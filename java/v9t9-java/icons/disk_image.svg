@@ -100,9 +100,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="6.5186406"
+     inkscape:zoom="9.2187499"
      inkscape:cx="32"
-     inkscape:cy="10.305085"
+     inkscape:cy="18.983051"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
@@ -115,7 +115,11 @@
      inkscape:snap-nodes="false">
     <inkscape:grid
        type="xygrid"
-       id="grid5085" />
+       id="grid5085"
+       empspacing="1"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
   </sodipodi:namedview>
   <metadata
      id="metadata21698">
@@ -179,8 +183,8 @@
        id="use20932"
        transform="matrix(-0.4947064,0.7303158,-0.7303158,-0.4947064,267.0586,99.928705)" />
     <path
-       style="fill:none;stroke:black;stroke-width:3.20175099;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 34.582049,38.959956 21.782425,0"
+       style="fill:none;stroke:black;stroke-width:3.09137392000000011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;opacity:0.5"
+       d="m 34.473574,38.526057 21.782425,0"
        id="path4989"
        inkscape:tile-cx="45.181819"
        inkscape:tile-cy="37.090909"
@@ -193,7 +197,7 @@
        y="0"
        xlink:href="#path4989"
        id="use5079"
-       transform="translate(-0.54693965,5.7568744)"
+       transform="translate(-0.43846507,6.0822981)"
        width="64"
        height="64" />
     <use
@@ -201,7 +205,7 @@
        y="0"
        xlink:href="#use5079"
        id="use5081"
-       transform="translate(-0.69904215,5.933104)"
+       transform="translate(-0.59056757,5.933104)"
        width="64"
        height="64" />
     <use
@@ -209,7 +213,7 @@
        y="0"
        xlink:href="#use5081"
        id="use5083"
-       transform="translate(-0.5111212,5.7036893)"
+       transform="translate(-0.5111212,5.9206385)"
        width="64"
        height="64" />
   </g>

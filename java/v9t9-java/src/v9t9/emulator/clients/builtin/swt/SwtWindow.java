@@ -34,7 +34,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -69,18 +68,13 @@ import v9t9.emulator.runtime.Executor;
  */
 public class SwtWindow extends BaseEmulatorWindow {
 	
-	/**
-	 * 
-	 */
-	private static final String WIDGET_DATA_KEEP_CENTERED = "keepCentered";
-	private static final String WIDGET_DESIRED_LOCATION = "desiredLocation";
 	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 	protected static final String DEBUGGER_TOOL_ID = "debugger";
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
-	private Map<String, Shell> toolShells;
+	private Map<String, ToolShell> toolShells;
 	private Timer toolUiTimer;
 	private Image mainIcons;
 	private Canvas cpuMetricsCanvas;
@@ -92,7 +86,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
 				
-		toolShells = new HashMap<String, Shell>();
+		toolShells = new HashMap<String, ToolShell>();
 		toolUiTimer = new Timer(true);
 		
 		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
@@ -366,11 +360,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						if (!restoreToolShell(DEBUGGER_TOOL_ID)) {
-							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-							final DebuggerWindow window = new DebuggerWindow(shell, SWT.NONE, machine, toolUiTimer);
-							createToolShell(DEBUGGER_TOOL_ID, shell, window, "DebuggerWindowBounds", false);
-						}
+						toggleToolShell(DEBUGGER_TOOL_ID, "DebuggerWindowBounds", false, false, new IToolShellFactory() {
+							public Control createContents(Shell shell) {
+								return new DebuggerWindow(shell, SWT.NONE, machine, toolUiTimer);
+							}
+						});
 					}
 			}
 		);
@@ -380,12 +374,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						if (!closeToolShell(MODULE_SELECTOR_TOOL_ID)) {
-							final Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
-							final ModuleSelector window = new ModuleSelector(shell, machine);
-							createToolShell(MODULE_SELECTOR_TOOL_ID, shell, window, "ModuleWindowBounds", true);
-							shell.setSize(400, 500);
-						}
+						toggleToolShell(MODULE_SELECTOR_TOOL_ID, "ModuleWindowBounds", true, true, new IToolShellFactory() {
+							public Control createContents(Shell shell) {
+								return new ModuleSelector(shell, machine);
+							}
+						});
 					}
 			}
 		);
@@ -395,12 +388,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						if (!closeToolShell(DISK_SELECTOR_TOOL_ID)) {
-							final Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
-							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager());
-							shell.layout(true);
-							createToolShell(DISK_SELECTOR_TOOL_ID, shell, window, "DiskWindowBounds", true);
-						}
+						toggleToolShell(DISK_SELECTOR_TOOL_ID, "DiskWindowBounds", true, true, new IToolShellFactory() {
+							public Control createContents(Shell shell) {
+								return new DiskSelector(shell, machine.getDsrManager());
+							}
+						});
 					}
 			}
 		);
@@ -507,6 +499,25 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 	}
 
+	/**
+	 * @param debuggerToolId
+	 * @param iToolShellFactory
+	 */
+	protected void toggleToolShell(String toolId, String boundsPref, 
+			boolean keepCentered, boolean dismissOnClickOutside,
+			IToolShellFactory toolShellFactory) {
+		if (!restoreToolShell(toolId)) {
+			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
+			final ToolShell toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
+							keepCentered ? buttonBar : null,
+							dismissOnClickOutside);
+			Control tool = toolShellFactory.createContents(shell);
+			toolShell.init(tool);
+			addToolShell(toolId, toolShell);
+		}
+		
+	}
+
 	/*
 	private void createControls() {
 		Button spawnMemoryViewButton = new Button(controlsComposite, SWT.PUSH | SWT.NO_FOCUS);
@@ -535,38 +546,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 */
 
 
-	protected void centerShellOverButtonBar(Shell shell) {
-		if (shell.isDisposed() || buttonBar.isDisposed())
-			return;
-		
-		Rectangle sbounds = shell.getBounds();
-		Rectangle bbounds = buttonBar.getBounds();
-		
-		Point pt = buttonBar.getParent().toDisplay(bbounds.x, bbounds.y);
-		pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
-				pt.y - sbounds.height);
-		
-		if (pt.x != sbounds.x || pt.y != sbounds.y) {
-			Point desired = (Point) shell.getData(WIDGET_DESIRED_LOCATION);
-			if (desired != null && desired.x == pt.x && desired.y == pt.y) {
-				// already tried, and it failed; just accept this fact
-				shell.setData(WIDGET_DESIRED_LOCATION, new Point(sbounds.x, sbounds.y));
-			} else {
-				shell.setData(WIDGET_DESIRED_LOCATION, pt);
-				shell.setLocation(pt);
-			}
-		}
-	}
-
 	protected void recenterToolShells() {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				for (Shell shell : toolShells.values()) {
-					if (shell.isDisposed())
-						continue;
-					if (Boolean.TRUE.equals(shell.getData(WIDGET_DATA_KEEP_CENTERED))) {
-						shell.setData(WIDGET_DESIRED_LOCATION, null);
-						centerShellOverButtonBar(shell);
+				for (ToolShell shell : toolShells.values()) {
+					if (shell.isKeepCentered()) {
+						shell.recenterTo(null);
+						shell.centerShell();
 					}
 				}	
 			}
@@ -591,21 +577,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 		hider.start();
 	}
 	protected boolean restoreToolShell(String toolId) {
-		Shell old = toolShells.get(toolId);
-		if (old != null) {
-			if (old.isVisible()) {
-				old.setVisible(false);
-				focusRestorer.restoreFocus();
-			} else {
-				old.setVisible(true);
-				old.setFocus();
-			}
+		ToolShell tool = toolShells.get(toolId);
+		if (tool != null) {
+			tool.restore();
 			return true;
 		} 
 		return false;
 	}
 	protected boolean closeToolShell(String toolId) {
-		Shell old = toolShells.get(toolId);
+		ToolShell old = toolShells.get(toolId);
 		if (old != null) {
 			old.dispose();
 			focusRestorer.restoreFocus();
@@ -613,98 +593,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		} 
 		return false;
 	}
-	protected void createToolShell(final String toolId, final Shell shell, final Composite tool, 
-			final String boundsPref, final boolean keepCentered) {
-		shell.setImage(getShell().getImage());
-		shell.setLayout(new GridLayout(1, false));
-		
-		final GridData data = GridDataFactory.fillDefaults().grab(true, true).hint(400, 300).create();
-		tool.setLayoutData(data);
-		
-		shell.addDisposeListener(new DisposeListener() {
-			public void widgetDisposed(DisposeEvent e) {
-				tool.dispose();
-				Display.getDefault().asyncExec(new Runnable() {
-					public void run() {
-						focusRestorer.restoreFocus();
-					}
-				});
-			}
-		});
-
-		
-		String boundsStr = EmulatorSettings.getInstance().getApplicationSettings().get(boundsPref);
-		if (boundsStr != null) {
-			Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
-			if (savedBounds != null) {
-				if (keepCentered)
-					shell.setSize(savedBounds.width, savedBounds.height);
-				else
-					shell.setBounds(savedBounds);
-			}
-		}
-		
-		if (keepCentered) {
-			shell.setData(WIDGET_DATA_KEEP_CENTERED, true);
-			
-			shell.addControlListener(new ControlAdapter() {
-				@Override
-				public void controlResized(ControlEvent e) {
-					Display.getDefault().asyncExec(new Runnable() {
-						public void run() {
-							shell.setData(WIDGET_DESIRED_LOCATION, null);
-							centerShellOverButtonBar(shell);
-						}
-					});
-				}
-				/* (non-Javadoc)
-				 * @see org.eclipse.swt.events.ControlAdapter#controlMoved(org.eclipse.swt.events.ControlEvent)
-				 */
-				@Override
-				public void controlMoved(ControlEvent e) {
-					Display.getDefault().asyncExec(new Runnable() {
-						public void run() {
-							Point pos = (Point) shell.getData(WIDGET_DESIRED_LOCATION);
-							if (pos != null && pos.equals(shell.getLocation())) {
-								shell.setData(WIDGET_DESIRED_LOCATION, null);
-							} else {
-								centerShellOverButtonBar(shell);
-							}
-						}
-					});
-				}
-			});
-		}
-		
-
-		shell.open();
-		
-		shell.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				// try to stay the same (user controlled) size and not 
-				// grow to full screen when next packed
-				data.heightHint = tool.getSize().y;
-			}
-		});
-		
-		shell.addDisposeListener(new DisposeListener() {
-			public void widgetDisposed(DisposeEvent e) {
-				Rectangle bounds = shell.getBounds();
-				String boundsStr = PrefUtils.writeBoundsString(bounds);
-				EmulatorSettings.getInstance().getApplicationSettings().put(boundsPref, boundsStr);
-			}
-		});
-		addToolShell(toolId, shell);
-		
-	}
-
-	protected void addToolShell(final String toolId, final Shell toolShell) {
-		Shell old = toolShells.get(toolId);
+	
+	protected void addToolShell(final String toolId, final ToolShell toolShell) {
+		ToolShell old = toolShells.get(toolId);
 		if (old != null)
 			old.dispose();
 		toolShells.put(toolId, toolShell);
-		toolShell.addDisposeListener(new DisposeListener() {
+		toolShell.getShell().addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				toolShells.remove(toolId);
 			}
@@ -718,9 +613,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected void handleClickOutsideToolWindow(final Point pt) {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				Shell[] shells = (Shell[]) toolShells.values().toArray(new Shell[toolShells.values().size()]);
-				for (Shell shell : shells) {
-					if (!shell.isDisposed() && shell.isVisible() && Boolean.TRUE.equals(shell.getData(WIDGET_DATA_KEEP_CENTERED))) {
+				ToolShell[] toolShellArr = (ToolShell[]) toolShells.values().toArray(new ToolShell[toolShells.values().size()]);
+				for (ToolShell toolShell : toolShellArr) {
+					Shell shell = toolShell.getShell();
+					if (toolShell.isDismissOnClickOutside() && !shell.isDisposed() && shell.isVisible()
+							&& System.currentTimeMillis() > toolShell.getClickOutsideCheckTime()) {
 						Rectangle bounds = shell.getBounds();
 						System.out.println(pt + "/"+ bounds);
 						if (pt.x < bounds.x - 16 || pt.y < bounds.y - 16 
@@ -732,7 +629,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 					
 			}
 		});
-			
 	}
 
 
@@ -829,8 +725,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		toolUiTimer.cancel();
 		
-		Shell[] shellArray = (Shell[]) toolShells.values().toArray(new Shell[toolShells.values().size()]);
-		for (Shell shell : shellArray) {
+		ToolShell[] shellArray = (ToolShell[]) toolShells.values().toArray(new ToolShell[toolShells.values().size()]);
+		for (ToolShell shell : shellArray) {
 			shell.dispose();
 		}
 		toolShells.clear();
