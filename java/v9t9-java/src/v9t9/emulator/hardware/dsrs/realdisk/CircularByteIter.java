@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.hardware.dsrs;
+package v9t9.emulator.hardware.dsrs.realdisk;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

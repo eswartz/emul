@@ -1,0 +1,303 @@
+/**
+ * 
+ */
+package v9t9.emulator.hardware.dsrs.emudisk;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.ejs.coffee.core.utils.HexUtils;
+
+import v9t9.emulator.hardware.dsrs.DsrException;
+import v9t9.emulator.hardware.dsrs.MemoryTransfer;
+import v9t9.engine.files.FDR;
+import v9t9.engine.files.IFDRFlags;
+import v9t9.engine.files.NativeFDRFile;
+import v9t9.engine.files.NativeFile;
+import v9t9.engine.files.NativeFileFactory;
+import v9t9.engine.files.V9t9FDR;
+import v9t9.engine.memory.ByteMemoryAccess;
+
+public class DirectDiskHandler {
+	static class DirectDiskInfo {
+		Map<File, DiskLikeDirectoryInfo> dirInfos = new HashMap<File, DiskLikeDirectoryInfo>();
+
+		public void reset() {
+			dirInfos.clear();
+		}
+		
+	}
+	private final MemoryTransfer xfer;
+	byte dev;
+	private byte opt;
+	private short addr1;
+	private short addr2;
+	private final short code;
+	private String devname;
+	private final IFileMapper mapper;
+
+	private static Map<Short, DirectDiskHandler.DirectDiskInfo> diskInfoBlocks = new HashMap<Short, DirectDiskHandler.DirectDiskInfo>();
+	private final short cru;
+	
+	public static DirectDiskHandler.DirectDiskInfo getDiskInfoBlock(short cru) {
+		DirectDiskHandler.DirectDiskInfo block = diskInfoBlocks.get(cru);
+		if (block == null) {
+			block = new DirectDiskInfo();
+			diskInfoBlocks.put(cru, block);
+		}
+		return block;
+	}
+	
+	public DirectDiskHandler(short cru, MemoryTransfer xfer, IFileMapper mapper, short code) {
+		this.cru = cru;
+		this.xfer = xfer;
+		this.mapper = mapper;
+		this.code = code;
+		
+		dev = xfer.readParamByte(0x4c);
+		devname = "DSK" + (char)(dev + '0');
+		
+		opt = xfer.readParamByte(0x4d);
+		addr1 = xfer.readParamWord(0x4e);
+		addr2 = xfer.readParamWord(0x50);
+	}
+
+	public byte getDevice() {
+		return dev;
+	}
+	
+	public void run() throws DsrException {
+		switch (code) {
+		case EmuDiskDsr.D_DINPUT:
+			directDiskInput();
+			break;
+		case EmuDiskDsr.D_DOUTPUT:
+			directDiskOutput();
+			break;
+		case EmuDiskDsr.D_SECRW:
+			directSectorReadWrite();
+			break;
+		default:
+			throw new DsrException(EmuDiskDsr.es_badfuncerr, "Unhandled function: " + code);
+		}
+	}
+	
+
+	public void error(DsrException e) {
+		xfer.writeParamByte(0x50, (byte) e.getErrorCode());
+		if (e != null)
+			EmuDiskDsr.info(e.getMessage());
+	}
+
+
+	protected String readBareFilename(short addr) {
+		StringBuilder builder = new StringBuilder();
+		int endAddr = addr;
+		while (endAddr < addr + 10) {
+			byte ch = xfer.readVdpByte(endAddr);
+			if (ch == ' ')
+				break;
+			builder.append((char) ch);
+			endAddr++;
+		}
+		return builder.toString();
+	}
+	
+
+	private void directDiskInput() throws DsrException {
+		byte secs = opt;
+		short fname = addr1;
+		int parms = addr2;
+		
+		String filename = readBareFilename(fname);
+		NativeFile file = null;
+		
+		try {
+			file = NativeFileFactory.createNativeFile(mapper.getLocalFile(devname, filename));
+		} catch (IOException e) {
+			throw new DsrException(EmuDiskDsr.es_filenotfound, e);
+		}
+		
+		parms = (parms >> 8);
+
+		if (secs == 0) {
+			// read FDR info
+			if (file instanceof NativeFDRFile) {
+				NativeFDRFile fdrFile = (NativeFDRFile) file;
+				FDR fdr = fdrFile.getFDR();
+				xfer.writeParamWord(parms + 2, (short) fdr.getSectorsUsed());
+				xfer.writeParamByte(parms + 4, (byte) fdr.getFlags());
+				xfer.writeParamByte(parms + 5, (byte) fdr.getRecordsPerSector());
+				xfer.writeParamByte(parms + 6, (byte) fdr.getByteOffset());
+				xfer.writeParamByte(parms + 7, (byte) fdr.getRecordLength());
+				xfer.writeParamWord(parms + 8, (short) fdr.getNumberRecords());
+			} else {
+				int size = file.getFileSize();
+				xfer.writeParamWord(parms + 2, (short) ((size + 255) / 256));
+				xfer.writeParamByte(parms + 6, (byte) (size % 256));
+			}
+			xfer.writeParamByte(0x50, (byte) 0);
+
+		} else {
+			// read sectors
+			short   vaddr = xfer.readParamWord(parms);
+			short	secnum = xfer.readParamWord(parms + 2);
+
+			EmuDiskDsr.info("reading "+secs+" sectors from sector #"+secnum+
+					" in " + file + ", storing to >"+HexUtils.toHex4(vaddr));
+
+			ByteMemoryAccess access = xfer.getVdpMemory(vaddr);
+			try {
+				int read = file.readContents(access.memory, access.offset, secnum * 256, secs * 256);
+				xfer.dirtyVdpMemory(vaddr, read);
+				// error will be set if sector read failed
+				xfer.writeParamByte(0x4D, (byte) ((read + 255) >> 8));
+				xfer.writeParamByte(0x50, (byte) 0);
+			} catch (IOException e) {
+				throw new DsrException(EmuDiskDsr.es_hardware, e);
+			}
+		}
+	}
+
+
+	private void directDiskOutput() throws DsrException {
+		byte secs = opt;
+		short fname = addr1;
+		int parms = addr2;
+		
+		String filename = readBareFilename(fname);
+		NativeFile file = null;
+		
+		File localFile = mapper.getLocalFile(devname, filename);
+		
+		parms = (parms >> 8);
+
+		if (secs == 0) {
+			// write FDR info (or create file)
+			try {
+				file = NativeFileFactory.createNativeFile(localFile);
+			} catch (IOException e) {
+			}
+			if (file == null || file.getFileSize() == 0) {
+				file = new NativeFDRFile(localFile, new V9t9FDR());
+			}
+			
+			if (file instanceof NativeFDRFile) {
+				NativeFDRFile fdrFile = (NativeFDRFile) file;
+				FDR fdr = fdrFile.getFDR();
+				fdr.setSectorsUsed(xfer.readParamWord(parms + 2) & 0xffff);
+				fdr.setFlags(xfer.readParamByte(parms + 4) & 0xff);
+				fdr.setRecordsPerSector(xfer.readParamByte(parms + 5) & 0xff);
+				fdr.setByteOffset(xfer.readParamByte(parms + 6) & 0xff);
+				fdr.setRecordLength(xfer.readParamByte(parms + 7) & 0xff);
+				fdr.setNumberRecords(xfer.readParamWord(parms + 8) & 0xffff);
+				if (fdr instanceof V9t9FDR) {
+					try {
+						((V9t9FDR)fdr).setFileName(filename);
+					} catch (IOException e) {
+					}
+				}
+				try {
+					fdr.writeFDR(file.getFile());
+					xfer.writeParamByte(0x50, (byte) 0);
+				} catch (IOException e) {
+					throw new DsrException(EmuDiskDsr.es_hardware, e, "Failed to write FDR: " + file.getFile());
+				}
+			}
+			
+			// change real file
+			int byteoffs = xfer.readParamByte(parms + 6);
+			int numsecs = xfer.readParamWord(parms + 2);
+			if (byteoffs != 0)
+				numsecs++;
+			int size = numsecs * 256 + byteoffs;
+			int oldsize = file != null ? file.getFileSize() : 0;
+			try {
+				file.setFileSize(size);
+			} catch (IOException e) {
+				throw new DsrException(oldsize < size ? EmuDiskDsr.es_outofspace : EmuDiskDsr.es_hardware, e, "Failed to resize file: " + file.getFile());
+			}
+			int flags = xfer.readParamByte(parms + 4);
+			if (!file.getFile().setWritable((flags & IFDRFlags.ff_protected) == 0)) {
+				throw new DsrException(EmuDiskDsr.es_hardware, "Error updating file protection status");
+			}
+
+		} else {
+			// write sectors
+			try {
+				file = NativeFileFactory.createNativeFile(localFile);
+			} catch (IOException e) {
+				throw new DsrException(EmuDiskDsr.es_filenotfound, "File not found: " + localFile);
+			}
+			
+			short   vaddr = xfer.readParamWord(parms);
+			short	secnum = xfer.readParamWord(parms + 2);
+
+			EmuDiskDsr.info("writing "+secs+" sectors to sector #"+secnum+
+					" in " + file + ", reading from >"+HexUtils.toHex4(vaddr));
+
+			ByteMemoryAccess access = xfer.getVdpMemory(vaddr);
+			try {
+				//String contents = new String(access.memory, access.offset, secs * 256);
+				//System.out.println(contents);
+				int wrote = file.writeContents(access.memory, access.offset, secnum * 256, secs * 256);
+				// error will be set if sector write failed
+				xfer.writeParamByte(0x4D, (byte) ((wrote + 255) >> 8));
+				xfer.writeParamByte(0x50, (byte) 0);
+			} catch (IOException e) {
+				throw new DsrException(EmuDiskDsr.es_outofspace, e);
+			}
+		}
+	}
+	
+	private void directSectorReadWrite() throws DsrException {
+		boolean write = opt == 0;
+		
+		if (write)
+			throw new DsrException(EmuDiskDsr.es_hardware, "Not implemented");
+		
+		short addr = addr1;
+		int secnum = addr2;
+		
+		ByteMemoryAccess access = xfer.getVdpMemory(addr);
+		DiskLikeDirectoryInfo info = getDirectory();
+		
+		if (secnum < info.lastSector) {
+			if (secnum == 0) {
+				info.synthesizeVolumeSector(access);
+			}
+			else if (secnum == 1) {
+				info.synthesizeIndexSector(access);
+			}
+			else {
+				try {
+					info.synthesizeSector(access, secnum);
+				} catch (IOException e) {
+					throw new DsrException(EmuDiskDsr.es_hardware, e);
+				}
+			}	
+		} else {
+			Arrays.fill(access.memory, access.offset, access.offset + 256, (byte) 0xe5);
+		}
+		
+		xfer.dirtyVdpMemory(addr, 256);
+		xfer.writeParamByte(0x50, (byte) 0);
+	}
+
+	DiskLikeDirectoryInfo getDirectory() {
+		DirectDiskHandler.DirectDiskInfo diskInfo = getDiskInfoBlock(cru);
+		
+		File dir = mapper.getLocalFile(devname, null);
+		DiskLikeDirectoryInfo info = diskInfo.dirInfos.get(dir);
+		if (info == null) {
+			info = new DiskLikeDirectoryInfo(dir, mapper, devname);
+			diskInfo.dirInfos.put(dir, info);
+		}
+		
+		return info;
+	}
+
+}

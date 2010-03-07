@@ -18,12 +18,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import v9t9.emulator.hardware.dsrs.DsrException;
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.PabStruct;
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper;
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr.OpenFile;
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler.PabInfoBlock;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler;
+import v9t9.emulator.hardware.dsrs.emudisk.IFileMapper;
+import v9t9.emulator.hardware.dsrs.emudisk.OpenFile;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.engine.files.NativeFDRFile;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
@@ -235,7 +236,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	
 	@Before
 	public void clearFiles() {
-		PabInfoBlock diskInfoBlock = EmuDiskDsr.EmuDiskPabHandler.getPabInfoBlock(dsr.getCruBase());
+		PabInfoBlock diskInfoBlock = EmuDiskPabHandler.getPabInfoBlock(dsr.getCruBase());
 		diskInfoBlock.reset();
 		
 		deleteFile("DSK1.TMP1");
@@ -796,7 +797,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	 * @return
 	 */
 	private OpenFile getOpenFile(PabStruct pab) {
-		return EmuDiskDsr.EmuDiskPabHandler.getPabInfoBlock(dsr.getCruBase()).findOpenFile(pab.pabaddr);
+		return EmuDiskPabHandler.getPabInfoBlock(dsr.getCruBase()).findOpenFile(pab.pabaddr);
 	}
 	
 	@Test

@@ -7,10 +7,13 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
+import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
 import v9t9.engine.files.V9t9FDR;
 
 
@@ -24,8 +27,21 @@ public class TestEmuDiskDSRDiskLike extends BaseEmuDiskDSRTest {
 	public static void setupSearch() {
 		BaseEmuDiskDSRTest.setupSearch();
 	}
-	
 
+
+	private boolean wasRealDisk;
+
+	@Before
+	public void setupEmuDisk() {
+		wasRealDisk = DiskImageDsr.diskImageDsrEnabled.getBoolean();
+		DiskImageDsr.diskImageDsrEnabled.setBoolean(false);
+	}
+	
+	@After
+	public void resetRealDisk() {
+		DiskImageDsr.diskImageDsrEnabled.setBoolean(wasRealDisk);
+	}
+	
 	private String getString(int addr, int cnt) {
 		String string = "";
 		for (int i = 0; i <cnt; i++)

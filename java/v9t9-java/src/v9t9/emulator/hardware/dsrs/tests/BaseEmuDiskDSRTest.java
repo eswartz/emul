@@ -15,12 +15,12 @@ import java.util.Arrays;
 import org.ejs.coffee.core.utils.HexUtils;
 import org.junit.BeforeClass;
 
-import v9t9.emulator.hardware.dsrs.DiskDirectoryMapper;
 import v9t9.emulator.hardware.dsrs.DsrException;
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.PabStruct;
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler;
+import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.FDRFactory;
 import v9t9.engine.files.V9t9FDR;

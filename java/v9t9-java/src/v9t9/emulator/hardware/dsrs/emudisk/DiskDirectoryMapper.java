@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.hardware.dsrs;
+package v9t9.emulator.hardware.dsrs.emudisk;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +16,6 @@ import org.ejs.coffee.core.utils.Setting;
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.hardware.V9t9;
-import v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper;
 
 
 public class DiskDirectoryMapper implements IFileMapper {

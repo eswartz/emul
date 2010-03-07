@@ -6,8 +6,8 @@ package v9t9.emulator.hardware.dsrs;
 public abstract class PabHandler {
 	protected Short pabaddr;
 	
-	protected String devname;
-	protected String fname;
+	public String devname;
+	public String fname;
 	protected PabStruct pab;
 	protected final MemoryTransfer xfer;
 
