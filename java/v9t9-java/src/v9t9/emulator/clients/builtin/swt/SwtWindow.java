@@ -30,9 +30,6 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
-import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -46,6 +43,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
@@ -75,6 +73,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * 
 	 */
 	private static final String WIDGET_DATA_KEEP_CENTERED = "keepCentered";
+	private static final String WIDGET_DESIRED_LOCATION = "desiredLocation";
 	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 	protected static final String DEBUGGER_TOOL_ID = "debugger";
@@ -110,6 +109,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 				dispose();
 			}
 			
+		});
+		
+		shell.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlMoved(ControlEvent e) {
+				recenterToolShells();
+			}
 		});
 		
 		if (false) {
@@ -199,6 +205,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 			public void mouseUp(MouseEvent e) {
 				if (e.button == 1) {
+					handleClickOutsideToolWindow(videoControl.toDisplay(e.x, e.y));
 					focusRestorer.restoreFocus();
 				}
 				if (SWT.getPlatform().equals("win32") && e.button == 3) {
@@ -320,6 +327,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 				recenterToolShells();
 			}
 		});
+		
+		buttonBar.getDisplay().addFilter(SWT.MouseUp, new Listener() {
+			
+			public void handleEvent(Event event) {
+				if (!(event.widget instanceof Control))
+					return;
+				if (event.button == 1) {
+					Point pt = ((Control)event.widget).toDisplay(event.x, event.y);
+					handleClickOutsideToolWindow(pt);
+				}
+			}
+		});
+		
 
 		createButton(buttonBar, 1,
 				"Send a NMI interrupt", new SelectionAdapter() {
@@ -361,7 +381,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						if (!restoreToolShell(MODULE_SELECTOR_TOOL_ID)) {
-							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+							final Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
 							final ModuleSelector window = new ModuleSelector(shell, machine);
 							createToolShell(MODULE_SELECTOR_TOOL_ID, shell, window, "ModuleWindowBounds", true);
 							shell.setSize(400, 500);
@@ -376,7 +396,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						if (!restoreToolShell(DISK_SELECTOR_TOOL_ID)) {
-							final Shell shell = new Shell(getShell(), SWT.TOOL | SWT.RESIZE);
+							final Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
 							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager());
 							shell.layout(true);
 							createToolShell(DISK_SELECTOR_TOOL_ID, shell, window, "DiskWindowBounds", true);
@@ -519,15 +539,23 @@ public class SwtWindow extends BaseEmulatorWindow {
 		if (shell.isDisposed() || buttonBar.isDisposed())
 			return;
 		
-		Rectangle bbounds = buttonBar.getBounds();
 		Rectangle sbounds = shell.getBounds();
+		Rectangle bbounds = buttonBar.getBounds();
 		
 		Point pt = buttonBar.getParent().toDisplay(bbounds.x, bbounds.y);
 		pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
 				pt.y - sbounds.height);
 		
-		if (pt.x != sbounds.x || pt.y != sbounds.y)
-			shell.setLocation(pt);
+		if (pt.x != sbounds.x || pt.y != sbounds.y) {
+			Point desired = (Point) shell.getData(WIDGET_DESIRED_LOCATION);
+			if (desired != null && desired.x == pt.x && desired.y == pt.y) {
+				// already tried, and it failed; just accept this fact
+				shell.setData(WIDGET_DESIRED_LOCATION, new Point(sbounds.x, sbounds.y));
+			} else {
+				shell.setData(WIDGET_DESIRED_LOCATION, pt);
+				shell.setLocation(pt);
+			}
+		}
 	}
 
 	protected void recenterToolShells() {
@@ -537,6 +565,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					if (shell.isDisposed())
 						continue;
 					if (Boolean.TRUE.equals(shell.getData(WIDGET_DATA_KEEP_CENTERED))) {
+						shell.setData(WIDGET_DESIRED_LOCATION, null);
 						centerShellOverButtonBar(shell);
 					}
 				}	
@@ -615,6 +644,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				public void controlResized(ControlEvent e) {
 					Display.getDefault().asyncExec(new Runnable() {
 						public void run() {
+							shell.setData(WIDGET_DESIRED_LOCATION, null);
 							centerShellOverButtonBar(shell);
 						}
 					});
@@ -626,7 +656,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 				public void controlMoved(ControlEvent e) {
 					Display.getDefault().asyncExec(new Runnable() {
 						public void run() {
-							centerShellOverButtonBar(shell);
+							Point pos = (Point) shell.getData(WIDGET_DESIRED_LOCATION);
+							if (pos != null && pos.equals(shell.getLocation())) {
+								shell.setData(WIDGET_DESIRED_LOCATION, null);
+							} else {
+								centerShellOverButtonBar(shell);
+							}
 						}
 					});
 				}
@@ -667,6 +702,25 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 	}
+
+	/**
+	 * Take down any transient tool windows when clicking outside them
+	 * @param pt display click location
+	 */
+	protected void handleClickOutsideToolWindow(Point pt) {
+		for (Shell shell : toolShells.values()) {
+			if (!shell.isDisposed() && shell.isVisible() && Boolean.TRUE.equals(shell.getData(WIDGET_DATA_KEEP_CENTERED))) {
+				Rectangle bounds = shell.getBounds();
+				System.out.println(pt + "/"+ bounds);
+				if (pt.x < bounds.x - 16 || pt.y < bounds.y - 16 
+						|| pt.x > bounds.x + bounds.width + 16 || pt.y > bounds.y + bounds.height + 16) {
+					shell.dispose();
+				}
+			}
+		}
+				
+	}
+
 
 	private Menu createAppMenu(Decorations control, Object parent, boolean isPopup) {
 		Menu appMenu;
