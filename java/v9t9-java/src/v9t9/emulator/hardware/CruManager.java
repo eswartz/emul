@@ -97,8 +97,11 @@ public class CruManager implements CruHandler {
         		return;
         	CruWriter writer = writerArray[addr / 2];
         	if (writer != null) {
-                writer.write(addr, val & (~(~0 << 1)), 1);
-
+        		try {
+        			writer.write(addr, val & (~(~0 << 1)), 1);
+        		} catch (Throwable t) {
+        			t.printStackTrace();
+        		}
         	}
         	num -= 1;
         	addr += 1 * 2;
@@ -129,7 +132,11 @@ public class CruManager implements CruHandler {
          	int shift = (addr - orgaddr) / 2;
             int bits = 0;
             if (reader != null) {
-            	bits = reader.read(addr, val, 1) & (~(~0 << 1));
+            	try {
+            		bits = reader.read(addr, val, 1) & (~(~0 << 1));
+            	} catch (Throwable t) {
+        			t.printStackTrace();
+        		}
             }
             val = (val & ~((~(~0 << 1)) << shift)) | (bits << shift);
             num -= 1;
