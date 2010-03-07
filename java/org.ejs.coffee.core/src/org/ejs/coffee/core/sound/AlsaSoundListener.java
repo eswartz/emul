@@ -33,6 +33,9 @@ public class AlsaSoundListener implements ISoundListener {
 	private boolean blocking;
 
 	public AlsaSoundListener(String device) {
+		// init outside locks
+		AlsaLibrary.INSTANCE.hashCode();
+
 		this.device = device != null ? device : "default";
 	}
 

@@ -12,6 +12,9 @@ import java.io.IOException;
 
 import org.ejs.coffee.core.utils.Setting;
 
+import com.sun.jna.Native;
+import com.sun.jna.Structure;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
@@ -31,7 +34,10 @@ import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WordMemoryArea;
 
 public class V9t9 {
-
+	static {
+		Class<?> k = Native.class;
+		k = Structure.class;
+	}
 	static public final Setting settingMonitorDrawing = new Setting("MonitorDrawing", new Boolean(true));
 
 	static {

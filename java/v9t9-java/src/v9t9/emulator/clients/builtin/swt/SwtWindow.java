@@ -380,7 +380,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						if (!restoreToolShell(MODULE_SELECTOR_TOOL_ID)) {
+						if (!closeToolShell(MODULE_SELECTOR_TOOL_ID)) {
 							final Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
 							final ModuleSelector window = new ModuleSelector(shell, machine);
 							createToolShell(MODULE_SELECTOR_TOOL_ID, shell, window, "ModuleWindowBounds", true);
@@ -395,7 +395,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						if (!restoreToolShell(DISK_SELECTOR_TOOL_ID)) {
+						if (!closeToolShell(DISK_SELECTOR_TOOL_ID)) {
 							final Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
 							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager());
 							shell.layout(true);
@@ -604,7 +604,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 		} 
 		return false;
 	}
-	
+	protected boolean closeToolShell(String toolId) {
+		Shell old = toolShells.get(toolId);
+		if (old != null) {
+			old.dispose();
+			focusRestorer.restoreFocus();
+			return true;
+		} 
+		return false;
+	}
 	protected void createToolShell(final String toolId, final Shell shell, final Composite tool, 
 			final String boundsPref, final boolean keepCentered) {
 		shell.setImage(getShell().getImage());
@@ -707,18 +715,24 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * Take down any transient tool windows when clicking outside them
 	 * @param pt display click location
 	 */
-	protected void handleClickOutsideToolWindow(Point pt) {
-		for (Shell shell : toolShells.values()) {
-			if (!shell.isDisposed() && shell.isVisible() && Boolean.TRUE.equals(shell.getData(WIDGET_DATA_KEEP_CENTERED))) {
-				Rectangle bounds = shell.getBounds();
-				System.out.println(pt + "/"+ bounds);
-				if (pt.x < bounds.x - 16 || pt.y < bounds.y - 16 
-						|| pt.x > bounds.x + bounds.width + 16 || pt.y > bounds.y + bounds.height + 16) {
-					shell.dispose();
+	protected void handleClickOutsideToolWindow(final Point pt) {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				Shell[] shells = (Shell[]) toolShells.values().toArray(new Shell[toolShells.values().size()]);
+				for (Shell shell : shells) {
+					if (!shell.isDisposed() && shell.isVisible() && Boolean.TRUE.equals(shell.getData(WIDGET_DATA_KEEP_CENTERED))) {
+						Rectangle bounds = shell.getBounds();
+						System.out.println(pt + "/"+ bounds);
+						if (pt.x < bounds.x - 16 || pt.y < bounds.y - 16 
+								|| pt.x > bounds.x + bounds.width + 16 || pt.y > bounds.y + bounds.height + 16) {
+							shell.dispose();
+						}
+					}
 				}
+					
 			}
-		}
-				
+		});
+			
 	}
 
 

@@ -38,6 +38,8 @@ public class Win32SoundListener implements ISoundListener {
 	private int hdrIndex;
 	
 	public Win32SoundListener() {
+		// init outside locks
+		WinMMLibrary.INSTANCE.hashCode();
 	}
 
 	public void setBlockMode(boolean blocking) {

@@ -69,6 +69,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private AnalogTV analog;
 	
 	public AwtVideoRenderer() {
+		// init outside locks
+		V9t9Render.INSTANCE.hashCode();
+		
 		updateRect = new Rectangle(0, 0, 0, 0);
 		setCanvas(new ImageDataCanvas24Bit(0));
 		//desiredWidth = (int)(zoomx * 256);
