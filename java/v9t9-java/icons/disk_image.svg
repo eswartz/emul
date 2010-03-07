@@ -12,7 +12,7 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    inkscape:export-ydpi="45"
    inkscape:export-xdpi="45"
-   inkscape:export-filename="/home/ejs/devel/emul/java/v9t9-java/icons/disk_directory.png"
+   inkscape:export-filename="/home/ejs/devel/emul/java/v9t9-java/icons/disk_image.png"
    sodipodi:docname="disk_image.svg"
    inkscape:version="0.47 r22583"
    version="1.1"
@@ -92,14 +92,6 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_x="0 : 0.5 : 1"
        sodipodi:type="inkscape:persp3d" />
-    <filter
-       inkscape:collect="always"
-       id="filter22882">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="0.84092172"
-         id="feGaussianBlur22884" />
-    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -108,18 +100,23 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.5"
+     inkscape:zoom="6.5186406"
      inkscape:cx="32"
-     inkscape:cy="25.818182"
+     inkscape:cy="10.305085"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
-     inkscape:window-width="977"
-     inkscape:window-height="594"
-     inkscape:window-x="496"
-     inkscape:window-y="275"
-     inkscape:window-maximized="0" />
+     inkscape:window-width="1016"
+     inkscape:window-height="826"
+     inkscape:window-x="369"
+     inkscape:window-y="96"
+     inkscape:window-maximized="0"
+     inkscape:snap-nodes="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid5085" />
+  </sodipodi:namedview>
   <metadata
      id="metadata21698">
     <rdf:RDF>
@@ -170,7 +167,7 @@
     </g>
     <g
        id="g22863"
-       transform="translate(-0.72727273,0.72727273)">
+       transform="matrix(1,0,0,0.96942219,-0.72727273,2.6051899)">
       <path
          sodipodi:nodetypes="ccccc"
          id="rect21821"
@@ -182,343 +179,37 @@
        id="use20932"
        transform="matrix(-0.4947064,0.7303158,-0.7303158,-0.4947064,267.0586,99.928705)" />
     <path
-       sodipodi:type="arc"
-       id="path4144"
-       style="fill:#333;stroke:none"
-       sodipodi:cx="36.727272"
-       sodipodi:cy="38.181816"
-       sodipodi:rx="1.5"
-       sodipodi:ry="1.5"
-       d="m 38.227272,38.181816 a 1.5,1.5 0 1 1 -3,0 1.5,1.5 0 1 1 3,0 z"
-       inkscape:tile-cx="36.727272"
-       inkscape:tile-cy="38.181816"
-       inkscape:tile-w="3"
-       inkscape:tile-h="3"
-       inkscape:tile-x0="35.227272"
-       inkscape:tile-y0="36.681816"
-       transform="matrix(1.0943339,0,-0.03659215,1.1003135,-3.6643363,-5.1342261)" />
+       style="fill:none;stroke:black;stroke-width:3.20175099;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 34.582049,38.959956 21.782425,0"
+       id="path4989"
+       inkscape:tile-cx="45.181819"
+       inkscape:tile-cy="37.090909"
+       inkscape:tile-w="22.727273"
+       inkscape:tile-h="0"
+       inkscape:tile-x0="33.818182"
+       inkscape:tile-y0="37.090909" />
     <use
        x="0"
        y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       id="use4788"
-       width="64"
-       height="64"
-       style="fill:#b3b3b3" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(-0.30137065,4.1261756)"
-       id="use4790"
+       xlink:href="#path4989"
+       id="use5079"
+       transform="translate(-0.54693965,5.7568744)"
        width="64"
        height="64" />
     <use
        x="0"
        y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(-0.60274126,8.2523511)"
-       id="use4792"
+       xlink:href="#use5079"
+       id="use5081"
+       transform="translate(-0.69904215,5.933104)"
        width="64"
        height="64" />
     <use
        x="0"
        y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(-0.9041119,12.378527)"
-       id="use4794"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(-1.2054826,16.504703)"
-       id="use4796"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(-1.5068532,20.630877)"
-       id="use4798"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(4.1037522,0)"
-       id="use4800"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(3.8023815,4.1261756)"
-       id="use4802"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(3.5010109,8.2523511)"
-       id="use4804"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(3.1996402,12.378527)"
-       id="use4806"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(2.8982696,16.504703)"
-       id="use4808"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(2.596899,20.630877)"
-       id="use4810"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(8.2075044,0)"
-       id="use4812"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(7.9061337,4.1261756)"
-       id="use4814"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(7.6047632,8.2523511)"
-       id="use4816"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(7.3033925,12.378527)"
-       id="use4818"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(7.0020219,16.504703)"
-       id="use4820"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(6.7006513,20.630877)"
-       id="use4822"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(12.311256,0)"
-       id="use4824"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(12.009886,4.1261756)"
-       id="use4826"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(11.708515,8.2523511)"
-       id="use4828"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(11.407144,12.378527)"
-       id="use4830"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(11.105775,16.504703)"
-       id="use4832"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(10.804403,20.630877)"
-       id="use4834"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(16.415009,0)"
-       id="use4836"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(16.113638,4.1261756)"
-       id="use4838"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(15.812267,8.2523511)"
-       id="use4840"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(15.510897,12.378527)"
-       id="use4842"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(15.209527,16.504703)"
-       id="use4844"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(14.908156,20.630877)"
-       id="use4846"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(20.518761,0)"
-       id="use4848"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(20.21739,4.1261756)"
-       id="use4850"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(19.91602,8.2523511)"
-       id="use4852"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(19.614649,12.378527)"
-       id="use4854"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(19.313279,16.504703)"
-       id="use4856"
-       width="64"
-       height="64" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#path4144"
-       xlink:href="#path4144"
-       transform="translate(19.011908,20.630877)"
-       id="use4858"
+       xlink:href="#use5081"
+       id="use5083"
+       transform="translate(-0.5111212,5.7036893)"
        width="64"
        height="64" />
   </g>
