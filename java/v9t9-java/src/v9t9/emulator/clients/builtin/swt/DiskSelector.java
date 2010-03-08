@@ -126,7 +126,7 @@ public class DiskSelector extends Composite {
 			label.setToolTipText(setting.getDescription());
 			
 			combo = new Combo(parent, SWT.BORDER | SWT.DROP_DOWN);
-			GridDataFactory.fillDefaults().grab(true, false).applyTo(combo);
+			GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.CENTER).applyTo(combo);
 			
 			combo.setToolTipText(setting.getDescription());
 			
