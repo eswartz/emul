@@ -13,6 +13,11 @@ import v9t9.emulator.runtime.Logging;
 public class StdMultiBankedMemoryEntry extends
 		MultiBankedMemoryEntry {
 	/**
+	 * Only to be used when reconstructing 
+	 */
+	public StdMultiBankedMemoryEntry() {
+	}
+	/**
 	 * @param memory
 	 * @param name
 	 * @param banks

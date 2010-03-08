@@ -4,8 +4,6 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -20,6 +18,7 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
@@ -35,10 +34,7 @@ import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.Cpu;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.modules.IModule;
-import v9t9.engine.modules.MemoryEntryInfo;
 
 /**
  * @author ejs
@@ -127,7 +123,8 @@ public class ModuleSelector extends Composite {
 		});
 		switchButton.setEnabled(false);
 		
-		viewer.setInput(machine.getModules());
+		viewer.setInput(machine.getModuleManager().getModules());
+		viewer.setSelection(new StructuredSelection(machine.getModuleManager().getLoadedModules()));
 
 		nameColumn.pack();
 	}
@@ -136,30 +133,18 @@ public class ModuleSelector extends Composite {
 	 * 
 	 */
 	protected void switchModule() {
-		for (MemoryDomain domain : machine.getMemory().getDomains())
-			for (MemoryEntry entry : domain.getMemoryEntries())
-				if (entry.moduleLoaded != null)
-					domain.unmapEntry(entry);
-		
 		try {
-			List<MemoryEntry> entries = new ArrayList<MemoryEntry>();
-			for (MemoryEntryInfo info : selectedModule.getMemoryEntryInfos()) {
-				MemoryEntry entry = info.createMemoryEntry(machine.getMemory());
-				entries.add(entry);
-			}
-			for (MemoryEntry entry : entries) {
-				machine.getMemory().addAndMap(entry);
-				entry.moduleLoaded = selectedModule;
-			}
+			machine.getModuleManager().switchModule(selectedModule);
 			machine.getCpu().setPin(Cpu.PIN_RESET);
 
 			getShell().dispose();
-			
 		} catch (IOException e) {
 			ErrorDialog.openError(getShell(), "Failed to load", 
 					"Failed to load all the entries from the module",
 					new Status(IStatus.ERROR, "v9t9", e.getMessage(), e));
 		}
+		
+			
 		
 	}
 

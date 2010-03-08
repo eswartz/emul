@@ -34,8 +34,10 @@ import v9t9.engine.CruHandler;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.modules.IModule;
+import v9t9.engine.modules.MemoryEntryInfo;
 import v9t9.engine.timer.FastTimer;
 import v9t9.engine.timer.FastTimerTask;
 import v9t9.keyboard.KeyboardState;
@@ -91,8 +93,8 @@ abstract public class Machine {
 	static public final String sThrottleInterrupts = "ThrottleVDPInterrupts";
 	static public final Setting settingThrottleInterrupts = new Setting(sThrottleInterrupts, new Boolean(false));
 	
-	private List<IModule> modules = new ArrayList<IModule>();
 	private TimerTask memorySaverTask;
+	private ModuleManager moduleManager;
 	
     public Machine(MachineModel machineModel) {
     	runnableList = new LinkedList<Runnable>();
@@ -106,7 +108,7 @@ abstract public class Machine {
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
     	
-    	modules = memoryModel.getModules();
+    	moduleManager = new ModuleManager(this, memoryModel.getModules());
     	
     	settings = new SettingsCollection();
     	cpu = new Cpu(this, 1000 / cpuTicksPerSec, vdp);
@@ -438,6 +440,7 @@ abstract public class Machine {
 		vdp.saveState(settings.addNewSection("VDP"));
 		sound.saveState(settings.addNewSection("Sound"));
 		dsrManager.saveState(settings.addNewSection("DSRs"));
+		moduleManager.saveState(settings.addNewSection("Modules"));
 		synchronized (executionLock) {
 			bExecuting = true;
 			executionLock.notifyAll();
@@ -457,12 +460,13 @@ abstract public class Machine {
 			executionLock.notifyAll();
 		}
 		
+		moduleManager.loadState(settings.getSection("Modules"));
 		memory.loadState(settings.getSection("Memory"));
 		getMemoryModel().getGplMmio().loadState(settings.getSection("GPL"));
 		cpu.loadState(settings.getSection("CPU"));
 		vdp.loadState(settings.getSection("VDP"));
 		sound.loadState(settings.getSection("Sound"));
-		dsrManager.loadState(settings.addNewSection("DSRs"));
+		dsrManager.loadState(settings.getSection("DSRs"));
 		keyboardState.resetKeyboard();
 		keyboardState.resetJoystick();
 		
@@ -511,11 +515,12 @@ abstract public class Machine {
 	}
 
 	/**
-	 * @return
+	 * @return the moduleManager
 	 */
-	public IModule[] getModules() {
-		return (IModule[]) modules.toArray(new IModule[modules.size()]);
+	public ModuleManager getModuleManager() {
+		return moduleManager;
 	}
+	
 
 }
 

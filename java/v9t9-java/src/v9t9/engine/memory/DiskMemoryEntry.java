@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.engine.files.DataFiles;
 
@@ -57,7 +58,20 @@ public class DiskMemoryEntry extends MemoryEntry {
     	
     	WordMemoryArea area;
     	
-    	if (!isStored) {
+    	// placeholder
+    	area = new WordMemoryArea();
+    	
+        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
+        
+        entry.area = createWordMemoryArea(domain, addr, entry.size, isStored);
+        return entry;
+    }
+
+	private static WordMemoryArea createWordMemoryArea(MemoryDomain domain, int addr,
+			int size, boolean isStored) {
+		WordMemoryArea area;
+        
+        if (!isStored) {
 			area = new WordMemoryArea();
 		} else {
 			area = new WordMemoryArea() {
@@ -72,21 +86,19 @@ public class DiskMemoryEntry extends MemoryEntry {
 	    		}
     		};
 		}
-    	
-    	
-        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
         area.setLatency(domain.getLatency(addr));
-        area.memory = new short[entry.size / 2];
+        area.memory = new short[size / 2];
         area.read = area.memory;
         if (isStored)
         	area.write = area.memory;
         if (isStored) {
         	area.write = area.memory;
         }
-        return entry;
-    }
 
-    /**
+		return area;
+	}
+
+	/**
      * Read memory and create a memory entry with no byte ordering adjustment.
      * @param addr
      * @param size	the expected size of the entry (a maximum if != 0, else for 0, the
@@ -104,9 +116,22 @@ public class DiskMemoryEntry extends MemoryEntry {
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
     	
-    	ByteMemoryArea area;
     	
-    	if (!isStored) {
+    	ByteMemoryArea area = new ByteMemoryArea();
+    	
+        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
+        
+        entry.area = createByteMemoryArea(domain, addr, entry.size, isStored);
+       
+        return entry;
+    }
+
+
+	private static ByteMemoryArea createByteMemoryArea(MemoryDomain domain, int addr,
+			int size, boolean isStored) {
+		ByteMemoryArea area;
+        
+		if (!isStored) {
 			area = new ByteMemoryArea();
 		} else {
 			area = new ByteMemoryArea() {
@@ -117,15 +142,14 @@ public class DiskMemoryEntry extends MemoryEntry {
     		};
 		}
     	
-    
-        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
-        area.setLatency(domain.getLatency(addr));
-        area.memory = new byte[entry.size];
-        area.read = area.memory;
-        if (isStored)
-        	area.write = area.memory;
-        return entry;
-    }
+		area.setLatency(domain.getLatency(addr));
+		area.memory = new byte[size];
+		area.read = area.memory;
+		if (isStored)
+			area.write = area.memory;
+
+		return area;
+	}
 
     /** Construct a DiskMemoryEntry based on the file length.
      * @param size if not isRam, the maximum acceptable size,
@@ -181,6 +205,10 @@ public class DiskMemoryEntry extends MemoryEntry {
         return entry;
     }
     
+    public DiskMemoryEntry() {
+    	// only to be used when reconstructing
+    	super();
+    }
     DiskMemoryEntry(MemoryArea area, int addr, int size, String name,
             MemoryDomain domain, 
             String filepath, int fileoffs, int filesize,
@@ -376,6 +404,33 @@ public class DiskMemoryEntry extends MemoryEntry {
 		section.put("Storable", bStorable);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryEntry#loadState(org.eclipse.jface.dialogs.IDialogSettings)
+	 */
+	@Override
+	public void loadState(IDialogSettings section) {
+		if (section == null)
+			return;
+		filepath = section.get("FilePath");
+		fileoffs = PrefUtils.readSavedInt(section, "FileOffs");
+		filesize = PrefUtils.readSavedInt(section, "FileSize");
+		bStorable = PrefUtils.readSavedBoolean(section, "Storable");
+		
+		// dup'd from super, but must be done here
+		addr = PrefUtils.readSavedInt(section, "Address");
+		size = PrefUtils.readSavedInt(section, "Size");
+		
+		if (bWordAccess)
+			area = createWordMemoryArea(domain, addr, size, bStorable);
+		else
+			area = createByteMemoryArea(domain, addr, size, bStorable);
+		
+		bLoaded = false;
+		super.loadState(section);
+	}
+	protected void loadMemoryContents(IDialogSettings section) {
+		load();
+	}
 	@Override
 	public String getUniqueName() {
 		return filepath;

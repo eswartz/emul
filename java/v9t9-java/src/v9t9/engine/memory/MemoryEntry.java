@@ -14,6 +14,7 @@ import java.util.TreeMap;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.engine.modules.IModule;
 
@@ -83,7 +84,14 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
     }
 
     
-    @Override
+    /**
+	 * Only to be used when reconstructing 
+	 */
+	public MemoryEntry() {
+	}
+
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -317,6 +325,9 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 
 
 	public void loadState(IDialogSettings section) {
+		name = section.get("Name");
+		addr = PrefUtils.readSavedInt(section, "Address");
+		size = PrefUtils.readSavedInt(section, "Size");
 		loadMemoryContents(section);
 	}
 

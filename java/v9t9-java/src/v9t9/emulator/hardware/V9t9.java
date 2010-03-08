@@ -34,10 +34,6 @@ import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WordMemoryArea;
 
 public class V9t9 {
-	static {
-		Class<?> k = Native.class;
-		k = Structure.class;
-	}
 	static public final Setting settingMonitorDrawing = new Setting("MonitorDrawing", new Boolean(true));
 
 	static {
@@ -149,29 +145,18 @@ public class V9t9 {
 	        	}
 
 	    	} else if (true) {
-		    	
-		    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
-	    		loadModuleRom("Alpiner", "alpinerc.bin");
-	    		loadModuleGrom("Alpiner", "alpinerg.bin");
-	    		loadModuleGrom("Mash", "mashg.bin");
-	    		loadModuleRom("Mash", "mashc.bin");
+
+	    		machine.getModuleManager().switchModule("Alpiner");
+	    		machine.getModuleManager().switchModule("Jungle");
+	    		machine.getModuleManager().switchModule("Mash");
+	    		machine.getModuleManager().switchModule("Parsec");
+	    		machine.getModuleManager().switchModule("TEII");
+	    		machine.getModuleManager().switchModule("Extended BASIC");
+	    		machine.getModuleManager().switchModule("Music Maker");
+	    		machine.getModuleManager().switchModule("Disk Manager");
 	    		
-	    		loadModuleGrom("Parsec", "parsecg.bin");
-	    		loadModuleRom("Parsec", "parsecc.bin");
-	    		loadModuleGrom("TEII", "teiig.bin");
-	    		loadModuleRom("TEII", "teiic.bin");
-	    		
-	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-	    		loadModuleGrom("ExtBasic", "tiextg.bin");
-	    		loadModuleGrom("Music", "musicmg.bin");
-	    		
-	    		loadModuleGrom("Disk Manager", "diskmang.bin");
-	    		
-	    	} else {
-		    	loadModuleRom("Logo", "logoc.bin");
-		    	loadModuleGrom("Logo", "logog.bin");
-		    	//loadModuleRom("PRK", "prkc.bin");
-		    	loadModuleGrom("PRK", "prkg.bin");
+	    		machine.getModuleManager().switchModule("TI Logo II");
+	    		machine.getModuleManager().switchModule("Personal Record Keeping");
 		    	ExpRamArea.settingExpRam.setBoolean(true);
 	    	}
     	} else { 

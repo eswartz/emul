@@ -22,6 +22,11 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	protected int bankCount;
 	private Memory memory;
 
+	/**
+	 * Only use when reconstructing 
+	 */
+	public BankedMemoryEntry() {
+	}
 	public BankedMemoryEntry(Memory memory,
 			String name,
 			MemoryDomain domain,

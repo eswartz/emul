@@ -19,6 +19,11 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	private MemoryEntry banks[];
 	private MemoryEntry currentBank;
 
+	/**
+	 * Only to be used when reconstructing 
+	 */
+	public MultiBankedMemoryEntry() {
+	}
 	public MultiBankedMemoryEntry(Memory memory,
 			String name, MemoryEntry[] banks) {
 		super(memory, name, banks[0].domain, banks[0].addr, banks[0].size, banks.length);

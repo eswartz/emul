@@ -146,6 +146,9 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			mouseMoveListeners.add(listener);		
 	}
 	protected void convertMouseEvent(int type, MouseEvent e) {
+		if (shell.isDisposed())
+			return;
+		
 		//System.out.println("Converting " + e);
 		e.consume();
 		
@@ -190,6 +193,9 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	}
 
 	protected void convertMouseMoveEvent(int type, MouseEvent e) {
+		if (shell.isDisposed())
+			return;
+		
 		//System.out.println("Converting " + e);
 		e.consume();
 		
@@ -215,6 +221,8 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		
 		shell.getDisplay().asyncExec(new Runnable() {
 			public void run() {
+				if (shell.isDisposed())
+					return;
 				for (org.eclipse.swt.events.MouseMoveListener listener : mouseMoveListeners) {
 					switch (event.type) {
 					case SWT.MouseMove:

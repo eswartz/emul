@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Stack;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.utils.PrefUtils;
+
+import v9t9.emulator.hardware.V9t9;
 
 /**
  * @author ejs
@@ -352,7 +355,6 @@ public class MemoryDomain implements MemoryAccess {
 	}
 
 	public void loadState(IDialogSettings section) {
-		// XXX: this doesn't really recreate memory, just reloads contents
 		//unmapAll();
 		if (section == null) {
 			return;
@@ -364,7 +366,29 @@ public class MemoryDomain implements MemoryAccess {
 			if (entry != null) {
 				entry.loadState(entryStore);
 			} else {
-				System.out.println("Cannot find memory entry: " + name);
+				String klazzName = entryStore.get("Class");
+				if (klazzName != null) {
+					try {
+						Class<?> klass = V9t9.class.forName(klazzName);
+						
+						entry = (MemoryEntry) klass.newInstance();
+						entry.domain = this;
+						entry.bWordAccess = name.equals("Console");	// TODO
+						int latency = getLatency(PrefUtils.readSavedInt(entryStore, "Address"));
+						if (entry.bWordAccess)
+							entry.area = new WordMemoryArea(latency);
+						else
+							entry.area = new ByteMemoryArea(latency);
+					} catch (Exception e) {
+						e.printStackTrace();
+						continue;
+					}
+					
+					entry.loadState(entryStore);
+					mapEntry(entry);
+				} else {
+					System.err.println("Cannot find memory entry: " + name);
+				}
 			}
 		}
 		

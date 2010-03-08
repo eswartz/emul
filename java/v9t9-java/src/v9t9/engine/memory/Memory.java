@@ -80,6 +80,9 @@ public class Memory {
 	}
 
 	public void loadState(IDialogSettings section) {
+		if (section == null)
+			return;
+		
 		// XXX: we assume the domains are the same
 		for (Map.Entry<String, MemoryDomain> entry : domains.entrySet()) {
 			entry.getValue().loadState(section.getSection(entry.getKey()));
