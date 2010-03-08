@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware.dsrs.realdisk;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -18,6 +19,15 @@ import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.StatusBit;
 
 public class TrackDiskImage extends BaseDiskImage  {
 	
+
+	/*	Header for track (*.trk) files; also used internally for sector
+		files, but not present in image: we guess the disk geometry from
+		the size and sector 0 information. */
+
+	static final String TRACK_MAGIC			= "trak";
+	static final int TRACK_MAGIC_SIZE 	= 4;
+	static final int TRACK_VERSION		= 1;
+
 	public TrackDiskImage(String name, File file) {
 		super(name, file);
 	}
@@ -71,16 +81,16 @@ public class TrackDiskImage extends BaseDiskImage  {
 		hdr.track0offs = (((handle.read() & 0xff) << 8) | (handle.read() & 0xff));
 
 		/* verify */
-		if (!Arrays.equals(DiskImageDsr.TRACK_MAGIC.getBytes(), hdr.magic)) {
+		if (!Arrays.equals(TRACK_MAGIC.getBytes(), hdr.magic)) {
 			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has unknown type (got {1}, expected {2})",
 					spec,
 					new String(hdr.magic),
-					DiskImageDsr.TRACK_MAGIC));
+					TRACK_MAGIC));
 		}	
 
-		if (hdr.version < 1 || hdr.version > DiskImageDsr.TRACK_VERSION) {
+		if (hdr.version < 1 || hdr.version > TRACK_VERSION) {
 			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has too new version ({1} > {2})\n",
-						  spec, hdr.version, DiskImageDsr.TRACK_VERSION));
+						  spec, hdr.version, TRACK_VERSION));
 		}
 		
 		if (hdr.tracksize < 0) {
@@ -268,6 +278,28 @@ public class TrackDiskImage extends BaseDiskImage  {
 			markers.add(marker);
 		}
 		return markers;
+	}
+
+
+	public static boolean isTrackImage(File file) {
+		byte[] header = new byte[TRACK_MAGIC.length()];
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(file);
+			fis.read(header);
+			
+			return Arrays.equals(TRACK_MAGIC.getBytes(), header);
+		} catch (IOException e) {
+			// ignore
+		} finally {
+			if (fis != null) {
+				try {
+					fis.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+		return false;
 	}
 
 }

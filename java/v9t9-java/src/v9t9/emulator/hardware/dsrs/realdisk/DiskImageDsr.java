@@ -65,15 +65,6 @@ public class DiskImageDsr implements DsrHandler {
 
 	static final int DSKbuffersize = (16384);		/* maximum track size */
 
-
-	/*	Header for track (*.trk) files; also used internally for sector
-		files, but not present in image: we guess the disk geometry from
-		the size and sector 0 information. */
-
-	static final String TRACK_MAGIC			= "trak";
-	static final int TRACK_MAGIC_SIZE 	= 4;
-	static final int TRACK_VERSION		= 1;
-
 	static class DSKheader
 	{
 		public static final short SIZE = 12;
@@ -712,7 +703,8 @@ public class DiskImageDsr implements DsrHandler {
 		public DiskImageSetting(String name, Object storage, String iconPath) {
 			super(name, 
 					"DSK" + name.charAt(name.length() - 1) + " Image",
-					"Specify the full path of the image for this disk.  Usually *.dsk is used for sector image disks.  The *.trk extension is required to indicate a track image disk.",
+					"Specify the full path of the image for this disk.\n\n"+
+					"The extension selects the image type when creating a new image.\n\nUse *.dsk for sector-image disks and *.trk for track image disks.",
 					storage, iconPath);
 			
 			addEnablementDependency(EmuDiskDsr.emuDiskDsrEnabled);
@@ -764,6 +756,10 @@ public class DiskImageDsr implements DsrHandler {
 	 * @return
 	 */
 	protected BaseDiskImage createDiskImage(String name, File file) {
+		if (file.exists()) {
+			if (TrackDiskImage.isTrackImage(file))
+				return new TrackDiskImage(name, file);
+		}
 		if (file.getName().toLowerCase().endsWith(".trk"))
 			return new TrackDiskImage(name, file);
 		else
