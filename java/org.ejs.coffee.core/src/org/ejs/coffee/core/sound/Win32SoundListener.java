@@ -72,9 +72,11 @@ public class Win32SoundListener implements ISoundListener {
 			
 		}
 
-		int res = WinMMLibrary.INSTANCE.waveOutClose(wHandle);
-		if (res != WinMMLibrary.MMSYSERR_NOERROR) {
-			System.err.println("Could not stop sound: " + getError(res));
+		if (wHandle != 0) {
+			int res = WinMMLibrary.INSTANCE.waveOutClose(wHandle);
+			if (res != WinMMLibrary.MMSYSERR_NOERROR) {
+				System.err.println("Could not stop sound: " + getError(res));
+			}
 		}
 		wHandle = 0;
 	}
