@@ -43,7 +43,7 @@ public class EmuDiskDsr implements DsrHandler {
 	public static final Setting emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
 			"Disk Directory Support",
 			"This implements a drive (like DSK1) in a single directory level on your host.",
-			Boolean.TRUE,
+			Boolean.FALSE,
 			diskDirectoryIconPath);
 	
 	/* emudisk.dsr */
@@ -88,6 +88,8 @@ public class EmuDiskDsr implements DsrHandler {
 	}
 
 	public EmuDiskDsr(IFileMapper mapper) {
+		emuDiskDsrEnabled.setBoolean(true);
+		
 		this.mapper = mapper;
 		
     	String diskRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";

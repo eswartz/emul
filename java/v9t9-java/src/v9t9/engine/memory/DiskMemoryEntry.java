@@ -405,30 +405,24 @@ public class DiskMemoryEntry extends MemoryEntry {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.engine.memory.MemoryEntry#loadState(org.eclipse.jface.dialogs.IDialogSettings)
+	 * @see v9t9.engine.memory.MemoryEntry#loadFields(org.eclipse.jface.dialogs.IDialogSettings)
 	 */
 	@Override
-	public void loadState(IDialogSettings section) {
-		if (section == null)
-			return;
+	protected void loadFields(IDialogSettings section) {
+		super.loadFields(section);
 		filepath = section.get("FilePath");
 		fileoffs = PrefUtils.readSavedInt(section, "FileOffs");
 		filesize = PrefUtils.readSavedInt(section, "FileSize");
 		bStorable = PrefUtils.readSavedBoolean(section, "Storable");
-		
-		// dup'd from super, but must be done here
-		addr = PrefUtils.readSavedInt(section, "Address");
-		size = PrefUtils.readSavedInt(section, "Size");
-		
+	}
+	
+	protected void loadMemoryContents(IDialogSettings section) {
 		if (bWordAccess)
 			area = createWordMemoryArea(domain, addr, size, bStorable);
 		else
 			area = createByteMemoryArea(domain, addr, size, bStorable);
 		
 		bLoaded = false;
-		super.loadState(section);
-	}
-	protected void loadMemoryContents(IDialogSettings section) {
 		load();
 	}
 	@Override

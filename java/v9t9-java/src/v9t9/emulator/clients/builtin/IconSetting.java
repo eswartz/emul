@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin;
 
-import java.net.URL;
-
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.ejs.coffee.core.utils.Setting;
 

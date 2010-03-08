@@ -60,6 +60,8 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 
 	/** Tell if this came from a module */
 	public IModule moduleLoaded;
+
+	public Memory memory;
 	
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
@@ -325,10 +327,15 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 
 
 	public void loadState(IDialogSettings section) {
+		loadFields(section);
+		loadMemoryContents(section);
+	}
+
+
+	protected void loadFields(IDialogSettings section) {
 		name = section.get("Name");
 		addr = PrefUtils.readSavedInt(section, "Address");
 		size = PrefUtils.readSavedInt(section, "Size");
-		loadMemoryContents(section);
 	}
 
 
@@ -354,5 +361,36 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 
 	public boolean contains(int addr) {
 		return addr >= this.addr + this.addrOffset && addr < this.addr + this.addrOffset + this.size;
+	}
+
+
+	/**
+	 * @param entryStore
+	 * @return
+	 */
+	public static MemoryEntry createEntry(MemoryDomain domain, IDialogSettings entryStore) {
+		MemoryEntry entry = null;
+		String klazzName = entryStore.get("Class");
+		if (klazzName != null) {
+			try {
+				Class<?> klass = Class.forName(klazzName);
+				
+				entry = (MemoryEntry) klass.newInstance();
+				entry.domain = domain;
+				entry.bWordAccess = domain.getName().equals("Console");	// TODO
+				int latency = domain.getLatency(PrefUtils.readSavedInt(entryStore, "Address"));
+				if (entry.bWordAccess)
+					entry.area = new WordMemoryArea(latency);
+				else
+					entry.area = new ByteMemoryArea(latency);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+			
+			entry.memory = domain.memory;
+			entry.loadState(entryStore);
+		}
+		return entry;
 	}
 }

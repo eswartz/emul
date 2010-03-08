@@ -23,10 +23,6 @@ public class DiskDirectoryMapper implements IFileMapper {
 	
 	public static final DiskDirectoryMapper INSTANCE = new DiskDirectoryMapper();
 	
-	public DiskDirectoryMapper() {
-	}
-	
-
 	static class EmuDiskSetting extends IconSetting {
 		public EmuDiskSetting(String name, Object storage, String iconPath) {
 			super(name, 
@@ -37,7 +33,7 @@ public class DiskDirectoryMapper implements IFileMapper {
 			addEnablementDependency(EmuDiskDsr.emuDiskDsrEnabled);
 			addEnablementDependency(DiskImageDsr.diskImageDsrEnabled);
 		}
-
+		
 		/* (non-Javadoc)
 		 * @see org.ejs.coffee.core.utils.Setting#isAvailable()
 		 */
@@ -52,6 +48,10 @@ public class DiskDirectoryMapper implements IFileMapper {
 			return getName().compareTo(EmuDiskDsr.getEmuDiskSetting(3)) >= 0;
 		}
 	}
+	
+	public DiskDirectoryMapper() {
+	}
+	
 
 	public void registerDiskSetting(String device, Setting diskSetting) {
 		diskMap.put(device, new File(diskSetting.getString()));

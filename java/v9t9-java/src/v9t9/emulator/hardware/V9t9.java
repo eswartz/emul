@@ -12,13 +12,11 @@ import java.io.IOException;
 
 import org.ejs.coffee.core.utils.Setting;
 
-import com.sun.jna.Native;
-import com.sun.jna.Structure;
-
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
+import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
@@ -169,6 +167,7 @@ public class V9t9 {
     		loadConsoleGrom("nforth.grm");
     		entry = loadModuleGrom("FORTH", "nforthg.bin");
     		
+    		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("../../tools/Forth"));
     		
     		// the high-GROM code is copied into RAM here
     		try {

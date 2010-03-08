@@ -70,9 +70,19 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	@Override
 	protected void doLoadBankEntries(IDialogSettings section) {
 		if (section == null) return;
+		if (banks == null) {
+			bankCount = section.getSections().length;
+			banks = new MemoryEntry[bankCount];
+		}
 		for (int idx = 0; idx < banks.length; idx++) {
+			IDialogSettings entryStore = section.getSection("" + idx);
 			MemoryEntry entry = banks[idx];
-			entry.loadState(section.getSection("" + idx));
+			if (entry != null) {
+				entry.loadState(entryStore);
+			} else {
+				entry = MemoryEntry.createEntry(domain, entryStore);
+				banks[idx] = entry;
+			}
 		}		
 	}
 	

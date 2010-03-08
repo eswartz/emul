@@ -54,7 +54,7 @@ public class DiskImageDsr implements DsrHandler {
 			"This implements a drive (like DSK1) in a disk image on your host.\n\n"+
 			"Either sector image or track image disks are supported.\n\n"+
 			"A track image can support copy-protected disks, while a sector image cannot.",
-			Boolean.TRUE, diskImageIconPath);
+			Boolean.FALSE, diskImageIconPath);
 	
 	/** setting name (DSKImage1) to setting */
 	private Map<String, Setting> diskSettingsMap = new LinkedHashMap<String, Setting>();
@@ -936,6 +936,7 @@ public class DiskImageDsr implements DsrHandler {
 	
 	
 	public DiskImageDsr(Machine machine) {
+		diskImageDsrEnabled.setBoolean(true);
 		
     	String diskImageRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";
     	defaultDiskRootDir = new File(diskImageRootPath);

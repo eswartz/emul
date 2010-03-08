@@ -20,7 +20,6 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	
 	private int currentBankIndex;
 	protected int bankCount;
-	private Memory memory;
 
 	/**
 	 * Only use when reconstructing 

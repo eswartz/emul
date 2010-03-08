@@ -54,6 +54,7 @@ public class Memory {
     
 	public void addDomain(String key, MemoryDomain domain) {
 		this.domains.put(key, domain);
+		domain.memory = this;
 	}
 	
 	public MemoryDomain getDomain(String key) {
