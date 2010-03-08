@@ -37,6 +37,8 @@ public abstract class BaseDiskImage {
 
 	protected abstract void writeImageHeader() throws IOException;
 
+	protected abstract int getHeaderSize();
+	
 	protected String name;
 	protected File spec;
 	protected RandomAccessFile handle;
@@ -151,12 +153,10 @@ public abstract class BaseDiskImage {
 		DiskImageDsr.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
 
 		/* defaults */
-		System.arraycopy(DiskImageDsr.TRACK_MAGIC.getBytes(), 0, hdr.magic, 0, DiskImageDsr.TRACK_MAGIC_SIZE);
-		hdr.version = DiskImageDsr.TRACK_VERSION;
 		hdr.tracks = 40;
 		hdr.sides = 1;
 		hdr.tracksize = getDefaultTrackSize();
-		hdr.track0offs = DSKheader.SIZE;
+		hdr.track0offs = getHeaderSize();
 
 		/* create file */
 		handle = null;
@@ -197,7 +197,7 @@ public abstract class BaseDiskImage {
 		long offset = trackoffset;
 		if (sideReg != 0) {
 			// goes in reverse order on side 2
-			offset = hdr.track0offs + hdr.getImageSize() - hdr.getTrackSize(hdr.tracks - seektrack);
+			offset = hdr.track0offs + hdr.getTrackSize(hdr.tracks) * 2 - hdr.getTrackSize(hdr.tracks - seektrack);
 		}
 		return offset;
 	}

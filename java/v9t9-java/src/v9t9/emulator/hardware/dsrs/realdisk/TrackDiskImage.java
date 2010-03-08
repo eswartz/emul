@@ -28,6 +28,8 @@ public class TrackDiskImage extends BaseDiskImage  {
 	static final int TRACK_MAGIC_SIZE 	= 4;
 	static final int TRACK_VERSION		= 1;
 
+	public static final short TRACK_HEADER_SIZE = 12;
+
 	public TrackDiskImage(String name, File file) {
 		super(name, file);
 	}
@@ -48,8 +50,8 @@ public class TrackDiskImage extends BaseDiskImage  {
 
 		/* byteswap header for export */
 		handle.seek(0);
-		handle.write(hdr.magic);
-		handle.write(hdr.version);
+		handle.write(TRACK_MAGIC.getBytes());
+		handle.write(TRACK_VERSION);
 		handle.write(hdr.tracks);
 		handle.write(hdr.sides);
 		handle.write(0); // unused
@@ -62,6 +64,14 @@ public class TrackDiskImage extends BaseDiskImage  {
 		growImageForContent(); 
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage#getHeaderSize()
+	 */
+	@Override
+	protected int getHeaderSize() {
+		return TRACK_HEADER_SIZE;
+	}
+	
 	@Override
 	public void readImageHeader() throws IOException {
 		if (handle == null)
@@ -72,8 +82,9 @@ public class TrackDiskImage extends BaseDiskImage  {
 		handle.seek(0);
 		
 		/* byteswap imported header */
-		handle.read(hdr.magic);
-		hdr.version = handle.readByte();
+		byte[] magic = new byte[TRACK_MAGIC.length()];
+		handle.read(magic);
+		byte version = handle.readByte();
 		hdr.tracks = handle.readByte();
 		hdr.sides = handle.readByte();
 		handle.readByte(); // unused
@@ -81,16 +92,16 @@ public class TrackDiskImage extends BaseDiskImage  {
 		hdr.track0offs = (((handle.read() & 0xff) << 8) | (handle.read() & 0xff));
 
 		/* verify */
-		if (!Arrays.equals(TRACK_MAGIC.getBytes(), hdr.magic)) {
+		if (!Arrays.equals(TRACK_MAGIC.getBytes(), magic)) {
 			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has unknown type (got {1}, expected {2})",
 					spec,
-					new String(hdr.magic),
+					new String(magic),
 					TRACK_MAGIC));
 		}	
 
-		if (hdr.version < 1 || hdr.version > TRACK_VERSION) {
+		if (version < 1 || version > TRACK_VERSION) {
 			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has too new version ({1} > {2})\n",
-						  spec, hdr.version, TRACK_VERSION));
+						  spec, version, TRACK_VERSION));
 		}
 		
 		if (hdr.tracksize < 0) {

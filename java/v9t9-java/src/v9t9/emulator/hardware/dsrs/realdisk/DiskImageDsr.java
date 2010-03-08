@@ -67,9 +67,6 @@ public class DiskImageDsr implements DsrHandler {
 
 	static class DSKheader
 	{
-		public static final short SIZE = 12;
-		byte			magic[] = new byte[4];	
-		byte			version;	/* disk version */
 		byte			tracks;		/* tracks per side */
 		byte			sides;		/* 1 or 2 */
 		byte			unused;
@@ -128,18 +125,19 @@ public class DiskImageDsr implements DsrHandler {
 	static void dumpBuffer(byte[] buffer, int offs, int len)
 	{
 		StringBuilder builder = new StringBuilder();
+		int rowLength = 32;
 		int x;
 		if (len > 0)
 			builder.append("Buffer contents:\n");
-		for (x = offs; len-- > 0; x+=16, len-=16) {
+		for (x = offs; len-- > 0; x+=rowLength, len-=rowLength) {
 			int         y;
 
 			builder.append(HexUtils.toHex4(x));
 			builder.append(' ');
-			for (y = 0; y < 16; y++)
+			for (y = 0; y < rowLength; y++)
 				builder.append(HexUtils.toHex2(buffer[x + y]) + " ");
 			builder.append(' ');
-			for (y = 0; y < 16; y++) {
+			for (y = 0; y < rowLength; y++) {
 				byte b = buffer[x+y];
 				if (b >= 32 && b < 127)
 					builder.append((char) b);
@@ -642,6 +640,7 @@ public class DiskImageDsr implements DsrHandler {
 		public void setSide(byte side) throws IOException {
 			info("Select side {0}", side);
 			updateSeek(seektrack, side);
+			sideReg = side;
 		}
 
 		/**

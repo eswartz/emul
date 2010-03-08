@@ -8,10 +8,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.DSKheader;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.FDCStatus;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.IdMarker;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.StatusBit;
@@ -111,8 +109,6 @@ public class SectorDiskImage extends BaseDiskImage  {
 		handle.seek(0);
 		handle.read(sector);
 
-		Arrays.fill(hdr.magic, (byte) 0);
-		hdr.version = 0;
 		hdr.tracks = sector[17];
 		hdr.sides = sector[18];
 		hdr.tracksize = (short) (sector[12] * 256L);
@@ -144,25 +140,14 @@ public class SectorDiskImage extends BaseDiskImage  {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage#getHeaderSize()
+	 */
 	@Override
-	public void createDiskImage() throws IOException
-	{
-		DiskImageDsr.info("Creating new sector disk image at {0} ({1})", name, spec);
-
-		/* defaults */
-		System.arraycopy(DiskImageDsr.TRACK_MAGIC.getBytes(), 0, hdr.magic, 0, DiskImageDsr.TRACK_MAGIC_SIZE);
-		hdr.version = DiskImageDsr.TRACK_VERSION;
-		hdr.tracks = 40;
-		hdr.sides = 1;
-		hdr.tracksize = (short) 256*9;
-		hdr.track0offs = DSKheader.SIZE;
-
-		/* create file */
-		handle = null;
-		handle = new RandomAccessFile(spec, "rw");
-		
-		writeImageHeader();
+	protected int getHeaderSize() {
+		return 0;
 	}
+	
 	/**
 	 * @param rwBuffer
 	 * @param start
