@@ -7,16 +7,21 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
+import v9t9.emulator.clients.builtin.IconSetting;
+import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.PabConstants;
+import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
 import v9t9.emulator.runtime.Executor;
@@ -33,7 +38,13 @@ import v9t9.engine.memory.MemoryDomain;
  *
  */
 public class EmuDiskDsr implements DsrHandler {
-	public static final Setting emuDiskDsrEnabled = new Setting("EmuDiskDSREnabled", Boolean.TRUE);
+	private static String diskDirectoryIconPath = V9t9.getDataFile("icons/disk_directory.png").getAbsolutePath();
+	
+	public static final Setting emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
+			"Disk Directory Support",
+			"This implements a drive (like DSK1) in a single directory level on your host.",
+			Boolean.TRUE,
+			diskDirectoryIconPath);
 	
 	/* emudisk.dsr */
 	/* this first group doubles as device codes */
@@ -72,6 +83,10 @@ public class EmuDiskDsr implements DsrHandler {
 	private short vdpnamebuffer;
 	private final IFileMapper mapper;
 	
+	public static String getEmuDiskSetting(int i) {
+		return "DSK" + i;
+	}
+
 	public EmuDiskDsr(IFileMapper mapper) {
 		this.mapper = mapper;
 		
@@ -80,8 +95,14 @@ public class EmuDiskDsr implements DsrHandler {
     	File dskdefault = new File(diskRootDir, "default");
     	dskdefault.mkdirs();
     	
-    	for (String dev : new String[] { "DSK1", "DSK2", "DSK3", "DSK4", "DSK5" }) {
-    		DiskDirectoryMapper.INSTANCE.registerDiskPath(dev, dskdefault); 
+    	for (int dev = 1; dev <= 5; dev++) {
+    		String devname = getEmuDiskSetting(dev);
+    		
+    		EmuDiskSetting diskSetting = new EmuDiskSetting(devname, dskdefault.getAbsolutePath(),
+    				diskDirectoryIconPath);
+			diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
+			
+			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting); 
     	}
 	}
 	
@@ -100,6 +121,9 @@ public class EmuDiskDsr implements DsrHandler {
 		return 0x1000;
 	}
 	public void activate(MemoryDomain console) throws IOException {
+		if (!emuDiskDsrEnabled.getBoolean())
+			return;
+
 		if (memoryEntry == null)
 			this.memoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
 					0x4000, 0x2000, "File Stream DSR ROM", console,
@@ -245,13 +269,19 @@ public class EmuDiskDsr implements DsrHandler {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getSettings()
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
 	 */
-	public Setting[] getSettings() {
-		List<Setting> settings = new ArrayList<Setting>();
+	public Map<String, Collection<Setting>> getEditableSettingGroups() {
+		Map<String, Collection<Setting>> map = new LinkedHashMap<String, Collection<Setting>>();
+		
+		Collection<Setting> settings = new ArrayList<Setting>();
 		settings.add(emuDiskDsrEnabled);
-		settings.addAll(Arrays.asList(mapper.getSettings()));
-		return (Setting[]) settings.toArray(new Setting[settings.size()]);
+		map.put(DsrHandler.GROUP_DSR_SELECTION, settings);
+		
+		settings = Arrays.asList(mapper.getSettings());
+		map.put(DsrHandler.GROUP_DISK_CONFIGURATION, settings);
+		
+		return map;
 	}
 	public void saveState(IDialogSettings section) {
 		emuDiskDsrEnabled.saveState(section);
@@ -263,4 +293,5 @@ public class EmuDiskDsr implements DsrHandler {
 		emuDiskDsrEnabled.loadState(section);
 		mapper.loadState(section.getSection("Mappings"));
 	}
+
 }

@@ -13,9 +13,8 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
-import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.IconSetting;
-import v9t9.emulator.hardware.V9t9;
+import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
 
 
 public class DiskDirectoryMapper implements IFileMapper {
@@ -28,18 +27,39 @@ public class DiskDirectoryMapper implements IFileMapper {
 	}
 	
 
-	public void registerDiskPath(String device, File dskdefault) {
-		IconSetting diskSetting = new IconSetting(device, dskdefault.getAbsolutePath(),
-				V9t9.getDataFile("icons/disk_directory.png").getAbsolutePath());
-		diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
-		diskMap.put(device, new File(diskSetting.getString()));
+	static class EmuDiskSetting extends IconSetting {
+		public EmuDiskSetting(String name, Object storage, String iconPath) {
+			super(name, 
+					"DSK" + name.charAt(name.length() - 1) + " Directory",
+					"Specify the full path of the directory representing this disk.",
+					storage, iconPath);
+			
+			addEnablementDependency(EmuDiskDsr.emuDiskDsrEnabled);
+			addEnablementDependency(DiskImageDsr.diskImageDsrEnabled);
+		}
 
+		/* (non-Javadoc)
+		 * @see org.ejs.coffee.core.utils.Setting#isAvailable()
+		 */
+		@Override
+		public boolean isEnabled() {
+			if (!EmuDiskDsr.emuDiskDsrEnabled.getBoolean())
+				return false;
+			if (!DiskImageDsr.diskImageDsrEnabled.getBoolean())
+				return true;
+			
+			// only DSK3 + are real disks if emu disk also enabled
+			return getName().compareTo(EmuDiskDsr.getEmuDiskSetting(3)) >= 0;
+		}
+	}
+
+	public void registerDiskSetting(String device, Setting diskSetting) {
+		diskMap.put(device, new File(diskSetting.getString()));
 		diskSettingsMap.put(device, diskSetting); 
 		diskSetting.addListener(new ISettingListener() {
 			
 			public void changed(Setting setting, Object oldValue) {
 				diskMap.put(setting.getName(), new File(setting.getString()));
-				setting.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 		});
 	}

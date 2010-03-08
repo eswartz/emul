@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -29,6 +30,7 @@ import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -42,7 +44,17 @@ import v9t9.engine.memory.MemoryEntry;
  *
  */
 public class DiskImageDsr implements DsrHandler {
-	public static final Setting diskImageDsrEnabled = new Setting("DiskImageDSREnabled", Boolean.TRUE);
+	/**
+	 * 
+	 */
+	private static final String diskImageIconPath = V9t9.getDataFile("icons/disk_image.png").getAbsolutePath();
+
+	public static final Setting diskImageDsrEnabled = new IconSetting("DiskImageDSREnabled",
+			"Disk Image Support",
+			"This implements a drive (like DSK1) in a disk image on your host.\n\n"+
+			"Either sector image or track image disks are supported.\n\n"+
+			"A track image can support copy-protected disks, while a sector image cannot.",
+			Boolean.TRUE, diskImageIconPath);
 	
 	/** setting name (DSKImage1) to setting */
 	private Map<String, Setting> diskSettingsMap = new LinkedHashMap<String, Setting>();
@@ -222,6 +234,9 @@ public class DiskImageDsr implements DsrHandler {
 				trackMarkerIter = null;
 				trackMarkers = null;
 				currentMarker = null;
+				
+				seektrack = -1;
+				seekside = -1;
 			}
 		}
 
@@ -656,7 +671,7 @@ public class DiskImageDsr implements DsrHandler {
 	protected byte side;
 	
 
-	private String getDiskImageSetting(int num) {
+	private static String getDiskImageSetting(int num) {
 		return "DSKImage" + num;
 	}
 	private Map<String, BaseDiskImage> disks = new LinkedHashMap<String, BaseDiskImage>();
@@ -693,10 +708,35 @@ public class DiskImageDsr implements DsrHandler {
 		return new File(defaultDiskRootDir, name + ".dsk");
 	}
 
+	static class DiskImageSetting extends IconSetting {
+		public DiskImageSetting(String name, Object storage, String iconPath) {
+			super(name, 
+					"DSK" + name.charAt(name.length() - 1) + " Image",
+					"Specify the full path of the image for this disk.  Usually *.dsk is used for sector image disks.  The *.trk extension is required to indicate a track image disk.",
+					storage, iconPath);
+			
+			addEnablementDependency(EmuDiskDsr.emuDiskDsrEnabled);
+			addEnablementDependency(DiskImageDsr.diskImageDsrEnabled);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.ejs.coffee.core.utils.Setting#isAvailable()
+		 */
+		@Override
+		public boolean isEnabled() {
+			if (!DiskImageDsr.diskImageDsrEnabled.getBoolean())
+				return false;
+			if (!EmuDiskDsr.emuDiskDsrEnabled.getBoolean())
+				return true;
+			
+			// only DSK1 and DSK2 are real disks if emu disk also enabled
+			return getName().compareTo(getDiskImageSetting(3)) < 0;
+		}
+	}
 
 	public void registerDiskImagePath(String device, File dskfile) {
-		IconSetting diskSetting = new IconSetting(device, dskfile.getAbsolutePath(),
-				V9t9.getDataFile("icons/disk_image.png").getAbsolutePath());
+		DiskImageSetting diskSetting = new DiskImageSetting(device, dskfile.getAbsolutePath(),
+				diskImageIconPath);
 		diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
 	
 		diskSettingsMap.put(device, diskSetting); 
@@ -1004,11 +1044,16 @@ public class DiskImageDsr implements DsrHandler {
 		 */
 		@Override
 		public byte readByte(MemoryEntry entry, int addr) {
+			
 			if (addr < 0x5ff0)
 				return romMemoryEntry.getArea().flatReadByte(romMemoryEntry, addr);
-			
+
 			byte ret = 0;
-			
+
+			if (!diskImageDsrEnabled.getBoolean())
+				return ret;
+
+
 			switch ((addr - 0x5ff0) >> 1) {
 			case R_RDSTAT:
 				StringBuilder status = new StringBuilder();
@@ -1052,6 +1097,9 @@ public class DiskImageDsr implements DsrHandler {
 				romMemoryEntry.getArea().flatWriteByte(romMemoryEntry, addr, val);
 				return;
 			}
+			
+			if (!diskImageDsrEnabled.getBoolean())
+				return;
 
 			val = (byte) ~val;
 
@@ -1287,6 +1335,9 @@ public class DiskImageDsr implements DsrHandler {
 		}
 	}
 	public void activate(MemoryDomain console) throws IOException {
+		if (!diskImageDsrEnabled.getBoolean())
+			return;
+		
 		if (romMemoryEntry == null)
 			this.romMemoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
 					0x4000, 0x2000, "TI Disk DSR ROM", console,
@@ -1334,12 +1385,20 @@ public class DiskImageDsr implements DsrHandler {
 		error(MessageFormat.format(fmt, args));
 	}
 
-	
-	public Setting[] getSettings() {
-		List<Setting> settings = new ArrayList<Setting>();
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
+	 */
+	public Map<String, Collection<Setting>> getEditableSettingGroups() {
+		Map<String, Collection<Setting>> map = new LinkedHashMap<String, Collection<Setting>>();
+		
+		Collection<Setting> settings = new ArrayList<Setting>();
 		settings.add(diskImageDsrEnabled);
-		settings.addAll(diskSettingsMap.values());
-		return (Setting[]) settings.toArray(new Setting[settings.size()]);
+		map.put(DsrHandler.GROUP_DSR_SELECTION, settings);
+		
+		settings = diskSettingsMap.values();
+		map.put(DsrHandler.GROUP_DISK_CONFIGURATION, settings);
+		
+		return map;
 	}
 	public void saveState(IDialogSettings section) {
 		diskImageDsrEnabled.saveState(section);

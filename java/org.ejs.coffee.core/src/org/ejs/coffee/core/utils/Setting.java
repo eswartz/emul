@@ -7,11 +7,10 @@
 package org.ejs.coffee.core.utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 /** A single configurable setting.
@@ -20,33 +19,95 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 public class Setting implements Comparable<Setting>, Comparator<Setting> {
     private Object storage;
     private String name;
-    private List<ISettingListener> listeners;
+    private ListenerList listeners, enabledListeners;
+	private final String label;
+	private final String description;
     
-    @SuppressWarnings("unchecked")
 	public Setting(String name, Object storage) {
         this.name = name;
+        this.label = name;
+        this.description = null;
         this.storage = storage;
-        this.listeners = (List<ISettingListener>)Collections.EMPTY_LIST;
+        this.listeners = null;
+        this.enabledListeners = null;
+        this.dependentListeners = null;
     }
+    
+	public Setting(String name, String label, String description, Object storage) {
+        this.name = name;
+		this.label = label;
+		this.description = description;
+        this.storage = storage;
+        this.listeners = null;
+        this.enabledListeners = null;
+        this.dependentListeners = null;
+    }
+    
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return getName() + " = " + getValue();
+	}
     public String getName() {
         return name;
     }
     
-    public void addListener(ISettingListener listener) {
-        if (listeners == Collections.EMPTY_LIST) {
-            listeners = new ArrayList<ISettingListener>();
-        }
+    /**
+	 * @return the label
+	 */
+	public String getLabel() {
+		return label;
+	}
+	/**
+	 * @return the description
+	 */
+	public String getDescription() {
+		return description;
+	}
+    /**
+     * Tell whether the setting is available.  A subclass can override this if
+     * a setting has conditional availability.
+     * @return
+     */
+    public boolean isEnabled() {
+    	return true;
+    }
+    public synchronized void addListener(ISettingListener listener) {
+    	if (listeners == null) 
+    		listeners = new ListenerList();
         listeners.add(listener);
     }
-    public void removeListener(ISettingListener listener) {
+    public synchronized void removeListener(ISettingListener listener) {
+    	if (listeners == null) return;
         listeners.remove(listener);
     }
-    private void notifyListeners(Object oldValue) {
-        for (Iterator<ISettingListener> iter = listeners.iterator(); iter.hasNext();) {
-            ISettingListener listener = iter.next();
+    private synchronized void notifyListeners(Object oldValue) {
+    	if (listeners == null) return;
+        for (Object obj : listeners.getListeners()) {
+            ISettingListener listener = (ISettingListener) obj;
             listener.changed(this, oldValue);
         }
     }
+    
+    public synchronized void addEnabledListener(ISettingEnabledListener listener) {
+    	if (enabledListeners == null)
+    		enabledListeners = new ListenerList();
+        enabledListeners.add(listener);
+    }
+    public synchronized void removeEnabledListener(ISettingEnabledListener listener) {
+    	if (enabledListeners == null) return;
+        enabledListeners.remove(listener);
+    }
+    protected synchronized void notifyEnabledListeners() {
+    	if (enabledListeners == null) return;
+        for (Object obj : enabledListeners.getListeners()) {
+            ISettingEnabledListener listener = (ISettingEnabledListener) obj;
+            listener.changed(this);
+        }
+    }
+
         
     public Object getValue() {
         return storage;
@@ -97,7 +158,7 @@ public class Setting implements Comparable<Setting>, Comparator<Setting> {
 				setValue(value);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 	 */
@@ -111,4 +172,46 @@ public class Setting implements Comparable<Setting>, Comparator<Setting> {
 	public int compareTo(Setting o) {
 		return getName().compareTo(o.getName());
 	}
+	
+
+    private class DependentSettingListener implements ISettingListener, ISettingEnabledListener {
+    	private Setting other;
+    	public DependentSettingListener(Setting other) {
+    		this.other = other;
+    	}
+		public void changed(Setting setting, Object oldValue) {
+			notifyEnabledListeners();
+		}
+		public void changed(Setting setting) {
+			notifyEnabledListeners();
+		}
+	}; 
+    private List<DependentSettingListener> dependentListeners;
+    
+    public synchronized void addEnablementDependency(final Setting other) {
+    	DependentSettingListener listener = new DependentSettingListener(other);
+    	if (dependentListeners == null) {
+    		dependentListeners = new ArrayList<DependentSettingListener>();
+    	}
+    	dependentListeners.add(listener);
+		other.addListener(listener);
+		other.addEnabledListener(listener);
+    };
+    
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+    protected void finalize() throws Throwable {
+    	super.finalize();
+    	if (dependentListeners != null) {
+    		for (DependentSettingListener listener : dependentListeners) {
+    			listener.other.removeListener(listener);
+    			listener.other.removeEnabledListener(listener);
+    		}
+    		dependentListeners.clear();
+    	}
+    		
+    }
 }

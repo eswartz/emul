@@ -4,6 +4,14 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -16,6 +24,7 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -24,6 +33,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.coffee.core.utils.ISettingEnabledListener;
 import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
@@ -37,14 +47,34 @@ import v9t9.emulator.hardware.dsrs.DsrManager;
  *
  */
 public class DiskSelector extends Composite {
-	class DiskEntry  {
-		private final Setting setting;
-		public DiskEntry(final Composite parent, Setting setting_) {
+	
+	abstract class SettingEntry extends Composite {
+		protected final Setting setting;
+		private ISettingEnabledListener enableListener;
+		
+		public SettingEntry(final Composite parent, Setting setting_, int style) {
+			super(parent, style);
+			
 			this.setting = setting_;
+			
+			enableListener = new ISettingEnabledListener() {
+				
+				public void changed(Setting setting) {
+					updateSetting();
+				}
+			};
+			setting.addEnabledListener(enableListener);
+			
+			addDisposeListener(new DisposeListener() {
+				
+				public void widgetDisposed(DisposeEvent e) {
+					setting.removeEnabledListener(enableListener);
+				}
+			});
 			
 			if (setting instanceof ISettingDecorator) {
 				ImageDescriptor descriptor = ((ISettingDecorator) setting).getIcon();
-				Label icon = new Label(parent, SWT.NONE);
+				Label icon = new Label(this, SWT.NONE);
 				final Image iconImage = descriptor.createImage();
 				icon.setImage(iconImage);
 				parent.addDisposeListener(new DisposeListener() {
@@ -55,15 +85,50 @@ public class DiskSelector extends Composite {
 				});
 				
 			} else {
-				new Label(parent, SWT.NONE);
+				new Label(this, SWT.NONE);
 			}
 			
+			createControls(this);
+		}
+		
+		protected void updateSetting() {
+			SettingEntry.this.setVisible(setting.isEnabled());
+			GridData data = (GridData) SettingEntry.this.getLayoutData();
+			data.exclude = !setting.isEnabled();
+			SettingEntry.this.getShell().layout(true, true);
+			
+		}
+
+		abstract protected void createControls(Composite parent);
+		
+	};
+
+	class DiskEntry extends SettingEntry {
+		private Combo combo;
+		private Button browse;
+		
+		public DiskEntry(final Composite parent, Setting setting_) {
+			super(parent, setting_, SWT.NONE);
+			
+		}
+		
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.swt.DiskSelector.SettingEntry#createControls(org.eclipse.swt.widgets.Composite)
+		 */
+		@Override
+		protected void createControls(final Composite parent) {
+			GridLayoutFactory.fillDefaults().numColumns(4).applyTo(this);
+			
 			Label label = new Label(parent, SWT.NONE);
-			label.setText(setting.getName() + ": ");
+			label.setText(setting.getLabel() + ": ");
 			GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(label);
 			
-			final Combo combo = new Combo(parent, SWT.BORDER | SWT.DROP_DOWN);
+			label.setToolTipText(setting.getDescription());
+			
+			combo = new Combo(parent, SWT.BORDER | SWT.DROP_DOWN);
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(combo);
+			
+			combo.setToolTipText(setting.getDescription());
 			
 			String[] history = getHistory(getHistoryName());
 			if (history != null) {
@@ -89,7 +154,7 @@ public class DiskSelector extends Composite {
 			});
 			
 			
-			Button browse = new Button(parent, SWT.PUSH);
+			browse = new Button(parent, SWT.PUSH);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(browse);
 			browse.setText("Browse...");
 			browse.addSelectionListener(new SelectionAdapter() {
@@ -116,7 +181,7 @@ public class DiskSelector extends Composite {
 						}
 					}
 				}
-			});
+			});			
 		}
 		
 		private boolean isDiskImage() {
@@ -144,30 +209,24 @@ public class DiskSelector extends Composite {
 	};
 
 
-	class BooleanEntry  {
-		private final Setting setting;
+	class BooleanEntry extends SettingEntry {
 		public BooleanEntry(final Composite parent, Setting setting_) {
-			this.setting = setting_;
-			
-			if (setting instanceof ISettingDecorator) {
-				ImageDescriptor descriptor = ((ISettingDecorator) setting).getIcon();
-				Label icon = new Label(parent, SWT.NONE);
-				final Image iconImage = descriptor.createImage();
-				icon.setImage(iconImage);
-				parent.addDisposeListener(new DisposeListener() {
-					
-					public void widgetDisposed(DisposeEvent e) {
-						iconImage.dispose();
-					}
-				});
-				
-			} else {
-				new Label(parent, SWT.NONE);
-			}
-			
+			super(parent, setting_, SWT.NONE);
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.swt.DiskSelector.SettingEntry#createControls(org.eclipse.swt.widgets.Composite)
+		 */
+		@Override
+		protected void createControls(Composite parent) {
+			GridLayoutFactory.fillDefaults().numColumns(2).applyTo(this);
+
+
 			final Button checkbox = new Button(parent, SWT.CHECK);
-			checkbox.setText(setting.getName() + ": ");
-			GridDataFactory.fillDefaults().grab(true, false).span(3,1).applyTo(checkbox);
+			checkbox.setText(setting.getLabel());
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(checkbox);
+			
+			checkbox.setToolTipText(setting.getDescription());
 			
 			checkbox.setSelection(setting.getBoolean());
 			
@@ -177,8 +236,9 @@ public class DiskSelector extends Composite {
 					
 				};
 			});
-			
 		}
+		
+		
 	};
 
 
@@ -198,31 +258,65 @@ public class DiskSelector extends Composite {
 		super(shell, SWT.NONE);
 		
 		shell.setText("Disk Selector");
-		
-		
-		System.out.println("Creating DiskSelector");
 
 		GridLayoutFactory.fillDefaults().applyTo(this);
-		
-		for (DsrHandler handler : dsrManager.getDsrs()) {
 
-			Composite section = new Composite(this, SWT.NONE);
-			GridDataFactory.fillDefaults().grab(true, true).applyTo(section);
-			GridLayoutFactory.fillDefaults().applyTo(section);
+		Map<String, Group> groups = new HashMap<String, Group>();
+		Map<String, List<Setting>> allSettings = new LinkedHashMap<String, List<Setting>>();
+		
+
+		for (DsrHandler handler : dsrManager.getDsrs()) {
+			Map<String, Collection<Setting>> settings = handler.getEditableSettingGroups();
+			for (Map.Entry<String, Collection<Setting>> entry : settings.entrySet()) {
+				List<Setting> groupSettings = allSettings.get(entry.getKey());
+				if (groupSettings == null) {
+					groupSettings = new ArrayList<Setting>();
+					allSettings.put(entry.getKey(), groupSettings);
+				}
+				groupSettings.addAll(entry.getValue());
+			}
+		}
+		
+		for (Map.Entry<String, List<Setting>> entry : allSettings.entrySet()) {
+			String name = entry.getKey();
+			Group group = groups.get(name);
 			
-			Label label = new Label(section, SWT.NONE);
-			label.setText("Settings for " + handler.getName() + ":");
-			GridDataFactory.fillDefaults().span(4, 1).applyTo(label);
+			List<Setting> groupSettings = entry.getValue();
+			Collections.sort(groupSettings,
+					new Comparator<Setting>() {
+
+						public int compare(Setting o1, Setting o2) {
+							return o1.getLabel().compareTo(o2.getLabel());
+						}
+				
+			});
 			
-			Group group = new Group(section, SWT.SHADOW_OUT);
-			GridLayoutFactory.fillDefaults().numColumns(4).margins(6, 6).applyTo(group);
-			GridDataFactory.fillDefaults().grab(true, true).applyTo(group);
+			if (group == null) {
+				Composite section = new Composite(this, SWT.NONE);
+				GridDataFactory.fillDefaults().grab(true, false).applyTo(section);
+				GridLayoutFactory.fillDefaults().applyTo(section);
+				
+				Label label = new Label(section, SWT.NONE);
+				label.setText(name);
+				GridDataFactory.fillDefaults().span(4, 1).applyTo(label);
+				
+				group = new Group(section, SWT.SHADOW_OUT);
+				GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(group);
+				GridDataFactory.fillDefaults().grab(true, true).applyTo(group);
+				
+				groups.put(name, group);
+			}
 			
-			for (Setting setting : handler.getSettings()) {
+			for (Setting setting : groupSettings) {
+				SettingEntry comp = null;
 				if (setting.getValue() instanceof String) {
-					/*DiskEntry diskEntry =*/ new DiskEntry(group, setting);
+					comp = new DiskEntry(group, setting);
 				} else if (setting.getValue() instanceof Boolean) {
-					new BooleanEntry(group, setting);
+					comp = new BooleanEntry(group, setting);
+				}
+				if (comp != null) {
+					GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
+					comp.updateSetting();
 				}
 			}
 		}

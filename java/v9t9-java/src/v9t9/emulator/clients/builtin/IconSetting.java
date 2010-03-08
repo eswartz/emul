@@ -20,8 +20,8 @@ public class IconSetting extends Setting implements ISettingDecorator {
 	 * @param name
 	 * @param storage
 	 */
-	public IconSetting(String name, Object storage, String iconPath) {
-		super(name, storage);
+	public IconSetting(String name, String label, String description, Object storage, String iconPath) {
+		super(name, label, description, storage);
 		this.iconPath = iconPath;
 	}
 

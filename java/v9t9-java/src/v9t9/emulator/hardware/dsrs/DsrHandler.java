@@ -4,6 +4,8 @@
 package v9t9.emulator.hardware.dsrs;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.Setting;
@@ -16,6 +18,9 @@ import v9t9.engine.memory.MemoryDomain;
  *
  */
 public interface DsrHandler {
+
+	String GROUP_DSR_SELECTION = "Device Selection";
+	String GROUP_DISK_CONFIGURATION = "Disk Configuration";
 
 	void dispose();
 	
@@ -43,7 +48,8 @@ public interface DsrHandler {
 	void loadState(IDialogSettings section);
 
 	/**
-	 * @return
+	 * Get editable settings
+	 * @return map of group label to settings
 	 */
-	Setting[] getSettings();
+	Map<String, Collection<Setting>> getEditableSettingGroups();
 }
