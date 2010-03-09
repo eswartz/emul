@@ -10,15 +10,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
+
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
-import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.compiler.Compiler;
@@ -29,21 +31,25 @@ import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
-import v9t9.engine.memory.WordMemoryArea;
 
 public class V9t9 {
-	static public final Setting settingMonitorDrawing = new Setting("MonitorDrawing", new Boolean(true));
 
 	static {
-		DataFiles.addSearchPath("/usr/local/src/V9t9/tools/Forth");
-		DataFiles.addSearchPath("/usr/local/src/v9t9-data/roms");
-		DataFiles.addSearchPath("/usr/local/src/v9t9-data/modules");
-		DataFiles.addSearchPath("l:/src/V9t9/tools/Forth");
-		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
-		DataFiles.addSearchPath("l:/src/v9t9-data/modules");
-		DataFiles.addSearchPath("/tmp");
-		DataFiles.addSearchPath("c:/devel/tistuff/v9t9-data/modules");
-		DataFiles.addSearchPath("c:/devel/tistuff/v9t9-data/roms");
+		DataFiles.settingBootRomsPath.addListener(new ISettingListener() {
+			
+			@Override
+			public void changed(Setting setting, Object oldValue) {
+				if (setting.getList().isEmpty())
+					addDefaultPaths();
+			}
+
+		});
+		
+		addDefaultPaths();
+	}
+	
+	private static void addDefaultPaths() {
+		DataFiles.addSearchPath("../../build/roms");		
 	}
 
 	private Memory memory;
@@ -119,49 +125,10 @@ public class V9t9 {
 	    	loadConsoleRom("994arom.bin");
 	    	loadConsoleGrom("994agrom.bin");
 	
-	    	if (false) {
-	    		ExpRamArea.settingExpRam.setBoolean(true);
-	    		loadModuleGrom("E/A", "eag.bin");
-	    		DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0xA000, 0x6000, "Ed's BASIC",
-	            		console,
-	                    "ed_basicH.bin", 0x0, false);
-	    		entry.load();
-	        	entry.getArea().setLatency(4);
-	        	short[] memory = ((WordMemoryArea) entry.getArea()).memory;
-				for (int a = 0xA000; a < 0x10000; a+=2) {
-	        		console.writeWord(a, memory[(a - 0xA000) / 2]);
-	        	}
-	    		
-	    		entry = DiskMemoryEntry.newWordMemoryFromFile(0x2000, 0x2000, "Ed's BASIC",
-	            		console,
-	                    "ed_basicL.bin", 0x0, false);
-	    		entry.load();
-	        	entry.getArea().setLatency(4);
-	        	memory = ((WordMemoryArea) entry.getArea()).memory;
-	        	for (int a = 0x2000; a < 0x4000; a+=2) {
-	        		console.writeWord(a, memory[(a - 0x2000) / 2]);
-	        	}
-
-	    	} else if (true) {
-
-	    		machine.getModuleManager().switchModule("Alpiner");
-	    		machine.getModuleManager().switchModule("Jungle");
-	    		machine.getModuleManager().switchModule("Mash");
-	    		machine.getModuleManager().switchModule("Parsec");
-	    		machine.getModuleManager().switchModule("TEII");
-	    		machine.getModuleManager().switchModule("Extended BASIC");
-	    		machine.getModuleManager().switchModule("Music Maker");
-	    		machine.getModuleManager().switchModule("Disk Manager");
-	    		
-	    		machine.getModuleManager().switchModule("TI Logo II");
-	    		machine.getModuleManager().switchModule("Personal Record Keeping");
-		    	ExpRamArea.settingExpRam.setBoolean(true);
-	    	}
     	} else { 
 
     		// enhanced model can only load FORTH for now
     		DiskMemoryEntry entry;
-    		
     		
     		loadEnhancedBankedConsoleRom("nforthA.rom", "nforthB.rom");
     		loadConsoleGrom("nforth.grm");
@@ -223,6 +190,10 @@ public class V9t9 {
     
     public static void main(String args[]) throws IOException {
     	
+    	EmulatorSettings.getInstance().load();
+    	DataFiles.settingBootRomsPath.loadState(EmulatorSettings.getInstance().getApplicationSettings());
+    	DataFiles.settingStoredRamPath.loadState(EmulatorSettings.getInstance().getApplicationSettings());
+    	
         Machine machine;
         
         if (findArgument(args, "--enhanced")) {
@@ -237,7 +208,12 @@ public class V9t9 {
         final V9t9 app = new V9t9(machine, client);
         
         app.setupDefaults();
-        app.loadMemory();
+        try {
+        	app.loadMemory();
+        } catch (IOException e) {
+        	machine.notifyEvent("Failed to load startup ROMs; please edit your BootRomsPath in the file "
+        		+ EmulatorSettings.getInstance().getSettingsConfigurationPath());
+        }
         app.run();
         
     }

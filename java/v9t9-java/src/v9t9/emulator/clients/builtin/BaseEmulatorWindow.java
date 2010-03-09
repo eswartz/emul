@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.jface.dialogs.DialogSettings;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.Cpu;
+import v9t9.engine.files.DataFiles;
 
 public abstract class BaseEmulatorWindow {
 
@@ -18,6 +20,7 @@ public abstract class BaseEmulatorWindow {
 	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { ".sav|V9t9 machine save file" };
 	protected VideoRenderer videoRenderer;
 	protected final Machine machine;
+	static public final Setting settingMonitorDrawing = new Setting("MonitorDrawing", new Boolean(true));
 
 	public BaseEmulatorWindow(Machine machine) {
 		this.machine = machine;
@@ -109,7 +112,7 @@ public abstract class BaseEmulatorWindow {
 				DialogSettings settings = new DialogSettings("state");
 				settings.load(filename);
 				
-				machine.restoreState(settings);
+				machine.loadState(settings);
 			} catch (Throwable e1) {
 				showErrorMessage("Load error", 
 						"Failed to load machine state:\n\n" + e1.getMessage());

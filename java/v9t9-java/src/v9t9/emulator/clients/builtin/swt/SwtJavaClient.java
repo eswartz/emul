@@ -132,6 +132,15 @@ public class SwtJavaClient implements Client {
         	videoRenderer = new SwtVideoRenderer();
         return videoRenderer;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.Client#getEventNotifier()
+	 */
+	@Override
+	public IEventNotifier getEventNotifier() {
+		return eventNotifier;
+	}
+	
 	/*
      * (non-Javadoc)
      * 

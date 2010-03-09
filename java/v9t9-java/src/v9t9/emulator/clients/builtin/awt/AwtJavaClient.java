@@ -10,6 +10,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.IEventNotifier;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
@@ -59,6 +60,15 @@ public class AwtJavaClient implements Client {
         		machine.getKeyboardState(), machine);
         keyboardHandler.setEventNotifier(window.getEventNotifier());
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.Client#getEventNotifier()
+     */
+    @Override
+    public IEventNotifier getEventNotifier() {
+    	return window.getEventNotifier();
+    }
+    
     /*
      * (non-Javadoc)
      * 

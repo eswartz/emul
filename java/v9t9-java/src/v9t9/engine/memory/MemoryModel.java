@@ -53,9 +53,4 @@ public interface MemoryModel {
 	 */
 	SpeechMmio getSpeechMmio();
 	
-	/**
-	 * Get the modules
-	 */
-	List<IModule> getModules();
-	
 }

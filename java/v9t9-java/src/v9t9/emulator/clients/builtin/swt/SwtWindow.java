@@ -433,7 +433,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				8, 0,
 				 "Pause machine");
 
-		createStateButton(buttonBar, V9t9.settingMonitorDrawing,  
+		createStateButton(buttonBar, BaseEmulatorWindow.settingMonitorDrawing,  
 				9, 0, 
 				"Apply monitor effect to video");
 

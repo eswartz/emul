@@ -4,6 +4,7 @@
 package v9t9.engine.modules;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,24 +25,21 @@ public class ModuleLoader {
 	/**
 	 * @return
 	 */
-	public static List<IModule> loadModuleList() {
+	public static List<IModule> loadModuleList(String name) throws IOException {
 		
 		
-		return loadModuleList(DataFiles.resolveFile("modules.xml"));
-	}
-
-
-	/**
-	 * 
-	 */
-	public static List<IModule> loadModuleList(File file) {
+		File file = DataFiles.resolveFile(name);
+		if (file == null)
+			return Collections.emptyList();
+			
 		List<IModule> modules = new ArrayList<IModule>();
 		FileXMLStorage storage = new FileXMLStorage(file);
 		try {
 			storage.load("modules");
 		} catch (CoreException e) {
-			e.printStackTrace();
-			return Collections.emptyList();
+			if (e.getCause() instanceof IOException)
+				throw ((IOException) e.getCause());
+			throw new IOException(e);
 		}
 		for (Element el : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), "module")) {
 			Module module = new Module(

@@ -7,6 +7,8 @@
 package v9t9.emulator;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -31,9 +33,12 @@ import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
 import v9t9.engine.VdpHandler;
+import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.engine.modules.IModule;
+import v9t9.engine.modules.ModuleLoader;
 import v9t9.engine.timer.FastTimer;
 import v9t9.engine.timer.FastTimerTask;
 import v9t9.keyboard.KeyboardState;
@@ -91,6 +96,9 @@ abstract public class Machine {
 	
 	private TimerTask memorySaverTask;
 	private ModuleManager moduleManager;
+	private List<IModule> modules;
+	
+	private List<String> notifications = new ArrayList<String>();
 	
     public Machine(MachineModel machineModel) {
     	runnableList = new LinkedList<Runnable>();
@@ -104,7 +112,7 @@ abstract public class Machine {
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
     	
-    	moduleManager = new ModuleManager(this, memoryModel.getModules());
+    	moduleManager = new ModuleManager(this, getModules());
     	
     	settings = new SettingsCollection();
     	cpu = new Cpu(this, 1000 / cpuTicksPerSec, vdp);
@@ -129,6 +137,32 @@ abstract public class Machine {
         });
     	
 
+	}
+    
+    
+    public List<IModule> getModules() {
+    	if (modules == null) {
+    		String dbName = "modules.xml";
+    		try {
+				modules = ModuleLoader.loadModuleList(dbName);
+    		} catch (IOException e) {
+    			notifyEvent("Failed to load module list " + dbName +"; be sure your BootRomPath setting is established in "
+						+ EmulatorSettings.getInstance().getSettingsConfigurationPath());
+    			modules = Collections.emptyList();
+			}
+    	}
+    	return modules;
+    }
+
+	/**
+	 * @param string
+	 */
+	public void notifyEvent(String string) {
+		if (client != null)
+			client.getEventNotifier().notifyEvent(this, string);
+		else
+			notifications.add(string);
+		
 	}
 
 	public interface ConsoleMmioReader {
@@ -388,6 +422,12 @@ abstract public class Machine {
     }
     public void setClient(Client client) {
         this.client = client;
+        if (client != null) {
+        	for (String note : notifications) {
+        		client.getEventNotifier().notifyEvent(this, note);
+        	}
+        	notifications.clear();
+        }
     }
     public Executor getExecutor() {
         return executor;
@@ -430,6 +470,8 @@ abstract public class Machine {
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
+		
+		
 		cpu.saveState(settings.addNewSection("CPU"));
 		getMemoryModel().getGplMmio().saveState(settings.addNewSection("GPL"));
 		memory.saveState(settings.addNewSection("Memory"));
@@ -437,13 +479,16 @@ abstract public class Machine {
 		sound.saveState(settings.addNewSection("Sound"));
 		dsrManager.saveState(settings.addNewSection("DSRs"));
 		moduleManager.saveState(settings.addNewSection("Modules"));
+		
+		DataFiles.saveState(settings);
+		
 		synchronized (executionLock) {
 			bExecuting = true;
 			executionLock.notifyAll();
 		}
 	}
 
-	public synchronized void restoreState(IDialogSettings settings) throws IOException {
+	public synchronized void loadState(IDialogSettings settings) throws IOException {
 		/*
 		machineRunner.interrupt();
 		videoRunner.interrupt();
@@ -455,6 +500,8 @@ abstract public class Machine {
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
+		
+		DataFiles.loadState(settings);
 		
 		moduleManager.loadState(settings.getSection("Modules"));
 		memory.loadState(settings.getSection("Memory"));

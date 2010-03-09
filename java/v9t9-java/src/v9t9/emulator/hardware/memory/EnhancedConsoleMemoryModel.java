@@ -6,12 +6,9 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import java.util.List;
-
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.modules.IModule;
 
 
 /**
@@ -41,13 +38,5 @@ public class EnhancedConsoleMemoryModel extends StandardConsoleMemoryModel {
 	protected void defineMmioMemory(TI994A machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
                 new EnhancedConsoleMmioArea(machine)));
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.hardware.memory.StandardConsoleMemoryModel#getModules()
-	 */
-	@Override
-	public List<IModule> getModules() {
-		return super.getModules();
 	}
 }

@@ -7,6 +7,7 @@
 package org.ejs.coffee.core.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -83,7 +84,7 @@ public class Setting implements Comparable<Setting>, Comparator<Setting> {
     	if (listeners == null) return;
         listeners.remove(listener);
     }
-    private synchronized void notifyListeners(Object oldValue) {
+    public synchronized void notifyListeners(Object oldValue) {
     	if (listeners == null) return;
         for (Object obj : listeners.getListeners()) {
             ISettingListener listener = (ISettingListener) obj;
@@ -100,7 +101,7 @@ public class Setting implements Comparable<Setting>, Comparator<Setting> {
     	if (enabledListeners == null) return;
         enabledListeners.remove(listener);
     }
-    protected synchronized void notifyEnabledListeners() {
+    public synchronized void notifyEnabledListeners() {
     	if (enabledListeners == null) return;
         for (Object obj : enabledListeners.getListeners()) {
             ISettingEnabledListener listener = (ISettingEnabledListener) obj;
@@ -120,6 +121,10 @@ public class Setting implements Comparable<Setting>, Comparator<Setting> {
     }
     public String getString() {
         return (String)storage;
+    }
+    @SuppressWarnings("unchecked")
+	public List<String> getList() {
+    	return (List)storage;
     }
     public void setValue(Object val) {
         Object old = storage;
@@ -141,9 +146,18 @@ public class Setting implements Comparable<Setting>, Comparator<Setting> {
         storage = val;
         notifyListeners(old);
     }
+    public void setList(List<String> val) {
+    	Object old = storage;
+    	storage = val;
+    	notifyListeners(old);
+    }
+    
+	@SuppressWarnings("unchecked")
 	public void saveState(IDialogSettings section) {
 		if (storage instanceof Integer)
 			section.put(name, Integer.toString(getInt()));
+		else if (storage instanceof List)
+			section.put(name, (String[]) ((List)storage).toArray(new String[((List)storage).size()]));
 		else
 			section.put(name, getValue().toString());
 	}
@@ -156,6 +170,11 @@ public class Setting implements Comparable<Setting>, Comparator<Setting> {
 				setValue(Integer.parseInt(value));
 			else
 				setValue(value);
+		} else {
+			String[] strings = section.getArray(name);
+			if (strings != null) {
+				setValue(new ArrayList<String>(Arrays.asList(strings)));
+			}
 		}
 	}
 

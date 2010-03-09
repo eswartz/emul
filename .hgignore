@@ -13,4 +13,5 @@ java/*/bin
 c/v9t9-c/log.unix.txt
 c/libanalogtv/swig
 c/libv9t9render/swig
-
+build
+*~

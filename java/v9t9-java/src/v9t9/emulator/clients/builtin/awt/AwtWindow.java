@@ -216,7 +216,7 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 		createStateButton(Machine.settingPauseMachine, new Rectangle(0, 512, 64, 64), new Rectangle(0, 0, 64, 64),
 				"Pause machine");
 
-		createStateButton(V9t9.settingMonitorDrawing, new Rectangle(0, 576, 64, 64), new Rectangle(0, 0, 64, 64), 
+		createStateButton(BaseEmulatorWindow.settingMonitorDrawing, new Rectangle(0, 576, 64, 64), new Rectangle(0, 0, 64, 64), 
 				"Apply monitor effect to video");
 
 		createButton(icons, new Rectangle(0, 640, 64, 64),

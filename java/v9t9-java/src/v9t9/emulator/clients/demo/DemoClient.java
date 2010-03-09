@@ -11,6 +11,7 @@ import java.io.IOException;
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.IEventNotifier;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.hardware.sound.SoundVoice;
@@ -76,6 +77,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 
     Connection connection;
 	private boolean isAlive;
+	private IEventNotifier eventNotifier;
 
     /** Construct the client as a demo running in a different TI994A */
     public DemoClient(Machine machine) {
@@ -84,6 +86,14 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         sound = this;
         cru = this;
         
+        eventNotifier = new IEventNotifier() {
+			
+			@Override
+			public void notifyEvent(Object context, String message) {
+				System.out.println(message);
+			}
+		};
+		
         try {
             //connection = new SocketConnection();
             connection = new FifoConnection();
@@ -141,6 +151,14 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         vdpPacket = new byte[256];
         vdpPacketStart = 0;
         vdpPacketSize = 0;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.Client#getEventNotifier()
+     */
+    @Override
+    public IEventNotifier getEventNotifier() {
+    	return eventNotifier;
     }
 
     private void flushVdp() {

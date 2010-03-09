@@ -6,8 +6,6 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import java.util.List;
-
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
@@ -25,8 +23,6 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryModel;
-import v9t9.engine.modules.IModule;
-import v9t9.engine.modules.ModuleLoader;
 
 /**
  * The standard TI-99/4[A] console memory map.
@@ -53,8 +49,6 @@ public class StandardConsoleMemoryModel implements MemoryModel {
 
 	private VdpMmio vdpMmio;
 
-	private List<IModule> modules;
-    
     public StandardConsoleMemoryModel() {
     	initSettings();
     }
@@ -142,11 +136,5 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     public VdpMmio getVdpMmio() {
     	return vdpMmio;
     }
-    
-    public List<IModule> getModules() {
-    	if (modules == null) {
-    		modules = ModuleLoader.loadModuleList();
-    	}
-    	return modules;
-    }
+  
 }

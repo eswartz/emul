@@ -23,6 +23,7 @@ import javax.imageio.ImageIO;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.jna.V9t9Render;
 import v9t9.emulator.clients.builtin.jna.V9t9Render.AnalogTV;
 import v9t9.emulator.clients.builtin.jna.V9t9Render.AnalogTVData;
@@ -31,7 +32,6 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
-import v9t9.emulator.hardware.V9t9;
 
 /**
  * AWT has nice accelerated blit routines, which are superior to SWT on Linux/GTK and Windows.
@@ -114,7 +114,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		doResizeToFit();
 		
 
-		V9t9.settingMonitorDrawing.addListener(new ISettingListener() {
+		BaseEmulatorWindow.settingMonitorDrawing.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
 				synchronized (AwtVideoRenderer.this) {
@@ -403,7 +403,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				}
 				
 			}
-			if (V9t9.settingMonitorDrawing.getBoolean() && 
+			if (BaseEmulatorWindow.settingMonitorDrawing.getBoolean() && 
 					(noisySurface == null || noisySurface.getWidth() != desiredWidth || noisySurface.getHeight() != desiredHeight)) {
 				noisySurface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
 			}
@@ -505,7 +505,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 					
 					
 					//System.out.println("scaled");
-					if (V9t9.settingMonitorDrawing.getBoolean() && zoom > 1) {
+					if (BaseEmulatorWindow.settingMonitorDrawing.getBoolean() && zoom > 1) {
 						// modify the original area
 						//if (logRect.x > 0) { logRect.x--; logRect.width++; }
 						//if (logRect.y > 0) { logRect.y--; logRect.height++; }

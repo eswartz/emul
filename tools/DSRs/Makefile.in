@@ -44,8 +44,6 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/./$host/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-depcomp =
-am__depfiles_maybe =
 SOURCES =
 DIST_SOURCES =
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -169,13 +167,15 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = foreign no-dependencies
+BUILD = $(TOP)/../build
+ROMS = $(BUILD)/roms
+AUTOMAKE_OPTIONS = foreign
 EXTRA_DIST = $(DSRS) opcodes.inc aclocal.m4
 TIASM = java -jar $(TIASM_JAR)
-TIASM_JAR = $(TOP)/../build/tiasm.jar
+TIASM_JAR = $(BUILD)/tiasm.jar
 ASMFLAGS = 
 DSRS = emudisk.dsr emu2disk.dsr emurs232.dsr emupio.dsr
-OUTS = $(DSRS:%.dsr=%.bin)
+OUTS = $(DSRS:%.dsr=$(ROMS)/%.bin)
 INCS = opcodes.inc
 all: all-am
 
@@ -351,7 +351,10 @@ uninstall-am:
 	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am
 
 
-all:	$(OUTS)
+all:	$(ROMS) $(OUTS)
+
+$(ROMS):
+	mkdir -p $(ROMS)
 
 clean:
 	rm -f $(OUTS)
@@ -364,16 +367,16 @@ install-data-am:
 
 FORCE:
 
-emudisk.bin:	emudisk.dsr $(INCS) $(TIASM_JAR)
+$(ROMS)/emudisk.bin:	emudisk.dsr $(INCS) $(TIASM_JAR)
 	$(TIASM) $< -d $@ $(ASMFLAGS)
 
-emu2disk.bin:	emu2disk.dsr $(INCS) $(TIASM_JAR)
+$(ROMS)/emu2disk.bin:	emu2disk.dsr $(INCS) $(TIASM_JAR)
 	$(TIASM) $< -d $@ $(ASMFLAGS)
 
-emurs232.bin:	emurs232.dsr $(INCS) $(TIASM_JAR)
+$(ROMS)/emurs232.bin:	emurs232.dsr $(INCS) $(TIASM_JAR)
 	$(TIASM) $< -d $@ $(ASMFLAGS)
 
-emupio.bin:	emupio.dsr $(INCS) $(TIASM_JAR)
+$(ROMS)/emupio.bin:	emupio.dsr $(INCS) $(TIASM_JAR)
 	$(TIASM) $< -d $@ $(ASMFLAGS)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

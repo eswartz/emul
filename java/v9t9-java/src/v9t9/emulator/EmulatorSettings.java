@@ -5,9 +5,12 @@ package v9t9.emulator;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.utils.Setting;
 
 /**
  * @author ejs
@@ -22,9 +25,8 @@ public class EmulatorSettings {
 	}
 	
 	protected EmulatorSettings() {
-		
 	}
-
+	
 	public void load() {
 		if (settings == null) {
 			settings = new DialogSettings("root");

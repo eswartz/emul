@@ -6,6 +6,8 @@
  */
 package v9t9.engine;
 
+import v9t9.emulator.clients.builtin.IEventNotifier;
+
 
 /** The client the emulated machine interacts with.  This could
  * be the emulator itself, hosting a window, keyboard, etc., 
@@ -29,4 +31,6 @@ public interface Client {
 	void updateVideo();
 
 	KeyboardHandler getKeyboardHandler();
+	
+	IEventNotifier getEventNotifier();
 }

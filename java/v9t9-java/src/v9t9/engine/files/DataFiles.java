@@ -14,25 +14,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.CompatUtils;
+import org.ejs.coffee.core.utils.Setting;
 
 
 /**
  * @author ejs
  */
 public class DataFiles {
-
-	private static List<String> searchPaths = new ArrayList<String>();
+	static public final Setting settingBootRomsPath = new Setting("BootRomPath", new ArrayList<String>());
+	static public final Setting settingUserRomsPath = new Setting("UserRomPath", new ArrayList<String>());
+	static public final Setting settingStoredRamPath = new Setting("StoredRamPath", ".");
 	
 	public static void addSearchPath(String filepath) {
-		if (!searchPaths.contains(filepath))
-			searchPaths.add(filepath);
+		List<String> list = settingBootRomsPath.getList();
+		if (!list.contains(filepath)) {
+			list.add(filepath);
+			settingBootRomsPath.notifyListeners(list);
+		}
 	}
 
-	public static void addSearchPath(int index, String filepath) {
-		searchPaths.remove(filepath);
-		searchPaths.add(index, filepath);
-	}
 	/**
 	 * Look for a file along the search paths with the given name
 	 * @param filepath file name or relative path
@@ -42,13 +44,15 @@ public class DataFiles {
 		File file = new File(filepath);
 		if (file.isAbsolute())
 			return file;
-		for (String path : searchPaths) {
-			file = new File(path, filepath);
-			if (file.exists())
-				return file;
-			file = new File(path, filepath.toLowerCase());
-			if (file.exists())
-				return file;
+		for (Setting setting : new Setting[] { settingBootRomsPath, settingUserRomsPath }) {
+			for (String path : setting.getList()) {
+				file = new File(path, filepath);
+				if (file.exists())
+					return file;
+				file = new File(path, filepath.toLowerCase());
+				if (file.exists())
+					return file;
+			}
 		}
 		return new File(filepath);
 	}
@@ -59,7 +63,6 @@ public class DataFiles {
      * @throws IOException
      */
     public static int getImageSize(String filepath) throws IOException {
-        // TODO: real handling of complex filetypes
         File file = resolveFile(filepath);
         if (!file.exists())
         	throw new FileNotFoundException(filepath);
@@ -81,8 +84,9 @@ public class DataFiles {
     public static File readMemoryImage(String filepath, int offset, int size, byte[] result) 
     	throws FileNotFoundException, IOException 
 	{
-        // TODO: real work
         File file = resolveFile(filepath);
+        if (file == null)
+        	throw new FileNotFoundException(filepath);
         
         NativeFile nativeFile = NativeFileFactory.createNativeFile(file);
         
@@ -115,8 +119,12 @@ public class DataFiles {
     public static File writeMemoryImage(String filepath, int size, byte[] memory)
     throws FileNotFoundException, IOException 
 	{
-        // TODO: real work
-        File file = resolveFile(filepath);
+        File file = new File(filepath);
+        if (!file.isAbsolute()) {
+        	File dir = new File(settingStoredRamPath.getString());
+        	dir.mkdirs();
+        	file = new File(dir, filepath);
+        }
         
         /* write the chunk */
         FileOutputStream stream = new FileOutputStream(file);
@@ -125,5 +133,20 @@ public class DataFiles {
         
         return file;
     }
+
+	/**
+	 * @param settings
+	 */
+	public static void loadState(IDialogSettings settings) {
+		settingUserRomsPath.loadState(settings);
+	}
+
+	/**
+	 * @param settings
+	 */
+	public static void saveState(IDialogSettings settings) {
+		settingUserRomsPath.saveState(settings);
+		
+	}
     
 }
