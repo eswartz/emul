@@ -5,12 +5,9 @@ package v9t9.emulator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.IDialogSettings;
-
-import v9t9.emulator.hardware.dsrs.DsrHandler;
 
 /**
  * @author ejs

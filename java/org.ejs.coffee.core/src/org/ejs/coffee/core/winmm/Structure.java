@@ -4,7 +4,8 @@ import java.lang.reflect.Array;
 
 public class Structure<Base, Foo, Bar> extends com.sun.jna.Structure {
 
-	  public static<Base> Base[] newArray(
+	  @SuppressWarnings("unchecked")
+	public static<Base> Base[] newArray(
 			Class<Base> class1, int arrayLength) {
 		Object arr = Array.newInstance(class1, arrayLength);
 		Base[] ret = (Base[]) arr;

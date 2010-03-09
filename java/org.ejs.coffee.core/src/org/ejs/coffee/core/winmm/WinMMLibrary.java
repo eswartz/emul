@@ -1,8 +1,6 @@
 package org.ejs.coffee.core.winmm;
 
 import com.sun.jna.Callback;
-import com.sun.jna.IntegerType;
-import com.sun.jna.PointerType;
 import com.sun.jna.ptr.IntByReference;
 
 /**

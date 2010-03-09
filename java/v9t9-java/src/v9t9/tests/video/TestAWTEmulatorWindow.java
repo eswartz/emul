@@ -16,8 +16,8 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
+import v9t9.emulator.clients.builtin.jna.V9t9Render;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
-import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 
 /**
  * YIKES this is slow
@@ -26,9 +26,6 @@ import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
  * 
  */
 public class TestAWTEmulatorWindow {
-	static {
-		System.loadLibrary("v9t9renderutils");
-	}
 	public static void main(String[] args) {
 		TestAWTEmulatorWindow window = new TestAWTEmulatorWindow();
 		window.run();
@@ -89,15 +86,16 @@ public class TestAWTEmulatorWindow {
 			image = new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
 		}
 		DataBufferInt buffer = (DataBufferInt) image.getRaster().getDataBuffer();
-		V9t9Render.scaleImageToRGBA(
+		V9t9Render.INSTANCE.scaleImageToRGBA(
 				buffer.getData(), 
 				vdpCanvas.getImageData().data, 0,
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 				bounds.width, bounds.height, bounds.width * 4,
 				0, 0, bounds.width, bounds.height);
-		V9t9Render.addNoiseRGBA(buffer.getData(), 0,
+		V9t9Render.INSTANCE.addNoiseRGBA(buffer.getData(), null,
 				bounds.width, bounds.height, bounds.width * 4,
-				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
+				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(),
+				bounds.width, bounds.height, bounds.height);
 		
 		return image;
 	}

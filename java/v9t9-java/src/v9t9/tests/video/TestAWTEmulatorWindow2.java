@@ -22,17 +22,14 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
 
+import v9t9.emulator.clients.builtin.jna.V9t9Render;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
-import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 
 /**
  * @author ejs
  * 
  */
 public class TestAWTEmulatorWindow2 {
-	static {
-		System.loadLibrary("v9t9renderutils");
-	}
 	public static void main(String[] args) {
 		TestAWTEmulatorWindow2 window = new TestAWTEmulatorWindow2();
 		window.run();
@@ -53,7 +50,7 @@ public class TestAWTEmulatorWindow2 {
 		Frame frame = new Frame(gc);
 		frame.setSize(512, 384);
 		frame.setVisible(true);
-		Rectangle bounds = gc.getBounds();
+		//Rectangle bounds = gc.getBounds();
 		//makeBigImage(frame, bounds);
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
@@ -85,12 +82,12 @@ public class TestAWTEmulatorWindow2 {
 		vdpCanvas.clear(new byte[] { (byte) (ctr*11),(byte) (ctr*15),(byte) (ctr*7) });
 		
 		byte[] scaledData = new byte[bounds.width * bounds.height * 3];
-		V9t9Render.scaleImage(scaledData, 
+		V9t9Render.INSTANCE.scaleImage(scaledData, 
 				vdpCanvas.getImageData().data, 0,
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 				bounds.width, bounds.height, bounds.width * 4,
 				0, 0, bounds.width, bounds.height);
-		V9t9Render.addNoise(scaledData, 0,
+		V9t9Render.INSTANCE.addNoise(scaledData, 0,
 				bounds.width, bounds.height, bounds.width * 3,
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 		

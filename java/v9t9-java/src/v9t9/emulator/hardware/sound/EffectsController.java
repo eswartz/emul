@@ -273,7 +273,7 @@ public class EffectsController {
 		voice.accum += voice.incr + vib;
 		
 		if (voice.period16 > 0)
-			voice.clock = (voice.clock + voice.CLOCKSTEP) % voice.period16;
+			voice.clock = (voice.clock + ClockedSoundVoice.CLOCKSTEP) % voice.period16;
 		else
 			voice.clock = 0;
 		//while (voice.div < 0)

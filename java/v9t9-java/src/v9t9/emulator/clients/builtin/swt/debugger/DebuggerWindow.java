@@ -20,15 +20,13 @@ import v9t9.emulator.Machine;
 public class DebuggerWindow extends Composite {
 
 	private SashForm horizSash;
-	private final Machine machine;
-	private final Timer timer;
-	private CpuViewer cpuViewer;
+	/*private*/ final Machine machine;
+	/*private*/ CpuViewer cpuViewer;
 	private SashForm vertSash;
 
 	public DebuggerWindow(Composite parent, int style, Machine machine, Timer timer) {
 		super(parent, style);
 		this.machine = machine;
-		this.timer = timer;
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
 		horizSash = new SashForm(this, SWT.HORIZONTAL);

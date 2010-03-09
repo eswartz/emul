@@ -12,7 +12,6 @@ import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
-import v9t9.emulator.runtime.DumpFullReporter;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.memory.MemoryDomain;
 
