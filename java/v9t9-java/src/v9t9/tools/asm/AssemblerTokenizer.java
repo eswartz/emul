@@ -82,19 +82,24 @@ public class AssemblerTokenizer {
 				number = Integer.parseInt(image, radix);
 				return NUMBER;
 			} else if (ch == '>') {
+				boolean neg = false;
+				boolean first = true;
 				do {
 					image += (char)ch;
 					ch = reader.read();
-					if (ch >= '0' && ch <= '9')
+					if (first && ch == '-') 
+						neg = true;
+					else if (ch >= '0' && ch <= '9')
 						number = (number << 4) | (ch - '0');
 					else if (ch >= 'A' && ch <= 'F')
 						number = (number << 4) | (ch - 'A' + 10);
 					else if (ch >= 'a' && ch <= 'f')
 						number = (number << 4) | (ch - 'a' + 10);
-					else {
+					else
 						break;
-					}
+					first = false;
 				} while (ch != -1);
+				if (neg) number = -number;
 				if (ch != -1) reader.unread();
 				return NUMBER;
 			} else if (isLetterChar(ch)) {

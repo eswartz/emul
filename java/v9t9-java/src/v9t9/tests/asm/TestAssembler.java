@@ -165,7 +165,7 @@ public class TestAssembler extends BaseTest {
 	}
 	public void testRandomInst() throws Exception {
 		int cnt = 100;
-		Random random = new Random(System.currentTimeMillis());
+		Random random = new Random(0x12345);
 		while (cnt-- > 0) {
 			assertInstWords(new short[] {
 					(short)random.nextInt(65536),
@@ -193,7 +193,7 @@ public class TestAssembler extends BaseTest {
 			short exp = CPU.readWord(i);
 			if (i == 0)
 				exp = (short) InstructionTable.coerceInstructionOpcode(minst.inst, exp);
-			assertEquals(minst.toString() + "@" + minst.size, exp, words[i/2]);
+			assertEquals(minst.toString() + "@" + minst.size, Integer.toHexString(exp), Integer.toHexString(words[i/2]));
 		}
 	}
 

@@ -191,11 +191,11 @@ public class TestAssemblerConstPool extends BaseTest {
 		realinsts = assembler.optimize(realinsts);
 		realinsts = assembler.fixupJumps(realinsts);
 
-		testGeneratedContent(assembler, realinsts, pcOrInst);
 		byte[] constBytes = assembler.getConstPool().getBytes();
 		assertEquals("table size", consts.length, constBytes.length);
 		for (int x = 0; x < constBytes.length; x++)
 			assertEquals("#"+x, consts[x], constBytes[x]);
+		testGeneratedContent(assembler, realinsts, pcOrInst);
 	}
 
 

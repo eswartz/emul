@@ -4,6 +4,7 @@
 package v9t9.tools.asm.transform;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import v9t9.engine.cpu.InstructionTable;
@@ -31,8 +32,8 @@ import v9t9.tools.asm.operand.hl.SymbolOperand;
  *
  */
 public class ConstPool {
-	private Map<Integer, Integer> instWordMap = new HashMap<Integer, Integer>();
-	private Map<Integer, Integer> constWordMap = new HashMap<Integer, Integer>();
+	private Map<Integer, Integer> instWordMap = new LinkedHashMap<Integer, Integer>();
+	private Map<Integer, Integer> constWordMap = new LinkedHashMap<Integer, Integer>();
 	private Symbol tableAddr;
 	private int tableSize;
 	private boolean lastAccessWasByte;
@@ -197,7 +198,7 @@ public class ConstPool {
 			for (int i = 0; i < words.length; i++) {
 				short word = words[i];
 				if (i == 0 || (i == 1 && inst.getOp1().isConstant())
-						|| (i == 2 && inst.getOp2().isConstant())) {
+						|| (((i == 1 && inst.getOp1().getSize() == 0) || i == 2) && inst.getOp2().isConstant())) {
 					Integer ipc = instWordMap.get(word & 0xffff);
 					if (ipc == null) {
 						instWordMap.put(word & 0xffff, pc + i * 2);
