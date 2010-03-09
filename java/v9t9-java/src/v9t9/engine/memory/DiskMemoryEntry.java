@@ -248,7 +248,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             		loadSymbols(new FileInputStream(symfile));
             	}
             } catch (java.io.IOException e) {
-                e.printStackTrace();
+                // ignore
             } finally {
             	bLoaded = true;
             }

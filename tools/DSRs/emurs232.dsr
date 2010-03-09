@@ -43,10 +43,10 @@ rsnx8:	dw	0
 ;	db	>3,"pio"
 
 
-rs232ex	dw	DSROP D_RS232 +
-rs2321ex dw	DSROP D_RS2321 +
-rs2322ex dw	DSROP D_RS2322 +
-;pioex	dw	DSROP D_PIO +
+rs232ex	    DSR D_RS232
+rs2321ex 	DSR D_RS2321
+rs2322ex 	DSR D_RS2322
+;pioex		DSR D_PIO
 
 
 rsinit	dw	0
@@ -64,5 +64,5 @@ rsinit0
 rsint	dw	0
 	dw	rsint0
 
-rsint0	dw	DSROP >60 +			; interrupt
+rsint0	DSR >60 			; interrupt
 

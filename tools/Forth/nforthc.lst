@@ -586,7 +586,7 @@
 72    >02AA=>06A0 >04D6       	bl     	@vscreenoff 
 74    >02AE                   intv00b:
 75    >02AE=>0200 >F7A6       	li		0,vcrstimer
-76    >02B2=>B420 >04C9       	ab		#1,*0			; cursor timer
+76    >02B2=>B420 >01B9       	ab		#1,*0			; cursor timer
 77    >02B6=>9810 >F7A7       	cb		*0,@vcrsblink	; to blink or not to blink?
 78    >02BA=>1A04             	jl		intv01
 80    >02BC=>7410             	sb		*0,*0			; clear
@@ -597,7 +597,7 @@
 86    >02C6=>1805                 joc     intv02
 88                                ; ----------------------- keyboard scan
 89                                
-90    >02C8=>B820 >04C9 >F8E7     ab      #1,@kbdtimer    ; inc repeat delay
+90    >02C8=>B820 >01B9 >F8E7     ab      #1,@kbdtimer    ; inc repeat delay
 91    >02CE=>06A0 >1796           bl      @scankbd        ; get keyboard, save char       TRASHES REGS
 93    >02D2                   intv02:
 94    >02D2=>D0E0 >FF60           movb    @vintflags, 3   ; kbd trashed, so reread
@@ -686,9 +686,9 @@
 64    >0360=>C68B             	mov    11, *SP
 65    >0362=>C800 >F7BE       	mov    0, @vfgbg
 66                            	
-67    >0366=>9820 >001A >F7CD 	cb     #M_text,@vidmode
+67    >0366=>9820 >0019 >F7CD 	cb     #M_text,@vidmode
 68    >036C=>1304             	jeq    vsetcolor1
-69    >036E=>9820 >0235 >F7CD 	cb     #M_text2,@vidmode
+69    >036E=>9820 >021C >F7CD 	cb     #M_text2,@vidmode
 70    >0374=>1608             	jne    vsetcolor0
 72    >0376                   vsetcolor1:
 73    >0376=>06A0 >038E           bl     @vgetcolorbyte
@@ -724,7 +724,7 @@
 *** video.i
 107   >03AA=>06A0 >0A4E           bl      @vcursoroff
 108   >03AE=>C081                 mov     r1 , r2
-109   >03B0=>9820 >1084 >F7CD     cb     #M_bit4, @vidmode
+109   >03B0=>9820 >0014 >F7CD     cb     #M_bit4, @vidmode
 110   >03B6=>1309                 jeq     vrwpage0
 111                               
 112                               ; text/graphics mode allows page access on 0x2000 boundaries
@@ -760,13 +760,13 @@
 *** video.i
 135   >03E2=>C001                 mov     r1 , r0
 136   >03E4=>D2E0 >F7CD           movb    @vidmode, 11
-137   >03E8=>92E0 >1084           cb     #M_bit4, 11
+137   >03E8=>92E0 >0014           cb     #M_bit4, 11
 138   >03EC=>1320                 jeq     vpage0
 139                               
 140                               ; text/graphics mode allows page access on 0x2000 boundaries
 141   >03EE=>0A30                 sla     0, 3
 142   >03F0=>7000                 sb      0, 0
-143   >03F2=>92E0 >0235           cb     #M_text2, 11
+143   >03F2=>92E0 >021C           cb     #M_text2, 11
 144   >03F6=>1303                 jeq     vpage1
 145   >03F8=>0260 >0200           ori     0,>200
 146   >03FC=>101B                 jmp     vpageout
@@ -878,13 +878,13 @@
 281   >04D2=>C2FA             	mov	*SP+,11
 282   >04D4=>045B             	rt
 302   >04D6                   vscreenoff
-303   >04D6=>5820 >0479 >F7D7 	szcb 	#>40,@vregr1
+303   >04D6=>5820 >0215 >F7D7 	szcb 	#>40,@vregr1
 304   >04DC=>1003             	jmp	vreg1set
 305   >04DE                   vscreenon
-306   >04DE=>F820 >0479 >F7D7 	socb	#>40,@vregr1
+306   >04DE=>F820 >0215 >F7D7 	socb	#>40,@vregr1
 307   >04E4                   vreg1set:
 308   >04E4=>D820 >F7D7 >FF8A 	movb	@vregr1,@VDPWA
-309   >04EA=>D820 >0C03 >FF8A 	movb	#>81,@VDPWA
+309   >04EA=>D820 >00D3 >FF8A 	movb	#>81,@VDPWA
 310   >04F0=>045B             	rt
 314   >04F2                   vtmap	dw	vscreen,vscreensz,vcolors,vcolorsz,vpatts,vpattsz,vsprpat,vsprites,vsprmot,vsprcol,vfree
       >04F2=>F786 >F788 >F78E 
@@ -1043,7 +1043,7 @@
 497   >075E=>C68B                 mov 11,*SP
 498                               
 499   >0760                   vts0 cb #>ff,*1
-      >0760=>9460 >2892       
+      >0760=>9460 >045D       
 500   >0764=>1304                 jeq  vts1
 501   >0766=>C031                 mov   *1+, 0
 502   >0768=>06A0 >0460           bl  @vwreg
@@ -1106,7 +1106,7 @@
 567                           	; delete the sprites; $d0 for mode 1 and $d8 for mode 2
 568   >07D4=>C060 >F794           mov @vsprcol, 1
 569   >07D8=>1603                 jne vclrtabspr2
-570   >07DA=>D060 >0A1E       	movb #>d0,1
+570   >07DA=>D060 >010E       	movb #>d0,1
 571   >07DE=>100C                 jmp vclrtabsprs
 572   >07E0                   vclrtabspr2:
 574                               ; clear sprite color table too
@@ -1116,7 +1116,7 @@
 578   >07E8=>06A0 >166C           bl @vsetbank
 579   >07EC=>06A0 >04BC           bl @vclr
 580   >07F0=>C020 >F792           mov @vsprites, 0
-581   >07F4=>D060 >1EC0       	movb #>d8,1
+581   >07F4=>D060 >0174       	movb #>d8,1
 582   >07F8                   vclrtabsprs:
 583   >07F8=>06A0 >166C           bl @vsetbank
 584   >07FC=>06A0 >044A           bl  @vwaddr    
@@ -1139,7 +1139,7 @@
 607   >0828=>064A                 dect SP
 608   >082A=>C68B                 mov 11, *SP
 609   >082C=>04C1                 clr 1
-610   >082E=>9820 >0235 >F7CD     cb #M_text2, @vidmode
+610   >082E=>9820 >021C >F7CD     cb #M_text2, @vidmode
 611   >0834=>1303                 jeq vcolorsetup1
 612   >0836=>06A0 >038E           bl @vgetcolorbyte
 613   >083A=>D040                 movb 0,1
@@ -1205,13 +1205,13 @@
 666   >089C=>06A0 >07AA           bl  @vcleartables
 667                               
 668   >08A0=>D060 >F7CD           movb @vidmode,1
-669   >08A4=>9060 >001A           cb   #M_text,1
+669   >08A4=>9060 >0019           cb   #M_text,1
 670   >08A8=>1309                 jeq  vresettextish
-671   >08AA=>9060 >0235           cb   #M_text2,1
+671   >08AA=>9060 >021C           cb   #M_text2,1
 672   >08AE=>1306                 jeq  vresettextish
-673   >08B0=>9060 >03C5           cb   #M_multi,1
+673   >08B0=>9060 >0078           cb   #M_multi,1
 674   >08B4=>1304                 jeq  vresetmulti
-675   >08B6=>9060 >04C9           cb   #M_graph,1
+675   >08B6=>9060 >01B9           cb   #M_graph,1
 676   >08BA=>1619                 jne  vreset0
 678   >08BC                   vresettextish:    
 679   >08BC=>102C                 jmp     vresetout
@@ -1228,7 +1228,7 @@
 690   >08CC                   vbs3    movb 1,@VDPWD
       >08CC=>D801 >FF88       
 691   >08D0=>0221 >0100           ai      1,>0100
-692   >08D4=>2460 >2894           czc     #>1f00, 1
+692   >08D4=>2460 >2892           czc     #>1f00, 1
 693   >08D8=>16F9                 jne     vbs3
 694   >08DA=>0221 >E000           ai      1,->2000
 695   >08DE=>0602                 dec     2
@@ -1239,7 +1239,7 @@
 700   >08EC=>1014                 jmp     vresetout
 701                               
 702   >08EE                   vreset0:    
-703   >08EE=>9820 >03D7 >F7CD     cb      #M_bit,@vidmode
+703   >08EE=>9820 >0018 >F7CD     cb      #M_bit,@vidmode
 704   >08F4=>160E                 jne     vreset1
 705                               
 706                               ; setup standard SIT for bitmap mode
@@ -1380,9 +1380,9 @@
 820   >09DA=>C831 >F7A2           mov    *1+, @vbsize
 821   >09DE=>C011                 mov    *1, 0
 822   >09E0=>C800 >F7BC           mov    0,@vfont
-824   >09E4=>9820 >03D7 >F7CD     cb     #M_bit, @vidmode
+824   >09E4=>9820 >0018 >F7CD     cb     #M_bit, @vidmode
 825   >09EA=>1316                 jeq    vsetfont1
-826   >09EC=>9820 >1084 >F7CD     cb     #M_bit4, @vidmode
+826   >09EC=>9820 >0014 >F7CD     cb     #M_bit4, @vidmode
 827   >09F2=>1312                 jeq    vsetfont1
 828                               
 829   >09F4                   vsetfont0:
@@ -1431,7 +1431,7 @@
 872   >0A4C=>045B                 rt
 874                               
 883   >0A4E                   vcursoroff
-884   >0A4E=>9820 >F7AA >001A 	cb	   @vcurs,#00
+884   >0A4E=>9820 >F7AA >0019 	cb	   @vcurs,#00
 885   >0A54=>1306             	jeq	   vcursisoff
 886   >0A56=>064A             	dect   SP
 887   >0A58=>C680             	mov	   0,*SP
@@ -1451,10 +1451,10 @@
 901   >0A6C=>020A >F740           li      SP,vstack + vstacksize
 903   >0A70=>C32D >0018           mov     @24(13), 12
 904                               
-905   >0A74=>9820 >1084 >F7CD     cb      #M_bit4,@vidmode
+905   >0A74=>9820 >0014 >F7CD     cb      #M_bit4,@vidmode
 906   >0A7A=>130D                 jeq     vbpcont4
 907                               
-908   >0A7C=>9820 >03D7 >F7CD     cb      #M_bit,@vidmode
+908   >0A7C=>9820 >0018 >F7CD     cb      #M_bit,@vidmode
 909   >0A82=>1301                 jeq     vbpcont
 911   >0A84=>0380                 rtwp
 913   >0A86                   vbpcont:
@@ -1476,9 +1476,9 @@
 931   >0AAC=>06A0 >048A           bl      @vwregnext
 932   >0AB0=>112C                 data    >112c        ; -> CLR
 933   >0AB2=>D52C >0001           movb    @1(12), *4     ; CLR
-935   >0AB6=>D520 >001A           movb    #00, *4         ; ARG 
+935   >0AB6=>D520 >0019           movb    #00, *4         ; ARG 
 937   >0ABA=>0209 >5000           li      9, >5000        ; PSET
-938   >0ABE=>5720 >1F5F           szcb    #>f0, *12
+938   >0ABE=>5720 >024B           szcb    #>f0, *12
 939   >0AC2=>F25C                 socb    *12, 9           ; OP
 940   >0AC4=>06A0 >161E           bl      @vbit4xsetupMMMcommand
 941                               
@@ -1494,10 +1494,10 @@
 950   >0AD2=>020A >F740           li      SP,vstack + vstacksize
 952   >0AD6=>C2AD >0018           mov     @24(13), 10
 953                               
-954   >0ADA=>9820 >F7CD >1084     cb      @vidmode, #M_bit4
+954   >0ADA=>9820 >F7CD >0014     cb      @vidmode, #M_bit4
 955   >0AE0=>131B                 jeq     fr4x
 956                               
-957   >0AE2=>9820 >F7CD >03D7     cb      @vidmode, #M_bit
+957   >0AE2=>9820 >F7CD >0018     cb      @vidmode, #M_bit
 958   >0AE8=>162C                 jne     frout
 960   >0AEA=>C0AA >0006           mov     @6(10), 2       ; Y
 961   >0AEE=>C06A >0008           mov     @8(10), 1       ; X
@@ -1512,7 +1512,7 @@
 970   >0B02=>F320 >F7BF           socb    @vfgbg+1, 12
 971                               
 972   >0B06=>06CC                 swpb    12
-973   >0B08=>D320 >2892           movb    #>FF,12
+973   >0B08=>D320 >045D           movb    #>FF,12
 975   >0B0C=>C100                 mov     0,4
 976   >0B0E=>0241 >0007           andi    1,7
 978   >0B12=>06A0 >1362           bl      @vbitfillrect
@@ -1531,7 +1531,7 @@
 992   >0B2E=>D52A >0001           movb    @1(10), *4      ; CLR
 994   >0B32=>D502                 movb    2, *4           ; ARG (dix=0, diy=0, mxc=0)
 996   >0B34=>0209 >8000           li      9, >8000        ; LMMV
-997   >0B38=>56A0 >1F5F           szcb    #>f0, *10
+997   >0B38=>56A0 >024B           szcb    #>f0, *10
 998   >0B3C=>F25A                 socb    *10, 9          ; OP
 999   >0B3E=>06A0 >161E           bl      @vbit4xsetupMMMcommand
 1000                              
@@ -1547,10 +1547,10 @@
 1011  >0B4C=>020A >F740           li      SP,vstack + vstacksize
 1013  >0B50=>C32D >0018           mov     @24(13), 12
 1014                              
-1015  >0B54=>9820 >F7CD >1084     cb     @vidmode, #M_bit4
+1015  >0B54=>9820 >F7CD >0014     cb     @vidmode, #M_bit4
 1016  >0B5A=>1306                 jeq     ln4x
 1017                              
-1018  >0B5C=>9820 >F7CD >03D7     cb     @vidmode, #M_bit
+1018  >0B5C=>9820 >F7CD >0018     cb     @vidmode, #M_bit
 1019  >0B62=>161A                 jne     lnout
 1020                              
 1021  >0B64=>0460 >0FE6           b       @vbitline
@@ -1570,7 +1570,7 @@
 1036  >0B84=>D52C >0001           movb    @1(12), *4     ; CLR
 1038  >0B88=>D502                 movb    2, *4           ; ARG (dix=0, diy=0, mxc=0)
 1040  >0B8A=>0209 >7000           li      9, >7000        ; LINE
-1041  >0B8E=>5720 >1F5F           szcb    #>f0, *12
+1041  >0B8E=>5720 >024B           szcb    #>f0, *12
 1042  >0B92=>F25C                 socb    *12, 9          ; OP
 1043  >0B94=>06A0 >161E           bl      @vbit4xsetupMMMcommand
 1044                              
@@ -1665,11 +1665,11 @@
 1150  >0C0C=>C041                 mov     1, 1        ; which direction?
 1151  >0C0E=>1103                 jlt     $1+
 1152                              
-1153  >0C10=>B0E0 >04C9           ab      #>1, 3      ; moved down, go further 
+1153  >0C10=>B0E0 >01B9           ab      #>1, 3      ; moved down, go further 
 1154  >0C14=>1002                 jmp     $2+
 1155                              
 1156  >0C16                   $1:
-1157  >0C16=>70E0 >04C9           sb      #>1, 3      ; moved up, go further
+1157  >0C16=>70E0 >01B9           sb      #>1, 3      ; moved up, go further
 1158                              
 1159  >0C1A                   $2:
 1160  >0C1A=>0260 >4000           ori     0, >4000
@@ -1708,7 +1708,7 @@
 1     >0C4E=>C68B                     mov  11, @(1-0-1)*2(SP)
 *** video_text.i
 24    >0C50=>0201 >050C           li      1,vtxt
-25    >0C54=>D820 >001A >F7CD     movb    #M_text,@vidmode
+25    >0C54=>D820 >0019 >F7CD     movb    #M_text,@vidmode
 26    >0C5A=>06A0 >0960           bl      @vstdmode
 27    >0C5E                   vtextsetup0:
 28    >0C5E=>06A0 >075C       	bl	    @vsetupregs
@@ -1732,7 +1732,7 @@
 1     >0C70=>C68B                     mov  11, @(1-0-1)*2(SP)
 *** video_text.i
 37    >0C72=>06A0 >14A8           bl      @venhmode
-38    >0C76=>D820 >0235 >F7CD     movb    #M_text2,@vidmode
+38    >0C76=>D820 >021C >F7CD     movb    #M_text2,@vidmode
 39                                
 40                                ; set inverted bg/fg for blink color
 41    >0C7C=>04C0                 clr     0
@@ -1740,13 +1740,13 @@
 43    >0C82=>06C0                 swpb    0
 44    >0C84=>D020 >F7BE           movb    @vfgbg,0
 45    >0C88=>0B05                 src     5, 0
-46    >0C8A=>D020 >11AB           movb    #>C,0
+46    >0C8A=>D020 >049B           movb    #>C,0
 47    >0C8E=>06A0 >0460           bl      @vwreg
 48                                
 49    >0C92=>0201 >069A           li      1,vtxt2
 50    >0C96=>10E3                 jmp     vtextsetup0
 53    >0C98                   vgraphsetup
-54    >0C98=>D820 >04C9 >F7CD     movb    #M_graph,@vidmode
+54    >0C98=>D820 >01B9 >F7CD     movb    #M_graph,@vidmode
 55    >0C9E=>0201 >0536       	li	1,vgfx
 56    >0CA2                   vgraphsetup0:	
 57                                PUSH    SP,11
@@ -1769,7 +1769,7 @@
 *** video_text.i
 64    >0CB8=>045B             	rt
 66    >0CBA                   vmultisetup
-67    >0CBA=>D820 >03C5 >F7CD     movb    #M_multi,@vidmode
+67    >0CBA=>D820 >0078 >F7CD     movb    #M_multi,@vidmode
 68    >0CC0=>0201 >06FA           li  1,vmulti
 69    >0CC4=>10EE                 jmp vgraphsetup0
 70                                
@@ -1842,7 +1842,7 @@
 144                               ;srl     2,8 
 145   >0D2C=>06A0 >04BC           bl      @vclr               ; clear out line
 146                               
-147   >0D30=>9820 >0235 >F7CD     cb      #M_text2, @vidmode
+147   >0D30=>9820 >021C >F7CD     cb      #M_text2, @vidmode
 148   >0D36=>160A                 jne     vtextclearlineout
 149                               
 150                               ; clear blinks
@@ -1879,7 +1879,7 @@
 186   >0D6A=>06A0 >166C           bl     @vsetbank            ; set bank / page
 187   >0D6E=>06A0 >044A       	bl	   @vwaddr				; set VDP addr
 188   >0D72=>D820 >F7C0 >FF88 	movb   @vch,@VDPWD			; draw
-190   >0D78=>9820 >0235 >F7CD     cb     #M_text2, @vidmode	
+190   >0D78=>9820 >021C >F7CD     cb     #M_text2, @vidmode	
 191   >0D7E=>1301             	jeq    vtextchar0
 192   >0D80=>0380             	rtwp
 193                           	
@@ -1922,7 +1922,7 @@
 235   >0DDA=>0691             	bl	    *1
 236                           	
 237   >0DDC=>06A0 >166C       	bl     @vsetbank
-238   >0DE0=>B820 >0BB1 >F7AA 	ab	    #>80,@vcurs
+238   >0DE0=>B820 >005F >F7AA 	ab	    #>80,@vcurs
 239   >0DE6=>130B             	jeq	   vtcoff
 241   >0DE8=>06A0 >044E       	bl	    @vraddr			; read char under cursor
 242   >0DEC=>D820 >FF80 >F7AB 	movb	@VDPRD,@vcursunder
@@ -1942,7 +1942,7 @@
 505                           	incl	video_bit.i
 *** video_bit.i
 23    >0E0E                   vbitmapsetup
-24    >0E0E=>D820 >001A >F7CC 	movb	#00,@vmono
+24    >0E0E=>D820 >0019 >F7CC 	movb	#00,@vmono
 25    >0E14=>0201 >0566       	li 	   1, vbit
 26    >0E18                   vbitsentr:
 27                                PUSH    SP,11
@@ -1952,7 +1952,7 @@
 *** <expansion of foreach>
 1     >0E1A=>C68B                     mov  11, @(1-0-1)*2(SP)
 *** video_bit.i
-28    >0E1C=>D820 >03D7 >F7CD     movb    #M_bit,@vidmode
+28    >0E1C=>D820 >0018 >F7CD     movb    #M_bit,@vidmode
 30    >0E22=>06A0 >075C       	bl	    @vsetupregs
 31    >0E26=>06A0 >0790       	bl	    @vsetupaddrs
 32    >0E2A=>C801 >F7C8       	mov    1,@vtermptr
@@ -1966,7 +1966,7 @@
 *** video_bit.i
 36    >0E34=>045B             	rt
 38    >0E36                   vmonosetup
-39    >0E36=>D820 >04C9 >F7CC 	movb	#1,@vmono
+39    >0E36=>D820 >01B9 >F7CC 	movb	#1,@vmono
 40    >0E3C=>0201 >06CA       	li     1, vmonobit
 41    >0E40=>10EB             	jmp	   vbitsentr
 43    >0E42                   vbitmap3setup
@@ -2171,7 +2171,7 @@
 258                               
 259                               ; based on the cursor mode, we either save + modify or restore the bits under the cursor
 260   >0FA2=>0205 >0F66           li      5,vbitcursorset
-261   >0FA6=>B820 >0BB1 >F7AA     ab      #>80,@vcurs
+261   >0FA6=>B820 >005F >F7AA     ab      #>80,@vcurs
 262   >0FAC=>1602                 jne     vbc1
 263   >0FAE=>0205 >0F76           li      5,vbitcursorreset
 264   >0FB2                   vbc1:    
@@ -2326,7 +2326,7 @@
 440   >109A=>06A0 >118A            bl     @vbitwritepixel_
 441                               
 442   >109E=>0580                 inc    0                ; new Y
-443   >10A0=>2420 >2896           czc    #7, 0            ; new block?
+443   >10A0=>2420 >0B10           czc    #7, 0            ; new block?
 444   >10A4=>1604                 jne    $1+              ; nope
 446   >10A6=>0220 >00F8           ai     0,256-8          ; next block
 447   >10AA=>0240 >1FFF           andi   0, >1fff         ; keep in range
@@ -2358,7 +2358,7 @@
 477                               
 478   >10D2=>06A0 >118A           bl     @vbitwritepixel_
 479                               
-480   >10D6=>B820 >0C02 >FC61     ab     #8, @vidws+1     ; move across a row (8 bytes), keeping in range
+480   >10D6=>B820 >0A0A >FC61     ab     #8, @vidws+1     ; move across a row (8 bytes), keeping in range
 481                               
 482   >10DC=>06A0 >117E           bl     @vbitreadpixel_
 483                               
@@ -2419,7 +2419,7 @@
 547   >1130=>C2C1                 mov     1, 11
 548                               
 549   >1132=>04C1                 clr     1
-550   >1134=>3C60 >2898           div     #192, 1              ; scale down Y (R2=mod)
+550   >1134=>3C60 >2894           div     #192, 1              ; scale down Y (R2=mod)
 551   >1138=>C002                 mov     2, 0
 553                               ; R0=Y R2=X
 554   >113A=>C08B                 mov     11, 2
@@ -2486,13 +2486,13 @@
 628   >1198=>D820 >F7CC >F7CC     movb   @vmono,@vmono
 629   >119E=>1609                 jne    $1+
 630                                   
-631   >11A0=>2820 >289A           xor    #>2000, 0            ; pattern -> color table
+631   >11A0=>2820 >07C8           xor    #>2000, 0            ; pattern -> color table
 633   >11A4=>D620 >FC61           movb   @vidws+1, *8
 634   >11A8=>D600                 movb   0, *8
 635                               
 636   >11AA=>D80C >FF88           movb   12, @VDPWD          ; put color byte
 637                               
-638   >11AE=>2820 >289A           xor    #>2000, 0            ; pattern -> color table
+638   >11AE=>2820 >07C8           xor    #>2000, 0            ; pattern -> color table
 639   >11B2                   $1:
 640   >11B2=>0240 >3FFF           andi   0, >3fff            ; turn off write bit    
 641   >11B6=>045B                 rt
@@ -2951,7 +2951,7 @@
 *** <expansion of foreach>
 1     >14FE=>C68B                     mov  11, @(1-0-1)*2(SP)
 *** video_bit4.i
-93    >1500=>D820 >1084 >F7CD     movb    #M_bit4,@vidmode
+93    >1500=>D820 >0014 >F7CD     movb    #M_bit4,@vidmode
 95    >1506=>06A0 >075C           bl  @vsetupregs
 96    >150A=>06A0 >0790           bl  @vsetupaddrs
 97    >150E=>06A0 >14A8           bl  @venhmode
@@ -3195,7 +3195,7 @@
 333   >164C=>06A0 >1598           bl      @vbit4xsetupcursorDXDY
 334   >1650=>06A0 >15D0           bl      @vbit4xsetupwindowlineNXNY
 336   >1654=>D520 >F7BF           movb    @vfgbg+1, *4    ; CLR
-338   >1658=>D520 >001A           movb    #>00, *4        ; ARG (dix=0, diy=0, mxc=0)
+338   >1658=>D520 >0019           movb    #>00, *4        ; ARG (dix=0, diy=0, mxc=0)
 340   >165C=>0209 >8000           li      9, >8000        ; HMMV  (terminal is usually aligned)
 341   >1660=>06A0 >161E           bl      @vbit4xsetupMMMcommand
 342                               
@@ -3224,7 +3224,7 @@
 367   >1672=>B020 >FF6C           ab      @vpob, 0
 368   >1676=>D800 >FF8A           movb    0, @VDPWA
 369   >167A=>C03A                 mov     *SP+,0
-370   >167C=>D820 >105F >FF8A     movb    #>8e,@VDPWA
+370   >167C=>D820 >0FEF >FF8A     movb    #>8e,@VDPWA
 371   >1682=>0240 >3FFF           andi    0,>3fff
 372   >1686=>045B                 rt
 377                               
@@ -3257,7 +3257,7 @@
 408   >16B6=>06CC                 swpb    12
 409   >16B8=>D1F1                 movb    *1+, 7               ; fetch first row
 410   >16BA=>06A0 >1688           bl      @vbit4xsendcharpixel  ; send first CLR
-412   >16BE=>D520 >001A           movb    #0, *4              ; ARG (dix=0, diy=0, mxc=0)
+412   >16BE=>D520 >0019           movb    #0, *4              ; ARG (dix=0, diy=0, mxc=0)
 413                               
 414   >16C2=>0209 >B800           li      9, >B800            ; LMMC + TINP
 415   >16C6=>06A0 >161E           bl      @vbit4xsetupMMMcommand
@@ -3304,12 +3304,12 @@
 462   >170C=>0980                 srl     0,8
 463   >170E=>0600                 dec     0
 464   >1710=>06A0 >1578           bl      @vcoordsend         ; NY
-466   >1714=>D520 >2892           movb    #>ff, *4            ; CLR
-468   >1718=>D520 >001A           movb    #0, *4              ; ARG (dix=0, diy=0, mxc=0)
+466   >1714=>D520 >045D           movb    #>ff, *4            ; CLR
+468   >1718=>D520 >0019           movb    #0, *4              ; ARG (dix=0, diy=0, mxc=0)
 469                               
 470   >171C=>0209 >8300           li      9, >8300            ; LMMV + EOR
 471   >1720=>06A0 >161E           bl      @vbit4xsetupMMMcommand
-473   >1724=>B820 >0BB1 >F7AA     ab  #>80,@vcurs
+473   >1724=>B820 >005F >F7AA     ab  #>80,@vcurs
 475   >172A=>06A0 >14CC           bl      @vstatus0
 476                               ; no need to wait!
 477                               
@@ -3396,7 +3396,7 @@
 *** kbd.i
 24    >178E                   kinit
 25                                ;   reset clears all memory
-27    >178E=>C820 >289C >F90C     mov    #>1e03,@kbdlimit  ; 1/2 s before repeat, 1/20 s delay between repeat
+27    >178E=>C820 >2896 >F90C     mov    #>1e03,@kbdlimit  ; 1/2 s before repeat, 1/20 s delay between repeat
 28                            	
 29    >1794=>045B             	rt
 45    >1796                   scankbd	mov	11,10
@@ -3412,7 +3412,7 @@
 58    >17AC=>0544             	inv		4			; 0=off 1=on
 59                            	
 60    >17AE=>04C5             	clr     5
-61    >17B0=>9120 >1B61       	cb      #>72, 4     ; ctrl+fctn+shift+space (abort)?
+61    >17B0=>9120 >03BF       	cb      #>72, 4     ; ctrl+fctn+shift+space (abort)?
 62    >17B4=>1601             	jne     sknobreak
 63                            	
 64    >17B6=>0705             	seto    5           ; remember for later
@@ -3504,9 +3504,9 @@
 181   >186C=>0A14             	sla		4,1		 	; kbd_poll set?
 182   >186E=>183E             	joc		khnone
 184                           	; HACK!  Fctn-Shift-S is treated as Ctrl-H
-185   >1870=>9060 >0EBC       	cb		#211, 1
+185   >1870=>9060 >0B08       	cb		#211, 1
 186   >1874=>1606             	jne		$0+
-187   >1876=>9820 >14E9 >F8E9 	cb		#>30, @kbdshft
+187   >1876=>9820 >03EF >F8E9 	cb		#>30, @kbdshft
 188   >187C=>1602             	jne		$0
 189                           	
 190   >187E=>0201 >0800       	li		1,>0800
@@ -3528,11 +3528,11 @@
 215   >18A0=>9820 >F8E7 >F90C 	cb		@kbdtimer,@kbdlimit ; repeated long enough yet?
 216   >18A6=>1A22             	jl		khnone		     	; no
 217                           	
-218   >18A8=>F820 >0BB1 >F90E     socb    #>80,@kbdflag       ; set repeat flag
+218   >18A8=>F820 >005F >F90E     socb    #>80,@kbdflag       ; set repeat flag
 219                           	
 220   >18AE=>1005             	jmp		khstuff
 222   >18B0                   khnew:
-223   >18B0=>5820 >0BB1 >F90E 	szcb	#>80,@kbdflag	    ; clear repeat flag
+223   >18B0=>5820 >005F >F90E 	szcb	#>80,@kbdflag	    ; clear repeat flag
 224   >18B6=>D803 >F8E8       	movb	3,@kbdscan			; save new scancode
 226   >18BA                   khstuff:
 227   >18BA=>7820 >F8E7 >F8E7 	sb		@kbdtimer,@kbdtimer ; restart timer
@@ -3563,8 +3563,8 @@
 296   >18F8=>9820 >F8EA >F8EB 	cb		@kbdhead,@kbdtail
 297   >18FE=>130C             	jeq		krbempty
 298   >1900=>D060 >F8EA       	movb	@kbdhead,1			; get head ptr
-299   >1904=>B820 >04C9 >F8EA 	ab		#1,@kbdhead		; and inc...
-300   >190A=>5820 >029D >F8EA 	szcb	#-kbdbufsize,@kbdhead	; mask...
+299   >1904=>B820 >01B9 >F8EA 	ab		#1,@kbdhead		; and inc...
+300   >190A=>5820 >0079 >F8EA 	szcb	#-kbdbufsize,@kbdhead	; mask...
 301   >1910=>06C1             	swpb	1					; and make offset
 302   >1912=>D021 >F8EC       	movb	@kbdbuf(1),0		; and retrieve!
 303   >1916=>0980             	srl		0,8
@@ -3639,7 +3639,7 @@
 109   >198C=>D801 >F7C0       	movb	1,@vch
 110   >1990=>C060 >F79C       	mov	    @vdrawchar,1
 111   >1994=>0411             	blwp	*1  				; print char
-113   >1996=>B820 >04C9 >F7CA 	ab	    #1,@vx	     		; add a space
+113   >1996=>B820 >01B9 >F7CA 	ab	    #1,@vx	     		; add a space
 114   >199C=>1804             	jc	    prchwr				; carried, thus wrapped
 115   >199E=>9820 >F7CA >F7C4 	cb	    @vx,@vwxs			; edge of window?
 116   >19A4=>1A02             	jl	    prchout				; no, we're okay
@@ -3664,13 +3664,13 @@
 136   >19B6=>9800 >F7C4       	cb	    0,@vwxs
 137   >19BA=>1A04             	jl	    gxyokayx
 138   >19BC=>D020 >F7C4       	movb	@vwxs,0
-139   >19C0=>7020 >04C9       	sb 	    #1,0
+139   >19C0=>7020 >01B9       	sb 	    #1,0
 140   >19C4                   gxyokayx:
 141   >19C4=>06C0             	swpb	0
 142   >19C6=>9800 >F7C5       	cb	    0,@vwys
 143   >19CA=>1A04             	jl	    gxyokayy
 144   >19CC=>D020 >F7C5       	movb	@vwys,0
-145   >19D0=>7020 >04C9       	sb	    #1,0
+145   >19D0=>7020 >01B9       	sb	    #1,0
 146   >19D4                   gxyokayy:
 147   >19D4=>06C0             	swpb	0
 148   >19D6=>C800 >F7CA       	mov	    0,@vx
@@ -3767,15 +3767,15 @@
 *** term.i
 223   >1A60=>06A0 >0A4E       	bl	@vcursoroff
 225   >1A64=>D060 >F7CA       	movb	@vx,1				; get x
-226   >1A68=>7060 >04C9       	sb	    #1,1				; decrement
+226   >1A68=>7060 >01B9       	sb	    #1,1				; decrement
 227   >1A6C=>180F             	jc	    bksp0				; 0 -> -1?
 229   >1A6E=>D060 >F7C4       	movb	@vwxs,1				; yup, move to other edge
-230   >1A72=>7060 >04C9       	sb	    #1,1			
+230   >1A72=>7060 >01B9       	sb	    #1,1			
 231   >1A76=>D0A0 >F7CB       	movb	@vy,2				; and decrement
-232   >1A7A=>70A0 >04C9       	sb	    #1,2				; Y
+232   >1A7A=>70A0 >01B9       	sb	    #1,2				; Y
 233   >1A7E=>1804             	jc	    bksp1				; 0 -> -1?
 234   >1A80=>D0A0 >F7C5       	movb	@vwys,2				; move to bottom
-235   >1A84=>70A0 >04C9       	sb	    #1,2
+235   >1A84=>70A0 >01B9       	sb	    #1,2
 236   >1A88                   bksp1	movb	2,@vy				; save
       >1A88=>D802 >F7CB       
 237   >1A8C                   bksp0	movb	1,@vx				; save
@@ -3799,7 +3799,7 @@
 *** term.i
 249   >1AA2=>06A0 >0A4E           bl      @vcursoroff         ; we're moving cursor
 251   >1AA6=>7820 >F7CA >F7CA     sb      @vx,@vx             ; reset X coord
-252   >1AAC=>B820 >04C9 >F7CB     ab      #1,@vy               ; next line
+252   >1AAC=>B820 >01B9 >F7CB     ab      #1,@vy               ; next line
 253   >1AB2=>1804                 jc      crlfc               ; wrapped?
 254   >1AB4=>9820 >F7CB >F7C5     cb      @vy,@vwys           ; bottom of window?
 255   >1ABA=>1A03                 jl      crlf0
@@ -3876,17 +3876,17 @@
 312   >1B30=>9801 >1053           cb      1,#>0d           ; enter?
 313   >1B34=>13B1                 jeq     crlf
 315   >1B36                   $1:  cb     1,#>07          ; bell?
-      >1B36=>9801 >126B       
+      >1B36=>9801 >004E       
 316   >1B3A=>130B                 jeq     bell
 318   >1B3C                   $1:  cb     1,#>08          ; backspace?
-      >1B3C=>9801 >0C02       
+      >1B3C=>9801 >0A0A       
 319   >1B40=>1388                 jeq     bksp
 321   >1B42                   $1:  cb     1,#>09          ; tab?
-      >1B42=>9801 >0EEA       
+      >1B42=>9801 >0216       
 322   >1B46=>13C9                 jeq     tab
 323                               
 324   >1B48                   $1: cb      1,#>0B          ; vertical tab ( == clear to end of line )
-      >1B48=>9801 >103B       
+      >1B48=>9801 >002D       
 325   >1B4C=>13DA                 jeq     clreol
 326                                   
 327   >1B4E=>0460 >1984           b       @printchar
@@ -3938,7 +3938,7 @@
 40    >1B98=>020C >0F00       	li	12,>0f00			; start below first DSR
 41    >1B9C                   di00	sbz	0
       >1B9C=>1E00             
-42    >1B9E=>B320 >04C9       	ab	#1,12				; point to next DSR
+42    >1B9E=>B320 >01B9       	ab	#1,12				; point to next DSR
 43    >1BA2=>028C >2000       	ci	12,>2000
 44    >1BA6=>1410             	jhe	diout				; done
 46    >1BA8=>1D00             	sbo	0					; turn on ROM
@@ -4185,7 +4185,7 @@
 310   >1E36=>8040                 c       0, 1
 311   >1E38=>1403                 jhe     $0+
 312                               
-313   >1E3A=>D760 >1084           movb    #4, *13             ; not enough memory!
+313   >1E3A=>D760 >0014           movb    #4, *13             ; not enough memory!
 314   >1E3E=>103D                 jmp     $1+
 315                                
 316   >1E40                   $0:
@@ -4203,7 +4203,7 @@
 329   >1E62=>0A25                 sla     5,2                 ; sector #
 330                               
 331   >1E64=>04C4                 clr     4
-332   >1E66=>3D20 >289E           div     #360, 4             ; sector -> disk
+332   >1E66=>3D20 >2898           div     #360, 4             ; sector -> disk
 333   >1E6A=>0584                 inc     4                   ; 0-based to 1-based
 334   >1E6C=>06C4                 swpb    4
 335   >1E6E=>DA04 >004C           movb    4, @>4C(8)          ; disk #
@@ -4214,7 +4214,7 @@
 340   >1E7A=>0206 >1DFC           li      6,rblockpab
 341                               
 342   >1E7E                   rblks 
-343   >1E7E=>DA20 >1084 >004D     movb    #4, @>4D(8)         ; four sectors
+343   >1E7E=>DA20 >0014 >004D     movb    #4, @>4D(8)         ; four sectors
 344   >1E84=>04E8 >0050           clr     @>50(8)              ; parms @>00 + rambase
 346   >1E88=>C607                 mov     7,*8             ; VDP buff addr 
 347   >1E8A=>CA05 >0002           mov     5,@2(8)          ; sector #
@@ -4265,7 +4265,7 @@
 408   >1EF4=>C051                 mov     *1,1                ; get next
 409   >1EF6=>16FA                 jne     dodsrfnd
 411   >1EF8                   dodsrerr 
-412   >1EF8=>DA20 >2892 >0050     movb    #>ff,@>50(8)         ; fake error
+412   >1EF8=>DA20 >045D >0050     movb    #>ff,@>50(8)         ; fake error
 413   >1EFE=>1006                 jmp     dodsrout
 415   >1F00                   dodsrrun 
 416   >1F00=>C2E1 >0002           mov     @2(1),11                ; get addr
@@ -4344,7 +4344,7 @@
 70    >1F6C=>D020 >FF6A           movb    @snddur, 0
 71    >1F70=>1304                 jeq     $0+
 72                               
-73    >1F72=>7820 >04C9 >FF6A     sb      #1, @snddur
+73    >1F72=>7820 >01B9 >FF6A     sb      #1, @snddur
 74    >1F78=>1623                 jne     $3+
 75                                 
 76    >1F7A                   $0:    
@@ -4374,7 +4374,7 @@
 101   >1FA2=>1309                 jeq     $2+         ; end of group?
 102                                   
 103   >1FA4=>D803 >FFA0           movb    3, @SOUND
-104   >1FA8=>20E0 >28A0           coc     #>1000, 3    ; volume?
+104   >1FA8=>20E0 >1C94           coc     #>1000, 3    ; volume?
 105   >1FAC=>13F9                 jeq     $4-         ; yup 
 106                               
 107   >1FAE=>0692                 bl      *2          ; else it was the first byte of a two-byte tone; fetch next
@@ -4420,7 +4420,7 @@
 152   >1FE6=>0734                 seto    *r4+        ; lt_incr
 153   >1FE8=>CD00                 mov     r0,*r4+     ; lt_tempoincr
 154   >1FEA=>04F4                 clr     *r4+        ; lt_a_d, lt_s_r
-155   >1FEC=>CD20 >28A2           mov     #>0f00,*r4+     ; lt_volume, lt_sustain
+155   >1FEC=>CD20 >0472           mov     #>0f00,*r4+     ; lt_volume, lt_sustain
 156   >1FF0=>04F4                 clr     *r4+        ; lt_vibrato, lt_tremolo
 157   >1FF2=>04F4                 clr     *r4+        ; lt_waveform, lt_balance
 158   >1FF4=>045B                 rt
@@ -4439,7 +4439,7 @@
 194   >200E=>0980                 srl     r0, 8
 195   >2010=>0A20                 sla     r0, 2
 196   >2012=>04C1                 clr     r1
-197   >2014=>3C20 >28A4           div     #3600, r0
+197   >2014=>3C20 >289A           div     #3600, r0
 198   >2018=>1901                 jno     $0+
 199   >201A=>0700                 seto    r0 
 200   >201C                   $0:    
@@ -4845,7 +4845,7 @@
 587   >2278=>C125 >0006           mov     @pv_track(r5), r4
 588   >227C                   snd_voice_apply2
 589   >227C=>D0A5 >000A           movb    @pv_freqmask(r5), r2
-590   >2280=>90A0 >029D           cb      #>E0, r2
+590   >2280=>90A0 >0079           cb      #>E0, r2
 591   >2284=>1606                 jne     $0+
 592                              
 593                               ; noise
@@ -4876,7 +4876,7 @@
 618                               
 619                               ; write pan for noise too
 620   >22BC=>D024 >000F           movb    @lt_balance(r4), r0
-621   >22C0=>D860 >28A6 >0002     movb    #>f9, @2(r1)
+621   >22C0=>D860 >289C >0002     movb    #>f9, @2(r1)
 622   >22C6=>D840 >0004           movb    r0, @4(r1)
 623                               
 624   >22CA=>0200 >0F00           li      r0, >F00
@@ -4907,7 +4907,7 @@
 657   >22F6=>04E5 >0006           clr     @pv_track(r5)
 658                               
 659                               ; was it a noise?
-660   >22FA=>9960 >029D >000A     cb      #>E0, @pv_freqmask(r5)
+660   >22FA=>9960 >0079 >000A     cb      #>E0, @pv_freqmask(r5)
 661   >2300=>1602                 jne     $0+
 662                               
 663                               ; if so, the previous was ours too
@@ -5484,9 +5484,7 @@
       >2882=>06A0 >1B54       
 616   >2886=>10FF             	jmp	$
 618   >2888=>FC40 >0070 >F786 	consttable
-      >288E=>0060 >0808 >FF00 
-      >2894=>1F00 >0007 >00C0 
-      >289A=>2000 >1E03 >0168 
-      >28A0=>1000 >0F00 >0E10 
-      >28A6=>F900             
-620   >28A8                   the_end equ $
+      >288E=>0060 >0808 >1F00 
+      >2894=>00C0 >1E03 >0168 
+      >289A=>0E10 >F900       
+620   >289E                   the_end equ $

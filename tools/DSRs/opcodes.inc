@@ -1,7 +1,5 @@
 ;	This is adapted from emudiskdsr.c and 9900.h
-
-DSROP		equ	>0c00
-TIDSROP		equ	>0d20
+;   or EmuDiskDSR.java
 
 D_DSK 		equ 0		; standard file operation on DSK.XXXX.[YYYY]
 D_DSK1 		equ 1		; standard file operation on DSK1.[YYYY]

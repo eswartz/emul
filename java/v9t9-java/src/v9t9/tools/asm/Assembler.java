@@ -3,6 +3,7 @@
  */
 package v9t9.tools.asm;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -131,9 +132,13 @@ public class Assembler {
 	}
 
 	public void setList(PrintStream stream) {
+		if (stream == null)
+			stream = new PrintStream(new ByteArrayOutputStream());
 		log = stream;
 	}
 	public void setError(PrintStream stream) {
+		if (stream == null)
+			stream = new PrintStream(new ByteArrayOutputStream());
 		errlog = stream;
 	}
 	

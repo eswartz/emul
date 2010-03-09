@@ -11,7 +11,7 @@ GFORTHPATH:=$(shell pwd)/site-forth:$(GFORTHPATH):$(shell pwd)
 
 #TIASM = ../TIAsm/tiasm
 TIASM_RUN = java -jar $(TIASM)
-TIASM = ../TIAsm/tiasm.jar
+TIASM = $(TOP)/../build/tiasm.jar
 
 OUTS = nforthA.rom nforth.grm nforthB.rom nforthB.sym  \
 	nforth.prm nforthc.bin nforthg.bin  nforthc.sym nforthg.sym

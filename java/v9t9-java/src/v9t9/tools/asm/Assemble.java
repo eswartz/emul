@@ -24,7 +24,9 @@ public class Assemble {
     public static void main(String[] args) throws IOException {
         Assembler assembler = new Assembler();
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:");
+        assembler.setList(null);
+        
+        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:v");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -78,12 +80,15 @@ public class Assemble {
             	break;            	
             case 'l':
             	String name = getopt.getOptarg();
-            	try {
-            		assembler.setList(new PrintStream(new File(name)));
-            	} catch (IOException e) {
-            		System.err.println("Failed to create list file: " + e.getMessage());
-            		System.exit(1);
-            	}
+            	if (name.equals("-"))
+            		assembler.setList(System.out);
+            	else
+	            	try {
+	            		assembler.setList(new PrintStream(new File(name)));
+	            	} catch (IOException e) {
+	            		System.err.println("Failed to create list file: " + e.getMessage());
+	            		System.exit(1);
+	            	}
             	break;   
             case 'D': {
             	String equ = getopt.getOptarg();
@@ -124,13 +129,14 @@ public class Assemble {
                         + "\n" 
                         +
                         "TIASM <input file> [-r|e <console ROM output>] [-m <module ROM output>]\n" +
-           			 "[-d <DSR ROM output>] [-g <console GROM output>] [-Dequ=val] [<list file>]\n" +
+           			 "[-d <DSR ROM output>] [-g <console GROM output>] [-Dequ=val] [-l<list file>]\n" +
            			 "\n"+
            			 "-r saves the 8k memory block at >0000.\n" +
            			 "-m saves the 8k memory block at >6000.\n" +
            			 "-d saves the 8k memory block at >4000.\n" +
            			 "-e saves the 16k memory block at >0000.\n" +
-           			 "-g saves the 24k memory block at >0000.  This can only be used with -m.\n");
+           			 "-g saves the 24k memory block at >0000.  This can only be used with -m.\n"+
+           			 "-l sends a listing to the given file (- for stdout)");
 
     }
 

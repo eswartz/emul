@@ -1,8 +1,12 @@
 TOP = @TOP@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
-TIASM = ../TIAsm/tiasm
+
 EXTRA_DIST = $(DSRS) opcodes.inc aclocal.m4
+
+TIASM = java -jar $(TIASM_JAR)
+TIASM_JAR = $(TOP)/../build/tiasm.jar
+ASMFLAGS=
 
 DSRS = emudisk.dsr emu2disk.dsr emurs232.dsr emupio.dsr
 OUTS = $(DSRS:%.dsr=%.bin)
@@ -22,18 +26,15 @@ INCS = opcodes.inc
 
 FORCE:
 
-$(TIASM): FORCE
-	make -C $(dir $(TIASM))
+emudisk.bin:	emudisk.dsr $(INCS) $(TIASM_JAR)
+	$(TIASM) $< -d $@ $(ASMFLAGS)
 
-emudisk.bin:	emudisk.dsr $(INCS) $(TIASM)
-	$(TIASM) $< -d $@
+emu2disk.bin:	emu2disk.dsr $(INCS) $(TIASM_JAR)
+	$(TIASM) $< -d $@ $(ASMFLAGS)
 
-emu2disk.bin:	emu2disk.dsr $(INCS) $(TIASM)
-	$(TIASM) $< -d $@
+emurs232.bin:	emurs232.dsr $(INCS) $(TIASM_JAR)
+	$(TIASM) $< -d $@ $(ASMFLAGS)
 
-emurs232.bin:	emurs232.dsr $(INCS) $(TIASM)
-	$(TIASM) $< -d $@
-
-emupio.bin:	emupio.dsr $(INCS) $(TIASM)
-	$(TIASM) $< -d $@
+emupio.bin:	emupio.dsr $(INCS) $(TIASM_JAR)
+	$(TIASM) $< -d $@ $(ASMFLAGS)
 

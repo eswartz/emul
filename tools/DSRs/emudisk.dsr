@@ -99,23 +99,23 @@ dskinit: dw	0
 	dw	dskinitcode
 	dw	0
 
-dskinitcode: dw	DSROP D_INIT +
+dskinitcode: DSR D_INIT
 
-dst10ex:	dw	DSROP D_SECRW +
-dst11ex:	dw	DSROP D_FMTDISK +
-dst12ex:	dw	DSROP D_PROT +
-dst13ex:	dw	DSROP D_RENAME +
-dst14ex:	dw	DSROP D_DINPUT +
-dst15ex:	dw	DSROP D_DOUTPUT +
-dst16ex:	dw	DSROP D_16 +
+dst10ex:	DSR D_SECRW
+dst11ex:	DSR D_FMTDISK
+dst12ex:	DSR D_PROT
+dst13ex:	DSR D_RENAME
+dst14ex:	DSR D_DINPUT
+dst15ex:	DSR D_DOUTPUT
+dst16ex:	DSR D_16
 
 
-ddtdsk:		dw	DSROP D_DSK +
-ddtdsk1:	dw	DSROP D_DSK1 +
-ddtdsk2:	dw	DSROP D_DSK2 +
-ddtdsk3:	dw	DSROP D_DSK3 +
-ddtdsk4:	dw	DSROP D_DSK4 +
-ddtdsk5:	dw	DSROP D_DSK5 +
+ddtdsk:		DSR D_DSK
+ddtdsk1:	DSR D_DSK1
+ddtdsk2:	DSR D_DSK2
+ddtdsk3:	DSR D_DSK3
+ddtdsk4:	DSR D_DSK4
+ddtdsk5:	DSR D_DSK5
 
-ddtfiles:	dw	DSROP D_FILES +
+ddtfiles:	DSR D_FILES
 

@@ -30,7 +30,7 @@ pionx3:	dw	0
 	dw	pioex
 	db	>5,"pio/1"
 
-pioex	dw	DSROP D_PIO +
+pioex	DSR D_PIO
 
 pioinit	dw	0
 	dw	pioinit0

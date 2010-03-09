@@ -7,7 +7,7 @@
 /* #undef HAVE_LC_MESSAGES */
 /* #undef HAVE_STPCPY */
 #define PACKAGE "v9t9"
-#define VERSION ""
+#define VERSION "0.9.0"
 
 /* Windows */
 /* this timer works best -- the midi/multimedia timer */
@@ -324,7 +324,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION ""
+#define VERSION "0.9.0"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

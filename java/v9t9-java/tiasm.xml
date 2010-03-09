@@ -1,22 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for Project V9t9j">
+<project default="create_run_jar" name="Create Runnable Jar for TI Assembler">
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
+	
+    <property name="base"        value="."/>
+    <property name="build.dir"   value="${base}/../../build"/>
+
+    <property name="bin.dir"     value="${base}/bin"/>
+	
     <target name="create_run_jar">
-        <jar destfile="/usr/local/src/V9t9/tools/Forth/tiasm.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="${build.dir}/tiasm.jar" filesetmanifest="mergewithoutmain">
             <manifest>
-                <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Main-Class" value="v9t9.tools.asm.Assemble"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/local/eclipse-3.4/eclipse/plugins/org.eclipse.swt_3.4.1.v3449c.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/local/eclipse-3.4/eclipse/plugins/org.eclipse.swt.gtk.linux.x86_64_3.4.1.v3449c.jar"/>
-            <fileset dir="/home/ejs/workspace/bcel-svn/bin"/>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/local/eclipse-3.4/eclipse/plugins/org.junit4_4.3.1/junit.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/share/java/gnu-getopt.jar"/>
-            <fileset dir="/usr/local/src/V9t9j"/>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/share/java/qtjambi.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/local/src/V9t9j/gnu-getopt-1.0.11.jar"/>
+            <fileset dir="${bin.dir}" includes="v9t9/tools/**/*.class"/>
+            <fileset dir="${bin.dir}" includes="v9t9/engine/files/**/*.class"/>
+            <fileset dir="${bin.dir}" includes="v9t9/engine/memory/**/*.class"/>
+            <fileset dir="${bin.dir}" includes="v9t9/engine/cpu/**/*.class"/>
+            <fileset dir="${base}/../org.ejs.coffee.core/bin" includes="org/ejs/coffee/core/**/*.class"/>
+            <zipfileset excludes="META-INF/*.SF" src="${base}/libs/gnu-getopt-1.0.11.jar"/>
         </jar>
     </target>
 </project>

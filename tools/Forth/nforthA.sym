@@ -55,7 +55,7 @@ F7CC vmono
 2882 dieerr
 0020 ST_OP
 F7E6 vbitbuf
-28A8 the_end
+289E the_end
 1DFC rblockpab
 F794 vsprcol
 FF60 sharedvarbase
