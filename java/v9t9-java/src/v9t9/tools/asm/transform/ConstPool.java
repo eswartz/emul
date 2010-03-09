@@ -3,7 +3,6 @@
  */
 package v9t9.tools.asm.transform;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
