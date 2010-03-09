@@ -13,6 +13,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruWriter;
 import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.MachineOperand;
 
 /**
  * @author ejs
@@ -88,7 +89,6 @@ public class DsrManager {
 	 */
 	public void handleDSR(InstructionWorkBlock instructionWorkBlock) {
 		short callpc = (short) (instructionWorkBlock.pc - 2);
-		short opcode = instructionWorkBlock.domain.readWord(callpc);
 		short rambase = (short) (instructionWorkBlock.wp - 0xe0);
 		short crubase = instructionWorkBlock.domain.readWord(rambase+ 0xD0);
 
@@ -97,7 +97,7 @@ public class DsrManager {
 			/*  Only respond if we have an active module whose
 			   base matches that which DSRLNK is currently scanning. */
 			if (activeDsr != null && activeDsr.getCruBase() == crubase) {
-				System.out.println("handling DSR: pc = "+HexUtils.toHex4(callpc)+" " + HexUtils.toHex4(opcode));
+				System.out.println("handling DSR: pc = "+HexUtils.toHex4(callpc)+" " + instructionWorkBlock.inst);
 
 				// on success, return to DSR handler, to return an
 				// error or otherwise terminate instead of continuing
@@ -109,7 +109,7 @@ public class DsrManager {
 				
 				int retreg = instructionWorkBlock.wp + 11 * 2;
 				short ret = instructionWorkBlock.domain.readWord(retreg);
-				if (activeDsr.handleDSR(xfer, (short) (opcode  & 0x3f))) {
+				if (activeDsr.handleDSR(xfer, (short) ((MachineOperand)instructionWorkBlock.inst.op1).val)) {
 					// success: skip next word (handling error)
 					ret += 2;
 				}

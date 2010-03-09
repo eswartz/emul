@@ -110,8 +110,11 @@ public class MachineOperand implements Operand {
     @Override
 	public String toString() {
     	String basic = basicString();
-    	if (symbol != null && !symbolResolved)
+    	if (symbol != null && !symbolResolved) {
+    		if (basic == null)
+    			basic = "";
     		basic += "{" + symbol +"}";
+    	}
     	return basic;
     }
 
@@ -141,7 +144,8 @@ public class MachineOperand implements Operand {
     	    return Integer.toString(val);
 
     	case OP_OFFS_R12: {
-    		byte offs = (byte) ((val >> 1) & 0xff);
+    		//byte offs = (byte) ((val >> 1) & 0xff);
+    		byte offs = (byte) (val & 0xff);
     	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs);
     	}
 

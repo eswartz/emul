@@ -91,7 +91,7 @@ public class InstructionTable {
 		register(InstructionTable.Isla, 0x0a00, REG_CNT);
 		register(InstructionTable.Isrc, 0x0b00, REG_CNT);
 
-		register(InstructionTable.Idsr, 0x0c00, CNT_NONE, 0xc00);
+		register(InstructionTable.Idsr, 0x0c00, OFF_NONE, 0xcff);
 		register(InstructionTable.Ikysl, 0x0d40, NONE_NONE, 0xd40);
 		register(InstructionTable.Iticks, 0x0d60, REG_NONE, 0xd60);
 		register(InstructionTable.Iemitchar, 0x0dc0, REG_CNT, 0xdcf);
@@ -701,6 +701,8 @@ public class InstructionTable {
         	// 0xc00
     		case 0:				/* DSR, OP_DSR */
     			inst.inst = InstructionTable.Idsr;
+    			mop1.type = MachineOperand.OP_OFFS_R12;
+    			mop1.val = (byte) (op & 0xff);
     			break;
   			// 0xd60
     		case 11:			/* TICKS */
