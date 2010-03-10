@@ -317,7 +317,16 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     }
 
     void onValueChanged() {
-        onSuspended();
+        prev_value = next_value;
+        value.reset();
+        TCFNode n = parent;
+        while (n != null) {
+            if (n instanceof TCFNodeExecContext) {
+                ((TCFNodeExecContext)n).onRegisterValueChanged();
+            }
+            n = n.parent;
+        }
+        addModelDelta(IModelDelta.STATE);
     }
 
     void onSuspended() {

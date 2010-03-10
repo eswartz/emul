@@ -23,6 +23,16 @@ public class SymbolsProxy implements ISymbols {
             value = JSON.toByteArray(props.get(PROP_VALUE));
         }
 
+        public String getOwnerID() {
+            return (String)props.get(PROP_OWNER_ID);
+        }
+
+        public int getUpdatePolicy() {
+            Number n = (Number)props.get(PROP_UPDATE_POLICY);
+            if (n == null) return 0;
+            return n.intValue();
+        }
+
         public Number getAddress() {
             return (Number)props.get(PROP_ADDRESS);
         }
@@ -110,6 +120,12 @@ public class SymbolsProxy implements ISymbols {
         public byte[] getValue() {
             return value;
         }
+
+        public boolean isBigEndian() {
+            Boolean b = (Boolean)props.get(PROP_LENGTH);
+            if (b == null) return false;
+            return b.booleanValue();
+        }
     }
 
     public SymbolsProxy(IChannel channel) {
@@ -147,6 +163,36 @@ public class SymbolsProxy implements ISymbols {
                     lst = toStringArray(args[1]);
                 }
                 done.doneGetChildren(token, error, lst);
+            }
+        }.token;
+    }
+
+    public IToken find(String context_id, String name, final DoneFind done) {
+        return new Command(channel, this, "find", new Object[]{ context_id, name }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                String id = null;
+                if (error == null) {
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    id = (String)args[1];
+                }
+                done.doneFind(token, error, id);
+            }
+        }.token;
+    }
+
+    public IToken list(String context_id, final DoneList done) {
+        return new Command(channel, this, "list", new Object[]{ context_id }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                String[] lst = null;
+                if (error == null) {
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    lst = toStringArray(args[1]);
+                }
+                done.doneList(token, error, lst);
             }
         }.token;
     }

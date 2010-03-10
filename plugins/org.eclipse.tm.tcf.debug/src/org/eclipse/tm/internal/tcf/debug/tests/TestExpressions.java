@@ -25,7 +25,6 @@ import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.ISymbols;
-import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 
 class TestExpressions implements ITCFTest,
     IRunControl.RunControlListener, IExpressions.ExpressionsListener, IBreakpoints.BreakpointsListener {
@@ -48,6 +47,7 @@ class TestExpressions implements ITCFTest,
     private String suspended_pc;
     private boolean waiting_suspend;
     private String[] stack_trace;
+    private IStackTrace.StackTraceContext[] stack_frames;
     private String[] local_vars;
     private final HashMap<String,IRunControl.RunControlContext> ctx_map = new HashMap<String,IRunControl.RunControlContext>();
     private final Map<String,IExpressions.Expression> expr_ctx = new HashMap<String,IExpressions.Expression>();
@@ -293,6 +293,25 @@ class TestExpressions implements ITCFTest,
             });
             return;
         }
+        if (stack_frames == null) {
+            stk.getContext(stack_trace, new IStackTrace.DoneGetContext() {
+                public void doneGetContext(IToken token, Exception error, IStackTrace.StackTraceContext[] frames) {
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else {
+                        stack_frames = frames;
+                        if (stack_frames == null || stack_frames.length != stack_trace.length) {
+                            exit(new Exception("Invalid stack trace"));
+                        }
+                        else {
+                            runTest();
+                        }
+                    }
+                }
+            });
+            return;
+        }
         if (local_vars == null) {
             expr.getChildren(stack_trace[stack_trace.length - 2], new IExpressions.DoneGetChildren() {
                 public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
@@ -454,14 +473,14 @@ class TestExpressions implements ITCFTest,
     }
 
     public void contextAdded(IRunControl.RunControlContext[] contexts) {
-        for (RunControlContext ctx : contexts) {
+        for (IRunControl.RunControlContext ctx : contexts) {
             if (ctx_map.get(ctx.getID()) != null) exit(new Error("Invalid 'contextAdded' event"));
             ctx_map.put(ctx.getID(), ctx);
         }
     }
 
     public void contextChanged(IRunControl.RunControlContext[] contexts) {
-        for (RunControlContext ctx : contexts) {
+        for (IRunControl.RunControlContext ctx : contexts) {
             if (ctx_map.get(ctx.getID()) == null) return;
             ctx_map.put(ctx.getID(), ctx);
         }
@@ -474,8 +493,16 @@ class TestExpressions implements ITCFTest,
         for (String id : context_ids) {
             ctx_map.remove(id);
             if (id.equals(process_id)) {
-                if (test_done) exit(null);
-                else exit(new Exception("Test process exited too soon"));
+                if (test_done) {
+                    bp.set(null, new IBreakpoints.DoneCommand() {
+                        public void doneCommand(IToken token, Exception error) {
+                            exit(error);
+                        }
+                    });
+                }
+                else {
+                    exit(new Exception("Test process exited too soon"));
+                }
                 return;
             }
         }

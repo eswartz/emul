@@ -372,6 +372,13 @@ public final class JSON {
             if (cur_ch != 'e') error();
             read();
             return Boolean.TRUE;
+        case 'N':
+            read();
+            if (cur_ch != 'a') error();
+            read();
+            if (cur_ch != 'N') error();
+            read();
+            return Float.NaN;
         default:
             boolean neg = cur_ch == '-';
             if (neg) read();

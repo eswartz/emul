@@ -53,6 +53,23 @@ public interface ISymbols extends IService {
         String getID();
 
         /**
+         * Get symbol owner ID.
+         * The owner can a thread or memory space (process).
+         * Certain changes in owner state can invalidate cached symbol properties,
+         * see getUpdatePolicy() and UPDATE_*.
+         */
+        String getOwnerID();
+
+        /**
+         * Get symbol properties update policy ID.
+         * Symbol properties can change during program execution.
+         * If a client wants to cache symbols, it should invalidate cached data
+         * according to update policies of cached symbols.
+         * @return symbol update policy ID, see UPDATE_*
+         */
+        int getUpdatePolicy();
+
+        /**
          * Get symbol name.
          * @return symbol name or null.
          */
@@ -141,6 +158,12 @@ public interface ISymbols extends IService {
         byte[] getValue();
 
         /**
+         * Get symbol values endianess.
+         * @return true if symbol is big-endian.
+         */
+        boolean isBigEndian();
+
+        /**
          * Get complete map of context properties.
          * @return map of context properties.
          */
@@ -152,6 +175,8 @@ public interface ISymbols extends IService {
      */
     static final String
         PROP_ID = "ID",
+        PROP_OWNER_ID = "OwnerID",
+        PROP_UPDATE_POLICY = "UpdatePolicy",
         PROP_NAME = "Name",
         PROP_SYMBOL_CLASS = "Class",
         PROP_TYPE_CLASS = "TypeClass",
@@ -164,9 +189,28 @@ public interface ISymbols extends IService {
         PROP_UPPER_BOUND = "UpperBound",
         PROP_OFFSET = "Offset",
         PROP_ADDRESS = "Address",
-        PROP_VALUE = "Value";
+        PROP_VALUE = "Value",
+        PROP_BIG_ENDIAN = "BigEndian";
 
-    // TODO: BigEndian property
+    /**
+     * Symbol context properties update policies.
+     */
+    static final int
+        /**
+         * Update policy "Memory Map": symbol properties become invalid when
+         * memory map changes - when modules are loaded or unloaded.
+         * Symbol OwnerID indicates memory space (process) that is invalidation events source.
+         * Most static variables and types have this update policy.
+         */
+        UPDATE_ON_MEMORY_MAP_CHANGES = 0,
+
+        /**
+         * Update policy "Execution State": symbol properties become invalid when
+         * execution state changes - a thread is suspended, resumed or exited.
+         * Symbol OwnerID indicates executable context (thread) that is invalidation events source.
+         * Most stack (auto) variables have this update policy.
+         */
+        UPDATE_ON_EXE_STATE_CHANGES = 1;
 
     /**
      * Retrieve symbol context info for given symbol ID.
@@ -214,5 +258,40 @@ public interface ISymbols extends IService {
          * @param context_ids – array of available context IDs.
          */
         void doneGetChildren(IToken token, Exception error, String[] context_ids);
+    }
+
+    /**
+     * Search symbol with given name in given context.
+     * The context can be memory space, process, thread or stack frame.
+     *
+     * @param context_id – a search scope.
+     * @param name – symbol name.
+     * @param done - call back interface called when operation is completed.
+     * @return - pending command handle.
+     */
+    IToken find(String context_id, String name, DoneFind done);
+
+    /**
+     * Client call back interface for find().
+     */
+    interface DoneFind {
+        void doneFind(IToken token, Exception error, String symbol_id);
+    }
+
+    /**
+     * List all symbols in given context.
+     * The context can be a stack frame.
+     *
+     * @param context_id – a scope.
+     * @param done - call back interface called when operation is completed.
+     * @return - pending command handle.
+     */
+    IToken list(String context_id, DoneList done);
+
+    /**
+     * Client call back interface for list().
+     */
+    interface DoneList {
+        void doneList(IToken token, Exception error, String[] symbol_ids);
     }
 }

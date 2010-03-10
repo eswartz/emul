@@ -57,6 +57,7 @@ class TestRCBP1 implements ITCFTest,
     private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
         new HashMap<String,Map<String,IRegisters.RegistersContext>>();
     private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>();
+    private final Random rnd = new Random();
 
     private String context_id; // Test process context ID
     private IRunControl.RunControlContext context;
@@ -229,7 +230,7 @@ class TestRCBP1 implements ITCFTest,
         Map<String,Object> m[] = new Map[4];
         for (int i = 0; i < m.length; i++) {
             m[i] = new HashMap();
-            m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i);
+            m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i + "" + channel_id);
             m[i].put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
             switch (i) {
             case 0:
@@ -247,7 +248,6 @@ class TestRCBP1 implements ITCFTest,
                 break;
             case 3:
                 // Breakpoint that will be enabled with "enable" command
-                m[i].put(IBreakpoints.PROP_ID, "TcfTestBP3" + channel_id);
                 m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
                 m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
                 break;
@@ -526,10 +526,10 @@ class TestRCBP1 implements ITCFTest,
                     exit(new Exception("Test main thread breakpoint count = " + bp_cnt + ", expected 30"));
                 }
                 rc.removeListener(this);
-                // Flush communication channel of pending commands
-                Protocol.sync(new Runnable() {
-                    public void run() {
-                        exit(null);
+                // Reset breakpoint list
+                bp.set(null, new IBreakpoints.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        exit(error);
                     }
                 });
             }
@@ -660,7 +660,9 @@ class TestRCBP1 implements ITCFTest,
         SuspendedContext sc = suspended.get(id);
         IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx != null && sc != null) {
-            ctx.resume(IRunControl.RM_RESUME, 1, new HashMap<String,Object>(), new IRunControl.DoneCommand() {
+            int rm = rnd.nextInt(6);
+            if (!ctx.canResume(rm)) rm = IRunControl.RM_RESUME;
+            ctx.resume(rm, 1, new HashMap<String,Object>(), new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (test_suite.cancel) return;
                     if (!test_suite.isActive(TestRCBP1.this)) return;
@@ -733,7 +735,7 @@ class TestRCBP1 implements ITCFTest,
             final Number addr, final byte[] buf,
             final Runnable done) {
         final byte[] data = new byte[buf.length];
-        new Random().nextBytes(data);
+        rnd.nextBytes(data);
         mem_ctx.set(addr, 1, data, 0, data.length, 0, new IMemory.DoneMemory() {
             public void doneMemory(IToken token, MemoryError error) {
                 if (suspended.get(sc.id) != sc) {
@@ -774,7 +776,7 @@ class TestRCBP1 implements ITCFTest,
             final Number addr, final byte[] buf,
             final Runnable done) {
         final byte[] data = new byte[buf.length / 7];
-        new Random().nextBytes(data);
+        rnd.nextBytes(data);
         mem_ctx.fill(addr, 1, data, buf.length, 0, new IMemory.DoneMemory() {
             public void doneMemory(IToken token, MemoryError error) {
                 if (suspended.get(sc.id) != sc) {
@@ -897,7 +899,6 @@ class TestRCBP1 implements ITCFTest,
             }));
         }
         if (!reg_map.isEmpty()) {
-            Random rnd = new Random();
             List<IRegisters.Location> locs = new ArrayList<IRegisters.Location>();
             String[] ids = reg_map.keySet().toArray(new String[reg_map.size()]);
             for (int i = 0; i < rnd.nextInt(32); i++) {

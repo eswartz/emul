@@ -366,6 +366,13 @@ public class TCFNodeStackFrame extends TCFNode {
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
+    void onRegisterValueChanged() {
+        stack_trace_context.cancel();
+        line_info.cancel();
+        address.cancel();
+        addModelDelta(IModelDelta.STATE);
+    }
+
     @Override
     public int compareTo(TCFNode n) {
         if (n instanceof TCFNodeStackFrame) {

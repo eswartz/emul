@@ -468,6 +468,13 @@ public class TCFNodeExecContext extends TCFNode {
         addModelDelta(IModelDelta.CONTENT);
     }
 
+    void onRegisterValueChanged() {
+        state.reset();
+        address.reset();
+        children_stack.onRegisterValueChanged();
+        addModelDelta(IModelDelta.CONTENT);
+    }
+
     // Return true if at least one child is suspended.
     // Return null if waiting for a cache element.
     private Boolean hasSuspendedChildren(Runnable done) {

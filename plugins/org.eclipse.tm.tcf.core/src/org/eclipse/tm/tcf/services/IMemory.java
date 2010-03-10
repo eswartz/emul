@@ -146,7 +146,7 @@ public interface IMemory extends IService {
 
         /**
          * Get memory endianess.
-         * @return true if memory id big-endian.
+         * @return true if memory is big-endian.
          */
         boolean isBigEndian();
 
