@@ -21,7 +21,7 @@ public class TCFChildrenLocalVariables extends TCFChildren {
     private final TCFNode node;
 
     TCFChildrenLocalVariables(TCFNode node) {
-        super(node.model.getLaunch().getChannel(), 128);
+        super(node.channel, 128);
         this.node = node;
     }
 

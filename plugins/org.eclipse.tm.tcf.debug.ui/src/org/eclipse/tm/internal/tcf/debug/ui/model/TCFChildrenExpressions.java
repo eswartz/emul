@@ -50,7 +50,7 @@ public class TCFChildrenExpressions extends TCFChildren {
     };
 
     TCFChildrenExpressions(TCFNodeStackFrame node) {
-        super(node.model.getLaunch().getChannel(), 128);
+        super(node.channel, 128);
         this.node = node;
         exp_manager = DebugPlugin.getDefault().getExpressionManager();
         exp_manager.addExpressionListener(listener);

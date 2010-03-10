@@ -79,7 +79,7 @@ public class CastToArrayCommand extends AbstractActionDelegate {
     private String getBaseTypeName() {
         final TCFNode node = getCastToTypeNode();
         if (node == null) return null;
-        return new TCFTask<String>(node.getModel().getLaunch().getChannel()) {
+        return new TCFTask<String>(node.getChannel()) {
             public void run() {
                 TCFDataCache<ISymbols.Symbol> type_cache = ((ICastToType)node).getType();
                 if (!type_cache.validate(this)) return;

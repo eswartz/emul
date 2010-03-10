@@ -42,6 +42,7 @@ public class ResumeCommand implements IResumeHandler {
     public void canExecute(final IEnabledStateRequest monitor) {
         new TCFRunnable(model.getDisplay(), monitor) {
             public void run() {
+                if (done) return;
                 Object[] elements = monitor.getElements();
                 boolean res = false;
                 for (int i = 0; i < elements.length; i++) {
@@ -81,6 +82,7 @@ public class ResumeCommand implements IResumeHandler {
     public boolean execute(final IDebugCommandRequest monitor) {
         new TCFRunnable(model.getDisplay(), monitor) {
             public void run() {
+                if (done) return;
                 Object[] elements = monitor.getElements();
                 Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
                 for (int i = 0; i < elements.length; i++) {
@@ -110,7 +112,7 @@ public class ResumeCommand implements IResumeHandler {
                         public void doneCommand(IToken token, Exception error) {
                             assert cmds.contains(token);
                             cmds.remove(token);
-                            if (error != null && model.getLaunch().getChannel().getState() == IChannel.STATE_OPEN) {
+                            if (error != null && model.getChannel().getState() == IChannel.STATE_OPEN) {
                                 monitor.setStatus(new Status(IStatus.ERROR,
                                         Activator.PLUGIN_ID, IStatus.OK, "Cannot resume", error));
                             }

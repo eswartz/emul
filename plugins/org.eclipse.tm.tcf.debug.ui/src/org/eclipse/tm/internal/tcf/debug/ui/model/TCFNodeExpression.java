@@ -77,7 +77,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
         void dispose() {
             if (!must_be_disposed) return;
-            final IChannel channel = model.getLaunch().getChannel();
             if (channel.getState() == IChannel.STATE_OPEN) {
                 IExpressions exps = channel.getRemoteService(IExpressions.class);
                 exps.dispose(expression.getID(), new IExpressions.DoneDispose() {
@@ -101,7 +100,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         this.field = field;
         this.index = index;
         this.deref = deref;
-        IChannel channel = model.getLaunch().getChannel();
         var_expression = new TCFDataCache<IExpressions.Expression>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -130,7 +128,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     Throwable err = null;
                     String exp = null;
                     if (var_expression.getData() == null) {
-                        err = expression.getError();
+                        err = var_expression.getError();
                     }
                     else {
                         exp = var_expression.getData().getExpression();

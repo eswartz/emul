@@ -141,7 +141,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                     expression_value.dispose();
                     expression_type.dispose();
                     if (remote_expression.isValid() && remote_expression.getData() != null) {
-                        final IChannel channel = exec_ctx.getModel().getLaunch().getChannel();
+                        final IChannel channel = exec_ctx.channel;
                         if (channel.getState() == IChannel.STATE_OPEN) {
                             IExpressions exps = channel.getRemoteService(IExpressions.class);
                             exps.dispose(remote_expression.getData().getID(), new IExpressions.DoneDispose() {

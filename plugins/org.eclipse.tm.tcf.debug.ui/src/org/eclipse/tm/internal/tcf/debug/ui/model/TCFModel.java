@@ -212,6 +212,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final IModelSelectionPolicy selection_policy;
 
+    private IChannel channel;
     private TCFNodeLaunch launch_node;
     private boolean disposed;
     private boolean debug_view_selection_set;
@@ -433,6 +434,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     void onConnected() {
         assert Protocol.isDispatchThread();
         assert launch_node == null;
+        channel = launch.getChannel();
         launch_node = new TCFNodeLaunch(this);
         IMemory mem = launch.getService(IMemory.class);
         if (mem != null) mem.addListener(mem_listener);
@@ -629,6 +631,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return launch;
     }
 
+    public IChannel getChannel() {
+        return channel;
+    }
+
     public TCFNode getRootNode() {
         return launch_node;
     }
@@ -657,7 +663,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(final String sym_id) {
         if (sym_id == null) return null;
         TCFDataCache<ISymbols.Symbol> s = symbols.get(sym_id);
-        if (s == null) symbols.put(sym_id, s = new TCFDataCache<ISymbols.Symbol>(launch.getChannel()) {
+        if (s == null) symbols.put(sym_id, s = new TCFDataCache<ISymbols.Symbol>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 ISymbols syms = getLaunch().getService(ISymbols.class);
@@ -679,7 +685,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     public TCFDataCache<String[]> getSymbolChildrenCache(final String sym_id) {
         if (sym_id == null) return null;
         TCFDataCache<String[]> s = symbol_children.get(sym_id);
-        if (s == null) symbol_children.put(sym_id, s = new TCFDataCache<String[]>(launch.getChannel()) {
+        if (s == null) symbol_children.put(sym_id, s = new TCFDataCache<String[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 ISymbols syms = getLaunch().getService(ISymbols.class);
@@ -790,7 +796,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (initial_selection && debug_view_selection_set) return;
         debug_view_selection_set = true;
         final int cnt = ++debug_view_selection_cnt;
-        Protocol.invokeLater(100, new Runnable() {
+        Protocol.invokeLater(new Runnable() {
             public void run() {
                 TCFNode node = getNode(node_id);
                 if (node == null) return;
@@ -838,7 +844,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (cnt != display_source_cnt) return;
                 TCFNodeExecContext exec_ctx = null;
                 TCFNodeStackFrame stack_frame = null;
-                IChannel channel = getLaunch().getChannel();
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (element instanceof TCFNodeExecContext) {
                         exec_ctx = (TCFNodeExecContext)element;

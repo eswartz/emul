@@ -24,7 +24,6 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -48,7 +47,6 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     TCFNodeRegister(TCFNode parent, final String id) {
         super(parent, id);
-        IChannel channel = parent.model.getLaunch().getChannel();
         context = new TCFDataCache<IRegisters.RegistersContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {

@@ -45,6 +45,7 @@ abstract class StepCommand implements IDebugCommandHandler {
     public final void canExecute(final IEnabledStateRequest monitor) {
         new TCFRunnable(model.getDisplay(), monitor) {
             public void run() {
+                if (done) return;
                 Object[] elements = monitor.getElements();
                 boolean res = false;
                 for (int i = 0; i < elements.length; i++) {
@@ -80,6 +81,7 @@ abstract class StepCommand implements IDebugCommandHandler {
     public final boolean execute(final IDebugCommandRequest monitor) {
         new TCFRunnable(model.getDisplay(), monitor) {
             public void run() {
+                if (done) return;
                 Object[] elements = monitor.getElements();
                 final Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
                 for (int i = 0; i < elements.length; i++) {

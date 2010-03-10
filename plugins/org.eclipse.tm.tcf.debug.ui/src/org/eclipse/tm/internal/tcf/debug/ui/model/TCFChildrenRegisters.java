@@ -22,7 +22,7 @@ public class TCFChildrenRegisters extends TCFChildren {
     private final TCFNodeStackFrame node;
 
     TCFChildrenRegisters(TCFNodeStackFrame node) {
-        super(node.model.getLaunch().getChannel(), 128);
+        super(node.channel, 128);
         this.node = node;
     }
 

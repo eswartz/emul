@@ -20,10 +20,7 @@ public abstract class TCFRunnable implements Runnable {
     private final IRequest monitor;
     private final Display display;
 
-    public TCFRunnable() {
-        monitor = null;
-        display = null;
-    }
+    protected boolean done;
 
     public TCFRunnable(Display display, IRequest monitor) {
         this.monitor = monitor;
@@ -32,7 +29,8 @@ public abstract class TCFRunnable implements Runnable {
     }
 
     public void done() {
-        if (display == null) return;
+        assert !done;
+        done = true;
         display.asyncExec(new Runnable() {
             public void run() {
                 monitor.done();

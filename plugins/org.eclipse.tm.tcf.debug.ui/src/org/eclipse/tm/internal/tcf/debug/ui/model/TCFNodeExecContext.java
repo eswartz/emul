@@ -24,7 +24,6 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -64,7 +63,6 @@ public class TCFNodeExecContext extends TCFNode {
                 return size() > 256;
             }
         };
-        IChannel channel = model.getLaunch().getChannel();
         mem_context = new TCFDataCache<IMemory.MemoryContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {

@@ -32,7 +32,7 @@ public class TCFChildrenExecContext extends TCFChildren {
     private final TCFChildren run_children;
 
     TCFChildrenExecContext(final TCFNode node) {
-        super(node.model.getLaunch().getChannel());
+        super(node.channel);
         this.node = node;
         mem_children = new TCFChildren(channel) {
             @Override

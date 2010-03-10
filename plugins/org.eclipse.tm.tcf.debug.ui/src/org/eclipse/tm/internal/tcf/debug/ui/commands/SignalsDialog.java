@@ -166,12 +166,7 @@ class SignalsDialog extends Dialog {
     SignalsDialog(Shell parent, final TCFNode node) {
         super(parent);
         model = node.getModel();
-        channel = new TCFTask<IChannel>() {
-
-            public void run() {
-                done(model.getLaunch().getChannel());
-            }
-        }.getE();
+        channel = node.getChannel();
         signal_list = new TCFTask<TCFDataCache<SignalList>>(channel) {
 
             public void run() {

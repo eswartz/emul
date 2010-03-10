@@ -24,7 +24,6 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
@@ -48,7 +47,6 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs = new TCFChildrenRegisters(this);
         children_vars = new TCFChildrenLocalVariables(this);
         children_exps = new TCFChildrenExpressions(this);
-        IChannel channel = model.getLaunch().getChannel();
         stack_trace_context = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {

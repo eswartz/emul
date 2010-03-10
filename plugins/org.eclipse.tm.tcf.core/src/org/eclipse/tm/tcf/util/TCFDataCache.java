@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.util;
 
-import java.util.HashSet;
-
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -21,9 +19,10 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * The cache is asynchronous state machine. The states are:
  *  1. Valid - cache is in sync with remote data, use getError() and getData() to get cached data;
  *  2. Invalid - cache is out of sync, start data retrieval by calling validate();
- *  3. Pending - cache is waiting result of a command that was sent to remote peer.
+ *  3. Pending - cache is waiting result of a command that was sent to remote peer;
+ *  4. Disposed - cache is disposed and cannot be used to store data.
  *
- * A cache instance can be created on any data type that needs to be caches.
+ * A cache instance can be created on any data type that needs to be cached.
  * Examples might be context children list, context properties, context state, memory data,
  * register data, symbol, variable, etc.
  * Clients of cache items can register for cache changes, but don’t need to think about any particular events
@@ -56,7 +55,8 @@ public abstract class TCFDataCache<V> implements Runnable {
     protected final IChannel channel;
     protected IToken command;
 
-    private final HashSet<Runnable> waiting_list = new HashSet<Runnable>();
+    private Runnable[] waiting_list = null;
+    private int waiting_cnt;
 
     public TCFDataCache(IChannel channel) {
         assert channel != null;
@@ -65,7 +65,7 @@ public abstract class TCFDataCache<V> implements Runnable {
 
     private void post() {
         if (posted) return;
-        if (waiting_list.isEmpty()) return;
+        if (waiting_cnt == 0) return;
         Protocol.invokeLater(this);
         posted = true;
     }
@@ -113,15 +113,22 @@ public abstract class TCFDataCache<V> implements Runnable {
     /**
      * Notify waiting clients about cache state change and remove them from wait list.
      * It is responsibility of clients to check if the state change was one they are waiting for.
+     * Clients are not intended to call this method.
      */
-    public void run() {
+    public final void run() {
         assert Protocol.isDispatchThread();
         posted = false;
-        Runnable[] arr = waiting_list.toArray(new Runnable[waiting_list.size()]);
-        waiting_list.clear();
-        for (Runnable r : arr) {
-            if (r instanceof TCFDataCache<?> && ((TCFDataCache<?>)r).posted) continue;
-            r.run();
+        if (waiting_cnt > 0) {
+            int cnt = waiting_cnt;
+            Runnable[] arr = waiting_list;
+            waiting_list = null;
+            waiting_cnt = 0;
+            for (int i = 0; i < cnt; i++) {
+                Runnable r = arr[i];
+                if (r instanceof TCFDataCache<?> && ((TCFDataCache<?>)r).posted) continue;
+                r.run();
+            }
+            if (waiting_list == null) waiting_list = arr;
         }
     }
 
@@ -136,7 +143,28 @@ public abstract class TCFDataCache<V> implements Runnable {
         assert Protocol.isDispatchThread();
         assert !disposed;
         assert !valid;
-        if (cb != null) waiting_list.add(cb);
+        if (cb != null && !is_waiting(cb)) {
+            if (waiting_list == null) waiting_list = new Runnable[8];
+            if (waiting_cnt >= waiting_list.length) {
+                Runnable[] tmp = new Runnable[waiting_cnt * 2];
+                System.arraycopy(waiting_list, 0, tmp, 0, waiting_list.length);
+                waiting_list = tmp;
+            }
+            waiting_list[waiting_cnt++] = cb;
+        }
+    }
+
+    /**
+     * Return true if a client call-back is waiting for state changes of this cache item.
+     * @param cb - a call-back object.
+     * @return true if 'cb' is in the wait list.
+     */
+    public boolean is_waiting(Runnable cb) {
+        if (waiting_list == null) return false;
+        for (int i = 0; i < waiting_cnt; i++) {
+            if (waiting_list[i] == cb) return true;
+        }
+        return false;
     }
 
     /**
@@ -145,7 +173,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      */
     public boolean validate() {
         assert Protocol.isDispatchThread();
-        if (channel.getState() != IChannel.STATE_OPEN) {
+        if (disposed || channel.getState() != IChannel.STATE_OPEN) {
             command = null;
             valid = true;
             error = null;
@@ -197,8 +225,8 @@ public abstract class TCFDataCache<V> implements Runnable {
             this.error = error;
             this.data = data;
             valid = true;
-            post();
         }
+        post();
     }
 
     /**
@@ -215,8 +243,8 @@ public abstract class TCFDataCache<V> implements Runnable {
             this.data = data;
             error = null;
             valid = true;
-            post();
         }
+        post();
     }
 
     /**
@@ -229,8 +257,8 @@ public abstract class TCFDataCache<V> implements Runnable {
             error = null;
             valid = false;
             data = null;
-            post();
         }
+        post();
     }
 
     /**

@@ -31,6 +31,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     protected final String id;
     protected final TCFNode parent;
     protected final TCFModel model;
+    protected final IChannel channel;
 
     protected boolean disposed;
 
@@ -41,6 +42,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     protected TCFNode(TCFModel model) {
         id = null;
         parent = null;
+        channel = model.getChannel();
         this.model = model;
     }
 
@@ -58,6 +60,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         this.id = id;
         model = parent.model;
         model.addNode(id, this);
+        channel = model.getChannel();
     }
 
     /**
@@ -98,6 +101,14 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      */
     public TCFModel getModel() {
         return model;
+    }
+
+    /**
+     * Get IChannel of TCFModel that owns this node.
+     * @return IChannel object
+     */
+    public IChannel getChannel() {
+        return channel;
     }
 
     /**
@@ -142,17 +153,18 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IChildrenCountUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!result.isCanceled()) {
-                    IChannel channel = model.getLaunch().getChannel();
-                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!getData(result, this)) return;
+                if (!done) {
+                    if (!result.isCanceled()) {
+                        if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                            if (!getData(result, this)) return;
+                        }
+                        else {
+                            result.setChildCount(0);
+                        }
+                        result.setStatus(Status.OK_STATUS);
                     }
-                    else {
-                        result.setChildCount(0);
-                    }
-                    result.setStatus(Status.OK_STATUS);
+                    done();
                 }
-                done();
             }
         };
     }
@@ -164,14 +176,15 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!result.isCanceled()) {
-                    IChannel channel = model.getLaunch().getChannel();
-                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!getData(result, this)) return;
+                if (!done) {
+                    if (!result.isCanceled()) {
+                        if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                            if (!getData(result, this)) return;
+                        }
+                        result.setStatus(Status.OK_STATUS);
                     }
-                    result.setStatus(Status.OK_STATUS);
+                    done();
                 }
-                done();
             }
         };
     }
@@ -183,17 +196,19 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IHasChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!result.isCanceled()) {
-                    IChannel channel = model.getLaunch().getChannel();
-                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!getData(result, this)) return;
+                if (!done) {
+                    if (!result.isCanceled()) {
+                        IChannel channel = model.getLaunch().getChannel();
+                        if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                            if (!getData(result, this)) return;
+                        }
+                        else {
+                            result.setHasChilren(false);
+                        }
+                        result.setStatus(Status.OK_STATUS);
                     }
-                    else {
-                        result.setHasChilren(false);
-                    }
-                    result.setStatus(Status.OK_STATUS);
+                    done();
                 }
-                done();
             }
         };
     }
@@ -205,17 +220,18 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final ILabelUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!result.isCanceled()) {
-                    IChannel channel = model.getLaunch().getChannel();
-                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!getData(result, this)) return;
+                if (!done) {
+                    if (!result.isCanceled()) {
+                        if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                            if (!getData(result, this)) return;
+                        }
+                        else {
+                            result.setLabel("...", 0);
+                        }
+                        result.setStatus(Status.OK_STATUS);
                     }
-                    else {
-                        result.setLabel("...", 0);
-                    }
-                    result.setStatus(Status.OK_STATUS);
+                    done();
                 }
-                done();
             }
         };
     }
