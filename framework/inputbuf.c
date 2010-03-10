@@ -186,24 +186,41 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
 
     /* Preprocess newly read data to count messages */
     inp = ibuf->inp;
-    while (len-- > 0) {
-        unsigned char ch = *inp++;
-        if (inp == ibuf->buf + INPUT_BUF_SIZE) inp = ibuf->buf;
+    while (len > 0) {
+        unsigned char ch;
 
 #if ENABLE_ZeroCopy
         if (ibuf->inp_size_mode) {
             /* Reading the size of the bin data */
             assert(!ibuf->inp_esc);
+            len--;
+            ch = *inp++;
+            if (inp == ibuf->buf + INPUT_BUF_SIZE) inp = ibuf->buf;
             ibuf->inp_data_size |= (ch & 0x7f) << (ibuf->inp_size_mode++ - 1) * 7;
             if ((ch & 0x80) == 0) ibuf->inp_size_mode = 0;
             continue;
         }
         if (ibuf->inp_data_size > 0) {
             assert(!ibuf->inp_esc);
-            ibuf->inp_data_size--;
+            if (ibuf->inp_data_size < len) {
+                len -= ibuf->inp_data_size;
+                inp += ibuf->inp_data_size;
+                ibuf->inp_data_size = 0;
+            }
+            else {
+                ibuf->inp_data_size -= len;
+                inp += len;
+                len = 0;
+            }
+            if (inp >= ibuf->buf + INPUT_BUF_SIZE) inp -= INPUT_BUF_SIZE;
             continue;
         }
 #endif
+
+        len--;
+        ch = *inp++;
+        if (inp == ibuf->buf + INPUT_BUF_SIZE) inp = ibuf->buf;
+
         if (ibuf->inp_esc) {
             ibuf->inp_esc = 0;
             switch (ch) {

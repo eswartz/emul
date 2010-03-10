@@ -2087,6 +2087,7 @@ static void command_get_children(char * token, Channel * c) {
     write_stringz(&c->out, token);
 
     /* TODO: Expressions.getChildren - structures */
+    /* TODO: Expressions.getChildren - symbols cache support */
 #if ENABLE_Symbols
     {
         Context * ctx;
@@ -2096,8 +2097,7 @@ static void command_get_children(char * token, Channel * c) {
 
         args.cnt = 0;
         args.channel = c;
-        strncpy(args.id, id, sizeof(args.id) - 1);
-        args.id[sizeof(args.id) - 1] = 0;
+        strlcpy(args.id, id, sizeof(args.id));
 
         if ((ctx = id2ctx(id)) != NULL && context_has_state(ctx)) {
             char * frame_id = get_stack_frame_id(ctx, STACK_TOP_FRAME);
@@ -2106,8 +2106,7 @@ static void command_get_children(char * token, Channel * c) {
             }
             else {
                 frame = STACK_TOP_FRAME;
-                strncpy(args.id, frame_id, sizeof(args.id) - 1);
-                args.id[sizeof(args.id) - 1] = 0;
+                strlcpy(args.id, frame_id, sizeof(args.id));
             }
         }
         else if (is_stack_frame_id(id, &ctx, &frame)) {
@@ -2154,8 +2153,8 @@ static void command_create(char * token, Channel * c) {
     e = (Expression *)loc_alloc_zero(sizeof(Expression));
     do snprintf(e->id, sizeof(e->id), "EXPR%d", expr_id_cnt++);
     while (find_expression(e->id) != NULL);
-    strncpy(e->parent, parent, sizeof(e->parent) - 1);
-    strncpy(e->language, language, sizeof(e->language) - 1);
+    strlcpy(e->parent, parent, sizeof(e->parent));
+    strlcpy(e->language, language, sizeof(e->language));
     e->channel = c;
     e->script = script;
 
@@ -2178,7 +2177,7 @@ static void command_create(char * token, Channel * c) {
             e->type_class = value.type_class;
             e->size = value.size;
 #if ENABLE_Symbols
-            if (value.type != NULL) strncpy(e->type, symbol2id(value.type), sizeof(e->type) - 1);
+            if (value.type != NULL) strlcpy(e->type, symbol2id(value.type), sizeof(e->type));
 #endif
         }
     }

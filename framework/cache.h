@@ -73,24 +73,20 @@
         write_stream(&c->out, MARKER_EOM);
 
         // Done command handling.
-
-        // Cleanup:
-
-        loc_free(args);
     }
 
     static void command_handler(char * token, Channel * c) {
         // Read command arguments
 
-        CommandArgs * args = loc_alloc_zero(sizeof(CommandArgs));
-        json_read_string(&c->inp, args->id, sizeof(args->id));
+        CommandArgs args;
+        json_read_string(&c->inp, args.id, sizeof(args.id));
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-        strncpy(args->token, token, sizeof(args->token) - 1);
+        strlcpy(args.token, token, sizeof(args.token));
 
         // Start cache client state machine:
 
-        cache_enter(cache_client, c, args);
+        cache_enter(cache_client, c, args, sizeof(args));
     }
 
     add_command_handler(proto, "Service Name", "Command Name", command_handler);
@@ -118,7 +114,7 @@ typedef struct AbstractCache {
  * The channel will be locked during periods of time when the client
  * waits for the cached data.
  */
-extern void cache_enter(CacheClient * client, Channel * channel, void * args);
+extern void cache_enter(CacheClient * client, Channel * channel, void * args, size_t args_size);
 
 /*
  * Cache clients call cache_exit() to indicate end of cache access.

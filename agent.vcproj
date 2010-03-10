@@ -77,7 +77,7 @@
 				ProgramDatabaseFile=".\obj\MSVC\Release/agent.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
+				DataExecutionPrevention="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -168,7 +168,7 @@
 				ProgramDatabaseFile=".\obj\MSVC\Debug/agent.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
+				DataExecutionPrevention="2"
 				TargetMachine="1"
 			/>
 			<Tool

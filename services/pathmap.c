@@ -139,7 +139,7 @@ static void read_rule_attrs(InputStream * inp, char * name, void * args) {
         r->attrs[r->attrs_cnt].value = json_read_alloc_string(inp);
     }
     else {
-        r->attrs[r->attrs_cnt].json = json_skip_object(inp);
+        r->attrs[r->attrs_cnt].json = json_read_object(inp);
     }
     r->attrs[r->attrs_cnt++].name = loc_strdup(name);
 }

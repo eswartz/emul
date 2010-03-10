@@ -66,6 +66,8 @@
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -117,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=".,services,main,../agent/framework,../agent/services"
+				AdditionalIncludeDirectories=".;services;main;../agent;../agent/framework;../agent/services"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -143,6 +145,8 @@
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -224,6 +228,10 @@
 			</File>
 			<File
 				RelativePath="..\agent\services\pathmap.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\stacktrace.c"
 				>
 			</File>
 			<File

@@ -409,28 +409,37 @@ void add_event_handler2(Channel * c, const char * service, const char * name, Pr
     event_handlers[h] = eh;
 }
 
+static void send_command_failed(void * args) {
+    ReplyHandlerInfo * rh = (ReplyHandlerInfo *)args;
+    rh->handler(rh->c, rh->client_data, ERR_CHANNEL_CLOSED);
+    loc_free(rh);
+}
+
 ReplyHandlerInfo * protocol_send_command(Channel * c, const char * service, const char * name, ReplyHandlerCB handler, void * client_data) {
     Protocol * p = c->protocol;
-    ReplyHandlerInfo * rh;
-    int h;
-    unsigned long tokenid;
-    char token[256];
+    ReplyHandlerInfo * rh = (ReplyHandlerInfo *)loc_alloc(sizeof(ReplyHandlerInfo));
 
-    do tokenid = p->tokenid++;
-    while (find_reply_handler(c, tokenid, 0) != NULL);
-    sprintf(token, "%lu", tokenid);
-    write_stringz(&c->out, "C");
-    write_stringz(&c->out, token);
-    write_stringz(&c->out, service);
-    write_stringz(&c->out, name);
-    rh = (ReplyHandlerInfo *)loc_alloc(sizeof *rh);
-    rh->tokenid = tokenid;
     rh->c = c;
     rh->handler = handler;
     rh->client_data = client_data;
-    h = reply_hash(c, tokenid);
-    rh->next = reply_handlers[h];
-    reply_handlers[h] = rh;
+    if (c->peer_service_list == NULL) {
+        post_event(send_command_failed, rh);
+    }
+    else {
+        int h;
+        unsigned long tokenid;
+        do tokenid = p->tokenid++;
+        while (find_reply_handler(c, tokenid, 0) != NULL);
+        write_stringz(&c->out, "C");
+        json_write_ulong(&c->out, tokenid);
+        write_stream(&c->out, 0);
+        write_stringz(&c->out, service);
+        write_stringz(&c->out, name);
+        rh->tokenid = tokenid;
+        h = reply_hash(c, tokenid);
+        rh->next = reply_handlers[h];
+        reply_handlers[h] = rh;
+    }
     return rh;
 }
 

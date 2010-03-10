@@ -801,7 +801,7 @@ void ini_mdep(void) {
     }
     pthread_attr_init(&pthread_create_attr);
 #if defined(_DEBUG) && defined(_MSC_VER)
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF /* | _CRTDBG_LEAK_CHECK_DF */);
 #endif
 }
 
@@ -1247,4 +1247,37 @@ void become_daemon(void) {
     }
     running_as_daemon = 1;
 }
+#endif
+
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__)
+
+size_t strlcpy(char * dst, const char * src, size_t size) {
+    char ch;
+    const char * src0 = src;
+    const char * dst1 = dst + size - 1;
+
+    while ((ch = *src) != 0) {
+        if (dst < dst1) *dst++ = ch;
+        src++;
+    }
+    if (dst <= dst1) *dst = 0;
+    return src - src0;
+}
+
+size_t strlcat(char * dst, const char * src, size_t size) {
+    char ch;
+    const char * dst0 = dst;
+    const char * src0 = src;
+    const char * dst1 = dst + size - 1;
+
+    while (dst <= dst1 && *dst != 0) dst++;
+
+    while ((ch = *src) != 0) {
+        if (dst < dst1) *dst++ = ch;
+        src++;
+    }
+    if (dst <= dst1) *dst = 0;
+    return (dst - dst0) + (src - src0);
+}
+
 #endif

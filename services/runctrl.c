@@ -381,7 +381,7 @@ static void send_event_context_resumed(OutputStream * out, Context * ctx);
 static void resume_params_callback(InputStream * inp, char * name, void * args) {
     int * err = (int *)args;
     /* Current agent implementation does not support resume parameters */
-    loc_free(json_skip_object(inp));
+    json_skip_object(inp);
     *err = ERR_UNSUPPORTED;
 }
 
@@ -439,11 +439,15 @@ static void command_resume(char * token, Channel * c) {
         }
         else if (context_has_state(ctx) && mode == RM_STEP_INTO) {
             send_event_context_resumed(&c->bcg->out, ctx);
-            if (context_single_step(ctx) < 0) {
+            if (run_ctrl_lock_cnt > 0) {
+                ctx->pending_step = 1;
+            }
+            else if (context_single_step(ctx) < 0) {
                 err = errno;
             }
             else {
                 assert(!ctx->intercepted);
+                assert(!ctx->stopped || ctx->stepping_over_bp);
                 ctx->pending_intercept = 1;
             }
         }
@@ -472,6 +476,7 @@ int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
                 ctx->pending_intercept = 1;
             }
             else {
+                ctx->pending_step = 0;
                 send_event_context_suspended(&bcg->out, ctx);
             }
         }
@@ -500,9 +505,6 @@ static void command_suspend(char * token, Channel * c) {
     }
     else if (ctx->intercepted) {
         err = ERR_ALREADY_STOPPED;
-    }
-    else if (ctx->stopped) {
-        send_event_context_suspended(&c->bcg->out, ctx);
     }
     else if (suspend_debug_context(c->bcg, ctx) < 0) {
         err = errno;
@@ -638,6 +640,7 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx) {
 static void send_event_context_resumed(OutputStream * out, Context * ctx) {
     assert(ctx->intercepted);
     assert(!ctx->pending_intercept);
+    assert(!ctx->pending_step);
     ctx->intercepted = 0;
     if (ctx->bp_ids != NULL) {
         loc_free(ctx->bp_ids);
@@ -692,24 +695,36 @@ static void run_safe_events(void * arg) {
 
     if ((uintptr_t)arg != safe_event_generation) return;
 
+    safe_event_pid_count = 0;
+
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
-        assert(safe_event_pid_count == 0);
-
-
-
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
+            int n = 0;
             Context * ctx = ctxl2ctxp(qp);
+            ctx->pending_safe_event = 0;
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
             if (ctx->intercepted) continue;
+            assert(!is_breakpoint_evaluation_running(ctx));
             assert(!ctx->pending_intercept);
-            context_continue(ctx);
+            if (ctx->pending_step) {
+                ctx->pending_step = 0;
+                ctx->pending_intercept = 1;
+                n = context_single_step(ctx);
+            }
+            else {
+                n = context_continue(ctx);
+            }
+            if (n < 0) {
+                int error = errno;
+                trace(LOG_ALWAYS, "error: can't resume pid %d; error %d: %s",
+                    ctx->pid, error, errno_to_str(error));
+            }
         }
         return;
     }
 
-    safe_event_pid_count = 0;
     mem = safe_event_list ? safe_event_list->mem : 0;
 
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
@@ -780,11 +795,10 @@ static void run_safe_events(void * arg) {
 static void check_safe_events(Context * ctx) {
     assert(ctx->stopped || ctx->exited);
     assert(ctx->pending_safe_event);
-    assert(run_ctrl_lock_cnt > 0);
     assert(safe_event_pid_count > 0);
     ctx->pending_safe_event = 0;
     safe_event_pid_count--;
-    if (safe_event_pid_count == 0) {
+    if (safe_event_pid_count == 0 && run_ctrl_lock_cnt > 0) {
         post_event(run_safe_events, (void *)++safe_event_generation);
     }
 }
@@ -805,7 +819,6 @@ void post_safe_event(int mem, EventCallBack * done, void * arg) {
 
 void run_ctrl_lock(void) {
     if (run_ctrl_lock_cnt == 0) {
-        assert(safe_event_pid_count == 0);
         assert(safe_event_list == NULL);
         cmdline_suspend();
         post_event(run_safe_events, (void *)++safe_event_generation);
@@ -849,7 +862,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     if (ctx->stopped_by_exception) {
         send_event_context_exception(&bcg->out, ctx);
     }
-    if (ctx->pending_intercept) {
+    if (ctx->pending_intercept && !is_breakpoint_evaluation_running(ctx)) {
         send_event_context_suspended(&bcg->out, ctx);
     }
     if (!ctx->intercepted && run_ctrl_lock_cnt == 0) {
@@ -865,7 +878,7 @@ static void event_context_started(Context * ctx, void * client_data) {
     if (ctx->intercepted) {
         send_event_context_resumed(&bcg->out, ctx);
     }
-    if (run_ctrl_lock_cnt > 0) {
+    if (safe_event_list) {
         if (!ctx->pending_step) {
             context_stop(ctx);
         }

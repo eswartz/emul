@@ -33,7 +33,7 @@ typedef struct BreakpointInfo BreakpointInfo;
  * The function is called from context.c every time a context is stopped by breakpoint.
  * The function evaluates breakpoint condition and sets ctx->intercepted = 1 if the condition is true.
  */
-extern void evaluate_breakpoint_condition(Context * ctx);
+extern void evaluate_breakpoint(Context * ctx);
 
 /*
  * When a context is stopped by breakpoint, it is necessary to disable
@@ -47,6 +47,9 @@ extern int skip_breakpoint(Context * ctx, int single_step);
 
 /* Return 1 if break instruction is planted at given address in the context memory */
 extern int is_breakpoint_address(Context * ctx, ContextAddress address);
+
+/* Return 1 if breakpoint expressions evaluation is in progress */
+extern int is_breakpoint_evaluation_running(Context * ctx);
 
 /* Check if memory data buffer contans planted break instructions and remove them */
 extern void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void * buf, size_t size);
@@ -66,7 +69,7 @@ extern void destroy_eventpoint(BreakpointInfo * eventpoint);
 
 #else /* SERVICE_Breakpoints */
 
-#define evaluate_breakpoint_condition(ctx)
+#define evaluate_breakpoint(ctx)
 #define skip_breakpoint(ctx, single_step) 0
 #define is_breakpoint_address(ctx, address) 0
 #define check_breakpoints_on_memory_read(ctx, address, buf, size)

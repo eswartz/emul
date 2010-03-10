@@ -62,8 +62,8 @@ static void dispose_memory_map(MemoryMap * map) {
 static void event_memory_map_changed(Context * ctx, void * args) {
     OutputStream * out;
 
+    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
     if (ctx->memory_map == NULL) return;
-    if (ctx->parent == NULL) return;
 
     dispose_memory_map((MemoryMap *)ctx->memory_map);
     ctx->memory_map = NULL;
@@ -135,7 +135,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
         moduleCreateHookAdd(module_create_func);
     }
     while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    if (ctx->memory_map == NULL) {
+    if (ctx->memory_map == NULL && !ctx->exited) {
         map = loc_alloc_zero(sizeof(MemoryMap));
         moduleEach(module_list_proc, 0);
         ctx->memory_map = map;
@@ -166,7 +166,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
     FILE * file;
 
     while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    if (ctx->memory_map != NULL) return (MemoryMap *)ctx->memory_map;
+    if (ctx->memory_map != NULL || ctx->exited) return (MemoryMap *)ctx->memory_map;
 
     snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", ctx->pid);
     if ((file = fopen(maps_file_name, "r")) == NULL) return NULL;

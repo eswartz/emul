@@ -49,7 +49,12 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     write_stream(out, ',');
     json_write_string(out, "ParentID");
     write_stream(out, ':');
-    json_write_string(out, ctx2id(ctx));
+    if (is_top_frame(ctx, frame)) {
+        json_write_string(out, ctx2id(ctx));
+    }
+    else {
+        json_write_string(out, get_stack_frame_id(ctx, frame));
+    }
 
     write_stream(out, ',');
     json_write_string(out, "Name");
@@ -70,6 +75,34 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     json_write_string(out, "Writeable");
     write_stream(out, ':');
     json_write_boolean(out, 1);
+
+    if (reg_def == get_PC_definition(ctx)) {
+        write_stream(out, ',');
+        json_write_string(out, "Role");
+        write_stream(out, ':');
+        json_write_string(out, "PC");
+    }
+
+    if (reg_def->dwarf_id >= 0) {
+        write_stream(out, ',');
+        json_write_string(out, "DwarfID");
+        write_stream(out, ':');
+        json_write_long(out, reg_def->dwarf_id);
+    }
+
+    if (reg_def->eh_frame_id >= 0) {
+        write_stream(out, ',');
+        json_write_string(out, "EhFrameID");
+        write_stream(out, ':');
+        json_write_long(out, reg_def->eh_frame_id);
+    }
+
+    if (reg_def->traceable) {
+        write_stream(out, ',');
+        json_write_string(out, "Traceable");
+        write_stream(out, ':');
+        json_write_boolean(out, reg_def->traceable);
+    }
 
 #if !defined(_WRS_KERNEL)
     write_stream(out, ',');
@@ -459,7 +492,7 @@ static void command_setm(char * token, Channel * c) {
 }
 
 static void read_filter_attrs(InputStream * inp, char * nm, void * arg) {
-    loc_free(json_skip_object(inp));
+    json_skip_object(inp);
 }
 
 static void command_search(char * token, Channel * c) {

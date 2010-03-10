@@ -46,6 +46,9 @@ typedef struct Symbol Symbol;
 #define TYPE_CLASS_ENUMERATION  7
 #define TYPE_CLASS_FUNCTION     8
 
+/* Symbol properties update policies */
+#define UPDATE_ON_MEMORY_MAP_CHANGES 0
+#define UPDATE_ON_EXE_STATE_CHANGES  1
 
 typedef void EnumerateSymbolsCallBack(void *, Symbol *);
 
@@ -93,6 +96,15 @@ extern int get_symbol_type(const Symbol * sym, Symbol ** type);
 
 /* Get type class, see TYPE_CLASS_* */
 extern int get_symbol_type_class(const Symbol * sym, int * type_class);
+
+/* Get symbol owner ID and update policy ID.
+ * Symbol owner can be memory space or executable context.
+ * Certain changes in owner state can invalidate cached symbol properties.
+ * Update policy ID selects a specific set of rules that a client should follow
+ * if it wants to cache symbol properties.
+ * The string returned shall not be modified by the client,
+ * and it may be overwritten by a subsequent calls to symbol functions */
+extern int get_symbol_update_policy(const Symbol * sym, char ** parent_id, int * policy);
 
 /* Get symbol name.
  * The string returned shall not be modified by the client,

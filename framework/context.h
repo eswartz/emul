@@ -48,6 +48,9 @@ struct Context {
 #if SERVICE_MemoryMap
     void *              memory_map;         /* pointer to MemoryMap service data cache */
 #endif
+#if SERVICE_Breakpoints
+    void *              breakpoints_state;  /* pointer to Breakpoints service data cache */
+#endif
 #if ENABLE_RCBP_TEST
     int                 test_process;       /* if not 0, the process is test process started by Diagnostics service */
 #endif

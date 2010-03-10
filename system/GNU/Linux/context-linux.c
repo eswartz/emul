@@ -274,9 +274,10 @@ int context_continue(Context * ctx) {
 
 int context_single_step(Context * ctx) {
     assert(is_dispatch_thread());
+    assert(context_has_state(ctx));
     assert(ctx->stopped);
-    assert(!ctx->pending_step);
     assert(!ctx->exited);
+    assert(!ctx->pending_step);
 
     if (skip_breakpoint(ctx, 1)) return 0;
 

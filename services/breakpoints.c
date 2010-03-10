@@ -14,7 +14,7 @@
 
 /*
  * This module implements Breakpoints service.
- * The service maintains a list of breakpoints.
+ * The service maintains a bp_arr of breakpoints.
  * Each breakpoint consists of one or more conditions that determine
  * when a program's execution should be interrupted.
  */
@@ -51,6 +51,9 @@
 typedef struct BreakpointClient BreakpointClient;
 typedef struct BreakpointAttribute BreakpointAttribute;
 typedef struct BreakInstruction BreakInstruction;
+typedef struct EvaluationArgs EvaluationArgs;
+typedef struct ConditionEvaluation ConditionEvaluation;
+typedef struct ConditionItem ConditionItem;
 
 struct BreakpointClient {
     LINK link_inp;
@@ -78,22 +81,19 @@ struct BreakpointInfo {
     char * condition;
     char ** context_ids;
     char ** stop_group;
-#if SERVICE_LineNumbers
     char * file;
     int line;
     int column;
-#endif
     int ignore_count;
     int hit_count;
     BreakpointAttribute * unsupported;
-    int triggered;
 
     EventPointCallBack * event_callback;
     void * event_callback_args;
 
     /* Last status report contents: */
-    int status_unsupported;
     ErrorReport * status_error;
+    int status_unsupported;
     int status_planted;
 };
 
@@ -116,6 +116,25 @@ struct BreakInstruction {
     int planted;
 };
 
+struct EvaluationArgs {
+    BreakpointInfo * bp;
+    Context * ctx;
+};
+
+struct ConditionItem {
+    BreakpointInfo * bp;
+    int condition_ok;
+    int triggered;
+};
+
+struct ConditionEvaluation {
+    LINK link;
+    Context * ctx;
+    int bp_cnt;
+    int bp_max;
+    ConditionItem bp_arr[1];
+};
+
 static const char * BREAKPOINTS = "Breakpoints";
 
 #define is_readable(ctx) (!(ctx)->exited && !(ctx)->exiting && ((ctx)->stopped || !context_has_state(ctx)))
@@ -136,6 +155,9 @@ static const char * BREAKPOINTS = "Breakpoints";
 #define link_inp2br(A)  ((BreakpointClient *)((char *)(A) - offsetof(BreakpointClient, link_inp)))
 #define link_bp2br(A)   ((BreakpointClient *)((char *)(A) - offsetof(BreakpointClient, link_bp)))
 
+#define link_all2ce(A)  ((ConditionEvaluation *)((char *)(A) - offsetof(ConditionEvaluation, link)))
+#define link_bcg2chnl(A) ((Channel *)((char *)(A) - offsetof(Channel, bclink)))
+
 static LINK breakpoints;
 static LINK id2bp[ID2BP_HASH_SIZE];
 
@@ -144,12 +166,13 @@ static LINK addr2instr[ADDR2INSTR_HASH_SIZE];
 
 static LINK inp2br[INP2BR_HASH_SIZE];
 
+static LINK evaluations;
+
 #define MAX_REPLANTING_MEM_SPACES 4
 static uintptr_t replanting_generation = 0;
+static uintptr_t done_generation = 0;
 static pid_t replanting_mem_spaces[MAX_REPLANTING_MEM_SPACES];
 static int replanting_mem_cnt = 0;
-static int replanting_posted = 0;
-static int replanting_running = 0;
 static int pending_cache_cnt = 0;
 static int planting_instruction = 0;
 
@@ -473,25 +496,54 @@ static void plant_breakpoint_at_address(BreakpointInfo * bp, Context * ctx, Cont
     }
 }
 
-#if SERVICE_LineNumbers
-typedef struct PlantBreakpointArgs {
-    BreakpointInfo * bp;
-    Context * ctx;
-} PlantBreakpointArgs;
+static void event_replant_breakpoints(void * arg);
+static void done_replanting_breakpoints(void);
+static void done_evaluate_conditions(void);
 
-static void plant_breakpoint_address_iterator(void * x, ContextAddress address) {
-    PlantBreakpointArgs * args = (PlantBreakpointArgs *)x;
-    plant_breakpoint_at_address(args->bp, args->ctx, address);
+static void expr_done(void) {
+    if (--pending_cache_cnt == 0) {
+        int i;
+        done_evaluate_conditions();
+        for (i = 0; i < replanting_mem_cnt; i++) {
+            post_safe_event(replanting_mem_spaces[i], event_replant_breakpoints, (void *)++replanting_generation);
+        }
+        if (replanting_mem_cnt == 0 && replanting_generation != done_generation) {
+            done_replanting_breakpoints();
+        }
+    }
 }
-#endif
+
+static void expr_cache_enter(CacheClient * client, BreakpointInfo * bp, Context * ctx) {
+    LINK * l = NULL;
+    EvaluationArgs args;
+
+    args.bp = bp;
+    args.ctx = ctx;
+
+    l = broadcast_group->channels.next;
+    while (l != &broadcast_group->channels) {
+        Channel * c = link_bcg2chnl(l);
+        pending_cache_cnt++;
+        run_ctrl_lock();
+        context_lock(ctx);
+        cache_enter(client, c, &args, sizeof(args));
+        l = l->next;
+    }
+}
+
+static void expr_cache_exit(EvaluationArgs * args) {
+    cache_exit();
+    expr_done();
+    run_ctrl_unlock();
+    context_unlock(args->ctx);
+}
 
 static void done_replanting_breakpoints(void) {
     LINK * l = NULL;
     int event_cnt = 0;
     assert(pending_cache_cnt == 0);
     assert(replanting_mem_cnt == 0);
-    assert(replanting_posted == 0);
-    assert(replanting_running == 0);
+    assert(done_generation != replanting_generation);
     flush_instructions();
     for (l = breakpoints.next; l != &breakpoints; l = l->next) {
         BreakpointInfo * bp = link_all2bp(l);
@@ -502,6 +554,7 @@ static void done_replanting_breakpoints(void) {
         for (m = instructions.next; m != &instructions; m = m->next) {
             BreakInstruction * bi = link_all2bi(m);
             assert(bi->ref_cnt <= bi->ref_size);
+            assert(bi->ctx->ref_count > 0);
             if (bi->planted) {
                 int i;
                 for (i = 0; i < bi->ref_cnt; i++) {
@@ -544,98 +597,74 @@ static void done_replanting_breakpoints(void) {
         }
     }
     if (event_cnt > 0) flush_stream(&broadcast_group->out);
+    done_generation = replanting_generation;
 }
 
-typedef struct EvaluateAddressArgs {
-    Context * ctx;
-    BreakpointInfo * bp;
-} EvaluateAddressArgs;
-
-static void event_replant_breakpoints(void * arg);
-
 static void evaluate_address_expression(void * x) {
+    EvaluationArgs * args = (EvaluationArgs *)x;
+    BreakpointInfo * bp = args->bp;
     Value v;
-    EvaluateAddressArgs * args  = (EvaluateAddressArgs *)x;
+
     assert(pending_cache_cnt > 0);
     if (select_valid_context(&args->ctx) < 0) {
-        address_expression_error(args->bp);
+        address_expression_error(bp);
     }
-    else if (evaluate_expression(args->ctx, STACK_NO_FRAME, args->bp->address, 1, &v) < 0) {
-        address_expression_error(args->bp);
+    else if (evaluate_expression(args->ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
+        address_expression_error(bp);
     }
     else if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL && v.type_class != TYPE_CLASS_POINTER) {
         errno = ERR_INV_DATA_TYPE;
-        address_expression_error(args->bp);
+        address_expression_error(bp);
     }
     else {
-        plant_breakpoint_at_address(args->bp, args->ctx, value_to_address(&v));
+        plant_breakpoint_at_address(bp, args->ctx, value_to_address(&v));
     }
-    cache_exit();
-    run_ctrl_unlock();
-    context_unlock(args->ctx);
-    pending_cache_cnt--;
-    loc_free(args);
-    if (pending_cache_cnt == 0 && !replanting_running) {
-        assert(replanting_posted == 0);
-        if (replanting_mem_cnt == 0) {
-            done_replanting_breakpoints();
-        }
-        else {
-            int mem = 0;
-            if (replanting_mem_cnt == 1) mem = replanting_mem_spaces[0];
-            post_safe_event(mem, event_replant_breakpoints, (void *)replanting_generation);
-            replanting_posted = 1;
-        }
-    }
+    expr_cache_exit(args);
 }
 
-static void plant_breakpoint_in_container(BreakpointInfo * bp, pid_t mem, Context * ctx, ContextAddress bp_addr) {
-
-#if 0
-    /* TODO: breakpoint condition otimization is broken */
-    if (bp->condition != NULL) {
-        /* Optimize away the breakpoint if condition is always false for given context */
-        Value c;
-        if (evaluate_expression(ctx, STACK_NO_FRAME, bp->condition, 1, &c) == 0) {
-            if (c.constant && !value_to_boolean(&c)) return;
-        }
-    }
-#endif
-
-    if (bp_addr != 0) {
-        plant_breakpoint_at_address(bp, ctx, bp_addr);
-    }
-    else if (bp->address != NULL) {
-        LINK * l = NULL;
-        /* TODO: don't know which channel to use to evaluate address of an eventpoint */
-        for (l = bp->link_clients.next; l != &bp->link_clients; l = l->next) {
-            BreakpointClient * br = link_bp2br(l);
-            EvaluateAddressArgs * args = (EvaluateAddressArgs *)loc_alloc_zero(sizeof(EvaluateAddressArgs));
-            args->bp = bp;
-            args->ctx = ctx;
-            assert(br->bp == bp);
-            assert(bp->client_cnt > 0);
-            pending_cache_cnt++;
-            context_lock(ctx);
-            run_ctrl_lock();
-            cache_enter(evaluate_address_expression, br->channel, args);
-        }
-    }
 #if SERVICE_LineNumbers
-    else if (bp->file != NULL) {
-        PlantBreakpointArgs args;
-        args.ctx = ctx;
-        args.bp = bp;
-        /* TODO: line number cache support */
-        if (line_to_address(ctx, bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, &args) < 0) {
-            assert(errno != 0);
-            if (bp->error == NULL) bp->error = get_error_report(errno);
+static void plant_breakpoint_address_iterator(void * x, ContextAddress address) {
+    EvaluationArgs * args = (EvaluationArgs *)x;
+    plant_breakpoint_at_address(args->bp, args->ctx, address);
+}
+
+static void evaluate_text_location(void * x) {
+    EvaluationArgs * args = (EvaluationArgs *)x;
+    BreakpointInfo * bp = args->bp;
+
+    assert(pending_cache_cnt > 0);
+    if (select_valid_context(&args->ctx) < 0) {
+        address_expression_error(bp);
+    }
+    else if (line_to_address(args->ctx, bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, args) < 0) {
+        address_expression_error(bp);
+    }
+    expr_cache_exit(args);
+}
+#endif
+
+static void plant_breakpoint_in_container(BreakpointInfo * bp, pid_t mem, Context * ctx, ContextAddress bp_addr) {
+    context_lock(ctx);
+    if (select_valid_context(&ctx) == 0) {
+        if (bp_addr != 0) {
+            plant_breakpoint_at_address(bp, ctx, bp_addr);
+        }
+        else if (bp->address != NULL) {
+            expr_cache_enter(evaluate_address_expression, bp, ctx);
+        }
+        else if (bp->file != NULL) {
+#if SERVICE_LineNumbers
+            expr_cache_enter(evaluate_text_location, bp, ctx);
+#else
+            set_errno(ERR_UNSUPPORTED, "LineNumbers service not available");
+            address_expression_error(bp);
+#endif
+        }
+        else {
+            assert(0);
         }
     }
-#endif
-    else {
-        assert(0);
-    }
+    context_unlock(ctx);
 }
 
 static void plant_breakpoint(BreakpointInfo * bp, pid_t mem) {
@@ -664,10 +693,8 @@ static void plant_breakpoint(BreakpointInfo * bp, pid_t mem) {
             bp_addr = value_to_address(&v);
         }
     }
-#if SERVICE_LineNumbers
     else if (bp->file != NULL) {
     }
-#endif
     else {
         bp->error = get_error_report(ERR_INV_EXPRESSION);
         return;
@@ -711,9 +738,7 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp->address);
     loc_free(bp->context_ids);
     loc_free(bp->stop_group);
-#if SERVICE_LineNumbers
     loc_free(bp->file);
-#endif
     loc_free(bp->condition);
     while (bp->unsupported != NULL) {
         BreakpointAttribute * u = bp->unsupported;
@@ -731,18 +756,15 @@ static void event_replant_breakpoints(void * arg) {
     int mem_cnt;
     pid_t mem_buf[MAX_REPLANTING_MEM_SPACES];
 
-    assert(replanting_posted);
-    assert(replanting_running == 0);
     assert(replanting_mem_cnt > 0);
     if ((uintptr_t)arg != replanting_generation) return;
-    replanting_posted = 0;
     if (pending_cache_cnt > 0) return;
 
     mem_cnt = replanting_mem_cnt;
     memcpy(mem_buf, replanting_mem_spaces, sizeof(pid_t) * mem_cnt);
     replanting_mem_cnt = 0;
+    pending_cache_cnt++;
 
-    replanting_running = 1;
     for (i = 0; i < mem_cnt; i++) {
         LINK * l = NULL;
         pid_t mem = mem_buf[i];
@@ -758,9 +780,8 @@ static void event_replant_breakpoints(void * arg) {
             }
         }
     }
-    replanting_running = 0;
 
-    if (pending_cache_cnt == 0) done_replanting_breakpoints();
+    expr_done();
 }
 
 static void replant_breakpoints_in_context(Context * ctx) {
@@ -774,11 +795,7 @@ static void replant_breakpoints_in_context(Context * ctx) {
         }
         if (replanting_mem_cnt < MAX_REPLANTING_MEM_SPACES) {
             replanting_mem_spaces[replanting_mem_cnt++] = ctx->mem;
-            replanting_generation++;
-            if (pending_cache_cnt == 0) {
-                post_safe_event(ctx->mem, event_replant_breakpoints, (void *)replanting_generation);
-                replanting_posted = 1;
-            }
+            post_safe_event(ctx->mem, event_replant_breakpoints, (void *)++replanting_generation);
             return;
         }
     }
@@ -786,11 +803,7 @@ static void replant_breakpoints_in_context(Context * ctx) {
     if (replanting_mem_cnt != 1 || replanting_mem_spaces[0] != 0)  {
         replanting_mem_cnt = 1;
         replanting_mem_spaces[0] = 0;
-        replanting_generation++;
-        if (pending_cache_cnt == 0) {
-            post_safe_event(0, event_replant_breakpoints, (void *)replanting_generation);
-            replanting_posted = 1;
-        }
+        post_safe_event(0, event_replant_breakpoints, (void *)++replanting_generation);
     }
 }
 
@@ -875,7 +888,6 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
     }
     src->stop_group = NULL;
 
-#if SERVICE_LineNumbers
     if (!str_equ(dst->file, src->file)) {
         loc_free(dst->file);
         dst->file = src->file;
@@ -895,7 +907,6 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
         dst->column = src->column;
         res = 1;
     }
-#endif
 
     if (dst->ignore_count != src->ignore_count) {
         dst->ignore_count = src->ignore_count;
@@ -974,7 +985,6 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             else if (strcmp(name, "StopGroup") == 0) {
                 bp->stop_group = json_read_alloc_string_array(inp, NULL);
             }
-#if SERVICE_LineNumbers
             else if (strcmp(name, "File") == 0) {
                 bp->file = json_read_alloc_string(inp);
             }
@@ -984,7 +994,6 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             else if (strcmp(name, "Column") == 0) {
                 bp->column = json_read_long(inp);
             }
-#endif
             else if (strcmp(name, "IgnoreCount") == 0) {
                 bp->ignore_count = json_read_long(inp);
             }
@@ -994,7 +1003,7 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             else {
                 BreakpointAttribute * u = (BreakpointAttribute *)loc_alloc(sizeof(BreakpointAttribute));
                 u->name = loc_strdup(name);
-                u->value = json_skip_object(inp);
+                u->value = json_read_object(inp);
                 u->next = bp->unsupported;
                 bp->unsupported = u;
             }
@@ -1056,7 +1065,6 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         write_stream(out, ']');
     }
 
-#if SERVICE_LineNumbers
     if (bp->file != NULL) {
         write_stream(out, ',');
         json_write_string(out, "File");
@@ -1077,7 +1085,6 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         write_stream(out, ':');
         json_write_long(out, bp->column);
     }
-#endif
 
     if (bp->ignore_count > 0) {
         write_stream(out, ',');
@@ -1502,12 +1509,10 @@ static void command_get_capabilities(char * token, Channel * c) {
     json_write_string(&c->out, "Location");
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
-#if SERVICE_LineNumbers
     write_stream(&c->out, ',');
     json_write_string(&c->out, "FileLine");
     write_stream(&c->out, ':');
-    json_write_boolean(&c->out, 1);
-#endif
+    json_write_boolean(&c->out, SERVICE_LineNumbers);
     write_stream(&c->out, ',');
     json_write_string(&c->out, "IgnoreCount");
     write_stream(&c->out, ':');
@@ -1535,62 +1540,121 @@ int is_breakpoint_address(Context * ctx, ContextAddress address) {
     return bi != NULL && bi->planted;
 }
 
-void evaluate_breakpoint_condition(Context * ctx) {
-    int i;
-    size_t size = 0;
-    BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
+#define is_disabled(bp) (bp->enabled == 0 || bp->client_cnt == 0 || bp->unsupported != NULL)
 
-    assert(context_has_state(ctx));
+static int check_context_ids(BreakpointInfo * bp, Context * ctx) {
+    if (bp->context_ids != NULL) {
+        int ok = 0;
+        char ** ids = bp->context_ids;
+        while (!ok && *ids != NULL) {
+            Context * c = id2ctx(*ids++);
+            ok = c != NULL && (c == ctx || c == ctx->parent);
+        }
+        return ok;
+    }
+    return 1;
+}
+
+static void evaluate_condition(void * x) {
+    int i;
+    EvaluationArgs * args = (EvaluationArgs *)x;
+    Context * ctx = args->ctx;
+    ConditionEvaluation * ce = (ConditionEvaluation *)ctx->breakpoints_state;
+
+    assert(ce != 0);
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
-    assert(!ctx->intercepted);
-    assert(ctx->bp_ids == NULL);
+    assert(ctx->intercepted == 0);
+    assert(pending_cache_cnt > 0);
 
-    if (bi == NULL) return;
+    for (i = 0; i < ce->bp_cnt; i++) {
+        BreakpointInfo * bp = ce->bp_arr[i].bp;
 
-    assert(bi->planted);
+        if (is_disabled(bp)) continue;
+        if (!check_context_ids(bp, ctx)) continue;
 
-    for (i = 0; i < bi->ref_cnt; i++) {
-        bi->refs[i]->triggered = 0;
-    }
-
-    for (i = 0; i < bi->ref_cnt; i++) {
-        BreakpointInfo * bp = bi->refs[i];
-        assert(bp->instruction_cnt);
-        assert(bp->error == NULL);
-        if (bp->client_cnt == 0) continue;
-        if (bp->unsupported != NULL) continue;
-        if (!bp->enabled) continue;
-        if (bp->context_ids != NULL) {
-            int ok = 0;
-            char ** ids = bp->context_ids;
-            while (!ok && *ids != NULL) {
-                Context * c = id2ctx(*ids++);
-                ok = c != NULL && (c == ctx || c == ctx->parent);
-            }
-            if (!ok) continue;
-        }
         if (bp->condition != NULL) {
             Value v;
-            /* TODO: symbols cache support in breakpoint condition */
             if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0) {
+                if (get_error_code(errno) == ERR_CACHE_MISS) break;
                 trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
+                ce->bp_arr[i].condition_ok = 1;
             }
-            else if (!value_to_boolean(&v)) {
-                continue;
+            else if (value_to_boolean(&v)) {
+                ce->bp_arr[i].condition_ok = 1;
+            }
+            continue;
+        }
+
+        ce->bp_arr[i].condition_ok = 1;
+    }
+
+    expr_cache_exit(args);
+}
+
+static void done_evaluate_conditions(void) {
+    LINK * l;
+
+    for (l = evaluations.next; l != &evaluations;) {
+        ConditionEvaluation * ce = link_all2ce(l);
+        Context * ctx = ce->ctx;
+        size_t size = 0;
+        int i;
+
+        l = l->next;
+
+        for (i = 0; i < ce->bp_cnt; i++) {
+            BreakpointInfo * bp = ce->bp_arr[i].bp;
+            if (!ce->bp_arr[i].condition_ok) continue;
+            bp->hit_count++;
+            if (bp->hit_count <= bp->ignore_count) continue;
+            bp->hit_count = 0;
+            if (bp->event_callback != NULL) {
+                bp->event_callback(ctx, bp->event_callback_args);
+            }
+            else {
+                ce->bp_arr[i].triggered = 1;
+                size += sizeof(char *) + strlen(bp->id) + 1;
             }
         }
-        bp->hit_count++;
-        if (bp->hit_count <= bp->ignore_count) continue;
-        bp->hit_count = 0;
-        if (bp->event_callback != NULL) {
-            bp->event_callback(ctx, bp->event_callback_args);
+
+        if (size > 0) {
+            /* Create bp_arr of triggered breakpoint IDs */
+            size_t mem_size = size + sizeof(char *);
+            char ** bp_arr = (char **)loc_alloc(mem_size);
+            char * pool = (char *)bp_arr + mem_size;
+            ctx->bp_ids = bp_arr;
+            for (i = 0; i < ce->bp_cnt; i++) {
+                BreakpointInfo * bp = ce->bp_arr[i].bp;
+                if (ce->bp_arr[i].triggered) {
+                    size_t n = strlen(bp->id) + 1;
+                    pool -= n;
+                    memcpy(pool, bp->id, n);
+                    *bp_arr++ = pool;
+                }
+            }
+            *bp_arr++ = NULL;
+            assert((char *)bp_arr == pool);
+            for (i = 0; i < ce->bp_cnt; i++) {
+                BreakpointInfo * bp = ce->bp_arr[i].bp;
+                if (ce->bp_arr[i].triggered && bp->stop_group == NULL) {
+                    suspend_debug_context(broadcast_group, ctx);
+                }
+            }
         }
-        else {
-            bp->triggered = 1;
-            ctx->pending_intercept = 1;
-            size += sizeof(char *) + strlen(bp->id) + 1;
-            if (bp->stop_group != NULL) {
+    }
+
+    for (l = evaluations.next; l != &evaluations;) {
+        ConditionEvaluation * ce = link_all2ce(l);
+        Context * ctx = ce->ctx;
+        int i;
+
+        l = l->next;
+
+        /* Intercept contexts in BP stop groups */
+        for (i = 0; i < ce->bp_cnt; i++) {
+            BreakpointInfo * bp = ce->bp_arr[i].bp;
+            if (ce->bp_arr[i].triggered && bp->stop_group != NULL) {
                 char ** ids = bp->stop_group;
                 while (*ids) {
                     Context * c = id2ctx(*ids++);
@@ -1598,25 +1662,103 @@ void evaluate_breakpoint_condition(Context * ctx) {
                 }
             }
         }
+
+        list_remove(&ce->link);
+        ce->bp_cnt = 0;
+
+        if (ctx->exited) {
+            loc_free(ce);
+            ctx->breakpoints_state = NULL;
+        }
+        if (ctx->pending_intercept) {
+            suspend_debug_context(broadcast_group, ctx);
+        }
+        assert(!ctx->pending_intercept || ctx->event_notification);
+    }
+    flush_stream(&broadcast_group->out);
+}
+
+static void evaluate_condition_event(void * x) {
+    ConditionEvaluation * ce = (ConditionEvaluation *)x;
+    Context * ctx = ce->ctx;
+    int i;
+
+    for (i = 0; i < ce->bp_cnt; i++) ce->bp_arr[i].condition_ok = 0;
+    expr_cache_enter(evaluate_condition, NULL, ctx);
+    expr_done();
+    run_ctrl_unlock();
+    context_unlock(ctx);
+}
+
+void evaluate_breakpoint(Context * ctx) {
+    int i;
+    int bp_cnt = 0;
+    int cond_cnt = 0;
+    BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
+    ConditionEvaluation * ce = (ConditionEvaluation *)ctx->breakpoints_state;
+
+    assert(context_has_state(ctx));
+    assert(ctx->stopped);
+    assert(ctx->stopped_by_bp);
+    assert(ctx->exiting == 0);
+    assert(ctx->bp_ids == NULL);
+    assert(ctx->intercepted == 0);
+
+    if (bi == NULL || !bi->planted || bi->ref_cnt == 0) return;
+
+    bp_cnt = bi->ref_cnt;
+    if (ce == NULL) {
+        ce = (ConditionEvaluation *)loc_alloc(sizeof(ConditionEvaluation) + sizeof(ConditionItem) * (bp_cnt - 1));
+        ce->bp_cnt = 0;
+        ce->bp_max = bp_cnt;
+        ce->ctx = ctx;
+        ctx->breakpoints_state = ce;
+    }
+    else if (ce->bp_max < bp_cnt) {
+        ce = (ConditionEvaluation *)loc_realloc(ce, sizeof(ConditionEvaluation) + sizeof(ConditionItem) * (bp_cnt - 1));
+        ce->bp_max = bp_cnt;
+        ctx->breakpoints_state = ce;
+    }
+    assert(ce->ctx == ctx);
+    assert(ce->bp_cnt == 0);
+    assert(ce->bp_max >= bp_cnt);
+    memset(ce->bp_arr, 0, sizeof(ConditionItem) * bp_cnt);
+    ce->bp_cnt = bp_cnt;
+    list_add_last(&ce->link, &evaluations);
+    pending_cache_cnt++;
+
+    for (i = 0; i < bp_cnt; i++) {
+        BreakpointInfo * bp = bi->refs[i];
+        assert(bp->instruction_cnt);
+        assert(bp->error == NULL);
+        ce->bp_arr[i].bp = bp;
+
+        if (is_disabled(bp)) continue;
+        if (!check_context_ids(bp, ctx)) continue;
+
+        if (bp->condition != NULL) {
+            /* Condition evaluation must start in another dispatch cycle,
+             * after symbol cache invalidation is completed */
+            cond_cnt++;
+            continue;
+        }
+
+        ce->bp_arr[i].condition_ok = 1;
     }
 
-    if (size > 0) {
-        size_t mem_size = size + sizeof(char *);
-        char ** list = (char **)loc_alloc(mem_size);
-        char * pool = (char *)list + mem_size;
-        ctx->bp_ids = list;
-        for (i = 0; i < bi->ref_cnt; i++) {
-            BreakpointInfo * bp = bi->refs[i];
-            if (bp->triggered) {
-                size_t n = strlen(bp->id) + 1;
-                pool -= n;
-                memcpy(pool, bp->id, n);
-                *list++ = pool;
-            }
-        }
-        *list++ = NULL;
-        assert((char *)list == pool);
+    if (cond_cnt) {
+        context_lock(ctx);
+        run_ctrl_lock();
+        post_event(evaluate_condition_event, ce);
     }
+    else {
+        expr_done();
+    }
+}
+
+int is_breakpoint_evaluation_running(Context * ctx) {
+    ConditionEvaluation * ce = (ConditionEvaluation *)ctx->breakpoints_state;
+    return ce != NULL && ce->bp_cnt > 0;
 }
 
 #ifndef _WRS_KERNEL
@@ -1627,15 +1769,17 @@ static void safe_restore_breakpoint(void * arg) {
 
     assert(bi->skip_cnt > 0);
     assert(find_instruction(ctx, bi->address) == bi);
-    assert(!ctx->stopped_by_bp);
-    if (ctx->stopped && get_regs_PC(ctx->regs) == bi->address) {
+    if (!ctx->exiting && ctx->stopped && get_regs_PC(ctx->regs) == bi->address) {
         trace(LOG_ALWAYS, "Skip breakpoint error: wrong PC %#lx", get_regs_PC(ctx->regs));
     }
     bi->skip_cnt--;
-    if (bi->skip_cnt == 0 && !bi->error && bi->ref_cnt > 0 && !bi->planted) {
+    if (bi->skip_cnt == 0 && done_generation == replanting_generation && !bi->error && bi->ref_cnt > 0 && !bi->planted) {
         plant_instruction(bi);
     }
     ctx->stepping_over_bp = NULL;
+    if (ctx->pending_intercept) {
+        suspend_debug_context(broadcast_group, ctx);
+    }
     context_unlock(ctx);
 }
 
@@ -1650,7 +1794,7 @@ static void safe_skip_breakpoint(void * arg) {
 
     post_safe_event(ctx->mem, safe_restore_breakpoint, ctx);
 
-    if (ctx->exited) return;
+    if (ctx->exited || ctx->exiting) return;
 
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
@@ -1661,10 +1805,7 @@ static void safe_skip_breakpoint(void * arg) {
     if (bi->planted) remove_instruction(bi);
     if (bi->error) error = set_error_report_errno(bi->error);
     if (error == 0 && context_single_step(ctx) < 0) error = errno;
-    if (error) {
-        trace(LOG_ALWAYS, "Skip breakpoint error: %d %s", error, errno_to_str(error));
-        ctx->stopped_by_bp = 0;
-    }
+    if (error) trace(LOG_ALWAYS, "Skip breakpoint error: %d %s", error, errno_to_str(error));
 }
 
 #endif /* ifndef _WRS_KERNEL */
@@ -1683,6 +1824,7 @@ int skip_breakpoint(Context * ctx, int single_step) {
     assert(ctx->stopped);
     assert(!ctx->exited);
     assert(!ctx->intercepted);
+    assert(!ctx->pending_step);
     assert(single_step || ctx->stepping_over_bp == NULL);
 
     if (ctx->stepping_over_bp != NULL) return 0;
@@ -1722,11 +1864,20 @@ void destroy_eventpoint(BreakpointInfo * eventpoint) {
     remove_breakpoint(eventpoint);
 }
 
-static void event_context_changed(Context * ctx, void * client_data) {
+static void event_context_changed(Context * ctx, void * args) {
     replant_breakpoints_in_context(ctx);
 }
 
-static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddress size, void * client_data) {
+static void event_context_exited(Context * ctx, void * args) {
+    ConditionEvaluation * ce = (ConditionEvaluation *)ctx->breakpoints_state;
+    replant_breakpoints_in_context(ctx);
+    if (ce != NULL && ce->bp_cnt == 0) {
+        loc_free(ce);
+        ctx->breakpoints_state = NULL;
+    }
+}
+
+static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddress size, void * args) {
     /* Unmapping a code section unplants all breakpoint instructions in that section as side effect.
      * This function udates service data structure to reflect that.
      */
@@ -1752,7 +1903,7 @@ static void channel_close_listener(Channel * c) {
 
 #if !defined(_WRS_KERNEL)
 static void eventpoint_at_main(Context * ctx, void * args) {
-    ctx->pending_intercept = 1;
+    suspend_debug_context(broadcast_group, ctx);
 }
 #endif
 
@@ -1763,7 +1914,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     {
         static ContextEventListener listener = {
             event_context_changed,
-            event_context_changed,
+            event_context_exited,
             NULL,
             NULL,
             event_context_changed
@@ -1779,6 +1930,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     }
     list_init(&breakpoints);
     list_init(&instructions);
+    list_init(&evaluations);
     for (i = 0; i < ADDR2INSTR_HASH_SIZE; i++) list_init(addr2instr + i);
     for (i = 0; i < ID2BP_HASH_SIZE; i++) list_init(id2bp + i);
     for (i = 0; i < INP2BR_HASH_SIZE; i++) list_init(inp2br + i);

@@ -140,6 +140,15 @@ void context_unlock(Context * ctx) {
     if (--(ctx->ref_count) == 0) {
         assert(list_is_empty(&ctx->children));
         assert(ctx->parent == NULL);
+#if SERVICE_StackTrace
+        assert(ctx->stack_trace == NULL);
+#endif
+#if SERVICE_MemoryMap
+        assert(ctx->memory_map == NULL);
+#endif
+#if SERVICE_Breakpoints
+        assert(ctx->breakpoints_state == NULL);
+#endif
         list_remove(&ctx->ctxl);
         list_remove(&ctx->pidl);
         release_error_report(ctx->regs_error);
@@ -212,7 +221,7 @@ void send_context_stopped_event(Context * ctx) {
         ctx->bp_ids = NULL;
     }
     if (ctx->stopped_by_bp) {
-        evaluate_breakpoint_condition(ctx);
+        evaluate_breakpoint(ctx);
     }
 #endif
     while (listener != NULL) {

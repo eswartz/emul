@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#if SERVICE_StackTrace
+#if SERVICE_StackTrace || ENABLE_ContextProxy
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -36,6 +36,61 @@
 #include "memorymap.h"
 #include "symbols.h"
 #include "dwarfframe.h"
+
+static int id2frame(char * id, Context ** ctx, int * frame) {
+    int f = 0;
+    Context * c = NULL;
+
+    if (*id++ != 'F') {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (*id++ != 'P') {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    while (*id != '.') {
+        if (*id < '0' || *id > '9') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        f = f * 10 + (*id++ - '0');
+    }
+    id++;
+    c = id2ctx(id);
+    if (c == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    *ctx = c;
+    *frame = f;
+    return 0;
+}
+
+char * get_stack_frame_id(Context * ctx, int frame) {
+    static char id[256];
+
+    assert(frame != STACK_NO_FRAME);
+
+    if (!context_has_state(ctx)) {
+        errno = ERR_INV_CONTEXT;
+        return NULL;
+    }
+    if (frame == STACK_TOP_FRAME) {
+        frame = get_top_frame(ctx);
+        if (frame < 0) return NULL;
+    }
+    snprintf(id, sizeof(id), "FP%d.%s", frame, ctx2id(ctx));
+    return id;
+}
+
+int is_stack_frame_id(char * id, Context ** ctx, int * frame) {
+    return id2frame(id, ctx, frame) == 0;
+}
+
+#endif /* SERVICE_StackTrace || ENABLE_ContextProxy */
+
+#if SERVICE_StackTrace
 
 #define MAX_FRAMES  1000
 
@@ -215,39 +270,6 @@ static StackTrace * create_stack_trace(Context * ctx) {
     return stack_trace;
 }
 
-static int id2frame(char * id, Context ** ctx, int * frame) {
-    int i;
-    char pid[64];
-
-    *ctx = NULL;
-    *frame = 0;
-    if (*id++ != 'F') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    if (*id++ != 'P') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    i = 0;
-    while (*id != '.') {
-        if (*id == 0) {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
-        pid[i++] = *id++;
-    }
-    pid[i++] = 0;
-    id++;
-    *ctx = context_find_from_pid(strtol(pid, NULL, 10), 1);
-    if (*ctx == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    *frame = strtol(id, NULL, 10);
-    return 0;
-}
-
 static void write_context(OutputStream * out, char * id, Context * ctx, int level, StackFrame * frame, StackFrame * down) {
     uint64_t v;
     RegisterDefinition * reg_def = get_PC_definition(ctx);
@@ -274,21 +296,21 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
         write_stream(out, ',');
         json_write_string(out, "FP");
         write_stream(out, ':');
-        json_write_ulong(out, frame->fp);
+        json_write_int64(out, frame->fp);
     }
 
     if (read_reg_value(reg_def, frame, &v) == 0) {
         write_stream(out, ',');
         json_write_string(out, "IP");
         write_stream(out, ':');
-        json_write_ulong(out, (ContextAddress)v);
+        json_write_int64(out, v);
     }
 
     if (down != NULL && read_reg_value(reg_def, down, &v) == 0) {
         write_stream(out, ',');
         json_write_string(out, "RP");
         write_stream(out, ':');
-        json_write_ulong(out, (ContextAddress)v);
+        json_write_int64(out, v);
     }
 
     write_stream(out, '}');
@@ -315,7 +337,7 @@ static void command_get_context(char * token, Channel * c) {
         if (id2frame(ids[i], &ctx, &frame) < 0) {
             err = errno;
         }
-        else if (!ctx->intercepted) {
+        else if (!ctx->stopped) {
             err = ERR_IS_RUNNING;
         }
         else {
@@ -351,7 +373,7 @@ static void command_get_children(char * token, Channel * c) {
     if (ctx == NULL || !context_has_state(ctx)) {
         /* no children */
     }
-    else if (!ctx->intercepted) {
+    else if (!ctx->stopped) {
         err = ERR_IS_RUNNING;
     }
     else {
@@ -368,12 +390,10 @@ static void command_get_children(char * token, Channel * c) {
     }
     else {
         int i;
-        char frame_id[64];
         write_stream(&c->out, '[');
         for (i = 0; i < s->frame_cnt; i++) {
             if (i > 0) write_stream(&c->out, ',');
-            snprintf(frame_id, sizeof(frame_id), "FP%d.%d", ctx->pid, i);
-            json_write_string(&c->out, frame_id);
+            json_write_string(&c->out, get_stack_frame_id(ctx, i));
         }
         write_stream(&c->out, ']');
         write_stream(&c->out, 0);
@@ -396,34 +416,21 @@ static void delete_stack_trace(Context * ctx, void * client_data) {
     }
 }
 
-int is_stack_frame_id(char * id, Context ** ctx, int * frame) {
-    return id2frame(id, ctx, frame) == 0;
-}
+int get_top_frame(Context * ctx) {
+    StackTrace * s;
 
-char * get_stack_frame_id(Context * ctx, int frame) {
-    static char id[256];
-
-    assert(context_has_state(ctx));
-    assert(frame != STACK_NO_FRAME);
-
-    if (frame == STACK_TOP_FRAME) {
-        StackTrace * s;
-
-        if (!ctx->stopped) {
-            errno = ERR_IS_RUNNING;
-            return NULL;
-        }
-
-        s = create_stack_trace(ctx);
-        if (s->error != NULL) {
-            set_error_report_errno(s->error);
-            return NULL;
-        }
-
-        frame = s->frame_cnt - 1;
+    if (!ctx->stopped) {
+        errno = ERR_IS_RUNNING;
+        return STACK_TOP_FRAME;
     }
-    snprintf(id, sizeof(id), "FP%d.%d", ctx->pid, frame);
-    return id;
+
+    s = create_stack_trace(ctx);
+    if (s->error != NULL) {
+        set_error_report_errno(s->error);
+        return STACK_TOP_FRAME;
+    }
+
+    return s->frame_cnt - 1;
 }
 
 int get_frame_info(Context * ctx, int frame, StackFrame ** info) {

@@ -26,7 +26,7 @@
 #define STACK_BOTTOM_FRAME 0
 #define STACK_NO_FRAME  (-1)
 
-#if SERVICE_StackTrace
+#if SERVICE_StackTrace || ENABLE_ContextProxy
 
 /*
  * Check if given context ID is stack frame ID.
@@ -38,6 +38,11 @@ extern int is_stack_frame_id(char * id, Context ** ctx, int * frame);
  * Get TCF ID of a stack frame.
  */
 extern char * get_stack_frame_id(Context * ctx, int frame);
+
+/*
+ * Get index of the top frame of a context.
+ */
+extern int get_top_frame(Context * ctx);
 
 /*
  * Get information about given stack frame.

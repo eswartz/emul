@@ -212,7 +212,6 @@ static void get_symbol_cache_client(void * x) {
     }
     context_unlock(ctx);
     loc_free(args->name);
-    loc_free(args);
 }
 
 #endif /* ENABLE_Symbols */
@@ -235,12 +234,12 @@ static void command_get_symbol(char * token, Channel * c) {
             error = ERR_INV_CONTEXT;
         }
         else {
-            GetSymbolArgs * args = (GetSymbolArgs *)loc_alloc_zero(sizeof(GetSymbolArgs));
-            strncpy(args->token, token, sizeof(args->token) - 1);
+            GetSymbolArgs args;
+            strlcpy(args.token, token, sizeof(args.token));
             context_lock(ctx);
-            args->ctx = ctx;
-            args->name = name;
-            cache_enter(get_symbol_cache_client, c, args);
+            args.ctx = ctx;
+            args.name = name;
+            cache_enter(get_symbol_cache_client, c, &args, sizeof(args));
             return;
         }
     }

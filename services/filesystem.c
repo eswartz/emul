@@ -363,13 +363,11 @@ static void read_path(InputStream * inp, char * path, int size) {
     }
 #endif
     if (path[0] == 0) {
-        strncpy(path, get_user_home(), size - 1);
-        path[size - 1] = 0;
+        strlcpy(path, get_user_home(), size);
     }
     else if (path[0] != '/') {
         snprintf(buf, sizeof(buf), "%s/%s", get_user_home(), path);
-        strncpy(path, buf, size - 1);
-        path[size - 1] = 0;
+        strlcpy(path, buf, size);
     }
 }
 
@@ -604,7 +602,7 @@ static IORequest * create_io_request(char * token, OpenFileInfo * handle, int ty
     req->handle = handle;
     req->info.done = done_io_request;
     req->info.client_data = req;
-    strncpy(req->token, token, sizeof(req->token) - 1);
+    strlcpy(req->token, token, sizeof(req->token));
     list_add_last(&req->link_reqs, &handle->link_reqs);
     return req;
 }

@@ -192,10 +192,16 @@ static int is_frame_relative(SYMBOL_INFO * info) {
 }
 
 static void syminfo2symbol(Context * ctx, int frame, SYMBOL_INFO * info, Symbol * sym) {
-    sym->ctx = ctx;
     sym->module = info->ModBase;
     sym->index = info->Index;
-    if (is_frame_relative(info)) sym->frame = frame + 4;
+    if (is_frame_relative(info)) {
+        assert(frame >= 0);
+        sym->frame = frame - STACK_NO_FRAME;
+    }
+    else {
+        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    }
+    sym->ctx = ctx;
     tag2symclass(sym, info->Tag);
 }
 
@@ -414,6 +420,13 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
     }
 
     *type_class = res;
+    return 0;
+}
+
+int get_symbol_update_policy(const Symbol * sym, char ** id, int * policy) {
+    assert(sym->magic == SYMBOL_MAGIC);
+    *id = ctx2id(sym->ctx);
+    *policy = context_has_state(sym->ctx) ? UPDATE_ON_EXE_STATE_CHANGES : UPDATE_ON_MEMORY_MAP_CHANGES;
     return 0;
 }
 
@@ -742,7 +755,7 @@ int get_symbol_address(const Symbol * sym, ContextAddress * addr) {
 
     if (is_frame_relative(info)) {
         StackFrame * frame_info;
-        int frame = sym->frame ? sym->frame - 4 : STACK_NO_FRAME;
+        int frame = sym->frame + STACK_NO_FRAME;
         if (get_frame_info(sym->ctx, frame, &frame_info) < 0) return -1;
         *addr += frame_info->fp - sizeof(ContextAddress) * 2;
     }
@@ -852,6 +865,7 @@ static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
     const TypeInfo * p = basic_type_info;
     while (p->name != NULL) {
         if (strcmp(p->name, name) == 0) {
+            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
             sym->ctx = ctx;
             sym->sym_class = SYM_CLASS_TYPE;
             sym->info = p;

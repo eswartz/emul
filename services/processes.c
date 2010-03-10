@@ -1218,7 +1218,7 @@ static void command_start(char * token, Channel * c) {
             write_process_input(prs);
             prs->out_struct = read_process_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
             if (prs->out != prs->err) prs->err_struct = read_process_output(prs, prs->err, prs->err_id, sizeof(prs->err_id));
-            strncpy(prs->name, exe, sizeof(prs->name) - 1);
+            strlcpy(prs->name, exe, sizeof(prs->name));
         }
         if (!err) {
             if (attach) {

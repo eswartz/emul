@@ -16,6 +16,8 @@
  * Symbols service - proxy implementation, gets symbols information from host.
  */
 
+/* TODO: need to cleanup symbols cache from data that not used for long time */
+
 #include "config.h"
 
 #if ENABLE_SymbolsProxy
@@ -33,6 +35,7 @@
 
 #define HASH_SIZE 511
 
+/* Symbols cahce, one per channel */
 typedef struct SymbolsCache {
     Channel * channel;
     LINK link_root;
@@ -41,6 +44,7 @@ typedef struct SymbolsCache {
     LINK link_list[HASH_SIZE];
 } SymbolsCache;
 
+/* Symbol properties cache */
 typedef struct SymInfoCache {
     unsigned magic;
     LINK link_syms;
@@ -50,7 +54,9 @@ typedef struct SymInfoCache {
     char * base_type_id;
     char * index_type_id;
     char * pointer_type_id;
+    char * owner_id;
     char * name;
+    int update_policy;
     int sym_class;
     int type_class;
     int has_size;
@@ -76,8 +82,10 @@ typedef struct SymInfoCache {
     int done_context;
     int done_children;
     LINK array_syms;
+    int disposed;
 } SymInfoCache;
 
+/* Cached result of get_array_symbol() */
 typedef struct ArraySymCache {
     LINK link_sym;
     AbstractCache cache;
@@ -85,29 +93,34 @@ typedef struct ArraySymCache {
     ReplyHandlerInfo * pending;
     ErrorReport * error;
     char * id;
+    int disposed;
 } ArraySymCache;
 
+/* Cached result of find_symbol() */
 typedef struct FindSymCache {
     LINK link_syms;
     AbstractCache cache;
     ReplyHandlerInfo * pending;
     ErrorReport * error;
-    pid_t mem;
+    pid_t pid;
     uint64_t ip;
     char * name;
     char * id;
+    int disposed;
 } FindSymCache;
 
+/* Cached result of enumerate_symbols() */
 typedef struct ListSymCache {
     LINK link_syms;
     AbstractCache cache;
     ReplyHandlerInfo * pending;
     ErrorReport * error;
-    pid_t mem;
+    pid_t pid;
     uint64_t ip;
     char ** list;
     unsigned list_size;
     unsigned list_max;
+    int disposed;
 } ListSymCache;
 
 #define SYM_CACHE_MAGIC 0x38254865
@@ -135,16 +148,16 @@ static unsigned hash_sym_id(const char * id) {
     return h % HASH_SIZE;
 }
 
-static unsigned hash_find(const char * name, uint64_t ip, pid_t mem) {
+static unsigned hash_find(const char * name, uint64_t ip, pid_t pid) {
     int i;
     unsigned h = 0;
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / HASH_SIZE;
-    return (h + (unsigned)ip + (unsigned)mem) % HASH_SIZE;
+    return (h + (unsigned)ip + (unsigned)pid) % HASH_SIZE;
 }
 
-static unsigned hash_list(uint64_t ip, pid_t mem) {
-    return ((unsigned)ip + (unsigned)mem) % HASH_SIZE;
+static unsigned hash_list(uint64_t ip, pid_t pid) {
+    return ((unsigned)ip + (unsigned)pid) % HASH_SIZE;
 }
 
 static SymbolsCache * get_symbols_cache(void) {
@@ -174,34 +187,66 @@ static SymbolsCache * get_symbols_cache(void) {
     return syms;
 }
 
-static void free_sym_info_cache(SymInfoCache * c) {
-    int i;
-    assert(c->magic == SYM_CACHE_MAGIC);
-    assert(c->pending_get_context == NULL);
-    assert(c->error_get_children == NULL);
-    list_remove(&c->link_syms);
-    cache_dispose(&c->cache);
-    loc_free(c->id);
-    loc_free(c->type_id);
-    loc_free(c->base_type_id);
-    loc_free(c->index_type_id);
-    loc_free(c->pointer_type_id);
-    loc_free(c->name);
-    loc_free(c->value);
-    for (i = 0; i < c->children_count; i++) loc_free(c->children_ids[i]);
-    loc_free(c->children_ids);
-    release_error_report(c->error_get_context);
-    release_error_report(c->error_get_children);
-    while (!list_is_empty(&c->array_syms)) {
-        ArraySymCache * a = sym2arr(c->array_syms.next);
-        assert(a->pending == NULL);
-        list_remove(&a->link_sym);
+static void free_arr_sym_cache(ArraySymCache * a) {
+    list_remove(&a->link_sym);
+    a->disposed = 1;
+    if (a->pending == NULL) {
         cache_dispose(&a->cache);
         release_error_report(a->error);
         loc_free(a->id);
         loc_free(a);
     }
-    loc_free(c);
+}
+
+static void free_sym_info_cache(SymInfoCache * c) {
+    int i;
+    assert(c->magic == SYM_CACHE_MAGIC);
+    list_remove(&c->link_syms);
+    c->disposed = 1;
+    if (c->pending_get_context == NULL && c->pending_get_children == NULL) {
+        cache_dispose(&c->cache);
+        loc_free(c->id);
+        loc_free(c->type_id);
+        loc_free(c->base_type_id);
+        loc_free(c->index_type_id);
+        loc_free(c->pointer_type_id);
+        loc_free(c->owner_id);
+        loc_free(c->name);
+        loc_free(c->value);
+        for (i = 0; i < c->children_count; i++) loc_free(c->children_ids[i]);
+        loc_free(c->children_ids);
+        release_error_report(c->error_get_context);
+        release_error_report(c->error_get_children);
+        while (!list_is_empty(&c->array_syms)) {
+            free_arr_sym_cache(sym2arr(c->array_syms.next));
+        }
+        loc_free(c);
+    }
+}
+
+static void free_find_sym_cache(FindSymCache * c) {
+    list_remove(&c->link_syms);
+    c->disposed = 1;
+    if (c->pending == NULL) {
+        cache_dispose(&c->cache);
+        release_error_report(c->error);
+        loc_free(c->name);
+        loc_free(c->id);
+        loc_free(c);
+    }
+}
+
+static void free_list_sym_cache(ListSymCache * c) {
+    list_remove(&c->link_syms);
+    c->disposed = 1;
+    if (c->pending == NULL) {
+        unsigned j;
+        cache_dispose(&c->cache);
+        release_error_report(c->error);
+        for (j = 0; j < c->list_size; j++) loc_free(c->list[j]);
+        loc_free(c->list);
+        loc_free(c);
+    }
 }
 
 static void free_symbols_cache(SymbolsCache * syms) {
@@ -211,25 +256,10 @@ static void free_symbols_cache(SymbolsCache * syms) {
             free_sym_info_cache(syms2sym(syms->link_sym[i].next));
         }
         while (!list_is_empty(syms->link_find + i)) {
-            FindSymCache * c = syms2find(syms->link_find[i].next);
-            assert(c->pending == NULL);
-            list_remove(&c->link_syms);
-            cache_dispose(&c->cache);
-            release_error_report(c->error);
-            loc_free(c->name);
-            loc_free(c->id);
-            loc_free(c);
+            free_find_sym_cache(syms2find(syms->link_find[i].next));
         }
         while (!list_is_empty(syms->link_list + i)) {
-            unsigned j;
-            ListSymCache * c = syms2list(syms->link_list[i].next);
-            assert(c->pending == NULL);
-            list_remove(&c->link_syms);
-            cache_dispose(&c->cache);
-            release_error_report(c->error);
-            for (j = 0; j < c->list_size; j++) loc_free(c->list[j]);
-            loc_free(c->list);
-            loc_free(c);
+            free_list_sym_cache(syms2list(syms->link_list[i].next));
         }
     }
     channel_unlock(syms->channel);
@@ -241,7 +271,9 @@ static void read_context_data(InputStream * inp, char * name, void * args) {
     char id[256];
     SymInfoCache * s = args;
     if (strcmp(name, "ID") == 0) { json_read_string(inp, id, sizeof(id)); assert(strcmp(id, s->id) == 0); }
+    else if (strcmp(name, "OwnerID") == 0) s->owner_id = json_read_alloc_string(inp);
     else if (strcmp(name, "Name") == 0) s->name = json_read_alloc_string(inp);
+    else if (strcmp(name, "UpdatePolicy") == 0) s->update_policy = json_read_long(inp);
     else if (strcmp(name, "Class") == 0) s->sym_class = json_read_long(inp);
     else if (strcmp(name, "TypeClass") == 0) s->type_class = json_read_long(inp);
     else if (strcmp(name, "TypeID") == 0) s->type_id = json_read_alloc_string(inp);
@@ -254,7 +286,7 @@ static void read_context_data(InputStream * inp, char * name, void * args) {
     else if (strcmp(name, "Offset") == 0) { s->offset = json_read_long(inp); s->has_offset = 1; }
     else if (strcmp(name, "Address") == 0) { s->address = (ContextAddress)json_read_int64(inp); s->has_address = 1; }
     else if (strcmp(name, "Value") == 0) s->value = json_read_alloc_binary(inp, &s->value_size);
-    else loc_free(json_skip_object(inp));
+    else json_skip_object(inp);
 }
 
 static void validate_context(Channel * c, void * args, int error) {
@@ -272,6 +304,7 @@ static void validate_context(Channel * c, void * args, int error) {
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     }
     cache_notify(&s->cache);
+    if (s->disposed) free_sym_info_cache(s);
 }
 
 static SymInfoCache * get_sym_info_cache(const Symbol * sym) {
@@ -315,6 +348,7 @@ static void validate_find(Channel * c, void * args, int error) {
     }
     assert(f->error != NULL || f->id != NULL);
     cache_notify(&f->cache);
+    if (f->disposed) free_find_sym_cache(f);
 }
 
 int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
@@ -327,17 +361,20 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
 
     if (!set_trap(&trap)) return -1;
 
-    if (frame != STACK_NO_FRAME) {
+    if (frame == STACK_NO_FRAME) {
+        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    }
+    else {
         StackFrame * info = NULL;
         if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
         if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
     }
 
-    h = hash_find(name, ip, ctx->mem);
+    h = hash_find(name, ip, ctx->pid);
     syms = get_symbols_cache();
     for (l = syms->link_find[h].next; l != syms->link_find + h; l = l->next) {
-        FindSymCache * c = syms2find(syms->link_find[h].next);
-        if (c->mem == ctx->mem && c->ip == ip && strcmp(c->name, name) == 0) {
+        FindSymCache * c = syms2find(l);
+        if (c->pid == ctx->pid && c->ip == ip && strcmp(c->name, name) == 0) {
             f = c;
             break;
         }
@@ -348,7 +385,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
         f = loc_alloc_zero(sizeof(FindSymCache));
         list_add_first(&f->link_syms, syms->link_find + h);
-        f->mem = ctx->mem;
+        f->pid = ctx->pid;
         f->ip = ip;
         f->name = loc_strdup(name);
         f->pending = protocol_send_command(c, "Symbols", "find", validate_find, f);
@@ -356,7 +393,6 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
             json_write_string(&c->out, get_stack_frame_id(ctx, frame));
         }
         else {
-            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
             json_write_string(&c->out, ctx2id(ctx));
         }
         write_stream(&c->out, 0);
@@ -404,6 +440,7 @@ static void validate_list(Channel * c, void * args, int error) {
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     }
     cache_notify(&f->cache);
+    if (f->disposed) free_list_sym_cache(f);
 }
 
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func, void * args) {
@@ -416,17 +453,20 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
 
     if (!set_trap(&trap)) return -1;
 
-    if (frame != STACK_NO_FRAME) {
+    if (frame == STACK_NO_FRAME) {
+        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    }
+    else {
         StackFrame * info = NULL;
         if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
         if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
     }
 
-    h = hash_list(ip, ctx->mem);
+    h = hash_list(ip, ctx->pid);
     syms = get_symbols_cache();
     for (l = syms->link_list[h].next; l != syms->link_list + h; l = l->next) {
-        ListSymCache * c = syms2list(syms->link_list[h].next);
-        if (c->mem == ctx->mem && c->ip == ip) {
+        ListSymCache * c = syms2list(l);
+        if (c->pid == ctx->pid && c->ip == ip) {
             f = c;
             break;
         }
@@ -437,14 +477,13 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
         f = loc_alloc_zero(sizeof(ListSymCache));
         list_add_first(&f->link_syms, syms->link_list + h);
-        f->mem = ctx->mem;
+        f->pid = ctx->pid;
         f->ip = ip;
         f->pending = protocol_send_command(c, "Symbols", "list", validate_list, f);
         if (frame != STACK_NO_FRAME) {
             json_write_string(&c->out, get_stack_frame_id(ctx, frame));
         }
         else {
-            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
             json_write_string(&c->out, ctx2id(ctx));
         }
         write_stream(&c->out, 0);
@@ -521,6 +560,14 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
     SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     *type_class = c->type_class;
+    return 0;
+}
+
+int get_symbol_update_policy(const Symbol * sym, char ** id, int * policy) {
+    SymInfoCache * c = get_sym_info_cache(sym);
+    if (c == NULL) return -1;
+    *id = c->owner_id;
+    *policy = c->update_policy;
     return 0;
 }
 
@@ -627,6 +674,7 @@ static void validate_children(Channel * c, void * args, int error) {
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     }
     cache_notify(&s->cache);
+    if (s->disposed) free_sym_info_cache(s);
 }
 
 int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
@@ -684,6 +732,7 @@ static void validate_type_id(Channel * c, void * args, int error) {
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     }
     cache_notify(&s->cache);
+    if (s->disposed) free_arr_sym_cache(s);
 }
 
 int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
@@ -701,19 +750,11 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
         }
     }
     if (a == NULL) {
-        a = loc_alloc_zero(sizeof(*a));
-        a->length = length;
-        list_add_first(&a->link_sym, &s->array_syms);
-    }
-    if (a->pending) {
-        cache_wait(&a->cache);
-    }
-    else if (a->error) {
-        exception(set_error_report_errno(a->error));
-    }
-    else if (!a->id) {
         Channel * c = cache_channel();
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+        a = loc_alloc_zero(sizeof(*a));
+        list_add_first(&a->link_sym, &s->array_syms);
+        a->length = length;
         a->pending = protocol_send_command(c, "Symbols", "getArrayType", validate_type_id, a);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
@@ -723,8 +764,17 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
         flush_stream(&c->out);
         cache_wait(&a->cache);
     }
+    else if (a->pending != NULL) {
+        cache_wait(&a->cache);
+    }
+    else if (a->error != NULL) {
+        exception(set_error_report_errno(a->error));
+    }
+    else if (id2symbol(a->id, ptr) < 0) {
+        exception(errno);
+    }
     clear_trap(&trap);
-    return id2symbol(a->id, ptr);
+    return 0;
 }
 
 /*************************************************************************************************/
@@ -734,20 +784,86 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return 0;
 }
 
-static void channel_close_listener(Channel * c) {
-    LINK * l = NULL;
+static void flush_syms(Context * ctx, int mode, int keep_pending) {
+    LINK * l;
+    LINK * m;
+    char id[256];
+    int i;
 
-    for (l = root.next; l != &root; l = l->next) {
-        SymbolsCache * s = root2syms(l);
-        if (s->channel == c) {
-            free_symbols_cache(s);
-            return;
+    strlcpy(id, ctx2id(ctx), sizeof(id));
+    for (m = root.next; m != &root; m = m->next) {
+        SymbolsCache * syms = root2syms(m);
+        for (i = 0; i < HASH_SIZE; i++) {
+            l = syms->link_sym[i].next;
+            while (l != syms->link_sym + i) {
+                SymInfoCache * c = syms2sym(l);
+                l = l->next;
+                if ((mode & (1 << c->update_policy)) != 0 && strcmp(id, c->owner_id) == 0) {
+                    if (keep_pending) {
+                        if ((!c->done_context || c->pending_get_context) &&
+                            (!c->done_children || c->pending_get_children) &&
+                            list_is_empty(&c->array_syms)) continue;
+                    }
+                    free_sym_info_cache(c);
+                }
+            }
+            l = syms->link_find[i].next;
+            while (l != syms->link_find + i) {
+                FindSymCache * c = syms2find(l);
+                l = l->next;
+                if (c->pid == ctx->pid && (c->pending == NULL || !keep_pending))
+                    free_find_sym_cache(c);
+            }
+            l = syms->link_list[i].next;
+            while (l != syms->link_list + i) {
+                ListSymCache * c = syms2list(l);
+                l = l->next;
+                if (c->pid == ctx->pid && (c->pending == NULL || !keep_pending))
+                    free_list_sym_cache(c);
+            }
         }
     }
 }
 
+static void event_context_created(Context * ctx, void * x) {
+    flush_syms(ctx, (1 << UPDATE_ON_MEMORY_MAP_CHANGES) | (1 << UPDATE_ON_EXE_STATE_CHANGES), 0);
+}
+
+static void event_context_exited(Context * ctx, void * x) {
+    flush_syms(ctx, (1 << UPDATE_ON_MEMORY_MAP_CHANGES) | (1 << UPDATE_ON_EXE_STATE_CHANGES), 0);
+}
+
+static void event_context_stopped(Context * ctx, void * x) {
+    flush_syms(ctx, (1 << UPDATE_ON_EXE_STATE_CHANGES), 1);
+}
+
+static void event_context_started(Context * ctx, void * x) {
+    flush_syms(ctx, (1 << UPDATE_ON_EXE_STATE_CHANGES), 1);
+}
+
+static void event_context_changed(Context * ctx, void * x) {
+    flush_syms(ctx, (1 << UPDATE_ON_MEMORY_MAP_CHANGES) | (1 << UPDATE_ON_EXE_STATE_CHANGES), 1);
+}
+
+static void channel_close_listener(Channel * c) {
+    LINK * l = root.next;
+    while (l != &root) {
+        SymbolsCache * s = root2syms(l);
+        l = l->next;
+        if (s->channel == c) free_symbols_cache(s);
+    }
+}
+
 void ini_symbols_lib(void) {
+    static ContextEventListener listener = {
+        event_context_created,
+        event_context_exited,
+        event_context_stopped,
+        event_context_started,
+        event_context_changed
+    };
     list_init(&root);
+    add_context_event_listener(&listener, NULL);
     add_channel_close_listener(channel_close_listener);
 }
 

@@ -45,7 +45,10 @@ typedef void JsonStructCallBack(InputStream *, char *, void *);
 /* Read JSON object (struct). Call "call_back" for each struct member. Return 0 if object if null, return 1 if not null */
 extern int json_read_struct(InputStream * inp, JsonStructCallBack * call_back, void * arg);
 
-extern char * json_skip_object(InputStream * inp);
+/* Read JSON object and return is as JSON string. Clients should use loc_free() to dispose the string */
+extern char * json_read_object(InputStream * inp);
+/* Skip one JSON object in the input stream */
+extern void json_skip_object(InputStream * inp);
 
 extern void json_write_ulong(OutputStream * out, unsigned long n);
 extern void json_write_long(OutputStream * out, long n);

@@ -789,7 +789,7 @@ static void skip_object(InputStream * inp) {
     exception(ERR_JSON_SYNTAX);
 }
 
-char * json_skip_object(InputStream * inp) {
+char * json_read_object(InputStream * inp) {
     char * str = NULL;
     buf_pos = 0;
     skip_object(inp);
@@ -797,6 +797,11 @@ char * json_skip_object(InputStream * inp) {
     str = (char *)loc_alloc(buf_pos);
     memcpy(str, buf, buf_pos);
     return str;
+}
+
+void json_skip_object(InputStream * inp) {
+    buf_pos = 0;
+    skip_object(inp);
 }
 
 int read_errno(InputStream * inp) {
@@ -825,7 +830,7 @@ int read_errno(InputStream * inp) {
             else {
                 ErrorReportItem * i = (ErrorReportItem *)loc_alloc_zero(sizeof(ErrorReportItem));
                 i->name = loc_strdup(name);
-                i->value = json_skip_object(inp);
+                i->value = json_read_object(inp);
                 i->next = err->props;
                 err->props = i;
             }

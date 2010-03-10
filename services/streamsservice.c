@@ -407,7 +407,7 @@ void virtual_stream_create(const char * type, const char * context_id, size_t bu
 
     buf_len++;
     list_init(&stream->clients);
-    strncpy(stream->type, type, sizeof(stream->type) - 1);
+    strlcpy(stream->type, type, sizeof(stream->type));
     stream->magic = STREAM_MAGIC;
     stream->id = id_cnt++;
     stream->access = access;
@@ -590,7 +590,7 @@ static void command_subscribe(char * token, Channel * c) {
         Subscription * s = (Subscription *)loc_alloc_zero(sizeof(Subscription));
         list_init(&s->link_all);
         list_add_first(&s->link_all, &subscriptions);
-        strncpy(s->type, type, sizeof(s->type) - 1);
+        strlcpy(s->type, type, sizeof(s->type));
         s->channel = c;
     }
 
@@ -650,7 +650,7 @@ static void command_read(char * token, Channel * c) {
             list_init(&r->link_client);
             r->client = client;
             r->size = size;
-            strncpy(r->token, token, sizeof(r->token) - 1);
+            strlcpy(r->token, token, sizeof(r->token));
             list_add_last(&r->link_client, &client->read_requests);
         }
         else {
@@ -732,7 +732,7 @@ static void command_write(char * token, Channel * c) {
         r->client = client;
         r->data = data;
         r->size = size - offs;
-        strncpy(r->token, token, sizeof(r->token) - 1);
+        strlcpy(r->token, token, sizeof(r->token));
         list_add_last(&r->link_client, &client->write_requests);
     }
     else {
@@ -764,7 +764,7 @@ static void command_eos(char * token, Channel * c) {
         list_init(&r->link_client);
         r->client = client;
         r->eos = 1;
-        strncpy(r->token, token, sizeof(r->token) - 1);
+        strlcpy(r->token, token, sizeof(r->token));
         list_add_last(&r->link_client, &client->write_requests);
     }
     else {

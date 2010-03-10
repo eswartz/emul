@@ -110,7 +110,7 @@ static void command_redirect(char * token, Channel * c) {
         channel_lock(c);
         c->state = ChannelStateRedirectReceived;
         info->channel = c;
-        strncpy(info->token, token, sizeof(info->token) - 1);
+        strlcpy(info->token, token, sizeof(info->token));
         channel_connect(ps, connect_done, info);
     }
     else {

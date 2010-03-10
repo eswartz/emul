@@ -226,37 +226,32 @@ static void event_win32_context_stopped(Context * ctx) {
     ctx->stopped_by_exception = 0;
     switch (exception_code) {
     case 0:
-        ctx->pending_step = 0;
         break;
     case EXCEPTION_SINGLE_STEP:
         assert(ctx->pending_step);
-        ctx->pending_step = 0;
         break;
     case EXCEPTION_BREAKPOINT:
         if (!ctx->regs_error && is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE)) {
-            assert(!ctx->pending_step);
             set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - BREAK_SIZE);
             ctx->regs_dirty = 1;
             ctx->stopped_by_bp = 1;
         }
         else {
-            ctx->pending_step = 0;
             ctx->pending_intercept = 1;
         }
         break;
     case EXCEPTION_DEBUGGER_IO:
-        ctx->pending_step = 0;
         trace(LOG_ALWAYS, "Debugger IO request %#lx",
             ctx->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
         break;
     default:
-        ctx->pending_step = 0;
         ctx->pending_signals |= 1 << ctx->signal;
         if (ctx->signal != 0 && (ctx->sig_dont_stop & (1 << ctx->signal)) != 0) break;
         ctx->stopped_by_exception = 1;
         ctx->pending_intercept = 1;
         break;
     }
+    ctx->pending_step = 0;
     send_context_stopped_event(ctx);
 }
 

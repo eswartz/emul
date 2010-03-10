@@ -381,6 +381,11 @@ extern int tkill(pid_t pid, int signal);
 
 #endif
 
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__)
+extern size_t strlcpy(char * dst, const char * src, size_t size);
+extern size_t strlcat(char * dst, const char * src, size_t size);
+#endif
+
 extern pthread_attr_t pthread_create_attr;
 
 /* Return Operating System name */

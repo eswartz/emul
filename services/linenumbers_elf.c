@@ -369,22 +369,21 @@ static void map_to_source_cache_client(void * x) {
         if (err != 0) trace(LOG_ALWAYS, "Line numbers info error %d: %d", err, errno_to_str(err));
     }
     write_stream(&c->out, MARKER_EOM);
-    loc_free(args);
 }
 
 static void command_map_to_source(char * token, Channel * c) {
-    MapToSourceArgs * args = (MapToSourceArgs *)loc_alloc_zero(sizeof(MapToSourceArgs));
+    MapToSourceArgs args;
 
-    json_read_string(&c->inp, args->id, sizeof(args->id));
+    json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    args->addr0 = json_read_ulong(&c->inp);
+    args.addr0 = json_read_ulong(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    args->addr1 = json_read_ulong(&c->inp);
+    args.addr1 = json_read_ulong(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    strncpy(args->token, token, sizeof(args->token) - 1);
-    cache_enter(map_to_source_cache_client, c, args);
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(map_to_source_cache_client, c, &args, sizeof(args));
 }
 
 void ini_line_numbers_service(Protocol * proto) {

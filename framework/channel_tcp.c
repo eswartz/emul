@@ -272,7 +272,6 @@ static void tcp_flush_stream(OutputStream * out) {
 
 static void tcp_write_stream(OutputStream * out, int byte) {
     ChannelTCP * c = channel2tcp(out2channel(out));
-    assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     if (c->chan.state == ChannelStateDisconnected) return;
     if (c->out_errno) return;
@@ -335,7 +334,7 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
     }
 #endif /* ENABLE_ZeroCopy */
 
-    while (cnt < size) tcp_write_stream(out, (unsigned char)bytes[cnt++]);
+    while (cnt < size) write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
 static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
@@ -469,9 +468,9 @@ static void send_eof_and_close(Channel * channel, int err) {
         cancel_event(handle_channel_msg, c, 0);
         c->ibuf.handling_msg = HandleMsgIdle;
     }
-    tcp_write_stream(&c->chan.out, MARKER_EOS);
+    write_stream(&c->chan.out, MARKER_EOS);
     write_errno(&c->chan.out, err);
-    tcp_write_stream(&c->chan.out, MARKER_EOM);
+    write_stream(&c->chan.out, MARKER_EOM);
     tcp_flush_stream(&c->chan.out);
     shutdown(c->socket, SHUT_WR);
     c->chan.state = ChannelStateDisconnected;
@@ -516,10 +515,10 @@ static void handle_channel_msg(void * x) {
             /* Completed processing of current message and there are no
              * messages pending - flush output */
             if (c->chan.bcg) {
-                c->chan.bcg->out.flush(&c->chan.bcg->out);
+                flush_stream(&c->chan.bcg->out);
             }
             else {
-                c->chan.out.flush(&c->chan.out);
+                flush_stream(&c->chan.out);
             }
         }
     }

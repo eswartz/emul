@@ -258,7 +258,7 @@ static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd)
         MemoryCommandArgs * args = (MemoryCommandArgs *)loc_alloc(sizeof(MemoryCommandArgs));
         *args = buf;
         args->c = c;
-        strncpy(args->token, token, sizeof(args->token) - 1);
+        strlcpy(args->token, token, sizeof(args->token));
         channel_lock(c);
         context_lock(buf.ctx);
         return args;

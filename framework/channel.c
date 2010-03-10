@@ -52,7 +52,7 @@ static void flush_all(OutputStream * out) {
     assert(bcg->magic == BCAST_MAGIC);
     while (l != &bcg->channels) {
         Channel * c = bclink2channel(l);
-        if (isBoardcastOkay(c)) c->out.flush(&c->out);
+        if (isBoardcastOkay(c)) flush_stream(&c->out);
         l = l->next;
     }
 }

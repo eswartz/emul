@@ -66,21 +66,26 @@ static ContextAddress sym_ip;
 static int get_sym_context(Context * ctx, int frame) {
     U8_T ip = 0;
 
-    sym_ctx = ctx;
-    sym_frame = frame;
-    if (frame != STACK_NO_FRAME) {
+    assert(frame != STACK_TOP_FRAME);
+
+    if (frame == STACK_NO_FRAME) {
+        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    }
+    else {
         StackFrame * info = NULL;
         if (get_frame_info(ctx, frame, &info) < 0) return -1;
         if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) return -1;
     }
+    sym_ctx = ctx;
+    sym_frame = frame;
     sym_ip = (ContextAddress)ip;
 
     return 0;
 }
 
 static void object2symbol(ObjectInfo * obj, Symbol ** res) {
+    Context * ctx = sym_ctx;
     Symbol * sym = alloc_symbol();
-    sym->ctx = sym_ctx;
     sym->obj = obj;
     switch (obj->mTag) {
     case TAG_global_subroutine:
@@ -117,20 +122,25 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
         sym->sym_class = SYM_CLASS_TYPE;
         break;
     case TAG_global_variable:
+    case TAG_member:
         sym->sym_class = SYM_CLASS_REFERENCE;
         break;
     case TAG_formal_parameter:
     case TAG_local_variable:
     case TAG_variable:
-    case TAG_member:
+        assert(sym_frame >= 0 || sym_frame == STACK_NO_FRAME);
         sym->sym_class = SYM_CLASS_REFERENCE;
-        if (sym_frame != STACK_NO_FRAME) sym->frame = sym_frame + 4;
+        sym->frame = sym_frame - STACK_NO_FRAME;
         break;
     case TAG_constant:
     case TAG_enumerator:
         sym->sym_class = SYM_CLASS_VALUE;
         break;
     }
+    if (sym->frame == 0) {
+        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    }
+    sym->ctx = ctx;
     *res = sym;
 }
 
@@ -205,11 +215,13 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
                 ((Elf64_Sym *)tbl->mSymPool + n)->st_name :
                 ((Elf32_Sym *)tbl->mSymPool + n)->st_name;
             if (strcmp(name, tbl->mStrPool + st_name) == 0) {
+                Context * ctx = sym_ctx;
                 Symbol * sym = alloc_symbol();
                 int st_type = cache->mFile->elf64 ?
                     ELF64_ST_TYPE(((Elf64_Sym *)tbl->mSymPool + n)->st_info) :
                     ELF32_ST_TYPE(((Elf32_Sym *)tbl->mSymPool + n)->st_info);
-                sym->ctx = sym_ctx;
+                while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+                sym->ctx = ctx;
                 switch (st_type) {
                 case STT_FUNC:
                     sym->sym_class = SYM_CLASS_FUNCTION;
@@ -248,6 +260,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         }
         else {
             Symbol * sym = alloc_symbol();
+            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
             sym->ctx = ctx;
             sym->address = (ContextAddress)ptr;
 
@@ -265,7 +278,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
 
     if (error == 0 && !found) {
 
-        if (get_sym_context(ctx, frame) < 0) error = errno;
+        if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) error = errno;
+        if (error == 0 && get_sym_context(ctx, frame) < 0) error = errno;
         if (error == 0) {
             ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip == 0 ? ~(ContextAddress)0 : sym_ip + 1);
             if (file == NULL) error = errno;
@@ -366,7 +380,8 @@ static void enumerate_local_vars(ObjectInfo * obj, int level,
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
     int error = 0;
 
-    if (get_sym_context(ctx, frame) < 0) error = errno;
+    if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) error = errno;
+    if (error == 0 && get_sym_context(ctx, frame) < 0) error = errno;
 
     if (error == 0) {
         ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip == 0 ? ~(ContextAddress)0 : sym_ip + 1);
@@ -505,7 +520,7 @@ int id2symbol(const char * id, Symbol ** res) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        if (get_sym_context(sym->ctx, sym->frame ? (int)(sym->frame - 4) : STACK_NO_FRAME) < 0) return -1;
+        if (get_sym_context(sym->ctx, sym->frame + STACK_NO_FRAME) < 0) return -1;
         file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) return -1;
         while (file->dev != dev || file->ino != ino) {
@@ -575,7 +590,7 @@ static Elf64_Sym * sym64;
 static int unpack(const Symbol * sym) {
     assert(sym->base == NULL);
     assert(sym->size == 0);
-    if (get_sym_context(sym->ctx, sym->frame ? (int)(sym->frame - 4) : STACK_NO_FRAME) < 0) return -1;
+    if (get_sym_context(sym->ctx, sym->frame + STACK_NO_FRAME) < 0) return -1;
     file = NULL;
     cache = NULL;
     obj = sym->obj;
@@ -824,6 +839,13 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
     return 0;
 }
 
+int get_symbol_update_policy(const Symbol * sym, char ** id, int * policy) {
+    assert(sym->magic == SYMBOL_MAGIC);
+    *id = ctx2id(sym->ctx);
+    *policy = context_has_state(sym->ctx) ? UPDATE_ON_EXE_STATE_CHANGES : UPDATE_ON_MEMORY_MAP_CHANGES;
+    return 0;
+}
+
 int get_symbol_name(const Symbol * sym, char ** name) {
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || sym->size) {
@@ -926,8 +948,8 @@ int get_symbol_base_type(const Symbol * sym, Symbol ** base_type) {
         return -1;
     }
     if (unpack(sym) < 0) return -1;
+    obj = get_original_type(obj);
     if (obj != NULL) {
-        obj = get_original_type(obj);
         if (obj->mTag == TAG_array_type) {
             int i = dimension;
             ObjectInfo * idx = obj->mChildren;
@@ -966,19 +988,17 @@ int get_symbol_index_type(const Symbol * sym, Symbol ** index_type) {
         return -1;
     }
     if (unpack(sym) < 0) return -1;
-    if (obj != NULL) {
-        obj = get_original_type(obj);
-        if (obj->mTag == TAG_array_type) {
-            int i = dimension;
-            ObjectInfo * idx = obj->mChildren;
-            while (i > 0 && idx != NULL) {
-                idx = idx->mSibling;
-                i--;
-            }
-            if (idx != NULL) {
-                object2symbol(idx, index_type);
-                return 0;
-            }
+    obj = get_original_type(obj);
+    if (obj != NULL && obj->mTag == TAG_array_type) {
+        int i = dimension;
+        ObjectInfo * idx = obj->mChildren;
+        while (i > 0 && idx != NULL) {
+            idx = idx->mSibling;
+            i--;
+        }
+        if (idx != NULL) {
+            object2symbol(idx, index_type);
+            return 0;
         }
     }
     errno = ERR_UNSUPPORTED;
@@ -996,22 +1016,20 @@ int get_symbol_length(const Symbol * sym, ContextAddress * length) {
         return -1;
     }
     if (unpack(sym) < 0) return -1;
-    if (obj != NULL) {
-        obj = get_original_type(obj);
-        if (obj->mTag == TAG_array_type) {
-            int i = dimension;
-            ObjectInfo * idx = obj->mChildren;
-            while (i > 0 && idx != NULL) {
-                idx = idx->mSibling;
-                i--;
-            }
-            if (idx != NULL) {
-                Trap trap;
-                if (!set_trap(&trap)) return -1;
-                *length = (ContextAddress)get_object_length(idx);
-                clear_trap(&trap);
-                return 0;
-            }
+    obj = get_original_type(obj);
+    if (obj != NULL && obj->mTag == TAG_array_type) {
+        int i = dimension;
+        ObjectInfo * idx = obj->mChildren;
+        while (i > 0 && idx != NULL) {
+            idx = idx->mSibling;
+            i--;
+        }
+        if (idx != NULL) {
+            Trap trap;
+            if (!set_trap(&trap)) return -1;
+            *length = (ContextAddress)get_object_length(idx);
+            clear_trap(&trap);
+            return 0;
         }
     }
     errno = ERR_UNSUPPORTED;
@@ -1029,25 +1047,23 @@ int get_symbol_lower_bound(const Symbol * sym, ContextAddress * value) {
         return -1;
     }
     if (unpack(sym) < 0) return -1;
-    if (obj != NULL) {
-        obj = get_original_type(obj);
-        if (obj->mTag == TAG_array_type) {
-            int i = dimension;
-            ObjectInfo * idx = obj->mChildren;
-            while (i > 0 && idx != NULL) {
-                idx = idx->mSibling;
-                i--;
-            }
-            if (idx != NULL) {
-                Trap trap;
-                U8_T x;
-                int y;
-                if (!set_trap(&trap)) return -1;
-                y = get_num_prop(obj, AT_lower_bound, &x);
-                clear_trap(&trap);
-                *value = y ? (ContextAddress)x : 0;
-                return 0;
-            }
+    obj = get_original_type(obj);
+    if (obj != NULL && obj->mTag == TAG_array_type) {
+        int i = dimension;
+        ObjectInfo * idx = obj->mChildren;
+        while (i > 0 && idx != NULL) {
+            idx = idx->mSibling;
+            i--;
+        }
+        if (idx != NULL) {
+            Trap trap;
+            U8_T x;
+            int y;
+            if (!set_trap(&trap)) return -1;
+            y = get_num_prop(obj, AT_lower_bound, &x);
+            clear_trap(&trap);
+            *value = y ? (ContextAddress)x : 0;
+            return 0;
         }
     }
     errno = ERR_UNSUPPORTED;
