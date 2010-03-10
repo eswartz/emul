@@ -465,11 +465,13 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx);
 
 int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
     LINK * qp;
-    if (context_has_state(ctx) && !ctx->exited && !ctx->exiting) {
+    if (context_has_state(ctx) && !ctx->exited) {
         if (!ctx->stopped) {
             assert(!ctx->intercepted);
-            ctx->pending_intercept = 1;
-            if (!ctx->pending_step && context_stop(ctx) < 0) return -1;
+            if (!ctx->exiting) {
+                ctx->pending_intercept = 1;
+                if (!ctx->pending_step && context_stop(ctx) < 0) return -1;
+            }
         }
         else if (!ctx->intercepted) {
             if (ctx->event_notification || ctx->stepping_over_bp != NULL) {
@@ -710,8 +712,9 @@ static void run_safe_events(void * arg) {
             assert(!ctx->pending_intercept);
             if (ctx->pending_step) {
                 ctx->pending_step = 0;
-                ctx->pending_intercept = 1;
                 n = context_single_step(ctx);
+                assert(n < 0 || !ctx->stopped || ctx->stepping_over_bp);
+                if (n >= 0) ctx->pending_intercept = 1;
             }
             else {
                 n = context_continue(ctx);

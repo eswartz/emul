@@ -329,6 +329,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         found = find_test_symbol(ctx, name, &address, &sym_class) >= 0;
         if (found) {
             Symbol * sym = alloc_symbol();
+            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+            sym->ctx = ctx;
             sym->address = (ContextAddress)address;
             sym->sym_class = sym_class;
             *res = sym;
@@ -337,6 +339,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
 #endif
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
+
+    assert(error || (*res != NULL && (*res)->ctx != NULL));
 
     if (error) {
         errno = error;

@@ -1770,6 +1770,7 @@ int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v)
     expression_context = ctx;
     expression_frame = frame;
     if (!set_trap(&trap)) return -1;
+    if (s == NULL || *s == 0) str_exception(ERR_INV_EXPRESSION, "Empty expression");
     str_pool_cnt = 0;
     while (str_alloc_list != NULL) {
         StringValue * str = str_alloc_list;
@@ -2225,6 +2226,7 @@ static void command_evaluate(char * token, Channel * c) {
         if (!err && sym_id[0] && id2symbol(sym_id, &sym) < 0) err = errno;
         if (!err && sym != NULL && get_symbol_name(sym, &name) < 0) err = errno;
         if (name != NULL) name = loc_strdup(name);
+        /* TODO: there must be a better way to get symbol value then calling evaluate_expression() */
     }
 #endif
     if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
