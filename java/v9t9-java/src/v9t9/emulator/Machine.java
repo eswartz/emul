@@ -86,13 +86,10 @@ abstract public class Machine {
 	private SoundProvider sound;
 	private List<Runnable> runnableList;
 	private CpuMetrics cpuMetrics;
-	static public final String sExpRam = "MemoryExpansion32K";
-	static public final Setting settingExpRam = new Setting(sExpRam, new Boolean(false));
 	
-	static public final String sPauseMachine = "PauseMachine";
-	static public final Setting settingPauseMachine = new Setting(sPauseMachine, new Boolean(false));
-	static public final String sThrottleInterrupts = "ThrottleVDPInterrupts";
-	static public final Setting settingThrottleInterrupts = new Setting(sThrottleInterrupts, new Boolean(false));
+	static public final Setting settingExpRam = new Setting("MemoryExpansion32K", new Boolean(false));
+	static public final Setting settingPauseMachine = new Setting("PauseMachine", new Boolean(false));
+	static public final Setting settingThrottleInterrupts = new Setting("ThrottleVDPInterrupts", new Boolean(false));
 	
 	private TimerTask memorySaverTask;
 	private ModuleManager moduleManager;

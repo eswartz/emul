@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
@@ -25,10 +26,13 @@ public class ModuleManager {
 	
 	private List<IModule> loadedModules = new ArrayList<IModule>();
 	
+	public static Setting settingLastLoadedModule = new Setting("LastLoadedModule", "");
+	
 	public ModuleManager(Machine machine, List<IModule> modules) {
 		this.machine = machine;
 		this.modules = modules;
 	}
+	
 	public IModule[] getModules() {
 		return (IModule[]) modules.toArray(new IModule[modules.size()]);
 	}
@@ -61,6 +65,8 @@ public class ModuleManager {
 				entry.moduleLoaded = module;
 			}
 			loadedModules.add(module);
+			
+			settingLastLoadedModule.setString(module.getName());
 		}
 		
 	}

@@ -246,6 +246,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 	public static void adjustRectVisibility(Shell shell, Rectangle rect) {
 		Rectangle screen = shell.getDisplay().getClientArea();
+		
+		// in GTK, for some reason, all bounds lose their positions
+		if (rect.x == 0 && rect.y == 0) {
+			rect.x = screen.width / 2 - rect.width / 2;
+			rect.y = screen.height / 2 - rect.height / 2;
+		}
 		if (rect.x > screen.x + screen.width)
 			rect.x = screen.x + screen.width - rect.width; 
 		if (rect.y > screen.y + screen.height)

@@ -16,6 +16,7 @@ import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
+import v9t9.emulator.ModuleManager;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
@@ -52,6 +53,7 @@ public class V9t9 {
 	private static void addDefaultPaths() {
 		DataFiles.addSearchPath("../../build/roms");		
 	}
+
 
 	private Memory memory;
 	private Machine machine;
@@ -189,6 +191,7 @@ public class V9t9 {
     	Machine.settingExpRam.setBoolean(true);
     }
     
+
     public static void main(String args[]) throws IOException {
     	
     	EmulatorSettings.INSTANCE.load();
@@ -211,6 +214,11 @@ public class V9t9 {
         app.setupDefaults();
         try {
         	app.loadMemory();
+        	
+        	EmulatorSettings.INSTANCE.register(ModuleManager.settingLastLoadedModule);
+        	if (ModuleManager.settingLastLoadedModule.getString().length() > 0)
+        		machine.getModuleManager().switchModule(ModuleManager.settingLastLoadedModule.getString());
+        	
         } catch (IOException e) {
         	machine.notifyEvent("Failed to load startup ROMs; please edit your BootRomsPath in the file "
         		+ EmulatorSettings.INSTANCE.getSettingsConfigurationPath());
