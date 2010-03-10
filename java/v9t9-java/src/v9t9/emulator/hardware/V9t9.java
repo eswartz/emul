@@ -41,6 +41,7 @@ public class V9t9 {
 			public void changed(Setting setting, Object oldValue) {
 				if (setting.getList().isEmpty())
 					addDefaultPaths();
+				//DataFiles.settingBootRomsPath.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 
 		});
@@ -190,9 +191,9 @@ public class V9t9 {
     
     public static void main(String args[]) throws IOException {
     	
-    	EmulatorSettings.getInstance().load();
-    	DataFiles.settingBootRomsPath.loadState(EmulatorSettings.getInstance().getApplicationSettings());
-    	DataFiles.settingStoredRamPath.loadState(EmulatorSettings.getInstance().getApplicationSettings());
+    	EmulatorSettings.INSTANCE.load();
+		EmulatorSettings.INSTANCE.register(DataFiles.settingBootRomsPath);
+		EmulatorSettings.INSTANCE.register(DataFiles.settingStoredRamPath);
     	
         Machine machine;
         
@@ -212,7 +213,9 @@ public class V9t9 {
         	app.loadMemory();
         } catch (IOException e) {
         	machine.notifyEvent("Failed to load startup ROMs; please edit your BootRomsPath in the file "
-        		+ EmulatorSettings.getInstance().getSettingsConfigurationPath());
+        		+ EmulatorSettings.INSTANCE.getSettingsConfigurationPath());
+        	//DataFiles.saveState(EmulatorSettings.getInstance().getApplicationSettings());
+        	EmulatorSettings.INSTANCE.save();
         }
         app.run();
         

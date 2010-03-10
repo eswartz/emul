@@ -61,15 +61,19 @@ public class ToolShell {
 		});
 
 		
-		String boundsStr = EmulatorSettings.getInstance().getApplicationSettings().get(boundsPref);
+		String boundsStr = EmulatorSettings.INSTANCE.getApplicationSettings().get(boundsPref);
 		if (boundsStr != null) {
 			Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
 			if (savedBounds != null) {
 				if (keepCentered)
 					shell.setSize(savedBounds.width, savedBounds.height);
-				else
+				else {
+					SwtWindow.adjustRectVisibility(shell, savedBounds);
 					shell.setBounds(savedBounds);
+				}
 			}
+		} else {
+			shell.pack();
 		}
 		
 		if (keepCentered) {
@@ -121,7 +125,7 @@ public class ToolShell {
 			public void widgetDisposed(DisposeEvent e) {
 				Rectangle bounds = shell.getBounds();
 				String boundsStr = PrefUtils.writeBoundsString(bounds);
-				EmulatorSettings.getInstance().getApplicationSettings().put(boundsPref, boundsStr);
+				EmulatorSettings.INSTANCE.getApplicationSettings().put(boundsPref, boundsStr);
 			}
 		});
 	}

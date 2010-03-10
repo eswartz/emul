@@ -728,7 +728,7 @@ public class DiskImageDsr implements DsrHandler {
 	public void registerDiskImagePath(String device, File dskfile) {
 		DiskImageSetting diskSetting = new DiskImageSetting(device, dskfile.getAbsolutePath(),
 				diskImageIconPath);
-		diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
+		EmulatorSettings.INSTANCE.register(diskSetting);
 	
 		diskSettingsMap.put(device, diskSetting); 
 		diskSetting.addListener(new ISettingListener() {
@@ -744,7 +744,7 @@ public class DiskImageDsr implements DsrHandler {
 				image = createDiskImage(setting.getName(), new File(setting.getString()));
 				disks.put(setting.getName(), image);
 						
-				setting.saveState(EmulatorSettings.getInstance().getApplicationSettings());
+				//setting.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 		});
 	}
@@ -938,7 +938,7 @@ public class DiskImageDsr implements DsrHandler {
 	public DiskImageDsr(Machine machine) {
 		diskImageDsrEnabled.setBoolean(true);
 		
-    	String diskImageRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";
+    	String diskImageRootPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + "disks";
     	defaultDiskRootDir = new File(diskImageRootPath);
     	defaultDiskRootDir.mkdirs();
     	

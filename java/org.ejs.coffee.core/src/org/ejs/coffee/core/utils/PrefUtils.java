@@ -69,6 +69,8 @@ public class PrefUtils  {
 	
 	public static Rectangle readBoundsString(String boundsStr) {
 		Rectangle savedBounds = null;
+		if (boundsStr == null)
+			return null;
 		String[] parts = boundsStr.split("\\|");
 		try {
 			savedBounds = new Rectangle(

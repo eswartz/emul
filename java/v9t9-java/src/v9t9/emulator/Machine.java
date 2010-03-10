@@ -147,7 +147,7 @@ abstract public class Machine {
 				modules = ModuleLoader.loadModuleList(dbName);
     		} catch (IOException e) {
     			notifyEvent("Failed to load module list " + dbName +"; be sure your BootRomPath setting is established in "
-						+ EmulatorSettings.getInstance().getSettingsConfigurationPath());
+						+ EmulatorSettings.INSTANCE.getSettingsConfigurationPath());
     			modules = Collections.emptyList();
 			}
     	}

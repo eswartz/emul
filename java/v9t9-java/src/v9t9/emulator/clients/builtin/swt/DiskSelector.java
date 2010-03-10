@@ -243,12 +243,12 @@ public class DiskSelector extends Composite {
 
 
 	private String[] getHistory(String name) {
-		String[] history = EmulatorSettings.getInstance().getHistorySettings().getArray("DiskSelector." + name);
+		String[] history = EmulatorSettings.INSTANCE.getHistorySettings().getArray("DiskSelector." + name);
 		return history;
 	}
 	private void setHistory(String name, String[] history) {
-		EmulatorSettings.getInstance().getHistorySettings().put("DiskSelector." + name, history);
-		EmulatorSettings.getInstance().save();
+		EmulatorSettings.INSTANCE.getHistorySettings().put("DiskSelector." + name, history);
+		EmulatorSettings.INSTANCE.save();
 	}
 	/**
 	 * 

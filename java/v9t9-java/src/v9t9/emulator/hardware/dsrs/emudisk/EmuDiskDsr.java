@@ -92,7 +92,7 @@ public class EmuDiskDsr implements DsrHandler {
 		
 		this.mapper = mapper;
 		
-    	String diskRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";
+    	String diskRootPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + "disks";
     	File diskRootDir = new File(diskRootPath);
     	File dskdefault = new File(diskRootDir, "default");
     	dskdefault.mkdirs();
@@ -102,7 +102,7 @@ public class EmuDiskDsr implements DsrHandler {
     		
     		EmuDiskSetting diskSetting = new EmuDiskSetting(devname, dskdefault.getAbsolutePath(),
     				diskDirectoryIconPath);
-			diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
+    		EmulatorSettings.INSTANCE.register(diskSetting);
 			
 			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting); 
     	}

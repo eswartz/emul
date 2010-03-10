@@ -10,7 +10,6 @@ import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.Cpu;
-import v9t9.engine.files.DataFiles;
 
 public abstract class BaseEmulatorWindow {
 
@@ -21,14 +20,15 @@ public abstract class BaseEmulatorWindow {
 	protected VideoRenderer videoRenderer;
 	protected final Machine machine;
 	static public final Setting settingMonitorDrawing = new Setting("MonitorDrawing", new Boolean(true));
+	static public final Setting settingZoomLevel = new Setting("ZoomLevel", new Integer(3));
 
 	public BaseEmulatorWindow(Machine machine) {
 		this.machine = machine;
-		EmulatorSettings.getInstance().load();
+		EmulatorSettings.INSTANCE.load();
 	}
 	
 	public void dispose() {
-		EmulatorSettings.getInstance().save();
+		EmulatorSettings.INSTANCE.save();
 	}
 	
 	public void setVideoRenderer(VideoRenderer videoRenderer) {
@@ -39,10 +39,10 @@ public abstract class BaseEmulatorWindow {
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
 		
 		boolean isUndefined = false;
-		DialogSettings settings = EmulatorSettings.getInstance().getApplicationSettings();
+		DialogSettings settings = EmulatorSettings.INSTANCE.getApplicationSettings();
 		String configPath = settings.get(configVar);
 		if (configPath == null) {
-			configPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + defaultSubdir + File.separatorChar + fileName;
+			configPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + defaultSubdir + File.separatorChar + fileName;
 			isUndefined = true;
 			File saveDir = new File(configPath);
 			saveDir.getParentFile().mkdirs();
@@ -65,10 +65,10 @@ public abstract class BaseEmulatorWindow {
 	protected String selectDirectory(String title, String configVar, String defaultSubdir,
 			boolean ifUndefined) {
 		boolean isUndefined = false;
-		DialogSettings settings = EmulatorSettings.getInstance().getApplicationSettings();
+		DialogSettings settings = EmulatorSettings.INSTANCE.getApplicationSettings();
 		String configDir = settings.get(configVar);
 		if (configDir == null) {
-			configDir = EmulatorSettings.getInstance().getBaseConfigurationPath() + File.separatorChar + defaultSubdir + File.separatorChar;
+			configDir = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + File.separatorChar + defaultSubdir + File.separatorChar;
 			File saveDir = new File(configDir);
 			saveDir.mkdirs();
 			isUndefined = true;
@@ -155,7 +155,7 @@ public abstract class BaseEmulatorWindow {
 			if (saveFile == null) {
 				showErrorMessage("Save error", 
 						"Too many screenshots here!");
-				EmulatorSettings.getInstance().clearConfigVar("ScreenShotsBase");
+				EmulatorSettings.INSTANCE.clearConfigVar("ScreenShotsBase");
 				return screenshot();
 			} else {
 				try {

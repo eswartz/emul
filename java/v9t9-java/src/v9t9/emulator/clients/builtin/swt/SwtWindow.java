@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 
-import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -68,6 +67,7 @@ import v9t9.emulator.runtime.Executor;
  */
 public class SwtWindow extends BaseEmulatorWindow {
 	
+	private static final String EMULATOR_WINDOW_BOUNDS = "EmulatorWindowBounds";
 	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 	protected static final String DEBUGGER_TOOL_ID = "debugger";
@@ -100,6 +100,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.addDisposeListener(new DisposeListener() {
 
 			public void widgetDisposed(DisposeEvent e) {
+				String boundsPref = PrefUtils.writeBoundsString(shell.getBounds());
+				EmulatorSettings.INSTANCE.getApplicationSettings().put(EMULATOR_WINDOW_BOUNDS, boundsPref);
 				dispose();
 			}
 			
@@ -165,15 +167,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 		};
 		
-		JavaSoundHandler.settingPlaySound.addListener(new ISettingListener() {
-
-			public void changed(Setting setting, Object oldValue) {
-				JavaSoundHandler.settingPlaySound.saveState(EmulatorSettings.getInstance().getApplicationSettings());
-			}
-			
-		});
-		
-		
+		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 	}
 
 	public void setSwtVideoRenderer(final ISwtVideoRenderer renderer) {
@@ -228,22 +222,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		
 		
-		shell.open();
+		EmulatorSettings.INSTANCE.register(Cpu.settingCyclesPerSecond);
+		EmulatorSettings.INSTANCE.register(Cpu.settingRealTime);
+		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
+
+		String boundsPref = EmulatorSettings.INSTANCE.getApplicationSettings().get(EMULATOR_WINDOW_BOUNDS);
+		Rectangle rect = PrefUtils.readBoundsString(boundsPref);
+		if (rect != null) {
+			adjustRectVisibility(shell, rect);
+			shell.setBounds(rect);
+		}
 		
-		shell.getDisplay().asyncExec(new Runnable() {
-			public void run() {
-				DialogSettings applicationSettings = EmulatorSettings.getInstance().getApplicationSettings();
-				
-				int zoom = PrefUtils.readSavedInt(applicationSettings, "ZoomLevel");
-				if (zoom > 0) {
-					videoRenderer.setZoom(zoom);
-				}
-				
-				Cpu.settingCyclesPerSecond.loadState(applicationSettings);
-				Cpu.settingRealTime.loadState(applicationSettings);
-				JavaSoundHandler.settingPlaySound.loadState(applicationSettings);
-			}
-		});
+		shell.open();
 		
 		shell.addFocusListener(new FocusAdapter() {
 			@Override
@@ -254,6 +244,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 		renderer.setFocus();
 	}
 	
+	public static void adjustRectVisibility(Shell shell, Rectangle rect) {
+		Rectangle screen = shell.getDisplay().getClientArea();
+		if (rect.x > screen.x + screen.width)
+			rect.x = screen.x + screen.width - rect.width; 
+		if (rect.y > screen.y + screen.height)
+			rect.y = screen.y + screen.height - rect.height; 
+		if (rect.x < screen.x)
+			rect.x = 0;
+		if (rect.y < screen.y)
+			rect.y = 0;
+	}
+
 	public void setMouseJoystickHandler(MouseJoystickHandler handler) {
 		//mouseJoystickHandler = new MouseJoystickHandler(videoControl, key);
 		this.mouseJoystickHandler = handler; 
@@ -863,7 +865,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void widgetSelected(SelectionEvent e) {
 				boolean setting = false;
 				Cpu.settingRealTime.setBoolean(setting);
-				Cpu.settingRealTime.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 		});
 
@@ -890,8 +891,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void widgetSelected(SelectionEvent e) {
 				Cpu.settingRealTime.setBoolean(true);
 				Cpu.settingCyclesPerSecond.setInt(cycles);
-				Cpu.settingRealTime.saveState(EmulatorSettings.getInstance().getApplicationSettings());
-				Cpu.settingCyclesPerSecond.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 		});
 	}

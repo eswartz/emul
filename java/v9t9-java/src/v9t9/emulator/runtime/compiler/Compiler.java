@@ -651,7 +651,7 @@ public class Compiler {
         byte[] bytecode = cgen.getJavaClass().getBytes();
 
         if (true) {
-            File dir = new File(new File(EmulatorSettings.getInstance().getBaseConfigurationPath()), "compilertmp"); 
+            File dir = new File(new File(EmulatorSettings.INSTANCE.getBaseConfigurationPath()), "compilertmp"); 
             dir.mkdirs();
             File test = new File(dir, baseName + ".class");
             try {
