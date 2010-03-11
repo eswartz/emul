@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
+import java.util.TreeMap;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -79,7 +80,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private ButtonBar buttonBar;
 	private Map<String, ToolShell> toolShells;
 	private Timer toolUiTimer;
-	private Image mainIcons;
+	private TreeMap<Integer, Image> mainIcons;
 	private Canvas cpuMetricsCanvas;
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
@@ -342,8 +343,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 
 	private void createButtons(Composite parent) {
-		File iconsFile = V9t9.getDataFile("icons/icons.png");
-		mainIcons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
+		mainIcons = new TreeMap<Integer, Image>();
+		for (int size : new int[] { 16, 32, 64, 128 }) {
+			File iconsFile = V9t9.getDataFile("icons/icons_" + size + ".png");
+			mainIcons.put(size, new Image(getShell().getDisplay(), iconsFile.getAbsolutePath()));
+		}
 		
 		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL, focusRestorer);
 		
@@ -940,7 +944,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 	
 	private Rectangle mainIconIndexToBounds(int iconIndex) {
-		Rectangle bounds = mainIcons.getBounds();
+		Rectangle bounds = mainIcons.values().iterator().next().getBounds();
 		int unit = bounds.width;
 		return new Rectangle(0, unit * iconIndex, unit, unit); 
 	}

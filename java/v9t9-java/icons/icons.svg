@@ -18,9 +18,9 @@
    version="1.0"
    sodipodi:docname="icons.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   inkscape:export-filename="/home/ejs/devel/emul/java/v9t9-java/icons/icons.png"
-   inkscape:export-xdpi="90"
-   inkscape:export-ydpi="90">
+   inkscape:export-filename="/home/ejs/devel/emul/java/v9t9-java/icons/icons_128.png"
+   inkscape:export-xdpi="180"
+   inkscape:export-ydpi="180">
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -33,7 +33,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.4142136"
      inkscape:cx="38.183993"
-     inkscape:cy="641.65307"
+     inkscape:cy="640.23886"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"

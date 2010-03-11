@@ -5,6 +5,8 @@ package v9t9.emulator.clients.builtin.swt;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
@@ -39,7 +41,6 @@ public class ImageButton extends Canvas {
 		void addedButton();
 	}
 	private final Rectangle bounds;
-	private Image icon;
 	private Rectangle overlayBounds;
 	private Rectangle menuOverlayBounds;
 	private List<SelectionListener> listeners;
@@ -49,17 +50,19 @@ public class ImageButton extends Canvas {
 	private boolean pressed;
 	private boolean isMenuHovering;
 	private IFocusRestorer focusRestorer;
+	private TreeMap<Integer, Image> iconMap;
 	
-	public ImageButton(ButtonParentDrawer parentDrawer, int style, Image icon_, Rectangle bounds_, String tooltip) {
+	public ImageButton(ButtonParentDrawer parentDrawer, int style, 
+			TreeMap<Integer, Image> iconMap, Rectangle bounds_, String tooltip) {
 		super(parentDrawer.getComposite(),  style /*| SWT.NO_BACKGROUND*/);
 		
-		if (icon_ == null)
+		if (iconMap == null)
 			throw new NullPointerException();
 		
 		this.parentDrawer = parentDrawer;
 		parentDrawer.addedButton();
 		
-		this.icon = icon_;
+		this.iconMap = iconMap;
 		this.bounds = bounds_;
 		this.listeners = new ArrayList<SelectionListener>();
 		
@@ -188,14 +191,25 @@ public class ImageButton extends Canvas {
 		}
 		offset = pressed ? 2 : 0;
 		try {
-			e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
+			SortedMap<Integer, Image> tailMap = iconMap.tailMap(size.x);
+			if (tailMap.isEmpty())
+				tailMap = iconMap;
+			Image icon = tailMap.values().iterator().next();
+			int min = iconMap.values().iterator().next().getBounds().width;
+			double ratio = (double) icon.getBounds().width / min;
+			e.gc.drawImage(icon, (int)(bounds.x * ratio), (int)(bounds.y * ratio), 
+					(int)(bounds.width * ratio), (int) (bounds.height * ratio), 
 					offset, offset, size.x, size.y);
 			if (overlayBounds != null)
-				e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
+				e.gc.drawImage(icon, 
+						(int)(overlayBounds.x * ratio), (int)(overlayBounds.y * ratio), 
+								(int)(overlayBounds.width * ratio), (int)(overlayBounds.height * ratio), 
 						0, 0, size.y, size.y);
 			
 			if (menuOverlayBounds != null && isMenuHovering) {
-				e.gc.drawImage(icon, menuOverlayBounds.x, menuOverlayBounds.y, menuOverlayBounds.width, menuOverlayBounds.height, 
+				e.gc.drawImage(icon, 
+						(int)(menuOverlayBounds.x * ratio), (int)(menuOverlayBounds.y * ratio), 
+						(int)(menuOverlayBounds.width * ratio), (int)(menuOverlayBounds.height * ratio), 
 						0, 0, size.y, size.y);
 			}
 		} catch (IllegalArgumentException e2) {
