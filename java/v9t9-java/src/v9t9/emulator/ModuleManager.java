@@ -3,13 +3,13 @@
  */
 package v9t9.emulator;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -37,7 +37,7 @@ public class ModuleManager {
 		return (IModule[]) modules.toArray(new IModule[modules.size()]);
 	}
 
-	public void switchModule(IModule module) throws IOException {
+	public void switchModule(IModule module) throws NotifyException {
 		unloadAllModules();
 		
 		loadModule(module);
@@ -49,7 +49,7 @@ public class ModuleManager {
 		loadedModules.clear();
 	}
 	
-	public void loadModule(IModule module) throws IOException {
+	public void loadModule(IModule module) throws NotifyException {
 		if (module != null) {
 			if (loadedModules.contains(module))
 				return;
@@ -86,7 +86,7 @@ public class ModuleManager {
 		
 	}
 	
-	public void switchModule(String name) throws IOException {
+	public void switchModule(String name) throws NotifyException {
 		switchModule(findModuleByName(name, true));
 	}
 	
@@ -121,8 +121,8 @@ public class ModuleManager {
 		for (String name : loaded) {
 			try {
 				loadModule(findModuleByName(name, true));
-			} catch (IOException e) {
-				System.err.println("Could not load module " + name);
+			} catch (NotifyException e) {
+				machine.notifyEvent(e.getEvent());
 			}
 		}
 		

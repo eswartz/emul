@@ -10,8 +10,10 @@ import java.io.IOException;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
+import v9t9.emulator.BaseEventNotifier;
+import v9t9.emulator.IEventNotifier;
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.IEventNotifier;
+import v9t9.emulator.NotifyEvent;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.hardware.sound.SoundVoice;
@@ -86,11 +88,16 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         sound = this;
         cru = this;
         
-        eventNotifier = new IEventNotifier() {
-			
-			@Override
-			public void notifyEvent(Object context, String message) {
-				System.out.println(message);
+        eventNotifier = new BaseEventNotifier() {
+        	{
+        		startConsumerThread();
+        	}
+        	/* (non-Javadoc)
+        	 * @see v9t9.emulator.BaseEventNotifier#consumeEvent(v9t9.emulator.clients.builtin.IEventNotifier.NotifyEvent)
+        	 */
+        	@Override
+        	protected void consumeEvent(NotifyEvent event) {
+        		event.print(System.out);
 			}
 		};
 		

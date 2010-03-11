@@ -1,5 +1,5 @@
 /*
- * (c) Ed Swartz, 2005
+ * (c) Ed Swartz, 2010
  * 
  * Created on Dec 16, 2004
  *
@@ -20,11 +20,12 @@ import org.ejs.coffee.core.utils.Setting;
 
 
 /**
+ * Utilities for finding needed files around the filesystem based on lists of paths.
  * @author ejs
  */
 public class DataFiles {
-	static public final Setting settingBootRomsPath = new Setting("BootRomPath", new ArrayList<String>());
-	static public final Setting settingUserRomsPath = new Setting("UserRomPath", new ArrayList<String>());
+	static public final Setting settingBootRomsPath = new Setting("BootRomsPath", new ArrayList<String>());
+	static public final Setting settingUserRomsPath = new Setting("UserRomsPath", new ArrayList<String>());
 	static public final Setting settingStoredRamPath = new Setting("StoredRamPath", ".");
 	
 	public static void addSearchPath(String filepath) {
@@ -36,7 +37,7 @@ public class DataFiles {
 	}
 
 	/**
-	 * Look for a file along the search paths with the given name
+	 * Look for a file along the search paths with the given name, using case-insensitive match
 	 * @param filepath file name or relative path
 	 * @return File where it exists or a default location
 	 */
@@ -46,15 +47,29 @@ public class DataFiles {
 			return file;
 		for (Setting setting : new Setting[] { settingBootRomsPath, settingUserRomsPath }) {
 			for (String path : setting.getList()) {
-				file = new File(path, filepath);
-				if (file.exists())
-					return file;
-				file = new File(path, filepath.toLowerCase());
-				if (file.exists())
+				file = resolveFileAtPath(path, filepath);
+				if (file != null)
 					return file;
 			}
 		}
 		return new File(filepath);
+	}
+
+	/**
+	 * Try to resolve a path against a given base path, using case-insensitive match
+	 * @param base
+	 * @param path
+	 * @return existing file or <code>null</code>
+	 */
+	public static File resolveFileAtPath(String base, String path) {
+		File file;
+		file = new File(base, path);
+		if (file.exists())
+			return file;
+		file = new File(base, path.toLowerCase());
+		if (file.exists())
+			return file;
+		return null;
 	}
 	
     /** Get the size of an image file on disk

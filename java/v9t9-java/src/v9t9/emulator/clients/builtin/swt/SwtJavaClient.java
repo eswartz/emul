@@ -12,8 +12,8 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.emulator.IEventNotifier;
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.IEventNotifier;
 import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.runtime.TerminatedException;

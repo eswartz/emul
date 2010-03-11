@@ -7,7 +7,6 @@
 package v9t9.emulator;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,6 +18,7 @@ import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 import org.ejs.coffee.core.utils.SettingsCollection;
 
+import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.CruManager;
@@ -91,13 +91,18 @@ abstract public class Machine {
 	static public final Setting settingPauseMachine = new Setting("PauseMachine", new Boolean(false));
 	static public final Setting settingThrottleInterrupts = new Setting("ThrottleVDPInterrupts", new Boolean(false));
 	
+	static public final Setting settingModuleList = new Setting("ModuleListFile", new String("modules.xml"));
+	
 	private TimerTask memorySaverTask;
 	private ModuleManager moduleManager;
 	private List<IModule> modules;
 	
-	private List<String> notifications = new ArrayList<String>();
+	private RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
+
 	
     public Machine(MachineModel machineModel) {
+    	EmulatorSettings.INSTANCE.register(settingModuleList);
+    	
     	runnableList = new LinkedList<Runnable>();
     	this.memoryModel = machineModel.getMemoryModel();
     	this.memory = memoryModel.createMemory();
@@ -139,11 +144,13 @@ abstract public class Machine {
     
     public List<IModule> getModules() {
     	if (modules == null) {
-    		String dbName = "modules.xml";
+    		String dbName = settingModuleList.getString();
     		try {
 				modules = ModuleLoader.loadModuleList(dbName);
-    		} catch (IOException e) {
-    			notifyEvent("Failed to load module list " + dbName +"; be sure your BootRomPath setting is established in "
+    		} catch (NotifyException e) {
+    			notifyEvent(e.getEvent());
+    			notifyEvent(IEventNotifier.Level.ERROR,
+    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
 						+ EmulatorSettings.INSTANCE.getSettingsConfigurationPath());
     			modules = Collections.emptyList();
 			}
@@ -151,15 +158,18 @@ abstract public class Machine {
     	return modules;
     }
 
-	/**
-	 * @param string
-	 */
-	public void notifyEvent(String string) {
+	public void notifyEvent(IEventNotifier.Level level, String string) {
 		if (client != null)
-			client.getEventNotifier().notifyEvent(this, string);
+			client.getEventNotifier().notifyEvent(this, level, string);
 		else
-			notifications.add(string);
-		
+			recordingNotifier.notifyEvent(this, level, string);
+	}
+	
+	public void notifyEvent(NotifyEvent event) {
+		if (client != null)
+			client.getEventNotifier().notifyEvent(event);
+		else
+			recordingNotifier.notifyEvent(event);
 	}
 
 	public interface ConsoleMmioReader {
@@ -178,6 +188,12 @@ abstract public class Machine {
      */
     @Override
 	protected void finalize() throws Throwable {
+    	if (recordingNotifier != null) {
+    		NotifyEvent event;
+    		while ((event = recordingNotifier.getNextEvent()) != null) {
+    			event.print(System.err);
+    		}
+    	}
         super.finalize();
         client = null;
         memory = null;
@@ -420,10 +436,15 @@ abstract public class Machine {
     public void setClient(Client client) {
         this.client = client;
         if (client != null) {
-        	for (String note : notifications) {
-        		client.getEventNotifier().notifyEvent(this, note);
+        	if (recordingNotifier != null) {
+        		NotifyEvent event;
+        		while ((event = recordingNotifier.getNextEvent()) != null) {
+        			client.getEventNotifier().notifyEvent(event);
+        		}
+        		recordingNotifier = null;
         	}
-        	notifications.clear();
+        } else {
+        	recordingNotifier = new RecordingEventNotifier();
         }
     }
     public Executor getExecutor() {
@@ -560,7 +581,6 @@ abstract public class Machine {
 	public ModuleManager getModuleManager() {
 		return moduleManager;
 	}
-	
 
 }
 

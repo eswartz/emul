@@ -6,6 +6,7 @@ package v9t9.engine.memory;
 import java.util.Collections;
 import java.util.List;
 
+import v9t9.emulator.IEventNotifier;
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
@@ -56,6 +57,14 @@ public class StockMemoryModel implements MemoryModel {
 	}
 
 	public void initMemory(Machine machine) {
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryModel#loadMemory(v9t9.emulator.clients.builtin.IEventNotifier)
+	 */
+	@Override
+	public void loadMemory(IEventNotifier eventNotifier) {
 		
 	}
 	

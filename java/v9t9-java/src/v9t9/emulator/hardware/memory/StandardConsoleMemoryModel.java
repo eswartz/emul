@@ -6,6 +6,9 @@
  */
 package v9t9.emulator.hardware.memory;
 
+import java.io.IOException;
+
+import v9t9.emulator.IEventNotifier;
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
@@ -19,6 +22,7 @@ import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
+import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -81,7 +85,69 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         	defineMmioMemory((TI994A) machine);
         }
     }
+    
+    protected void reportLoadError(IEventNotifier eventNotifier, String file, IOException e) {
+		eventNotifier.notifyEvent(this, IEventNotifier.Level.ERROR, 
+				"Failed to find image '" + file +"' which is needed to start"); 
 
+    }
+
+    /* (non-Javadoc)
+     * @see v9t9.engine.memory.MemoryModel#loadMemory()
+     */
+    @Override
+    public void loadMemory(IEventNotifier eventNotifier) {
+    	loadConsoleRom(eventNotifier, "994arom.bin");
+    	loadConsoleGrom(eventNotifier, "994agrom.bin");    	
+    }
+    
+
+    protected DiskMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename) {
+    	DiskMemoryEntry cpuRomEntry;
+    	try {
+			cpuRomEntry = DiskMemoryEntry.newWordMemoryFromFile(
+	    			0x0, 0x2000, "CPU ROM",
+	        		CPU,
+	                filename, 0x0, false);
+    	} catch (IOException e) {
+    		reportLoadError(eventNotifier, filename, e);
+    		return null;
+    	}
+    	cpuRomEntry.getArea().setLatency(0);
+		memory.addAndMap(cpuRomEntry);
+		return cpuRomEntry;
+    }
+    
+    protected DiskMemoryEntry loadConsoleGrom(IEventNotifier eventNotifier, String filename) {
+    	DiskMemoryEntry entry;
+    	try {
+			entry = DiskMemoryEntry.newByteMemoryFromFile(
+	    			0x0, 0x6000, "CPU GROM", 
+	    			GRAPHICS,
+	    			filename, 0x0, false);
+    	} catch (IOException e) {
+    		reportLoadError(eventNotifier, filename, e);
+    		return null;
+    	}
+		memory.addAndMap(entry);
+		return entry;
+    }
+
+    protected DiskMemoryEntry loadModuleGrom(IEventNotifier eventNotifier, String name, String filename) {
+    	DiskMemoryEntry entry;
+    	try {
+			entry = DiskMemoryEntry.newByteMemoryFromFile(
+	    			0x6000, 0, name, 
+	    			GRAPHICS,
+	    			filename, 0x0, false);
+    	} catch (IOException e) {
+    		reportLoadError(eventNotifier, filename, e);
+    		return null;
+    	}
+		memory.addAndMap(entry);
+		return entry;
+    }
+    
 	protected void initSettings() {
 		Machine.settingExpRam.setBoolean(true);
 		ConsoleRamArea.settingEnhRam.setBoolean(false);

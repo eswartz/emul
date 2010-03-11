@@ -3,6 +3,7 @@
  */
 package v9t9.engine.memory;
 
+import v9t9.emulator.IEventNotifier;
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
@@ -49,5 +50,11 @@ public interface MemoryModel {
 	 * Get the speech MMIO. 
 	 */
 	SpeechMmio getSpeechMmio();
+
+	/**
+	 * Load memory
+	 * @param eventNotifier 
+	 */
+	void loadMemory(IEventNotifier eventNotifier);
 	
 }

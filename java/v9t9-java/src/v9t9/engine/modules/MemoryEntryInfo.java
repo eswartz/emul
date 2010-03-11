@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.emulator.EmulatorSettings;
+import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;
@@ -22,6 +23,8 @@ public class MemoryEntryInfo {
 
 	/** Class<? extends MemoryEntry> */
 	public final static String CLASS = "class";
+	/** String */
+	public final static String NAME = "name";
 	/** String */
 	public final static String FILENAME = "fileName";
 	/** String */
@@ -61,40 +64,54 @@ public class MemoryEntryInfo {
 	 * @throws IOException 
 	 */
 	@SuppressWarnings("unchecked")
-	public MemoryEntry createMemoryEntry(Memory memory) throws IOException {
-		MemoryEntry entry = null;
-		if (properties.containsKey(FILENAME2)) {
-			entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
-					(Class) properties.get(CLASS),
-					getInt(ADDRESS),
-					getInt(SIZE),
-					memory,
-					getString(FILENAME),
-					memory.getDomain(getString(DOMAIN)),
-					getFilePath(getString(FILENAME), getBool(STORED)),
-					getInt(OFFSET),
-					getFilePath(getString(FILENAME2), getBool(STORED)),
-					getInt(OFFSET2));
-		} else if ("CPU".equals(properties.get(DOMAIN))) {
-			entry = DiskMemoryEntry.newWordMemoryFromFile(
-					getInt(ADDRESS),
-					getInt(SIZE),
-					getString(FILENAME),
-					memory.getDomain(getString(DOMAIN)),
-					getFilePath(getString(FILENAME), getBool(STORED)),
-					getInt(OFFSET),
-					getBool(STORED));
-		} else {
-			entry = DiskMemoryEntry.newByteMemoryFromFile(
-					getInt(ADDRESS),
-					getInt(SIZE),
-					getString(FILENAME),
-					memory.getDomain(getString(DOMAIN)),
-					getFilePath(getString(FILENAME), getBool(STORED)),
-					getInt(OFFSET),
-					getBool(STORED));
+	public MemoryEntry createMemoryEntry(Memory memory) throws NotifyException {
+		try {
+			MemoryEntry entry = null;
+			if (properties.containsKey(FILENAME2)) {
+				try {
+					entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
+							(Class) properties.get(CLASS),
+							getInt(ADDRESS),
+							getInt(SIZE),
+							memory,
+							getString(NAME),
+							memory.getDomain(getString(DOMAIN)),
+							getFilePath(getString(FILENAME), getBool(STORED)),
+							getInt(OFFSET),
+							getFilePath(getString(FILENAME2), getBool(STORED)),
+							getInt(OFFSET2));
+				} catch (IOException e) {
+					String filename = getString(FILENAME); 
+					String filename2 = getString(FILENAME2); 
+					if (filename2 == null)
+					throw new NotifyException(null, 
+							"Failed to load file(s) '" + filename + "' and/or '"+ filename2 + "' for '" + getString(NAME) + "'",
+							e);
+				}
+			} else if ("CPU".equals(properties.get(DOMAIN))) {
+				entry = DiskMemoryEntry.newWordMemoryFromFile(
+						getInt(ADDRESS),
+						getInt(SIZE),
+						getString(NAME),
+						memory.getDomain(getString(DOMAIN)),
+						getFilePath(getString(FILENAME), getBool(STORED)),
+						getInt(OFFSET),
+						getBool(STORED));
+			} else {
+				entry = DiskMemoryEntry.newByteMemoryFromFile(
+						getInt(ADDRESS),
+						getInt(SIZE),
+						getString(NAME),
+						memory.getDomain(getString(DOMAIN)),
+						getFilePath(getString(FILENAME), getBool(STORED)),
+						getInt(OFFSET),
+						getBool(STORED));
+			}
+			return entry;
+		} catch (IOException e) {
+			String filename = getString(FILENAME); 
+			throw new NotifyException(null, "Failed to load file '" + filename + "' for '" + getString(NAME) +"'", e);
 		}
-		return entry;
 	}
 
 	/**

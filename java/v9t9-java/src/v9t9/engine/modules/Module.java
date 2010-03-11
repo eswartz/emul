@@ -56,6 +56,8 @@ public class Module implements IModule {
 				Map<String, Object> properties = info.getProperties();
 				this.entries.add(info);
 				
+				properties.put(MemoryEntryInfo.NAME, name);
+				
 				// helpers
 				if (el.getNodeName().equals("romModuleEntry")) {
 					properties.put(MemoryEntryInfo.DOMAIN, "CPU");

@@ -50,10 +50,13 @@ import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.PrefUtils;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.BaseEventNotifier;
 import v9t9.emulator.EmulatorSettings;
+import v9t9.emulator.IEventNotifier;
 import v9t9.emulator.Machine;
+import v9t9.emulator.NotifyEvent;
+import v9t9.emulator.IEventNotifier.Level;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
-import v9t9.emulator.clients.builtin.IEventNotifier;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
 import v9t9.emulator.hardware.V9t9;
@@ -132,22 +135,51 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
 		
-
-		eventNotifier = new IEventNotifier() {
+		eventNotifier = new BaseEventNotifier() {
 
 			ToolTip lastTooltip = null;
 			
-			public void notifyEvent(final Object context, final String message) {
+			{
+				startConsumerThread();
+			}
+
+			/* (non-Javadoc)
+			 * @see v9t9.emulator.BaseEventNotifier#canConsume()
+			 */
+			@Override
+			protected boolean canConsume() {
+				final boolean[] consume = { true };
+				Display.getDefault().syncExec(new Runnable() {
+					public void run() {
+						consume[0] = lastTooltip == null || lastTooltip.isDisposed() || !lastTooltip.isVisible();
+					}
+				});
+				return consume[0];
+			}
+			
+			/* (non-Javadoc)
+			 * @see v9t9.emulator.BaseEventNotifier#consumeEvent(v9t9.emulator.clients.builtin.IEventNotifier.NotifyEvent)
+			 */
+			@Override
+			protected void consumeEvent(final NotifyEvent event) {
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
 						if (lastTooltip != null)
 							lastTooltip.dispose();
 						
-						ToolTip tip = new ToolTip(shell, SWT.BALLOON | SWT.ICON_INFORMATION);
-						tip.setText(message);
+						int status = 0;
+						if (event.level == Level.INFO)
+							status = SWT.ICON_INFORMATION;
+						else if (event.level == Level.WARNING)
+							status = SWT.ICON_WARNING;
+						else
+							status = SWT.ICON_ERROR;
+						
+						ToolTip tip = new ToolTip(shell, SWT.BALLOON | status);
+						tip.setText(event.message);
 						tip.setAutoHide(true);
-						if (context instanceof Event) {
-							Event e = (Event)context;
+						if (event.context instanceof Event) {
+							Event e = (Event)event.context;
 							Control b = (Control) e.widget;
 							tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
 						} else {
@@ -222,8 +254,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		
 		
-		EmulatorSettings.INSTANCE.register(Cpu.settingCyclesPerSecond);
-		EmulatorSettings.INSTANCE.register(Cpu.settingRealTime);
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 
 		String boundsPref = EmulatorSettings.INSTANCE.getApplicationSettings().get(EMULATOR_WINDOW_BOUNDS);
@@ -270,9 +300,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 				mouseJoystickHandler.setEnabled(!mouseJoystickHandler.isEnabled());
 				if (eventNotifier != null)
 					if (mouseJoystickHandler.isEnabled())
-						eventNotifier.notifyEvent(null, "Using mouse as joystick");
+						eventNotifier.notifyEvent(null, Level.INFO, "Using mouse as joystick");
 					else
-						eventNotifier.notifyEvent(null, "Releasing mouse as joystick");
+						eventNotifier.notifyEvent(null, Level.INFO, "Releasing mouse as joystick");
 			}
 		});
 	}
@@ -451,7 +481,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					public void widgetSelected(SelectionEvent e) {
 						File file = screenshot();
 						if (file != null) {
-							eventNotifier.notifyEvent(e, "Recorded screenshot to " + file);
+							eventNotifier.notifyEvent(e, Level.INFO, "Recorded screenshot to " + file);
 						}
 					}
 			});

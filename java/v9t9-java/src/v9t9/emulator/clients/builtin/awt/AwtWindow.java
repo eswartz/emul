@@ -41,54 +41,61 @@ import javax.swing.PopupFactory;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.BaseEventNotifier;
+import v9t9.emulator.IEventNotifier;
 import v9t9.emulator.Machine;
+import v9t9.emulator.NotifyEvent;
+import v9t9.emulator.IEventNotifier.Level;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
-import v9t9.emulator.clients.builtin.IEventNotifier;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 
 /**
  * Provide the emulator in an SWT window
+ * 
  * @author ejs
- *
+ * 
  */
-public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererContainer {
-	
+public class AwtWindow extends BaseEmulatorWindow implements
+		IAwtVideoRendererContainer {
+
 	protected Frame frame;
 	private Container controlsContainer;
 	private BufferedImage icons;
 	private BufferStrategy bufferStrategy;
 	private GridBagLayout controlsLayout;
 	private IEventNotifier eventNotifier;
+
 	public AwtWindow(final Machine machine) {
 		super(machine);
-		
-		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+		GraphicsEnvironment env = GraphicsEnvironment
+				.getLocalGraphicsEnvironment();
 		GraphicsDevice device = env.getDefaultScreenDevice();
 		GraphicsConfiguration gc = device.getDefaultConfiguration();
 		frame = new Frame(gc);
-		
+
 		AwtVideoRenderer renderer = new AwtVideoRenderer();
 		setVideoRenderer(renderer);
-		
-		//frame.setIgnoreRepaint(true);
+
+		// frame.setIgnoreRepaint(true);
 		frame.setTitle("V9t9");
-		
+
 		BoxLayout toplevelLayout = new BoxLayout(frame, BoxLayout.X_AXIS);
 		frame.setLayout(toplevelLayout);
-		
+
 		frame.add(renderer.getAwtCanvas());
-		
+
 		frame.setFocusCycleRoot(true);
 		frame.setFocusTraversalKeysEnabled(false);
-		
+
 		File iconsFile = V9t9.getDataFile("icons/icons.png");
 		try {
 			icons = ImageIO.read(iconsFile);
 		} catch (IOException e1) {
 			icons = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		}
-		
+
 		controlsContainer = new Container() {
 			/**
 			 * 
@@ -99,8 +106,9 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 			public void paint(Graphics g) {
 				Graphics2D g2d = (Graphics2D) g;
 				Paint oldPaint = g2d.getPaint();
-				GradientPaint paint = new GradientPaint(new Point(0, 0), new Color(0xf0f0f0),
-						new Point(getWidth() / 2, 0), new Color(0xc0c0c0), true);
+				GradientPaint paint = new GradientPaint(new Point(0, 0),
+						new Color(0xf0f0f0), new Point(getWidth() / 2, 0),
+						new Color(0xc0c0c0), true);
 				g2d.setPaint(paint);
 				g2d.fillRect(0, 0, getWidth(), getHeight());
 				g2d.setPaint(oldPaint);
@@ -114,128 +122,147 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 
 		frame.add(Box.createGlue());
 		frame.add(controlsContainer);
-		
 
-		eventNotifier = new IEventNotifier() {
+		eventNotifier = new BaseEventNotifier() {
+			private Thread waiter;
+
+			{
+				startConsumerThread();
+			}
 			
-			public void notifyEvent(Object context, String message) {
-				Label label = new Label(message);
+			/* (non-Javadoc)
+			 * @see v9t9.emulator.BaseEventNotifier#canConsume()
+			 */
+			@Override
+			protected boolean canConsume() {
+				return waiter == null;
+			}
+
+			/* (non-Javadoc)
+			 * @see v9t9.emulator.BaseEventNotifier#consumeEvent(v9t9.emulator.clients.builtin.IEventNotifier.NotifyEvent)
+			 */
+			@Override
+			protected void consumeEvent(NotifyEvent event) {
+				Label label = new Label(event.message);
 				label.setBackground(Color.YELLOW);
 				label.setForeground(Color.BLACK);
 				Point pt;
-				if (context instanceof Component) {
-					pt = ((Component) context).getLocationOnScreen();
+				if (event.context instanceof Component) {
+					pt = ((Component) event.context).getLocationOnScreen();
 				} else {
 					pt = controlsContainer.getLocationOnScreen();
 					pt.x += controlsContainer.getWidth() * 3 / 4;
 					pt.y += controlsContainer.getHeight();
 				}
-				final Popup popup = PopupFactory.getSharedInstance().getPopup(getFrame(), 
-						label,
-						pt.x, pt.y);
+				final Popup popup = PopupFactory.getSharedInstance().getPopup(
+						getFrame(), label, pt.x, pt.y);
 				popup.show();
-				Thread waiter = new Thread() {
+				waiter = new Thread() {
 					public void run() {
-						try {
-							Thread.sleep(2000);
-						} catch (InterruptedException e) {
+						int timeout = 2000;
+						while (timeout > 0) {
+							try {
+								Thread.sleep(100);
+								timeout -= 100;
+							} catch (InterruptedException e) {
+								break;
+							}
 						}
 						popup.hide();
+						waiter = null;
 					};
 				};
 				waiter.start();
 			}
 		};
-		
-		createButton(icons, 
-				new Rectangle(0, 64, 64, 64), "Send a NMI interrupt",
-				new ButtonPressHandler() {
+
+		createButton(icons, new Rectangle(0, 64, 64, 64),
+				"Send a NMI interrupt", new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
 						sendNMI();
 					}
 				});
 
-		createButton(icons, 
-				new Rectangle(0, 256, 64, 64), "Reset the computer",
-				new ButtonPressHandler() {
+		createButton(icons, new Rectangle(0, 256, 64, 64),
+				"Reset the computer", new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
 						sendReset();
 					}
 				});
 
-		createStateButton(Executor.settingDumpFullInstructions,
-				new Rectangle(0, 128, 64, 64), new Rectangle(0, 0, 64, 64),
+		createStateButton(Executor.settingDumpFullInstructions, new Rectangle(
+				0, 128, 64, 64), new Rectangle(0, 0, 64, 64),
 				"Toggle CPU logging");
-		
-		/*BasicButton basicButton =*/ /*createButton(
-				icons, new Rectangle(0, 128, 64, 64),
-				"Branch to Condensed BASIC",
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						SwtWindow.this.machine.getExecutor().controlCpu(new Executor.ICpuController() {
 
-							public void act(Cpu cpu) {
-								cpu.setPC((short)0xa000);								
-								cpu.setWP((short)0x83e0);								
-							}
-							
-						}) ;
-					}
-				});*/
-		
+		/* BasicButton basicButton = *//*
+										 * createButton( icons, new Rectangle(0,
+										 * 128, 64, 64),
+										 * "Branch to Condensed BASIC", new
+										 * SelectionAdapter() {
+										 * 
+										 * @Override public void
+										 * widgetSelected(SelectionEvent e) {
+										 * SwtWindow
+										 * .this.machine.getExecutor().controlCpu
+										 * (new Executor.ICpuController() {
+										 * 
+										 * public void act(Cpu cpu) {
+										 * cpu.setPC((short)0xa000);
+										 * cpu.setWP((short)0x83e0); }
+										 * 
+										 * }) ; } });
+										 */
+
 		createButton(icons, new Rectangle(0, 192, 64, 64),
-				"Paste into keyboard",
-				new ButtonPressHandler() {
+				"Paste into keyboard", new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
 						pasteClipboardToKeyboard();
 					}
-			});
-		
+				});
+
 		createButton(icons, new Rectangle(0, 384, 64, 64),
-				"Save machine state",
-				new ButtonPressHandler() {
+				"Save machine state", new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
 						saveMachineState();
 					}
 
-			});
-		
+				});
+
 		createButton(icons, new Rectangle(0, 448, 64, 64),
-				"Load machine state",
-				new ButtonPressHandler() {
+				"Load machine state", new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
 						loadMachineState();
 					}
-			});
+				});
 
 		controlsContainer.setMinimumSize(new Dimension(64, 64));
-		controlsContainer.setPreferredSize(new Dimension(64, 64 * controlsContainer.getComponentCount()));
-		
-		//controlsContainer.add(Box.createVerHorizontalStrut(64));
-		createStateButton(Machine.settingPauseMachine, new Rectangle(0, 512, 64, 64), new Rectangle(0, 0, 64, 64),
-				"Pause machine");
+		controlsContainer.setPreferredSize(new Dimension(64,
+				64 * controlsContainer.getComponentCount()));
 
-		createStateButton(BaseEmulatorWindow.settingMonitorDrawing, new Rectangle(0, 576, 64, 64), new Rectangle(0, 0, 64, 64), 
+		// controlsContainer.add(Box.createVerHorizontalStrut(64));
+		createStateButton(Machine.settingPauseMachine, new Rectangle(0, 512,
+				64, 64), new Rectangle(0, 0, 64, 64), "Pause machine");
+
+		createStateButton(BaseEmulatorWindow.settingMonitorDrawing,
+				new Rectangle(0, 576, 64, 64), new Rectangle(0, 0, 64, 64),
 				"Apply monitor effect to video");
 
-		createButton(icons, new Rectangle(0, 640, 64, 64),
-				"Take screenshot",
+		createButton(icons, new Rectangle(0, 640, 64, 64), "Take screenshot",
 				new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
 						File file = screenshot();
 						if (file != null) {
-							eventNotifier.notifyEvent(
-									button.getLocation(), "Recorded screenshot to " + file);
+							eventNotifier.notifyEvent(button.getLocation(),
+									Level.INFO, "Recorded screenshot to "
+											+ file);
 						}
 					}
-			});
+				});
 
-		//screenContainer.setFocus();
-
+		// screenContainer.setFocus();
 
 		frame.setVisible(true);
-		//frame.setBounds(800, 800, 256 * 3 + 96, 200 * 3);
+		// frame.setBounds(800, 800, 256 * 3 + 96, 200 * 3);
 		frame.setLocation(800, 800);
 		frame.pack();
 		frame.createBufferStrategy(1);
@@ -247,11 +274,13 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 	public void dispose() {
 		super.dispose();
 		frame.dispose();
-		
+
 	}
+
 	public BufferStrategy getBufferStrategy() {
 		return bufferStrategy;
 	}
+
 	class BasicButton extends LightweightButton {
 
 		/**
@@ -262,7 +291,8 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 		private BufferedImage icon;
 		private Rectangle overlayBounds;
 
-		public BasicButton(BufferedImage icon_, Rectangle bounds_, String tooltip) {
+		public BasicButton(BufferedImage icon_, Rectangle bounds_,
+				String tooltip) {
 			super(tooltip, new Dimension(bounds_.width, bounds_.height));
 			this.icon = icon_;
 			this.bounds = bounds_;
@@ -271,14 +301,18 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 		public void setOverlayBounds(Rectangle overlayBounds) {
 			this.overlayBounds = overlayBounds;
 		}
-		
+
 		@Override
 		public void paint(Graphics g) {
-			
-			g.drawImage(icon, 0, 0, getWidth(), getHeight(), bounds.x, bounds.y, bounds.x+bounds.width, bounds.y+bounds.height, frame);
+
+			g.drawImage(icon, 0, 0, getWidth(), getHeight(), bounds.x,
+					bounds.y, bounds.x + bounds.width,
+					bounds.y + bounds.height, frame);
 			if (overlayBounds != null) {
-				g.drawImage(icon, 0, 0, getWidth(), getHeight(), 
-						overlayBounds.x, overlayBounds.y, overlayBounds.x+overlayBounds.width, overlayBounds.y+overlayBounds.height, frame);
+				g.drawImage(icon, 0, 0, getWidth(), getHeight(),
+						overlayBounds.x, overlayBounds.y, overlayBounds.x
+								+ overlayBounds.width, overlayBounds.y
+								+ overlayBounds.height, frame);
 			}
 			super.paint(g);
 		}
@@ -288,8 +322,9 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 		void pressed(BasicButton button);
 	}
 
-	private BasicButton createButton(final BufferedImage icon, final Rectangle bounds,
-			String tooltip, final ButtonPressHandler handler) {
+	private BasicButton createButton(final BufferedImage icon,
+			final Rectangle bounds, String tooltip,
+			final ButtonPressHandler handler) {
 		final BasicButton button = new BasicButton(icon, bounds, tooltip);
 		controlsContainer.add(button);
 		button.addActionListener(new ActionListener() {
@@ -297,12 +332,12 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 			public void actionPerformed(ActionEvent e) {
 				handler.pressed(button);
 			}
-			
+
 		});
 		button.setPreferredSize(new Dimension(64, 64));
-		
+
 		button.setFocusTraversalKeysEnabled(false);
-		
+
 		GridBagConstraints constraints = new GridBagConstraints();
 		constraints.gridx = 0;
 		constraints.anchor = GridBagConstraints.EAST;
@@ -310,23 +345,23 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 
 		return button;
 	}
-	
-	
+
 	private BasicButton createStateButton(final Setting setting,
 			Rectangle bounds, final Rectangle checkBounds, String tooltip) {
-		
-		final BasicButton button = createButton(icons, bounds, tooltip, new ButtonPressHandler() {
 
-			public void pressed(BasicButton button) {
-				machine.asyncExec(new Runnable() {
-					public void run() {
-						setting.setBoolean(!setting.getBoolean());
+		final BasicButton button = createButton(icons, bounds, tooltip,
+				new ButtonPressHandler() {
+
+					public void pressed(BasicButton button) {
+						machine.asyncExec(new Runnable() {
+							public void run() {
+								setting.setBoolean(!setting.getBoolean());
+							}
+						});
 					}
+
 				});
-			}
-			
-		});
-		
+
 		setting.addListener(new ISettingListener() {
 
 			public void changed(final Setting setting, final Object oldValue) {
@@ -337,9 +372,9 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 				}
 				button.repaint();
 			}
-			
+
 		});
-		
+
 		if (setting.getBoolean())
 			button.setOverlayBounds(checkBounds);
 		return button;
@@ -348,21 +383,19 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 	protected void restoreFocus() {
 	}
 
-	
 	public void setDesiredScreenSize(int desiredWidth, int desiredHeight) {
-		//Dimension sz = frame.getLayout().preferredLayoutSize(frame);
-		//frame.setSize(sz);
+		// Dimension sz = frame.getLayout().preferredLayoutSize(frame);
+		// frame.setSize(sz);
 		frame.pack();
 	}
 
 	public AwtVideoRenderer getVideoRenderer() {
 		return (AwtVideoRenderer) videoRenderer;
 	}
-	
+
 	public Frame getFrame() {
 		return frame;
 	}
-
 
 	protected void pasteClipboardToKeyboard() {
 		Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -371,16 +404,16 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 			if (t == null) {
 				throw new Exception("No data on clipboard");
 			}
-		
+
 			if (t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-				String contents = t.getTransferData(DataFlavor.stringFlavor).toString();
+				String contents = t.getTransferData(DataFlavor.stringFlavor)
+						.toString();
 				machine.getKeyboardState().pasteText(contents);
 			} else {
 				throw new Exception("Cannot convert clipboard to text");
 			}
 		} catch (Exception e) {
-			showErrorMessage("Paste Error", 
-					e.getMessage());
+			showErrorMessage("Paste Error", e.getMessage());
 		}
 	}
 
@@ -399,7 +432,7 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 			return null;
 		return chooser.getSelectedFile().getAbsolutePath();
 	}
-	
+
 	@Override
 	protected String openDirectorySelectionDialog(String title, String directory) {
 		JFileChooser chooser = new JFileChooser(directory);
@@ -412,10 +445,10 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 			return null;
 		return chooser.getSelectedFile().getAbsolutePath();
 	}
-	
+
 	@Override
 	protected void showErrorMessage(String title, String msg) {
-		
+
 	}
 
 	/**
@@ -424,5 +457,5 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 	public IEventNotifier getEventNotifier() {
 		return eventNotifier;
 	}
-	
+
 }

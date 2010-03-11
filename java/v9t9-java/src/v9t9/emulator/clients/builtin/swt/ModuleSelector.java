@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import java.io.IOException;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -33,6 +31,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.modules.IModule;
 
@@ -138,7 +137,7 @@ public class ModuleSelector extends Composite {
 			machine.getCpu().setPin(Cpu.PIN_RESET);
 
 			getShell().dispose();
-		} catch (IOException e) {
+		} catch (NotifyException e) {
 			ErrorDialog.openError(getShell(), "Failed to load", 
 					"Failed to load all the entries from the module",
 					new Status(IStatus.ERROR, "v9t9", e.getMessage(), e));
