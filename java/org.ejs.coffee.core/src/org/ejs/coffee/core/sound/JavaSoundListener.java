@@ -5,10 +5,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Control;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.Control.Type;
 
 
 
@@ -29,9 +32,11 @@ public class JavaSoundListener implements ISoundListener {
 
 	private BlockingQueue<AudioChunk> soundQueue;
 	private int ticksPerSec;
+	private double volume;
 
 	public JavaSoundListener(int ticksPerSec) {
 		this.ticksPerSec = ticksPerSec;
+		volume = 1.0;
 		
 	}
 
@@ -129,6 +134,13 @@ public class JavaSoundListener implements ISoundListener {
 		soundGeneratorLine.start();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.coffee.core.sound.ISoundListener#setVolume(double)
+	 */
+	public void setVolume(double loudness) {
+		this.volume = Math.max(0.0, Math.min(1.0, loudness));
+	}
+	
 	public void dispose() {
 		waitUntilSilent();
 		if (soundWritingThread != null)
@@ -145,7 +157,7 @@ public class JavaSoundListener implements ISoundListener {
 					soundQueue.remove();
 			}
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk);
+			AudioChunk o = new AudioChunk(chunk, volume);
 			//System.out.println("Got chunk " + o + " at " + System.currentTimeMillis());
 			soundQueue.put(o);
 		} catch (InterruptedException e) {

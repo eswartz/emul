@@ -9,12 +9,15 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.HexUtils;
@@ -970,7 +973,8 @@ public class DiskImageDsr implements DsrHandler {
 			@Override
 			public void run() {
 				long now = System.currentTimeMillis();
-				for (Map.Entry<String, BaseDiskImage> entry : disks.entrySet()) {
+				Set<Entry<String, BaseDiskImage>> entrySet = new HashSet<Entry<String,BaseDiskImage>>(disks.entrySet());
+				for (Map.Entry<String, BaseDiskImage> entry : entrySet) {
 					String name = "DSK" + entry.getKey().charAt(entry.getKey().length() - 1);
 					BaseDiskImage info = entry.getValue();
 					if (info.motorTimeout != 0) {

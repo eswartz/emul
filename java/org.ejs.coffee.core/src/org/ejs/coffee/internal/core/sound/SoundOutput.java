@@ -82,6 +82,12 @@ public class SoundOutput implements ISoundOutput {
 		}
 	}
 
+	public void setVolume(double loudness) {
+		for (ISoundListener listener : listeners) {
+			listener.setVolume(loudness);
+		}
+	}
+	
 	/**
 	 * @return the soundClock
 	 */

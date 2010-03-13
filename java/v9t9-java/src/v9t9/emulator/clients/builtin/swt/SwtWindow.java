@@ -59,6 +59,7 @@ import v9t9.emulator.NotifyEvent;
 import v9t9.emulator.IEventNotifier.Level;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
+import v9t9.emulator.clients.builtin.swt.ImageButton.ImageProvider;
 import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Cpu;
@@ -81,6 +82,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private Map<String, ToolShell> toolShells;
 	private Timer toolUiTimer;
 	private TreeMap<Integer, Image> mainIcons;
+	private ImageProvider imageProvider;
 	private Canvas cpuMetricsCanvas;
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
@@ -199,7 +201,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 			
 		};
-		
+
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 	}
 
@@ -349,9 +351,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 			mainIcons.put(size, new Image(getShell().getDisplay(), iconsFile.getAbsolutePath()));
 		}
 		
-		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL, focusRestorer);
+		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL, focusRestorer, true);
 		
 		GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(buttonBar);
+
+		//imageProvider = new MultiImageSizeProvider(mainIcons);
+		SVGLoader svgIconLoader = new SVGLoader(V9t9.getDataFile("icons/icons.svg"));
+		imageProvider = new SVGImageProvider(mainIcons, buttonBar, svgIconLoader);
 		
 		buttonBar.addControlListener(new ControlAdapter() {
 			@Override
@@ -536,6 +542,27 @@ public class SwtWindow extends BaseEmulatorWindow {
 					javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
 					javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
 				}
+				MenuItem vitem = new MenuItem(menu, SWT.CASCADE);
+				vitem.setText("Volume");
+				
+				final Menu volumeMenu = new Menu(vitem);
+
+				int curVol = JavaSoundHandler.settingSoundVolume.getInt();
+				int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+				for (final int vol : vols) {
+					MenuItem item = new MenuItem(volumeMenu, SWT.RADIO);
+					item.setText("" + vol);
+					if (vol == curVol)
+						item.setSelection(true);
+					item.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							JavaSoundHandler.settingSoundVolume.setInt(vol);
+						}
+
+					});
+				}
+				vitem.setMenu(volumeMenu);
 				showMenu(menu, button, e.x, e.y);
 			}
 		});
@@ -938,7 +965,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 	private BasicButton createButton(ButtonBar buttonBar, int iconIndex, String tooltip, SelectionListener selectionListener) {
 		Rectangle bounds = mainIconIndexToBounds(iconIndex);
-		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, mainIcons, bounds, tooltip);
+		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, imageProvider, bounds, tooltip);
 		button.addSelectionListener(selectionListener);
 		return button;
 	}
@@ -953,7 +980,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			final boolean inverted, final Point noClickCorner, 
 			int iconIndex, final int overlayIndex, String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH, 
-				mainIcons, 
+				imageProvider, 
 				mainIconIndexToBounds(iconIndex), 
 				tooltip);
 		setting.addListener(new ISettingListener() {

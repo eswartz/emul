@@ -10,4 +10,5 @@ public interface ISoundListener {
 	void played(SoundChunk chunk);
 	void stopped();
 	void waitUntilSilent();
+	void setVolume(double loudness);
 }

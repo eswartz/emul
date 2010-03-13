@@ -27,10 +27,11 @@ public class PulseSoundListener implements ISoundListener {
 	private Thread soundWritingThread;
 
 	private BlockingQueue<AudioChunk> soundQueue;
+	private double volume;
 
 	public PulseSoundListener(int ticksPerSec) {
 		//this.ticksPerSec = ticksPerSec;
-		
+		this.volume = 1.0;
 	}
 
 	/* (non-Javadoc)
@@ -166,7 +167,7 @@ public class PulseSoundListener implements ISoundListener {
 					soundQueue.remove();
 			}
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk);
+			AudioChunk o = new AudioChunk(chunk, volume);
 			//if (o.isEmpty())
 			//	return;
 			//System.out.println("Got chunk " + o + " at " + System.currentTimeMillis());
@@ -175,6 +176,13 @@ public class PulseSoundListener implements ISoundListener {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.coffee.core.sound.ISoundListener#setVolume(double)
+	 */
+	public void setVolume(double loudness) {
+		this.volume = Math.max(0.0, Math.min(1.0, loudness));
+	}
+	
 	/**
 	 * 
 	 */

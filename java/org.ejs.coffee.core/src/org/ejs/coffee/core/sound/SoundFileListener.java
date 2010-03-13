@@ -40,6 +40,12 @@ public class SoundFileListener implements ISoundListener {
 			started(soundFormat);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.coffee.core.sound.ISoundListener#setVolume(double)
+	 */
+	public void setVolume(double loudness) {
+		// IGNORED
+	}
 	/**
 	 * @return the soundFile
 	 */

@@ -31,18 +31,28 @@ public class AlsaSoundListener implements ISoundListener {
 	private BlockingQueue<AudioChunk> soundQueue;
 	private final String device;
 	private boolean blocking;
+	private double volume;
 
 	public AlsaSoundListener(String device) {
 		// init outside locks
 		AlsaLibrary.INSTANCE.hashCode();
 
 		this.device = device != null ? device : "default";
+		volume = 1.0;
 	}
 
 	public void setBlockMode(boolean blocking) {
 		this.blocking = blocking;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.coffee.core.sound.ISoundListener#setVolume(double)
+	 */
+	public void setVolume(double loudness) {
+		this.volume = Math.max(0.0, Math.min(1.0, loudness));
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.SoundListener#stopped()
 	 */
@@ -260,7 +270,7 @@ public class AlsaSoundListener implements ISoundListener {
 			if (!blocking && soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk);
+			AudioChunk o = new AudioChunk(chunk, volume);
 			soundQueue.put(o);
 		} catch (InterruptedException e) {
 		}

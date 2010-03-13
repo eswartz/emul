@@ -14,6 +14,7 @@ import org.ejs.coffee.core.sound.ui.SoundRecordingHelper;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.hardware.sound.SoundVoice;
@@ -26,6 +27,7 @@ import v9t9.engine.SoundHandler;
  */
 public class JavaSoundHandler implements SoundHandler {
 	public static Setting settingPlaySound = new Setting("PlaySound", new Boolean(true));
+	public static Setting settingSoundVolume = new Setting("SoundVolume", new Integer(10));
 	public static Setting settingRecordSoundOutputFile = new Setting("RecordSoundOutputFile", (String)null);
 	public static Setting settingRecordSpeechOutputFile = new Setting("RecordSpeechOutputFile", (String)null);
 
@@ -78,11 +80,21 @@ public class JavaSoundHandler implements SoundHandler {
 		audio = SoundFactory.createAudioListener();
 		if (audio instanceof AlsaSoundListener)
 			((AlsaSoundListener) audio).setBlockMode(false);
+		
 		speechAudio = SoundFactory.createAudioListener();
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
 		
 		speechVoice = new SpeechVoice();
+		
+		settingSoundVolume.addListener(new ISettingListener() {
+			
+			@Override
+			public void changed(Setting setting, Object oldValue) {
+				output.setVolume(setting.getInt() / 10.0);
+			}
+		});
+		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingSoundVolume);
 		
 		soundRecordingHelper = new SoundRecordingHelper(output, settingRecordSoundOutputFile, "sound");
 		speechRecordingHelper = new SoundRecordingHelper(speechOutput, settingRecordSpeechOutputFile, "speech");

@@ -29,5 +29,7 @@ public interface ISoundOutput {
 	
 	void start();
 	void stop();
+	
+	void setVolume(double loudness);
 }
 

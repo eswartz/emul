@@ -38,6 +38,8 @@ public class SVGLoader {
 
 	private Device device;
 
+	private TranscoderInput transcoderInput;
+
     public SVGLoader(File file) {
     	this.uri = file.toURI().toString();
     }
@@ -137,8 +139,10 @@ public class SVGLoader {
 			if (document == null) {
 				document = getSvgDomFromFile(uri);
 			}
-			TranscoderInput transcoderInput = new TranscoderInput(document);
-			transcoderInput.setURI(uri);
+			if (transcoderInput == null) { 
+				transcoderInput = new TranscoderInput(document);
+				transcoderInput.setURI(uri);
+			}
 			return load(transcoderInput, aoi, size);
 		} catch (Exception e) {
 			if (e instanceof TranscoderException) {
@@ -148,6 +152,25 @@ public class SVGLoader {
 			}
 			throw new CoreException(
 					new Status(IStatus.ERROR, "v9t9", null, e));
+		}
+	}
+	
+	public Point getSize() {
+		try {
+			if (document == null) {
+				document = getSvgDomFromFile(uri);
+			}
+			if (transcoderInput == null) { 
+				transcoderInput = new TranscoderInput(document);
+				transcoderInput.setURI(uri);
+			}
+			Document doc = transcoderInput.getDocument();
+	        if (doc == null)
+	            return null;
+
+	        return readDefaultSize(doc);
+		} catch (Exception e) {
+			return null;
 		}
 	}
 
@@ -195,14 +218,14 @@ public class SVGLoader {
         
         //System.out.println("dims: "+theWidth+","+theHeight);
         if (size != null && size.x > 0) {
-            //trans.addTranscodingHint(ImageTranscoder.KEY_WIDTH, new Float(
-            //		size.x));
+            trans.addTranscodingHint(ImageTranscoder.KEY_WIDTH, new Float(
+            		size.x));
             trans.addTranscodingHint(ImageTranscoder.KEY_MAX_WIDTH, new Float(
             		size.x));
         }
         if (size != null && size.y > 0) {
-            //trans.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, new Float(
-            //    size.y));
+            trans.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, new Float(
+                size.y));
             trans.addTranscodingHint(ImageTranscoder.KEY_MAX_HEIGHT, new Float(
                     size.y));
         }

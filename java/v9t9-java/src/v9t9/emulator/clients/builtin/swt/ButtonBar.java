@@ -24,6 +24,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 	private boolean isHorizontal;
 	private Composite buttonComposite;
 	private final IFocusRestorer focusRestorer;
+	private final boolean smoothResize;
 
 	/**
 	 * Create a button bar with the given orientation.  This must be in a parent with a GridLayout.
@@ -31,10 +32,11 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 	 * @param style
 	 * @param videoRenderer
 	 */
-	public ButtonBar(Composite parent, int style, IFocusRestorer focusRestorer) {
+	public ButtonBar(Composite parent, int style, IFocusRestorer focusRestorer, boolean smoothResize) {
 		// the bar itself is the full width of the parent
 		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
 		this.focusRestorer = focusRestorer;
+		this.smoothResize = smoothResize;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
 		
 		GridLayout mainLayout = new GridLayout(1, false);
@@ -99,6 +101,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 			if (isHorizontal) {
 				//maxsize =  cursize.x * 3 / 4 / num;
 				axis = cursize.x;
+				size = cursize.y;
 				//maxsize =  cursize.x / num;
 				//minsize = cursize.y;
 			} else {
@@ -106,6 +109,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 				//maxsize = cursize.y / num;
 				//minsize = cursize.x;
 				axis = cursize.y;
+				size = cursize.x;
 			}
 			/*
 			size = Math.max(minsize, maxsize);
@@ -114,19 +118,34 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 			else if (size > 128)
 				size = 128;
 			*/
-			int scale = 4;
-			while (scale < 7 && (num * (1 << (scale + 1))) < axis) {
-				scale++;
-			}
-			size = 1 << scale;
-			
-			if (isHorizontal) {
-				w = whint >= 0 ? whint : size * num;
-				h = hhint >= 0 ? hhint : size;
+			//System.out.println(axis+","+whint+","+hhint);
+			if (smoothResize) {
+				axis = axis * 7 / 8;
+				size = axis / num;
+				if (isHorizontal) {
+					w = axis;
+					h = size;
+				} else {
+					w = size;
+					h = axis;
+				}
 			} else {
-				w = whint >= 0 ? whint : size;
-				h = hhint >= 0 ? hhint : size * num;
+				int scale = 4;
+				while (scale < 7 && (num * (1 << (scale + 1))) < axis) {
+					scale++;
+				}
+				size = 1 << scale;
+				
+				if (isHorizontal) {
+					w = whint >= 0 ? whint : size * num;
+					h = hhint >= 0 ? hhint : size;
+				} else {
+					w = whint >= 0 ? whint : size;
+					h = hhint >= 0 ? hhint : size * num;
+				}
 			}
+			
+			
 			return new Point(w, h);
 		}
 
@@ -196,5 +215,23 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 
 	public boolean isHorizontal() {
 		return isHorizontal;
+	}
+
+	/**
+	 * 
+	 */
+	public void redrawAll() {
+		redrawAll(this);
+	}
+
+	/**
+	 * @param buttonBar
+	 */
+	private void redrawAll(Control c) {
+		c.redraw();
+		if (c instanceof Composite)
+			for (Control control : ((Composite) c).getChildren())
+				redrawAll(control);
+		
 	}
 }

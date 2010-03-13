@@ -27,6 +27,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
+import org.ejs.coffee.core.utils.Pair;
 
 /**
  * A button with an image, which is allowed to be transparent.
@@ -35,6 +36,9 @@ import org.eclipse.swt.widgets.Event;
  */
 public class ImageButton extends Canvas {
 
+	public interface ImageProvider {
+		Pair<Double, Image> getImage(Point size);
+	}
 	public interface ButtonParentDrawer {
 		Composite getComposite();
 		void drawBackground(GC gc, ImageButton imageButton, Point offset, Point size);
@@ -50,19 +54,16 @@ public class ImageButton extends Canvas {
 	private boolean pressed;
 	private boolean isMenuHovering;
 	private IFocusRestorer focusRestorer;
-	private TreeMap<Integer, Image> iconMap;
+	private final ImageProvider imageProvider;
 	
 	public ImageButton(ButtonParentDrawer parentDrawer, int style, 
-			TreeMap<Integer, Image> iconMap, Rectangle bounds_, String tooltip) {
+			ImageProvider imageProvider, Rectangle bounds_, String tooltip) {
 		super(parentDrawer.getComposite(),  style /*| SWT.NO_BACKGROUND*/);
-		
-		if (iconMap == null)
-			throw new NullPointerException();
+		this.imageProvider = imageProvider;
 		
 		this.parentDrawer = parentDrawer;
 		parentDrawer.addedButton();
 		
-		this.iconMap = iconMap;
 		this.bounds = bounds_;
 		this.listeners = new ArrayList<SelectionListener>();
 		
@@ -191,12 +192,11 @@ public class ImageButton extends Canvas {
 		}
 		offset = pressed ? 2 : 0;
 		try {
-			SortedMap<Integer, Image> tailMap = iconMap.tailMap(size.x);
-			if (tailMap.isEmpty())
-				tailMap = iconMap;
-			Image icon = tailMap.values().iterator().next();
-			int min = iconMap.values().iterator().next().getBounds().width;
-			double ratio = (double) icon.getBounds().width / min;
+			double ratio;
+			Pair<Double, Image> iconInfo = imageProvider.getImage(size);
+			ratio = iconInfo.first;
+			Image icon = iconInfo.second;
+			
 			e.gc.drawImage(icon, (int)(bounds.x * ratio), (int)(bounds.y * ratio), 
 					(int)(bounds.width * ratio), (int) (bounds.height * ratio), 
 					offset, offset, size.x, size.y);

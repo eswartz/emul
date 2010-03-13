@@ -36,6 +36,7 @@ public class Win32SoundListener implements ISoundListener {
 	
 	private List<WAVEHDR> hdrs = new ArrayList<WAVEHDR>();
 	private int hdrIndex;
+	private double volume;
 	
 	public Win32SoundListener() {
 		// init outside locks
@@ -46,6 +47,14 @@ public class Win32SoundListener implements ISoundListener {
 		this.blocking = blocking;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.coffee.core.sound.ISoundListener#setVolume(double)
+	 */
+	public void setVolume(double loudness) {
+		this.volume = Math.max(0.0, Math.min(1.0, loudness));
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.SoundListener#stopped()
 	 */
@@ -255,7 +264,7 @@ public class Win32SoundListener implements ISoundListener {
 				if (soundQueue.remainingCapacity() == 0)
 					soundQueue.remove();
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk);
+			AudioChunk o = new AudioChunk(chunk, volume);
 			soundQueue.put(o);
 		} catch (InterruptedException e) {
 		}
