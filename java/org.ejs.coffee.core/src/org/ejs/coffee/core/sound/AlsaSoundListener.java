@@ -228,8 +228,10 @@ public class AlsaSoundListener implements ISoundListener {
 									continue;
 								if (err == -11) /* EAGAIN */ {
 									// going too fast
-									while (chunk != null && soundQueue.size() > 2) {
-										chunk = soundQueue.poll();
+									if (!blocking) {
+										while (chunk != null && soundQueue.size() > 2) {
+											chunk = soundQueue.poll();
+										}
 									}
 									try {
 										Thread.sleep(100);
