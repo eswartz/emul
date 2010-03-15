@@ -46,19 +46,23 @@ public class EnhancedConsoleMemoryModel extends StandardConsoleMemoryModel {
 		// enhanced model can only load FORTH for now
 		DiskMemoryEntry entry;
 		
+		DataFiles.addSearchPath("../../tools/Forth");
 		loadEnhancedBankedConsoleRom(eventNotifier, "nforthA.rom", "nforthB.rom");
 		loadConsoleGrom(eventNotifier, "nforth.grm");
 		entry = loadModuleGrom(eventNotifier, "FORTH", "nforthg.bin");
 		
+		if (entry != null) {
+			// the high-GROM code is copied into RAM here
+			try {
+	    		CPU.getEntryAt(0x6000).loadSymbols(
+	    				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
+			} catch (IOException e) {
+				
+			}
+		}
+		
 		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("../../tools/Forth"));
 		
-		// the high-GROM code is copied into RAM here
-		try {
-    		CPU.getEntryAt(0x6000).loadSymbols(
-    				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
-		} catch (IOException e) {
-			
-		}
 	}
 	
 
