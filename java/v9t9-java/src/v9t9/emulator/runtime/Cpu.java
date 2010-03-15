@@ -8,9 +8,11 @@ package v9t9.emulator.runtime;
 
 import java.io.PrintWriter;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruAccess;
@@ -26,7 +28,7 @@ import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
  * 
  * @author ejs
  */
-public class Cpu implements MemoryAccessListener {
+public class Cpu implements MemoryAccessListener, IPersistable {
     public static final int TMS_9900_BASE_CYCLES_PER_SEC = 3000000;
 	Machine machine;
 	public Memory memory;
@@ -76,9 +78,9 @@ public class Cpu implements MemoryAccessListener {
         this.status = new Status();
         this.interruptTick = interruptTick;
         
-        settingCyclesPerSecond.addListener(new ISettingListener() {
+        settingCyclesPerSecond.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				baseclockhz = setting.getInt();
 				targetcycles = (int)((long) baseclockhz * Cpu.this.interruptTick / 1000);
 		        currenttargetcycles = targetcycles;
@@ -89,9 +91,9 @@ public class Cpu implements MemoryAccessListener {
         
         settingCyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
-        settingRealTime.addListener(new ISettingListener() {
+        settingRealTime.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				tick();
 				if (setting.getBoolean()) {
 					totalcurrentcycles = totaltargetcycles;
@@ -179,12 +181,12 @@ public class Cpu implements MemoryAccessListener {
 
 	static public final String sRealTime = "RealTime";
 
-	static public final Setting settingRealTime = new Setting(
+	static public final SettingProperty settingRealTime = new SettingProperty(
 			sRealTime, new Boolean(false));
 
 	static public final String sCyclesPerSecond = "CyclesPerSecond";
 
-	static public final Setting settingCyclesPerSecond = new Setting(
+	static public final SettingProperty settingCyclesPerSecond = new SettingProperty(
 			sCyclesPerSecond, new Integer(0));
 
     //public static Object executionToken;
@@ -362,15 +364,8 @@ public class Cpu implements MemoryAccessListener {
 		currentcycles = 0;
 		
 		totaltargetcycles += targetcycles;
-		//totalcurrentcycles += currentcycles;
 
-		//System.out.print('-');
-		//System.out.println("tick: " + currenttargetcycles);
 		ticks++;
-		
-		//if ((ticks % 60) == 0) {
-		//	vdpInterruptFrac = 0;
-		//}
 	}
 
 	public synchronized boolean isThrottled() {
@@ -418,7 +413,7 @@ public class Cpu implements MemoryAccessListener {
 		return cruAccess;
 	}
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		section.put("PC", PC);
 		section.put("WP", WP);
 		section.put("status", status.flatten());
@@ -428,7 +423,7 @@ public class Cpu implements MemoryAccessListener {
 		cruAccess.saveState(section.addNewSection("CRU"));
 	}
 
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		if (section == null) {
 			setPin(INTLEVEL_RESET);
 			return;

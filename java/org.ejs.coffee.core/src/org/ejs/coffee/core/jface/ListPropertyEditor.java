@@ -30,9 +30,10 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
-import org.ejs.coffee.core.model.IClassPropertyFactory;
-import org.ejs.coffee.core.model.IPropertyEditorProvider;
-import org.ejs.coffee.core.model.ListFieldProperty;
+import org.ejs.coffee.core.properties.IClassPropertyFactory;
+import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyEditorProvider;
+import org.ejs.coffee.core.properties.ListFieldProperty;
 import org.ejs.coffee.core.utils.CompatUtils;
 
 /**

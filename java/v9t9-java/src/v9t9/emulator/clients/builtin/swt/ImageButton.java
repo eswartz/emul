@@ -5,8 +5,6 @@ package v9t9.emulator.clients.builtin.swt;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;

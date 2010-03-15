@@ -25,6 +25,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
@@ -123,7 +124,15 @@ public class ModuleSelector extends Composite {
 		switchButton.setEnabled(false);
 		
 		viewer.setInput(machine.getModuleManager().getModules());
-		viewer.setSelection(new StructuredSelection(machine.getModuleManager().getLoadedModules()));
+		final IModule[] loadedModules = machine.getModuleManager().getLoadedModules();
+		viewer.setSelection(new StructuredSelection(loadedModules));
+		if (loadedModules.length > 0) {
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					viewer.reveal(loadedModules[0]);
+				}
+			});
+		}
 
 		nameColumn.pack();
 	}

@@ -6,8 +6,7 @@
  */
 package v9t9.emulator.hardware;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.PrefUtils;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.Cpu;
@@ -432,7 +431,7 @@ public class InternalCru9901 implements CruAccess {
 		}
 	}
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		section.put("EnabledInterrupts", int9901);
 		section.put("CurrentInterrupts", currentints);
 		section.put("KeyboardColumn", crukeyboardcol);
@@ -445,22 +444,22 @@ public class InternalCru9901 implements CruAccess {
 		section.put("IntReq", intreq);
 		section.put("IC", ic);
 	}
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		if (section == null) {
 			reset();
 			return;
 		}
-		int9901 = PrefUtils.readSavedInt(section, "EnabledInterrupts");
-		currentints = PrefUtils.readSavedInt(section, "CurrentInterrupts");
-		crukeyboardcol = PrefUtils.readSavedInt(section, "KeyboardColumn");
-		clockmode = PrefUtils.readSavedBoolean(section, "ClockMode");
-		clockReadRegister = PrefUtils.readSavedInt(section, "ClockReadRegister");
-		clockDecrementerRegister = PrefUtils.readSavedInt(section, "ClockDecrementerRegister");
-		clockRegister = PrefUtils.readSavedInt(section, "ClockRegister");
-		suppressClockInterrupts = PrefUtils.readSavedBoolean(section, "SuppressClockInterrupts");
-		alphaLockMask = PrefUtils.readSavedBoolean(section, "AlphaLockMask");
-		intreq = PrefUtils.readSavedBoolean(section, "IntReq");
-		ic = (byte) PrefUtils.readSavedInt(section, "IC");
+		int9901 = section.getInt("EnabledInterrupts");
+		currentints = section.getInt("CurrentInterrupts");
+		crukeyboardcol = section.getInt("KeyboardColumn");
+		clockmode = section.getBoolean("ClockMode");
+		clockReadRegister = section.getInt("ClockReadRegister");
+		clockDecrementerRegister = section.getInt("ClockDecrementerRegister");
+		clockRegister = section.getInt("ClockRegister");
+		suppressClockInterrupts = section.getBoolean("SuppressClockInterrupts");
+		alphaLockMask = section.getBoolean("AlphaLockMask");
+		intreq = section.getBoolean("IntReq");
+		ic = (byte) section.getInt("IC");
 	}
 	
 }

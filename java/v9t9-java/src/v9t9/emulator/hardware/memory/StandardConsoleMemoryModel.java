@@ -101,6 +101,21 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     	loadConsoleGrom(eventNotifier, "994agrom.bin");    	
     }
     
+    /* (non-Javadoc)
+     * @see v9t9.engine.memory.MemoryModel#resetMemory()
+     */
+    @Override
+    public void resetMemory() {
+    	for (MemoryEntry entry : CPU.getMemoryEntries()) {
+    		if (entry.addr == 0x4000 || entry.addr == 0x6000)
+    			CPU.unmapEntry(entry);
+    	}
+    	for (MemoryEntry entry : GRAPHICS.getMemoryEntries()) {
+    		if (entry.addr >= 0x6000)
+    			GRAPHICS.unmapEntry(entry);
+    	}
+    }
+    
 
     protected DiskMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename) {
     	DiskMemoryEntry cpuRomEntry;

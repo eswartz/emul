@@ -10,8 +10,8 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 
 /**
  * Help for dumping logs.
@@ -19,9 +19,9 @@ import org.ejs.coffee.core.utils.Setting;
  *
  */
 public class Logging {
-	private static Map<Setting, File> settingToFilenameMap = new HashMap<Setting, File>();
+	private static Map<IProperty, File> settingToFilenameMap = new HashMap<IProperty, File>();
 	private static Map<File, PrintWriter> fileToStreamMap = new HashMap<File, PrintWriter>();
-	private static Map<Setting, PrintWriter> settingToPrintwriterMap = new HashMap<Setting, PrintWriter>();
+	private static Map<IProperty, PrintWriter> settingToPrintwriterMap = new HashMap<IProperty, PrintWriter>();
 	
 	final static String TMPDIR = File.separatorChar == '/' ? "/tmp/" : "c:/temp/";
     
@@ -32,7 +32,7 @@ public class Logging {
 	 * @param logFileName filename, which will live in a temporary directory 
 	 * unless absolute
 	 */
-	public static void registerLog(Setting setting, String logFileName) {
+	public static void registerLog(IProperty setting, String logFileName) {
 		File file = new File(logFileName);
 		if (!file.isAbsolute()) {
 			logFileName = TMPDIR + logFileName;
@@ -45,9 +45,9 @@ public class Logging {
 		// multiple settings to share the same file
 		file.delete();
 		
-		setting.addListener(new ISettingListener() {
+		setting.addListener(new IPropertyListener() {
 
-            public void changed(Setting setting, Object oldValue) {
+            public void propertyChanged(IProperty setting) {
             	PrintWriter dump = settingToPrintwriterMap.get(setting);
             	
             	boolean enabled = isSettingEnabled(1, setting);
@@ -83,14 +83,14 @@ public class Logging {
 	 * @param logFileName filename, which will live in a temporary directory 
 	 * unless absolute
 	 */
-	public static void registerLog(Setting setting, PrintWriter writer) {
+	public static void registerLog(IProperty setting, PrintWriter writer) {
 		if ((setting.getValue() instanceof Integer && setting.getInt() > 0)
 				|| setting.getBoolean())
 			settingToPrintwriterMap.put(setting, writer);
 		
-		setting.addListener(new ISettingListener() {
+		setting.addListener(new IPropertyListener() {
 
-            public void changed(Setting setting, Object oldValue) {
+            public void propertyChanged(IProperty setting) {
             	PrintWriter dump = settingToPrintwriterMap.get(setting);
             	
             	boolean enabled = isSettingEnabled(1, setting);
@@ -111,7 +111,7 @@ public class Logging {
 	 * @param setting
 	 * @return PrintWriter or <code>null</code>
 	 */
-	public static PrintWriter getLog(int level, Setting setting) {
+	public static PrintWriter getLog(int level, IProperty setting) {
 		boolean enabled = isSettingEnabled(level, setting);
 		if (enabled)
 			return settingToPrintwriterMap.get(setting);
@@ -119,7 +119,7 @@ public class Logging {
 			return null;
 	}
 
-	private static boolean isSettingEnabled(int level, Setting setting) {
+	private static boolean isSettingEnabled(int level, IProperty setting) {
 		boolean enabled;
 		if (setting.getValue() instanceof Integer) 
 			enabled = setting.getInt() >= level;
@@ -133,7 +133,7 @@ public class Logging {
 	 * @param setting
 	 * @return PrintWriter or <code>null</code>
 	 */
-	public static PrintWriter getLog(Setting setting) {
+	public static PrintWriter getLog(IProperty setting) {
 		return getLog(1, setting);
 	}
 	
@@ -143,7 +143,7 @@ public class Logging {
 	 * @param setting setting controlling the log
 	 * @param msg text to write
 	 */
-	public static void writeLogLine(Setting setting, String msg) {
+	public static void writeLogLine(IProperty setting, String msg) {
 		PrintWriter pw = getLog(setting);
 		if (pw != null) {
 			pw.println(msg);
@@ -156,7 +156,7 @@ public class Logging {
 	 * @param setting setting controlling the log
 	 * @param msg text to write
 	 */
-	public static void writeLogLine(int level, Setting setting, String msg) {
+	public static void writeLogLine(int level, IProperty setting, String msg) {
 		PrintWriter pw = getLog(level, setting);
 		if (pw != null) {
 			pw.println(msg);

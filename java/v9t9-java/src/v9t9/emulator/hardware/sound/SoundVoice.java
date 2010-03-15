@@ -3,10 +3,11 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.sound.ISoundVoice;
 
-public abstract class SoundVoice implements ISoundVoice
+public abstract class SoundVoice implements ISoundVoice, IPersistable
 {
 	/** volume, 0 == off, 0xf == loudest */
 	private byte	volume;			
@@ -41,11 +42,11 @@ public abstract class SoundVoice implements ISoundVoice
 	public String getName() {
 		return name;
 	}
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		// derived
 		//section.put("Volume", volume);
 	}
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		// derived
 		//volume = (byte) Utils.readSavedInt(section, "Volume");
 	}

@@ -11,7 +11,8 @@ import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Text;
-import org.ejs.coffee.core.model.IProperty;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyEditor;
 
 /**
  * @author ejs

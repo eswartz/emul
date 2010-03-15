@@ -4,13 +4,13 @@
 package v9t9.emulator.clients.builtin;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 /**
  * @author ejs
  *
  */
-public class IconSetting extends Setting implements ISettingDecorator {
+public class IconSetting extends SettingProperty implements ISettingDecorator {
 
 	private final String iconPath;
 

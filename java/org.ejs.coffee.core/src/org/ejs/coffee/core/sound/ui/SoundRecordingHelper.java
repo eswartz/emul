@@ -16,10 +16,10 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.sound.ISoundOutput;
 import org.ejs.coffee.core.sound.SoundFileListener;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
 
 /**
  * This class provides a useful way of recording sound to a file, with a helper
@@ -31,25 +31,25 @@ public class SoundRecordingHelper {
 
 	private SoundFileListener iSoundListener;
 	
-	private Setting soundFileSetting;
+	private IProperty soundFileSetting;
 
 	private final ISoundOutput output;
 
-	private ISettingListener listener;
+	private IPropertyListener listener;
 
 	private final String label;
 
 	/**
 	 * @param shell
 	 */
-	public SoundRecordingHelper(ISoundOutput output, Setting settingRecordSoundOutputFile, String label) {
+	public SoundRecordingHelper(ISoundOutput output, IProperty settingRecordSoundOutputFile, String label) {
 		this.output = output;
 		this.soundFileSetting = settingRecordSoundOutputFile;
 		this.label = label;
 		iSoundListener = new SoundFileListener();
 		
-		listener = new ISettingListener() {
-			public void changed(Setting setting, Object oldValue) {
+		listener = new IPropertyListener() {
+			public void propertyChanged(IProperty setting) {
 				iSoundListener.setFileName(setting.getString());
 			}
 			
@@ -63,7 +63,7 @@ public class SoundRecordingHelper {
 	/**
 	 * @return the soundFileSetting
 	 */
-	public Setting getSoundFileSetting() {
+	public IProperty getSoundFileSetting() {
 		return soundFileSetting;
 	}
 	public Menu createSoundMenu(final Control parent) {

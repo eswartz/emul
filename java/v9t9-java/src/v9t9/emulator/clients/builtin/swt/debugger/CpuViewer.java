@@ -27,10 +27,10 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.CompatUtils;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.V9t9;
@@ -50,7 +50,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 	private Image pauseImage;
 	private Image stepImage;
 	private Button stepButton;
-	private ISettingListener pauseListener;
+	private IPropertyListener pauseListener;
 	private final Machine machine;
 
 	private TableViewer instTableViewer;
@@ -116,9 +116,9 @@ public class CpuViewer extends Composite implements InstructionListener {
 				});
 			}
 		});*/
-		pauseListener = new ISettingListener() {
+		pauseListener = new IPropertyListener() {
 
-			public void changed(final Setting setting, Object oldValue) {
+			public void propertyChanged(final IProperty setting) {
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						if (!playPauseButton.isDisposed()) {
@@ -262,6 +262,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 			@Override
 			public void run() {
 				if (refreshTask == null)
+					return;
+				if (!CpuViewer.this.isDisposed())
 					return;
 				showNextInstruction = true;
 				synchronized (machine.getExecutionLock()) {

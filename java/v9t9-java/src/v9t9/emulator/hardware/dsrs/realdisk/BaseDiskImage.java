@@ -9,7 +9,8 @@ import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.util.List;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.DSKheader;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.FDCStatus;
@@ -21,7 +22,7 @@ import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.StatusBit;
  * @author ejs
  *
  */
-public abstract class BaseDiskImage {
+public abstract class BaseDiskImage implements IPersistable {
 
 	public abstract String getDiskType();
 	
@@ -298,11 +299,11 @@ public abstract class BaseDiskImage {
 	/**
 	 * @param addNewSection
 	 */
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		section.put("FilePath", spec.getAbsolutePath());			
 	}
 
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		spec = DiskImageDsr.getDefaultDiskImage(name);
 		if (section == null)
 			return;

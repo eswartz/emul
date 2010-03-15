@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.DialogSettings;
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.DialogSettingsPropertyStorage;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 /**
  * This maintains settings global to the emulator (and saved automagically in
@@ -22,21 +24,21 @@ import org.ejs.coffee.core.utils.Setting;
  */
 public class EmulatorSettings {
 	public static final EmulatorSettings INSTANCE = new EmulatorSettings();
-	protected DialogSettings settings;
+	protected IPropertyStorage storage;
 
-	private List<Setting> trackedSettings;
+	private List<SettingProperty> trackedSettings;
 	private boolean isLoading;
-	private ISettingListener trackedSettingListener;
+	private IPropertyListener trackedSettingListener;
 	protected boolean isLoaded;
 	protected boolean needsSave;
 	
 	protected EmulatorSettings() {
-		settings = new DialogSettings("root");
-		trackedSettings = new ArrayList<Setting>();
-		trackedSettingListener = new ISettingListener() {
+		storage = new DialogSettingsPropertyStorage(new DialogSettings("root"));
+		trackedSettings = new ArrayList<SettingProperty>();
+		trackedSettingListener = new IPropertyListener() {
 			
 			@Override
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				if (!isLoading)
 					needsSave = true;
 			}
@@ -45,14 +47,14 @@ public class EmulatorSettings {
 	
 	public synchronized void load() {
 		try {
-			settings.load(getSettingsConfigurationPath());
+			storage.load(getSettingsConfigurationPath());
 			
 			isLoaded = true;
 			needsSave = false;
 			isLoading = true;
 			try {
-				for (Setting setting : trackedSettings) {
-					setting.loadState(settings);
+				for (SettingProperty setting : trackedSettings) {
+					setting.loadState(storage);
 				}
 			} finally {
 				isLoading = false;
@@ -71,40 +73,41 @@ public class EmulatorSettings {
 		File backup = new File(path + "~");
 		file.renameTo(backup);
 		
-		for (Setting setting : trackedSettings) {
-			setting.saveState(settings);
+		for (SettingProperty setting : trackedSettings) {
+			setting.saveState(storage);
 		}
 		
 		try {
-			settings.save(path);
+			storage.save(path);
 			needsSave = false;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void register(Setting setting) {
+	public void register(SettingProperty setting) {
 		if (!trackedSettings.contains(setting)) {
 			trackedSettings.add(setting);
 			setting.addListener(trackedSettingListener);
 			if (isLoaded) {
-				setting.loadState(settings);
+				setting.loadState(storage);
 			}
 		}
 	}
 	public void clearConfigVar(String configVar) {
-		settings.put(configVar, (String)null);
+		// TODO
+		storage.remove(new SettingProperty(configVar, null));
 	}
 
 	public String getBaseConfigurationPath() {
 		return System.getProperty("user.home") + File.separatorChar + ".v9t9j" + File.separatorChar;
 	}
 
-	public DialogSettings getApplicationSettings() {
-		if (settings == null) {
+	public IPropertyStorage getApplicationSettings() {
+		if (storage == null) {
 			load();
 		}
-		return settings;
+		return storage;
 	}
 
 	public String getSettingsConfigurationPath() {
@@ -114,10 +117,10 @@ public class EmulatorSettings {
 	/**
 	 * @return
 	 */
-	public IDialogSettings getHistorySettings() {
-		IDialogSettings section = settings.getSection("History");
+	public IPropertyStorage getHistorySettings() {
+		IPropertyStorage section = storage.getSection("History");
 		if (section == null)
-			section = settings.addNewSection("History");
+			section = storage.addNewSection("History");
 		return section;
 	}
 }

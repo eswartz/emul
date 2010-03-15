@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 
 
@@ -60,7 +60,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	//}
 
 	@Override
-	protected void doSaveBankEntries(IDialogSettings section) {
+	protected void doSaveBankEntries(IPropertyStorage section) {
 		for (int idx = 0; idx < banks.length; idx++) {
 			MemoryEntry entry = banks[idx];
 			entry.saveState(section.addNewSection("" + idx));
@@ -68,14 +68,14 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	}
 
 	@Override
-	protected void doLoadBankEntries(IDialogSettings section) {
+	protected void doLoadBankEntries(IPropertyStorage section) {
 		if (section == null) return;
 		if (banks == null) {
 			bankCount = section.getSections().length;
 			banks = new MemoryEntry[bankCount];
 		}
 		for (int idx = 0; idx < banks.length; idx++) {
-			IDialogSettings entryStore = section.getSection("" + idx);
+			IPropertyStorage entryStore = section.getSection("" + idx);
 			MemoryEntry entry = banks[idx];
 			if (entry != null) {
 				entry.loadState(entryStore);

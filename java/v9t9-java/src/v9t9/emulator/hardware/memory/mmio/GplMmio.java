@@ -6,9 +6,9 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
@@ -18,7 +18,7 @@ import v9t9.engine.memory.MemoryDomain;
 /** GPL chip entry
  * @author ejs
  */
-public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter {
+public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistable {
 
     private MemoryDomain memory;
     
@@ -100,12 +100,14 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter {
     	}    
     }
 
-	public void loadState(IDialogSettings section) {
-		gromaddr = (short) PrefUtils.readSavedInt(section, "Addr");
-		gromaddrflag = PrefUtils.readSavedBoolean(section, "AddrFlag");
+	public void loadState(IPropertyStorage section) {
+		if (section == null)
+			return;
+		gromaddr = (short) section.getInt("Addr");
+		gromaddrflag = section.getBoolean("AddrFlag");
 	}
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		section.put("Addr", gromaddr);
 		section.put("AddrFlag", gromaddrflag);
 	}

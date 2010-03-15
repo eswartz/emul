@@ -13,9 +13,10 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.ejs.coffee.core.model.IClassPropertyFactory;
-import org.ejs.coffee.core.model.IProperty;
-import org.ejs.coffee.core.model.IPropertyProvider;
+import org.ejs.coffee.core.properties.IClassPropertyFactory;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyProvider;
 
 /**
  * @author ejs
@@ -57,7 +58,7 @@ public class PropertyEditor  {
 		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).applyTo(link);
 
 		if (property.getClassFactory() != null) {
-			link.setText("<a href=\"new\">" + property.getName() + "</a>");
+			link.setText("<a href=\"new\">" + property.getLabel() + "</a>");
 			link.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -65,7 +66,7 @@ public class PropertyEditor  {
 				}
 			});
 		} else {
-			link.setText(property.getName());
+			link.setText(property.getLabel());
 		}
 		
 		

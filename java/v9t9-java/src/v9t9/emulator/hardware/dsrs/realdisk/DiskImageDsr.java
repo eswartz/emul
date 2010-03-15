@@ -19,10 +19,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
@@ -52,7 +54,7 @@ public class DiskImageDsr implements DsrHandler {
 	 */
 	private static final String diskImageIconPath = V9t9.getDataFile("icons/disk_image.png").getAbsolutePath();
 
-	public static final Setting diskImageDsrEnabled = new IconSetting("DiskImageDSREnabled",
+	public static final SettingProperty diskImageDsrEnabled = new IconSetting("DiskImageDSREnabled",
 			"Disk Image Support",
 			"This implements a drive (like DSK1) in a disk image on your host.\n\n"+
 			"Either sector image or track image disks are supported.\n\n"+
@@ -60,7 +62,7 @@ public class DiskImageDsr implements DsrHandler {
 			Boolean.FALSE, diskImageIconPath);
 	
 	/** setting name (DSKImage1) to setting */
-	private Map<String, Setting> diskSettingsMap = new LinkedHashMap<String, Setting>();
+	private Map<String, SettingProperty> diskSettingsMap = new LinkedHashMap<String, SettingProperty>();
 	private DiskMemoryEntry romMemoryEntry;
 	
 	static final int DSKtracksize_SD = (3210);
@@ -179,7 +181,7 @@ public class DiskImageDsr implements DsrHandler {
 		void growImageForContent() throws IOException;
 	}
 	
-	static class FDC1771 {
+	static class FDC1771 implements IPersistable {
 
 		
 		boolean hold; /* holding for data? */
@@ -588,10 +590,10 @@ public class DiskImageDsr implements DsrHandler {
 			
 		}
 
-		public void saveState(IDialogSettings section) {
+		public void saveState(IPropertyStorage section) {
 		}
 
-		public void loadState(IDialogSettings section) {
+		public void loadState(IPropertyStorage section) {
 			if (image != null) {
 				try {
 					image.closeDiskImage();
@@ -680,7 +682,7 @@ public class DiskImageDsr implements DsrHandler {
 		String name = getDiskImageSetting(num);
 		BaseDiskImage info = disks.get(name);
 		if (info == null) {
-			Setting setting = diskSettingsMap.get(name);
+			SettingProperty setting = diskSettingsMap.get(name);
 			if (setting == null)
 				return null;
 			info = createDiskImage(name, new File(setting.getString()));
@@ -714,7 +716,7 @@ public class DiskImageDsr implements DsrHandler {
 		}
 
 		/* (non-Javadoc)
-		 * @see org.ejs.coffee.core.utils.Setting#isAvailable()
+		 * @see org.ejs.coffee.core.utils.SettingProperty#isAvailable()
 		 */
 		@Override
 		public boolean isEnabled() {
@@ -734,9 +736,9 @@ public class DiskImageDsr implements DsrHandler {
 		EmulatorSettings.INSTANCE.register(diskSetting);
 	
 		diskSettingsMap.put(device, diskSetting); 
-		diskSetting.addListener(new ISettingListener() {
+		diskSetting.addListener(new IPropertyListener() {
 			
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 	
 				BaseDiskImage image = disks.get(setting.getName());
 				if (image != null) {
@@ -1388,10 +1390,10 @@ public class DiskImageDsr implements DsrHandler {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
 	 */
-	public Map<String, Collection<Setting>> getEditableSettingGroups() {
-		Map<String, Collection<Setting>> map = new LinkedHashMap<String, Collection<Setting>>();
+	public Map<String, Collection<SettingProperty>> getEditableSettingGroups() {
+		Map<String, Collection<SettingProperty>> map = new LinkedHashMap<String, Collection<SettingProperty>>();
 		
-		Collection<Setting> settings = new ArrayList<Setting>();
+		Collection<SettingProperty> settings = new ArrayList<SettingProperty>();
 		settings.add(diskImageDsrEnabled);
 		map.put(DsrHandler.GROUP_DSR_SELECTION, settings);
 		
@@ -1400,14 +1402,14 @@ public class DiskImageDsr implements DsrHandler {
 		
 		return map;
 	}
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		diskImageDsrEnabled.saveState(section);
 		fdc.saveState(section.addNewSection("FDC1771"));
 		for (Map.Entry<String, BaseDiskImage> entry : disks.entrySet())
 			entry.getValue().saveState(section.addNewSection(entry.getKey()));
 	}
 	
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		if (section == null) return;
 		diskImageDsrEnabled.loadState(section);
 		fdc.loadState(section.getSection("FDC1771"));

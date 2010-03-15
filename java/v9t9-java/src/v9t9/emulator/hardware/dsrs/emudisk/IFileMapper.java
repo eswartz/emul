@@ -2,22 +2,19 @@ package v9t9.emulator.hardware.dsrs.emudisk;
 
 import java.io.File;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 /**
  * This maps DSR device+filenames back and forth to disk ones
  * @author ejs
  *
  */
-public interface IFileMapper {
+public interface IFileMapper extends IPersistable {
 	/**
 	 * Get all the registered settings (String)
 	 */
-	Setting[] getSettings();
-	
-	void saveState(IDialogSettings section);
-	void loadState(IDialogSettings section);
+	SettingProperty[] getSettings();
 	
 	/**
 	 * Get the candidate file for the given device.filename

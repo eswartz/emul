@@ -11,7 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.PrefUtils;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 import v9t9.engine.files.DataFiles;
 
@@ -396,7 +396,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 	}
 	
 	@Override
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		super.saveState(section);
 		section.put("FilePath", filepath);
 		section.put("FileOffs", fileoffs);
@@ -408,12 +408,12 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @see v9t9.engine.memory.MemoryEntry#loadFields(org.eclipse.jface.dialogs.IDialogSettings)
 	 */
 	@Override
-	protected void loadFields(IDialogSettings section) {
+	protected void loadFields(IPropertyStorage section) {
 		super.loadFields(section);
 		filepath = section.get("FilePath");
-		fileoffs = PrefUtils.readSavedInt(section, "FileOffs");
-		filesize = PrefUtils.readSavedInt(section, "FileSize");
-		bStorable = PrefUtils.readSavedBoolean(section, "Storable");
+		fileoffs = section.getInt("FileOffs");
+		filesize = section.getInt("FileSize");
+		bStorable = section.getBoolean("Storable");
 	}
 	
 	protected void loadMemoryContents(IDialogSettings section) {

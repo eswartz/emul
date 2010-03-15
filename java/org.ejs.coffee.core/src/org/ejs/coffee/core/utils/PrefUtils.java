@@ -63,10 +63,10 @@ public class PrefUtils  {
 			}
 		}
 	}
+	
 	public static boolean readSavedBoolean(IDialogSettings section, String key) {
 		return readSavedBoolean(section, key, false);
 	}
-	
 	public static Rectangle readBoundsString(String boundsStr) {
 		Rectangle savedBounds = null;
 		if (boundsStr == null)

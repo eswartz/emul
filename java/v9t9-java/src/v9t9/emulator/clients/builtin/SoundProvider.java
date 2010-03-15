@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.clients.builtin;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
 
 import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.SoundHandler;
@@ -13,7 +13,7 @@ import v9t9.engine.SoundHandler;
  * @author ejs
  *
  */
-public interface SoundProvider {
+public interface SoundProvider extends IPersistable {
 	/** Get all the existing sound voices. */
 	SoundVoice[] getSoundVoices();
 
@@ -22,10 +22,6 @@ public interface SoundProvider {
 
 	SoundHandler getSoundHandler();
 	void setSoundHandler(SoundHandler soundHandler);
-
-	void saveState(IDialogSettings section);
-
-	void loadState(IDialogSettings section);
 
 	void setAudioGate(int addr, boolean b);
 

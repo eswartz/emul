@@ -9,8 +9,8 @@ package v9t9.emulator.hardware;
 import java.io.File;
 import java.io.IOException;
 
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.IEventNotifier;
@@ -31,10 +31,10 @@ import v9t9.engine.memory.MemoryModel;
 public class V9t9 {
 
 	static {
-		DataFiles.settingBootRomsPath.addListener(new ISettingListener() {
+		DataFiles.settingBootRomsPath.addListener(new IPropertyListener() {
 			
 			@Override
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				if (setting.getList().isEmpty())
 					addDefaultPaths();
 				//DataFiles.settingBootRomsPath.saveState(EmulatorSettings.getInstance().getApplicationSettings());

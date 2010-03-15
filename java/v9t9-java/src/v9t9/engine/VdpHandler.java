@@ -6,7 +6,7 @@
  */
 package v9t9.engine;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
@@ -20,7 +20,7 @@ import v9t9.engine.memory.MemoryDomain;
  * to VDP memory / register changes detected by the memory subsystem. 
  * @author ejs
  */
-public interface VdpHandler {
+public interface VdpHandler extends IPersistable{
     /** Write a VDP register. 
     */
     void writeVdpReg(int reg, byte val);
@@ -66,10 +66,6 @@ public interface VdpHandler {
 	void work();
 	
 	void setCanvas(VdpCanvas canvas);
-
-	void saveState(IDialogSettings section);
-
-	void loadState(IDialogSettings section);
 
 	/** This is called regularly from the CPU and should trigger the VDP
 	 * interrupt according to the desired frequency. 

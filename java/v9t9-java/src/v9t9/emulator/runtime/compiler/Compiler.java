@@ -39,8 +39,8 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.TABLESWITCH;
 import org.apache.bcel.generic.Type;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
@@ -72,25 +72,25 @@ public class Compiler {
 
     MemoryDomain memory;
 
-    static public final Setting settingOptimize = new Setting("CompilerOptimize",
+    static public final SettingProperty settingOptimize = new SettingProperty("CompilerOptimize",
             new Boolean(false));
 
-    static public final Setting settingOptimizeRegAccess = new Setting(
+    static public final SettingProperty settingOptimizeRegAccess = new SettingProperty(
             "CompilerOptimizeRegAccess", new Boolean(false));
 
-    static public final Setting settingOptimizeStatus = new Setting(
+    static public final SettingProperty settingOptimizeStatus = new SettingProperty(
             "CompilerOptimizeStatus", new Boolean(false));
 
-    static public final Setting settingCompileOptimizeCallsWithData = new Setting(
+    static public final SettingProperty settingCompileOptimizeCallsWithData = new SettingProperty(
             "CompilerOptmizeCallsWithData", new Boolean(false));
 
-    static public final Setting settingDebugInstructions = new Setting(
+    static public final SettingProperty settingDebugInstructions = new SettingProperty(
             "DebugInstructions", new Boolean(false));
 
-    static public final Setting settingDumpModuleRomInstructions = new Setting(
+    static public final SettingProperty settingDumpModuleRomInstructions = new SettingProperty(
     		"CompilerDumpModuleRomInstructions", new Boolean(false));
 
-    static public final Setting settingCompileFunctions = new Setting(
+    static public final SettingProperty settingCompileFunctions = new SettingProperty(
     		"CompilerCompileFunctions", new Boolean(false));
 
     public Compiler(Cpu cpu) {
@@ -98,12 +98,6 @@ public class Compiler {
         
         this.machine = cpu.getMachine();
         this.memory = cpu.getConsole();
-
-        machine.getSettings().register(settingOptimize);
-        machine.getSettings().register(settingOptimizeRegAccess);
-        machine.getSettings().register(settingOptimizeStatus);
-        machine.getSettings().register(settingDebugInstructions);
-        machine.getSettings().register(settingCompileOptimizeCallsWithData);
     }
 
     /**

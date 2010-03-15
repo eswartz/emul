@@ -15,9 +15,10 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Text;
-import org.ejs.coffee.core.model.FieldProperty;
-import org.ejs.coffee.core.model.FieldUtils;
-import org.ejs.coffee.core.model.IPropertyEditorProvider;
+import org.ejs.coffee.core.properties.FieldProperty;
+import org.ejs.coffee.core.properties.FieldUtils;
+import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyEditorProvider;
 
 /**
  * @author ejs

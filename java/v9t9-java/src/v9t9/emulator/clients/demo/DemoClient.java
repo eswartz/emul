@@ -8,7 +8,7 @@ package v9t9.emulator.clients.demo;
 
 import java.io.IOException;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 import v9t9.emulator.BaseEventNotifier;
 import v9t9.emulator.IEventNotifier;
@@ -452,12 +452,12 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     	return null;
     }
     
-    public void loadState(IDialogSettings section) {
+    public void loadState(IPropertyStorage storage) {
     	// TODO Auto-generated method stub
     	
     }
     
-    public void saveState(IDialogSettings section) {
+    public void saveState(IPropertyStorage storage) {
     	// TODO Auto-generated method stub
     	
     }

@@ -9,17 +9,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
 
 
-public class DiskDirectoryMapper implements IFileMapper {
+public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	private Map<String, File> diskMap = new HashMap<String, File>();
-	private Map<String, Setting> diskSettingsMap = new HashMap<String, Setting>();
+	private Map<String, SettingProperty> diskSettingsMap = new HashMap<String, SettingProperty>();
 	
 	public static final DiskDirectoryMapper INSTANCE = new DiskDirectoryMapper();
 	
@@ -35,7 +37,7 @@ public class DiskDirectoryMapper implements IFileMapper {
 		}
 		
 		/* (non-Javadoc)
-		 * @see org.ejs.coffee.core.utils.Setting#isAvailable()
+		 * @see org.ejs.coffee.core.utils.SettingProperty#isAvailable()
 		 */
 		@Override
 		public boolean isEnabled() {
@@ -53,19 +55,19 @@ public class DiskDirectoryMapper implements IFileMapper {
 	}
 	
 
-	public void registerDiskSetting(String device, Setting diskSetting) {
+	public void registerDiskSetting(String device, SettingProperty diskSetting) {
 		diskMap.put(device, new File(diskSetting.getString()));
 		diskSettingsMap.put(device, diskSetting); 
-		diskSetting.addListener(new ISettingListener() {
+		diskSetting.addListener(new IPropertyListener() {
 			
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				diskMap.put(setting.getName(), new File(setting.getString()));
 			}
 		});
 	}
 	public void setDiskPath(String device, File dir) {
 		diskMap.put(device, dir);
-		Setting diskSetting = diskSettingsMap.get(device);
+		SettingProperty diskSetting = diskSettingsMap.get(device);
 		if (diskSetting != null)
 			diskSetting.setString(dir.getAbsolutePath());
 	}
@@ -73,22 +75,22 @@ public class DiskDirectoryMapper implements IFileMapper {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper#getSetting()
 	 */
-	public Setting[] getSettings() {
-		ArrayList<? extends Setting> list = new ArrayList<Setting>(diskSettingsMap.values());
+	public SettingProperty[] getSettings() {
+		ArrayList<? extends SettingProperty> list = new ArrayList<SettingProperty>(diskSettingsMap.values());
 		Collections.sort(list);
-		return (Setting[]) list.toArray(new Setting[list.size()]);
+		return (SettingProperty[]) list.toArray(new SettingProperty[list.size()]);
 	}
 	
 
-	public synchronized void saveState(IDialogSettings settings) {
-		for (Map.Entry<String, Setting> entry : diskSettingsMap.entrySet()) {
+	public synchronized void saveState(IPropertyStorage settings) {
+		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
 			entry.getValue().saveState(settings);
 		}
 	}
 
-	public synchronized void loadState(IDialogSettings settings) {
+	public synchronized void loadState(IPropertyStorage settings) {
 		if (settings == null) return;
-		for (Map.Entry<String, Setting> entry : diskSettingsMap.entrySet()) {
+		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
 			entry.getValue().loadState(settings);
 		}
 	}

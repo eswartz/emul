@@ -33,8 +33,9 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
-import org.ejs.coffee.core.utils.ISettingEnabledListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.ISettingDecorator;
@@ -49,26 +50,26 @@ import v9t9.emulator.hardware.dsrs.DsrManager;
 public class DiskSelector extends Composite {
 	
 	abstract class SettingEntry extends Composite {
-		protected final Setting setting;
-		private ISettingEnabledListener enableListener;
+		protected final SettingProperty setting;
+		private IPropertyListener enableListener;
 		
-		public SettingEntry(final Composite parent, Setting setting_, int style) {
+		public SettingEntry(final Composite parent, SettingProperty setting_, int style) {
 			super(parent, style);
 			
 			this.setting = setting_;
 			
-			enableListener = new ISettingEnabledListener() {
+			enableListener = new IPropertyListener() {
 				
-				public void changed(Setting setting) {
+				public void propertyChanged(IProperty setting) {
 					updateSetting();
 				}
 			};
-			setting.addEnabledListener(enableListener);
+			setting.addListener(enableListener);
 			
 			addDisposeListener(new DisposeListener() {
 				
 				public void widgetDisposed(DisposeEvent e) {
-					setting.removeEnabledListener(enableListener);
+					setting.removeListener(enableListener);
 				}
 			});
 			
@@ -92,9 +93,10 @@ public class DiskSelector extends Composite {
 		}
 		
 		protected void updateSetting() {
-			SettingEntry.this.setVisible(setting.isEnabled());
+			boolean enabled = setting.isEnabled();
+			SettingEntry.this.setVisible(enabled);
 			GridData data = (GridData) SettingEntry.this.getLayoutData();
-			data.exclude = !setting.isEnabled();
+			data.exclude = !enabled;
 			SettingEntry.this.getShell().layout(true, true);
 			
 		}
@@ -107,7 +109,7 @@ public class DiskSelector extends Composite {
 		private Combo combo;
 		private Button browse;
 		
-		public DiskEntry(final Composite parent, Setting setting_) {
+		public DiskEntry(final Composite parent, SettingProperty setting_) {
 			super(parent, setting_, SWT.NONE);
 			
 		}
@@ -210,7 +212,7 @@ public class DiskSelector extends Composite {
 
 
 	class BooleanEntry extends SettingEntry {
-		public BooleanEntry(final Composite parent, Setting setting_) {
+		public BooleanEntry(final Composite parent, SettingProperty setting_) {
 			super(parent, setting_, SWT.NONE);
 		}
 
@@ -243,8 +245,7 @@ public class DiskSelector extends Composite {
 
 
 	private String[] getHistory(String name) {
-		String[] history = EmulatorSettings.INSTANCE.getHistorySettings().getArray("DiskSelector." + name);
-		return history;
+		return EmulatorSettings.INSTANCE.getHistorySettings().getArray("DiskSelector." + name);
 	}
 	private void setHistory(String name, String[] history) {
 		EmulatorSettings.INSTANCE.getHistorySettings().put("DiskSelector." + name, history);
@@ -262,30 +263,30 @@ public class DiskSelector extends Composite {
 		GridLayoutFactory.fillDefaults().applyTo(this);
 
 		Map<String, Group> groups = new HashMap<String, Group>();
-		Map<String, List<Setting>> allSettings = new LinkedHashMap<String, List<Setting>>();
+		Map<String, List<SettingProperty>> allSettings = new LinkedHashMap<String, List<SettingProperty>>();
 		
 
 		for (DsrHandler handler : dsrManager.getDsrs()) {
-			Map<String, Collection<Setting>> settings = handler.getEditableSettingGroups();
-			for (Map.Entry<String, Collection<Setting>> entry : settings.entrySet()) {
-				List<Setting> groupSettings = allSettings.get(entry.getKey());
+			Map<String, Collection<SettingProperty>> settings = handler.getEditableSettingGroups();
+			for (Map.Entry<String, Collection<SettingProperty>> entry : settings.entrySet()) {
+				List<SettingProperty> groupSettings = allSettings.get(entry.getKey());
 				if (groupSettings == null) {
-					groupSettings = new ArrayList<Setting>();
+					groupSettings = new ArrayList<SettingProperty>();
 					allSettings.put(entry.getKey(), groupSettings);
 				}
 				groupSettings.addAll(entry.getValue());
 			}
 		}
 		
-		for (Map.Entry<String, List<Setting>> entry : allSettings.entrySet()) {
+		for (Map.Entry<String, List<SettingProperty>> entry : allSettings.entrySet()) {
 			String name = entry.getKey();
 			Group group = groups.get(name);
 			
-			List<Setting> groupSettings = entry.getValue();
+			List<SettingProperty> groupSettings = entry.getValue();
 			Collections.sort(groupSettings,
-					new Comparator<Setting>() {
+					new Comparator<SettingProperty>() {
 
-						public int compare(Setting o1, Setting o2) {
+						public int compare(SettingProperty o1, SettingProperty o2) {
 							return o1.getLabel().compareTo(o2.getLabel());
 						}
 				
@@ -307,7 +308,7 @@ public class DiskSelector extends Composite {
 				groups.put(name, group);
 			}
 			
-			for (Setting setting : groupSettings) {
+			for (SettingProperty setting : groupSettings) {
 				SettingEntry comp = null;
 				if (setting.getValue() instanceof String) {
 					comp = new DiskEntry(group, setting);

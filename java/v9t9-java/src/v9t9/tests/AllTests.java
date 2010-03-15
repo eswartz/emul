@@ -22,7 +22,6 @@ public class AllTests {
 		TestSuite suite = new TestSuite("Test for v9t9");
 		//$JUnit-BEGIN$
 		suite.addTestSuite(MemoryTest.class);
-		suite.addTestSuite(SettingTest.class);
 		suite.addTestSuite(TestBlocks.class);
 		suite.addTestSuite(StatusTest.class);
 		suite.addTestSuite(DiskMemoryEntryTest.class);

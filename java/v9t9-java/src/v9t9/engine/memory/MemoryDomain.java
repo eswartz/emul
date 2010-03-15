@@ -12,12 +12,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 /**
  * @author ejs
  */
-public class MemoryDomain implements MemoryAccess {
+public class MemoryDomain implements MemoryAccess, IPersistable {
     /*
      * This must remain 64K, even if mega-memory expansion is emulated. All the
      * public routines expect to be passed 16-bit addresses.
@@ -343,7 +344,7 @@ public class MemoryDomain implements MemoryAccess {
 		}
 	}
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		int idx = 0;
 		for (MemoryEntry entry : mappedEntries) {
 			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry)) {
@@ -353,13 +354,13 @@ public class MemoryDomain implements MemoryAccess {
 		}
 	}
 
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		//unmapAll();
 		if (section == null) {
 			return;
 		}
 
-		for (IDialogSettings entryStore : section.getSections()) {
+		for (IPropertyStorage entryStore : section.getSections()) {
 			String name = entryStore.get("Name");
 			MemoryEntry entry = findMappedEntry(name);
 			if (entry != null) {

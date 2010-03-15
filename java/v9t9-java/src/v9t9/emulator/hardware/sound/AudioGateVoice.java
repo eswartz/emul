@@ -3,8 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.PrefUtils;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 public class AudioGateVoice extends SoundVoice {
 
@@ -49,15 +48,16 @@ public class AudioGateVoice extends SoundVoice {
 	}
 	
 	@Override
-	public void loadState(IDialogSettings settings) {
+	public void loadState(IPropertyStorage settings) {
+		if (settings == null) return;
 		super.loadState(settings);
-		setVolume((byte) (PrefUtils.readSavedBoolean(settings, "State") ? 15 : 0));
+		setVolume((byte) (settings.getBoolean("State") ? 15 : 0));
 	}
 	
 	@Override
-	public void saveState(IDialogSettings settings) {
+	public void saveState(IPropertyStorage settings) {
 		super.saveState(settings);
-		settings.put("State", getVolume() != 0);
+		settings.put("State", Boolean.toString(getVolume() != 0));
 	}
 
 	public void setState(boolean b) {

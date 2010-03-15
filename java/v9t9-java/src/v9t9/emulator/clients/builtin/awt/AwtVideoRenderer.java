@@ -20,8 +20,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.jna.V9t9Render;
@@ -114,9 +114,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		doResizeToFit();
 		
 
-		BaseEmulatorWindow.settingMonitorDrawing.addListener(new ISettingListener() {
+		BaseEmulatorWindow.settingMonitorDrawing.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				synchronized (AwtVideoRenderer.this) {
 					synchronized (vdpCanvas) {
 						vdpCanvas.markDirty();

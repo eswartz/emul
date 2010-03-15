@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 
 
@@ -42,18 +42,21 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	@Override
 	public void onMap() {
 		super.onMap();
-		selectBank(currentBankIndex);
+		doSelectBank(currentBankIndex);
 	}
 	
 	public boolean selectBank(int bank) {
 		if (currentBankIndex != bank) {
-			doSwitchBank(bank);
-			currentBankIndex = bank;
-			memory.notifyListenersOfLogicalChange(this);
-			currentBankIndex = bank;
+			doSelectBank(bank);
 			return true;
 		}
 		return false;
+	}
+	protected void doSelectBank(int bank) {
+		doSwitchBank(bank);
+		currentBankIndex = bank;
+		memory.notifyListenersOfLogicalChange(this);
+		currentBankIndex = bank;
 	}
 	
 	abstract protected void doSwitchBank(int bank);
@@ -87,27 +90,16 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	}
 	
 	@Override
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		super.saveState(section);
 		section.put("CurrentBankIndex", currentBankIndex);
 		
 		doSaveBankEntries(section.addNewSection("Banks"));
 	}
 	
-	abstract protected void doSaveBankEntries(IDialogSettings section);
 
 	@Override
-	protected void saveMemoryContents(IDialogSettings section) {
-		// do this per-bank
-	}
-	
-	@Override
-	protected void loadMemoryContents(IDialogSettings section) {
-		// do this per-bank
-	}
-	
-	@Override
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		super.loadState(section);
 
 		doLoadBankEntries(section.getSection("Banks"));
@@ -115,8 +107,21 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 		selectBank(section.getInt("CurrentBankIndex"));
 		
 	}
+	
+	abstract protected void doSaveBankEntries(IPropertyStorage section);
+	abstract protected void doLoadBankEntries(IPropertyStorage section);
 
-	abstract protected void doLoadBankEntries(IDialogSettings section);
+	@Override
+	protected void saveMemoryContents(IPropertyStorage section) {
+		// do this per-bank
+	}
+	
+	@Override
+	protected void loadMemoryContents(IPropertyStorage section) {
+		// do this per-bank
+	}
+	
+
 	
 	@Override
 	public String getUniqueName() {

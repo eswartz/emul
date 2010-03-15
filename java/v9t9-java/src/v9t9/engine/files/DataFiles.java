@@ -14,9 +14,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.CompatUtils;
-import org.ejs.coffee.core.utils.Setting;
 
 
 /**
@@ -24,15 +24,15 @@ import org.ejs.coffee.core.utils.Setting;
  * @author ejs
  */
 public class DataFiles {
-	static public final Setting settingBootRomsPath = new Setting("BootRomsPath", new ArrayList<String>());
-	static public final Setting settingUserRomsPath = new Setting("UserRomsPath", new ArrayList<String>());
-	static public final Setting settingStoredRamPath = new Setting("StoredRamPath", ".");
+	static public final SettingProperty settingBootRomsPath = new SettingProperty("BootRomsPath", String.class, new ArrayList<String>());
+	static public final SettingProperty settingUserRomsPath = new SettingProperty("UserRomsPath", String.class, new ArrayList<String>());
+	static public final SettingProperty settingStoredRamPath = new SettingProperty("StoredRamPath", ".");
 	
 	public static void addSearchPath(String filepath) {
 		List<String> list = settingBootRomsPath.getList();
 		if (!list.contains(filepath)) {
 			list.add(filepath);
-			settingBootRomsPath.notifyListeners(list);
+			settingBootRomsPath.firePropertyChange();
 		}
 	}
 
@@ -45,9 +45,9 @@ public class DataFiles {
 		File file = new File(filepath);
 		if (file.isAbsolute())
 			return file;
-		for (Setting setting : new Setting[] { settingBootRomsPath, settingUserRomsPath }) {
-			for (String path : setting.getList()) {
-				file = resolveFileAtPath(path, filepath);
+		for (SettingProperty setting : new SettingProperty[] { settingBootRomsPath, settingUserRomsPath }) {
+			for (Object pathObj : setting.getList()) {
+				file = resolveFileAtPath(pathObj.toString(), filepath);
 				if (file != null)
 					return file;
 			}
@@ -150,17 +150,17 @@ public class DataFiles {
     }
 
 	/**
-	 * @param settings
+	 * @param storage
 	 */
-	public static void loadState(IDialogSettings settings) {
-		settingUserRomsPath.loadState(settings);
+	public static void loadState(IPropertyStorage storage) {
+		settingUserRomsPath.loadState(storage);
 	}
 
 	/**
-	 * @param settings
+	 * @param storage
 	 */
-	public static void saveState(IDialogSettings settings) {
-		settingUserRomsPath.saveState(settings);
+	public static void saveState(IPropertyStorage storage) {
+		settingUserRomsPath.saveState(storage);
 		
 	}
     

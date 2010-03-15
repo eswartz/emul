@@ -12,9 +12,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.TreeMap;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.engine.modules.IModule;
 
@@ -35,7 +35,7 @@ import v9t9.engine.modules.IModule;
  * 
  * @author ejs
  */
-public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
+public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPersistable {
     /** start address */
     public int addr;
 
@@ -310,7 +310,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 	}
 
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		section.put("Class", getClass().getCanonicalName());
 		section.put("Name", getName());
 		section.put("Address", addr);
@@ -319,27 +319,27 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 	}
 
 
-	protected void saveMemoryContents(IDialogSettings section) {
+	protected void saveMemoryContents(IPropertyStorage section) {
 		if (area.hasWriteAccess()) {
 			area.saveContents(section, this);
 		}
 	}
 
 
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		loadFields(section);
 		loadMemoryContents(section);
 	}
 
 
-	protected void loadFields(IDialogSettings section) {
+	protected void loadFields(IPropertyStorage section) {
 		name = section.get("Name");
-		addr = PrefUtils.readSavedInt(section, "Address");
-		size = PrefUtils.readSavedInt(section, "Size");
+		addr = section.getInt("Address");
+		size = section.getInt("Size");
 	}
 
 
-	protected void loadMemoryContents(IDialogSettings section) {
+	protected void loadMemoryContents(IPropertyStorage section) {
 		if (area.hasReadAccess()) {
 			area.loadContents(section, this);
 		}
@@ -368,7 +368,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 	 * @param entryStore
 	 * @return
 	 */
-	public static MemoryEntry createEntry(MemoryDomain domain, IDialogSettings entryStore) {
+	public static MemoryEntry createEntry(MemoryDomain domain, IPropertyStorage entryStore) {
 		MemoryEntry entry = null;
 		String klazzName = entryStore.get("Class");
 		if (klazzName != null) {
@@ -378,7 +378,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 				entry = (MemoryEntry) klass.newInstance();
 				entry.domain = domain;
 				entry.bWordAccess = domain.getName().equals("Console");	// TODO
-				int latency = domain.getLatency(PrefUtils.readSavedInt(entryStore, "Address"));
+				int latency = domain.getLatency(entryStore.getInt("Address"));
 				if (entry.bWordAccess)
 					entry.area = new WordMemoryArea(latency);
 				else

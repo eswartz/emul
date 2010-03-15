@@ -3,8 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.PrefUtils;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 public class NoiseGeneratorVoice extends ClockedSoundVoice
 {
@@ -92,14 +91,15 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	}
 	
 	@Override
-	public void saveState(IDialogSettings settings) {
+	public void saveState(IPropertyStorage settings) {
 		super.saveState(settings);
 		settings.put("Shifter", ns1);
 	}
 	
 	@Override
-	public void loadState(IDialogSettings settings) {
+	public void loadState(IPropertyStorage settings) {
+		if (settings == null) return;
 		super.loadState(settings);
-		ns1 = PrefUtils.readSavedInt(settings, "Shifter");
+		ns1 = settings.getInt("Shifter");
 	}
 }

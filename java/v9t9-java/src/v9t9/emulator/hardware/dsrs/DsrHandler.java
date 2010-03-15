@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.engine.memory.MemoryDomain;
 
@@ -17,7 +17,7 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  *
  */
-public interface DsrHandler {
+public interface DsrHandler extends IPersistable {
 
 	String GROUP_DSR_SELECTION = "Device Selection";
 	String GROUP_DISK_CONFIGURATION = "Disk Configuration";
@@ -35,21 +35,18 @@ public interface DsrHandler {
 	boolean handleDSR(MemoryTransfer xfer, short code);
 
 	/** Activate the DSR (should be called when the ROM memory entry is mapped) 
-	 * @param console TODO
+	 * @param console
 	 * @throws IOException */
 	void activate(MemoryDomain console) throws IOException;
 	/** Dectivate the DSR (should be called when the ROM memory entry is unmapped) 
-	 * @param console TODO*/
+	 * @param console */
 	void deactivate(MemoryDomain console);
 
 	String getName();
 	
-	void saveState(IDialogSettings section);
-	void loadState(IDialogSettings section);
-
 	/**
 	 * Get editable settings
 	 * @return map of group label to settings
 	 */
-	Map<String, Collection<Setting>> getEditableSettingGroups();
+	Map<String, Collection<SettingProperty>> getEditableSettingGroups();
 }

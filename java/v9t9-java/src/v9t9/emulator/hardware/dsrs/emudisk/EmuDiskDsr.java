@@ -11,8 +11,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.IconSetting;
@@ -40,7 +40,7 @@ import v9t9.engine.memory.MemoryDomain;
 public class EmuDiskDsr implements DsrHandler {
 	private static String diskDirectoryIconPath = V9t9.getDataFile("icons/disk_directory.png").getAbsolutePath();
 	
-	public static final Setting emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
+	public static final SettingProperty emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
 			"Disk Directory Support",
 			"This implements a drive (like DSK1) in a single directory level on your host.",
 			Boolean.FALSE,
@@ -273,10 +273,10 @@ public class EmuDiskDsr implements DsrHandler {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
 	 */
-	public Map<String, Collection<Setting>> getEditableSettingGroups() {
-		Map<String, Collection<Setting>> map = new LinkedHashMap<String, Collection<Setting>>();
+	public Map<String, Collection<SettingProperty>> getEditableSettingGroups() {
+		Map<String, Collection<SettingProperty>> map = new LinkedHashMap<String, Collection<SettingProperty>>();
 		
-		Collection<Setting> settings = new ArrayList<Setting>();
+		Collection<SettingProperty> settings = new ArrayList<SettingProperty>();
 		settings.add(emuDiskDsrEnabled);
 		map.put(DsrHandler.GROUP_DSR_SELECTION, settings);
 		
@@ -285,12 +285,12 @@ public class EmuDiskDsr implements DsrHandler {
 		
 		return map;
 	}
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		emuDiskDsrEnabled.saveState(section);
 		mapper.saveState(section.addNewSection("Mappings"));
 	}
 	
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		if (section == null) return;
 		emuDiskDsrEnabled.loadState(section);
 		mapper.loadState(section.getSection("Mappings"));

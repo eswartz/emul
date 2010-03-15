@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
 
 import v9t9.emulator.runtime.Cpu;
 
@@ -12,7 +12,7 @@ import v9t9.emulator.runtime.Cpu;
  * @author ejs
  *
  */
-public interface CruAccess {
+public interface CruAccess extends IPersistable {
 	/**
 	 * Poll the CRU for interrupts, pins, etc. which influence the CPU,
 	 * and set any pins on the CPU.
@@ -32,8 +32,4 @@ public interface CruAccess {
 	void triggerInterrupt(int level);
 
 	boolean isInterruptWaiting();
-
-	void saveState(IDialogSettings section);
-
-	void loadState(IDialogSettings section);
 }

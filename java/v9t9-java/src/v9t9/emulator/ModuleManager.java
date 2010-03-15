@@ -6,8 +6,9 @@ package v9t9.emulator;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.engine.memory.Memory;
@@ -20,13 +21,13 @@ import v9t9.engine.modules.MemoryEntryInfo;
  * @author ejs
  *
  */
-public class ModuleManager {
+public class ModuleManager implements IPersistable {
 	private List<IModule> modules;
 	private final Machine machine;
 	
 	private List<IModule> loadedModules = new ArrayList<IModule>();
 	
-	public static Setting settingLastLoadedModule = new Setting("LastLoadedModule", "");
+	public static SettingProperty settingLastLoadedModule = new SettingProperty("LastLoadedModule", "");
 	
 	public ModuleManager(Machine machine, List<IModule> modules) {
 		this.machine = machine;
@@ -104,18 +105,18 @@ public class ModuleManager {
 		return (IModule[]) loadedModules.toArray(new IModule[loadedModules.size()]);
 	}
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage storage) {
 		String[] moduleNames = new String[loadedModules.size()];
 		for (int i = 0; i < moduleNames.length; i++)
 			moduleNames[i] = loadedModules.get(i).getName();
-		section.put("LoadedModules", moduleNames);
+		storage.put("LoadedModules", moduleNames);
 	}
 	
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage storage) {
 		unloadAllModules();
-		if (section == null)
+		if (storage == null)
 			return;
-		String[] loaded = section.getArray("LoadedModules");
+		String[] loaded = storage.getArray("LoadedModules");
 		if (loaded == null)
 			return;
 		for (String name : loaded) {

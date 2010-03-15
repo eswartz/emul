@@ -9,10 +9,11 @@ package v9t9.emulator.clients.builtin.video.tms9918a;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
@@ -95,12 +96,12 @@ public class VdpTMS9918A implements VdpHandler {
 	public final static int MODE_MULTI = 2;
 	
     static public final String sDumpVdpAccess = "DumpVdpAccess";
-    static public final Setting settingDumpVdpAccess = new Setting(sDumpVdpAccess, new Boolean(false));
+    static public final SettingProperty settingDumpVdpAccess = new SettingProperty(sDumpVdpAccess, new Boolean(false));
     static public final String sVdpInterruptRate = "VdpInterruptRate";
-    static public final Setting settingVdpInterruptRate = new Setting(sVdpInterruptRate, new Integer(60));
+    static public final SettingProperty settingVdpInterruptRate = new SettingProperty(sVdpInterruptRate, new Integer(60));
 
     // this should pretty much stay on
-    static public final Setting settingCpuSynchedVdpInterrupt = new Setting("CpuSynchedVdpInterrupt",
+    static public final SettingProperty settingCpuSynchedVdpInterrupt = new SettingProperty("CpuSynchedVdpInterrupt",
     		new Boolean(true));
 
 	/** The circular counter for VDP interrupt timing. */
@@ -110,17 +111,17 @@ public class VdpTMS9918A implements VdpHandler {
 	private int throttleCount;
 
 	public VdpTMS9918A(MemoryDomain videoMemory) {
-		settingVdpInterruptRate.addListener(new ISettingListener() {
+		settingVdpInterruptRate.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				recalcInterruptTiming();
 			}
 			
 		});
 		
-		Cpu.settingCyclesPerSecond.addListener(new ISettingListener() {
+		Cpu.settingCyclesPerSecond.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				recalcInterruptTiming();
 			}
 			
@@ -131,9 +132,9 @@ public class VdpTMS9918A implements VdpHandler {
 		// interleave with CPU log
 		Logging.registerLog(settingDumpVdpAccess, "instrs_full.txt");
 		
-		settingDumpVdpAccess.addListener(new ISettingListener() {
+		settingDumpVdpAccess.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				if (setting.getBoolean())
 					vdplog = Logging.getLog(setting);
 				else
@@ -142,8 +143,8 @@ public class VdpTMS9918A implements VdpHandler {
 			
 		});
 		
-		Cpu.settingRealTime.addListener(new ISettingListener() {
-			public void changed(Setting setting, Object oldValue) {
+		Cpu.settingRealTime.addListener(new IPropertyListener() {
+			public void propertyChanged(IProperty setting) {
 				VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
 			}
 		});
@@ -681,30 +682,30 @@ public class VdpTMS9918A implements VdpHandler {
 		return modeNumber;
 	}
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage storage) {
 		String[] regState = new String[vdpregs.length];
 		for (int i = 0; i < vdpregs.length; i++) {
 			regState[i] = HexUtils.toHex2(vdpregs[i]);
 		}
-		section.put("Registers", regState);
-		settingDumpVdpAccess.saveState(section);
-		settingCpuSynchedVdpInterrupt.saveState(section);
-		settingVdpInterruptRate.saveState(section);
+		storage.put("Registers", regState);
+		settingDumpVdpAccess.saveState(storage);
+		settingCpuSynchedVdpInterrupt.saveState(storage);
+		settingVdpInterruptRate.saveState(storage);
 	}
 	
-	public void loadState(IDialogSettings section) {
-		if (section == null) return;
+	public void loadState(IPropertyStorage storage) {
+		if (storage == null) return;
 		
-		String[] regState = section.getArray("Registers");
+		String[] regState = storage.getArray("Registers");
 		if (regState != null) {
 			for (int i = 0; i < regState.length; i++) {
 				writeVdpReg(i, (byte) Integer.parseInt(regState[i], 16));
 			}
 		}
 		
-		settingDumpVdpAccess.loadState(section);
-		settingCpuSynchedVdpInterrupt.loadState(section);
-		settingVdpInterruptRate.loadState(section);
+		settingDumpVdpAccess.loadState(storage);
+		settingCpuSynchedVdpInterrupt.loadState(storage);
+		settingVdpInterruptRate.loadState(storage);
 	}
 	
 	

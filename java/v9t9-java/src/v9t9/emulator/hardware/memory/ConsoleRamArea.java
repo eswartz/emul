@@ -3,14 +3,14 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.engine.memory.MemoryEntry;
 
 /** Builtin console RAM: 256 bytes */
 public class ConsoleRamArea extends ConsoleMemoryArea {
     static public final String sEnhRam = "ExtraConsoleRAM";
-	static public final Setting settingEnhRam = new Setting(sEnhRam, new Boolean(false));
+	static public final SettingProperty settingEnhRam = new SettingProperty(sEnhRam, new Boolean(false));
 
 	public ConsoleRamArea() {
     	super(0);

@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
-import org.ejs.coffee.core.utils.SettingsCollection;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
@@ -47,7 +47,6 @@ import v9t9.keyboard.KeyboardState;
  * @author ejs
  */
 abstract public class Machine {
-    SettingsCollection settings;
     protected Memory memory;
     protected MemoryDomain console;
     Cpu cpu;
@@ -87,11 +86,11 @@ abstract public class Machine {
 	private List<Runnable> runnableList;
 	private CpuMetrics cpuMetrics;
 	
-	static public final Setting settingExpRam = new Setting("MemoryExpansion32K", new Boolean(false));
-	static public final Setting settingPauseMachine = new Setting("PauseMachine", new Boolean(false));
-	static public final Setting settingThrottleInterrupts = new Setting("ThrottleVDPInterrupts", new Boolean(false));
+	static public final SettingProperty settingExpRam = new SettingProperty("MemoryExpansion32K", new Boolean(false));
+	static public final SettingProperty settingPauseMachine = new SettingProperty("PauseMachine", new Boolean(false));
+	static public final SettingProperty settingThrottleInterrupts = new SettingProperty("ThrottleVDPInterrupts", new Boolean(false));
 	
-	static public final Setting settingModuleList = new Setting("ModuleListFile", new String("modules.xml"));
+	static public final SettingProperty settingModuleList = new SettingProperty("ModuleListFile", new String("modules.xml"));
 	
 	private TimerTask memorySaverTask;
 	private ModuleManager moduleManager;
@@ -116,7 +115,6 @@ abstract public class Machine {
     	
     	moduleManager = new ModuleManager(this, getModules());
     	
-    	settings = new SettingsCollection();
     	cpu = new Cpu(this, 1000 / cpuTicksPerSec, vdp);
     	keyboardState = new KeyboardState(cpu);
     	machineModel.defineDevices(this);
@@ -124,9 +122,9 @@ abstract public class Machine {
     	cpuMetrics = new CpuMetrics();
     	executor = new Executor(cpu, cpuMetrics);
     	
-    	settingPauseMachine.addListener(new ISettingListener() {
+    	settingPauseMachine.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				executor.interruptExecution = Boolean.TRUE;
 				synchronized (executionLock) {
 					executor.interruptExecution = Boolean.TRUE;
@@ -198,14 +196,10 @@ abstract public class Machine {
         client = null;
         memory = null;
         executor = null;
-        settings = null;
     }
     
     public Memory getMemory() {
         return memory;
-    }
-    public SettingsCollection getSettings() {
-        return settings;
     }
     
     public boolean isAlive() {
@@ -483,7 +477,7 @@ abstract public class Machine {
 		return keyboardState;
 	}
 
-	public synchronized void saveState(IDialogSettings settings) {
+	public synchronized void saveState(IPropertyStorage settings) {
 		synchronized (executionLock) {
 			bExecuting = false;
 			executionLock.notifyAll();
@@ -506,7 +500,7 @@ abstract public class Machine {
 		}
 	}
 
-	public synchronized void loadState(IDialogSettings settings) throws IOException {
+	public synchronized void loadState(IPropertyStorage storage) throws IOException {
 		/*
 		machineRunner.interrupt();
 		videoRunner.interrupt();
@@ -514,20 +508,21 @@ abstract public class Machine {
 		cpuTimer.cancel();
 		videoTimer.cancel();
 		*/
+		bExecuting = false;
 		synchronized (executionLock) {
-			bExecuting = false;
 			executionLock.notifyAll();
 		}
 		
-		DataFiles.loadState(settings);
+		DataFiles.loadState(storage);
 		
-		moduleManager.loadState(settings.getSection("Modules"));
-		memory.loadState(settings.getSection("Memory"));
-		getMemoryModel().getGplMmio().loadState(settings.getSection("GPL"));
-		cpu.loadState(settings.getSection("CPU"));
-		vdp.loadState(settings.getSection("VDP"));
-		sound.loadState(settings.getSection("Sound"));
-		dsrManager.loadState(settings.getSection("DSRs"));
+		memory.getModel().resetMemory();
+		moduleManager.loadState(storage.getSection("Modules"));
+		memory.loadState(storage.getSection("Memory"));
+		getMemoryModel().getGplMmio().loadState(storage.getSection("GPL"));
+		cpu.loadState(storage.getSection("CPU"));
+		vdp.loadState(storage.getSection("VDP"));
+		sound.loadState(storage.getSection("Sound"));
+		dsrManager.loadState(storage.getSection("DSRs"));
 		keyboardState.resetKeyboard();
 		keyboardState.resetJoystick();
 		

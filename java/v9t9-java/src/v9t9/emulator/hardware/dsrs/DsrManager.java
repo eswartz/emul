@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
@@ -19,7 +20,7 @@ import v9t9.engine.cpu.MachineOperand;
  * @author ejs
  *
  */
-public class DsrManager {
+public class DsrManager implements IPersistable {
 
 	private final Machine machine;
 	private List<DsrHandler> dsrs;
@@ -37,12 +38,12 @@ public class DsrManager {
 	}
 	
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		for (DsrHandler handler : dsrs) {
 			handler.saveState(section.addNewSection(handler.getName()));
 		}
 	}
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		if (section == null) return;
 		for (DsrHandler handler : dsrs) {
 			handler.loadState(section.getSection(handler.getName()));

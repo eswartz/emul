@@ -3,8 +3,8 @@
  */
 package org.ejs.coffee.core.jface;
 
-import org.ejs.coffee.core.model.FieldProperty;
-import org.ejs.coffee.core.model.FieldUtils;
+import org.ejs.coffee.core.properties.FieldProperty;
+import org.ejs.coffee.core.properties.FieldUtils;
 
 
 /**

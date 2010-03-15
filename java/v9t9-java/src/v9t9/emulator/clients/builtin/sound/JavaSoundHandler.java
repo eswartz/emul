@@ -5,14 +5,15 @@ package v9t9.emulator.clients.builtin.sound;
 
 import javax.sound.sampled.AudioFormat;
 
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.sound.AlsaSoundListener;
 import org.ejs.coffee.core.sound.ISoundListener;
 import org.ejs.coffee.core.sound.ISoundOutput;
 import org.ejs.coffee.core.sound.ISoundVoice;
 import org.ejs.coffee.core.sound.SoundFactory;
 import org.ejs.coffee.core.sound.ui.SoundRecordingHelper;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
@@ -26,10 +27,10 @@ import v9t9.engine.SoundHandler;
  *
  */
 public class JavaSoundHandler implements SoundHandler {
-	public static Setting settingPlaySound = new Setting("PlaySound", new Boolean(true));
-	public static Setting settingSoundVolume = new Setting("SoundVolume", new Integer(10));
-	public static Setting settingRecordSoundOutputFile = new Setting("RecordSoundOutputFile", (String)null);
-	public static Setting settingRecordSpeechOutputFile = new Setting("RecordSpeechOutputFile", (String)null);
+	public static SettingProperty settingPlaySound = new SettingProperty("PlaySound", new Boolean(true));
+	public static SettingProperty settingSoundVolume = new SettingProperty("SoundVolume", new Integer(10));
+	public static SettingProperty settingRecordSoundOutputFile = new SettingProperty("RecordSoundOutputFile", String.class, null);
+	public static SettingProperty settingRecordSpeechOutputFile = new SettingProperty("RecordSpeechOutputFile", String.class, null);
 
 	private SoundRecordingHelper soundRecordingHelper;
 	private SoundRecordingHelper speechRecordingHelper;
@@ -87,10 +88,10 @@ public class JavaSoundHandler implements SoundHandler {
 		
 		speechVoice = new SpeechVoice();
 		
-		settingSoundVolume.addListener(new ISettingListener() {
+		settingSoundVolume.addListener(new IPropertyListener() {
 			
 			@Override
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				output.setVolume(setting.getInt() / 10.0);
 			}
 		});
@@ -105,9 +106,9 @@ public class JavaSoundHandler implements SoundHandler {
 		soundFramesPerTick = (int) ((soundFormat.getFrameRate() * soundFormat.getChannels() 
 				+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
 		
-		settingPlaySound.addListener(new ISettingListener() {
+		settingPlaySound.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				toggleSound(setting.getBoolean());
 			}
 			

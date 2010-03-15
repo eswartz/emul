@@ -38,8 +38,9 @@ import javax.swing.JFileChooser;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
 
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.BaseEventNotifier;
 import v9t9.emulator.IEventNotifier;
@@ -346,7 +347,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		return button;
 	}
 
-	private BasicButton createStateButton(final Setting setting,
+	private BasicButton createStateButton(final SettingProperty setting,
 			Rectangle bounds, final Rectangle checkBounds, String tooltip) {
 
 		final BasicButton button = createButton(icons, bounds, tooltip,
@@ -362,9 +363,9 @@ public class AwtWindow extends BaseEmulatorWindow implements
 
 				});
 
-		setting.addListener(new ISettingListener() {
+		setting.addListener(new IPropertyListener() {
 
-			public void changed(final Setting setting, final Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				if (setting.getBoolean()) {
 					button.setOverlayBounds(checkBounds);
 				} else {

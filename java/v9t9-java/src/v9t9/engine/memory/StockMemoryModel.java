@@ -12,7 +12,6 @@ import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.engine.Client;
 import v9t9.engine.modules.IModule;
 
 /**
@@ -28,13 +27,14 @@ public class StockMemoryModel implements MemoryModel {
 		memory = new Memory(this);
 		CPU = new MemoryDomain("Console");
 	}
+
 	/* (non-Javadoc)
-	 * @see v9t9.engine.memory.MemoryModel#connectClient(v9t9.engine.Client)
+	 * @see v9t9.engine.memory.MemoryModel#resetMemory()
 	 */
-	public void connectClient(Client client) {
-
+	@Override
+	public void resetMemory() {
+		
 	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryModel#getConsole()
 	 */

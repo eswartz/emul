@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.utils.SettingProperty;
 
 import sdljava.SDLException;
 import sdljava.event.SDLEvent;
@@ -146,7 +146,7 @@ public class SdlWindow extends BaseEmulatorWindow {
 		
 	}
 	
-	protected void createToggleButton(final Setting setting,
+	protected void createToggleButton(final SettingProperty setting,
 			SDLRect imageRect, final SDLRect checkRect,
 			String tooltip) {
 		final SDLButton button = new SDLButton(icons,

@@ -11,12 +11,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 /*
  * @author ejs
  */
-public class Memory {
+public class Memory implements IPersistable {
 
     private List<MemoryListener> listeners;
 
@@ -74,13 +75,13 @@ public class Memory {
 		return model;
 	}
 
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		for (Map.Entry<String, MemoryDomain> entry : domains.entrySet()) {
 			entry.getValue().saveState(section.addNewSection(entry.getKey()));
 		}
 	}
 
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		if (section == null)
 			return;
 		
@@ -100,6 +101,15 @@ public class Memory {
 	public void save() {
 		for (MemoryDomain domain : domains.values()) {
 			domain.save();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	public void clear() {
+		for (MemoryDomain domain : getDomains()) {
+			domain.unmapAll();
 		}
 	}
 

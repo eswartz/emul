@@ -7,8 +7,9 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.ejs.coffee.core.model.IProperty;
-import org.ejs.coffee.core.model.PropertySource;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.PropertySource;
 
 /**
  * @author ejs

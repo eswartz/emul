@@ -67,6 +67,10 @@ public class ByteMemoryArea extends MemoryArea {
     
     @Override
 	void copyFromBytes(byte[] array) {
+    	if (memory == null) {
+    		memory = new byte[array.length];
+    		read = memory;
+    	} 
         System.arraycopy(array, 0, memory, 0, Math.min(array.length, memory.length));
     }
 

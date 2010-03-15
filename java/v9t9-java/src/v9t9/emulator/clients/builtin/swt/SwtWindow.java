@@ -47,9 +47,10 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolTip;
-import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.PrefUtils;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.BaseEventNotifier;
 import v9t9.emulator.EmulatorSettings;
@@ -976,16 +977,16 @@ public class SwtWindow extends BaseEmulatorWindow {
 		return new Rectangle(0, unit * iconIndex, unit, unit); 
 	}
 
-	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, 
+	private BasicButton createStateButton(ButtonBar buttonBar, final SettingProperty setting, 
 			final boolean inverted, final Point noClickCorner, 
 			int iconIndex, final int overlayIndex, String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH, 
 				imageProvider, 
 				mainIconIndexToBounds(iconIndex), 
 				tooltip);
-		setting.addListener(new ISettingListener() {
+		setting.addListener(new IPropertyListener() {
 
-			public void changed(final Setting setting, final Object oldValue) {
+			public void propertyChanged(final IProperty setting) {
 				Display.getDefault().asyncExec(new Runnable() {
 
 					public void run() {
@@ -1032,7 +1033,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		return button;
 	}
-	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, 
+	private BasicButton createStateButton(ButtonBar buttonBar, final SettingProperty setting, 
 			int iconIndex, int overlayIndex, String tooltip) {
 		return createStateButton(buttonBar, setting, false, null, iconIndex, overlayIndex, tooltip);
 	}

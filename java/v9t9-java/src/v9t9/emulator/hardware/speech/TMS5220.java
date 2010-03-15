@@ -6,9 +6,9 @@ package v9t9.emulator.hardware.speech;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.BinaryUtils;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;
@@ -74,7 +74,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 	private LPCSpeech lpc;
 	
-	public static final Setting settingLogSpeech = new Setting("LogSpeech",
+	public static final SettingProperty settingLogSpeech = new SettingProperty("LogSpeech",
 			new Integer(1));
 
 	private Sender sender;

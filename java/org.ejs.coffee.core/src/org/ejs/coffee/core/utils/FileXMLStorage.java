@@ -18,12 +18,19 @@ import org.eclipse.core.runtime.CoreException;
  */
 public class FileXMLStorage extends XMLStorageBase {
 
-	private final File file;
+	private File file;
 
-	/**
-	 * 
-	 */
+	public FileXMLStorage() {
+	}
+	
 	public FileXMLStorage(File file) {
+		this.file = file;
+	}
+	
+	/**
+	 * @param file the file to set
+	 */
+	public void setFile(File file) {
 		this.file = file;
 	}
 	/* (non-Javadoc)
@@ -31,6 +38,8 @@ public class FileXMLStorage extends XMLStorageBase {
 	 */
 	@Override
 	protected InputStream getStorageInputStream() throws CoreException {
+		if (file == null)
+			throw newCoreException("No file to read", null);
 		try {
 			return new FileInputStream(file);
 		} catch (FileNotFoundException e) {
@@ -43,6 +52,8 @@ public class FileXMLStorage extends XMLStorageBase {
 	 */
 	@Override
 	protected OutputStream getStorageOutputStream() throws CoreException {
+		if (file == null)
+			throw newCoreException("No file to read", null);
 		try {
 			return new FileOutputStream(file);
 		} catch (FileNotFoundException e) {

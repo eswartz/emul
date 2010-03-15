@@ -7,7 +7,6 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.hardware.memory.ConsoleRamArea;
 import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
@@ -22,8 +21,6 @@ public class TI994A extends Machine {
 	
     public TI994A(MachineModel machineModel) {
         super(machineModel);
-        getSettings().register(Machine.settingExpRam);
-        getSettings().register(ConsoleRamArea.settingEnhRam);
     }
     
     public v9t9.emulator.hardware.memory.mmio.SoundMmio getSoundMmio() {

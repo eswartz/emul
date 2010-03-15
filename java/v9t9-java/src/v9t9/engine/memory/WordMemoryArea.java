@@ -70,6 +70,11 @@ public class WordMemoryArea extends MemoryArea {
 
     @Override
 	void copyFromBytes(byte[] array) {
+    	if (memory == null) {
+    		memory = new short[array.length / 2];
+    		read = memory;
+    	} 
+
         int length = Math.min(array.length, memory.length*2);
         for (int i = 0; i < length; i+=2) {
             memory[i/2] = (short) (array[i]<<8 | array[i+1]&0xff);

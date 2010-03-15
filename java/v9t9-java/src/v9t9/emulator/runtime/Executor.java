@@ -13,9 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.ISettingListener;
-import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.CpuMetrics.MetricEntry;
@@ -54,12 +55,12 @@ public class Executor {
 	public int nVdpInterrupts;
 
 	static public final String sCompile = "Compile";
-    static public final Setting settingCompile = new Setting(sCompile, new Boolean(false));
+    static public final SettingProperty settingCompile = new SettingProperty(sCompile, new Boolean(false));
     static public final String sDumpInstructions = "DumpInstructions";
-    static public final Setting settingDumpInstructions = new Setting(sDumpInstructions, new Boolean(false));
+    static public final SettingProperty settingDumpInstructions = new SettingProperty(sDumpInstructions, new Boolean(false));
     static public final String sDumpFullInstructions = "DumpFullInstructions";
-    static public final Setting settingDumpFullInstructions = new Setting(sDumpFullInstructions, new Boolean(false));
-    static public final Setting settingSingleStep = new Setting("SingleStep", new Boolean(false));
+    static public final SettingProperty settingDumpFullInstructions = new SettingProperty(sDumpFullInstructions, new Boolean(false));
+    static public final SettingProperty settingSingleStep = new SettingProperty("SingleStep", new Boolean(false));
 
     /** counter for DBG/DBGF instructions */
     public int debugCount;
@@ -77,10 +78,10 @@ public class Executor {
         this.compilerStrategy = new CodeBlockCompilerStrategy(this);
         this.highLevelCodeInfoMap = new HashMap<MemoryArea, HighLevelCodeInfo>();
         
-        settingDumpFullInstructions.addListener(new ISettingListener() {
+        settingDumpFullInstructions.addListener(new IPropertyListener() {
 
         	DumpFullReporter reporter = new DumpFullReporter(Executor.this.cpu);
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
 				
 				if (setting.getBoolean()) {
@@ -92,9 +93,9 @@ public class Executor {
 			}
         	
         });
-        settingDumpInstructions.addListener(new ISettingListener() {
+        settingDumpInstructions.addListener(new IPropertyListener() {
         	DumpReporter reporter = new DumpReporter(Executor.this.cpu);
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				if (setting.getBoolean()) {
 					Executor.this.addInstructionListener(reporter);
 				} else {
@@ -104,35 +105,33 @@ public class Executor {
 			}
         	
         });
-        Machine.settingPauseMachine.addListener(new ISettingListener() {
+        Machine.settingPauseMachine.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
 			}
         	
         });
-        settingSingleStep.addListener(new ISettingListener() {
+        settingSingleStep.addListener(new IPropertyListener() {
         	
-        	public void changed(Setting setting, Object oldValue) {
+        	public void propertyChanged(IProperty setting) {
         		interruptExecution = Boolean.TRUE;
         	}
         	
         });
-        Cpu.settingRealTime.addListener(new ISettingListener() {
+        Cpu.settingRealTime.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
 			}
         	
         });
-        cpu.getMachine().getSettings().register(settingDumpInstructions);
-        cpu.getMachine().getSettings().register(settingDumpFullInstructions);
         Logging.registerLog(settingDumpInstructions, "instrs.txt");
         Logging.registerLog(settingDumpFullInstructions, "instrs_full.txt");
         
-        Machine.settingPauseMachine.addListener(new ISettingListener() {
+        Machine.settingPauseMachine.addListener(new IPropertyListener() {
 
-			public void changed(Setting setting, Object oldValue) {
+			public void propertyChanged(IProperty setting) {
 				Executor.this.cpuMetrics.resetLastCycleCount();				
 			}
         	

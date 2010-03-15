@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
@@ -94,7 +94,7 @@ public class MultiSoundTMS9919 implements SoundProvider {
 		}
 	}
 
-	public void loadState(IDialogSettings section) {
+	public void loadState(IPropertyStorage section) {
 		if (section == null)
 			return;
 		int idx = 0;
@@ -104,7 +104,7 @@ public class MultiSoundTMS9919 implements SoundProvider {
 		}
 	}
 	
-	public void saveState(IDialogSettings section) {
+	public void saveState(IPropertyStorage section) {
 		int idx = 0;
 		for (SoundTMS9919 chip : chips) {
 			chip.saveState(section.addNewSection("" + idx));

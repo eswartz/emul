@@ -5,9 +5,8 @@ package v9t9.emulator.hardware.sound;
 
 import java.text.MessageFormat;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.PrefUtils;
 
 public abstract class ClockedSoundVoice extends SoundVoice
 {
@@ -92,17 +91,18 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	}
 	
 	@Override
-	public void loadState(IDialogSettings settings) {
+	public void loadState(IPropertyStorage settings) {
+		if (settings == null) return;
 		super.loadState(settings);
-		operation[0] = (byte) PrefUtils.readSavedInt(settings, "Op1");
-		operation[1] = (byte) PrefUtils.readSavedInt(settings, "Op2");
-		operation[2] = (byte) PrefUtils.readSavedInt(settings, "Op3");
-		accum = PrefUtils.readSavedInt(settings, "Accumulator");
-		clock = PrefUtils.readSavedInt(settings, "Clock");
+		operation[0] = (byte) settings.getInt("Op1");
+		operation[1] = (byte) settings.getInt("Op2");
+		operation[2] = (byte) settings.getInt("Op3");
+		accum = settings.getInt("Accumulator");
+		clock = settings.getInt("Clock");
 	}
 	
 	@Override
-	public void saveState(IDialogSettings settings) {
+	public void saveState(IPropertyStorage settings) {
 		super.saveState(settings);
 		settings.put("Op1", operation[0]);
 		settings.put("Op2", operation[1]);

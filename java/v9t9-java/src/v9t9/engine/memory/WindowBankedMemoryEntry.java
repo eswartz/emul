@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 /**
  * This is banked memory which exposes a portion of a larger
@@ -39,12 +39,12 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	}
 	
 	@Override
-	protected void doSaveBankEntries(IDialogSettings section) {
+	protected void doSaveBankEntries(IPropertyStorage section) {
 		getArea().saveContents(section, this);
 	}
 	
 	@Override
-	protected void doLoadBankEntries(IDialogSettings section) {
+	protected void doLoadBankEntries(IPropertyStorage section) {
 		if (section == null) return;
 		getArea().loadContents(section, this);
 	}

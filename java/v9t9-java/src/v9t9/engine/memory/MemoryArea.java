@@ -11,7 +11,7 @@ import java.util.List;
 
 import net.iHarder.Base64;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.properties.IPropertyStorage;
 
 /**
  * A memory area is the smallest unit of contiguous memory which has the
@@ -52,7 +52,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 
 	/**
 	 * Read a word at the given 16-bit address, without side effects.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
 	public short flatReadWord(MemoryEntry entry, int addr) {
@@ -61,7 +61,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 
 	/**
 	 * Read a byte at the given 16-bit address, without side effects.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
     public byte flatReadByte(MemoryEntry entry, int addr) {
@@ -70,7 +70,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 
 	/**
 	 * Write a word at the given 16-bit address, without side effects.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
     public void flatWriteWord(MemoryEntry entry, int addr, short val) {
@@ -79,7 +79,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 
 	/**
 	 * Write a byte at the given 16-bit address, without side effects.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
     public void flatWriteByte(MemoryEntry entry, int addr, byte val) {
@@ -88,28 +88,28 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 
 	/**
 	 * Read a word at the given 16-bit address.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
     abstract short readWord(MemoryEntry entry, int addr);
 
 	/**
 	 * Read a byte at the given 16-bit address.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
     abstract byte readByte(MemoryEntry entry, int addr);
 
 	/**
 	 * Write a word at the given 16-bit address.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
     abstract void writeWord(MemoryEntry entry, int addr, short val);
 
 	/**
 	 * Write a byte at the given 16-bit address.
-	 * @param entry TODO
+	 * @param entry
 	 * @param addr address
 	 */
     abstract void writeByte(MemoryEntry entry, int addr, byte val);
@@ -137,7 +137,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 		return latency;
 	}
 
-	public void saveContents(IDialogSettings section, MemoryEntry entry) {
+	public void saveContents(IPropertyStorage section, MemoryEntry entry) {
 		List<String> contents = new ArrayList<String>();
 		//int endAddr = entry.addr + getSize();
 		//endAddr = Math.min(endAddr, entry.addr + entry.size);
@@ -163,7 +163,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 		section.put("Contents", (String[]) contents.toArray(new String[contents.size()]));		
 	}
 
-	public void loadContents(IDialogSettings section, MemoryEntry memoryEntry) {
+	public void loadContents(IPropertyStorage section, MemoryEntry memoryEntry) {
 		String[] contents = section.getArray("Contents");
 		if (contents == null)
 			return;

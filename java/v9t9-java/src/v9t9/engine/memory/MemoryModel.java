@@ -56,5 +56,10 @@ public interface MemoryModel {
 	 * @param eventNotifier 
 	 */
 	void loadMemory(IEventNotifier eventNotifier);
+
+	/**
+	 * Reset memory to load-time state
+	 */
+	void resetMemory();
 	
 }
