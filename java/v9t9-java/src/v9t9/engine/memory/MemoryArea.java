@@ -11,7 +11,8 @@ import java.util.List;
 
 import net.iHarder.Base64;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
+import org.ejs.coffee.core.utils.HexUtils;
 
 /**
  * A memory area is the smallest unit of contiguous memory which has the
@@ -137,14 +138,12 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 		return latency;
 	}
 
-	public void saveContents(IPropertyStorage section, MemoryEntry entry) {
-		List<String> contents = new ArrayList<String>();
-		//int endAddr = entry.addr + getSize();
-		//endAddr = Math.min(endAddr, entry.addr + entry.size);
+	public void saveContents(ISettingSection section, MemoryEntry entry) {
+		ISettingSection contents = section.addSection("Contents");
 		int endAddr = entry.addr + getSize();
+		byte[] chunk = new byte[256];
 		for(int saveAddr = entry.addr; saveAddr < endAddr; saveAddr += 256) {
 			int perLine = saveAddr + 256 < endAddr ? 256 : endAddr - saveAddr;
-			byte[] chunk = new byte[perLine];
 			boolean allZero = true;
 			try {
 				for (int idx = 0; idx < perLine; idx++) {
@@ -157,30 +156,47 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 			}
 			if (!allZero) {
 				String encoded = Base64.encodeBytes(chunk, Base64.GZIP);
-				contents.add(Integer.toHexString(saveAddr) + ":" + encoded);
+				contents.put(Integer.toHexString(saveAddr).toUpperCase(), encoded);
 			}
 		}
-		section.put("Contents", (String[]) contents.toArray(new String[contents.size()]));		
 	}
 
-	public void loadContents(IPropertyStorage section, MemoryEntry memoryEntry) {
-		String[] contents = section.getArray("Contents");
-		if (contents == null)
-			return;
-		
-		for (String entry : contents) {
-			int cidx = entry.indexOf(':');
-			try {
-				int saveAddr = Integer.parseInt(entry.substring(0, cidx), 16);
-				String encoded = entry.substring(cidx + 1);
-				byte[] chunk = Base64.decode(encoded, Base64.GZIP);
-				for (int idx = 0; idx < chunk.length; idx++) {
-					flatWriteByte(memoryEntry, saveAddr++, chunk[idx]);
+	public void loadContents(ISettingSection section, MemoryEntry memoryEntry) {
+		ISettingSection contents = section.getSection("Contents");
+		if (contents != null) {
+			for (ISettingSection.SettingEntry entry : contents) {
+				try {
+					int saveAddr = Integer.parseInt(entry.name, 16);
+					byte[] chunk = Base64.decode(entry.value.toString(), Base64.GZIP);
+					for (int idx = 0; idx < chunk.length; idx++) {
+						flatWriteByte(memoryEntry, saveAddr++, chunk[idx]);
+					}
+				} catch (NumberFormatException e) {
+					// not a chunk
 				}
-			} catch (NumberFormatException e) {
-				// not a chunk
+			}		
+	
+		}
+		else {
+			// compatibility
+			String[] contentsStr = section.getArray("Contents");
+			if (contentsStr == null)
+				return;
+			
+			for (String entry : contentsStr) {
+				int cidx = entry.indexOf(':');
+				try {
+					int saveAddr = Integer.parseInt(entry.substring(0, cidx), 16);
+					String encoded = entry.substring(cidx + 1);
+					byte[] chunk = Base64.decode(encoded, Base64.GZIP);
+					for (int idx = 0; idx < chunk.length; idx++) {
+						flatWriteByte(memoryEntry, saveAddr++, chunk[idx]);
+					}
+				} catch (NumberFormatException e) {
+					// not a chunk
+				}
 			}
-		}		
+		}
 	}
 
 	public int compareTo(MemoryArea o) {

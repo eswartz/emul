@@ -3,11 +3,12 @@ package v9t9.emulator.clients.builtin;
 import java.io.File;
 import java.io.IOException;
 
-import org.eclipse.jface.dialogs.DialogSettings;
-import org.ejs.coffee.core.properties.DialogSettingsPropertyStorage;
 import org.ejs.coffee.core.properties.IProperty;
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
+import org.ejs.coffee.core.settings.ISettingStorage;
+import org.ejs.coffee.core.settings.SettingsSection;
+import org.ejs.coffee.core.settings.XMLSettingStorage;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
@@ -16,6 +17,10 @@ import v9t9.emulator.runtime.Cpu;
 
 public abstract class BaseEmulatorWindow {
 
+	/**
+	 * 
+	 */
+	private static final String STATE = "state";
 	/**
 	 * 
 	 */
@@ -31,11 +36,11 @@ public abstract class BaseEmulatorWindow {
 	
 	public BaseEmulatorWindow(Machine machine) {
 		this.machine = machine;
-		EmulatorSettings.INSTANCE.load();
+		//EmulatorSettings.INSTANCE.load();
 	}
 	
 	public void dispose() {
-		EmulatorSettings.INSTANCE.save();
+		//EmulatorSettings.INSTANCE.save();
 	}
 	
 	public void setVideoRenderer(VideoRenderer videoRenderer) {
@@ -46,8 +51,8 @@ public abstract class BaseEmulatorWindow {
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
 		
 		boolean isUndefined = false;
-		IPropertyStorage settings = EmulatorSettings.INSTANCE.getApplicationSettings();
-		settings.read(configVar);
+		ISettingSection settings = EmulatorSettings.INSTANCE.getApplicationSettings();
+		configVar.loadState(settings);
 		String configPath = configVar.getString();
 		if (configPath == null || configPath.length() == 0) {
 			configPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + defaultSubdir + File.separatorChar + fileName;
@@ -73,8 +78,8 @@ public abstract class BaseEmulatorWindow {
 	protected String selectDirectory(String title, IProperty configVar, String defaultSubdir,
 			boolean ifUndefined) {
 		boolean isUndefined = false;
-		IPropertyStorage settings = EmulatorSettings.INSTANCE.getApplicationSettings();
-		settings.read(configVar);
+		ISettingSection settings = EmulatorSettings.INSTANCE.getApplicationSettings();
+		configVar.loadState(settings);
 		String configDir = configVar.getString();
 		if (configDir == null || configDir.length() == 0) {
 			configDir = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + File.separatorChar + defaultSubdir + File.separatorChar;
@@ -88,7 +93,7 @@ public abstract class BaseEmulatorWindow {
 		String dirname = openDirectorySelectionDialog(title, configDir);
 		if (dirname != null && isUndefined) {
 			configVar.setString(dirname);
-			settings.write(configVar);
+			configVar.saveState(settings);
 		}
 		return dirname;
 	}
@@ -119,8 +124,8 @@ public abstract class BaseEmulatorWindow {
 		
 		if (filename != null) {
 			try {
-				IPropertyStorage settings = new DialogSettingsPropertyStorage(new DialogSettings("state"));
-				settings.load(filename);
+				ISettingStorage storage = new XMLSettingStorage(STATE);
+				ISettingSection settings = storage.load(new File(filename));
 				
 				machine.loadState(settings);
 			} catch (Throwable e1) {
@@ -136,7 +141,7 @@ public abstract class BaseEmulatorWindow {
 	protected void saveMachineState() {
 		
 		// get immediately
-		IPropertyStorage settings = new DialogSettingsPropertyStorage(new DialogSettings("state"));
+		ISettingSection settings = new SettingsSection();
 		machine.saveState(settings);
 		
 		String filename = selectFile(
@@ -145,7 +150,8 @@ public abstract class BaseEmulatorWindow {
 		
 		if (filename != null) {
 			try {
-				settings.save(filename);
+				ISettingStorage storage = new XMLSettingStorage(STATE);
+				storage.save(new File(filename), settings);
 			} catch (Throwable e1) {
 				showErrorMessage("Save error", 
 						"Failed to save machine state:\n\n" + e1.getMessage());

@@ -11,8 +11,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.IconSetting;
@@ -221,8 +221,10 @@ public class EmuDiskDsr implements DsrHandler {
 		{
 			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
-			if (handler.dev <= 2 && DiskImageDsr.diskImageDsrEnabled.getBoolean())
+			if (handler.dev <= 2 && DiskImageDsr.diskImageDsrEnabled.getBoolean()) {
+				Executor.settingDumpFullInstructions.setBoolean(true);
 				return false;
+			}
 			
 			if (handler.getDevice() <= MAXDRIVE) {
 				try {
@@ -285,12 +287,12 @@ public class EmuDiskDsr implements DsrHandler {
 		
 		return map;
 	}
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		emuDiskDsrEnabled.saveState(section);
-		mapper.saveState(section.addNewSection("Mappings"));
+		mapper.saveState(section.addSection("Mappings"));
 	}
 	
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null) return;
 		emuDiskDsrEnabled.loadState(section);
 		mapper.loadState(section.getSection("Mappings"));

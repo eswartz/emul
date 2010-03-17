@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 /*
  * @author ejs
@@ -75,13 +75,13 @@ public class Memory implements IPersistable {
 		return model;
 	}
 
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		for (Map.Entry<String, MemoryDomain> entry : domains.entrySet()) {
-			entry.getValue().saveState(section.addNewSection(entry.getKey()));
+			entry.getValue().saveState(section.addSection(entry.getKey()));
 		}
 	}
 
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null)
 			return;
 		

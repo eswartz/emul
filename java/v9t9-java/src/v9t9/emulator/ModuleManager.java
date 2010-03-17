@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.engine.memory.Memory;
@@ -105,18 +105,18 @@ public class ModuleManager implements IPersistable {
 		return (IModule[]) loadedModules.toArray(new IModule[loadedModules.size()]);
 	}
 
-	public void saveState(IPropertyStorage storage) {
+	public void saveState(ISettingSection section) {
 		String[] moduleNames = new String[loadedModules.size()];
 		for (int i = 0; i < moduleNames.length; i++)
 			moduleNames[i] = loadedModules.get(i).getName();
-		storage.put("LoadedModules", moduleNames);
+		section.put("LoadedModules", moduleNames);
 	}
 	
-	public void loadState(IPropertyStorage storage) {
+	public void loadState(ISettingSection section) {
 		unloadAllModules();
-		if (storage == null)
+		if (section == null)
 			return;
-		String[] loaded = storage.getArray("LoadedModules");
+		String[] loaded = section.getArray("LoadedModules");
 		if (loaded == null)
 			return;
 		for (String name : loaded) {

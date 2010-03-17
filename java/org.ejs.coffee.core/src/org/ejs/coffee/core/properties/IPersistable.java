@@ -3,6 +3,8 @@
  */
 package org.ejs.coffee.core.properties;
 
+import org.ejs.coffee.core.settings.ISettingSection;
+
 /**
  * @author ejs
  *
@@ -14,7 +16,7 @@ public interface IPersistable {
 	 * or an object should be emitted with a known child element name that
 	 * loadState can find.)
 	 * */
-	void saveState(IPropertyStorage section);
+	void saveState(ISettingSection section);
 	/** Load state from the given storage.  The property already exists */
-	void loadState(IPropertyStorage section);
+	void loadState(ISettingSection section);
 }

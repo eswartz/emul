@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 
 
@@ -90,16 +90,16 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	}
 	
 	@Override
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		super.saveState(section);
 		section.put("CurrentBankIndex", currentBankIndex);
 		
-		doSaveBankEntries(section.addNewSection("Banks"));
+		doSaveBankEntries(section.addSection("Banks"));
 	}
 	
 
 	@Override
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		super.loadState(section);
 
 		doLoadBankEntries(section.getSection("Banks"));
@@ -108,16 +108,16 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 		
 	}
 	
-	abstract protected void doSaveBankEntries(IPropertyStorage section);
-	abstract protected void doLoadBankEntries(IPropertyStorage section);
+	abstract protected void doSaveBankEntries(ISettingSection section);
+	abstract protected void doLoadBankEntries(ISettingSection section);
 
 	@Override
-	protected void saveMemoryContents(IPropertyStorage section) {
+	protected void saveMemoryContents(ISettingSection section) {
 		// do this per-bank
 	}
 	
 	@Override
-	protected void loadMemoryContents(IPropertyStorage section) {
+	protected void loadMemoryContents(ISettingSection section) {
 		// do this per-bank
 	}
 	

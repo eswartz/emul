@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.ejs.coffee.core.jface.PropertySourceEditor;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.w3c.dom.Element;
 
 /**
@@ -58,18 +59,18 @@ public class PropertySource implements IPropertySource {
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#loadState(org.w3c.dom.Element)
 	 */
-	public void loadState(IPropertyStorage storage) {
+	public void loadState(ISettingSection section) {
 		for (IProperty property : propertyMap.values()) {
-			property.loadState(storage);
+			property.loadState(section);
 		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#saveState()
 	 */
-	public void saveState(IPropertyStorage storage) {
+	public void saveState(ISettingSection section) {
 		for (IProperty property : propertyMap.values()) {
-			property.saveState(storage);
+			property.saveState(section);
 		}
 	}
 	

@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 public class AudioGateVoice extends SoundVoice {
 
@@ -48,14 +48,14 @@ public class AudioGateVoice extends SoundVoice {
 	}
 	
 	@Override
-	public void loadState(IPropertyStorage settings) {
+	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		super.loadState(settings);
 		setVolume((byte) (settings.getBoolean("State") ? 15 : 0));
 	}
 	
 	@Override
-	public void saveState(IPropertyStorage settings) {
+	public void saveState(ISettingSection settings) {
 		super.saveState(settings);
 		settings.put("State", Boolean.toString(getVolume() != 0));
 	}

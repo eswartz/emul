@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
@@ -94,7 +94,7 @@ public class MultiSoundTMS9919 implements SoundProvider {
 		}
 	}
 
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null)
 			return;
 		int idx = 0;
@@ -104,10 +104,10 @@ public class MultiSoundTMS9919 implements SoundProvider {
 		}
 	}
 	
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		int idx = 0;
 		for (SoundTMS9919 chip : chips) {
-			chip.saveState(section.addNewSection("" + idx));
+			chip.saveState(section.addSection("" + idx));
 			idx++;
 		}
 	}

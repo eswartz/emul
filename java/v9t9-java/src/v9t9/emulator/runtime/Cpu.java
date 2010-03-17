@@ -11,8 +11,8 @@ import java.io.PrintWriter;
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruAccess;
@@ -413,17 +413,17 @@ public class Cpu implements MemoryAccessListener, IPersistable {
 		return cruAccess;
 	}
 
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		section.put("PC", PC);
 		section.put("WP", WP);
 		section.put("status", status.flatten());
 		section.put("ForceAllIntsLevel1", forceIcTo1);
 		settingRealTime.saveState(section);
 		settingCyclesPerSecond.saveState(section);
-		cruAccess.saveState(section.addNewSection("CRU"));
+		cruAccess.saveState(section.addSection("CRU"));
 	}
 
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null) {
 			setPin(INTLEVEL_RESET);
 			return;

@@ -13,7 +13,7 @@ import java.io.InputStreamReader;
 import java.util.TreeMap;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.modules.IModule;
@@ -310,7 +310,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 	}
 
 
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		section.put("Class", getClass().getCanonicalName());
 		section.put("Name", getName());
 		section.put("Address", addr);
@@ -319,27 +319,27 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 	}
 
 
-	protected void saveMemoryContents(IPropertyStorage section) {
+	protected void saveMemoryContents(ISettingSection section) {
 		if (area.hasWriteAccess()) {
 			area.saveContents(section, this);
 		}
 	}
 
 
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		loadFields(section);
 		loadMemoryContents(section);
 	}
 
 
-	protected void loadFields(IPropertyStorage section) {
+	protected void loadFields(ISettingSection section) {
 		name = section.get("Name");
 		addr = section.getInt("Address");
 		size = section.getInt("Size");
 	}
 
 
-	protected void loadMemoryContents(IPropertyStorage section) {
+	protected void loadMemoryContents(ISettingSection section) {
 		if (area.hasReadAccess()) {
 			area.loadContents(section, this);
 		}
@@ -368,7 +368,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 	 * @param entryStore
 	 * @return
 	 */
-	public static MemoryEntry createEntry(MemoryDomain domain, IPropertyStorage entryStore) {
+	public static MemoryEntry createEntry(MemoryDomain domain, ISettingSection entryStore) {
 		MemoryEntry entry = null;
 		String klazzName = entryStore.get("Class");
 		if (klazzName != null) {

@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 /**
  * This is banked memory which exposes a portion of a larger
@@ -39,12 +39,12 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	}
 	
 	@Override
-	protected void doSaveBankEntries(IPropertyStorage section) {
+	protected void doSaveBankEntries(ISettingSection section) {
 		getArea().saveContents(section, this);
 	}
 	
 	@Override
-	protected void doLoadBankEntries(IPropertyStorage section) {
+	protected void doLoadBankEntries(ISettingSection section) {
 		if (section == null) return;
 		getArea().loadContents(section, this);
 	}

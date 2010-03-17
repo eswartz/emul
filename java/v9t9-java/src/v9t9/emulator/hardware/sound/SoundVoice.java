@@ -4,7 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.sound.ISoundVoice;
 
 public abstract class SoundVoice implements ISoundVoice, IPersistable
@@ -42,11 +42,11 @@ public abstract class SoundVoice implements ISoundVoice, IPersistable
 	public String getName() {
 		return name;
 	}
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		// derived
 		//section.put("Volume", volume);
 	}
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		// derived
 		//volume = (byte) Utils.readSavedInt(section, "Volume");
 	}

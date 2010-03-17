@@ -15,8 +15,8 @@ import java.util.TimerTask;
 
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
@@ -477,20 +477,20 @@ abstract public class Machine {
 		return keyboardState;
 	}
 
-	public synchronized void saveState(IPropertyStorage settings) {
+	public synchronized void saveState(ISettingSection settings) {
 		synchronized (executionLock) {
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
 		
 		
-		cpu.saveState(settings.addNewSection("CPU"));
-		getMemoryModel().getGplMmio().saveState(settings.addNewSection("GPL"));
-		memory.saveState(settings.addNewSection("Memory"));
-		vdp.saveState(settings.addNewSection("VDP"));
-		sound.saveState(settings.addNewSection("Sound"));
-		dsrManager.saveState(settings.addNewSection("DSRs"));
-		moduleManager.saveState(settings.addNewSection("Modules"));
+		cpu.saveState(settings.addSection("CPU"));
+		getMemoryModel().getGplMmio().saveState(settings.addSection("GPL"));
+		memory.saveState(settings.addSection("Memory"));
+		vdp.saveState(settings.addSection("VDP"));
+		sound.saveState(settings.addSection("Sound"));
+		dsrManager.saveState(settings.addSection("DSRs"));
+		moduleManager.saveState(settings.addSection("Modules"));
 		
 		DataFiles.saveState(settings);
 		
@@ -500,7 +500,7 @@ abstract public class Machine {
 		}
 	}
 
-	public synchronized void loadState(IPropertyStorage storage) throws IOException {
+	public synchronized void loadState(ISettingSection section) throws IOException {
 		/*
 		machineRunner.interrupt();
 		videoRunner.interrupt();
@@ -513,16 +513,16 @@ abstract public class Machine {
 			executionLock.notifyAll();
 		}
 		
-		DataFiles.loadState(storage);
+		DataFiles.loadState(section);
 		
 		memory.getModel().resetMemory();
-		moduleManager.loadState(storage.getSection("Modules"));
-		memory.loadState(storage.getSection("Memory"));
-		getMemoryModel().getGplMmio().loadState(storage.getSection("GPL"));
-		cpu.loadState(storage.getSection("CPU"));
-		vdp.loadState(storage.getSection("VDP"));
-		sound.loadState(storage.getSection("Sound"));
-		dsrManager.loadState(storage.getSection("DSRs"));
+		moduleManager.loadState(section.getSection("Modules"));
+		memory.loadState(section.getSection("Memory"));
+		getMemoryModel().getGplMmio().loadState(section.getSection("GPL"));
+		cpu.loadState(section.getSection("CPU"));
+		vdp.loadState(section.getSection("VDP"));
+		sound.loadState(section.getSection("Sound"));
+		dsrManager.loadState(section.getSection("DSRs"));
 		keyboardState.resetKeyboard();
 		keyboardState.resetJoystick();
 		

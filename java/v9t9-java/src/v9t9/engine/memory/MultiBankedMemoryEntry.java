@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 
 
@@ -60,22 +60,22 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	//}
 
 	@Override
-	protected void doSaveBankEntries(IPropertyStorage section) {
+	protected void doSaveBankEntries(ISettingSection section) {
 		for (int idx = 0; idx < banks.length; idx++) {
 			MemoryEntry entry = banks[idx];
-			entry.saveState(section.addNewSection("" + idx));
+			entry.saveState(section.addSection("" + idx));
 		}		
 	}
 
 	@Override
-	protected void doLoadBankEntries(IPropertyStorage section) {
+	protected void doLoadBankEntries(ISettingSection section) {
 		if (section == null) return;
 		if (banks == null) {
 			bankCount = section.getSections().length;
 			banks = new MemoryEntry[bankCount];
 		}
 		for (int idx = 0; idx < banks.length; idx++) {
-			IPropertyStorage entryStore = section.getSection("" + idx);
+			ISettingSection entryStore = section.getSection("" + idx);
 			MemoryEntry entry = banks[idx];
 			if (entry != null) {
 				entry.loadState(entryStore);

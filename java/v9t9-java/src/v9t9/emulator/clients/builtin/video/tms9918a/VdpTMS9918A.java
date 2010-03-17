@@ -11,8 +11,8 @@ import java.util.Arrays;
 
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
@@ -682,30 +682,30 @@ public class VdpTMS9918A implements VdpHandler {
 		return modeNumber;
 	}
 
-	public void saveState(IPropertyStorage storage) {
+	public void saveState(ISettingSection section) {
 		String[] regState = new String[vdpregs.length];
 		for (int i = 0; i < vdpregs.length; i++) {
 			regState[i] = HexUtils.toHex2(vdpregs[i]);
 		}
-		storage.put("Registers", regState);
-		settingDumpVdpAccess.saveState(storage);
-		settingCpuSynchedVdpInterrupt.saveState(storage);
-		settingVdpInterruptRate.saveState(storage);
+		section.put("Registers", regState);
+		settingDumpVdpAccess.saveState(section);
+		settingCpuSynchedVdpInterrupt.saveState(section);
+		settingVdpInterruptRate.saveState(section);
 	}
 	
-	public void loadState(IPropertyStorage storage) {
-		if (storage == null) return;
+	public void loadState(ISettingSection section) {
+		if (section == null) return;
 		
-		String[] regState = storage.getArray("Registers");
+		String[] regState = section.getArray("Registers");
 		if (regState != null) {
 			for (int i = 0; i < regState.length; i++) {
 				writeVdpReg(i, (byte) Integer.parseInt(regState[i], 16));
 			}
 		}
 		
-		settingDumpVdpAccess.loadState(storage);
-		settingCpuSynchedVdpInterrupt.loadState(storage);
-		settingVdpInterruptRate.loadState(storage);
+		settingDumpVdpAccess.loadState(section);
+		settingCpuSynchedVdpInterrupt.loadState(section);
+		settingVdpInterruptRate.loadState(section);
 	}
 	
 	

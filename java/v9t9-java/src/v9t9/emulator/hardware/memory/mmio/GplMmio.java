@@ -7,7 +7,7 @@
 package v9t9.emulator.hardware.memory.mmio;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
@@ -100,14 +100,14 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
     	}    
     }
 
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null)
 			return;
 		gromaddr = (short) section.getInt("Addr");
 		gromaddrflag = section.getBoolean("AddrFlag");
 	}
 
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		section.put("Addr", gromaddr);
 		section.put("AddrFlag", gromaddrflag);
 	}

@@ -4,7 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
@@ -174,15 +174,15 @@ public class SoundTMS9919 implements SoundProvider {
 		return sound_voices;
 	}
 	
-	public void saveState(IPropertyStorage settings) {
+	public void saveState(ISettingSection settings) {
 		JavaSoundHandler.settingPlaySound.saveState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
-			v.saveState(settings.addNewSection(v.getName()));
+			v.saveState(settings.addSection(v.getName()));
 			
 		}
 	}
-	public void loadState(IPropertyStorage settings) {
+	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		JavaSoundHandler.settingPlaySound.loadState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {

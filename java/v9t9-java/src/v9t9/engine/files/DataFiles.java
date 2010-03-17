@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.CompatUtils;
 
 
@@ -150,17 +150,17 @@ public class DataFiles {
     }
 
 	/**
-	 * @param storage
+	 * @param section
 	 */
-	public static void loadState(IPropertyStorage storage) {
-		settingUserRomsPath.loadState(storage);
+	public static void loadState(ISettingSection section) {
+		settingUserRomsPath.loadState(section);
 	}
 
 	/**
-	 * @param storage
+	 * @param section
 	 */
-	public static void saveState(IPropertyStorage storage) {
-		settingUserRomsPath.saveState(storage);
+	public static void saveState(ISettingSection section) {
+		settingUserRomsPath.saveState(section);
 		
 	}
     

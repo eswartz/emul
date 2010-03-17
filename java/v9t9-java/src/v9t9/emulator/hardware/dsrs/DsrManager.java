@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
@@ -38,12 +38,12 @@ public class DsrManager implements IPersistable {
 	}
 	
 
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		for (DsrHandler handler : dsrs) {
-			handler.saveState(section.addNewSection(handler.getName()));
+			handler.saveState(section.addSection(handler.getName()));
 		}
 	}
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null) return;
 		for (DsrHandler handler : dsrs) {
 			handler.loadState(section.getSection(handler.getName()));

@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -145,7 +146,7 @@ public class JSONObject {
      * Construct an empty JSONObject.
      */
     public JSONObject() {
-        this.map = new HashMap();
+        this.map = new TreeMap();
     }
 
 
@@ -238,7 +239,7 @@ public class JSONObject {
      * @throws JSONException 
      */
     public JSONObject(Map map) {
-        this.map = new HashMap();
+        this.map = new TreeMap();
         if (map != null) {
             Iterator i = map.entrySet().iterator();
             while (i.hasNext()) {

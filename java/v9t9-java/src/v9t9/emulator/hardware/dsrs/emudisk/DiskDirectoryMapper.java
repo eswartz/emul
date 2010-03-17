@@ -12,8 +12,8 @@ import java.util.Map;
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
@@ -82,13 +82,13 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	}
 	
 
-	public synchronized void saveState(IPropertyStorage settings) {
+	public synchronized void saveState(ISettingSection settings) {
 		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
 			entry.getValue().saveState(settings);
 		}
 	}
 
-	public synchronized void loadState(IPropertyStorage settings) {
+	public synchronized void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
 			entry.getValue().loadState(settings);

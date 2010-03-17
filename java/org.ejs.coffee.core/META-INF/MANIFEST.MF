@@ -10,10 +10,12 @@ Export-Package: com.sun.jna,
  net.iHarder,
  org.ejs.coffee.core.jface,
  org.ejs.coffee.core.properties,
+ org.ejs.coffee.core.settings,
  org.ejs.coffee.core.sound,
  org.ejs.coffee.core.sound.ui,
  org.ejs.coffee.core.timer,
- org.ejs.coffee.core.utils
+ org.ejs.coffee.core.utils,
+ org.json
 Require-Bundle: org.eclipse.jface,
  org.eclipse.core.runtime,
  org.junit,

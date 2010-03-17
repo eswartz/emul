@@ -3,6 +3,7 @@
  */
 package org.ejs.coffee.core.properties;
 
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Element;
 
@@ -87,10 +88,10 @@ public class ClassProperty extends AbstractProperty {
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.model.IProperty#saveState(org.w3c.dom.Element)
 	 */
-	public void saveState(IPropertyStorage storage) {
+	public void saveState(ISettingSection section) {
 		IPropertySource ps = null;
 		if (obj instanceof IPersistable) {
-			((IPersistable) obj).saveState(storage);
+			((IPersistable) obj).saveState(section);
 			return;
 		}
 		if (obj instanceof IPropertySource) {
@@ -100,7 +101,7 @@ public class ClassProperty extends AbstractProperty {
 			ps = ((IPropertyProvider) obj).getPropertySource();
 		}
 		if (ps != null) {
-			IPropertyStorage child = storage.addNewSection(name);
+			ISettingSection child = section.addSection(name);
 			ps.saveState(child);
 			String id = factory.getId(obj);
 			if (id != null)
@@ -141,10 +142,10 @@ public class ClassProperty extends AbstractProperty {
 		
 		
 	}
-	public void loadState(IPropertyStorage storage) {
-		IPropertyStorage section = storage.getSection(name);
-		if (section != null) {
-			String id = section.get("id");
+	public void loadState(ISettingSection section) {
+		ISettingSection childSection = section.getSection(name);
+		if (childSection != null) {
+			String id = childSection.get("id");
 			if (id == null)
 				return;
 			
@@ -161,7 +162,7 @@ public class ClassProperty extends AbstractProperty {
 				ps = ((IPropertyProvider) obj).getPropertySource();
 			}
 			if (ps != null) {
-				ps.loadState(section);
+				ps.loadState(childSection);
 				return;
 			} 
 		}

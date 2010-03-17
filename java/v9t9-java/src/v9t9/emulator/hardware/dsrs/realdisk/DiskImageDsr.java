@@ -22,8 +22,8 @@ import java.util.Map.Entry;
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
-import org.ejs.coffee.core.properties.IPropertyStorage;
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.EmulatorSettings;
@@ -590,10 +590,10 @@ public class DiskImageDsr implements DsrHandler {
 			
 		}
 
-		public void saveState(IPropertyStorage section) {
+		public void saveState(ISettingSection section) {
 		}
 
-		public void loadState(IPropertyStorage section) {
+		public void loadState(ISettingSection section) {
 			if (image != null) {
 				try {
 					image.closeDiskImage();
@@ -1402,14 +1402,14 @@ public class DiskImageDsr implements DsrHandler {
 		
 		return map;
 	}
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		diskImageDsrEnabled.saveState(section);
-		fdc.saveState(section.addNewSection("FDC1771"));
+		fdc.saveState(section.addSection("FDC1771"));
 		for (Map.Entry<String, BaseDiskImage> entry : disks.entrySet())
-			entry.getValue().saveState(section.addNewSection(entry.getKey()));
+			entry.getValue().saveState(section.addSection(entry.getKey()));
 	}
 	
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null) return;
 		diskImageDsrEnabled.loadState(section);
 		fdc.loadState(section.getSection("FDC1771"));

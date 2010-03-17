@@ -115,7 +115,7 @@ public class V9t9 {
         	machine.notifyEvent(IEventNotifier.Level.ERROR,
         			"Failed to load startup ROMs; please edit your " + DataFiles.settingBootRomsPath.getName() + " in the file "
         		+ EmulatorSettings.INSTANCE.getSettingsConfigurationPath());
-        	EmulatorSettings.INSTANCE.save();
+        	//EmulatorSettings.INSTANCE.save();
         }
 	}
 
@@ -140,8 +140,11 @@ public class V9t9 {
         
         app.setupDefaults();
         app.loadState();
-        app.run();
-        
+        try {
+        	app.run();
+        } finally {
+        	EmulatorSettings.INSTANCE.save();        	
+        }
     }
 
 	private static Client createClient(String[] args, Machine machine) {

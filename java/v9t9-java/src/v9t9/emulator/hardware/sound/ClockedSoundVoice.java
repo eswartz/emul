@@ -5,7 +5,7 @@ package v9t9.emulator.hardware.sound;
 
 import java.text.MessageFormat;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 public abstract class ClockedSoundVoice extends SoundVoice
@@ -91,7 +91,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	}
 	
 	@Override
-	public void loadState(IPropertyStorage settings) {
+	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		super.loadState(settings);
 		operation[0] = (byte) settings.getInt("Op1");
@@ -102,7 +102,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	}
 	
 	@Override
-	public void saveState(IPropertyStorage settings) {
+	public void saveState(ISettingSection settings) {
 		super.saveState(settings);
 		settings.put("Op1", operation[0]);
 		settings.put("Op2", operation[1]);

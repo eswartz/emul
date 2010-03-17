@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 public class NoiseGeneratorVoice extends ClockedSoundVoice
 {
@@ -91,13 +91,13 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	}
 	
 	@Override
-	public void saveState(IPropertyStorage settings) {
+	public void saveState(ISettingSection settings) {
 		super.saveState(settings);
 		settings.put("Shifter", ns1);
 	}
 	
 	@Override
-	public void loadState(IPropertyStorage settings) {
+	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		super.loadState(settings);
 		ns1 = settings.getInt("Shifter");

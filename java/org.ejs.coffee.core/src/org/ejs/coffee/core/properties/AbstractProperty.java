@@ -12,6 +12,7 @@ import java.util.List;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.widgets.Composite;
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Element;
 
@@ -234,13 +235,13 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.model.IProperty#loadState(org.w3c.dom.Element)
 	 */
-	public void loadState(IPropertyStorage storage) {
+	public void loadState(ISettingSection section) {
 		if (factory != null) {
-			IPropertyStorage section = storage.getSection(getName());
-			String id = section.get("id");
+			ISettingSection childSection = section.getSection(getName());
+			String id = childSection.get("id");
 			Object obj = factory.create(id);
 			if (obj != null)
-				loadChildState(section, obj, getName());
+				loadChildState(childSection, obj, getName());
 			else
 				System.err.println("Cannot recreate id="+id+" for " +getName());
 			setValue(obj);
@@ -249,7 +250,7 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 		}
 		
 		Object value = getValue();
-		loadChildState(storage, value, getName());
+		loadChildState(section, value, getName());
 	}
 
 
@@ -257,10 +258,10 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 	 * @see org.ejs.chiprocksynth.model.IPersistable#loadChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
 	 */
 	@SuppressWarnings("unchecked")
-	public void loadChildState(IPropertyStorage storage, Object obj, String propertyName) {
+	public void loadChildState(ISettingSection section, Object obj, String propertyName) {
 		IPropertySource ps = null;
 		if (obj instanceof IPersistable) {
-			((IPersistable) obj).loadState(storage);
+			((IPersistable) obj).loadState(section);
 			return;
 		}		
 		if (obj instanceof IPropertySource) {
@@ -270,12 +271,12 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 			ps = ((IPropertyProvider) obj).getPropertySource();
 		}
 		if (ps != null) {
-			ps.loadState(storage);
+			ps.loadState(section);
 			//setValue(obj);
 			return;
 		} 		
 		if (obj instanceof Collection) {
-			String[] items = storage.getArray(propertyName);
+			String[] items = section.getArray(propertyName);
 			if (items != null) {
 				((Collection) obj).clear();
 				for (String item : items) {
@@ -285,7 +286,7 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 				}
 			}
 		} else {
-			String attr = storage.get(propertyName);
+			String attr = section.get(propertyName);
 			if (attr != null)
 				setValueFromString(attr);
 		}
@@ -344,25 +345,25 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.model.IProperty#saveState(org.w3c.dom.Element)
 	 */
-	public void saveState(IPropertyStorage storage) {
+	public void saveState(ISettingSection section) {
 		Object value = getValue();
-		saveChildState(storage, value, getName());
+		saveChildState(section, value, getName());
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.model.IPersistable#saveChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
 	 */
-	public void saveChildState(IPropertyStorage storage, Object value, String propertyName) {
+	public void saveChildState(ISettingSection section, Object value, String propertyName) {
 		IPropertySource ps = null;
 		if (value instanceof IPersistable) {
-			((IPersistable) value).saveState(storage);
+			((IPersistable) value).saveState(section);
 			return;
 		}
 		if (value instanceof IPropertyProvider) {
 			ps = ((IPropertyProvider) value).getPropertySource();
 		}
 		if (ps != null) {
-			IPropertyStorage child = storage.addNewSection(propertyName);
+			ISettingSection child = section.addSection(propertyName);
 			doSaveChildState(value, ps, child);
 			return;
 		}
@@ -374,9 +375,9 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 				for (Object obj : ((Collection) value)) {
 					items[idx++] = obj.toString();
 				}
-				storage.put(propertyName, items);
+				section.put(propertyName, items);
 			} else {
-				storage.put(propertyName, value.toString());
+				section.put(propertyName, value.toString());
 			}
 		}
 	}
@@ -384,7 +385,7 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 	 * @param child
 	 * @param ps
 	 */
-	protected void doSaveChildState(Object value, IPropertySource ps, IPropertyStorage child) {
+	protected void doSaveChildState(Object value, IPropertySource ps, ISettingSection child) {
 		ps.saveState(child);
 		String id = factory.getId(value);
 		if (id != null) {

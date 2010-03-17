@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Stack;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 /**
  * @author ejs
@@ -344,23 +344,23 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
 		}
 	}
 
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		int idx = 0;
 		for (MemoryEntry entry : mappedEntries) {
 			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry)) {
-				entry.saveState(section.addNewSection(""+ idx));
+				entry.saveState(section.addSection(""+ idx));
 				idx++;
 			}
 		}
 	}
 
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		//unmapAll();
 		if (section == null) {
 			return;
 		}
 
-		for (IPropertyStorage entryStore : section.getSections()) {
+		for (ISettingSection entryStore : section.getSections()) {
 			String name = entryStore.get("Name");
 			MemoryEntry entry = findMappedEntry(name);
 			if (entry != null) {

@@ -6,7 +6,7 @@
  */
 package v9t9.emulator.hardware;
 
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.Cpu;
@@ -431,7 +431,7 @@ public class InternalCru9901 implements CruAccess {
 		}
 	}
 
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		section.put("EnabledInterrupts", int9901);
 		section.put("CurrentInterrupts", currentints);
 		section.put("KeyboardColumn", crukeyboardcol);
@@ -444,7 +444,7 @@ public class InternalCru9901 implements CruAccess {
 		section.put("IntReq", intreq);
 		section.put("IC", ic);
 	}
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		if (section == null) {
 			reset();
 			return;

@@ -30,6 +30,8 @@ import org.w3c.dom.Element;
  */
 public abstract class XMLStorageBase {
 
+	/** com.sun.org.apache.xml.internal.serializer#INDENT_AMOUNT */
+	private static final String INDENT_AMOUNT = "{http://xml.apache.org/xalan}indent-amount";
 	private boolean dirty;
 	private Document document;
 	private Element documentElement;
@@ -112,8 +114,10 @@ public abstract class XMLStorageBase {
 		} catch (TransformerConfigurationException e) {
 			throw saveException(e);
 		}
+		transformer.setOutputProperty(OutputKeys.STANDALONE, "yes"); //$NON-NLS-1$
 		transformer.setOutputProperty(OutputKeys.METHOD, "xml"); //$NON-NLS-1$
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes"); //$NON-NLS-1$
+		transformer.setOutputProperty(INDENT_AMOUNT, "2"); //$NON-NLS-1$
 	
 		OutputStream output = getStorageOutputStream();
 		

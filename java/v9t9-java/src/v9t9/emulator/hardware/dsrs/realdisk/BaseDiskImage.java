@@ -10,7 +10,7 @@ import java.text.MessageFormat;
 import java.util.List;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IPropertyStorage;
+import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.DSKheader;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.FDCStatus;
@@ -299,11 +299,11 @@ public abstract class BaseDiskImage implements IPersistable {
 	/**
 	 * @param addNewSection
 	 */
-	public void saveState(IPropertyStorage section) {
+	public void saveState(ISettingSection section) {
 		section.put("FilePath", spec.getAbsolutePath());			
 	}
 
-	public void loadState(IPropertyStorage section) {
+	public void loadState(ISettingSection section) {
 		spec = DiskImageDsr.getDefaultDiskImage(name);
 		if (section == null)
 			return;

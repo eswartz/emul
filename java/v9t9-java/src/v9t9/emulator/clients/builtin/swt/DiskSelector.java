@@ -249,7 +249,7 @@ public class DiskSelector extends Composite {
 	}
 	private void setHistory(String name, String[] history) {
 		EmulatorSettings.INSTANCE.getHistorySettings().put("DiskSelector." + name, history);
-		EmulatorSettings.INSTANCE.save();
+		//EmulatorSettings.INSTANCE.save();
 	}
 	/**
 	 * 

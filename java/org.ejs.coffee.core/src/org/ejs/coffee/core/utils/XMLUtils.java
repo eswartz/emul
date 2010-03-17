@@ -92,5 +92,17 @@ public class XMLUtils {
 		}
 		return null;
 	}
+	
+	/**
+	 * Get the trimmed text for an element, which is considered the first Text child element.
+	 * @param element
+	 * @returns the text or <code>""</code>
+	 */
+	public static String getTrimmedText(Element element) {
+		String text = getText(element);
+		if (text != null)
+			return text.trim();
+		return null;
+	}
 
 }
