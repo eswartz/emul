@@ -5,6 +5,10 @@ package org.ejs.coffee.core.properties;
 
 import java.lang.reflect.Field;
 
+import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.swt.widgets.Composite;
+
 /**
  * @author ejs
  *
@@ -113,6 +117,13 @@ public class FieldProperty extends AbstractProperty {
 
 
 
+	/* (non-Javadoc)
+	 * @see org.ejs.chiprocksynth.model.ICellEditorProvider#createCellEditor(org.eclipse.swt.widgets.Composite)
+	 */
+	public CellEditor createCellEditor(Composite composite) {
+		return new TextCellEditor(composite);
+	}
+	
 	protected FieldProperty getProperty() { return this; }
 	
 	/* (non-Javadoc)

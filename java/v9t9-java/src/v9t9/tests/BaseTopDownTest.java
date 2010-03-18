@@ -2,10 +2,10 @@ package v9t9.tests;
 
 import java.util.Collection;
 
-import v9t9.tools.decomp.TopDownPhase;
-import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.ParseException;
-import v9t9.tools.llinst.Routine;
+import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.common.Block;
+import v9t9.tools.asm.decomp.Routine;
+import v9t9.tools.asm.decomp.TopDownPhase;
 
 public class BaseTopDownTest extends BaseTopDownPhaseTest {
 

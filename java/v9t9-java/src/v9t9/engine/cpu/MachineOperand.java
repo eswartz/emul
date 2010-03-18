@@ -7,9 +7,9 @@
 package v9t9.engine.cpu;
 
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.asm.Assembler;
-import v9t9.tools.asm.ResolveException;
-import v9t9.tools.asm.Symbol;
+import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.ResolveException;
+import v9t9.tools.asm.assembler.Symbol;
 
 /**
  * A machine operand, as parsed from the instruction.

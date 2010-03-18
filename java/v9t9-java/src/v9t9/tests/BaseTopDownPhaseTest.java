@@ -16,12 +16,12 @@ import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
-import v9t9.tools.decomp.ICodeProvider;
-import v9t9.tools.decomp.IDecompileInfo;
-import v9t9.tools.llinst.HighLevelInstruction;
-import v9t9.tools.llinst.MemoryRanges;
-import v9t9.tools.llinst.ParseException;
-import v9t9.tools.llinst.Routine;
+import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.common.HighLevelInstruction;
+import v9t9.tools.asm.common.MemoryRanges;
+import v9t9.tools.asm.decomp.ICodeProvider;
+import v9t9.tools.asm.decomp.IDecompileInfo;
+import v9t9.tools.asm.decomp.Routine;
 
 public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProvider
 {

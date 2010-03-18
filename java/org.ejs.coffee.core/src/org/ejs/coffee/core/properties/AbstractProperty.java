@@ -9,9 +9,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.eclipse.jface.viewers.CellEditor;
-import org.eclipse.jface.viewers.TextCellEditor;
-import org.eclipse.swt.widgets.Composite;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Element;
@@ -22,7 +19,7 @@ import org.w3c.dom.Element;
  * @author ejs
  *
  */
-public abstract class AbstractProperty implements IProperty, ICellEditorProvider, Comparable<IProperty>, Comparator<IProperty> {
+public abstract class AbstractProperty implements IProperty, Comparable<IProperty>, Comparator<IProperty> {
 
 	
 	protected final String name;
@@ -61,13 +58,6 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 	 */
 	public int compareTo(IProperty o) {
 		return getName().compareTo(o.getName());
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.ICellEditorProvider#createCellEditor(org.eclipse.swt.widgets.Composite)
-	 */
-	public CellEditor createCellEditor(Composite composite) {
-		return new TextCellEditor(composite);
 	}
 	
 	@Override
@@ -353,6 +343,7 @@ public abstract class AbstractProperty implements IProperty, ICellEditorProvider
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.model.IPersistable#saveChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
 	 */
+	@SuppressWarnings("unchecked")
 	public void saveChildState(ISettingSection section, Object value, String propertyName) {
 		IPropertySource ps = null;
 		if (value instanceof IPersistable) {

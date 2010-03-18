@@ -12,9 +12,9 @@ import v9t9.emulator.runtime.compiler.Compiler.InstInfo;
 import v9t9.emulator.runtime.compiler.Compiler.InstructionRangeCompiler;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
-import v9t9.tools.decomp.IDecompileInfo;
-import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.HighLevelInstruction;
+import v9t9.tools.asm.common.Block;
+import v9t9.tools.asm.common.HighLevelInstruction;
+import v9t9.tools.asm.decomp.IDecompileInfo;
 
 /**
  * Compile lists of instructions per discovered functions, assuming only a few

@@ -7,8 +7,8 @@
 package v9t9.tests;
 
 import junit.framework.TestCase;
-import v9t9.tools.llinst.MemoryRange;
-import v9t9.tools.llinst.MemoryRanges;
+import v9t9.tools.asm.common.MemoryRange;
+import v9t9.tools.asm.common.MemoryRanges;
 
 public class TestMemoryRanges extends TestCase {
     @Override

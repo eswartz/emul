@@ -4,8 +4,8 @@ import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tests.BaseTest;
-import v9t9.tools.asm.Assembler;
-import v9t9.tools.asm.ContentEntry;
+import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.ContentEntry;
 
 public class TestAssemblerJumpRanges extends BaseTest {
 

@@ -3,8 +3,8 @@
  */
 package v9t9.tests;
 
-import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.HighLevelInstruction;
+import v9t9.tools.asm.common.Block;
+import v9t9.tools.asm.common.HighLevelInstruction;
 
 /**
  * @author ejs

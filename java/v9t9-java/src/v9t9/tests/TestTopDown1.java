@@ -11,14 +11,14 @@ import java.util.Set;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.ContextSwitchRoutine;
-import v9t9.tools.llinst.HighLevelInstruction;
-import v9t9.tools.llinst.LabelListOperand;
-import v9t9.tools.llinst.LinkedRoutine;
-import v9t9.tools.llinst.ParseException;
-import v9t9.tools.llinst.Routine;
-import v9t9.tools.llinst.RoutineOperand;
+import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.common.Block;
+import v9t9.tools.asm.common.HighLevelInstruction;
+import v9t9.tools.asm.decomp.ContextSwitchRoutine;
+import v9t9.tools.asm.decomp.LabelListOperand;
+import v9t9.tools.asm.decomp.LinkedRoutine;
+import v9t9.tools.asm.decomp.Routine;
+import v9t9.tools.asm.decomp.RoutineOperand;
 
 
 public class TestTopDown1 extends BaseTopDownTest

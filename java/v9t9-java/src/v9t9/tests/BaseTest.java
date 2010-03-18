@@ -18,18 +18,18 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.StockMemoryModel;
 import v9t9.engine.memory.StockRamArea;
-import v9t9.tools.asm.Assembler;
-import v9t9.tools.asm.AssemblerInstruction;
-import v9t9.tools.asm.DirectiveInstructionParserStage;
-import v9t9.tools.asm.LLInstruction;
-import v9t9.tools.asm.ResolveException;
-import v9t9.tools.asm.StandardInstructionParserStage;
-import v9t9.tools.asm.Symbol;
-import v9t9.tools.asm.directive.Directive;
-import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.HighLevelInstruction;
-import v9t9.tools.llinst.ParseException;
-import v9t9.tools.llinst.Routine;
+import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.AssemblerInstruction;
+import v9t9.tools.asm.assembler.DirectiveInstructionParserStage;
+import v9t9.tools.asm.assembler.LLInstruction;
+import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.assembler.ResolveException;
+import v9t9.tools.asm.assembler.StandardInstructionParserStage;
+import v9t9.tools.asm.assembler.Symbol;
+import v9t9.tools.asm.assembler.directive.Directive;
+import v9t9.tools.asm.common.Block;
+import v9t9.tools.asm.common.HighLevelInstruction;
+import v9t9.tools.asm.decomp.Routine;
 
 public abstract class BaseTest extends TestCase {
 

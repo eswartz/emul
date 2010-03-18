@@ -4,11 +4,11 @@ import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tests.BaseTest;
-import v9t9.tools.asm.Assembler;
-import v9t9.tools.asm.ContentEntry;
-import v9t9.tools.asm.Equate;
-import v9t9.tools.asm.Symbol;
-import v9t9.tools.llinst.ParseException;
+import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.ContentEntry;
+import v9t9.tools.asm.assembler.Equate;
+import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.assembler.Symbol;
 
 public class TestAssemblerMacros extends BaseTest {
 

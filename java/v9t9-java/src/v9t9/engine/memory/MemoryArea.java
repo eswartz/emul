@@ -6,13 +6,9 @@
  */
 package v9t9.engine.memory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.iHarder.Base64;
 
 import org.ejs.coffee.core.settings.ISettingSection;
-import org.ejs.coffee.core.utils.HexUtils;
 
 /**
  * A memory area is the smallest unit of contiguous memory which has the

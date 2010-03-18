@@ -8,16 +8,16 @@ package v9t9.tests.asm;
 
 import junit.framework.TestCase;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.tools.asm.AssemblerTokenizer;
-import v9t9.tools.asm.MachineOperandParserStage;
-import v9t9.tools.asm.operand.ll.LLAddrOperand;
-import v9t9.tools.asm.operand.ll.LLEmptyOperand;
-import v9t9.tools.asm.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.operand.ll.LLOperand;
-import v9t9.tools.asm.operand.ll.LLRegIncOperand;
-import v9t9.tools.asm.operand.ll.LLRegIndOperand;
-import v9t9.tools.asm.operand.ll.LLRegisterOperand;
-import v9t9.tools.llinst.ParseException;
+import v9t9.tools.asm.assembler.AssemblerTokenizer;
+import v9t9.tools.asm.assembler.MachineOperandParserStage;
+import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 public class MachineOperandParserTest extends TestCase {
 
