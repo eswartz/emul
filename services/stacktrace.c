@@ -424,8 +424,8 @@ int is_top_frame(Context * ctx, int frame) {
     StackTrace * stack;
 
     if (ctx == NULL || !context_has_state(ctx)) return 0;
-    if (!ctx->stopped) return 0;
     if (frame == STACK_TOP_FRAME) return 1;
+    if (!ctx->stopped) return 0;
     stack = create_stack_trace(ctx);
     if (stack->error != NULL) return 0;
     return frame == stack->frame_cnt - 1;
