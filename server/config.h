@@ -64,6 +64,18 @@
 #  define ENABLE_SymbolsProxy   0
 #endif
 
+#if !defined(ENABLE_LineNumbersProxy)
+#  define ENABLE_LineNumbersProxy   0
+#endif
+
+#if !defined(ENABLE_Symbols)
+#  define ENABLE_Symbols        (ENABLE_SymbolsProxy || SERVICE_Symbols)
+#endif
+
+#if !defined(ENABLE_LineNumbers)
+#  define ENABLE_LineNumbers    (ENABLE_LineNumbersProxy || SERVICE_LineNumbers)
+#endif
+
 #if !defined(ENABLE_DebugContext)
 #  define ENABLE_DebugContext   1
 #endif

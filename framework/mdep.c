@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 /*
- * Machine and OS dependend definitions.
+ * Machine and OS dependent definitions.
  * This module implements host OS abstraction layer that helps make
  * agent code portable between Linux, Windows, VxWorks and potentially other OSes.
  */
@@ -36,7 +36,7 @@ pthread_attr_t pthread_create_attr;
 
 /*********************************************************************
     Support of pthreads on Windows is implemented according to
-    reccomendations from the paper:
+    recommendations from the paper:
 
     Strategies for Implementing POSIX Condition Variables on Win32
     C++ Report, SIGS, Vol. 10, No. 5, June, 1998
@@ -104,7 +104,7 @@ int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex) {
     res = SignalObjectAndWait(*mutex, p->sema, INFINITE, FALSE);
     if (res == WAIT_FAILED) return set_win32_errno(GetLastError());
 
-    /* Reacquire lock to avoid race conditions. */
+    /* Re-acquire lock to avoid race conditions. */
     EnterCriticalSection(&p->waiters_count_lock);
 
     /* We're no longer waiting... */
@@ -157,7 +157,7 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const
     res = SignalObjectAndWait(*mutex, p->sema, timeout, FALSE);
     if (res == WAIT_FAILED) return set_win32_errno(GetLastError());
 
-    /* Reacquire lock to avoid race conditions. */
+    /* Re-acquire lock to avoid race conditions. */
     EnterCriticalSection(&p->waiters_count_lock);
 
     /* We're no longer waiting... */

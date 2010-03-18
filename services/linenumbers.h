@@ -24,14 +24,33 @@
 #include "protocol.h"
 #include "context.h"
 
-typedef void LineToAddressCallBack(void *, ContextAddress);
+typedef struct CodeArea {
+    char * directory;
+    char * file;
+    ContextAddress start_address;
+    int start_line;
+    int start_column;
+    ContextAddress end_address;
+    int end_line;
+    int end_column;
+    int isa;
+    int is_statement;
+    int basic_block;
+    int prologue_end;
+    int epilogue_begin;
+} CodeArea;
 
-extern int line_to_address(Context * ctx, char * file, int line, int column, LineToAddressCallBack *, void * args);
+typedef void LineNumbersCallBack(CodeArea *, void *);
+
+extern int line_to_address(Context * ctx, char * file, int line, int column, LineNumbersCallBack * client, void * args);
+
+extern int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, LineNumbersCallBack * client, void * args);
 
 /*
  * Initialize Line Numbers service.
  */
 extern void ini_line_numbers_service(Protocol *);
+extern void ini_line_numbers_lib(void);
 
 
 #endif /* D_linenumbers */

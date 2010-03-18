@@ -173,43 +173,41 @@ static void get_symbol_cache_client(void * x) {
     GetSymbolArgs * args = (GetSymbolArgs *)x;
     Channel * c = cache_channel();
     Context * ctx = args->ctx;
+    Symbol * sym = NULL;
+    ContextAddress addr = 0;
+    int error = 0;
 
-    if (!is_channel_closed(c)) {
-        Symbol * sym = NULL;
-        ContextAddress addr = 0;
-        int error = 0;
-
-        if (ctx == NULL || ctx->exited) {
-            error = ERR_INV_CONTEXT;
-        }
-        else if (find_symbol(ctx, STACK_NO_FRAME, args->name, &sym) < 0) {
-            error = errno;
-        }
-        else if (get_symbol_address(sym, &addr) < 0) {
-            error = errno;
-        }
-        cache_exit();
-
-        write_stringz(&c->out, "R");
-        write_stringz(&c->out, args->token);
-        write_errno(&c->out, error);
-        if (error != 0) {
-            write_stringz(&c->out, "null");
-        }
-        else {
-            write_stream(&c->out, '{');
-            json_write_string(&c->out, "Abs");
-            write_stream(&c->out, ':');
-            json_write_boolean(&c->out, 1);
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "Value");
-            write_stream(&c->out, ':');
-            json_write_int64(&c->out, addr);
-            write_stream(&c->out, '}');
-            write_stream(&c->out, 0);
-        }
-        write_stream(&c->out, MARKER_EOM);
+    if (ctx == NULL || ctx->exited) {
+        error = ERR_INV_CONTEXT;
     }
+    else if (find_symbol(ctx, STACK_NO_FRAME, args->name, &sym) < 0) {
+        error = errno;
+    }
+    else if (get_symbol_address(sym, &addr) < 0) {
+        error = errno;
+    }
+    cache_exit();
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, error);
+    if (error != 0) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        write_stream(&c->out, '{');
+        json_write_string(&c->out, "Abs");
+        write_stream(&c->out, ':');
+        json_write_boolean(&c->out, 1);
+        write_stream(&c->out, ',');
+        json_write_string(&c->out, "Value");
+        write_stream(&c->out, ':');
+        json_write_int64(&c->out, addr);
+        write_stream(&c->out, '}');
+        write_stream(&c->out, 0);
+    }
+    write_stream(&c->out, MARKER_EOM);
+
     context_unlock(ctx);
     loc_free(args->name);
 }

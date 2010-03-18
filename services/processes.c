@@ -42,6 +42,7 @@
 #include "filesystem.h"
 #include "streamsservice.h"
 #include "waitpid.h"
+#include "signames.h"
 #include "processes.h"
 
 static const char * PROCESSES = "Processes";
@@ -136,8 +137,15 @@ static ChildProcess * find_process(int pid) {
     return NULL;
 }
 
+static int is_attached(pid_t pid) {
+#if ENABLE_DebugContext
+    return context_find_from_pid(pid, 0) != NULL;
+#else
+    return 0;
+#endif
+}
+
 static void write_context(OutputStream * out, int pid) {
-    Context * ctx = context_find_from_pid(pid, 0);
     ChildProcess * prs = find_process(pid);
 
     write_stream(out, '{');
@@ -152,7 +160,7 @@ static void write_context(OutputStream * out, int pid) {
     json_write_boolean(out, 1);
     write_stream(out, ',');
 
-    if (ctx != NULL) {
+    if (is_attached(pid)) {
         json_write_string(out, "Attached");
         write_stream(out, ':');
         json_write_boolean(out, 1);
@@ -280,7 +288,7 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         write_stream(&c->out, '[');
         do {
-            if (!attached_only || context_find_from_pid(pe32.th32ProcessID, 0) != NULL) {
+            if (!attached_only || is_attached(pe32.th32ProcessID)) {
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, pid2id(pe32.th32ProcessID, 0));
                 cnt++;
@@ -307,7 +315,7 @@ static void command_get_children(char * token, Channel * c) {
         write_errno(&c->out, 0);
         write_stream(&c->out, '[');
         for (i = 0; i < ids_cnt; i++) {
-            if (!attached_only || context_find_from_pid(ids[i], 0) != NULL) {
+            if (!attached_only || is_attached(ids[i])) {
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, pid2id(ids[i], 0));
                 cnt++;
@@ -331,7 +339,7 @@ static void command_get_children(char * token, Channel * c) {
                 if (ent == NULL) break;
                 if (ent->d_name[0] >= '1' && ent->d_name[0] <= '9') {
                     pid_t pid = atol(ent->d_name);
-                    if (!attached_only || context_find_from_pid(pid, 0) != NULL) {
+                    if (!attached_only || is_attached(pid)) {
                         if (cnt > 0) write_stream(&c->out, ',');
                         json_write_string(&c->out, pid2id(pid, 0));
                         cnt++;
@@ -379,7 +387,7 @@ static void command_attach(char * token, Channel * c) {
     if (parent != 0) {
         err = ERR_INV_CONTEXT;
     }
-    else if (context_find_from_pid(pid, 0) != NULL) {
+    else if (is_attached(pid)) {
         err = ERR_ALREADY_ATTACHED;
     }
     else {
@@ -404,7 +412,93 @@ static void command_detach(char * token, Channel * c) {
     exception(ERR_PROTOCOL);
 }
 
-#endif
+static void command_get_signal_mask(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+    Context * ctx = NULL;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    ctx = id2ctx(id);
+    if (ctx == NULL) err = ERR_INV_CONTEXT;
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+
+    if (ctx == NULL) {
+        write_stringz(&c->out, "null");
+        write_stringz(&c->out, "null");
+        write_stringz(&c->out, "null");
+    }
+    else {
+        json_write_long(&c->out, ctx->sig_dont_stop);
+        write_stream(&c->out, 0);
+        json_write_long(&c->out, ctx->sig_dont_pass);
+        write_stream(&c->out, 0);
+        json_write_long(&c->out, ctx->pending_signals);
+        write_stream(&c->out, 0);
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_set_signal_mask(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+    Context * ctx = NULL;
+    int dont_stop;
+    int dont_pass;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    dont_stop = json_read_long(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    dont_pass = json_read_long(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    ctx = id2ctx(id);
+    if (ctx == NULL) {
+        err = ERR_INV_CONTEXT;
+    }
+    else {
+        ctx->sig_dont_stop = dont_stop;
+        ctx->sig_dont_pass = dont_pass;
+    }
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void start_done(int error, Context * ctx, void * arg) {
+    AttachDoneArgs * data = (AttachDoneArgs *)arg;
+    Channel * c = data->c;
+
+    if (!is_channel_closed(c)) {
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, data->token);
+        write_errno(&c->out, error);
+        if (ctx == NULL) write_string(&c->out, "null");
+        else write_context(&c->out, ctx->pid);
+        write_stream(&c->out, 0);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
+    }
+    channel_unlock(c);
+    loc_free(data);
+}
+
+#else /* not ENABLE_DebugContext */
+
+#define context_attach(pid, done, client_data, selfattach) (errno = ERR_UNSUPPORTED, -1)
+#define context_attach_self() (errno = ERR_UNSUPPORTED, -1)
+
+#endif /* ENABLE_DebugContext */
 
 static void command_terminate(char * token, Channel * c) {
     int err = 0;
@@ -534,74 +628,6 @@ static void command_get_signal_list(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-
-#if ENABLE_DebugContext
-
-static void command_get_signal_mask(char * token, Channel * c) {
-    int err = 0;
-    char id[256];
-    Context * ctx = NULL;
-
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-
-    ctx = id2ctx(id);
-    if (ctx == NULL) err = ERR_INV_CONTEXT;
-
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-
-    if (ctx == NULL) {
-        write_stringz(&c->out, "null");
-        write_stringz(&c->out, "null");
-        write_stringz(&c->out, "null");
-    }
-    else {
-        json_write_long(&c->out, ctx->sig_dont_stop);
-        write_stream(&c->out, 0);
-        json_write_long(&c->out, ctx->sig_dont_pass);
-        write_stream(&c->out, 0);
-        json_write_long(&c->out, ctx->pending_signals);
-        write_stream(&c->out, 0);
-    }
-
-    write_stream(&c->out, MARKER_EOM);
-}
-
-static void command_set_signal_mask(char * token, Channel * c) {
-    int err = 0;
-    char id[256];
-    Context * ctx = NULL;
-    int dont_stop;
-    int dont_pass;
-
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    dont_stop = json_read_long(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    dont_pass = json_read_long(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-
-    ctx = id2ctx(id);
-    if (ctx == NULL) {
-        err = ERR_INV_CONTEXT;
-    }
-    else {
-        ctx->sig_dont_stop = dont_stop;
-        ctx->sig_dont_pass = dont_pass;
-    }
-
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    write_stream(&c->out, MARKER_EOM);
-}
-
-#endif /* ENABLE_DebugContext */
-
 static void command_get_environment(char * token, Channel * c) {
     char ** p = environ;
 
@@ -620,24 +646,6 @@ static void command_get_environment(char * token, Channel * c) {
     write_stream(&c->out, ']');
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
-}
-
-static void start_done(int error, Context * ctx, void * arg) {
-    AttachDoneArgs * data = (AttachDoneArgs *)arg;
-    Channel * c = data->c;
-
-    if (!is_channel_closed(c)) {
-        write_stringz(&c->out, "R");
-        write_stringz(&c->out, data->token);
-        write_errno(&c->out, error);
-        if (ctx == NULL) write_string(&c->out, "null");
-        else write_context(&c->out, ctx->pid);
-        write_stream(&c->out, 0);
-        write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
-    }
-    channel_unlock(c);
-    loc_free(data);
 }
 
 static void process_exited(ChildProcess * prs) {
@@ -1285,14 +1293,14 @@ void ini_processes_service(Protocol * proto) {
     add_command_handler(proto, PROCESSES, "terminate", command_terminate);
     add_command_handler(proto, PROCESSES, "signal", command_signal);
     add_command_handler(proto, PROCESSES, "getSignalList", command_get_signal_list);
+    add_command_handler(proto, PROCESSES, "getEnvironment", command_get_environment);
+    add_command_handler(proto, PROCESSES, "start", command_start);
 #if ENABLE_DebugContext
     add_command_handler(proto, PROCESSES, "attach", command_attach);
     add_command_handler(proto, PROCESSES, "detach", command_detach);
     add_command_handler(proto, PROCESSES, "getSignalMask", command_get_signal_mask);
     add_command_handler(proto, PROCESSES, "setSignalMask", command_set_signal_mask);
-#endif
-    add_command_handler(proto, PROCESSES, "getEnvironment", command_get_environment);
-    add_command_handler(proto, PROCESSES, "start", command_start);
+#endif /* ENABLE_DebugContext */
 }
 
 #endif

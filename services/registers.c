@@ -53,7 +53,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
         json_write_string(out, ctx2id(ctx));
     }
     else {
-        json_write_string(out, get_stack_frame_id(ctx, frame));
+        json_write_string(out, frame2id(ctx, frame));
     }
 
     write_stream(out, ',');
@@ -120,64 +120,6 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     write_stream(out, 0);
 }
 
-static char * register2id(char * ctx_id, int frame, int reg) {
-    static char id[256];
-    if (frame == STACK_TOP_FRAME || frame == STACK_NO_FRAME) {
-        snprintf(id, sizeof(id), "R%d.%s", reg, ctx_id);
-    }
-    else {
-        snprintf(id, sizeof(id), "R%d@%d.%s", reg, frame, ctx_id);
-    }
-    return id;
-}
-
-static int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def) {
-    int r = 0;
-
-    *ctx = NULL;
-    *frame = STACK_TOP_FRAME;
-    *reg_def = NULL;
-    if (*id++ != 'R') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    while (*id != '.' && *id != '@') {
-        if (*id >= '0' && *id <= '9') {
-            r = r * 10 + (*id++ - '0');
-        }
-        else {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
-    }
-    if (*id == '@') {
-        int n = 0;
-        id++;
-        while (*id != '.') {
-            if (*id >= '0' && *id <= '9') {
-                n = n * 10 + (*id++ - '0');
-            }
-            else {
-                errno = ERR_INV_CONTEXT;
-                return -1;
-            }
-        }
-        *frame = n;
-    }
-    id++;
-    *ctx = id2ctx(id);
-    if (*ctx == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    if ((*ctx)->exited) {
-        errno = ERR_ALREADY_EXITED;
-        return -1;
-    }
-    *reg_def = get_reg_definitions(*ctx) + r;
-    return 0;
-}
-
 static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
@@ -214,7 +156,7 @@ static void command_get_children(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (is_stack_frame_id(id, &ctx, &frame)) {
+    if (id2frame(id, &ctx, &frame) == 0) {
         if (get_frame_info(ctx, frame, &frame_info) < 0) err = errno;
     }
     else {
@@ -230,13 +172,12 @@ static void command_get_children(char * token, Channel * c) {
     write_stream(&c->out, '[');
     if (err == 0 && ctx != NULL && context_has_state(ctx)) {
         int cnt = 0;
-        char * ctx_id = ctx2id(ctx);
         RegisterDefinition * defs = get_reg_definitions(ctx);
         RegisterDefinition * reg_def;
         for (reg_def = defs; reg_def->name != NULL; reg_def++) {
             if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
                 if (cnt > 0) write_stream(&c->out, ',');
-                json_write_string(&c->out, register2id(ctx_id, frame, reg_def - defs));
+                json_write_string(&c->out, register2id(ctx, frame, reg_def));
                 cnt++;
             }
         }
@@ -357,67 +298,45 @@ typedef struct Location Location;
 static Location * buf = NULL;
 static int buf_pos = 0;
 static int buf_len = 0;
+static int buf_setm = 0;
+static int buf_err = 0;
+
+static void read_location(InputStream * inp, void * args) {
+    int ch = read_stream(inp);
+    Location * loc = NULL;
+    if (ch != '[') exception(ERR_JSON_SYNTAX);
+    if (buf_pos >= buf_len) {
+        buf_len = buf_len == 0 ? 0x10 : buf_len * 2;
+        buf = (Location *)loc_realloc(buf, buf_len * sizeof(Location));
+    }
+    loc = buf + buf_pos++;
+    memset(loc, 0, sizeof(Location));
+    json_read_string(inp, loc->id, sizeof(loc->id));
+    if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
+    loc->offs = (unsigned)json_read_ulong(inp);
+    if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
+    loc->size = (unsigned)json_read_ulong(inp);
+    if (read_stream(inp) != ']') exception(ERR_JSON_SYNTAX);
+
+    if (!buf_err) {
+        if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) buf_err = errno;
+        else if (!loc->ctx->intercepted) buf_err = ERR_IS_RUNNING;
+        else if (loc->offs + loc->size > (unsigned)loc->reg_def->size) buf_err = ERR_INV_DATA_SIZE;
+    }
+
+    if (!buf_err && !is_top_frame(loc->ctx, loc->frame)) {
+        if (buf_setm) buf_err = ERR_INV_CONTEXT;
+        else if (get_frame_info(loc->ctx, loc->frame, &loc->frame_info) < 0) buf_err = errno;
+        else if (read_reg_value(loc->reg_def, loc->frame_info, NULL) < 0) buf_err = errno;
+    }
+}
 
 static int read_location_list(Channel * c, int setm) {
-    int err = 0;
-    InputStream * inp = &c->inp;
-    int ch = read_stream(inp);
-
     buf_pos = 0;
-    if (ch == 'n') {
-        if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
-        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
-        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
-    }
-    else if (ch != '[') {
-        exception(ERR_PROTOCOL);
-    }
-    else {
-        if (peek_stream(inp) == ']') {
-            read_stream(inp);
-        }
-        else {
-            for (;;) {
-                int ch = read_stream(inp);
-                if (ch == 'n') {
-                    if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
-                    if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
-                    if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
-                }
-                else {
-                    Location * loc = NULL;
-                    if (ch != '[') exception(ERR_JSON_SYNTAX);
-                    if (buf_pos >= buf_len) {
-                        buf_len = buf_len == 0 ? 0x10 : buf_len * 2;
-                        buf = (Location *)loc_realloc(buf, buf_len * sizeof(Location));
-                    }
-                    loc = buf + buf_pos++;
-                    memset(loc, 0, sizeof(Location));
-                    json_read_string(inp, loc->id, sizeof(loc->id));
-                    if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
-                    loc->offs = (unsigned)json_read_ulong(inp);
-                    if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
-                    loc->size = (unsigned)json_read_ulong(inp);
-                    if (read_stream(inp) != ']') exception(ERR_JSON_SYNTAX);
-                    if (!err) {
-                        if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) err = errno;
-                        else if (!loc->ctx->intercepted) err = ERR_IS_RUNNING;
-                        else if (loc->offs + loc->size > (unsigned)loc->reg_def->size) err = ERR_INV_DATA_SIZE;
-                    }
-                    if (!err && !is_top_frame(loc->ctx, loc->frame)) {
-                        if (setm) err = ERR_INV_CONTEXT;
-                        else if (get_frame_info(loc->ctx, loc->frame, &loc->frame_info) < 0) err = errno;
-                        else if (read_reg_value(loc->reg_def, loc->frame_info, NULL) < 0) err = errno;
-                    }
-                }
-                ch = read_stream(inp);
-                if (ch == ',') continue;
-                if (ch == ']') break;
-                exception(ERR_JSON_SYNTAX);
-            }
-        }
-    }
-    return err;
+    buf_err = 0;
+    buf_setm = setm;
+    json_read_array(&c->inp, read_location, NULL);
+    return buf_err;
 }
 
 static void command_getm(char * token, Channel * c) {
@@ -491,7 +410,7 @@ static void command_setm(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void read_filter_attrs(InputStream * inp, char * nm, void * arg) {
+static void read_filter_attrs(InputStream * inp, const char * nm, void * arg) {
     json_skip_object(inp);
 }
 

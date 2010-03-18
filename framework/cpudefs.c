@@ -204,4 +204,105 @@ int write_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t v
     return -1;
 }
 
+int id2frame(char * id, Context ** ctx, int * frame) {
+    int f = 0;
+    Context * c = NULL;
+
+    if (*id++ != 'F') {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (*id++ != 'P') {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    while (*id != '.') {
+        if (*id < '0' || *id > '9') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        f = f * 10 + (*id++ - '0');
+    }
+    id++;
+    c = id2ctx(id);
+    if (c == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    *ctx = c;
+    *frame = f;
+    return 0;
+}
+
+char * frame2id(Context * ctx, int frame) {
+    static char id[256];
+
+    assert(frame >= 0);
+    if (!context_has_state(ctx)) {
+        errno = ERR_INV_CONTEXT;
+        return NULL;
+    }
+    snprintf(id, sizeof(id), "FP%d.%s", frame, ctx2id(ctx));
+    return id;
+}
+
+char * register2id(Context * ctx, int frame, RegisterDefinition * reg) {
+    static char id[256];
+    RegisterDefinition * defs = get_reg_definitions(ctx);
+    if (frame < 0) {
+        snprintf(id, sizeof(id), "R%d.%s", (int)(reg - defs), ctx2id(ctx));
+    }
+    else {
+        snprintf(id, sizeof(id), "R%d@%d.%s", (int)(reg - defs), frame, ctx2id(ctx));
+    }
+    return id;
+}
+
+int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def) {
+    int r = 0;
+
+    *ctx = NULL;
+    *frame = STACK_TOP_FRAME;
+    *reg_def = NULL;
+    if (*id++ != 'R') {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    while (*id != '.' && *id != '@') {
+        if (*id >= '0' && *id <= '9') {
+            r = r * 10 + (*id++ - '0');
+        }
+        else {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+    }
+    if (*id == '@') {
+        int n = 0;
+        id++;
+        while (*id != '.') {
+            if (*id >= '0' && *id <= '9') {
+                n = n * 10 + (*id++ - '0');
+            }
+            else {
+                errno = ERR_INV_CONTEXT;
+                return -1;
+            }
+        }
+        *frame = n;
+    }
+    id++;
+    *ctx = id2ctx(id);
+    if (*ctx == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if ((*ctx)->exited) {
+        errno = ERR_ALREADY_EXITED;
+        return -1;
+    }
+    *reg_def = get_reg_definitions(*ctx) + r;
+    return 0;
+}
+
 #endif /* ENABLE_DebugContext */

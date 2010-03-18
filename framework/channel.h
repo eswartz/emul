@@ -66,7 +66,7 @@ struct Channel {
     void (*lock)(Channel *);            /* Lock channel from deletion */
     void (*unlock)(Channel *);          /* Unlock channel */
     int (*is_closed)(Channel *);        /* Return true if channel is closed */
-    void (*close)(Channel *, int);      /* Closed channel */
+    void (*close)(Channel *, int);      /* Close channel */
 
     /* Populated by channel client, NULL values mean default handling */
     void (*connecting)(Channel *);      /* Called when channel is ready for transmit */

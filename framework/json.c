@@ -506,6 +506,13 @@ void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp) {
     else if (ch == '"') {
         state->encoding = ENCODING_BASE64;
     }
+    else if (ch == 'n') {
+        if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        state->encoding = ENCODING_BINARY;
+        state->size_start = 0;
+    }
     else {
         exception(ERR_JSON_SYNTAX);
     }
@@ -805,6 +812,7 @@ void json_skip_object(InputStream * inp) {
 }
 
 int read_errno(InputStream * inp) {
+    int no = 0;
     ErrorReport * err = NULL;
     int ch = read_stream(inp);
     if (ch == 0) return 0;
@@ -817,7 +825,7 @@ int read_errno(InputStream * inp) {
             char name[256];
             json_read_string(inp, name, sizeof(name));
             if (read_stream(inp) != ':') exception(ERR_JSON_SYNTAX);
-            if (err == NULL) err = (ErrorReport *)loc_alloc_zero(sizeof(ErrorReport));
+            if (err == NULL) err = create_error_report();
             if (strcmp(name, "Code") == 0) {
                 err->code = json_read_long(inp);
             }
@@ -842,18 +850,9 @@ int read_errno(InputStream * inp) {
     }
     if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
     if (err == NULL) return 0;
-    if (err->code == 0) {
-        while (err->props != NULL) {
-            ErrorReportItem * i = err->props;
-            err->props = i->next;
-            loc_free(i->name);
-            loc_free(i->value);
-            loc_free(i);
-        }
-        loc_free(err);
-        return 0;
-    }
-    return set_error_report_errno(err);
+    if (err->code != 0) no = set_error_report_errno(err);
+    release_error_report(err);
+    return no;
 }
 
 static void write_error_props(OutputStream * out, ErrorReport * rep) {

@@ -37,8 +37,52 @@ static void command_get_context_cache_client(void * x) {
     Channel * c = cache_channel();
     int err = 0;
     Symbol * sym = NULL;
+    char * owner = NULL;
+    char * name = NULL;
+    int update_policy = 0;
+    int sym_class = SYM_CLASS_UNKNOWN;
+    int type_class = TYPE_CLASS_UNKNOWN;
+    Symbol * type = NULL;
+    Symbol * base = NULL;
+    Symbol * index = NULL;
+    int has_size = 0;
+    int has_length = 0;
+    int has_lower_bound = 0;
+    int has_offset = 0;
+    int has_address = 0;
+    ContextAddress size = 0;
+    ContextAddress length = 0;
+    ContextAddress lower_bound = 0;
+    ContextAddress offset = 0;
+    ContextAddress address = 0;
+    void * value = NULL;
+    size_t value_size = 0;
 
     if (id2symbol(args->id, &sym) < 0) err = errno;
+
+    if (err == 0) {
+        get_symbol_class(sym, &sym_class);
+        get_symbol_update_policy(sym, &owner, &update_policy);
+        get_symbol_name(sym, &name);
+        get_symbol_type_class(sym, &type_class);
+        get_symbol_type(sym, &type);
+        get_symbol_base_type(sym, &base);
+        get_symbol_index_type(sym, &index);
+        has_size = get_symbol_size(sym, &size) == 0;
+        has_length = get_symbol_length(sym, &length) == 0;
+        if (has_length) {
+            has_lower_bound = get_symbol_lower_bound(sym, &lower_bound) == 0;
+        }
+        if (sym_class == SYM_CLASS_REFERENCE) {
+            has_offset = get_symbol_offset(sym, &offset) == 0;
+        }
+        if (sym_class == SYM_CLASS_REFERENCE || sym_class == SYM_CLASS_FUNCTION) {
+            has_address = get_symbol_address(sym, &address) == 0;
+        }
+        if (sym_class == SYM_CLASS_VALUE) {
+            get_symbol_value(sym, &value, &value_size);
+        }
+    }
 
     cache_exit();
 
@@ -47,18 +91,6 @@ static void command_get_context_cache_client(void * x) {
     write_errno(&c->out, err);
 
     if (err == 0) {
-        char * owner = NULL;
-        char * name = NULL;
-        int update_policy = 0;
-        int sym_class = SYM_CLASS_UNKNOWN;
-        int type_class = TYPE_CLASS_UNKNOWN;
-        Symbol * type = NULL;
-        ContextAddress size = 0;
-        ContextAddress length = 0;
-        ContextAddress offset = 0;
-        ContextAddress address = 0;
-
-        get_symbol_class(sym, &sym_class);
 
         write_stream(&c->out, '{');
 
@@ -67,7 +99,7 @@ static void command_get_context_cache_client(void * x) {
         json_write_string(&c->out, args->id);
         write_stream(&c->out, ',');
 
-        if (get_symbol_update_policy(sym, &owner, &update_policy) == 0 && owner != NULL) {
+        if (owner != NULL) {
             json_write_string(&c->out, "OwnerID");
             write_stream(&c->out, ':');
             json_write_string(&c->out, owner);
@@ -79,94 +111,86 @@ static void command_get_context_cache_client(void * x) {
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_name(sym, &name) == 0 && name != NULL) {
+        if (name != NULL) {
             json_write_string(&c->out, "Name");
             write_stream(&c->out, ':');
             json_write_string(&c->out, name);
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_type_class(sym, &type_class) == 0 && type_class != TYPE_CLASS_UNKNOWN) {
+        if (type_class != TYPE_CLASS_UNKNOWN) {
             json_write_string(&c->out, "TypeClass");
             write_stream(&c->out, ':');
             json_write_long(&c->out, type_class);
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_type(sym, &type) == 0 && type != NULL) {
+        if (type != NULL) {
             json_write_string(&c->out, "TypeID");
             write_stream(&c->out, ':');
             json_write_string(&c->out, symbol2id(type));
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_base_type(sym, &type) == 0 && type != NULL) {
+        if (base != NULL) {
             json_write_string(&c->out, "BaseTypeID");
             write_stream(&c->out, ':');
-            json_write_string(&c->out, symbol2id(type));
+            json_write_string(&c->out, symbol2id(base));
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_index_type(sym, &type) == 0 && type != NULL) {
+        if (index != NULL) {
             json_write_string(&c->out, "IndexTypeID");
             write_stream(&c->out, ':');
-            json_write_string(&c->out, symbol2id(type));
+            json_write_string(&c->out, symbol2id(index));
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_size(sym, &size) == 0) {
+        if (has_size) {
             json_write_string(&c->out, "Size");
             write_stream(&c->out, ':');
             json_write_int64(&c->out, size);
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_length(sym, &length) == 0) {
+        if (has_length) {
             json_write_string(&c->out, "Length");
             write_stream(&c->out, ':');
             json_write_int64(&c->out, length);
             write_stream(&c->out, ',');
 
-            if (get_symbol_lower_bound(sym, &offset) == 0) {
+            if (has_lower_bound) {
                 json_write_string(&c->out, "LowerBound");
                 write_stream(&c->out, ':');
-                json_write_int64(&c->out, offset);
+                json_write_int64(&c->out, lower_bound);
                 write_stream(&c->out, ',');
 
                 json_write_string(&c->out, "UpperBound");
                 write_stream(&c->out, ':');
-                json_write_int64(&c->out, offset + length - 1);
+                json_write_int64(&c->out, lower_bound + length - 1);
                 write_stream(&c->out, ',');
             }
         }
 
-        if (sym_class == SYM_CLASS_REFERENCE) {
-            if (get_symbol_offset(sym, &offset) == 0) {
-                json_write_string(&c->out, "Offset");
-                write_stream(&c->out, ':');
-                json_write_int64(&c->out, offset);
-                write_stream(&c->out, ',');
-            }
+        if (has_offset) {
+            json_write_string(&c->out, "Offset");
+            write_stream(&c->out, ':');
+            json_write_int64(&c->out, offset);
+            write_stream(&c->out, ',');
         }
 
-        if (sym_class == SYM_CLASS_REFERENCE || sym_class == SYM_CLASS_FUNCTION) {
-            if (get_symbol_address(sym, &address) == 0) {
-                json_write_string(&c->out, "Address");
-                write_stream(&c->out, ':');
-                json_write_int64(&c->out, address);
-                write_stream(&c->out, ',');
-            }
+        if (has_address) {
+            json_write_string(&c->out, "Address");
+            write_stream(&c->out, ':');
+            json_write_int64(&c->out, address);
+            write_stream(&c->out, ',');
         }
 
-        if (sym_class == SYM_CLASS_VALUE) {
-            void * value = NULL;
-            size_t value_size = 0;
-            if (get_symbol_value(sym, &value, &value_size) == 0 && value != NULL) {
-                json_write_string(&c->out, "Value");
-                write_stream(&c->out, ':');
-                json_write_binary(&c->out, value, value_size);
-                write_stream(&c->out, ',');
-            }
+        if (value != NULL) {
+            json_write_string(&c->out, "Value");
+            write_stream(&c->out, ':');
+            json_write_binary(&c->out, value, value_size);
+            write_stream(&c->out, ',');
         }
 
         json_write_string(&c->out, "Class");
@@ -258,7 +282,7 @@ static void command_find_cache_client(void * x) {
     Symbol * sym = NULL;
     int err = 0;
 
-    if (!is_stack_frame_id(args->id, &ctx, &frame)) ctx = id2ctx(args->id);
+    if (id2frame(args->id, &ctx, &frame) < 0) ctx = id2ctx(args->id);
     if (ctx == NULL) err = set_errno(ERR_INV_CONTEXT, args->id);
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
@@ -319,7 +343,9 @@ static void command_list_cache_client(void * x) {
     int frame = STACK_NO_FRAME;
     int err = 0;
 
-    if (!is_stack_frame_id(args->id, &ctx, &frame)) ctx = id2ctx(args->id);
+    list_cnt = 0;
+
+    if (id2frame(args->id, &ctx, &frame) < 0) ctx = id2ctx(args->id);
     if (ctx == NULL) err = set_errno(ERR_INV_CONTEXT, args->id);
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
@@ -359,6 +385,52 @@ static void command_list(char * token, Channel * c) {
     cache_enter(command_list_cache_client, c, &args, sizeof(args));
 }
 
+typedef struct CommandGetArrayTypeArgs {
+    char token[256];
+    char id[256];
+    int64_t length;
+} CommandGetArrayTypeArgs;
+
+static void command_get_array_type_cache_client(void * x) {
+    CommandGetArrayTypeArgs * args = (CommandGetArrayTypeArgs *)x;
+    Channel * c = cache_channel();
+    Symbol * sym = NULL;
+    Symbol * arr = NULL;
+    int err = 0;
+
+    if (id2symbol(args->id, &sym) < 0) err = errno;
+    if (err == 0 && get_array_symbol(sym, (ContextAddress)args->length, &arr) < 0) err = errno;
+
+    cache_exit();
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, err);
+
+    if (err == 0) {
+        json_write_string(&c->out, symbol2id(arr));
+        write_stream(&c->out, 0);
+    }
+    else {
+        write_stringz(&c->out, "null");
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_array_type(char * token, Channel * c) {
+    CommandGetArrayTypeArgs args;
+
+    json_read_string(&c->inp, args.id, sizeof(args.id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args.length = json_read_int64(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_get_array_type_cache_client, c, &args, sizeof(args));
+}
+
 void ini_symbols_service(Protocol * proto) {
     static int ini_done = 0;
     if (!ini_done) {
@@ -369,6 +441,7 @@ void ini_symbols_service(Protocol * proto) {
     add_command_handler(proto, SYMBOLS, "getChildren", command_get_children);
     add_command_handler(proto, SYMBOLS, "find", command_find);
     add_command_handler(proto, SYMBOLS, "list", command_list);
+    add_command_handler(proto, SYMBOLS, "getArrayType", command_get_array_type);
 }
 
 #endif /* SERVICE_Symbols */

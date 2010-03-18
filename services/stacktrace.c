@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#if SERVICE_StackTrace || ENABLE_ContextProxy
+#if SERVICE_StackTrace
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -36,61 +36,6 @@
 #include "memorymap.h"
 #include "symbols.h"
 #include "dwarfframe.h"
-
-static int id2frame(char * id, Context ** ctx, int * frame) {
-    int f = 0;
-    Context * c = NULL;
-
-    if (*id++ != 'F') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    if (*id++ != 'P') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    while (*id != '.') {
-        if (*id < '0' || *id > '9') {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
-        f = f * 10 + (*id++ - '0');
-    }
-    id++;
-    c = id2ctx(id);
-    if (c == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    *ctx = c;
-    *frame = f;
-    return 0;
-}
-
-char * get_stack_frame_id(Context * ctx, int frame) {
-    static char id[256];
-
-    assert(frame != STACK_NO_FRAME);
-
-    if (!context_has_state(ctx)) {
-        errno = ERR_INV_CONTEXT;
-        return NULL;
-    }
-    if (frame == STACK_TOP_FRAME) {
-        frame = get_top_frame(ctx);
-        if (frame < 0) return NULL;
-    }
-    snprintf(id, sizeof(id), "FP%d.%s", frame, ctx2id(ctx));
-    return id;
-}
-
-int is_stack_frame_id(char * id, Context ** ctx, int * frame) {
-    return id2frame(id, ctx, frame) == 0;
-}
-
-#endif /* SERVICE_StackTrace || ENABLE_ContextProxy */
-
-#if SERVICE_StackTrace
 
 #define MAX_FRAMES  1000
 
@@ -261,8 +206,7 @@ static StackTrace * create_stack_trace(Context * ctx) {
     stack_trace->frame_max = 32;
     ctx->stack_trace = stack_trace;
     if (ctx->regs_error != NULL) {
-        stack_trace->error = ctx->regs_error;
-        stack_trace->error->refs++;
+        stack_trace->error = get_error_report(set_error_report_errno(ctx->regs_error));
     }
     else if (trace_stack(ctx) < 0) {
         stack_trace->error = get_error_report(errno);
@@ -285,12 +229,24 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
     write_stream(out, ':');
     json_write_string(out, ctx2id(ctx));
 
+    write_stream(out, ',');
+    json_write_string(out, "Level");
+    write_stream(out, ':');
+    json_write_long(out, level);
+
 #if !defined(_WRS_KERNEL)
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
     json_write_string(out, pid2id(ctx->mem, 0));
 #endif
+
+    if (frame->is_top_frame) {
+        write_stream(out, ',');
+        json_write_string(out, "TopFrame");
+        write_stream(out, ':');
+        json_write_boolean(out, 1);
+    }
 
     if (frame->fp) {
         write_stream(out, ',');
@@ -393,7 +349,7 @@ static void command_get_children(char * token, Channel * c) {
         write_stream(&c->out, '[');
         for (i = 0; i < s->frame_cnt; i++) {
             if (i > 0) write_stream(&c->out, ',');
-            json_write_string(&c->out, get_stack_frame_id(ctx, i));
+            json_write_string(&c->out, frame2id(ctx, i));
         }
         write_stream(&c->out, ']');
         write_stream(&c->out, 0);

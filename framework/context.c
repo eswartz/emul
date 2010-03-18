@@ -148,6 +148,7 @@ void context_unlock(Context * ctx) {
 #endif
 #if SERVICE_Breakpoints
         assert(ctx->breakpoints_state == NULL);
+        assert(ctx->stepping_over_bp == NULL);
 #endif
         list_remove(&ctx->ctxl);
         list_remove(&ctx->pidl);
@@ -254,6 +255,10 @@ void send_context_started_event(Context * ctx) {
 void send_context_exited_event(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(!ctx->event_notification);
+#if !ENABLE_ContextProxy
+    ctx->exiting = 0;
+#endif
+    ctx->exited = 1;
     ctx->event_notification = 1;
     while (listener != NULL) {
         if (listener->context_exited != NULL) {
@@ -262,6 +267,12 @@ void send_context_exited_event(Context * ctx) {
         listener = listener->next;
     }
     ctx->event_notification = 0;
+    if (ctx->parent != NULL) {
+        list_remove(&ctx->cldl);
+        context_unlock(ctx->parent);
+        ctx->parent = NULL;
+    }
+    context_unlock(ctx);
 }
 
 unsigned context_word_size(Context * ctx) {

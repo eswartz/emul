@@ -131,9 +131,9 @@ void broadcast_group_free(TCFBroadcastGroup * p) {
     while (l != &p->channels) {
         Channel * c = bclink2channel(l);
         assert(c->bcg == p);
+        l = l->next;
         c->bcg = NULL;
         list_remove(&c->bclink);
-        l = l->next;
     }
     assert(list_is_empty(&p->channels));
     p->magic = 0;

@@ -254,7 +254,7 @@ static void fill_attrs(FileAttrs * attrs, struct stat * buf) {
     attrs->mtime = (int64_t)buf->st_mtime * 1000;
 }
 
-static void read_file_attrs(InputStream * inp, char * nm, void * arg) {
+static void read_file_attrs(InputStream * inp, const char * nm, void * arg) {
     FileAttrs * attrs = (FileAttrs *)arg;
     if (strcmp(nm, "Size") == 0) {
         attrs->size = json_read_int64(inp);

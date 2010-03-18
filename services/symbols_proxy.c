@@ -174,7 +174,7 @@ static SymbolsCache * get_symbols_cache(void) {
     }
     if (syms == NULL) {
         int i = 0;
-        syms = loc_alloc_zero(sizeof(SymbolsCache));
+        syms = (SymbolsCache *)loc_alloc_zero(sizeof(SymbolsCache));
         syms->channel = c;
         list_add_first(&syms->link_root, &root);
         for (i = 0; i < HASH_SIZE; i++) {
@@ -199,11 +199,11 @@ static void free_arr_sym_cache(ArraySymCache * a) {
 }
 
 static void free_sym_info_cache(SymInfoCache * c) {
-    int i;
     assert(c->magic == SYM_CACHE_MAGIC);
     list_remove(&c->link_syms);
     c->disposed = 1;
     if (c->pending_get_context == NULL && c->pending_get_children == NULL) {
+        c->magic = 0;
         cache_dispose(&c->cache);
         loc_free(c->id);
         loc_free(c->type_id);
@@ -213,7 +213,6 @@ static void free_sym_info_cache(SymInfoCache * c) {
         loc_free(c->owner_id);
         loc_free(c->name);
         loc_free(c->value);
-        for (i = 0; i < c->children_count; i++) loc_free(c->children_ids[i]);
         loc_free(c->children_ids);
         release_error_report(c->error_get_context);
         release_error_report(c->error_get_children);
@@ -267,9 +266,9 @@ static void free_symbols_cache(SymbolsCache * syms) {
     loc_free(syms);
 }
 
-static void read_context_data(InputStream * inp, char * name, void * args) {
+static void read_context_data(InputStream * inp, const char * name, void * args) {
     char id[256];
-    SymInfoCache * s = args;
+    SymInfoCache * s = (SymInfoCache *)args;
     if (strcmp(name, "ID") == 0) { json_read_string(inp, id, sizeof(id)); assert(strcmp(id, s->id) == 0); }
     else if (strcmp(name, "OwnerID") == 0) s->owner_id = json_read_alloc_string(inp);
     else if (strcmp(name, "Name") == 0) s->name = json_read_alloc_string(inp);
@@ -290,19 +289,26 @@ static void read_context_data(InputStream * inp, char * name, void * args) {
 }
 
 static void validate_context(Channel * c, void * args, int error) {
-    SymInfoCache * s = args;
+    Trap trap;
+    SymInfoCache * s = (SymInfoCache *)args;
     assert(s->pending_get_context != NULL);
     assert(s->error_get_context == NULL);
     assert(!s->done_context);
-    s->pending_get_context = NULL;
-    s->error_get_context = get_error_report(error);
-    s->done_context = 1;
-    if (!error) {
-        s->error_get_context = get_error_report(read_errno(&c->inp));
-        json_read_struct(&c->inp, read_context_data, s);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        s->pending_get_context = NULL;
+        s->done_context = 1;
+        if (!error) {
+            error = read_errno(&c->inp);
+            json_read_struct(&c->inp, read_context_data, s);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        }
+        clear_trap(&trap);
     }
+    else {
+        error = trap.error;
+    }
+    s->error_get_context = get_error_report(error);
     cache_notify(&s->cache);
     if (s->disposed) free_sym_info_cache(s);
 }
@@ -335,17 +341,24 @@ static SymInfoCache * get_sym_info_cache(const Symbol * sym) {
 }
 
 static void validate_find(Channel * c, void * args, int error) {
-    FindSymCache * f = args;
+    Trap trap;
+    FindSymCache * f = (FindSymCache *)args;
     assert(f->pending != NULL);
     assert(f->error == NULL);
-    f->pending = NULL;
-    f->error = get_error_report(error);
-    if (!error) {
-        f->error = get_error_report(read_errno(&c->inp));
-        f->id = json_read_alloc_string(&c->inp);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        f->pending = NULL;
+        if (!error) {
+            error = read_errno(&c->inp);
+            f->id = json_read_alloc_string(&c->inp);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        }
+        clear_trap(&trap);
     }
+    else {
+        error = trap.error;
+    }
+    f->error = get_error_report(error);
     assert(f->error != NULL || f->id != NULL);
     cache_notify(&f->cache);
     if (f->disposed) free_find_sym_cache(f);
@@ -383,14 +396,14 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     if (f == NULL) {
         Channel * c = cache_channel();
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
-        f = loc_alloc_zero(sizeof(FindSymCache));
+        f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
         list_add_first(&f->link_syms, syms->link_find + h);
         f->pid = ctx->pid;
         f->ip = ip;
         f->name = loc_strdup(name);
         f->pending = protocol_send_command(c, "Symbols", "find", validate_find, f);
         if (frame != STACK_NO_FRAME) {
-            json_write_string(&c->out, get_stack_frame_id(ctx, frame));
+            json_write_string(&c->out, frame2id(ctx, frame));
         }
         else {
             json_write_string(&c->out, ctx2id(ctx));
@@ -418,27 +431,34 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
 }
 
 static void read_sym_list_item(InputStream * inp, void * args) {
-    ListSymCache * f = args;
+    ListSymCache * f = (ListSymCache *)args;
     char * id = json_read_alloc_string(inp);
     if (f->list_size >= f->list_max) {
         f->list_max += 16;
-        f->list = loc_realloc(f->list, f->list_max * sizeof(char *));
+        f->list = (char **)loc_realloc(f->list, f->list_max * sizeof(char *));
     }
     f->list[f->list_size++] = id;
 }
 
 static void validate_list(Channel * c, void * args, int error) {
-    ListSymCache * f = args;
+    Trap trap;
+    ListSymCache * f = (ListSymCache *)args;
     assert(f->pending != NULL);
     assert(f->error == NULL);
-    f->pending = NULL;
-    f->error = get_error_report(error);
-    if (!error) {
-        f->error = get_error_report(read_errno(&c->inp));
-        json_read_array(&c->inp, read_sym_list_item, f);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        f->pending = NULL;
+        if (!error) {
+            error = read_errno(&c->inp);
+            json_read_array(&c->inp, read_sym_list_item, f);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        }
+        clear_trap(&trap);
     }
+    else {
+        error = trap.error;
+    }
+    f->error = get_error_report(error);
     cache_notify(&f->cache);
     if (f->disposed) free_list_sym_cache(f);
 }
@@ -475,13 +495,13 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
     if (f == NULL) {
         Channel * c = cache_channel();
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
-        f = loc_alloc_zero(sizeof(ListSymCache));
+        f = (ListSymCache *)loc_alloc_zero(sizeof(ListSymCache));
         list_add_first(&f->link_syms, syms->link_list + h);
         f->pid = ctx->pid;
         f->ip = ip;
         f->pending = protocol_send_command(c, "Symbols", "list", validate_list, f);
         if (frame != STACK_NO_FRAME) {
-            json_write_string(&c->out, get_stack_frame_id(ctx, frame));
+            json_write_string(&c->out, frame2id(ctx, frame));
         }
         else {
             json_write_string(&c->out, ctx2id(ctx));
@@ -520,8 +540,8 @@ int id2symbol(const char * id, Symbol ** sym) {
     LINK * l;
     SymInfoCache * s = NULL;
     unsigned h = hash_sym_id(id);
-    SymbolsCache * t = get_symbols_cache();
-    for (l = t->link_sym[h].next; l != t->link_sym + h; l = l->next) {
+    SymbolsCache * syms = get_symbols_cache();
+    for (l = syms->link_sym[h].next; l != syms->link_sym + h; l = l->next) {
         SymInfoCache * x = syms2sym(l);
         if (strcmp(x->id, id) == 0) {
             s = x;
@@ -529,10 +549,10 @@ int id2symbol(const char * id, Symbol ** sym) {
         }
     }
     if (s == NULL) {
-        s = loc_alloc_zero(sizeof(*s));
+        s = (SymInfoCache *)loc_alloc_zero(sizeof(SymInfoCache));
         s->magic = SYM_CACHE_MAGIC;
         s->id = loc_strdup(id);
-        list_add_first(&s->link_syms, t->link_sym + h);
+        list_add_first(&s->link_syms, syms->link_sym + h);
         list_init(&s->array_syms);
     }
     *sym = alloc_symbol();
@@ -660,19 +680,26 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
 }
 
 static void validate_children(Channel * c, void * args, int error) {
-    SymInfoCache * s = args;
+    Trap trap;
+    SymInfoCache * s = (SymInfoCache *)args;
     assert(s->pending_get_children != NULL);
     assert(s->error_get_children == NULL);
     assert(!s->done_children);
-    s->pending_get_children = NULL;
-    s->error_get_children = get_error_report(error);
-    s->done_children = 1;
-    if (!error) {
-        s->error_get_children = get_error_report(read_errno(&c->inp));
-        s->children_ids = json_read_alloc_string_array(&c->inp, &s->children_count);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        s->pending_get_children = NULL;
+        s->done_children = 1;
+        if (!error) {
+            error = read_errno(&c->inp);
+            s->children_ids = json_read_alloc_string_array(&c->inp, &s->children_count);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        }
+        clear_trap(&trap);
     }
+    else {
+        error = trap.error;
+    }
+    s->error_get_children = get_error_report(error);
     cache_notify(&s->cache);
     if (s->disposed) free_sym_info_cache(s);
 }
@@ -706,7 +733,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
         static int buf_len = 0;
         if (buf_len < cnt) {
             buf_len = cnt;
-            buf = loc_realloc(buf, cnt * sizeof(Symbol *));
+            buf = (Symbol **)loc_realloc(buf, cnt * sizeof(Symbol *));
         }
         for (i = 0; i < cnt; i++) {
             if (id2symbol(s->children_ids[i], buf + i) < 0) exception(errno);
@@ -719,18 +746,25 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
 }
 
 static void validate_type_id(Channel * c, void * args, int error) {
-    ArraySymCache * s = args;
+    Trap trap;
+    ArraySymCache * s = (ArraySymCache *)args;
     assert(s->pending != NULL);
     assert(s->error == NULL);
     assert(s->id == NULL);
-    s->pending = NULL;
-    s->error = get_error_report(error);
-    if (!error) {
-        s->error = get_error_report(read_errno(&c->inp));
-        s->id = json_read_alloc_string(&c->inp);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        s->pending = NULL;
+        if (!error) {
+            error = read_errno(&c->inp);
+            s->id = json_read_alloc_string(&c->inp);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        }
+        clear_trap(&trap);
     }
+    else {
+        error = trap.error;
+    }
+    s->error = get_error_report(error);
     cache_notify(&s->cache);
     if (s->disposed) free_arr_sym_cache(s);
 }
@@ -752,7 +786,7 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
     if (a == NULL) {
         Channel * c = cache_channel();
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
-        a = loc_alloc_zero(sizeof(*a));
+        a = (ArraySymCache *)loc_alloc_zero(sizeof(*a));
         list_add_first(&a->link_sym, &s->array_syms);
         a->length = length;
         a->pending = protocol_send_command(c, "Symbols", "getArrayType", validate_type_id, a);
@@ -798,12 +832,14 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
             while (l != syms->link_sym + i) {
                 SymInfoCache * c = syms2sym(l);
                 l = l->next;
-                if ((mode & (1 << c->update_policy)) != 0 && strcmp(id, c->owner_id) == 0) {
-                    if (keep_pending) {
-                        if ((!c->done_context || c->pending_get_context) &&
-                            (!c->done_children || c->pending_get_children) &&
-                            list_is_empty(&c->array_syms)) continue;
-                    }
+                if (!c->done_context) {
+                    if (keep_pending && list_is_empty(&c->array_syms)) continue;
+                    free_sym_info_cache(c);
+                }
+                else if (c->update_policy == 0 || c->owner_id == NULL) {
+                    free_sym_info_cache(c);
+                }
+                else if ((mode & (1 << c->update_policy)) != 0 && strcmp(id, c->owner_id) == 0) {
                     free_sym_info_cache(c);
                 }
             }

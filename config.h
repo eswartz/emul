@@ -135,9 +135,26 @@
 #if !defined(ENABLE_SymbolsProxy)
 #  define ENABLE_SymbolsProxy   TARGET_VXWORKS
 #endif
+#if !defined(ENABLE_LineNumbersProxy)
+#  define ENABLE_LineNumbersProxy TARGET_VXWORKS
+#endif
+
+#if ENABLE_SymbolsProxy
+#  undef SERVICE_Symbols
+#  define SERVICE_Symbols       0
+#endif
+
+#if ENABLE_LineNumbersProxy
+#  undef SERVICE_LineNumbers
+#  define SERVICE_LineNumbers    0
+#endif
 
 #if !defined(ENABLE_Symbols)
 #  define ENABLE_Symbols        (ENABLE_SymbolsProxy || SERVICE_Symbols)
+#endif
+
+#if !defined(ENABLE_LineNumbers)
+#  define ENABLE_LineNumbers    (ENABLE_LineNumbersProxy || SERVICE_LineNumbers)
 #endif
 
 #if !defined(ENABLE_DebugContext)
@@ -232,6 +249,8 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
 #endif
 #if SERVICE_LineNumbers
     ini_line_numbers_service(proto);
+#elif ENABLE_LineNumbersProxy
+    ini_line_numbers_lib();
 #endif
 #if SERVICE_Processes
     ini_processes_service(proto);

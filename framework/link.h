@@ -37,6 +37,7 @@ struct LINK {
 #define list_remove(item) { \
             (item)->prev->next = (item)->next; \
             (item)->next->prev = (item)->prev; \
+            (item)->next = (item)->prev = (item); \
         }
 
 #define list_add_first(item,list) { \

@@ -48,9 +48,6 @@ extern int skip_breakpoint(Context * ctx, int single_step);
 /* Return 1 if break instruction is planted at given address in the context memory */
 extern int is_breakpoint_address(Context * ctx, ContextAddress address);
 
-/* Return 1 if breakpoint expressions evaluation is in progress */
-extern int is_breakpoint_evaluation_running(Context * ctx);
-
 /* Check if memory data buffer contans planted break instructions and remove them */
 extern void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void * buf, size_t size);
 

@@ -33,7 +33,7 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 #include "waitpid.h"
-#include "system/signames.h"
+#include "signames.h"
 
 /* TODO: VxWorks RTP support */
 
@@ -70,7 +70,6 @@ static SEM_ID events_signal;
 static pthread_t events_thread;
 
 const char * context_suspend_reason(Context * ctx) {
-    if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
     if (ctx->event == TRACE_EVENT_STEP) return "Step";
     return "Suspended";
 }
@@ -214,19 +213,10 @@ static int kill_context(Context * ctx) {
         return -1;
     }
     send_context_started_event(ctx);
-    ctx->exiting = 0;
-    ctx->exited = 1;
     trace(LOG_CONTEXT, "context: killed ctx %#lx, id %#x", ctx, ctx->pid);
     send_context_exited_event(ctx);
-    list_remove(&ctx->cldl);
-    context_unlock(ctx->parent);
-    ctx->parent = NULL;
-    context_unlock(ctx);
     if (list_is_empty(&prs->children)) {
-        prs->exiting = 0;
-        prs->exited = 1;
         send_context_exited_event(prs);
-        context_unlock(prs);
     }
     return 0;
 }
@@ -507,19 +497,10 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
             assert(!stopped_ctx->intercepted);
             assert(!stopped_ctx->exited);
             stopped_ctx->pending_step = 0;
-            stopped_ctx->exiting = 0;
-            stopped_ctx->exited = 1;
             trace(LOG_CONTEXT, "context: exited ctx %#lx, id %#x", stopped_ctx, stopped_ctx->pid);
             send_context_exited_event(stopped_ctx);
-            list_remove(&stopped_ctx->cldl);
-            context_unlock(prs);
-            stopped_ctx->parent = NULL;
-            context_unlock(stopped_ctx);
             if (list_is_empty(&prs->children)) {
-                prs->exiting = 0;
-                prs->exited = 1;
                 send_context_exited_event(prs);
-                context_unlock(prs);
             }
         }
     }

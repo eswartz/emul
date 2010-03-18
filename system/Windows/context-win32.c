@@ -34,64 +34,7 @@
 #include "breakpoints.h"
 #include "waitpid.h"
 #include "regset.h"
-
-typedef struct ExceptionName {
-    DWORD code;
-    char * name;
-    char * desc;
-} ExceptionName;
-
-static ExceptionName exception_names[] = {
-    { 0x40010005, NULL, "Control-C" },
-    { 0x40010008, NULL, "Control-Break" },
-    { EXCEPTION_DATATYPE_MISALIGNMENT, "EXCEPTION_DATATYPE_MISALIGNMENT", "Datatype Misalignment" },
-    { EXCEPTION_ACCESS_VIOLATION, "EXCEPTION_ACCESS_VIOLATION", "Access Violation" },
-    { EXCEPTION_IN_PAGE_ERROR, "EXCEPTION_IN_PAGE_ERROR", "In Page Error" },
-    { EXCEPTION_ILLEGAL_INSTRUCTION, "EXCEPTION_ILLEGAL_INSTRUCTION", "Illegal Instruction" },
-    { EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "EXCEPTION_ARRAY_BOUNDS_EXCEEDED", "Array Bounds Exceeded" },
-    { EXCEPTION_FLT_DENORMAL_OPERAND, "EXCEPTION_FLT_DENORMAL_OPERAND", "Float Denormal Operand" },
-    { EXCEPTION_FLT_DIVIDE_BY_ZERO, "EXCEPTION_FLT_DIVIDE_BY_ZERO", "Float Divide by Zero" },
-    { EXCEPTION_FLT_INEXACT_RESULT, "EXCEPTION_FLT_INEXACT_RESULT", "Float Inexact Result" },
-    { EXCEPTION_FLT_INVALID_OPERATION, "EXCEPTION_FLT_INVALID_OPERATION", "Float Invalid Operation" },
-    { EXCEPTION_FLT_OVERFLOW, "EXCEPTION_FLT_OVERFLOW", "Float Overflow" },
-    { EXCEPTION_FLT_STACK_CHECK, "EXCEPTION_FLT_STACK_CHECK", "Float Stack Check" },
-    { EXCEPTION_FLT_UNDERFLOW, "EXCEPTION_FLT_UNDERFLOW", "Float Underflow" },
-    { EXCEPTION_NONCONTINUABLE_EXCEPTION, "EXCEPTION_NONCONTINUABLE_EXCEPTION", "Noncontinuable Exception" },
-    { EXCEPTION_INVALID_DISPOSITION, "EXCEPTION_INVALID_DISPOSITION", "Invalid Disposition" },
-    { EXCEPTION_INT_DIVIDE_BY_ZERO, "EXCEPTION_INT_DIVIDE_BY_ZERO", "Integer Divide by Zero" },
-    { EXCEPTION_INT_OVERFLOW, "EXCEPTION_INT_OVERFLOW", "Integer Overflow" },
-    { EXCEPTION_PRIV_INSTRUCTION, "EXCEPTION_PRIV_INSTRUCTION", "Privileged Instruction" },
-    { EXCEPTION_STACK_OVERFLOW, "EXCEPTION_STACK_OVERFLOW", "Stack Overflow" },
-    { EXCEPTION_GUARD_PAGE, "EXCEPTION_GUARD_PAGE", "Guard Page" },
-    { 0xC0000194, "EXCEPTION_POSSIBLE_DEADLOCK", "Possible Deadlock" },
-    { EXCEPTION_INVALID_HANDLE, "EXCEPTION_INVALID_HANDLE", "Invalid Handle" },
-    { 0xc0000017, NULL, "No Memory" },
-    { 0xc0000135, NULL, "DLL Not Found" },
-    { 0xc0000142, NULL, "DLL Initialization Failed" },
-    { 0xc06d007e, NULL, "Module Not Found" },
-    { 0xc06d007f, NULL, "Procedure Not Found" },
-    { 0xe06d7363, NULL, "Microsoft C++ Exception" },
-};
-
-#define EXCEPTION_NAMES_CNT ((int)(sizeof(exception_names) / sizeof(ExceptionName)))
-
-const char * signal_name(int signal) {
-    int n = signal - 1;
-    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].name;
-    return NULL;
-}
-
-const char * signal_description(int signal) {
-    int n = signal - 1;
-    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].desc;
-    return NULL;
-}
-
-unsigned signal_code(int signal) {
-    int n = signal - 1;
-    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].code;
-    return 0;
-}
+#include "signames.h"
 
 typedef struct DebugThreadArgs {
     int error;
@@ -116,19 +59,15 @@ typedef struct DebugEvent {
 
 const char * context_suspend_reason(Context * ctx) {
     DWORD exception_code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
+    const char * desc = NULL;
     static char buf[64];
-    int n = 0;
 
-    if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
-    if (ctx->stopped_by_bp) return "Eventpoint";
     if (exception_code == 0) return "Suspended";
     if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) return "Suspended";
     if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
 
-    while (n < EXCEPTION_NAMES_CNT) {
-        if (exception_names[n].code == exception_code) return exception_names[n].desc;
-        n++;
-    }
+    desc = signal_description(get_signal_from_code(exception_code));
+    if (desc != NULL) return desc;
 
     snprintf(buf, sizeof(buf), "Exception %#lx", exception_code);
     return buf;
@@ -136,16 +75,10 @@ const char * context_suspend_reason(Context * ctx) {
 
 static int get_signal_index(Context * ctx) {
     DWORD exception_code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
-    int n = 0;
 
     if (exception_code == 0) return 0;
     if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) return 0;
-
-    while (n < EXCEPTION_NAMES_CNT) {
-        if (exception_names[n].code == exception_code) return n;
-        n++;
-    }
-    return 0;
+    return get_signal_from_code(exception_code);
 }
 
 static char * win32_debug_event_name(int event) {
@@ -280,11 +213,10 @@ static void event_win32_context_exited(Context * ctx) {
         assert(c->parent == ctx);
         if (!c->exited) event_win32_context_exited(c);
     }
-    ctx->exiting = 0;
-    ctx->exited = 1;
+    context_lock(ctx);
     send_context_exited_event(ctx);
     if (ctx->handle != NULL) {
-        if (ctx->parent == NULL) {
+        if (ctx->mem == ctx->pid) {
             log_error("CloseHandle", CloseHandle(ctx->handle));
         }
         ctx->handle = NULL;
@@ -292,11 +224,6 @@ static void event_win32_context_exited(Context * ctx) {
     if (ctx->file_handle != NULL) {
         log_error("CloseHandle", CloseHandle(ctx->file_handle));
         ctx->file_handle = NULL;
-    }
-    if (ctx->parent != NULL) {
-        list_remove(&ctx->cldl);
-        context_unlock(ctx->parent);
-        ctx->parent = NULL;
     }
     context_unlock(ctx);
 }

@@ -110,10 +110,6 @@ struct Context {
 extern void ini_contexts(void);
 extern void init_contexts_sys_dep(void);
 
-extern const char * signal_name(int signal);
-extern const char * signal_description(int signal);
-extern unsigned signal_code(int signal);
-
 extern const char * context_state_name(Context * ctx);
 extern const char * context_suspend_reason(Context * ctx);
 
@@ -234,9 +230,6 @@ extern void link_context(Context * ctx);
 
 #else /* ENABLE_DebugContext */
 
-#define context_find_from_pid(pid, thread) NULL
-#define context_attach(pid, done, client_data, selfattach) (errno = ERR_UNSUPPORTED, -1)
-#define context_attach_self() (errno = ERR_UNSUPPORTED, -1)
 #define context_has_state(ctx) 0
 #define context_read_mem(ctx, address, buf, size) (errno = ERR_INV_CONTEXT, -1)
 #define context_write_mem(ctx, address, buf, size) (errno = ERR_INV_CONTEXT, -1)

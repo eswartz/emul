@@ -48,6 +48,10 @@ struct RegisterDefinition {
     int          traceable;      /* register value can be traced using .eh_frame of .debug_frame */
 };
 
+#define STACK_BOTTOM_FRAME  0
+#define STACK_NO_FRAME      (-1)
+#define STACK_TOP_FRAME     (-2)
+
 typedef struct StackFrame StackFrame;
 
 struct StackFrame {
@@ -78,6 +82,18 @@ extern ContextAddress get_regs_PC(RegisterData * regs);
 
 /* Set instruction pointer (PC) value */
 extern void set_regs_PC(RegisterData * x, ContextAddress y);
+
+/* Get TCF ID of a stack frame */
+extern char * frame2id(Context * ctx, int frame);
+
+/* Get stack frame for TCF ID */
+extern int id2frame(char * id, Context ** ctx, int * frame);
+
+/* Get TCF ID of a register */
+extern char * register2id(Context * ctx, int frame, RegisterDefinition * reg);
+
+/* Get register for TCF ID */
+extern int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def);
 
 #if !defined(_WRS_KERNEL)
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */

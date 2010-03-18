@@ -359,6 +359,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\framework\signames.c"
+				>
+			</File>
+			<File
+				RelativePath=".\framework\signames.h"
+				>
+			</File>
+			<File
 				RelativePath=".\framework\streams.c"
 				>
 			</File>
@@ -483,11 +491,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\services\linenumbers.c"
+				>
+			</File>
+			<File
 				RelativePath=".\services\linenumbers.h"
 				>
 			</File>
 			<File
 				RelativePath=".\services\linenumbers_elf.c"
+				>
+			</File>
+			<File
+				RelativePath=".\services\linenumbers_proxy.c"
 				>
 			</File>
 			<File
@@ -726,10 +742,6 @@
 		<Filter
 			Name="system"
 			>
-			<File
-				RelativePath=".\system\signames.h"
-				>
-			</File>
 			<Filter
 				Name="Windows"
 				>

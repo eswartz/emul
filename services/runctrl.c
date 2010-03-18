@@ -35,6 +35,7 @@
 #include "events.h"
 #include "exceptions.h"
 #include "breakpoints.h"
+#include "signames.h"
 #include "cmdline.h"
 
 #define RM_RESUME                   0
@@ -177,6 +178,7 @@ static void write_context(OutputStream * out, Context * ctx) {
 
 static void write_context_state(OutputStream * out, Context * ctx) {
     int fst = 1;
+    const char * reason = NULL;
     assert(!ctx->exited);
 
     if (!ctx->intercepted) {
@@ -191,7 +193,9 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     write_stream(out, 0);
 
     /* String: Reason */
-    json_write_string(out, context_suspend_reason(ctx));
+    if (ctx->bp_ids != NULL && ctx->bp_ids[0] != NULL) reason = "Breakpoint";
+    if (reason == NULL) reason = context_suspend_reason(ctx);
+    json_write_string(out, reason);
     write_stream(out, 0);
 
     /* Object: Additional context state info */
@@ -378,7 +382,7 @@ static void send_simple_result(Channel * c, char * token, int err) {
 
 static void send_event_context_resumed(OutputStream * out, Context * ctx);
 
-static void resume_params_callback(InputStream * inp, char * name, void * args) {
+static void resume_params_callback(InputStream * inp, const char * name, void * args) {
     int * err = (int *)args;
     /* Current agent implementation does not support resume parameters */
     json_skip_object(inp);
@@ -708,7 +712,6 @@ static void run_safe_events(void * arg) {
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
             if (ctx->intercepted) continue;
-            assert(!is_breakpoint_evaluation_running(ctx));
             assert(!ctx->pending_intercept);
             if (ctx->pending_step) {
                 ctx->pending_step = 0;
@@ -865,7 +868,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     if (ctx->stopped_by_exception) {
         send_event_context_exception(&bcg->out, ctx);
     }
-    if (ctx->pending_intercept && !is_breakpoint_evaluation_running(ctx)) {
+    if (ctx->pending_intercept) {
         send_event_context_suspended(&bcg->out, ctx);
     }
     if (!ctx->intercepted && run_ctrl_lock_cnt == 0) {

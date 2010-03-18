@@ -22,22 +22,7 @@
 #include "protocol.h"
 #include "context.h"
 
-#define STACK_TOP_FRAME (-2)
-#define STACK_BOTTOM_FRAME 0
-#define STACK_NO_FRAME  (-1)
-
 #if SERVICE_StackTrace || ENABLE_ContextProxy
-
-/*
- * Check if given context ID is stack frame ID.
- * Return 1 if frame ID, 0 otherwise.
- */
-extern int is_stack_frame_id(char * id, Context ** ctx, int * frame);
-
-/*
- * Get TCF ID of a stack frame.
- */
-extern char * get_stack_frame_id(Context * ctx, int frame);
 
 /*
  * Get index of the top frame of a context.
@@ -62,8 +47,6 @@ extern void ini_stack_trace_service(Protocol *, TCFBroadcastGroup *);
 #else /* SERVICE_StackTrace */
 
 #define get_frame_info(ctx, frame, info) (errno = ERR_UNSUPPORTED, -1)
-#define is_stack_frame_id(id, ctx, frame) 0
-#define get_stack_frame_id(ctx, frame) NULL
 #define is_top_frame(ctx, frame) (frame == STACK_TOP_FRAME)
 
 #endif /* SERVICE_StackTrace */

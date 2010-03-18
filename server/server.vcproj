@@ -223,6 +223,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\linenumbers.c"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\linenumbers_elf.c"
 				>
 			</File>

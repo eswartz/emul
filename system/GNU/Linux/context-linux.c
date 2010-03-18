@@ -40,7 +40,7 @@
 #include "memorymap.h"
 #include "waitpid.h"
 #include "tcf_elf.h"
-#include "system/signames.h"
+#include "signames.h"
 
 #if !defined(PTRACE_SETOPTIONS)
 #define PTRACE_SETOPTIONS       0x4200
@@ -105,7 +105,6 @@ static const char * event_name(int event) {
 const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
-    if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
     if (ctx->end_of_step) return "Step";
     if (ctx->ptrace_event != 0) {
         assert(ctx->signal == SIGTRAP);
@@ -445,27 +444,13 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
                 assert(!c->exited);
                 assert(c->parent == ctx);
                 if (c->stopped) send_context_started_event(c);
-                c->exiting = 0;
-                c->exited = 1;
                 send_context_exited_event(c);
-                list_remove(&c->cldl);
-                context_unlock(c->parent);
-                c->parent = NULL;
-                context_unlock(c);
             }
         }
         /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
          * between PTRACE_CONT (or PTRACE_SYSCALL) and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
          */
-        ctx->exiting = 0;
-        ctx->exited = 1;
         send_context_exited_event(ctx);
-        if (ctx->parent != NULL) {
-            list_remove(&ctx->cldl);
-            context_unlock(ctx->parent);
-            ctx->parent = NULL;
-        }
-        context_unlock(ctx);
     }
 }
 

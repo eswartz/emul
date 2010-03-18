@@ -63,6 +63,7 @@ void cache_enter(CacheClient * client, Channel * channel, void * args, size_t ar
     assert(is_dispatch_thread());
     assert(client != NULL);
     assert(channel != NULL);
+    assert(!is_channel_closed(channel));
     assert(current_client.client == NULL);
     current_client.client = client;
     current_client.channel = channel;
@@ -82,6 +83,7 @@ void cache_exit(void) {
 
 void cache_wait(AbstractCache * cache) {
     assert(is_dispatch_thread());
+    assert(client_exited == 0);
     if (current_client.client != NULL && cache_miss_cnt == 0) {
         if (cache->wait_list_cnt >= cache->wait_list_max) {
             cache->wait_list_max += 8;

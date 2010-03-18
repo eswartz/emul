@@ -126,7 +126,7 @@ static void write_rule(OutputStream * out, PathMapRule * r) {
     write_stream(out, '}');
 }
 
-static void read_rule_attrs(InputStream * inp, char * name, void * args) {
+static void read_rule_attrs(InputStream * inp, const char * name, void * args) {
     PathMapRule * r = (PathMapRule *)args;
 
     if (r->attrs_cnt >= r->attrs_max) {

@@ -17,6 +17,7 @@
  */
 
 #include "config.h"
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -37,29 +38,35 @@
 #define SRC_MESSAGE 3
 #define SRC_REPORT  4
 
+typedef struct ReportBuffer {
+    ErrorReport pub; /* public part of error report */
+    int refs;
+    int gets;
+} ReportBuffer;
+
 typedef struct ErrorMessage {
     int source;
     int error;
     char * text;
-    ErrorReport * report;
+    ReportBuffer * report;
 } ErrorMessage;
 
 static ErrorMessage msgs[MESSAGE_CNT];
 static int msgs_pos = 0;
 
-void release_error_report(ErrorReport * report) {
+static void release_report(ReportBuffer * report) {
     if (report == NULL) return;
-    assert(report->refs > 0);
+    assert(report->refs > report->gets);
     report->refs--;
     if (report->refs == 0) {
-        while (report->props != NULL) {
-            ErrorReportItem * i = report->props;
-            report->props = i->next;
+        while (report->pub.props != NULL) {
+            ErrorReportItem * i = report->pub.props;
+            report->pub.props = i->next;
             loc_free(i->name);
             loc_free(i->value);
             loc_free(i);
         }
-        loc_free(report->format);
+        loc_free(report->pub.format);
         loc_free(report);
     }
 }
@@ -69,15 +76,12 @@ static ErrorMessage * alloc_msg(int source) {
     assert(is_dispatch_thread());
     errno = ERR_MESSAGE_MIN + msgs_pos++;
     if (msgs_pos >= MESSAGE_CNT) msgs_pos = 0;
+    release_report(m->report);
+    loc_free(m->text);
     m->source = source;
-    if (m->report != NULL) {
-        release_error_report(m->report);
-        m->report = NULL;
-    }
-    if (m->text != NULL) {
-        loc_free(m->text);
-        m->text = NULL;
-    }
+    m->error = 0;
+    m->report = NULL;
+    m->text = NULL;
     return m;
 }
 
@@ -174,9 +178,9 @@ const char * errno_to_str(int err) {
     default:
         if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
             ErrorMessage * m = msgs + (err - ERR_MESSAGE_MIN);
-            if (m->report != NULL && m->report->format != NULL) {
+            if (m->report != NULL && m->report->pub.format != NULL) {
                 /* TODO: error report args */
-                return m->report->format;
+                return m->report->pub.format;
             }
             switch (m->source) {
 #ifdef WIN32
@@ -219,11 +223,12 @@ int set_gai_errno(int no) {
     return errno;
 }
 
-int set_error_report_errno(ErrorReport * report) {
+int set_error_report_errno(ErrorReport * r) {
     errno = 0;
-    if (report != NULL) {
+    if (r != NULL) {
+        ReportBuffer * report = (ReportBuffer *)((char *)r - offsetof(ReportBuffer, pub));
         ErrorMessage * m = alloc_msg(SRC_REPORT);
-        m->error = report->code + STD_ERR_BASE;
+        m->error = report->pub.code + STD_ERR_BASE;
         m->report = report;
         report->refs++;
     }
@@ -244,15 +249,15 @@ int get_error_code(int no) {
     return no;
 }
 
-static void add_report_prop(ErrorReport * report, const char * name, ByteArrayOutputStream * buf) {
+static void add_report_prop(ReportBuffer * report, const char * name, ByteArrayOutputStream * buf) {
     ErrorReportItem * i = (ErrorReportItem *)loc_alloc(sizeof(ErrorReportItem));
     i->name = loc_strdup(name);
     get_byte_array_output_stream_data(buf, &i->value, NULL);
-    i->next = report->props;
-    report->props = i;
+    i->next = report->pub.props;
+    report->pub.props = i;
 }
 
-static void add_report_prop_int(ErrorReport * report, const char * name, uint64_t n) {
+static void add_report_prop_int(ReportBuffer * report, const char * name, uint64_t n) {
     ByteArrayOutputStream buf;
     OutputStream * out = create_byte_array_output_stream(&buf);
     json_write_int64(out, n);
@@ -260,7 +265,7 @@ static void add_report_prop_int(ErrorReport * report, const char * name, uint64_
     add_report_prop(report, name, &buf);
 }
 
-static void add_report_prop_str(ErrorReport * report, const char * name, const char * str) {
+static void add_report_prop_str(ReportBuffer * report, const char * name, const char * str) {
     ByteArrayOutputStream buf;
     OutputStream * out = create_byte_array_output_stream(&buf);
     json_write_string(out, str);
@@ -274,18 +279,19 @@ ErrorReport * get_error_report(int err) {
         m = msgs + (err - ERR_MESSAGE_MIN);
         if (m->report != NULL) {
             m->report->refs++;
-            return m->report;
+            m->report->gets++;
+            return &m->report->pub;
         }
     }
     if (err != 0) {
-        ErrorReport * report = (ErrorReport *)loc_alloc_zero(sizeof(ErrorReport));
+        ReportBuffer * report = (ReportBuffer *)loc_alloc_zero(sizeof(ReportBuffer));
         struct timespec timenow;
 
         if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
-            report->time_stamp = (uint64_t)timenow.tv_sec * 1000 + timenow.tv_nsec / 1000000;
+            report->pub.time_stamp = (uint64_t)timenow.tv_sec * 1000 + timenow.tv_nsec / 1000000;
         }
 
-        report->format = loc_strdup(errno_to_str(err));
+        report->pub.format = loc_strdup(errno_to_str(err));
 
         if (m != NULL) {
             if (m->source == SRC_MESSAGE) {
@@ -322,16 +328,33 @@ ErrorReport * get_error_report(int err) {
         assert(err >= STD_ERR_BASE);
         assert(err < ERR_MESSAGE_MIN);
 
-        report->code = err - STD_ERR_BASE;
+        report->pub.code = err - STD_ERR_BASE;
         report->refs = 1;
+        report->gets = 1;
         if (m != NULL) {
             assert(m->report == NULL);
             m->report = report;
             report->refs++;
         }
-        return report;
+        return &report->pub;
     }
     return NULL;
+}
+
+ErrorReport * create_error_report(void) {
+    ReportBuffer * report = (ReportBuffer *)loc_alloc_zero(sizeof(ReportBuffer));
+    report->refs = 1;
+    report->gets = 1;
+    return &report->pub;
+}
+
+void release_error_report(ErrorReport * r) {
+    if (r != NULL) {
+        ReportBuffer * report = (ReportBuffer *)((char *)r - offsetof(ReportBuffer, pub));
+        assert(report->gets > 0);
+        report->gets--;
+        release_report(report);
+    }
 }
 
 #ifdef NDEBUG

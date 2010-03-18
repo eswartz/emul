@@ -58,10 +58,9 @@ typedef struct ErrorReportItem {
 } ErrorReportItem;
 
 typedef struct ErrorReport {
-    uint64_t time_stamp;
-    char * format;
     int code;
-    int refs;
+    char * format;
+    uint64_t time_stamp;
     ErrorReportItem * props;
 } ErrorReport;
 
@@ -116,6 +115,12 @@ extern int get_error_code(int no);
  * set_error_report_errno() and 'create' = 0.
  */
 extern ErrorReport * get_error_report(int no);
+
+/*
+ * Create new instance of TCF error report.
+ * Clients should call release_error_report() when done using it.
+ */
+extern ErrorReport * create_error_report(void);
 
 /*
  * Release error report that was obtained by get_error_report().

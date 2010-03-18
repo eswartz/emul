@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#if SERVICE_LineNumbers && defined(_MSC_VER) && !ENABLE_ELF
+#if SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && defined(_MSC_VER) && !ENABLE_ELF
 
 #include <errno.h>
 #include <assert.h>
@@ -34,19 +34,20 @@
 #include "json.h"
 #include "protocol.h"
 
-static const char * LINENUMBERS = "LineNumbers";
-
-
-int line_to_address(Context * ctx, char * file, int line, int column, LineToAddressCallBack * callback, void * user_args) {
+int line_to_address(Context * ctx, char * file, int line, int column, LineNumbersCallBack * callback, void * user_args) {
     int err = 0;
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
+    if (err == 0 && ctx->parent != NULL) ctx = ctx->parent;
+
     if (err == 0) {
         LONG offset = 0;
         IMAGEHLP_LINE img_line;
+        CodeArea area;
         memset(&img_line, 0, sizeof(img_line));
+        memset(&area, 0, sizeof(area));
         img_line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
 
         if (!SymGetLineFromName(ctx->handle, NULL, file, line, &offset, &img_line)) {
@@ -56,7 +57,19 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineToAddr
             }
         }
         else {
-            callback(user_args, img_line.Address);
+            IMAGEHLP_LINE img_next;
+            memcpy(&img_next, &img_line, sizeof(img_next));
+            if (!SymGetLineNext(ctx->handle, &img_next)) {
+                err = set_win32_errno(GetLastError());
+            }
+            else {
+                area.file = img_line.FileName;
+                area.start_line = img_line.LineNumber;
+                area.start_address = img_line.Address;
+                area.end_line = img_next.LineNumber;
+                area.end_address = img_next.Address;
+                callback(&area, user_args);
+            }
         }
     }
 
@@ -72,26 +85,13 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineToAddr
 #define GRP5        0xff
 #define JMPN        0x25
 
-static void command_map_to_source(char * token, Channel * c) {
+int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, LineNumbersCallBack * callback, void * user_args) {
     int err = 0;
     int not_found = 0;
-    char id[256];
-    ContextAddress addr0;
-    ContextAddress addr1;
-    Context * ctx = NULL;
     DWORD offset = 0;
     IMAGEHLP_LINE line;
     IMAGEHLP_LINE next;
 
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    addr0 = json_read_ulong(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    addr1 = json_read_ulong(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-
-    ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
@@ -153,52 +153,28 @@ static void command_map_to_source(char * token, Channel * c) {
         err = set_win32_errno(GetLastError());
     }
 
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    if (err != 0 || not_found) {
-        write_stringz(&c->out, "null");
-    }
-    else {
-        int cnt = 0;
-        write_stream(&c->out, '[');
+    if (err == 0 && !not_found) {
         for (;;) {
-            if (cnt > 0) write_stream(&c->out, ',');
-            write_stream(&c->out, '{');
-            json_write_string(&c->out, "SLine");
-            write_stream(&c->out, ':');
-            json_write_ulong(&c->out, line.LineNumber);
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "ELine");
-            write_stream(&c->out, ':');
-            json_write_ulong(&c->out, next.LineNumber);
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "File");
-            write_stream(&c->out, ':');
-            json_write_string(&c->out, line.FileName);
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "SAddr");
-            write_stream(&c->out, ':');
-            json_write_ulong(&c->out, line.Address);
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "EAddr");
-            write_stream(&c->out, ':');
-            json_write_ulong(&c->out, next.Address);
-            write_stream(&c->out, '}');
-            cnt++;
+            CodeArea area;
+            memset(&area, 0, sizeof(area));
+            area.file = line.FileName;
+            area.start_address = line.Address;
+            area.start_line = line.LineNumber;
+            area.end_address = next.Address;
+            area.end_line = next.LineNumber;
+            callback(&area, user_args);
             if (next.Address >= addr1) break;
             memcpy(&line, &next, sizeof(line));
             if (!SymGetLineNext(ctx->handle, &next)) break;
         }
-        write_stream(&c->out, ']');
-        write_stream(&c->out, 0);
     }
-    write_stream(&c->out, MARKER_EOM);
+
+    if (err != 0) {
+        errno = err;
+        return -1;
+    }
+    return 0;
 }
 
-void ini_line_numbers_service(Protocol * proto) {
-    add_command_handler(proto, LINENUMBERS, "mapToSource", command_map_to_source);
-}
-
-#endif /* SERVICE_LineNumbers && defined(_MSC_VER) */
+#endif /* SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && defined(_MSC_VER) && !ENABLE_ELF */
 
