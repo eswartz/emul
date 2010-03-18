@@ -93,21 +93,9 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             if (exp instanceof TCFNodeExpression) break;
             exp = exp.parent;
         }
-        final TCFDataCache<IExpressions.Value> value_cache = ((TCFNodeExpression)exp).getValue();
-        if (!value_cache.validate(this)) return false;
-        final IExpressions.Value value_data = value_cache.getData();
-        final ISymbols syms = node.model.getLaunch().getService(ISymbols.class);
-        if (value_data == null || syms == null) {
-            set(null, null, new HashMap<String,TCFNode>());
-            return true;
-        }
-        final TCFDataCache<ISymbols.Symbol> type_cache = node.model.getSymbolInfoCache(value_data.getTypeID());
-        if (type_cache == null) {
-            set(null, null, new HashMap<String,TCFNode>());
-            return true;
-        }
+        TCFDataCache<ISymbols.Symbol> type_cache = ((TCFNodeExpression)exp).getType();
         if (!type_cache.validate(this)) return false;
-        final ISymbols.Symbol type_data = type_cache.getData();
+        ISymbols.Symbol type_data = type_cache.getData();
         if (type_data == null) {
             set(null, null, new HashMap<String,TCFNode>());
             return true;

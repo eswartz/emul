@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -151,8 +150,7 @@ public class TransportManager {
     public static void peerDisposed(AbstractPeer peer) {
         Exception error = null;
         Collection<AbstractChannel> bf = new ArrayList<AbstractChannel>(channels);
-        for (Iterator<AbstractChannel> i = bf.iterator(); i.hasNext();) {
-            AbstractChannel c = i.next();
+        for (AbstractChannel c : bf) {
             if (c.getRemotePeer() != peer) continue;
             if (error == null) error = new Exception("Peer is disposed");
             c.terminate(error);
@@ -166,10 +164,12 @@ public class TransportManager {
      * This is internal API, TCF clients should use {@code org.eclipse.tm.tcf.protocol.Protocol}.
      */
     public static void sendEvent(String service_name, String event_name, byte[] data) {
-        for (Iterator<AbstractChannel> i = channels.iterator(); i.hasNext();) {
-            AbstractChannel channel = i.next();
-            IService s = channel.getLocalService(service_name);
-            if (s != null) channel.sendEvent(s, event_name, data);
+        for (AbstractChannel c : channels) {
+            // Skip channels that are executing "redirect" command - STATE_OPENNING
+            if (c.getState() == IChannel.STATE_OPEN) {
+                IService s = c.getLocalService(service_name);
+                if (s != null) c.sendEvent(s, event_name, data);
+            }
         }
     }
 
@@ -195,10 +195,11 @@ public class TransportManager {
                 if (set.isEmpty()) done.run();
             }
         };
-        for (Iterator<AbstractChannel> i = channels.iterator(); i.hasNext();) {
-            AbstractChannel channel = i.next();
-            ILocator s = channel.getRemoteService(ILocator.class);
-            if (s != null) set.add(s.sync(done_sync));
+        for (AbstractChannel c : channels) {
+            if (c.getState() == IChannel.STATE_OPEN) {
+                ILocator s = c.getRemoteService(ILocator.class);
+                if (s != null) set.add(s.sync(done_sync));
+            }
         }
         if (set.isEmpty()) Protocol.invokeLater(done);
     }

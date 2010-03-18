@@ -113,6 +113,7 @@ public class TCFModelPresentation implements IDebugModelPresentation {
         if (element instanceof IFile) {
             return new FileEditorInput((IFile)element);
         }
+        // TODO: files outside workspace (e.g. LocalFileStorage)
         return null;
     }
 }

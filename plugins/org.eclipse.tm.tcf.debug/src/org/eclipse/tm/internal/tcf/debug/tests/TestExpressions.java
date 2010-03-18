@@ -126,7 +126,7 @@ class TestExpressions implements ITCFTest,
                                     public void run() {
                                         if (!test_suite.isActive(TestExpressions.this)) return;
                                         cnt++;
-                                        if (cnt < 10) {
+                                        if (cnt < 60) {
                                             Protocol.invokeLater(1000, this);
                                         }
                                         else if (test_suite.cancel) {

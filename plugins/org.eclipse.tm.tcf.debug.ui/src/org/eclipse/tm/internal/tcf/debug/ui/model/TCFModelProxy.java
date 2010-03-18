@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.internal.ui.viewers.provisional.AbstractModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
@@ -171,8 +170,10 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     private void post() {
         assert Protocol.isDispatchThread();
         if (!posted) {
-            long idle_time = System.currentTimeMillis() - last_update_time;
+            long time_now = System.currentTimeMillis();
+            long idle_time = time_now - last_update_time;
             Protocol.invokeLater(MIN_IDLE_TIME - idle_time, this);
+            last_update_time = time_now;
             posted = true;
         }
     }
@@ -215,7 +216,11 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         ModelDelta delta = node2delta.get(node);
         if (delta == null) {
             if (node.parent == null) {
-                delta = root.addNode(model.getLaunch(), -1, flags, getNodeChildren(node).length);
+                if (root.getElement() instanceof TCFNode) return null;
+                delta = root.addNode(model.getLaunch(), -1, flags, -1);
+            }
+            else if (node == root.getElement()) {
+                delta = root;
             }
             else {
                 int parent_flags = 0;
@@ -249,19 +254,22 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         pending_node = null;
         node2children.clear();
         node2delta.clear();
-        ModelDelta root = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
+        Object input = getViewer().getInput();
+        int flags = 0;
+        if (node2flags.containsKey(input)) flags = node2flags.get(input);
+        ModelDelta root = new ModelDelta(input, flags);
         for (TCFNode node : node2flags.keySet()) makeDelta(root, node, node2flags.get(node));
         if (pending_node == null) {
             node2flags.clear();
-            if (!node2delta.isEmpty()) {
+            if ((root.getFlags() != 0 || node2delta.size() > 0) && (root.getFlags() & IModelDelta.REMOVED) == 0) {
                 fireModelChanged(root);
-                node2delta.clear();
             }
+            node2delta.clear();
             if (selection != null) {
-                ModelDelta root1 = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
+                ModelDelta root1 = new ModelDelta(input, IModelDelta.NO_CHANGE);
                 makeDelta(root1, selection, IModelDelta.REVEAL);
                 node2delta.clear();
-                ModelDelta root2 = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
+                ModelDelta root2 = new ModelDelta(input, IModelDelta.NO_CHANGE);
                 makeDelta(root2, selection, IModelDelta.SELECT);
                 node2delta.clear();
                 if (pending_node == null) {
@@ -273,7 +281,6 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         }
 
         if (pending_node == null) {
-            last_update_time = System.currentTimeMillis();
         }
         else if (pending_node.getData(children_count_update, this)) {
             assert false;

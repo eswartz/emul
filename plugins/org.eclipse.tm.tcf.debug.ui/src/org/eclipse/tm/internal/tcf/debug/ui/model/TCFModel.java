@@ -902,15 +902,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     if (locator instanceof ISourceLookupDirector) {
                         source_element = ((ISourceLookupDirector)locator).getSourceElement(area);
                     }
-                    if (source_element == null) {
-                        ILaunchConfiguration cfg = launch.getLaunchConfiguration();
-                        editor_input = editor_not_found.get(cfg);
-                        if (editor_input == null) {
-                            editor_not_found.put(cfg, editor_input = new CommonSourceNotFoundEditorInput(cfg));
-                        }
-                        editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
-                    }
-                    else {
+                    if (source_element != null) {
                         ISourcePresentation presentation = TCFModelPresentation.getDefault();
                         if (presentation != null) {
                             editor_input = presentation.getEditorInput(source_element);
@@ -921,6 +913,15 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         line = area.start_line;
                     }
                     if (cnt != display_source_cnt) return;
+                }
+                if (area != null && (editor_input == null || editor_id == null)) {
+                    ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+                    editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
+                    editor_input = editor_not_found.get(cfg);
+                    if (editor_input == null) {
+                        editor_input = new CommonSourceNotFoundEditorInput(cfg);
+                        editor_not_found.put(cfg, editor_input);
+                    }
                 }
                 ITextEditor text_editor = null;
                 IRegion region = null;

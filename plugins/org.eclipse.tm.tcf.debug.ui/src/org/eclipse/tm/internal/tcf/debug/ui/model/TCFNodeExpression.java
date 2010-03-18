@@ -249,13 +249,20 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         type = new TCFDataCache<ISymbols.Symbol>(channel) {
             @Override
             protected boolean startDataRetrieval() {
+                String type_id = null;
                 if (!value.validate(this)) return false;
                 IExpressions.Value val = value.getData();
-                if (val == null) {
+                if (val != null) type_id = val.getTypeID();
+                if (type_id == null) {
+                    if (!expression.validate(this)) return false;
+                    Expression exp = expression.getData();
+                    if (exp != null) type_id = exp.expression.getTypeID();
+                }
+                if (type_id == null) {
                     set(null, value.getError(), null);
                     return true;
                 }
-                TCFDataCache<ISymbols.Symbol> type_cache = model.getSymbolInfoCache(val.getTypeID());
+                TCFDataCache<ISymbols.Symbol> type_cache = model.getSymbolInfoCache(type_id);
                 if (type_cache == null) {
                     set(null, null, null);
                     return true;
@@ -433,7 +440,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                 get_base_type = true;
                                 break;
                             case array:
-                                s = "[]";
+                                s = "[" + type_symbol.getLength() + "]";
                                 get_base_type = true;
                                 break;
                             case composite:
@@ -834,16 +841,19 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         if (data == null) return true;
         ISymbols.Symbol type_data = null;
         if (type_id != null) {
-            TCFDataCache<ISymbols.Symbol> type_cahce = model.getSymbolInfoCache(type_id);
-            if (!type_cahce.validate(done)) return false;
-            type_data = type_cahce.getData();
+            TCFDataCache<ISymbols.Symbol> type_cache = model.getSymbolInfoCache(type_id);
+            if (!type_cache.validate(done)) return false;
+            type_data = type_cache.getData();
         }
         if (type_data == null) {
             if (level == 0) {
+                bf.append("Type: not available\n");
+                bf.append("Size: ");
+                bf.append(data.length);
+                bf.append(data.length == 1 ? " byte\n" : " bytes\n");
                 bf.append("Hex: ");
                 bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
                 bf.append("\n");
-                bf.append("Value type is not available\n");
             }
             else {
                 bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
@@ -870,58 +880,67 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 bf.append("\n");
             }
         }
-        switch (type_data.getTypeClass()) {
-        case enumeration:
-        case integer:
-        case cardinal:
-        case real:
-            if (level == 0) {
-                bf.append("Size: ");
-                bf.append(type_data.getSize());
-                bf.append(type_data.getSize() == 1 ? " byte\n" : " bytes\n");
-                if (type_data.getSize() == 0) break;
-                bf.append("Dec: ");
-                bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
-                bf.append("\n");
-                bf.append("Oct: ");
-                bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
-                bf.append("\n");
-                bf.append("Hex: ");
-                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+        if (type_data.getSize() > 0) {
+            switch (type_data.getTypeClass()) {
+            case enumeration:
+            case integer:
+            case cardinal:
+            case real:
+                if (level == 0) {
+                    bf.append("Dec: ");
+                    bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
+                    bf.append("\n");
+                    bf.append("Oct: ");
+                    bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
+                    bf.append("\n");
+                    bf.append("Hex: ");
+                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                    bf.append("\n");
+                }
+                else if (type_data.getTypeClass() == ISymbols.TypeClass.cardinal) {
+                    bf.append("0x");
+                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                }
+                else {
+                    bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
+                }
+                break;
+            case pointer:
+            case function:
+                if (level == 0) {
+                    bf.append("Oct: ");
+                    bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
+                    bf.append("\n");
+                    bf.append("Hex: ");
+                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                    bf.append("\n");
+                }
+                else {
+                    bf.append("0x");
+                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                }
+                break;
+            case array:
+                if (!appendArrayValueText(bf, level, type_data, data, offs, size, big_endian, done)) return false;
+                if (level == 0) bf.append("\n");
+                break;
+            case composite:
+                if (!appendCompositeValueText(bf, level, type_data, data, offs, size, big_endian, done)) return false;
+                if (level == 0) bf.append("\n");
+                break;
+            }
+        }
+        if (level == 0) {
+            if (!type_name.validate(done)) return false;
+            String nm = type_name.getData();
+            if (nm != null) {
+                bf.append("Type: ");
+                bf.append(nm);
                 bf.append("\n");
             }
-            else if (type_data.getTypeClass() == ISymbols.TypeClass.cardinal) {
-                bf.append("0x");
-                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
-            }
-            else {
-                bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
-            }
-            break;
-        case pointer:
-        case function:
-            if (level == 0) {
-                bf.append("Oct: ");
-                bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
-                bf.append("\n");
-                bf.append("Hex: ");
-                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
-                bf.append("\n");
-            }
-            else {
-                bf.append("0x");
-                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
-            }
-            break;
-        case array:
-            if (!appendArrayValueText(bf, level, type_data, data, offs, size, big_endian, done)) return false;
-            break;
-        case composite:
-            if (!appendCompositeValueText(bf, level, type_data, data, offs, size, big_endian, done)) return false;
-            break;
-        default:
-            bf.append('?');
-            break;
+            bf.append("Size: ");
+            bf.append(type_data.getSize());
+            bf.append(type_data.getSize() == 1 ? " byte\n" : " bytes\n");
         }
         return true;
     }

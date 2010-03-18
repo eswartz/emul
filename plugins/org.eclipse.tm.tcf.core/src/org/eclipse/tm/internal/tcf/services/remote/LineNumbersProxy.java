@@ -38,6 +38,23 @@ public class LineNumbersProxy implements ILineNumbers {
         }.token;
     }
 
+    public IToken mapToMemory(String context_id, String file,
+            int line, int column, final DoneMapToMemory done) {
+        return new Command(channel, this, "mapToMemory", new Object[]{ context_id,
+                file, line, column }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                CodeArea[] arr = null;
+                if (error == null) {
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toTextAreaArray(args[1]);
+                }
+                done.doneMapToMemory(token, error, arr);
+            }
+        }.token;
+    }
+
     private static int getInteger(Map<String,Object> map, String name, int def) {
         Number n = (Number)map.get(name);
         if (n == null) return def;

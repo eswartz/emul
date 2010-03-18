@@ -21,18 +21,20 @@ public interface IStackTrace extends IService {
     static final String NAME = "StackTrace";
 
     /**
-     * Context property names.
+     * Stack frame context property names.
      */
     static final String
-        PROP_ID = "ID",
-        PROP_PARENT_ID = "ParentID",
-        PROP_PROCESS_ID = "ProcessID",
-        PROP_NAME = "Name",
-        PROP_FRAME_ADDRESS = "FP",
-        PROP_RETURN_ADDRESS = "RP",
-        PROP_INSTRUCTION_ADDRESS = "IP",
-        PROP_ARGUMENTS_COUNT = "ArgsCnt",
-        PROP_ARGUMENTS_ADDRESS = "ArgsAddr";
+        PROP_ID = "ID",                         /** String, stack frame ID */
+        PROP_PARENT_ID = "ParentID",            /** String, stack frame parent ID */
+        PROP_PROCESS_ID = "ProcessID",          /** String, stack frame process ID */
+        PROP_NAME = "Name",                     /** String, human readable name */
+        PROP_TOP_FRAME = "TopFrame",            /** Boolean, true if the frame is top frame on a stack */
+        PROP_LEVEL = "Level",                   /** Integer, stack frame level, starting from stack bottom */
+        PROP_FRAME_ADDRESS = "FP",              /** Number, stack frame memory address */
+        PROP_RETURN_ADDRESS = "RP",             /** Number, return address */
+        PROP_INSTRUCTION_ADDRESS = "IP",        /** Number, instruction pointer */
+        PROP_ARGUMENTS_COUNT = "ArgsCnt",       /** Integer, number of function arguments */
+        PROP_ARGUMENTS_ADDRESS = "ArgsAddr";    /** Number, memory address of function arguments */
 
     /**
      * Retrieve context info for given context IDs.

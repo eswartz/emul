@@ -227,7 +227,7 @@ class TestRCBP1 implements ITCFTest,
     @SuppressWarnings("unchecked")
     private void iniBreakpoints() {
         assert !bp_set_done;
-        Map<String,Object> m[] = new Map[4];
+        Map<String,Object> m[] = new Map[6];
         for (int i = 0; i < m.length; i++) {
             m[i] = new HashMap();
             m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i + "" + channel_id);
@@ -235,21 +235,33 @@ class TestRCBP1 implements ITCFTest,
             switch (i) {
             case 0:
                 m[i].put(IBreakpoints.PROP_LOCATION, func0.getValue().toString());
+                // Condition is always true
                 m[i].put(IBreakpoints.PROP_CONDITION, "$thread!=\"\"");
                 break;
             case 1:
-                m[i].put(IBreakpoints.PROP_LOCATION, "(31+1)/16+tcf_test_func1-2");
-                m[i].put(IBreakpoints.PROP_CONDITION, "tcf_test_func0!=tcf_test_func1");
+                m[i].put(IBreakpoints.PROP_LOCATION, func0.getValue().toString());
+                // Condition is always false
+                m[i].put(IBreakpoints.PROP_CONDITION, "$thread==\"\"");
                 break;
             case 2:
+                // Second breakpoint at same address
+                m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func0");
+                break;
+            case 3:
+                // Location is an expression
+                m[i].put(IBreakpoints.PROP_LOCATION, "(31+1)/16+tcf_test_func1-2");
+                // Condition is always true
+                m[i].put(IBreakpoints.PROP_CONDITION, "tcf_test_func0!=tcf_test_func1");
+                break;
+            case 4:
                 // Disabled breakpoint
                 m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
                 m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
                 break;
-            case 3:
+            case 5:
                 // Breakpoint that will be enabled with "enable" command
-                m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
                 m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
+                m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
                 break;
             }
             bp_list.put((String)m[i].get(IBreakpoints.PROP_ID), m[i]);
@@ -370,7 +382,7 @@ class TestRCBP1 implements ITCFTest,
         assert !bp_change_done;
         if (threads.size() == 0) return;
         done_starting_test_process = true;
-        final String bp_id = "TcfTestBP3" + channel_id;
+        final String bp_id = "TcfTestBP5" + channel_id;
         final Map<String,Object> m = new HashMap<String,Object>();
         m.put(IBreakpoints.PROP_ID, bp_id);
         m.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);

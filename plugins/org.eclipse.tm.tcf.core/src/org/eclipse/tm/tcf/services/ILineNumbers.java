@@ -163,4 +163,10 @@ public interface ILineNumbers extends IService {
     interface DoneMapToSource {
         void doneMapToSource(IToken token, Exception error, CodeArea[] areas);
     }
+
+    IToken mapToMemory(String context_id, String file, int line, int column, DoneMapToMemory done);
+
+    interface DoneMapToMemory {
+        void doneMapToMemory(IToken token, Exception error, CodeArea[] areas);
+    }
 }
