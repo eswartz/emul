@@ -90,7 +90,6 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.StepReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.SuspendCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
 import org.eclipse.tm.tcf.protocol.IChannel;
-import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -195,12 +194,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found =
         new HashMap<ILaunchConfiguration,IEditorInput>();
-
-    private final Map<String,TCFDataCache<ISymbols.Symbol>> symbols =
-        new HashMap<String,TCFDataCache<ISymbols.Symbol>>();
-
-    private final Map<String,TCFDataCache<String[]>> symbol_children =
-        new HashMap<String,TCFDataCache<String[]>>();
 
     private final IModelSelectionPolicyFactory model_selection_factory = new IModelSelectionPolicyFactory() {
 
@@ -662,46 +655,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(final String sym_id) {
         if (sym_id == null) return null;
-        TCFDataCache<ISymbols.Symbol> s = symbols.get(sym_id);
-        if (s == null) symbols.put(sym_id, s = new TCFDataCache<ISymbols.Symbol>(channel) {
-            @Override
-            protected boolean startDataRetrieval() {
-                ISymbols syms = getLaunch().getService(ISymbols.class);
-                if (sym_id == null || syms == null) {
-                    set(null, null, null);
-                    return true;
-                }
-                command = syms.getContext(sym_id, new ISymbols.DoneGetContext() {
-                    public void doneGetContext(IToken token, Exception error, ISymbols.Symbol sym) {
-                        set(token, error, sym);
-                    }
-                });
-                return false;
-            }
-        });
-        return s;
+        TCFNodeSymbol n = (TCFNodeSymbol)getNode(sym_id);
+        if (n == null) n = new TCFNodeSymbol(launch_node, sym_id);
+        return n.getContext();
     }
 
     public TCFDataCache<String[]> getSymbolChildrenCache(final String sym_id) {
         if (sym_id == null) return null;
-        TCFDataCache<String[]> s = symbol_children.get(sym_id);
-        if (s == null) symbol_children.put(sym_id, s = new TCFDataCache<String[]>(channel) {
-            @Override
-            protected boolean startDataRetrieval() {
-                ISymbols syms = getLaunch().getService(ISymbols.class);
-                if (sym_id == null || syms == null) {
-                    set(null, null, null);
-                    return true;
-                }
-                command = syms.getChildren(sym_id, new ISymbols.DoneGetChildren() {
-                    public void doneGetChildren(IToken token, Exception error, String[] ids) {
-                        set(token, error, ids);
-                    }
-                });
-                return false;
-            }
-        });
-        return s;
+        TCFNodeSymbol n = (TCFNodeSymbol)getNode(sym_id);
+        if (n == null) n = new TCFNodeSymbol(launch_node, sym_id);
+        return n.getChildren();
     }
 
     public void update(IChildrenCountUpdate[] updates) {
@@ -979,13 +942,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             public void run() {
                 Shell shell = display.getActiveShell();
                 if (shell == null) {
-                    IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                    if (window == null) {
-                        IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
-                        if (windows == null || windows.length == 0) return;
-                        window = windows[0];
+                    Shell[] shells = display.getShells();
+                    HashSet<Shell> set = new HashSet<Shell>();
+                    for (Shell s : shells) set.add(s);
+                    for (Shell s : shells) {
+                        if (s.getParent() != null) set.remove(s.getParent().getShell());
                     }
-                    shell = window.getShell();
+                    for (Shell s : shells) shell = s;
                 }
                 StringBuffer buf = new StringBuffer();
                 Throwable err = error;

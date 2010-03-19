@@ -12,6 +12,8 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
@@ -21,9 +23,10 @@ import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
 
 
-public class TCFNodeLaunch extends TCFNode {
+public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     private final TCFChildrenExecContext children;
+    private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
     TCFNodeLaunch(final TCFModel model) {
         super(model);
@@ -69,6 +72,9 @@ public class TCFNodeLaunch extends TCFNode {
     @Override
     void dispose() {
         children.dispose();
+        ArrayList<TCFNodeSymbol> l = new ArrayList<TCFNodeSymbol>(symbols.values());
+        for (TCFNodeSymbol s : l) s.dispose();
+        assert symbols.size() == 0;
         super.dispose();
     }
 
@@ -115,7 +121,17 @@ public class TCFNodeLaunch extends TCFNode {
         children.onContextAdded(context);
     }
 
-    TCFChildrenExecContext getChildren() {
+    public void addSymbol(TCFNodeSymbol s) {
+        assert symbols.get(s.id) == null;
+        symbols.put(s.id, s);
+    }
+
+    public void removeSymbol(TCFNodeSymbol s) {
+        assert symbols.get(s.id) == s;
+        symbols.remove(s.id);
+    }
+
+    public TCFChildrenExecContext getChildren() {
         return children;
     }
 }

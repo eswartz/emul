@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,8 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -33,7 +35,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 @SuppressWarnings("serial")
-public class TCFNodeExecContext extends TCFNode {
+public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     private final int seq_no;
 
@@ -47,6 +49,8 @@ public class TCFNodeExecContext extends TCFNode {
     private final TCFDataCache<BigInteger> address; // Current PC as BigInteger
 
     private final Map<BigInteger,TCFSourceRef> line_info_cache;
+
+    private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
     private int resumed_cnt;
 
@@ -171,6 +175,9 @@ public class TCFNodeExecContext extends TCFNode {
         address.dispose();
         children_exec.dispose();
         children_stack.dispose();
+        ArrayList<TCFNodeSymbol> l = new ArrayList<TCFNodeSymbol>(symbols.values());
+        for (TCFNodeSymbol s : l) s.dispose();
+        assert symbols.size() == 0;
         super.dispose();
     }
 
@@ -190,6 +197,16 @@ public class TCFNodeExecContext extends TCFNode {
 
     void setMemoryContext(IMemory.MemoryContext ctx) {
         mem_context.reset(ctx);
+    }
+
+    public void addSymbol(TCFNodeSymbol s) {
+        assert symbols.get(s.id) == null;
+        symbols.put(s.id, s);
+    }
+
+    public void removeSymbol(TCFNodeSymbol s) {
+        assert symbols.get(s.id) == s;
+        symbols.remove(s.id);
     }
 
     Map<BigInteger,TCFSourceRef> getLineInfoCache() {
@@ -360,6 +377,7 @@ public class TCFNodeExecContext extends TCFNode {
         state.reset();
         children_stack.reset();
         children_stack.onSourceMappingChange();
+        for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
@@ -370,6 +388,7 @@ public class TCFNodeExecContext extends TCFNode {
     void onContextChanged(IMemory.MemoryContext context) {
         assert !disposed;
         mem_context.reset(context);
+        for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
@@ -401,6 +420,7 @@ public class TCFNodeExecContext extends TCFNode {
             if (!ctx.hasState()) return;
         }
         state.reset();
+        for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
@@ -420,6 +440,7 @@ public class TCFNodeExecContext extends TCFNode {
         address.reset();
         resumed_cnt++;
         children_stack.onSuspended();
+        for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
         if (!model.isContextActionRunning(id)) {
             addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
         }
