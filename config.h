@@ -96,7 +96,7 @@
 #define SERVICE_PathMap         ENABLE_ELF
 #endif
 
-#ifndef ENABLE_Plugins
+#if !defined(ENABLE_Plugins)
 #  if TARGET_UNIX && defined(PATH_Plugins)
 #    define ENABLE_Plugins      1
 #  else
@@ -109,8 +109,13 @@
 #endif
 
 #if !defined(ENABLE_Splice)
-#  if (ENABLE_ZeroCopy) && defined(SPLICE_F_MOVE)
-#    define ENABLE_Splice       1
+#  if ENABLE_ZeroCopy
+#    include <fcntl.h>
+#    if defined(SPLICE_F_MOVE)
+#      define ENABLE_Splice       1
+#    else
+#      define ENABLE_Splice       0
+#    endif
 #  else
 #    define ENABLE_Splice       0
 #  endif

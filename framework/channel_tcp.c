@@ -347,16 +347,16 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
             int rd = splice(fd, offset, c->pipefd[1], NULL, size, SPLICE_F_MOVE);
             if (rd > 0) {
                 /* Send the binary data escape seq */
-                int n = rd;
-                if (c->obuf_inp >= BUF_SIZE - 8) tcp_flush_with_flags(out, MSG_MORE);
-                c->obuf[c->obuf_inp++] = ESC;
-                c->obuf[c->obuf_inp++] = 3;
+                unsigned n = rd;
+                if (c->chan.out.cur >= c->chan.out.end - 8) tcp_flush_with_flags(out, MSG_MORE);
+                *c->chan.out.cur++ = ESC;
+                *c->chan.out.cur++ = 3;
                 for (;;) {
                     if (n <= 0x7fu) {
-                        c->obuf[c->obuf_inp++] = (char)n;
+                        *c->chan.out.cur++ = (char)n;
                         break;
                     }
-                    c->obuf[c->obuf_inp++] = (n & 0x7fu) | 0x80u;
+                    *c->chan.out.cur++ = (n & 0x7fu) | 0x80u;
                     n = n >> 7;
                 }
                 /* We need to flush the buffer then send our data */
