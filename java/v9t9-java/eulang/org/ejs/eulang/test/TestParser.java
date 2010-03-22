@@ -68,7 +68,6 @@ public class TestParser  {
 	        }
 	        System.out.println("\n"+str);
 	        if (!expectError) {
-	        	assertTrue("consumed all input", tokens.index() >= tokens.size());
 				if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
 					for (String msg : errors) {
 						System.err.println(msg);
@@ -82,7 +81,10 @@ public class TestParser  {
 	        
 	        if (prog != null && prog.getTree() != null)
 	        	System.out.println(((Tree) prog.getTree()).toStringTree());
-	        
+
+	        if (!expectError)
+	        	assertTrue("did not consume all input", tokens.index() >= tokens.size());
+
 	        return prog;
     	} finally {
     		System.err.flush();
@@ -122,6 +124,22 @@ public class TestParser  {
     @Test
     public void testNumber4() throws Exception {
     	runAt("atom", "129.39281e203");
+    }
+    @Test
+    public void testChar1() throws Exception {
+    	runAt("atom", "'9'");
+    }
+    @Test
+    public void testChar2() throws Exception {
+    	runAt("atom", "'\\u0004'");
+    }
+    @Test
+    public void testString1() throws Exception {
+    	runAt("atom", "\"\"");
+    }
+    @Test
+    public void testString2() throws Exception {
+    	runAt("atom", "\"There is stuff in here\"");
     }
     @Test
     public void testId1() throws Exception {
@@ -195,6 +213,14 @@ public class TestParser  {
     	run("myCode = {( a : Int = 10 , b= 10 , c: Float)  } ;");
     }
     @Test
+    public void testCodeBlockReturns1() throws Exception  {
+    	run("sqrAdd = {( => Object )  };");
+    }
+    @Test
+    public void testCodeBlockReturns2() throws Exception  {
+    	run("sqrAdd = {( x , y => Object )  };");
+    }
+    @Test
     public void testCodeBlockFuncCall1a() throws Exception  {
     	run("sqrAdd = {( a,b ) a*a+b } ;"
     			+"myCode = {( a ) sqrAdd(a*10, a-10) ; } ;");
@@ -232,16 +258,28 @@ public class TestParser  {
     	runAt("rhsExpr", "(y & 0xff) << 8 + 5");
     }
     @Test
+    public void testExpr2b() throws Exception  {
+    	runAt("rhsExpr", "y * z + a / c + d & 11");
+    }
+    @Test
+    public void testExpr2c() throws Exception  {
+    	runAt("rhsExpr", "y & z ^ d");
+    }
+    @Test
+    public void testExpr2d() throws Exception  {
+    	runAt("rhsExpr", "y | z >>> a \\ c ^ d & 11");
+    }
+    @Test
     public void testCondExpr2b() throws Exception  {
     	runAt("rhsExpr", "(y*2 > 0 && x < 10) ? true : false");
     }
     @Test
     public void testCondExpr2c() throws Exception  {
-    	runAt("rhsExpr", "a ? (b ? 1 : 2) : 3;");
+    	runAt("rhsExpr", "a ? (b ? 1 : 2) : 3");
     }
     @Test
     public void testCondExpr2d() throws Exception  {
-    	runAt("rhsExpr", "a==4 ? ((y*2 > 0 && x < 10) ? true : false) : rout(a);");
+    	runAt("rhsExpr", "a==4 ? ((y*2 > 0 && x < 10) ? a<<9!=0 : a!=4) : rout(a)");
     }
 }
 

@@ -27,7 +27,7 @@ HASH : '#';
 EXCL : '!';
 TILDE : '~';
 AT : '@';
-AMP : '&';
+AMP : '&'; 
 BAR : '|';
 CARET : '^';
 SEMI : ';';
@@ -46,6 +46,7 @@ URSHIFT : '>>>';
 BACKSLASH : '\\';
 PERCENT : '%';
 UMOD : '%%';
+RETURNS : '=>' ;
 
 //
 //  Numbers

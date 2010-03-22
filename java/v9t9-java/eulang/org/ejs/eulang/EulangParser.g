@@ -8,6 +8,7 @@ options {
 tokens {
   CODE;
   STMTLIST;
+  PROTO;
   ARGLIST;
   ARGDEF;
   EXPR;
@@ -21,11 +22,13 @@ tokens {
   BITAND;
   BITOR;
   BITXOR;
+  
+  ADD;
+  SUB;
   MUL;
   DIV;
   UDIV;
   MOD;
-  
 }
 @header {
 package org.ejs.eulang;
@@ -63,17 +66,19 @@ selectorlist: (selectoritem ( COMMA selectoritem )* COMMA?)?
 selectoritem: code  ;
 
 // code block
-code 
-    :   LBRACE_LPAREN argdefs RPAREN codestmtlist RBRACE -> ^(CODE argdefs* codestmtlist*)  
+code
+    :   LBRACE_LPAREN argdefs xreturns? RPAREN codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? argdefs*) codestmtlist*)  
     ;
 
-argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> ^(ARGLIST argdef*) 
+argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
     ;
 
 argdef:  ID (COLON type (EQUALS assignExpr)?)?    -> ^(ARGDEF ID type* assignExpr*)
     | ID EQUALS assignExpr    -> ^(ARGDEF ID TYPE assignExpr)
   ;
 
+xreturns: RETURNS type      -> type
+  ;
 type:  ID       -> ^(TYPE ID)
   ;
 
@@ -105,30 +110,33 @@ arglist: (arg ( COMMA arg)* COMMA?)?                        -> ^(ARGLIST arg*)
 arg:  assignExpr                    -> ^(EXPR assignExpr) 
    ;
 
+//
+//  Expressions
+//
 
 cond:    ( l=logcond  -> $l )
       ( QUESTION t=cond COLON f=cond -> ^(COND $l $t $f ) 
-      )?
+      )*
 ;
 
 logcond: ( l=binlogcond     -> $l )      
       ( COMPAND r=binlogcond -> ^(COMPAND $l $r)
       | COMPOR r=binlogcond -> ^(COMPOR $l $r)
       | COMPXOR r=binlogcond  -> ^(COMPXOR $l $r)
-      )?
+      )*
 ;
 
 binlogcond: ( l=compeq      -> $l )       
       ( AMP r=compeq  -> ^(BITAND $l $r)
       | BAR r=compeq  -> ^(BITOR $l $r)
       | CARET r=compeq  -> ^(BITXOR $l $r)
-      )?
+      )*
 ;
 
 compeq:   ( l=comp        -> $l )          
       ( COMPEQ r=comp -> ^(COMPEQ $l $r)
       | COMPNE r=comp -> ^(COMPNE $l $r)
-      )?
+      )*
 ;
 
 comp:  ( l=shift           -> $l )
@@ -136,18 +144,19 @@ comp:  ( l=shift           -> $l )
       | COMPGE r=shift    -> ^(COMPGE $l $r)
       | LESS r=shift     -> ^(LESS $l $r)
       | GREATER r=shift    -> ^(GREATER $l $r)
-      )?
+      )*
 ;               
 
 shift:  ( l=factor        -> $l )         
       ( LSHIFT r=factor   -> ^(LSHIFT $l $r) 
       | RSHIFT r=factor   -> ^(RSHIFT $l $r)
       | URSHIFT r=factor   -> ^(URSHIFT $l $r)
-      )?
+      )*
   ;
-factor : ( l=multExpr              -> $l )
-        (   PLUS r=multExpr         -> ^(PLUS $l $r)
-        |   MINUS r=multExpr        -> ^(MINUS $l $r)
+factor  
+    : ( l=multExpr              -> $l )
+        (   PLUS r=multExpr         -> ^(ADD $l $r)
+        |   MINUS r=multExpr        -> ^(SUB $l $r)
         )*
     ;
 
@@ -162,7 +171,9 @@ multExpr : ( l=atom                  -> $l )
 
 atom options { k=2; } :
     MINUS NUMBER                          -> {new CommonTree(new CommonToken(NUMBER, "-" + $NUMBER.text))}
-    | NUMBER                          -> NUMBER
+    |   NUMBER                          -> NUMBER
+    |   CHAR_LITERAL
+    |   STRING_LITERAL
     |   funcCall                                    -> funcCall
     |   ID                                     -> ID
     |   LPAREN assignExpr RPAREN               -> assignExpr 
