@@ -347,6 +347,19 @@ public class TestParser  {
     public void testRef1() throws Exception  {
     	run("foo = {() x : Int& = Ref.at(0x8370); };");
     }
+    @Test
+    public void testEmptyICodeBlock() throws Exception  {
+    	run("myICode = {*()};");
+    }
+    @Test
+    public void testCallICodeBlock() throws Exception  {
+    	run("myICode = {(x,y)}; foo = {() a=*myICode(1,2); };");
+    }
+    @Test
+    public void testAmbiguousProtoOrExpr() throws Exception  {
+    	// TODO: test
+    	run("myProto = (x,y); myExpr = (10);  myProtoNotExpr = (x);");
+    }
 }
 
 

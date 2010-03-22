@@ -9,6 +9,7 @@ tokens {
   SCOPE;
   LIST_COMPREHENSION;
   CODE;
+  MACRO;
   STMTLIST;
   PROTO;
   ARGLIST;
@@ -22,7 +23,10 @@ tokens {
   DEFINE;
   LIST;
   TYPE;
+  
   CALL;
+  INLINE;   // modifier on CALL
+  
   COND;
   BITAND;
   BITOR;
@@ -34,6 +38,10 @@ tokens {
   DIV;
   UDIV;
   MOD;
+  
+  NOT;
+  NEG;
+  INV;
 
   IDREF;
   IDLIST;
@@ -45,6 +53,10 @@ import java.util.HashMap;
 
 
 @members {
+public String getTokenErrorDisplay(Token t) {
+    return t.toString();
+}
+
 }
 
 
@@ -62,6 +74,7 @@ toplevelstat:   ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE_ASSIGN ID toplevel
 
 toplevelvalue : xscope
     | code
+    | macro
     | proto       
     | selector
     | rhsExpr
@@ -74,7 +87,7 @@ selector: LBRACKET selectors RBRACKET    -> ^(LIST selectors*)
 selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    
   ;
         
-selectoritem: listCompr | code  ;
+selectoritem: listCompr | code | macro ;
 
 //  scope
 //
@@ -91,7 +104,7 @@ forIn : FOR idlist IN list      -> ^(FOR idlist list ) ;
 idlist : ID (COMMA ID)*    -> ^(IDLIST ID+)
     ;
 
-listiterable : ( code | proto ) ;
+listiterable : ( code | macro | proto ) ;
     
 list : LBRACKET listitems RBRACKET     -> ^(LIST listitems*)
     ;
@@ -117,6 +130,10 @@ protoargdef:  ID (COLON type (EQUALS rhsExpr)?)?    -> ^(ARGDEF ID type* rhsExpr
   
 // code block
 code :   LBRACE_LPAREN argdefs xreturns? RPAREN codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? argdefs*) codestmtlist*)  
+    ;
+
+// inline code block
+macro :   LBRACE_STAR_LPAREN argdefs xreturns? RPAREN codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? argdefs*) codestmtlist*)  
     ;
 
 argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
@@ -171,7 +188,7 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 //
 
 cond:    ( l=logcond  -> $l )
-      ( QUESTION t=cond COLON f=cond -> ^(COND $l $t $f ) 
+      ( ( QUESTION t=cond ) => QUESTION t=cond COLON f=cond -> ^(COND $l $t $f ) 
       )*
 ;
 
@@ -209,28 +226,35 @@ shift:  ( l=factor        -> $l )
       | URSHIFT r=factor   -> ^(URSHIFT $l $r)
       )*
   ;
-factor  
-    : ( l=multExpr              -> $l )
-        (   PLUS r=multExpr         -> ^(ADD $l $r)
-        |   MINUS r=multExpr        -> ^(SUB $l $r)
+factor 
+    : ( l=term              -> $l )
+        (   PLUS r=term         -> ^(ADD $l $r)
+        |   ( MINUS r=term ) => MINUS r=term        -> ^(SUB $l $r)
         )*
     ;
 
-multExpr : ( l=atom                  -> $l )
-        ( STAR r=atom             -> ^(MUL  $l $r)
-        | SLASH r=atom            -> ^(DIV $l $r)
-        | BACKSLASH r=atom            -> ^(UDIV $l $r)
-        | PERCENT r=atom            -> ^(MOD $l $r)
-        | UMOD r=atom            -> ^(UMOD $l $r)
+term : ( l=unary                  -> $l )
+        (  ( STAR r=unary ) => STAR r=unary             -> ^(MUL  $l $r)
+        | SLASH r=unary            -> ^(DIV $l $r)
+        | BACKSLASH r=unary            -> ^(UDIV $l $r)
+        | PERCENT r=unary            -> ^(MOD $l $r)
+        | UMOD r=unary            -> ^(UMOD $l $r)
         )*                        
     ; 
 
+
+unary:    ( atom        -> atom )        
+      | ( MINUS u=unary )    => MINUS u=unary -> ^(NEG $u )
+      | EXCL u=unary     -> ^(NOT $u )
+      | TILDE u=unary     -> ^(INV $u )
+;
 atom options { k=2; } :
-    MINUS NUMBER                          -> {new CommonTree(new CommonToken(NUMBER, "-" + $NUMBER.text))}
-    |   NUMBER                          -> NUMBER
+    //MINUS NUMBER                          -> {new CommonTree(new CommonToken(NUMBER, "-" + $NUMBER.text))}
+      NUMBER                          -> NUMBER
     |   CHAR_LITERAL
     |   STRING_LITERAL
-    |   funcCall                                    -> funcCall
+    |   ( STAR ( ID | SCOPEREF) LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
+    |   (( ID | SCOPEREF ) LPAREN ) => funcCall   -> funcCall
     |   ID                                -> ^(IDREF ID)
     |   SCOPEREF                                -> ^(IDREF SCOPEREF)
     |   LPAREN assignExpr RPAREN               -> assignExpr 

@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 LBRACE_LPAREN : '{(';
 LBRACE_STAR : '{*';
+LBRACE_STAR_LPAREN : '{*(';
 COLON : ':';
 COMMA : ',';
 EQUALS : '=';
