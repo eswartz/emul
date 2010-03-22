@@ -4,12 +4,11 @@
  * Created on Mar 4, 2006
  *
  */
-package v9t9.tools.asm.decomp;
+package v9t9.tools.ast.expr.impl;
 
-import v9t9.tools.asm.decomp.expr.IAstExpression;
-import v9t9.tools.asm.decomp.expr.IAstNode;
-import v9t9.tools.asm.decomp.expr.IAstRegisterExpression;
-import v9t9.tools.asm.decomp.expr.impl.AstExpression;
+import v9t9.tools.ast.expr.IAstExpression;
+import v9t9.tools.ast.expr.IAstNode;
+import v9t9.tools.ast.expr.IAstRegisterExpression;
 
 public class AstRegisterExpression extends AstExpression implements
         IAstRegisterExpression {

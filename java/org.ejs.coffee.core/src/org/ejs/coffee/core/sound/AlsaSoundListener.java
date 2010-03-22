@@ -85,7 +85,7 @@ public class AlsaSoundListener implements ISoundListener {
 				return;
 			stopped();
 		}
-		soundQueue = new LinkedBlockingQueue<AudioChunk>(20);
+		soundQueue = new LinkedBlockingQueue<AudioChunk>(50);
 
 		soundFormat = format;
 		
@@ -234,7 +234,7 @@ public class AlsaSoundListener implements ISoundListener {
 										}
 									}
 									try {
-										Thread.sleep(100);
+										Thread.sleep(50);
 									} catch (InterruptedException e) {
 									}
 									continue;
@@ -286,7 +286,7 @@ public class AlsaSoundListener implements ISoundListener {
 			soundQueue.clear();
 			while (!soundQueue.isEmpty()) {
 				try {
-					Thread.sleep(100);
+					Thread.sleep(50);
 				} catch (InterruptedException e) {
 					break;
 				}

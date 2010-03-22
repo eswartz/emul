@@ -20,8 +20,8 @@ Export-Package: .,
  v9t9.tests,
  v9t9.tools.asm.assembler,
  v9t9.tools.asm.decomp,
- v9t9.tools.asm.decomp.expr,
- v9t9.tools.asm.decomp.expr.impl
+ v9t9.tools.ast.expr,
+ v9t9.tools.ast.expr.impl
 Require-Bundle: org.eclipse.swt;bundle-version="3.4.0",
  org.junit4;bundle-version="4.3.1",
  org.eclipse.jface;bundle-version="3.4.1",
@@ -43,5 +43,6 @@ Require-Bundle: org.eclipse.swt;bundle-version="3.4.0",
  org.apache.xerces;bundle-version="2.9.0",
  org.eclipse.ui.forms;bundle-version="3.3.101",
  org.eclipse.jface.text;bundle-version="3.4.1",
- org.ejs.coffee.core;bundle-version="1.0.0"
+ org.ejs.coffee.core;bundle-version="1.0.0",
+ org.eclipse.cdt.core;bundle-version="5.1.2"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

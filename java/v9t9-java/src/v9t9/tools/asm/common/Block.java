@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import v9t9.tools.asm.assembler.HLInstruction;
+
 
 public class Block implements Comparable<Block> {
 
@@ -312,6 +314,17 @@ public class Block implements Comparable<Block> {
 
 	public int getFlags() {
 		return flags;
+	}
+
+	/**
+	 * @param inst
+	 */
+	public void addInst(HighLevelInstruction inst) {
+		if (first == null) {
+			first = last = inst;
+		} else {
+			last.setNext(inst);
+		}
 	}
 
 }

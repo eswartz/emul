@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.tools.asm.decomp.expr;
+package v9t9.tools.ast.expr;
 
 /**
  * Interface for nodes which hold IAstNames telling how the name

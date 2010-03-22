@@ -1,10 +1,10 @@
 /**
  * 
  */
-package v9t9.tools.asm.decomp.expr.impl;
+package v9t9.tools.ast.expr.impl;
 
-import v9t9.tools.asm.decomp.expr.AstVisitor;
-import v9t9.tools.asm.decomp.expr.IAstNode;
+import v9t9.tools.ast.expr.AstVisitor;
+import v9t9.tools.ast.expr.IAstNode;
 
 /**
  * @author eswartz
