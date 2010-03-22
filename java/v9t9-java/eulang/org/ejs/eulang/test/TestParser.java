@@ -1,0 +1,247 @@
+/**
+ * 
+ */
+package org.ejs.eulang.test;
+
+import static junit.framework.Assert.*;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+
+import junit.framework.AssertionFailedError;
+
+import org.antlr.runtime.ANTLRStringStream;
+import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.ParserRuleReturnScope;
+import org.antlr.runtime.RecognitionException;
+import org.antlr.runtime.tree.Tree;
+import org.ejs.eulang.EulangLexer;
+import org.ejs.eulang.EulangParser;
+import org.ejs.eulang.EulangParser.prog_return;
+import org.junit.Test;
+/**
+ * @author ejs
+ *
+ */
+public class TestParser  {
+
+    protected ParserRuleReturnScope run(String method, String str, boolean expectError) throws RecognitionException {
+    	System.err.flush();
+		System.out.flush();
+		final List<String> errors = new ArrayList<String>();
+    	try {
+	    	// create a CharStream that reads from standard input
+	        EulangLexer lexer = new EulangLexer(new ANTLRStringStream(str)) {
+	        	/* (non-Javadoc)
+	        	 * @see org.antlr.runtime.BaseRecognizer#emitErrorMessage(java.lang.String)
+	        	 */
+	        	@Override
+	        	public void emitErrorMessage(String msg) {
+	        		errors.add( msg);
+	        	}
+	        };
+	        
+	        // create a buffer of tokens pulled from the lexer
+	        CommonTokenStream tokens = new CommonTokenStream(lexer);
+	        // create a parser that feeds off the tokens buffer
+	        EulangParser parser = new EulangParser(tokens);
+	        // begin parsing at rule
+	        ParserRuleReturnScope prog = null;
+	        if(method == null)
+	        	prog = parser.prog();
+	        else {
+        		try {
+					prog = (ParserRuleReturnScope) parser.getClass().getMethod(method).invoke(parser);
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				}
+	        		
+	        }
+	        System.out.println("\n"+str);
+	        if (!expectError) {
+	        	assertTrue("consumed all input", tokens.index() >= tokens.size());
+				if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
+					for (String msg : errors) {
+						System.err.println(msg);
+					}
+				    assertEquals(0, parser.getNumberOfSyntaxErrors());
+				    assertEquals(0, lexer.getNumberOfSyntaxErrors());
+				}
+			} else {
+				assertTrue(parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0);
+			}
+	        
+	        if (prog != null && prog.getTree() != null)
+	        	System.out.println(((Tree) prog.getTree()).toStringTree());
+	        
+	        return prog;
+    	} finally {
+    		System.err.flush();
+    		System.out.flush();
+    		
+    	}
+    }
+    
+    protected void run(String str) throws Exception {
+    	run(null, str, false);
+    }
+    
+    protected void runFail(String str) throws Exception {
+    	run(null, str, true);
+    }
+    
+    protected void runAt(String method, String str) throws Exception {
+    	run(method, str, false);
+    }
+    
+    @Test
+    public void testEmpty() throws Exception {
+    	run("  \n\n");
+    }
+    @Test
+    public void testNumber1() throws Exception {
+    	runAt("atom", "3192");
+    }
+    @Test
+    public void testNumber2() throws Exception {
+    	runAt("atom", "0x100FFFp100");
+    }
+    @Test
+    public void testNumber3() throws Exception {
+    	runAt("atom", "0x1.00FFFp100");
+    }
+    @Test
+    public void testNumber4() throws Exception {
+    	runAt("atom", "129.39281e203");
+    }
+    @Test
+    public void testId1() throws Exception {
+    	runAt("atom", "myName");
+    }
+    @Test
+    public void testId2() throws Exception {
+    	runAt("atom", "m");
+    }
+    @Test
+    public void testExpr() throws Exception {
+    	run("3+6;");
+    }
+    @Test
+    public void testAssign() throws Exception  {
+    	run("i = 3 + 6 ;");
+    }
+    @Test
+    public void testStmtList() throws Exception  {
+    	run("i = 3 + 6 ; j = 8 + 9;");
+    }
+    @Test
+    public void testEmptyCodeBlock() throws Exception  {
+    	run("myCode = {()};");
+    }
+    @Test
+    public void testExprCodeBlock() throws Exception  {
+    	run("myCode = {() 3+6 };");
+    }
+    @Test
+    public void testStmtCodeBlock() throws Exception  {
+    	run("myCode = {() i=3+6; j=i*i; };");
+    }
+    @Test
+    public void testSelector1() throws Exception  {
+    	run("myCode = [ {() i=3+6; j=i*i; } ];");
+    }
+    @Test
+    public void testSelector2() throws Exception  {
+    	run("myCode = [ " +
+    			"{() i=3+6; j=i*333; }, " +
+    			"{()  }, " +
+    			"{(a:Int,b)  }, " +	// trailing comma
+    			"]" +
+    			";");
+    }
+    @Test
+    public void testSelector2b() throws Exception  {
+    	run("myCode = [  ]" +
+    			";");
+    }
+    @Test
+    public void testSelector2c() throws Exception  {
+    	runFail("myCode = [ , ]" +
+    			";");
+    }
+    @Test
+    public void testCodeBlockArgs1() throws Exception  {
+    	run("sqrAdd = {( x, y) x*x+y };");
+    }
+    @Test
+    public void testCodeBlockArgs1b() throws Exception  {
+    	run("sqrAdd = {( x, y,) x*x+y };");
+    }
+    @Test
+    public void testCodeBlockArgs1c() throws Exception  {
+    	runFail("sqrAdd = {( ,) x*x+y };");
+    }
+    @Test
+    public void testCodeBlockArgs2() throws Exception  {
+    	run("myCode = {( a : Int = 10 , b= 10 , c: Float)  } ;");
+    }
+    @Test
+    public void testCodeBlockFuncCall1a() throws Exception  {
+    	run("sqrAdd = {( a,b ) a*a+b } ;"
+    			+"myCode = {( a ) sqrAdd(a*10, a-10) ; } ;");
+    }
+    @Test
+    public void testCodeBlockFuncCall1b() throws Exception  {
+    	runAt("codestmtlist", "sqrAdd(a*10, a-10);");
+    }
+    @Test
+    public void testCodeBlockFuncCall1c() throws Exception  {
+    	runAt("codestmtlist", "sqrAdd(10, -10);");
+    }
+    @Test
+    public void testCodeBlockFuncCall1d() throws Exception  {
+    	runAt("codestmtlist", "a = 1; sqrAdd(a, a=2);");
+    }
+    @Test
+    public void testCodeBlockFuncCall2a() throws Exception  {
+    	runAt("codestmtlist", "sqrAdd() + sqrAdd();");
+    }
+    @Test
+    public void testCodeBlockFuncCall2b() throws Exception  {
+    	runAt("codestmtlist", "sqrAdd(a*10, a-10) + sqrAdd(10,20);");
+    }
+    @Test
+    public void testCodeBlockFuncCall2c() throws Exception  {
+    	runAt("codestmtlist", "a = 1 / sqrAdd(-1, -2);");
+    }
+    @Test
+    public void testExpr1() throws Exception  {
+    	runAt("rhsExpr", "-1 - -1");
+    }
+    @Test
+    public void testExpr2() throws Exception  {
+    	runAt("rhsExpr", "(y & 0xff) << 8 + 5");
+    }
+    @Test
+    public void testCondExpr2b() throws Exception  {
+    	runAt("rhsExpr", "(y*2 > 0 && x < 10) ? true : false");
+    }
+    @Test
+    public void testCondExpr2c() throws Exception  {
+    	runAt("rhsExpr", "a ? (b ? 1 : 2) : 3;");
+    }
+    @Test
+    public void testCondExpr2d() throws Exception  {
+    	runAt("rhsExpr", "a==4 ? ((y*2 > 0 && x < 10) ? true : false) : rout(a);");
+    }
+}
+
