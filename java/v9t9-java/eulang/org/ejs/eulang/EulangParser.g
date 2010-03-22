@@ -13,6 +13,9 @@ tokens {
   PROTO;
   ARGLIST;
   ARGDEF;
+  
+  REF;
+  
   EXPR;
   DEFINE_ASSIGN;
   ASSIGN;
@@ -31,7 +34,8 @@ tokens {
   DIV;
   UDIV;
   MOD;
-  
+
+  IDREF;
   IDLIST;
 }
 @header {
@@ -124,7 +128,10 @@ argdef:  protoargdef
 
 xreturns: RETURNS type      -> type
   ;
-type:  ID       -> ^(TYPE ID)
+  
+type :  ( ID -> ^(TYPE ID) )
+      ( AMP -> ^(TYPE ^(REF ID) ) )? 
+      
   ;
 
 codestmtlist: (codeStmt ( SEMI codeStmt )* SEMI?) ? ->  ^(STMTLIST codeStmt*)
@@ -149,7 +156,7 @@ assignExpr : ID EQUALS assignExpr        -> ^(ASSIGN ID assignExpr)
 rhsExpr :   cond 
     ;
     
-funcCall : ID LPAREN arglist RPAREN   ->     ^(CALL ID arglist) 
+funcCall : idOrScopeRef LPAREN arglist RPAREN   ->     ^(CALL idOrScopeRef arglist) 
     ;
 
 
@@ -224,7 +231,12 @@ atom options { k=2; } :
     |   CHAR_LITERAL
     |   STRING_LITERAL
     |   funcCall                                    -> funcCall
-    |   ID                                     -> ID
+    |   ID                                -> ^(IDREF ID)
+    |   SCOPEREF                                -> ^(IDREF SCOPEREF)
     |   LPAREN assignExpr RPAREN               -> assignExpr 
     ;
 
+idOrScopeRef : ID -> ^(IDREF ID ) 
+      | SCOPEREF -> ^(IDREF SCOPEREF )
+      ;
+      

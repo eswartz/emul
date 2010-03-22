@@ -310,6 +310,43 @@ public class TestParser  {
     public void testScope2() throws Exception  {
     	run("{ sqrAdd = (); inner = { foo = 4; }; }");
     }
+    @Test
+    public void testType1() throws Exception  {
+    	runAt("type", "Int&");
+    }
+    @Test
+    public void testType1b() throws Exception  {
+    	runAt("varDecl", "x : Int&");
+    }
+    @Test
+    public void testType1c() throws Exception  {
+    	runAt("codeStmt", "x : Int&");
+    }
+    @Test
+    public void testType1d() throws Exception  {
+    	run("foo = {() x : Int& = 0; };");
+    }
+    @Test
+    public void testCodeExpr1() throws Exception  {
+    	run("codeExpr1 = {()  x; } ; ");
+    }
+    @Test
+    public void testCodeExpr2a() throws Exception  {
+    	run("codeExpr2 = {()  x.y.z; } ; ");
+    }
+    @Test
+    public void testCodeExpr2b() throws Exception  {
+    	run("codeExpr2 = {()  x.y.z(); } ; ");
+    }
+    
+    @Test
+    public void testScopeRef1() throws Exception  {
+    	run("foo = {() Ref.at; Ref.at(0x8370); };");
+    }
+    @Test
+    public void testRef1() throws Exception  {
+    	run("foo = {() x : Int& = Ref.at(0x8370); };");
+    }
 }
 
 

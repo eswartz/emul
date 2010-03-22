@@ -47,6 +47,7 @@ BACKSLASH : '\\';
 PERCENT : '%';
 UMOD : '%%';
 RETURNS : '=>' ;
+PERIOD : '.';
 
 RETURN : 'return';
 FOR : 'for';
@@ -62,6 +63,7 @@ NUMBER: '0'..'9' (IDSUFFIX ( '.' IDSUFFIX)?);
 //
 //  Identifiers
 //
+SCOPEREF : ID ('.' ID) + ;
 ID : LETTERLIKE IDSUFFIX ;
 fragment IDSUFFIX : ( LETTERLIKE | DIGIT )*;
 fragment LETTERLIKE:  'a'..'z' | 'A'..'Z' | '_';
