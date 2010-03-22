@@ -6,10 +6,6 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.*;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-
-import junit.framework.AssertionFailedError;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -18,7 +14,6 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
 import org.ejs.eulang.EulangLexer;
 import org.ejs.eulang.EulangParser;
-import org.ejs.eulang.EulangParser.prog_return;
 import org.junit.Test;
 /**
  * @author ejs
@@ -29,7 +24,7 @@ public class TestParser  {
     protected ParserRuleReturnScope run(String method, String str, boolean expectError) throws RecognitionException {
     	System.err.flush();
 		System.out.flush();
-		final List<String> errors = new ArrayList<String>();
+		final StringBuilder errors = new StringBuilder();
     	try {
 	    	// create a CharStream that reads from standard input
 	        EulangLexer lexer = new EulangLexer(new ANTLRStringStream(str)) {
@@ -38,7 +33,7 @@ public class TestParser  {
 	        	 */
 	        	@Override
 	        	public void emitErrorMessage(String msg) {
-	        		errors.add( msg);
+	        		errors.append( msg +"\n");
 	        	}
 	        };
 	        
@@ -69,11 +64,8 @@ public class TestParser  {
 	        System.out.println("\n"+str);
 	        if (!expectError) {
 				if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
-					for (String msg : errors) {
-						System.err.println(msg);
-					}
-				    assertEquals(0, parser.getNumberOfSyntaxErrors());
-				    assertEquals(0, lexer.getNumberOfSyntaxErrors());
+					System.err.println(errors);
+					fail(errors.toString());
 				}
 			} else {
 				assertTrue(parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0);
@@ -154,11 +146,11 @@ public class TestParser  {
     	run("3+6;");
     }
     @Test
-    public void testAssign() throws Exception  {
+    public void testTopLevelAssign() throws Exception  {
     	run("i = 3 + 6 ;");
     }
     @Test
-    public void testStmtList() throws Exception  {
+    public void testTopLevelStmtList() throws Exception  {
     	run("i = 3 + 6 ; j = 8 + 9;");
     }
     @Test
@@ -206,7 +198,7 @@ public class TestParser  {
     }
     @Test
     public void testCodeBlockArgs1c() throws Exception  {
-    	runFail("sqrAdd = {( ,) x*x+y };");
+    	runFail("sqrAdd = {( ,) return x*x+y; };");
     }
     @Test
     public void testCodeBlockArgs2() throws Exception  {
@@ -281,5 +273,43 @@ public class TestParser  {
     public void testCondExpr2d() throws Exception  {
     	runAt("rhsExpr", "a==4 ? ((y*2 > 0 && x < 10) ? a<<9!=0 : a!=4) : rout(a)");
     }
+    @Test
+    public void testProto() throws Exception  {
+    	run("run = (x,y);");
+    }
+    @Test
+    public void testNoTopLevelStmts() throws Exception  {
+    	runFail("return 3;");
+    }
+    @Test
+    public void testListCompr0() throws Exception  {
+    	runAt("listCompr", "for T in [ Int, Float ] : {( x : T, y : T => T )  x*x+y }");
+    }
+    @Test
+    public void testListCompr1() throws Exception  {
+    	run("sqrAdd = [ for T in [ Int, Float ] : {( x : T, y : T => T )  x*x+y } ] ; ");
+    }
+    @Test
+    public void testListCompr2() throws Exception  {
+    	run("sqrAdd = [ for T, U in [ Int, Float ] : {( x : T, y : U )  x*x+y } ] ; ");
+    }
+    @Test
+    public void testListCompr3() throws Exception  {
+    	run("sqrAdd = [ for T in [ Int, Float ] for U in [ Byte, Double ] : {( x : T, y : U )  x*x+y } ];");
+    }
+    @Test
+    public void testListCompr4() throws Exception  {
+    	// TODO: be sure the outer list has three items
+    	run("sqrAdd = [ {( x, y, z )} , for T in [ Byte, Double ] : {( x : T, y : U )  x*x+y }, {( a, b, c )} ];");
+    }
+    @Test
+    public void testScope1() throws Exception  {
+    	run("{ sqrAdd = (); }");
+    }
+    @Test
+    public void testScope2() throws Exception  {
+    	run("{ sqrAdd = (); inner = { foo = 4; }; }");
+    }
 }
+
 

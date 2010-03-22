@@ -48,6 +48,10 @@ PERCENT : '%';
 UMOD : '%%';
 RETURNS : '=>' ;
 
+RETURN : 'return';
+FOR : 'for';
+IN : 'in';
+
 //
 //  Numbers
 //

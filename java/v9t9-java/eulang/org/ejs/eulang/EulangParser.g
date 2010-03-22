@@ -6,6 +6,8 @@ options {
   tokenVocab=EulangLexer;
 }
 tokens {
+  SCOPE;
+  LIST_COMPREHENSION;
   CODE;
   STMTLIST;
   PROTO;
@@ -29,6 +31,8 @@ tokens {
   DIV;
   UDIV;
   MOD;
+  
+  IDLIST;
 }
 @header {
 package org.ejs.eulang;
@@ -43,37 +47,78 @@ import java.util.HashMap;
 prog:   toplevelstmts EOF!
     ;
                 
-toplevelstmts: stat*      -> ^(STMTLIST stat*)
+toplevelstmts: toplevelstat*      -> ^(STMTLIST toplevelstat*)
     ; 
     
-stat:   ID EQUALS value     SEMI  -> ^(DEFINE_ASSIGN ID value)
+toplevelstat:   ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE_ASSIGN ID toplevelvalue)
     | ID COLON_EQUALS rhsExpr  SEMI  -> ^(DEFINE ID rhsExpr)
     | rhsExpr                  SEMI?  -> ^(EXPR rhsExpr)
+    | xscope
     ;
 
-value: code       
+toplevelvalue : xscope
+    | code
+    | proto       
     | selector
     | rhsExpr
     ;
 
 // one or more selectors
-selector: LBRACKET selectorlist RBRACKET    -> ^(LIST selectorlist*) 
+selector: LBRACKET selectors RBRACKET    -> ^(LIST selectors*) 
     ;
 
-selectorlist: (selectoritem ( COMMA selectoritem )* COMMA?)?    
+selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    
   ;
         
-selectoritem: code  ;
+selectoritem: listCompr | code  ;
 
+//  scope
+//
+xscope : LBRACE toplevelstmts RBRACE    -> ^(SCOPE toplevelstmts* )
+    ;
+
+//  list comprehension
+//
+listCompr: forIn+ COLON listiterable     -> ^(LIST_COMPREHENSION forIn+ listiterable ) 
+    ;
+  
+forIn : FOR idlist IN list      -> ^(FOR idlist list ) ;
+
+idlist : ID (COMMA ID)*    -> ^(IDLIST ID+)
+    ;
+
+listiterable : ( code | proto ) ;
+    
+list : LBRACKET listitems RBRACKET     -> ^(LIST listitems*)
+    ;
+    
+listitems: (listitem ( COMMA listitem )* COMMA?)?    
+  ;
+        
+listitem : toplevelvalue ;
+    
+//
+// prototype:  like foo = (x,y);
+//
+// such a prototype cannot use any initializers, or else this looks like an assignment as in "x = 40; foo= (x=40);"
+//
+proto :   LPAREN protoargdefs xreturns? RPAREN                   -> ^(PROTO xreturns? protoargdefs*)
+  ;
+  
+protoargdefs: (protoargdef ( COMMA protoargdef)* COMMA?)?                        -> protoargdef* 
+    ;
+
+protoargdef:  ID (COLON type (EQUALS rhsExpr)?)?    -> ^(ARGDEF ID type* rhsExpr*)
+  ;
+  
 // code block
-code
-    :   LBRACE_LPAREN argdefs xreturns? RPAREN codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? argdefs*) codestmtlist*)  
+code :   LBRACE_LPAREN argdefs xreturns? RPAREN codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? argdefs*) codestmtlist*)  
     ;
 
 argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
     ;
 
-argdef:  ID (COLON type (EQUALS assignExpr)?)?    -> ^(ARGDEF ID type* assignExpr*)
+argdef:  protoargdef
     | ID EQUALS assignExpr    -> ^(ARGDEF ID TYPE assignExpr)
   ;
 
@@ -87,12 +132,16 @@ codestmtlist: (codeStmt ( SEMI codeStmt )* SEMI?) ? ->  ^(STMTLIST codeStmt*)
     
 codeStmt : varDecl
       | assignExpr
+      | returnExpr
       ;
 
 varDecl: ID COLON_EQUALS assignExpr         -> ^(DEFINE ID TYPE assignExpr)
     | ID COLON type (EQUALS assignExpr)?  -> ^(DEFINE ID type assignExpr*)
     ;
 
+returnExpr : RETURN assignExpr?           -> ^(RETURN assignExpr?)
+      ;
+      
 assignExpr : ID EQUALS assignExpr        -> ^(ASSIGN ID assignExpr)
     | rhsExpr
     ;
