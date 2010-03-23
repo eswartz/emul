@@ -57,14 +57,16 @@ IN : 'in';
 //
 //  Numbers
 //
-//NEGNUMBER: '-' NUMBER ;
-
 NUMBER: '0'..'9' (IDSUFFIX ( '.' IDSUFFIX)?);
 
 //
 //  Identifiers
 //
 SCOPEREF : ID ('.' ID) + ;
+
+// Need to greedily eat colons so "::a.b.c" doesn't look like ":" + ":a.b.c"
+COLONS : COLON COLON+ ;
+
 ID : LETTERLIKE IDSUFFIX ;
 fragment IDSUFFIX : ( LETTERLIKE | DIGIT )*;
 fragment LETTERLIKE:  'a'..'z' | 'A'..'Z' | '_';
@@ -75,7 +77,6 @@ fragment DIGIT: '0'..'9';
 //  
 CHAR_LITERAL: '\'' ~('\'') * '\'';
 STRING_LITERAL: '"' ~('"') * '"';
-fragment SPACE: ' ' | '\t';
 
 //
 //  Whitespace

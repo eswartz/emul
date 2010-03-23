@@ -43,19 +43,22 @@ tokens {
   NEG;
   INV;
 
+  LIT;
+  
   IDREF;
   IDLIST;
 }
+
 @header {
 package org.ejs.eulang;
 import java.util.HashMap;
 } 
 
-
 @members {
-public String getTokenErrorDisplay(Token t) {
-    return t.toString();
-}
+    public String getTokenErrorDisplay(Token t) {
+        return '\'' + t.getText() + '\'';
+    }
+
 
 }
 
@@ -75,7 +78,7 @@ toplevelstat:   ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE_ASSIGN ID toplevel
 toplevelvalue : xscope
     | code
     | macro
-    | proto       
+    | (  LPAREN (RPAREN | ID) ) => proto     
     | selector
     | rhsExpr
     ;
@@ -166,11 +169,11 @@ varDecl: ID COLON_EQUALS assignExpr         -> ^(DEFINE ID TYPE assignExpr)
 returnExpr : RETURN assignExpr?           -> ^(RETURN assignExpr?)
       ;
       
-assignExpr : ID EQUALS assignExpr        -> ^(ASSIGN ID assignExpr)
-    | rhsExpr
+assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
+    | rhsExpr                             -> rhsExpr
     ;
 
-rhsExpr :   cond 
+rhsExpr :   cond                          -> cond
     ;
     
 funcCall : idOrScopeRef LPAREN arglist RPAREN   ->     ^(CALL idOrScopeRef arglist) 
@@ -249,18 +252,18 @@ unary:    ( atom        -> atom )
       | TILDE u=unary     -> ^(INV $u )
 ;
 atom options { k=2; } :
-    //MINUS NUMBER                          -> {new CommonTree(new CommonToken(NUMBER, "-" + $NUMBER.text))}
-      NUMBER                          -> NUMBER
-    |   CHAR_LITERAL
-    |   STRING_LITERAL
-    |   ( STAR ( ID | SCOPEREF) LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
-    |   (( ID | SCOPEREF ) LPAREN ) => funcCall   -> funcCall
-    |   ID                                -> ^(IDREF ID)
-    |   SCOPEREF                                -> ^(IDREF SCOPEREF)
+      NUMBER                          -> ^(LIT NUMBER)
+    |   CHAR_LITERAL                  -> ^(LIT CHAR_LITERAL)
+    |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
+    |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
+    |   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
+    |   idOrScopeRef
     |   LPAREN assignExpr RPAREN               -> assignExpr 
     ;
 
 idOrScopeRef : ID -> ^(IDREF ID ) 
-      | SCOPEREF -> ^(IDREF SCOPEREF )
+      | SCOPEREF -> ^(IDREF SCOPEREF)
+      | COLONS ( ( SCOPEREF -> ^(IDREF COLONS SCOPEREF) ) | ( ID -> ^(IDREF COLONS ID) ) )
+      | COLON+ ( ( SCOPEREF -> ^(IDREF COLON+ SCOPEREF) ) | ( ID -> ^(IDREF COLON+ ID) ) )
       ;
       

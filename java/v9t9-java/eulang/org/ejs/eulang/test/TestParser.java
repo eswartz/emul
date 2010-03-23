@@ -174,7 +174,7 @@ public class TestParser  {
     	run("myCode = [ " +
     			"{() i=3+6; j=i*333; }, " +
     			"{()  }, " +
-    			"{(a:Int,b)  }, " +	// trailing comma
+    			"{(a:Int,b)  }, " +	// (1) not a scope ref, (2) allow trailing comma
     			"]" +
     			";");
     }
@@ -359,6 +359,30 @@ public class TestParser  {
     public void testAmbiguousProtoOrExpr() throws Exception  {
     	// TODO: test
     	run("myProto = (x,y); myExpr = (10);  myProtoNotExpr = (x);");
+    }
+    @Test
+    public void testScopeOrFloat() throws Exception  {
+    	run("foo = {() x.y.z0 + 0x.e0; };");
+    }
+    @Test
+    public void testScopeRefs() throws Exception  {
+    	run("scopeRef = {()  :x = x; } ; ");
+    }
+    @Test
+    public void testScopeRefs2() throws Exception  {
+    	run("scopeRef = {()  a.b.c = x; } ; ");
+    }
+    @Test
+    public void testScopeRefs3a() throws Exception  {
+    	run("scopeRef = {()  :a.b.c = x; } ; ");
+    }
+    @Test
+    public void testScopeRefs3b() throws Exception  {
+    	run("scopeRef = {()  ::a.b.c = x; } ; ");
+    }
+    @Test
+    public void testScopeRefs4() throws Exception  {
+    	run("scopeRef = {()  :x = x; ::a.b.c = r; } ; ");
     }
 }
 
