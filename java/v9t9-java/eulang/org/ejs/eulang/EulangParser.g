@@ -190,64 +190,65 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 //  Expressions
 //
 
-cond:    ( l=logcond  -> $l )
-      ( ( QUESTION t=cond ) => QUESTION t=cond COLON f=cond -> ^(COND $l $t $f ) 
-      )*
+cond:    ( logor  -> logor )
+      ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
 ;
 
-logcond: ( l=binlogcond     -> $l )      
-      ( COMPAND r=binlogcond -> ^(COMPAND $l $r)
-      | COMPOR r=binlogcond -> ^(COMPOR $l $r)
-      | COMPXOR r=binlogcond  -> ^(COMPXOR $l $r)
-      )*
-;
+logor : ( logand  -> logand )
+      ( COMPOR r=logand -> ^(COMPOR $logor $r) )*
+      ;
+logand : ( comp -> comp )
+      ( COMPAND r=comp -> ^(COMPAND $logand $r) ) *
+      ;
+              
+// in Python, "not expr" is here
 
-binlogcond: ( l=compeq      -> $l )       
-      ( AMP r=compeq  -> ^(BITAND $l $r)
-      | BAR r=compeq  -> ^(BITOR $l $r)
-      | CARET r=compeq  -> ^(BITXOR $l $r)
-      )*
-;
-
-compeq:   ( l=comp        -> $l )          
-      ( COMPEQ r=comp -> ^(COMPEQ $l $r)
-      | COMPNE r=comp -> ^(COMPNE $l $r)
-      )*
-;
-
-comp:  ( l=shift           -> $l )
-      ( COMPLE r=shift    -> ^(COMPLE $l $r)
-      | COMPGE r=shift    -> ^(COMPGE $l $r)
-      | LESS r=shift     -> ^(LESS $l $r)
-      | GREATER r=shift    -> ^(GREATER $l $r)
+comp:   ( bitor        -> bitor )          
+      ( COMPEQ r=bitor -> ^(COMPEQ $comp $r)
+      | COMPNE r=bitor -> ^(COMPNE $comp $r)
+      | COMPLE r=bitor    -> ^(COMPLE $comp $r)
+      | COMPGE r=bitor    -> ^(COMPGE $comp $r)
+      | LESS r=bitor     -> ^(LESS $comp $r)
+      | GREATER r=bitor    -> ^(GREATER $comp $r)
       )*
 ;               
 
-shift:  ( l=factor        -> $l )         
-      ( LSHIFT r=factor   -> ^(LSHIFT $l $r) 
-      | RSHIFT r=factor   -> ^(RSHIFT $l $r)
-      | URSHIFT r=factor   -> ^(URSHIFT $l $r)
+
+bitor: ( bitxor      -> bitxor )       
+      ( BAR r=bitxor  -> ^(BITOR $bitor $r) ) *
+;
+bitxor: ( bitand      -> bitand )       
+      ( CARET r=bitand  -> ^(BITXOR $bitxor $r) )*
+;
+bitand: ( shift      -> shift )       
+      ( AMP r=shift  -> ^(BITAND $bitand $r) )*
+;
+
+shift:  ( factor        -> factor )         
+      ( ( LSHIFT r=factor   -> ^(LSHIFT $shift $r) ) 
+      | ( RSHIFT r=factor   -> ^(RSHIFT $shift $r) )
+      | ( URSHIFT r=factor   -> ^(URSHIFT $shift $r) )
       )*
   ;
 factor 
-    : ( l=term              -> $l )
-        (   PLUS r=term         -> ^(ADD $l $r)
-        |   ( MINUS r=term ) => MINUS r=term        -> ^(SUB $l $r)
+    : ( term              -> term )
+        (   PLUS r=term         -> ^(ADD $factor $r)
+        |  ( MINUS term) => MINUS r=term        -> ^(SUB $factor $r)
         )*
     ;
 
-term : ( l=unary                  -> $l )
-        (  ( STAR r=unary ) => STAR r=unary             -> ^(MUL  $l $r)
-        | SLASH r=unary            -> ^(DIV $l $r)
-        | BACKSLASH r=unary            -> ^(UDIV $l $r)
-        | PERCENT r=unary            -> ^(MOD $l $r)
-        | UMOD r=unary            -> ^(UMOD $l $r)
+term : ( unary                  -> unary )
+        ( ( STAR unary) => STAR r=unary            -> ^(MUL  $term $r)
+        | SLASH r=unary            -> ^(DIV $term $r)
+        | BACKSLASH r=unary            -> ^(UDIV $term $r)
+        | PERCENT r=unary            -> ^(MOD $term $r)
+        | UMOD r=unary            -> ^(UMOD $term $r)
         )*                        
     ; 
 
 
 unary:    ( atom        -> atom )        
-      | ( MINUS u=unary )    => MINUS u=unary -> ^(NEG $u )
+      | MINUS u=unary -> ^(NEG $u )
       | EXCL u=unary     -> ^(NOT $u )
       | TILDE u=unary     -> ^(INV $u )
 ;

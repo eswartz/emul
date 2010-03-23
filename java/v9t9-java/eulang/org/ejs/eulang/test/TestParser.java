@@ -384,6 +384,33 @@ public class TestParser  {
     public void testScopeRefs4() throws Exception  {
     	run("scopeRef = {()  :x = x; ::a.b.c = r; } ; ");
     }
+    
+    @Test 
+    public void testOpPrec1a() throws Exception {
+    	run("opPrec1 = {()  x=1*2+3>>4&5^6|7==8&&9||10; };");
+    }
+    @Test 
+    public void testOpPrec2a() throws Exception {
+    	run("opPrec1 = {()  x=1||2&&3==4|5^6&7>>8+9*10; };");
+    }
+    @Test 
+    public void testOpPrec1b() throws Exception {
+    	// TODO: make sure all tokens used
+    	run("opPrec1 = {()  x=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17&&18||19; };");
+    }
+    @Test 
+    public void testOpPrec2b() throws Exception {
+    	// TODO: make sure all tokens used
+    	run("opPrec1 = {()  x=1||2&&3!=4==5>=6<=7>8<9|10^11&12<<13>>14-15+16%17/18*19; };");
+    }
+    @Test 
+    public void testOpPrec3() throws Exception {
+    	run("opPrec1 = {()  x=1000>>2>>5; };");
+    }
+    @Test 
+    public void testOpPrec3b() throws Exception {
+    	run("opPrec1 = {()  x=1*2/3%4\\5; };");
+    }
 }
 
 
