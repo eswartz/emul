@@ -46,6 +46,21 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     private boolean disposed;
     private long last_update_time;
 
+    private final Runnable timer = new Runnable() {
+
+        public void run() {
+            posted = false;
+            long idle_time = System.currentTimeMillis() - last_update_time;
+            if (idle_time < MIN_IDLE_TIME - 50) {
+                Protocol.invokeLater(MIN_IDLE_TIME - idle_time, this);
+                posted = true;
+            }
+            else {
+                TCFModelProxy.this.run();
+            }
+        }
+    };
+
     private class ViewerUpdate implements IViewerUpdate {
 
         IStatus status;
@@ -150,30 +165,31 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     void addDelta(TCFNode node, int flags) {
-        if (flags != 0) {
-            Integer delta = node2flags.get(node);
-            if (delta != null) {
-                node2flags.put(node, delta.intValue() | flags);
-            }
-            else {
-                node2flags.put(node, flags);
-            }
-            post();
+        if (flags == 0) return;
+        Integer delta = node2flags.get(node);
+        if (delta != null) {
+            node2flags.put(node, delta.intValue() | flags);
         }
+        else {
+            node2flags.put(node, flags);
+        }
+        post();
     }
 
     void setSelection(TCFNode node) {
         selection = node;
+        while (node.parent != null) {
+            node = node.parent;
+            addDelta(node, IModelDelta.EXPAND);
+        }
         post();
     }
 
     private void post() {
         assert Protocol.isDispatchThread();
         if (!posted) {
-            long time_now = System.currentTimeMillis();
-            long idle_time = time_now - last_update_time;
-            Protocol.invokeLater(MIN_IDLE_TIME - idle_time, this);
-            last_update_time = time_now;
+            long idle_time = System.currentTimeMillis() - last_update_time;
+            Protocol.invokeLater(MIN_IDLE_TIME - idle_time, timer);
             posted = true;
         }
     }
@@ -212,12 +228,16 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         return -1;
     }
 
-    private ModelDelta makeDelta(ModelDelta root, TCFNode node, int flags) {
+    private ModelDelta makeDelta(ModelDelta root, TCFNode node, int flags, boolean selection_delta) {
         ModelDelta delta = node2delta.get(node);
         if (delta == null) {
             if (node.parent == null) {
                 if (root.getElement() instanceof TCFNode) return null;
-                delta = root.addNode(model.getLaunch(), -1, flags, -1);
+                int children = -1;
+                if (selection_delta || (flags & IModelDelta.EXPAND) != 0) {
+                    children = getNodeChildren(node).length;
+                }
+                delta = root.addNode(model.getLaunch(), -1, flags, children);
             }
             else if (node == root.getElement()) {
                 delta = root;
@@ -227,14 +247,14 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 Integer parent_flags_obj = node2flags.get(node.parent);
                 if (parent_flags_obj != null) parent_flags = parent_flags_obj;
                 if ((parent_flags & IModelDelta.REMOVED) != 0) return null;
-                ModelDelta parent = makeDelta(root, node.parent, parent_flags);
+                ModelDelta parent = makeDelta(root, node.parent, parent_flags, selection_delta);
                 if (parent == null) return null;
                 int index = -1;
                 int children = -1;
                 if ((flags & IModelDelta.INSERTED) != 0) {
                     index = getNodeIndex(node);
                 }
-                if ((flags & IModelDelta.REVEAL) != 0 || (flags & IModelDelta.SELECT) != 0) {
+                if (selection_delta || (flags & IModelDelta.EXPAND) != 0) {
                     if (index < 0) index = getNodeIndex(node);
                     children = getNodeChildren(node).length;
                 }
@@ -247,7 +267,6 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     public void run() {
-        posted = false;
         assert Protocol.isDispatchThread();
         if (disposed) return;
         if (node2flags.isEmpty() && selection == null) return;
@@ -258,37 +277,28 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         int flags = 0;
         if (node2flags.containsKey(input)) flags = node2flags.get(input);
         ModelDelta root = new ModelDelta(input, flags);
-        for (TCFNode node : node2flags.keySet()) makeDelta(root, node, node2flags.get(node));
+        for (TCFNode node : node2flags.keySet()) makeDelta(root, node, node2flags.get(node), false);
         if (pending_node == null) {
             node2flags.clear();
             if ((root.getFlags() != 0 || node2delta.size() > 0) && (root.getFlags() & IModelDelta.REMOVED) == 0) {
                 fireModelChanged(root);
             }
             node2delta.clear();
+            last_update_time = System.currentTimeMillis();
             if (selection != null) {
-                ModelDelta root1 = new ModelDelta(input, IModelDelta.NO_CHANGE);
-                makeDelta(root1, selection, IModelDelta.REVEAL);
-                node2delta.clear();
-                ModelDelta root2 = new ModelDelta(input, IModelDelta.NO_CHANGE);
-                makeDelta(root2, selection, IModelDelta.SELECT);
+                root = new ModelDelta(input, IModelDelta.NO_CHANGE);
+                makeDelta(root, selection, IModelDelta.SELECT, true);
                 node2delta.clear();
                 if (pending_node == null) {
-                    fireModelChanged(root1);
-                    fireModelChanged(root2);
+                    fireModelChanged(root);
                     selection = null;
                 }
             }
         }
 
-        if (pending_node == null) {
-        }
-        else if (pending_node.getData(children_count_update, this)) {
+        if (pending_node != null && pending_node.getData(children_count_update, this)) {
             assert false;
             Protocol.invokeLater(this);
-            posted = true;
-        }
-        else {
-            posted = true;
         }
         node2children.clear();
     }

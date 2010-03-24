@@ -16,6 +16,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 
 class TCFLaunchLabelProvider implements IElementLabelProvider {
 
@@ -39,10 +40,7 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
             }
             Throwable error = launch.getError();
             if (error != null) {
-                String msg = error.getLocalizedMessage();
-                if (msg == null || msg.length() == 0) msg = error.getClass().getName();
-                else msg = msg.replace('\n', '|');
-                status += " - " + msg;
+                status += " - " + TCFModel.getErrorMessage(error, false);
                 result.setForeground(new RGB(255, 0, 0), 0);
             }
             if (status.length() > 0) status = " (" + status + ")";

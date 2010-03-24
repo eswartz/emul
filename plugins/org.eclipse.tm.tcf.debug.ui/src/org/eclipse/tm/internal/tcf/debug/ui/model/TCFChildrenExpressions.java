@@ -66,10 +66,6 @@ public class TCFChildrenExpressions extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onSuspended();
     }
 
-    void onContextActionDone() {
-        for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onContextActionDone();
-    }
-
     private TCFNodeExpression findScript(String text) {
         for (TCFNode n : getNodes()) {
             TCFNodeExpression e = (TCFNodeExpression)n;

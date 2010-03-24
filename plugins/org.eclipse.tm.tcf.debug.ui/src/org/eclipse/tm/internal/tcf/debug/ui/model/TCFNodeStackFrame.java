@@ -216,12 +216,6 @@ public class TCFNodeStackFrame extends TCFNode {
         return null;
     }
 
-    @Override
-    int getRelevantModelDeltaFlags(IPresentationContext p) {
-        if (model.isContextActionRunning(parent.id)) return 0;
-        return super.getRelevantModelDeltaFlags(p);
-    }
-
     private TCFChildren getChildren(IPresentationContext ctx) {
         String id = ctx.getId();
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id)) return children_regs;
@@ -288,24 +282,32 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else {
             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();
-            TCFDataCache<?> pending = null;
-            if (!state_cache.validate()) pending = state_cache;
-            if (!stack_trace_context.validate()) pending = stack_trace_context;
-            if (!line_info.validate()) pending = line_info;
-            if (pending != null) {
-                pending.wait(done);
-                return false;
-            }
+            if (!state_cache.validate()) return false;
             Throwable error = state_cache.getError();
-            if (error == null) error = stack_trace_context.getError();
-            if (error == null) error = line_info.getError();
+            if (error == null) error = stack_trace_cache.getError();
+            if (error == null) {
+                TCFDataCache<?> pending = null;
+                if (!stack_trace_context.validate()) pending = stack_trace_context;
+                if (!line_info.validate()) pending = line_info;
+                if (pending != null) {
+                    pending.wait(done);
+                    return false;
+                }
+                if (error == null) error = stack_trace_context.getError();
+                if (error == null) error = line_info.getError();
+            }
             TCFContextState state_data = state_cache.getData();
             String image_name =  state_data != null && state_data.is_suspended ?
                     ImageCache.IMG_STACK_FRAME_SUSPENDED :
                     ImageCache.IMG_STACK_FRAME_RUNNING;
-            if (error != null && state_data != null && state_data.is_suspended) {
-                result.setForeground(new RGB(255, 0, 0), 0);
-                result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
+            if (error != null) {
+                if (state_data == null || state_data.is_suspended) {
+                    result.setForeground(new RGB(255, 0, 0), 0);
+                    result.setLabel(TCFModel.getErrorMessage(error, false), 0);
+                }
+                else {
+                    result.setLabel("...", 0);
+                }
             }
             else {
                 TCFSourceRef l = line_info.getData();
@@ -349,13 +351,6 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.onSuspended();
         children_vars.onSuspended();
         children_exps.onSuspended();
-        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-    }
-
-    void onContextActionDone() {
-        children_regs.onContextActionDone();
-        children_vars.onContextActionDone();
-        children_exps.onContextActionDone();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 

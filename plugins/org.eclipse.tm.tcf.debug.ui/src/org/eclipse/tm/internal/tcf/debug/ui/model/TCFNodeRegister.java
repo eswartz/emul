@@ -92,16 +92,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     private void appendErrorText(StringBuffer bf, Throwable error) {
         if (error == null) return;
         bf.append("Exception: ");
-        for (;;) {
-            String s = error.getLocalizedMessage();
-            if (s == null || s.length() == 0) s = error.getClass().getName();
-            bf.append(s);
-            if (!s.endsWith("\n")) bf.append('\n');
-            Throwable cause = error.getCause();
-            if (cause == null) return;
-            bf.append("Caused by: ");
-            error = cause;
-        }
+        bf.append(TCFModel.getErrorMessage(error, true));
     }
 
     String getDetailText(Runnable done) {
@@ -308,7 +299,6 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     @Override
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
-            if (model.isContextActionRunning(parent.id)) return 0;
             return super.getRelevantModelDeltaFlags(p);
         }
         return 0;
@@ -330,10 +320,6 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     void onSuspended() {
         prev_value = next_value;
         value.reset();
-        addModelDelta(IModelDelta.STATE);
-    }
-
-    void onContextActionDone() {
         addModelDelta(IModelDelta.STATE);
     }
 

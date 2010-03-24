@@ -325,7 +325,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         Throwable error = run_context.getError();
         if (error != null) {
             result.setForeground(new RGB(255, 0, 0), 0);
-            label += ": " + error.getClass().getName() + ": " + error.getMessage();
+            label += ": " + TCFModel.getErrorMessage(error, false);
         }
         else {
             IRunControl.RunControlContext ctx = run_context.getData();
@@ -441,13 +441,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         resumed_cnt++;
         children_stack.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
-        if (!model.isContextActionRunning(id)) {
-            addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-        }
-    }
-
-    void onContextActionDone() {
-        children_stack.onContextActionDone();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 

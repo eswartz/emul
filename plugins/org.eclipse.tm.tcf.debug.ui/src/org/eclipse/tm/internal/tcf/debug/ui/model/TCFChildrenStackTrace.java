@@ -47,10 +47,6 @@ public class TCFChildrenStackTrace extends TCFChildren {
         reset();
     }
 
-    void onContextActionDone() {
-        for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onContextActionDone();
-    }
-
     void onRegistersChanged() {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onRegistersChanged();
     }
@@ -76,6 +72,13 @@ public class TCFChildrenStackTrace extends TCFChildren {
         super.set(token, error, data);
     }
 
+    private void addEmulatedTopFrame(HashMap<String,TCFNode> data) {
+        top_frame_id = node.id + "-TF";
+        TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(top_frame_id);
+        if (n == null) n = new TCFNodeStackFrame(node, top_frame_id);
+        data.put(n.id, n);
+    }
+
     @Override
     protected boolean startDataRetrieval() {
         final HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
@@ -89,27 +92,27 @@ public class TCFChildrenStackTrace extends TCFChildren {
         }
         IStackTrace st = node.model.getLaunch().getService(IStackTrace.class);
         if (st == null) {
-            top_frame_id = node.id + "-TF";
-            TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(top_frame_id);
-            if (n == null) n = new TCFNodeStackFrame(node, top_frame_id);
-            data.put(n.id, n);
+            addEmulatedTopFrame(data);
             set(null, null, data);
             return true;
         }
         assert command == null;
         command = st.getChildren(node.id, new IStackTrace.DoneGetChildren() {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-                if (command == token && error == null && contexts != null) {
-                    int cnt = contexts.length;
-                    for (String id : contexts) {
-                        cnt--;
-                        TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(id);
-                        if (n == null) n = new TCFNodeStackFrame(node, id);
-                        assert n.parent == node;
-                        n.setFrameNo(cnt);
-                        data.put(id, n);
-                        if (cnt == 0) top_frame_id = id;
+                if (command == token) {
+                    if (error == null && contexts != null) {
+                        int cnt = contexts.length;
+                        for (String id : contexts) {
+                            cnt--;
+                            TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(id);
+                            if (n == null) n = new TCFNodeStackFrame(node, id);
+                            assert n.parent == node;
+                            n.setFrameNo(cnt);
+                            data.put(id, n);
+                            if (cnt == 0) top_frame_id = id;
+                        }
                     }
+                    if (data.size() == 0) addEmulatedTopFrame(data);
                 }
                 set(token, error, data);
             }

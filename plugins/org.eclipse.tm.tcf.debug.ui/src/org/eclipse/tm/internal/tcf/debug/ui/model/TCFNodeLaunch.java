@@ -33,40 +33,33 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
         children = new TCFChildrenExecContext(this);
         // Set initial selection in Debug View
         Protocol.invokeLater(new Runnable() {
+            boolean done;
             public void run() {
-                if (!children.validate(this)) return;
+                if (done) return;
                 ArrayList<TCFNodeStackFrame> frames = new ArrayList<TCFNodeStackFrame>();
-                TCFNode[] arr = children.toArray();
-                Arrays.sort(arr);
-                for (TCFNode n : arr) {
-                    if (!searchTopFrame((TCFNodeExecContext)n, frames, this)) return;
-                    if (frames.size() > 0) {
-                        model.setDebugViewSelection(frames.get(0).id, true);
-                        return;
-                    }
-                }
-                if (arr.length > 0) {
-                    model.setDebugViewSelection(arr[0].id, true);
-                }
+                if (!searchTopFrames(children, frames, this)) return;
+                for (TCFNodeStackFrame f : frames) model.setDebugViewSelection(f.id, false);
+                done = true;
             }
         });
     }
 
-    private boolean searchTopFrame(TCFNodeExecContext e, ArrayList<TCFNodeStackFrame> frames, Runnable r) {
+    private boolean searchTopFrames(TCFChildrenExecContext c, ArrayList<TCFNodeStackFrame> frames, Runnable r) {
+        if (!c.validate(r)) return false;
+        TCFNode[] arr = c.toArray();
+        Arrays.sort(arr);
+        for (TCFNode n : arr) {
+            if (!searchTopFrames((TCFNodeExecContext)n, frames, r)) return false;
+        }
+        return true;
+    }
+
+    private boolean searchTopFrames(TCFNodeExecContext e, ArrayList<TCFNodeStackFrame> frames, Runnable r) {
         TCFChildrenStackTrace stack_trace = e.getStackTrace();
         if (!stack_trace.validate(r)) return false;
         TCFNodeStackFrame f = stack_trace.getTopFrame();
-        if (f != null && !f.disposed) {
-            frames.add(f);
-            return true;
-        }
-        TCFChildrenExecContext c = e.getChildren();
-        if (!c.validate(r)) return false;
-        for (TCFNode n : c.toArray()) {
-            if (!searchTopFrame((TCFNodeExecContext)n, frames, r)) return false;
-            if (frames.size() > 0) break;
-        }
-        return true;
+        if (f != null && !f.disposed) frames.add(f);
+        return searchTopFrames(e.getChildren(), frames, r);
     }
 
     @Override

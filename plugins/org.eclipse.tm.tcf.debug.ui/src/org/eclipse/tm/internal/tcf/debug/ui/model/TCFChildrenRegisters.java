@@ -31,10 +31,6 @@ public class TCFChildrenRegisters extends TCFChildren {
         reset();
     }
 
-    void onContextActionDone() {
-        for (TCFNode n : getNodes()) ((TCFNodeRegister)n).onContextActionDone();
-    }
-
     void onRegistersChanged() {
         for (TCFNode n : getNodes()) ((TCFNodeRegister)n).onRegistersChanged();
         reset();

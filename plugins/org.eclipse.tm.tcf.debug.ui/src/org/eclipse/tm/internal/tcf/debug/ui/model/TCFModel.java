@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -89,7 +88,9 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.StepOverCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.SuspendCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
+import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -210,7 +211,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private boolean disposed;
     private boolean debug_view_selection_set;
 
-    private static int debug_view_selection_cnt;
     private static int display_source_cnt;
 
     private final IMemory.MemoryListener mem_listener = new IMemory.MemoryListener() {
@@ -331,9 +331,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 final TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onContextSuspended(pc, reason, params);
             }
-            if (!isContextActionRunning(context)) {
-                setDebugViewSelection(context, false);
-            }
+            setDebugViewSelection(context, false);
             runSuspendTrigger(node);
             finished_actions.remove(context);
         }
@@ -510,20 +508,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onContextActionsDone(String id, String result) {
         running_actions.remove(id);
+        for (TCFModelProxy p : model_proxies.values()) p.run();
         finished_actions.put(id, result);
-        TCFNode n = id2node.get(id);
-        if (n instanceof TCFNodeExecContext) {
-            ((TCFNodeExecContext)n).onContextActionDone();
-        }
         setDebugViewSelection(id, false);
     }
 
     String getContextActionResult(String id) {
         return finished_actions.get(id);
-    }
-
-    boolean isContextActionRunning(String id) {
-        return running_actions.contains(id);
     }
 
     boolean isContextActionResultAvailable(String id) {
@@ -576,9 +567,17 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         });
     }
 
-    Collection<TCFModelProxy> getModelProxyList() {
-        return model_proxies.values();
+    /**
+     * Create and post ModelDelta for changes in this node.
+     * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
+     */
+    final void addDelta(TCFNode node, int flags) {
+        for (TCFModelProxy p : model_proxies.values()) {
+            int f = flags & node.getRelevantModelDeltaFlags(p.getPresentationContext());
+            if (f != 0) p.addDelta(node, f);
+        }
     }
+
 
     void launchChanged() {
         if (launch_node != null) {
@@ -754,17 +753,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return null;
     }
 
-    public void setDebugViewSelection(final String node_id, boolean initial_selection) {
+    public void setDebugViewSelection(final String node_id, final boolean initial_selection) {
         assert Protocol.isDispatchThread();
-        if (initial_selection && debug_view_selection_set) return;
-        debug_view_selection_set = true;
-        final int cnt = ++debug_view_selection_cnt;
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 TCFNode node = getNode(node_id);
                 if (node == null) return;
                 if (node.disposed) return;
-                if (cnt != debug_view_selection_cnt) return;
                 if (node instanceof TCFNodeExecContext) {
                     TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
                     if (!state_cache.validate(this)) return;
@@ -775,6 +770,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     TCFNode frame = stack_trace.getTopFrame();
                     if (frame != null && !frame.disposed) node = frame;
                 }
+                if (running_actions.contains(node_id)) return;
+                if (initial_selection && debug_view_selection_set) return;
+                debug_view_selection_set = true;
                 for (TCFModelProxy proxy : model_proxies.values()) {
                     if (proxy.getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
                         proxy.setSelection(node);
@@ -932,7 +930,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     }
 
-    /*
+    /**
      * Show error message box in active workbench window.
      * @param title - message box title.
      * @param error - error to be shown.
@@ -950,24 +948,52 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                     for (Shell s : shells) shell = s;
                 }
-                StringBuffer buf = new StringBuffer();
-                Throwable err = error;
-                while (err != null) {
-                    String msg = err.getLocalizedMessage();
-                    if (msg == null || msg.length() == 0) msg = err.getClass().getName();
-                    buf.append(msg);
-                    err = err.getCause();
-                    if (err != null) {
-                        buf.append('\n');
-                        buf.append("Caused by:\n");
-                    }
-                }
                 MessageBox mb = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
                 mb.setText(title);
-                mb.setMessage(buf.toString());
+                mb.setMessage(getErrorMessage(error, true));
                 mb.open();
             }
         });
+    }
+
+    /**
+     * Create human readable error message from a Throwable object.
+     * @param error - a Throwable object.
+     * @param multiline - true if multi-line text is allowed.
+     * @return
+     */
+    public static String getErrorMessage(Throwable error, boolean multiline) {
+        StringBuffer buf = new StringBuffer();
+        while (error != null) {
+            String msg = null;
+            if (error instanceof IErrorReport) {
+                msg = Command.toErrorString(((IErrorReport)error).getAttributes());
+            }
+            else {
+                msg = error.getLocalizedMessage();
+            }
+            if (msg == null || msg.length() == 0) msg = error.getClass().getName();
+            buf.append(msg);
+            error = error.getCause();
+            if (error != null) {
+                char ch = buf.charAt(buf.length() - 1);
+                if (multiline && ch != '\n') {
+                    buf.append('\n');
+                }
+                else if (ch != '.' && ch != ';') {
+                    buf.append(';');
+                }
+                buf.append("Caused by:");
+                buf.append(multiline ? '\n' : ' ');
+            }
+        }
+        if (buf.length() > 0) {
+            char ch = buf.charAt(buf.length() - 1);
+            if (multiline && ch != '\n') {
+                buf.append('\n');
+            }
+        }
+        return buf.toString();
     }
 
     /*

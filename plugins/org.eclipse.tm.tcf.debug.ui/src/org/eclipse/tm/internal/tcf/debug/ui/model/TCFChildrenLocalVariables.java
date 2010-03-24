@@ -30,10 +30,6 @@ public class TCFChildrenLocalVariables extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onSuspended();
     }
 
-    void onContextActionDone() {
-        for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onContextActionDone();
-    }
-
     @Override
     protected boolean startDataRetrieval() {
         IExpressions exps = node.model.getLaunch().getService(IExpressions.class);

@@ -292,10 +292,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
      */
     final void addModelDelta(int flags) {
-        for (TCFModelProxy p : model.getModelProxyList()) {
-            int f = flags & getRelevantModelDeltaFlags(p.getPresentationContext());
-            if (f != 0) p.addDelta(this, f);
-        }
+        model.addDelta(this, flags);
     }
 
     /**

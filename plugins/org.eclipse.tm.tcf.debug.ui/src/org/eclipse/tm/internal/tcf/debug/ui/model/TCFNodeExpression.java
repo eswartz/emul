@@ -30,9 +30,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
-import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
@@ -502,11 +500,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
-    void onContextActionDone() {
-        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-    }
-
-
     public void onCastToTypeChanged() {
         expression.cancel();
         value.cancel();
@@ -770,16 +763,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     private void appendErrorText(StringBuffer bf, Throwable error) {
         if (error == null) return;
         bf.append("Exception: ");
-        for (;;) {
-            String s = error.getLocalizedMessage();
-            if (s == null || s.length() == 0) s = error.getClass().getName();
-            bf.append(s);
-            if (!s.endsWith("\n")) bf.append('\n');
-            Throwable cause = error.getCause();
-            if (cause == null) return;
-            bf.append("Caused by: ");
-            error = cause;
-        }
+        bf.append(TCFModel.getErrorMessage(error, true));
     }
 
     private boolean appendArrayValueText(StringBuffer bf, int level, ISymbols.Symbol type,
@@ -869,15 +853,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 bf.append("\n");
             }
             else if (e != null) {
-                String msg = "Cannot read pointed value: ";
-                if (e instanceof IErrorReport) {
-                    msg += Command.toErrorString(((IErrorReport)e).getAttributes());
-                }
-                else {
-                    msg += e.getLocalizedMessage();
-                }
-                bf.append(msg);
-                bf.append("\n");
+                bf.append("Cannot read pointed value: ");
+                bf.append(TCFModel.getErrorMessage(e, true));
             }
         }
         if (type_data.getSize() > 0) {
@@ -997,11 +974,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId()) ||
                 IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
-            TCFNode n = parent;
-            while (n != null) {
-                if (n instanceof TCFNodeExecContext && model.isContextActionRunning(n.id)) return 0;
-                n = n.parent;
-            }
             return super.getRelevantModelDeltaFlags(p);
         }
         return 0;
