@@ -379,6 +379,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     }
     else {
         StackFrame * info = NULL;
+        if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);;
         if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
         if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
     }
@@ -478,6 +479,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
     }
     else {
         StackFrame * info = NULL;
+        if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);;
         if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
         if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
     }
@@ -815,6 +817,10 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
 
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     /* TODO: is_plt_section() in symbols proxy */
+    return 0;
+}
+
+int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     return 0;
 }
 

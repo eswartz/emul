@@ -35,7 +35,6 @@
 #include "breakpoints.h"
 #include "memorymap.h"
 #include "symbols.h"
-#include "dwarfframe.h"
 
 #define MAX_FRAMES  1000
 
@@ -133,33 +132,12 @@ static int walk_frames(Context * ctx) {
         down.regs_size = ctx->regs_size;
         down.regs = (RegisterData *)loc_alloc_zero(down.regs_size);
         down.mask = (RegisterData *)loc_alloc_zero(down.regs_size);
-#if ENABLE_ELF
-        {
-            int found = 0;
-            ContextAddress ip = get_regs_PC(frame.regs);
-            ELF_File * file = elf_list_first(ctx, ip, ip + 1);
-            while (error == 0 && file != NULL) {
-                Trap trap;
-                if (set_trap(&trap)) {
-                    get_dwarf_stack_frame_info(ctx, file, &frame, &down);
-                    if (frame.fp != 0) found = 1;
-                    clear_trap(&trap);
-                }
-                else {
-                    error = trap.error;
-                }
-                if (error || found) break;
-                file = elf_list_next(ctx);
-                if (file == NULL) error = errno;
-            }
-            elf_list_done(ctx);
-            if (error) {
-                loc_free(down.regs);
-                loc_free(down.mask);
-                break;
-            }
+        if (get_next_stack_frame(ctx, &frame, &down) < 0) {
+            error = errno;
+            loc_free(down.regs);
+            loc_free(down.mask);
+            break;
         }
-#endif
         if (frame.fp == 0 && crawl_stack_frame(ctx, &frame, &down) < 0) {
             error = errno;
             loc_free(down.regs);

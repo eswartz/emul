@@ -2229,7 +2229,7 @@ static void command_evaluate_cache_client(void * x) {
 
     memset(&value, 0, sizeof(value));
     if (expression_context_id(args->id, &ctx, &frame, &expr) < 0) err = errno;
-    if (!err && frame != STACK_NO_FRAME && !ctx->intercepted) err = ERR_IS_RUNNING;
+    if (!err && frame != STACK_NO_FRAME && !ctx->stopped) err = ERR_IS_RUNNING;
     if (!err && evaluate_expression(ctx, frame, expr->script, 0, &value) < 0) err = errno;
     if (value.size >= 0x100000) err = ERR_BUFFER_OVERFLOW;
 
@@ -2315,7 +2315,7 @@ static void command_assign_cache_client(void * x) {
 
     memset(&value, 0, sizeof(value));
     if (expression_context_id(args->id, &ctx, &frame, &expr) < 0) err = errno;
-    if (!err && frame != STACK_NO_FRAME && !ctx->intercepted) err = ERR_IS_RUNNING;
+    if (!err && frame != STACK_NO_FRAME && !ctx->stopped) err = ERR_IS_RUNNING;
     if (!err && evaluate_expression(ctx, frame, expr->script, 0, &value) < 0) err = errno;
     if (!err && !value.remote) err = ERR_INV_EXPRESSION;
     if (!err && context_write_mem(ctx, value.address, args->value_buf, args->value_size) < 0) err = errno;

@@ -159,6 +159,19 @@ extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
 #define is_plt_section(ctx, addr) 0
 #endif
 
+
+/*
+ * For given context and its registers in a stack frame,
+ * compute stack frame location and next frame register values.
+ * If frame info is not available, do nothing.
+ * Return -1 and set errno in case of an error.
+ */
+#if ENABLE_Symbols
+extern int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down);
+#else
+#define get_next_stack_frame(ctx, frame, down) 0
+#endif
+
 /*
  * Initialize symbol service.
  */

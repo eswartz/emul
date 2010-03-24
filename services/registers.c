@@ -212,7 +212,7 @@ static void command_get(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (id2register(id, &ctx, &frame, &reg_def) < 0) err = errno;
-    else if (!ctx->intercepted) err = ERR_IS_RUNNING;
+    else if (!ctx->stopped) err = ERR_IS_RUNNING;
 
     if (!err) {
         if (is_top_frame(ctx, frame)) {
@@ -263,7 +263,7 @@ static void command_set(char * token, Channel * c) {
 
     if (id2register(id, &ctx, &frame, &reg_def) < 0) err = errno;
     else if (!is_top_frame(ctx, frame)) err = ERR_INV_CONTEXT;
-    else if (!ctx->intercepted) err = ERR_IS_RUNNING;
+    else if (!ctx->stopped) err = ERR_IS_RUNNING;
 
     if (err == 0) {
         uint8_t * data = (uint8_t *)ctx->regs + reg_def->offset;
@@ -320,7 +320,7 @@ static void read_location(InputStream * inp, void * args) {
 
     if (!buf_err) {
         if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) buf_err = errno;
-        else if (!loc->ctx->intercepted) buf_err = ERR_IS_RUNNING;
+        else if (!loc->ctx->stopped) buf_err = ERR_IS_RUNNING;
         else if (loc->offs + loc->size > (unsigned)loc->reg_def->size) buf_err = ERR_INV_DATA_SIZE;
     }
 

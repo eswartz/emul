@@ -260,6 +260,7 @@ void send_context_exited_event(Context * ctx) {
 #endif
     ctx->exited = 1;
     ctx->event_notification = 1;
+    ctx->pending_intercept = 0;
     while (listener != NULL) {
         if (listener->context_exited != NULL) {
             listener->context_exited(ctx, listener->client_data);

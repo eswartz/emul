@@ -37,6 +37,7 @@
 #include "exceptions.h"
 #include "dwarfcache.h"
 #include "dwarfexpr.h"
+#include "dwarfframe.h"
 #include "stacktrace.h"
 #include "symbols.h"
 #if ENABLE_RCBP_TEST
@@ -575,6 +576,37 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     }
     elf_list_done(ctx);
     return res;
+}
+
+int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
+    int error = 0;
+    uint64_t ip = 0;
+
+    if (read_reg_value(get_PC_definition(ctx), frame, &ip) < 0) {
+        if (frame->is_top_frame) error = errno;
+    }
+    else {
+        ELF_File * file = elf_list_first(ctx, (ContextAddress)ip, (ContextAddress)(ip + 1));
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                get_dwarf_stack_frame_info(ctx, file, frame, down);
+                clear_trap(&trap);
+            }
+            else {
+                error = trap.error;
+            }
+            if (error || frame->fp != 0) break;
+            file = elf_list_next(ctx);
+            if (file == NULL) error = errno;
+        }
+        elf_list_done(ctx);
+    }
+    if (error) {
+        errno = error;
+        return -1;
+    }
+    return 0;
 }
 
 void ini_symbols_lib(void) {

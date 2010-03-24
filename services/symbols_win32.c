@@ -944,6 +944,10 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return 0;
 }
 
+int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
+    return 0;
+}
+
 static void event_context_created(Context * ctx, void * client_data) {
     if (ctx->parent != NULL) return;
     assert(ctx->pid == ctx->mem);
