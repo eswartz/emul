@@ -264,33 +264,38 @@ static void start_thread(void * x) {
     ExitThread((DWORD)a.start(a.args));
 }
 
-int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
+int pthread_create(pthread_t * res, const pthread_attr_t * attr,
                    void * (*start)(void *), void * args) {
-    HANDLE r;
-    ThreadArgs * a;
+    HANDLE thread = NULL;
+    DWORD thread_id = 0;
+    ThreadArgs * a = (ThreadArgs *)loc_alloc(sizeof(ThreadArgs));
 
-    a = (ThreadArgs *)loc_alloc(sizeof(ThreadArgs));
     a->start = start;
     a->args = args;
-    r = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)start_thread, a, 0, 0);
-    if (r == NULL) {
+    thread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)start_thread, a, 0, &thread_id);
+    if (thread == NULL) {
         int err = set_win32_errno(GetLastError());
         loc_free(a);
         return errno = err;
     }
-    *thread = (pthread_t)r;
+    if (!CloseHandle(thread)) return set_win32_errno(GetLastError());
+    *res = (pthread_t)thread_id;
     return 0;
 }
 
-int pthread_join(pthread_t thread, void ** value_ptr) {
-    if (WaitForSingleObject(thread, INFINITE) == WAIT_FAILED) return set_win32_errno(GetLastError());
-    if (value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) return set_win32_errno(GetLastError());
-    if (!CloseHandle(thread)) return set_win32_errno(GetLastError());
-    return 0;
+int pthread_join(pthread_t thread_id, void ** value_ptr) {
+    int error = 0;
+    HANDLE thread = OpenThread(SYNCHRONIZE | THREAD_QUERY_INFORMATION, FALSE, (DWORD)thread_id);
+
+    if (thread == NULL) return set_win32_errno(GetLastError());
+    if (WaitForSingleObject(thread, INFINITE) == WAIT_FAILED) error = set_win32_errno(GetLastError());
+    if (!error && value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) error = set_win32_errno(GetLastError());
+    if (!CloseHandle(thread) && !error) error = set_win32_errno(GetLastError());
+    return error;
 }
 
 pthread_t pthread_self(void) {
-    return (pthread_t)GetCurrentThread();
+    return (pthread_t)GetCurrentThreadId();
 }
 
 int pthread_attr_init(pthread_attr_t * attr) {
