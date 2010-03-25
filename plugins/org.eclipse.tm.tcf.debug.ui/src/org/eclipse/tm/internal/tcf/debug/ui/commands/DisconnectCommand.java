@@ -28,7 +28,7 @@ public class DisconnectCommand implements IDisconnectHandler {
     }
 
     public void canExecute(final IEnabledStateRequest monitor) {
-        new TCFRunnable(model.getDisplay(), monitor) {
+        new TCFRunnable(monitor) {
             public void run() {
                 monitor.setEnabled(model.getLaunch().canDisconnect());
                 monitor.setStatus(Status.OK_STATUS);
@@ -38,7 +38,7 @@ public class DisconnectCommand implements IDisconnectHandler {
     }
 
     public boolean execute(final IDebugCommandRequest monitor) {
-        new TCFRunnable(model.getDisplay(), monitor) {
+        new TCFRunnable(monitor) {
             public void run() {
                 try {
                     model.getLaunch().disconnect();

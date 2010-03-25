@@ -209,7 +209,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private IChannel channel;
     private TCFNodeLaunch launch_node;
     private boolean disposed;
-    private boolean debug_view_selection_set;
 
     private static int display_source_cnt;
 
@@ -331,7 +330,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 final TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onContextSuspended(pc, reason, params);
             }
-            setDebugViewSelection(context, false);
+            setDebugViewSelection(context);
             runSuspendTrigger(node);
             finished_actions.remove(context);
         }
@@ -510,7 +509,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         running_actions.remove(id);
         for (TCFModelProxy p : model_proxies.values()) p.run();
         finished_actions.put(id, result);
-        setDebugViewSelection(id, false);
+        setDebugViewSelection(id);
     }
 
     String getContextActionResult(String id) {
@@ -753,26 +752,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return null;
     }
 
-    public void setDebugViewSelection(final String node_id, final boolean initial_selection) {
+    public void setDebugViewSelection(final String node_id) {
         assert Protocol.isDispatchThread();
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 TCFNode node = getNode(node_id);
                 if (node == null) return;
                 if (node.disposed) return;
-                if (node instanceof TCFNodeExecContext) {
-                    TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
-                    if (!state_cache.validate(this)) return;
-                    TCFContextState state_data = state_cache.getData();
-                    if (state_data == null || !state_data.is_suspended) return;
-                    TCFChildrenStackTrace stack_trace = ((TCFNodeExecContext)node).getStackTrace();
-                    if (!stack_trace.validate(this)) return;
-                    TCFNode frame = stack_trace.getTopFrame();
-                    if (frame != null && !frame.disposed) node = frame;
-                }
                 if (running_actions.contains(node_id)) return;
-                if (initial_selection && debug_view_selection_set) return;
-                debug_view_selection_set = true;
                 for (TCFModelProxy proxy : model_proxies.values()) {
                     if (proxy.getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
                         proxy.setSelection(node);

@@ -11,30 +11,23 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import org.eclipse.debug.core.IRequest;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 
 public abstract class TCFRunnable implements Runnable {
 
-    private final IRequest monitor;
-    private final Display display;
+    private final IRequest request;
 
     protected boolean done;
 
-    public TCFRunnable(Display display, IRequest monitor) {
-        this.monitor = monitor;
-        this.display = display;
+    public TCFRunnable(IRequest request) {
+        this.request = request;
         Protocol.invokeLater(this);
     }
 
     public void done() {
         assert !done;
         done = true;
-        display.asyncExec(new Runnable() {
-            public void run() {
-                monitor.done();
-            }
-        });
+        request.done();
     }
 }

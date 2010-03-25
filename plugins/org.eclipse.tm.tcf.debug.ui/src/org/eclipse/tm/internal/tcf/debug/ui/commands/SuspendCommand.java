@@ -39,7 +39,7 @@ public class SuspendCommand implements ISuspendHandler {
     }
 
     public void canExecute(final IEnabledStateRequest monitor) {
-        new TCFRunnable(model.getDisplay(), monitor) {
+        new TCFRunnable(monitor) {
             public void run() {
                 if (done) return;
                 Object[] elements = monitor.getElements();
@@ -79,7 +79,7 @@ public class SuspendCommand implements ISuspendHandler {
     }
 
     public boolean execute(final IDebugCommandRequest monitor) {
-        new TCFRunnable(model.getDisplay(), monitor) {
+        new TCFRunnable(monitor) {
             public void run() {
                 if (done) return;
                 Object[] elements = monitor.getElements();

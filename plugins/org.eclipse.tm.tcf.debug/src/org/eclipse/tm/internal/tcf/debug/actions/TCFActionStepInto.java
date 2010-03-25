@@ -66,10 +66,13 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
             return;
         }
         if (ctx.canResume(src_step ? IRunControl.RM_STEP_INTO_LINE : IRunControl.RM_STEP_INTO)) {
-            if (step_cnt > 0) return;
+            if (step_cnt > 0) {
+                exit(null);
+                return;
+            }
             ctx.resume(src_step ? IRunControl.RM_STEP_INTO_LINE : IRunControl.RM_STEP_INTO, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
-                    exit(error);
+                    if (error != null) exit(error);
                 }
             });
             step_cnt++;

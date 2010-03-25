@@ -151,7 +151,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @param result - children count update request.
      */
     final void update(final IChildrenCountUpdate result) {
-        new TCFRunnable(model.getDisplay(), result) {
+        new TCFRunnable(result) {
             public void run() {
                 if (!done) {
                     if (!result.isCanceled()) {
@@ -174,7 +174,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @param result - children update request.
      */
     final void update(final IChildrenUpdate result) {
-        new TCFRunnable(model.getDisplay(), result) {
+        new TCFRunnable(result) {
             public void run() {
                 if (!done) {
                     if (!result.isCanceled()) {
@@ -194,7 +194,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @param result - "has children" update request.
      */
     final void update(final IHasChildrenUpdate result) {
-        new TCFRunnable(model.getDisplay(), result) {
+        new TCFRunnable(result) {
             public void run() {
                 if (!done) {
                     if (!result.isCanceled()) {
@@ -218,7 +218,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @param result - label update request.
      */
     final void update(final ILabelUpdate result) {
-        new TCFRunnable(model.getDisplay(), result) {
+        new TCFRunnable(result) {
             public void run() {
                 if (!done) {
                     if (!result.isCanceled()) {

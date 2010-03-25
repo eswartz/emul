@@ -60,10 +60,13 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             return;
         }
         if (ctx.canResume(IRunControl.RM_STEP_OUT)) {
-            if (step_cnt > 0) return;
+            if (step_cnt > 0) {
+                exit(null);
+                return;
+            }
             ctx.resume(IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
-                    exit(error);
+                    if (error != null) exit(error);
                 }
             });
             step_cnt++;

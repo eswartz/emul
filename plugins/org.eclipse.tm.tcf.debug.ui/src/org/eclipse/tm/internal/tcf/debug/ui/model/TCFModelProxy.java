@@ -287,7 +287,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             last_update_time = System.currentTimeMillis();
             if (selection != null) {
                 root = new ModelDelta(input, IModelDelta.NO_CHANGE);
-                makeDelta(root, selection, IModelDelta.SELECT, true);
+                makeDelta(root, selection, IModelDelta.SELECT | IModelDelta.EXPAND, true);
                 node2delta.clear();
                 if (pending_node == null) {
                     fireModelChanged(root);

@@ -31,14 +31,11 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TerminateCommand implements ITerminateHandler {
 
-    private final TCFModel model;
-
     public TerminateCommand(TCFModel model) {
-        this.model = model;
     }
 
     public void canExecute(final IEnabledStateRequest monitor) {
-        new TCFRunnable(model.getDisplay(), monitor) {
+        new TCFRunnable(monitor) {
             public void run() {
                 if (done) return;
                 Object[] elements = monitor.getElements();
@@ -68,7 +65,7 @@ public class TerminateCommand implements ITerminateHandler {
     }
 
     public boolean execute(final IDebugCommandRequest monitor) {
-        new TCFRunnable(model.getDisplay(), monitor) {
+        new TCFRunnable(monitor) {
             public void run() {
                 if (done) return;
                 Object[] elements = monitor.getElements();

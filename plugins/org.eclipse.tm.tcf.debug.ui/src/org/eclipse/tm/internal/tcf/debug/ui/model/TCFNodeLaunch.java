@@ -18,9 +18,11 @@ import java.util.Map;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
@@ -36,30 +38,30 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
             boolean done;
             public void run() {
                 if (done) return;
-                ArrayList<TCFNodeStackFrame> frames = new ArrayList<TCFNodeStackFrame>();
-                if (!searchTopFrames(children, frames, this)) return;
-                for (TCFNodeStackFrame f : frames) model.setDebugViewSelection(f.id, false);
+                ArrayList<TCFNode> nodes = new ArrayList<TCFNode>();
+                if (!searchSuspendedThreads(children, nodes, this)) return;
+                for (TCFNode n : nodes) model.setDebugViewSelection(n.id);
                 done = true;
             }
         });
     }
 
-    private boolean searchTopFrames(TCFChildrenExecContext c, ArrayList<TCFNodeStackFrame> frames, Runnable r) {
+    private boolean searchSuspendedThreads(TCFChildrenExecContext c, ArrayList<TCFNode> nodes, Runnable r) {
         if (!c.validate(r)) return false;
         TCFNode[] arr = c.toArray();
         Arrays.sort(arr);
         for (TCFNode n : arr) {
-            if (!searchTopFrames((TCFNodeExecContext)n, frames, r)) return false;
+            if (!searchSuspendedThreads((TCFNodeExecContext)n, nodes, r)) return false;
         }
         return true;
     }
 
-    private boolean searchTopFrames(TCFNodeExecContext e, ArrayList<TCFNodeStackFrame> frames, Runnable r) {
-        TCFChildrenStackTrace stack_trace = e.getStackTrace();
-        if (!stack_trace.validate(r)) return false;
-        TCFNodeStackFrame f = stack_trace.getTopFrame();
-        if (f != null && !f.disposed) frames.add(f);
-        return searchTopFrames(e.getChildren(), frames, r);
+    private boolean searchSuspendedThreads(TCFNodeExecContext n, ArrayList<TCFNode> nodes, Runnable r) {
+        TCFDataCache<TCFContextState> state = n.getState();
+        if (!state.validate(r)) return false;
+        TCFContextState s = state.getData();
+        if (s != null && s.is_suspended) nodes.add(n);
+        return searchSuspendedThreads(n.getChildren(), nodes, r);
     }
 
     @Override
