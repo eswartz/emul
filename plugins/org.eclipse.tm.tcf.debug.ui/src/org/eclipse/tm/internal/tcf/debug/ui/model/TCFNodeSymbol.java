@@ -83,6 +83,7 @@ public class TCFNodeSymbol extends TCFNode {
 
     @Override
     public void dispose() {
+        assert !disposed;
         if (owner != null) {
             owner.removeSymbol(this);
             owner = null;
@@ -129,12 +130,14 @@ public class TCFNodeSymbol extends TCFNode {
 
     private void setUpdatePolicy(String id, int policy) {
         update_policy = policy;
-        TCFNode n = model.getNode(id);
-        if (!(n instanceof ISymbolOwner)) n = parent;
-        if (n != owner) {
-            if (owner != null) owner.removeSymbol(this);
-            owner = (ISymbolOwner)n;
-            owner.addSymbol(this);
+        if (!disposed) {
+            TCFNode n = model.getNode(id);
+            if (!(n instanceof ISymbolOwner)) n = parent;
+            if (n != owner) {
+                if (owner != null) owner.removeSymbol(this);
+                owner = (ISymbolOwner)n;
+                owner.addSymbol(this);
+            }
         }
     }
 
