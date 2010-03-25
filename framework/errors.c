@@ -110,8 +110,14 @@ static char * system_strerror(DWORD errno_win32) {
 
 int set_win32_errno(DWORD win32_error_code) {
     if (win32_error_code) {
-        ErrorMessage * m = alloc_msg(SRC_SYSTEM);
-        m->error = win32_error_code;
+        if (is_dispatch_thread()) {
+            ErrorMessage * m = alloc_msg(SRC_SYSTEM);
+            m->error = win32_error_code;
+        }
+        else {
+            /* TODO: set_win32_errno() needs to be thread safe */
+            errno = ERR_OTHER;
+        }
     }
     else {
         errno = 0;
@@ -257,10 +263,10 @@ static void add_report_prop(ReportBuffer * report, const char * name, ByteArrayO
     report->pub.props = i;
 }
 
-static void add_report_prop_int(ReportBuffer * report, const char * name, uint64_t n) {
+static void add_report_prop_int(ReportBuffer * report, const char * name, unsigned long n) {
     ByteArrayOutputStream buf;
     OutputStream * out = create_byte_array_output_stream(&buf);
-    json_write_int64(out, n);
+    json_write_ulong(out, n);
     write_stream(out, 0);
     add_report_prop(report, name, &buf);
 }
