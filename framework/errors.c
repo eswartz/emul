@@ -29,7 +29,7 @@
 #include "trace.h"
 
 #define ERR_MESSAGE_MIN         (STD_ERR_BASE + 100)
-#define ERR_MESSAGE_MAX         (STD_ERR_BASE + 149)
+#define ERR_MESSAGE_MAX         (STD_ERR_BASE + 199)
 
 #define MESSAGE_CNT             (ERR_MESSAGE_MAX - ERR_MESSAGE_MIN + 1)
 
@@ -108,6 +108,22 @@ static char * system_strerror(DWORD errno_win32) {
     return msg;
 }
 
+typedef struct EventArgs {
+    HANDLE done;
+    int win32_code;
+    int error_code;
+} EventArgs;
+
+static void set_win32_errno_event(void * args) {
+    ErrorMessage * m = NULL;
+    EventArgs * e = (EventArgs *)args;
+
+    m = alloc_msg(SRC_SYSTEM);
+    m->error = e->win32_code;
+    e->error_code = errno;
+    SetEvent(e->done);
+}
+
 int set_win32_errno(DWORD win32_error_code) {
     if (win32_error_code) {
         if (is_dispatch_thread()) {
@@ -115,8 +131,17 @@ int set_win32_errno(DWORD win32_error_code) {
             m->error = win32_error_code;
         }
         else {
-            /* TODO: set_win32_errno() needs to be thread safe */
-            errno = ERR_OTHER;
+            /* Called on background thread */
+            int error = 0;
+            EventArgs * e = (EventArgs *)loc_alloc_zero(sizeof(EventArgs));
+            e->done = CreateEvent(NULL, TRUE, FALSE, NULL);
+            e->win32_code = win32_error_code;
+            post_event(set_win32_errno_event, e);
+            WaitForSingleObject(e->done, INFINITE);
+            CloseHandle(e->done);
+            error = e->error_code;
+            loc_free(e);
+            errno = error;
         }
     }
     else {
@@ -129,58 +154,32 @@ int set_win32_errno(DWORD win32_error_code) {
 
 const char * errno_to_str(int err) {
     switch (err) {
-    case ERR_ALREADY_STOPPED:
-        return "Already stopped";
-    case ERR_ALREADY_EXITED:
-        return "Already exited";
-    case ERR_ALREADY_RUNNING:
-        return "Already running";
-    case ERR_JSON_SYNTAX:
-        return "JSON syntax error";
-    case ERR_PROTOCOL:
-        return "Protocol format error";
-    case ERR_INV_CONTEXT:
-        return "Invalid context ID";
-    case ERR_INV_ADDRESS:
-        return "Invalid address";
-    case ERR_EOF:
-        return "End of file";
-    case ERR_BASE64:
-        return "Invalid BASE64 string";
-    case ERR_INV_EXPRESSION:
-        return "Invalid expression";
-    case ERR_SYM_NOT_FOUND:
-        return "Symbol not found";
-    case ERR_ALREADY_ATTACHED:
-        return "Already attached";
-    case ERR_BUFFER_OVERFLOW:
-        return "Buffer overflow";
-    case ERR_INV_FORMAT:
-        return "Format is not supported";
-    case ERR_INV_NUMBER:
-        return "Invalid number";
-    case ERR_IS_RUNNING:
-        return "Execution context is running";
-    case ERR_INV_DWARF:
-        return "Error reading DWARF data";
-    case ERR_UNSUPPORTED:
-        return "Unsupported command";
-    case ERR_CHANNEL_CLOSED:
-        return "Channel closed";
-    case ERR_COMMAND_CANCELLED:
-        return "Command cancelled";
-    case ERR_UNKNOWN_PEER:
-        return "Unknown peer ID";
-    case ERR_INV_DATA_SIZE:
-        return "Invalid data size";
-    case ERR_INV_DATA_TYPE:
-        return "Invalid data type";
-    case ERR_INV_COMMAND:
-        return "Command is not recognized";
-    case ERR_INV_TRANSPORT:
-        return "Invalid transport name";
-    case ERR_CACHE_MISS:
-        return "Invalid data cache state";
+    case ERR_ALREADY_STOPPED:   return "Already stopped";
+    case ERR_ALREADY_EXITED:    return "Already exited";
+    case ERR_ALREADY_RUNNING:   return "Already running";
+    case ERR_JSON_SYNTAX:       return "JSON syntax error";
+    case ERR_PROTOCOL:          return "Protocol format error";
+    case ERR_INV_CONTEXT:       return "Invalid context ID";
+    case ERR_INV_ADDRESS:       return "Invalid address";
+    case ERR_EOF:               return "End of file";
+    case ERR_BASE64:            return "Invalid BASE64 string";
+    case ERR_INV_EXPRESSION:    return "Invalid expression";
+    case ERR_SYM_NOT_FOUND:     return "Symbol not found";
+    case ERR_ALREADY_ATTACHED:  return "Already attached";
+    case ERR_BUFFER_OVERFLOW:   return "Buffer overflow";
+    case ERR_INV_FORMAT:        return "Format is not supported";
+    case ERR_INV_NUMBER:        return "Invalid number";
+    case ERR_IS_RUNNING:        return "Execution context is running";
+    case ERR_INV_DWARF:         return "Error reading DWARF data";
+    case ERR_UNSUPPORTED:       return "Unsupported command";
+    case ERR_CHANNEL_CLOSED:    return "Channel closed";
+    case ERR_COMMAND_CANCELLED: return "Command cancelled";
+    case ERR_UNKNOWN_PEER:      return "Unknown peer ID";
+    case ERR_INV_DATA_SIZE:     return "Invalid data size";
+    case ERR_INV_DATA_TYPE:     return "Invalid data type";
+    case ERR_INV_COMMAND:       return "Command is not recognized";
+    case ERR_INV_TRANSPORT:     return "Invalid transport name";
+    case ERR_CACHE_MISS:        return "Invalid data cache state";
     default:
         if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
             ErrorMessage * m = msgs + (err - ERR_MESSAGE_MIN);
@@ -357,6 +356,7 @@ ErrorReport * create_error_report(void) {
 void release_error_report(ErrorReport * r) {
     if (r != NULL) {
         ReportBuffer * report = (ReportBuffer *)((char *)r - offsetof(ReportBuffer, pub));
+        assert(is_dispatch_thread());
         assert(report->gets > 0);
         report->gets--;
         release_report(report);

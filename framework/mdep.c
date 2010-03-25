@@ -298,7 +298,12 @@ pthread_t pthread_self(void) {
     return (pthread_t)GetCurrentThreadId();
 }
 
+int pthread_equal(pthread_t thread1, pthread_t thread2) {
+    return thread1 == thread2;
+}
+
 int pthread_attr_init(pthread_attr_t * attr) {
+    *attr = NULL;
     return 0;
 }
 

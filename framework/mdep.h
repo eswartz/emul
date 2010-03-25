@@ -233,6 +233,7 @@ extern pthread_t pthread_self(void);
 extern int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
                           void * (*start_routine)(void *), void * arg);
 extern int pthread_join(pthread_t thread, void **value_ptr);
+extern int pthread_equal(pthread_t thread1, pthread_t thread2);
 
 /*
  * Windows socket functions don't set errno as expected.

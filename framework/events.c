@@ -231,7 +231,7 @@ int cancel_event(EventCallBack * handler, void *arg, int wait) {
 }
 
 int is_dispatch_thread(void) {
-    return event_thread == pthread_self();
+    return pthread_equal(event_thread, pthread_self());
 }
 
 void ini_events_queue(void) {

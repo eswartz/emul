@@ -81,8 +81,8 @@ struct FileAttrs {
     int uid;
     int gid;
     int permissions;
-    int64_t atime;
-    int64_t mtime;
+    uint64_t atime;
+    uint64_t mtime;
 };
 
 struct OpenFileInfo {
@@ -250,8 +250,8 @@ static void fill_attrs(FileAttrs * attrs, struct stat * buf) {
     attrs->uid = buf->st_uid;
     attrs->gid = buf->st_gid;
     attrs->permissions = buf->st_mode;
-    attrs->atime = (int64_t)buf->st_atime * 1000;
-    attrs->mtime = (int64_t)buf->st_mtime * 1000;
+    attrs->atime = (uint64_t)buf->st_atime * 1000;
+    attrs->mtime = (uint64_t)buf->st_mtime * 1000;
 }
 
 static void read_file_attrs(InputStream * inp, const char * nm, void * arg) {
@@ -273,11 +273,11 @@ static void read_file_attrs(InputStream * inp, const char * nm, void * arg) {
         attrs->flags |= ATTR_PERMISSIONS;
     }
     else if (strcmp(nm, "ATime") == 0) {
-        attrs->atime = json_read_int64(inp);
+        attrs->atime = json_read_uint64(inp);
         attrs->flags |= ATTR_ACMODTIME;
     }
     else if (strcmp(nm, "MTime") == 0) {
-        attrs->mtime = json_read_int64(inp);
+        attrs->mtime = json_read_uint64(inp);
         attrs->flags |= ATTR_ACMODTIME;
     }
     else {
@@ -322,11 +322,11 @@ static void write_file_attrs(OutputStream * out, FileAttrs * attrs) {
         if (cnt) write_stream(out, ',');
         json_write_string(out, "ATime");
         write_stream(out, ':');
-        json_write_int64(out, attrs->atime);
+        json_write_uint64(out, attrs->atime);
         write_stream(out, ',');
         json_write_string(out, "MTime");
         write_stream(out, ':');
-        json_write_int64(out, attrs->mtime);
+        json_write_uint64(out, attrs->mtime);
         cnt++;
     }
     write_stream(out, '}');
@@ -581,8 +581,8 @@ static void post_io_requst(OpenFileInfo * handle) {
 #endif
                 if (attrs.flags & ATTR_ACMODTIME) {
                     struct utimbuf buf;
-                    buf.actime = (long)(attrs.atime / 1000);
-                    buf.modtime = (long)(attrs.mtime / 1000);
+                    buf.actime = (time_t)(attrs.atime / 1000);
+                    buf.modtime = (time_t)(attrs.mtime / 1000);
                     if (utime(handle->path, &buf) < 0) err = errno;
                 }
                 reply_setstat(req->token, handle->out, err);
@@ -798,8 +798,8 @@ static void command_setstat(char * token, Channel * c) {
     }
     if (attrs.flags & ATTR_ACMODTIME) {
         struct utimbuf buf;
-        buf.actime = (long)(attrs.atime / 1000);
-        buf.modtime = (long)(attrs.mtime / 1000);
+        buf.actime = (time_t)(attrs.atime / 1000);
+        buf.modtime = (time_t)(attrs.mtime / 1000);
         if (utime(path, &buf) < 0) err = errno;
     }
 

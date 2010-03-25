@@ -65,17 +65,20 @@ void json_write_long(OutputStream * out, long n) {
     json_write_ulong(out, (unsigned long)n);
 }
 
+void json_write_uint64(OutputStream * out, uint64_t n) {
+    if (n >= 10) {
+        json_write_uint64(out, n / 10);
+        n = n % 10;
+    }
+    write_stream(out, (int)n + '0');
+}
+
 void json_write_int64(OutputStream * out, int64_t n) {
     if (n < 0) {
         write_stream(out, '-');
         n = -n;
-        if (n < 0) exception(EINVAL);
     }
-    if (n >= 10) {
-        json_write_int64(out, n / 10);
-        n = n % 10;
-    }
-    write_stream(out, (int)n + '0');
+    json_write_uint64(out, (uint64_t)n);
 }
 
 void json_write_double(OutputStream * out, double n) {
@@ -292,6 +295,26 @@ int64_t json_read_int64(InputStream * inp) {
         res = res * 10 + (ch - '0');
     }
     if (neg) return -res;
+    return res;
+}
+
+uint64_t json_read_uint64(InputStream * inp) {
+    uint64_t res = 0;
+    int neg = 0;
+    int ch = read_stream(inp);
+    if (ch == '-') {
+        neg = 1;
+        ch = read_stream(inp);
+    }
+    if (ch < '0' || ch > '9') exception(ERR_JSON_SYNTAX);
+    res = ch - '0';
+    for (;;) {
+        ch = peek_stream(inp);
+        if (ch < '0' || ch > '9') break;
+        read_stream(inp);
+        res = res * 10 + (ch - '0');
+    }
+    if (neg) return ~res + 1;
     return res;
 }
 
@@ -830,7 +853,7 @@ int read_errno(InputStream * inp) {
                 err->code = json_read_long(inp);
             }
             else if (strcmp(name, "Time") == 0) {
-                err->time_stamp = json_read_int64(inp);
+                err->time_stamp = json_read_uint64(inp);
             }
             else if (strcmp(name, "Format") == 0) {
                 err->format = json_read_alloc_string(inp);
@@ -862,7 +885,7 @@ static void write_error_props(OutputStream * out, ErrorReport * rep) {
         write_stream(out, ',');
         json_write_string(out, "Time");
         write_stream(out, ':');
-        json_write_int64(out, rep->time_stamp);
+        json_write_uint64(out, rep->time_stamp);
     }
 
     if (rep->format != NULL) {

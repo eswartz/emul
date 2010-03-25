@@ -58,6 +58,7 @@ int main(int argc, char ** argv) {
 
     ini_mdep();
     ini_trace();
+    ini_events_queue();
     ini_asyncreq();
 
 #if defined(_WRS_KERNEL)
@@ -140,8 +141,6 @@ int main(int argc, char ** argv) {
     open_log_file(log_name);
 
 #endif
-
-    ini_events_queue();
 
     bcg = broadcast_group_alloc();
     proto = protocol_alloc();

@@ -61,8 +61,8 @@ int main(int argc, char ** argv) {
 
     ini_mdep();
     ini_trace();
-    ini_asyncreq();
     ini_events_queue();
+    ini_asyncreq();
 
 #if defined(_WRS_KERNEL)
 

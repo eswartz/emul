@@ -202,7 +202,7 @@ static void get_symbol_cache_client(void * x) {
         write_stream(&c->out, ',');
         json_write_string(&c->out, "Value");
         write_stream(&c->out, ':');
-        json_write_int64(&c->out, addr);
+        json_write_uint64(&c->out, addr);
         write_stream(&c->out, '}');
         write_stream(&c->out, 0);
     }

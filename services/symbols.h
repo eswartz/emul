@@ -124,7 +124,7 @@ extern int get_symbol_index_type(const Symbol * sym, Symbol ** index_type);
 extern int get_symbol_length(const Symbol * sym, ContextAddress * length);
 
 /* Get array index lower bound (index of first element) */
-extern int get_symbol_lower_bound(const Symbol * sym, ContextAddress * value);
+extern int get_symbol_lower_bound(const Symbol * sym, int64_t * value);
 
 /* Get children type IDs (struct, union, class, function and enum).
  * The array returned shall not be modified by the client,

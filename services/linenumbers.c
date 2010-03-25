@@ -64,7 +64,7 @@ static void write_line_info(OutputStream * out, int cnt) {
     write_stream(out, '{');
     json_write_string(out, "SAddr");
     write_stream(out, ':');
-    json_write_int64(out, area->start_address);
+    json_write_uint64(out, area->start_address);
     if (area->start_line > 0) {
         write_stream(out, ',');
         json_write_string(out, "SLine");
@@ -81,7 +81,7 @@ static void write_line_info(OutputStream * out, int cnt) {
         write_stream(out, ',');
         json_write_string(out, "EAddr");
         write_stream(out, ':');
-        json_write_int64(out, area->end_address);
+        json_write_uint64(out, area->end_address);
     }
     if (area->end_line > 0) {
         write_stream(out, ',');
@@ -190,9 +190,9 @@ static void command_map_to_source(char * token, Channel * c) {
 
     json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    args.addr0 = (ContextAddress)json_read_int64(&c->inp);
+    args.addr0 = (ContextAddress)json_read_uint64(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    args.addr1 = (ContextAddress)json_read_int64(&c->inp);
+    args.addr1 = (ContextAddress)json_read_uint64(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 

@@ -40,14 +40,6 @@
 #define ENABLE_ZeroCopy         1
 #endif
 
-#if !defined(ENABLE_Splice)
-#  if (ENABLE_ZeroCopy) && defined(SPLICE_F_MOVE)
-#    define ENABLE_Splice       1
-#  else
-#    define ENABLE_Splice       0
-#  endif
-#endif
-
 #if !defined(ENABLE_Trace)
 #  define ENABLE_Trace          1
 #endif

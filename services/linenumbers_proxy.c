@@ -142,10 +142,10 @@ static void read_code_area_props(InputStream * inp, const char * name, void * ar
     CodeArea * area = (CodeArea *)args;
     if (strcmp(name, "SLine") == 0) area->start_line = json_read_long(inp);
     else if (strcmp(name, "SCol") == 0) area->start_column = json_read_long(inp);
-    else if (strcmp(name, "SAddr") == 0) area->start_address = (ContextAddress)json_read_int64(inp);
+    else if (strcmp(name, "SAddr") == 0) area->start_address = (ContextAddress)json_read_uint64(inp);
     else if (strcmp(name, "ELine") == 0) area->end_line = json_read_long(inp);
     else if (strcmp(name, "ECol") == 0) area->end_column = json_read_long(inp);
-    else if (strcmp(name, "EAddr") == 0) area->end_address = (ContextAddress)json_read_int64(inp);
+    else if (strcmp(name, "EAddr") == 0) area->end_address = (ContextAddress)json_read_uint64(inp);
     else if (strcmp(name, "File") == 0) area->file = json_read_alloc_string(inp);
     else if (strcmp(name, "Dir") == 0) area->directory = json_read_alloc_string(inp);
     else if (strcmp(name, "ISA") == 0) area->isa = json_read_long(inp);

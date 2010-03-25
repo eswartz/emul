@@ -1072,7 +1072,7 @@ int get_symbol_length(const Symbol * sym, ContextAddress * length) {
     return -1;
 }
 
-int get_symbol_lower_bound(const Symbol * sym, ContextAddress * value) {
+int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
         *value = 0;
@@ -1098,7 +1098,7 @@ int get_symbol_lower_bound(const Symbol * sym, ContextAddress * value) {
             if (!set_trap(&trap)) return -1;
             y = get_num_prop(obj, AT_lower_bound, &x);
             clear_trap(&trap);
-            *value = y ? (ContextAddress)x : 0;
+            *value = y ? (int64_t)x : 0;
             return 0;
         }
     }

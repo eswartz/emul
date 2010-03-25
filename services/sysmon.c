@@ -200,12 +200,12 @@ static void write_context(OutputStream * out, char * id, char * parent_id, kinfo
 
     json_write_string(out, "UTime");
     write_stream(out, ':');
-    json_write_int64(out, p->kp_proc.p_uticks);
+    json_write_uint64(out, p->kp_proc.p_uticks);
     write_stream(out, ',');
 
     json_write_string(out, "STime");
     write_stream(out, ':');
-    json_write_int64(out, p->kp_proc.p_sticks);
+    json_write_uint64(out, p->kp_proc.p_sticks);
     write_stream(out, ',');
 
     json_write_string(out, "Priority");
@@ -1275,22 +1275,22 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
 
                 json_write_string(out, "UTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64_t)utime * 1000 / HZ);
+                json_write_uint64(out, (uint64_t)utime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "STime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64_t)stime * 1000 / HZ);
+                json_write_uint64(out, (uint64_t)stime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "CUTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64_t)cutime * 1000 / HZ);
+                json_write_uint64(out, (uint64_t)cutime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "CSTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64_t)cstime * 1000 / HZ);
+                json_write_uint64(out, (uint64_t)cstime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "Priority");
@@ -1314,7 +1314,7 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
 
                 json_write_string(out, "StartTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64_t)starttime * 1000 / HZ);
+                json_write_uint64(out, (uint64_t)starttime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "VSize");

@@ -257,10 +257,10 @@ void send_context_exited_event(Context * ctx) {
     assert(!ctx->event_notification);
 #if !ENABLE_ContextProxy
     ctx->exiting = 0;
+    ctx->pending_intercept = 0;
 #endif
     ctx->exited = 1;
     ctx->event_notification = 1;
-    ctx->pending_intercept = 0;
     while (listener != NULL) {
         if (listener->context_exited != NULL) {
             listener->context_exited(ctx, listener->client_data);

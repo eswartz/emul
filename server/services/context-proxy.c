@@ -80,7 +80,7 @@ struct ContextCache {
 
     /* Run Control State */
     int pc_valid;
-    int64_t suspend_pc;
+    uint64_t suspend_pc;
     char suspend_reason[256];
 
     /* Memory */
@@ -433,31 +433,29 @@ static void event_context_removed(Channel * c, void * args) {
 static void event_context_suspended(Channel * ch, void * args) {
     PeerCache * p = (PeerCache *)args;
     ContextCache * c = NULL;
-    char id[256];
-    char reason[sizeof(c->suspend_reason)];
-    int64_t pc;
     ContextCache buf;
 
     assert(p->target == ch);
+    memset(&buf, 0, sizeof(buf));
     write_stringz(&p->host->out, "E");
     write_stringz(&p->host->out, RUN_CONTROL);
     write_stringz(&p->host->out, "contextSuspended");
-    json_read_string(p->fwd_inp, id, sizeof(id));
+    json_read_string(p->fwd_inp, buf.id, sizeof(buf.id));
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    pc = json_read_int64(p->fwd_inp);
+    buf.suspend_pc = json_read_uint64(p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(p->fwd_inp, reason, sizeof(reason));
+    json_read_string(p->fwd_inp, buf.suspend_reason, sizeof(buf.suspend_reason));
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_struct(p->fwd_inp, read_context_suspended_data, &buf);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    c = find_context_cache(p, id);
+    c = find_context_cache(p, buf.id);
     if (c != NULL) {
         assert(c->ctx->proxy == c);
         c->pc_valid = 1;
-        c->suspend_pc = pc;
-        strcpy(c->suspend_reason, reason);
+        c->suspend_pc = buf.suspend_pc;
+        strcpy(c->suspend_reason, buf.suspend_reason);
         if (!c->ctx->stopped) {
             c->ctx->stopped = 1;
             c->ctx->intercepted = 1;
@@ -466,7 +464,7 @@ static void event_context_suspended(Channel * ch, void * args) {
         }
     }
     else if (p->rc_done) {
-        trace(LOG_ALWAYS, "Invalid ID in 'context suspended' event: %s", id);
+        trace(LOG_ALWAYS, "Invalid ID in 'context suspended' event: %s", buf.id);
     }
 }
 
@@ -500,21 +498,21 @@ static void event_context_resumed(Channel * ch, void * args) {
 
 static void event_container_suspended(Channel * c, void * args) {
     PeerCache * p = (PeerCache *)args;
-    char id[256];
-    char reason[256];
-    int64_t pc;
     ContextCache ctx;
+
+    memset(&ctx, 0, sizeof(ctx));
     write_stringz(&p->host->out, "E");
     write_stringz(&p->host->out, RUN_CONTROL);
     write_stringz(&p->host->out, "containerSuspended");
-    json_read_string(p->fwd_inp, id, sizeof(id));
+    json_read_string(p->fwd_inp, ctx.id, sizeof(ctx.id));
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    pc = json_read_int64(p->fwd_inp);
+    ctx.suspend_pc = json_read_uint64(p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(p->fwd_inp, reason, sizeof(reason));
+    json_read_string(p->fwd_inp, ctx.suspend_reason, sizeof(ctx.suspend_reason));
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_struct(p->fwd_inp, read_context_suspended_data, &ctx);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    /* TODO: save suspend data in the cache */
     json_read_array(p->fwd_inp, read_container_suspended_item, p);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -681,7 +679,7 @@ static void validate_peer_cache_state(Channel * c, void * args, int error) {
         set_rc_error(p, error = read_errno(&c->inp));
         x->pc_valid = json_read_boolean(&c->inp);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        x->suspend_pc = json_read_int64(&c->inp);
+        x->suspend_pc = json_read_uint64(&c->inp);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         json_read_string(&c->inp, x->suspend_reason, sizeof(x->suspend_reason));
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -823,7 +821,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
 
 static void read_memory_region_property(InputStream * inp, const char * name, void * args) {
     MemoryRegion * m = (MemoryRegion *)args;
-    if (strcmp(name, "Addr") == 0) m->addr = (ContextAddress)json_read_int64(inp);
+    if (strcmp(name, "Addr") == 0) m->addr = (ContextAddress)json_read_uint64(inp);
     else if (strcmp(name, "Size") == 0) m->size = json_read_ulong(inp);
     else if (strcmp(name, "Offs") == 0) m->file_offs = json_read_ulong(inp);
     else if (strcmp(name, "Flags") == 0) m->flags = json_read_ulong(inp);
@@ -1161,9 +1159,9 @@ static void validate_reg_children_cache(Channel * c, void * args, int error) {
 
 static void read_stack_frame_property(InputStream * inp, const char * name, void * args) {
     StackFrameCache * s = (StackFrameCache *)args;
-    if (strcmp(name, "FP") == 0) s->info.fp = json_read_int64(inp);
-    else if (strcmp(name, "IP") == 0) s->ip = json_read_int64(inp);
-    else if (strcmp(name, "RP") == 0) s->rp = json_read_int64(inp);
+    if (strcmp(name, "FP") == 0) s->info.fp = (ContextAddress)json_read_uint64(inp);
+    else if (strcmp(name, "IP") == 0) s->ip = (ContextAddress)json_read_uint64(inp);
+    else if (strcmp(name, "RP") == 0) s->rp = (ContextAddress)json_read_uint64(inp);
     else if (strcmp(name, "TopFrame") == 0) s->info.is_top_frame = json_read_boolean(inp);
     else json_skip_object(inp);
 }

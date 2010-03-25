@@ -177,6 +177,7 @@ static int trace_stack(Context * ctx) {
 #endif
 
 static StackTrace * create_stack_trace(Context * ctx) {
+    int error = 0;
     StackTrace * stack_trace = (StackTrace *)ctx->stack_trace;
     if (stack_trace != NULL) return stack_trace;
 
@@ -185,10 +186,11 @@ static StackTrace * create_stack_trace(Context * ctx) {
     ctx->stack_trace = stack_trace;
     if (ctx->regs_error != NULL) {
         stack_trace->error = get_error_report(set_error_report_errno(ctx->regs_error));
+        return stack_trace;
     }
-    else if (trace_stack(ctx) < 0) {
-        stack_trace->error = get_error_report(errno);
-    }
+    if (trace_stack(ctx) < 0) error = errno;
+    stack_trace = (StackTrace *)ctx->stack_trace;
+    if (error) stack_trace->error = get_error_report(error);
     return stack_trace;
 }
 
@@ -230,21 +232,21 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
         write_stream(out, ',');
         json_write_string(out, "FP");
         write_stream(out, ':');
-        json_write_int64(out, frame->fp);
+        json_write_uint64(out, frame->fp);
     }
 
     if (read_reg_value(reg_def, frame, &v) == 0) {
         write_stream(out, ',');
         json_write_string(out, "IP");
         write_stream(out, ':');
-        json_write_int64(out, v);
+        json_write_uint64(out, v);
     }
 
     if (down != NULL && read_reg_value(reg_def, down, &v) == 0) {
         write_stream(out, ',');
         json_write_string(out, "RP");
         write_stream(out, ':');
-        json_write_int64(out, v);
+        json_write_uint64(out, v);
     }
 
     write_stream(out, '}');

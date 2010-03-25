@@ -42,6 +42,7 @@ typedef struct SymbolsCache {
     LINK link_sym[HASH_SIZE];
     LINK link_find[HASH_SIZE];
     LINK link_list[HASH_SIZE];
+    LINK link_frame[HASH_SIZE];
 } SymbolsCache;
 
 /* Symbol properties cache */
@@ -69,8 +70,8 @@ typedef struct SymInfoCache {
     ContextAddress size;
     ContextAddress offset;
     ContextAddress length;
-    ContextAddress lower_bound;
-    ContextAddress upper_bound;
+    int64_t lower_bound;
+    int64_t upper_bound;
     char * value;
     int value_size;
     char ** children_ids;
@@ -123,6 +124,18 @@ typedef struct ListSymCache {
     int disposed;
 } ListSymCache;
 
+typedef struct StackFrameCache {
+    LINK link_syms;
+    AbstractCache cache;
+    ReplyHandlerInfo * pending;
+    ErrorReport * error;
+    pid_t mem;
+    uint64_t address;
+    uint64_t size;
+
+    int disposed;
+} StackFrameCache;
+
 #define SYM_CACHE_MAGIC 0x38254865
 
 #define root2syms(A) ((SymbolsCache *)((char *)(A) - offsetof(SymbolsCache, link_root)))
@@ -130,6 +143,7 @@ typedef struct ListSymCache {
 #define syms2find(A) ((FindSymCache *)((char *)(A) - offsetof(FindSymCache, link_syms)))
 #define syms2list(A) ((ListSymCache *)((char *)(A) - offsetof(ListSymCache, link_syms)))
 #define sym2arr(A)   ((ArraySymCache *)((char *)(A) - offsetof(ArraySymCache, link_sym)))
+#define syms2frame(A)((StackFrameCache *)((char *)(A) - offsetof(StackFrameCache, link_syms)))
 
 struct Symbol {
     unsigned magic;
@@ -158,6 +172,10 @@ static unsigned hash_find(const char * name, uint64_t ip, pid_t pid) {
 
 static unsigned hash_list(uint64_t ip, pid_t pid) {
     return ((unsigned)ip + (unsigned)pid) % HASH_SIZE;
+}
+
+static unsigned hash_frame(pid_t pid) {
+    return (unsigned)pid % HASH_SIZE;
 }
 
 static SymbolsCache * get_symbols_cache(void) {
@@ -248,6 +266,16 @@ static void free_list_sym_cache(ListSymCache * c) {
     }
 }
 
+static void free_stack_frame_cache(StackFrameCache * c) {
+    list_remove(&c->link_syms);
+    c->disposed = 1;
+    if (c->pending == NULL) {
+        cache_dispose(&c->cache);
+        release_error_report(c->error);
+        loc_free(c);
+    }
+}
+
 static void free_symbols_cache(SymbolsCache * syms) {
     int i;
     for (i = 0; i < HASH_SIZE; i++) {
@@ -259,6 +287,9 @@ static void free_symbols_cache(SymbolsCache * syms) {
         }
         while (!list_is_empty(syms->link_list + i)) {
             free_list_sym_cache(syms2list(syms->link_list[i].next));
+        }
+        while (!list_is_empty(syms->link_frame + i)) {
+            free_stack_frame_cache(syms2frame(syms->link_frame[i].next));
         }
     }
     channel_unlock(syms->channel);
@@ -280,10 +311,10 @@ static void read_context_data(InputStream * inp, const char * name, void * args)
     else if (strcmp(name, "IndexTypeID") == 0) s->index_type_id = json_read_alloc_string(inp);
     else if (strcmp(name, "Size") == 0) { s->size = json_read_long(inp); s->has_size = 1; }
     else if (strcmp(name, "Length") == 0) { s->length = json_read_long(inp); s->has_length = 1; }
-    else if (strcmp(name, "LowerBound") == 0) { s->lower_bound = json_read_long(inp); s->has_lower_bound = 1; }
-    else if (strcmp(name, "UpperBound") == 0) { s->upper_bound = json_read_long(inp); s->has_upper_bound = 1; }
+    else if (strcmp(name, "LowerBound") == 0) { s->lower_bound = json_read_int64(inp); s->has_lower_bound = 1; }
+    else if (strcmp(name, "UpperBound") == 0) { s->upper_bound = json_read_int64(inp); s->has_upper_bound = 1; }
     else if (strcmp(name, "Offset") == 0) { s->offset = json_read_long(inp); s->has_offset = 1; }
-    else if (strcmp(name, "Address") == 0) { s->address = (ContextAddress)json_read_int64(inp); s->has_address = 1; }
+    else if (strcmp(name, "Address") == 0) { s->address = (ContextAddress)json_read_uint64(inp); s->has_address = 1; }
     else if (strcmp(name, "Value") == 0) s->value = json_read_alloc_binary(inp, &s->value_size);
     else json_skip_object(inp);
 }
@@ -628,15 +659,19 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
 int get_symbol_length(const Symbol * sym, ContextAddress * length) {
     SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
-    if (!c->has_length) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
+    if (c->has_length) {
+        *length = c->length;
+        return 0;
     }
-    *length = c->length;
-    return 0;
+    if (c->has_lower_bound && c->has_upper_bound) {
+        *length = (ContextAddress)(c->has_upper_bound - c->has_lower_bound + 1);
+        return 0;
+    }
+    errno = ERR_INV_CONTEXT;
+    return -1;
 }
 
-int get_symbol_lower_bound(const Symbol * sym, ContextAddress * lower_bound) {
+int get_symbol_lower_bound(const Symbol * sym, int64_t * lower_bound) {
     SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (!c->has_lower_bound) {
@@ -794,7 +829,7 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
         a->pending = protocol_send_command(c, "Symbols", "getArrayType", validate_type_id, a);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
-        json_write_int64(&c->out, length);
+        json_write_uint64(&c->out, length);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
@@ -820,9 +855,91 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return 0;
 }
 
+static void validate_frame(Channel * c, void * args, int error) {
+    Trap trap;
+    StackFrameCache * f = (StackFrameCache *)args;
+    assert(f->pending != NULL);
+    assert(f->error == NULL);
+    if (set_trap(&trap)) {
+        f->pending = NULL;
+        if (!error) {
+            error = read_errno(&c->inp);
+
+
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        }
+        clear_trap(&trap);
+    }
+    else {
+        error = trap.error;
+    }
+    f->error = get_error_report(error);
+    cache_notify(&f->cache);
+    if (f->disposed) free_stack_frame_cache(f);
+}
+
 int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
+    Trap trap;
+    unsigned h;
+    LINK * l;
+    uint64_t ip = 0;
+    SymbolsCache * syms = NULL;
+    StackFrameCache * f = NULL;
+
+    if (!set_trap(&trap)) return -1;
+
+    if (read_reg_value(get_PC_definition(ctx), frame, &ip) < 0) {
+        if (frame->is_top_frame) exception(errno);
+        clear_trap(&trap);
+        return 0;
+    }
+
+    h = hash_frame(ctx->mem);
+    syms = get_symbols_cache();
+    for (l = syms->link_frame[h].next; l != syms->link_frame + h; l = l->next) {
+        StackFrameCache * c = syms2frame(l);
+        if (c->mem == ctx->mem) {
+            if (c->pending != NULL) {
+                cache_wait(&c->cache);
+            }
+            else if (c->address <= ip && c->address + c->size > ip) {
+                f = c;
+                break;
+            }
+        }
+    }
+
+    assert(f == NULL || f->pending == NULL);
+
+    if (f == NULL) {
+        Channel * c = cache_channel();
+        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+        f = (StackFrameCache *)loc_alloc_zero(sizeof(StackFrameCache));
+        list_add_first(&f->link_syms, syms->link_frame + h);
+        f->mem = ctx->mem;
+        f->address = ip;
+        f->size = 1;
+        f->pending = protocol_send_command(c, "Symbols", "getFrameInfo", validate_frame, f);
+        json_write_string(&c->out, pid2id(ctx->mem, 0));
+        write_stream(&c->out, 0);
+        json_write_uint64(&c->out, ip);
+        write_stream(&c->out, 0);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
+        cache_wait(&f->cache);
+    }
+    else if (f->error != NULL) {
+        exception(set_error_report_errno(f->error));
+    }
+    else {
+    }
+
+    clear_trap(&trap);
     return 0;
 }
+
+/*************************************************************************************************/
 
 static void flush_syms(Context * ctx, int mode, int keep_pending) {
     LINK * l;

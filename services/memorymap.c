@@ -309,7 +309,7 @@ static void command_get(char * token, Channel * c) {
             write_stream(&c->out, '{');
             json_write_string(&c->out, "Addr");
             write_stream(&c->out, ':');
-            json_write_int64(&c->out, m->addr);
+            json_write_uint64(&c->out, m->addr);
             write_stream(&c->out, ',');
             json_write_string(&c->out, "Size");
             write_stream(&c->out, ':');

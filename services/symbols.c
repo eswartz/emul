@@ -52,7 +52,7 @@ static void command_get_context_cache_client(void * x) {
     int has_address = 0;
     ContextAddress size = 0;
     ContextAddress length = 0;
-    ContextAddress lower_bound = 0;
+    int64_t lower_bound = 0;
     ContextAddress offset = 0;
     ContextAddress address = 0;
     void * value = NULL;
@@ -149,14 +149,14 @@ static void command_get_context_cache_client(void * x) {
         if (has_size) {
             json_write_string(&c->out, "Size");
             write_stream(&c->out, ':');
-            json_write_int64(&c->out, size);
+            json_write_uint64(&c->out, size);
             write_stream(&c->out, ',');
         }
 
         if (has_length) {
             json_write_string(&c->out, "Length");
             write_stream(&c->out, ':');
-            json_write_int64(&c->out, length);
+            json_write_uint64(&c->out, length);
             write_stream(&c->out, ',');
 
             if (has_lower_bound) {
@@ -167,7 +167,7 @@ static void command_get_context_cache_client(void * x) {
 
                 json_write_string(&c->out, "UpperBound");
                 write_stream(&c->out, ':');
-                json_write_int64(&c->out, lower_bound + length - 1);
+                json_write_int64(&c->out, lower_bound + (int64_t)length - 1);
                 write_stream(&c->out, ',');
             }
         }
@@ -175,14 +175,14 @@ static void command_get_context_cache_client(void * x) {
         if (has_offset) {
             json_write_string(&c->out, "Offset");
             write_stream(&c->out, ':');
-            json_write_int64(&c->out, offset);
+            json_write_uint64(&c->out, offset);
             write_stream(&c->out, ',');
         }
 
         if (has_address) {
             json_write_string(&c->out, "Address");
             write_stream(&c->out, ':');
-            json_write_int64(&c->out, address);
+            json_write_uint64(&c->out, address);
             write_stream(&c->out, ',');
         }
 
@@ -388,7 +388,7 @@ static void command_list(char * token, Channel * c) {
 typedef struct CommandGetArrayTypeArgs {
     char token[256];
     char id[256];
-    int64_t length;
+    uint64_t length;
 } CommandGetArrayTypeArgs;
 
 static void command_get_array_type_cache_client(void * x) {
@@ -423,7 +423,7 @@ static void command_get_array_type(char * token, Channel * c) {
 
     json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    args.length = json_read_int64(&c->inp);
+    args.length = json_read_uint64(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 

@@ -604,7 +604,7 @@ int get_symbol_length(const Symbol * sym, ContextAddress * length) {
     return 0;
 }
 
-int get_symbol_lower_bound(const Symbol * sym, ContextAddress * value) {
+int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
     Symbol type = *sym;
     DWORD tag = 0;
 
@@ -620,6 +620,7 @@ int get_symbol_lower_bound(const Symbol * sym, ContextAddress * value) {
     if (get_type_tag(&type, &tag)) return -1;
     switch (tag) {
     case SymTagArrayType:
+        /* TODO: Windows array symbol lower bound value */
         *value = 0;
         return 0;
     }

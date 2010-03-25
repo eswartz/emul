@@ -130,8 +130,8 @@ int main(int argc, char ** argv) {
 
     ini_mdep();
     ini_trace();
-    ini_asyncreq();
     ini_events_queue();
+    ini_asyncreq();
 
     log_mode = LOG_TCFLOG;
 
