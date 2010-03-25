@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="v9t9/emulator/clients/builtin/sdl/" kind="src" path="src"/>
+	<classpathentry excluding="v9t9/emulator/clients/builtin/sdl/|v9t9/tools/tinyc/frontend/" kind="src" path="src"/>
 	<classpathentry kind="src" path="eulang"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="libs/bcel-5.2.jar"/>

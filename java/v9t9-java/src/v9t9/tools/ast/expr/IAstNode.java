@@ -65,6 +65,9 @@ public interface IAstNode {
      * @param visitor
      */
     public void acceptReference(AstVisitor visitor);
+    
+    public ISourceRef getSourceRef();
+    public void setSourceRef(ISourceRef sourceRef);
 
 }
 

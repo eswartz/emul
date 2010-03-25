@@ -1,10 +1,10 @@
-parser grammar EulangParser;
+grammar Eulang;
 options {
  ASTLabelType=CommonTree;
   output=AST;
   language=Java;
-  tokenVocab=EulangLexer;
 }
+
 tokens {
   SCOPE;
   LIST_COMPREHENSION;
@@ -53,15 +53,28 @@ tokens {
 package org.ejs.eulang;
 import java.util.HashMap;
 } 
+@lexer::header{
+package org.ejs.eulang;
+}
 
 @members {
     public String getTokenErrorDisplay(Token t) {
         return '\'' + t.getText() + '\'';
     }
 
-
+  protected CommonTree split(CommonTree items) {
+        if (items == null) return null;
+        StringBuilder sb = new StringBuilder();
+        if (items.getText()!=null) sb.append(items.getText());
+        for (int  i = 0; i < items.getChildCount(); i++)
+          sb.append(items.getChild(i).getText());
+        //return new CommonTree(new CommonToken(COLONS, sb.toString()));
+        CommonTree out = new CommonTree();
+        for (int i = 0; i < sb.length(); i++) 
+          out.addChild(new CommonTree(new CommonToken(COLON, ":")));
+          return out;
+      }
 }
-
 
 prog:   toplevelstmts EOF!
     ;
@@ -76,7 +89,7 @@ toplevelstat:   ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE_ASSIGN ID toplevel
     ;
 
 toplevelvalue : xscope
-    | code
+    //| code
     | macro
     | (  LPAREN (RPAREN | ID) ) => proto     
     | selector
@@ -117,41 +130,36 @@ listitems: (listitem ( COMMA listitem )* COMMA?)?
         
 listitem : toplevelvalue ;
     
-//
-// prototype:  like foo = (x,y);
-//
-// such a prototype cannot use any initializers, or else this looks like an assignment as in "x = 40; foo= (x=40);"
-//
-proto :   LPAREN protoargdefs xreturns? RPAREN                   -> ^(PROTO xreturns? protoargdefs*)
-  ;
-  
-protoargdefs: (protoargdef ( COMMA protoargdef)* COMMA?)?                        -> protoargdef* 
-    ;
-
-protoargdef:  ID (COLON type (EQUALS rhsExpr)?)?    -> ^(ARGDEF ID type* rhsExpr*)
-  ;
   
 // code block
-code :   LBRACE_LPAREN argdefs xreturns? RPAREN codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? argdefs*) codestmtlist*)  
+
+code : CODE ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? optargdefs*) codestmtlist*)  
     ;
 
 // inline code block
-macro :   LBRACE_STAR_LPAREN argdefs xreturns? RPAREN codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? argdefs*) codestmtlist*)  
+macro : MACRO ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? optargdefs*) codestmtlist*)  
     ;
 
+proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? argdefs*)
+    ;
 argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
     ;
 
-argdef:  protoargdef
-    | ID EQUALS assignExpr    -> ^(ARGDEF ID TYPE assignExpr)
+argdef: ID (COLON type)?    -> ^(ARGDEF ID type* )
   ;
 
 xreturns: RETURNS type      -> type
   ;
+
+optargdefs: (optargdef ( COMMA optargdef)* COMMA?)?                        -> optargdef* 
+    ;
+
+optargdef: ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF ID type* $init?)
+
+  ;
   
-type :  ( ID -> ^(TYPE ID) )
-      ( AMP -> ^(TYPE ^(REF ID) ) )? 
-      
+type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScopeRef) ) )? 
+     | CODE proto ? -> ^(TYPE proto )
   ;
 
 codestmtlist: (codeStmt ( SEMI codeStmt )* SEMI?) ? ->  ^(STMTLIST codeStmt*)
@@ -259,12 +267,108 @@ atom options { k=2; } :
     |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
     |   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
     |   idOrScopeRef
-    |   LPAREN assignExpr RPAREN               -> assignExpr 
+    |   LPAREN assignExpr RPAREN               -> assignExpr
+    |   code                           -> code   
     ;
 
-idOrScopeRef : ID -> ^(IDREF ID ) 
-      | SCOPEREF -> ^(IDREF SCOPEREF)
-      | COLONS ( ( SCOPEREF -> ^(IDREF COLONS SCOPEREF) ) | ( ID -> ^(IDREF COLONS ID) ) )
-      | COLON+ ( ( SCOPEREF -> ^(IDREF COLON+ SCOPEREF) ) | ( ID -> ^(IDREF COLON+ ID) ) )
+idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
+      //| SCOPEREF -> ^(IDREF SCOPEREF)
+      //| COLONS ( ( SCOPEREF -> ^(IDREF COLONS SCOPEREF) ) | ( ID -> ^(IDREF COLONS ID) ) )
+      //| COLON+ ( ( SCOPEREF -> ^(IDREF COLON+ SCOPEREF) ) | ( ID -> ^(IDREF COLON+ ID) ) )
+      //| COLONS ( ( ID ( PERIOD ID ) * -> ^(IDREF COLONS ID+) ) )
+      | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
       ;
+
+colons : (COLON | COLONS)+ ;
+
+LBRACE_LPAREN : '{(';
+LBRACE_STAR : '{*';
+LBRACE_STAR_LPAREN : '{*(';
+COLON : ':';
+COMMA : ',';
+EQUALS : '=';
+COLON_EQUALS : ':=';
+COLON_COLON_EQUALS : '::=';
+PLUS : '+';
+MINUS : '-';
+STAR : '*';
+SLASH : '/';
+LPAREN : '(';
+RPAREN : ')';
+LBRACE : '{';
+RBRACE : '}';
+LBRACKET : '[';
+RBRACKET : ']';
+HASH : '#';
+EXCL : '!';
+TILDE : '~';
+AT : '@';
+AMP : '&'; 
+BAR : '|';
+CARET : '^';
+SEMI : ';';
+QUESTION : '?';
+COMPAND : '&&';
+COMPOR : '||';
+COMPEQ : '==';
+COMPNE : '!=';
+COMPGE : '>=';
+COMPLE : '<=';
+GREATER : '>';
+LESS : '<';
+LSHIFT : '<<';
+RSHIFT : '>>';
+URSHIFT : '>>>';
+BACKSLASH : '\\';
+PERCENT : '%';
+UMOD : '%%';
+RETURNS : '=>' ;
+PERIOD : '.';
+
+RETURN : 'return';
+CODE : 'code';
+DATA : 'data';
+MACRO : 'macro';
+FOR : 'for';
+IN : 'in';
+
+//
+//  Numbers
+//
+NUMBER: '0'..'9' (IDSUFFIX ( '.' IDSUFFIX)?);
+
+//
+//  Identifiers
+//
+//SCOPEREF : ID ('.' ID) + ;
+
+//  Handle multiple colons which aren't ':' or '::='.  (We ignore spaces so we have to account for this)
+COLONS : COLON COLON+ ;
+
+ID : LETTERLIKE IDSUFFIX ;
+fragment IDSUFFIX : ( LETTERLIKE | DIGIT )*;
+fragment LETTERLIKE:  'a'..'z' | 'A'..'Z' | '_';
+fragment DIGIT: '0'..'9';
+ 
+//
+//  Strings
+//  
+CHAR_LITERAL: '\'' ~('\'') * '\'';
+STRING_LITERAL: '"' ~('"') * '"';
+
+//
+//  Whitespace
+//
+NEWLINE: ('\r'? '\n')+   { $channel = HIDDEN; };
+WS  :   (' '|'\t')+     { $channel = HIDDEN; };
+
+// Single-line comments begin with //, are followed by any characters
+// other than those in a newline, and are terminated by newline characters.
+SINGLE_COMMENT: '//' ~('\r' | '\n')* NEWLINE { skip(); };
+
+// Multi-line comments are delimited by /* and */
+// and are optionally followed by newline characters.
+MULTI_COMMENT options { greedy = false; }
+  : '/*' .* '*/' NEWLINE? { skip(); };
+
       

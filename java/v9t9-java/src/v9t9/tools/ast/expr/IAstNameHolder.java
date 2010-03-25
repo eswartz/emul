@@ -21,4 +21,6 @@ public interface IAstNameHolder {
     
     /** Tell how the name is used */
     public int getRoleForName();
+    
+    IAstName getName();
 }

@@ -49,4 +49,9 @@ public interface IScope {
     /** Remove a name to the scope.  Sets name's scope to null.
      * @param name the name to remove.  Current scope must be this.  */
     public void remove(IAstName name);
+
+	/**
+	 * @return
+	 */
+	public IAstName[] getNames();
 }

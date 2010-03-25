@@ -5,6 +5,7 @@ package v9t9.tools.ast.expr.impl;
 
 import v9t9.tools.ast.expr.AstVisitor;
 import v9t9.tools.ast.expr.IAstNode;
+import v9t9.tools.ast.expr.ISourceRef;
 
 /**
  * @author eswartz
@@ -15,6 +16,8 @@ abstract public class AstNode implements IAstNode {
     private IAstNode parent;
 
     protected boolean dirty;
+
+	private ISourceRef sourceRef;
     
     public AstNode() {
     }
@@ -91,4 +94,18 @@ abstract public class AstNode implements IAstNode {
     }
 
 
+    /* (non-Javadoc)
+     * @see v9t9.tools.ast.expr.IAstNode#getSourceRef()
+     */
+    @Override
+    public ISourceRef getSourceRef() {
+    	return sourceRef;
+    }
+    /* (non-Javadoc)
+     * @see v9t9.tools.ast.expr.IAstNode#setSourceRef(v9t9.tools.ast.expr.ISourceRef)
+     */
+    @Override
+    public void setSourceRef(ISourceRef sourceRef) {
+    	this.sourceRef = sourceRef;
+    }
 }

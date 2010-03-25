@@ -723,7 +723,8 @@ public class TopDownPhase extends Phase {
 	 */
 	//
 	
-	/*private*/IAstExpression getExpressionForOperand(HighLevelInstruction inst, MachineOperand mop1) {
+	/*
+	IAstExpression getExpressionForOperand(HighLevelInstruction inst, MachineOperand mop1) {
 		switch (mop1.type) {
 		case MachineOperand.OP_IMMED:
 		case MachineOperand.OP_CNT:
@@ -745,12 +746,10 @@ public class TopDownPhase extends Phase {
 					new AstRegisterExpression(inst.getWp(), mop1.val));
 		case MachineOperand.OP_INC:
 			// TODO: and add!
-			/*
-			return new AstBinaryExpression(IAstBinaryExpression.K_COMMA,
-			        new AstBinaryExpression(IAstBinaryExpression.K_ASSIGN,
-			                new AstUnaryExpression(IAstUnaryExpression.K_INDIRECT,
-			                        new AstRegisterExpression(inst.wp, mop1.val))
-			 */
+			//return new AstBinaryExpression(IAstBinaryExpression.K_COMMA,
+			//        new AstBinaryExpression(IAstBinaryExpression.K_ASSIGN,
+			//                new AstUnaryExpression(IAstUnaryExpression.K_INDIRECT,
+			 //                       new AstRegisterExpression(inst.wp, mop1.val))
 			return new AstUnaryExpression(IAstUnaryExpression.K_INDIRECT,
 					new AstRegisterExpression(inst.getWp(), mop1.val));
 
@@ -759,7 +758,8 @@ public class TopDownPhase extends Phase {
 		}
 		return null;
 	}
-
+	*/
+	
 	//  For each block, figure out the 
 	//  successors/predecessors lists 
 	private void getFlowgraph(Collection<Block> list) {
