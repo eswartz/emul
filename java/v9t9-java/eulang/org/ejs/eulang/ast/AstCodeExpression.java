@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.ast;
 
-import org.ejs.eulang.llvm.types.LLType;
-
 import v9t9.tools.ast.expr.IAstExpression;
 import v9t9.tools.ast.expr.IAstNode;
 import v9t9.tools.ast.expr.IScope;
@@ -13,21 +11,39 @@ import v9t9.tools.ast.expr.IScope;
  * @author ejs
  *
  */
-public class AstCodeExpression extends AstTypedExpression implements IAstCodeExpression {
+public class AstCodeExpression extends AstTypedExpr implements IAstCodeExpression {
 
 	private final IAstPrototype proto;
 	private final IAstNodeList stmts;
 	private final IScope scope;
+	private final boolean macro;
 	/**
 	 * @param stmts 
 	 * 
 	 */
-	public AstCodeExpression(IAstPrototype proto, IScope scope, IAstNodeList stmts) {
+	public AstCodeExpression(IAstPrototype proto, IScope scope, IAstNodeList stmts, boolean macro) {
 		this.proto = proto;
 		this.scope = scope;
+		this.macro = macro;
+		scope.setOwner(this);
 		this.stmts = stmts;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return macro ? "macro" : "code";
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstCodeExpression#isMacro()
+	 */
+	@Override
+	public boolean isMacro() {
+		return macro;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstScope#getScope()
 	 */

@@ -9,6 +9,6 @@ import v9t9.tools.ast.expr.IAstNode;
  * @author ejs
  *
  */
-public interface IAstTopLevelNode extends IAstNode, IAstTypedExpr {
+public interface IAstStatement extends IAstNode {
 
 }

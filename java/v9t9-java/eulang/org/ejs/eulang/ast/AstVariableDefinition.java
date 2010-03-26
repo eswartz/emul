@@ -5,30 +5,35 @@ package org.ejs.eulang.ast;
 
 import org.ejs.eulang.llvm.types.LLType;
 
-import v9t9.tools.ast.expr.AstVisitor;
 import v9t9.tools.ast.expr.IAstExpression;
 import v9t9.tools.ast.expr.IAstName;
 import v9t9.tools.ast.expr.IAstNode;
-import v9t9.tools.ast.expr.IScope;
-import v9t9.tools.ast.expr.ISourceRef;
 
 /**
  * @author ejs
  *
  */
-public class AstVariableDefinition extends AstTypedExpression implements IAstVariableDefinition {
+public class AstVariableDefinition extends AstTypedExpr implements IAstVariableDefinition {
 
 	private IAstName name;
-	private IAstTypedExpression defaultVal;
+	private IAstTypedExpr defaultVal;
 
 	/**
 	 * 
 	 */
-	public AstVariableDefinition(IAstName name, LLType type, IAstTypedExpression defaultVal) {
+	public AstVariableDefinition(IAstName name, LLType type, IAstTypedExpr defaultVal) {
 		this.name = name;
 		setDefaultValue(defaultVal);
 		if (type != null)
 			setType(type);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return name + " : " + getType() + (defaultVal != null ? " = " + defaultVal : ""); 
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstVariableDefintion#getName()
@@ -43,7 +48,7 @@ public class AstVariableDefinition extends AstTypedExpression implements IAstVar
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		if (defaultVal == null)
+		if (defaultVal != null)
 			return new IAstNode[] { name, defaultVal };
 		return new IAstNode[] { name };
 	}
@@ -76,7 +81,7 @@ public class AstVariableDefinition extends AstTypedExpression implements IAstVar
 	 * @see org.ejs.eulang.ast.IAstVariableDefintion#getDefaultValue()
 	 */
 	@Override
-	public IAstTypedExpression getDefaultValue() {
+	public IAstTypedExpr getDefaultValue() {
 		return defaultVal;
 	}
 
@@ -84,7 +89,7 @@ public class AstVariableDefinition extends AstTypedExpression implements IAstVar
 	 * @see org.ejs.eulang.ast.IAstVariableDefintion#setDefaultValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public void setDefaultValue(IAstTypedExpression defaultVal) {
+	public void setDefaultValue(IAstTypedExpr defaultVal) {
 		this.defaultVal = defaultVal;
 		setDirty(true);
 		

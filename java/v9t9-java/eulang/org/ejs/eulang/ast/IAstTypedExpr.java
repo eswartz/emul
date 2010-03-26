@@ -11,7 +11,7 @@ import v9t9.tools.ast.expr.IAstNode;
  * @author ejs
  *
  */
-public interface IAstTypedExpression extends IAstNode {
+public interface IAstTypedExpr extends IAstNode {
 
 	LLType getType();
 	void setType(LLType type);

@@ -6,26 +6,32 @@ package org.ejs.eulang.ast;
 import org.ejs.eulang.llvm.types.LLType;
 
 import v9t9.tools.ast.expr.IAstName;
-import v9t9.tools.ast.expr.IAstNode;
+import v9t9.tools.ast.expr.impl.AstIdExpression;
 
 /**
  * @author ejs
  *
  */
-public class AstTopLevelDefine extends AstDefine implements IAstTopLevelNode {
+public class AstIdExpr extends AstIdExpression implements IAstIdExpr {
 
 	private LLType type;
 
 	/**
 	 * @param name
-	 * @param expr
 	 */
-	public AstTopLevelDefine(IAstName name, IAstNode expr) {
-		super(name, expr);
-		if (expr instanceof IAstTypedExpr)
-			setType(((IAstTypedExpr) expr).getType());
+	public AstIdExpr(IAstName name) {
+		super(name);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstIdExpression#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + " : " +(type != null ? type.toString() : "<unknown>"); 
+	}
+	
+
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedExpression#getType()
 	 */

@@ -32,6 +32,19 @@ abstract public class AstNode implements IAstNode {
         return "{ " + name + ":" +hashCode() + " }"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
     
+	protected String catenate(IAstNode[] nodes) {
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (IAstNode k : nodes) {
+			if (first)
+				first = false;
+			else
+				sb.append(", ");
+			sb.append(k);
+		}
+		return sb.toString();
+	}
+
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstNode#isDirty()
      */
@@ -82,8 +95,21 @@ abstract public class AstNode implements IAstNode {
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstNode#accept(v9t9.tools.decomp.expr.AstVisitor)
      */
-    public void accept(AstVisitor visitor) {
-        visitor.visit(this);
+    public int accept(AstVisitor visitor) {
+        int ret = visitor.visit(this);
+        if (ret == AstVisitor.PROCESS_ABORT)
+        	return ret;
+        if (ret == AstVisitor.PROCESS_CONTINUE) {
+        	visitor.visitChildren(this);
+	        IAstNode[] children = getChildren();
+			for (IAstNode node : children) {
+	        	ret = node.accept(visitor);
+	        	if (ret == AstVisitor.PROCESS_ABORT)
+	        		return ret;
+	        }
+        }
+        visitor.visitEnd(this);
+        return ret;
     }
     
     /* (non-Javadoc)

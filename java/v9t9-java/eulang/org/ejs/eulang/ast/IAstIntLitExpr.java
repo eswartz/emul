@@ -7,7 +7,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstIntegerLiteralExpression extends IAstLiteralExpression {
+public interface IAstIntLitExpr extends IAstLitExpr {
 
 	long getValue();
 

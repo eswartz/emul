@@ -3,9 +3,6 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
-
-
 import org.junit.Test;
 /**
  * @author ejs

@@ -3,17 +3,15 @@
  */
 package org.ejs.eulang.ast;
 
-import v9t9.tools.ast.expr.IAstExpression;
 import v9t9.tools.ast.expr.IAstName;
-import v9t9.tools.ast.expr.IScope;
 
 /**
  * @author ejs
  *
  */
-public interface IAstVariableDefinition extends IAstTypedExpression {
+public interface IAstVariableDefinition extends IAstTypedExpr {
 	IAstName getName();
 	
-	IAstTypedExpression getDefaultValue();
-	void setDefaultValue(IAstTypedExpression defaultVal);
+	IAstTypedExpr getDefaultValue();
+	void setDefaultValue(IAstTypedExpr defaultVal);
 }

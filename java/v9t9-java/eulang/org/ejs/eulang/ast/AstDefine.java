@@ -21,6 +21,15 @@ public class AstDefine extends AstNode implements IAstDefine {
 		this.expr = expr;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return "define";
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstDefine#getExpression()
 	 */

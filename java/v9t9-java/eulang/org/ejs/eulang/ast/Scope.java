@@ -7,10 +7,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import v9t9.tools.ast.expr.IAstName;
-import v9t9.tools.ast.expr.IAstNameHolder;
 import v9t9.tools.ast.expr.IAstNode;
 import v9t9.tools.ast.expr.IScope;
-import v9t9.tools.ast.expr.impl.AstNode;
+
+// TODO: should IScope or IAstScope or what have the responsibility of mapping IAstName to IAstNode?
+// It'll be silly to reimplement the same code in modules, code blocks, data blocks, etc...
 
 /**
  * @author ejs
@@ -18,6 +19,7 @@ import v9t9.tools.ast.expr.impl.AstNode;
  */
 public class Scope implements IScope {
 	private Map<String, IAstName> entries = new LinkedHashMap<String, IAstName>();
+	private Map<IAstName, IAstNode> nodeEntries = new LinkedHashMap<IAstName, IAstNode>();
 	private IAstNode owner;
 	private IAstName name;
 	private IScope parent;
@@ -28,13 +30,23 @@ public class Scope implements IScope {
 	public Scope(IScope parent) {
 		setParent(parent);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return name != null ? name.getName() : getOwner() != null ? getOwner().toString() : null;
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IScope#add(v9t9.tools.ast.expr.IAstName)
 	 */
 	@Override
-	public void add(IAstName name) {
+	public void add(IAstName name, IAstNode node) {
 		entries.put(name.getName(), name);
+		nodeEntries.put(name, node);
+		name.setScope(this);
 	}
 
 	/* (non-Javadoc)
@@ -66,7 +78,8 @@ public class Scope implements IScope {
 	 */
 	@Override
 	public void remove(IAstName name) {
-		entries.remove(name);
+		entries.remove(name.getName());
+		nodeEntries.remove(name);
 	}
 
 	/* (non-Javadoc)
@@ -75,11 +88,23 @@ public class Scope implements IScope {
 	@Override
 	public IAstName search(String name) {
 		IAstName match = find(name);
-		if (match == null) {
-			IScope up = getParent();
-			if (up != null)
-				return up.search(name);
-		}
+		if (match != null)
+			return match;
+		IScope up = getParent();
+		if (up != null)
+			return up.search(name);
+		return null;
+	}
+
+	@Override
+	public IAstNode search(IAstName name) {
+		IAstNode match = find(name);
+		if (match != null) 
+			return match;
+		
+		IScope up = getParent();
+		if (up != null)
+			return up.search(name);
 		return null;
 	}
 
@@ -123,5 +148,28 @@ public class Scope implements IScope {
 	@Override
 	public IAstName[] getNames() {
 		return (IAstName[]) entries.values().toArray(new IAstName[entries.values().size()]);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.IScope#getNodes()
+	 */
+	@Override
+	public IAstNode[] getNodes() {
+		return (IAstNode[]) nodeEntries.values().toArray(new IAstNode[nodeEntries.values().size()]);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstScope#find(v9t9.tools.ast.expr.IAstName)
+	 */
+	@Override
+	public IAstNode find(IAstName name) {
+		if (name.getScope().equals(this))
+			return entries.get(name);
+		else {
+			if (parent != null) {
+				return parent.find(name);
+			}
+			return null;
+		}
 	}
 }

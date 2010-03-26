@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.ast;
 
-import org.ejs.eulang.llvm.types.LLType;
-
 import v9t9.tools.ast.expr.IAstNode;
 
 /**
@@ -13,8 +11,7 @@ import v9t9.tools.ast.expr.IAstNode;
  */
 public interface IAstPrototype extends IAstNode {
 
-	LLType getReturnType();
-	void setReturnType(LLType type);
+	IAstType returnType();
 	
 	IAstVariableDefinition[] argumentTypes();
 }

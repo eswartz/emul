@@ -11,14 +11,14 @@ import v9t9.tools.ast.expr.impl.AstExpression;
  * @author ejs
  *
  */
-public abstract class AstTypedExpression extends AstExpression implements IAstTypedExpression {
+public abstract class AstTypedExpr extends AstExpression implements IAstTypedExpr {
 
 	protected LLType type;
 
 	/**
 	 * 
 	 */
-	public AstTypedExpression() {
+	public AstTypedExpr() {
 		super();
 	}
 

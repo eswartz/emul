@@ -26,6 +26,14 @@ public class AstVisitor {
         return PROCESS_CONTINUE;
     }
 
+    public void visitChildren(IAstNode node) {
+    	
+    }
+    /** Done visiting node and children */
+    public int visitEnd(IAstNode node) {
+    	return PROCESS_CONTINUE;
+    	
+    }
     /** Visit a referenced node */
     public int visitReference(IAstNode node) {
         return PROCESS_CONTINUE;

@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.ast;
 
-import org.ejs.eulang.llvm.types.LLType;
-
 import v9t9.tools.ast.expr.IAstNode;
 import v9t9.tools.ast.expr.impl.AstNode;
 
@@ -13,15 +11,24 @@ import v9t9.tools.ast.expr.impl.AstNode;
  *
  */
 public class AstPrototype extends AstNode implements IAstPrototype {
-	private LLType retType;
+	private IAstType retType;
 	private final IAstVariableDefinition[] argumentTypes;
 
 	/** Create with the types; may be null */
-	public AstPrototype(LLType retType, IAstVariableDefinition[] argumentTypes) {
+	public AstPrototype(IAstType retType, IAstVariableDefinition[] argumentTypes) {
 		this.retType = retType;
 		this.argumentTypes = argumentTypes;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return (retType != null ? retType.toString() : "<Object>") + " (" + catenate(argumentTypes) + ")"; 
+	}
+
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#argumentTypes()
 	 */
@@ -34,24 +41,18 @@ public class AstPrototype extends AstNode implements IAstPrototype {
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#getReturnType()
 	 */
 	@Override
-	public LLType getReturnType() {
+	public IAstType returnType() {
 		return retType;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstCodeExpression#setReturnType(org.ejs.eulang.llvm.types.LLType)
-	 */
-	@Override
-	public void setReturnType(LLType type) {
-		this.retType = type;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		// TODO Auto-generated method stub
-		return null;
+		IAstNode[] children = new IAstNode[argumentTypes.length + 1];
+		children[0] = retType;
+		System.arraycopy(argumentTypes, 0, children, 1, argumentTypes.length);
+		return children;
 	}
 
 	/* (non-Javadoc)
@@ -59,8 +60,7 @@ public class AstPrototype extends AstNode implements IAstPrototype {
 	 */
 	@Override
 	public IAstNode[] getReferencedNodes() {
-		// TODO Auto-generated method stub
-		return null;
+		return getChildren();
 	}
 
 }

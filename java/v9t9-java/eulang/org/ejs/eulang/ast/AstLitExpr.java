@@ -12,15 +12,16 @@ import v9t9.tools.ast.expr.IAstNode;
  * @author ejs
  *
  */
-public class AstLiteralExpression extends AstTypedExpression implements
-		IAstLiteralExpression, IAstTypedExpression {
+public class AstLitExpr extends AstTypedExpr implements
+		IAstLitExpr, IAstTypedExpr {
 
 	private String lit;
-	public AstLiteralExpression(String lit, LLType type) {
+	public AstLitExpr(String lit, LLType type) {
 		this.lit = lit;
 		this.type = type;
 		
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstLiteralExpression#getLiteral()
 	 */
@@ -34,7 +35,7 @@ public class AstLiteralExpression extends AstTypedExpression implements
 	 */
 	@Override
 	public boolean equalValue(IAstExpression expr) {
-		return expr instanceof IAstLiteralExpression && ((IAstLiteralExpression) expr).getLiteral().equals(lit);
+		return expr instanceof IAstLitExpr && ((IAstLitExpr) expr).getLiteral().equals(lit);
 	}
 
 	/* (non-Javadoc)

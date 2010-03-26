@@ -18,6 +18,13 @@ public class AstNodeList extends AstNode implements IAstNodeList {
 	private List<IAstNode> list = new ArrayList<IAstNode>();
 
 	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return "";
+	}
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNodeList#list()
 	 */
 	@Override

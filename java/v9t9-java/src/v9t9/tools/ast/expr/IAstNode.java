@@ -57,8 +57,9 @@ public interface IAstNode {
     /** Accept visitor
      * 
      * @param visitor impl
+     * @return TODO
      */
-    public void accept(AstVisitor visitor);
+    public int accept(AstVisitor visitor);
 
     /**
      * Accept a reference

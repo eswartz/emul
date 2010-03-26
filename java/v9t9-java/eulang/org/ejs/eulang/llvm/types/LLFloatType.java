@@ -7,10 +7,10 @@ package org.ejs.eulang.llvm.types;
  * @author ejs
  *
  */
-public class LLIntType implements LLType {
+public class LLFloatType implements LLType {
 
 	private final int bits;
-	public LLIntType(int bits) {
+	public LLFloatType(int bits) {
 		this.bits = bits;
 	}
 	
@@ -33,7 +33,7 @@ public class LLIntType implements LLType {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		LLIntType other = (LLIntType) obj;
+		LLFloatType other = (LLFloatType) obj;
 		if (bits != other.bits)
 			return false;
 		return true;
@@ -46,7 +46,7 @@ public class LLIntType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return "int" + bits;
+		return "float" + bits;
 	}
 	
 	/* (non-Javadoc)

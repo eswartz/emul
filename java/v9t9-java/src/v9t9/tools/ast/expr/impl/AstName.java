@@ -44,7 +44,8 @@ public class AstName extends AstNode implements IAstName {
      */
     @Override
 	public String toString() {
-        return "AstName { name="+name+" scope="+scope + " }"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        //return "AstName { name="+name+" scope="+scope + " }"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    	return name;
     }
     
     /* (non-Javadoc)

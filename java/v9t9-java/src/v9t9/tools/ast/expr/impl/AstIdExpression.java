@@ -24,6 +24,14 @@ public class AstIdExpression extends AstExpression implements IAstIdExpression {
     }
 
     /* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return name.toString();
+	}
+    	
+    /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstNode#getChildren()
      */
     public IAstNode[] getChildren() {
