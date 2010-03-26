@@ -16,8 +16,7 @@ import v9t9.tools.ast.expr.IScope;
  */
 public class AstModule extends AstScope implements IAstModule {
 
-	private List<IAstNode> initCode = new ArrayList<IAstNode>();
-
+	private IAstNodeList stmtList;
 	/**
 	 * 
 	 */
@@ -32,23 +31,26 @@ public class AstModule extends AstScope implements IAstModule {
 	public String toString() {
 		return "module";
 	}
-	
-	
+
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstModule#initCode()
+	 * @see org.ejs.eulang.ast.IAstModule#getStmtList()
 	 */
 	@Override
-	public List<IAstNode> initCode() {
-		return initCode;
+	public IAstNodeList getStmtList() {
+		return stmtList;
 	}
-
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstModule#setStmtList(org.ejs.eulang.ast.IAstNodeList)
+	 */
+	@Override
+	public void setStmtList(IAstNodeList stmtList) {
+		this.stmtList = reparent(this.stmtList, stmtList);
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.AstScope#getChildren()
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		List<IAstNode> kids = new ArrayList<IAstNode>(Arrays.asList(super.getChildren()));
-		kids.addAll(initCode);
-		return (IAstNode[]) kids.toArray(new IAstNode[kids.size()]);
+		return new IAstNode[] { stmtList };
 	}
 }

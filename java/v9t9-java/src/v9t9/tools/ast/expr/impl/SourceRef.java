@@ -14,10 +14,12 @@ public class SourceRef implements ISourceRef {
 	private final int line;
 	private final int column;
 	private final int offs;
+	private final int length;
 
-	public SourceRef(String file, int offs, int line, int column) {
+	public SourceRef(String file, int offs, int length, int line, int column) {
 		this.file = file;
 		this.offs = offs;
+		this.length = length;
 		this.line = line;
 		this.column = column;
 		
@@ -63,4 +65,11 @@ public class SourceRef implements ISourceRef {
 		return offs;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.ISourceRef#getLength()
+	 */
+	@Override
+	public int getLength() {
+		return length;
+	}
 }

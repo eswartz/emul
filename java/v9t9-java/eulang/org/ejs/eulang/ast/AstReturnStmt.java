@@ -42,7 +42,7 @@ public class AstReturnStmt extends AstStatement implements IAstReturnStmt {
 	 */
 	@Override
 	public void setExpr(IAstExpression expr) {
-		this.expr = expr;
+		this.expr = reparent(this.expr, expr);
 	}
 
 	/* (non-Javadoc)

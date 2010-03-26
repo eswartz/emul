@@ -22,6 +22,7 @@ import org.ejs.eulang.ast.IAstCodeExpression;
 import org.ejs.eulang.ast.IAstDefine;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -30,6 +31,7 @@ import org.ejs.eulang.ast.GenerateAST.Error;
 import org.junit.Test;
 
 import v9t9.tools.ast.expr.IAstNode;
+import v9t9.tools.ast.expr.impl.AstName;
 /**
  * @author ejs
  *
@@ -101,15 +103,17 @@ public class TestGenerator extends BaseParserTest {
      * @param mod
      */
     private void sanityTest(IAstNode node) {
-    	assertNotNull(node);
-    	assertNotNull(node.getChildren());
+    	assertNotNull(node+"", node);
+    	assertNotNull(node+"", node.getChildren());
+    	assertNotNull("source for " + node.getClass()+"", node.getSourceRef());
     	for (IAstNode kid : node.getChildren()) {
-    		assertSame(node, kid.getParent());
+    		assertSame(kid+"",  node, kid.getParent());
     		assertEquals(node, kid.getParent());
     		
     		if (node instanceof IAstScope && kid instanceof IAstScope) {
     			assertEquals(((IAstScope)node).getScope(), ((IAstScope) kid).getScope().getOwner());
     		}
+    		sanityTest(kid);
     	}
     }
     
@@ -129,7 +133,7 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(1, mod.getScope().getNames().length);
     	assertEquals(1, mod.getChildren().length);
     	
-    	IAstDefine def = (IAstDefine) mod.getChildren()[0];
+    	IAstDefine def = (IAstDefine) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
     	assertEquals("foo", def.getName().getName());
     	assertTrue(def.getExpression() instanceof IAstIntLitExpr);
     	assertEquals("3", ((IAstIntLitExpr)def.getExpression()).getLiteral());
@@ -149,7 +153,7 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(1, mod.getScope().getNames().length);
     	assertEquals(1, mod.getChildren().length);
     	
-    	IAstDefine def = (IAstDefine) mod.getChildren()[0];
+    	IAstDefine def = (IAstDefine) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
     	assertEquals("foo", def.getName().getName());
     	assertTrue(def.getExpression() instanceof IAstCodeExpression);
     	IAstCodeExpression codeExpression = (IAstCodeExpression)def.getExpression();
@@ -185,6 +189,17 @@ public class TestGenerator extends BaseParserTest {
     public void testOpPrec1b() throws Exception {
     	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17&&18||19; };");
     	sanityTest(mod);
+    	
+    	IAstDefine def = (IAstDefine) mod.getScope().findNode("opPrec1");
+    	assertNotNull(def);
+    	assertEquals("opPrec1", def.getName().getName());
+    	assertTrue(def.getExpression() instanceof IAstCodeExpression);
+    	IAstCodeExpression codeExpression = (IAstCodeExpression)def.getExpression();
+    	assertEquals(mod.getScope(), codeExpression.getScope().getParent());
+    	
+		IAstPrototype prototype = codeExpression.getPrototype();
+		assertEquals(0, prototype.argumentTypes().length);
+		assertNull(prototype.returnType().getType());
     }
 }
 

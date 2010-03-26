@@ -118,11 +118,7 @@ public class AstBinaryExpression extends AstExpression implements
      */
     public void setLeftOperand(IAstExpression expr) {
         org.ejs.coffee.core.utils.Check.checkArg(expr);
-        if (this.left != null) {
-			this.left.setParent(null);
-		}
-        this.left = expr;
-        expr.setParent(this);
+        left = reparent(left, expr);
         dirty = true;
     }
 
@@ -138,11 +134,7 @@ public class AstBinaryExpression extends AstExpression implements
      */
     public void setRightOperand(IAstExpression expr) {
         org.ejs.coffee.core.utils.Check.checkArg(expr);
-        if (this.right != null) {
-			this.right.setParent(null);
-		}
-        this.right = expr;
-        expr.setParent(this);
+        right = reparent(right, expr);
         dirty = true;
     }
 

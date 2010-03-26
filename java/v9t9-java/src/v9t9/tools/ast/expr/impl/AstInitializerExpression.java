@@ -36,14 +36,8 @@ public class AstInitializerExpression extends AstInitializer implements
      */
     public void setExpression(IAstExpression expr) {
         org.ejs.coffee.core.utils.Check.checkArg(expr);
-        if (this.expr != null) {
-			this.expr.setParent(null);
-		}
-        if (this.expr == null || !this.expr.equalValue(expr)) {
-			dirty = true;
-		}
-        this.expr = expr;
-        expr.setParent(this);
+        this.expr = reparent(this.expr, expr);
+        dirty = true;
     }
 
     /* (non-Javadoc)

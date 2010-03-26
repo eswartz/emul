@@ -32,7 +32,9 @@ public interface IScope {
     /** Set the parent scope (or null) */
     public void setParent(IScope parent);
     
-    /** Look up a name in this scope */
+    /** Look up a name in this scope and get the name, if registered. */
+    public IAstNode findNode(String name);
+    /** Look up a name in this scope and get the node associated with it. */
     public IAstName find(String name);
 
     /**
@@ -41,14 +43,6 @@ public interface IScope {
      */
     public IAstName search(String name);
     
-    /** Look up a named node by name in this scope */
-    public IAstNode find(IAstName name);
-    
-    /**
-     * Look up a named node in any scope visible from this scope,
-     * starting from this one and going up the parent chain
-     */
-    public IAstNode search(IAstName name);
 
     /** Add a name to the scope.  Sets name's scope to this
      * and the name's parent to node.

@@ -12,5 +12,6 @@ import v9t9.tools.ast.expr.IAstNode;
  *
  */
 public interface IAstModule extends IAstScope {
-	List<IAstNode> initCode();
+	void setStmtList(IAstNodeList stmtList);
+	IAstNodeList getStmtList();
 }

@@ -93,7 +93,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	@Override
 	public void setExpr(IAstTypedExpr expr) {
 		Check.checkArg(expr);
-		this.expr = expr;
+		this.expr = reparent(this.expr, expr);
 		if (getType() == null)
 			setType(expr.getType());
 	}
@@ -104,7 +104,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	@Override
 	public void setId(IAstIdExpr id) {
 		Check.checkArg(id);
-		this.id = id;
+		this.id = reparent(this.id, id);
 		if (getType() == null)
 			setType(id.getType());
 	}
@@ -122,7 +122,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public void setTypeExpr(IAstType type) {
-		this.typeExpr = type;
+		this.typeExpr = reparent(this.typeExpr, type);
 	}
 
 }

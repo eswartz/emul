@@ -23,10 +23,12 @@ public class AstCodeExpression extends AstTypedExpr implements IAstCodeExpressio
 	 */
 	public AstCodeExpression(IAstPrototype proto, IScope scope, IAstNodeList stmts, boolean macro) {
 		this.proto = proto;
+		proto.setParent(this);
 		this.scope = scope;
 		this.macro = macro;
 		scope.setOwner(this);
 		this.stmts = stmts;
+		stmts.setParent(this);
 	}
 	
 	/* (non-Javadoc)

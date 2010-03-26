@@ -68,10 +68,13 @@ public class GenerateAST {
 		if (tree instanceof CommonTree) {
 			Token token = ((CommonTree) tree).getToken();
 			if (token != null) {
-				return new TokenSourceRef(fileMap.get(token.getChannel()), token);
+				return new TokenSourceRef(fileMap.get(token.getChannel()), token,
+						tree.getTokenStopIndex() - tree.getTokenStartIndex());
 			}
 		}
-		return new SourceRef(defaultFile, tree.getTokenStartIndex(), tree.getLine(), tree.getCharPositionInLine()+1);
+		return new SourceRef(defaultFile, tree.getTokenStartIndex(), 
+				tree.getTokenStopIndex() - tree.getTokenStartIndex(),
+				tree.getLine(), tree.getCharPositionInLine()+1);
 		
 	}
 	/** Copy source info into node */
@@ -79,7 +82,23 @@ public class GenerateAST {
 		node.setSourceRef(getSourceRef(tree));
 	}
 	
-
+	protected ISourceRef getEmptySourceRef(Tree tree) {
+		if (tree instanceof CommonTree) {
+			Token token = ((CommonTree) tree).getToken();
+			if (token != null) {
+				return new SourceRef(fileMap.get(token.getChannel()), tree.getTokenStartIndex(), 0,
+						tree.getLine(), tree.getCharPositionInLine() + 1);
+			}
+		}
+		return new SourceRef(defaultFile, tree.getTokenStartIndex(), 0,
+				tree.getLine(), tree.getCharPositionInLine()+1);
+		
+	}
+	/** Copy empty source info into node */
+	protected void getEmptySource(Tree tree, IAstNode node) {
+		node.setSourceRef(getEmptySourceRef(tree));
+	}
+	
 	/**
 	 * @param tree
 	 * @return
@@ -166,18 +185,9 @@ public class GenerateAST {
 			
 			IAstNodeList stmtList = constructStmtList(tree);
 			
-			for (IAstNode node : stmtList.list()) {
-				node.setParent(null);
-				if (node instanceof IAstDefine) {
-					IAstDefine define = (IAstDefine) node;
-					define.setParent(module);
-					module.getScope().add(define.getName(), define);
-					
-				} else {
-					module.initCode().add(node);
-				}
-			}
+			module.setStmtList(stmtList);
 			
+			getSource(tree, module);
 			return module;
 		} finally {
 			currentScope = oldScope;
@@ -261,8 +271,9 @@ public class GenerateAST {
 			expr = constructCheck(tree.getChild(2), IAstTypedExpr.class);
 		}
 		IAstIdExpr idExpr = new AstIdExpr(nameNode);
+		idExpr.setSourceRef(nameNode.getSourceRef());
 		IAstAssignStmt define = new AstAssignStmt(idExpr, type, expr);
-		getSource(tree.getChild(1), define);
+		getSource(tree, define);
 		
 		return define;
 	}
@@ -287,7 +298,7 @@ public class GenerateAST {
 		// could have ':'s
 		IScope startScope = currentScope;
 		int idx = 0;
-		IAstName name = null;
+		IAstName nameNode = null;
 		boolean inScope = false;
 		while (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx);
@@ -300,26 +311,28 @@ public class GenerateAST {
 				inScope = true;
 			} else if (kid.getType() == EulangParser.ID) {
 				if (inScope) {
-					name = startScope.find(kid.getText());
+					nameNode = startScope.find(kid.getText());
 				} else {
-					name = startScope.search(kid.getText());
+					nameNode = startScope.search(kid.getText());
 				}
-				if (name == null) {
+				if (nameNode == null) {
 					error(tree, "Cannot find name '" + kid.getText() + "'");
 					break;
 				}
-				startScope = name.getScope();
+				startScope = nameNode.getScope();
 			} else {
 				unhandled(kid);
 				return null;
 			}
 			idx++;
 		}
-		if (name == null) {
-			error(tree, "Cannot resolve name");
-			name = new AstName(tree.getChild(tree.getChildCount() - 1).getText(), currentScope);
+		if (nameNode == null) {
+			error(tree, "Cannot resolve name: ");
 		}
-		IAstIdExpr idExpr = new AstIdExpr(name);
+		nameNode = new AstName(tree.getChild(tree.getChildCount() - 1).getText(), currentScope);
+		getSource(tree, nameNode);
+		IAstIdExpr idExpr = new AstIdExpr(nameNode);
+		getSource(tree, idExpr);
 		return idExpr;
 	}
 
@@ -400,7 +413,9 @@ public class GenerateAST {
 			
 		default:
 			unhandled(tree);
+			return null;
 		}
+		getSource(tree, binop);
 		return binop;
 	}
 
@@ -414,6 +429,7 @@ public class GenerateAST {
 			expr = constructCheck(tree.getChild(0), IAstExpression.class);
 		}
 		IAstReturnStmt stmt = new AstReturnStmt(expr);
+		getSource(tree, stmt);
 		return stmt;
 	}
 
@@ -423,6 +439,7 @@ public class GenerateAST {
 	 */
 	public IAstNode constructArgDef(Tree tree) {
 		IAstName name = new AstName(tree.getChild(0).getText(), currentScope); 
+		getSource(tree.getChild(0), name);
 		
 		LLType type = null;
 		IAstTypedExpr defaultVal = null;
@@ -439,7 +456,10 @@ public class GenerateAST {
 		}
 		
 		IAstVariableDefinition argDef = new AstVariableDefinition(name, type, defaultVal);
+		getSource(tree, argDef);
+		
 		currentScope.add(name, argDef);
+		
 		return argDef;
 	}
 
@@ -454,9 +474,13 @@ public class GenerateAST {
 		
 		for (Tree kid : iter(tree)) {
 			IAstNode node = construct(kid);
-			if (node != null)
+			if (node != null) {
 				list.list().add(node);
+				node.setParent(list);
+			}
 		}
+		
+		getSource(tree, list);
 		return list;
 	}
 
@@ -466,14 +490,18 @@ public class GenerateAST {
 	 */
 	public IAstNode constructPrototype(Tree tree) {
 		LLType retType = null;
+		IAstType retTypeNode;
 		int start = 1;
 		if (tree.getChildCount() == 0 || tree.getChild(0).getType() != EulangParser.RETURN) {
 			retType = typeEngine.UNSPECIFIED;
+			retTypeNode = new AstType(retType);
+			getEmptySource(tree, retTypeNode); 
 			start = 0;
 		} else {
 			retType = constructType(tree.getChild(0).getChild(0));
+			retTypeNode = new AstType(retType);
+			getSource(tree, retTypeNode); 
 		}
-		IAstType retTypeNode = new AstType(retType);
 		
 		IAstVariableDefinition[] argTypes = new IAstVariableDefinition[tree.getChildCount() - start];
 		int idx = 0;
@@ -512,11 +540,12 @@ public class GenerateAST {
 		if (nameNode != null && tree.getType() == EulangParser.DEFINE) {
 			error(tree, "redefining " + name);
 		}
-		nameNode = new AstName(name, currentScope);
+		nameNode = new AstName(name);
 		getSource(tree.getChild(0), nameNode);
 		AstTopLevelDefine define = new AstTopLevelDefine(nameNode, construct(tree.getChild(1)));
 		getSource(tree.getChild(1), define);
 		
+		currentScope.add(nameNode, define);
 		return define;
 	}
 	

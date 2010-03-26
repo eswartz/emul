@@ -86,7 +86,7 @@ abstract public class AstNode implements IAstNode {
      * @see v9t9.tools.decomp.expr.IAstNode#setParent(v9t9.tools.decomp.expr.IAstNode)
      */
     public void setParent(IAstNode node) {
-        if (node != null) {
+        if (node != null && node != parent) {
 			org.ejs.coffee.core.utils.Check.checkArg((parent == null));
 		}
         parent = node;
@@ -133,5 +133,13 @@ abstract public class AstNode implements IAstNode {
     @Override
     public void setSourceRef(ISourceRef sourceRef) {
     	this.sourceRef = sourceRef;
+    }
+    
+    protected <T extends IAstNode> T reparent(T existing, T newkid) {
+    	if (existing != null)
+			existing.setParent(null);
+		if (newkid != null)
+			newkid.setParent(this);
+		return newkid;
     }
 }

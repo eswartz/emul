@@ -23,6 +23,7 @@ public class AstVariableDefinition extends AstTypedExpr implements IAstVariableD
 	 */
 	public AstVariableDefinition(IAstName name, LLType type, IAstTypedExpr defaultVal) {
 		this.name = name;
+		name.setParent(this);
 		setDefaultValue(defaultVal);
 		if (type != null)
 			setType(type);

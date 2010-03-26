@@ -14,10 +14,12 @@ import v9t9.tools.ast.expr.ISourceRef;
 public class TokenSourceRef implements ISourceRef {
 	private final Token token;
 	private final String file;
+	private final int length;
 
-	public TokenSourceRef(String file, Token token) {
+	public TokenSourceRef(String file, Token token, int length) {
 		this.file = file;
 		this.token = token;
+		this.length = length;
 		
 	}
 	
@@ -59,6 +61,14 @@ public class TokenSourceRef implements ISourceRef {
 	@Override
 	public int getOffset() {
 		return token.getCharPositionInLine();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.ISourceRef#getLength()
+	 */
+	@Override
+	public int getLength() {
+		return length;
 	}
 
 }

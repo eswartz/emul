@@ -86,8 +86,7 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	 */
 	@Override
 	public void setLeft(IAstTypedExpr expr) {
-		Check.checkArg(expr);
-		this.left = expr;
+		left = reparent(left, expr);
 		if (getType() == null)
 			setType(left.getType());
 	}
@@ -97,8 +96,7 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	 */
 	@Override
 	public void setRight(IAstTypedExpr expr) {
-		Check.checkArg(expr);
-		this.right = expr;
+		right = reparent(right, expr);
 		if (getType() == null)
 			setType(right.getType());
 	}

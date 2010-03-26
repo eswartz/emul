@@ -17,7 +17,10 @@ public class AstPrototype extends AstNode implements IAstPrototype {
 	/** Create with the types; may be null */
 	public AstPrototype(IAstType retType, IAstVariableDefinition[] argumentTypes) {
 		this.retType = retType;
+		retType.setParent(this);
 		this.argumentTypes = argumentTypes;
+		for (IAstVariableDefinition arg : argumentTypes)
+			arg.setParent(this);
 		
 	}
 	

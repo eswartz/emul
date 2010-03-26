@@ -107,11 +107,7 @@ public class AstUnaryExpression extends AstExpression implements
      */
     public void setOperand(IAstExpression expr) {
         org.ejs.coffee.core.utils.Check.checkArg(expr);
-        if (this.operand != null) {
-			this.operand.setParent(null);
-		}
-        this.operand = expr;
-        expr.setParent(this);
+        this.operand = reparent(this.operand, expr);
         dirty = true;
     }
 

@@ -18,7 +18,8 @@ public class AstDefine extends AstNode implements IAstDefine {
 
 	public AstDefine(IAstName name, IAstNode expr) {
 		this.name = name;
-		this.expr = expr;
+		name.setParent(this);
+		setExpression(expr);
 		
 	}
 	
@@ -43,10 +44,7 @@ public class AstDefine extends AstNode implements IAstDefine {
 	 */
 	@Override
 	public void setExpression(IAstNode expr) {
-		if (!this.expr.equals(expr)) {
-			this.expr = expr;
-			setDirty(true);
-		}
+		this.expr = reparent(this.expr, expr);
 	}
 	
 	/* (non-Javadoc)

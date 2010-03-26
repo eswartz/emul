@@ -48,14 +48,6 @@ public class AstIdExpression extends AstExpression implements IAstIdExpression {
 
     
     /* (non-Javadoc)
-     * @see v9t9.tools.decomp.expr.impl.AstNode#constructText()
-     */
-    public Object[] getTextSegments() {
-        // we're not defining the name, so provide its text
-        return new Object[] { name.getName() }; 
-    }
-
-    /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstIdExpression#getName()
      */
     public IAstName getName() {
@@ -70,8 +62,7 @@ public class AstIdExpression extends AstExpression implements IAstIdExpression {
         if (this.name == null || !this.name.getName().equals(name.getName())) {
         	dirty = true;
         }
-        this.name = name;
-        // name not owned
+        this.name = reparent(this.name, name);
     }
 
     /* (non-Javadoc)

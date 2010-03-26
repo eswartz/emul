@@ -53,8 +53,20 @@ public class Scope implements IScope {
 	 * @see v9t9.tools.ast.expr.IScope#find(java.lang.String)
 	 */
 	@Override
+	public IAstNode findNode(String name) {
+		IAstName nameNode = entries.get(name);
+		if (nameNode != null)
+			return nodeEntries.get(nameNode);
+		else
+			return null;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.IScope#find(java.lang.String)
+	 */
+	@Override
 	public IAstName find(String name) {
-		return entries.get(name);
+		IAstName nameNode = entries.get(name);
+		return nameNode;
 	}
 
 	/* (non-Javadoc)
@@ -87,21 +99,9 @@ public class Scope implements IScope {
 	 */
 	@Override
 	public IAstName search(String name) {
-		IAstName match = find(name);
+		IAstName match = entries.get(name);
 		if (match != null)
 			return match;
-		IScope up = getParent();
-		if (up != null)
-			return up.search(name);
-		return null;
-	}
-
-	@Override
-	public IAstNode search(IAstName name) {
-		IAstNode match = find(name);
-		if (match != null) 
-			return match;
-		
 		IScope up = getParent();
 		if (up != null)
 			return up.search(name);
@@ -156,20 +156,5 @@ public class Scope implements IScope {
 	@Override
 	public IAstNode[] getNodes() {
 		return (IAstNode[]) nodeEntries.values().toArray(new IAstNode[nodeEntries.values().size()]);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstScope#find(v9t9.tools.ast.expr.IAstName)
-	 */
-	@Override
-	public IAstNode find(IAstName name) {
-		if (name.getScope().equals(this))
-			return entries.get(name);
-		else {
-			if (parent != null) {
-				return parent.find(name);
-			}
-			return null;
-		}
 	}
 }
