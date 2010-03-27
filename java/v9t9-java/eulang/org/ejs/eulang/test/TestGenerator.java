@@ -6,123 +6,30 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertSame;
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertSame;
 
-import java.util.Collections;
-import java.util.List;
-
-import org.antlr.runtime.CharStream;
-import org.antlr.runtime.ParserRuleReturnScope;
-import org.antlr.runtime.tree.Tree;
-import org.ejs.eulang.ast.DumpAST;
-import org.ejs.eulang.ast.GenerateAST;
-import org.ejs.eulang.ast.IAstCodeExpression;
+import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefine;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
-import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.ast.GenerateAST.Error;
 import org.junit.Test;
 
-import v9t9.tools.ast.expr.IAstNode;
-import v9t9.tools.ast.expr.impl.AstName;
 /**
  * @author ejs
  *
  */
 public class TestGenerator extends BaseParserTest {
 
-    private TypeEngine typeEngine;
-
-	protected IAstNode treeize(String method, String pmethod, String str, boolean expectError) throws Exception {
-    	ParserRuleReturnScope ret = parse(method, str, expectError);
-    	if (ret == null)
-    		return null;
-    	
-    	Tree tree = (Tree) ret.getTree();
-    	if (tree == null)
-    		return null;
-    	
-    	GenerateAST gen = new GenerateAST("<string>", Collections.<CharStream, String>emptyMap());
-    	
-    	typeEngine = gen.getTypeEngine();
-    	IAstNode node = null;
-    	
-    	 if(method == null)
-        	node = gen.constructModule(tree);
-        else {
-    		try {
-				node = (IAstNode) gen.getClass().getMethod(method).invoke(tree);
-			} catch (Exception e) {
-				throw e;
-			}
-        }
-	 
-    	 DumpAST dump = new DumpAST(System.out);
-     	node.accept(dump);
-     	
-    	 if (!expectError) {
-    		 if (gen.getErrors().size() > 0) {
-    			 String msgs = catenate(gen.getErrors());
-    			 fail(msgs);
-    		 }
-    	 } else {
-    		 if (gen.getErrors().isEmpty()) {
-    			 fail("no errors generated");
-    		 }
-    	 }
-    		 
-    	return node;
-    }
- 
-    /**
-	 * @param errors
-	 * @return
-	 */
-	private String catenate(List<Error> errors) {
-		StringBuilder sb = new StringBuilder();
-		for (Error e : errors) {
-			sb.append(e.toString());
-			sb.append('\n');
-		}
-		return sb.toString();
-	}
-
-	protected IAstModule treeize(String str) throws Exception {
-    	return (IAstModule) treeize(null, null, str, false);
-    }
-    
-    
-    /**
-     * @param mod
-     */
-    private void sanityTest(IAstNode node) {
-    	assertNotNull(node+"", node);
-    	assertNotNull(node+"", node.getChildren());
-    	assertNotNull("source for " + node.getClass()+"", node.getSourceRef());
-    	for (IAstNode kid : node.getChildren()) {
-    		assertSame(kid+"",  node, kid.getParent());
-    		assertEquals(node, kid.getParent());
-    		
-    		if (node instanceof IAstScope && kid instanceof IAstScope) {
-    			assertEquals(((IAstScope)node).getScope(), ((IAstScope) kid).getScope().getOwner());
-    		}
-    		sanityTest(kid);
-    	}
-    }
-    
     @Test
     public void testEmptyModule() throws Exception {
     	IAstModule mod = treeize("");
     	sanityTest(mod);
     	
-    	assertTrue(mod.getScope().getNames().length == 0);
+    	assertTrue(mod.getScope().getSymbols().length == 0);
     }
     
     @Test
@@ -130,19 +37,20 @@ public class TestGenerator extends BaseParserTest {
     	IAstModule mod = treeize("foo = 3;");
     	sanityTest(mod);
     	
-    	assertEquals(1, mod.getScope().getNames().length);
+    	assertEquals(1, mod.getScope().getSymbols().length);
     	assertEquals(1, mod.getChildren().length);
     	
-    	IAstDefine def = (IAstDefine) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
-    	assertEquals("foo", def.getName().getName());
-    	assertTrue(def.getExpression() instanceof IAstIntLitExpr);
-    	assertEquals("3", ((IAstIntLitExpr)def.getExpression()).getLiteral());
-    	assertEquals((long) 3, ((IAstIntLitExpr)def.getExpression()).getValue());
-    	assertTrue(def.getExpression() instanceof IAstTypedExpr);
-    	assertTrue(((IAstTypedExpr)def.getExpression()).getType().equals(typeEngine.INT));
+    	IAstDefine def0 = (IAstDefine) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
+    	IAstDefine def = (IAstDefine) mod.getScope().getNode("foo");
+    	assertSame(def0, def);
     	
-    	assertTrue(def instanceof IAstTypedExpr);
-    	assertTrue(((IAstTypedExpr)def.getExpression()).getType().equals(typeEngine.INT));
+    	assertEquals("foo", def.getName().getName());
+    	assertTrue(def.getExpr() instanceof IAstIntLitExpr);
+    	assertEquals("3", ((IAstIntLitExpr)def.getExpr()).getLiteral());
+    	assertEquals((long) 3, ((IAstIntLitExpr)def.getExpr()).getValue());
+    	assertTrue(def.getExpr() instanceof IAstTypedExpr);
+    	assertTrue(((IAstTypedExpr)def.getExpr()).getType().equals(typeEngine.INT));
+    	
     }
     
     @Test
@@ -150,27 +58,27 @@ public class TestGenerator extends BaseParserTest {
     	IAstModule mod = treeize("foo = code (x,y) { };");
     	sanityTest(mod);
     	
-    	assertEquals(1, mod.getScope().getNames().length);
+    	assertEquals(1, mod.getScope().getSymbols().length);
     	assertEquals(1, mod.getChildren().length);
     	
-    	IAstDefine def = (IAstDefine) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
+    	IAstDefine def = (IAstDefine) mod.getScope().getNode("foo");
     	assertEquals("foo", def.getName().getName());
-    	assertTrue(def.getExpression() instanceof IAstCodeExpression);
-    	IAstCodeExpression codeExpression = (IAstCodeExpression)def.getExpression();
-    	assertEquals(mod.getScope(), codeExpression.getScope().getParent());
+    	assertTrue(def.getExpr() instanceof IAstCodeExpr);
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
     	
-		IAstPrototype prototype = codeExpression.getPrototype();
+		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(2, prototype.argumentTypes().length);
 		assertEquals("x", prototype.argumentTypes()[0].getName().getName());
 		assertNull(prototype.argumentTypes()[0].getType());
 		assertEquals("y", prototype.argumentTypes()[1].getName().getName());
 		assertNull(prototype.argumentTypes()[1].getType());
 		
-		assertEquals(prototype.argumentTypes()[0].getName().getScope(), codeExpression.getScope());
-		assertEquals(prototype.argumentTypes()[1].getName().getScope(), codeExpression.getScope());
+		assertEquals(prototype.argumentTypes()[0].getName().getScope(), codeExpr.getScope());
+		assertEquals(prototype.argumentTypes()[1].getName().getScope(), codeExpr.getScope());
 		
-		assertNotNull(codeExpression.getStmts());
-		assertTrue(codeExpression.getStmts().list().isEmpty());
+		assertNotNull(codeExpr.getStmts());
+		assertTrue(codeExpr.getStmts().list().isEmpty());
     }
     @Test
     public void testOneEntryCodeModuleReturnNull() throws Exception {
@@ -184,20 +92,44 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     	
     }
-    
+    @Test
+    public void testVarDecls() throws Exception {
+    	IAstModule mod = treeize("bar := 2; baz : Float ; pp : Float = 3.3; " +
+    			"foo = code (x,y) { p : Float = 3.9; return x+y*p; };");
+    	sanityTest(mod);
+    	
+    }
+    @Test
+    public void testVarDeclsRedef1() throws Exception {
+    	IAstModule mod = treeizeFail("foo = code (x,y) { p : Float = 3.9; p := 44; return x+y*p; };");
+    	sanityTest(mod);
+    	
+    }
+    @Test
+    public void testVarDeclsRedef2() throws Exception {
+    	IAstModule mod = treeizeFail("p : Float = 3.9; p := 44; ");
+    	sanityTest(mod);
+    	
+    }
+    @Test
+    public void testVarDecls2() throws Exception {
+    	IAstModule mod = treeize("foo = code (x,y) { p : Float = 3.9; p = 44; return x+y*p; };");
+    	sanityTest(mod);
+    	
+    }
     @Test 
-    public void testOpPrec1b() throws Exception {
+    public void testBinOps() throws Exception {
     	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17&&18||19; };");
     	sanityTest(mod);
     	
-    	IAstDefine def = (IAstDefine) mod.getScope().findNode("opPrec1");
+    	IAstDefine def = (IAstDefine) mod.getScope().getNode("opPrec1");
     	assertNotNull(def);
     	assertEquals("opPrec1", def.getName().getName());
-    	assertTrue(def.getExpression() instanceof IAstCodeExpression);
-    	IAstCodeExpression codeExpression = (IAstCodeExpression)def.getExpression();
-    	assertEquals(mod.getScope(), codeExpression.getScope().getParent());
+    	assertTrue(def.getExpr() instanceof IAstCodeExpr);
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
     	
-		IAstPrototype prototype = codeExpression.getPrototype();
+		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(0, prototype.argumentTypes().length);
 		assertNull(prototype.returnType().getType());
     }

@@ -3,33 +3,40 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.ast.impl.ArithmeticBinaryOperation;
+import org.ejs.eulang.ast.impl.ComparisonOperation;
+import org.ejs.eulang.ast.impl.LogicalBinaryOperation;
+import org.ejs.eulang.ast.impl.ShiftOperation;
+
 /**
  * @author ejs
  *
  */
 public interface IOperation {
-	IOperation ADD = new ArithmeticOperation("+", true);
-	IOperation SUB = new ArithmeticOperation("-", false);
-	IOperation MUL = new ArithmeticOperation("*", true);
-	IOperation DIV = new ArithmeticOperation("/", false);
-	IOperation MOD = new ArithmeticOperation("%", false);
-	IOperation UDIV = new ArithmeticOperation("\\", false);
-	IOperation UMOD = new ArithmeticOperation("%%", false);
-	IOperation SHL = new ArithmeticOperation("<<", false);
-	IOperation SHR = new ArithmeticOperation(">>>", false);
-	IOperation SAR = new ArithmeticOperation(">>", false);
-	IOperation BITOR = new ArithmeticOperation("|", true);
-	IOperation BITAND = new ArithmeticOperation("&", true);
-	IOperation BITXOR = new ArithmeticOperation("^", true);
-	IOperation COMPAND = new ArithmeticOperation("&&", true);
-	IOperation COMPOR = new ArithmeticOperation("||", true);
-	IOperation COMPEQ = new ArithmeticOperation("==", true);
-	IOperation COMPNE = new ArithmeticOperation("!=", true);
-	IOperation COMPGT = new ArithmeticOperation(">", false);
-	IOperation COMPLT = new ArithmeticOperation(">", false);
-	IOperation COMPLE = new ArithmeticOperation(">=", false);
-	IOperation COMPGE = new ArithmeticOperation("<=", false);
+	IBinaryOperation ADD = new ArithmeticBinaryOperation("+", true);
+	IBinaryOperation SUB = new ArithmeticBinaryOperation("-", false);
+	IBinaryOperation MUL = new ArithmeticBinaryOperation("*", true);
+	IBinaryOperation DIV = new ArithmeticBinaryOperation("/", false);
+	IBinaryOperation MOD = new ArithmeticBinaryOperation("%", false);
+	IBinaryOperation UDIV = new ArithmeticBinaryOperation("\\", false);
+	IBinaryOperation UMOD = new ArithmeticBinaryOperation("%%", false);
+	IBinaryOperation SHL = new ShiftOperation("<<");
+	IBinaryOperation SHR = new ShiftOperation(">>>");
+	IBinaryOperation SAR = new ShiftOperation(">>");
+	IBinaryOperation BITOR = new LogicalBinaryOperation("|", true);
+	IBinaryOperation BITAND = new LogicalBinaryOperation("&", true);
+	IBinaryOperation BITXOR = new LogicalBinaryOperation("^", true);
+	IBinaryOperation COMPAND = new ComparisonOperation("&&", true);
+	IBinaryOperation COMPOR = new ComparisonOperation("||", true);
+	IBinaryOperation COMPEQ = new ComparisonOperation("==", true);
+	IBinaryOperation COMPNE = new ComparisonOperation("!=", true);
+	IBinaryOperation COMPGT = new ComparisonOperation(">", false);
+	IBinaryOperation COMPLT = new ComparisonOperation(">", false);
+	IBinaryOperation COMPLE = new ComparisonOperation(">=", false);
+	IBinaryOperation COMPGE = new ComparisonOperation("<=", false);
+	IUnaryOperation CAST = new CastOperation("<cast>");
 	
 	String getName();
 	boolean isCommutative();
+	
 }

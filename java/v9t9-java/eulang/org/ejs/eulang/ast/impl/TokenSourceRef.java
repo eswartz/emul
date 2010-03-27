@@ -1,0 +1,74 @@
+/**
+ * 
+ */
+package org.ejs.eulang.ast.impl;
+
+import org.antlr.runtime.Token;
+import org.ejs.eulang.ast.ISourceRef;
+
+
+/**
+ * @author ejs
+ *
+ */
+public class TokenSourceRef implements ISourceRef {
+	private final Token token;
+	private final String file;
+	private final int length;
+
+	public TokenSourceRef(String file, Token token, int length) {
+		this.file = file;
+		this.token = token;
+		this.length = length;
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return getFile() + ":" + getLine() + ":" + getColumn();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.ISourceRef#getColumn()
+	 */
+	@Override
+	public int getColumn() {
+		return token.getCharPositionInLine() + 1;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.ISourceRef#getFile()
+	 */
+	@Override
+	public String getFile() {
+		return file;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.ISourceRef#getLine()
+	 */
+	@Override
+	public int getLine() {
+		return token.getLine();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.ISourceRef#getOffset()
+	 */
+	@Override
+	public int getOffset() {
+		return token.getCharPositionInLine();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.ast.expr.ISourceRef#getLength()
+	 */
+	@Override
+	public int getLength() {
+		return length;
+	}
+
+}

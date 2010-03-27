@@ -3,19 +3,17 @@
  */
 package org.ejs.eulang.ast;
 
-import v9t9.tools.ast.expr.IAstExpression;
 
 /**
+ * This node assigns a new value to the location of the id.
  * @author ejs
  *
  */
 public interface IAstAssignStmt extends IAstStatement, IAstTypedExpr,
-		IAstExpression {
+		IAstExpr {
 
-	IAstIdExpr getId();
-	void setId(IAstIdExpr id);
-	IAstType getTypeExpr();
-	void setTypeExpr(IAstType type);
+	IAstSymbolExpr getId();
+	void setId(IAstSymbolExpr id);
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);
 }

@@ -5,7 +5,7 @@ package org.ejs.eulang.llvm.instrs;
 
 import org.ejs.eulang.llvm.ops.LLId;
 import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.types.LLType;
+import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs

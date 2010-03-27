@@ -11,9 +11,9 @@ package org.ejs.eulang.ast;
  */
 public interface IAstBinExpr extends IAstTypedExpr {
 
-    public IOperation getOp();
+    public IBinaryOperation getOp();
 
-    public void setOp(IOperation operator);
+    public void setOp(IBinaryOperation operator);
 
     /** Get the left-hand side of the expression */
     public IAstTypedExpr getLeft();

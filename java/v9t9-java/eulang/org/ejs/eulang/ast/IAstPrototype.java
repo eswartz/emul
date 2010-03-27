@@ -3,15 +3,20 @@
  */
 package org.ejs.eulang.ast;
 
-import v9t9.tools.ast.expr.IAstNode;
 
 /**
  * @author ejs
  *
  */
-public interface IAstPrototype extends IAstNode {
+public interface IAstPrototype extends IAstTypedNode {
 
 	IAstType returnType();
 	
-	IAstVariableDefinition[] argumentTypes();
+	IAstArgDef[] argumentTypes();
+
+	/**
+	 * @return
+	 */
+	int getArgCount();
+
 }

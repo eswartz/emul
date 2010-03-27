@@ -26,14 +26,6 @@ import v9t9.tools.asm.common.DataWordListOperand;
 import v9t9.tools.asm.common.HighLevelInstruction;
 import v9t9.tools.asm.common.Label;
 import v9t9.tools.asm.common.LabelOperand;
-import v9t9.tools.ast.expr.IAstBinaryExpression;
-import v9t9.tools.ast.expr.IAstExpression;
-import v9t9.tools.ast.expr.IAstUnaryExpression;
-import v9t9.tools.ast.expr.impl.AstAddressExpression;
-import v9t9.tools.ast.expr.impl.AstBinaryExpression;
-import v9t9.tools.ast.expr.impl.AstIntegralExpression;
-import v9t9.tools.ast.expr.impl.AstRegisterExpression;
-import v9t9.tools.ast.expr.impl.AstUnaryExpression;
 
 /**
  * Top-down phase.  This looks at a known set of entry points

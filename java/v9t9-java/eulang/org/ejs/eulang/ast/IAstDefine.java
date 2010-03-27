@@ -3,16 +3,14 @@
  */
 package org.ejs.eulang.ast;
 
-import v9t9.tools.ast.expr.IAstName;
-import v9t9.tools.ast.expr.IAstNameHolder;
-import v9t9.tools.ast.expr.IAstNode;
 
 /**
+ * This node defines a name to a node.  This means the node may be substituted for the name.
  * @author ejs
  *
  */
 public interface IAstDefine extends IAstNode, IAstNameHolder {
 	IAstName getName();
-	IAstNode getExpression();
-	void setExpression(IAstNode expr);
+	IAstTypedExpr getExpr();
+	void setExpr(IAstTypedExpr expr);
 }
