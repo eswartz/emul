@@ -20,6 +20,7 @@ import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IOperation;
 import org.ejs.eulang.ast.Message;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeInference;
 import org.junit.Test;
@@ -29,6 +30,33 @@ import org.junit.Test;
  *
  */
 public class TestTypeInfer extends BaseParserTest {
+	protected void doTypeInfer(IAstModule mod) {
+		List<Message> messages = new ArrayList<Message>();
+		TypeInference infer = new TypeInference();
+		
+		infer.infer(messages, typeEngine, mod);
+		
+		System.err.flush();
+		System.out.println("After type inference:");
+		DumpAST dump = new DumpAST(System.out);
+		mod.accept(dump);
+		
+		for (Message msg : messages)
+			System.err.println(msg);
+		assertEquals(0, messages.size());
+		
+		messages.clear();
+		infer.propagateTypes(messages, typeEngine, mod);
+		
+		System.err.flush();
+		System.out.println("After type propagation:");
+		mod.accept(dump);
+		
+		for (Message msg : messages)
+			System.err.println(msg);
+		assertEquals(0, messages.size());
+	}
+
 	@Test
     public void testNoChange1() throws Exception {
     	IAstModule mod = treeize(
@@ -174,31 +202,57 @@ public class TestTypeInfer extends BaseParserTest {
 		assertEquals(typeEngine.FLOAT, mulExpr.getLeft().getType());
 		assertEquals(typeEngine.FLOAT, mulExpr.getRight().getType());
     }
+    
 
-	protected void doTypeInfer(IAstModule mod) {
-		List<Message> messages = new ArrayList<Message>();
-    	TypeInference infer = new TypeInference();
+	@Test
+    public void testDiscoverAssign1() throws Exception {
+    	IAstModule mod = treeize(
+    			"testDiscoverAssign1 = code (x : Int, y : Float) {\n" +
+    			"   z := x;\n" +
+    			"   a := z + y;\n" +
+    			"   return a;\n"+
+    			"};");
+    	sanityTest(mod);
+
+    	doTypeInfer(mod);
     	
-    	infer.infer(messages, typeEngine, mod);
+    	IAstDefine def = (IAstDefine) mod.getScope().getNode("testDiscoverAssign1");
+    	typeTest(def.getExpr(), false);
     	
-    	System.out.println("After type inference:");
-    	DumpAST dump = new DumpAST(System.out);
-    	mod.accept(dump);
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+		IAstPrototype prototype = codeExpr.getPrototype();
+		assertEquals(typeEngine.FLOAT, prototype.returnType().getType());
+    	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
+    	assertEquals(typeEngine.FLOAT, prototype.argumentTypes()[1].getType());
     	
-    	for (Message msg : messages)
-    		System.err.println(msg);
-    	assertEquals(0, messages.size());
+    }
+	@Test
+    public void testDiscoverAssign2() throws Exception {
+    	IAstModule mod = treeize(
+    			"testDiscoverAssign2 = code (x : Int, y : Float) {\n" +
+    			"   z := x;\n" +
+    			"   a :Int = y;\n"+
+    			"   a = z + y;\n" +
+    			"   return a;\n"+
+    			"};");
+    	sanityTest(mod);
+
+    	doTypeInfer(mod);
     	
-    	messages.clear();
-    	infer.propagateTypes(messages, typeEngine, mod);
+    	IAstDefine def = (IAstDefine) mod.getScope().getNode("testDiscoverAssign2");
+    	typeTest(def.getExpr(), false);
     	
-    	System.out.println("After type propagation:");
-    	mod.accept(dump);
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+		IAstPrototype prototype = codeExpr.getPrototype();
+		assertEquals(typeEngine.INT, prototype.returnType().getType());
+    	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
+    	assertEquals(typeEngine.FLOAT, prototype.argumentTypes()[1].getType());
     	
-    	for (Message msg : messages)
-    		System.err.println(msg);
-    	assertEquals(0, messages.size());
-	}
+    	ISymbol a = codeExpr.getScope().get("a");
+    	assertEquals(typeEngine.INT, a.getType());
+    }
 }
 
 

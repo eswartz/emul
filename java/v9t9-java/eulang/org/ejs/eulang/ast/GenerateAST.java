@@ -286,7 +286,8 @@ public class GenerateAST {
 		symbol = currentScope.add(nameNode);
 
 		IAstSymbolExpr symbolExpr = new AstSymbolExpr(symbol);
-		if (type != null) symbol.setType(type.getType());
+		if (type != null) 
+			symbol.setType(type.getType());
 		symbolExpr.setSourceRef(nameNode.getSourceRef());
 
 		if (expr == null)
@@ -309,14 +310,6 @@ public class GenerateAST {
 		IAstTypedExpr right = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
 		IAstAssignStmt assign = new AstAssignStmt(left, right);
 		getSource(tree, assign);
-		
-
-		ISymbol symbol = currentScope.search(left.getName().getName());
-		if (symbol != null && tree.getType() == EulangParser.DEFINE) {
-			error(tree, "redefining " + left.getName().getName());
-		}
-		currentScope.add(left.getName());
-		
 		return assign;
 	}
 

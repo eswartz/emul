@@ -190,6 +190,16 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		super.setType(type);
+		if (id.getType() == null)
+			id.setType(type);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#updateType(org.ejs.eulang.types.LLType)
 	 */
 	@Override
