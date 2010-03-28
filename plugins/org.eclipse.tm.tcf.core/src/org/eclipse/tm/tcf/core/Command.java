@@ -179,7 +179,6 @@ public abstract class Command implements IChannel.ICommandListener {
         if (severity != null) {
             bf.append('\n');
             bf.append("Severity: ");
-            bf.append(toErrorString(map));
             switch (severity.intValue()) {
             case IErrorReport.SEVERITY_ERROR: bf.append("Error");
             case IErrorReport.SEVERITY_FATAL: bf.append("Fatal");

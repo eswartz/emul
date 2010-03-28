@@ -953,7 +953,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         StringBuffer buf = new StringBuffer();
         while (error != null) {
             String msg = null;
-            if (error instanceof IErrorReport) {
+            if (!multiline && error instanceof IErrorReport) {
                 msg = Command.toErrorString(((IErrorReport)error).getAttributes());
             }
             else {
