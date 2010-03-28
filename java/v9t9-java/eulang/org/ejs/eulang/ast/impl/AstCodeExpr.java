@@ -14,9 +14,10 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstReturnStmt;
+import org.ejs.eulang.ast.IAstStatement;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
-import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -28,12 +29,12 @@ import org.ejs.eulang.types.TypeException;
 public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 
 	private final IAstPrototype proto;
-	private final IAstNodeList stmts;
+	private final IAstNodeList<IAstStatement> stmts;
 	private final IScope scope;
 	private final boolean macro;
 	
 	
-	public AstCodeExpr(IAstPrototype proto, IScope scope, IAstNodeList stmts, boolean macro) {
+	public AstCodeExpr(IAstPrototype proto, IScope scope, IAstNodeList<IAstStatement> stmts, boolean macro) {
 		this.proto = proto;
 		proto.setParent(this);
 		this.scope = scope;
@@ -77,7 +78,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#getStmts()
 	 */
 	@Override
-	public IAstNodeList getStmts() {
+	public IAstNodeList<IAstStatement> getStmts() {
 		return stmts;
 	}
 
@@ -117,35 +118,56 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
-	public LLType inferTypeFromChildren(TypeEngine typeEngine)
+	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		if (proto.getType() != null && proto.getType().isComplete())
-			return proto.getType();
+		LLCodeType newType = null;
 		
-		LLType[] infArgTypes = new LLType[proto.getArgCount()];
-		int argIdx = 0;
-		
-		for (IAstArgDef arg : proto.argumentTypes()) {
-			infArgTypes[argIdx] = arg.getType();
-			if (infArgTypes[argIdx] == null) {
-				// see if the argument was assigned in scope
-				ISymbol symbol = scope.get(arg.getName().getName());
-				infArgTypes[argIdx] = symbol.getType();
+		if (proto.getType() != null && proto.getType().isComplete()) {
+			newType = (LLCodeType) proto.getType();
+		} else {
+			LLType[] infArgTypes = new LLType[proto.getArgCount()];
+			int argIdx = 0;
+			
+			for (IAstArgDef arg : proto.argumentTypes()) {
+				infArgTypes[argIdx] = arg.getType();
+				argIdx++;
 			}
-			argIdx++;
-		}
-		
-		LLType infRetType = proto.returnType() != null ? proto.returnType().getType() : null;
-		if (infRetType == null) {
-			// see what the return statements do
-			for (IAstReturnStmt returns : getReturnStmts()) {
-				if (returns.getType() != null) {
-					infRetType = returns.getType();		// take last
+			
+			LLType infRetType = proto.returnType().getType();
+			if (infRetType == null || !infRetType.isComplete()) {
+				// see what the return statements do
+				infRetType = typeEngine.VOID;
+				for (IAstReturnStmt returns : getReturnStmts()) {
+					if (returns.getExpr() == null) {
+						infRetType = typeEngine.VOID;
+					} else if (canInferTypeFrom(returns)) {
+						infRetType = returns.getType();		// take last
+					}
 				}
 			}
+			
+			newType = typeEngine.getCodeType(infRetType, infArgTypes);
 		}
 		
-		return typeEngine.getCodeType(infRetType, infArgTypes);
+		boolean changed = false;
+		if (proto.adaptToType(newType))
+			changed = true;
+		
+		// see what the return statements do
+		for (IAstReturnStmt returns : getReturnStmts()) {
+			if (returns.getExpr() == null && returns.getType() == null) {
+				returns.setType(newType.getRetType());
+				changed = true;
+			}
+			else if (canReplaceType(returns)) {
+				returns.setType(newType.getRetType());
+				changed = true;
+			}
+		}
+		
+		changed |= updateType(this, newType);
+		
+		return changed;
 	}
 	
 	/**
@@ -163,14 +185,5 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		return list != null ? list : Collections.<IAstReturnStmt> emptyList();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-		proto.setType(newType);
-		
-		// TODO: set return types, assignments
-	}
 
 }

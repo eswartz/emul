@@ -8,6 +8,7 @@ import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
@@ -17,8 +18,9 @@ import org.ejs.eulang.types.TypeException;
  * @author eswartz
  *
  */
-public class AstSymbolExpr extends AstExpr implements IAstSymbolExpr {
+public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	private ISymbol symbol;
+	private LLType type;
 
     public AstSymbolExpr(ISymbol symbol) {
         super();
@@ -70,17 +72,10 @@ public class AstSymbolExpr extends AstExpr implements IAstSymbolExpr {
      * @see v9t9.tools.decomp.expr.IAstNode#getReferencedNodes()
      */
     public IAstNode[] getReferencedNodes() {
-        return new IAstNode[] { symbol.getName() };
+        return getChildren();
     }
 
     
-    /* (non-Javadoc)
-     * @see v9t9.tools.decomp.expr.IAstIdExpression#getName()
-     */
-    public IAstName getName() {
-        return symbol.getName();
-    }
-
     /* (non-Javadoc)
      * @see org.ejs.eulang.ast.IAstSymbolExpr#getSymbol()
      */
@@ -95,13 +90,7 @@ public class AstSymbolExpr extends AstExpr implements IAstSymbolExpr {
     public void setSymbol(ISymbol symbol) {
     	Check.checkArg(symbol);
     	this.symbol = symbol;
-    }
-
-    /* (non-Javadoc)
-     * @see v9t9.tools.decomp.expr.IAstNameHolder#getRoleForName()
-     */
-    public int getRoleForName() {
-        return NAME_REFERENCED;
+    	setType(symbol.getType());
     }
 
     /* (non-Javadoc)
@@ -140,16 +129,9 @@ public class AstSymbolExpr extends AstExpr implements IAstSymbolExpr {
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
-	public LLType inferTypeFromChildren(TypeEngine typeEngine)
+	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		return symbol.getType();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-		symbol.setType(newType);
+		return inferTypesFromChildren(new ITyped[] { symbol });
+
 	}
 }

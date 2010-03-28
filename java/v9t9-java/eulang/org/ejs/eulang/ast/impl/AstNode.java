@@ -9,7 +9,9 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IOperation;
 import org.ejs.eulang.ast.ISourceRef;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -17,7 +19,9 @@ import org.ejs.eulang.types.LLType;
  *
  */
 abstract public class AstNode implements IAstNode {
-
+	private static int gId;
+	private int id = ++gId;
+	
     private IAstNode parent;
 
     protected boolean dirty;
@@ -27,6 +31,13 @@ abstract public class AstNode implements IAstNode {
     public AstNode() {
     }
 
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#getId()
+     */
+    @Override
+    public int getId() {
+    	return id;
+    }
     public abstract boolean equals(Object obj);
     public abstract int hashCode();
     
@@ -167,25 +178,4 @@ abstract public class AstNode implements IAstNode {
     	return 1;
     }
     
-	protected IAstTypedExpr createCastOn(TypeEngine typeEngine,
-			IAstTypedExpr child, LLType newType) {
-		if (child == null)
-			return null;
-		
-		// don't cast if we can fill a slot 
-		if (child.getType() == null || child.getType().equals(newType)) {
-			child.setType(newType);
-			return child;
-		}
-		
-		// ignore wildcard casts
-		if (child.getType() != null && child.getType().getBasicType() == newType.getBasicType() &&
-				newType.getBits() == 0) {
-			return child;
-		}
-		child.setParent(null);
-		IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, child);
-		castExpr.setType(newType);
-		return castExpr;
-	}
 }

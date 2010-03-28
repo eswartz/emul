@@ -10,7 +10,7 @@ package org.ejs.eulang.ast;
  */
 public interface IAstCodeExpr extends IAstTypedExpr, IAstExpr, IAstScope {
 	IAstPrototype getPrototype();
-	IAstNodeList getStmts();
+	IAstNodeList<IAstStatement> getStmts();
 	
 	boolean isMacro();
 }

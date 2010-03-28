@@ -31,9 +31,9 @@ public interface IOperation {
 	IBinaryOperation COMPEQ = new ComparisonOperation("==", true);
 	IBinaryOperation COMPNE = new ComparisonOperation("!=", true);
 	IBinaryOperation COMPGT = new ComparisonOperation(">", false);
-	IBinaryOperation COMPLT = new ComparisonOperation(">", false);
-	IBinaryOperation COMPLE = new ComparisonOperation(">=", false);
-	IBinaryOperation COMPGE = new ComparisonOperation("<=", false);
+	IBinaryOperation COMPLT = new ComparisonOperation("<", false);
+	IBinaryOperation COMPLE = new ComparisonOperation("<=", false);
+	IBinaryOperation COMPGE = new ComparisonOperation(">=", false);
 	IUnaryOperation CAST = new CastOperation("<cast>");
 	
 	String getName();

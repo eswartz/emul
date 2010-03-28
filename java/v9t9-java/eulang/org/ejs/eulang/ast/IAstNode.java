@@ -14,6 +14,9 @@ package org.ejs.eulang.ast;
 public interface IAstNode {
     public static final IAstNode[] NO_CHILDREN = new IAstNode[] { };
     
+    /** Get the unique id of the node */
+    public int getId();
+    
     /** Tell whether the node is dirty (changed with respect to original source)
      * @see #isDirtyTree()
      * @see #hasDirtySource()

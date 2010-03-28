@@ -8,6 +8,7 @@ import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.IUnaryOperation;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
@@ -110,20 +111,12 @@ public class AstUnaryExpr extends AstTypedExpr implements
      * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
      */
     @Override
-    public LLType inferTypeFromChildren(TypeEngine typeEngine)
+    public boolean inferTypeFromChildren(TypeEngine typeEngine)
     		throws TypeException {
-    	LLType opType = operand.getType();
-    	if (opType == null)
-    		return null;
+    	LLType opType = null;
+    	if (canInferTypeFrom(operand))
+    		opType = operand.getType();
     	opType = op.getPreferredType(typeEngine, null, opType);
-    	return op.getResultType(opType);
-    }
-    
-    /* (non-Javadoc)
-     * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
-     */
-    @Override
-    public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-    	setOperand(createCastOn(typeEngine, operand, op.getPreferredType(typeEngine, operand.getType(), newType)));
+    	return updateType(operand, opType) | updateType(this, op.getResultType(opType));
     }
 }

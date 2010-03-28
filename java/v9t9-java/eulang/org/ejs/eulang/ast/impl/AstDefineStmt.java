@@ -4,13 +4,14 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -19,20 +20,17 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
+public class AstDefineStmt extends AstTypedExpr implements IAstDefineStmt {
 
 	private IAstSymbolExpr id;
 	private IAstTypedExpr expr;
-
-	/**
-	 * @param expr2 
-	 * @param left
-	 * @param right
-	 */
-	public AstAssignStmt(IAstSymbolExpr id, IAstTypedExpr expr) {
+	
+	public AstDefineStmt(IAstSymbolExpr name, IAstTypedExpr expr) {
+		this.id = name;
+		setSymbolExpr(name);
 		setExpr(expr);
-		setSymbol(id);
 	}
+	
 
 	
 	@Override
@@ -53,7 +51,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstAssignStmt other = (AstAssignStmt) obj;
+		AstDefineStmt other = (AstDefineStmt) obj;
 		if (expr == null) {
 			if (other.expr != null)
 				return false;
@@ -73,17 +71,20 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public String toString() {
-		return "=" + ":" + getTypeString();
+		return "DEFINE";
 	}
 	
+
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { id, expr };
+		if (expr != null)
+			return new IAstNode[] { id, expr };
+		else
+			return new IAstNode[] { id };
 	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
 	 */
@@ -91,6 +92,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	public IAstNode[] getReferencedNodes() {
 		return getChildren();
 	}
+
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
@@ -120,10 +122,18 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getId()
 	 */
 	@Override
-	public IAstSymbolExpr getSymbol() {
+	public IAstSymbolExpr getSymbolExpr() {
 		return id;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDefineStmt#getSymbol()
+	 */
+	@Override
+	public ISymbol getSymbol() {
+		return id.getSymbol();
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setExpr(v9t9.tools.ast.expr.IAstExpression)
 	 */
@@ -137,7 +147,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setId(v9t9.tools.ast.expr.IAstIdExpression)
 	 */
 	@Override
-	public void setSymbol(IAstSymbolExpr id) {
+	public void setSymbolExpr(IAstSymbolExpr id) {
 		Check.checkArg(id);
 		this.id = reparent(this.id, id);
 	}
@@ -147,8 +157,21 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		// here, the symbol should have a type, which takes precedence
-		return inferTypesFromChildren(new ITyped[] { id, expr });
+		return inferTypesFromChildren(new ITyped[] { expr, id });
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		super.setType(type);
+		/*
+		if (id.getType() == null)
+			id.setType(type);
+		if (expr.getType() == null)
+			expr.setType(type);
+		*/
 	}
 	
 }

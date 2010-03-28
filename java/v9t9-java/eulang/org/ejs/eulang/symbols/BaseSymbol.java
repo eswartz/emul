@@ -6,8 +6,7 @@ package org.ejs.eulang.symbols;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.ast.impl.AstName;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -16,18 +15,22 @@ import org.ejs.eulang.types.LLType;
  */
 public class BaseSymbol implements ISymbol {
 
-	private IAstName name;
+	private static int gNumber = 0;
+	private String name;
 	private IAstNode def;
 	private LLType type;
-
+	private IScope scope;
+	private int number = gNumber++;
 	
 	public BaseSymbol(String name, IScope scope, IAstNode def) {
-		this.name = new AstName(name, scope);
+		this.name = name;
+		this.scope = scope;
 		Check.checkArg(this.name);
 		setDefinition(def);
 	}
 	public BaseSymbol(IAstName name, IAstNode def) {
-		this.name = name;
+		this.name = name.getName();
+		this.scope = name.getScope();
 		setDefinition(def);
 	}
 	
@@ -62,14 +65,29 @@ public class BaseSymbol implements ISymbol {
 	 */
 	@Override
 	public String toString() {
-		return "\"" + name.getName() + "\"" + ":" +(type != null ? type.toString() : "<unknown>");
+		return "\"" + name + "\"" + ":" +(type != null ? type.toString() : "<unknown>");
 	}
 	
 	@Override
-	public IAstName getName() {
+	public String getName() {
 		return name;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#getScope()
+	 */
+	@Override
+	public IScope getScope() {
+		return scope;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#setScope(org.ejs.eulang.symbols.IScope)
+	 */
+	@Override
+	public void setScope(IScope scope) {
+		this.scope = scope;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.symbols.ISymbol#getDefinition()
 	 */
@@ -84,7 +102,7 @@ public class BaseSymbol implements ISymbol {
 	@Override
 	public void setDefinition(IAstNode def) {
 		this.def = def;
-		this.type = def instanceof IAstTypedNode ? ((IAstTypedNode) def).getType() : null;
+		this.type = def instanceof ITyped ? ((ITyped) def).getType() : null;
 	}
 
 	/* (non-Javadoc)

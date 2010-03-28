@@ -28,10 +28,10 @@ public class LogicalUnaryOperation extends Operation implements IUnaryOperation 
 	 */
 	@Override
 	public LLType getPreferredType(TypeEngine typeEngine, LLType lhsType, LLType opType) {
-		if (opType != null && opType.getBasicType() == BasicType.INTEGRAL)
-			return opType;
 		if (lhsType != null && lhsType.getBasicType() == BasicType.INTEGRAL)
 			return lhsType;
+		if (opType != null && opType.getBasicType() == BasicType.INTEGRAL)
+			return opType;
 		return typeEngine.INT_ANY;
 	}
 

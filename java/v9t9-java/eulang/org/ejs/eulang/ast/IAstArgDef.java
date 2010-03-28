@@ -12,7 +12,8 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstArgDef extends IAstTypedExpr {
-	IAstName getName();
+	String getName();
+	IAstSymbolExpr getSymbolExpr();
 	
 	IAstType getTypeExpr();
 	void setTypeExpr(IAstType typeExpr);

@@ -12,8 +12,8 @@ package org.ejs.eulang.ast;
 public interface IAstAssignStmt extends IAstStatement, IAstTypedExpr,
 		IAstExpr {
 
-	IAstSymbolExpr getId();
-	void setId(IAstSymbolExpr id);
+	IAstSymbolExpr getSymbol();
+	void setSymbol(IAstSymbolExpr id);
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);
 }

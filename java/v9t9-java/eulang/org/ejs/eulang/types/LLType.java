@@ -14,7 +14,8 @@ public interface LLType {
 		VOID,
 		POINTER,
 		DATA,
-		CODE
+		CODE, 
+		BOOL
 	};
 	
 	String toString();

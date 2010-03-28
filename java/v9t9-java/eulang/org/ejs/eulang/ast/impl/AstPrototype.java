@@ -71,7 +71,7 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 	 */
 	@Override
 	public String toString() {
-		return (retType != null ? retType.toString() : "<Object>") + " (" + catenate(argumentTypes) + ")"; 
+		return "(" + catenate(argumentTypes) + " => " + (retType != null ? retType.toString() : "<Object>") + ")"; 
 	}
 
 	/* (non-Javadoc)
@@ -112,32 +112,33 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
-	public LLType inferTypeFromChildren(TypeEngine typeEngine)
+	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
+		LLCodeType newType = null;
+		
 		LLType[] argTypes = new LLType[argumentTypes.length];
-		LLType tretType = null;
-		if (retType != null)
-			tretType = retType.getType();
+		LLType tretType = retType.getType();
 		for (int i = 0; i < argumentTypes.length; i++) {
 			IAstArgDef argDef = argumentTypes[i];
 			argTypes[i] = argDef.getType();
 		}
 		
-		return typeEngine.getCodeType(tretType, argTypes);
+		newType = typeEngine.getCodeType(tretType, argTypes);
+		
+		return updateType(this, newType);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
+	 * @see org.ejs.eulang.ast.IAstPrototype#adaptToType(org.ejs.eulang.types.LLType)
 	 */
 	@Override
-	public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-		// new type is a prototype
-		Check.checkArg(newType instanceof LLCodeType);
-		LLCodeType codeType = (LLCodeType) newType;
-		retType.setType(codeType.getRetType());
-		LLType[] argTypes = codeType.getArgTypes();
-		for (int  i = 0; i < argumentTypes.length; i++)
-			argumentTypes[i].setType(argTypes[i]);
+	public boolean adaptToType(LLCodeType codeType) {
+		boolean changed = false;
+		changed = updateType(retType, codeType.getRetType());
+		for (int  i = 0; i < argumentTypes.length; i++) {
+			changed |= updateType(argumentTypes[i], codeType.getArgTypes()[i]);
+		}
+		return changed;
 	}
 	
 	/* (non-Javadoc)
@@ -146,14 +147,6 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 	@Override
 	public void setType(LLType type) {
 		super.setType(type);
-		if (type != null) {
-			Check.checkArg(type instanceof LLCodeType);
-			LLCodeType codeType = (LLCodeType) type;
-			if (retType != null)
-				retType.setType(codeType.getRetType());
-			for (int  i = 0; i < argumentTypes.length; i++)
-				argumentTypes[i].setType(codeType.getArgTypes()[i]);
-		}		
 	}
 	
 	/* (non-Javadoc)

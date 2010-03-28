@@ -7,8 +7,10 @@ import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -20,14 +22,14 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 
-	private IAstName name;
+	private IAstSymbolExpr name;
 	private IAstTypedExpr defaultVal;
 	private IAstType typeExpr;
 
 	/**
 	 * 
 	 */
-	public AstArgDef(IAstName name, IAstType type, IAstTypedExpr defaultVal) {
+	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal) {
 		this.name = name;
 		name.setParent(this);
 		setDefaultValue(defaultVal);
@@ -45,7 +47,7 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	 * @see org.ejs.eulang.ast.IAstVariableDefintion#getName()
 	 */
 	@Override
-	public IAstName getName() {
+	public IAstSymbolExpr getSymbolExpr() {
 		return name;
 	}
 
@@ -54,9 +56,14 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		if (defaultVal != null)
+		if (typeExpr != null && defaultVal != null)
+			return new IAstNode[] { name, typeExpr, defaultVal };
+		else if (defaultVal != null)
 			return new IAstNode[] { name, defaultVal };
-		return new IAstNode[] { name };
+		else if (typeExpr != null)
+			return new IAstNode[] { name, typeExpr };
+		else
+			return new IAstNode[] { name };
 	}
 
 	/* (non-Javadoc)
@@ -84,6 +91,14 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstArgDef#getName()
+	 */
+	@Override
+	public String getName() {
+		return name.getSymbol().getName();
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstVariableDefintion#getDefaultValue()
 	 */
 	@Override
@@ -100,8 +115,6 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 		
 		if (defaultVal != null)
 			setType(defaultVal.getType());
-		else
-			setType(null);
 	}
 
 	/* (non-Javadoc)
@@ -123,21 +136,29 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren()
 	 */
 	@Override
-	public LLType inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		if (typeExpr != null)
-			return typeExpr.getType();
-		if (defaultVal != null)
-			return defaultVal.getType();
-		return null;
+	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
+		return inferTypesFromChildren(new ITyped[] { name.getSymbol(), typeExpr, defaultVal });
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
 	 */
 	@Override
-	public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-		if (typeExpr.getType() == null)
-			typeExpr.setType(newType);
-		setDefaultValue(createCastOn(typeEngine, defaultVal, newType));
+	public void setType(LLType type) {
+		super.setType(type);
+		/*
+		name.setType(type);
+		name.getSymbol().setType(type);
+		if (typeExpr != null)
+			typeExpr.setType(type);
+		*/
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#getType()
+	 */
+	@Override
+	public LLType getType() {
+		return name.getType();
 	}
 }

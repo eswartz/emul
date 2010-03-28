@@ -44,8 +44,8 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public ISymbol add(ISymbol symbol) {
-		symbol.getName().setScope(this);
-		entries.put(symbol.getName().getName(), symbol);
+		symbol.setScope(this);
+		entries.put(symbol.getName(), symbol);
 		return symbol;
 	}
 	@Override

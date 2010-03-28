@@ -9,13 +9,8 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstAllocStmt extends IAstStatement, IAstTypedExpr,
-		IAstExpr {
+public interface IAstAllocStmt extends IAstDefineStmt, IAstTypedNode {
 
-	IAstSymbolExpr getId();
-	void setId(IAstSymbolExpr id);
 	IAstType getTypeExpr();
 	void setTypeExpr(IAstType type);
-	IAstTypedExpr getExpr();
-	void setExpr(IAstTypedExpr expr);
 }

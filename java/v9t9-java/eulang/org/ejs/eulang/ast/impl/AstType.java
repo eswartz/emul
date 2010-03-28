@@ -95,16 +95,9 @@ public class AstType extends AstNode implements IAstType {
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
-	public LLType inferTypeFromChildren(TypeEngine typeEngine)
+	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		return type;
+		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-		this.type = newType;
-	}
 }

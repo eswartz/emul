@@ -29,6 +29,7 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.Message;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.parser.EulangLexer;
@@ -174,7 +175,7 @@ public class BaseParserTest {
 	 * @param errors
 	 * @return
 	 */
-	private String catenate(List<Error> errors) {
+	protected String catenate(List<? extends Message> errors) {
 		StringBuilder sb = new StringBuilder();
 		for (Message e : errors) {
 			sb.append(e.toString());
@@ -221,10 +222,10 @@ public class BaseParserTest {
 		for (ISymbol sym : scope) {
 			assertNotNull(sym);
 			assertNotNull(sym.getName());
-			assertNotNull(sym.getName().getName());
-			assertFalse(sym.getName().getName(), seen.contains(sym.getName()));
-			seen.add(sym.getName().getName());
-			assertSame(scope, sym.getName().getScope());
+			assertNotNull(sym.getName());
+			assertFalse(sym.getName(), seen.contains(sym.getName()));
+			seen.add(sym.getName());
+			assertSame(scope, sym.getScope());
 		}
 	}
 	
@@ -233,7 +234,7 @@ public class BaseParserTest {
 			assertNotNull("No type: " +node.toString(), node.getType());
 		for (IAstNode kid : node.getChildren()) {
 			assertNotNull(node.toString(), kid);
-			if (kid instanceof IAstTypedNode)
+			if (kid instanceof ITyped)
 				typeTest((IAstTypedNode) kid, allowUnknown);
 		}
 	}

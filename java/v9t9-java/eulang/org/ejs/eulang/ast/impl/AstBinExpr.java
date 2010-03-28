@@ -9,6 +9,7 @@ import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IBinaryOperation;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -235,24 +236,29 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren()
 	 */
 	@Override
-	public LLType inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		LLType leftType = left.getType();
-		LLType rightType = right.getType();
+	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
+		LLType newType = null;
 		
-		leftType = oper.getPreferredLeftType(typeEngine, null, leftType, rightType);
-		rightType = oper.getPreferredRightType(typeEngine, null, leftType, rightType);
+		if (!(canInferTypeFrom(left) || canInferTypeFrom(right)))
+			return false;
 		
-		return oper.getResultType(typeEngine, leftType, rightType);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-		LLType leftType = left.getType();
-		LLType rightType = right.getType();
-		setLeft(createCastOn(typeEngine, left, oper.getPreferredLeftType(typeEngine, newType, leftType, rightType)));
-		setRight(createCastOn(typeEngine, right, oper.getPreferredLeftType(typeEngine, newType, leftType, rightType)));
+		IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();
+		types.left = left.getType();
+		types.right = right.getType();
+		types.result = getType();
+		oper.inferTypes(typeEngine, types);
+		
+		if (updateType(left, types.left) | updateType(right, types.right) | updateType(this, types.result)) {
+			types.left = left.getType();
+			types.right = right.getType();
+			types.result = getType();
+			if (types.left != null && types.right != null && types.result != null) {
+				oper.castTypes(typeEngine, types);
+				left = createCastOn(typeEngine, left, types.left);
+				right = createCastOn(typeEngine, right, types.right);
+			}
+			return true;
+		}
+		return false;
 	}
 }

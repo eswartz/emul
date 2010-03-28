@@ -6,10 +6,13 @@ package org.ejs.eulang.ast;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLVoidType;
+import org.ejs.eulang.types.LLType.BasicType;
 
 /**
  * @author ejs
@@ -20,8 +23,9 @@ public class TypeEngine {
 	public int ptrBits;
 	public LLIntType INT;
 	public LLFloatType FLOAT;
-	public LLType INT_ANY;
-	public LLType BOOL;
+	public LLIntType INT_ANY;
+	public LLBoolType BOOL;
+	public LLVoidType VOID;
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 
@@ -30,7 +34,8 @@ public class TypeEngine {
 	 */
 	public TypeEngine() {
 		ptrBits = 16;
-		BOOL = new LLIntType(1);
+		VOID = new LLVoidType();
+		BOOL = new LLBoolType(1);
 		INT = new LLIntType(16);
 		INT_ANY = new LLIntType(0);
 		FLOAT = new LLFloatType(32, 23);
@@ -46,13 +51,20 @@ public class TypeEngine {
 		if (a.equals(b))
 			return a;
 		
-		if (a instanceof LLIntType && b instanceof LLIntType)
+		if (a.getBasicType() == BasicType.INTEGRAL && b.getBasicType() == BasicType.INTEGRAL)
 			return a.getBits() > b.getBits() ? a : b;
 		
-		if (a instanceof LLIntType && b instanceof LLFloatType) {
+		if (a.getBasicType() == BasicType.BOOL && b.getBasicType() == BasicType.INTEGRAL)
+			return b;
+		if (b.getBasicType() == BasicType.BOOL && a.getBasicType() == BasicType.INTEGRAL)
+			return a;
+			
+		if ((a.getBasicType() == BasicType.INTEGRAL || a.getBasicType() == BasicType.BOOL) 
+				&& b.getBasicType() == BasicType.FLOATING) {
 			return b;
 		}
-		if (b instanceof LLIntType && a instanceof LLFloatType) {
+		if ((b.getBasicType() == BasicType.INTEGRAL || b.getBasicType() == BasicType.BOOL)
+				&& a.getBasicType() == BasicType.FLOATING) {
 			return a;
 		}
 		

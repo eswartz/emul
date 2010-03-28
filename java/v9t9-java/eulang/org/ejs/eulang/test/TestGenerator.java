@@ -10,7 +10,8 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertSame;
 
 import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstDefine;
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
@@ -40,11 +41,11 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(1, mod.getScope().getSymbols().length);
     	assertEquals(1, mod.getChildren().length);
     	
-    	IAstDefine def0 = (IAstDefine) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
-    	IAstDefine def = (IAstDefine) mod.getScope().getNode("foo");
+    	IAstDefineStmt def0 = (IAstDefineStmt) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("foo");
     	assertSame(def0, def);
     	
-    	assertEquals("foo", def.getName().getName());
+    	assertEquals("foo", def.getSymbol().getName());
     	assertTrue(def.getExpr() instanceof IAstIntLitExpr);
     	assertEquals("3", ((IAstIntLitExpr)def.getExpr()).getLiteral());
     	assertEquals((long) 3, ((IAstIntLitExpr)def.getExpr()).getValue());
@@ -61,21 +62,21 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(1, mod.getScope().getSymbols().length);
     	assertEquals(1, mod.getChildren().length);
     	
-    	IAstDefine def = (IAstDefine) mod.getScope().getNode("foo");
-    	assertEquals("foo", def.getName().getName());
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("foo");
+    	assertEquals("foo", def.getSymbol().getName());
     	assertTrue(def.getExpr() instanceof IAstCodeExpr);
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
     	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
     	
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(2, prototype.argumentTypes().length);
-		assertEquals("x", prototype.argumentTypes()[0].getName().getName());
+		assertEquals("x", prototype.argumentTypes()[0].getName());
 		assertNull(prototype.argumentTypes()[0].getType());
-		assertEquals("y", prototype.argumentTypes()[1].getName().getName());
+		assertEquals("y", prototype.argumentTypes()[1].getName());
 		assertNull(prototype.argumentTypes()[1].getType());
 		
-		assertEquals(prototype.argumentTypes()[0].getName().getScope(), codeExpr.getScope());
-		assertEquals(prototype.argumentTypes()[1].getName().getScope(), codeExpr.getScope());
+		assertEquals(prototype.argumentTypes()[0].getSymbolExpr().getSymbol().getScope(), codeExpr.getScope());
+		assertEquals(prototype.argumentTypes()[1].getSymbolExpr().getSymbol().getScope(), codeExpr.getScope());
 		
 		assertNotNull(codeExpr.getStmts());
 		assertTrue(codeExpr.getStmts().list().isEmpty());
@@ -122,9 +123,9 @@ public class TestGenerator extends BaseParserTest {
     	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17&&18||19; };");
     	sanityTest(mod);
     	
-    	IAstDefine def = (IAstDefine) mod.getScope().getNode("opPrec1");
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("opPrec1");
     	assertNotNull(def);
-    	assertEquals("opPrec1", def.getName().getName());
+    	assertEquals("opPrec1", def.getSymbol().getName());
     	assertTrue(def.getExpr() instanceof IAstCodeExpr);
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
     	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
@@ -132,6 +133,16 @@ public class TestGenerator extends BaseParserTest {
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(0, prototype.argumentTypes().length);
 		assertNull(prototype.returnType().getType());
+    }
+    
+    @Test
+    public void testCalls() throws Exception {
+    	IAstModule mod = treeize("callee = code(a,b) {} ;  testCalls = code { callee(7,8); };");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCalls");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstFuncCallExpr callExpr = (IAstFuncCallExpr) codeExpr.getStmts().list().get(0);
     }
 }
 

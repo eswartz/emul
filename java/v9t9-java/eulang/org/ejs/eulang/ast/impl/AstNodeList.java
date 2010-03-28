@@ -14,9 +14,9 @@ import org.ejs.eulang.ast.IAstNodeList;
  * @author ejs
  *
  */
-public class AstNodeList extends AstNode implements IAstNodeList {
+public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNodeList<T> {
 
-	private List<IAstNode> list = new ArrayList<IAstNode>();
+	private List<T> list = new ArrayList<T>();
 
 	
 	@Override
@@ -26,13 +26,14 @@ public class AstNodeList extends AstNode implements IAstNodeList {
 		result = prime * result + ((list == null) ? 0 : list.hashCode());
 		return result;
 	}
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
 		if (getClass() != obj.getClass())
 			return false;
-		AstNodeList other = (AstNodeList) obj;
+		AstNodeList<T> other = (AstNodeList) obj;
 		if (list == null) {
 			if (other.list != null)
 				return false;
@@ -45,13 +46,13 @@ public class AstNodeList extends AstNode implements IAstNodeList {
 	 */
 	@Override
 	public String toString() {
-		return "";
+		return "LIST";
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNodeList#list()
 	 */
 	@Override
-	public List<IAstNode> list() {
+	public List<T> list() {
 		return list;
 	}
 

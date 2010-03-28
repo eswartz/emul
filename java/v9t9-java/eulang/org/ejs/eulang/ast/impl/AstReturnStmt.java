@@ -7,6 +7,7 @@ import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -120,16 +121,9 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
-	public LLType inferTypeFromChildren(TypeEngine typeEngine)
+	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		return expr.getType();
+		return inferTypesFromChildren(new ITyped[] { expr });
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#setTypeOnChildren(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setTypeOnChildren(TypeEngine typeEngine, LLType newType) {
-		setExpr(createCastOn(typeEngine, expr, newType));
-	}
 }
