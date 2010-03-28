@@ -21,6 +21,7 @@
 #if SERVICE_Expressions
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -144,9 +145,15 @@ static void string_value(Value * v, char * str) {
     }
 }
 
-static void error(int no, const char * msg) {
+static void error(int no, const char * fmt, ...) {
+    va_list ap;
     char buf[256];
-    snprintf(buf, sizeof(buf), "%s, text pos %d", msg, text_pos);
+    size_t l = 0;
+
+    va_start(ap, fmt);
+    l = snprintf(buf, sizeof(buf), "At col %d: ", text_pos);
+    vsnprintf(buf + l, sizeof(buf) - l, fmt, ap);
+    va_end(ap);
     str_exception(no, buf);
 }
 
@@ -885,8 +892,8 @@ static void primary_expression(int mode, Value * v) {
     else if (text_sy == SY_ID) {
         if (mode != MODE_SKIP) {
             int sym_class = identifier((char *)text_val.value, v);
-            if (sym_class == SYM_CLASS_UNKNOWN) error(ERR_SYM_NOT_FOUND, "Undefined identifier");
-            if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type name");
+            if (sym_class == SYM_CLASS_UNKNOWN) error(errno, "Undefined identifier '%s'", text_val.value);
+            if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type '%s'", text_val.value);
         }
         next_sy();
     }
@@ -1593,7 +1600,7 @@ static void equality_expression(int mode, Value * v) {
                 *value = strcmp((char *)v->value, (char *)x.value) == 0;
             }
             else if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
-                *value = to_double(mode, v) == to_double(mode, &x); break;
+                *value = to_double(mode, v) == to_double(mode, &x);
             }
             else {
                 *value = to_int(mode, v) == to_int(mode, &x);
