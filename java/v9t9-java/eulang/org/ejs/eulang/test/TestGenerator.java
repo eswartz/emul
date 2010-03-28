@@ -17,7 +17,6 @@ import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
-import org.ejs.eulang.ast.IAstStatement;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.junit.Test;
 

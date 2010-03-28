@@ -18,6 +18,7 @@ public class DumpAST extends AstVisitor {
 	private final PrintStream str;
 	
 	public DumpAST(PrintStream str) {
+		this.visitDumpChildren = true;
 		this.str = str;
 	}
 	
@@ -42,10 +43,15 @@ public class DumpAST extends AstVisitor {
 	 */
 	private void dumpScope(IScope scope) {
 		printIndent();
-		str.println("=== Symbols:");
-		for (ISymbol symbol : scope) {
-			printIndent(); str.print("=== ");
-			str.println(symbol);
+		ISymbol[] symbols = scope.getSymbols();
+		if (symbols.length > 0) {
+			str.println("=== Symbols:");
+			for (ISymbol symbol : symbols) {
+				printIndent(); str.print("=== ");
+				str.println(symbol);
+			}
+		} else {
+			str.println("=== (no symbols)"); 
 		}
 	}
 

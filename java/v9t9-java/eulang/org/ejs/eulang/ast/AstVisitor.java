@@ -20,6 +20,8 @@ public class AstVisitor {
 
     public final static int PROCESS_CONTINUE = 3;
 
+    public boolean visitDumpChildren = false;
+    
     /** Visit the node and its children */
     public int visit(IAstNode node) {
         
@@ -34,26 +36,15 @@ public class AstVisitor {
     	return PROCESS_CONTINUE;
     	
     }
-    /** Visit a referenced node */
-    public int visitReference(IAstNode node) {
-        return PROCESS_CONTINUE;
-    }
     
-    public void traverseChildren(IAstNode node) {
-        IAstNode[] refs = node.getReferencedNodes();
-        IAstNode[] kids = node.getChildren();
-        for (IAstNode element : refs) {
-            boolean isKid = false;
-            for (IAstNode element2 : kids) {
-                if (element2 == element) {
-                    isKid = true;
-                    element.accept(this);
-                }
-            }
-            if (!isKid) {
-				element.acceptReference(this);
-			}
+    public int traverseChildren(IAstNode node) {
+        IAstNode[] kids = visitDumpChildren ? node.getDumpChildren() : node.getChildren();
+        for (IAstNode element : kids) {
+            int ret = element.accept(this);
+            if (ret == PROCESS_ABORT)
+            	return ret;
         }
+        return PROCESS_CONTINUE;
     }
 
 }

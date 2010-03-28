@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstExpr;
-import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
@@ -64,14 +63,6 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 			return new IAstNode[] { name, typeExpr };
 		else
 			return new IAstNode[] { name };
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
 	}
 
 	/* (non-Javadoc)

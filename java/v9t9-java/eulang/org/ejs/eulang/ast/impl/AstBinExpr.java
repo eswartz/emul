@@ -9,9 +9,7 @@ import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IBinaryOperation;
-import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -45,14 +43,6 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	@Override
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { left, right };
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
 	}
 
 	/* (non-Javadoc)

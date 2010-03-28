@@ -9,18 +9,14 @@ import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.ITyped;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TypeException;
 
 
 /**
  * @author ejs
  *
  */
-public class AstDefineStmt extends AstTypedExpr implements IAstDefineStmt {
+public class AstDefineStmt extends AstExpr implements IAstDefineStmt {
 
 	private IAstSymbolExpr id;
 	private IAstTypedExpr expr;
@@ -36,7 +32,7 @@ public class AstDefineStmt extends AstTypedExpr implements IAstDefineStmt {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = super.hashCode();
+		int result = 0; //super.hashCode();
 		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		return result;
@@ -47,8 +43,8 @@ public class AstDefineStmt extends AstTypedExpr implements IAstDefineStmt {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		//if (!super.equals(obj))
+		//	return false;
 		if (getClass() != obj.getClass())
 			return false;
 		AstDefineStmt other = (AstDefineStmt) obj;
@@ -85,14 +81,6 @@ public class AstDefineStmt extends AstTypedExpr implements IAstDefineStmt {
 		else
 			return new IAstNode[] { id };
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
-	}
-
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
@@ -155,23 +143,11 @@ public class AstDefineStmt extends AstTypedExpr implements IAstDefineStmt {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren()
 	 */
+	/*
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		return inferTypesFromChildren(new ITyped[] { expr, id });
 	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		super.setType(type);
-		/*
-		if (id.getType() == null)
-			id.setType(type);
-		if (expr.getType() == null)
-			expr.setType(type);
-		*/
-	}
+	*/
 	
 }

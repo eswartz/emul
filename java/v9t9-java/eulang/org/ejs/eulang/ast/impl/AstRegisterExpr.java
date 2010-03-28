@@ -84,8 +84,4 @@ public class AstRegisterExpr extends AstExpr implements
         return NO_CHILDREN;
     }
 
-    public IAstNode[] getReferencedNodes() {
-        return NO_CHILDREN;
-    }
-
 }

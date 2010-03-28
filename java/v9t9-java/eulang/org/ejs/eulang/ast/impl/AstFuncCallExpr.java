@@ -4,16 +4,12 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -108,14 +104,6 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	@Override
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { function, arguments };
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
 	}
 
 	/* (non-Javadoc)

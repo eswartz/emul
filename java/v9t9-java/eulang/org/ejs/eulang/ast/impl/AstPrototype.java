@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import java.util.Arrays;
 
-import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -98,14 +97,6 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 		children[0] = retType;
 		System.arraycopy(argumentTypes, 0, children, 1, argumentTypes.length);
 		return children;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
 	}
 	
 	/* (non-Javadoc)

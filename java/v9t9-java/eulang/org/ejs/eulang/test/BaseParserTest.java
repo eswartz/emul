@@ -23,7 +23,6 @@ import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
 import org.ejs.eulang.ast.DumpAST;
-import org.ejs.eulang.ast.Error;
 import org.ejs.eulang.ast.GenerateAST;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
@@ -229,9 +228,9 @@ public class BaseParserTest {
 		}
 	}
 	
-	protected void typeTest(IAstTypedNode node, boolean allowUnknown) {
-		if (!allowUnknown)
-			assertNotNull("No type: " +node.toString(), node.getType());
+	protected void typeTest(IAstNode node, boolean allowUnknown) {
+		if (!allowUnknown && node instanceof IAstTypedNode)
+			assertNotNull("No type: " +node.toString(), ((IAstTypedNode) node).getType());
 		for (IAstNode kid : node.getChildren()) {
 			assertNotNull(node.toString(), kid);
 			if (kid instanceof ITyped)

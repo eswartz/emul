@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast;
 
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 

@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstExpr;
-import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.ITyped;
@@ -20,7 +19,6 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	private ISymbol symbol;
-	private LLType type;
 
     public AstSymbolExpr(ISymbol symbol) {
         super();
@@ -67,14 +65,6 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     public IAstNode[] getChildren() {
         return NO_CHILDREN;
     }
-    
-    /* (non-Javadoc)
-     * @see v9t9.tools.decomp.expr.IAstNode#getReferencedNodes()
-     */
-    public IAstNode[] getReferencedNodes() {
-        return getChildren();
-    }
-
     
     /* (non-Javadoc)
      * @see org.ejs.eulang.ast.IAstSymbolExpr#getSymbol()

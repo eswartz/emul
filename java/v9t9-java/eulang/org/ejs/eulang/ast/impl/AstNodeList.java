@@ -64,12 +64,4 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 		return (IAstNode[]) list.toArray(new IAstNode[list.size()]);
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
-	}
-
 }

@@ -6,7 +6,6 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstExprStatement;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstStatement;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
@@ -82,14 +81,6 @@ public class AstExprStatement extends AstTypedExpr implements IAstExprStatement 
 	@Override
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { expr };
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
 	}
 
 	/* (non-Javadoc)

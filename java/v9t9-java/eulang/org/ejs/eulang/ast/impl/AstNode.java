@@ -5,14 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.AstVisitor;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.IOperation;
 import org.ejs.eulang.ast.ISourceRef;
-import org.ejs.eulang.ast.ITyped;
-import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
 
 /**
  * @author eswartz
@@ -49,6 +42,22 @@ abstract public class AstNode implements IAstNode {
 			name = name.substring(idx+1);
 		}
         return "{ " + name + ":" +hashCode() + " }"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    }
+    
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#getDumpChildren()
+     */
+    @Override
+    public IAstNode[] getDumpChildren() {
+    	return getChildren();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#getReferencedNodes()
+     */
+    @Override
+    public IAstNode[] getReferencedNodes() {
+    	return getChildren();
     }
     
 	protected String catenate(IAstNode[] nodes) {
@@ -120,12 +129,9 @@ abstract public class AstNode implements IAstNode {
         	return ret;
         if (ret == AstVisitor.PROCESS_CONTINUE) {
         	visitor.visitChildren(this);
-	        IAstNode[] children = getChildren();
-			for (IAstNode node : children) {
-	        	ret = node.accept(visitor);
-	        	if (ret == AstVisitor.PROCESS_ABORT)
-	        		return ret;
-	        }
+        	ret = visitor.traverseChildren(this);
+        	if (ret == AstVisitor.PROCESS_ABORT)
+            	return ret;
         }
         visitor.visitEnd(this);
         return ret;
@@ -134,8 +140,8 @@ abstract public class AstNode implements IAstNode {
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstNode#acceptReference(v9t9.tools.decomp.expr.AstVisitor)
      */
-    public void acceptReference(AstVisitor visitor) {
-        visitor.visitReference(this);
+    public int acceptReference(AstVisitor visitor) {
+    	return AstVisitor.PROCESS_CONTINUE;
     }
 
 

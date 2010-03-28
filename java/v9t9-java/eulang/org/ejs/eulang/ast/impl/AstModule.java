@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstStatement;
 import org.ejs.eulang.symbols.IScope;
 
 
@@ -15,7 +16,7 @@ import org.ejs.eulang.symbols.IScope;
  */
 public class AstModule extends AstScope implements IAstModule {
 
-	private IAstNodeList stmtList;
+	private IAstNodeList<IAstStatement> stmtList;
 	/**
 	 * 
 	 */
@@ -35,14 +36,14 @@ public class AstModule extends AstScope implements IAstModule {
 	 * @see org.ejs.eulang.ast.IAstModule#getStmtList()
 	 */
 	@Override
-	public IAstNodeList getStmtList() {
+	public IAstNodeList<IAstStatement> getStmtList() {
 		return stmtList;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstModule#setStmtList(org.ejs.eulang.ast.IAstNodeList)
 	 */
 	@Override
-	public void setStmtList(IAstNodeList stmtList) {
+	public void setStmtList(IAstNodeList<IAstStatement> stmtList) {
 		this.stmtList = reparent(this.stmtList, stmtList);
 	}
 	/* (non-Javadoc)

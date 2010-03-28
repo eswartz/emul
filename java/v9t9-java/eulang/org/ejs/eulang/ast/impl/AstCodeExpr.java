@@ -89,15 +89,6 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { proto, stmts };
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */

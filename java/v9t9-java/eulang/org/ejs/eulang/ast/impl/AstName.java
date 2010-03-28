@@ -88,13 +88,6 @@ public class AstName extends AstNode implements IAstName {
     }
    
     /* (non-Javadoc)
-     * @see v9t9.tools.decomp.expr.IAstNode#getReferencedNodes()
-     */
-    public IAstNode[] getReferencedNodes() {
-        return getChildren();
-    }
-    
-    /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#constructText()
      */
     public Object[] getTextSegments() {

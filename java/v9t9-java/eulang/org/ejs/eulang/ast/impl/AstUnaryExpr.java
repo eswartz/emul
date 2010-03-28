@@ -8,7 +8,6 @@ import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.IUnaryOperation;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
@@ -46,15 +45,6 @@ public class AstUnaryExpr extends AstTypedExpr implements
     public IAstNode[] getChildren() {
         return new IAstNode[] { operand };
     }
-
-    /*
-     * (non-Javadoc)
-     *  
-     * @see v9t9.tools.decomp.expr.IAstNode#getReferencedNodes()
-     */
-     public IAstNode[] getReferencedNodes() {
-         return getChildren();
-     }
 
      /* (non-Javadoc)
      * @see org.ejs.eulang.ast.IAstUnaryExpr#getOp()

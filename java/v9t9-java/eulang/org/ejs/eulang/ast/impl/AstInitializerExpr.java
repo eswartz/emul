@@ -75,13 +75,4 @@ public class AstInitializerExpr extends AstInitializer implements
     public IAstNode[] getChildren() {
         return new IAstNode[] { expr };
     }
-
-    /* (non-Javadoc)
-     * @see v9t9.tools.decomp.expr.IAstNode#getReferencedNodes()
-     */
-    public IAstNode[] getReferencedNodes() {
-        return getChildren();
-    }
-
-
 }

@@ -9,7 +9,6 @@ import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -89,14 +88,6 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 		if (expr == null)
 			return NO_CHILDREN;
 		return new IAstNode[] { expr };
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
 	}
 	
 	/* (non-Javadoc)

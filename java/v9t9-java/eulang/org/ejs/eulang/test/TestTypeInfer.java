@@ -4,7 +4,7 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -12,7 +12,6 @@ import java.util.List;
 
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.IAstAllocStmt;
-import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
@@ -76,7 +75,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testNoChange1");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -96,7 +95,7 @@ public class TestTypeInfer extends BaseParserTest {
     	
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testBinOps");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
     	IAstAllocStmt allocStmt = (IAstAllocStmt) codeExpr.getStmts().list().get(0);
@@ -136,7 +135,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testVoidReturn");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -157,7 +156,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCast1");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
     	
@@ -180,7 +179,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverReturn1");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -210,7 +209,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverReturn2");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -239,7 +238,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast1");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -277,7 +276,7 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	assertTrue(mod.getScope().getSymbols().length == 2);
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast2b");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
 
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
@@ -317,7 +316,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign1");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -342,7 +341,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign2");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -372,7 +371,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign3");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -400,7 +399,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign3b");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
@@ -429,7 +428,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverFuncCall2");
-    	typeTest(def.getExpr(), false);
+    	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.BOOL,  new LLType[] {typeEngine.FLOAT, typeEngine.FLOAT}), def.getExpr().getType());
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();

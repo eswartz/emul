@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IBinaryOperation;
 import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.ast.IBinaryOperation.OpTypes;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -61,51 +60,4 @@ public class ComparisonOperation extends Operation implements IBinaryOperation {
 					+ types.left.toString() + " and " + types.right.toString());
 		types.left = types.right = common;
 	}
-	
-	private LLType getPreferredType(TypeEngine typeEngine, LLType lhsType,
-			LLType a, LLType b) {
-		if (a != null) {
-			if (b != null) {
-				if (a.getBasicType() == b.getBasicType())
-					return a;
-				return typeEngine.getPromotionType(a, b);
-			}
-			return a;
-		} else if (b != null) {
-			return b;
-		} 
-		return null;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IBinaryOperation#getPreferredLeftType(org.ejs.eulang.ast.TypeEngine)
-	 */
-	@Override
-	public LLType getPreferredLeftType(TypeEngine typeEngine, LLType lhsType, LLType leftType, LLType rightType) {
-		return getPreferredType(typeEngine, lhsType, leftType, rightType);
-	}
-
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IBinaryOperation#getPreferredRightType(org.ejs.eulang.ast.TypeEngine)
-	 */
-	@Override
-	public LLType getPreferredRightType(TypeEngine typeEngine, LLType lhsType, LLType leftType, LLType rightType) {
-		return getPreferredType(typeEngine, lhsType, rightType, leftType);
-	}
-
-
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IBinaryOperation#getResultType(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.types.LLType, org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public LLType getResultType(TypeEngine typeEngine, LLType leftType,
-			LLType rightType) throws TypeException {
-		if (!leftType.equals(rightType))
-			throw new TypeException(getName() + " requires identical operands, got " + leftType.toString() + " and " + rightType.toString());
-		return typeEngine.BOOL;
-	}
-
 }

@@ -65,15 +65,6 @@ public class AstScope extends AstNode implements IAstScope {
 		return (IAstNode[]) kids.toArray(new IAstNode[kids.size()]);
 		
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getReferencedNodes()
-	 */
-	@Override
-	public IAstNode[] getReferencedNodes() {
-		return getChildren();
-	}
-	
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstScope#getScope()

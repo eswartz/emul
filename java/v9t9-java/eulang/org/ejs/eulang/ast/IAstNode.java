@@ -48,6 +48,10 @@ public interface IAstNode {
      * @return array of children (never null) 
      */
     public IAstNode[] getChildren();
+    /**Get the owned children of this node to show in a dump.
+     * @return array of children (never null) 
+     */
+    public IAstNode[] getDumpChildren();
     
     /** Get references to other nodes from this node.
      * This set includes nodes which are not owned (i.e.
@@ -68,7 +72,7 @@ public interface IAstNode {
      * Accept a reference
      * @param visitor
      */
-    public void acceptReference(AstVisitor visitor);
+    public int acceptReference(AstVisitor visitor);
     
     public ISourceRef getSourceRef();
     public void setSourceRef(ISourceRef sourceRef);
