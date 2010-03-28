@@ -13,6 +13,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -191,7 +192,15 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		return inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExpr(), getExpr() });
+		if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExpr(), getExpr() }))
+			return false;
+		
+		LLType left = symExpr.getType();
+		LLType right = expr.getType();
+		if (left != null && right != null) {
+			setExpr(createCastOn(typeEngine, expr, left));
+		}
+		return true;
 	}
 	
 }

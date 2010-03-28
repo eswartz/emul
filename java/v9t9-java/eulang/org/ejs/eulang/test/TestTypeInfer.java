@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
@@ -145,7 +146,7 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[1].getType());
     	
     }
-	 @Test
+	@Test
     public void testPromotedCast1() throws Exception {
     	IAstModule mod = treeize(
     			"testPromotedCast1 = code (x : Int, y : Int) {\n" +
@@ -167,6 +168,89 @@ public class TestTypeInfer extends BaseParserTest {
 		assertEquals(typeEngine.FLOAT, binExpr.getLeft().getType());
 		assertTrue(binExpr.getLeft() instanceof IAstUnaryExpr && ((IAstUnaryExpr) binExpr.getLeft()).getOp() == IOperation.CAST);
 		assertEquals(typeEngine.FLOAT, binExpr.getRight().getType());
+    }
+	@Test
+    public void testPromotedCast2() throws Exception {
+    	IAstModule mod = treeize(
+    			"testPromotedCast2 = code () {\n" +
+    			"   z : Byte;\n" +
+    			"	z = z * Byte(100) / 5;\n" +
+    			"};");
+    	sanityTest(mod);
+
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCast2");
+    	typeTest(mod, false);
+    	
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	
+    	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.getStmts().list().get(0);
+		assertEquals(typeEngine.BYTE, allocStmt.getType());
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		assertEquals(typeEngine.INT, castExpr.getOperand().getType());
+		IAstBinExpr divExpr = (IAstBinExpr) castExpr.getOperand();
+		assertEquals(typeEngine.INT, divExpr.getLeft().getType());
+		assertEquals(typeEngine.INT, divExpr.getRight().getType());
+		assertTrue(divExpr.getLeft() instanceof IAstUnaryExpr && ((IAstUnaryExpr) divExpr.getLeft()).getOp() == IOperation.CAST);
+		IAstBinExpr mulExpr = (IAstBinExpr) ((IAstUnaryExpr) divExpr.getLeft()).getOperand();
+		assertEquals(typeEngine.BYTE, mulExpr.getType());
+		assertEquals(typeEngine.BYTE, mulExpr.getLeft().getType());
+		assertEquals(typeEngine.BYTE, mulExpr.getRight().getType());
+    }
+	@Test
+    public void testPromotedCast3() throws Exception {
+    	IAstModule mod = treeize(
+    			"testPromotedCast3 = code () {\n" +
+    			"   z : Byte;\n" +
+    			"	z = z + 1000;\n" +
+    			"};");
+    	sanityTest(mod);
+
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCast3");
+    	typeTest(mod, false);
+    	
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	
+    	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.getStmts().list().get(0);
+		assertEquals(typeEngine.BYTE, allocStmt.getType());
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		assertEquals(typeEngine.INT, castExpr.getOperand().getType());
+		IAstBinExpr addExpr = (IAstBinExpr) castExpr.getOperand();
+		assertEquals(typeEngine.INT, addExpr.getType());
+		assertEquals(typeEngine.INT, addExpr.getLeft().getType());
+		assertEquals(typeEngine.INT, addExpr.getRight().getType());
+		castExpr = (IAstUnaryExpr) addExpr.getLeft();
+		assertTrue(castExpr.getOp() == IOperation.CAST);
+		assertEquals(typeEngine.BYTE, castExpr.getOperand().getType());
+    }
+	@Test
+    public void testPromotedCond1() throws Exception {
+    	IAstModule mod = treeize(
+    			"testPromotedCond1 = code () {\n" +
+    			"   z : Byte;\n" +
+    			"	z = 99 > 100;\n" +
+    			"};");
+    	sanityTest(mod);
+
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCond1");
+    	typeTest(mod, false);
+    	
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	
+    	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.getStmts().list().get(0);
+		assertEquals(typeEngine.BYTE, allocStmt.getType());
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		assertTrue(castExpr.getOp() == IOperation.CAST);
+		IAstBinExpr cmpExpr = (IAstBinExpr)  castExpr.getOperand();
+		assertEquals(typeEngine.BOOL, cmpExpr.getType());
+		assertEquals(typeEngine.INT, cmpExpr.getLeft().getType());
+		assertEquals(typeEngine.INT, cmpExpr.getRight().getType());
+		
     }
 	@Test
     public void testDiscoverReturn1() throws Exception {

@@ -11,6 +11,7 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -20,7 +21,7 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 
-	private IAstSymbolExpr id;
+	private IAstSymbolExpr symExpr;
 	private IAstTypedExpr expr;
 
 	/**
@@ -39,7 +40,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((symExpr == null) ? 0 : symExpr.hashCode());
 		return result;
 	}
 
@@ -58,10 +59,10 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 				return false;
 		} else if (!expr.equals(other.expr))
 			return false;
-		if (id == null) {
-			if (other.id != null)
+		if (symExpr == null) {
+			if (other.symExpr != null)
 				return false;
-		} else if (!id.equals(other.id))
+		} else if (!symExpr.equals(other.symExpr))
 			return false;
 		return true;
 	}
@@ -80,7 +81,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { id, expr };
+		return new IAstNode[] { symExpr, expr };
 	}
 
 	/* (non-Javadoc)
@@ -112,7 +113,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public IAstSymbolExpr getSymbol() {
-		return id;
+		return symExpr;
 	}
 
 	/* (non-Javadoc)
@@ -130,7 +131,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	@Override
 	public void setSymbol(IAstSymbolExpr id) {
 		Check.checkArg(id);
-		this.id = reparent(this.id, id);
+		this.symExpr = reparent(this.symExpr, id);
 	}
 
 	/* (non-Javadoc)
@@ -138,8 +139,15 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		// here, the symbol should have a type, which takes precedence
-		return inferTypesFromChildren(new ITyped[] { id, expr });
+		if (!inferTypesFromChildren(new ITyped[] { symExpr, expr }))
+			return false;
+		
+		LLType left = symExpr.getType();
+		LLType right = expr.getType();
+		if (left != null && right != null) {
+			setExpr(createCastOn(typeEngine, expr, left));
+		}
+		return true;
 	}
 	
 }

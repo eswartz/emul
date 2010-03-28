@@ -6,6 +6,9 @@ package org.ejs.eulang.ast;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ejs.eulang.ast.impl.AstName;
+import org.ejs.eulang.ast.impl.AstType;
+import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
@@ -22,6 +25,7 @@ public class TypeEngine {
 	public LLType UNSPECIFIED = null;
 	public int ptrBits;
 	public LLIntType INT;
+	public LLIntType BYTE;
 	public LLFloatType FLOAT;
 	public LLIntType INT_ANY;
 	public LLBoolType BOOL;
@@ -36,6 +40,7 @@ public class TypeEngine {
 		ptrBits = 16;
 		VOID = new LLVoidType();
 		BOOL = new LLBoolType(1);
+		BYTE = new LLIntType(8);
 		INT = new LLIntType(16);
 		INT_ANY = new LLIntType(0);
 		FLOAT = new LLFloatType(32, 23);
@@ -119,5 +124,16 @@ public class TypeEngine {
 	public LLType getCodeType(IAstType retType, IAstArgDef[] argumentTypes) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	/**
+	 * @param globalScope
+	 */
+	public void populateTypes(GlobalScope globalScope) {
+		globalScope.add(new AstName("Int"), new AstType(INT));
+		globalScope.add(new AstName("Float"), new AstType(FLOAT));		
+		globalScope.add(new AstName("Void"), new AstType(VOID));		
+		globalScope.add(new AstName("Bool"), new AstType(BOOL));		
+		globalScope.add(new AstName("Byte"), new AstType(BYTE));		
 	}
 }

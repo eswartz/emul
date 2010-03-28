@@ -78,8 +78,9 @@ public class GenerateAST {
 		this.fileMap = fileMap;
 		this.globalScope = new GlobalScope();
 		this.typeEngine = new TypeEngine();
-		globalScope.add(new AstName("Int"), new AstType(typeEngine.INT));
-		globalScope.add(new AstName("Float"), new AstType(typeEngine.FLOAT));
+		
+		typeEngine.populateTypes(globalScope);
+		
 	}
 	
 	public List<Error> getErrors() {
