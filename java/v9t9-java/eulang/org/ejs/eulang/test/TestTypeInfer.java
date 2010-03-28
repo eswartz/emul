@@ -439,7 +439,7 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(typeEngine.FLOAT, prototype.argumentTypes()[1].getType());
     	
     	ISymbol a = codeExpr.getScope().get("a");
-    	assertEquals(typeEngine.FLOAT, a.getType());
+    	assertEquals(typeEngine.BOOL, a.getType());
     	ISymbol x = codeExpr.getScope().get("x");
     	assertEquals(typeEngine.FLOAT, x.getType());
     }

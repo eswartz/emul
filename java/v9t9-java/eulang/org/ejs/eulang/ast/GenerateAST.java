@@ -19,6 +19,7 @@ import org.ejs.eulang.ast.impl.AstAssignStmt;
 import org.ejs.eulang.ast.impl.AstBinExpr;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstDefineStmt;
+import org.ejs.eulang.ast.impl.AstExprStatement;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
@@ -286,12 +287,29 @@ public class GenerateAST {
 			return constructCallOrCast(tree);
 		case EulangParser.ARGLIST:
 			return constructArgList(tree);
+			
+		case EulangParser.STMTEXPR:
+			return constructStmtExpr(tree);
 		default:
 			unhandled(tree);
 			return null;
 		}
 		
 	}
+	/**
+	 * @param tree
+	 * @return
+	 * @throws StmtException 
+	 */
+	private IAstNode constructStmtExpr(Tree tree) throws StmtException {
+		assert tree.getChildCount() == 1;
+		
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		IAstStatement stmt = new AstExprStatement(expr);
+		getSource(tree, stmt);
+		return stmt;
+	}
+
 	/**
 	 * @param tree
 	 * @return

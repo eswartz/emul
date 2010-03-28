@@ -67,7 +67,7 @@ public class TypeInference {
 		}
 		if (node instanceof ITyped) {
 			IAstTypedNode typed = (IAstTypedNode) node;
-			if (changed || typed.getType() == null || !typed.getType().isComplete()) {
+			if (/*changed || typed.getType() == null || !typed.getType().isComplete()*/ true) {
 				try {
 					changed |= typed.inferTypeFromChildren(typeEngine);
 				} catch (TypeException e) {

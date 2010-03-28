@@ -39,21 +39,23 @@ public class LLCodeType implements LLType {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		if (retType != null)
-			sb.append(retType.toString());
-		else
-			sb.append("<unknown>");
+		
 		boolean first = true;
 		for (LLType type : argTypes) {
-			if (first) {
-				sb.append('='); first = false;
-			} else
+			if (first)
+				first = false;
+			else
 				sb.append(',');
 			if (type != null)
 				sb.append(type.toString());
 			else
 				sb.append("<unknown>");
 		}
+		sb.append(" => ");
+		if (retType != null)
+			sb.append(retType.toString());
+		else
+			sb.append("<unknown>");
 		return sb.toString();
 	}
 	

@@ -237,9 +237,7 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		LLType newType = null;
-		
-		if (!(canInferTypeFrom(left) || canInferTypeFrom(right)))
+		if (!(canInferTypeFrom(left) || canInferTypeFrom(right) || canInferTypeFrom(this)))
 			return false;
 		
 		IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();

@@ -34,6 +34,12 @@ public class ComparisonOperation extends Operation implements IBinaryOperation {
 			if (commonType == null)
 				throw new TypeException("cannot find compatible type for comparing "
 						+ types.left.toString() + " and " + types.right.toString());
+		} 
+		else if (types.left != null) {
+			types.right = types.left;
+		}
+		else if (types.right != null) {
+			types.left = types.right;
 		}
 		if (types.result != null) {
 			if (types.result.getBasicType() != BasicType.BOOL)

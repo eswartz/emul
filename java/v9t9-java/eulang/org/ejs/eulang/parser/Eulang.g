@@ -23,6 +23,7 @@ tokens {
   EXPR;
   LIST;
   TYPE;
+  STMTEXPR;
   
   CALL;
   INLINE;   // modifier on CALL
@@ -163,20 +164,26 @@ type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScop
      | CODE proto ? -> ^(TYPE proto )
   ;
 
-codestmtlist: (codeStmt ( SEMI codeStmt )* SEMI?) ? ->  ^(STMTLIST codeStmt*)
+codestmtlist: (codeStmt SEMI) => (codeStmt SEMI (codeStmt  SEMI)*) ? ->  ^(STMTLIST codeStmt*)
+    | rhsExpr          -> ^(STMTLIST ^(RETURN rhsExpr))
+    | -> ^(STMTLIST) 
     ;
     
-codeStmt : varDecl
-      | assignExpr
-      | returnExpr
+codeStmt : varDecl    -> varDecl
+      | assignStmt    -> assignStmt
+      | returnStmt    -> returnStmt
+      | rhsExpr       -> ^(STMTEXPR rhsExpr)
       ;
 
 varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
     | ID COLON type (EQUALS assignExpr)?  -> ^(ALLOC ID type assignExpr*)
     ;
 
-returnExpr : RETURN assignExpr?           -> ^(RETURN assignExpr?)
+returnStmt : RETURN assignExpr?           -> ^(RETURN assignExpr?)
       ;
+
+assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
+    ;
       
 assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
     | rhsExpr                             -> rhsExpr

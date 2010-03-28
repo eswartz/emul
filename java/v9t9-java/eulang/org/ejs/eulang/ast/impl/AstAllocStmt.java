@@ -66,7 +66,7 @@ public class AstAllocStmt extends AstDefineStmt implements IAstAllocStmt {
 	 */
 	@Override
 	public String toString() {
-		return "ALLOC";
+		return "ALLOC" + ":" + getTypeString();
 	}
 	
 	/* (non-Javadoc)
@@ -108,16 +108,4 @@ public class AstAllocStmt extends AstDefineStmt implements IAstAllocStmt {
 		return inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExpr(), getExpr() });
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#updateType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setInferredType(TypeEngine typeEngine, LLType newType) {
-		super.setInferredType(typeEngine, newType);
-		if (newType != null)
-			typeExpr.setType(newType);
-	}
-
-
-
 }

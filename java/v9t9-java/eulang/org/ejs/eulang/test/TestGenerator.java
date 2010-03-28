@@ -11,11 +11,13 @@ import static org.junit.Assert.assertSame;
 
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstExprStatement;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstStatement;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.junit.Test;
 
@@ -140,9 +142,12 @@ public class TestGenerator extends BaseParserTest {
     	IAstModule mod = treeize("callee = code(a,b) {} ;  testCalls = code { callee(7,8); };");
     	sanityTest(mod);
     	
+    	IAstDefineStmt callee = (IAstDefineStmt) mod.getScope().getNode("callee");
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCalls");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
-    	IAstFuncCallExpr callExpr = (IAstFuncCallExpr) codeExpr.getStmts().list().get(0);
+    	IAstExprStatement stmt = (IAstExprStatement) codeExpr.getStmts().list().get(0);
+    	IAstFuncCallExpr callExpr = (IAstFuncCallExpr) stmt.getExpr();
+    	assertEquals(callee.getSymbolExpr(), callExpr.getFunction());
     }
 }
 

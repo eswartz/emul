@@ -151,7 +151,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			return false;
 		}
 
-		return updateType(function, codeType);
+		return updateType(function, codeType) | updateType(this, codeType.getRetType());
 	}
 
 	/*

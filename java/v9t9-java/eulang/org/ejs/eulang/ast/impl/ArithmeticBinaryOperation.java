@@ -46,6 +46,10 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 			types.left = types.right;
 			types.result = types.right;
 		}
+		else if (types.result != null) {
+			types.left = types.result;
+			types.right = types.result;
+		}
 	}
 
 	/* (non-Javadoc)
