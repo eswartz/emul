@@ -35,4 +35,12 @@ public class AstIntLitExpr extends AstLitExpr implements
 	public long getValue() {
 		return value;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstLitExpr#getObject()
+	 */
+	@Override
+	public Object getObject() {
+		return value;
+	}
 }

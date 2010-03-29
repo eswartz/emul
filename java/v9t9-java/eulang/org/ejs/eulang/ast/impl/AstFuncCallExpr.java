@@ -105,6 +105,16 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { function, arguments };
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		setFunction((IAstTypedExpr) children[0]);
+		if (children[1] != arguments)
+			throw new UnsupportedOperationException();
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstExpr#equalValue(org.ejs.eulang.ast.IAstExpr)
@@ -113,13 +123,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	public boolean equalValue(IAstExpr expr) {
 		return false;
 	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstExpr#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
-	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */

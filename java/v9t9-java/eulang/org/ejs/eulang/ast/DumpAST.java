@@ -42,6 +42,7 @@ public class DumpAST extends AstVisitor {
 	 * 
 	 */
 	private void dumpScope(IScope scope) {
+		indent++;
 		printIndent();
 		ISymbol[] symbols = scope.getSymbols();
 		if (symbols.length > 0) {
@@ -53,6 +54,7 @@ public class DumpAST extends AstVisitor {
 		} else {
 			str.println("=== (no symbols)"); 
 		}
+		indent--;
 	}
 
 	/* (non-Javadoc)

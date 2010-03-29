@@ -65,7 +65,10 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     public IAstNode[] getChildren() {
         return NO_CHILDREN;
     }
-    
+    @Override
+	public void replaceChildren(IAstNode[] children) {
+	}
+	
     /* (non-Javadoc)
      * @see org.ejs.eulang.ast.IAstSymbolExpr#getSymbol()
      */

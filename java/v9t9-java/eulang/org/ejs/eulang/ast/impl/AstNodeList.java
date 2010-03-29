@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.ejs.eulang.ast.IAstNode;
@@ -64,4 +65,12 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 		return (IAstNode[]) list.toArray(new IAstNode[list.size()]);
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		list.clear();
+		List<T> asList = (List<T>) Arrays.asList(children);
+		list.addAll(asList);
+	}
+	
 }

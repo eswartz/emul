@@ -12,12 +12,12 @@ import org.ejs.eulang.ast.IAstNode;
  */
 public class LocalSymbol extends BaseSymbol {
 
-	public LocalSymbol(IAstName name, IAstNode def) {
-		super(name, def);
+	public LocalSymbol(int number, IAstName name, IAstNode def) {
+		super(number, name, def);
 	}
 
-	public LocalSymbol(String name, IScope scope, IAstNode def) {
-		super(name, scope, def);
+	public LocalSymbol(int number, String name, IScope scope, IAstNode def) {
+		super(number, name, scope, def);
 	}
 
 }

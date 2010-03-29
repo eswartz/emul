@@ -15,20 +15,21 @@ import org.ejs.eulang.types.LLType;
  */
 public class BaseSymbol implements ISymbol {
 
-	private static int gNumber = 0;
 	private String name;
 	private IAstNode def;
 	private LLType type;
 	private IScope scope;
-	private int number = gNumber++;
+	private int number;
 	
-	public BaseSymbol(String name, IScope scope, IAstNode def) {
+	public BaseSymbol(int number, String name, IScope scope, IAstNode def) {
+		this.number = number;
 		this.name = name;
 		this.scope = scope;
 		Check.checkArg(this.name);
 		setDefinition(def);
 	}
-	public BaseSymbol(IAstName name, IAstNode def) {
+	public BaseSymbol(int number, IAstName name, IAstNode def) {
+		this.number = number;
 		this.name = name.getName();
 		this.scope = name.getScope();
 		setDefinition(def);
@@ -41,6 +42,7 @@ public class BaseSymbol implements ISymbol {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + number;
 		return result;
 	}
 	@Override
@@ -57,6 +59,8 @@ public class BaseSymbol implements ISymbol {
 				return false;
 		} else if (!name.equals(other.name))
 			return false;
+		if (number != other.number)
+			return false;
 		return true;
 	}
 	
@@ -65,7 +69,8 @@ public class BaseSymbol implements ISymbol {
 	 */
 	@Override
 	public String toString() {
-		return "\"" + name + "\"" + ":" +(type != null ? type.toString() : "<unknown>");
+		//return "\"" + name + "\"" + ":" +(type != null ? type.toString() : "<unknown>");
+		return name  + "." + number + ":" +(type != null ? type.toString() : "<unknown>");
 	}
 	
 	@Override

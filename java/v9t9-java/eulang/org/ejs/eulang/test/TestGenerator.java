@@ -9,11 +9,14 @@ import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertSame;
 
+import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstExprStatement;
+import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
+import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
+import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -34,7 +37,8 @@ public class TestGenerator extends BaseParserTest {
     	assertTrue(mod.getScope().getSymbols().length == 0);
     }
     
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testOneEntryConstModule() throws Exception {
     	IAstModule mod = treeize("foo = 3;");
     	sanityTest(mod);
@@ -79,8 +83,8 @@ public class TestGenerator extends BaseParserTest {
 		assertEquals(prototype.argumentTypes()[0].getSymbolExpr().getSymbol().getScope(), codeExpr.getScope());
 		assertEquals(prototype.argumentTypes()[1].getSymbolExpr().getSymbol().getScope(), codeExpr.getScope());
 		
-		assertNotNull(codeExpr.getStmts());
-		assertTrue(codeExpr.getStmts().list().isEmpty());
+		assertNotNull(codeExpr.stmts());
+		assertTrue(codeExpr.stmts().list().isEmpty());
     }
     @Test
     public void testOneEntryCodeModuleReturnNull() throws Exception {
@@ -144,9 +148,70 @@ public class TestGenerator extends BaseParserTest {
     	IAstDefineStmt callee = (IAstDefineStmt) mod.getScope().getNode("callee");
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCalls");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
-    	IAstExprStatement stmt = (IAstExprStatement) codeExpr.getStmts().list().get(0);
+    	IAstExprStmt stmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr callExpr = (IAstFuncCallExpr) stmt.getExpr();
     	assertEquals(callee.getSymbolExpr(), callExpr.getFunction());
+    }
+    
+    @Test
+    public void testGoto1() throws Exception {
+    	IAstModule mod = treeize("testGoto = code { @foo: };");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGoto");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstLabelStmt lab = (IAstLabelStmt) codeExpr.stmts().list().get(0);
+    	assertEquals("foo", lab.getLabel().getSymbol().getName());
+    	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
+    }
+    @Test
+    public void testGoto2() throws Exception {
+    	IAstModule mod = treeize("testGoto = code { @foo: \n" +
+    			"goto foo;\n" +
+    			"goto foo, 9>8;\n" +
+    			"};");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGoto");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstLabelStmt lab = (IAstLabelStmt) codeExpr.stmts().list().get(0);
+    	assertEquals("foo", lab.getLabel().getSymbol().getName());
+    	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
+    	
+    	IAstGotoStmt goto1 = (IAstGotoStmt) codeExpr.stmts().list().get(1);
+    	assertEquals(lab.getLabel(), goto1.getLabel());
+    	IAstGotoStmt goto2 = (IAstGotoStmt) codeExpr.stmts().list().get(2);
+    	assertEquals(lab.getLabel(), goto2.getLabel());
+    }
+    @Test
+    public void testGoto3() throws Exception {
+    	IAstModule mod = treeize("testGoto = code { @foo: \n" +
+    			"{ @foo: \n"+
+    			"goto foo;\n" +
+    			"goto :foo;\n" +
+    			"}\n"+
+    			"goto foo, 9>8;\n" +
+    			"};");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGoto");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstLabelStmt lab = (IAstLabelStmt) codeExpr.stmts().list().get(0);
+    	assertEquals("foo", lab.getLabel().getSymbol().getName());
+    	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
+
+    	IAstBlockStmt block = (IAstBlockStmt) codeExpr.stmts().list().get(1);
+    	
+	    	IAstLabelStmt lab2 = (IAstLabelStmt) block.stmts().list().get(0);
+	    	assertEquals("foo", lab2.getLabel().getSymbol().getName());
+	    	assertEquals(codeExpr.getScope(), lab2.getLabel().getSymbol().getScope().getParent());
+	    	IAstGotoStmt goto1 = (IAstGotoStmt) block.stmts().list().get(1);
+	    	assertEquals(lab2.getLabel(), goto1.getLabel());
+	    	IAstGotoStmt goto2 = (IAstGotoStmt) block.stmts().list().get(2);
+	    	assertEquals(lab.getLabel(), goto2.getLabel());
+	    	
+    	IAstGotoStmt goto3 = (IAstGotoStmt) codeExpr.stmts().list().get(2);
+    	assertEquals(lab.getLabel(), goto3.getLabel());
     }
 }
 

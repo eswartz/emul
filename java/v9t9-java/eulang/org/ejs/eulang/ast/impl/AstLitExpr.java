@@ -16,7 +16,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstLitExpr extends AstTypedExpr implements
+public abstract class AstLitExpr extends AstTypedExpr implements
 		IAstLitExpr, IAstTypedExpr {
 
 	private String lit;
@@ -43,19 +43,15 @@ public class AstLitExpr extends AstTypedExpr implements
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
 	 */
-	@Override
+	@Override 
 	public IAstNode[] getChildren() {
 		return NO_CHILDREN;
+	}
+	
+	@Override
+	public void replaceChildren(IAstNode[] children) {
 	}
 
 	/* (non-Javadoc)

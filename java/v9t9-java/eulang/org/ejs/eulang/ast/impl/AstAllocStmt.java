@@ -154,6 +154,30 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		else
 			return new IAstNode[] { getSymbolExpr() };
 	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		if (typeExpr != null && getExpr() != null) {
+			setSymbolExpr((IAstSymbolExpr) children[0]);
+			if (children[1] != typeExpr)
+				throw new UnsupportedOperationException();
+			setExpr((IAstTypedExpr) children[2]);
+		}
+		else if (typeExpr != null) {
+			setSymbolExpr((IAstSymbolExpr) children[0]);
+			if (children[1] != typeExpr)
+				throw new UnsupportedOperationException();
+		}
+		else if (getExpr() != null) {
+			setSymbolExpr((IAstSymbolExpr) children[0]);
+			setExpr((IAstTypedExpr) children[1]);
+		} else {
+			setSymbolExpr((IAstSymbolExpr) children[0]);
+		}		
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
@@ -163,14 +187,6 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getTypeExpr()
 	 */

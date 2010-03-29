@@ -6,6 +6,9 @@ package org.ejs.eulang.ast;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ejs.eulang.ast.impl.AstBoolLitExpr;
+import org.ejs.eulang.ast.impl.AstFloatLitExpr;
+import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
@@ -13,6 +16,7 @@ import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
 import org.ejs.eulang.types.LLIntType;
+import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -30,6 +34,7 @@ public class TypeEngine {
 	public LLIntType INT_ANY;
 	public LLBoolType BOOL;
 	public LLVoidType VOID;
+	public LLLabelType LABEL;
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 
@@ -39,6 +44,7 @@ public class TypeEngine {
 	public TypeEngine() {
 		ptrBits = 16;
 		VOID = new LLVoidType();
+		LABEL = new LLLabelType();
 		BOOL = new LLBoolType(1);
 		BYTE = new LLIntType(8);
 		INT = new LLIntType(16);
@@ -135,5 +141,48 @@ public class TypeEngine {
 		globalScope.add(new AstName("Void"), new AstType(VOID));		
 		globalScope.add(new AstName("Bool"), new AstType(BOOL));		
 		globalScope.add(new AstName("Byte"), new AstType(BYTE));		
+	}
+
+	/**
+	 * Create a new literal node with the given value
+	 * @param type
+	 * @param object
+	 * @return
+	 */
+	public IAstLitExpr createLiteralNode(LLType type, Object object) {
+		switch (type.getBasicType()) {
+		case INTEGRAL: {
+			if (object instanceof Number) {
+				long newValue = ((Number) object).longValue() << (64 - type.getBits()) >> (64 - type.getBits());
+				return new AstIntLitExpr(newValue+"", type, newValue);
+			} else if (object instanceof Boolean) {
+				long newValue = ((Boolean) object).booleanValue() ? 1 : 0;
+				return new AstIntLitExpr(newValue+"", type, newValue);
+			} else {
+				return null;
+			}
+		}
+		case FLOATING: {
+			if (object instanceof Number) {
+				double newValue = ((Number) object).doubleValue();
+				if (type.getBits() <= 32) {
+					newValue = (float) newValue;
+				}
+				return new AstFloatLitExpr(newValue+"", type, newValue);
+			} else if (object instanceof Boolean) {
+				double newValue = ((Boolean) object).booleanValue() ? 1 : 0;
+				return new AstFloatLitExpr(newValue+"", type, newValue);
+			} else {
+				return null;
+			}
+		}
+		case BOOL: {
+			if (!(object instanceof Number))
+				return null;
+			boolean newValue = ((Number) object).longValue() != 0;
+			return new AstBoolLitExpr(newValue+"", type, newValue);
+		}
+		}
+		return null;
 	}
 }

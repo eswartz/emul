@@ -23,12 +23,6 @@ public interface IScope extends Iterable<ISymbol> {
      * an IAstEnumDeclaration, IAstCompositeTypeSpecifier, etc. */
     public void setOwner(IAstNode owner);
     
-    /** Get the name of the scope (or null) */
-    //public IAstName getScopeName();
-    
-    /** Set the name of the scope (or null) */
-  //  public void setScopeName(IAstName name);
-    
     /** Get the parent scope (or null) */
     public IScope getParent();
     

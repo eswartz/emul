@@ -16,9 +16,9 @@ public interface IAstUnaryExpr extends IAstExpr, IAstTypedExpr {
     public void setOp(IUnaryOperation operator);
 
     /** Get the target of the expression */
-    public IAstTypedExpr getOperand();
+    public IAstTypedExpr getExpr();
 
     /** Set the target of the expression */
-    public void setOperand(IAstTypedExpr expr);
+    public void setExpr(IAstTypedExpr expr);
 
 }

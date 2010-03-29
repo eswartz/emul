@@ -3,7 +3,7 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IAstFloatLitExpr;
+import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.types.LLType;
 
@@ -11,12 +11,12 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class AstFloatLitExpr extends AstLitExpr implements
-		IAstLitExpr, IAstFloatLitExpr {
+public class AstBoolLitExpr extends AstLitExpr implements
+		IAstLitExpr, IAstBoolLitExpr {
 
-	private final double value;
+	private final boolean value;
 
-	public AstFloatLitExpr(String lit, LLType type, double value) {
+	public AstBoolLitExpr(String lit, LLType type, boolean value) {
 		super(lit, type);
 		this.value = value;
 		
@@ -32,7 +32,7 @@ public class AstFloatLitExpr extends AstLitExpr implements
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstIntegerLiteralExpression#getValue()
 	 */
-	public double getValue() {
+	public boolean getValue() {
 		return value;
 	}
 	

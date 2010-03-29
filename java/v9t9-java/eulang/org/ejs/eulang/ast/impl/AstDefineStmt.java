@@ -82,20 +82,18 @@ public class AstDefineStmt extends AstExpr implements IAstDefineStmt {
 			return new IAstNode[] { id };
 	}
 
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		throw new UnsupportedOperationException();
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
 	public boolean equalValue(IAstExpr expr) {
 		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
 	}
 
 	/* (non-Javadoc)

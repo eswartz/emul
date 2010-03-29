@@ -5,12 +5,13 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.IOperation;
 import org.ejs.eulang.ast.IUnaryOperation;
 import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -20,14 +21,14 @@ import org.ejs.eulang.types.TypeException;
 public class AstUnaryExpr extends AstTypedExpr implements
         IAstUnaryExpr {
 
-    protected IAstTypedExpr operand;
+    protected IAstTypedExpr expr;
     protected IUnaryOperation op;
 
     /** Create a unary expression
      */
     public AstUnaryExpr(IUnaryOperation op, IAstTypedExpr operand) {
         setOp(op);
-        setOperand(operand);
+        setExpr(operand);
         dirty = false;
     }
     
@@ -43,9 +44,13 @@ public class AstUnaryExpr extends AstTypedExpr implements
      * @see v9t9.tools.decomp.expr.impl.AstNode#getChildren()
      */
     public IAstNode[] getChildren() {
-        return new IAstNode[] { operand };
+        return new IAstNode[] { expr };
     }
-
+    @Override
+	public void replaceChildren(IAstNode[] children) {
+    	setExpr((IAstTypedExpr) children[0]);
+	}
+	
      /* (non-Javadoc)
      * @see org.ejs.eulang.ast.IAstUnaryExpr#getOp()
      */
@@ -66,23 +71,26 @@ public class AstUnaryExpr extends AstTypedExpr implements
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstUnaryExpression#getOperand()
      */
-    public IAstTypedExpr getOperand() {
-        return operand;
+    public IAstTypedExpr getExpr() {
+        return expr;
     }
 
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstUnaryExpression#setOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
-    public void setOperand(IAstTypedExpr expr) {
+    public void setExpr(IAstTypedExpr expr) {
         org.ejs.coffee.core.utils.Check.checkArg(expr);
-        this.operand = reparent(this.operand, expr);
+        this.expr = reparent(this.expr, expr);
         dirty = true;
     }
 
-    /* (non-Javadoc)
-     * @see v9t9.tools.decomp.expr.IAstExpression#simplify()
-     */
-    public IAstExpr simplify() {
+    public IAstExpr simplify(TypeEngine typeEngine) {
+		if (op == IOperation.CAST) {
+			if (expr instanceof IAstLitExpr) {
+				return typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
+			}
+		}
+
         return this;
     }
     
@@ -93,7 +101,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
         return expr instanceof IAstUnaryExpr
         && ((IAstUnaryExpr) expr).getType().equals(getType())
         && ((IAstUnaryExpr) expr).getOp() == getOp()
-        && ((IAstUnaryExpr) expr).getOperand().equalValue(getOperand())
+        && ((IAstUnaryExpr) expr).getExpr().equalValue(getExpr())
         ;
     }
     
@@ -103,10 +111,10 @@ public class AstUnaryExpr extends AstTypedExpr implements
     @Override
     public boolean inferTypeFromChildren(TypeEngine typeEngine)
     		throws TypeException {
-    	LLType opType = null;
-    	if (canInferTypeFrom(operand))
-    		opType = operand.getType();
-    	opType = op.getPreferredType(typeEngine, null, opType);
-    	return updateType(operand, opType) | updateType(this, op.getResultType(opType));
+    	IUnaryOperation.OpTypes types = new IUnaryOperation.OpTypes();
+    	types.expr = expr.getType();
+    	types.result = getType();
+    	op.inferTypes(typeEngine, types);
+    	return updateType(expr, types.expr) | updateType(this, types.result);
     }
 }

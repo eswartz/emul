@@ -131,6 +131,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 				newType.getBits() == 0) {
 			return child;
 		}
+		
 		child.setParent(null);
 		IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, child);
 		castExpr.setType(newType);

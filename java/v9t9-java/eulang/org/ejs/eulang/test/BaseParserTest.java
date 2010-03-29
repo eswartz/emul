@@ -11,6 +11,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.ejs.eulang.parser.EulangParser;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.TypeInference;
 
 /**
  * @author ejs
@@ -237,5 +239,37 @@ public class BaseParserTest {
 				typeTest((IAstTypedNode) kid, allowUnknown);
 		}
 	}
-    
+ 
+	protected void doTypeInfer(IAstModule mod) {
+		doTypeInfer(mod, false);
+	}
+	protected void doTypeInfer(IAstModule mod, boolean expectErrors) {
+		List<Message> messages = new ArrayList<Message>();
+		TypeInference infer = new TypeInference();
+		
+		int depth = mod.getDepth();
+		
+		int passes = 0;
+		while (passes++ <= depth) {
+			boolean changed = false;
+			
+			changed = infer.infer(messages, typeEngine, mod);
+			
+			if (!changed) 
+				break;
+			
+			System.err.flush();
+			System.out.println("After type inference:");
+			DumpAST dump = new DumpAST(System.out);
+			mod.accept(dump);
+			
+		}
+		System.out.println("Inference: " + passes + " passes");
+		for (Message msg : messages)
+			System.err.println(msg);
+		if (!expectErrors)
+			assertEquals("expected no errors: " + catenate(messages), 0, messages.size());
+		else
+			assertTrue("expected errors", messages.size() > 0);
+	}
 }

@@ -83,6 +83,15 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { symExpr, expr };
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		setSymbol((IAstSymbolExpr) children[0]);
+		setExpr((IAstTypedExpr) children[1]);
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
@@ -90,14 +99,6 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	@Override
 	public boolean equalValue(IAstExpr expr) {
 		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
 	}
 
 	/* (non-Javadoc)

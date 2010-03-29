@@ -11,21 +11,22 @@ import org.ejs.eulang.types.TypeException;
  *
  */
 public interface IUnaryOperation extends IOperation {
+	class OpTypes {
+		public LLType expr;
+		public LLType result;
+	}
+	
 	/**
-	 * Get the type preferred for the input to this operation.
+	 * Update the types to those the operation needs.  Some or all of 
+	 * 'types' may be null.  If the incoming types are inappropriate, throws an exception.  
+	 */
+	void inferTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
+
+	/**
+	 * Update 'expr' to the type expected by 'result'.  All the entries
+	 * in 'types' are set.
 	 * @param typeEngine
-	 * @param lhsType if non-<code>null</code>, the existing type into which the result is used
-	 * @param opType if non-<code>null</code>, current operand type
-	 * @return llType
+	 * @param types
 	 */
-	LLType getPreferredType(TypeEngine typeEngine, LLType lhsType, LLType opType);
-
-	/**
-	 * Get the type generated from the given input type.
-	 * @param type
-	 * @return
-	 */
-	LLType getResultType(LLType type) throws TypeException;
-
-
+	void castTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
 }

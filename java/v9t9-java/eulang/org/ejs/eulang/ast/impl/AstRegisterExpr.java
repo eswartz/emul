@@ -83,5 +83,8 @@ public class AstRegisterExpr extends AstExpr implements
     public IAstNode[] getChildren() {
         return NO_CHILDREN;
     }
-
+    @Override
+	public void replaceChildren(IAstNode[] children) {
+	}
+	
 }

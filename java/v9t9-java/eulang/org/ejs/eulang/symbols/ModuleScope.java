@@ -21,7 +21,7 @@ public class ModuleScope extends Scope {
 	 */
 	@Override
 	public ISymbol createSymbol(String name) {
-		return new GlobalSymbol(name, this, null);
+		return new GlobalSymbol(nextId(), name, this, null);
 	}
 
 }

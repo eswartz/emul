@@ -249,7 +249,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testType1c() throws Exception  {
-    	parseAt("codeStmt", "x : Int&");
+    	parseAt("codeStmt", "x : Int&;");
     }
     @Test
     public void testType1d() throws Exception  {

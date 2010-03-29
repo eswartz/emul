@@ -12,12 +12,12 @@ import org.ejs.eulang.ast.IAstNode;
  */
 public class GlobalSymbol extends BaseSymbol {
 
-	public GlobalSymbol(IAstName name, IAstNode def) {
-		super(name, def);
+	public GlobalSymbol(int number, IAstName name, IAstNode def) {
+		super(number, name, def);
 	}
 
-	public GlobalSymbol(String name, IScope scope, IAstNode def) {
-		super(name, scope, def);
+	public GlobalSymbol(int number, String name, IScope scope, IAstNode def) {
+		super(number, name, scope, def);
 	}
 
 }

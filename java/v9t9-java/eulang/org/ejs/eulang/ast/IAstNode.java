@@ -82,5 +82,11 @@ public interface IAstNode {
 	 */
 	public int getDepth();
 
+	/**
+	 * Replace children from the array. 
+	 * @param children array which matches length and semantics of {@link #getChildren()}
+	 */
+	public void replaceChildren(IAstNode[] children);
+
 }
 

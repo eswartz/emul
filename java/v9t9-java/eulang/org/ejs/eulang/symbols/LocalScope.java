@@ -21,7 +21,7 @@ public class LocalScope extends Scope {
 	 */
 	@Override
 	public ISymbol createSymbol(String name) {
-		return new LocalSymbol(name, this, null);
+		return new LocalSymbol(nextId(), name, this, null);
 	}
 
 }

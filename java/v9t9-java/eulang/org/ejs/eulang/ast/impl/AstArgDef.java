@@ -50,6 +50,12 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 		return name;
 	}
 
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(IAstSymbolExpr name) {
+		this.name = reparent(this.name, name);
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
 	 */
@@ -66,19 +72,31 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		if (typeExpr != null && defaultVal != null) {
+			setName((IAstSymbolExpr) children[0]);
+			setTypeExpr((IAstType) children[1]);
+			setDefaultValue((IAstTypedExpr) children[2]);
+		} else if (defaultVal != null) {
+			setName((IAstSymbolExpr) children[0]);
+			setDefaultValue((IAstTypedExpr) children[1]);
+		} else if (typeExpr != null) {
+			setName((IAstSymbolExpr) children[0]);
+			setTypeExpr((IAstType) children[1]);
+		} else {
+			setName((IAstSymbolExpr) children[0]);
+		}
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
 	public boolean equalValue(IAstExpr expr) {
 		return expr.equalValue(expr);
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return null;
 	}
 
 	/* (non-Javadoc)

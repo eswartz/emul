@@ -19,6 +19,7 @@ public class AllTests {
 		suite.addTest(new JUnit4TestAdapter(TestParser.class));
 		suite.addTest(new JUnit4TestAdapter(TestGenerator.class));
 		suite.addTest(new JUnit4TestAdapter(TestTypeInfer.class));
+		suite.addTest(new JUnit4TestAdapter(TestSimplify.class));
 		//$JUnit-END$
 		return suite;
 	}

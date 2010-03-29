@@ -78,7 +78,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#getStmts()
 	 */
 	@Override
-	public IAstNodeList<IAstStatement> getStmts() {
+	public IAstNodeList<IAstStatement> stmts() {
 		return stmts;
 	}
 
@@ -89,6 +89,15 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { proto, stmts };
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		throw new UnsupportedOperationException();
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
@@ -97,14 +106,6 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		return expr.equals(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */

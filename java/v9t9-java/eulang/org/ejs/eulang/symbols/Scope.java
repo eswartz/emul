@@ -6,6 +6,7 @@ package org.ejs.eulang.symbols;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
@@ -21,15 +22,24 @@ public abstract class Scope implements IScope {
 	//private String scopeName;
 	private IScope parent;
 
+	private AtomicInteger counter;
 	public abstract ISymbol createSymbol(String name);
 	
 	/**
 	 * @param currentScope
 	 */
 	public Scope(IScope parent) {
+		if (parent instanceof Scope) {
+			counter = ((Scope) parent).counter;
+		} else {
+			counter = new AtomicInteger();
+		}
 		setParent(parent);
 	}
 	
+	protected int nextId() {
+		return counter.getAndIncrement();
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
 	 */

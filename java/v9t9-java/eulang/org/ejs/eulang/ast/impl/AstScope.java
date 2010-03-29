@@ -66,6 +66,12 @@ public class AstScope extends AstNode implements IAstScope {
 		
 	}
 	
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		throw new UnsupportedOperationException();
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstScope#getScope()
 	 */

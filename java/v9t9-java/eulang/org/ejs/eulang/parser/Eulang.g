@@ -43,11 +43,15 @@ tokens {
   NOT;
   NEG;
   INV;
-
+  
   LIT;
   
   IDREF;
   IDLIST;
+  
+  LABEL;
+  GOTO;
+  BLOCK;
 }
 
 @header {
@@ -164,15 +168,18 @@ type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScop
      | CODE proto ? -> ^(TYPE proto )
   ;
 
-codestmtlist: (codeStmt SEMI) => (codeStmt SEMI (codeStmt  SEMI)*) ? ->  ^(STMTLIST codeStmt*)
+codestmtlist:  (codeStmt ) => (codeStmt+)  ->  ^(STMTLIST codeStmt*)
     | rhsExpr          -> ^(STMTLIST ^(RETURN rhsExpr))
     | -> ^(STMTLIST) 
     ;
     
-codeStmt : varDecl    -> varDecl
-      | assignStmt    -> assignStmt
-      | returnStmt    -> returnStmt
-      | rhsExpr       -> ^(STMTEXPR rhsExpr)
+codeStmt : varDecl SEMI   -> varDecl
+      | assignStmt SEMI   -> assignStmt
+      | returnStmt SEMI   -> returnStmt
+      | gotoStmt SEMI     -> gotoStmt
+      | rhsExpr SEMI      -> ^(STMTEXPR rhsExpr)
+      | blockStmt         -> blockStmt
+      | labelStmt     -> labelStmt
       ;
 
 varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
@@ -188,6 +195,14 @@ assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assi
 assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
+
+labelStmt: AT ID COLON                    -> ^(LABEL ID)
+  ;
+gotoStmt: GOTO idOrScopeRef ( COMMA rhsExpr )?           -> ^(GOTO idOrScopeRef rhsExpr?)
+  ;
+  
+blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
+  ;
 
 rhsExpr :   cond                          -> cond
     ;
@@ -270,6 +285,8 @@ unary:    ( atom        -> atom )
 ;
 atom options { k=2; } :
       NUMBER                          -> ^(LIT NUMBER)
+    |   FALSE                         -> ^(LIT FALSE)
+    |   TRUE                          -> ^(LIT TRUE)
     |   CHAR_LITERAL                  -> ^(LIT CHAR_LITERAL)
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
     |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
@@ -339,6 +356,9 @@ DATA : 'data';
 MACRO : 'macro';
 FOR : 'for';
 IN : 'in';
+GOTO: 'goto';
+FALSE: 'false';
+TRUE: 'true';
 
 //
 //  Numbers
@@ -348,6 +368,7 @@ NUMBER: '0'..'9' (IDSUFFIX ( '.' IDSUFFIX)?);
 //
 //  Identifiers
 //
+
 //SCOPEREF : ID ('.' ID) + ;
 
 //  Handle multiple colons which aren't ':' or '::='.  (We ignore spaces so we have to account for this)

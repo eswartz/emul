@@ -4,7 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstExpr;
-import org.ejs.eulang.ast.IAstExprStatement;
+import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
@@ -15,14 +15,14 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstExprStatement extends AstTypedExpr implements IAstExprStatement  {
+public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 
 	private IAstTypedExpr expr;
 
 	/**
 	 * @param expr
 	 */
-	public AstExprStatement(IAstTypedExpr expr) {
+	public AstExprStmt(IAstTypedExpr expr) {
 		setExpr(expr);
 	}
 
@@ -52,7 +52,7 @@ public class AstExprStatement extends AstTypedExpr implements IAstExprStatement 
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstExprStatement other = (AstExprStatement) obj;
+		AstExprStmt other = (AstExprStmt) obj;
 		if (expr == null) {
 			if (other.expr != null)
 				return false;
@@ -84,19 +84,19 @@ public class AstExprStatement extends AstTypedExpr implements IAstExprStatement 
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		setExpr((IAstTypedExpr) children[0]);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstExpr#equalValue(org.ejs.eulang.ast.IAstExpr)
 	 */
 	@Override
 	public boolean equalValue(IAstExpr expr) {
 		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstExpr#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
 	}
 
 	/* (non-Javadoc)

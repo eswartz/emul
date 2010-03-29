@@ -89,6 +89,12 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 			return NO_CHILDREN;
 		return new IAstNode[] { expr };
 	}
+	@Override
+	public void replaceChildren(IAstNode[] children) {
+		if (expr != null)
+			setExpr((IAstTypedExpr) children[0]);
+	}
+	
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstExpr#equalValue(org.ejs.eulang.ast.IAstExpr)
@@ -98,15 +104,6 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 		return false;
 	}
 
-
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstExpr#simplify()
-	 */
-	@Override
-	public IAstExpr simplify() {
-		return this;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)

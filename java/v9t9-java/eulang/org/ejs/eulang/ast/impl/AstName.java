@@ -87,6 +87,11 @@ public class AstName extends AstNode implements IAstName {
         return NO_CHILDREN;
     }
    
+    @Override
+	public void replaceChildren(IAstNode[] children) {
+		throw new UnsupportedOperationException();
+	}
+	
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#constructText()
      */

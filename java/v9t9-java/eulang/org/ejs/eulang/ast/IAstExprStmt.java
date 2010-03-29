@@ -8,7 +8,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstExprStatement extends IAstStatement, IAstTypedExpr {
+public interface IAstExprStmt extends IAstStatement, IAstTypedExpr {
 
 	/**
 	 * @param expr2

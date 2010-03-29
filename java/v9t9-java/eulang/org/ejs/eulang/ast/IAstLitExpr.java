@@ -10,4 +10,6 @@ package org.ejs.eulang.ast;
  */
 public interface IAstLitExpr extends IAstExpr, IAstTypedExpr {
 	String getLiteral();
+	
+	Object getObject();
 }

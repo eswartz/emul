@@ -1,33 +1,36 @@
 /**
  * 
  */
-package org.ejs.eulang.ast;
+package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.impl.Operation;
+import org.ejs.eulang.ast.IUnaryOperation;
+import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.TypeException;
 
 /**
  * @author ejs
  *
  */
-public class CastOperation extends Operation implements IUnaryOperation {
+public class ArithmeticUnaryOperation extends Operation implements IUnaryOperation {
 
 	/**
 	 * @param name
 	 * @param isCommutative
 	 */
-	public CastOperation(String name) {
+	public ArithmeticUnaryOperation(String name) {
 		super(name, false);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IUnaryOperation#inferTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IUnaryOperation.OpTypes)
 	 */
 	@Override
 	public void inferTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		if (types.result == null)
-			throw new TypeException("cannot determine cast type");
+		if (types.result != null && types.expr == null)
+			types.expr = types.result;
+		if (types.expr != null && types.result == null)
+			types.result = types.expr;
 	}
 	
 	/* (non-Javadoc)
@@ -36,6 +39,7 @@ public class CastOperation extends Operation implements IUnaryOperation {
 	@Override
 	public void castTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		
+		types.expr = types.result;
 	}
+	
 }
