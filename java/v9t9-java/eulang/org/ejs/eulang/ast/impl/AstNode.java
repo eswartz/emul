@@ -3,9 +3,16 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.ejs.eulang.ast.AstVisitor;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstScope;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.ISourceRef;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * @author eswartz
@@ -183,5 +190,72 @@ abstract public class AstNode implements IAstNode {
     	}
     	return 1;
     }
+
+    @SuppressWarnings("unchecked")
+	protected <T extends IAstNode> T doCopy(T node, IAstNode copyParent) {
+    	if (node == null)
+			return null;
+    	T copy = (T) node.copy(copyParent);
+    	return copy;
+    }
     
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#findMatch(org.ejs.eulang.ast.IAstNode)
+     */
+    @Override
+    public IAstNode findMatch(IAstNode target) {
+    	if (target == null)
+    		return null;
+    	if (target.getId() == id)
+    		return this;
+    	for (IAstNode kid : getChildren()) {
+    		IAstNode match = kid.findMatch(target);
+    		if (match != null)
+    			return match;
+    	}
+    	return null;
+    }
+
+    protected IScope getCopyScope(IAstNode copyParent) {
+    	while (copyParent != null) {
+    		if (copyParent instanceof IAstScope) {
+    			return ((IAstScope) copyParent).getScope();
+    		}
+    	}
+    	return null;
+    }
+    protected IScope remapScope(IScope scope, IScope copy, IAstNode copyRoot) {
+    	if (scope == null) return null;
+    	Map<Integer, IAstNode> copyMap = new HashMap<Integer, IAstNode>();
+    	getNodeMap(this, copyRoot, copyMap);
+    	for (ISymbol symbol : scope) {
+    		ISymbol copySymbol = symbol.newInstance();
+    		copySymbol.setScope(copy);
+    		if (symbol.getDefinition() != null)
+    			copySymbol.setDefinition(copyMap.get(symbol.getDefinition().getId()));
+    		copy.add(copySymbol);
+    	}
+    	return copy;
+    }
+	
+    /**
+	 * @param copyRoot
+	 * @param copyMap
+	 */
+	private void getNodeMap(IAstNode orig, IAstNode copy, Map<Integer, IAstNode> copyMap) {
+		copyMap.put(orig.getId(), copy);
+		IAstNode[] kids = orig.getChildren();
+		IAstNode[] copyKids = copy.getChildren();
+		for (int i = 0; i < kids.length; i++) {
+			getNodeMap(kids[i], copyKids[i], copyMap);
+		}
+	}
+
+	protected <T extends IAstNode> T fixup(T orig, T copy) {
+    	((AstNode)copy).id = ((AstNode)orig).id;
+    	copy.setSourceRef(orig.getSourceRef());
+    	if (orig instanceof IAstTypedNode)
+    		((IAstTypedNode) copy).setType(((IAstTypedNode) orig).getType());
+    	return copy;
+    }
 }

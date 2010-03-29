@@ -20,4 +20,11 @@ public class LocalSymbol extends BaseSymbol {
 		super(number, name, scope, def);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#copy()
+	 */
+	@Override
+	public LocalSymbol newInstance() {
+		return new LocalSymbol(getNumber(), getName(), null, null);
+	}
 }

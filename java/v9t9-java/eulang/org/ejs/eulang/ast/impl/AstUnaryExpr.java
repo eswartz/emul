@@ -4,7 +4,6 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -32,6 +31,13 @@ public class AstUnaryExpr extends AstTypedExpr implements
         dirty = false;
     }
     
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#copy()
+     */
+    @Override
+    public IAstUnaryExpr copy(IAstNode copyParent) {
+    	return fixup(this, new AstUnaryExpr(op, doCopy(expr, copyParent)));
+    }
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#toString()
      */
@@ -84,7 +90,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
         dirty = true;
     }
 
-    public IAstExpr simplify(TypeEngine typeEngine) {
+    public IAstTypedExpr simplify(TypeEngine typeEngine) {
 		if (op == IOperation.CAST) {
 			if (expr instanceof IAstLitExpr) {
 				return typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
@@ -97,7 +103,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstExpression#equalValue(v9t9.tools.decomp.expr.IAstExpression)
      */
-    public boolean equalValue(IAstExpr expr) {
+    public boolean equalValue(IAstTypedExpr expr) {
         return expr instanceof IAstUnaryExpr
         && ((IAstUnaryExpr) expr).getType().equals(getType())
         && ((IAstUnaryExpr) expr).getOp() == getOp()

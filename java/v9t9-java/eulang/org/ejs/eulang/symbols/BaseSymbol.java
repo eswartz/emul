@@ -13,13 +13,13 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class BaseSymbol implements ISymbol {
+public abstract class BaseSymbol implements ISymbol {
 
 	private String name;
 	private IAstNode def;
 	private LLType type;
 	private IScope scope;
-	private int number;
+	private final int number;
 	
 	public BaseSymbol(int number, String name, IScope scope, IAstNode def) {
 		this.number = number;
@@ -35,6 +35,12 @@ public class BaseSymbol implements ISymbol {
 		setDefinition(def);
 	}
 	
+	/**
+	 * @return the number
+	 */
+	public int getNumber() {
+		return number;
+	}
 	
 	
 	@Override

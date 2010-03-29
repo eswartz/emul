@@ -16,7 +16,7 @@ import org.ejs.eulang.symbols.ISymbol;
  * @author ejs
  *
  */
-public class AstScope extends AstNode implements IAstScope {
+public abstract class AstScope extends AstNode implements IAstScope {
 	private IScope scope;
 
 	/**
@@ -26,8 +26,7 @@ public class AstScope extends AstNode implements IAstScope {
 		this.scope = scope;
 		scope.setOwner(this);
 	}
-	
-	
+   
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -44,7 +43,7 @@ public class AstScope extends AstNode implements IAstScope {
 		if (getClass() != obj.getClass())
 			return false;
 		AstScope other = (AstScope) obj;
-		if (scope != other.scope)
+		if (!scope.equals(other.scope))
 			return false;
 		return true;
 	}

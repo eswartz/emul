@@ -6,7 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstStatement;
+import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.symbols.IScope;
 
 /**
@@ -15,18 +15,24 @@ import org.ejs.eulang.symbols.IScope;
  */
 public class AstBlockStmt extends AstScope implements IAstBlockStmt {
 
-	private IAstNodeList<IAstStatement> stmtList;
+	private IAstNodeList<IAstStmt> stmtList;
 
 	/**
 	 * @param stmtList
 	 * @param scope 
 	 */
-	public AstBlockStmt(IAstNodeList<IAstStatement> stmtList, IScope scope) {
+	public AstBlockStmt(IAstNodeList<IAstStmt> stmtList, IScope scope) {
 		super(scope);
 		this.stmtList = stmtList;
 		stmtList.setParent(this);
 	}
 
+	public IAstBlockStmt copy(IAstNode copyParent) {
+		IAstBlockStmt copied = new AstBlockStmt(doCopy(stmtList, copyParent), getScope().newInstance(getScope()));
+		remapScope(getScope(), copied.getScope(), copied);
+		return fixup(this, copied);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()
 	 */
@@ -65,7 +71,7 @@ public class AstBlockStmt extends AstScope implements IAstBlockStmt {
 	 * @see org.ejs.eulang.ast.IAstBlockStmt#stmtList()
 	 */
 	@Override
-	public IAstNodeList<IAstStatement> stmts() {
+	public IAstNodeList<IAstStmt> stmts() {
 		return stmtList;
 	}
 

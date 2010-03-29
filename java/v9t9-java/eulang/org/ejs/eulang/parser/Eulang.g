@@ -56,7 +56,6 @@ tokens {
 
 @header {
 package org.ejs.eulang.parser;
-import java.util.HashMap;
 } 
 @lexer::header{
 package org.ejs.eulang.parser;

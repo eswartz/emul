@@ -25,6 +25,14 @@ public class AstLabelStmt extends AstStatement implements IAstLabelStmt {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstLabelStmt copy(IAstNode copyParent) {
+		return fixup(this, new AstLabelStmt(doCopy(label, copyParent)));
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()
 	 */
 	@Override

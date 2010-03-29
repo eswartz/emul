@@ -6,7 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstStatement;
+import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.symbols.IScope;
 
 
@@ -16,12 +16,27 @@ import org.ejs.eulang.symbols.IScope;
  */
 public class AstModule extends AstScope implements IAstModule {
 
-	private IAstNodeList<IAstStatement> stmtList;
+	private IAstNodeList<IAstStmt> stmtList;
 	/**
 	 * 
 	 */
 	public AstModule(IScope scope) {
 		super(scope);
+	}
+	protected AstModule(IScope scope, IAstNodeList<IAstStmt> stmtList) {
+		super(scope);
+		setStmtList(stmtList);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstModule copy(IAstNode copyParent) {
+		IAstModule copied = new AstModule(getScope().newInstance(getCopyScope(copyParent)), 
+				doCopy(stmtList, copyParent));
+		remapScope(getScope(), copied.getScope(), copied);
+		return fixup(this, copied);
 	}
 	
 	/* (non-Javadoc)
@@ -36,14 +51,14 @@ public class AstModule extends AstScope implements IAstModule {
 	 * @see org.ejs.eulang.ast.IAstModule#getStmtList()
 	 */
 	@Override
-	public IAstNodeList<IAstStatement> getStmtList() {
+	public IAstNodeList<IAstStmt> getStmtList() {
 		return stmtList;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstModule#setStmtList(org.ejs.eulang.ast.IAstNodeList)
 	 */
 	@Override
-	public void setStmtList(IAstNodeList<IAstStatement> stmtList) {
+	public void setStmtList(IAstNodeList<IAstStmt> stmtList) {
 		this.stmtList = reparent(this.stmtList, stmtList);
 	}
 	/* (non-Javadoc)

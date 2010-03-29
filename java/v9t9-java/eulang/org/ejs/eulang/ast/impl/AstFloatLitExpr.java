@@ -3,8 +3,10 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -21,6 +23,15 @@ public class AstFloatLitExpr extends AstLitExpr implements
 		this.value = value;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstFloatLitExpr copy(IAstNode copyParent) {
+		return fixup(this, new AstFloatLitExpr(getLiteral(), type, value));
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
 	 */

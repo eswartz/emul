@@ -39,6 +39,14 @@ public class AstName extends AstNode implements IAstName {
         dirty = false;
     }
 
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#copy()
+     */
+    @Override
+    public IAstName copy(IAstNode copyParent) {
+    	return fixup(this, new AstName(getName(), null));
+    }
+    
     
     @Override
 	public int hashCode() {

@@ -66,4 +66,9 @@ public interface IScope extends Iterable<ISymbol> {
 
 	public ISymbol[] getSymbols();
 
+	/**
+	 * @return
+	 */
+	public IScope newInstance(IScope parent);
+
 }

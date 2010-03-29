@@ -196,7 +196,7 @@ public class BaseParserTest {
     /**
      * @param mod
      */
-    protected void sanityTest(IAstNode node) {
+    protected void doSanityTest(IAstNode node) {
     	if (node instanceof IAstScope)
     		scopeTest(((IAstScope) node).getScope());
     	assertNotNull(node+"", node);
@@ -209,9 +209,60 @@ public class BaseParserTest {
     		if (node instanceof IAstScope && kid instanceof IAstScope) {
     			assertEquals(((IAstScope)node).getScope(), ((IAstScope) kid).getScope().getOwner());
     		}
-    		sanityTest(kid);
+    		doSanityTest(kid);
     	}
+    	
     }
+    protected void sanityTest(IAstNode node) {
+    	doSanityTest(node);
+    	
+    	IAstNode copy = node.copy(null);
+    	checkCopy(node, copy);
+    }
+
+	/**
+	 * Make sure a full copy works
+	 * @param node
+	 * @param copy
+	 */
+	private void checkCopy(IAstNode node, IAstNode copy) {
+		assertEquals(node.getClass(), copy.getClass());
+		assertFalse(node.toString(), node == copy);
+		if (node.getParent() != null)
+			assertFalse(node.toString(), node.getParent() == copy.getParent());
+		IAstNode[] kids = node.getChildren();
+		IAstNode[] copyKids = copy.getChildren();
+		assertEquals(node.toString() +  ": children count differ", kids.length, copyKids.length);
+		if (node instanceof IAstTypedNode)
+			assertEquals(node.toString() + ": types differ", ((IAstTypedNode) node).getType(), ((IAstTypedNode) copy).getType());
+		
+		if (node instanceof IAstScope) {
+			IScope scope = ((IAstScope) node).getScope();
+			IScope copyScope = ((IAstScope) copy).getScope();
+			assertEquals(node.toString() + ": scope count", scope.getSymbols().length, copyScope.getSymbols().length);
+			
+			for (ISymbol symbol : scope) {
+				ISymbol copySym = copyScope.get(symbol.getName());
+				assertEquals(symbol+"", symbol, copySym);
+				assertEquals(symbol+"", symbol.getDefinition(), copySym.getDefinition());
+				assertFalse(symbol+"", symbol == copySym);
+				if (symbol.getDefinition() != null) {
+					assertFalse(symbol+"", symbol.getDefinition() == copySym.getDefinition());
+				}
+			}
+			
+			assertEquals(node.toString() + ": scopes differ", scope, copyScope);
+		}
+		
+		for (int  i = 0; i < kids.length; i++) {
+			checkCopy(kids[i], copyKids[i]);
+		}
+		
+		// now that a rough scan worked, check harder
+		assertEquals(node.toString() + ": #equals()", node, copy);
+		
+		assertEquals(node.toString() + ": #hashCode()", node.hashCode(), copy.hashCode());
+	}
 
 	/**
 	 * @param scope

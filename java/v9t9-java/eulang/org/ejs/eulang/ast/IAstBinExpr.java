@@ -10,7 +10,8 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstBinExpr extends IAstTypedExpr {
-
+	IAstBinExpr copy(IAstNode copyParent);
+	
     public IBinaryOperation getOp();
 
     public void setOp(IBinaryOperation operator);

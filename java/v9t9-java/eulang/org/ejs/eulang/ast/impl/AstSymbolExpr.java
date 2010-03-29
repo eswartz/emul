@@ -4,9 +4,9 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
@@ -25,6 +25,13 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
         setSymbol(symbol);
     }
 
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#copy()
+     */
+    @Override
+    public IAstSymbolExpr copy(IAstNode copyParent) {
+    	return fixup(this, new AstSymbolExpr(symbol));
+    }
     
     @Override
 	public int hashCode() {
@@ -89,14 +96,14 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstExpression#simplify()
      */
-    public IAstExpr simplify() {
+    public IAstTypedExpr simplify() {
         return this;
     }
     
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstExpression#equalValue(v9t9.tools.decomp.expr.IAstExpression)
      */
-    public boolean equalValue(IAstExpr expr) {
+    public boolean equalValue(IAstTypedExpr expr) {
         return expr instanceof IAstSymbolExpr
         && ((IAstSymbolExpr) expr).getSymbol().equals(getSymbol());
     }

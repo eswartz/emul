@@ -23,5 +23,9 @@ public class LocalScope extends Scope {
 	public ISymbol createSymbol(String name) {
 		return new LocalSymbol(nextId(), name, this, null);
 	}
+	
+	public LocalScope newInstance(IScope parent) {
+		return new LocalScope(parent);
+	}
 
 }

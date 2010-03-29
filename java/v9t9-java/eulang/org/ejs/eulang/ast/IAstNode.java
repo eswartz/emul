@@ -17,6 +17,10 @@ public interface IAstNode {
     /** Get the unique id of the node */
     public int getId();
     
+    /** Fully copy the node 
+     * @param copyParent TODO*/
+    IAstNode copy(IAstNode copyParent);
+    
     /** Tell whether the node is dirty (changed with respect to original source)
      * @see #isDirtyTree()
      * @see #hasDirtySource()
@@ -87,6 +91,13 @@ public interface IAstNode {
 	 * @param children array which matches length and semantics of {@link #getChildren()}
 	 */
 	public void replaceChildren(IAstNode[] children);
+
+	/**
+	 * Find a node in this tree matching the given node in another tree
+	 * @param target
+	 * @return IAstNode or null
+	 */
+	public IAstNode findMatch(IAstNode target);
 
 }
 

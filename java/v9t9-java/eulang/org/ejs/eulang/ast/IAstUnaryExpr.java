@@ -9,8 +9,9 @@ package org.ejs.eulang.ast;
  * @author eswartz
  *
  */
-public interface IAstUnaryExpr extends IAstExpr, IAstTypedExpr {
-
+public interface IAstUnaryExpr extends IAstTypedExpr {
+	IAstUnaryExpr copy(IAstNode copyParent);
+	
     public IUnaryOperation getOp();
 
     public void setOp(IUnaryOperation operator);

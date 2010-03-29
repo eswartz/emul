@@ -12,6 +12,8 @@ import org.ejs.eulang.symbols.IScope;
  *
  */
 public interface IAstName extends IAstNode {
+	IAstName copy(IAstNode copyParent);
+	
     /** Get the name
      * 
      * @return name (never null)

@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -21,6 +22,15 @@ public class AstIntLitExpr extends AstLitExpr implements
 		this.value = value;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstIntLitExpr copy(IAstNode copyParent) {
+		return fixup(this, new AstIntLitExpr(getLiteral(), getType(), getValue()));
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
 	 */

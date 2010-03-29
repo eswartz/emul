@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -27,7 +26,13 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 		setExpr(expr);
 	}
 	
-	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstReturnStmt copy(IAstNode copyParent) {
+		return fixup(this, new AstReturnStmt(doCopy(expr, copyParent)));
+	}
 
 	@Override
 	public int hashCode() {
@@ -97,10 +102,10 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 	
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstExpr#equalValue(org.ejs.eulang.ast.IAstExpr)
+	 * @see org.ejs.eulang.ast.IAstTypedExpr#equalValue(org.ejs.eulang.ast.IAstTypedExpr)
 	 */
 	@Override
-	public boolean equalValue(IAstExpr expr) {
+	public boolean equalValue(IAstTypedExpr expr) {
 		return false;
 	}
 

@@ -26,6 +26,13 @@ public class AstGotoStmt extends AstStatement implements IAstGotoStmt {
 		setExpr(test);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstGotoStmt copy(IAstNode copyParent) {
+		return fixup(this, new AstGotoStmt(doCopy(label, copyParent), doCopy(expr, copyParent)));
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()

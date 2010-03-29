@@ -8,6 +8,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstFuncCallExpr extends IAstTypedExpr {
+	IAstFuncCallExpr copy(IAstNode copyParent);
 	IAstTypedExpr getFunction();
 	void setFunction(IAstTypedExpr expr);
 	IAstNodeList<IAstTypedExpr> arguments();

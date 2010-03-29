@@ -11,20 +11,13 @@ import org.ejs.eulang.types.LLCodeType;
  *
  */
 public interface IAstPrototype extends IAstTypedNode {
-
+	IAstPrototype copy(IAstNode copyParent);
+	
 	IAstType returnType();
 	
 	IAstArgDef[] argumentTypes();
 
-	/**
-	 * @return
-	 */
 	int getArgCount();
-
-	/**
-	 * @param newType
-	 * @return TODO
-	 */
 	boolean adaptToType(LLCodeType newType);
 
 }

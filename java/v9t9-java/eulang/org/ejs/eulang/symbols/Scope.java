@@ -40,6 +40,40 @@ public abstract class Scope implements IScope {
 	protected int nextId() {
 		return counter.getAndIncrement();
 	}
+	
+	
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((entries == null) ? 0 : entries.hashCode());
+		result = prime * result + ((owner == null) ? 0 : owner.getId());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Scope other = (Scope) obj;
+		if (entries == null) {
+			if (other.entries != null)
+				return false;
+		} else if (!entries.equals(other.entries))
+			return false;
+		if (owner == null) {
+			if (other.owner != null)
+				return false;
+		} else if (owner.getId() != other.owner.getId())
+			return false;
+		return true;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
 	 */
@@ -125,7 +159,7 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public void setParent(IScope parent) {
-		if (parent != null && parent.equals(this))
+		if (parent != null && parent == this)
 			throw new IllegalStateException();
 		this.parent = parent;
 	}

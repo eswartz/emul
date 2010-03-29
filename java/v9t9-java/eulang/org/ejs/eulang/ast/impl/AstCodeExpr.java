@@ -9,12 +9,12 @@ import java.util.List;
 
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstReturnStmt;
-import org.ejs.eulang.ast.IAstStatement;
+import org.ejs.eulang.ast.IAstStmt;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLCodeType;
@@ -29,12 +29,12 @@ import org.ejs.eulang.types.TypeException;
 public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 
 	private final IAstPrototype proto;
-	private final IAstNodeList<IAstStatement> stmts;
+	private final IAstNodeList<IAstStmt> stmts;
 	private final IScope scope;
 	private final boolean macro;
 	
 	
-	public AstCodeExpr(IAstPrototype proto, IScope scope, IAstNodeList<IAstStatement> stmts, boolean macro) {
+	public AstCodeExpr(IAstPrototype proto, IScope scope, IAstNodeList<IAstStmt> stmts, boolean macro) {
 		this.proto = proto;
 		proto.setParent(this);
 		this.scope = scope;
@@ -43,6 +43,17 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		this.stmts = stmts;
 		stmts.setParent(this);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstCodeExpr copy(IAstNode copyParent) {
+		IAstCodeExpr copied = new AstCodeExpr(doCopy(proto, copyParent), getScope().newInstance(scope), doCopy(stmts, copyParent), macro);
+		remapScope(getScope(), copied.getScope(), copied);
+		return fixup(this, copied);
+	}
+	
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
@@ -78,7 +89,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#getStmts()
 	 */
 	@Override
-	public IAstNodeList<IAstStatement> stmts() {
+	public IAstNodeList<IAstStmt> stmts() {
 		return stmts;
 	}
 
@@ -102,7 +113,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public boolean equalValue(IAstExpr expr) {
+	public boolean equalValue(IAstTypedExpr expr) {
 		return expr.equals(this);
 	}
 

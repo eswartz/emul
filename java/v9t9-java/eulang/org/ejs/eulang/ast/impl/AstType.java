@@ -25,6 +25,13 @@ public class AstType extends AstNode implements IAstType {
 		setType(type);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstType copy(IAstNode copyParent) {
+		return fixup(this, new AstType(type));
+	}
 	
 	@Override
 	public int hashCode() {

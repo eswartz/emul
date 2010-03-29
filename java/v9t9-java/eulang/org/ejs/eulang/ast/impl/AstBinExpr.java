@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstBinExpr;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IBinaryOperation;
@@ -29,6 +28,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		setRight(right);
 	}
 	
+	public IAstBinExpr copy(IAstNode copyParent) {
+		return fixup(this, new AstBinExpr(oper, doCopy(left, copyParent), doCopy(right, copyParent)));
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
 	 */
@@ -105,10 +107,10 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstExpr#equalValue(org.ejs.eulang.ast.IAstExpr)
+	 * @see org.ejs.eulang.ast.IAstTypedExpr#equalValue(org.ejs.eulang.ast.IAstTypedExpr)
 	 */
 	@Override
-	public boolean equalValue(IAstExpr expr) {
+	public boolean equalValue(IAstTypedExpr expr) {
 		  if (expr instanceof IAstBinExpr
 	        && ((IAstBinExpr) expr).getType().equals(getType())
 	        && ((IAstBinExpr) expr).getOp() == getOp()) {
@@ -123,9 +125,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	        
 	}
 	/*
-    public IAstExpr simplify() {
-        IAstExpr newLeft = left.simplify();
-        IAstExpr newRight = right.simplify();
+    public IAstTypedExpr simplify() {
+        IAstTypedExpr newLeft = left.simplify();
+        IAstTypedExpr newRight = right.simplify();
         
         // it is simplifiable?
         if (operator != K_SUBSCRIPT
@@ -204,7 +206,7 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		}
     }
 
-    public boolean equalValue(IAstExpr expr) {
+    public boolean equalValue(IAstTypedExpr expr) {
         if (!(expr instanceof IAstBinaryExpression)) {
 			return false;
 		}

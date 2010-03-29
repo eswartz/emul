@@ -226,7 +226,7 @@ public class GenerateAST {
 		currentScope = new ModuleScope(globalScope);
 		IAstModule module = new AstModule(currentScope);
 		
-		IAstNodeList<IAstStatement> stmtList = constructStmtList(tree);
+		IAstNodeList<IAstStmt> stmtList = constructStmtList(tree);
 		
 		module.setStmtList(stmtList);
 		
@@ -324,7 +324,7 @@ public class GenerateAST {
 		IScope oldScope = currentScope;
 		currentScope = new LocalScope(oldScope);
 		try {
-			IAstNodeList<IAstStatement> stmtList = checkConstruct(tree.getChild(0), IAstNodeList.class);
+			IAstNodeList<IAstStmt> stmtList = checkConstruct(tree.getChild(0), IAstNodeList.class);
 			
 			IAstBlockStmt block = new AstBlockStmt(stmtList, currentScope);
 			getSource(tree, block);
@@ -363,7 +363,7 @@ public class GenerateAST {
 		assert tree.getChildCount() == 1;
 		
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
-		IAstStatement stmt = new AstExprStmt(expr);
+		IAstStmt stmt = new AstExprStmt(expr);
 		getSource(tree, stmt);
 		return stmt;
 	}
@@ -703,14 +703,14 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstNodeList<IAstStatement> constructStmtList(Tree tree) {
-		IAstNodeList<IAstStatement> list = new AstNodeList<IAstStatement>();
+	public IAstNodeList<IAstStmt> constructStmtList(Tree tree) {
+		IAstNodeList<IAstStmt> list = new AstNodeList<IAstStmt>();
 		
 		assert tree.getType() == EulangParser.STMTLIST;
 		
 		for (Tree kid : iter(tree)) {
 			try {
-				IAstStatement node = checkConstruct(kid, IAstStatement.class);
+				IAstStmt node = checkConstruct(kid, IAstStmt.class);
 				/*if (node instanceof IAstBlockStmt) {
 					addBlock(list.list(), ((IAstBlockStmt) node).stmtList());
 					list.list().add(node);
@@ -808,14 +808,14 @@ public class GenerateAST {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public IAstExpr constructCodeExpr(Tree tree) throws StmtException {
+	public IAstTypedExpr constructCodeExpr(Tree tree) throws StmtException {
 		assert tree.getChildCount() == 2;
 		boolean isMacro = tree.getType() == EulangParser.MACRO;
 		IScope oldScope = currentScope;
 		try {
 			currentScope = new LocalScope(currentScope);
 			IAstPrototype proto = checkConstruct(tree.getChild(0), IAstPrototype.class);
-			IAstNodeList<IAstStatement> list = checkConstruct(tree.getChild(1), IAstNodeList.class);
+			IAstNodeList<IAstStmt> list = checkConstruct(tree.getChild(1), IAstNodeList.class);
 			IAstCodeExpr codeExpr = new AstCodeExpr(proto, currentScope, list, isMacro);
 			getSource(tree, codeExpr);
 			return codeExpr;

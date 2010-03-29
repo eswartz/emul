@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -26,6 +25,13 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 		setExpr(expr);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstExprStmt copy(IAstNode copyParent) {
+		return fixup(this, new AstExprStmt(doCopy(expr, copyParent)));
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()
 	 */
@@ -92,10 +98,10 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstExpr#equalValue(org.ejs.eulang.ast.IAstExpr)
+	 * @see org.ejs.eulang.ast.IAstTypedExpr#equalValue(org.ejs.eulang.ast.IAstTypedExpr)
 	 */
 	@Override
-	public boolean equalValue(IAstExpr expr) {
+	public boolean equalValue(IAstTypedExpr expr) {
 		return false;
 	}
 

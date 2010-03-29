@@ -20,5 +20,13 @@ public class GlobalScope extends Scope {
 	public ISymbol createSymbol(String name) {
 		return new GlobalSymbol(nextId(), name, this, null);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#newInstance()
+	 */
+	@Override
+	public GlobalScope newInstance(IScope parent) {
+		return new GlobalScope();
+	}
 
 }

@@ -10,7 +10,8 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstAllocStmt extends IAstDefineStmt, IAstTypedNode {
-
+	IAstAllocStmt copy(IAstNode copyParent);
+	
 	IAstType getTypeExpr();
 	void setTypeExpr(IAstType type);
 }

@@ -11,8 +11,5 @@ import org.ejs.eulang.symbols.IScope;
  *
  */
 public interface IAstScope extends IAstNode {
-	/**
-	 * @return
-	 */
 	IScope getScope(); 
 }

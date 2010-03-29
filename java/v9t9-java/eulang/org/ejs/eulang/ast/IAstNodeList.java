@@ -11,5 +11,6 @@ import java.util.List;
  *
  */
 public interface IAstNodeList <T extends IAstNode> extends IAstNode {
+	IAstNodeList<T> copy(IAstNode copyParent);
 	List<T> list();
 }

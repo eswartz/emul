@@ -4,7 +4,6 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstArgDef;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
@@ -31,8 +30,16 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal) {
 		this.name = name;
 		name.setParent(this);
-		setDefaultValue(defaultVal);
 		setTypeExpr(type);
+		setDefaultValue(defaultVal);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstArgDef copy(IAstNode copyParent) {
+		return fixup(this, new AstArgDef(doCopy(name, copyParent), doCopy(typeExpr, copyParent), doCopy(defaultVal, copyParent)));
 	}
 	
 	/* (non-Javadoc)
@@ -95,7 +102,7 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public boolean equalValue(IAstExpr expr) {
+	public boolean equalValue(IAstTypedExpr expr) {
 		return expr.equalValue(expr);
 	}
 
@@ -155,8 +162,8 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	@Override
 	public void setType(LLType type) {
 		super.setType(type);
-		/*
 		name.setType(type);
+		/*
 		name.getSymbol().setType(type);
 		if (typeExpr != null)
 			typeExpr.setType(type);
@@ -168,6 +175,6 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	 */
 	@Override
 	public LLType getType() {
-		return name.getType();
+		return super.getType();
 	}
 }

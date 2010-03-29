@@ -10,7 +10,9 @@ package org.ejs.eulang.ast;
  * @author eswartz
  *
  */
-public interface IAstIntegralExpr extends IAstExpr {
+public interface IAstIntegralExpr extends IAstTypedExpr {
+	IAstIntegralExpr copy(IAstNode copyParent);
+	
     /** Get the value (never null) */
     public int getValue();
     

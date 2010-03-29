@@ -12,7 +12,8 @@ import org.ejs.eulang.symbols.ISymbol;
  * @author eswartz
  *
  */
-public interface IAstSymbolExpr extends IAstExpr, IAstTypedExpr {
+public interface IAstSymbolExpr extends IAstTypedExpr {
+	IAstSymbolExpr copy(IAstNode copyParent);
     /** Get the symbol referenced */
     public ISymbol getSymbol();
     

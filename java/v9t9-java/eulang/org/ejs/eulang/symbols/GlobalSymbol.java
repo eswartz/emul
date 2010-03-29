@@ -19,5 +19,13 @@ public class GlobalSymbol extends BaseSymbol {
 	public GlobalSymbol(int number, String name, IScope scope, IAstNode def) {
 		super(number, name, scope, def);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#copy()
+	 */
+	@Override
+	public GlobalSymbol newInstance() {
+		return new GlobalSymbol(getNumber(), getName(), null, null);
+	}
 
 }

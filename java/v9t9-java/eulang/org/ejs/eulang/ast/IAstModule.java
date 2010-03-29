@@ -10,6 +10,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstModule extends IAstScope {
-	void setStmtList(IAstNodeList<IAstStatement> stmtList);
-	IAstNodeList<IAstStatement> getStmtList();
+	IAstModule copy(IAstNode copyParent);
+	void setStmtList(IAstNodeList<IAstStmt> stmtList);
+	IAstNodeList<IAstStmt> getStmtList();
 }

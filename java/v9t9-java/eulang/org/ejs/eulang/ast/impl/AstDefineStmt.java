@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -16,17 +15,25 @@ import org.ejs.eulang.symbols.ISymbol;
  * @author ejs
  *
  */
-public class AstDefineStmt extends AstExpr implements IAstDefineStmt {
+public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 
 	private IAstSymbolExpr id;
 	private IAstTypedExpr expr;
 	
 	public AstDefineStmt(IAstSymbolExpr name, IAstTypedExpr expr) {
 		this.id = name;
+		id.setParent(this);
 		setSymbolExpr(name);
 		setExpr(expr);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstDefineStmt copy(IAstNode copyParent) {
+		return fixup(this, new AstDefineStmt(doCopy(id, copyParent), doCopy(expr, copyParent)));
+	}
 
 	
 	@Override
@@ -88,14 +95,6 @@ public class AstDefineStmt extends AstExpr implements IAstDefineStmt {
 	}
 	
 	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
-	 */
-	@Override
-	public boolean equalValue(IAstExpr expr) {
-		return false;
-	}
-
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getExpr()
 	 */

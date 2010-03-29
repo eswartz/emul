@@ -4,7 +4,6 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
@@ -29,6 +28,15 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		this.arguments = arguments;
 		this.arguments.setParent(this);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstFuncCallExpr copy(IAstNode copyParent) {
+		return fixup(this, new AstFuncCallExpr(doCopy(function, copyParent), doCopy(arguments, copyParent)));
+	}
+	
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()
@@ -117,10 +125,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstExpr#equalValue(org.ejs.eulang.ast.IAstExpr)
+	 * @see org.ejs.eulang.ast.IAstTypedExpr#equalValue(org.ejs.eulang.ast.IAstTypedExpr)
 	 */
 	@Override
-	public boolean equalValue(IAstExpr expr) {
+	public boolean equalValue(IAstTypedExpr expr) {
 		return false;
 	}
 	

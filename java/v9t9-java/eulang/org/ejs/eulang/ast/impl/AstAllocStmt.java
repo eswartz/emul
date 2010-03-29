@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstAllocStmt;
-import org.ejs.eulang.ast.IAstExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
@@ -38,6 +37,13 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		setTypeExpr(type);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstAllocStmt copy(IAstNode copyParent) {
+		return fixup(this, new AstAllocStmt(doCopy(symExpr, copyParent), doCopy(typeExpr, copyParent), doCopy(expr, copyParent)));
+	}
 	
 	@Override
 	public int hashCode() {
@@ -183,7 +189,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public boolean equalValue(IAstExpr expr) {
+	public boolean equalValue(IAstTypedExpr expr) {
 		return false;
 	}
 

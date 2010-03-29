@@ -24,4 +24,11 @@ public class ModuleScope extends Scope {
 		return new GlobalSymbol(nextId(), name, this, null);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#newInstance(org.ejs.eulang.symbols.IScope)
+	 */
+	@Override
+	public ModuleScope newInstance(IScope parent) {
+		return new ModuleScope(parent);
+	}
 }

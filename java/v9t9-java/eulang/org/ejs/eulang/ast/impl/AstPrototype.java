@@ -25,15 +25,29 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 
 	/** Create with the types; may be null */
 	public AstPrototype(TypeEngine typeEngine, IAstType retType, IAstArgDef[] argumentTypes) {
+		this(typeEngine.getCodeType(retType, argumentTypes), retType, argumentTypes);
+	}
+	protected AstPrototype(LLType codeType, IAstType retType, IAstArgDef[] argumentTypes) {
 		this.retType = retType;
 		retType.setParent(this);
 		this.argumentTypes = argumentTypes;
 		for (IAstArgDef arg : argumentTypes)
 			arg.setParent(this);
-		setType(typeEngine.getCodeType(retType, argumentTypes));
+		setType(codeType);
 	}
 	
-	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstPrototype copy(IAstNode copyParent) {
+		IAstArgDef[] argTypesCopy = new IAstArgDef[argumentTypes.length];
+		for (int i = 0; i < argTypesCopy.length; i++) {
+			argTypesCopy[i] = argumentTypes[i].copy(copyParent);
+			argTypesCopy[i] = fixup(argumentTypes[i], argTypesCopy[i]);
+		}
+		return fixup(this, new AstPrototype(getType(), doCopy(returnType(), copyParent), argTypesCopy));
+	}
 	
 	@Override
 	public int hashCode() {

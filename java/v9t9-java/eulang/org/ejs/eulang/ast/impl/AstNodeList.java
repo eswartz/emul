@@ -19,6 +19,26 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 
 	private List<T> list = new ArrayList<T>();
 
+	/**
+	 * 
+	 */
+	public AstNodeList() {
+	}
+	protected AstNodeList(List<T> copyList) {
+		list = copyList;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#copy()
+	 */
+	@Override
+	public IAstNodeList<T> copy(IAstNode copyParent) {
+		List<T> copyList = new ArrayList<T>();
+		for (T t : list) {
+			copyList.add(doCopy(t, copyParent));
+		}
+		return fixup(this, new AstNodeList<T>(copyList));
+	}
 	
 	@Override
 	public int hashCode() {

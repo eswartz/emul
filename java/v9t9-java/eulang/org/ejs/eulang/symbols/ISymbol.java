@@ -16,4 +16,8 @@ public interface ISymbol extends ITyped {
 	void setScope(IScope scope);
 	IAstNode getDefinition();
 	void setDefinition(IAstNode def);
+	/**
+	 * @return
+	 */
+	ISymbol newInstance();
 }
