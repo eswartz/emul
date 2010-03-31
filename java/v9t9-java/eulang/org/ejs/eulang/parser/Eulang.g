@@ -94,8 +94,6 @@ toplevelstat:   ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
     ;
 
 toplevelvalue : xscope
-    //| code
-    | macro
     | (  LPAREN (RPAREN | ID) ) => proto     
     | selector
     | rhsExpr
@@ -141,30 +139,31 @@ listitem : toplevelvalue ;
 code : CODE ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? optargdefs*) codestmtlist*)  
     ;
 
-// inline code block
+// macro code block
 macro : MACRO ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? optargdefs*) codestmtlist*)  
     ;
 
+// prototype, as for a type (no defaults allowed)
 proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? argdefs*)
     ;
 argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
     ;
 
-argdef: ID (COLON type)?    -> ^(ARGDEF ID type* )
+argdef: MACRO? ID (COLON type)?    -> ^(ARGDEF MACRO? ID type* )
   ;
 
 xreturns: RETURNS type      -> type
   ;
 
+// args inside a prototype, which have optional initializers
 optargdefs: (optargdef ( COMMA optargdef)* COMMA?)?                        -> optargdef* 
     ;
 
-optargdef: ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF ID type* $init?)
-
+optargdef: MACRO? ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO? ID type* $init?)
   ;
   
 type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScopeRef) ) )? 
-     | CODE proto ? -> ^(TYPE proto )
+     | CODE proto? -> ^(TYPE ^(CODE proto?) )
   ;
 
 codestmtlist:  (codeStmt ) => (codeStmt+)  ->  ^(STMTLIST codeStmt*)
@@ -213,7 +212,8 @@ funcCall : idOrScopeRef LPAREN arglist RPAREN   ->     ^(CALL idOrScopeRef argli
 arglist: (arg ( COMMA arg)* COMMA?)?                        -> ^(ARGLIST arg*) 
     ;
 
-arg:  assignExpr                    -> ^(EXPR assignExpr) 
+arg:  assignExpr                    -> ^(EXPR assignExpr)
+  | LBRACE codestmtlist RBRACE      -> ^(EXPR ^(CODE codestmtlist) )
    ;
 
 //
@@ -293,6 +293,7 @@ atom options { k=2; } :
     |   idOrScopeRef
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |   code                           -> code   
+    |   macro                           -> macro   
     ;
 
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 

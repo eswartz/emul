@@ -19,12 +19,14 @@ public abstract class BaseSymbol implements ISymbol {
 	private IAstNode def;
 	private LLType type;
 	private IScope scope;
-	private final int number;
+	private int number;
+	private boolean temp;
 	
-	public BaseSymbol(int number, String name, IScope scope, IAstNode def) {
+	public BaseSymbol(int number, String name, boolean temporary, IScope scope, IAstNode def) {
 		this.number = number;
 		this.name = name;
 		this.scope = scope;
+		this.temp = temporary;
 		Check.checkArg(this.name);
 		setDefinition(def);
 	}
@@ -76,7 +78,7 @@ public abstract class BaseSymbol implements ISymbol {
 	@Override
 	public String toString() {
 		//return "\"" + name + "\"" + ":" +(type != null ? type.toString() : "<unknown>");
-		return name  + "." + number + ":" +(type != null ? type.toString() : "<unknown>");
+		return name  + (temp ? "." + number : "") + " [" +(type != null ? type.toString() : "<unknown>") + "]";
 	}
 	
 	@Override
@@ -130,5 +132,22 @@ public abstract class BaseSymbol implements ISymbol {
 	@Override
 	public void setType(LLType type) {
 		this.type = type;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#isTemporary()
+	 */
+	@Override
+	public boolean isTemporary() {
+		return temp;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#setTemporary(boolean)
+	 */
+	@Override
+	public void setTemporary(boolean temp) {
+		this.temp = temp;
+		if (temp)
+			this.number = scope.nextId();
 	}
 }

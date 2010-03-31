@@ -8,7 +8,9 @@ import java.util.Arrays;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
@@ -34,6 +36,14 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 		for (IAstArgDef arg : argumentTypes)
 			arg.setParent(this);
 		setType(codeType);
+	}
+	
+	/**
+	 * @param argCode
+	 */
+	public AstPrototype(LLType retType) {
+		this.retType = new AstType(retType);
+		this.argumentTypes = new IAstArgDef[0];
 	}
 	
 	/* (non-Javadoc)
@@ -117,6 +127,24 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 		throw new UnsupportedOperationException();
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (returnType() == existing) {
+			retType = (IAstType) existing;
+			return;
+		}
+		for (int i = 0; i < argumentTypes.length; i++) {
+			IAstArgDef argDef = argumentTypes[i];
+			if (argDef == existing) {
+				argumentTypes[i] = (IAstArgDef) another;
+				return;
+			}
+		}
+		throw new IllegalArgumentException();
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
@@ -165,5 +193,17 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 	@Override
 	public int getArgCount() {
 		return argumentTypes.length;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstPrototype#hasDefaultArguments()
+	 */
+	@Override
+	public boolean hasDefaultArguments() {
+		for (int  i = 0; i < argumentTypes.length; i++) {
+			if (argumentTypes[i].getDefaultValue() != null)
+				return true;
+		}
+		return false;
 	}
 }

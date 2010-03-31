@@ -5,6 +5,8 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
@@ -37,7 +39,7 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 	 */
 	@Override
 	public String toString() {
-		return "EXPR" + ":" + getTypeString();
+		return typedString("EXPRSTMT");
 	}
 	
 	
@@ -95,6 +97,18 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 	@Override
 	public void replaceChildren(IAstNode[] children) {
 		setExpr((IAstTypedExpr) children[0]);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (getExpr() == existing) {
+			setExpr((IAstTypedExpr) another);
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/* (non-Javadoc)

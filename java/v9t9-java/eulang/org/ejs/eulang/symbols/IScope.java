@@ -45,6 +45,7 @@ public interface IScope extends Iterable<ISymbol> {
 	 * @return the node or <code>null</code>
 	 */
 	public IAstNode getNode(String name);
+
 	
     /** Add a name to the scope.  Sets name's scope to this
      * and the name's parent to node.
@@ -64,11 +65,32 @@ public interface IScope extends Iterable<ISymbol> {
      * */
     public ISymbol add(ISymbol symbol);
 
+	/**
+	 * Add a temporary name
+	 * @param string
+	 * @param b
+	 * @return
+	 */
+	public ISymbol addTemporary(String name);
+
 	public ISymbol[] getSymbols();
 
 	/**
 	 * @return
 	 */
 	public IScope newInstance(IScope parent);
+
+	/**
+	 * @return
+	 */
+	public int nextId();
+
+	/**
+	 * @param symbol
+	 * @return
+	 */
+	public boolean contains(ISymbol symbol);
+
+
 
 }

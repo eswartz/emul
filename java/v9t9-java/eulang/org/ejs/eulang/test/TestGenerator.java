@@ -9,6 +9,9 @@ import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertSame;
 
+import java.util.List;
+
+import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
@@ -20,6 +23,8 @@ import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstReturnStmt;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.junit.Test;
 
@@ -212,6 +217,101 @@ public class TestGenerator extends BaseParserTest {
 	    	
     	IAstGotoStmt goto3 = (IAstGotoStmt) codeExpr.stmts().list().get(2);
     	assertEquals(lab.getLabel(), goto3.getLabel());
+    }
+    
+    /**
+     * if and while are functions which take blocks.  Before type inference, we must
+     * be able to handle either expressions, scope blocks, or actual code blocks as
+     * parameters. 
+     * @throws Exception
+     */
+    @Test
+    public void testImplicitBlocks1() throws Exception {
+    	IAstModule mod = treeize(
+    			" if = code { };\n"+
+    			"testImplicitBlocks1 = code (t, x, y) {\n" +
+    			"   return if(t, x = 9, y = 7);\n"+
+    			"};");
+    	sanityTest(mod);
+    
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks1");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstReturnStmt ret = (IAstReturnStmt) codeExpr.stmts().list().get(0);
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
+    	List<IAstTypedExpr> arglist = funcCall.arguments().list();
+		assertEquals(3, arglist.size());
+    	assertTrue(arglist.get(0) instanceof IAstSymbolExpr);
+    	assertTrue(arglist.get(1) instanceof IAstAssignStmt);
+    	assertTrue(arglist.get(2) instanceof IAstAssignStmt);
+    }
+    /**
+     * if and while are functions which take blocks.  Before type inference, we must
+     * be able to handle either expressions, scope blocks, or actual code blocks as
+     * parameters. 
+     * @throws Exception
+     */
+    @Test
+    public void testImplicitBlocks2() throws Exception {
+    	IAstModule mod = treeize(
+    			" if = code { };\n"+
+    			"testImplicitBlocks2 = code (t, x, y) {\n" +
+    			"   return if(t, { x = x + 9; return x; }, { y = y + 7; return y; });\n"+
+    			"};");
+    	sanityTest(mod);
+    
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks2");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstReturnStmt ret = (IAstReturnStmt) codeExpr.stmts().list().get(0);
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
+    	List<IAstTypedExpr> arglist = funcCall.arguments().list();
+		assertEquals(3, arglist.size());
+    	assertTrue(arglist.get(0) instanceof IAstSymbolExpr);
+    	assertTrue(arglist.get(1) instanceof IAstCodeExpr);
+    	assertTrue(arglist.get(2) instanceof IAstCodeExpr);
+    }
+    /**
+     * if and while are functions which take blocks.  Before type inference, we must
+     * be able to handle either expressions, scope blocks, or actual code blocks as
+     * parameters. 
+     * @throws Exception
+     */
+    @Test
+    public void testImplicitBlocks3() throws Exception {
+    	IAstModule mod = treeize(
+    			" if = code { };\n"+
+    			"testImplicitBlocks3 = code (t, x, y) {\n" +
+    			"   return if(t, code ( => Int) { x = x + 9; return x; }, code ( => Int) { y = y + 7; return y; });\n"+
+    			"};");
+    	sanityTest(mod);
+    
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks3");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstReturnStmt ret = (IAstReturnStmt) codeExpr.stmts().list().get(0);
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
+    	List<IAstTypedExpr> arglist = funcCall.arguments().list();
+		assertEquals(3, arglist.size());
+    	assertTrue(arglist.get(0) instanceof IAstSymbolExpr);
+    	assertTrue(arglist.get(1) instanceof IAstCodeExpr);
+    	assertTrue(arglist.get(2) instanceof IAstCodeExpr);
+    }
+    
+    @Test
+    public void testMacroArgs1() throws Exception {
+    	IAstModule mod = treeize(
+    			" testMacroArgs1 = macro (macro t : code, macro then : code, macro else : code) { };\n");
+    	sanityTest(mod);
+    
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	
+    	IAstPrototype proto = codeExpr.getPrototype();
+    	assertTrue(proto.argumentTypes()[0].isMacro());
+    	assertTrue(proto.argumentTypes()[1].isMacro());
+    	assertTrue(proto.argumentTypes()[2].isMacro());
+    }
+    @Test
+    public void testMacroArgs2() throws Exception {
+    	treeizeFail(" testMacroArgs1 = code (macro t : code, macro then : code, macro else : code) { };\n");
     }
 }
 

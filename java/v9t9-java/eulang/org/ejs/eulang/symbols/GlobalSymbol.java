@@ -16,8 +16,8 @@ public class GlobalSymbol extends BaseSymbol {
 		super(number, name, def);
 	}
 
-	public GlobalSymbol(int number, String name, IScope scope, IAstNode def) {
-		super(number, name, scope, def);
+	public GlobalSymbol(int number, String name, boolean temporary, IScope scope, IAstNode def) {
+		super(number, name, temporary, scope, def);
 	}
 	
 	/* (non-Javadoc)
@@ -25,7 +25,7 @@ public class GlobalSymbol extends BaseSymbol {
 	 */
 	@Override
 	public GlobalSymbol newInstance() {
-		return new GlobalSymbol(getNumber(), getName(), null, null);
+		return new GlobalSymbol(getNumber(), getName(), false, null, null);
 	}
 
 }

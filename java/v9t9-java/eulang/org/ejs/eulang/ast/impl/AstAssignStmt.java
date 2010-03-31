@@ -7,6 +7,7 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
@@ -75,7 +76,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public String toString() {
-		return "=" + ":" + getTypeString();
+		return typedString("=");
 	}
 	
 	/* (non-Javadoc)
@@ -95,6 +96,19 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		setExpr((IAstTypedExpr) children[1]);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (getExpr() == existing) {
+			setExpr((IAstTypedExpr) another);
+		} else if (getSymbol() == existing) {
+			setSymbol((IAstSymbolExpr) another);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */

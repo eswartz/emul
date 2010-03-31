@@ -128,8 +128,10 @@ public class TypeEngine {
 	 * @return
 	 */
 	public LLType getCodeType(IAstType retType, IAstArgDef[] argumentTypes) {
-		// TODO Auto-generated method stub
-		return null;
+		LLType[] argTypes = new LLType[argumentTypes != null ? argumentTypes.length : 0];
+		for (int i = 0; i < argTypes.length; i++)
+			argTypes[i] = argumentTypes[i].getType();
+		return getCodeType(retType != null ? retType.getType() : null, argTypes);
 	}
 
 	/**

@@ -32,6 +32,7 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.Message;
 import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.optimize.SimplifyTree;
 import org.ejs.eulang.parser.EulangLexer;
 import org.ejs.eulang.parser.EulangParser;
 import org.ejs.eulang.symbols.GlobalScope;
@@ -239,13 +240,16 @@ public class BaseParserTest {
 		if (node instanceof IAstScope) {
 			IScope scope = ((IAstScope) node).getScope();
 			IScope copyScope = ((IAstScope) copy).getScope();
+			assertFalse(node.toString(), scope == copyScope);
 			assertEquals(node.toString() + ": scope count", scope.getSymbols().length, copyScope.getSymbols().length);
 			
 			for (ISymbol symbol : scope) {
 				ISymbol copySym = copyScope.get(symbol.getName());
+				assertSame(copyScope, copySym.getScope());
 				assertEquals(symbol+"", symbol, copySym);
 				assertEquals(symbol+"", symbol.getDefinition(), copySym.getDefinition());
 				assertFalse(symbol+"", symbol == copySym);
+				assertFalse(symbol+"", symbol.getDefinition() == copySym.getDefinition());
 				if (symbol.getDefinition() != null) {
 					assertFalse(symbol+"", symbol.getDefinition() == copySym.getDefinition());
 				}
@@ -291,10 +295,10 @@ public class BaseParserTest {
 		}
 	}
  
-	protected void doTypeInfer(IAstModule mod) {
+	protected void doTypeInfer(IAstNode mod) {
 		doTypeInfer(mod, false);
 	}
-	protected void doTypeInfer(IAstModule mod, boolean expectErrors) {
+	protected void doTypeInfer(IAstNode mod, boolean expectErrors) {
 		List<Message> messages = new ArrayList<Message>();
 		TypeInference infer = new TypeInference();
 		
@@ -323,4 +327,31 @@ public class BaseParserTest {
 		else
 			assertTrue("expected errors", messages.size() > 0);
 	}
+	
+	protected void doSimplify(IAstModule mod) {
+		SimplifyTree simplify = new SimplifyTree(typeEngine);
+		
+		// must infer types first
+		doTypeInfer(mod);
+		
+		int depth = mod.getDepth();
+		
+		int passes = 0;
+		while (passes++ <= depth) {
+			boolean[] changed = { false }; 
+			
+			simplify.simplify(changed, mod);
+			
+			if (!changed[0]) 
+				break;
+			
+			System.err.flush();
+			System.out.println("After simplification:");
+			DumpAST dump = new DumpAST(System.out);
+			mod.accept(dump);
+			
+		}
+		System.out.println("Simplification: " + passes + " passes");
+	}
+
 }

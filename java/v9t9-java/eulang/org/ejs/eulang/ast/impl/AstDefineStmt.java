@@ -7,6 +7,7 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -92,6 +93,21 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	@Override
 	public void replaceChildren(IAstNode[] children) {
 		throw new UnsupportedOperationException();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (getSymbolExpr() == existing) {
+			setSymbolExpr((IAstSymbolExpr) another);
+		} else if (getExpr() == existing) {
+			setExpr((IAstSymbolExpr) another);
+		} else {
+			throw new IllegalArgumentException();
+		}
+		
 	}
 	
 	

@@ -17,8 +17,8 @@ public class GlobalScope extends Scope {
 	 * @see org.ejs.eulang.symbols.Scope#createSymbol(java.lang.String)
 	 */
 	@Override
-	public ISymbol createSymbol(String name) {
-		return new GlobalSymbol(nextId(), name, this, null);
+	public ISymbol createSymbol(String name, boolean temporary) {
+		return new GlobalSymbol(nextId(), name, temporary, this, null);
 	}
 	
 	/* (non-Javadoc)

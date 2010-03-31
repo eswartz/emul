@@ -3,12 +3,18 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.ast.IAstTypedExpr;
 
 
 /**
@@ -26,6 +32,8 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 	}
 	protected AstNodeList(List<T> copyList) {
 		list = copyList;
+		for (T node : list)
+			node.setParent(this);
 	}
 
 	/* (non-Javadoc)
@@ -69,6 +77,16 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 	public String toString() {
 		return "LIST";
 	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNodeList#nodeCount()
+	 */
+	@Override
+	public int nodeCount() {
+		return list.size();
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNodeList#list()
 	 */
@@ -76,7 +94,47 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 	public List<T> list() {
 		return list;
 	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNodeList#getNodes()
+	 */
+	@Override
+	public IAstNode[] getNodes() {
+		return (IAstNode[]) list.toArray(new IAstNode[list.size()]);
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNodeList#getNodes()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public T[] getNodes(Class<T> baseClass) {
+		T[] array = (T[]) Array.newInstance(baseClass, list.size());
+		return (T[]) list.toArray(array);
+	}
 
+	public void add(T node) {
+		list.add(node);
+		this.reparent(null, node);
+	}
+	
+	public void add(int idx, T node) {
+		list.add(idx, node);
+		this.reparent(null, node);
+	}
+	
+	
+	public void addAfter(T node, T newNode) {
+		int idx = newNode != null ? list.indexOf(newNode) : 0;
+		list.add(idx, node);
+		this.reparent(null, node);
+	} 
+	public void addBefore(T newNode, T node) {
+		int idx = newNode != null ? list.indexOf(newNode) : list.size();
+		list.add(idx, node);
+		this.reparent(null, node);
+	} 
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
 	 */
@@ -89,8 +147,33 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 	@Override
 	public void replaceChildren(IAstNode[] children) {
 		list.clear();
-		List<T> asList = (List<T>) Arrays.asList(children);
-		list.addAll(asList);
+		for (IAstNode node : children) {
+			if (node != null) {
+				node.setParent(this);
+				list.add((T)node);
+			}
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		for (ListIterator<T> iterator = list.listIterator(); iterator.hasNext();) {
+			T node = (T) iterator.next();
+			if (node == existing) {
+				if (another == null) {
+					iterator.remove();
+				} else {
+					iterator.set((T) another);
+					another.setParent(this);
+				}
+				return;
+			}
+		}
+		throw new IllegalArgumentException();
 	}
 	
 }

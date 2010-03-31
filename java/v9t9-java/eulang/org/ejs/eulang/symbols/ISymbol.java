@@ -16,7 +16,12 @@ public interface ISymbol extends ITyped {
 	void setScope(IScope scope);
 	IAstNode getDefinition();
 	void setDefinition(IAstNode def);
+	
+	boolean isTemporary();
+	void setTemporary(boolean temp);
+	
 	/**
+	 * Copy self (type and name)
 	 * @return
 	 */
 	ISymbol newInstance();

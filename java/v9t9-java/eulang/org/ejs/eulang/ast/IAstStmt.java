@@ -9,5 +9,4 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstStmt extends IAstNode {
-	IAstStmt copy(IAstNode copyParent);
 }

@@ -20,8 +20,8 @@ public class LocalScope extends Scope {
 	 * @see org.ejs.eulang.symbols.Scope#createSymbol(java.lang.String)
 	 */
 	@Override
-	public ISymbol createSymbol(String name) {
-		return new LocalSymbol(nextId(), name, this, null);
+	public ISymbol createSymbol(String name, boolean temporary) {
+		return new LocalSymbol(nextId(), name, temporary, this, null);
 	}
 	
 	public LocalScope newInstance(IScope parent) {

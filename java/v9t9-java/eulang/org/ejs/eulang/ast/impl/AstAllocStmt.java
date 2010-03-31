@@ -90,7 +90,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public String toString() {
-		return "ALLOC" + ":" + getTypeString() + (typeExpr != null ? " <= " + typeExpr.toString() : "");
+		return typedString("ALLOC") + (typeExpr != null ? " <= " + typeExpr.toString() : "");
 	}
 	
 	/* (non-Javadoc)
@@ -133,7 +133,6 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public void setExpr(IAstTypedExpr expr) {
-		Check.checkArg(expr);
 		this.expr = reparent(this.expr, expr);
 	}
 
@@ -184,6 +183,22 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 			setSymbolExpr((IAstSymbolExpr) children[0]);
 		}		
 	}
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
+     */
+    @Override
+    public void replaceChild(IAstNode existing, IAstNode another) {
+		if (getTypeExpr() == existing) {
+			setTypeExpr((IAstType) another);
+		} else if (getSymbolExpr() == existing) {
+			setSymbolExpr((IAstSymbolExpr) another);
+		} else if (getExpr() == existing) {
+			setExpr((IAstTypedExpr) another);
+		} else {
+			throw new IllegalArgumentException();
+		}
+    }
+
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
@@ -218,7 +233,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 			return false;
 		
 		LLType left = symExpr.getType();
-		LLType right = expr.getType();
+		LLType right = expr != null ? expr.getType() : null;
 		if (left != null && right != null) {
 			setExpr(createCastOn(typeEngine, expr, left));
 		}

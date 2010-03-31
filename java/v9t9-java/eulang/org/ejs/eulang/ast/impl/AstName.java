@@ -99,6 +99,14 @@ public class AstName extends AstNode implements IAstName {
 	public void replaceChildren(IAstNode[] children) {
 		throw new UnsupportedOperationException();
 	}
+    
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
+     */
+    @Override
+    public void replaceChild(IAstNode existing, IAstNode another) {
+    	throw new UnsupportedOperationException();
+    }
 	
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#constructText()

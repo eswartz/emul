@@ -53,20 +53,26 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public class GenerateAST {
-	static class StmtException extends Exception {
+	static class GenerateException extends Exception {
 		private static final long serialVersionUID = -2510488670733387859L;
-		private final Tree tree;
+		private Tree tree;
+		private ISourceRef ref;
 		
-		/**
-		 * 
-		 */
-		public StmtException(Tree tree, String msg) {
+		public GenerateException(Tree tree, String msg) {
 			super(msg);
 			this.tree = tree;
+		}
+		public GenerateException(ISourceRef ref, String msg) {
+			super(msg);
+			this.ref = ref;
 		}
 		
 		public Tree getTree() {
 			return tree;
+		}
+
+		public ISourceRef getSourceRef() {
+			return ref;
 		}
 		
 	}
@@ -168,13 +174,15 @@ public class GenerateAST {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private <T extends IAstNode> T checkConstruct(Tree tree, Class<T> klass) throws StmtException {
+	private <T extends IAstNode> T checkConstruct(Tree tree, Class<T> klass) throws GenerateException {
+		if (tree == null)
+			throw new GenerateException(tree, "no tree to create " + klass.getSimpleName());
 		IAstNode node = construct(tree);
 		if (node == null)
 			return null;
 		if (klass.isInstance(node))
 			return (T) node;
-		throw new StmtException(tree, "unexpected node " + node.getClass().getSimpleName() 
+		throw new GenerateException(tree, "unexpected node " + node.getClass().getSimpleName() 
 				+ " created, expected " + klass.getSimpleName());
 	}
 
@@ -183,12 +191,17 @@ public class GenerateAST {
 		System.err.println(e);
 		errors.add(e);
 	}
+	private void error(ISourceRef ref, String msg) {
+		Error e = new Error(ref, msg);
+		System.err.println(e);
+		errors.add(e);
+	}
 
 	/**
 	 * @param tree
 	 */
-	private void unhandled(Tree tree) throws StmtException {
-		StmtException e = new StmtException(tree, "Unhandled tree: " + tree.toStringTree());
+	private void unhandled(Tree tree) throws GenerateException {
+		GenerateException e = new GenerateException(tree, "Unhandled tree: " + tree.toStringTree());
 		System.err.println(e.getMessage());
 		StackTraceElement[] stackTrace = e.getStackTrace();
 		for (int i = 0; i < stackTrace.length; i++) {
@@ -217,13 +230,33 @@ public class GenerateAST {
 		return id;
 	}*/
 	
+	protected IScope pushScope(IScope newScope) {
+		newScope.setParent(currentScope);
+		currentScope = newScope;
+		return newScope;
+	}
+	
+	protected IScope popScope(Tree tree) throws GenerateException {
+		if (currentScope == null)
+			throw new GenerateException(tree, "no current scope");
+		for (ISymbol symbol : currentScope) {
+			if (symbol.getDefinition() == null)
+				throw new GenerateException(tree, "unreferenced symbol '" + symbol.getName() + "'");
+		}
+		currentScope = currentScope.getParent();
+		
+		return currentScope;
+	}
 	/**
 	 * @param tree
 	 * @return
+	 * @throws GenerateException 
 	 */
-	public IAstModule constructModule(Tree tree) {
+	public IAstModule constructModule(Tree tree) throws GenerateException {
 		
+		// don't push/pop, since globals are not defined at all
 		currentScope = new ModuleScope(globalScope);
+		
 		IAstModule module = new AstModule(currentScope);
 		
 		IAstNodeList<IAstStmt> stmtList = constructStmtList(tree);
@@ -231,11 +264,12 @@ public class GenerateAST {
 		module.setStmtList(stmtList);
 		
 		getSource(tree, module);
+		
 		return module;
 	}
 
 	
-	public IAstNode construct(Tree tree) throws StmtException {
+	public IAstNode construct(Tree tree) throws GenerateException {
 		switch (tree.getType()) {
 		//case EulangParser.ID:
 		//	return constructId(tree);
@@ -317,12 +351,11 @@ public class GenerateAST {
 	/**
 	 * @param tree
 	 * @return
-	 * @throws StmtException 
+	 * @throws GenerateException 
 	 */
 	@SuppressWarnings("unchecked")
-	private IAstNode constructBlockStmt(Tree tree) throws StmtException {
-		IScope oldScope = currentScope;
-		currentScope = new LocalScope(oldScope);
+	private IAstNode constructBlockStmt(Tree tree) throws GenerateException {
+		pushScope(new LocalScope(currentScope));
 		try {
 			IAstNodeList<IAstStmt> stmtList = checkConstruct(tree.getChild(0), IAstNodeList.class);
 			
@@ -330,13 +363,14 @@ public class GenerateAST {
 			getSource(tree, block);
 			return block;
 		} finally {
-			currentScope = oldScope;
+			popScope(tree);
 		}
 	}
 
-	private IAstNode constructGotoStmt(Tree tree) throws StmtException {
+	private IAstNode constructGotoStmt(Tree tree) throws GenerateException {
 		IAstSymbolExpr label = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
 		label.getSymbol().setType(typeEngine.LABEL);
+		
 		IAstTypedExpr test = null;
 		if (tree.getChildCount() == 2)
 			test = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
@@ -346,20 +380,24 @@ public class GenerateAST {
 		return gotoStmt;
 	}
 
-	private IAstNode constructLabelStmt(Tree tree) throws StmtException {
+	private IAstNode constructLabelStmt(Tree tree) throws GenerateException {
 		IAstSymbolExpr label = createSymbol(tree.getChild(0));
 		label.getSymbol().setType(typeEngine.LABEL);
+		
 		IAstLabelStmt labelStmt = new AstLabelStmt(label);
 		getSource(tree, labelStmt);
+		
+		label.getSymbol().setDefinition(labelStmt);
+		
 		return labelStmt;
 	}
 
 	/**
 	 * @param tree
 	 * @return
-	 * @throws StmtException 
+	 * @throws GenerateException 
 	 */
-	private IAstNode constructStmtExpr(Tree tree) throws StmtException {
+	private IAstNode constructStmtExpr(Tree tree) throws GenerateException {
 		assert tree.getChildCount() == 1;
 		
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
@@ -372,11 +410,11 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstNode constructArgList(Tree tree) throws StmtException {
+	public IAstNode constructArgList(Tree tree) throws GenerateException {
 		IAstNodeList<IAstTypedExpr> argList = new AstNodeList<IAstTypedExpr>();
 		for (Tree kid : iter(tree)) {
 			IAstTypedExpr arg = checkConstruct(kid, IAstTypedExpr.class);
-			argList.list().add(arg);
+			argList.add(arg);
 			arg.setParent(argList);
 		}
 		getSource(tree, argList);
@@ -386,10 +424,10 @@ public class GenerateAST {
 	/**
 	 * @param tree
 	 * @return
-	 * @throws StmtException 
+	 * @throws GenerateException 
 	 */
 	@SuppressWarnings("unchecked")
-	public IAstNode constructCallOrCast(Tree tree) throws StmtException {
+	public IAstNode constructCallOrCast(Tree tree) throws GenerateException {
 		assert tree.getChildCount() == 2;
 		
 		IAstTypedExpr function = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
@@ -397,12 +435,13 @@ public class GenerateAST {
 		IAstNodeList<IAstTypedExpr> args = checkConstruct(tree.getChild(1), IAstNodeList.class);
 		
 		// check for a cast
-		if (args.list().size() == 1 && function instanceof IAstSymbolExpr) {
+		if (args.nodeCount() == 1 && function instanceof IAstSymbolExpr) {
 			ISymbol funcSym = ((IAstSymbolExpr) function).getSymbol();
 			IAstNode symdef = funcSym.getDefinition();
 			if (symdef instanceof IAstType && ((IAstType) symdef).getType() != null) {
-				 args.list().get(0).setParent(null);
-				IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, args.list().get(0));
+				IAstTypedExpr[] argNodes = args.getNodes(IAstTypedExpr.class);
+				argNodes[0].setParent(null);
+				IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, argNodes[0]);
 				castExpr.setType(((IAstType) symdef).getType());
 				getSource(tree, castExpr);
 				return castExpr;
@@ -414,19 +453,17 @@ public class GenerateAST {
 		return funcCall;
 	}
 
-	public IAstAllocStmt constructAlloc(Tree tree) throws StmtException {
+	public IAstAllocStmt constructAlloc(Tree tree) throws GenerateException {
 		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
 		
 		IAstType type = checkConstruct(tree.getChild(1), IAstType.class);
-		if (type != null) 
+		if (type != null) {
 			symbolExpr.getSymbol().setType(type.getType());
+		}
 
 		IAstTypedExpr expr = null;
 		if (tree.getChildCount() == 3)
 			expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
-		
-		if (expr == null)
-			return null;
 		
 		IAstAllocStmt define = new AstAllocStmt(symbolExpr, type, expr);
 		getSource(tree, define);
@@ -438,23 +475,25 @@ public class GenerateAST {
 	/**
 	 * @param child
 	 * @return
-	 * @throws StmtException 
+	 * @throws GenerateException 
 	 */
-	private IAstSymbolExpr createSymbol(Tree id) throws StmtException {
+	private IAstSymbolExpr createSymbol(Tree id) throws GenerateException {
 		String name = id.getText();
 		
 		ISymbol symbol = currentScope.get(name);
-		if (symbol != null) {
-			throw new StmtException(id, "redefining " + name);
+		if (symbol != null && symbol.getDefinition() != null) {
+			throw new GenerateException(id, "redefining " + name);
 		}
 		IAstName nameNode = new AstName(name, currentScope);
 		getSource(id, nameNode);
 		
 		
-		symbol = currentScope.add(nameNode);
+		if (symbol == null)
+			symbol = currentScope.add(nameNode);
 
 		IAstSymbolExpr symbolExpr = new AstSymbolExpr(symbol);
 		symbolExpr.setSourceRef(nameNode.getSourceRef());
+		System.out.println("Creating " +  symbol);
 
 		return symbolExpr;
 	}
@@ -463,7 +502,7 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstNode constructAssign(Tree tree) throws StmtException {
+	public IAstNode constructAssign(Tree tree) throws GenerateException {
 		assert(tree.getChildCount() == 2);
 		IAstSymbolExpr left = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
 		IAstTypedExpr right = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
@@ -476,7 +515,7 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstSymbolExpr constructIdRef(Tree tree) throws StmtException {
+	public IAstSymbolExpr constructIdRef(Tree tree) throws GenerateException {
 		// could have ':'s
 		IScope startScope = currentScope;
 		int idx = 0;
@@ -486,7 +525,7 @@ public class GenerateAST {
 			Tree kid = tree.getChild(idx);
 			if (kid.getType() == EulangParser.COLON) {
 				if (startScope.getParent() == null) {
-					throw new StmtException(tree, "Cannot go out of module scope");
+					throw new GenerateException(tree, "Cannot go out of module scope");
 				} else {
 					startScope = startScope.getParent();
 				}
@@ -499,7 +538,8 @@ public class GenerateAST {
 					symbol = startScope.search(kid.getText());
 				}
 				if (symbol == null) {
-					throw new StmtException(tree, "Cannot find name '" + kid.getText() + "'");
+					// make forward
+					symbol = startScope.add(new AstName(kid.getText()));
 				}
 				startScope = symbol.getScope();
 			} else {
@@ -509,14 +549,14 @@ public class GenerateAST {
 			idx++;
 		}
 		if (symbol == null) {
-			throw new StmtException(tree, "Cannot resolve name: " + tree.toStringTree());
+			throw new GenerateException(tree, "Cannot resolve name: " + tree.toStringTree());
 		}
 		IAstSymbolExpr symbolExpr = new AstSymbolExpr(symbol);
 		getSource(tree, symbolExpr);
 		return symbolExpr;
 	}
 
-	public IAstBinExpr constructBinaryExpr(Tree tree) throws StmtException {
+	public IAstBinExpr constructBinaryExpr(Tree tree) throws GenerateException {
 		assert(tree.getChildCount() == 2);
 		IAstTypedExpr left = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
 		IAstTypedExpr right = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
@@ -599,7 +639,7 @@ public class GenerateAST {
 		return binop;
 	}
 
-	public IAstUnaryExpr constructUnaryExpr(Tree tree) throws StmtException {
+	public IAstUnaryExpr constructUnaryExpr(Tree tree) throws GenerateException {
 		assert(tree.getChildCount() == 1);
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
 		IAstUnaryExpr unary = null;
@@ -623,7 +663,7 @@ public class GenerateAST {
 		return unary;
 	}
 	
-	public IAstBinExpr constructLogicalNot(Tree tree) throws StmtException {
+	public IAstBinExpr constructLogicalNot(Tree tree) throws GenerateException {
 		assert(tree.getChildCount() == 1);
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
 		IAstLitExpr zero = createZero(expr.getType());
@@ -657,7 +697,7 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstReturnStmt constructReturn(Tree tree) throws StmtException {
+	public IAstReturnStmt constructReturn(Tree tree) throws GenerateException {
 		IAstTypedExpr expr = null;
 		if (tree.getChildCount() == 1) {
 			expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
@@ -671,14 +711,21 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstNode constructArgDef(Tree tree) throws StmtException {
-		IAstSymbolExpr symExpr = createSymbol(tree.getChild(0));
+	public IAstNode constructArgDef(Tree tree) throws GenerateException {
+		int argIdx = 0;
+		
+		boolean isMacro = false;
+		if (tree.getChild(argIdx).getType() == EulangParser.MACRO) {
+			isMacro = true;
+			argIdx++;
+		}
+		
+		IAstSymbolExpr symExpr = createSymbol(tree.getChild(argIdx++));
 		
 		IAstType type = null;
 		IAstTypedExpr defaultVal = null;
 		
 		if (tree.getChildCount() > 1) {
-			int argIdx = 1;
 			if (tree.getChild(argIdx).getType() == EulangParser.TYPE) {
 				type = checkConstruct(tree.getChild(argIdx), IAstType.class);
 				argIdx++;
@@ -688,13 +735,14 @@ public class GenerateAST {
 			}
 		}
 		
-		IAstArgDef argDef = new AstArgDef(symExpr, type, defaultVal);
+		IAstArgDef argDef = new AstArgDef(symExpr, type, defaultVal, isMacro);
 		getSource(tree, argDef);
 		
 		symExpr.getSymbol().setDefinition(argDef);
 		
-		if (type != null && type.getType() != null)
+		if (type != null && type.getType() != null) {
 			symExpr.getSymbol().setType(type.getType());
+		}
 		
 		return argDef;
 	}
@@ -718,11 +766,14 @@ public class GenerateAST {
 				}
 				else*/ 
 				if (node != null) { 
-					list.list().add(node);
+					list.add(node);
 					node.setParent(list);
 				}
-			} catch (StmtException e) {
-				error(e.getTree(), e.getMessage());
+			} catch (GenerateException e) {
+				if (e.getTree() != null)
+					error(e.getTree(), e.getMessage());
+				else
+					error(e.getSourceRef(), e.getMessage());
 			}
 		}
 		
@@ -734,7 +785,7 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstNode constructPrototype(Tree tree) throws StmtException {
+	public IAstPrototype constructPrototype(Tree tree) throws GenerateException {
 		LLType retType = null;
 		IAstType retTypeNode;
 		int start = 1;
@@ -764,24 +815,30 @@ public class GenerateAST {
 	 * @param child
 	 * @return
 	 */
-	public LLType constructType(Tree tree) throws StmtException {
-		IAstNode id = construct(tree);
-		if (id instanceof IAstSymbolExpr)
-			return ((IAstSymbolExpr) id).getType();
-		if (id instanceof IAstType)
-			return ((IAstType) id).getType();
-		// for now, assume predefined
-		String name = tree.getChild(0).getText();
-		if (name.equals("Int"))
-			return typeEngine.INT;
-		if (name.equals("Float"))
-			return typeEngine.FLOAT;
-		//IAstIdExpr id = constructCheck(tree, IAstIdExpr.class);
+	public LLType constructType(Tree tree) throws GenerateException {
+		if (tree.getType() == EulangParser.TYPE) {
+			return checkConstruct(tree, IAstType.class).getType();
+		}
+		else if (tree.getType() == EulangParser.CODE) {
+			if (tree.getChildCount() == 0) {
+				return typeEngine.getCodeType(null, new LLType[0]);
+			}
+			if (tree.getChildCount() > 1)
+				throw new GenerateException(tree.getChild(2), "did not expect code block here");
+			IAstPrototype proto = checkConstruct(tree.getChild(0), IAstPrototype.class);
+			if (proto.hasDefaultArguments()) {
+				throw new GenerateException(tree.getChild(2), "cannot use default arguments in code type");
+			}
+			return proto.getType();
+		}
+		else if (tree.getType() == EulangParser.IDREF) {
+			return checkConstruct(tree, IAstSymbolExpr.class).getType();
+		}
 		unhandled(tree);
 		return null;
 	}
 
-	public IAstType constructTypeExpr(Tree tree) throws StmtException {
+	public IAstType constructTypeExpr(Tree tree) throws GenerateException {
 		LLType type = null;
 		if (tree.getChildCount() == 1)
 			type = constructType(tree.getChild(0));
@@ -790,7 +847,7 @@ public class GenerateAST {
 		return typeExpr;
 	}
 	
-	public IAstDefineStmt constructDefine(Tree tree) throws StmtException {
+	public IAstDefineStmt constructDefine(Tree tree) throws GenerateException {
 		assert tree.getChildCount() == 2;
 		
 		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
@@ -808,19 +865,36 @@ public class GenerateAST {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public IAstTypedExpr constructCodeExpr(Tree tree) throws StmtException {
-		assert tree.getChildCount() == 2;
+	public IAstTypedExpr constructCodeExpr(Tree tree) throws GenerateException {
+		assert tree.getChildCount() > 0;
 		boolean isMacro = tree.getType() == EulangParser.MACRO;
-		IScope oldScope = currentScope;
+		pushScope(new LocalScope(currentScope));
 		try {
-			currentScope = new LocalScope(currentScope);
-			IAstPrototype proto = checkConstruct(tree.getChild(0), IAstPrototype.class);
-			IAstNodeList<IAstStmt> list = checkConstruct(tree.getChild(1), IAstNodeList.class);
+			IAstPrototype proto;
+			int idx = 0;
+			if (tree.getChild(idx).getType() == EulangParser.PROTO) {
+				proto = checkConstruct(tree.getChild(idx), IAstPrototype.class);
+
+				if (!isMacro) {
+					for (IAstArgDef argDef : proto.argumentTypes()) {
+						if (argDef.isMacro()) {
+							throw new GenerateException(argDef.getSourceRef(), "cannot use macro arguments outside macro code");
+						}
+					}
+				}
+				idx++;
+			} else {
+				IAstType unspecified = new AstType(null);
+				getEmptySource(tree, unspecified);
+				proto = new AstPrototype(typeEngine, unspecified, new IAstArgDef[0]);
+				getEmptySource(tree, proto);
+			}
+			IAstNodeList<IAstStmt> list = checkConstruct(tree.getChild(idx++), IAstNodeList.class);
 			IAstCodeExpr codeExpr = new AstCodeExpr(proto, currentScope, list, isMacro);
 			getSource(tree, codeExpr);
 			return codeExpr;
 		} finally {
-			currentScope = oldScope;
+			popScope(tree);
 		}
 	}
 
@@ -828,7 +902,7 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	private IAstLitExpr constructLiteral(Tree tree) throws StmtException {
+	private IAstLitExpr constructLiteral(Tree tree) throws GenerateException {
 		assert tree.getType() == EulangParser.LIT;
 		assert tree.getChildCount() == 1;
 

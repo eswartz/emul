@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.symbols.IScope;
+
 
 
 /** 
@@ -18,7 +20,7 @@ public interface IAstNode {
     public int getId();
     
     /** Fully copy the node 
-     * @param copyParent TODO*/
+     * @param copyParent the parent of the copy into which the copy goes */
     IAstNode copy(IAstNode copyParent);
     
     /** Tell whether the node is dirty (changed with respect to original source)
@@ -68,7 +70,7 @@ public interface IAstNode {
     /** Accept visitor
      * 
      * @param visitor impl
-     * @return TODO
+     * @return {@link AstVisitor#PROCESS_xxx} flag
      */
     public int accept(AstVisitor visitor);
 
@@ -99,5 +101,15 @@ public interface IAstNode {
 	 */
 	public IAstNode findMatch(IAstNode target);
 
+	/**
+	 * Get the nearest enclosing scope (may be this)
+	 * @return
+	 */
+	IScope getOwnerScope();
+	
+	/**
+	 * Replace the given child node with another.
+	 */
+	void replaceChild(IAstNode existing, IAstNode another);
 }
 

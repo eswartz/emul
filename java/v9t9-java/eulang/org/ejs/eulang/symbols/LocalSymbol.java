@@ -16,8 +16,8 @@ public class LocalSymbol extends BaseSymbol {
 		super(number, name, def);
 	}
 
-	public LocalSymbol(int number, String name, IScope scope, IAstNode def) {
-		super(number, name, scope, def);
+	public LocalSymbol(int number, String name, boolean temporary, IScope scope, IAstNode def) {
+		super(number, name, temporary, scope, def);
 	}
 
 	/* (non-Javadoc)
@@ -25,6 +25,6 @@ public class LocalSymbol extends BaseSymbol {
 	 */
 	@Override
 	public LocalSymbol newInstance() {
-		return new LocalSymbol(getNumber(), getName(), null, null);
+		return new LocalSymbol(getNumber(), getName(), false, null, null);
 	}
 }

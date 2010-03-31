@@ -14,6 +14,9 @@ package org.ejs.eulang.ast;
 public interface IAstArgDef extends IAstTypedExpr {
 	IAstArgDef copy(IAstNode copyParent);
 	
+	boolean isMacro();
+	void setMacro(boolean isMacro);
+	
 	String getName();
 	IAstSymbolExpr getSymbolExpr();
 	

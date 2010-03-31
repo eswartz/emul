@@ -23,7 +23,7 @@ public abstract class Scope implements IScope {
 	private IScope parent;
 
 	private AtomicInteger counter;
-	public abstract ISymbol createSymbol(String name);
+	public abstract ISymbol createSymbol(String name, boolean temporary);
 	
 	/**
 	 * @param currentScope
@@ -37,7 +37,7 @@ public abstract class Scope implements IScope {
 		setParent(parent);
 	}
 	
-	protected int nextId() {
+	public int nextId() {
 		return counter.getAndIncrement();
 	}
 	
@@ -95,7 +95,7 @@ public abstract class Scope implements IScope {
 	@Override
 	public ISymbol add(IAstName name) {
 		name.setScope(this);
-		ISymbol symbol = createSymbol(name.getName());
+		ISymbol symbol = createSymbol(name.getName(), false);
 		entries.put(name.getName(), symbol);
 		return symbol;
 	}
@@ -186,5 +186,23 @@ public abstract class Scope implements IScope {
 	@Override
 	public Iterator<ISymbol> iterator() {
 		return entries.values().iterator();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#contains(org.ejs.eulang.symbols.ISymbol)
+	 */
+	@Override
+	public boolean contains(ISymbol symbol) {
+		return entries.values().contains(symbol);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#addTemporary(java.lang.String)
+	 */
+	@Override
+	public ISymbol addTemporary(String name) {
+		ISymbol symbol = createSymbol(name + "@" + counter.get(), true);
+		entries.put(name, symbol);
+		return symbol;		
 	}
 }

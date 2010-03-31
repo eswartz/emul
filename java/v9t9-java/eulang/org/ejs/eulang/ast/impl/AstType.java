@@ -4,7 +4,9 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -93,6 +95,13 @@ public class AstType extends AstNode implements IAstType {
 	public void replaceChildren(IAstNode[] children) {
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		throw new IllegalArgumentException();
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */

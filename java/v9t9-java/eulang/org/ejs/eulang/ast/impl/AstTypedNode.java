@@ -61,8 +61,8 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		this.type = type;
 	}
 
-	public String getTypeString() {
-		return getType() != null ? getType().toString() : "<unknown>";
+	public String typedString(String input) {
+		return input + " [" + (getType() != null ? getType().toString() : "<unknown>") + "]";
 	}
 	
 

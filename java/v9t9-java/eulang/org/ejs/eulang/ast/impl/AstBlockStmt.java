@@ -7,6 +7,9 @@ import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStmt;
+import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
 
 /**
@@ -91,4 +94,16 @@ public class AstBlockStmt extends AstScope implements IAstBlockStmt {
 		throw new UnsupportedOperationException();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (stmtList == existing) {
+			stmtList = (IAstNodeList<IAstStmt>) ((IAstType) another);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
 }

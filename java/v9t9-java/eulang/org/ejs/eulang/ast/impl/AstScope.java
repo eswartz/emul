@@ -50,28 +50,6 @@ public abstract class AstScope extends AstNode implements IAstScope {
 
 
 	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
-	 */
-	@Override
-	public IAstNode[] getChildren() {
-		ISymbol[] symbols = scope.getSymbols();
-		List<IAstNode> kids = new ArrayList<IAstNode>(symbols.length);
-		for (int i = 0; i < symbols.length; i++) {
-			IAstNode kid = symbols[i].getDefinition();
-			if (kid != null)
-				kids.add(kid);
-		}
-		return (IAstNode[]) kids.toArray(new IAstNode[kids.size()]);
-		
-	}
-	
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		throw new UnsupportedOperationException();
-	}
-	
-	
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstScope#getScope()
 	 */
 	@Override

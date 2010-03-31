@@ -11,8 +11,6 @@ import org.ejs.eulang.types.TypeException;
  *
  */
 public interface IAstTypedNode extends IAstNode, ITyped {
-	IAstTypedNode copy(IAstNode copyParent);
-	
 	/**
 	 * Infer the type this node should have by examining its childrens' types
 	 * and applying any semantics specific to the node.  This should not recurse.

@@ -6,6 +6,7 @@ package org.ejs.eulang.types;
 import java.util.List;
 
 import org.ejs.eulang.ast.Error;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -61,7 +62,13 @@ public class TypeInference {
 	 */
 	private boolean inferUp(List<Message> messages, TypeEngine typeEngine,
 			IAstNode node) {
+		
 		boolean changed = false;
+		
+		// don't infer through defines
+		if (node instanceof IAstDefineStmt)
+			return changed;
+		
 		for (IAstNode kid : node.getChildren()) {
 			changed |= inferUp(messages, typeEngine, kid);
 		}
@@ -78,35 +85,4 @@ public class TypeInference {
 		return changed;
 	}
 
-	/**
-	 * @param messages
-	 * @param typeEngine
-	 * @param node
-	 */
-	/*
-	private boolean propagateTypesDown(List<Message> messages, TypeEngine typeEngine,
-			IAstNode node) {
-		boolean changed = false;
-		if (node instanceof ITyped) {
-			IAstTypedNode typed = (IAstTypedNode) node;
-			try {
-				LLType type = typed.getType();
-				if (type == null || !type.isComplete()) {
-					boolean updatedNode = typed.inferTypeFromChildren(typeEngine);
-					if (!updatedNode) {
-						messages.add(new Error(node.getSourceRef(), "Could not infer types"));
-					} else {
-						changed = true;
-					}
-				}
-			} catch (TypeException e) {
-				messages.add(new Error(node.getSourceRef(), e.getMessage()));
-			}
-		}
-		for (IAstNode kid : node.getChildren()) {
-			changed |= propagateTypesDown(messages, typeEngine, kid);
-		}
-		return changed;
-	}
-*/
 }

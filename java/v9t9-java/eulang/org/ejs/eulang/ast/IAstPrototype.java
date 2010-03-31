@@ -20,4 +20,9 @@ public interface IAstPrototype extends IAstTypedNode {
 	int getArgCount();
 	boolean adaptToType(LLCodeType newType);
 
+	/**
+	 * @return
+	 */
+	boolean hasDefaultArguments();
+
 }

@@ -36,7 +36,7 @@ public class AstIntLitExpr extends AstLitExpr implements
 	 */
 	@Override
 	public String toString() {
-		return value + ":" + getTypeString();
+		return typedString(value+"");
 	}
 	
 	/* (non-Javadoc)

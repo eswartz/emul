@@ -7,6 +7,8 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLCodeType;
@@ -43,7 +45,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	 */
 	@Override
 	public String toString() {
-		return "CALL" + ":" + getTypeString();
+		return typedString("CALL");
 	}
 	
 	
@@ -122,6 +124,21 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		setFunction((IAstTypedExpr) children[0]);
 		if (children[1] != arguments)
 			throw new UnsupportedOperationException();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (getFunction() == existing) {
+			setFunction((IAstTypedExpr) another);
+		} else if (arguments == existing) {
+			arguments = (IAstNodeList<IAstTypedExpr>) ((IAstTypedExpr) another);
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	/* (non-Javadoc)

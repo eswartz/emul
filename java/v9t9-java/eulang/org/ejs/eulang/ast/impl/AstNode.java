@@ -9,6 +9,7 @@ import java.util.Map;
 import org.ejs.eulang.ast.AstVisitor;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.ISourceRef;
 import org.ejs.eulang.symbols.IScope;
@@ -227,18 +228,46 @@ abstract public class AstNode implements IAstNode {
     protected IScope remapScope(IScope scope, IScope copy, IAstNode copyRoot) {
     	if (scope == null) return null;
     	Map<Integer, IAstNode> copyMap = new HashMap<Integer, IAstNode>();
+    	Map<ISymbol, ISymbol> symbolMap = new HashMap<ISymbol, ISymbol>();
     	getNodeMap(this, copyRoot, copyMap);
     	for (ISymbol symbol : scope) {
     		ISymbol copySymbol = symbol.newInstance();
+    		symbolMap.put(symbol, copySymbol);
     		copySymbol.setScope(copy);
     		if (symbol.getDefinition() != null)
     			copySymbol.setDefinition(copyMap.get(symbol.getDefinition().getId()));
     		copy.add(copySymbol);
     	}
+    	replaceSymbols(this, copyRoot, scope, symbolMap);
     	return copy;
     }
 	
     /**
+	 * @param copyRoot
+     * @param origScope 
+	 * @param symbolMap
+	 */
+	private static void replaceSymbols(IAstNode origRoot, IAstNode copyRoot,
+			IScope origScope, Map<ISymbol, ISymbol> symbolMap) {
+		IScope myScope = origRoot.getOwnerScope();
+		if (origRoot instanceof IAstSymbolExpr) {
+			ISymbol symbol = ((IAstSymbolExpr)origRoot).getSymbol();
+			if (symbol.getScope() == origScope) {
+				ISymbol replaced = symbolMap.get(symbol);
+				if (replaced == null)
+					throw new IllegalStateException();
+				((IAstSymbolExpr) copyRoot).setSymbol(replaced);
+			}
+		}
+		IAstNode[] kids = origRoot.getChildren(); 
+		IAstNode[] copyKids = copyRoot.getChildren();
+		for (int i = 0; i < kids.length; i++) {
+			replaceSymbols(kids[i], copyKids[i], origScope, symbolMap);
+		}
+	
+	}
+
+	/**
 	 * @param copyRoot
 	 * @param copyMap
 	 */
@@ -258,4 +287,18 @@ abstract public class AstNode implements IAstNode {
     		((IAstTypedNode) copy).setType(((IAstTypedNode) orig).getType());
     	return copy;
     }
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#getOwnerScope()
+	 */
+	@Override
+	public IScope getOwnerScope() {
+		IAstNode node = this;
+		while (node != null) {
+			if (node instanceof IAstScope)
+				return ((IAstScope) node).getScope();
+			node = node.getParent();
+		}
+		return null;
+	}
 }

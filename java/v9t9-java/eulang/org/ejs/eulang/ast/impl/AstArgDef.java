@@ -23,32 +23,102 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	private IAstSymbolExpr name;
 	private IAstTypedExpr defaultVal;
 	private IAstType typeExpr;
+	private boolean isMacro;
 
 	/**
+	 * @param isMacro 
 	 * 
 	 */
-	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal) {
+	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal, boolean isMacro) {
 		this.name = name;
 		name.setParent(this);
 		setTypeExpr(type);
 		setDefaultValue(defaultVal);
+		setMacro(isMacro);
 	}
+	
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
 	public IAstArgDef copy(IAstNode copyParent) {
-		return fixup(this, new AstArgDef(doCopy(name, copyParent), doCopy(typeExpr, copyParent), doCopy(defaultVal, copyParent)));
+		return fixup(this, new AstArgDef(
+				doCopy(name, copyParent), doCopy(typeExpr, copyParent), doCopy(defaultVal, copyParent), isMacro()));
 	}
+	
+	
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
 	 */
 	@Override
 	public String toString() {
-		return name + " : " + getTypeString() + (defaultVal != null ? " = " + defaultVal : ""); 
+		return (isMacro ? "macro " : "") + name + (typeExpr != null && typeExpr.getType() != null ? " : " + typeExpr.getType().toString() : "") + (defaultVal != null ? " = " + defaultVal : ""); 
 	}
+	
+	
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result
+				+ ((defaultVal == null) ? 0 : defaultVal.hashCode());
+		result = prime * result + (isMacro ? 1231 : 1237);
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result
+				+ ((typeExpr == null) ? 0 : typeExpr.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AstArgDef other = (AstArgDef) obj;
+		if (defaultVal == null) {
+			if (other.defaultVal != null)
+				return false;
+		} else if (!defaultVal.equals(other.defaultVal))
+			return false;
+		if (isMacro != other.isMacro)
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (typeExpr == null) {
+			if (other.typeExpr != null)
+				return false;
+		} else if (!typeExpr.equals(other.typeExpr))
+			return false;
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstArgDef#isMacro()
+	 */
+	@Override
+	public boolean isMacro() {
+		return isMacro;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstArgDef#setMacro(boolean)
+	 */
+	@Override
+	public void setMacro(boolean isMacro) {
+		this.isMacro = isMacro;
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstVariableDefintion#getName()
 	 */
@@ -95,6 +165,23 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 			setTypeExpr((IAstType) children[1]);
 		} else {
 			setName((IAstSymbolExpr) children[0]);
+		}
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (getTypeExpr() == existing) {
+			setTypeExpr((IAstType) another);
+		} else if (getDefaultValue() == existing) {
+			setDefaultValue((IAstTypedExpr) another);
+		} else if (name == existing) {
+			setName((IAstSymbolExpr) another);
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 	

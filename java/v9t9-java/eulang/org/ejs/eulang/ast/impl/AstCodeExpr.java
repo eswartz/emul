@@ -14,6 +14,8 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstStmt;
+import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
@@ -60,7 +62,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 */
 	@Override
 	public String toString() {
-		return (macro ? "macro" : "code")+ ":" + getTypeString();
+		return typedString(macro ? "macro" : "code");
 	}
 	
 	/* (non-Javadoc)
@@ -110,6 +112,13 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		throw new IllegalArgumentException();
+	}
+	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
@@ -132,6 +141,8 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			int argIdx = 0;
 			
 			for (IAstArgDef arg : proto.argumentTypes()) {
+				if (!canInferTypeFrom(arg))
+					return false;
 				infArgTypes[argIdx] = arg.getType();
 				argIdx++;
 			}
@@ -178,7 +189,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 */
 	private List<IAstReturnStmt> getReturnStmts() {
 		List<IAstReturnStmt> list = null;
-		for (IAstNode node : stmts.list()) {
+		for (IAstStmt node : stmts.getNodes(IAstStmt.class)) {
 			if (node instanceof IAstReturnStmt) {
 				if (list == null)
 					list = new ArrayList<IAstReturnStmt>();

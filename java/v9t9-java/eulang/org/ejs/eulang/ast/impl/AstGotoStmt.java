@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 
 /**
@@ -121,6 +122,20 @@ public class AstGotoStmt extends AstStatement implements IAstGotoStmt {
 			setExpr((IAstTypedExpr) children[1]);
 		} else {
 			setLabel((IAstSymbolExpr) children[0]);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
+	 */
+	@Override
+	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (getLabel() == existing) {
+			setLabel((IAstSymbolExpr) another);
+		} else if (getExpr() == existing) {
+			setExpr((IAstTypedExpr) another);
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 
