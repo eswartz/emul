@@ -232,6 +232,7 @@ abstract public class AstNode implements IAstNode {
     	getNodeMap(this, copyRoot, copyMap);
     	for (ISymbol symbol : scope) {
     		ISymbol copySymbol = symbol.newInstance();
+    		copySymbol.setType(symbol.getType());
     		symbolMap.put(symbol, copySymbol);
     		copySymbol.setScope(copy);
     		if (symbol.getDefinition() != null)
@@ -249,7 +250,6 @@ abstract public class AstNode implements IAstNode {
 	 */
 	private static void replaceSymbols(IAstNode origRoot, IAstNode copyRoot,
 			IScope origScope, Map<ISymbol, ISymbol> symbolMap) {
-		IScope myScope = origRoot.getOwnerScope();
 		if (origRoot instanceof IAstSymbolExpr) {
 			ISymbol symbol = ((IAstSymbolExpr)origRoot).getSymbol();
 			if (symbol.getScope() == origScope) {

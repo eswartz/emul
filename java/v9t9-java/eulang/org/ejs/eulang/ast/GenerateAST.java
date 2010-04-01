@@ -382,7 +382,7 @@ public class GenerateAST {
 
 	private IAstNode constructLabelStmt(Tree tree) throws GenerateException {
 		IAstSymbolExpr label = createSymbol(tree.getChild(0));
-		label.getSymbol().setType(typeEngine.LABEL);
+		label.setType(typeEngine.LABEL);
 		
 		IAstLabelStmt labelStmt = new AstLabelStmt(label);
 		getSource(tree, labelStmt);

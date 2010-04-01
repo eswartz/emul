@@ -8,6 +8,7 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
@@ -98,7 +99,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     public void setSymbol(ISymbol symbol) {
     	Check.checkArg(symbol);
     	this.symbol = symbol;
-    	setType(symbol.getType());
+    	//setType(symbol.getType());
     }
 
     /* (non-Javadoc)
@@ -139,7 +140,10 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		return inferTypesFromChildren(new ITyped[] { symbol });
+		//if (getSymbol().getDefinition() instanceof IAstTypedNode)
+		//	if ( canInferTypeFrom((IAstTypedNode) getSymbol().getDefinition()))
+		//		return updateType(symbol, (((IAstTypedNode)symbol.getDefinition()).getType()));
+		return false;
 
 	}
 }

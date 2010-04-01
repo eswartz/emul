@@ -27,34 +27,34 @@ public class SimplifyTree {
 	}
 	
 
-	public IAstNode simplify(boolean[] anyChanged, IAstNode node) {
+	public boolean simplify(IAstNode node) {
 
 		boolean changed = false;
-		IAstNode[] children = node.getChildren();
-		for (int i = 0; i < children.length; i++) {
-			IAstNode kid = children[i];
-			IAstNode newkid = simplify(anyChanged, kid);
-			if (newkid != null && newkid != kid) {
-				newkid.setSourceRef(kid.getSourceRef());
-				children[i] = newkid;
-				changed = true;
-				anyChanged[0] = true;
-			}
+		for (IAstNode kid : node.getChildren()) {
+			changed |= simplify(kid);
 		}
 		
-		if (changed) {
-			node.replaceChildren(children);
+		IAstNode simple = doSimplify(node);
+		if (simple != null) {
+			node.getParent().replaceChild(node, simple);
+			changed = true;
 		}
-		
+		return changed;
+	}
+
+	private IAstNode doSimplify(IAstNode node) {
 		if (!(node instanceof IAstTypedExpr)) 
-			return node;
+			return null;
 		
 		IAstTypedExpr expr = (IAstTypedExpr) node;
 		
 		// change cast of literal to casted literal
 		IAstNode simple = expr.simplify(typeEngine);
+		if (simple != expr) {
+			return simple;
+		}
 		
-		return simple;
+		return null;
 	}
 	
 }

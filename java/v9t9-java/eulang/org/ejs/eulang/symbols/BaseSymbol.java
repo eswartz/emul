@@ -115,7 +115,8 @@ public abstract class BaseSymbol implements ISymbol {
 	@Override
 	public void setDefinition(IAstNode def) {
 		this.def = def;
-		this.type = def instanceof ITyped ? ((ITyped) def).getType() : null;
+		if (this.type == null)
+			this.type = def instanceof ITyped ? ((ITyped) def).getType() : null;
 	}
 
 	/* (non-Javadoc)

@@ -218,6 +218,9 @@ public class BaseParserTest {
     	doSanityTest(node);
     	
     	IAstNode copy = node.copy(null);
+    	
+    	//DumpAST dump = new DumpAST(System.out);
+    	//copy.accept(dump);
     	checkCopy(node, copy);
     }
 
@@ -338,11 +341,9 @@ public class BaseParserTest {
 		
 		int passes = 0;
 		while (passes++ <= depth) {
-			boolean[] changed = { false }; 
+			boolean changed = simplify.simplify(mod);
 			
-			simplify.simplify(changed, mod);
-			
-			if (!changed[0]) 
+			if (!changed) 
 				break;
 			
 			System.err.flush();

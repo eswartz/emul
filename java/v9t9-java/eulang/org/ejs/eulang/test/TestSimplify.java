@@ -25,32 +25,6 @@ import org.junit.Test;
  *
  */
 public class TestSimplify extends BaseParserTest {
-	protected void doSimplify(IAstModule mod) {
-		SimplifyTree simplify = new SimplifyTree(typeEngine);
-		
-		// must infer types first
-		doTypeInfer(mod);
-		
-		int depth = mod.getDepth();
-		
-		int passes = 0;
-		while (passes++ <= depth) {
-			boolean[] changed = { false }; 
-			
-			simplify.simplify(changed, mod);
-			
-			if (!changed[0]) 
-				break;
-			
-			System.err.flush();
-			System.out.println("After simplification:");
-			DumpAST dump = new DumpAST(System.out);
-			mod.accept(dump);
-			
-		}
-		System.out.println("Simplification: " + passes + " passes");
-	}
-
 	@Test
     public void testPromotedCast2() throws Exception {
     	IAstModule mod = treeize(

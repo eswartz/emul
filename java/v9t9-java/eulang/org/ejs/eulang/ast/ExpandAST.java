@@ -16,6 +16,7 @@ import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
+import org.ejs.eulang.ast.impl.AstStmtListExpr;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.IScope;
@@ -69,16 +70,15 @@ public class ExpandAST {
 					// Direct expansion of call, e.g.:   code () { } () 
 					// We may have produced this ourselves.
 					
-					IAstNodeList<IAstStmt> blockList = new AstNodeList<IAstStmt>();
-					IAstAllocStmt allocReturnStmt  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
+					IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
 							null,
 							(IAstCodeExpr) funcExpr.copy(funcCallExpr),
-							node.getOwnerScope(),
-							blockList);
+							node.getOwnerScope());
 					
 					//if (!(node.getParent() instanceof IAstStmt))
 					//	throw new ASTException(node, "cannot replace macro expansion except in statement (yet)");
 					
+					/*
 					IAstNodeList<IAstStmt> topStmtList = null;
 					int nodeStmtIdx = -1;
 					IAstNode stmtParent = node;
@@ -98,9 +98,10 @@ public class ExpandAST {
 						topStmtList.add(nodeStmtIdx++, stmt);
 					}
 					blockList.list().clear();
+					*/
 					
-					if (allocReturnStmt != null)
-						funcCallExpr.getParent().replaceChild(funcCallExpr, allocReturnStmt.getSymbolExpr().copy(null));
+					if (stmtListExpr != null)
+						funcCallExpr.getParent().replaceChild(funcCallExpr, stmtListExpr);
 					else
 						funcCallExpr.getParent().replaceChild(funcCallExpr, null);
 					return true;
@@ -120,17 +121,19 @@ public class ExpandAST {
 	 * @param symDef
 	 * @return node containing the return value, or <code>null</code>
 	 */
-	private IAstAllocStmt doExpandFuncCallExpr(IAstNode node, IAstNodeList<IAstTypedExpr> args,
+	private IAstStmtListExpr doExpandFuncCallExpr(IAstNode node, IAstNodeList<IAstTypedExpr> args,
 			ISymbol funcName,
 			IAstCodeExpr codeExpr, 
-			IScope parentScope,
-			IAstNodeList<IAstStmt> blockList) throws ASTException {
+			IScope parentScope
+			) throws ASTException {
 		
 		// get the scope into which new temporaries go
 		IScope nodeScope = node.getOwnerScope();
 		if (nodeScope == null) {
 			throw new ASTException(node, "no scope found");
 		}
+		
+		IAstNodeList<IAstStmt> blockList = new AstNodeList<IAstStmt>();
 		
 		// mark all the symbols temporary so they don't collide,
 		// and move them into the other scope
@@ -194,6 +197,7 @@ public class ExpandAST {
 		}
 		
 		IAstAllocStmt allocReturnStmt = null;
+		IAstSymbolExpr returnValSymExpr = null;
 		ISymbol returnValSym = null;
 		for (IAstStmt stmt : codeExpr.stmts().list()) {
 			// when inlining functions, replace returns
@@ -203,17 +207,24 @@ public class ExpandAST {
 				if (retStmt.getExpr() == null)
 					continue;
 				
-				if (allocReturnStmt != null)
-					throw new ASTException(stmt, "cannot return from more than one place in macro expanded function (yet)");
-				
-				if (funcName != null)
-					returnValSym = parentScope.addTemporary(funcName.getName());
-				else
-					returnValSym = parentScope.addTemporary("$return");
-				
 				retStmt.getExpr().setParent(null);
-				allocReturnStmt = new AstAllocStmt(new AstSymbolExpr(returnValSym), new AstType(retStmt.getType()), retStmt.getExpr());
-				blockList.add(0, allocReturnStmt);
+				
+				if (allocReturnStmt == null) {
+					//throw new ASTException(stmt, "cannot return from more than one place in macro expanded function (yet)");
+					if (funcName != null)
+						returnValSym = parentScope.addTemporary(funcName.getName());
+					else
+						returnValSym = parentScope.addTemporary("$return");
+					
+					returnValSymExpr = new AstSymbolExpr(returnValSym);
+					allocReturnStmt = new AstAllocStmt(returnValSymExpr, null, null);
+					blockList.add(0, allocReturnStmt);
+					
+				} 
+				
+				IAstAssignStmt assignStmt = new AstAssignStmt(returnValSymExpr, retStmt.getExpr());
+				blockList.add(assignStmt);
+				
 				continue;
 			}
 			
@@ -222,7 +233,9 @@ public class ExpandAST {
 		}
 		codeExpr.stmts().list().clear();
 		
-		return allocReturnStmt;
+		IAstStmtListExpr stmtListExpr = new AstStmtListExpr(returnValSymExpr, blockList);
+		setSourceInTree(stmtListExpr, codeExpr.getSourceRef());
+		return stmtListExpr;
 	}
 
 	/**
@@ -230,9 +243,9 @@ public class ExpandAST {
 	 * @param sourceRef
 	 */
 	private void setSourceInTree(IAstNode node, ISourceRef sourceRef) {
-		node.setSourceRef(sourceRef);
+		if (node.getSourceRef() == null)
+			node.setSourceRef(sourceRef);
 		for (IAstNode kid : node.getChildren()) {
-			kid.setSourceRef(sourceRef);
 			setSourceInTree(kid, sourceRef);
 		}
 	}
