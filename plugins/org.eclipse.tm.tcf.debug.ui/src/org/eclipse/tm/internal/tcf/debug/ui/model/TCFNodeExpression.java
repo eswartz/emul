@@ -199,6 +199,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 if (cast != null) e = "(" + cast + ")(" + e + ")";
                 TCFNode n = parent;
                 while (n instanceof TCFNodeExpression || n instanceof TCFNodeArrayPartition) n = n.parent;
+                if (n instanceof TCFNodeStackFrame && ((TCFNodeStackFrame)n).isEmulated()) n = n.parent;
                 command = exps.create(n.id, null, e, new IExpressions.DoneCreate() {
                     public void doneCreate(IToken token, Exception error, IExpressions.Expression context) {
                         Expression e = null;

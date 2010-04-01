@@ -75,7 +75,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
     private void addEmulatedTopFrame(HashMap<String,TCFNode> data) {
         top_frame_id = node.id + "-TF";
         TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(top_frame_id);
-        if (n == null) n = new TCFNodeStackFrame(node, top_frame_id);
+        if (n == null) n = new TCFNodeStackFrame(node, top_frame_id, true);
         data.put(n.id, n);
     }
 
@@ -105,7 +105,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
                         for (String id : contexts) {
                             cnt--;
                             TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(id);
-                            if (n == null) n = new TCFNodeStackFrame(node, id);
+                            if (n == null) n = new TCFNodeStackFrame(node, id, false);
                             assert n.parent == node;
                             n.setFrameNo(cnt);
                             data.put(id, n);

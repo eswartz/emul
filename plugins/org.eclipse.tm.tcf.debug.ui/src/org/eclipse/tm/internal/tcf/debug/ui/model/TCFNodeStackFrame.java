@@ -35,6 +35,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public class TCFNodeStackFrame extends TCFNode {
 
     private int frame_no;
+    private final boolean emulated;
     private final TCFChildrenRegisters children_regs;
     private final TCFChildrenLocalVariables children_vars;
     private final TCFChildrenExpressions children_exps;
@@ -42,8 +43,9 @@ public class TCFNodeStackFrame extends TCFNode {
     private final TCFDataCache<TCFSourceRef> line_info;
     private final TCFDataCache<BigInteger> address;
 
-    TCFNodeStackFrame(final TCFNodeExecContext parent, final String id) {
+    TCFNodeStackFrame(final TCFNodeExecContext parent, final String id, final boolean emulated) {
         super(parent, id);
+        this.emulated = emulated;
         children_regs = new TCFChildrenRegisters(this);
         children_vars = new TCFChildrenLocalVariables(this);
         children_exps = new TCFChildrenExpressions(this);
@@ -51,6 +53,10 @@ public class TCFNodeStackFrame extends TCFNode {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
+                if (emulated) {
+                    set(null, null, null);
+                    return true;
+                }
                 TCFDataCache<TCFContextState> parent_state_cache = parent.getState();
                 if (!parent_state_cache.validate(this)) return false;
                 TCFContextState parent_state_data = parent_state_cache.getData();
@@ -214,6 +220,10 @@ public class TCFNodeStackFrame extends TCFNode {
             if (n != null) return new BigInteger(n.toString());
         }
         return null;
+    }
+
+    public boolean isEmulated() {
+        return emulated;
     }
 
     private TCFChildren getChildren(IPresentationContext ctx) {

@@ -18,9 +18,9 @@ import org.eclipse.tm.tcf.services.IExpressions;
 
 public class TCFChildrenLocalVariables extends TCFChildren {
 
-    private final TCFNode node;
+    private final TCFNodeStackFrame node;
 
-    TCFChildrenLocalVariables(TCFNode node) {
+    TCFChildrenLocalVariables(TCFNodeStackFrame node) {
         super(node.channel, 128);
         this.node = node;
     }
@@ -33,7 +33,7 @@ public class TCFChildrenLocalVariables extends TCFChildren {
     @Override
     protected boolean startDataRetrieval() {
         IExpressions exps = node.model.getLaunch().getService(IExpressions.class);
-        if (exps == null) {
+        if (exps == null || node.isEmulated()) {
             set(null, null, new HashMap<String,TCFNode>());
             return true;
         }
