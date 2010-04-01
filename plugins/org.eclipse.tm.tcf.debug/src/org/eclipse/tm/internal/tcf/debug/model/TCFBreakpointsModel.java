@@ -28,7 +28,6 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointListener;
 import org.eclipse.debug.core.IBreakpointManager;
 import org.eclipse.debug.core.IBreakpointManagerListener;
-import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -45,11 +44,7 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
 public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointManagerListener {
 
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
-
-    public TCFBreakpointsModel() {
-        bp_manager.addBreakpointListener(this);
-        bp_manager.addBreakpointManagerListener(this);
-    }
+    private final HashSet<IChannel> channels = new HashSet<IChannel>();
 
     public static TCFBreakpointsModel getBreakpointsModel() {
         return Activator.getBreakpointsModel();
@@ -75,11 +70,28 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     }
 
     @SuppressWarnings("unchecked")
-    public void downloadBreakpoints(final IChannel channel, final Runnable done)
-            throws IOException, CoreException {
+    public void downloadBreakpoints(final IChannel channel, final Runnable done) throws IOException, CoreException {
         assert Protocol.isDispatchThread();
         IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
         if (service != null) {
+            if (channels.isEmpty()) {
+                bp_manager.addBreakpointListener(this);
+                bp_manager.addBreakpointManagerListener(this);
+            }
+            channels.add(channel);
+            channel.addChannelListener(new IChannel.IChannelListener() {
+                public void congestionLevel(int level) {
+                }
+                public void onChannelClosed(Throwable error) {
+                    channels.remove(channel);
+                    if (channels.isEmpty()) {
+                        bp_manager.removeBreakpointListener(TCFBreakpointsModel.this);
+                        bp_manager.removeBreakpointManagerListener(TCFBreakpointsModel.this);
+                    }
+                }
+                public void onChannelOpened() {
+                }
+            });
             IBreakpoint[] arr = bp_manager.getBreakpoints();
             if (arr != null && arr.length > 0) {
                 Map<String,Object>[] bps = new Map[arr.length];
@@ -117,33 +129,25 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 map.put(id, arr[i]);
             }
             if (map.isEmpty()) return;
-            final ILaunch[] launches = DebugPlugin.getDefault().getLaunchManager().getLaunches();
             Runnable r = new Runnable() {
                 public void run() {
-                    for (int i = 0; i < launches.length; i++) {
-                        if (launches[i] instanceof TCFLaunch) {
-                            TCFLaunch launch = (TCFLaunch)launches[i];
-                            final IChannel channel = launch.getChannel();
-                            if (channel == null) continue;
-                            if (channel.getState() != IChannel.STATE_OPEN) continue;
-                            IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
-                            if (service == null) continue;
-                            Set<String> ids = new HashSet<String>();
-                            for (String id : map.keySet()) {
-                                IBreakpoint bp = map.get(id);
-                                if (isSupported(channel, bp)) ids.add(id);
+                    for (final IChannel channel : channels) {
+                        IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
+                        Set<String> ids = new HashSet<String>();
+                        for (String id : map.keySet()) {
+                            IBreakpoint bp = map.get(id);
+                            if (isSupported(channel, bp)) ids.add(id);
+                        }
+                        IBreakpoints.DoneCommand done = new IBreakpoints.DoneCommand() {
+                            public void doneCommand(IToken token, Exception error) {
+                                if (error != null) channel.terminate(error);
                             }
-                            IBreakpoints.DoneCommand done = new IBreakpoints.DoneCommand() {
-                                public void doneCommand(IToken token, Exception error) {
-                                    if (error != null) channel.terminate(error);
-                                }
-                            };
-                            if (enabled) {
-                                service.enable(ids.toArray(new String[ids.size()]), done);
-                            }
-                            else {
-                                service.disable(ids.toArray(new String[ids.size()]), done);
-                            }
+                        };
+                        if (enabled) {
+                            service.enable(ids.toArray(new String[ids.size()]), done);
+                        }
+                        else {
+                            service.disable(ids.toArray(new String[ids.size()]), done);
                         }
                     }
                     Protocol.sync(new Runnable() {
@@ -169,7 +173,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     private abstract class BreakpointUpdate implements Runnable {
 
         private final IBreakpoint breakpoint;
-        private final ILaunch[] launches;
         private final Map<String,Object> marker_attrs;
         private final String marker_file;
         private final String marker_id;
@@ -184,35 +187,27 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             marker_attrs = new HashMap<String,Object>(breakpoint.getMarker().getAttributes());
             marker_file = getFilePath(breakpoint.getMarker().getResource());
             marker_id = getBreakpointID(breakpoint);
-            launches = DebugPlugin.getDefault().getLaunchManager().getLaunches();
         }
 
         synchronized void exec() throws InterruptedException {
             assert !Protocol.isDispatchThread();
-            Protocol.invokeLater(this);
-            wait();
+            if (marker_id != null) {
+                Protocol.invokeLater(this);
+                wait();
+            }
         }
 
         public void run() {
-            if (marker_id != null) {
-                tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_attrs);
-                for (int i = 0; i < launches.length; i++) {
-                    if (launches[i] instanceof TCFLaunch) {
-                        final TCFLaunch launch = (TCFLaunch)launches[i];
-                        final IChannel channel = launch.getChannel();
-                        if (channel == null) continue;
-                        if (channel.getState() != IChannel.STATE_OPEN) continue;
-                        service = channel.getRemoteService(IBreakpoints.class);
-                        if (service == null) continue;
-                        if (!isSupported(channel, breakpoint)) continue;
-                        done = new IBreakpoints.DoneCommand() {
-                            public void doneCommand(IToken token, Exception error) {
-                                if (error != null) channel.terminate(error);
-                            }
-                        };
-                        update();
+            tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_attrs);
+            for (final IChannel channel : channels) {
+                service = channel.getRemoteService(IBreakpoints.class);
+                if (!isSupported(channel, breakpoint)) continue;
+                done = new IBreakpoints.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        if (error != null) channel.terminate(error);
                     }
-                }
+                };
+                update();
             }
             Protocol.sync(new Runnable() {
                 public void run() {
