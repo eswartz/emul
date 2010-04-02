@@ -12,6 +12,8 @@ import org.ejs.eulang.ast.impl.AstAssignStmt;
 import org.ejs.eulang.ast.impl.AstBlockStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
+import org.ejs.eulang.ast.impl.AstGotoStmt;
+import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPrototype;
@@ -74,31 +76,6 @@ public class ExpandAST {
 							null,
 							(IAstCodeExpr) funcExpr.copy(funcCallExpr),
 							node.getOwnerScope());
-					
-					//if (!(node.getParent() instanceof IAstStmt))
-					//	throw new ASTException(node, "cannot replace macro expansion except in statement (yet)");
-					
-					/*
-					IAstNodeList<IAstStmt> topStmtList = null;
-					int nodeStmtIdx = -1;
-					IAstNode stmtParent = node;
-					while (stmtParent != null) {
-						if (stmtParent.getParent() instanceof IAstNodeList) {
-							topStmtList = (IAstNodeList<IAstStmt>) stmtParent.getParent();
-							nodeStmtIdx = topStmtList.list().indexOf(stmtParent);
-							break;
-						}
-						stmtParent = stmtParent.getParent();
-					}
-					if (topStmtList == null)
-						throw new ASTException(node, "cannot find function into which to replace macro expansion");
-					
-					for (IAstStmt stmt : blockList.list()) {
-						stmt.setParent(null);
-						topStmtList.add(nodeStmtIdx++, stmt);
-					}
-					blockList.list().clear();
-					*/
 					
 					if (stmtListExpr != null)
 						funcCallExpr.getParent().replaceChild(funcCallExpr, stmtListExpr);
@@ -199,38 +176,60 @@ public class ExpandAST {
 		IAstAllocStmt allocReturnStmt = null;
 		IAstSymbolExpr returnValSymExpr = null;
 		ISymbol returnValSym = null;
+		
+		IAstSymbolExpr returnLabelSymExpr = null;
+		ISymbol returnLabelSym = null;
+		
 		for (IAstStmt stmt : codeExpr.stmts().list()) {
 			// when inlining functions, replace returns
 			if (!codeExpr.isMacro() && stmt instanceof IAstReturnStmt) {
 				IAstReturnStmt retStmt = (IAstReturnStmt) stmt;
 				
-				if (retStmt.getExpr() == null)
-					continue;
-				
-				retStmt.getExpr().setParent(null);
-				
-				if (allocReturnStmt == null) {
-					//throw new ASTException(stmt, "cannot return from more than one place in macro expanded function (yet)");
+				if (retStmt.getExpr() != null) {
+					retStmt.getExpr().setParent(null);
+					
+					if (allocReturnStmt == null) {
+						//throw new ASTException(stmt, "cannot return from more than one place in macro expanded function (yet)");
+						if (funcName != null)
+							returnValSym = parentScope.addTemporary(funcName.getName());
+						else
+							returnValSym = parentScope.addTemporary("$return");
+						
+						returnValSymExpr = new AstSymbolExpr(returnValSym);
+						allocReturnStmt = new AstAllocStmt(returnValSymExpr, null, null);
+						blockList.add(0, allocReturnStmt);
+						
+					} 
+					
+					IAstAssignStmt assignStmt = new AstAssignStmt(returnValSymExpr, retStmt.getExpr());
+					blockList.add(assignStmt);
+				}
+
+				if (returnLabelSymExpr == null) {
 					if (funcName != null)
-						returnValSym = parentScope.addTemporary(funcName.getName());
+						returnLabelSym = parentScope.addTemporary("$end$" + funcName.getName());
 					else
-						returnValSym = parentScope.addTemporary("$return");
+						returnLabelSym = parentScope.addTemporary("$end");
 					
-					returnValSymExpr = new AstSymbolExpr(returnValSym);
-					allocReturnStmt = new AstAllocStmt(returnValSymExpr, null, null);
-					blockList.add(0, allocReturnStmt);
-					
-				} 
+					returnLabelSymExpr = new AstSymbolExpr(returnLabelSym);
+				}
+
 				
-				IAstAssignStmt assignStmt = new AstAssignStmt(returnValSymExpr, retStmt.getExpr());
-				blockList.add(assignStmt);
-				
+				IAstGotoStmt gotoEndStmt = new AstGotoStmt(returnLabelSymExpr, null);
+				blockList.add(gotoEndStmt);
 				continue;
 			}
 			
 			stmt.setParent(null);
 			blockList.add(stmt);
 		}
+		
+		if (returnLabelSymExpr != null) {
+			AstLabelStmt returnLabelStmt = new AstLabelStmt(returnLabelSymExpr);
+			blockList.add(returnLabelStmt);
+		}
+		//returnLabelSymExpr.getSymbol().setDefinition(returnLabelStmt);
+		
 		codeExpr.stmts().list().clear();
 		
 		IAstStmtListExpr stmtListExpr = new AstStmtListExpr(returnValSymExpr, blockList);

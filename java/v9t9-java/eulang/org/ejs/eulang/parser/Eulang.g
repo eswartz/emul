@@ -25,6 +25,9 @@ tokens {
   TYPE;
   STMTEXPR;
   
+  CONDSTAR;
+  CONDTEST;
+  
   CALL;
   INLINE;   // modifier on CALL
   
@@ -174,9 +177,9 @@ codestmtlist:  (codeStmt ) => (codeStmt+)  ->  ^(STMTLIST codeStmt*)
 codeStmt : varDecl SEMI   -> varDecl
       | assignStmt SEMI   -> assignStmt
       | returnStmt SEMI   -> returnStmt
-      | gotoStmt SEMI     -> gotoStmt
       | rhsExpr SEMI      -> ^(STMTEXPR rhsExpr)
       | blockStmt         -> blockStmt
+      | gotoStmt SEMI     -> gotoStmt
       | labelStmt     -> labelStmt
       ;
 
@@ -202,7 +205,7 @@ gotoStmt: GOTO idOrScopeRef ( COMMA rhsExpr )?           -> ^(GOTO idOrScopeRef 
 blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
   ;
 
-rhsExpr :   cond                          -> cond
+rhsExpr :   condStar                          -> condStar
     ;
     
 funcCall : idOrScopeRef LPAREN arglist RPAREN   ->     ^(CALL idOrScopeRef arglist) 
@@ -220,6 +223,18 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 //  Expressions
 //
 
+// multi-argument cond:  
+//
+//  e.g.:  ?[ <test1> -> <stmt> || <test2> -> <stmt> || ..., [<true> -> ] <defaultStmt> ]
+
+condStar: ( cond -> cond )
+   | QUESTION_LBRACKET (condTest (COMPOR condTest)* ) RBRACKET -> ^(CONDSTAR condTest* )
+    ;
+condTest : cond ARROW codeStmt -> ^(CONDTEST cond codeStmt) 
+  ;
+condFinal :  codeStmt -> ^(CONDTEST ^(LIT TRUE) codeStmt)
+    ;
+    
 cond:    ( logor  -> logor )
       ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
 ;
@@ -349,6 +364,9 @@ PERCENT : '%';
 UMOD : '%%';
 RETURNS : '=>' ;
 PERIOD : '.';
+
+QUESTION_LBRACKET : '?[';
+ARROW : '->';
 
 RETURN : 'return';
 CODE : 'code';

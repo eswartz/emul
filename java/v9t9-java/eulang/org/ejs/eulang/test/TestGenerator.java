@@ -313,6 +313,20 @@ public class TestGenerator extends BaseParserTest {
     public void testMacroArgs2() throws Exception {
     	treeizeFail(" testMacroArgs1 = code (macro t : code, macro then : code, macro else : code) { };\n");
     }
+    
+    //@Test
+    public void testCondStar1() throws Exception {
+    	IAstModule mod = treeize(
+    		" testCondStar1 = code (t) { ?[ 1>t -> 1;\n" +
+    		"		||	t!=2 -> { x:= 9+t; return -x; }\n" +
+    		"		||	true ->  0; ]; };\n");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
+		IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+		
+		IAstPrototype proto = codeExpr.getPrototype();    	
+    }
 }
 
 

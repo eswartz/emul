@@ -45,7 +45,7 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 	 */
 	@Override
 	public String toString() {
-		return typedString("STMTLIST");
+		return typedString("STMTLIST")+"; return: " + (getResult() != null ? getResult() : "nothing");
 	}
 
 	/* (non-Javadoc)
