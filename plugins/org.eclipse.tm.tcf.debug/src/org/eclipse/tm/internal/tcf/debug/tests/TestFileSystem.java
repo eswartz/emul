@@ -75,8 +75,14 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
             exit(new Exception("Invalid FileSysrem.roots responce: empty roots array"));
         }
         else {
-            root = entries[0].filename;
-            files.opendir(root, this);
+            for (DirEntry d : entries) {
+                if (d.filename.startsWith("A:")) continue;
+                if (d.filename.startsWith("B:")) continue;
+                root = d.filename;
+                break;
+            }
+            if (root == null) exit(new Exception("Invalid FileSysrem.roots responce: no suitable root"));
+            else files.opendir(root, this);
         }
     }
 
