@@ -311,7 +311,7 @@ static void write_file_attrs(OutputStream * out, FileAttrs * attrs) {
         json_write_long(out, attrs->gid);
         cnt++;
     }
-    if (attrs->flags & ATTR_SIZE) {
+    if (attrs->flags & ATTR_PERMISSIONS) {
         if (cnt) write_stream(out, ',');
         json_write_string(out, "Permissions");
         write_stream(out, ':');
@@ -1160,28 +1160,29 @@ static void command_roots(char * token, Channel * c) {
     {
         int cnt = 0;
         int disk = 0;
-        for (disk = 'A'; disk <= 'Z'; disk++) {
-            char path[32];
-            ULARGE_INTEGER freeBytesAvailable;
-            ULARGE_INTEGER totalNumberOfBytes;
-            ULARGE_INTEGER totalNumberOfFreeBytes;
-            BOOL hasSize;
-
-            snprintf(path, sizeof(path), "%c:/", disk);
-            hasSize = GetDiskFreeSpaceExA(path, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
-            memset(&st, 0, sizeof(st));
-            if (hasSize && stat(path, &st) == 0) {
-                FileAttrs attrs;
+        DWORD disks = GetLogicalDrives();
+        for (disk = 0; disk <= 30; disk++) {
+            if (disks & (1 << disk)) {
+                char path[32];
+                snprintf(path, sizeof(path), "%c:/", 'A' + disk);
                 if (cnt > 0) write_stream(&c->out, ',');
                 write_stream(&c->out, '{');
                 json_write_string(&c->out, "FileName");
                 write_stream(&c->out, ':');
                 json_write_string(&c->out, path);
-                fill_attrs(&attrs, &st);
-                write_stream(&c->out, ',');
-                json_write_string(&c->out, "Attrs");
-                write_stream(&c->out, ':');
-                write_file_attrs(&c->out, &attrs);
+                if (disk >= 2) {
+                    ULARGE_INTEGER total_number_of_bytes;
+                    BOOL has_size = GetDiskFreeSpaceExA(path, NULL, &total_number_of_bytes, NULL);
+                    memset(&st, 0, sizeof(st));
+                    if (has_size && stat(path, &st) == 0) {
+                        FileAttrs attrs;
+                        fill_attrs(&attrs, &st);
+                        write_stream(&c->out, ',');
+                        json_write_string(&c->out, "Attrs");
+                        write_stream(&c->out, ':');
+                        write_file_attrs(&c->out, &attrs);
+                    }
+                }
                 write_stream(&c->out, '}');
                 cnt++;
             }
