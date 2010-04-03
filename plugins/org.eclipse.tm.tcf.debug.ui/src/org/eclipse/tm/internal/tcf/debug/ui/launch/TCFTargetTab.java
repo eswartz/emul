@@ -326,6 +326,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 }
                 else {
                     fillItem(item, info);
+                    updateLaunchConfigurationDialog();
                 }
             }
         });
@@ -346,6 +347,12 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             }
             @Override
             public void widgetSelected(SelectionEvent e) {
+                TreeItem[] selections = peer_tree.getSelection();
+                if (selections.length > 0) {
+                    assert selections.length == 1;
+                    PeerInfo info = findPeerInfo(selections[0]);
+                    if (info != null) peer_id_text.setText(getPath(info));
+                }
                 updateLaunchConfigurationDialog();
             }
         });
@@ -429,7 +436,9 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 final PeerInfo info = findPeerInfo(peer_id_text.getText());
                 if (info == null) return;
                 if (!(info.peer instanceof TCFUserDefPeer)) return;
-                Protocol.invokeLater(new Runnable() {
+                peer_id_text.setText("");
+                updateLaunchConfigurationDialog();
+                Protocol.invokeAndWait(new Runnable() {
                     public void run() {
                         ((TCFUserDefPeer)info.peer).dispose();
                         TCFUserDefPeer.savePeers();
@@ -475,13 +484,16 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         update_peer_buttons = new Runnable() {
 
             public void run() {
+                boolean local = use_local_agent_button.getSelection();
                 PeerInfo info = findPeerInfo(peer_id_text.getText());
-                button_edit.setEnabled(info != null);
-                button_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer);
+                button_new.setEnabled(!local);
+                button_edit.setEnabled(info != null && !local);
+                button_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer && !local);
                 button_test.setEnabled(info != null);
                 button_loop.setEnabled(info != null);
-                item_edit.setEnabled(info != null);
-                item_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer);
+                item_new.setEnabled(!local);
+                item_edit.setEnabled(info != null && !local);
+                item_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer && !local);
                 item_test.setEnabled(info != null);
                 item_loop.setEnabled(info != null);
             }
@@ -493,17 +505,19 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     protected void updateLaunchConfigurationDialog() {
         if (use_local_agent_button.getSelection()) {
             peer_tree.setEnabled(false);
+            peer_tree.deselectAll();
             String id = TCFLocalAgent.getLocalAgentID();
-            if (id != null) peer_id_text.setText(id);
+            if (id == null) id = "";
+            peer_id_text.setText(id);
+            peer_id_text.setEnabled(false);
         }
         else {
             peer_tree.setEnabled(true);
-            TreeItem[] selections = peer_tree.getSelection();
-            if (selections.length > 0) {
-                assert selections.length == 1;
-                PeerInfo info = findPeerInfo(selections[0]);
-                if (info != null) peer_id_text.setText(getPath(info));
-            }
+            peer_id_text.setEnabled(true);
+            String id = peer_id_text.getText();
+            TreeItem item = findItem(findPeerInfo(id));
+            if (item != null) peer_tree.setSelection(item);
+            else peer_tree.deselectAll();
         }
         update_peer_buttons.run();
         super.updateLaunchConfigurationDialog();
@@ -533,9 +547,10 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         setErrorMessage(null);
         setMessage(null);
         try {
-            String id = configuration.getAttribute(TCFLaunchDelegate.ATTR_PEER_ID, (String)null);
+            String id = configuration.getAttribute(TCFLaunchDelegate.ATTR_PEER_ID, "");
             TreeItem item = findItem(findPeerInfo(id));
             if (item != null) peer_tree.setSelection(item);
+            peer_id_text.setText(id);
             run_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, true));
             use_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true));
         }
@@ -548,8 +563,12 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     }
 
     public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-        String id = peer_id_text.getText().trim();
-        if (id.length() > 0) configuration.setAttribute(TCFLaunchDelegate.ATTR_PEER_ID, id);
+        if (use_local_agent_button.getSelection()) {
+            configuration.removeAttribute(TCFLaunchDelegate.ATTR_PEER_ID);
+        }
+        else {
+            configuration.setAttribute(TCFLaunchDelegate.ATTR_PEER_ID, peer_id_text.getText());
+        }
         configuration.setAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, run_local_agent_button.getSelection());
         configuration.setAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, use_local_agent_button.getSelection());
     }
@@ -773,12 +792,6 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             if (expanded) {
                 assert items.length == arr.length;
                 for (int i = 0; i < items.length; i++) fillItem(items[i], arr[i]);
-                String id = peer_id_text.getText();
-                TreeItem item = findItem(findPeerInfo(id));
-                if (item != null) {
-                    peer_tree.setSelection(item);
-                    update_peer_buttons.run();
-                }
             }
             else {
                 Protocol.invokeAndWait(new Runnable() {
@@ -791,6 +804,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 for (int i = 1; i < n; i++) items[0].setText(i, "");
             }
         }
+        updateLaunchConfigurationDialog();
     }
 
     private PeerInfo findPeerInfo(TreeItem item) {
