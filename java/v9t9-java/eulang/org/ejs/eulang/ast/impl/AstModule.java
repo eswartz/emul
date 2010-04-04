@@ -70,15 +70,6 @@ public class AstModule extends AstScope implements IAstModule {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		this.stmtList = (IAstNodeList<IAstStmt>) reparent(this.stmtList, children[0]);
-	}
-
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
 	 */
 	@SuppressWarnings("unchecked")

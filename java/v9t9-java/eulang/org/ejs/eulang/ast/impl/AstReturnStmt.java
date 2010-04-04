@@ -94,12 +94,6 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 			return NO_CHILDREN;
 		return new IAstNode[] { expr };
 	}
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		if (expr != null)
-			setExpr((IAstTypedExpr) children[0]);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */

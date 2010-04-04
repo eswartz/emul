@@ -89,12 +89,6 @@ public interface IAstNode {
 	public int getDepth();
 
 	/**
-	 * Replace children from the array. 
-	 * @param children array which matches length and semantics of {@link #getChildren()}
-	 */
-	public void replaceChildren(IAstNode[] children);
-
-	/**
 	 * Find a node in this tree matching the given node in another tree
 	 * @param target
 	 * @return IAstNode or null

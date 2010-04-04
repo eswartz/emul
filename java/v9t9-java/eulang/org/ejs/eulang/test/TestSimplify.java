@@ -23,6 +23,9 @@ import org.junit.Test;
  *
  */
 public class TestSimplify extends BaseParserTest {
+	{
+		dumpSimplify = true;
+	}
 	@Test
     public void testPromotedCast2() throws Exception {
     	IAstModule mod = treeize(

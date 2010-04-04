@@ -53,8 +53,11 @@ tokens {
   IDLIST;
   
   LABEL;
-  //GOTO;
+  GOTO;
   BLOCK;
+  
+  //temporary
+  LABELSTMT;
 }
 
 @header {
@@ -174,13 +177,18 @@ codestmtlist:  /*(codeStmt ) =>*/ codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST cod
     | -> ^(STMTLIST) 
     ;
     
-codeStmt : varDecl    -> varDecl
+codeStmt : labelStmt codeStmtExpr  -> ^(LABELSTMT labelStmt codeStmtExpr)
+      | codeStmtExpr -> codeStmtExpr
+      ;
+
+codeStmtExpr : varDecl    -> varDecl
       | assignStmt    -> assignStmt
       //| returnStmt SEMI   -> returnStmt
       | rhsExpr       -> ^(STMTEXPR rhsExpr)
       | blockStmt         -> blockStmt
       //| gotoStmt SEMI     -> gotoStmt
-      | labelStmt     -> labelStmt
+      | gotoStmt      -> gotoStmt
+      //| labelStmt     -> labelStmt
       ;
 
 varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
@@ -199,10 +207,9 @@ assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assi
 
 labelStmt: AT ID COLON                    -> ^(LABEL ID)
   ;
-/*
-gotoStmt: GOTO idOrScopeRef ( COMMA rhsExpr )?           -> ^(GOTO idOrScopeRef rhsExpr?)
+//gotoStmt: GOTO idOrScopeRef ( COMMA rhsExpr )?           -> ^(GOTO idOrScopeRef rhsExpr?)
+gotoStmt: AT idOrScopeRef                -> ^(GOTO idOrScopeRef)
   ;
-*/
   
 blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
   ;

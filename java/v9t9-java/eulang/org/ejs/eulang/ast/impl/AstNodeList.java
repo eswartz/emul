@@ -138,18 +138,6 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 		return (IAstNode[]) list.toArray(new IAstNode[list.size()]);
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		list.clear();
-		for (IAstNode node : children) {
-			if (node != null) {
-				node.setParent(this);
-				list.add((T)node);
-			}
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */

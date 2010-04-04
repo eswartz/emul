@@ -159,26 +159,6 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 		else
 			return new IAstNode[] { name };
 	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		if (typeExpr != null && defaultVal != null) {
-			setName((IAstSymbolExpr) children[0]);
-			setTypeExpr((IAstType) children[1]);
-			setDefaultValue((IAstTypedExpr) children[2]);
-		} else if (defaultVal != null) {
-			setName((IAstSymbolExpr) children[0]);
-			setDefaultValue((IAstTypedExpr) children[1]);
-		} else if (typeExpr != null) {
-			setName((IAstSymbolExpr) children[0]);
-			setTypeExpr((IAstType) children[1]);
-		} else {
-			setName((IAstSymbolExpr) children[0]);
-		}
-	}
 	
 	
 	/* (non-Javadoc)

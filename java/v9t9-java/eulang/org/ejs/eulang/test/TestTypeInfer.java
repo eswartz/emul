@@ -27,7 +27,9 @@ import org.junit.Test;
  *
  */
 public class TestTypeInfer extends BaseParserTest {
-	
+	{
+		dumpTypeInfer = true;
+	}
 
 	@Test
     public void testNoChange1() throws Exception {

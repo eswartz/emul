@@ -80,16 +80,7 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		setCondExprs((IAstNodeList<IAstCondExpr>) children[0]);
-	}
-	
-	
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getCondExprs() == existing) {

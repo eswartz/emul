@@ -117,16 +117,6 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		setFunction((IAstTypedExpr) children[0]);
-		if (children[1] != arguments)
-			throw new UnsupportedOperationException();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {

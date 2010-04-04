@@ -87,14 +87,6 @@ public class AstBlockStmt extends AstScope implements IAstBlockStmt {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		throw new UnsupportedOperationException();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {

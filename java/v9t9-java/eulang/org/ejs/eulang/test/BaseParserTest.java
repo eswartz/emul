@@ -136,6 +136,10 @@ public class BaseParserTest {
 	}
 
 	protected TypeEngine typeEngine;
+	protected boolean dumpSimplify;
+	protected boolean dumpTreeize;
+	protected boolean dumpTypeInfer;
+	protected boolean dumpExpand;
 
 	protected IAstNode treeize(String method, String pmethod, String str, boolean expectError) throws Exception {
     	ParserRuleReturnScope ret = parse(method, str, false);
@@ -161,8 +165,10 @@ public class BaseParserTest {
 			}
     	}
 	 
-    	DumpAST dump = new DumpAST(System.out);
-    	node.accept(dump);
+    	if (dumpTreeize || (!expectError && gen.getErrors().size() > 0)) {
+	    	DumpAST dump = new DumpAST(System.out);
+	    	node.accept(dump);
+    	}
      	
     	if (!expectError) {
     		 if (gen.getErrors().size() > 0) {
@@ -322,11 +328,18 @@ public class BaseParserTest {
 			if (!changed) 
 				break;
 			
-			System.err.flush();
-			System.out.println("After type inference:");
+			if (dumpTypeInfer) {
+				System.err.flush();
+				System.out.println("After type inference:");
+				DumpAST dump = new DumpAST(System.out);
+				mod.accept(dump);
+			}
+			
+		}
+		
+		if (!dumpTypeInfer || (!expectErrors && messages.size() > 0)) {
 			DumpAST dump = new DumpAST(System.out);
 			mod.accept(dump);
-			
 		}
 		System.out.println("Inference: " + passes + " passes");
 		for (Message msg : messages)
@@ -352,10 +365,12 @@ public class BaseParserTest {
 			if (!changed) 
 				break;
 			
-			System.err.flush();
-			System.out.println("After simplification:");
-			DumpAST dump = new DumpAST(System.out);
-			mod.accept(dump);
+			if (dumpSimplify) {
+				System.err.flush();
+				System.out.println("After simplification:");
+				DumpAST dump = new DumpAST(System.out);
+				mod.accept(dump);
+			}
 			
 		}
 		System.out.println("Simplification: " + passes + " passes");
@@ -371,9 +386,11 @@ public class BaseParserTest {
 			boolean changed = expand.expand(messages, node);
 			
 			if (changed) {
-				System.out.println("After expansion pass " + passes + ":");
-				DumpAST dump = new DumpAST(System.out);
-				node.accept(dump);
+				if (dumpExpand || messages.size() > 0) {
+					System.out.println("After expansion pass " + passes + ":");
+					DumpAST dump = new DumpAST(System.out);
+					node.accept(dump);
+				}
 				
 				for (Message msg : messages)
 					System.err.println(msg);

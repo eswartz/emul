@@ -89,11 +89,6 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 			return new IAstNode[] { id };
 	}
 
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		throw new UnsupportedOperationException();
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
 	 */

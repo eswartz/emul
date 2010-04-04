@@ -90,15 +90,6 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
 	@Override
-	public void replaceChildren(IAstNode[] children) {
-		setSymbol((IAstSymbolExpr) children[0]);
-		setExpr((IAstTypedExpr) children[1]);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getExpr() == existing) {
 			setExpr((IAstTypedExpr) another);

@@ -52,11 +52,6 @@ public class AstUnaryExpr extends AstTypedExpr implements
     public IAstNode[] getChildren() {
         return new IAstNode[] { expr };
     }
-    @Override
-	public void replaceChildren(IAstNode[] children) {
-    	setExpr((IAstTypedExpr) children[0]);
-	}
-	
     /* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */

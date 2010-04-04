@@ -106,14 +106,6 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
 	@Override
-	public void replaceChildren(IAstNode[] children) {
-		throw new UnsupportedOperationException();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		throw new IllegalArgumentException();
 	}

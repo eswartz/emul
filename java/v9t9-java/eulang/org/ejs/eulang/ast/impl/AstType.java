@@ -89,10 +89,6 @@ public class AstType extends AstNode implements IAstType {
 	public IAstNode[] getChildren() {
 		return NO_CHILDREN;
 	}
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */

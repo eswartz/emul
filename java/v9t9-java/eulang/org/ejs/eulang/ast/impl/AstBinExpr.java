@@ -51,15 +51,6 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
 	@Override
-	public void replaceChildren(IAstNode[] children) {
-		setLeft((IAstTypedExpr) children[0]);
-		setRight((IAstTypedExpr) children[1]);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getLeft() == existing) {
 			setLeft((IAstTypedExpr) another);

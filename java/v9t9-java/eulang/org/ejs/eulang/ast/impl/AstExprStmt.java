@@ -93,14 +93,6 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
 	@Override
-	public void replaceChildren(IAstNode[] children) {
-		setExpr((IAstTypedExpr) children[0]);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getExpr() == existing) {
 			setExpr((IAstTypedExpr) another);

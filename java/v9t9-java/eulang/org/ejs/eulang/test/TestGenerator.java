@@ -12,6 +12,7 @@ import static org.junit.Assert.assertSame;
 import java.util.List;
 
 import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
@@ -19,6 +20,7 @@ import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
+import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
@@ -160,7 +162,7 @@ public class TestGenerator extends BaseParserTest {
     
     @Test
     public void testGoto1() throws Exception {
-    	IAstModule mod = treeize("testGoto = code { @foo: };");
+    	IAstModule mod = treeize("testGoto = code { @foo: 0; };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGoto");
@@ -170,12 +172,10 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
     }
     
-    /*
     @Test
     public void testGoto2() throws Exception {
     	IAstModule mod = treeize("testGoto = code { @foo: \n" +
-    			"goto foo;\n" +
-    			"goto foo, 9>8;\n" +
+    			"@foo;\n" +
     			"};");
     	sanityTest(mod);
     	
@@ -187,17 +187,15 @@ public class TestGenerator extends BaseParserTest {
     	
     	IAstGotoStmt goto1 = (IAstGotoStmt) codeExpr.stmts().list().get(1);
     	assertEquals(lab.getLabel(), goto1.getLabel());
-    	IAstGotoStmt goto2 = (IAstGotoStmt) codeExpr.stmts().list().get(2);
-    	assertEquals(lab.getLabel(), goto2.getLabel());
     }
     @Test
     public void testGoto3() throws Exception {
     	IAstModule mod = treeize("testGoto = code { @foo: \n" +
-    			"{ @foo: \n"+
-    			"goto foo;\n" +
-    			"goto :foo;\n" +
-    			"}\n"+
-    			"goto foo, 9>8;\n" +
+    			"{ @foo: select [ true then null ]; \n"+
+    			"@foo;\n" +
+    			"@:foo;\n" +
+    			"};\n"+
+    			"@foo;\n" +
     			"};");
     	sanityTest(mod);
     	
@@ -212,15 +210,14 @@ public class TestGenerator extends BaseParserTest {
 	    	IAstLabelStmt lab2 = (IAstLabelStmt) block.stmts().list().get(0);
 	    	assertEquals("foo", lab2.getLabel().getSymbol().getName());
 	    	assertEquals(codeExpr.getScope(), lab2.getLabel().getSymbol().getScope().getParent());
-	    	IAstGotoStmt goto1 = (IAstGotoStmt) block.stmts().list().get(1);
+	    	IAstGotoStmt goto1 = (IAstGotoStmt) block.stmts().list().get(2);
 	    	assertEquals(lab2.getLabel(), goto1.getLabel());
-	    	IAstGotoStmt goto2 = (IAstGotoStmt) block.stmts().list().get(2);
+	    	IAstGotoStmt goto2 = (IAstGotoStmt) block.stmts().list().get(3);
 	    	assertEquals(lab.getLabel(), goto2.getLabel());
 	    	
     	IAstGotoStmt goto3 = (IAstGotoStmt) codeExpr.stmts().list().get(2);
     	assertEquals(lab.getLabel(), goto3.getLabel());
     }
-    */
     
     /**
      * if and while are functions which take blocks.  Before type inference, we must

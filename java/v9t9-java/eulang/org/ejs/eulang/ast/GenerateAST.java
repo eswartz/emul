@@ -28,7 +28,6 @@ import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
-import org.ejs.eulang.ast.impl.AstInvokeExpr;
 import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstModule;
 import org.ejs.eulang.ast.impl.AstName;
@@ -36,6 +35,7 @@ import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstNullLitExpr;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
+import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstUnaryExpr;
@@ -79,6 +79,58 @@ public class GenerateAST {
 			return ref;
 		}
 		
+	}
+	
+	static class TempLabelStmt extends AstStatement {
+
+		private final IAstLabelStmt label;
+		private final IAstStmt stmt;
+
+		/**
+		 * @param label
+		 * @param stmt
+		 */
+		public TempLabelStmt(IAstLabelStmt label, IAstStmt stmt) {
+			this.label = label;
+			this.stmt = stmt;
+		}
+
+		/**
+		 * @return the label
+		 */
+		public IAstLabelStmt getLabel() {
+			return label;
+		}
+		/**
+		 * @return the stmt
+		 */
+		public IAstStmt getStmt() {
+			return stmt;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return 0;
+		}
+
+		@Override
+		public IAstNode copy(IAstNode copyParent) {
+			return null;
+		}
+
+		@Override
+		public IAstNode[] getChildren() {
+			return NO_CHILDREN;
+		}
+
+		@Override
+		public void replaceChild(IAstNode existing, IAstNode another) {
+			throw new UnsupportedOperationException();
+		}
 	}
 	private final Map<CharStream, String> fileMap;
 	private final String defaultFile;
@@ -269,7 +321,7 @@ public class GenerateAST {
 		
 		IAstModule module = new AstModule(currentScope);
 		
-		IAstNodeList<IAstStmt> stmtList = constructStmtList(tree);
+		IAstNodeList<IAstStmt> stmtList = checkConstruct(tree, IAstNodeList.class);
 		
 		module.setStmtList(stmtList);
 		
@@ -281,8 +333,6 @@ public class GenerateAST {
 	
 	public IAstNode construct(Tree tree) throws GenerateException {
 		switch (tree.getType()) {
-		//case EulangParser.ID:
-		//	return constructId(tree);
 		case EulangParser.STMTLIST:
 			return constructStmtList(tree);
 		case EulangParser.LIT:
@@ -342,15 +392,18 @@ public class GenerateAST {
 		case EulangParser.ARGLIST:
 			return constructArgList(tree);
 
-		case EulangParser.INVOKE:
-			return constructInvoke(tree);
+		//case EulangParser.INVOKE:
+		//	return constructInvoke(tree);
 
+		case EulangParser.LABELSTMT:
+			return constructLabelStmt(tree);
+		case EulangParser.LABEL:
+			return constructLabel(tree);
+			
 		case EulangParser.STMTEXPR:
 			return constructStmtExpr(tree);
-		//case EulangParser.GOTO:
-		//	return constructGotoStmt(tree);
-		case EulangParser.LABEL:
-			return constructLabelStmt(tree);
+		case EulangParser.GOTO:
+			return constructGotoStmt(tree);
 		case EulangParser.BLOCK:
 			return constructBlockStmt(tree);
 			
@@ -359,6 +412,8 @@ public class GenerateAST {
 		case EulangParser.CONDTEST:
 			return constructCondExpr(tree);
 			
+			
+			
 		default:
 			unhandled(tree);
 			return null;
@@ -366,16 +421,6 @@ public class GenerateAST {
 		
 	}
 	
-	/**
-	 * @param tree
-	 * @return
-	 */
-	private IAstNode constructInvoke(Tree tree) {
-		IAstInvokeExpr expr = new AstInvokeExpr();
-		getSource(tree, expr);
-		return expr;
-	}
-
 	/**
 	 * @param tree
 	 * @return
@@ -434,8 +479,15 @@ public class GenerateAST {
 		getSource(tree, gotoStmt);
 		return gotoStmt;
 	}
+	
+	private TempLabelStmt constructLabelStmt(Tree tree) throws GenerateException {
+		// ^(LABELSTMT ^(LABEL idRef) codeStmt)
+		IAstLabelStmt label = checkConstruct(tree.getChild(0), IAstLabelStmt.class);
+		IAstStmt stmt = checkConstruct(tree.getChild(1), IAstStmt.class);
+		return new TempLabelStmt(label, stmt);
+	}
 
-	private IAstNode constructLabelStmt(Tree tree) throws GenerateException {
+	private IAstNode constructLabel(Tree tree) throws GenerateException {
 		IAstSymbolExpr label = createSymbol(tree.getChild(0));
 		label.setType(typeEngine.LABEL);
 		
@@ -823,13 +875,11 @@ public class GenerateAST {
 		for (Tree kid : iter(tree)) {
 			try {
 				IAstStmt node = checkConstruct(kid, IAstStmt.class);
-				/*if (node instanceof IAstBlockStmt) {
-					addBlock(list.list(), ((IAstBlockStmt) node).stmtList());
-					list.list().add(node);
-					node.setParent(list);
+				if (node instanceof TempLabelStmt) {
+					list.add(((TempLabelStmt) node).getLabel());
+					list.add(((TempLabelStmt) node).getStmt());
 				}
-				else*/ 
-				if (node != null) { 
+				else if (node != null) {
 					list.add(node);
 					node.setParent(list);
 				}

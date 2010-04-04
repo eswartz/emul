@@ -88,13 +88,6 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {

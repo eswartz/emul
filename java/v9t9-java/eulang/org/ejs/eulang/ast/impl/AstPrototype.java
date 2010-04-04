@@ -120,11 +120,6 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 		System.arraycopy(argumentTypes, 0, children, 1, argumentTypes.length);
 		return children;
 	}
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		throw new UnsupportedOperationException();
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */

@@ -77,10 +77,6 @@ public abstract class AstLitExpr extends AstTypedExpr implements
 		return NO_CHILDREN;
 	}
 	
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */

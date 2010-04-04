@@ -20,7 +20,9 @@ import org.junit.Test;
  * 
  */
 public class TestMacroCall extends BaseParserTest {
-	
+	{
+		dumpExpand = true;
+	}
 	@Test
     public void testSimple1() throws Exception {
     	IAstModule mod = treeize(
@@ -45,15 +47,13 @@ public class TestMacroCall extends BaseParserTest {
 				"\n" + 
 				"  forCountUntil = macro (macro idx, count : Int, macro test, macro body = code { idx }, macro fail = code { -1 }) {\n" + 
 				"        idx := 0;\n" + 
-				"        {\n" + 
-				"            select [ \n" + 
-				"                idx < count then select [ \n" + 
-				"                    test then { count = idx; body; }\n" + 
-				"                    else { idx = idx + 1; invoke; }\n" + 
-				"                ]\n" + 
-				"                else fail \n" + 
+				"        @loop: select [ \n" + 
+				"            idx < count then select [ \n" + 
+				"                test then { count = idx; body; }\n" + 
+				"                else { idx = idx + 1; @loop; }\n" + 
 				"            ]\n" + 
-				"        }\n" + 
+				"            else fail \n" + 
+				"        ]\n" + 
 				"    };\n" + 
 				"    \n" + 
 				"testForCount = code () { forCountUntil(i, 10, i % 5 == 0, i, -1);"+
@@ -66,7 +66,7 @@ public class TestMacroCall extends BaseParserTest {
 		
 	}
 	
-	   /**
+	/**
      * if and while are functions which take blocks.  Before type inference, we must
      * be able to handle either expressions, scope blocks, or actual code blocks as
      * parameters. 

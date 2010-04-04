@@ -175,29 +175,6 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 			return new IAstNode[] { getSymbolExpr() };
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
-	public void replaceChildren(IAstNode[] children) {
-		if (typeExpr != null && getExpr() != null) {
-			setSymbolExpr((IAstSymbolExpr) children[0]);
-			if (children[1] != typeExpr)
-				throw new UnsupportedOperationException();
-			setExpr((IAstTypedExpr) children[2]);
-		}
-		else if (typeExpr != null) {
-			setSymbolExpr((IAstSymbolExpr) children[0]);
-			if (children[1] != typeExpr)
-				throw new UnsupportedOperationException();
-		}
-		else if (getExpr() != null) {
-			setSymbolExpr((IAstSymbolExpr) children[0]);
-			setExpr((IAstTypedExpr) children[1]);
-		} else {
-			setSymbolExpr((IAstSymbolExpr) children[0]);
-		}		
-	}
     /* (non-Javadoc)
      * @see org.ejs.eulang.ast.IAstNode#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
      */

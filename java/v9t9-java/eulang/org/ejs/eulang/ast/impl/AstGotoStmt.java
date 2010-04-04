@@ -115,19 +115,6 @@ public class AstGotoStmt extends AstStatement implements IAstGotoStmt {
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
 	@Override
-	public void replaceChildren(IAstNode[] children) {
-		if (expr != null) {
-			setLabel((IAstSymbolExpr) children[0]);
-			setExpr((IAstTypedExpr) children[1]);
-		} else {
-			setLabel((IAstSymbolExpr) children[0]);
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getLabel() == existing) {
 			setLabel((IAstSymbolExpr) another);
