@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;

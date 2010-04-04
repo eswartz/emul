@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;

@@ -11,7 +11,6 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;

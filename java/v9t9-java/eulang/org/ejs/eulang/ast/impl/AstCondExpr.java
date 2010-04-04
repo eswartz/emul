@@ -4,14 +4,11 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 

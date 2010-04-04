@@ -31,7 +31,6 @@ public class ExpandAST {
 		
 	}
 
-	@SuppressWarnings("unchecked")
 	public boolean expand(List<Message> messages, IAstNode node) {
 		boolean changed = false;
 		

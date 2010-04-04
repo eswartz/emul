@@ -4,7 +4,6 @@
 package org.ejs.eulang.ast.impl;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.ejs.eulang.ast.AstVisitor;

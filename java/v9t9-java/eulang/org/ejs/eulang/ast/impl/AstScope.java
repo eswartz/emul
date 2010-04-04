@@ -3,13 +3,9 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.symbols.IScope;
-import org.ejs.eulang.symbols.ISymbol;
 
 
 /**

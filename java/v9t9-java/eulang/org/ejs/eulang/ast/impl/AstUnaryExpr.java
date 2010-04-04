@@ -6,8 +6,6 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstSymbolExpr;
-import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IOperation;

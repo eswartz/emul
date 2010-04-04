@@ -14,8 +14,6 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstStmt;
-import org.ejs.eulang.ast.IAstSymbolExpr;
-import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
