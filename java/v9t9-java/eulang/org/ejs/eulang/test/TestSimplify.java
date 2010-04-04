@@ -7,17 +7,15 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-import org.ejs.eulang.ast.DumpAST;
+import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IOperation;
-import org.ejs.eulang.optimize.SimplifyTree;
 import org.junit.Test;
 
 /**
@@ -48,7 +46,7 @@ public class TestSimplify extends BaseParserTest {
 		IAstBinExpr divExpr = (IAstBinExpr) castExpr.getExpr();
 		assertEquals(typeEngine.INT, divExpr.getLeft().getType());
 		assertEquals(typeEngine.INT, divExpr.getRight().getType());
-		assertTrue(divExpr.getLeft() instanceof IAstUnaryExpr && ((IAstUnaryExpr) divExpr.getLeft()).getOp() == IOperation.CAST);
+		assertTrue(isCastTo(divExpr.getLeft(), typeEngine.INT));
 		IAstBinExpr mulExpr = (IAstBinExpr) ((IAstUnaryExpr) divExpr.getLeft()).getExpr();
 		assertEquals(typeEngine.BYTE, mulExpr.getType());
 		assertEquals(typeEngine.BYTE, mulExpr.getLeft().getType());
@@ -99,7 +97,7 @@ public class TestSimplify extends BaseParserTest {
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
 		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
-		assertTrue(castExpr.getOp() == IOperation.CAST);
+		assertTrue(isCastTo(allocStmt.getExpr(), typeEngine.BYTE));
 		IAstBinExpr cmpExpr = (IAstBinExpr)  castExpr.getExpr();
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.BYTE, cmpExpr.getLeft().getType());
@@ -114,7 +112,7 @@ public class TestSimplify extends BaseParserTest {
     	IAstModule mod = treeize(
     			"testUnaryNot := code () {\n" +
     			"   z : Byte;\n" +
-    			"	return !-~z;\n" +
+    			"	 !-~z;\n" +
     			"};");
     	sanityTest(mod);
 
@@ -125,7 +123,8 @@ public class TestSimplify extends BaseParserTest {
     	
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
     	
-    	IAstReturnStmt allocStmt = (IAstReturnStmt) codeExpr.stmts().list().get(1);
+    	//IAstReturnStmt allocStmt = (IAstReturnStmt) codeExpr.stmts().list().get(1);
+    	IAstExprStmt allocStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BOOL, allocStmt.getType());
 		IAstBinExpr cmpExpr = (IAstBinExpr) allocStmt.getExpr();
 		assertTrue(cmpExpr.getOp() == IOperation.COMPNE);

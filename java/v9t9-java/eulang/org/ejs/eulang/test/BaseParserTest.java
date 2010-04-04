@@ -24,11 +24,15 @@ import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
 import org.ejs.eulang.ast.DumpAST;
+import org.ejs.eulang.ast.ExpandAST;
 import org.ejs.eulang.ast.GenerateAST;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.IOperation;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.Message;
 import org.ejs.eulang.ast.TypeEngine;
@@ -38,6 +42,7 @@ import org.ejs.eulang.parser.EulangParser;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeInference;
 
 /**
@@ -252,7 +257,7 @@ public class BaseParserTest {
 				assertEquals(symbol+"", symbol, copySym);
 				assertEquals(symbol+"", symbol.getDefinition(), copySym.getDefinition());
 				assertFalse(symbol+"", symbol == copySym);
-				assertFalse(symbol+"", symbol.getDefinition() == copySym.getDefinition());
+				assertFalse(symbol+"", symbol.getDefinition() != null && symbol.getDefinition() == copySym.getDefinition());
 				if (symbol.getDefinition() != null) {
 					assertFalse(symbol+"", symbol.getDefinition() == copySym.getDefinition());
 				}
@@ -262,6 +267,7 @@ public class BaseParserTest {
 		}
 		
 		for (int  i = 0; i < kids.length; i++) {
+			assertSame(copy+"", copy, copyKids[i].getParent());
 			checkCopy(kids[i], copyKids[i]);
 		}
 		
@@ -353,6 +359,35 @@ public class BaseParserTest {
 			
 		}
 		System.out.println("Simplification: " + passes + " passes");
+	}
+	
+	
+
+	protected IAstNode doExpand(IAstNode node) {
+		ExpandAST expand = new ExpandAST();
+		
+		for (int passes = 1; passes < 256; passes++) {
+			List<Message> messages = new ArrayList<Message>();
+			boolean changed = expand.expand(messages, node);
+			
+			if (changed) {
+				System.out.println("After expansion pass " + passes + ":");
+				DumpAST dump = new DumpAST(System.out);
+				node.accept(dump);
+				
+				for (Message msg : messages)
+					System.err.println(msg);
+				assertEquals(0, messages.size());
+			} else {
+				break;
+			}
+		}
+		return node;
+	}
+
+	protected boolean isCastTo(IAstTypedExpr expr, LLType type) {
+		return (expr instanceof IAstUnaryExpr && ((IAstUnaryExpr) expr).getOp() == IOperation.CAST)
+		&& expr.getType().equals(type);
 	}
 
 }

@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -124,10 +125,9 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		LLType newType = null;
-		if (canInferTypeFrom(result)) {
-			return updateType(result, newType);
-		}
+		IAstStmt last = stmtList.getLast();
+		if (last instanceof ITyped)
+			return inferTypesFromChildren(new ITyped[] { (ITyped) last });
 		return false;
 	}
 

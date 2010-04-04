@@ -35,6 +35,7 @@ public class TypeEngine {
 	public LLBoolType BOOL;
 	public LLVoidType VOID;
 	public LLLabelType LABEL;
+	public LLType NULL;
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 
@@ -44,6 +45,7 @@ public class TypeEngine {
 	public TypeEngine() {
 		ptrBits = 16;
 		VOID = new LLVoidType();
+		NULL = new LLVoidType();
 		LABEL = new LLLabelType();
 		BOOL = new LLBoolType(1);
 		BYTE = new LLIntType(8);

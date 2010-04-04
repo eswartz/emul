@@ -1,24 +1,18 @@
 
 package org.ejs.eulang.test;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.ejs.eulang.ast.DumpAST;
-import org.ejs.eulang.ast.ExpandAST;
-import org.ejs.eulang.ast.IAstAssignStmt;
-import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstCondExpr;
+import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstIntLitExpr;
+import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.IOperation;
-import org.ejs.eulang.ast.Message;
+import org.ejs.eulang.ast.IAstStmtListExpr;
+import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -27,42 +21,15 @@ import org.junit.Test;
  */
 public class TestMacroCall extends BaseParserTest {
 	
-	protected IAstNode doExpand(IAstNode node) {
-		ExpandAST expand = new ExpandAST();
-		
-		for (int passes = 1; passes < 256; passes++) {
-			List<Message> messages = new ArrayList<Message>();
-			boolean changed = expand.expand(messages, node);
-			
-			if (changed) {
-				System.out.println("After expansion pass " + passes + ":");
-				DumpAST dump = new DumpAST(System.out);
-				node.accept(dump);
-				
-				for (Message msg : messages)
-					System.err.println(msg);
-				assertEquals(0, messages.size());
-			} else {
-				break;
-			}
-		}
-		return node;
-	}
-	
 	@Test
     public void testSimple1() throws Exception {
     	IAstModule mod = treeize(
     			"\n" + 
-"if = macro ( macro test : code( => Bool ), macro then : code, macro else : code = code() {} ) {\n" + 
-    			"    goto lelse, !test();\n" + 
-    			"    then();\n" + 
-    			"    goto exit;\n" + 
-    			"@lelse:\n" + 
-    			"    else();\n" + 
-    			"@exit:\n" + 
+"if = macro ( macro test : code( => Bool ), macro mthen : code, macro melse : code = code() {} ) {\n" + 
+    			"    select [ test() then mthen() else melse() ];\n" + 
     			"};\n"+
     			"testSimple1 = code (t, x, y) {\n" +
-    			"   return if(t > 10, x + 1, x*t*y);\n"+
+    			"   if(t > 10, x + 1, x*t*y);\n"+
     			"};");
     	sanityTest(mod);
 
@@ -71,6 +38,73 @@ public class TestMacroCall extends BaseParserTest {
     	sanityTest(defPrime);
     	
     }
+	
+	@Test
+	public void testForCount() throws Exception {
+		IAstModule mod = treeize(
+				"\n" + 
+				"  forCountUntil = macro (macro idx, count : Int, macro test, macro body = code { idx }, macro fail = code { -1 }) {\n" + 
+				"        idx := 0;\n" + 
+				"        {\n" + 
+				"            select [ \n" + 
+				"                idx < count then select [ \n" + 
+				"                    test then { count = idx; body; }\n" + 
+				"                    else { idx = idx + 1; invoke; }\n" + 
+				"                ]\n" + 
+				"                else fail \n" + 
+				"            ]\n" + 
+				"        }\n" + 
+				"    };\n" + 
+				"    \n" + 
+				"testForCount = code () { forCountUntil(i, 10, i % 5 == 0, i, -1);"+
+		"};");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testForCount");
+		IAstDefineStmt defPrime = (IAstDefineStmt) doExpand(def);
+		sanityTest(defPrime);
+		
+	}
+	
+	   /**
+     * if and while are functions which take blocks.  Before type inference, we must
+     * be able to handle either expressions, scope blocks, or actual code blocks as
+     * parameters. 
+     * @throws Exception
+     */
+    @Test
+    public void testImplicitBlocks3() throws Exception {
+    	IAstModule mod = treeize(
+    			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [" +
+    			"	 test then mthen() || false then false || else melse() ] };\n"+
+    			"testImplicitBlocks3 = code (t, x : Int, y : Float) {\n" +
+    			"   if(t, { x = x + 9; x; }, { y = y + 7; y; })\n"+
+    			"};");
+    	sanityTest(mod);
+    	
+    	IAstModule expMod = (IAstModule) doExpand(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) expMod.getScope().getNode("testImplicitBlocks3");
+    	doTypeInfer(def.getExpr());
+    	
+    	// float because it's the common type
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.BOOL, typeEngine.INT, typeEngine.FLOAT}), 
+    			def.getExpr().getType());
+    	
+    	IAstCodeExpr defExpr = (IAstCodeExpr) def.getExpr();
+    	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) ((IAstExprStmt) defExpr.stmts().getFirst()).getExpr()).getStmtList().list().get(1);
+    	IAstCondList condList = (IAstCondList) stmt1.getExpr();
+    	IAstCondExpr condExpr = condList.getCondExprs().list().get(0);
+		assertEquals(typeEngine.INT, condExpr.getType());
+		assertTrue(isCastTo(condExpr.getExpr(), typeEngine.FLOAT));
+		condExpr = condList.getCondExprs().list().get(1);
+    	assertEquals(typeEngine.BOOL, condExpr.getType());
+    	assertTrue(isCastTo(condExpr.getExpr(), typeEngine.FLOAT));
+    	condExpr = condList.getCondExprs().list().get(2);
+    	assertEquals(typeEngine.FLOAT, condExpr.getType());
+    	assertFalse(isCastTo(condExpr.getExpr(), typeEngine.FLOAT));
+    }
+
 }
 
 

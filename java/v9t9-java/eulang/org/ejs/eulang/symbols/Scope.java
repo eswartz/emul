@@ -107,6 +107,15 @@ public abstract class Scope implements IScope {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#remove(org.ejs.eulang.symbols.ISymbol)
+	 */
+	@Override
+	public void remove(ISymbol symbol) {
+		symbol.setDefinition(null);
+		entries.remove(symbol.getName());
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IScope#find(java.lang.String)
 	 */
 	@Override
@@ -204,5 +213,18 @@ public abstract class Scope implements IScope {
 		ISymbol symbol = createSymbol(name + "@" + counter.get(), true);
 		entries.put(name, symbol);
 		return symbol;		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#encloses(org.ejs.eulang.symbols.IScope)
+	 */
+	@Override
+	public boolean encloses(IScope otherScope) {
+		while (otherScope != null) {
+			if (otherScope == this)
+				return true;
+			otherScope = otherScope.getParent();
+		}
+		return false;
 	}
 }

@@ -25,7 +25,7 @@ tokens {
   TYPE;
   STMTEXPR;
   
-  CONDSTAR;
+  CONDLIST;
   CONDTEST;
   
   CALL;
@@ -53,7 +53,7 @@ tokens {
   IDLIST;
   
   LABEL;
-  GOTO;
+  //GOTO;
   BLOCK;
 }
 
@@ -169,17 +169,17 @@ type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScop
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
   ;
 
-codestmtlist:  (codeStmt ) => (codeStmt+)  ->  ^(STMTLIST codeStmt*)
-    | rhsExpr          -> ^(STMTLIST ^(RETURN rhsExpr))
+codestmtlist:  /*(codeStmt ) =>*/ codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
+    //| rhsExpr          -> ^(STMTLIST ^(RETURN rhsExpr))
     | -> ^(STMTLIST) 
     ;
     
-codeStmt : varDecl SEMI   -> varDecl
-      | assignStmt SEMI   -> assignStmt
-      | returnStmt SEMI   -> returnStmt
-      | rhsExpr SEMI      -> ^(STMTEXPR rhsExpr)
+codeStmt : varDecl    -> varDecl
+      | assignStmt    -> assignStmt
+      //| returnStmt SEMI   -> returnStmt
+      | rhsExpr       -> ^(STMTEXPR rhsExpr)
       | blockStmt         -> blockStmt
-      | gotoStmt SEMI     -> gotoStmt
+      //| gotoStmt SEMI     -> gotoStmt
       | labelStmt     -> labelStmt
       ;
 
@@ -187,8 +187,8 @@ varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
     | ID COLON type (EQUALS assignExpr)?  -> ^(ALLOC ID type assignExpr*)
     ;
 
-returnStmt : RETURN assignExpr?           -> ^(RETURN assignExpr?)
-      ;
+//returnStmt : RETURN assignExpr?           -> ^(RETURN assignExpr?)
+      //;
 
 assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
     ;
@@ -199,8 +199,10 @@ assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assi
 
 labelStmt: AT ID COLON                    -> ^(LABEL ID)
   ;
+/*
 gotoStmt: GOTO idOrScopeRef ( COMMA rhsExpr )?           -> ^(GOTO idOrScopeRef rhsExpr?)
   ;
+*/
   
 blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
   ;
@@ -225,14 +227,16 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 
 // multi-argument cond:  
 //
-//  e.g.:  ?[ <test1> -> <stmt> || <test2> -> <stmt> || ..., [<true> -> ] <defaultStmt> ]
+//  e.g.:  select <test1> then <arg> || <test2> then <arg> || ..., [<true> then ] <defaultArg> ?]
 
-condStar: ( cond -> cond )
-   | QUESTION_LBRACKET (condTest (COMPOR condTest)* ) RBRACKET -> ^(CONDSTAR condTest* )
+condStar: cond -> cond
+   | SELECT LBRACKET condTests RBRACKET -> condTests
     ;
-condTest : cond ARROW codeStmt -> ^(CONDTEST cond codeStmt) 
+condTests : condTest (BAR_BAR condTest)* (BAR_BAR? condFinal)? -> ^(CONDLIST condTest* condFinal?)
+  ;    
+condTest : (cond THEN) => cond THEN arg -> ^(CONDTEST cond arg)
   ;
-condFinal :  codeStmt -> ^(CONDTEST ^(LIT TRUE) codeStmt)
+condFinal : ELSE arg -> ^(CONDTEST ^(LIT TRUE) arg)
     ;
     
 cond:    ( logor  -> logor )
@@ -303,9 +307,12 @@ atom options { k=2; } :
     |   TRUE                          -> ^(LIT TRUE)
     |   CHAR_LITERAL                  -> ^(LIT CHAR_LITERAL)
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
+    |   NULL                          -> ^(LIT NULL)
     |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
     |   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
-    |   idOrScopeRef
+    |   INVOKE                        -> ^(INVOKE)
+    |   RECURSE LPAREN arglist RPAREN   -> ^(RECURSE arglist) 
+    |   idOrScopeRef                  -> idOrScopeRef
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |   code                           -> code   
     |   macro                           -> macro   
@@ -348,8 +355,8 @@ BAR : '|';
 CARET : '^';
 SEMI : ';';
 QUESTION : '?';
-COMPAND : '&&';
-COMPOR : '||';
+COMPAND : 'and';
+COMPOR : 'or';
 COMPEQ : '==';
 COMPNE : '!=';
 COMPGE : '>=';
@@ -365,18 +372,24 @@ UMOD : '%%';
 RETURNS : '=>' ;
 PERIOD : '.';
 
-QUESTION_LBRACKET : '?[';
 ARROW : '->';
+BAR_BAR : '||';
 
-RETURN : 'return';
+SELECT : 'select';
+THEN : 'then';
+ELSE : 'else';
+//RETURN : 'return';
 CODE : 'code';
 DATA : 'data';
 MACRO : 'macro';
 FOR : 'for';
 IN : 'in';
-GOTO: 'goto';
+//GOTO: 'goto';
 FALSE: 'false';
 TRUE: 'true';
+NULL: ' null';
+INVOKE: 'invoke';
+RECURSE: 'recurse';
 
 //
 //  Numbers

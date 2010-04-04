@@ -11,6 +11,7 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -142,7 +143,22 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	@Override
 	public void setSymbolExpr(IAstSymbolExpr id) {
 		Check.checkArg(id);
+		/*
+		if (symExpr != null) {
+			IScope ownerScope = getOwnerScope();
+			if (ownerScope == symExpr.getSymbol().getScope()) {
+				IAstNode def = symExpr.getSymbol() != null ? symExpr.getSymbol().getDefinition() : null;
+				if (def == this)
+					symExpr.getSymbol().setDefinition(null);
+				getOwnerScope().remove(symExpr.getSymbol());
+				getOwnerScope().add(id.getSymbol());
+				id.getSymbol().setDefinition(def);
+			}
+		}*/
+
 		this.symExpr = reparent(this.symExpr, id);
+		
+//		this.symExpr.getSymbol().setDefinition(this);
 	}
 
 	/* (non-Javadoc)

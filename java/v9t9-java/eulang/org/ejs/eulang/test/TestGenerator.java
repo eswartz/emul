@@ -12,18 +12,18 @@ import static org.junit.Assert.assertSame;
 import java.util.List;
 
 import org.ejs.eulang.ast.IAstAssignStmt;
-import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstCondExpr;
+import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
+import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
-import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
-import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.junit.Test;
@@ -93,26 +93,26 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test
     public void testOneEntryCodeModuleReturnNull() throws Exception {
-    	IAstModule mod = treeize("foo = code (x,y) { return ; };");
+    	IAstModule mod = treeize("foo = code (x,y) { };");
     	sanityTest(mod);
     	
     }
     @Test
     public void testOneEntryCodeModuleReturnExpr() throws Exception {
-    	IAstModule mod = treeize("foo = code (x,y) { return x+y; };");
+    	IAstModule mod = treeize("foo = code (x,y) { x+y; };");
     	sanityTest(mod);
     	
     }
     @Test
     public void testVarDecls() throws Exception {
     	IAstModule mod = treeize("bar := 2; baz : Float ; pp : Float = 3.3; " +
-    			"foo = code (x,y) { p : Float = 3.9; return x+y*p; };");
+    			"foo = code (x,y) { p : Float = 3.9; x+y*p; };");
     	sanityTest(mod);
     	
     }
     @Test
     public void testVarDeclsRedef1() throws Exception {
-    	IAstModule mod = treeizeFail("foo = code (x,y) { p : Float = 3.9; p := 44; return x+y*p; };");
+    	IAstModule mod = treeizeFail("foo = code (x,y) { p : Float = 3.9; p := 44; x+y*p; };");
     	sanityTest(mod);
     	
     }
@@ -124,13 +124,13 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test
     public void testVarDecls2() throws Exception {
-    	IAstModule mod = treeize("foo = code (x,y) { p : Float = 3.9; p = 44; return x+y*p; };");
+    	IAstModule mod = treeize("foo = code (x,y) { p : Float = 3.9; p = 44; x+y*p; };");
     	sanityTest(mod);
     	
     }
     @Test 
     public void testBinOps() throws Exception {
-    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17&&18||19; };");
+    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("opPrec1");
@@ -169,6 +169,8 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals("foo", lab.getLabel().getSymbol().getName());
     	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
     }
+    
+    /*
     @Test
     public void testGoto2() throws Exception {
     	IAstModule mod = treeize("testGoto = code { @foo: \n" +
@@ -218,6 +220,7 @@ public class TestGenerator extends BaseParserTest {
     	IAstGotoStmt goto3 = (IAstGotoStmt) codeExpr.stmts().list().get(2);
     	assertEquals(lab.getLabel(), goto3.getLabel());
     }
+    */
     
     /**
      * if and while are functions which take blocks.  Before type inference, we must
@@ -230,13 +233,13 @@ public class TestGenerator extends BaseParserTest {
     	IAstModule mod = treeize(
     			" if = code { };\n"+
     			"testImplicitBlocks1 = code (t, x, y) {\n" +
-    			"   return if(t, x = 9, y = 7);\n"+
+    			"   if(t, x = 9, y = 7);\n"+
     			"};");
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks1");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
-    	IAstReturnStmt ret = (IAstReturnStmt) codeExpr.stmts().list().get(0);
+    	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
 		assertEquals(3, arglist.size());
@@ -255,13 +258,13 @@ public class TestGenerator extends BaseParserTest {
     	IAstModule mod = treeize(
     			" if = code { };\n"+
     			"testImplicitBlocks2 = code (t, x, y) {\n" +
-    			"   return if(t, { x = x + 9; return x; }, { y = y + 7; return y; });\n"+
+    			"   if(t, { x = x + 9; x; }, { y = y + 7; y; });\n"+
     			"};");
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks2");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
-    	IAstReturnStmt ret = (IAstReturnStmt) codeExpr.stmts().list().get(0);
+    	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
 		assertEquals(3, arglist.size());
@@ -280,13 +283,13 @@ public class TestGenerator extends BaseParserTest {
     	IAstModule mod = treeize(
     			" if = code { };\n"+
     			"testImplicitBlocks3 = code (t, x, y) {\n" +
-    			"   return if(t, code ( => Int) { x = x + 9; return x; }, code ( => Int) { y = y + 7; return y; });\n"+
+    			"   if(t, code ( => Int) { x = x + 9; x; }, code ( => Int) { y = y + 7;  y; });\n"+
     			"};");
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks3");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
-    	IAstReturnStmt ret = (IAstReturnStmt) codeExpr.stmts().list().get(0);
+    	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
 		assertEquals(3, arglist.size());
@@ -298,7 +301,7 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testMacroArgs1() throws Exception {
     	IAstModule mod = treeize(
-    			" testMacroArgs1 = macro (macro t : code, macro then : code, macro else : code) { };\n");
+    			" testMacroArgs1 = macro (macro t : code, macro mthen : code, macro melse : code) { };\n");
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
@@ -311,21 +314,30 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test
     public void testMacroArgs2() throws Exception {
-    	treeizeFail(" testMacroArgs1 = code (macro t : code, macro then : code, macro else : code) { };\n");
+    	treeizeFail(" testMacroArgs1 = code (macro t : code, macro mthen : code, macro melse : code) { };\n");
     }
     
-    //@Test
+    @Test
     public void testCondStar1() throws Exception {
     	IAstModule mod = treeize(
-    		" testCondStar1 = code (t) { ?[ 1>t -> 1;\n" +
-    		"		||	t!=2 -> { x:= 9+t; return -x; }\n" +
-    		"		||	true ->  0; ]; };\n");
+    		" testCondStar1 = code (t) { select [ 1>t then 1\n" +
+    		"		||	t!=2 and t!=1 then { x:= 9+t; -x; }\n" +
+    		"		||	else  0.4 \n" +
+    		"		]; };\n");
 		sanityTest(mod);
 		
-		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCondStar1");
 		IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
-		
-		IAstPrototype proto = codeExpr.getPrototype();    	
+		IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
+		IAstCondList condList = (IAstCondList) exprStmt.getExpr();
+		assertEquals(3, condList.getCondExprs().nodeCount());
+		IAstCondExpr condExpr;
+		condExpr = condList.getCondExprs().list().get(0);
+		assertTrue(condExpr.getExpr() instanceof IAstIntLitExpr);
+		condExpr = condList.getCondExprs().list().get(1);
+		assertTrue(condExpr.getExpr() instanceof IAstCodeExpr);
+		condExpr = condList.getCondExprs().list().get(2);
+		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
     }
 }
 

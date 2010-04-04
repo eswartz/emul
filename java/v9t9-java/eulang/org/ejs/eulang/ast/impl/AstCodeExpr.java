@@ -17,6 +17,7 @@ import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLCodeType;
@@ -151,13 +152,21 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			if (infRetType == null || !infRetType.isComplete()) {
 				// see what the return statements do
 				infRetType = typeEngine.VOID;
-				for (IAstReturnStmt returns : getReturnStmts()) {
-					if (returns.getExpr() == null) {
-						infRetType = typeEngine.VOID;
-					} else if (canInferTypeFrom(returns)) {
-						infRetType = returns.getType();		// take last
+				IAstStmt returns = stmts.getLast();
+				if (returns instanceof ITyped) {
+					if (canInferTypeFrom((ITyped) returns)) {
+						infRetType = ((ITyped)returns).getType(); 
 					}
 				}
+				/*
+				for (IAstTypedExpr returns : getReturnStmts()) {
+					if (returns.getExpr() == null) {
+						infRetType = typeEngine.VOID;
+					} else 
+					if (canInferTypeFrom(returns)) {
+						infRetType = returns.getType();		// take last  TODO: get common 
+					}
+				}*/
 			}
 			
 			newType = typeEngine.getCodeType(infRetType, infArgTypes);
@@ -168,7 +177,15 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			changed = true;
 		
 		// see what the return statements do
-		for (IAstReturnStmt returns : getReturnStmts()) {
+		IAstStmt returns = stmts.getLast();
+		if (returns instanceof ITyped) {
+			if (canInferTypeFrom((ITyped) returns)) {
+				((ITyped)returns).setType(newType.getRetType());
+				changed = true;
+			}
+		}
+		/*
+		for (IAstTypedExpr returns : getReturnStmts()) {
 			if (returns.getExpr() == null && returns.getType() == null) {
 				returns.setType(newType.getRetType());
 				changed = true;
@@ -177,7 +194,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 				returns.setType(newType.getRetType());
 				changed = true;
 			}
-		}
+		}*/
 		
 		changed |= updateType(this, newType);
 		

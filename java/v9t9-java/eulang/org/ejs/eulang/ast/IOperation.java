@@ -35,8 +35,8 @@ public interface IOperation {
 	IBinaryOperation BITXOR = new LogicalBinaryOperation("^", true);
 	
 	IUnaryOperation NOT = new ComparisonUnaryOperation("not");
-	IBinaryOperation COMPAND = new ComparisonOperation("&&", true);
-	IBinaryOperation COMPOR = new ComparisonOperation("||", true);
+	IBinaryOperation COMPAND = new ComparisonOperation("and", true);
+	IBinaryOperation COMPOR = new ComparisonOperation("or", true);
 	IBinaryOperation COMPEQ = new ComparisonOperation("==", true);
 	IBinaryOperation COMPNE = new ComparisonOperation("!=", true);
 	IBinaryOperation COMPGT = new ComparisonOperation(">", false);

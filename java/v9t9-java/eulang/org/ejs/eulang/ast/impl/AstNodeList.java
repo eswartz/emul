@@ -176,4 +176,21 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 		throw new IllegalArgumentException();
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNodeList#getFirst()
+	 */
+	@Override
+	public T getFirst() {
+		if (list.size() > 0)
+			return list.get(0);
+		else
+			return null;
+	}
+	public T getLast() {
+		if (list.size() > 0)
+			return list.get(list.size() - 1);
+		else
+			return null;
+		
+	}
 }

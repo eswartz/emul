@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
@@ -115,6 +116,33 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
     	
     }
     
+    /** Get the common type of all the children with types */
+    protected boolean inferTypesFromChildList(TypeEngine typeEngine, IAstTypedExpr[] typedChildren) {
+    	LLType newType = null;
+    	for (IAstTypedExpr kid : typedChildren) {
+    		if (canInferTypeFrom(kid)) {
+    			LLType oldType = newType;
+    			newType = kid.getType();
+    			if (oldType != null)
+    				newType = typeEngine.getPromotionType(newType, oldType);
+    		}
+    	}
+    	if (newType == null)
+    		return false;
+    	
+    	boolean changed = false;
+    	for (IAstTypedExpr kid : typedChildren) {
+    		boolean kidChanged = updateType(kid, newType);
+    		if (kidChanged) {
+    			changed = true;
+    		}
+    		kid.getParent().replaceChild(kid, createCastOn(typeEngine, kid, newType));
+    	}
+    	changed |= updateType(this, newType);
+    	
+    	return changed;
+    	
+    }
 	protected IAstTypedExpr createCastOn(TypeEngine typeEngine,
 			IAstTypedExpr child, LLType newType) {
 		if (child == null)

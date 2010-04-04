@@ -10,6 +10,7 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -131,6 +132,18 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 	 * @param name the name to set
 	 */
 	public void setName(IAstSymbolExpr name) {
+		/*
+		if (this.name != null) {
+			IScope ownerScope = getOwnerScope();
+			if (ownerScope == this.name.getSymbol().getScope()) {
+				IAstNode def = this.name.getSymbol() != null ? this.name.getSymbol().getDefinition() : null;
+				if (def == this)
+					this.name.getSymbol().setDefinition(null);
+				getOwnerScope().remove(this.name.getSymbol());
+				getOwnerScope().add(name.getSymbol());
+				name.getSymbol().setDefinition(def);
+			}
+		}*/
 		this.name = reparent(this.name, name);
 	}
 	/* (non-Javadoc)

@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.ejs.eulang.ast.AstVisitor;
@@ -228,15 +229,31 @@ abstract public class AstNode implements IAstNode {
     protected IScope remapScope(IScope scope, IScope copy, IAstNode copyRoot) {
     	if (scope == null) return null;
     	Map<Integer, IAstNode> copyMap = new HashMap<Integer, IAstNode>();
-    	Map<ISymbol, ISymbol> symbolMap = new HashMap<ISymbol, ISymbol>();
     	getNodeMap(this, copyRoot, copyMap);
+    	
+    	// remove dead symbols
+    	/*
+    	for (Iterator<ISymbol> iter = scope.iterator(); iter.hasNext(); ) {
+    		ISymbol sym = iter.next();
+    		// dangling symbol?
+    		if (sym.getDefinition() != null && !copyMap.containsKey(sym.getDefinition().getId())) {
+    			iter.remove();
+    		}
+    	}*/
+    	
+    	Map<ISymbol, ISymbol> symbolMap = new HashMap<ISymbol, ISymbol>();
     	for (ISymbol symbol : scope) {
     		ISymbol copySymbol = symbol.newInstance();
     		copySymbol.setType(symbol.getType());
     		symbolMap.put(symbol, copySymbol);
     		copySymbol.setScope(copy);
-    		if (symbol.getDefinition() != null)
-    			copySymbol.setDefinition(copyMap.get(symbol.getDefinition().getId()));
+
+    		if (symbol.getDefinition() != null) {
+    			IAstNode copyDef = copyMap.get(symbol.getDefinition().getId());
+    			
+    			//assert (copyDef != null);
+    			copySymbol.setDefinition(copyDef);
+    		}
     		copy.add(copySymbol);
     	}
     	replaceSymbols(this, copyRoot, scope, symbolMap);
@@ -254,8 +271,7 @@ abstract public class AstNode implements IAstNode {
 			ISymbol symbol = ((IAstSymbolExpr)origRoot).getSymbol();
 			if (symbol.getScope() == origScope) {
 				ISymbol replaced = symbolMap.get(symbol);
-				if (replaced == null)
-					throw new IllegalStateException();
+				assert (replaced != null);
 				((IAstSymbolExpr) copyRoot).setSymbol(replaced);
 			}
 		}
@@ -275,6 +291,8 @@ abstract public class AstNode implements IAstNode {
 		copyMap.put(orig.getId(), copy);
 		IAstNode[] kids = orig.getChildren();
 		IAstNode[] copyKids = copy.getChildren();
+		if (kids.length  != copyKids.length)
+			throw new IllegalStateException();
 		for (int i = 0; i < kids.length; i++) {
 			getNodeMap(kids[i], copyKids[i], copyMap);
 		}

@@ -72,7 +72,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testExprCodeBlock() throws Exception  {
-    	parse("myCode = code { 3+6 };");
+    	parse("myCode = code { 3+6; };");
     }
     @Test
     public void testStmtCodeBlock() throws Exception  {
@@ -80,7 +80,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testCodeBlockVar1() throws Exception  {
-    	parse("testCodeBlockVar = code { block : code(x,y) = code(x,y) { x*y }; };");
+    	parse("testCodeBlockVar = code { block : code(x,y) = code(x,y) { x*y; }; };");
     }
     @Test
     public void testCodeBlockVar2() throws Exception  {
@@ -123,7 +123,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testCodeBlockArgs1c() throws Exception  {
-    	parseFail("sqrAdd = code ( ,)  { return x*x+y; };");
+    	parseFail("sqrAdd = code ( ,)  { x*x+y; };");
     }
     @Test
     public void testCodeBlockArgs2() throws Exception  {
@@ -192,7 +192,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testCondExpr2b() throws Exception  {
-    	parseAt("rhsExpr", "(y*2 > 0 && x < 10) ? true : false");
+    	parseAt("rhsExpr", "(y*2 > 0 and x < 10) ? true : false");
     }
     @Test
     public void testCondExpr2c() throws Exception  {
@@ -200,7 +200,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testCondExpr2d() throws Exception  {
-    	parseAt("rhsExpr", "a==4 ? ((y*2 > 0 && x < 10) ? a<<9!=0 : a!=4) : rout(a)");
+    	parseAt("rhsExpr", "a==4 ? ((y*2 > 0 and x < 10) ? a<<9!=0 : a!=4) : rout(a)");
     }
     @Test
     public void testProto() throws Exception  {
@@ -208,7 +208,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testNoTopLevelStmts() throws Exception  {
-    	parseFail("return 3;");
+    	parseFail(" @label:");
     }
     @Test
     public void testListCompr0() throws Exception  {
@@ -249,7 +249,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testType1c() throws Exception  {
-    	parseAt("codeStmt", "x : Int&;");
+    	parseAt("codestmtlist", "x : Int&;");
     }
     @Test
     public void testType1d() throws Exception  {
@@ -332,21 +332,21 @@ public class TestParser extends BaseParserTest  {
     
     @Test 
     public void testOpPrec1a() throws Exception {
-    	parse("opPrec1 = code { x=1*2+3>>4&5^6|7==8&&9||10; };");
+    	parse("opPrec1 = code { x=1*2+3>>4&5^6|7==8 and 9 or 10; };");
     }
     @Test 
     public void testOpPrec2a() throws Exception {
-    	parse("opPrec1 = code { x=1||2&&3==4|5^6&7>>8+9*10; };");
+    	parse("opPrec1 = code { x=1 or 2 and 3==4|5^6&7>>8+9*10; };");
     }
     @Test 
     public void testOpPrec1b() throws Exception {
     	// TODO: make sure all tokens used
-    	parse("opPrec1 = code { x=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17&&18||19; };");
+    	parse("opPrec1 = code { x=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
     }
     @Test 
     public void testOpPrec2b() throws Exception {
     	// TODO: make sure all tokens used
-    	parse("opPrec1 = code { x=1||2&&3!=4==5>=6<=7>8<9|10^11&12<<13>>14-15+16%17/18*19; };");
+    	parse("opPrec1 = code { x=1 or 2 and 3!=4==5>=6<=7>8<9|10^11&12<<13>>14-15+16%17/18*19; };");
     }
     @Test 
     public void testOpPrec3() throws Exception {

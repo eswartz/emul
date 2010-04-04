@@ -91,6 +91,17 @@ public interface IScope extends Iterable<ISymbol> {
 	 */
 	public boolean contains(ISymbol symbol);
 
+	/**
+	 * @param symbol
+	 */
+	public void remove(ISymbol symbol);
+
+	/**
+	 * @param ownerScope
+	 * @return
+	 */
+	public boolean encloses(IScope otherScope);
+
 
 
 }

@@ -8,6 +8,7 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -125,11 +126,12 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		LLType newType = null;
+		/*LLType newType = null;
 		if (canInferTypeFrom(expr)) {
-			return updateType(expr, newType);
+			return updateType(expr, newType) | updateType(this, newType);
 		}
-		return false;
+		return false;*/
+		return inferTypesFromChildren(new ITyped[] { expr });
 	}
 
 }

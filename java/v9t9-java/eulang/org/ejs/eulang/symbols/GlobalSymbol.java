@@ -25,7 +25,7 @@ public class GlobalSymbol extends BaseSymbol {
 	 */
 	@Override
 	public GlobalSymbol newInstance() {
-		return new GlobalSymbol(getNumber(), getName(), false, null, null);
+		return new GlobalSymbol(getNumber(), getName(), false, null, getDefinition());
 	}
 
 }

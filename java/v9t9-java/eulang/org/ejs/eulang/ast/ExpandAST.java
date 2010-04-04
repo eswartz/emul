@@ -3,24 +3,19 @@
  */
 package org.ejs.eulang.ast;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstAssignStmt;
-import org.ejs.eulang.ast.impl.AstBlockStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
 import org.ejs.eulang.ast.impl.AstLabelStmt;
-import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
-import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
@@ -49,8 +44,12 @@ public class ExpandAST {
 			if (node instanceof IAstSymbolExpr) {
 				IAstSymbolExpr symExpr = (IAstSymbolExpr)node;
 				IAstNode symDef = symExpr.getSymbol().getDefinition();
-				if (symDef == null)
-					throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
+				if (symDef == null) {
+					// handle later
+					if (!symExpr.getSymbol().getScope().encloses(node.getOwnerScope()))
+						throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
+					return false;
+				}
 				if (symDef == node.getParent())
 					return false;
 				
@@ -83,7 +82,7 @@ public class ExpandAST {
 						funcCallExpr.getParent().replaceChild(funcCallExpr, null);
 					return true;
 				}
-			}
+			} 
 		} catch (ASTException e) {
 			messages.add(new Error(e.getNode(), e.getMessage()));
 		}
@@ -91,6 +90,7 @@ public class ExpandAST {
 	}
 	
 	/**
+	 * Expand a function or macro into the tree 
 	 * @param node
 	 * @param args 
 	 * @param codeExpr copy of tree
@@ -116,10 +116,12 @@ public class ExpandAST {
 		// and move them into the other scope
 		
 		// TODO: rename to "@" syntax and remap symbols... or allow remapping as temporaries when copying a scope
-		for (ISymbol sym : codeExpr.getScope()) {
+		ISymbol[] origSyms = codeExpr.getScope().getSymbols();
+		for (ISymbol sym : origSyms) {
 			// this refers to the copied definition
 			sym.setTemporary(true);
-			sym.setScope(null);
+			//sym.setScope(null);
+			sym.getScope().remove(sym);
 			parentScope.add(sym);
 		}
 		
@@ -130,6 +132,7 @@ public class ExpandAST {
 			throw new ASTException(args, "argument count does not match prototype " + codeExpr.getPrototype().toString());
 		}
 		IAstTypedExpr[] realArgs = args.getNodes(IAstTypedExpr.class);
+		int realArgIdx = 0;
 		for (int i = 0; i < protoArgs.length; i++) {
 			IAstTypedExpr realArg = realArgs[i];
 			IAstArgDef protoArg = protoArgs[i];
@@ -162,11 +165,12 @@ public class ExpandAST {
 				// For non-macro arguments, make a single assignment to a new variable
 				// using the proto arg's symbol 
 				protoArg.getSymbolExpr().setParent(null);
+				protoArg.getTypeExpr().setParent(null);
 				IAstAllocStmt argAlloc = new AstAllocStmt(
 						protoArg.getSymbolExpr(), 
 						protoArg.getTypeExpr(),
 						realArg);
-				blockList.add(i, argAlloc);
+				blockList.add(realArgIdx++, argAlloc);
 			} else {
 				// For macro arguments, the actual argument is directly replaced
 				replaceInTree(codeExpr.stmts(), protoArg.getSymbolExpr(), realArg);
@@ -230,7 +234,9 @@ public class ExpandAST {
 		}
 		//returnLabelSymExpr.getSymbol().setDefinition(returnLabelStmt);
 		
-		codeExpr.stmts().list().clear();
+		//codeExpr.stmts().list().clear();
+		
+		// replace invoke with reference to self
 		
 		IAstStmtListExpr stmtListExpr = new AstStmtListExpr(returnValSymExpr, blockList);
 		setSourceInTree(stmtListExpr, codeExpr.getSourceRef());

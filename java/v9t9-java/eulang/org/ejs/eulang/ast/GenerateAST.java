@@ -20,16 +20,20 @@ import org.ejs.eulang.ast.impl.AstBinExpr;
 import org.ejs.eulang.ast.impl.AstBlockStmt;
 import org.ejs.eulang.ast.impl.AstBoolLitExpr;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
+import org.ejs.eulang.ast.impl.AstCondExpr;
+import org.ejs.eulang.ast.impl.AstCondList;
 import org.ejs.eulang.ast.impl.AstDefineStmt;
 import org.ejs.eulang.ast.impl.AstExprStmt;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
+import org.ejs.eulang.ast.impl.AstInvokeExpr;
 import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstModule;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNodeList;
+import org.ejs.eulang.ast.impl.AstNullLitExpr;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
@@ -239,13 +243,19 @@ public class GenerateAST {
 	protected IScope popScope(Tree tree) throws GenerateException {
 		if (currentScope == null)
 			throw new GenerateException(tree, "no current scope");
-		for (ISymbol symbol : currentScope) {
-			if (symbol.getDefinition() == null)
-				throw new GenerateException(tree, "unreferenced symbol '" + symbol.getName() + "'");
+		try {
+			// do this later
+			/*
+			for (ISymbol symbol : currentScope) {
+				if (symbol.getDefinition() == null)
+					throw new GenerateException(tree, "undefined symbol '" + symbol.getName() + "'");
+			}
+			*/
+			return currentScope;
+		} finally {
+			currentScope = currentScope.getParent();
 		}
-		currentScope = currentScope.getParent();
 		
-		return currentScope;
 	}
 	/**
 	 * @param tree
@@ -290,8 +300,8 @@ public class GenerateAST {
 			return constructCodeExpr(tree);
 		case EulangParser.ARGDEF:
 			return constructArgDef(tree);
-		case EulangParser.RETURN:
-			return constructReturn(tree);
+		//case EulangParser.RETURN:
+		//	return constructReturn(tree);
 		case EulangParser.ADD:
 		case EulangParser.SUB:
 		case EulangParser.MUL:
@@ -331,15 +341,23 @@ public class GenerateAST {
 			return constructCallOrCast(tree);
 		case EulangParser.ARGLIST:
 			return constructArgList(tree);
-			
+
+		case EulangParser.INVOKE:
+			return constructInvoke(tree);
+
 		case EulangParser.STMTEXPR:
 			return constructStmtExpr(tree);
-		case EulangParser.GOTO:
-			return constructGotoStmt(tree);
+		//case EulangParser.GOTO:
+		//	return constructGotoStmt(tree);
 		case EulangParser.LABEL:
 			return constructLabelStmt(tree);
 		case EulangParser.BLOCK:
 			return constructBlockStmt(tree);
+			
+		case EulangParser.CONDLIST:
+			return constructCondList(tree);
+		case EulangParser.CONDTEST:
+			return constructCondExpr(tree);
 			
 		default:
 			unhandled(tree);
@@ -348,6 +366,43 @@ public class GenerateAST {
 		
 	}
 	
+	/**
+	 * @param tree
+	 * @return
+	 */
+	private IAstNode constructInvoke(Tree tree) {
+		IAstInvokeExpr expr = new AstInvokeExpr();
+		getSource(tree, expr);
+		return expr;
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructCondList(Tree tree) throws GenerateException {
+		IAstNodeList<IAstCondExpr> condExprList = new AstNodeList<IAstCondExpr>();
+		for (Tree kid : iter(tree)) {
+			IAstCondExpr arg = checkConstruct(kid, IAstCondExpr.class);
+			condExprList.add(arg);
+			arg.setParent(condExprList);
+		}
+		getSource(tree, condExprList);
+		IAstCondList condList = new AstCondList(condExprList);
+		getSource(tree, condList);
+		return condList;
+	}
+	
+	private IAstNode constructCondExpr(Tree tree) throws GenerateException {
+		assert tree.getChildCount() == 2;
+		IAstTypedExpr test = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		IAstTypedExpr expr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+		IAstCondExpr condExpr = new AstCondExpr(test, expr);
+		getSource(tree, condExpr);
+		return condExpr;
+	}
+
 	/**
 	 * @param tree
 	 * @return
@@ -481,21 +536,30 @@ public class GenerateAST {
 		String name = id.getText();
 		
 		ISymbol symbol = currentScope.get(name);
-		if (symbol != null && symbol.getDefinition() != null) {
+		if (symbol != null && symbol.getDefinition() != null && !isMacroArg(symbol.getDefinition())) {
 			throw new GenerateException(id, "redefining " + name);
 		}
 		IAstName nameNode = new AstName(name, currentScope);
 		getSource(id, nameNode);
 		
 		
-		if (symbol == null)
-			symbol = currentScope.add(nameNode);
+		if (symbol == null) {
+			symbol = currentScope.add(nameNode); 
+			System.out.println("Creating " +  symbol);
+		}
 
 		IAstSymbolExpr symbolExpr = new AstSymbolExpr(symbol);
 		symbolExpr.setSourceRef(nameNode.getSourceRef());
-		System.out.println("Creating " +  symbol);
 
 		return symbolExpr;
+	}
+
+	/**
+	 * @param definition
+	 * @return
+	 */
+	private boolean isMacroArg(IAstNode definition) {
+		return definition instanceof IAstArgDef && ((IAstArgDef) definition).isMacro();
 	}
 
 	/**
@@ -725,7 +789,7 @@ public class GenerateAST {
 		IAstType type = null;
 		IAstTypedExpr defaultVal = null;
 		
-		if (tree.getChildCount() > 1) {
+		if (tree.getChildCount() > argIdx) {
 			if (tree.getChild(argIdx).getType() == EulangParser.TYPE) {
 				type = checkConstruct(tree.getChild(argIdx), IAstType.class);
 				argIdx++;
@@ -852,7 +916,7 @@ public class GenerateAST {
 		
 		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
 		
-		AstDefineStmt stmt = new AstDefineStmt(symbolExpr, checkConstruct(tree.getChild(1), IAstTypedExpr.class));
+		IAstDefineStmt stmt = new AstDefineStmt(symbolExpr, checkConstruct(tree.getChild(1), IAstTypedExpr.class));
 		getSource(tree.getChild(1), stmt);
 		
 		symbolExpr.getSymbol().setDefinition(stmt);
@@ -910,6 +974,9 @@ public class GenerateAST {
 		
 		String lit = tree.getChild(0).getText();
 		switch (tree.getChild(0).getType()) {
+		case EulangParser.NULL:
+			litExpr = new AstNullLitExpr(lit, typeEngine.NULL);
+			break;
 		case EulangParser.TRUE:
 			litExpr = new AstBoolLitExpr(lit, typeEngine.BOOL, true);
 			break;

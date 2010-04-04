@@ -25,4 +25,7 @@ public interface IAstNodeList <T extends IAstNode> extends IAstNode {
 	void addAfter(T node, T newNode);
 	
 	void add(int idx, T node);
+	
+	T getFirst();
+	T getLast();
 }
