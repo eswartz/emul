@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.ejs.eulang.ast;
+package org.ejs.eulang;
 
 /**
  * These are rough types for initial type inference.  

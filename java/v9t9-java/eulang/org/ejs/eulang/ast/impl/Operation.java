@@ -3,7 +3,7 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IOperation;
+import org.ejs.eulang.IOperation;
 
 /**
  * @author ejs
@@ -13,15 +13,18 @@ public class Operation implements IOperation {
 
 	private final String name;
 	private final boolean isCommutative;
+	private final String llvmName;
 
 	/**
-	 * @param string
+	 * @param llvmName TODO
 	 * @param isCommutative
+	 * @param string
 	 * @param isArithmetic
 	 * @param isLogical
 	 */
-	public Operation(String name, boolean isCommutative) {
+	public Operation(String name, String llvmName, boolean isCommutative) {
 		this.name = name;
+		this.llvmName = llvmName;
 		this.isCommutative = isCommutative;
 	}
 	
@@ -42,6 +45,13 @@ public class Operation implements IOperation {
 		return name;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IOperation#getLLVMName()
+	 */
+	@Override
+	public String getLLVMName() {
+		return llvmName;
+	}
 	@Override
 	public boolean isCommutative() {
 		return isCommutative;

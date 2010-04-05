@@ -24,4 +24,11 @@ public abstract class LLTypedInstr extends LLBaseInstr {
 		return type;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLBaseInstr#appendOptionString(java.lang.StringBuilder)
+	 */
+	@Override
+	protected void appendOptionString(StringBuilder sb) {
+		sb.append(type).append(' ');
+	}
 }

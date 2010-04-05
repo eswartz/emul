@@ -10,15 +10,14 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class LLAddInstr extends LLBinaryInstr {
+public class LLAllocaInstr extends LLAssignInstr {
 
 	/**
 	 * @param name
-	 * @param type
 	 * @param ops
 	 */
-	public LLAddInstr(LLType type, LLOperand[] ops) {
-		super("add", type, ops);
+	public LLAllocaInstr(LLOperand ret, LLType type, LLOperand... ops) {
+		super("alloca", ret, type, ops);
 	}
 
 }

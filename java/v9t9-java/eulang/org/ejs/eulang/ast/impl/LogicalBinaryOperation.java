@@ -3,8 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IBinaryOperation;
-import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -17,10 +17,11 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 
 	/**
 	 * @param name
+	 * @param llvmName 
 	 * @param isCommutative
 	 */
-	public LogicalBinaryOperation(String name, boolean isCommutative) {
-		super(name, isCommutative);
+	public LogicalBinaryOperation(String name, String llvmName, boolean isCommutative) {
+		super(name, llvmName, isCommutative);
 	}
 
 

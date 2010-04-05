@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import v9t9.tools.asm.assembler.HLInstruction;
-
+import org.ejs.coffee.core.utils.Check;
 
 public class Block implements Comparable<Block> {
 
@@ -40,7 +39,7 @@ public class Block implements Comparable<Block> {
      * @param inst
      */
     public Block(HighLevelInstruction inst) {
-    	org.ejs.coffee.core.utils.Check.checkArg((inst.getBlock() == null));
+    	Check.checkArg((inst.getBlock() == null));
     	this.id = nextId++;
         succ = new ArrayList<Block>(2);
         pred = new ArrayList<Block>(2);
@@ -149,7 +148,7 @@ public class Block implements Comparable<Block> {
 	public void setLast(HighLevelInstruction last) {
 		
 		if (last != null) {
-			org.ejs.coffee.core.utils.Check.checkArg((last.getBlock() == null || last.getBlock() == this));
+			Check.checkArg((last.getBlock() == null || last.getBlock() == this));
 			
 			boolean hitOldLast = false;
 			boolean hitNewLast = false;
@@ -169,7 +168,7 @@ public class Block implements Comparable<Block> {
 				}
 				inst = inst.getNext();
 			}
-			org.ejs.coffee.core.utils.Check.checkState(hitNewLast);
+			Check.checkState(hitNewLast);
 	
 			// reset blocks for insts no longer in block
 			if (!hitOldLast && this.last != null) {
@@ -184,7 +183,7 @@ public class Block implements Comparable<Block> {
 				}
 				
 				if (!hitOldLast) {
-					org.ejs.coffee.core.utils.Check.checkState(false);
+					Check.checkState(false);
 				}
 			}
 		} else {
@@ -210,7 +209,7 @@ public class Block implements Comparable<Block> {
 		if (first == this.first)
 			return this;
 		HighLevelInstruction oldLast = this.last;
-		org.ejs.coffee.core.utils.Check.checkArg(oldLast);	// can't split unbounded block
+		Check.checkArg(oldLast);	// can't split unbounded block
 		first.setBlock(null);
 		setLast(first.getPrev());
 		Block split = new Block(first);
@@ -228,7 +227,7 @@ public class Block implements Comparable<Block> {
     }
 
     public void addSucc(Block block) {
-    	org.ejs.coffee.core.utils.Check.checkArg(block.getFirst());
+    	Check.checkArg(block.getFirst());
     	
         if (!succ.contains(block)) {
 			succ.add(block);

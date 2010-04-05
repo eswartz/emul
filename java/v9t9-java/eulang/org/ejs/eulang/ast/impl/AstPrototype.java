@@ -5,11 +5,11 @@ package org.ejs.eulang.ast.impl;
 
 import java.util.Arrays;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstType;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;

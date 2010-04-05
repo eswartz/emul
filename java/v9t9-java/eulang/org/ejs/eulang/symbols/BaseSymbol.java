@@ -4,9 +4,9 @@
 package org.ejs.eulang.symbols;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.ITyped;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.ITyped;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -78,7 +78,15 @@ public abstract class BaseSymbol implements ISymbol {
 	@Override
 	public String toString() {
 		//return "\"" + name + "\"" + ":" +(type != null ? type.toString() : "<unknown>");
-		return name  + (temp ? "." + number : "") + " [" +(type != null ? type.toString() : "<unknown>") + "]";
+		return getUniqueName() + " [" +(type != null ? type.toString() : "<unknown>") + "]";
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#getUniqueName()
+	 */
+	@Override
+	public String getUniqueName() {
+		return name  + (temp ? "." + number : "");
 	}
 	
 	@Override
@@ -150,5 +158,16 @@ public abstract class BaseSymbol implements ISymbol {
 		this.temp = temp;
 		if (temp)
 			this.number = scope.nextId();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#getLLVMName()
+	 */
+	@Override
+	public String getLLVMName() {
+		String prefix = "@";
+		if (getScope() instanceof LocalScope)
+			prefix = "%";
+		return prefix + getName().replaceAll("@", "\\$");
 	}
 }

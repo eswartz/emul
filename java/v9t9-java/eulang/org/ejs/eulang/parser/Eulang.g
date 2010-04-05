@@ -239,7 +239,7 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 condStar: cond -> cond
    | SELECT LBRACKET condTests RBRACKET -> condTests
     ;
-condTests : condTest (BAR_BAR condTest)* (BAR_BAR? condFinal)? -> ^(CONDLIST condTest* condFinal?)
+condTests : condTest (BAR_BAR condTest)* BAR_BAR? condFinal -> ^(CONDLIST condTest* condFinal?)
   ;    
 condTest : (cond THEN) => cond THEN arg -> ^(CONDTEST cond arg)
   ;

@@ -4,11 +4,11 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.IBinaryOperation;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.TypeException;
 
 

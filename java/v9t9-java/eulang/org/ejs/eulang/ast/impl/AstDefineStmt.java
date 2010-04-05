@@ -3,12 +3,16 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 
 
 /**
@@ -19,6 +23,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 
 	private IAstSymbolExpr id;
 	private IAstTypedExpr expr;
+	private Map<LLType, IAstTypedExpr> expansions = new HashMap<LLType, IAstTypedExpr>();
 	
 	public AstDefineStmt(IAstSymbolExpr name, IAstTypedExpr expr) {
 		this.id = name;
@@ -156,5 +161,12 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 		return inferTypesFromChildren(new ITyped[] { expr, id });
 	}
 	*/
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDefineStmt#expansions()
+	 */
+	@Override
+	public Map<LLType, IAstTypedExpr> expansions() {
+		return expansions;
+	}
 }

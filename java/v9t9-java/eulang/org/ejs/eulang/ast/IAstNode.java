@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.symbols.IScope;
 
 

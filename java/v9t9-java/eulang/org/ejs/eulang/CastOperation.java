@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.ejs.eulang.ast;
+package org.ejs.eulang;
 
 import org.ejs.eulang.ast.impl.Operation;
 import org.ejs.eulang.types.TypeException;
@@ -17,7 +17,7 @@ public class CastOperation extends Operation implements IUnaryOperation {
 	 * @param isCommutative
 	 */
 	public CastOperation(String name) {
-		super(name, false);
+		super(name, null, false);
 	}
 
 	/* (non-Javadoc)

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.ejs.eulang.ITyped;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -15,8 +17,6 @@ import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.ITyped;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;

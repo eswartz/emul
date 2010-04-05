@@ -53,7 +53,7 @@ public class LLIntType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return "int" + bits;
+		return "i" + bits;
 	}
 	
 	/* (non-Javadoc)

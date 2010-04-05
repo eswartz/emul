@@ -1,11 +1,14 @@
 /**
  * 
  */
-package org.ejs.eulang.ast;
+package org.ejs.eulang;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ejs.eulang.ast.IAstArgDef;
+import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.impl.AstBoolLitExpr;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
@@ -17,6 +20,7 @@ import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLLabelType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -27,7 +31,7 @@ import org.ejs.eulang.types.LLType.BasicType;
  */
 public class TypeEngine {
 	public LLType UNSPECIFIED = null;
-	public int ptrBits;
+	private int ptrBits;
 	public LLIntType INT;
 	public LLIntType BYTE;
 	public LLFloatType FLOAT;
@@ -38,20 +42,79 @@ public class TypeEngine {
 	public LLType NULL;
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
+	private Map<String, LLType> typeMap = new HashMap<String, LLType>();
+	private Map<LLType, LLPointerType> ptrTypeMap = new HashMap<LLType, LLPointerType>();
+	private boolean isLittleEndian;
+	private int ptrAlign;
+	private int stackMinAlign;
+	public int getStackMinAlign() {
+		return stackMinAlign;
+	}
+
+	public void setStackMinAlign(int stackMinAlign) {
+		this.stackMinAlign = stackMinAlign;
+	}
+
+	private int stackAlign;
+	private int structAlign;
+	private int structMinAlign;
+	public LLType INTPTR;
+
+	public int getStructMinAlign() {
+		return structMinAlign;
+	}
+
+	public void setStructMinAlign(int structMinAlign) {
+		this.structMinAlign = structMinAlign;
+	}
 
 	/**
 	 * 
 	 */
 	public TypeEngine() {
-		ptrBits = 16;
-		VOID = new LLVoidType();
-		NULL = new LLVoidType();
-		LABEL = new LLLabelType();
-		BOOL = new LLBoolType(1);
-		BYTE = new LLIntType(8);
-		INT = new LLIntType(16);
+		isLittleEndian = false;
+		setPtrBits(16);
+		setPtrAlign(16);
+		setStackMinAlign(16);
+		setStackAlign(16);
+		setStructAlign(16);
+		setStructMinAlign(8);
+		VOID = register(new LLVoidType());
+		NULL = register(new LLVoidType());
+		LABEL = register(new LLLabelType());
+		BOOL = register(new LLBoolType(1));
+		BYTE = register(new LLIntType(8));
+		INT = register(new LLIntType(16));
+		FLOAT = register(new LLFloatType(32, 23));
+		
 		INT_ANY = new LLIntType(0);
-		FLOAT = new LLFloatType(32, 23);
+	}
+	
+	/**
+	 * @param i
+	 */
+	public void setStackAlign(int i) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public <T extends LLType> T register(T type) {
+		typeMap.put(type.toString(), type);
+		return type;
+	}
+
+	/**
+	 * @return the typeMap
+	 */
+	public Map<String, LLType> getTypeMap() {
+		return typeMap;
+	}
+	
+	/**
+	 * @return the isLittleEndian
+	 */
+	public boolean isLittleEndian() {
+		return isLittleEndian;
 	}
 	
 	/**
@@ -93,7 +156,7 @@ public class TypeEngine {
 		String key = getCodeTypeKey(retType, argTypes);
 		LLCodeType type = codeTypes.get(key);
 		if (type == null) {
-			type = new LLCodeType(retType, argTypes, ptrBits);
+			type = new LLCodeType(retType, argTypes, getPtrBits());
 			codeTypes .put(key, type);
 		}
 		return type;
@@ -188,5 +251,49 @@ public class TypeEngine {
 		}
 		}
 		return null;
+	}
+
+	public void setPtrBits(int ptrBits) {
+		this.ptrBits = ptrBits;
+		INTPTR = new LLIntType(ptrBits);
+	}
+
+	public int getPtrBits() {
+		return ptrBits;
+	}
+
+	public void setPtrAlign(int ptrAlign) {
+		this.ptrAlign = ptrAlign;
+	}
+
+	public int getPtrAlign() {
+		return ptrAlign;
+	}
+	public void setStructAlign(int structAlign) {
+		this.structAlign = structAlign;
+	}
+	
+	public int getStructAlign() {
+		return structAlign;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getStackAlign() {
+		return stackAlign;
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	public LLType getPointerType(LLType type) {
+		LLPointerType ptrType = ptrTypeMap.get(type);
+		if (ptrType == null) {
+			ptrType = new LLPointerType(ptrBits, type);
+			ptrTypeMap.put(type, ptrType);
+		}
+		return ptrType;
 	}
 }

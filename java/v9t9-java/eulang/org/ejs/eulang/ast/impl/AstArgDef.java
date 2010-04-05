@@ -3,13 +3,13 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.eulang.ITyped;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.ITyped;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -18,7 +18,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstArgDef extends AstTypedExpr implements IAstArgDef {
+public class AstArgDef extends AstTypedNode implements IAstArgDef {
 
 	private IAstSymbolExpr name;
 	private IAstTypedExpr defaultVal;
@@ -177,14 +177,6 @@ public class AstArgDef extends AstTypedExpr implements IAstArgDef {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
-	 */
-	@Override
-	public boolean equalValue(IAstTypedExpr expr) {
-		return expr.equalValue(expr);
-	}
-
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstArgDef#getName()
 	 */

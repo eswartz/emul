@@ -23,6 +23,10 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
+import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ITyped;
+import org.ejs.eulang.Message;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.ExpandAST;
 import org.ejs.eulang.ast.GenerateAST;
@@ -32,10 +36,6 @@ import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.IOperation;
-import org.ejs.eulang.ast.ITyped;
-import org.ejs.eulang.ast.Message;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.optimize.SimplifyTree;
 import org.ejs.eulang.parser.EulangLexer;
 import org.ejs.eulang.parser.EulangParser;
@@ -337,7 +337,7 @@ public class BaseParserTest {
 			
 		}
 		
-		if (!dumpTypeInfer || (!expectErrors && messages.size() > 0)) {
+		if (!dumpTypeInfer && (!expectErrors && messages.size() > 0)) {
 			DumpAST dump = new DumpAST(System.out);
 			mod.accept(dump);
 		}
@@ -350,7 +350,7 @@ public class BaseParserTest {
 			assertTrue("expected errors", messages.size() > 0);
 	}
 	
-	protected void doSimplify(IAstModule mod) {
+	protected void doSimplify(IAstNode mod) {
 		SimplifyTree simplify = new SimplifyTree(typeEngine);
 		
 		// must infer types first

@@ -7,6 +7,7 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
@@ -15,7 +16,6 @@ import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.IOperation;
 import org.junit.Test;
 
 /**

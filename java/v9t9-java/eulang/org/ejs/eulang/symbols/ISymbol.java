@@ -3,8 +3,8 @@
  */
 package org.ejs.eulang.symbols;
 
+import org.ejs.eulang.ITyped;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.ITyped;
 
 /**
  * @author ejs
@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.ITyped;
  */
 public interface ISymbol extends ITyped {
 	String getName();
+	String getUniqueName();
 	IScope getScope();
 	void setScope(IScope scope);
 	IAstNode getDefinition();
@@ -25,4 +26,8 @@ public interface ISymbol extends ITyped {
 	 * @return
 	 */
 	ISymbol newInstance();
+	/**
+	 * @return
+	 */
+	String getLLVMName();
 }

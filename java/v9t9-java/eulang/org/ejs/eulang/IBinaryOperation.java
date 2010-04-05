@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.ejs.eulang.ast;
+package org.ejs.eulang;
 
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;

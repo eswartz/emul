@@ -13,6 +13,9 @@ import org.antlr.runtime.CharStream;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.Tree;
+import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ISourceRef;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstArgDef;
 import org.ejs.eulang.ast.impl.AstAssignStmt;
@@ -538,7 +541,6 @@ public class GenerateAST {
 		assert tree.getChildCount() == 2;
 		
 		IAstTypedExpr function = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
-		
 		IAstNodeList<IAstTypedExpr> args = checkConstruct(tree.getChild(1), IAstNodeList.class);
 		
 		// check for a cast
@@ -554,6 +556,9 @@ public class GenerateAST {
 				return castExpr;
 			}
 		}
+		
+		if (function instanceof IAstSymbolExpr)
+			((IAstSymbolExpr) function).setAddress(true);
 		
 		IAstFuncCallExpr funcCall = new AstFuncCallExpr(function, args);
 		getSource(tree, funcCall);

@@ -3,8 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IBinaryOperation;
-import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -17,9 +17,10 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 
 	/**
 	 * @param name
+	 * @param llvmName 
 	 */
-	public ShiftOperation(String name) {
-		super(name, false);
+	public ShiftOperation(String name, String llvmName) {
+		super(name, llvmName, false);
 	}
 
 	/* (non-Javadoc)

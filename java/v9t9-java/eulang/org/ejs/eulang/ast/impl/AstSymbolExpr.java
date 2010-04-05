@@ -4,10 +4,10 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -18,10 +18,17 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	private ISymbol symbol;
+	private boolean isAddress;
 
     public AstSymbolExpr(ISymbol symbol) {
         super();
         setSymbol(symbol);
+        setAddress(false);
+    }
+    public AstSymbolExpr(ISymbol symbol, boolean isAddress) {
+    	super();
+    	setSymbol(symbol);
+    	setAddress(isAddress);
     }
 
     /* (non-Javadoc)
@@ -29,7 +36,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
      */
     @Override
     public IAstSymbolExpr copy(IAstNode copyParent) {
-    	return fixup(this, new AstSymbolExpr(symbol));
+    	return fixup(this, new AstSymbolExpr(symbol, isAddress));
     }
     
     @Override
@@ -62,7 +69,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 */
 	@Override
 	public String toString() {
-		return symbol.toString();
+		return (isAddress ? "&" : "") + symbol.toString();
 	}
     	
     /* (non-Javadoc)
@@ -139,4 +146,20 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		return false;
 
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#isAddress()
+	 */
+	@Override
+	public boolean isAddress() {
+		return isAddress;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#setAddress(boolean)
+	 */
+	@Override
+	public void setAddress(boolean isAddress) {
+		this.isAddress = isAddress;
+	}
+	
 }

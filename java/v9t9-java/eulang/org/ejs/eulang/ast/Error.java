@@ -3,6 +3,9 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.ISourceRef;
+import org.ejs.eulang.Message;
+
 public class Error extends Message {
 	
 	public Error(ISourceRef ref, String msg) {

@@ -191,7 +191,7 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testGoto3() throws Exception {
     	IAstModule mod = treeize("testGoto = code { @foo: \n" +
-    			"{ @foo: select [ true then null ]; \n"+
+    			"{ @foo: select [ true then 1 else 0 ]; \n"+
     			"@foo;\n" +
     			"@:foo;\n" +
     			"};\n"+

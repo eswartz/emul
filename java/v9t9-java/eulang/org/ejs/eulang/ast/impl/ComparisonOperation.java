@@ -3,8 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IBinaryOperation;
-import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -15,12 +15,32 @@ import org.ejs.eulang.types.LLType.BasicType;
  */
 public class ComparisonOperation extends Operation implements IBinaryOperation {
 
+	private final String floatPrefix;
+	private final String intPrefix;
+
 	/**
 	 * @param name
+	 * @param llvmName 
 	 * @param isCommutative
+	 * @param isSignedOrdered TODO
 	 */
-	public ComparisonOperation(String name, boolean isCommutative) {
-		super(name, isCommutative);
+	public ComparisonOperation(String name, String llvmName, boolean isCommutative, String intPrefix, String floatPrefix) {
+		super(name, llvmName, isCommutative);
+		this.intPrefix = intPrefix;
+		this.floatPrefix = floatPrefix;
+	}
+
+	/**
+	 * @return the intPrefix
+	 */
+	public String getLLIntPrefix() {
+		return intPrefix;
+	}
+	/**
+	 * @return the floatPrefix
+	 */
+	public String getLLFloatPrefix() {
+		return floatPrefix;
 	}
 
 	/* (non-Javadoc)

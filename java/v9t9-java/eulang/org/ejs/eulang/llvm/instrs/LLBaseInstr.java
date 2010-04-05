@@ -22,6 +22,9 @@ public abstract class LLBaseInstr implements LLInstr {
 	public LLBaseInstr(String name, LLOperand... ops) {
 		this.name = name;
 		this.ops = ops;
+		for (LLOperand op : ops)
+			if (op == null)
+				throw new IllegalArgumentException();
 	}
 	
 	
@@ -66,15 +69,18 @@ public abstract class LLBaseInstr implements LLInstr {
 	}
 
 	protected void appendInstrString(StringBuilder sb) {
+		sb.append('\t');
 		sb.append(name); sb.append(' ');
 		appendOptionString(sb);
 		boolean first = true;
+		int idx = 0;
 		for (LLOperand op : ops) {
 			if (first)
 				first = false;
 			else
 				sb.append(", ");
-			sb.append(op.toString());
+			appendOperandString(sb, idx, op);
+			idx++;
 		}
 	}
 	
@@ -83,6 +89,14 @@ public abstract class LLBaseInstr implements LLInstr {
 	 */
 	protected void appendOptionString(StringBuilder sb) {
 	}
+	
+	/**
+	 * Override if the operand needs special tuning
+	 */
+	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
+		sb.append(op.toString());
+	}
+
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.LLInstruction#getName()

@@ -3,8 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.TypeEngine;
 
 
 /**

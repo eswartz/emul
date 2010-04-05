@@ -4,11 +4,15 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.ITyped;
+import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -146,8 +150,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		
 		LLCodeType codeType = null;
 
-		if (canInferTypeFrom(function)) {
-			LLType type = function.getType();
+		IAstTypedNode actualFunction = getRealTypedNode(function);
+		
+		if (canInferTypeFrom(actualFunction)) {
+			LLType type = actualFunction.getType();
 			if (!(type instanceof LLCodeType)) {
 				throw new TypeException("calling non-function: " + type.toString());  
 			}
@@ -156,7 +162,24 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			return false;
 		}
 
-		return updateType(function, codeType) | updateType(this, codeType.getRetType());
+		return updateType(function, codeType) | updateType(actualFunction, codeType) | updateType(this, codeType.getRetType());
+	}
+
+	private IAstTypedNode getRealTypedNode(IAstTypedExpr node) {
+		if (node.getType() != null)
+			return node;
+		
+		if (node instanceof IAstSymbolExpr) {
+			IAstNode def = ((IAstSymbolExpr) node).getSymbol().getDefinition();
+			if (def instanceof IAstDefineStmt) {
+				// TODO: instances
+				return ((IAstDefineStmt) def).getExpr();
+			}
+			if (!(def instanceof ITyped))
+				return null;
+			return ((IAstTypedNode)node);
+		} 
+		return null;
 	}
 
 	/*

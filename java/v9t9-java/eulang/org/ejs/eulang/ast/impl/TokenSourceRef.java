@@ -4,7 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import org.antlr.runtime.Token;
-import org.ejs.eulang.ast.ISourceRef;
+import org.ejs.eulang.ISourceRef;
 
 
 /**

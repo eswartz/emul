@@ -5,15 +5,15 @@ package org.ejs.eulang.types;
 
 import java.util.List;
 
+import org.ejs.eulang.ITyped;
+import org.ejs.eulang.Message;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.Error;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.ast.ITyped;
-import org.ejs.eulang.ast.Message;
-import org.ejs.eulang.ast.TypeEngine;
 
 /**
  * This class infers types in an AST. We allow code to have unspecified types
@@ -66,8 +66,8 @@ public class TypeInference {
 		boolean changed = false;
 		
 		// don't infer through defines
-		if (node instanceof IAstDefineStmt)
-			return changed;
+		//if (node instanceof IAstDefineStmt)
+		//	return changed;
 		
 		for (IAstNode kid : node.getChildren()) {
 			changed |= inferUp(messages, typeEngine, kid);

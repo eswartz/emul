@@ -3,12 +3,12 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ITyped;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.IOperation;
-import org.ejs.eulang.ast.ITyped;
-import org.ejs.eulang.ast.TypeEngine;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -42,7 +42,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstTypedExpr other = (AstTypedExpr) obj;
+		AstTypedNode other = (AstTypedNode) obj;
 		if (type == null) {
 			if (other.type != null)
 				return false;

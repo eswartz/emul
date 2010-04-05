@@ -3,8 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IUnaryOperation;
-import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.IUnaryOperation;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -18,7 +18,7 @@ public class ArithmeticUnaryOperation extends Operation implements IUnaryOperati
 	 * @param isCommutative
 	 */
 	public ArithmeticUnaryOperation(String name) {
-		super(name, false);
+		super(name, null, false);
 	}
 	
 	/* (non-Javadoc)

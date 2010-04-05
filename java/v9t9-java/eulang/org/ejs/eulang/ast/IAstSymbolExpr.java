@@ -19,4 +19,7 @@ public interface IAstSymbolExpr extends IAstTypedExpr {
     
     /** Set the symbol */
     public void setSymbol(ISymbol symbol);
+    
+    boolean isAddress();
+    void setAddress(boolean isAddress);
 }

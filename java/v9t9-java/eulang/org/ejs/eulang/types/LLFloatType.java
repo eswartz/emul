@@ -55,7 +55,7 @@ public class LLFloatType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return "float" + bits;
+		return "f" + bits;
 	}
 	
 	/* (non-Javadoc)

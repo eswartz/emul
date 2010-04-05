@@ -3,8 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IUnaryOperation;
-import org.ejs.eulang.ast.TypeEngine;
+import org.ejs.eulang.IUnaryOperation;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.types.TypeException;
 import org.ejs.eulang.types.LLType.BasicType;
 
@@ -19,7 +19,7 @@ public class LogicalUnaryOperation extends Operation implements IUnaryOperation 
 	 * @param isCommutative
 	 */
 	public LogicalUnaryOperation(String name) {
-		super(name, false);
+		super(name, null, false);
 	}
 	
 

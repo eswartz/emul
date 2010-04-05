@@ -11,7 +11,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstArgDef extends IAstTypedExpr {
+public interface IAstArgDef extends IAstTypedNode {
 	IAstArgDef copy(IAstNode copyParent);
 	
 	boolean isMacro();

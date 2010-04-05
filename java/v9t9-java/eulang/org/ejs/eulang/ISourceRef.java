@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.ejs.eulang.ast;
+package org.ejs.eulang;
 
 /**
  * @author ejs

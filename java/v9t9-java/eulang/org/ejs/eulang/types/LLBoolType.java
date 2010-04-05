@@ -53,7 +53,7 @@ public class LLBoolType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return "bool" + bits;
+		return "i" + bits;
 	}
 	
 	/* (non-Javadoc)

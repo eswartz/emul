@@ -6,12 +6,12 @@ package org.ejs.eulang.ast.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.ast.AstVisitor;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.ast.ISourceRef;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 

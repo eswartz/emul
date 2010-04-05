@@ -3,8 +3,11 @@
  */
 package org.ejs.eulang.ast;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.ejs.eulang.ISourceRef;
+import org.ejs.eulang.Message;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstAssignStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
@@ -20,6 +23,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
@@ -53,8 +57,17 @@ public class ExpandAST {
 					return false;
 				
 				if (symDef instanceof IAstDefineStmt) {
-					IAstNode value = ((IAstDefineStmt) symDef).getExpr();
-					node.getParent().replaceChild(node, value.copy(node));
+					IAstDefineStmt defineStmt = (IAstDefineStmt) symDef;
+					IAstNode value = defineStmt.getExpr();
+					
+					if (value instanceof IAstCodeExpr) {
+						IAstCodeExpr codeExpr = (IAstCodeExpr) value;
+						if (codeExpr.isMacro()) {
+							// directly replace
+							node.getParent().replaceChild(node, value.copy(node));
+							changed = true;
+						}
+					}
 				}
 				
 				/*
@@ -66,9 +79,32 @@ public class ExpandAST {
 			} else if (node instanceof IAstFuncCallExpr) {
 				IAstFuncCallExpr funcCallExpr = (IAstFuncCallExpr) node;
 				IAstTypedExpr funcExpr = funcCallExpr.getFunction();
-				if (funcExpr instanceof IAstCodeExpr) {
-					// Direct expansion of call, e.g.:   code () { } () 
-					// We may have produced this ourselves.
+				if (funcExpr instanceof IAstSymbolExpr) {
+					// Call to a define?
+					
+					IAstSymbolExpr symExpr = (IAstSymbolExpr) funcExpr;
+					if (symExpr.getSymbol().getDefinition() instanceof IAstDefineStmt) {
+						IAstDefineStmt defineStmt = (IAstDefineStmt) symExpr.getSymbol().getDefinition();
+						IAstNode def = defineStmt.getExpr();
+						if (def instanceof IAstCodeExpr) {
+							IAstCodeExpr codeExpr = (IAstCodeExpr) def;
+							if (codeExpr.getType() != null && codeExpr.getType().isComplete()) {
+								// fine
+							} else if (funcExpr.getType() != null && funcExpr.getType().isComplete()) {
+								// create a variant for the given type
+								IAstTypedExpr instance = instantiateFuncCall(defineStmt, funcCallExpr);
+								funcExpr.getParent().replaceChild(funcExpr, instance);
+							}
+
+						}
+					}
+				}
+				else if (funcExpr instanceof IAstCodeExpr) {
+					// Direct expansion of call, e.g.:   code () { } ()
+					//
+					// Replace the arguments and statements in place of the call.
+					//
+					// (We may have produced this ourselves.)
 					
 					IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
 							null,
@@ -88,6 +124,41 @@ public class ExpandAST {
 		return changed;
 	}
 	
+	/**
+	 * @param codeExpr
+	 * @param funcCallExpr
+	 * @return
+	 */
+	private IAstTypedExpr instantiateFuncCall(IAstDefineStmt defineStmt,
+			IAstFuncCallExpr funcCallExpr) {
+		
+		LLCodeType callType = (LLCodeType) funcCallExpr.getFunction().getType();
+		
+		IAstNode typedExpr = defineStmt.expansions().get(callType);
+		if (typedExpr != null)
+			return (IAstSymbolExpr) typedExpr;
+		
+		ISymbol codeSymbol = defineStmt.getSymbol();
+		ISymbol instSymbol = codeSymbol.getScope().addTemporary(codeSymbol.getName());
+		
+		IAstCodeExpr codeExpr = (IAstCodeExpr) defineStmt.getExpr();
+		IAstCodeExpr instExpr = codeExpr.copy(null);
+		
+		return instExpr;
+		
+		/*
+		LLType retType = ((LLCodeType)codeExpr).getRetType();
+		LLType[] origArgTypes = ((LLCodeType)codeExpr).getArgTypes();
+		LLType[] argTypes = Arrays.copyOf(origArgTypes, origArgTypes.length); 
+		
+		if (retType == null || !retType.isComplete()) {
+			retType = funcCallExpr.getType();
+		}
+		funcCallExpr.arguments();
+		return null;
+		*/
+	}
+
 	/**
 	 * Expand a function or macro into the tree 
 	 * @param node
@@ -164,7 +235,8 @@ public class ExpandAST {
 				// For non-macro arguments, make a single assignment to a new variable
 				// using the proto arg's symbol 
 				protoArg.getSymbolExpr().setParent(null);
-				protoArg.getTypeExpr().setParent(null);
+				if (protoArg.getTypeExpr() != null)
+					protoArg.getTypeExpr().setParent(null);
 				IAstAllocStmt argAlloc = new AstAllocStmt(
 						protoArg.getSymbolExpr(), 
 						protoArg.getTypeExpr(),
@@ -176,15 +248,16 @@ public class ExpandAST {
 			}
 		}
 		
-		IAstAllocStmt allocReturnStmt = null;
-		IAstSymbolExpr returnValSymExpr = null;
-		ISymbol returnValSym = null;
+		//IAstAllocStmt allocReturnStmt = null;
+		//IAstSymbolExpr returnValSymExpr = null;
+		//ISymbol returnValSym = null;
 		
-		IAstSymbolExpr returnLabelSymExpr = null;
-		ISymbol returnLabelSym = null;
+		//IAstSymbolExpr returnLabelSymExpr = null;
+		//ISymbol returnLabelSym = null;
 		
 		for (IAstStmt stmt : codeExpr.stmts().list()) {
 			// when inlining functions, replace returns
+			/*
 			if (!codeExpr.isMacro() && stmt instanceof IAstReturnStmt) {
 				IAstReturnStmt retStmt = (IAstReturnStmt) stmt;
 				
@@ -221,23 +294,24 @@ public class ExpandAST {
 				IAstGotoStmt gotoEndStmt = new AstGotoStmt(returnLabelSymExpr, null);
 				blockList.add(gotoEndStmt);
 				continue;
-			}
+			}*/
 			
 			stmt.setParent(null);
 			blockList.add(stmt);
 		}
 		
+		/*
 		if (returnLabelSymExpr != null) {
 			AstLabelStmt returnLabelStmt = new AstLabelStmt(returnLabelSymExpr);
 			blockList.add(returnLabelStmt);
-		}
+		}*/
 		//returnLabelSymExpr.getSymbol().setDefinition(returnLabelStmt);
 		
 		//codeExpr.stmts().list().clear();
 		
 		// replace invoke with reference to self
 		
-		IAstStmtListExpr stmtListExpr = new AstStmtListExpr(returnValSymExpr, blockList);
+		IAstStmtListExpr stmtListExpr = new AstStmtListExpr(/*returnValSymExpr,*/ blockList);
 		setSourceInTree(stmtListExpr, codeExpr.getSourceRef());
 		return stmtListExpr;
 	}

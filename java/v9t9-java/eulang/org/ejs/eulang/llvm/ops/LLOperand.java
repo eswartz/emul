@@ -14,5 +14,4 @@ public interface LLOperand {
 	int hashCode();
 	
 	String toString();
-	LLType getType();
 }
