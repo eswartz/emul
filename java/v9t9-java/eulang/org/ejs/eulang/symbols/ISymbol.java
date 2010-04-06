@@ -12,7 +12,9 @@ import org.ejs.eulang.ast.IAstNode;
  */
 public interface ISymbol extends ITyped {
 	String getName();
+	String getLLVMName();
 	String getUniqueName();
+	
 	IScope getScope();
 	void setScope(IScope scope);
 	IAstNode getDefinition();
@@ -20,14 +22,13 @@ public interface ISymbol extends ITyped {
 	
 	boolean isTemporary();
 	void setTemporary(boolean temp);
+
+	boolean isAddressed();
+	void setAddressed(boolean addressed);
 	
 	/**
 	 * Copy self (type and name)
 	 * @return
 	 */
 	ISymbol newInstance();
-	/**
-	 * @return
-	 */
-	String getLLVMName();
 }

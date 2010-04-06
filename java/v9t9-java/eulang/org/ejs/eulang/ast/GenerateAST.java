@@ -835,9 +835,15 @@ public class GenerateAST {
 	public IAstNode constructArgDef(Tree tree) throws GenerateException {
 		int argIdx = 0;
 		
+		boolean isVar = false;
 		boolean isMacro = false;
 		if (tree.getChild(argIdx).getType() == EulangParser.MACRO) {
 			isMacro = true;
+			argIdx++;
+		}
+		
+		if (tree.getChild(argIdx).getType() == EulangParser.AT) {
+			isVar = true;
 			argIdx++;
 		}
 		
@@ -856,7 +862,10 @@ public class GenerateAST {
 			}
 		}
 		
-		IAstArgDef argDef = new AstArgDef(symExpr, type, defaultVal, isMacro);
+		if (isMacro && isVar)
+			throw new GenerateException(tree, "cannot have a macro and '@' argument");
+		
+		IAstArgDef argDef = new AstArgDef(symExpr, type, defaultVal, isMacro, isVar);
 		getSource(tree, argDef);
 		
 		symExpr.getSymbol().setDefinition(argDef);
@@ -935,8 +944,11 @@ public class GenerateAST {
 	 * @return
 	 */
 	public LLType constructType(Tree tree) throws GenerateException {
-		if (tree.getType() == EulangParser.TYPE) {
-			return checkConstruct(tree, IAstType.class).getType();
+		if (tree.getType() == EulangParser.NULL) {
+			return typeEngine.VOID;
+		}
+		else if (tree.getType() == EulangParser.REF) {
+			return typeEngine.getRefType(constructType(tree.getChild(0)));
 		}
 		else if (tree.getType() == EulangParser.CODE) {
 			if (tree.getChildCount() == 0) {

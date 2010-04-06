@@ -72,6 +72,7 @@ public interface IScope extends Iterable<ISymbol> {
 	 * @return
 	 */
 	public ISymbol addTemporary(String name);
+	public ISymbol addTemporary(String name, boolean uniquifyt);
 
 	public ISymbol[] getSymbols();
 

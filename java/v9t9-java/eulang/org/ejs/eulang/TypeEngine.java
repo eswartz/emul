@@ -21,6 +21,7 @@ import org.ejs.eulang.types.LLFloatType;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -44,6 +45,7 @@ public class TypeEngine {
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 	private Map<String, LLType> typeMap = new HashMap<String, LLType>();
 	private Map<LLType, LLPointerType> ptrTypeMap = new HashMap<LLType, LLPointerType>();
+	private Map<LLType, LLRefType> refTypeMap = new HashMap<LLType, LLRefType>();
 	private boolean isLittleEndian;
 	private int ptrAlign;
 	private int stackMinAlign;
@@ -143,6 +145,8 @@ public class TypeEngine {
 				&& a.getBasicType() == BasicType.FLOATING) {
 			return a;
 		}
+		
+		// ptrs, refs, voids cannot be interconverted
 		
 		return null;
 	}
@@ -283,11 +287,6 @@ public class TypeEngine {
 	public int getStackAlign() {
 		return stackAlign;
 	}
-
-	/**
-	 * @param type
-	 * @return
-	 */
 	public LLType getPointerType(LLType type) {
 		LLPointerType ptrType = ptrTypeMap.get(type);
 		if (ptrType == null) {
@@ -295,5 +294,14 @@ public class TypeEngine {
 			ptrTypeMap.put(type, ptrType);
 		}
 		return ptrType;
+	}
+
+	public LLRefType getRefType(LLType type) {
+		LLRefType refType = refTypeMap.get(type);
+		if (refType == null) {
+			refType = new LLRefType(type, ptrBits);
+			refTypeMap.put(type, refType);
+		}
+		return refType;
 	}
 }

@@ -28,6 +28,7 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -335,6 +336,20 @@ public class TestGenerator extends BaseParserTest {
 		assertTrue(condExpr.getExpr() instanceof IAstCodeExpr);
 		condExpr = condList.getCondExprs().list().get(2);
 		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
+    }
+    
+    @Test
+    public void testPointers1() throws Exception {
+    	IAstModule mod = treeize(
+        		" badSwap_testPointers1 = code (x : Int&, y : Int& => null) {\n" +
+        		"};\n"+
+        		" refOnlySwap_testPointers1 = code (@x : Int&, @y : Int& => null) {\n" +
+        		"};\n"+
+        		" intOnlySwap_testPointers1 = code (@x : Int, @y : Int => null) {\n" +
+        		"};\n"+
+        		" genericSwap_testPointers1 = code (@x, @y => null) {\n" +
+        		"};\n");
+    		sanityTest(mod);
     }
 }
 

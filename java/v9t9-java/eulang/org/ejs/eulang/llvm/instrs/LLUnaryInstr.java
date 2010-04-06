@@ -5,7 +5,6 @@ package org.ejs.eulang.llvm.instrs;
 
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -18,7 +17,7 @@ public class LLUnaryInstr extends LLAssignInstr {
 	/**
 	 * Create with ops= {ret, op1, op2}; 
 	 */
-	public LLUnaryInstr(IOperation op, LLTempOp ret, LLType type, LLOperand... ops) {
+	public LLUnaryInstr(IOperation op, LLOperand ret, LLType type, LLOperand... ops) {
 		super(op.getLLVMName(), ret, type, ops);
 		this.op = op;
 		if (ops.length != 1)
@@ -26,7 +25,7 @@ public class LLUnaryInstr extends LLAssignInstr {
 	}
 	
 	/**  Return value:  llGetOperands()[0] */
-	public LLTempOp ret() { return (LLTempOp) ops[0]; }
+	public LLOperand ret() { return (LLOperand) ops[0]; }
 	/**  llGetOperands()[1] */
 	public LLOperand op() { return ops[1]; }
 	

@@ -34,5 +34,13 @@ public class TargetV9t9 implements ITarget {
 	public String getLLCallingConvention() {
 		return "cc100";
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITarget#moveLocalsToTemps()
+	 */
+	@Override
+	public boolean moveLocalsToTemps() {
+		return true;
+	}
 
 }

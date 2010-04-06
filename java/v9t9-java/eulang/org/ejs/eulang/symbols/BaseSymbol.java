@@ -21,12 +21,14 @@ public abstract class BaseSymbol implements ISymbol {
 	private IScope scope;
 	private int number;
 	private boolean temp;
+	private boolean addressed;
 	
-	public BaseSymbol(int number, String name, boolean temporary, IScope scope, IAstNode def) {
+	public BaseSymbol(int number, String name, boolean temporary, IScope scope, IAstNode def, boolean addressed) {
 		this.number = number;
 		this.name = name;
 		this.scope = scope;
 		this.temp = temporary;
+		this.addressed = addressed;
 		Check.checkArg(this.name);
 		setDefinition(def);
 	}
@@ -158,6 +160,21 @@ public abstract class BaseSymbol implements ISymbol {
 		this.temp = temp;
 		if (temp)
 			this.number = scope.nextId();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#isAddressed()
+	 */
+	@Override
+	public boolean isAddressed() {
+		return addressed;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.ISymbol#setAddressed(boolean)
+	 */
+	@Override
+	public void setAddressed(boolean addressed) {
+		this.addressed = addressed;
 	}
 	
 	/* (non-Javadoc)

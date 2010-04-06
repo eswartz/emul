@@ -24,17 +24,19 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	private IAstTypedExpr defaultVal;
 	private IAstType typeExpr;
 	private boolean isMacro;
+	private boolean isVar;
 
 	/**
 	 * @param isMacro 
 	 * 
 	 */
-	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal, boolean isMacro) {
+	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal, boolean isMacro, boolean isVar) {
 		this.name = name;
 		name.setParent(this);
 		setTypeExpr(type);
 		setDefaultValue(defaultVal);
 		setMacro(isMacro);
+		setVar(isVar);
 	}
 	
 	
@@ -44,7 +46,8 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	@Override
 	public IAstArgDef copy(IAstNode copyParent) {
 		return fixup(this, new AstArgDef(
-				doCopy(name, copyParent), doCopy(typeExpr, copyParent), doCopy(defaultVal, copyParent), isMacro()));
+				doCopy(name, copyParent), doCopy(typeExpr, copyParent), doCopy(defaultVal, copyParent), 
+				isMacro(), isVar()));
 	}
 	
 	
@@ -54,7 +57,8 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	 */
 	@Override
 	public String toString() {
-		return (isMacro ? "macro " : "") + name + (typeExpr != null && typeExpr.getType() != null ? " : " + typeExpr.getType().toString() : "") + (defaultVal != null ? " = " + defaultVal : ""); 
+		return (isMacro ? "macro " : "") + (isVar ? "&" : "") +
+			name + (typeExpr != null && typeExpr.getType() != null ? " : " + typeExpr.getType().toString() : "") + (defaultVal != null ? " = " + defaultVal : ""); 
 	}
 	
 	
@@ -66,6 +70,7 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 		result = prime * result
 				+ ((defaultVal == null) ? 0 : defaultVal.hashCode());
 		result = prime * result + (isMacro ? 1231 : 1237);
+		result = prime * result + (isVar ? 4231 : 4237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result
 				+ ((typeExpr == null) ? 0 : typeExpr.hashCode());
@@ -88,6 +93,8 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 		} else if (!defaultVal.equals(other.defaultVal))
 			return false;
 		if (isMacro != other.isMacro)
+			return false;
+		if (isVar != other.isVar)
 			return false;
 		if (name == null) {
 			if (other.name != null)
@@ -117,6 +124,22 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	public void setMacro(boolean isMacro) {
 		this.isMacro = isMacro;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstArgDef#isVar()
+	 */
+	@Override
+	public boolean isVar() {
+		return isVar;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstArgDef#setVar(boolean)
+	 */
+	@Override
+	public void setVar(boolean isVar) {
+		this.isVar = isVar;
+	}
+	
 	
 	
 	/* (non-Javadoc)

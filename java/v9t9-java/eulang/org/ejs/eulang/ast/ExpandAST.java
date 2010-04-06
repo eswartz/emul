@@ -68,6 +68,11 @@ public class ExpandAST {
 							changed = true;
 						}
 					}
+					else {
+						// directly replace
+						node.getParent().replaceChild(node, value.copy(node));
+						changed = true;
+					}
 				}
 				
 				/*

@@ -21,10 +21,15 @@ import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TargetV9t9;
 import org.ejs.eulang.ast.DumpAST;
+import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -62,6 +67,9 @@ public class TestLLVMGenerator extends BaseParserTest {
 	 * @throws FileNotFoundException 
 	 */
 	protected void doGenerate(IAstModule mod, boolean expectErrors) throws Exception {
+		doExpand(mod);
+		doSimplify(mod);
+		
 		LLVMGenerator generator = new LLVMGenerator(v9t9Target);
 		generator.generate(mod);
 		
@@ -143,11 +151,26 @@ public class TestLLVMGenerator extends BaseParserTest {
 		IAstModule mod = doFrontend("FOO = 3;\n"+
 				"helper = code (x : Int => Int) { -x; };\n"+
 				"main := code (p, q) {\n" +
-				"	x := helper(10);\n"+
-				"   select [ x > q then -1 else 1+p ];\n"+
+				"	x := helper(10 * q);\n"+
+				"   x = x + x;\n"+
+				"   select [ x > q then -FOO else 1+p ];\n"+
 				"};\n");
 		
 		doGenerate(mod);
 	}
+	
+	 @Test
+    public void testPointers4() throws Exception {
+		 dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			" genericSwap_testPointers4 := code (@x, @y => null) {\n" +
+    			" t : Int = x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+    	"};\n");
+    	doGenerate(mod);
+
+    }
+	
 
 }

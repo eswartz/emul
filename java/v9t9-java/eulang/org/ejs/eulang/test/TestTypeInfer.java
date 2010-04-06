@@ -595,7 +595,100 @@ public class TestTypeInfer extends BaseParserTest {
     	assertTrue(assign.getExpr() instanceof IAstBinExpr);
     }
 	
- 
+
+    @Test
+    public void testPointers1() throws Exception {
+    	IAstModule mod = treeize(
+        		" badSwap_testPointers1 = code (x : Int&, y : Int& => null) {\n" +
+        		" t := x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+        		"};\n");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("badSwap_testPointers1");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+
+		LLType intRef = typeEngine.getRefType(typeEngine.INT);
+	   	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  
+	   			new LLType[] { intRef, intRef }), 
+	   			def.getExpr().getType());
+	   	
+	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) def.getExpr()).stmts().getLast();
+	   	assertEquals(intRef, assn.getType());
+    }
+
+    @Test
+    public void testPointers2() throws Exception {
+    	IAstModule mod = treeize(
+        		" refOnlySwap_testPointers2 = code (@x : Int&, @y : Int& => null) {\n" +
+        		" t := x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+        		"};\n");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("refOnlySwap_testPointers2");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+
+		LLType intRef = typeEngine.getRefType(typeEngine.INT);
+	   	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  
+	   			new LLType[] { intRef, intRef }), 
+	   			def.getExpr().getType());
+	   	
+	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) def.getExpr()).stmts().getLast();
+	   	assertEquals(intRef, assn.getType());
+		
+    }
+    
+    @Test
+    public void testPointers3() throws Exception {
+    	IAstModule mod = treeize(
+        		" intOnlySwap_testPointers3 = code (@x : Int, @y : Int => null) {\n" +
+        		" t := x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+        		"};\n");
+		sanityTest(mod);
+
+
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("intOnlySwap_testPointers3");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+
+	   	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  
+	   			new LLType[] { typeEngine.INT, typeEngine.INT }), 
+	   			def.getExpr().getType());
+	   	
+	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) def.getExpr()).stmts().getLast();
+	   	assertEquals(typeEngine.INT, assn.getType());
+
+    }
+    @Test
+    public void testPointers4() throws Exception {
+    	IAstModule mod = treeize(
+    			" genericSwap_testPointers4 = code (@x, @y => null) {\n" +
+    			" t : Int = x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+    	"};\n");
+    	sanityTest(mod);
+    	
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("genericSwap_testPointers4");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
+    	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  
+    			new LLType[] { typeEngine.INT, typeEngine.INT }), 
+    			def.getExpr().getType());
+    	
+	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) def.getExpr()).stmts().getLast();
+	   	assertEquals(typeEngine.INT, assn.getType());
+
+    }
 }
 
 

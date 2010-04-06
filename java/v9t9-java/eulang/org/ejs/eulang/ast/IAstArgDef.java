@@ -17,6 +17,9 @@ public interface IAstArgDef extends IAstTypedNode {
 	boolean isMacro();
 	void setMacro(boolean isMacro);
 	
+	boolean isVar();
+	void setVar(boolean isVar);
+	
 	String getName();
 	IAstSymbolExpr getSymbolExpr();
 	

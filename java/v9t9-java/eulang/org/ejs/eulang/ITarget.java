@@ -19,4 +19,6 @@ public interface ITarget {
 	 * @return e.g. "foo-bar-baz"
 	 */
 	String getTriple();
+	
+	boolean moveLocalsToTemps();
 }

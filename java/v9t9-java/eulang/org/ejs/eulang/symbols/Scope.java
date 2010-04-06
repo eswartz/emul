@@ -210,7 +210,17 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public ISymbol addTemporary(String name) {
-		ISymbol symbol = createSymbol(name + "@" + counter.get(), true);
+		return addTemporary(name, true);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#addTemporary(java.lang.String, boolean)
+	 */
+	@Override
+	public ISymbol addTemporary(String name, boolean uniquifyt) {
+		if (uniquifyt)
+			name += "@" + counter.get();
+		ISymbol symbol = createSymbol(name, true);
 		entries.put(name, symbol);
 		return symbol;		
 	}

@@ -169,7 +169,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		// see what the return statements do
 		IAstStmt returns = stmts.getLast();
 		if (returns instanceof ITyped) {
-			if (canInferTypeFrom((ITyped) returns)) {
+			if (canReplaceType((ITyped) returns)) {
 				((ITyped)returns).setType(newType.getRetType());
 				changed = true;
 			}

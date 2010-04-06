@@ -13,8 +13,7 @@ import org.ejs.eulang.types.LLType;
 public class LLAllocaInstr extends LLAssignInstr {
 
 	/**
-	 * @param name
-	 * @param ops
+	 * @type is the actual type desired (not pointer to...)
 	 */
 	public LLAllocaInstr(LLOperand ret, LLType type, LLOperand... ops) {
 		super("alloca", ret, type, ops);

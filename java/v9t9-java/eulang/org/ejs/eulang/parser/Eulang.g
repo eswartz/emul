@@ -155,17 +155,18 @@ proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? a
 argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
     ;
 
-argdef: MACRO? ID (COLON type)?    -> ^(ARGDEF MACRO? ID type* )
+argdef: MACRO?  AT? ID (COLON type)?    -> ^(ARGDEF MACRO?  AT? ID type* )
   ;
 
 xreturns: RETURNS type      -> type
+  | RETURNS NULL            -> ^(TYPE NULL)
   ;
 
 // args inside a prototype, which have optional initializers
 optargdefs: (optargdef ( COMMA optargdef)* COMMA?)?                        -> optargdef* 
     ;
 
-optargdef: MACRO? ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO? ID type* $init?)
+optargdef: MACRO? AT? ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO? AT? ID type* $init?)
   ;
   
 type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScopeRef) ) )? 

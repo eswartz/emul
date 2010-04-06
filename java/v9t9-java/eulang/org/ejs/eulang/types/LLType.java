@@ -15,7 +15,8 @@ public interface LLType {
 		POINTER,
 		DATA,
 		CODE, 
-		BOOL
+		BOOL, 
+		REF
 	};
 	
 	String toString();

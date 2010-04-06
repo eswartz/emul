@@ -18,7 +18,7 @@ public class GlobalScope extends Scope {
 	 */
 	@Override
 	public ISymbol createSymbol(String name, boolean temporary) {
-		return new GlobalSymbol(nextId(), name, temporary, this, null);
+		return new GlobalSymbol(nextId(), name, temporary, this, null, false);
 	}
 	
 	/* (non-Javadoc)
