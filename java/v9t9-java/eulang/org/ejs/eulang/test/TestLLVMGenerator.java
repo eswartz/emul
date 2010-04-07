@@ -13,6 +13,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import junit.framework.AssertionFailedError;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.ejs.eulang.ITarget;
@@ -72,8 +74,6 @@ public class TestLLVMGenerator extends BaseParserTest {
 			System.err.println(msg);
 		if (!expectErrors)
 			assertEquals("expected no errors: " + catenate(messages), 0, messages.size());
-		else
-			assertTrue("expected errors", messages.size() > 0);
 		
 		File file = getTempFile("");
 		File llfile = new File(file.getAbsolutePath() + ".ll");
@@ -92,10 +92,19 @@ public class TestLLVMGenerator extends BaseParserTest {
 
 		System.out.println(text);
 		
-		run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+		try {
+			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+			run("opt", bcFile.getAbsolutePath(), "-O2", "-f", "-o", bcOptFile.getAbsolutePath());
+			run("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+		} catch (AssertionFailedError e) {
+			if (expectErrors)
+				return;
+			else
+				throw e;
+		}
 		
-		run("opt", bcFile.getAbsolutePath(), "-O2", "-f", "-o", bcOptFile.getAbsolutePath());
-		run("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+		if (expectErrors)
+			assertTrue("expected errors", messages.size() > 0);
 	}
 	/**
 	 * @param string
@@ -151,6 +160,21 @@ public class TestLLVMGenerator extends BaseParserTest {
 		doGenerate(mod);
 	}
 	
+
+	
+	@Test
+    public void testPointers3() throws Exception {
+		 dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			" refSwap_testPointers3 := code (x : Int&, y : Int& => null) {\n" +
+    			" t : Int = x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+    	"};\n");
+    	doGenerate(mod);
+
+    }
+	
 	@Test
     public void testPointers4() throws Exception {
 		 dumpTypeInfer = true;
@@ -164,6 +188,19 @@ public class TestLLVMGenerator extends BaseParserTest {
     	doGenerate(mod);
 
     }
-	
+
+	// TODO: this should work, probably
+	@Test
+    public void testPointers2Fail() throws Exception {
+		 dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			" swap_testPointers2Fail := code (x : Int&, @y => null) {\n" +
+    			" t : Int = x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+    	"};\n");
+    	doGenerate(mod, true);
+
+    }
 
 }

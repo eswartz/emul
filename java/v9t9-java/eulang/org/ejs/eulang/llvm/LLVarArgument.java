@@ -5,8 +5,10 @@ package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
+import org.ejs.eulang.llvm.instrs.LLIntToPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
@@ -20,7 +22,6 @@ import org.ejs.eulang.types.LLType;
  */
 public class LLVarArgument implements ILLVariable {
 
-	private LLType addrType;
 	private ISymbol addrSymbol;
 	private final ISymbol symbol;
 
@@ -33,9 +34,8 @@ public class LLVarArgument implements ILLVariable {
 		
 		// the pointer to the value through the symbol
 		LLType varStorage = typeEngine.getPointerType(symbol.getType());
-		addrType = typeEngine.getPointerType(varStorage);
 		addrSymbol = symbol.getScope().addTemporary(symbol.getName() + "$va", false);
-		addrSymbol.setType(addrType);
+		addrSymbol.setType(typeEngine.getPointerType(varStorage));
 	}
 
 
@@ -55,7 +55,7 @@ public class LLVarArgument implements ILLVariable {
 		result = prime * result
 				+ ((addrSymbol == null) ? 0 : addrSymbol.hashCode());
 		result = prime * result
-				+ ((addrType == null) ? 0 : addrType.hashCode());
+				+ ((addrSymbol.getType() == null) ? 0 : addrSymbol.getType().hashCode());
 		result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
 		return result;
 	}
@@ -75,11 +75,6 @@ public class LLVarArgument implements ILLVariable {
 				return false;
 		} else if (!addrSymbol.equals(other.addrSymbol))
 			return false;
-		if (addrType == null) {
-			if (other.addrType != null)
-				return false;
-		} else if (!addrType.equals(other.addrType))
-			return false;
 		if (symbol == null) {
 			if (other.symbol != null)
 				return false;
@@ -96,8 +91,15 @@ public class LLVarArgument implements ILLVariable {
 	public void allocate(ILLCodeTarget target, LLOperand address) {
 		LLSymbolOp tempOp = new LLSymbolOp(addrSymbol);
 		target.emit(new LLAllocaInstr(tempOp, addrSymbol.getType().getSubType()));
-		if (address != null)
-			target.emit(new LLStoreInstr(addrSymbol.getType().getSubType(), address, tempOp));
+		if (address == null) {
+			LLOperand nullTemp = target.newTemp(addrSymbol.getType().getSubType());
+			address = new LLConstOp(0);
+			target.emit(new LLIntToPtrInstr(nullTemp, target.getTarget().getTypeEngine().INT, address,
+					addrSymbol.getType().getSubType()));
+			address = nullTemp;
+		}
+		target.emit(new LLStoreInstr(addrSymbol.getType().getSubType(), address, tempOp));
+			
 	}
 
 	/* (non-Javadoc)
@@ -121,9 +123,7 @@ public class LLVarArgument implements ILLVariable {
 	 */
 	@Override
 	public LLOperand load(ILLCodeTarget target) {
-		// first, load the addr
-		LLOperand addr = target.newTemp(addrType);
-		target.emit(new LLLoadInstr(addr, addrSymbol.getType().getSubType(), new LLSymbolOp(addrSymbol)));
+		LLOperand addr = address(target);
 		
 		// now, read through it
 		LLOperand valTemp = target.newTemp(symbol.getType());
@@ -136,9 +136,7 @@ public class LLVarArgument implements ILLVariable {
 	 */
 	@Override
 	public void store(ILLCodeTarget target, LLOperand value) {
-		// first, load the addr
-		LLOperand addr = target.newTemp(addrType);
-		target.emit(new LLLoadInstr(addr, addrSymbol.getType().getSubType(), new LLSymbolOp(addrSymbol)));
+		LLOperand addr = address(target);
 		
 		// now, write through it
 		target.emit(new LLStoreInstr(symbol.getType(), value, addr));
@@ -149,7 +147,10 @@ public class LLVarArgument implements ILLVariable {
 	 */
 	@Override
 	public LLOperand address(ILLCodeTarget target) {
-		return null;
+		// first, load the addr
+		LLOperand addr = target.newTemp(addrSymbol.getType());
+		target.emit(new LLLoadInstr(addr, addrSymbol.getType().getSubType(), new LLSymbolOp(addrSymbol)));
+		return addr;
 	}
 
 }

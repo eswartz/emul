@@ -23,7 +23,7 @@ public class LLCallInstr extends LLAssignInstr {
 	 * @param funcType 
 	 * @param ops
 	 */
-	public LLCallInstr(LLOperand ret, LLType type, LLOperand func, LLCodeType funcType, LLOperand[] ops) {
+	public LLCallInstr(LLOperand ret, LLType type, LLOperand func, LLCodeType funcType, LLOperand... ops) {
 		super("call", ret, type, ops);
 		this.func = func;
 		this.funcType = funcType;

@@ -3,10 +3,14 @@
  */
 package org.ejs.eulang.llvm;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
 public class LLVariableStorage {
@@ -36,5 +40,18 @@ public class LLVariableStorage {
 		
 		return temp;
 		*/
+	}
+
+	/**
+	 * @param scope
+	 * @return
+	 */
+	public Collection<ILLVariable> getVariablesForScope(IScope scope) {
+		List<ILLVariable> vars = new ArrayList<ILLVariable>();
+		for (ILLVariable var : symbolMap.values()) {
+			if (scope.encloses(var.getSymbol().getScope()))
+				vars.add(var);
+		}
+		return vars;
 	}
 }

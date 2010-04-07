@@ -61,6 +61,7 @@ public class TypeEngine {
 	private int structAlign;
 	private int structMinAlign;
 	public LLType INTPTR;
+	public LLType REFPTR;
 
 	public int getStructMinAlign() {
 		return structMinAlign;
@@ -88,6 +89,8 @@ public class TypeEngine {
 		BYTE = register(new LLIntType(8));
 		INT = register(new LLIntType(16));
 		FLOAT = register(new LLFloatType(32, 23));
+		//REFPTR = register(new LLRefType(new LLPointerType(ptrBits, VOID), ptrBits));
+		REFPTR = register(new LLPointerType(ptrBits, BYTE));
 		
 		INT_ANY = new LLIntType(0);
 	}
@@ -259,7 +262,7 @@ public class TypeEngine {
 
 	public void setPtrBits(int ptrBits) {
 		this.ptrBits = ptrBits;
-		INTPTR = new LLIntType(ptrBits);
+		INTPTR = getPointerType(new LLIntType(ptrBits));
 	}
 
 	public int getPtrBits() {
@@ -299,7 +302,7 @@ public class TypeEngine {
 	public LLRefType getRefType(LLType type) {
 		LLRefType refType = refTypeMap.get(type);
 		if (refType == null) {
-			refType = new LLRefType(type, ptrBits);
+			refType = new LLRefType(type, ptrBits, INT.getBits());
 			refTypeMap.put(type, refType);
 		}
 		return refType;

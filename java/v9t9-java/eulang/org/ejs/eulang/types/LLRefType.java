@@ -11,9 +11,11 @@ public class LLRefType implements LLType {
 
 	private LLType subType;
 	private final int ptrBits;
+	private final int refCntBits;
 
-	public LLRefType(LLType baseType, int ptrBits) {
+	public LLRefType(LLType baseType, int ptrBits, int refCntBits) {
 		this.ptrBits = ptrBits;
+		this.refCntBits = refCntBits;
 		if (baseType instanceof LLRefType)
 			throw new IllegalArgumentException();
 		this.subType = baseType;
@@ -24,7 +26,8 @@ public class LLRefType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return "&" + (subType != null ? subType.toString() : "");
+		return "{ " + (subType != null ? subType.toString() : "") + "*, i" + refCntBits + "}*";
+		
 	}
 	
 	@Override

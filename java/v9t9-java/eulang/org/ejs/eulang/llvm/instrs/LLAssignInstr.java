@@ -20,7 +20,7 @@ public abstract class LLAssignInstr extends LLTypedInstr {
 	 * @param type
 	 * @param ops
 	 */
-	public LLAssignInstr(String name, LLOperand result, LLType type, LLOperand[] ops) {
+	public LLAssignInstr(String name, LLOperand result, LLType type, LLOperand... ops) {
 		super(name, type, ops);
 		this.result = result;
 	}

@@ -5,6 +5,7 @@ package org.ejs.eulang.llvm;
 
 import java.util.List;
 
+import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -47,14 +48,20 @@ public interface ILLCodeTarget {
 	
 	public void emit( LLBaseInstr instr);
 	/**
-	 * Copy a temporary value into the target symbol.  If the target is a local symbol,
-	 * also store
-	 * same type or the original variable, which may be on the stack or in memory.
+	 * Copy a value into the target.  Target should be a variable
+	 * or an address.
 	 */
 	public void store(LLType valueType, LLOperand value, LLOperand target);
 
 	/**
-	 * Load the value of the given operand, if it is a symbol
+	 * Load the value of the given source, which should be a variable or an address.
 	 */
 	public LLOperand load(LLType valueType, LLOperand source);
+
+	ITarget getTarget();
+
+	/**
+	 * @return
+	 */
+	LLModule getModule();
 }

@@ -80,7 +80,6 @@ public class LLVMGenerator {
 		this.typeEngine = target.getTypeEngine();
 		this.target = target;
 		
-		this.ll = new LLModule();
 		messages = new ArrayList<Message>();
 		varStorage = new LLVariableStorage(typeEngine);
 	}
@@ -125,6 +124,8 @@ public class LLVMGenerator {
 	}
 
 	public void generate(IAstModule module) {
+		this.ll = new LLModule(module.getOwnerScope());
+
 		currentTarget = null;
 		
 		ll.add(new LLTargetDataTypeDirective(typeEngine));
@@ -225,7 +226,7 @@ public class LLVMGenerator {
 	private void generateGlobalCode(ISymbol symbol, IAstCodeExpr expr) throws ASTException {
 		ensureTypes(expr);
 		
-		LLDefineDirective define = new LLDefineDirective(
+		LLDefineDirective define = new LLDefineDirective(target, ll, 
 				expr.getScope(),
 				symbol,
 				null /*linkage*/, 
@@ -251,7 +252,10 @@ public class LLVMGenerator {
 		if (isVar) {
 			var = new LLVarArgument(symbol, typeEngine);
 		} else {
-			var = new LLLocalVariable(symbol, typeEngine);
+			if (symbol.getType().getBasicType() == BasicType.REF)
+				var = new LLRefLocalVariable(symbol, typeEngine);
+			else
+				var = new LLLocalVariable(symbol, typeEngine);
 		}
 		varStorage.registerVariable(symbol, var);
 		
@@ -283,13 +287,16 @@ public class LLVMGenerator {
 			for (IAstArgDef argDef : code.getPrototype().argumentTypes()) {
 				
 				ISymbol argSymbol = argDef.getSymbolExpr().getSymbol();
-				if (target.moveLocalsToTemps() || argSymbol.isAddressed()) {
-					LLOperand argVal = generateSymbolExpr(argDef.getSymbolExpr());
-					/*LLVariableOp argAddrOp =*/ makeLocalStorage(argSymbol, argDef.isVar(), argVal);
-				}
+				LLOperand argVal = generateSymbolExpr(argDef.getSymbolExpr());
+				/*LLVariableOp argAddrOp =*/ makeLocalStorage(argSymbol, argDef.isVar(), argVal);
 			}
 			
 			LLOperand ret = generateStmtList(code.stmts());
+			
+			// deallocate variables
+			for (ILLVariable var : varStorage.getVariablesForScope(scope)) {
+				var.deallocate(currentTarget);
+			}
 			
 			if (returnType.getBasicType() != BasicType.VOID) {
 				LLOperand retVal = currentTarget.load(returnType, ret);
@@ -484,19 +491,70 @@ public class LLVMGenerator {
 	}
 
 	private LLOperand generateUnaryExpr(IAstUnaryExpr expr) throws ASTException {
+		LLOperand ret;
 		LLOperand op = generateTypedExpr(expr.getExpr());
-		LLOperand ret = currentTarget.newTemp(expr.getType());
 		if (expr.getOp().getLLVMName() != null) {
+			ret = currentTarget.newTemp(expr.getType());
 			currentTarget.emit(new LLUnaryInstr(expr.getOp(), ret, expr.getType(), op));
 		} else {
 			if (expr.getOp() == IOperation.NEG) {
 				// result = sub 0, val
+				ret = currentTarget.newTemp(expr.getType());
 				currentTarget.emit(new LLBinaryInstr("sub", IOperation.SUB, ret, expr.getType(), new LLConstOp(0), op));
+			} else if (expr.getOp() == IOperation.CAST) {
+				ret = generateCast(expr, op);
 			} else {
 				unhandled(expr);
+				ret = null;
 			}
 		}
 		return ret;
+	}
+
+	/**
+	 * Cast one value (value, w/origType) to another (type).
+	 * Loads and stores automatically handle memory dereferencing, so we can ignore
+	 * those casts, unless they are illegal:
+	 * <p>
+	 * <li>casting from value to reference (should be explicit new)
+	 * <li>casting from pointer (var) to reference (another explicit new)
+	 * <li>casting from reference to reference (types change, should be explicit new)
+	 * <li>casting from value to pointer (should not happen)
+	 * <li>casting from pointer to pointer (types chane, should not happen)
+	 * <p>
+	 * We handle casting from reference, pointer, etc. to value by dereferencing implicitly.  
+	 * @param type
+	 * @param expr
+	 */
+	private LLOperand generateCast(IAstUnaryExpr expr, LLOperand value) throws ASTException {
+		LLType type = expr.getType();
+		LLType origType = expr.getExpr().getType();
+		
+		//if (type.getBasicType() == BasicType.REF)
+		//	throw new ASTException(expr, "cannot cast to a reference; must use .New()");
+		//if (type.getBasicType() == BasicType.POINTER)
+		//	throw new ASTException(expr, "cannot cast to a pointer");
+		
+		// first, automagically skip all memory operations
+		while (origType.getBasicType() == BasicType.REF || origType.getBasicType() == BasicType.POINTER) {
+			// dereference the value...
+			value = currentTarget.load(origType.getSubType(), value);
+			origType = origType.getSubType();
+		}
+		
+		// strip target type to basic
+		while (type.getBasicType() == BasicType.REF || type.getBasicType() == BasicType.POINTER) {
+			type = type.getSubType();
+		}
+		
+		// now, do value conversion to basic type
+		if (origType.equals(type)) {
+			// good
+		} else {
+			unhandled(expr);
+		}
+		
+		return value;
 	}
 
 	private LLOperand generateBinExpr(IAstBinExpr expr) throws ASTException {

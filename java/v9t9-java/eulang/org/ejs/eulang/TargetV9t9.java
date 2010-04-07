@@ -3,6 +3,20 @@
  */
 package org.ejs.eulang;
 
+import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLArgAttrType;
+import org.ejs.eulang.llvm.LLAttrType;
+import org.ejs.eulang.llvm.LLFuncAttrs;
+import org.ejs.eulang.llvm.LLLinkage;
+import org.ejs.eulang.llvm.LLVisibility;
+import org.ejs.eulang.llvm.instrs.LLBitCastInstr;
+import org.ejs.eulang.llvm.instrs.LLCallInstr;
+import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLType;
+
 /**
  * @author ejs
  *
@@ -10,6 +24,10 @@ package org.ejs.eulang;
 public class TargetV9t9 implements ITarget {
 
 	private TypeEngine typeEngine = new TypeEngine();
+	
+	private ISymbol intrinsic_IncRef;
+
+	private ISymbol intrinsic_DecRef;
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ITarget#createTypeEngine()
@@ -34,13 +52,48 @@ public class TargetV9t9 implements ITarget {
 	public String getLLCallingConvention() {
 		return "cc100";
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ITarget#moveLocalsToTemps()
+
+	/**
+	 * Increment a reference to a ref-counted object with the given id (may be 0)
+	 * @param value
 	 */
-	@Override
-	public boolean moveLocalsToTemps() {
-		return true;
+	public void incRef(ILLCodeTarget target, LLType valueType, LLOperand value) {
+		if (intrinsic_IncRef == null) {
+			LLCodeType codeType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { typeEngine.REFPTR });
+			intrinsic_IncRef = target.getModule().addExtern("IncRef",
+					codeType,
+					null, LLVisibility.DEFAULT, null /*cconv*/,
+					new LLAttrType(null, codeType.getRetType()),
+					new LLAttrType[] { new LLAttrType(null, codeType.getArgTypes()[0]) },
+					new LLFuncAttrs(), 
+					null /*gc*/);
+		}
+		
+		LLOperand temp = target.newTemp(typeEngine.REFPTR);
+		target.emit(new LLBitCastInstr(temp, valueType, value, typeEngine.REFPTR));
+		target.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(intrinsic_IncRef), 
+				(LLCodeType) intrinsic_IncRef.getType(), temp));
 	}
 
+	/**
+	 * Decrement a reference to a ref-counted object with the given id (may be  0)
+	 * @param value
+	 */
+	public void decRef(ILLCodeTarget target, LLType valueType, LLOperand value) {
+		if (intrinsic_DecRef == null) {
+			LLCodeType codeType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { typeEngine.REFPTR });
+			intrinsic_DecRef = target.getModule().addExtern("DecRef",
+					codeType,
+					null, LLVisibility.DEFAULT, null /*cconv*/,
+					new LLAttrType(null, codeType.getRetType()),
+					new LLAttrType[] { new LLAttrType(null, codeType.getArgTypes()[0]) },
+					new LLFuncAttrs(), 
+					null /*gc*/);
+		}
+		
+		LLOperand temp = target.newTemp(typeEngine.REFPTR);
+		target.emit(new LLBitCastInstr(temp, valueType, value, typeEngine.REFPTR));
+		target.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(intrinsic_DecRef), 
+				(LLCodeType) intrinsic_DecRef.getType(), temp));
+	}
 }

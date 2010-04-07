@@ -8,12 +8,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ejs.eulang.ITarget;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.ILLVariable;
 import org.ejs.eulang.llvm.LLAttrType;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLLinkage;
+import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
@@ -47,10 +49,14 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	
 	private LLBlock current;
 	private int tempId;
+	private final ITarget target;
+	private final LLModule module;
 	
-	public LLDefineDirective(IScope localScope,
+	public LLDefineDirective(ITarget target, LLModule module, IScope localScope,
 			ISymbol symbol, LLLinkage linkage, LLVisibility visibility, String cconv, LLAttrType retType,
 			LLAttrType argTypes[], LLFuncAttrs funcAttrs, String section, int align, String gc) {
+		this.target = target;
+		this.module = module;
 		this.localScope = localScope;
 		this.symbol = symbol;
 		this.linkage = linkage;
@@ -211,4 +217,21 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 		}
 	}
 
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeTarget#getModule()
+	 */
+	@Override
+	public LLModule getModule() {
+		return module;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeTarget#getTarget()
+	 */
+	@Override
+	public ITarget getTarget() {
+		return target;
+	}
+	
 }
