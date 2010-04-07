@@ -8,28 +8,27 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.bcel.generic.FNEG;
-import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.ILLVariable;
 import org.ejs.eulang.llvm.LLAttrType;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLLinkage;
-import org.ejs.eulang.llvm.LLParamAttrs;
 import org.ejs.eulang.llvm.LLVisibility;
-import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
+import org.ejs.eulang.llvm.instrs.LLBaseInstr;
+import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.symbols.LocalSymbol;
-import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
  *
  */
-public class LLDefineDirective extends LLBaseDirective {
+public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget {
 
 	private final ISymbol symbol;
 	private final LLLinkage linkage;
@@ -45,13 +44,13 @@ public class LLDefineDirective extends LLBaseDirective {
 
 	private IScope localScope;
 	private Map<ISymbol, LLBlock> labelMap;
-	private Map<ISymbol, ISymbol> localMap;
 	
 	private LLBlock current;
 	private int tempId;
 	
-	public LLDefineDirective(IScope localScope, ISymbol symbol, LLLinkage linkage, LLVisibility visibility, String cconv,
-			LLAttrType retType, LLAttrType argTypes[], LLFuncAttrs funcAttrs, String section, int align, String gc) {
+	public LLDefineDirective(IScope localScope,
+			ISymbol symbol, LLLinkage linkage, LLVisibility visibility, String cconv, LLAttrType retType,
+			LLAttrType argTypes[], LLFuncAttrs funcAttrs, String section, int align, String gc) {
 		this.localScope = localScope;
 		this.symbol = symbol;
 		this.linkage = linkage;
@@ -66,7 +65,6 @@ public class LLDefineDirective extends LLBaseDirective {
 		
 		this.blocks = new ArrayList<LLBlock>();
 		labelMap = new LinkedHashMap<ISymbol, LLBlock>();
-		localMap = new LinkedHashMap<ISymbol, ISymbol>();
 	}
 
 			
@@ -128,15 +126,15 @@ public class LLDefineDirective extends LLBaseDirective {
 		return sb.toString();
 	}
 
-	/**
-	 * @return the blocks
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.directives.ICodeTarget#blocks()
 	 */
 	public List<LLBlock> blocks() {
 		return blocks;
 	}
 
-	/**
-	 * Create a new block whose label is the given symbol
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.directives.ICodeTarget#addBlock(org.ejs.eulang.symbols.ISymbol)
 	 */
 	public LLBlock addBlock(ISymbol symbol) {
 		LLBlock block = new LLBlock(symbol);
@@ -146,58 +144,71 @@ public class LLDefineDirective extends LLBaseDirective {
 		return block;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.directives.ICodeTarget#getCurrentBlock()
+	 */
 	public LLBlock getCurrentBlock() {
 		return current;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.directives.ICodeTarget#setCurrentBlock(org.ejs.eulang.llvm.LLBlock)
+	 */
 	public void setCurrentBlock(LLBlock block) {
 		current = block;
 	}
 
-	/**
-	 * Get the next temporary id.  These must be used in order.
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.directives.ICodeTarget#newTemp()
 	 */
-	public ISymbol newTemp() {
+	public ISymbol newTempSymbol() {
 		ISymbol symbol = localScope.addTemporary(tempId + "", false);
 		tempId++;
 		return symbol;
 	}
 
-
-
-
-	/**
-	 * Map a given local symbol to a temporary memory location for use in holding its changing value.
-	 * This is required for any local which is assigned more than once.
-	 * @param isVar variable is indirected twice
-	 * @param local
-	 * @return temp
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeTarget#newTemp(org.ejs.eulang.types.LLType)
 	 */
-	public ISymbol mapLocalToStore(ISymbol symbol, TypeEngine typeEngine, boolean isVar) {
-		ISymbol temp = localMap.get(symbol);
-		if (temp == null) {
-			LLType addrType = typeEngine.getPointerType(symbol.getType());
-			if (isVar)
-				addrType = typeEngine.getPointerType(addrType);
-			temp = localScope.addTemporary(symbol.getName() + (isVar ? "$va" : "$a"), false);
-			temp.setType(addrType);
-			localMap.put(symbol, temp);
+	@Override
+	public LLSymbolOp newTemp(LLType type) {
+		ISymbol newTemp = newTempSymbol();
+		newTemp.setType(type);
+		return new LLSymbolOp(newTemp);
+	}
+
+	
+
+	public void emit( LLBaseInstr instr) {
+		getCurrentBlock().instrs().add(instr);
+	}
+	
+	/**
+	 * Copy a temporary value into the target symbol.  If the target is a local symbol,
+	 * also store
+	 * same type or the original variable, which may be on the stack or in memory.
+	 */
+	public void store(LLType valueType, LLOperand value, LLOperand target) {
+		if (target instanceof LLVariableOp) {
+			ILLVariable var = ((LLVariableOp) target).getVariable();
+			var.store(this, value);
+		} else {
+			// should already be addressable
+			emit(new LLStoreInstr(valueType, value, target));
 		}
-		return temp;
 	}
-
-
-
 
 	/**
-	 * @param srcSymbol
-	 * @return
+	 * Load the value of the given operand, if it is a symbol
 	 */
-	public ISymbol lookupLocalStore(ISymbol srcSymbol) {
-		return localMap.get(srcSymbol);
+	public LLOperand load(LLType valueType, LLOperand source) {
+		if (source instanceof LLVariableOp) { 
+			
+			ILLVariable var = ((LLVariableOp) source).getVariable();
+			return var.load(this);
+		} else {
+			return source;
+		}
 	}
-	
 
-	
 }

@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.llvm;
 
-import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -33,7 +32,7 @@ public class LLAttrType {
 	 */
 	@Override
 	public String toString() {
-		return (attrs != null ? attrs + " " : "") + type;
+		return type + (attrs != null ? attrs + " " : "");
 	}
 	
 }

@@ -3,7 +3,8 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,9 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Stack;
-
-import junit.framework.Assert;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
@@ -21,15 +19,9 @@ import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TargetV9t9;
 import org.ejs.eulang.ast.DumpAST;
-import org.ejs.eulang.ast.IAstAllocStmt;
-import org.ejs.eulang.ast.IAstAssignStmt;
-import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLVMGenerator;
-import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -159,11 +151,12 @@ public class TestLLVMGenerator extends BaseParserTest {
 		doGenerate(mod);
 	}
 	
-	 @Test
+	@Test
     public void testPointers4() throws Exception {
 		 dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			" genericSwap_testPointers4 := code (@x, @y => null) {\n" +
+    			//" x = x + 1; y = y + 1; x = x + 2; y = y - 4; x = x - 4;\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+

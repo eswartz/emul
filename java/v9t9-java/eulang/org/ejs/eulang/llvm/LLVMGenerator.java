@@ -43,7 +43,6 @@ import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.directives.LLTargetDataTypeDirective;
 import org.ejs.eulang.llvm.directives.LLTargetTripleDirective;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
-import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
@@ -53,13 +52,12 @@ import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
-import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -75,7 +73,8 @@ public class LLVMGenerator {
 	private final TypeEngine typeEngine;
 	private final ITarget target;
 	private LLModule ll;
-	private LLDefineDirective currentDefine;
+	private ILLCodeTarget currentTarget;
+	private LLVariableStorage varStorage;
 
 	public LLVMGenerator(ITarget target) {
 		this.typeEngine = target.getTypeEngine();
@@ -83,6 +82,7 @@ public class LLVMGenerator {
 		
 		this.ll = new LLModule();
 		messages = new ArrayList<Message>();
+		varStorage = new LLVariableStorage(typeEngine);
 	}
 	
 	/**
@@ -125,7 +125,7 @@ public class LLVMGenerator {
 	}
 
 	public void generate(IAstModule module) {
-		currentDefine = null;
+		currentTarget = null;
 		
 		ll.add(new LLTargetDataTypeDirective(typeEngine));
 		ll.add(new LLTargetTripleDirective(target));
@@ -208,7 +208,8 @@ public class LLVMGenerator {
 			LLType argType = argumentTypes[i].getType();
 			if (argumentTypes[i].isVar())
 				argType = typeEngine.getPointerType(argType);
-			attrTypes[i] = new LLArgAttrType(argumentTypes[i].getName(),  null, argType);
+			LLAttrs attrs = null; //new LLAttrs("noalias");
+			attrTypes[i] = new LLArgAttrType(argumentTypes[i].getName(),  attrs, argType);
 		}
 		return attrTypes;
 	}
@@ -226,11 +227,11 @@ public class LLVMGenerator {
 		
 		LLDefineDirective define = new LLDefineDirective(
 				expr.getScope(),
-				symbol, 
-				null /*linkage*/,
+				symbol,
+				null /*linkage*/, 
 				LLVisibility.DEFAULT,
-				null, //target.getLLCallingConvention(),
-				getRetAttrType(expr.getPrototype().returnType()),
+				null,
+				getRetAttrType(expr.getPrototype().returnType()), //target.getLLCallingConvention(),
 				getArgAttrTypes(expr.getPrototype().argumentTypes()),
 				getFuncAttrType(expr),
 				null /*section*/,
@@ -241,82 +242,21 @@ public class LLVMGenerator {
 		generateCode(define, symbol, expr);
 	}
 
-	private void emit( LLBaseInstr instr) {
-		currentDefine.getCurrentBlock().instrs().add(instr);
-	}
 	/**
-	 * Copy a temporary value into the target symbol.  If the target is a local symbol,
-	 * also store
-	 * same type or the original variable, which may be on the stack or in memory.
-	 */
-	private void store(LLType valueType, LLOperand value, LLSymbolOp target) {
-		ISymbol targetSymbol = target.getSymbol();
-		if (targetSymbol.getScope() instanceof LocalScope) {
-			// use storage
-			ISymbol storage = currentDefine.lookupLocalStore(targetSymbol);
-			if (storage != null) {
-				LLOperand storageOp = new LLSymbolOp(storage);
-				if (storage.getType() instanceof LLPointerType && storage.getType().getSubType() instanceof LLPointerType
-						&& storage.getType().getSubType().getSubType().equals(valueType)) {
-					// likely a 'var' argument; indirect first
-					storageOp = load(storage.getType().getSubType(), storageOp);
-				}
-				emit(new LLStoreInstr(valueType, value, storageOp));
-				return;
-			}
-		}
-		
-		// should already be addressable
-		emit(new LLStoreInstr(valueType, value, target));
-	}
-
-	/**
-	 * Load the value of the given operand, if it is a symbol
-	 */
-	private LLOperand load(LLType valueType, LLOperand source) {
-		if (!(source instanceof LLSymbolOp)) 
-			return source;
-			
-		ISymbol srcSymbol = ((LLSymbolOp) source).getSymbol();
-		ISymbol symAddr;
-		if (srcSymbol.getType().equals(valueType)) {
-			symAddr = currentDefine.lookupLocalStore(srcSymbol);
-			if (symAddr == null) {
-				return source;
-			}
-		} else {
-			symAddr = srcSymbol;
-		}
-		
-		LLOperand symbolOp = new LLSymbolOp(symAddr);
-		if (symAddr.getType() instanceof LLPointerType && symAddr.getType().getSubType() instanceof LLPointerType 
-				&& symAddr.getType().getSubType().getSubType().equals(valueType)) {
-			// likely a 'var' argument; indirect first
-			symbolOp = load(symAddr.getType().getSubType(), symbolOp);
-		}
-		LLSymbolOp temp = temp(valueType);
-		emit(new LLLoadInstr(temp, valueType, symbolOp));
-		return temp;
-	}
-
-	/**
-	 * Make a new temporary.
-	 * @return
-	 */
-	private LLSymbolOp temp(LLType type) {
-		ISymbol newTemp = currentDefine.newTemp();
-		newTemp.setType(type);
-		return new LLSymbolOp(newTemp);
-	}
-
-	/**
+	 * @param argVal 
 	 * @param ret
 	 */
-	private LLSymbolOp makeStorage(ISymbol symbol, boolean isVar) {
-		ISymbol temp = currentDefine.mapLocalToStore(symbol, typeEngine, isVar);
-		LLSymbolOp tempOp = new LLSymbolOp(temp);
-		emit(new LLAllocaInstr(tempOp, ((LLPointerType) temp.getType()).getSubType()));
-		return tempOp;
+	private LLVariableOp makeLocalStorage(ISymbol symbol, boolean isVar, LLOperand argVal) {
+		ILLVariable var;
+		if (isVar) {
+			var = new LLVarArgument(symbol, typeEngine);
+		} else {
+			var = new LLLocalVariable(symbol, typeEngine);
+		}
+		varStorage.registerVariable(symbol, var);
+		
+		var.allocate(currentTarget, argVal);
+		return new LLVariableOp(var);
 	}
 
 	/**
@@ -324,27 +264,19 @@ public class LLVMGenerator {
 	 * @param stmts
 	 * @throws ASTException 
 	 */
-	private void generateCode(LLDefineDirective define, ISymbol symbol, IAstCodeExpr code) throws ASTException {
-		LLDefineDirective oldDefine = currentDefine;
+	private void generateCode(ILLCodeTarget define, ISymbol symbol, IAstCodeExpr code) throws ASTException {
+		ILLCodeTarget oldDefine = currentTarget;
 		
 		//IAstCodeExpr code = codeOrig.copy(null);
 		
 		try {
-			currentDefine = define;
+			currentTarget = define;
 			
 			IScope scope = code.getScope();
 			define.addBlock(scope.addTemporary("entry"));
 			
 			// get return value
 			LLType returnType = code.getPrototype().returnType().getType();
-			/*
-			LLOperand retval = null;
-			if (returnType.getBasicType() != BasicType.VOID) {
-				ISymbol retvalSym = scope.addTemporary("retval");
-				retval = new LLSymbolOp(retvalSym);
-				emit(new LLAllocaInstr(retval, returnType));
-			}
-			*/
 			
 			// get address of each incoming argument, assuming it 
 			// will be accessed only on the frame in the best case
@@ -352,71 +284,25 @@ public class LLVMGenerator {
 				
 				ISymbol argSymbol = argDef.getSymbolExpr().getSymbol();
 				if (target.moveLocalsToTemps() || argSymbol.isAddressed()) {
-					
-					LLSymbolOp argAddrOp = makeStorage(argSymbol, argDef.isVar());
-					
-					LLType argType = argSymbol.getType();
-					if (argDef.isVar()) {
-						argType = typeEngine.getPointerType(argType);
-					}
-					store(argType, new LLSymbolOp(argSymbol), argAddrOp);
-					/*
 					LLOperand argVal = generateSymbolExpr(argDef.getSymbolExpr());
-					//emit(new LLAllocaInstr(argVal, argDef.getType()));
-					
-					ISymbol argAddrSym = scope.addTemporary(argDef.getName() + "_addr");
-					//argAddrSym.setType(typeEngine.getPointerType(argDef.getSymbolExpr().getSymbol().getType()));
-					argAddrSym.setType(argSymbol.getType());
-					argAddrSym.setDefinition(argSymbol.getDefinition());
-					
-					LLOperand argAddr = new LLSymbolOp(argAddrSym);
-					emit(new LLAllocaInstr(argAddr, typeEngine.INTPTR));
-					
-					emit(new LLStoreInstr(argDef.getType(), argVal, argAddr));
-					 */
-					// now change all code
-					//replaceSymbols(code, argDef.getSymbolExpr().getSymbol(), argAddrSym);
+					/*LLVariableOp argAddrOp =*/ makeLocalStorage(argSymbol, argDef.isVar(), argVal);
 				}
 			}
 			
 			LLOperand ret = generateStmtList(code.stmts());
 			
 			if (returnType.getBasicType() != BasicType.VOID) {
-				/*
-				emit(new LLStoreInstr(returnType, ret, retval));
-				
-				LLOperand retvalTemp = temp();
-				emit(new LLLoadInstr(retvalTemp, returnType, retval));
-				
-				emit(new LLRetInst(returnType, retvalTemp));
-				*/
-				LLOperand retVal = load(returnType, ret);
-				emit(new LLRetInst(returnType, retVal));
+				LLOperand retVal = currentTarget.load(returnType, ret);
+				currentTarget.emit(new LLRetInst(returnType, retVal));
 			} else {
-				emit(new LLRetInst(returnType));
+				currentTarget.emit(new LLRetInst(returnType));
 			}
 		} finally {
-			currentDefine = oldDefine;
+			currentTarget = oldDefine;
 		}
 		
 	}
 
-	/**
-	 * @param code
-	 * @param symbolExpr
-	 * @param argAddrSym
-	 */
-	/*
-	private void replaceSymbols(IAstNode node, ISymbol from, ISymbol to) {
-		if (node instanceof IAstSymbolExpr) {
-			IAstSymbolExpr symExpr = (IAstSymbolExpr) node;
-			if (symExpr.getSymbol().equals(from))
-				symExpr.setSymbol(to);
-		}
-		for (IAstNode kid : node.getChildren())
-			replaceSymbols(kid, from, to);
-	}
-	*/
 	/**
 	 * @param stmts
 	 * @throws ASTException 
@@ -426,10 +312,10 @@ public class LLVMGenerator {
 		for (IAstStmt stmt : stmts.list()) {
 			// ensure we have a block
 			if (stmt instanceof IAstLabelStmt) {
-				currentDefine.addBlock(((IAstLabelStmt) stmt).getLabel().getSymbol());
+				currentTarget.addBlock(((IAstLabelStmt) stmt).getLabel().getSymbol());
 				continue;
-			} else if (currentDefine.getCurrentBlock() == null) {
-				currentDefine.addBlock(stmts.getOwnerScope().addTemporary("block"));
+			} else if (currentTarget.getCurrentBlock() == null) {
+				currentTarget.addBlock(stmts.getOwnerScope().addTemporary("block"));
 			}
 			
 			result = generateStmt(stmt);
@@ -437,7 +323,7 @@ public class LLVMGenerator {
 			
 			// end of block instr
 			if (stmt instanceof IAstGotoStmt) {
-				currentDefine.setCurrentBlock(null);
+				currentTarget.setCurrentBlock(null);
 			}
 		}	
 		return result;
@@ -467,17 +353,17 @@ public class LLVMGenerator {
 	private LLOperand generateLocalAllocStmt(
 			IAstAllocStmt stmt) throws ASTException {
 		
-		LLSymbolOp sym = new LLSymbolOp(stmt.getSymbol());
+		//LLSymbolOp sym = new LLSymbolOp(stmt.getSymbol());
 
 		
-		LLSymbolOp ret = makeStorage(stmt.getSymbol(), false);
+		LLVariableOp ret = makeLocalStorage(stmt.getSymbol(), false, null);
 		
 		if (stmt.getExpr() != null) {
 			LLOperand value = generateTypedExpr(stmt.getExpr());
-			store(stmt.getExpr().getType(), value, sym);
+			currentTarget.store(stmt.getExpr().getType(), value, ret);
 			
-			if (ret != sym)
-				emit(new LLStoreInstr(stmt.getExpr().getType(), value, ret));
+			//if (ret != sym)
+			//	currentTarget.emit(new LLStoreInstr(stmt.getExpr().getType(), value, ret));
 		}
 		
 		return ret;
@@ -486,19 +372,23 @@ public class LLVMGenerator {
 	private LLOperand generateAssign( LLType type,
 			IAstSymbolExpr symbolExpr, IAstTypedExpr expr) throws ASTException {
 		LLOperand value = generateTypedExpr(expr);
-		LLSymbolOp var = generateSymbolExpr(symbolExpr);
+		LLOperand var = generateSymbolExpr(symbolExpr);
 		
-		store(type, value, var);
+		currentTarget.store(type, value, var);
 		
 		//emit(new LLStoreInstr(type, value, var));
 		return var;
 	}
 
 
-	private LLSymbolOp generateSymbolExpr(
+	private LLOperand generateSymbolExpr(
 			IAstSymbolExpr symbolExpr) {
 		// TODO: out-of-scope variables
-		return new LLSymbolOp(symbolExpr.getSymbol());
+		ISymbol symbol = symbolExpr.getSymbol();
+		ILLVariable var = varStorage.lookupVariable(symbol);
+		if (var != null)
+			return new LLVariableOp(var);
+		return new LLSymbolOp(symbol);
 	}
 
 	private LLOperand generateStmtListExpr(
@@ -537,7 +427,7 @@ public class LLVMGenerator {
 			return null;
 		}
 		
-		temp = load(expr.getType(), temp);
+		temp = currentTarget.load(expr.getType(), temp);
 		return temp;
 	}
 
@@ -550,7 +440,7 @@ public class LLVMGenerator {
 		IScope scope = condList.getOwnerScope();
 		ISymbol retvalSym = scope.addTemporary("cond");
 		LLOperand retval = new LLSymbolOp(retvalSym);
-		emit(new LLAllocaInstr(retval, condList.getType()));
+		currentTarget.emit(new LLAllocaInstr(retval, condList.getType()));
 		
 		// generate a series of tests
 		LLBlock[] conds = new LLBlock[condList.getCondExprs().nodeCount()];
@@ -561,47 +451,47 @@ public class LLVMGenerator {
 			ISymbol resultLabel;
 			
 			if (nextTest != null) {
-				currentDefine.addBlock(nextTest);
+				currentTarget.addBlock(nextTest);
 			}
 			if (idx + 1 < condList.getCondExprs().nodeCount()) {
 				LLOperand test = generateTypedExpr(expr.getTest());
 				resultLabel = scope.addTemporary("cb");
 				nextTest = scope.addTemporary("ct");
-				emit(new LLBranchInstr(expr.getTest().getType(), test, new LLSymbolOp(resultLabel), new LLSymbolOp(nextTest)));
+				currentTarget.emit(new LLBranchInstr(expr.getTest().getType(), test, new LLSymbolOp(resultLabel), new LLSymbolOp(nextTest)));
 			} else {
 				// last test is always true
 				resultLabel = nextTest;
 			}
 			
-			currentDefine.addBlock(resultLabel);
+			currentTarget.addBlock(resultLabel);
 			
 			LLOperand result = generateTypedExpr(expr.getExpr());
 			
-			emit(new LLStoreInstr(condList.getType(), result, retval));
-			conds[idx++] = currentDefine.getCurrentBlock();
+			currentTarget.emit(new LLStoreInstr(condList.getType(), result, retval));
+			conds[idx++] = currentTarget.getCurrentBlock();
 		}
 		
 		ISymbol condSetSym = scope.addTemporary("cs");
-		currentDefine.addBlock(condSetSym);
+		currentTarget.addBlock(condSetSym);
 		
 		for (LLBlock cond : conds)
 			cond.instrs().add(new LLUncondBranchInstr(new LLSymbolOp(condSetSym)));
 		
-		LLOperand retTemp = temp(condList.getType());
-		emit(new LLLoadInstr(retTemp, condList.getType(), retval));
+		LLOperand retTemp = currentTarget.newTemp(condList.getType());
+		currentTarget.emit(new LLLoadInstr(retTemp, condList.getType(), retval));
 		
 		return retTemp;
 	}
 
 	private LLOperand generateUnaryExpr(IAstUnaryExpr expr) throws ASTException {
 		LLOperand op = generateTypedExpr(expr.getExpr());
-		LLOperand ret = temp(expr.getType());
+		LLOperand ret = currentTarget.newTemp(expr.getType());
 		if (expr.getOp().getLLVMName() != null) {
-			emit(new LLUnaryInstr(expr.getOp(), ret, expr.getType(), op));
+			currentTarget.emit(new LLUnaryInstr(expr.getOp(), ret, expr.getType(), op));
 		} else {
 			if (expr.getOp() == IOperation.NEG) {
 				// result = sub 0, val
-				emit(new LLBinaryInstr("sub", IOperation.SUB, ret, expr.getType(), new LLConstOp(0), op));
+				currentTarget.emit(new LLBinaryInstr("sub", IOperation.SUB, ret, expr.getType(), new LLConstOp(0), op));
 			} else {
 				unhandled(expr);
 			}
@@ -613,7 +503,7 @@ public class LLVMGenerator {
 		LLOperand left = generateTypedExpr(expr.getLeft());
 		LLOperand right = generateTypedExpr(expr.getRight());
 		
-		LLOperand ret = temp(expr.getType());
+		LLOperand ret = currentTarget.newTemp(expr.getType());
 		String instr = expr.getOp().getLLVMName();
 		if (instr != null) {
 			if (expr.getOp() instanceof ComparisonOperation) {
@@ -622,7 +512,7 @@ public class LLVMGenerator {
 				else
 					instr = "icmp " + ((ComparisonOperation) expr.getOp()).getLLIntPrefix() + instr;
 			}
-			emit(new LLBinaryInstr(instr, expr.getOp(), ret, expr.getLeft().getType(), left, right));
+			currentTarget.emit(new LLBinaryInstr(instr, expr.getOp(), ret, expr.getLeft().getType(), left, right));
 		} else {
 			unhandled(expr);
 		}
@@ -651,10 +541,10 @@ public class LLVMGenerator {
 		LLOperand func = generateTypedExpr(expr.getFunction());
 
 		if (!(funcType.getRetType() instanceof LLVoidType)) {
-			ret = temp(funcType.getRetType());
+			ret = currentTarget.newTemp(funcType.getRetType());
 		}
 
-		emit(new LLCallInstr(ret, expr.getType(), func, funcType, ops));
+		currentTarget.emit(new LLCallInstr(ret, expr.getType(), func, funcType, ops));
 		return ret;
 	}
 
