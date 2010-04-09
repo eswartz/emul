@@ -125,4 +125,12 @@ public abstract class BaseLLType implements LLType {
 	public String getLLVMName() {
 		return name != null ? "%" + name : llvmType;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#isMoreComplete(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isMoreComplete(LLType type) {
+		return isComplete() || (type == null || !type.isComplete());
+	}
 }

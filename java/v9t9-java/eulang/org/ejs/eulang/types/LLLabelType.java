@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.types;
 
-import org.ejs.eulang.types.LLType.BasicType;
-
 /**
  * @author ejs
  *

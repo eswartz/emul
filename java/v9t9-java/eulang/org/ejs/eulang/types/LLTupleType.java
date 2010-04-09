@@ -95,6 +95,32 @@ public class LLTupleType extends BaseLLType {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#isMoreComplete(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isMoreComplete(LLType otherType) {
+		if (isComplete())
+			return true;
+		
+		int otherCnt;
+		if (otherType instanceof LLTupleType)
+			otherCnt = ((LLTupleType) otherType).typeCount();
+		else
+			return false;
+				
+		return typeCount() > otherCnt;
+	}
+
+
+	private int typeCount() {
+		int cnt = 0;
+		for (LLType type : types)
+			if (type != null && type.isComplete())
+				cnt++;
+		return cnt;
+	}
+	
 	/**
 	 * @return
 	 */

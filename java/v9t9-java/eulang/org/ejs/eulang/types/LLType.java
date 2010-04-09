@@ -46,4 +46,9 @@ public interface LLType {
 	 * @return
 	 */
 	String getLLVMName();
+	/**
+	 * @param type
+	 * @return
+	 */
+	boolean isMoreComplete(LLType type);
 }

@@ -100,4 +100,32 @@ public class LLCodeType extends BaseLLType {
 			if (arg == null) return false;
 		return true;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#isMoreComplete(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isMoreComplete(LLType otherType) {
+		if (isComplete())
+			return true;
+		
+		int otherCnt;
+		if (otherType instanceof LLCodeType)
+			otherCnt = ((LLCodeType) otherType).typeCount();
+		else
+			return false;
+				
+		return typeCount() > otherCnt;
+	}
+
+
+	private int typeCount() {
+		int cnt = 0;
+		if(retType != null && retType.isComplete())
+			cnt++;
+		for (LLType type : argTypes)
+			if (type != null && type.isComplete())
+				cnt++;
+		return cnt;
+	}
 }

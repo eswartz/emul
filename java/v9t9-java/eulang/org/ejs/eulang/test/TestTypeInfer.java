@@ -831,6 +831,20 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	doTypeInfer(mod, true);
     }
+    @Test
+    public void testTuples5() throws Exception {
+    	IAstModule mod = treeize("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
+    			"bop = code(x,y) { y };\n"+
+    			"testTuples5 = code (a,b) { (a, b) = bop(5, swap(4, 5)); }; \n");
+    	sanityTest(mod);
+    	
+    	// module gets allocations, but not defines
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples5");
+    	typeTest(mod, false);
+    	
+    }
 }
 
 
