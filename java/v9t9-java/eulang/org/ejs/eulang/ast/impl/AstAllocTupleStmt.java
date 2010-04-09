@@ -206,8 +206,7 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 			}
 			
 			if (((LLTupleType) right).getElementTypes().length != syms.elements().nodeCount())
-				throw new TypeException("mismatch in tuple sizes: "
-						+ ((LLTupleType) right).getElementTypes().length + " !=  " + syms.elements().nodeCount());
+				return false; // detect later
 				
 			for (int idx = 0; idx < syms.elements().nodeCount(); idx++) {
 				IAstSymbolExpr sym = syms.elements().list().get(idx);

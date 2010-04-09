@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -197,4 +198,14 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			}
 		}
 	 */
+	
+	 /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
+     */
+    @Override
+    public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+    	if (!(function.getType() instanceof LLCodeType)) {
+    		throw new ASTException(function, "calling non-function");
+    	}
+    }
 }

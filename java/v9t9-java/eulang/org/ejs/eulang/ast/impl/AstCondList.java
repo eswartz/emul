@@ -123,7 +123,7 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 			exprs[i] = condList.list().get(i).getExpr();
 		boolean changed = inferTypesFromChildList(typeEngine, exprs);
 		
-		if (!changed && canInferTypeFrom(this)) {
+		if (canInferTypeFrom(this)) {
 			// get common promotion type
 			LLType common = getType();
 			for (int i = 0; i < exprs.length; i++)
@@ -136,6 +136,12 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 					if (canReplaceType(exprs[i])) {
 						updateType(exprs[i], common);
 						changed = true;
+					}
+				}
+				if (changed) {
+					for (int i = 0; i < exprs.length; i++) {
+						condList.list().get(i).setExpr(createCastOn(typeEngine, exprs[i], common));
+						condList.list().get(i).setType(common);
 					}
 				}
 			}

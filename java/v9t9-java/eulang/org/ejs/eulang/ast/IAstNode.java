@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast;
 
 import org.ejs.eulang.ISourceRef;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
 
 
@@ -106,5 +107,18 @@ public interface IAstNode {
 	 * Replace the given child node with another.
 	 */
 	void replaceChild(IAstNode existing, IAstNode another);
+	
+	/** 
+	 * Ensure that the node's type is sensible
+	 * @param typeEngine 
+	 * @throws ASTException
+	 */
+	void validateType(TypeEngine typeEngine) throws ASTException;
+	/** 
+	 * Ensure that the node's child types are sensible for this node
+	 * @param typeEngine 
+	 * @throws ASTException
+	 */
+	void validateChildTypes(TypeEngine typeEngine) throws ASTException;
 }
 

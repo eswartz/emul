@@ -127,15 +127,14 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 				tupleTypes[idx] = elements.list().get(idx).getType();
 			newType = new LLTupleType(typeEngine, tupleTypes);
 		}
+		boolean changed = false;
 		
 		if (elements.nodeCount() != newType.getElementTypes().length)
 			throw new TypeException("mismatched sizes in tuples: " + 
 					elements.nodeCount() + " != " + newType.getElementTypes().length);
-		
-		boolean changed = false;
+			
 		if (adaptToType(newType))
 			changed = true;
-	
 		changed |= updateType(this, newType);
 		
 		return changed;

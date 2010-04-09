@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import java.util.Arrays;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -198,5 +199,13 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 				return true;
 		}
 		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+		// no restrictions
 	}
 }

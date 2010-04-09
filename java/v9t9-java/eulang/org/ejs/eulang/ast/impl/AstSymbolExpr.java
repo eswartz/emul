@@ -5,6 +5,8 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -162,4 +164,13 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		this.isAddress = isAddress;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateType()
+	 */
+	@Override
+	public void validateType(TypeEngine typeEngine) throws ASTException {
+		if (!(getParent() instanceof IAstDefineStmt)) {
+			super.validateType(typeEngine);
+		}
+	}
 }

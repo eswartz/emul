@@ -95,10 +95,10 @@ public class TestMacroCall extends BaseParserTest {
     	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) ((IAstExprStmt) defExpr.stmts().getFirst()).getExpr()).getStmtList().list().get(1);
     	IAstCondList condList = (IAstCondList) stmt1.getExpr();
     	IAstCondExpr condExpr = condList.getCondExprs().list().get(0);
-		assertEquals(typeEngine.INT, condExpr.getType());
+		assertEquals(typeEngine.FLOAT, condExpr.getType());
 		assertTrue(isCastTo(condExpr.getExpr(), typeEngine.FLOAT));
 		condExpr = condList.getCondExprs().list().get(1);
-    	assertEquals(typeEngine.BOOL, condExpr.getType());
+    	assertEquals(typeEngine.FLOAT, condExpr.getType());
     	assertTrue(isCastTo(condExpr.getExpr(), typeEngine.FLOAT));
     	condExpr = condList.getCondExprs().list().get(2);
     	assertEquals(typeEngine.FLOAT, condExpr.getType());

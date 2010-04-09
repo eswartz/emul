@@ -824,6 +824,13 @@ public class TestTypeInfer extends BaseParserTest {
     	typeTest(mod, false);
     	
     }
+    @Test
+    public void testTuples4Fail() throws Exception {
+    	IAstModule mod = treeize("swap = code (x,y,z => (Int, Int, Int)) { (y,x); };\n" +
+    			"testTuples4b = code (a,b) { (x, o, y) := swap(a+b, a-b, b); (a*x, y*b); }; \n");
+    	sanityTest(mod);
+    	doTypeInfer(mod, true);
+    }
 }
 
 

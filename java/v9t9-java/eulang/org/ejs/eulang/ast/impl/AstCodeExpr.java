@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -12,10 +13,12 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
+import org.ejs.eulang.types.LLType.BasicType;
 
 
 /**
@@ -172,6 +175,36 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		changed |= updateType(this, newType);
 		
 		return changed;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+		super.validateChildTypes(typeEngine);
+		
+		// see what the return statements do
+		LLType thisType = ((IAstTypedNode) this).getType();
+		if (thisType == null || !thisType.isComplete() || !(thisType instanceof LLCodeType))
+			return;
+		
+		
+		LLCodeType codeType = (LLCodeType) thisType;
+		
+		if (codeType.getRetType().getBasicType() == BasicType.VOID)
+			return;
+			
+		IAstStmt returns = stmts.getLast();
+		if (returns instanceof ITyped) {
+			LLType kidType = ((ITyped) returns).getType();
+			if (kidType != null && kidType.isComplete()) {
+				if (!typeEngine.getBaseType(((LLCodeType) thisType).getRetType()).equals(
+						typeEngine.getBaseType(kidType))) {
+					throw new ASTException(returns, "code block does not return same type as prototype");
+				}
+			}
+		}
 	}
 
 }

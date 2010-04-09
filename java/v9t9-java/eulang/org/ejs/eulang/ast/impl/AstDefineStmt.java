@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -168,5 +170,13 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	@Override
 	public Map<LLType, IAstTypedExpr> expansions() {
 		return expansions;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+		// don't worry about symbol type
 	}
 }

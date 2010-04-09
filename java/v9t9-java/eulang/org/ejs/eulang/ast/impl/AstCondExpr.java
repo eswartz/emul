@@ -6,9 +6,12 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -146,5 +149,21 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		return inferTypesFromChildren(new ITyped[] { expr });
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+		LLType thisType = ((IAstTypedNode) this).getType();
+		if (thisType == null || !thisType.isComplete())
+			return;
+		
+		LLType kidType = ((IAstTypedNode) expr).getType();
+		if (kidType != null && kidType.isComplete()) {
+			if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
+				throw new ASTException(expr, "expression's type does not match parent");
+			}
+		}
+	}
 }

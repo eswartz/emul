@@ -7,6 +7,7 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -128,5 +129,13 @@ public class AstUnaryExpr extends AstTypedExpr implements
     	types.result = typeEngine.getBaseType(getType());
     	op.inferTypes(typeEngine, types);
     	return updateType(expr, types.expr) | updateType(this, types.result);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
+     */
+    @Override
+    public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+    	// already validated
     }
 }

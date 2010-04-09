@@ -8,6 +8,7 @@ import java.util.List;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.Error;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -51,9 +52,15 @@ public class TypeInference {
 	 * Infer the types in the tree from known types.
 	 */
 	public boolean infer(List<Message> messages, TypeEngine typeEngine, IAstNode node) {
-		return inferUp(messages, typeEngine, node); 
+		boolean changed = inferUp(messages, typeEngine, node);
+		
+		if (!changed) {
+			validateTypes(messages, typeEngine, node);
+		}
+		return changed;
 	}
 	
+
 	/**
 	 * @param messages
 	 * @param typeEngine
@@ -81,7 +88,34 @@ public class TypeInference {
 				}
 			}
 		}		
+		
 		return changed;
+	}
+
+	/**
+	 * @param messages
+	 * @param typeEngine 
+	 * @param node
+	 */
+	private void validateTypes(List<Message> messages, TypeEngine typeEngine, IAstNode node) {
+		try {
+			node.validateType(typeEngine);
+			
+			try {
+				node.validateChildTypes(typeEngine);
+			} catch (ASTException e) {
+				messages.add(new Error(node, e.getMessage()));
+			}
+			
+			// continue validating kids if node succeeded on its own
+			for (IAstNode kid : node.getChildren()) {
+				validateTypes(messages, typeEngine, kid);
+			}
+		} catch (ASTException e) {
+			// node failed, stop here
+			messages.add(new Error(node, e.getMessage()));
+		}
+		
 	}
 
 }

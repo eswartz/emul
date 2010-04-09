@@ -3,8 +3,9 @@
  */
 package org.ejs.eulang.types;
 
+import java.util.Arrays;
+
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.types.LLType.BasicType;
 
 /**
  * @author ejs
@@ -25,6 +26,31 @@ public class LLTupleType extends BaseLLType {
 		super(null, sumTypeBits(engine, types), toLLVMString(types), BasicType.TUPLE, null);
 		this.types = types;
 	}
+
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(types);
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LLTupleType other = (LLTupleType) obj;
+		if (!Arrays.equals(types, other.types))
+			return false;
+		return true;
+	}
+
 
 	/**
 	 * @param types
