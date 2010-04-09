@@ -11,9 +11,6 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public class LLGetElementPtrInstr extends LLAssignInstr {
-
-	private LLType toType;
-
 	public LLGetElementPtrInstr(LLOperand temp, LLType type, LLOperand... valueAndTypeIdxOps) {
 		super("getelementptr", temp, type, valueAndTypeIdxOps);
 	}

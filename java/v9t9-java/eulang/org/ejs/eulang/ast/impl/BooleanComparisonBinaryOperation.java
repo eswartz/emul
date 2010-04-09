@@ -13,34 +13,15 @@ import org.ejs.eulang.types.LLType.BasicType;
  * @author ejs
  *
  */
-public class ComparisonOperation extends Operation implements IBinaryOperation {
-
-	private final String floatPrefix;
-	private final String intPrefix;
+public class BooleanComparisonBinaryOperation extends Operation implements IBinaryOperation {
 
 	/**
 	 * @param name
 	 * @param llvmName 
 	 * @param isCommutative
-	 * @param isSignedOrdered TODO
 	 */
-	public ComparisonOperation(String name, String llvmName, boolean isCommutative, String intPrefix, String floatPrefix) {
+	public BooleanComparisonBinaryOperation(String name, String llvmName, boolean isCommutative) {
 		super(name, llvmName, isCommutative);
-		this.intPrefix = intPrefix;
-		this.floatPrefix = floatPrefix;
-	}
-
-	/**
-	 * @return the intPrefix
-	 */
-	public String getLLIntPrefix() {
-		return intPrefix;
-	}
-	/**
-	 * @return the floatPrefix
-	 */
-	public String getLLFloatPrefix() {
-		return floatPrefix;
 	}
 
 	/* (non-Javadoc)
@@ -48,6 +29,25 @@ public class ComparisonOperation extends Operation implements IBinaryOperation {
 	 */
 	@Override
 	public void inferTypes(TypeEngine typeEngine, OpTypes types) throws TypeException {
+		// first, check errors
+		if (types.left != null && types.left.getBasicType() != BasicType.BOOL)
+			throw new TypeException(getName() + " requires an boolean left operand, got " + types.left.toString());
+		if (types.right != null && types.right.getBasicType() != BasicType.BOOL)
+			throw new TypeException(getName() + " requires an boolean right operand, got " + types.right.toString());
+
+		// now, prefer booleans
+		if (types.left == null) {
+			types.left = typeEngine.BOOL;
+		}
+		if (types.right == null) {
+			types.right = typeEngine.BOOL;
+		}
+		if (types.result == null) {
+			types.result = typeEngine.getPromotionType(types.left, types.right);
+			if (types.result.getBits() == 0)
+				types.result = typeEngine.BOOL;
+		}
+		
 		if (types.left != null && types.right != null) {
 			LLType commonType = typeEngine.getPromotionType(types.left, types.right);
 			if (commonType == null)

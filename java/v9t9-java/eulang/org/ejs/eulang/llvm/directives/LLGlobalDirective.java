@@ -42,6 +42,8 @@ public class LLGlobalDirective extends LLBaseDirective {
 		
 		String symName = symbol.getLLVMName();
 		sb.append(symName).append(" = ");
+		if (linkage != null)
+			sb.append(linkage.getLinkageName()).append(' ');	
 		if (visibility != null)
 			sb.append(visibility.getVisibility()).append(' ');	
 		sb.append(type).append(' ');

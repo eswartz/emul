@@ -358,6 +358,19 @@ public class TestParser extends BaseParserTest  {
     public void testOpPrec3b() throws Exception {
     	parse("opPrec1 = code { x=1*2/3%4\\5; };");
     }
+    
+    @Test
+    public void testTuples1() throws Exception {
+    	parse("tuples1 = code (x,y) { (y,x); };");
+    }
+    @Test
+    public void testTuples2() throws Exception {
+    	parse("tuples2 = (7, code (x,y) { (y,x); });");
+    }
+    @Test
+    public void testTuples3() throws Exception {
+    	parse("tuples3 = code (x,y => (Int, Int)) { (y,x); };");
+    }
 }
 
 

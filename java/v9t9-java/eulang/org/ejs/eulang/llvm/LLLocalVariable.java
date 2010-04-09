@@ -10,7 +10,6 @@ import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -137,7 +136,7 @@ public class LLLocalVariable implements ILLVariable {
 	 */
 	@Override
 	public LLOperand address(ILLCodeTarget target) {
-		return null;
+		return new LLSymbolOp(addrSymbol);
 	}
 
 }

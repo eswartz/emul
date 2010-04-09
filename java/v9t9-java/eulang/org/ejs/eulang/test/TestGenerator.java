@@ -28,7 +28,6 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -69,7 +68,7 @@ public class TestGenerator extends BaseParserTest {
     
     @Test
     public void testOneEntryCodeModule0() throws Exception {
-    	IAstModule mod = treeize("foo = code (x,y) { };");
+    	IAstModule mod = treeize("foo = code (x,y) {\n};");
     	sanityTest(mod);
     	
     	assertEquals(1, mod.getScope().getSymbols().length);
@@ -342,14 +341,39 @@ public class TestGenerator extends BaseParserTest {
     public void testPointers1() throws Exception {
     	IAstModule mod = treeize(
         		" badSwap_testPointers1 = code (x : Int&, y : Int& => null) {\n" +
-        		"};\n"+
-        		" refOnlySwap_testPointers1 = code (@x : Int&, @y : Int& => null) {\n" +
-        		"};\n"+
-        		" intOnlySwap_testPointers1 = code (@x : Int, @y : Int => null) {\n" +
-        		"};\n"+
-        		" genericSwap_testPointers1 = code (@x, @y => null) {\n" +
         		"};\n");
     		sanityTest(mod);
+    }
+    
+    
+    @Test
+    public void testTuples1() throws Exception {
+    	IAstModule mod = treeize("tuples1 = code (x,y) { (y,x); };");
+    	sanityTest(mod);
+    }
+    @Test
+    public void testTuples2() throws Exception {
+    	IAstModule mod = treeize("tuples2 = (7, code (x,y) { (y,x); });");
+    	sanityTest(mod);
+    }
+    @Test
+    public void testTuples3() throws Exception {
+    	IAstModule mod = treeize("tuples3 = code (x,y => (Int, Int)) { (y,x); };");
+    	sanityTest(mod);
+    }
+    @Test
+    public void testTuples4() throws Exception {
+    	dumpTreeize = true;
+    	IAstModule mod = treeize("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
+    			"testTuples4 = code (x,y) { (a, b) = swap(4, 5); }; \n");
+    	sanityTest(mod);
+    }
+    @Test
+    public void testTuples4b() throws Exception {
+    	dumpTreeize = true;
+    	IAstModule mod = treeize(
+    			"testTuples4 = code (x,y) { (a, b) := (4, 5); }; \n");
+    	sanityTest(mod);
     }
 }
 

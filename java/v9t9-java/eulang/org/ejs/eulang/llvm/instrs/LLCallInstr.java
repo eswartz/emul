@@ -52,7 +52,7 @@ public class LLCallInstr extends LLAssignInstr {
 	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
 		if (idx == 0) 
 			sb.append('(');
-		sb.append(funcType.getArgTypes()[idx]).append(' ');
+		sb.append(funcType.getArgTypes()[idx].getLLVMName()).append(' ');
 		super.appendOperandString(sb, idx, op);
 		if (idx == getOperands().length - 1)
 			sb.append(')');

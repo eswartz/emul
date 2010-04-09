@@ -28,7 +28,6 @@ public abstract class AstLitExpr extends AstTypedExpr implements
 	
 	@Override
 	public int hashCode() {
-		final int prime = 31;
 		int result = super.hashCode();
 		//result = prime * result + ((lit == null) ? 0 : lit.hashCode());
 		return result;
@@ -43,12 +42,6 @@ public abstract class AstLitExpr extends AstTypedExpr implements
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstLitExpr other = (AstLitExpr) obj;
-		/*if (lit == null) {
-			if (other.lit != null)
-				return false;
-		} else if (!lit.equals(other.lit))
-			return false;*/
 		return true;
 	}
 

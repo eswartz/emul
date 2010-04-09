@@ -16,7 +16,8 @@ public interface LLType {
 		DATA,
 		CODE, 
 		BOOL, 
-		REF
+		REF, 
+		TUPLE
 	};
 	
 	String toString();
@@ -33,4 +34,16 @@ public interface LLType {
 	 * @return
 	 */
 	boolean isComplete();
+	/**
+	 * @return
+	 */
+	String getName();
+	
+	/** Get the type, e.g. "i8" or "{ i16* , i16 }" */
+	String getLLVMType();
+	/**
+	 * Get the name of the type -- either #getLLVMType() or "%" + getName()
+	 * @return
+	 */
+	String getLLVMName();
 }

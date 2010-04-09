@@ -29,6 +29,6 @@ public abstract class LLTypedInstr extends LLBaseInstr {
 	 */
 	@Override
 	protected void appendOptionString(StringBuilder sb) {
-		sb.append(type).append(' ');
+		sb.append(type.getLLVMName()).append(' ');
 	}
 }

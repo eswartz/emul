@@ -3,8 +3,13 @@
  */
 package org.ejs.eulang;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstLitExpr;
@@ -43,7 +48,7 @@ public class TypeEngine {
 	public LLType NULL;
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
-	private Map<String, LLType> typeMap = new HashMap<String, LLType>();
+	private Set<LLType> types = new HashSet<LLType>();
 	private Map<LLType, LLPointerType> ptrTypeMap = new HashMap<LLType, LLPointerType>();
 	private Map<LLType, LLRefType> refTypeMap = new HashMap<LLType, LLRefType>();
 	private boolean isLittleEndian;
@@ -62,14 +67,7 @@ public class TypeEngine {
 	private int structMinAlign;
 	public LLType INTPTR;
 	public LLType REFPTR;
-
-	public int getStructMinAlign() {
-		return structMinAlign;
-	}
-
-	public void setStructMinAlign(int structMinAlign) {
-		this.structMinAlign = structMinAlign;
-	}
+	public LLBoolType LLBOOL;
 
 	/**
 	 * 
@@ -82,19 +80,29 @@ public class TypeEngine {
 		setStackAlign(16);
 		setStructAlign(16);
 		setStructMinAlign(8);
-		VOID = register(new LLVoidType());
-		NULL = register(new LLVoidType());
+		VOID = register(new LLVoidType(null));
+		NULL = register(new LLVoidType(null));
 		LABEL = register(new LLLabelType());
-		BOOL = register(new LLBoolType(1));
-		BYTE = register(new LLIntType(8));
-		INT = register(new LLIntType(16));
-		FLOAT = register(new LLFloatType(32, 23));
+		BOOL = register(new LLBoolType("Bool", 1));
+		LLBOOL = register(new LLBoolType(null, 1));
+		BYTE = register(new LLIntType("Byte", 8));
+		INT = register(new LLIntType("Int", 16));
+		FLOAT = register(new LLFloatType("Float", 32, 23));
 		//REFPTR = register(new LLRefType(new LLPointerType(ptrBits, VOID), ptrBits));
-		REFPTR = register(new LLPointerType(ptrBits, BYTE));
+		REFPTR = register(new LLPointerType("RefPtr", ptrBits, 
+				getRefType(BYTE)));
 		
-		INT_ANY = new LLIntType(0);
+		INT_ANY = new LLIntType("Int*", 0);
 	}
 	
+	public int getStructMinAlign() {
+		return structMinAlign;
+	}
+
+	public void setStructMinAlign(int structMinAlign) {
+		this.structMinAlign = structMinAlign;
+	}
+
 	/**
 	 * @param i
 	 */
@@ -104,17 +112,10 @@ public class TypeEngine {
 	}
 
 	public <T extends LLType> T register(T type) {
-		typeMap.put(type.toString(), type);
+		types.add(type);
 		return type;
 	}
 
-	/**
-	 * @return the typeMap
-	 */
-	public Map<String, LLType> getTypeMap() {
-		return typeMap;
-	}
-	
 	/**
 	 * @return the isLittleEndian
 	 */
@@ -122,6 +123,14 @@ public class TypeEngine {
 		return isLittleEndian;
 	}
 	
+	/**
+	 * Get the basic type, ignoring ptrs and refs
+	 */
+	public LLType getBaseType(LLType a) {
+		while (a != null && (a.getBasicType() == BasicType.REF || a.getBasicType() == BasicType.POINTER))
+			a = a.getSubType();
+		return a;
+	}
 	/**
 	 * Get the type to which a and b should be promoted 
 	 * @param a
@@ -131,6 +140,12 @@ public class TypeEngine {
 	public LLType getPromotionType(LLType a, LLType b) {
 		if (a.equals(b))
 			return a;
+		
+		a = getBaseType(a);
+		b = getBaseType(b);
+		
+		if (a == null || b == null)
+			return null;
 		
 		if (a.getBasicType() == BasicType.INTEGRAL && b.getBasicType() == BasicType.INTEGRAL)
 			return a.getBits() > b.getBits() ? a : b;
@@ -262,7 +277,7 @@ public class TypeEngine {
 
 	public void setPtrBits(int ptrBits) {
 		this.ptrBits = ptrBits;
-		INTPTR = getPointerType(new LLIntType(ptrBits));
+		INTPTR = getPointerType(new LLIntType("Int", ptrBits));
 	}
 
 	public int getPtrBits() {
@@ -306,5 +321,17 @@ public class TypeEngine {
 			refTypeMap.put(type, refType);
 		}
 		return refType;
+	}
+
+	/**
+	 * @return
+	 */
+	public Collection<LLType> getTypes() {
+		List<LLType> types = new ArrayList<LLType>();
+		types.addAll(this.types);
+		types.addAll(ptrTypeMap.values());
+		types.addAll(refTypeMap.values());
+		//types.addAll(codeTypes.values());
+		return types;
 	}
 }

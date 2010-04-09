@@ -9,17 +9,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
 public class LLVariableStorage {
 	Map<ISymbol, ILLVariable> symbolMap = new HashMap<ISymbol, ILLVariable>();
-	private final TypeEngine typeEngine;
 	
-	public LLVariableStorage(TypeEngine typeEngine) {
-		this.typeEngine = typeEngine;
-		
+	public LLVariableStorage() {
 	}
 	
 	public ILLVariable lookupVariable(ISymbol symbol) {

@@ -32,13 +32,13 @@ import org.junit.Test;
  */
 public class TestLLVMGenerator extends BaseParserTest {
 
-	private ITarget v9t9Target = new TargetV9t9();
+	private ITarget v9t9Target = new TargetV9t9(typeEngine);
 	
 	protected IAstModule doFrontend(String text) throws Exception {
 		IAstModule mod = treeize(text);
     	sanityTest(mod);
     	IAstModule expanded = (IAstModule) doExpand(mod);
-    	//doTypeInfer(expanded);
+    	doTypeInfer(expanded);
     	doSimplify(expanded);
     	
     	System.err.flush();
@@ -165,7 +165,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	@Test
     public void testPointers3() throws Exception {
 		 dumpTypeInfer = true;
-    	IAstModule mod = treeize(
+    	IAstModule mod = doFrontend(
     			" refSwap_testPointers3 := code (x : Int&, y : Int& => null) {\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
@@ -175,10 +175,12 @@ public class TestLLVMGenerator extends BaseParserTest {
 
     }
 	
+	/*
+	
 	@Test
     public void testPointers4() throws Exception {
 		 dumpTypeInfer = true;
-    	IAstModule mod = treeize(
+    	IAstModule mod = doFrontend(
     			" genericSwap_testPointers4 := code (@x, @y => null) {\n" +
     			//" x = x + 1; y = y + 1; x = x + 2; y = y - 4; x = x - 4;\n" +
     			" t : Int = x;\n"+
@@ -189,18 +191,64 @@ public class TestLLVMGenerator extends BaseParserTest {
 
     }
 
-	// TODO: this should work, probably
 	@Test
-    public void testPointers2Fail() throws Exception {
+    public void testPointers2() throws Exception {
 		 dumpTypeInfer = true;
-    	IAstModule mod = treeize(
-    			" swap_testPointers2Fail := code (x : Int&, @y => null) {\n" +
+    	IAstModule mod = doFrontend(
+    			" swap_testPointers2 := code (x : Int&, @y : Int => null) {\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
     	"};\n");
-    	doGenerate(mod, true);
+    	doGenerate(mod);
 
     }
 
+
+	@Test
+    public void testPointers2b() throws Exception {
+		 dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			" swap_testPointers2b := code (x : Int&, @y : Int& => null) {\n" +
+    			" t : Int = x;\n"+
+    			" x = y;\n"+
+    			" y = t;\n"+
+    	"};\n");
+    	doGenerate(mod);
+
+    }
+    */
+	
+	@Test
+	public void testBinOps() throws Exception {
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4%%45+5-6>>7<<8>>>85&9^10|11<12>13<=14>=15==16!=17 and Bool(18) or Bool(19); };");
+		doGenerate(mod);
+	}
+	
+
+	@Test
+	public void testShortCircuitAndOr() throws Exception {
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend("testShortCircuitAndOr = code (x,y:Int&,z => Int){\n" +
+				"select [ x > y and y > z then y " +
+				"|| x > z and z > y then z" +
+				"|| y > x and x > z then x " +
+				"|| x == y or z == x then x+y+z " +
+				"|| else x-y-z ] };");
+		doGenerate(mod);
+	}
+	
+	@Test
+    public void testTuples4() throws Exception {
+    	IAstModule mod = doFrontend("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
+    			"testTuples4 = code (a,b) { (a, b) = swap(4, 5); }; \n");
+    	doGenerate(mod);
+    }
+	@Test
+    public void testTuples4b() throws Exception {
+    	IAstModule mod = doFrontend("swap = code (x,y,z => (Int, Int, Int)) { (y,z,x); };\n" +
+    			"testTuples4b = code (a,b) { (x, o, y) := swap(a+b, a-b, b); (a*x, y*b); }; \n");
+    	doGenerate(mod);
+    }
 }

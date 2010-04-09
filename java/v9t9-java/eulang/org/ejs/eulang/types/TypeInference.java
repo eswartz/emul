@@ -9,10 +9,9 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.Error;
-import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 
 /**

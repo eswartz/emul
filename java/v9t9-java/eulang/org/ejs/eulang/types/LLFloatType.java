@@ -7,28 +7,19 @@ package org.ejs.eulang.types;
  * @author ejs
  *
  */
-public class LLFloatType implements LLType {
+public class LLFloatType extends BaseLLType {
 
-	private final int bits;
 	private final int mbits;
-	public LLFloatType(int bits, int mbits) {
-		this.bits = bits;
+	public LLFloatType(String name, int bits, int mbits) {
+		super(name, bits, bits==32 ? "float" : bits==64 ? "double" : null, BasicType.FLOATING, null);
 		this.mbits = mbits;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#getBasicType()
-	 */
-	@Override
-	public BasicType getBasicType() {
-		return BasicType.FLOATING;
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + bits;
+		result = prime * result + mbits;
 		return result;
 	}
 
@@ -43,36 +34,11 @@ public class LLFloatType implements LLType {
 		if (getClass() != obj.getClass())
 			return false;
 		LLFloatType other = (LLFloatType) obj;
-		if (bits != other.bits)
+		if (mbits != other.mbits)
 			return false;
 		return true;
 	}
 
-
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return "f" + bits;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.types.LLType#getType()
-	 */
-	@Override
-	public LLType getSubType() {
-		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#getBits()
-	 */
-	@Override
-	public int getBits() {
-		return bits;
-	}
 
 	public int getMantissaBits() {
 		return mbits;

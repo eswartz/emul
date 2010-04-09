@@ -10,6 +10,7 @@ import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -117,10 +118,30 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		IAstTypedExpr[] exprs = new IAstTypedExpr[condList.list().size()];
+		IAstTypedExpr[] exprs = new IAstTypedExpr[condList.list().size() ];
 		for (int i = 0; i < exprs.length; i++)
 			exprs[i] = condList.list().get(i).getExpr();
-		return inferTypesFromChildList(typeEngine, exprs);
+		boolean changed = inferTypesFromChildList(typeEngine, exprs);
+		
+		if (!changed && canInferTypeFrom(this)) {
+			// get common promotion type
+			LLType common = getType();
+			for (int i = 0; i < exprs.length; i++)
+				if (canInferTypeFrom(exprs[i]))
+					common = typeEngine.getPromotionType(common, exprs[i].getType());
+			
+			// if we make it out, assign
+			if (common != null) {
+				for (int i = 0; i < exprs.length; i++) {
+					if (canReplaceType(exprs[i])) {
+						updateType(exprs[i], common);
+						changed = true;
+					}
+				}
+			}
+		}
+		
+		return changed;
 	}
 	
 }

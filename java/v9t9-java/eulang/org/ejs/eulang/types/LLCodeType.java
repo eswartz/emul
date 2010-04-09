@@ -9,35 +9,58 @@ import java.util.Arrays;
  * @author ejs
  *
  */
-public class LLCodeType implements LLType {
+public class LLCodeType extends BaseLLType {
 
-	private final int ptrBits;
 	private final LLType retType;
 	private final LLType[] argTypes;
 
+	private static int gId;
+	
 	/**
 	 * @param retType 
 	 * 
 	 */
 	public LLCodeType(LLType retType, LLType[] argTypes, int ptrBits) {
+		super("__code$"+gId++, ptrBits, toString(retType, argTypes), BasicType.CODE, null);
 		this.retType = retType;
 		this.argTypes = argTypes;
-		this.ptrBits = ptrBits;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#getBasicType()
-	 */
-	@Override
-	public BasicType getBasicType() {
-		return BasicType.CODE;
-	}	
+	
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
-	public String toString() {
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(argTypes);
+		result = prime * result + ((retType == null) ? 0 : retType.hashCode());
+		return result;
+	}
+
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LLCodeType other = (LLCodeType) obj;
+		if (!Arrays.equals(argTypes, other.argTypes))
+			return false;
+		if (retType == null) {
+			if (other.retType != null)
+				return false;
+		} else if (!retType.equals(other.retType))
+			return false;
+		return true;
+	}
+
+
+
+	public static String toString(LLType retType, LLType[] argTypes) {
 		StringBuilder sb = new StringBuilder();
 		
 		boolean first = true;
@@ -59,68 +82,14 @@ public class LLCodeType implements LLType {
 		return sb.toString();
 	}
 	
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + Arrays.hashCode(argTypes);
-		result = prime * result + ptrBits;
-		result = prime * result + ((retType == null) ? 0 : retType.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LLCodeType other = (LLCodeType) obj;
-		if (!Arrays.equals(argTypes, other.argTypes))
-			return false;
-		if (ptrBits != other.ptrBits)
-			return false;
-		if (retType == null) {
-			if (other.retType != null)
-				return false;
-		} else if (!retType.equals(other.retType))
-			return false;
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#getBits()
-	 */
-	@Override
-	public int getBits() {
-		return ptrBits;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#getSubType()
-	 */
-	@Override
-	public LLType getSubType() {
-		return null;
-	}
-
-	/**
-	 */
 	public LLType[] getArgTypes() {
 		return argTypes;
 	}
 	
-	/**
-	 * @return the retType
-	 */
 	public LLType getRetType() {
 		return retType;
 	}
 	
-
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isComplete()
 	 */

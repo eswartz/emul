@@ -17,6 +17,7 @@ import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
+import org.ejs.eulang.ast.impl.AstAllocTupleStmt;
 import org.ejs.eulang.ast.impl.AstArgDef;
 import org.ejs.eulang.ast.impl.AstAssignStmt;
 import org.ejs.eulang.ast.impl.AstBinExpr;
@@ -40,6 +41,9 @@ import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
+import org.ejs.eulang.ast.impl.AstAssignTupleStmt;
+import org.ejs.eulang.ast.impl.AstTupleExpr;
+import org.ejs.eulang.ast.impl.AstTupleNode;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstUnaryExpr;
 import org.ejs.eulang.ast.impl.SourceRef;
@@ -50,6 +54,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 
 
@@ -142,11 +147,11 @@ public class GenerateAST {
 	private TypeEngine typeEngine;
 	private GlobalScope globalScope;
 	
-	public GenerateAST(String defaultFile, Map<CharStream, String> fileMap) {
+	public GenerateAST(TypeEngine typeEngine, String defaultFile, Map<CharStream, String> fileMap) {
 		this.defaultFile = defaultFile;
 		this.fileMap = fileMap;
 		this.globalScope = new GlobalScope();
-		this.typeEngine = new TypeEngine();
+		this.typeEngine = typeEngine;
 		
 		typeEngine.populateTypes(globalScope);
 		
@@ -162,15 +167,29 @@ public class GenerateAST {
 				String file = fileMap.get(token.getChannel());
 				if (file == null)
 					file = defaultFile;
-				return new TokenSourceRef(file, token,
-						tree.getTokenStopIndex() - tree.getTokenStartIndex());
+				return new TokenSourceRef(file, token, tree.toStringTree().length());
 			}
 		}
-		return new SourceRef(defaultFile, tree.getTokenStartIndex(), 
-				tree.getTokenStopIndex() - tree.getTokenStartIndex(),
-				tree.getLine(), tree.getCharPositionInLine()+1);
+		String string = tree.toString();
+		return new SourceRef(defaultFile, string.length(),
+				tree.getLine(), tree.getCharPositionInLine() + 1,
+				tree.getLine() + countNls(string), string.length() - string.lastIndexOf('\n'));
 		
 	}
+	/**
+	 * @param string
+	 * @return
+	 */
+	private int countNls(String string) {
+		int cnt = 0;
+		int idx = -1;
+		while (idx < string.length()) {
+			if (string.charAt(idx) == '\n')
+				cnt++;
+		}
+		return cnt;
+	}
+
 	/** Copy source info into node */
 	protected void getSource(Tree tree, IAstNode node) {
 		node.setSourceRef(getSourceRef(tree));
@@ -180,11 +199,13 @@ public class GenerateAST {
 		if (tree instanceof CommonTree) {
 			Token token = ((CommonTree) tree).getToken();
 			if (token != null) {
-				return new SourceRef(fileMap.get(token.getChannel()), tree.getTokenStartIndex(), 0,
+				return new SourceRef(fileMap.get(token.getChannel()), 
+						0, tree.getLine(), tree.getCharPositionInLine() + 1,
 						tree.getLine(), tree.getCharPositionInLine() + 1);
 			}
 		}
-		return new SourceRef(defaultFile, tree.getTokenStartIndex(), 0,
+		return new SourceRef(defaultFile, 0,
+				tree.getLine(), tree.getCharPositionInLine()+1,
 				tree.getLine(), tree.getCharPositionInLine()+1);
 		
 	}
@@ -317,6 +338,7 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException 
 	 */
+	@SuppressWarnings("unchecked")
 	public IAstModule constructModule(Tree tree) throws GenerateException {
 		
 		// don't push/pop, since globals are not defined at all
@@ -415,6 +437,8 @@ public class GenerateAST {
 		case EulangParser.CONDTEST:
 			return constructCondExpr(tree);
 			
+		case EulangParser.TUPLE:
+			return constructTuple(tree);
 			
 			
 		default:
@@ -424,6 +448,22 @@ public class GenerateAST {
 		
 	}
 	
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstTupleExpr constructTuple(Tree tree) throws GenerateException {
+		IAstNodeList<IAstTypedExpr> elements = new AstNodeList<IAstTypedExpr>();
+		for (Tree kid : iter(tree)) {
+			elements.add(checkConstruct(kid, IAstTypedExpr.class));
+		}
+		getSource(tree, elements);
+		IAstTupleExpr node = new AstTupleExpr(elements);
+		getSource(tree, node);
+		return node;
+	}
+
 	/**
 	 * @param tree
 	 * @return
@@ -565,24 +605,44 @@ public class GenerateAST {
 		return funcCall;
 	}
 
-	public IAstAllocStmt constructAlloc(Tree tree) throws GenerateException {
-		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
-		
+	public IAstNode constructAlloc(Tree tree) throws GenerateException {
 		IAstType type = checkConstruct(tree.getChild(1), IAstType.class);
-		if (type != null) {
-			symbolExpr.getSymbol().setType(type.getType());
-		}
-
+		
+		
 		IAstTypedExpr expr = null;
 		if (tree.getChildCount() == 3)
 			expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
 		
-		IAstAllocStmt define = new AstAllocStmt(symbolExpr, type, expr);
-		getSource(tree, define);
+		if (tree.getChild(0).getType() == EulangParser.ID) {
+			IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
+			
+			if (type != null) {
+				symbolExpr.getSymbol().setType(type.getType());
+			}
+			IAstAllocStmt alloc = new AstAllocStmt(symbolExpr, type, expr);
+			getSource(tree, alloc);
+	
+			symbolExpr.getSymbol().setDefinition(alloc);
+	
+			return alloc;
+		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
+			IAstTupleNode syms = constructIdTuple(tree.getChild(0));
+			
+			IAstAllocTupleStmt alloc = new AstAllocTupleStmt(syms, type, expr);
+			getSource(tree, alloc);
 
-		symbolExpr.getSymbol().setDefinition(define);
-
-		return define;
+			if (type != null) {
+				for (IAstSymbolExpr symExpr : syms.elements().list()) {
+					symExpr.getSymbol().setType(type.getType());
+					symExpr.getSymbol().setDefinition(alloc.getExpr());
+				}
+			}
+			
+			return alloc;
+		} else {
+			unhandled(tree);
+			return null;
+		}
 	}
 	/**
 	 * @param child
@@ -625,11 +685,39 @@ public class GenerateAST {
 	 */
 	public IAstNode constructAssign(Tree tree) throws GenerateException {
 		assert(tree.getChildCount() == 2);
-		IAstSymbolExpr left = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
-		IAstTypedExpr right = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
-		IAstAssignStmt assign = new AstAssignStmt(left, right);
-		getSource(tree, assign);
-		return assign;
+		if (tree.getChild(0).getType() == EulangParser.IDREF) {
+			IAstSymbolExpr left = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
+			IAstTypedExpr right = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+			IAstAssignStmt assign = new AstAssignStmt(left, right);
+			getSource(tree, assign);
+			return assign;
+		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
+			IAstTupleNode left = constructIdTuple(tree.getChild(0));
+			IAstTypedExpr right = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+			IAstAssignTupleStmt assign = new AstAssignTupleStmt(left, right);
+			getSource(tree, assign);
+			return assign;
+			
+		} else {
+			unhandled(tree);
+			return null;
+		}
+	}
+
+	/**
+	 * @param child
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstTupleNode constructIdTuple(Tree tree) throws GenerateException {
+		IAstNodeList<IAstSymbolExpr> elements = new AstNodeList<IAstSymbolExpr>();
+		for (Tree kid : iter(tree)) {
+			elements.add(checkConstruct(kid, IAstSymbolExpr.class));
+		}
+		getSource(tree, elements);
+		IAstTupleNode node = new AstTupleNode(elements);
+		getSource(tree, node);
+		return node;
 	}
 
 	/**
@@ -917,11 +1005,15 @@ public class GenerateAST {
 		LLType retType = null;
 		IAstType retTypeNode;
 		int start = 1;
-		if (tree.getChildCount() == 0 || tree.getChild(0).getType() != EulangParser.TYPE) {
+		if (tree.getChildCount() == 0 || tree.getChild(0).getType() == EulangParser.ARGDEF) {
 			retType = typeEngine.UNSPECIFIED;
 			retTypeNode = new AstType(retType);
 			getEmptySource(tree, retTypeNode); 
 			start = 0;
+		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
+			retType = constructType(tree.getChild(0));
+			retTypeNode = new AstType(retType);
+			getSource(tree, retTypeNode);
 		} else {
 			retType = constructType(tree.getChild(0).getChild(0));
 			retTypeNode = new AstType(retType);
@@ -946,24 +1038,34 @@ public class GenerateAST {
 	public LLType constructType(Tree tree) throws GenerateException {
 		if (tree.getType() == EulangParser.NULL) {
 			return typeEngine.VOID;
-		}
-		else if (tree.getType() == EulangParser.REF) {
-			return typeEngine.getRefType(constructType(tree.getChild(0)));
-		}
-		else if (tree.getType() == EulangParser.CODE) {
-			if (tree.getChildCount() == 0) {
-				return typeEngine.getCodeType(null, new LLType[0]);
+		} else {
+			Tree kid0 = tree.getChild(0);
+			if (tree.getType() == EulangParser.TUPLE) {
+				LLType[] tupleTypes = new LLType[tree.getChildCount()];
+				for (int idx = 0; idx < tree.getChildCount(); idx++) {
+					assert tree.getChild(idx).getType() == EulangParser.TYPE;
+					tupleTypes[idx] = constructType(tree.getChild(idx).getChild(0));
+				}
+				return new LLTupleType(typeEngine, tupleTypes);
 			}
-			if (tree.getChildCount() > 1)
-				throw new GenerateException(tree.getChild(2), "did not expect code block here");
-			IAstPrototype proto = checkConstruct(tree.getChild(0), IAstPrototype.class);
-			if (proto.hasDefaultArguments()) {
-				throw new GenerateException(tree.getChild(2), "cannot use default arguments in code type");
+			else if (tree.getType() == EulangParser.REF) {
+				return typeEngine.getRefType(constructType(kid0));
 			}
-			return proto.getType();
-		}
-		else if (tree.getType() == EulangParser.IDREF) {
-			return checkConstruct(tree, IAstSymbolExpr.class).getType();
+			else if (tree.getType() == EulangParser.CODE) {
+				if (tree.getChildCount() == 0) {
+					return typeEngine.getCodeType(null, new LLType[0]);
+				}
+				if (tree.getChildCount() > 1)
+					throw new GenerateException(tree.getChild(2), "did not expect code block here");
+				IAstPrototype proto = checkConstruct(kid0, IAstPrototype.class);
+				if (proto.hasDefaultArguments()) {
+					throw new GenerateException(tree.getChild(2), "cannot use default arguments in code type");
+				}
+				return proto.getType();
+			}
+			else if (tree.getType() == EulangParser.IDREF) {
+				return checkConstruct(tree, IAstSymbolExpr.class).getType();
+			}
 		}
 		unhandled(tree);
 		return null;
@@ -984,7 +1086,7 @@ public class GenerateAST {
 		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
 		
 		IAstDefineStmt stmt = new AstDefineStmt(symbolExpr, checkConstruct(tree.getChild(1), IAstTypedExpr.class));
-		getSource(tree.getChild(1), stmt);
+		getSource(tree, stmt);
 		
 		symbolExpr.getSymbol().setDefinition(stmt);
 		

@@ -56,7 +56,8 @@ tokens {
   GOTO;
   BLOCK;
   
-  //temporary
+  TUPLE;
+  
   LABELSTMT;
 }
 
@@ -155,18 +156,30 @@ proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? a
 argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
     ;
 
-argdef: MACRO?  AT? ID (COLON type)?    -> ^(ARGDEF MACRO?  AT? ID type* )
+argdef: MACRO? ID (COLON type)?    -> ^(ARGDEF MACRO? ID type* )
   ;
 
 xreturns: RETURNS type      -> type
+  | RETURNS argtuple           -> argtuple
   | RETURNS NULL            -> ^(TYPE NULL)
   ;
 
+argtuple : LPAREN tupleargdefs RPAREN    -> ^(TUPLE tupleargdefs)
+  ;
+
+tupleargdefs: (tupleargdef ( COMMA tupleargdef)+ )                        -> tupleargdef* 
+    ;
+
+tupleargdef: type    -> type
+  | QUESTION        -> ^(TYPE NULL)
+  |                 -> ^(TYPE NULL)
+  ;
+  
 // args inside a prototype, which have optional initializers
 optargdefs: (optargdef ( COMMA optargdef)* COMMA?)?                        -> optargdef* 
     ;
 
-optargdef: MACRO? AT? ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO? AT? ID type* $init?)
+optargdef: MACRO? ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO? ID type* $init?)
   ;
   
 type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScopeRef) ) )? 
@@ -193,16 +206,20 @@ codeStmtExpr : varDecl    -> varDecl
       ;
 
 varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
+    | idTuple COLON_EQUALS assignExpr         -> ^(ALLOC idTuple TYPE assignExpr)
     | ID COLON type (EQUALS assignExpr)?  -> ^(ALLOC ID type assignExpr*)
+    | idTuple COLON type (EQUALS assignExpr)?  -> ^(ALLOC idTuple type assignExpr*)
     ;
 
 //returnStmt : RETURN assignExpr?           -> ^(RETURN assignExpr?)
       //;
 
 assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
+    | idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
     ;
       
 assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
+    | idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
 
@@ -214,6 +231,18 @@ gotoStmt: AT idOrScopeRef                -> ^(GOTO idOrScopeRef)
   
 blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
   ;
+
+tuple : LPAREN tupleEntries RPAREN      -> ^(TUPLE tupleEntries+) 
+  ;
+  
+tupleEntries : assignExpr (COMMA assignExpr)+  -> assignExpr+ 
+; 
+
+idTuple : LPAREN idTupleEntries RPAREN      -> ^(TUPLE idTupleEntries+) 
+  ;
+  
+idTupleEntries : idOrScopeRef (COMMA idOrScopeRef)+  -> idOrScopeRef+ 
+; 
 
 rhsExpr :   condStar                          -> condStar
     ;
@@ -309,7 +338,7 @@ unary:    ( atom        -> atom )
       | EXCL u=unary     -> ^(NOT $u )
       | TILDE u=unary     -> ^(INV $u )
 ;
-atom options { k=2; } :
+atom :
       NUMBER                          -> ^(LIT NUMBER)
     |   FALSE                         -> ^(LIT FALSE)
     |   TRUE                          -> ^(LIT TRUE)
@@ -321,6 +350,7 @@ atom options { k=2; } :
     |   INVOKE                        -> ^(INVOKE)
     |   RECURSE LPAREN arglist RPAREN   -> ^(RECURSE arglist) 
     |   idOrScopeRef                  -> idOrScopeRef
+    |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |   code                           -> code   
     |   macro                           -> macro   

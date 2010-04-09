@@ -5,7 +5,8 @@ package org.ejs.eulang;
 
 import org.ejs.eulang.ast.impl.ArithmeticBinaryOperation;
 import org.ejs.eulang.ast.impl.ArithmeticUnaryOperation;
-import org.ejs.eulang.ast.impl.ComparisonOperation;
+import org.ejs.eulang.ast.impl.BooleanComparisonBinaryOperation;
+import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonUnaryOperation;
 import org.ejs.eulang.ast.impl.IndirectOperation;
 import org.ejs.eulang.ast.impl.LogicalBinaryOperation;
@@ -13,6 +14,10 @@ import org.ejs.eulang.ast.impl.LogicalUnaryOperation;
 import org.ejs.eulang.ast.impl.ShiftOperation;
 
 /**
+ * The operations we know about.
+ * 
+ * Note that the strings in the constructors are for output only; they must match those
+ * parsed by the *.g file.
  * @author ejs
  *
  */
@@ -38,14 +43,16 @@ public interface IOperation {
 	IBinaryOperation BITXOR = new LogicalBinaryOperation("^", "xor", true);
 	
 	IUnaryOperation NOT = new ComparisonUnaryOperation("not");
-	IBinaryOperation COMPAND = new ComparisonOperation("and", null, true, "", "");
-	IBinaryOperation COMPOR = new ComparisonOperation("or", null, true, "", "");
-	IBinaryOperation COMPEQ = new ComparisonOperation("==", "eq", true, "", "o");
-	IBinaryOperation COMPNE = new ComparisonOperation("!=", "ne", true, "", "o");
-	IBinaryOperation COMPGT = new ComparisonOperation(">", "gt", false, "s", "o");
-	IBinaryOperation COMPLT = new ComparisonOperation("<", "lt", false, "s", "o");
-	IBinaryOperation COMPLE = new ComparisonOperation("<=", "le", false, "s", "o");
-	IBinaryOperation COMPGE = new ComparisonOperation(">=", "ge", false, "s", "o");
+	
+	IBinaryOperation COMPAND = new BooleanComparisonBinaryOperation("and", null, false);
+	IBinaryOperation COMPOR = new BooleanComparisonBinaryOperation("or", null, false);
+	
+	IBinaryOperation COMPEQ = new ComparisonBinaryOperation("==", "eq", true, "", "o");
+	IBinaryOperation COMPNE = new ComparisonBinaryOperation("!=", "ne", true, "", "o");
+	IBinaryOperation COMPGT = new ComparisonBinaryOperation(">", "gt", false, "s", "o");
+	IBinaryOperation COMPLT = new ComparisonBinaryOperation("<", "lt", false, "s", "o");
+	IBinaryOperation COMPLE = new ComparisonBinaryOperation("<=", "le", false, "s", "o");
+	IBinaryOperation COMPGE = new ComparisonBinaryOperation(">=", "ge", false, "s", "o");
 	
 	IUnaryOperation CAST = new CastOperation("<cast>");
 	

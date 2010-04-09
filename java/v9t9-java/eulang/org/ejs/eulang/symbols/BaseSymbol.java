@@ -182,9 +182,13 @@ public abstract class BaseSymbol implements ISymbol {
 	 */
 	@Override
 	public String getLLVMName() {
-		String prefix = "@";
-		if (getScope() instanceof LocalScope)
-			prefix = "%";
+		String prefix = getLLVMPrefix();
 		return prefix + getName().replaceAll("@", "\\$");
+	}
+	/**
+	 * @return
+	 */
+	protected String getLLVMPrefix() {
+		return "";
 	}
 }

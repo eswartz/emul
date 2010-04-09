@@ -3,6 +3,9 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
@@ -17,6 +20,7 @@ import org.ejs.eulang.symbols.IScope;
 public class AstModule extends AstScope implements IAstModule {
 
 	private IAstNodeList<IAstStmt> stmtList;
+	private Map<String, String> nonFileText = new HashMap<String, String>();
 	/**
 	 * 
 	 */
@@ -78,5 +82,13 @@ public class AstModule extends AstScope implements IAstModule {
 		if (existing == stmtList) {
 			this.stmtList = (IAstNodeList<IAstStmt>) reparent(this.stmtList, another);
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstModule#getNonFileText()
+	 */
+	@Override
+	public Map<String, String> getNonFileText() {
+		return nonFileText;
 	}
 }

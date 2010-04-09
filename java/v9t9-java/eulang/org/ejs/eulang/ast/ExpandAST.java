@@ -3,27 +3,21 @@
  */
 package org.ejs.eulang.ast;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
-import org.ejs.eulang.ast.impl.AstAssignStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
-import org.ejs.eulang.ast.impl.AstGotoStmt;
-import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
-import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs

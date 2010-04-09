@@ -7,24 +7,14 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.symbols.ISymbol;
-
-import v9t9.tools.asm.common.Block;
-import v9t9.tools.asm.common.HighLevelInstruction;
 
 /**
  * @author ejs
  *
  */
 public class LLBlock {
-
-
-	static int nextId;
-	
-	private int id;
-
 	private ISymbol label;
 	private List<LLInstr> instrs = new LinkedList<LLInstr>(); 
     
@@ -34,8 +24,6 @@ public class LLBlock {
     public static final int fVisited = 1;
     static final int fInsideInstruction = 2;
     
-    private int flags;
-
     /**
      * Create a block
      * @param symbol 
@@ -43,7 +31,6 @@ public class LLBlock {
      */
     public LLBlock(ISymbol symbol) {
     	setLabel(symbol);
-    	this.id = nextId++;
         succ = new ArrayList<LLBlock>(2);
         pred = new ArrayList<LLBlock>(2);
     }

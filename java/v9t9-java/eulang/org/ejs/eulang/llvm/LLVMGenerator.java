@@ -3,18 +3,27 @@
  */
 package org.ejs.eulang.llvm;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstAllocTupleStmt;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstAssignTupleStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
@@ -32,11 +41,12 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstTupleExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.impl.ComparisonOperation;
+import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
@@ -46,14 +56,19 @@ import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr;
+import org.ejs.eulang.llvm.instrs.LLExtractValueInstr;
+import org.ejs.eulang.llvm.instrs.LLInsertValueInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInst;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
@@ -81,7 +96,30 @@ public class LLVMGenerator {
 		this.target = target;
 		
 		messages = new ArrayList<Message>();
-		varStorage = new LLVariableStorage(typeEngine);
+		varStorage = new LLVariableStorage();
+	}
+	
+	private Map<String, String[]> fileText = new HashMap<String, String[]>();
+	
+	protected String getSource(ISourceRef ref) {
+		if (ref == null || ref.getFile() == null) return "";
+		
+		String[] fileC = fileText.get(ref.getFile());
+		if (fileC == null) {
+			try {
+				File file = new File(ref.getFile());
+				FileInputStream fis = new FileInputStream(file);
+				byte[] text = new byte[(int) file.length()];
+				fis.read(text);
+				String fileT = new String(text);
+				fileText.put(ref.getFile(), fileT.split("\n"));
+			} catch (IOException e) {
+				return "";
+			}
+		}
+		
+		int offset = Math.max(1, ref.getLine());
+		return fileC[offset-1].substring(ref.getColumn());
 	}
 	
 	/**
@@ -121,15 +159,19 @@ public class LLVMGenerator {
 		for (IAstNode kid : node.getChildren()) {
 			ensureTypes(kid);
 		}
+		
 	}
 
 	public void generate(IAstModule module) {
+		for (Map.Entry<String, String> nfEnt : module.getNonFileText().entrySet())
+			fileText.put(nfEnt.getKey(), nfEnt.getValue().split("\n"));
+		
 		this.ll = new LLModule(module.getOwnerScope());
 
 		currentTarget = null;
 		
-		ll.add(new LLTargetDataTypeDirective(typeEngine));
-		ll.add(new LLTargetTripleDirective(target));
+		ll.addModuleDirective(new LLTargetDataTypeDirective(typeEngine));
+		ll.addModuleDirective(new LLTargetTripleDirective(target));
 		
 		for (IAstStmt stmt : module.getStmtList().list()) {
 			// TODO: rules for module scopes, exports, visibility... right now we export everything
@@ -144,6 +186,12 @@ public class LLVMGenerator {
 			} catch (ASTException e) {
 				messages.add(new Message(e.getNode().getSourceRef(), e.getMessage())); 
 			}
+		}
+		
+
+		for (LLType type : typeEngine.getTypes()) {
+			if (type.getLLVMName() != null)
+				ll.addExternType(type);
 		}
 	}
 
@@ -210,12 +258,14 @@ public class LLVMGenerator {
 			if (argumentTypes[i].isVar())
 				argType = typeEngine.getPointerType(argType);
 			LLAttrs attrs = null; //new LLAttrs("noalias");
+			// /*ISymbol typeSymbol =*/ ll.addExternType(argumentTypes[i].getType());
 			attrTypes[i] = new LLArgAttrType(argumentTypes[i].getName(),  attrs, argType);
 		}
 		return attrTypes;
 	}
 
 	private LLAttrType getRetAttrType(IAstType returnType) {
+		// /*ISymbol typeSymbol =*/ ll.addExternType(returnType.getType());
 		return new LLAttrType(null, returnType.getType());
 	}
 	/**
@@ -337,17 +387,24 @@ public class LLVMGenerator {
 	}
 
 	private LLOperand generateStmt( IAstStmt stmt) throws ASTException {
+		
 		LLOperand result = null;
 		if (stmt instanceof IAstExprStmt) {
 			result = generateExprStmt((IAstExprStmt) stmt);
 		} else if (stmt instanceof IAstAllocStmt) {
 			result = generateLocalAllocStmt((IAstAllocStmt) stmt);
+		} else if (stmt instanceof IAstAllocTupleStmt) {
+			result = generateLocalAllocTupleStmt((IAstAllocTupleStmt) stmt);
 		} else if (stmt instanceof IAstAssignStmt) {
 			result = generateAssignStmt((IAstAssignStmt) stmt);
+		} else if (stmt instanceof IAstAssignTupleStmt) {
+			result = generateAssignTupleStmt((IAstAssignTupleStmt) stmt);
 		} else if (stmt instanceof IAstBlockStmt) {
 			result = generateStmtList(((IAstBlockStmt) stmt).stmts());
 		} else if (stmt instanceof IAstDefineStmt) {
 			// ignore
+		} else {
+			unhandled(stmt);
 		}
 		return result;
 	}
@@ -356,6 +413,7 @@ public class LLVMGenerator {
 			IAstAssignStmt stmt) throws ASTException {
 		return generateAssign(stmt.getType(), stmt.getSymbol(), stmt.getExpr());
 	}
+	
 
 	private LLOperand generateLocalAllocStmt(
 			IAstAllocStmt stmt) throws ASTException {
@@ -376,6 +434,25 @@ public class LLVMGenerator {
 		return ret;
 	}
 
+	private LLOperand generateLocalAllocTupleStmt(
+			IAstAllocTupleStmt stmt) throws ASTException {
+
+		LLOperand value = generateTypedExpr(stmt.getExpr());
+		
+		IAstNodeList<IAstSymbolExpr> syms = stmt.getSymbols().elements();
+		
+		for (int idx = 0; idx < syms.nodeCount(); idx++) {
+			IAstSymbolExpr sym = syms.list().get(idx);
+			
+			LLOperand val = currentTarget.newTemp(sym.getType());
+			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, new LLConstOp(idx)));
+			
+			makeLocalStorage(sym.getSymbol(), false, val);
+		}
+		return value;
+	}
+	
+	
 	private LLOperand generateAssign( LLType type,
 			IAstSymbolExpr symbolExpr, IAstTypedExpr expr) throws ASTException {
 		LLOperand value = generateTypedExpr(expr);
@@ -412,6 +489,7 @@ public class LLVMGenerator {
 	}
 
 	private LLOperand generateTypedExpr( IAstTypedExpr expr) throws ASTException {
+		//currentTarget.emit(new LLCommentInstr(getSource(expr.getSourceRef())));
 		LLOperand temp;
 		if (expr instanceof IAstExprStmt) 
 			temp = generateExprStmt((IAstExprStmt) expr);
@@ -429,6 +507,8 @@ public class LLVMGenerator {
 			temp = generateBinExpr((IAstBinExpr) expr);
 		else if (expr instanceof IAstCondList)
 			temp = generateCondList((IAstCondList) expr);
+		else if (expr instanceof IAstTupleExpr)
+			temp = generateTupleExpr((IAstTupleExpr) expr);
 		else {
 			unhandled(expr);
 			return null;
@@ -439,10 +519,51 @@ public class LLVMGenerator {
 	}
 
 	/**
-	 * @param expr
+	 * A tuple is an unnamed type.  We just fill in all the pieces.
+	 * @param tuple
 	 * @return
-	 * @throws ASTException 
+	 * @throws ASTException
 	 */
+	private LLOperand generateTupleExpr(IAstTupleExpr tuple) throws ASTException {
+		
+		//ISymbol tupleSym = currentTarget.newTempSymbol();
+		//tupleSym.setType(tuple.getType());
+		//LLVariableOp ret = makeLocalStorage(tupleSym, false, null);
+		
+		LLOperand ret = new LLUndefOp();
+		for (int idx = 0; idx < tuple.elements().nodeCount(); idx++) {
+			IAstTypedExpr expr = tuple.elements().list().get(idx);
+			LLOperand el = generateTypedExpr(expr);
+			
+			LLOperand tmp = currentTarget.newTemp(tuple.getType()); 
+			currentTarget.emit(new LLInsertValueInstr(tmp, tuple.getType(), ret,
+					expr.getType(), el, idx));
+			ret = tmp;
+		}
+		
+		return ret;
+	}
+
+	private LLOperand generateAssignTupleStmt(
+			IAstAssignTupleStmt stmt) throws ASTException {
+
+		LLOperand value = generateTypedExpr(stmt.getExpr());
+		
+		IAstNodeList<IAstSymbolExpr> syms = stmt.getSymbols().elements();
+		
+		for (int idx = 0; idx < syms.nodeCount(); idx++) {
+			IAstSymbolExpr sym = syms.list().get(idx);
+			
+			LLOperand val = currentTarget.newTemp(sym.getType());
+			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, new LLConstOp(idx)));
+			
+			LLOperand var = generateSymbolExpr(sym);
+			//makeLocalStorage(sym.getSymbol(), false, val);
+			currentTarget.store(sym.getType(), val, var);
+		}
+		return value;
+	}
+	
 	private LLOperand generateCondList(IAstCondList condList) throws ASTException {
 		IScope scope = condList.getOwnerScope();
 		ISymbol retvalSym = scope.addTemporary("cond");
@@ -464,7 +585,10 @@ public class LLVMGenerator {
 				LLOperand test = generateTypedExpr(expr.getTest());
 				resultLabel = scope.addTemporary("cb");
 				nextTest = scope.addTemporary("ct");
-				currentTarget.emit(new LLBranchInstr(expr.getTest().getType(), test, new LLSymbolOp(resultLabel), new LLSymbolOp(nextTest)));
+				currentTarget.emit(new LLBranchInstr(
+						//expr.getTest().getType(),
+						typeEngine.LLBOOL,
+						test, new LLSymbolOp(resultLabel), new LLSymbolOp(nextTest)));
 			} else {
 				// last test is always true
 				resultLabel = nextTest;
@@ -489,7 +613,7 @@ public class LLVMGenerator {
 		
 		return retTemp;
 	}
-
+	
 	private LLOperand generateUnaryExpr(IAstUnaryExpr expr) throws ASTException {
 		LLOperand ret;
 		LLOperand op = generateTypedExpr(expr.getExpr());
@@ -500,7 +624,7 @@ public class LLVMGenerator {
 			if (expr.getOp() == IOperation.NEG) {
 				// result = sub 0, val
 				ret = currentTarget.newTemp(expr.getType());
-				currentTarget.emit(new LLBinaryInstr("sub", IOperation.SUB, ret, expr.getType(), new LLConstOp(0), op));
+				currentTarget.emit(new LLBinaryInstr("sub", ret, expr.getType(), new LLConstOp(0), op));
 			} else if (expr.getOp() == IOperation.CAST) {
 				ret = generateCast(expr, op);
 			} else {
@@ -551,32 +675,160 @@ public class LLVMGenerator {
 		if (origType.equals(type)) {
 			// good
 		} else {
-			unhandled(expr);
+			ECast cast = null;
+			if ((origType.getBasicType() == BasicType.INTEGRAL || origType.getBasicType() == BasicType.BOOL) 
+					&& type.getBasicType() == BasicType.INTEGRAL || type.getBasicType() == BasicType.BOOL) {
+				if (origType.getBits() > type.getBits()) {
+					cast = ECast.TRUNC;
+				}
+				else if (origType.getBits() < type.getBits()) {
+					// TODO: signedness
+					cast = ECast.SEXT;
+				} 
+				else {
+					cast = ECast.BITCAST;
+				}
+			} 
+			else if ((origType.getBasicType() == BasicType.INTEGRAL || origType.getBasicType() == BasicType.BOOL)
+					&& type.getBasicType() == BasicType.FLOATING) {
+				// TODO: signedness
+				cast = ECast.SITOFP;
+			}
+			else if (origType.getBasicType() == BasicType.FLOATING
+					&& (type.getBasicType() == BasicType.INTEGRAL || type.getBasicType() == BasicType.BOOL)) {
+				// TODO: signedness
+				cast = ECast.FPTOSI;
+			}
+			else 
+				unhandled(expr);
+			
+			LLOperand temp = currentTarget.newTemp(type);
+			currentTarget.emit(new LLCastInstr(temp, cast, origType, value, type));
+			
+			value = temp;
 		}
 		
 		return value;
 	}
 
 	private LLOperand generateBinExpr(IAstBinExpr expr) throws ASTException {
+		IBinaryOperation op = expr.getOp();
+
+		if (op == IOperation.COMPAND) {
+			return generateShortCircuitAnd(expr);
+		} else if (op == IOperation.COMPOR) {
+			return generateShortCircuitOr(expr);
+		}
+		
 		LLOperand left = generateTypedExpr(expr.getLeft());
 		LLOperand right = generateTypedExpr(expr.getRight());
 		
 		LLOperand ret = currentTarget.newTemp(expr.getType());
-		String instr = expr.getOp().getLLVMName();
+		String instr = op.getLLVMName();
 		if (instr != null) {
-			if (expr.getOp() instanceof ComparisonOperation) {
+			if (op instanceof ComparisonBinaryOperation) {
 				if (expr.getLeft().getType().getBasicType() == BasicType.FLOATING)
-					instr = "fcmp " + ((ComparisonOperation) expr.getOp()).getLLFloatPrefix()  + instr;
+					instr = "fcmp " + ((ComparisonBinaryOperation) op).getLLFloatPrefix()  + instr;
 				else
-					instr = "icmp " + ((ComparisonOperation) expr.getOp()).getLLIntPrefix() + instr;
+					instr = "icmp " + ((ComparisonBinaryOperation) op).getLLIntPrefix() + instr;
 			}
-			currentTarget.emit(new LLBinaryInstr(instr, expr.getOp(), ret, expr.getLeft().getType(), left, right));
+			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
 		} else {
 			unhandled(expr);
 		}
 		return ret;
 	}
 
+	private LLOperand generateShortCircuitAnd(IAstBinExpr expr) throws ASTException {
+		IBinaryOperation op = expr.getOp();
+		assert op == IOperation.COMPAND;
+		
+		IScope scope = expr.getOwnerScope();
+		
+		// get a var for the outcome
+		ISymbol boolResultSym = scope.addTemporary("and");
+		LLOperand retval = new LLSymbolOp(boolResultSym);
+		currentTarget.emit(new LLAllocaInstr(retval, expr.getType()));
+
+		ISymbol rhsLabel, outLabel;
+
+		///
+		
+		// calculate the left side and save that
+		LLOperand left = generateTypedExpr(expr.getLeft());
+		currentTarget.store(expr.getType(), left, retval);
+		
+		rhsLabel = scope.addTemporary("rhsOut");
+		outLabel = scope.addTemporary("andOut");
+		
+		// if it was false, done
+		currentTarget.emit(new LLBranchInstr(
+				expr.getLeft().getType(),
+				//typeEngine.LLBOOL,
+				left, new LLSymbolOp(rhsLabel), new LLSymbolOp(outLabel)));
+		
+		//
+		
+		// else, calculate rhs and overwrite the result with that
+		currentTarget.addBlock(rhsLabel);
+		
+		LLOperand right = generateTypedExpr(expr.getRight());
+		
+		currentTarget.store(expr.getRight().getType(), right, retval);
+		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(outLabel)));
+		
+		currentTarget.addBlock(outLabel);
+			
+		LLOperand retTemp = currentTarget.newTemp(expr.getType());
+		currentTarget.emit(new LLLoadInstr(retTemp, expr.getType(), retval));
+		
+		return retTemp;
+	}
+	
+	private LLOperand generateShortCircuitOr(IAstBinExpr expr) throws ASTException {
+		IBinaryOperation op = expr.getOp();
+		assert op == IOperation.COMPOR;
+		
+		IScope scope = expr.getOwnerScope();
+		
+		// get result holder
+		ISymbol boolResultSym = scope.addTemporary("or");
+		LLOperand retval = new LLSymbolOp(boolResultSym);
+		currentTarget.emit(new LLAllocaInstr(retval, expr.getType()));
+
+		ISymbol rhsLabel, outLabel;
+
+		///
+		
+		// calculate lhs
+		LLOperand left = generateTypedExpr(expr.getLeft());
+		currentTarget.store(expr.getType(), left, retval);
+		
+		// if it was true, done
+		rhsLabel = scope.addTemporary("rhsOut");
+		outLabel = scope.addTemporary("andOut");
+		currentTarget.emit(new LLBranchInstr(
+				expr.getLeft().getType(),
+				//typeEngine.LLBOOL,
+				left, new LLSymbolOp(outLabel), new LLSymbolOp(rhsLabel)));
+		
+		//
+		
+		// else, see if the rhs is true
+		currentTarget.addBlock(rhsLabel);
+		
+		LLOperand right = generateTypedExpr(expr.getRight());
+		
+		currentTarget.store(expr.getRight().getType(), right, retval);
+		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(outLabel)));
+		
+		currentTarget.addBlock(outLabel);
+			
+		LLOperand retTemp = currentTarget.newTemp(expr.getType());
+		currentTarget.emit(new LLLoadInstr(retTemp, expr.getType(), retval));
+		
+		return retTemp;
+	}
 	/**
 	 * @param define
 	 * @param expr
@@ -628,7 +880,11 @@ public class LLVMGenerator {
 	}
 
 	private LLOperand generateLitExpr( IAstLitExpr expr) throws ASTException {
-		return new LLConstOp((Number) expr.getObject());
+		Object object = expr.getObject();
+		if (object instanceof Boolean)
+			return new LLConstOp(Boolean.TRUE.equals(object) ? 1 : 0);
+		else
+			return new LLConstOp((Number) object);
 			
 	}
 

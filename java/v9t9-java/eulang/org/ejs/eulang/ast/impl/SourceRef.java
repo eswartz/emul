@@ -13,15 +13,17 @@ public class SourceRef implements ISourceRef {
 	private final String file;
 	private final int line;
 	private final int column;
-	private final int offs;
 	private final int length;
+	private final int endLine;
+	private final int endColumn;
 
-	public SourceRef(String file, int offs, int length, int line, int column) {
+	public SourceRef(String file, int length, int line, int column, int endLine, int endColumn) {
 		this.file = file;
-		this.offs = offs;
 		this.length = length;
-		this.line = line;
+		this.line = Math.max(1, line);
 		this.column = column;
+		this.endLine = Math.max(1, endLine);
+		this.endColumn = endColumn;
 		
 	}
 	
@@ -30,7 +32,7 @@ public class SourceRef implements ISourceRef {
 	 */
 	@Override
 	public String toString() {
-		return file + ":" + line + ":" +column;
+		return file + ":" + line + ":" +column + " [" +getLength() + "]";
 	}
 	
 	/* (non-Javadoc)
@@ -58,18 +60,37 @@ public class SourceRef implements ISourceRef {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.ISourceRef#getOffset()
-	 */
-	@Override
-	public int getOffset() {
-		return offs;
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.ISourceRef#getLength()
 	 */
 	@Override
 	public int getLength() {
 		return length;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ISourceRef#getEndColumn()
+	 */
+	@Override
+	public int getEndColumn() {
+		return endColumn;
+	}
+	
+	public int getEndLine() {
+		return endLine;
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ISourceRef#contains(org.ejs.eulang.ISourceRef)
+	 */
+	@Override
+	public boolean contains(ISourceRef sourceRef) {
+		return getFile().equals(sourceRef.getFile())
+		&& (getLine() < sourceRef.getLine()
+		|| (getLine() == sourceRef.getLine())
+			&& getColumn() <= sourceRef.getColumn())
+		&& (getEndLine() > sourceRef.getEndLine()
+			|| getEndLine() >= sourceRef.getEndLine()
+			&& getEndColumn() >= sourceRef.getEndColumn());
 	}
 }

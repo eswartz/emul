@@ -239,9 +239,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 			return false;
 		
 		IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();
-		types.left = left.getType();
-		types.right = right.getType();
-		types.result = getType();
+		types.left = typeEngine.getBaseType(left.getType());
+		types.right = typeEngine.getBaseType(right.getType());
+		types.result = typeEngine.getBaseType(getType());
 		oper.inferTypes(typeEngine, types);
 		
 		if (updateType(left, types.left) | updateType(right, types.right) | updateType(this, types.result)) {

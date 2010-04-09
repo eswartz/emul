@@ -124,8 +124,8 @@ public class AstUnaryExpr extends AstTypedExpr implements
     public boolean inferTypeFromChildren(TypeEngine typeEngine)
     		throws TypeException {
     	IUnaryOperation.OpTypes types = new IUnaryOperation.OpTypes();
-    	types.expr = expr.getType();
-    	types.result = getType();
+    	types.expr = typeEngine.getBaseType(expr.getType());
+    	types.result = typeEngine.getBaseType(getType());
     	op.inferTypes(typeEngine, types);
     	return updateType(expr, types.expr) | updateType(this, types.result);
     }

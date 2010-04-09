@@ -25,7 +25,7 @@ public class LLLoadInstr extends LLAssignInstr {
 	 */
 	@Override
 	protected void appendOptionString(StringBuilder sb) {
-		sb.append(getType()).append("* ");
+		sb.append(getType().getLLVMName()).append("* ");
 		//sb.append(getType());
 	}
 	/* (non-Javadoc)

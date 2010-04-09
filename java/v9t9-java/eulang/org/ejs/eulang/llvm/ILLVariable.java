@@ -1,8 +1,6 @@
 package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.ops.LLSymbolOp;
-import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.ISymbol;
 
 /** 

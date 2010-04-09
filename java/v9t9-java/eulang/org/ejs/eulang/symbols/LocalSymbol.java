@@ -27,4 +27,12 @@ public class LocalSymbol extends BaseSymbol {
 	public LocalSymbol newInstance() {
 		return new LocalSymbol(getNumber(), getName(), false, null, getDefinition(), isAddressed());
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.BaseSymbol#getLLVMPrefix()
+	 */
+	@Override
+	protected String getLLVMPrefix() {
+		return "%";
+	}
 }

@@ -27,7 +27,7 @@ public class LLStoreInstr extends LLTypedInstr {
 	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
 		if (idx == 1)
 			//sb.append(getType()).append(' ').append(op); 
-			sb.append(getType() + "* ").append(op); 
+			sb.append(getType().getLLVMName() + "* ").append(op); 
 		else
 			super.appendOperandString(sb, idx, op);
 	}

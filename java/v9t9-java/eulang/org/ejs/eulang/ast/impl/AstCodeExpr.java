@@ -3,10 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArgDef;
@@ -14,7 +10,6 @@ import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
-import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
@@ -118,6 +113,14 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		// TODO Auto-generated method stub
+		super.setType(type);
+	}
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
@@ -132,31 +135,22 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			int argIdx = 0;
 			
 			for (IAstArgDef arg : proto.argumentTypes()) {
-				if (!canInferTypeFrom(arg))
-					return false;
-				infArgTypes[argIdx] = arg.getType();
+				if (canInferTypeFrom(arg))
+					infArgTypes[argIdx] = arg.getType();
 				argIdx++;
 			}
 			
 			LLType infRetType = proto.returnType().getType();
 			if (infRetType == null || !infRetType.isComplete()) {
 				// see what the return statements do
-				infRetType = typeEngine.VOID;
 				IAstStmt returns = stmts.getLast();
 				if (returns instanceof ITyped) {
 					if (canInferTypeFrom((ITyped) returns)) {
 						infRetType = ((ITyped)returns).getType(); 
 					}
+				} else {
+					infRetType = typeEngine.VOID;
 				}
-				/*
-				for (IAstTypedExpr returns : getReturnStmts()) {
-					if (returns.getExpr() == null) {
-						infRetType = typeEngine.VOID;
-					} else 
-					if (canInferTypeFrom(returns)) {
-						infRetType = returns.getType();		// take last  TODO: get common 
-					}
-				}*/
 			}
 			
 			newType = typeEngine.getCodeType(infRetType, infArgTypes);
@@ -174,37 +168,10 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 				changed = true;
 			}
 		}
-		/*
-		for (IAstTypedExpr returns : getReturnStmts()) {
-			if (returns.getExpr() == null && returns.getType() == null) {
-				returns.setType(newType.getRetType());
-				changed = true;
-			}
-			else if (canReplaceType(returns)) {
-				returns.setType(newType.getRetType());
-				changed = true;
-			}
-		}*/
 		
 		changed |= updateType(this, newType);
 		
 		return changed;
 	}
-	
-	/**
-	 * @return
-	 */
-	private List<IAstReturnStmt> getReturnStmts() {
-		List<IAstReturnStmt> list = null;
-		for (IAstStmt node : stmts.getNodes(IAstStmt.class)) {
-			if (node instanceof IAstReturnStmt) {
-				if (list == null)
-					list = new ArrayList<IAstReturnStmt>();
-				list.add((IAstReturnStmt) node);
-			}
-		}
-		return list != null ? list : Collections.<IAstReturnStmt> emptyList();
-	}
-
 
 }

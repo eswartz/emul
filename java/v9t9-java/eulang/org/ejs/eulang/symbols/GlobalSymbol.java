@@ -27,5 +27,14 @@ public class GlobalSymbol extends BaseSymbol {
 	public GlobalSymbol newInstance() {
 		return new GlobalSymbol(getNumber(), getName(), false, null, getDefinition(), isAddressed());
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.BaseSymbol#getLLVMPrefix()
+	 */
+	@Override
+	protected String getLLVMPrefix() {
+		return "@";
+	}
+	
 
 }

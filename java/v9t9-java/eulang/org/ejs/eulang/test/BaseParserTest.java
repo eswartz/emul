@@ -13,8 +13,10 @@ import static junit.framework.Assert.fail;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.antlr.runtime.ANTLRStringStream;
@@ -30,6 +32,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.ExpandAST;
 import org.ejs.eulang.ast.GenerateAST;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
@@ -135,7 +138,7 @@ public class BaseParserTest {
 		parse(method, str, false);
 	}
 
-	protected TypeEngine typeEngine;
+	protected TypeEngine typeEngine = new TypeEngine();
 	protected boolean dumpSimplify;
 	protected boolean dumpTreeize;
 	protected boolean dumpTypeInfer;
@@ -150,14 +153,17 @@ public class BaseParserTest {
     	if (tree == null)
     		return null;
     	
-    	GenerateAST gen = new GenerateAST("<string>", Collections.<CharStream, String>emptyMap());
     	
-    	typeEngine = gen.getTypeEngine();
+    	Map<CharStream, String> fileMap = new HashMap<CharStream, String>();
+		String mainFileName = "<string>";
+		GenerateAST gen = new GenerateAST(typeEngine, mainFileName, fileMap);
+    	
     	IAstNode node = null;
     		
-    	if(method == null)
+    	if(method == null) {
         	node = gen.constructModule(tree);
-    	else {
+        	((IAstModule) node).getNonFileText().put(mainFileName, str);
+    	} else {
     		try {
 				node = (IAstNode) gen.getClass().getMethod(method).invoke(tree);
 			} catch (Exception e) {
@@ -222,6 +228,8 @@ public class BaseParserTest {
     			assertEquals(((IAstScope)node).getScope(), ((IAstScope) kid).getScope().getOwner());
     		}
     		doSanityTest(kid);
+    		
+    		//assertTrue("source containment " + kid+"", node.getSourceRef().contains(kid.getSourceRef()));
     	}
     	
     }
@@ -301,12 +309,15 @@ public class BaseParserTest {
 	}
 	
 	protected void typeTest(IAstNode node, boolean allowUnknown) {
-		if (!allowUnknown && node instanceof IAstTypedNode)
-			assertNotNull("No type: " +node.toString(), ((IAstTypedNode) node).getType());
+		if (!allowUnknown && node instanceof IAstTypedNode) {
+			if (!(node instanceof IAstDefineStmt) && !(node.getParent() instanceof IAstDefineStmt)) {
+				assertNotNull("No type: " +node.toString(), ((IAstTypedNode) node).getType());
+				assertTrue("Unresolved type: " +node.toString(), ((IAstTypedNode) node).getType().isComplete());
+			}
+		}
 		for (IAstNode kid : node.getChildren()) {
 			assertNotNull(node.toString(), kid);
-			if (kid instanceof ITyped)
-				typeTest((IAstTypedNode) kid, allowUnknown);
+			typeTest(kid, allowUnknown);
 		}
 	}
  

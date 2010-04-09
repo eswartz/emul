@@ -5,15 +5,14 @@ package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
-import org.ejs.eulang.llvm.instrs.LLIntToPtrInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
-import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -94,7 +93,7 @@ public class LLVarArgument implements ILLVariable {
 		if (address == null) {
 			LLOperand nullTemp = target.newTemp(addrSymbol.getType().getSubType());
 			address = new LLConstOp(0);
-			target.emit(new LLIntToPtrInstr(nullTemp, target.getTarget().getTypeEngine().INT, address,
+			target.emit(new LLCastInstr(nullTemp, ECast.PTRTOINT, target.getTarget().getTypeEngine().INT, address,
 					addrSymbol.getType().getSubType()));
 			address = nullTemp;
 		}

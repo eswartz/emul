@@ -5,10 +5,11 @@ package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
-import org.ejs.eulang.llvm.instrs.LLIntToPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
@@ -38,6 +39,7 @@ import org.ejs.eulang.types.LLType;
 public class LLRefLocalVariable implements ILLVariable {
 	private ISymbol objRefSymbol;
 	private final ISymbol symbol;
+	private LLType symbolValueType;
 	private LLType symbolPtrType;
 	private LLIntType intType;
 
@@ -48,8 +50,11 @@ public class LLRefLocalVariable implements ILLVariable {
 	public LLRefLocalVariable(ISymbol symbol, TypeEngine typeEngine) {
 		this.symbol = symbol;
 		
-		this.symbolPtrType = typeEngine.getPointerType(symbol.getType().getSubType());
-		this.intType = new LLIntType(32);
+		symbolValueType = symbol.getType().getSubType();
+		
+		this.symbolPtrType = typeEngine.getPointerType(symbolValueType);
+		this.intType = new LLIntType(null, 32);
+		typeEngine.register(intType);
 		
 		// the pointer to the object entry through the symbol
 		LLType objRefStorage = typeEngine.getPointerType(symbol.getType());
@@ -107,17 +112,17 @@ public class LLRefLocalVariable implements ILLVariable {
 	@Override
 	public void allocate(ILLCodeTarget target, LLOperand address) {
 		LLSymbolOp tempOp = new LLSymbolOp(objRefSymbol);
-		target.emit(new LLAllocaInstr(tempOp, objRefSymbol.getType().getSubType()));
+		target.emit(new LLAllocaInstr(tempOp, symbol.getType()));
 		if (address == null) {
-			LLOperand nullTemp = target.newTemp(objRefSymbol.getType().getSubType());
+			LLOperand nullTemp = target.newTemp(symbol.getType());
 			address = new LLConstOp(0);
-			target.emit(new LLIntToPtrInstr(nullTemp, target.getTarget().getTypeEngine().INT, address,
-					objRefSymbol.getType().getSubType()));
+			target.emit(new LLCastInstr(nullTemp, ECast.PTRTOINT, target.getTarget().getTypeEngine().INT, address,
+					symbol.getType()));
 			address = nullTemp;
 		}
-		target.emit(new LLStoreInstr(objRefSymbol.getType().getSubType(), address, tempOp));
+		target.emit(new LLStoreInstr(symbol.getType(), address, tempOp));
 		if (!(address instanceof LLConstOp)) {
-			target.getTarget().incRef(target, objRefSymbol.getType().getSubType(), address);
+			target.getTarget().incRef(target, symbol.getType(), address);
 		}
 	}
 
@@ -127,8 +132,8 @@ public class LLRefLocalVariable implements ILLVariable {
 	@Override
 	public void deallocate(ILLCodeTarget target) {
 		LLOperand value = target.newTemp(objRefSymbol.getType());
-		target.emit(new LLLoadInstr(value, objRefSymbol.getType().getSubType(), new LLSymbolOp(objRefSymbol)));
-		target.getTarget().decRef(target, objRefSymbol.getType().getSubType(), value);
+		target.emit(new LLLoadInstr(value, symbol.getType(), new LLSymbolOp(objRefSymbol)));
+		target.getTarget().decRef(target, symbol.getType(), value);
 	}
 
 	/* (non-Javadoc)
@@ -147,8 +152,8 @@ public class LLRefLocalVariable implements ILLVariable {
 		LLOperand addr = address(target);
 		
 		// now, read through it to get the value
-		LLOperand valTemp = target.newTemp(symbol.getType().getSubType());
-		target.emit(new LLLoadInstr(valTemp, symbol.getType().getSubType(), addr));
+		LLOperand valTemp = target.newTemp(symbolValueType);
+		target.emit(new LLLoadInstr(valTemp, symbolValueType, addr));
 		return valTemp;
 	}
 
@@ -158,7 +163,7 @@ public class LLRefLocalVariable implements ILLVariable {
 	@Override
 	public void store(ILLCodeTarget target, LLOperand value) {
 		LLOperand addr = address(target);
-		target.emit(new LLStoreInstr(symbol.getType().getSubType(), value, addr));
+		target.emit(new LLStoreInstr(symbolValueType, value, addr));
 	}
 
 	/* (non-Javadoc)
@@ -168,11 +173,11 @@ public class LLRefLocalVariable implements ILLVariable {
 	public LLOperand address(ILLCodeTarget target) {
 		// first, load the object id
 		LLOperand valueTemp = target.newTemp(objRefSymbol.getType());
-		target.emit(new LLLoadInstr(valueTemp, objRefSymbol.getType().getSubType(), new LLSymbolOp(objRefSymbol)));
+		target.emit(new LLLoadInstr(valueTemp, symbol.getType(), new LLSymbolOp(objRefSymbol)));
 		
 		// dereference to get the data ptr
-		LLOperand addrTemp = target.newTemp(objRefSymbol.getType().getSubType());
-		target.emit(new LLGetElementPtrInstr(addrTemp, objRefSymbol.getType().getSubType(), valueTemp,
+		LLOperand addrTemp = target.newTemp(symbol.getType());
+		target.emit(new LLGetElementPtrInstr(addrTemp, symbol.getType(), valueTemp,
 				new LLTypeIdxOp(intType, 0), new LLTypeIdxOp(intType, 0)));
 		
 		// now read data ptr

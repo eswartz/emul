@@ -28,7 +28,7 @@ public class TokenSourceRef implements ISourceRef {
 	 */
 	@Override
 	public String toString() {
-		return getFile() + ":" + getLine() + ":" + getColumn();
+		return getFile() + ":" + getLine() + ":" + getColumn() + " [" + getLength() + "]";
 	}
 	
 	/* (non-Javadoc)
@@ -52,15 +52,7 @@ public class TokenSourceRef implements ISourceRef {
 	 */
 	@Override
 	public int getLine() {
-		return token.getLine();
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.ISourceRef#getOffset()
-	 */
-	@Override
-	public int getOffset() {
-		return token.getCharPositionInLine();
+		return Math.max(1, token.getLine());
 	}
 	
 	/* (non-Javadoc)
@@ -71,4 +63,29 @@ public class TokenSourceRef implements ISourceRef {
 		return length;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ISourceRef#getEndColumn()
+	 */
+	@Override
+	public int getEndColumn() {
+		return getColumn() + getLength();
+	}
+	
+	public int getEndLine() {
+		return getLine();
+		
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ISourceRef#contains(org.ejs.eulang.ISourceRef)
+	 */
+	@Override
+	public boolean contains(ISourceRef sourceRef) {
+		return getFile().equals(sourceRef.getFile())
+		&& (getLine() < sourceRef.getLine()
+		|| (getLine() == sourceRef.getLine())
+			&& getColumn() <= sourceRef.getColumn())
+		&& (getEndLine() > sourceRef.getEndLine()
+			|| (getEndLine() == sourceRef.getEndLine()
+			&& getEndColumn() >= sourceRef.getEndColumn()));
+	}
 }

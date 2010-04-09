@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm;
 
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -19,6 +20,11 @@ public class LLArgAttrType extends LLAttrType {
 	 */
 	public LLArgAttrType(String name, LLAttrs attrs, LLType type) {
 		super(attrs, type);
+		this.name = name;
+	}
+	
+	public LLArgAttrType(String name, LLAttrs attrs, LLType type, ISymbol typeSymbol) {
+		super(attrs, type, typeSymbol);
 		this.name = name;
 	}
 	

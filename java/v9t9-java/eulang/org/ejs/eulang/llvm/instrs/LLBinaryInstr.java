@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.llvm.instrs;
 
-import org.ejs.eulang.IOperation;
-import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.LLType;
 
@@ -14,13 +12,11 @@ import org.ejs.eulang.types.LLType;
  */
 public class LLBinaryInstr extends LLAssignInstr {
 	
-	private final IOperation op;
 	/**
 	 * Create with ops= {ret, op1, op2}; 
 	 */
-	public LLBinaryInstr(String opName, IOperation op, LLOperand ret, LLType type, LLOperand... ops) {
+	public LLBinaryInstr(String opName, LLOperand ret, LLType type, LLOperand... ops) {
 		super(opName, ret, type, ops);
-		this.op = op;
 		if (ops.length != 2)
 			throw new IllegalArgumentException();
 	}

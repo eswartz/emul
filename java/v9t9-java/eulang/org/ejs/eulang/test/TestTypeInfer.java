@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
@@ -55,7 +56,7 @@ public class TestTypeInfer extends BaseParserTest {
 
 	 @Test 
     public void testBinOps() throws Exception {
-    	IAstModule mod = treeize("testBinOps = code { x:=(1*2/3 and 4%%45 or 5<=6>>7<<8>>>85&9^10)or(11<12)>(13<=(14-15)==(16!=17%18+19)); };");
+    	IAstModule mod = treeize("testBinOps = code { x:=(Bool(1*2/3) and Bool(4%%45 )or 5<=6>>7<<8>>>85&9^10)or(11<12)>(13<=(14-15)==(16!=17%18+19)); };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testBinOps");
@@ -402,6 +403,7 @@ public class TestTypeInfer extends BaseParserTest {
     			"};");
     	sanityTest(mod);
 
+    	doTypeInfer(mod);
     	
     	assertTrue(mod.getScope().getSymbols().length == 2);
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast2b");
@@ -619,6 +621,7 @@ public class TestTypeInfer extends BaseParserTest {
 	   	assertEquals(intRef, assn.getType());
     }
 
+    /*
     @Test
     public void testPointers2() throws Exception {
     	IAstModule mod = treeize(
@@ -688,6 +691,138 @@ public class TestTypeInfer extends BaseParserTest {
 	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) def.getExpr()).stmts().getLast();
 	   	assertEquals(typeEngine.INT, assn.getType());
 
+    }*/
+    
+
+
+	@Test
+	public void testShortCircuitAndOrRet() throws Exception {
+		// awesomeness: return propagates down
+		IAstModule mod = treeize("testShortCircuitAndOr = code (x,y,z => Int ){\n" +
+				"select [ x > y and y > z then y " +
+				"|| x > z and z > y then z" +
+				"|| y > x and x > z then x " +
+				"|| x == y or z == x then x+y+z " +
+				"|| else x-y-z ] };");
+		sanityTest(mod);
+    	
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOr");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  
+    			new LLType[] { typeEngine.INT, typeEngine.INT, typeEngine.INT }), 
+    			def.getExpr().getType());
+    	
+    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)def.getExpr()).stmts().getFirst();
+		assertEquals(typeEngine.INT, stmt1.getType());
+		assertEquals(typeEngine.INT, ((IAstCondList)stmt1.getExpr()).getType());
+	}
+	
+
+	@Test
+	public void testShortCircuitAndOrConst() throws Exception {
+		// awesomeness: lone int constant propagates up
+		IAstModule mod = treeize("testShortCircuitAndOr = code (x,y,z ){\n" +
+				"select [ x > y and y > z then y " +
+				"|| x > z and z > y then z" +
+				"|| y > x and x > z then x " +
+				"|| x == y or z == x then x+y+z " +
+				"|| else x-y-z+0 ] };");
+		sanityTest(mod);
+    	
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOr");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  
+    			new LLType[] { typeEngine.INT, typeEngine.INT, typeEngine.INT }), 
+    			def.getExpr().getType());
+    	
+    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)def.getExpr()).stmts().getFirst();
+		assertEquals(typeEngine.INT, stmt1.getType());
+		assertEquals(typeEngine.INT, ((IAstCondList)stmt1.getExpr()).getType());
+	}
+
+	@Test
+	public void testShortCircuitAndOrRef() throws Exception {
+		// be sure stray 'Int&' doesn't make everything a reference
+		IAstModule mod = treeize("testShortCircuitAndOrRef = code (x,y:Int&,z => Int){\n" +
+				"select [ x > y and y > z then y " +
+				"|| x > z and z > y then z" +
+				"|| y > x and x > z then x " +
+				"|| x == y or z == x then x+y+z " +
+				"|| else x-y-z ] };");
+		sanityTest(mod);
+    	
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOrRef");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
+    	LLType intRef = typeEngine.getRefType(typeEngine.INT);
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  
+    			new LLType[] { typeEngine.INT, intRef, typeEngine.INT }), 
+    			def.getExpr().getType());
+    	
+    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)def.getExpr()).stmts().getFirst();
+		assertEquals(typeEngine.INT, stmt1.getType());
+		assertEquals(typeEngine.INT, ((IAstCondList)stmt1.getExpr()).getType());
+	}
+	
+
+	 
+    @Test
+    public void testTuples1() throws Exception {
+    	IAstModule mod = treeize("testTuples1 = code (x,y) { (y+0,x+0); };");
+    	sanityTest(mod);
+    	
+
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples1");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
+    }
+    
+    /*
+    @Test
+    public void testTuples2() throws Exception {
+    	IAstModule mod = treeize("testTuples2 = (7, code (x,y) { (0,1); });");
+    	sanityTest(mod);
+    	
+    	doTypeInfer(mod);
+
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples2");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
+    }
+    */
+    @Test
+    public void testTuples3() throws Exception {
+    	IAstModule mod = treeize("testTuples3 = code (x,y => (Int, Int)) { (y,x); };");
+    	sanityTest(mod);
+
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples3");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
+    }
+    @Test
+    public void testTuples4() throws Exception {
+    	IAstModule mod = treeize("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
+    			"testTuples4 = code (a,b) { (a, b) = swap(4, 5); }; \n");
+    	sanityTest(mod);
+    	
+    	// module gets allocations, but not defines
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples4");
+    	doTypeInfer(def.getExpr());
+    	typeTest(mod, false);
+    	
     }
 }
 
