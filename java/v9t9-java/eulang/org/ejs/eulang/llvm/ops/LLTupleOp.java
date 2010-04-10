@@ -74,7 +74,7 @@ public class LLTupleOp implements LLOperand {
 		boolean first = true;
 		for (int idx = 0; idx < elements.length; idx++) {
 			if (first) first = false; else sb.append(", ");
-			LLType type = tupleType.getElementTypes()[idx];
+			LLType type = tupleType.getTypes()[idx];
 			sb.append(type).append(' ').append(elements[idx]);
 		}
 		sb.append("}");

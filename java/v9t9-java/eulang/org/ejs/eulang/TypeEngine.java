@@ -164,6 +164,16 @@ public class TypeEngine {
 			return a;
 		}
 		
+		if (a.getBasicType() == BasicType.GENERIC && b.getBasicType() != BasicType.GENERIC) {
+			return b;
+		}
+		if (b.getBasicType() == BasicType.GENERIC && a.getBasicType() != BasicType.GENERIC) {
+			return a;
+		}
+		if (a.getBasicType() == BasicType.GENERIC && b.getBasicType() == BasicType.GENERIC) {
+			return a.getName().compareTo(b.getName()) <= 0 ? a : b;
+		}
+		
 		// ptrs, refs, voids cannot be interconverted
 		
 		return null;

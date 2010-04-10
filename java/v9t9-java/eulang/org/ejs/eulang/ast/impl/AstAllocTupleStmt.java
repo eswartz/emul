@@ -195,9 +195,17 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		if (!inferTypesFromChildren(new ITyped[] { typeExpr, getExpr() }))
-			return false;
-		
+		boolean changed = false;
+		if (!inferTypesFromChildren(new ITyped[] { typeExpr, getExpr() })) {
+			if (getExpr() != null) {
+				if (typeExpr != null && getExpr().getType().isMoreComplete(typeExpr.getType()))
+					changed = updateType(typeExpr, getExpr().getType());
+				if (getExpr().getType().isMoreComplete(getType()))
+					changed = updateType(this, getExpr().getType());
+			}
+			if (!changed)
+				return false;
+		}
 		
 		LLType right = expr != null ? expr.getType() : null;
 		if (right != null) {
@@ -205,12 +213,12 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 				throw new TypeException("unpacking from non-tuple value");
 			}
 			
-			if (((LLTupleType) right).getElementTypes().length != syms.elements().nodeCount())
+			if (((LLTupleType) right).getTypes().length != syms.elements().nodeCount())
 				return false; // detect later
 				
 			for (int idx = 0; idx < syms.elements().nodeCount(); idx++) {
 				IAstSymbolExpr sym = syms.elements().list().get(idx);
-				updateType(sym, ((LLTupleType) right).getElementTypes()[idx]);
+				updateType(sym, ((LLTupleType) right).getTypes()[idx]);
 			}
 			updateType(this, right);
 			

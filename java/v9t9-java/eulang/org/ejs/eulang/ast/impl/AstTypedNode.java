@@ -73,12 +73,12 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
     	return child != null && (child.getType() == null || !child.getType().isComplete()); 
     }
 
-    protected boolean updateType(ITyped child, LLType newType) {
-    	if (child == null || newType == null)
+    public static boolean updateType(ITyped child, LLType newType) {
+    	if (child == null || newType == null || child.getType() == newType)
 			return false;
 		
-		if ((child.getType() == null || !child.getType().isComplete())
-				&& newType.isMoreComplete(child.getType())) {
+		if (//(child.getType() == null || !child.getType().isComplete()) &&
+				newType.isMoreComplete(child.getType())) {
 			child.setType(newType);
 			return true;
 		}
@@ -163,6 +163,14 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, child);
 		castExpr.setType(newType);
 		return castExpr;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#inferExpansion(org.ejs.eulang.ast.IAstTypedExpr)
+	 */
+	@Override
+	public LLType inferExpansion(TypeEngine typeEngine, IAstTypedExpr expr) {
+		return null;
 	}
 
 }

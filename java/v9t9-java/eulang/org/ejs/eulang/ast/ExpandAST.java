@@ -137,8 +137,8 @@ public class ExpandAST {
 		if (typedExpr != null)
 			return (IAstSymbolExpr) typedExpr;
 		
-		ISymbol codeSymbol = defineStmt.getSymbol();
-		ISymbol instSymbol = codeSymbol.getScope().addTemporary(codeSymbol.getName());
+		//ISymbol codeSymbol = defineStmt.getSymbol();
+		//ISymbol instSymbol = codeSymbol.getScope().addTemporary(codeSymbol.getName());
 		
 		IAstCodeExpr codeExpr = (IAstCodeExpr) defineStmt.getExpr();
 		IAstCodeExpr instExpr = codeExpr.copy(null);

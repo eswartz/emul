@@ -142,6 +142,14 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
+		
+		if ( symbol.getDefinition() instanceof IAstDefineStmt) {
+			IAstDefineStmt define = (IAstDefineStmt) symbol.getDefinition();
+			if (canInferTypeFrom(define.getExpr())) {
+				return updateType(this, define.getExpr().getType());
+			}
+		}
+		
 		//if (getSymbol().getDefinition() instanceof IAstTypedNode)
 		//	if ( canInferTypeFrom((IAstTypedNode) getSymbol().getDefinition()))
 		//		return updateType(symbol, (((IAstTypedNode)symbol.getDefinition()).getType()));

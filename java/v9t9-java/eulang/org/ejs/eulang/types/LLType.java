@@ -17,7 +17,8 @@ public interface LLType {
 		CODE, 
 		BOOL, 
 		REF, 
-		TUPLE
+		TUPLE,
+		GENERIC
 	};
 	
 	String toString();
@@ -51,4 +52,6 @@ public interface LLType {
 	 * @return
 	 */
 	boolean isMoreComplete(LLType type);
+	
+	boolean isGeneric();
 }

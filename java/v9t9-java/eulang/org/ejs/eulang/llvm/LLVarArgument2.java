@@ -5,11 +5,8 @@ package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
-import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.ISymbol;

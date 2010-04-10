@@ -12,7 +12,6 @@ import static junit.framework.Assert.fail;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +25,6 @@ import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
 import org.ejs.eulang.IOperation;
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
@@ -325,9 +323,9 @@ public class BaseParserTest {
 		doTypeInfer(mod, false);
 	}
 	protected void doTypeInfer(IAstNode mod, boolean expectErrors) {
-		List<Message> messages = new ArrayList<Message>();
-		TypeInference infer = new TypeInference();
-		
+		TypeInference infer = new TypeInference(typeEngine);
+		List<Message> messages = infer.getMessages();
+		/*
 		int depth = mod.getDepth();
 		
 		int passes = 0;
@@ -347,12 +345,14 @@ public class BaseParserTest {
 			}
 			
 		}
+		*/
 		
-		if (!dumpTypeInfer && (!expectErrors && messages.size() > 0)) {
+		boolean changed = infer.infer(mod);
+		if (dumpTypeInfer || (!expectErrors && messages.size() > 0)) {
 			DumpAST dump = new DumpAST(System.out);
 			mod.accept(dump);
 		}
-		System.out.println("Inference: " + passes + " passes");
+		//System.out.println("Inference: " + passes + " passes");
 		for (Message msg : messages)
 			System.err.println(msg);
 		if (!expectErrors)

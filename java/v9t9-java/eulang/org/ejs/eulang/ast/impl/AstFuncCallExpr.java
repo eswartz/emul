@@ -7,12 +7,10 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
-import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
@@ -157,28 +155,47 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		
 		if (canInferTypeFrom(actualFunction)) {
 			LLType type = actualFunction.getType();
+			
 			if (!(type instanceof LLCodeType)) {
 				throw new TypeException("calling non-function: " + type.toString());  
 			}
+
 			codeType = (LLCodeType) type;
 		} else if (canInferTypeFromArgs()) {
-			LLType[] infArgTypes = new LLType[arguments.nodeCount()];
-			int argIdx = 0;
-			
-			for (IAstTypedExpr arg : arguments.list()) {
-				if (canInferTypeFrom(arg))
-					infArgTypes[argIdx] = arg.getType();
-				argIdx++;
-			}
-			
-			LLType infRetType = null;
-			
-			codeType = typeEngine.getCodeType(infRetType, infArgTypes);
+			codeType = getArgInferredType(typeEngine);
 		} else {
 			return false;
 		}
 
 		return updateType(function, codeType) | updateType(actualFunction, codeType) | updateType(this, codeType.getRetType());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#inferExpansion(org.ejs.eulang.ast.IAstTypedExpr)
+	 */
+	@Override
+	public LLType inferExpansion(TypeEngine typeEngine, IAstTypedExpr expr) {
+		if (expr == getRealTypedNode(function)) {
+			return getArgInferredType(typeEngine);
+		}
+		return super.inferExpansion(typeEngine, expr);
+	}
+	
+	private LLCodeType getArgInferredType(TypeEngine typeEngine) {
+		LLCodeType codeType;
+		LLType[] infArgTypes = new LLType[arguments.nodeCount()];
+		int argIdx = 0;
+		
+		for (IAstTypedExpr arg : arguments.list()) {
+			if (canInferTypeFrom(arg))
+				infArgTypes[argIdx] = arg.getType();
+			argIdx++;
+		}
+		
+		LLType infRetType = getType();
+		
+		codeType = typeEngine.getCodeType(infRetType, infArgTypes);
+		return codeType;
 	}
 
 	/**
@@ -193,14 +210,17 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	}
 
 	private IAstTypedNode getRealTypedNode(IAstTypedExpr node) {
-		if (node.getType() != null)
+		if (node.getType() != null && !node.getType().isGeneric()) {
 			return node;
+		}
 		
 		if (node instanceof IAstSymbolExpr) {
 			IAstNode def = ((IAstSymbolExpr) node).getSymbol().getDefinition();
 			if (def instanceof IAstDefineStmt) {
 				// TODO: instances
-				return ((IAstDefineStmt) def).getExpr();
+				IAstDefineStmt defineStmt = (IAstDefineStmt) def;
+				IAstTypedExpr expr = defineStmt.getExpr();
+				return expr;
 			}
 			if (!(def instanceof ITyped))
 				return null;

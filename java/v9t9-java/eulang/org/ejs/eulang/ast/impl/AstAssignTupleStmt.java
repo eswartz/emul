@@ -165,14 +165,14 @@ public class AstAssignTupleStmt extends AstTypedExpr implements IAstAssignTupleS
 				throw new TypeException("unpacking from non-tuple value");
 			}
 			
-			if (((LLTupleType) right).getElementTypes().length != tuple.elements().nodeCount())
+			if (((LLTupleType) right).getTypes().length != tuple.elements().nodeCount())
 				//throw new TypeException("mismatch in tuple sizes: "
 				//		+ ((LLTupleType) right).getElementTypes().length + " !=  " + tuple.elements().nodeCount());
 				return false;
 			
 			for (int idx = 0; idx < tuple.elements().nodeCount(); idx++) {
 				IAstSymbolExpr sym = tuple.elements().list().get(idx);
-				updateType(sym, ((LLTupleType) right).getElementTypes()[idx]);
+				updateType(sym, ((LLTupleType) right).getTypes()[idx]);
 			}
 			updateType(this, right);
 		}

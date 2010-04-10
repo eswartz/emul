@@ -119,7 +119,7 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 			throws TypeException {
 		LLTupleType newType = null;
 		
-		if (getType() != null && getType().isComplete() && getType() instanceof LLTupleType) {
+		if (getType() != null && getType().isComplete() && !getType().isGeneric() && getType() instanceof LLTupleType) {
 			newType = (LLTupleType) getType();
 		} else {
 			LLType[] tupleTypes = new LLType[elements.nodeCount()];
@@ -129,9 +129,9 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 		}
 		boolean changed = false;
 		
-		if (elements.nodeCount() != newType.getElementTypes().length)
+		if (elements.nodeCount() != newType.getTypes().length)
 			throw new TypeException("mismatched sizes in tuples: " + 
-					elements.nodeCount() + " != " + newType.getElementTypes().length);
+					elements.nodeCount() + " != " + newType.getTypes().length);
 			
 		if (adaptToType(newType))
 			changed = true;
@@ -143,7 +143,7 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 	protected boolean adaptToType(LLTupleType tupleType) {
 		boolean changed = false;
 		for (int idx = 0; idx < elements.nodeCount(); idx++)
-			changed |= updateType(elements.list().get(idx), tupleType.getElementTypes()[idx]);
+			changed |= updateType(elements.list().get(idx), tupleType.getTypes()[idx]);
 		return changed;
 	}
 

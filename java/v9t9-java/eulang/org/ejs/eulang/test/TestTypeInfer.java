@@ -4,8 +4,7 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
@@ -821,7 +820,6 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples4");
     	doTypeInfer(def.getExpr());
-    	typeTest(mod, false);
     	
     }
     @Test
@@ -833,17 +831,89 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testTuples5() throws Exception {
+    	// In this case, we need to infer through the 'bop' call.
+    	// This means detecting that 'bop' is generic and making a new instance.
     	IAstModule mod = treeize("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
     			"bop = code(x,y) { y };\n"+
     			"testTuples5 = code (a,b) { (a, b) = bop(5, swap(4, 5)); }; \n");
     	sanityTest(mod);
     	
-    	// module gets allocations, but not defines
     	doTypeInfer(mod);
     	
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples5");
-    	typeTest(mod, false);
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("bop");
+    	assertEquals(1, def.expansions().size());
+    	assertTrue(def.getExpr().getType().isGeneric());
+    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    }
+    
+    @Test
+    public void testGenerics0() throws Exception {
+    	IAstModule mod = treeize("add = code (x,y) { x+y };\n" +
+    			"testGenerics0 = code (a:Int,b:Int) { add(a,b);  }; \n");
+    	sanityTest(mod);
     	
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("add");
+    	assertEquals(1, def.expansions().size());
+    	assertTrue(def.getExpr().getType().isGeneric());
+    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	
+    	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics0");
+    	assertFalse(def.getExpr().getType().isGeneric());
+
+    }
+    
+    @Test
+    public void testGenerics0b() throws Exception {
+    	IAstModule mod = treeize("add = code (x,y) { x+y };\n" +
+    			"testGenerics0b = code (a:Int,b:Int) { add(a,b) + add(10.0,b);  }; \n");
+    	sanityTest(mod);
+    	
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("add");
+    	assertEquals(2, def.expansions().size());
+    	assertTrue(def.getExpr().getType().isGeneric());
+    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	
+    	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics0b");
+    	assertFalse(def.getExpr().getType().isGeneric());
+
+    }
+    @Test
+    public void testGenerics1() throws Exception {
+    	IAstModule mod = treeize("swap = code (x,y) { (y,x); };\n" +
+    			"testGenerics1 = code (a,b) { (a, b) = swap(4, 5);  }; \n");
+    	sanityTest(mod);
+    	
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("swap");
+    	assertEquals(1, def.expansions().size());
+    	assertTrue(def.getExpr().getType().isGeneric());
+    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	
+    	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics1");
+    	assertFalse(def.getExpr().getType().isGeneric());
+
+    }
+    @Test
+    public void testGenerics2() throws Exception {
+    	IAstModule mod = treeize("swap = code (x,y) { (y,x); };\n" +
+    			"testGenerics2 = code (a,b) { (a, b) = swap(4, 5); (x, y) := swap(1.0, 9); }; \n");
+    	sanityTest(mod);
+    	
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("swap");
+    	assertEquals(2, def.expansions().size());
+    	assertTrue(def.getExpr().getType().isGeneric());
+    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	
+    	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics2");
+    	assertFalse(def.getExpr().getType().isGeneric());
+
     }
 }
 

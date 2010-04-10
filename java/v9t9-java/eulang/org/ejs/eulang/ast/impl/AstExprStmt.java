@@ -122,9 +122,9 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 		return false;*/
 		boolean changed = inferTypesFromChildren(new ITyped[] { expr });
 		if (!changed && canInferTypeFrom(this)) {
-			return updateType(expr, getType());
+			changed = updateType(expr, getType());
 		}
-		return false;
+		return changed;
 	}
 
 }

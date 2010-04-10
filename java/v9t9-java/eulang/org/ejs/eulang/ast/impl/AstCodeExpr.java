@@ -131,32 +131,26 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			throws TypeException {
 		LLCodeType newType = null;
 		
-		if (proto.getType() != null && proto.getType().isComplete()) {
-			newType = (LLCodeType) proto.getType();
-		} else {
-			LLType[] infArgTypes = new LLType[proto.getArgCount()];
-			int argIdx = 0;
-			
-			for (IAstArgDef arg : proto.argumentTypes()) {
-				if (canInferTypeFrom(arg))
-					infArgTypes[argIdx] = arg.getType();
-				argIdx++;
+		IAstStmt returns = stmts.getLast();
+		
+		LLCodeType protoType = getProtoType(typeEngine, returns);
+		
+		if (canInferTypeFrom(this) && getType().isComplete()) {
+			newType = (LLCodeType) getType();
+			if (returns instanceof ITyped 
+					&& ((ITyped) returns).getType() != null
+					&& ((ITyped) returns).getType().isMoreComplete(newType.getRetType())) {
+				LLType[] types = newType.getTypes();
+				types[0] = ((ITyped) returns).getType();
+				newType = newType.updateTypes(types);
 			}
-			
-			LLType infRetType = proto.returnType().getType();
-			if (infRetType == null || !infRetType.isComplete()) {
-				// see what the return statements do
-				IAstStmt returns = stmts.getLast();
-				if (returns instanceof ITyped) {
-					if (canInferTypeFrom((ITyped) returns)) {
-						infRetType = ((ITyped)returns).getType(); 
-					}
-				} else {
-					infRetType = typeEngine.VOID;
-				}
+		}
+		if (newType == null || protoType.isMoreComplete(newType)) {
+			/*if (proto.getType() != null && proto.getType().isComplete()) {
+				newType = (LLCodeType) proto.getType();
+			} else*/ {
+				newType = protoType;
 			}
-			
-			newType = typeEngine.getCodeType(infRetType, infArgTypes);
 		}
 		
 		boolean changed = false;
@@ -164,17 +158,41 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			changed = true;
 		
 		// see what the return statements do
-		IAstStmt returns = stmts.getLast();
 		if (returns instanceof ITyped) {
-			if (canReplaceType((ITyped) returns)) {
-				((ITyped)returns).setType(newType.getRetType());
-				changed = true;
-			}
+			changed |= updateType((ITyped) returns, newType.getRetType());
 		}
 		
 		changed |= updateType(this, newType);
 		
 		return changed;
+	}
+
+	private LLCodeType getProtoType(TypeEngine typeEngine, IAstStmt returns) {
+		LLCodeType protoType = null;
+		
+		LLType[] infArgTypes = new LLType[proto.getArgCount()];
+		int argIdx = 0;
+		
+		for (IAstArgDef arg : proto.argumentTypes()) {
+			if (canInferTypeFrom(arg))
+				infArgTypes[argIdx] = arg.getType();
+			argIdx++;
+		}
+		
+		LLType infRetType = proto.returnType().getType();
+		if (infRetType == null || !infRetType.isComplete()) {
+			// see what the return statements do
+			if (returns instanceof ITyped) {
+				if (canInferTypeFrom((ITyped) returns)) {
+					infRetType = ((ITyped)returns).getType(); 
+				}
+			} else {
+				infRetType = typeEngine.VOID;
+			}
+		}
+		
+		protoType = typeEngine.getCodeType(infRetType, infArgTypes);
+		return protoType;
 	}
 	
 	/* (non-Javadoc)

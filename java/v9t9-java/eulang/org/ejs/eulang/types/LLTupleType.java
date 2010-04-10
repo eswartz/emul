@@ -11,7 +11,7 @@ import org.ejs.eulang.TypeEngine;
  * @author ejs
  *
  */
-public class LLTupleType extends BaseLLType {
+public class LLTupleType extends BaseLLAggregateType {
 
 	private LLType[] types;
 
@@ -27,7 +27,11 @@ public class LLTupleType extends BaseLLType {
 		this.types = types;
 	}
 
-	
+	public LLTupleType(LLType[] types) {
+		super(null, sumTypeBits(null, types), toLLVMString(types), BasicType.TUPLE, null);
+		this.types = types;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -62,7 +66,7 @@ public class LLTupleType extends BaseLLType {
 		sb.append("{");
 		for (LLType type : types) {
 			if (first) first = false; else sb.append(',');
-			sb.append(type != null ? type.getLLVMType() : "opaque");
+			sb.append(type != null ? (type.getLLVMType() != null ? type.getLLVMType() : type.getName()) : "<unknown>");
 		}
 		sb.append('}');
 		return sb.toString();
@@ -75,7 +79,7 @@ public class LLTupleType extends BaseLLType {
 	 */
 	private static int sumTypeBits(TypeEngine engine, LLType[] types) {
 		int sum = 0;
-		int align = engine.getStructAlign(); 
+		int align = engine != null ? engine.getStructAlign() : 8; 
 		for (LLType type : types)  {
 			if (sum % align != 0)
 				sum += (align - sum % align);
@@ -84,48 +88,31 @@ public class LLTupleType extends BaseLLType {
 		return sum;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#isComplete()
-	 */
-	@Override
-	public boolean isComplete() {
-		for (LLType type : types)
-			if (type == null)
-				return false;
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.BaseLLType#isMoreComplete(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public boolean isMoreComplete(LLType otherType) {
-		if (isComplete())
-			return true;
-		
-		int otherCnt;
-		if (otherType instanceof LLTupleType)
-			otherCnt = ((LLTupleType) otherType).typeCount();
-		else
-			return false;
-				
-		return typeCount() > otherCnt;
-	}
-
-
-	private int typeCount() {
-		int cnt = 0;
-		for (LLType type : types)
-			if (type != null && type.isComplete())
-				cnt++;
-		return cnt;
-	}
 	
 	/**
 	 * @return
 	 */
-	public LLType[] getElementTypes() {
+	public LLType[] getTypes() {
 		return types;
 	};
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLAggregateType#getCount()
+	 */
+	@Override
+	public int getCount() {
+		return types.length;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLAggregateType#getType(int)
+	 */
+	@Override
+	public LLType getType(int idx) {
+		return types[idx];
+	}
+	
+	public LLTupleType updateTypes(LLType[] type) {
+		return new LLTupleType(type);
+	}
 }

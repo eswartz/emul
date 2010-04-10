@@ -221,8 +221,19 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExpr(), getExpr() }))
-			return false;
+		boolean changed = false;
+		if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExpr(), getExpr() })) {
+			if (getExpr() != null && getExpr().getType() != null) {
+				if (getSymbolExpr() != null && getExpr().getType().isMoreComplete(getSymbolExpr().getType()))
+					changed = updateType(getSymbolExpr(), getExpr().getType());
+				if (typeExpr != null && getExpr().getType().isMoreComplete(typeExpr.getType()))
+					changed = updateType(typeExpr, getExpr().getType());
+				if (getExpr().getType().isMoreComplete(getType()))
+					changed = updateType(this, getExpr().getType());
+			}
+			if (!changed)
+				return false;
+		}
 		
 		LLType left = symExpr.getType();
 		LLType right = expr != null ? expr.getType() : null;

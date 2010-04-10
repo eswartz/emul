@@ -14,7 +14,6 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
 
 
 /**
@@ -25,7 +24,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 
 	private IAstSymbolExpr id;
 	private IAstTypedExpr expr;
-	private Map<LLType, IAstTypedExpr> expansions = new HashMap<LLType, IAstTypedExpr>();
+	private Map<ISymbol, IAstTypedExpr> expansions = new HashMap<ISymbol, IAstTypedExpr>();
 	
 	public AstDefineStmt(IAstSymbolExpr name, IAstTypedExpr expr) {
 		this.id = name;
@@ -94,6 +93,23 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 			return new IAstNode[] { id, expr };
 		else
 			return new IAstNode[] { id };
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#getDumpChildren()
+	 */
+	@Override
+	public IAstNode[] getDumpChildren() {
+		IAstNode[] kids = getChildren();
+		if (expansions.size() > 0) {
+			IAstNode[] allKids = new IAstNode[kids.length + expansions.size()];
+			System.arraycopy(kids, 0, allKids, 0, kids.length);
+			int idx = kids.length;
+			for (IAstTypedExpr expansion : expansions.values())
+				allKids[idx++] = expansion;
+			return allKids;
+		}
+		return kids;
 	}
 
 	/* (non-Javadoc)
@@ -168,7 +184,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.IAstDefineStmt#expansions()
 	 */
 	@Override
-	public Map<LLType, IAstTypedExpr> expansions() {
+	public Map<ISymbol, IAstTypedExpr> expansions() {
 		return expansions;
 	}
 	

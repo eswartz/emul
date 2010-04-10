@@ -32,7 +32,7 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 			if (commonType == null)
 				throw new TypeException("cannot find compatible type for '" + getName() + "' on " 
 						+ types.left.toString() + " and " + types.right.toString());
-			if (types.result == null) {
+			if (types.result == null || types.result.isGeneric()) {
 				types.result = commonType;
 			}
 		} 

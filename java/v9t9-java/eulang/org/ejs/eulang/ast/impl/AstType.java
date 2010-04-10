@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -104,5 +105,12 @@ public class AstType extends AstNode implements IAstType {
 			throws TypeException {
 		return false;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#inferExpansion(org.ejs.eulang.TypeEngine, org.ejs.eulang.ast.IAstTypedExpr)
+	 */
+	@Override
+	public LLType inferExpansion(TypeEngine typeEngine, IAstTypedExpr expr) {
+		return null;
+	}
 }

@@ -6,7 +6,6 @@ package org.ejs.eulang.ast;
 import java.util.Map;
 
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
 
 
 /**
@@ -23,5 +22,5 @@ public interface IAstDefineStmt extends IAstStmt {
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);
 	
-	Map<LLType, IAstTypedExpr> expansions();
+	Map<ISymbol, IAstTypedExpr> expansions();
 }

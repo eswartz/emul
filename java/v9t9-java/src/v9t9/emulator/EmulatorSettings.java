@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jface.dialogs.DialogSettings;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
@@ -16,7 +15,6 @@ import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.settings.ISettingStorage;
 import org.ejs.coffee.core.settings.SettingsSection;
 import org.ejs.coffee.core.settings.XMLSettingStorage;
-import org.json.JSONObject;
 
 /**
  * This maintains settings global to the emulator (and saved automagically in

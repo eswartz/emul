@@ -9,21 +9,23 @@ import java.util.Arrays;
  * @author ejs
  *
  */
-public class LLCodeType extends BaseLLType {
+public class LLCodeType extends BaseLLAggregateType  {
 
 	private final LLType retType;
 	private final LLType[] argTypes;
+	private final LLType[] types;
 
-	private static int gId;
-	
 	/**
 	 * @param retType 
 	 * 
 	 */
 	public LLCodeType(LLType retType, LLType[] argTypes, int ptrBits) {
-		super("__code$"+gId++, ptrBits, toString(retType, argTypes), BasicType.CODE, null);
+		super(null, ptrBits, toString(retType, argTypes), BasicType.CODE, null);
 		this.retType = retType;
 		this.argTypes = argTypes;
+		this.types = new LLType[1 + argTypes.length];
+		types[0] = retType;
+		System.arraycopy(argTypes, 0, types, 1, argTypes.length);
 	}
 	
 	
@@ -91,41 +93,35 @@ public class LLCodeType extends BaseLLType {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#isComplete()
+	 * @see org.ejs.eulang.types.LLAggregateType#getCount()
 	 */
 	@Override
-	public boolean isComplete() {
-		if (retType == null) return false;
-		for (LLType arg : argTypes)
-			if (arg == null) return false;
-		return true;
+	public int getCount() {
+		return 1 + argTypes.length;
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.BaseLLType#isMoreComplete(org.ejs.eulang.types.LLType)
+	 * @see org.ejs.eulang.types.LLAggregateType#getTypes()
 	 */
 	@Override
-	public boolean isMoreComplete(LLType otherType) {
-		if (isComplete())
-			return true;
-		
-		int otherCnt;
-		if (otherType instanceof LLCodeType)
-			otherCnt = ((LLCodeType) otherType).typeCount();
-		else
-			return false;
-				
-		return typeCount() > otherCnt;
+	public LLType[] getTypes() {
+		return types;
 	}
-
-
-	private int typeCount() {
-		int cnt = 0;
-		if(retType != null && retType.isComplete())
-			cnt++;
-		for (LLType type : argTypes)
-			if (type != null && type.isComplete())
-				cnt++;
-		return cnt;
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLAggregateType#getType(int)
+	 */
+	@Override
+	public LLType getType(int idx) {
+		if (idx == 0)
+			return retType;
+		return argTypes[idx - 1];
 	}
+	
+	public LLCodeType updateTypes(LLType[] type) {
+		LLType retType = type[0];
+		LLType[] argTypes = new LLType[type.length - 1];
+		System.arraycopy(type, 1, argTypes, 0, argTypes.length);
+		return new LLCodeType(retType, argTypes, getBits());
+	}
+	
 }

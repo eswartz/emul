@@ -1061,7 +1061,7 @@ public class GenerateAST {
 				if (proto.hasDefaultArguments()) {
 					throw new GenerateException(tree.getChild(2), "cannot use default arguments in code type");
 				}
-				return proto.getType();
+				return typeEngine.getCodeType(proto.returnType(), proto.argumentTypes());
 			}
 			else if (tree.getType() == EulangParser.IDREF) {
 				return checkConstruct(tree, IAstSymbolExpr.class).getType();

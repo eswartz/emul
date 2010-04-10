@@ -13,28 +13,27 @@ import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TypeException;
 
 
 /**
  * @author ejs
  *
  */
-public class AstPrototype extends AstTypedNode implements IAstPrototype {
+public class AstPrototype extends AstNode implements IAstPrototype {
 	private IAstType retType;
 	private final IAstArgDef[] argumentTypes;
 
 	/** Create with the types; may be null */
 	public AstPrototype(TypeEngine typeEngine, IAstType retType, IAstArgDef[] argumentTypes) {
-		this(typeEngine.getCodeType(retType, argumentTypes), retType, argumentTypes);
+		this(/*typeEngine.getCodeType(retType, argumentTypes),*/ retType, argumentTypes);
 	}
-	protected AstPrototype(LLType codeType, IAstType retType, IAstArgDef[] argumentTypes) {
+	protected AstPrototype(/*LLType codeType,*/ IAstType retType, IAstArgDef[] argumentTypes) {
 		this.retType = retType;
 		retType.setParent(this);
 		this.argumentTypes = argumentTypes;
 		for (IAstArgDef arg : argumentTypes)
 			arg.setParent(this);
-		setType(codeType);
+		//setType(codeType);
 	}
 	
 	/**
@@ -55,7 +54,7 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 			argTypesCopy[i] = argumentTypes[i].copy(copyParent);
 			argTypesCopy[i] = fixup(argumentTypes[i], argTypesCopy[i]);
 		}
-		return fixup(this, new AstPrototype(getType(), doCopy(returnType(), copyParent), argTypesCopy));
+		return fixup(this, new AstPrototype(/*getType(),*/ doCopy(returnType(), copyParent), argTypesCopy));
 	}
 	
 	@Override
@@ -143,6 +142,7 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
+	/*
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
@@ -159,28 +159,19 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 		
 		return updateType(this, newType);
 	}
-
+	*/
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstPrototype#adaptToType(org.ejs.eulang.types.LLType)
 	 */
 	@Override
 	public boolean adaptToType(LLCodeType codeType) {
 		boolean changed = false;
-		changed = updateType(retType, codeType.getRetType());
+		changed = AstTypedNode.updateType(retType, codeType.getRetType());
 		for (int  i = 0; i < argumentTypes.length; i++) {
-			changed |= updateType(argumentTypes[i], codeType.getArgTypes()[i]);
+			changed |= AstTypedNode.updateType(argumentTypes[i], codeType.getArgTypes()[i]);
 		}
 		return changed;
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		super.setType(type);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstPrototype#getArgCount()
 	 */

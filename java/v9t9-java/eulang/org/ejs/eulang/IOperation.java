@@ -8,7 +8,6 @@ import org.ejs.eulang.ast.impl.ArithmeticUnaryOperation;
 import org.ejs.eulang.ast.impl.BooleanComparisonBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonUnaryOperation;
-import org.ejs.eulang.ast.impl.IndirectOperation;
 import org.ejs.eulang.ast.impl.LogicalBinaryOperation;
 import org.ejs.eulang.ast.impl.LogicalUnaryOperation;
 import org.ejs.eulang.ast.impl.ShiftOperation;
