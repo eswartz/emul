@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.ITyped;
+
 /**
  * @author ejs
  *
@@ -12,14 +14,11 @@ public abstract class BaseLLType implements LLType {
 	protected final int bits;
 
 	protected final String name;
-	protected final LLType subType;
 	protected final BasicType basicType;
-
 	protected final String llvmType;
+	
+	protected LLType subType;
 
-	/**
-	 * 
-	 */
 	public BaseLLType(String name, int bits, String llvmType, BasicType basicType, LLType subType) {
 		this.name = name;
 		this.bits = bits;
@@ -27,8 +26,13 @@ public abstract class BaseLLType implements LLType {
 		this.basicType = basicType;
 		this.subType = subType;
 	}
-
-	
+	public BaseLLType(String name, int bits, String llvmType, BasicType basicType) {
+		this.name = name;
+		this.bits = bits;
+		this.llvmType = llvmType;
+		this.basicType = basicType;
+		this.subType = null;
+	}
 
 	@Override
 	public int hashCode() {

@@ -39,6 +39,13 @@ public abstract class BaseSymbol implements ISymbol {
 		setDefinition(def);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITyped#getNode()
+	 */
+	@Override
+	public IAstNode getNode() {
+		return getDefinition();
+	}
 	/**
 	 * @return the number
 	 */

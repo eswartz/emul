@@ -5,6 +5,7 @@ package org.ejs.eulang.ast;
 
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -22,6 +23,12 @@ public interface IAstTypedNode extends IAstNode, ITyped {
 	 * @throws TypeException if the inference detected illegal type combinations
 	 */
 	boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException;
+
+	/**
+	 * @param typeEngine
+	 * @param graph
+	 */
+	void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph);
 
 	/**
 	 * Validate that the existing child types are compatible with the operation.

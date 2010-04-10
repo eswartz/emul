@@ -10,6 +10,7 @@ import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -156,5 +157,13 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		}
 		return true;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
+	 */
+	@Override
+	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
+		graph.addCompatibility(this, new ITyped[] { getExpr() });		
+		graph.addEquivalence(this, symExpr);
+	}
 }

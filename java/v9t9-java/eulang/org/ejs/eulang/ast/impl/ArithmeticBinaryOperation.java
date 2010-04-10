@@ -61,7 +61,9 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 		if (newLeft == null || newRight == null)
 			throw new TypeException("cannot convert result of '" + getName() + "' on " 
 					+ types.left.toString() + " and " + types.right.toString() + " to " + types.result.toString());
-		types.left = newLeft;
-		types.right = newRight;
+		LLType common = typeEngine.getPromotionType(newLeft, newRight);
+		types.left = common;
+		types.right = common;
+		types.result = common;
 	}
 }

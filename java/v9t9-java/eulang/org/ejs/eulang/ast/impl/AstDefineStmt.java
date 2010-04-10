@@ -8,13 +8,13 @@ import java.util.Map;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeException;
 
 
 /**
@@ -176,7 +176,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
 	 */
 	@Override
-	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		// don't worry about symbol type
 	}
 }

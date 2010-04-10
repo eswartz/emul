@@ -11,8 +11,10 @@ import org.ejs.eulang.ast.IAstAssignTupleStmt;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTupleNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TupleRelation;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -177,6 +179,21 @@ public class AstAssignTupleStmt extends AstTypedExpr implements IAstAssignTupleS
 			updateType(this, right);
 		}
 		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
+	 */
+	@Override
+	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
+		graph.addEquivalence(this, expr);
+		
+		ITyped[] tails = new ITyped[tuple.elements().nodeCount()];
+		for (int idx = 0; idx < tails.length; idx++) {
+			tails[idx] = tuple.elements().list().get(idx);
+		}
+		
+		graph.add(new TupleRelation(this, tails));
 	}
 	
 }

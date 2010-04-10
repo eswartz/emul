@@ -3,13 +3,16 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTupleExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TupleRelation;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -145,6 +148,19 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 		for (int idx = 0; idx < elements.nodeCount(); idx++)
 			changed |= updateType(elements.list().get(idx), tupleType.getElementTypes()[idx]);
 		return changed;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
+	 */
+	@Override
+	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
+		ITyped[] tails = new ITyped[elements.nodeCount()];
+		for (int idx = 0; idx < tails.length; idx++) {
+			tails[idx] = elements.list().get(idx);
+		}
+		
+		graph.add(new TupleRelation(this, tails));
 	}
 
 }

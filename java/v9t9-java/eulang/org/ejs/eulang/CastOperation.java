@@ -36,6 +36,6 @@ public class CastOperation extends Operation implements IUnaryOperation {
 	@Override
 	public void castTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		
+		types.result = types.expr;
 	}
 }

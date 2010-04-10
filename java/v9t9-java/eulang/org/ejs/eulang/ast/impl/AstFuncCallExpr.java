@@ -7,15 +7,15 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
-import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.types.CodeRelation;
+import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -225,13 +225,28 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		}
 	 */
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
+	 */
+	@Override
+	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
+		ITyped[] tails = new ITyped[arguments.nodeCount() + 1];
+		tails[0] = this;
+		for (int idx = 0; idx < tails.length - 1; idx++)
+			tails[idx + 1] = arguments.list().get(idx);
+		
+		
+		graph.add(new CodeRelation(function, tails));
+		graph.addEquivalence(this, new ITyped[] { function, getRealTypedNode(function) });
+	}
+	
 	 /* (non-Javadoc)
      * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
      */
     @Override
-    public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+    public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
     	if (!(function.getType() instanceof LLCodeType)) {
-    		throw new ASTException(function, "calling non-function");
+    		throw new TypeException(function, "calling non-function");
     	}
     }
 }

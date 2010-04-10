@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -25,6 +26,13 @@ public class AstType extends AstNode implements IAstType {
 		setType(type);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITyped#getNode()
+	 */
+	@Override
+	public IAstNode getNode() {
+		return this;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
@@ -105,4 +113,11 @@ public class AstType extends AstNode implements IAstType {
 		return false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
+	 */
+	@Override
+	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
+		
+	}
 }

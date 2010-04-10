@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.ejs.eulang.ISourceRef;
+import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.AstVisitor;
@@ -17,6 +18,7 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeException;
 
 /**
  * @author eswartz
@@ -338,7 +340,7 @@ abstract public class AstNode implements IAstNode {
 	 * @see org.ejs.eulang.ast.IAstNode#validateTypes()
 	 */
 	@Override
-	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		if (this instanceof IAstTypedNode) {
 			LLType thisType = ((IAstTypedNode) this).getType();
 			if (thisType == null || !thisType.isComplete())
@@ -349,7 +351,7 @@ abstract public class AstNode implements IAstNode {
 					LLType kidType = ((IAstTypedNode) kid).getType();
 					if (kidType != null && kidType.isComplete()) {
 						if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
-							throw new ASTException(kid, "expression's type does not match parent");
+							throw new TypeException((ITyped) kid, "expression's type does not match parent");
 						}
 					}
 				}

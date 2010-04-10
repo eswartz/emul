@@ -52,14 +52,36 @@ public class TypeInference {
 	 * Infer the types in the tree from known types.
 	 */
 	public boolean infer(List<Message> messages, TypeEngine typeEngine, IAstNode node) {
-		boolean changed = inferUp(messages, typeEngine, node);
+		InferenceGraph graph = new InferenceGraph(typeEngine);
 		
+		getTypeRelationGraph(typeEngine, graph, node);
+		
+		//boolean changed = inferUp(messages, typeEngine, node);
+
+		boolean changed = false;
+		changed |= graph.inferDown(messages, node);
+		changed |= graph.inferUp(messages, node);
 		if (!changed) {
+			graph.finalizeTypes(messages, node);
 			validateTypes(messages, typeEngine, node);
 		}
 		return changed;
 	}
 	
+
+	/**
+	 * @param node
+	 * @param graph
+	 */
+	private void getTypeRelationGraph( TypeEngine typeEngine, InferenceGraph graph, IAstNode node) {
+		if (node instanceof IAstTypedNode) {
+			((IAstTypedNode) node).getTypeRelations(typeEngine, graph);
+		}
+		for (IAstNode kid : node.getChildren()) {
+			getTypeRelationGraph(typeEngine, graph, kid);
+		}
+	}
+
 
 	/**
 	 * @param messages
@@ -103,7 +125,7 @@ public class TypeInference {
 			
 			try {
 				node.validateChildTypes(typeEngine);
-			} catch (ASTException e) {
+			} catch (TypeException e) {
 				messages.add(new Error(node, e.getMessage()));
 			}
 			

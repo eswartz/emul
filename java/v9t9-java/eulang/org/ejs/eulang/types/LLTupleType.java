@@ -23,7 +23,7 @@ public class LLTupleType extends BaseLLType {
 	 * @param subType
 	 */
 	public LLTupleType(TypeEngine engine, LLType[] types) {
-		super(null, sumTypeBits(engine, types), toLLVMString(types), BasicType.TUPLE, null);
+		super(null, sumTypeBits(engine, types), toLLVMString(types), BasicType.TUPLE);
 		this.types = types;
 	}
 
