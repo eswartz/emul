@@ -5,17 +5,14 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.IOperation;
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.types.BinaryOperationRelation;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.TypeException;
-import org.ejs.eulang.types.UnaryOperationRelation;
 
 /**
  * @author eswartz
@@ -135,18 +132,10 @@ public class AstUnaryExpr extends AstTypedExpr implements
     }
     
     /* (non-Javadoc)
-     * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-     */
-    @Override
-    public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-    	graph.add(new UnaryOperationRelation(op, this, expr));    	
-    }
-    
-    /* (non-Javadoc)
      * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
      */
     @Override
-    public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+    public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
     	// already validated
     }
 }

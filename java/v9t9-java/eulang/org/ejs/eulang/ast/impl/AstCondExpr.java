@@ -11,7 +11,6 @@ import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -152,18 +151,10 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		graph.addEquivalence(this, expr);
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
 	 */
 	@Override
-	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
 		LLType thisType = ((IAstTypedNode) this).getType();
 		if (thisType == null || !thisType.isComplete())
 			return;
@@ -171,7 +162,7 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 		LLType kidType = ((IAstTypedNode) expr).getType();
 		if (kidType != null && kidType.isComplete()) {
 			if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
-				throw new TypeException(expr, "expression's type does not match parent");
+				throw new ASTException(expr, "expression's type does not match parent");
 			}
 		}
 	}

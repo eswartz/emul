@@ -10,7 +10,6 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -117,13 +116,4 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		IAstStmt last = stmtList.getLast();
-		if (last instanceof ITyped)
-			graph.addEquivalence(this, (ITyped) last);
-	}
 }

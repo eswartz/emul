@@ -12,8 +12,6 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.AllocRelation;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -234,12 +232,4 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		graph.addEquivalence(this, new ITyped[] { typeExpr, getSymbolExpr() });
-		graph.add(new AllocRelation(this, new ITyped[] { typeExpr, getSymbolExpr(), getExpr() }));
-	}
 }

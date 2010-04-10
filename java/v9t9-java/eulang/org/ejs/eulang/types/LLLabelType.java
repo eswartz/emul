@@ -10,7 +10,7 @@ package org.ejs.eulang.types;
 public class LLLabelType extends BaseLLType {
 
 	public LLLabelType() {
-		super("__label", 0, "label", BasicType.CODE);
+		super("__label", 0, "label", BasicType.CODE, null);
 	}
 	@Override
 	public boolean isComplete() {

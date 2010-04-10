@@ -12,10 +12,8 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTupleNode;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TupleRelation;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -219,20 +217,5 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 		}
 		return true;
 	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		ITyped[] tails = new ITyped[syms.elements().nodeCount()];
-		for (int idx = 0; idx < tails.length; idx++) {
-			tails[idx] = syms.elements().list().get(idx);
-		}
-		
-		graph.add(new TupleRelation(this, tails));
-		
-		graph.addEquivalence(this, getExpr());
-		graph.addEquivalence(this, getTypeExpr());
-	}
+	
 }

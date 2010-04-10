@@ -5,14 +5,12 @@ package org.ejs.eulang.ast.impl;
 
 import java.util.Arrays;
 
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstType;
-import org.ejs.eulang.types.CodeRelation;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -207,20 +205,7 @@ public class AstPrototype extends AstTypedNode implements IAstPrototype {
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
 	 */
 	@Override
-	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
 		// no restrictions
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		ITyped[] tails = new ITyped[argumentTypes.length + 1];
-		tails[0] = retType;
-		for (int idx = 0; idx < tails.length - 1; idx++)
-			tails[idx + 1] = argumentTypes[idx];
-		graph.add(new CodeRelation(this, tails));
-	}
-	
 }

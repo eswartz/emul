@@ -6,7 +6,6 @@ package org.ejs.eulang.ast;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.IScope;
-import org.ejs.eulang.types.TypeException;
 
 
 
@@ -118,8 +117,8 @@ public interface IAstNode {
 	/** 
 	 * Ensure that the node's child types are sensible for this node
 	 * @param typeEngine 
-	 * @throws TypeException TODO
+	 * @throws ASTException
 	 */
-	void validateChildTypes(TypeEngine typeEngine) throws TypeException;
+	void validateChildTypes(TypeEngine typeEngine) throws ASTException;
 }
 

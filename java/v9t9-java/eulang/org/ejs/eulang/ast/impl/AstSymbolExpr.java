@@ -11,8 +11,6 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.symbols.LocalScope;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -149,15 +147,6 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		//		return updateType(symbol, (((IAstTypedNode)symbol.getDefinition()).getType()));
 		return false;
 
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		//if (symbol.getScope() instanceof LocalScope)
-		//	graph.addEquivalence(this, symbol);
 	}
 	
 	/* (non-Javadoc)

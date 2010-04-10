@@ -10,7 +10,7 @@ package org.ejs.eulang.types;
 public class LLIntType extends BaseLLType {
 
 	public LLIntType(String name, int bits) {
-		super(name, bits, "i" + bits, BasicType.INTEGRAL);
+		super(name, bits, "i" + bits, BasicType.INTEGRAL, null);
 	}
 	
 	/* (non-Javadoc)

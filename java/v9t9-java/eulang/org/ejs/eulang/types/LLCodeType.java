@@ -21,7 +21,7 @@ public class LLCodeType extends BaseLLType {
 	 * 
 	 */
 	public LLCodeType(LLType retType, LLType[] argTypes, int ptrBits) {
-		super("__code$"+gId++, ptrBits, toString(retType, argTypes), BasicType.CODE);
+		super("__code$"+gId++, ptrBits, toString(retType, argTypes), BasicType.CODE, null);
 		this.retType = retType;
 		this.argTypes = argTypes;
 	}

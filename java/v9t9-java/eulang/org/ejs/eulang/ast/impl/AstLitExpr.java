@@ -7,7 +7,6 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -88,11 +87,4 @@ public abstract class AstLitExpr extends AstTypedExpr implements
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		
-	}
 }

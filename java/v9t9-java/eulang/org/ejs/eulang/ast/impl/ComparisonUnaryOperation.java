@@ -44,6 +44,5 @@ public class ComparisonUnaryOperation extends Operation implements IUnaryOperati
 	@Override
 	public void castTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		types.result = typeEngine.BOOL;
 	}
 }

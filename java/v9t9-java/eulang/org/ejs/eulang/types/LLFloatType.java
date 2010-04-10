@@ -11,7 +11,7 @@ public class LLFloatType extends BaseLLType {
 
 	private final int mbits;
 	public LLFloatType(String name, int bits, int mbits) {
-		super(name, bits, bits==32 ? "float" : bits==64 ? "double" : null, BasicType.FLOATING);
+		super(name, bits, bits==32 ? "float" : bits==64 ? "double" : null, BasicType.FLOATING, null);
 		this.mbits = mbits;
 	}
 	

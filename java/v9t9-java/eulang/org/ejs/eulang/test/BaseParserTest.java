@@ -312,8 +312,7 @@ public class BaseParserTest {
 		if (!allowUnknown && node instanceof IAstTypedNode) {
 			if (!(node instanceof IAstDefineStmt) && !(node.getParent() instanceof IAstDefineStmt)) {
 				assertNotNull("No type: " +node.toString(), ((IAstTypedNode) node).getType());
-				if (!((IAstTypedNode) node).getType().isComplete())
-					fail("Unresolved type: " +node.toString());
+				assertTrue("Unresolved type: " +node.toString(), ((IAstTypedNode) node).getType().isComplete());
 			}
 		}
 		for (IAstNode kid : node.getChildren()) {
@@ -349,7 +348,7 @@ public class BaseParserTest {
 			
 		}
 		
-		if (dumpTypeInfer || (!expectErrors && messages.size() > 0)) {
+		if (!dumpTypeInfer && (!expectErrors && messages.size() > 0)) {
 			DumpAST dump = new DumpAST(System.out);
 			mod.accept(dump);
 		}

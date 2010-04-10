@@ -15,7 +15,6 @@ import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -179,23 +178,10 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		graph.addEquivalence(this, proto);
-		
-		IAstStmt returns = stmts.getLast();
-		if (returns instanceof ITyped) {
-			graph.addCompatibility(proto.returnType(), (ITyped) returns);
-		}
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
-	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
 		super.validateChildTypes(typeEngine);
 		
 		// see what the return statements do
@@ -215,7 +201,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			if (kidType != null && kidType.isComplete()) {
 				if (!typeEngine.getBaseType(((LLCodeType) thisType).getRetType()).equals(
 						typeEngine.getBaseType(kidType))) {
-					throw new TypeException((ITyped) returns, "code block does not return same type as prototype");
+					throw new ASTException(returns, "code block does not return same type as prototype");
 				}
 			}
 		}

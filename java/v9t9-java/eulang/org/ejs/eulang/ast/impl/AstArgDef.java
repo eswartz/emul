@@ -10,7 +10,6 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -249,15 +248,6 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		return inferTypesFromChildren(new ITyped[] { name.getSymbol(), typeExpr, defaultVal });
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		graph.addEquivalence(this, new ITyped[] { name.getSymbol(), typeExpr });
-		graph.addCompatibility(this, defaultVal);
 	}
 	
 	/* (non-Javadoc)

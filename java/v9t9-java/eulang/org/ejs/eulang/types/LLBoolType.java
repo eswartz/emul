@@ -10,7 +10,7 @@ package org.ejs.eulang.types;
 public class LLBoolType extends BaseLLType  {
 
 	public LLBoolType(String name, int bits) {
-		super(name, bits, "i" + bits, BasicType.BOOL);
+		super(name, bits, "i" + bits, BasicType.BOOL, null);
 	}
 	
 	/* (non-Javadoc)

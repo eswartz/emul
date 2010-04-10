@@ -8,7 +8,6 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstReturnStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -123,14 +122,6 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
 		return inferTypesFromChildren(new ITyped[] { expr });
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		graph.addCompatibility(this, expr);
 	}
 	
 }

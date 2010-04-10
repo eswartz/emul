@@ -5,13 +5,11 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.IBinaryOperation;
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.BinaryOperationRelation;
-import org.ejs.eulang.types.InferenceGraph;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -261,28 +259,11 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#getTypeRelations(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.InferenceGraph)
-	 */
-	@Override
-	public void getTypeRelations(TypeEngine typeEngine, InferenceGraph graph) {
-		graph.add(new BinaryOperationRelation(oper, this, new ITyped[] { left, right }));
-	}
-	
 	 /* (non-Javadoc)
      * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
      */
     @Override
-    public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
-    	/*
-    	IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();
-    	types.left = left.getType();
-		types.right = right.getType();
-		types.result = getType();
-		if (types.left != null && types.right != null && types.result != null) {
-			oper.castTypes(typeEngine, types);
-			setLeft(createCastOn(typeEngine, left, types.left));
-			setRight(createCastOn(typeEngine, right, types.right));
-		}*/
+    public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+    	// already validated
     }
 }
