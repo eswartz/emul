@@ -301,4 +301,27 @@ public class TestLLVMGenerator extends BaseParserTest {
      	LLVMGenerator g = doGenerate(mod);
     	assertEquals(3, g.getModule().getSymbolCount());
      }
+
+  	 @Test
+     public void testRecursion() throws Exception {
+     	IAstModule mod = doFrontend(
+     	"   factorial = code (x) { select [ x > 1 then x * factorial(x-1) else 1 ] };\n" + 
+     	"  ");
+     	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(1, g.getModule().getSymbolCount());
+     	
+     }
+  	 
+  	 @Test
+  	 public void testOverloading() throws Exception {
+  		 IAstModule mod = doFrontend(
+  				 "    util = [ code(x:Int, y:Int, z:Int) { x*y-z },\n" + 
+  				 "             code(x, y) { util(x, y, 0) }\n" + 
+  				 "            ];\n" +
+  				 "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
+  		 LLVMGenerator g = doGenerate(mod);
+  		 assertEquals(3, g.getModule().getSymbolCount());
+  		 
+  		 
+  	 }
 }

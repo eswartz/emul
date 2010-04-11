@@ -897,8 +897,9 @@ public class TestTypeInfer extends BaseParserTest {
     	assertNotNull(addBody);
     	List<IAstTypedExpr> exps = addDef.bodyToInstanceMap().get(addBody.getType());
     	assertNotNull(exps);
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT }), exps.get(0).getType());
-    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT }), exps.get(1).getType());
+    	assertEquals(2, exps.size());
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT }), exps.get(1).getType());
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT }), exps.get(0).getType());
 
     	// make sure the casting worked properly
     	exps.get(1).validateType(typeEngine);

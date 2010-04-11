@@ -153,7 +153,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		
 		IAstTypedNode actualFunction = getRealTypedNode(function, argCodeType);
 		
-		if (canInferTypeFrom(actualFunction)) {
+		if (canInferTypeFrom(actualFunction) && actualFunction.getType().isMoreComplete(argCodeType)) {
 			LLType type = actualFunction.getType();
 			
 			if (!(type instanceof LLCodeType)) {
@@ -161,10 +161,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			}
 
 			codeType = (LLCodeType) type;
-		} else if (canInferTypeFromArgs()) {
+		} else /*if (canInferTypeFromArgs())*/ {
 			codeType = argCodeType;
-		} else {
-			return false;
+		//} else {
+		//	return false;
 		}
 
 		boolean changed = updateType(function, codeType) | updateType(actualFunction, codeType) | updateType(this, codeType.getRetType());

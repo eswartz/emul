@@ -64,15 +64,20 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		if (otherType == null)
 			return true;
 		
+		LLAggregateType otherAggregate = null;
+		
+		if (!(otherType instanceof LLGenericType)) {
+			if (!otherType.getClass().equals(getClass()))
+				return false;
+			
+			otherAggregate = (LLAggregateType) otherType;
+			if (otherAggregate.getCount() != getCount()) 
+				return false;
+		}
+		
 		if (isComplete() && !otherType.isComplete())
 			return true;
 		
-		if (!otherType.getClass().equals(getClass()))
-			return false;
-		
-		LLAggregateType otherAggregate = (LLAggregateType) otherType;
-		if (otherAggregate.getCount() != getCount()) 
-			return false;
 		
 		int thisDefinedTypes = 0;
 		for (int idx = 0; idx < getCount(); idx++) {

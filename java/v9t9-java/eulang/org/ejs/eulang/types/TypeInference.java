@@ -5,8 +5,10 @@ package org.ejs.eulang.types;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
@@ -58,10 +60,18 @@ public class TypeInference {
 	private final TypeEngine typeEngine;
 	private List<Message> messages;
 
+	private Set<IAstNode> instantiationSet = new HashSet<IAstNode>();
+	
 	public TypeInference(TypeEngine typeEngine) {
 		this.typeEngine = typeEngine;
 		messages = new ArrayList<Message>();
 		
+	}
+	
+	public TypeInference subInferenceJob() {
+		TypeInference inference = new TypeInference(typeEngine);
+		inference.instantiationSet = instantiationSet;
+		return inference;
 	}
 	
 	/**
@@ -102,13 +112,22 @@ public class TypeInference {
 		if (node instanceof IAstDefineStmt) {
 			IAstDefineStmt defineStmt = (IAstDefineStmt) node;
 			
-			changed |= inferUp(defineStmt.getSymbolExpr());
-			
 			for (IAstTypedExpr bodyExpr : defineStmt.bodyList()) {
 				LLType origDefineType = bodyExpr.getType();
 				if (origDefineType == null || !origDefineType.isComplete()) {
-					TypeInference inference = new TypeInference(typeEngine);
-					boolean defineChanged = inference.infer(bodyExpr, false);
+					
+					boolean defineChanged = false;
+					
+					// first, see if the top-level type can be inferred, for the case
+					// of overloaded functions calling each other.
+					try {
+						defineChanged |= bodyExpr.inferTypeFromChildren(typeEngine);
+					} catch (TypeException e) {
+						messages.add(new Error(bodyExpr, e.getMessage()));
+					}
+					
+					TypeInference inference = subInferenceJob();
+					defineChanged = inference.infer(bodyExpr, false);
 					
 					if (DUMP) {
 						System.out.println("Inferring on define:");
@@ -133,6 +152,8 @@ public class TypeInference {
 					// okay, don't infer here
 				}
 			}
+			
+			changed |= inferUp(defineStmt.getSymbolExpr());
 			
 			recurse = false;
 		}
@@ -166,6 +187,7 @@ public class TypeInference {
 	 * @param context 
 	 */
 	private boolean instantiate(IAstSymbolExpr site) {
+		
 		// Does this refer to a definition (still)?
 		// 
 		// We will replace all symbol exprs with references to actual definitions if possible.
@@ -174,7 +196,8 @@ public class TypeInference {
 		if (define == null)
 			return false;
 		
-		
+		if (instantiationSet.contains(site))
+			return false;
 
 		// Get the actual type expected for the site (don't use the symbol's site, since that aliases
 		// other definitions and uses)
@@ -195,8 +218,20 @@ public class TypeInference {
 			context = context.getParent();
 		}
 		
-		if (expandedType == null)
-			return false;
+		if (expandedType == null) {
+			// look for another body in this definition
+			/*if (site.getParent() == define) {
+				for (IAstTypedExpr expr : define.bodyList()) {
+					if (expr.getType() != null && expr.getType().matchesExactly(site.getType())) {
+						expandedType = expr.getType();
+						break;
+					}
+				}
+			}*/
+			if (expandedType == null) {
+				return false;
+			}
+		}
 		
 		IAstTypedExpr body = define.getMatchingBodyExpr(expandedType);
 		if (body == null) {
@@ -206,41 +241,21 @@ public class TypeInference {
 			}
 		}
 
-
 		
-		if (site.getType() == null || !expandedType.isGeneric()) {
-			if (define.bodyList().size() == 1)
-				return false;
-			
-			ISymbol bodySym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
-					false);
-			bodySym.setDefinition(body);
-		
-			
-			TypeInference inference = new TypeInference(typeEngine);
-			boolean updated = inference.infer(body, false);
-			
-			LLType bodyType = body.getType();
-			
-			if (updated && DUMP) {
-				System.out.println("Updated body of " + define.getSymbol() + " for " + bodyType + ":");
-				DumpAST dump = new DumpAST(System.out);
-				body.accept(dump);
+		try {
+			instantiationSet.add(site);
+			if (site.getType() != null && (expandedType.isGeneric() || body.getType().isGeneric())) {
+				return doInstantiateGeneric(site, define, expandedType, body);
+			} else {
+				return doInstantiateBody(site, define, expandedType, body);
 			}
-			
-			site.setType(bodyType);
-
-			bodySym.setDefinition(body);
-			bodySym.setType(site.getType());
-			
-			site.setSymbol(bodySym);
-			site.setType(bodyType);
-				
-			//define.registerInstance(body.getType(), body);
-			return true;
+		} finally {
+			instantiationSet.remove(site);
 		}
+	}
 
-
+	private boolean doInstantiateGeneric(IAstSymbolExpr site,
+			IAstDefineStmt define, LLType expandedType, IAstTypedExpr body) {
 		IAstTypedExpr expansion = define.getMatchingInstance(body.getType(), expandedType);
 
 		/*
@@ -262,7 +277,7 @@ public class TypeInference {
 		
 		ISymbol expansionSym = site.getSymbol();
 		
-		if (expansion == null) {
+		if (expansion == null || expansion.getType().isGeneric()) {
 			// nothing matched; make a new one
 			if (DUMP) 
 				System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
@@ -283,7 +298,7 @@ public class TypeInference {
 		
 		
 		
-		TypeInference inference = new TypeInference(typeEngine);
+		TypeInference inference = subInferenceJob();
 		boolean updated = inference.infer(expansion, false);
 		expandedType = expansion.getType();
 		if (updated && DUMP) {
@@ -298,6 +313,45 @@ public class TypeInference {
 		site.setType(expandedType);
 		
 		define.registerInstance(body.getType(), expansion);
+		return true;
+	}
+
+	private boolean doInstantiateBody(IAstSymbolExpr site,
+			IAstDefineStmt define, LLType expandedType, IAstTypedExpr body) {
+		if (define.bodyList().size() == 1)
+			return false;
+		
+		ISymbol bodySym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
+				false);
+		bodySym.setDefinition(body);
+
+
+		// replace immediately in case of recursion when inferring below,
+		// which will recurse
+		//site.setSymbol(bodySym);
+		//site.setType(expandedType);
+			
+		
+		TypeInference inference = subInferenceJob();
+		boolean updated = inference.infer(body, false);
+		
+		LLType bodyType = body.getType();
+		
+		if (updated && DUMP) {
+			System.out.println("Updated body of " + define.getSymbol() + " for " + bodyType + ":");
+			DumpAST dump = new DumpAST(System.out);
+			body.accept(dump);
+		}
+		
+		site.setType(bodyType);
+
+		bodySym.setDefinition(body);
+		bodySym.setType(site.getType());
+		
+		site.setSymbol(bodySym);
+		site.setType(bodyType);
+			
+		//define.registerInstance(body.getType(), body);
 		return true;
 	}
 
@@ -333,7 +387,7 @@ public class TypeInference {
 			LLType expandedType, Map<LLType, LLType> expansionMap) {
 		if (currentType.isGeneric())
 			expansionMap.put(currentType, expandedType);
-		if (currentType instanceof LLAggregateType) {
+		if (currentType instanceof LLAggregateType && expandedType != null) {
 			LLType[] types = ((LLAggregateType) currentType).getTypes();
 			LLType[] expandedTypes = ((LLAggregateType) expandedType).getTypes();
 			for (int i = 0; i < types.length; i++) {
@@ -375,7 +429,7 @@ public class TypeInference {
 		LLType newType = aggregate.updateTypes(types);
 		defineExpr.setType(newType);
 		
-		TypeInference inference = new TypeInference(typeEngine);
+		TypeInference inference = subInferenceJob();
 		boolean changed = inference.infer(defineExpr, false);
 		
 		if (changed && DUMP) {

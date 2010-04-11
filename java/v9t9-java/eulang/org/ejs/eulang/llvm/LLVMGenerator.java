@@ -151,7 +151,15 @@ public class LLVMGenerator {
 				IAstTypedExpr instance = symExpr.getInstance();
 				if (instance == null)
 					throw new ASTException(node, "could not find an instance for " + symExpr.getSymbol().getName() +"; add some type specifications");
-				ensureTypes(instance);
+				
+				IAstNode recursionCheck = instance;
+				while (recursionCheck != null) {
+					if (recursionCheck == instance)
+						break;
+					recursionCheck = recursionCheck.getParent();
+				}
+				if (recursionCheck == null)
+					ensureTypes(instance);
 				return;
 			}
 		} 

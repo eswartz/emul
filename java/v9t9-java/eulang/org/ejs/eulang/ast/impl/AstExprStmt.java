@@ -124,6 +124,8 @@ public class AstExprStmt extends AstTypedExpr implements IAstExprStmt  {
 		if (!changed && canInferTypeFrom(this)) {
 			changed = updateType(expr, getType());
 		}
+		
+		setExpr(createCastOn(typeEngine, expr, getType()));
 		return changed;
 	}
 

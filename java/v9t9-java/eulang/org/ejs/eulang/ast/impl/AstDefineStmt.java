@@ -95,7 +95,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public String toString() {
-		return "DEFINE";
+		return "DEFINE " + getSymbol();
 	}
 	
 
@@ -115,17 +115,8 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public IAstNode[] getDumpChildren() {
-		IAstNode[] kids = getChildren();
 		Collection<IAstTypedExpr> exprs = getConcreteInstances();
-		if (exprs.size() > 0) {
-			IAstNode[] allKids = new IAstNode[kids.length + exprs.size()];
-			System.arraycopy(kids, 0, allKids, 0, kids.length);
-			int idx = kids.length;
-			for (IAstTypedExpr expansion : exprs)
-				allKids[idx++] = expansion;
-			return allKids;
-		}
-		return kids;
+		return (IAstTypedExpr[]) exprs.toArray(new IAstTypedExpr[exprs.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -276,7 +267,10 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 		
 		if (type == null) {
 			// then the first
-			return bodyList.get(0);
+			if (bodyList.size() == 1)
+				return bodyList.get(0);
+			else
+				return null;
 		}
 		
 		// look for exact matches
@@ -309,7 +303,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
         	return null;
         }
         if (bodyType.isComplete() && !bodyType.isGeneric()) {
-        	assert instanceType == null || bodyType.equals(instanceType);
+        	//assert instanceType == null || bodyType.equals(instanceType);
         	return null;
         }
 		List<IAstTypedExpr> list = instanceMap.get(bodyType);
