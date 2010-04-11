@@ -217,7 +217,10 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		IAstTypedExpr body = def.getMatchingBodyExpr(getType());
 		if (body == null) 
 			return null;
-		return def.getMatchingInstance(body.getType(), getType());
+		ISymbol instance = def.getMatchingInstance(body.getType(), getType());
+		if (instance == null)
+			return body;
+		return (IAstTypedExpr) instance.getDefinition();
 	}
 	
 }

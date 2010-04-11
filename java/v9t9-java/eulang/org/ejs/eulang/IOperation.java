@@ -27,8 +27,8 @@ public interface IOperation {
 	IBinaryOperation ADD = new ArithmeticBinaryOperation("+", "add", true);
 	IBinaryOperation SUB = new ArithmeticBinaryOperation("-", "sub", false);
 	IBinaryOperation MUL = new ArithmeticBinaryOperation("*", "mul", true);
-	IBinaryOperation DIV = new ArithmeticBinaryOperation("/", "sdiv", false);
-	IBinaryOperation MOD = new ArithmeticBinaryOperation("%", "srem", false);
+	IBinaryOperation DIV = new ArithmeticBinaryOperation("/", "div", false, "s", "f");
+	IBinaryOperation MOD = new ArithmeticBinaryOperation("%", "rem", false, "s", "f");
 	IBinaryOperation UDIV = new ArithmeticBinaryOperation("\\", "udiv", false);
 	IBinaryOperation UMOD = new ArithmeticBinaryOperation("%%", "urem", false);
 	

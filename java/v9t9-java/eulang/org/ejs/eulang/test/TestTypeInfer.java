@@ -844,13 +844,7 @@ public class TestTypeInfer extends BaseParserTest {
 	 */
 	private void assertInstanceCount(int bodyCount, int totalInstanceCount, IAstDefineStmt def) {
     	assertEquals(bodyCount, def.bodyList().size());
-    	int sum = 0;
-    	for (List<IAstTypedExpr> list : def.bodyToInstanceMap().values()) {
-    		sum += list.size();
-    		for (IAstTypedExpr expr : list)
-    			assertFalse(expr.getType().isGeneric());
-    	}
-    	assertEquals(totalInstanceCount, sum);
+    	assertEquals(totalInstanceCount, def.getConcreteInstances().size());
 		
 	}
 	
@@ -901,13 +895,13 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstTypedExpr addBody = addDef.getMatchingBodyExpr(null);
     	assertNotNull(addBody);
-    	List<IAstTypedExpr> exps = addDef.bodyToInstanceMap().get(addBody.getType());
+    	List<ISymbol> exps = addDef.bodyToInstanceMap().get(addBody.getType());
     	assertNotNull(exps);
     	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT }), exps.get(0).getType());
     	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT }), exps.get(1).getType());
 
     	// make sure the casting worked properly
-    	exps.get(1).validateType(typeEngine);
+    	exps.get(1).getDefinition().validateType(typeEngine);
     }
     @Test
     public void testGenerics1() throws Exception {
@@ -952,7 +946,7 @@ public class TestTypeInfer extends BaseParserTest {
 		doTypeInfer(mod);
 
 		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("floor");
-		assertInstanceCount(2, 0, def);
+		assertInstanceCount(2, 2, def);
     	
     }
 }

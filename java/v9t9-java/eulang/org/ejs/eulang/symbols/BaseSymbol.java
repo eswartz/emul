@@ -15,7 +15,8 @@ import org.ejs.eulang.types.LLType;
  */
 public abstract class BaseSymbol implements ISymbol {
 
-	private String name;
+	private final String name;
+	private String llvmName;
 	private IAstNode def;
 	private LLType type;
 	private IScope scope;
@@ -65,6 +66,8 @@ public abstract class BaseSymbol implements ISymbol {
 			return false;
 		BaseSymbol other = (BaseSymbol) obj;
 		if (number != other.number)
+			return false;
+		if (temp != other.temp)
 			return false;
 		if (name == null) {
 			if (other.name != null)
@@ -149,6 +152,7 @@ public abstract class BaseSymbol implements ISymbol {
 	@Override
 	public void setType(LLType type) {
 		this.type = type;
+		llvmName = null;
 	}
 	
 	/* (non-Javadoc)
@@ -188,9 +192,13 @@ public abstract class BaseSymbol implements ISymbol {
 	 */
 	@Override
 	public String getLLVMName() {
-		String prefix = getLLVMPrefix();
-		String safeName = getName().replaceAll("[^a-zA-Z0-9_$]", "_");
-		return prefix + safeName;
+		if (llvmName == null) {
+			String prefix = getLLVMPrefix();
+			String safeName = getName().replace(" => ","$");
+			safeName = safeName.replaceAll("[^a-zA-Z0-9_$]", ".");
+			llvmName = prefix + safeName;
+		}
+		return llvmName;
 	}
 	/**
 	 * @return

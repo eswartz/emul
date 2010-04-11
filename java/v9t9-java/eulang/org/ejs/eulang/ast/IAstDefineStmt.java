@@ -68,30 +68,30 @@ public interface IAstDefineStmt extends IAstStmt, IAstSymbolDefiner {
 	 * @return read-only map of body types to the instances recorded for them.  If the body type
 	 * is not generic, there is only one entry in the list, and it cannot be modified.
 	 */
-	Map<LLType, List<IAstTypedExpr>> bodyToInstanceMap();
+	Map<LLType, List<ISymbol>> bodyToInstanceMap();
 	
 	/**
-	 * Get a generated matching resolved version of the definition used for this type.
+	 * Get the symbol for a generated matching resolved version of the definition used for this type.
 	 * The type is a key to locate the unique bodyList element.
 	 * <p>
 	 * For a non-generic body type, the returns the body expression; otherwise,
 	 * this returns the concrete instance registered via {@link #registerInstance(LLType, IAstTypedExpr)}.
 	 * @param bodyType the type of an expr for which the instance is searched
 	 * @param instanceType the type of a target expr for which the instance is searched
-	 * @return expanded and type-specific body of the define, or <code>null</code>
+	 * @return the symbol for expanded and type-specific body of the define, whose definition is the body, or <code>null</code>
 	 */
-	IAstTypedExpr getMatchingInstance(LLType bodyType, LLType instanceType);
+	ISymbol getMatchingInstance(LLType bodyType, LLType instanceType);
 
 	
 	/**
-	 * Add an instance for the given generic body type.  
+	 * Add a generated instance for the given generic body type.  
 	 * <p>
 	 * @param bodyType the type of the matching expr for which the instance was made,
 	 * not generic
-	 * @param expr expanded and type-specific body of the define
-	 * @throws IllegalArgumentException if the bodyType is not generic
+	 * @param expansionSym expanded and type-specific body of the define
+	 * @throws IllegalArgumentException if the bodyType is not generic or the symbol does not have a body
 	 */
-	void registerInstance(LLType bodyType, IAstTypedExpr expr);
+	void registerInstance(LLType bodyType, ISymbol expansionSym);
 	
 	/**
 	 * Get all concrete instances.

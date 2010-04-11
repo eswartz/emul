@@ -264,7 +264,7 @@ public class BaseParserTest {
 			assertEquals(node.toString() + ": scope count", scope.getSymbols().length, copyScope.getSymbols().length);
 			
 			for (ISymbol symbol : scope) {
-				ISymbol copySym = copyScope.get(symbol.getName());
+				ISymbol copySym = copyScope.get(symbol.getUniqueName());
 				assertSame(copyScope, copySym.getScope());
 				assertEquals(symbol+"", symbol, copySym);
 				assertEquals(symbol+"", symbol.getDefinition(), copySym.getDefinition());

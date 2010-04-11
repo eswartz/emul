@@ -23,6 +23,24 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#getSymbolicName()
+	 */
+	@Override
+	public String getSymbolicName() {
+		if (getName() != null)
+			return getName();
+		StringBuilder sb = new StringBuilder();
+		sb.append(getBasicType().toString()).append('$');
+		boolean first = true;
+		for (LLType type : getTypes()) {
+			if (first) first = false; else sb.append('.');
+			sb.append(type.getSymbolicName());
+		}
+		sb.append('$');
+		return sb.toString();
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isComplete()
 	 */
 	@Override

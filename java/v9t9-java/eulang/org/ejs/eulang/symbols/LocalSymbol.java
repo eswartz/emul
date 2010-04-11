@@ -25,7 +25,7 @@ public class LocalSymbol extends BaseSymbol {
 	 */
 	@Override
 	public LocalSymbol newInstance() {
-		return new LocalSymbol(getNumber(), getName(), false, null, getDefinition(), isAddressed());
+		return new LocalSymbol(getNumber(), getName(), isTemporary(), null, getDefinition(), isAddressed());
 	}
 	
 	/* (non-Javadoc)

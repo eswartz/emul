@@ -140,6 +140,29 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 		return changed;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		super.validateChildTypes(typeEngine);
+		
+		if (!(getType() instanceof LLTupleType))
+			throw new TypeException("expected a tuple type"); 
+			
+		LLTupleType type = (LLTupleType) getType();
+		if (elements.nodeCount() != type.getTypes().length)
+			throw new TypeException("mismatched sizes in tuples: " + 
+					elements.nodeCount() + " != " + type.getTypes().length);
+		
+		int idx = 0; 
+		for (LLType elType : type.getTypes()) {
+			if (!elType.equals(elements.list().get(idx).getType()))
+				throw new TypeException(this, "mismatched tuple type at index " + idx); 
+			idx++;
+		}
+
+	}
 	protected boolean adaptToType(LLTupleType tupleType) {
 		boolean changed = false;
 		for (int idx = 0; idx < elements.nodeCount(); idx++)

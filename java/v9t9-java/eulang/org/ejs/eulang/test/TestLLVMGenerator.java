@@ -258,6 +258,18 @@ public class TestLLVMGenerator extends BaseParserTest {
     	doGenerate(mod);
     }
   
+	@Test
+  	public void testCasting1() throws Exception {
+  		IAstModule mod = doFrontend(
+			"testCasting1 = code (f:Float, d:Double, i:Int, b:Byte) {\n"+
+			"f = d; f = i; f = b;\n"+
+			"d = f; d = i; d = b;\n" +
+			"i = f; i = d; i = b;\n" +
+			"b = f; b = d; b = i;\n" +
+			"};\n");
+  		doGenerate(mod);
+  }
+	
   	@Test
   	public void testTypeList1() throws Exception {
   		IAstModule mod = doFrontend("floor = [\n"+

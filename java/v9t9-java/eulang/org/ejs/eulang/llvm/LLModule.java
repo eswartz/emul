@@ -4,9 +4,7 @@
 package org.ejs.eulang.llvm;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -33,7 +31,6 @@ public class LLModule {
 	private final IScope globalScope;
 	
 	private IScope moduleScope;
-	private Map<IAstTypedExpr, ISymbol> moduleSymbols;
 	
 	/**
 	 * 
@@ -44,7 +41,6 @@ public class LLModule {
 		externDirectives = new ArrayList<LLBaseDirective>();
 		
 		moduleScope = new ModuleScope(globalScope);
-		moduleSymbols = new HashMap<IAstTypedExpr, ISymbol>();
 	}
 	
 	public String toString() {
@@ -77,7 +73,7 @@ public class LLModule {
 		sb.append(astSymbol.getName());
 		
 		// and the exact type
-		sb.append('.').append(expr.getType().toString());
+		sb.append('.').append(expr.getType().getSymbolicName());
 		
 		String symName = sb.toString();
 		ISymbol modSymbol = moduleScope.get(symName);

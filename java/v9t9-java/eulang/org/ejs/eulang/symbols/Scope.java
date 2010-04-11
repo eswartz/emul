@@ -103,7 +103,7 @@ public abstract class Scope implements IScope {
 		if (entries.containsKey(symbol.getName()))
 			throw new IllegalArgumentException();
 		symbol.setScope(this);
-		entries.put(symbol.getName(), symbol);
+		entries.put(symbol.getUniqueName(), symbol);
 		return symbol;
 	}
 	@Override
@@ -129,7 +129,7 @@ public abstract class Scope implements IScope {
 	@Override
 	public void remove(ISymbol symbol) {
 		symbol.setDefinition(null);
-		entries.remove(symbol.getName());
+		entries.remove(symbol.getUniqueName());
 	}
 	
 	/* (non-Javadoc)
@@ -238,7 +238,7 @@ public abstract class Scope implements IScope {
 		if (uniquifyt)
 			name += "@" + counter.get();
 		ISymbol symbol = createSymbol(name, true);
-		entries.put(name, symbol);
+		entries.put(symbol.getUniqueName(), symbol);
 		return symbol;		
 	}
 	

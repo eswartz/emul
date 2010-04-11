@@ -14,12 +14,41 @@ import org.ejs.eulang.types.TypeException;
  */
 public class ArithmeticBinaryOperation extends Operation implements IBinaryOperation {
 
+	private String intPrefix;
+	private String floatPrefix;
+
 	/**
 	 * @param name
 	 * @param isCommutative
 	 */
 	public ArithmeticBinaryOperation(String name, String llvmName, boolean isCommutative) {
 		super(name, llvmName, isCommutative);
+	}
+
+	/**
+	 * @param string
+	 * @param string2
+	 * @param b
+	 * @param string3
+	 * @param string4
+	 */
+	public ArithmeticBinaryOperation(String name, String llvmName, boolean isCommutative, String intPrefix, String floatPrefix) {
+		super(name, llvmName, isCommutative);
+		this.intPrefix = intPrefix;
+		this.floatPrefix = floatPrefix;
+	}
+	
+	/**
+	 * @return the intPrefix
+	 */
+	public String getIntPrefix() {
+		return intPrefix;
+	}
+	/**
+	 * @return the floatPrefix
+	 */
+	public String getFloatPrefix() {
+		return floatPrefix;
 	}
 
 	/* (non-Javadoc)

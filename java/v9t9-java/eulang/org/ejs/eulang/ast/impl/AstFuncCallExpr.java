@@ -166,7 +166,18 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			return false;
 		}
 
-		return updateType(function, codeType) | updateType(actualFunction, codeType) | updateType(this, codeType.getRetType());
+		boolean changed = updateType(function, codeType) | updateType(actualFunction, codeType) | updateType(this, codeType.getRetType());
+		
+		// insert casts of arguments
+		if (codeType.isComplete() && !codeType.isGeneric()) {
+			for (int idx = 0; idx < arguments.nodeCount(); idx++) {
+				IAstTypedExpr arg = arguments.list().get(idx);
+				LLType argType = codeType.getArgTypes()[idx];
+				arguments.replaceChild(arg, createCastOn(typeEngine, arg, argType));
+			}
+		}
+	
+		return changed;
 	}
 
 	/* (non-Javadoc)

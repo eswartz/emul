@@ -48,6 +48,9 @@ public interface LLType {
 	 */
 	String getLLVMName();
 	
+	/** Get the mangled name */
+	String getSymbolicName();
+	
 	/**
 	 * Tell if this type is more complete than the other, which may have
 	 * generics or unknown types.  Also, if the types are not compatible,

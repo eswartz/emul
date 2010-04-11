@@ -175,11 +175,12 @@ public class TypeInference {
 					if (expandedType != null) {
 
 						ISymbol expansionSym = null;
-						IAstTypedExpr expansion = null;
-						List<IAstTypedExpr> expansions = define.bodyToInstanceMap().get(body.getType());
+						List<ISymbol> expansions = define.bodyToInstanceMap().get(body.getType());
 						if (expansions != null)
-							expansion = define.getMatchingInstance(body.getType(), expandedType);
+							expansionSym = define.getMatchingInstance(body.getType(), expandedType);
 
+						IAstTypedExpr expansion = expansionSym != null ? (IAstTypedExpr) expansionSym.getDefinition() : null;
+						
 						/*
 						// the expanded type may yet have unknowns or generics in it
 						for (Map.Entry<ISymbol, IAstTypedExpr> entry : define.instances().entrySet()) {
@@ -211,7 +212,9 @@ public class TypeInference {
 								expansion.accept(dump);
 							}
 							
-							expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName() + "$instance", false);
+							expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
+									false);
+							expansionSym.setDefinition(expansion);
 						}
 						
 						
@@ -226,11 +229,11 @@ public class TypeInference {
 						}
 						
 						expansionSym.setType(expandedType);
+						
 						site.setSymbol(expansionSym);
-						expansion.setType(expandedType);
 						site.setType(expandedType);
 						
-						define.registerInstance(body.getType(), expansion);
+						define.registerInstance(body.getType(), expansionSym);
 						return true;
 					}
 				} else {

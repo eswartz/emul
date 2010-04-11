@@ -332,7 +332,7 @@ abstract public class AstNode implements IAstNode {
 	public void validateType(TypeEngine typeEngine) throws TypeException {
 		if (this instanceof IAstTypedNode) {
 			LLType thisType = ((IAstTypedNode) this).getType();
-			if (thisType == null || !thisType.isComplete())
+			if (thisType == null || !thisType.isComplete() || thisType.isGeneric())
 				throw new TypeException(this, "type inference cannot resolve type");
 		}
 	}

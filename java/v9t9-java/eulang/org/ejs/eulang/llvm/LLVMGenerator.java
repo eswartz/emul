@@ -46,6 +46,7 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.impl.ArithmeticBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
@@ -233,9 +234,9 @@ public class LLVMGenerator {
 		
 			generateGlobalExpr(stmt, expr);
 		}
-		for (List<IAstTypedExpr> exprList : stmt.bodyToInstanceMap().values()) {
-			for (IAstTypedExpr expr : exprList)
-				generateGlobalExpr(stmt, expr);
+		for (List<ISymbol> instanceList : stmt.bodyToInstanceMap().values()) {
+			for (ISymbol instance : instanceList)
+				generateGlobalExpr(stmt, (IAstTypedExpr) instance.getDefinition());
 		}
 	}
 
@@ -712,6 +713,17 @@ public class LLVMGenerator {
 					cast = ECast.BITCAST;
 				}
 			} 
+			else if (origType.getBasicType() == BasicType.FLOATING && type.getBasicType() == BasicType.FLOATING) {
+				if (origType.getBits() > type.getBits()) {
+					cast = ECast.FPTRUNC;
+				}
+				else if (origType.getBits() < type.getBits()) {
+					cast = ECast.FPEXT;
+				} 
+				else {
+					cast = ECast.BITCAST;
+				}
+			}
 			else if ((origType.getBasicType() == BasicType.INTEGRAL || origType.getBasicType() == BasicType.BOOL)
 					&& type.getBasicType() == BasicType.FLOATING) {
 				// TODO: signedness
@@ -722,7 +734,7 @@ public class LLVMGenerator {
 				// TODO: signedness
 				cast = ECast.FPTOSI;
 			}
-			else 
+			else
 				unhandled(expr);
 			
 			LLOperand temp = currentTarget.newTemp(type);
@@ -754,6 +766,12 @@ public class LLVMGenerator {
 					instr = "fcmp " + ((ComparisonBinaryOperation) op).getLLFloatPrefix()  + instr;
 				else
 					instr = "icmp " + ((ComparisonBinaryOperation) op).getLLIntPrefix() + instr;
+			}
+			else if (op instanceof ArithmeticBinaryOperation) {
+				String prefix = (expr.getLeft().getType().getBasicType() == BasicType.FLOATING) ? 
+						((ArithmeticBinaryOperation) op).getFloatPrefix() : ((ArithmeticBinaryOperation) op).getIntPrefix();
+				if (prefix != null) 
+					instr = prefix + instr;
 			}
 			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
 		} else {
@@ -863,7 +881,7 @@ public class LLVMGenerator {
 		
 		//LLCodeType funcType = (LLCodeType) expr.getFunction().getType();
 		
-		LLCodeType funcType = (LLCodeType) getSymbolType(expr.getFunction());
+		LLCodeType funcType = (LLCodeType) expr.getFunction().getType();
 		LLOperand[] ops = new LLOperand[funcType.getArgTypes().length];
 		
 		int idx = 0;
@@ -879,27 +897,6 @@ public class LLVMGenerator {
 
 		currentTarget.emit(new LLCallInstr(ret, expr.getType(), func, funcType, ops));
 		return ret;
-	}
-
-	/**
-	 * @param node
-	 * @return
-	 */
-	private LLType getSymbolType(IAstTypedExpr node) {
-		if (node.getType() != null)
-			return node.getType();
-		
-		if (node instanceof IAstSymbolExpr) {
-			IAstNode def = ((IAstSymbolExpr) node).getSymbol().getDefinition();
-			if (def instanceof IAstDefineStmt) {
-				// TODO: instances
-				return ((IAstDefineStmt) def).getExpr().getType();
-			}
-			if (!(def instanceof ITyped))
-				return null;
-			return ((ITyped)node).getType();
-		} 
-		return null;
 	}
 
 	private LLOperand generateLitExpr( IAstLitExpr expr) throws ASTException {

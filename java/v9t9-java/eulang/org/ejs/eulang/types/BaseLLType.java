@@ -127,6 +127,14 @@ public abstract class BaseLLType implements LLType {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#getSymbolicName()
+	 */
+	@Override
+	public String getSymbolicName() {
+		return name != null ? name : llvmType;
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isMoreComplete(org.ejs.eulang.types.LLType)
 	 */
 	@Override
