@@ -956,6 +956,30 @@ public class TestTypeInfer extends BaseParserTest {
 		assertTrue(isCastTo(add.getLeft(), typeEngine.DOUBLE)); 
 		assertFalse(isCastTo(add.getRight(), typeEngine.DOUBLE)); 
     }
+    
+    @Test
+    public void testTypeList2() throws Exception {
+ 		 // make sure we don't generate more than one instance per type (even if we waste temp symbols)
+    	IAstModule mod = treeize("floor = [\n"+
+    			"	code (x:Float) { x - x%1.0 },\n" +
+    			"   code (x:Double) { x - x%1.0 }\n " +
+    			"];\n"+
+			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b)*floor(a)*floor(b) }; \n");
+		sanityTest(mod);
+		
+		doTypeInfer(mod);
+
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("floor");
+		assertInstanceCount(2, 2, def);
+    	
+		// be sure we selected the right one
+		def = (IAstDefineStmt) mod.getScope().getNode("testTypeList1");
+		IAstCodeExpr code = (IAstCodeExpr) def.getMatchingBodyExpr(null);
+		IAstBinExpr add = (IAstBinExpr) ((IAstExprStmt) code.stmts().list().get(0)).getExpr();
+		assertEquals(typeEngine.DOUBLE, add.getType());
+		assertTrue(isCastTo(add.getLeft(), typeEngine.DOUBLE)); 
+		assertFalse(isCastTo(add.getRight(), typeEngine.DOUBLE)); 
+    }
 }
 
 

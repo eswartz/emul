@@ -289,4 +289,16 @@ public class TestLLVMGenerator extends BaseParserTest {
   		LLVMGenerator g = doGenerate(mod);
     	assertEquals(3, g.getModule().getSymbolCount());
   }
+  	
+  	 @Test
+     public void testTypeList2() throws Exception {
+  		 // make sure we don't generate more than one instance per type
+     	IAstModule mod = doFrontend("floor = [\n"+
+     			"	code (x:Float) { x - x%1.0 },\n" +
+     			"   code (x:Double) { x - x%1.0 }\n " +
+     			"];\n"+
+ 			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b)*floor(a)*floor(b) }; \n");
+     	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(3, g.getModule().getSymbolCount());
+     }
 }

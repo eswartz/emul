@@ -15,7 +15,6 @@ import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.ITarget;
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
