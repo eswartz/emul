@@ -25,11 +25,6 @@ public interface IAstDefineStmt extends IAstStmt, IAstSymbolDefiner {
 	
 	ISymbol getSymbol();
 	
-	/** @deprecated */
-	IAstTypedExpr getExpr();
-	/** @deprecated */
-	void setExpr(IAstTypedExpr expr);
-	
 	/**
 	 * Get the abstract variants of the definition body.  There is one for each instance
 	 * defined in source code (e.g. explicit definitions, list comprehensions, etc).
@@ -68,7 +63,7 @@ public interface IAstDefineStmt extends IAstStmt, IAstSymbolDefiner {
 	 * @return read-only map of body types to the instances recorded for them.  If the body type
 	 * is not generic, there is only one entry in the list, and it cannot be modified.
 	 */
-	Map<LLType, List<ISymbol>> bodyToInstanceMap();
+	Map<LLType, List<IAstTypedExpr>> bodyToInstanceMap();
 	
 	/**
 	 * Get the symbol for a generated matching resolved version of the definition used for this type.
@@ -78,9 +73,9 @@ public interface IAstDefineStmt extends IAstStmt, IAstSymbolDefiner {
 	 * this returns the concrete instance registered via {@link #registerInstance(LLType, IAstTypedExpr)}.
 	 * @param bodyType the type of an expr for which the instance is searched
 	 * @param instanceType the type of a target expr for which the instance is searched
-	 * @return the symbol for expanded and type-specific body of the define, whose definition is the body, or <code>null</code>
+	 * @return the expanded and type-specific body of the define, whose definition is the body, or <code>null</code>
 	 */
-	ISymbol getMatchingInstance(LLType bodyType, LLType instanceType);
+	IAstTypedExpr getMatchingInstance(LLType bodyType, LLType instanceType);
 
 	
 	/**
@@ -88,13 +83,14 @@ public interface IAstDefineStmt extends IAstStmt, IAstSymbolDefiner {
 	 * <p>
 	 * @param bodyType the type of the matching expr for which the instance was made,
 	 * not generic
-	 * @param expansionSym expanded and type-specific body of the define
+	 * @param expansion expanded and type-specific body of the define
 	 * @throws IllegalArgumentException if the bodyType is not generic or the symbol does not have a body
 	 */
-	void registerInstance(LLType bodyType, ISymbol expansionSym);
+	void registerInstance(LLType bodyType, IAstTypedExpr expansion);
 	
 	/**
-	 * Get all concrete instances.
+	 * Get all concrete instances.  These are the non-generic body expressions
+	 * and the generated instances.
 	 */
 	Collection<IAstTypedExpr> getConcreteInstances();
 }

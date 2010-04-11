@@ -97,39 +97,50 @@ public class TypeInference {
 	private boolean inferUp(IAstNode node) {
 		
 		boolean changed = false;
+		boolean recurse = true;
 		
-		 if (node instanceof IAstDefineStmt) {
+		if (node instanceof IAstDefineStmt) {
 			IAstDefineStmt defineStmt = (IAstDefineStmt) node;
-			IAstTypedExpr defineExpr = defineStmt.getExpr();
-			LLType origDefineType = defineExpr.getType();
-			if (origDefineType == null || !origDefineType.isComplete()) {
-				TypeInference inference = new TypeInference(typeEngine);
-				boolean defineChanged = inference.infer(defineExpr, false);
-				
-				if (DUMP) {
-					System.out.println("Inferring on define:");
-					DumpAST dump = new DumpAST(System.out);
-					defineStmt.accept(dump);
-				}
-				
-				if (!defineChanged || (defineExpr.getType() == null || !defineExpr.getType().isComplete())) {
-					// a standalone define should have a known type based on predecessors,
-					// so this must be a generic
-					boolean madeGeneric = genericize(defineExpr);
-					if (madeGeneric) {
-						return true;
+			
+			changed |= inferUp(defineStmt.getSymbolExpr());
+			
+			for (IAstTypedExpr bodyExpr : defineStmt.bodyList()) {
+				LLType origDefineType = bodyExpr.getType();
+				if (origDefineType == null || !origDefineType.isComplete()) {
+					TypeInference inference = new TypeInference(typeEngine);
+					boolean defineChanged = inference.infer(bodyExpr, false);
+					
+					if (DUMP) {
+						System.out.println("Inferring on define:");
+						DumpAST dump = new DumpAST(System.out);
+						defineStmt.accept(dump);
 					}
+					
+					if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
+						// a standalone define should have a known type based on predecessors,
+						// so this must be a generic
+						boolean madeGeneric = genericize(bodyExpr);
+						if (madeGeneric) {
+							return true;
+						}
+					}
+					messages.addAll(inference.getMessages());
+					//if (defineExpr.getType() != null && defineExpr.getType().isMoreComplete(origDefineType))
+					//	changed = true;
+					
+					changed |= inferUp(bodyExpr);
+				} else if (origDefineType.isGeneric()) {
+					// okay, don't infer here
 				}
-				messages.addAll(inference.getMessages());
-				//if (defineExpr.getType() != null && defineExpr.getType().isMoreComplete(origDefineType))
-				//	changed = true;
-			} else if (origDefineType.isGeneric()) {
-				return changed;
 			}
+			
+			recurse = false;
 		}
-		 
-		for (IAstNode kid : node.getChildren()) {
-			changed |= inferUp(kid);
+
+		if (recurse) {
+			for (IAstNode kid : node.getChildren()) {
+				changed |= inferUp(kid);
+			}
 		}
 		if (node instanceof IAstTypedNode) {
 			IAstTypedNode typed = (IAstTypedNode) node;
@@ -155,94 +166,139 @@ public class TypeInference {
 	 * @param context 
 	 */
 	private boolean instantiate(IAstSymbolExpr site) {
+		// Does this refer to a definition (still)?
+		// 
+		// We will replace all symbol exprs with references to actual definitions if possible.
+		//
 		IAstDefineStmt define = site.getDefinition();
 		if (define == null)
 			return false;
 		
-		if (site.getType() == null || !site.getType().isGeneric())
-			return false;
+		
 
-		IAstTypedExpr body = define.getMatchingBodyExpr(site.getType());
-		if (body == null)
-			return false;
-
+		// Get the actual type expected for the site (don't use the symbol's site, since that aliases
+		// other definitions and uses)
+		//
+		
+		LLType expandedType = null;
 		IAstNode context = site;
 		while (context != null) {
 			if (context instanceof IAstTypedNode) {
 				IAstTypedNode typed = (IAstTypedNode) context;
-				if (typed.getType() != null && (!typed.getType().isComplete() || typed.getType().isGeneric())) {
-					LLType expandedType = typed.inferExpansion(typeEngine, body);
+				if (true /*typed.getType() != null  && (!typed.getType().isComplete() || typed.getType().isGeneric())*/) {
+					expandedType = typed.inferExpansion(typeEngine, null);
 					if (expandedType != null) {
-
-						ISymbol expansionSym = null;
-						List<ISymbol> expansions = define.bodyToInstanceMap().get(body.getType());
-						if (expansions != null)
-							expansionSym = define.getMatchingInstance(body.getType(), expandedType);
-
-						IAstTypedExpr expansion = expansionSym != null ? (IAstTypedExpr) expansionSym.getDefinition() : null;
-						
-						/*
-						// the expanded type may yet have unknowns or generics in it
-						for (Map.Entry<ISymbol, IAstTypedExpr> entry : define.instances().entrySet()) {
-							if (entry.getValue().getType().isMoreComplete(expandedType)
-									|| expandedType.equals(entry.getValue().getType())) {
-								site.setSymbol(entry.getKey());
-								return true;
-							}
-							if (expandedType.isMoreComplete(entry.getValue().getType())) {
-								// we can improve the expansion
-								//expansionSym = entry.getKey();
-								expansion = entry.getValue();
-								break;
-							}
-						}
-						*/
-						
-						if (expansion == null) {
-							// nothing matched; make a new one
-							if (DUMP) 
-								System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
-							
-							expansion = (IAstTypedExpr) body.copy(null);
-							replaceGenericTypes(expansion, expandedType);
-							
-							if (DUMP) {
-								System.out.println("Initial expansion:");
-								DumpAST dump = new DumpAST(System.out);
-								expansion.accept(dump);
-							}
-							
-							expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
-									false);
-							expansionSym.setDefinition(expansion);
-						}
-						
-						
-						
-						TypeInference inference = new TypeInference(typeEngine);
-						boolean updated = inference.infer(expansion, false);
-						expandedType = expansion.getType();
-						if (updated && DUMP) {
-							System.out.println("Updated expansion of " + define.getSymbol() + " for " + expandedType + ":");
-							DumpAST dump = new DumpAST(System.out);
-							expansion.accept(dump);
-						}
-						
-						expansionSym.setType(expandedType);
-						
-						site.setSymbol(expansionSym);
-						site.setType(expandedType);
-						
-						define.registerInstance(body.getType(), expansionSym);
-						return true;
+						break;
 					}
-				} else {
-					break;
 				}
 			}
 			context = context.getParent();
 		}
-		return false;
+		
+		if (expandedType == null)
+			return false;
+		
+		IAstTypedExpr body = define.getMatchingBodyExpr(expandedType);
+		if (body == null) {
+			body = define.getMatchingBodyExpr(site.getType());
+			if (body == null) {
+				return false;
+			}
+		}
+
+
+		
+		if (site.getType() == null || !expandedType.isGeneric()) {
+			if (define.bodyList().size() == 1)
+				return false;
+			
+			ISymbol bodySym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
+					false);
+			bodySym.setDefinition(body);
+		
+			
+			TypeInference inference = new TypeInference(typeEngine);
+			boolean updated = inference.infer(body, false);
+			
+			LLType bodyType = body.getType();
+			
+			if (updated && DUMP) {
+				System.out.println("Updated body of " + define.getSymbol() + " for " + bodyType + ":");
+				DumpAST dump = new DumpAST(System.out);
+				body.accept(dump);
+			}
+			
+			site.setType(bodyType);
+
+			bodySym.setDefinition(body);
+			bodySym.setType(site.getType());
+			
+			site.setSymbol(bodySym);
+			site.setType(bodyType);
+				
+			//define.registerInstance(body.getType(), body);
+			return true;
+		}
+
+
+		IAstTypedExpr expansion = define.getMatchingInstance(body.getType(), expandedType);
+
+		/*
+		// the expanded type may yet have unknowns or generics in it
+		for (Map.Entry<ISymbol, IAstTypedExpr> entry : define.instances().entrySet()) {
+			if (entry.getValue().getType().isMoreComplete(expandedType)
+					|| expandedType.equals(entry.getValue().getType())) {
+				site.setSymbol(entry.getKey());
+				return true;
+			}
+			if (expandedType.isMoreComplete(entry.getValue().getType())) {
+				// we can improve the expansion
+				//expansionSym = entry.getKey();
+				expansion = entry.getValue();
+				break;
+			}
+		}
+		*/
+		
+		ISymbol expansionSym = site.getSymbol();
+		
+		if (expansion == null) {
+			// nothing matched; make a new one
+			if (DUMP) 
+				System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
+			
+			expansion = (IAstTypedExpr) body.copy(null);
+			replaceGenericTypes(expansion, expandedType);
+			
+			if (DUMP) {
+				System.out.println("Initial expansion:");
+				DumpAST dump = new DumpAST(System.out);
+				expansion.accept(dump);
+			}
+			
+			expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
+					false);
+			expansionSym.setDefinition(expansion);
+		}
+		
+		
+		
+		TypeInference inference = new TypeInference(typeEngine);
+		boolean updated = inference.infer(expansion, false);
+		expandedType = expansion.getType();
+		if (updated && DUMP) {
+			System.out.println("Updated expansion of " + define.getSymbol() + " for " + expandedType + ":");
+			DumpAST dump = new DumpAST(System.out);
+			expansion.accept(dump);
+		}
+		
+		expansionSym.setType(expandedType);
+		
+		site.setSymbol(expansionSym);
+		site.setType(expandedType);
+		
+		define.registerInstance(body.getType(), expansion);
+		return true;
 	}
 
 	/**

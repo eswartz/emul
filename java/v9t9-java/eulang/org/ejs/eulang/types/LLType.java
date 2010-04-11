@@ -65,5 +65,12 @@ public interface LLType {
 	 * @return
 	 */
 	boolean isGeneric();
+	/**
+	 * Tell whether this type matches another on exact type comparisons -- 
+	 * but ignoring any unknown types.
+	 * @param target
+	 * @return
+	 */
+	boolean matchesExactly(LLType target);
 	
 }

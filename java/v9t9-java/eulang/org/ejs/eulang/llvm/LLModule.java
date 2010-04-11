@@ -131,6 +131,13 @@ public class LLModule {
 			externDirectives.add(new LLTypeDirective(typeSymbol, type));
 		}
 		return typeSymbol;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getSymbolCount() {
+		return moduleScope.getSymbols().length;
 	};
 	
 }

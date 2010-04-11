@@ -142,4 +142,34 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		}
 		return false;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#matchesExactly(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean matchesExactly(LLType target) {
+		if (target == null)
+			return true;
+		
+		if (getBasicType() != target.getBasicType())
+			return false;
+		
+		if (!(target instanceof LLAggregateType))
+			return false;
+		LLAggregateType aggTarget = (LLAggregateType) target;
+		if (getCount() != aggTarget.getCount())
+			return false;
+		
+		LLType[] types = getTypes();
+		LLType[] otherTypes = aggTarget.getTypes();
+		
+		for (int idx = 0; idx < getCount(); idx++) {
+			if (types[idx] == null || otherTypes[idx] == null)
+				continue;
+			if (!types[idx].matchesExactly(otherTypes[idx]))
+				return false;
+		}
+		
+		return true;
+	}
 }

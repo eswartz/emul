@@ -32,7 +32,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	private List<IAstTypedExpr> bodyList = new ArrayList<IAstTypedExpr>();
 	//private Map<LLType, IAstTypedExpr> typedBodyMap = new HashMap<LLType, IAstTypedExpr>();
 	
-	private Map<LLType, List<ISymbol>> instanceMap = new HashMap<LLType, List<ISymbol>>();
+	private Map<LLType, List<IAstTypedExpr>> instanceMap = new HashMap<LLType, List<IAstTypedExpr>>();
 
 	public AstDefineStmt(IAstSymbolExpr name, List<IAstTypedExpr> bodyList) {
 		this.id = name;
@@ -135,11 +135,15 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getSymbolExpr() == existing) {
 			setSymbolExpr((IAstSymbolExpr) another);
-		} else if (getExpr() == existing) {
-			setExpr((IAstSymbolExpr) another);
-		} else {
-			throw new IllegalArgumentException();
+		} 
+		for (int idx = 0; idx < bodyList.size(); idx++) {
+			IAstTypedExpr expr = bodyList.get(idx);	
+			if (expr == existing) {
+				bodyList.set(idx, (IAstTypedExpr) another);
+				return;
+			}
 		}
+		throw new IllegalArgumentException();
 		
 	}
 	
@@ -147,10 +151,11 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getExpr()
 	 */
+	/*
 	@Override
 	public IAstTypedExpr getExpr() {
 		return bodyList.isEmpty() ? null : bodyList.get(0);
-	}
+	}*/
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getId()
@@ -171,6 +176,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setExpr(v9t9.tools.ast.expr.IAstExpression)
 	 */
+	/*
 	@Override
 	public void setExpr(IAstTypedExpr expr) {
 		//this.expr = reparent(this.expr, expr);
@@ -179,7 +185,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 		else
 			bodyList.set(0, expr);
 		expr.setParent(this);
-	}
+	}*/
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setId(v9t9.tools.ast.expr.IAstIdExpression)
@@ -238,14 +244,14 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.IAstDefineStmt#instanceMap()
 	 */
 	@Override
-	public Map<LLType, List<ISymbol>> bodyToInstanceMap() {
+	public Map<LLType, List<IAstTypedExpr>> bodyToInstanceMap() {
 		return Collections.unmodifiableMap(instanceMap);
 	}
 	
 	protected boolean typeMatchesExactly(LLType orig, LLType target) {
-		if (orig == null || target == null)
+		if (orig == null)
 			return false;
-		if (orig.equals(target))
+		if (orig.matchesExactly(target))
 			return true;
 		return false;
 	}
@@ -273,18 +279,18 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 			return bodyList.get(0);
 		}
 		
-		if (type.isComplete()) {
-			// look for exact matches
-			for (IAstTypedExpr expr : bodyList) {
-				if (typeMatchesExactly(expr.getType(), type))
-					return expr;
-			}	
-			// then compatible ones
-			for (IAstTypedExpr expr : bodyList) {
-				if (typeMatchesCompatible(expr.getType(), type))
-					return expr;
-			}	
+		// look for exact matches
+		for (IAstTypedExpr expr : bodyList) {
+			if (typeMatchesExactly(expr.getType(), type))
+				return expr;
+		}	
+		
+		// then compatible ones
+		for (IAstTypedExpr expr : bodyList) {
+			if (typeMatchesCompatible(expr.getType(), type))
+				return expr;
 		}
+		
 		// then generic matches
 		for (IAstTypedExpr expr : bodyList) {
 			if (typeMatchesGeneric(expr.getType(), type))
@@ -298,23 +304,21 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.IAstDefineStmt#getMatchingInstance(org.ejs.eulang.types.LLType)
 	 */
 	@Override
-	public ISymbol getMatchingInstance(LLType type, LLType instanceType) {
-		if (type == null) {
-			return null;
-		}
-
-		if (type.isComplete() && !type.isGeneric()) {
-			assert type.equals(instanceType);
-			return null;
-		}
-		
-		List<ISymbol> list = instanceMap.get(type);
+	public IAstTypedExpr getMatchingInstance(LLType bodyType, LLType instanceType) {
+        if (bodyType == null) {
+        	return null;
+        }
+        if (bodyType.isComplete() && !bodyType.isGeneric()) {
+        	assert instanceType == null || bodyType.equals(instanceType);
+        	return null;
+        }
+		List<IAstTypedExpr> list = instanceMap.get(bodyType);
 		if (list == null)
-			return null;
+			return getMatchingBodyExpr(instanceType);
 		
-		for (ISymbol sym : list) {
-			if (typeMatchesExactly(sym.getType(), type))
-				return sym;
+		for (IAstTypedExpr expr : list) {
+			if (typeMatchesExactly(expr.getType(), instanceType))
+				return expr;
 		}
 		/*
 		for (IAstTypedExpr expr : list) {
@@ -333,16 +337,16 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.IAstDefineStmt#registerInstance(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstTypedExpr)
 	 */
 	@Override
-	public void registerInstance(LLType type, ISymbol sym) {
+	public void registerInstance(LLType type, IAstTypedExpr expansion) {
 		if (type == null || !type.isGeneric()) {
 			throw new IllegalArgumentException();
 		}
 		
-		List<ISymbol> list = instanceMap.get(type);
+		List<IAstTypedExpr> list = instanceMap.get(type);
 		if (list == null) {
 			for (IAstTypedExpr body : bodyList) {
 				if (body.getType().equals(type)) {
-					list = new ArrayList<ISymbol>();
+					list = new ArrayList<IAstTypedExpr>();
 					instanceMap.put(type, list);
 					break;
 				}
@@ -350,8 +354,8 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 			if (list == null)
 				throw new IllegalArgumentException("type should match one inferred previously");
 		}
-		if (!list.contains(sym))
-			list.add(sym);
+		if (!list.contains(expansion))
+			list.add(expansion);
 	}
 	
 	/* (non-Javadoc)
@@ -364,9 +368,8 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 			if (expr.getType() != null && expr.getType().isComplete() && !expr.getType().isGeneric())
 				list.add(expr);
 		}
-		for (List<ISymbol> ilist : instanceMap.values()) {
-			for (ISymbol sym : ilist)
-				list.add((IAstTypedExpr) sym.getDefinition());
+		for (List<IAstTypedExpr> alist : instanceMap.values()) {
+			list.addAll(alist);
 		}
 		return list;
 	}

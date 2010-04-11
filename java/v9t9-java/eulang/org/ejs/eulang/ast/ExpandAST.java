@@ -50,10 +50,8 @@ public class ExpandAST {
 				if (symDef == node.getParent())
 					return false;
 				
-				if (symDef instanceof IAstDefineStmt) {
-					IAstDefineStmt defineStmt = (IAstDefineStmt) symDef;
-					IAstNode value = defineStmt.getExpr();
-					
+				IAstTypedExpr value = symExpr.getInstance();
+				if (value != null) {
 					if (value instanceof IAstCodeExpr) {
 						IAstCodeExpr codeExpr = (IAstCodeExpr) value;
 						if (codeExpr.isMacro()) {
@@ -80,7 +78,7 @@ public class ExpandAST {
 				IAstTypedExpr funcExpr = funcCallExpr.getFunction();
 				if (funcExpr instanceof IAstSymbolExpr) {
 					// Call to a define?
-					
+					/*
 					IAstSymbolExpr symExpr = (IAstSymbolExpr) funcExpr;
 					if (symExpr.getSymbol().getDefinition() instanceof IAstDefineStmt) {
 						IAstDefineStmt defineStmt = (IAstDefineStmt) symExpr.getSymbol().getDefinition();
@@ -96,7 +94,7 @@ public class ExpandAST {
 							}
 
 						}
-					}
+					}*/
 				}
 				else if (funcExpr instanceof IAstCodeExpr) {
 					// Direct expansion of call, e.g.:   code () { } ()
@@ -128,6 +126,7 @@ public class ExpandAST {
 	 * @param funcCallExpr
 	 * @return
 	 */
+	/*
 	private IAstTypedExpr instantiateFuncCall(IAstDefineStmt defineStmt,
 			IAstFuncCallExpr funcCallExpr) {
 		
@@ -143,19 +142,10 @@ public class ExpandAST {
 		
 		return instExpr;
 		
-		/*
-		LLType retType = ((LLCodeType)codeExpr).getRetType();
-		LLType[] origArgTypes = ((LLCodeType)codeExpr).getArgTypes();
-		LLType[] argTypes = Arrays.copyOf(origArgTypes, origArgTypes.length); 
 		
-		if (retType == null || !retType.isComplete()) {
-			retType = funcCallExpr.getType();
-		}
-		funcCallExpr.arguments();
-		return null;
-		*/
 	}
-
+*/
+	
 	/**
 	 * Expand a function or macro into the tree 
 	 * @param node

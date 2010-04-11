@@ -197,7 +197,7 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		boolean changed = false;
 		if (!inferTypesFromChildren(new ITyped[] { typeExpr, getExpr() })) {
-			if (getExpr() != null) {
+			if (getExpr() != null && getExpr().getType() != null) {
 				if (typeExpr != null && getExpr().getType().isMoreComplete(typeExpr.getType()))
 					changed = updateType(typeExpr, getExpr().getType());
 				if (getExpr().getType().isMoreComplete(getType()))

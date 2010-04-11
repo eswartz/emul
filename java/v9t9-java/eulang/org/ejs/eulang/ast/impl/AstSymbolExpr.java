@@ -125,6 +125,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	@Override
 	public LLType getType() {
 		return symbol.getType();
+		//return super.getType();
 	}
 
 	/* (non-Javadoc)
@@ -132,6 +133,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 */
 	@Override
 	public void setType(LLType type) {
+		//super.setType(type);
 		symbol.setType(type);
 	}
 	
@@ -217,10 +219,10 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		IAstTypedExpr body = def.getMatchingBodyExpr(getType());
 		if (body == null) 
 			return null;
-		ISymbol instance = def.getMatchingInstance(body.getType(), getType());
+		IAstTypedExpr instance = def.getMatchingInstance(body.getType(), getType());
 		if (instance == null)
 			return body;
-		return (IAstTypedExpr) instance.getDefinition();
+		return instance;
 	}
 	
 }

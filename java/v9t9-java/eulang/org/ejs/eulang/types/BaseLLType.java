@@ -149,4 +149,12 @@ public abstract class BaseLLType implements LLType {
 	public boolean isGeneric() {
 		return false;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#matchesExactly(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean matchesExactly(LLType target) {
+		return this.equals(target);
+	}
 }

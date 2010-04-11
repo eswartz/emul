@@ -51,15 +51,17 @@ public class TestLLVMGenerator extends BaseParserTest {
 	/**
 	 * Generate the module, expecting no errors.
 	 * @param mod
+	 * @return 
 	 */
-	private void doGenerate(IAstModule mod) throws Exception {
-		doGenerate(mod, false);
+	private LLVMGenerator doGenerate(IAstModule mod) throws Exception {
+		return doGenerate(mod, false);
 	}
 	/**
 	 * @param mod
+	 * @return 
 	 * @throws Exception 
 	 */
-	protected void doGenerate(IAstModule mod, boolean expectErrors) throws Exception {
+	protected LLVMGenerator doGenerate(IAstModule mod, boolean expectErrors) throws Exception {
 		//doExpand(mod);
 		//doSimplify(mod);
 		
@@ -97,13 +99,15 @@ public class TestLLVMGenerator extends BaseParserTest {
 			run("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
 		} catch (AssertionFailedError e) {
 			if (expectErrors)
-				return;
+				return generator;
 			else
 				throw e;
 		}
 		
 		if (expectErrors)
 			assertTrue("expected errors", messages.size() > 0);
+		
+		return generator;
 	}
 	/**
 	 * @param string
@@ -242,20 +246,23 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testTuples4() throws Exception {
     	IAstModule mod = doFrontend("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
     			"testTuples4 = code (a,b) { (a, b) = swap(4, 5); }; \n");
-    	doGenerate(mod);
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(2, g.getModule().getSymbolCount());
     }
 	@Test
     public void testTuples4b() throws Exception {
     	IAstModule mod = doFrontend("swap = code (x,y,z => (Int, Int, Int)) { (y,z,x); };\n" +
     			"testTuples4b = code (a,b) { (x, o, y) := swap(a+b, a-b, b); (a*x, y*b); }; \n");
-    	doGenerate(mod);
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(2, g.getModule().getSymbolCount());
     }
 	
 	@Test
     public void testGenerics0b() throws Exception {
     	IAstModule mod = doFrontend("add = code (x,y) { x+y };\n" +
     			"testGenerics0b = code (a:Int,b:Int) { add(a,b) + add(10.0,b);  }; \n");
-    	doGenerate(mod);
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(3, g.getModule().getSymbolCount());
     }
   
 	@Test
@@ -267,16 +274,19 @@ public class TestLLVMGenerator extends BaseParserTest {
 			"i = f; i = d; i = b;\n" +
 			"b = f; b = d; b = i;\n" +
 			"};\n");
-  		doGenerate(mod);
+  		LLVMGenerator g = doGenerate(mod);
+    	assertEquals(1, g.getModule().getSymbolCount());
   }
 	
   	@Test
   	public void testTypeList1() throws Exception {
+  		// be sure the right symbol is used for each reference
   		IAstModule mod = doFrontend("floor = [\n"+
   			"	code (x:Float) { x - x%1.0 },\n" +
   			"   code (x:Double) { x - x%1.0 }\n " +
   			"];\n"+
 			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b) }; \n");
-  		doGenerate(mod);
+  		LLVMGenerator g = doGenerate(mod);
+    	assertEquals(3, g.getModule().getSymbolCount());
   }
 }

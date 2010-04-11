@@ -13,6 +13,7 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -150,7 +151,9 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		
 		LLCodeType codeType = null;
 
-		IAstTypedNode actualFunction = getRealTypedNode(function);
+		LLCodeType argCodeType = getArgInferredType(typeEngine);
+		
+		IAstTypedNode actualFunction = getRealTypedNode(function, argCodeType);
 		
 		if (canInferTypeFrom(actualFunction)) {
 			LLType type = actualFunction.getType();
@@ -161,7 +164,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 
 			codeType = (LLCodeType) type;
 		} else if (canInferTypeFromArgs()) {
-			codeType = getArgInferredType(typeEngine);
+			codeType = argCodeType;
 		} else {
 			return false;
 		}
@@ -185,10 +188,11 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	 */
 	@Override
 	public LLType inferExpansion(TypeEngine typeEngine, IAstTypedExpr expr) {
-		if (expr == getRealTypedNode(function)) {
-			return getArgInferredType(typeEngine);
-		}
-		return super.inferExpansion(typeEngine, expr);
+		LLCodeType argCodeType = getArgInferredType(typeEngine);
+		//if (expr == getRealTypedNode(function, expr.getType())) {
+			return argCodeType;
+		//}
+		//return super.inferExpansion(typeEngine, expr);
 	}
 	
 	private LLCodeType getArgInferredType(TypeEngine typeEngine) {
@@ -207,7 +211,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		codeType = typeEngine.getCodeType(infRetType, infArgTypes);
 		return codeType;
 	}
-
+	
 	/**
 	 * @return
 	 */
@@ -219,20 +223,26 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		return true;
 	}
 
-	private IAstTypedNode getRealTypedNode(IAstTypedExpr node) {
-		if (node.getType() != null && !node.getType().isGeneric()) {
-			return node;
-		}
+	private IAstTypedNode getRealTypedNode(IAstTypedExpr node, LLType codeType) {
+		//if (node.getType() != null && !node.getType().isGeneric()) {
+		//	return node;
+		//}
 		
 		if (node instanceof IAstSymbolExpr) {
-			IAstNode def = ((IAstSymbolExpr) node).getSymbol().getDefinition();
-			if (def instanceof IAstDefineStmt) {
+			IAstSymbolExpr symbolExpr = (IAstSymbolExpr) node;
+			if (symbolExpr.getDefinition() != null) {
 				// TODO: instances
-				IAstDefineStmt defineStmt = (IAstDefineStmt) def;
-				IAstTypedExpr expr = defineStmt.getExpr();
+				/*
+				IAstTypedExpr expr = symbolExpr.getDefinition().getMatchingBodyExpr(codeType);
+				if (expr != null) {
+					IAstTypedExpr expandedExpr = symbolExpr.getDefinition().getMatchingInstance(expr.getType(), codeType);
+					if (expandedExpr != null)
+						expandedExpr = 
+				}*/
+				IAstTypedExpr expr = symbolExpr.getInstance();
 				return expr;
 			}
-			if (!(def instanceof ITyped))
+			if (!(symbolExpr.getSymbol().getDefinition() instanceof ITyped))
 				return null;
 			return ((IAstTypedNode)node);
 		} 
