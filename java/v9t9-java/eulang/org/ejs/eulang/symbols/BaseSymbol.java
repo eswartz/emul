@@ -64,13 +64,19 @@ public abstract class BaseSymbol implements ISymbol {
 		if (getClass() != obj.getClass())
 			return false;
 		BaseSymbol other = (BaseSymbol) obj;
+		if (number != other.number)
+			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
 		} else if (!name.equals(other.name))
 			return false;
-		if (number != other.number)
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
 			return false;
+		
 		return true;
 	}
 	
@@ -183,7 +189,8 @@ public abstract class BaseSymbol implements ISymbol {
 	@Override
 	public String getLLVMName() {
 		String prefix = getLLVMPrefix();
-		return prefix + getName().replaceAll("@", "\\$");
+		String safeName = getName().replaceAll("[^a-zA-Z0-9_$]", "_");
+		return prefix + safeName;
 	}
 	/**
 	 * @return

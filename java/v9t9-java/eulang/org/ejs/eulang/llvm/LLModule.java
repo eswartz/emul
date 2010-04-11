@@ -4,8 +4,12 @@
 package org.ejs.eulang.llvm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.ejs.eulang.ast.IAstSymbolDefiner;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
@@ -13,6 +17,7 @@ import org.ejs.eulang.llvm.directives.LLTypeDirective;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalSymbol;
+import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLType.BasicType;
@@ -27,6 +32,9 @@ public class LLModule {
 	List<LLBaseDirective> externDirectives;
 	private final IScope globalScope;
 	
+	private IScope moduleScope;
+	private Map<IAstTypedExpr, ISymbol> moduleSymbols;
+	
 	/**
 	 * 
 	 */
@@ -34,6 +42,9 @@ public class LLModule {
 		this.globalScope = globalScope;
 		directives = new ArrayList<LLBaseDirective>();
 		externDirectives = new ArrayList<LLBaseDirective>();
+		
+		moduleScope = new ModuleScope(globalScope);
+		moduleSymbols = new HashMap<IAstTypedExpr, ISymbol>();
 	}
 	
 	public String toString() {
@@ -48,6 +59,44 @@ public class LLModule {
 			sb.append('\n');
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Find or create the symbol that uniquely references this expression
+	 * @param astSymbol the name of the symbol in the AST 
+	 * @param expr the concrete body for the symbol
+	 * @return unique symbol
+	 */
+	public ISymbol getModuleSymbol(ISymbol astSymbol, IAstTypedExpr expr) {
+		StringBuilder sb = new StringBuilder();
+		
+		// put a unique scope
+		getScopePrefix(sb, astSymbol.getScope());
+		
+		// and the name
+		sb.append(astSymbol.getName());
+		
+		// and the exact type
+		sb.append('.').append(expr.getType().toString());
+		
+		String symName = sb.toString();
+		ISymbol modSymbol = moduleScope.get(symName);
+		if (modSymbol == null) {
+			modSymbol = moduleScope.add(symName);
+		}
+		return modSymbol;
+	}
+	
+	/**
+	 * @param sb 
+	 * @param scope
+	 * @return
+	 */
+	private void getScopePrefix(StringBuilder sb, IScope scope) {
+		if (scope.getOwner() != null && scope.getOwner() instanceof IAstSymbolDefiner) {
+			ISymbol scopeSymbol = ((IAstSymbolDefiner) scope.getOwner()).getSymbol();
+			sb.append(scopeSymbol.getName()).append('.');
+		}
 	}
 
 	/**

@@ -72,6 +72,7 @@ import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
@@ -140,14 +141,17 @@ public class LLVMGenerator {
 	 * @param stmt
 	 */
 	private void ensureTypes(IAstNode node) throws ASTException {
-		// TODO: multiple expansions
 		if (node instanceof IAstDefineStmt) {
-			ensureTypes(((IAstDefineStmt) node).getExpr());
+			//ensureTypes(((IAstDefineStmt) node).getExpr());
 			return;
 		} else if (node instanceof IAstSymbolExpr) {
 			// don't get stuck on definition and don't recurse up
-			if (((IAstSymbolExpr) node).getSymbol().getDefinition() != node.getParent()) {
-				ensureTypes(((IAstSymbolExpr) node).getSymbol().getDefinition());
+			IAstSymbolExpr symExpr = (IAstSymbolExpr) node;
+			if (symExpr.getDefinition() != null) {
+				IAstTypedExpr instance = symExpr.getInstance();
+				if (instance == null)
+					throw new ASTException(node, "could not find an instance for " + symExpr.getSymbol().getName() +"; add some type specifications");
+				ensureTypes(instance);
 				return;
 			}
 		} 
@@ -222,13 +226,27 @@ public class LLVMGenerator {
 	 */
 	private void generateGlobalDefine(IAstDefineStmt stmt) throws ASTException {
 	
-		// TODO: get appropriate entry(-ies)
-		ensureTypes(stmt.getExpr());
+		// only generate concrete instances
+		for (IAstTypedExpr expr : stmt.bodyList()) {
+			if (expr.getType() == null || expr.getType().isGeneric())
+				continue;
 		
-		if (stmt.getExpr() instanceof IAstCodeExpr) {
-			generateGlobalCode(stmt.getSymbol(), (IAstCodeExpr) stmt.getExpr());
-		} else if (stmt.getExpr() instanceof IAstLitExpr) {
-			generateGlobalConstant(stmt.getSymbol(), (IAstLitExpr) stmt.getExpr());
+			generateGlobalExpr(stmt, expr);
+		}
+		for (List<IAstTypedExpr> exprList : stmt.bodyToInstanceMap().values()) {
+			for (IAstTypedExpr expr : exprList)
+				generateGlobalExpr(stmt, expr);
+		}
+	}
+
+	private void generateGlobalExpr(IAstDefineStmt stmt, IAstTypedExpr expr)
+			throws ASTException {
+		ensureTypes(expr);
+		
+		if (expr instanceof IAstCodeExpr) {
+			generateGlobalCode(stmt.getSymbol(), (IAstCodeExpr) expr);
+		} else if (expr instanceof IAstLitExpr) {
+			generateGlobalConstant(stmt.getSymbol(), (IAstLitExpr) expr);
 		} else {
 			unhandled(stmt);
 		}
@@ -242,7 +260,8 @@ public class LLVMGenerator {
 	private void generateGlobalConstant(ISymbol symbol, IAstLitExpr expr) throws ASTException {
 		ensureTypes(expr);
 		
-		ll.add(new LLConstantDirective(symbol, true, expr.getType(), new LLConstant(expr.getLiteral())));
+		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr);
+		ll.add(new LLConstantDirective(modSymbol, true, expr.getType(), new LLConstant(expr.getLiteral())));
 		
 	}
 
@@ -276,9 +295,11 @@ public class LLVMGenerator {
 	private void generateGlobalCode(ISymbol symbol, IAstCodeExpr expr) throws ASTException {
 		ensureTypes(expr);
 		
+		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr);
+		
 		LLDefineDirective define = new LLDefineDirective(target, ll, 
 				expr.getScope(),
-				symbol,
+				modSymbol,
 				null /*linkage*/, 
 				LLVisibility.DEFAULT,
 				null,
@@ -469,6 +490,8 @@ public class LLVMGenerator {
 			IAstSymbolExpr symbolExpr) {
 		// TODO: out-of-scope variables
 		ISymbol symbol = symbolExpr.getSymbol();
+		if (!(symbol.getScope() instanceof LocalScope))
+			symbol = ll.getModuleSymbol(symbol, symbolExpr);
 		ILLVariable var = varStorage.lookupVariable(symbol);
 		if (var != null)
 			return new LLVariableOp(var);

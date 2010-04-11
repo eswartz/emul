@@ -64,4 +64,16 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 		types.left = newLeft;
 		types.right = newRight;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#validateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.IBinaryOperation.OpTypes)
+	 */
+	@Override
+	public void validateTypes(TypeEngine typeEngine, OpTypes types)
+			throws TypeException {
+		if (!types.left.equals(types.right) 
+				|| !types.result.equals(types.left)) {
+			throw new TypeException("inconsistent types in expression");
+		}
+	}
 }

@@ -50,4 +50,16 @@ public class LogicalUnaryOperation extends Operation implements IUnaryOperation 
 		types.expr = types.result;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#validateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.IBinaryOperation.OpTypes)
+	 */
+	@Override
+	public void validateTypes(TypeEngine typeEngine, OpTypes types)
+			throws TypeException {
+		if (!types.expr.equals(types.result) 
+				|| types.result.getBasicType() != BasicType.INTEGRAL) {
+			throw new TypeException("inconsistent types in expression");
+		}
+	}
+
 }

@@ -84,16 +84,33 @@ public abstract class Scope implements IScope {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#add(java.lang.String)
+	 */
+	@Override
+	public ISymbol add(String symName) {
+		if (entries.containsKey(symName))
+			throw new IllegalArgumentException();
+		ISymbol symbol = createSymbol(symName, false);
+		entries.put(symName, symbol);
+		return symbol;
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IScope#add(v9t9.tools.ast.expr.IAstName)
 	 */
 	@Override
 	public ISymbol add(ISymbol symbol) {
+		if (entries.containsKey(symbol.getName()))
+			throw new IllegalArgumentException();
 		symbol.setScope(this);
 		entries.put(symbol.getName(), symbol);
 		return symbol;
 	}
 	@Override
 	public ISymbol add(IAstName name) {
+		if (entries.containsKey(name.getName()))
+			throw new IllegalArgumentException();
+
 		name.setScope(this);
 		ISymbol symbol = createSymbol(name.getName(), false);
 		entries.put(name.getName(), symbol);

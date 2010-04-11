@@ -42,4 +42,15 @@ public class IndirectOperation extends Operation implements IUnaryOperation {
 		types.expr = types.result;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#validateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.IBinaryOperation.OpTypes)
+	 */
+	@Override
+	public void validateTypes(TypeEngine typeEngine, OpTypes types)
+			throws TypeException {
+		if (!types.expr.equals(types.result)) {
+			throw new TypeException("inconsistent types in expression");
+		}
+	}
+
 }

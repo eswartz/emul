@@ -6,7 +6,6 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -263,7 +262,12 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
      * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
      */
     @Override
-    public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
-    	// already validated
+    public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+    	IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();
+		types.left = typeEngine.getBaseType(left.getType());
+		types.right = typeEngine.getBaseType(right.getType());
+		types.result = typeEngine.getBaseType(getType());
+		oper.validateTypes(typeEngine, types);
+		
     }
 }

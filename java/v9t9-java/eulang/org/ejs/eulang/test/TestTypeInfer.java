@@ -6,6 +6,8 @@ package org.ejs.eulang.test;
 
 import static junit.framework.Assert.*;
 
+import java.util.List;
+
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
@@ -17,6 +19,7 @@ import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
@@ -41,11 +44,11 @@ public class TestTypeInfer extends BaseParserTest {
 
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testNoChange1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.INT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -53,16 +56,20 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(typeEngine.INT, ((IAstExprStmt) codeExpr.stmts().list().get(0)).getType());
     }
 
+	private IAstTypedExpr getMainBodyExpr(IAstDefineStmt def) {
+		return def.getMatchingBodyExpr(null);
+	}
+
 	 @Test 
     public void testBinOps() throws Exception {
     	IAstModule mod = treeize("testBinOps = code { x:=(Bool(1*2/3) and Bool(4%%45 )or 5<=6>>7<<8>>>85&9^10)or(11<12)>(13<=(14-15)==(16!=17%18+19)); };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testBinOps");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	IAstAllocStmt allocStmt = (IAstAllocStmt) codeExpr.stmts().list().get(0);
     	assertEquals(typeEngine.BOOL, allocStmt.getTypeExpr().getType());
     }
@@ -76,7 +83,7 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testInvalidTypes1");
-    	doTypeInfer(def.getExpr(), true);
+    	doTypeInfer(getMainBodyExpr(def), true);
     }
     
     @Test
@@ -89,7 +96,7 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testInvalidTypes2");
-    	doTypeInfer(def.getExpr(), true);
+    	doTypeInfer(getMainBodyExpr(def), true);
     }
 	    
 	@Test
@@ -100,11 +107,11 @@ public class TestTypeInfer extends BaseParserTest {
 
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testVoidReturn");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  new LLType[] {typeEngine.INT, typeEngine.INT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.VOID, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -121,10 +128,10 @@ public class TestTypeInfer extends BaseParserTest {
 
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCast1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAllocStmt allocStmt = (IAstAllocStmt) codeExpr.stmts().list().get(0);
 		assertEquals(typeEngine.FLOAT, allocStmt.getType());
@@ -144,10 +151,10 @@ public class TestTypeInfer extends BaseParserTest {
 
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCast2");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
@@ -173,10 +180,10 @@ public class TestTypeInfer extends BaseParserTest {
 
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCast3");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
@@ -198,10 +205,10 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCond1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertTrue(isCastTo(allocStmt.getExpr(), typeEngine.BYTE));
@@ -222,11 +229,11 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testPromotedCond2");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertTrue(isCastTo(allocStmt.getExpr(), typeEngine.BYTE));
@@ -249,11 +256,11 @@ public class TestTypeInfer extends BaseParserTest {
 
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testUnary1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
@@ -277,10 +284,10 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testUnaryNot");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstExprStmt allocStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BOOL, allocStmt.getType());
@@ -311,11 +318,11 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverReturn1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.FLOAT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -340,11 +347,11 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverReturn2");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.FLOAT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -367,11 +374,11 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.INT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.FLOAT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -392,7 +399,7 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast2");
-    	doTypeInfer(def.getExpr(), true);
+    	doTypeInfer(getMainBodyExpr(def), true);
     }
     @Test
     public void testCast2b() throws Exception {
@@ -406,12 +413,12 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	assertTrue(mod.getScope().getSymbols().length == 2);
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast2b");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
 
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.INT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -445,12 +452,12 @@ public class TestTypeInfer extends BaseParserTest {
 
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.FLOAT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -470,11 +477,11 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign2");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.FLOAT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.INT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -499,12 +506,12 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign3");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.INT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -527,11 +534,11 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverAssign3b");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.INT, prototype.returnType().getType());
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[0].getType());
@@ -558,11 +565,11 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testDiscoverFuncCall2");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.BOOL,  new LLType[] {typeEngine.FLOAT, typeEngine.FLOAT}), def.getExpr().getType());
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertEquals(typeEngine.getCodeType(typeEngine.BOOL,  new LLType[] {typeEngine.FLOAT, typeEngine.FLOAT}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(typeEngine.BOOL, prototype.returnType().getType());
     	assertEquals(typeEngine.FLOAT, prototype.argumentTypes()[0].getType());
@@ -584,12 +591,12 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testExample1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
-    	assertEquals(typeEngine.getCodeType(typeEngine.BYTE,  new LLType[] {typeEngine.BYTE, typeEngine.BYTE}), def.getExpr().getType());
+    	assertEquals(typeEngine.getCodeType(typeEngine.BYTE,  new LLType[] {typeEngine.BYTE, typeEngine.BYTE}), getMainBodyExpr(def).getType());
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	IAstAssignStmt assign = (IAstAssignStmt) codeExpr.stmts().list().get(0);
     	assertEquals(typeEngine.BYTE, assign.getType());
     	assertEquals(typeEngine.BYTE, assign.getExpr().getType());
@@ -608,15 +615,15 @@ public class TestTypeInfer extends BaseParserTest {
 		sanityTest(mod);
 		
 		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("badSwap_testPointers1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
 
 		LLType intRef = typeEngine.getRefType(typeEngine.INT);
 	   	assertEquals(typeEngine.getCodeType(typeEngine.VOID,  
 	   			new LLType[] { intRef, intRef }), 
-	   			def.getExpr().getType());
+	   			getMainBodyExpr(def).getType());
 	   	
-	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) def.getExpr()).stmts().getLast();
+	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) getMainBodyExpr(def)).stmts().getLast();
 	   	assertEquals(intRef, assn.getType());
     }
 
@@ -707,14 +714,14 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOr");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  
     			new LLType[] { typeEngine.INT, typeEngine.INT, typeEngine.INT }), 
-    			def.getExpr().getType());
+    			getMainBodyExpr(def).getType());
     	
-    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)def.getExpr()).stmts().getFirst();
+    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)getMainBodyExpr(def)).stmts().getFirst();
 		assertEquals(typeEngine.INT, stmt1.getType());
 		assertEquals(typeEngine.INT, ((IAstCondList)stmt1.getExpr()).getType());
 	}
@@ -733,14 +740,14 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOr");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  
     			new LLType[] { typeEngine.INT, typeEngine.INT, typeEngine.INT }), 
-    			def.getExpr().getType());
+    			getMainBodyExpr(def).getType());
     	
-    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)def.getExpr()).stmts().getFirst();
+    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)getMainBodyExpr(def)).stmts().getFirst();
 		assertEquals(typeEngine.INT, stmt1.getType());
 		assertEquals(typeEngine.INT, ((IAstCondList)stmt1.getExpr()).getType());
 	}
@@ -758,15 +765,15 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOrRef");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
     	LLType intRef = typeEngine.getRefType(typeEngine.INT);
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  
     			new LLType[] { typeEngine.INT, intRef, typeEngine.INT }), 
-    			def.getExpr().getType());
+    			getMainBodyExpr(def).getType());
     	
-    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)def.getExpr()).stmts().getFirst();
+    	IAstExprStmt stmt1 = (IAstExprStmt)((IAstCodeExpr)getMainBodyExpr(def)).stmts().getFirst();
 		assertEquals(typeEngine.INT, stmt1.getType());
 		assertEquals(typeEngine.INT, ((IAstCondList)stmt1.getExpr()).getType());
 	}
@@ -780,7 +787,7 @@ public class TestTypeInfer extends BaseParserTest {
     	
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples1");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
     }
@@ -805,7 +812,7 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples3");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	typeTest(mod, false);
     	
     }
@@ -819,7 +826,7 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples4");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	
     }
     @Test
@@ -829,7 +836,25 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	doTypeInfer(mod, true);
     }
-    @Test
+   
+    /**
+	 * @param i
+	 * @param def
+	 * @param j
+	 */
+	private void assertInstanceCount(int bodyCount, int totalInstanceCount, IAstDefineStmt def) {
+    	assertEquals(bodyCount, def.bodyList().size());
+    	int sum = 0;
+    	for (List<IAstTypedExpr> list : def.bodyToInstanceMap().values()) {
+    		sum += list.size();
+    		for (IAstTypedExpr expr : list)
+    			assertFalse(expr.getType().isGeneric());
+    	}
+    	assertEquals(totalInstanceCount, sum);
+		
+	}
+	
+	@Test
     public void testTuples5() throws Exception {
     	// In this case, we need to infer through the 'bop' call.
     	// This means detecting that 'bop' is generic and making a new instance.
@@ -841,12 +866,10 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("bop");
-    	assertEquals(1, def.expansions().size());
-    	assertTrue(def.getExpr().getType().isGeneric());
-    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	assertInstanceCount(1, 1, def);
     }
     
-    @Test
+	@Test
     public void testGenerics0() throws Exception {
     	IAstModule mod = treeize("add = code (x,y) { x+y };\n" +
     			"testGenerics0 = code (a:Int,b:Int) { add(a,b);  }; \n");
@@ -855,12 +878,10 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("add");
-    	assertEquals(1, def.expansions().size());
-    	assertTrue(def.getExpr().getType().isGeneric());
-    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	assertInstanceCount(1, 1, def);
     	
     	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics0");
-    	assertFalse(def.getExpr().getType().isGeneric());
+    	assertFalse(getMainBodyExpr(def).getType().isGeneric());
 
     }
     
@@ -872,14 +893,21 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	doTypeInfer(mod);
     	
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("add");
-    	assertEquals(2, def.expansions().size());
-    	assertTrue(def.getExpr().getType().isGeneric());
-    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	IAstDefineStmt addDef = (IAstDefineStmt) mod.getScope().getNode("add");
+    	assertInstanceCount(1, 2, addDef);
     	
-    	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics0b");
-    	assertFalse(def.getExpr().getType().isGeneric());
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGenerics0b");
+    	assertFalse(getMainBodyExpr(def).getType().isGeneric());
+    	
+    	IAstTypedExpr addBody = addDef.getMatchingBodyExpr(null);
+    	assertNotNull(addBody);
+    	List<IAstTypedExpr> exps = addDef.bodyToInstanceMap().get(addBody.getType());
+    	assertNotNull(exps);
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT }), exps.get(0).getType());
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT }), exps.get(1).getType());
 
+    	// make sure the casting worked properly
+    	exps.get(1).validateType(typeEngine);
     }
     @Test
     public void testGenerics1() throws Exception {
@@ -890,12 +918,10 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("swap");
-    	assertEquals(1, def.expansions().size());
-    	assertTrue(def.getExpr().getType().isGeneric());
-    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	assertInstanceCount(1, 1, def);
     	
     	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics1");
-    	assertFalse(def.getExpr().getType().isGeneric());
+    	assertFalse(getMainBodyExpr(def).getType().isGeneric());
 
     }
     @Test
@@ -907,13 +933,27 @@ public class TestTypeInfer extends BaseParserTest {
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("swap");
-    	assertEquals(2, def.expansions().size());
-    	assertTrue(def.getExpr().getType().isGeneric());
-    	assertFalse(def.expansions().values().iterator().next().getType().isGeneric());
+    	assertInstanceCount(1, 2, def);
     	
     	def = (IAstDefineStmt) mod.getScope().getNode("testGenerics2");
-    	assertFalse(def.getExpr().getType().isGeneric());
+    	assertFalse(getMainBodyExpr(def).getType().isGeneric());
 
+    }
+    
+    @Test
+    public void testTypeList1() throws Exception {
+    	IAstModule mod = treeize("floor = [\n"+
+    			"	code (x:Float) { x - x%1.0 },\n" +
+    			"   code (x:Double) { x - x%1.0 }\n " +
+    			"];\n"+
+			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b) }; \n");
+		sanityTest(mod);
+		
+		doTypeInfer(mod);
+
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("floor");
+		assertInstanceCount(2, 0, def);
+    	
     }
 }
 

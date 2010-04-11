@@ -6,6 +6,7 @@ package org.ejs.eulang.llvm;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
 public class LLVariableStorage {
-	Map<ISymbol, ILLVariable> symbolMap = new HashMap<ISymbol, ILLVariable>();
+	Map<ISymbol, ILLVariable> symbolMap = new IdentityHashMap<ISymbol, ILLVariable>();
 	
 	public LLVariableStorage() {
 	}
@@ -23,19 +24,9 @@ public class LLVariableStorage {
 	}
 	
 	public void registerVariable(ISymbol symbol, ILLVariable variable) {
-		assert !symbolMap.containsKey(symbol);
+		if (symbolMap.containsKey(symbol))
+			assert false;
 		symbolMap.put(symbol, variable);
-		/*
-		// the variable lives in memory, not in value
-		LLType addrType = typeEngine.getPointerType(symbol.getType());
-		if (isVar)
-			addrType = typeEngine.getPointerType(addrType);
-		temp = localScope.addTemporary(symbol.getName() + (isVar ? "$va" : "$a"), false);
-		temp.setType(addrType);
-		localMap.put(symbol, temp);
-		
-		return temp;
-		*/
 	}
 
 	/**

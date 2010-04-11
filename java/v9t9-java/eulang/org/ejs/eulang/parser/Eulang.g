@@ -110,7 +110,7 @@ toplevelvalue : xscope
 selector: LBRACKET selectors RBRACKET    -> ^(LIST selectors*) 
     ;
 
-selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    
+selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    -> selectoritem*
   ;
         
 selectoritem: listCompr | code | macro ;

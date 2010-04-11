@@ -30,4 +30,11 @@ public interface IBinaryOperation extends IOperation {
 	 * @param types
 	 */
 	void castTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
+
+	/**
+	 * Make sure the types can be generated.
+	 * @param typeEngine
+	 * @param types
+	 */
+	void validateTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
 }

@@ -46,6 +46,13 @@ public interface IScope extends Iterable<ISymbol> {
 	 */
 	public IAstNode getNode(String name);
 
+	/**
+	 * Add a symbol to the scope
+	 * @param symName
+	 * @return
+	 */
+	public ISymbol add(String symName);
+
 	
     /** Add a name to the scope.  Sets name's scope to this
      * and the name's parent to node.
@@ -102,6 +109,7 @@ public interface IScope extends Iterable<ISymbol> {
 	 * @return
 	 */
 	public boolean encloses(IScope otherScope);
+
 
 
 

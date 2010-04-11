@@ -7,7 +7,6 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -22,7 +21,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
         IAstUnaryExpr {
 
     protected IAstTypedExpr expr;
-    protected IUnaryOperation op;
+    protected IUnaryOperation oper;
 
     /** Create a unary expression
      */
@@ -37,14 +36,14 @@ public class AstUnaryExpr extends AstTypedExpr implements
      */
     @Override
     public IAstUnaryExpr copy(IAstNode copyParent) {
-    	return fixup(this, new AstUnaryExpr(op, doCopy(expr, copyParent)));
+    	return fixup(this, new AstUnaryExpr(oper, doCopy(expr, copyParent)));
     }
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#toString()
      */
     @Override
 	public String toString() {
-        return typedString(op.getName());
+        return typedString(oper.getName());
     }
     
      /* (non-Javadoc)
@@ -69,7 +68,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
      */
     @Override
     public IUnaryOperation getOp() {
-    	return op;
+    	return oper;
     }
 
     /* (non-Javadoc)
@@ -78,7 +77,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
     @Override
     public void setOp(IUnaryOperation op) {
     	Check.checkArg(op);
-    	this.op = op;
+    	this.oper = op;
     }
 
     /* (non-Javadoc)
@@ -98,7 +97,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
     }
 
     public IAstTypedExpr simplify(TypeEngine typeEngine) {
-		if (op == IOperation.CAST) {
+		if (oper == IOperation.CAST) {
 			if (expr instanceof IAstLitExpr) {
 				return typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
 			}
@@ -127,15 +126,19 @@ public class AstUnaryExpr extends AstTypedExpr implements
     	IUnaryOperation.OpTypes types = new IUnaryOperation.OpTypes();
     	types.expr = typeEngine.getBaseType(expr.getType());
     	types.result = typeEngine.getBaseType(getType());
-    	op.inferTypes(typeEngine, types);
+    	oper.inferTypes(typeEngine, types);
     	return updateType(expr, types.expr) | updateType(this, types.result);
     }
     
-    /* (non-Javadoc)
-     * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
-     */
-    @Override
-    public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
-    	// already validated
-    }
+	
+	 /* (non-Javadoc)
+    * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
+    */
+   @Override
+   public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+	   IUnaryOperation.OpTypes types = new IUnaryOperation.OpTypes();
+		types.expr = typeEngine.getBaseType(expr.getType());
+		types.result = typeEngine.getBaseType(getType());
+		oper.validateTypes(typeEngine, types);
+   }
 }

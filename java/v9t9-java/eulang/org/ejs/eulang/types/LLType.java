@@ -47,11 +47,20 @@ public interface LLType {
 	 * @return
 	 */
 	String getLLVMName();
+	
 	/**
+	 * Tell if this type is more complete than the other, which may have
+	 * generics or unknown types.  Also, if the types are not compatible,
+	 * this always returns false.
 	 * @param type
 	 * @return
 	 */
 	boolean isMoreComplete(LLType type);
 	
+	/**
+	 * Tell if this type, or any contained/aggregate type, is generic.
+	 * @return
+	 */
 	boolean isGeneric();
+	
 }

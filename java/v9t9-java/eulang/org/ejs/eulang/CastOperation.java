@@ -38,4 +38,13 @@ public class CastOperation extends Operation implements IUnaryOperation {
 			throws TypeException {
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#validateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.IBinaryOperation.OpTypes)
+	 */
+	@Override
+	public void validateTypes(TypeEngine typeEngine, OpTypes types)
+			throws TypeException {
+	}
+
 }

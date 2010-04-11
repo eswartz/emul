@@ -131,14 +131,12 @@ public class ExpandAST {
 	private IAstTypedExpr instantiateFuncCall(IAstDefineStmt defineStmt,
 			IAstFuncCallExpr funcCallExpr) {
 		
-		LLCodeType callType = (LLCodeType) funcCallExpr.getFunction().getType();
-		
-		IAstNode typedExpr = defineStmt.expansions().get(callType);
-		if (typedExpr != null)
-			return (IAstSymbolExpr) typedExpr;
-		
-		//ISymbol codeSymbol = defineStmt.getSymbol();
-		//ISymbol instSymbol = codeSymbol.getScope().addTemporary(codeSymbol.getName());
+
+		// TODO
+		//LLCodeType callType = (LLCodeType) funcCallExpr.getFunction().getType();
+		//IAstNode typedExpr = defineStmt.instances().get(callType);
+		//if (typedExpr != null)
+		//	return (IAstSymbolExpr) typedExpr;
 		
 		IAstCodeExpr codeExpr = (IAstCodeExpr) defineStmt.getExpr();
 		IAstCodeExpr instExpr = codeExpr.copy(null);

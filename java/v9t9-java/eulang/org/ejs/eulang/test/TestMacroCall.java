@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstStmtListExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
@@ -85,13 +86,13 @@ public class TestMacroCall extends BaseParserTest {
     	IAstModule expMod = (IAstModule) doExpand(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) expMod.getScope().getNode("testImplicitBlocks3");
-    	doTypeInfer(def.getExpr());
+    	doTypeInfer(getMainBodyExpr(def));
     	
     	// float because it's the common type
     	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.BOOL, typeEngine.INT, typeEngine.FLOAT}), 
-    			def.getExpr().getType());
+    			getMainBodyExpr(def).getType());
     	
-    	IAstCodeExpr defExpr = (IAstCodeExpr) def.getExpr();
+    	IAstCodeExpr defExpr = (IAstCodeExpr) getMainBodyExpr(def);
     	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) ((IAstExprStmt) defExpr.stmts().getFirst()).getExpr()).getStmtList().list().get(1);
     	IAstCondList condList = (IAstCondList) stmt1.getExpr();
     	IAstCondExpr condExpr = condList.getCondExprs().list().get(0);
@@ -104,6 +105,10 @@ public class TestMacroCall extends BaseParserTest {
     	assertEquals(typeEngine.FLOAT, condExpr.getType());
     	assertFalse(isCastTo(condExpr.getExpr(), typeEngine.FLOAT));
     }
+
+	private IAstTypedExpr getMainBodyExpr(IAstDefineStmt def) {
+		return def.getMatchingBodyExpr(null);
+	}
 
 }
 

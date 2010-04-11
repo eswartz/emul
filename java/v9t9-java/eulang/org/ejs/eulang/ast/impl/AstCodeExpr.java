@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -199,7 +198,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
-	public void validateChildTypes(TypeEngine typeEngine) throws ASTException {
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		super.validateChildTypes(typeEngine);
 		
 		// see what the return statements do
@@ -219,7 +218,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			if (kidType != null && kidType.isComplete()) {
 				if (!typeEngine.getBaseType(((LLCodeType) thisType).getRetType()).equals(
 						typeEngine.getBaseType(kidType))) {
-					throw new ASTException(returns, "code block does not return same type as prototype");
+					throw new TypeException(returns, "code block does not return same type as prototype");
 				}
 			}
 		}

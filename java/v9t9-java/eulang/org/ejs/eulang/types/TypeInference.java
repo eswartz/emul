@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.Error;
 import org.ejs.eulang.ast.IAstDefineStmt;
@@ -54,6 +53,8 @@ import org.ejs.eulang.symbols.ISymbol;
  */
 public class TypeInference {
 
+	public static boolean DUMP = true;
+	
 	private final TypeEngine typeEngine;
 	private List<Message> messages;
 
@@ -71,8 +72,9 @@ public class TypeInference {
 	}
 	/**
 	 * Infer the types in the tree from known types.
+	 * @param validateTypes if true, make sure all types are concrete after inferring 
 	 */
-	public boolean infer(IAstNode node) {
+	public boolean infer(IAstNode node, boolean validateTypes) {
 		boolean anyChange = false;
 		boolean changed = false;
 		
@@ -82,7 +84,9 @@ public class TypeInference {
 			anyChange |= changed;
 		} while (changed);
 		
-		validateTypes(node);
+		if (validateTypes)
+			validateTypes(node);
+		
 		return anyChange;
 	}
 	
@@ -100,11 +104,13 @@ public class TypeInference {
 			LLType origDefineType = defineExpr.getType();
 			if (origDefineType == null || !origDefineType.isComplete()) {
 				TypeInference inference = new TypeInference(typeEngine);
-				boolean defineChanged = inference.infer(defineExpr);
+				boolean defineChanged = inference.infer(defineExpr, false);
 				
-				System.out.println("Inferring on define:");
-				DumpAST dump = new DumpAST(System.out);
-				defineStmt.accept(dump);
+				if (DUMP) {
+					System.out.println("Inferring on define:");
+					DumpAST dump = new DumpAST(System.out);
+					defineStmt.accept(dump);
+				}
 				
 				if (!defineChanged || (defineExpr.getType() == null || !defineExpr.getType().isComplete())) {
 					// a standalone define should have a known type based on predecessors,
@@ -129,9 +135,8 @@ public class TypeInference {
 			IAstTypedNode typed = (IAstTypedNode) node;
 			
 			// instantiate generic defines
-			if (typed instanceof IAstSymbolExpr && typed.getType() != null && typed.getType().isGeneric()
-					&& ((IAstSymbolExpr) typed).getSymbol().getDefinition() instanceof IAstDefineStmt) {
-				changed |= instantiate((IAstSymbolExpr) typed, (IAstDefineStmt) ((IAstSymbolExpr) typed).getSymbol().getDefinition());
+			if (typed instanceof IAstSymbolExpr) {
+				changed |= instantiate((IAstSymbolExpr) typed);
 			}
 			
 			if (/*changed || typed.getType() == null || !typed.getType().isComplete()*/ true) {
@@ -149,20 +154,35 @@ public class TypeInference {
 	/**
 	 * @param context 
 	 */
-	private boolean instantiate(IAstSymbolExpr site, IAstDefineStmt define) {
+	private boolean instantiate(IAstSymbolExpr site) {
+		IAstDefineStmt define = site.getDefinition();
+		if (define == null)
+			return false;
+		
+		if (site.getType() == null || !site.getType().isGeneric())
+			return false;
+
+		IAstTypedExpr body = define.getMatchingBodyExpr(site.getType());
+		if (body == null)
+			return false;
+
 		IAstNode context = site;
 		while (context != null) {
 			if (context instanceof IAstTypedNode) {
 				IAstTypedNode typed = (IAstTypedNode) context;
 				if (typed.getType() != null && (!typed.getType().isComplete() || typed.getType().isGeneric())) {
-					LLType expandedType = typed.inferExpansion(typeEngine, define.getExpr());
+					LLType expandedType = typed.inferExpansion(typeEngine, body);
 					if (expandedType != null) {
 
 						ISymbol expansionSym = null;
 						IAstTypedExpr expansion = null;
+						List<IAstTypedExpr> expansions = define.bodyToInstanceMap().get(body.getType());
+						if (expansions != null)
+							expansion = define.getMatchingInstance(body.getType(), expandedType);
 
+						/*
 						// the expanded type may yet have unknowns or generics in it
-						for (Map.Entry<ISymbol, IAstTypedExpr> entry : define.expansions().entrySet()) {
+						for (Map.Entry<ISymbol, IAstTypedExpr> entry : define.instances().entrySet()) {
 							if (entry.getValue().getType().isMoreComplete(expandedType)
 									|| expandedType.equals(entry.getValue().getType())) {
 								site.setSymbol(entry.getKey());
@@ -170,40 +190,47 @@ public class TypeInference {
 							}
 							if (expandedType.isMoreComplete(entry.getValue().getType())) {
 								// we can improve the expansion
-								expansionSym = entry.getKey();
+								//expansionSym = entry.getKey();
 								expansion = entry.getValue();
 								break;
 							}
 						}
+						*/
 						
 						if (expansion == null) {
 							// nothing matched; make a new one
-							System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
+							if (DUMP) 
+								System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
 							
-							expansion = (IAstTypedExpr) define.getExpr().copy(null);
+							expansion = (IAstTypedExpr) body.copy(null);
 							replaceGenericTypes(expansion, expandedType);
 							
-							System.out.println("Initial expansion:");
-							DumpAST dump = new DumpAST(System.out);
-							expansion.accept(dump);
+							if (DUMP) {
+								System.out.println("Initial expansion:");
+								DumpAST dump = new DumpAST(System.out);
+								expansion.accept(dump);
+							}
 							
-							expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName() + "$instance", true);
-							define.expansions().put(expansionSym, expansion);
+							expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName() + "$instance", false);
 						}
 						
-						expansion.setType(expandedType);
+						
 						
 						TypeInference inference = new TypeInference(typeEngine);
-						boolean updated = inference.infer(expansion);
+						boolean updated = inference.infer(expansion, false);
 						expandedType = expansion.getType();
-						if (updated) {
-							System.out.println("Updated expansion of " + expansionSym + ":");
+						if (updated && DUMP) {
+							System.out.println("Updated expansion of " + define.getSymbol() + " for " + expandedType + ":");
 							DumpAST dump = new DumpAST(System.out);
 							expansion.accept(dump);
 						}
 						
 						expansionSym.setType(expandedType);
 						site.setSymbol(expansionSym);
+						expansion.setType(expandedType);
+						site.setType(expandedType);
+						
+						define.registerInstance(body.getType(), expansion);
 						return true;
 					}
 				} else {
@@ -290,9 +317,9 @@ public class TypeInference {
 		defineExpr.setType(newType);
 		
 		TypeInference inference = new TypeInference(typeEngine);
-		boolean changed = inference.infer(defineExpr);
+		boolean changed = inference.infer(defineExpr, false);
 		
-		if (changed) {
+		if (changed && DUMP) {
 			System.out.println("Replacing generic types in: ");
 			DumpAST dump = new DumpAST(System.out);
 			defineExpr.accept(dump);
@@ -307,31 +334,34 @@ public class TypeInference {
 	private void validateTypes(IAstNode node) {
 		try {
 			if (node instanceof IAstDefineStmt) {
-				if (((IAstDefineStmt) node).getExpr().getType().isGeneric())
-					return;
+				IAstDefineStmt define = (IAstDefineStmt) node;
+				for (IAstTypedExpr expr : define.getConcreteInstances()) {
+					validateTypes(expr);
+				}
+				return;
 			}
-			if (node instanceof IAstTypedNode && ((IAstTypedNode) node).getType() != null) {
-				
-				if (node instanceof IAstTypedNode && ((IAstTypedNode) node).getType().isGeneric()) {
-					messages.add(new Error(node, "generic types not expanded; add some type declarations"));
+
+			if (node instanceof IAstTypedNode) {
+				IAstTypedNode typed = (IAstTypedNode) node;
+				if (typed.getType() == null ) {
+					throw new TypeException(node, "unknown types encountered; add some type specifications");
 				}
 			}
-			
 			node.validateType(typeEngine);
 			
 			try {
 				node.validateChildTypes(typeEngine);
-			} catch (ASTException e) {
-				messages.add(new Error(node, e.getMessage()));
+			} catch (TypeException e) {
+				messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
 			}
 			
 			// continue validating kids if node succeeded on its own
 			for (IAstNode kid : node.getChildren()) {
 				validateTypes(kid);
 			}
-		} catch (ASTException e) {
+		} catch (TypeException e) {
 			// node failed, stop here
-			messages.add(new Error(node, e.getMessage()));
+			messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
 		}
 		
 	}

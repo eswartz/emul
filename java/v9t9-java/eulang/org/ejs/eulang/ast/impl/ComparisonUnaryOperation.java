@@ -45,4 +45,17 @@ public class ComparisonUnaryOperation extends Operation implements IUnaryOperati
 	public void castTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#validateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.IBinaryOperation.OpTypes)
+	 */
+	@Override
+	public void validateTypes(TypeEngine typeEngine, OpTypes types)
+			throws TypeException {
+		if (!types.expr.equals(types.result) 
+				|| types.result.getBasicType() != BasicType.BOOL) {
+			throw new TypeException("inconsistent types in expression");
+		}
+	}
+
 }

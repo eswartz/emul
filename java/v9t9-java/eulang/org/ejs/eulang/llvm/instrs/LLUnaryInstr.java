@@ -13,13 +13,11 @@ import org.ejs.eulang.types.LLType;
  */
 public class LLUnaryInstr extends LLAssignInstr {
 	
-	private final IOperation op;
 	/**
 	 * Create with ops= {ret, op1, op2}; 
 	 */
 	public LLUnaryInstr(IOperation op, LLOperand ret, LLType type, LLOperand... ops) {
 		super(op.getLLVMName(), ret, type, ops);
-		this.op = op;
 		if (ops.length != 1)
 			throw new IllegalArgumentException();
 	}

@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -440,6 +441,8 @@ public class GenerateAST {
 		case EulangParser.TUPLE:
 			return constructTuple(tree);
 			
+		case EulangParser.LIST:
+			return constructList(tree);
 			
 		default:
 			unhandled(tree);
@@ -448,6 +451,21 @@ public class GenerateAST {
 		
 	}
 	
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructList(Tree tree) throws GenerateException {
+		IAstNodeList<IAstTypedExpr> list = new AstNodeList<IAstTypedExpr>();
+		
+		for (Tree kid : iter(tree)) {
+			list.add(checkConstruct(kid, IAstTypedExpr.class));
+		}
+		getSource(tree, list);
+		return list;
+	}
+
 	/**
 	 * @param tree
 	 * @return
@@ -1080,12 +1098,23 @@ public class GenerateAST {
 		return typeExpr;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public IAstDefineStmt constructDefine(Tree tree) throws GenerateException {
 		assert tree.getChildCount() == 2;
 		
 		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
 		
-		IAstDefineStmt stmt = new AstDefineStmt(symbolExpr, checkConstruct(tree.getChild(1), IAstTypedExpr.class));
+		
+		IAstDefineStmt stmt;
+		Tree exprTree = tree.getChild(1);
+		if (exprTree.getType() == EulangParser.LIST) {
+			IAstNodeList<IAstTypedExpr> exprList = checkConstruct(exprTree, IAstNodeList.class);
+			stmt = new AstDefineStmt(symbolExpr, exprList.list());
+		} else {
+			IAstTypedExpr expr = null;
+			expr = checkConstruct(exprTree, IAstTypedExpr.class);
+			stmt = new AstDefineStmt(symbolExpr, Collections.singletonList(expr));
+		}
 		getSource(tree, stmt);
 		
 		symbolExpr.getSymbol().setDefinition(stmt);

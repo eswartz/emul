@@ -347,7 +347,7 @@ public class BaseParserTest {
 		}
 		*/
 		
-		boolean changed = infer.infer(mod);
+		boolean changed = infer.infer(mod, true);
 		if (dumpTypeInfer || (!expectErrors && messages.size() > 0)) {
 			DumpAST dump = new DumpAST(System.out);
 			mod.accept(dump);

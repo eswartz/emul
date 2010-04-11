@@ -62,4 +62,19 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 		types.left = newLeft;
 		types.right = newRight;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#validateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.IBinaryOperation.OpTypes)
+	 */
+	@Override
+	public void validateTypes(TypeEngine typeEngine, OpTypes types)
+			throws TypeException {
+		if (types.left.getBasicType() != BasicType.INTEGRAL
+				|| types.right.getBasicType() != BasicType.INTEGRAL
+				|| !types.result.equals(types.left)
+				|| types.result.getBasicType() != BasicType.INTEGRAL) {
+			throw new TypeException("inconsistent types in expression");
+		}
+	}
+
 }

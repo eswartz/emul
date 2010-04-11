@@ -8,7 +8,6 @@ import static junit.framework.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -50,6 +49,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	}
 	
 	/**
+	 * Generate the module, expecting no errors.
 	 * @param mod
 	 */
 	private void doGenerate(IAstModule mod) throws Exception {
@@ -57,12 +57,11 @@ public class TestLLVMGenerator extends BaseParserTest {
 	}
 	/**
 	 * @param mod
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
+	 * @throws Exception 
 	 */
 	protected void doGenerate(IAstModule mod, boolean expectErrors) throws Exception {
-		doExpand(mod);
-		doSimplify(mod);
+		//doExpand(mod);
+		//doSimplify(mod);
 		
 		LLVMGenerator generator = new LLVMGenerator(v9t9Target);
 		generator.generate(mod);
@@ -251,4 +250,21 @@ public class TestLLVMGenerator extends BaseParserTest {
     			"testTuples4b = code (a,b) { (x, o, y) := swap(a+b, a-b, b); (a*x, y*b); }; \n");
     	doGenerate(mod);
     }
+	
+	@Test
+    public void testGenerics0b() throws Exception {
+    	IAstModule mod = doFrontend("add = code (x,y) { x+y };\n" +
+    			"testGenerics0b = code (a:Int,b:Int) { add(a,b) + add(10.0,b);  }; \n");
+    	doGenerate(mod);
+    }
+  
+  	@Test
+  	public void testTypeList1() throws Exception {
+  		IAstModule mod = doFrontend("floor = [\n"+
+  			"	code (x:Float) { x - x%1.0 },\n" +
+  			"   code (x:Double) { x - x%1.0 }\n " +
+  			"];\n"+
+			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b) }; \n");
+  		doGenerate(mod);
+  }
 }

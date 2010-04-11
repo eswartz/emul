@@ -29,4 +29,11 @@ public interface IUnaryOperation extends IOperation {
 	 * @param types
 	 */
 	void castTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
+
+	/**
+	 * Ensure these types work
+	 * @param typeEngine
+	 * @param types
+	 */
+	void validateTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
 }

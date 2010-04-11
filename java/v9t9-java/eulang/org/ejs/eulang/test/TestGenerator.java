@@ -58,13 +58,17 @@ public class TestGenerator extends BaseParserTest {
     	assertSame(def0, def);
     	
     	assertEquals("foo", def.getSymbol().getName());
-    	assertTrue(def.getExpr() instanceof IAstIntLitExpr);
-    	assertEquals("3", ((IAstIntLitExpr)def.getExpr()).getLiteral());
-    	assertEquals((long) 3, ((IAstIntLitExpr)def.getExpr()).getValue());
-    	assertTrue(def.getExpr() instanceof IAstTypedExpr);
-    	assertTrue(((IAstTypedExpr)def.getExpr()).getType().equals(typeEngine.INT));
+    	assertTrue(getMainExpr(def) instanceof IAstIntLitExpr);
+    	assertEquals("3", ((IAstIntLitExpr)getMainExpr(def)).getLiteral());
+    	assertEquals((long) 3, ((IAstIntLitExpr)getMainExpr(def)).getValue());
+    	assertTrue(getMainExpr(def) instanceof IAstTypedExpr);
+    	assertTrue(((IAstTypedExpr)getMainExpr(def)).getType().equals(typeEngine.INT));
     	
     }
+
+	private IAstTypedExpr getMainExpr(IAstDefineStmt def) {
+		return def.getMatchingBodyExpr(null);
+	}
     
     @Test
     public void testOneEntryCodeModule0() throws Exception {
@@ -76,8 +80,8 @@ public class TestGenerator extends BaseParserTest {
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("foo");
     	assertEquals("foo", def.getSymbol().getName());
-    	assertTrue(def.getExpr() instanceof IAstCodeExpr);
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertTrue(getMainExpr(def) instanceof IAstCodeExpr);
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
     	
 		IAstPrototype prototype = codeExpr.getPrototype();
@@ -138,8 +142,8 @@ public class TestGenerator extends BaseParserTest {
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("opPrec1");
     	assertNotNull(def);
     	assertEquals("opPrec1", def.getSymbol().getName());
-    	assertTrue(def.getExpr() instanceof IAstCodeExpr);
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	assertTrue(getMainExpr(def) instanceof IAstCodeExpr);
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
     	
 		IAstPrototype prototype = codeExpr.getPrototype();
@@ -154,7 +158,7 @@ public class TestGenerator extends BaseParserTest {
     	
     	IAstDefineStmt callee = (IAstDefineStmt) mod.getScope().getNode("callee");
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCalls");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt stmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr callExpr = (IAstFuncCallExpr) stmt.getExpr();
     	assertEquals(callee.getSymbolExpr(), callExpr.getFunction());
@@ -166,7 +170,7 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGoto");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstLabelStmt lab = (IAstLabelStmt) codeExpr.stmts().list().get(0);
     	assertEquals("foo", lab.getLabel().getSymbol().getName());
     	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
@@ -180,7 +184,7 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGoto");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstLabelStmt lab = (IAstLabelStmt) codeExpr.stmts().list().get(0);
     	assertEquals("foo", lab.getLabel().getSymbol().getName());
     	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
@@ -200,7 +204,7 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testGoto");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstLabelStmt lab = (IAstLabelStmt) codeExpr.stmts().list().get(0);
     	assertEquals("foo", lab.getLabel().getSymbol().getName());
     	assertEquals(codeExpr.getScope(), lab.getLabel().getSymbol().getScope());
@@ -235,7 +239,7 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks1");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
@@ -260,7 +264,7 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks2");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
@@ -285,7 +289,7 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks3");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
     	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
@@ -302,7 +306,7 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	
     	IAstPrototype proto = codeExpr.getPrototype();
     	assertTrue(proto.argumentTypes()[0].isMacro());
@@ -324,7 +328,7 @@ public class TestGenerator extends BaseParserTest {
 		sanityTest(mod);
 		
 		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCondStar1");
-		IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
 		IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
 		IAstCondList condList = (IAstCondList) exprStmt.getExpr();
 		assertEquals(3, condList.getCondExprs().nodeCount());

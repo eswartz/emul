@@ -41,6 +41,8 @@ public class TypeEngine {
 	public LLIntType INT;
 	public LLIntType BYTE;
 	public LLFloatType FLOAT;
+	public LLFloatType DOUBLE;
+
 	public LLIntType INT_ANY;
 	public LLBoolType BOOL;
 	public LLVoidType VOID;
@@ -68,7 +70,7 @@ public class TypeEngine {
 	public LLType INTPTR;
 	public LLType REFPTR;
 	public LLBoolType LLBOOL;
-
+	
 	/**
 	 * 
 	 */
@@ -88,6 +90,7 @@ public class TypeEngine {
 		BYTE = register(new LLIntType("Byte", 8));
 		INT = register(new LLIntType("Int", 16));
 		FLOAT = register(new LLFloatType("Float", 32, 23));
+		DOUBLE = register(new LLFloatType("Double", 64, 53));
 		//REFPTR = register(new LLRefType(new LLPointerType(ptrBits, VOID), ptrBits));
 		REFPTR = register(new LLPointerType("RefPtr", ptrBits, 
 				getRefType(BYTE)));
@@ -95,21 +98,19 @@ public class TypeEngine {
 		INT_ANY = new LLIntType("Int*", 0);
 	}
 	
-	public int getStructMinAlign() {
-		return structMinAlign;
-	}
-
-	public void setStructMinAlign(int structMinAlign) {
-		this.structMinAlign = structMinAlign;
-	}
-
 	/**
-	 * @param i
+	 * Add names for globally accessible types
+	 * @param globalScope
 	 */
-	public void setStackAlign(int i) {
-		// TODO Auto-generated method stub
-		
+	public void populateTypes(GlobalScope globalScope) {
+		globalScope.add(new AstName("Int"), new AstType(INT));
+		globalScope.add(new AstName("Float"), new AstType(FLOAT));		
+		globalScope.add(new AstName("Double"), new AstType(DOUBLE));		
+		globalScope.add(new AstName("Void"), new AstType(VOID));		
+		globalScope.add(new AstName("Bool"), new AstType(BOOL));		
+		globalScope.add(new AstName("Byte"), new AstType(BYTE));		
 	}
+
 
 	public <T extends LLType> T register(T type) {
 		types.add(type);
@@ -149,7 +150,9 @@ public class TypeEngine {
 		
 		if (a.getBasicType() == BasicType.INTEGRAL && b.getBasicType() == BasicType.INTEGRAL)
 			return a.getBits() > b.getBits() ? a : b;
-		
+		if (a.getBasicType() == BasicType.FLOATING && b.getBasicType() == BasicType.FLOATING)
+			return a.getBits() > b.getBits() ? a : b;
+			
 		if (a.getBasicType() == BasicType.BOOL && b.getBasicType() == BasicType.INTEGRAL)
 			return b;
 		if (b.getBasicType() == BasicType.BOOL && a.getBasicType() == BasicType.INTEGRAL)
@@ -232,17 +235,6 @@ public class TypeEngine {
 	}
 
 	/**
-	 * @param globalScope
-	 */
-	public void populateTypes(GlobalScope globalScope) {
-		globalScope.add(new AstName("Int"), new AstType(INT));
-		globalScope.add(new AstName("Float"), new AstType(FLOAT));		
-		globalScope.add(new AstName("Void"), new AstType(VOID));		
-		globalScope.add(new AstName("Bool"), new AstType(BOOL));		
-		globalScope.add(new AstName("Byte"), new AstType(BYTE));		
-	}
-
-	/**
 	 * Create a new literal node with the given value
 	 * @param type
 	 * @param object
@@ -315,6 +307,21 @@ public class TypeEngine {
 	public int getStackAlign() {
 		return stackAlign;
 	}
+	/**
+	 * @param i
+	 */
+	public void setStackAlign(int i) {
+		stackAlign = i;
+	}
+
+	public int getStructMinAlign() {
+		return structMinAlign;
+	}
+
+	public void setStructMinAlign(int structMinAlign) {
+		this.structMinAlign = structMinAlign;
+	}
+
 	public LLType getPointerType(LLType type) {
 		LLPointerType ptrType = ptrTypeMap.get(type);
 		if (ptrType == null) {

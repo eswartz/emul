@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -143,12 +142,12 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
 		
-		if ( symbol.getDefinition() instanceof IAstDefineStmt) {
+		/*if ( symbol.getDefinition() instanceof IAstDefineStmt) {
 			IAstDefineStmt define = (IAstDefineStmt) symbol.getDefinition();
 			if (canInferTypeFrom(define.getExpr())) {
 				return updateType(this, define.getExpr().getType());
 			}
-		}
+		}*/
 		
 		//if (getSymbol().getDefinition() instanceof IAstTypedNode)
 		//	if ( canInferTypeFrom((IAstTypedNode) getSymbol().getDefinition()))
@@ -176,9 +175,49 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateType()
 	 */
 	@Override
-	public void validateType(TypeEngine typeEngine) throws ASTException {
+	public void validateType(TypeEngine typeEngine) throws TypeException {
 		if (!(getParent() instanceof IAstDefineStmt)) {
 			super.validateType(typeEngine);
 		}
+		if (getDefinition() != null && getInstance() == null)
+			throw new TypeException(this, "could not find an instance for symbol " + getSymbol());
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#getDefinition()
+	 */
+	@Override
+	public IAstDefineStmt getDefinition() {
+		if (symbol.getDefinition() == null)
+			return null;
+		if (symbol.getDefinition() instanceof IAstDefineStmt)
+			return ((IAstDefineStmt) symbol.getDefinition());
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#getBody()
+	 */
+	@Override
+	public IAstTypedExpr getBody() {
+		IAstDefineStmt def = getDefinition();
+		if (def == null) 
+			return null;
+		return def.getMatchingBodyExpr(getType());
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#getInstance()
+	 */
+	@Override
+	public IAstTypedExpr getInstance() {
+		IAstDefineStmt def = getDefinition();
+		if (def == null) 
+			return null;
+		IAstTypedExpr body = def.getMatchingBodyExpr(getType());
+		if (body == null) 
+			return null;
+		return def.getMatchingInstance(body.getType(), getType());
+	}
+	
 }
