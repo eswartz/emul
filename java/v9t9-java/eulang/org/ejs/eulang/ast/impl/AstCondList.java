@@ -138,11 +138,9 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 						changed = true;
 					}
 				}
-				if (changed) {
-					for (int i = 0; i < exprs.length; i++) {
-						condList.list().get(i).setExpr(createCastOn(typeEngine, exprs[i], common));
-						condList.list().get(i).setType(common);
-					}
+				for (int i = 0; i < exprs.length; i++) {
+					condList.list().get(i).setExpr(createCastOn(typeEngine, exprs[i], common));
+					condList.list().get(i).setType(common);
 				}
 			}
 		}

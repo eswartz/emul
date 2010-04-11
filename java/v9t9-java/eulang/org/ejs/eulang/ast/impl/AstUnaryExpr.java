@@ -127,7 +127,13 @@ public class AstUnaryExpr extends AstTypedExpr implements
     	types.expr = typeEngine.getBaseType(expr.getType());
     	types.result = typeEngine.getBaseType(getType());
     	oper.inferTypes(typeEngine, types);
-    	return updateType(expr, types.expr) | updateType(this, types.result);
+    	boolean changed = updateType(expr, types.expr) | updateType(this, types.result);
+    	
+    	if (types.expr != null && types.result != null) {
+			oper.castTypes(typeEngine, types);
+			setExpr(createCastOn(typeEngine, expr, types.expr));
+		}
+    	return changed;
     }
     
 	

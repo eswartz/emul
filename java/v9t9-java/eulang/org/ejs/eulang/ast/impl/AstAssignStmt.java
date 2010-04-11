@@ -146,15 +146,14 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		if (!inferTypesFromChildren(new ITyped[] { symExpr, expr }))
-			return false;
+		boolean changed = inferTypesFromChildren(new ITyped[] { symExpr, expr });
 		
 		LLType left = symExpr.getType();
 		LLType right = expr.getType();
 		if (left != null && right != null) {
 			setExpr(createCastOn(typeEngine, expr, left));
 		}
-		return true;
+		return changed;
 	}
 	
 }

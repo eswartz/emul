@@ -244,18 +244,17 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		types.result = typeEngine.getBaseType(getType());
 		oper.inferTypes(typeEngine, types);
 		
-		if (updateType(left, types.left) | updateType(right, types.right) | updateType(this, types.result)) {
-			types.left = left.getType();
-			types.right = right.getType();
-			types.result = getType();
-			if (types.left != null && types.right != null && types.result != null) {
-				oper.castTypes(typeEngine, types);
-				setLeft(createCastOn(typeEngine, left, types.left));
-				setRight(createCastOn(typeEngine, right, types.right));
-			}
-			return true;
+		boolean changed = (updateType(left, types.left) | updateType(right, types.right) | updateType(this, types.result));
+		
+		types.left = left.getType();
+		types.right = right.getType();
+		types.result = getType();
+		if (types.left != null && types.right != null && types.result != null) {
+			oper.castTypes(typeEngine, types);
+			setLeft(createCastOn(typeEngine, left, types.left));
+			setRight(createCastOn(typeEngine, right, types.right));
 		}
-		return false;
+		return changed;
 	}
 	
 	 /* (non-Javadoc)

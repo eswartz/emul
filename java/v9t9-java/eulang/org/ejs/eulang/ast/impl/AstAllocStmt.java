@@ -231,8 +231,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 				if (getExpr().getType().isMoreComplete(getType()))
 					changed = updateType(this, getExpr().getType());
 			}
-			if (!changed)
-				return false;
+			
 		}
 		
 		LLType left = symExpr.getType();
@@ -240,7 +239,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		if (left != null && right != null) {
 			setExpr(createCastOn(typeEngine, expr, left));
 		}
-		return true;
+		return changed;
 	}
 	
 }
