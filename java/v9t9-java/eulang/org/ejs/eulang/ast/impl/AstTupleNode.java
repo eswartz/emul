@@ -37,7 +37,7 @@ public class AstTupleNode extends AstNode implements IAstTupleNode {
 	 */
 	@Override
 	public IAstTupleNode copy(IAstNode copyParent) {
-		return new AstTupleNode(doCopy(elements, copyParent));
+		return fixup(this, new AstTupleNode(doCopy(elements, copyParent)));
 	}
 
 	@Override

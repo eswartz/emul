@@ -214,8 +214,12 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	@Override
 	public IAstTypedExpr getInstance() {
 		IAstDefineStmt def = getDefinition();
-		if (def == null) 
-			return null;
+		if (def == null) { 
+			if (symbol.getDefinition() instanceof IAstTypedExpr)
+				return (IAstTypedExpr)symbol.getDefinition();
+			else
+				return null;
+		}
 		IAstTypedExpr body = def.getMatchingBodyExpr(getType());
 		if (body == null) 
 			return null;

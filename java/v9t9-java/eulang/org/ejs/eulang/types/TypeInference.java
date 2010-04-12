@@ -14,6 +14,7 @@ import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.Error;
+import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -113,18 +114,25 @@ public class TypeInference {
 			IAstDefineStmt defineStmt = (IAstDefineStmt) node;
 			
 			for (IAstTypedExpr bodyExpr : defineStmt.bodyList()) {
+				// don't infer on macros
+				if (bodyExpr instanceof IAstCodeExpr && ((IAstCodeExpr) bodyExpr).isMacro())
+					continue;
+				
+				// first, see if the top-level type can be inferred, for the case
+				// of overloaded functions calling each other.
+				try {
+					changed |= bodyExpr.inferTypeFromChildren(typeEngine);
+				} catch (TypeException e) {
+					messages.add(new Error(bodyExpr, e.getMessage()));
+				}
+
+				
+
 				LLType origDefineType = bodyExpr.getType();
 				if (origDefineType == null || !origDefineType.isComplete()) {
 					
 					boolean defineChanged = false;
 					
-					// first, see if the top-level type can be inferred, for the case
-					// of overloaded functions calling each other.
-					try {
-						defineChanged |= bodyExpr.inferTypeFromChildren(typeEngine);
-					} catch (TypeException e) {
-						messages.add(new Error(bodyExpr, e.getMessage()));
-					}
 					
 					TypeInference inference = subInferenceJob();
 					defineChanged = inference.infer(bodyExpr, false);
@@ -149,7 +157,10 @@ public class TypeInference {
 					
 					changed |= inferUp(bodyExpr);
 				} else if (origDefineType.isGeneric()) {
-					// okay, don't infer here
+					// okay, don't infer again here
+				} else {
+					// infer in case expansions introduced more unknown nodes inside
+					changed |= inferUp(bodyExpr);
 				}
 			}
 			
@@ -158,6 +169,11 @@ public class TypeInference {
 			recurse = false;
 		}
 
+		// don't infer on macros (until we know how to remove/instantiate generic args)
+		if (node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
+			return changed;
+		
+		
 		if (recurse) {
 			for (IAstNode kid : node.getChildren()) {
 				changed |= inferUp(kid);
@@ -385,6 +401,8 @@ public class TypeInference {
 
 	private void getTypeInstanceMap(LLType currentType,
 			LLType expandedType, Map<LLType, LLType> expansionMap) {
+		if (currentType == null)
+			return;
 		if (currentType.isGeneric())
 			expansionMap.put(currentType, expandedType);
 		if (currentType instanceof LLAggregateType && expandedType != null) {

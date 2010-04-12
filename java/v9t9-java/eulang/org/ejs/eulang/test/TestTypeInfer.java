@@ -21,6 +21,7 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
@@ -981,6 +982,23 @@ public class TestTypeInfer extends BaseParserTest {
 		assertTrue(isCastTo(add.getLeft(), typeEngine.DOUBLE)); 
 		assertFalse(isCastTo(add.getRight(), typeEngine.DOUBLE)); 
     }
+    
+    // be sure we can do this style of overloading too:
+    // 1) don't replace macro in call spot, but only as a function call
+    // (or else you get wrong arguments on injected code)
+    // 2) the usual
+	@Test
+	public void testOverloadingMacro() throws Exception {
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend("    util = [ code(x, y, z ) { x*y-z },\n"
+				+ "             macro (x, y) { util(x, y, 0) }\n"
+				+ "            ];\n"
+				+ "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
+		sanityTest(mod);
+
+		doTypeInfer(mod);
+
+	}
 }
 
 

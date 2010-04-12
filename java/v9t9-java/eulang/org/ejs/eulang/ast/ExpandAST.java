@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
@@ -18,51 +19,81 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeException;
 
 /**
+ * TODO: unify with TypeInference; these both contain a lot of duplicate logic for ensuring
+ * that we get an accurate idea of a function call's type
+ * 
  * @author ejs
  *
  */
 public class ExpandAST {
 	
-	public ExpandAST() {
+	private final TypeEngine typeEngine;
+
+	public ExpandAST(TypeEngine typeEngine) {
+		this.typeEngine = typeEngine;
 		
 	}
 
 	public boolean expand(List<Message> messages, IAstNode node) {
 		boolean changed = false;
 		
-		IAstNode[] kids = node.getChildren();
-		for (int i = 0; i < kids.length; i++) {
-			changed |= expand(messages, kids[i]);
+		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())) {
+			// go deep first, since node parenting changes as expansion occurs
+			IAstNode[] kids = node.getChildren();
+			for (int i = 0; i < kids.length; i++) {
+				changed |= expand(messages, kids[i]);
+			}
 		}
 		
 		try {
 			if (node instanceof IAstSymbolExpr) {
+				//if (node.getParent() instanceof IAstFuncCallExpr)
+				//	return changed;
+				
 				IAstSymbolExpr symExpr = (IAstSymbolExpr)node;
-				IAstNode symDef = symExpr.getSymbol().getDefinition();
+				IAstNode symDef = symExpr.getDefinition();
 				if (symDef == null) {
 					// handle later
 					if (!symExpr.getSymbol().getScope().encloses(node.getOwnerScope()))
 						throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
 					return false;
 				}
-				if (symDef == node.getParent())
+				if (symDef == node.getParent() || !(symDef instanceof IAstDefineStmt))
 					return false;
 				
-				IAstTypedExpr value = symExpr.getInstance();
+				IAstTypedExpr value = null;
+				if (symExpr.getParent() instanceof IAstFuncCallExpr) {
+					IAstFuncCallExpr funcParent = (IAstFuncCallExpr) symExpr.getParent();
+					LLType type = funcParent.inferExpansion(typeEngine, null);
+					IAstTypedExpr body = symExpr.getDefinition().getMatchingBodyExpr(type);
+					if (body != null) {
+						value = symExpr.getDefinition().getMatchingInstance(body.getType(), type);
+					}
+					
+				} else {
+					value = symExpr.getInstance();
+				}
 				if (value != null) {
+					
 					if (value instanceof IAstCodeExpr) {
 						IAstCodeExpr codeExpr = (IAstCodeExpr) value;
 						if (codeExpr.isMacro()) {
 							// directly replace
-							node.getParent().replaceChild(node, value.copy(node));
+							IAstNode copy = value.copy(node);
+							removeGenerics(copy);
+							node.getParent().replaceChild(node, copy);
 							changed = true;
 						}
 					}
 					else {
 						// directly replace
-						node.getParent().replaceChild(node, value.copy(node));
+						IAstNode copy = value.copy(node);
+						removeGenerics(copy);
+						node.getParent().replaceChild(node, copy);
 						changed = true;
 					}
 				}
@@ -78,6 +109,67 @@ public class ExpandAST {
 				IAstTypedExpr funcExpr = funcCallExpr.getFunction();
 				if (funcExpr instanceof IAstSymbolExpr) {
 					// Call to a define?
+					
+					IAstSymbolExpr symExpr = (IAstSymbolExpr)funcExpr;
+					IAstNode symDef = symExpr.getSymbol().getDefinition();
+					if (symDef == null) {
+						// handle later
+						if (!symExpr.getSymbol().getScope().encloses(node.getOwnerScope()))
+							throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
+						return false;
+					}
+					if (symDef == node.getParent() /*|| !(symDef instanceof IAstDefineStmt)*/)
+						return false;
+					
+					IAstTypedExpr value = null;
+					if (symExpr.getDefinition() != null) {
+						// be sure bodies have types
+						for (IAstTypedExpr bodyExpr : symExpr.getDefinition().bodyList()) {
+							try {
+								changed |= bodyExpr.inferTypeFromChildren(typeEngine);
+							} catch (TypeException e) {
+								messages.add(new Error(bodyExpr, e.getMessage()));
+							}
+						}
+						
+						// and pick an appropriate replacement
+						IAstFuncCallExpr funcParent = (IAstFuncCallExpr) symExpr.getParent();
+						
+						LLType type = funcParent.inferExpansion(typeEngine, null);
+						IAstTypedExpr body = symExpr.getDefinition().getMatchingBodyExpr(type);
+						if (body != null) {
+							value = symExpr.getDefinition().getMatchingInstance(body.getType(), type);
+						}
+					} else {
+						value = symExpr.getInstance();
+					}
+					if (value != null) {
+						if (value instanceof IAstCodeExpr) {
+							IAstCodeExpr codeExpr = (IAstCodeExpr) value;
+							if (codeExpr.isMacro()) {
+								// "call" it
+								IAstNode copy = value.copy(node);
+								removeGenerics(copy);
+								funcCallExpr.replaceChild(funcExpr, copy);
+								funcCallExpr.getFunction().setType(codeExpr.getType());
+								/*
+								IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
+										null,
+										(IAstCodeExpr) value.copy(funcCallExpr),
+										node.getOwnerScope());
+								
+								if (stmtListExpr != null)
+									funcCallExpr.getParent().replaceChild(funcCallExpr, stmtListExpr);
+								else
+									funcCallExpr.getParent().replaceChild(funcCallExpr, null);
+								*/
+								changed = true;
+							}
+						}
+						
+					}
+					
+					
 					/*
 					IAstSymbolExpr symExpr = (IAstSymbolExpr) funcExpr;
 					if (symExpr.getSymbol().getDefinition() instanceof IAstDefineStmt) {
@@ -103,9 +195,12 @@ public class ExpandAST {
 					//
 					// (We may have produced this ourselves.)
 					
+					IAstNode copy = funcExpr.copy(funcCallExpr);
+					removeGenerics(copy);
+
 					IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
 							null,
-							(IAstCodeExpr) funcExpr.copy(funcCallExpr),
+							(IAstCodeExpr) copy,
 							node.getOwnerScope());
 					
 					if (stmtListExpr != null)
@@ -118,9 +213,39 @@ public class ExpandAST {
 		} catch (ASTException e) {
 			messages.add(new Error(e.getNode(), e.getMessage()));
 		}
+		
+		/*
+		if (node instanceof IAstCodeExpr && changed) {
+			((IAstCodeExpr) node).setType(null);
+			if (node.getParent() instanceof IAstDefineStmt) {
+				((IAstDefineStmt) node.getParent()).getSymbol().setType(null);
+			}
+		}*/
+		
+		
+		if (changed) {
+			System.out.println("after expansion:");
+			DumpAST dump = new DumpAST(System.out);
+			node.accept(dump);
+		}
 		return changed;
 	}
 	
+	/**
+	 * @param copy
+	 */
+	private void removeGenerics(IAstNode node) {
+		if (node instanceof IAstTypedNode) {
+			IAstTypedNode typedNode = (IAstTypedNode) node;
+			if (typedNode.getType() != null && typedNode.getType().isGeneric()) {
+				typedNode.setType(null);
+			}
+		}
+		for (IAstNode kid : node.getChildren()) {
+			removeGenerics(kid);
+		}
+	}
+
 	/**
 	 * @param codeExpr
 	 * @param funcCallExpr

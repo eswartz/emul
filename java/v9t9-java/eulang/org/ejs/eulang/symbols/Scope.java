@@ -100,7 +100,7 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public ISymbol add(ISymbol symbol) {
-		if (entries.containsKey(symbol.getName()))
+		if (entries.containsKey(symbol.getUniqueName()))
 			throw new IllegalArgumentException();
 		symbol.setScope(this);
 		entries.put(symbol.getUniqueName(), symbol);

@@ -40,7 +40,7 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 	 */
 	@Override
 	public IAstTupleExpr copy(IAstNode copyParent) {
-		return new AstTupleExpr(doCopy(elements, copyParent));
+		return fixup(this, new AstTupleExpr(doCopy(elements, copyParent)));
 	}
 
 	@Override

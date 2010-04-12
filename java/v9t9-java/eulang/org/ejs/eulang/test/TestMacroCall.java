@@ -86,7 +86,7 @@ public class TestMacroCall extends BaseParserTest {
     	IAstModule expMod = (IAstModule) doExpand(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) expMod.getScope().getNode("testImplicitBlocks3");
-    	doTypeInfer(getMainBodyExpr(def));
+    	doTypeInfer(mod);
     	
     	// float because it's the common type
     	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT,  new LLType[] {typeEngine.BOOL, typeEngine.INT, typeEngine.FLOAT}), 

@@ -332,9 +332,9 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public void registerInstance(LLType type, IAstTypedExpr expansion) {
-		if (type == null || !type.isGeneric()) {
-			throw new IllegalArgumentException();
-		}
+		//if (type == null || !type.isGeneric()) {
+		//	throw new IllegalArgumentException();
+		//}
 		
 		List<IAstTypedExpr> list = instanceMap.get(type);
 		if (list == null) {

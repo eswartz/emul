@@ -298,10 +298,10 @@ public class BaseParserTest {
 		Set<String> seen = new HashSet<String>();
 		for (ISymbol sym : scope) {
 			assertNotNull(sym);
-			assertNotNull(sym.getName());
-			assertNotNull(sym.getName());
-			assertFalse(sym.getName(), seen.contains(sym.getName()));
-			seen.add(sym.getName());
+			assertNotNull(sym.getUniqueName());
+			assertNotNull(sym.getUniqueName());
+			assertFalse(sym.getUniqueName(), seen.contains(sym.getUniqueName()));
+			seen.add(sym.getUniqueName());
 			assertSame(scope, sym.getScope());
 		}
 	}
@@ -390,7 +390,7 @@ public class BaseParserTest {
 	
 
 	protected IAstNode doExpand(IAstNode node) {
-		ExpandAST expand = new ExpandAST();
+		ExpandAST expand = new ExpandAST(typeEngine);
 		
 		for (int passes = 1; passes < 256; passes++) {
 			List<Message> messages = new ArrayList<Message>();
@@ -405,7 +405,7 @@ public class BaseParserTest {
 				
 				for (Message msg : messages)
 					System.err.println(msg);
-				assertEquals(0, messages.size());
+				assertEquals(catenate(messages), 0, messages.size());
 			} else {
 				break;
 			}
@@ -417,5 +417,35 @@ public class BaseParserTest {
 		return (expr instanceof IAstUnaryExpr && ((IAstUnaryExpr) expr).getOp() == IOperation.CAST)
 		&& expr.getType().equals(type);
 	}
+	
+
+	protected IAstModule doFrontend(String text) throws Exception {
+		IAstModule mod = treeize(text);
+    	sanityTest(mod);
+    	
+    	TypeInference infer = new TypeInference(typeEngine);
+    	infer.infer(mod, false);
+    	sanityTest(mod);
+    	
+    	IAstModule expanded = (IAstModule) doExpand(mod);
+    	
+    	sanityTest(mod);
+    	
+    	System.err.flush();
+		System.out.println("After doExpand:");
+		DumpAST dump = new DumpAST(System.out);
+		expanded.accept(dump);
+		
+    	doTypeInfer(expanded);
+    	doSimplify(expanded);
+    	
+    	System.err.flush();
+		System.out.println("After frontend:");
+		dump = new DumpAST(System.out);
+		expanded.accept(dump);
+		
+    	return expanded;
+	}
+	
 
 }

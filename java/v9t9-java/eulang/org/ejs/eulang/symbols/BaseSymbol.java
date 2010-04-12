@@ -194,7 +194,7 @@ public abstract class BaseSymbol implements ISymbol {
 	public String getLLVMName() {
 		if (llvmName == null) {
 			String prefix = getLLVMPrefix();
-			String safeName = getName().replace(" => ","$");
+			String safeName = getUniqueName().replace(" => ","$");
 			safeName = safeName.replaceAll("[^a-zA-Z0-9_$]", ".");
 			llvmName = prefix + safeName;
 		}

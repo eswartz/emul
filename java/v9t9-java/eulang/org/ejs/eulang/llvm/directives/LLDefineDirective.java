@@ -168,7 +168,8 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	 * @see org.ejs.eulang.llvm.directives.ICodeTarget#newTemp()
 	 */
 	public ISymbol newTempSymbol() {
-		ISymbol symbol = localScope.addTemporary(tempId + "", false);
+		//ISymbol symbol = localScope.addTemporary(tempId + "", false);
+		ISymbol symbol = localScope.add(tempId + "");
 		tempId++;
 		return symbol;
 	}

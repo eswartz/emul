@@ -70,7 +70,7 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 	 */
 	@Override
 	public String toString() {
-		return "LIST";
+		return "LIST [" + list.size() + "]";
 	}
 	
 	

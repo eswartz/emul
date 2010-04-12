@@ -32,22 +32,6 @@ import org.junit.Test;
 public class TestLLVMGenerator extends BaseParserTest {
 
 	private ITarget v9t9Target = new TargetV9t9(typeEngine);
-	
-	protected IAstModule doFrontend(String text) throws Exception {
-		IAstModule mod = treeize(text);
-    	sanityTest(mod);
-    	IAstModule expanded = (IAstModule) doExpand(mod);
-    	doTypeInfer(expanded);
-    	doSimplify(expanded);
-    	
-    	System.err.flush();
-		System.out.println("After frontend:");
-		DumpAST dump = new DumpAST(System.out);
-		expanded.accept(dump);
-		
-    	return expanded;
-	}
-	
 	/**
 	 * Generate the module, expecting no errors.
 	 * @param mod
@@ -322,6 +306,19 @@ public class TestLLVMGenerator extends BaseParserTest {
   		 LLVMGenerator g = doGenerate(mod);
   		 assertEquals(3, g.getModule().getSymbolCount());
   		 
+  		 
+  	 }
+  	 
+  	 @Test
+     public void testOverloadingMacro() throws Exception {
+  		 // TODO: should not need to explicitly say => Float
+  		 IAstModule mod = doFrontend(
+  				 "    util = [ code(x, y, z => Float) { x*y-z },\n" + 
+  				 "             macro (x, y) { util(x, y, 0) }\n" + 
+  				 "            ];\n" +
+  				 "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
+  		 LLVMGenerator g = doGenerate(mod);
+  		 assertEquals(2, g.getModule().getSymbolCount());
   		 
   	 }
 }
