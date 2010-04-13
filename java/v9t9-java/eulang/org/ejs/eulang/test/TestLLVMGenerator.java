@@ -310,9 +310,8 @@ public class TestLLVMGenerator extends BaseParserTest {
   	 
   	 @Test
      public void testOverloadingMacro() throws Exception {
-  		 // TODO: should not need to explicitly say => Float
   		 IAstModule mod = doFrontend(
-  				 "    util = [ code(x, y, z => Float) { x*y-z },\n" + 
+  				 "    util = [ code(x, y, z ) { x*y-z },\n" + 
   				 "             macro (x, y) { util(x, y, 0) }\n" + 
   				 "            ];\n" +
   				 "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
