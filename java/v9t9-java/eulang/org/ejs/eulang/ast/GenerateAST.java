@@ -1071,7 +1071,7 @@ public class GenerateAST {
 			}
 			else if (tree.getType() == EulangParser.CODE) {
 				if (tree.getChildCount() == 0) {
-					return typeEngine.getCodeType(null, new LLType[0]);
+					return typeEngine.getCodeType(null, (LLType[])null);
 				}
 				if (tree.getChildCount() > 1)
 					throw new GenerateException(tree.getChild(2), "did not expect code block here");

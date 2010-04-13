@@ -157,4 +157,16 @@ public abstract class BaseLLType implements LLType {
 	public boolean matchesExactly(LLType target) {
 		return this.equals(target);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#isCompatibleWith(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isCompatibleWith(LLType target) {
+		if (target == null)
+			return false;
+		return getBasicType().isCompatibleWith(target.getBasicType())
+				//&& (getBits() == 0 || target.getBits() == 0 || getBits() == target.getBits())
+				&& ((getSubType() == null && target.getSubType() == null) || getSubType().isCompatibleWith(target.getSubType())); 
+		}
 }

@@ -78,6 +78,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 			return false;
 		
 		if (//(child.getType() == null || !child.getType().isComplete()) &&
+				//(child.getType() == null || newType.isCompatibleWith(child.getType())) &&
 				newType.isMoreComplete(child.getType())) {
 			child.setType(newType);
 			return true;

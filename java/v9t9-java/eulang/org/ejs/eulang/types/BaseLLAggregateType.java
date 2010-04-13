@@ -10,18 +10,32 @@ package org.ejs.eulang.types;
  */
 public abstract class BaseLLAggregateType extends BaseLLType implements LLAggregateType {
 
+	protected final LLType[] NO_TYPES = new LLType[0];
+	
+	private final boolean isAbstract;
+
 	/**
 	 * @param name
 	 * @param bits
 	 * @param llvmType
 	 * @param basicType
 	 * @param subType
+	 * @param isAbstract 
 	 */
 	public BaseLLAggregateType(String name, int bits, String llvmType,
-			BasicType basicType, LLType subType) {
+			BasicType basicType, LLType subType, boolean isAbstract) {
 		super(name, bits, llvmType, basicType, subType);
+		this.isAbstract = isAbstract;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLAggregateType#isAbstract()
+	 */
+	@Override
+	public boolean isAbstract() {
+		return isAbstract;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLType#getSymbolicName()
 	 */
@@ -71,6 +85,12 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 				return false;
 			
 			otherAggregate = (LLAggregateType) otherType;
+			if (isAbstract() && otherAggregate.isAbstract())
+				return false;
+			if (isAbstract())
+				return false;
+			if (otherAggregate.isAbstract())
+				return true;
 			if (otherAggregate.getCount() != getCount()) 
 				return false;
 		}
@@ -172,6 +192,35 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 			if (types[idx] == null || otherTypes[idx] == null)
 				continue;
 			if (!types[idx].matchesExactly(otherTypes[idx]))
+				return false;
+		}
+		
+		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#isCompatibleWith(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isCompatibleWith(LLType target) {
+		if (!super.isCompatibleWith(target))
+			return false;
+		
+		if (!(target instanceof LLAggregateType))
+			return false;
+		LLAggregateType aggTarget = (LLAggregateType) target;
+		if (isAbstract() || aggTarget.isAbstract())
+			return true;
+		if (getCount() != aggTarget.getCount())
+			return false;
+				
+		LLType[] types = getTypes();
+		LLType[] otherTypes = aggTarget.getTypes();
+		
+		for (int idx = 0; idx < getCount(); idx++) {
+			if (types[idx] == null || otherTypes[idx] == null)
+				continue;
+			if (!types[idx].isCompatibleWith(otherTypes[idx]))
 				return false;
 		}
 		

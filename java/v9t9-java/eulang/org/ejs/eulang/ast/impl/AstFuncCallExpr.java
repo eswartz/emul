@@ -153,7 +153,8 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		
 		IAstTypedNode actualFunction = getRealTypedNode(function, argCodeType);
 		
-		if (canInferTypeFrom(actualFunction) && !argCodeType.isMoreComplete(actualFunction.getType())) {
+		if (canInferTypeFrom(actualFunction) && argCodeType.isCompatibleWith(actualFunction.getType())
+				&& !argCodeType.isMoreComplete(actualFunction.getType())) {
 			LLType type = actualFunction.getType();
 			
 			if (!(type instanceof LLCodeType)) {

@@ -14,6 +14,7 @@ import org.ejs.eulang.TypeEngine;
 public class LLTupleType extends BaseLLAggregateType {
 
 	private LLType[] types;
+	private boolean isAbstract;
 
 	/**
 	 * @param name
@@ -23,13 +24,13 @@ public class LLTupleType extends BaseLLAggregateType {
 	 * @param subType
 	 */
 	public LLTupleType(TypeEngine engine, LLType[] types) {
-		super(null, sumTypeBits(engine, types), toLLVMString(types), BasicType.TUPLE, null);
-		this.types = types;
+		super(null, sumTypeBits(engine, types), toLLVMString(types), BasicType.TUPLE, null, types == null);
+		this.types = types != null ? types : NO_TYPES;
 	}
 
 	public LLTupleType(LLType[] types) {
-		super(null, sumTypeBits(null, types), toLLVMString(types), BasicType.TUPLE, null);
-		this.types = types;
+		super(null, sumTypeBits(null, types), toLLVMString(types), BasicType.TUPLE, null, types == null);
+		this.types = types != null ? types : NO_TYPES;
 	}
 
 	@Override
@@ -61,6 +62,9 @@ public class LLTupleType extends BaseLLAggregateType {
 	 * @return
 	 */
 	private static String toLLVMString(LLType[] types) {
+		if (types == null)
+			return "<tuple>";
+		
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		sb.append("{");
@@ -78,6 +82,9 @@ public class LLTupleType extends BaseLLAggregateType {
 	 * @return
 	 */
 	private static int sumTypeBits(TypeEngine engine, LLType[] types) {
+		if (types == null)
+			return 0;
+		
 		int sum = 0;
 		int align = engine != null ? engine.getStructAlign() : 8; 
 		for (LLType type : types)  {

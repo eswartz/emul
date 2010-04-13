@@ -14,18 +14,20 @@ public class LLCodeType extends BaseLLAggregateType  {
 	private final LLType retType;
 	private final LLType[] argTypes;
 	private final LLType[] types;
+	private boolean isAbstract;
 
 	/**
 	 * @param retType 
 	 * 
 	 */
 	public LLCodeType(LLType retType, LLType[] argTypes, int ptrBits) {
-		super(null, ptrBits, toString(retType, argTypes), BasicType.CODE, null);
+		super(null, ptrBits, toString(retType, argTypes), BasicType.CODE, null, argTypes == null);
 		this.retType = retType;
-		this.argTypes = argTypes;
-		this.types = new LLType[1 + argTypes.length];
+		this.argTypes = argTypes != null ? argTypes : NO_TYPES;
+		this.types = new LLType[1 + this.argTypes.length];
 		types[0] = retType;
-		System.arraycopy(argTypes, 0, types, 1, argTypes.length);
+		if (argTypes != null)
+			System.arraycopy(argTypes, 0, types, 1, argTypes.length);
 	}
 	
 	
@@ -63,8 +65,10 @@ public class LLCodeType extends BaseLLAggregateType  {
 
 
 	public static String toString(LLType retType, LLType[] argTypes) {
+		if (retType == null && argTypes == null)
+			return "<code>";
+
 		StringBuilder sb = new StringBuilder();
-		
 		boolean first = true;
 		for (LLType type : argTypes) {
 			if (first)

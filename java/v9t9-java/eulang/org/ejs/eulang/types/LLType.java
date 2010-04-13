@@ -8,17 +8,30 @@ package org.ejs.eulang.types;
  *
  */
 public interface LLType {
+	final int TYPECLASS_PRIMITIVE = 1,
+		TYPECLASS_MEMORY = 2,
+		TYPECLASS_CODE = 4,
+		TYPECLASS_DATA = 8;
+	
 	enum BasicType {
-		INTEGRAL,
-		FLOATING,
-		VOID,
-		POINTER,
-		DATA,
-		CODE, 
-		BOOL, 
-		REF, 
-		TUPLE,
-		GENERIC
+		INTEGRAL(TYPECLASS_PRIMITIVE),
+		FLOATING(TYPECLASS_PRIMITIVE),
+		VOID(0),
+		POINTER(TYPECLASS_MEMORY),
+		DATA(TYPECLASS_DATA ),
+		CODE(TYPECLASS_CODE), 
+		BOOL(TYPECLASS_PRIMITIVE), 
+		REF(TYPECLASS_MEMORY), 
+		TUPLE(TYPECLASS_DATA),
+		GENERIC(~0);
+
+		private final int classMask;
+		private BasicType(int classMask) {
+			this.classMask = classMask;
+		}
+		public boolean isCompatibleWith(BasicType basicType) {
+			return (classMask & basicType.classMask) != 0; 
+		}
 	};
 	
 	String toString();
@@ -72,5 +85,13 @@ public interface LLType {
 	 * @return
 	 */
 	boolean matchesExactly(LLType target);
-	
+
+	/**
+	 * Tell whether the two types are compatible.  They must be the same basic
+	 * type, have the same aggregate structure (if aggregates), and have either
+	 * unknowns, generics, or matching subtypes in each position. 
+	 * @param target
+	 * @return
+	 */
+	boolean isCompatibleWith(LLType target);
 }

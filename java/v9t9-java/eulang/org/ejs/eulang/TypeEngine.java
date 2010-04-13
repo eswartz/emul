@@ -212,6 +212,9 @@ public class TypeEngine {
 	 * @return
 	 */
 	private String getCodeTypeKey(LLType retType, LLType[] retAndArgTypes) {
+		if (retType == null && retAndArgTypes == null)
+			return "<code>";
+		
 		StringBuilder sb = new StringBuilder();
 		if (retType != null)
 			sb.append(retType.toString());

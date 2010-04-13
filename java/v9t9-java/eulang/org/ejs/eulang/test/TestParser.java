@@ -132,10 +132,6 @@ public class TestParser extends BaseParserTest  {
     	parse("myCode = code (a : Int, b , c: Float){  } ;");
     }
     @Test
-    public void testCodeBlockArgs3() throws Exception  {
-    	parse("testCodeBlockArgs3 = code (a : Int = 10, b = 5, c: Float = 9.9){  } ;");
-    }
-    @Test
     public void testCodeBlockReturns1() throws Exception  {
     	parse("sqrAdd = code( => Object ) { };");
     }

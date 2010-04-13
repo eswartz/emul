@@ -150,7 +150,7 @@ code : CODE ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE 
 macro : MACRO ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? optargdefs*) codestmtlist*)  
     ;
 
-// prototype, as for a type (no defaults allowed)
+// prototype, as for a type or code block (no defaults allowed)
 proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? argdefs*)
     ;
 argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
@@ -179,7 +179,8 @@ tupleargdef: type    -> type
 optargdefs: (optargdef ( COMMA optargdef)* COMMA?)?                        -> optargdef* 
     ;
 
-optargdef: MACRO? ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO? ID type* $init?)
+optargdef: ID (COLON type)?   -> ^(ARGDEF ID type* )
+    | MACRO ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO ID type* $init?)
   ;
   
 type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScopeRef) ) )? 

@@ -13,7 +13,6 @@ import java.util.List;
 
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBlockStmt;
-import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
@@ -367,6 +366,7 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test
     public void testCondStar3() throws Exception {
+    	// no 'else' means 'else true then null'
     	IAstModule mod = treeize(
     		" testCondStar3 = code (t) { \n" +
     		"select [ 1>t then 1 ];\n" +
