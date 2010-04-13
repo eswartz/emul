@@ -162,11 +162,12 @@ public class LLVMGenerator {
 					ensureTypes(instance);
 				return;
 			}
-		} 
+		}
 		if (node instanceof IAstTypedNode) {
 			IAstTypedNode typed = (IAstTypedNode) node;
-			if (typed.getType() == null || !typed.getType().isComplete())
+			if (typed.getType() == null || !typed.getType().isComplete()) {
 				throw new ASTException(node, "incomplete type information; add some specifications");
+			}
 		}
 		for (IAstNode kid : node.getChildren()) {
 			ensureTypes(kid);
@@ -249,8 +250,6 @@ public class LLVMGenerator {
 
 	private void generateGlobalExpr(IAstDefineStmt stmt, IAstTypedExpr expr)
 			throws ASTException {
-		ensureTypes(expr);
-		
 		if (expr instanceof IAstCodeExpr) {
 			generateGlobalCode(stmt.getSymbol(), (IAstCodeExpr) expr);
 		} else if (expr instanceof IAstLitExpr) {
@@ -301,6 +300,9 @@ public class LLVMGenerator {
 	 * @throws ASTException 
 	 */
 	private void generateGlobalCode(ISymbol symbol, IAstCodeExpr expr) throws ASTException {
+		if (expr.isMacro())
+			return;
+		
 		ensureTypes(expr);
 		
 		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr);
