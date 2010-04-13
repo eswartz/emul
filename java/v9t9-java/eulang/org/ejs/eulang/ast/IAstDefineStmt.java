@@ -39,7 +39,6 @@ public interface IAstDefineStmt extends IAstStmt, IAstSymbolDefiner {
 	 */
 	//Map<LLType, IAstTypedExpr> typedBodyMap();
 	
-	
 	/**
 	 * Get the body of the definition matching the given type of a symbol
 	 * referencing this definition.  

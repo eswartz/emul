@@ -247,7 +247,8 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		return inferTypesFromChildren(new ITyped[] { name.getSymbol(), typeExpr, defaultVal });
+		boolean changed = inferTypesFromChildren(new ITyped[] { name, typeExpr, defaultVal });
+		return changed;
 	}
 	
 	/* (non-Javadoc)
@@ -256,7 +257,7 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	@Override
 	public void setType(LLType type) {
 		super.setType(type);
-		name.setType(type);
+		//name.setType(type);
 		/*
 		name.getSymbol().setType(type);
 		if (typeExpr != null)

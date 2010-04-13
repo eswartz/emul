@@ -203,28 +203,18 @@ public class TypeInference {
 	 * @param context 
 	 */
 	private boolean instantiate(IAstSymbolExpr site) {
-		
-		// Does this refer to a definition (still)?
-		// 
-		// We will replace all symbol exprs with references to actual definitions if possible.
-		//
-		IAstDefineStmt define = site.getDefinition();
-		if (define == null)
-			return false;
-		
-		if (instantiationSet.contains(site))
-			return false;
-
 		// Get the actual type expected for the site (don't use the symbol's site, since that aliases
 		// other definitions and uses)
 		//
 		
-		LLType expandedType = null;
+		LLType expandedType = site.getType();
+		
+		/*
 		IAstNode context = site;
 		while (context != null) {
 			if (context instanceof IAstTypedNode) {
 				IAstTypedNode typed = (IAstTypedNode) context;
-				if (true /*typed.getType() != null  && (!typed.getType().isComplete() || typed.getType().isGeneric())*/) {
+				if (true) {
 					expandedType = typed.inferExpansion(typeEngine, null);
 					if (expandedType != null) {
 						break;
@@ -233,37 +223,46 @@ public class TypeInference {
 			}
 			context = context.getParent();
 		}
+		*/
 		
 		if (expandedType == null) {
-			// look for another body in this definition
-			/*if (site.getParent() == define) {
-				for (IAstTypedExpr expr : define.bodyList()) {
-					if (expr.getType() != null && expr.getType().matchesExactly(site.getType())) {
-						expandedType = expr.getType();
-						break;
-					}
-				}
-			}*/
-			if (expandedType == null) {
-				return false;
-			}
+			return false;
 		}
 		
-		IAstTypedExpr body = define.getMatchingBodyExpr(expandedType);
-		if (body == null) {
-			body = define.getMatchingBodyExpr(site.getType());
-			if (body == null) {
-				return false;
-			}
-		}
+		// Did this symbol once refer to a definition?  We won't instantiate anything else. 
+		//
+		IAstDefineStmt define = site.getDefinition();
+		if (define == null)
+			return false;
+		
+		// Now, does the symbol *still* refer to the definition?  If so, no one has
+		// detected what the type of the symbol should be.
+		
+		IAstNode definition = site.getSymbol().getDefinition();
+		if (definition instanceof IAstDefineStmt)
+			return false;
+		
+	
+		// See if it's still generic..,
+		//
+		IAstTypedNode body = (IAstTypedNode) definition;
+	
+		if (body.getType() == null || !body.getType().isGeneric() || !expandedType.isMoreComplete(body.getType()))
+			return false;
+		
+		// Ok, we can progress.
+		//
+		
+		if (instantiationSet.contains(site))
+			return false;
 
-		
 		try {
 			instantiationSet.add(site);
 			if (site.getType() != null && (expandedType.isGeneric() || body.getType().isGeneric())) {
 				return doInstantiateGeneric(site, define, expandedType, body);
 			} else {
-				return doInstantiateBody(site, define, expandedType, body);
+				//return doInstantiateBody(site, define, expandedType, body);
+				return false;
 			}
 		} finally {
 			instantiationSet.remove(site);
@@ -271,7 +270,7 @@ public class TypeInference {
 	}
 
 	private boolean doInstantiateGeneric(IAstSymbolExpr site,
-			IAstDefineStmt define, LLType expandedType, IAstTypedExpr body) {
+			IAstDefineStmt define, LLType expandedType, IAstTypedNode body) {
 		IAstTypedExpr expansion = define.getMatchingInstance(body.getType(), expandedType);
 
 		/*

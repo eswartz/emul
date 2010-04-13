@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
@@ -20,7 +21,8 @@ import org.ejs.eulang.types.TypeException;
 public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	private ISymbol symbol;
 	private boolean isAddress;
-
+	private ISymbol origSymbol;
+	
     public AstSymbolExpr(ISymbol symbol) {
         super();
         setSymbol(symbol);
@@ -31,13 +33,20 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     	setSymbol(symbol);
     	setAddress(isAddress);
     }
+    public AstSymbolExpr(ISymbol symbol, boolean isAddress, ISymbol origSymbol) {
+    	super();
+    	this.origSymbol = origSymbol;
+    	setSymbol(symbol);
+    	setAddress(isAddress);
+    }
 
     /* (non-Javadoc)
      * @see org.ejs.eulang.ast.IAstNode#copy()
      */
     @Override
     public IAstSymbolExpr copy(IAstNode copyParent) {
-    	return fixup(this, new AstSymbolExpr(symbol, isAddress));
+    	IAstSymbolExpr symbolExpr = fixup(this, new AstSymbolExpr(symbol, isAddress, origSymbol));
+    	return symbolExpr;
     }
     
     @Override
@@ -64,13 +73,12 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		return true;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
 	 */
 	@Override
 	public String toString() {
-		return (isAddress ? "&" : "") + symbol.toString();
+		return typedString((isAddress ? "&" : "") + symbol.getName());
 	}
     	
     /* (non-Javadoc)
@@ -100,9 +108,36 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     public void setSymbol(ISymbol symbol) {
     	Check.checkArg(symbol);
     	this.symbol = symbol;
-    	//setType(symbol.getType());
+    	setType(symbol.getType());
     }
 
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.impl.AstTypedNode#getType()
+     */
+    @Override
+    public LLType getType() {
+    	//if (type == null)
+    	//	return symbol.getType();
+    	//else
+    	//	return type;
+    	if (super.getType() != null)
+    		return super.getType();
+    	return symbol.getType();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
+     */
+    @Override
+    public void setType(LLType type) {
+    	super.setType(type);
+    	if (type != null && !(symbol.getDefinition() instanceof IAstDefineStmt)) {
+    		symbol.setType(type);
+    		//if (symbol.getDefinition() instanceof ITyped)
+    		//	((ITyped) symbol.getDefinition()).setType(type);
+    	}
+    }
+    
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstExpression#simplify()
      */
@@ -120,30 +155,67 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedExpression#getType()
-	 */
-	@Override
-	public LLType getType() {
-		return symbol.getType();
-		//return super.getType();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedExpression#setType(org.ejs.eulang.llvm.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		//super.setType(type);
-		symbol.setType(type);
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
 		
+		boolean changed = false;
+		
+		// When a symbol expression is first created, it may point to a
+		// define statement, which in turn may have several possible options
+		// with several different types, depending on context.
+		//
+		// It is up to the owner of this symbol expression to decide when
+		// enough information has been deduced, at which time it will
+		// set this node's type.  Once set, then here, we will create a new symbol
+		// pointing to the specific definition that matches. 
+		
+		IAstDefineStmt stmt = getDefinition();
+		if (origSymbol == null && stmt != null) {
+			LLType newType = getType();
+			
+			IAstTypedExpr selectedBody = null;
+			boolean isUnique = false;
+			if (stmt.bodyList().size() == 1) {
+				// no question
+				//changed = inferTypesFromChildren(new ITyped[] { symbol, stmt.bodyList().get(0) });
+				selectedBody = stmt.bodyList().get(0);
+				isUnique = true;
+			} else {
+				// Multiple choices.  This expr will take the type from a parent node with more context. 
+				if (getType() == null)
+					return false;
+				
+				selectedBody = stmt.getMatchingBodyExpr(getType());
+				
+				if (selectedBody == null)
+					return false;
+			}
+			
+			if (selectedBody.getType() != null && selectedBody.getType().isMoreComplete(newType))
+				newType = selectedBody.getType();
+			
+			if (true || !isUnique) {
+				ISymbol instanceSymbol = symbol.getScope().addTemporary(symbol.getName(),
+						false);
+				instanceSymbol.setType(newType);
+				instanceSymbol.setDefinition(selectedBody.copy(null));
+				
+				origSymbol = symbol;
+				symbol = instanceSymbol;
+				setType(newType);
+			} else {
+				super.setType(newType);
+			}
+			
+			selectedBody.setType(newType);
+			
+		} else if (symbol.getDefinition() instanceof ITyped) {
+			// The symbol's expr should have a type. 
+			changed = inferTypesFromChildren(new ITyped[] { (ITyped) symbol.getDefinition() });
+		}
 		/*if ( symbol.getDefinition() instanceof IAstDefineStmt) {
 			IAstDefineStmt define = (IAstDefineStmt) symbol.getDefinition();
 			if (canInferTypeFrom(define.getExpr())) {
@@ -154,7 +226,8 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		//if (getSymbol().getDefinition() instanceof IAstTypedNode)
 		//	if ( canInferTypeFrom((IAstTypedNode) getSymbol().getDefinition()))
 		//		return updateType(symbol, (((IAstTypedNode)symbol.getDefinition()).getType()));
-		return false;
+		
+		return changed;
 
 	}
 	
@@ -190,10 +263,14 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 */
 	@Override
 	public IAstDefineStmt getDefinition() {
-		if (symbol.getDefinition() == null)
+		ISymbol theSymbol = symbol;
+		if (origSymbol != null) {
+			theSymbol = origSymbol;
+		}
+		if (theSymbol.getDefinition() == null)
 			return null;
-		if (symbol.getDefinition() instanceof IAstDefineStmt)
-			return ((IAstDefineStmt) symbol.getDefinition());
+		if (theSymbol.getDefinition() instanceof IAstDefineStmt)
+			return ((IAstDefineStmt) theSymbol.getDefinition());
 		return null;
 	}
 	
@@ -213,11 +290,13 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 */
 	@Override
 	public IAstTypedExpr getInstance() {
+		if (origSymbol != null)
+			return (IAstTypedExpr) symbol.getDefinition();
 		IAstDefineStmt def = getDefinition();
 		if (def == null) { 
-			if (symbol.getDefinition() instanceof IAstTypedExpr)
+			/*if (symbol.getDefinition() instanceof IAstTypedExpr)
 				return (IAstTypedExpr)symbol.getDefinition();
-			else
+			else*/
 				return null;
 		}
 		IAstTypedExpr body = def.getMatchingBodyExpr(getType());

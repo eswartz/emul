@@ -425,11 +425,11 @@ public class BaseParserTest {
     	
     	TypeInference infer = new TypeInference(typeEngine);
     	infer.infer(mod, false);
-    	sanityTest(mod);
+    	//sanityTest(mod);
     	
     	IAstModule expanded = (IAstModule) doExpand(mod);
     	
-    	sanityTest(mod);
+    	//sanityTest(mod);
     	
     	System.err.flush();
 		System.out.println("After doExpand:");

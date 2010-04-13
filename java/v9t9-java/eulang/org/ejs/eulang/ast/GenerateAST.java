@@ -976,9 +976,9 @@ public class GenerateAST {
 		
 		symExpr.getSymbol().setDefinition(argDef);
 		
-		if (type != null && type.getType() != null) {
+		/*if (type != null && type.getType() != null) {
 			symExpr.getSymbol().setType(type.getType());
-		}
+		}*/
 		
 		return argDef;
 	}
@@ -1082,7 +1082,8 @@ public class GenerateAST {
 				return typeEngine.getCodeType(proto.returnType(), proto.argumentTypes());
 			}
 			else if (tree.getType() == EulangParser.IDREF) {
-				return checkConstruct(tree, IAstSymbolExpr.class).getType();
+				IAstSymbolExpr symbolExpr = checkConstruct(tree, IAstSymbolExpr.class);
+				return symbolExpr.getType();
 			}
 		}
 		unhandled(tree);

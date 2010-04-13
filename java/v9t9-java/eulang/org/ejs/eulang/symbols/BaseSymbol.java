@@ -5,6 +5,7 @@ package org.ejs.eulang.symbols;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.types.LLType;
@@ -130,8 +131,8 @@ public abstract class BaseSymbol implements ISymbol {
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.symbols.ISymbol#setDefinition(org.ejs.eulang.ast.IAstNode)
-	 */
 	@Override
+	 */
 	public void setDefinition(IAstNode def) {
 		this.def = def;
 		if (this.type == null)
@@ -151,8 +152,11 @@ public abstract class BaseSymbol implements ISymbol {
 	 */
 	@Override
 	public void setType(LLType type) {
-		this.type = type;
-		llvmName = null;
+		if (type != this.type) {
+			assert !(def instanceof IAstDefineStmt);
+			this.type = type;
+			llvmName = null;
+		}
 	}
 	
 	/* (non-Javadoc)
