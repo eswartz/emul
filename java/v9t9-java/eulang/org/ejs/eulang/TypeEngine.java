@@ -167,6 +167,15 @@ public class TypeEngine {
 			return a;
 		}
 		
+		if (a.getBasicType() != BasicType.VOID && b.getBasicType() == BasicType.VOID)
+			return a;
+		if (b.getBasicType() != BasicType.VOID && a.getBasicType() == BasicType.VOID)
+			return b;
+		if (a.getBasicType() != BasicType.VOID && b.getBasicType() == BasicType.VOID)
+			return null;
+		if (a.getBasicType() == BasicType.GENERIC || b.getBasicType() == BasicType.GENERIC)
+			return null;
+		/*
 		if (a.getBasicType() == BasicType.GENERIC && b.getBasicType() != BasicType.GENERIC) {
 			return b;
 		}
@@ -176,6 +185,7 @@ public class TypeEngine {
 		if (a.getBasicType() == BasicType.GENERIC && b.getBasicType() == BasicType.GENERIC) {
 			return a.getName().compareTo(b.getName()) <= 0 ? a : b;
 		}
+		*/
 		
 		// ptrs, refs, voids cannot be interconverted
 		

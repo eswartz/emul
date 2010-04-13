@@ -268,14 +268,21 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 
 condStar: cond -> cond
    | SELECT LBRACKET condTests RBRACKET -> condTests
+   | SELECT condTestExprs -> condTestExprs
     ;
-condTests : condTest (BAR_BAR condTest)* BAR_BAR? condFinal -> ^(CONDLIST condTest* condFinal?)
+condTests : condTest (BAR_BAR condTest)* BAR_BAR? condFinalOrEmpty -> ^(CONDLIST condTest* condFinalOrEmpty)
   ;    
 condTest : (cond THEN) => cond THEN arg -> ^(CONDTEST cond arg)
   ;
 condFinal : ELSE arg -> ^(CONDTEST ^(LIT TRUE) arg)
     ;
-    
+condFinalOrEmpty : condFinal -> condFinal
+    | -> ^(CONDTEST ^(LIT TRUE) ^(LIT NULL))
+    ;
+
+condTestExprs : condTest (BAR_BAR condTest)* condFinal -> ^(CONDLIST condTest* condFinal)
+  ;    
+
 cond:    ( logor  -> logor )
       ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
 ;

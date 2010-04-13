@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBlockStmt;
+import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
@@ -25,6 +26,7 @@ import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstNullLitExpr;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -340,7 +342,51 @@ public class TestGenerator extends BaseParserTest {
 		condExpr = condList.getCondExprs().list().get(2);
 		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
     }
-    
+    @Test
+    public void testCondStar2() throws Exception {
+    	IAstModule mod = treeize(
+    		" testCondStar2 = code (t) { select 1>t then 1\n" +
+    	//	"		||	t!=2 and t!=1 then { x:= 9+t; -x; }\n" +
+    		"		else  0.4;" +
+    		"11 \n" +
+    		"		; };\n");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCondStar2");
+		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+		IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
+		IAstCondList condList = (IAstCondList) exprStmt.getExpr();
+		assertEquals(2, condList.getCondExprs().nodeCount());
+		IAstCondExpr condExpr;
+		condExpr = condList.getCondExprs().list().get(0);
+		assertTrue(condExpr.getExpr() instanceof IAstIntLitExpr);
+		//condExpr = condList.getCondExprs().list().get(1);
+		//assertTrue(condExpr.getExpr() instanceof IAstCodeExpr);
+		condExpr = condList.getCondExprs().list().get(1);
+		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
+    }
+    @Test
+    public void testCondStar3() throws Exception {
+    	IAstModule mod = treeize(
+    		" testCondStar3 = code (t) { \n" +
+    		"select [ 1>t then 1 ];\n" +
+    		"		11;\n"+
+    		"		; };\n");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCondStar3");
+		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+		IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
+		IAstCondList condList = (IAstCondList) exprStmt.getExpr();
+		assertEquals(2, condList.getCondExprs().nodeCount());
+		IAstCondExpr condExpr;
+		condExpr = condList.getCondExprs().list().get(0);
+		assertTrue(condExpr.getExpr() instanceof IAstIntLitExpr);
+		//condExpr = condList.getCondExprs().list().get(1);
+		//assertTrue(condExpr.getExpr() instanceof IAstCodeExpr);
+		condExpr = condList.getCondExprs().list().get(1);
+		assertTrue(condExpr.getExpr() instanceof IAstNullLitExpr);
+    }
     @Test
     public void testPointers1() throws Exception {
     	IAstModule mod = treeize(

@@ -743,7 +743,11 @@ public class LLVMGenerator {
 				// TODO: signedness
 				cast = ECast.FPTOSI;
 			}
-			else
+			else if (origType.getBasicType() == BasicType.VOID) {
+				// not really a cast
+				type = origType;
+				return value;
+			} else 
 				unhandled(expr);
 			
 			LLOperand temp = currentTarget.newTemp(type);
@@ -912,8 +916,10 @@ public class LLVMGenerator {
 		Object object = expr.getObject();
 		if (object instanceof Boolean)
 			return new LLConstOp(Boolean.TRUE.equals(object) ? 1 : 0);
-		else
+		else if (object != null)
 			return new LLConstOp((Number) object);
+		else
+			return new LLConstOp(0);
 			
 	}
 

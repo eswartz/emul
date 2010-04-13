@@ -319,4 +319,16 @@ public class TestLLVMGenerator extends BaseParserTest {
   		 assertEquals(2, g.getModule().getSymbolCount());
   		 
   	 }
+  	 
+  	@Test
+    public void testCondStar3() throws Exception {
+  		// implicit else counts as 0 in the inferred type
+    	IAstModule mod = doFrontend(
+    		" testCondStar3 = code (t) { \n" +
+    		"select [ 1>t then 15 ];\n" +
+    		"		; };\n");
+    	LLVMGenerator g = doGenerate(mod);
+ 		 assertEquals(1, g.getModule().getSymbolCount());
+ 		 
+    }
 }
