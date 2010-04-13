@@ -161,13 +161,11 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			}
 
 			codeType = (LLCodeType) type;
-		} else /*if (canInferTypeFromArgs())*/ {
+		} else  {
 			codeType = argCodeType;
-		//} else {
-		//	return false;
 		}
 
-		boolean changed = updateType(function, codeType) /*updateType(actualFunction, codeType) |*/ ;
+		boolean changed = updateType(function, codeType);
 		if (codeType.getRetType() != null && codeType.getRetType().isComplete()
 				&& !codeType.getRetType().equals(getType())) {
 			setType(codeType.getRetType());
@@ -183,18 +181,6 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		}
 	
 		return changed;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedNode#inferExpansion(org.ejs.eulang.ast.IAstTypedExpr)
-	 */
-	@Override
-	public LLType inferExpansion(TypeEngine typeEngine, IAstTypedExpr expr) {
-		LLCodeType argCodeType = getArgInferredType(typeEngine);
-		//if (expr == getRealTypedNode(function, expr.getType())) {
-			return argCodeType;
-		//}
-		//return super.inferExpansion(typeEngine, expr);
 	}
 	
 	private LLCodeType getArgInferredType(TypeEngine typeEngine) {
@@ -214,33 +200,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		return codeType;
 	}
 	
-	/**
-	 * @return
-	 */
-	private boolean canInferTypeFromArgs() {
-		for (IAstTypedExpr expr : arguments.list()) {
-			if (!canInferTypeFrom(expr))
-				return false;
-		}
-		return true;
-	}
-
 	private IAstTypedNode getRealTypedNode(IAstTypedExpr node, LLType codeType) {
-		//if (node.getType() != null && !node.getType().isGeneric()) {
-		//	return node;
-		//}
-		
 		if (node instanceof IAstSymbolExpr) {
 			IAstSymbolExpr symbolExpr = (IAstSymbolExpr) node;
 			if (symbolExpr.getDefinition() != null) {
-				// TODO: instances
-				/*
-				IAstTypedExpr expr = symbolExpr.getDefinition().getMatchingBodyExpr(codeType);
-				if (expr != null) {
-					IAstTypedExpr expandedExpr = symbolExpr.getDefinition().getMatchingInstance(expr.getType(), codeType);
-					if (expandedExpr != null)
-						expandedExpr = 
-				}*/
 				IAstTypedExpr expr = symbolExpr.getInstance();
 				return expr;
 			}
@@ -250,22 +213,6 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		} 
 		return null;
 	}
-
-	/*
-	 * if (function instanceof IAstSymbolExpr) {
-			ISymbol funcSym = ((IAstSymbolExpr) function).getSymbol();
-			IAstNode symdef = funcSym.getDefinition();
-			IAstTypedExpr expr = null;
-			if (symdef instanceof IAstDefineStmt) {
-				expr = ((IAstDefineStmt) symdef).getExpr();
-			} else {
-				assert false;
-			}
-			if (!(expr instanceof IAstCodeExpr)) {
-				throw new TypeException("Calling non-function");
-			}
-		}
-	 */
 	
 	 /* (non-Javadoc)
      * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()

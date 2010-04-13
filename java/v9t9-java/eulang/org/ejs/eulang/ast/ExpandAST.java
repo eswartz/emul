@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
-import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
@@ -19,8 +18,6 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TypeException;
 
 /**
  * TODO: unify with TypeInference; these both contain a lot of duplicate logic for ensuring
@@ -31,11 +28,7 @@ import org.ejs.eulang.types.TypeException;
  */
 public class ExpandAST {
 	
-	private final TypeEngine typeEngine;
-
-	public ExpandAST(TypeEngine typeEngine) {
-		this.typeEngine = typeEngine;
-		
+	public ExpandAST() {
 	}
 
 	public boolean expand(List<Message> messages, IAstNode node) {
@@ -63,9 +56,6 @@ public class ExpandAST {
 		
 		try {
 			if (node instanceof IAstSymbolExpr) {
-				//if (node.getParent() instanceof IAstFuncCallExpr)
-				//	return changed;
-				
 				IAstSymbolExpr symExpr = (IAstSymbolExpr)node;
 				IAstNode symDef = symExpr.getDefinition();
 				if (symDef == null) {
@@ -77,18 +67,7 @@ public class ExpandAST {
 				if (symDef == node.getParent() || !(symDef instanceof IAstDefineStmt))
 					return false;
 				
-				IAstTypedExpr value = null;
-				if (symExpr.getParent() instanceof IAstFuncCallExpr) {
-					IAstFuncCallExpr funcParent = (IAstFuncCallExpr) symExpr.getParent();
-					LLType type = funcParent.inferExpansion(typeEngine, null);
-					IAstTypedExpr body = symExpr.getDefinition().getMatchingBodyExpr(type);
-					if (body != null) {
-						value = symExpr.getDefinition().getMatchingInstance(body.getType(), type);
-					}
-					
-				} else {
-					value = symExpr.getInstance();
-				}
+				IAstTypedExpr value = symExpr.getInstance();
 				if (value != null) {
 					
 					if (value instanceof IAstCodeExpr) {
@@ -111,13 +90,6 @@ public class ExpandAST {
 						changed = true;
 					}
 				}
-				
-				/*
-				if (symDef instanceof IAstDefineStmt && ((IAstDefineStmt) symDef).getExpr() instanceof IAstCodeExpr) {
-					IAstCodeExpr symDefCode = (IAstCodeExpr) ((IAstDefineStmt) symDef).getExpr();
-					
-				}
-				*/
 			} else if (node instanceof IAstFuncCallExpr) {
 				IAstFuncCallExpr funcCallExpr = (IAstFuncCallExpr) node;
 				IAstTypedExpr funcExpr = funcCallExpr.getFunction();
@@ -135,28 +107,7 @@ public class ExpandAST {
 					if (symDef == node.getParent() /*|| !(symDef instanceof IAstDefineStmt)*/)
 						return false;
 					
-					IAstTypedExpr value = null;
-					if (symExpr.getDefinition() != null) {
-						// be sure bodies have types
-						for (IAstTypedExpr bodyExpr : symExpr.getDefinition().bodyList()) {
-							try {
-								changed |= bodyExpr.inferTypeFromChildren(typeEngine);
-							} catch (TypeException e) {
-								messages.add(new Error(bodyExpr, e.getMessage()));
-							}
-						}
-						
-						// and pick an appropriate replacement
-						IAstFuncCallExpr funcParent = (IAstFuncCallExpr) symExpr.getParent();
-						
-						LLType type = funcParent.inferExpansion(typeEngine, null);
-						IAstTypedExpr body = symExpr.getDefinition().getMatchingBodyExpr(type);
-						if (body != null) {
-							value = symExpr.getDefinition().getMatchingInstance(body.getType(), type);
-						}
-					} else {
-						value = symExpr.getInstance();
-					}
+					IAstTypedExpr value = symExpr.getInstance();
 					if (value != null) {
 						if (value instanceof IAstCodeExpr) {
 							IAstCodeExpr codeExpr = (IAstCodeExpr) value;
@@ -167,41 +118,12 @@ public class ExpandAST {
 								removeGenerics(copy);
 								funcCallExpr.replaceChild(funcExpr, copy);
 								funcCallExpr.getFunction().setType(codeExpr.getType());
-								/*
-								IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
-										null,
-										(IAstCodeExpr) value.copy(funcCallExpr),
-										node.getOwnerScope());
-								
-								if (stmtListExpr != null)
-									funcCallExpr.getParent().replaceChild(funcCallExpr, stmtListExpr);
-								else
-									funcCallExpr.getParent().replaceChild(funcCallExpr, null);
-								*/
 								changed = true;
 							}
 						}
 						
 					}
 					
-					
-					/*
-					IAstSymbolExpr symExpr = (IAstSymbolExpr) funcExpr;
-					if (symExpr.getSymbol().getDefinition() instanceof IAstDefineStmt) {
-						IAstDefineStmt defineStmt = (IAstDefineStmt) symExpr.getSymbol().getDefinition();
-						IAstNode def = defineStmt.getExpr();
-						if (def instanceof IAstCodeExpr) {
-							IAstCodeExpr codeExpr = (IAstCodeExpr) def;
-							if (codeExpr.getType() != null && codeExpr.getType().isComplete()) {
-								// fine
-							} else if (funcExpr.getType() != null && funcExpr.getType().isComplete()) {
-								// create a variant for the given type
-								IAstTypedExpr instance = instantiateFuncCall(defineStmt, funcCallExpr);
-								funcExpr.getParent().replaceChild(funcExpr, instance);
-							}
-
-						}
-					}*/
 				}
 				else if (funcExpr instanceof IAstCodeExpr) {
 					// Direct expansion of call, e.g.:   code () { } ()
@@ -230,13 +152,6 @@ public class ExpandAST {
 			messages.add(new Error(e.getNode(), e.getMessage()));
 		}
 		
-		/*
-		if (node instanceof IAstCodeExpr && changed) {
-			((IAstCodeExpr) node).setType(null);
-			if (node.getParent() instanceof IAstDefineStmt) {
-				((IAstDefineStmt) node.getParent()).getSymbol().setType(null);
-			}
-		}*/
 		return changed;
 	}
 	

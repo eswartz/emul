@@ -402,7 +402,7 @@ public class BaseParserTest {
 	
 
 	protected IAstNode doExpand(IAstNode node) {
-		ExpandAST expand = new ExpandAST(typeEngine);
+		ExpandAST expand = new ExpandAST();
 		
 		for (int passes = 1; passes < 256; passes++) {
 			List<Message> messages = new ArrayList<Message>();

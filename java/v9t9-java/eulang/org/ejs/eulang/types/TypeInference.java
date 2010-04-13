@@ -152,8 +152,6 @@ public class TypeInference {
 						}
 					}
 					messages.addAll(inference.getMessages());
-					//if (defineExpr.getType() != null && defineExpr.getType().isMoreComplete(origDefineType))
-					//	changed = true;
 					
 					changed |= inferUp(bodyExpr);
 				} else if (origDefineType.isGeneric()) {
@@ -208,23 +206,7 @@ public class TypeInference {
 		//
 		
 		LLType expandedType = site.getType();
-		
-		/*
-		IAstNode context = site;
-		while (context != null) {
-			if (context instanceof IAstTypedNode) {
-				IAstTypedNode typed = (IAstTypedNode) context;
-				if (true) {
-					expandedType = typed.inferExpansion(typeEngine, null);
-					if (expandedType != null) {
-						break;
-					}
-				}
-			}
-			context = context.getParent();
-		}
-		*/
-		
+	
 		if (expandedType == null) {
 			return false;
 		}
@@ -261,7 +243,6 @@ public class TypeInference {
 			if (site.getType() != null && (expandedType.isGeneric() || body.getType().isGeneric())) {
 				return doInstantiateGeneric(site, define, expandedType, body);
 			} else {
-				//return doInstantiateBody(site, define, expandedType, body);
 				return false;
 			}
 		} finally {
@@ -272,23 +253,6 @@ public class TypeInference {
 	private boolean doInstantiateGeneric(IAstSymbolExpr site,
 			IAstDefineStmt define, LLType expandedType, IAstTypedNode body) {
 		IAstTypedExpr expansion = define.getMatchingInstance(body.getType(), expandedType);
-
-		/*
-		// the expanded type may yet have unknowns or generics in it
-		for (Map.Entry<ISymbol, IAstTypedExpr> entry : define.instances().entrySet()) {
-			if (entry.getValue().getType().isMoreComplete(expandedType)
-					|| expandedType.equals(entry.getValue().getType())) {
-				site.setSymbol(entry.getKey());
-				return true;
-			}
-			if (expandedType.isMoreComplete(entry.getValue().getType())) {
-				// we can improve the expansion
-				//expansionSym = entry.getKey();
-				expansion = entry.getValue();
-				break;
-			}
-		}
-		*/
 		
 		ISymbol expansionSym = site.getSymbol();
 		
@@ -329,45 +293,6 @@ public class TypeInference {
 		site.setType(expandedType);
 		
 		define.registerInstance(body.getType(), expansion);
-		return true;
-	}
-
-	private boolean doInstantiateBody(IAstSymbolExpr site,
-			IAstDefineStmt define, LLType expandedType, IAstTypedExpr body) {
-		if (define.bodyList().size() == 1)
-			return false;
-		
-		ISymbol bodySym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
-				false);
-		bodySym.setDefinition(body);
-
-
-		// replace immediately in case of recursion when inferring below,
-		// which will recurse
-		//site.setSymbol(bodySym);
-		//site.setType(expandedType);
-			
-		
-		TypeInference inference = subInferenceJob();
-		boolean updated = inference.infer(body, false);
-		
-		LLType bodyType = body.getType();
-		
-		if (updated && DUMP) {
-			System.out.println("Updated body of " + define.getSymbol() + " for " + bodyType + ":");
-			DumpAST dump = new DumpAST(System.out);
-			body.accept(dump);
-		}
-		
-		site.setType(bodyType);
-
-		bodySym.setDefinition(body);
-		bodySym.setType(site.getType());
-		
-		site.setSymbol(bodySym);
-		site.setType(bodyType);
-			
-		//define.registerInstance(body.getType(), body);
 		return true;
 	}
 

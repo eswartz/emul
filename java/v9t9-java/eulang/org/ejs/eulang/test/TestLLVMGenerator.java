@@ -19,7 +19,6 @@ import org.eclipse.core.runtime.Path;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TargetV9t9;
-import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLVMGenerator;

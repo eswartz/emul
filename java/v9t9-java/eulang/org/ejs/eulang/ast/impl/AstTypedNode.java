@@ -165,13 +165,5 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		castExpr.setType(newType);
 		return castExpr;
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#inferExpansion(org.ejs.eulang.ast.IAstTypedExpr)
-	 */
-	@Override
-	public LLType inferExpansion(TypeEngine typeEngine, IAstTypedExpr expr) {
-		return null;
-	}
 
 }
