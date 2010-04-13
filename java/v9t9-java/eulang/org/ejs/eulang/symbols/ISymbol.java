@@ -31,4 +31,8 @@ public interface ISymbol extends ITyped {
 	 * @return
 	 */
 	ISymbol newInstance();
+	/**
+	 * @return
+	 */
+	int getNumber();
 }

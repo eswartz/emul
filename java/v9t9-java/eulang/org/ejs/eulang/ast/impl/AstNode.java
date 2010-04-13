@@ -246,11 +246,11 @@ abstract public class AstNode implements IAstNode {
     		}
     	}*/
     	
-    	Map<ISymbol, ISymbol> symbolMap = new HashMap<ISymbol, ISymbol>();
+    	Map<Integer, ISymbol> symbolMap = new HashMap<Integer, ISymbol>();
     	for (ISymbol symbol : scope) {
     		ISymbol copySymbol = symbol.newInstance();
     		copySymbol.setType(symbol.getType());
-    		symbolMap.put(symbol, copySymbol);
+    		symbolMap.put(symbol.getNumber(), copySymbol);
     		copySymbol.setScope(copy);
 
     		if (symbol.getDefinition() != null) {
@@ -271,11 +271,11 @@ abstract public class AstNode implements IAstNode {
 	 * @param symbolMap
 	 */
 	private static void replaceSymbols(IAstNode origRoot, IAstNode copyRoot,
-			IScope origScope, Map<ISymbol, ISymbol> symbolMap) {
+			IScope origScope, Map<Integer, ISymbol> symbolMap) {
 		if (origRoot instanceof IAstSymbolExpr) {
 			ISymbol symbol = ((IAstSymbolExpr)origRoot).getSymbol();
 			if (symbol.getScope() == origScope) {
-				ISymbol replaced = symbolMap.get(symbol);
+				ISymbol replaced = symbolMap.get(symbol.getNumber());
 				assert (replaced != null);
 				((IAstSymbolExpr) copyRoot).setSymbol(replaced);
 			}
@@ -293,6 +293,7 @@ abstract public class AstNode implements IAstNode {
 	 * @param copyMap
 	 */
 	private void getNodeMap(IAstNode orig, IAstNode copy, Map<Integer, IAstNode> copyMap) {
+		assert !copyMap.containsKey(orig.getId()) || copyMap.get(orig.getId()) == copy;
 		copyMap.put(orig.getId(), copy);
 		IAstNode[] kids = orig.getChildren();
 		IAstNode[] copyKids = copy.getChildren();
@@ -358,5 +359,15 @@ abstract public class AstNode implements IAstNode {
 				}
 			}
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstNode#uniquifyIds()
+	 */
+	@Override
+	public void uniquifyIds() {
+		this.id = gId++;
+		for (IAstNode kid : getChildren())
+			kid.uniquifyIds();
 	}
 }

@@ -986,18 +986,45 @@ public class TestTypeInfer extends BaseParserTest {
     // be sure we can do this style of overloading too:
     // 1) don't replace macro in call spot, but only as a function call
     // (or else you get wrong arguments on injected code)
-    // 2) the usual
+    // 2) avoid recursion in expanding
+    // 3) be sure generic types are not inferred so tightly that the code is broken (add casts)
+    @Test
+	public void testOverloadingMacro0() throws Exception {
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend("    util = [\n"
+				+ "             macro (x, y) { util(x, y, 0) },\n"
+				+ "				code(x:Int, y:Int, z:Int => Int ) { x*y-z }\n"
+				+ "            ];\n"
+				+ "func = code(x:Int,y:Int => Int) { util(x,y) };\n");
+		sanityTest(mod);
+
+		doTypeInfer(mod);
+
+	}
+    
 	@Test
-	public void testOverloadingMacro() throws Exception {
+	public void testOverloadingMacro1() throws Exception {
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend("    util = [ code(x, y, z ) { x*y-z },\n"
+				+ "             macro (x, y) { util(x, y, 0) }\n"
+				+ "            ];\n"
+				+ "func = code(x:Int,y:Int => Int) { util(x,y) };\n");
+		sanityTest(mod);
+
+		doTypeInfer(mod);
+
+	}
+	@Test
+	public void testOverloadingMacro2() throws Exception {
 		dumpTypeInfer = true;
 		IAstModule mod = doFrontend("    util = [ code(x, y, z ) { x*y-z },\n"
 				+ "             macro (x, y) { util(x, y, 0) }\n"
 				+ "            ];\n"
 				+ "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
 		sanityTest(mod);
-
+		
 		doTypeInfer(mod);
-
+		
 	}
 }
 

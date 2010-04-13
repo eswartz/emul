@@ -298,6 +298,7 @@ public class TypeInference {
 				System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
 			
 			expansion = (IAstTypedExpr) body.copy(null);
+			expansion.uniquifyIds();
 			replaceGenericTypes(expansion, expandedType);
 			
 			if (DUMP) {
@@ -446,14 +447,16 @@ public class TypeInference {
 		LLType newType = aggregate.updateTypes(types);
 		defineExpr.setType(newType);
 		
+		boolean changed = false;
+		/*
 		TypeInference inference = subInferenceJob();
-		boolean changed = inference.infer(defineExpr, false);
+		changed = inference.infer(defineExpr, false);
 		
 		if (changed && DUMP) {
 			System.out.println("Replacing generic types in: ");
 			DumpAST dump = new DumpAST(System.out);
 			defineExpr.accept(dump);
-		}
+		}*/
 		return changed;
 	}
 

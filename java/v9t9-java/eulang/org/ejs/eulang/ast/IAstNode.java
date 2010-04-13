@@ -121,5 +121,7 @@ public interface IAstNode {
 	 * @throws TypeException TODO
 	 */
 	void validateChildTypes(TypeEngine typeEngine) throws TypeException;
+	
+	void uniquifyIds();
 }
 

@@ -104,6 +104,7 @@ public abstract class Scope implements IScope {
 			throw new IllegalArgumentException();
 		symbol.setScope(this);
 		entries.put(symbol.getUniqueName(), symbol);
+		counter.set(Math.max(counter.get(), symbol.getNumber() + 1));
 		return symbol;
 	}
 	@Override

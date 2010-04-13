@@ -210,9 +210,13 @@ public class BaseParserTest {
     
     
     /**
+     * @param symIds 
+     * @param nodeIds 
      * @param mod
      */
-    protected void doSanityTest(IAstNode node) {
+    protected void doSanityTest(IAstNode node, Set<Integer> nodeIds) {
+    	assertFalse(nodeIds.contains(node.getId()));
+    	nodeIds.add(node.getId());
     	if (node instanceof IAstScope)
     		scopeTest(((IAstScope) node).getScope());
     	assertNotNull(node+"", node);
@@ -225,14 +229,15 @@ public class BaseParserTest {
     		if (node instanceof IAstScope && kid instanceof IAstScope) {
     			assertEquals(((IAstScope)node).getScope(), ((IAstScope) kid).getScope().getOwner());
     		}
-    		doSanityTest(kid);
+    		doSanityTest(kid, nodeIds);
     		
     		//assertTrue("source containment " + kid+"", node.getSourceRef().contains(kid.getSourceRef()));
     	}
     	
     }
     protected void sanityTest(IAstNode node) {
-    	doSanityTest(node);
+    	Set<Integer> nodeIds = new HashSet<Integer>();
+    	doSanityTest(node, nodeIds);
     	
     	IAstNode copy = node.copy(null);
     	
@@ -267,7 +272,9 @@ public class BaseParserTest {
 				ISymbol copySym = copyScope.get(symbol.getUniqueName());
 				assertSame(copyScope, copySym.getScope());
 				assertEquals(symbol+"", symbol, copySym);
-				assertEquals(symbol+"", symbol.getDefinition(), copySym.getDefinition());
+				// a symbol may refer to dead code
+				if (symbol.getDefinition() == null || symbol.getDefinition().getParent() != null)
+					assertEquals(symbol+"", symbol.getDefinition(), copySym.getDefinition());
 				assertFalse(symbol+"", symbol == copySym);
 				assertFalse(symbol+"", symbol.getDefinition() != null && symbol.getDefinition() == copySym.getDefinition());
 				if (symbol.getDefinition() != null) {
@@ -280,7 +287,9 @@ public class BaseParserTest {
 		
 		for (int  i = 0; i < kids.length; i++) {
 			assertSame(copy+"", copy, copyKids[i].getParent());
-			checkCopy(kids[i], copyKids[i]);
+			// look out for dead definitions
+			if (kids[i].getParent() == copy)
+				checkCopy(kids[i], copyKids[i]);
 		}
 		
 		// now that a rough scan worked, check harder
@@ -295,14 +304,17 @@ public class BaseParserTest {
 	protected void scopeTest(IScope scope) {
 		if (!(scope instanceof GlobalScope))
 			assertNotNull(scope.getOwner());
+		Set<Integer> seenIds = new HashSet<Integer>();
 		Set<String> seen = new HashSet<String>();
 		for (ISymbol sym : scope) {
 			assertNotNull(sym);
-			assertNotNull(sym.getUniqueName());
+			assertNotNull(sym.getName());
 			assertNotNull(sym.getUniqueName());
 			assertFalse(sym.getUniqueName(), seen.contains(sym.getUniqueName()));
 			seen.add(sym.getUniqueName());
 			assertSame(scope, sym.getScope());
+			assertFalse(sym.getUniqueName(), seenIds.contains(sym.getNumber()));
+			seenIds.add(sym.getNumber());
 		}
 	}
 	
@@ -425,11 +437,11 @@ public class BaseParserTest {
     	
     	TypeInference infer = new TypeInference(typeEngine);
     	infer.infer(mod, false);
-    	//sanityTest(mod);
+    	sanityTest(mod);
     	
     	IAstModule expanded = (IAstModule) doExpand(mod);
     	
-    	//sanityTest(mod);
+    	sanityTest(mod);
     	
     	System.err.flush();
 		System.out.println("After doExpand:");

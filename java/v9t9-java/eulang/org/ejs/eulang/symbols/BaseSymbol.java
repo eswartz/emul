@@ -80,7 +80,13 @@ public abstract class BaseSymbol implements ISymbol {
 				return false;
 		} else if (!type.equals(other.type))
 			return false;
-		
+		/*
+		if (def == null) {
+			if (other.def != null)
+				return false;
+		} else if (def.getId() != other.def.getId())
+			return false;
+		*/
 		return true;
 	}
 	

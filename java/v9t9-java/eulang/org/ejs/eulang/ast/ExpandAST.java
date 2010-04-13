@@ -39,13 +39,25 @@ public class ExpandAST {
 	}
 
 	public boolean expand(List<Message> messages, IAstNode node) {
+		boolean changed = doExpand(messages, node);
+		
+		
+		if (changed) {
+			System.out.println("after expansion:");
+			DumpAST dump = new DumpAST(System.out);
+			node.accept(dump);
+		}
+		return changed;
+	}
+
+	private boolean doExpand(List<Message> messages, IAstNode node) {
 		boolean changed = false;
 		
 		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())) {
 			// go deep first, since node parenting changes as expansion occurs
 			IAstNode[] kids = node.getChildren();
 			for (int i = 0; i < kids.length; i++) {
-				changed |= expand(messages, kids[i]);
+				changed |= doExpand(messages, kids[i]);
 			}
 		}
 		
@@ -84,6 +96,7 @@ public class ExpandAST {
 						if (codeExpr.isMacro()) {
 							// directly replace
 							IAstNode copy = value.copy(node);
+							copy.uniquifyIds();
 							removeGenerics(copy);
 							node.getParent().replaceChild(node, copy);
 							changed = true;
@@ -92,6 +105,7 @@ public class ExpandAST {
 					else {
 						// directly replace
 						IAstNode copy = value.copy(node);
+						copy.uniquifyIds();
 						removeGenerics(copy);
 						node.getParent().replaceChild(node, copy);
 						changed = true;
@@ -149,6 +163,7 @@ public class ExpandAST {
 							if (codeExpr.isMacro()) {
 								// "call" it
 								IAstNode copy = value.copy(node);
+								copy.uniquifyIds();
 								removeGenerics(copy);
 								funcCallExpr.replaceChild(funcExpr, copy);
 								funcCallExpr.getFunction().setType(codeExpr.getType());
@@ -196,6 +211,7 @@ public class ExpandAST {
 					// (We may have produced this ourselves.)
 					
 					IAstNode copy = funcExpr.copy(funcCallExpr);
+					copy.uniquifyIds();
 					removeGenerics(copy);
 
 					IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
@@ -221,13 +237,6 @@ public class ExpandAST {
 				((IAstDefineStmt) node.getParent()).getSymbol().setType(null);
 			}
 		}*/
-		
-		
-		if (changed) {
-			System.out.println("after expansion:");
-			DumpAST dump = new DumpAST(System.out);
-			node.accept(dump);
-		}
 		return changed;
 	}
 	
@@ -331,10 +340,12 @@ public class ExpandAST {
 					throw new ASTException(realArg, "cannot pass expression as an implicit code block since named arguments are required");
 				IAstNodeList<IAstStmt> stmtlist = new AstNodeList<IAstStmt>();
 				
+				IAstTypedExpr retVal = (IAstTypedExpr) realArg.copy(null);
+				retVal.uniquifyIds();
 				if (!protoArg.isMacro())
-					stmtlist.add(new AstReturnStmt((IAstTypedExpr) realArg.copy(null)));
+					stmtlist.add(new AstReturnStmt(retVal));
 				else
-					stmtlist.add(new AstExprStmt((IAstTypedExpr) realArg.copy(null)));
+					stmtlist.add(new AstExprStmt(retVal));
 				IAstCodeExpr implCode = new AstCodeExpr(new AstPrototype(argCode.getRetType()), new LocalScope(nodeScope), stmtlist, 
 						protoArg.isMacro());
 				
@@ -344,14 +355,28 @@ public class ExpandAST {
 			
 			if (!protoArg.isMacro()) {
 				realArg.setParent(null);	// deleting call
+				//realArg.uniquifyIds();
 				// For non-macro arguments, make a single assignment to a new variable
-				// using the proto arg's symbol 
+				// using the proto arg's symbol
+				//IAstSymbolExpr symCopy = protoArg.getSymbolExpr().copy(null);
+				//IAstType typeExprCopy = protoArg.getTypeExpr() != null ? protoArg.getTypeExpr().copy(null) : null;
+				IAstSymbolExpr symCopy = protoArg.getSymbolExpr();
+				symCopy.setParent(null);
+				//symCopy.uniquifyIds();
+				IAstType typeExprCopy = protoArg.getTypeExpr();
+				if (typeExprCopy != null) {
+					typeExprCopy.setParent(null);
+					//typeExprCopy.uniquifyIds();
+				}
+				
+				/*
 				protoArg.getSymbolExpr().setParent(null);
 				if (protoArg.getTypeExpr() != null)
 					protoArg.getTypeExpr().setParent(null);
+					*/
 				IAstAllocStmt argAlloc = new AstAllocStmt(
-						protoArg.getSymbolExpr(), 
-						protoArg.getTypeExpr(),
+						symCopy, 
+						typeExprCopy,
 						realArg);
 				blockList.add(realArgIdx++, argAlloc);
 			} else {
@@ -454,7 +479,10 @@ public class ExpandAST {
 			//if (root.getParent() instanceof IAstFuncCallExpr)
 			//	root.getParent().getParent().replaceChild(root.getParent(), replacement.copy(null));
 			//else
-				root.getParent().replaceChild(root, replacement.copy(null));
+			
+				IAstNode copy = replacement.copy(null);
+				copy.uniquifyIds();
+				root.getParent().replaceChild(root, copy);
 		} 
 		
 	}
