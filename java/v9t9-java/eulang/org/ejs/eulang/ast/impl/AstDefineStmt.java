@@ -115,7 +115,8 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public IAstNode[] getDumpChildren() {
-		Collection<IAstTypedExpr> exprs = getConcreteInstances();
+		Collection<IAstTypedExpr> exprs = new ArrayList<IAstTypedExpr>(bodyList); 
+		exprs.addAll(getConcreteInstances());
 		return (IAstTypedExpr[]) exprs.toArray(new IAstTypedExpr[exprs.size()]);
 	}
 

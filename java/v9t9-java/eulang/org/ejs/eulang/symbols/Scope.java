@@ -129,7 +129,6 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public void remove(ISymbol symbol) {
-		symbol.setDefinition(null);
 		entries.remove(symbol.getUniqueName());
 	}
 	

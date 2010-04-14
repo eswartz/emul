@@ -27,6 +27,7 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstNullLitExpr;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.junit.Test;
@@ -299,7 +300,7 @@ public class TestGenerator extends BaseParserTest {
     	assertTrue(arglist.get(1) instanceof IAstCodeExpr);
     	assertTrue(arglist.get(2) instanceof IAstCodeExpr);
     }
-    
+
     @Test
     public void testMacroArgs1() throws Exception {
     	IAstModule mod = treeize(
@@ -337,7 +338,7 @@ public class TestGenerator extends BaseParserTest {
 		condExpr = condList.getCondExprs().list().get(0);
 		assertTrue(condExpr.getExpr() instanceof IAstIntLitExpr);
 		condExpr = condList.getCondExprs().list().get(1);
-		assertTrue(condExpr.getExpr() instanceof IAstCodeExpr);
+		assertTrue(condExpr.getExpr() instanceof IAstStmtListExpr);
 		condExpr = condList.getCondExprs().list().get(2);
 		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
     }

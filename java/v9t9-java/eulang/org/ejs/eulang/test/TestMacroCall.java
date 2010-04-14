@@ -106,6 +106,38 @@ public class TestMacroCall extends BaseParserTest {
     	assertFalse(isCastTo(condExpr.getExpr(), typeEngine.FLOAT));
     }
 
+    @Test
+    public void testImplicitBlocks4() throws Exception {
+    	dumpTreeize = true;
+    	dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [\n" +
+    			"	 test then mthen() || false then false || else melse() ] };\n"+
+    			"while = macro ( macro test:code, macro body : code) {\n"+
+    			"    @loop: select test() then body() else @loop;\n"+
+    			"};\n"+
+    			"testImplicitBlocks4 = code (t, x : Int, y : Float) {\n" +
+    			"   while(x > t, { y = y/2; x = x-1; } )\n"+
+    			"};");
+    	sanityTest(mod);
+    	
+    	IAstModule expMod = (IAstModule) doExpand(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) expMod.getScope().getNode("testImplicitBlocks4");
+    	doTypeInfer(mod);
+    	
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT,  new LLType[] {typeEngine.INT, typeEngine.INT, typeEngine.FLOAT}), 
+    			getMainBodyExpr(def).getType());
+    	
+    	IAstCodeExpr defExpr = (IAstCodeExpr) getMainBodyExpr(def);
+    	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) ((IAstExprStmt) defExpr.stmts().getFirst()).getExpr()).getStmtList().list().get(1);
+    	IAstCondList condList = (IAstCondList) stmt1.getExpr();
+    	IAstCondExpr condExpr = condList.getCondExprs().list().get(0);
+		assertEquals(typeEngine.INT, condExpr.getType());
+		condExpr = condList.getCondExprs().list().get(1);
+    	assertEquals(typeEngine.INT, condExpr.getType());
+    }
+
 	private IAstTypedExpr getMainBodyExpr(IAstDefineStmt def) {
 		return def.getMatchingBodyExpr(null);
 	}

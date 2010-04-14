@@ -337,27 +337,7 @@ public class BaseParserTest {
 	protected void doTypeInfer(IAstNode mod, boolean expectErrors) {
 		TypeInference infer = new TypeInference(typeEngine);
 		List<Message> messages = infer.getMessages();
-		/*
-		int depth = mod.getDepth();
 		
-		int passes = 0;
-		while (passes++ <= depth) {
-			boolean changed = false;
-			
-			changed = infer.infer(messages, typeEngine, mod);
-			
-			if (!changed) 
-				break;
-			
-			if (dumpTypeInfer) {
-				System.err.flush();
-				System.out.println("After type inference:");
-				DumpAST dump = new DumpAST(System.out);
-				mod.accept(dump);
-			}
-			
-		}
-		*/
 		
 		infer.infer(mod, true);
 		if (dumpTypeInfer || (!expectErrors && messages.size() > 0)) {
@@ -439,9 +419,9 @@ public class BaseParserTest {
     	infer.infer(mod, false);
     	sanityTest(mod);
     	
-    	IAstModule expanded = (IAstModule) doExpand(mod);
     	
-    	sanityTest(mod);
+    	IAstModule expanded = (IAstModule) doExpand(mod);
+    	sanityTest(expanded);
     	
     	System.err.flush();
 		System.out.println("After doExpand:");

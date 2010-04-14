@@ -66,7 +66,6 @@ public class TypeInference {
 	public TypeInference(TypeEngine typeEngine) {
 		this.typeEngine = typeEngine;
 		messages = new ArrayList<Message>();
-		
 	}
 	
 	public TypeInference subInferenceJob() {
@@ -84,6 +83,7 @@ public class TypeInference {
 	/**
 	 * Infer the types in the tree from known types.
 	 * @param validateTypes if true, make sure all types are concrete after inferring 
+	 * @param genericize 
 	 */
 	public boolean infer(IAstNode node, boolean validateTypes) {
 		boolean anyChange = false;
@@ -155,7 +155,7 @@ public class TypeInference {
 					
 					changed |= inferUp(bodyExpr);
 				} else if (origDefineType.isGeneric()) {
-					// okay, don't infer again here
+					
 				} else {
 					// infer in case expansions introduced more unknown nodes inside
 					changed |= inferUp(bodyExpr);

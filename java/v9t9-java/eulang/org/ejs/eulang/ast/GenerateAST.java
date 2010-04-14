@@ -41,6 +41,7 @@ import org.ejs.eulang.ast.impl.AstNullLitExpr;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
+import org.ejs.eulang.ast.impl.AstStmtListExpr;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstAssignTupleStmt;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
@@ -504,6 +505,13 @@ public class GenerateAST {
 		assert tree.getChildCount() == 2;
 		IAstTypedExpr test = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
 		IAstTypedExpr expr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+		// flatten code blocks
+		if (expr instanceof IAstCodeExpr) {
+			IAstCodeExpr origCode = ((IAstCodeExpr) expr);
+			origCode.stmts().setParent(null);
+			expr = new AstStmtListExpr(origCode.stmts());
+			expr.setSourceRef(origCode.getSourceRef());
+		}
 		IAstCondExpr condExpr = new AstCondExpr(test, expr);
 		getSource(tree, condExpr);
 		return condExpr;

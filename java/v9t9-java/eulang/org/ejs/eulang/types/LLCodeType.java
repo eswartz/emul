@@ -14,7 +14,6 @@ public class LLCodeType extends BaseLLAggregateType  {
 	private final LLType retType;
 	private final LLType[] argTypes;
 	private final LLType[] types;
-	private boolean isAbstract;
 
 	/**
 	 * @param retType 

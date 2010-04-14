@@ -13,27 +13,6 @@ public interface LLType {
 		TYPECLASS_CODE = 4,
 		TYPECLASS_DATA = 8;
 	
-	enum BasicType {
-		INTEGRAL(TYPECLASS_PRIMITIVE),
-		FLOATING(TYPECLASS_PRIMITIVE),
-		VOID(0),
-		POINTER(TYPECLASS_MEMORY),
-		DATA(TYPECLASS_DATA ),
-		CODE(TYPECLASS_CODE), 
-		BOOL(TYPECLASS_PRIMITIVE), 
-		REF(TYPECLASS_MEMORY), 
-		TUPLE(TYPECLASS_DATA),
-		GENERIC(~0);
-
-		private final int classMask;
-		private BasicType(int classMask) {
-			this.classMask = classMask;
-		}
-		public boolean isCompatibleWith(BasicType basicType) {
-			return (classMask & basicType.classMask) != 0; 
-		}
-	};
-	
 	String toString();
 	boolean equals(Object obj);
 	int hashCode();

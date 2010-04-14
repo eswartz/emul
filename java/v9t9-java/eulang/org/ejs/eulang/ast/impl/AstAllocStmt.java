@@ -232,9 +232,6 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 					changed |= updateType(this, getExpr().getType());
 			}
 			else if (getSymbolExpr() != null && getSymbolExpr().getType() != null) {
-				//if (getSymbolExpr() != null && getTypeExpr().getType().isMoreComplete(getSymbolExpr().getType())) {
-				//	changed = updateType(getSymbolExpr(), getTypeExpr().getType());
-				//}
 				if (typeExpr != null)
 					changed |= updateType(typeExpr, getSymbolExpr().getType());
 				changed |= updateType(this, getSymbolExpr().getType());

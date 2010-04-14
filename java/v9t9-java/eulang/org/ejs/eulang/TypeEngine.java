@@ -20,6 +20,7 @@ import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
@@ -29,7 +30,6 @@ import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
-import org.ejs.eulang.types.LLType.BasicType;
 
 /**
  * @author ejs

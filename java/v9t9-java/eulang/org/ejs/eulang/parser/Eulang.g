@@ -257,6 +257,7 @@ arglist: (arg ( COMMA arg)* COMMA?)?                        -> ^(ARGLIST arg*)
 
 arg:  assignExpr                    -> ^(EXPR assignExpr)
   | LBRACE codestmtlist RBRACE      -> ^(EXPR ^(CODE codestmtlist) )
+  | gotoStmt                        -> ^(EXPR gotoStmt)
    ;
 
 //

@@ -132,11 +132,13 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
     	
     	boolean changed = false;
     	for (IAstTypedExpr kid : typedChildren) {
-    		boolean kidChanged = updateType(kid, newType);
-    		if (kidChanged) {
-    			changed = true;
+    		if (kid != null) {
+	    		boolean kidChanged = updateType(kid, newType);
+	    		if (kidChanged) {
+	    			changed = true;
+	    		}
+	    		kid.getParent().replaceChild(kid, createCastOn(typeEngine, kid, newType));
     		}
-    		kid.getParent().replaceChild(kid, createCastOn(typeEngine, kid, newType));
     	}
     	changed |= updateType(this, newType);
     	

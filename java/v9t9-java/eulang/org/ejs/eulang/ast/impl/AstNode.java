@@ -250,13 +250,14 @@ abstract public class AstNode implements IAstNode {
     	for (ISymbol symbol : scope) {
     		ISymbol copySymbol = symbol.newInstance();
     		copySymbol.setType(symbol.getType());
+    		assert !symbolMap.containsKey(symbol.getNumber());
     		symbolMap.put(symbol.getNumber(), copySymbol);
     		copySymbol.setScope(copy);
 
     		if (symbol.getDefinition() != null) {
     			IAstNode copyDef = copyMap.get(symbol.getDefinition().getId());
     			
-    			//assert (copyDef != null);
+    			//assert (copyDef != null); // may be null for dead symbols
     			copySymbol.setDefinition(copyDef);
     		}
     		copy.add(copySymbol);

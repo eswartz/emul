@@ -60,8 +60,8 @@ public class ExpandAST {
 				IAstNode symDef = symExpr.getDefinition();
 				if (symDef == null) {
 					// handle later
-					if (!symExpr.getSymbol().getScope().encloses(node.getOwnerScope()))
-						throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
+					//if (!symExpr.getSymbol().getScope().encloses(node.getOwnerScope()))
+					//	throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
 					return false;
 				}
 				if (symDef == node.getParent() || !(symDef instanceof IAstDefineStmt))

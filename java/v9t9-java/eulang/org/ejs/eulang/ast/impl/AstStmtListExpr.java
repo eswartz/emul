@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStmt;
@@ -110,7 +111,12 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		IAstStmt last = stmtList.getLast();
+		IAstStmt last = null;
+		for (int idx = stmtList.list().size(); idx > 0; idx--) {
+			last = stmtList.list().get(idx - 1);
+			if (!(last instanceof IAstGotoStmt))
+				break;
+		}
 		if (last instanceof ITyped)
 			return inferTypesFromChildren(new ITyped[] { (ITyped) last });
 		return false;

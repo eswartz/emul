@@ -7,9 +7,11 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
+import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -119,8 +121,11 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		IAstTypedExpr[] exprs = new IAstTypedExpr[condList.list().size() ];
-		for (int i = 0; i < exprs.length; i++)
-			exprs[i] = condList.list().get(i).getExpr();
+		for (int i = 0; i < exprs.length; i++) {
+			IAstTypedExpr expr = condList.list().get(i).getExpr();
+			if (!(expr instanceof IAstGotoStmt))
+				exprs[i] = expr;
+		}
 		boolean changed = inferTypesFromChildList(typeEngine, exprs);
 		
 		if (canInferTypeFrom(this)) {
@@ -134,13 +139,14 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 			if (common != null) {
 				for (int i = 0; i < exprs.length; i++) {
 					if (canReplaceType(exprs[i])) {
-						updateType(exprs[i], common);
-						changed = true;
+						changed |= updateType(exprs[i], common);
 					}
 				}
 				for (int i = 0; i < exprs.length; i++) {
-					condList.list().get(i).setExpr(createCastOn(typeEngine, exprs[i], common));
-					condList.list().get(i).setType(common);
+					if (exprs[i] != null) {
+						condList.list().get(i).setExpr(createCastOn(typeEngine, exprs[i], common));
+						condList.list().get(i).setType(common);
+					}
 				}
 			}
 		}

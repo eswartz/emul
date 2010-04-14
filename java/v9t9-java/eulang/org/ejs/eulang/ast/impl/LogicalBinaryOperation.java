@@ -5,9 +5,9 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
-import org.ejs.eulang.types.LLType.BasicType;
 
 /**
  * @author ejs

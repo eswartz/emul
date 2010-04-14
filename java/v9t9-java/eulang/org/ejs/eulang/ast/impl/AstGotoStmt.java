@@ -3,16 +3,25 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.List;
+
+import org.ejs.eulang.ITyped;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.types.LLLabelType;
+import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeException;
 
 /**
  * @author ejs
  *
  */
-public class AstGotoStmt extends AstStatement implements IAstGotoStmt {
+public class AstGotoStmt extends AstTypedExpr implements IAstGotoStmt {
 
 	private IAstSymbolExpr label;
 	private IAstTypedExpr expr;
@@ -39,7 +48,7 @@ public class AstGotoStmt extends AstStatement implements IAstGotoStmt {
 	 */
 	@Override
 	public String toString() {
-		return "GOTO " + label.toString();
+		return typedString("GOTO " + label.toString());
 	}
 
 	/* (non-Javadoc)
@@ -141,4 +150,51 @@ public class AstGotoStmt extends AstStatement implements IAstGotoStmt {
 		this.label = reparent(this.label, symbol);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedExpr#equalValue(org.ejs.eulang.ast.IAstTypedExpr)
+	 */
+	@Override
+	public boolean equalValue(IAstTypedExpr expr) {
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public boolean inferTypeFromChildren(TypeEngine typeEngine)
+			throws TypeException {
+		/*
+		if (label.getSymbol().getDefinition() instanceof IAstTypedExpr)
+			return inferTypesFromChildren(new ITyped[] { (ITyped) label.getSymbol().getDefinition() });
+		else
+			return false;
+		*/
+		
+		if (getParent() instanceof IAstNodeList) {
+			List<?> list = ((IAstNodeList) getParent()).list();
+			int idx = list.indexOf(this);
+			if (idx - 1 >= 0) {
+				return inferTypesFromChildren(new ITyped[] { (ITyped) list.get(idx - 1) });
+			}
+		}
+		if (label.getSymbol().getDefinition() instanceof IAstTypedExpr)
+			return inferTypesFromChildren(new ITyped[] { (ITyped) label.getSymbol().getDefinition() });
+		else
+			return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		LLType thisType = ((IAstTypedNode) this).getType();
+		if (thisType == null || !thisType.isComplete())
+			return;
+		
+		if (!(label.getType() instanceof LLLabelType)) {
+			throw new TypeException(label, "label does not have label type");
+		}
+	}
 }

@@ -21,6 +21,7 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
@@ -1033,6 +1034,17 @@ public class TestTypeInfer extends BaseParserTest {
 		doTypeInfer(mod);
 		
 	}
+	
+	@Test
+    public void testWhileLoop() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			"testWhileLoop := code (t, x : Int, y : Float) {\n" +
+    			"    @loop: select x > t then { y = y / 2; x = x - 1; @loop } else @loop;\n"+
+    			 "	y;\n"+
+    			"};");
+    	doTypeInfer(mod);
+    }
 }
 
 

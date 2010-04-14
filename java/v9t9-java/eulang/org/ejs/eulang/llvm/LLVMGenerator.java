@@ -73,10 +73,11 @@ import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
-import org.ejs.eulang.types.LLType.BasicType;
 
 /**
  * Generate LLVM instructions
@@ -399,7 +400,7 @@ public class LLVMGenerator {
 		LLOperand result = null;
 		for (IAstStmt stmt : stmts.list()) {
 			// ensure we have a block
-			if (stmt instanceof IAstLabelStmt) {
+			if (false && stmt instanceof IAstLabelStmt) {
 				currentTarget.addBlock(((IAstLabelStmt) stmt).getLabel().getSymbol());
 				continue;
 			} else if (currentTarget.getCurrentBlock() == null) {
@@ -410,7 +411,7 @@ public class LLVMGenerator {
 			
 			
 			// end of block instr
-			if (stmt instanceof IAstGotoStmt) {
+			if (false && stmt instanceof IAstGotoStmt) {
 				currentTarget.setCurrentBlock(null);
 			}
 		}	
@@ -434,10 +435,28 @@ public class LLVMGenerator {
 			result = generateStmtList(((IAstBlockStmt) stmt).stmts());
 		} else if (stmt instanceof IAstDefineStmt) {
 			// ignore
+		} else if (stmt instanceof IAstLabelStmt) {
+			generateLabelStmt((IAstLabelStmt) stmt);
+		} else if (stmt instanceof IAstGotoStmt) {
+			generateGotoStmt((IAstGotoStmt) stmt);
 		} else {
 			unhandled(stmt);
 		}
 		return result;
+	}
+
+	private void generateLabelStmt(IAstLabelStmt stmt) {
+		if (currentTarget.getCurrentBlock() != null) {
+			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(stmt.getLabel().getSymbol())));
+		}
+		currentTarget.addBlock(stmt.getLabel().getSymbol());
+	}
+	private void generateGotoStmt(IAstGotoStmt stmt) throws ASTException {
+		if (stmt.getExpr() != null) {
+			unhandled(stmt);
+		}
+		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(stmt.getLabel().getSymbol())));
+		currentTarget.setCurrentBlock(null);
 	}
 
 	private LLOperand generateAssignStmt(
@@ -542,6 +561,10 @@ public class LLVMGenerator {
 			temp = generateCondList((IAstCondList) expr);
 		else if (expr instanceof IAstTupleExpr)
 			temp = generateTupleExpr((IAstTupleExpr) expr);
+		else if (expr instanceof IAstGotoStmt) {
+			generateGotoStmt((IAstGotoStmt) expr);
+			return null;
+		}
 		else {
 			unhandled(expr);
 			return null;
@@ -631,15 +654,19 @@ public class LLVMGenerator {
 			
 			LLOperand result = generateTypedExpr(expr.getExpr());
 			
-			currentTarget.emit(new LLStoreInstr(condList.getType(), result, retval));
+			if (result != null)
+				currentTarget.emit(new LLStoreInstr(condList.getType(), result, retval));
 			conds[idx++] = currentTarget.getCurrentBlock();
 		}
 		
 		ISymbol condSetSym = scope.addTemporary("cs");
 		currentTarget.addBlock(condSetSym);
 		
-		for (LLBlock cond : conds)
-			cond.instrs().add(new LLUncondBranchInstr(new LLSymbolOp(condSetSym)));
+		for (LLBlock cond : conds) {
+			// null if block branched
+			if (cond != null)
+				cond.instrs().add(new LLUncondBranchInstr(new LLSymbolOp(condSetSym)));
+		}
 		
 		LLOperand retTemp = currentTarget.newTemp(condList.getType());
 		currentTarget.emit(new LLLoadInstr(retTemp, condList.getType(), retval));

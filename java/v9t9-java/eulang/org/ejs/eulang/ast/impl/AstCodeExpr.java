@@ -14,10 +14,10 @@ import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
-import org.ejs.eulang.types.LLType.BasicType;
 
 
 /**

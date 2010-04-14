@@ -16,9 +16,9 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalSymbol;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLType.BasicType;
 
 /**
  * @author ejs
