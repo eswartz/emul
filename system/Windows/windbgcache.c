@@ -70,7 +70,7 @@ static FARPROC GetProc(char * name) {
     return GetProcAddress(dbghelp_dll, name);
 }
 
-extern BOOL SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess) {
+BOOL SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PCSTR, BOOL);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -80,7 +80,7 @@ extern BOOL SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadePro
     return proc(hProcess, UserSearchPath, fInvadeProcess);
 }
 
-extern BOOL SymSetOptions(DWORD Options) {
+BOOL SymSetOptions(DWORD Options) {
     typedef BOOL (FAR WINAPI * ProcType)(DWORD);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -90,7 +90,7 @@ extern BOOL SymSetOptions(DWORD Options) {
     return proc(Options);
 }
 
-extern BOOL SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName, DWORD dwLineNumber, PLONG plDisplacement, PIMAGEHLP_LINE Line) {
+BOOL SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName, DWORD dwLineNumber, PLONG plDisplacement, PIMAGEHLP_LINE Line) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PCSTR, PCSTR, DWORD, PLONG, PIMAGEHLP_LINE);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -100,7 +100,7 @@ extern BOOL SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName
     return proc(hProcess, ModuleName, FileName, dwLineNumber, plDisplacement, Line);
 }
 
-extern BOOL SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, PDWORD pdwDisplacement, PIMAGEHLP_LINE Line) {
+BOOL SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, PDWORD pdwDisplacement, PIMAGEHLP_LINE Line) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, DWORD, PDWORD, PIMAGEHLP_LINE);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -110,7 +110,7 @@ extern BOOL SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, PDWORD pdwDisplace
     return proc(hProcess, dwAddr, pdwDisplacement, Line);
 }
 
-extern BOOL SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line) {
+BOOL SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PIMAGEHLP_LINE);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -122,7 +122,7 @@ extern BOOL SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line) {
     return proc(hProcess, Line);
 }
 
-extern BOOL SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase, ULONG TypeId, IMAGEHLP_SYMBOL_TYPE_INFO GetType, PVOID pInfo) {
+BOOL SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase, ULONG TypeId, IMAGEHLP_SYMBOL_TYPE_INFO GetType, PVOID pInfo) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, DWORD64, ULONG, IMAGEHLP_SYMBOL_TYPE_INFO, PVOID);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -132,7 +132,7 @@ extern BOOL SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase, ULONG TypeId, IMAGE
     return proc(hProcess, ModBase, TypeId, GetType, pInfo);
 }
 
-extern BOOL SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index, PSYMBOL_INFO Symbol) {
+BOOL SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index, PSYMBOL_INFO Symbol) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, ULONG64, DWORD, PSYMBOL_INFO);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -142,7 +142,7 @@ extern BOOL SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index, PSYMBO
     return proc(hProcess, BaseOfDll, Index, Symbol);
 }
 
-extern BOOL SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame, PIMAGEHLP_CONTEXT Context) {
+BOOL SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame, PIMAGEHLP_CONTEXT Context) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PIMAGEHLP_STACK_FRAME, PIMAGEHLP_CONTEXT);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -152,7 +152,7 @@ extern BOOL SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame, PIM
     return proc(hProcess, StackFrame, Context);
 }
 
-extern BOOL SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol) {
+BOOL SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PCSTR, PSYMBOL_INFO);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -162,7 +162,7 @@ extern BOOL SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol) {
     return proc(hProcess, Name, Symbol);
 }
 
-extern BOOL SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask, PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext) {
+BOOL SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask, PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, ULONG64, PCSTR, PSYM_ENUMERATESYMBOLS_CALLBACK, PVOID);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -172,7 +172,7 @@ extern BOOL SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask, PSYM_
     return proc(hProcess, BaseOfDll, Mask, EnumSymbolsCallback, UserContext);
 }
 
-extern BOOL SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Name, PSYMBOL_INFO Symbol) {
+BOOL SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Name, PSYMBOL_INFO Symbol) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, ULONG64, PCSTR, PSYMBOL_INFO);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -182,7 +182,7 @@ extern BOOL SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Name, P
     return proc(hProcess, BaseOfDll, Name, Symbol);
 }
 
-extern DWORD64 SymGetModuleBase64(HANDLE hProcess, ULONG64 Address) {
+DWORD64 SymGetModuleBase64(HANDLE hProcess, ULONG64 Address) {
     typedef DWORD64 (FAR WINAPI * ProcType)(HANDLE, ULONG64);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -192,7 +192,7 @@ extern DWORD64 SymGetModuleBase64(HANDLE hProcess, ULONG64 Address) {
     return proc(hProcess, Address);
 }
 
-extern BOOL SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName, PCSTR ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll) {
+BOOL SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName, PCSTR ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, HANDLE, PCSTR, PCSTR, DWORD64, DWORD);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -202,7 +202,7 @@ extern BOOL SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName, PCST
     return proc(hProcess, hFile, ImageName, ModuleName, BaseOfDll, SizeOfDll);
 }
 
-extern BOOL SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll) {
+BOOL SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, DWORD64);
     static ProcType proc = NULL;
     if (proc == NULL) {
@@ -212,7 +212,7 @@ extern BOOL SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll) {
     return proc(hProcess, BaseOfDll);
 }
 
-extern BOOL SymCleanup(HANDLE hProcess) {
+BOOL SymCleanup(HANDLE hProcess) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE);
     static ProcType proc = NULL;
     if (proc == NULL) {
