@@ -81,7 +81,7 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 root = d.filename;
                 break;
             }
-            if (root == null) exit(new Exception("Invalid FileSysrem.roots responce: no suitable root"));
+            if (root == null) exit(new Exception("Invalid FileSystem.roots responce: no suitable root"));
             else files.opendir(root, this);
         }
     }
