@@ -161,7 +161,6 @@ static void event_win32_context_stopped(Context * ctx) {
     case 0:
         break;
     case EXCEPTION_SINGLE_STEP:
-        assert(ctx->pending_step);
         break;
     case EXCEPTION_BREAKPOINT:
         if (!ctx->regs_error && is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE)) {
@@ -620,12 +619,10 @@ int context_continue(Context * ctx) {
     if (skip_breakpoint(ctx, 0)) return 0;
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, pid %d", ctx, ctx->pid);
-#if defined(__i386__) || defined(__x86_64__)
     if ((((REG_SET *)ctx->regs)->EFlags & 0x100) != 0) {
         ((REG_SET *)ctx->regs)->EFlags &= ~0x100;
         ctx->regs_dirty = 1;
     }
-#endif
     if (ctx->regs_dirty && ctx->regs_error) {
         trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, pid %d", ctx, ctx->pid);
         errno = set_error_report_errno(ctx->regs_error);
@@ -649,12 +646,10 @@ int context_single_step(Context * ctx) {
         errno = set_error_report_errno(ctx->regs_error);
         return -1;
     }
-#if defined(__i386__) || defined(__x86_64__)
     if ((((REG_SET *)ctx->regs)->EFlags & 0x100) == 0) {
         ((REG_SET *)ctx->regs)->EFlags |= 0x100;
         ctx->regs_dirty = 1;
     }
-#endif
     ctx->pending_step = 1;
     return win32_resume(ctx);
 }
