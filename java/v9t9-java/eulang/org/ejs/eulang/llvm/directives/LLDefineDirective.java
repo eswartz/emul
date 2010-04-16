@@ -234,5 +234,12 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	public ITarget getTarget() {
 		return target;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeTarget#getPreviousBlock()
+	 */
+	@Override
+	public LLBlock getPreviousBlock() {
+		return blocks.isEmpty() ? null : blocks.get(blocks.size() - 1);
+	}
 }

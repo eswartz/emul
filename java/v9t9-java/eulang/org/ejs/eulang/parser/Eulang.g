@@ -43,7 +43,6 @@ tokens {
   UDIV;
   MOD;
   
-  NOT;
   NEG;
   INV;
   
@@ -59,6 +58,7 @@ tokens {
   TUPLE;
   
   LABELSTMT;
+  BINDING;
 }
 
 @header {
@@ -93,9 +93,9 @@ prog:   toplevelstmts EOF!
 toplevelstmts: toplevelstat*      -> ^(STMTLIST toplevelstat*)
     ; 
     
-toplevelstat:   ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
-    | ID COLON type (EQUALS toplevelvalue)?     SEMI  -> ^(ALLOC ID type toplevelvalue?)
-    | ID COLON_EQUALS rhsExpr  SEMI  -> ^(ALLOC ID TYPE rhsExpr)
+toplevelstat:  (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
+    |  (ID COLON) => ID COLON type (EQUALS toplevelvalue)?     SEMI  -> ^(ALLOC ID type toplevelvalue?)
+    |  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExpr  SEMI  -> ^(ALLOC ID TYPE rhsExpr)
     | rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
     | xscope
     ;
@@ -159,9 +159,9 @@ argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef*
 argdef: MACRO? ID (COLON type)?    -> ^(ARGDEF MACRO? ID type* )
   ;
 
-xreturns: RETURNS type      -> type
-  | RETURNS argtuple           -> argtuple
-  | RETURNS NULL            -> ^(TYPE NULL)
+xreturns: ARROW type      -> type
+  | ARROW argtuple           -> argtuple
+  | ARROW NULL            -> ^(TYPE NULL)
   ;
 
 argtuple : LPAREN tupleargdefs RPAREN    -> ^(TUPLE tupleargdefs)
@@ -199,11 +199,12 @@ codeStmt : labelStmt codeStmtExpr  -> ^(LABELSTMT labelStmt codeStmtExpr)
 codeStmtExpr : varDecl    -> varDecl
       | assignStmt    -> assignStmt
       //| returnStmt SEMI   -> returnStmt
-      | rhsExpr       -> ^(STMTEXPR rhsExpr)
+      | rhsExpr       ->  ^(STMTEXPR rhsExpr)
       | blockStmt         -> blockStmt
       //| gotoStmt SEMI     -> gotoStmt
       | gotoStmt      -> gotoStmt
       //| labelStmt     -> labelStmt
+      //| withStmt      -> withStmt
       ;
 
 varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
@@ -228,6 +229,7 @@ labelStmt: AT ID COLON                    -> ^(LABEL ID)
   ;
 //gotoStmt: GOTO idOrScopeRef ( COMMA rhsExpr )?           -> ^(GOTO idOrScopeRef rhsExpr?)
 gotoStmt: AT idOrScopeRef                -> ^(GOTO idOrScopeRef)
+    | AT idOrScopeRef LPAREN assignExpr RPAREN   -> ^(GOTO idOrScopeRef assignExpr)
   ;
   
 blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
@@ -245,7 +247,7 @@ idTuple : LPAREN idTupleEntries RPAREN      -> ^(TUPLE idTupleEntries+)
 idTupleEntries : idOrScopeRef (COMMA idOrScopeRef)+  -> idOrScopeRef+ 
 ; 
 
-rhsExpr :   condStar                          -> condStar
+rhsExpr :   condStar -> condStar
     ;
     
 funcCall : idOrScopeRef LPAREN arglist RPAREN   ->     ^(CALL idOrScopeRef arglist) 
@@ -264,9 +266,21 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 //  Expressions
 //
 
-// multi-argument cond:  
 //
-//  e.g.:  select <test1> then <arg> || <test2> then <arg> || ..., [<true> then ] <defaultArg> ?]
+//  With
+//
+//  with <expr> as <type> [and <expr2> as <type2>] => <expr> [else <stmt>]
+//
+
+withStmt : WITH bindings ARROW b=rhsExpr (ELSE e=codeStmtExpr)? -> ^(WITH bindings $b $e?) 
+  ;
+
+bindings: binding (AND binding)* -> binding+
+  ;  
+binding: rhsExpr AS type   -> ^(BINDING type rhsExpr) 
+  ;  
+
+// multi-argument cond  
 
 condStar: cond -> cond
    | SELECT LBRACKET condTests RBRACKET -> condTests
@@ -290,10 +304,10 @@ cond:    ( logor  -> logor )
 ;
 
 logor : ( logand  -> logand )
-      ( COMPOR r=logand -> ^(COMPOR $logor $r) )*
+      ( OR r=logand -> ^(OR $logor $r) )*
       ;
 logand : ( comp -> comp )
-      ( COMPAND r=comp -> ^(COMPAND $logand $r) ) *
+      ( AND r=comp -> ^(AND $logand $r) ) *
       ;
               
 // in Python, "not expr" is here
@@ -344,7 +358,7 @@ term : ( unary                  -> unary )
 
 unary:    ( atom        -> atom )        
       | MINUS u=unary -> ^(NEG $u )
-      | EXCL u=unary     -> ^(NOT $u )
+      | NOT u=unary     -> ^(NOT $u )
       | TILDE u=unary     -> ^(INV $u )
 ;
 atom :
@@ -356,8 +370,8 @@ atom :
     |   NULL                          -> ^(LIT NULL)
     |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
     |   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
-    |   INVOKE                        -> ^(INVOKE)
-    |   RECURSE LPAREN arglist RPAREN   -> ^(RECURSE arglist) 
+    //|   INVOKE                        -> ^(INVOKE)
+    //|   RECURSE LPAREN arglist RPAREN   -> ^(RECURSE arglist) 
     |   idOrScopeRef                  -> idOrScopeRef
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
@@ -394,7 +408,8 @@ RBRACE : '}';
 LBRACKET : '[';
 RBRACKET : ']';
 HASH : '#';
-EXCL : '!';
+//EXCL : '!';
+NOT : 'not';
 TILDE : '~';
 AT : '@';
 AMP : '&'; 
@@ -402,8 +417,8 @@ BAR : '|';
 CARET : '^';
 SEMI : ';';
 QUESTION : '?';
-COMPAND : 'and';
-COMPOR : 'or';
+AND : 'and';
+OR : 'or';
 COMPEQ : '==';
 COMPNE : '!=';
 COMPGE : '>=';
@@ -416,10 +431,10 @@ URSHIFT : '>>>';
 BACKSLASH : '\\';
 PERCENT : '%';
 UMOD : '%%';
-RETURNS : '=>' ;
+ARROW : '=>' ;
 PERIOD : '.';
 
-ARROW : '->';
+POINTS : '->';
 BAR_BAR : '||';
 
 SELECT : 'select';
@@ -435,8 +450,10 @@ IN : 'in';
 FALSE: 'false';
 TRUE: 'true';
 NULL: ' null';
-INVOKE: 'invoke';
-RECURSE: 'recurse';
+
+WITH: 'with';
+AS: 'as';
+END: 'end';
 
 //
 //  Numbers

@@ -19,16 +19,9 @@ import org.eclipse.core.runtime.Path;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TargetV9t9;
-import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstCondExpr;
-import org.ejs.eulang.ast.IAstCondList;
-import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLVMGenerator;
-import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -234,7 +227,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	
 	@Test
     public void testTuples4() throws Exception {
-    	IAstModule mod = doFrontend("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
+    	IAstModule mod = doFrontend("swap = code (x,y) { (y,x); };\n" +
     			"testTuples4 = code (a,b) { (a, b) = swap(4, 5); }; \n");
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(2, g.getModule().getSymbolCount());
@@ -346,17 +339,27 @@ public class TestLLVMGenerator extends BaseParserTest {
     			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [\n" +
     			"	 test then mthen() || false then false || else melse() ] };\n"+
     			"while = macro ( macro test:code, macro body : code) {\n"+
-    			"    @loop: select test() then { body(); @loop } else @loop;\n"+
+    			"    @loop: select [ test() then { body(); @loop } ];\n"+
     			"};\n"+
-    			// TODO: forcing ':=' to avoid situation where the code block is marked generic
-    			// before we have expanded (suppressing genericization before expansion
-    			// causes other failures)
-    			"testWhileLoop := code (t, x : Int, y : Float) {\n" +
+    			"testWhileLoop = code (t, x : Int, y : Float& => Void) {\n" +
     			"   while(x > t, { y = y/2; x = x-1; } );\n"+
-    			 "	y;\n"+
     			"};");
     	LLVMGenerator g = doGenerate(mod);
 		 assertEquals(1, g.getModule().getSymbolCount());
     }
-
+    @Test
+    public void testDoWhile() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [\n" +
+    			"	 test then mthen() || false then false || else melse() ] };\n"+
+    			"doWhile = macro ( macro body : code, macro test:code) {\n"+
+    			"    @loop: body(); @loop (not test()) ;\n"+
+    			"};\n"+
+    			"testDoWhile = code (t, x : Int, y : Float) {\n" +
+    			"   doWhile(y = y/2, { x = x - 1; x > t }); y ; \n"+
+    			"};");
+    	LLVMGenerator g = doGenerate(mod);
+		 assertEquals(1, g.getModule().getSymbolCount());
+    }
 }

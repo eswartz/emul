@@ -427,7 +427,15 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     }
     
-   
+    /*
+    @Test
+    public void testWith() throws Exception {
+    	dumpTreeize = true;
+    	IAstModule mod = treeize(
+			"testWith = code (x,y) { with ix : x as Int => ix+y else with fx : x as Float => fx-y ; }; \n");
+    	sanityTest(mod);
+    }
+    */
 }
 
 

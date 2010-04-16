@@ -115,7 +115,7 @@ public class TestSimplify extends BaseParserTest {
     	IAstModule mod = treeize(
     			"testUnaryNot := code () {\n" +
     			"   z : Byte;\n" +
-    			"	 !-~z;\n" +
+    			"	 not -~z;\n" +
     			"};");
     	sanityTest(mod);
 

@@ -56,6 +56,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 
@@ -392,8 +393,8 @@ public class GenerateAST {
 		case EulangParser.BITAND:
 		case EulangParser.BITOR:
 		case EulangParser.BITXOR:
-		case EulangParser.COMPAND:
-		case EulangParser.COMPOR:
+		case EulangParser.AND:
+		case EulangParser.OR:
 		case EulangParser.COMPEQ:
 		case EulangParser.COMPNE:
 		case EulangParser.COMPLE:
@@ -849,10 +850,10 @@ public class GenerateAST {
 			binop = new AstBinExpr(IOperation.COMPLE, left, right);
 			break;
 			
-		case EulangParser.COMPAND:
+		case EulangParser.AND:
 			binop = new AstBinExpr(IOperation.COMPAND, left, right);
 			break;
-		case EulangParser.COMPOR:
+		case EulangParser.OR:
 			binop = new AstBinExpr(IOperation.COMPOR, left, right);
 			break;
 			
@@ -925,7 +926,7 @@ public class GenerateAST {
 			//$FALL-THROUGH$
 			}
 		}
-		return new AstIntLitExpr("0", typeEngine.INT_ANY, 0);
+		return new AstIntLitExpr("0", new LLIntType(null, type != null ? type.getBits() : 1), 0);
 	}
 
 	/**

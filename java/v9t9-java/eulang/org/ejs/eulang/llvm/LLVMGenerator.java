@@ -75,7 +75,6 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 
@@ -452,11 +451,21 @@ public class LLVMGenerator {
 		currentTarget.addBlock(stmt.getLabel().getSymbol());
 	}
 	private void generateGotoStmt(IAstGotoStmt stmt) throws ASTException {
+		ISymbol falseBlock = null;
 		if (stmt.getExpr() != null) {
-			unhandled(stmt);
+			LLOperand test = generateTypedExpr(stmt.getExpr());
+			falseBlock = stmt.getOwnerScope().addTemporary("gt");
+			currentTarget.emit(new LLBranchInstr(stmt.getExpr().getType(), test, 
+					new LLSymbolOp(stmt.getLabel().getSymbol()),
+					new LLSymbolOp(falseBlock)
+			));
+		} else {
+			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(stmt.getLabel().getSymbol())));
 		}
-		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(stmt.getLabel().getSymbol())));
 		currentTarget.setCurrentBlock(null);
+		if (falseBlock != null) {
+			currentTarget.addBlock(falseBlock);
+		}
 	}
 
 	private LLOperand generateAssignStmt(
@@ -561,6 +570,8 @@ public class LLVMGenerator {
 			temp = generateCondList((IAstCondList) expr);
 		else if (expr instanceof IAstTupleExpr)
 			temp = generateTupleExpr((IAstTupleExpr) expr);
+		else if (expr instanceof IAstAssignStmt)
+			temp = generateAssignStmt((IAstAssignStmt) expr);
 		else if (expr instanceof IAstGotoStmt) {
 			generateGotoStmt((IAstGotoStmt) expr);
 			return null;
@@ -656,7 +667,7 @@ public class LLVMGenerator {
 			
 			if (result != null)
 				currentTarget.emit(new LLStoreInstr(condList.getType(), result, retval));
-			conds[idx++] = currentTarget.getCurrentBlock();
+			conds[idx++] = currentTarget.getPreviousBlock();
 		}
 		
 		ISymbol condSetSym = scope.addTemporary("cs");
@@ -664,7 +675,7 @@ public class LLVMGenerator {
 		
 		for (LLBlock cond : conds) {
 			// null if block branched
-			if (cond != null)
+			if (cond != null && !cond.endsWithUncondBranch())
 				cond.instrs().add(new LLUncondBranchInstr(new LLSymbolOp(condSetSym)));
 		}
 		
@@ -718,6 +729,9 @@ public class LLVMGenerator {
 		//	throw new ASTException(expr, "cannot cast to a reference; must use .New()");
 		//if (type.getBasicType() == BasicType.POINTER)
 		//	throw new ASTException(expr, "cannot cast to a pointer");
+		
+		if (type.getBasicType() == BasicType.VOID)
+			return null;
 		
 		// first, automagically skip all memory operations
 		while (origType.getBasicType() == BasicType.REF || origType.getBasicType() == BasicType.POINTER) {

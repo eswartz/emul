@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.ejs.eulang.llvm.instrs.LLInstr;
+import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**
@@ -69,5 +70,12 @@ public class LLBlock {
 	 */
 	public List<LLInstr> instrs() {
 		return instrs;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean endsWithUncondBranch() {
+		return !instrs.isEmpty() && instrs.get(instrs.size() - 1) instanceof LLUncondBranchInstr;
 	}
 }

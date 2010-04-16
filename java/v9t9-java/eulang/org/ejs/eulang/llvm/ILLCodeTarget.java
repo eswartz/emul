@@ -63,4 +63,9 @@ public interface ILLCodeTarget {
 	 * @return
 	 */
 	LLModule getModule();
+
+	/**
+	 * @return
+	 */
+	LLBlock getPreviousBlock();
 }

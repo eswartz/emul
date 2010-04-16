@@ -280,7 +280,7 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstModule mod = treeize(
     			"testUnaryNot = code () {\n" +
     			"   z : Byte;\n" +
-    			"	!-~z;\n" +
+    			"	not -~z;\n" +
     			"};");
     	sanityTest(mod);
     	
