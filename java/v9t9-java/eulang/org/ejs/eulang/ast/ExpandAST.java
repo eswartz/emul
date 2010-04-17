@@ -394,14 +394,19 @@ public class ExpandAST {
 	 * @param realArg
 	 */
 	private void replaceInTree(IAstNode root,
-			IAstSymbolExpr symbolExpr, IAstNode replacement) {
+			IAstSymbolExpr symbolExpr, IAstNode replacement) throws ASTException {
 		for (IAstNode kid : root.getChildren()) {
 			replaceInTree(kid, symbolExpr, replacement);
 		}
 		if (root.equals(symbolExpr)) {
 			IAstNode copy = replacement.copy(null);
 			copy.uniquifyIds();
-			root.getParent().replaceChild(root, copy);
+			
+			try {
+				root.getParent().replaceChild(root, copy);
+			} catch (ClassCastException e) {
+				throw new ASTException(replacement, "cannot macro-substitute an argument of this syntax type in place of " + symbolExpr.getSymbol().getName());
+			}
 		} 
 		
 	}

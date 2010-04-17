@@ -70,6 +70,51 @@ public class TestMacroCall extends BaseParserTest {
 		
 	}
 	
+	@Test
+	public void testForCountBad1() throws Exception {
+		IAstModule mod = treeize(
+				"\n" + 
+				"  forCountUntil = macro (macro idx, count : Int, macro test, macro body = code { idx }, macro fail = code { -1 }) {\n" + 
+				"        idx := 0;\n" + 
+				"        @loop: if \n" + 
+				"            idx < count then if \n" + 
+				"                test then { count = idx; body; }\n" + 
+				"                else { idx = idx + 1; goto loop; }\n" + 
+				"            \n" + 
+				"            else fail \n" + 
+				"        \n" + 
+				"    };\n" + 
+				"    \n" + 
+				"testForCountBad1 = code () { forCountUntil(i % 5 == 0, 10, i, -1);"+
+		"};");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testForCountBad1");
+		doExpand(def, true);
+	}
+	
+	@Test
+	public void testForCountBad2() throws Exception {
+		IAstModule mod = treeize(
+				"\n" + 
+				"  forCountUntil = macro (macro idx, count : Int, macro test, macro body = code { idx }, macro fail = code { -1 }) {\n" + 
+				"        idx := 0;\n" + 
+				"        @loop: if \n" + 
+				"            idx < count then if \n" + 
+				"                test then { count = idx; body; }\n" + 
+				"                else { idx = idx + 1; goto loop; }\n" + 
+				"            \n" + 
+				"            else fail \n" + 
+				"        \n" + 
+				"    };\n" + 
+				"    \n" + 
+				"testForCountBad2 = code () { forCountUntil(i % 5 == 0, 10, i, 0, -1);"+
+		"};");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testForCountBad2");
+		doExpand(def, true);
+	}
 	/**
      * if and while are functions which take blocks.  Before type inference, we must
      * be able to handle either expressions, scope blocks, or actual code blocks as
