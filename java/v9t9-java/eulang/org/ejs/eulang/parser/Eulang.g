@@ -201,9 +201,7 @@ codeStmtExpr : varDecl    -> varDecl
       //| returnStmt SEMI   -> returnStmt
       | rhsExpr       ->  ^(STMTEXPR rhsExpr)
       | blockStmt         -> blockStmt
-      //| gotoStmt SEMI     -> gotoStmt
       | gotoStmt      -> gotoStmt
-      //| labelStmt     -> labelStmt
       //| withStmt      -> withStmt
       | controlStmt      -> controlStmt
       ;

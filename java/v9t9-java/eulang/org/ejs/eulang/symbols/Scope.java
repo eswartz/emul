@@ -227,7 +227,7 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public ISymbol addTemporary(String name) {
-		return addTemporary(name, true);
+		return addTemporary(name, false);
 	}
 	
 	/* (non-Javadoc)

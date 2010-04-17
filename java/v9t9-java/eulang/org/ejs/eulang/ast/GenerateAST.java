@@ -28,6 +28,7 @@ import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstCondExpr;
 import org.ejs.eulang.ast.impl.AstCondList;
 import org.ejs.eulang.ast.impl.AstDefineStmt;
+import org.ejs.eulang.ast.impl.AstDoWhileExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
@@ -49,6 +50,7 @@ import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstUnaryExpr;
+import org.ejs.eulang.ast.impl.AstWhileExpr;
 import org.ejs.eulang.ast.impl.SourceRef;
 import org.ejs.eulang.ast.impl.TokenSourceRef;
 import org.ejs.eulang.parser.EulangParser;
@@ -94,21 +96,6 @@ public class GenerateAST {
 			return ref;
 		}
 		
-	}
-	
-	static class MultiGenerateException extends GenerateException {
-		private GenerateException[] excs;
-
-		public MultiGenerateException(GenerateException[] excs) {
-			super();
-			this.excs = excs;
-		}
-		/**
-		 * @return the excs
-		 */
-		public GenerateException[] getExceptions() {
-			return excs;
-		}
 	}
 	
 	static class TempLabelStmt extends AstStatement {
@@ -460,6 +447,10 @@ public class GenerateAST {
 			
 		case EulangParser.REPEAT:
 			return constructRepeat(tree);
+		case EulangParser.WHILE:
+			return constructWhile(tree);
+		case EulangParser.DO:
+			return constructDoWhile(tree);
 			
 		default:
 			unhandled(tree);
@@ -468,11 +459,30 @@ public class GenerateAST {
 		
 	}
 	
-	/**
-	 * @param tree
-	 * @return
-	 * @throws GenerateException 
-	 */
+	private IAstNode constructWhile(Tree tree) throws GenerateException {
+		pushScope(new LocalScope(currentScope));
+		try {
+			IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+			IAstTypedExpr body = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+			IAstWhileExpr while_ = new AstWhileExpr(currentScope, expr, body);
+			getSource(tree, while_);
+			return while_;
+		} finally {
+			popScope(tree);
+		}
+	}
+	private IAstNode constructDoWhile(Tree tree) throws GenerateException {
+		pushScope(new LocalScope(currentScope));
+		try {
+			IAstTypedExpr body = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+			IAstTypedExpr expr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+			IAstDoWhileExpr dowhile = new AstDoWhileExpr(currentScope, body, expr);
+			getSource(tree, dowhile);
+			return dowhile;
+		} finally {
+			popScope(tree);
+		}
+	}
 	private IAstNode constructRepeat(Tree tree) throws GenerateException {
 		pushScope(new LocalScope(currentScope));
 		try {
@@ -1051,10 +1061,6 @@ public class GenerateAST {
 				else if (node != null) {
 					list.add(node);
 					node.setParent(list);
-				}
-			} catch (MultiGenerateException me) {
-				for (GenerateException e : me.getExceptions()) {
-					emitExceptionError(e);
 				}
 			} catch (GenerateException e) {
 				emitExceptionError(e);

@@ -3,24 +3,9 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.List;
-
-import junit.framework.AssertionFailedError;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
-import org.ejs.eulang.ITarget;
-import org.ejs.eulang.Message;
-import org.ejs.eulang.TargetV9t9;
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.junit.Test;
 

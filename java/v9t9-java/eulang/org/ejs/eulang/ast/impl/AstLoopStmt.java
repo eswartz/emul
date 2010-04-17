@@ -14,6 +14,7 @@ import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -192,6 +193,25 @@ public abstract class AstLoopStmt extends AstTypedExpr implements IAstLoopStmt {
 		}
 		
 		return changed;
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		LLType thisType = ((IAstTypedNode) this).getType();
+		if (thisType == null || !thisType.isComplete())
+			return;
+		
+		LLType kidType = ((IAstTypedNode) body).getType();
+		if (kidType != null && kidType.isComplete()) {
+			if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
+				throw new TypeException(body, "expression's type does not match parent");
+			}
+		}
+
 	}
 
 }

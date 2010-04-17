@@ -49,7 +49,7 @@ public class AstBlockStmt extends AstTypedExpr implements IAstBlockStmt {
 	 */
 	@Override
 	public String toString() {
-		return "BLOCK";
+		return typedString("BLOCK");
 	}
 	
 	@Override

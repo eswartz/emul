@@ -3,13 +3,10 @@
  */
 package org.ejs.eulang.ast;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
-import org.ejs.eulang.ast.GenerateAST.GenerateException;
-import org.ejs.eulang.ast.GenerateAST.MultiGenerateException;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
@@ -173,30 +170,6 @@ public class ExpandAST {
 		}
 	}
 
-	/**
-	 * @param codeExpr
-	 * @param funcCallExpr
-	 * @return
-	 */
-	/*
-	private IAstTypedExpr instantiateFuncCall(IAstDefineStmt defineStmt,
-			IAstFuncCallExpr funcCallExpr) {
-		
-
-		// TODO
-		//LLCodeType callType = (LLCodeType) funcCallExpr.getFunction().getType();
-		//IAstNode typedExpr = defineStmt.instances().get(callType);
-		//if (typedExpr != null)
-		//	return (IAstSymbolExpr) typedExpr;
-		
-		IAstCodeExpr codeExpr = (IAstCodeExpr) defineStmt.getExpr();
-		IAstCodeExpr instExpr = codeExpr.copy(null);
-		
-		return instExpr;
-		
-		
-	}
-*/
 	
 	/**
 	 * Expand a function or macro into the tree 
@@ -273,11 +246,6 @@ public class ExpandAST {
 			
 			if (!protoArg.isMacro()) {
 				realArg.setParent(null);	// deleting call
-				//realArg.uniquifyIds();
-				// For non-macro arguments, make a single assignment to a new variable
-				// using the proto arg's symbol
-				//IAstSymbolExpr symCopy = protoArg.getSymbolExpr().copy(null);
-				//IAstType typeExprCopy = protoArg.getTypeExpr() != null ? protoArg.getTypeExpr().copy(null) : null;
 				IAstSymbolExpr symCopy = protoArg.getSymbolExpr();
 				symCopy.setParent(null);
 				//symCopy.uniquifyIds();
@@ -287,11 +255,6 @@ public class ExpandAST {
 					//typeExprCopy.uniquifyIds();
 				}
 				
-				/*
-				protoArg.getSymbolExpr().setParent(null);
-				if (protoArg.getTypeExpr() != null)
-					protoArg.getTypeExpr().setParent(null);
-					*/
 				IAstAllocStmt argAlloc = new AstAllocStmt(
 						symCopy, 
 						typeExprCopy,
@@ -308,66 +271,11 @@ public class ExpandAST {
 			}
 		}
 		
-		//IAstAllocStmt allocReturnStmt = null;
-		//IAstSymbolExpr returnValSymExpr = null;
-		//ISymbol returnValSym = null;
-		
-		//IAstSymbolExpr returnLabelSymExpr = null;
-		//ISymbol returnLabelSym = null;
-		
 		for (IAstStmt stmt : codeExpr.stmts().list()) {
-			// when inlining functions, replace returns
-			/*
-			if (!codeExpr.isMacro() && stmt instanceof IAstReturnStmt) {
-				IAstReturnStmt retStmt = (IAstReturnStmt) stmt;
-				
-				if (retStmt.getExpr() != null) {
-					retStmt.getExpr().setParent(null);
-					
-					if (allocReturnStmt == null) {
-						//throw new ASTException(stmt, "cannot return from more than one place in macro expanded function (yet)");
-						if (funcName != null)
-							returnValSym = parentScope.addTemporary(funcName.getName());
-						else
-							returnValSym = parentScope.addTemporary("$return");
-						
-						returnValSymExpr = new AstSymbolExpr(returnValSym);
-						allocReturnStmt = new AstAllocStmt(returnValSymExpr, null, null);
-						blockList.add(0, allocReturnStmt);
-						
-					} 
-					
-					IAstAssignStmt assignStmt = new AstAssignStmt(returnValSymExpr, retStmt.getExpr());
-					blockList.add(assignStmt);
-				}
-
-				if (returnLabelSymExpr == null) {
-					if (funcName != null)
-						returnLabelSym = parentScope.addTemporary("$end$" + funcName.getName());
-					else
-						returnLabelSym = parentScope.addTemporary("$end");
-					
-					returnLabelSymExpr = new AstSymbolExpr(returnLabelSym);
-				}
-
-				
-				IAstGotoStmt gotoEndStmt = new AstGotoStmt(returnLabelSymExpr, null);
-				blockList.add(gotoEndStmt);
-				continue;
-			}*/
 			
 			stmt.setParent(null);
 			blockList.add(stmt);
 		}
-		
-		/*
-		if (returnLabelSymExpr != null) {
-			AstLabelStmt returnLabelStmt = new AstLabelStmt(returnLabelSymExpr);
-			blockList.add(returnLabelStmt);
-		}*/
-		//returnLabelSymExpr.getSymbol().setDefinition(returnLabelStmt);
-		
-		//codeExpr.stmts().list().clear();
 		
 		// replace invoke with reference to self
 		
@@ -376,10 +284,6 @@ public class ExpandAST {
 		return stmtListExpr;
 	}
 
-	/**
-	 * @param implCode
-	 * @param sourceRef
-	 */
 	private void setSourceInTree(IAstNode node, ISourceRef sourceRef) {
 		if (node.getSourceRef() == null)
 			node.setSourceRef(sourceRef);
@@ -388,11 +292,6 @@ public class ExpandAST {
 		}
 	}
 
-	/**
-	 * @param stmts
-	 * @param symbolExpr
-	 * @param realArg
-	 */
 	private void replaceInTree(IAstNode root,
 			IAstSymbolExpr symbolExpr, IAstNode replacement) throws ASTException {
 		for (IAstNode kid : root.getChildren()) {
@@ -425,10 +324,6 @@ public class ExpandAST {
 			validate(messages, kid);
 	}
 
-	/**
-	 * @param messages 
-	 * @param node
-	 */
 	private void validateScope(List<Message> messages, IAstScope node) {
 		for (ISymbol symbol : node.getScope()) {
 			if (symbol.getDefinition() == null) {

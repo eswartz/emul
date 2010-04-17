@@ -16,8 +16,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +32,6 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
-import org.apache.batik.bridge.Messages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.ejs.eulang.IOperation;
@@ -517,9 +518,30 @@ public class BaseParserTest {
 
 		System.out.println(text);
 		
+		String opts = "-preverify -domtree -verify //-lowersetjmp -raiseallocs -simplifycfg -domtree -domfrontier -mem2reg -globalopt "
+				+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
+				+ " -simplify-libcalls -instcombine -jump-threading -simplifycfg -domtree -domfrontier -scalarrepl -instcombine "
+				+ "-break-crit-edges -condprop -tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
+				+ "-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -lcssa -iv-users "
+				//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
+				+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
+				+ "-break-crit-edges -condprop -domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
+				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify";
 		try {
 			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
-			run("opt", bcFile.getAbsolutePath(), "-O2", "-f", "-o", bcOptFile.getAbsolutePath());
+			List<String> optList = new ArrayList<String>();
+			optList.addAll(Arrays.asList(opts.split(" ")));
+			for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
+				String val = iter.next();
+				if (val.startsWith("//")) {
+					iter.remove();
+				}
+			}
+			optList.add(0, bcFile.getAbsolutePath());
+			optList.add("-f");
+			optList.add("-o");
+			optList.add(bcOptFile.getAbsolutePath());
+			run("opt", (String[]) optList.toArray(new String[optList.size()]));
 			run("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
 		} catch (AssertionFailedError e) {
 			if (expectErrors)

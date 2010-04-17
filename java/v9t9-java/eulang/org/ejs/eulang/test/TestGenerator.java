@@ -30,7 +30,6 @@ import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.llvm.LLVMGenerator;
 import org.junit.Test;
 
 /**

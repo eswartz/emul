@@ -26,11 +26,11 @@ import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstAssignTupleStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBlockStmt;
-import org.ejs.eulang.ast.IAstBreakStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstDoWhileExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
@@ -49,6 +49,7 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.IAstWhileExpr;
 import org.ejs.eulang.ast.impl.ArithmeticBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
@@ -455,7 +456,7 @@ public class LLVMGenerator {
 
 	static class LoopContext {
 		private final ISymbol exitLabel;
-		private final ISymbol bodyLabel;
+		private ISymbol bodyLabel;
 		private final ISymbol enterLabel;
 		private final LLVariableOp value;
 		private final IScope scope;
@@ -535,7 +536,8 @@ public class LLVMGenerator {
 	private void generateLoopHeader(LoopContext context, IAstLoopStmt stmt) throws ASTException {
 		if (stmt instanceof IAstRepeatExpr) {
 			// get the count
-			LLOperand counterVal = generateTypedExpr(((IAstRepeatExpr)stmt).getExpr());
+			IAstRepeatExpr repeatExpr = (IAstRepeatExpr)stmt;
+			LLOperand counterVal = generateTypedExpr(repeatExpr.getExpr());
 			
 			// make a var to hold it
 			ISymbol counterSym = context.scope.addTemporary("counter");
@@ -556,7 +558,26 @@ public class LLVMGenerator {
 			
 			currentTarget.addBlock(context.bodyLabel);
 			
-		} else { 
+		} else if (stmt instanceof IAstWhileExpr) {
+			IAstWhileExpr whileExpr = (IAstWhileExpr)stmt;
+			
+			// now do the test before the body
+			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
+			currentTarget.addBlock(context.enterLabel);
+			
+			LLOperand test = generateTypedExpr(whileExpr.getExpr());
+			currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, test, new LLSymbolOp(context.bodyLabel), new LLSymbolOp(context.exitLabel)));
+			
+			currentTarget.addBlock(context.bodyLabel);
+		} else if (stmt instanceof IAstDoWhileExpr) {
+
+			// jump right in
+			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
+			currentTarget.addBlock(context.enterLabel);
+			
+			context.bodyLabel = context.enterLabel;
+			
+		} else {
 			unhandled(stmt);
 		}
 	}
@@ -580,7 +601,18 @@ public class LLVMGenerator {
 			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
 			
 			currentTarget.addBlock(context.exitLabel);
-		} else { 
+		} else if (stmt instanceof IAstWhileExpr) {
+			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
+			
+			currentTarget.addBlock(context.exitLabel);
+		} else if (stmt instanceof IAstDoWhileExpr) {
+			// at end of loop, test condition and jump back if true
+
+			LLOperand test = generateTypedExpr(((IAstDoWhileExpr) stmt).getExpr());
+			currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, test, new LLSymbolOp(context.bodyLabel), new LLSymbolOp(context.exitLabel)));
+			
+			currentTarget.addBlock(context.exitLabel);
+		} else {
 			unhandled(stmt);
 		}
 		

@@ -4,8 +4,8 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDoWhileExpr;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstRepeatExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLType;
@@ -14,13 +14,9 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class AstRepeatExpr extends AstTestBodyLoopExpr implements IAstRepeatExpr {
+public class AstDoWhileExpr extends AstTestBodyLoopExpr implements IAstDoWhileExpr {
 
-	/**
-	 * @param doCopy
-	 * @param doCopy2
-	 */
-	public AstRepeatExpr(IScope scope, IAstTypedExpr expr, IAstTypedExpr body) {
+	public AstDoWhileExpr(IScope scope, IAstTypedExpr body, IAstTypedExpr expr) {
 		super(scope, expr, body);
 	}
 
@@ -29,23 +25,24 @@ public class AstRepeatExpr extends AstTestBodyLoopExpr implements IAstRepeatExpr
 	 */
 	@Override
 	public String toString() {
-		return typedString("REPEAT");
+		return typedString("DO");
 	}
+	
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstRepeatExpr copy(IAstNode c) {
-		return (IAstRepeatExpr) fixupLoop(new AstRepeatExpr(getScope().newInstance(getCopyScope(c)), 
-				doCopy(getExpr(), c), doCopy(getBody(), c)));
+	public IAstDoWhileExpr copy(IAstNode c) {
+		return (IAstDoWhileExpr) fixupLoop(new AstDoWhileExpr(getScope().newInstance(getCopyScope(c)), 
+				 doCopy(getBody(), c), doCopy(getExpr(), c)));
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTestBodyLoopExpr#getExpressionType()
+	 * @see org.ejs.eulang.ast.impl.AstTestBodyLoopExpr#getExpressionType(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
 	protected LLType getExpressionType(TypeEngine typeEngine) {
-		return typeEngine.INT;
+		return typeEngine.BOOL;
 	}
 }
