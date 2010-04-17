@@ -228,6 +228,7 @@ abstract public class AstNode implements IAstNode {
     		if (copyParent instanceof IAstScope) {
     			return ((IAstScope) copyParent).getScope();
     		}
+    		copyParent = copyParent.getParent();
     	}
     	return null;
     }

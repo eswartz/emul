@@ -146,7 +146,11 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		return inferTypesFromChildren(new ITyped[] { expr });
+		boolean changed = inferTypesFromChildren(new ITyped[] { expr });
+		
+		changed |= updateType(test, typeEngine.BOOL);
+		
+		return changed;
 	}
 
 	/* (non-Javadoc)

@@ -161,7 +161,7 @@ argdef: MACRO? ID (COLON type)?    -> ^(ARGDEF MACRO? ID type* )
 
 xreturns: ARROW type      -> type
   | ARROW argtuple           -> argtuple
-  | ARROW NULL            -> ^(TYPE NULL)
+  | ARROW NIL            -> ^(TYPE NIL)
   ;
 
 argtuple : LPAREN tupleargdefs RPAREN    -> ^(TUPLE tupleargdefs)
@@ -171,8 +171,8 @@ tupleargdefs: (tupleargdef ( COMMA tupleargdef)+ )                        -> tup
     ;
 
 tupleargdef: type    -> type
-  | QUESTION        -> ^(TYPE NULL)
-  |                 -> ^(TYPE NULL)
+  | QUESTION        -> ^(TYPE NIL)
+  |                 -> ^(TYPE NIL)
   ;
   
 // args inside a prototype, which have optional initializers
@@ -205,6 +205,7 @@ codeStmtExpr : varDecl    -> varDecl
       | gotoStmt      -> gotoStmt
       //| labelStmt     -> labelStmt
       //| withStmt      -> withStmt
+      | controlStmt      -> controlStmt
       ;
 
 varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
@@ -225,11 +226,41 @@ assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assi
     | rhsExpr                             -> rhsExpr
     ;
 
-labelStmt: AT ID COLON                    -> ^(LABEL ID)
+
+controlStmt : doWhile | whileDo | repeat | forIter ;
+
+doWhile : DO codeStmtExpr WHILE rhsExpr   -> ^(DO codeStmtExpr rhsExpr)
   ;
-//gotoStmt: GOTO idOrScopeRef ( COMMA rhsExpr )?           -> ^(GOTO idOrScopeRef rhsExpr?)
-gotoStmt: AT idOrScopeRef                -> ^(GOTO idOrScopeRef)
-    | AT idOrScopeRef LPAREN assignExpr RPAREN   -> ^(GOTO idOrScopeRef assignExpr)
+
+whileDo : WHILE rhsExpr DO codeStmtExpr   -> ^(WHILE rhsExpr codeStmtExpr)
+  ;
+  
+repeat : REPEAT rhsExpr DO codeOrValueExpr         -> ^(REPEAT rhsExpr codeOrValueExpr)
+  ; 
+
+forIter : FOR forIds atId? IN rhsExpr DO codeOrValueExpr       -> ^(FOR forIds atId? rhsExpr codeOrValueExpr)
+  ; 
+
+forIds : ID (AND ID)* -> ID+ ;
+
+atId : AT ID    -> ^(AT ID) 
+  ;
+  
+codeOrValueExpr : codeStmt | breakStmt ;
+
+breakStmt : BREAK valueCond ->  ^(BREAK valueCond)
+  ; 
+
+valueCond : rhsExpr WHEN rhsExpr ELSE rhsExpr  -> ^(WHEN rhsExpr+) 
+  | UNTIL rhsExpr THEN rhsExpr ELSE rhsExpr    -> ^(UNTIL rhsExpr+)
+  | WITH rhsExpr                               -> rhsExpr
+    ;  
+   
+labelStmt: ATSIGN ID COLON                    -> ^(LABEL ID)
+  ;
+gotoStmt: GOTO idOrScopeRef (IF rhsExpr)?           -> ^(GOTO idOrScopeRef rhsExpr?)
+//gotoStmt: ATSIGN idOrScopeRef                -> ^(GOTO idOrScopeRef)
+//    | ATSIGN idOrScopeRef LPAREN assignExpr RPAREN   -> ^(GOTO idOrScopeRef assignExpr)
   ;
   
 blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
@@ -282,10 +313,15 @@ binding: rhsExpr AS type   -> ^(BINDING type rhsExpr)
 
 // multi-argument cond  
 
+//
+//  select [ expr1 then arg || expr2 then arg || elsearg ]
+
 condStar: cond -> cond
-   | SELECT LBRACKET condTests RBRACKET -> condTests
-   | SELECT condTestExprs -> condTestExprs
+   //| SELECT LBRACKET condTests RBRACKET -> condTests
+   | IF ifExprs -> ifExprs
     ;
+    
+/*    
 condTests : condTest (BAR_BAR condTest)* BAR_BAR? condFinalOrEmpty -> ^(CONDLIST condTest* condFinalOrEmpty)
   ;    
 condTest : (cond THEN) => cond THEN arg -> ^(CONDTEST cond arg)
@@ -293,11 +329,30 @@ condTest : (cond THEN) => cond THEN arg -> ^(CONDTEST cond arg)
 condFinal : ELSE arg -> ^(CONDTEST ^(LIT TRUE) arg)
     ;
 condFinalOrEmpty : condFinal -> condFinal
-    | -> ^(CONDTEST ^(LIT TRUE) ^(LIT NULL))
+    | -> ^(CONDTEST ^(LIT TRUE) ^(LIT NIL))
     ;
+condExprFinal : ELSE arg -> ^(CONDTEST ^(LIT TRUE) arg)
+      | BAR_BAR arg -> ^(CONDTEST ^(LIT TRUE) arg)
+    ;
+*/
 
-condTestExprs : condTest (BAR_BAR condTest)* condFinal -> ^(CONDLIST condTest* condFinal)
-  ;    
+//
+//  if TEST then VALUE [elif TEST then VALUE]+ else VALUE
+//
+ifExprs : thenClause elses -> ^(CONDLIST thenClause elses)
+  ;
+thenClause : t=arg THEN v=arg   -> ^(CONDTEST $t $v) 
+    ; 
+elses : elif* elseClause    -> elif* elseClause 
+    ;
+elif : ELIF t=arg THEN v=arg  -> ^(CONDTEST $t $v )
+    ;
+elseClause : ELSE arg       -> ^(CONDTEST ^(LIT TRUE) arg)
+   | FI -> ^(CONDTEST ^(LIT TRUE) ^(LIT NIL))
+  ;
+    
+//arg condTest (BAR_BAR condTest)* condExprFinal -> ^(CONDLIST condTest* condExprFinal)
+//  ;    
 
 cond:    ( logor  -> logor )
       ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
@@ -306,12 +361,14 @@ cond:    ( logor  -> logor )
 logor : ( logand  -> logand )
       ( OR r=logand -> ^(OR $logor $r) )*
       ;
-logand : ( comp -> comp )
-      ( AND r=comp -> ^(AND $logand $r) ) *
+logand : ( not -> not )
+      ( AND r=not -> ^(AND $logand $r) ) *
       ;
               
-// in Python, "not expr" is here
-
+not :  comp     -> comp
+    | NOT u=comp     -> ^(NOT $u )
+    ;
+    
 comp:   ( bitor        -> bitor )          
       ( COMPEQ r=bitor -> ^(COMPEQ $comp $r)
       | COMPNE r=bitor -> ^(COMPNE $comp $r)
@@ -358,7 +415,6 @@ term : ( unary                  -> unary )
 
 unary:    ( atom        -> atom )        
       | MINUS u=unary -> ^(NEG $u )
-      | NOT u=unary     -> ^(NOT $u )
       | TILDE u=unary     -> ^(INV $u )
 ;
 atom :
@@ -367,7 +423,7 @@ atom :
     |   TRUE                          -> ^(LIT TRUE)
     |   CHAR_LITERAL                  -> ^(LIT CHAR_LITERAL)
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
-    |   NULL                          -> ^(LIT NULL)
+    |   NIL                          -> ^(LIT NIL)
     |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
     |   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
     //|   INVOKE                        -> ^(INVOKE)
@@ -411,7 +467,7 @@ HASH : '#';
 //EXCL : '!';
 NOT : 'not';
 TILDE : '~';
-AT : '@';
+ATSIGN : '@';
 AMP : '&'; 
 BAR : '|';
 CARET : '^';
@@ -438,18 +494,30 @@ POINTS : '->';
 BAR_BAR : '||';
 
 SELECT : 'select';
+
+IF: 'if';
 THEN : 'then';
 ELSE : 'else';
+ELIF : 'elif';
+FI : 'fi';
+DO : 'do';
+WHILE : 'while';
+AT : 'at';
+WHEN : 'when';
+UNTIL : 'until';
+BREAK : 'break';
+REPEAT : 'repeat';
+
 //RETURN : 'return';
 CODE : 'code';
 DATA : 'data';
 MACRO : 'macro';
 FOR : 'for';
 IN : 'in';
-//GOTO: 'goto';
+GOTO: 'goto';
 FALSE: 'false';
 TRUE: 'true';
-NULL: ' null';
+NIL: ' nil';
 
 WITH: 'with';
 AS: 'as';

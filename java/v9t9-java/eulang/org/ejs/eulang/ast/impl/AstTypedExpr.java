@@ -20,11 +20,21 @@ public abstract class AstTypedExpr extends AstTypedNode implements IAstTypedExpr
 		super();
 	}
 	
+	
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedExpr#simplify(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
 	public IAstTypedExpr simplify(TypeEngine engine) {
 		return this;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedExpr#equalValue(org.ejs.eulang.ast.IAstTypedExpr)
+	 */
+	@Override
+	public boolean equalValue(IAstTypedExpr expr) {
+		return false;
 	}
 }

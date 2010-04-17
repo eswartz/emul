@@ -25,11 +25,12 @@ import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstNullLitExpr;
+import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.junit.Test;
 
 /**
@@ -181,7 +182,7 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testGoto2() throws Exception {
     	IAstModule mod = treeize("testGoto = code { @foo: \n" +
-    			"@foo;\n" +
+    			"goto foo;\n" +
     			"};");
     	sanityTest(mod);
     	
@@ -197,11 +198,11 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testGoto3() throws Exception {
     	IAstModule mod = treeize("testGoto = code { @foo: \n" +
-    			"{ @foo: select [ true then 1 else 0 ]; \n"+
-    			"@foo;\n" +
-    			"@:foo;\n" +
+    			"{ @foo: if true then 1 else 0 ; \n"+
+    			"goto foo;\n" +
+    			"goto :foo;\n" +
     			"};\n"+
-    			"@foo;\n" +
+    			"goto foo;\n" +
     			"};");
     	sanityTest(mod);
     	
@@ -234,9 +235,9 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testImplicitBlocks1() throws Exception {
     	IAstModule mod = treeize(
-    			" if = code { };\n"+
+    			" iff = code { };\n"+
     			"testImplicitBlocks1 = code (t, x, y) {\n" +
-    			"   if(t, x = 9, y = 7);\n"+
+    			"   iff(t, x = 9, y = 7);\n"+
     			"};");
     	sanityTest(mod);
     
@@ -259,9 +260,9 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testImplicitBlocks2() throws Exception {
     	IAstModule mod = treeize(
-    			" if = code { };\n"+
+    			" iff = code { };\n"+
     			"testImplicitBlocks2 = code (t, x, y) {\n" +
-    			"   if(t, { x = x + 9; x; }, { y = y + 7; y; });\n"+
+    			"   iff(t, { x = x + 9; x; }, { y = y + 7; y; });\n"+
     			"};");
     	sanityTest(mod);
     
@@ -284,9 +285,9 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testImplicitBlocks3() throws Exception {
     	IAstModule mod = treeize(
-    			" if = code { };\n"+
+    			" iff = code { };\n"+
     			"testImplicitBlocks3 = code (t, x, y) {\n" +
-    			"   if(t, code ( => Int) { x = x + 9; x; }, code ( => Int) { y = y + 7;  y; });\n"+
+    			"   iff(t, code ( => Int) { x = x + 9; x; }, code ( => Int) { y = y + 7;  y; });\n"+
     			"};");
     	sanityTest(mod);
     
@@ -323,10 +324,10 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testCondStar1() throws Exception {
     	IAstModule mod = treeize(
-    		" testCondStar1 = code (t) { select [ 1>t then 1\n" +
-    		"		||	t!=2 and t!=1 then { x:= 9+t; -x; }\n" +
-    		"		||	else  0.4 \n" +
-    		"		]; };\n");
+    		" testCondStar1 = code (t) { if 1>t then 1\n" +
+    		"		elif	t!=2 and t!=1 then { x:= 9+t; -x; }\n" +
+    		"		else  0.4 \n" +
+    		"		; };\n");
 		sanityTest(mod);
 		
 		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCondStar1");
@@ -345,8 +346,8 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testCondStar2() throws Exception {
     	IAstModule mod = treeize(
-    		" testCondStar2 = code (t) { select 1>t then 1\n" +
-    	//	"		||	t!=2 and t!=1 then { x:= 9+t; -x; }\n" +
+    		" testCondStar2 = code (t) { if 1>t then 1\n" +
+    		"		elif t!=2 and t!=1 then { x:= 9+t; -x; }\n" +
     		"		else  0.4;" +
     		"11 \n" +
     		"		; };\n");
@@ -356,21 +357,21 @@ public class TestGenerator extends BaseParserTest {
 		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
 		IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
 		IAstCondList condList = (IAstCondList) exprStmt.getExpr();
-		assertEquals(2, condList.getCondExprs().nodeCount());
+		assertEquals(3, condList.getCondExprs().nodeCount());
 		IAstCondExpr condExpr;
 		condExpr = condList.getCondExprs().list().get(0);
 		assertTrue(condExpr.getExpr() instanceof IAstIntLitExpr);
-		//condExpr = condList.getCondExprs().list().get(1);
-		//assertTrue(condExpr.getExpr() instanceof IAstCodeExpr);
 		condExpr = condList.getCondExprs().list().get(1);
+		assertTrue(condExpr.getExpr() instanceof IAstStmtListExpr);
+		condExpr = condList.getCondExprs().list().get(2);
 		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
     }
     @Test
     public void testCondStar3() throws Exception {
-    	// no 'else' means 'else true then null'
+    	// 'fi' means 'else nil'
     	IAstModule mod = treeize(
     		" testCondStar3 = code (t) { \n" +
-    		"select [ 1>t then 1 ];\n" +
+    		"if 1>t then 1 fi;\n" +
     		"		11;\n"+
     		"		; };\n");
 		sanityTest(mod);
@@ -386,12 +387,12 @@ public class TestGenerator extends BaseParserTest {
 		//condExpr = condList.getCondExprs().list().get(1);
 		//assertTrue(condExpr.getExpr() instanceof IAstCodeExpr);
 		condExpr = condList.getCondExprs().list().get(1);
-		assertTrue(condExpr.getExpr() instanceof IAstNullLitExpr);
+		assertTrue(condExpr.getExpr() instanceof IAstNilLitExpr);
     }
     @Test
     public void testPointers1() throws Exception {
     	IAstModule mod = treeize(
-        		" badSwap_testPointers1 = code (x : Int&, y : Int& => null) {\n" +
+        		" badSwap_testPointers1 = code (x : Int&, y : Int& => nil) {\n" +
         		"};\n");
     		sanityTest(mod);
     }
@@ -416,7 +417,7 @@ public class TestGenerator extends BaseParserTest {
     public void testTuples4() throws Exception {
     	dumpTreeize = true;
     	IAstModule mod = treeize("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
-    			"testTuples4 = code (x,y) { (a, b) = swap(4, 5); }; \n");
+    			"testTuples4 = code (x,y) { a : Int; b : Int; (a, b) = swap(4, 5); }; \n");
     	sanityTest(mod);
     }
     @Test
@@ -436,6 +437,21 @@ public class TestGenerator extends BaseParserTest {
     	sanityTest(mod);
     }
     */
+    
+    @Test
+    public void testBlockScopes() throws Exception {
+    	treeize(
+    			"testBlockScopes = code (t, x : Int, y : Float) {\n" +
+    			"  if t then { z := Float(x); z = z * 8 } else { z := y; }; "+
+    			"};");
+    	
+    	// which 'z' is used at end?  should be unknown
+    	IAstModule mod = treeize(
+    			"testBlockScopes = code (t, x : Int, y : Float) {\n" +
+    			"  if t then { z := Float(x); z = z * 8 } else { z := y; }; z;"+
+    			"};");
+    	doExpand(mod, true);
+    }
 }
 
 

@@ -37,8 +37,9 @@ import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstModule;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNodeList;
-import org.ejs.eulang.ast.impl.AstNullLitExpr;
+import org.ejs.eulang.ast.impl.AstNilLitExpr;
 import org.ejs.eulang.ast.impl.AstPrototype;
+import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
@@ -82,6 +83,9 @@ public class GenerateAST {
 			this.ref = ref;
 		}
 		
+		public GenerateException() {
+			super((String)null);
+		}
 		public Tree getTree() {
 			return tree;
 		}
@@ -90,6 +94,21 @@ public class GenerateAST {
 			return ref;
 		}
 		
+	}
+	
+	static class MultiGenerateException extends GenerateException {
+		private GenerateException[] excs;
+
+		public MultiGenerateException(GenerateException[] excs) {
+			super();
+			this.excs = excs;
+		}
+		/**
+		 * @return the excs
+		 */
+		public GenerateException[] getExceptions() {
+			return excs;
+		}
 	}
 	
 	static class TempLabelStmt extends AstStatement {
@@ -323,13 +342,6 @@ public class GenerateAST {
 		if (currentScope == null)
 			throw new GenerateException(tree, "no current scope");
 		try {
-			// do this later
-			/*
-			for (ISymbol symbol : currentScope) {
-				if (symbol.getDefinition() == null)
-					throw new GenerateException(tree, "undefined symbol '" + symbol.getName() + "'");
-			}
-			*/
 			return currentScope;
 		} finally {
 			currentScope = currentScope.getParent();
@@ -446,6 +458,9 @@ public class GenerateAST {
 		case EulangParser.LIST:
 			return constructList(tree);
 			
+		case EulangParser.REPEAT:
+			return constructRepeat(tree);
+			
 		default:
 			unhandled(tree);
 			return null;
@@ -453,6 +468,24 @@ public class GenerateAST {
 		
 	}
 	
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructRepeat(Tree tree) throws GenerateException {
+		pushScope(new LocalScope(currentScope));
+		try {
+			IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+			IAstTypedExpr body = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+			IAstRepeatExpr repeat = new AstRepeatExpr(currentScope, expr, body);
+			getSource(tree, repeat);
+			return repeat;
+		} finally {
+			popScope(tree);
+		}
+	}
+
 	/**
 	 * @param tree
 	 * @return
@@ -508,10 +541,17 @@ public class GenerateAST {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
 		// flatten code blocks
 		if (expr instanceof IAstCodeExpr) {
+			// TODO: we need to shove the scope somewhere!
 			IAstCodeExpr origCode = ((IAstCodeExpr) expr);
 			origCode.stmts().setParent(null);
 			expr = new AstStmtListExpr(origCode.stmts());
 			expr.setSourceRef(origCode.getSourceRef());
+			/*
+			IAstNodeList<IAstTypedExpr> args = new AstNodeList<IAstTypedExpr>();
+			getEmptySource(tree.getChild(1), args);
+			expr = new AstFuncCallExpr(expr, args);
+			getSource(tree, expr);
+			*/
 		}
 		IAstCondExpr condExpr = new AstCondExpr(test, expr);
 		getSource(tree, condExpr);
@@ -1012,16 +1052,24 @@ public class GenerateAST {
 					list.add(node);
 					node.setParent(list);
 				}
+			} catch (MultiGenerateException me) {
+				for (GenerateException e : me.getExceptions()) {
+					emitExceptionError(e);
+				}
 			} catch (GenerateException e) {
-				if (e.getTree() != null)
-					error(e.getTree(), e.getMessage());
-				else
-					error(e.getSourceRef(), e.getMessage());
+				emitExceptionError(e);
 			}
 		}
 		
 		getSource(tree, list);
 		return list;
+	}
+
+	private void emitExceptionError(GenerateException e) {
+		if (e.getTree() != null)
+			error(e.getTree(), e.getMessage());
+		else
+			error(e.getSourceRef(), e.getMessage());
 	}
 
 	/**
@@ -1063,7 +1111,7 @@ public class GenerateAST {
 	 * @return
 	 */
 	public LLType constructType(Tree tree) throws GenerateException {
-		if (tree.getType() == EulangParser.NULL) {
+		if (tree.getType() == EulangParser.NIL) {
 			return typeEngine.VOID;
 		} else {
 			Tree kid0 = tree.getChild(0);
@@ -1182,8 +1230,8 @@ public class GenerateAST {
 		
 		String lit = tree.getChild(0).getText();
 		switch (tree.getChild(0).getType()) {
-		case EulangParser.NULL:
-			litExpr = new AstNullLitExpr(lit, typeEngine.NULL);
+		case EulangParser.NIL:
+			litExpr = new AstNilLitExpr(lit, typeEngine.NIL);
 			break;
 		case EulangParser.TRUE:
 			litExpr = new AstBoolLitExpr(lit, typeEngine.BOOL, true);

@@ -60,7 +60,7 @@ public abstract class AstScope extends AstNode implements IAstScope {
 		if (node != null) {
 			while (node != null) {
 				if (node instanceof IAstScope) {
-					((IAstScope) node).getScope().setParent(scope);
+					scope.setParent(((IAstScope) node).getScope());
 					break;
 				}
 				node = node.getParent();

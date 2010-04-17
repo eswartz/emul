@@ -11,7 +11,6 @@ import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -144,7 +143,8 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 				}
 				for (int i = 0; i < exprs.length; i++) {
 					if (exprs[i] != null) {
-						condList.list().get(i).setExpr(createCastOn(typeEngine, exprs[i], common));
+						exprs[i].getParent().replaceChild(exprs[i], createCastOn(typeEngine, exprs[i], common));
+						//condList.list().get(i).setExpr(createCastOn(typeEngine, exprs[i], common));
 						condList.list().get(i).setType(common);
 					}
 				}
@@ -153,5 +153,6 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 		
 		return changed;
 	}
+	
 	
 }

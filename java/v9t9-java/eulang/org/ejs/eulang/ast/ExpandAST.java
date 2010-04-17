@@ -3,10 +3,13 @@
  */
 package org.ejs.eulang.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
+import org.ejs.eulang.ast.GenerateAST.GenerateException;
+import org.ejs.eulang.ast.GenerateAST.MultiGenerateException;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
@@ -296,6 +299,11 @@ public class ExpandAST {
 				blockList.add(realArgIdx++, argAlloc);
 			} else {
 				// For macro arguments, the actual argument is directly replaced
+				if (realArg instanceof IAstSymbolExpr) {
+					IAstNode rootDef = protoArg.getSymbolExpr().getSymbol().getDefinition();
+					assert rootDef != null;
+					((IAstSymbolExpr)realArg).getSymbol().setDefinition(rootDef);
+				}
 				replaceInTree(codeExpr.stmts(), protoArg.getSymbolExpr(), realArg);
 			}
 		}
@@ -391,15 +399,37 @@ public class ExpandAST {
 			replaceInTree(kid, symbolExpr, replacement);
 		}
 		if (root.equals(symbolExpr)) {
-			//if (root.getParent() instanceof IAstFuncCallExpr)
-			//	root.getParent().getParent().replaceChild(root.getParent(), replacement.copy(null));
-			//else
-			
-				IAstNode copy = replacement.copy(null);
-				copy.uniquifyIds();
-				root.getParent().replaceChild(root, copy);
+			IAstNode copy = replacement.copy(null);
+			copy.uniquifyIds();
+			root.getParent().replaceChild(root, copy);
 		} 
 		
+	}
+
+	/**
+	 * Ensure that the tree is proper.  Whether or not any macros were expanded, we need
+	 * to validate against undefined symbol references (which were allowed up til now
+	 * in case they were variables defined by macros).
+	 * @param node
+	 */
+	public void validate(List<Message> messages, IAstNode node)  {
+		if (node instanceof IAstScope) {
+			validateScope(messages, (IAstScope) node);
+		}
+		for (IAstNode kid : node.getChildren())
+			validate(messages, kid);
+	}
+
+	/**
+	 * @param messages 
+	 * @param node
+	 */
+	private void validateScope(List<Message> messages, IAstScope node) {
+		for (ISymbol symbol : node.getScope()) {
+			if (symbol.getDefinition() == null) {
+				messages.add(new Error(node, "undefined symbol '" + symbol.getName() + "'"));
+			}
+		}
 	}
 
 }

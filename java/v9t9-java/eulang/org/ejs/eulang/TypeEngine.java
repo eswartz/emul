@@ -47,7 +47,7 @@ public class TypeEngine {
 	public LLBoolType BOOL;
 	public LLVoidType VOID;
 	public LLLabelType LABEL;
-	public LLType NULL;
+	public LLType NIL;
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 	private Set<LLType> types = new HashSet<LLType>();
@@ -83,7 +83,7 @@ public class TypeEngine {
 		setStructAlign(16);
 		setStructMinAlign(8);
 		VOID = register(new LLVoidType(null));
-		NULL = register(new LLVoidType(null));
+		NIL = register(new LLVoidType(null));
 		LABEL = register(new LLLabelType());
 		BOOL = register(new LLBoolType("Bool", 1));
 		LLBOOL = register(new LLBoolType(null, 1));

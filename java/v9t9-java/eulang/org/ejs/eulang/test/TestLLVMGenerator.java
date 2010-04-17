@@ -30,109 +30,7 @@ import org.junit.Test;
  */
 public class TestLLVMGenerator extends BaseParserTest {
 
-	private ITarget v9t9Target = new TargetV9t9(typeEngine);
-	/**
-	 * Generate the module, expecting no errors.
-	 * @param mod
-	 * @return 
-	 */
-	private LLVMGenerator doGenerate(IAstModule mod) throws Exception {
-		return doGenerate(mod, false);
-	}
-	/**
-	 * @param mod
-	 * @return 
-	 * @throws Exception 
-	 */
-	protected LLVMGenerator doGenerate(IAstModule mod, boolean expectErrors) throws Exception {
-		//doExpand(mod);
-		//doSimplify(mod);
-		
-		LLVMGenerator generator = new LLVMGenerator(v9t9Target);
-		generator.generate(mod);
-		
-		String text = generator.getText();
-		
-		List<Message> messages = generator.getMessages();
-		for (Message msg : messages)
-			System.err.println(msg);
-		if (!expectErrors)
-			assertEquals("expected no errors: " + catenate(messages), 0, messages.size());
-		
-		File file = getTempFile("");
-		File llfile = new File(file.getAbsolutePath() + ".ll");
-		FileOutputStream os = new FileOutputStream(llfile);
-		os.write(text.getBytes());
-		os.close();
-		
-		File bcFile = new File(file.getAbsolutePath() + ".bc");
-		bcFile.delete();
 
-		File bcOptFile = new File(file.getAbsolutePath() + ".opt.bc");
-		bcOptFile.delete();
-
-		File llOptFile = new File(file.getAbsolutePath() + ".opt.ll");
-		llOptFile.delete();
-
-		System.out.println(text);
-		
-		try {
-			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
-			run("opt", bcFile.getAbsolutePath(), "-O2", "-f", "-o", bcOptFile.getAbsolutePath());
-			run("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
-		} catch (AssertionFailedError e) {
-			if (expectErrors)
-				return generator;
-			else
-				throw e;
-		}
-		
-		if (expectErrors)
-			assertTrue("expected errors", messages.size() > 0);
-		
-		return generator;
-	}
-	/**
-	 * @param string
-	 * @param absolutePath
-	 * @param string2
-	 * @param string3
-	 * @param absolutePath2
-	 * @throws CoreException 
-	 */
-	private void run(String prog, String... args) throws CoreException {
-		CommandLauncher launcher = new CommandLauncher();
-		launcher.showCommand(true);
-		launcher.execute(new Path(prog), 
-				args,
-				null,
-				null,
-				null);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		ByteArrayOutputStream err = new ByteArrayOutputStream();
-		int exit = launcher.waitAndRead(out, err);
-		
-		System.out.print(out.toString());
-		System.err.print(err.toString());
-		assertEquals(out.toString() + err.toString(), 0, exit);
-	}
-
-	/**
-	 * @return
-	 * @throws IOException 
-	 */
-	private File getTempFile(String ext) throws IOException {
-		String name = "test";
-		StackTraceElement[] stackTrace = new Exception().getStackTrace();
-		for (StackTraceElement e : stackTrace) {
-			if (e.getMethodName().startsWith("test")) {
-				name = e.getMethodName();
-				break;
-			}
-		}
-		return new File("/tmp/" + name + ext);
-	}
-	
 	@Test
 	public void testSimple() throws Exception {
 		IAstModule mod = doFrontend("FOO = 3;\n"+
@@ -140,7 +38,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 				"main := code (p, q) {\n" +
 				"	x := helper(10 * q);\n"+
 				"   x = x + x;\n"+
-				"   select [ x > q then -FOO else 1+p ];\n"+
+				"   if x > q then -FOO else 1+p ;\n"+
 				"};\n");
 		
 		doGenerate(mod);
@@ -152,7 +50,7 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testPointers3() throws Exception {
 		 dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			" refSwap_testPointers3 := code (x : Int&, y : Int& => null) {\n" +
+    			" refSwap_testPointers3 := code (x : Int&, y : Int& => nil) {\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -217,11 +115,11 @@ public class TestLLVMGenerator extends BaseParserTest {
 	public void testShortCircuitAndOr() throws Exception {
 		dumpTypeInfer = true;
 		IAstModule mod = doFrontend("testShortCircuitAndOr = code (x,y:Int&,z => Int){\n" +
-				"select [ x > y and y > z then y " +
-				"|| x > z and z > y then z" +
-				"|| y > x and x > z then x " +
-				"|| x == y or z == x then x+y+z " +
-				"|| else x-y-z ] };");
+				"if  x > y and y > z then y " +
+				"elif x > z and z > y then z " +
+				"elif y > x and x > z then x " +
+				"elif x == y or z == x then x+y+z " +
+				"else x-y-z };");
 		doGenerate(mod);
 	}
 	
@@ -288,7 +186,7 @@ public class TestLLVMGenerator extends BaseParserTest {
   	 @Test
      public void testRecursion() throws Exception {
      	IAstModule mod = doFrontend(
-     	"   factorial = code (x) { select [ x > 1 then x * factorial(x-1) else 1 ] };\n" + 
+     	"   factorial = code (x) { if x > 1 then x * factorial(x-1) else 1 };\n" + 
      	"  ");
      	LLVMGenerator g = doGenerate(mod);
     	assertEquals(1, g.getModule().getSymbolCount());
@@ -322,11 +220,11 @@ public class TestLLVMGenerator extends BaseParserTest {
   	 
   	@Test
     public void testCondStar3() throws Exception {
-  		// implicit else counts as 0 in the inferred type
+  		// nil counts as 0 in the inferred type
     	IAstModule mod = doFrontend(
     		" testCondStar3 = code (t) { \n" +
-    		"select [ 1>t then 15 ];\n" +
-    		"		; };\n");
+    		"if 1>t then 15 else nil;\n" +
+    		"};\n");
     	LLVMGenerator g = doGenerate(mod);
  		 assertEquals(1, g.getModule().getSymbolCount());
  		 
@@ -336,13 +234,11 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testWhileLoop() throws Exception {
     	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [\n" +
-    			"	 test then mthen() || false then false || else melse() ] };\n"+
-    			"while = macro ( macro test:code, macro body : code) {\n"+
-    			"    @loop: select [ test() then { body(); @loop } ];\n"+
+    			"wwhile = macro ( macro test:code, macro body : code) {\n"+
+    			"    @loop: if test() then { body(); goto loop } fi;\n"+
     			"};\n"+
     			"testWhileLoop = code (t, x : Int, y : Float& => Void) {\n" +
-    			"   while(x > t, { y = y/2; x = x-1; } );\n"+
+    			"   wwhile(x > t, { y = y/2; x = x-1; } );\n"+
     			"};");
     	LLVMGenerator g = doGenerate(mod);
 		 assertEquals(1, g.getModule().getSymbolCount());
@@ -351,15 +247,26 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testDoWhile() throws Exception {
     	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [\n" +
-    			"	 test then mthen() || false then false || else melse() ] };\n"+
     			"doWhile = macro ( macro body : code, macro test:code) {\n"+
-    			"    @loop: body(); @loop (not test()) ;\n"+
+    			"    @loop: body(); goto loop if (not test()) ;\n"+
     			"};\n"+
     			"testDoWhile = code (t, x : Int, y : Float) {\n" +
     			"   doWhile(y = y/2, { x = x - 1; x > t }); y ; \n"+
     			"};");
     	LLVMGenerator g = doGenerate(mod);
 		 assertEquals(1, g.getModule().getSymbolCount());
+    }
+    
+    @Test
+    public void testBlockScopes() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"testBlockScopes = code (t, x : Int, y : Float) {\n" +
+    			"  if t then { z := Float(x); z = z * 8 } else { z := y; };"+
+    			"};");
+    	mod = mod.copy(null);
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(1, g.getModule().getSymbolCount());
+    	
     }
 }

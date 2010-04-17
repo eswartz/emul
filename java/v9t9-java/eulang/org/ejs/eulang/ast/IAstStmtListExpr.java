@@ -5,10 +5,8 @@ package org.ejs.eulang.ast;
 
 
 /**
- * This is a node resulting from inlining a function.  This node
- * has no scope of its own.  #getResult()
- * yields the allocated symbol into which the result of the function
- * is stored.  #getStmtList yields the statements comprising the function,
+ * A list of expressions, where the last expression yields the value.
+ *  #getStmtList yields the statements comprising the function,
  * where returns have been converted into assignments to the result
  * followed by jumps to the end.  All statements that originally referred
  * to locals now refer to new temporaries.
@@ -18,6 +16,8 @@ package org.ejs.eulang.ast;
  */
 public interface IAstStmtListExpr extends IAstTypedExpr {
 	IAstStmtListExpr copy(IAstNode copyParent);
+	
+	IAstTypedExpr getValue();
 	
 	//IAstSymbolExpr getResult();
 	//void setResult(IAstSymbolExpr result);

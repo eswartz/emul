@@ -268,11 +268,11 @@ public class TestParser extends BaseParserTest  {
     
     @Test
     public void testScopeRef1() throws Exception  {
-    	parse("foo = code { Ref.at; Ref.at(0x8370); };");
+    	parse("foo = code { Ref.adr; Ref.adr(0x8370); };");
     }
     @Test
     public void testRef1() throws Exception  {
-    	parse("foo = code { x : Int& = Ref.at(0x8370); };");
+    	parse("foo = code { x : Int& = Ref.adr(0x8370); };");
     }
     @Test
     public void testEmptyMacroCodeBlock() throws Exception  {

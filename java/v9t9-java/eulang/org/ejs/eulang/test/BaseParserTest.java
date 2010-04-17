@@ -10,6 +10,10 @@ import static junit.framework.Assert.assertSame;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,14 +22,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import junit.framework.AssertionFailedError;
+
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
+import org.apache.batik.bridge.Messages;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
+import org.ejs.eulang.TargetV9t9;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.ExpandAST;
@@ -37,6 +48,8 @@ import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ext.CommandLauncher;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.optimize.SimplifyTree;
 import org.ejs.eulang.parser.EulangLexer;
 import org.ejs.eulang.parser.EulangParser;
@@ -227,7 +240,7 @@ public class BaseParserTest {
     		assertEquals(node, kid.getParent());
     		
     		if (node instanceof IAstScope && kid instanceof IAstScope) {
-    			assertEquals(((IAstScope)node).getScope(), ((IAstScope) kid).getScope().getOwner());
+    			assertEquals(((IAstScope)node).getScope(), ((IAstScope) kid).getScope().getParent());
     		}
     		doSanityTest(kid, nodeIds);
     		
@@ -381,11 +394,13 @@ public class BaseParserTest {
 	
 	
 
-	protected IAstNode doExpand(IAstNode node) {
+	protected IAstNode doExpand(IAstNode node, boolean expectErrors) {
 		ExpandAST expand = new ExpandAST();
 		
+		List<Message> messages = new ArrayList<Message>();
+		boolean hadAnyErrors = false;
 		for (int passes = 1; passes < 256; passes++) {
-			List<Message> messages = new ArrayList<Message>();
+			messages.clear();
 			boolean changed = expand.expand(messages, node);
 			
 			if (changed) {
@@ -395,16 +410,33 @@ public class BaseParserTest {
 					node.accept(dump);
 				}
 				
-				for (Message msg : messages)
+				for (Message msg : messages) {
 					System.err.println(msg);
-				assertEquals(catenate(messages), 0, messages.size());
+					hadAnyErrors = true;
+				}
+				if (!expectErrors)
+					assertEquals(catenate(messages), 0, messages.size());
 			} else {
 				break;
 			}
 		}
+
+		messages.clear();
+		expand.validate(messages, node);
+		for (Message msg : messages) {
+			System.err.println(msg);
+			hadAnyErrors = true;
+		}
+		if (!expectErrors)
+			assertEquals(catenate(messages), 0, messages.size());
+		else if (!hadAnyErrors || messages.isEmpty())
+			fail("no messages generated");
 		return node;
 	}
 
+	protected IAstNode doExpand(IAstNode node) {
+		return doExpand(node, false);
+	}
 	protected boolean isCastTo(IAstTypedExpr expr, LLType type) {
 		return (expr instanceof IAstUnaryExpr && ((IAstUnaryExpr) expr).getOp() == IOperation.CAST)
 		&& expr.getType().equals(type);
@@ -437,6 +469,109 @@ public class BaseParserTest {
 		expanded.accept(dump);
 		
     	return expanded;
+	}
+
+	protected ITarget v9t9Target = new TargetV9t9(typeEngine);
+	/**
+	 * Generate the module, expecting no errors.
+	 * @param mod
+	 * @return 
+	 */
+	protected LLVMGenerator doGenerate(IAstModule mod) throws Exception {
+		return doGenerate(mod, false);
+	}
+	/**
+	 * @param mod
+	 * @return 
+	 * @throws Exception 
+	 */
+	protected LLVMGenerator doGenerate(IAstModule mod, boolean expectErrors) throws Exception {
+		//doExpand(mod);
+		//doSimplify(mod);
+		
+		LLVMGenerator generator = new LLVMGenerator(v9t9Target);
+		generator.generate(mod);
+		
+		String text = generator.getText();
+		
+		List<Message> messages = generator.getMessages();
+		for (Message msg : messages)
+			System.err.println(msg);
+		if (!expectErrors)
+			assertEquals("expected no errors: " + catenate(messages), 0, messages.size());
+		
+		File file = getTempFile("");
+		File llfile = new File(file.getAbsolutePath() + ".ll");
+		FileOutputStream os = new FileOutputStream(llfile);
+		os.write(text.getBytes());
+		os.close();
+		
+		File bcFile = new File(file.getAbsolutePath() + ".bc");
+		bcFile.delete();
+
+		File bcOptFile = new File(file.getAbsolutePath() + ".opt.bc");
+		bcOptFile.delete();
+
+		File llOptFile = new File(file.getAbsolutePath() + ".opt.ll");
+		llOptFile.delete();
+
+		System.out.println(text);
+		
+		try {
+			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+			run("opt", bcFile.getAbsolutePath(), "-O2", "-f", "-o", bcOptFile.getAbsolutePath());
+			run("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+		} catch (AssertionFailedError e) {
+			if (expectErrors)
+				return generator;
+			else
+				throw e;
+		}
+		
+		if (expectErrors)
+			assertTrue("expected errors", messages.size() > 0);
+		
+		return generator;
+	}
+	/**
+	 * @param string
+	 * @param absolutePath
+	 * @param string2
+	 * @param string3
+	 * @param absolutePath2
+	 * @throws CoreException 
+	 */
+	private void run(String prog, String... args) throws CoreException {
+		CommandLauncher launcher = new CommandLauncher();
+		launcher.showCommand(true);
+		launcher.execute(new Path(prog), 
+				args,
+				null,
+				null,
+				null);
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream err = new ByteArrayOutputStream();
+		int exit = launcher.waitAndRead(out, err);
+		
+		System.out.print(out.toString());
+		System.err.print(err.toString());
+		assertEquals(out.toString() + err.toString(), 0, exit);
+	}
+
+	/**
+	 * @return
+	 * @throws IOException 
+	 */
+	private File getTempFile(String ext) throws IOException {
+		String name = "test";
+		StackTraceElement[] stackTrace = new Exception().getStackTrace();
+		for (StackTraceElement e : stackTrace) {
+			if (e.getMethodName().startsWith("test")) {
+				name = e.getMethodName();
+				break;
+			}
+		}
+		return new File("/tmp/" + name + ext);
 	}
 	
 

@@ -28,11 +28,11 @@ public class TestMacroCall extends BaseParserTest {
     public void testSimple1() throws Exception {
     	IAstModule mod = treeize(
     			"\n" + 
-"if = macro ( macro test : code( => Bool ), macro mthen : code, macro melse : code = code() {} ) {\n" + 
-    			"    select [ test() then mthen() else melse() ];\n" + 
+"iff = macro ( macro test : code( => Bool ), macro mthen : code, macro melse : code = code() {} ) {\n" + 
+    			"    if  test() then mthen() else melse() ;\n" + 
     			"};\n"+
     			"testSimple1 = code (t, x, y) {\n" +
-    			"   if(t > 10, x + 1, x*t*y);\n"+
+    			"   iff(t > 10, x + 1, x*t*y);\n"+
     			"};");
     	sanityTest(mod);
 
@@ -48,13 +48,13 @@ public class TestMacroCall extends BaseParserTest {
 				"\n" + 
 				"  forCountUntil = macro (macro idx, count : Int, macro test, macro body = code { idx }, macro fail = code { -1 }) {\n" + 
 				"        idx := 0;\n" + 
-				"        @loop: select [ \n" + 
-				"            idx < count then select [ \n" + 
+				"        @loop: if \n" + 
+				"            idx < count then if \n" + 
 				"                test then { count = idx; body; }\n" + 
-				"                else { idx = idx + 1; @loop; }\n" + 
-				"            ]\n" + 
+				"                else { idx = idx + 1; goto loop; }\n" + 
+				"            \n" + 
 				"            else fail \n" + 
-				"        ]\n" + 
+				"        \n" + 
 				"    };\n" + 
 				"    \n" + 
 				"testForCount = code () { forCountUntil(i, 10, i % 5 == 0, i, -1);"+
@@ -64,6 +64,9 @@ public class TestMacroCall extends BaseParserTest {
 		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testForCount");
 		IAstDefineStmt defPrime = (IAstDefineStmt) doExpand(def);
 		sanityTest(defPrime);
+		
+		doTypeInfer(mod);
+		doGenerate(mod);
 		
 	}
 	
@@ -76,10 +79,10 @@ public class TestMacroCall extends BaseParserTest {
     @Test
     public void testImplicitBlocks3() throws Exception {
     	IAstModule mod = treeize(
-    			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [" +
-    			"	 test then mthen() || false then false || else melse() ] };\n"+
+    			"iff = macro ( test:Bool, macro mthen: code, macro melse: code) { " +
+    			"	 if test then mthen() elif false then false else melse() };\n"+
     			"testImplicitBlocks3 = code (t, x : Int, y : Float) {\n" +
-    			"   if(t, { x = x + 9; x; }, { y = y + 7; y; })\n"+
+    			"   iff(t, { x = x + 9; x; }, { y = y + 7; y; })\n"+
     			"};");
     	sanityTest(mod);
     	
@@ -111,13 +114,11 @@ public class TestMacroCall extends BaseParserTest {
     	dumpTreeize = true;
     	dumpTypeInfer = true;
     	IAstModule mod = treeize(
-    			"if = macro ( test:Bool, macro mthen: code, macro melse: code) { select [\n" +
-    			"	 test then mthen() || false then false || else melse() ] };\n"+
-    			"while = macro ( macro test:code, macro body : code) {\n"+
-    			"    @loop: select test() then body() else @loop;\n"+
+    			"wwhile = macro ( macro test:code, macro body : code) {\n"+
+    			"    @loop: if test() then body() else goto loop;\n"+
     			"};\n"+
     			"testImplicitBlocks4 = code (t, x : Int, y : Float) {\n" +
-    			"   while(x > t, { y = y/2; x = x-1; } )\n"+
+    			"   wwhile(x > t, { y = y/2; x = x-1; } )\n"+
     			"};");
     	sanityTest(mod);
     	

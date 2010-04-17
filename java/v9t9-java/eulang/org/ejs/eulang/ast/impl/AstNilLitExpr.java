@@ -5,21 +5,21 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstNullLitExpr;
+import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
  *
  */
-public class AstNullLitExpr extends AstLitExpr implements IAstNullLitExpr {
+public class AstNilLitExpr extends AstLitExpr implements IAstNilLitExpr {
 
 	/**
 	 * @param lit 
 	 * @param lit
 	 * @param type
 	 */
-	public AstNullLitExpr(String lit, LLType nullType) {
+	public AstNilLitExpr(String lit, LLType nullType) {
 		super(lit, nullType);
 	}
 
@@ -28,7 +28,7 @@ public class AstNullLitExpr extends AstLitExpr implements IAstNullLitExpr {
 	 */
 	@Override
 	public String toString() {
-		return "NULL";
+		return "NIL";
 	}
 
 	
@@ -38,7 +38,7 @@ public class AstNullLitExpr extends AstLitExpr implements IAstNullLitExpr {
 	 */
 	@Override
 	public IAstLitExpr copy(IAstNode copyParent) {
-		return new AstNullLitExpr(getLiteral(), getType());
+		return new AstNilLitExpr(getLiteral(), getType());
 	}
 
 	/* (non-Javadoc)

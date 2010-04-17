@@ -47,7 +47,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 */
 	@Override
 	public IAstCodeExpr copy(IAstNode copyParent) {
-		IAstCodeExpr copied = new AstCodeExpr(doCopy(proto, copyParent), getScope().newInstance(scope), doCopy(stmts, copyParent), macro);
+		IAstCodeExpr copied = new AstCodeExpr(doCopy(proto, copyParent), getScope().newInstance(getCopyScope(copyParent)), doCopy(stmts, copyParent), macro);
 		remapScope(getScope(), copied.getScope(), copied);
 		return fixup(this, copied);
 	}

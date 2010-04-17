@@ -66,10 +66,10 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 	}
 	
 
-    protected boolean canInferTypeFrom(ITyped child) {
+    protected static boolean canInferTypeFrom(ITyped child) {
     	return child != null && child.getType() != null; // && child.getType().isComplete(); 
     }
-    protected boolean canReplaceType(ITyped child) {
+    protected static boolean canReplaceType(ITyped child) {
     	return child != null && (child.getType() == null || !child.getType().isComplete()); 
     }
 
@@ -168,5 +168,6 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		castExpr.setType(newType);
 		return castExpr;
 	}
+	
 
 }

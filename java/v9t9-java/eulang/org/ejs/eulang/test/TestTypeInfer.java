@@ -608,7 +608,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testPointers1() throws Exception {
     	IAstModule mod = treeize(
-        		" badSwap_testPointers1 = code (x : Int&, y : Int& => null) {\n" +
+        		" badSwap_testPointers1 = code (x : Int&, y : Int& => nil) {\n" +
         		" t := x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -706,11 +706,11 @@ public class TestTypeInfer extends BaseParserTest {
 	public void testShortCircuitAndOrRet() throws Exception {
 		// awesomeness: return propagates down
 		IAstModule mod = treeize("testShortCircuitAndOr = code (x,y,z => Int ){\n" +
-				"select [ x > y and y > z then y " +
-				"|| x > z and z > y then z" +
-				"|| y > x and x > z then x " +
-				"|| x == y or z == x then x+y+z " +
-				"|| else x-y-z ] };");
+				"if x > y and y > z then y " +
+				"elif x > z and z > y then z " +
+				"elif y > x and x > z then x " +
+				"elif x == y or z == x then x+y+z " +
+				"else x-y-z  };");
 		sanityTest(mod);
     	
     	
@@ -732,11 +732,11 @@ public class TestTypeInfer extends BaseParserTest {
 	public void testShortCircuitAndOrConst() throws Exception {
 		// awesomeness: lone int constant propagates up
 		IAstModule mod = treeize("testShortCircuitAndOr = code (x,y,z ){\n" +
-				"select [ x > y and y > z then y " +
-				"|| x > z and z > y then z" +
-				"|| y > x and x > z then x " +
-				"|| x == y or z == x then x+y+z " +
-				"|| else x-y-z+0 ] };");
+				"if  x > y and y > z then y " +
+				"elif x > z and z > y then z " +
+				"elif y > x and x > z then x " +
+				"elif x == y or z == x then x+y+z " +
+				"else x-y-z+0 };");
 		sanityTest(mod);
     	
     	
@@ -757,11 +757,11 @@ public class TestTypeInfer extends BaseParserTest {
 	public void testShortCircuitAndOrRef() throws Exception {
 		// be sure stray 'Int&' doesn't make everything a reference
 		IAstModule mod = treeize("testShortCircuitAndOrRef = code (x,y:Int&,z => Int){\n" +
-				"select [ x > y and y > z then y " +
-				"|| x > z and z > y then z" +
-				"|| y > x and x > z then x " +
-				"|| x == y or z == x then x+y+z " +
-				"|| else x-y-z ] };");
+				"if x > y and y > z then y " +
+				"elif x > z and z > y then z " +
+				"elif y > x and x > z then x " +
+				"elif x == y or z == x then x+y+z " +
+				"else x-y-z };");
 		sanityTest(mod);
     	
     	
@@ -1040,7 +1040,7 @@ public class TestTypeInfer extends BaseParserTest {
     	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"testWhileLoop := code (t, x : Int, y : Float) {\n" +
-    			"    @loop: select x > t then { y = y / 2; x = x - 1; @loop } else @loop;\n"+
+    			"    @loop: if x > t then { y = y / 2; x = x - 1; goto loop } else goto loop;\n"+
     			 "	y;\n"+
     			"};");
     	doTypeInfer(mod);

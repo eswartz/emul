@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.IOperation;
@@ -25,6 +26,7 @@ import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstAssignTupleStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBlockStmt;
+import org.ejs.eulang.ast.IAstBreakStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
@@ -34,9 +36,11 @@ import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstLoopStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstRepeatExpr;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -432,16 +436,154 @@ public class LLVMGenerator {
 			result = generateAssignTupleStmt((IAstAssignTupleStmt) stmt);
 		} else if (stmt instanceof IAstBlockStmt) {
 			result = generateStmtList(((IAstBlockStmt) stmt).stmts());
+		} else if (stmt instanceof IAstLoopStmt) {
+			result = generateLoopStmt((IAstLoopStmt) stmt);
+			
 		} else if (stmt instanceof IAstDefineStmt) {
 			// ignore
 		} else if (stmt instanceof IAstLabelStmt) {
+			// no val
 			generateLabelStmt((IAstLabelStmt) stmt);
 		} else if (stmt instanceof IAstGotoStmt) {
+			// no val
 			generateGotoStmt((IAstGotoStmt) stmt);
 		} else {
 			unhandled(stmt);
 		}
 		return result;
+	}
+
+	static class LoopContext {
+		private final ISymbol exitLabel;
+		private final ISymbol bodyLabel;
+		private final ISymbol enterLabel;
+		private final LLVariableOp value;
+		private final IScope scope;
+
+		private LLVariableOp inductor;
+		
+		LoopContext(IScope scope, ISymbol bodyLabel, ISymbol enterLabel, ISymbol exitLabel, LLVariableOp loopVal) {
+			this.scope = scope;
+			this.bodyLabel = bodyLabel;
+			this.enterLabel = enterLabel;
+			this.exitLabel = exitLabel;
+			this.value = loopVal;
+		}
+	}
+	
+	private Stack<LoopContext> loopStack = new Stack<LoopContext>();
+	
+	/**
+	 * Generate a loop.  This has an implicit return value which can be set by a 'break' statement  
+	 * @param stmt
+	 * @return
+	 * @throws ASTException 
+	 */
+	private LLOperand generateLoopStmt(IAstLoopStmt stmt) throws ASTException {
+		
+		IScope scope = stmt.getOwnerScope();
+		
+		ISymbol loopValSym = scope.addTemporary("loopValue");
+		loopValSym.setType(stmt.getType());
+		
+		LLVariableOp loopVal = makeLocalStorage(loopValSym, false, generateNil(stmt));
+		
+		ISymbol loopEnter = scope.addTemporary("loopEnter");
+		loopEnter.setType(typeEngine.LABEL);
+		
+		ISymbol loopBody = scope.addTemporary("loopBody");
+		loopBody.setType(typeEngine.LABEL);
+		
+		ISymbol loopExit = scope.addTemporary("loopExit");
+		loopExit.setType(typeEngine.LABEL);
+		
+		LoopContext context = new LoopContext(scope, loopBody, loopEnter, loopExit, loopVal);
+		loopStack.push(context);
+
+		generateLoopHeader(context, stmt);
+
+		LLOperand loopTemp = generateTypedExpr(stmt.getBody());
+		
+		currentTarget.store(stmt.getType(), loopTemp, context.value);
+		
+		generateLoopFooter(context, stmt);
+		
+		loopStack.pop();
+		
+		return context.value;
+	}
+
+	/**
+	 * Get the value of 'nil' for a type
+	 * @param type
+	 * @return
+	 * @throws ASTException 
+	 */
+	private LLOperand generateNil(IAstTypedExpr expr) throws ASTException {
+		LLType type = expr.getType();
+		if (type.getBasicType() == BasicType.BOOL || type.getBasicType() == BasicType.INTEGRAL || type.getBasicType() == BasicType.FLOATING)
+			return new LLConstOp(0);
+		else
+			throw new ASTException(expr, "unhandled generating nil for: " + type);
+	}
+
+	/**
+	 * @param context 
+	 * @param stmt
+	 * @throws ASTException 
+	 */
+	private void generateLoopHeader(LoopContext context, IAstLoopStmt stmt) throws ASTException {
+		if (stmt instanceof IAstRepeatExpr) {
+			// get the count
+			LLOperand counterVal = generateTypedExpr(((IAstRepeatExpr)stmt).getExpr());
+			
+			// make a var to hold it
+			ISymbol counterSym = context.scope.addTemporary("counter");
+			counterSym.setType(typeEngine.INT);
+			
+			context.inductor = makeLocalStorage(counterSym, false, counterVal);
+			
+			// now do the test before the body
+			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
+			currentTarget.addBlock(context.enterLabel);
+			
+			LLType indVarType = context.inductor.getVariable().getSymbol().getType();
+			LLOperand current = currentTarget.load(indVarType, context.inductor);
+			
+			LLOperand ret = currentTarget.newTemp(typeEngine.BOOL);
+			currentTarget.emit(new LLBinaryInstr("icmp eq", ret, indVarType, current, new LLConstOp(0)));
+			currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, ret, new LLSymbolOp(context.exitLabel), new LLSymbolOp(context.bodyLabel)));
+			
+			currentTarget.addBlock(context.bodyLabel);
+			
+		} else { 
+			unhandled(stmt);
+		}
+	}
+
+	/**
+	 * @param context 
+	 * @param stmt
+	 */
+	private void generateLoopFooter(LoopContext context, IAstLoopStmt stmt) throws ASTException {
+		if (stmt instanceof IAstRepeatExpr) {
+			// at the end of the loop, decrement the counter
+			
+			LLType indVarType = context.inductor.getVariable().getSymbol().getType();
+			LLOperand current = currentTarget.load(indVarType, context.inductor);
+			LLOperand minusOne = currentTarget.newTemp(indVarType);
+			currentTarget.emit(new LLBinaryInstr(IOperation.SUB.getLLVMName(), minusOne, indVarType, current, new LLConstOp(1)));
+			currentTarget.store(indVarType, minusOne, context.inductor);
+
+			// and jump back
+			
+			currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
+			
+			currentTarget.addBlock(context.exitLabel);
+		} else { 
+			unhandled(stmt);
+		}
+		
 	}
 
 	private void generateLabelStmt(IAstLabelStmt stmt) {
@@ -538,6 +680,8 @@ public class LLVMGenerator {
 
 	private LLOperand generateStmtListExpr(
 			IAstStmtListExpr expr) throws ASTException {
+		
+		
 		LLOperand result = null;
 		for (IAstStmt stmt : expr.getStmtList().list()) {
 			result = generateStmt(stmt);
@@ -551,7 +695,7 @@ public class LLVMGenerator {
 
 	private LLOperand generateTypedExpr( IAstTypedExpr expr) throws ASTException {
 		//currentTarget.emit(new LLCommentInstr(getSource(expr.getSourceRef())));
-		LLOperand temp;
+		LLOperand temp = null;
 		if (expr instanceof IAstExprStmt) 
 			temp = generateExprStmt((IAstExprStmt) expr);
 		else if (expr instanceof IAstStmtListExpr)
@@ -572,10 +716,10 @@ public class LLVMGenerator {
 			temp = generateTupleExpr((IAstTupleExpr) expr);
 		else if (expr instanceof IAstAssignStmt)
 			temp = generateAssignStmt((IAstAssignStmt) expr);
-		else if (expr instanceof IAstGotoStmt) {
+		else if (expr instanceof IAstBlockStmt)
+			temp = generateStmtList(((IAstBlockStmt) expr).stmts());		
+		else if (expr instanceof IAstGotoStmt)
 			generateGotoStmt((IAstGotoStmt) expr);
-			return null;
-		}
 		else {
 			unhandled(expr);
 			return null;

@@ -104,6 +104,20 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 	public boolean equalValue(IAstTypedExpr expr) {
 		return false;
 	}
+	
+	public IAstTypedExpr getValue() {
+		IAstStmt last = null;
+		for (int idx = stmtList.list().size(); idx > 0; idx--) {
+			last = stmtList.list().get(idx - 1);
+			if (!(last instanceof IAstGotoStmt)) {
+				if (last instanceof IAstTypedExpr)
+					return (IAstTypedExpr) last;
+				else
+					return null;
+			}
+		}
+		return null;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
@@ -111,7 +125,7 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		IAstStmt last = null;
+		/*IAstStmt last = null;
 		for (int idx = stmtList.list().size(); idx > 0; idx--) {
 			last = stmtList.list().get(idx - 1);
 			if (!(last instanceof IAstGotoStmt))
@@ -119,7 +133,8 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 		}
 		if (last instanceof ITyped)
 			return inferTypesFromChildren(new ITyped[] { (ITyped) last });
-		return false;
+		return false;*/
+		return inferTypesFromChildren(new ITyped[] { getValue() });
 	}
 
 }
