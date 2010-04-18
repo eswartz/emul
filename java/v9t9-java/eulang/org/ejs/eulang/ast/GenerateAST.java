@@ -21,6 +21,7 @@ import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstAllocTupleStmt;
 import org.ejs.eulang.ast.impl.AstArgDef;
 import org.ejs.eulang.ast.impl.AstAssignStmt;
+import org.ejs.eulang.ast.impl.AstAssignTupleStmt;
 import org.ejs.eulang.ast.impl.AstBinExpr;
 import org.ejs.eulang.ast.impl.AstBlockStmt;
 import org.ejs.eulang.ast.impl.AstBoolLitExpr;
@@ -37,15 +38,14 @@ import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstModule;
 import org.ejs.eulang.ast.impl.AstName;
-import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstNilLitExpr;
+import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
-import org.ejs.eulang.ast.impl.AstAssignTupleStmt;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
 import org.ejs.eulang.ast.impl.AstType;
@@ -502,7 +502,7 @@ public class GenerateAST {
 	 * @throws GenerateException 
 	 */
 	private IAstNode constructList(Tree tree) throws GenerateException {
-		IAstNodeList<IAstTypedExpr> list = new AstNodeList<IAstTypedExpr>();
+		IAstNodeList<IAstTypedExpr> list = new AstNodeList<IAstTypedExpr>(IAstTypedExpr.class);
 		
 		for (Tree kid : iter(tree)) {
 			list.add(checkConstruct(kid, IAstTypedExpr.class));
@@ -517,7 +517,7 @@ public class GenerateAST {
 	 * @throws GenerateException 
 	 */
 	private IAstTupleExpr constructTuple(Tree tree) throws GenerateException {
-		IAstNodeList<IAstTypedExpr> elements = new AstNodeList<IAstTypedExpr>();
+		IAstNodeList<IAstTypedExpr> elements = new AstNodeList<IAstTypedExpr>(IAstTypedExpr.class);
 		for (Tree kid : iter(tree)) {
 			elements.add(checkConstruct(kid, IAstTypedExpr.class));
 		}
@@ -533,7 +533,7 @@ public class GenerateAST {
 	 * @throws GenerateException 
 	 */
 	private IAstNode constructCondList(Tree tree) throws GenerateException {
-		IAstNodeList<IAstCondExpr> condExprList = new AstNodeList<IAstCondExpr>();
+		IAstNodeList<IAstCondExpr> condExprList = new AstNodeList<IAstCondExpr>(IAstCondExpr.class);
 		for (Tree kid : iter(tree)) {
 			IAstCondExpr arg = checkConstruct(kid, IAstCondExpr.class);
 			condExprList.add(arg);
@@ -638,7 +638,7 @@ public class GenerateAST {
 	 * @return
 	 */
 	public IAstNode constructArgList(Tree tree) throws GenerateException {
-		IAstNodeList<IAstTypedExpr> argList = new AstNodeList<IAstTypedExpr>();
+		IAstNodeList<IAstTypedExpr> argList = new AstNodeList<IAstTypedExpr>(IAstTypedExpr.class);
 		for (Tree kid : iter(tree)) {
 			IAstTypedExpr arg = checkConstruct(kid, IAstTypedExpr.class);
 			argList.add(arg);
@@ -686,24 +686,83 @@ public class GenerateAST {
 		IAstType type = checkConstruct(tree.getChild(1), IAstType.class);
 		
 		
-		IAstTypedExpr expr = null;
-		if (tree.getChildCount() == 3)
-			expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
-		
 		if (tree.getChild(0).getType() == EulangParser.ID) {
 			IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
 			
 			if (type != null) {
 				symbolExpr.getSymbol().setType(type.getType());
 			}
-			IAstAllocStmt alloc = new AstAllocStmt(symbolExpr, type, expr);
+
+			IAstNodeList<IAstSymbolExpr> idlist = AstNodeList.<IAstSymbolExpr>singletonList(
+					IAstSymbolExpr.class, symbolExpr);
+			
+			IAstNodeList<IAstTypedExpr> exprlist = null;
+			if (tree.getChildCount() == 3) {
+				IAstTypedExpr expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
+				exprlist = AstNodeList.<IAstTypedExpr>singletonList(IAstTypedExpr.class, expr);
+			}
+			
+			IAstAllocStmt alloc = new AstAllocStmt(idlist, type, exprlist, false);
 			getSource(tree, alloc);
 	
 			symbolExpr.getSymbol().setDefinition(alloc);
 	
 			return alloc;
+		} else if (tree.getChild(0).getType() == EulangParser.LIST) {
+			IAstNodeList<IAstSymbolExpr> idlist = new AstNodeList<IAstSymbolExpr>(IAstSymbolExpr.class);
+			
+			boolean expand = false;
+			int idx = 0;
+			
+			for (Tree kid : iter(tree.getChild(idx))) {
+				IAstSymbolExpr symbolExpr = createSymbol(kid);
+				
+				if (type != null) {
+					symbolExpr.getSymbol().setType(type.getType());
+				}
+				idlist.add(symbolExpr);
+			}
+			getSource(tree.getChild(idx), idlist);
+			idx += 2;  // skip TYPE
+			
+			if (tree.getChildCount() > idx) {
+				if (tree.getChild(idx).getType() == EulangParser.PLUS) {
+					expand = true;
+					idx++;
+				}
+			}
+
+			IAstNodeList<IAstTypedExpr> exprlist = null;
+			if (tree.getChildCount() > idx) {
+				exprlist = new AstNodeList<IAstTypedExpr>(IAstTypedExpr.class);
+				for (Tree kid : iter(tree.getChild(idx))) {
+					IAstTypedExpr expr = checkConstruct(kid, IAstTypedExpr.class);
+					exprlist.add(expr);
+				}
+				getSource(tree.getChild(idx), exprlist);
+				idx++;
+			}
+			
+			if (exprlist != null && exprlist.nodeCount() != idlist.nodeCount() && exprlist.nodeCount() != 1) {
+				throw new GenerateException(tree, "multi-allocation statement has incompatible number of identifiers and expressions "
+						+ idlist.nodeCount() + " != " + exprlist.nodeCount());
+			}
+			if (expand && (exprlist == null || exprlist.nodeCount() != 1 ))
+				throw new GenerateException(tree, "expand modifier ('+') makes no sense without a singular expression");
+			
+			IAstAllocStmt alloc = new AstAllocStmt(idlist, type, exprlist, expand);
+			getSource(tree, alloc);
+	
+			for (IAstSymbolExpr symbolExpr : idlist.list())
+				symbolExpr.getSymbol().setDefinition(alloc);
+	
+			return alloc;
 		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
 			IAstTupleNode syms = constructIdTuple(tree.getChild(0));
+			
+			IAstTypedExpr expr = null;
+			if (tree.getChildCount() == 3)
+				expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
 			
 			IAstAllocTupleStmt alloc = new AstAllocTupleStmt(syms, type, expr);
 			getSource(tree, alloc);
@@ -761,11 +820,37 @@ public class GenerateAST {
 	 * @return
 	 */
 	public IAstNode constructAssign(Tree tree) throws GenerateException {
-		assert(tree.getChildCount() == 2);
 		if (tree.getChild(0).getType() == EulangParser.IDREF) {
 			IAstSymbolExpr left = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
 			IAstTypedExpr right = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
-			IAstAssignStmt assign = new AstAssignStmt(left, right);
+			IAstAssignStmt assign = new AstAssignStmt(
+					AstNodeList.<IAstSymbolExpr>singletonList(IAstSymbolExpr.class, left),
+					AstNodeList.<IAstTypedExpr>singletonList(IAstTypedExpr.class, right),
+					false);
+			getSource(tree, assign);
+			return assign;
+		} else if (tree.getChild(0).getType() == EulangParser.LIST) {
+			IAstNodeList<IAstSymbolExpr> symbols = new AstNodeList<IAstSymbolExpr>(IAstSymbolExpr.class);
+			IAstNodeList<IAstTypedExpr> exprs = new AstNodeList<IAstTypedExpr>(IAstTypedExpr.class);
+			
+			boolean expand = false;
+			int idx = 0;
+			for (Tree kid : iter(tree.getChild(idx))) {
+				IAstSymbolExpr left = checkConstruct(kid, IAstSymbolExpr.class);
+				symbols.add(left);
+			}
+			getSource(tree.getChild(idx), symbols);
+			++idx;
+			if (tree.getChild(idx).getType() == EulangParser.PLUS) {
+				expand = true;
+				idx++;
+			}
+			for (Tree kid : iter(tree.getChild(idx))) {
+				IAstTypedExpr right = checkConstruct(kid, IAstTypedExpr.class);
+				exprs.add(right);
+			}
+			getSource(tree.getChild(idx), exprs);
+			IAstAssignStmt assign = new AstAssignStmt(symbols, exprs, expand);
 			getSource(tree, assign);
 			return assign;
 		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
@@ -787,7 +872,7 @@ public class GenerateAST {
 	 * @throws GenerateException 
 	 */
 	private IAstTupleNode constructIdTuple(Tree tree) throws GenerateException {
-		IAstNodeList<IAstSymbolExpr> elements = new AstNodeList<IAstSymbolExpr>();
+		IAstNodeList<IAstSymbolExpr> elements = new AstNodeList<IAstSymbolExpr>(IAstSymbolExpr.class);
 		for (Tree kid : iter(tree)) {
 			elements.add(checkConstruct(kid, IAstSymbolExpr.class));
 		}
@@ -1047,7 +1132,7 @@ public class GenerateAST {
 	 * @return
 	 */
 	public IAstNodeList<IAstStmt> constructStmtList(Tree tree) {
-		IAstNodeList<IAstStmt> list = new AstNodeList<IAstStmt>();
+		IAstNodeList<IAstStmt> list = new AstNodeList<IAstStmt>(IAstStmt.class);
 		
 		assert tree.getType() == EulangParser.STMTLIST;
 		

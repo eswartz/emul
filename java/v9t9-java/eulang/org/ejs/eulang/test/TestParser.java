@@ -101,7 +101,7 @@ public class TestParser extends BaseParserTest  {
     	parse("myCode = [ " +
     			"code { i=3+6; j=i*333; }, " +
     			"code { }, " +
-    			"code (a:Int,b) { }, " +	// (1) not a scope ref, (2) allow trailing comma
+    			"code (a:Int;b) { }, " +	// (1) not a scope ref, (2) allow trailing comma
     			"]" +
     			";");
     }
@@ -121,7 +121,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testCodeBlockArgs1b() throws Exception  {
-    	parse("sqrAdd = code ( x, y,) { x*x+y };");
+    	parse("sqrAdd = code ( x; y) { x*x+y };");
     }
     @Test
     public void testCodeBlockArgs1c() throws Exception  {
@@ -129,7 +129,7 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testCodeBlockArgs2() throws Exception  {
-    	parse("myCode = code (a : Int, b , c: Float){  } ;");
+    	parse("myCode = code (a : Int; b ; c: Float){  } ;");
     }
     @Test
     public void testCodeBlockReturns1() throws Exception  {
@@ -210,24 +210,24 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testListCompr0() throws Exception  {
-    	parseAt("listCompr", "for T in [ Int, Float ] : code ( x : T, y : T => T ) { x*x+y }");
+    	parseAt("listCompr", "for T in [ Int, Float ] : code ( x : T; y : T => T ) { x*x+y }");
     }
     @Test
     public void testListCompr1() throws Exception  {
-    	parse("sqrAdd = [ for T in [ Int, Float ] : code( x : T, y : T => T ) { x*x+y } ] ; ");
+    	parse("sqrAdd = [ for T in [ Int, Float ] : code( x : T; y : T => T ) { x*x+y } ] ; ");
     }
     @Test
     public void testListCompr2() throws Exception  {
-    	parse("sqrAdd = [ for T, U in [ Int, Float ] : code ( x : T, y : U )  { x*x+y } ] ; ") ;
+    	parse("sqrAdd = [ for T, U in [ Int, Float ] : code ( x : T; y : U )  { x*x+y } ] ; ") ;
     }
     @Test
     public void testListCompr3() throws Exception  {
-    	parse("sqrAdd = [ for T in [ Int, Float ] for U in [ Byte, Double ] : code ( x : T, y : U ) {  x*x+y } ];") ;
+    	parse("sqrAdd = [ for T in [ Int, Float ] for U in [ Byte, Double ] : code ( x : T; y : U ) {  x*x+y } ];") ;
     }
     @Test
     public void testListCompr4() throws Exception  {
     	// TODO: be sure the outer list has three items
-    	parse("sqrAdd = [ code ( x, y, z ) {} , for T in [ Byte, Double ] : code ( x : T, y : U ) {  x*x+y }, code ( a, b, c ) {}];") ;
+    	parse("sqrAdd = [ code ( x, y, z ) {} , for T in [ Byte, Double ] : code ( x : T; y : U ) {  x*x+y }, code ( a, b, c ) {}];") ;
     }
     @Test
     public void testScope1() throws Exception  {

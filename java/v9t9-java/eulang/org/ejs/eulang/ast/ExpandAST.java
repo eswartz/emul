@@ -192,7 +192,7 @@ public class ExpandAST {
 			throw new ASTException(node, "no scope found");
 		}
 		
-		IAstNodeList<IAstStmt> blockList = new AstNodeList<IAstStmt>();
+		IAstNodeList<IAstStmt> blockList = new AstNodeList<IAstStmt>(IAstStmt.class);
 		
 		// mark all the symbols temporary so they don't collide,
 		// and move them into the other scope
@@ -229,7 +229,7 @@ public class ExpandAST {
 			if (argCode != null && !(realArg instanceof IAstCodeExpr)) {
 				if (argCode.getArgTypes().length > 0)
 					throw new ASTException(realArg, "cannot pass expression as an implicit code block since named arguments are required");
-				IAstNodeList<IAstStmt> stmtlist = new AstNodeList<IAstStmt>();
+				IAstNodeList<IAstStmt> stmtlist = new AstNodeList<IAstStmt>(IAstStmt.class);
 				
 				IAstTypedExpr retVal = (IAstTypedExpr) realArg.copy(null);
 				retVal.uniquifyIds();
@@ -255,10 +255,16 @@ public class ExpandAST {
 					//typeExprCopy.uniquifyIds();
 				}
 				
+				IAstNodeList<IAstSymbolExpr> idList = AstNodeList.<IAstSymbolExpr>singletonList(
+						IAstSymbolExpr.class, symCopy);
+				IAstNodeList<IAstTypedExpr> exprList = AstNodeList.<IAstTypedExpr>singletonList(
+						IAstTypedExpr.class, realArg);
+				
 				IAstAllocStmt argAlloc = new AstAllocStmt(
-						symCopy, 
+						idList, 
 						typeExprCopy,
-						realArg);
+						exprList, 
+						false);
 				blockList.add(realArgIdx++, argAlloc);
 			} else {
 				// For macro arguments, the actual argument is directly replaced

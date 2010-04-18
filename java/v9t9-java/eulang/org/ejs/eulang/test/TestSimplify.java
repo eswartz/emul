@@ -40,11 +40,11 @@ public class TestSimplify extends BaseParserTest {
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testPromotedCast2");
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr().getFirst();
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
 		assertEquals(typeEngine.INT, castExpr.getExpr().getType());
 		IAstBinExpr divExpr = (IAstBinExpr) castExpr.getExpr();
 		assertEquals(typeEngine.INT, divExpr.getLeft().getType());
@@ -71,12 +71,12 @@ public class TestSimplify extends BaseParserTest {
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testPromotedCond1");
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr().getFirst();
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
 
-		IAstIntLitExpr litExpr = (IAstIntLitExpr) allocStmt.getExpr();
+		IAstIntLitExpr litExpr = (IAstIntLitExpr) allocStmt.getExpr().getFirst();
 		assertEquals(1, litExpr.getValue());
 		
     }
@@ -95,12 +95,12 @@ public class TestSimplify extends BaseParserTest {
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testPromotedCond2");
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr().getFirst();
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
-		assertTrue(isCastTo(allocStmt.getExpr(), typeEngine.BYTE));
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
+		assertTrue(isCastTo(allocStmt.getExpr().getFirst(), typeEngine.BYTE));
 		IAstBinExpr cmpExpr = (IAstBinExpr)  castExpr.getExpr();
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.BYTE, cmpExpr.getLeft().getType());
@@ -124,12 +124,12 @@ public class TestSimplify extends BaseParserTest {
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testUnaryNot");
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr();
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExpr().getFirst();
     	
     	//IAstReturnStmt allocStmt = (IAstReturnStmt) codeExpr.stmts().list().get(1);
-    	IAstExprStmt allocStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
-		assertEquals(typeEngine.BOOL, allocStmt.getType());
-		IAstBinExpr cmpExpr = (IAstBinExpr) allocStmt.getExpr();
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
+		assertEquals(typeEngine.BOOL, exprStmt.getType());
+		IAstBinExpr cmpExpr = (IAstBinExpr) exprStmt.getExpr();
 		assertTrue(cmpExpr.getOp() == IOperation.COMPNE);
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.BYTE, cmpExpr.getLeft().getType());

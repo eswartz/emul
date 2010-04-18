@@ -10,6 +10,7 @@ import java.util.ListIterator;
 
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 
 
 /**
@@ -19,16 +20,18 @@ import org.ejs.eulang.ast.IAstNodeList;
 public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNodeList<T> {
 
 	private List<T> list = new ArrayList<T>();
-
+	private Class<T> theClass;
 	/**
 	 * 
 	 */
-	public AstNodeList() {
+	public AstNodeList(Class<T> theClass) {
+		this.theClass = theClass;
 	}
 	protected AstNodeList(List<T> copyList) {
 		list = copyList;
-		for (T node : list)
+		for (T node : list) {
 			node.setParent(this);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -40,7 +43,9 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 		for (T t : list) {
 			copyList.add(doCopy(t, copyParent));
 		}
-		return fixup(this, new AstNodeList<T>(copyList));
+		AstNodeList<T> newList = new AstNodeList<T>(copyList);
+		newList.theClass = theClass;
+		return fixup(this, newList);
 	}
 	
 	@Override
@@ -144,6 +149,8 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
+		if (theClass == null || !theClass.isAssignableFrom(another.getClass()))
+			throw new ClassCastException();
 		for (ListIterator<T> iterator = list.listIterator(); iterator.hasNext();) {
 			T node = (T) iterator.next();
 			if (node == existing) {
@@ -175,5 +182,15 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 		else
 			return null;
 		
+	}
+	/**
+	 * @param symCopy
+	 * @return
+	 */
+	public static <T extends IAstNode> IAstNodeList<T> singletonList(Class<T> theClass, T symCopy) {
+		IAstNodeList<T> list = new AstNodeList<T>(theClass);
+		list.add(symCopy);
+		list.setSourceRef(symCopy.getSourceRef());
+		return list;
 	}
 }

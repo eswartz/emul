@@ -3,7 +3,7 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
 
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
@@ -35,7 +35,7 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testPointers3() throws Exception {
 		 dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			" refSwap_testPointers3 := code (x : Int&, y : Int& => nil) {\n" +
+    			" refSwap_testPointers3 := code (x : Int&; y : Int& => nil) {\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -64,7 +64,7 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testPointers2() throws Exception {
 		 dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			" swap_testPointers2 := code (x : Int&, @y : Int => null) {\n" +
+    			" swap_testPointers2 := code (x : Int&; @y : Int => null) {\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -78,7 +78,7 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testPointers2b() throws Exception {
 		 dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			" swap_testPointers2b := code (x : Int&, @y : Int& => null) {\n" +
+    			" swap_testPointers2b := code (x : Int&; @y : Int& => null) {\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -99,7 +99,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	@Test
 	public void testShortCircuitAndOr() throws Exception {
 		dumpTypeInfer = true;
-		IAstModule mod = doFrontend("testShortCircuitAndOr = code (x,y:Int&,z => Int){\n" +
+		IAstModule mod = doFrontend("testShortCircuitAndOr = code (x;y:Int&;z => Int){\n" +
 				"if  x > y and y > z then y " +
 				"elif x > z and z > y then z " +
 				"elif y > x and x > z then x " +
@@ -126,7 +126,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	@Test
     public void testGenerics0b() throws Exception {
     	IAstModule mod = doFrontend("add = code (x,y) { x+y };\n" +
-    			"testGenerics0b = code (a:Int,b:Int) { add(a,b) + add(10.0,b);  }; \n");
+    			"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(3, g.getModule().getSymbolCount());
     }
@@ -134,7 +134,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	@Test
   	public void testCasting1() throws Exception {
   		IAstModule mod = doFrontend(
-			"testCasting1 = code (f:Float, d:Double, i:Int, b:Byte) {\n"+
+			"testCasting1 = code (f:Float; d:Double; i:Int; b:Byte) {\n"+
 			"f = d; f = i; f = b;\n"+
 			"d = f; d = i; d = b;\n" +
 			"i = f; i = d; i = b;\n" +
@@ -151,7 +151,7 @@ public class TestLLVMGenerator extends BaseParserTest {
   			"	code (x:Float) { x - x%1.0 },\n" +
   			"   code (x:Double) { x - x%1.0 }\n " +
   			"];\n"+
-			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b) }; \n");
+			"testTypeList1 = code (a:Float;b:Double) { floor(a)+floor(b) }; \n");
   		LLVMGenerator g = doGenerate(mod);
     	assertEquals(3, g.getModule().getSymbolCount());
   }
@@ -163,7 +163,7 @@ public class TestLLVMGenerator extends BaseParserTest {
      			"	code (x:Float) { x - x%1.0 },\n" +
      			"   code (x:Double) { x - x%1.0 }\n " +
      			"];\n"+
- 			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b)*floor(a)*floor(b) }; \n");
+ 			"testTypeList1 = code (a:Float;b:Double) { floor(a)+floor(b)*floor(a)*floor(b) }; \n");
      	LLVMGenerator g = doGenerate(mod);
     	assertEquals(3, g.getModule().getSymbolCount());
      }
@@ -181,10 +181,10 @@ public class TestLLVMGenerator extends BaseParserTest {
   	 @Test
   	 public void testOverloading() throws Exception {
   		 IAstModule mod = doFrontend(
-  				 "    util = [ code(x:Int, y:Int, z:Int) { x*y-z },\n" + 
+  				 "    util = [ code(x:Int; y:Int; z:Int) { x*y-z },\n" + 
   				 "             code(x, y) { util(x, y, 0) }\n" + 
   				 "            ];\n" +
-  				 "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
+  				 "func = code(x:Int;y:Float => Float) { util(x,y) };\n");
   		 LLVMGenerator g = doGenerate(mod);
   		 assertEquals(3, g.getModule().getSymbolCount());
   		 
@@ -197,7 +197,7 @@ public class TestLLVMGenerator extends BaseParserTest {
   				 "    util = [ code(x, y, z ) { x*y-z },\n" + 
   				 "             macro (x, y) { util(x, y, 0) }\n" + 
   				 "            ];\n" +
-  				 "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
+  				 "func = code(x:Int;y:Float => Float) { util(x,y) };\n");
   		 LLVMGenerator g = doGenerate(mod);
   		 assertEquals(2, g.getModule().getSymbolCount());
   		 
@@ -219,10 +219,10 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testWhileLoop() throws Exception {
     	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			"wwhile = macro ( macro test:code, macro body : code) {\n"+
+    			"wwhile = macro ( macro test:code; macro body : code) {\n"+
     			"    @loop: if test() then { body(); goto loop } fi;\n"+
     			"};\n"+
-    			"testWhileLoop = code (t, x : Int, y : Float& => Void) {\n" +
+    			"testWhileLoop = code (t; x : Int; y : Float& => Void) {\n" +
     			"   wwhile(x > t, { y = y/2; x = x-1; } );\n"+
     			"};");
     	LLVMGenerator g = doGenerate(mod);
@@ -232,10 +232,10 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testDoWhile() throws Exception {
     	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			"doWhile = macro ( macro body : code, macro test:code) {\n"+
+    			"doWhile = macro ( macro body : code; macro test:code) {\n"+
     			"    @loop: body(); goto loop if (not test()) ;\n"+
     			"};\n"+
-    			"testDoWhile = code (t, x : Int, y : Float) {\n" +
+    			"testDoWhile = code (t; x : Int; y : Float) {\n" +
     			"   doWhile(y = y/2, { x = x - 1; x > t }); y ; \n"+
     			"};");
     	LLVMGenerator g = doGenerate(mod);
@@ -246,12 +246,56 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testBlockScopes() throws Exception {
     	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			"testBlockScopes = code (t, x : Int, y : Float) {\n" +
+    			"testBlockScopes = code (t; x : Int; y : Float) {\n" +
     			"  if t then { z := Float(x); z = z * 8 } else { z := y; };"+
     			"};");
     	mod = mod.copy(null);
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(1, g.getModule().getSymbolCount());
     	
+    }
+    
+    
+    @Test
+    public void testCodeBlockMultiNamedVars1() throws Exception  {
+    	IAstModule mod = doFrontend("maker = code(u:Int) { u*u*u*u }; " +
+    			"\n" +
+    			"testCodeBlockMultiNamedVars1 = code() {\n" +
+    			"	a, b := maker(4);\n" +
+    			"	c, d := +maker(4);\n" +
+    			" };");
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(2, g.getModule().getSymbolCount());
+    }
+    @Test
+    public void testCodeBlockMultiNamedVars2() throws Exception  {
+    	IAstModule mod = doFrontend("maker = code(u:Int) { u*u*u*u }; " +
+    			"\n" +"testCodeBlockMultiNamedVars2 = code() {\n" +
+    					" a, b := maker(4), maker(9);\n" +
+    					" };");
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(2, g.getModule().getSymbolCount());
+    }
+    @Test
+    public void testCodeBlockMultiAssigns1() throws Exception  {
+    	IAstModule mod = doFrontend("maker = code(u:Int) { -u }; " +
+    			"\n" +
+    			"testCodeBlockMultiAssigns1 = code(a, b) {\n" +
+    			"	a, b = maker(a+b);\n" +
+    			"	a, b = +maker(a+b);\n" +
+    			" };");
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(2, g.getModule().getSymbolCount());
+    }
+    @Test
+    public void testCodeBlockMultiAssigns2() throws Exception  {
+    	IAstModule mod = doFrontend("maker = code(u:Int) { u*u*u*u }; " +
+    			"\n" +
+    			"testCodeBlockMultiAssigns2 = code(a, b) {\n" +
+    			"	a, b = maker(b), maker(a);\n" +
+    			"   a, b = b, a;\n"+
+    			" };");
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(2, g.getModule().getSymbolCount());
     }
 }

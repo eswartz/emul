@@ -161,6 +161,7 @@ public class AstGotoStmt extends AstTypedExpr implements IAstGotoStmt {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.TypeEngine)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {

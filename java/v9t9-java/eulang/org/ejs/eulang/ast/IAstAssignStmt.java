@@ -11,8 +11,11 @@ package org.ejs.eulang.ast;
  */
 public interface IAstAssignStmt extends IAstStmt, IAstTypedExpr {
 	IAstAssignStmt copy(IAstNode copyParent);
-	IAstSymbolExpr getSymbol();
-	void setSymbol(IAstSymbolExpr id);
-	IAstTypedExpr getExpr();
-	void setExpr(IAstTypedExpr expr);
+	IAstNodeList<IAstSymbolExpr> getSymbol();
+	void setSymbol(IAstNodeList<IAstSymbolExpr> id);
+	IAstNodeList<IAstTypedExpr> getExpr();
+	void setExpr(IAstNodeList<IAstTypedExpr> expr);
+
+	void setExpand(boolean expand);
+	boolean getExpand();
 }

@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast;
 
-import org.ejs.eulang.symbols.ISymbol;
 
 
 /**
@@ -11,15 +10,18 @@ import org.ejs.eulang.symbols.ISymbol;
  * @author ejs
  *
  */
-public interface IAstAllocStmt extends IAstStmt, IAstTypedNode, IAstSymbolDefiner {
+public interface IAstAllocStmt extends IAstStmt, IAstTypedNode /*, IAstSymbolDefiner*/ {
 	IAstAllocStmt copy(IAstNode copyParent);
 	
-	IAstSymbolExpr getSymbolExpr();
-	void setSymbolExpr(IAstSymbolExpr id);
-	ISymbol getSymbol();
-	IAstTypedExpr getExpr();
-	void setExpr(IAstTypedExpr expr);
+	IAstNodeList<IAstSymbolExpr> getSymbolExpr();
+	void setSymbolExpr(IAstNodeList<IAstSymbolExpr> id);
 	
 	IAstType getTypeExpr();
 	void setTypeExpr(IAstType type);
+	
+	IAstNodeList<IAstTypedExpr> getExpr();
+	void setExpr(IAstNodeList<IAstTypedExpr> expr);
+	
+	void setExpand(boolean expand);
+	boolean getExpand();
 }

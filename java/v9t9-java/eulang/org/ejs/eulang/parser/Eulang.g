@@ -143,21 +143,35 @@ listitem : toplevelvalue ;
   
 // code block
 
-code : CODE ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? optargdefs*) codestmtlist*)  
+code : CODE ( LPAREN argdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? argdefs*) codestmtlist*)  
     ;
 
 // macro code block
-macro : MACRO ( LPAREN optargdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? optargdefs*) codestmtlist*)  
+macro : MACRO ( LPAREN argdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? argdefs*) codestmtlist*)  
     ;
+
+argdefs options {  backtrack = true; } :
+  | argdefsWithTypes 
+  | argdefWithType? 
+  |  argdefsWithNames 
+  ;
+    
+argdefsWithTypes: (argdefWithType ( SEMI argdefWithType)+ SEMI?)        -> argdefWithType* 
+    ;
+
+// make use of antlr's node replication
+argdefWithType:  ID (COMMA ID)* (COLON type)?   -> ^(ARGDEF ID type* )+
+    | MACRO ID (COMMA ID)* (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO ID type* $init?)+
+  ;
+
+argdefsWithNames :  (argdefWithName ( COMMA argdefWithName)+ COMMA?)    -> argdefWithName* 
+    ;
+argdefWithName: ID   -> ^(ARGDEF ID )
+  ;
 
 // prototype, as for a type or code block (no defaults allowed)
 proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? argdefs*)
     ;
-argdefs: (argdef ( COMMA argdef)* COMMA?)?                        -> argdef* 
-    ;
-
-argdef: MACRO? ID (COLON type)?    -> ^(ARGDEF MACRO? ID type* )
-  ;
 
 xreturns: ARROW type      -> type
   | ARROW argtuple           -> argtuple
@@ -173,14 +187,6 @@ tupleargdefs: (tupleargdef ( COMMA tupleargdef)+ )                        -> tup
 tupleargdef: type    -> type
   | QUESTION        -> ^(TYPE NIL)
   |                 -> ^(TYPE NIL)
-  ;
-  
-// args inside a prototype, which have optional initializers
-optargdefs: (optargdef ( COMMA optargdef)* COMMA?)?                        -> optargdef* 
-    ;
-
-optargdef: ID (COLON type)?   -> ^(ARGDEF ID type* )
-    | MACRO ID (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO ID type* $init?)
   ;
   
 type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScopeRef) ) )? 
@@ -210,6 +216,10 @@ varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
     | idTuple COLON_EQUALS assignExpr         -> ^(ALLOC idTuple TYPE assignExpr)
     | ID COLON type (EQUALS assignExpr)?  -> ^(ALLOC ID type assignExpr*)
     | idTuple COLON type (EQUALS assignExpr)?  -> ^(ALLOC idTuple type assignExpr*)
+    | ID (COMMA ID)+ COLON_EQUALS PLUS? assignExpr (COMMA assignExpr)* 
+        -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST assignExpr+))
+    | ID (COMMA ID)+ COLON type (EQUALS PLUS? assignExpr (COMMA assignExpr)*)?  
+        -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignExpr+)?)
     ;
 
 //returnStmt : RETURN assignExpr?           -> ^(RETURN assignExpr?)
@@ -217,6 +227,8 @@ varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
 
 assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
     | idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
+    | idOrScopeRef (COMMA idOrScopeRef)+ EQUALS PLUS? assignExpr (COMMA assignExpr)*       
+        -> ^(ASSIGN ^(LIST idOrScopeRef+) PLUS? ^(LIST assignExpr+))
     ;
       
 assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)

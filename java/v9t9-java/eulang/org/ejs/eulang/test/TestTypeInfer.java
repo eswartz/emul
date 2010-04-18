@@ -38,7 +38,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testNoChange1() throws Exception {
     	IAstModule mod = treeize(
-    			"testNoChange1 = code (x : Int, y : Int => Int) {\n" +
+    			"testNoChange1 = code (x : Int; y : Int => Int) {\n" +
     			"   x+10;\n" +
     			"};");
     	sanityTest(mod);
@@ -78,7 +78,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testInvalidTypes1() throws Exception {
     	IAstModule mod = treeize(
-    			"testInvalidTypes1 = code (x : Int, y : Float) {\n" +
+    			"testInvalidTypes1 = code (x : Int; y : Float) {\n" +
     			"   y>>1;\n" +
     			"};");
     	sanityTest(mod);
@@ -90,7 +90,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testInvalidTypes2() throws Exception {
     	IAstModule mod = treeize(
-    			"testInvalidTypes2 = code (x : Int, y : Float) {\n" +
+    			"testInvalidTypes2 = code (x : Int; y : Float) {\n" +
     			"   z : Int = 2.0;\n" +
     			"   z | y;\n"+
     			"};");
@@ -103,7 +103,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testVoidReturn() throws Exception {
     	IAstModule mod = treeize(
-    			"testVoidReturn= code (x : Int, y : Int) { };");
+    			"testVoidReturn= code (x : Int; y : Int) { };");
     	sanityTest(mod);
 
     	
@@ -122,7 +122,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testPromotedCast1() throws Exception {
     	IAstModule mod = treeize(
-    			"testPromotedCast1 = code (x : Int, y : Int) {\n" +
+    			"testPromotedCast1 = code (x : Int; y : Int) {\n" +
     			"   p := x*1.0;\n" +
     			"};");
     	sanityTest(mod);
@@ -136,8 +136,8 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstAllocStmt allocStmt = (IAstAllocStmt) codeExpr.stmts().list().get(0);
 		assertEquals(typeEngine.FLOAT, allocStmt.getType());
-		assertTrue(allocStmt.getExpr() instanceof IAstBinExpr);
-		IAstBinExpr binExpr = (IAstBinExpr) allocStmt.getExpr();
+		assertTrue(allocStmt.getExpr().getFirst() instanceof IAstBinExpr);
+		IAstBinExpr binExpr = (IAstBinExpr) allocStmt.getExpr().getFirst();
 		assertEquals(typeEngine.FLOAT, binExpr.getLeft().getType());
 		assertTrue(isCastTo(binExpr.getLeft(), typeEngine.FLOAT));
     }
@@ -159,7 +159,7 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
 		assertEquals(typeEngine.INT, castExpr.getExpr().getType());
 		IAstBinExpr divExpr = (IAstBinExpr) castExpr.getExpr();
 		assertEquals(typeEngine.INT, divExpr.getLeft().getType());
@@ -188,7 +188,7 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
 		assertEquals(typeEngine.INT, castExpr.getExpr().getType());
 		IAstBinExpr addExpr = (IAstBinExpr) castExpr.getExpr();
 		assertEquals(typeEngine.INT, addExpr.getType());
@@ -212,8 +212,8 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
-		assertTrue(isCastTo(allocStmt.getExpr(), typeEngine.BYTE));
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		assertTrue(isCastTo(allocStmt.getExpr().getFirst(), typeEngine.BYTE));
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
 		IAstBinExpr cmpExpr = (IAstBinExpr)  castExpr.getExpr();
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.INT, cmpExpr.getLeft().getType());
@@ -237,8 +237,8 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
-		assertTrue(isCastTo(allocStmt.getExpr(), typeEngine.BYTE));
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		assertTrue(isCastTo(allocStmt.getExpr().getFirst(), typeEngine.BYTE));
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
 		IAstBinExpr cmpExpr = (IAstBinExpr)  castExpr.getExpr();
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.BYTE, cmpExpr.getLeft().getType());
@@ -266,7 +266,7 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
 
-		IAstUnaryExpr negExpr = (IAstUnaryExpr) allocStmt.getExpr();
+		IAstUnaryExpr negExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
 		assertTrue(negExpr.getOp() == IOperation.NEG);
 		assertEquals(typeEngine.BYTE, negExpr.getExpr().getType());
 		IAstUnaryExpr invExpr = (IAstUnaryExpr) negExpr.getExpr();
@@ -313,7 +313,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testDiscoverReturn1() throws Exception {
     	IAstModule mod = treeize(
-    			"testDiscoverReturn1 = code (x : Int, y : Int) {\n" +
+    			"testDiscoverReturn1 = code (x : Int; y : Int) {\n" +
     			"   x*1.0;\n" +
     			"};");
     	sanityTest(mod);
@@ -342,7 +342,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testDiscoverReturn2() throws Exception {
     	IAstModule mod = treeize(
-    			"testDiscoverReturn2 = code (x : Int, y : Int) {\n" +
+    			"testDiscoverReturn2 = code (x : Int; y : Int) {\n" +
     			"   x+10.0;\n" +
     			"};");
     	sanityTest(mod);
@@ -369,7 +369,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testCast1() throws Exception {
     	IAstModule mod = treeize(
-    			"testCast1 = code (x : Int, y : Int) {\n" +
+    			"testCast1 = code (x : Int; y : Int) {\n" +
     			"   x+10.0;\n" +
     			"};");
     	sanityTest(mod);
@@ -394,7 +394,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testCast2a() throws Exception {
     	IAstModule mod = treeize("global : Int = 3;\n" +
-    			"testCast2 = code (x : Int, y : Float) {\n" +
+    			"testCast2 = code (x : Int; y : Float) {\n" +
     			"   x+10*y>>global;\n" +
     			"};");
     	sanityTest(mod);
@@ -405,7 +405,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testCast2b() throws Exception {
     	IAstModule mod = treeize("global : Int = 3;\n" +
-    			"testCast2b = code (x : Int, y : Float) {\n" +
+    			"testCast2b = code (x : Int; y : Float) {\n" +
     			"   Int(x+10*y)>>global;\n" +
     			"};");
     	sanityTest(mod);
@@ -444,7 +444,7 @@ public class TestTypeInfer extends BaseParserTest {
     public void testDiscoverAssign1() throws Exception {
 		// result of 'a' and thus type is promoted
     	IAstModule mod = treeize(
-    			"testDiscoverAssign1 = code (x : Int, y : Float) {\n" +
+    			"testDiscoverAssign1 = code (x : Int; y : Float) {\n" +
     			"   z := x;\n" +
     			"   a := z + y;\n" +
     			"   a;\n"+
@@ -469,7 +469,7 @@ public class TestTypeInfer extends BaseParserTest {
     public void testDiscoverAssign2() throws Exception {
 		// 'a' should not change 'y'
     	IAstModule mod = treeize(
-    			"testDiscoverAssign2 = code (x : Int, y : Float) {\n" +
+    			"testDiscoverAssign2 = code (x : Int; y : Float) {\n" +
     			"   z := x;\n" +
     			"   a : Int = y;\n"+
     			"   a = z + y;\n" +
@@ -585,7 +585,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testExample1() throws Exception {
     	IAstModule mod = treeize(
-    			"testExample1 = code (z, a : Byte) {\n" +
+    			"testExample1 = code (z; a : Byte) {\n" +
     			"   z = a | Byte(6);\n" +
     			"   z;\n"+
     			"};");
@@ -600,15 +600,15 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	IAstAssignStmt assign = (IAstAssignStmt) codeExpr.stmts().list().get(0);
     	assertEquals(typeEngine.BYTE, assign.getType());
-    	assertEquals(typeEngine.BYTE, assign.getExpr().getType());
-    	assertTrue(assign.getExpr() instanceof IAstBinExpr);
+    	assertEquals(typeEngine.BYTE, assign.getExpr().getFirst().getType());
+    	assertTrue(assign.getExpr().getFirst() instanceof IAstBinExpr);
     }
 	
 
     @Test
     public void testPointers1() throws Exception {
     	IAstModule mod = treeize(
-        		" badSwap_testPointers1 = code (x : Int&, y : Int& => nil) {\n" +
+        		" badSwap_testPointers1 = code (x : Int&; y : Int& => nil) {\n" +
         		" t := x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -632,7 +632,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testPointers2() throws Exception {
     	IAstModule mod = treeize(
-        		" refOnlySwap_testPointers2 = code (@x : Int&, @y : Int& => null) {\n" +
+        		" refOnlySwap_testPointers2 = code (@x : Int&; @y : Int& => null) {\n" +
         		" t := x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -656,7 +656,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testPointers3() throws Exception {
     	IAstModule mod = treeize(
-        		" intOnlySwap_testPointers3 = code (@x : Int, @y : Int => null) {\n" +
+        		" intOnlySwap_testPointers3 = code (@x : Int; @y : Int => null) {\n" +
         		" t := x;\n"+
     			" x = y;\n"+
     			" y = t;\n"+
@@ -756,7 +756,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
 	public void testShortCircuitAndOrRef() throws Exception {
 		// be sure stray 'Int&' doesn't make everything a reference
-		IAstModule mod = treeize("testShortCircuitAndOrRef = code (x,y:Int&,z => Int){\n" +
+		IAstModule mod = treeize("testShortCircuitAndOrRef = code (x;y:Int&;z => Int){\n" +
 				"if x > y and y > z then y " +
 				"elif x > z and z > y then z " +
 				"elif y > x and x > z then x " +
@@ -867,7 +867,7 @@ public class TestTypeInfer extends BaseParserTest {
 	@Test
     public void testGenerics0() throws Exception {
     	IAstModule mod = treeize("add = code (x,y) { x+y };\n" +
-    			"testGenerics0 = code (a:Int,b:Int) { add(a,b);  }; \n");
+    			"testGenerics0 = code (a:Int;b:Int) { add(a,b);  }; \n");
     	sanityTest(mod);
     	
     	doTypeInfer(mod);
@@ -883,7 +883,7 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testGenerics0b() throws Exception {
     	IAstModule mod = treeize("add = code (x,y) { x+y };\n" +
-    			"testGenerics0b = code (a:Int,b:Int) { add(a,b) + add(10.0,b);  }; \n");
+    			"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
     	sanityTest(mod);
     	
     	doTypeInfer(mod);
@@ -942,7 +942,7 @@ public class TestTypeInfer extends BaseParserTest {
     			"	code (x:Float) { x - x%1.0 },\n" +
     			"   code (x:Double) { x - x%1.0 }\n " +
     			"];\n"+
-			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b) }; \n");
+			"testTypeList1 = code (a:Float;b:Double) { floor(a)+floor(b) }; \n");
 		sanityTest(mod);
 		
 		doTypeInfer(mod);
@@ -966,7 +966,7 @@ public class TestTypeInfer extends BaseParserTest {
     			"	code (x:Float) { x - x%1.0 },\n" +
     			"   code (x:Double) { x - x%1.0 }\n " +
     			"];\n"+
-			"testTypeList1 = code (a:Float,b:Double) { floor(a)+floor(b)*floor(a)*floor(b) }; \n");
+			"testTypeList1 = code (a:Float;b:Double) { floor(a)+floor(b)*floor(a)*floor(b) }; \n");
 		sanityTest(mod);
 		
 		doTypeInfer(mod);
@@ -992,9 +992,9 @@ public class TestTypeInfer extends BaseParserTest {
 	public void testOverloadingMacro0() throws Exception {
 		IAstModule mod = doFrontend("    util = [\n"
 				+ "             macro (x, y) { util(x, y, 0) },\n"
-				+ "				code(x:Int, y:Int, z:Int => Int ) { x*y-z }\n"
+				+ "				code(x:Int; y:Int; z:Int => Int ) { x*y-z }\n"
 				+ "            ];\n"
-				+ "func = code(x:Int,y:Int => Int) { util(x,y) };\n");
+				+ "func = code(x:Int;y:Int => Int) { util(x,y) };\n");
 		sanityTest(mod);
 
 		doTypeInfer(mod);
@@ -1006,7 +1006,7 @@ public class TestTypeInfer extends BaseParserTest {
 		IAstModule mod = doFrontend("    util = [ code(x, y, z ) { x*y-z },\n"
 				+ "             macro (x, y) { util(x, y, 0) }\n"
 				+ "            ];\n"
-				+ "func = code(x:Int,y:Int => Int) { util(x,y) };\n");
+				+ "func = code(x:Int;y:Int => Int) { util(x,y) };\n");
 		sanityTest(mod);
 
 		doTypeInfer(mod);
@@ -1017,7 +1017,7 @@ public class TestTypeInfer extends BaseParserTest {
 		IAstModule mod = doFrontend("    util = [ code(x, y, z ) { x*y-z },\n"
 				+ "             macro (x, y) { util(x, y, 0) }\n"
 				+ "            ];\n"
-				+ "func = code(x:Int,y:Float => Float) { util(x,y) };\n");
+				+ "func = code(x:Int;y:Float => Float) { util(x,y) };\n");
 		sanityTest(mod);
 		
 		doTypeInfer(mod);
@@ -1028,7 +1028,7 @@ public class TestTypeInfer extends BaseParserTest {
 	public void testFunctionTypes() throws Exception {
 		IAstModule mod = doFrontend("" +
 				" funcptr : code;\n"+     
-				"func = code(x:Int,y:Float => Float) { funcptr(x,y) };\n");
+				"func = code(x:Int;y:Float => Float) { funcptr(x,y) };\n");
 		sanityTest(mod);
 		
 		doTypeInfer(mod);
@@ -1039,7 +1039,7 @@ public class TestTypeInfer extends BaseParserTest {
     public void testWhileLoop() throws Exception {
     	dumpTypeInfer = true;
     	IAstModule mod = treeize(
-    			"testWhileLoop := code (t, x : Int, y : Float) {\n" +
+    			"testWhileLoop := code (t; x : Int; y : Float) {\n" +
     			"    @loop: if x > t then { y = y / 2; x = x - 1; goto loop } else goto loop;\n"+
     			 "	y;\n"+
     			"};");

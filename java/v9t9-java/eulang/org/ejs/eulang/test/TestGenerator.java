@@ -3,14 +3,11 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertSame;
+import static junit.framework.Assert.*;
 
 import java.util.List;
 
+import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
@@ -24,6 +21,7 @@ import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -38,6 +36,9 @@ import org.junit.Test;
  */
 public class TestGenerator extends BaseParserTest {
 
+	{
+		//dumpTreeize = true;
+	}
     @Test
     public void testEmptyModule() throws Exception {
     	IAstModule mod = treeize("");
@@ -304,7 +305,7 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testMacroArgs1() throws Exception {
     	IAstModule mod = treeize(
-    			" testMacroArgs1 = macro (macro t : code, macro mthen : code, macro melse : code) { };\n");
+    			" testMacroArgs1 = macro (macro t : code; macro mthen : code; macro melse : code) { };\n");
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
@@ -317,7 +318,7 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test
     public void testMacroArgs2() throws Exception {
-    	treeizeFail(" testMacroArgs1 = code (macro t : code, macro mthen : code, macro melse : code) { };\n");
+    	treeizeFail(" testMacroArgs1 = code (macro t : code; macro mthen : code; macro melse : code) { };\n");
     }
     
     @Test
@@ -391,7 +392,7 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testPointers1() throws Exception {
     	IAstModule mod = treeize(
-        		" badSwap_testPointers1 = code (x : Int&, y : Int& => nil) {\n" +
+        		" badSwap_testPointers1 = code (x : Int&; y : Int& => nil) {\n" +
         		"};\n");
     		sanityTest(mod);
     }
@@ -414,14 +415,12 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test
     public void testTuples4() throws Exception {
-    	dumpTreeize = true;
     	IAstModule mod = treeize("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
     			"testTuples4 = code (x,y) { a : Int; b : Int; (a, b) = swap(4, 5); }; \n");
     	sanityTest(mod);
     }
     @Test
     public void testTuples4b() throws Exception {
-    	dumpTreeize = true;
     	IAstModule mod = treeize(
     			"testTuples4 = code (x,y) { (a, b) := (4, 5); }; \n");
     	sanityTest(mod);
@@ -440,16 +439,88 @@ public class TestGenerator extends BaseParserTest {
     @Test
     public void testBlockScopes() throws Exception {
     	treeize(
-    			"testBlockScopes = code (t, x : Int, y : Float) {\n" +
+    			"testBlockScopes = code (t; x : Int; y : Float) {\n" +
     			"  if t then { z := Float(x); z = z * 8 } else { z := y; }; "+
     			"};");
     	
     	// which 'z' is used at end?  should be unknown
     	IAstModule mod = treeize(
-    			"testBlockScopes = code (t, x : Int, y : Float) {\n" +
+    			"testBlockScopes = code (t; x : Int; y : Float) {\n" +
     			"  if t then { z := Float(x); z = z * 8 } else { z := y; }; z;"+
     			"};");
     	doExpand(mod, true);
+    }
+    
+    @Test
+    public void testCodeBlockMultiNamedArgs() throws Exception  {
+    	IAstModule mod = treeize("testCodeBlockMultiNamedArgs = code( x , y : Int => Object ) { };");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCodeBlockMultiNamedArgs");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr(def);
+    	IAstPrototype proto = code.getPrototype();
+    	assertEquals(2, proto.argumentTypes().length);
+    	assertNotNull(proto.argumentTypes()[0].getTypeExpr());
+    	assertNotNull(proto.argumentTypes()[1].getTypeExpr());
+    	if (proto.argumentTypes()[0].getTypeExpr() == proto.argumentTypes()[1].getTypeExpr())
+    		fail();
+    }
+    
+    @Test
+    public void testCodeBlockMultiNamedArgs2() throws Exception  {
+    	IAstModule mod = treeize("testCodeBlockMultiNamedArgs2 = code( a : Float; x , y : Int => Object ) { };");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCodeBlockMultiNamedArgs2");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr(def);
+    	IAstPrototype proto = code.getPrototype();
+    	assertEquals(3, proto.argumentTypes().length);
+    	assertNotNull(proto.argumentTypes()[0].getTypeExpr());
+    	assertNotNull(proto.argumentTypes()[1].getTypeExpr());
+    	assertNotNull(proto.argumentTypes()[2].getTypeExpr());
+    	if (proto.argumentTypes()[1].getTypeExpr() == proto.argumentTypes()[2].getTypeExpr())
+    		fail();
+    }
+    
+    @Test
+    public void testCodeBlockMultiNamedVars1() throws Exception  {
+    	IAstModule mod = treeize("testCodeBlockMultiNamedVars1 = code() { a, b := 4; };");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCodeBlockMultiNamedVars1");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr(def);
+    	IAstNode[] kids = code.stmts().getChildren();
+    	assertEquals(1, kids.length);
+    	assertTrue(kids[0] instanceof IAstAllocStmt);
+    	IAstAllocStmt alloc = (IAstAllocStmt) kids[0];
+    	assertEquals("a", alloc.getSymbolExpr().list().get(0).getSymbol().getName());
+    	assertEquals("b", alloc.getSymbolExpr().list().get(1).getSymbol().getName());
+    	assertEquals(1, alloc.getExpr().nodeCount());
+    	assertEquals(4, (((IAstIntLitExpr) alloc.getExpr().getFirst()).getValue()));
+    }
+    @Test
+    public void testCodeBlockMultiNamedVars1b() throws Exception  {
+    	dumpTreeize = true;
+    	treeizeFail("testCodeBlockMultiNamedVars1b = code() { a, b := +9, 8; };");
+    }
+    @Test
+    public void testCodeBlockMultiNamedVars2() throws Exception  {
+    	IAstModule mod = treeize("testCodeBlockMultiNamedVars2 = code() { a, b := 4, 9; };");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCodeBlockMultiNamedVars2");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr(def);
+    	IAstNode[] kids = code.stmts().getChildren();
+    	assertEquals(1, kids.length);
+    	assertTrue(kids[0] instanceof IAstAllocStmt);
+    	
+    	IAstAllocStmt alloc = (IAstAllocStmt) kids[0];
+    	assertEquals("a", alloc.getSymbolExpr().list().get(0).getSymbol().getName());
+    	assertEquals("b", alloc.getSymbolExpr().list().get(1).getSymbol().getName());
+    	assertEquals(2, alloc.getExpr().nodeCount());
+    	assertEquals(4, (((IAstIntLitExpr) alloc.getExpr().getFirst()).getValue()));
+    	assertEquals(9, (((IAstIntLitExpr) alloc.getExpr().list().get(1)).getValue()));
+
     }
 }
 

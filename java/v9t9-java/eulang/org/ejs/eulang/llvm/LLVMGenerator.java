@@ -224,12 +224,16 @@ public class LLVMGenerator {
 	 */
 	private void generateGlobalAlloc(IAstAllocStmt stmt) throws ASTException {
 		ensureTypes(stmt);
-		
-		if (stmt.getType() instanceof LLCodeType)
-			generateGlobalCode(stmt.getSymbol(), (IAstCodeExpr) stmt.getExpr());
-		else
-			ll.add(new LLGlobalDirective(stmt.getSymbol(), LLVisibility.DEFAULT, LLLinkage.INTERNAL, stmt.getType()));
-		
+
+		// TODO: simultaneous assignment?
+		for (int i = 0; i < stmt.getSymbolExpr().nodeCount(); i++) {
+			IAstSymbolExpr symbol = stmt.getSymbolExpr().list().get(i);
+			IAstTypedExpr value = stmt.getExpr().list().get(stmt.getExpr().nodeCount() == 1 ? 0 : i);
+			if (stmt.getType() instanceof LLCodeType)
+				generateGlobalCode(symbol.getSymbol(), (IAstCodeExpr) value);
+			else
+				ll.add(new LLGlobalDirective(symbol.getSymbol(), LLVisibility.DEFAULT, LLLinkage.INTERNAL, stmt.getType()));
+		}
 	}
 
 
@@ -644,27 +648,56 @@ public class LLVMGenerator {
 
 	private LLOperand generateAssignStmt(
 			IAstAssignStmt stmt) throws ASTException {
-		return generateAssign(stmt.getType(), stmt.getSymbol(), stmt.getExpr());
+		
+
+		LLOperand[] vals = new LLOperand[stmt.getSymbol().nodeCount()];
+		for (int i = 0; i < stmt.getSymbol().nodeCount(); i++) {
+			IAstTypedExpr exprValue = stmt.getExpr().list().get(stmt.getExpr().nodeCount() == 1 ? 0 : i);
+			
+			LLOperand value = stmt.getExpand() || stmt.getExpr().nodeCount() > 1 || i == 0 ? generateTypedExpr(exprValue) : vals[0];
+			vals[i] = value;
+		}
+		
+		LLOperand first = null;
+		for (int i = 0; i < stmt.getSymbol().nodeCount(); i++) {
+			IAstSymbolExpr symbol = stmt.getSymbol().list().get(i);
+			
+			LLOperand var = generateSymbolExpr(symbol);
+			currentTarget.store(stmt.getType(), vals[i], var);
+			
+			if (i == 0)
+				first = var;
+		}
+		
+		return first;
 	}
 	
 
 	private LLOperand generateLocalAllocStmt(
 			IAstAllocStmt stmt) throws ASTException {
 		
-		//LLSymbolOp sym = new LLSymbolOp(stmt.getSymbol());
+		LLOperand first = null;
+		
+		LLOperand val = null;
+		
+		for (int i = 0; i < stmt.getSymbolExpr().nodeCount(); i++) {
+			IAstSymbolExpr symbol = stmt.getSymbolExpr().list().get(i);
+			IAstTypedExpr exprValue = stmt.getExpr() != null ? stmt.getExpr().list().get(stmt.getExpr().nodeCount() == 1 ? 0 : i) : null;
 
-		
-		LLVariableOp ret = makeLocalStorage(stmt.getSymbol(), false, null);
-		
-		if (stmt.getExpr() != null) {
-			LLOperand value = generateTypedExpr(stmt.getExpr());
-			currentTarget.store(stmt.getExpr().getType(), value, ret);
+			LLVariableOp ret = makeLocalStorage(symbol.getSymbol(), false, null);
 			
-			//if (ret != sym)
-			//	currentTarget.emit(new LLStoreInstr(stmt.getExpr().getType(), value, ret));
+			if (exprValue != null) {
+				LLOperand value = stmt.getExpand() || stmt.getExpr().nodeCount() > 1 || val == null ? generateTypedExpr(exprValue) : val;
+				currentTarget.store(exprValue.getType(), value, ret);
+				val = value;
+			}
+			
+			if (i == 0)
+				first = ret;
 		}
 		
-		return ret;
+		
+		return first;
 	}
 
 	private LLOperand generateLocalAllocTupleStmt(
@@ -685,18 +718,6 @@ public class LLVMGenerator {
 		return value;
 	}
 	
-	
-	private LLOperand generateAssign( LLType type,
-			IAstSymbolExpr symbolExpr, IAstTypedExpr expr) throws ASTException {
-		LLOperand value = generateTypedExpr(expr);
-		LLOperand var = generateSymbolExpr(symbolExpr);
-		
-		currentTarget.store(type, value, var);
-		
-		//emit(new LLStoreInstr(type, value, var));
-		return var;
-	}
-
 
 	private LLOperand generateSymbolExpr(
 			IAstSymbolExpr symbolExpr) {

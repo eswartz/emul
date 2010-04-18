@@ -8,6 +8,7 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.LLType;
@@ -20,21 +21,23 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 
-	private IAstSymbolExpr symExpr;
-	private IAstTypedExpr expr;
+	private IAstNodeList<IAstSymbolExpr> symExpr;
+	private IAstNodeList<IAstTypedExpr> expr;
+	private boolean expand;
 
 	/**
 	 * @param expr2 
 	 * @param left
 	 * @param right
 	 */
-	public AstAssignStmt(IAstSymbolExpr id, IAstTypedExpr expr) {
+	public AstAssignStmt(IAstNodeList<IAstSymbolExpr> id, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
 		setExpr(expr);
 		setSymbol(id);
+		setExpand(expand);
 	}
 
 	public IAstAssignStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstAssignStmt(doCopy(symExpr, copyParent), doCopy(expr, copyParent)));
+		return fixup(this, new AstAssignStmt(doCopy(symExpr, copyParent), doCopy(expr, copyParent), expand));
 	}
 	
 	@Override
@@ -43,6 +46,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		int result = super.hashCode();
 		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
 		result = prime * result + ((symExpr == null) ? 0 : symExpr.hashCode());
+		result = prime * result + (expand ? 0 : 111);
 		return result;
 	}
 
@@ -66,6 +70,8 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 				return false;
 		} else if (!symExpr.equals(other.symExpr))
 			return false;
+		if (expand != other.expand)
+			return false;
 		return true;
 	}
 
@@ -87,14 +93,26 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#getDumpChildren()
+	 */
+	@Override
+	public IAstNode[] getDumpChildren() {
+		if (symExpr.nodeCount() == 1)
+			return new IAstNode[] { symExpr.getFirst(), expr.getFirst() };
+		else
+			return getChildren();
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getExpr() == existing) {
-			setExpr((IAstTypedExpr) another);
+			setExpr((IAstNodeList<IAstTypedExpr>) another);
 		} else if (getSymbol() == existing) {
-			setSymbol((IAstSymbolExpr) another);
+			setSymbol((IAstNodeList<IAstSymbolExpr>) another);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -111,7 +129,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getExpr()
 	 */
 	@Override
-	public IAstTypedExpr getExpr() {
+	public IAstNodeList<IAstTypedExpr> getExpr() {
 		return expr;
 	}
 
@@ -119,7 +137,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getId()
 	 */
 	@Override
-	public IAstSymbolExpr getSymbol() {
+	public IAstNodeList<IAstSymbolExpr> getSymbol() {
 		return symExpr;
 	}
 
@@ -127,7 +145,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setExpr(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public void setExpr(IAstTypedExpr expr) {
+	public void setExpr(IAstNodeList<IAstTypedExpr> expr) {
 		Check.checkArg(expr);
 		this.expr = reparent(this.expr, expr);
 	}
@@ -136,7 +154,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setId(v9t9.tools.ast.expr.IAstIdExpression)
 	 */
 	@Override
-	public void setSymbol(IAstSymbolExpr id) {
+	public void setSymbol(IAstNodeList<IAstSymbolExpr> id) {
 		Check.checkArg(id);
 		this.symExpr = reparent(this.symExpr, id);
 	}
@@ -146,14 +164,34 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
-		boolean changed = inferTypesFromChildren(new ITyped[] { symExpr, expr });
-		
-		LLType left = symExpr.getType();
-		LLType right = expr.getType();
-		if (left != null && right != null) {
-			setExpr(createCastOn(typeEngine, expr, left));
+		boolean changed = false;
+		for (int i = 0; i < symExpr.nodeCount(); i++) {
+			IAstSymbolExpr theSym = symExpr.list().get(i);
+			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
+			changed |= inferTypesFromChildren(new ITyped[] { theSym, theExpr });
+			
+			LLType left = theSym.getType();
+			LLType right = theExpr.getType();
+			if (left != null && right != null) {
+				theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
+			}
 		}
 		return changed;
 	}
-	
+
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAllocStmt#setExpand(boolean)
+	 */
+	@Override
+	public void setExpand(boolean expand) {
+		this.expand = expand;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAllocStmt#getExpand()
+	 */
+	@Override
+	public boolean getExpand() {
+		return expand;
+	}
 }
