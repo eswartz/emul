@@ -25,6 +25,13 @@ public class LLTupleOp implements LLOperand {
 		this.elements = elements;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.LLOperand#getType()
+	 */
+	@Override
+	public LLType getType() {
+		return tupleType;
+	}
 	public LLTupleType getTupleType() {
 		return tupleType;
 	}

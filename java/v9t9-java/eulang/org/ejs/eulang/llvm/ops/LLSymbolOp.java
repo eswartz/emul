@@ -9,9 +9,10 @@ import org.ejs.eulang.symbols.ISymbol;
  * @author ejs
  *
  */
-public class LLSymbolOp implements LLOperand {
+public class LLSymbolOp extends BaseLLOperand {
 	private ISymbol symbol;
 	public LLSymbolOp(ISymbol symbol) {
+		super(symbol.getType());
 		this.symbol = symbol;
 	}
 	

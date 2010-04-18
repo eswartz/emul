@@ -16,13 +16,15 @@ import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
+import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
@@ -1044,6 +1046,54 @@ public class TestTypeInfer extends BaseParserTest {
     			 "	y;\n"+
     			"};");
     	doTypeInfer(mod);
+    }
+	
+	@Test
+    public void testArrayAccess1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"mycode := code(p:Int[10]) {\n"+
+    			"   p[5];"+
+    			"};\n"+
+    			"");
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
+    	assertTrue(astmt.getType() instanceof LLCodeType);
+    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	
+    	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
+    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	assertEquals(typeEngine.INT, index.getType());
+    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	assertEquals(10, arrayType.getArrayCount());
+    	assertNull(arrayType.getDynamicSizeExpr());
+    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	
+    }
+    @Test
+    public void testArrayAccess1b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"mycode := code(p:Int[10]; i) {\n"+
+    			"   p[i];"+
+    			"};\n"+
+    			"");
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
+    	assertTrue(astmt.getType() instanceof LLCodeType);
+    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	
+    	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
+    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	assertEquals(typeEngine.INT, index.getType());
+    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	assertEquals(10, arrayType.getArrayCount());
+    	assertNull(arrayType.getDynamicSizeExpr());
+    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	
+    	
     }
 }
 

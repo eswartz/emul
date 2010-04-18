@@ -19,9 +19,9 @@ import org.ejs.eulang.types.LLType;
  */
 public class LLLocalVariable implements ILLVariable {
 
-	private final ISymbol symbol;
+	protected final ISymbol symbol;
 	private LLType addrType;
-	private ISymbol addrSymbol;
+	protected ISymbol addrSymbol;
 
 	/**
 	 * @param symbol

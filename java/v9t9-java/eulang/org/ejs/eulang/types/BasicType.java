@@ -14,7 +14,8 @@ public enum BasicType {
 	BOOL(LLType.TYPECLASS_PRIMITIVE), 
 	REF(LLType.TYPECLASS_MEMORY), 
 	TUPLE(LLType.TYPECLASS_DATA),
-	GENERIC(~0);
+	GENERIC(~0), 
+	ARRAY(LLType.TYPECLASS_MEMORY);
 
 	private final int classMask;
 	private BasicType(int classMask) {
@@ -22,5 +23,11 @@ public enum BasicType {
 	}
 	public boolean isCompatibleWith(BasicType basicType) {
 		return (classMask & basicType.classMask) != 0; 
+	}
+	/**
+	 * @return
+	 */
+	public int getClassMask() {
+		return classMask;
 	}
 }

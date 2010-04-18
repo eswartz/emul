@@ -63,6 +63,9 @@ tokens {
   
   LABELSTMT;
   BINDING;
+  
+  ARRAY;
+  INDEX;
 }
 
 @header {
@@ -195,7 +198,12 @@ tupleargdef: type    -> type
   |                 -> ^(TYPE NIL)
   ;
   
-type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScopeRef) ) )? 
+type : ( baseType LBRACKET ) => baseType LBRACKET rhsExpr? RBRACKET   -> ^(TYPE ^(ARRAY baseType rhsExpr? ) ) 
+     | baseType -> baseType 
+  ;
+
+baseType : idOrScopeRef AMP -> ^(TYPE ^(REF idOrScopeRef) ) 
+     | idOrScopeRef -> ^(TYPE idOrScopeRef)  
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
   ;
 
@@ -246,10 +254,10 @@ doWhile : DO codeStmtExpr WHILE rhsExpr   -> ^(DO codeStmtExpr rhsExpr)
 whileDo : WHILE rhsExpr DO codeStmtExpr   -> ^(WHILE rhsExpr codeStmtExpr)
   ;
   
-repeat : REPEAT rhsExpr DO codeOrValueExpr         -> ^(REPEAT rhsExpr codeOrValueExpr)
+repeat : REPEAT rhsExpr DO codeStmt         -> ^(REPEAT rhsExpr codeStmt)
   ; 
 
-forIter : FOR forIds atId? IN rhsExpr DO codeOrValueExpr       -> ^(FOR forIds atId? rhsExpr codeOrValueExpr)
+forIter : FOR forIds atId? IN rhsExpr DO codeStmt       -> ^(FOR forIds atId? rhsExpr codeStmt)
   ; 
 
 forIds : ID (AND ID)* -> ID+ ;
@@ -257,15 +265,13 @@ forIds : ID (AND ID)* -> ID+ ;
 atId : AT ID    -> ^(AT ID) 
   ;
   
-codeOrValueExpr : codeStmt | breakStmt ;
-
-breakStmt : BREAK valueCond ->  ^(BREAK valueCond)
+breakStmt : BREAK rhsExpr ->  ^(BREAK rhsExpr)
   ; 
 
-valueCond : rhsExpr WHEN rhsExpr ELSE rhsExpr  -> ^(WHEN rhsExpr+) 
-  | UNTIL rhsExpr THEN rhsExpr ELSE rhsExpr    -> ^(UNTIL rhsExpr+)
-  | WITH rhsExpr                               -> rhsExpr
-    ;  
+//valueCond : rhsExpr WHEN rhsExpr ELSE rhsExpr  -> ^(WHEN rhsExpr+) 
+//  | UNTIL rhsExpr THEN rhsExpr ELSE rhsExpr    -> ^(UNTIL rhsExpr+)
+//  | WITH rhsExpr                               -> rhsExpr
+//    ;  
    
 labelStmt: ATSIGN ID COLON                    -> ^(LABEL ID)
   ;
@@ -329,15 +335,17 @@ condStar: cond -> cond
 //
 ifExprs : thenClause elses -> ^(CONDLIST thenClause elses)
   ;
-thenClause : t=arg THEN v=arg   -> ^(CONDTEST $t $v) 
+thenClause : t=condStmtExpr THEN v=condStmtExpr   -> ^(CONDTEST $t $v) 
     ; 
 elses : elif* elseClause    -> elif* elseClause 
     ;
-elif : ELIF t=arg THEN v=arg  -> ^(CONDTEST $t $v )
+elif : ELIF t=condStmtExpr THEN v=condStmtExpr  -> ^(CONDTEST $t $v )
     ;
-elseClause : ELSE arg       -> ^(CONDTEST ^(LIT TRUE) arg)
+elseClause : ELSE condStmtExpr       -> ^(CONDTEST ^(LIT TRUE) condStmtExpr)
    | FI -> ^(CONDTEST ^(LIT TRUE) ^(LIT NIL))
   ;
+
+condStmtExpr : arg | breakStmt ;
     
 cond:    ( logor  -> logor )
       ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
@@ -402,6 +410,7 @@ unary:  MINUS u=unary -> ^(NEG $u )
       | TILDE u=unary     -> ^(INV $u )
       | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
       | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
+      | ( atom LBRACKET assignExpr RBRACKET) => a=atom LBRACKET assignExpr RBRACKET -> ^(INDEX $a assignExpr)
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)

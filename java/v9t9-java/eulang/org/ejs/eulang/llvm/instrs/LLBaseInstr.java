@@ -72,7 +72,7 @@ public abstract class LLBaseInstr implements LLInstr {
 		sb.append('\t');
 		sb.append(name); sb.append(' ');
 		appendOptionString(sb);
-		boolean first = true;
+		boolean first = noCommaBeforeOperands();
 		int idx = 0;
 		for (LLOperand op : ops) {
 			if (first)
@@ -84,6 +84,14 @@ public abstract class LLBaseInstr implements LLInstr {
 		}
 	}
 	
+	/**
+	 * @return
+	 */
+	protected boolean noCommaBeforeOperands() {
+		return true;
+	}
+
+
 	/**
 	 * Override if the #toString() method has options before operands
 	 */

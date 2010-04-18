@@ -9,13 +9,14 @@ import org.ejs.eulang.llvm.ILLVariable;
  * @author ejs
  *
  */
-public class LLVariableOp implements LLOperand {
+public class LLVariableOp extends BaseLLOperand {
 
 	private final ILLVariable var;
 	/**
 	 * 
 	 */
 	public LLVariableOp(ILLVariable var) {
+		super(var.getSymbol().getType());
 		this.var = var;
 	}
 	/* (non-Javadoc)

@@ -3,14 +3,17 @@
  */
 package org.ejs.eulang.llvm.ops;
 
+import org.ejs.eulang.types.LLType;
+
 
 /**
  * @author ejs
  *
  */
-public class LLUndefOp implements LLOperand {
+public class LLUndefOp extends BaseLLOperand {
 
-	public LLUndefOp() {
+	public LLUndefOp(LLType type) {
+		super(type);
 	}
 	
 	/* (non-Javadoc)

@@ -79,6 +79,7 @@ public class LLModule {
 		ISymbol modSymbol = moduleScope.get(symName);
 		if (modSymbol == null) {
 			modSymbol = moduleScope.add(symName);
+			modSymbol.setType(expr.getType());
 		}
 		return modSymbol;
 	}

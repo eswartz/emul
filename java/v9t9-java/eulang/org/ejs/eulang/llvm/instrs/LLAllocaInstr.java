@@ -18,5 +18,22 @@ public class LLAllocaInstr extends LLAssignInstr {
 	public LLAllocaInstr(LLOperand ret, LLType type, LLOperand... ops) {
 		super("alloca", ret, type, ops);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLBaseInstr#noCommaBeforeOperands()
+	 */
+	@Override
+	protected boolean noCommaBeforeOperands() {
+		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLBaseInstr#appendOperandString(java.lang.StringBuilder, int, org.ejs.eulang.llvm.ops.LLOperand)
+	 */
+	@Override
+	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
+		sb.append(op.getType()).append(' ');
+		super.appendOperandString(sb, idx, op);
+	}
 
 }

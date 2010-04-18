@@ -6,6 +6,7 @@ package org.ejs.eulang.llvm;
 import java.util.List;
 
 import org.ejs.eulang.ITarget;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLTempOp;
@@ -62,4 +63,7 @@ public interface ILLCodeTarget {
 	 * @return
 	 */
 	LLBlock getPreviousBlock();
+	
+	LLVMGenerator getGenerator();
+	TypeEngine getTypeEngine();
 }

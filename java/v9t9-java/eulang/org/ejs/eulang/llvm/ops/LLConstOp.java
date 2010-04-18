@@ -3,14 +3,23 @@
  */
 package org.ejs.eulang.llvm.ops;
 
+import org.ejs.eulang.types.LLIntType;
+import org.ejs.eulang.types.LLType;
+
 /**
  * @author ejs
  *
  */
-public class LLConstOp implements LLOperand {
+public class LLConstOp extends BaseLLOperand {
 
+	private static final LLType I32 = new LLIntType(null, 32);
 	private final Number value;
 	public LLConstOp(Number value) {
+		super(I32);
+		this.value = value;
+	}
+	public LLConstOp(LLType type, Number value) {
+		super(type);
 		this.value = value;
 	}
 	

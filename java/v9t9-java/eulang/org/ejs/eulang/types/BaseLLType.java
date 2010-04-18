@@ -165,8 +165,19 @@ public abstract class BaseLLType implements LLType {
 	public boolean isCompatibleWith(LLType target) {
 		if (target == null)
 			return false;
-		return getBasicType().isCompatibleWith(target.getBasicType())
-				//&& (getBits() == 0 || target.getBits() == 0 || getBits() == target.getBits())
-				&& ((getSubType() == null && target.getSubType() == null) || getSubType().isCompatibleWith(target.getSubType())); 
-		}
+		if (!getBasicType().isCompatibleWith(target.getBasicType()))
+			return false;
+
+		if (getSubType() == null && target.getSubType() == null)
+			return true;
+		if (getSubType() == null || target.getSubType() == null)
+			return true;
+		return subTypesCompatible(target.getSubType());
+	}
+
+
+
+	protected boolean subTypesCompatible(LLType subType) {
+		return subType.isCompatibleWith(subType);
+	}
 }

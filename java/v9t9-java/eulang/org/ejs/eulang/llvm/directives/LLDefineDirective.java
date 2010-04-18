@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.ejs.eulang.ITarget;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.ILLVariable;
 import org.ejs.eulang.llvm.LLAttrType;
@@ -16,14 +17,20 @@ import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLLinkage;
 import org.ejs.eulang.llvm.LLModule;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
+import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
+import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -51,10 +58,12 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	private int tempId;
 	private final ITarget target;
 	private final LLModule module;
+	private final LLVMGenerator generator;
 	
-	public LLDefineDirective(ITarget target, LLModule module, IScope localScope,
+	public LLDefineDirective(LLVMGenerator generator, ITarget target, LLModule module, IScope localScope,
 			ISymbol symbol, LLLinkage linkage, LLVisibility visibility, String cconv, LLAttrType retType,
 			LLAttrType argTypes[], LLFuncAttrs funcAttrs, String section, int align, String gc) {
+		this.generator = generator;
 		this.target = target;
 		this.module = module;
 		this.localScope = localScope;
@@ -197,6 +206,27 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 		if (target instanceof LLVariableOp) {
 			ILLVariable var = ((LLVariableOp) target).getVariable();
 			var.store(this, value);
+		} else if (valueType != null && valueType.equals(target.getType().getSubType())) {
+			// TODO: this is copied from ILLVariable impls
+			
+			if (target.getType().getBasicType() == BasicType.REF) {
+				// dereference to get the data ptr
+				LLOperand addrTemp = newTemp(target.getType());
+				emit(new LLGetElementPtrInstr(addrTemp, target.getType(), target,
+						new LLConstOp(0), new LLConstOp(0)));
+				
+				// now read data ptr
+				LLType valPtrType = getTypeEngine().getPointerType(valueType);
+				LLOperand addr = newTemp(valPtrType);
+				emit(new LLLoadInstr(addr, valPtrType, addrTemp));
+				
+				// now store value
+				emit(new LLStoreInstr(valueType, value, addr));
+			} else if (target.getType().getBasicType() == BasicType.POINTER) {
+				emit(new LLStoreInstr(valueType, value, target));
+			} else {
+				throw new IllegalStateException();
+			}
 		} else {
 			// should already be addressable
 			emit(new LLStoreInstr(valueType, value, target));
@@ -211,6 +241,31 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 			
 			ILLVariable var = ((LLVariableOp) source).getVariable();
 			return var.load(this);
+		} else if (valueType != null && valueType.equals(source.getType().getSubType())) {
+			// TODO: this is copied from ILLVariable impls
+			
+			if (source.getType().getBasicType() == BasicType.REF) {
+				// dereference to get the data ptr
+				LLOperand addrTemp = newTemp(source.getType());
+				emit(new LLGetElementPtrInstr(addrTemp, source.getType(), source,
+						new LLConstOp(0), new LLConstOp(0)));
+				
+				// now read data ptr
+				LLType valPtrType = getTypeEngine().getPointerType(valueType);
+				LLOperand addr = newTemp(valPtrType);
+				emit(new LLLoadInstr(addr, valPtrType, addrTemp));
+				
+				// now read value
+				LLOperand value = newTemp(valueType);
+				emit(new LLLoadInstr(value, valueType, addr));
+				return addr;	
+			} else if (source.getType().getBasicType() == BasicType.POINTER) {
+				LLOperand ret = newTemp(valueType);
+				emit(new LLLoadInstr(ret, valueType, source));
+				return ret;
+			} else {
+				throw new IllegalStateException();
+			}
 		} else {
 			return source;
 		}
@@ -239,5 +294,20 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	@Override
 	public LLBlock getPreviousBlock() {
 		return blocks.isEmpty() ? null : blocks.get(blocks.size() - 1);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeTarget#getGenerator()
+	 */
+	@Override
+	public LLVMGenerator getGenerator() {
+		return generator;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeTarget#getTypeEngine()
+	 */
+	@Override
+	public TypeEngine getTypeEngine() {
+		return generator.getTypeEngine();
 	}
 }

@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -102,6 +103,13 @@ public class AstType extends AstNode implements IAstType {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		return false;
+		boolean changed = false;
+		if (type instanceof LLArrayType) {
+			LLArrayType array = (LLArrayType) type;
+			if (array.getDynamicSizeExpr() != null) {
+				changed |= AstTypedNode.updateType(array.getDynamicSizeExpr(), typeEngine.INT);
+			}
+		}
+		return changed;
 	}
 }

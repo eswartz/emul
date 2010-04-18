@@ -25,6 +25,7 @@ import org.ejs.eulang.ast.impl.AstAssignTupleStmt;
 import org.ejs.eulang.ast.impl.AstBinExpr;
 import org.ejs.eulang.ast.impl.AstBlockStmt;
 import org.ejs.eulang.ast.impl.AstBoolLitExpr;
+import org.ejs.eulang.ast.impl.AstBreakStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstCondExpr;
 import org.ejs.eulang.ast.impl.AstCondList;
@@ -34,6 +35,7 @@ import org.ejs.eulang.ast.impl.AstExprStmt;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
+import org.ejs.eulang.ast.impl.AstIndexExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstModule;
@@ -449,12 +451,17 @@ public class GenerateAST {
 		case EulangParser.LIST:
 			return constructList(tree);
 			
+		case EulangParser.INDEX:
+			return constructIndex(tree);
+			
 		case EulangParser.REPEAT:
 			return constructRepeat(tree);
 		case EulangParser.WHILE:
 			return constructWhile(tree);
 		case EulangParser.DO:
 			return constructDoWhile(tree);
+		case EulangParser.BREAK:
+			return constructBreak(tree);
 			
 		default:
 			unhandled(tree);
@@ -463,6 +470,31 @@ public class GenerateAST {
 		
 	}
 	
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructIndex(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		IAstTypedExpr at = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+		IAstIndexExpr index = new AstIndexExpr(expr, at);
+		getSource(tree, index);
+		return index;
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructBreak(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		IAstBreakStmt breakStmt = new AstBreakStmt(expr);
+		getSource(tree, breakStmt);
+		return breakStmt;
+	}
+
 	private IAstNode constructWhile(Tree tree) throws GenerateException {
 		pushScope(new LocalScope(currentScope));
 		try {
@@ -1077,7 +1109,7 @@ public class GenerateAST {
 			//$FALL-THROUGH$
 			}
 		}
-		return new AstIntLitExpr("0", new LLIntType(null, type != null ? type.getBits() : 1), 0);
+		return new AstIntLitExpr("0", typeEngine.getIntType(type != null ? type.getBits() : 1), 0);
 	}
 
 	/**
@@ -1229,6 +1261,24 @@ public class GenerateAST {
 					tupleTypes[idx] = constructType(tree.getChild(idx).getChild(0));
 				}
 				return new LLTupleType(typeEngine, tupleTypes);
+			}
+			else if (tree.getType() == EulangParser.ARRAY) {
+				int size = 0;
+				IAstTypedExpr countExpr = null;
+				if (tree.getChild(1) != null) {
+					countExpr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+					countExpr = countExpr.simplify(typeEngine);
+					if (countExpr instanceof IAstLitExpr) {
+						try {
+							size = Integer.parseInt(((IAstLitExpr) countExpr).getLiteral());
+							countExpr = null;
+						} catch (NumberFormatException e) {
+							throw new GenerateException(tree.getChild(1), "illegal constant size for an array");
+						}
+					}
+				}
+				assert kid0.getType() == EulangParser.TYPE;
+				return typeEngine.getArrayType(constructType(kid0.getChild(0)), size, countExpr);
 			}
 			else if (tree.getType() == EulangParser.REF) {
 				return typeEngine.getRefType(constructType(kid0));

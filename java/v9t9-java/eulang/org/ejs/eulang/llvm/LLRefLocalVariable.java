@@ -13,9 +13,7 @@ import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
-import org.ejs.eulang.llvm.ops.LLTypeIdxOp;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -41,7 +39,6 @@ public class LLRefLocalVariable implements ILLVariable {
 	private final ISymbol symbol;
 	private LLType symbolValueType;
 	private LLType symbolPtrType;
-	private LLIntType intType;
 
 	/**
 	 * @param symbol
@@ -53,8 +50,6 @@ public class LLRefLocalVariable implements ILLVariable {
 		symbolValueType = symbol.getType().getSubType();
 		
 		this.symbolPtrType = typeEngine.getPointerType(symbolValueType);
-		this.intType = new LLIntType(null, 32);
-		typeEngine.register(intType);
 		
 		// the pointer to the object entry through the symbol
 		LLType objRefStorage = typeEngine.getPointerType(symbol.getType());
@@ -178,7 +173,7 @@ public class LLRefLocalVariable implements ILLVariable {
 		// dereference to get the data ptr
 		LLOperand addrTemp = target.newTemp(symbol.getType());
 		target.emit(new LLGetElementPtrInstr(addrTemp, symbol.getType(), valueTemp,
-				new LLTypeIdxOp(intType, 0), new LLTypeIdxOp(intType, 0)));
+				new LLConstOp(0), new LLConstOp(0)));
 		
 		// now read data ptr
 		LLOperand addr = target.newTemp(symbolPtrType);

@@ -14,6 +14,7 @@ import java.util.Set;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.impl.AstBoolLitExpr;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
@@ -21,6 +22,7 @@ import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
@@ -36,6 +38,7 @@ import org.ejs.eulang.types.LLVoidType;
  *
  */
 public class TypeEngine {
+	
 	public LLType UNSPECIFIED = null;
 	private int ptrBits;
 	public LLIntType INT;
@@ -53,6 +56,9 @@ public class TypeEngine {
 	private Set<LLType> types = new HashSet<LLType>();
 	private Map<LLType, LLPointerType> ptrTypeMap = new HashMap<LLType, LLPointerType>();
 	private Map<LLType, LLRefType> refTypeMap = new HashMap<LLType, LLRefType>();
+	private Map<Tuple, LLArrayType> arrayTypeMap = new HashMap<Tuple, LLArrayType>();
+	private Map<Integer, LLIntType> intMap = new HashMap<Integer, LLIntType>();
+	
 	private boolean isLittleEndian;
 	private int ptrAlign;
 	private int stackMinAlign;
@@ -173,6 +179,19 @@ public class TypeEngine {
 			return b;
 		if (a.getBasicType() != BasicType.VOID && b.getBasicType() == BasicType.VOID)
 			return null;
+		
+		if (a.getBasicType() == BasicType.ARRAY && b.getBasicType() == BasicType.ARRAY) {
+			if (a.getSubType() == null && b.getSubType() == null)
+				return a;
+			if (a.getSubType() == null)
+				return b;
+			if (b.getSubType() == null)
+				return a;
+			if (a.getSubType().equals(b.getSubType()))
+				return a;
+			return null;
+		}
+		
 		if (a.getBasicType() == BasicType.GENERIC || b.getBasicType() == BasicType.GENERIC)
 			return null;
 		/*
@@ -361,7 +380,34 @@ public class TypeEngine {
 		types.addAll(this.types);
 		types.addAll(ptrTypeMap.values());
 		types.addAll(refTypeMap.values());
+		types.addAll(arrayTypeMap.values());
 		//types.addAll(codeTypes.values());
 		return types;
+	}
+
+	/**
+	 * @param baseType
+	 * @param count
+	 * @param expr
+	 * @return
+	 */
+	public LLArrayType getArrayType(LLType baseType, int count,
+			IAstTypedExpr sizeExpr) {
+		Tuple key = new Tuple(baseType, count, sizeExpr);
+		LLArrayType array = arrayTypeMap.get(key);
+		if (array == null) {
+			array = new LLArrayType(baseType, count, sizeExpr);
+			arrayTypeMap.put(key, array);
+		}
+		return array;
+	}
+
+	public LLIntType getIntType(int bits) {
+		LLIntType type = intMap.get(bits);
+		if (type == null) {
+			type = new LLIntType(null, bits);
+			intMap.put(bits, type);
+		}
+		return type;
 	}
 }
