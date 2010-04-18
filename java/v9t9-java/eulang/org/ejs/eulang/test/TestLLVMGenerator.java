@@ -298,4 +298,16 @@ public class TestLLVMGenerator extends BaseParserTest {
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(2, g.getModule().getSymbolCount());
     }
+    @Test
+    public void testIncsDecs() throws Exception  {
+    	IAstModule mod = doFrontend("maker1 = code(u,v:Int) { u++ * ++v }; " +
+    			"maker2 = code(u,v:Int) { u-- * --v }; " +
+    			"\n" +
+    			"testCodeBlockMultiAssigns2 = code(a, b) {\n" +
+    			"	a, b = maker1(b,a), maker2(a,b);\n" +
+    			"   a/b;\n"+
+    			" };");
+    	LLVMGenerator g = doGenerate(mod);
+    	assertEquals(3, g.getModule().getSymbolCount());
+    }
 }

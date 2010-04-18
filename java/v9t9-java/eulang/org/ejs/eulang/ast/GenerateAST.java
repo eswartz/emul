@@ -403,6 +403,10 @@ public class GenerateAST {
 			return constructBinaryExpr(tree);
 		case EulangParser.INV:
 		case EulangParser.NEG:
+		case EulangParser.POSTINC:
+		case EulangParser.POSTDEC:
+		case EulangParser.PREINC:
+		case EulangParser.PREDEC:
 			return constructUnaryExpr(tree);
 		case EulangParser.NOT:
 			return constructLogicalNot(tree);
@@ -1024,6 +1028,18 @@ public class GenerateAST {
 		//	break;
 		case EulangParser.NEG:
 			unary = new AstUnaryExpr(IOperation.NEG, expr);
+			break;
+		case EulangParser.POSTINC:
+			unary = new AstUnaryExpr(IOperation.POSTINC, expr);
+			break;
+		case EulangParser.POSTDEC:
+			unary = new AstUnaryExpr(IOperation.POSTDEC, expr);
+			break;
+		case EulangParser.PREINC:
+			unary = new AstUnaryExpr(IOperation.PREINC, expr);
+			break;
+		case EulangParser.PREDEC:
+			unary = new AstUnaryExpr(IOperation.PREDEC, expr);
 			break;
 			
 		default:

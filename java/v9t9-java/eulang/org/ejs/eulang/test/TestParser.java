@@ -3,6 +3,10 @@
  */
 package org.ejs.eulang.test;
 
+import static junit.framework.Assert.assertEquals;
+
+import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.junit.Test;
 /**
  * @author ejs
@@ -366,6 +370,15 @@ public class TestParser extends BaseParserTest  {
     @Test
     public void testTuples3() throws Exception {
     	parse("tuples3 = code (x,y => (Int, Int)) { (y,x); };");
+    }
+    @Test
+    public void testIncsDecs() throws Exception  {
+    	parse("maker1 = code(u:Int;v:Int) { u++  };\n" +
+    			"maker1b = code(u:Int;v:Int) {  ++v };\n" +
+    			"maker2 = code(u:Int;v:Int) { u-- };\n"+
+    			"maker2b = code(u:Int;v:Int) {  --v };\n"+
+    			""
+    			);
     }
 }
 

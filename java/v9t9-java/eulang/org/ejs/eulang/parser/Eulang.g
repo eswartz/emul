@@ -45,6 +45,10 @@ tokens {
   
   NEG;
   INV;
+  POSTINC;
+  POSTDEC;
+  PREINC;
+  PREDEC;
   
   LIT;
   
@@ -394,9 +398,13 @@ term : ( unary                  -> unary )
     ; 
 
 
-unary:    ( atom        -> atom )        
-      | MINUS u=unary -> ^(NEG $u )
+unary:  MINUS u=unary -> ^(NEG $u )
       | TILDE u=unary     -> ^(INV $u )
+      | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
+      | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
+      | ( atom        -> atom )        
+      | PLUSPLUS a=atom   -> ^(PREINC $a)
+      | MINUSMINUS a=atom -> ^(PREDEC $a)
 ;
 atom :
       NUMBER                          -> ^(LIT NUMBER)
@@ -420,9 +428,9 @@ idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ )
 
 colons : (COLON | COLONS)+ ;
 
-LBRACE_LPAREN : '{(';
-LBRACE_STAR : '{*';
-LBRACE_STAR_LPAREN : '{*(';
+//LBRACE_LPAREN : '{(';
+//LBRACE_STAR : '{*';
+//LBRACE_STAR_LPAREN : '{*(';
 COLON : ':';
 COMMA : ',';
 EQUALS : '=';
@@ -464,6 +472,8 @@ PERCENT : '%';
 UMOD : '%%';
 ARROW : '=>' ;
 PERIOD : '.';
+PLUSPLUS : '++';
+MINUSMINUS : '--';
 
 POINTS : '->';
 BAR_BAR : '||';

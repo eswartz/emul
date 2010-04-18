@@ -165,7 +165,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		boolean changed = false;
-		for (int i = 0; i < symExpr.nodeCount(); i++) {
+		for (int i = symExpr.nodeCount(); i-- > 0; ) {
 			IAstSymbolExpr theSym = symExpr.list().get(i);
 			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
 			changed |= inferTypesFromChildren(new ITyped[] { theSym, theExpr });

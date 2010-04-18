@@ -216,7 +216,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		boolean changed = false;
 		
 		// infer each type individually
-		for (int i = 0; i < symExpr.nodeCount(); i++) {
+		for (int i = symExpr.nodeCount(); i-- > 0; ) {
 			IAstSymbolExpr theSymbol = getSymbolExprs().list().get(i);
 			IAstTypedExpr theExpr = getExprs() != null ? (getExprs().list().get(getExprs().nodeCount() == 1 ? 0 : i)) : null;
 			if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExprs().list().get(i), theExpr })) {

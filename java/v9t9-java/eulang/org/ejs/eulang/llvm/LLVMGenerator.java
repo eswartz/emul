@@ -748,6 +748,15 @@ public class LLVMGenerator {
 
 	private LLOperand generateTypedExpr( IAstTypedExpr expr) throws ASTException {
 		//currentTarget.emit(new LLCommentInstr(getSource(expr.getSourceRef())));
+		LLOperand temp = generateTypedExprAddr(expr);
+		if (temp == null)
+			return null;
+		temp = currentTarget.load(expr.getType(), temp);
+		return temp;
+	}
+
+	private LLOperand generateTypedExprAddr(IAstTypedExpr expr)
+			throws ASTException {
 		LLOperand temp = null;
 		if (expr instanceof IAstExprStmt) 
 			temp = generateExprStmt((IAstExprStmt) expr);
@@ -777,8 +786,6 @@ public class LLVMGenerator {
 			unhandled(expr);
 			return null;
 		}
-		
-		temp = currentTarget.load(expr.getType(), temp);
 		return temp;
 	}
 
@@ -884,16 +891,42 @@ public class LLVMGenerator {
 	
 	private LLOperand generateUnaryExpr(IAstUnaryExpr expr) throws ASTException {
 		LLOperand ret;
-		LLOperand op = generateTypedExpr(expr.getExpr());
 		if (expr.getOp().getLLVMName() != null) {
+			LLOperand op = generateTypedExpr(expr.getExpr());
 			ret = currentTarget.newTemp(expr.getType());
 			currentTarget.emit(new LLUnaryInstr(expr.getOp(), ret, expr.getType(), op));
 		} else {
 			if (expr.getOp() == IOperation.NEG) {
 				// result = sub 0, val
+				LLOperand op = generateTypedExpr(expr.getExpr());
 				ret = currentTarget.newTemp(expr.getType());
 				currentTarget.emit(new LLBinaryInstr("sub", ret, expr.getType(), new LLConstOp(0), op));
+			} else if (expr.getOp() == IOperation.PREINC || expr.getOp() == IOperation.POSTINC) {
+				// get addr...
+				LLOperand opAddr = generateTypedExprAddr(expr.getExpr());
+				// read value
+				LLOperand op = currentTarget.load(expr.getType(), opAddr);
+				// increment
+				LLOperand incd = currentTarget.newTemp(expr.getType()); 
+				currentTarget.emit(new LLBinaryInstr("add", incd, expr.getType(), op, new LLConstOp(1)));
+				// write back
+				currentTarget.store(expr.getType(), incd, opAddr);
+				// and yield
+				ret = (expr.getOp() == IOperation.POSTINC) ? op : incd;
+			} else if (expr.getOp() == IOperation.PREDEC || expr.getOp() == IOperation.POSTDEC) {
+				// get addr...
+				LLOperand opAddr = generateTypedExprAddr(expr.getExpr());
+				// read value
+				LLOperand op = currentTarget.load(expr.getType(), opAddr);
+				// decrement
+				LLOperand decd = currentTarget.newTemp(expr.getType()); 
+				currentTarget.emit(new LLBinaryInstr("sub", decd, expr.getType(), op, new LLConstOp(1)));
+				// write back
+				currentTarget.store(expr.getType(), decd, opAddr);
+				// and yield
+				ret = expr.getOp() == IOperation.POSTDEC ? op : decd;
 			} else if (expr.getOp() == IOperation.CAST) {
+				LLOperand op = generateTypedExpr(expr.getExpr());
 				ret = generateCast(expr, op);
 			} else {
 				unhandled(expr);

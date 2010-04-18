@@ -24,6 +24,12 @@ public interface IOperation {
 	//IUnaryOperation INDIRECT = new IndirectOperation("INDIRECT");
 	
 	IUnaryOperation NEG = new ArithmeticUnaryOperation("-");
+
+	IUnaryOperation POSTINC = new ArithmeticUnaryOperation("()++");
+	IUnaryOperation POSTDEC = new ArithmeticUnaryOperation("()--");
+	IUnaryOperation PREINC = new ArithmeticUnaryOperation("++()");
+	IUnaryOperation PREDEC = new ArithmeticUnaryOperation("--()");
+	
 	IBinaryOperation ADD = new ArithmeticBinaryOperation("+", "add", true);
 	IBinaryOperation SUB = new ArithmeticBinaryOperation("-", "sub", false);
 	IBinaryOperation MUL = new ArithmeticBinaryOperation("*", "mul", true);
@@ -54,7 +60,7 @@ public interface IOperation {
 	IBinaryOperation COMPGE = new ComparisonBinaryOperation(">=", "ge", false, "s", "o");
 	
 	IUnaryOperation CAST = new CastOperation("<cast>");
-	
+
 	String getName();
 	String getLLVMName();
 	boolean isCommutative();
