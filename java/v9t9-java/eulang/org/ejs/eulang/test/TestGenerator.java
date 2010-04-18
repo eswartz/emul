@@ -493,10 +493,10 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(1, kids.length);
     	assertTrue(kids[0] instanceof IAstAllocStmt);
     	IAstAllocStmt alloc = (IAstAllocStmt) kids[0];
-    	assertEquals("a", alloc.getSymbolExpr().list().get(0).getSymbol().getName());
-    	assertEquals("b", alloc.getSymbolExpr().list().get(1).getSymbol().getName());
-    	assertEquals(1, alloc.getExpr().nodeCount());
-    	assertEquals(4, (((IAstIntLitExpr) alloc.getExpr().getFirst()).getValue()));
+    	assertEquals("a", alloc.getSymbolExprs().list().get(0).getSymbol().getName());
+    	assertEquals("b", alloc.getSymbolExprs().list().get(1).getSymbol().getName());
+    	assertEquals(1, alloc.getExprs().nodeCount());
+    	assertEquals(4, (((IAstIntLitExpr) alloc.getExprs().getFirst()).getValue()));
     }
     @Test
     public void testCodeBlockMultiNamedVars1b() throws Exception  {
@@ -515,11 +515,11 @@ public class TestGenerator extends BaseParserTest {
     	assertTrue(kids[0] instanceof IAstAllocStmt);
     	
     	IAstAllocStmt alloc = (IAstAllocStmt) kids[0];
-    	assertEquals("a", alloc.getSymbolExpr().list().get(0).getSymbol().getName());
-    	assertEquals("b", alloc.getSymbolExpr().list().get(1).getSymbol().getName());
-    	assertEquals(2, alloc.getExpr().nodeCount());
-    	assertEquals(4, (((IAstIntLitExpr) alloc.getExpr().getFirst()).getValue()));
-    	assertEquals(9, (((IAstIntLitExpr) alloc.getExpr().list().get(1)).getValue()));
+    	assertEquals("a", alloc.getSymbolExprs().list().get(0).getSymbol().getName());
+    	assertEquals("b", alloc.getSymbolExprs().list().get(1).getSymbol().getName());
+    	assertEquals(2, alloc.getExprs().nodeCount());
+    	assertEquals(4, (((IAstIntLitExpr) alloc.getExprs().getFirst()).getValue()));
+    	assertEquals(9, (((IAstIntLitExpr) alloc.getExprs().list().get(1)).getValue()));
 
     }
 }

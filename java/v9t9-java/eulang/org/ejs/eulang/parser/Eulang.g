@@ -321,30 +321,9 @@ bindings: binding (AND binding)* -> binding+
 binding: rhsExpr AS type   -> ^(BINDING type rhsExpr) 
   ;  
 
-// multi-argument cond  
-
-//
-//  select [ expr1 then arg || expr2 then arg || elsearg ]
-
 condStar: cond -> cond
-   //| SELECT LBRACKET condTests RBRACKET -> condTests
    | IF ifExprs -> ifExprs
     ;
-    
-/*    
-condTests : condTest (BAR_BAR condTest)* BAR_BAR? condFinalOrEmpty -> ^(CONDLIST condTest* condFinalOrEmpty)
-  ;    
-condTest : (cond THEN) => cond THEN arg -> ^(CONDTEST cond arg)
-  ;
-condFinal : ELSE arg -> ^(CONDTEST ^(LIT TRUE) arg)
-    ;
-condFinalOrEmpty : condFinal -> condFinal
-    | -> ^(CONDTEST ^(LIT TRUE) ^(LIT NIL))
-    ;
-condExprFinal : ELSE arg -> ^(CONDTEST ^(LIT TRUE) arg)
-      | BAR_BAR arg -> ^(CONDTEST ^(LIT TRUE) arg)
-    ;
-*/
 
 //
 //  if TEST then VALUE [elif TEST then VALUE]+ else VALUE
@@ -361,9 +340,6 @@ elseClause : ELSE arg       -> ^(CONDTEST ^(LIT TRUE) arg)
    | FI -> ^(CONDTEST ^(LIT TRUE) ^(LIT NIL))
   ;
     
-//arg condTest (BAR_BAR condTest)* condExprFinal -> ^(CONDLIST condTest* condExprFinal)
-//  ;    
-
 cond:    ( logor  -> logor )
       ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
 ;

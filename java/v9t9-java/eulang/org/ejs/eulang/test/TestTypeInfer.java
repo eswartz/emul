@@ -136,8 +136,8 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstAllocStmt allocStmt = (IAstAllocStmt) codeExpr.stmts().list().get(0);
 		assertEquals(typeEngine.FLOAT, allocStmt.getType());
-		assertTrue(allocStmt.getExpr().getFirst() instanceof IAstBinExpr);
-		IAstBinExpr binExpr = (IAstBinExpr) allocStmt.getExpr().getFirst();
+		assertTrue(allocStmt.getExprs().getFirst() instanceof IAstBinExpr);
+		IAstBinExpr binExpr = (IAstBinExpr) allocStmt.getExprs().getFirst();
 		assertEquals(typeEngine.FLOAT, binExpr.getLeft().getType());
 		assertTrue(isCastTo(binExpr.getLeft(), typeEngine.FLOAT));
     }
@@ -159,7 +159,7 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExprs().getFirst();
 		assertEquals(typeEngine.INT, castExpr.getExpr().getType());
 		IAstBinExpr divExpr = (IAstBinExpr) castExpr.getExpr();
 		assertEquals(typeEngine.INT, divExpr.getLeft().getType());
@@ -188,7 +188,7 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExprs().getFirst();
 		assertEquals(typeEngine.INT, castExpr.getExpr().getType());
 		IAstBinExpr addExpr = (IAstBinExpr) castExpr.getExpr();
 		assertEquals(typeEngine.INT, addExpr.getType());
@@ -212,8 +212,8 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
-		assertTrue(isCastTo(allocStmt.getExpr().getFirst(), typeEngine.BYTE));
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
+		assertTrue(isCastTo(allocStmt.getExprs().getFirst(), typeEngine.BYTE));
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExprs().getFirst();
 		IAstBinExpr cmpExpr = (IAstBinExpr)  castExpr.getExpr();
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.INT, cmpExpr.getLeft().getType());
@@ -237,8 +237,8 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
-		assertTrue(isCastTo(allocStmt.getExpr().getFirst(), typeEngine.BYTE));
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
+		assertTrue(isCastTo(allocStmt.getExprs().getFirst(), typeEngine.BYTE));
+		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExprs().getFirst();
 		IAstBinExpr cmpExpr = (IAstBinExpr)  castExpr.getExpr();
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.BYTE, cmpExpr.getLeft().getType());
@@ -266,7 +266,7 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
 
-		IAstUnaryExpr negExpr = (IAstUnaryExpr) allocStmt.getExpr().getFirst();
+		IAstUnaryExpr negExpr = (IAstUnaryExpr) allocStmt.getExprs().getFirst();
 		assertTrue(negExpr.getOp() == IOperation.NEG);
 		assertEquals(typeEngine.BYTE, negExpr.getExpr().getType());
 		IAstUnaryExpr invExpr = (IAstUnaryExpr) negExpr.getExpr();
@@ -600,8 +600,8 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
     	IAstAssignStmt assign = (IAstAssignStmt) codeExpr.stmts().list().get(0);
     	assertEquals(typeEngine.BYTE, assign.getType());
-    	assertEquals(typeEngine.BYTE, assign.getExpr().getFirst().getType());
-    	assertTrue(assign.getExpr().getFirst() instanceof IAstBinExpr);
+    	assertEquals(typeEngine.BYTE, assign.getExprs().getFirst().getType());
+    	assertTrue(assign.getExprs().getFirst() instanceof IAstBinExpr);
     }
 	
 

@@ -34,8 +34,8 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 * @param right
 	 */
 	public AstAllocStmt(IAstNodeList<IAstSymbolExpr> id, IAstType type, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
-		setSymbolExpr(id);
-		setExpr(expr);
+		setSymbolExprs(id);
+		setExprs(expr);
 		setTypeExpr(type);
 		setExpand(expand);
 	}
@@ -104,17 +104,17 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public IAstNode[] getDumpChildren() {
-		if (getExpr() != null) {
-			if (getSymbolExpr().nodeCount() == 1)
-				return new IAstNode[] { getSymbolExpr().getFirst(), getExpr().getFirst() };
+		if (getExprs() != null) {
+			if (getSymbolExprs().nodeCount() == 1)
+				return new IAstNode[] { getSymbolExprs().getFirst(), getExprs().getFirst() };
 			else
-				return new IAstNode[] { getSymbolExpr(), getExpr() };
+				return new IAstNode[] { getSymbolExprs(), getExprs() };
 		}
 		else {
-			if (getSymbolExpr().nodeCount() == 1)
-				return new IAstNode[] { getSymbolExpr().getFirst() };
+			if (getSymbolExprs().nodeCount() == 1)
+				return new IAstNode[] { getSymbolExprs().getFirst() };
 			else
-				return new IAstNode[] { getSymbolExpr() };
+				return new IAstNode[] { getSymbolExprs() };
 		}
 	}
 	
@@ -122,7 +122,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getExpr()
 	 */
 	@Override
-	public IAstNodeList<IAstTypedExpr> getExpr() {
+	public IAstNodeList<IAstTypedExpr> getExprs() {
 		return expr;
 	}
 
@@ -130,7 +130,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getId()
 	 */
 	@Override
-	public IAstNodeList<IAstSymbolExpr> getSymbolExpr() {
+	public IAstNodeList<IAstSymbolExpr> getSymbolExprs() {
 		return symExpr;
 	}
 	
@@ -138,7 +138,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setExpr(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public void setExpr(IAstNodeList<IAstTypedExpr> expr) {
+	public void setExprs(IAstNodeList<IAstTypedExpr> expr) {
 		this.expr = reparent(this.expr, expr);
 	}
 
@@ -146,7 +146,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setId(v9t9.tools.ast.expr.IAstIdExpression)
 	 */
 	@Override
-	public void setSymbolExpr(IAstNodeList<IAstSymbolExpr> id) {
+	public void setSymbolExprs(IAstNodeList<IAstSymbolExpr> id) {
 		Check.checkArg(id);
 		this.symExpr = reparent(this.symExpr, id);
 	}
@@ -156,14 +156,14 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		if (typeExpr != null && getExpr() != null)
-			return new IAstNode[] { getSymbolExpr(), typeExpr, getExpr() };
+		if (typeExpr != null && getExprs() != null)
+			return new IAstNode[] { getSymbolExprs(), typeExpr, getExprs() };
 		else if (typeExpr != null)
-			return new IAstNode[] { getSymbolExpr(), typeExpr };
-		else if (getExpr() != null)
-			return new IAstNode[] { getSymbolExpr(), getExpr() };
+			return new IAstNode[] { getSymbolExprs(), typeExpr };
+		else if (getExprs() != null)
+			return new IAstNode[] { getSymbolExprs(), getExprs() };
 		else
-			return new IAstNode[] { getSymbolExpr() };
+			return new IAstNode[] { getSymbolExprs() };
 	}
 
     /* (non-Javadoc)
@@ -174,10 +174,10 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
     public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getTypeExpr() == existing) {
 			setTypeExpr((IAstType) another);
-		} else if (getSymbolExpr() == existing) {
-			setSymbolExpr((IAstNodeList<IAstSymbolExpr>) another);
-		} else if (getExpr() == existing) {
-			setExpr((IAstNodeList<IAstTypedExpr>) another);
+		} else if (getSymbolExprs() == existing) {
+			setSymbolExprs((IAstNodeList<IAstSymbolExpr>) another);
+		} else if (getExprs() == existing) {
+			setExprs((IAstNodeList<IAstTypedExpr>) another);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -217,18 +217,18 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		
 		// infer each type individually
 		for (int i = 0; i < symExpr.nodeCount(); i++) {
-			IAstSymbolExpr theSymbol = getSymbolExpr().list().get(i);
-			IAstTypedExpr theExpr = getExpr() != null ? (getExpr().list().get(getExpr().nodeCount() == 1 ? 0 : i)) : null;
-			if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExpr().list().get(i), theExpr })) {
-				if (getExpr() != null && theExpr.getType() != null) {
-					if (getSymbolExpr() != null && theExpr.getType().isMoreComplete(theSymbol.getType()))
+			IAstSymbolExpr theSymbol = getSymbolExprs().list().get(i);
+			IAstTypedExpr theExpr = getExprs() != null ? (getExprs().list().get(getExprs().nodeCount() == 1 ? 0 : i)) : null;
+			if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExprs().list().get(i), theExpr })) {
+				if (getExprs() != null && theExpr.getType() != null) {
+					if (getSymbolExprs() != null && theExpr.getType().isMoreComplete(theSymbol.getType()))
 						changed |= updateType(theSymbol, theExpr.getType());
 					if (typeExpr != null && theExpr.getType().isMoreComplete(typeExpr.getType()))
 						changed |= updateType(typeExpr, theExpr.getType());
 					if (i == 0 && theExpr.getType().isMoreComplete(getType()))
 						changed |= updateType(this, theExpr.getType());
 				}
-				else if (getSymbolExpr() != null && theSymbol.getType() != null) {
+				else if (getSymbolExprs() != null && theSymbol.getType() != null) {
 					if (typeExpr != null)
 						changed |= updateType(typeExpr, theSymbol.getType());
 					if (i == 0)

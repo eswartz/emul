@@ -31,8 +31,8 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @param right
 	 */
 	public AstAssignStmt(IAstNodeList<IAstSymbolExpr> id, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
-		setExpr(expr);
-		setSymbol(id);
+		setExprs(expr);
+		setSymbolExprs(id);
 		setExpand(expand);
 	}
 
@@ -109,10 +109,10 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
-		if (getExpr() == existing) {
-			setExpr((IAstNodeList<IAstTypedExpr>) another);
-		} else if (getSymbol() == existing) {
-			setSymbol((IAstNodeList<IAstSymbolExpr>) another);
+		if (getExprs() == existing) {
+			setExprs((IAstNodeList<IAstTypedExpr>) another);
+		} else if (getSymbolExprs() == existing) {
+			setSymbolExprs((IAstNodeList<IAstSymbolExpr>) another);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -129,7 +129,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getExpr()
 	 */
 	@Override
-	public IAstNodeList<IAstTypedExpr> getExpr() {
+	public IAstNodeList<IAstTypedExpr> getExprs() {
 		return expr;
 	}
 
@@ -137,7 +137,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getId()
 	 */
 	@Override
-	public IAstNodeList<IAstSymbolExpr> getSymbol() {
+	public IAstNodeList<IAstSymbolExpr> getSymbolExprs() {
 		return symExpr;
 	}
 
@@ -145,7 +145,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setExpr(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public void setExpr(IAstNodeList<IAstTypedExpr> expr) {
+	public void setExprs(IAstNodeList<IAstTypedExpr> expr) {
 		Check.checkArg(expr);
 		this.expr = reparent(this.expr, expr);
 	}
@@ -154,7 +154,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setId(v9t9.tools.ast.expr.IAstIdExpression)
 	 */
 	@Override
-	public void setSymbol(IAstNodeList<IAstSymbolExpr> id) {
+	public void setSymbolExprs(IAstNodeList<IAstSymbolExpr> id) {
 		Check.checkArg(id);
 		this.symExpr = reparent(this.symExpr, id);
 	}
