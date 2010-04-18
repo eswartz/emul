@@ -8,7 +8,7 @@ import java.util.List;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -34,15 +34,9 @@ public interface ILLCodeTarget {
 	void setCurrentBlock(LLBlock block);
 
 	/**
-	 * Get the next temporary id.  These must be used in order.
-	 * @return
-	 */
-	ISymbol newTempSymbol();
-
-	/**
 	 * Create a new temporary operand.
 	 */
-	LLSymbolOp newTemp(LLType type);
+	LLTempOp newTemp(LLType type);
 	
 	
 	public void emit( LLBaseInstr instr);

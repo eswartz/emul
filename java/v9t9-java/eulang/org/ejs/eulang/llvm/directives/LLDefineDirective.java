@@ -20,7 +20,7 @@ import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
@@ -178,10 +178,8 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	 * @see org.ejs.eulang.llvm.ILLCodeTarget#newTemp(org.ejs.eulang.types.LLType)
 	 */
 	@Override
-	public LLSymbolOp newTemp(LLType type) {
-		ISymbol newTemp = newTempSymbol();
-		newTemp.setType(type);
-		return new LLSymbolOp(newTemp);
+	public LLTempOp newTemp(LLType type) {
+		return new LLTempOp(tempId++, type);
 	}
 
 	

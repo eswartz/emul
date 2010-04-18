@@ -9,6 +9,7 @@ import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -117,7 +118,7 @@ public class LLLocalVariable implements ILLVariable {
 	@Override
 	public LLOperand load(ILLCodeTarget target) {
 		LLOperand symbolOp = new LLSymbolOp(addrSymbol);
-		LLSymbolOp temp = target.newTemp(symbol.getType());
+		LLTempOp temp = target.newTemp(symbol.getType());
 		target.emit(new LLLoadInstr(temp, symbol.getType(), symbolOp));
 		return temp;
 	}
