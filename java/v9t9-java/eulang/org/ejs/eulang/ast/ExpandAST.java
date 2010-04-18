@@ -3,10 +3,14 @@
  */
 package org.ejs.eulang.ast;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
@@ -28,11 +32,14 @@ import org.ejs.eulang.types.LLCodeType;
  */
 public class ExpandAST {
 	
-	public ExpandAST() {
+	private final TypeEngine typeEngine;
+
+	public ExpandAST(TypeEngine typeEngine) {
+		this.typeEngine = typeEngine;
 	}
 
 	public boolean expand(List<Message> messages, IAstNode node) {
-		boolean changed = doExpand(messages, node);
+		boolean changed = doExpand(messages, node, Collections.<ISymbol, IAstNode>emptyMap());
 		
 		
 		if (changed) {
@@ -43,31 +50,33 @@ public class ExpandAST {
 		return changed;
 	}
 
-	private boolean doExpand(List<Message> messages, IAstNode node) {
+	private boolean doExpand(List<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
 		boolean changed = false;
 		
 		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())) {
 			// go deep first, since node parenting changes as expansion occurs
 			IAstNode[] kids = node.getChildren();
 			for (int i = 0; i < kids.length; i++) {
-				changed |= doExpand(messages, kids[i]);
+				changed |= doExpand(messages, kids[i], replacementMap);
 			}
 		}
 		
 		try {
 			if (node instanceof IAstSymbolExpr) {
+				IAstNode value = null;
 				IAstSymbolExpr symExpr = (IAstSymbolExpr)node;
 				IAstNode symDef = symExpr.getDefinition();
 				if (symDef == null) {
-					// handle later
-					//if (!symExpr.getSymbol().getScope().encloses(node.getOwnerScope()))
-					//	throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
-					return false;
+					value = replacementMap.get(symExpr.getSymbol());
+					if (value == null)
+						return false;
+				} else {
+					if (symDef == node.getParent() || !(symDef instanceof IAstDefineStmt))
+						return false;
+					
+					value = symExpr.getInstance();
 				}
-				if (symDef == node.getParent() || !(symDef instanceof IAstDefineStmt))
-					return false;
 				
-				IAstTypedExpr value = symExpr.getInstance();
 				if (value != null) {
 					
 					if (value instanceof IAstCodeExpr) {
@@ -86,7 +95,11 @@ public class ExpandAST {
 						IAstNode copy = value.copy(node);
 						copy.uniquifyIds();
 						removeGenerics(copy);
-						node.getParent().replaceChild(node, copy);
+						try {
+							node.getParent().replaceChild(node, copy);
+						} catch (ClassCastException e) {
+							throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
+						}
 						changed = true;
 					}
 				}
@@ -136,7 +149,7 @@ public class ExpandAST {
 					copy.uniquifyIds();
 					removeGenerics(copy);
 
-					IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(funcCallExpr, funcCallExpr.arguments(),
+					IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(messages, funcCallExpr, funcCallExpr.arguments(),
 							null,
 							(IAstCodeExpr) copy,
 							node.getOwnerScope());
@@ -173,6 +186,7 @@ public class ExpandAST {
 	
 	/**
 	 * Expand a function or macro into the tree 
+	 * @param messages 
 	 * @param node
 	 * @param args 
 	 * @param codeExpr copy of tree
@@ -180,7 +194,8 @@ public class ExpandAST {
 	 * @param symDef
 	 * @return node containing the return value, or <code>null</code>
 	 */
-	private IAstStmtListExpr doExpandFuncCallExpr(IAstNode node, IAstNodeList<IAstTypedExpr> args,
+	private IAstStmtListExpr doExpandFuncCallExpr(
+			List<Message> messages, IAstNode node, IAstNodeList<IAstTypedExpr> args,
 			ISymbol funcName,
 			IAstCodeExpr codeExpr, 
 			IScope parentScope
@@ -209,20 +224,38 @@ public class ExpandAST {
 		
 		// Substitute arguments
 		IAstArgDef[] protoArgs = codeExpr.getPrototype().argumentTypes();
-		if (protoArgs.length != args.nodeCount()) {
-			// TODO: default values...
+		if (args.nodeCount() < codeExpr.getPrototype().getDefaultArgumentIndex()) {
 			throw new ASTException(args, "argument count does not match prototype " + codeExpr.getPrototype().toString());
 		}
 		IAstTypedExpr[] realArgs = args.getNodes(IAstTypedExpr.class);
 		int realArgIdx = 0;
+		
+		Map<ISymbol, IAstNode> expandedArgs = new HashMap<ISymbol, IAstNode>();
+		
 		for (int i = 0; i < protoArgs.length; i++) {
-			IAstTypedExpr realArg = realArgs[i];
 			IAstArgDef protoArg = protoArgs[i];
+			IAstTypedExpr realArg;
+			if (i < realArgs.length) {
+				realArg = realArgs[i];
+				protoArg.getSymbolExpr().getSymbol().setDefinition(realArg);
+				expandedArgs.put(protoArg.getSymbolExpr().getSymbol(), realArg);
+			}
+			else {
+				realArg = (IAstTypedExpr) protoArg.getDefaultValue().copy(codeExpr);
+				
+				// allow defaults to reference other arguments
+				doExpand(messages, realArg, expandedArgs);
+			}
+			
 			
 			// coerce expression argument to code if needed
 			LLCodeType argCode = null;
 			if (protoArg.getTypeExpr() != null && protoArg.getTypeExpr().getType() instanceof LLCodeType)
 				argCode = ((LLCodeType) protoArg.getTypeExpr().getType());
+			else if (protoArg.getDefaultValue() instanceof IAstCodeExpr) {
+				IAstPrototype proto =((IAstCodeExpr) protoArg.getDefaultValue()).getPrototype(); 
+				argCode = typeEngine.getCodeType(proto.returnType(), proto.argumentTypes());
+			}
 			else if (protoArg.getType() instanceof LLCodeType)
 				argCode = (LLCodeType) protoArg.getType();
 			

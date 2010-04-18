@@ -150,6 +150,8 @@ code : CODE ( LPAREN argdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> 
 macro : MACRO ( LPAREN argdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? argdefs*) codestmtlist*)  
     ;
 
+// argument definitions:  allow a list of names separated with commas,
+// or a list of declarations, types, and initializers (with multiple args per type allowed) separated with semicolons
 argdefs options {  backtrack = true; } :
   | argdefsWithTypes 
   | argdefWithType? 
@@ -193,8 +195,7 @@ type :  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )  ( AMP -> ^(TYPE ^(REF idOrScop
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
   ;
 
-codestmtlist:  /*(codeStmt ) =>*/ codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
-    //| rhsExpr          -> ^(STMTLIST ^(RETURN rhsExpr))
+codestmtlist:  codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
     | -> ^(STMTLIST) 
     ;
     
@@ -204,7 +205,6 @@ codeStmt : labelStmt codeStmtExpr  -> ^(LABELSTMT labelStmt codeStmtExpr)
 
 codeStmtExpr : varDecl    -> varDecl
       | assignStmt    -> assignStmt
-      //| returnStmt SEMI   -> returnStmt
       | rhsExpr       ->  ^(STMTEXPR rhsExpr)
       | blockStmt         -> blockStmt
       | gotoStmt      -> gotoStmt
@@ -221,9 +221,6 @@ varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
     | ID (COMMA ID)+ COLON type (EQUALS PLUS? assignExpr (COMMA assignExpr)*)?  
         -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignExpr+)?)
     ;
-
-//returnStmt : RETURN assignExpr?           -> ^(RETURN assignExpr?)
-      //;
 
 assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
     | idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
@@ -269,8 +266,6 @@ valueCond : rhsExpr WHEN rhsExpr ELSE rhsExpr  -> ^(WHEN rhsExpr+)
 labelStmt: ATSIGN ID COLON                    -> ^(LABEL ID)
   ;
 gotoStmt: GOTO idOrScopeRef (IF rhsExpr)?           -> ^(GOTO idOrScopeRef rhsExpr?)
-//gotoStmt: ATSIGN idOrScopeRef                -> ^(GOTO idOrScopeRef)
-//    | ATSIGN idOrScopeRef LPAREN assignExpr RPAREN   -> ^(GOTO idOrScopeRef assignExpr)
   ;
   
 blockStmt: LBRACE codestmtlist RBRACE     -> ^(BLOCK codestmtlist)
@@ -412,8 +407,6 @@ atom :
     |   NIL                          -> ^(LIT NIL)
     |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
     |   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
-    //|   INVOKE                        -> ^(INVOKE)
-    //|   RECURSE LPAREN arglist RPAREN   -> ^(RECURSE arglist) 
     |   idOrScopeRef                  -> idOrScopeRef
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
@@ -422,10 +415,6 @@ atom :
     ;
 
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
-      //| SCOPEREF -> ^(IDREF SCOPEREF)
-      //| COLONS ( ( SCOPEREF -> ^(IDREF COLONS SCOPEREF) ) | ( ID -> ^(IDREF COLONS ID) ) )
-      //| COLON+ ( ( SCOPEREF -> ^(IDREF COLON+ SCOPEREF) ) | ( ID -> ^(IDREF COLON+ ID) ) )
-      //| COLONS ( ( ID ( PERIOD ID ) * -> ^(IDREF COLONS ID+) ) )
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
       ;
 
@@ -517,8 +506,6 @@ NUMBER: '0'..'9' (IDSUFFIX ( '.' IDSUFFIX)?);
 //
 //  Identifiers
 //
-
-//SCOPEREF : ID ('.' ID) + ;
 
 //  Handle multiple colons which aren't ':' or '::='.  (We ignore spaces so we have to account for this)
 COLONS : COLON COLON+ ;

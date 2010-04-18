@@ -240,7 +240,7 @@ public class TypeEngine {
 	 * @param argumentTypes
 	 * @return
 	 */
-	public LLType getCodeType(IAstType retType, IAstArgDef[] argumentTypes) {
+	public LLCodeType getCodeType(IAstType retType, IAstArgDef[] argumentTypes) {
 		LLType[] argTypes = new LLType[argumentTypes != null ? argumentTypes.length : 0];
 		for (int i = 0; i < argTypes.length; i++)
 			argTypes[i] = argumentTypes[i].getType();

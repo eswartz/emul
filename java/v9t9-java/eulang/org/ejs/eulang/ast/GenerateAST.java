@@ -1286,11 +1286,17 @@ public class GenerateAST {
 			if (tree.getChild(idx).getType() == EulangParser.PROTO) {
 				proto = checkConstruct(tree.getChild(idx), IAstPrototype.class);
 
-				if (!isMacro) {
-					for (IAstArgDef argDef : proto.argumentTypes()) {
-						if (argDef.isMacro()) {
-							throw new GenerateException(argDef.getSourceRef(), "cannot use macro arguments outside macro code");
-						}
+				boolean hitDefaults = false;
+				for (IAstArgDef argDef : proto.argumentTypes()) {
+					if (!isMacro && argDef.isMacro()) {
+						throw new GenerateException(argDef.getSourceRef(), "cannot use macro arguments outside macro code");
+					}
+					if (argDef.getDefaultValue() != null) {
+						if (!isMacro) 
+							throw new GenerateException(argDef.getSourceRef(), "cannot use default arguments outside macro code");
+						hitDefaults = true;
+					} else if (hitDefaults) {
+						throw new GenerateException(argDef.getSourceRef(), "non-default argument follows default argument");
 					}
 				}
 				idx++;

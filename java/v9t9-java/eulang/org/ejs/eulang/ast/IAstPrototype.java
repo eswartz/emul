@@ -18,11 +18,11 @@ public interface IAstPrototype extends IAstNode {
 	IAstArgDef[] argumentTypes();
 
 	int getArgCount();
+	
 	boolean adaptToType(LLCodeType newType);
-
-	/**
-	 * @return
-	 */
 	boolean hasDefaultArguments();
-
+	
+	/** index of first default argument, or # of arguments if none */
+	int getDefaultArgumentIndex();
+	
 }

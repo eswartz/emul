@@ -396,7 +396,7 @@ public class BaseParserTest {
 	
 
 	protected IAstNode doExpand(IAstNode node, boolean expectErrors) {
-		ExpandAST expand = new ExpandAST();
+		ExpandAST expand = new ExpandAST(typeEngine);
 		
 		List<Message> messages = new ArrayList<Message>();
 		boolean hadAnyErrors = false;

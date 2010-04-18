@@ -42,22 +42,24 @@ public class TestMacroCall extends BaseParserTest {
     	
     }
 	
+	
 	@Test
 	public void testForCount() throws Exception {
+		dumpTreeize = true;
 		IAstModule mod = treeize(
 				"\n" + 
 				"  forCountUntil = macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
 				"        idx := 0;\n" + 
 				"        @loop: if \n" + 
 				"            idx < count then if \n" + 
-				"                test then { count = idx; body; }\n" + 
+				"                test then { count = idx; body(); }\n" + 
 				"                else { idx = idx + 1; goto loop; }\n" + 
 				"            \n" + 
-				"            else fail \n" + 
+				"            else fail() \n" + 
 				"        \n" + 
 				"    };\n" + 
 				"    \n" + 
-				"testForCount = code () { forCountUntil(i, 10, i % 5 == 0, i, -1);"+
+				"testForCount = code () { forCountUntil(i, 10, i % 5 == 0, i+10, -123);"+
 		"};");
 		sanityTest(mod);
 		
@@ -70,6 +72,33 @@ public class TestMacroCall extends BaseParserTest {
 		
 	}
 	
+	@Test
+	public void testForCountDefaults() throws Exception {
+		IAstModule mod = treeize(
+				"\n" + 
+				"  forCountUntil = macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
+				"        idx := 0;\n" + 
+				"        @loop: if \n" + 
+				"            idx < count then if \n" + 
+				"                test then { count = idx; body(); }\n" + 
+				"                else { idx = idx + 1; goto loop; }\n" + 
+				"            \n" + 
+				"            else fail() \n" + 
+				"        \n" + 
+				"    };\n" + 
+				"    \n" + 
+				"testForCountDefaults = code () { forCountUntil(i, 10, i % 5 == 0);"+
+		"};");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testForCountDefaults");
+		IAstDefineStmt defPrime = (IAstDefineStmt) doExpand(def);
+		sanityTest(defPrime);
+		
+		doTypeInfer(mod);
+		doGenerate(mod);
+		
+	}
 	@Test
 	public void testForCountBad1() throws Exception {
 		IAstModule mod = treeize(
@@ -89,6 +118,7 @@ public class TestMacroCall extends BaseParserTest {
 		"};");
 		sanityTest(mod);
 		
+		//bad because we substitute an expression for an identifier
 		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testForCountBad1");
 		doExpand(def, true);
 	}
