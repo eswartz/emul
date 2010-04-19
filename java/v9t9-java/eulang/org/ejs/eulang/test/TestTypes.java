@@ -151,6 +151,59 @@ public class TestTypes extends BaseParserTest {
     	
     	
     }
+    @Test
+    public void testArrayAccess1c() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"mycode := code(p:Int&[10]; i => nil) {\n"+
+    			"   p[i];"+
+    			"};\n"+
+    			"");
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
+    	assertTrue(astmt.getType() instanceof LLCodeType);
+    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	
+    	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
+    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
+    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	assertEquals(10, arrayType.getArrayCount());
+    	assertNull(arrayType.getDynamicSizeExpr());
+    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	
+    	doGenerate(mod);
+    	
+    	
+    }
+    /*
+    @Test
+    public void testArrayAccess1d() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"mycode := code(p:(Int[10])&; i => nil) {\n"+
+    			"   p[i];"+
+    			"};\n"+
+    			"");
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
+    	assertTrue(astmt.getType() instanceof LLCodeType);
+    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	
+    	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
+    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
+    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	assertEquals(10, arrayType.getArrayCount());
+    	assertNull(arrayType.getDynamicSizeExpr());
+    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	
+    	doGenerate(mod);
+    	
+    	
+    }*/
 }
 
 
