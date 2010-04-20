@@ -103,14 +103,17 @@ toplevelstmts: toplevelstat*      -> ^(STMTLIST toplevelstat*)
 toplevelstat:  (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
     |  (ID COLON) => ID COLON type (EQUALS toplevelvalue)?     SEMI  -> ^(ALLOC ID type toplevelvalue?)
     |  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExpr  SEMI  -> ^(ALLOC ID TYPE rhsExpr)
+    | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     | rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
-    | xscope
+    | (LBRACE ) => xscope 
     ;
 
-toplevelvalue : xscope
-    | (  LPAREN (RPAREN | ID) ) => proto     
+toplevelvalue : (LBRACE ) => xscope
     | selector
     | rhsExpr
+    |   (DATA LBRACE_LESS ) => data
+    | macro -> macro
+     
     ;
 
 // one or more selectors
@@ -137,7 +140,7 @@ forIn : FOR idlist IN list      -> ^(FOR idlist list ) ;
 idlist : ID (COMMA ID)*    -> ^(IDLIST ID+)
     ;
 
-listiterable : ( code | macro | proto ) ;
+listiterable : ( code | macro ) ;
     
 list : LBRACKET listitems RBRACKET     -> ^(LIST listitems*)
     ;
@@ -150,11 +153,11 @@ listitem : toplevelvalue ;
   
 // code block
 
-code : CODE ( LPAREN argdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(CODE ^(PROTO xreturns? argdefs*) codestmtlist*)  
+code : CODE proto? LBRACE codestmtlist RBRACE -> ^(CODE proto? codestmtlist*)  
     ;
 
 // macro code block
-macro : MACRO ( LPAREN argdefs xreturns? RPAREN ) ? LBRACE codestmtlist RBRACE -> ^(MACRO ^(PROTO xreturns? argdefs*) codestmtlist*)  
+macro : MACRO proto ? LBRACE codestmtlist RBRACE -> ^(MACRO proto? codestmtlist*)  
     ;
 
 // argument definitions:  allow a list of names separated with commas,
@@ -218,7 +221,7 @@ codeStmt : labelStmt codeStmtExpr  -> ^(LABELSTMT labelStmt codeStmtExpr)
 codeStmtExpr : varDecl    -> varDecl
       | assignStmt    -> assignStmt
       | rhsExpr       ->  ^(STMTEXPR rhsExpr)
-      | blockStmt         -> blockStmt
+      | ( LBRACE ) => blockStmt         -> blockStmt
       | gotoStmt      -> gotoStmt
       //| withStmt      -> withStmt
       | controlStmt      -> controlStmt
@@ -240,8 +243,8 @@ assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assi
         -> ^(ASSIGN ^(LIST idOrScopeRef+) PLUS? ^(LIST assignExpr+))
     ;
       
-assignExpr : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
-    | idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
+assignExpr : (idOrScopeRef EQUALS) => idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
+    | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
 
@@ -427,8 +430,7 @@ atom :
     |   idOrScopeRef                  -> idOrScopeRef
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
-    |   code                           -> code   
-    |   macro                           -> macro   
+    |    code                           -> code   
     ;
 
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
@@ -437,9 +439,18 @@ idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ )
 
 colons : (COLON | COLONS)+ ;
 
+data : DATA LBRACE_LESS f=fieldDecls GREATER   s=fieldDecls  RBRACE  -> ^(DATA $f $s) ;
+
+fieldDecls : toplevelstat* -> ^(LIST toplevelstat*);
+
+
 //LBRACE_LPAREN : '{(';
 //LBRACE_STAR : '{*';
 //LBRACE_STAR_LPAREN : '{*(';
+LBRACE_LESS : '{<';
+
+FORWARD : 'forward';
+
 COLON : ':';
 COMMA : ',';
 EQUALS : '=';

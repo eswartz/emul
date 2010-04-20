@@ -39,7 +39,8 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		this.macro = macro;
 		scope.setOwner(this);
 		this.stmts = stmts;
-		stmts.setParent(this);
+		if (stmts != null)
+			stmts.setParent(this);
 	}
 	
 	/* (non-Javadoc)
@@ -96,7 +97,10 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { proto, stmts };
+		if (stmts != null)
+			return new IAstNode[] { proto, stmts };
+		else
+			return new IAstNode[] { proto };
 	}
 	
 	/* (non-Javadoc)
@@ -130,7 +134,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			throws TypeException {
 		LLCodeType newType = null;
 		
-		IAstStmt returns = stmts.getLast();
+		IAstStmt returns = stmts != null ? stmts.getLast() : null;
 		
 		LLCodeType protoType = getProtoType(typeEngine, returns);
 		
@@ -212,7 +216,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		if (codeType.getRetType().getBasicType() == BasicType.VOID)
 			return;
 			
-		IAstStmt returns = stmts.getLast();
+		IAstStmt returns = stmts != null ? stmts.getLast() : null;
 		if (returns instanceof ITyped) {
 			LLType kidType = ((ITyped) returns).getType();
 			if (kidType != null && kidType.isComplete()) {

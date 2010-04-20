@@ -29,6 +29,7 @@ import org.ejs.eulang.ast.impl.AstBreakStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstCondExpr;
 import org.ejs.eulang.ast.impl.AstCondList;
+import org.ejs.eulang.ast.impl.AstDataDecl;
 import org.ejs.eulang.ast.impl.AstDefineStmt;
 import org.ejs.eulang.ast.impl.AstDoWhileExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
@@ -61,7 +62,6 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
-import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 
@@ -368,6 +368,8 @@ public class GenerateAST {
 			return constructLiteral(tree);
 		case EulangParser.DEFINE:
 			return constructDefine(tree);
+		case EulangParser.FORWARD:
+			return constructForward(tree);
 		case EulangParser.ALLOC:
 			return constructAlloc(tree);
 		case EulangParser.PROTO:
@@ -463,6 +465,9 @@ public class GenerateAST {
 		case EulangParser.BREAK:
 			return constructBreak(tree);
 			
+		case EulangParser.DATA:
+			return constructData(tree);
+			
 		default:
 			unhandled(tree);
 			return null;
@@ -470,6 +475,47 @@ public class GenerateAST {
 		
 	}
 	
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructForward(Tree tree) throws GenerateException {
+		for (Tree id : iter(tree)) {
+			String name = id.getText();
+			
+			ISymbol symbol = currentScope.get(name);
+			if (symbol != null)
+				throw new GenerateException(id, "redefining " + name);
+			
+			IAstName nameNode = new AstName(name, currentScope);
+			getSource(id, nameNode);
+			
+			if (symbol == null) {
+				symbol = currentScope.add(nameNode); 
+				System.out.println("Creating " +  symbol);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	@SuppressWarnings("unchecked")
+	private IAstNode constructData(Tree tree) throws GenerateException {
+		// first, fields 
+		IAstNodeList<IAstTypedNode> fields = checkConstruct(tree.getChild(0), IAstNodeList.class);
+		IAstNodeList<IAstTypedNode> statics = checkConstruct(tree.getChild(1), IAstNodeList.class);
+		
+		IAstDataDecl dataDecl = new AstDataDecl(fields, statics);
+		getSource(tree, dataDecl);
+		
+		return dataDecl;
+	}
+
 	/**
 	 * @param tree
 	 * @return
@@ -825,7 +871,8 @@ public class GenerateAST {
 		String name = id.getText();
 		
 		ISymbol symbol = currentScope.get(name);
-		if (symbol != null && symbol.getDefinition() != null && !isMacroArg(symbol.getDefinition())) {
+		IAstNode def = symbol != null ? symbol.getDefinition() : null;
+		if (symbol != null && def != null && !isMacroArg(def)) {
 			throw new GenerateException(id, "redefining " + name);
 		}
 		IAstName nameNode = new AstName(name, currentScope);
@@ -1315,8 +1362,6 @@ public class GenerateAST {
 	
 	@SuppressWarnings("unchecked")
 	public IAstDefineStmt constructDefine(Tree tree) throws GenerateException {
-		assert tree.getChildCount() == 2;
-		
 		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
 		
 		
@@ -1372,7 +1417,9 @@ public class GenerateAST {
 				proto = new AstPrototype(typeEngine, unspecified, new IAstArgDef[0]);
 				getEmptySource(tree, proto);
 			}
-			IAstNodeList<IAstStmt> list = checkConstruct(tree.getChild(idx++), IAstNodeList.class);
+			IAstNodeList<IAstStmt> list = null;
+			if (idx < tree.getChildCount())
+				list  = checkConstruct(tree.getChild(idx++), IAstNodeList.class);
 			IAstCodeExpr codeExpr = new AstCodeExpr(proto, currentScope, list, isMacro);
 			getSource(tree, codeExpr);
 			return codeExpr;

@@ -1095,6 +1095,18 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	
     }
+    
+    
+    @Test
+    public void testForwardReferences() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = treeize("forward bar;\n"+
+    			"foo = code(p) { bar(p-1, p+1); };\n"+
+    			"bar = code(a:Int; b:Int => Int ) { a*b };\n");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	
+    }
 }
 
 

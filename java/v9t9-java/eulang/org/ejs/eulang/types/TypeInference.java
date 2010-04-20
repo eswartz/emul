@@ -41,14 +41,13 @@ import org.ejs.eulang.symbols.ISymbol;
  * than filling in completely equal integer types, the addition node and
  * children may merely indicate "some integer is needed here".
  * <p>
+ * When a definition (IAstDefinition) is referenced, it may have more than
+ * one expansion.  Either it has been explicitly declared with several variants
+ * or it has generic types.  We deduce whether it is a generic AST here and 
+ * create and select a concrete instance if so.
+ * <p>
  * Otherwise, the outcome of this phase is a tree where types may still be
  * incomplete, due to symbols that lack types.
- * <p>
- *  * <p>
- * <b>First</b>, if the existing types have incorrect basic type classes (e.g.
- * shifting by a float or adding a boolean), then these are due to user error,
- * and errors are thrown and the inference fails.
-
  * 
  * 
  * @author ejs
@@ -127,7 +126,7 @@ public class TypeInference {
 				}
 
 				
-
+				// Try to determine if the body is generic or not
 				LLType origDefineType = bodyExpr.getType();
 				if (origDefineType == null || !origDefineType.isComplete()) {
 					
@@ -144,7 +143,7 @@ public class TypeInference {
 					}
 					
 					if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
-						// a standalone define should have a known type based on predecessors,
+						// a standalone define should have a known type based on its references,
 						// so this must be a generic
 						boolean madeGeneric = genericize(bodyExpr);
 						if (madeGeneric) {
@@ -401,7 +400,9 @@ public class TypeInference {
 
 			if (node instanceof IAstTypedNode) {
 				IAstTypedNode typed = (IAstTypedNode) node;
-				if (typed.getType() == null ) {
+				if (typed instanceof IAstCodeExpr && ((IAstCodeExpr) typed).isMacro()) {
+					// okay 
+				} else if (typed.getType() == null ) {
 					throw new TypeException(node, "unknown types encountered; add some type specifications");
 				}
 			}

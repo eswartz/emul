@@ -204,6 +204,17 @@ public class TestTypes extends BaseParserTest {
     	
     	
     }*/
+    
+    @Test
+    public void testStruct1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {<\n"+
+    			"   x:Int=66; y:Float; z; "+
+    			">  e:code; f:Byte=9; };\n"+
+    			"");
+
+    	sanityTest(mod);
+    }
 }
 
 

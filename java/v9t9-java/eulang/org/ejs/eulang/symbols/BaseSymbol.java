@@ -159,6 +159,7 @@ public abstract class BaseSymbol implements ISymbol {
 	@Override
 	public void setType(LLType type) {
 		if (type != this.type) {
+			// the symbol itself should not have a type for defines
 			assert !(def instanceof IAstDefineStmt);
 			this.type = type;
 			llvmName = null;

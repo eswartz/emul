@@ -303,6 +303,16 @@ public class TestGenerator extends BaseParserTest {
     }
 
     @Test
+    public void testNoMacroAlloc() throws Exception {
+    	parseFail(
+    			"mycode := macro(p:Int[10]; i) {\n"+
+    			"   p[i];"+
+    			"};\n"+
+    			"");
+    }
+
+    
+    @Test
     public void testMacroArgs1() throws Exception {
     	IAstModule mod = treeize(
     			" testMacroArgs1 = macro (macro t : code; macro mthen : code; macro melse : code) { };\n");
@@ -522,6 +532,7 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(9, (((IAstIntLitExpr) alloc.getExprs().list().get(1)).getValue()));
 
     }
+  
 }
 
 

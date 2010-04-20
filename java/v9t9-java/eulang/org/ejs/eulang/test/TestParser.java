@@ -234,12 +234,16 @@ public class TestParser extends BaseParserTest  {
     	parse("sqrAdd = [ code ( x, y, z ) {} , for T in [ Byte, Double ] : code ( x : T; y : U ) {  x*x+y }, code ( a, b, c ) {}];") ;
     }
     @Test
+    public void testForward1() throws Exception  {
+    	parse("forward sqrAdd;");
+    }
+    @Test
     public void testScope1() throws Exception  {
-    	parse("{ sqrAdd = (); }");
+    	parse("{ forward sqrAdd; }");
     }
     @Test
     public void testScope2() throws Exception  {
-    	parse("{ sqrAdd = (); inner = { foo = 4; }; }");
+    	parse("{ forward sqrAdd; inner = { foo = code() { sqrAdd() }; }; }");
     }
     @Test
     public void testType1() throws Exception  {
