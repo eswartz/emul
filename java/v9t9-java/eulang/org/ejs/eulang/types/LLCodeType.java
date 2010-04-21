@@ -5,6 +5,8 @@ package org.ejs.eulang.types;
 
 import java.util.Arrays;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * @author ejs
  *
@@ -120,7 +122,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 		return argTypes[idx - 1];
 	}
 	
-	public LLCodeType updateTypes(LLType[] type) {
+	public LLCodeType updateTypes(TypeEngine typeEngine, LLType[] type) {
 		LLType retType = type[0];
 		LLType[] argTypes = new LLType[type.length - 1];
 		System.arraycopy(type, 1, argTypes, 0, argTypes.length);

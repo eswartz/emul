@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * @author ejs
  *
@@ -14,5 +16,5 @@ public interface LLAggregateType extends LLType {
 	LLType[] getTypes();
 
 	LLType getType(int idx);
-	LLAggregateType updateTypes(LLType[] type);
+	LLAggregateType updateTypes(TypeEngine typeEngine, LLType[] type);
 }

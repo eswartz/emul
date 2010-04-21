@@ -7,7 +7,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstDataDecl extends IAstTypedNode {
+public interface IAstDataDecl extends IAstTypedExpr, IAstScope {
 	IAstDataDecl copy(IAstNode parent);
 	
 	IAstNodeList<IAstTypedNode> getFields();

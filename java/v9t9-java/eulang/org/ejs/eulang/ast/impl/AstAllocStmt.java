@@ -208,6 +208,10 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		this.typeExpr = reparent(this.typeExpr, type);
 	}
 	
+	public IAstTypedExpr getDefaultFor(int symbolNum) {
+		IAstTypedExpr theExpr = getExprs() != null ? (getExprs().list().get(getExprs().nodeCount() == 1 ? 0 : symbolNum)) : null;
+		return theExpr;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren()
 	 */
@@ -218,7 +222,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		// infer each type individually
 		for (int i = symExpr.nodeCount(); i-- > 0; ) {
 			IAstSymbolExpr theSymbol = getSymbolExprs().list().get(i);
-			IAstTypedExpr theExpr = getExprs() != null ? (getExprs().list().get(getExprs().nodeCount() == 1 ? 0 : i)) : null;
+			IAstTypedExpr theExpr = getDefaultFor(i);
 			if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExprs().list().get(i), theExpr })) {
 				if (getExprs() != null && theExpr.getType() != null) {
 					if (getSymbolExprs() != null && theExpr.getType().isMoreComplete(theSymbol.getType()))

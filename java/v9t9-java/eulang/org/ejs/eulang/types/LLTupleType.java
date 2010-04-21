@@ -5,6 +5,7 @@ package org.ejs.eulang.types;
 
 import java.util.Arrays;
 
+import org.apache.batik.css.engine.value.svg.AlignmentBaselineManager;
 import org.ejs.eulang.TypeEngine;
 
 /**
@@ -14,7 +15,6 @@ import org.ejs.eulang.TypeEngine;
 public class LLTupleType extends BaseLLAggregateType {
 
 	private LLType[] types;
-	private boolean isAbstract;
 
 	/**
 	 * @param name
@@ -25,11 +25,6 @@ public class LLTupleType extends BaseLLAggregateType {
 	 */
 	public LLTupleType(TypeEngine engine, LLType[] types) {
 		super(null, sumTypeBits(engine, types), toLLVMString(types), BasicType.TUPLE, null, types == null);
-		this.types = types != null ? types : NO_TYPES;
-	}
-
-	public LLTupleType(LLType[] types) {
-		super(null, sumTypeBits(null, types), toLLVMString(types), BasicType.TUPLE, null, types == null);
 		this.types = types != null ? types : NO_TYPES;
 	}
 
@@ -85,14 +80,11 @@ public class LLTupleType extends BaseLLAggregateType {
 		if (types == null)
 			return 0;
 		
-		int sum = 0;
-		int align = engine != null ? engine.getStructAlign() : 8; 
+		TypeEngine.Alignment align = engine.new Alignment(TypeEngine.Target.STRUCT);
 		for (LLType type : types)  {
-			if (sum % align != 0)
-				sum += (align - sum % align);
-			sum += type != null ? type.getBits() : 0; 
+			align.add(type);
 		}
-		return sum;
+		return align.sizeof();
 	}
 
 	
@@ -119,7 +111,7 @@ public class LLTupleType extends BaseLLAggregateType {
 		return types[idx];
 	}
 	
-	public LLTupleType updateTypes(LLType[] type) {
-		return new LLTupleType(type);
+	public LLTupleType updateTypes(TypeEngine typeEngine, LLType[] type) {
+		return new LLTupleType(typeEngine, type);
 	}
 }

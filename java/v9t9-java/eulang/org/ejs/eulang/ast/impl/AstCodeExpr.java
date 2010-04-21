@@ -145,7 +145,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 					&& ((ITyped) returns).getType().isMoreComplete(newType.getRetType())) {
 				LLType[] types = newType.getTypes();
 				types[0] = ((ITyped) returns).getType();
-				newType = newType.updateTypes(types);
+				newType = newType.updateTypes(typeEngine, types);
 			}
 		}
 		if (newType == null || protoType.isMoreComplete(newType)) {

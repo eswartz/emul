@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.ast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 import org.ejs.eulang.symbols.IScope;
@@ -80,5 +81,19 @@ public class DumpAST extends AstVisitor {
 	private void printIndent() {
 		for (int i = 0; i < indent; i++)
 			str.print("  ");
+	}
+
+	/**
+	 * @param object
+	 * @return
+	 */
+	public static String dumpString(IAstNode node) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		PrintStream strStream = new PrintStream(out);
+		DumpAST dump = new DumpAST(strStream);
+		node.accept(dump);
+		String dumpstr = out.toString();
+		dumpstr = dumpstr.trim().replaceAll("\n", " // ");
+		return dumpstr;
 	}
 }

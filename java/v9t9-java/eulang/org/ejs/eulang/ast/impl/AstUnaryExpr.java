@@ -99,7 +99,10 @@ public class AstUnaryExpr extends AstTypedExpr implements
     public IAstTypedExpr simplify(TypeEngine typeEngine) {
 		if (oper == IOperation.CAST) {
 			if (expr instanceof IAstLitExpr) {
-				return typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
+				IAstLitExpr lit = typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
+				if (lit != null)
+					lit.setSourceRef(getSourceRef());
+				return lit;
 			}
 		}
 

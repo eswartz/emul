@@ -595,6 +595,10 @@ public class BaseParserTest {
 		}
 		return new File("/tmp/" + name + ext);
 	}
-	
+
+	protected IAstTypedExpr getMainExpr(IAstDefineStmt def) {
+		return def.getMatchingBodyExpr(null);
+	}
+    
 
 }

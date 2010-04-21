@@ -7,11 +7,15 @@ import static junit.framework.Assert.*;
 
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstDataDecl;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLInstanceField;
 import org.junit.Test;
 
 /**
@@ -206,14 +210,102 @@ public class TestTypes extends BaseParserTest {
     }*/
     
     @Test
-    public void testStruct1() throws Exception {
+    public void testStruct0() throws Exception {
     	IAstModule mod = doFrontend(
-    			"Tuple = data {<\n"+
-    			"   x:Int=66; y:Float; z; "+
-    			">  e:code; f:Byte=9; };\n"+
+    			"Tuple = data {\n"+
+    			"   x:Int=66; y:Float;\n" +
+    			" static f,g,h:Byte=9; };\n"+
     			"");
 
     	sanityTest(mod);
+    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(decl.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) decl.getType();
+    	assertTrue(data.isComplete());
+    	assertEquals(5, data.getTypes().length);
+    	assertEquals(2, data.getInstanceFields().length);
+    	assertEquals(3, data.getStaticFields().length);
+    	
+    	assertEquals((2 + 4) * 8, data.getSizeof());
+    }
+    
+    @Test
+    public void testStruct1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Int=66; y:Float;\n" +
+    			"z;\n" +
+    			" static f,g,h:Byte=9; };\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(decl.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) decl.getType();
+    	assertTrue(data.isGeneric());
+    	assertEquals(6, data.getTypes().length);
+    	assertEquals(3, data.getInstanceFields().length);
+    	assertEquals(3, data.getStaticFields().length);
+    	
+    	assertEquals((2 + 4) * 8, data.getSizeof());		// z is generic and contributes nothing
+    }
+    
+    @Test
+    public void testStructAlign1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x,y,z:Byte; f:Float; };\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(decl.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) decl.getType();
+    	assertTrue(data.isComplete());
+    	assertTrue(data.isCompatibleWith(data));
+    	
+    	assertEquals(4, data.getTypes().length);
+    	LLInstanceField[] fields = data.getInstanceFields();
+		assertEquals(4, fields.length);
+		assertEquals("x", fields[0].getName());
+		assertEquals(0, fields[0].getOffset());
+		assertEquals("y", fields[1].getName());
+		assertEquals(8, fields[1].getOffset());
+		assertEquals("z", fields[2].getName());
+		assertEquals(16, fields[2].getOffset());
+		assertEquals("f", fields[3].getName());
+		assertEquals(32, fields[3].getOffset());
+    	
+    	assertEquals(32 + 4 * 8, data.getSizeof());
+    }
+
+    @Test
+    public void testStructAlign2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(decl.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) decl.getType();
+    	assertTrue(data.isComplete());
+    	assertTrue(data.isCompatibleWith(data));
+    	
+    	assertEquals(4, data.getTypes().length);
+    	LLInstanceField[] fields = data.getInstanceFields();
+		assertEquals(4, fields.length);
+		assertEquals("x", fields[0].getName());
+		assertEquals(0, fields[0].getOffset());
+		assertEquals("f", fields[1].getName());
+		assertEquals(16, fields[1].getOffset());
+		assertEquals("y", fields[2].getName());
+		assertEquals(48, fields[2].getOffset());
+		assertEquals("z", fields[3].getName());
+		assertEquals(56, fields[3].getOffset());
+    	
+    	assertEquals(64, data.getSizeof());
     }
 }
 

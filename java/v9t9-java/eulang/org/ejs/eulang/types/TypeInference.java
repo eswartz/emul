@@ -368,7 +368,7 @@ public class TypeInference {
 		if (!anyGeneric)
 			return false;
 		
-		LLType newType = aggregate.updateTypes(types);
+		LLType newType = aggregate.updateTypes(typeEngine, types);
 		defineExpr.setType(newType);
 		
 		boolean changed = false;

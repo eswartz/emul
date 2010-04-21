@@ -111,8 +111,8 @@ toplevelstat:  (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID t
 toplevelvalue : (LBRACE ) => xscope
     | selector
     | rhsExpr
-    |   (DATA LBRACE_LESS ) => data
-    | macro -> macro
+    | data
+    | macro
      
     ;
 
@@ -218,7 +218,8 @@ codeStmt : labelStmt codeStmtExpr  -> ^(LABELSTMT labelStmt codeStmtExpr)
       | codeStmtExpr -> codeStmtExpr
       ;
 
-codeStmtExpr : varDecl    -> varDecl
+codeStmtExpr options { backtrack=true; } :
+     varDecl    -> varDecl
       | assignStmt    -> assignStmt
       | rhsExpr       ->  ^(STMTEXPR rhsExpr)
       | ( LBRACE ) => blockStmt         -> blockStmt
@@ -439,10 +440,15 @@ idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ )
 
 colons : (COLON | COLONS)+ ;
 
-data : DATA LBRACE_LESS f=fieldDecls GREATER   s=fieldDecls  RBRACE  -> ^(DATA $f $s) ;
+data : DATA LBRACE fieldDecl* RBRACE  -> ^(DATA fieldDecl*) ;
 
-fieldDecls : toplevelstat* -> ^(LIST toplevelstat*);
+staticVarDecl : STATIC varDecl -> ^(STATIC varDecl) ;
 
+fieldDecl : staticVarDecl SEMI -> staticVarDecl 
+    | varDecl SEMI -> varDecl 
+    | fieldIdRef SEMI -> fieldIdRef;
+
+fieldIdRef : ID (COMMA ID)* -> ^(ALLOC ID)+ ;
 
 //LBRACE_LPAREN : '{(';
 //LBRACE_STAR : '{*';
@@ -450,6 +456,7 @@ fieldDecls : toplevelstat* -> ^(LIST toplevelstat*);
 LBRACE_LESS : '{<';
 
 FORWARD : 'forward';
+STATIC : 'static';
 
 COLON : ':';
 COMMA : ',';

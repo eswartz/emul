@@ -62,6 +62,53 @@ public class TypeEngine {
 	private boolean isLittleEndian;
 	private int ptrAlign;
 	private int stackMinAlign;
+	
+	public enum Target {
+		STACK,
+		STRUCT
+	};
+	public class Alignment {
+		private int offset;
+		private final Target target;
+		public Alignment(Target target) {
+			this.target = target;
+			offset = 0;
+		}
+		/** Add a type to align.  
+		 * 
+		 * @param type
+		 * @return the bit offset of the type
+		 */
+		public int add(LLType type) {
+			int bits = type != null ? type.getBits() : 0;
+				
+			int minAlign = target == Target.STRUCT ? getStructMinAlign() : getStackMinAlign();
+			int align = target == Target.STRUCT ? getStructAlign() : getStackAlign();
+			
+			if (bits != 0 && bits < minAlign)
+				bits = minAlign;
+			if (bits < align)
+				align = minAlign;
+			
+			if (offset % align != 0) {
+				offset += (align - offset % align);
+			}
+			
+			int fieldOffset = offset;
+			
+			offset += bits; 
+			if (offset % align != 0)
+				offset += (align - offset % align);
+			return fieldOffset;
+		}
+		/**
+		 * @return the bit size 
+		 */
+		public int sizeof() {
+			return offset;
+		}
+	}
+	
 	public int getStackMinAlign() {
 		return stackMinAlign;
 	}

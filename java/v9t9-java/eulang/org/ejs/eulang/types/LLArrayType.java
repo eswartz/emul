@@ -69,13 +69,7 @@ public class LLArrayType extends BaseLLType {
 	public String toString() {
 		String str = super.toString();
 		if (dynamicSizeExpr != null) {
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			PrintStream strStream = new PrintStream(out);
-			DumpAST dump = new DumpAST(strStream);
-			dynamicSizeExpr.accept(dump);
-			String dumpstr = out.toString();
-			dumpstr = dumpstr.trim().replaceAll("\n", " // ");
-			str += " { dynamic: " + dumpstr + " }";
+			str += " { dynamic: " + DumpAST.dumpString(dynamicSizeExpr) + " }";
 		}
 		return str;
 	}

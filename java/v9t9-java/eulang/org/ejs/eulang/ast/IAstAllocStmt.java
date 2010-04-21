@@ -29,4 +29,6 @@ public interface IAstAllocStmt extends IAstStmt, IAstTypedNode /*, IAstSymbolDef
 	
 	void setExpand(boolean expand);
 	boolean getExpand();
+	
+	IAstTypedExpr getDefaultFor(int symbolNum);
 }

@@ -69,10 +69,6 @@ public class TestGenerator extends BaseParserTest {
     	
     }
 
-	private IAstTypedExpr getMainExpr(IAstDefineStmt def) {
-		return def.getMatchingBodyExpr(null);
-	}
-    
     @Test
     public void testOneEntryCodeModule0() throws Exception {
     	IAstModule mod = treeize("foo = code (x,y) {\n};");

@@ -504,16 +504,41 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException 
 	 */
-	@SuppressWarnings("unchecked")
 	private IAstNode constructData(Tree tree) throws GenerateException {
-		// first, fields 
-		IAstNodeList<IAstTypedNode> fields = checkConstruct(tree.getChild(0), IAstNodeList.class);
-		IAstNodeList<IAstTypedNode> statics = checkConstruct(tree.getChild(1), IAstNodeList.class);
-		
-		IAstDataDecl dataDecl = new AstDataDecl(fields, statics);
-		getSource(tree, dataDecl);
-		
-		return dataDecl;
+		pushScope(new LocalScope(currentScope));
+		try {
+			IAstNodeList<IAstTypedNode> fields = new AstNodeList<IAstTypedNode>(IAstTypedNode.class);
+			IAstNodeList<IAstTypedNode> statics = new AstNodeList<IAstTypedNode>(IAstTypedNode.class);
+			for (Tree kid : iter(tree)) {
+				IAstNodeList<IAstTypedNode> theList = fields;
+				if (kid.getType() == EulangParser.STATIC) {
+					theList = statics;
+					kid = kid.getChild(0);
+				}
+				IAstTypedNode item = checkConstruct(kid, IAstTypedNode.class);
+				
+				if (item instanceof IAstSymbolExpr) {
+					// convert to an alloc
+					item.setParent(null);
+					IAstSymbolExpr symbolExpr = (IAstSymbolExpr) item;
+					IAstAllocStmt alloc = new AstAllocStmt(AstNodeList.<IAstSymbolExpr>singletonList(
+							IAstSymbolExpr.class, symbolExpr), null, null, false);
+					item = alloc;
+					symbolExpr.getSymbol().setDefinition(item);
+					getSource(kid, alloc);
+				}
+				theList.add(item);
+			}
+			getSource(tree, statics);
+			getSource(tree, fields);
+			
+			IAstDataDecl dataDecl = new AstDataDecl(fields, statics, currentScope);
+			getSource(tree, dataDecl);
+			
+			return dataDecl;
+		} finally {
+			popScope(tree);
+		}
 	}
 
 	/**
@@ -765,7 +790,7 @@ public class GenerateAST {
 	}
 
 	public IAstNode constructAlloc(Tree tree) throws GenerateException {
-		IAstType type = checkConstruct(tree.getChild(1), IAstType.class);
+		IAstType type = tree.getChildCount() > 1 ? checkConstruct(tree.getChild(1), IAstType.class) : null;
 		
 		
 		if (tree.getChild(0).getType() == EulangParser.ID) {
