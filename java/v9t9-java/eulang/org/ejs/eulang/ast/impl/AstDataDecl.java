@@ -9,6 +9,7 @@ import java.util.List;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstDataDecl;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstScope;
@@ -175,7 +176,7 @@ public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (statics == existing) 
 			setStatics((IAstNodeList<IAstTypedNode>) another);
-		else if (statics == ifields)
+		else if (ifields == existing)
 			setFields((IAstNodeList<IAstTypedNode>) another);
 		else
 			throw new IllegalArgumentException();
@@ -230,9 +231,16 @@ public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
 				}
 			}
 		}
-		return new LLDataType(typeEngine, 
+		
+		String name = null;
+		if (getParent() instanceof IAstDefineStmt) {
+			name = ((IAstDefineStmt) getParent()).getSymbol().getName();
+		}
+		LLDataType data = new LLDataType(typeEngine, name,
 				(LLInstanceField[]) newIFields.toArray(new LLInstanceField[newIFields.size()]),
 				(LLStaticField[]) newSFields.toArray(new LLStaticField[newSFields.size()]));
+		typeEngine.register(data);
+		return data;
 	}
 	
 }

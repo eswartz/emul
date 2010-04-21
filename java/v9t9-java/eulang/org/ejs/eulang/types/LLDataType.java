@@ -21,8 +21,8 @@ public class LLDataType extends BaseLLAggregateType {
 	private LLStaticField[] statics;
 	private int sizeof;
 
-	public LLDataType(TypeEngine engine, LLInstanceField[] ifields, LLStaticField[] statics) {
-		super(null, sumTypeBits(engine, ifields), toLLVMString(ifields), BasicType.TUPLE, null, ifields == null);
+	public LLDataType(TypeEngine engine, String name, LLInstanceField[] ifields, LLStaticField[] statics) {
+		super(name, sumTypeBits(engine, ifields), toLLVMString(ifields), BasicType.DATA, null, ifields == null);
 		this.ifields = ifields != null ? ifields : NO_FIELDS;
 		this.statics = statics != null ? statics : NO_STATIC_FIELDS;
 		
@@ -155,7 +155,7 @@ public class LLDataType extends BaseLLAggregateType {
 					field.getDefinition(), field.getDefault());
 		}
 		
-		return new LLDataType(typeEngine, newIFields, newSFields);
+		return new LLDataType(typeEngine, name, newIFields, newSFields);
 	}
 
 	/**

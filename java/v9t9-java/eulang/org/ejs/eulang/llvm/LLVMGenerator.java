@@ -30,6 +30,7 @@ import org.ejs.eulang.ast.IAstBreakStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
+import org.ejs.eulang.ast.IAstDataDecl;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDoWhileExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
@@ -272,9 +273,19 @@ public class LLVMGenerator {
 			generateGlobalCode(stmt.getSymbol(), (IAstCodeExpr) expr);
 		} else if (expr instanceof IAstLitExpr) {
 			generateGlobalConstant(stmt.getSymbol(), (IAstLitExpr) expr);
+		} else if (expr instanceof IAstDataDecl) {
+			generateGlobalData(stmt.getSymbol(), (IAstDataDecl) expr);
 		} else {
 			unhandled(stmt);
 		}
+	}
+
+	/**
+	 * @param symbol
+	 * @param expr
+	 */
+	private void generateGlobalData(ISymbol symbol, IAstDataDecl expr) {
+		// ignore for now, even though it may have initializers		
 	}
 
 	/**

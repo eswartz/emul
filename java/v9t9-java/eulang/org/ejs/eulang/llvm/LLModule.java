@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
 import org.ejs.eulang.llvm.directives.LLTypeDirective;
+import org.ejs.eulang.symbols.GlobalSymbol;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalSymbol;
@@ -129,6 +130,9 @@ public class LLModule {
 		ISymbol typeSymbol = globalScope.get(type.getName());
 		if (typeSymbol == null) {
 			typeSymbol = globalScope.add(new LocalSymbol(globalScope.nextId(), new AstName(type.getName()), null));
+			externDirectives.add(new LLTypeDirective(typeSymbol, type));
+		} else if (typeSymbol instanceof GlobalSymbol) {
+			typeSymbol = moduleScope.add(new LocalSymbol(moduleScope.nextId(), new AstName(type.getName()), null));
 			externDirectives.add(new LLTypeDirective(typeSymbol, type));
 		}
 		return typeSymbol;

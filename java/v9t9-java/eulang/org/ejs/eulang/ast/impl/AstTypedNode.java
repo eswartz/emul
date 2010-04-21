@@ -51,6 +51,15 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return type != null ? type.toString() : "<unknown>";
+	}
+	
+	
 	@Override
 	public LLType getType() {
 		return type;

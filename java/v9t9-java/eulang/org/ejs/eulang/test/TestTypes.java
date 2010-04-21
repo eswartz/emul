@@ -307,6 +307,30 @@ public class TestTypes extends BaseParserTest {
     	
     	assertEquals(64, data.getSizeof());
     }
+    
+    @Test
+    public void testStructAlloc1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    			"testStructAlloc1 = code() {\n"+
+    			"  foo:Tuple;\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(decl.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) decl.getType();
+    	
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testStructAlloc1").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	IAstAllocStmt stmt = (IAstAllocStmt) code.stmts().getFirst();
+    	assertEquals(data, stmt.getType());
+    	
+    	doGenerate(mod);
+    }
 }
 
 

@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-04-20 20:34:51
+// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-04-20 22:46:28
 
 package org.ejs.eulang.parser;
 
@@ -561,7 +561,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, toplevelvalue, type
+                    // elements: toplevelvalue, type, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -692,7 +692,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, FORWARD
+                    // elements: FORWARD, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -705,10 +705,10 @@ public class EulangParser extends Parser {
                     root_0 = (CommonTree)adaptor.nil();
                     // 106:35: -> ( ^( FORWARD ID ) )+
                     {
-                        if ( !(stream_ID.hasNext()||stream_FORWARD.hasNext()) ) {
+                        if ( !(stream_FORWARD.hasNext()||stream_ID.hasNext()) ) {
                             throw new RewriteEarlyExitException();
                         }
-                        while ( stream_ID.hasNext()||stream_FORWARD.hasNext() ) {
+                        while ( stream_FORWARD.hasNext()||stream_ID.hasNext() ) {
                             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:106:38: ^( FORWARD ID )
                             {
                             CommonTree root_1 = (CommonTree)adaptor.nil();
@@ -720,8 +720,8 @@ public class EulangParser extends Parser {
                             }
 
                         }
-                        stream_ID.reset();
                         stream_FORWARD.reset();
+                        stream_ID.reset();
 
                     }
 
@@ -1595,7 +1595,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: idlist, FOR, list
+            // elements: idlist, list, FOR
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -2214,7 +2214,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: CODE, proto, codestmtlist
+            // elements: codestmtlist, proto, CODE
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -2891,7 +2891,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, ID
+                    // elements: ID, type
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -3026,7 +3026,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: MACRO, init, ID, type
+                    // elements: type, ID, MACRO, init
                     // token labels: 
                     // rule labels: retval, init
                     // token list labels: 
@@ -3040,10 +3040,10 @@ public class EulangParser extends Parser {
                     root_0 = (CommonTree)adaptor.nil();
                     // 176:68: -> ( ^( ARGDEF MACRO ID ( type )* ( $init)? ) )+
                     {
-                        if ( !(stream_MACRO.hasNext()||stream_ID.hasNext()) ) {
+                        if ( !(stream_ID.hasNext()||stream_MACRO.hasNext()) ) {
                             throw new RewriteEarlyExitException();
                         }
-                        while ( stream_MACRO.hasNext()||stream_ID.hasNext() ) {
+                        while ( stream_ID.hasNext()||stream_MACRO.hasNext() ) {
                             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:176:71: ^( ARGDEF MACRO ID ( type )* ( $init)? )
                             {
                             CommonTree root_1 = (CommonTree)adaptor.nil();
@@ -3068,8 +3068,8 @@ public class EulangParser extends Parser {
                             }
 
                         }
-                        stream_MACRO.reset();
                         stream_ID.reset();
+                        stream_MACRO.reset();
 
                     }
 
@@ -3395,7 +3395,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: xreturns, argdefs
+            // elements: argdefs, xreturns
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -4441,7 +4441,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: CODE, proto
+                    // elements: proto, CODE
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5208,7 +5208,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, assignExpr
+                    // elements: assignExpr, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5259,7 +5259,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idTuple, assignExpr
+                    // elements: assignExpr, idTuple
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5333,7 +5333,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, assignExpr, type
+                    // elements: assignExpr, type, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5415,7 +5415,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignExpr, idTuple, type
+                    // elements: type, idTuple, assignExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5756,7 +5756,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, PLUS, type, assignExpr
+                    // elements: ID, assignExpr, PLUS, type
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5923,7 +5923,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignExpr, idOrScopeRef
+                    // elements: idOrScopeRef, assignExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6261,7 +6261,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idOrScopeRef, assignExpr
+                    // elements: assignExpr, idOrScopeRef
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6311,7 +6311,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignExpr, idTuple
+                    // elements: idTuple, assignExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6579,7 +6579,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: codeStmtExpr, DO, rhsExpr
+            // elements: rhsExpr, codeStmtExpr, DO
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -6679,7 +6679,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: rhsExpr, WHILE, codeStmtExpr
+            // elements: WHILE, codeStmtExpr, rhsExpr
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -6779,7 +6779,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: rhsExpr, codeStmt, REPEAT
+            // elements: REPEAT, codeStmt, rhsExpr
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -6920,7 +6920,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: atId, FOR, forIds, rhsExpr, codeStmt
+            // elements: FOR, codeStmt, rhsExpr, forIds, atId
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -7204,7 +7204,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: rhsExpr, BREAK
+            // elements: BREAK, rhsExpr
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -7408,7 +7408,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: idOrScopeRef, GOTO, rhsExpr
+            // elements: idOrScopeRef, rhsExpr, GOTO
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8109,7 +8109,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: idOrScopeRef, arglist
+            // elements: arglist, idOrScopeRef
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8637,7 +8637,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: b, WITH, e, bindings
+            // elements: e, b, WITH, bindings
             // token labels: 
             // rule labels: retval, e, b
             // token list labels: 
@@ -9784,7 +9784,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: f, t, cond
+            	    // elements: cond, f, t
             	    // token labels: 
             	    // rule labels: f, retval, t
             	    // token list labels: 
@@ -9930,7 +9930,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: OR, logor, r
+            	    // elements: r, OR, logor
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10074,7 +10074,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, logand, AND
+            	    // elements: logand, AND, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10221,7 +10221,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: NOT, u
+                    // elements: u, NOT
                     // token labels: 
                     // rule labels: retval, u
                     // token list labels: 
@@ -10399,7 +10399,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, COMPEQ, r
+            	    // elements: comp, r, COMPEQ
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10444,7 +10444,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, comp, COMPNE
+            	    // elements: r, COMPNE, comp
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10489,7 +10489,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: COMPLE, r, comp
+            	    // elements: r, COMPLE, comp
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10534,7 +10534,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, comp, COMPGE
+            	    // elements: COMPGE, r, comp
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10579,7 +10579,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, LESS, r
+            	    // elements: r, comp, LESS
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10624,7 +10624,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, GREATER, comp
+            	    // elements: comp, r, GREATER
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -10912,7 +10912,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, bitxor
+            	    // elements: bitxor, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -11323,7 +11323,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, URSHIFT, shift
+            	    // elements: r, shift, URSHIFT
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -11476,7 +11476,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, factor
+            	    // elements: factor, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14726,39 +14726,64 @@ public class EulangParser extends Parser {
         }
     }
     static final String DFA57_eotS =
-        "\24\uffff";
+        "\34\uffff";
     static final String DFA57_eofS =
-        "\24\uffff";
+        "\1\uffff\1\4\5\uffff\1\4\2\uffff\1\4\4\uffff\1\4\5\uffff\1\4\6\uffff";
     static final String DFA57_minS =
-        "\1\6\3\0\20\uffff";
+        "\1\6\1\64\1\63\1\6\1\uffff\1\63\1\uffff\2\64\1\63\1\64\2\63\1\6"+
+        "\4\64\3\63\4\64\1\uffff\1\63\1\64";
     static final String DFA57_maxS =
-        "\1\161\3\0\20\uffff";
+        "\1\161\1\160\2\161\1\uffff\1\63\1\uffff\2\160\1\161\1\160\2\63\1"+
+        "\161\4\160\1\161\2\63\1\152\3\160\1\uffff\1\63\1\160";
     static final String DFA57_acceptS =
-        "\4\uffff\1\3\15\uffff\1\1\1\2";
+        "\4\uffff\1\3\1\uffff\1\1\22\uffff\1\2\2\uffff";
     static final String DFA57_specialS =
-        "\1\uffff\1\0\1\1\1\2\20\uffff}>";
+        "\1\uffff\1\1\5\uffff\1\2\2\uffff\1\3\4\uffff\1\0\5\uffff\1\4\6\uffff}>";
     static final String[] DFA57_transitionS = {
             "\1\4\54\uffff\1\1\2\uffff\1\2\11\uffff\1\3\2\uffff\1\4\12\uffff"+
             "\1\4\7\uffff\1\4\13\uffff\2\4\4\uffff\10\4\1\uffff\1\2",
-            "\1\uffff",
-            "\1\uffff",
-            "\1\uffff",
+            "\1\6\1\4\3\uffff\3\4\1\uffff\1\4\2\uffff\3\4\1\uffff\5\4\1"+
+            "\uffff\1\4\5\uffff\6\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\5",
+            "\1\7\2\uffff\1\2\72\uffff\1\2",
+            "\1\4\54\uffff\1\10\2\uffff\1\11\11\uffff\1\4\2\uffff\1\4\12"+
+            "\uffff\1\4\7\uffff\1\4\13\uffff\2\4\4\uffff\10\4\1\uffff\1\11",
             "",
+            "\1\12",
             "",
+            "\1\6\1\4\3\uffff\3\4\1\uffff\1\4\2\uffff\3\4\1\uffff\5\4\1"+
+            "\uffff\1\4\5\uffff\6\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\13",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\2\4\2\uffff\3\4\3\uffff\1\4\12"+
+            "\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\14",
+            "\1\16\2\uffff\1\11\72\uffff\1\11",
+            "\1\6\1\4\3\uffff\3\4\1\uffff\1\4\2\uffff\3\4\1\uffff\5\4\1"+
+            "\uffff\1\4\5\uffff\6\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\5",
+            "\1\17",
+            "\1\20",
+            "\1\4\54\uffff\1\21\2\uffff\1\22\11\uffff\1\4\2\uffff\1\4\12"+
+            "\uffff\1\4\7\uffff\1\4\13\uffff\2\4\4\uffff\10\4\1\uffff\1\22",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\2\4\2\uffff\3\4\3\uffff\1\4\12"+
+            "\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\23",
+            "\1\6\1\4\3\uffff\3\4\1\uffff\1\4\2\uffff\3\4\1\uffff\5\4\1"+
+            "\uffff\1\4\5\uffff\6\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\13",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\2\4\2\uffff\3\4\3\uffff\1\4\12"+
+            "\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\14",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\1\4\1\25\2\uffff\3\4\3\uffff"+
+            "\1\4\12\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\24",
+            "\1\26\2\uffff\1\22\72\uffff\1\22",
+            "\1\27",
+            "\1\30",
+            "\1\31\1\4\3\uffff\3\4\1\uffff\1\4\3\uffff\2\4\1\uffff\5\4\1"+
+            "\uffff\1\4\5\uffff\6\4\1\uffff\21\4\1\uffff\2\4",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\1\4\1\25\2\uffff\3\4\3\uffff"+
+            "\1\4\12\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\32",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\2\4\2\uffff\3\4\3\uffff\1\4\12"+
+            "\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\23",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\1\4\1\25\2\uffff\3\4\3\uffff"+
+            "\1\4\12\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\24",
             "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
+            "\1\33",
+            "\1\4\4\uffff\1\15\1\4\5\uffff\1\4\1\25\2\uffff\3\4\3\uffff"+
+            "\1\4\12\uffff\1\4\1\uffff\21\4\1\uffff\2\4\5\uffff\1\32"
     };
 
     static final short[] DFA57_eot = DFA.unpackEncodedString(DFA57_eotS);
@@ -14798,48 +14823,86 @@ public class EulangParser extends Parser {
         	int _s = s;
             switch ( s ) {
                     case 0 : 
+                        int LA57_15 = input.LA(1);
+
+                         
+                        int index57_15 = input.index();
+                        input.rewind();
+                        s = -1;
+                        if ( (LA57_15==EOF||LA57_15==SEMI||(LA57_15>=COMMA && LA57_15<=RBRACKET)||LA57_15==RBRACE||(LA57_15>=LPAREN && LA57_15<=ARROW)||(LA57_15>=QUESTION && LA57_15<=WHILE)||LA57_15==AND||(LA57_15>=ELSE && LA57_15<=OR)||(LA57_15>=COMPEQ && LA57_15<=UMOD)||(LA57_15>=PLUSPLUS && LA57_15<=MINUSMINUS)) ) {s = 4;}
+
+                        else if ( (LA57_15==PERIOD) ) {s = 11;}
+
+                        else if ( (LA57_15==EQUALS) && (synpred15_Eulang())) {s = 6;}
+
+                         
+                        input.seek(index57_15);
+                        if ( s>=0 ) return s;
+                        break;
+                    case 1 : 
                         int LA57_1 = input.LA(1);
 
                          
                         int index57_1 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred15_Eulang()) ) {s = 18;}
+                        if ( (LA57_1==PERIOD) ) {s = 5;}
 
-                        else if ( (true) ) {s = 4;}
+                        else if ( (LA57_1==EOF||LA57_1==SEMI||(LA57_1>=COMMA && LA57_1<=RBRACKET)||LA57_1==RBRACE||(LA57_1>=LPAREN && LA57_1<=ARROW)||(LA57_1>=QUESTION && LA57_1<=WHILE)||LA57_1==AND||(LA57_1>=ELSE && LA57_1<=OR)||(LA57_1>=COMPEQ && LA57_1<=UMOD)||(LA57_1>=PLUSPLUS && LA57_1<=MINUSMINUS)) ) {s = 4;}
+
+                        else if ( (LA57_1==EQUALS) && (synpred15_Eulang())) {s = 6;}
 
                          
                         input.seek(index57_1);
                         if ( s>=0 ) return s;
                         break;
-                    case 1 : 
-                        int LA57_2 = input.LA(1);
+                    case 2 : 
+                        int LA57_7 = input.LA(1);
 
                          
-                        int index57_2 = input.index();
+                        int index57_7 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred15_Eulang()) ) {s = 18;}
+                        if ( (LA57_7==PERIOD) ) {s = 11;}
 
-                        else if ( (true) ) {s = 4;}
+                        else if ( (LA57_7==EOF||LA57_7==SEMI||(LA57_7>=COMMA && LA57_7<=RBRACKET)||LA57_7==RBRACE||(LA57_7>=LPAREN && LA57_7<=ARROW)||(LA57_7>=QUESTION && LA57_7<=WHILE)||LA57_7==AND||(LA57_7>=ELSE && LA57_7<=OR)||(LA57_7>=COMPEQ && LA57_7<=UMOD)||(LA57_7>=PLUSPLUS && LA57_7<=MINUSMINUS)) ) {s = 4;}
+
+                        else if ( (LA57_7==EQUALS) && (synpred15_Eulang())) {s = 6;}
 
                          
-                        input.seek(index57_2);
+                        input.seek(index57_7);
                         if ( s>=0 ) return s;
                         break;
-                    case 2 : 
-                        int LA57_3 = input.LA(1);
+                    case 3 : 
+                        int LA57_10 = input.LA(1);
 
                          
-                        int index57_3 = input.index();
+                        int index57_10 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred16_Eulang()) ) {s = 19;}
+                        if ( (LA57_10==EOF||LA57_10==SEMI||(LA57_10>=COMMA && LA57_10<=RBRACKET)||LA57_10==RBRACE||(LA57_10>=LPAREN && LA57_10<=ARROW)||(LA57_10>=QUESTION && LA57_10<=WHILE)||LA57_10==AND||(LA57_10>=ELSE && LA57_10<=OR)||(LA57_10>=COMPEQ && LA57_10<=UMOD)||(LA57_10>=PLUSPLUS && LA57_10<=MINUSMINUS)) ) {s = 4;}
 
-                        else if ( (true) ) {s = 4;}
+                        else if ( (LA57_10==PERIOD) ) {s = 5;}
+
+                        else if ( (LA57_10==EQUALS) && (synpred15_Eulang())) {s = 6;}
 
                          
-                        input.seek(index57_3);
+                        input.seek(index57_10);
+                        if ( s>=0 ) return s;
+                        break;
+                    case 4 : 
+                        int LA57_21 = input.LA(1);
+
+                         
+                        int index57_21 = input.index();
+                        input.rewind();
+                        s = -1;
+                        if ( (LA57_21==EOF||LA57_21==SEMI||(LA57_21>=COMMA && LA57_21<=RBRACKET)||LA57_21==RBRACE||(LA57_21>=RPAREN && LA57_21<=ARROW)||(LA57_21>=QUESTION && LA57_21<=WHILE)||LA57_21==AND||(LA57_21>=ELSE && LA57_21<=OR)||(LA57_21>=COMPEQ && LA57_21<=UMOD)||(LA57_21>=PLUSPLUS && LA57_21<=MINUSMINUS)) ) {s = 4;}
+
+                        else if ( (LA57_21==EQUALS) && (synpred16_Eulang())) {s = 25;}
+
+                         
+                        input.seek(index57_21);
                         if ( s>=0 ) return s;
                         break;
             }
