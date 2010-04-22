@@ -217,7 +217,7 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 				return false; // detect later
 				
 			for (int idx = 0; idx < syms.elements().nodeCount(); idx++) {
-				IAstSymbolExpr sym = syms.elements().list().get(idx);
+				IAstTypedExpr sym = syms.elements().list().get(idx);
 				updateType(sym, ((LLTupleType) right).getTypes()[idx]);
 			}
 			updateType(this, right);

@@ -528,7 +528,8 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(9, (((IAstIntLitExpr) alloc.getExprs().list().get(1)).getValue()));
 
     }
-  
+
+
 }
 
 

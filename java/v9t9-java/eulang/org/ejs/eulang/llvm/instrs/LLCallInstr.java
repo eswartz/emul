@@ -43,18 +43,23 @@ public class LLCallInstr extends LLAssignInstr {
 	@Override
 	protected void appendOptionString(StringBuilder sb) {
 		super.appendOptionString(sb);
-		sb.append(func).append(' ');
+		sb.append(func).append(" (");
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLAssignInstr#appendInstrString(java.lang.StringBuilder)
+	 */
+	@Override
+	protected void appendInstrString(StringBuilder sb) {
+		super.appendInstrString(sb);
+		sb.append(')');
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.instrs.LLBaseInstr#appendOperandString(java.lang.StringBuilder, int, org.ejs.eulang.llvm.ops.LLOperand)
 	 */
 	@Override
 	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
-		if (idx == 0) 
-			sb.append('(');
 		sb.append(funcType.getArgTypes()[idx].getLLVMName()).append(' ');
 		super.appendOperandString(sb, idx, op);
-		if (idx == getOperands().length - 1)
-			sb.append(')');
 	}
 }

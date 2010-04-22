@@ -5,7 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTupleNode;
 
 /**
@@ -14,11 +14,11 @@ import org.ejs.eulang.ast.IAstTupleNode;
  */
 public class AstTupleNode extends AstNode implements IAstTupleNode {
 
-	private IAstNodeList<IAstSymbolExpr> elements;
+	private IAstNodeList<IAstTypedExpr> elements;
 	/**
 	 * 
 	 */
-	public AstTupleNode(IAstNodeList<IAstSymbolExpr> elements) {
+	public AstTupleNode(IAstNodeList<IAstTypedExpr> elements) {
 		this.elements = reparent(this.elements, elements);
 	}
 	
@@ -74,7 +74,7 @@ public class AstTupleNode extends AstNode implements IAstTupleNode {
 	 * @see org.ejs.eulang.ast.IAstTupleNode#elements()
 	 */
 	@Override
-	public IAstNodeList<IAstSymbolExpr> elements() {
+	public IAstNodeList<IAstTypedExpr> elements() {
 		return elements;
 	}
 
@@ -93,7 +93,7 @@ public class AstTupleNode extends AstNode implements IAstTupleNode {
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (existing == elements())
-			this.elements = (IAstNodeList<IAstSymbolExpr>) reparent(this.elements, another);
+			this.elements = (IAstNodeList<IAstTypedExpr>) reparent(this.elements, another);
 		else
 			throw new IllegalArgumentException();
 	}

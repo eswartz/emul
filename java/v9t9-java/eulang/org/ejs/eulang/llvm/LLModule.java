@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.eulang.ast.IAstSymbolDefiner;
-import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
@@ -64,7 +63,7 @@ public class LLModule {
 	 * @param expr the concrete body for the symbol
 	 * @return unique symbol
 	 */
-	public ISymbol getModuleSymbol(ISymbol astSymbol, IAstTypedExpr expr) {
+	public ISymbol getModuleSymbol(ISymbol astSymbol, LLType type) {
 		StringBuilder sb = new StringBuilder();
 		
 		// put a unique scope
@@ -74,13 +73,13 @@ public class LLModule {
 		sb.append(astSymbol.getName());
 		
 		// and the exact type
-		sb.append('.').append(expr.getType().getSymbolicName());
+		sb.append('.').append(type.getSymbolicName());
 		
 		String symName = sb.toString();
 		ISymbol modSymbol = moduleScope.get(symName);
 		if (modSymbol == null) {
 			modSymbol = moduleScope.add(symName);
-			modSymbol.setType(expr.getType());
+			modSymbol.setType(type);
 		}
 		return modSymbol;
 	}

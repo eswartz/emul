@@ -25,11 +25,14 @@ import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLFloatType;
+import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
+import org.ejs.eulang.types.LLStaticField;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 
@@ -58,6 +61,7 @@ public class TypeEngine {
 	private Map<LLType, LLRefType> refTypeMap = new HashMap<LLType, LLRefType>();
 	private Map<Tuple, LLArrayType> arrayTypeMap = new HashMap<Tuple, LLArrayType>();
 	private Map<Integer, LLIntType> intMap = new HashMap<Integer, LLIntType>();
+	private Map<String, LLDataType> dataTypeMap = new HashMap<String, LLDataType>();
 	
 	private boolean isLittleEndian;
 	private int ptrAlign;
@@ -428,6 +432,7 @@ public class TypeEngine {
 		types.addAll(ptrTypeMap.values());
 		types.addAll(refTypeMap.values());
 		types.addAll(arrayTypeMap.values());
+		types.addAll(dataTypeMap.values());
 		//types.addAll(codeTypes.values());
 		return types;
 	}
@@ -456,5 +461,28 @@ public class TypeEngine {
 			intMap.put(bits, type);
 		}
 		return type;
+	}
+	
+	public LLDataType getDataType(String name, List<LLInstanceField> ifields, List<LLStaticField> statics) {
+		String key = getDataTypeKey(name, ifields, statics);
+		LLDataType data = dataTypeMap.get(key);
+		if (data == null) {
+			data = new LLDataType(this, name,
+					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
+					(LLStaticField[]) statics.toArray(new LLStaticField[statics.size()]));
+			dataTypeMap.put(key, data);
+		}
+		return data;
+	}
+
+	private String getDataTypeKey(String name, List<LLInstanceField> ifields,
+			List<LLStaticField> statics) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(name).append('$');
+		for (LLInstanceField field : ifields)
+			sb.append(field.getType() != null ? field.getType().toString() : "<u>").append('$');
+		for (LLStaticField field : statics)
+			sb.append(field.getType() != null ? field.getType().toString() : "<u>").append('$');
+		return sb.toString();
 	}
 }

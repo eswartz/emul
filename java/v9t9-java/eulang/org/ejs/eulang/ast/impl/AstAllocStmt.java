@@ -96,7 +96,9 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public String toString() {
-		return typedString("ALLOC") + (typeExpr != null ? " <= " + typeExpr.toString() : "");
+		boolean hasType = getType() != null;
+		boolean hasTypeExpr = typeExpr != null && typeExpr.getType() != null;
+		return typedString("ALLOC") + (hasType && hasTypeExpr && !getType().equals(typeExpr.getType()) ? " <= " + typeExpr.toString() : "");
 	}
 	
 	/* (non-Javadoc)

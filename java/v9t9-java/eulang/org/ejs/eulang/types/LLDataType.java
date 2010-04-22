@@ -171,4 +171,37 @@ public class LLDataType extends BaseLLAggregateType {
 	public LLStaticField[] getStaticFields() {
 		return statics;
 	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	public BaseLLField getField(String name) {
+		for (BaseLLField field : ifields)
+			if (field.getName().equals(name))
+				return field;
+		for (BaseLLField field : statics)
+			if (field.getName().equals(name))
+				return field;
+		return null;
+	}
+
+	/**
+	 * @param field
+	 * @return
+	 */
+	public int getFieldIndex(BaseLLField afield) {
+		int idx = 0;
+		for (BaseLLField field : ifields)
+			if (field == afield)
+				return idx;
+			else
+				idx++;
+		for (BaseLLField field : statics)
+			if (field == afield)
+				return idx;
+			else
+				idx++;
+		return -1;
+	}
 }

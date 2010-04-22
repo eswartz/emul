@@ -9,7 +9,6 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -21,7 +20,7 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 
-	private IAstNodeList<IAstSymbolExpr> symExpr;
+	private IAstNodeList<IAstTypedExpr> symExpr;
 	private IAstNodeList<IAstTypedExpr> expr;
 	private boolean expand;
 
@@ -30,7 +29,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @param left
 	 * @param right
 	 */
-	public AstAssignStmt(IAstNodeList<IAstSymbolExpr> id, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
+	public AstAssignStmt(IAstNodeList<IAstTypedExpr> id, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
 		setExprs(expr);
 		setSymbolExprs(id);
 		setExpand(expand);
@@ -112,7 +111,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		if (getExprs() == existing) {
 			setExprs((IAstNodeList<IAstTypedExpr>) another);
 		} else if (getSymbolExprs() == existing) {
-			setSymbolExprs((IAstNodeList<IAstSymbolExpr>) another);
+			setSymbolExprs((IAstNodeList<IAstTypedExpr>) another);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -137,7 +136,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getId()
 	 */
 	@Override
-	public IAstNodeList<IAstSymbolExpr> getSymbolExprs() {
+	public IAstNodeList<IAstTypedExpr> getSymbolExprs() {
 		return symExpr;
 	}
 
@@ -154,7 +153,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#setId(v9t9.tools.ast.expr.IAstIdExpression)
 	 */
 	@Override
-	public void setSymbolExprs(IAstNodeList<IAstSymbolExpr> id) {
+	public void setSymbolExprs(IAstNodeList<IAstTypedExpr> id) {
 		Check.checkArg(id);
 		this.symExpr = reparent(this.symExpr, id);
 	}
@@ -166,7 +165,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		boolean changed = false;
 		for (int i = symExpr.nodeCount(); i-- > 0; ) {
-			IAstSymbolExpr theSym = symExpr.list().get(i);
+			IAstTypedExpr theSym = symExpr.list().get(i);
 			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
 			changed |= inferTypesFromChildren(new ITyped[] { theSym, theExpr });
 			

@@ -33,6 +33,7 @@ import org.ejs.eulang.ast.impl.AstDataDecl;
 import org.ejs.eulang.ast.impl.AstDefineStmt;
 import org.ejs.eulang.ast.impl.AstDoWhileExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
+import org.ejs.eulang.ast.impl.AstFieldExpr;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
@@ -181,14 +182,21 @@ public class GenerateAST {
 
 	protected ISourceRef getSourceRef(Tree tree) {
 		if (tree instanceof CommonTree) {
-			Token token = ((CommonTree) tree).getToken();
+			
+			CommonTree cTree = (CommonTree) tree;
+			Token token = cTree.getToken();
 			if (token != null) {
 				String file = fileMap.get(token.getChannel());
 				if (file == null)
 					file = defaultFile;
-				return new TokenSourceRef(file, token, tree.toStringTree()
-						.length());
+				//return new TokenSourceRef(file, token, tree.toStringTree()
+				//		.length());
+				String string = cTree.toStringTree();
+				return new SourceRef(file, string.length(), tree.getLine(), 
+						tree.getCharPositionInLine()+1, tree.getLine() + countNls(string), string.length()
+						- string.lastIndexOf('\n'));
 			}
+			
 		}
 		String string = tree.toString();
 		return new SourceRef(defaultFile, string.length(), tree.getLine(), tree
@@ -204,10 +212,11 @@ public class GenerateAST {
 	 */
 	private int countNls(String string) {
 		int cnt = 0;
-		int idx = -1;
+		int idx = 0;
 		while (idx < string.length()) {
 			if (string.charAt(idx) == '\n')
 				cnt++;
+			idx++;
 		}
 		return cnt;
 	}
@@ -936,7 +945,10 @@ public class GenerateAST {
 			getSource(tree, alloc);
 
 			if (type != null) {
-				for (IAstSymbolExpr symExpr : syms.elements().list()) {
+				for (IAstTypedExpr elExpr : syms.elements().list()) {
+					if (!(elExpr instanceof IAstSymbolExpr))
+						throw new GenerateException(tree.getChild(0), "can only tuple-allocate locals");
+					IAstSymbolExpr symExpr = (IAstSymbolExpr) elExpr;
 					symExpr.getSymbol().setType(type.getType());
 					symExpr.getSymbol().setDefinition(alloc.getExpr());
 				}
@@ -991,27 +1003,27 @@ public class GenerateAST {
 	 */
 	public IAstNode constructAssign(Tree tree) throws GenerateException {
 		if (tree.getChild(0).getType() == EulangParser.IDREF) {
-			IAstSymbolExpr left = checkConstruct(tree.getChild(0),
-					IAstSymbolExpr.class);
+			IAstTypedExpr left = checkConstruct(tree.getChild(0),
+					IAstTypedExpr.class);
 			IAstTypedExpr right = checkConstruct(tree.getChild(1),
 					IAstTypedExpr.class);
 			IAstAssignStmt assign = new AstAssignStmt(
-					AstNodeList.<IAstSymbolExpr> singletonList(
-							IAstSymbolExpr.class, left), AstNodeList
+					AstNodeList.<IAstTypedExpr> singletonList(
+							IAstTypedExpr.class, left), AstNodeList
 							.<IAstTypedExpr> singletonList(IAstTypedExpr.class,
 									right), false);
 			getSource(tree, assign);
 			return assign;
 		} else if (tree.getChild(0).getType() == EulangParser.LIST) {
-			IAstNodeList<IAstSymbolExpr> symbols = new AstNodeList<IAstSymbolExpr>(
-					IAstSymbolExpr.class);
+			IAstNodeList<IAstTypedExpr> symbols = new AstNodeList<IAstTypedExpr>(
+					IAstTypedExpr.class);
 			IAstNodeList<IAstTypedExpr> exprs = new AstNodeList<IAstTypedExpr>(
 					IAstTypedExpr.class);
 
 			boolean expand = false;
 			int idx = 0;
 			for (Tree kid : iter(tree.getChild(idx))) {
-				IAstSymbolExpr left = checkConstruct(kid, IAstSymbolExpr.class);
+				IAstTypedExpr left = checkConstruct(kid, IAstTypedExpr.class);
 				symbols.add(left);
 			}
 			getSource(tree.getChild(idx), symbols);
@@ -1048,10 +1060,10 @@ public class GenerateAST {
 	 * @throws GenerateException
 	 */
 	private IAstTupleNode constructIdTuple(Tree tree) throws GenerateException {
-		IAstNodeList<IAstSymbolExpr> elements = new AstNodeList<IAstSymbolExpr>(
-				IAstSymbolExpr.class);
+		IAstNodeList<IAstTypedExpr> elements = new AstNodeList<IAstTypedExpr>(
+				IAstTypedExpr.class);
 		for (Tree kid : iter(tree)) {
-			elements.add(checkConstruct(kid, IAstSymbolExpr.class));
+			elements.add(checkConstruct(kid, IAstTypedExpr.class));
 		}
 		getSource(tree, elements);
 		IAstTupleNode node = new AstTupleNode(elements);
@@ -1063,12 +1075,13 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
-	public IAstSymbolExpr constructIdRef(Tree tree) throws GenerateException {
+	public IAstTypedExpr constructIdRef(Tree tree) throws GenerateException {
 		// could have ':'s
 		IScope startScope = currentScope;
 		int idx = 0;
-		ISymbol symbol = null;
 		boolean inScope = false;
+		
+		// go up through scope backtracks...
 		while (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx);
 			if (kid.getType() == EulangParser.COLON) {
@@ -1079,14 +1092,28 @@ public class GenerateAST {
 					startScope = startScope.getParent();
 				}
 				inScope = true;
-			} else if (kid.getType() == EulangParser.ID) {
+			} else {
+				break;
+			}
+			idx++;
+		}
+		
+		// find a symbol
+		ISymbol symbol = null;
 
+		if (idx < tree.getChildCount()) {
+			Tree kid = tree.getChild(idx);
+			if (kid.getType() == EulangParser.ID) {
 				if (inScope) {
 					symbol = startScope.get(kid.getText());
 				} else {
 					symbol = startScope.search(kid.getText());
 				}
 				if (symbol == null) {
+					if (inScope) {
+						throw new GenerateException(tree, "Cannot resolve name in scope: "
+								+ tree.toStringTree());
+					}
 					// make forward
 					symbol = startScope.add(new AstName(kid.getText()));
 				}
@@ -1097,13 +1124,31 @@ public class GenerateAST {
 			}
 			idx++;
 		}
+
 		if (symbol == null) {
-			throw new GenerateException(tree, "Cannot resolve name: "
+			throw new GenerateException(tree, "Cannot resolve symbol: "
 					+ tree.toStringTree());
 		}
-		IAstSymbolExpr symbolExpr = new AstSymbolExpr(symbol);
-		getSource(tree, symbolExpr);
-		return symbolExpr;
+		
+		IAstTypedExpr idExpr = new AstSymbolExpr(symbol);
+		getSource(tree, idExpr);
+		
+		// resolve field references 
+		while (idx < tree.getChildCount()) {
+			Tree kid = tree.getChild(idx);
+			if (kid.getType() == EulangParser.ID) {
+				IAstName name = new AstName(kid.getText(), startScope);
+				getSource(kid, name);
+				idExpr = new AstFieldExpr(idExpr, name); 
+				getSource(tree, idExpr);
+			} else {
+				unhandled(kid);
+				return null;
+			}
+			idx++;
+		}
+		
+		return idExpr;
 	}
 
 	public IAstBinExpr constructBinaryExpr(Tree tree) throws GenerateException {

@@ -9,5 +9,5 @@ package org.ejs.eulang.ast;
  */
 public interface IAstTupleNode extends IAstNode {
 	IAstTupleNode copy(IAstNode parent);
-	IAstNodeList<IAstSymbolExpr> elements();
+	IAstNodeList<IAstTypedExpr> elements();
 }

@@ -171,7 +171,7 @@ public class AstAssignTupleStmt extends AstTypedExpr implements IAstAssignTupleS
 				return false;
 			
 			for (int idx = 0; idx < tuple.elements().nodeCount(); idx++) {
-				IAstSymbolExpr sym = tuple.elements().list().get(idx);
+				IAstTypedExpr sym = tuple.elements().list().get(idx);
 				updateType(sym, ((LLTupleType) right).getTypes()[idx]);
 			}
 			updateType(this, right);

@@ -12,13 +12,15 @@ import org.ejs.eulang.ISourceRef;
  *
  */
 public class TokenSourceRef implements ISourceRef {
-	private final Token token;
 	private final String file;
 	private final int length;
+	private int line;
+	private int column;
 
 	public TokenSourceRef(String file, Token token, int length) {
 		this.file = file;
-		this.token = token;
+		this.line = Math.max(1, token.getLine());
+		this.column = token.getCharPositionInLine() + 1;
 		this.length = length;
 		
 	}
@@ -36,7 +38,7 @@ public class TokenSourceRef implements ISourceRef {
 	 */
 	@Override
 	public int getColumn() {
-		return token.getCharPositionInLine() + 1;
+		return column;
 	}
 
 	/* (non-Javadoc)
@@ -52,7 +54,7 @@ public class TokenSourceRef implements ISourceRef {
 	 */
 	@Override
 	public int getLine() {
-		return Math.max(1, token.getLine());
+		return line;
 	}
 	
 	/* (non-Javadoc)

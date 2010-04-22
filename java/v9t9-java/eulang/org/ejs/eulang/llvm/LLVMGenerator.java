@@ -34,6 +34,7 @@ import org.ejs.eulang.ast.IAstDataDecl;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDoWhileExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
+import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
@@ -83,9 +84,14 @@ import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
+import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLInstanceField;
+import org.ejs.eulang.types.LLStaticField;
+import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 
@@ -296,7 +302,7 @@ public class LLVMGenerator {
 	private void generateGlobalConstant(ISymbol symbol, IAstLitExpr expr) throws ASTException {
 		ensureTypes(expr);
 		
-		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr);
+		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
 		ll.add(new LLConstantDirective(modSymbol, true, expr.getType(), new LLConstant(expr.getLiteral())));
 		
 	}
@@ -334,7 +340,7 @@ public class LLVMGenerator {
 		
 		ensureTypes(expr);
 		
-		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr);
+		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
 		
 		LLDefineDirective define = new LLDefineDirective(this, target, ll, 
 				expr.getScope(),
@@ -706,9 +712,9 @@ public class LLVMGenerator {
 		
 		LLOperand first = null;
 		for (int i = 0; i < stmt.getSymbolExprs().nodeCount(); i++) {
-			IAstSymbolExpr symbol = stmt.getSymbolExprs().list().get(i);
+			IAstTypedExpr symbol = stmt.getSymbolExprs().list().get(i);
 			
-			LLOperand var = generateSymbolExpr(symbol);
+			LLOperand var = generateTypedExprCore(symbol);
 			currentTarget.store(stmt.getType(), vals[i], var);
 			
 			if (i == 0)
@@ -751,15 +757,20 @@ public class LLVMGenerator {
 
 		LLOperand value = generateTypedExpr(stmt.getExpr());
 		
-		IAstNodeList<IAstSymbolExpr> syms = stmt.getSymbols().elements();
+		IAstNodeList<IAstTypedExpr> syms = stmt.getSymbols().elements();
 		
 		for (int idx = 0; idx < syms.nodeCount(); idx++) {
-			IAstSymbolExpr sym = syms.list().get(idx);
+			IAstTypedExpr sym = syms.list().get(idx);
+			if (!(sym instanceof IAstSymbolExpr))
+				throw new ASTException(sym, "can only tuple-allocate a symbol");
 			
 			LLOperand val = currentTarget.newTemp(sym.getType());
 			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, new LLConstOp(idx)));
 			
-			makeLocalStorage(sym.getSymbol(), null, val);
+			// add a cast if needed
+			val = generateCast(sym, sym.getType(), val.getType(), val);
+			
+			makeLocalStorage(((IAstSymbolExpr) sym).getSymbol(), null, val);
 		}
 		return value;
 	}
@@ -767,10 +778,15 @@ public class LLVMGenerator {
 
 	private LLOperand generateSymbolExpr(
 			IAstSymbolExpr symbolExpr) {
-		// TODO: out-of-scope variables
 		ISymbol symbol = symbolExpr.getSymbol();
+		LLType type = symbolExpr.getType();
+		return generateSymbolAddr(symbol, type);
+	}
+
+	private LLOperand generateSymbolAddr(ISymbol symbol, LLType type) {
+		// TODO: out-of-scope variables
 		if (!(symbol.getScope() instanceof LocalScope))
-			symbol = ll.getModuleSymbol(symbol, symbolExpr);
+			symbol = ll.getModuleSymbol(symbol, type);
 		ILLVariable var = varStorage.lookupVariable(symbol);
 		if (var != null)
 			return new LLVariableOp(var);
@@ -831,6 +847,8 @@ public class LLVMGenerator {
 			temp = generateBinExpr((IAstBinExpr) expr);
 		else if (expr instanceof IAstIndexExpr)
 			temp = generateIndexExpr((IAstIndexExpr) expr);		
+		else if (expr instanceof IAstFieldExpr)
+			temp = generateFieldExpr((IAstFieldExpr) expr);		
 		else if (expr instanceof IAstCondList)
 			temp = generateCondList((IAstCondList) expr);
 		else if (expr instanceof IAstTupleExpr)
@@ -870,6 +888,49 @@ public class LLVMGenerator {
 		return ret;
 	}
 
+	private LLOperand generateFieldExpr(IAstFieldExpr expr) throws ASTException {
+		
+		LLDataType dataType = (LLDataType) expr.getExpr().getType();
+		BaseLLField field = dataType.getField(expr.getField().getName());
+		if (field == null)
+			throw new ASTException(expr.getField(), "unknown field '" + expr.getField().getName() + "' in '" + dataType.getName());
+		
+		// point to the element 
+		LLType fieldPointerType = typeEngine.getPointerType(field.getType());
+
+		if (field instanceof LLInstanceField) {
+			// dereferenced from the address of the expr
+			
+			LLOperand structAddr = generateTypedExprAddr(expr.getExpr());
+			
+			LLTempOp elPtr = currentTarget.newTemp(fieldPointerType);
+			currentTarget.emit(new LLGetElementPtrInstr(elPtr, 
+					typeEngine.getPointerType(expr.getExpr().getType()), 
+					structAddr, 
+					new LLConstOp(0),
+					new LLConstOp(dataType.getFieldIndex(field))));
+			
+			// and load value
+			//LLOperand ret = currentTarget.newTemp(expr.getType());
+			//currentTarget.emit(new LLLoadInstr(ret, expr.getType(), elPtr));
+			//return ret;
+			return elPtr;
+		}
+		else if (field instanceof LLStaticField) {
+			// find the symbol and use it directly
+			ISymbol fieldSym = ((LLStaticField) field).getSymbol();
+			if (fieldSym == null)
+				throw new ASTException(expr.getField(), "cannot find symbol for '" + expr.getField().getName() + "' in '" + dataType.getName());
+			
+			LLOperand ret = generateSymbolAddr(fieldSym, fieldPointerType);
+			return ret;
+		} 
+		else {
+			unhandled(expr.getField());
+			return null;
+		}
+	}
+
 	/**
 	 * A tuple is an unnamed type.  We just fill in all the pieces.
 	 * @param tuple
@@ -901,17 +962,21 @@ public class LLVMGenerator {
 
 		LLOperand value = generateTypedExpr(stmt.getExpr());
 		
-		IAstNodeList<IAstSymbolExpr> syms = stmt.getSymbols().elements();
+		IAstNodeList<IAstTypedExpr> syms = stmt.getSymbols().elements();
+		
+		LLTupleType tupleType = (LLTupleType) stmt.getType();
 		
 		for (int idx = 0; idx < syms.nodeCount(); idx++) {
-			IAstSymbolExpr sym = syms.list().get(idx);
+			IAstTypedExpr sym = syms.list().get(idx);
 			
-			LLOperand val = currentTarget.newTemp(sym.getType());
+			LLOperand val = currentTarget.newTemp(tupleType.getType(idx));
 			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, 
 					new LLConstOp(idx)));
 			
-			LLOperand var = generateSymbolExpr(sym);
-			//makeLocalStorage(sym.getSymbol(), false, val);
+			// add a cast if needed
+			val = generateCast(sym, sym.getType(), val.getType(), val);
+			
+			LLOperand var = generateTypedExprCore(sym);
 			currentTarget.store(sym.getType(), val, var);
 		}
 		return value;

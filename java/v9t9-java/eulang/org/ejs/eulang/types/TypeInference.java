@@ -94,7 +94,7 @@ public class TypeInference {
 			anyChange |= changed;
 		} while (changed);
 		
-		if (validateTypes)
+		if (validateTypes && messages.isEmpty())
 			validateTypes(node);
 		
 		return anyChange;
@@ -188,7 +188,7 @@ public class TypeInference {
 				try {
 					changed |= typed.inferTypeFromChildren(typeEngine);
 				} catch (TypeException e) {
-					messages.add(new Error(node, e.getMessage()));
+					messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
 				}
 			}
 		}		

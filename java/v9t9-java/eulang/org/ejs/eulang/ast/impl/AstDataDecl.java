@@ -236,10 +236,7 @@ public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
 		if (getParent() instanceof IAstDefineStmt) {
 			name = ((IAstDefineStmt) getParent()).getSymbol().getName();
 		}
-		LLDataType data = new LLDataType(typeEngine, name,
-				(LLInstanceField[]) newIFields.toArray(new LLInstanceField[newIFields.size()]),
-				(LLStaticField[]) newSFields.toArray(new LLStaticField[newSFields.size()]));
-		typeEngine.register(data);
+		LLDataType data = typeEngine.getDataType(name, newIFields, newSFields);
 		return data;
 	}
 	
