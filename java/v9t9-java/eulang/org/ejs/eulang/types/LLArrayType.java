@@ -20,7 +20,7 @@ public class LLArrayType extends BaseLLType {
 
 
 	public LLArrayType(LLType baseType, int arrayCount, IAstTypedExpr dynamicSizeExpr) {
-		super(baseType.getName() + (dynamicSizeExpr != null ? "$dyn" : "x" + arrayCount), 
+		super((baseType != null ? baseType.getName() : "<unknown>") + (dynamicSizeExpr != null ? "$dyn" : "x" + arrayCount), 
 				baseType != null ? baseType.getBits() * arrayCount : 0, 
 				 "[ " + arrayCount + " x " + (baseType != null ? baseType.getLLVMType() : "") + " ]",
 				 BasicType.ARRAY, baseType);

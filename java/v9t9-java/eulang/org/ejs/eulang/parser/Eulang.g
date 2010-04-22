@@ -64,6 +64,8 @@ tokens {
   LABELSTMT;
   BINDING;
   
+  IDEXPR;
+  FIELDREF;
   ARRAY;
   INDEX;
 }
@@ -238,13 +240,13 @@ varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
         -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignExpr+)?)
     ;
 
-assignStmt : idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
+assignStmt : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN idExpr assignExpr)
     | idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
-    | idOrScopeRef (COMMA idOrScopeRef)+ EQUALS PLUS? assignExpr (COMMA assignExpr)*       
-        -> ^(ASSIGN ^(LIST idOrScopeRef+) PLUS? ^(LIST assignExpr+))
+    | idExpr (COMMA idExpr)+ EQUALS PLUS? assignExpr (COMMA assignExpr)*       
+        -> ^(ASSIGN ^(LIST idExpr+) PLUS? ^(LIST assignExpr+))
     ;
       
-assignExpr : (idOrScopeRef EQUALS) => idOrScopeRef EQUALS assignExpr        -> ^(ASSIGN idOrScopeRef assignExpr)
+assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN idExpr assignExpr)
     | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
@@ -300,7 +302,7 @@ idTupleEntries : idOrScopeRef (COMMA idOrScopeRef)+  -> idOrScopeRef+
 rhsExpr :   condStar -> condStar
     ;
     
-funcCall : idOrScopeRef LPAREN arglist RPAREN   ->     ^(CALL idOrScopeRef arglist) 
+funcCall : LPAREN arglist RPAREN   ->     ^(CALL arglist) 
     ;
 
 
@@ -414,7 +416,6 @@ unary:  MINUS u=unary -> ^(NEG $u )
       | TILDE u=unary     -> ^(INV $u )
       | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
       | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
-      | ( atom LBRACKET assignExpr RBRACKET) => a=atom LBRACKET assignExpr RBRACKET -> ^(INDEX $a assignExpr)
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)
@@ -426,13 +427,25 @@ atom :
     |   CHAR_LITERAL                  -> ^(LIT CHAR_LITERAL)
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
     |   NIL                          -> ^(LIT NIL)
-    |   ( STAR idOrScopeRef LPAREN) => STAR f=funcCall  -> ^(INLINE $f)
-    |   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
-    |   idOrScopeRef                  -> idOrScopeRef
+    |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef f=funcCall  -> ^(INLINE idOrScopeRef $f)
+    //|   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
+    //| ( idOrScopeRef LBRACKET ) => a=idOrScopeRef LBRACKET assignExpr RBRACKET -> ^(INDEX $a assignExpr)
+    |   idExpr                  -> idExpr
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |    code                           -> code   
     ;
+
+idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) ;
+
+appendIdModifiers : nonFieldIdModifier idModifier* ;
+
+nonFieldIdModifier : funcCall | arrayIndex ;
+idModifier : fieldRef | funcCall | arrayIndex ;
+
+fieldRef : PERIOD ID  -> ^(FIELDREF ID) ;
+
+arrayIndex :  LBRACKET assignExpr RBRACKET -> ^(INDEX assignExpr) ;
 
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 

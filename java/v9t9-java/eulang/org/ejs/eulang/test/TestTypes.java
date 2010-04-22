@@ -8,7 +8,7 @@ import static junit.framework.Assert.*;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstDataDecl;
+import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
@@ -220,9 +220,9 @@ public class TestTypes extends BaseParserTest {
     			"");
 
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	assertTrue(data.isComplete());
     	assertEquals(5, data.getTypes().length);
     	assertEquals(2, data.getInstanceFields().length);
@@ -241,9 +241,9 @@ public class TestTypes extends BaseParserTest {
     	"");
     	
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	assertTrue(data.isGeneric());
     	assertEquals(6, data.getTypes().length);
     	assertEquals(3, data.getInstanceFields().length);
@@ -260,9 +260,9 @@ public class TestTypes extends BaseParserTest {
     	"");
     	
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	assertTrue(data.isComplete());
     	assertTrue(data.isCompatibleWith(data));
     	
@@ -289,9 +289,9 @@ public class TestTypes extends BaseParserTest {
     	"");
     	
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	assertTrue(data.isComplete());
     	assertTrue(data.isCompatibleWith(data));
     	
@@ -321,9 +321,9 @@ public class TestTypes extends BaseParserTest {
     	"");
     	
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testDataAlloc1").getDefinition());
     	assertTrue(code.getType().isComplete());
@@ -346,9 +346,9 @@ public class TestTypes extends BaseParserTest {
     	"");
     	
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testDataDeref1").getDefinition());
     	assertTrue(code.getType().isComplete());
@@ -375,9 +375,9 @@ public class TestTypes extends BaseParserTest {
     	"");
     	
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testDataDeref2").getDefinition());
     	assertTrue(code.getType().isComplete());
@@ -408,9 +408,9 @@ public class TestTypes extends BaseParserTest {
     	"");
     	
     	sanityTest(mod);
-    	IAstDataDecl decl = (IAstDataDecl) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
-    	assertTrue(decl.getType() instanceof LLDataType);
-    	LLDataType data = (LLDataType) decl.getType();
+    	IAstDataType type = (IAstDataType) getMainExpr((IAstDefineStmt) mod.getScope().get("Tuple").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
     	
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testDataDeref3").getDefinition());
     	assertTrue(code.getType().isComplete());
@@ -452,15 +452,29 @@ public class TestTypes extends BaseParserTest {
     
     @Test
     public void testDataDeref4() throws Exception {
-    	IAstModule mod = treeize(
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
-    			"getData = code() {\n"+
+    			"testDataDeref4 = code() {\n"+
     			"  foo:Tuple[10];\n"+
-    			"  foo[7].x = foo[1].x;\n"+
+    			"  foo[7].x = 33;\n"+
     			"};\n"+
     	"");
-    	doTypeInfer(mod, true);
+    	doGenerate(mod);
+    }
+    
+    @Test
+    public void testDataDeref5() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    			"testDataDeref4 = code() {\n"+
+    			"  foo:Tuple[10];\n"+
+    			"  foo[7].x = foo[foo[0].z].x;\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
     }
 }
 

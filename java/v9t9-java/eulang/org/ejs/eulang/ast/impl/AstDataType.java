@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAllocStmt;
-import org.ejs.eulang.ast.IAstDataDecl;
+import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
@@ -27,7 +27,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
+public class AstDataType extends AstTypedExpr implements IAstDataType {
 
 	private IAstNodeList<IAstTypedNode> statics;
 	private IAstNodeList<IAstTypedNode> ifields;
@@ -36,7 +36,7 @@ public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
 	protected IScope scope;
 
 		
-	public AstDataDecl(IAstNodeList<IAstTypedNode> fields,
+	public AstDataType(IAstNodeList<IAstTypedNode> fields,
 			IAstNodeList<IAstTypedNode> statics, IScope scope) {
 		this.scope = scope;
 		scope.setOwner(this);
@@ -48,8 +48,8 @@ public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
 	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstDataDecl copy(IAstNode copyParent) {
-		AstDataDecl copied = fixup(this, new AstDataDecl(doCopy(ifields, copyParent), doCopy(statics, copyParent),
+	public IAstDataType copy(IAstNode copyParent) {
+		AstDataType copied = fixup(this, new AstDataType(doCopy(ifields, copyParent), doCopy(statics, copyParent),
 				getScope().newInstance(getCopyScope(copyParent))));
 		remapScope(getScope(), copied.getScope(), copied);
 		return copied;
@@ -75,7 +75,7 @@ public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstDataDecl other = (AstDataDecl) obj;
+		AstDataType other = (AstDataType) obj;
 		if (ifields == null) {
 			if (other.ifields != null)
 				return false;
@@ -198,6 +198,13 @@ public class AstDataDecl extends AstTypedExpr implements IAstDataDecl {
 		return changed;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		
+	}
 
 	public LLDataType createDataType(TypeEngine typeEngine) {
 		List<LLInstanceField> newIFields = new ArrayList<LLInstanceField>();

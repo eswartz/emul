@@ -20,6 +20,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstAllocTupleStmt;
 import org.ejs.eulang.ast.impl.AstArgDef;
+import org.ejs.eulang.ast.impl.AstArrayType;
 import org.ejs.eulang.ast.impl.AstAssignStmt;
 import org.ejs.eulang.ast.impl.AstAssignTupleStmt;
 import org.ejs.eulang.ast.impl.AstBinExpr;
@@ -29,7 +30,7 @@ import org.ejs.eulang.ast.impl.AstBreakStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstCondExpr;
 import org.ejs.eulang.ast.impl.AstCondList;
-import org.ejs.eulang.ast.impl.AstDataDecl;
+import org.ejs.eulang.ast.impl.AstDataType;
 import org.ejs.eulang.ast.impl.AstDefineStmt;
 import org.ejs.eulang.ast.impl.AstDoWhileExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
@@ -441,6 +442,8 @@ public class GenerateAST {
 		case EulangParser.NOT:
 			return constructLogicalNot(tree);
 
+		case EulangParser.IDEXPR:
+			return constructIdExpr(tree);
 		case EulangParser.IDREF:
 			return constructIdRef(tree);
 		case EulangParser.ASSIGN:
@@ -562,11 +565,11 @@ public class GenerateAST {
 			getSource(tree, statics);
 			getSource(tree, fields);
 
-			IAstDataDecl dataDecl = new AstDataDecl(fields, statics,
+			IAstDataType dataType = new AstDataType(fields, statics,
 					currentScope);
-			getSource(tree, dataDecl);
+			getSource(tree, dataType);
 
-			return dataDecl;
+			return dataType;
 		} finally {
 			popScope(tree);
 		}
@@ -1002,7 +1005,7 @@ public class GenerateAST {
 	 * @return
 	 */
 	public IAstNode constructAssign(Tree tree) throws GenerateException {
-		if (tree.getChild(0).getType() == EulangParser.IDREF) {
+		if (tree.getChild(0).getType() == EulangParser.IDEXPR) {
 			IAstTypedExpr left = checkConstruct(tree.getChild(0),
 					IAstTypedExpr.class);
 			IAstTypedExpr right = checkConstruct(tree.getChild(1),
@@ -1071,10 +1074,6 @@ public class GenerateAST {
 		return node;
 	}
 
-	/**
-	 * @param tree
-	 * @return
-	 */
 	public IAstTypedExpr constructIdRef(Tree tree) throws GenerateException {
 		// could have ':'s
 		IScope startScope = currentScope;
@@ -1130,24 +1129,80 @@ public class GenerateAST {
 					+ tree.toStringTree());
 		}
 		
-		IAstTypedExpr idExpr = new AstSymbolExpr(symbol);
-		getSource(tree, idExpr);
+		IAstSymbolExpr symExpr = new AstSymbolExpr(symbol);
+		getSource(tree, symExpr);
 		
-		// resolve field references 
+		IAstTypedExpr idExpr = symExpr;
+		
+		// may have field references
 		while (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx);
-			if (kid.getType() == EulangParser.ID) {
-				IAstName name = new AstName(kid.getText(), startScope);
+			IAstName name = new AstName(kid.getText(), symExpr != null ? symExpr.getSymbol().getScope() : null);
+			getSource(kid, name);
+			idExpr = new AstFieldExpr(idExpr, name); 
+			getSource(tree, idExpr);
+			idx++;
+		}
+		return idExpr;
+	}
+
+	@SuppressWarnings("unchecked")
+	public IAstTypedExpr constructIdExpr(Tree tree) throws GenerateException {
+		// idref is first
+		IAstTypedExpr symExpr = constructIdRef(tree.getChild(0));
+		
+		IAstTypedExpr idExpr = symExpr;
+		
+		// then, possible other fun 
+		int idx = 1;
+		while (idx < tree.getChildCount()) {
+			Tree kid = tree.getChild(idx++);
+			
+			if (kid.getType() == EulangParser.INDEX) {
+				IAstTypedExpr index = checkConstruct(kid.getChild(0), IAstTypedExpr.class);
+				idExpr = new AstIndexExpr(idExpr, index);
+				getSource(kid, index);
+				getSource(kid, idExpr);
+				symExpr = null;
+			}
+			else if (kid.getType() == EulangParser.FIELDREF) {
+				IAstName name = new AstName(kid.getChild(0).getText(), null);
 				getSource(kid, name);
 				idExpr = new AstFieldExpr(idExpr, name); 
 				getSource(tree, idExpr);
-			} else {
-				unhandled(kid);
-				return null;
 			}
-			idx++;
-		}
+			else if (kid.getType() == EulangParser.CALL) {
 		
+				IAstNodeList<IAstTypedExpr> args = checkConstruct(kid.getChild(0),
+						IAstNodeList.class);
+
+				// check for a cast
+				if (args.nodeCount() == 1 && idExpr instanceof IAstSymbolExpr) {
+					ISymbol funcSym = ((IAstSymbolExpr) idExpr).getSymbol();
+					IAstNode symdef = funcSym.getDefinition();
+					if (symdef instanceof IAstType
+							&& ((IAstType) symdef).getType() != null) {
+						IAstTypedExpr[] argNodes = args.getNodes(IAstTypedExpr.class);
+						argNodes[0].setParent(null);
+						IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST,
+								argNodes[0]);
+						castExpr.setType(((IAstType) symdef).getType());
+						getSource(tree, castExpr);
+						idExpr = castExpr;
+						continue;
+					}
+				}
+
+				//if (function instanceof IAstSymbolExpr)
+				//	((IAstSymbolExpr) function).setAddress(true);
+
+				IAstFuncCallExpr funcCall = new AstFuncCallExpr(idExpr, args);
+				getSource(tree, funcCall);
+				idExpr = funcCall;
+			}
+			else
+				unhandled(kid);
+		}
 		return idExpr;
 	}
 
@@ -1459,27 +1514,13 @@ public class GenerateAST {
 				}
 				type = new AstType(new LLTupleType(typeEngine, tupleTypes));
 			} else if (tree.getType() == EulangParser.ARRAY) {
-				int size = 0;
 				IAstTypedExpr countExpr = null;
 				if (tree.getChild(1) != null) {
 					countExpr = checkConstruct(tree.getChild(1),
 							IAstTypedExpr.class);
-					countExpr = countExpr.simplify(typeEngine);
-					if (countExpr instanceof IAstLitExpr) {
-						try {
-							size = Integer.parseInt(((IAstLitExpr) countExpr)
-									.getLiteral());
-							countExpr = null;
-						} catch (NumberFormatException e) {
-							throw new GenerateException(tree.getChild(1),
-									"illegal constant size for an array");
-						}
-					}
 				}
 				assert kid0.getType() == EulangParser.TYPE;
-				LLType elementType = constructType(kid0.getChild(0)).getType();// TODO
-				type = new AstType(typeEngine.getArrayType(elementType,	
-						size, countExpr));
+				type = new AstArrayType(constructType(kid0.getChild(0)), countExpr);
 			} else if (tree.getType() == EulangParser.REF) {
 				LLType baseType = constructType(kid0).getType();// TODO
 				type = new AstType(typeEngine.getRefType(baseType)); 

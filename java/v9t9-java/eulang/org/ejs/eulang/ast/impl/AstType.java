@@ -54,12 +54,7 @@ public class AstType extends AstTypedNode implements IAstType {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
 		boolean changed = false;
-		if (type instanceof LLArrayType) {
-			LLArrayType array = (LLArrayType) type;
-			if (array.getDynamicSizeExpr() != null) {
-				changed |= AstTypedNode.updateType(array.getDynamicSizeExpr(), typeEngine.INT);
-			}
-		}
+		
 		return changed;
 	}
 }

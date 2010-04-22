@@ -30,7 +30,7 @@ import org.ejs.eulang.ast.IAstBreakStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
-import org.ejs.eulang.ast.IAstDataDecl;
+import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDoWhileExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
@@ -279,8 +279,8 @@ public class LLVMGenerator {
 			generateGlobalCode(stmt.getSymbol(), (IAstCodeExpr) expr);
 		} else if (expr instanceof IAstLitExpr) {
 			generateGlobalConstant(stmt.getSymbol(), (IAstLitExpr) expr);
-		} else if (expr instanceof IAstDataDecl) {
-			generateGlobalData(stmt.getSymbol(), (IAstDataDecl) expr);
+		} else if (expr instanceof IAstDataType) {
+			generateGlobalData(stmt.getSymbol(), (IAstDataType) expr);
 		} else {
 			unhandled(stmt);
 		}
@@ -290,7 +290,7 @@ public class LLVMGenerator {
 	 * @param symbol
 	 * @param expr
 	 */
-	private void generateGlobalData(ISymbol symbol, IAstDataDecl expr) {
+	private void generateGlobalData(ISymbol symbol, IAstDataType expr) {
 		// ignore for now, even though it may have initializers		
 	}
 
@@ -883,9 +883,9 @@ public class LLVMGenerator {
 				index));
 		
 		// and load value
-		LLOperand ret = currentTarget.newTemp(expr.getType());
-		currentTarget.emit(new LLLoadInstr(ret, expr.getType(), elPtr));
-		return ret;
+		//LLOperand ret = currentTarget.newTemp(expr.getType());
+		//currentTarget.emit(new LLLoadInstr(ret, expr.getType(), elPtr));
+		return elPtr;
 	}
 
 	private LLOperand generateFieldExpr(IAstFieldExpr expr) throws ASTException {
