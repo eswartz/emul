@@ -428,14 +428,14 @@ atom :
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
     |   NIL                          -> ^(LIT NIL)
     |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef f=funcCall  -> ^(INLINE idOrScopeRef $f)
-    //|   (idOrScopeRef LPAREN ) => funcCall   -> funcCall
-    //| ( idOrScopeRef LBRACKET ) => a=idOrScopeRef LBRACKET assignExpr RBRACKET -> ^(INDEX $a assignExpr)
     |   idExpr                  -> idExpr
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |    code                           -> code   
     ;
 
+// an idOrScopeRef can have dotted parts that interpreted either as scope derefs or field refs,
+// so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 
 idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) ;
 
 appendIdModifiers : nonFieldIdModifier idModifier* ;

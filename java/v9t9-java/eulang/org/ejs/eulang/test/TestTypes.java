@@ -469,9 +469,21 @@ public class TestTypes extends BaseParserTest {
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
-    			"testDataDeref4 = code() {\n"+
+    			"testDataDeref5 = code() {\n"+
     			"  foo:Tuple[10];\n"+
     			"  foo[7].x = foo[foo[0].z].x;\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
+    
+    //@Test
+    public void testDataInit1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    			"testDataInit1 = code() {\n"+
+    			"  foo:Tuple = ( 1, 2.0, 0x10, 0x20 );\n"+
     			"};\n"+
     	"");
     	doGenerate(mod);

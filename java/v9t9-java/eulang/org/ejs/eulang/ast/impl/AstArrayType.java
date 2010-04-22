@@ -81,7 +81,7 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 	 */
 	@Override
 	public String toString() {
-		return baseType.toString() + "[" + countExpr.toString() + "]";
+		return baseType.toString() + "[" + (countExpr != null ? countExpr.toString() : "") + "]";
 	}
 	
 	/* (non-Javadoc)
@@ -162,6 +162,10 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 			LLArrayType data = typeEngine.getArrayType(baseType.getType(), count, countVal);  
 			changed |= updateType(this, data);
 		}
+		
+		if (countExpr != null)
+			changed |= updateType(countExpr, typeEngine.INT);
+		
 		return changed;
 	}
 	

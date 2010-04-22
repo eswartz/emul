@@ -872,10 +872,12 @@ public class LLVMGenerator {
 		LLOperand index = generateTypedExpr(expr.getIndex());
 		LLOperand array = generateTypedExprAddr(expr.getExpr());
 		
-		// point to the element 
+		// point to the array 
 		LLType arrayPointerType = typeEngine.getPointerType(expr.getExpr().getType());
+		// point to the element
+		LLType elementType = typeEngine.getPointerType(expr.getType());
 		
-		LLTempOp elPtr = currentTarget.newTemp(arrayPointerType);
+		LLTempOp elPtr = currentTarget.newTemp(elementType);
 		currentTarget.emit(new LLGetElementPtrInstr(elPtr, 
 				arrayPointerType, 
 				array, 

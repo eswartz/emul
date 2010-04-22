@@ -58,7 +58,6 @@ import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstUnaryExpr;
 import org.ejs.eulang.ast.impl.AstWhileExpr;
 import org.ejs.eulang.ast.impl.SourceRef;
-import org.ejs.eulang.ast.impl.TokenSourceRef;
 import org.ejs.eulang.parser.EulangParser;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.symbols.IScope;
@@ -1664,9 +1663,19 @@ public class GenerateAST {
 		case EulangParser.FALSE:
 			litExpr = new AstBoolLitExpr(lit, typeEngine.BOOL, false);
 			break;
-		case EulangParser.NUMBER:
+		case EulangParser.NUMBER: {
+			int radix = 10;
+			if (lit.startsWith("0x") || lit.startsWith("0X")) {
+				radix = 16;
+				lit = lit.substring(2);
+			} else if (lit.startsWith("0b")) {
+				radix = 2;
+				lit = lit.substring(2);
+			} else if (lit.length() > 1 &&  lit.startsWith("0")) {
+				radix = 8;
+			}
 			try {
-				Long l = Long.parseLong(lit);
+				Long l = Long.parseLong(lit, radix);
 				litExpr = new AstIntLitExpr(lit, typeEngine.INT, l);
 			} catch (NumberFormatException e) {
 				try {
@@ -1675,6 +1684,7 @@ public class GenerateAST {
 				} catch (NumberFormatException e2) {
 				}
 			}
+		}
 		}
 
 		if (litExpr == null) {
