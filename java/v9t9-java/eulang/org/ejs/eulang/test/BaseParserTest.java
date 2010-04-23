@@ -12,6 +12,7 @@ import static junit.framework.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -493,7 +494,7 @@ public class BaseParserTest {
 		LLVMGenerator generator = new LLVMGenerator(v9t9Target);
 		generator.generate(mod);
 		
-		String text = generator.getText();
+		String text = generator.getUnoptimizedText();
 		
 		List<Message> messages = generator.getMessages();
 		for (Message msg : messages)
@@ -516,6 +517,8 @@ public class BaseParserTest {
 		File llOptFile = new File(file.getAbsolutePath() + ".opt.ll");
 		llOptFile.delete();
 
+		generator.setIntermediateFile(llfile);
+		generator.setOptimizedFile(llOptFile);
 		System.out.println(text);
 		
 		String opts = "-preverify -domtree -verify //-lowersetjmp -raiseallocs -simplifycfg -domtree -domfrontier -mem2reg -globalopt "
@@ -542,7 +545,8 @@ public class BaseParserTest {
 			optList.add("-o");
 			optList.add(bcOptFile.getAbsolutePath());
 			run("opt", (String[]) optList.toArray(new String[optList.size()]));
-			run("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+			runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+			generator.setOptimizedText(readFile(llOptFile.getAbsoluteFile()));
 		} catch (AssertionFailedError e) {
 			if (expectErrors)
 				return generator;
@@ -553,8 +557,26 @@ public class BaseParserTest {
 		if (expectErrors)
 			assertTrue("expected errors", messages.size() > 0);
 		
+		
 		return generator;
 	}
+	/**
+	 * @param absoluteFile
+	 * @return
+	 * @throws IOException 
+	 */
+	private String readFile(File absoluteFile) throws IOException {
+		long len = absoluteFile.length();
+		FileInputStream fis = new FileInputStream(absoluteFile);
+		try {
+			byte[] bytes = new byte[(int)len];
+			fis.read(bytes);
+			return new String(bytes);
+		} finally {
+			fis.close();
+		}
+	}
+
 	/**
 	 * @param string
 	 * @param absolutePath
@@ -563,7 +585,7 @@ public class BaseParserTest {
 	 * @param absolutePath2
 	 * @throws CoreException 
 	 */
-	private void run(String prog, String... args) throws CoreException {
+	private String runAndReturn(String prog, String... args) throws CoreException {
 		CommandLauncher launcher = new CommandLauncher();
 		launcher.showCommand(true);
 		launcher.execute(new Path(prog), 
@@ -578,8 +600,12 @@ public class BaseParserTest {
 		System.out.print(out.toString());
 		System.err.print(err.toString());
 		assertEquals(out.toString() + err.toString(), 0, exit);
+		return out.toString();
 	}
 
+	private void run(String prog, String... args) throws CoreException {
+		runAndReturn(prog, args);
+	}
 	/**
 	 * @return
 	 * @throws IOException 
@@ -599,6 +625,16 @@ public class BaseParserTest {
 	protected IAstTypedExpr getMainExpr(IAstDefineStmt def) {
 		return def.getMatchingBodyExpr(null);
 	}
-    
+
+	protected void assertFoundInUnoptimizedText(String string, LLVMGenerator generator) {
+		String unopt = generator.getUnoptimizedText();
+		assertTrue(string + "in\n"+ unopt, unopt.replaceAll("\\s+","").contains(string.replaceAll("\\s+","")));
+		
+	}
+	protected void assertFoundInOptimizedText(String string, LLVMGenerator generator) {
+		String opt = generator.getOptimizedText();
+		assertTrue(string + "in\n"+ opt, opt.replaceAll("\\s+","").contains(string.replaceAll("\\s+","")));
+		
+	}
 
 }

@@ -14,6 +14,7 @@ import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
@@ -517,10 +518,12 @@ public class TestTypes extends BaseParserTest {
     			"  foo:Int[10] = [ 1, [5] = 55, 66, 77, 88, 99, [1] = 11, 22, 33, 44 ];\n"+
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator generator = doGenerate(mod);
+    	assertFoundInUnoptimizedText("[ i16 1, i16 11, i16 22, i16 33, i16 44, i16 55, i16 66, i16 77, i16 88, i16 99 ]", generator);
     }
     
-    @Test
+  
+	@Test
     public void testDataInit3a() throws Exception {
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+

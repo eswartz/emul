@@ -83,11 +83,10 @@ import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
-import org.ejs.eulang.llvm.ops.LLIdxValOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLStructOp;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
-import org.ejs.eulang.llvm.ops.LLStructOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.llvm.ops.LLZeroInit;
@@ -159,10 +158,7 @@ public class LLVMGenerator {
 		return messages;
 	}
 	
-	/**
-	 * @return the sb
-	 */
-	public String getText() {
+	public String getUnoptimizedText() {
 		return ll.toString();
 	}
 	
@@ -540,6 +536,9 @@ public class LLVMGenerator {
 	}
 	
 	private Stack<LoopContext> loopStack = new Stack<LoopContext>();
+	private File optimizedFile;
+	private File intermediateFile;
+	private String optimizedText;
 	
 	/**
 	 * Generate a loop.  This has an implicit return value which can be set by a 'break' statement  
@@ -1593,4 +1592,44 @@ entry:
 		return typeEngine;
 	}
 
+	/**
+	 * @param llfile
+	 */
+	public void setIntermediateFile(File llfile) {
+		this.intermediateFile = llfile;
+	}
+
+	/**
+	 * @return the intermediateFile
+	 */
+	public File getIntermediateFile() {
+		return intermediateFile;
+	}
+	
+	/**
+	 * @param llOptFile
+	 */
+	public void setOptimizedFile(File llOptFile) {
+		this.optimizedFile = llOptFile;		
+	}
+
+	/**
+	 * @return the optimizedFile
+	 */
+	public File getOptimizedFile() {
+		return optimizedFile;
+	}
+
+	/**
+	 * @param optimized
+	 */
+	public void setOptimizedText(String optimized) {
+		this.optimizedText = optimized;
+	}
+	/**
+	 * @return the optimizedText
+	 */
+	public String getOptimizedText() {
+		return optimizedText;
+	}
 }
