@@ -158,7 +158,7 @@ public interface ISymbols extends IService {
         byte[] getValue();
 
         /**
-         * Get symbol values endianess.
+         * Get symbol values endianness.
          * @return true if symbol is big-endian.
          */
         boolean isBigEndian();
@@ -275,6 +275,12 @@ public interface ISymbols extends IService {
      * Client call back interface for find().
      */
     interface DoneFind {
+        /**
+         * Called when symbol search is done.
+         * @param token - command handle.
+         * @param error – error description if operation failed, null if succeeded.
+         * @param symbol_id - symbol ID.
+         */
         void doneFind(IToken token, Exception error, String symbol_id);
     }
 
@@ -292,6 +298,61 @@ public interface ISymbols extends IService {
      * Client call back interface for list().
      */
     interface DoneList {
+        /**
+         * Called when symbol list retrieval is done.
+         * @param token - command handle.
+         * @param error – error description if operation failed, null if succeeded.
+         * @param symbol_ids - array of symbol IDs.
+         */
         void doneList(IToken token, Exception error, String[] symbol_ids);
+    }
+
+    /***********************************************************************************************/
+
+    /**
+     * Command codes that used to calculate frame pointer and register values during stack tracing.
+     */
+    static final int
+        /** Load a number to the evaluation stack. Command argument is the number. */
+        CMD_NUMBER      = 1,
+
+        /** Load a register value to the evaluation stack. Command argument is the register ID. */
+        CMD_REGISTER    = 2,
+
+        /** Load frame address to the evaluation stack. */
+        CMD_FP          = 3,
+
+        /** Read memory at address on the top of the evaluation stack. Command arguments are
+         *  the value size (Number) and endianness (Boolean, false - little-endian, true - big-endian). */
+        CMD_DEREF       = 4,
+
+        /** Add two values on top of the evaluation stack */
+        CMD_ADD         = 5;
+
+    /**
+     * Retrieve stack tracing commands for given instruction address in a context memory.
+     * @param context_id - exacutable context ID.
+     * @param address - instruction address.
+     * @param done - call back interface called when operation is completed.
+     * @return - pending command handle.
+     */
+    IToken findFrameInfo(String context_id, Number address, DoneFindFrameInfo done);
+
+    /**
+     * Client call back interface for findFrameInfo().
+     */
+    interface DoneFindFrameInfo {
+        /**
+         * Called when stack tracing information retrieval is done.
+         * @param token - command handle.
+         * @param error – error description if operation failed, null if succeeded.
+         * @param address - start of instruction address range
+         * @param size - size of instruction address range
+         * @param fp_cmds - commands to calculate stack frame pointer
+         * @param reg_cmds - map register IDs -> commands to calculate register values
+         */
+        void doneFindFrameInfo(IToken token, Exception error,
+                Number address, Number size,
+                Object[] fp_cmds, Map<String,Object[]> reg_cmds);
     }
 }

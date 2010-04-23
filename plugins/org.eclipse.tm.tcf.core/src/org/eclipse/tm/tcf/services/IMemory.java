@@ -145,7 +145,7 @@ public interface IMemory extends IService {
         String getProcessID();
 
         /**
-         * Get memory endianess.
+         * Get memory endianness.
          * @return true if memory is big-endian.
          */
         boolean isBigEndian();

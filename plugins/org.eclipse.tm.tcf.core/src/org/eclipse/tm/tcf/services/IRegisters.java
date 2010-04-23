@@ -207,9 +207,9 @@ public interface IRegisters extends IService {
         boolean isFloat();
 
         /**
-         * Check endianess of the context.
+         * Check endianness of the context.
          * Big endian means decreasing numeric significance with increasing bit number.
-         * The endianess is used to encode and decode values of get, getm, set and setm commands.
+         * The endianness is used to encode and decode values of get, getm, set and setm commands.
          * @return true if big endian.
          */
         boolean isBigEndian();

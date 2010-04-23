@@ -1,6 +1,7 @@
 package org.eclipse.tm.internal.tcf.services.remote;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.Command;
@@ -197,10 +198,49 @@ public class SymbolsProxy implements ISymbols {
         }.token;
     }
 
+    public IToken findFrameInfo(String context_id, Number address, final DoneFindFrameInfo done) {
+        return new Command(channel, this, "findFrameInfo", new Object[]{ context_id, address }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                Number address = null;
+                Number size = null;
+                Object[] fp_cmds = null;
+                Map<String,Object[]> reg_cmds = null;
+                if (error == null) {
+                    assert args.length == 5;
+                    error = toError(args[0]);
+                    address = (Number)args[1];
+                    size = (Number)args[2];
+                    fp_cmds = toObjectArray(args[3]);
+                    reg_cmds = toStringMap(args[4]);
+                }
+                done.doneFindFrameInfo(token, error, address, size, fp_cmds, reg_cmds);
+            }
+        }.token;
+    }
+
     @SuppressWarnings("unchecked")
     private String[] toStringArray(Object o) {
         if (o == null) return null;
         Collection<String> c = (Collection<String>)o;
         return (String[])c.toArray(new String[c.size()]);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object[] toObjectArray(Object o) {
+        if (o == null) return null;
+        Collection<Object> c = (Collection<Object>)o;
+        return (Object[])c.toArray(new Object[c.size()]);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String,Object[]> toStringMap(Object o) {
+        if (o == null) return null;
+        Map<String,Object> c = (Map<String,Object>)o;
+        HashMap<String,Object[]> m = new HashMap<String,Object[]>();
+        for (String id : c.keySet()) {
+            m.put(id, toObjectArray(c.get(id)));
+        }
+        return m;
     }
 }

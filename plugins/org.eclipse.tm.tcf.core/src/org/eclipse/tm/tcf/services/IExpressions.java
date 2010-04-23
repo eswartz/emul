@@ -126,9 +126,9 @@ public interface IExpressions extends IService {
         String getTypeID();
 
         /**
-         * Check endianess of the values.
-         * Big endian means decreasing numeric significance with increasing byte number.
-         * @return true if big endian.
+         * Check endianness of the values.
+         * Big-endian means decreasing numeric significance with increasing byte number.
+         * @return true if big-endian.
          */
         boolean isBigEndian();
 
