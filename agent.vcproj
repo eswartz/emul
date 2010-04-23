@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\obj\MSVC\Release"
-			IntermediateDirectory=".\obj\MSVC\Release"
+			OutputDirectory="$(SolutionDir)\obj\MSVC\$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)\obj\MSVC\$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -106,8 +106,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\obj\MSVC\Debug"
-			IntermediateDirectory=".\obj\MSVC\Debug"
+			OutputDirectory="$(SolutionDir)\obj\MSVC\$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)\obj\MSVC\$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
