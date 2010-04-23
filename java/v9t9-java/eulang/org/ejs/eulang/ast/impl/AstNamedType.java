@@ -100,7 +100,7 @@ public class AstNamedType extends AstType implements IAstNamedType {
 		if (type == null || !type.isComplete())
 			changed |= inferTypesFromChildren(new ITyped[] { symbolExpr });
 		changed |= super.inferTypeFromChildren(typeEngine);
-		return changed;
+ 		return changed;
 	}
 	
 	/* (non-Javadoc)

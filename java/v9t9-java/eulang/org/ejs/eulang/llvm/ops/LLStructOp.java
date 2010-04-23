@@ -5,22 +5,22 @@ package org.ejs.eulang.llvm.ops;
 
 import java.util.Arrays;
 
-import org.ejs.eulang.types.LLTupleType;
+import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
  *
  */
-public class LLTupleOp implements LLOperand {
+public class LLStructOp implements LLOperand {
 
-	private final LLTupleType tupleType;
+	private final LLAggregateType tupleType;
 	private final LLOperand[] elements;
 
 	/**
 	 * 
 	 */
-	public LLTupleOp(LLTupleType type, LLOperand[] elements) {
+	public LLStructOp(LLAggregateType type, LLOperand[] elements) {
 		this.tupleType = type;
 		this.elements = elements;
 	}
@@ -32,7 +32,7 @@ public class LLTupleOp implements LLOperand {
 	public LLType getType() {
 		return tupleType;
 	}
-	public LLTupleType getTupleType() {
+	public LLAggregateType getTupleType() {
 		return tupleType;
 	}
 	
@@ -59,7 +59,7 @@ public class LLTupleOp implements LLOperand {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		LLTupleOp other = (LLTupleOp) obj;
+		LLStructOp other = (LLStructOp) obj;
 		if (!Arrays.equals(elements, other.elements))
 			return false;
 		if (tupleType == null) {
@@ -81,10 +81,9 @@ public class LLTupleOp implements LLOperand {
 		boolean first = true;
 		for (int idx = 0; idx < elements.length; idx++) {
 			if (first) first = false; else sb.append(", ");
-			LLType type = tupleType.getTypes()[idx];
-			sb.append(type).append(' ').append(elements[idx]);
+			sb.append(elements[idx].getType()).append(' ').append(elements[idx]);
 		}
-		sb.append("}");
+		sb.append(" }");
 		return sb.toString();
 	}
 

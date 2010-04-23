@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.antlr.stringtemplate.language.Expr;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -111,7 +112,10 @@ public class AstIndexExpr extends AstTypedExpr implements IAstIndexExpr {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { expr, index };
+		if (expr != null)
+			return new IAstNode[] { expr, index };
+		else
+			return new IAstNode[] { index };
 	}
 
 	/* (non-Javadoc)
@@ -164,9 +168,11 @@ public class AstIndexExpr extends AstTypedExpr implements IAstIndexExpr {
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		if (type == null || !type.isComplete())
 			return;
-		if (expr.getType() != null && expr.getType().isComplete()) {
-			if (!type.equals(expr.getType().getSubType()))
-				throw new TypeException(this, "array element type and result type do not match");
+		if (expr != null) {
+			if (expr.getType() != null && expr.getType().isComplete()) {
+				if (!type.equals(expr.getType().getSubType()))
+					throw new TypeException(this, "array element type and result type do not match");
+			}
 		}
 		if (index.getType() != null && index.getType().isComplete()) {
 			if (index.getType().getBasicType() != BasicType.INTEGRAL)

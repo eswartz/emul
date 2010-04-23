@@ -118,7 +118,10 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { expr, field };
+		if (expr != null)
+			return new IAstNode[] { expr, field };
+		else
+			return new IAstNode[] { field };
 	}
 
 	/* (non-Javadoc)
@@ -126,7 +129,10 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 */
 	@Override
 	public IAstNode[] getDumpChildren() {
-		return new IAstNode[] { expr };
+		if (expr != null)
+			return new IAstNode[] { expr };
+		else
+			return NO_CHILDREN;
 	}
 	
 	/* (non-Javadoc)
@@ -193,6 +199,9 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		if (expr == null)
+			return;
+		
 		LLType exprType = expr.getType();
 		if (!(exprType instanceof LLDataType)) {
 			throw new TypeException(expr, "can only field-dereference data");

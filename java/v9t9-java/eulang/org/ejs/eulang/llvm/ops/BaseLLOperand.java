@@ -9,7 +9,7 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class BaseLLOperand implements LLOperand {
+public abstract class BaseLLOperand implements LLOperand {
 
 	protected final LLType type;
 

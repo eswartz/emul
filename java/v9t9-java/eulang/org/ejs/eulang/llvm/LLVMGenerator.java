@@ -7,17 +7,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAllocTupleStmt;
@@ -38,6 +42,8 @@ import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
+import org.ejs.eulang.ast.IAstInitListExpr;
+import org.ejs.eulang.ast.IAstInitNodeExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstLoopStmt;
@@ -75,17 +81,22 @@ import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
+import org.ejs.eulang.llvm.ops.LLArrayOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.llvm.ops.LLIdxValOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
+import org.ejs.eulang.llvm.ops.LLStructOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
+import org.ejs.eulang.llvm.ops.LLZeroInit;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
@@ -94,6 +105,7 @@ import org.ejs.eulang.types.LLStaticField;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
+import org.ejs.eulang.types.TypeException;
 
 /**
  * Generate LLVM instructions
@@ -220,7 +232,7 @@ public class LLVMGenerator {
 		
 
 		for (LLType type : typeEngine.getTypes()) {
-			if (type.getLLVMName() != null)
+			if (type.getLLVMName() != null && type.isComplete())
 				ll.addExternType(type);
 		}
 	}
@@ -855,6 +867,8 @@ public class LLVMGenerator {
 			temp = generateTupleExpr((IAstTupleExpr) expr);
 		else if (expr instanceof IAstAssignStmt)
 			temp = generateAssignStmt((IAstAssignStmt) expr);
+		else if (expr instanceof IAstInitListExpr)
+			temp = generateInitListExpr((IAstInitListExpr) expr);
 		else if (expr instanceof IAstBlockStmt)
 			temp = generateStmtList(((IAstBlockStmt) expr).stmts());		
 		else if (expr instanceof IAstBreakStmt)
@@ -866,6 +880,198 @@ public class LLVMGenerator {
 			return null;
 		}
 		return temp;
+	}
+
+	/**
+	 * Initialize data in an array or struct and return the result.
+
+		Note LLVM favors using "physical" types that are specialized for initialization, which explicitly
+		spell out where gaps between elements exist -- which are filled with zeroinitializer operands,
+		and must be accounted for in the type.  The #load() code will bitcast this to the actual
+		logical type.
+		 
+struct Silly {
+int a;
+char b[103];
+short c;
+};
+
+struct Silly example = { .a = 0, .c = 3 }, other;
+
+struct Silly *sillyptr() { return example.a ? &example : &other; }
+int main(int argc, char **argv) {
+  example.a += example.b[94];
+  return sillyptr();
+}
+
+========
+%0 = type { i32, [104 x i8], i16 }
+%struct.Silly = type { i32, [103 x i8], i16 }
+
+@example = internal global %0 { i32 0, [104 x i8] zeroinitializer, i16 3 }, align 32 ; <%0*> [#uses=2]
+@other = internal global %struct.Silly zeroinitializer, align 32 ; <%struct.Silly*> [#uses=1]
+
+define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
+entry:
+  %0 = load i32* getelementptr (%struct.Silly* bitcast (%0* @example to %struct.Silly*), i64 0, i32 0), align 32 ; <i32> [#uses=1]
+  %1 = load i8* getelementptr (%struct.Silly* bitcast (%0* @example to %struct.Silly*), i64 0, i32 1, i64 94), align 2 ; <i8> [#uses=1]
+  %2 = sext i8 %1 to i32                          ; <i32> [#uses=1]
+  %3 = add nsw i32 %2, %0                         ; <i32> [#uses=2]
+  store i32 %3, i32* getelementptr (%struct.Silly* bitcast (%0* @example to %struct.Silly*), i64 0, i32 0), align 32
+  %4 = icmp eq i32 %3, 0                          ; <i1> [#uses=1]
+  %5 = select i1 %4, i32 ptrtoint (%struct.Silly* @other to i32), i32 ptrtoint (%0* @example to i32) ; <i32> [#uses=1]
+  ret i32 %5
+}
+ 
+	 * @param expr
+	 * @return
+	 */
+	private LLOperand generateInitListExpr(final IAstInitListExpr expr) throws ASTException {
+		
+		
+		boolean notAgg = !(expr.getType() instanceof LLAggregateType) && !(expr.getType() instanceof LLArrayType);
+		
+		if (notAgg)
+			return generateTypedExpr(expr.getInitExprs().getFirst().getExpr());
+		
+		List<LLOperand> initOps = new ArrayList<LLOperand>();
+
+		ArrayList<IAstInitNodeExpr> sortedFields = new ArrayList<IAstInitNodeExpr>(expr.getInitExprs().list());
+		Collections.sort(sortedFields, new Comparator<IAstInitNodeExpr>() {
+
+			@Override
+			public int compare(IAstInitNodeExpr o1, IAstInitNodeExpr o2) {
+				Pair<Integer, LLType> info1;
+				Pair<Integer, LLType> info2;
+				try {
+					info1 = o1.getInitFieldInfo(expr.getType());
+					info2 = o2.getInitFieldInfo(expr.getType());
+					return info1.first - info2.first;
+				} catch (TypeException e) {
+					// ignore here
+					return 0;
+				}
+			}
+			
+		});
+		
+		int curOffs = 0;
+		int initIdx = 0;
+		
+		boolean isArray = expr.getType() instanceof LLArrayType;
+		boolean needAlignment = true;
+		
+		int fieldCount = expr.getType() instanceof LLAggregateType ? ((LLAggregateType) expr.getType()).getCount() : 
+				((LLArrayType) expr.getType()).getArrayCount();
+		
+		// track the init-view types, which include explicit zeroinitializer slots
+		List<LLType> initFieldTypes = new ArrayList<LLType>();
+		if (isArray) {
+			TypeEngine.Alignment align = typeEngine.new Alignment(TypeEngine.Target.STRUCT);
+			LLType elType = expr.getType().getSubType();
+			align.add(elType);
+			if (align.sizeof() == elType.getBits())
+				initFieldTypes.add(elType);
+			else
+				initFieldTypes.add(typeEngine.getArrayType(typeEngine.BYTE, align.sizeof() / 8, null));
+		}
+		
+		Pair<Integer, LLType> initInfo = null;
+		IAstInitNodeExpr initNode = null;
+		int fieldIdx;
+
+		TypeEngine.Alignment align = typeEngine.new Alignment(TypeEngine.Target.STRUCT);
+
+		for (fieldIdx = 0; fieldIdx < fieldCount && initIdx < sortedFields.size(); fieldIdx++) {
+		
+			// add zero init if no init here
+			if (initInfo == null) {
+				initNode = sortedFields.get(initIdx);
+				try {
+					initInfo = initNode.getInitFieldInfo(expr.getType());
+				} catch (TypeException e) {
+					throw new ASTException(initNode, e.getMessage());
+				}
+			}
+			
+			if (initInfo.first == fieldIdx) {
+
+				if (needAlignment) {
+					// add zero init if we skipped anything
+					int gap = align.nextOffset(initNode.getExpr().getType()) - curOffs;
+					addZeroInitGap(gap, initOps, initFieldTypes, isArray, align);
+					curOffs = align.sizeof();
+				}
+				
+				LLOperand op = generateTypedExpr(initNode.getExpr());
+				initOps.add(op);
+				curOffs += op.getType().getBits();
+				align.add(op.getType());
+				if (!isArray) initFieldTypes.add(initInfo.second);
+				
+				initInfo = null;
+				initIdx++;
+			} else {
+				// no init for this field
+				
+				LLType fieldType = expr.getType() instanceof LLAggregateType 
+					? ((LLAggregateType) expr.getType()).getType(fieldIdx) 
+						: expr.getType().getSubType();
+				
+				align.add(fieldType);
+			}
+		}
+		
+		// add zeroinits at end
+		
+		for (; fieldIdx < fieldCount; fieldIdx++) {
+			
+			LLType fieldType = expr.getType() instanceof LLAggregateType 
+				? ((LLAggregateType) expr.getType()).getType(fieldIdx) 
+					: expr.getType().getSubType();
+
+			align.add(fieldType);
+		}
+		
+		if (needAlignment) {
+			// fill final gap
+			int gap = align.sizeof() - curOffs;
+			addZeroInitGap(gap, initOps, initFieldTypes, isArray, align);
+		}
+		
+		LLOperand initOp;
+		if (isArray) {
+			LLArrayType initType = typeEngine.getArrayType(initFieldTypes.get(0), ((LLArrayType) expr.getType()).getArrayCount(), null);
+			initOp = new LLArrayOp(initType, initOps.toArray(new LLOperand[initOps.size()]));
+		} else {
+			LLDataType initType = typeEngine.getDataType(expr.getType().getName() + "$init", initFieldTypes);
+			initOp = new LLStructOp(initType, initOps.toArray(new LLOperand[initOps.size()]));
+		}
+		
+		return initOp;
+		
+	}
+
+	private void addZeroInitGap(int gap, List<LLOperand> initOps,
+			List<LLType> initFieldTypes, boolean isArray, Alignment align) {
+		if (gap > 0) {
+			assert gap % 8 == 0;
+			LLType fillType;
+			if (isArray)
+				fillType = initFieldTypes.get(0);
+			else
+				fillType = typeEngine.getArrayType(typeEngine.BYTE, gap / 8, 
+						null);
+			
+			if (align != null)
+				align.add(gap);
+
+			while (gap > 0) {
+				initOps.add(new LLZeroInit(fillType));
+				if (!isArray) initFieldTypes.add(fillType);
+				gap -= fillType.getBits();
+			}
+		}
 	}
 
 	private LLOperand generateIndexExpr(IAstIndexExpr expr) throws ASTException {

@@ -78,6 +78,29 @@ public class TypeEngine {
 			this.target = target;
 			offset = 0;
 		}
+		
+		/**
+		 * Get the bit offset of a field of the given type if it were added
+		 * @param type
+		 * @return bit offset
+		 */
+		public int nextOffset(LLType type) {
+			int bits = type != null ? type.getBits() : 0;
+			
+			int minAlign = target == Target.STRUCT ? getStructMinAlign() : getStackMinAlign();
+			int align = target == Target.STRUCT ? getStructAlign() : getStackAlign();
+			
+			if (bits != 0 && bits < minAlign)
+				bits = minAlign;
+			if (bits < align)
+				align = minAlign;
+			
+			if (offset % align != 0) {
+				return offset + (align - offset % align);
+			}
+			return offset;
+		}
+		
 		/** Add a type to align.  
 		 * 
 		 * @param type
@@ -106,11 +129,19 @@ public class TypeEngine {
 			return fieldOffset;
 		}
 		/**
-		 * @return the bit size 
+		 * @return the bit size after final alignment 
 		 */
 		public int sizeof() {
 			return offset;
 		}
+
+		/**
+		 * @param gap
+		 */
+		public void add(int gap) {
+			offset += gap;
+		}
+
 	}
 	
 	public int getStackMinAlign() {
@@ -483,6 +514,29 @@ public class TypeEngine {
 			sb.append(field.getType() != null ? field.getType().toString() : "<u>").append('$');
 		for (LLStaticField field : statics)
 			sb.append(field.getType() != null ? field.getType().toString() : "<u>").append('$');
+		return sb.toString();
+	}
+	
+	public LLDataType getDataType(String name, List<LLType> fieldTypes) {
+		String key = getDataTypeKey(name, fieldTypes);
+		LLDataType data = dataTypeMap.get(key);
+		if (data == null) {
+			List<LLInstanceField> ifields = new ArrayList<LLInstanceField>(fieldTypes.size());
+			for (LLType type : fieldTypes)
+				ifields.add(new LLInstanceField("", type, null, null));
+			data = new LLDataType(this, name,
+					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
+					null);
+			dataTypeMap.put(key, data);
+		}
+		return data;
+	}
+	
+	private String getDataTypeKey(String name, List<LLType> ifields) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(name).append('$');
+		for (LLType type : ifields)
+			sb.append(type != null ? type.toString() : "<u>").append('$');
 		return sb.toString();
 	}
 }

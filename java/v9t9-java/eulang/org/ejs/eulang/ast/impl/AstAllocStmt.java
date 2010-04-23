@@ -7,6 +7,7 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstInitListExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -248,7 +249,14 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 			LLType left = theSymbol.getType();
 			LLType right = theExpr != null ? theExpr.getType() : null;
 			if (left != null && right != null) {
-				theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
+				// for init lists, force type to the symbol's type since we can't cast aggregates
+				if (theExpr instanceof IAstInitListExpr) {
+					if (!left.equals(theExpr.getType())) {
+						theExpr.setType(left);
+						changed = true;
+					}
+				} else
+					theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
 			}
 		}
 		return changed;

@@ -477,13 +477,59 @@ public class TestTypes extends BaseParserTest {
     	doGenerate(mod);
     }
     
-    //@Test
+    @Test
     public void testDataInit1() throws Exception {
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
     			"testDataInit1 = code() {\n"+
-    			"  foo:Tuple = ( 1, 2.0, 0x10, 0x20 );\n"+
+    			"  foo:Tuple = [ 1, 2, .z=0x10, .y=0x20 ];\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
+
+    @Test
+    public void testDataInit1b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    			"testDataInit1b = code() {\n"+
+    			"  foo:Tuple = [ .f=4 ];\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
+    @Test
+    public void testDataInit2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testDataInit2 = code() {\n"+
+    			"  foo:Int[10] = [ [5] = 55, [1] = 11 ];\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
+    
+    
+    @Test
+    public void testDataInit3a() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    			"testDataInit3a = code() {\n"+
+    			"  foo:Tuple[10] = [];\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
+    
+    @Test
+    public void testDataInit3b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    			"testDataInit3b = code() {\n"+
+    			"  foo:Tuple[5] = [ [3] = [ 1, .z=55], [1] = [.f=2] ];\n"+
     			"};\n"+
     	"");
     	doGenerate(mod);

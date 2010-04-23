@@ -68,6 +68,9 @@ tokens {
   FIELDREF;
   ARRAY;
   INDEX;
+  
+  INITEXPR;
+  INITLIST;
 }
 
 @header {
@@ -230,27 +233,37 @@ codeStmtExpr options { backtrack=true; } :
       | controlStmt      -> controlStmt
       ;
 
-varDecl: ID COLON_EQUALS assignExpr         -> ^(ALLOC ID TYPE assignExpr)
-    | idTuple COLON_EQUALS assignExpr         -> ^(ALLOC idTuple TYPE assignExpr)
-    | ID COLON type (EQUALS assignExpr)?  -> ^(ALLOC ID type assignExpr*)
-    | idTuple COLON type (EQUALS assignExpr)?  -> ^(ALLOC idTuple type assignExpr*)
-    | ID (COMMA ID)+ COLON_EQUALS PLUS? assignExpr (COMMA assignExpr)* 
-        -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST assignExpr+))
-    | ID (COMMA ID)+ COLON type (EQUALS PLUS? assignExpr (COMMA assignExpr)*)?  
-        -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignExpr+)?)
+varDecl: ID COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID TYPE assignOrInitExpr)
+    | idTuple COLON_EQUALS assignOrInitExpr         -> ^(ALLOC idTuple TYPE assignOrInitExpr)
+    | ID COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC ID type assignOrInitExpr*)
+    | idTuple COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC idTuple type assignOrInitExpr*)
+    | ID (COMMA ID)+ COLON_EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)* 
+        -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST assignOrInitExpr+))
+    | ID (COMMA ID)+ COLON type (EQUALS PLUS? assignExpr (COMMA assignOrInitExpr)*)?  
+        -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignOrInitExpr+)?)
     ;
 
-assignStmt : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN idExpr assignExpr)
-    | idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
-    | idExpr (COMMA idExpr)+ EQUALS PLUS? assignExpr (COMMA assignExpr)*       
-        -> ^(ASSIGN ^(LIST idExpr+) PLUS? ^(LIST assignExpr+))
+
+assignStmt : (idExpr EQUALS) => idExpr EQUALS assignOrInitExpr        -> ^(ASSIGN idExpr assignOrInitExpr)
+    | idTuple EQUALS assignOrInitExpr               -> ^(ASSIGN idTuple assignOrInitExpr)
+    | idExpr (COMMA idExpr)+ EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
+        -> ^(ASSIGN ^(LIST idExpr+) PLUS? ^(LIST assignOrInitExpr+))
     ;
       
+assignOrInitExpr : assignExpr | initList ;
+
 assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN idExpr assignExpr)
     | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
 
+initList : LBRACKET (initExpr (COMMA initExpr)*)? RBRACKET     -> ^(INITLIST initExpr* ) ;
+initExpr : e=rhsExpr                                              -> ^(INITEXPR $e) 
+    | PERIOD ID EQUALS ei=initElement                                  -> ^(INITEXPR $ei ID) 
+    | LBRACKET i=rhsExpr RBRACKET EQUALS ei=initElement                  -> ^(INITEXPR $ei $i) 
+    ;
+
+initElement : rhsExpr | initList;    
 
 controlStmt : doWhile | whileDo | repeat | forIter ;
 

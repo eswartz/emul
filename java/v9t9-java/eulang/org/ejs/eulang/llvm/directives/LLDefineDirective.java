@@ -23,6 +23,7 @@ import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
+import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLTempOp;
@@ -30,6 +31,8 @@ import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLAggregateType;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLType;
 
@@ -266,6 +269,17 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 			} else {
 				throw new IllegalStateException();
 			}
+		} else if (valueType != null && !valueType.equals(source.getType())) {
+			if (source.getType().getBasicType() == BasicType.VOID || valueType.getBasicType() == BasicType.VOID) {
+				// ignore
+				return source;
+			} else if ((valueType instanceof LLAggregateType || valueType instanceof LLArrayType)
+					&& (source.getType() instanceof LLAggregateType || source.getType() instanceof LLArrayType)) {
+				LLOperand cast = new LLBitcastOp(valueType, source);
+				return cast;
+			}
+			// ignore: ref/ptr casts?
+			return source;
 		} else {
 			return source;
 		}

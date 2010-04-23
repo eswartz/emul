@@ -39,6 +39,8 @@ import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
 import org.ejs.eulang.ast.impl.AstIndexExpr;
+import org.ejs.eulang.ast.impl.AstInitListExpr;
+import org.ejs.eulang.ast.impl.AstInitNodeExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstLabelStmt;
 import org.ejs.eulang.ast.impl.AstModule;
@@ -450,6 +452,9 @@ public class GenerateAST {
 		case EulangParser.EXPR:
 			return construct(tree.getChild(0));
 
+		case EulangParser.INITLIST:
+			return constructInitList(tree);
+			
 		case EulangParser.CALL:
 			return constructCallOrCast(tree);
 		case EulangParser.ARGLIST:
@@ -501,6 +506,47 @@ public class GenerateAST {
 			return null;
 		}
 
+	}
+
+	/**
+	 * An initializer list.
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructInitList(Tree tree) throws GenerateException {
+		IAstNodeList<IAstInitNodeExpr> initExprs = new AstNodeList<IAstInitNodeExpr>(IAstInitNodeExpr.class);
+		int index = 0;
+		for (Tree kid : iter(tree)) {
+			IAstTypedExpr expr = checkConstruct(kid.getChild(0), IAstTypedExpr.class);
+			IAstTypedExpr context = null;
+			if (kid.getChildCount() == 1) {
+				context = new AstIntLitExpr(""+index, typeEngine.INT, index);
+				getEmptySource(kid, context);
+			} else if (kid.getChild(1).getType() == EulangParser.ID) {
+				IAstName name = new AstName(kid.getChild(1).getText());
+				getSource(kid, name);
+				context = new AstFieldExpr(null, name);
+				getSource(kid, context);
+			} else {
+				IAstTypedExpr indexExpr = checkConstruct(kid.getChild(1), IAstTypedExpr.class);
+				indexExpr = indexExpr.simplify(typeEngine);
+				if (!(indexExpr instanceof IAstIntLitExpr))
+					throw new GenerateException(kid.getChild(1), "an index expression must be a compile-time constant");
+				context = new AstIndexExpr(null, indexExpr);
+				getSource(kid, context);
+				index = (int) ((IAstIntLitExpr) indexExpr).getValue();
+			}	
+			IAstInitNodeExpr initNode = new AstInitNodeExpr(context, expr);
+			getSource(kid, initNode);
+			initExprs.add(initNode);
+			index++;
+		}
+		IAstInitListExpr list = new AstInitListExpr(initExprs);
+		getSource(tree, initExprs);
+		getSource(tree, list);
+		
+		return list;
 	}
 
 	/**
