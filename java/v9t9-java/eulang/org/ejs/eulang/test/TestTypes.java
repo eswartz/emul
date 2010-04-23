@@ -487,7 +487,8 @@ public class TestTypes extends BaseParserTest {
     			"  foo:Tuple = [ 1, 2, .z=0x10, .y=0x20 ];\n"+
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("store %Tuple bitcast ({i8,[ 1 x i8 ],float,i8,i8} { i8 1, [ 1 x i8 ] zeroinitializer, float 2.0, i8 32, i8 16 } to {i8,float,i8,i8}), %Tuple*", gen);
     }
 
     @Test
@@ -499,7 +500,8 @@ public class TestTypes extends BaseParserTest {
     			"  foo:Tuple = [ .f=4 ];\n"+
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("store %Tuple bitcast ({[ 2 x i8 ],float,[ 3 x i8 ]} { [ 2 x i8 ] zeroinitializer, float 4.0, [ 3 x i8 ] zeroinitializer } to {i8,float,i8,i8}), %Tuple* ", gen);
     }
     @Test
     public void testDataInit2() throws Exception {
@@ -508,7 +510,8 @@ public class TestTypes extends BaseParserTest {
     			"  foo:Int[10] = [ [5] = 55, [1] = 11 ];\n"+
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("store %Intx10 [ i16 zeroinitializer, i16 11, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 55, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer ]", gen);
     }
     
     @Test
@@ -532,7 +535,8 @@ public class TestTypes extends BaseParserTest {
     			"  foo:Tuple[10] = [];\n"+
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("store %Tuplex10 [ {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer ], %Tuplex10*", gen);
     }
     
     @Test
@@ -544,7 +548,8 @@ public class TestTypes extends BaseParserTest {
     			"  foo:Tuple[5] = [ [3] = [ 1, .z=55], [1] = [.f=2] ];\n"+
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("store %Tuplex5 [ {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} bitcast ({[ 2 x i8 ],float,[ 3 x i8 ]} { [ 2 x i8 ] zeroinitializer, float 2.0, [ 3 x i8 ] zeroinitializer } to {i8,float,i8,i8}), {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} bitcast ({i8,[ 6 x i8 ],i8} { i8 1, [ 6 x i8 ] zeroinitializer, i8 55 } to {i8,float,i8,i8}), {i8,float,i8,i8} zeroinitializer ], %Tuplex5*", gen);
     }
 }
 
