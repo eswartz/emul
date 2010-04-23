@@ -510,6 +510,15 @@ public class TestTypes extends BaseParserTest {
     	doGenerate(mod);
     }
     
+    @Test
+    public void testDataInit2b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testDataInit2b = code() {\n"+
+    			"  foo:Int[10] = [ 1, [5] = 55, 66, 77, 88, 99, [1] = 11, 22, 33, 44 ];\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
     
     @Test
     public void testDataInit3a() throws Exception {

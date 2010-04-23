@@ -159,7 +159,18 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 				throw new TypeException(expr, "invalid array initializer index " + fieldIdx);
 			fieldType = aggType.getType(fieldIdx);
 		} else if (exprType instanceof LLArrayType) {
-			fieldIdx = getIndex((IAstIndexExpr) context, expr.getType());
+			if (context instanceof IAstFieldExpr) {
+				String fieldName = ((IAstFieldExpr)context).getField().getName();
+				throw new TypeException(expr, "cannot set field '" + fieldName + "' in non-data type " + exprType.getName());
+			} 
+			else if (context instanceof IAstIndexExpr) {
+				fieldIdx = getIndex((IAstIndexExpr) context, exprType);
+			}
+			else if (context instanceof IAstIntLitExpr) {
+				fieldIdx = (int) ((IAstIntLitExpr) context).getValue();
+			} else {
+				throw new TypeException(context, "unhandled initializer context");
+			}
 			if (fieldIdx < 0 || fieldIdx >= ((LLArrayType) exprType).getArrayCount()) 
 				throw new TypeException(expr, "invalid array initializer index " + fieldIdx);
 			fieldType = exprType.getSubType();
