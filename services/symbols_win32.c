@@ -169,7 +169,7 @@ static void tag2symclass(Symbol * sym, int tag) {
         sym->sym_class = SYM_CLASS_REFERENCE;
         break;
     case SymTagPublicSymbol:
-        sym->sym_class = SYM_CLASS_REFERENCE;
+        sym->sym_class = SYM_CLASS_FUNCTION;
         break;
     case SymTagUDT:
     case SymTagEnum:
@@ -369,6 +369,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
 
     switch (tag) {
     case SymTagFunction:
+    case SymTagPublicSymbol:
         res = TYPE_CLASS_FUNCTION;
         break;
     case SymTagEnum:
