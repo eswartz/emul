@@ -227,7 +227,11 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     if (frame->is_top_frame) {
         /* Top frame */
         ContextAddress addr = trace_jump(ctx, reg_ip);
+#if ENABLE_Symbols
         ContextAddress plt = is_plt_section(ctx, addr);
+#else
+        ContextAddress plt = 0;
+#endif
 
         /*
          * we don't have a stack frame in a few restricted but useful cases:

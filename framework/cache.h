@@ -103,6 +103,7 @@
 typedef void CacheClient(void *);
 
 typedef struct AbstractCache {
+    LINK link;
     struct WaitingCacheClient * wait_list_buf;
     unsigned wait_list_cnt;
     unsigned wait_list_max;
@@ -126,7 +127,12 @@ extern void cache_exit(void);
  * Cache data handling code call cache_wait() to suspend current client
  * until cache validation is done.
  */
+#ifdef NDEBUG
 extern void cache_wait(AbstractCache * cache);
+#else
+#define cache_wait(cache) cache_wait_dbg(__FILE__, __LINE__, cache)
+extern void cache_wait_dbg(const char * file, int line, AbstractCache * cache);
+#endif
 
 /*
  * Invoke all items in the cache wait list.

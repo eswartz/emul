@@ -431,6 +431,101 @@ static void command_get_array_type(char * token, Channel * c) {
     cache_enter(command_get_array_type_cache_client, c, &args, sizeof(args));
 }
 
+typedef struct CommandFindFrameInfo {
+    char token[256];
+    char id[256];
+    ContextAddress addr;
+} CommandFindFrameInfo;
+
+static void write_commands(OutputStream * out, Context * ctx, StackTracingCommandSequence * seq) {
+    if (seq != NULL) {
+        int i;
+        write_stream(out, '[');
+        for (i = 0; i < seq->cmds_cnt; i++) {
+            StackTracingCommand * cmd = seq->cmds + i;
+            if (i > 0) write_stream(out, ',');
+            json_write_long(out, cmd->cmd);
+            switch (cmd->cmd) {
+            case SFT_CMD_NUMBER:
+                write_stream(out, ',');
+                json_write_int64(out, cmd->num);
+                break;
+            case SFT_CMD_REGISTER:
+                write_stream(out, ',');
+                json_write_string(out, register2id(ctx, STACK_NO_FRAME, cmd->reg));
+                break;
+            case SFT_CMD_DEREF:
+                write_stream(out, ',');
+                json_write_ulong(out, cmd->size);
+                write_stream(out, ',');
+                json_write_boolean(out, cmd->big_endian);
+                break;
+            }
+        }
+        write_stream(out, ']');
+    }
+    else {
+        write_string(out, "null");
+    }
+}
+
+static void command_find_frame_info_cache_client(void * x) {
+    CommandFindFrameInfo * args = (CommandFindFrameInfo *)x;
+    Channel * c = cache_channel();
+    Context * ctx = NULL;
+    StackTracingInfo * info = NULL;
+    int err = 0;
+
+    ctx = id2ctx(args->id);
+    if (ctx == NULL) err = ERR_INV_CONTEXT;
+    else if (get_stack_tracing_info(ctx, args->addr, &info) < 0) err = errno;
+
+    cache_exit();
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, err);
+
+    json_write_uint64(&c->out, info ? info->addr : 0);
+    write_stream(&c->out, 0);
+    json_write_uint64(&c->out, info ? info->size : 0);
+    write_stream(&c->out, 0);
+
+    write_commands(&c->out, ctx, info ? info->fp : NULL);
+    write_stream(&c->out, 0);
+
+    if (info != NULL && info->regs != NULL) {
+        int i;
+        write_stream(&c->out, '{');
+        for (i = 0; i < info->reg_cnt; i++) {
+            if (i > 0) write_stream(&c->out, ',');
+            json_write_string(&c->out, register2id(ctx, STACK_NO_FRAME, info->regs[i]->reg));
+            write_stream(&c->out, ':');
+            write_commands(&c->out, ctx, info->regs[i]);
+        }
+        write_stream(&c->out, '}');
+    }
+    else {
+        write_string(&c->out, "null");
+    }
+    write_stream(&c->out, 0);
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_find_frame_info(char * token, Channel * c) {
+    CommandFindFrameInfo args;
+
+    json_read_string(&c->inp, args.id, sizeof(args.id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args.addr = (ContextAddress)json_read_uint64(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_find_frame_info_cache_client, c, &args, sizeof(args));
+}
+
 void ini_symbols_service(Protocol * proto) {
     static int ini_done = 0;
     if (!ini_done) {
@@ -442,6 +537,7 @@ void ini_symbols_service(Protocol * proto) {
     add_command_handler(proto, SYMBOLS, "find", command_find);
     add_command_handler(proto, SYMBOLS, "list", command_list);
     add_command_handler(proto, SYMBOLS, "getArrayType", command_get_array_type);
+    add_command_handler(proto, SYMBOLS, "findFrameInfo", command_find_frame_info);
 }
 
 #endif /* SERVICE_Symbols */

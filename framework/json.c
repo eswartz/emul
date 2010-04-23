@@ -373,25 +373,8 @@ int json_read_struct(InputStream * inp, JsonStructCallBack * call_back, void * a
                 for (;;) {
                     ch = read_stream(inp);
                     if (ch == '"') break;
-                    if (ch == '\\') {
-                        ch = read_stream(inp);
-                        switch (ch) {
-                        case '"': break;
-                        case '\\': break;
-                        case '/': break;
-                        case 'b': ch = '\b'; break;
-                        case 'f': ch = '\f'; break;
-                        case 'n': ch = '\n'; break;
-                        case 'r': ch = '\r'; break;
-                        case 't': ch = '\t'; break;
-                        case 'u': ch = readHexChar(inp); break;
-                        default: exception(ERR_JSON_SYNTAX);
-                        }
-                    }
-                    if (nm_len < (int)sizeof(nm) - 1) {
-                        nm[nm_len] = (char)ch;
-                        nm_len++;
-                    }
+                    if (ch == '\\') ch = read_esc_char(inp);
+                    if (nm_len < (int)sizeof(nm) - 1) nm[nm_len++] = (char)ch;
                 }
                 nm[nm_len] = 0;
                 ch = read_stream(inp);

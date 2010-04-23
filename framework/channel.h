@@ -72,7 +72,6 @@ struct Channel {
     void (*connecting)(Channel *);      /* Called when channel is ready for transmit */
     void (*connected)(Channel *);       /* Called when channel negotiation is complete */
     void (*receive)(Channel *);         /* Called when messages has been received */
-    void (*redirected)(Channel *, Channel *);/* Called when channel is redirected */
     void (*disconnected)(Channel *);    /* Called when channel is disconnected */
 };
 

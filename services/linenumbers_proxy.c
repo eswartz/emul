@@ -194,6 +194,7 @@ static void validate_map_to_memory(Channel * c, void * args, int error) {
     f->error = get_error_report(error);
     cache_notify(&f->cache);
     if (f->disposed) free_line_address_cache(f);
+    if (trap.error) exception(trap.error);
 }
 
 int line_to_address(Context * ctx, char * file, int line, int column, LineNumbersCallBack * client, void * args) {

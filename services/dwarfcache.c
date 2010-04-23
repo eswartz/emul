@@ -99,6 +99,7 @@ static ObjectInfo * find_object_info(U8_T ID) {
     ObjectInfo * Info = find_object(sCache, ID);
     if (Info == NULL) {
         U4_T Hash = (U4_T)ID % OBJ_HASH_SIZE;
+        assert(ID >= sDebugSection->addr + dio_gEntryPos);
         Info = (ObjectInfo *)loc_alloc_zero(sizeof(ObjectInfo));
         Info->mHashNext = sCache->mObjectHash[Hash];
         sCache->mObjectHash[Hash] = Info;
@@ -234,10 +235,10 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
     case 0:
         if (Form) {
             Info = find_object_info(sDebugSection->addr + dio_gEntryPos);
+            assert(Info->mTag == 0);
             Info->mTag = Tag;
             Info->mCompUnit = sCompUnit;
             Info->mParent = sParentObject;
-            /* TODO: Default AT_lower_bound value is language dependand */
             Sibling = 0;
         }
         else {

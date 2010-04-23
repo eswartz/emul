@@ -52,6 +52,8 @@ typedef struct Symbol Symbol;
 
 typedef void EnumerateSymbolsCallBack(void *, Symbol *);
 
+#if ENABLE_Symbols
+
 /*
  * Find symbol information for given symbol name in given context.
  * On error, returns -1 and sets errno.
@@ -148,17 +150,11 @@ extern int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol **
 
 /*************************************************************************************************/
 
-
 /*
  * Check if given address is inside a PLT section, then return address of the section.
  * If not a PLT address return 0;
  */
-#if ENABLE_Symbols
 extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
-#else
-#define is_plt_section(ctx, addr) 0
-#endif
-
 
 /*
  * For given context and its registers in a stack frame,
@@ -166,16 +162,21 @@ extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
  * If frame info is not available, do nothing.
  * Return -1 and set errno in case of an error.
  */
-#if ENABLE_Symbols
 extern int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down);
-#else
-#define get_next_stack_frame(ctx, frame, down) 0
-#endif
+
+/*
+ * For given context and instruction address,
+ * search for stack tracing information.
+ * Return -1 and set errno in case of an error.
+ */
+extern int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info);
 
 /*
  * Initialize symbol service.
  */
 extern void ini_symbols_service(Protocol * proto);
 extern void ini_symbols_lib(void);
+
+#endif /* ENABLE_Symbols */
 
 #endif /* D_symbols */

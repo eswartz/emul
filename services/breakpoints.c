@@ -760,6 +760,7 @@ static void done_conditions_evaluation(int * need_to_flush) {
 }
 
 static void done_evaluation(void) {
+    assert(cache_enter_cnt > 0);
     cache_enter_cnt--;
     if (cache_enter_cnt == 0) {
         int need_to_flush = 0;

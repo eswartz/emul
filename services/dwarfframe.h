@@ -27,22 +27,27 @@
 
 #include "context.h"
 #include "dwarfcache.h"
+#include "stacktrace.h"
 
 /*
- * Lookup stack frame data in ELF file, in .debug_frame and .eh_frame sections.
+ * Lookup stack tracing information in ELF file, in .debug_frame and .eh_frame sections.
  *
- * "frame" is current frame info, it should have frame->regs and frame->mask filled with
- * proper values before this function is called.
+ * Given register values in one frame, stack tracing information allows to calculate
+ * frame address and register values in the next frame.
  *
- * "down" is next frame - moving from stack top to the bottom.
- *
- * The function uses register values in current frame to calculate frame address "frame->fp",
- * and calculate register values in the next frame.
- *
- * If frame data is not found the function does nothing.
+ * When function returns, dwarf_stack_trace_fp contains commands to calculate frame address,
+ * and dwarf_stack_trace_regs contains commands to calculate register values.
  * In case of error reading frame data, the function throws an exception.
  */
-extern void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, StackFrame * frame, StackFrame * down);
+extern void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T ip);
+
+extern U8_T dwarf_stack_trace_addr;
+extern U8_T dwarf_stack_trace_size;
+
+extern StackTracingCommandSequence * dwarf_stack_trace_fp;
+
+extern int dwarf_stack_trace_regs_cnt;
+extern StackTracingCommandSequence ** dwarf_stack_trace_regs;
 
 #endif /* ENABLE_ELF */
 

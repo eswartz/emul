@@ -945,6 +945,11 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return 0;
 }
 
+int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info) {
+    *info = NULL;
+    return 0;
+}
+
 int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     return 0;
 }

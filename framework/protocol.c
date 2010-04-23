@@ -107,6 +107,7 @@ ServiceInfo * protocol_get_service(void * owner, const char * name) {
 
     while (s != NULL && (s->owner != owner || strcmp(s->name, name) != 0)) s = s->next;
     if (s == NULL) {
+        assert(strcmp(name, "ZeroCopy") != 0);
         s = (ServiceInfo *)loc_alloc(sizeof(ServiceInfo));
         s->owner = owner;
         s->name = loc_strdup(name);
@@ -426,7 +427,7 @@ ReplyHandlerInfo * protocol_send_command(Channel * c, const char * service, cons
         post_event(send_command_failed, rh);
     }
     else {
-        int h;
+        unsigned h;
         unsigned long tokenid;
         do tokenid = p->tokenid++;
         while (find_reply_handler(c, tokenid, 0) != NULL);
@@ -599,7 +600,7 @@ int protocol_cancel_command(ReplyHandlerInfo * rh) {
 }
 
 static void channel_closed(Channel * c) {
-    int i;
+    unsigned i;
 
     assert(is_dispatch_thread());
     for (i = 0; i < EVENT_HASH_SIZE; i++) {

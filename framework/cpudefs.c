@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 /*
- * This module contains definitions of target CPU registers.
+ * This module contains definitions of target CPU registers and stack frames.
  */
 
 #include "config.h"
@@ -27,6 +27,7 @@
 #include "errors.h"
 #include "context.h"
 #include "myalloc.h"
+#include "exceptions.h"
 #include "breakpoints.h"
 #include "symbols.h"
 
@@ -204,7 +205,7 @@ int write_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t v
     return -1;
 }
 
-int id2frame(char * id, Context ** ctx, int * frame) {
+int id2frame(const char * id, Context ** ctx, int * frame) {
     int f = 0;
     Context * c = NULL;
 
@@ -258,7 +259,7 @@ char * register2id(Context * ctx, int frame, RegisterDefinition * reg) {
     return id;
 }
 
-int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def) {
+int id2register(const char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def) {
     int r = 0;
 
     *ctx = NULL;
@@ -303,6 +304,63 @@ int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** re
     }
     *reg_def = get_reg_definitions(*ctx) + r;
     return 0;
+}
+
+static void stack_trace_error(void) {
+    str_exception(ERR_OTHER, "Invalid stack trace program");
+}
+
+uint64_t evaluate_stack_trace_commands(Context * ctx, StackFrame * frame, StackTracingCommandSequence * cmds) {
+    static uint64_t * stk = NULL;
+    static int stk_size = 0;
+
+    int i;
+    int stk_pos = 0;
+
+    for (i = 0; i < cmds->cmds_cnt; i++) {
+        StackTracingCommand * cmd = cmds->cmds + i;
+        if (stk_pos >= stk_size) {
+            stk_size += 4;
+            stk = (uint64_t *)loc_realloc(stk, sizeof(uint64_t) * stk_size);
+        }
+        switch (cmd->cmd) {
+        case SFT_CMD_NUMBER:
+            stk[stk_pos++] = cmd->num;
+            break;
+        case SFT_CMD_REGISTER:
+            if (read_reg_value(cmd->reg, frame, stk + stk_pos) < 0) exception(errno);
+            stk_pos++;
+            break;
+        case SFT_CMD_FP:
+            stk[stk_pos++] = frame->fp;
+            break;
+        case SFT_CMD_DEREF:
+            if (stk_pos < 1) stack_trace_error();
+            {
+                size_t j;
+                size_t size = cmd->size;
+                uint64_t n = 0;
+                uint8_t buf[8];
+
+                if (context_read_mem(ctx, (ContextAddress)stk[stk_pos - 1], buf, size) < 0) exception(errno);
+                for (j = 0; j < size; j++) {
+                    n = (n << 8) | buf[cmd->big_endian ? j : size - j - 1];
+                }
+                stk[stk_pos - 1] = n;
+            }
+            break;
+        case SFT_CMD_ADD:
+            if (stk_pos < 2) stack_trace_error();
+            stk[stk_pos - 2] = stk[stk_pos - 2] + stk[stk_pos - 1];
+            stk_pos--;
+            break;
+        default:
+            stack_trace_error();
+            break;
+        }
+    }
+    if (stk_pos != 1) stack_trace_error();
+    return stk[0];
 }
 
 #endif /* ENABLE_DebugContext */

@@ -31,6 +31,10 @@ typedef struct WaitingCacheClient {
     void * args;
     size_t args_size;
     int args_copy;
+#ifndef NDEBUG
+    const char * file;
+    int line;
+#endif
 } WaitingCacheClient;
 
 static WaitingCacheClient current_client = {0, 0, 0, 0, 0};
@@ -38,6 +42,7 @@ static int client_exited = 0;
 static int cache_miss_cnt = 0;
 static WaitingCacheClient * wait_list_buf;
 static unsigned wait_list_max;
+static LINK cache_list;
 
 static void run_cache_client(void) {
     Trap trap;
@@ -52,7 +57,7 @@ static void run_cache_client(void) {
         assert(client_exited);
         flush_stream(out);
     }
-    else if (get_error_code(trap.error) != ERR_CACHE_MISS || client_exited) {
+    else if (get_error_code(trap.error) != ERR_CACHE_MISS || client_exited || cache_miss_cnt == 0) {
         trace(LOG_ALWAYS, "Unhandled exception in data cache client: %d %s", trap.error, errno_to_str(trap.error));
     }
     if (cache_miss_cnt == 0 && current_client.args_copy) loc_free(current_client.args);
@@ -81,10 +86,15 @@ void cache_exit(void) {
     client_exited = 1;
 }
 
+#ifdef NDEBUG
 void cache_wait(AbstractCache * cache) {
+#else
+void cache_wait_dbg(const char * file, int line, AbstractCache * cache) {
+#endif
     assert(is_dispatch_thread());
     assert(client_exited == 0);
     if (current_client.client != NULL && cache_miss_cnt == 0) {
+        if (cache_list.next == NULL) list_init(&cache_list);
         if (cache->wait_list_cnt >= cache->wait_list_max) {
             cache->wait_list_max += 8;
             cache->wait_list_buf = (WaitingCacheClient *)loc_realloc(cache->wait_list_buf, cache->wait_list_max * sizeof(WaitingCacheClient));
@@ -95,6 +105,11 @@ void cache_wait(AbstractCache * cache) {
             current_client.args = mem;
             current_client.args_copy = 1;
         }
+#ifndef NDEBUG
+        current_client.file = file;
+        current_client.line = line;
+#endif
+        if (cache->wait_list_cnt == 0) list_add_last(&cache->link, &cache_list);
         cache->wait_list_buf[cache->wait_list_cnt++] = current_client;
         channel_lock(current_client.channel);
     }
@@ -107,6 +122,7 @@ void cache_notify(AbstractCache * cache) {
     unsigned cnt = cache->wait_list_cnt;
 
     assert(is_dispatch_thread());
+    list_remove(&cache->link);
     cache->wait_list_cnt = 0;
     if (wait_list_max < cnt) {
         wait_list_max = cnt;
@@ -127,6 +143,7 @@ Channel * cache_channel(void) {
 void cache_dispose(AbstractCache * cache) {
     assert(is_dispatch_thread());
     assert(cache->wait_list_cnt == 0);
+    assert(list_is_empty(&cache->link));
     loc_free(cache->wait_list_buf);
     memset(cache, 0, sizeof(*cache));
 }

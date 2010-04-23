@@ -33,7 +33,7 @@
 #include "stacktrace.h"
 #include "symbols.h"
 
-#define HASH_SIZE 511
+#define HASH_SIZE 101
 
 /* Symbols cahce, one per channel */
 typedef struct SymbolsCache {
@@ -43,6 +43,7 @@ typedef struct SymbolsCache {
     LINK link_find[HASH_SIZE];
     LINK link_list[HASH_SIZE];
     LINK link_frame[HASH_SIZE];
+    int service_available;
 } SymbolsCache;
 
 /* Symbol properties cache */
@@ -133,6 +134,10 @@ typedef struct StackFrameCache {
     uint64_t address;
     uint64_t size;
 
+    StackTracingCommandSequence * fp;
+    StackTracingCommandSequence ** regs;
+    int regs_cnt;
+
     int disposed;
 } StackFrameCache;
 
@@ -153,6 +158,8 @@ struct Symbol {
 #include "symbols_alloc.h"
 
 static LINK root;
+
+static const char * SYMBOLS = "Symbols";
 
 static unsigned hash_sym_id(const char * id) {
     int i;
@@ -182,7 +189,9 @@ static SymbolsCache * get_symbols_cache(void) {
     LINK * l = NULL;
     SymbolsCache * syms = NULL;
     Channel * c = cache_channel();
-    if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+    if (c == NULL) {
+        str_exception(ERR_SYM_NOT_FOUND, "Illegal cache access");
+    }
     for (l = root.next; l != &root; l = l->next) {
         SymbolsCache * x = root2syms(l);
         if (x->channel == c) {
@@ -199,9 +208,14 @@ static SymbolsCache * get_symbols_cache(void) {
             list_init(syms->link_sym + i);
             list_init(syms->link_find + i);
             list_init(syms->link_list + i);
+            list_init(syms->link_frame + i);
         }
         channel_lock(c);
+        for (i = 0; i < c->peer_service_cnt; i++) {
+            if (strcmp(c->peer_service_list[i], SYMBOLS) == 0) syms->service_available = 1;
+        }
     }
+    if (!syms->service_available) str_exception(ERR_SYM_NOT_FOUND, "Symbols service not available");
     return syms;
 }
 
@@ -270,8 +284,12 @@ static void free_stack_frame_cache(StackFrameCache * c) {
     list_remove(&c->link_syms);
     c->disposed = 1;
     if (c->pending == NULL) {
+        int i;
         cache_dispose(&c->cache);
         release_error_report(c->error);
+        for (i = 0; i < c->regs_cnt; i++) loc_free(c->regs[i]);
+        loc_free(c->regs);
+        loc_free(c->fp);
         loc_free(c);
     }
 }
@@ -342,6 +360,7 @@ static void validate_context(Channel * c, void * args, int error) {
     s->error_get_context = get_error_report(error);
     cache_notify(&s->cache);
     if (s->disposed) free_sym_info_cache(s);
+    if (trap.error) exception(trap.error);
 }
 
 static SymInfoCache * get_sym_info_cache(const Symbol * sym) {
@@ -360,7 +379,7 @@ static SymInfoCache * get_sym_info_cache(const Symbol * sym) {
     else if (!s->done_context) {
         Channel * c = cache_channel();
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
-        s->pending_get_context = protocol_send_command(c, "Symbols", "getContext", validate_context, s);
+        s->pending_get_context = protocol_send_command(c, SYMBOLS, "getContext", validate_context, s);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
@@ -393,6 +412,7 @@ static void validate_find(Channel * c, void * args, int error) {
     assert(f->error != NULL || f->id != NULL);
     cache_notify(&f->cache);
     if (f->disposed) free_find_sym_cache(f);
+    if (trap.error) exception(trap.error);
 }
 
 int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
@@ -433,7 +453,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         f->pid = ctx->pid;
         f->ip = ip;
         f->name = loc_strdup(name);
-        f->pending = protocol_send_command(c, "Symbols", "find", validate_find, f);
+        f->pending = protocol_send_command(c, SYMBOLS, "find", validate_find, f);
         if (frame != STACK_NO_FRAME) {
             json_write_string(&c->out, frame2id(ctx, frame));
         }
@@ -493,6 +513,7 @@ static void validate_list(Channel * c, void * args, int error) {
     f->error = get_error_report(error);
     cache_notify(&f->cache);
     if (f->disposed) free_list_sym_cache(f);
+    if (trap.error) exception(trap.error);
 }
 
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func, void * args) {
@@ -532,7 +553,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
         list_add_first(&f->link_syms, syms->link_list + h);
         f->pid = ctx->pid;
         f->ip = ip;
-        f->pending = protocol_send_command(c, "Symbols", "list", validate_list, f);
+        f->pending = protocol_send_command(c, SYMBOLS, "list", validate_list, f);
         if (frame != STACK_NO_FRAME) {
             json_write_string(&c->out, frame2id(ctx, frame));
         }
@@ -739,6 +760,7 @@ static void validate_children(Channel * c, void * args, int error) {
     s->error_get_children = get_error_report(error);
     cache_notify(&s->cache);
     if (s->disposed) free_sym_info_cache(s);
+    if (trap.error) exception(trap.error);
 }
 
 int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
@@ -757,7 +779,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
     else if (!s->done_children) {
         Channel * c = cache_channel();
         if (c == NULL) exception(ERR_SYM_NOT_FOUND);
-        s->pending_get_children = protocol_send_command(c, "Symbols", "getChildren", validate_children, s);
+        s->pending_get_children = protocol_send_command(c, SYMBOLS, "getChildren", validate_children, s);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
@@ -804,6 +826,7 @@ static void validate_type_id(Channel * c, void * args, int error) {
     s->error = get_error_report(error);
     cache_notify(&s->cache);
     if (s->disposed) free_arr_sym_cache(s);
+    if (trap.error) exception(trap.error);
 }
 
 int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
@@ -826,7 +849,7 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
         a = (ArraySymCache *)loc_alloc_zero(sizeof(*a));
         list_add_first(&a->link_sym, &s->array_syms);
         a->length = length;
-        a->pending = protocol_send_command(c, "Symbols", "getArrayType", validate_type_id, a);
+        a->pending = protocol_send_command(c, SYMBOLS, "getArrayType", validate_type_id, a);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
         json_write_uint64(&c->out, length);
@@ -850,9 +873,74 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
 
 /*************************************************************************************************/
 
+static int trace_cmds_cnt = 0;
+static int trace_cmds_max = 0;
+static StackTracingCommand * trace_cmds = NULL;
+
+static int trace_regs_cnt = 0;
+static int trace_regs_max = 0;
+static StackTracingCommandSequence ** trace_regs = NULL;
+
+static int trace_error = 0;
+
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     /* TODO: is_plt_section() in symbols proxy */
     return 0;
+}
+
+static void read_stack_trace_command(InputStream * inp, void * args) {
+    char id[256];
+    Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
+    StackTracingCommand * cmd = NULL;
+    if (trace_cmds_cnt >= trace_cmds_max) {
+        trace_cmds_max += 16;
+        trace_cmds = (StackTracingCommand *)loc_realloc(trace_cmds, trace_cmds_max * sizeof(StackTracingCommand));
+    }
+    cmd = trace_cmds + trace_cmds_cnt++;
+    memset(cmd, 0, sizeof(*cmd));
+    cmd->cmd = json_read_long(inp);
+    switch (cmd->cmd) {
+    case SFT_CMD_NUMBER:
+        if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
+        cmd->num = json_read_int64(inp);
+        break;
+    case SFT_CMD_REGISTER:
+        if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
+        json_read_string(inp, id, sizeof(id));
+        if (id2register(id, &ctx, &frame, &cmd->reg) < 0) trace_error = errno;
+        break;
+    case SFT_CMD_DEREF:
+        if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
+        cmd->size = json_read_ulong(inp);
+        if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
+        cmd->big_endian = json_read_boolean(inp);
+        break;
+    }
+}
+
+static void read_stack_trace_register(InputStream * inp, const char * id, void * args) {
+    if (trace_regs_cnt >= trace_regs_max) {
+        trace_regs_max += 16;
+        trace_regs = (StackTracingCommandSequence **)loc_realloc(trace_regs, trace_regs_max * sizeof(StackTracingCommandSequence *));
+    }
+    trace_cmds_cnt = 0;
+    if (json_read_array(inp, read_stack_trace_command, NULL)) {
+        Context * ctx = NULL;
+        int frame = STACK_NO_FRAME;
+        StackTracingCommandSequence * reg = (StackTracingCommandSequence *)loc_alloc(
+            sizeof(StackTracingCommandSequence) + (trace_cmds_cnt - 1) * sizeof(StackTracingCommand));
+        if (id2register(id, &ctx, &frame, &reg->reg) < 0) {
+            trace_error = errno;
+            loc_free(reg);
+        }
+        else {
+            reg->cmds_cnt = trace_cmds_cnt;
+            reg->cmds_max = trace_cmds_cnt;
+            memcpy(reg->cmds, trace_cmds, trace_cmds_cnt * sizeof(StackTracingCommand));
+            trace_regs[trace_regs_cnt++] = reg;
+        }
+    }
 }
 
 static void validate_frame(Channel * c, void * args, int error) {
@@ -863,20 +951,45 @@ static void validate_frame(Channel * c, void * args, int error) {
     if (set_trap(&trap)) {
         f->pending = NULL;
         if (!error) {
+            uint64_t addr, size;
+            trace_error = 0;
             error = read_errno(&c->inp);
-
-
+            addr = json_read_uint64(&c->inp);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            size = json_read_uint64(&c->inp);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (!error && addr != 0 && size != 0) {
+                f->address = addr;
+                f->size = size;
+            }
+            trace_cmds_cnt = 0;
+            if (json_read_array(&c->inp, read_stack_trace_command, NULL)) {
+                f->fp = (StackTracingCommandSequence *)loc_alloc(sizeof(StackTracingCommandSequence) + (trace_cmds_cnt - 1) * sizeof(StackTracingCommand));
+                f->fp->reg = NULL;
+                f->fp->cmds_cnt = trace_cmds_cnt;
+                f->fp->cmds_max = trace_cmds_cnt;
+                memcpy(f->fp->cmds, trace_cmds, trace_cmds_cnt * sizeof(StackTracingCommand));
+            }
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            trace_regs_cnt = 0;
+            if (json_read_struct(&c->inp, read_stack_trace_register, NULL)) {
+                f->regs_cnt = trace_regs_cnt;
+                f->regs = (StackTracingCommandSequence **)loc_alloc(trace_regs_cnt * sizeof(StackTracingCommandSequence *));
+                memcpy(f->regs, trace_regs, trace_regs_cnt * sizeof(StackTracingCommandSequence *));
+            }
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            if (!error && trace_error) error = trace_error;
         }
         clear_trap(&trap);
     }
     else {
         error = trap.error;
     }
-    f->error = get_error_report(error);
+    if (get_error_code(error) != ERR_INV_COMMAND) f->error = get_error_report(error);
     cache_notify(&f->cache);
     if (f->disposed) free_stack_frame_cache(f);
+    if (trap.error) exception(trap.error);
 }
 
 int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
@@ -899,6 +1012,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     syms = get_symbols_cache();
     for (l = syms->link_frame[h].next; l != syms->link_frame + h; l = l->next) {
         StackFrameCache * c = syms2frame(l);
+        /* Here we assume that stack tracing info is valid for all threads in same memory space */
         if (c->mem == ctx->mem) {
             if (c->pending != NULL) {
                 cache_wait(&c->cache);
@@ -920,8 +1034,8 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
         f->mem = ctx->mem;
         f->address = ip;
         f->size = 1;
-        f->pending = protocol_send_command(c, "Symbols", "getFrameInfo", validate_frame, f);
-        json_write_string(&c->out, pid2id(ctx->mem, 0));
+        f->pending = protocol_send_command(c, SYMBOLS, "findFrameInfo", validate_frame, f);
+        json_write_string(&c->out, ctx2id(ctx));
         write_stream(&c->out, 0);
         json_write_uint64(&c->out, ip);
         write_stream(&c->out, 0);
@@ -932,7 +1046,13 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     else if (f->error != NULL) {
         exception(set_error_report_errno(f->error));
     }
-    else {
+    else if (f->fp != NULL) {
+        int i;
+        frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, f->fp);
+        for (i = 0; i < f->regs_cnt; i++) {
+            uint64_t v = evaluate_stack_trace_commands(ctx, frame, f->regs[i]);
+            if (write_reg_value(f->regs[i]->reg, down, v) < 0) exception(errno);
+        }
     }
 
     clear_trap(&trap);
@@ -979,6 +1099,15 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
                 l = l->next;
                 if (c->pid == ctx->pid && (c->pending == NULL || !keep_pending))
                     free_list_sym_cache(c);
+            }
+            if ((mode & (1 << UPDATE_ON_MEMORY_MAP_CHANGES)) != 0) {
+                l = syms->link_frame[i].next;
+                while (l != syms->link_frame + i) {
+                    StackFrameCache * c = syms2frame(l);
+                    l = l->next;
+                    if (c->mem == ctx->mem && (c->pending == NULL || !keep_pending))
+                        free_stack_frame_cache(c);
+                }
             }
         }
     }

@@ -30,14 +30,14 @@
 extern int get_top_frame(Context * ctx);
 
 /*
- * Get information about given stack frame.
- */
-extern int get_frame_info(Context * ctx, int frame, StackFrame ** info);
-
-/*
  * Return 1 if 'frame' is the top frame of the context.
  */
 extern int is_top_frame(Context * ctx, int frame);
+
+/*
+ * Get information about given stack frame.
+ */
+extern int get_frame_info(Context * ctx, int frame, StackFrame ** info);
 
 /*
  * Initialize stack trace service.

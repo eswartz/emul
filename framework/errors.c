@@ -211,7 +211,7 @@ int set_errno(int no, const char * msg) {
         int len = strlen(msg) + strlen(text0) + 4;
         char * text1 = (char *)loc_alloc(len);
         ErrorMessage * m = NULL;
-        snprintf(text1, len, "%s: %s", msg, text0);
+        snprintf(text1, len, "%s. %s", msg, text0);
         m = alloc_msg(SRC_MESSAGE);
         m->error = get_error_code(no);
         m->text = text1;

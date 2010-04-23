@@ -30,6 +30,7 @@
 #include "trace.h"
 #include "myalloc.h"
 #include "errors.h"
+#include "proxy.h"
 #include "context-proxy.h"
 
 static char * progname;
@@ -37,33 +38,38 @@ static Protocol * proto;
 static ChannelServer * serv;
 static TCFBroadcastGroup * bcg;
 
-static void channel_redirected(Channel * host, Channel * target) {
-    int i;
-    int service_ln = 0;
-    int service_mm = 0;
-    int service_pm = 0;
-    for (i = 0; i < target->peer_service_cnt; i++) {
-        protocol_get_service(host->protocol, target->peer_service_list[i]);
-        if (strcmp(target->peer_service_list[i], "LineNumbers") == 0) service_ln = 1;
-        if (strcmp(target->peer_service_list[i], "MemoryMap") == 0) service_mm = 1;
-        if (strcmp(target->peer_service_list[i], "PathMap") == 0) service_pm = 1;
-    }
-    if (!service_pm) {
-        ini_path_map_service(host->protocol);
-    }
-    if (service_mm) {
-        ini_line_numbers_service(host->protocol);
+static void channel_redirection_listener(Channel * host, Channel * target) {
+    if (target->state == ChannelStateStarted) {
         ini_line_numbers_service(target->protocol);
-        ini_symbols_service(host->protocol);
         ini_symbols_service(target->protocol);
-        create_context_proxy(host, target);
+    }
+    if (target->state == ChannelStateConnected) {
+        int i;
+        int service_ln = 0;
+        int service_mm = 0;
+        int service_pm = 0;
+        int service_sm = 0;
+        for (i = 0; i < target->peer_service_cnt; i++) {
+            char * nm = target->peer_service_list[i];
+            if (strcmp(nm, "LineNumbers") == 0) service_ln = 1;
+            if (strcmp(nm, "Symbols") == 0) service_sm = 1;
+            if (strcmp(nm, "MemoryMap") == 0) service_mm = 1;
+            if (strcmp(nm, "PathMap") == 0) service_pm = 1;
+        }
+        if (!service_pm) {
+            ini_path_map_service(host->protocol);
+        }
+        if (service_mm) {
+            if (!service_ln) ini_line_numbers_service(host->protocol);
+            if (!service_sm) ini_symbols_service(host->protocol);
+            create_context_proxy(host, target);
+        }
     }
 }
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
     c->protocol = proto;
-    c->redirected = channel_redirected;
     channel_set_broadcast_group(c, bcg);
     channel_start(c);
 }
@@ -162,6 +168,7 @@ int main(int argc, char ** argv) {
         exit(1);
     }
     serv->new_conn = channel_new_connection;
+    add_channel_redirection_listener(channel_redirection_listener);
 
     discovery_start();
 

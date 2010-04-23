@@ -578,29 +578,67 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return res;
 }
 
+int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info) {
+    ELF_File * file = elf_list_first(ctx, (ContextAddress)addr, (ContextAddress)(addr + 1));
+    int error = 0;
+
+    *info = NULL;
+
+    while (error == 0 && file != NULL) {
+        Trap trap;
+        if (set_trap(&trap)) {
+            get_dwarf_stack_frame_info(ctx, file, addr);
+            if (dwarf_stack_trace_fp->cmds_cnt > 0) {
+                static StackTracingInfo buf;
+                buf.addr = (ContextAddress)dwarf_stack_trace_addr;
+                buf.size = (ContextAddress)dwarf_stack_trace_size;
+                buf.fp = dwarf_stack_trace_fp;
+                buf.regs = dwarf_stack_trace_regs;
+                buf.reg_cnt = dwarf_stack_trace_regs_cnt;
+                *info = &buf;
+            }
+            clear_trap(&trap);
+        }
+        else {
+            error = trap.error;
+        }
+        if (error || *info != NULL) break;
+        file = elf_list_next(ctx);
+        if (file == NULL) error = errno;
+    }
+    elf_list_done(ctx);
+    if (error) {
+        errno = error;
+        return -1;
+    }
+    return 0;
+}
+
 int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     int error = 0;
     uint64_t ip = 0;
+    StackTracingInfo * info = NULL;
 
     if (read_reg_value(get_PC_definition(ctx), frame, &ip) < 0) {
         if (frame->is_top_frame) error = errno;
     }
-    else {
-        ELF_File * file = elf_list_first(ctx, (ContextAddress)ip, (ContextAddress)(ip + 1));
-        while (error == 0 && file != NULL) {
-            Trap trap;
-            if (set_trap(&trap)) {
-                get_dwarf_stack_frame_info(ctx, file, frame, down);
-                clear_trap(&trap);
+    else if (get_stack_tracing_info(ctx, ip, &info) < 0) {
+        error = errno;
+    }
+    else if (info != NULL) {
+        Trap trap;
+        if (set_trap(&trap)) {
+            int i;
+            frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, dwarf_stack_trace_fp);
+            for (i = 0; i < dwarf_stack_trace_regs_cnt; i++) {
+                uint64_t v = evaluate_stack_trace_commands(ctx, frame, dwarf_stack_trace_regs[i]);
+                if (write_reg_value(dwarf_stack_trace_regs[i]->reg, down, v) < 0) exception(errno);
             }
-            else {
-                error = trap.error;
-            }
-            if (error || frame->fp != 0) break;
-            file = elf_list_next(ctx);
-            if (file == NULL) error = errno;
+            clear_trap(&trap);
         }
-        elf_list_done(ctx);
+        else {
+            error = trap.error;
+        }
     }
     if (error) {
         errno = error;

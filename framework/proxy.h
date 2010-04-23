@@ -22,6 +22,15 @@
 
 #include "channel.h"
 
+/*
+ * Register channel redirection callback.
+ * When a channel is redirected, the callback is called two times:
+ * 1. before sending Hello message to target channel.
+ * 2. after receiving Hello message from target channel, but before sending Hello to host.
+ */
+typedef void (*ChannelRedirectionListener)(Channel * /* host */, Channel * /* target */);
+extern void add_channel_redirection_listener(ChannelRedirectionListener listener);
+
 extern void proxy_create(Channel * c1, Channel * c2);
 
 #endif /* D_proxy */

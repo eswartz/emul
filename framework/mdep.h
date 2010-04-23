@@ -300,6 +300,7 @@ extern char * canonicalize_file_name(const char * path);
 
 #if _WRS_VXWORKS_MAJOR < 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR < 8
 typedef unsigned long uintptr_t;
+#define send(s, buf, len, flags) (send)(s, (char *)(buf), len, flags)
 #endif
 
 typedef unsigned long useconds_t;

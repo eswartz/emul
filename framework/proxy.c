@@ -34,7 +34,11 @@ typedef struct Proxy {
     int instance;
 } Proxy;
 
+static ChannelRedirectionListener redirection_listeners[16];
+static int redirection_listeners_cnt = 0;
+
 static void proxy_connecting(Channel * c) {
+    int i;
     Proxy * target = (Proxy *)c->client_data;
     Proxy * host = target + target->other;
 
@@ -43,13 +47,18 @@ static void proxy_connecting(Channel * c) {
     assert(c->state == ChannelStateStarted);
     assert(host->c->state == ChannelStateHelloReceived);
 
-    trace(LOG_PROXY, "Proxy waiting Hello from target");
+    for (i = 0; i < redirection_listeners_cnt; i++) {
+        redirection_listeners[i](host->c, target->c);
+    }
 
     target->c->disable_zero_copy = !host->c->out.supports_zero_copy;
     send_hello_message(target->c);
+
+    trace(LOG_PROXY, "Proxy waiting Hello from target");
 }
 
 static void proxy_connected(Channel * c) {
+    int i;
     Proxy * target = (Proxy *)c->client_data;
     Proxy * host = target + target->other;
 
@@ -63,16 +72,16 @@ static void proxy_connected(Channel * c) {
 
     host->c->disable_zero_copy = !target->c->out.supports_zero_copy;
 
-    if (host->c->redirected) {
-        host->c->redirected(host->c, target->c);
+    trace(LOG_PROXY, "Proxy connected, target services:");
+    for (i = 0; i < target->c->peer_service_cnt; i++) {
+        char * nm = target->c->peer_service_list[i];
+        trace(LOG_PROXY, "    %s", nm);
+        if (strcmp(nm, "ZeroCopy") == 0) continue;
+        protocol_get_service(host->proto, nm);
     }
-    else {
-        int i;
-        trace(LOG_PROXY, "Proxy connected, target services:");
-        for (i = 0; i < target->c->peer_service_cnt; i++) {
-            trace(LOG_PROXY, "    %s", target->c->peer_service_list[i]);
-            protocol_get_service(host->proto, target->c->peer_service_list[i]);
-        }
+
+    for (i = 0; i < redirection_listeners_cnt; i++) {
+        redirection_listeners[i](host->c, target->c);
     }
 
     send_hello_message(host->c);
@@ -131,11 +140,11 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
     assert(c == proxy->c);
     assert(argc > 0 && strlen(argv[0]) == 1);
     if (proxy[proxy->other].c->state == ChannelStateDisconnected) return;
+
     if (argv[0][0] == 'C') {
         write_stringz(out, argv[0]);
-        /* Prefix token with 'R'emote to distinguish from locally
-         * generated commands */
-        write_string(out, "R");
+        /* Prefix token with 'R'emote to distinguish from locally generated commands */
+        write_stream(out, 'R');
         i = 1;
     }
     else if (argv[0][0] == 'R' || argv[0][0] == 'P' || argv[0][0] == 'N') {
@@ -145,10 +154,8 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
         }
         argv[1]++;
     }
-    while (i < argc) {
-        write_stringz(out, argv[i]);
-        i++;
-    }
+
+    while (i < argc) write_stringz(out, argv[i++]);
 
     if (log_mode & LOG_TCFLOG) {
         logstr(&p, (char *)(proxy->other > 0 ? "---> " : "<--- "));
@@ -226,8 +233,10 @@ void proxy_create(Channel * c1, Channel * c2) {
 
     trace(LOG_PROXY, "Proxy created, host services:");
     for (i = 0; i < c1->peer_service_cnt; i++) {
-        trace(LOG_PROXY, "    %s", c1->peer_service_list[i]);
-        protocol_get_service(proxy[1].proto, c1->peer_service_list[i]);
+        char * nm = c1->peer_service_list[i];
+        trace(LOG_PROXY, "    %s", nm);
+        if (strcmp(nm, "ZeroCopy") == 0) continue;
+        protocol_get_service(proxy[1].proto, nm);
     }
     c1->state = ChannelStateHelloReceived;
     notify_channel_closed(c1);
@@ -252,4 +261,10 @@ void proxy_create(Channel * c1, Channel * c2) {
     channel_set_broadcast_group(c1, bcg);
     channel_set_broadcast_group(c2, bcg);
     channel_start(c2);
- }
+}
+
+void add_channel_redirection_listener(ChannelRedirectionListener listener) {
+    assert(redirection_listeners_cnt < (int)(sizeof(redirection_listeners) / sizeof(ChannelRedirectionListener)));
+    redirection_listeners[redirection_listeners_cnt++] = listener;
+}
+

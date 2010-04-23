@@ -62,6 +62,18 @@ static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {
     return read_reg_value(def, frame, Data);
 }
 
+static U8_T read_memory(PropertyValue * Value, U8_T Addr, size_t Size) {
+    size_t i;
+    U8_T n = 0;
+    U1_T buf[8];
+
+    if (context_read_mem(Value->mContext, Addr, buf, Size) < 0) exception(errno);
+    for (i = 0; i < Size; i++) {
+        n = (n << 8) | buf[Value->mBigEndian ? i : Size - i - 1];
+    }
+    return n;
+}
+
 static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Section * Section, U1_T * Buf, size_t Size) {
     U8_T StartPos = Buf - (U1_T *)Section->data;
     CompUnit * Unit = Value->mObject->mCompUnit;
@@ -89,35 +101,17 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_deref:
             check_e_stack(1);
             {
-                U1_T Tmp[8];
                 U8_T Addr = sExprStack[sExprStackLen - 1];
                 size_t Size = Unit->mDesc.mAddressSize;
-                if (context_read_mem(Value->mContext, (ContextAddress)Addr, Tmp, Size) < 0) exception(errno);
-                switch (Size)  {
-                case 1: Data = *Tmp; break;
-                case 2: Data = *(U2_T *)Tmp; break;
-                case 4: Data = *(U4_T *)Tmp; break;
-                case 8: Data = *(U8_T *)Tmp; break;
-                default: assert(0);
-                }
-                sExprStack[sExprStackLen - 1] = Data;
+                sExprStack[sExprStackLen - 1] = read_memory(Value, Addr, Size);
             }
             break;
         case OP_deref_size:
             check_e_stack(1);
             {
-                U1_T Tmp[8];
                 U8_T Addr = sExprStack[sExprStackLen - 1];
                 U1_T Size = dio_ReadU1();
-                if (context_read_mem(Value->mContext, (ContextAddress)Addr, Tmp, Size) < 0) exception(errno);
-                switch (Size)  {
-                case 1: Data = *Tmp; break;
-                case 2: Data = *(U2_T *)Tmp; break;
-                case 4: Data = *(U4_T *)Tmp; break;
-                case 8: Data = *(U8_T *)Tmp; break;
-                default: assert(0);
-                }
-                sExprStack[sExprStackLen - 1] = Data;
+                sExprStack[sExprStackLen - 1] = read_memory(Value, Addr, Size);
             }
             break;
         case OP_const1u:
@@ -188,36 +182,18 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_xderef:
             check_e_stack(2);
             {
-                U1_T Tmp[8];
                 U8_T Addr = sExprStack[sExprStackLen - 1];
                 size_t Size = Unit->mDesc.mAddressSize;
-                if (context_read_mem(Value->mContext, (ContextAddress)Addr, Tmp, Size) < 0) exception(errno);
-                switch (Size)  {
-                case 1: Data = *Tmp; break;
-                case 2: Data = *(U2_T *)Tmp; break;
-                case 4: Data = *(U4_T *)Tmp; break;
-                case 8: Data = *(U8_T *)Tmp; break;
-                default: assert(0);
-                }
-                sExprStack[sExprStackLen - 2] = Data;
+                sExprStack[sExprStackLen - 2] = read_memory(Value, Addr, Size);
                 sExprStackLen--;
             }
             break;
         case OP_xderef_size:
             check_e_stack(2);
             {
-                U1_T Tmp[8];
                 U8_T Addr = sExprStack[sExprStackLen - 1];
                 U1_T Size = dio_ReadU1();
-                if (context_read_mem(Value->mContext, (ContextAddress)Addr, Tmp, Size) < 0) exception(errno);
-                switch (Size)  {
-                case 1: Data = *Tmp; break;
-                case 2: Data = *(U2_T *)Tmp; break;
-                case 4: Data = *(U4_T *)Tmp; break;
-                case 8: Data = *(U8_T *)Tmp; break;
-                default: assert(0);
-                }
-                sExprStack[sExprStackLen - 2] = Data;
+                sExprStack[sExprStackLen - 2] = read_memory(Value, Addr, Size);
                 sExprStackLen--;
             }
             break;

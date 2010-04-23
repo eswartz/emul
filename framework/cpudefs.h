@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 /*
- * This module contains definitions of target CPU registers.
+ * This module contains definitions of target CPU registers and stack frames.
  */
 
 #ifndef D_cpudefs
@@ -47,6 +47,39 @@ struct RegisterDefinition {
     int          eh_frame_id;    /* ID of the register in .eh_frame section */
     int          traceable;      /* register value can be traced using .eh_frame of .debug_frame */
 };
+
+/* Stack tracing command codes */
+#define SFT_CMD_NUMBER          1
+#define SFT_CMD_REGISTER        2
+#define SFT_CMD_FP              3
+#define SFT_CMD_DEREF           4
+#define SFT_CMD_ADD             5
+
+/* Stack tracing command */
+typedef struct StackTracingCommand {
+    int cmd;
+    int64_t num;
+    size_t size;
+    int big_endian;
+    RegisterDefinition * reg;
+} StackTracingCommand;
+
+/* Stack tracing command sequence */
+typedef struct StackTracingCommandSequence {
+    RegisterDefinition * reg;
+    int cmds_cnt;
+    int cmds_max;
+    StackTracingCommand cmds[1];
+} StackTracingCommandSequence;
+
+/* Complete stack tracing info for a range of instruction addresses */
+typedef struct StackTracingInfo {
+    ContextAddress addr;
+    ContextAddress size;
+    StackTracingCommandSequence * fp;
+    StackTracingCommandSequence ** regs;
+    int reg_cnt;
+} StackTracingInfo;
 
 #define STACK_BOTTOM_FRAME  0
 #define STACK_NO_FRAME      (-1)
@@ -87,13 +120,13 @@ extern void set_regs_PC(RegisterData * x, ContextAddress y);
 extern char * frame2id(Context * ctx, int frame);
 
 /* Get stack frame for TCF ID */
-extern int id2frame(char * id, Context ** ctx, int * frame);
+extern int id2frame(const char * id, Context ** ctx, int * frame);
 
 /* Get TCF ID of a register */
 extern char * register2id(Context * ctx, int frame, RegisterDefinition * reg);
 
 /* Get register for TCF ID */
-extern int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def);
+extern int id2register(const char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def);
 
 #if !defined(_WRS_KERNEL)
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
@@ -113,6 +146,11 @@ extern size_t get_break_size(void);
  * and calculate register values in the next frame.
  */
 extern int crawl_stack_frame(struct Context * ctx, StackFrame * frame, StackFrame * down);
+
+/*
+ * Execute stack tracing command sequence.
+ */
+extern uint64_t evaluate_stack_trace_commands(Context * ctx, StackFrame * frame, StackTracingCommandSequence * cmds);
 
 #endif /* ENABLE_DebugContext */
 

@@ -100,6 +100,19 @@ static int regs_stack_pos = 0;
 
 static StackFrameRules rules;
 
+U8_T dwarf_stack_trace_addr = 0;
+U8_T dwarf_stack_trace_size = 0;
+
+StackTracingCommandSequence * dwarf_stack_trace_fp = NULL;
+
+int dwarf_stack_trace_regs_cnt = 0;
+StackTracingCommandSequence ** dwarf_stack_trace_regs = NULL;
+
+static int trace_regs_max = 0;
+static int trace_cmds_max = 0;
+static int trace_cmds_cnt = 0;
+static StackTracingCommand * trace_cmds = NULL;
+
 static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
     RegisterDefinition * reg_def;
     while (reg >= regs->regs_max) {
@@ -347,83 +360,102 @@ static void exec_stack_frame_instruction(void) {
     }
 }
 
-static void fill_frame_register(RegisterRules * reg, RegisterDefinition * reg_def, StackFrame * frame, StackFrame * down) {
+static StackTracingCommand * add_command(int op) {
+    StackTracingCommand * cmd = NULL;
+    if (trace_cmds_cnt >= trace_cmds_max) {
+        trace_cmds_max += 16;
+        trace_cmds = (StackTracingCommand *)loc_realloc(trace_cmds, trace_cmds_max * sizeof(StackTracingCommand));
+    }
+    cmd = trace_cmds + trace_cmds_cnt++;
+    memset(cmd, 0, sizeof(*cmd));
+    cmd->cmd = op;
+    return cmd;
+}
+
+static void add_command_sequence(StackTracingCommandSequence ** ptr, RegisterDefinition * reg) {
+    StackTracingCommandSequence * seq = *ptr;
+    if (seq == NULL || seq->cmds_max < trace_cmds_cnt) {
+        *ptr = seq = (StackTracingCommandSequence *)loc_realloc(seq, sizeof(StackTracingCommandSequence) + (trace_cmds_cnt - 1) * sizeof(StackTracingCommand));
+        seq->cmds_max = trace_cmds_cnt;
+    }
+    seq->reg = reg;
+    seq->cmds_cnt = trace_cmds_cnt;
+    memcpy(seq->cmds, trace_cmds, trace_cmds_cnt * sizeof(StackTracingCommand));
+}
+
+static void generate_register_commands(RegisterRules * reg, RegisterDefinition * reg_def) {
+    if (reg_def == NULL) return;
+    trace_cmds_cnt = 0;
     switch (reg->rule) {
+    case RULE_VAL_OFFSET:
     case RULE_OFFSET:
-        if (frame->fp != 0 && reg_def != NULL) {
-            size_t size = reg_def->size;
-            if (size <= 8) {
-                U1_T v[8];
-                if (context_read_mem(rules.ctx, frame->fp + reg->offset, v, size) < 0) exception(errno);
-                switch (size) {
-                case 1: write_reg_value(reg_def, down, *(U1_T *)v); break;
-                case 2: write_reg_value(reg_def, down, *(U2_T *)v); break;
-                case 4: write_reg_value(reg_def, down, *(U4_T *)v); break;
-                case 8: write_reg_value(reg_def, down, *(U8_T *)v); break;
-                }
-            }
+        add_command(SFT_CMD_FP);
+        if (reg->offset != 0) {
+            add_command(SFT_CMD_NUMBER)->num = reg->offset;
+            add_command(SFT_CMD_ADD);
+        }
+        if (reg->rule == RULE_OFFSET) {
+            StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
+            cmd->size = reg_def->size;
+            cmd->big_endian = rules.section->file->big_endian;
         }
         break;
     case RULE_SAME_VALUE:
-        if (reg_def != NULL) {
-            U8_T v = 0;
-            if (read_reg_value(reg_def, frame, &v) >= 0) {
-                write_reg_value(reg_def, down, v);
-            }
-        }
+        add_command(SFT_CMD_REGISTER)->reg = reg_def;
         break;
     case RULE_REGISTER:
-        if (reg_def != NULL) {
+        {
             RegisterDefinition * src_sef = get_reg_by_id(rules.ctx, reg->offset, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
-            if (src_sef != NULL) {
-                U8_T v = 0;
-                if (read_reg_value(src_sef, frame, &v) >= 0) {
-                    write_reg_value(reg_def, down, v);
-                }
-            }
+            if (src_sef != NULL) add_command(SFT_CMD_REGISTER)->reg = src_sef;
         }
         break;
-    case RULE_VAL_OFFSET:
-        if (frame->fp != 0 && reg_def != NULL) {
-            U8_T v = frame->fp + reg->offset;
-            write_reg_value(reg_def, down, v);
-        }
-        break;
-    case RULE_EXPRESSION:
-    case RULE_VAL_EXPRESSION:
-        /* TODO: RULE_EXPRESSION */
+    default:
+        /* TODO: RULE_EXPRESSION, RULE_VAL_EXPRESSION */
+        str_exception(ERR_UNSUPPORTED, "Not implemented yet: expression in .debug_frame");
         break;
     }
+    if (dwarf_stack_trace_regs_cnt >= trace_regs_max) {
+        int i;
+        trace_regs_max += 16;
+        dwarf_stack_trace_regs = (StackTracingCommandSequence **)loc_realloc(dwarf_stack_trace_regs, trace_regs_max * sizeof(StackTracingCommandSequence *));
+        for (i = dwarf_stack_trace_regs_cnt; i < trace_regs_max; i++) dwarf_stack_trace_regs[i] = NULL;
+    }
+    if (trace_cmds_cnt == 0) return;
+    add_command_sequence(dwarf_stack_trace_regs + dwarf_stack_trace_regs_cnt++, reg_def);
 }
 
-static int fill_stack_frame(StackFrame * frame, StackFrame * down) {
+static void generate_commands(void) {
     int i;
-    U8_T v = 0;
     RegisterRules * reg;
     RegisterDefinition * reg_def;
 
-    switch (rules.cfa_rule) {
-    case RULE_OFFSET:
-        reg_def = get_reg_by_id(rules.ctx, rules.cfa_register, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
-        if (reg_def != NULL) {
-            if (read_reg_value(reg_def, frame, &v) >= 0) {
-                frame->fp = (ContextAddress)(v + rules.cfa_offset);
-            }
-        }
-        break;
-        /* TODO: RULE_EXPRESSION */
-    }
-
     reg = get_reg(&frame_regs, rules.return_address_register);
-    if (reg->rule != 0) fill_frame_register(reg, get_PC_definition(rules.ctx), frame, down);
+    if (reg->rule != 0) generate_register_commands(reg, get_PC_definition(rules.ctx));
     for (i = 0; i < frame_regs.regs_cnt; i++) {
         if (i == rules.return_address_register) continue;
         reg = get_reg(&frame_regs, i);
         if (reg->rule == 0) continue;
         reg_def = get_reg_by_id(rules.ctx, i, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
-        fill_frame_register(reg, reg_def, frame, down);
+        generate_register_commands(reg, reg_def);
     }
-    return 0;
+
+    trace_cmds_cnt = 0;
+    switch (rules.cfa_rule) {
+    case RULE_OFFSET:
+        reg_def = get_reg_by_id(rules.ctx, rules.cfa_register, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        if (reg_def != NULL) {
+            add_command(SFT_CMD_REGISTER)->reg = reg_def;
+            if (rules.cfa_offset != 0) {
+                add_command(SFT_CMD_NUMBER)->num = rules.cfa_offset;
+                add_command(SFT_CMD_ADD);
+            }
+        }
+        break;
+    default:
+        /* TODO: RULE_EXPRESSION */
+        str_exception(ERR_UNSUPPORTED, "Not implemented yet: expression in .debug_frame");
+    }
+    add_command_sequence(&dwarf_stack_trace_fp, NULL);
 }
 
 static void read_frame_cie(U8_T pos) {
@@ -485,15 +517,23 @@ static void read_frame_cie(U8_T pos) {
     dio_Skip(saved_pos - dio_GetPos());
 }
 
-void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, StackFrame * frame, StackFrame * down) {
+void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
     /* TODO: use .eh_frame_hdr section for faster frame data search */
-    U8_T IP = 0;
     DWARFCache * cache = get_dwarf_cache(file);
     ELF_Section * section = cache->mDebugFrame;
+
+    dwarf_stack_trace_regs_cnt = 0;
+    if (dwarf_stack_trace_fp == NULL) {
+        dwarf_stack_trace_fp = (StackTracingCommandSequence *)loc_alloc_zero(sizeof(StackTracingCommandSequence));
+        dwarf_stack_trace_fp->cmds_max = 1;
+    }
+    dwarf_stack_trace_fp->cmds_cnt = 0;
+    dwarf_stack_trace_addr = 0;
+    dwarf_stack_trace_size = 0;
+
     if (section == NULL) section = cache->mEHFrame;
     if (section == NULL) return;
 
-    if (read_reg_value(get_PC_definition(rules.ctx), frame, &IP) < 0) exception(errno);
     memset(&rules, 0, sizeof(StackFrameRules));
     rules.ctx = ctx;
     rules.section = section;
@@ -529,6 +569,7 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, StackFrame * fra
             Range = read_frame_data_pointer(rules.addr_encoding, NULL);
             AddrRT = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)Addr);
             if (AddrRT != 0 && AddrRT <= IP && AddrRT + Range > IP) {
+                U8_T location0 = Addr;
                 if (rules.cie_aug != NULL && rules.cie_aug[0] == 'z') {
                     rules.fde_aug_length = dio_ReadULEB128();
                     rules.fde_aug_data = dio_GetDataPtr();
@@ -537,11 +578,19 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, StackFrame * fra
                 copy_register_rules(&frame_regs, &cie_regs);
                 rules.location = Addr;
                 regs_stack_pos = 0;
-                while (dio_GetPos() < fde_end) {
+                for (;;) {
+                    if (dio_GetPos() >= fde_end) {
+                        rules.location = Addr + Range;
+                        break;
+                    }
                     exec_stack_frame_instruction();
+                    assert(location0 - Addr + AddrRT <= IP);
                     if (rules.location - Addr + AddrRT > IP) break;
+                    location0 = rules.location;
                 }
-                fill_stack_frame(frame, down);
+                dwarf_stack_trace_addr = location0 - Addr + AddrRT;
+                dwarf_stack_trace_size = rules.location - location0;
+                generate_commands();
                 break;
             }
         }

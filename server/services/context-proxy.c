@@ -82,6 +82,9 @@ struct ContextCache {
     int pc_valid;
     uint64_t suspend_pc;
     char suspend_reason[256];
+    long signal;
+    char * signal_name;
+    char ** bp_ids;
 
     /* Memory */
     LINK mem_cache;
@@ -234,6 +237,8 @@ static void free_context_cache(ContextCache * c) {
     loc_free(c->reg_ids);
     loc_free(c->reg_ids_str);
     loc_free(c->reg_defs);
+    loc_free(c->signal_name);
+    loc_free(c->bp_ids);
     if (c->reg_props != NULL) {
         unsigned i;
         for (i = 0; i < c->reg_cnt; i++) {
@@ -296,13 +301,26 @@ static void read_run_control_context_property(InputStream * inp, const char * na
 
 static void read_context_suspended_data(InputStream * inp, const char * name, void * args) {
     ContextCache * ctx = (ContextCache *)args;
-    /* TODO: read context susped data: Signal SignalName BPs */
-    json_skip_object(inp);
+    if (strcmp(name, "Signal") == 0) ctx->signal = json_read_long(inp);
+    else if (strcmp(name, "SignalName") == 0) ctx->signal_name = json_read_alloc_string(inp);
+    else if (strcmp(name, "BPs") == 0) ctx->bp_ids = json_read_alloc_string_array(inp, NULL);
+    else json_skip_object(inp);
+}
+
+static void clear_context_suspended_data(ContextCache * ctx) {
+    loc_free(ctx->signal_name);
+    loc_free(ctx->bp_ids);
+    ctx->pc_valid = 0;
+    ctx->suspend_pc = 0;
+    ctx->suspend_reason[0] = 0;
+    ctx->signal = 0;
+    ctx->signal_name = NULL;
+    ctx->bp_ids = NULL;
 }
 
 static void read_context_added_item(InputStream * inp, void * args) {
     PeerCache * p = (PeerCache *)args;
-    ContextCache * c = loc_alloc_zero(sizeof(ContextCache));
+    ContextCache * c = (ContextCache *)loc_alloc_zero(sizeof(ContextCache));
 
     json_read_struct(inp, read_run_control_context_property, c);
 
@@ -391,7 +409,7 @@ static void read_container_resumed_item(InputStream * inp, void * args) {
         if (c->ctx->stopped) {
             c->ctx->stopped = 0;
             c->ctx->intercepted = 0;
-            c->pc_valid = 0;
+            clear_context_suspended_data(c);
             send_context_started_event(c->ctx);
         }
     }
@@ -432,30 +450,30 @@ static void event_context_removed(Channel * c, void * args) {
 
 static void event_context_suspended(Channel * ch, void * args) {
     PeerCache * p = (PeerCache *)args;
-    ContextCache * c = NULL;
     ContextCache buf;
+    ContextCache * c = &buf;
 
     assert(p->target == ch);
     memset(&buf, 0, sizeof(buf));
     write_stringz(&p->host->out, "E");
     write_stringz(&p->host->out, RUN_CONTROL);
     write_stringz(&p->host->out, "contextSuspended");
-    json_read_string(p->fwd_inp, buf.id, sizeof(buf.id));
+    json_read_string(p->fwd_inp, c->id, sizeof(c->id));
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    buf.suspend_pc = json_read_uint64(p->fwd_inp);
+    c = find_context_cache(p, c->id);
+    if (c == NULL) c = &buf;
+    else clear_context_suspended_data(c);
+    c->suspend_pc = json_read_uint64(p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(p->fwd_inp, buf.suspend_reason, sizeof(buf.suspend_reason));
+    json_read_string(p->fwd_inp, c->suspend_reason, sizeof(c->suspend_reason));
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_struct(p->fwd_inp, read_context_suspended_data, &buf);
+    json_read_struct(p->fwd_inp, read_context_suspended_data, c);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    c = find_context_cache(p, buf.id);
-    if (c != NULL) {
+    if (c != &buf) {
         assert(c->ctx->proxy == c);
         c->pc_valid = 1;
-        c->suspend_pc = buf.suspend_pc;
-        strcpy(c->suspend_reason, buf.suspend_reason);
         if (!c->ctx->stopped) {
             c->ctx->stopped = 1;
             c->ctx->intercepted = 1;
@@ -464,7 +482,7 @@ static void event_context_suspended(Channel * ch, void * args) {
         }
     }
     else if (p->rc_done) {
-        trace(LOG_ALWAYS, "Invalid ID in 'context suspended' event: %s", buf.id);
+        trace(LOG_ALWAYS, "Invalid ID in 'context suspended' event: %s", c->id);
     }
 }
 
@@ -487,7 +505,7 @@ static void event_context_resumed(Channel * ch, void * args) {
         if (c->ctx->stopped) {
             c->ctx->stopped = 0;
             c->ctx->intercepted = 0;
-            c->pc_valid = 0;
+            clear_context_suspended_data(c);
             send_context_started_event(c->ctx);
         }
     }
@@ -535,7 +553,7 @@ void create_context_proxy(Channel * host, Channel * target) {
         p = peers2peer(l);
         if (p->target == target) return;
     }
-    p = loc_alloc_zero(sizeof(PeerCache));
+    p = (PeerCache *)loc_alloc_zero(sizeof(PeerCache));
     p->host = host;
     p->target = target;
     p->fwd_inp = create_forwarding_input_stream(&p->fwd, &target->inp, &host->out);
@@ -559,7 +577,7 @@ void context_lock(Context * ctx) {
 void context_unlock(Context * ctx) {
     assert(ctx->ref_count > 0);
     if (--ctx->ref_count == 0) {
-        ContextCache * c = ctx->proxy;
+        ContextCache * c = (ContextCache *)ctx->proxy;
         assert(list_is_empty(&ctx->children));
         assert(ctx->parent == NULL);
         loc_free(ctx);
@@ -578,7 +596,7 @@ static void read_rc_children_item(InputStream * inp, void * args) {
     json_read_string(inp, id, sizeof(id));
 
     if (find_context_cache(p, id) == NULL) {
-        ContextCache * c = loc_alloc_zero(sizeof(ContextCache));
+        ContextCache * c = (ContextCache *)loc_alloc_zero(sizeof(ContextCache));
         strcpy(c->id, id);
         c->peer = p;
         protocol_send_command(p->target, "RunControl", "getContext", validate_peer_cache_context, c);
@@ -606,106 +624,131 @@ static void set_rc_error(PeerCache * p, int error) {
 
 static void validate_peer_cache_children(Channel * c, void * args, int error) {
     PeerCache * p = (PeerCache *)args;
+    Trap trap;
 
     assert(p->target == c);
     assert(p->rc_pending_cnt > 0);
-    p->rc_pending_cnt--;
-    if (error) {
-        set_rc_error(p, error);
+    if (set_trap(&trap)) {
+        p->rc_pending_cnt--;
+        if (!error) {
+            error = read_errno(&c->inp);
+            json_read_array(&c->inp, read_rc_children_item, p);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            flush_stream(&p->target->out);
+        }
+        clear_trap(&trap);
     }
     else {
-        set_rc_error(p, read_errno(&c->inp));
-        json_read_array(&c->inp, read_rc_children_item, p);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-        flush_stream(&p->target->out);
+        error = trap.error;
     }
+    set_rc_error(p, error);
     set_rc_done(p);
+    if (trap.error) exception(trap.error);
 }
 
 static void validate_peer_cache_context(Channel * c, void * args, int error) {
-    ContextCache * x = args;
+    ContextCache * x = (ContextCache *)args;
     PeerCache * p = x->peer;
+    Trap trap;
 
     assert(p->target == c);
     assert(p->rc_pending_cnt > 0);
-    p->rc_pending_cnt--;
-    if (error) {
-        set_rc_error(p, error);
-        free_context_cache(x);
-    }
-    else {
-        set_rc_error(p, error = read_errno(&c->inp));
-        json_read_struct(&c->inp, read_run_control_context_property, x);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-        if (error || find_context_cache(p, x->id) != NULL) {
+    if (set_trap(&trap)) {
+        p->rc_pending_cnt--;
+        if (error) {
+            set_rc_error(p, error);
             free_context_cache(x);
         }
-        else if (x->has_state) {
-            protocol_send_command(p->target, "RunControl", "getState", validate_peer_cache_state, x);
-            json_write_string(&p->target->out, x->id);
-            write_stream(&p->target->out, 0);
-            write_stream(&p->target->out, MARKER_EOM);
-            flush_stream(&p->target->out);
-            p->rc_pending_cnt++;
-        }
         else {
-            add_context_cache(p, x);
-            protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
-            json_write_string(&p->target->out, x->id);
-            write_stream(&p->target->out, 0);
-            write_stream(&p->target->out, MARKER_EOM);
-            flush_stream(&p->target->out);
-            p->rc_pending_cnt++;
+            set_rc_error(p, error = read_errno(&c->inp));
+            json_read_struct(&c->inp, read_run_control_context_property, x);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            if (error || find_context_cache(p, x->id) != NULL) {
+                free_context_cache(x);
+            }
+            else if (x->has_state) {
+                protocol_send_command(p->target, "RunControl", "getState", validate_peer_cache_state, x);
+                json_write_string(&p->target->out, x->id);
+                write_stream(&p->target->out, 0);
+                write_stream(&p->target->out, MARKER_EOM);
+                flush_stream(&p->target->out);
+                p->rc_pending_cnt++;
+            }
+            else {
+                add_context_cache(p, x);
+                protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
+                json_write_string(&p->target->out, x->id);
+                write_stream(&p->target->out, 0);
+                write_stream(&p->target->out, MARKER_EOM);
+                flush_stream(&p->target->out);
+                p->rc_pending_cnt++;
+            }
         }
+        clear_trap(&trap);
+    }
+    else {
+        set_rc_error(p, trap.error);
+        free_context_cache(x);
     }
     set_rc_done(p);
+    if (trap.error) exception(trap.error);
 }
 
 static void validate_peer_cache_state(Channel * c, void * args, int error) {
-    ContextCache * x = args;
+    ContextCache * x = (ContextCache *)args;
     PeerCache * p = x->peer;
+    Trap trap;
 
     assert(p->target == c);
     assert(p->rc_error == NULL);
     assert(p->rc_pending_cnt > 0);
-    p->rc_pending_cnt--;
-    if (error) {
-        set_rc_error(p, error);
-        free_context_cache(x);
-    }
-    else {
-        set_rc_error(p, error = read_errno(&c->inp));
-        x->pc_valid = json_read_boolean(&c->inp);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        x->suspend_pc = json_read_uint64(&c->inp);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        json_read_string(&c->inp, x->suspend_reason, sizeof(x->suspend_reason));
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        json_read_struct(&c->inp, read_context_suspended_data, x);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-
-        if (error || find_context_cache(p, x->id) != NULL) {
+    if (set_trap(&trap)) {
+        p->rc_pending_cnt--;
+        if (error) {
+            set_rc_error(p, error);
             free_context_cache(x);
         }
         else {
-            add_context_cache(p, x);
-            x->ctx->stopped = x->ctx->intercepted = x->pc_valid;
-            if (x->pc_valid) {
-                on_context_suspended(x);
-                send_context_stopped_event(x->ctx);
+            set_rc_error(p, error = read_errno(&c->inp));
+            clear_context_suspended_data(x);
+            x->pc_valid = json_read_boolean(&c->inp);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            x->suspend_pc = json_read_uint64(&c->inp);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            json_read_string(&c->inp, x->suspend_reason, sizeof(x->suspend_reason));
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            json_read_struct(&c->inp, read_context_suspended_data, x);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+            if (error || find_context_cache(p, x->id) != NULL) {
+                free_context_cache(x);
             }
-            protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
-            json_write_string(&p->target->out, x->id);
-            write_stream(&p->target->out, 0);
-            write_stream(&p->target->out, MARKER_EOM);
-            flush_stream(&p->target->out);
-            p->rc_pending_cnt++;
+            else {
+                add_context_cache(p, x);
+                x->ctx->stopped = x->ctx->intercepted = x->pc_valid;
+                if (x->pc_valid) {
+                    on_context_suspended(x);
+                    send_context_stopped_event(x->ctx);
+                }
+                protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
+                json_write_string(&p->target->out, x->id);
+                write_stream(&p->target->out, 0);
+                write_stream(&p->target->out, MARKER_EOM);
+                flush_stream(&p->target->out);
+                p->rc_pending_cnt++;
+            }
         }
+        clear_trap(&trap);
+    }
+    else {
+        set_rc_error(p, trap.error);
+        free_context_cache(x);
     }
     set_rc_done(p);
+    if (trap.error) exception(trap.error);
 }
 
 Context * id2ctx(const char * id) {
@@ -745,28 +788,38 @@ int context_has_state(Context * ctx) {
 
 static void validate_memory_cache(Channel * c, void * args, int error) {
     MemoryCache * m = (MemoryCache *)args;
+    Context * ctx = m->ctx->ctx;
+    Trap trap;
 
     assert(m->pending != NULL);
     assert(m->error == NULL);
-    m->pending = NULL;
-    if (!error) {
-        size_t pos = 0;
-        JsonReadBinaryState state;
-        json_read_binary_start(&state, &c->inp);
-        for (;;) {
-            int rd = json_read_binary_data(&state, (int8_t *)m->buf + pos, m->size - pos);
-            if (rd == 0) break;
-            pos += rd;
+    if (set_trap(&trap)) {
+        m->pending = NULL;
+        if (!error) {
+            size_t pos = 0;
+            JsonReadBinaryState state;
+            json_read_binary_start(&state, &c->inp);
+            for (;;) {
+                int rd = json_read_binary_data(&state, (int8_t *)m->buf + pos, m->size - pos);
+                if (rd == 0) break;
+                pos += rd;
+            }
+            json_read_binary_end(&state);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            error = read_errno(&c->inp);
+            while (read_stream(&c->inp) != 0) {}
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
         }
-        json_read_binary_end(&state);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        error = read_errno(&c->inp);
-        while (read_stream(&c->inp) != 0) {}
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        clear_trap(&trap);
+    }
+    else {
+        error = trap.error;
     }
     m->error = get_error_report(error);
     cache_notify(&m->cache);
-    context_unlock(m->ctx->ctx);
+    if (m->disposed) free_memory_cache(m);
+    context_unlock(ctx);
+    if (trap.error) exception(trap.error);
 }
 
 int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
@@ -795,7 +848,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         }
     }
 
-    m = loc_alloc_zero(sizeof(MemoryCache));
+    m = (MemoryCache *)loc_alloc_zero(sizeof(MemoryCache));
     list_add_first(&m->link_ctx, &cache->mem_cache);
     m->ctx = cache;
     m->addr = address;
@@ -831,11 +884,11 @@ static void read_memory_region_property(InputStream * inp, const char * name, vo
 }
 
 static void read_memory_map_item(InputStream * inp, void * args) {
-    Channel * c = args;
+    Channel * c = (Channel *)args;
     MemoryRegion * m;
     if (mem_buf_pos >= mem_buf_max) {
         mem_buf_max = mem_buf_max == 0 ? 16 : mem_buf_max * 2;
-        mem_buf = loc_realloc(mem_buf, sizeof(MemoryRegion) * mem_buf_max);
+        mem_buf = (MemoryRegion *)loc_realloc(mem_buf, sizeof(MemoryRegion) * mem_buf_max);
     }
     m = mem_buf + mem_buf_pos;
     memset(m, 0, sizeof(MemoryRegion));
@@ -859,24 +912,33 @@ static void read_memory_map_item(InputStream * inp, void * args) {
 
 static void validate_memory_map_cache(Channel * c, void * args, int error) {
     ContextCache * cache = (ContextCache *)args;
+    Trap trap;
 
     assert(cache->ctx->parent == NULL);
     assert(cache->mmap_regions == NULL);
     assert(cache->pending_get_mmap != NULL);
-    cache->pending_get_mmap = NULL;
-    cache->mmap_error = get_error_report(error);
-    if (!error) {
-        cache->mmap_error = get_error_report(read_errno(&c->inp));
-        mem_buf_pos = 0;
-        json_read_array(&c->inp, read_memory_map_item, cache->peer->host);
-        cache->mmap_size = mem_buf_pos;
-        cache->mmap_regions = loc_alloc(sizeof(MemoryRegion) * mem_buf_pos);
-        memcpy(cache->mmap_regions, mem_buf, sizeof(MemoryRegion) * mem_buf_pos);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        cache->pending_get_mmap = NULL;
+        cache->mmap_error = get_error_report(error);
+        if (!error) {
+            error = read_errno(&c->inp);
+            mem_buf_pos = 0;
+            json_read_array(&c->inp, read_memory_map_item, cache->peer->host);
+            cache->mmap_size = mem_buf_pos;
+            cache->mmap_regions = (MemoryRegion *)loc_alloc(sizeof(MemoryRegion) * mem_buf_pos);
+            memcpy(cache->mmap_regions, mem_buf, sizeof(MemoryRegion) * mem_buf_pos);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        }
+        clear_trap(&trap);
     }
+    else {
+        error = trap.error;
+    }
+    cache->mmap_error = get_error_report(error);
     cache_notify(&cache->mmap_cache);
     context_unlock(cache->ctx);
+    if (trap.error) exception(trap.error);
 }
 
 void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt) {
@@ -904,15 +966,15 @@ static void read_ids_item(InputStream * inp, void * args) {
     char id[256];
     if (ids_buf_pos >= ids_buf_max) {
         ids_buf_max = ids_buf_max == 0 ? 16 : ids_buf_max * 2;
-        ids_buf = loc_realloc(ids_buf, sizeof(unsigned) * ids_buf_max);
+        ids_buf = (unsigned *)loc_realloc(ids_buf, sizeof(unsigned) * ids_buf_max);
     }
     n = json_read_string(inp, id, sizeof(id));
     if (n <= 0) return;
     n++;
-    if (n > sizeof(id)) n = sizeof(id);
+    if (n > (int)sizeof(id)) n = sizeof(id);
     if (str_buf_pos + n > str_buf_max) {
         str_buf_max = str_buf_max == 0 ? sizeof(id) : str_buf_max * 2;
-        str_buf = loc_realloc(str_buf, str_buf_max);
+        str_buf = (char *)loc_realloc(str_buf, str_buf_max);
     }
     memcpy(str_buf + str_buf_pos, id, n);
     ids_buf[ids_buf_pos++] = str_buf_pos;
@@ -933,56 +995,69 @@ static void read_register_property(InputStream * inp, const char * name, void * 
 
 static void validate_registers_cache(Channel * c, void * args, int error) {
     ContextCache * cache = (ContextCache *)args;
+    Trap trap;
 
     if (cache->reg_ids == NULL) {
         /* Registers.getChildren reply */
         assert(cache->reg_ids_str == NULL);
         assert(cache->reg_error == NULL);
         assert(cache->pending_regs_cnt == 1);
-        cache->pending_regs_cnt--;
-        cache->reg_error = get_error_report(error);
-        if (!error) {
-            unsigned i;
-            cache->reg_error = get_error_report(read_errno(&c->inp));
-            ids_buf_pos = 0;
-            str_buf_pos = 0;
-            json_read_array(&c->inp, read_ids_item, NULL);
-            cache->reg_cnt = ids_buf_pos;
-            cache->reg_ids = loc_alloc(sizeof(char *) * ids_buf_pos);
-            cache->reg_ids_str = loc_alloc(str_buf_pos);
-            memcpy(cache->reg_ids_str, str_buf, str_buf_pos);
-            for (i = 0; i < cache->reg_cnt; i++) {
-                cache->reg_ids[i] = cache->reg_ids_str + ids_buf[i];
+        if (set_trap(&trap)) {
+            cache->pending_regs_cnt--;
+            if (!error) {
+                unsigned i;
+                error = read_errno(&c->inp);
+                ids_buf_pos = 0;
+                str_buf_pos = 0;
+                json_read_array(&c->inp, read_ids_item, NULL);
+                cache->reg_cnt = ids_buf_pos;
+                cache->reg_ids = (char **)loc_alloc(sizeof(char *) * ids_buf_pos);
+                cache->reg_ids_str = (char *)loc_alloc(str_buf_pos);
+                memcpy(cache->reg_ids_str, str_buf, str_buf_pos);
+                for (i = 0; i < cache->reg_cnt; i++) {
+                    cache->reg_ids[i] = cache->reg_ids_str + ids_buf[i];
+                }
+                if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+                if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
             }
-            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            clear_trap(&trap);
         }
+        else {
+            error = trap.error;
+        }
+        cache->reg_error = get_error_report(error);
         cache_notify(&cache->regs_cache);
     }
     else {
         /* Registers.getContext reply */
         assert(cache->pending_regs_cnt > 0);
-        cache->pending_regs_cnt--;
-        cache->reg_error = get_error_report(error);
-        if (!error) {
-            unsigned i;
-            RegisterProps props;
-            memset(&props, 0, sizeof(props));
-            cache->reg_error = get_error_report(read_errno(&c->inp));
-            json_read_struct(&c->inp, read_register_property, &props);
-            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-            for (i = 0; i < cache->reg_cnt; i++) {
-                if (strcmp(props.id, cache->reg_ids[i]) == 0) {
-                    cache->reg_props[i] = props;
-                    cache->reg_defs[i] = props.def;
-                    if (props.role != NULL && strcmp(props.role, "PC") == 0) {
-                        cache->pc_def = cache->reg_defs + i;
+        if (set_trap(&trap)) {
+            cache->pending_regs_cnt--;
+            if (!error) {
+                unsigned i;
+                RegisterProps props;
+                memset(&props, 0, sizeof(props));
+                error = read_errno(&c->inp);
+                json_read_struct(&c->inp, read_register_property, &props);
+                if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+                if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+                for (i = 0; i < cache->reg_cnt; i++) {
+                    if (strcmp(props.id, cache->reg_ids[i]) == 0) {
+                        cache->reg_props[i] = props;
+                        cache->reg_defs[i] = props.def;
+                        if (props.role != NULL && strcmp(props.role, "PC") == 0) {
+                            cache->pc_def = cache->reg_defs + i;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
+            clear_trap(&trap);
         }
+        else {
+            error = trap.error;
+        }
+        cache->reg_error = get_error_report(error);
         if (cache->pending_regs_cnt == 0) {
             unsigned i;
             unsigned offs = 0;
@@ -996,6 +1071,7 @@ static void validate_registers_cache(Channel * c, void * args, int error) {
         }
     }
     context_unlock(cache->ctx);
+    if (trap.error) exception(trap.error);
 }
 
 static void check_registers_cache(ContextCache * cache) {
@@ -1051,10 +1127,10 @@ RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munberin
     while (defs != NULL && defs->name != NULL) {
         switch (munbering_convention) {
         case REGNUM_DWARF:
-            if (defs->dwarf_id == id) return defs;
+            if (defs->dwarf_id == (int)id) return defs;
             break;
         case REGNUM_EH_FRAME:
-            if (defs->eh_frame_id == id) return defs;
+            if (defs->eh_frame_id == (int)id) return defs;
             break;
         }
         defs++;
@@ -1064,97 +1140,117 @@ RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munberin
 
 static void validate_reg_values_cache(Channel * c, void * args, int error) {
     StackFrameCache * s = (StackFrameCache *)args;
+    Context * ctx = s->ctx->ctx;
+    Trap trap;
 
     assert(s->pending != NULL);
     assert(s->error == NULL);
-    s->pending = NULL;
-    if (!error) {
-        int r = 0;
-        int n = s->info.is_top_frame ? s->ctx->reg_cnt : s->regs_cnt;
-        JsonReadBinaryState state;
-        error = read_errno(&c->inp);
-        json_read_binary_start(&state, &c->inp);
-        for (r = 0; r < n; r++) {
-            int pos = 0;
-            RegisterDefinition * reg = s->info.is_top_frame ? s->ctx->reg_defs + r : s->regs[r];
-            uint8_t * regs = (uint8_t *)s->info.regs + reg->offset;
-            uint8_t * mask = (uint8_t *)s->info.mask + reg->offset;
-            while (pos < reg->size) {
-                size_t rd = json_read_binary_data(&state, regs + pos, reg->size - pos);
-                memset(mask + pos, ~0, rd);
-                if (rd == 0) break;
-                pos += rd;
+    if (set_trap(&trap)) {
+        s->pending = NULL;
+        if (!error) {
+            int r = 0;
+            int n = s->info.is_top_frame ? s->ctx->reg_cnt : s->regs_cnt;
+            JsonReadBinaryState state;
+            error = read_errno(&c->inp);
+            json_read_binary_start(&state, &c->inp);
+            for (r = 0; r < n; r++) {
+                int pos = 0;
+                RegisterDefinition * reg = s->info.is_top_frame ? s->ctx->reg_defs + r : s->regs[r];
+                uint8_t * regs = (uint8_t *)s->info.regs + reg->offset;
+                uint8_t * mask = (uint8_t *)s->info.mask + reg->offset;
+                while (pos < reg->size) {
+                    size_t rd = json_read_binary_data(&state, regs + pos, reg->size - pos);
+                    memset(mask + pos, ~0, rd);
+                    if (rd == 0) break;
+                    pos += rd;
+                }
             }
+            json_read_binary_end(&state);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
         }
-        json_read_binary_end(&state);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        clear_trap(&trap);
+    }
+    else {
+        error = trap.error;
     }
     s->error = get_error_report(error);
     cache_notify(&s->cache);
-    context_unlock(s->ctx->ctx);
     if (s->disposed) free_stack_frame_cache(s);
+    context_unlock(ctx);
+    if (trap.error) exception(trap.error);
 }
 
 static void validate_reg_children_cache(Channel * c, void * args, int error) {
     StackFrameCache * s = (StackFrameCache *)args;
+    Context * ctx = s->ctx->ctx;
+    Trap trap;
+
     assert(s->pending != NULL);
     assert(s->error == NULL);
-    s->pending = NULL;
-    if (!error) {
-        ids_buf_pos = 0;
-        str_buf_pos = 0;
-        error = read_errno(&c->inp);
-        json_read_array(&c->inp, read_ids_item, NULL);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-        if (!error && !s->disposed) {
-            int n = 0;
-            s->regs_cnt = ids_buf_pos;
-            s->regs = (RegisterDefinition **)loc_alloc_zero(sizeof(RegisterDefinition *) * s->regs_cnt);
-            for (n = 0; n < s->regs_cnt; n++) {
-                unsigned r = 0;
-                char * id = str_buf + ids_buf[n];
-                if (*id++ != 'R') {
-                    error = ERR_INV_CONTEXT;
-                    break;
-                }
-                while (*id >= '0' && *id <= '9') {
-                    r = r * 10 + (*id++ - '0');
-                }
-                if (r >= s->ctx->reg_cnt) {
-                    error = ERR_INV_CONTEXT;
-                    break;
-                }
-                s->regs[n] = s->ctx->reg_defs + r;
-            }
-            if (!error) {
-                s->pending = protocol_send_command(c, "Registers", "getm", validate_reg_values_cache, s);
-                write_stream(&c->out, '[');
+    if (set_trap(&trap)) {
+        s->pending = NULL;
+        if (!error) {
+            ids_buf_pos = 0;
+            str_buf_pos = 0;
+            error = read_errno(&c->inp);
+            json_read_array(&c->inp, read_ids_item, NULL);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            if (!error && !s->disposed) {
+                int n = 0;
+                s->regs_cnt = ids_buf_pos;
+                s->regs = (RegisterDefinition **)loc_alloc_zero(sizeof(RegisterDefinition *) * s->regs_cnt);
                 for (n = 0; n < s->regs_cnt; n++) {
-                    RegisterDefinition * reg = s->regs[n];
+                    unsigned r = 0;
                     char * id = str_buf + ids_buf[n];
-                    if (n > 0) write_stream(&c->out, ',');
-                    write_stream(&c->out, '[');
-                    json_write_string(&c->out, id);
-                    write_stream(&c->out, ',');
-                    json_write_long(&c->out, 0);
-                    write_stream(&c->out, ',');
-                    json_write_long(&c->out, reg->size);
-                    write_stream(&c->out, ']');
+                    if (*id++ != 'R') {
+                        error = ERR_INV_CONTEXT;
+                        break;
+                    }
+                    while (*id >= '0' && *id <= '9') {
+                        r = r * 10 + (*id++ - '0');
+                    }
+                    if (r >= s->ctx->reg_cnt) {
+                        error = ERR_INV_CONTEXT;
+                        break;
+                    }
+                    s->regs[n] = s->ctx->reg_defs + r;
                 }
-                write_stream(&c->out, ']');
-                write_stream(&c->out, 0);
-                write_stream(&c->out, MARKER_EOM);
-                flush_stream(&c->out);
-                return;
+                if (!error) {
+                    s->pending = protocol_send_command(c, "Registers", "getm", validate_reg_values_cache, s);
+                    write_stream(&c->out, '[');
+                    for (n = 0; n < s->regs_cnt; n++) {
+                        RegisterDefinition * reg = s->regs[n];
+                        char * id = str_buf + ids_buf[n];
+                        if (n > 0) write_stream(&c->out, ',');
+                        write_stream(&c->out, '[');
+                        json_write_string(&c->out, id);
+                        write_stream(&c->out, ',');
+                        json_write_long(&c->out, 0);
+                        write_stream(&c->out, ',');
+                        json_write_long(&c->out, reg->size);
+                        write_stream(&c->out, ']');
+                    }
+                    write_stream(&c->out, ']');
+                    write_stream(&c->out, 0);
+                    write_stream(&c->out, MARKER_EOM);
+                    flush_stream(&c->out);
+                    clear_trap(&trap);
+                    return;
+                }
             }
         }
+        clear_trap(&trap);
+    }
+    else {
+        error = trap.error;
     }
     s->error = get_error_report(error);
     cache_notify(&s->cache);
-    context_unlock(s->ctx->ctx);
     if (s->disposed) free_stack_frame_cache(s);
+    context_unlock(ctx);
+    if (trap.error) exception(trap.error);
 }
 
 static void read_stack_frame_property(InputStream * inp, const char * name, void * args) {
@@ -1172,46 +1268,56 @@ static void read_stack_frame(InputStream * inp, void * args) {
 
 static void validate_stack_frame_cache(Channel * c, void * args, int error) {
     StackFrameCache * s = (StackFrameCache *)args;
+    Context * ctx = s->ctx->ctx;
+    Trap trap;
 
     assert(s->pending != NULL);
     assert(s->error == NULL);
-    s->pending = NULL;
-    if (!error) {
-        json_read_array(&c->inp, read_stack_frame, s);
-        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        error = read_errno(&c->inp);
-        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-        if (!error && !s->disposed) {
-            if (s->info.is_top_frame) {
-                RegisterDefinition * reg = s->ctx->reg_defs;
-                s->pending = protocol_send_command(c, "Registers", "getm", validate_reg_values_cache, s);
-                write_stream(&c->out, '[');
-                while (reg->name) {
+    if (set_trap(&trap)) {
+        s->pending = NULL;
+        if (!error) {
+            json_read_array(&c->inp, read_stack_frame, s);
+            if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            error = read_errno(&c->inp);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            if (!error && !s->disposed) {
+                if (s->info.is_top_frame) {
+                    RegisterDefinition * reg = s->ctx->reg_defs;
+                    s->pending = protocol_send_command(c, "Registers", "getm", validate_reg_values_cache, s);
                     write_stream(&c->out, '[');
-                    json_write_string(&c->out, register2id(s->ctx->ctx, s->frame, reg));
-                    write_stream(&c->out, ',');
-                    json_write_long(&c->out, 0);
-                    write_stream(&c->out, ',');
-                    json_write_long(&c->out, reg->size);
+                    while (reg->name) {
+                        write_stream(&c->out, '[');
+                        json_write_string(&c->out, register2id(s->ctx->ctx, s->frame, reg));
+                        write_stream(&c->out, ',');
+                        json_write_long(&c->out, 0);
+                        write_stream(&c->out, ',');
+                        json_write_long(&c->out, reg->size);
+                        write_stream(&c->out, ']');
+                        if ((++reg)->name) write_stream(&c->out, ',');
+                    }
                     write_stream(&c->out, ']');
-                    if ((++reg)->name) write_stream(&c->out, ',');
                 }
-                write_stream(&c->out, ']');
+                else {
+                    s->pending = protocol_send_command(c, "Registers", "getChildren", validate_reg_children_cache, s);
+                    json_write_string(&c->out, frame2id(s->ctx->ctx, s->frame));
+                }
+                write_stream(&c->out, 0);
+                write_stream(&c->out, MARKER_EOM);
+                flush_stream(&c->out);
+                clear_trap(&trap);
+                return;
             }
-            else {
-                s->pending = protocol_send_command(c, "Registers", "getChildren", validate_reg_children_cache, s);
-                json_write_string(&c->out, frame2id(s->ctx->ctx, s->frame));
-            }
-            write_stream(&c->out, 0);
-            write_stream(&c->out, MARKER_EOM);
-            flush_stream(&c->out);
-            return;
         }
+        clear_trap(&trap);
+    }
+    else {
+        error = trap.error;
     }
     s->error = get_error_report(error);
     cache_notify(&s->cache);
-    context_unlock(s->ctx->ctx);
     if (s->disposed) free_stack_frame_cache(s);
+    context_unlock(ctx);
+    if (trap.error) exception(trap.error);
 }
 
 int get_frame_info(Context * ctx, int frame, StackFrame ** info) {

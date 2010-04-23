@@ -191,7 +191,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\diagnostics.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\discovery.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\discovery.h"
 				>
 			</File>
 			<File
@@ -199,7 +207,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\discovery_udp.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\dwarfcache.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfcache.h"
 				>
 			</File>
 			<File
@@ -207,7 +223,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\dwarfexpr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\dwarfframe.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfframe.h"
 				>
 			</File>
 			<File
@@ -215,7 +239,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\dwarfio.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\dwarfreloc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfreloc.h"
 				>
 			</File>
 			<File
@@ -223,7 +255,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\filesystem.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\linenumbers.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\linenumbers.h"
 				>
 			</File>
 			<File
@@ -235,11 +275,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\pathmap.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\stacktrace.c"
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\stacktrace.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\symbols.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\symbols.h"
 				>
 			</File>
 			<File
@@ -267,7 +319,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\asyncreq.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\base64.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\base64.h"
 				>
 			</File>
 			<File
@@ -283,7 +343,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\channel.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\channel_tcp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\channel_tcp.h"
 				>
 			</File>
 			<File
@@ -291,7 +359,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\context.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\cpudefs.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\cpudefs.h"
 				>
 			</File>
 			<File
@@ -299,7 +375,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\errors.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\events.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\events.h"
 				>
 			</File>
 			<File
@@ -307,7 +391,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\exceptions.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\inputbuf.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\inputbuf.h"
 				>
 			</File>
 			<File
@@ -315,7 +407,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\ip_ifc.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\json.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\json.h"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\link.h"
 				>
 			</File>
 			<File
@@ -323,7 +427,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\mdep.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\myalloc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\myalloc.h"
 				>
 			</File>
 			<File
@@ -331,7 +443,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\peer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\plugins.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\protocol.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\protocol.h"
 				>
 			</File>
 			<File
@@ -339,11 +463,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\proxy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\signames.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\streams.c"
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\streams.h"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\tcf.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\trace.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\trace.h"
 				>
 			</File>
 		</Filter>
