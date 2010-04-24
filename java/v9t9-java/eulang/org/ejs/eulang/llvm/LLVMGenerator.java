@@ -212,7 +212,7 @@ public class LLVMGenerator {
 		ll.addModuleDirective(new LLTargetDataTypeDirective(typeEngine));
 		ll.addModuleDirective(new LLTargetTripleDirective(target));
 		
-		for (IAstStmt stmt : module.getStmtList().list()) {
+		for (IAstStmt stmt : module.stmts().list()) {
 			// TODO: rules for module scopes, exports, visibility... right now we export everything
 			try {
 				if (stmt instanceof IAstAllocStmt)

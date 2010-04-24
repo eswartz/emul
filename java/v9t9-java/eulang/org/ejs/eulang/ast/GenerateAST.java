@@ -383,12 +383,10 @@ public class GenerateAST {
 		// don't push/pop, since globals are not defined at all
 		currentScope = new ModuleScope(globalScope);
 
-		IAstModule module = new AstModule(currentScope);
-
 		IAstNodeList<IAstStmt> stmtList = checkConstruct(tree,
 				IAstNodeList.class);
 
-		module.setStmtList(stmtList);
+		IAstModule module = new AstModule(currentScope, stmtList);
 
 		getSource(tree, module);
 
