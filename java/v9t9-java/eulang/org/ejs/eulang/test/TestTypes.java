@@ -31,7 +31,7 @@ public class TestTypes extends BaseParserTest {
     public void testArrayDecls() throws Exception {
     	IAstModule mod = doFrontend(
     			"p : Int[10];\n"+
-    			"q : Int[];\n");
+    			"q : Int[]= [0];\n");
 
     	sanityTest(mod);
     	
@@ -581,24 +581,35 @@ public class TestTypes extends BaseParserTest {
     
 
 	@Test
-    public void testArrayDecls3() throws Exception {
-    	IAstModule mod = doFrontend(
+    public void testArrayDecls3Fail() throws Exception {
+		// can't have an empty zero dimension unless initializer present
+    	treeizeFail(
     			"testDataInit4 = code() {\n"+
     			"  foo:Byte[][3][3];\n"+
     			"};\n"+
     	"");
-    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testDataInit4").getDefinition());
+    	
+    }
+
+
+	@Test
+    public void testArrayAccess3() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testArrayAccess3 = code() {\n"+
+    			"  foo:Byte[3][3];\n"+
+    			"  foo[1][2] + (foo[2])[1];"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testArrayAccess3").getDefinition());
     	assertTrue(code.getType().isComplete());
 
     	IAstAllocStmt stmt = (IAstAllocStmt) code.stmts().list().get(0);
-    	assertEquals(0, ((LLArrayType) stmt.getType()).getArrayCount());
+    	assertEquals(3, ((LLArrayType) stmt.getType()).getArrayCount());
     	assertEquals(3, ((LLArrayType)((LLArrayType) stmt.getType()).getSubType()).getArrayCount());
-    	assertEquals(3, ((LLArrayType)((LLArrayType)((LLArrayType) stmt.getType()).getSubType()).getSubType()).getArrayCount());
     	
     	doGenerate(mod);
     	
     }
-
 	@Test
     public void testDataInit4() throws Exception {
     	IAstModule mod = doFrontend(
@@ -606,6 +617,13 @@ public class TestTypes extends BaseParserTest {
     			"  foo:Byte[][3] = [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9]];\n"+
     			"};\n"+
     	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testDataInit4").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	IAstAllocStmt stmt = (IAstAllocStmt) code.stmts().list().get(0);
+    	assertEquals(3, ((LLArrayType) stmt.getType()).getArrayCount()); // fills type from initializer
+    	assertEquals(3, ((LLArrayType)((LLArrayType) stmt.getType()).getSubType()).getArrayCount());
+    	
     	LLVMGenerator gen = doGenerate(mod);
     	assertFoundInUnoptimizedText("%Bytex3x3 [ [ 3 x i8 ] [ i8 1, i8 2, i8 3 ], [ 3 x i8 ] [ i8 4, i8 5, i8 6 ], [ 3 x i8 ] [ i8 7, i8 8, i8 9 ] ], %Bytex3x3*", gen);
     }

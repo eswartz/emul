@@ -128,7 +128,7 @@ selector: LBRACKET selectors RBRACKET    -> ^(LIST selectors*)
 selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    -> selectoritem*
   ;
         
-selectoritem: listCompr | code | macro ;
+selectoritem options { backtrack=true; } : code | macro | rhsExpr | listCompr;
 
 //  scope
 //
@@ -243,7 +243,7 @@ varDecl: ID COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID TYPE assignOrIni
     | idTuple COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC idTuple type assignOrInitExpr*)
     | ID (COMMA ID)+ COLON_EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)* 
         -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST assignOrInitExpr+))
-    | ID (COMMA ID)+ COLON type (EQUALS PLUS? assignExpr (COMMA assignOrInitExpr)*)?  
+    | ID (COMMA ID)+ COLON type (EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*)?  
         -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignOrInitExpr+)?)
     ;
 
@@ -433,13 +433,15 @@ term : ( unary                  -> unary )
 
 unary:  MINUS u=unary -> ^(NEG $u )
       | TILDE u=unary     -> ^(INV $u )
+      | (noIdAtom idModifier) => noIdAtom idModifier+ -> ^(IDEXPR noIdAtom idModifier+) 
       | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
       | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)
 ;
-atom :
+
+noIdAtom :
       NUMBER                          -> ^(LIT NUMBER)
     |   FALSE                         -> ^(LIT FALSE)
     |   TRUE                          -> ^(LIT TRUE)
@@ -447,11 +449,12 @@ atom :
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
     |   NIL                          -> ^(LIT NIL)
     |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef f=funcCall  -> ^(INLINE idOrScopeRef $f)
-    |   idExpr                  -> idExpr
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |    code                           -> code   
     ;
+
+atom : noIdAtom | idExpr ;
 
 // an idOrScopeRef can have dotted parts that interpreted either as scope derefs or field refs,
 // so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 

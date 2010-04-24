@@ -909,9 +909,12 @@ public class GenerateAST {
 		return funcCall;
 	}
 
+	@SuppressWarnings("unchecked")
 	public IAstNode constructAlloc(Tree tree) throws GenerateException {
 		IAstType type = tree.getChildCount() > 1 ? checkConstruct(tree
 				.getChild(1), IAstType.class) : null;
+
+		IAstAllocStmt alloc = null;
 
 		if (tree.getChild(0).getType() == EulangParser.ID) {
 			IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
@@ -926,19 +929,22 @@ public class GenerateAST {
 
 			IAstNodeList<IAstTypedExpr> exprlist = null;
 			if (tree.getChildCount() == 3) {
-				IAstTypedExpr expr = checkConstruct(tree.getChild(2),
-						IAstTypedExpr.class);
-				exprlist = AstNodeList.<IAstTypedExpr> singletonList(
-						IAstTypedExpr.class, expr);
+				IAstNode init = construct(tree.getChild(2));
+				if (init instanceof IAstNodeList)
+					exprlist = (IAstNodeList<IAstTypedExpr>) init;
+				else {
+					IAstTypedExpr expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
+					exprlist = AstNodeList.<IAstTypedExpr> singletonList(
+							IAstTypedExpr.class, expr);
+				}
 			}
 
-			IAstAllocStmt alloc = new AstAllocStmt(idlist, type, exprlist,
+			alloc = new AstAllocStmt(idlist, type, exprlist,
 					false);
 			getSource(tree, alloc);
 
 			symbolExpr.getSymbol().setDefinition(alloc);
 
-			return alloc;
 		} else if (tree.getChild(0).getType() == EulangParser.LIST) {
 			IAstNodeList<IAstSymbolExpr> idlist = new AstNodeList<IAstSymbolExpr>(
 					IAstSymbolExpr.class);
@@ -989,14 +995,13 @@ public class GenerateAST {
 				throw new GenerateException(tree,
 						"expand modifier ('+') makes no sense without a singular expression");
 
-			IAstAllocStmt alloc = new AstAllocStmt(idlist, type, exprlist,
+			alloc = new AstAllocStmt(idlist, type, exprlist,
 					expand);
 			getSource(tree, alloc);
 
 			for (IAstSymbolExpr symbolExpr : idlist.list())
 				symbolExpr.getSymbol().setDefinition(alloc);
 
-			return alloc;
 		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
 			IAstTupleNode syms = constructIdTuple(tree.getChild(0));
 
@@ -1004,8 +1009,8 @@ public class GenerateAST {
 			if (tree.getChildCount() == 3)
 				expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
 
-			IAstAllocTupleStmt alloc = new AstAllocTupleStmt(syms, type, expr);
-			getSource(tree, alloc);
+			IAstAllocTupleStmt tupleAlloc = new AstAllocTupleStmt(syms, type, expr);
+			getSource(tree, tupleAlloc);
 
 			if (type != null) {
 				for (IAstTypedExpr elExpr : syms.elements().list()) {
@@ -1013,15 +1018,31 @@ public class GenerateAST {
 						throw new GenerateException(tree.getChild(0), "can only tuple-allocate locals");
 					IAstSymbolExpr symExpr = (IAstSymbolExpr) elExpr;
 					symExpr.getSymbol().setType(type.getType());
-					symExpr.getSymbol().setDefinition(alloc.getExpr());
+					symExpr.getSymbol().setDefinition(tupleAlloc.getExpr());
 				}
 			}
 
-			return alloc;
+			return tupleAlloc;
 		} else {
 			unhandled(tree);
 			return null;
 		}
+		
+		if (alloc.getTypeExpr() != null && alloc.getTypeExpr() instanceof IAstArrayType && 
+				isZero(((IAstArrayType) alloc.getTypeExpr()).getCount()) &&
+				(alloc.getExprs() == null || alloc.getExprs().nodeCount() == 0)) {
+			throw new GenerateException(tree, "cannot allocate unsized array without an initializer");
+		}
+		
+		return alloc;
+	}
+
+	/**
+	 * @param count
+	 * @return
+	 */
+	private boolean isZero(IAstTypedExpr count) {
+		return count == null || (count instanceof IAstIntLitExpr && ((IAstIntLitExpr) count).getValue() == 0);
 	}
 
 	/**
@@ -1158,11 +1179,13 @@ public class GenerateAST {
 		}
 		
 		// find a symbol
-		ISymbol symbol = null;
+		IAstTypedExpr idExpr = null;
+		IAstSymbolExpr symExpr = null;
 
 		if (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx);
 			if (kid.getType() == EulangParser.ID) {
+				ISymbol symbol = null;
 				if (inScope) {
 					symbol = startScope.get(kid.getText());
 				} else {
@@ -1177,6 +1200,14 @@ public class GenerateAST {
 					symbol = startScope.add(new AstName(kid.getText()));
 				}
 				startScope = symbol.getScope();
+				
+				symExpr = new AstSymbolExpr(symbol);
+				getSource(tree, symExpr);
+				
+				idExpr = symExpr;
+			} else if (kid.getType() == EulangParser.IDREF) {
+				symExpr = null;
+				idExpr = constructIdRef(kid);
 			} else {
 				unhandled(kid);
 				return null;
@@ -1184,15 +1215,10 @@ public class GenerateAST {
 			idx++;
 		}
 
-		if (symbol == null) {
-			throw new GenerateException(tree, "Cannot resolve symbol: "
+		if (idExpr == null) {
+			throw new GenerateException(tree, "Cannot resolve symbol or expression: "
 					+ tree.toStringTree());
 		}
-		
-		IAstSymbolExpr symExpr = new AstSymbolExpr(symbol);
-		getSource(tree, symExpr);
-		
-		IAstTypedExpr idExpr = symExpr;
 		
 		// may have field references
 		while (idx < tree.getChildCount()) {
@@ -1209,7 +1235,7 @@ public class GenerateAST {
 	@SuppressWarnings("unchecked")
 	public IAstTypedExpr constructIdExpr(Tree tree) throws GenerateException {
 		// idref is first
-		IAstTypedExpr symExpr = constructIdRef(tree.getChild(0));
+		IAstTypedExpr symExpr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
 		
 		IAstTypedExpr idExpr = symExpr;
 		
