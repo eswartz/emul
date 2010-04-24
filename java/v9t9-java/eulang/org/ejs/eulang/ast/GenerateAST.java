@@ -1205,9 +1205,6 @@ public class GenerateAST {
 				getSource(tree, symExpr);
 				
 				idExpr = symExpr;
-			} else if (kid.getType() == EulangParser.IDREF) {
-				symExpr = null;
-				idExpr = constructIdRef(kid);
 			} else {
 				unhandled(kid);
 				return null;
