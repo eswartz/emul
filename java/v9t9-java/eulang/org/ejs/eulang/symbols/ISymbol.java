@@ -11,9 +11,18 @@ import org.ejs.eulang.ast.IAstNode;
  *
  */
 public interface ISymbol extends ITyped {
+	enum Visibility {
+		LOCAL,
+		GLOBAL,
+		MODULE,
+		NAMESPACE
+	};
 	String getName();
 	String getLLVMName();
 	String getUniqueName();
+	
+	Visibility getVisibility();
+	void setVisibility(Visibility vis);
 	
 	IScope getScope();
 	void setScope(IScope scope);
@@ -25,12 +34,6 @@ public interface ISymbol extends ITyped {
 
 	boolean isAddressed();
 	void setAddressed(boolean addressed);
-	
-	/**
-	 * Copy self (type and name)
-	 * @return
-	 */
-	ISymbol newInstance();
 	/**
 	 * @return
 	 */

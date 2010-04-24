@@ -4,6 +4,7 @@
 package org.ejs.eulang.symbols;
 
 /**
+ * This is a scope inside a code block.
  * @author ejs
  *
  */
@@ -13,15 +14,7 @@ public class LocalScope extends Scope {
 	 * @param parent
 	 */
 	public LocalScope(IScope parent) {
-		super(parent);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.symbols.Scope#createSymbol(java.lang.String)
-	 */
-	@Override
-	public ISymbol createSymbol(String name, boolean temporary) {
-		return new LocalSymbol(nextId(), name, temporary, this, null, false);
+		super(parent, ISymbol.Visibility.LOCAL);
 	}
 	
 	public LocalScope newInstance(IScope parent) {

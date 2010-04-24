@@ -14,6 +14,7 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
@@ -29,20 +30,16 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 
 	private IAstSymbolExpr id;
 	//private IAstTypedExpr expr;
-	private List<IAstTypedExpr> bodyList = new ArrayList<IAstTypedExpr>();
+	private IAstNodeList<IAstTypedExpr> bodyList;
 	//private Map<LLType, IAstTypedExpr> typedBodyMap = new HashMap<LLType, IAstTypedExpr>();
 	
 	private Map<LLType, List<IAstTypedExpr>> instanceMap = new HashMap<LLType, List<IAstTypedExpr>>();
 
-	public AstDefineStmt(IAstSymbolExpr name, List<IAstTypedExpr> bodyList) {
+	public AstDefineStmt(IAstSymbolExpr name, IAstNodeList<IAstTypedExpr> bodyList) {
 		this.id = name;
 		id.setParent(this);
 		setSymbolExpr(name);
-		for (IAstTypedExpr body : bodyList) {
-			body.setParent(null);
-			body.setParent(this);
-			this.bodyList.add(body);
-		}
+		this.bodyList = reparent(this.bodyList, bodyList);
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
@@ -50,11 +47,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	@Override
 	public IAstDefineStmt copy(IAstNode copyParent) {
 		// TODO: copy expansions
-		List<IAstTypedExpr> bodyCopies = new ArrayList<IAstTypedExpr>();
-		for (IAstTypedExpr body : bodyList) {
-			bodyCopies.add((IAstTypedExpr) body.copy(null));
-		}
-		return fixup(this, new AstDefineStmt(doCopy(id, copyParent), bodyCopies));
+		return fixup(this, new AstDefineStmt(doCopy(id, copyParent), doCopy(bodyList, copyParent)));
 	}
 
 	
@@ -105,9 +98,9 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		IAstNode[] kids = new IAstNode[bodyList.size() + 1];
+		IAstNode[] kids = new IAstNode[2];
 		kids[0] = id;
-		System.arraycopy(bodyList.toArray(), 0, kids, 1, kids.length - 1);
+		kids[1] = bodyList;
 		return kids;
 	}
 	
@@ -116,7 +109,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public IAstNode[] getDumpChildren() {
-		Collection<IAstTypedExpr> exprs = new ArrayList<IAstTypedExpr>(bodyList); 
+		Collection<IAstTypedExpr> exprs = new ArrayList<IAstTypedExpr>(bodyList.list()); 
 		exprs.addAll(getConcreteInstances());
 		return (IAstTypedExpr[]) exprs.toArray(new IAstTypedExpr[exprs.size()]);
 	}
@@ -124,17 +117,13 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (getSymbolExpr() == existing) {
 			setSymbolExpr((IAstSymbolExpr) another);
-		} 
-		for (int idx = 0; idx < bodyList.size(); idx++) {
-			IAstTypedExpr expr = bodyList.get(idx);	
-			if (expr == existing) {
-				bodyList.set(idx, (IAstTypedExpr) another);
-				return;
-			}
+		}  else if (bodyList == existing) {
+			this.bodyList =(IAstNodeList<IAstTypedExpr>) reparent(this.bodyList, another);
 		}
 		throw new IllegalArgumentException();
 		
@@ -221,7 +210,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public List<IAstTypedExpr> bodyList() {
-		return bodyList;
+		return bodyList.list();
 	}
 	
 	
@@ -264,31 +253,31 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	 */
 	@Override
 	public IAstTypedExpr getMatchingBodyExpr(LLType type) {
-		if (bodyList.isEmpty())
+		if (bodyList.nodeCount() == 0)
 			return null;
 		
 		if (type == null) {
 			// then the first
-			if (bodyList.size() == 1)
-				return bodyList.get(0);
+			if (bodyList.nodeCount() == 1)
+				return bodyList.getFirst();
 			else
 				return null;
 		}
 		
 		// look for exact matches
-		for (IAstTypedExpr expr : bodyList) {
+		for (IAstTypedExpr expr : bodyList.list()) {
 			if (typeMatchesExactly(expr.getType(), type))
 				return expr;
 		}	
 		
 		// then compatible ones
-		for (IAstTypedExpr expr : bodyList) {
+		for (IAstTypedExpr expr : bodyList.list()) {
 			if (typeMatchesCompatible(expr.getType(), type))
 				return expr;
 		}
 		
 		// then generic matches
-		for (IAstTypedExpr expr : bodyList) {
+		for (IAstTypedExpr expr : bodyList.list()) {
 			if (typeMatchesGeneric(expr.getType(), type))
 				return expr;
 		}
@@ -340,7 +329,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 		
 		List<IAstTypedExpr> list = instanceMap.get(type);
 		if (list == null) {
-			for (IAstTypedExpr body : bodyList) {
+			for (IAstTypedExpr body : bodyList.list()) {
 				if (body.getType().equals(type)) {
 					list = new ArrayList<IAstTypedExpr>();
 					instanceMap.put(type, list);
@@ -360,7 +349,7 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	@Override
 	public Collection<IAstTypedExpr> getConcreteInstances() {
 		List<IAstTypedExpr> list = new ArrayList<IAstTypedExpr>();
-		for (IAstTypedExpr expr : bodyList) {
+		for (IAstTypedExpr expr : bodyList.list()) {
 			if (expr.getType() != null && expr.getType().isComplete() && !expr.getType().isGeneric())
 				list.add(expr);
 		}

@@ -4,23 +4,17 @@
 package org.ejs.eulang.symbols;
 
 /**
+ * This is a top-level scope above module scope where external symbols are
+ * declared and are visible to anything linked in. 
  * @author ejs
  *
  */
 public class GlobalScope extends Scope {
 
 	public GlobalScope() {
-		super(null);
+		super(null, ISymbol.Visibility.GLOBAL);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.symbols.Scope#createSymbol(java.lang.String)
-	 */
-	@Override
-	public ISymbol createSymbol(String name, boolean temporary) {
-		return new GlobalSymbol(nextId(), name, temporary, this, null, false);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.symbols.IScope#newInstance()
 	 */

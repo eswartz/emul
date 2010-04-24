@@ -242,6 +242,8 @@ public class AstDataType extends AstTypedExpr implements IAstDataType {
 		String name = null;
 		if (getParent() instanceof IAstDefineStmt) {
 			name = ((IAstDefineStmt) getParent()).getSymbol().getName();
+		} else if (getParent() != null && getParent().getParent() instanceof IAstDefineStmt) {
+			name = ((IAstDefineStmt) getParent().getParent()).getSymbol().getName();
 		}
 		LLDataType data = typeEngine.getDataType(name, newIFields, newSFields);
 		return data;

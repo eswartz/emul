@@ -20,27 +20,19 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstBlockStmt extends AstTypedExpr implements IAstBlockStmt {
+public class AstBlockStmt extends AstStmtScope implements IAstBlockStmt {
 
-	private IAstNodeList<IAstStmt> stmtList;
-
-	protected IScope scope;
 	/**
 	 * @param stmtList
 	 * @param scope 
 	 */
 	public AstBlockStmt(IAstNodeList<IAstStmt> stmtList, IScope scope) {
-		this.scope = scope;
-		scope.setOwner(this);
-
-		this.stmtList = stmtList;
-		stmtList.setParent(this);
+		super(stmtList, scope);
 	}
 
 	public IAstBlockStmt copy(IAstNode copyParent) {
-		IAstBlockStmt copied = new AstBlockStmt(doCopy(stmtList, copyParent), getScope().newInstance(getCopyScope(copyParent)));
-		remapScope(getScope(), copied.getScope(), copied);
-		return fixup(this, copied);
+		return (IAstBlockStmt) fixupStmtScope(new AstBlockStmt(
+				doCopy(stmtList, copyParent), getScope().newInstance(getCopyScope(copyParent))));
 	}
 	
 
@@ -50,91 +42,6 @@ public class AstBlockStmt extends AstTypedExpr implements IAstBlockStmt {
 	@Override
 	public String toString() {
 		return typedString("BLOCK");
-	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 444;
-		result = prime * result
-				+ ((stmtList == null) ? 0 : stmtList.hashCode());
-		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (getClass() != obj.getClass())
-			return false;
-		AstBlockStmt other = (AstBlockStmt) obj;
-		if (stmtList == null) {
-			if (other.stmtList != null)
-				return false;
-		} else if (!stmtList.equals(other.stmtList))
-			return false;
-		if (scope == null) {
-			if (other.scope != null)
-				return false;
-		} else if (!scope.equals(other.scope))
-			return false;
-		return true;
-	}
-
-	@Override
-	public void setParent(IAstNode node) {
-		super.setParent(node);
-
-		if (node != null) {
-			while (node != null) {
-				if (node instanceof IAstScope) {
-					scope.setParent(((IAstScope) node).getScope());
-					break;
-				}
-				node = node.getParent();
-			}
-		} else {
-			scope.setParent(null);
-		}
-		
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstScope#getScope()
-	 */
-	@Override
-	public IScope getScope() {
-		return scope;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstBlockStmt#stmtList()
-	 */
-	@Override
-	public IAstNodeList<IAstStmt> stmts() {
-		return stmtList;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#getChildren()
-	 */
-	@Override
-	public IAstNode[] getChildren() {
-		return new IAstNode[] { stmtList };
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public void replaceChild(IAstNode existing, IAstNode another) {
-		if (stmtList == existing) {
-			stmtList = (IAstNodeList<IAstStmt>) ((IAstType) another);
-		} else {
-			throw new IllegalArgumentException();
-		}
 	}
 
 	public IAstTypedExpr getValue() {

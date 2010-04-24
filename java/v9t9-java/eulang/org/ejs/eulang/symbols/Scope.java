@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.symbols.ISymbol.Visibility;
 
 
 /**
@@ -23,12 +24,16 @@ public abstract class Scope implements IScope {
 	private IScope parent;
 
 	private AtomicInteger counter;
-	public abstract ISymbol createSymbol(String name, boolean temporary);
+	private final Visibility defaultVisibility;
+	public ISymbol createSymbol(String name, boolean temporary) {
+		return new Symbol(nextId(), name, defaultVisibility, null, temporary, this, null, false);
+	}
 	
 	/**
 	 * @param currentScope
 	 */
-	public Scope(IScope parent) {
+	public Scope(IScope parent, Visibility vis) {
+		this.defaultVisibility = vis;
 		if (parent instanceof Scope) {
 			counter = ((Scope) parent).counter;
 		} else {
@@ -117,10 +122,13 @@ public abstract class Scope implements IScope {
 		entries.put(name.getName(), symbol);
 		return symbol;
 	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#add(org.ejs.eulang.symbols.ISymbol.Visibility, org.ejs.eulang.ast.IAstName)
+	 */
 	@Override
-	public ISymbol add(IAstName name, IAstNode node) {
+	public ISymbol add(Visibility vis, IAstName name) {
 		ISymbol symbol = add(name);
-		symbol.setDefinition(node);
+		symbol.setVisibility(vis);
 		return symbol;
 	}
 
@@ -253,5 +261,19 @@ public abstract class Scope implements IScope {
 			otherScope = otherScope.getParent();
 		}
 		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#copySymbol(org.ejs.eulang.symbols.ISymbol)
+	 */
+	@Override
+	public ISymbol copySymbol(ISymbol symbol) {
+		ISymbol copySymbol = new Symbol(symbol.getNumber(), symbol.getName(), 
+					symbol.getVisibility(), symbol.getType(), 
+					symbol.isTemporary(), 
+					null, symbol.getDefinition(), symbol.isAddressed());
+		add(copySymbol);
+		copySymbol.setType(symbol.getType());
+		return copySymbol;
 	}
 }

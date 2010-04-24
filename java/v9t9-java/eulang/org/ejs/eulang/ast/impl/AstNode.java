@@ -249,19 +249,22 @@ abstract public class AstNode implements IAstNode {
     	
     	Map<Integer, ISymbol> symbolMap = new HashMap<Integer, ISymbol>();
     	for (ISymbol symbol : scope) {
+    		ISymbol copySymbol = copy.copySymbol(symbol);
+    		/*
     		ISymbol copySymbol = symbol.newInstance();
-    		copySymbol.setType(symbol.getType());
+    		copy.add(copySymbol);
+    		//copySymbol.setScope(copy);
+*/
     		assert !symbolMap.containsKey(symbol.getNumber());
     		symbolMap.put(symbol.getNumber(), copySymbol);
-    		copySymbol.setScope(copy);
-
     		if (symbol.getDefinition() != null) {
     			IAstNode copyDef = copyMap.get(symbol.getDefinition().getId());
     			
     			//assert (copyDef != null); // may be null for dead symbols
     			copySymbol.setDefinition(copyDef);
+    			// the type gets blitzed
+    			copySymbol.setType(symbol.getType());
     		}
-    		copy.add(copySymbol);
     	}
     	replaceSymbols(this, copyRoot, scope, symbolMap);
     	return copy;

@@ -79,6 +79,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	@Override
 	public void setField(IAstName field) {
 		this.field = reparent(this.field, field);
+		field.setScope(null);
 	}
 
 	/* (non-Javadoc)

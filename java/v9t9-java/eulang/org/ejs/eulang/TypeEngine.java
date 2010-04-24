@@ -21,6 +21,7 @@ import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
@@ -235,14 +236,25 @@ public class TypeEngine {
 	 * @param globalScope
 	 */
 	public void populateTypes(GlobalScope globalScope) {
-		globalScope.add(new AstName("Int"), new AstType(INT));
-		globalScope.add(new AstName("Float"), new AstType(FLOAT));		
-		globalScope.add(new AstName("Double"), new AstType(DOUBLE));		
-		globalScope.add(new AstName("Void"), new AstType(VOID));		
-		globalScope.add(new AstName("Bool"), new AstType(BOOL));		
-		globalScope.add(new AstName("Byte"), new AstType(BYTE));		
+		populateType(globalScope, "Int", INT);
+		populateType(globalScope, "Float", FLOAT);		
+		populateType(globalScope, "Double", DOUBLE);		
+		populateType(globalScope, "Void", VOID);		
+		populateType(globalScope, "Bool", BOOL);		
+		populateType(globalScope, "Byte", BYTE);		
 	}
 
+
+	/**
+	 * @param globalScope 
+	 * @param name
+	 * @param iNT2
+	 */
+	private void populateType(GlobalScope globalScope, String name, LLType type) {
+		ISymbol symbol = globalScope.add(name);
+		symbol.setDefinition(new AstType(type));
+		
+	}
 
 	public <T extends LLType> T register(T type) {
 		types.add(type);

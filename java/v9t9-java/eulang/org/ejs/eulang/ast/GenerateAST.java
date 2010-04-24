@@ -57,6 +57,7 @@ import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
+import org.ejs.eulang.ast.impl.AstStmtScope;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
@@ -71,6 +72,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.symbols.NamespaceScope;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 
@@ -395,6 +397,12 @@ public class GenerateAST {
 
 	public IAstNode construct(Tree tree) throws GenerateException {
 		switch (tree.getType()) {
+		case EulangParser.SCOPE:
+			return constructScope(tree);
+
+		case EulangParser.DATA:
+			return constructData(tree);
+			
 		case EulangParser.STMTLIST:
 			return constructStmtList(tree);
 		case EulangParser.LIT:
@@ -512,14 +520,36 @@ public class GenerateAST {
 		case EulangParser.BREAK:
 			return constructBreak(tree);
 
-		case EulangParser.DATA:
-			return constructData(tree);
-
 		default:
 			unhandled(tree);
 			return null;
 		}
 
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstScope constructScope(Tree tree) throws GenerateException {
+		pushScope(new NamespaceScope(currentScope));
+		try {
+			IAstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(
+					IAstStmt.class);
+			for (Tree kid : iter(tree)) {
+				IAstStmt item = checkConstruct(kid, IAstStmt.class);
+				stmts.add(item);
+			}
+			getSource(tree, stmts);
+
+			IAstStmtScope scope = new AstStmtScope(stmts, currentScope);
+			getSource(tree, scope);
+
+			return scope;
+		} finally {
+			popScope(tree);
+		}
 	}
 
 	/**
@@ -1759,12 +1789,11 @@ public class GenerateAST {
 		if (exprTree.getType() == EulangParser.LIST) {
 			IAstNodeList<IAstTypedExpr> exprList = checkConstruct(exprTree,
 					IAstNodeList.class);
-			stmt = new AstDefineStmt(symbolExpr, exprList.list());
+			stmt = new AstDefineStmt(symbolExpr, exprList);
 		} else {
 			IAstTypedExpr expr = null;
 			expr = checkConstruct(exprTree, IAstTypedExpr.class);
-			stmt = new AstDefineStmt(symbolExpr, Collections
-					.singletonList(expr));
+			stmt = new AstDefineStmt(symbolExpr, AstNodeList.singletonList(IAstTypedExpr.class, expr));
 		}
 		getSource(tree, stmt);
 

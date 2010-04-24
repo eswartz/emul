@@ -7,6 +7,8 @@ options {
 
 tokens {
   SCOPE;
+  ADDSCOPE;
+  
   LIST_COMPREHENSION;
   CODE;
   MACRO;
@@ -121,6 +123,8 @@ toplevelstat:  (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID t
     ;
 
 toplevelvalue : (LBRACE ) => xscope
+    | ID PLUS data -> ^(ADDSCOPE ID data)
+    | ID PLUS xscope -> ^(ADDSCOPE ID xscope)
     | selector
     | rhsExpr
     | data

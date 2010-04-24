@@ -24,23 +24,17 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
+public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 
 	private final IAstPrototype proto;
-	private final IAstNodeList<IAstStmt> stmts;
-	private final IScope scope;
 	private final boolean macro;
 	
 	
 	public AstCodeExpr(IAstPrototype proto, IScope scope, IAstNodeList<IAstStmt> stmts, boolean macro) {
+		super(stmts, scope);
 		this.proto = proto;
 		proto.setParent(this);
-		this.scope = scope;
 		this.macro = macro;
-		scope.setOwner(this);
-		this.stmts = stmts;
-		if (stmts != null)
-			stmts.setParent(this);
 	}
 	
 	/* (non-Javadoc)
@@ -48,9 +42,8 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	 */
 	@Override
 	public IAstCodeExpr copy(IAstNode copyParent) {
-		IAstCodeExpr copied = new AstCodeExpr(doCopy(proto, copyParent), getScope().newInstance(getCopyScope(copyParent)), doCopy(stmts, copyParent), macro);
-		remapScope(getScope(), copied.getScope(), copied);
-		return fixup(this, copied);
+		return (IAstCodeExpr) fixupStmtScope(new AstCodeExpr(
+				doCopy(proto, copyParent), getScope().newInstance(getCopyScope(copyParent)), doCopy(stmtList, copyParent), macro));
 	}
 	
 	
@@ -70,13 +63,6 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		return macro;
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstScope#getScope()
-	 */
-	@Override
-	public IScope getScope() {
-		return scope;
-	}
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#getPrototype()
 	 */
 	@Override
@@ -85,47 +71,16 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstCodeExpression#getStmts()
-	 */
-	@Override
-	public IAstNodeList<IAstStmt> stmts() {
-		return stmts;
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		if (stmts != null)
-			return new IAstNode[] { proto, stmts };
+		if (stmtList != null)
+			return new IAstNode[] { proto, stmtList };
 		else
 			return new IAstNode[] { proto };
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
-	 */
-	@Override
-	public void replaceChild(IAstNode existing, IAstNode another) {
-		throw new IllegalArgumentException();
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.tools.ast.expr.IAstExpression#equalValue(v9t9.tools.ast.expr.IAstExpression)
-	 */
-	@Override
-	public boolean equalValue(IAstTypedExpr expr) {
-		return expr.equals(this);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		// TODO Auto-generated method stub
-		super.setType(type);
-	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
@@ -134,7 +89,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 			throws TypeException {
 		LLCodeType newType = null;
 		
-		IAstStmt returns = stmts != null ? stmts.getLast() : null;
+		IAstStmt returns = stmtList != null ? stmtList.getLast() : null;
 		
 		LLCodeType protoType = getProtoType(typeEngine, returns);
 		
@@ -216,7 +171,7 @@ public class AstCodeExpr extends AstTypedExpr implements IAstCodeExpr {
 		if (codeType.getRetType().getBasicType() == BasicType.VOID)
 			return;
 			
-		IAstStmt returns = stmts != null ? stmts.getLast() : null;
+		IAstStmt returns = stmtList != null ? stmtList.getLast() : null;
 		if (returns instanceof ITyped) {
 			LLType kidType = ((ITyped) returns).getType();
 			if (kidType != null && kidType.isComplete()) {

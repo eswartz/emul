@@ -4,6 +4,8 @@
 package org.ejs.eulang.symbols;
 
 /**
+ * This is a per-file scope.  It does not have a name.  Top-level symbols in the module
+ * are visible to other modules via imports.
  * @author ejs
  *
  */
@@ -13,15 +15,7 @@ public class ModuleScope extends Scope {
 	 * @param parent
 	 */
 	public ModuleScope(IScope parent) {
-		super(parent);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.symbols.Scope#createSymbol(java.lang.String)
-	 */
-	@Override
-	public ISymbol createSymbol(String name, boolean temporary) {
-		return new GlobalSymbol(nextId(), name, temporary, this, null, false);
+		super(parent, ISymbol.Visibility.MODULE);
 	}
 
 	/* (non-Javadoc)

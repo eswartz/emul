@@ -35,6 +35,6 @@ public abstract class AstTypedExpr extends AstTypedNode implements IAstTypedExpr
 	 */
 	@Override
 	public boolean equalValue(IAstTypedExpr expr) {
-		return false;
+		return expr.equals(this);
 	}
 }

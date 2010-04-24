@@ -13,7 +13,7 @@ import org.ejs.eulang.symbols.IScope;
  *
  */
 public abstract class AstScope extends AstNode implements IAstScope {
-	private IScope scope;
+	protected IScope scope;
 
 	/**
 	 * 
