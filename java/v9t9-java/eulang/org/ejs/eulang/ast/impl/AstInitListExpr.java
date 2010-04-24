@@ -24,10 +24,11 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstInitListExpr extends AstTypedExpr implements IAstInitListExpr { 
+public class AstInitListExpr extends AstInitNodeExpr implements IAstInitListExpr { 
 	private IAstNodeList<IAstInitNodeExpr> initExprs;
 
-	public AstInitListExpr(IAstNodeList<IAstInitNodeExpr> initExprs) {
+	public AstInitListExpr(IAstTypedExpr context, IAstNodeList<IAstInitNodeExpr> initExprs) {
+		super(context, null);
 		setInitExprs(initExprs);
 	}
 	
@@ -44,7 +45,7 @@ public class AstInitListExpr extends AstTypedExpr implements IAstInitListExpr {
 	 */
 	@Override
 	public IAstInitListExpr copy(IAstNode parent) {
-		return fixup(this,new AstInitListExpr(doCopy(initExprs, parent)));
+		return fixup(this,new AstInitListExpr(doCopy(getContext(), parent), doCopy(initExprs, parent)));
 	}
 	
 	
@@ -97,7 +98,10 @@ public class AstInitListExpr extends AstTypedExpr implements IAstInitListExpr {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { initExprs };
+		if (getContext() != null)
+			return new IAstNode[] { getContext(), initExprs };
+		else
+			return new IAstNode[] { initExprs };
 	}
 
 	/* (non-Javadoc)
@@ -109,7 +113,7 @@ public class AstInitListExpr extends AstTypedExpr implements IAstInitListExpr {
 		if (existing == initExprs)
 			setInitExprs((IAstNodeList<IAstInitNodeExpr>) another);
 		else
-			throw new IllegalArgumentException();
+			super.replaceChild(existing, another);
 	}
 
 

@@ -206,10 +206,14 @@ tupleargdef: type    -> type
   |                 -> ^(TYPE NIL)
   ;
   
-type : ( baseType LBRACKET ) => baseType LBRACKET rhsExpr? RBRACKET   -> ^(TYPE ^(ARRAY baseType rhsExpr? ) ) 
+type : ( baseType LBRACKET ) => typedArray -> typedArray 
      | baseType -> baseType 
   ;
 
+typedArray : baseType arrayType+ -> ^(TYPE ^(ARRAY baseType arrayType+)) ; 
+arrayType : LBRACKET rhsExpr RBRACKET -> rhsExpr
+    | LBRACKET RBRACKET -> FALSE
+    ;
 baseType : idOrScopeRef AMP -> ^(TYPE ^(REF idOrScopeRef) ) 
      | idOrScopeRef -> ^(TYPE idOrScopeRef)  
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
@@ -258,9 +262,11 @@ assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN idEx
     ;
 
 initList : LBRACKET (initExpr (COMMA initExpr)*)? RBRACKET     -> ^(INITLIST initExpr* ) ;
-initExpr : e=rhsExpr                                              -> ^(INITEXPR $e) 
+initExpr options { backtrack=true;} 
+    : e=rhsExpr                                              -> ^(INITEXPR $e) 
     | PERIOD ID EQUALS ei=initElement                                  -> ^(INITEXPR $ei ID) 
-    | LBRACKET i=rhsExpr RBRACKET EQUALS ei=initElement                  -> ^(INITEXPR $ei $i) 
+    | LBRACKET i=rhsExpr RBRACKET EQUALS ei=initElement                  -> ^(INITEXPR $ei $i)
+    | initList 
     ;
 
 initElement : rhsExpr | initList;    

@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLTempOp;
@@ -49,8 +50,9 @@ public interface ILLCodeTarget {
 
 	/**
 	 * Load the value of the given source, which should be a variable or an address.
+	 * @throws ASTException 
 	 */
-	public LLOperand load(LLType valueType, LLOperand source);
+	public LLOperand load(LLType valueType, LLOperand source) throws ASTException;
 
 	ITarget getTarget();
 

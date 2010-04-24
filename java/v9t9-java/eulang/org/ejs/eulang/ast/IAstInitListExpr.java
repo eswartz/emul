@@ -8,7 +8,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstInitListExpr extends IAstTypedExpr {
+public interface IAstInitListExpr extends IAstInitNodeExpr {
 	IAstInitListExpr copy(IAstNode parent);
 	
 	IAstNodeList<IAstInitNodeExpr> getInitExprs();

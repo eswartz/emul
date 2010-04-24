@@ -20,6 +20,15 @@ public class LLBitcastOp implements LLOperand {
 		this.castTo = castTo;
 		this.val = val;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.LLOperand#isConstant()
+	 */
+	@Override
+	public boolean isConstant() {
+		return val.isConstant();
+	}
+	
 	@Override
 	public LLType getType() {
 		return castTo;

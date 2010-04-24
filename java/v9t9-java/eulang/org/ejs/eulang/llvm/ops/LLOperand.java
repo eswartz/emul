@@ -16,4 +16,8 @@ public interface LLOperand {
 	String toString();
 	
 	LLType getType();
+	/**
+	 * @return
+	 */
+	boolean isConstant();
 }

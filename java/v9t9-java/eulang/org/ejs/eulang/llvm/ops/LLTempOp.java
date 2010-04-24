@@ -10,12 +10,11 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class LLTempOp implements LLOperand {
+public class LLTempOp extends BaseLLOperand {
 	private int number;
-	private final LLType type;
 	public LLTempOp(int number, LLType type) {
+		super(type);
 		this.number = number;
-		this.type = type;
 	}
 	
 	/* (non-Javadoc)
@@ -31,6 +30,8 @@ public class LLTempOp implements LLOperand {
 		return "%" + number;
 	}
 
+	
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -52,18 +53,12 @@ public class LLTempOp implements LLOperand {
 			return false;
 		return true;
 	}
-	
+
 	/**
 	 * @return the number
 	 */
 	public int getNumber() {
 		return number;
-	}
-	/**
-	 * @return the type
-	 */
-	public LLType getType() {
-		return type;
 	}
 	
 }

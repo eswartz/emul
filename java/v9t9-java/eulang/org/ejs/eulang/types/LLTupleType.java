@@ -82,7 +82,7 @@ public class LLTupleType extends BaseLLAggregateType {
 		
 		TypeEngine.Alignment align = engine.new Alignment(TypeEngine.Target.STRUCT);
 		for (LLType type : types)  {
-			align.add(type);
+			align.alignAndAdd(type);
 		}
 		return align.sizeof();
 	}

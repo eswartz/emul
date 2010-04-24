@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.ILLVariable;
 import org.ejs.eulang.llvm.LLAttrType;
@@ -20,9 +21,11 @@ import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -238,8 +241,9 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 
 	/**
 	 * Load the value of the given operand, if it is a symbol
+	 * @throws ASTException 
 	 */
-	public LLOperand load(LLType valueType, LLOperand source) {
+	public LLOperand load(LLType valueType, LLOperand source) throws ASTException {
 		if (source instanceof LLVariableOp) { 
 			
 			ILLVariable var = ((LLVariableOp) source).getVariable();

@@ -36,7 +36,7 @@ public class LLDataType extends BaseLLAggregateType {
 		TypeEngine.Alignment align = typeEngine.new Alignment(Target.STRUCT);
 		for (int idx = 0; idx < ifields.length; idx++) {
 			LLInstanceField field = ifields[idx];
-			field.setOffset(align.add(field.getType()));
+			field.setOffset(align.alignAndAdd(field.getType()));
 		}
 		this.sizeof = align.sizeof();		
 	}
@@ -105,7 +105,7 @@ public class LLDataType extends BaseLLAggregateType {
 		
 		TypeEngine.Alignment align = engine.new Alignment(TypeEngine.Target.STRUCT);
 		for (LLInstanceField field : fields)  {
-			align.add(field.getType());
+			align.alignAndAdd(field.getType());
 		}
 		return align.sizeof();
 	}

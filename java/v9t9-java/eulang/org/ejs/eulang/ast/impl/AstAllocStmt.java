@@ -13,6 +13,8 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -251,7 +253,14 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 			if (left != null && right != null) {
 				// for init lists, force type to the symbol's type since we can't cast aggregates
 				if (theExpr instanceof IAstInitListExpr) {
-					if (!left.equals(theExpr.getType())) {
+					if (left instanceof LLArrayType && ((LLArrayType) left).isInitSized()) {
+						left = typeEngine.getArrayType(left.getSubType(), ((IAstInitListExpr)theExpr).getInitExprs().nodeCount(), null);
+						theSymbol.setType(left);
+						if (typeExpr != null)
+							typeExpr.setType(left);
+						setType(left);
+					} 
+					if (!left.equals(right)) {
 						theExpr.setType(left);
 						changed = true;
 					}
@@ -262,6 +271,26 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		return changed;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		LLType thisType = ((IAstTypedNode) this).getType();
+		if (thisType == null || !thisType.isComplete())
+			return;
+		
+		for (IAstNode kid : getChildren()) {
+			if (kid instanceof IAstTypedNode) {
+				LLType kidType = ((IAstTypedNode) kid).getType();
+				if (kidType != null && kidType.isComplete()) {
+					if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
+						throw new TypeException(kid, "expression's type does not match parent");
+					}
+				}
+			}
+		}
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAllocStmt#setExpand(boolean)
 	 */

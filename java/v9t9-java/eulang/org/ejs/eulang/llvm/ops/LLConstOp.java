@@ -23,6 +23,14 @@ public class LLConstOp extends BaseLLOperand {
 		this.value = value;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.BaseLLOperand#isConstant()
+	 */
+	@Override
+	public boolean isConstant() {
+		return true;
+	}
+	
 	/**
 	 * @return the value
 	 */

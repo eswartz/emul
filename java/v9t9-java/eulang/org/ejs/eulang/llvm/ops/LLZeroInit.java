@@ -23,5 +23,14 @@ public class LLZeroInit extends BaseLLOperand {/**
 	public String toString() {
 		return "zeroinitializer";
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.BaseLLOperand#isConstant()
+	 */
+	@Override
+	public boolean isConstant() {
+		return true;
+	}
+		
 
 }

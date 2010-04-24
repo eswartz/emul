@@ -551,6 +551,64 @@ public class TestTypes extends BaseParserTest {
     	LLVMGenerator gen = doGenerate(mod);
     	assertFoundInUnoptimizedText("store %Tuplex5 [ {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} bitcast ({[ 2 x i8 ],float,[ 3 x i8 ]} { [ 2 x i8 ] zeroinitializer, float 2.0, [ 3 x i8 ] zeroinitializer } to {i8,float,i8,i8}), {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} bitcast ({i8,[ 6 x i8 ],i8} { i8 1, [ 6 x i8 ] zeroinitializer, i8 55 } to {i8,float,i8,i8}), {i8,float,i8,i8} zeroinitializer ], %Tuplex5*", gen);
     }
+    
+    @Test
+    public void testDataInitVar1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testDataInit2 = code() {\n"+
+    			"  val := 10;\n"+
+    			"  foo:Int[10] = [ [5] = val, [1] = 11 ];\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("insertvalue %Intx10 [ i16 zeroinitializer, i16 11, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer ], i16 %", gen);
+    }
+
+    @Test
+    public void testDataInitVar2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte; };\n"+
+    			"testDataInit3b = code() {\n"+
+    			"  baz:=55;\n"+
+    			"  foo:Tuple[5] = [ [3] = [ baz, .z=55], [1] = [.f=baz] ];\n"+
+    			"};\n"+
+    	"");
+    	// hmm, doing this requires fancy bitcasts and loads/stores to temps,
+    	// and I don't really feel like doing that yet
+    	doGenerate(mod, true);
+    }
+    
+
+	@Test
+    public void testArrayDecls3() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testDataInit4 = code() {\n"+
+    			"  foo:Byte[][3][3];\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testDataInit4").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	IAstAllocStmt stmt = (IAstAllocStmt) code.stmts().list().get(0);
+    	assertEquals(0, ((LLArrayType) stmt.getType()).getArrayCount());
+    	assertEquals(3, ((LLArrayType)((LLArrayType) stmt.getType()).getSubType()).getArrayCount());
+    	assertEquals(3, ((LLArrayType)((LLArrayType)((LLArrayType) stmt.getType()).getSubType()).getSubType()).getArrayCount());
+    	
+    	doGenerate(mod);
+    	
+    }
+
+	@Test
+    public void testDataInit4() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testDataInit4 = code() {\n"+
+    			"  foo:Byte[][3] = [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9]];\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("%Bytex3x3 [ [ 3 x i8 ] [ i8 1, i8 2, i8 3 ], [ 3 x i8 ] [ i8 4, i8 5, i8 6 ], [ 3 x i8 ] [ i8 7, i8 8, i8 9 ] ], %Bytex3x3*", gen);
+    }
 }
 
 

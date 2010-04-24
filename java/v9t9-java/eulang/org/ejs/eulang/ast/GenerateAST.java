@@ -454,6 +454,8 @@ public class GenerateAST {
 
 		case EulangParser.INITLIST:
 			return constructInitList(tree);
+		case EulangParser.INITEXPR:
+			return constructInitNodeExpr(tree);
 			
 		case EulangParser.CALL:
 			return constructCallOrCast(tree);
@@ -518,37 +520,50 @@ public class GenerateAST {
 		IAstNodeList<IAstInitNodeExpr> initExprs = new AstNodeList<IAstInitNodeExpr>(IAstInitNodeExpr.class);
 		int index = 0;
 		for (Tree kid : iter(tree)) {
-			IAstTypedExpr expr = checkConstruct(kid.getChild(0), IAstTypedExpr.class);
-			IAstTypedExpr context = null;
-			if (kid.getChildCount() == 1) {
-				context = new AstIntLitExpr(""+index, typeEngine.INT, index);
-				getEmptySource(kid, context);
-			} else if (kid.getChild(1).getType() == EulangParser.ID) {
-				IAstName name = new AstName(kid.getChild(1).getText());
-				getSource(kid, name);
-				context = new AstFieldExpr(null, name);
-				getSource(kid, context);
-			} else {
-				IAstTypedExpr indexExpr = checkConstruct(kid.getChild(1), IAstTypedExpr.class);
-				indexExpr = indexExpr.simplify(typeEngine);
-				if (!(indexExpr instanceof IAstIntLitExpr))
-					throw new GenerateException(kid.getChild(1), "an index expression must be a compile-time constant");
-				context = new AstIndexExpr(null, indexExpr);
-				getSource(kid, context);
-				index = (int) ((IAstIntLitExpr) indexExpr).getValue();
-			}	
-			IAstInitNodeExpr initNode = new AstInitNodeExpr(context, expr);
-			getSource(kid, initNode);
+			IAstInitNodeExpr initNode = checkConstruct(kid, IAstInitNodeExpr.class);
 			initExprs.add(initNode);
+			
+			if (initNode.getContext() == null) {
+				IAstIntLitExpr context = new AstIntLitExpr(""+index, typeEngine.INT, index);
+				getEmptySource(tree, context);
+				initNode.setContext(context);
+			} else if (initNode.getContext() instanceof IAstIndexExpr) {
+				index = (int) ((IAstIntLitExpr) ((IAstIndexExpr) initNode.getContext()).getIndex()).getValue();
+			} else if (initNode.getContext() instanceof IAstIntLitExpr) {
+				index = (int) ((IAstIntLitExpr) initNode.getContext()).getValue();
+			} 
 			index++;
 		}
-		IAstInitListExpr list = new AstInitListExpr(initExprs);
+		IAstInitListExpr list = new AstInitListExpr(null, initExprs);
 		getSource(tree, initExprs);
 		getSource(tree, list);
 		
 		return list;
 	}
 
+	private IAstInitNodeExpr constructInitNodeExpr(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		IAstTypedExpr context = null;
+		if (tree.getChildCount() == 1) {
+			context = null;
+		} else if (tree.getChild(1).getType() == EulangParser.ID) {
+			IAstName name = new AstName(tree.getChild(1).getText());
+			getSource(tree, name);
+			context = new AstFieldExpr(null, name);
+			getSource(tree, context);
+		} else {
+			IAstTypedExpr indexExpr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+			indexExpr = indexExpr.simplify(typeEngine);
+			if (!(indexExpr instanceof IAstIntLitExpr))
+				throw new GenerateException(tree.getChild(1), "an index expression must be a compile-time constant");
+			context = new AstIndexExpr(null, indexExpr);
+			getSource(tree, context);
+			//index = (int) ((IAstIntLitExpr) indexExpr).getValue();
+		}	
+		IAstInitNodeExpr initNode = new AstInitNodeExpr(context, expr);
+		getSource(tree, initNode);
+		return initNode;
+	}
 	/**
 	 * @param tree
 	 * @return
@@ -1559,13 +1574,22 @@ public class GenerateAST {
 				}
 				type = new AstType(new LLTupleType(typeEngine, tupleTypes));
 			} else if (tree.getType() == EulangParser.ARRAY) {
-				IAstTypedExpr countExpr = null;
-				if (tree.getChild(1) != null) {
-					countExpr = checkConstruct(tree.getChild(1),
-							IAstTypedExpr.class);
-				}
 				assert kid0.getType() == EulangParser.TYPE;
-				type = new AstArrayType(constructType(kid0.getChild(0)), countExpr);
+				type = constructType(kid0.getChild(0));
+				for (int idx = tree.getChildCount(); idx-- > 1; ) {
+					IAstTypedExpr countExpr = null;
+					Tree kid = tree.getChild(idx);
+					if (kid.getType() == EulangParser.FALSE) {
+						if (idx != 1)
+							throw new GenerateException(kid, "only the first array element can be variable");
+					} else {
+						countExpr = checkConstruct(kid,
+								IAstTypedExpr.class);
+					}
+					type = new AstArrayType(type, countExpr);
+					getSource(tree, type);
+				}
+				
 			} else if (tree.getType() == EulangParser.REF) {
 				LLType baseType = constructType(kid0).getType();// TODO
 				type = new AstType(typeEngine.getRefType(baseType)); 

@@ -90,6 +90,12 @@ public class LLArrayType extends BaseLLType {
 		return arrayCount;
 	}
 
+	public boolean isValidArrayIndex(int index) {
+		if (isInitSized())
+			return true;
+		else
+			return index < arrayCount;
+	}
 
 
 	/**
@@ -97,5 +103,14 @@ public class LLArrayType extends BaseLLType {
 	 */
 	public IAstTypedExpr getDynamicSizeExpr() {
 		return dynamicSizeExpr;
+	}
+
+
+
+	/**
+	 * @return
+	 */
+	public boolean isInitSized() {
+		return arrayCount == 0 && dynamicSizeExpr == null;
 	}
 }

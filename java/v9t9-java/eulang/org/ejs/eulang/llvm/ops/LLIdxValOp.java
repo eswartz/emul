@@ -23,6 +23,14 @@ public class LLIdxValOp implements LLOperand {
 	public LLType getType() {
 		return val.getType();
 	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.LLOperand#isConstant()
+	 */
+	@Override
+	public boolean isConstant() {
+		return val.isConstant();
+	}
+	
 	@Override
 	public String toString() {
 		return idx + " " + val;

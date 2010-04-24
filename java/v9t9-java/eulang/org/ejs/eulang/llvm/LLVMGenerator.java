@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -932,8 +933,11 @@ entry:
 		
 		if (notAgg)
 			return generateTypedExpr(expr.getInitExprs().getFirst().getExpr());
-		
-		List<LLOperand> initOps = new ArrayList<LLOperand>();
+
+		// constant init ops stored here, with zeroinits for nonconstant ones
+		List<LLOperand> constOps = new ArrayList<LLOperand>();
+		// non-const ops evaluated and stored here by position in constOps
+		Map<Integer, LLOperand> nonConstOps = new LinkedHashMap<Integer,LLOperand>();
 
 		ArrayList<IAstInitNodeExpr> sortedFields = new ArrayList<IAstInitNodeExpr>(expr.getInitExprs().list());
 		Collections.sort(sortedFields, new Comparator<IAstInitNodeExpr>() {
@@ -960,15 +964,22 @@ entry:
 		boolean isArray = expr.getType() instanceof LLArrayType;
 		boolean needAlignment = true;
 		
-		int fieldCount = expr.getType() instanceof LLAggregateType ? ((LLAggregateType) expr.getType()).getCount() : 
-				((LLArrayType) expr.getType()).getArrayCount();
+		int fieldCount;
+		if (expr.getType() instanceof LLAggregateType) {
+			fieldCount = ((LLAggregateType) expr.getType()).getCount();
+		} else {
+			if (((LLArrayType) expr.getType()).getArrayCount() != 0)
+				fieldCount = ((LLArrayType) expr.getType()).getArrayCount();
+			else
+				fieldCount = sortedFields.size();
+		}
 		
 		// track the init-view types, which include explicit zeroinitializer slots
 		List<LLType> initFieldTypes = new ArrayList<LLType>();
 		if (isArray) {
 			TypeEngine.Alignment align = typeEngine.new Alignment(TypeEngine.Target.STRUCT);
 			LLType elType = expr.getType().getSubType();
-			align.add(elType);
+			align.alignAndAdd(elType);
 			if (align.sizeof() == elType.getBits())
 				initFieldTypes.add(elType);
 			else
@@ -995,17 +1006,35 @@ entry:
 			
 			if (initInfo.first == fieldIdx) {
 
+				IAstTypedExpr initExpr = initNode.getExpr();
+				LLOperand op;
+				
+				if (initExpr == null && initNode instanceof IAstInitListExpr) {
+					op = generateInitListExpr((IAstInitListExpr) initNode);
+				} else {
+					op = generateTypedExpr(initExpr);
+					
+				}
 				if (needAlignment) {
 					// add zero init if we skipped anything
-					int gap = align.nextOffset(initNode.getExpr().getType()) - curOffs;
-					addZeroInitGap(gap, initOps, initFieldTypes, isArray, align);
+					int gap = align.alignmentGap(op.getType()) + (align.sizeof() - curOffs);
+					addZeroInitGap(gap, constOps, initFieldTypes, isArray, align);
 					curOffs = align.sizeof();
 				}
 				
-				LLOperand op = generateTypedExpr(initNode.getExpr());
-				initOps.add(op);
+				
+				if (op.isConstant()) {
+					constOps.add(op);
+				} else{
+					if (op.getType() instanceof LLAggregateType || op.getType() instanceof LLArrayType)
+						throw new ASTException(initNode, "cannot initialize with variable aggregates");
+					int idx = constOps.size();
+					constOps.add(new LLZeroInit(op.getType()));
+					nonConstOps.put(idx, op);
+				}
+				
 				curOffs += op.getType().getBits();
-				align.add(op.getType());
+				align.addAtOffset(op.getType());
 				if (!isArray) initFieldTypes.add(initInfo.second);
 				
 				initInfo = null;
@@ -1017,7 +1046,7 @@ entry:
 					? ((LLAggregateType) expr.getType()).getType(fieldIdx) 
 						: expr.getType().getSubType();
 				
-				align.add(fieldType);
+				align.alignAndAdd(fieldType);
 			}
 		}
 		
@@ -1029,22 +1058,34 @@ entry:
 				? ((LLAggregateType) expr.getType()).getType(fieldIdx) 
 					: expr.getType().getSubType();
 
-			align.add(fieldType);
+			align.alignAndAdd(fieldType);
 		}
 		
 		if (needAlignment) {
 			// fill final gap
 			int gap = align.sizeof() - curOffs;
-			addZeroInitGap(gap, initOps, initFieldTypes, isArray, align);
+			addZeroInitGap(gap, constOps, initFieldTypes, isArray, align);
 		}
 		
 		LLOperand initOp;
+		LLType initType;
 		if (isArray) {
-			LLArrayType initType = typeEngine.getArrayType(initFieldTypes.get(0), ((LLArrayType) expr.getType()).getArrayCount(), null);
-			initOp = new LLArrayOp(initType, initOps.toArray(new LLOperand[initOps.size()]));
+			int size = ((LLArrayType) expr.getType()).getArrayCount();
+			if (size == 0)
+				size = constOps.size();
+			initType = typeEngine.getArrayType(initFieldTypes.get(0), size, null);
+			initOp = new LLArrayOp((LLArrayType) initType, constOps.toArray(new LLOperand[constOps.size()]));
 		} else {
-			LLDataType initType = typeEngine.getDataType(expr.getType().getName() + "$init", initFieldTypes);
-			initOp = new LLStructOp(initType, initOps.toArray(new LLOperand[initOps.size()]));
+			initType = typeEngine.getDataType(expr.getType().getName() + "$init", initFieldTypes);
+			initOp = new LLStructOp((LLAggregateType) initType, constOps.toArray(new LLOperand[constOps.size()]));
+		}
+		
+		// inject non-consts
+		for (Map.Entry<Integer, LLOperand> entry : nonConstOps.entrySet()) {
+			LLOperand temp = currentTarget.newTemp(initType);
+			currentTarget.emit(new LLInsertValueInstr(temp, initType, initOp, 
+					entry.getValue().getType(), entry.getValue(), entry.getKey()));
+			initOp = temp;
 		}
 		
 		return initOp;

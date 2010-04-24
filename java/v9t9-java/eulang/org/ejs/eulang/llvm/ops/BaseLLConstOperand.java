@@ -9,11 +9,11 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public abstract class BaseLLOperand implements LLOperand {
+public abstract class BaseLLConstOperand implements LLOperand {
 
 	protected final LLType type;
 
-	public BaseLLOperand(LLType type) {
+	public BaseLLConstOperand(LLType type) {
 		this.type = type;
 	}
 	/* (non-Javadoc)
@@ -29,7 +29,7 @@ public abstract class BaseLLOperand implements LLOperand {
 	 */
 	@Override
 	public boolean isConstant() {
-		return false;
+		return true;
 	}
 
 }

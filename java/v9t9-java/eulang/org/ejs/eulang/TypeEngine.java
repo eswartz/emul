@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstType;
@@ -22,6 +23,7 @@ import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
@@ -55,6 +57,8 @@ public class TypeEngine {
 	public LLLabelType LABEL;
 	public LLType NIL;
 	
+	private Map<String, LLType> llvmNameToTypeMap = new HashMap<String, LLType>();
+	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 	private Set<LLType> types = new HashSet<LLType>();
 	private Map<LLType, LLPointerType> ptrTypeMap = new HashMap<LLType, LLPointerType>();
@@ -82,9 +86,43 @@ public class TypeEngine {
 		/**
 		 * Get the bit offset of a field of the given type if it were added
 		 * @param type
-		 * @return bit offset
+		 * @return next field offset, next aligned offset after adding 
 		 */
-		public int nextOffset(LLType type) {
+		private Pair<Integer,Integer> calcNextOffset(LLType type, boolean alignToField) {
+			if (type instanceof LLArrayType) {
+				Pair<Integer, Integer> ret = new Pair<Integer, Integer>(offset, offset);
+				Pair<Integer, Integer> first = ret;
+				int origOffset = offset;
+				int end = ((LLArrayType) type).getArrayCount();
+				for (int i = 0; i < end; i++) {
+					ret = calcNextOffset(type.getSubType(), alignToField);
+					if (alignToField && i == 0) 
+						first = ret;
+					offset = ret.second;
+				}
+				offset = origOffset;
+				if (alignToField)
+					ret.first = first.first;
+				return ret;
+			}
+			if (type instanceof LLAggregateType) {
+				Pair<Integer, Integer> ret = new Pair<Integer, Integer>(offset, offset);
+				Pair<Integer, Integer> first = ret;
+				int origOffset = offset;
+				int end = ((LLAggregateType) type).getCount();
+				for (int i = 0; i < end; i++) {
+					LLType subType = ((LLAggregateType) type).getType(i);
+					ret = calcNextOffset(subType, alignToField);
+					if (alignToField && i == 0) 
+						first = ret;
+					offset = ret.second;
+				}
+				offset = origOffset;
+				if (alignToField)
+					ret.first = first.first;
+				return ret;
+			}
+			
 			int bits = type != null ? type.getBits() : 0;
 			
 			int minAlign = target == Target.STRUCT ? getStructMinAlign() : getStackMinAlign();
@@ -95,38 +133,107 @@ public class TypeEngine {
 			if (bits < align)
 				align = minAlign;
 			
-			if (offset % align != 0) {
-				return offset + (align - offset % align);
+			int fieldOffset = offset;
+			if (alignToField) {
+				if (fieldOffset % align != 0) {
+					fieldOffset += (align - fieldOffset % align);
+				}
 			}
-			return offset;
+			
+			int nextOffset = fieldOffset;
+
+			nextOffset += bits; 
+			if (nextOffset % align != 0)
+				nextOffset += (align - offset % align);
+			return new Pair<Integer, Integer>(fieldOffset, nextOffset);
 		}
 		
-		/** Add a type to align.  
+		/**
+		 * Get the size of a gap from the current offset to the position of the given type's field
+		 * @param type
+		 * @return bit offset
+		 */
+		public int alignmentGap(LLType type) {
+			while (type != null && type instanceof LLArrayType) {
+				type = type.getSubType();
+			}
+			
+			while (type != null && type instanceof LLAggregateType) {
+				if (((LLAggregateType) type).getCount() > 0)
+					type = ((LLAggregateType) type).getType(0);
+				else
+					break;
+			}
+			
+			int bits = type != null ? type.getBits() : 0;
+			
+			int minAlign = target == Target.STRUCT ? getStructMinAlign() : getStackMinAlign();
+			int align = target == Target.STRUCT ? getStructAlign() : getStackAlign();
+			
+			if (bits != 0 && bits < minAlign)
+				bits = minAlign;
+			if (bits < align)
+				align = minAlign;
+			
+			int fieldOffset = offset;
+			if (fieldOffset % align != 0) {
+				fieldOffset += (align - fieldOffset % align);
+			}
+
+			return fieldOffset - offset;
+		}
+		
+		/** 
+		 * Add a type to align.  
 		 * 
 		 * @param type
 		 * @return the bit offset of the type
 		 */
-		public int add(LLType type) {
+		public int addAtOffset(LLType type) {
+			LLType alignType = type;
+			while (alignType != null && alignType instanceof LLArrayType) {
+				alignType = alignType.getSubType();
+			}
+			
+			
 			int bits = type != null ? type.getBits() : 0;
-				
+			int alignBits = alignType != null ? alignType.getBits() : 0;
+			
 			int minAlign = target == Target.STRUCT ? getStructMinAlign() : getStackMinAlign();
 			int align = target == Target.STRUCT ? getStructAlign() : getStackAlign();
 			
 			if (bits != 0 && bits < minAlign)
 				bits = minAlign;
-			if (bits < align)
+			if (alignBits < align)
 				align = minAlign;
 			
-			if (offset % align != 0) {
-				offset += (align - offset % align);
-			}
-			
 			int fieldOffset = offset;
+			/*if (alignToField) {
+				if (fieldOffset % align != 0) {
+					fieldOffset += (align - fieldOffset % align);
+				}
+			}
+			*/
 			
-			offset += bits; 
-			if (offset % align != 0)
-				offset += (align - offset % align);
+			int nextOffset = fieldOffset;
+
+			nextOffset += bits; 
+			if (nextOffset % align != 0)
+				nextOffset += (align - offset % align);
+			offset = nextOffset;
+			
 			return fieldOffset;
+		}
+		
+		/** 
+		 * Add a type to align.  
+		 * 
+		 * @param type
+		 * @return the bit offset of the type
+		 */
+		public int alignAndAdd(LLType type) {
+			add(alignmentGap(type));
+			return addAtOffset(type);
 		}
 		/**
 		 * @return the bit size after final alignment 
@@ -158,6 +265,7 @@ public class TypeEngine {
 	public LLType INTPTR;
 	public LLType REFPTR;
 	public LLBoolType LLBOOL;
+	private int gUniqueId;
 	
 	/**
 	 * 
@@ -303,7 +411,7 @@ public class TypeEngine {
 		LLCodeType type = codeTypes.get(key);
 		if (type == null) {
 			type = new LLCodeType(retType, argTypes, getPtrBits());
-			codeTypes .put(key, type);
+			codeTypes.put(key, type);
 		}
 		return type;
 	}
@@ -498,12 +606,30 @@ public class TypeEngine {
 		String key = getDataTypeKey(name, ifields, statics);
 		LLDataType data = dataTypeMap.get(key);
 		if (data == null) {
+			name = uniquify(name);
 			data = new LLDataType(this, name,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
 					(LLStaticField[]) statics.toArray(new LLStaticField[statics.size()]));
 			dataTypeMap.put(key, data);
+			llvmNameToTypeMap.put(name, data);
 		}
 		return data;
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	private String uniquify(String origName) {
+		String name = origName; 
+		while (true) {
+			if (llvmNameToTypeMap.containsKey(name)) {
+				name = origName + "." + gUniqueId++;
+			} else {
+				break;
+			}
+		}
+		return name;
 	}
 
 	private String getDataTypeKey(String name, List<LLInstanceField> ifields,
@@ -524,9 +650,11 @@ public class TypeEngine {
 			List<LLInstanceField> ifields = new ArrayList<LLInstanceField>(fieldTypes.size());
 			for (LLType type : fieldTypes)
 				ifields.add(new LLInstanceField("", type, null, null));
+			name = uniquify(name);
 			data = new LLDataType(this, name,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
 					null);
+			llvmNameToTypeMap.put(name, data);
 			dataTypeMap.put(key, data);
 		}
 		return data;

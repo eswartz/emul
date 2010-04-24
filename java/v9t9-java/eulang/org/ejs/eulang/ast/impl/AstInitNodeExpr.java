@@ -171,7 +171,7 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 			} else {
 				throw new TypeException(context, "unhandled initializer context");
 			}
-			if (fieldIdx < 0 || fieldIdx >= ((LLArrayType) exprType).getArrayCount()) 
+			if (fieldIdx < 0 || !((LLArrayType) exprType).isValidArrayIndex(fieldIdx)) 
 				throw new TypeException(expr, "invalid array initializer index " + fieldIdx);
 			fieldType = exprType.getSubType();
 		} else {

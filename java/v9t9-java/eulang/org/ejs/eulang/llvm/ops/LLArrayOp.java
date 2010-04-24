@@ -6,14 +6,13 @@ package org.ejs.eulang.llvm.ops;
 import java.util.Arrays;
 
 import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
  *
  */
-public class LLArrayOp implements LLOperand {
+public class LLArrayOp extends BaseLLConstOperand {
 
 	private final LLArrayType arrayType;
 	private final LLOperand[] elements;
@@ -22,18 +21,11 @@ public class LLArrayOp implements LLOperand {
 	 * 
 	 */
 	public LLArrayOp(LLArrayType type, LLOperand[] elements) {
+		super(type);
 		this.arrayType = type;
 		this.elements = elements;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.ops.LLOperand#getType()
-	 */
-	@Override
-	public LLType getType() {
-		return arrayType;
-	}
-	
 	public LLOperand[] getElements() {
 		return elements;
 	}
@@ -41,7 +33,7 @@ public class LLArrayOp implements LLOperand {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
+		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(elements);
 		result = prime * result
 				+ ((arrayType == null) ? 0 : arrayType.hashCode());
@@ -53,17 +45,12 @@ public class LLArrayOp implements LLOperand {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj == null)
+		if (!super.equals(obj))
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
 		LLArrayOp other = (LLArrayOp) obj;
 		if (!Arrays.equals(elements, other.elements))
-			return false;
-		if (arrayType == null) {
-			if (other.arrayType != null)
-				return false;
-		} else if (!arrayType.equals(other.arrayType))
 			return false;
 		return true;
 	}

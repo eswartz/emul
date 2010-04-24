@@ -23,4 +23,13 @@ public class LLUndefOp extends BaseLLOperand {
 	public String toString() {
 		return "undef";
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.BaseLLOperand#isConstant()
+	 */
+	@Override
+	public boolean isConstant() {
+		return true;
+	}
+	
 }
