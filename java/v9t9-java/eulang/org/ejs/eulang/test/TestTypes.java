@@ -731,6 +731,38 @@ public class TestTypes extends BaseParserTest {
 	}
 	
 	@Test
+	public void testPointerInit1b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerInit1b = code() {\n"+
+    			"  foo:Byte=10;\n"+
+    			"  foo0:=&foo;\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerInit1b").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	LLType bytePtr = typeEngine.getPointerType(typeEngine.BYTE);
+    	IAstAllocStmt alloc;
+    	
+    	// setting a pointer to an address
+		alloc = (IAstAllocStmt) code.stmts().list().get(1);
+    	assertEquals(bytePtr, alloc.getType());
+    	assertEquals(bytePtr, alloc.getTypeExpr().getType());
+    	assertEquals(bytePtr, alloc.getSymbolExprs().getFirst().getType());
+    	assertEquals(bytePtr, alloc.getExprs().getFirst().getType());
+    	IAstAddrOfExpr addrOf = (IAstAddrOfExpr) alloc.getExprs().getFirst();
+    	assertEquals(typeEngine.BYTE, addrOf.getExpr().getType());
+    	
+    	// infers a pointer type
+    	alloc = (IAstAllocStmt) code.stmts().list().get(1);
+    	assertEquals(bytePtr, alloc.getType());
+    	assertEquals(bytePtr, alloc.getSymbolExprs().getFirst().getType());
+    	assertEquals(bytePtr, alloc.getExprs().getFirst().getType());
+    	
+    	doGenerate(mod);
+    	
+	}
+	@Test
 	public void testPointerInit2() throws Exception {
     	IAstModule mod = doFrontend(
     			"testPointerInit2 = code() {\n"+
@@ -831,7 +863,7 @@ public class TestTypes extends BaseParserTest {
 	public void testPointerMath2() throws Exception {
     	IAstModule mod = doFrontend(
     			"testPointerMath2 = code(foo:Int^) {\n"+
-    			"  (foo^+4)-foo^;\n"+
+    			"  foo^+4-foo^;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
@@ -845,6 +877,19 @@ public class TestTypes extends BaseParserTest {
     			"  foop:Int^=&foo;\n"+
     			"  foo1, foo2 : Int^ = foop^+1, foop^+3;\n"+
     			"  foo1 * foo2;\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i16 8", gen);
+	}
+	@Test
+	public void testPointerMath3b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerMath3b = code() {\n"+
+    			"  foo:Int[4] = [ 1, 2, 3, 4];\n"+
+    			"  foop:Int^=&foo;\n"+
+    			// implicit DEREF on parenthesized expressions
+    			"  ((foop^+1) * (foop^+3));\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);

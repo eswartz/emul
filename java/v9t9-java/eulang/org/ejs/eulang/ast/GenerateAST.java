@@ -457,7 +457,7 @@ public class GenerateAST {
 		case EulangParser.EXPR:
 			return construct(tree.getChild(0));
 
-		case EulangParser.VALUE:
+		case EulangParser.DEREF:
 			return constructDeref(tree);
 		case EulangParser.ADDRREF:
 			return constructAddrRef(tree);

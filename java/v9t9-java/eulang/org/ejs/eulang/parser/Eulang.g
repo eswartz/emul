@@ -70,7 +70,7 @@ tokens {
   INDEX;
   POINTER;
   
-  VALUE;
+  DEREF;
   ADDRREF;
   ADDROF;
   
@@ -481,7 +481,7 @@ noIdAtom :
     |   NIL                          -> ^(LIT NIL)
     |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef f=funcCall  -> ^(INLINE idOrScopeRef $f)
     |   ( tuple ) => tuple                          -> tuple
-    |   LPAREN assignExpr RPAREN               -> assignExpr
+    |   LPAREN assignExpr RPAREN               -> ^(DEREF assignExpr)
     |    code                           -> code   
     ;
 
@@ -489,7 +489,7 @@ atom : noIdAtom | idExpr ;
 
 // an idOrScopeRef can have dotted parts that interpreted either as scope derefs or field refs,
 // so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 
-idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR ^(VALUE idOrScopeRef) appendIdModifiers*) ;
+idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR ^(DEREF idOrScopeRef) appendIdModifiers*) ;
 
 appendIdModifiers : nonFieldIdModifier idModifier* ;
 

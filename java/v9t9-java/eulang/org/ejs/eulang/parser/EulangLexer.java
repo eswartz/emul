@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-04-24 09:44:17
+// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-04-24 13:00:58
 
 package org.ejs.eulang.parser;
 
@@ -15,6 +15,7 @@ public class EulangLexer extends Lexer {
     public static final int MOD=33;
     public static final int POINTER=53;
     public static final int PREDEC=39;
+    public static final int DEREF=54;
     public static final int MINUSMINUS=116;
     public static final int DO=81;
     public static final int ARGLIST=10;
@@ -53,7 +54,6 @@ public class EulangLexer extends Lexer {
     public static final int NUMBER=117;
     public static final int LIT=40;
     public static final int UDIV=32;
-    public static final int VALUE=54;
     public static final int LIST=17;
     public static final int MUL=30;
     public static final int ARGDEF=11;
