@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstType;
@@ -81,71 +80,6 @@ public class TypeEngine {
 		public Alignment(Target target) {
 			this.target = target;
 			offset = 0;
-		}
-		
-		/**
-		 * Get the bit offset of a field of the given type if it were added
-		 * @param type
-		 * @return next field offset, next aligned offset after adding 
-		 */
-		private Pair<Integer,Integer> calcNextOffset(LLType type, boolean alignToField) {
-			if (type instanceof LLArrayType) {
-				Pair<Integer, Integer> ret = new Pair<Integer, Integer>(offset, offset);
-				Pair<Integer, Integer> first = ret;
-				int origOffset = offset;
-				int end = ((LLArrayType) type).getArrayCount();
-				for (int i = 0; i < end; i++) {
-					ret = calcNextOffset(type.getSubType(), alignToField);
-					if (alignToField && i == 0) 
-						first = ret;
-					offset = ret.second;
-				}
-				offset = origOffset;
-				if (alignToField)
-					ret.first = first.first;
-				return ret;
-			}
-			if (type instanceof LLAggregateType) {
-				Pair<Integer, Integer> ret = new Pair<Integer, Integer>(offset, offset);
-				Pair<Integer, Integer> first = ret;
-				int origOffset = offset;
-				int end = ((LLAggregateType) type).getCount();
-				for (int i = 0; i < end; i++) {
-					LLType subType = ((LLAggregateType) type).getType(i);
-					ret = calcNextOffset(subType, alignToField);
-					if (alignToField && i == 0) 
-						first = ret;
-					offset = ret.second;
-				}
-				offset = origOffset;
-				if (alignToField)
-					ret.first = first.first;
-				return ret;
-			}
-			
-			int bits = type != null ? type.getBits() : 0;
-			
-			int minAlign = target == Target.STRUCT ? getStructMinAlign() : getStackMinAlign();
-			int align = target == Target.STRUCT ? getStructAlign() : getStackAlign();
-			
-			if (bits != 0 && bits < minAlign)
-				bits = minAlign;
-			if (bits < align)
-				align = minAlign;
-			
-			int fieldOffset = offset;
-			if (alignToField) {
-				if (fieldOffset % align != 0) {
-					fieldOffset += (align - fieldOffset % align);
-				}
-			}
-			
-			int nextOffset = fieldOffset;
-
-			nextOffset += bits; 
-			if (nextOffset % align != 0)
-				nextOffset += (align - offset % align);
-			return new Pair<Integer, Integer>(fieldOffset, nextOffset);
 		}
 		
 		/**

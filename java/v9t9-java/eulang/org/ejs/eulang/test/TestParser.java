@@ -3,10 +3,6 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.assertEquals;
-
-import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.llvm.LLVMGenerator;
 import org.junit.Test;
 /**
  * @author ejs

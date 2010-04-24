@@ -3,9 +3,6 @@
  */
 package org.ejs.eulang.types;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.IAstTypedExpr;
 

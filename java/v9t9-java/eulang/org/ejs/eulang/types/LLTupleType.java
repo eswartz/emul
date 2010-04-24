@@ -5,7 +5,6 @@ package org.ejs.eulang.types;
 
 import java.util.Arrays;
 
-import org.apache.batik.css.engine.value.svg.AlignmentBaselineManager;
 import org.ejs.eulang.TypeEngine;
 
 /**

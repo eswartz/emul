@@ -4,7 +4,6 @@
 package org.ejs.eulang.optimize;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstAddrRefExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 

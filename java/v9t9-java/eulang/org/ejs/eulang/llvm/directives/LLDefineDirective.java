@@ -21,11 +21,9 @@ import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -36,7 +34,6 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLType;
 
 /**

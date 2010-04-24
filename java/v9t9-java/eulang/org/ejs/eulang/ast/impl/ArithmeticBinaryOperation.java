@@ -8,7 +8,6 @@ import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
-import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
