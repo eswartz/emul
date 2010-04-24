@@ -135,7 +135,7 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test 
     public void testBinOps() throws Exception {
-    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9^10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
+    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9 xor 10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("opPrec1");

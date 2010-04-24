@@ -544,7 +544,7 @@ public class TypeEngine {
 		this.structMinAlign = structMinAlign;
 	}
 
-	public LLType getPointerType(LLType type) {
+	public LLPointerType getPointerType(LLType type) {
 		LLPointerType ptrType = ptrTypeMap.get(type);
 		if (ptrType == null) {
 			ptrType = new LLPointerType(ptrBits, type);

@@ -15,10 +15,13 @@ import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
+import org.ejs.eulang.types.LLIntType;
+import org.ejs.eulang.types.LLPointerType;
 import org.junit.Test;
 
 /**
@@ -595,19 +598,20 @@ public class TestTypes extends BaseParserTest {
 	@Test
     public void testArrayAccess3() throws Exception {
     	IAstModule mod = doFrontend(
-    			"testArrayAccess3 = code() {\n"+
-    			"  foo:Byte[3][3];\n"+
-    			"  foo[1][2] + (foo[2])[1];"+
+    			"testArrayAccess3 = code(foo:Byte[3][3]) {\n"+
+    			"  foo[1][2] + (foo[2])[2];"+
     			"};\n"+
     	"");
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testArrayAccess3").getDefinition());
     	assertTrue(code.getType().isComplete());
 
-    	IAstAllocStmt stmt = (IAstAllocStmt) code.stmts().list().get(0);
-    	assertEquals(3, ((LLArrayType) stmt.getType()).getArrayCount());
-    	assertEquals(3, ((LLArrayType)((LLArrayType) stmt.getType()).getSubType()).getArrayCount());
+    	ISymbol sym = code.getScope().get("foo");
+    	assertEquals(3, ((LLArrayType) sym.getType()).getArrayCount());
+    	assertEquals(3, ((LLArrayType)((LLArrayType) sym.getType()).getSubType()).getArrayCount());
     	
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("%foo, i16 0, i16 1, i16 2", gen);
+    	assertFoundInOptimizedText("%foo, i16 0, i16 2, i16 2", gen);
     	
     }
 	@Test
@@ -627,6 +631,65 @@ public class TestTypes extends BaseParserTest {
     	LLVMGenerator gen = doGenerate(mod);
     	assertFoundInUnoptimizedText("%Bytex3x3 [ [ 3 x i8 ] [ i8 1, i8 2, i8 3 ], [ 3 x i8 ] [ i8 4, i8 5, i8 6 ], [ 3 x i8 ] [ i8 7, i8 8, i8 9 ] ], %Bytex3x3*", gen);
     }
+	
+	@Test
+	public void testPointerDecl1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerDecl1 = code() {\n"+
+    			"  foo0:Byte^;\n"+
+    			"  foo1:Byte^^;\n"+
+    			"  foo2:Byte^[10];\n"+
+    			"  foo3:Byte[10]^;\n"+
+    			"  foo4:Byte^[10]^;\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerDecl1").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	IAstAllocStmt stmt;
+		stmt = (IAstAllocStmt) code.stmts().list().get(0);
+    	assertTrue(stmt.getType() instanceof LLPointerType);
+    	assertTrue(stmt.getType().getSubType() instanceof LLIntType);
+    	
+    	stmt = (IAstAllocStmt) code.stmts().list().get(1);
+    	assertTrue(stmt.getType() instanceof LLPointerType);
+    	assertTrue(stmt.getType().getSubType() instanceof LLPointerType);
+    	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLIntType);
+		
+    	stmt = (IAstAllocStmt) code.stmts().list().get(2);
+    	assertTrue(stmt.getType() instanceof LLArrayType);
+    	assertTrue(stmt.getType().getSubType() instanceof LLPointerType);
+    	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLIntType);
+    	
+    	stmt = (IAstAllocStmt) code.stmts().list().get(3);
+    	assertTrue(stmt.getType() instanceof LLPointerType);
+    	assertTrue(stmt.getType().getSubType() instanceof LLArrayType);
+    	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLIntType);
+    	
+    	stmt = (IAstAllocStmt) code.stmts().list().get(4);
+    	assertTrue(stmt.getType() instanceof LLPointerType);
+    	assertTrue(stmt.getType().getSubType() instanceof LLArrayType);
+    	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLPointerType);
+    	assertTrue(stmt.getType().getSubType().getSubType().getSubType() instanceof LLIntType);
+    	
+	}
+	
+	@Test
+	public void testPointerInit1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerInit1 = code() {\n"+
+    			"  foo:Byte=10;\n"+
+    			"  foo0:Byte^=foo;\n"+
+    			"  foo0^ = 0;\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerInit1").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	IAstAllocStmt stmt;
+		stmt = (IAstAllocStmt) code.stmts().list().get(1);
+    	
+	}
 }
 
 

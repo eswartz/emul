@@ -17,6 +17,7 @@ import org.antlr.runtime.tree.Tree;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.impl.AstAddrExpr;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstAllocTupleStmt;
 import org.ejs.eulang.ast.impl.AstArgDef;
@@ -48,7 +49,9 @@ import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNamedType;
 import org.ejs.eulang.ast.impl.AstNilLitExpr;
 import org.ejs.eulang.ast.impl.AstNodeList;
+import org.ejs.eulang.ast.impl.AstPointerType;
 import org.ejs.eulang.ast.impl.AstPrototype;
+import org.ejs.eulang.ast.impl.AstRefType;
 import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
@@ -58,6 +61,7 @@ import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstUnaryExpr;
+import org.ejs.eulang.ast.impl.AstValueExpr;
 import org.ejs.eulang.ast.impl.AstWhileExpr;
 import org.ejs.eulang.ast.impl.SourceRef;
 import org.ejs.eulang.parser.EulangParser;
@@ -452,6 +456,9 @@ public class GenerateAST {
 		case EulangParser.EXPR:
 			return construct(tree.getChild(0));
 
+		case EulangParser.ADDR:
+			return constructAddr(tree);
+			
 		case EulangParser.INITLIST:
 			return constructInitList(tree);
 		case EulangParser.INITEXPR:
@@ -508,6 +515,18 @@ public class GenerateAST {
 			return null;
 		}
 
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstTypedExpr constructAddr(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		IAstAddrExpr addr = new AstAddrExpr(expr);
+		getSource(tree, expr);
+		return addr;
 	}
 
 	/**
@@ -886,6 +905,10 @@ public class GenerateAST {
 				IAstNodeList.class);
 
 		// check for a cast
+		IAstTypedExpr functionSym = function;
+		if (functionSym instanceof IAstValueExpr)
+			functionSym = ((IAstValueExpr) functionSym).getExpr();
+		
 		if (args.nodeCount() == 1 && function instanceof IAstSymbolExpr) {
 			ISymbol funcSym = ((IAstSymbolExpr) function).getSymbol();
 			IAstNode symdef = funcSym.getDefinition();
@@ -1234,7 +1257,10 @@ public class GenerateAST {
 		// idref is first
 		IAstTypedExpr symExpr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
 		
+		//IAstTypedExpr idExpr = new AstValueExpr(symExpr);
+		//getSource(tree.getChild(0), idExpr);
 		IAstTypedExpr idExpr = symExpr;
+		
 		
 		// then, possible other fun 
 		int idx = 1;
@@ -1254,11 +1280,22 @@ public class GenerateAST {
 				idExpr = new AstFieldExpr(idExpr, name); 
 				getSource(tree, idExpr);
 			}
+			else if (kid.getType() == EulangParser.ADDR) {
+				assert kid.getChildCount() == 0;
+				idExpr = new AstAddrExpr(idExpr);
+				getSource(tree, idExpr);
+			}
 			else if (kid.getType() == EulangParser.CALL) {
 		
 				IAstNodeList<IAstTypedExpr> args = checkConstruct(kid.getChild(0),
 						IAstNodeList.class);
 
+				IAstTypedExpr functionSym = idExpr;
+				if (functionSym instanceof IAstValueExpr) {
+					idExpr = ((IAstValueExpr) idExpr).getExpr();
+					idExpr.setParent(null);
+				}
+				
 				// check for a cast
 				if (args.nodeCount() == 1 && idExpr instanceof IAstSymbolExpr) {
 					ISymbol funcSym = ((IAstSymbolExpr) idExpr).getSymbol();
@@ -1599,7 +1636,7 @@ public class GenerateAST {
 			} else if (tree.getType() == EulangParser.ARRAY) {
 				assert kid0.getType() == EulangParser.TYPE;
 				type = constructType(kid0.getChild(0));
-				for (int idx = tree.getChildCount(); idx-- > 1; ) {
+				for (int idx = tree.getChildCount(); idx-- > 1 ;) {
 					IAstTypedExpr countExpr = null;
 					Tree kid = tree.getChild(idx);
 					if (kid.getType() == EulangParser.FALSE) {
@@ -1613,9 +1650,14 @@ public class GenerateAST {
 					getSource(tree, type);
 				}
 				
+			} else if (tree.getType() == EulangParser.POINTER) {
+				type = constructType(kid0.getChild(0));
+				type = new AstPointerType(type);
+				getSource(tree, type);
 			} else if (tree.getType() == EulangParser.REF) {
-				LLType baseType = constructType(kid0).getType();// TODO
-				type = new AstType(typeEngine.getRefType(baseType)); 
+				type = constructType(kid0.getChild(0));
+				type = new AstRefType(type);
+				getSource(tree, type);
 			} else if (tree.getType() == EulangParser.CODE) {
 				if (tree.getChildCount() == 0) {
 					type = new AstType(typeEngine.getCodeType(null, (LLType[]) null));

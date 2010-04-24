@@ -68,6 +68,9 @@ tokens {
   FIELDREF;
   ARRAY;
   INDEX;
+  POINTER;
+  
+  ADDR;
   
   INITEXPR;
   INITLIST;
@@ -190,7 +193,7 @@ argdefWithName: ID   -> ^(ARGDEF ID )
 proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? argdefs*)
     ;
 
-xreturns: ARROW type      -> type
+xreturns : ARROW type      -> type
   | ARROW argtuple           -> argtuple
   | ARROW NIL            -> ^(TYPE NIL)
   ;
@@ -206,19 +209,41 @@ tupleargdef: type    -> type
   |                 -> ^(TYPE NIL)
   ;
   
-type : ( baseType LBRACKET ) => typedArray -> typedArray 
-     | baseType -> baseType 
-  ;
+type : 
+    (nonArrayType -> nonArrayType)
+     ( 
+	     (
+	       arraySuff+ -> ^(TYPE ^(ARRAY $type arraySuff+))
+	      )
+	      | 
+	      (
+	        CARET -> ^(TYPE ^(POINTER $type))
+	      )
+      )*
+  ; 
+  
+nonArrayType :  
+     baseType -> baseType
+//     | CARET nonArrayType -> ^(TYPE ^(POINTER nonArrayType))
+ //    | CARET LPAREN type RPAREN -> ^(TYPE ^(POINTER type))
+      ;
+        
+   //( logor  -> logor )
+//      ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
 
-typedArray : baseType arrayType+ -> ^(TYPE ^(ARRAY baseType arrayType+)) ; 
-arrayType : LBRACKET rhsExpr RBRACKET -> rhsExpr
+// need to eat up as many array pieces as possible so we can properly order them
+baseType : (typeAtom -> typeAtom)
+     ( //CARET -> ^(TYPE ^(POINTER $baseType ))  
+     //| 
+     AMP -> ^(TYPE ^(REF $baseType ))  
+     )*
+  ; 
+arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
     | LBRACKET RBRACKET -> FALSE
     ;
-baseType : idOrScopeRef AMP -> ^(TYPE ^(REF idOrScopeRef) ) 
-     | idOrScopeRef -> ^(TYPE idOrScopeRef)  
+typeAtom : idOrScopeRef -> ^(TYPE idOrScopeRef)  
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
   ;
-
 codestmtlist:  codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
     | -> ^(STMTLIST) 
     ;
@@ -402,7 +427,7 @@ bitor: ( bitxor      -> bitxor )
       ( BAR r=bitxor  -> ^(BITOR $bitor $r) ) *
 ;
 bitxor: ( bitand      -> bitand )       
-      ( CARET r=bitand  -> ^(BITXOR $bitxor $r) )*
+      ( XOR r=bitand  -> ^(BITXOR $bitxor $r) )*
 ;
 bitand: ( shift      -> shift )       
       ( AMP r=shift  -> ^(BITAND $bitand $r) )*
@@ -436,6 +461,7 @@ unary:  MINUS u=unary -> ^(NEG $u )
       | (noIdAtom idModifier) => noIdAtom idModifier+ -> ^(IDEXPR noIdAtom idModifier+) 
       | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
       | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
+      //| ( atom CARET ) => a=atom CARET -> ^(ADDR $a)
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)
@@ -462,12 +488,14 @@ idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifi
 
 appendIdModifiers : nonFieldIdModifier idModifier* ;
 
-nonFieldIdModifier : funcCall | arrayIndex ;
-idModifier : fieldRef | funcCall | arrayIndex ;
+nonFieldIdModifier : funcCall | arrayIndex | addrOf ;
+idModifier : fieldRef | funcCall | arrayIndex | addrOf ;
 
 fieldRef : PERIOD ID  -> ^(FIELDREF ID) ;
 
 arrayIndex :  LBRACKET assignExpr RBRACKET -> ^(INDEX assignExpr) ;
+
+addrOf : CARET -> ^(ADDR) ;
 
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
@@ -520,6 +548,7 @@ SEMI : ';';
 QUESTION : '?';
 AND : 'and';
 OR : 'or';
+XOR : 'xor';
 COMPEQ : '==';
 COMPNE : '!=';
 COMPGE : '>=';

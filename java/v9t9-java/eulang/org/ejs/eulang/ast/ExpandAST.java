@@ -98,7 +98,17 @@ public class ExpandAST {
 						try {
 							node.getParent().replaceChild(node, copy);
 						} catch (ClassCastException e) {
-							throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
+							if (copy instanceof IAstValueExpr) {
+								copy = ((IAstValueExpr) copy).getExpr();
+								copy.setParent(null);
+								try {
+									node.getParent().replaceChild(node, copy);
+								} catch (ClassCastException e2) {
+									throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
+								}
+							} else {
+								throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
+							}
 						}
 						changed = true;
 					}
