@@ -17,8 +17,15 @@ import org.ejs.eulang.symbols.ISymbol;
 public class DumpAST extends AstVisitor {
 	private int indent = 0;
 	private final PrintStream str;
+	private final boolean showSourceRef;
 	
 	public DumpAST(PrintStream str) {
+		this.visitDumpChildren = true;
+		showSourceRef = true;
+		this.str = str;
+	}
+	public DumpAST(PrintStream str, boolean showSourceRef) {
+		this.showSourceRef = showSourceRef;
 		this.visitDumpChildren = true;
 		this.str = str;
 	}
@@ -28,7 +35,7 @@ public class DumpAST extends AstVisitor {
 	 */
 	@Override
 	public int visit(IAstNode node) {
-		printIndent();
+		printIndent(node);
 		str.print(node.toString());
 		str.println();
 		if (node instanceof IAstScope)
@@ -44,12 +51,12 @@ public class DumpAST extends AstVisitor {
 	 */
 	private void dumpScope(IScope scope) {
 		indent++;
-		printIndent();
+		printIndent(null);
 		ISymbol[] symbols = scope.getSymbols();
 		if (symbols.length > 0) {
 			str.println("=== Symbols:");
 			for (ISymbol symbol : symbols) {
-				printIndent(); str.print("=== ");
+				printIndent(null); str.print("=== ");
 				str.println(symbol);
 			}
 		} else {
@@ -78,7 +85,17 @@ public class DumpAST extends AstVisitor {
 	/**
 	 * @param str2
 	 */
-	private void printIndent() {
+	private void printIndent(IAstNode node) {
+		if (showSourceRef) {
+			String src = "";
+			if (node != null && node.getSourceRef() != null) {
+				src = node.getSourceRef().getLine() + ":" + node.getSourceRef().getColumn();
+			}
+			str.print(src);
+			int left = 16 - src.length();
+			while (left-- > 0)
+				str.print(' ');
+		}
 		for (int i = 0; i < indent; i++)
 			str.print("  ");
 	}
@@ -90,7 +107,7 @@ public class DumpAST extends AstVisitor {
 	public static String dumpString(IAstNode node) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		PrintStream strStream = new PrintStream(out);
-		DumpAST dump = new DumpAST(strStream);
+		DumpAST dump = new DumpAST(strStream, false);
 		node.accept(dump);
 		String dumpstr = out.toString();
 		dumpstr = dumpstr.trim().replaceAll("\n", " // ");

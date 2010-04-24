@@ -5,6 +5,12 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
+import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -92,5 +98,27 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 			throw new TypeException("inconsistent types in expression");
 		}
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#generate(org.ejs.eulang.llvm.ILLCodeTarget)
+	 */
+	@Override
+	public LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException {
+		LLOperand left = generator.generateTypedExpr(expr.getLeft());
+		LLOperand right = generator.generateTypedExpr(expr.getRight());
+		
+		LLOperand ret = currentTarget.newTemp(expr.getType());
+		
+		String instr = this.getLLVMName();
+		if (instr != null) {
+			if (expr.getLeft().getType().getBasicType() == BasicType.FLOATING)
+				instr = "fcmp " + getLLFloatPrefix()  + instr;
+			else
+				instr = "icmp " + getLLIntPrefix() + instr;
+			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
+		} else {
+			generator.unhandled(expr);
+		}
+		return ret;
+	}
 }

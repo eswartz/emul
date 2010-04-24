@@ -6,7 +6,6 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstBreakStmt;
-import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.TypeException;

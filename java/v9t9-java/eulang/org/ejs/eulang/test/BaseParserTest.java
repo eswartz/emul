@@ -44,6 +44,7 @@ import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.ExpandAST;
 import org.ejs.eulang.ast.GenerateAST;
 import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
@@ -494,14 +495,15 @@ public class BaseParserTest {
 		LLVMGenerator generator = new LLVMGenerator(v9t9Target);
 		generator.generate(mod);
 		
-		String text = generator.getUnoptimizedText();
-		
 		List<Message> messages = generator.getMessages();
 		for (Message msg : messages)
 			System.err.println(msg);
 		if (!expectErrors)
 			assertEquals("expected no errors: " + catenate(messages), 0, messages.size());
+		else if (!messages.isEmpty())
+			return generator;
 		
+		String text = generator.getUnoptimizedText();
 		File file = getTempFile("");
 		File llfile = new File(file.getAbsolutePath() + ".ll");
 		FileOutputStream os = new FileOutputStream(llfile);
@@ -628,13 +630,20 @@ public class BaseParserTest {
 
 	protected void assertFoundInUnoptimizedText(String string, LLVMGenerator generator) {
 		String unopt = generator.getUnoptimizedText();
-		assertTrue(string + "in\n"+ unopt, unopt.replaceAll("\\s+","").contains(string.replaceAll("\\s+","")));
+		assertTrue(string + " in\n"+ unopt, unopt.replaceAll("\\s+","").contains(string.replaceAll("\\s+","")));
 		
 	}
 	protected void assertFoundInOptimizedText(String string, LLVMGenerator generator) {
 		String opt = generator.getOptimizedText();
-		assertTrue(string + "in\n"+ opt, opt.replaceAll("\\s+","").contains(string.replaceAll("\\s+","")));
+		assertTrue(string + " in\n"+ opt, opt.replaceAll("\\s+","").contains(string.replaceAll("\\s+","")));
 		
 	}
+	
+	protected IAstTypedExpr getValue(IAstTypedExpr expr) {
+		if (expr instanceof IAstDerefExpr)
+			return ((IAstDerefExpr)expr).getExpr();
+		return expr;
+	}
+
 
 }

@@ -17,7 +17,8 @@ import org.antlr.runtime.tree.Tree;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.impl.AstAddrExpr;
+import org.ejs.eulang.ast.impl.AstAddrOfExpr;
+import org.ejs.eulang.ast.impl.AstAddrRefExpr;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstAllocTupleStmt;
 import org.ejs.eulang.ast.impl.AstArgDef;
@@ -61,7 +62,7 @@ import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstUnaryExpr;
-import org.ejs.eulang.ast.impl.AstValueExpr;
+import org.ejs.eulang.ast.impl.AstDerefExpr;
 import org.ejs.eulang.ast.impl.AstWhileExpr;
 import org.ejs.eulang.ast.impl.SourceRef;
 import org.ejs.eulang.parser.EulangParser;
@@ -456,8 +457,12 @@ public class GenerateAST {
 		case EulangParser.EXPR:
 			return construct(tree.getChild(0));
 
-		case EulangParser.ADDR:
-			return constructAddr(tree);
+		case EulangParser.VALUE:
+			return constructDeref(tree);
+		case EulangParser.ADDRREF:
+			return constructAddrRef(tree);
+		case EulangParser.ADDROF:
+			return constructAddrOf(tree);
 			
 		case EulangParser.INITLIST:
 			return constructInitList(tree);
@@ -522,10 +527,32 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException 
 	 */
-	private IAstTypedExpr constructAddr(Tree tree) throws GenerateException {
+	private IAstNode constructDeref(Tree tree) throws GenerateException {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
-		IAstAddrExpr addr = new AstAddrExpr(expr);
-		getSource(tree, expr);
+		IAstDerefExpr value = new AstDerefExpr(expr);
+		getSource(tree, value);
+		return value;
+	}
+
+	private IAstTypedExpr constructAddrRef(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		if (expr instanceof IAstDerefExpr) {
+			expr = ((IAstDerefExpr) expr).getExpr();
+			expr.setParent(null);
+		}
+
+		IAstAddrRefExpr addr = new AstAddrRefExpr(expr);
+		getSource(tree, addr);
+		return addr;
+	}
+	private IAstTypedExpr constructAddrOf(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
+		if (expr instanceof IAstDerefExpr) {
+			expr = ((IAstDerefExpr) expr).getExpr();
+			expr.setParent(null);
+		}
+		IAstAddrOfExpr addr = new AstAddrOfExpr(expr);
+		getSource(tree, addr);
 		return addr;
 	}
 
@@ -906,8 +933,8 @@ public class GenerateAST {
 
 		// check for a cast
 		IAstTypedExpr functionSym = function;
-		if (functionSym instanceof IAstValueExpr)
-			functionSym = ((IAstValueExpr) functionSym).getExpr();
+		if (functionSym instanceof IAstDerefExpr)
+			functionSym = ((IAstDerefExpr) functionSym).getExpr();
 		
 		if (args.nodeCount() == 1 && function instanceof IAstSymbolExpr) {
 			ISymbol funcSym = ((IAstSymbolExpr) function).getSymbol();
@@ -923,9 +950,6 @@ public class GenerateAST {
 				return castExpr;
 			}
 		}
-
-		if (function instanceof IAstSymbolExpr)
-			((IAstSymbolExpr) function).setAddress(true);
 
 		IAstFuncCallExpr funcCall = new AstFuncCallExpr(function, args);
 		getSource(tree, funcCall);
@@ -1240,11 +1264,20 @@ public class GenerateAST {
 					+ tree.toStringTree());
 		}
 		
+		//idExpr = new AstValueExpr(idExpr);
+		//getSource(tree.getChild(0), idExpr);
+		boolean first = true;
+		
 		// may have field references
 		while (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx);
 			IAstName name = new AstName(kid.getText(), symExpr != null ? symExpr.getSymbol().getScope() : null);
 			getSource(kid, name);
+			if (first) {
+				idExpr = new AstDerefExpr(idExpr);
+				getSource(tree.getChild(0), idExpr);
+				first = false;
+			}
 			idExpr = new AstFieldExpr(idExpr, name); 
 			getSource(tree, idExpr);
 			idx++;
@@ -1280,9 +1313,9 @@ public class GenerateAST {
 				idExpr = new AstFieldExpr(idExpr, name); 
 				getSource(tree, idExpr);
 			}
-			else if (kid.getType() == EulangParser.ADDR) {
+			else if (kid.getType() == EulangParser.ADDRREF) {
 				assert kid.getChildCount() == 0;
-				idExpr = new AstAddrExpr(idExpr);
+				idExpr = new AstAddrRefExpr(idExpr);
 				getSource(tree, idExpr);
 			}
 			else if (kid.getType() == EulangParser.CALL) {
@@ -1291,8 +1324,8 @@ public class GenerateAST {
 						IAstNodeList.class);
 
 				IAstTypedExpr functionSym = idExpr;
-				if (functionSym instanceof IAstValueExpr) {
-					idExpr = ((IAstValueExpr) idExpr).getExpr();
+				if (functionSym instanceof IAstDerefExpr) {
+					idExpr = ((IAstDerefExpr) idExpr).getExpr();
 					idExpr.setParent(null);
 				}
 				
@@ -1323,7 +1356,21 @@ public class GenerateAST {
 			else
 				unhandled(kid);
 		}
+		
+		if (!(idExpr instanceof IAstDerefExpr) &&  !(idExpr instanceof IAstAddrRefExpr) && !isCast(idExpr)) {
+			idExpr = new AstDerefExpr(idExpr);
+			getSource(tree.getChild(0), idExpr);
+		}
+
 		return idExpr;
+	}
+
+	/**
+	 * @param expr
+	 * @return
+	 */
+	private boolean isCast(IAstTypedExpr expr) {
+		return expr instanceof IAstUnaryExpr && ((IAstUnaryExpr) expr).getOp() == IOperation.CAST;
 	}
 
 	public IAstBinExpr constructBinaryExpr(Tree tree) throws GenerateException {

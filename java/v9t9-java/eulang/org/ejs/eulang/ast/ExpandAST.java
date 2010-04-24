@@ -92,23 +92,18 @@ public class ExpandAST {
 					}
 					else {
 						// directly replace
+						
+						//if (node instanceof IAstDerefExpr) 
+						//	node = ((IAstDerefExpr) node).getExpr();
+						
+						
 						IAstNode copy = value.copy(node);
 						copy.uniquifyIds();
 						removeGenerics(copy);
 						try {
 							node.getParent().replaceChild(node, copy);
 						} catch (ClassCastException e) {
-							if (copy instanceof IAstValueExpr) {
-								copy = ((IAstValueExpr) copy).getExpr();
-								copy.setParent(null);
-								try {
-									node.getParent().replaceChild(node, copy);
-								} catch (ClassCastException e2) {
-									throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
-								}
-							} else {
-								throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
-							}
+							throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
 						}
 						changed = true;
 					}
@@ -247,6 +242,8 @@ public class ExpandAST {
 			IAstTypedExpr realArg;
 			if (i < realArgs.length) {
 				realArg = realArgs[i];
+				if (realArg instanceof IAstDerefExpr)
+					realArg = ((IAstDerefExpr) realArg).getExpr();
 				protoArg.getSymbolExpr().getSymbol().setDefinition(realArg);
 				expandedArgs.put(protoArg.getSymbolExpr().getSymbol(), realArg);
 			}
@@ -347,6 +344,9 @@ public class ExpandAST {
 			replaceInTree(kid, symbolExpr, replacement);
 		}
 		if (root.equals(symbolExpr)) {
+			//if (replacement instanceof IAstDerefExpr)
+//				replacement = ((IAstDerefExpr) replacement).getExpr();
+			
 			IAstNode copy = replacement.copy(null);
 			copy.uniquifyIds();
 			

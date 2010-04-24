@@ -2,6 +2,7 @@ package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 
 /** 
  * This is a realized variable originally specified as an ISymbol in the AST.
@@ -18,6 +19,13 @@ public interface ILLVariable {
 	/** Get the associated symbol */
 	ISymbol getSymbol();
 	
+
+	/**
+	 * Get the type of the symbol's value  
+	 * @return
+	 */
+	LLType getValueType();
+	
 	/** Emit instructions to allocate the variable, and return its symbol op */
 	void allocate(ILLCodeTarget target, LLOperand value);
 	/** Emit instructions to destroy the variable once out of scope */
@@ -29,4 +37,5 @@ public interface ILLVariable {
 	void store(ILLCodeTarget target, LLOperand value);
 	/** Emit instructions to fetch the address of the variable's storage. */
 	LLOperand address(ILLCodeTarget target);
+
 }

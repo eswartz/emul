@@ -171,7 +171,7 @@ public class TestMacroCall extends BaseParserTest {
     			getMainBodyExpr(def).getType());
     	
     	IAstCodeExpr defExpr = (IAstCodeExpr) getMainBodyExpr(def);
-    	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) ((IAstExprStmt) defExpr.stmts().getFirst()).getExpr()).getStmtList().list().get(1);
+    	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) getValue(((IAstExprStmt) defExpr.stmts().getFirst()).getExpr())).getStmtList().list().get(1);
     	IAstCondList condList = (IAstCondList) stmt1.getExpr();
     	IAstCondExpr condExpr = condList.getCondExprs().list().get(0);
 		assertEquals(typeEngine.FLOAT, condExpr.getType());
@@ -206,7 +206,7 @@ public class TestMacroCall extends BaseParserTest {
     			getMainBodyExpr(def).getType());
     	
     	IAstCodeExpr defExpr = (IAstCodeExpr) getMainBodyExpr(def);
-    	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) ((IAstExprStmt) defExpr.stmts().getFirst()).getExpr()).getStmtList().list().get(1);
+    	IAstExprStmt stmt1 = (IAstExprStmt) ((IAstStmtListExpr) getValue(((IAstExprStmt) defExpr.stmts().getFirst()).getExpr())).getStmtList().list().get(1);
     	IAstCondList condList = (IAstCondList) stmt1.getExpr();
     	IAstCondExpr condExpr = condList.getCondExprs().list().get(0);
 		assertEquals(typeEngine.INT, condExpr.getType());

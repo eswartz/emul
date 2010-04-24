@@ -8,8 +8,8 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstAddrExpr extends IAstTypedExpr {
-	IAstAddrExpr copy(IAstNode copyParent);
+public interface IAstAddrRefExpr extends IAstTypedExpr {
+	IAstAddrRefExpr copy(IAstNode copyParent);
 	
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);

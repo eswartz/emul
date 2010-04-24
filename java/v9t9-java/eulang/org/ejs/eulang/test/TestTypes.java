@@ -5,6 +5,7 @@ package org.ejs.eulang.test;
 
 import static junit.framework.Assert.*;
 
+import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
@@ -14,6 +15,8 @@ import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
@@ -22,6 +25,7 @@ import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -93,7 +97,7 @@ public class TestTypes extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
-    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
     	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
     	assertEquals(10, arrayType.getArrayCount());
@@ -124,7 +128,7 @@ public class TestTypes extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
     	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
     	assertEquals(10, arrayType.getArrayCount());
@@ -150,7 +154,7 @@ public class TestTypes extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
     	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
     	assertEquals(10, arrayType.getArrayCount());
@@ -176,7 +180,7 @@ public class TestTypes extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
     	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
     	assertEquals(10, arrayType.getArrayCount());
@@ -187,7 +191,7 @@ public class TestTypes extends BaseParserTest {
     	
     	
     }
-    /*
+	/*
     @Test
     public void testArrayAccess1d() throws Exception {
     	IAstModule mod = doFrontend(
@@ -358,14 +362,23 @@ public class TestTypes extends BaseParserTest {
     	assertTrue(code.getType().isComplete());
 
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
-    	IAstFieldExpr field = (IAstFieldExpr) stmt.getExpr();
+    	IAstFieldExpr field = getField(stmt.getExpr());
     	assertEquals(data.getField("x").getType(), field.getType());
     	assertEquals(data.getField("x").getType(), stmt.getType());
     	
     	doGenerate(mod);
     }
     
-    @Test
+    /**
+	 * @param expr
+	 * @return
+	 */
+	private IAstFieldExpr getField(IAstTypedExpr expr) {
+		while (expr instanceof IAstDerefExpr)
+			expr = ((IAstDerefExpr) expr).getExpr();
+		return (IAstFieldExpr) expr;
+	}
+	@Test
     public void testDataDeref2() throws Exception {
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
@@ -387,7 +400,7 @@ public class TestTypes extends BaseParserTest {
     	assertTrue(code.getType().isComplete());
 
     	IAstAssignStmt stmt = (IAstAssignStmt) code.stmts().list().get(2);
-    	IAstFieldExpr field = (IAstFieldExpr) stmt.getSymbolExprs().getFirst();
+    	IAstFieldExpr field = getField(stmt.getSymbolExprs().getFirst());
     	assertEquals(data.getField("x").getType(), field.getType());
     	assertEquals(data.getField("x").getType(), stmt.getType());
     	
@@ -420,7 +433,7 @@ public class TestTypes extends BaseParserTest {
     	assertTrue(code.getType().isComplete());
 
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
-    	IAstFieldExpr field = (IAstFieldExpr) stmt.getExpr();
+    	IAstFieldExpr field = getField(stmt.getExpr());
     	assertEquals(data.getField("x").getType(), field.getType());
     	assertEquals(data.getField("x").getType(), stmt.getType());
     	
@@ -462,7 +475,8 @@ public class TestTypes extends BaseParserTest {
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
     			"testDataDeref4 = code() {\n"+
     			"  foo:Tuple[10];\n"+
-    			"  foo[7].x = 33;\n"+
+    			"  foo[7].x = 33;\n"+		// don't deref LHS
+    			"  foo[1].x = foo[2].x;\n"+	// do deref RHS
     			"};\n"+
     	"");
     	doGenerate(mod);
@@ -679,16 +693,162 @@ public class TestTypes extends BaseParserTest {
     	IAstModule mod = doFrontend(
     			"testPointerInit1 = code() {\n"+
     			"  foo:Byte=10;\n"+
-    			"  foo0:Byte^=foo;\n"+
+    			"  foo0:Byte^=&foo;\n"+
+    			"  foo0 = 6;\n"+
     			"  foo0^ = 0;\n"+
     			"};\n"+
     	"");
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerInit1").getDefinition());
     	assertTrue(code.getType().isComplete());
 
-    	IAstAllocStmt stmt;
-		stmt = (IAstAllocStmt) code.stmts().list().get(1);
+    	LLType bytePtr = typeEngine.getPointerType(typeEngine.BYTE);
+    	IAstAllocStmt alloc;
     	
+    	// setting a pointer to an address
+		alloc = (IAstAllocStmt) code.stmts().list().get(1);
+    	assertEquals(bytePtr, alloc.getType());
+    	assertEquals(bytePtr, alloc.getTypeExpr().getType());
+    	assertEquals(bytePtr, alloc.getSymbolExprs().getFirst().getType());
+    	assertEquals(bytePtr, alloc.getExprs().getFirst().getType());
+    	IAstAddrOfExpr addrOf = (IAstAddrOfExpr) alloc.getExprs().getFirst();
+    	assertEquals(typeEngine.BYTE, addrOf.getExpr().getType());
+    	
+    	IAstAssignStmt assg;
+    	// setting the byte value
+    	assg = (IAstAssignStmt) code.stmts().list().get(2);
+    	assertEquals(typeEngine.BYTE, assg.getType());
+    	assertEquals(typeEngine.BYTE, assg.getSymbolExprs().getFirst().getType());
+    	assertEquals(typeEngine.BYTE, assg.getExprs().getFirst().getType());
+    	
+    	// setting the pointer value
+    	assg = (IAstAssignStmt) code.stmts().list().get(3);
+    	assertEquals(bytePtr, assg.getType());
+    	assertEquals(bytePtr, assg.getSymbolExprs().getFirst().getType());
+    	assertEquals(bytePtr, assg.getExprs().getFirst().getType());
+
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i8* null", gen);
+	}
+	
+	@Test
+	public void testPointerInit2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerInit2 = code() {\n"+
+    			"  foo:Byte=10;\n"+
+    			"  foo0:Byte^=0;\n"+
+    			"  foo0^ = &foo;\n"+
+    			"  foo0;\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerInit2").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i8 10", gen);
+	}
+	
+	@Test
+	public void testPointerMixing1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerMixing1 = code() {\n"+
+    			"  foo:Byte=10;\n"+
+    			"  foo0:Byte^=&foo;\n"+
+    			"  foo0 = 6;\n"+
+    			"  foo0+foo;\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerMixing1").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i8 12", gen);		// foo0=6 changed foo
+	}
+	@Test
+	public void testPointerMixing2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerMixing2 = code() {\n"+
+    			"  foo:Byte[2]=[10,5];\n"+
+    			"  foo0:Byte^=&foo[0];\n"+
+    			"  foo0 = 6;\n"+
+    			"  foo0+foo[1];\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerMixing2").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i8 11", gen);
+	}
+	@Test
+	public void testPointerArrays1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerArrays1 = code() {\n"+
+    			"  foo:Byte[2]=[10,5];\n"+
+    			"  foo0:Byte^=&foo;\n"+		// array!
+    			"  foo0 = 6;\n"+
+    			"  foo0+foo[1];\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerArrays1").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i8 11", gen);
+	}
+	@Test
+	public void testPointerArrays1Bad() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerArrays1Bad = code() {\n"+
+    			"  foo:Byte[2]=[10,5];\n"+
+    			"  foo0:Byte^=foo;\n"+		// not legal
+    			"};\n"+
+    	"");
+    	doGenerate(mod, true);
+	}
+	
+	@Test
+	public void testPointerInit3() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerInit3 = code() {\n"+
+    			"  foo:Int^=0;\n"+	
+    			"  foo=100;\n" +	// null reference
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("unreachable", gen);
+	}
+	@Test
+	public void testPointerMath1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerMath1 = code(foo:Int^) {\n"+
+    			"  foo^-foo^;\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i16 0", gen);
+	}
+	@Test
+	public void testPointerMath2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerMath2 = code(foo:Int^) {\n"+
+    			"  (foo^+4)-foo^;\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ashr i16", gen);
+	}
+	@Test
+	public void testPointerMath3() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerMath3 = code() {\n"+
+    			"  foo:Int[4] = [ 1, 2, 3, 4];\n"+
+    			"  foop:Int^=&foo;\n"+
+    			"  foo1, foo2 : Int^ = foop^+1, foop^+3;\n"+
+    			"  foo1 * foo2;\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i16 8", gen);
 	}
 }
 

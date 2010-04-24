@@ -70,10 +70,14 @@ tokens {
   INDEX;
   POINTER;
   
-  ADDR;
+  VALUE;
+  ADDRREF;
+  ADDROF;
   
   INITEXPR;
   INITLIST;
+  
+  
 }
 
 @header {
@@ -461,10 +465,11 @@ unary:  MINUS u=unary -> ^(NEG $u )
       | (noIdAtom idModifier) => noIdAtom idModifier+ -> ^(IDEXPR noIdAtom idModifier+) 
       | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
       | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
-      //| ( atom CARET ) => a=atom CARET -> ^(ADDR $a)
+      //| ( atom CARET ) => a=atom CARET -> ^(ADDRREF $a)
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)
+      | AMP idExpr        -> ^(ADDROF idExpr)
 ;
 
 noIdAtom :
@@ -484,18 +489,18 @@ atom : noIdAtom | idExpr ;
 
 // an idOrScopeRef can have dotted parts that interpreted either as scope derefs or field refs,
 // so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 
-idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) ;
+idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR ^(VALUE idOrScopeRef) appendIdModifiers*) ;
 
 appendIdModifiers : nonFieldIdModifier idModifier* ;
 
-nonFieldIdModifier : funcCall | arrayIndex | addrOf ;
-idModifier : fieldRef | funcCall | arrayIndex | addrOf ;
+nonFieldIdModifier : funcCall | arrayIndex | addrRef ;
+idModifier : fieldRef | funcCall | arrayIndex | addrRef ;
 
 fieldRef : PERIOD ID  -> ^(FIELDREF ID) ;
 
 arrayIndex :  LBRACKET assignExpr RBRACKET -> ^(INDEX assignExpr) ;
 
-addrOf : CARET -> ^(ADDR) ;
+addrRef : CARET -> ^(ADDRREF) ;
 
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 

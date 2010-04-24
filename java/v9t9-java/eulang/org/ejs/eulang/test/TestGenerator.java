@@ -14,6 +14,7 @@ import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
@@ -159,7 +160,7 @@ public class TestGenerator extends BaseParserTest {
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCalls");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt stmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
-    	IAstFuncCallExpr callExpr = (IAstFuncCallExpr) stmt.getExpr();
+    	IAstFuncCallExpr callExpr = (IAstFuncCallExpr) getValue(stmt.getExpr());
     	assertEquals(callee.getSymbolExpr(), callExpr.getFunction());
     }
     
@@ -240,14 +241,24 @@ public class TestGenerator extends BaseParserTest {
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks1");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
-    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) getValue(ret.getExpr());
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
 		assertEquals(3, arglist.size());
-    	assertTrue(arglist.get(0) instanceof IAstSymbolExpr);
+    	assertTrue(baseOf(arglist.get(0)) instanceof IAstSymbolExpr);
     	assertTrue(arglist.get(1) instanceof IAstAssignStmt);
     	assertTrue(arglist.get(2) instanceof IAstAssignStmt);
     }
     /**
+	 * @param expr
+	 * @return
+	 */
+	private IAstTypedExpr baseOf(IAstTypedExpr expr) {
+		if (expr instanceof IAstDerefExpr)
+			return ((IAstDerefExpr) expr).getExpr();
+		return expr;
+	}
+
+	/**
      * if and while are functions which take blocks.  Before type inference, we must
      * be able to handle either expressions, scope blocks, or actual code blocks as
      * parameters. 
@@ -265,10 +276,10 @@ public class TestGenerator extends BaseParserTest {
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks2");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
-    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) getValue(ret.getExpr());
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
 		assertEquals(3, arglist.size());
-    	assertTrue(arglist.get(0) instanceof IAstSymbolExpr);
+    	assertTrue(baseOf(arglist.get(0)) instanceof IAstSymbolExpr);
     	assertTrue(arglist.get(1) instanceof IAstCodeExpr);
     	assertTrue(arglist.get(2) instanceof IAstCodeExpr);
     }
@@ -290,10 +301,10 @@ public class TestGenerator extends BaseParserTest {
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testImplicitBlocks3");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	IAstExprStmt ret = (IAstExprStmt) codeExpr.stmts().list().get(0);
-    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) ret.getExpr();
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) getValue(ret.getExpr());
     	List<IAstTypedExpr> arglist = funcCall.arguments().list();
 		assertEquals(3, arglist.size());
-    	assertTrue(arglist.get(0) instanceof IAstSymbolExpr);
+    	assertTrue(baseOf(arglist.get(0)) instanceof IAstSymbolExpr);
     	assertTrue(arglist.get(1) instanceof IAstCodeExpr);
     	assertTrue(arglist.get(2) instanceof IAstCodeExpr);
     }

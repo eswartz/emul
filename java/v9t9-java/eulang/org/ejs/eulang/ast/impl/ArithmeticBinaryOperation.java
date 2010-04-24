@@ -4,7 +4,20 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr;
+import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
+import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -61,6 +74,10 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 			if (commonType == null)
 				throw new TypeException("cannot find compatible type for '" + getName() + "' on " 
 						+ types.left.toString() + " and " + types.right.toString());
+			
+			if (commonType.getBasicType() == BasicType.POINTER && this == IOperation.SUB) {
+				commonType = typeEngine.PTRDIFF;
+			}
 			if (types.result == null || types.result.isGeneric()) {
 				types.result = commonType;
 			}
@@ -87,9 +104,15 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 			throws TypeException {
 		LLType newLeft = typeEngine.getPromotionType(types.left, types.result);
 		LLType newRight = typeEngine.getPromotionType(types.right, types.result);
-		if (newLeft == null || newRight == null)
+		if (newLeft == null || newRight == null) {
+			if ((this == IOperation.ADD || this == IOperation.SUB) &&
+					types.left.getBasicType() == BasicType.POINTER && types.right.getBasicType() == BasicType.INTEGRAL) {
+				// fine
+				return;
+			}
 			throw new TypeException("cannot convert result of '" + getName() + "' on " 
 					+ types.left.toString() + " and " + types.right.toString() + " to " + types.result.toString());
+		}
 		types.left = newLeft;
 		types.right = newRight;
 	}
@@ -100,9 +123,76 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 	@Override
 	public void validateTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
+		if ((types.result.getBasicType().getClassMask() & LLType.TYPECLASS_PRIMITIVE) == 0) {
+			// allow pointer math
+			if ((this == IOperation.ADD || this == IOperation.SUB) &&
+					types.left.getBasicType() == BasicType.POINTER && types.right.getBasicType() == BasicType.INTEGRAL)
+				return;
+			throw new TypeException("invalid type for '" + getName() + "' : " + types.result);
+		}
+		if (this == IOperation.SUB &&
+				types.left.getBasicType() == BasicType.POINTER && types.right.getBasicType() == BasicType.POINTER) {
+			if (types.result.getBasicType() == BasicType.INTEGRAL)
+				return;
+			throw new TypeException("inconsistent types in pointer difference expression");
+		}
 		if (!types.left.equals(types.right) 
 				|| !types.result.equals(types.left)) {
 			throw new TypeException("inconsistent types in expression");
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#generate(org.ejs.eulang.llvm.ILLCodeTarget)
+	 */
+	@Override
+	public LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException {
+		LLOperand left;
+		left = generator.generateTypedExpr(expr.getLeft());
+		LLOperand right;
+		right = generator.generateTypedExpr(expr.getRight());
+		
+		
+		// pointer math
+		if ((this == IOperation.ADD || this == IOperation.SUB) &&
+				left.getType().getBasicType() == BasicType.POINTER && right.getType().getBasicType() == BasicType.INTEGRAL) {
+			
+			LLOperand ret = currentTarget.newTemp(expr.getType());
+			currentTarget.emit(new LLGetElementPtrInstr(ret, ret.getType(), 
+					left, right));
+			return ret;
+		}
+
+		if (this == IOperation.SUB &&
+				left.getType().getBasicType() == BasicType.POINTER && right.getType().getBasicType() == BasicType.POINTER) {
+			// make into ints
+			LLOperand tempLeft = currentTarget.newTemp(expr.getType());
+			currentTarget.emit(new LLCastInstr(tempLeft, ECast.PTRTOINT, expr.getLeft().getType(), left, tempLeft.getType()));
+			LLOperand tempRight = currentTarget.newTemp(expr.getType());
+			currentTarget.emit(new LLCastInstr(tempRight, ECast.PTRTOINT, expr.getRight().getType(), right, tempRight.getType()));
+			LLOperand diff = currentTarget.newTemp(expr.getType());
+			currentTarget.emit(new LLBinaryInstr(getLLVMName(), diff, expr.getType(), tempLeft, tempRight));
+			
+			// now, scale down
+			LLOperand ret = currentTarget.newTemp(expr.getType());
+			int size = left.getType().getBits() / 8;
+			currentTarget.emit(new LLBinaryInstr("sdiv exact", ret, expr.getType(), diff, new LLConstOp(expr.getType(), size)));
+			return ret;
+		}
+
+		LLOperand ret = currentTarget.newTemp(expr.getType());
+		
+		String instr = this.getLLVMName();
+		if (instr != null) {
+			String prefix = (expr.getLeft().getType().getBasicType() == BasicType.FLOATING) ? 
+					((ArithmeticBinaryOperation) this).getFloatPrefix() : ((ArithmeticBinaryOperation) this).getIntPrefix();
+			if (prefix != null) 
+				instr = prefix + instr;
+			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
+			
+		} else {
+			generator.unhandled(expr);
+		}
+		return ret;
 	}
 }

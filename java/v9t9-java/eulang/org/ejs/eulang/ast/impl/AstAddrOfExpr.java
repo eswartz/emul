@@ -4,10 +4,10 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstRefType;
-import org.ejs.eulang.ast.IAstType;
-import org.ejs.eulang.types.LLRefType;
+import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -15,30 +15,30 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstRefType extends AstTypedExpr implements IAstRefType {
+public class AstAddrOfExpr extends AstTypedExpr implements IAstAddrOfExpr {
 
-	private IAstType baseType;
+	private IAstTypedExpr expr;
 
 	/**
 	 * @param type
 	 */
-	public AstRefType(IAstType baseType) {
-		setBaseType(baseType);
+	public AstAddrOfExpr(IAstTypedExpr expr) {
+		setExpr(expr);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstRefType copy(IAstNode copyParent) {
-		return fixup(this, new AstRefType(doCopy(baseType, copyParent)));
+	public IAstAddrOfExpr copy(IAstNode copyParent) {
+		return fixup(this, new AstAddrOfExpr(doCopy(expr, copyParent)));
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((baseType == null) ? 0 : baseType.hashCode());
+		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
 		return result;
 	}
 
@@ -51,11 +51,11 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstRefType other = (AstRefType) obj;
-		if (baseType == null) {
-			if (other.baseType != null)
+		AstAddrOfExpr other = (AstAddrOfExpr) obj;
+		if (expr == null) {
+			if (other.expr != null)
 				return false;
-		} else if (!baseType.equals(other.baseType))
+		} else if (!expr.equals(other.expr))
 			return false;
 		return true;
 	}
@@ -66,7 +66,7 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 	 */
 	@Override
 	public String toString() {
-		return baseType.toString() + "&";
+		return typedString("ADDROF");
 	}
 	
 	/* (non-Javadoc)
@@ -74,7 +74,7 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { baseType };
+		return new IAstNode[] { expr };
 	}
 	
 	
@@ -83,25 +83,25 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 	 */
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
-		if (existing == baseType)
-			setBaseType((IAstType) another);
+		if (existing == expr)
+			setExpr((IAstTypedExpr) another);
 		else
 			throw new IllegalArgumentException();
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstArrayType#setBaseType(org.ejs.eulang.ast.IAstType)
+	 * @see org.ejs.eulang.ast.IAstType#setSymbol(org.ejs.eulang.ast.IAstSymbolExpr)
 	 */
 	@Override
-	public void setBaseType(IAstType typeExpr) {
-		this.baseType = reparent(this.baseType, typeExpr);
+	public void setExpr(IAstTypedExpr expr) {
+		this.expr = reparent(this.expr, expr);
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstArrayType#getBaseType()
+	 * @see org.ejs.eulang.ast.IAstType#getSymbol()
 	 */
 	@Override
-	public IAstType getBaseType() {
-		return baseType;
+	public IAstTypedExpr getExpr() {
+		return expr;
 	}
 	
 	/* (non-Javadoc)
@@ -112,10 +112,19 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 			throws TypeException {
 		boolean changed = false;
 		
-		
-		if (canReplaceType(this)) {
-			LLRefType ref = typeEngine.getRefType(baseType.getType());  
-			changed |= updateType(this, ref);
+		// the type is fixed to be the pointer-to the dereferenced child.
+		if (canInferTypeFrom(expr)) {
+			IAstTypedExpr theExpr = expr;
+			LLType child = typeEngine.getBaseType(expr.getType());
+			do {
+				child = typeEngine.getPointerType(child);
+				if (theExpr instanceof IAstAddrOfExpr)
+					theExpr = ((IAstAddrOfExpr) theExpr).getExpr();
+				else
+					break;
+			}
+			while (true);
+			changed |= updateType(this, child);
 		}
 		
 		return changed;
@@ -126,9 +135,9 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
-		if (baseType.getType() != null && baseType.getType().isComplete()) {
-			if (!baseType.getType().equals(getType().getSubType()))
-				throw new TypeException(this, "pointer base type does not match in parent");
+		if (getType() != null && getType().isComplete()) {
+			if (!expr.getType().equals(getType().getSubType()))
+				throw new TypeException(expr, "pointer base type does not match in parent");
 		}
 	}
 

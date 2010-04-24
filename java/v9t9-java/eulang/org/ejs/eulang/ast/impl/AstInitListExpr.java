@@ -5,18 +5,11 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstFieldExpr;
-import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstInitListExpr;
 import org.ejs.eulang.ast.IAstInitNodeExpr;
-import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.BaseLLField;
-import org.ejs.eulang.types.LLAggregateType;
-import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 

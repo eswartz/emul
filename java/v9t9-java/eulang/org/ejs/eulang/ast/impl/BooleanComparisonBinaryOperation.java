@@ -4,7 +4,20 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
+import org.ejs.eulang.llvm.instrs.LLBranchInstr;
+import org.ejs.eulang.llvm.instrs.LLLoadInstr;
+import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
+import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -93,4 +106,111 @@ public class BooleanComparisonBinaryOperation extends Operation implements IBina
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#generate(org.ejs.eulang.llvm.ILLCodeTarget)
+	 */
+	@Override
+	public LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException {
+		if (this == IOperation.COMPAND) {
+			return generateShortCircuitAnd(generator, currentTarget, expr);
+		} else if (this == IOperation.COMPOR) {
+			return generateShortCircuitOr(generator, currentTarget,  expr);
+		} else {
+			generator.unhandled(expr);
+			return null;
+		}
+	}
+	
+	private LLOperand generateShortCircuitAnd(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException {
+		IBinaryOperation op = expr.getOp();
+		assert op == IOperation.COMPAND;
+		
+		IScope scope = expr.getOwnerScope();
+		
+		// get a var for the outcome
+		ISymbol boolResultSym = scope.addTemporary("and");
+		boolResultSym.setType(expr.getType());
+		LLOperand retval = new LLSymbolOp(boolResultSym);
+		currentTarget.emit(new LLAllocaInstr(retval, expr.getType()));
+
+		ISymbol rhsLabel, outLabel;
+
+		///
+		
+		// calculate the left side and save that
+		LLOperand left = generator.generateTypedExpr(expr.getLeft());
+		currentTarget.store(expr.getType(), left, retval);
+		
+		rhsLabel = scope.addTemporary("rhsOut");
+		outLabel = scope.addTemporary("andOut");
+		
+		// if it was false, done
+		currentTarget.emit(new LLBranchInstr(
+				expr.getLeft().getType(),
+				//typeEngine.LLBOOL,
+				left, new LLSymbolOp(rhsLabel), new LLSymbolOp(outLabel)));
+		
+		//
+		
+		// else, calculate rhs and overwrite the result with that
+		currentTarget.addBlock(rhsLabel);
+		
+		LLOperand right = generator.generateTypedExpr(expr.getRight());
+		
+		currentTarget.store(expr.getRight().getType(), right, retval);
+		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(outLabel)));
+		
+		currentTarget.addBlock(outLabel);
+			
+		LLOperand retTemp = currentTarget.newTemp(expr.getType());
+		currentTarget.emit(new LLLoadInstr(retTemp, expr.getType(), retval));
+		
+		return retTemp;
+	}
+	
+	private LLOperand generateShortCircuitOr(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException {
+		IBinaryOperation op = expr.getOp();
+		assert op == IOperation.COMPOR;
+		
+		IScope scope = expr.getOwnerScope();
+		
+		// get result holder
+		ISymbol boolResultSym = scope.addTemporary("or");
+		boolResultSym.setType(expr.getType());
+		LLOperand retval = new LLSymbolOp(boolResultSym);
+		currentTarget.emit(new LLAllocaInstr(retval, expr.getType()));
+
+		ISymbol rhsLabel, outLabel;
+
+		///
+		
+		// calculate lhs
+		LLOperand left = generator.generateTypedExpr(expr.getLeft());
+		currentTarget.store(expr.getType(), left, retval);
+		
+		// if it was true, done
+		rhsLabel = scope.addTemporary("rhsOut");
+		outLabel = scope.addTemporary("andOut");
+		currentTarget.emit(new LLBranchInstr(
+				expr.getLeft().getType(),
+				//typeEngine.LLBOOL,
+				left, new LLSymbolOp(outLabel), new LLSymbolOp(rhsLabel)));
+		
+		//
+		
+		// else, see if the rhs is true
+		currentTarget.addBlock(rhsLabel);
+		
+		LLOperand right = generator.generateTypedExpr(expr.getRight());
+		
+		currentTarget.store(expr.getRight().getType(), right, retval);
+		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(outLabel)));
+		
+		currentTarget.addBlock(outLabel);
+			
+		LLOperand retTemp = currentTarget.newTemp(expr.getType());
+		currentTarget.emit(new LLLoadInstr(retTemp, expr.getType(), retval));
+		
+		return retTemp;
+	}
 }

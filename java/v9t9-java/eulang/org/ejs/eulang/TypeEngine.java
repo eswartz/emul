@@ -266,6 +266,7 @@ public class TypeEngine {
 	public LLType REFPTR;
 	public LLBoolType LLBOOL;
 	private int gUniqueId;
+	public LLIntType PTRDIFF;
 	
 	/**
 	 * 
@@ -278,6 +279,7 @@ public class TypeEngine {
 		setStackAlign(16);
 		setStructAlign(16);
 		setStructMinAlign(8);
+		
 		VOID = register(new LLVoidType(null));
 		NIL = register(new LLVoidType(null));
 		LABEL = register(new LLLabelType());
@@ -338,8 +340,8 @@ public class TypeEngine {
 		if (a.equals(b))
 			return a;
 		
-		a = getBaseType(a);
-		b = getBaseType(b);
+		//a = getBaseType(a);
+		//b = getBaseType(b);
 		
 		if (a == null || b == null)
 			return null;
@@ -381,7 +383,10 @@ public class TypeEngine {
 				return a;
 			return null;
 		}
-		
+
+		if (a.getBasicType() == BasicType.POINTER && b.getBasicType() == BasicType.INTEGRAL)
+			return a;
+
 		if (a.getBasicType() == BasicType.GENERIC || b.getBasicType() == BasicType.GENERIC)
 			return null;
 		/*
@@ -502,6 +507,7 @@ public class TypeEngine {
 	public void setPtrBits(int ptrBits) {
 		this.ptrBits = ptrBits;
 		INTPTR = getPointerType(new LLIntType("Int", ptrBits));
+		PTRDIFF = getIntType(ptrBits);
 	}
 
 	public int getPtrBits() {

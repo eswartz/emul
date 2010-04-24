@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArrayType;
 import org.ejs.eulang.ast.IAstIntLitExpr;
@@ -13,8 +12,6 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLDataType;
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 

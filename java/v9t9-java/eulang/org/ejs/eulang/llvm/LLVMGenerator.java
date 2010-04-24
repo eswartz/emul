@@ -24,6 +24,7 @@ import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAllocTupleStmt;
 import org.ejs.eulang.ast.IAstArgDef;
@@ -60,6 +61,7 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
 import org.ejs.eulang.ast.impl.ArithmeticBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
@@ -238,7 +240,7 @@ public class LLVMGenerator {
 		messages.add(new Message(e.getNode().getSourceRef(), e.getMessage()));
 	}
 
-	private void unhandled(IAstNode node) throws ASTException {
+	public void unhandled(IAstNode node) throws ASTException {
 		throw new ASTException(node, "unhandled generating: " + node.toString());
 	}
 	
@@ -849,6 +851,10 @@ public class LLVMGenerator {
 			temp = generateStmtListExpr((IAstStmtListExpr) expr);
 		else if (expr instanceof IAstLitExpr)
 			temp = generateLitExpr((IAstLitExpr) expr);
+		else if (expr instanceof IAstDerefExpr)
+			temp = generateDerefExpr((IAstDerefExpr) expr);
+		else if (expr instanceof IAstAddrOfExpr)
+			temp = generateAddrOfExpr((IAstAddrOfExpr) expr);
 		else if (expr instanceof IAstFuncCallExpr)
 			temp = generateFuncCallExpr((IAstFuncCallExpr) expr);
 		else if (expr instanceof IAstSymbolExpr)
@@ -880,6 +886,57 @@ public class LLVMGenerator {
 			return null;
 		}
 		return temp;
+	}
+
+	/**
+	 * @param expr
+	 * @return
+	 * @throws ASTException 
+	 */
+	private LLOperand generateAddrOfExpr(IAstAddrOfExpr expr) throws ASTException {
+		return generateTypedExprAddr(expr.getExpr());
+	}
+
+	/**
+	 * Only point to the address holding the desired value, so load and store can
+	 * work with addresses.
+	 * @param expr
+	 * @return
+	 * @throws ASTException 
+	 */
+	private LLOperand generateDerefExpr(IAstDerefExpr expr) throws ASTException {
+		LLOperand source = generateTypedExprCore(expr.getExpr());
+		if (source == null)
+			return null;
+		
+		LLType valueType = source.getType();
+		while (valueType != null && !valueType.equals(source.getType())) {
+			if (source.getType().getBasicType() == BasicType.REF) {
+				// dereference to get the data ptr
+				LLOperand addrTemp = currentTarget.newTemp(source.getType());
+				currentTarget.emit(new LLGetElementPtrInstr(addrTemp, source.getType(), source,
+						new LLConstOp(0), new LLConstOp(0)));
+				
+				// now read data ptr
+				LLType valPtrType = getTypeEngine().getPointerType(source.getType().getSubType());
+				LLOperand addr = currentTarget.newTemp(valPtrType);
+				currentTarget.emit(new LLLoadInstr(addr, valPtrType, addrTemp));
+				
+				// now read value
+				LLOperand value = currentTarget.newTemp(source.getType().getSubType());
+				currentTarget.emit(new LLLoadInstr(value, value.getType(), addr));
+				source = addr;	
+			} else if (source.getType().getBasicType() == BasicType.POINTER) {
+				LLOperand ret = currentTarget.newTemp(source.getType().getSubType());
+				currentTarget.emit(new LLLoadInstr(ret, ret.getType(), source));
+				source = ret;
+			} else {
+				throw new IllegalStateException();
+			}
+			valueType = source.getType();
+		}
+		
+		return source;
 	}
 
 	/**
@@ -1354,17 +1411,20 @@ entry:
 		if (type.getBasicType() == BasicType.VOID)
 			return null;
 		
+		/*
 		// first, automagically skip all memory operations
 		while (origType.getBasicType() == BasicType.REF || origType.getBasicType() == BasicType.POINTER) {
 			// dereference the value...
 			value = currentTarget.load(origType.getSubType(), value);
 			origType = origType.getSubType();
 		}
-		
+		*/
+		/*
 		// strip target type to basic
 		while (type.getBasicType() == BasicType.REF || type.getBasicType() == BasicType.POINTER) {
 			type = type.getSubType();
 		}
+		*/
 		
 		// now, do value conversion to basic type
 		if (origType.equals(type)) {
@@ -1409,8 +1469,15 @@ entry:
 				// not really a cast
 				type = origType;
 				return value;
-			} else 
-				throw new ASTException(node, "Unhandled casting from " + type + " to " + origType);
+			} else if (origType.getBasicType() == BasicType.POINTER && type.getBasicType() == BasicType.INTEGRAL) {
+				cast = ECast.PTRTOINT;
+			} else if (origType.getBasicType() == BasicType.INTEGRAL && type.getBasicType() == BasicType.POINTER) {
+				cast = ECast.INTTOPTR;
+			} else if (origType.getBasicType() == BasicType.POINTER && type.getBasicType() == BasicType.POINTER) {
+				cast = ECast.BITCAST;
+			} else {
+				throw new ASTException(node, "Cannot cast from " + origType + " to " + type);
+			}
 			
 			LLOperand temp = currentTarget.newTemp(type);
 			currentTarget.emit(new LLCastInstr(temp, cast, origType, value, type));
@@ -1424,129 +1491,11 @@ entry:
 	private LLOperand generateBinExpr(IAstBinExpr expr) throws ASTException {
 		IBinaryOperation oper = expr.getOp();
 
-		if (oper == IOperation.COMPAND) {
-			return generateShortCircuitAnd(expr);
-		} else if (oper == IOperation.COMPOR) {
-			return generateShortCircuitOr(expr);
-		}
-		
-		LLOperand left = generateTypedExpr(expr.getLeft());
-		LLOperand right = generateTypedExpr(expr.getRight());
-		
-		LLOperand ret = currentTarget.newTemp(expr.getType());
-		String instr = oper.getLLVMName();
-		if (instr != null) {
-			if (oper instanceof ComparisonBinaryOperation) {
-				if (expr.getLeft().getType().getBasicType() == BasicType.FLOATING)
-					instr = "fcmp " + ((ComparisonBinaryOperation) oper).getLLFloatPrefix()  + instr;
-				else
-					instr = "icmp " + ((ComparisonBinaryOperation) oper).getLLIntPrefix() + instr;
-			}
-			else if (oper instanceof ArithmeticBinaryOperation) {
-				String prefix = (expr.getLeft().getType().getBasicType() == BasicType.FLOATING) ? 
-						((ArithmeticBinaryOperation) oper).getFloatPrefix() : ((ArithmeticBinaryOperation) oper).getIntPrefix();
-				if (prefix != null) 
-					instr = prefix + instr;
-			}
-			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
-		} else {
-			unhandled(expr);
-		}
-		return ret;
+		return oper.generate(this, currentTarget, expr);
+
 	}
 
-	private LLOperand generateShortCircuitAnd(IAstBinExpr expr) throws ASTException {
-		IBinaryOperation op = expr.getOp();
-		assert op == IOperation.COMPAND;
-		
-		IScope scope = expr.getOwnerScope();
-		
-		// get a var for the outcome
-		ISymbol boolResultSym = scope.addTemporary("and");
-		boolResultSym.setType(expr.getType());
-		LLOperand retval = new LLSymbolOp(boolResultSym);
-		currentTarget.emit(new LLAllocaInstr(retval, expr.getType()));
 
-		ISymbol rhsLabel, outLabel;
-
-		///
-		
-		// calculate the left side and save that
-		LLOperand left = generateTypedExpr(expr.getLeft());
-		currentTarget.store(expr.getType(), left, retval);
-		
-		rhsLabel = scope.addTemporary("rhsOut");
-		outLabel = scope.addTemporary("andOut");
-		
-		// if it was false, done
-		currentTarget.emit(new LLBranchInstr(
-				expr.getLeft().getType(),
-				//typeEngine.LLBOOL,
-				left, new LLSymbolOp(rhsLabel), new LLSymbolOp(outLabel)));
-		
-		//
-		
-		// else, calculate rhs and overwrite the result with that
-		currentTarget.addBlock(rhsLabel);
-		
-		LLOperand right = generateTypedExpr(expr.getRight());
-		
-		currentTarget.store(expr.getRight().getType(), right, retval);
-		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(outLabel)));
-		
-		currentTarget.addBlock(outLabel);
-			
-		LLOperand retTemp = currentTarget.newTemp(expr.getType());
-		currentTarget.emit(new LLLoadInstr(retTemp, expr.getType(), retval));
-		
-		return retTemp;
-	}
-	
-	private LLOperand generateShortCircuitOr(IAstBinExpr expr) throws ASTException {
-		IBinaryOperation op = expr.getOp();
-		assert op == IOperation.COMPOR;
-		
-		IScope scope = expr.getOwnerScope();
-		
-		// get result holder
-		ISymbol boolResultSym = scope.addTemporary("or");
-		boolResultSym.setType(expr.getType());
-		LLOperand retval = new LLSymbolOp(boolResultSym);
-		currentTarget.emit(new LLAllocaInstr(retval, expr.getType()));
-
-		ISymbol rhsLabel, outLabel;
-
-		///
-		
-		// calculate lhs
-		LLOperand left = generateTypedExpr(expr.getLeft());
-		currentTarget.store(expr.getType(), left, retval);
-		
-		// if it was true, done
-		rhsLabel = scope.addTemporary("rhsOut");
-		outLabel = scope.addTemporary("andOut");
-		currentTarget.emit(new LLBranchInstr(
-				expr.getLeft().getType(),
-				//typeEngine.LLBOOL,
-				left, new LLSymbolOp(outLabel), new LLSymbolOp(rhsLabel)));
-		
-		//
-		
-		// else, see if the rhs is true
-		currentTarget.addBlock(rhsLabel);
-		
-		LLOperand right = generateTypedExpr(expr.getRight());
-		
-		currentTarget.store(expr.getRight().getType(), right, retval);
-		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(outLabel)));
-		
-		currentTarget.addBlock(outLabel);
-			
-		LLOperand retTemp = currentTarget.newTemp(expr.getType());
-		currentTarget.emit(new LLLoadInstr(retTemp, expr.getType(), retval));
-		
-		return retTemp;
-	}
 	/**
 	 * @param define
 	 * @param expr

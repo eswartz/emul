@@ -28,6 +28,7 @@ public class TestSimplify extends BaseParserTest {
 	}
 	@Test
     public void testPromotedCast2() throws Exception {
+		dumpTreeize = true;
     	IAstModule mod = treeize(
     			"testPromotedCast2 := code () {\n" +
     			"   z : Byte;\n" +

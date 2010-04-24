@@ -627,7 +627,8 @@ public class TestTypeInfer extends BaseParserTest {
 	   			getMainBodyExpr(def).getType());
 	   	
 	   	IAstAssignStmt assn = (IAstAssignStmt) ((IAstCodeExpr) getMainBodyExpr(def)).stmts().getLast();
-	   	assertEquals(intRef, assn.getType());
+	   	//assertEquals(intRef, assn.getType());
+	   	assertEquals(typeEngine.INT, assn.getType());
     }
 
     /*
@@ -1063,7 +1064,7 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
     	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
     	assertEquals(10, arrayType.getArrayCount());
@@ -1086,7 +1087,7 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
     	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
     	assertEquals(10, arrayType.getArrayCount());

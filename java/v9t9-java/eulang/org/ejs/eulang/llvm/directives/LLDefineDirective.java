@@ -211,8 +211,13 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	public void store(LLType valueType, LLOperand value, LLOperand target) {
 		if (target instanceof LLVariableOp) {
 			ILLVariable var = ((LLVariableOp) target).getVariable();
-			var.store(this, value);
-		} else if (valueType != null && valueType.equals(target.getType().getSubType())) {
+			if (var.getValueType().equals(valueType)) {
+				var.store(this, value);
+				return;
+			}
+			target = var.load(this);
+		} 
+		if (valueType != null && valueType.equals(target.getType().getSubType())) {
 			// TODO: this is copied from ILLVariable impls
 			
 			if (target.getType().getBasicType() == BasicType.REF) {
@@ -247,8 +252,12 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 		if (source instanceof LLVariableOp) { 
 			
 			ILLVariable var = ((LLVariableOp) source).getVariable();
-			return var.load(this);
-		} else if (valueType != null && valueType.equals(source.getType().getSubType())) {
+			if (var.getValueType().equals(valueType))
+				return var.load(this);
+			
+			source = var.load(this);
+		} 
+		if (valueType != null && valueType.equals(source.getType().getSubType())) {
 			// TODO: this is copied from ILLVariable impls
 			
 			if (source.getType().getBasicType() == BasicType.REF) {

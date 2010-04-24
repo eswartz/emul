@@ -5,9 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
-import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 

@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -51,6 +52,8 @@ public class ArithmeticUnaryOperation extends Operation implements IUnaryOperati
 		if (!types.result.equals(types.expr)) {
 			throw new TypeException("inconsistent types in expression");
 		}
+		if ((types.expr.getBasicType().getClassMask() & LLType.TYPECLASS_PRIMITIVE) == 0) 
+			throw new TypeException("invalid type for '" + getName() + "': " + types.expr);
 	}
 
 }

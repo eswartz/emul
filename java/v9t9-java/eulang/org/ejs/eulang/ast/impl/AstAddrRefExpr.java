@@ -4,10 +4,10 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstValueExpr;
+import org.ejs.eulang.ast.IAstAddrRefExpr;
+import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -16,14 +16,14 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstValueExpr extends AstTypedExpr implements IAstValueExpr {
+public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 
 	private IAstTypedExpr expr;
 
 	/**
 	 * @param type
 	 */
-	public AstValueExpr(IAstTypedExpr expr) {
+	public AstAddrRefExpr(IAstTypedExpr expr) {
 		setExpr(expr);
 	}
 
@@ -31,8 +31,8 @@ public class AstValueExpr extends AstTypedExpr implements IAstValueExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstValueExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstValueExpr(doCopy(expr, copyParent)));
+	public IAstAddrRefExpr copy(IAstNode copyParent) {
+		return fixup(this, new AstAddrRefExpr(doCopy(expr, copyParent)));
 	}
 	
 	@Override
@@ -52,7 +52,7 @@ public class AstValueExpr extends AstTypedExpr implements IAstValueExpr {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstValueExpr other = (AstValueExpr) obj;
+		AstAddrRefExpr other = (AstAddrRefExpr) obj;
 		if (expr == null) {
 			if (other.expr != null)
 				return false;
@@ -67,7 +67,7 @@ public class AstValueExpr extends AstTypedExpr implements IAstValueExpr {
 	 */
 	@Override
 	public String toString() {
-		return typedString("VALUE");
+		return typedString("ADDRREF");
 	}
 	
 	/* (non-Javadoc)
@@ -113,15 +113,19 @@ public class AstValueExpr extends AstTypedExpr implements IAstValueExpr {
 			throws TypeException {
 		boolean changed = false;
 		
-		// the type is fixed to be the base type of the dereferenced child.
+		// the type is fixed to be the pointer-to the dereferenced child.
 		if (canInferTypeFrom(expr)) {
+			IAstTypedExpr theExpr = expr;
 			LLType child = typeEngine.getBaseType(expr.getType());
-			changed |= updateType(this, child);
-		} else if (canInferTypeFrom(this)) {
-			if (expr.getType() == null) {
-				expr.setType(getType());
-				changed = true;
+			do {
+				child = typeEngine.getPointerType(child);
+				if (theExpr instanceof IAstAddrRefExpr)
+					theExpr = ((IAstAddrRefExpr) theExpr).getExpr();
+				else
+					break;
 			}
+			while (true);
+			changed |= updateType(this, child);
 		}
 		
 		return changed;
@@ -133,9 +137,20 @@ public class AstValueExpr extends AstTypedExpr implements IAstValueExpr {
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		if (getType() != null && getType().isComplete()) {
-			if (!typeEngine.getBaseType(expr.getType()).equals(getType()))
-				throw new TypeException(expr, "type is not the child's base type");
+			if (!expr.getType().equals(getType().getSubType()))
+				throw new TypeException(expr, "pointer base type does not match in parent");
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public IAstTypedExpr simplify(TypeEngine engine) {
+		if (expr instanceof IAstDerefExpr) {
+			return (IAstTypedExpr) ((IAstDerefExpr) expr).getExpr().copy(this);
+		}
+		return super.simplify(engine);
 	}
 
 }

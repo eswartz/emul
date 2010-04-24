@@ -5,8 +5,8 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTupleNode;
+import org.ejs.eulang.ast.IAstTypedExpr;
 
 /**
  * @author ejs

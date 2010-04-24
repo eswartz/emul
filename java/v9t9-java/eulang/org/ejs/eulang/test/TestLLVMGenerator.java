@@ -180,6 +180,7 @@ public class TestLLVMGenerator extends BaseParserTest {
   	 
   	 @Test
   	 public void testOverloading() throws Exception {
+  		 // util(x,y) should be Int,Int=>Int too
   		 IAstModule mod = doFrontend(
   				 "    util = [ code(x:Int; y:Int; z:Int) { x*y-z },\n" + 
   				 "             code(x, y) { util(x, y, 0) }\n" + 

@@ -84,6 +84,13 @@ public class LLLocalVariable implements ILLVariable {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLVariable#getSymbolType()
+	 */
+	@Override
+	public LLType getValueType() {
+		return symbol.getType();
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.ILLVariable#allocate(org.ejs.eulang.llvm.ILLCodeTarget)
@@ -130,6 +137,7 @@ public class LLLocalVariable implements ILLVariable {
 	public void store(ILLCodeTarget target, LLOperand value) {
 		LLOperand storageOp = new LLSymbolOp(addrSymbol);
 		target.emit(new LLStoreInstr(symbol.getType(), value, storageOp));
+		//target.store(value.getType(), value, storageOp);
 	}
 
 	/* (non-Javadoc)

@@ -168,7 +168,14 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		
 		// ignore when we're already a cast
 		if (this instanceof IAstUnaryExpr && ((IAstUnaryExpr) this).getOp() == IOperation.CAST) {
-			setType(newType);
+			if (canReplaceType(this))
+				setType(newType);
+			return child;
+		}
+		
+		// modify cast when child is a cast and this is legal
+		if (child instanceof IAstUnaryExpr && ((IAstUnaryExpr) child).getOp() == IOperation.CAST) {
+			child.setType(newType);
 			return child;
 		}
 		

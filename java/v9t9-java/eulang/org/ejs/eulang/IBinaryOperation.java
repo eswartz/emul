@@ -3,6 +3,12 @@
  */
 package org.ejs.eulang;
 
+import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -37,4 +43,11 @@ public interface IBinaryOperation extends IOperation {
 	 * @param types
 	 */
 	void validateTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
+
+	/**
+	 * @param generator TODO
+	 * @param currentTarget
+	 * @return
+	 */
+	LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException;
 }

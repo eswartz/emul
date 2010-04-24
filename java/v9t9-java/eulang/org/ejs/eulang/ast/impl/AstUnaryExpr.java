@@ -127,8 +127,8 @@ public class AstUnaryExpr extends AstTypedExpr implements
     public boolean inferTypeFromChildren(TypeEngine typeEngine)
     		throws TypeException {
     	IUnaryOperation.OpTypes types = new IUnaryOperation.OpTypes();
-    	types.expr = typeEngine.getBaseType(expr.getType());
-    	types.result = typeEngine.getBaseType(getType());
+    	types.expr = (expr.getType());
+    	types.result = (getType());
     	oper.inferTypes(typeEngine, types);
     	boolean changed = updateType(expr, types.expr) | updateType(this, types.result);
     	
@@ -146,8 +146,8 @@ public class AstUnaryExpr extends AstTypedExpr implements
    @Override
    public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 	   IUnaryOperation.OpTypes types = new IUnaryOperation.OpTypes();
-		types.expr = typeEngine.getBaseType(expr.getType());
-		types.result = typeEngine.getBaseType(getType());
+		types.expr = (expr.getType());
+		types.result = (getType());
 		oper.validateTypes(typeEngine, types);
    }
 }

@@ -21,24 +21,20 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	private ISymbol symbol;
-	private boolean isAddress;
 	private ISymbol origSymbol;
 	
     public AstSymbolExpr(ISymbol symbol) {
         super();
         setSymbol(symbol);
-        setAddress(false);
     }
     public AstSymbolExpr(ISymbol symbol, boolean isAddress) {
     	super();
     	setSymbol(symbol);
-    	setAddress(isAddress);
     }
     public AstSymbolExpr(AstSymbolExpr other) {
     	// avoid side effects
     	this.origSymbol = other.origSymbol;
     	this.symbol = other.symbol;
-    	this.isAddress = other.isAddress;
     	this.type = other.type;
     }
 
@@ -80,7 +76,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 */
 	@Override
 	public String toString() {
-		return typedString((isAddress ? "&" : "") + symbol.getName());
+		return typedString(symbol.getName());
 	}
     	
     /* (non-Javadoc)
@@ -227,21 +223,6 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		
 		return changed;
 
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstSymbolExpr#isAddress()
-	 */
-	@Override
-	public boolean isAddress() {
-		return isAddress;
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstSymbolExpr#setAddress(boolean)
-	 */
-	@Override
-	public void setAddress(boolean isAddress) {
-		this.isAddress = isAddress;
 	}
 	
 	/* (non-Javadoc)

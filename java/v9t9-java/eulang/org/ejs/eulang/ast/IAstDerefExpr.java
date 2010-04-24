@@ -9,8 +9,8 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstValueExpr extends IAstTypedExpr {
-	IAstValueExpr copy(IAstNode copyParent);
+public interface IAstDerefExpr extends IAstTypedExpr {
+	IAstDerefExpr copy(IAstNode copyParent);
 	
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);

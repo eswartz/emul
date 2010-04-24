@@ -4,8 +4,8 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstLitExpr;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNilLitExpr;
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.types.LLType;
 
 /**

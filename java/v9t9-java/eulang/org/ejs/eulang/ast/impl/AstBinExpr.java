@@ -239,9 +239,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 			return false;
 		
 		IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();
-		types.left = typeEngine.getBaseType(left.getType());
-		types.right = typeEngine.getBaseType(right.getType());
-		types.result = typeEngine.getBaseType(getType());
+		types.left = left.getType();
+		types.right = right.getType();
+		types.result = getType();
 		oper.inferTypes(typeEngine, types);
 		
 		boolean changed = (updateType(left, types.left) | updateType(right, types.right) | updateType(this, types.result));
@@ -263,9 +263,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
     @Override
     public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
     	IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();
-		types.left = typeEngine.getBaseType(left.getType());
-		types.right = typeEngine.getBaseType(right.getType());
-		types.result = typeEngine.getBaseType(getType());
+		types.left = left.getType();
+		types.right = right.getType();
+		types.result = getType();
 		oper.validateTypes(typeEngine, types);
 		
     }

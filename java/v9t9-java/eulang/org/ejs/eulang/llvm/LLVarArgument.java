@@ -81,6 +81,14 @@ public class LLVarArgument implements ILLVariable {
 			return false;
 		return true;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLVariable#getSymbolType()
+	 */
+	@Override
+	public LLType getValueType() {
+		return symbol.getType();
+	}
 
 
 	/* (non-Javadoc)

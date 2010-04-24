@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast;
 
 /**
+ * Point to a field.  
  * @author ejs
  *
  */

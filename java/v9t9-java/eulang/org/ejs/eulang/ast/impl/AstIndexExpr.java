@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.antlr.stringtemplate.language.Expr;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstNode;

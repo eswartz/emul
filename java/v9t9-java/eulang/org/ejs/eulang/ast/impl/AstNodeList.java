@@ -10,7 +10,6 @@ import java.util.ListIterator;
 
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstSymbolExpr;
 
 
 /**
