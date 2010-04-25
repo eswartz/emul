@@ -5,12 +5,14 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstStmt;
+import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
@@ -67,5 +69,15 @@ public class AstBlockStmt extends AstStmtScope implements IAstBlockStmt {
 		return inferTypesFromChildren(new ITyped[] { getValue() });
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
+	 */
+	@Override
+	public void merge(IAstStmtScope added) throws ASTException {
+		if (!(added instanceof IAstBlockStmt))
+			throw new ASTException(added, "cannot merge these scopes");
+		
+		super.merge(added);
+	}
 	
 }

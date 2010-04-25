@@ -5,12 +5,14 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmt;
+import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
@@ -183,4 +185,11 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
+	 */
+	@Override
+	public void merge(IAstStmtScope added) throws ASTException {
+		throw new ASTException(added, "cannot merge code blocks");
+	}
 }

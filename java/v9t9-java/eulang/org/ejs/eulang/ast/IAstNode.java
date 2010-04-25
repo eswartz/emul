@@ -51,6 +51,9 @@ public interface IAstNode {
      * will also assign the parent.  
      */
     public void setParent(IAstNode node);
+    
+    /** Change the parent to the given node. */
+    public void reparent(IAstNode node);
 
     /**Get the owned children of this node.  Each child's
      * #getParent() returns this.

@@ -7,12 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstScope;
+import org.ejs.eulang.ast.IAstStmt;
+import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
@@ -27,19 +30,16 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstDataType extends AstTypedExpr implements IAstDataType {
+public class AstDataType extends AstStmtScope implements IAstDataType {
 
 	private IAstNodeList<IAstTypedNode> statics;
 	private IAstNodeList<IAstTypedNode> ifields;
 
-
-	protected IScope scope;
-
 		
-	public AstDataType(IAstNodeList<IAstTypedNode> fields,
+	public AstDataType( IAstNodeList<IAstStmt> stmts,
+			IAstNodeList<IAstTypedNode> fields,
 			IAstNodeList<IAstTypedNode> statics, IScope scope) {
-		this.scope = scope;
-		scope.setOwner(this);
+		super(stmts, scope);
 		setFields(fields);
 		setStatics(statics);
 	}
@@ -49,10 +49,10 @@ public class AstDataType extends AstTypedExpr implements IAstDataType {
 	 */
 	@Override
 	public IAstDataType copy(IAstNode copyParent) {
-		AstDataType copied = fixup(this, new AstDataType(doCopy(ifields, copyParent), doCopy(statics, copyParent),
+		return (IAstDataType) fixupStmtScope(new AstDataType(
+				doCopy(stmtList, copyParent),
+				doCopy(ifields, copyParent), doCopy(statics, copyParent),
 				getScope().newInstance(getCopyScope(copyParent))));
-		remapScope(getScope(), copied.getScope(), copied);
-		return copied;
 	}
 
 	
@@ -63,7 +63,6 @@ public class AstDataType extends AstTypedExpr implements IAstDataType {
 		int result = super.hashCode();
 		result = prime * result + ((ifields == null) ? 0 : ifields.hashCode());
 		result = prime * result + ((statics == null) ? 0 : statics.hashCode());
-		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
 		return result;
 	}
 
@@ -86,40 +85,9 @@ public class AstDataType extends AstTypedExpr implements IAstDataType {
 				return false;
 		} else if (!statics.equals(other.statics))
 			return false;
-		if (scope == null) {
-			if (other.scope != null)
-				return false;
-		} else if (!scope.equals(other.scope))
-			return false;
 		return true;
 	}
 
-
-	@Override
-	public void setParent(IAstNode node) {
-		super.setParent(node);
-
-		if (node != null) {
-			while (node != null) {
-				if (node instanceof IAstScope) {
-					scope.setParent(((IAstScope) node).getScope());
-					break;
-				}
-				node = node.getParent();
-			}
-		} else {
-			scope.setParent(null);
-		}
-		
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstScope#getScope()
-	 */
-	@Override
-	public IScope getScope() {
-		return scope;
-	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()
 	 */
@@ -165,7 +133,7 @@ public class AstDataType extends AstTypedExpr implements IAstDataType {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { ifields, statics };
+		return new IAstNode[] { ifields, statics, stmtList };
 	}
 
 	/* (non-Javadoc)
@@ -179,7 +147,7 @@ public class AstDataType extends AstTypedExpr implements IAstDataType {
 		else if (ifields == existing)
 			setFields((IAstNodeList<IAstTypedNode>) another);
 		else
-			throw new IllegalArgumentException();
+			super.replaceChild(existing, another);
 	}
 
 	/* (non-Javadoc)
@@ -247,6 +215,18 @@ public class AstDataType extends AstTypedExpr implements IAstDataType {
 		}
 		LLDataType data = typeEngine.getDataType(name, newIFields, newSFields);
 		return data;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
+	 */
+	@Override
+	public void merge(IAstStmtScope added) throws ASTException {
+		if (added instanceof IAstDataType) {
+			doMerge(ifields, ((IAstDataType) added).getFields());
+			doMerge(statics, ((IAstDataType) added).getStatics());
+		} 
+		super.merge(added);
 	}
 	
 }

@@ -115,12 +115,14 @@ toplevelstmts: toplevelstat*      -> ^(STMTLIST toplevelstat*)
     ; 
     
 toplevelstat:  (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
-    |  (ID COLON) => ID COLON type (EQUALS toplevelvalue)?     SEMI  -> ^(ALLOC ID type toplevelvalue?)
-    |  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExpr  SEMI  -> ^(ALLOC ID TYPE rhsExpr)
+    |  (ID COLON) => ID COLON type (EQUALS rhsExprOrInitList)?     SEMI  -> ^(ALLOC ID type rhsExprOrInitList?)
+    |  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExprOrInitList  SEMI  -> ^(ALLOC ID TYPE rhsExprOrInitList)
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     | rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
     | (LBRACE ) => xscope 
     ;
+
+rhsExprOrInitList : rhsExpr | initList ;
 
 toplevelvalue : (LBRACE ) => xscope
     | ID PLUS data -> ^(ADDSCOPE ID data)

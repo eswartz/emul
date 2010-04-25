@@ -38,7 +38,10 @@ public class TestTypes extends BaseParserTest {
     public void testArrayDecls() throws Exception {
     	IAstModule mod = doFrontend(
     			"p : Int[10];\n"+
-    			"q : Int[]= [0];\n");
+    			"q : Int[]= [];\n"+
+    			"r : Int[]= [0,2];\n"+
+    			""
+    			);
 
     	sanityTest(mod);
     	
@@ -52,6 +55,13 @@ public class TestTypes extends BaseParserTest {
     	stmt = (IAstAllocStmt) mod.getScope().get("q").getDefinition();
     	assertTrue(stmt.getType() instanceof LLArrayType);
     	assertEquals(0, ((LLArrayType)stmt.getType()).getArrayCount()); 
+    	assertEquals(typeEngine.INT, ((LLArrayType)stmt.getType()).getSubType()); 
+    	assertTrue(stmt.getType().isCompatibleWith(stmt.getType()));
+    	assertNull(((LLArrayType)stmt.getType()).getDynamicSizeExpr());
+    	
+    	stmt = (IAstAllocStmt) mod.getScope().get("r").getDefinition();
+    	assertTrue(stmt.getType() instanceof LLArrayType);
+    	assertEquals(2, ((LLArrayType)stmt.getType()).getArrayCount()); 
     	assertEquals(typeEngine.INT, ((LLArrayType)stmt.getType()).getSubType()); 
     	assertTrue(stmt.getType().isCompatibleWith(stmt.getType()));
     	assertNull(((LLArrayType)stmt.getType()).getDynamicSizeExpr());
@@ -895,6 +905,53 @@ public class TestTypes extends BaseParserTest {
     	LLVMGenerator gen = doGenerate(mod);
     	assertFoundInOptimizedText("ret i16 8", gen);
 	}
+	
+	@Test
+	public void testPointerInit4() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testPointerInit4 = code() {\n"+
+    			"  foo:Byte=10;\n"+
+    			"  foo0:Int^=&foo;\n"+
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerInit4").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("bitcast i8*", gen);
+    	assertFoundInOptimizedText("to i16*", gen);
+	}
+	
+	@Test
+	public void testCastingBad1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"testCastingBad1 = code() {\n"+
+    			"  foo:Byte[1];\n"+
+    			"  foo0:Byte[2]=foo;\n"+	// cast from array to array
+    			"};\n"+
+    	"");
+    	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testCastingBad1").getDefinition());
+    	assertTrue(code.getType().isComplete());
+
+    	doGenerate(mod, true);
+	}
+	
+    @Test
+    public void testDataFuncPtr1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"  draw:code(this:Class; count:Int);\n"+
+    			"};\n"+
+    			"doDraw = code(this:Class; count:Int) { count*count };\n"+
+    			"testDataFuncPtr1 = code() {\n"+
+    			"  inst : Class;\n"+
+    			"  inst.draw = doDraw;\n"+
+    			"  Class.draw(inst, 5);\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    }
+
 }
 
 

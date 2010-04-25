@@ -10,4 +10,10 @@ package org.ejs.eulang.ast;
  */
 public interface IAstStmtScope extends IAstScope {
 	IAstNodeList<IAstStmt> stmts();
+
+	/**
+	 * Merge another scope into this one.
+	 * @param added
+	 */
+	void merge(IAstStmtScope added) throws ASTException;
 }

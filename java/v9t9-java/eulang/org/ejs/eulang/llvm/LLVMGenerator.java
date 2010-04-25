@@ -1401,30 +1401,9 @@ entry:
 	 */
 	public LLOperand generateCast(IAstNode node, LLType type, LLType origType, LLOperand value) throws ASTException {
 		
-		//if (type.getBasicType() == BasicType.REF)
-		//	throw new ASTException(expr, "cannot cast to a reference; must use .New()");
-		//if (type.getBasicType() == BasicType.POINTER)
-		//	throw new ASTException(expr, "cannot cast to a pointer");
-		
 		if (type.getBasicType() == BasicType.VOID)
 			return null;
 		
-		/*
-		// first, automagically skip all memory operations
-		while (origType.getBasicType() == BasicType.REF || origType.getBasicType() == BasicType.POINTER) {
-			// dereference the value...
-			value = currentTarget.load(origType.getSubType(), value);
-			origType = origType.getSubType();
-		}
-		*/
-		/*
-		// strip target type to basic
-		while (type.getBasicType() == BasicType.REF || type.getBasicType() == BasicType.POINTER) {
-			type = type.getSubType();
-		}
-		*/
-		
-		// now, do value conversion to basic type
 		if (origType.equals(type)) {
 			// good
 		} else {
@@ -1474,7 +1453,7 @@ entry:
 			} else if (origType.getBasicType() == BasicType.POINTER && type.getBasicType() == BasicType.POINTER) {
 				cast = ECast.BITCAST;
 			} else {
-				throw new ASTException(node, "Cannot cast from " + origType + " to " + type);
+				throw new ASTException(node, "cannot cast from " + origType + " to " + type);
 			}
 			
 			LLOperand temp = currentTarget.newTemp(type);

@@ -7,7 +7,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstDataType extends IAstTypedExpr, IAstScope {
+public interface IAstDataType extends IAstTypedExpr, IAstStmtScope, IAstType {
 	IAstDataType copy(IAstNode parent);
 	
 	IAstNodeList<IAstTypedNode> getFields();
@@ -15,4 +15,5 @@ public interface IAstDataType extends IAstTypedExpr, IAstScope {
 	
 	void setFields(IAstNodeList<IAstTypedNode> fields);
 	void setStatics(IAstNodeList<IAstTypedNode> statics);
+	
 }

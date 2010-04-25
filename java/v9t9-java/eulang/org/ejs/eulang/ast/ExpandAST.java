@@ -75,6 +75,8 @@ public class ExpandAST {
 						return false;
 					
 					value = symExpr.getInstance();
+					if (value instanceof IAstType)
+						return false;
 				}
 				
 				if (value != null) {

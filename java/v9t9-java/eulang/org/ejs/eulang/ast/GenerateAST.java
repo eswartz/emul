@@ -397,6 +397,8 @@ public class GenerateAST {
 		switch (tree.getType()) {
 		case EulangParser.SCOPE:
 			return constructScope(tree);
+		case EulangParser.ADDSCOPE:
+			return constructAddScope(tree);
 
 		case EulangParser.DATA:
 			return constructData(tree);
@@ -530,16 +532,59 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException 
 	 */
+	private IAstNode constructAddScope(Tree tree) throws GenerateException {
+		String name = tree.getChild(0).getText();
+		ISymbol fromScope = currentScope.search(name);
+		if (fromScope == null)
+			throw new GenerateException(tree.getChild(0), "cannot find scope " + name);
+		
+		IAstNode def = fromScope.getDefinition();
+		
+		if (def instanceof IAstDefineStmt) {
+			if (((IAstDefineStmt) def).bodyList().size() != 1)
+				throw new GenerateException(tree.getChild(0), "symbol is not a simple scope: " + name);
+			def = ((IAstDefineStmt) def).getMatchingBodyExpr(null);
+		}
+		if (!(def instanceof IAstStmtScope)) {
+			throw new GenerateException(tree.getChild(0), "symbol is not a scope: " + name);
+		}
+		
+		
+		IAstStmtScope combined = (IAstStmtScope) def.copy(def);
+
+		// make sure the new scope can see the original one...
+		pushScope(combined.getScope());
+		try {
+			// make the new scope
+			IAstStmtScope added = checkConstruct(tree.getChild(1), IAstStmtScope.class);
+			
+			// merge
+			combined.uniquifyIds();
+			try {
+				combined.merge(added);
+			} catch (ASTException e) {
+				throw new GenerateException(e.getNode().getSourceRef(), e.getMessage());
+			}
+			
+			getSource(tree, combined);
+			return combined;
+		} finally {
+			popScope(tree);
+		}
+		
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
 	private IAstScope constructScope(Tree tree) throws GenerateException {
 		pushScope(new NamespaceScope(currentScope));
 		try {
 			IAstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(
 					IAstStmt.class);
-			for (Tree kid : iter(tree)) {
-				IAstStmt item = checkConstruct(kid, IAstStmt.class);
-				stmts.add(item);
-			}
-			getSource(tree, stmts);
+			constructScopeEntries(stmts, tree);
 
 			IAstStmtScope scope = new AstStmtScope(stmts, currentScope);
 			getSource(tree, scope);
@@ -548,6 +593,17 @@ public class GenerateAST {
 		} finally {
 			popScope(tree);
 		}
+	}
+
+	private void constructScopeEntries(IAstNodeList<IAstStmt> stmts, Tree tree)
+			throws GenerateException {
+		Tree start = tree.getChild(0);
+		assert (tree.getChildCount() == 1 && tree.getChild(0).getType() == EulangParser.STMTLIST);
+		for (Tree kid : iter(start)) {
+			IAstStmt item = checkConstruct(kid, IAstStmt.class);
+			stmts.add(item);
+		}
+		getSource(tree, stmts);
 	}
 
 	/**
@@ -699,7 +755,10 @@ public class GenerateAST {
 			getSource(tree, statics);
 			getSource(tree, fields);
 
-			IAstDataType dataType = new AstDataType(fields, statics,
+			AstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(IAstStmt.class);
+			getEmptySource(tree, stmts);
+			
+			IAstDataType dataType = new AstDataType(stmts, fields, statics,
 					currentScope);
 			getSource(tree, dataType);
 

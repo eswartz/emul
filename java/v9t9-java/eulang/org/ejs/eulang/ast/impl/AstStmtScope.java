@@ -3,18 +3,14 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstBlockStmt;
-import org.ejs.eulang.ast.IAstGotoStmt;
-import org.ejs.eulang.ast.IAstLoopStmt;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstType;
-import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.TypeException;
@@ -136,9 +132,7 @@ public class AstStmtScope extends AstTypedExpr implements IAstStmtScope, IAstTyp
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
-	 */
+	/** Override in subclasses.  This sets the scope to VOID. */
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
@@ -150,7 +144,21 @@ public class AstStmtScope extends AstTypedExpr implements IAstStmtScope, IAstTyp
 			
 		return changed;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
+	 */
+	@Override
+	public void merge(IAstStmtScope added) throws ASTException {
+		doMerge(stmtList, added.stmts());
+	}
 
-
+	protected <T extends IAstNode> void doMerge(IAstNodeList<T> nodes, IAstNodeList<T> added) throws ASTException {
+		for (T node : added.list()) {
+			node.reparent(nodes);
+			nodes.add(node);
+		}
+		added.list().clear();
+	}
 	
 }

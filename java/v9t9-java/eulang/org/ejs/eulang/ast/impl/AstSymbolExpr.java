@@ -43,8 +43,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
      */
     @Override
     public IAstSymbolExpr copy(IAstNode copyParent) {
-    	AstSymbolExpr symbolExpr = new AstSymbolExpr(this);
-    	return symbolExpr;
+    	return fixup(this, new AstSymbolExpr(this));
     }
     
     @Override

@@ -130,6 +130,14 @@ abstract public class AstNode implements IAstNode {
 		}
         parent = node;
     }
+    
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#reparent(org.ejs.eulang.ast.IAstNode)
+     */
+    @Override
+    public void reparent(IAstNode node) {
+    	parent = node;
+    }
 
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstNode#accept(v9t9.tools.decomp.expr.AstVisitor)
@@ -174,6 +182,13 @@ abstract public class AstNode implements IAstNode {
     	this.sourceRef = sourceRef;
     }
     
+    /** Reparent newkid to this, being sure to ensure we don't try to set parents where one is already set.
+     * Reset existing's parent, if set.
+     * @param <T>
+     * @param existing
+     * @param newkid
+     * @return
+     */
     protected <T extends IAstNode> T reparent(T existing, T newkid) {
     	if (existing != null && existing.getParent() == this)
 			existing.setParent(null);
