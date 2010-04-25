@@ -21,7 +21,7 @@ public class LLGetElementPtrInstr extends LLAssignInstr {
 	@Override
 	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
 		if (idx > 0) 
-			sb.append(op.getType()).append(' ');
+			sb.append(op.getType().getLLVMName()).append(' ');
 		super.appendOperandString(sb, idx, op);
 	}
 }

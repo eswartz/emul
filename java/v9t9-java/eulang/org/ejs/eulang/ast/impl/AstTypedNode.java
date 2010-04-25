@@ -10,6 +10,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeException;
 
 /**
  * @author ejs
@@ -72,6 +73,16 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 
 	public String typedString(String input) {
 		return input + " [" + (getType() != null ? getType().toString() : "<unknown>") + "]";
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#validateType(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateType(TypeEngine typeEngine) throws TypeException {
+		LLType thisType = getType();
+		if (thisType == null || !thisType.isComplete() || thisType.isGeneric())
+			throw new TypeException(this, "type inference cannot resolve type");
 	}
 	
 

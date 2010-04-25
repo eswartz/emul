@@ -74,7 +74,7 @@ public class LLStructOp extends BaseLLConstOperand {
 		boolean first = true;
 		for (int idx = 0; idx < elements.length; idx++) {
 			if (first) first = false; else sb.append(", ");
-			sb.append(elements[idx].getType()).append(' ').append(elements[idx]);
+			sb.append(elements[idx].getType().getLLVMName()).append(' ').append(elements[idx]);
 		}
 		sb.append(" }");
 		return sb.toString();

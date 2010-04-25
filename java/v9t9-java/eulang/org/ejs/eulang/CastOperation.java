@@ -46,7 +46,7 @@ public class CastOperation extends Operation implements IUnaryOperation {
 	@Override
 	public void validateTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		
+
 		// see if types are allowed
 		if (types.expr.getBasicType() != types.result.getBasicType()) {
 			if ((types.expr.getBasicType() == BasicType.POINTER && types.result.getBasicType() == BasicType.ARRAY)
@@ -63,6 +63,10 @@ public class CastOperation extends Operation implements IUnaryOperation {
 				return;
 			}
 			else if (types.expr.getBasicType() == BasicType.INTEGRAL && types.result.getBasicType() == BasicType.POINTER) {
+				// fine
+				return;
+			}
+			else if (types.expr.getBasicType() == BasicType.CODE && types.result.getBasicType() == BasicType.POINTER) {
 				// fine
 				return;
 			}

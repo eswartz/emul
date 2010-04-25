@@ -22,7 +22,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 	 * 
 	 */
 	public LLCodeType(LLType retType, LLType[] argTypes, int ptrBits) {
-		super(null, ptrBits, toString(retType, argTypes), BasicType.CODE, null, argTypes == null);
+		super(toNameString(retType, argTypes), ptrBits, toString(retType, argTypes), BasicType.CODE, null, argTypes == null);
 		this.retType = retType;
 		this.argTypes = argTypes != null ? argTypes : NO_TYPES;
 		this.types = new LLType[1 + this.argTypes.length];
@@ -32,7 +32,6 @@ public class LLCodeType extends BaseLLAggregateType  {
 	}
 	
 	
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -65,11 +64,31 @@ public class LLCodeType extends BaseLLAggregateType  {
 
 
 
+	/**
+	 * @param retType
+	 * @param argTypes
+	 * @return
+	 */
+	private static String toNameString(LLType retType, LLType[] argTypes) {
+		String name = toString(retType, argTypes);
+		name = name.replaceAll("\\s+", "");
+		name = name.replaceAll("\\(|,", "\\$");
+		name = name.replaceAll("[^A-Za-z0_9$]+", "_");
+		return name;
+	}
+
+
 	public static String toString(LLType retType, LLType[] argTypes) {
 		if (retType == null && argTypes == null)
 			return "<code>";
 
 		StringBuilder sb = new StringBuilder();
+		if (retType != null)
+			sb.append(retType.getLLVMName());
+		else
+			sb.append("<unknown>");
+		
+		sb.append(" (");
 		boolean first = true;
 		for (LLType type : argTypes) {
 			if (first)
@@ -77,15 +96,12 @@ public class LLCodeType extends BaseLLAggregateType  {
 			else
 				sb.append(',');
 			if (type != null)
-				sb.append(type.toString());
+				sb.append(type.getLLVMName());
 			else
 				sb.append("<unknown>");
 		}
-		sb.append(" => ");
-		if (retType != null)
-			sb.append(retType.toString());
-		else
-			sb.append("<unknown>");
+		sb.append(')');
+		
 		return sb.toString();
 	}
 	

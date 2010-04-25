@@ -24,7 +24,7 @@ public class LLPointerType extends BaseLLType {
 	 */
 	@Override
 	public boolean isComplete() {
-		return true;
+		return subType != null && subType.isComplete();
 	}
 
 }

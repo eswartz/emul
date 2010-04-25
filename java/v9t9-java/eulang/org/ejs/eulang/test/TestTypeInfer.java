@@ -14,6 +14,7 @@ import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondList;
+import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
@@ -22,10 +23,15 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLInstanceField;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.junit.Test;
 
 /**
@@ -80,26 +86,24 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testInvalidTypes1() throws Exception {
     	IAstModule mod = treeize(
-    			"testInvalidTypes1 = code (x : Int; y : Float) {\n" +
+    			"testInvalidTypes1 = code (x : Int; y : Float => nil) {\n" +
     			"   y>>1;\n" +
     			"};");
     	sanityTest(mod);
 
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testInvalidTypes1");
-    	doTypeInfer(mod);
+    	doTypeInfer(mod, true);
     }
     
     @Test
     public void testInvalidTypes2() throws Exception {
     	IAstModule mod = treeize(
-    			"testInvalidTypes2 = code (x : Int; y : Float) {\n" +
+    			"testInvalidTypes2 = code (x : Int; y : Float => nil) {\n" +
     			"   z : Int = 2.0;\n" +
     			"   z | y;\n"+
     			"};");
     	sanityTest(mod);
 
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testInvalidTypes2");
-    	doTypeInfer(mod);
+    	doTypeInfer(mod, true);
     }
 	    
 	@Test
@@ -396,13 +400,12 @@ public class TestTypeInfer extends BaseParserTest {
     @Test
     public void testCast2a() throws Exception {
     	IAstModule mod = treeize("global : Int = 3;\n" +
-    			"testCast2 = code (x : Int; y : Float) {\n" +
+    			"testCast2 = code (x : Int; y : Float => nil) {\n" +
     			"   x+10*y>>global;\n" +
     			"};");
     	sanityTest(mod);
 
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast2");
-    	doTypeInfer(mod);
+    	doTypeInfer(mod, true);
     }
     @Test
     public void testCast2b() throws Exception {
@@ -1103,6 +1106,90 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	doTypeInfer(mod);
     	
+    }
+    
+    // base case
+    @Test
+    public void testSelfRef0() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			"Class = data {\n"+
+    			"  next:Int^;\n"+
+    			"};\n"+
+    			"testSelfRef0 = code() {\n"+
+    			"  inst : Class;\n"+
+    			"};\n"+
+    	"");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    }
+    @Test
+    public void testSelfRef1() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			"Class = data {\n"+
+    			"  next:Class^;\n"+
+    			"};\n"+
+    			"testSelfRef1 = code() {\n"+
+    			"  inst : Class;\n"+
+    			"};\n"+
+    	"");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) mod.getScope().get("Class").getDefinition()).getMatchingBodyExpr(null);
+    	assertTrue(dataNode.getType().isComplete());
+    	System.out.println(dataNode.getType());
+    	
+    	LLDataType data = (LLDataType) dataNode.getType();
+    	assertEquals(1, data.getInstanceFields().length);
+    	LLInstanceField field = data.getInstanceFields()[0];
+    	LLPointerType ptr = (LLPointerType) field.getType();
+    	assertEquals(new LLUpType("Class", 1), ptr.getSubType());
+    	
+    }
+    @Test 
+    public void testSelfRef2() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			"Class = data {\n"+
+    			"  draw:code(this:Class; count:Int => nil);\n"+
+    			"};\n"+
+    	"");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) mod.getScope().get("Class").getDefinition()).getMatchingBodyExpr(null);
+    	assertTrue(dataNode.getType().isComplete());
+    	System.out.println(dataNode.getType());
+    	
+    	LLDataType data = (LLDataType) dataNode.getType();
+    	assertEquals(1, data.getInstanceFields().length);
+    	LLInstanceField field = data.getInstanceFields()[0];
+    	LLPointerType funcPtr = (LLPointerType) field.getType();
+    	LLCodeType code = (LLCodeType) funcPtr.getSubType();
+    	assertEquals(typeEngine.INT, code.getArgTypes()[1]);
+    	assertEquals(new LLUpType("Class", 1), code.getArgTypes()[0]);
+    }
+
+    @Test
+    public void testSelfRef3() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = treeize(
+    			"Class = data {\n"+
+    			"  draw:code(this:Class; count:Int => nil);\n"+
+    			"};\n"+
+    			//"doDraw = code(this:Class; count:Int) { count*count };\n"+
+    			"testSelfRef3 = code() {\n"+
+    			"  inst : Class;\n"+
+    			//"  inst.draw = doDraw;\n"+
+    			"  inst.draw(inst, 5);\n"+
+    			"};\n"+
+    	"");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	
+    	IAstCodeExpr code = (IAstCodeExpr) ((IAstDefineStmt) mod.getScope().get("testSelfRef3").getDefinition()).getMatchingBodyExpr(null);
+    	assertTrue(code.getType().isComplete());
+    	System.out.println(code.getType());
     }
 }
 

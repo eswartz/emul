@@ -3,15 +3,18 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDataType;
-import org.ejs.eulang.ast.IAstNamedType;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSelfReferentialType;
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.TypeException;
 
@@ -20,35 +23,32 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstNamedType extends AstType implements IAstNamedType {
+public class AstSelfReferentialType extends AstType implements IAstSelfReferentialType {
 
-	/**
-	 * 
-	 */
-	//private static final LLVoidType UNKNOWN_NAME = new LLVoidType("self-reference");
+	private ISymbol symbol;
 	private IAstSymbolExpr symbolExpr;
 
 	/**
 	 * @param type
 	 */
-	public AstNamedType(LLType type, IAstSymbolExpr symbolExpr) {
-		super(type);
-		setSymbol(symbolExpr);
+	public AstSelfReferentialType(IAstSymbolExpr symbolExpr) {
+		super(new LLUpType(symbolExpr.getSymbol().getName(), 0));
+		setSymbolExpr(symbolExpr);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstNamedType copy(IAstNode copyParent) {
-		return fixup(this, new AstNamedType(type, doCopy(symbolExpr, copyParent)));
+	public IAstSelfReferentialType copy(IAstNode copyParent) {
+		return fixup(this, new AstSelfReferentialType(doCopy(symbolExpr, copyParent)));
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((symbolExpr == null) ? 0 : symbolExpr.hashCode());
+		result = prime * result + ((symbol == null) ? 0 : symbol.getName().hashCode());
 		return result;
 	}
 
@@ -61,11 +61,11 @@ public class AstNamedType extends AstType implements IAstNamedType {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstNamedType other = (AstNamedType) obj;
-		if (symbolExpr == null) {
-			if (other.symbolExpr != null)
+		AstSelfReferentialType other = (AstSelfReferentialType) obj;
+		if (symbol == null) {
+			if (other.symbol != null)
 				return false;
-		} else if (!symbolExpr.equals(other.symbolExpr))
+		} else if (symbol.getNumber() != other.symbol.getNumber())
 			return false;
 		return true;
 	}
@@ -76,7 +76,7 @@ public class AstNamedType extends AstType implements IAstNamedType {
 	 */
 	@Override
 	public String toString() {
-		return symbolExpr.getSymbol() + ": " + super.toString();
+		return typedString(symbol.getName());
 	}
 	
 	/* (non-Javadoc)
@@ -94,10 +94,11 @@ public class AstNamedType extends AstType implements IAstNamedType {
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (existing == symbolExpr)
-			setSymbol((IAstSymbolExpr) another);
+			setSymbolExpr((org.ejs.eulang.ast.IAstSymbolExpr) another);
 		else
 			throw new IllegalArgumentException();
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
@@ -105,57 +106,41 @@ public class AstNamedType extends AstType implements IAstNamedType {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
 		boolean changed = false;
+		
 		if (type == null || !type.isComplete()) {
-			// check for self-refs
-			IAstNode ref = getParent();
-			while (ref != null) {
-				if (ref instanceof IAstDataType && ((IAstDataType) ref).getTypeName().equals(symbolExpr.getOriginalSymbol())) {
-					IAstSelfReferentialType selfRef = new AstSelfReferentialType(symbolExpr.copy(this));
-					selfRef.setSourceRef(getSourceRef());
-					getParent().replaceChild(this, selfRef);
-					return true;
+			IScope theScope = getOwnerScope();
+			int count = 0;
+			while (theScope != null) {
+				if (theScope.getOwner() instanceof IAstDataType) {
+					count++;
+					ISymbol name = ((IAstDataType) theScope.getOwner()).getTypeName();
+					if (name != null && symbol.getName().equals(name.getName()))
+						break;
 				}
-				ref = ref.getParent();
+				theScope = theScope.getParent();
 			}
-			
-			changed |= inferTypesFromChildren(new ITyped[] { symbolExpr });
+			assert count != 0;
+			setType(new LLUpType(symbol.getName(), count));
+			changed = true;
 		}
-		changed |= super.inferTypeFromChildren(typeEngine);
  		return changed;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedNode#getType()
-	 */
-	@Override
-	public LLType getType() {
-		/*
-		if (type == null || !type.isComplete()) {
-			// if we're inside the type itself, use its type
-			IAstNode node = this;
-			while (node != null) {
-				if (node == symbolExpr) {
-					return UNKNOWN_NAME;
-				}
-				node = node.getParent();
-			}
-		}
-		*/
-		return super.getType();
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstType#setSymbol(org.ejs.eulang.ast.IAstSymbolExpr)
 	 */
 	@Override
-	public void setSymbol(IAstSymbolExpr symbolExpr) {
-		this.symbolExpr = reparent(this.symbolExpr, symbolExpr);
+	public void setSymbolExpr(IAstSymbolExpr name) {
+		Check.checkArg(name);
+		this.symbolExpr = reparent(this.symbolExpr, name);
+		//this.symbolExpr = name; 
+		this.symbol = name.getOriginalSymbol();
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstType#getSymbol()
 	 */
 	@Override
-	public IAstSymbolExpr getSymbol() {
+	public IAstSymbolExpr getSymbolExpr() {
 		return symbolExpr;
 	}
 }

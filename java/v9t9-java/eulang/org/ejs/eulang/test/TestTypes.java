@@ -515,7 +515,7 @@ public class TestTypes extends BaseParserTest {
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Tuple bitcast ({i8,[ 1 x i8 ],float,i8,i8} { i8 1, [ 1 x i8 ] zeroinitializer, float 2.0, i8 32, i8 16 } to {i8,float,i8,i8}), %Tuple*", gen);
+    	assertFoundInUnoptimizedText("store %Tuple bitcast (%Tuple$init { %Byte 1, %Bytex1 zeroinitializer, %Float 2.0, %Byte 32, %Byte 16 } to %Tuple), %Tuple*", gen);
     }
 
     @Test
@@ -528,7 +528,7 @@ public class TestTypes extends BaseParserTest {
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Tuple bitcast ({[ 2 x i8 ],float,[ 3 x i8 ]} { [ 2 x i8 ] zeroinitializer, float 4.0, [ 3 x i8 ] zeroinitializer } to {i8,float,i8,i8}), %Tuple* ", gen);
+    	assertFoundInUnoptimizedText("store %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 4.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple*", gen);
     }
     @Test
     public void testDataInit2() throws Exception {
@@ -538,7 +538,7 @@ public class TestTypes extends BaseParserTest {
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Intx10 [ i16 zeroinitializer, i16 11, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 55, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer ]", gen);
+    	assertFoundInUnoptimizedText("store %Intx10 [ %Int zeroinitializer, %Int 11, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer, %Int 55, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer ], %Intx10*", gen);
     }
     
     @Test
@@ -549,7 +549,7 @@ public class TestTypes extends BaseParserTest {
     			"};\n"+
     	"");
     	LLVMGenerator generator = doGenerate(mod);
-    	assertFoundInUnoptimizedText("[ i16 1, i16 11, i16 22, i16 33, i16 44, i16 55, i16 66, i16 77, i16 88, i16 99 ]", generator);
+    	assertFoundInUnoptimizedText("store %Intx10 [ %Int 1, %Int 11, %Int 22, %Int 33, %Int 44, %Int 55, %Int 66, %Int 77, %Int 88, %Int 99 ], %Intx10*", generator);
     }
     
   
@@ -563,7 +563,7 @@ public class TestTypes extends BaseParserTest {
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Tuplex10 [ {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} zeroinitializer ], %Tuplex10*", gen);
+    	assertFoundInUnoptimizedText("tore %Tuplex10 [ %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer ], %Tuplex10*", gen);
     }
     
     @Test
@@ -576,7 +576,7 @@ public class TestTypes extends BaseParserTest {
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Tuplex5 [ {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} bitcast ({[ 2 x i8 ],float,[ 3 x i8 ]} { [ 2 x i8 ] zeroinitializer, float 2.0, [ 3 x i8 ] zeroinitializer } to {i8,float,i8,i8}), {i8,float,i8,i8} zeroinitializer, {i8,float,i8,i8} bitcast ({i8,[ 6 x i8 ],i8} { i8 1, [ 6 x i8 ] zeroinitializer, i8 55 } to {i8,float,i8,i8}), {i8,float,i8,i8} zeroinitializer ], %Tuplex5*", gen);
+    	assertFoundInUnoptimizedText("store %Tuplex5 [ %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 2.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init.0 { %Byte 1, %Bytex6 zeroinitializer, %Byte 55 } to %Tuple), %Tuple zeroinitializer ], %Tuplex5*", gen);
     }
     
     @Test
@@ -588,7 +588,8 @@ public class TestTypes extends BaseParserTest {
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("insertvalue %Intx10 [ i16 zeroinitializer, i16 11, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer, i16 zeroinitializer ], i16 %", gen);
+    	assertFoundInUnoptimizedText("insertvalue %Intx10 [ %Int zeroinitializer, %Int 11, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer, %Int zeroinitializer ], %Int", gen);
+    	assertFoundInUnoptimizedText(", 5", gen);
     }
 
     @Test
@@ -653,7 +654,7 @@ public class TestTypes extends BaseParserTest {
     	assertEquals(3, ((LLArrayType)((LLArrayType) stmt.getType()).getSubType()).getArrayCount());
     	
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("%Bytex3x3 [ [ 3 x i8 ] [ i8 1, i8 2, i8 3 ], [ 3 x i8 ] [ i8 4, i8 5, i8 6 ], [ 3 x i8 ] [ i8 7, i8 8, i8 9 ] ], %Bytex3x3*", gen);
+    	assertFoundInUnoptimizedText("%Bytex3x3 [ %Bytex3 [ %Byte 1, %Byte 2, %Byte 3 ], %Bytex3 [ %Byte 4, %Byte 5, %Byte 6 ], %Bytex3 [ %Byte 7, %Byte 8, %Byte 9 ] ], %Bytex3x3*", gen);
     }
 	
 	@Test
@@ -937,16 +938,32 @@ public class TestTypes extends BaseParserTest {
 	}
 	
     @Test
+    public void testDataFuncPtr0() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"  draw:code(this:Class; count:Int => Int);\n"+
+    			"};\n"+
+    	"");
+    	IAstDefineStmt defineStmt = (IAstDefineStmt) mod.getScope().get("Class").getDefinition();
+		IAstDataType dataNode = (IAstDataType) getMainExpr(defineStmt);
+    	assertTrue(dataNode.getType().isComplete());
+    	LLDataType data = (LLDataType) dataNode.getType();
+    	LLType drawFieldType = data.getField("draw").getType();
+    	assertTrue(drawFieldType instanceof LLPointerType);
+		assertTrue(drawFieldType.getSubType() instanceof LLCodeType);
+    }
+    @Test
     public void testDataFuncPtr1() throws Exception {
     	IAstModule mod = doFrontend(
     			"Class = data {\n"+
-    			"  draw:code(this:Class; count:Int);\n"+
+    			"  draw:code(this:Class^; count:Int => Int);\n"+
     			"};\n"+
-    			"doDraw = code(this:Class; count:Int) { count*count };\n"+
+    			"doDraw = code(this:Class^; count:Int) { count*count };\n"+
     			"testDataFuncPtr1 = code() {\n"+
     			"  inst : Class;\n"+
     			"  inst.draw = doDraw;\n"+
-    			"  Class.draw(inst, 5);\n"+
+    			"  inst.draw(&inst, 5);\n"+
+    			" nil;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);

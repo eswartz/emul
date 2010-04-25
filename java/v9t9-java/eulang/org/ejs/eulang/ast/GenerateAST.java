@@ -750,6 +750,16 @@ public class GenerateAST {
 					symbolExpr.getSymbol().setDefinition(item);
 					getSource(kid, alloc);
 				}
+				else if (item instanceof IAstAllocStmt) {
+					// convert any code refs to pointers
+					IAstAllocStmt alloc = (IAstAllocStmt) item;
+					if (alloc.getTypeExpr() != null && alloc.getTypeExpr() instanceof IAstPrototype) {
+						alloc.getTypeExpr().setParent(null);
+						IAstPointerType ptr = new AstPointerType(alloc.getTypeExpr());
+						ptr.setSourceRef(alloc.getTypeExpr().getSourceRef());
+						alloc.setTypeExpr(ptr);
+					}
+				}
 				theList.add(item);
 			}
 			getSource(tree, statics);
@@ -1805,8 +1815,9 @@ public class GenerateAST {
 						throw new GenerateException(tree.getChild(2),
 								"cannot use default arguments in code type");
 					}
-					type = new AstType(typeEngine.getCodeType(proto.returnType(), proto
-							.argumentTypes()));
+					//type = new AstType(typeEngine.getCodeType(proto.returnType(), proto
+					//		.argumentTypes()));
+					type = proto;
 				}
 			} else if (tree.getType() == EulangParser.IDREF) {
 				IAstSymbolExpr symbolExpr = checkConstruct(tree,

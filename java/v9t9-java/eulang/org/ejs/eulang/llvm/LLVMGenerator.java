@@ -101,6 +101,7 @@ import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLStaticField;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
@@ -298,9 +299,14 @@ public class LLVMGenerator {
 	/**
 	 * @param symbol
 	 * @param expr
+	 * @throws ASTException 
 	 */
-	private void generateGlobalData(ISymbol symbol, IAstDataType expr) {
+	private void generateGlobalData(ISymbol symbol, IAstDataType expr) throws ASTException {
 		// ignore for now, even though it may have initializers		
+		ensureTypes(expr);
+		
+		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
+		//ll.add(new LLConstantDirective(modSymbol, true, expr.getType(), new LLConstant(expr.getLiteral())));
 	}
 
 	/**
@@ -1452,6 +1458,19 @@ entry:
 				cast = ECast.INTTOPTR;
 			} else if (origType.getBasicType() == BasicType.POINTER && type.getBasicType() == BasicType.POINTER) {
 				cast = ECast.BITCAST;
+			} else if (origType.getBasicType() == BasicType.CODE && type.getBasicType() == BasicType.POINTER) {
+				// not really a cast:  take the address
+				if (value instanceof LLSymbolOp) {
+					origType = typeEngine.getPointerType(origType);
+				}
+				cast = ECast.BITCAST;
+			/*} else if (origType.getBasicType() == BasicType.DATA && type.getBasicType() == BasicType.DATA) {
+				// may be innocuous
+				LLDataType origData = (LLDataType) origType;
+				LLDataType data = (LLDataType) type;
+				if (origData.isCompatibleWith(data)) {
+					
+				}*/
 			} else {
 				throw new ASTException(node, "cannot cast from " + origType + " to " + type);
 			}
@@ -1484,7 +1503,12 @@ entry:
 		
 		//LLCodeType funcType = (LLCodeType) expr.getFunction().getType();
 		
-		LLCodeType funcType = (LLCodeType) expr.getFunction().getType();
+		LLType realFuncType = expr.getFunction().getType();
+		LLCodeType funcType;
+		if (realFuncType instanceof LLPointerType)
+			funcType = (LLCodeType) realFuncType.getSubType();
+		else
+			funcType = (LLCodeType) realFuncType;
 		
 		LLType realRetType = funcType.getRetType();
 		LLType[] realArgTypes = new LLType[funcType.getArgTypes().length];
@@ -1531,7 +1555,8 @@ entry:
 	 * @return
 	 */
 	private boolean isArgumentPassedByValue(LLType type) {
-		return (type.getBasicType().getClassMask() & LLType.TYPECLASS_MEMORY) == 0 || type.getBasicType() == BasicType.REF;
+		return (type.getBasicType().getClassMask() & LLType.TYPECLASS_MEMORY) == 0 || type.getBasicType() == BasicType.REF
+			|| type.getBasicType() == BasicType.POINTER;
 	}
 
 	private LLOperand generateLitExpr( IAstLitExpr expr) throws ASTException {

@@ -4,10 +4,12 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -115,7 +117,16 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 		
 		// the type is fixed to be the base type of the dereferenced child.
 		if (canInferTypeFrom(expr)) {
-			LLType child = typeEngine.getBaseType(expr.getType());
+			LLType child = expr.getType();
+			
+			child = typeEngine.getBaseType(child);
+			
+			if (child instanceof LLCodeType) {
+				expr.setParent(null);
+				getParent().replaceChild(this, expr);
+				return true;
+			}
+			
 			changed |= updateType(this, child);
 		} else if (canInferTypeFrom(this)) {
 			if (expr.getType() == null) {

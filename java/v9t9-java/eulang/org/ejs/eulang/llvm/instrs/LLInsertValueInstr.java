@@ -28,6 +28,6 @@ public class LLInsertValueInstr extends LLAssignInstr {
 	@Override
 	protected void appendInstrString(StringBuilder sb) {
 		super.appendInstrString(sb);
-		sb.append(", ").append(eltType).append(" ").append(elt).append(", ").append(idx);
+		sb.append(", ").append(eltType.getLLVMName()).append(" ").append(elt).append(", ").append(idx);
 	}
 }

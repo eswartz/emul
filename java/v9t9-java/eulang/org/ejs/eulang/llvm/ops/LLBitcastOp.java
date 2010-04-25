@@ -35,7 +35,7 @@ public class LLBitcastOp implements LLOperand {
 	}
 	@Override
 	public String toString() {
-		return "bitcast (" + val.getType() + " " + val.toString() + " to " + castTo + ")" ;
+		return "bitcast (" + val.getType().getLLVMName() + " " + val.toString() + " to " + castTo.getLLVMName() + ")" ;
 	}
 	@Override
 	public int hashCode() {

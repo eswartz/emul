@@ -95,7 +95,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		
 		LLCodeType protoType = getProtoType(typeEngine, returns);
 		
-		if (canInferTypeFrom(this) && getType().isComplete()) {
+		if (canInferTypeFrom(this) /*&& getType().isComplete()*/) {
 			newType = (LLCodeType) getType();
 			if (returns instanceof ITyped 
 					&& ((ITyped) returns).getType() != null
@@ -123,6 +123,9 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		}
 		
 		changed |= updateType(this, newType);
+		
+		if (changed)
+			proto.setType(newType);
 		
 		return changed;
 	}

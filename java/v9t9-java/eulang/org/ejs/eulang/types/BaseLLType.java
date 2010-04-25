@@ -99,7 +99,7 @@ public abstract class BaseLLType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return llvmType;
+		return name != null ? name : llvmType;
 	}
 	
 	public int getBits() {

@@ -10,6 +10,7 @@ import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -171,6 +172,14 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 			
 			LLType left = theSym.getType();
 			LLType right = theExpr.getType();
+			
+			if (left instanceof LLCodeType && right instanceof LLCodeType) {
+				left = typeEngine.getPointerType(left);
+				theSym.setType(left);
+				right = typeEngine.getPointerType(right);
+				theExpr.setType(right);
+				changed = true;
+			}
 			if (left != null && right != null) {
 				theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
 			}

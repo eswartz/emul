@@ -18,6 +18,7 @@ import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
@@ -82,7 +83,6 @@ public class TypeInference {
 	/**
 	 * Infer the types in the tree from known types.
 	 * @param validateTypes if true, make sure all types are concrete after inferring 
-	 * @param genericize 
 	 */
 	public boolean infer(IAstNode node, boolean validateTypes) {
 		boolean anyChange = false;
@@ -131,7 +131,7 @@ public class TypeInference {
 				if (origDefineType == null || !origDefineType.isComplete()) {
 					
 					boolean defineChanged = false;
-					
+					//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
 					
 					TypeInference inference = subInferenceJob();
 					defineChanged = inference.infer(bodyExpr, false);
@@ -145,12 +145,14 @@ public class TypeInference {
 					if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
 						// a standalone define should have a known type based on its references,
 						// so this must be a generic
+						if (defineChanged && bodyExpr.getType() != null && bodyExpr.getType().isGeneric())
+							return false;
 						boolean madeGeneric = genericize(bodyExpr);
 						if (madeGeneric) {
 							return true;
 						}
 					}
-					messages.addAll(inference.getMessages());
+					//messages.addAll(inference.getMessages());
 					
 					changed |= inferUp(bodyExpr);
 				} else if (origDefineType.isGeneric()) {
@@ -170,6 +172,10 @@ public class TypeInference {
 		if (node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
 			return changed;
 		
+		
+		if (node instanceof IAstSelfReferentialType) {
+			recurse = false;
+		}
 		
 		if (recurse) {
 			for (IAstNode kid : node.getChildren()) {
@@ -390,6 +396,7 @@ public class TypeInference {
 	 */
 	private void validateTypes(IAstNode node) {
 		try {
+			boolean recurse = true;
 			if (node instanceof IAstDefineStmt) {
 				IAstDefineStmt define = (IAstDefineStmt) node;
 				for (IAstTypedExpr expr : define.getConcreteInstances()) {
@@ -398,6 +405,9 @@ public class TypeInference {
 				return;
 			}
 
+			if (node instanceof IAstSelfReferentialType) {
+				recurse = false;
+			}
 			if (node instanceof IAstTypedNode) {
 				IAstTypedNode typed = (IAstTypedNode) node;
 				if (typed instanceof IAstCodeExpr && ((IAstCodeExpr) typed).isMacro()) {
@@ -406,6 +416,7 @@ public class TypeInference {
 					throw new TypeException(node, "unknown types encountered; add some type specifications");
 				}
 			}
+			
 			node.validateType(typeEngine);
 			
 			try {
@@ -415,8 +426,10 @@ public class TypeInference {
 			}
 			
 			// continue validating kids if node succeeded on its own
-			for (IAstNode kid : node.getChildren()) {
-				validateTypes(kid);
+			if (recurse) {
+				for (IAstNode kid : node.getChildren()) {
+					validateTypes(kid);
+				}
 			}
 		} catch (TypeException e) {
 			// node failed, stop here

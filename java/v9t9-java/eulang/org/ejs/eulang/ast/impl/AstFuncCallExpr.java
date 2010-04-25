@@ -6,13 +6,17 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -151,17 +155,16 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 
 		LLCodeType argCodeType = getArgInferredType(typeEngine);
 		
-		IAstTypedNode actualFunction = getRealTypedNode(function, argCodeType);
+		LLType referencedType = getRealType(function);
 		
-		if (canInferTypeFrom(actualFunction) && argCodeType.isCompatibleWith(actualFunction.getType())
-				&& !argCodeType.isMoreComplete(actualFunction.getType())) {
-			LLType type = actualFunction.getType();
+		if (referencedType != null && argCodeType.isCompatibleWith(referencedType)
+				&& !argCodeType.isMoreComplete(referencedType)) {
 			
-			if (!(type instanceof LLCodeType)) {
-				throw new TypeException("calling non-function: " + type.toString());  
+			if (!(referencedType instanceof LLCodeType)) {
+				throw new TypeException("calling non-function: " + referencedType.toString());  
 			}
 
-			codeType = (LLCodeType) type;
+			codeType = (LLCodeType) referencedType;
 		} else  {
 			codeType = argCodeType;
 		}
@@ -201,17 +204,31 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		return codeType;
 	}
 	
-	private IAstTypedNode getRealTypedNode(IAstTypedExpr node, LLType codeType) {
+	private LLType getRealType(IAstTypedExpr node) {
 		if (node instanceof IAstSymbolExpr) {
 			IAstSymbolExpr symbolExpr = (IAstSymbolExpr) node;
 			if (symbolExpr.getDefinition() != null) {
 				IAstTypedExpr expr = symbolExpr.getInstance();
-				return expr;
+				return expr != null ? expr.getType() : null;
 			}
 			if (!(symbolExpr.getSymbol().getDefinition() instanceof ITyped))
 				return null;
-			return ((IAstTypedNode)node);
+			return ((IAstTypedNode)node).getType();
 		} 
+		else if (node instanceof IAstFieldExpr) {
+			IAstFieldExpr fieldExpr = (IAstFieldExpr) node;
+			if (fieldExpr.getExpr().getType() instanceof LLDataType) {
+				LLDataType data = (LLDataType) fieldExpr.getExpr().getType();
+				BaseLLField field = data.getField(fieldExpr.getField().getName());
+				if (field == null) {
+					return null;
+				}
+				LLType type = field.getType();
+				if (type instanceof LLPointerType)
+					type = type.getSubType();
+				return type;
+			}
+		}
 		return null;
 	}
 	
@@ -220,7 +237,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
      */
     @Override
     public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
-    	if (!(function.getType() instanceof LLCodeType)) {
+    	LLType functionType = function.getType();
+    	if (functionType instanceof LLPointerType)
+    		functionType = functionType.getSubType();
+    	if (!(functionType instanceof LLCodeType)) {
     		throw new TypeException(function, "calling non-function");
     	}
     }

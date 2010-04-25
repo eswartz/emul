@@ -589,9 +589,9 @@ public class TypeEngine {
 		StringBuilder sb = new StringBuilder();
 		sb.append(name).append('$');
 		for (LLInstanceField field : ifields)
-			sb.append(field.getType() != null ? field.getType().toString() : "<u>").append('$');
+			sb.append(field.getType() != null ? field.getType().getLLVMType() : "<u>").append('$');
 		for (LLStaticField field : statics)
-			sb.append(field.getType() != null ? field.getType().toString() : "<u>").append('$');
+			sb.append(field.getType() != null ? field.getType().getLLVMType() : "<u>").append('$');
 		return sb.toString();
 	}
 	

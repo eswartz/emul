@@ -20,6 +20,8 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLStaticField;
@@ -93,7 +95,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 */
 	@Override
 	public String toString() {
-		return "DATA";
+		return typedString("DATA") + (type == null ? " : <unknown>" : !type.isComplete() ? " : incomplete: " + type.getLLVMType() : "");
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstDataDecl#getFields()
@@ -159,7 +161,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		
 		boolean changed = false;
 		
-		if (canReplaceType(this)) {
+		if (canReplaceType(this) || !getType().isComplete()) {
 			LLDataType data = createDataType(typeEngine); 
 			changed |= updateType(this, data);
 		}
@@ -171,7 +173,30 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+
+		for (IAstTypedNode node : ifields.list()) {
+			if (node instanceof IAstAllocStmt) {
+				IAstAllocStmt alloc = (IAstAllocStmt) node;
+				for (int i = 0; i < alloc.getSymbolExprs().nodeCount(); i++) {
+					IAstSymbolExpr symbolExpr = alloc.getSymbolExprs().list().get(i);
+					LLType type = symbolExpr.getType();
+					if (type instanceof LLCodeType)
+						throw new TypeException(node, "cannot directly embed code in field");
+				}
+			}
+		}
 		
+		for (IAstTypedNode node : statics.list()) {
+			if (node instanceof IAstAllocStmt) {
+				IAstAllocStmt alloc = (IAstAllocStmt) node;
+				for (int i = 0; i < alloc.getSymbolExprs().nodeCount(); i++) {
+					IAstSymbolExpr symbolExpr = alloc.getSymbolExprs().list().get(i);
+					LLType type = symbolExpr.getType();
+					if (type instanceof LLCodeType)
+						throw new TypeException(node, "cannot directly embed code in field");
+				}
+			}
+		}
 	}
 
 	public LLDataType createDataType(TypeEngine typeEngine) {
@@ -208,13 +233,20 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		}
 		
 		String name = null;
-		if (getParent() instanceof IAstDefineStmt) {
-			name = ((IAstDefineStmt) getParent()).getSymbol().getName();
-		} else if (getParent() != null && getParent().getParent() instanceof IAstDefineStmt) {
-			name = ((IAstDefineStmt) getParent().getParent()).getSymbol().getName();
-		}
+		ISymbol sym = getTypeName();
+		name = sym != null ? sym.getName() : null;
 		LLDataType data = typeEngine.getDataType(name, newIFields, newSFields);
 		return data;
+	}
+
+	public ISymbol getTypeName() {
+		ISymbol name = null;
+		if (getParent() instanceof IAstDefineStmt) {
+			name = ((IAstDefineStmt) getParent()).getSymbol();
+		} else if (getParent() != null && getParent().getParent() instanceof IAstDefineStmt) {
+			name = ((IAstDefineStmt) getParent().getParent()).getSymbol();
+		}
+		return name;
 	}
 
 	/* (non-Javadoc)

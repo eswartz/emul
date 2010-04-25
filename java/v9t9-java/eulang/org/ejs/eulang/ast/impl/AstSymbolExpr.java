@@ -109,6 +109,14 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     }
 
     /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstSymbolExpr#getOriginalSymbol()
+     */
+    @Override
+    public ISymbol getOriginalSymbol() {
+    	return origSymbol != null ? origSymbol : symbol;
+    }
+    
+    /* (non-Javadoc)
      * @see org.ejs.eulang.ast.impl.AstTypedNode#getType()
      */
     @Override
@@ -196,7 +204,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 			if (selectedBody.getType() != null && selectedBody.getType().isMoreComplete(newType))
 				newType = selectedBody.getType();
 			
-			if (true || !isUnique) {
+			if (!isUnique || (newType != null &&  newType.isGeneric())) {
 				ISymbol instanceSymbol = symbol.getScope().addTemporary(symbol.getName(),
 						false);
 				instanceSymbol.setType(newType);

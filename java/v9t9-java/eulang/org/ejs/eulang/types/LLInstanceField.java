@@ -23,7 +23,7 @@ public class LLInstanceField extends BaseLLField {
 	
 	@Override
 	public String toString() {
-		return "@" + offset + " " + super.toString();
+		return "@" + offset + " "  +name + ": " + super.toString();
 	}
 	
 	/**

@@ -19,7 +19,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstPrototype extends AstNode implements IAstPrototype {
+public class AstPrototype extends AstTypedNode implements IAstPrototype {
 	private IAstType retType;
 	private final IAstArgDef[] argumentTypes;
 
@@ -142,7 +142,6 @@ public class AstPrototype extends AstNode implements IAstPrototype {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
-	/*
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
@@ -159,7 +158,6 @@ public class AstPrototype extends AstNode implements IAstPrototype {
 		
 		return updateType(this, newType);
 	}
-	*/
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstPrototype#adaptToType(org.ejs.eulang.types.LLType)
 	 */

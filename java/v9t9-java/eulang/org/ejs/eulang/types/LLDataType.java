@@ -204,4 +204,28 @@ public class LLDataType extends BaseLLAggregateType {
 				idx++;
 		return -1;
 	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#isComplete()
+	 */
+	/*
+	@Override
+	public boolean isComplete() {
+		for (int idx = 0; idx < getCount(); idx++) {
+			LLType type = getType(idx);
+			if (type == null || !type.isComplete())
+				return false;
+		}
+		return true;
+	}*/
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLAggregateType#isCompatibleWith(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isCompatibleWith(LLType target) {
+		if (target instanceof LLUpType)
+			return target.isCompatibleWith(this);
+		return super.isCompatibleWith(target);
+	}
 }

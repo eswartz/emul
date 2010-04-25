@@ -67,7 +67,7 @@ public class LLArrayOp extends BaseLLConstOperand {
 		LLType type = arrayType.getSubType();
 		for (int idx = 0; idx < elements.length; idx++) {
 			if (first) first = false; else sb.append(", ");
-			sb.append(type).append(' ').append(elements[idx]);
+			sb.append(type.getLLVMName()).append(' ').append(elements[idx]);
 		}
 		sb.append(" ]");
 		return sb.toString();

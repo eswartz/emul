@@ -20,6 +20,9 @@ public interface IAstSymbolExpr extends IAstTypedExpr {
 	/** Set the symbol */
 	public void setSymbol(ISymbol symbol);
 
+	/** Get the original symbol name, in case this instance is a copy. */
+	ISymbol getOriginalSymbol();
+	
 	/**
 	 * Get the original definition of the symbol was defined, if it was defined in a define statement.
 	 * 

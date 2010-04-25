@@ -4,9 +4,12 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLDataType;
@@ -203,6 +206,14 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		if (expr == null)
 			return;
 		
+		IAstTypedExpr theRef = expr;
+		if (theRef instanceof IAstDerefExpr)
+			theRef = ((IAstDerefExpr) theRef).getExpr();
+		if (theRef instanceof IAstSymbolExpr) {
+			IAstDefineStmt definition = ((IAstSymbolExpr) theRef).getDefinition();
+			if (definition != null)
+				throw new TypeException(theRef, "cannot reference fields in definitions (use an instance instead)");
+		}
 		LLType exprType = expr.getType();
 		if (!(exprType instanceof LLDataType)) {
 			throw new TypeException(expr, "can only field-dereference data");

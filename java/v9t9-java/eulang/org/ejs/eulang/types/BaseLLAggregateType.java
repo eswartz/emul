@@ -61,7 +61,7 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 	public boolean isComplete() {
 		for (int idx = 0; idx < getCount(); idx++) {
 			LLType type = getType(idx);
-			if (type == null)
+			if (type == null || (!type.isGeneric() && !type.isComplete()))
 				return false;
 		}
 		return true;
@@ -98,6 +98,8 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		if (isComplete() && !otherType.isComplete())
 			return true;
 		
+		if (otherAggregate == null)
+			return false;
 		
 		int thisDefinedTypes = 0;
 		for (int idx = 0; idx < getCount(); idx++) {
