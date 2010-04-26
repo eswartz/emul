@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.impl.AstName;
+import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
 import org.ejs.eulang.llvm.directives.LLTypeDirective;

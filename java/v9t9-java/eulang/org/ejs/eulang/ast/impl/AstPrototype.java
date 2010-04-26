@@ -19,7 +19,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstPrototype extends AstTypedNode implements IAstPrototype {
+public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	private IAstType retType;
 	private final IAstArgDef[] argumentTypes;
 

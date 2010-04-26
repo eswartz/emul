@@ -19,6 +19,7 @@ public class AllTests {
 		suite.addTest(new JUnit4TestAdapter(TestParser.class));
 		suite.addTest(new JUnit4TestAdapter(TestGenerator.class));
 		suite.addTest(new JUnit4TestAdapter(TestTypeInfer.class));
+		suite.addTest(new JUnit4TestAdapter(TestGenerics.class));
 		suite.addTest(new JUnit4TestAdapter(TestSimplify.class));
 		suite.addTest(new JUnit4TestAdapter(TestMacroCall.class));
 		suite.addTest(new JUnit4TestAdapter(TestLLVMGenerator.class));

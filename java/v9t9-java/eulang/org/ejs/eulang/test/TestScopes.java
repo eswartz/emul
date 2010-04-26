@@ -52,4 +52,5 @@ public class TestScopes extends BaseParserTest {
 		assertEquals(2, data.getInstanceFields().length);
 		
 	}
+	
 }

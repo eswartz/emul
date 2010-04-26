@@ -3,6 +3,12 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.symbols.ISymbol;
+
 /**
  * This refers to an enclosing type.  It breaks circular references when defining a type.
  * @author ejs
@@ -11,16 +17,18 @@ package org.ejs.eulang.types;
 public class LLUpType extends BaseLLType {
 
 	private int level;
+	private final ISymbol symbol;
 
 	/**
-	 * @param name
+	 * @param symbol
 	 * @param bits
 	 * @param llvmType
 	 * @param basicType
 	 * @param subType
 	 */
-	public LLUpType(String name, int level) {
-		super(name, 1, "\\" + level, BasicType.DATA, null);
+	public LLUpType(String name, ISymbol symbol, int level) {
+		super(name, 1, "%" + name, BasicType.DATA, null);
+		this.symbol = symbol;
 		this.level = level;
 	}
 
@@ -38,9 +46,12 @@ public class LLUpType extends BaseLLType {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
+		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		if (!super.equals(obj))
 			return false;
 		LLUpType other = (LLUpType) obj;
 		if (level != other.level)
@@ -76,5 +87,33 @@ public class LLUpType extends BaseLLType {
 			return getName().equals(targetName);
 		}
 		return super.isCompatibleWith(target);
+	}
+	
+	/**
+	 * @return the symbol
+	 */
+	public ISymbol getSymbol() {
+		return symbol;
+	}
+	
+	public IAstType getRealType() {
+		IAstNode node = getSymbol().getDefinition();
+		if (node instanceof IAstDefineStmt) {
+			IAstTypedExpr match = ((IAstDefineStmt) node).getMatchingBodyExpr(null);
+			if (match instanceof IAstType)
+				return (IAstType) match;
+		}
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#matchesExactly(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean matchesExactly(LLType target) {
+		IAstType realType = getRealType();
+		if (realType != null && realType.getType().equals(target))
+			return true;
+		return super.matchesExactly(target);
 	}
 }

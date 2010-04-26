@@ -124,12 +124,20 @@ public class TestLLVMGenerator extends BaseParserTest {
     }
 	
 	@Test
-    public void testGenerics0b() throws Exception {
+    public void testGenerics0a() throws Exception {
+		// not generic
     	IAstModule mod = doFrontend("add = code (x,y) { x+y };\n" +
     			"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
     	LLVMGenerator g = doGenerate(mod);
-    	assertEquals(3, g.getModule().getSymbolCount());
+    	assertEquals(2, g.getModule().getSymbolCount());
     }
+	@Test
+	public void testGenerics0b() throws Exception {
+		IAstModule mod = doFrontend("add = [] code (x,y) { x+y };\n" +
+		"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
+		LLVMGenerator g = doGenerate(mod);
+		assertEquals(3, g.getModule().getSymbolCount());
+	}
   
 	@Test
   	public void testCasting1() throws Exception {
@@ -195,7 +203,7 @@ public class TestLLVMGenerator extends BaseParserTest {
   	 @Test
      public void testOverloadingMacro() throws Exception {
   		 IAstModule mod = doFrontend(
-  				 "    util = [ code(x, y, z ) { x*y-z },\n" + 
+  				 "    util = [] [ code(x, y, z ) { x*y-z },\n" + 
   				 "             macro (x, y) { util(x, y, 0) }\n" + 
   				 "            ];\n" +
   				 "func = code(x:Int;y:Float => Float) { util(x,y) };\n");

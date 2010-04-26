@@ -82,7 +82,7 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals("foo", def.getSymbol().getName());
     	assertTrue(getMainExpr(def) instanceof IAstCodeExpr);
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
-    	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
+    	assertEquals(mod.getScope(), codeExpr.getScope().getParent().getParent());
     	
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(2, prototype.argumentTypes().length);
@@ -144,7 +144,7 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals("opPrec1", def.getSymbol().getName());
     	assertTrue(getMainExpr(def) instanceof IAstCodeExpr);
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
-    	assertEquals(mod.getScope(), codeExpr.getScope().getParent());
+    	assertEquals(mod.getScope(), codeExpr.getScope().getParent().getParent());
     	
 		IAstPrototype prototype = codeExpr.getPrototype();
 		assertEquals(0, prototype.argumentTypes().length);

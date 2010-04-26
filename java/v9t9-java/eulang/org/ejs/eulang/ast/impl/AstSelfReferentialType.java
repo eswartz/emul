@@ -32,7 +32,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 * @param type
 	 */
 	public AstSelfReferentialType(IAstSymbolExpr symbolExpr) {
-		super(new LLUpType(symbolExpr.getSymbol().getName(), 0));
+		super(new LLUpType(symbolExpr.getSymbol().getName(), symbolExpr.getSymbol(), 0));
 		setSymbolExpr(symbolExpr);
 	}
 
@@ -111,7 +111,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 			IScope theScope = getOwnerScope();
 			int count = 0;
 			while (theScope != null) {
-				if (theScope.getOwner() instanceof IAstDataType) {
+				if (theScope.getOwner() instanceof IAstDataType) { // TODO: any named type
 					count++;
 					ISymbol name = ((IAstDataType) theScope.getOwner()).getTypeName();
 					if (name != null && symbol.getName().equals(name.getName()))
@@ -120,9 +120,21 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 				theScope = theScope.getParent();
 			}
 			assert count != 0;
-			setType(new LLUpType(symbol.getName(), count));
+			setType(new LLUpType(symbol.getName(), symbol, count));
 			changed = true;
 		}
+		/*else {
+			// if the type got concretized, we need to update
+			IAstTypedExpr body = symbolExpr.getBody();
+			if (body instanceof IAstDataType) { // TODO: any named type
+				LLUpType upType = (LLUpType) type;
+				String name = ((IAstDataType) body).getType().getName();
+				if (name != null && !upType.getName().equals(name)) {
+					setType(new LLUpType(name, symbol, upType.getLevel()));
+					changed = true;
+				}
+			}
+		}*/
  		return changed;
 	}
 	

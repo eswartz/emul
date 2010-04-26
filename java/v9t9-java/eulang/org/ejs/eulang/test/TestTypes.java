@@ -252,9 +252,9 @@ public class TestTypes extends BaseParserTest {
     @Test
     public void testData1() throws Exception {
     	IAstModule mod = doFrontend(
-    			"Tuple = data {\n"+
+    			"Tuple = [T] data {\n"+
     			"   x:Int=66; y:Float;\n" +
-    			"z;\n" +
+    			"z:T;\n" +
     			" static f,g,h:Byte=9; };\n"+
     	"");
     	
@@ -500,6 +500,20 @@ public class TestTypes extends BaseParserTest {
     			"testDataDeref5 = code() {\n"+
     			"  foo:Tuple[10];\n"+
     			"  foo[7].x = foo[foo[0].z].x;\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
+    @Test
+    public void testDataDeref6() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   next:Tuple^; val:Byte; };\n"+
+    			"testDataDeref6 = code() {\n"+
+    			"  foo, foo2:Tuple;\n"+
+    			"  foo.next^ = &foo2;\n"+
+    			"  foo2.val = 0x55;\n"+
+    			"  foo.next.val;\n"+
     			"};\n"+
     	"");
     	doGenerate(mod);
@@ -968,6 +982,42 @@ public class TestTypes extends BaseParserTest {
     	"");
     	LLVMGenerator gen = doGenerate(mod);
     }
+
+	/**
+	 * When adding to a generic data, we can instantiate types 
+	 * @throws Exception
+	 */
+	@Test 
+	public void testGenericTypes1() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List^;\n" + 
+				"};\n" + 
+				"\n" +
+				"intList = code(x:Int;y:Int=>Int) {\n"+
+				"   list1, list2 : List<Int>;\n" +
+				"   list1.node = x;\n"+
+				"   list2.node = y;\n"+
+				"   list1.next^ = &list2;\n"+
+				"   list1.next.node;\n"+
+				"};\n" +
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
 
 }
 

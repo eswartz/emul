@@ -25,6 +25,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstAddrOfExpr;
+import org.ejs.eulang.ast.IAstAddrRefExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAllocTupleStmt;
 import org.ejs.eulang.ast.IAstArgDef;
@@ -63,6 +64,7 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
+import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
@@ -230,8 +232,10 @@ public class LLVMGenerator {
 		
 
 		for (LLType type : typeEngine.getTypes()) {
-			if (type.getLLVMName() != null && type.isComplete())
+			if (type.getLLVMName() != null && type.isComplete() && !type.isGeneric()) {
+				type = AstTypedNode.getConcreteType(typeEngine, null, type);
 				ll.addExternType(type);
+			}
 		}
 	}
 
@@ -733,7 +737,7 @@ public class LLVMGenerator {
 			IAstTypedExpr symbol = stmt.getSymbolExprs().list().get(i);
 			
 			LLOperand var = generateTypedExprCore(symbol);
-			currentTarget.store(stmt.getType(), vals[i], var);
+			currentTarget.store(vals[i].getType(), vals[i], var);
 			
 			if (i == 0)
 				first = var;
@@ -859,6 +863,8 @@ public class LLVMGenerator {
 			temp = generateDerefExpr((IAstDerefExpr) expr);
 		else if (expr instanceof IAstAddrOfExpr)
 			temp = generateAddrOfExpr((IAstAddrOfExpr) expr);
+		else if (expr instanceof IAstAddrRefExpr)
+			temp = generateAddrRefExpr((IAstAddrRefExpr) expr);
 		else if (expr instanceof IAstFuncCallExpr)
 			temp = generateFuncCallExpr((IAstFuncCallExpr) expr);
 		else if (expr instanceof IAstSymbolExpr)
@@ -900,6 +906,9 @@ public class LLVMGenerator {
 	private LLOperand generateAddrOfExpr(IAstAddrOfExpr expr) throws ASTException {
 		return generateTypedExprAddr(expr.getExpr());
 	}
+	private LLOperand generateAddrRefExpr(IAstAddrRefExpr expr) throws ASTException {
+		return generateTypedExprAddr(expr.getExpr());
+	}
 
 	/**
 	 * Only point to the address holding the desired value, so load and store can
@@ -913,8 +922,15 @@ public class LLVMGenerator {
 		if (source == null)
 			return null;
 		
-		LLType valueType = source.getType();
-		while (valueType != null && !valueType.equals(source.getType())) {
+		LLType valueType = AstTypedNode.getConcreteType(typeEngine, expr, source.getType());
+		if (valueType.equals(expr.getType()))
+			return source;
+		
+		if (expr.getType().getBasicType() == BasicType.VOID)
+			return source;
+		//LLPointerType addrType = typeEngine.getPointerType(expr.getType());
+		
+		while (valueType != null && !expr.getType().equals(valueType.getSubType())) {
 			if (source.getType().getBasicType() == BasicType.REF) {
 				// dereference to get the data ptr
 				LLOperand addrTemp = currentTarget.newTemp(source.getType());
@@ -937,7 +953,7 @@ public class LLVMGenerator {
 			} else {
 				throw new IllegalStateException();
 			}
-			valueType = source.getType();
+			valueType = AstTypedNode.getConcreteType(typeEngine, expr, source.getType());
 		}
 		
 		return source;
@@ -1199,7 +1215,7 @@ entry:
 
 	private LLOperand generateFieldExpr(IAstFieldExpr expr) throws ASTException {
 		
-		LLDataType dataType = (LLDataType) expr.getExpr().getType();
+		LLDataType dataType = (LLDataType) expr.getDataType();
 		BaseLLField field = dataType.getField(expr.getField().getName());
 		if (field == null)
 			throw new ASTException(expr.getField(), "unknown field '" + expr.getField().getName() + "' in '" + dataType.getName());
@@ -1213,6 +1229,7 @@ entry:
 			LLOperand structAddr = generateTypedExprAddr(expr.getExpr());
 			
 			LLTempOp elPtr = currentTarget.newTemp(fieldPointerType);
+			
 			currentTarget.emit(new LLGetElementPtrInstr(elPtr, 
 					typeEngine.getPointerType(expr.getExpr().getType()), 
 					structAddr, 

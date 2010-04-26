@@ -13,6 +13,7 @@ public interface IAstDataType extends IAstTypedExpr, IAstStmtScope, IAstType {
 	IAstDataType copy(IAstNode parent);
 	
 	ISymbol getTypeName();
+	void setTypeName(ISymbol typeName);
 	
 	IAstNodeList<IAstTypedNode> getFields();
 	IAstNodeList<IAstTypedNode> getStatics();

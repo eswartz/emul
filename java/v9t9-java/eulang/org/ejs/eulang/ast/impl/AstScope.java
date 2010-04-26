@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
+import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.symbols.IScope;
 
 
@@ -44,6 +45,10 @@ public abstract class AstScope extends AstNode implements IAstScope {
 		return true;
 	}
 
+	protected IAstScope fixupScope(IAstScope copied) {
+		remapScope(getScope(), copied.getScope(), copied);
+		return fixup(this, copied);
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstScope#getScope()

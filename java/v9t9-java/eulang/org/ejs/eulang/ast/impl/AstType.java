@@ -14,7 +14,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstType extends AstTypedNode implements IAstType {
+public class AstType extends AstTypedExpr implements IAstType {
 
 	/**
 	 * @param type

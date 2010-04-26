@@ -15,7 +15,7 @@ public class LLPointerType extends BaseLLType {
 		
 	}
 	public LLPointerType(int bits, LLType baseType) {
-		super(baseType.getName() + "$p", bits, baseType.getLLVMType() + "*", BasicType.POINTER, baseType);
+		super(fixLLVMName(baseType.getLLVMName()) + "$p", bits, baseType.getLLVMType() + "*", BasicType.POINTER, baseType);
 		
 	}
 	

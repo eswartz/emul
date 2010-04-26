@@ -41,7 +41,7 @@ public class AstNamedType extends AstType implements IAstNamedType {
 	 */
 	@Override
 	public IAstNamedType copy(IAstNode copyParent) {
-		return fixup(this, new AstNamedType(type, doCopy(symbolExpr, copyParent)));
+		return fixup(this, new AstNamedType(getType(), doCopy(symbolExpr, copyParent)));
 	}
 	
 	@Override
@@ -119,6 +119,8 @@ public class AstNamedType extends AstType implements IAstNamedType {
 			}
 			
 			changed |= inferTypesFromChildren(new ITyped[] { symbolExpr });
+		} else {
+			changed |= updateType(symbolExpr, type);
 		}
 		changed |= super.inferTypeFromChildren(typeEngine);
  		return changed;

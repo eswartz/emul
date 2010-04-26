@@ -36,12 +36,15 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 
 	private IAstNodeList<IAstTypedNode> statics;
 	private IAstNodeList<IAstTypedNode> ifields;
+	private ISymbol typeName;
 
 		
-	public AstDataType( IAstNodeList<IAstStmt> stmts,
+	public AstDataType( ISymbol typeName,
+			IAstNodeList<IAstStmt> stmts,
 			IAstNodeList<IAstTypedNode> fields,
 			IAstNodeList<IAstTypedNode> statics, IScope scope) {
 		super(stmts, scope);
+		this.typeName = typeName;
 		setFields(fields);
 		setStatics(statics);
 	}
@@ -52,6 +55,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	@Override
 	public IAstDataType copy(IAstNode copyParent) {
 		return (IAstDataType) fixupStmtScope(new AstDataType(
+				typeName,
 				doCopy(stmtList, copyParent),
 				doCopy(ifields, copyParent), doCopy(statics, copyParent),
 				getScope().newInstance(getCopyScope(copyParent))));
@@ -163,6 +167,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		
 		if (canReplaceType(this) || !getType().isComplete()) {
 			LLDataType data = createDataType(typeEngine); 
+			// TODO: references to this type's name need to be updated
 			changed |= updateType(this, data);
 		}
 		return changed;
@@ -240,6 +245,8 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	}
 
 	public ISymbol getTypeName() {
+		return typeName;
+		/*
 		ISymbol name = null;
 		if (getParent() instanceof IAstDefineStmt) {
 			name = ((IAstDefineStmt) getParent()).getSymbol();
@@ -247,7 +254,16 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 			name = ((IAstDefineStmt) getParent().getParent()).getSymbol();
 		}
 		return name;
+		*/
 	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDataType#setTypeName(org.ejs.eulang.symbols.ISymbol)
+	 */
+	@Override
+	public void setTypeName(ISymbol typeName) {
+		this.typeName = typeName;
+	}
+	
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)

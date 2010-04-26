@@ -17,6 +17,7 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -26,7 +27,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
+public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 
 	private IAstSymbolExpr id;
 	//private IAstTypedExpr expr;
@@ -34,11 +35,14 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	//private Map<LLType, IAstTypedExpr> typedBodyMap = new HashMap<LLType, IAstTypedExpr>();
 	
 	private Map<LLType, List<IAstTypedExpr>> instanceMap = new HashMap<LLType, List<IAstTypedExpr>>();
+	private boolean generic;
 
-	public AstDefineStmt(IAstSymbolExpr name, IAstNodeList<IAstTypedExpr> bodyList) {
+	public AstDefineStmt(IAstSymbolExpr name, boolean generic, IScope scope, IAstNodeList<IAstTypedExpr> bodyList) {
+		super(scope);
 		this.id = name;
 		id.setParent(this);
 		setSymbolExpr(name);
+		setGeneric(generic);
 		this.bodyList = reparent(this.bodyList, bodyList);
 	}
 	/* (non-Javadoc)
@@ -47,7 +51,9 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	@Override
 	public IAstDefineStmt copy(IAstNode copyParent) {
 		// TODO: copy expansions
-		return fixup(this, new AstDefineStmt(doCopy(id, copyParent), doCopy(bodyList, copyParent)));
+		return (IAstDefineStmt) fixupScope(new AstDefineStmt(doCopy(id, copyParent), isGeneric(), 
+				scope.newInstance(getCopyScope(copyParent)),
+				doCopy(bodyList, copyParent)));
 	}
 
 	
@@ -56,10 +62,11 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 777;
+		int result = super.hashCode();
 		result = prime * result
 				+ ((bodyList == null) ? 0 : bodyList.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + (generic ? 19283 : 0);
 		return result;
 	}
 	@Override
@@ -67,11 +74,13 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 		if (this == obj)
 			return true;
 		if (obj == null) return false;
-		//if (!super.equals(obj))
-		//	return false;
+		if (!super.equals(obj))
+			return false;
 		if (getClass() != obj.getClass())
 			return false;
 		AstDefineStmt other = (AstDefineStmt) obj;
+		if (generic != other.generic)
+			return false;
 		if (bodyList == null) {
 			if (other.bodyList != null)
 				return false;
@@ -129,6 +138,20 @@ public class AstDefineStmt extends AstStatement implements IAstDefineStmt {
 		
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDefineStmt#isGeneric()
+	 */
+	@Override
+	public boolean isGeneric() {
+		return generic;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDefineStmt#setGeneric(boolean)
+	 */
+	@Override
+	public void setGeneric(boolean generic) {
+		this.generic = generic;
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAssignStmt#getExpr()

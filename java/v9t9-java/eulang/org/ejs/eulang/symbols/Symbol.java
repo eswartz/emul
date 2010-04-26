@@ -165,6 +165,7 @@ public class Symbol implements ISymbol {
 		if (type != this.type) {
 			// the symbol itself should not have a type for defines
 			assert !(def instanceof IAstDefineStmt);
+			assert !(scope.getOwner() instanceof IAstDefineStmt); 
 			this.type = type;
 			llvmName = null;
 		}

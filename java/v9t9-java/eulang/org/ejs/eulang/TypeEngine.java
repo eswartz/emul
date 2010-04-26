@@ -35,7 +35,9 @@ import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLStaticField;
+import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.LLVoidType;
 
 /**
@@ -65,6 +67,7 @@ public class TypeEngine {
 	private Map<LLType, LLRefType> refTypeMap = new HashMap<LLType, LLRefType>();
 	private Map<Tuple, LLArrayType> arrayTypeMap = new HashMap<Tuple, LLArrayType>();
 	private Map<Integer, LLIntType> intMap = new HashMap<Integer, LLIntType>();
+	private Map<String, LLTupleType> tupleTypeMap = new HashMap<String, LLTupleType>();
 	private Map<String, LLDataType> dataTypeMap = new HashMap<String, LLDataType>();
 	
 	private boolean isLittleEndian;
@@ -498,6 +501,9 @@ public class TypeEngine {
 
 	public LLPointerType getPointerType(LLType type) {
 		LLPointerType ptrType = ptrTypeMap.get(type);
+		//if (type instanceof LLUpType) {
+		//	ptrType = ptrType;
+		//}
 		if (ptrType == null) {
 			ptrType = new LLPointerType(ptrBits, type);
 			ptrTypeMap.put(type, ptrType);
@@ -524,6 +530,7 @@ public class TypeEngine {
 		types.addAll(refTypeMap.values());
 		types.addAll(arrayTypeMap.values());
 		types.addAll(dataTypeMap.values());
+		types.addAll(tupleTypeMap.values());
 		//types.addAll(codeTypes.values());
 		return types;
 	}
@@ -558,7 +565,7 @@ public class TypeEngine {
 		String key = getDataTypeKey(name, ifields, statics);
 		LLDataType data = dataTypeMap.get(key);
 		if (data == null) {
-			name = uniquify(name);
+			//name = uniquify(name);
 			data = new LLDataType(this, name,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
 					(LLStaticField[]) statics.toArray(new LLStaticField[statics.size()]));
@@ -589,10 +596,14 @@ public class TypeEngine {
 		StringBuilder sb = new StringBuilder();
 		sb.append(name).append('$');
 		for (LLInstanceField field : ifields)
-			sb.append(field.getType() != null ? field.getType().getLLVMType() : "<u>").append('$');
+			sb.append(getUniqueTypeName(field.getType())).append('$');
 		for (LLStaticField field : statics)
-			sb.append(field.getType() != null ? field.getType().getLLVMType() : "<u>").append('$');
+			sb.append(getUniqueTypeName(field.getType())).append('$');
 		return sb.toString();
+	}
+
+	private String getUniqueTypeName(LLType type) {
+		return type != null ? (type.isGeneric() ? type.getName() : type.getLLVMType()) : "<u>";
 	}
 	
 	public LLDataType getDataType(String name, List<LLType> fieldTypes) {
@@ -616,7 +627,32 @@ public class TypeEngine {
 		StringBuilder sb = new StringBuilder();
 		sb.append(name).append('$');
 		for (LLType type : ifields)
-			sb.append(type != null ? type.toString() : "<u>").append('$');
+			sb.append(getUniqueTypeName(type)).append('$');
 		return sb.toString();
 	}
+
+	/**
+	 * @param llTypes
+	 * @return
+	 */
+	public LLTupleType getTupleType(LLType[] types) {
+		String key = getTupleTypeKey(types);
+		LLTupleType tuple = tupleTypeMap.get(key);
+		if (tuple == null) {
+			tuple = new LLTupleType(this, types);
+			tupleTypeMap.put(key, tuple);
+		}
+		return tuple;
+	}
+	
+	private String getTupleTypeKey(LLType[] types) {
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (LLType type : types) {
+			if (first) first = false; else sb.append('$');
+			sb.append(getUniqueTypeName(type));
+		}
+		return sb.toString();
+	}
+
 }

@@ -10,10 +10,12 @@ import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -165,7 +167,8 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		LLType fieldType = type;
 		
 		if (canInferTypeFrom(expr)) {
-			LLType exprType = expr.getType();
+			LLType exprType = getDataType();
+			
 			if (!(exprType instanceof LLDataType)) {
 				throw new TypeException(expr, "can only field-dereference data");
 			}
@@ -176,6 +179,8 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			
 			int fieldIdx = dataType.getFieldIndex(field);
 			fieldType = field.getType();
+			
+			fieldType = getConcreteType(typeEngine, this, fieldType);
 			
 			changed |= updateType(this, fieldType);
 			
@@ -198,6 +203,21 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		return changed;
 	}
 
+	/**
+	 * @param type
+	 * @return
+	 */
+	public LLType getDataType() {
+		LLType exprType = expr.getType();
+		if (exprType instanceof LLUpType) {
+			IAstType upType = ((LLUpType) exprType).getRealType();
+			if (upType != null)
+				exprType = upType.getType();
+		}
+		return exprType;
+	}
+
+
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
 	 */
@@ -214,7 +234,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			if (definition != null)
 				throw new TypeException(theRef, "cannot reference fields in definitions (use an instance instead)");
 		}
-		LLType exprType = expr.getType();
+		LLType exprType = getDataType();
 		if (!(exprType instanceof LLDataType)) {
 			throw new TypeException(expr, "can only field-dereference data");
 		}
@@ -225,7 +245,8 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		
 		LLType fieldType = field.getType();
 		if (fieldType != null && fieldType.isComplete()) {
-			if (!typeEngine.getBaseType(type).equals(typeEngine.getBaseType(fieldType))) {
+			// account for up-types
+			if (!typeEngine.getBaseType(type).matchesExactly(typeEngine.getBaseType(fieldType))) {
 				throw new TypeException(this.field, "field's type does not match parent");
 			}
 		}

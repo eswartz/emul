@@ -4,6 +4,9 @@
 package org.ejs.eulang.types;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +25,7 @@ import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**
@@ -62,6 +66,7 @@ public class TypeInference {
 	private List<Message> messages;
 
 	private Set<IAstNode> instantiationSet = new HashSet<IAstNode>();
+	private Set<IAstTypedExpr> genericizedSet = new HashSet<IAstTypedExpr>();
 	
 	public TypeInference(TypeEngine typeEngine) {
 		this.typeEngine = typeEngine;
@@ -142,6 +147,20 @@ public class TypeInference {
 						defineStmt.accept(dump);
 					}
 					
+					if (defineStmt.isGeneric()) {
+						
+						// see if we can still infer some types
+						if (!genericizedSet.contains(bodyExpr)) {
+							boolean madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
+							genericizedSet.add(bodyExpr);
+							if (madeGeneric) {
+								defineChanged = true;
+							}
+						}
+						return defineChanged;
+					}
+					
+					/*
 					if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
 						// a standalone define should have a known type based on its references,
 						// so this must be a generic
@@ -152,7 +171,8 @@ public class TypeInference {
 							return true;
 						}
 					}
-					//messages.addAll(inference.getMessages());
+					*/
+					messages.addAll(inference.getMessages());
 					
 					changed |= inferUp(bodyExpr);
 				} else if (origDefineType.isGeneric()) {
@@ -348,7 +368,7 @@ public class TypeInference {
 	 * Make the given expression generic.  Replace types with variables.
 	 * @param expr
 	 */
-	public boolean genericize(IAstTypedExpr defineExpr) {
+	public boolean genericize(IScope scope, IAstTypedExpr defineExpr) {
 		LLType type = defineExpr.getType();
 		if (!(type instanceof LLAggregateType))
 			return false;
@@ -356,18 +376,24 @@ public class TypeInference {
 		
 		LLType[] types = new LLType[aggregate.getCount()];
 		
+		Set<String> currentNames = new HashSet<String>();
+		for (ISymbol symbol : scope.getSymbols()) {
+			currentNames.add(symbol.getName());
+		}
+		
 		boolean anyGeneric = false;
-		char ch = 'T';
-		String prefix = "";
+		
+		int unique = 0;
 		for (int i = 0; i < aggregate.getCount(); i++) {
 			if ((types[i] = aggregate.getType(i)) == null) {
 				anyGeneric = true;
-				types[i] = new LLGenericType(prefix + ch);
-				ch++;
-				if (ch > 'Z')
-					ch = 'A';
-				else if (ch == 'T')
-					prefix += "T";
+				String name = "T" + unique;
+				while (currentNames.contains(name)) {
+					unique++;
+					name = "T" + unique;
+				}
+				currentNames.add(name);
+				types[i] = new LLGenericType(name);
 			}
 		}
 		

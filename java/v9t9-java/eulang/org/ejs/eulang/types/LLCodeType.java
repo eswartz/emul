@@ -22,7 +22,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 	 * 
 	 */
 	public LLCodeType(LLType retType, LLType[] argTypes, int ptrBits) {
-		super(toNameString(retType, argTypes), ptrBits, toString(retType, argTypes), BasicType.CODE, null, argTypes == null);
+		super(fixLLVMName(toString(retType, argTypes)), ptrBits, toString(retType, argTypes), BasicType.CODE, null, argTypes == null);
 		this.retType = retType;
 		this.argTypes = argTypes != null ? argTypes : NO_TYPES;
 		this.types = new LLType[1 + this.argTypes.length];
@@ -62,20 +62,6 @@ public class LLCodeType extends BaseLLAggregateType  {
 		return true;
 	}
 
-
-
-	/**
-	 * @param retType
-	 * @param argTypes
-	 * @return
-	 */
-	private static String toNameString(LLType retType, LLType[] argTypes) {
-		String name = toString(retType, argTypes);
-		name = name.replaceAll("\\s+", "");
-		name = name.replaceAll("\\(|,", "\\$");
-		name = name.replaceAll("[^A-Za-z0_9$]+", "_");
-		return name;
-	}
 
 
 	public static String toString(LLType retType, LLType[] argTypes) {

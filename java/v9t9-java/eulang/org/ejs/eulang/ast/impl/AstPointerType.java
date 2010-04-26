@@ -114,6 +114,7 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 		
 		
 		if (canReplaceType(this)) {
+			//LLPointerType ptr = typeEngine.getPointerType(getConcreteType(typeEngine, this, baseType.getType()));  
 			LLPointerType ptr = typeEngine.getPointerType(baseType.getType());  
 			changed |= updateType(this, ptr);
 		}

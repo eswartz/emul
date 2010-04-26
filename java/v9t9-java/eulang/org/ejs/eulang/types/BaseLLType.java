@@ -28,6 +28,13 @@ public abstract class BaseLLType implements LLType {
 		this.subType = subType;
 	}
 
+	static String fixLLVMName(String name) {
+		name = name.replaceAll("%|@", "");
+		name = name.replaceAll("\\s+", "");
+		name = name.replaceAll("\\(|,", "\\$");
+		name = name.replaceAll("[^A-Za-z0-9$\\.]+", "_");
+		return name;
+	}
 	
 
 	@Override
@@ -147,7 +154,7 @@ public abstract class BaseLLType implements LLType {
 	 */
 	@Override
 	public boolean isGeneric() {
-		return false;
+		return subType != null && subType.isGeneric();
 	}
 	
 	/* (non-Javadoc)

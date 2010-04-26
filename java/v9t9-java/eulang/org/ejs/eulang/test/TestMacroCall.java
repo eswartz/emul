@@ -213,11 +213,6 @@ public class TestMacroCall extends BaseParserTest {
 		condExpr = condList.getCondExprs().list().get(1);
     	assertEquals(typeEngine.INT, condExpr.getType());
     }
-
-	private IAstTypedExpr getMainBodyExpr(IAstDefineStmt def) {
-		return def.getMatchingBodyExpr(null);
-	}
-
 }
 
 

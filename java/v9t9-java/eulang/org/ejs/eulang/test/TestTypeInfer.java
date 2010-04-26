@@ -30,6 +30,7 @@ import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
 import org.junit.Test;
@@ -64,10 +65,6 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(typeEngine.INT, prototype.argumentTypes()[1].getType());
     	assertEquals(typeEngine.INT, ((IAstExprStmt) codeExpr.stmts().list().get(0)).getType());
     }
-
-	private IAstTypedExpr getMainBodyExpr(IAstDefineStmt def) {
-		return def.getMatchingBodyExpr(null);
-	}
 
 	 @Test 
     public void testBinOps() throws Exception {
@@ -746,10 +743,10 @@ public class TestTypeInfer extends BaseParserTest {
 		sanityTest(mod);
     	
     	
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOr");
     	doTypeInfer(mod);
     	typeTest(mod, false);
     	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testShortCircuitAndOr");
     	assertEquals(typeEngine.getCodeType(typeEngine.INT,  
     			new LLType[] { typeEngine.INT, typeEngine.INT, typeEngine.INT }), 
     			getMainBodyExpr(def).getType());
@@ -856,7 +853,7 @@ public class TestTypeInfer extends BaseParserTest {
     	// In this case, we need to infer through the 'bop' call.
     	// This means detecting that 'bop' is generic and making a new instance.
     	IAstModule mod = treeize("swap = code (x,y => (Int, Int)) { (y,x); };\n" +
-    			"bop = code(x,y) { y };\n"+
+    			"bop = [T,U] code(x:T;y:U) { y };\n"+
     			"testTuples5 = code (a,b) { (a, b) = bop(5, swap(4, 5)); }; \n");
     	sanityTest(mod);
     	
@@ -864,6 +861,15 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("bop");
     	assertInstanceCount(1, 1, def);
+    	
+    	LLTupleType tupleType = typeEngine.getTupleType(  
+    			new LLType[] { typeEngine.INT, typeEngine.INT });
+    	
+    	LLType expType = typeEngine.getCodeType(tupleType, new LLType[] { typeEngine.INT, tupleType });
+    	IAstTypedExpr main = getMainBodyExpr(def);
+    	assertNotNull(def.getMatchingInstance(main.getType(), expType));
+    	
+
     }
     
 	@Test
@@ -884,7 +890,7 @@ public class TestTypeInfer extends BaseParserTest {
     
     @Test
     public void testGenerics0b() throws Exception {
-    	IAstModule mod = treeize("add = code (x,y) { x+y };\n" +
+    	IAstModule mod = treeize("add = [T,U] code  (x:T;y:U) { x+y };\n" +
     			"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
     	sanityTest(mod);
     	
@@ -924,7 +930,7 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testGenerics2() throws Exception {
-    	IAstModule mod = treeize("swap = code (x,y) { (y,x); };\n" +
+    	IAstModule mod = treeize("swap = [T,U] code (x:T;y:U) { (y,x); };\n" +
     			"testGenerics2 = code (a,b) { (a, b) = swap(4, 5); (x, y) := swap(1.0, 9); }; \n");
     	sanityTest(mod);
     	
@@ -1004,9 +1010,9 @@ public class TestTypeInfer extends BaseParserTest {
 	}
     
 	@Test
-	public void testOverloadingMacro1() throws Exception {
-		IAstModule mod = doFrontend("    util = [ code(x, y, z ) { x*y-z },\n"
-				+ "             macro (x, y) { util(x, y, 0) }\n"
+	public void testOverloadingMacro1a() throws Exception {
+		IAstModule mod = doFrontend("    util = [T, U] [ code(x:T; y:U; z:T ) { x*y-z },\n"
+				+ "             macro (x:T; y:T) { util(x, y, 0) }\n"
 				+ "            ];\n"
 				+ "func = code(x:Int;y:Int => Int) { util(x,y) };\n");
 		sanityTest(mod);
@@ -1015,8 +1021,20 @@ public class TestTypeInfer extends BaseParserTest {
 
 	}
 	@Test
+	public void testOverloadingMacro1b() throws Exception {
+		IAstModule mod = doFrontend("    util = [] [ code(x; y; z ) { x*y-z },\n"
+				+ "             macro (x; y) { util(x, y, 0) }\n"
+				+ "            ];\n"
+				+ "func = code(x:Int;y:Int => Int) { util(x,y) };\n");
+		sanityTest(mod);
+		
+		doTypeInfer(mod);
+		
+	}
+	
+	@Test
 	public void testOverloadingMacro2() throws Exception {
-		IAstModule mod = doFrontend("    util = [ code(x, y, z ) { x*y-z },\n"
+		IAstModule mod = doFrontend("    util = [] [ code(x, y, z ) { x*y-z },\n"
 				+ "             macro (x, y) { util(x, y, 0) }\n"
 				+ "            ];\n"
 				+ "func = code(x:Int;y:Float => Float) { util(x,y) };\n");
@@ -1136,7 +1154,8 @@ public class TestTypeInfer extends BaseParserTest {
     	"");
     	sanityTest(mod);
     	doTypeInfer(mod);
-    	IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) mod.getScope().get("Class").getDefinition()).getMatchingBodyExpr(null);
+    	ISymbol classSym = mod.getScope().get("Class");
+		IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) classSym.getDefinition()).getMatchingBodyExpr(null);
     	assertTrue(dataNode.getType().isComplete());
     	System.out.println(dataNode.getType());
     	
@@ -1144,7 +1163,7 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(1, data.getInstanceFields().length);
     	LLInstanceField field = data.getInstanceFields()[0];
     	LLPointerType ptr = (LLPointerType) field.getType();
-    	assertEquals(new LLUpType("Class", 1), ptr.getSubType());
+    	assertEquals(new LLUpType("Class", classSym, 1), ptr.getSubType());
     	
     }
     @Test 
@@ -1157,7 +1176,8 @@ public class TestTypeInfer extends BaseParserTest {
     	"");
     	sanityTest(mod);
     	doTypeInfer(mod);
-    	IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) mod.getScope().get("Class").getDefinition()).getMatchingBodyExpr(null);
+    	ISymbol classSym = mod.getScope().get("Class");
+		IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) classSym.getDefinition()).getMatchingBodyExpr(null);
     	assertTrue(dataNode.getType().isComplete());
     	System.out.println(dataNode.getType());
     	
@@ -1167,7 +1187,7 @@ public class TestTypeInfer extends BaseParserTest {
     	LLPointerType funcPtr = (LLPointerType) field.getType();
     	LLCodeType code = (LLCodeType) funcPtr.getSubType();
     	assertEquals(typeEngine.INT, code.getArgTypes()[1]);
-    	assertEquals(new LLUpType("Class", 1), code.getArgTypes()[0]);
+    	assertEquals(new LLUpType("Class", classSym, 1), code.getArgTypes()[0]);
     }
 
     @Test

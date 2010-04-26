@@ -79,7 +79,7 @@ tokens {
   INITEXPR;
   INITLIST;
   
-  
+  INSTANCE;
 }
 
 @header {
@@ -114,7 +114,7 @@ prog:   toplevelstmts EOF!
 toplevelstmts: toplevelstat*      -> ^(STMTLIST toplevelstat*)
     ; 
     
-toplevelstat:  (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
+toplevelstat:  defineStmt
     |  (ID COLON) => ID COLON type (EQUALS rhsExprOrInitList)?     SEMI  -> ^(ALLOC ID type rhsExprOrInitList?)
     |  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExprOrInitList  SEMI  -> ^(ALLOC ID TYPE rhsExprOrInitList)
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
@@ -123,6 +123,10 @@ toplevelstat:  (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID t
     ;
 
 rhsExprOrInitList : rhsExpr | initList ;
+
+defineStmt : (ID EQUALS LBRACKET) => ID EQUALS LBRACKET idlistOrEmpty RBRACKET  toplevelvalue     SEMI  -> ^(DEFINE ID idlistOrEmpty toplevelvalue) 
+    | (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
+  ;
 
 toplevelvalue : (LBRACE ) => xscope
     | ID PLUS data -> ^(ADDSCOPE ID data)
@@ -157,6 +161,7 @@ forIn : FOR idlist IN list      -> ^(FOR idlist list ) ;
 
 idlist : ID (COMMA ID)*    -> ^(IDLIST ID+)
     ;
+idlistOrEmpty : idlist -> idlist | -> ^(IDLIST) ;
 
 listiterable : ( code | macro ) ;
     
@@ -251,7 +256,8 @@ baseType : (typeAtom -> typeAtom)
 arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
     | LBRACKET RBRACKET -> FALSE
     ;
-typeAtom : idOrScopeRef -> ^(TYPE idOrScopeRef)  
+typeAtom : idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
+     | idOrScopeRef -> ^(TYPE idOrScopeRef)  
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
   ;
 codestmtlist:  codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
@@ -493,10 +499,18 @@ noIdAtom :
 
 atom : noIdAtom | idExpr ;
 
+idExpr options { backtrack=true;} :
+     idOrScopeRef instantiation appendIdModifiers? -> ^(IDEXPR ^(INSTANCE idOrScopeRef instantiation) appendIdModifiers*) 
+    | idOrScopeRef appendIdModifiers? -> ^(IDEXPR ^(DEREF idOrScopeRef ) appendIdModifiers*) 
+;
+    
+instantiation : LESS (instanceExpr (COMMA instanceExpr)*) GREATER   -> ^(LIST instanceExpr*) 
+  ; 
+
+instanceExpr options { backtrack=true;} : type | atom ;
+
 // an idOrScopeRef can have dotted parts that interpreted either as scope derefs or field refs,
 // so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 
-idExpr : idOrScopeRef appendIdModifiers? -> ^(IDEXPR ^(DEREF idOrScopeRef) appendIdModifiers*) ;
-
 appendIdModifiers : nonFieldIdModifier idModifier* ;
 
 nonFieldIdModifier : funcCall | arrayIndex | addrRef ;
@@ -520,7 +534,8 @@ staticVarDecl : STATIC varDecl -> ^(STATIC varDecl) ;
 
 fieldDecl : staticVarDecl SEMI -> staticVarDecl 
     | varDecl SEMI -> varDecl 
-    | fieldIdRef SEMI -> fieldIdRef;
+    //| fieldIdRef SEMI -> fieldIdRef
+    ;
 
 fieldIdRef : ID (COMMA ID)* -> ^(ALLOC ID)+ ;
 

@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.types.LLType;
+
 /**
  * Point to a field.  
  * @author ejs
@@ -16,4 +18,7 @@ public interface IAstFieldExpr extends IAstTypedExpr {
 	
 	IAstName getField();
 	void setField(IAstName name);
+	
+	/** get the resolved type of the expr, going through LLUpTypes */
+	LLType getDataType();
 }

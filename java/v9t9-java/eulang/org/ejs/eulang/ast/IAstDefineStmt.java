@@ -17,11 +17,14 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public interface IAstDefineStmt extends IAstStmt, IAstSymbolDefiner {
+public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	IAstDefineStmt copy(IAstNode copyParent);
 	
 	IAstSymbolExpr getSymbolExpr();
 	void setSymbolExpr(IAstSymbolExpr id);
+	
+	boolean isGeneric();
+	void setGeneric(boolean generic);
 	
 	ISymbol getSymbol();
 	

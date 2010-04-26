@@ -111,6 +111,6 @@ public class LLTupleType extends BaseLLAggregateType {
 	}
 	
 	public LLTupleType updateTypes(TypeEngine typeEngine, LLType[] type) {
-		return new LLTupleType(typeEngine, type);
+		return typeEngine.getTupleType(type);
 	}
 }

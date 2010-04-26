@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
+import org.ejs.eulang.ast.IAstDataType;
+import org.ejs.eulang.ast.IAstType;
 
 /**
  * @author ejs
@@ -22,7 +24,7 @@ public class LLDataType extends BaseLLAggregateType {
 	private int sizeof;
 
 	public LLDataType(TypeEngine engine, String name, LLInstanceField[] ifields, LLStaticField[] statics) {
-		super(name, sumTypeBits(engine, ifields), toLLVMString(ifields), BasicType.DATA, null, ifields == null);
+		super(name, sumTypeBits(engine, ifields), toLLVMString(name, ifields), BasicType.DATA, null, ifields == null);
 		this.ifields = ifields != null ? ifields : NO_FIELDS;
 		this.statics = statics != null ? statics : NO_STATIC_FIELDS;
 		
@@ -78,7 +80,7 @@ public class LLDataType extends BaseLLAggregateType {
 	 * @param fields
 	 * @return
 	 */
-	private static String toLLVMString(LLInstanceField[] fields) {
+	private static String toLLVMString(String name, LLInstanceField[] fields) {
 		if (fields == null)
 			return "<data>";
 		
@@ -88,7 +90,17 @@ public class LLDataType extends BaseLLAggregateType {
 		for (BaseLLField field : fields) {
 			if (first) first = false; else sb.append(',');
 			LLType type = field.getType();
-			sb.append(type != null ? (type.getLLVMType() != null ? type.getLLVMType() : type.getName()) : "<unknown>");
+			String typeName = null;
+			/*
+			if (type instanceof LLUpType) {
+				IAstType realType = ((LLUpType) type).getRealType();
+				if (realType instanceof IAstDataType) {
+					if (((IAstDataType) realType).getTypeName().getName().equals(name))
+						typeName = 
+				}
+			}*/
+			typeName = type != null ? (type.getLLVMType() != null ? type.getLLVMType() : type.getName()) : "<unknown>";
+			sb.append(typeName);
 		}
 		sb.append('}');
 		return sb.toString();

@@ -125,7 +125,7 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 			LLType[] tupleTypes = new LLType[elements.nodeCount()];
 			for (int idx = 0; idx < elements.nodeCount(); idx++)
 				tupleTypes[idx] = elements.list().get(idx).getType();
-			newType = new LLTupleType(typeEngine, tupleTypes);
+			newType = typeEngine.getTupleType(tupleTypes);
 		}
 		boolean changed = false;
 		

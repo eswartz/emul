@@ -646,5 +646,8 @@ public class BaseParserTest {
 		return expr;
 	}
 
+	protected IAstTypedExpr getMainBodyExpr(IAstDefineStmt def) {
+		return def.getMatchingBodyExpr(null);
+	}
 
 }

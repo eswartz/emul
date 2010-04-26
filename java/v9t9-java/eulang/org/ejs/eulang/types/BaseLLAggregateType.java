@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.ast.IAstType;
+
 
 /**
  * @author ejs
@@ -180,8 +182,13 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		
 		if (getBasicType() != target.getBasicType())
 			return false;
-		
-		if (!(target instanceof LLAggregateType))
+
+		if (target instanceof LLUpType) {
+			IAstType realType = ((LLUpType) target).getRealType();
+			if (realType != null && realType.getType().equals(this))
+				return true;
+		}
+		if (!(target instanceof LLAggregateType)) 
 			return false;
 		LLAggregateType aggTarget = (LLAggregateType) target;
 		if (getCount() != aggTarget.getCount())

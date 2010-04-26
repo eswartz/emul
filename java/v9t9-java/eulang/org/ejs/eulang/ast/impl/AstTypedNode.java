@@ -6,10 +6,19 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDataType;
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSelfReferentialType;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -94,9 +103,15 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
     }
 
     public static boolean updateType(ITyped child, LLType newType) {
-    	if (child == null || newType == null || child.getType() == newType)
+    	
+    	if (child == null || newType == null)
 			return false;
 		
+    	//newType = getConcreteType( child, newType);
+    	
+    	if (child.getType() == newType)
+    		return false;
+    	
 		if (//(child.getType() == null || !child.getType().isComplete()) &&
 				//(child.getType() == null || newType.isCompatibleWith(child.getType())) &&
 				newType.isMoreComplete(child.getType())) {
@@ -115,7 +130,44 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		return false;
     }
     
-    protected boolean inferTypesFromChildren(ITyped[] typedChildren) {
+    /**
+	 * @param typeEngine 
+     * @param newType
+	 * @return
+	 */
+	public static LLType getConcreteType(TypeEngine typeEngine, ITyped child, LLType newType) {
+		
+		// don't put uprefs in normal code
+    	if (newType instanceof LLUpType) {
+    		IAstType actual = ((LLUpType) newType).getRealType();
+    		if(actual == null)
+    			return newType;
+    		IAstNode n = null;
+    		if (child != null) {
+				n = child instanceof IAstNode ? (IAstNode) child : ((ISymbol) child).getDefinition();
+	    		while (n != null) {
+	    			if (n == actual)
+	    				break;
+	    			n = n.getParent();
+	    		}
+    		}
+    		if (n == null)
+    			return actual.getType();
+    	} else if (newType instanceof LLPointerType) {
+    		LLType sub = getConcreteType(typeEngine, child, newType.getSubType());
+    		if (sub != newType.getSubType()) {
+    			return typeEngine.getPointerType(sub);
+    		}
+    	} else if (newType instanceof LLRefType) {
+    		LLType sub = getConcreteType(typeEngine, child, newType.getSubType());
+    		if (sub != newType.getSubType()) {
+    			return typeEngine.getRefType(sub);
+    		}
+    	}
+		return newType;
+	}
+
+	protected boolean inferTypesFromChildren(ITyped[] typedChildren) {
     	LLType newType = null;
     	for (ITyped kid : typedChildren) {
     		if (canInferTypeFrom(kid)) {
@@ -196,12 +248,20 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 			return child;
 		}
 		
+		/*
+		// ignore uprefs
+		if (child.getType().getSubType() instanceof LLUpType) {
+			IAstType realType = ((LLUpType) child.getType().getSubType()).getRealType();
+			if (realType != null && realType.getType().equals(newType))
+				return child;
+		}*/
+		
 		child.setParent(null);
 		IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, child);
 		castExpr.setSourceRef(child.getSourceRef());
 		castExpr.setType(newType);
 		return castExpr;
 	}
-	
+
 
 }
