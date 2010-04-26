@@ -114,6 +114,8 @@ public class ExpandAST {
 		
 		body = (IAstTypedExpr) body.copy(instanceExpr);
 		
+		// TODO: this is supposed to make a new instance for the define's concrete body list (see code in TypeInference)
+		
 		int index = 0;
 		for (IAstTypedExpr expr : instanceExpr.getExprs().list()) {
 			ISymbol symbol = varSymbols[index];
