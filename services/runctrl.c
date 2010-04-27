@@ -60,28 +60,35 @@
 
 static const char RUN_CONTROL[] = "RunControl";
 
-typedef struct SafeEvent SafeEvent;
+typedef struct ContextExtension {
+    int pending_safe_event; /* safe events are waiting for this context to be stopped */
+    int intercepted_by_bp;
+} ContextExtension;
 
-struct SafeEvent {
+static size_t context_extension_offset = 0;
+
+#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+
+typedef struct SafeEvent {
     pid_t mem;
     EventCallBack * done;
     void * arg;
-    SafeEvent * next;
-};
+    struct SafeEvent * next;
+} SafeEvent;
 
-typedef struct GetContextArgs GetContextArgs;
-
-struct GetContextArgs {
+typedef struct GetContextArgs {
     Channel * c;
     char token[256];
     Context * ctx;
-};
+} GetContextArgs;
 
 static SafeEvent * safe_event_list = NULL;
 static SafeEvent * safe_event_last = NULL;
 static int safe_event_pid_count = 0;
 static uintptr_t safe_event_generation = 0;
 static int run_ctrl_lock_cnt = 0;
+
+static TCFBroadcastGroup * broadcast_group = NULL;
 
 #if !defined(WIN32) && !defined(_WRS_KERNEL)
 static char * get_executable(pid_t pid) {
@@ -179,6 +186,7 @@ static void write_context(OutputStream * out, Context * ctx) {
 static void write_context_state(OutputStream * out, Context * ctx) {
     int fst = 1;
     const char * reason = NULL;
+    char ** bp_ids = NULL;
     assert(!ctx->exited);
 
     if (!ctx->intercepted) {
@@ -193,8 +201,9 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     write_stream(out, 0);
 
     /* String: Reason */
-    if (ctx->bp_ids != NULL && ctx->bp_ids[0] != NULL) reason = "Breakpoint";
-    if (reason == NULL) reason = context_suspend_reason(ctx);
+    if (EXT(ctx)->intercepted_by_bp == 1) bp_ids = get_context_breakpoint_ids(ctx);
+    if (bp_ids != NULL) reason = "Breakpoint";
+    else reason = context_suspend_reason(ctx);
     json_write_string(out, reason);
     write_stream(out, 0);
 
@@ -212,15 +221,15 @@ static void write_context_state(OutputStream * out, Context * ctx) {
         }
         fst = 0;
     }
-    if (ctx->bp_ids != NULL && ctx->bp_ids[0] != NULL) {
+    if (bp_ids != NULL) {
         int i = 0;
         if (!fst) write_stream(out, ',');
         json_write_string(out, "BPs");
         write_stream(out, ':');
         write_stream(out, '[');
-        while (ctx->bp_ids[i] != NULL) {
+        while (bp_ids[i] != NULL) {
             if (i > 0) write_stream(out, ',');
-            json_write_string(out, ctx->bp_ids[i++]);
+            json_write_string(out, bp_ids[i++]);
         }
         write_stream(out, ']');
         fst = 0;
@@ -467,7 +476,7 @@ static void command_resume(char * token, Channel * c) {
 
 static void send_event_context_suspended(OutputStream * out, Context * ctx);
 
-int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
+int suspend_debug_context(Context * ctx) {
     LINK * qp;
     if (context_has_state(ctx) && !ctx->exited) {
         if (!ctx->stopped) {
@@ -483,12 +492,12 @@ int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
             }
             else {
                 ctx->pending_step = 0;
-                send_event_context_suspended(&bcg->out, ctx);
+                send_event_context_suspended(&broadcast_group->out, ctx);
             }
         }
     }
     for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
-        suspend_debug_context(bcg, cldl2ctxp(qp));
+        suspend_debug_context(cldl2ctxp(qp));
     }
     return 0;
 }
@@ -512,7 +521,7 @@ static void command_suspend(char * token, Channel * c) {
     else if (ctx->intercepted) {
         err = ERR_ALREADY_STOPPED;
     }
-    else if (suspend_debug_context(c->bcg, ctx) < 0) {
+    else if (suspend_debug_context(ctx) < 0) {
         err = errno;
     }
 
@@ -630,6 +639,7 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx) {
     assert(!ctx->pending_step);
     ctx->intercepted = 1;
     ctx->pending_intercept = 0;
+    if (get_context_breakpoint_ids(ctx) != NULL) EXT(ctx)->intercepted_by_bp++;
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -648,10 +658,6 @@ static void send_event_context_resumed(OutputStream * out, Context * ctx) {
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     ctx->intercepted = 0;
-    if (ctx->bp_ids != NULL) {
-        loc_free(ctx->bp_ids);
-        ctx->bp_ids = NULL;
-    }
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -708,7 +714,7 @@ static void run_safe_events(void * arg) {
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             int n = 0;
             Context * ctx = ctxl2ctxp(qp);
-            ctx->pending_safe_event = 0;
+            EXT(ctx)->pending_safe_event = 0;
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
             if (ctx->intercepted) continue;
@@ -736,14 +742,14 @@ static void run_safe_events(void * arg) {
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
         if (ctx->exited || ctx->exiting || ctx->stopped || !context_has_state(ctx)) {
-            ctx->pending_safe_event = 0;
+            EXT(ctx)->pending_safe_event = 0;
             continue;
         }
         if (mem > 0 && ctx->mem != mem) {
-            ctx->pending_safe_event = 0;
+            EXT(ctx)->pending_safe_event = 0;
             continue;
         }
-        if (!ctx->pending_step || ctx->pending_safe_event >= STOP_ALL_MAX_CNT / 2) {
+        if (!ctx->pending_step || EXT(ctx)->pending_safe_event >= STOP_ALL_MAX_CNT / 2) {
             if (context_stop(ctx) < 0) {
                 int error = errno;
 #ifdef _WRS_KERNEL
@@ -761,13 +767,13 @@ static void run_safe_events(void * arg) {
             }
             assert(!ctx->stopped);
         }
-        if (ctx->pending_safe_event >= STOP_ALL_MAX_CNT) {
+        if (EXT(ctx)->pending_safe_event >= STOP_ALL_MAX_CNT) {
             trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error: timeout", ctx->pid);
             ctx->exiting = 1;
-            ctx->pending_safe_event = 0;
+            EXT(ctx)->pending_safe_event = 0;
         }
         else {
-            ctx->pending_safe_event++;
+            EXT(ctx)->pending_safe_event++;
             safe_event_pid_count++;
         }
     }
@@ -800,9 +806,9 @@ static void run_safe_events(void * arg) {
 
 static void check_safe_events(Context * ctx) {
     assert(ctx->stopped || ctx->exited);
-    assert(ctx->pending_safe_event);
+    assert(EXT(ctx)->pending_safe_event);
     assert(safe_event_pid_count > 0);
-    ctx->pending_safe_event = 0;
+    EXT(ctx)->pending_safe_event = 0;
     safe_event_pid_count--;
     if (safe_event_pid_count == 0 && run_ctrl_lock_cnt > 0) {
         post_event(run_safe_events, (void *)++safe_event_generation);
@@ -843,67 +849,59 @@ void run_ctrl_unlock(void) {
 }
 
 static void event_context_created(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
     assert(!ctx->exited);
     assert(!ctx->intercepted);
     assert(!ctx->stopped);
-    send_event_context_added(&bcg->out, ctx);
-    flush_stream(&bcg->out);
+    send_event_context_added(&broadcast_group->out, ctx);
+    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
-
-    send_event_context_changed(&bcg->out, ctx);
-    flush_stream(&bcg->out);
+    send_event_context_changed(&broadcast_group->out, ctx);
+    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_stopped(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
-
     assert(ctx->stopped);
     assert(!ctx->intercepted);
     assert(!ctx->exited);
-    if (ctx->pending_safe_event) check_safe_events(ctx);
+    if (EXT(ctx)->pending_safe_event) check_safe_events(ctx);
     if (ctx->stopped_by_exception) {
-        send_event_context_exception(&bcg->out, ctx);
+        send_event_context_exception(&broadcast_group->out, ctx);
     }
     if (ctx->pending_intercept) {
-        send_event_context_suspended(&bcg->out, ctx);
+        send_event_context_suspended(&broadcast_group->out, ctx);
     }
     if (!ctx->intercepted && run_ctrl_lock_cnt == 0) {
         context_continue(ctx);
     }
-    flush_stream(&bcg->out);
+    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_started(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
-
     assert(!ctx->stopped);
     if (ctx->intercepted) {
-        send_event_context_resumed(&bcg->out, ctx);
+        send_event_context_resumed(&broadcast_group->out, ctx);
     }
+    EXT(ctx)->intercepted_by_bp = 0;
     if (safe_event_list) {
         if (!ctx->pending_step) {
             context_stop(ctx);
         }
-        if (!ctx->pending_safe_event) {
-            ctx->pending_safe_event = 1;
+        if (!EXT(ctx)->pending_safe_event) {
+            EXT(ctx)->pending_safe_event = 1;
             safe_event_pid_count++;
         }
     }
-    flush_stream(&bcg->out);
+    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
-
     assert(!ctx->stopped);
     assert(!ctx->intercepted);
-    if (ctx->pending_safe_event) check_safe_events(ctx);
-    send_event_context_removed(&bcg->out, ctx);
-    flush_stream(&bcg->out);
+    if (EXT(ctx)->pending_safe_event) check_safe_events(ctx);
+    send_event_context_removed(&broadcast_group->out, ctx);
+    flush_stream(&broadcast_group->out);
 }
 
 void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
@@ -914,7 +912,9 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         event_context_started,
         event_context_changed
     };
-    add_context_event_listener(&listener, bcg);
+    broadcast_group = bcg;
+    add_context_event_listener(&listener, NULL);
+    context_extension_offset = context_extension(sizeof(ContextExtension));
     add_command_handler(proto, RUN_CONTROL, "getContext", command_get_context);
     add_command_handler(proto, RUN_CONTROL, "getChildren", command_get_children);
     add_command_handler(proto, RUN_CONTROL, "getState", command_get_state);

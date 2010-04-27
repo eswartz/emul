@@ -28,6 +28,7 @@
 #include "linenumbers.h"
 #include "breakpoints.h"
 #include "windbgcache.h"
+#include "context-win32.h"
 #include "context.h"
 #include "exceptions.h"
 #include "symbols.h"
@@ -50,7 +51,7 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineNumber
         memset(&area, 0, sizeof(area));
         img_line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
 
-        if (!SymGetLineFromName(ctx->handle, NULL, file, line, &offset, &img_line)) {
+        if (!SymGetLineFromName(get_context_handle(ctx), NULL, file, line, &offset, &img_line)) {
             DWORD win_err = GetLastError();
             if (win_err != ERROR_NOT_FOUND) {
                 err = set_win32_errno(win_err);
@@ -59,7 +60,7 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineNumber
         else {
             IMAGEHLP_LINE img_next;
             memcpy(&img_next, &img_line, sizeof(img_next));
-            if (!SymGetLineNext(ctx->handle, &img_next)) {
+            if (!SymGetLineNext(get_context_handle(ctx), &img_next)) {
                 err = set_win32_errno(GetLastError());
             }
             else {
@@ -101,7 +102,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
     line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
     if (addr0 >= addr1) not_found = 1;
 
-    while (err == 0 && not_found == 0 && !SymGetLineFromAddr(ctx->handle, addr0, &offset, &line)) {
+    while (err == 0 && not_found == 0 && !SymGetLineFromAddr(get_context_handle(ctx), addr0, &offset, &line)) {
         DWORD w = GetLastError();
         if (w == ERROR_MOD_NOT_FOUND) {
             not_found = 1;
@@ -149,7 +150,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
         }
     }
     memcpy(&next, &line, sizeof(next));
-    if (err == 0 && !not_found && !SymGetLineNext(ctx->handle, &next)) {
+    if (err == 0 && !not_found && !SymGetLineNext(get_context_handle(ctx), &next)) {
         err = set_win32_errno(GetLastError());
     }
 
@@ -165,7 +166,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
             callback(&area, user_args);
             if (next.Address >= addr1) break;
             memcpy(&line, &next, sizeof(line));
-            if (!SymGetLineNext(ctx->handle, &next)) break;
+            if (!SymGetLineNext(get_context_handle(ctx), &next)) break;
         }
     }
 

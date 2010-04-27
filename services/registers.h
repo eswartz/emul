@@ -24,7 +24,7 @@
 /*
  * Initialize registers service.
  */
-extern void ini_registers_service(Protocol *);
+extern void ini_registers_service(Protocol *, TCFBroadcastGroup *);
 
 
 #endif /* D_registers */

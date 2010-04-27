@@ -23,7 +23,11 @@ extern "C" {
 
 #if defined(__APPLE__)
 #  include <mach/thread_status.h>
-   typedef x86_thread_state32_t REG_SET;
+#  if defined(__i386__)
+     typedef x86_thread_state32_t REG_SET;
+#  else
+     typedef x86_thread_state64_t REG_SET;
+#  endif
 #endif
 
 #ifdef __cplusplus

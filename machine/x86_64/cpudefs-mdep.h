@@ -47,6 +47,25 @@ RegisterDefinition regs_index[] = {
     { "edi",    REG_OFFSET(__edi),    4,  7,  7,  0},
     { "eip",    REG_OFFSET(__eip),    4,  8,  8,  1},
     { "eflags", REG_OFFSET(__eflags), 4,  9,  9,  0},
+#elif defined(__APPLE__) && defined(__x86_64__)
+    { "rax",    REG_OFFSET(__rax),    8,  0,  0,  0},
+    { "rdx",    REG_OFFSET(__rdx),    8,  1,  1,  0},
+    { "rcx",    REG_OFFSET(__rcx),    8,  2,  2,  0},
+    { "rbx",    REG_OFFSET(__rbx),    8,  3,  3,  0},
+    { "rsi",    REG_OFFSET(__rsi),    8,  4,  4,  0},
+    { "rdi",    REG_OFFSET(__rdi),    8,  5,  5,  0},
+    { "rbp",    REG_OFFSET(__rbp),    8,  6,  6,  1},
+    { "rsp",    REG_OFFSET(__rsp),    8,  7,  7,  1},
+    { "r8",     REG_OFFSET(__r8),     8,  8,  8,  0},
+    { "r9",     REG_OFFSET(__r9),     8,  9,  9,  0},
+    { "r10",    REG_OFFSET(__r10),    8, 10, 10,  0},
+    { "r11",    REG_OFFSET(__r11),    8, 11, 11,  0},
+    { "r12",    REG_OFFSET(__r12),    8, 12, 12,  0},
+    { "r13",    REG_OFFSET(__r13),    8, 13, 13,  0},
+    { "r14",    REG_OFFSET(__r14),    8, 14, 14,  0},
+    { "r15",    REG_OFFSET(__r15),    8, 15, 15,  0},
+    { "rip",    REG_OFFSET(__rip),    8, -1, -1,  1},
+    { "eflags", REG_OFFSET(__rflags), 4, 49, -1,  0},
 #elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__i386__)
     { "eax",    REG_OFFSET(r_eax),    4,  0,  0,  0},
     { "ecx",    REG_OFFSET(r_ecx),    4,  1,  1,  0},
@@ -106,10 +125,14 @@ RegisterDefinition regs_index[] = {
 #  define REG_SP Esp
 #  define REG_BP Ebp
 #  define REG_IP Eip
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) && defined(__i386__)
 #  define REG_SP __esp
 #  define REG_BP __ebp
 #  define REG_IP __eip
+#elif defined(__APPLE__) && defined(__x86_64__)
+#  define REG_SP __rsp
+#  define REG_BP __rbp
+#  define REG_IP __rip
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
 #  define REG_SP r_esp
 #  define REG_BP r_ebp

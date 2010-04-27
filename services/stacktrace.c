@@ -41,33 +41,37 @@
 
 static const char * STACKTRACE = "StackTrace";
 
-struct StackTrace {
+typedef struct StackTrace {
     ErrorReport * error;
+    int valid;
     int frame_cnt;
     int frame_max;
-    struct StackFrame frames[1]; /* ordered bottom to top */
-};
+    StackFrame * frames; /* ordered bottom to top */
+} StackTrace;
 
-typedef struct StackTrace StackTrace;
+static size_t context_extension_offset = 0;
 
-static StackTrace * add_frame(StackTrace * stack_trace, StackFrame * frame) {
+#define EXT(ctx) ((StackTrace *)((char *)(ctx) + context_extension_offset))
+
+static void add_frame(StackTrace * stack_trace, StackFrame * frame) {
     if (stack_trace->frame_cnt >= stack_trace->frame_max) {
-        stack_trace->frame_max *= 2;
-        stack_trace = (StackTrace *)loc_realloc(stack_trace,
-            sizeof(StackTrace) + (stack_trace->frame_max - 1) * sizeof(StackFrame));
+        stack_trace->frame_max += 32;
+        stack_trace->frames = (StackFrame *)loc_realloc(stack_trace->frames,
+            stack_trace->frame_max * sizeof(StackFrame));
     }
     stack_trace->frames[stack_trace->frame_cnt++] = *frame;
-    return stack_trace;
 }
 
-static void free_stack_trace(StackTrace * stack_trace) {
+static void invalidate_stack_trace(StackTrace * stack_trace) {
     int i;
     release_error_report(stack_trace->error);
     for (i = 0; i < stack_trace->frame_cnt; i++) {
         if (!stack_trace->frames[i].is_top_frame) loc_free(stack_trace->frames[i].regs);
         loc_free(stack_trace->frames[i].mask);
     }
-    loc_free(stack_trace);
+    stack_trace->error = NULL;
+    stack_trace->frame_cnt = 0;
+    stack_trace->valid = 0;
 }
 
 #if defined(_WRS_KERNEL)
@@ -76,7 +80,6 @@ static void free_stack_trace(StackTrace * stack_trace) {
 
 static Context * client_ctx;
 static StackTrace * client_trace;
-static int frame_cnt;
 static ContextAddress frame_rp;
 
 static void vxworks_stack_trace_callback(
@@ -91,7 +94,7 @@ static void vxworks_stack_trace_callback(
     StackFrame f;
     memset(&f, 0, sizeof(f));
     f.regs_size = client_ctx->regs_size;
-    if (frame_cnt == 0) {
+    if (client_trace->frame_cnt == 0) {
         f.is_top_frame = 1;
         f.regs = client_ctx->regs;
         f.mask = loc_alloc(f.regs_size);
@@ -104,22 +107,19 @@ static void vxworks_stack_trace_callback(
     }
     f.fp = (ContextAddress)args;
     frame_rp = (ContextAddress)callAdrs;
-    client_trace = add_frame(client_trace, &f);
-    frame_cnt++;
+    add_frame(client_trace, &f);
 }
 
-static StackTrace * trace_stack(Context * ctx, StackTrace * s) {
+static void trace_stack(Context * ctx, StackTrace * s) {
     client_ctx = ctx;
     client_trace = s;
-    frame_cnt = 0;
     trcStack((REG_SET *)ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, ctx->pid);
-    if (frame_cnt == 0) vxworks_stack_trace_callback(NULL, 0, 0, NULL, ctx->pid, 1);
-    return client_trace;
+    if (s->frame_cnt == 0) vxworks_stack_trace_callback(NULL, 0, 0, NULL, ctx->pid, 1);
 }
 
 #else
 
-static StackTrace * walk_frames(Context * ctx, StackTrace * stack_trace) {
+static void walk_frames(Context * ctx, StackTrace * stack_trace) {
     int error = 0;
     unsigned cnt = 0;
     StackFrame frame;
@@ -155,7 +155,7 @@ static StackTrace * walk_frames(Context * ctx, StackTrace * stack_trace) {
             loc_free(down.mask);
             break;
         }
-        stack_trace = add_frame(stack_trace, &frame);
+        add_frame(stack_trace, &frame);
         frame = down;
         cnt++;
     }
@@ -163,47 +163,38 @@ static StackTrace * walk_frames(Context * ctx, StackTrace * stack_trace) {
     if (!frame.is_top_frame) loc_free(frame.regs);
     loc_free(frame.mask);
 
-    if (error) {
-        if (get_error_code(error) == ERR_CACHE_MISS) {
-            free_stack_trace(stack_trace);
-            stack_trace = NULL;
-            errno = ERR_CACHE_MISS;
-        }
-        else {
-            stack_trace->error = get_error_report(error);
-        }
+    if (get_error_code(error) == ERR_CACHE_MISS) {
+        invalidate_stack_trace(stack_trace);
     }
-    return stack_trace;
+    else if (error) {
+        stack_trace->error = get_error_report(error);
+    }
 }
 
-static StackTrace * trace_stack(Context * ctx, StackTrace * s) {
-    s = walk_frames(ctx, s);
-    if (s != NULL) {
-        int i;
-        for (i = 0; i < s->frame_cnt / 2; i++) {
-            StackFrame f = s->frames[i];
-            s->frames[i] = s->frames[s->frame_cnt - i - 1];
-            s->frames[s->frame_cnt - i - 1] = f;
-        }
+static void trace_stack(Context * ctx, StackTrace * s) {
+    int i;
+    walk_frames(ctx, s);
+    for (i = 0; i < s->frame_cnt / 2; i++) {
+        StackFrame f = s->frames[i];
+        s->frames[i] = s->frames[s->frame_cnt - i - 1];
+        s->frames[s->frame_cnt - i - 1] = f;
     }
-    return s;
 }
 
 #endif
 
 static StackTrace * create_stack_trace(Context * ctx) {
-    StackTrace * stack_trace = (StackTrace *)ctx->stack_trace;
-    if (stack_trace != NULL) return stack_trace;
-
-    stack_trace = (StackTrace *)loc_alloc_zero(sizeof(StackTrace) + 31 * sizeof(StackFrame));
-    stack_trace->frame_max = 32;
-    if (ctx->regs_error != NULL) {
-        stack_trace->error = get_error_report(set_error_report_errno(ctx->regs_error));
+    StackTrace * stack_trace = EXT(ctx);
+    if (!stack_trace->valid) {
+        stack_trace->frame_cnt = 0;
+        if (ctx->regs_error != NULL) {
+            stack_trace->error = get_error_report(set_error_report_errno(ctx->regs_error));
+        }
+        else {
+            trace_stack(ctx, stack_trace);
+        }
+        stack_trace->valid = 1;
     }
-    else {
-        stack_trace = trace_stack(ctx, stack_trace);
-    }
-    ctx->stack_trace = stack_trace;
     return stack_trace;
 }
 
@@ -298,10 +289,6 @@ static void command_get_context_cache_client(void * x) {
             break;
         }
         s = create_stack_trace(d->ctx);
-        if (s == NULL) {
-            err = errno;
-            break;
-        }
         if (s->error) {
             err = set_error_report_errno(s->error);
             break;
@@ -417,9 +404,6 @@ int get_top_frame(Context * ctx) {
     }
 
     s = create_stack_trace(ctx);
-    if (s == NULL) {
-        return STACK_TOP_FRAME;
-    }
     if (s->error != NULL) {
         set_error_report_errno(s->error);
         return STACK_TOP_FRAME;
@@ -442,9 +426,6 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
     }
 
     stack = create_stack_trace(ctx);
-    if (stack == NULL) {
-        return -1;
-    }
     if (stack->error != NULL) {
         set_error_report_errno(stack->error);
         return -1;
@@ -469,29 +450,33 @@ int is_top_frame(Context * ctx, int frame) {
     if (frame == STACK_TOP_FRAME) return 1;
     if (!ctx->stopped) return 0;
     stack = create_stack_trace(ctx);
-    if (stack == NULL || stack->error != NULL) return 0;
+    if (stack->error != NULL) return 0;
     return frame == stack->frame_cnt - 1;
 }
 
+static void flush_stack_trace(Context * ctx, void * args) {
+    invalidate_stack_trace(EXT(ctx));
+}
+
 static void delete_stack_trace(Context * ctx, void * args) {
-    StackTrace * stack_trace = (StackTrace *)ctx->stack_trace;
-    if (stack_trace != NULL) {
-        free_stack_trace(stack_trace);
-        ctx->stack_trace = NULL;
-    }
+    invalidate_stack_trace(EXT(ctx));
+    loc_free(EXT(ctx)->frames);
+    memset(EXT(ctx), 0, sizeof(StackTrace));
 }
 
 void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     static ContextEventListener listener = {
         NULL,
-        delete_stack_trace,
-        delete_stack_trace,
-        delete_stack_trace,
+        flush_stack_trace,
+        flush_stack_trace,
+        flush_stack_trace,
+        flush_stack_trace,
         delete_stack_trace
     };
     add_context_event_listener(&listener, bcg);
     add_command_handler(proto, STACKTRACE, "getContext", command_get_context);
     add_command_handler(proto, STACKTRACE, "getChildren", command_get_children);
+    context_extension_offset = context_extension(sizeof(StackTrace));
 }
 
 #endif

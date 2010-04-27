@@ -50,6 +50,23 @@
 #define USE_ESRCH_WORKAROUND    1
 #define USE_PTRACE_SYSCALL      0
 
+typedef struct ContextExtension {
+    ContextAttachCallBack * attach_callback;
+    void *                  attach_data;
+    int                     ptrace_flags;
+    int                     ptrace_event;
+    int                     syscall_enter;
+    int                     syscall_exit;
+    int                     syscall_id;
+    ContextAddress          syscall_pc;
+    ContextAddress          loader_state;
+    int                     end_of_step;
+} ContextExtension;
+
+static size_t context_extension_offset = 0;
+
+#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+
 static LINK pending_list;
 
 static char * event_name(int event) {
@@ -60,10 +77,10 @@ static char * event_name(int event) {
 const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
-    if (ctx->end_of_step) return "Step";
-    if (ctx->ptrace_event != 0) {
+    if (EXT(ctx)->end_of_step) return "Step";
+    if (EXT(ctx)->ptrace_event != 0) {
         assert(ctx->signal == SIGTRAP);
-        snprintf(reason, sizeof(reason), "Event: %s", event_name(ctx->ptrace_event));
+        snprintf(reason, sizeof(reason), "Event: %s", event_name(EXT(ctx)->ptrace_event));
         return reason;
     }
     if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
@@ -104,8 +121,8 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     add_waitpid_process(pid);
     ctx = create_context(pid, 0);
     ctx->mem = pid;
-    ctx->attach_callback = done;
-    ctx->attach_data = data;
+    EXT(ctx)->attach_callback = done;
+    EXT(ctx)->attach_data = data;
     list_add_first(&ctx->ctxl, &pending_list);
     /* TODO: context_attach works only for main task in a process */
     return 0;
@@ -146,7 +163,7 @@ int context_continue(Context * ctx) {
 
     if (skip_breakpoint(ctx, 0)) return 0;
 
-    if (!ctx->ptrace_event) {
+    if (!EXT(ctx)->ptrace_event) {
         while (ctx->pending_signals != 0) {
             while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
             if (ctx->sig_dont_pass & (1 << signal)) {
@@ -342,9 +359,9 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
         }
         else {
             assert(ctx->ref_count == 0);
-            if (ctx->attach_callback != NULL) {
+            if (EXT(ctx)->attach_callback != NULL) {
                 if (status == 0) status = EINVAL;
-                ctx->attach_callback(status, ctx, ctx->attach_data);
+                EXT(ctx)->attach_callback(status, ctx, EXT(ctx)->attach_data);
             }
             assert(list_is_empty(&ctx->children));
             assert(ctx->parent == NULL);
@@ -354,7 +371,7 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
     }
     else {
         if (ctx->parent->pid == ctx->pid) ctx = ctx->parent;
-        assert(ctx->attach_callback == NULL);
+        assert(EXT(ctx)->attach_callback == NULL);
         if (ctx->stopped || ctx->intercepted || ctx->exited) {
             trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
                 ctx, pid, status, ctx->stopped, ctx->intercepted, ctx->exited);
@@ -399,10 +416,10 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             link_context(ctx);
             send_context_created_event(prs);
             send_context_created_event(ctx);
-            if (prs->attach_callback) {
-                prs->attach_callback(0, prs, prs->attach_data);
-                prs->attach_callback = NULL;
-                prs->attach_data = NULL;
+            if (EXT(prs)->attach_callback) {
+                EXT(prs)->attach_callback(0, prs, EXT(prs)->attach_data);
+                EXT(prs)->attach_callback = NULL;
+                EXT(prs)->attach_data = NULL;
             }
         }
     }
@@ -410,7 +427,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     if (ctx == NULL) return;
 
     assert(!ctx->exited);
-    assert(!ctx->attach_callback);
+    assert(!EXT(ctx)->attach_callback);
 
     if (signal != SIGSTOP && signal != SIGTRAP) {
         assert(signal < 32);
@@ -460,15 +477,15 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
         else {
             ctx->signal = signal;
-            ctx->ptrace_event = event;
+            EXT(ctx)->ptrace_event = event;
             ctx->stopped = 1;
             ctx->stopped_by_bp = 0;
             ctx->stopped_by_exception = stopped_by_exception;
-            ctx->end_of_step = 0;
+            EXT(ctx)->end_of_step = 0;
             if (signal == SIGTRAP && event == 0 && !syscall) {
                 ctx->stopped_by_bp = !ctx->regs_error &&
                     is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
-                ctx->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
+                EXT(ctx)->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
             }
             ctx->pending_step = 0;
             if (ctx->stopped_by_bp) {
@@ -491,6 +508,7 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
 
 void init_contexts_sys_dep(void) {
     list_init(&pending_list);
+    context_extension_offset = context_extension(sizeof(ContextExtension));
     add_waitpid_listener(waitpid_listener, NULL);
 }
 

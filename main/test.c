@@ -28,8 +28,11 @@
 #include "myalloc.h"
 #include "test.h"
 #include "trace.h"
-#include "context.h"
+#include "diagnostics.h"
 #include "errors.h"
+#if defined(WIN32)
+#  include "system/Windows/context-win32.h"
+#endif
 
 typedef enum test_enum {
     enum_val1 = 1,
@@ -117,7 +120,7 @@ void test_proc(void) {
 int find_test_symbol(Context * ctx, char * name, void ** addr, int * sym_class) {
     /* This code allows to run TCF diagnostic tests when symbols info is not available */
     if (ctx->parent != NULL) ctx = ctx->parent;
-    if (ctx->test_process && strncmp(name, "tcf_test_", 9) == 0) {
+    if (is_test_process(ctx) && strncmp(name, "tcf_test_", 9) == 0) {
         *addr = NULL;
         if (strcmp(name, "tcf_test_array") == 0) {
             *sym_class = SYM_CLASS_REFERENCE;
@@ -146,7 +149,7 @@ typedef struct ContextAttachArgs {
 static void done_context_attach(int error, Context * ctx, void * data) {
     ContextAttachArgs * args = (ContextAttachArgs *)data;
     args->done(error, ctx, args->data);
-    assert(error || args->process != ctx->handle);
+    assert(error || args->process != get_context_handle(ctx));
     CloseHandle(args->thread);
     CloseHandle(args->process);
     loc_free(args);

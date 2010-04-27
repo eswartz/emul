@@ -42,6 +42,22 @@
 
 static const char * DIAGNOSTICS = "Diagnostics";
 
+#if ENABLE_RCBP_TEST
+
+typedef struct ContextExtension {
+    int test_process;
+} ContextExtension;
+
+static size_t context_extension_offset = 0;
+
+#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+
+int is_test_process(Context * ctx) {
+    return EXT(ctx)->test_process;
+}
+
+#endif /* ENABLE_RCBP_TEST */
+
 typedef struct RunTestDoneArgs RunTestDoneArgs;
 
 struct RunTestDoneArgs {
@@ -92,7 +108,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     RunTestDoneArgs * data = (RunTestDoneArgs *)arg;
     Channel * c = data->c;
 
-    if (ctx != NULL) ctx->test_process = 1;
+    if (ctx != NULL) EXT(ctx)->test_process = 1;
     if (!is_channel_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
@@ -368,6 +384,9 @@ void ini_diagnostics_service(Protocol * proto) {
     add_command_handler(proto, DIAGNOSTICS, "getSymbol", command_get_symbol);
     add_command_handler(proto, DIAGNOSTICS, "createTestStreams", command_create_test_streams);
     add_command_handler(proto, DIAGNOSTICS, "disposeTestStream", command_dispose_test_stream);
+#if ENABLE_RCBP_TEST
+    context_extension_offset = context_extension(sizeof(ContextExtension));
+#endif
 }
 
 

@@ -32,6 +32,9 @@
 #include "exceptions.h"
 #include "stacktrace.h"
 #include "symbols.h"
+#if ENABLE_RCBP_TEST
+#  include "test.h"
+#endif
 
 #define HASH_SIZE 101
 
@@ -215,7 +218,6 @@ static SymbolsCache * get_symbols_cache(void) {
             if (strcmp(c->peer_service_list[i], SYMBOLS) == 0) syms->service_available = 1;
         }
     }
-    if (!syms->service_available) str_exception(ERR_SYM_NOT_FOUND, "Symbols service not available");
     return syms;
 }
 
@@ -313,6 +315,11 @@ static void free_symbols_cache(SymbolsCache * syms) {
     channel_unlock(syms->channel);
     list_remove(&syms->link_root);
     loc_free(syms);
+}
+
+static Channel * get_channel(SymbolsCache * syms) {
+    if (!syms->service_available) str_exception(ERR_SYM_NOT_FOUND, "Symbols service not available");
+    return syms->channel;
 }
 
 static void read_context_data(InputStream * inp, const char * name, void * args) {
@@ -445,9 +452,35 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         }
     }
 
+#if ENABLE_RCBP_TEST
+    if (f == NULL && !syms->service_available && ctx->parent == NULL) {
+        void * address = NULL;
+        int sym_class = 0;
+        if (find_test_symbol(ctx, name, &address, &sym_class) >= 0) {
+            SymInfoCache * s = (SymInfoCache *)loc_alloc_zero(sizeof(SymInfoCache));
+            f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
+            list_add_first(&f->link_syms, syms->link_find + h);
+            f->pid = ctx->pid;
+            f->ip = ip;
+            f->name = loc_strdup(name);
+            f->id = loc_strdup(name);
+            s->magic = SYM_CACHE_MAGIC;
+            s->id = loc_strdup(name);
+            s->name = loc_strdup(name);
+            s->done_context = 1;
+            s->has_address = 1;
+            s->address = (ContextAddress)address;
+            s->sym_class = sym_class;
+            s->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
+            s->owner_id = loc_strdup(ctx2id(ctx));
+            list_add_first(&s->link_syms, syms->link_sym + hash_sym_id(name));
+            list_init(&s->array_syms);
+        }
+    }
+#endif
+
     if (f == NULL) {
-        Channel * c = cache_channel();
-        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+        Channel * c = get_channel(syms);
         f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
         list_add_first(&f->link_syms, syms->link_find + h);
         f->pid = ctx->pid;
@@ -547,8 +580,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
     }
 
     if (f == NULL) {
-        Channel * c = cache_channel();
-        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+        Channel * c = get_channel(syms);
         f = (ListSymCache *)loc_alloc_zero(sizeof(ListSymCache));
         list_add_first(&f->link_syms, syms->link_list + h);
         f->pid = ctx->pid;
@@ -1027,8 +1059,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     assert(f == NULL || f->pending == NULL);
 
     if (f == NULL) {
-        Channel * c = cache_channel();
-        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+        Channel * c = get_channel(syms);
         f = (StackFrameCache *)loc_alloc_zero(sizeof(StackFrameCache));
         list_add_first(&f->link_syms, syms->link_frame + h);
         f->mem = ctx->mem;

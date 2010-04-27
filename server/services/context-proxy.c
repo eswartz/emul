@@ -160,6 +160,10 @@ static char * str_buf = NULL;
 static unsigned str_buf_max = 0;
 static unsigned str_buf_pos = 0;
 
+static size_t context_extension_offset = 0;
+
+#define EXT(ctx) ((ContextCache **)((char *)(ctx) + context_extension_offset))
+
 static const char RUN_CONTROL[] = "RunControl";
 
 static ContextCache * find_context_cache(PeerCache * p, const char * id) {
@@ -176,13 +180,10 @@ static void add_context_cache(PeerCache * p, ContextCache * c) {
     list_init(&c->stk_cache);
     list_add_first(&c->link_peer, &p->ctx_cache);
     c->peer = p;
-    c->ctx = (Context *)loc_alloc_zero(sizeof(Context));
-    list_init(&c->ctx->children);
-    list_init(&c->ctx->cldl);
-    c->ctx->pid = id2pid(c->id, NULL);
+    c->ctx = create_context(id2pid(c->id, NULL), 0);
     c->ctx->mem = c->ctx->pid;
-    c->ctx->proxy = c;
     c->ctx->ref_count = 1;
+    *EXT(c->ctx) = c;
     if (c->parent_id[0]) {
         ContextCache * h = find_context_cache(p, c->parent_id);
         if (h != NULL) {
@@ -268,7 +269,7 @@ static void on_context_suspended(ContextCache * c) {
     ContextCache * p = NULL;
 
     while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    p = (ContextCache *)ctx->proxy;
+    p = *EXT(ctx);
 
     l = p->mem_cache.next;
     while (l != &p->mem_cache) {
@@ -370,7 +371,7 @@ static void read_context_removed_item(InputStream * inp, void * args) {
     json_read_string(inp, id, sizeof(id));
     c = find_context_cache(p, id);
     if (c != NULL) {
-        assert(c->ctx->proxy == c);
+        assert(*EXT(c->ctx) == c);
         send_context_exited_event(c->ctx);
     }
     else if (p->rc_done) {
@@ -385,7 +386,7 @@ static void read_container_suspended_item(InputStream * inp, void * args) {
     json_read_string(inp, id, sizeof(id));
     c = find_context_cache(p, id);
     if (c != NULL) {
-        assert(c->ctx->proxy == c);
+        assert(*EXT(c->ctx) == c);
         if (!c->ctx->stopped) {
             c->ctx->stopped = 1;
             c->ctx->intercepted = 1;
@@ -405,7 +406,7 @@ static void read_container_resumed_item(InputStream * inp, void * args) {
     json_read_string(inp, id, sizeof(id));
     c = find_context_cache(p, id);
     if (c != NULL) {
-        assert(c->ctx->proxy == c);
+        assert(*EXT(c->ctx) == c);
         if (c->ctx->stopped) {
             c->ctx->stopped = 0;
             c->ctx->intercepted = 0;
@@ -472,7 +473,7 @@ static void event_context_suspended(Channel * ch, void * args) {
     if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (c != &buf) {
-        assert(c->ctx->proxy == c);
+        assert(*EXT(c->ctx) == c);
         c->pc_valid = 1;
         if (!c->ctx->stopped) {
             c->ctx->stopped = 1;
@@ -501,7 +502,7 @@ static void event_context_resumed(Channel * ch, void * args) {
 
     c = find_context_cache(p, id);
     if (c != NULL) {
-        assert(c->ctx->proxy == c);
+        assert(*EXT(c->ctx) == c);
         if (c->ctx->stopped) {
             c->ctx->stopped = 0;
             c->ctx->intercepted = 0;
@@ -568,22 +569,6 @@ void create_context_proxy(Channel * host, Channel * target) {
     add_event_handler2(target, RUN_CONTROL, "contextResumed", event_context_resumed, p);
     add_event_handler2(target, RUN_CONTROL, "containerSuspended", event_container_suspended, p);
     add_event_handler2(target, RUN_CONTROL, "containerResumed", event_container_resumed, p);
-}
-
-void context_lock(Context * ctx) {
-    ctx->ref_count++;
-}
-
-void context_unlock(Context * ctx) {
-    assert(ctx->ref_count > 0);
-    if (--ctx->ref_count == 0) {
-        ContextCache * c = (ContextCache *)ctx->proxy;
-        assert(list_is_empty(&ctx->children));
-        assert(ctx->parent == NULL);
-        loc_free(ctx);
-        c->ctx = NULL;
-        free_context_cache(c);
-    }
 }
 
 static void validate_peer_cache_context(Channel * c, void * args, int error);
@@ -782,8 +767,7 @@ Context * id2ctx(const char * id) {
 }
 
 int context_has_state(Context * ctx) {
-    ContextCache * cache = (ContextCache *)ctx->proxy;
-    return cache->has_state;
+    return (*EXT(ctx))->has_state;
 }
 
 static void validate_memory_cache(Channel * c, void * args, int error) {
@@ -835,7 +819,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
 
     while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
 
-    cache = (ContextCache *)ctx->proxy;
+    cache = *EXT(ctx);
     c = cache->peer->target;
 
     for (l = cache->mem_cache.next; l != &cache->mem_cache; l = l->next) {
@@ -944,7 +928,7 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
 void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt) {
     ContextCache * cache = NULL;
     while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    cache = (ContextCache *)ctx->proxy;
+    cache = *EXT(ctx);
     assert(cache->ctx == ctx);
     if (cache->pending_get_mmap != NULL) cache_wait(&cache->mmap_cache);
     if (cache->mmap_regions == NULL && cache->mmap_error == NULL && cache->peer != NULL) {
@@ -1108,20 +1092,20 @@ static void check_registers_cache(ContextCache * cache) {
 }
 
 RegisterDefinition * get_reg_definitions(Context * ctx) {
-    ContextCache * cache = (ContextCache *)ctx->proxy;
+    ContextCache * cache = *EXT(ctx);
     check_registers_cache(cache);
     return cache->reg_defs;
 }
 
 RegisterDefinition * get_PC_definition(Context * ctx) {
-    ContextCache * cache = (ContextCache *)ctx->proxy;
+    ContextCache * cache = *EXT(ctx);
     check_registers_cache(cache);
     return cache->pc_def;
 }
 
 RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munbering_convention) {
     RegisterDefinition * defs;
-    ContextCache * cache = (ContextCache *)ctx->proxy;
+    ContextCache * cache = *EXT(ctx);
     check_registers_cache(cache);
     defs = cache->reg_defs;
     while (defs != NULL && defs->name != NULL) {
@@ -1321,7 +1305,7 @@ static void validate_stack_frame_cache(Channel * c, void * args, int error) {
 }
 
 int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
-    ContextCache * cache = (ContextCache *)ctx->proxy;
+    ContextCache * cache = *EXT(ctx);
     Channel * c = cache->peer->target;
     StackFrameCache * s = NULL;
     LINK * l = NULL;
@@ -1405,9 +1389,25 @@ static void channel_close_listener(Channel * c) {
     }
 }
 
+void event_context_disposed(Context * ctx, void * args) {
+    ContextCache * c = *EXT(ctx);
+    c->ctx = NULL;
+    free_context_cache(c);
+}
+
 void init_contexts_sys_dep(void) {
-    list_init(&peers);
+    static ContextEventListener listener = {
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        event_context_disposed
+    };
+    add_context_event_listener(&listener, NULL);
     add_channel_close_listener(channel_close_listener);
+    context_extension_offset = context_extension(sizeof(ContextCache *));
+    list_init(&peers);
 }
 
 #endif /* ENABLE_DebugContext && ENABLE_ContextProxy */

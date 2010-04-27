@@ -750,6 +750,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\system\Windows\context-win32.h"
+					>
+				</File>
+				<File
 					RelativePath=".\system\Windows\regset.h"
 					>
 				</File>
@@ -874,7 +878,51 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath=".\system\VxWorks\context-vxworks.h"
+					>
+				</File>
+				<File
 					RelativePath=".\system\VxWorks\regset.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Cygwin"
+				>
+				<File
+					RelativePath=".\system\Cygwin\context-cygwin.c"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\system\Cygwin\regset.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Msys"
+				>
+				<File
+					RelativePath=".\system\Msys\context-msys.c"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\system\Msys\regset.h"
 					>
 				</File>
 			</Filter>

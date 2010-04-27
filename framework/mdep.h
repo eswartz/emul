@@ -375,6 +375,12 @@ extern char ** environ;
 
 #endif /* BSD */
 
+#if defined(__APPLE__)
+#  define CLOCK_REALTIME 1
+  typedef int clockid_t;
+  extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
+#endif
+
 extern int tkill(pid_t pid, int signal);
 
 #define FILE_PATH_SIZE PATH_MAX

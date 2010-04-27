@@ -42,31 +42,15 @@ struct Context {
     int                 intercepted;        /* context is reported to a host as suspended */
     int                 exited;             /* context exited */
     int                 event_notification; /* set to 1 when calling one of ContextEventListener call-backs for this context */
-#if SERVICE_StackTrace
-    void *              stack_trace;        /* pointer to StackTrace service data cache */
-#endif
-#if SERVICE_MemoryMap
-    void *              memory_map;         /* pointer to MemoryMap service data cache */
-#endif
-#if SERVICE_Breakpoints
-    void *              breakpoints_state;  /* pointer to Breakpoints service data cache */
-#endif
-#if ENABLE_RCBP_TEST
-    int                 test_process;       /* if not 0, the process is test process started by Diagnostics service */
-#endif
-#if ENABLE_ContextProxy
-    void *              proxy;
-#elif ENABLE_DebugContext
+#if ENABLE_DebugContext && !ENABLE_ContextProxy
     LINK                ctxl;               /* link that used to form a list of all contexts */
     LINK                pidl;               /* link that used to form a list of contexts with same hash code */
     int                 stopped_by_bp;      /* stopped by breakpoint */
     int                 stopped_by_exception;/* stopped by runtime exception (like SIGSEGV, etc.) */
     void *              stepping_over_bp;   /* if not NULL context is stepping over a breakpoint */
-    char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     int                 exiting;            /* context is about to exit */
     int                 pending_step;       /* context is executing single instruction step */
     int                 pending_intercept;  /* host is waiting for this context to be suspended */
-    int                 pending_safe_event; /* safe events are waiting for this context to be stopped */
     unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
     unsigned long       sig_dont_stop;      /* bitset of signals that should not be intercepted by the debugger */
     unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
@@ -75,43 +59,8 @@ struct Context {
     size_t              regs_size;          /* size of data pointed by "regs" */
     ErrorReport *       regs_error;         /* if not NULL, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
-/* OS dependant context attributes */
-#  if defined(_WRS_KERNEL)
-    VXDBG_BP_INFO       bp_info;            /* breakpoint information */
-    pid_t               bp_pid;             /* process or thread that hit breakpoint */
-    int                 event;
-#  elif defined(WIN32)
-    HANDLE              handle;
-    HANDLE              file_handle;
-    DWORD64             base_address;
-    int                 module_loaded;
-    int                 module_unloaded;
-    HANDLE              module_handle;
-    DWORD64             module_address;
-    int                 debug_started;
-    EXCEPTION_DEBUG_INFO pending_event;
-    EXCEPTION_DEBUG_INFO suspend_reason;
-    int                 context_stopped_async_pending;
-#  else /* Linux/Unix/BSD */
-    ContextAttachCallBack * attach_callback;
-    void *              attach_data;
-    int                 ptrace_flags;
-    int                 ptrace_event;
-    int                 syscall_enter;
-    int                 syscall_exit;
-    int                 syscall_id;
-    ContextAddress      syscall_pc;
-    ContextAddress      loader_state;
-    int                 end_of_step;
-#  endif
 #endif /* ENABLE_DebugContext */
 };
-
-extern void ini_contexts(void);
-extern void init_contexts_sys_dep(void);
-
-extern const char * context_state_name(Context * ctx);
-extern const char * context_suspend_reason(Context * ctx);
 
 /*
  * Convert PID to TCF Context ID
@@ -134,6 +83,26 @@ extern pid_t id2pid(const char * id, pid_t * parent);
 extern Context * id2ctx(const char * id);
 
 #if ENABLE_DebugContext
+
+/*
+ * Register an extension of struct Context.
+ * Return offset of extension data area.
+ * Additional memory of given size will be allocated in each context struct.
+ * Client are allowed to call this function only during initialization.
+ */
+extern size_t context_extension(size_t size);
+
+/*
+ * Get human redable name of current state of a context.
+ */
+extern const char * context_state_name(Context * ctx);
+
+/*
+ * Get state change reason of a context.
+ * Reason can be any text, but if it is one of predefined strings,
+ * a generic client might be able to handle it better.
+ */
+extern const char * context_suspend_reason(Context * ctx);
 
 /*
  * Find a context by PID
@@ -228,12 +197,8 @@ extern void send_context_exited_event(Context * ctx);
 extern Context * create_context(pid_t pid, size_t regs_size);
 extern void link_context(Context * ctx);
 
-#else /* ENABLE_DebugContext */
-
-#define context_has_state(ctx) 0
-#define context_read_mem(ctx, address, buf, size) (errno = ERR_INV_CONTEXT, -1)
-#define context_write_mem(ctx, address, buf, size) (errno = ERR_INV_CONTEXT, -1)
-#define context_word_size(ctx) sizeof(void *)
+extern void ini_contexts(void);
+extern void init_contexts_sys_dep(void);
 
 #endif /* ENABLE_DebugContext */
 
@@ -243,15 +208,9 @@ typedef struct ContextEventListener {
     void (*context_stopped)(Context * ctx, void * client_data);
     void (*context_started)(Context * ctx, void * client_data);
     void (*context_changed)(Context * ctx, void * client_data);
-    /* Private: */
-    void * client_data;
-    struct ContextEventListener * next;
+    void (*context_disposed)(Context * ctx, void * client_data);
 } ContextEventListener;
 
 extern void add_context_event_listener(ContextEventListener * listener, void * client_data);
-
-#ifdef _WRS_KERNEL
-extern VXDBG_CLNT_ID vxdbg_clnt_id;
-#endif
 
 #endif

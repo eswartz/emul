@@ -13,18 +13,23 @@
  *******************************************************************************/
 
 /*
- * Diagnostics service.
- * This service is used for framework and agents testing.
+ * This module handles process/thread OS contexts and their state machine.
  */
 
-#ifndef D_diagnostics
-#define D_diagnostics
+#ifndef D_context_win32
+#define D_context_win32
 
-#include "protocol.h"
+#include "config.h"
 #include "context.h"
 
-extern int is_test_process(Context * ctx);
+extern HANDLE get_context_handle(Context * ctx);
+extern HANDLE get_context_file_handle(Context * ctx);
+extern HANDLE get_context_module_handle(Context * ctx);
 
-extern void ini_diagnostics_service(Protocol *);
+extern DWORD64 get_context_base_address(Context * ctx);
+extern DWORD64 get_context_module_address(Context * ctx);
 
-#endif /* D_diagnostics */
+extern int is_context_module_loaded(Context * ctx);
+extern int is_context_module_unloaded(Context * ctx);
+
+#endif /* D_context_win32 */

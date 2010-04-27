@@ -242,7 +242,7 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
     ini_memory_map_service(proto, bcg);
 #endif
 #if SERVICE_Registers
-    ini_registers_service(proto);
+    ini_registers_service(proto, bcg);
 #endif
 #if SERVICE_StackTrace
     ini_stack_trace_service(proto, bcg);

@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
-#include "context.h"
+#include "context-vxworks.h"
 #include "events.h"
 #include "errors.h"
 #include "trace.h"
@@ -41,6 +41,16 @@
 #include <private/vxdbgLibP.h>
 
 #define TRACE_EVENT_STEP        2
+
+typedef struct ContextExtension {
+    VXDBG_BP_INFO       bp_info;        /* breakpoint information */
+    pid_t               bp_pid;         /* process or thread that hit breakpoint */
+    int                 event;
+} ContextExtension;
+
+static size_t context_extension_offset = 0;
+
+#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
 
 #define EVENT_HOOK_BREAKPOINT   2
 #define EVENT_HOOK_STEP_DONE    3
@@ -70,7 +80,7 @@ static SEM_ID events_signal;
 static pthread_t events_thread;
 
 const char * context_suspend_reason(Context * ctx) {
-    if (ctx->event == TRACE_EVENT_STEP) return "Step";
+    if (EXT(ctx)->event == TRACE_EVENT_STEP) return "Step";
     return "Suspended";
 }
 
@@ -346,7 +356,7 @@ static void event_handler(void * arg) {
         memcpy(stopped_ctx->regs, &info->regs, stopped_ctx->regs_size);
         stopped_ctx->signal = SIGTRAP;
         assert(get_regs_PC(stopped_ctx->regs) == info->addr);
-        stopped_ctx->event = 0;
+        EXT(stopped_ctx)->event = 0;
         stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = info->bp_info_ok;
@@ -356,8 +366,8 @@ static void event_handler(void * arg) {
             stopped_ctx->stopped_by_bp = 0;
             stopped_ctx->pending_intercept = 1;
         }
-        stopped_ctx->bp_info = info->bp_info;
-        if (current_ctx != NULL) stopped_ctx->bp_pid = current_ctx->pid;
+        EXT(stopped_ctx)->bp_info = info->bp_info;
+        if (current_ctx != NULL) EXT(stopped_ctx)->bp_pid = current_ctx->pid;
         assert(taskIsStopped(stopped_ctx->pid));
         trace(LOG_CONTEXT, "context: stopped by breakpoint: ctx %#lx, id %#x",
                 stopped_ctx, stopped_ctx->pid);
@@ -373,8 +383,8 @@ static void event_handler(void * arg) {
             current_ctx->regs_error = NULL;
         }
         memcpy(current_ctx->regs, &info->regs, current_ctx->regs_size);
+        EXT(current_ctx)->event = TRACE_EVENT_STEP;
         current_ctx->signal = SIGTRAP;
-        current_ctx->event = TRACE_EVENT_STEP;
         current_ctx->pending_step = 0;
         current_ctx->stopped = 1;
         current_ctx->stopped_by_bp = 0;
@@ -395,8 +405,8 @@ static void event_handler(void * arg) {
             stopped_ctx->regs_error = get_error_report(errno);
             assert(stopped_ctx->regs_error != NULL);
         }
+        EXT(stopped_ctx)->event = 0;
         stopped_ctx->signal = SIGSTOP;
-        stopped_ctx->event = 0;
         stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = 0;
@@ -515,6 +525,7 @@ void init_contexts_sys_dep(void) {
     if (vxdbg_clnt_id == NULL) {
         check_error(errno);
     }
+    context_extension_offset = context_extension(sizeof(ContextExtension));
     taskCreateHookAdd((FUNCPTR)task_create_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_BP, vxdbg_event_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);

@@ -13,18 +13,15 @@
  *******************************************************************************/
 
 /*
- * Diagnostics service.
- * This service is used for framework and agents testing.
+ * This module handles process/thread OS contexts and their state machine.
  */
 
-#ifndef D_diagnostics
-#define D_diagnostics
+#ifndef D_context_vxworks
+#define D_context_vxworks
 
-#include "protocol.h"
+#include "config.h"
 #include "context.h"
 
-extern int is_test_process(Context * ctx);
+extern VXDBG_CLNT_ID vxdbg_clnt_id;
 
-extern void ini_diagnostics_service(Protocol *);
-
-#endif /* D_diagnostics */
+#endif /* D_context_vxworks */

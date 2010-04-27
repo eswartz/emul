@@ -86,6 +86,23 @@
       PTRACE_O_TRACEEXIT)
 #endif
 
+typedef struct ContextExtension {
+    ContextAttachCallBack * attach_callback;
+    void *                  attach_data;
+    int                     ptrace_flags;
+    int                     ptrace_event;
+    int                     syscall_enter;
+    int                     syscall_exit;
+    int                     syscall_id;
+    ContextAddress          syscall_pc;
+    ContextAddress          loader_state;
+    int                     end_of_step;
+} ContextExtension;
+
+static size_t context_extension_offset = 0;
+
+#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+
 static LINK pending_list;
 
 static const char * event_name(int event) {
@@ -105,14 +122,14 @@ static const char * event_name(int event) {
 const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
-    if (ctx->end_of_step) return "Step";
-    if (ctx->ptrace_event != 0) {
+    if (EXT(ctx)->end_of_step) return "Step";
+    if (EXT(ctx)->ptrace_event != 0) {
         assert(ctx->signal == SIGTRAP);
-        snprintf(reason, sizeof(reason), "Event: %s", event_name(ctx->ptrace_event));
+        snprintf(reason, sizeof(reason), "Event: %s", event_name(EXT(ctx)->ptrace_event));
         return reason;
     }
-    if (ctx->syscall_enter) return "System Call";
-    if (ctx->syscall_exit) return "System Return";
+    if (EXT(ctx)->syscall_enter) return "System Call";
+    if (EXT(ctx)->syscall_exit) return "System Return";
     if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
         return "Suspended";
     }
@@ -151,8 +168,8 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     add_waitpid_process(pid);
     ctx = create_context(pid, 0);
     ctx->mem = pid;
-    ctx->attach_callback = done;
-    ctx->attach_data = data;
+    EXT(ctx)->attach_callback = done;
+    EXT(ctx)->attach_data = data;
     list_add_first(&ctx->ctxl, &pending_list);
     /* TODO: context_attach works only for main task in a process */
     return 0;
@@ -183,8 +200,8 @@ int context_stop(Context * ctx) {
 }
 
 static int syscall_never_returns(Context * ctx) {
-    if (ctx->syscall_enter) {
-        switch (ctx->syscall_id) {
+    if (EXT(ctx)->syscall_enter) {
+        switch (EXT(ctx)->syscall_id) {
 #ifdef __NR_sigreturn
         case __NR_sigreturn:
             return 1;
@@ -205,7 +222,7 @@ int context_continue(Context * ctx) {
 
     if (skip_breakpoint(ctx, 0)) return 0;
 
-    if (!ctx->syscall_enter && !ctx->ptrace_event) {
+    if (!EXT(ctx)->syscall_enter && !EXT(ctx)->ptrace_event) {
         while (ctx->pending_signals != 0) {
             while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
             if (ctx->sig_dont_pass & (1 << signal)) {
@@ -263,9 +280,9 @@ int context_continue(Context * ctx) {
     }
     ctx->pending_signals &= ~(1 << signal);
     if (syscall_never_returns(ctx)) {
-        ctx->syscall_enter = 0;
-        ctx->syscall_exit = 0;
-        ctx->syscall_id = 0;
+        EXT(ctx)->syscall_enter = 0;
+        EXT(ctx)->syscall_exit = 0;
+        EXT(ctx)->syscall_id = 0;
     }
     send_context_started_event(ctx);
     return 0;
@@ -417,9 +434,9 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
         }
         else {
             assert(ctx->ref_count == 0);
-            if (ctx->attach_callback != NULL) {
+            if (EXT(ctx)->attach_callback != NULL) {
                 if (status == 0) status = EINVAL;
-                ctx->attach_callback(status, ctx, ctx->attach_data);
+                EXT(ctx)->attach_callback(status, ctx, EXT(ctx)->attach_data);
             }
             assert(list_is_empty(&ctx->children));
             assert(ctx->parent == NULL);
@@ -429,7 +446,7 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
     }
     else {
         if (ctx->parent->pid == ctx->pid) ctx = ctx->parent;
-        assert(ctx->attach_callback == NULL);
+        assert(EXT(ctx)->attach_callback == NULL);
         if (ctx->stopped || ctx->intercepted || ctx->exited) {
             trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
                 ctx, pid, status, ctx->stopped, ctx->intercepted, ctx->exited);
@@ -489,10 +506,10 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             link_context(ctx);
             send_context_created_event(prs);
             send_context_created_event(ctx);
-            if (prs->attach_callback) {
-                prs->attach_callback(0, prs, prs->attach_data);
-                prs->attach_callback = NULL;
-                prs->attach_data = NULL;
+            if (EXT(prs)->attach_callback) {
+                EXT(prs)->attach_callback(0, prs, EXT(prs)->attach_data);
+                EXT(prs)->attach_callback = NULL;
+                EXT(prs)->attach_data = NULL;
             }
         }
     }
@@ -500,15 +517,15 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     if (ctx == NULL) return;
 
     assert(!ctx->exited);
-    assert(!ctx->attach_callback);
-    if (ctx->ptrace_flags != PTRACE_FLAGS) {
+    assert(!EXT(ctx)->attach_callback);
+    if (EXT(ctx)->ptrace_flags != PTRACE_FLAGS) {
         if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ctx->pid, 0, PTRACE_FLAGS) < 0) {
                 int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETOPTIONS) failed: pid %d, error %d %s",
                 ctx->pid, err, errno_to_str(err));
         }
         else {
-            ctx->ptrace_flags = PTRACE_FLAGS;
+            EXT(ctx)->ptrace_flags = PTRACE_FLAGS;
         }
     }
 
@@ -595,22 +612,22 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
 
         if (syscall && !ctx->regs_error) {
-            if (!ctx->syscall_enter) {
-                ctx->syscall_id = get_syscall_id(ctx);
-                ctx->syscall_pc = get_regs_PC(ctx->regs);
-                ctx->syscall_enter = 1;
-                ctx->syscall_exit = 0;
+            if (!EXT(ctx)->syscall_enter) {
+                EXT(ctx)->syscall_id = get_syscall_id(ctx);
+                EXT(ctx)->syscall_pc = get_regs_PC(ctx->regs);
+                EXT(ctx)->syscall_enter = 1;
+                EXT(ctx)->syscall_exit = 0;
                 trace(LOG_EVENTS, "event: pid %d enter sys call %d, PC = %#lx",
-                    ctx->pid, ctx->syscall_id, ctx->syscall_pc);
+                    ctx->pid, EXT(ctx)->syscall_id, EXT(ctx)->syscall_pc);
             }
             else {
-                if (ctx->syscall_pc != get_regs_PC(ctx->regs)) {
+                if (EXT(ctx)->syscall_pc != get_regs_PC(ctx->regs)) {
                     trace(LOG_ALWAYS, "Invalid PC at sys call exit: pid %d, sys call %d, PC %#lx, expected PC %#lx",
-                        ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs), ctx->syscall_pc);
+                        ctx->pid, EXT(ctx)->syscall_id, get_regs_PC(ctx->regs), EXT(ctx)->syscall_pc);
                 }
                 trace(LOG_EVENTS, "event: pid %d exit sys call %d, PC = %#lx",
-                    ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs));
-                switch (ctx->syscall_id) {
+                    ctx->pid, EXT(ctx)->syscall_id, get_regs_PC(ctx->regs));
+                switch (EXT(ctx)->syscall_id) {
                 case __NR_mmap:
                 case __NR_munmap:
 #ifdef __NR_mmap2
@@ -621,16 +638,16 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                     send_context_changed_event(ctx);
                     break;
                 }
-                ctx->syscall_enter = 0;
-                ctx->syscall_exit = 1;
+                EXT(ctx)->syscall_enter = 0;
+                EXT(ctx)->syscall_exit = 1;
             }
         }
         else {
-            if (!ctx->syscall_enter || ctx->regs_error || pc0 != get_regs_PC(ctx->regs)) {
-                ctx->syscall_enter = 0;
-                ctx->syscall_exit = 0;
-                ctx->syscall_id = 0;
-                ctx->syscall_pc = 0;
+            if (!EXT(ctx)->syscall_enter || ctx->regs_error || pc0 != get_regs_PC(ctx->regs)) {
+                EXT(ctx)->syscall_enter = 0;
+                EXT(ctx)->syscall_exit = 0;
+                EXT(ctx)->syscall_id = 0;
+                EXT(ctx)->syscall_pc = 0;
             }
             trace(LOG_EVENTS, "event: pid %d stopped at PC = %#lx", ctx->pid, get_regs_PC(ctx->regs));
         }
@@ -641,15 +658,15 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
         else {
             ctx->signal = signal;
-            ctx->ptrace_event = event;
+            EXT(ctx)->ptrace_event = event;
             ctx->stopped = 1;
             ctx->stopped_by_bp = 0;
             ctx->stopped_by_exception = stopped_by_exception;
-            ctx->end_of_step = 0;
+            EXT(ctx)->end_of_step = 0;
             if (signal == SIGTRAP && event == 0 && !syscall) {
                 ctx->stopped_by_bp = !ctx->regs_error &&
                     is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
-                ctx->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
+                EXT(ctx)->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
             }
             ctx->pending_step = 0;
             if (ctx->stopped_by_bp) {
@@ -727,17 +744,17 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
             int error = errno;
             trace(LOG_ALWAYS, "Can't read loader state flag: %d %s", error, errno_to_str(error));
             ctx->pending_intercept = 1;
-            ctx->loader_state = 0;
+            EXT(ctx)->loader_state = 0;
             return;
         }
     }
 
     switch (state) {
     case RT_CONSISTENT:
-        if (ctx->loader_state == RT_ADD) {
+        if (EXT(ctx)->loader_state == RT_ADD) {
             memory_map_event_module_loaded(ctx);
         }
-        else if (ctx->loader_state == RT_DELETE) {
+        else if (EXT(ctx)->loader_state == RT_DELETE) {
             memory_map_event_module_unloaded(ctx);
         }
         break;
@@ -747,13 +764,14 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
         /* TODO: need to call memory_map_event_code_section_ummapped() */
         break;
     }
-    ctx->loader_state = state;
+    EXT(ctx)->loader_state = state;
 }
 
 #endif /* SERVICE_Expressions && ENABLE_ELF */
 
 void init_contexts_sys_dep(void) {
     list_init(&pending_list);
+    context_extension_offset = context_extension(sizeof(ContextExtension));
     add_waitpid_listener(waitpid_listener, NULL);
 #if SERVICE_Expressions && ENABLE_ELF
     add_identifier_callback(expression_identifier_callback);

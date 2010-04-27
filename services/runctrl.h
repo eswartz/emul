@@ -67,11 +67,11 @@ extern int terminate_debug_context(Channel * c, Context * ctx);
 /*
  * Suspend (stop and intercept) debug context - thread or process.
  * If "ctx" is a process, suspend all children.
- * RunControl.suspended event is sent if it was not sent berore.
+ * RunControl.suspended event is sent if it was not sent before.
  * Returns 0 if no errors, otherwise returns -1 and sets errno.
  * Note: this function is asynchronous, it returns before contexts are suspended.
  */
-extern int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx);
+extern int suspend_debug_context(Context * ctx);
 
 /*
  * Initialize run control service.

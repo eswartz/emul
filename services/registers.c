@@ -37,6 +37,8 @@ static const char * REGISTERS = "Registers";
 static short endianess_test = 0x0201;
 #define BIG_ENDIAN_DATA (*(char *)&endianess_test == 0x02)
 
+static TCFBroadcastGroup * broadcast_group = NULL;
+
 static void write_context(OutputStream * out, char * id, Context * ctx, int frame, RegisterDefinition * reg_def) {
     assert(!ctx->exited);
 
@@ -188,15 +190,16 @@ static void command_get_children(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void send_event_register_changed(Channel * c, char * id) {
-    write_stringz(&c->out, "E");
-    write_stringz(&c->out, REGISTERS);
-    write_stringz(&c->out, "registerChanged");
+static void send_event_register_changed(char * id) {
+    OutputStream * out = &broadcast_group->out;
+    write_stringz(out, "E");
+    write_stringz(out, REGISTERS);
+    write_stringz(out, "registerChanged");
 
-    json_write_string(&c->out, id);
-    write_stream(&c->out, 0);
+    json_write_string(out, id);
+    write_stream(out, 0);
 
-    write_stream(&c->out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void command_get(char * token, Channel * c) {
@@ -274,7 +277,7 @@ static void command_set(char * token, Channel * c) {
         else {
             memcpy(data, val, val_len);
             ctx->regs_dirty = 1;
-            send_event_register_changed(c, id);
+            send_event_register_changed(id);
         }
     }
 
@@ -397,7 +400,7 @@ static void command_setm(char * token, Channel * c) {
                 if (rd == 0) break;
                 rd_done += rd;
             }
-            send_event_register_changed(c, l->id);
+            send_event_register_changed(l->id);
         }
     }
     json_read_binary_end(&state);
@@ -430,7 +433,8 @@ static void command_search(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-void ini_registers_service(Protocol * proto) {
+void ini_registers_service(Protocol * proto, TCFBroadcastGroup * bcg) {
+    broadcast_group = bcg;
     add_command_handler(proto, REGISTERS, "getContext", command_get_context);
     add_command_handler(proto, REGISTERS, "getChildren", command_get_children);
     add_command_handler(proto, REGISTERS, "get", command_get);

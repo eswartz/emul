@@ -637,7 +637,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
             clear_trap(&trap);
         }
         else {
-            error = trap.error;
+            frame->fp = 0;
         }
     }
     if (error) {

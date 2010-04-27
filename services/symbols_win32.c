@@ -32,8 +32,11 @@
 #include "symbols.h"
 #include "stacktrace.h"
 #include "windbgcache.h"
+#include "context-win32.h"
 #include "trace.h"
-#include "test.h"
+#if ENABLE_RCBP_TEST
+#  include "test.h"
+#endif
 
 #define SYM_SEARCH_PATH ""
 /* Path could contain "http://msdl.microsoft.com/download/symbols",
@@ -131,7 +134,7 @@ static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stac
 static int get_sym_info(const Symbol * sym, DWORD index, SYMBOL_INFO ** res) {
     static ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
     SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
-    HANDLE process = sym->ctx->parent == NULL ? sym->ctx->handle : sym->ctx->parent->handle;
+    HANDLE process = get_context_handle(sym->ctx->parent == NULL ? sym->ctx : sym->ctx->parent);
 
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
     info->MaxNameLen = MAX_SYM_NAME;
@@ -144,7 +147,7 @@ static int get_sym_info(const Symbol * sym, DWORD index, SYMBOL_INFO ** res) {
 }
 
 static int get_type_info(const Symbol * sym, int info_tag, void * info) {
-    HANDLE process = sym->ctx->parent == NULL ? sym->ctx->handle : sym->ctx->parent->handle;
+    HANDLE process = get_context_handle(sym->ctx->parent == NULL ? sym->ctx : sym->ctx->parent);
     if (!SymGetTypeInfo(process, sym->module, sym->index, info_tag, info)) {
         set_win32_errno(GetLastError());
         return -1;
@@ -811,9 +814,11 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
     SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
-    HANDLE process = ctx->parent == NULL ? ctx->handle : ctx->parent->handle;
+    HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
     DWORD64 module;
 
+    if (frame == STACK_TOP_FRAME) frame = get_top_frame(ctx);
+    if (frame == STACK_TOP_FRAME) return -1;
     if (get_stack_frame(ctx, frame, &stack_frame) < 0) return -1;
     if (find_cache_symbol(process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
@@ -884,7 +889,13 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     (*sym)->ctx = ctx;
     if (find_pe_symbol(ctx, frame, name, *sym) >= 0) return 0;
     if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
-    if (find_test_symbol(ctx, name, &(*sym)->address, &(*sym)->sym_class) >= 0) return 0;
+#if ENABLE_RCBP_TEST
+    if (find_test_symbol(ctx, name, &(*sym)->address, &(*sym)->sym_class) >= 0) {
+        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+        (*sym)->ctx = ctx;
+        return 0;
+    }
+#endif
     if (find_basic_type_symbol(ctx, name, *sym) >= 0) return 0;
     return -1;
 }
@@ -909,7 +920,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     SYMBOL_INFO * symbol = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
     EnumerateSymbolsContext enum_context;
-    HANDLE process = ctx->parent == NULL ? ctx->handle : ctx->parent->handle;
+    HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
 
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     symbol->MaxNameLen = MAX_SYM_NAME;
@@ -958,12 +969,13 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
 static void event_context_created(Context * ctx, void * client_data) {
     if (ctx->parent != NULL) return;
     assert(ctx->pid == ctx->mem);
-    if (!SymInitialize(ctx->handle, SYM_SEARCH_PATH, FALSE)) {
+    if (!SymInitialize(get_context_handle(ctx), SYM_SEARCH_PATH, FALSE)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymInitialize() error: %d: %s",
             errno, errno_to_str(errno));
     }
-    if (!SymLoadModule64(ctx->handle, ctx->file_handle, NULL, NULL, ctx->base_address, 0)) {
+    if (!SymLoadModule64(get_context_handle(ctx), get_context_file_handle(ctx),
+            NULL, NULL, get_context_base_address(ctx), 0)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
             errno, errno_to_str(errno));
@@ -972,6 +984,7 @@ static void event_context_created(Context * ctx, void * client_data) {
 
 static void event_context_exited(Context * ctx, void * client_data) {
     unsigned i;
+    HANDLE handle = get_context_handle(ctx);
     for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
         if (symbol_cache[i].sym.ctx == ctx) {
             release_error_report(symbol_cache[i].error);
@@ -979,13 +992,13 @@ static void event_context_exited(Context * ctx, void * client_data) {
         }
     }
     if (ctx->parent != NULL) return;
-    assert(ctx->handle != NULL);
-    if (!SymUnloadModule64(ctx->handle, ctx->base_address)) {
+    assert(handle != NULL);
+    if (!SymUnloadModule64(handle, get_context_base_address(ctx))) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
             errno, errno_to_str(errno));
     }
-    if (!SymCleanup(ctx->handle)) {
+    if (!SymCleanup(handle)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymCleanup() error: %d: %s",
             errno, errno_to_str(errno));
@@ -993,27 +1006,29 @@ static void event_context_exited(Context * ctx, void * client_data) {
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
-    if (ctx->module_loaded) {
+    HANDLE handle = get_context_handle(ctx);
+    if (is_context_module_loaded(ctx)) {
         unsigned i;
         assert(ctx->pid == ctx->mem);
-        assert(ctx->handle != NULL);
-        if (!SymLoadModule64(ctx->handle, ctx->module_handle, NULL, NULL, ctx->module_address, 0)) {
+        assert(handle != NULL);
+        if (!SymLoadModule64(handle, get_context_module_handle(ctx),
+                NULL, NULL, get_context_module_address(ctx), 0)) {
             set_win32_errno(GetLastError());
             trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
                 errno, errno_to_str(errno));
         }
         for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-            if (symbol_cache[i].process == ctx->handle && symbol_cache[i].error) symbol_cache[i].process = NULL;
+            if (symbol_cache[i].process == handle && symbol_cache[i].error) symbol_cache[i].process = NULL;
         }
     }
-    if (ctx->module_unloaded) {
+    if (is_context_module_unloaded(ctx)) {
         unsigned i;
         assert(ctx->pid == ctx->mem);
-        assert(ctx->handle != NULL);
+        assert(handle != NULL);
         for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-            if (symbol_cache[i].process == ctx->handle) symbol_cache[i].process = NULL;
+            if (symbol_cache[i].process == handle) symbol_cache[i].process = NULL;
         }
-        if (!SymUnloadModule64(ctx->handle, ctx->module_address)) {
+        if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
             set_win32_errno(GetLastError());
             trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
                 errno, errno_to_str(errno));

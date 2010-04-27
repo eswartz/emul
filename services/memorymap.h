@@ -58,9 +58,6 @@ typedef struct MemoryMapEventListener {
     void (*module_loaded)(Context * ctx, void * client_data);
     void (*code_section_ummapped)(Context * ctx, ContextAddress addr, ContextAddress size, void * client_data);
     void (*module_unloaded)(Context * ctx, void * client_data);
-    /* Private: */
-    void * client_data;
-    struct MemoryMapEventListener * next;
 } MemoryMapEventListener;
 
 /*

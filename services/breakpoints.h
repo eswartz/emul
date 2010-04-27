@@ -36,6 +36,12 @@ typedef struct BreakpointInfo BreakpointInfo;
 extern void evaluate_breakpoint(Context * ctx);
 
 /*
+ * Return NULL-terminated array of breakpoint IDs if the context is stopped by breakpoint.
+ * Otherwise return NULL.
+ */
+extern char ** get_context_breakpoint_ids(Context * ctx);
+
+/*
  * When a context is stopped by breakpoint, it is necessary to disable
  * the breakpoint temporarily before the context can be resumed.
  * This function function removes break instruction, then does single step
