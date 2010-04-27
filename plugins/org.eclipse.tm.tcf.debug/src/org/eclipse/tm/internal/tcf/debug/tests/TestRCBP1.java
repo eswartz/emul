@@ -66,6 +66,7 @@ class TestRCBP1 implements ITCFTest,
     private ISymbol func0;
     private ISymbol func1;
     private ISymbol func2;
+    private ISymbol func3;
     private ISymbol array;
     private int bp_cnt = 0;
     private boolean done_starting_test_process;
@@ -180,6 +181,7 @@ class TestRCBP1 implements ITCFTest,
                 diag.getSymbol(context_id, "tcf_test_func0", this);
                 diag.getSymbol(context_id, "tcf_test_func1", this);
                 diag.getSymbol(context_id, "tcf_test_func2", this);
+                diag.getSymbol(context_id, "tcf_test_func3", this);
                 diag.getSymbol(context_id, "tcf_test_array", this);
             }
         }
@@ -207,6 +209,9 @@ class TestRCBP1 implements ITCFTest,
         else if (func2 == null) {
             func2 = symbol;
         }
+        else if (func3 == null) {
+            func3 = symbol;
+        }
         else {
             array = symbol;
             // Reset breakpoint list (previous tests might left breakpoints)
@@ -227,7 +232,7 @@ class TestRCBP1 implements ITCFTest,
     @SuppressWarnings("unchecked")
     private void iniBreakpoints() {
         assert !bp_set_done;
-        Map<String,Object> m[] = new Map[6];
+        Map<String,Object> m[] = new Map[7];
         for (int i = 0; i < m.length; i++) {
             m[i] = new HashMap();
             m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i + "" + channel_id);
@@ -262,6 +267,9 @@ class TestRCBP1 implements ITCFTest,
                 // Breakpoint that will be enabled with "enable" command
                 m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
                 m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                break;
+            case 6:
+                m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func3");
                 break;
             }
             bp_list.put((String)m[i].get(IBreakpoints.PROP_ID), m[i]);
@@ -383,10 +391,7 @@ class TestRCBP1 implements ITCFTest,
         if (threads.size() == 0) return;
         done_starting_test_process = true;
         final String bp_id = "TcfTestBP5" + channel_id;
-        final Map<String,Object> m = new HashMap<String,Object>();
-        m.put(IBreakpoints.PROP_ID, bp_id);
-        m.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
-        m.put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
+        final Map<String,Object> m = bp_list.get(bp_id);
         ArrayList<String> l = new ArrayList<String>();
         l.add(context_id);
         m.put(IBreakpoints.PROP_CONTEXTIDS, l);
@@ -534,8 +539,8 @@ class TestRCBP1 implements ITCFTest,
             }
             running.remove(id);
             if (threads.remove(id) != null && threads.isEmpty()) {
-                if (bp_cnt != 30) {
-                    exit(new Exception("Test main thread breakpoint count = " + bp_cnt + ", expected 30"));
+                if (bp_cnt != 40) {
+                    exit(new Exception("Test main thread breakpoint count = " + bp_cnt + ", expected 40"));
                 }
                 rc.removeListener(this);
                 // Reset breakpoint list
@@ -564,6 +569,7 @@ class TestRCBP1 implements ITCFTest,
         if (func0.getValue().longValue() == addr) return "tcf_test_func0";
         if (func1.getValue().longValue() == addr) return "tcf_test_func1";
         if (func2.getValue().longValue() == addr) return "tcf_test_func2";
+        if (func3.getValue().longValue() == addr) return "tcf_test_func3";
         return "0x" + Long.toHexString(addr);
     }
 
@@ -582,6 +588,7 @@ class TestRCBP1 implements ITCFTest,
         if (pc == func0.getValue().longValue()) return true;
         if (pc == func1.getValue().longValue()) return true;
         if (pc == func2.getValue().longValue()) return true;
+        if (pc == func3.getValue().longValue()) return true;
         return false;
     }
 
@@ -621,19 +628,22 @@ class TestRCBP1 implements ITCFTest,
             if (sp == null) {
                 checkSuspendedContext(sc, func0);
             }
-            else if (Long.parseLong(sp.pc) == func2.getValue().longValue()) {
-                checkSuspendedContext(sc, func0);
+            else if (Long.parseLong(sp.pc) == func0.getValue().longValue()) {
+                checkSuspendedContext(sc, func1);
             }
             else if (Long.parseLong(sp.pc) == func1.getValue().longValue()) {
                 if (id.equals(main_thread_id)) {
                     checkSuspendedContext(sc, func2);
                 }
                 else {
-                    checkSuspendedContext(sc, func0);
+                    checkSuspendedContext(sc, func3);
                 }
             }
-            else if (Long.parseLong(sp.pc) == func0.getValue().longValue()) {
-                checkSuspendedContext(sc, func1);
+            else if (Long.parseLong(sp.pc) == func2.getValue().longValue()) {
+                checkSuspendedContext(sc, func3);
+            }
+            else if (Long.parseLong(sp.pc) == func3.getValue().longValue()) {
+                checkSuspendedContext(sc, func0);
             }
         }
         if (!test_suite.isActive(this)) return;
