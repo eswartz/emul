@@ -168,7 +168,8 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		for (int i = symExpr.nodeCount(); i-- > 0; ) {
 			IAstTypedExpr theSym = symExpr.list().get(i);
 			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
-			changed |= inferTypesFromChildren(new ITyped[] { theSym, theExpr });
+			// don't use the expr's type as our own type, since this will change the LHS type
+			changed |= inferTypesFromChildren(new ITyped[] { theSym /*, theExpr*/ });
 			
 			LLType left = theSym.getType();
 			LLType right = theExpr.getType();

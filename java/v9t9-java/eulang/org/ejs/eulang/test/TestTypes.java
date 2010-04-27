@@ -520,6 +520,7 @@ public class TestTypes extends BaseParserTest {
     }
     @Test
     public void testDataDeref7() throws Exception {
+    	// should not infer that 'val' is a Double or fail to cast the RHS to double
     	IAstModule mod = doFrontend(
     			"Tuple = [T] data {\n"+
     			"   val:T; };\n"+

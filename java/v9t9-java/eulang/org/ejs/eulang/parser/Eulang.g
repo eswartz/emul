@@ -501,7 +501,7 @@ atom : noIdAtom | idExpr ;
 
 idExpr options { backtrack=true;} :
      idOrScopeRef instantiation appendIdModifiers? -> ^(IDEXPR ^(INSTANCE idOrScopeRef instantiation) appendIdModifiers*) 
-    | idOrScopeRef appendIdModifiers? -> ^(IDEXPR ^(DEREF idOrScopeRef ) appendIdModifiers*) 
+    | idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) 
 ;
     
 instantiation : LESS (instanceExpr (COMMA instanceExpr)*) GREATER   -> ^(LIST instanceExpr*) 

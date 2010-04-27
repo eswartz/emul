@@ -8,6 +8,8 @@ import static junit.framework.Assert.*;
 
 import java.util.List;
 
+import junit.framework.AssertionFailedError;
+
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
@@ -584,7 +586,8 @@ public class TestTypeInfer extends BaseParserTest {
     }
 	
 	@Test
-    public void testExample1() throws Exception {
+    public void testExample1Fail() throws Exception {
+		// can't do this... if we infer the LHS type, it messes up "real" types
     	IAstModule mod = treeize(
     			"testExample1 = code (z; a : Byte) {\n" +
     			"   z = a | Byte(6);\n" +
@@ -592,10 +595,16 @@ public class TestTypeInfer extends BaseParserTest {
     			"};");
     	sanityTest(mod);
 
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testExample1");
+    	//IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testExample1");
     	doTypeInfer(mod);
-    	//typeTest(mod, false);
+    	try {
+    		typeTest(mod, false);
+    		fail();
+    	} catch (AssertionFailedError e) {
+    		
+    	}
     	
+    	/*
     	assertEquals(typeEngine.getCodeType(typeEngine.BYTE,  new LLType[] {typeEngine.BYTE, typeEngine.BYTE}), getMainBodyExpr(def).getType());
     	
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
@@ -603,6 +612,7 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(typeEngine.BYTE, assign.getType());
     	assertEquals(typeEngine.BYTE, assign.getExprs().getFirst().getType());
     	assertTrue(assign.getExprs().getFirst() instanceof IAstBinExpr);
+    	*/
     }
 	
 
