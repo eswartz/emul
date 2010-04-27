@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * This is a placeholder type that fills in leaf nodes of types in generic invocation
  * contexts.
@@ -47,4 +49,15 @@ public class LLGenericType extends BaseLLType {
 		return true;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType, org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, LLType fromType,
+			LLType toType) {
+		// generics support replacing all generics if the fromType has no name
+		if (fromType instanceof LLGenericType && ((LLGenericType) fromType).getName() == null)
+			return toType;
+		return super.substitute(typeEngine, fromType, toType);
+	}
 }

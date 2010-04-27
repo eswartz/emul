@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstType;
 
 
@@ -234,5 +235,30 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		}
 		
 		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
+		if (fromType == null)
+			return toType;
+		
+		LLType[] types = getTypes();
+		boolean changed = false;
+		for (int idx = 0; idx < types.length; idx++) {
+			if (types[idx] != null) {
+				LLType updated = types[idx].substitute(typeEngine, fromType, toType);
+				if (updated != types[idx]) {
+					types[idx] = updated;
+					changed = true;
+				}
+			}
+		}
+		if (changed)
+			return updateTypes(typeEngine, types);
+		else
+			return this;
 	}
 }

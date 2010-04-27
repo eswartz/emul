@@ -8,6 +8,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstNamedType;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -108,13 +109,16 @@ public class AstNamedType extends AstType implements IAstNamedType {
 		if (type == null || !type.isComplete()) {
 			// check for self-refs
 			IAstNode ref = getParent();
+			int level = 1;
 			while (ref != null) {
 				if (ref instanceof IAstDataType && ((IAstDataType) ref).getTypeName().equals(symbolExpr.getOriginalSymbol())) {
-					IAstSelfReferentialType selfRef = new AstSelfReferentialType(symbolExpr.copy(this));
+					IAstSelfReferentialType selfRef = new AstSelfReferentialType(symbolExpr.copy(this), level);
 					selfRef.setSourceRef(getSourceRef());
 					getParent().replaceChild(this, selfRef);
 					return true;
 				}
+				if(ref instanceof IAstScope)
+					level++;
 				ref = ref.getParent();
 			}
 			

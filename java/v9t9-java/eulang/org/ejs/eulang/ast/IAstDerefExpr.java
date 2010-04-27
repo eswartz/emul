@@ -12,6 +12,9 @@ package org.ejs.eulang.ast;
 public interface IAstDerefExpr extends IAstTypedExpr {
 	IAstDerefExpr copy(IAstNode copyParent);
 	
+	boolean isLHS();
+	void setLHS(boolean lhs);
+	
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);
 }

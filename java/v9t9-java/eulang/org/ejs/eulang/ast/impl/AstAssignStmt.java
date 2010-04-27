@@ -181,6 +181,10 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 				changed = true;
 			}
 			if (left != null && right != null) {
+				/*if (getType() != null && !getType().equals(left)) {
+					setType(left);
+					changed = true;
+				}*/
 				theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
 			}
 		}

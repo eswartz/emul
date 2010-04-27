@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * @author ejs
  *
@@ -15,7 +17,9 @@ public class LLPointerType extends BaseLLType {
 		
 	}
 	public LLPointerType(int bits, LLType baseType) {
-		super(fixLLVMName(baseType.getLLVMName()) + "$p", bits, baseType.getLLVMType() + "*", BasicType.POINTER, baseType);
+		super(baseType.getName() != null ? baseType.getName() + "$p" : 
+			fixLLVMName(baseType.getLLVMName()) + "$p", 
+				bits, baseType.getLLVMType() + "*", BasicType.POINTER, baseType);
 		
 	}
 	
@@ -27,4 +31,17 @@ public class LLPointerType extends BaseLLType {
 		return subType != null && subType.isComplete();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
+		if (subType == null)
+			return this;
+		LLType newSub = subType.substitute(typeEngine, fromType, toType);
+		if (newSub != subType)
+			return typeEngine.getPointerType(newSub);
+		else
+			return this;
+	}
 }

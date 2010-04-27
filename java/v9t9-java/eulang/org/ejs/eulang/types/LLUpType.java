@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstType;
@@ -18,16 +19,17 @@ public class LLUpType extends BaseLLType {
 
 	private int level;
 	private final ISymbol symbol;
-
+	
 	/**
 	 * @param symbol
+	 * @param actualType TODO
 	 * @param bits
 	 * @param llvmType
 	 * @param basicType
 	 * @param subType
 	 */
-	public LLUpType(String name, ISymbol symbol, int level) {
-		super(name, 1, "%" + name, BasicType.DATA, null);
+	public LLUpType(String name, ISymbol symbol, int level, LLType actualType) {
+		super(name, 1, "%" + name, BasicType.DATA, actualType instanceof LLUpType ? actualType.getSubType() : actualType);
 		this.symbol = symbol;
 		this.level = level;
 	}
@@ -51,10 +53,9 @@ public class LLUpType extends BaseLLType {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		if (!super.equals(obj))
-			return false;
+		// don't check super.equals, which checks subtypes
 		LLUpType other = (LLUpType) obj;
-		if (level != other.level)
+		if (!getName().equals(other.getName()))
 			return false;
 		return true;
 	}
@@ -78,6 +79,7 @@ public class LLUpType extends BaseLLType {
 	@Override
 	public boolean isCompatibleWith(LLType target) {
 		if (target != null) {
+			/*
 			// HACK: type inference tends to replicate classes endlessly,
 			// so there will always be a temporary instance... pretend they're all the same for now
 			String targetName = target.getName();
@@ -85,6 +87,8 @@ public class LLUpType extends BaseLLType {
 			if (idx > 0)
 				targetName = targetName.substring(0, idx);
 			return getName().equals(targetName);
+			*/
+			return getSymbol().getName().equals(target.getName());
 		}
 		return super.isCompatibleWith(target);
 	}
@@ -115,5 +119,24 @@ public class LLUpType extends BaseLLType {
 		if (realType != null && realType.getType().equals(target))
 			return true;
 		return super.matchesExactly(target);
+	}
+	
+	protected boolean subTypesCompatible(LLType subType) {
+		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
+		if (fromType == null || fromType.equals(this))
+			return toType;
+		if (subType != null) {
+			LLType newSub = subType.substitute(typeEngine, fromType, toType);
+			if (newSub != subType)
+				return new LLUpType(name, symbol, level, newSub);
+		}
+		return this;
 	}
 }

@@ -518,7 +518,18 @@ public class TestTypes extends BaseParserTest {
     	"");
     	doGenerate(mod);
     }
-    
+    @Test
+    public void testDataDeref7() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = [T] data {\n"+
+    			"   val:T; };\n"+
+    			"testDataDeref6 = code(x:Double) {\n"+
+    			"  foo:Tuple<Byte>;\n"+
+    			"  foo.val = x;\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
     @Test
     public void testDataInit1() throws Exception {
     	IAstModule mod = doFrontend(
@@ -1002,6 +1013,71 @@ public class TestTypes extends BaseParserTest {
 				"   list1.node = x;\n"+
 				"   list2.node = y;\n"+
 				"   list1.next^ = &list2;\n"+
+				"   list1.next.node;\n"+
+				"};\n" +
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+
+	@Test 
+	public void testGenericTypes1b() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List<T>^;\n" + 		// note: indicating type here, tho not necessary
+				"};\n" + 
+				"\n" +
+				"intList = code(x:Int;y:Int=>Int) {\n"+
+				"   list1, list2 : List<Int>;\n" +
+				"   list1.node = x;\n"+
+				"   list2.node = y;\n"+
+				"   list1.next^ = &list2;\n"+
+				"   list1.next.node;\n"+
+				"};\n" +
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+	
+	@Test 
+	public void testGenericTypes2() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T, U] data {\n" +
+				"        node:T;\n"+
+				"        next:List<U>^;\n" +
+				"};\n" + 
+				"\n" +
+				"intList = code(x:Int;y:Double) {\n"+
+				"   list1 : List<Int, Double>; list2 : List<Double, Int>;\n" +
+				"   list1.node = x;\n"+
+				"   list2.node = y;\n"+
+				"   list1.next^ = &list2;\n"+
+				"   list2.next^ = &list1;\n"+
 				"   list1.next.node;\n"+
 				"};\n" +
 				"");

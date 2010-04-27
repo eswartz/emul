@@ -32,7 +32,7 @@ public class LLAllocaInstr extends LLAssignInstr {
 	 */
 	@Override
 	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
-		sb.append(op.getType()).append(' ');
+		sb.append(op.getType().getLLVMType()).append(' ');
 		super.appendOperandString(sb, idx, op);
 	}
 

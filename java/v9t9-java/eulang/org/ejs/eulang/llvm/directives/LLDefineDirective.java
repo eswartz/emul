@@ -199,6 +199,10 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	
 
 	public void emit( LLBaseInstr instr) {
+		for (LLOperand op : instr.getOperands()) {
+			if (op != null)
+				module.emitTypes(op.getType());
+		}
 		getCurrentBlock().instrs().add(instr);
 	}
 	

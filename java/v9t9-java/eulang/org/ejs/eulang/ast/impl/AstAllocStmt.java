@@ -246,6 +246,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 				
 			} else {
 				changed = true;
+				changed |= updateType(this, theSymbol.getType());
 			}
 			
 			LLType left = theSymbol.getType();

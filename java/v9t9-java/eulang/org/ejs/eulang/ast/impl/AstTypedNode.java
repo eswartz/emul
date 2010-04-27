@@ -15,6 +15,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLType;
@@ -81,7 +82,9 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 	}
 
 	public String typedString(String input) {
-		return input + " [" + (getType() != null ? getType().toString() : "<unknown>") + "]";
+		LLType type = getType();
+		String typeString = (type == null ? "<unknown>" : (!type.isComplete() ? "<incomplete> : "  : "") + type.getLLVMType());
+		return input + " [" + typeString + "]";
 	}
 	
 	/* (non-Javadoc)
@@ -139,6 +142,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		
 		// don't put uprefs in normal code
     	if (newType instanceof LLUpType) {
+    		/*
     		IAstType actual = ((LLUpType) newType).getRealType();
     		if(actual == null)
     			return newType;
@@ -153,6 +157,8 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
     		}
     		if (n == null)
     			return actual.getType();
+    			*/
+    		return newType.getSubType();
     	} else if (newType instanceof LLPointerType) {
     		LLType sub = getConcreteType(typeEngine, child, newType.getSubType());
     		if (sub != newType.getSubType()) {
@@ -237,7 +243,8 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		}
 		
 		// modify cast when child is a cast and this is legal
-		if (child instanceof IAstUnaryExpr && ((IAstUnaryExpr) child).getOp() == IOperation.CAST) {
+		if (child instanceof IAstUnaryExpr && ((IAstUnaryExpr) child).getOp() == IOperation.CAST 
+				&& ((IAstUnaryExpr)child).getExpr().getType().getBasicType() == newType.getBasicType()) {
 			child.setType(newType);
 			return child;
 		}
@@ -256,6 +263,11 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 				return child;
 		}*/
 		
+		// don't implicitly cast to pointers of different types
+		//if (child.getType() != null && !child.getType().isCompatibleWith(newType)) {
+		//	if (child.getType().getBasicType() != BasicType.VOID && newType.getBasicType() != BasicType.VOID)
+		//		return child;
+		//}
 		child.setParent(null);
 		IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, child);
 		castExpr.setSourceRef(child.getSourceRef());

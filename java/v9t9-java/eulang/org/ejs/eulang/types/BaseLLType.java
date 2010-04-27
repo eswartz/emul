@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * @author ejs
  *
@@ -106,7 +108,7 @@ public abstract class BaseLLType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return name != null ? name : llvmType;
+		return (name != null ? name : llvmType);
 	}
 	
 	public int getBits() {
@@ -172,6 +174,8 @@ public abstract class BaseLLType implements LLType {
 	public boolean isCompatibleWith(LLType target) {
 		if (target == null)
 			return false;
+		if (target == this)
+			return true;
 		if (!getBasicType().isCompatibleWith(target.getBasicType()))
 			return false;
 
@@ -185,6 +189,16 @@ public abstract class BaseLLType implements LLType {
 
 
 	protected boolean subTypesCompatible(LLType subType) {
-		return subType.isCompatibleWith(subType);
+		return this.subType.isCompatibleWith(subType);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
+		if (fromType == null || fromType.equals(this))
+			return toType;
+		return this;
 	}
 }

@@ -340,7 +340,8 @@ public class TypeInference {
 	private void replaceTypes(IAstNode expansion,
 			Map<LLType, LLType> expansionMap) {
 		if (expansion instanceof IAstTypedNode) {
-			LLType repl = expansionMap.get(((IAstTypedNode)expansion).getType());
+			LLType fromType = ((IAstTypedNode)expansion).getType();
+			LLType repl = expansionMap.get(fromType);
 			if (repl != null)
 				((IAstTypedNode)expansion).setType(repl);
 		}

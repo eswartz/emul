@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * @author ejs
  *
@@ -73,4 +75,12 @@ public interface LLType {
 	 * @return
 	 */
 	boolean isCompatibleWith(LLType target);
+	/**
+	 * Substitute references to the given type with the given replacement
+	 * @param typeEngine
+	 * @param fromType
+	 * @param toType
+	 * @return this or an updated type
+	 */
+	LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType);
 }

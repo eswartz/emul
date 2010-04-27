@@ -637,7 +637,7 @@ public class GenerateAST {
 	 */
 	private IAstNode constructDeref(Tree tree) throws GenerateException {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
-		IAstDerefExpr value = new AstDerefExpr(expr);
+		IAstDerefExpr value = new AstDerefExpr(expr, false);
 		getSource(tree, value);
 		return value;
 	}
@@ -1194,6 +1194,7 @@ public class GenerateAST {
 				}
 			}
 
+			setLHS(tupleAlloc.getSymbols());
 			return tupleAlloc;
 		} else {
 			unhandled(tree);
@@ -1206,7 +1207,19 @@ public class GenerateAST {
 			throw new GenerateException(tree, "cannot allocate unsized array without an initializer");
 		}
 		
+		setLHS(alloc.getSymbolExprs());
 		return alloc;
+	}
+
+	/**
+	 * @param symbolExprs
+	 */
+	private void setLHS(IAstNode node) {
+		if (node instanceof IAstDerefExpr) {
+			((IAstDerefExpr) node).setLHS(true);
+		}
+		for (IAstNode kid : node.getChildren())
+			setLHS(kid);
 	}
 
 	/**
@@ -1268,6 +1281,7 @@ public class GenerateAST {
 							IAstTypedExpr.class, left), AstNodeList
 							.<IAstTypedExpr> singletonList(IAstTypedExpr.class,
 									right), false);
+			setLHS(assign.getSymbolExprs());
 			getSource(tree, assign);
 			return assign;
 		} else if (tree.getChild(0).getType() == EulangParser.LIST) {
@@ -1294,6 +1308,7 @@ public class GenerateAST {
 			}
 			getSource(tree.getChild(idx), exprs);
 			IAstAssignStmt assign = new AstAssignStmt(symbols, exprs, expand);
+			setLHS(exprs);
 			getSource(tree, assign);
 			return assign;
 		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
@@ -1301,6 +1316,7 @@ public class GenerateAST {
 			IAstTypedExpr right = checkConstruct(tree.getChild(1),
 					IAstTypedExpr.class);
 			IAstAssignTupleStmt assign = new AstAssignTupleStmt(left, right);
+			setLHS(left);
 			getSource(tree, assign);
 			return assign;
 
@@ -1405,7 +1421,7 @@ public class GenerateAST {
 			IAstName name = new AstName(kid.getText(), symExpr != null ? symExpr.getSymbol().getScope() : null);
 			getSource(kid, name);
 			if (true) {
-				idExpr = new AstDerefExpr(idExpr);
+				idExpr = new AstDerefExpr(idExpr, false);
 				getSource(tree.getChild(0), idExpr);
 				first = false;
 			}
@@ -1494,7 +1510,7 @@ public class GenerateAST {
 		
 		if (!(idExpr instanceof IAstDerefExpr) &&  !(idExpr instanceof IAstAddrRefExpr) && !isCast(idExpr)
 				&& !(idExpr instanceof IAstInstanceExpr)) {
-			idExpr = new AstDerefExpr(idExpr);
+			idExpr = new AstDerefExpr(idExpr, false);
 			getSource(tree.getChild(0), idExpr);
 		}
 

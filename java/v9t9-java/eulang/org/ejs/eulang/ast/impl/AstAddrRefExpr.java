@@ -136,7 +136,7 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
-		if (getType() != null && getType().isComplete()) {
+		if (getType() != null && getType().isComplete() && expr.getType() != null) {
 			if (!expr.getType().equals(getType().getSubType())
 					&& !expr.getType().equals(getType()))
 				throw new TypeException(expr, "pointer base type does not match in parent");

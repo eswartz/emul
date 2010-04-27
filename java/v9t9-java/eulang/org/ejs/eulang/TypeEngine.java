@@ -569,6 +569,7 @@ public class TypeEngine {
 			data = new LLDataType(this, name,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
 					(LLStaticField[]) statics.toArray(new LLStaticField[statics.size()]));
+			
 			dataTypeMap.put(key, data);
 			llvmNameToTypeMap.put(name, data);
 		}

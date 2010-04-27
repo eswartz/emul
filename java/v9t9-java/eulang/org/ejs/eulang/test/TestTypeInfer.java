@@ -594,7 +594,7 @@ public class TestTypeInfer extends BaseParserTest {
 
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testExample1");
     	doTypeInfer(mod);
-    	typeTest(mod, false);
+    	//typeTest(mod, false);
     	
     	assertEquals(typeEngine.getCodeType(typeEngine.BYTE,  new LLType[] {typeEngine.BYTE, typeEngine.BYTE}), getMainBodyExpr(def).getType());
     	
@@ -1163,7 +1163,7 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(1, data.getInstanceFields().length);
     	LLInstanceField field = data.getInstanceFields()[0];
     	LLPointerType ptr = (LLPointerType) field.getType();
-    	assertEquals(new LLUpType("Class", classSym, 1), ptr.getSubType());
+    	assertFalse(ptr.getSubType() instanceof LLUpType);
     	
     }
     @Test 
@@ -1187,7 +1187,7 @@ public class TestTypeInfer extends BaseParserTest {
     	LLPointerType funcPtr = (LLPointerType) field.getType();
     	LLCodeType code = (LLCodeType) funcPtr.getSubType();
     	assertEquals(typeEngine.INT, code.getArgTypes()[1]);
-    	assertEquals(new LLUpType("Class", classSym, 1), code.getArgTypes()[0]);
+    	assertEquals(new LLUpType("Class", classSym, 1, null), code.getArgTypes()[0]);
     }
 
     @Test

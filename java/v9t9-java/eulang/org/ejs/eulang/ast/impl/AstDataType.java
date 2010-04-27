@@ -26,6 +26,7 @@ import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLStaticField;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -99,7 +100,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 */
 	@Override
 	public String toString() {
-		return typedString("DATA") + (type == null ? " : <unknown>" : !type.isComplete() ? " : incomplete: " + type.getLLVMType() : "");
+		return typedString("DATA");
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstDataDecl#getFields()
@@ -241,6 +242,11 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		ISymbol sym = getTypeName();
 		name = sym != null ? sym.getName() : null;
 		LLDataType data = typeEngine.getDataType(name, newIFields, newSFields);
+		
+		data = (LLDataType) data.substitute(typeEngine, 
+				new LLUpType(name, null, 0, data), 
+				data);
+		
 		return data;
 	}
 

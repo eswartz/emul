@@ -4,7 +4,9 @@
 package org.ejs.eulang.llvm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.impl.AstName;
@@ -16,6 +18,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
@@ -30,6 +33,8 @@ public class LLModule {
 	private final IScope globalScope;
 	
 	private IScope moduleScope;
+	
+	private Map<LLType, ISymbol> emittedTypes = new HashMap<LLType, ISymbol>();
 	
 	/**
 	 * 
@@ -123,18 +128,29 @@ public class LLModule {
 	 * @param rEFPTR
 	 * @return
 	 */
-	public ISymbol addExternType(LLType type) {
-		if (type.getName() == null || type.getBasicType() == BasicType.VOID) return null;
+	public boolean addExternType(LLType type) {
+		if (type == null|| type.getName() == null || type.getBasicType() == BasicType.VOID) return false;
+		if (emittedTypes.containsKey(type))
+			return false;
 		ISymbol typeSymbol = globalScope.get(type.getName());
 		if (typeSymbol == null) {
 			//typeSymbol = globalScope.add(new LocalSymbol(globalScope.nextId(), new AstName(type.getName()), null));
 			typeSymbol = globalScope.add(ISymbol.Visibility.LOCAL, new AstName(type.getName()));
+			typeSymbol.setType(type);
 			externDirectives.add(new LLTypeDirective(typeSymbol, type));
 		} else if (typeSymbol.getVisibility() != ISymbol.Visibility.LOCAL) {
+			typeSymbol = moduleScope.get(type.getName());
+			if (typeSymbol != null) {
+				if (typeSymbol.getType().isMoreComplete(type))
+					return false;
+				moduleScope.remove(typeSymbol);
+			}
 			typeSymbol = moduleScope.add(ISymbol.Visibility.LOCAL, new AstName(type.getName()));
+			typeSymbol.setType(type);
 			externDirectives.add(new LLTypeDirective(typeSymbol, type));
 		}
-		return typeSymbol;
+		emittedTypes.put(type, typeSymbol);
+		return true;
 	}
 
 	/**
@@ -142,6 +158,25 @@ public class LLModule {
 	 */
 	public int getSymbolCount() {
 		return moduleScope.getSymbols().length;
+	}
+
+	/**
+	 * @param type
+	 */
+	public boolean emitTypes(LLType type) {
+		if (type == null)
+			return false;
+		if (emittedTypes.containsKey(type))
+			return false;
+		if (!addExternType(type))
+			return false;
+		boolean changed = false;
+		if (type instanceof LLAggregateType) {
+			for (LLType agg : ((LLAggregateType) type).getTypes())
+				changed |= emitTypes(agg);
+		}
+		changed |= emitTypes(type.getSubType());
+		return changed;
 	};
 	
 }

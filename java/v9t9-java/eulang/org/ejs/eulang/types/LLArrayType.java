@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.IAstTypedExpr;
 
@@ -110,4 +111,17 @@ public class LLArrayType extends BaseLLType {
 	public boolean isInitSized() {
 		return arrayCount == 0 && dynamicSizeExpr == null;
 	}
-}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
+		if (subType == null)
+			return this;
+		LLType newSub = subType.substitute(typeEngine, fromType, toType);
+		if (newSub != subType)
+			return typeEngine.getArrayType(newSub, getArrayCount(), getDynamicSizeExpr());
+		else
+			return this;
+	}}

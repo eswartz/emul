@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
+import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BasicType;
@@ -21,12 +22,14 @@ import org.ejs.eulang.types.TypeException;
 public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 
 	private IAstTypedExpr expr;
+	private boolean lhs;
 
 	/**
 	 * @param type
 	 */
-	public AstDerefExpr(IAstTypedExpr expr) {
+	public AstDerefExpr(IAstTypedExpr expr, boolean isLHS) {
 		setExpr(expr);
+		setLHS(lhs);
 	}
 
 	/* (non-Javadoc)
@@ -34,7 +37,7 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 	 */
 	@Override
 	public IAstDerefExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstDerefExpr(doCopy(expr, copyParent)));
+		return fixup(this, new AstDerefExpr(doCopy(expr, copyParent), lhs));
 	}
 	
 	@Override
@@ -106,7 +109,20 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 	public IAstTypedExpr getExpr() {
 		return expr;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDerefExpr#setLHS(boolean)
+	 */
+	@Override
+	public void setLHS(boolean lhs) {
+		this.lhs = lhs;
+	}
+	/**
+	 * 
+	 */
+	public boolean isLHS() {
+		return lhs;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
@@ -128,16 +144,25 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 			}
 			
 			changed |= updateType(this, child);
-		} else if (canInferTypeFrom(this)) {
-			if (expr.getType() == null) {
+		} else if (!lhs && canInferTypeFrom(this)) {
+			// don't presume the base type, but update it if we know better
+			if (!(expr instanceof IAstFieldExpr) || expr.getType() != null) {
+				//changed |= updateType(expr, getType());
 				expr.setType(getType());
-				changed = true;
 			}
 		}
 		
 		if (canInferTypeFrom(this) && canInferTypeFrom(expr) && !typeEngine.getBaseType(expr.getType()).equals(getType())) {
-			if (getType().getBasicType() != BasicType.VOID)
-				setExpr(createCastOn(typeEngine, expr, typeEngine.getPointerType(getType())));
+			if (getType().getBasicType() != BasicType.VOID) {
+				if (!lhs) {
+					setExpr(createCastOn(typeEngine, expr, typeEngine.getPointerType(getType())));
+				} else {
+					if (!getType().equals(expr.getType())) {
+						setType(expr.getType());
+						changed = true;
+					}
+				}
+			}
 		}
 		
 		return changed;
@@ -148,7 +173,7 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
-		if (getType() != null && getType().isComplete()) {
+		if (getType() != null && getType().isComplete() && expr.getType() != null) {
 			if (getType().getBasicType() == BasicType.VOID)
 				return;
 			if (!typeEngine.getBaseType(expr.getType()).equals(getType()))

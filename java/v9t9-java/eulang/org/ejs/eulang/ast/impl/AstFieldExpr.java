@@ -180,7 +180,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			int fieldIdx = dataType.getFieldIndex(field);
 			fieldType = field.getType();
 			
-			fieldType = getConcreteType(typeEngine, this, fieldType);
+			//fieldType = fieldType.substitute(typeEngine, this, fieldType);
 			
 			changed |= updateType(this, fieldType);
 			
@@ -210,9 +210,12 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	public LLType getDataType() {
 		LLType exprType = expr.getType();
 		if (exprType instanceof LLUpType) {
+			return exprType.getSubType();
+			/*
 			IAstType upType = ((LLUpType) exprType).getRealType();
 			if (upType != null)
 				exprType = upType.getType();
+				*/
 		}
 		return exprType;
 	}

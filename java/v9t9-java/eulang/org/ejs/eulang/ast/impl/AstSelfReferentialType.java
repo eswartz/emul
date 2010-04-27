@@ -29,10 +29,11 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	private IAstSymbolExpr symbolExpr;
 
 	/**
+	 * @param level 
 	 * @param type
 	 */
-	public AstSelfReferentialType(IAstSymbolExpr symbolExpr) {
-		super(new LLUpType(symbolExpr.getSymbol().getName(), symbolExpr.getSymbol(), 0));
+	public AstSelfReferentialType(IAstSymbolExpr symbolExpr, int level) {
+		super(new LLUpType(symbolExpr.getSymbol().getName(), symbolExpr.getSymbol(), level, symbolExpr.getType()));
 		setSymbolExpr(symbolExpr);
 	}
 
@@ -41,7 +42,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 */
 	@Override
 	public IAstSelfReferentialType copy(IAstNode copyParent) {
-		return fixup(this, new AstSelfReferentialType(doCopy(symbolExpr, copyParent)));
+		return fixup(this, new AstSelfReferentialType(doCopy(symbolExpr, copyParent), ((LLUpType)getType()).getLevel()));
 	}
 	
 	@Override
@@ -120,7 +121,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 				theScope = theScope.getParent();
 			}
 			assert count != 0;
-			setType(new LLUpType(symbol.getName(), symbol, count));
+			setType(new LLUpType(symbol.getName(), symbol, count, getType()));
 			changed = true;
 		}
 		/*else {

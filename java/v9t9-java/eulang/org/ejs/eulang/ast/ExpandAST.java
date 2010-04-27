@@ -35,6 +35,7 @@ import org.ejs.eulang.types.LLType;
  */
 public class ExpandAST {
 	
+	private static final LLType ALL_GENERICS = new LLGenericType(null);
 	private final TypeEngine typeEngine;
 
 	public ExpandAST(TypeEngine typeEngine) {
@@ -141,18 +142,60 @@ public class ExpandAST {
 
 	/**
 	 * @param body
-	 * @param symbol
+	 * @param varSymbol
 	 * @param type
 	 */
-	private void replaceTypes(IAstNode root, ISymbol symbol, LLType type) {
+	private void replaceTypes(IAstNode root, ISymbol varSymbol, LLType type) {
 		if (root instanceof IAstTypedNode) {
 			IAstTypedNode typed = (IAstTypedNode) root;
-			if (typed.getType() instanceof LLGenericType &&
-					((LLGenericType) typed.getType()).getName().equals(symbol.getName()))
-				typed.setType(type);
+			LLType typedType = typed.getType();
+			if (typedType != null) {
+				LLType noGeneric = typedType.substitute(typeEngine, varSymbol.getType(), type);
+				if (noGeneric != typedType)
+					typed.setType(noGeneric);
+			}
+			if (typed instanceof IAstSymbolExpr) {
+				IAstSymbolExpr symbolExpr = (IAstSymbolExpr) typed;
+				ISymbol symbol = symbolExpr.getSymbol();
+				LLType symbolType = symbol.getType();
+				if (symbolType != null) {
+					LLType noGeneric = symbolType.substitute(typeEngine, varSymbol.getType(), type);
+					if (noGeneric != symbolType)
+						symbol.setType(noGeneric);
+				}
+			}
 		}
 		for (IAstNode kid : root.getChildren())
-			replaceTypes(kid, symbol, type);
+			replaceTypes(kid, varSymbol, type);
+	}
+
+	/**
+	 * @param copy
+	 */
+	private void removeGenerics(IAstNode node) {
+		if (node instanceof IAstTypedNode) {
+			IAstTypedNode typedNode = (IAstTypedNode) node;
+			LLType type = typedNode.getType();
+			if (type != null) {
+				LLType noGeneric = type.substitute(typeEngine, ALL_GENERICS, null);
+				if (noGeneric != type)
+					typedNode.setType(noGeneric);
+			}
+			if (typedNode instanceof IAstSymbolExpr) {
+				IAstSymbolExpr symbolExpr = (IAstSymbolExpr) typedNode;
+				//if (node.getOwnerScope().encloses(symbolExpr.getSymbol().getScope()))
+				ISymbol symbol = symbolExpr.getSymbol();
+				LLType symbolType = symbol.getType();
+				if (symbolType != null) {
+					LLType noGeneric = symbolType.substitute(typeEngine, ALL_GENERICS, null);
+					if (noGeneric != symbolType)
+						symbol.setType(noGeneric);
+				}
+			}
+		}
+		for (IAstNode kid : node.getChildren()) {
+			removeGenerics(kid);
+		}
 	}
 
 	private boolean expandFuncCallExpr(List<Message> messages, IAstNode node) throws ASTException {
@@ -267,27 +310,6 @@ public class ExpandAST {
 		}
 		return changed;
 	}
-	
-	/**
-	 * @param copy
-	 */
-	private void removeGenerics(IAstNode node) {
-		if (node instanceof IAstTypedNode) {
-			IAstTypedNode typedNode = (IAstTypedNode) node;
-			if (typedNode.getType() != null && typedNode.getType().isGeneric()) {
-				typedNode.setType(null);
-				if (typedNode instanceof IAstSymbolExpr) {
-					IAstSymbolExpr symbolExpr = (IAstSymbolExpr) typedNode;
-					//if (node.getOwnerScope().encloses(symbolExpr.getSymbol().getScope()))
-					symbolExpr.getSymbol().setType(null);
-				}
-			}
-		}
-		for (IAstNode kid : node.getChildren()) {
-			removeGenerics(kid);
-		}
-	}
-
 	
 	/**
 	 * Expand a function or macro into the tree 

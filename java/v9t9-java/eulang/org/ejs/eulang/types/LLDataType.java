@@ -167,7 +167,7 @@ public class LLDataType extends BaseLLAggregateType {
 					field.getDefinition(), field.getDefault());
 		}
 		
-		return new LLDataType(typeEngine, name, newIFields, newSFields);
+		return typeEngine.getDataType(name, Arrays.asList(newIFields), Arrays.asList(newSFields));
 	}
 
 	/**

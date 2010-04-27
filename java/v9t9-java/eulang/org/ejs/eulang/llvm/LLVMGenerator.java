@@ -230,13 +230,13 @@ public class LLVMGenerator {
 			}
 		}
 		
-
+/*
 		for (LLType type : typeEngine.getTypes()) {
 			if (type.getLLVMName() != null && type.isComplete() && !type.isGeneric()) {
 				type = AstTypedNode.getConcreteType(typeEngine, null, type);
 				ll.addExternType(type);
 			}
-		}
+		}*/
 	}
 
 	public void recordError(ASTException e) {
@@ -930,7 +930,7 @@ public class LLVMGenerator {
 			return source;
 		//LLPointerType addrType = typeEngine.getPointerType(expr.getType());
 		
-		while (valueType != null && !expr.getType().equals(valueType.getSubType())) {
+		while (valueType != null && !expr.getType().isCompatibleWith(valueType.getSubType())) {
 			if (source.getType().getBasicType() == BasicType.REF) {
 				// dereference to get the data ptr
 				LLOperand addrTemp = currentTarget.newTemp(source.getType());
@@ -1059,8 +1059,11 @@ entry:
 			align.alignAndAdd(elType);
 			if (align.sizeof() == elType.getBits())
 				initFieldTypes.add(elType);
-			else
-				initFieldTypes.add(typeEngine.getArrayType(typeEngine.BYTE, align.sizeof() / 8, null));
+			else {
+				elType = typeEngine.getArrayType(typeEngine.BYTE, align.sizeof() / 8, null);
+				initFieldTypes.add(elType);
+			}
+			ll.emitTypes(elType);
 		}
 		
 		Pair<Integer, LLType> initInfo = null;
@@ -1156,6 +1159,8 @@ entry:
 			initType = typeEngine.getDataType(expr.getType().getName() + "$init", initFieldTypes);
 			initOp = new LLStructOp((LLAggregateType) initType, constOps.toArray(new LLOperand[constOps.size()]));
 		}
+		
+		ll.emitTypes(initType);
 		
 		// inject non-consts
 		for (Map.Entry<Integer, LLOperand> entry : nonConstOps.entrySet()) {
