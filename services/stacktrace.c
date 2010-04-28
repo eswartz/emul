@@ -119,18 +119,19 @@ static void trace_stack(Context * ctx, StackTrace * s) {
 
 #else
 
-static void walk_frames(Context * ctx, StackTrace * stack_trace) {
+static void trace_stack(Context * ctx, StackTrace * stack_trace) {
+    int i;
     int error = 0;
-    unsigned cnt = 0;
     StackFrame frame;
 
+    stack_trace->frame_cnt = 0;
     memset(&frame, 0, sizeof(frame));
     frame.is_top_frame = 1;
     frame.regs_size = ctx->regs_size;
     frame.regs = ctx->regs;
     frame.mask = (RegisterData *)loc_alloc(frame.regs_size);
     memset(frame.mask, 0xff, frame.regs_size);
-    while (cnt < MAX_FRAMES) {
+    while (stack_trace->frame_cnt < MAX_FRAMES) {
         StackFrame down;
         memset(&down, 0, sizeof(down));
         down.regs_size = ctx->regs_size;
@@ -150,14 +151,13 @@ static void walk_frames(Context * ctx, StackTrace * stack_trace) {
             loc_free(down.mask);
             break;
         }
-        if (cnt > 0 && frame.fp == 0) {
+        if (stack_trace->frame_cnt > 0 && frame.fp == 0) {
             loc_free(down.regs);
             loc_free(down.mask);
             break;
         }
         add_frame(stack_trace, &frame);
         frame = down;
-        cnt++;
     }
 
     if (!frame.is_top_frame) loc_free(frame.regs);
@@ -169,15 +169,10 @@ static void walk_frames(Context * ctx, StackTrace * stack_trace) {
     else if (error) {
         stack_trace->error = get_error_report(error);
     }
-}
-
-static void trace_stack(Context * ctx, StackTrace * s) {
-    int i;
-    walk_frames(ctx, s);
-    for (i = 0; i < s->frame_cnt / 2; i++) {
-        StackFrame f = s->frames[i];
-        s->frames[i] = s->frames[s->frame_cnt - i - 1];
-        s->frames[s->frame_cnt - i - 1] = f;
+    for (i = 0; i < stack_trace->frame_cnt / 2; i++) {
+        StackFrame f = stack_trace->frames[i];
+        stack_trace->frames[i] = stack_trace->frames[stack_trace->frame_cnt - i - 1];
+        stack_trace->frames[stack_trace->frame_cnt - i - 1] = f;
     }
 }
 
@@ -187,13 +182,13 @@ static StackTrace * create_stack_trace(Context * ctx) {
     StackTrace * stack_trace = EXT(ctx);
     if (!stack_trace->valid) {
         stack_trace->frame_cnt = 0;
+        stack_trace->valid = 1;
         if (ctx->regs_error != NULL) {
             stack_trace->error = get_error_report(set_error_report_errno(ctx->regs_error));
         }
         else {
             trace_stack(ctx, stack_trace);
         }
-        stack_trace->valid = 1;
     }
     return stack_trace;
 }

@@ -102,7 +102,6 @@ void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * in
         info->mValue = s.st_value;
         info->mSize = s.st_size;
     }
-
 }
 
 static CompUnit * find_comp_unit(U8_T ID) {
