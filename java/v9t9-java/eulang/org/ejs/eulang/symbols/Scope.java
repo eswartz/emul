@@ -25,6 +25,9 @@ public abstract class Scope implements IScope {
 
 	private AtomicInteger counter;
 	private final Visibility defaultVisibility;
+	
+	private int uniquifyId;
+	
 	public ISymbol createSymbol(String name, boolean temporary) {
 		return new Symbol(nextId(), name, defaultVisibility, null, temporary, this, null, false);
 	}
@@ -34,11 +37,6 @@ public abstract class Scope implements IScope {
 	 */
 	public Scope(IScope parent, Visibility vis) {
 		this.defaultVisibility = vis;
-		if (parent instanceof Scope) {
-			counter = ((Scope) parent).counter;
-		} else {
-			counter = new AtomicInteger();
-		}
 		setParent(parent);
 	}
 	
@@ -92,9 +90,13 @@ public abstract class Scope implements IScope {
 	 * @see org.ejs.eulang.symbols.IScope#add(java.lang.String)
 	 */
 	@Override
-	public ISymbol add(String symName) {
-		if (entries.containsKey(symName))
-			throw new IllegalArgumentException();
+	public ISymbol add(String symName, boolean uniquify) {
+		if (entries.containsKey(symName)) {
+			if (uniquify)
+				symName += "." + uniquifyId++;
+			else
+				throw new IllegalArgumentException();
+		}
 		ISymbol symbol = createSymbol(symName, false);
 		entries.put(symName, symbol);
 		return symbol;
@@ -196,6 +198,13 @@ public abstract class Scope implements IScope {
 		if (parent != null && parent == this)
 			throw new IllegalStateException();
 		this.parent = parent;
+		if (counter == null) {
+			if (parent instanceof Scope) {
+				counter = ((Scope) parent).counter;
+			} else {
+				counter = new AtomicInteger();
+			}
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -235,16 +244,8 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public ISymbol addTemporary(String name) {
-		return addTemporary(name, false);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.symbols.IScope#addTemporary(java.lang.String, boolean)
-	 */
-	@Override
-	public ISymbol addTemporary(String name, boolean uniquifyt) {
-		if (uniquifyt)
-			name += "@" + counter.get();
+		//if (uniquifyt)
+		//	name += "@" + counter.get();
 		ISymbol symbol = createSymbol(name, true);
 		entries.put(symbol.getUniqueName(), symbol);
 		return symbol;		

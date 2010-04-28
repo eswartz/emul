@@ -3,8 +3,13 @@
  */
 package org.ejs.eulang.types;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 
 
 /**
@@ -246,18 +251,45 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 			return toType;
 		
 		LLType[] types = getTypes();
-		boolean changed = false;
+		LLType[] newTypes = null;
 		for (int idx = 0; idx < types.length; idx++) {
 			if (types[idx] != null) {
 				LLType updated = types[idx].substitute(typeEngine, fromType, toType);
 				if (updated != types[idx]) {
-					types[idx] = updated;
-					changed = true;
+					if (newTypes == null) {
+						newTypes = Arrays.copyOf(types, types.length);
+					}
+					newTypes[idx] = updated;
 				}
 			}
 		}
-		if (changed)
-			return updateTypes(typeEngine, types);
+		if (newTypes != null)
+			return updateTypes(typeEngine, newTypes);
+		else
+			return this;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.symbols.IScope, java.util.Map)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, IScope origScope,
+			Map<Integer, ISymbol> symbolMap) {
+		LLType[] types = getTypes();
+		LLType[] newTypes = null;
+		for (int idx = 0; idx < types.length; idx++) {
+			if (types[idx] != null) {
+				LLType updated = types[idx].substitute(typeEngine, origScope, symbolMap);
+				if (updated != types[idx]) {
+					if (newTypes == null) {
+						newTypes = Arrays.copyOf(types, types.length);
+					}
+					newTypes[idx] = updated;
+				}
+			}
+		}
+		if (newTypes != null)
+			return updateTypes(typeEngine, newTypes);
 		else
 			return this;
 	}

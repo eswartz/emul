@@ -14,11 +14,11 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
+import org.ejs.eulang.ast.impl.AstNode;
 import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
-import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
@@ -113,60 +113,51 @@ public class ExpandAST {
 			throw new ASTException(instanceExpr.getSymbolExpr(), 
 					"could not find matching body for instance");
 		
-		body = (IAstTypedExpr) body.copy(instanceExpr);
+		IAstTypedExpr bodyCopy = (IAstTypedExpr) body.copy(instanceExpr);
 		
-		// TODO: this is supposed to make a new instance for the define's concrete body list (see code in TypeInference)
+		ISymbol instanceSymbol = null;
+		if (bodyCopy instanceof IAstDataType) {
+			instanceSymbol = ((IAstDataType) ((IAstDataType) bodyCopy).getScope().getOwner()).getTypeName();
+			ISymbol renamedSymbol = instanceSymbol.getScope().addTemporary(instanceSymbol.getName());
+			renamedSymbol.setDefinition(bodyCopy);
+			((IAstDataType) bodyCopy).setTypeName(instanceSymbol);
+			
+			Map<Integer, ISymbol> symbolReplacemap = Collections.singletonMap(instanceSymbol.getNumber(), renamedSymbol);
+			AstNode.replaceSymbols(typeEngine, body, bodyCopy, instanceSymbol.getScope(), symbolReplacemap);
+		}
+			
+		
+		// TODO: could this make a new instance for the define's concrete body list (see code in TypeInference)?
+		// As it is, we expand directly into the tree.
+		
+		Map<LLType, LLType> typeReplacementMap = new HashMap<LLType, LLType>();
 		
 		int index = 0;
 		for (IAstTypedExpr expr : instanceExpr.getExprs().list()) {
 			ISymbol symbol = varSymbols[index];
+			typeReplacementMap.put(symbol.getType(), expr.getType());
 			
 			// replace contents
-			replaceInTree(body, symbol, expr);
+			replaceInTree(bodyCopy, symbol, expr);
 			
-			// then, replace known type
-			replaceTypes(body, symbol, expr.getType());
 			index++;
 		}
 		
-		instanceExpr.getParent().replaceChild(instanceExpr, body);
-		body.uniquifyIds();
-		removeGenerics(body);
+		// then replace types
+	//	typeReplacementMap.put(bodyCopy.getType(), null);
+		AstNode.replaceTypesInTree(typeEngine, bodyCopy, typeReplacementMap);
+		
+		instanceExpr.getParent().replaceChild(instanceExpr, bodyCopy);
+		bodyCopy.uniquifyIds();
+		
+		// every generic should be replaced, or an outer level defines it
+		//removeGenerics(bodyCopy);
 		
 		System.out.println("After expanding generic:");
 		DumpAST dump = new DumpAST(System.out);
-		body.accept(dump);
+		bodyCopy.accept(dump);
 		
 		return true;
-	}
-
-	/**
-	 * @param body
-	 * @param varSymbol
-	 * @param type
-	 */
-	private void replaceTypes(IAstNode root, ISymbol varSymbol, LLType type) {
-		if (root instanceof IAstTypedNode) {
-			IAstTypedNode typed = (IAstTypedNode) root;
-			LLType typedType = typed.getType();
-			if (typedType != null) {
-				LLType noGeneric = typedType.substitute(typeEngine, varSymbol.getType(), type);
-				if (noGeneric != typedType)
-					typed.setType(noGeneric);
-			}
-			if (typed instanceof IAstSymbolExpr) {
-				IAstSymbolExpr symbolExpr = (IAstSymbolExpr) typed;
-				ISymbol symbol = symbolExpr.getSymbol();
-				LLType symbolType = symbol.getType();
-				if (symbolType != null) {
-					LLType noGeneric = symbolType.substitute(typeEngine, varSymbol.getType(), type);
-					if (noGeneric != symbolType)
-						symbol.setType(noGeneric);
-				}
-			}
-		}
-		for (IAstNode kid : root.getChildren())
-			replaceTypes(kid, varSymbol, type);
 	}
 
 	/**

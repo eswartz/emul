@@ -3,7 +3,11 @@
  */
 package org.ejs.eulang.types;
 
+import java.util.Map;
+
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * @author ejs
@@ -199,6 +203,15 @@ public abstract class BaseLLType implements LLType {
 	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
 		if (fromType == null || fromType.equals(this))
 			return toType;
+		return this;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.symbols.IScope, java.util.Map)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, IScope origScope,
+			Map<Integer, ISymbol> symbolMap) {
 		return this;
 	}
 }

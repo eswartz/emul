@@ -7,7 +7,6 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.*;
 
 import org.ejs.eulang.ast.IAstAllocStmt;
-import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.types.LLDataType;
 import org.junit.Test;

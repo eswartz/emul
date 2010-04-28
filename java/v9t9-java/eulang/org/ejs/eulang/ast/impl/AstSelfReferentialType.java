@@ -4,18 +4,14 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
-import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
-import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -33,7 +29,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 * @param type
 	 */
 	public AstSelfReferentialType(IAstSymbolExpr symbolExpr, int level) {
-		super(new LLUpType(symbolExpr.getSymbol().getName(), symbolExpr.getSymbol(), level, symbolExpr.getType()));
+		super(new LLUpType(symbolExpr.getOriginalSymbol(), level, symbolExpr.getType()));
 		setSymbolExpr(symbolExpr);
 	}
 
@@ -42,7 +38,10 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 */
 	@Override
 	public IAstSelfReferentialType copy(IAstNode copyParent) {
-		return fixup(this, new AstSelfReferentialType(doCopy(symbolExpr, copyParent), ((LLUpType)getType()).getLevel()));
+		AstSelfReferentialType copy = new AstSelfReferentialType(doCopy(symbolExpr, copyParent), ((LLUpType)getType()).getLevel());
+		copy.symbol = symbol;
+		copy = fixup(this, copy);
+		return copy;
 	}
 	
 	@Override
@@ -115,13 +114,13 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 				if (theScope.getOwner() instanceof IAstDataType) { // TODO: any named type
 					count++;
 					ISymbol name = ((IAstDataType) theScope.getOwner()).getTypeName();
-					if (name != null && symbol.getName().equals(name.getName()))
+					if (name != null && symbol.equals(name))
 						break;
 				}
 				theScope = theScope.getParent();
 			}
 			assert count != 0;
-			setType(new LLUpType(symbol.getName(), symbol, count, getType()));
+			setType(new LLUpType(symbol, count, getType()));
 			changed = true;
 		}
 		/*else {
@@ -131,7 +130,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 				LLUpType upType = (LLUpType) type;
 				String name = ((IAstDataType) body).getType().getName();
 				if (name != null && !upType.getName().equals(name)) {
-					setType(new LLUpType(name, symbol, upType.getLevel()));
+					setType(new LLUpType(symbol, upType.getLevel(), getType()));
 					changed = true;
 				}
 			}
@@ -144,6 +143,8 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 */
 	@Override
 	public void setSymbolExpr(IAstSymbolExpr name) {
+		if (name.getSymbol().getNumber() == 10)
+			name = name;
 		Check.checkArg(name);
 		this.symbolExpr = reparent(this.symbolExpr, name);
 		//this.symbolExpr = name; 

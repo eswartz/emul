@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
-import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.symbols.IScope;
 
 

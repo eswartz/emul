@@ -3,9 +3,15 @@
  */
 package org.ejs.eulang.types;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.impl.AstNode;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * @author ejs
@@ -120,8 +126,42 @@ public class LLArrayType extends BaseLLType {
 		if (subType == null)
 			return this;
 		LLType newSub = subType.substitute(typeEngine, fromType, toType);
-		if (newSub != subType)
+		IAstTypedExpr newDynamicSizeExpr = dynamicSizeExpr;
+		if (newDynamicSizeExpr != null) {
+			newDynamicSizeExpr = (IAstTypedExpr) dynamicSizeExpr.copy(null);
+			boolean changed = AstNode.replaceTypesInTree(typeEngine, newDynamicSizeExpr, Collections.singletonMap(fromType, toType));
+			if (!changed) {
+				newDynamicSizeExpr = dynamicSizeExpr;
+			}
+		}
+		if (newSub != subType || dynamicSizeExpr != newDynamicSizeExpr)
 			return typeEngine.getArrayType(newSub, getArrayCount(), getDynamicSizeExpr());
 		else
 			return this;
-	}}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.symbols.IScope, java.util.Map)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, IScope origScope,
+			Map<Integer, ISymbol> symbolMap) {
+		if (subType == null)
+			return this;
+		LLType newSub = subType.substitute(typeEngine, origScope, symbolMap);
+		
+		IAstTypedExpr newDynamicSizeExpr = dynamicSizeExpr;
+		if (newDynamicSizeExpr != null) {
+			newDynamicSizeExpr = (IAstTypedExpr) dynamicSizeExpr.copy(null);
+			boolean changed = AstNode.replaceSymbols(typeEngine, dynamicSizeExpr, newDynamicSizeExpr, origScope, symbolMap);
+			if (!changed) {
+				newDynamicSizeExpr = dynamicSizeExpr;
+			}
+		}
+		
+		if (newSub != subType || dynamicSizeExpr != newDynamicSizeExpr)
+			return typeEngine.getArrayType(newSub, getArrayCount(), getDynamicSizeExpr());
+		else
+			return this;
+	}
+}

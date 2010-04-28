@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.ast;
 
-import org.ejs.eulang.symbols.ISymbol;
-
 /**
  * This node references the name of the type in which this reference is embedded.
  * This resolves to an LLUpType.

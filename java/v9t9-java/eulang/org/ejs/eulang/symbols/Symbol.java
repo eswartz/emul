@@ -8,7 +8,6 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.symbols.ISymbol.Visibility;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -100,7 +99,7 @@ public class Symbol implements ISymbol {
 	@Override
 	public String toString() {
 		//return "\"" + name + "\"" + ":" +(type != null ? type.toString() : "<unknown>");
-		return getUniqueName() + " [" +(type != null ? type.toString() : "<unknown>") + "]";
+		return getUniqueName() + " [" +(type != null ? type.getName() : "<unknown>") + "]";
 	}
 	
 	/* (non-Javadoc)
@@ -165,7 +164,7 @@ public class Symbol implements ISymbol {
 		if (type != this.type) {
 			// the symbol itself should not have a type for defines
 			assert !(def instanceof IAstDefineStmt);
-			assert !(scope.getOwner() instanceof IAstDefineStmt); 
+			//assert !(scope.getOwner() instanceof IAstDefineStmt); 
 			this.type = type;
 			llvmName = null;
 		}
@@ -183,9 +182,13 @@ public class Symbol implements ISymbol {
 	 */
 	@Override
 	public void setTemporary(boolean temp) {
-		this.temp = temp;
-		if (temp)
-			this.number = scope.nextId();
+		if (temp != this.temp) {
+			getScope().remove(this);
+			this.temp = temp;
+			if (temp)
+				this.number = scope.nextId();
+			getScope().add(this);
+		}
 	}
 	
 	/* (non-Javadoc)

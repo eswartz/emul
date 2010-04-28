@@ -21,11 +21,9 @@ import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -183,7 +181,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	 */
 	public ISymbol newTempSymbol() {
 		//ISymbol symbol = localScope.addTemporary(tempId + "", false);
-		ISymbol symbol = localScope.add(tempId + "");
+		ISymbol symbol = localScope.add(tempId + "", false);
 		tempId++;
 		return symbol;
 	}

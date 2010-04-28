@@ -996,6 +996,38 @@ public class TestTypes extends BaseParserTest {
     }
 
 	/**
+	 * Test that the symbols created for generic types are really generic
+	 * and unique 
+	 * @throws Exception
+	 */
+	@Test 
+	public void testGenericTypes0() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [] data {\n" +
+				"        next:List^;\n" + 
+				"};\n" + 
+				"\n" +
+				"intList = code() {\n"+
+				"   list1 : List<>;\n" +
+				"   list1.next^ = &list1;\n"+
+				"};\n" +
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(1, data.getInstanceFields().length);
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[0];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+
+	/**
 	 * When adding to a generic data, we can instantiate types 
 	 * @throws Exception
 	 */
@@ -1065,6 +1097,8 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test 
 	public void testGenericTypes2() throws Exception {
+		// there are two expansions here; be sure to name the types properly
+		// so they don't get confused in LLVM
 		dumpTypeInfer = true;
 		dumpTreeize = true;
 		IAstModule mod = doFrontend(

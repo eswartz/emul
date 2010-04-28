@@ -4,9 +4,6 @@
 package org.ejs.eulang.types;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,14 +14,19 @@ import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.Error;
+import org.ejs.eulang.ast.ExpandAST;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.ast.impl.AstName;
+import org.ejs.eulang.ast.impl.AstNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -48,8 +50,11 @@ import org.ejs.eulang.symbols.ISymbol;
  * <p>
  * When a definition (IAstDefinition) is referenced, it may have more than
  * one expansion.  Either it has been explicitly declared with several variants
- * or it has generic types.  We deduce whether it is a generic AST here and 
- * create and select a concrete instance if so.
+ * or it has generic types.  If it has a generic type, we ensure that all the
+ * unknown types in the declaration are named and replaced throughout the tree,
+ * so we can distinguish unnamed generic types versus unknown types, which could
+ * not be deduced (yet).  We create concrete instances for the generic instances
+ * if we can infer the types.
  * <p>
  * Otherwise, the outcome of this phase is a tree where types may still be
  * incomplete, due to symbols that lack types.
@@ -139,7 +144,10 @@ public class TypeInference {
 					//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
 					
 					TypeInference inference = subInferenceJob();
+					
+					LLType origType = bodyExpr.getType();
 					defineChanged = inference.infer(bodyExpr, false);
+					
 					
 					if (DUMP) {
 						System.out.println("Inferring on define:");
@@ -151,12 +159,15 @@ public class TypeInference {
 						
 						// see if we can still infer some types
 						if (!genericizedSet.contains(bodyExpr)) {
-							boolean madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
+							boolean madeGeneric = false;
+							madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
 							genericizedSet.add(bodyExpr);
 							if (madeGeneric) {
 								defineChanged = true;
 							}
 						}
+						
+						//bodyExpr.setType(origType);
 						return defineChanged;
 					}
 					
@@ -175,17 +186,22 @@ public class TypeInference {
 					messages.addAll(inference.getMessages());
 					
 					changed |= inferUp(bodyExpr);
+					//bodyExpr.setType(origType);
 				} else if (origDefineType.isGeneric()) {
 					
 				} else {
 					// infer in case expansions introduced more unknown nodes inside
+					//LLType origType = bodyExpr.getType();
 					changed |= inferUp(bodyExpr);
+					//bodyExpr.setType(origType);
 				}
 			}
 			
 			changed |= inferUp(defineStmt.getSymbolExpr());
 			
 			recurse = false;
+			
+			return changed;
 		}
 
 		// don't infer on macros (until we know how to remove/instantiate generic args)
@@ -219,6 +235,65 @@ public class TypeInference {
 			}
 		}		
 
+		return changed;
+	}
+
+
+	/**
+	 * Ensure the given generic define has a generic expression where all the top-level types are
+	 * generic.
+	 * @param expr
+	 */
+	private boolean genericize(IScope scope, IAstTypedExpr defineExpr) {
+		LLType type = defineExpr.getType();
+		if (!(type instanceof LLAggregateType))
+			return false;
+		LLAggregateType aggregate = (LLAggregateType) type;
+		
+		LLType[] types = new LLType[aggregate.getCount()];
+		
+		boolean anyGeneric = false;
+		
+		int unique = 0;
+		for (int i = 0; i < aggregate.getCount(); i++) {
+			if ((types[i] = aggregate.getType(i)) == null) {
+				
+				// add new type variables
+				anyGeneric = true;
+				String name = "T" + unique;
+				while (scope.get(name) != null) {
+					unique++;
+					name = "T" + unique;
+				}
+				
+				// the AST <-> Symbol <-> LLType stanza...
+				IAstName genericName = new AstName(name);
+				ISymbol genericSym = scope.add(genericName);
+				genericSym.setDefinition(genericName);
+				
+				types[i] = new LLGenericType(name);
+				genericSym.setType(types[i]);
+				
+			}
+		}
+		
+		if (!anyGeneric)
+			return false;
+		
+		LLType newType = aggregate.updateTypes(typeEngine, types);
+		defineExpr.setType(newType);
+		
+		
+		boolean changed = false;
+		/*
+		TypeInference inference = subInferenceJob();
+		changed = inference.infer(defineExpr, false);
+		
+		if (changed && DUMP) {
+			System.out.println("Replacing generic types in: ");
+			DumpAST dump = new DumpAST(System.out);
+			defineExpr.accept(dump);
+		}*/
 		return changed;
 	}
 
@@ -296,8 +371,7 @@ public class TypeInference {
 				expansion.accept(dump);
 			}
 			
-			expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName(),
-					false);
+			expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName());
 			expansionSym.setDefinition(expansion);
 		}
 		
@@ -317,37 +391,24 @@ public class TypeInference {
 		site.setSymbol(expansionSym);
 		site.setType(expandedType);
 		
-		define.registerInstance(body.getType(), expansion);
+		define.registerInstance((IAstTypedExpr) body, expansion);
 		return true;
 	}
 
 	/**
+	 * Replace generics whose names match the same positions in the expanded type.
+	 * This is not the same as expanding an instance since (1) we replace only
+	 * types, not arbitrary ASTS, and (2) we don't know the names of the generic
+	 * type variables, but we already have generic types to replace. 
 	 * @param expansion
 	 * @param expandedType
 	 */
-	private void replaceGenericTypes(IAstTypedExpr expansion,
-			LLType expandedType) {
+	private void replaceGenericTypes(IAstTypedExpr expansion, LLType expandedType) {
 		Map<LLType, LLType> expansionMap = new HashMap<LLType, LLType>();
 		getTypeInstanceMap(expansion.getType(), expandedType, expansionMap);
 		
-		replaceTypes(expansion, expansionMap);
-	}
-
-	/**
-	 * @param expansion
-	 * @param expansionMap
-	 */
-	private void replaceTypes(IAstNode expansion,
-			Map<LLType, LLType> expansionMap) {
-		if (expansion instanceof IAstTypedNode) {
-			LLType fromType = ((IAstTypedNode)expansion).getType();
-			LLType repl = expansionMap.get(fromType);
-			if (repl != null)
-				((IAstTypedNode)expansion).setType(repl);
-		}
-		for (IAstNode kid : expansion.getChildren()) {
-			replaceTypes(kid, expansionMap);
-		}
+		ExpandAST expand = new ExpandAST(typeEngine);
+		AstNode.replaceTypesInTree(typeEngine, expansion, expansionMap);
 	}
 
 	private void getTypeInstanceMap(LLType currentType,
@@ -365,65 +426,12 @@ public class TypeInference {
 		}
 	}
 
-	/**
-	 * Make the given expression generic.  Replace types with variables.
-	 * @param expr
-	 */
-	public boolean genericize(IScope scope, IAstTypedExpr defineExpr) {
-		LLType type = defineExpr.getType();
-		if (!(type instanceof LLAggregateType))
-			return false;
-		LLAggregateType aggregate = (LLAggregateType) type;
-		
-		LLType[] types = new LLType[aggregate.getCount()];
-		
-		Set<String> currentNames = new HashSet<String>();
-		for (ISymbol symbol : scope.getSymbols()) {
-			currentNames.add(symbol.getName());
-		}
-		
-		boolean anyGeneric = false;
-		
-		int unique = 0;
-		for (int i = 0; i < aggregate.getCount(); i++) {
-			if ((types[i] = aggregate.getType(i)) == null) {
-				anyGeneric = true;
-				String name = "T" + unique;
-				while (currentNames.contains(name)) {
-					unique++;
-					name = "T" + unique;
-				}
-				currentNames.add(name);
-				types[i] = new LLGenericType(name);
-			}
-		}
-		
-		if (!anyGeneric)
-			return false;
-		
-		LLType newType = aggregate.updateTypes(typeEngine, types);
-		defineExpr.setType(newType);
-		
-		boolean changed = false;
-		/*
-		TypeInference inference = subInferenceJob();
-		changed = inference.infer(defineExpr, false);
-		
-		if (changed && DUMP) {
-			System.out.println("Replacing generic types in: ");
-			DumpAST dump = new DumpAST(System.out);
-			defineExpr.accept(dump);
-		}*/
-		return changed;
-	}
-
-
-	/**
-	 * @param node
-	 */
 	private void validateTypes(IAstNode node) {
 		try {
 			boolean recurse = true;
+			if (node.getParent() == null && !(node instanceof IAstModule))
+				return;
+				
 			if (node instanceof IAstDefineStmt) {
 				IAstDefineStmt define = (IAstDefineStmt) node;
 				for (IAstTypedExpr expr : define.getConcreteInstances()) {

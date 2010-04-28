@@ -10,10 +10,8 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstDataType;
-import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -26,7 +24,6 @@ import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLStaticField;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -238,30 +235,21 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 			}
 		}
 		
-		String name = null;
 		ISymbol sym = getTypeName();
-		name = sym != null ? sym.getName() : null;
-		LLDataType data = typeEngine.getDataType(name, newIFields, newSFields);
+		assert sym != null;
+		LLDataType data = typeEngine.getDataType(sym, newIFields, newSFields);
 		
-		data = (LLDataType) data.substitute(typeEngine, 
-				new LLUpType(name, null, 0, data), 
+		/*data = (LLDataType) data.substitute(typeEngine, 
+				new LLUpType(sym, 0, data), 
 				data);
-		
+		*/
 		return data;
 	}
 
 	public ISymbol getTypeName() {
 		return typeName;
-		/*
-		ISymbol name = null;
-		if (getParent() instanceof IAstDefineStmt) {
-			name = ((IAstDefineStmt) getParent()).getSymbol();
-		} else if (getParent() != null && getParent().getParent() instanceof IAstDefineStmt) {
-			name = ((IAstDefineStmt) getParent().getParent()).getSymbol();
-		}
-		return name;
-		*/
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstDataType#setTypeName(org.ejs.eulang.symbols.ISymbol)
 	 */

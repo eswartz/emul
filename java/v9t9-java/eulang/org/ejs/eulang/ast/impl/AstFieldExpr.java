@@ -10,7 +10,6 @@ import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
-import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLDataType;

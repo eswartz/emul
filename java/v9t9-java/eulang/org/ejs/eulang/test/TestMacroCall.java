@@ -12,7 +12,6 @@ import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstStmtListExpr;
-import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 

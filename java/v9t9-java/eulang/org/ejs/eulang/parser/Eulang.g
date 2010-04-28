@@ -504,7 +504,7 @@ idExpr options { backtrack=true;} :
     | idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) 
 ;
     
-instantiation : LESS (instanceExpr (COMMA instanceExpr)*) GREATER   -> ^(LIST instanceExpr*) 
+instantiation : LESS (instanceExpr (COMMA instanceExpr)*)? GREATER   -> ^(LIST instanceExpr*) 
   ; 
 
 instanceExpr options { backtrack=true;} : type | atom ;

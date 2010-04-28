@@ -3,11 +3,14 @@
  */
 package org.ejs.eulang.types;
 
+import java.util.Map;
+
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**
@@ -22,14 +25,14 @@ public class LLUpType extends BaseLLType {
 	
 	/**
 	 * @param symbol
-	 * @param actualType TODO
+	 * @param actualType 
 	 * @param bits
 	 * @param llvmType
 	 * @param basicType
 	 * @param subType
 	 */
-	public LLUpType(String name, ISymbol symbol, int level, LLType actualType) {
-		super(name, 1, "%" + name, BasicType.DATA, actualType instanceof LLUpType ? actualType.getSubType() : actualType);
+	public LLUpType(ISymbol symbol, int level, LLType actualType) {
+		super(symbol.getUniqueName(), 1, "%" + symbol.getUniqueName(), BasicType.DATA, actualType instanceof LLUpType ? actualType.getSubType() : actualType);
 		this.symbol = symbol;
 		this.level = level;
 	}
@@ -51,11 +54,14 @@ public class LLUpType extends BaseLLType {
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass()) {
+			if (obj instanceof LLType) {
+				return name.equals(((LLType) obj).getName());
+			}
 			return false;
 		}
 		// don't check super.equals, which checks subtypes
 		LLUpType other = (LLUpType) obj;
-		if (!getName().equals(other.getName()))
+		if (!symbol.getName().equals(other.symbol.getName()))
 			return false;
 		return true;
 	}
@@ -66,7 +72,7 @@ public class LLUpType extends BaseLLType {
 	 */
 	@Override
 	public boolean isComplete() {
-		return level != 0;
+		return level != 0 && subType != null;
 	}
 
 	public int getLevel() { 
@@ -88,7 +94,7 @@ public class LLUpType extends BaseLLType {
 				targetName = targetName.substring(0, idx);
 			return getName().equals(targetName);
 			*/
-			return getSymbol().getName().equals(target.getName());
+			return getSymbol().getUniqueName().equals(target.getName());
 		}
 		return super.isCompatibleWith(target);
 	}
@@ -135,8 +141,31 @@ public class LLUpType extends BaseLLType {
 		if (subType != null) {
 			LLType newSub = subType.substitute(typeEngine, fromType, toType);
 			if (newSub != subType)
-				return new LLUpType(name, symbol, level, newSub);
+				return new LLUpType(symbol, level, newSub);
 		}
 		return this;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.symbols.IScope, java.util.Map)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, IScope origScope,
+			Map<Integer, ISymbol> symbolMap) {
+		ISymbol repl = null;
+		if (origScope == symbol.getScope()) {
+			repl = symbolMap.get(symbol.getNumber());
+			if (repl == null)
+				repl = symbol;
+		}
+		LLType newSub = null;
+		if (subType != null) {
+			newSub = subType.substitute(typeEngine, origScope, symbolMap);
+		}
+		if (repl != symbol || newSub != subType) {
+			return new LLUpType(repl, level, newSub);
+		}
+		return this;
+	}
+	
 }

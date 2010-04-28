@@ -88,11 +88,12 @@ public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	 * @param expansion expanded and type-specific body of the define
 	 * @throws IllegalArgumentException if the bodyType is not generic or the symbol does not have a body
 	 */
-	void registerInstance(LLType bodyType, IAstTypedExpr expansion);
+	void registerInstance(IAstTypedExpr body, IAstTypedExpr expansion);
 	
 	/**
 	 * Get all concrete instances.  These are the non-generic body expressions
 	 * and the generated instances.
 	 */
 	Collection<IAstTypedExpr> getConcreteInstances();
+
 }

@@ -197,6 +197,7 @@ public class LLVMGenerator {
 			if (typed.getType() == null || !typed.getType().isComplete()) {
 				throw new ASTException(node, "incomplete type information; add some specifications");
 			}
+			ll.emitTypes(typed.getType());
 		}
 		for (IAstNode kid : node.getChildren()) {
 			ensureTypes(kid);
@@ -1156,7 +1157,10 @@ entry:
 			initType = typeEngine.getArrayType(initFieldTypes.get(0), size, null);
 			initOp = new LLArrayOp((LLArrayType) initType, constOps.toArray(new LLOperand[constOps.size()]));
 		} else {
-			initType = typeEngine.getDataType(expr.getType().getName() + "$init", initFieldTypes);
+			ISymbol dataSym = ((LLDataType) expr.getType()).getSymbol();
+			ISymbol initSym = dataSym.getScope().add(dataSym.getUniqueName() + "$init", true);
+			
+			initType = typeEngine.getDataType(initSym, initFieldTypes);
 			initOp = new LLStructOp((LLAggregateType) initType, constOps.toArray(new LLOperand[constOps.size()]));
 		}
 		
@@ -1527,6 +1531,7 @@ entry:
 		
 		LLType realFuncType = expr.getFunction().getType();
 		LLCodeType funcType;
+		
 		if (realFuncType instanceof LLPointerType)
 			funcType = (LLCodeType) realFuncType.getSubType();
 		else

@@ -18,7 +18,6 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.impl.AstBoolLitExpr;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
-import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.symbols.ISymbol;
@@ -37,7 +36,6 @@ import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLStaticField;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.LLVoidType;
 
 /**
@@ -254,7 +252,7 @@ public class TypeEngine {
 	 * @param iNT2
 	 */
 	private void populateType(GlobalScope globalScope, String name, LLType type) {
-		ISymbol symbol = globalScope.add(name);
+		ISymbol symbol = globalScope.add(name, false);
 		symbol.setDefinition(new AstType(type));
 		
 	}
@@ -561,12 +559,13 @@ public class TypeEngine {
 		return type;
 	}
 	
-	public LLDataType getDataType(String name, List<LLInstanceField> ifields, List<LLStaticField> statics) {
+	public LLDataType getDataType(ISymbol symbol, List<LLInstanceField> ifields, List<LLStaticField> statics) {
+		String name = symbol.getUniqueName();
 		String key = getDataTypeKey(name, ifields, statics);
 		LLDataType data = dataTypeMap.get(key);
 		if (data == null) {
 			//name = uniquify(name);
-			data = new LLDataType(this, name,
+			data = new LLDataType(this, symbol,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
 					(LLStaticField[]) statics.toArray(new LLStaticField[statics.size()]));
 			
@@ -607,15 +606,16 @@ public class TypeEngine {
 		return type != null ? (type.isGeneric() ? type.getName() : type.getLLVMType()) : "<u>";
 	}
 	
-	public LLDataType getDataType(String name, List<LLType> fieldTypes) {
+	public LLDataType getDataType(ISymbol symbol, List<LLType> fieldTypes) {
+		String name = symbol.getUniqueName();
 		String key = getDataTypeKey(name, fieldTypes);
 		LLDataType data = dataTypeMap.get(key);
 		if (data == null) {
 			List<LLInstanceField> ifields = new ArrayList<LLInstanceField>(fieldTypes.size());
 			for (LLType type : fieldTypes)
 				ifields.add(new LLInstanceField("", type, null, null));
-			name = uniquify(name);
-			data = new LLDataType(this, name,
+			//name = uniquify(name);
+			data = new LLDataType(this, symbol,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
 					null);
 			llvmNameToTypeMap.put(name, data);

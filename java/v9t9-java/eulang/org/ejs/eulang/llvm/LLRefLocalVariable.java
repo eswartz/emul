@@ -53,7 +53,7 @@ public class LLRefLocalVariable implements ILLVariable {
 		
 		// the pointer to the object entry through the symbol
 		LLType objRefStorage = typeEngine.getPointerType(symbol.getType());
-		objRefSymbol = symbol.getScope().addTemporary(symbol.getName() + "$obj", false);
+		objRefSymbol = symbol.getScope().addTemporary(symbol.getName() + "$obj");
 		objRefSymbol.setType(objRefStorage);
 	}
 

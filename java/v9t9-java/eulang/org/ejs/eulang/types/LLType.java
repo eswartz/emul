@@ -3,7 +3,11 @@
  */
 package org.ejs.eulang.types;
 
+import java.util.Map;
+
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * @author ejs
@@ -83,4 +87,12 @@ public interface LLType {
 	 * @return this or an updated type
 	 */
 	LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType);
+	/**
+	 * @param typeEngine
+	 * @param origScope
+	 * @param symbolMap
+	 * @return
+	 */
+	LLType substitute(TypeEngine typeEngine, IScope origScope,
+			Map<Integer, ISymbol> symbolMap);
 }

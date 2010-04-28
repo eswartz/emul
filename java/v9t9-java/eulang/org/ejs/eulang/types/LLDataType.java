@@ -4,11 +4,12 @@
 package org.ejs.eulang.types;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
-import org.ejs.eulang.ast.IAstDataType;
-import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * @author ejs
@@ -22,9 +23,11 @@ public class LLDataType extends BaseLLAggregateType {
 	private LLInstanceField[] ifields;
 	private LLStaticField[] statics;
 	private int sizeof;
+	private final ISymbol symbol;
 
-	public LLDataType(TypeEngine engine, String name, LLInstanceField[] ifields, LLStaticField[] statics) {
-		super(name, sumTypeBits(engine, ifields), toLLVMString(name, ifields), BasicType.DATA, null, ifields == null);
+	public LLDataType(TypeEngine engine, ISymbol symbol, LLInstanceField[] ifields, LLStaticField[] statics) {
+		super(symbol.getUniqueName(), sumTypeBits(engine, ifields), toLLVMString(symbol.getUniqueName(), ifields), BasicType.DATA, null, ifields == null);
+		this.symbol = symbol;
 		this.ifields = ifields != null ? ifields : NO_FIELDS;
 		this.statics = statics != null ? statics : NO_STATIC_FIELDS;
 		
@@ -167,7 +170,7 @@ public class LLDataType extends BaseLLAggregateType {
 					field.getDefinition(), field.getDefault());
 		}
 		
-		return typeEngine.getDataType(name, Arrays.asList(newIFields), Arrays.asList(newSFields));
+		return typeEngine.getDataType(symbol, Arrays.asList(newIFields), Arrays.asList(newSFields));
 	}
 
 	/**
@@ -239,5 +242,29 @@ public class LLDataType extends BaseLLAggregateType {
 		if (target instanceof LLUpType)
 			return target.isCompatibleWith(this);
 		return super.isCompatibleWith(target);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLAggregateType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.symbols.IScope, java.util.Map)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, IScope origScope,
+			Map<Integer, ISymbol> symbolMap) {
+		ISymbol newSym = symbol;
+		if (origScope == symbol.getScope()) {
+			newSym = symbolMap.get(symbol.getNumber());
+			if (newSym != null) {
+				LLType newData = typeEngine.getDataType(newSym, Arrays.asList(ifields), Arrays.asList(statics));
+				return newData.substitute(typeEngine, origScope, symbolMap);
+			}
+		}
+		return super.substitute(typeEngine, origScope, symbolMap);
+	}
+
+	/**
+	 * @return
+	 */
+	public ISymbol getSymbol() {
+		return symbol;
 	}
 }

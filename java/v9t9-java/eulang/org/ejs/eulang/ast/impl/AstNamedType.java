@@ -11,9 +11,7 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
-import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.TypeException;
 
 

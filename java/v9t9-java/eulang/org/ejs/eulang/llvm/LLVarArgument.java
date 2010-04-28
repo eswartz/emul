@@ -33,7 +33,7 @@ public class LLVarArgument implements ILLVariable {
 		
 		// the pointer to the value through the symbol
 		LLType varStorage = typeEngine.getPointerType(symbol.getType());
-		addrSymbol = symbol.getScope().addTemporary(symbol.getName() + "$va", false);
+		addrSymbol = symbol.getScope().addTemporary(symbol.getName() + "$va");
 		addrSymbol.setType(typeEngine.getPointerType(varStorage));
 	}
 

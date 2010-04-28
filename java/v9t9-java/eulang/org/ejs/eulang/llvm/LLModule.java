@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.impl.AstName;
-import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
 import org.ejs.eulang.llvm.directives.LLTypeDirective;
@@ -21,6 +20,7 @@ import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 
 /**
  * @author ejs
@@ -82,7 +82,7 @@ public class LLModule {
 		String symName = sb.toString();
 		ISymbol modSymbol = moduleScope.get(symName);
 		if (modSymbol == null) {
-			modSymbol = moduleScope.add(symName);
+			modSymbol = moduleScope.add(symName, false);
 			modSymbol.setType(type);
 		}
 		return modSymbol;
@@ -130,6 +130,8 @@ public class LLModule {
 	 */
 	public boolean addExternType(LLType type) {
 		if (type == null|| type.getName() == null || type.getBasicType() == BasicType.VOID) return false;
+		if (type instanceof LLUpType)
+			return false;
 		if (emittedTypes.containsKey(type))
 			return false;
 		ISymbol typeSymbol = globalScope.get(type.getName());

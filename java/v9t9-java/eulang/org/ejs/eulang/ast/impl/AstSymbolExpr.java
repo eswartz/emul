@@ -3,10 +3,13 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.Collections;
+
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -43,7 +46,10 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
      */
     @Override
     public IAstSymbolExpr copy(IAstNode copyParent) {
-    	return fixup(this, new AstSymbolExpr(this));
+    	//return fixup(this, new AstSymbolExpr(this));
+    	AstSymbolExpr copy = new AstSymbolExpr(this);
+    	copy.setSourceRef(getSourceRef());
+    	return copy;
     }
     
     @Override
@@ -205,17 +211,33 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 				newType = selectedBody.getType();
 			
 			if (!isUnique || (newType != null &&  newType.isGeneric())) {
-				ISymbol instanceSymbol = symbol.getScope().addTemporary(symbol.getName(),
-						false);
+				ISymbol instanceSymbol = symbol.getScope().addTemporary(symbol.getName());
 				instanceSymbol.setType(newType);
 				IAstTypedExpr copy = (IAstTypedExpr) selectedBody.copy(null);
 				copy.setType(newType);
+				// replace self-refs to symbol
+				ISymbol theSymbol = symbol;
+				if (copy instanceof IAstDataType) {
+					theSymbol = ((IAstDataType) ((IAstDataType) selectedBody).getScope().getOwner()).getTypeName();
+					((IAstDataType) copy).setTypeName(instanceSymbol);
+				}
+				AstNode.replaceSymbols(typeEngine, selectedBody, copy, theSymbol.getScope(), Collections.singletonMap(theSymbol.getNumber(), instanceSymbol));
+				AstNode.replaceTypesInTree(typeEngine, copy, Collections.singletonMap(selectedBody.getType(), newType));
 				//copy.uniquifyIds();
 				instanceSymbol.setDefinition(copy);
 				
+				//
+				
+				if (copy instanceof IAstDataType) {
+					((IAstDataType) copy).setTypeName(instanceSymbol);
+				}
 				origSymbol = symbol;
 				symbol = instanceSymbol;
+				
+				//stmt.registerInstance(selectedBody, copy);
+				
 				setType(newType);
+				
 			} else {
 				super.setType(newType);
 				selectedBody.setType(newType);

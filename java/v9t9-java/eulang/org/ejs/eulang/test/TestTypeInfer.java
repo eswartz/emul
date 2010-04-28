@@ -25,7 +25,6 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
@@ -587,7 +586,8 @@ public class TestTypeInfer extends BaseParserTest {
 	
 	@Test
     public void testExample1Fail() throws Exception {
-		// can't do this... if we infer the LHS type, it messes up "real" types
+		// can't allow this right now... if we infer the LHS type this way, it messes up "real" types
+		// which may dereference through pointers or fields
     	IAstModule mod = treeize(
     			"testExample1 = code (z; a : Byte) {\n" +
     			"   z = a | Byte(6);\n" +
@@ -1173,7 +1173,7 @@ public class TestTypeInfer extends BaseParserTest {
     	assertEquals(1, data.getInstanceFields().length);
     	LLInstanceField field = data.getInstanceFields()[0];
     	LLPointerType ptr = (LLPointerType) field.getType();
-    	assertFalse(ptr.getSubType() instanceof LLUpType);
+    	assertFalse(ptr.getSubType()== data);
     	
     }
     @Test 
@@ -1197,7 +1197,7 @@ public class TestTypeInfer extends BaseParserTest {
     	LLPointerType funcPtr = (LLPointerType) field.getType();
     	LLCodeType code = (LLCodeType) funcPtr.getSubType();
     	assertEquals(typeEngine.INT, code.getArgTypes()[1]);
-    	assertEquals(new LLUpType("Class", classSym, 1, null), code.getArgTypes()[0]);
+    	assertEquals(new LLUpType(classSym, 1, null), code.getArgTypes()[0]);
     }
 
     @Test

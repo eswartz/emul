@@ -13,7 +13,7 @@ import org.ejs.eulang.TypeEngine;
  */
 public class LLTupleType extends BaseLLAggregateType {
 
-	private LLType[] types;
+	private final LLType[] types;
 
 	/**
 	 * @param name

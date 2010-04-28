@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
@@ -34,7 +36,8 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	private IAstNodeList<IAstTypedExpr> bodyList;
 	//private Map<LLType, IAstTypedExpr> typedBodyMap = new HashMap<LLType, IAstTypedExpr>();
 	
-	private Map<LLType, List<IAstTypedExpr>> instanceMap = new HashMap<LLType, List<IAstTypedExpr>>();
+	private Map<Integer, List<IAstTypedExpr>> instanceIdMap = new HashMap<Integer, List<IAstTypedExpr>>();
+	private Map<LLType, List<IAstTypedExpr>> instanceTypeMap = new HashMap<LLType, List<IAstTypedExpr>>();
 	private boolean generic;
 
 	public AstDefineStmt(IAstSymbolExpr name, boolean generic, IScope scope, IAstNodeList<IAstTypedExpr> bodyList) {
@@ -250,7 +253,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 */
 	@Override
 	public Map<LLType, List<IAstTypedExpr>> bodyToInstanceMap() {
-		return Collections.unmodifiableMap(instanceMap);
+		return Collections.unmodifiableMap(instanceTypeMap);
 	}
 	
 	protected boolean typeMatchesExactly(LLType orig, LLType target) {
@@ -320,7 +323,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
         	//assert instanceType == null || bodyType.equals(instanceType);
         	return null;
         }
-		List<IAstTypedExpr> list = instanceMap.get(bodyType);
+		List<IAstTypedExpr> list = instanceTypeMap.get(bodyType);
 		if (list == null)
 			return getMatchingBodyExpr(instanceType);
 		
@@ -345,25 +348,46 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.IAstDefineStmt#registerInstance(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstTypedExpr)
 	 */
 	@Override
-	public void registerInstance(LLType type, IAstTypedExpr expansion) {
+	public void registerInstance(IAstTypedExpr body, IAstTypedExpr expansion) {
 		//if (type == null || !type.isGeneric()) {
 		//	throw new IllegalArgumentException();
 		//}
-		
-		List<IAstTypedExpr> list = instanceMap.get(type);
+
+		List<IAstTypedExpr> list = instanceTypeMap.get(body.getType());
 		if (list == null) {
-			for (IAstTypedExpr body : bodyList.list()) {
-				if (body.getType().equals(type)) {
+			
+			for (IAstTypedExpr xbody : bodyList.list()) {
+				//if (typeMatchesExactly(xbody.getType(), body.getType())) {
+					if (xbody.getType().equals(body.getType())) {
 					list = new ArrayList<IAstTypedExpr>();
-					instanceMap.put(type, list);
+					//instanceIdMap.put(xbody.getId(), list);
+					instanceTypeMap.put(body.getType(), list);
 					break;
 				}
 			}
-			if (list == null)
-				throw new IllegalArgumentException("type should match one inferred previously");
+			//if (list == null)
+			//	throw new IllegalArgumentException("type should match one inferred previously");
 		}
-		if (!list.contains(expansion))
+		if (list == null) {
+			list = instanceIdMap.get(body.getId());
+			if (list == null) {
+				
+				//for (IAstTypedExpr body : bodyList.list()) {
+				//	if (typeMatchesExactly(body.getType(), type)) {
+						list = new ArrayList<IAstTypedExpr>();
+						instanceIdMap.put(body.getId(), list);
+						//instanceTypeMap.put(body.getType(), list);
+				//		break;
+				//	}
+				//}
+				if (list == null)
+					throw new IllegalArgumentException("type should match one inferred previously");
+			}
+		}
+		if (!list.contains(expansion)) {
 			list.add(expansion);
+			//expansion.setParent(this);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -371,12 +395,15 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 */
 	@Override
 	public Collection<IAstTypedExpr> getConcreteInstances() {
-		List<IAstTypedExpr> list = new ArrayList<IAstTypedExpr>();
+		Set<IAstTypedExpr> list = new HashSet<IAstTypedExpr>();
 		for (IAstTypedExpr expr : bodyList.list()) {
 			if (expr.getType() != null && expr.getType().isComplete() && !expr.getType().isGeneric())
 				list.add(expr);
 		}
-		for (List<IAstTypedExpr> alist : instanceMap.values()) {
+		for (List<IAstTypedExpr> alist : instanceIdMap.values()) {
+			list.addAll(alist);
+		}
+		for (List<IAstTypedExpr> alist : instanceTypeMap.values()) {
 			list.addAll(alist);
 		}
 		return list;

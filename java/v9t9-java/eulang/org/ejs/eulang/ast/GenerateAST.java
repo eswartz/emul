@@ -4,9 +4,6 @@
 package org.ejs.eulang.ast;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +74,6 @@ import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.symbols.NamespaceScope;
 import org.ejs.eulang.types.LLGenericType;
-import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -1991,8 +1987,10 @@ public class GenerateAST {
 		if (generic) pushScope(new LocalScope(currentScope));
 		try {
 			IAstTypedExpr expr = checkConstruct(exprTree, IAstTypedExpr.class);
-			if (expr instanceof IAstDataType) // TODO: other types
-				((IAstDataType) expr).setTypeName(symbolExpr.getSymbol());
+			if (expr instanceof IAstDataType) { // TODO: other types
+				ISymbol symbol = symbolExpr.getSymbol();
+				((IAstDataType) expr).setTypeName(symbol);
+			}
 			return expr;
 		} finally {
 			if (generic) popScope(exprTree);

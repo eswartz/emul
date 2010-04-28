@@ -281,31 +281,89 @@ abstract public class AstNode implements IAstNode {
     			copySymbol.setType(symbol.getType());
     		}
     	}
-    	replaceSymbols(this, copyRoot, scope, symbolMap);
+    	replaceSymbolsChecking(this, copyRoot, scope, symbolMap, true);
     	return copy;
     }
 	
     /**
-	 * @param copyRoot
+	 * @param typeEngine 
+     * @param copyRoot
      * @param origScope 
 	 * @param symbolMap
 	 */
-	private static void replaceSymbols(IAstNode origRoot, IAstNode copyRoot,
+	public static boolean replaceSymbols(TypeEngine typeEngine, IAstNode origRoot, IAstNode copyRoot,
 			IScope origScope, Map<Integer, ISymbol> symbolMap) {
+		boolean changed = false;
+		changed |= replaceSymbolsChecking(origRoot, copyRoot, origScope, symbolMap, false);
+		changed |= replaceSymbolsInTypes(origRoot, copyRoot, origScope, symbolMap, typeEngine);
+		return changed;
+	}
+
+	/**
+	 * @param origRoot
+	 * @param copyRoot
+	 * @param origScope
+	 * @param symbolMap
+	 * @param typeEngine
+	 */
+	private static boolean replaceSymbolsInTypes(IAstNode origRoot,
+			IAstNode copyRoot, IScope origScope,
+			Map<Integer, ISymbol> symbolMap, TypeEngine typeEngine) {
+		boolean changed = false;
+		if (copyRoot instanceof IAstTypedNode) {
+			IAstTypedNode typed = (IAstTypedNode) copyRoot;
+			LLType typedType = typed.getType();
+			if (typedType != null) {
+				LLType replaced = typedType.substitute(typeEngine, origScope, symbolMap);
+				//LLType replaced = typedType;
+				if (typedType != replaced) {
+					typed.setType(replaced);
+					changed = true;
+				}
+			}
+		}
+		if (copyRoot instanceof IAstSymbolExpr) {
+			ISymbol symbol = ((IAstSymbolExpr) copyRoot).getSymbol();
+			LLType typedType = symbol.getType();
+			if (typedType != null) {
+				LLType replaced = typedType.substitute(typeEngine, origScope, symbolMap);
+				//LLType replaced = typedType;
+				if (typedType != replaced) {
+					symbol.setType(replaced);
+					changed = true;
+				}
+			}
+		}
+		IAstNode[] kids = origRoot.getChildren();
+		IAstNode[] copyKids = copyRoot.getChildren();
+		for (int i = 0; i < kids.length; i++) {
+			replaceSymbolsInTypes(kids[i], copyKids[i], origScope, symbolMap, typeEngine);
+		}
+		return changed;
+	}
+
+	private static boolean replaceSymbolsChecking(IAstNode origRoot,
+			IAstNode copyRoot, IScope origScope, Map<Integer, ISymbol> symbolMap, boolean checking) {
+		boolean changed = false;
 		if (origRoot instanceof IAstSymbolExpr) {
 			ISymbol symbol = ((IAstSymbolExpr)origRoot).getSymbol();
 			if (symbol.getScope() == origScope) {
 				ISymbol replaced = symbolMap.get(symbol.getNumber());
-				assert (replaced != null);
-				((IAstSymbolExpr) copyRoot).setSymbol(replaced);
+				if (replaced != null) {
+					((IAstSymbolExpr) copyRoot).setSymbol(replaced);
+					changed = true;
+				} else {
+					if (checking)
+						assert(false);
+				}
 			}
 		}
 		IAstNode[] kids = origRoot.getChildren(); 
 		IAstNode[] copyKids = copyRoot.getChildren();
 		for (int i = 0; i < kids.length; i++) {
-			replaceSymbols(kids[i], copyKids[i], origScope, symbolMap);
+			changed |= replaceSymbolsChecking(kids[i], copyKids[i], origScope, symbolMap, checking);
 		}
-	
+		return changed;
 	}
 
 	/**
@@ -385,4 +443,54 @@ abstract public class AstNode implements IAstNode {
 		for (IAstNode kid : getChildren())
 			kid.uniquifyIds();
 	}
+
+
+	public static boolean replaceTypesInTree(TypeEngine typeEngine, IAstNode body,
+			Map<LLType, LLType> typeReplacementMap) {
+		boolean changed = false;
+		for (Map.Entry<LLType, LLType> entry : typeReplacementMap.entrySet()) {
+			// then, replace known type
+			changed |= replaceTypes(typeEngine, body, entry.getKey(), entry.getValue());
+		}
+		for (IAstNode kid : body.getChildren()) {
+			replaceTypesInTree(typeEngine, kid, typeReplacementMap);
+		}
+		return changed;
+	}
+
+	/**
+	 * @param body
+	 * @param varSymbol
+	 * @param type
+	 */
+	private static boolean replaceTypes(TypeEngine typeEngine, IAstNode root, LLType varType, LLType type) {
+		boolean changed = false;
+		if (root instanceof IAstTypedNode) {
+			IAstTypedNode typed = (IAstTypedNode) root;
+			LLType typedType = typed.getType();
+			if (typedType != null) {
+				LLType noGeneric = typedType.substitute(typeEngine, varType, type);
+				if (noGeneric != typedType) {
+					typed.setType(noGeneric);
+					changed = true;
+				}
+			}
+			if (typed instanceof IAstSymbolExpr) {
+				IAstSymbolExpr symbolExpr = (IAstSymbolExpr) typed;
+				ISymbol symbol = symbolExpr.getSymbol();
+				LLType symbolType = symbol.getType();
+				if (symbolType != null) {
+					LLType noGeneric = symbolType.substitute(typeEngine, varType, type);
+					if (noGeneric != symbolType) {
+						symbol.setType(noGeneric);
+						changed = true;
+					}
+				}
+			}
+		}
+		for (IAstNode kid : root.getChildren())
+			changed |= replaceTypes(typeEngine, kid, varType, type);
+		return changed;
+	}
+
 }

@@ -52,8 +52,14 @@ public interface IScope extends Iterable<ISymbol> {
 	 * @param symName
 	 * @return
 	 */
-	public ISymbol add(String symName);
+	public ISymbol add(String symName, boolean uniquify);
 
+	/**
+	 * Add a symbol to the scope.  
+	 * @param symName
+	 * @param makeUnique uniquify the name if 
+	 * @return
+	 */
 	
     /** Add a name to the scope.  Sets name's scope to this
      * and the name's parent to node.
@@ -80,7 +86,6 @@ public interface IScope extends Iterable<ISymbol> {
 	 * @return
 	 */
 	public ISymbol addTemporary(String name);
-	public ISymbol addTemporary(String name, boolean uniquifyt);
 
 	public ISymbol[] getSymbols();
 
@@ -115,6 +120,7 @@ public interface IScope extends Iterable<ISymbol> {
 	 * @return
 	 */
 	public boolean encloses(IScope otherScope);
+
 
 
 
