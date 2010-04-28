@@ -785,7 +785,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
         }
         bf.append(']');
-        if (level == 0) bf.append('\n');
         return true;
     }
 
