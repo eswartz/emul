@@ -34,6 +34,7 @@
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
 typedef struct ObjectInfo ObjectInfo;
+typedef struct SymbolInfo SymbolInfo;
 typedef struct PropertyValue PropertyValue;
 typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
@@ -54,11 +55,22 @@ struct SymbolSection {
     unsigned mIndex;
     char * mStrPool;
     size_t mStrPoolSize;
-    unsigned sym_cnt;
+    unsigned mSymCount;
     ElfX_Sym * mSymPool;    /* pointer to ELF section data: array of Elf32_Sym or Elf64_Sym */
     size_t mSymPoolSize;
     unsigned mSymbolHash[SYM_HASH_SIZE];
     unsigned * mHashNext;
+};
+
+struct SymbolInfo {
+    SymbolSection * mSymSection;
+    U4_T mSectionIndex;
+    ELF_Section * mSection;
+    char * mName;
+    U1_T mBind;
+    U1_T mType;
+    U8_T mValue;
+    U8_T mSize;
 };
 
 #define TAG_fund_type 0x2000
@@ -158,21 +170,22 @@ struct DWARFCache {
     unsigned mSymSectionsLen;
     ObjectInfo ** mObjectHash;
     ObjectInfo * mObjectList;
-    ElfX_Sym ** mSymbolHash;
-    unsigned mSymbolTableLen;
     DWARFCache * mLineInfoNext;
 };
 
 /* Return DWARF cache for given file, create and populate the cache if needed, throw an exception if error */
 extern DWARFCache * get_dwarf_cache(ELF_File * file);
 
-extern unsigned calc_symbol_name_hash(char * s);
+extern unsigned calc_symbol_name_hash(const char * s);
 
 /* Load line number information for given compilation unit, throw an exception if error */
 extern void load_line_numbers(DWARFCache * cache, CompUnit * unit);
 
 /* Find ObjectInfo by ID */
 extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
+
+/* Get SymbolInfo */
+extern void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * info);
 
 /*
  * Read and evaluate a property of a DWARF object, perform ELF relocations if any.

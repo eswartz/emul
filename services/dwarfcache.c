@@ -37,7 +37,6 @@ static ELF_Section * sDebugSection;
 static DIO_UnitDescriptor sUnitDesc;
 static ObjectInfo * sObjectList;
 static ObjectInfo * sObjectListTail;
-static unsigned sSymbolTableLen;
 static CompUnit * sCompUnit;
 static unsigned sCompUnitsMax;
 static ObjectInfo * sParentObject;
@@ -45,7 +44,7 @@ static ObjectInfo * sPrevSibling;
 
 static int sCloseListenerOK = 0;
 
-unsigned calc_symbol_name_hash(char * s) {
+unsigned calc_symbol_name_hash(const char * s) {
     unsigned h = 0;
     while (*s) {
         unsigned g;
@@ -57,24 +56,53 @@ unsigned calc_symbol_name_hash(char * s) {
     return h % SYM_HASH_SIZE;
 }
 
-static U8_T get_elf_symbol_address(ElfX_Sym * x) {
-    if (sCache->mFile->elf64) {
-        Elf64_Sym * s = (Elf64_Sym *)x;
-        switch (ELF64_ST_TYPE(s->st_info)) {
-        case STT_OBJECT:
-        case STT_FUNC:
-            return s->st_value;
+void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * info) {
+    memset(info, 0, sizeof(SymbolInfo));
+    if (index >= section->mSymCount) exception(ERR_INV_FORMAT);
+    info->mSymSection = section;
+    if (section->mFile->elf64) {
+        Elf64_Sym s = ((Elf64_Sym *)section->mSymPool)[index];
+        if (section->mFile->byte_swap) {
+            SWAP(s.st_name);
+            SWAP(s.st_shndx);
+            SWAP(s.st_size);
+            SWAP(s.st_value);
         }
+        info->mSectionIndex = s.st_shndx;
+        if (s.st_shndx > 0 && s.st_shndx < section->mFile->section_cnt) {
+            info->mSection = section->mFile->sections + s.st_shndx;
+        }
+        if (s.st_name > 0) {
+            if (s.st_name >= section->mStrPoolSize) exception(ERR_INV_FORMAT);
+            info->mName = section->mStrPool + s.st_name;
+        }
+        info->mBind = ELF64_ST_BIND(s.st_info);
+        info->mType = ELF64_ST_TYPE(s.st_info);
+        info->mValue = s.st_value;
+        info->mSize = s.st_size;
     }
     else {
-        Elf32_Sym * s = (Elf32_Sym *)x;
-        switch (ELF32_ST_TYPE(s->st_info)) {
-        case STT_OBJECT:
-        case STT_FUNC:
-            return s->st_value;
+        Elf32_Sym s = ((Elf32_Sym *)section->mSymPool)[index];
+        if (section->mFile->byte_swap) {
+            SWAP(s.st_name);
+            SWAP(s.st_shndx);
+            SWAP(s.st_size);
+            SWAP(s.st_value);
         }
+        info->mSectionIndex = s.st_shndx;
+        if (s.st_shndx > 0 && s.st_shndx < section->mFile->section_cnt) {
+            info->mSection = section->mFile->sections + s.st_shndx;
+        }
+        if (s.st_name > 0) {
+            if (s.st_name >= section->mStrPoolSize) exception(ERR_INV_FORMAT);
+            info->mName = section->mStrPool + s.st_name;
+        }
+        info->mBind = ELF32_ST_BIND(s.st_info);
+        info->mType = ELF32_ST_TYPE(s.st_info);
+        info->mValue = s.st_value;
+        info->mSize = s.st_size;
     }
-    return 0;
+
 }
 
 static CompUnit * find_comp_unit(U8_T ID) {
@@ -302,17 +330,8 @@ static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form) {
     }
 }
 
-static int symbol_sort_func(const void * X, const void * Y) {
-    U8_T AddrX = get_elf_symbol_address(*(ElfX_Sym **)X);
-    U8_T AddrY = get_elf_symbol_address(*(ElfX_Sym **)Y);
-    if (AddrX < AddrY) return -1;
-    if (AddrX > AddrY) return +1;
-    return 0;
-}
-
 static void load_symbol_tables(void) {
     unsigned idx;
-    unsigned cnt = 0;
     ELF_File * File = sCache->mFile;
     unsigned sym_size = File->elf64 ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
 
@@ -322,8 +341,6 @@ static void load_symbol_tables(void) {
         if (sym_sec->type == SHT_SYMTAB) {
             unsigned i;
             ELF_Section * str_sec;
-            U1_T * str_data = NULL;
-            U1_T * sym_data = NULL;
             SymbolSection * tbl = (SymbolSection *)loc_alloc_zero(sizeof(SymbolSection));
             if (sCache->mSymSections == NULL) {
                 sCache->mSymSectionsLen = 8;
@@ -339,58 +356,27 @@ static void load_symbol_tables(void) {
             str_sec = File->sections + sym_sec->link;
             if (elf_load(sym_sec) < 0) exception(errno);
             if (elf_load(str_sec) < 0) exception(errno);
-            sym_data = (U1_T *)sym_sec->data;
-            str_data = (U1_T *)str_sec->data;
             tbl->mFile = File;
-            tbl->mStrPool = (char *)str_data;
+            tbl->mStrPool = (char *)str_sec->data;
             tbl->mStrPoolSize = (size_t)str_sec->size;
-            tbl->mSymPool = (ElfX_Sym *)sym_data;
+            tbl->mSymPool = (ElfX_Sym *)sym_sec->data;
             tbl->mSymPoolSize = (size_t)sym_sec->size;
-            tbl->sym_cnt = (unsigned)(sym_sec->size / sym_size);
-            tbl->mHashNext = (unsigned *)loc_alloc(tbl->sym_cnt * sizeof(unsigned));
-            for (i = 0; i < tbl->sym_cnt; i++) {
-                U8_T Name = 0;
-                if (File->elf64) {
-                    Elf64_Sym * s = (Elf64_Sym *)tbl->mSymPool + i;
-                    if (get_elf_symbol_address((ElfX_Sym *)s) != 0) cnt++;
-                    Name = s->st_name;
-                }
-                else {
-                    Elf32_Sym * s = (Elf32_Sym *)tbl->mSymPool + i;
-                    if (get_elf_symbol_address((ElfX_Sym *)s) != 0) cnt++;
-                    Name = s->st_name;
-                }
-                assert(Name < tbl->mStrPoolSize);
-                if (Name == 0) {
+            tbl->mSymCount = (unsigned)(sym_sec->size / sym_size);
+            tbl->mHashNext = (unsigned *)loc_alloc(tbl->mSymCount * sizeof(unsigned));
+            for (i = 0; i < tbl->mSymCount; i++) {
+                SymbolInfo sym;
+                unpack_elf_symbol_info(tbl, i, &sym);
+                if (sym.mName == NULL) {
                     tbl->mHashNext[i] = 0;
                 }
                 else {
-                    unsigned h = calc_symbol_name_hash(tbl->mStrPool + Name);
+                    unsigned h = calc_symbol_name_hash(sym.mName);
                     tbl->mHashNext[i] = tbl->mSymbolHash[h];
                     tbl->mSymbolHash[h] = i;
                 }
             }
         }
     }
-    sCache->mSymbolHash = (ElfX_Sym **)loc_alloc(sizeof(void *) * cnt);
-    sCache->mSymbolTableLen = cnt;
-    cnt = 0;
-    for (idx = 0; idx < sCache->mSymSectionsCnt; idx++) {
-        SymbolSection * tbl = sCache->mSymSections[idx];
-        unsigned i;
-        for (i = 0; i < tbl->sym_cnt; i++) {
-            if (File->elf64) {
-                ElfX_Sym * s = (ElfX_Sym *)((Elf64_Sym *)tbl->mSymPool + i);
-                if (get_elf_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
-            }
-            else {
-                ElfX_Sym * s = (ElfX_Sym *)((Elf32_Sym *)tbl->mSymPool + i);
-                if (get_elf_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
-            }
-        }
-    }
-    assert(sCache->mSymbolTableLen == cnt);
-    qsort(sCache->mSymbolHash, sCache->mSymbolTableLen, sizeof(ElfX_Sym *), symbol_sort_func);
 }
 
 static void load_debug_sections(void) {
@@ -399,7 +385,6 @@ static void load_debug_sections(void) {
     ELF_File * File = sCache->mFile;
 
     memset(&trap, 0, sizeof(trap));
-    sSymbolTableLen = sCache->mSymbolTableLen;
     sObjectList = NULL;
     sObjectListTail = NULL;
     sCompUnitsMax = 0;
@@ -452,7 +437,6 @@ static void load_debug_sections(void) {
         sCache->mObjectHash = NULL;
     }
     sCache->mObjectList = sObjectList;
-    sSymbolTableLen = 0;
     sObjectList = NULL;
     sObjectListTail = NULL;
     sCompUnitsMax = 0;
@@ -652,7 +636,6 @@ static void free_dwarf_cache(ELF_File * File) {
             loc_free(Info);
         }
         loc_free(Cache->mObjectHash);
-        loc_free(Cache->mSymbolHash);
         loc_free(Cache->mSymSections);
         loc_free(Cache);
         File->dwarf_dt_cache = NULL;
