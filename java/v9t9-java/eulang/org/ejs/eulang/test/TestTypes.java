@@ -989,10 +989,29 @@ public class TestTypes extends BaseParserTest {
     			"  inst : Class;\n"+
     			"  inst.draw = doDraw;\n"+
     			"  inst.draw(&inst, 5);\n"+
-    			" nil;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i16 25", gen);
+    }
+    @Test
+    public void testDataFuncPtr2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"  val:Int;\n"+
+    			"  draw:code(this:Class^; count:Int => Int);\n"+
+    			"};\n"+
+    			"doCall = code(this:Class^; count:Int => Int) { this.draw(this, count); };\n"+
+    			"doDraw = code(this:Class^; count:Int) { this.val + count*count };\n"+
+    			"testDataFuncPtr2 = code() {\n"+
+    			"  inst : Class;\n"+
+    			"  inst.val = 10;\n"+
+    			"  inst.draw = doDraw;\n"+
+    			"  doCall(&inst, 5);\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i16 35", gen); // yay!  (Note: needs -std-link-opts)
     }
 
 	/**

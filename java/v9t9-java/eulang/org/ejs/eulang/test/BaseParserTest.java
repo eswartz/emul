@@ -531,7 +531,8 @@ public class BaseParserTest {
 				//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
 				+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
 				+ "-break-crit-edges -condprop -domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
-				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify";
+				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
+				+ "-std-link-opts -verify";
 		try {
 			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
 			List<String> optList = new ArrayList<String>();

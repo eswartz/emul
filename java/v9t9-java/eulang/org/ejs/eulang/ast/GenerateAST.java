@@ -1071,7 +1071,7 @@ public class GenerateAST {
 				return castExpr;
 			}
 		}
-
+	
 		IAstFuncCallExpr funcCall = new AstFuncCallExpr(function, args);
 		getSource(tree, funcCall);
 		return funcCall;
@@ -1495,6 +1495,15 @@ public class GenerateAST {
 
 				//if (function instanceof IAstSymbolExpr)
 				//	((IAstSymbolExpr) function).setAddress(true);
+
+				
+				for (IAstTypedExpr arg : args.list()) {
+					if (arg instanceof IAstDerefExpr) {
+						IAstTypedExpr expr = ((IAstDerefExpr) arg).getExpr();
+						expr.setParent(null);
+						arg.getParent().replaceChild(arg, expr);
+					}
+				}
 
 				IAstFuncCallExpr funcCall = new AstFuncCallExpr(idExpr, args);
 				getSource(tree, funcCall);

@@ -20,4 +20,8 @@ public interface LLOperand {
 	 * @return
 	 */
 	boolean isConstant();
+	/**
+	 * @param type
+	 */
+	void setType(LLType type);
 }

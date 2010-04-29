@@ -9,7 +9,8 @@ package org.ejs.eulang.llvm;
  */
 public enum LLLinkage {
 	INTERNAL("internal"),
-	PRIVATE("private");
+	PRIVATE("private"), 
+	LINKONCE_ODR("linkonce_odr");
 	
 	private final String dname;
 

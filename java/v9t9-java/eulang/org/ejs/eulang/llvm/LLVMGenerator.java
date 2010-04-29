@@ -329,7 +329,7 @@ public class LLVMGenerator {
 
 
 	private LLFuncAttrs getFuncAttrType(IAstCodeExpr expr) {
-		return new LLFuncAttrs();
+		return new LLFuncAttrs("optsize");
 	}
 
 	private LLArgAttrType[] getArgAttrTypes(IAstArgDef[] argumentTypes) {
@@ -919,7 +919,7 @@ public class LLVMGenerator {
 	 * @throws ASTException 
 	 */
 	private LLOperand generateDerefExpr(IAstDerefExpr expr) throws ASTException {
-		LLOperand source = generateTypedExprCore(expr.getExpr());
+		LLOperand source = generateTypedExprAddr(expr.getExpr());
 		if (source == null)
 			return null;
 		
@@ -929,7 +929,6 @@ public class LLVMGenerator {
 		
 		if (expr.getType().getBasicType() == BasicType.VOID)
 			return source;
-		//LLPointerType addrType = typeEngine.getPointerType(expr.getType());
 		
 		while (valueType != null && !expr.getType().isCompatibleWith(valueType.getSubType())) {
 			if (source.getType().getBasicType() == BasicType.REF) {
@@ -1483,11 +1482,17 @@ entry:
 			} else if (origType.getBasicType() == BasicType.INTEGRAL && type.getBasicType() == BasicType.POINTER) {
 				cast = ECast.INTTOPTR;
 			} else if (origType.getBasicType() == BasicType.POINTER && type.getBasicType() == BasicType.POINTER) {
+				if (origType.equals(type))
+					return value;
 				cast = ECast.BITCAST;
 			} else if (origType.getBasicType() == BasicType.CODE && type.getBasicType() == BasicType.POINTER) {
 				// not really a cast:  take the address
 				if (value instanceof LLSymbolOp) {
 					origType = typeEngine.getPointerType(origType);
+				}
+				if (origType.equals(type)) {
+					value.setType(type);
+					return value;
 				}
 				cast = ECast.BITCAST;
 			/*} else if (origType.getBasicType() == BasicType.DATA && type.getBasicType() == BasicType.DATA) {

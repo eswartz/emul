@@ -23,7 +23,9 @@ public class LLPointerType extends BaseLLType {
 	public LLPointerType(int bits, LLType baseType) {
 		super(baseType.getName() != null ? baseType.getName() + "$p" : 
 			fixLLVMName(baseType.getLLVMName()) + "$p", 
-				bits, baseType.getLLVMType() + "*", BasicType.POINTER, baseType);
+				bits, 
+				(baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*", 
+				BasicType.POINTER, baseType);
 		
 	}
 	
@@ -62,5 +64,13 @@ public class LLPointerType extends BaseLLType {
 			return typeEngine.getPointerType(newSub);
 		else
 			return this;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#isCompatibleWith(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isCompatibleWith(LLType target) {
+		return super.isCompatibleWith(target);
 	}
 }
