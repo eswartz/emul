@@ -24,6 +24,14 @@ public class LLIdxValOp implements LLOperand {
 		return val.getType();
 	}
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.LLOperand#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		val.setType(type);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.ops.LLOperand#isConstant()
 	 */
 	@Override

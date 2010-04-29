@@ -11,7 +11,7 @@ import org.ejs.eulang.types.LLType;
  */
 public abstract class BaseLLConstOperand implements LLOperand {
 
-	protected final LLType type;
+	protected LLType type;
 
 	public BaseLLConstOperand(LLType type) {
 		this.type = type;
@@ -22,6 +22,14 @@ public abstract class BaseLLConstOperand implements LLOperand {
 	@Override
 	public LLType getType() {
 		return type;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.LLOperand#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		this.type = type;
 	}
 	
 	/* (non-Javadoc)

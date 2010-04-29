@@ -1409,18 +1409,14 @@ public class GenerateAST {
 		
 		//idExpr = new AstValueExpr(idExpr);
 		//getSource(tree.getChild(0), idExpr);
-		boolean first = true;
 		
 		// may have field references
 		while (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx);
 			IAstName name = new AstName(kid.getText(), symExpr != null ? symExpr.getSymbol().getScope() : null);
 			getSource(kid, name);
-			if (true) {
-				idExpr = new AstDerefExpr(idExpr, false);
-				getSource(tree.getChild(0), idExpr);
-				first = false;
-			}
+			idExpr = new AstDerefExpr(idExpr, false);
+			getSource(tree.getChild(0), idExpr);
 			idExpr = new AstFieldExpr(idExpr, name); 
 			getSource(tree, idExpr);
 			idx++;
@@ -1936,7 +1932,6 @@ public class GenerateAST {
 		return typeExpr;
 	}
 
-	@SuppressWarnings("unchecked")
 	public IAstDefineStmt constructDefine(Tree tree) throws GenerateException {
 		IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
 

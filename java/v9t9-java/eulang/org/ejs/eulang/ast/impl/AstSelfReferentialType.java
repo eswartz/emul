@@ -143,11 +143,8 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 */
 	@Override
 	public void setSymbolExpr(IAstSymbolExpr name) {
-		if (name.getSymbol().getNumber() == 10)
-			name = name;
 		Check.checkArg(name);
 		this.symbolExpr = reparent(this.symbolExpr, name);
-		//this.symbolExpr = name; 
 		this.symbol = name.getOriginalSymbol();
 	}
 	/* (non-Javadoc)

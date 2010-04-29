@@ -6,7 +6,6 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
@@ -72,8 +71,6 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 
 	@Override
 	public void setType(LLType type) {
-		if (getParent() != null && getParent().getParent() instanceof IAstDefineStmt)
-			type =type;
 		this.type = type;
 	}
 

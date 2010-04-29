@@ -12,7 +12,7 @@ import org.ejs.eulang.types.LLType;
  */
 public class LLBitcastOp implements LLOperand {
 	private final LLOperand val;
-	private final LLType castTo;
+	private LLType castTo;
 	/**
 	 * 
 	 */
@@ -33,6 +33,15 @@ public class LLBitcastOp implements LLOperand {
 	public LLType getType() {
 		return castTo;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.LLOperand#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		this.castTo = type;
+	}
+	
 	@Override
 	public String toString() {
 		return "bitcast (" + val.getType().getLLVMName() + " " + val.toString() + " to " + castTo.getLLVMName() + ")" ;

@@ -201,7 +201,6 @@ public class TypeEngine {
 	public LLType INTPTR;
 	public LLType REFPTR;
 	public LLBoolType LLBOOL;
-	private int gUniqueId;
 	public LLIntType PTRDIFF;
 	
 	/**
@@ -573,22 +572,6 @@ public class TypeEngine {
 			llvmNameToTypeMap.put(name, data);
 		}
 		return data;
-	}
-
-	/**
-	 * @param name
-	 * @return
-	 */
-	private String uniquify(String origName) {
-		String name = origName; 
-		while (true) {
-			if (llvmNameToTypeMap.containsKey(name)) {
-				name = origName + "." + gUniqueId++;
-			} else {
-				break;
-			}
-		}
-		return name;
 	}
 
 	private String getDataTypeKey(String name, List<LLInstanceField> ifields,
