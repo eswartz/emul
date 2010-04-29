@@ -195,7 +195,7 @@ ELF_File * elf_open(char * file_name) {
     if (st.st_ino == 0 && (st.st_ino = elf_ino(file_name)) == 0) return NULL;
 
     while (file != NULL) {
-        if (file->dev == st.st_dev && file->ino == st.st_ino) {
+        if (file->dev == st.st_dev && file->ino == st.st_ino && file->mtime == st.st_mtime) {
             if (prev != NULL) {
                 prev->next = file->next;
                 file->next = files;
@@ -215,6 +215,7 @@ ELF_File * elf_open(char * file_name) {
     file->name = loc_strdup(file_name);
     file->dev = st.st_dev;
     file->ino = st.st_ino;
+    file->mtime = st.st_mtime;
     if ((file->fd = open(file->name, O_RDONLY | O_BINARY, 0)) < 0) error = errno;
 
     if (error == 0) {
@@ -532,36 +533,16 @@ void elf_close(ELF_File * file) {
 }
 
 static ELF_File * open_memory_region_file(unsigned n, int * error) {
-    ELF_File * prev = NULL;
-    ELF_File * file = files;
+    ELF_File * file = NULL;
     MemoryRegion * r = elf_list_regions + n;
-    ino_t ino = r->ino;
 
     assert(n < elf_list_region_cnt);
     elf_list_files[n] = NULL;
-
     if (r->file_name == NULL) return NULL;
-    if (ino == 0 && (ino = elf_ino(r->file_name)) == 0) return NULL;
-
-    while (file != NULL) {
-        if (file->dev == r->dev && file->ino == ino) {
-            if (prev != NULL) {
-                prev->next = file->next;
-                file->next = files;
-                files = file;
-            }
-            file->ref_cnt++;
-            file->age = 0;
-            return elf_list_files[n] = file;
-        }
-        prev = file;
-        file = file->next;
-    }
-
     file = elf_open(r->file_name);
     if (file == NULL && *error == 0) *error = errno;
     if (file == NULL) return NULL;
-    if (file->dev != r->dev) return NULL;
+    if (r->dev != 0 && file->dev != r->dev) return NULL;
     if (r->ino != 0 && file->ino != r->ino) return NULL;
     return elf_list_files[n] = file;
 }

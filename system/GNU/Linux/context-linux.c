@@ -67,24 +67,18 @@
 #define USE_ESRCH_WORKAROUND    1
 #define USE_PTRACE_SYSCALL      0
 
+static const int PTRACE_FLAGS =
 #if USE_PTRACE_SYSCALL
-#  define PTRACE_FLAGS ( \
-      PTRACE_O_TRACESYSGOOD | \
-      PTRACE_O_TRACEFORK | \
-      PTRACE_O_TRACEVFORK | \
-      PTRACE_O_TRACECLONE | \
-      PTRACE_O_TRACEEXEC | \
-      PTRACE_O_TRACEVFORKDONE | \
-      PTRACE_O_TRACEEXIT)
-#else
-#  define PTRACE_FLAGS ( \
-      PTRACE_O_TRACEFORK | \
-      PTRACE_O_TRACEVFORK | \
-      PTRACE_O_TRACECLONE | \
-      PTRACE_O_TRACEEXEC | \
-      PTRACE_O_TRACEVFORKDONE | \
-      PTRACE_O_TRACEEXIT)
+      PTRACE_O_TRACESYSGOOD |
 #endif
+      PTRACE_O_TRACEFORK |
+      PTRACE_O_TRACEVFORK |
+      PTRACE_O_TRACECLONE |
+      PTRACE_O_TRACEEXEC |
+      PTRACE_O_TRACEVFORKDONE |
+      PTRACE_O_TRACEEXIT;
+
+/* TODO: when inferior forks, the new process inherits breakpoints - need to account for that in BP service */
 
 typedef struct ContextExtension {
     ContextAttachCallBack * attach_callback;

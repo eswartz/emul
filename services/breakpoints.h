@@ -42,6 +42,11 @@ extern void evaluate_breakpoint(Context * ctx);
 extern char ** get_context_breakpoint_ids(Context * ctx);
 
 /*
+ * Return 1 if breakpoints for given context are in consistent state.
+ */
+extern int are_breakpoints_in_sync(Context * ctx);
+
+/*
  * When a context is stopped by breakpoint, it is necessary to disable
  * the breakpoint temporarily before the context can be resumed.
  * This function function removes break instruction, then does single step

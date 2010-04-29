@@ -141,6 +141,7 @@ struct EvaluationRequest {
 };
 
 struct ContextExtension {
+    BreakInstruction *  stepping_over_bp;   /* if not NULL context is stepping over a breakpoint instruction */
     char **             bp_ids; /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     EvaluationRequest * req;
 };
@@ -664,7 +665,7 @@ static void done_locations_evaluation(int * need_to_flush) {
     }
 }
 
-static void done_condition(EvaluationRequest * req, int * need_to_flush) {
+static void done_condition_evaluation(EvaluationRequest * req, int * need_to_flush) {
     Context * ctx = req->ctx;
     size_t size = 0;
     int i;
@@ -714,7 +715,8 @@ static void done_condition(EvaluationRequest * req, int * need_to_flush) {
     }
 }
 
-static void done_conditions_evaluation(int * need_to_flush) {
+static void done_all_evaluations(void) {
+    int need_to_flush = 0;
     LINK * l = evaluations_active.next;
 
     while (l != &evaluations_active) {
@@ -727,7 +729,7 @@ static void done_conditions_evaluation(int * need_to_flush) {
                 ctx->stopped_by_bp = 0;
             }
             else {
-                done_condition(req, need_to_flush);
+                done_condition_evaluation(req, &need_to_flush);
             }
         }
     }
@@ -749,7 +751,7 @@ static void done_conditions_evaluation(int * need_to_flush) {
                     Context * c = id2ctx(*ids++);
                     if (c != NULL) {
                         suspend_debug_context(c);
-                        *need_to_flush = 1;
+                        need_to_flush = 1;
                     }
                 }
             }
@@ -760,32 +762,30 @@ static void done_conditions_evaluation(int * need_to_flush) {
         if (list_is_empty(&req->link_posted)) {
             if (!ctx->exited && ctx->pending_intercept) {
                 suspend_debug_context(ctx);
-                *need_to_flush = 1;
+                need_to_flush = 1;
             }
             assert(!ctx->pending_intercept || ctx->event_notification);
         }
         context_unlock(ctx);
     }
+
+    if (list_is_empty(&evaluations_posted)) {
+        done_locations_evaluation(&need_to_flush);
+        generation_done = generation_active;
+    }
+
+    if (need_to_flush) flush_stream(&broadcast_group->out);
 }
 
 static void done_evaluation(void) {
     assert(cache_enter_cnt > 0);
     cache_enter_cnt--;
     if (cache_enter_cnt == 0) {
-        int need_to_flush = 0;
-
-        done_conditions_evaluation(&need_to_flush);
-
-        if (list_is_empty(&evaluations_posted)) {
-            done_locations_evaluation(&need_to_flush);
-            generation_done = generation_active;
-        }
-        else {
+        done_all_evaluations();
+        if (!list_is_empty(&evaluations_posted)) {
             EvaluationRequest * req = link_posted2erl(evaluations_posted.next);
             post_safe_event(req->ctx->mem, event_replant_breakpoints, (void *)++generation_posted);
         }
-
-        if (need_to_flush) flush_stream(&broadcast_group->out);
     }
 }
 
@@ -1716,7 +1716,7 @@ void evaluate_breakpoint(Context * ctx) {
     }
     else {
         int need_to_flush = 0;
-        done_condition(req, &need_to_flush);
+        done_condition_evaluation(req, &need_to_flush);
         if (need_to_flush) flush_stream(&broadcast_group->out);
         req->bp_cnt = 0;
     }
@@ -1726,18 +1726,29 @@ char ** get_context_breakpoint_ids(Context * ctx) {
     return EXT(ctx)->bp_ids;
 }
 
+int are_breakpoints_in_sync(Context * ctx) {
+    ContextExtension * ext = EXT(ctx);
+    if (ctx->stopped_by_bp && ctx->event_notification) return 0;
+    if (ext->stepping_over_bp != NULL) return 0;
+    if (ext->req != NULL) {
+         if (!list_is_empty(&ext->req->link_posted)) return 0;
+         if (!list_is_empty(&ext->req->link_active)) return 0;
+    }
+    return 1;
+}
+
 #ifndef _WRS_KERNEL
 
 static void safe_restore_breakpoint(void * arg) {
     Context * ctx = (Context *)arg;
-    BreakInstruction * bi = (BreakInstruction *)ctx->stepping_over_bp;
+    BreakInstruction * bi = EXT(ctx)->stepping_over_bp;
 
     assert(bi->stepping_over_bp > 0);
     assert(find_instruction(ctx, bi->address) == bi);
     if (!ctx->exiting && ctx->stopped && get_regs_PC(ctx->regs) == bi->address) {
         trace(LOG_ALWAYS, "Skip breakpoint error: wrong PC %#lx", get_regs_PC(ctx->regs));
     }
-    ctx->stepping_over_bp = NULL;
+    EXT(ctx)->stepping_over_bp = NULL;
     bi->stepping_over_bp--;
     if (!ctx->exited) {
         if (generation_done == generation_posted && bi->stepping_over_bp == 0 && bi->ref_cnt > 0 && !bi->planted) {
@@ -1753,7 +1764,7 @@ static void safe_restore_breakpoint(void * arg) {
 
 static void safe_skip_breakpoint(void * arg) {
     Context * ctx = (Context *)arg;
-    BreakInstruction * bi = (BreakInstruction *)ctx->stepping_over_bp;
+    BreakInstruction * bi = EXT(ctx)->stepping_over_bp;
     int error = 0;
 
     assert(bi != NULL);
@@ -1793,9 +1804,9 @@ int skip_breakpoint(Context * ctx, int single_step) {
     assert(!ctx->exited);
     assert(!ctx->intercepted);
     assert(!ctx->pending_step);
-    assert(single_step || ctx->stepping_over_bp == NULL);
+    assert(single_step || EXT(ctx)->stepping_over_bp == NULL);
 
-    if (ctx->stepping_over_bp != NULL) return 0;
+    if (EXT(ctx)->stepping_over_bp != NULL) return 0;
     if (ctx->exited || ctx->exiting || !ctx->stopped_by_bp) return 0;
 
 #ifdef _WRS_KERNEL
@@ -1806,7 +1817,7 @@ int skip_breakpoint(Context * ctx, int single_step) {
     bi = find_instruction(ctx, get_regs_PC(ctx->regs));
     if (bi == NULL || bi->error) return 0;
     bi->stepping_over_bp++;
-    ctx->stepping_over_bp = bi;
+    EXT(ctx)->stepping_over_bp = bi;
     assert(bi->stepping_over_bp > 0);
     context_lock(ctx);
     post_safe_event(ctx->mem, safe_skip_breakpoint, ctx);

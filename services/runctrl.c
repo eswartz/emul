@@ -460,7 +460,6 @@ static void command_resume(char * token, Channel * c) {
             }
             else {
                 assert(!ctx->intercepted);
-                assert(!ctx->stopped || ctx->stepping_over_bp);
                 ctx->pending_intercept = 1;
             }
         }
@@ -487,7 +486,7 @@ int suspend_debug_context(Context * ctx) {
             }
         }
         else if (!ctx->intercepted) {
-            if (ctx->event_notification || ctx->stepping_over_bp != NULL) {
+            if (!are_breakpoints_in_sync(ctx)) {
                 ctx->pending_intercept = 1;
             }
             else {
@@ -722,7 +721,6 @@ static void run_safe_events(void * arg) {
             if (ctx->pending_step) {
                 ctx->pending_step = 0;
                 n = context_single_step(ctx);
-                assert(n < 0 || !ctx->stopped || ctx->stepping_over_bp);
                 if (n >= 0) ctx->pending_intercept = 1;
             }
             else {
@@ -865,6 +863,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     assert(ctx->stopped);
     assert(!ctx->intercepted);
     assert(!ctx->exited);
+    if (ctx->stopped_by_bp) evaluate_breakpoint(ctx);
     if (EXT(ctx)->pending_safe_event) check_safe_events(ctx);
     if (ctx->stopped_by_exception) {
         send_event_context_exception(&broadcast_group->out, ctx);

@@ -47,7 +47,6 @@ struct Context {
     LINK                pidl;               /* link that used to form a list of contexts with same hash code */
     int                 stopped_by_bp;      /* stopped by breakpoint */
     int                 stopped_by_exception;/* stopped by runtime exception (like SIGSEGV, etc.) */
-    void *              stepping_over_bp;   /* if not NULL context is stepping over a breakpoint */
     int                 exiting;            /* context is about to exit */
     int                 pending_step;       /* context is executing single instruction step */
     int                 pending_intercept;  /* host is waiting for this context to be suspended */

@@ -241,11 +241,6 @@ void send_context_stopped_event(Context * ctx) {
     assert(ctx->stopped != 0);
     assert(!ctx->event_notification);
     ctx->event_notification = 1;
-#if !ENABLE_ContextProxy
-    if (ctx->stopped_by_bp) {
-        evaluate_breakpoint(ctx);
-    }
-#endif
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->func->context_stopped == NULL) continue;
