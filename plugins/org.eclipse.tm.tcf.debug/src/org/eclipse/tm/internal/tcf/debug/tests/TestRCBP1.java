@@ -714,7 +714,7 @@ class TestRCBP1 implements ITCFTest,
                 if (!context_id.equals(mem_ctx.getID())) {
                     exit(new Exception("Bad memory context data: invalid ID"));
                 }
-                Object pid = context.getProperties().get(IRunControl.PROP_PROCESS_ID);
+                Object pid = context.getProcessID();
                 if (pid != null && !pid.equals(mem_ctx.getProcessID())) {
                     exit(new Exception("Bad memory context data: invalid ProcessID"));
                 }

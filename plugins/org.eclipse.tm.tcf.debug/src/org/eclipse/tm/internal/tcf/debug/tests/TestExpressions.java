@@ -40,9 +40,11 @@ class TestExpressions implements ITCFTest,
     private String bp_id;
     private boolean bp_ok;
     private IDiagnostics.ISymbol sym_func3;
+    private String test_ctx_id;
     private String process_id;
     private String thread_id;
     private boolean test_done;
+    private IRunControl.RunControlContext test_ctx;
     private IRunControl.RunControlContext thread_ctx;
     private String suspended_pc;
     private boolean waiting_suspend;
@@ -181,14 +183,35 @@ class TestExpressions implements ITCFTest,
             });
             return;
         }
-        if (process_id == null) {
+        if (test_ctx_id == null) {
             diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
                 public void doneRunTest(IToken token, Throwable error, String id) {
                     if (error != null) {
                         exit(error);
                     }
                     else {
-                        process_id = id;
+                        test_ctx_id = id;
+                        runTest();
+                    }
+                }
+            });
+            return;
+        }
+        if (test_ctx == null) {
+            rc.getContext(test_ctx_id, new IRunControl.DoneGetContext() {
+                public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext ctx) {
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else if (ctx == null) {
+                        exit(new Exception("Invalid test execution context"));
+                    }
+                    else {
+                        test_ctx = ctx;
+                        process_id = test_ctx.getProcessID();
+                        if (!process_id.equals(test_ctx_id)) {
+                            thread_id = test_ctx_id;
+                        }
                         runTest();
                     }
                 }
@@ -203,6 +226,9 @@ class TestExpressions implements ITCFTest,
                     }
                     else if (ids == null || ids.length == 0) {
                         exit(new Exception("Test process has no threads"));
+                    }
+                    else if (ids.length != 1) {
+                        exit(new Exception("Test process has too many threads"));
                     }
                     else {
                         thread_id = ids[0];

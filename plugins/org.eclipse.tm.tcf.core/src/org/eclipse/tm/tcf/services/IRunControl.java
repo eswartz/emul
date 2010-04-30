@@ -24,14 +24,34 @@ public interface IRunControl extends IService {
      * Context property names.
      */
     static final String
+        /** Run control context ID */
         PROP_ID = "ID",
+
+        /** Context parent (owner) ID, for a thread it is same as process ID */
         PROP_PARENT_ID = "ParentID",
+
+        /** Context process (memory space) ID */
         PROP_PROCESS_ID = "ProcessID",
+
+        /** ID of a context that created this context */
+        PROP_CREATOR_ID = "CreatorID",
+
+        /** true if the context is a container. Container can propagate run control commands to his children */
         PROP_IS_CONTAINER = "IsContainer",
+
+        /** true if context has execution state - can be suspended/resumed */
         PROP_HAS_STATE = "HasState",
+
+        /** Bit-set of RM_ values that are supported by the context */
         PROP_CAN_RESUME = "CanResume",
+
+        /** Bit-set of RM_ values that can be used with count > 1 */
         PROP_CAN_COUNT = "CanCount",
+
+        /** true if suspend command is supported by the context */
         PROP_CAN_SUSPEND = "CanSuspend",
+
+        /** true if terminate command is supported by the context */
         PROP_CAN_TERMINATE = "CanTerminate";
 
     /**
@@ -211,6 +231,13 @@ public interface IRunControl extends IService {
     interface RunControlContext {
 
         /**
+         * Get context properties. See PROP_* definitions for property names.
+         * Context properties are read only, clients should not try to modify them.
+         * @return Map of context properties.
+         */
+        Map<String,Object> getProperties();
+
+        /**
          * Retrieve context ID.
          * Same as getProperties().get(“ID”)
          */
@@ -223,11 +250,16 @@ public interface IRunControl extends IService {
         String getParentID();
 
         /**
-         * Get context properties. See PROP_* definitions for property names.
-         * Context properties are read only, clients should not try to modify them.
-         * @return Map of context properties.
+         * Retrieve context process ID.
+         * Same as getProperties().get(“ProcessID”)
          */
-        Map<String,Object> getProperties();
+        String getProcessID();
+
+        /**
+         * Retrieve context creator ID.
+         * Same as getProperties().get(“CreatorID”)
+         */
+        String getCreatorID();
 
         /**
          * Utility method to read context property PROP_IS_CONTAINER.

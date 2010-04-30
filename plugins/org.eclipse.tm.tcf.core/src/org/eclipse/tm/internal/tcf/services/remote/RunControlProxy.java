@@ -48,6 +48,14 @@ public class RunControlProxy implements IRunControl {
             return (String)props.get(PROP_PARENT_ID);
         }
 
+        public String getProcessID() {
+            return (String)props.get(PROP_PROCESS_ID);
+        }
+
+        public String getCreatorID() {
+            return (String)props.get(PROP_CREATOR_ID);
+        }
+
         public boolean isContainer() {
             Boolean b = (Boolean)props.get(PROP_IS_CONTAINER);
             return b != null && b.booleanValue();
