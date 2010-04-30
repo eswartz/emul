@@ -542,7 +542,7 @@ static int identifier(char * name, Value * v) {
         exception(ERR_INV_CONTEXT);
     }
     if (strcmp(name, "$thread") == 0) {
-        string_value(v, ctx2id(expression_context));
+        string_value(v, expression_context->id);
         v->constant = 1;
         return SYM_CLASS_VALUE;
     }

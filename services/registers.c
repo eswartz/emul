@@ -52,7 +52,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     json_write_string(out, "ParentID");
     write_stream(out, ':');
     if (is_top_frame(ctx, frame)) {
-        json_write_string(out, ctx2id(ctx));
+        json_write_string(out, ctx->id);
     }
     else {
         json_write_string(out, frame2id(ctx, frame));
@@ -106,12 +106,10 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
         json_write_boolean(out, reg_def->traceable);
     }
 
-#if !defined(_WRS_KERNEL)
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
-    json_write_string(out, pid2id(ctx->mem, 0));
-#endif
+    json_write_string(out, ctx->mem->id);
 
     write_stream(out, ',');
     json_write_string(out, "BigEndian");

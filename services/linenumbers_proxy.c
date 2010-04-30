@@ -48,7 +48,7 @@ typedef struct LineAddressCache {
     unsigned magic;
     LINK link_cache;
     AbstractCache cache;
-    pid_t pid;
+    Context * ctx;
     char * file;
     int line;
     int column;
@@ -79,6 +79,7 @@ static void free_line_address_cache(LineAddressCache * cache) {
         cache->magic = 0;
         cache_dispose(&cache->cache);
         release_error_report(cache->error);
+        context_unlock(cache->ctx);
         for (i = 0; i < cache->areas_cnt; i++) {
             CodeArea * area = cache->areas + i;
             loc_free(area->file);
@@ -130,12 +131,11 @@ static LineNumbersCache * get_line_numbers_cache(void) {
     return cache;
 }
 
-static unsigned hash_addr(const char * file, int line, int column, pid_t pid) {
+static unsigned hash_addr(Context * ctx, const char * file, int line, int column) {
     int i;
     unsigned h = 0;
     for (i = 0; file[i]; i++) h += file[i];
-    h = h + h / HASH_SIZE;
-    return (h + (unsigned)line + (unsigned)column + (unsigned)pid) % HASH_SIZE;
+    return (h + ((uintptr_t)ctx >> 4) + (unsigned)line + (unsigned)column) % HASH_SIZE;
 }
 
 static void read_code_area_props(InputStream * inp, const char * name, void * args) {
@@ -206,13 +206,13 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineNumber
 
     if (!set_trap(&trap)) return -1;
 
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    h = hash_addr(file, line, column, ctx->pid);
+    ctx = ctx->mem;
+    h = hash_addr(ctx, file, line, column);
     cache = get_line_numbers_cache();
     assert(cache->magic == LINE_NUMBERS_CACHE_MAGIC);
     for (l = cache->link_addr[h].next; l != cache->link_addr + h; l = l->next) {
         LineAddressCache * c = cache2addr(l);
-        if (c->pid == ctx->pid && c->line == line && c->column == column && strcmp(c->file, file) == 0) {
+        if (c->ctx == ctx && c->line == line && c->column == column && strcmp(c->file, file) == 0) {
             assert(c->magic == LINE_NUMBERS_CACHE_MAGIC);
             f = c;
             break;
@@ -225,12 +225,12 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineNumber
         f = (LineAddressCache *)loc_alloc_zero(sizeof(LineAddressCache));
         list_add_first(&f->link_cache, cache->link_addr + h);
         f->magic = LINE_NUMBERS_CACHE_MAGIC;
-        f->pid = ctx->pid;
+        context_lock(f->ctx = ctx);
+        f->file = loc_strdup(file);
         f->line = line;
         f->column = column;
-        f->file = loc_strdup(file);
         f->pending = protocol_send_command(c, "LineNumbers", "mapToMemory", validate_map_to_memory, f);
-        json_write_string(&c->out, ctx2id(ctx));
+        json_write_string(&c->out, ctx->id);
         write_stream(&c->out, 0);
         json_write_string(&c->out, file);
         write_stream(&c->out, 0);
@@ -263,10 +263,8 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineNumber
 static void flush_cache(Context * ctx) {
     LINK * l;
     LINK * m;
-    char id[256];
     int i;
 
-    strlcpy(id, ctx2id(ctx), sizeof(id));
     for (m = root.next; m != &root; m = m->next) {
         LineNumbersCache * cache = root2cache(m);
         for (i = 0; i < HASH_SIZE; i++) {
@@ -274,26 +272,22 @@ static void flush_cache(Context * ctx) {
             while (l != cache->link_addr + i) {
                 LineAddressCache * c = cache2addr(l);
                 l = l->next;
-                if (c->pid == ctx->mem) {
-                    free_line_address_cache(c);
-                }
+                if (c->ctx == ctx) free_line_address_cache(c);
             }
         }
     }
 }
 
 static void event_context_created(Context * ctx, void * x) {
-    if (ctx->parent != NULL && ctx->parent->mem == ctx->mem) return;
-    flush_cache(ctx);
+    if (ctx == ctx->mem) flush_cache(ctx);
 }
 
 static void event_context_exited(Context * ctx, void * x) {
-    if (ctx->parent != NULL && ctx->parent->mem == ctx->mem) return;
-    flush_cache(ctx);
+    if (ctx == ctx->mem) flush_cache(ctx);
 }
 
 static void event_context_changed(Context * ctx, void * x) {
-    flush_cache(ctx);
+    flush_cache(ctx->mem);
 }
 
 static void channel_close_listener(Channel * c) {

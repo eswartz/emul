@@ -39,6 +39,8 @@ static Listener * listeners = NULL;
 static unsigned listener_cnt = 0;
 static unsigned listener_max = 0;
 
+LINK context_root = { NULL, NULL };
+
 char * pid2id(pid_t pid, pid_t parent) {
     static char s[64];
     char * p = s + sizeof(s);
@@ -60,12 +62,6 @@ char * pid2id(pid_t pid, pid_t parent) {
     }
     *(--p) = 'P';
     return p;
-}
-
-char * ctx2id(Context * ctx) {
-    if (ctx->parent == NULL) return pid2id(ctx->pid, 0);
-    assert(ctx->parent->parent == NULL);
-    return pid2id(ctx->pid, ctx->parent->pid);
 }
 
 pid_t id2pid(const char * id, pid_t * parent) {
@@ -99,53 +95,6 @@ void add_context_event_listener(ContextEventListener * listener, void * client_d
 static size_t extension_size = 0;
 static int context_created = 0;
 
-#if !ENABLE_ContextProxy
-
-#define CONTEXT_PID_HASH_SIZE 1024
-#define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_HASH_SIZE)
-#define pidl2ctxp(A) ((Context *)((char *)(A) - offsetof(Context, pidl)))
-
-LINK context_root = { NULL, NULL };
-
-static LINK context_pid_root[CONTEXT_PID_HASH_SIZE];
-
-void link_context(Context * ctx) {
-    LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(ctx->pid)];
-
-    assert(ctx->pid != 0);
-    assert(ctx->mem != 0);
-    assert(context_find_from_pid(ctx->pid, ctx->parent != NULL) == NULL);
-    list_remove(&ctx->ctxl);
-    list_remove(&ctx->pidl);
-    list_add_first(&ctx->ctxl, &context_root);
-    list_add_first(&ctx->pidl, qhp);
-    ctx->ref_count++;
-}
-
-Context * context_find_from_pid(pid_t pid, int thread) {
-    LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(pid)];
-    LINK * qp = qhp->next;
-
-    assert(is_dispatch_thread());
-    if (qp == NULL) return NULL;
-    while (qp != qhp) {
-        Context * ctx = pidl2ctxp(qp);
-        if (ctx->pid == pid && !ctx->exited &&
-            (ctx->parent != NULL) == (thread != 0)) return ctx;
-        qp = qp->next;
-    }
-    return NULL;
-}
-
-Context * id2ctx(const char * id) {
-    pid_t parent = 0;
-    pid_t pid = id2pid(id, &parent);
-    if (pid == 0) return NULL;
-    return context_find_from_pid(pid, parent != 0);
-}
-
-#endif /* !ENABLE_ContextProxy */
-
 size_t context_extension(size_t size) {
     size_t offs = 0;
     assert(!context_created);
@@ -155,19 +104,14 @@ size_t context_extension(size_t size) {
     return offs;
 }
 
-Context * create_context(pid_t pid, size_t regs_size) {
+Context * create_context(const char * id, size_t regs_size) {
     Context * ctx = (Context *)loc_alloc_zero(sizeof(Context) + extension_size);
 
-    ctx->pid = pid;
-#if ENABLE_DebugContext && !ENABLE_ContextProxy
+    strlcpy(ctx->id, id, sizeof(ctx->id));
     if ((ctx->regs_size = regs_size) > 0) {
         ctx->regs = (RegisterData *)loc_alloc_zero(regs_size);
     }
-    list_init(&ctx->pidl);
-    list_init(&ctx->ctxl);
-#endif
     list_init(&ctx->children);
-    list_init(&ctx->cldl);
     context_created = 1;
     return ctx;
 }
@@ -183,7 +127,16 @@ void context_unlock(Context * ctx) {
         unsigned i;
 
         assert(list_is_empty(&ctx->children));
-        assert(ctx->parent == NULL);
+        if (ctx->parent != NULL) {
+            list_remove(&ctx->cldl);
+            context_unlock(ctx->parent);
+            ctx->parent = NULL;
+        }
+        if (ctx->creator != NULL) {
+            context_unlock(ctx->creator);
+            ctx->creator = NULL;
+        }
+
         assert(!ctx->event_notification);
         ctx->event_notification = 1;
         for (i = 0; i < listener_cnt; i++) {
@@ -192,12 +145,9 @@ void context_unlock(Context * ctx) {
             l->func->context_disposed(ctx, l->args);
         }
         ctx->event_notification = 0;
-#if ENABLE_DebugContext && !ENABLE_ContextProxy
         list_remove(&ctx->ctxl);
-        list_remove(&ctx->pidl);
         release_error_report(ctx->regs_error);
         loc_free(ctx->regs);
-#endif
         loc_free(ctx);
     }
 }
@@ -253,10 +203,8 @@ void send_context_started_event(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
     ctx->stopped = 0;
-#if !ENABLE_ContextProxy
     ctx->stopped_by_bp = 0;
     ctx->stopped_by_exception = 0;
-#endif
     ctx->event_notification++;
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
@@ -269,10 +217,8 @@ void send_context_started_event(Context * ctx) {
 void send_context_exited_event(Context * ctx) {
     unsigned i;
     assert(!ctx->event_notification);
-#if !ENABLE_ContextProxy
     ctx->exiting = 0;
     ctx->pending_intercept = 0;
-#endif
     ctx->exited = 1;
     ctx->event_notification = 1;
     for (i = 0; i < listener_cnt; i++) {
@@ -281,27 +227,11 @@ void send_context_exited_event(Context * ctx) {
         l->func->context_exited(ctx, l->args);
     }
     ctx->event_notification = 0;
-    if (ctx->parent != NULL) {
-        list_remove(&ctx->cldl);
-        context_unlock(ctx->parent);
-        ctx->parent = NULL;
-    }
     context_unlock(ctx);
 }
 
-unsigned context_word_size(Context * ctx) {
-    /* Place holder to support variable context word size */
-    return sizeof(ContextAddress);
-}
-
 void ini_contexts(void) {
-#if !ENABLE_ContextProxy
-    int i;
-    for (i = 0; i < CONTEXT_PID_HASH_SIZE; i++) {
-        list_init(&context_pid_root[i]);
-    }
     list_init(&context_root);
-#endif
     init_contexts_sys_dep();
 }
 

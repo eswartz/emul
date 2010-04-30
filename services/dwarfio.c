@@ -350,7 +350,7 @@ static void dio_ReadFormRelRef(U8_T Offset) {
 static void dio_ReadFormRefAddr(void) {
     U4_T Size = sUnit->mAddressSize;
     if (sUnit->mVersion >= 3) Size = sUnit->m64bit ? 8 : 4;
-    dio_gFormData = dio_ReadUX(Size);
+    dio_gFormData = dio_ReadAddressX(&dio_gFormSection, Size);
     dio_gFormDataSize = Size;
 }
 

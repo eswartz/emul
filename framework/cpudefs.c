@@ -243,7 +243,7 @@ char * frame2id(Context * ctx, int frame) {
         errno = ERR_INV_CONTEXT;
         return NULL;
     }
-    snprintf(id, sizeof(id), "FP%d.%s", frame, ctx2id(ctx));
+    snprintf(id, sizeof(id), "FP%d.%s", frame, ctx->id);
     return id;
 }
 
@@ -251,10 +251,10 @@ char * register2id(Context * ctx, int frame, RegisterDefinition * reg) {
     static char id[256];
     RegisterDefinition * defs = get_reg_definitions(ctx);
     if (frame < 0) {
-        snprintf(id, sizeof(id), "R%d.%s", (int)(reg - defs), ctx2id(ctx));
+        snprintf(id, sizeof(id), "R%d.%s", (int)(reg - defs), ctx->id);
     }
     else {
-        snprintf(id, sizeof(id), "R%d@%d.%s", (int)(reg - defs), frame, ctx2id(ctx));
+        snprintf(id, sizeof(id), "R%d@%d.%s", (int)(reg - defs), frame, ctx->id);
     }
     return id;
 }

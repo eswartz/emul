@@ -64,7 +64,7 @@ static void event_memory_map_changed(Context * ctx, void * args) {
     OutputStream * out;
     MemoryMap * map = NULL;
 
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    ctx = ctx->mem;
     map = EXT(ctx);
 
     for (i = 0; i < map->region_cnt; i++) {
@@ -83,7 +83,7 @@ static void event_memory_map_changed(Context * ctx, void * args) {
     write_stringz(out, MEMORYMAP);
     write_stringz(out, "changed");
 
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
 }
@@ -159,7 +159,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
         hooks_done = 1;
         moduleCreateHookAdd(module_create_func);
     }
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    ctx = ctx->mem;
     map = EXT(ctx);
     if (!map->valid && !ctx->exited) {
         moduleEach(module_list_proc, (int)map);
@@ -171,15 +171,13 @@ static MemoryMap * get_memory_map(Context * ctx) {
 #elif defined(WIN32)
 
 static MemoryMap * get_memory_map(Context * ctx) {
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    return EXT(ctx);
+    return EXT(ctx->mem);
 }
 
 #elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
 
 static MemoryMap * get_memory_map(Context * ctx) {
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    return EXT(ctx);
+    return EXT(ctx->mem);
 }
 
 #else
@@ -189,11 +187,11 @@ static MemoryMap * get_memory_map(Context * ctx) {
     MemoryMap * map = NULL;
     FILE * file = NULL;
 
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    ctx = ctx->mem;
     map = EXT(ctx);
     if (map->valid || ctx->exited) return map;
 
-    snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", ctx->pid);
+    snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", id2pid(ctx->id, NULL));
     if ((file = fopen(maps_file_name, "r")) == NULL) return map;
     for (;;) {
         unsigned long addr0 = 0;

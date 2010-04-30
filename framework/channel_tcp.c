@@ -54,7 +54,12 @@
 #define MSG_MORE 0
 #endif
 
-#define BUF_SIZE 0x1000
+#if defined(_WRS_KERNEL)
+/* Bug in VxWorks: send() crashes if buffer is too large */
+#  define BUF_SIZE 0x400
+#else
+#  define BUF_SIZE 0x1000
+#endif
 #define CHANNEL_MAGIC 0x27208956
 #define MAX_IFC 10
 

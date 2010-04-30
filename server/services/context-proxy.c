@@ -81,16 +81,15 @@ struct ContextCache {
     /* Run Control State */
     int pc_valid;
     uint64_t suspend_pc;
-    char suspend_reason[256];
-    long signal;
+    char * suspend_reason;
     char * signal_name;
     char ** bp_ids;
 
     /* Memory */
-    LINK mem_cache;
+    LINK mem_cache_list;
 
     /* Stack trace */
-    LINK stk_cache;
+    LINK stk_cache_list;
 };
 
 struct RegisterProps {
@@ -176,13 +175,14 @@ static ContextCache * find_context_cache(PeerCache * p, const char * id) {
 }
 
 static void add_context_cache(PeerCache * p, ContextCache * c) {
-    list_init(&c->mem_cache);
-    list_init(&c->stk_cache);
+    list_init(&c->mem_cache_list);
+    list_init(&c->stk_cache_list);
     list_add_first(&c->link_peer, &p->ctx_cache);
     c->peer = p;
-    c->ctx = create_context(id2pid(c->id, NULL), 0);
-    c->ctx->mem = c->ctx->pid;
+    c->ctx = create_context(c->id, 0);
+    c->ctx->mem = c->ctx;
     c->ctx->ref_count = 1;
+    list_add_first(&c->ctx->ctxl, &context_root);
     *EXT(c->ctx) = c;
     if (c->parent_id[0]) {
         ContextCache * h = find_context_cache(p, c->parent_id);
@@ -224,8 +224,6 @@ static void free_stack_frame_cache(StackFrameCache * s) {
 }
 
 static void free_context_cache(ContextCache * c) {
-    LINK * l;
-
     assert(c->pending_get_mmap == NULL);
     assert(c->pending_regs_cnt == 0);
     cache_dispose(&c->mmap_cache);
@@ -248,17 +246,21 @@ static void free_context_cache(ContextCache * c) {
         }
         loc_free(c->reg_props);
     }
-    l = c->mem_cache.next;
-    while (l != &c->mem_cache) {
-        MemoryCache * m = ctx2mem(c->mem_cache.next);
-        l = l->next;
-        free_memory_cache(m);
+    if (!list_is_empty(&c->mem_cache_list)) {
+        LINK * l = c->mem_cache_list.next;
+        while (l != &c->mem_cache_list) {
+            MemoryCache * m = ctx2mem(c->mem_cache_list.next);
+            l = l->next;
+            free_memory_cache(m);
+        }
     }
-    l = c->stk_cache.next;
-    while (l != &c->stk_cache) {
-        StackFrameCache * s = ctx2stk(c->stk_cache.next);
-        l = l->next;
-        free_stack_frame_cache(s);
+    if (!list_is_empty(&c->stk_cache_list)) {
+        LINK * l = c->stk_cache_list.next;
+        while (l != &c->stk_cache_list) {
+            StackFrameCache * s = ctx2stk(c->stk_cache_list.next);
+            l = l->next;
+            free_stack_frame_cache(s);
+        }
     }
     loc_free(c);
 }
@@ -271,15 +273,15 @@ static void on_context_suspended(ContextCache * c) {
     while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
     p = *EXT(ctx);
 
-    l = p->mem_cache.next;
-    while (l != &p->mem_cache) {
-        MemoryCache * m = ctx2mem(p->mem_cache.next);
+    l = p->mem_cache_list.next;
+    while (l != &p->mem_cache_list) {
+        MemoryCache * m = ctx2mem(p->mem_cache_list.next);
         l = l->next;
         if (!m->pending) free_memory_cache(m);
     }
-    l = c->stk_cache.next;
-    while (l != &c->stk_cache) {
-        StackFrameCache * f = ctx2stk(c->stk_cache.next);
+    l = c->stk_cache_list.next;
+    while (l != &c->stk_cache_list) {
+        StackFrameCache * f = ctx2stk(c->stk_cache_list.next);
         l = l->next;
         free_stack_frame_cache(f);
     }
@@ -302,19 +304,20 @@ static void read_run_control_context_property(InputStream * inp, const char * na
 
 static void read_context_suspended_data(InputStream * inp, const char * name, void * args) {
     ContextCache * ctx = (ContextCache *)args;
-    if (strcmp(name, "Signal") == 0) ctx->signal = json_read_long(inp);
+    if (strcmp(name, "Signal") == 0 && ctx->ctx != NULL) ctx->ctx->signal = json_read_long(inp);
     else if (strcmp(name, "SignalName") == 0) ctx->signal_name = json_read_alloc_string(inp);
     else if (strcmp(name, "BPs") == 0) ctx->bp_ids = json_read_alloc_string_array(inp, NULL);
     else json_skip_object(inp);
 }
 
 static void clear_context_suspended_data(ContextCache * ctx) {
+    loc_free(ctx->suspend_reason);
     loc_free(ctx->signal_name);
     loc_free(ctx->bp_ids);
+    if (ctx->ctx != NULL) ctx->ctx->signal = 0;
     ctx->pc_valid = 0;
     ctx->suspend_pc = 0;
-    ctx->suspend_reason[0] = 0;
-    ctx->signal = 0;
+    ctx->suspend_reason = NULL;
     ctx->signal_name = NULL;
     ctx->bp_ids = NULL;
 }
@@ -466,7 +469,7 @@ static void event_context_suspended(Channel * ch, void * args) {
     else clear_context_suspended_data(c);
     c->suspend_pc = json_read_uint64(p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(p->fwd_inp, c->suspend_reason, sizeof(c->suspend_reason));
+    c->suspend_reason = json_read_alloc_string(p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_struct(p->fwd_inp, read_context_suspended_data, c);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -527,7 +530,7 @@ static void event_container_suspended(Channel * c, void * args) {
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     ctx.suspend_pc = json_read_uint64(p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(p->fwd_inp, ctx.suspend_reason, sizeof(ctx.suspend_reason));
+    ctx.suspend_reason = json_read_alloc_string(p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_struct(p->fwd_inp, read_context_suspended_data, &ctx);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -687,7 +690,6 @@ static void validate_peer_cache_state(Channel * c, void * args, int error) {
     Trap trap;
 
     assert(p->target == c);
-    assert(p->rc_error == NULL);
     assert(p->rc_pending_cnt > 0);
     if (set_trap(&trap)) {
         p->rc_pending_cnt--;
@@ -702,7 +704,7 @@ static void validate_peer_cache_state(Channel * c, void * args, int error) {
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             x->suspend_pc = json_read_uint64(&c->inp);
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-            json_read_string(&c->inp, x->suspend_reason, sizeof(x->suspend_reason));
+            x->suspend_reason = json_read_alloc_string(&c->inp);
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             json_read_struct(&c->inp, read_context_suspended_data, x);
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -822,7 +824,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     cache = *EXT(ctx);
     c = cache->peer->target;
 
-    for (l = cache->mem_cache.next; l != &cache->mem_cache; l = l->next) {
+    for (l = cache->mem_cache_list.next; l != &cache->mem_cache_list; l = l->next) {
         m = ctx2mem(l);
         if (address >= m->addr && address + size <= m->addr + m->size) {
             if (m->pending != NULL) cache_wait(&m->cache);
@@ -833,13 +835,13 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     }
 
     m = (MemoryCache *)loc_alloc_zero(sizeof(MemoryCache));
-    list_add_first(&m->link_ctx, &cache->mem_cache);
+    list_add_first(&m->link_ctx, &cache->mem_cache_list);
     m->ctx = cache;
     m->addr = address;
     m->buf = loc_alloc(size);
     m->size = size;
     m->pending = protocol_send_command(c, "Memory", "get", validate_memory_cache, m);
-    json_write_string(&c->out, ctx2id(cache->ctx));
+    json_write_string(&c->out, cache->ctx->id);
     write_stream(&c->out, 0);
     json_write_int64(&c->out, m->addr);
     write_stream(&c->out, 0);
@@ -1066,7 +1068,7 @@ static void check_registers_cache(ContextCache * cache) {
         Channel * c = cache->peer->target;
         cache->pending_regs_cnt++;
         protocol_send_command(c, "Registers", "getChildren", validate_registers_cache, cache);
-        json_write_string(&c->out, ctx2id(cache->ctx));
+        json_write_string(&c->out, cache->ctx->id);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
@@ -1322,7 +1324,7 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
 
     assert(frame >= 0);
     check_registers_cache(cache);
-    for (l = cache->stk_cache.next; l != &cache->stk_cache; l = l->next) {
+    for (l = cache->stk_cache_list.next; l != &cache->stk_cache_list; l = l->next) {
         s = ctx2stk(l);
         if (s->frame == frame) {
             assert(!s->disposed);
@@ -1337,7 +1339,7 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
     if (id == NULL) return -1;
 
     s = (StackFrameCache *)loc_alloc_zero(sizeof(StackFrameCache));
-    list_add_first(&s->link_ctx, &cache->stk_cache);
+    list_add_first(&s->link_ctx, &cache->stk_cache_list);
     s->ctx = cache;
     s->frame = frame;
     s->info.regs_size = cache->reg_size;
@@ -1389,7 +1391,7 @@ static void channel_close_listener(Channel * c) {
     }
 }
 
-void event_context_disposed(Context * ctx, void * args) {
+static void event_context_disposed(Context * ctx, void * args) {
     ContextCache * c = *EXT(ctx);
     c->ctx = NULL;
     free_context_cache(c);

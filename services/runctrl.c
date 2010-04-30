@@ -70,7 +70,7 @@ static size_t context_extension_offset = 0;
 #define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
 
 typedef struct SafeEvent {
-    pid_t mem;
+    Context * mem;
     EventCallBack * done;
     void * arg;
     struct SafeEvent * next;
@@ -90,7 +90,7 @@ static int run_ctrl_lock_cnt = 0;
 
 static TCFBroadcastGroup * broadcast_group = NULL;
 
-#if !defined(WIN32) && !defined(_WRS_KERNEL)
+#if defined(__linux__)
 static char * get_executable(pid_t pid) {
     static char s[FILE_PATH_SIZE + 1];
     char tmpbuf[100];
@@ -114,28 +114,33 @@ static void write_context(OutputStream * out, Context * ctx) {
 
     json_write_string(out, "ID");
     write_stream(out, ':');
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
 
     if (ctx->parent != NULL) {
         write_stream(out, ',');
         json_write_string(out, "ParentID");
         write_stream(out, ':');
-        json_write_string(out, ctx2id(ctx->parent));
+        json_write_string(out, ctx->parent->id);
     }
 
-#if !defined(_WRS_KERNEL)
+    if (ctx->creator != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "CreatorID");
+        write_stream(out, ':');
+        json_write_string(out, ctx->creator->id);
+    }
+
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
-    json_write_string(out, pid2id(ctx->mem, 0));
-#endif
+    json_write_string(out, ctx->mem->id);
 
-#if !defined(WIN32) && !defined(_WRS_KERNEL)
+#if defined(__linux__)
     if (!ctx->exiting && ctx->parent == NULL) {
         write_stream(out, ',');
         json_write_string(out, "File");
         write_stream(out, ':');
-        json_write_string(out, get_executable(ctx->pid));
+        json_write_string(out, get_executable(id2pid(ctx->id, NULL)));
     }
 #endif
 
@@ -317,29 +322,30 @@ static void command_get_children(char * token, Channel * c) {
 
     write_stream(&c->out, '[');
     if (id[0] == 0) {
-        LINK * qp;
+        LINK * l;
         int cnt = 0;
-        for (qp = context_root.next; qp != &context_root; qp = qp->next) {
-            Context * ctx = ctxl2ctxp(qp);
+        for (l = context_root.next; l != &context_root; l = l->next) {
+            Context * ctx = ctxl2ctxp(l);
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
             if (cnt > 0) write_stream(&c->out, ',');
-            json_write_string(&c->out, ctx2id(ctx));
+            json_write_string(&c->out, ctx->id);
             cnt++;
         }
     }
     else if (id[0] == 'P') {
         Context * parent = id2ctx(id);
         if (parent != NULL) {
-            LINK * qp;
+            LINK * l;
             int cnt = 0;
-            for (qp = parent->children.next; qp != &parent->children; qp = qp->next) {
-                Context * ctx = cldl2ctxp(qp);
-                assert(!ctx->exited);
+            for (l = parent->children.next; l != &parent->children; l = l->next) {
+                Context * ctx = cldl2ctxp(l);
                 assert(ctx->parent == parent);
-                if (cnt > 0) write_stream(&c->out, ',');
-                json_write_string(&c->out, ctx2id(ctx));
-                cnt++;
+                if (!ctx->exited) {
+                    if (cnt > 0) write_stream(&c->out, ',');
+                    json_write_string(&c->out, ctx->id);
+                    cnt++;
+                }
             }
         }
     }
@@ -399,14 +405,14 @@ static void resume_params_callback(InputStream * inp, const char * name, void * 
 }
 
 static int context_continue_recursive(OutputStream * out, Context * ctx) {
-    LINK * qp;
+    LINK * l;
     int err = 0;
     if (context_has_state(ctx)) {
         send_event_context_resumed(out, ctx);
         if (run_ctrl_lock_cnt == 0 && context_continue(ctx) < 0) err = errno;
     }
-    for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
-        Context * cld = cldl2ctxp(qp);
+    for (l = ctx->children.next; l != &ctx->children; l = l->next) {
+        Context * cld = cldl2ctxp(l);
         if (cld->exited || context_has_state(cld) && !cld->intercepted) continue;
         context_continue_recursive(out, cld);
     }
@@ -476,7 +482,7 @@ static void command_resume(char * token, Channel * c) {
 static void send_event_context_suspended(OutputStream * out, Context * ctx);
 
 int suspend_debug_context(Context * ctx) {
-    LINK * qp;
+    LINK * l;
     if (context_has_state(ctx) && !ctx->exited) {
         if (!ctx->stopped) {
             assert(!ctx->intercepted);
@@ -495,8 +501,8 @@ int suspend_debug_context(Context * ctx) {
             }
         }
     }
-    for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
-        suspend_debug_context(cldl2ctxp(qp));
+    for (l = ctx->children.next; l != &ctx->children; l = l->next) {
+        suspend_debug_context(cldl2ctxp(l));
     }
     return 0;
 }
@@ -536,13 +542,15 @@ static void event_terminate(void * x) {
     TerminateArgs * args = (TerminateArgs *)x;
     Context * ctx = args->ctx;
     Channel * c = args->channel;
-    LINK * qp = ctx->children.next;
-    while (qp != &ctx->children) {
-        Context * x = cldl2ctxp(qp);
-        if (x->intercepted) send_event_context_resumed(&c->bcg->out, x);
-        x->pending_intercept = 0;
-        x->pending_signals |= 1 << SIGKILL;
-        qp = qp->next;
+    LINK * l = ctx->children.next;
+    while (l != &ctx->children) {
+        Context * x = cldl2ctxp(l);
+        if (!x->exited) {
+            if (x->intercepted) send_event_context_resumed(&c->bcg->out, x);
+            x->pending_intercept = 0;
+            x->pending_signals |= 1 << SIGKILL;
+        }
+        l = l->next;
     }
     if (ctx->intercepted) send_event_context_resumed(&c->bcg->out, ctx);
     ctx->pending_intercept = 0;
@@ -624,7 +632,7 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
 
     /* <array of context IDs> */
     write_stream(out, '[');
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
     write_stream(out, ']');
     write_stream(out, 0);
 
@@ -645,7 +653,7 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextSuspended");
 
     /* String: Context ID */
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
     write_stream(out, 0);
 
     write_context_state(out, ctx);
@@ -663,7 +671,7 @@ static void send_event_context_resumed(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextResumed");
 
     /* String: Context ID */
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
     write_stream(out, 0);
 
     write_stream(out, MARKER_EOM);
@@ -677,7 +685,7 @@ static void send_event_context_exception(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextException");
 
     /* String: Context ID */
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
     write_stream(out, 0);
 
     /* String: Human readable description of the exception */
@@ -688,21 +696,22 @@ static void send_event_context_exception(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-int is_all_stopped(pid_t mem) {
-    LINK * qp;
-    for (qp = context_root.next; qp != &context_root; qp = qp->next) {
-        Context * ctx = ctxl2ctxp(qp);
+int is_all_stopped(Context * mem) {
+    LINK * l;
+    assert(mem->mem == mem);
+    for (l = context_root.next; l != &context_root; l = l->next) {
+        Context * ctx = ctxl2ctxp(l);
         if (ctx->exited || ctx->exiting) continue;
         if (!context_has_state(ctx)) continue;
-        if (mem > 0 && ctx->mem != mem) continue;
+        if (ctx->mem != mem) continue;
         if (!ctx->stopped) return 0;
     }
     return 1;
 }
 
 static void run_safe_events(void * arg) {
-    LINK * qp;
-    pid_t mem;
+    LINK * l;
+    Context * mem;
 
     if ((uintptr_t)arg != safe_event_generation) return;
 
@@ -710,9 +719,9 @@ static void run_safe_events(void * arg) {
 
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
-        for (qp = context_root.next; qp != &context_root; qp = qp->next) {
+        for (l = context_root.next; l != &context_root; l = l->next) {
             int n = 0;
-            Context * ctx = ctxl2ctxp(qp);
+            Context * ctx = ctxl2ctxp(l);
             EXT(ctx)->pending_safe_event = 0;
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
@@ -728,22 +737,22 @@ static void run_safe_events(void * arg) {
             }
             if (n < 0) {
                 int error = errno;
-                trace(LOG_ALWAYS, "error: can't resume pid %d; error %d: %s",
-                    ctx->pid, error, errno_to_str(error));
+                trace(LOG_ALWAYS, "error: can't resume %s; error %d: %s",
+                    ctx->id, error, errno_to_str(error));
             }
         }
         return;
     }
 
-    mem = safe_event_list ? safe_event_list->mem : 0;
+    mem = safe_event_list ? safe_event_list->mem : NULL;
 
-    for (qp = context_root.next; qp != &context_root; qp = qp->next) {
-        Context * ctx = ctxl2ctxp(qp);
+    for (l = context_root.next; l != &context_root; l = l->next) {
+        Context * ctx = ctxl2ctxp(l);
         if (ctx->exited || ctx->exiting || ctx->stopped || !context_has_state(ctx)) {
             EXT(ctx)->pending_safe_event = 0;
             continue;
         }
-        if (mem > 0 && ctx->mem != mem) {
+        if (mem != NULL && ctx->mem != mem) {
             EXT(ctx)->pending_safe_event = 0;
             continue;
         }
@@ -759,14 +768,14 @@ static void run_safe_events(void * arg) {
                 }
 #endif
                 if (error) {
-                    trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error %d: %s",
-                        ctx->pid, error, errno_to_str(error));
+                    trace(LOG_ALWAYS, "error: can't temporary stop %s; error %d: %s",
+                        ctx->id, error, errno_to_str(error));
                 }
             }
             assert(!ctx->stopped);
         }
         if (EXT(ctx)->pending_safe_event >= STOP_ALL_MAX_CNT) {
-            trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error: timeout", ctx->pid);
+            trace(LOG_ALWAYS, "error: can't temporary stop %s; error: timeout", ctx->id);
             ctx->exiting = 1;
             EXT(ctx)->pending_safe_event = 0;
         }
@@ -783,7 +792,7 @@ static void run_safe_events(void * arg) {
             post_event_with_delay(run_safe_events, (void *)++safe_event_generation, STOP_ALL_TIMEOUT);
             return;
         }
-        if (mem > 0 && i->mem != mem) {
+        if (mem != NULL && i->mem != mem) {
             post_event(run_safe_events, (void *)++safe_event_generation);
             return;
         }
@@ -797,6 +806,7 @@ static void run_safe_events(void * arg) {
             trace(LOG_ALWAYS, "Unhandled exception in \"safe\" event dispatch: %d %s",
                   trap.error, errno_to_str(trap.error));
         }
+        context_unlock(i->mem);
         loc_free(i);
         run_ctrl_unlock();
     }
@@ -813,9 +823,11 @@ static void check_safe_events(Context * ctx) {
     }
 }
 
-void post_safe_event(int mem, EventCallBack * done, void * arg) {
+void post_safe_event(Context * mem, EventCallBack * done, void * arg) {
     SafeEvent * i = (SafeEvent *)loc_alloc_zero(sizeof(SafeEvent));
+    assert(mem->mem == mem);
     run_ctrl_lock();
+    context_lock(mem);
     if (run_ctrl_lock_cnt > 1 && safe_event_list == NULL) {
         post_event(run_safe_events, (void *)++safe_event_generation);
     }
@@ -925,8 +937,10 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
 #else
 
 #include "runctrl.h"
+#include <assert.h>
 
-void post_safe_event(int mem, EventCallBack * done, void * arg) {
+void post_safe_event(Context * mem, EventCallBack * done, void * arg) {
+    assert(mem->mem == mem);
     post_event(done, arg);
 }
 

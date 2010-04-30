@@ -321,7 +321,7 @@ static BreakInstruction * find_instruction(Context * ctx, ContextAddress address
     return NULL;
 }
 
-static void clear_instruction_refs(pid_t mem) {
+static void clear_instruction_refs(Context * mem) {
     int i;
     LINK * l = instructions.next;
     while (l != &instructions) {
@@ -445,7 +445,7 @@ static void write_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
             write_stream(out, '{');
             json_write_string(out, "LocationContext");
             write_stream(out, ':');
-            json_write_string(out, ctx2id(bi->ctx));
+            json_write_string(out, bi->ctx->id);
             write_stream(out, ',');
             if (bi->error != NULL) {
                 json_write_string(out, "Error");
@@ -558,8 +558,7 @@ static EvaluationRequest * post_evaluation_request(EvaluationRequest * req) {
 
 static void post_location_evaluation_request(Context * ctx) {
     if (ctx->exited) post_evaluation_request(create_evaluation_request(ctx, 0));
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    post_evaluation_request(create_evaluation_request(ctx, 0))->location = 1;
+    post_evaluation_request(create_evaluation_request(ctx->mem, 0))->location = 1;
 }
 
 static void expr_cache_enter(CacheClient * client, BreakpointInfo * bp, Context * ctx) {

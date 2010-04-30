@@ -144,8 +144,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
-
-    while (err == 0 && ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    else ctx = ctx->mem;
 
     if (err == 0) {
         ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);
@@ -225,8 +224,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
-
-    while (err == 0 && ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    else ctx = ctx->mem;
 
     if (err == 0) {
         ELF_File * file = elf_list_first(ctx, addr0, addr1);

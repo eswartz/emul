@@ -202,7 +202,7 @@ static void syminfo2symbol(Context * ctx, int frame, SYMBOL_INFO * info, Symbol 
         sym->frame = frame - STACK_NO_FRAME;
     }
     else {
-        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+        ctx = ctx->mem;
     }
     sym->ctx = ctx;
     tag2symclass(sym, info->Tag);
@@ -234,7 +234,7 @@ const char * symbol2id(const Symbol * sym) {
     else {
         int i = sym->info ? sym->info - basic_type_info + 1 : 0;
         snprintf(buf, sizeof(buf), "SYM%llX.%lX.%X.%X.%s",
-            sym->module, sym->index, sym->frame, i, ctx2id(sym->ctx));
+            sym->module, sym->index, sym->frame, i, sym->ctx->id);
     }
     return buf;
 }
@@ -429,7 +429,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
 
 int get_symbol_update_policy(const Symbol * sym, char ** id, int * policy) {
     assert(sym->magic == SYMBOL_MAGIC);
-    *id = ctx2id(sym->ctx);
+    *id = sym->ctx->id;
     *policy = context_has_state(sym->ctx) ? UPDATE_ON_EXE_STATE_CHANGES : UPDATE_ON_MEMORY_MAP_CHANGES;
     return 0;
 }
@@ -872,8 +872,7 @@ static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
     const TypeInfo * p = basic_type_info;
     while (p->name != NULL) {
         if (strcmp(p->name, name) == 0) {
-            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-            sym->ctx = ctx;
+            sym->ctx = ctx->mem;
             sym->sym_class = SYM_CLASS_TYPE;
             sym->info = p;
             return 0;
@@ -891,8 +890,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
 #if ENABLE_RCBP_TEST
     if (find_test_symbol(ctx, name, &(*sym)->address, &(*sym)->sym_class) >= 0) {
-        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-        (*sym)->ctx = ctx;
+        (*sym)->ctx = ctx->mem;
         return 0;
     }
 #endif
@@ -968,7 +966,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
 
 static void event_context_created(Context * ctx, void * client_data) {
     if (ctx->parent != NULL) return;
-    assert(ctx->pid == ctx->mem);
+    assert(ctx->mem == ctx);
     if (!SymInitialize(get_context_handle(ctx), SYM_SEARCH_PATH, FALSE)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymInitialize() error: %d: %s",
@@ -1009,7 +1007,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
     HANDLE handle = get_context_handle(ctx);
     if (is_context_module_loaded(ctx)) {
         unsigned i;
-        assert(ctx->pid == ctx->mem);
+        assert(ctx->mem == ctx);
         assert(handle != NULL);
         if (!SymLoadModule64(handle, get_context_module_handle(ctx),
                 NULL, NULL, get_context_module_address(ctx), 0)) {
@@ -1023,7 +1021,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
     }
     if (is_context_module_unloaded(ctx)) {
         unsigned i;
-        assert(ctx->pid == ctx->mem);
+        assert(ctx->mem == ctx);
         assert(handle != NULL);
         for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
             if (symbol_cache[i].process == handle) symbol_cache[i].process = NULL;

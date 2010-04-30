@@ -126,7 +126,7 @@ static ObjectInfo * find_object_info(U8_T ID) {
     ObjectInfo * Info = find_object(sCache, ID);
     if (Info == NULL) {
         U4_T Hash = (U4_T)ID % OBJ_HASH_SIZE;
-        assert(ID >= sDebugSection->addr + dio_gEntryPos);
+        if (ID < sDebugSection->addr + dio_gEntryPos) str_exception(ERR_INV_DWARF, "Invalid entry reference");
         Info = (ObjectInfo *)loc_alloc_zero(sizeof(ObjectInfo));
         Info->mHashNext = sCache->mObjectHash[Hash];
         sCache->mObjectHash[Hash] = Info;

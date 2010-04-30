@@ -107,7 +107,7 @@ typedef struct FindSymCache {
     AbstractCache cache;
     ReplyHandlerInfo * pending;
     ErrorReport * error;
-    pid_t pid;
+    Context * ctx;
     uint64_t ip;
     char * name;
     char * id;
@@ -120,7 +120,7 @@ typedef struct ListSymCache {
     AbstractCache cache;
     ReplyHandlerInfo * pending;
     ErrorReport * error;
-    pid_t pid;
+    Context * ctx;
     uint64_t ip;
     char ** list;
     unsigned list_size;
@@ -133,7 +133,7 @@ typedef struct StackFrameCache {
     AbstractCache cache;
     ReplyHandlerInfo * pending;
     ErrorReport * error;
-    pid_t mem;
+    Context * ctx;
     uint64_t address;
     uint64_t size;
 
@@ -168,24 +168,22 @@ static unsigned hash_sym_id(const char * id) {
     int i;
     unsigned h = 0;
     for (i = 0; id[i]; i++) h += id[i];
-    h = h + h / HASH_SIZE;
     return h % HASH_SIZE;
 }
 
-static unsigned hash_find(const char * name, uint64_t ip, pid_t pid) {
+static unsigned hash_find(Context * ctx, const char * name, uint64_t ip) {
     int i;
     unsigned h = 0;
     for (i = 0; name[i]; i++) h += name[i];
-    h = h + h / HASH_SIZE;
-    return (h + (unsigned)ip + (unsigned)pid) % HASH_SIZE;
+    return (h + ((uintptr_t)ctx >> 4) + (unsigned)ip) % HASH_SIZE;
 }
 
-static unsigned hash_list(uint64_t ip, pid_t pid) {
-    return ((unsigned)ip + (unsigned)pid) % HASH_SIZE;
+static unsigned hash_list(Context * ctx, uint64_t ip) {
+    return (((uintptr_t)ctx >> 4) + (unsigned)ip) % HASH_SIZE;
 }
 
-static unsigned hash_frame(pid_t pid) {
-    return (unsigned)pid % HASH_SIZE;
+static unsigned hash_frame(Context * ctx) {
+    return ((uintptr_t)ctx >> 4) % HASH_SIZE;
 }
 
 static SymbolsCache * get_symbols_cache(void) {
@@ -263,6 +261,7 @@ static void free_find_sym_cache(FindSymCache * c) {
     if (c->pending == NULL) {
         cache_dispose(&c->cache);
         release_error_report(c->error);
+        context_unlock(c->ctx);
         loc_free(c->name);
         loc_free(c->id);
         loc_free(c);
@@ -276,6 +275,7 @@ static void free_list_sym_cache(ListSymCache * c) {
         unsigned j;
         cache_dispose(&c->cache);
         release_error_report(c->error);
+        context_unlock(c->ctx);
         for (j = 0; j < c->list_size; j++) loc_free(c->list[j]);
         loc_free(c->list);
         loc_free(c);
@@ -289,6 +289,7 @@ static void free_stack_frame_cache(StackFrameCache * c) {
         int i;
         cache_dispose(&c->cache);
         release_error_report(c->error);
+        context_unlock(c->ctx);
         for (i = 0; i < c->regs_cnt; i++) loc_free(c->regs[i]);
         loc_free(c->regs);
         loc_free(c->fp);
@@ -433,7 +434,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     if (!set_trap(&trap)) return -1;
 
     if (frame == STACK_NO_FRAME) {
-        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+        ctx = ctx->mem;
     }
     else {
         StackFrame * info = NULL;
@@ -442,11 +443,11 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
     }
 
-    h = hash_find(name, ip, ctx->pid);
+    h = hash_find(ctx, name, ip);
     syms = get_symbols_cache();
     for (l = syms->link_find[h].next; l != syms->link_find + h; l = l->next) {
         FindSymCache * c = syms2find(l);
-        if (c->pid == ctx->pid && c->ip == ip && strcmp(c->name, name) == 0) {
+        if (c->ctx == ctx && c->ip == ip && strcmp(c->name, name) == 0) {
             f = c;
             break;
         }
@@ -460,7 +461,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
             SymInfoCache * s = (SymInfoCache *)loc_alloc_zero(sizeof(SymInfoCache));
             f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
             list_add_first(&f->link_syms, syms->link_find + h);
-            f->pid = ctx->pid;
+            context_lock(f->ctx = ctx);
             f->ip = ip;
             f->name = loc_strdup(name);
             f->id = loc_strdup(name);
@@ -472,7 +473,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
             s->address = (ContextAddress)address;
             s->sym_class = sym_class;
             s->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
-            s->owner_id = loc_strdup(ctx2id(ctx));
+            s->owner_id = loc_strdup(ctx->id);
             list_add_first(&s->link_syms, syms->link_sym + hash_sym_id(name));
             list_init(&s->array_syms);
         }
@@ -483,7 +484,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         Channel * c = get_channel(syms);
         f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
         list_add_first(&f->link_syms, syms->link_find + h);
-        f->pid = ctx->pid;
+        context_lock(f->ctx = ctx);
         f->ip = ip;
         f->name = loc_strdup(name);
         f->pending = protocol_send_command(c, SYMBOLS, "find", validate_find, f);
@@ -491,7 +492,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
             json_write_string(&c->out, frame2id(ctx, frame));
         }
         else {
-            json_write_string(&c->out, ctx2id(ctx));
+            json_write_string(&c->out, ctx->id);
         }
         write_stream(&c->out, 0);
         json_write_string(&c->out, name);
@@ -560,7 +561,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
     if (!set_trap(&trap)) return -1;
 
     if (frame == STACK_NO_FRAME) {
-        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+        ctx = ctx->mem;
     }
     else {
         StackFrame * info = NULL;
@@ -569,11 +570,11 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
         if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
     }
 
-    h = hash_list(ip, ctx->pid);
+    h = hash_list(ctx, ip);
     syms = get_symbols_cache();
     for (l = syms->link_list[h].next; l != syms->link_list + h; l = l->next) {
         ListSymCache * c = syms2list(l);
-        if (c->pid == ctx->pid && c->ip == ip) {
+        if (c->ctx == ctx && c->ip == ip) {
             f = c;
             break;
         }
@@ -583,14 +584,14 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
         Channel * c = get_channel(syms);
         f = (ListSymCache *)loc_alloc_zero(sizeof(ListSymCache));
         list_add_first(&f->link_syms, syms->link_list + h);
-        f->pid = ctx->pid;
+        context_lock(f->ctx = ctx);
         f->ip = ip;
         f->pending = protocol_send_command(c, SYMBOLS, "list", validate_list, f);
         if (frame != STACK_NO_FRAME) {
             json_write_string(&c->out, frame2id(ctx, frame));
         }
         else {
-            json_write_string(&c->out, ctx2id(ctx));
+            json_write_string(&c->out, ctx->id);
         }
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
@@ -1045,7 +1046,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     for (l = syms->link_frame[h].next; l != syms->link_frame + h; l = l->next) {
         StackFrameCache * c = syms2frame(l);
         /* Here we assume that stack tracing info is valid for all threads in same memory space */
-        if (c->mem == ctx->mem) {
+        if (c->ctx == ctx->mem) {
             if (c->pending != NULL) {
                 cache_wait(&c->cache);
             }
@@ -1062,11 +1063,11 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
         Channel * c = get_channel(syms);
         f = (StackFrameCache *)loc_alloc_zero(sizeof(StackFrameCache));
         list_add_first(&f->link_syms, syms->link_frame + h);
-        f->mem = ctx->mem;
+        context_lock(f->ctx = ctx->mem);
         f->address = ip;
         f->size = 1;
         f->pending = protocol_send_command(c, SYMBOLS, "findFrameInfo", validate_frame, f);
-        json_write_string(&c->out, ctx2id(ctx));
+        json_write_string(&c->out, f->ctx->id);
         write_stream(&c->out, 0);
         json_write_uint64(&c->out, ip);
         write_stream(&c->out, 0);
@@ -1095,10 +1096,8 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
 static void flush_syms(Context * ctx, int mode, int keep_pending) {
     LINK * l;
     LINK * m;
-    char id[256];
     int i;
 
-    strlcpy(id, ctx2id(ctx), sizeof(id));
     for (m = root.next; m != &root; m = m->next) {
         SymbolsCache * syms = root2syms(m);
         for (i = 0; i < HASH_SIZE; i++) {
@@ -1113,7 +1112,7 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
                 else if (c->update_policy == 0 || c->owner_id == NULL) {
                     free_sym_info_cache(c);
                 }
-                else if ((mode & (1 << c->update_policy)) != 0 && strcmp(id, c->owner_id) == 0) {
+                else if ((mode & (1 << c->update_policy)) != 0 && strcmp(ctx->id, c->owner_id) == 0) {
                     free_sym_info_cache(c);
                 }
             }
@@ -1121,14 +1120,14 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
             while (l != syms->link_find + i) {
                 FindSymCache * c = syms2find(l);
                 l = l->next;
-                if (c->pid == ctx->pid && (c->pending == NULL || !keep_pending))
+                if (c->ctx == ctx && (c->pending == NULL || !keep_pending))
                     free_find_sym_cache(c);
             }
             l = syms->link_list[i].next;
             while (l != syms->link_list + i) {
                 ListSymCache * c = syms2list(l);
                 l = l->next;
-                if (c->pid == ctx->pid && (c->pending == NULL || !keep_pending))
+                if (c->ctx == ctx && (c->pending == NULL || !keep_pending))
                     free_list_sym_cache(c);
             }
             if ((mode & (1 << UPDATE_ON_MEMORY_MAP_CHANGES)) != 0) {
@@ -1136,7 +1135,7 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
                 while (l != syms->link_frame + i) {
                     StackFrameCache * c = syms2frame(l);
                     l = l->next;
-                    if (c->mem == ctx->mem && (c->pending == NULL || !keep_pending))
+                    if (c->ctx == ctx->mem && (c->pending == NULL || !keep_pending))
                         free_stack_frame_cache(c);
                 }
             }

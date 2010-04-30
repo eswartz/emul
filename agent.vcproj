@@ -742,6 +742,10 @@
 		<Filter
 			Name="system"
 			>
+			<File
+				RelativePath=".\system\pid-hash.h"
+				>
+			</File>
 			<Filter
 				Name="Windows"
 				>

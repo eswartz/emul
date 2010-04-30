@@ -32,44 +32,39 @@ extern LINK context_root;
 typedef void ContextAttachCallBack(int, Context *, void *);
 
 struct Context {
-    LINK                cldl;               /* Link that used to form a list of context chidren */
-    LINK                children;           /* Context children double linked list */
-    Context *           parent;             /* if this is not main thread in a process, parent points to main thread */
-    unsigned int        ref_count;          /* reference count, see context_lock() and context_unlock() */
-    pid_t               pid;                /* process or thread identifier */
-    pid_t               mem;                /* context memory space identifier */
-    int                 stopped;            /* OS kernel has stopped this context */
-    int                 intercepted;        /* context is reported to a host as suspended */
-    int                 exited;             /* context exited */
-    int                 event_notification; /* set to 1 when calling one of ContextEventListener call-backs for this context */
-#if ENABLE_DebugContext && !ENABLE_ContextProxy
+    char                id[256];            /* context ID */
+    LINK                cldl;               /* link that used to form a list of context chidren */
     LINK                ctxl;               /* link that used to form a list of all contexts */
-    LINK                pidl;               /* link that used to form a list of contexts with same hash code */
+    LINK                children;           /* context children double linked list */
+    Context *           parent;             /* context parent */
+    Context *           creator;            /* context creator */
+    Context *           mem;                /* context memory space owner */
+    unsigned int        ref_count;          /* reference count, see context_lock() and context_unlock() */
+    int                 stopped;            /* OS kernel has stopped this context */
     int                 stopped_by_bp;      /* stopped by breakpoint */
     int                 stopped_by_exception;/* stopped by runtime exception (like SIGSEGV, etc.) */
+    int                 intercepted;        /* context is reported to a host as suspended */
     int                 exiting;            /* context is about to exit */
+    int                 exited;             /* context exited */
+    int                 event_notification; /* set to 1 when calling one of ContextEventListener call-backs for this context */
     int                 pending_step;       /* context is executing single instruction step */
     int                 pending_intercept;  /* host is waiting for this context to be suspended */
     unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
     unsigned long       sig_dont_stop;      /* bitset of signals that should not be intercepted by the debugger */
     unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
     int                 signal;             /* signal that stopped this context */
+#if ENABLE_DebugContext
     RegisterData *      regs;               /* copy of context registers, updated when context stops */
     size_t              regs_size;          /* size of data pointed by "regs" */
     ErrorReport *       regs_error;         /* if not NULL, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
-#endif /* ENABLE_DebugContext */
+#endif
 };
 
 /*
  * Convert PID to TCF Context ID
  */
 extern char * pid2id(pid_t pid, pid_t parent);
-
-/*
- * Get context ID
- */
-extern char * ctx2id(Context * ctx);
 
 /*
  * Convert TCF Context ID to PID
@@ -193,7 +188,7 @@ extern void send_context_exited_event(Context * ctx);
  * Functions that are used to create a Context.
  * They are not supposed to be called by clients.
  */
-extern Context * create_context(pid_t pid, size_t regs_size);
+extern Context * create_context(const char * id, size_t regs_size);
 extern void link_context(Context * ctx);
 
 extern void ini_contexts(void);

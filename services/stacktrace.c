@@ -77,6 +77,7 @@ static void invalidate_stack_trace(StackTrace * stack_trace) {
 #if defined(_WRS_KERNEL)
 
 #include <trcLib.h>
+#include "system/VxWorks/context-vxworks.h"
 
 static Context * client_ctx;
 static StackTrace * client_trace;
@@ -111,10 +112,11 @@ static void vxworks_stack_trace_callback(
 }
 
 static void trace_stack(Context * ctx, StackTrace * s) {
+    int task_id = get_context_task_id(ctx);
     client_ctx = ctx;
     client_trace = s;
-    trcStack((REG_SET *)ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, ctx->pid);
-    if (s->frame_cnt == 0) vxworks_stack_trace_callback(NULL, 0, 0, NULL, ctx->pid, 1);
+    trcStack((REG_SET *)ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, task_id);
+    if (s->frame_cnt == 0) vxworks_stack_trace_callback(NULL, 0, 0, NULL, task_id, 1);
 }
 
 #else
@@ -206,19 +208,17 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
     write_stream(out, ',');
     json_write_string(out, "ParentID");
     write_stream(out, ':');
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
 
     write_stream(out, ',');
     json_write_string(out, "Level");
     write_stream(out, ':');
     json_write_long(out, level);
 
-#if !defined(_WRS_KERNEL)
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
-    json_write_string(out, pid2id(ctx->mem, 0));
-#endif
+    json_write_string(out, ctx->mem->id);
 
     if (frame->is_top_frame) {
         write_stream(out, ',');

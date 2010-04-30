@@ -70,7 +70,7 @@ static int get_sym_context(Context * ctx, int frame) {
     assert(frame != STACK_TOP_FRAME);
 
     if (frame == STACK_NO_FRAME) {
-        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+        ctx = ctx->mem;
     }
     else {
         StackFrame * info = NULL;
@@ -138,9 +138,7 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
         sym->sym_class = SYM_CLASS_VALUE;
         break;
     }
-    if (sym->frame == 0) {
-        while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    }
+    if (sym->frame == 0) ctx = ctx->mem;
     sym->ctx = ctx;
     *res = sym;
 }
@@ -217,8 +215,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
             if (strcmp(name, sym_info.mName) == 0) {
                 Context * ctx = sym_ctx;
                 Symbol * sym = alloc_symbol();
-                while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-                sym->ctx = ctx;
+                sym->ctx = ctx->mem;
                 switch (sym_info.mType) {
                 case STT_FUNC:
                     sym->sym_class = SYM_CLASS_FUNCTION;
@@ -257,8 +254,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         }
         else {
             Symbol * sym = alloc_symbol();
-            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-            sym->ctx = ctx;
+            sym->ctx = ctx->mem;
             sym->address = (ContextAddress)ptr;
 
             if (SYM_IS_TEXT(type)) {
@@ -326,8 +322,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         found = find_test_symbol(ctx, name, &address, &sym_class) >= 0;
         if (found) {
             Symbol * sym = alloc_symbol();
-            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-            sym->ctx = ctx;
+            sym->ctx = ctx->mem;
             sym->address = (ContextAddress)address;
             sym->sym_class = sym_class;
             *res = sym;
@@ -444,7 +439,7 @@ const char * symbol2id(const Symbol * sym) {
         if (sym->tbl != NULL) tbl_index = sym->tbl->mIndex + 1;
         snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%lX.%llX.%X.%X.%X.%X.%llX.%s",
             sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino, (unsigned long)file->mtime, obj_index, tbl_index,
-            sym->frame, sym->index, sym->dimension, (unsigned long long)sym->size, ctx2id(sym->ctx));
+            sym->frame, sym->index, sym->dimension, (unsigned long long)sym->size, sym->ctx->id);
     }
     return id;
 }
@@ -909,7 +904,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
 
 int get_symbol_update_policy(const Symbol * sym, char ** id, int * policy) {
     assert(sym->magic == SYMBOL_MAGIC);
-    *id = ctx2id(sym->ctx);
+    *id = sym->ctx->id;
     *policy = context_has_state(sym->ctx) ? UPDATE_ON_EXE_STATE_CHANGES : UPDATE_ON_MEMORY_MAP_CHANGES;
     return 0;
 }

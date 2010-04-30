@@ -64,14 +64,12 @@ static void write_context(OutputStream * out, Context * ctx) {
 
     json_write_string(out, "ID");
     write_stream(out, ':');
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
 
-#if !defined(_WRS_KERNEL)
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
-    json_write_string(out, pid2id(ctx->mem, 0));
-#endif
+    json_write_string(out, ctx->mem->id);
 
     /* Check endianness */
     {
@@ -204,7 +202,7 @@ static void command_get_children(char * token, Channel * c) {
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
             if (cnt > 0) write_stream(&c->out, ',');
-            json_write_string(&c->out, ctx2id(ctx));
+            json_write_string(&c->out, ctx->id);
             cnt++;
         }
     }
@@ -272,7 +270,7 @@ static void send_event_memory_changed(OutputStream * out, Context * ctx, Context
     write_stringz(out, MEMORY);
     write_stringz(out, "memoryChanged");
 
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
     write_stream(out, 0);
 
     /* <array of addres ranges> */
@@ -559,7 +557,7 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
 
     /* <array of context IDs> */
     write_stream(out, '[');
-    json_write_string(out, ctx2id(ctx));
+    json_write_string(out, ctx->id);
     write_stream(out, ']');
     write_stream(out, 0);
 

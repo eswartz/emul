@@ -43,19 +43,19 @@ extern void run_ctrl_unlock(void);
  * Temporary suspends handling of incoming messages and stops all debuggee threads.
  * Callback function 'done' will be called when everything is stopped and
  * it is safe to access debuggee memory, plant breakpoints, etc.
- * 'mem' is memory ID, only threads that belong to that memory are stopped.
+ * 'mem' is memory context, only threads that belong to that memory are stopped.
  * if 'mem' = 0, stop all threads.
  * post_safe_event() uses run_ctrl_lock()/run_ctrl_unlock() to suspend/resume debuggee.
  */
-extern void post_safe_event(int mem, EventCallBack * done, void * arg);
+extern void post_safe_event(Context * mem, EventCallBack * done, void * arg);
 
 /*
  * Return 1 if all threads in debuggee are stopped and handling of incoming messages
  * is suspended and it is safe to access debuggee memory, plant breakpoints, etc.
- * 'mem' is memory ID, only threads that belong to that memory are checked.
+ * 'mem' is memory context, only threads that belong to that memory are checked.
  * if 'mem' = 0, check all threads.
  */
-extern int is_all_stopped(pid_t mem);
+extern int is_all_stopped(Context * mem);
 
 /*
  * Terminate debug context - thread or process.
