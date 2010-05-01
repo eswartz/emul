@@ -51,7 +51,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     write_stream(out, ',');
     json_write_string(out, "ParentID");
     write_stream(out, ':');
-    if (is_top_frame(ctx, frame)) {
+    if (frame < 0 || is_top_frame(ctx, frame)) {
         json_write_string(out, ctx->id);
     }
     else {
@@ -170,15 +170,17 @@ static void command_get_children(char * token, Channel * c) {
     write_errno(&c->out, err);
 
     write_stream(&c->out, '[');
-    if (err == 0 && ctx != NULL && context_has_state(ctx)) {
-        int cnt = 0;
+    if (err == 0 && ctx != NULL) {
         RegisterDefinition * defs = get_reg_definitions(ctx);
-        RegisterDefinition * reg_def;
-        for (reg_def = defs; reg_def->name != NULL; reg_def++) {
-            if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
-                if (cnt > 0) write_stream(&c->out, ',');
-                json_write_string(&c->out, register2id(ctx, frame, reg_def));
-                cnt++;
+        if (defs != NULL) {
+            int cnt = 0;
+            RegisterDefinition * reg_def;
+            for (reg_def = defs; reg_def->name != NULL; reg_def++) {
+                if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
+                    if (cnt > 0) write_stream(&c->out, ',');
+                    json_write_string(&c->out, register2id(ctx, frame, reg_def));
+                    cnt++;
+                }
             }
         }
     }
@@ -213,6 +215,7 @@ static void command_get(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (id2register(id, &ctx, &frame, &reg_def) < 0) err = errno;
+    else if (!context_has_state(ctx)) err = ERR_INV_CONTEXT;
     else if (!ctx->stopped) err = ERR_IS_RUNNING;
 
     if (!err) {
@@ -321,6 +324,7 @@ static void read_location(InputStream * inp, void * args) {
 
     if (!buf_err) {
         if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) buf_err = errno;
+        else if (!context_has_state(loc->ctx)) buf_err = ERR_INV_CONTEXT;
         else if (!loc->ctx->stopped) buf_err = ERR_IS_RUNNING;
         else if (loc->offs + loc->size > (unsigned)loc->reg_def->size) buf_err = ERR_INV_DATA_SIZE;
     }

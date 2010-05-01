@@ -42,11 +42,10 @@ typedef struct PeerCache PeerCache;
 typedef struct RegisterProps RegisterProps;
 
 struct ContextCache {
-    LINK link_peer;
-
     char id[256];
     char parent_id[256];
     char process_id[256];
+    char creator_id[256];
     char * file;
     Context * ctx;
     PeerCache * peer;
@@ -127,7 +126,7 @@ struct StackFrameCache {
 
 struct PeerCache {
     LINK link_all;
-    LINK ctx_cache;
+    LINK context_list;
     Channel * host;
     Channel * target;
     ForwardingInputStream fwd;
@@ -141,7 +140,6 @@ struct PeerCache {
 };
 
 #define peers2peer(A)    ((PeerCache *)((char *)(A) - offsetof(PeerCache, link_all)))
-#define peer2ctx(A)      ((ContextCache *)((char *)(A) - offsetof(ContextCache, link_peer)))
 #define ctx2mem(A)       ((MemoryCache *)((char *)(A) - offsetof(MemoryCache, link_ctx)))
 #define ctx2stk(A)       ((StackFrameCache *)((char *)(A) - offsetof(StackFrameCache, link_ctx)))
 
@@ -167,35 +165,53 @@ static const char RUN_CONTROL[] = "RunControl";
 
 static ContextCache * find_context_cache(PeerCache * p, const char * id) {
     LINK * l;
-    for (l = p->ctx_cache.next; l != &p->ctx_cache; l = l->next) {
-        ContextCache * c = peer2ctx(l);
-        if (strcmp(c->id, id) == 0) return c;
+    for (l = p->context_list.next; l != &p->context_list; l = l->next) {
+        Context * c = ctxl2ctxp(l);
+        if (strcmp(c->id, id) == 0) return *EXT(c);
     }
     return NULL;
 }
 
-static void add_context_cache(PeerCache * p, ContextCache * c) {
-    list_init(&c->mem_cache_list);
-    list_init(&c->stk_cache_list);
-    list_add_first(&c->link_peer, &p->ctx_cache);
-    c->peer = p;
-    c->ctx = create_context(c->id, 0);
-    c->ctx->mem = c->ctx;
-    c->ctx->ref_count = 1;
-    list_add_first(&c->ctx->ctxl, &context_root);
-    *EXT(c->ctx) = c;
+static void set_context_links(ContextCache * c) {
     if (c->parent_id[0]) {
-        ContextCache * h = find_context_cache(p, c->parent_id);
+        ContextCache * h = find_context_cache(c->peer, c->parent_id);
         if (h != NULL) {
-            c->ctx->parent = h->ctx;
-            c->ctx->mem = h->ctx->mem;
-            h->ctx->ref_count++;
+            (c->ctx->parent = h->ctx)->ref_count++;
             list_add_last(&c->ctx->cldl, &h->ctx->children);
         }
-        else if (p->rc_done) {
-            trace(LOG_ALWAYS, "Invalid parent ID in 'context added' event: %s", c->parent_id);
+        else {
+            trace(LOG_ALWAYS, "Invalid parent ID: %s", c->parent_id);
         }
     }
+    if (c->process_id[0]) {
+        ContextCache * h = find_context_cache(c->peer, c->process_id);
+        if (h != NULL) {
+            c->ctx->mem = h->ctx;
+        }
+        else {
+            trace(LOG_ALWAYS, "Invalid process ID: %s", c->process_id);
+        }
+    }
+    if (c->creator_id[0]) {
+        ContextCache * h = find_context_cache(c->peer, c->creator_id);
+        if (h != NULL) {
+            (c->ctx->creator = h->ctx)->ref_count++;
+        }
+        else {
+            trace(LOG_ALWAYS, "Invalid creater ID: %s", c->creator_id);
+        }
+    }
+}
+
+static void add_context_cache(PeerCache * p, ContextCache * c) {
+    c->peer = p;
+    c->ctx = create_context(c->id, 0);
+    c->ctx->ref_count = 1;
+    *EXT(c->ctx) = c;
+    list_init(&c->mem_cache_list);
+    list_init(&c->stk_cache_list);
+    list_add_first(&c->ctx->ctxl, &c->peer->context_list);
+    if (p->rc_done) set_context_links(c);
     send_context_created_event(c->ctx);
 }
 
@@ -228,7 +244,6 @@ static void free_context_cache(ContextCache * c) {
     assert(c->pending_regs_cnt == 0);
     cache_dispose(&c->mmap_cache);
     cache_dispose(&c->regs_cache);
-    if (c->peer != NULL && c->link_peer.next != NULL) list_remove(&c->link_peer);
     release_error_report(c->mmap_error);
     release_error_report(c->reg_error);
     loc_free(c->file);
@@ -292,6 +307,7 @@ static void read_run_control_context_property(InputStream * inp, const char * na
     if (strcmp(name, "ID") == 0) json_read_string(inp, ctx->id, sizeof(ctx->id));
     else if (strcmp(name, "ParentID") == 0) json_read_string(inp, ctx->parent_id, sizeof(ctx->parent_id));
     else if (strcmp(name, "ProcessID") == 0) json_read_string(inp, ctx->process_id, sizeof(ctx->process_id));
+    else if (strcmp(name, "CreatorID") == 0) json_read_string(inp, ctx->creator_id, sizeof(ctx->creator_id));
     else if (strcmp(name, "File") == 0) ctx->file = json_read_alloc_string(inp);
     else if (strcmp(name, "HasState") == 0) ctx->has_state = json_read_boolean(inp);
     else if (strcmp(name, "IsContainer") == 0) ctx->is_container = json_read_boolean(inp);
@@ -561,7 +577,7 @@ void create_context_proxy(Channel * host, Channel * target) {
     p->host = host;
     p->target = target;
     p->fwd_inp = create_forwarding_input_stream(&p->fwd, &target->inp, &host->out);
-    list_init(&p->ctx_cache);
+    list_init(&p->context_list);
     list_add_first(&p->link_all, &peers);
     channel_lock(host);
     channel_lock(target);
@@ -597,7 +613,12 @@ static void read_rc_children_item(InputStream * inp, void * args) {
 
 static void set_rc_done(PeerCache * p) {
     if (p->rc_pending_cnt == 0) {
+        LINK * l;
         p->rc_done = 1;
+        for (l = p->context_list.next; l != &p->context_list; l = l->next) {
+            Context * c = ctxl2ctxp(l);
+            set_context_links(*EXT(c));
+        }
         cache_notify(&p->rc_cache);
     }
 }
@@ -1005,6 +1026,8 @@ static void validate_registers_cache(Channel * c, void * args, int error) {
                 }
                 if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
                 if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+                if (!error && cache->reg_cnt == 0) error = set_errno(
+                    ERR_INV_CONTEXT, "Register definitions not available");
             }
             clear_trap(&trap);
         }
@@ -1061,7 +1084,6 @@ static void validate_registers_cache(Channel * c, void * args, int error) {
 }
 
 static void check_registers_cache(ContextCache * cache) {
-    if (!cache->has_state) exception(ERR_INV_CONTEXT);
     if (cache->pending_regs_cnt > 0) cache_wait(&cache->regs_cache);
     if (cache->reg_error != NULL) exception(set_error_report_errno(cache->reg_error));
     if (cache->reg_ids == NULL) {
@@ -1374,17 +1396,6 @@ static void channel_close_listener(Channel * c) {
             cache_dispose(&p->rc_cache);
             release_error_report(p->rc_error);
             list_remove(&p->link_all);
-            while (!list_is_empty(&p->ctx_cache)) {
-                ContextCache * c = peer2ctx(p->ctx_cache.next);
-                c->peer = NULL;
-                list_remove(&c->link_peer);
-                if (c->ctx->parent != NULL) {
-                    list_remove(&c->ctx->cldl);
-                    context_unlock(c->ctx->parent);
-                    c->ctx->parent = NULL;
-                }
-                context_unlock(c->ctx);
-            }
             loc_free(p);
             return;
         }
