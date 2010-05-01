@@ -205,6 +205,8 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	public LLDataType createDataType(TypeEngine typeEngine) {
 		List<LLInstanceField> newIFields = new ArrayList<LLInstanceField>();
 		
+		LLType[] existing = type != null ? ((LLDataType) type).getTypes() : null;
+		int idx = 0;
 		for (IAstTypedNode node : ifields.list()) {
 			if (node instanceof IAstAllocStmt) {
 				IAstAllocStmt alloc = (IAstAllocStmt) node;
@@ -212,8 +214,11 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 					IAstSymbolExpr symbolExpr = alloc.getSymbolExprs().list().get(i);
 					IAstTypedExpr defaul = alloc.getDefaultFor(i);
 					LLType type = symbolExpr.getType();
+					if (type == null && existing != null)
+						type = existing[idx]; 
 					LLInstanceField field = new LLInstanceField(symbolExpr.getSymbol().getName(), type, symbolExpr, defaul);
 					newIFields.add(field);
+					idx++;
 				}
 			}
 		}
@@ -226,11 +231,14 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 					IAstSymbolExpr symbolExpr = alloc.getSymbolExprs().list().get(i);
 					IAstTypedExpr defaul = alloc.getDefaultFor(i);
 					LLType type = symbolExpr.getType();
+					if (type == null && existing != null)
+						type = existing[idx]; 
 					String name = symbolExpr.getSymbol().getName();
 					LLStaticField field = new LLStaticField(name, type, 
 							symbolExpr.getSymbol(),
 							symbolExpr, defaul);
 					newSFields.add(field);
+					idx++;
 				}
 			}
 		}

@@ -281,7 +281,7 @@ abstract public class AstNode implements IAstNode {
     			copySymbol.setType(symbol.getType());
     		}
     	}
-    	replaceSymbolsChecking(this, copyRoot, scope, symbolMap, true);
+    	replaceSymbolsChecking(copyRoot, scope, symbolMap, true);
     	return copy;
     }
 	
@@ -289,26 +289,25 @@ abstract public class AstNode implements IAstNode {
 	 * @param typeEngine 
      * @param copyRoot
      * @param origScope 
-	 * @param symbolMap
+     * @param symbolMap
 	 */
-	public static boolean replaceSymbols(TypeEngine typeEngine, IAstNode origRoot, IAstNode copyRoot,
-			IScope origScope, Map<Integer, ISymbol> symbolMap) {
+	public static boolean replaceSymbols(TypeEngine typeEngine, IAstNode copyRoot, IScope origScope,
+			Map<Integer, ISymbol> symbolMap) {
 		boolean changed = false;
-		changed |= replaceSymbolsChecking(origRoot, copyRoot, origScope, symbolMap, false);
-		changed |= replaceSymbolsInTypes(origRoot, copyRoot, origScope, symbolMap, typeEngine);
+		changed |= replaceSymbolsChecking(copyRoot, origScope, symbolMap, false);
+		changed |= replaceSymbolsInTypes(copyRoot, origScope, symbolMap, typeEngine);
 		return changed;
 	}
 
 	/**
-	 * @param origRoot
 	 * @param copyRoot
 	 * @param origScope
 	 * @param symbolMap
 	 * @param typeEngine
 	 */
-	private static boolean replaceSymbolsInTypes(IAstNode origRoot,
-			IAstNode copyRoot, IScope origScope,
-			Map<Integer, ISymbol> symbolMap, TypeEngine typeEngine) {
+	private static boolean replaceSymbolsInTypes(IAstNode copyRoot,
+			IScope origScope, Map<Integer, ISymbol> symbolMap,
+			TypeEngine typeEngine) {
 		boolean changed = false;
 		if (copyRoot instanceof IAstTypedNode) {
 			IAstTypedNode typed = (IAstTypedNode) copyRoot;
@@ -334,19 +333,18 @@ abstract public class AstNode implements IAstNode {
 				}
 			}
 		}
-		IAstNode[] kids = origRoot.getChildren();
 		IAstNode[] copyKids = copyRoot.getChildren();
-		for (int i = 0; i < kids.length; i++) {
-			replaceSymbolsInTypes(kids[i], copyKids[i], origScope, symbolMap, typeEngine);
+		for (int i = 0; i < copyKids.length; i++) {
+			replaceSymbolsInTypes(copyKids[i], origScope, symbolMap, typeEngine);
 		}
 		return changed;
 	}
 
-	private static boolean replaceSymbolsChecking(IAstNode origRoot,
-			IAstNode copyRoot, IScope origScope, Map<Integer, ISymbol> symbolMap, boolean checking) {
+	private static boolean replaceSymbolsChecking(IAstNode copyRoot,
+			IScope origScope, Map<Integer, ISymbol> symbolMap, boolean checking) {
 		boolean changed = false;
-		if (origRoot instanceof IAstSymbolExpr) {
-			ISymbol symbol = ((IAstSymbolExpr)origRoot).getSymbol();
+		if (copyRoot instanceof IAstSymbolExpr) {
+			ISymbol symbol = ((IAstSymbolExpr)copyRoot).getSymbol();
 			if (symbol.getScope() == origScope) {
 				ISymbol replaced = symbolMap.get(symbol.getNumber());
 				if (replaced != null) {
@@ -358,10 +356,9 @@ abstract public class AstNode implements IAstNode {
 				}
 			}
 		}
-		IAstNode[] kids = origRoot.getChildren(); 
 		IAstNode[] copyKids = copyRoot.getChildren();
-		for (int i = 0; i < kids.length; i++) {
-			changed |= replaceSymbolsChecking(kids[i], copyKids[i], origScope, symbolMap, checking);
+		for (int i = 0; i < copyKids.length; i++) {
+			changed |= replaceSymbolsChecking(copyKids[i], origScope, symbolMap, checking);
 		}
 		return changed;
 	}

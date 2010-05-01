@@ -61,6 +61,8 @@ public class AstStmtScope extends AstTypedExpr implements IAstStmtScope, IAstTyp
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
+		if (obj == null)
+			return false;
 		if (getClass() != obj.getClass())
 			return false;
 		AstStmtScope other = (AstStmtScope) obj;

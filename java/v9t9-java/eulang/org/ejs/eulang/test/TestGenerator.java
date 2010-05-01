@@ -406,6 +406,7 @@ public class TestGenerator extends BaseParserTest {
 		condExpr = condList.getCondExprs().list().get(1);
 		assertTrue(condExpr.getExpr() instanceof IAstNilLitExpr);
     }
+    /*
     @Test
     public void testPointers1() throws Exception {
     	IAstModule mod = treeize(
@@ -413,7 +414,7 @@ public class TestGenerator extends BaseParserTest {
         		"};\n");
     		sanityTest(mod);
     }
-    
+    */
     
     @Test
     public void testTuples1() throws Exception {

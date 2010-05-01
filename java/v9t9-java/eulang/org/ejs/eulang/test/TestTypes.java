@@ -178,7 +178,7 @@ public class TestTypes extends BaseParserTest {
     @Test
     public void testArrayAccess1c() throws Exception {
     	IAstModule mod = doFrontend(
-    			"mycode := code(p:Int&[10]; i => nil) {\n"+
+    			"mycode := code(p:Int[10]; i => nil) {\n"+
     			"   p[i];"+
     			"};\n"+
     			"");
@@ -191,7 +191,8 @@ public class TestTypes extends BaseParserTest {
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
     	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
-    	assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
+    	//assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
+    	assertEquals(typeEngine.INT, index.getType());
     	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
@@ -511,16 +512,19 @@ public class TestTypes extends BaseParserTest {
     			"   next:Tuple^; val:Byte; };\n"+
     			"testDataDeref6 = code() {\n"+
     			"  foo, foo2:Tuple;\n"+
-    			"  foo.next^ = &foo2;\n"+
+    			"  foo.next = &foo2;\n"+
     			"  foo2.val = 0x55;\n"+
     			"  foo.next.val;\n"+
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("store %Byte 85, %Byte* ", gen);
+    	assertFoundInUnoptimizedText("load %Tuple$p* %", gen);
+    	assertFoundInUnoptimizedText("load %Byte* %", gen);
     }
     @Test
     public void testDataDeref7() throws Exception {
-    	// should not infer that 'val' is a Double or fail to cast the RHS to double
+    	// should not infer that 'val' is a Double or fail to cast the RHS to Byte
     	IAstModule mod = doFrontend(
     			"Tuple = [T] data {\n"+
     			"   val:T; };\n"+
@@ -731,8 +735,8 @@ public class TestTypes extends BaseParserTest {
     			"testPointerInit1 = code() {\n"+
     			"  foo:Byte=10;\n"+
     			"  foo0:Byte^=&foo;\n"+
-    			"  foo0 = 6;\n"+
-    			"  foo0^ = 0;\n"+
+    			"  foo0^ = 6;\n"+
+    			"  foo0 = 0;\n"+
     			"};\n"+
     	"");
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerInit1").getDefinition());
@@ -805,8 +809,8 @@ public class TestTypes extends BaseParserTest {
     			"testPointerInit2 = code() {\n"+
     			"  foo:Byte=10;\n"+
     			"  foo0:Byte^=0;\n"+
-    			"  foo0^ = &foo;\n"+
-    			"  foo0;\n"+
+    			"  foo0 = &foo;\n"+
+    			"  foo0^;\n"+
     			"};\n"+
     	"");
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerInit2").getDefinition());
@@ -822,8 +826,8 @@ public class TestTypes extends BaseParserTest {
     			"testPointerMixing1 = code() {\n"+
     			"  foo:Byte=10;\n"+
     			"  foo0:Byte^=&foo;\n"+
-    			"  foo0 = 6;\n"+
-    			"  foo0+foo;\n"+
+    			"  foo0^ = 6;\n"+
+    			"  foo0^+foo^;\n"+
     			"};\n"+
     	"");
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerMixing1").getDefinition());
@@ -838,8 +842,8 @@ public class TestTypes extends BaseParserTest {
     			"testPointerMixing2 = code() {\n"+
     			"  foo:Byte[2]=[10,5];\n"+
     			"  foo0:Byte^=&foo[0];\n"+
-    			"  foo0 = 6;\n"+
-    			"  foo0+foo[1];\n"+
+    			"  foo0^ = 6;\n"+
+    			"  foo0^+foo[1];\n"+
     			"};\n"+
     	"");
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerMixing2").getDefinition());
@@ -854,8 +858,8 @@ public class TestTypes extends BaseParserTest {
     			"testPointerArrays1 = code() {\n"+
     			"  foo:Byte[2]=[10,5];\n"+
     			"  foo0:Byte^=&foo;\n"+		// array!
-    			"  foo0 = 6;\n"+
-    			"  foo0+foo[1];\n"+
+    			"  foo0^ = 6;\n"+
+    			"  foo0^+foo[1];\n"+
     			"};\n"+
     	"");
     	IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testPointerArrays1").getDefinition());
@@ -880,7 +884,7 @@ public class TestTypes extends BaseParserTest {
     	IAstModule mod = doFrontend(
     			"testPointerInit3 = code() {\n"+
     			"  foo:Int^=0;\n"+	
-    			"  foo=100;\n" +	// null reference
+    			"  foo^=100;\n" +	// null reference
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
@@ -890,7 +894,7 @@ public class TestTypes extends BaseParserTest {
 	public void testPointerMath1() throws Exception {
     	IAstModule mod = doFrontend(
     			"testPointerMath1 = code(foo:Int^) {\n"+
-    			"  foo^-foo^;\n"+
+    			"  foo-foo;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
@@ -900,7 +904,7 @@ public class TestTypes extends BaseParserTest {
 	public void testPointerMath2() throws Exception {
     	IAstModule mod = doFrontend(
     			"testPointerMath2 = code(foo:Int^) {\n"+
-    			"  foo^+4-foo^;\n"+
+    			"  foo+4-foo;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
@@ -912,8 +916,8 @@ public class TestTypes extends BaseParserTest {
     			"testPointerMath3 = code() {\n"+
     			"  foo:Int[4] = [ 1, 2, 3, 4];\n"+
     			"  foop:Int^=&foo;\n"+
-    			"  foo1, foo2 : Int^ = foop^+1, foop^+3;\n"+
-    			"  foo1 * foo2;\n"+
+    			"  foo1, foo2 : Int^ = foop+1, foop+3;\n"+
+    			"  foo1^ * foo2^;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
@@ -925,8 +929,7 @@ public class TestTypes extends BaseParserTest {
     			"testPointerMath3b = code() {\n"+
     			"  foo:Int[4] = [ 1, 2, 3, 4];\n"+
     			"  foop:Int^=&foo;\n"+
-    			// implicit DEREF on parenthesized expressions
-    			"  ((foop^+1) * (foop^+3));\n"+
+    			"  (foop+1)^ * (foop+3)^;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
@@ -999,9 +1002,9 @@ public class TestTypes extends BaseParserTest {
     	IAstModule mod = doFrontend(
     			"Class = data {\n"+
     			"  val:Int;\n"+
-    			"  draw:code(this:Class^; count:Int => Int);\n"+
+    			"  draw:code(this:Class^; count:Int=>Int);\n"+
     			"};\n"+
-    			"doCall = code(this:Class^; count:Int => Int) { this.draw(this, count); };\n"+
+    			"doCall = code(this:Class^; count:Int) { this.draw(this, count); };\n"+
     			"doDraw = code(this:Class^; count:Int) { this.val + count*count };\n"+
     			"testDataFuncPtr2 = code() {\n"+
     			"  inst : Class;\n"+
@@ -1025,12 +1028,12 @@ public class TestTypes extends BaseParserTest {
 		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [] data {\n" +
-				"        next:List^;\n" + 
+				"        next:List^;\n" + 	//no <>
 				"};\n" + 
 				"\n" +
 				"intList = code() {\n"+
 				"   list1 : List<>;\n" +
-				"   list1.next^ = &list1;\n"+
+				"   list1.next = &list1;\n"+
 				"};\n" +
 				"");
 		sanityTest(mod);
@@ -1057,14 +1060,51 @@ public class TestTypes extends BaseParserTest {
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
 				"        node:T;\n"+
-				"        next:List^;\n" + 
+				"        next:List^;\n" + 	// no <>
 				"};\n" + 
 				"\n" +
 				"intList = code(x:Int;y:Int=>Int) {\n"+
 				"   list1, list2 : List<Int>;\n" +
 				"   list1.node = x;\n"+
 				"   list2.node = y;\n"+
-				"   list1.next^ = &list2;\n"+
+				"   list1.next = &list2;\n"+
+				"   list1.next.node;\n"+
+				"};\n" +
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+
+	/**
+	 * When adding to a generic data, we can instantiate types 
+	 * @throws Exception
+	 */
+	@Test 
+	public void testGenericTypes1a() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List^;\n" + 	// no <>
+				"};\n" + 
+				"\n" +
+				"intList = code(x:Int;y:Int=>Int) {\n"+
+				"   list1 : List<Int>;\n" +
+				"   list2 : List<Int>;\n" +
+				"   list1.node = x;\n"+
+				"   list2.node = y;\n"+
+				"   list1.next = &list2;\n"+
 				"   list1.next.node;\n"+
 				"};\n" +
 				"");
@@ -1096,7 +1136,7 @@ public class TestTypes extends BaseParserTest {
 				"   list1, list2 : List<Int>;\n" +
 				"   list1.node = x;\n"+
 				"   list2.node = y;\n"+
-				"   list1.next^ = &list2;\n"+
+				"   list1.next = &list2;\n"+
 				"   list1.next.node;\n"+
 				"};\n" +
 				"");
@@ -1123,16 +1163,88 @@ public class TestTypes extends BaseParserTest {
 		IAstModule mod = doFrontend(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
-				"        next:List<U>^;\n" +
+				"        next:List<U, T>^;\n" +
 				"};\n" + 
 				"\n" +
 				"intList = code(x:Int;y:Double) {\n"+
 				"   list1 : List<Int, Double>; list2 : List<Double, Int>;\n" +
 				"   list1.node = x;\n"+
 				"   list2.node = y;\n"+
-				"   list1.next^ = &list2;\n"+
-				"   list2.next^ = &list1;\n"+
+				"   list1.next = &list2;\n"+
+				"   list2.next = &list1;\n"+
 				"   list1.next.node;\n"+
+				"};\n" +
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		LLCodeType codeType = (LLCodeType) code.getType();
+		assertEquals(typeEngine.DOUBLE, codeType.getRetType());
+		doGenerate(mod);
+	}
+	
+	// we need global defs for these variables... these are bieng replicated endlessly and not matching
+	@Test 
+	public void testGenericTypes3a() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T, U] data {\n" +
+				"        node:T;\n"+
+				"        next:List<U,T>^;\n" +
+				"};\n" + 
+				"\n" +
+				"listNextNext = [T,U] code (list:List<T,U>) { list.next.next };\n"+
+				"intList = code (x:Int;y:Float=>Float) {\n"+
+				"  a:List<Int,Float>;\n"+
+				"  b:List<Float,Int>;\n"+
+				"  a.next=&b;\n"+
+				"  b.next=&a;\n"+
+				"  listNextNext(a);\n"+
+				"};\n"+
+	
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+	// we need global defs for these variables... these are bieng replicated endlessly and not matching
+	@Test 
+	public void testGenericTypes3() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T, U] data {\n" +
+				"        node:T;\n"+
+				"        next:List<U>^;\n" +
+				"};\n" + 
+				"\n" +
+				"IntDoubleList = List<Int,Double>;\n"+
+				"listNextNext = code (list:IntDoubleList) { list.next.next };\n"+
+				"intList = code(x:Int;y:Double) {\n"+
+				"   list1 : List<Int, Double>; list2 : List<Double, Int>;\n" +
+				"   list1.node = x;\n"+
+				"   list2.node = y;\n"+
+				"   list1.next = &list2;\n"+
+				"   list2.next = &list1;\n"+
+				"   listNextNext(list1);\n"+
 				"};\n" +
 				"");
 		sanityTest(mod);
@@ -1148,7 +1260,6 @@ public class TestTypes extends BaseParserTest {
 		
 		doGenerate(mod);
 	}
-
 }
 
 

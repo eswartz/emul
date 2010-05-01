@@ -4,6 +4,9 @@
 package org.ejs.eulang.ast;
 
 /**
+ * This is an expression with types or expressions used to instantiate
+ * a generic type.  It expands to a specific unique instance of a
+ * type.
  * @author ejs
  *
  */

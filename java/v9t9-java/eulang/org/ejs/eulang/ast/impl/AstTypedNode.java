@@ -76,7 +76,10 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 
 	public String typedString(String input) {
 		LLType type = getType();
-		String typeString = (type == null ? "<unknown>" : (!type.isComplete() ? "<incomplete> : "  : "") + type.getLLVMType());
+		String typeString = (type == null ? "<unknown>" : 
+			(!type.isComplete() ? "<incomplete> : " :
+				(type.isGeneric() ? "<generic> : " : "")
+				) + type.getLLVMType());
 		return input + " [" + typeString + "]";
 	}
 	

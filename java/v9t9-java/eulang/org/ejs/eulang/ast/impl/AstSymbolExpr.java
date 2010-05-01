@@ -8,6 +8,7 @@ import java.util.Collections;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
@@ -163,11 +164,78 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     }
     
 
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.TypeEngine)
+     */
+    @Override
+    public boolean inferTypeFromChildren(TypeEngine typeEngine)
+    		throws TypeException {
+
+		boolean changed = false;
+		
+		// When a symbol expression is first created, it may point to a
+		// define statement, which in turn may have several possible options
+		// with several different types, depending on context.
+		//
+		// The type of this symbol becomes the type of the most appropriate
+		// definition, which may be generic.  It is up to an expansion phase 
+		// to instantiate any generics.
+		
+		IAstDefineStmt stmt = getDefinition();
+		if (stmt != null && origSymbol == null) {
+			LLType newType = getType();
+			
+			IAstTypedExpr selectedBody = null;
+			/*
+			//boolean isUnique = false;
+			if (stmt.bodyList().size() == 1) {
+				// no question
+				selectedBody = stmt.bodyList().get(0);
+				//isUnique = true;
+			} else {
+				// Multiple choices.  This expr will take the type from a parent node with more context. 
+				if (getType() == null)
+					return false;
+				
+				selectedBody = stmt.getMatchingBodyExpr(getType());
+				
+				if (selectedBody == null)
+					return false;
+			}
+			
+			// ignore macros here
+			if (selectedBody instanceof IAstCodeExpr && ((IAstCodeExpr) selectedBody).isMacro())
+				return false;
+			
+			if (selectedBody.getType() != null && selectedBody.getType().isMoreComplete(newType)
+					&& !(!newType.isGeneric() && selectedBody.getType().isGeneric()))
+				newType = selectedBody.getType();
+			
+			super.setType(newType);
+			*/
+			selectedBody = getInstance();
+			if (selectedBody == null) {
+				if (getType() == null) {
+					selectedBody = getBody();
+				}
+				if (selectedBody == null)
+					return false;
+			}
+			
+			changed |= updateType(this, selectedBody.getType());
+			
+		} else if (symbol.getDefinition() instanceof ITyped) {
+			// The symbol's expr should have a type. 
+			changed = inferTypesFromChildren(new ITyped[] { (ITyped) symbol.getDefinition() });
+		}
+		
+		return changed;
+    }
+    
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren(org.ejs.eulang.ast.TypeEngine)
 	 */
-	@Override
-	public boolean inferTypeFromChildren(TypeEngine typeEngine)
+	boolean inferTypeFromChildren__(TypeEngine typeEngine)
 			throws TypeException {
 		
 		boolean changed = false;
@@ -221,7 +289,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 					theSymbol = ((IAstDataType) ((IAstDataType) selectedBody).getScope().getOwner()).getTypeName();
 					((IAstDataType) copy).setTypeName(instanceSymbol);
 				}
-				AstNode.replaceSymbols(typeEngine, selectedBody, copy, theSymbol.getScope(), Collections.singletonMap(theSymbol.getNumber(), instanceSymbol));
+				AstNode.replaceSymbols(typeEngine, copy, theSymbol.getScope(), Collections.singletonMap(theSymbol.getNumber(), instanceSymbol));
 				AstNode.replaceTypesInTree(typeEngine, copy, Collections.singletonMap(selectedBody.getType(), newType));
 				//copy.uniquifyIds();
 				instanceSymbol.setDefinition(copy);
@@ -310,10 +378,13 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		IAstTypedExpr body = def.getMatchingBodyExpr(getType());
 		if (body == null) 
 			return null;
-		IAstTypedExpr instance = def.getMatchingInstance(body.getType(), getType());
-		if (instance == null)
-			return body;
-		return instance;
+		if (body.getType() != null && body.getType().isGeneric()) {
+			ISymbol instanceSym = def.getMatchingInstance(body.getType(), getType());
+			if (instanceSym == null)
+				return null;
+			return (IAstTypedExpr) instanceSym.getDefinition();
+		}
+		return body;
 	}
 	
 }

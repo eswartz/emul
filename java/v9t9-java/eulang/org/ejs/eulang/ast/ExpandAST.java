@@ -14,11 +14,13 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
+import org.ejs.eulang.ast.impl.AstNamedType;
 import org.ejs.eulang.ast.impl.AstNode;
 import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
+import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
@@ -37,59 +39,71 @@ public class ExpandAST {
 	
 	private static final LLType ALL_GENERICS = new LLGenericType(null);
 	private final TypeEngine typeEngine;
+	private final boolean onlyInstances;
+	private boolean changed;
 
-	public ExpandAST(TypeEngine typeEngine) {
+	public ExpandAST(TypeEngine typeEngine, boolean onlyInstances) {
 		this.typeEngine = typeEngine;
+		this.onlyInstances = onlyInstances;
 	}
 
-	public boolean expand(List<Message> messages, IAstNode node) {
-		boolean changed = doExpand(messages, node, Collections.<ISymbol, IAstNode>emptyMap());
-		
+	public IAstNode expand(List<Message> messages, IAstNode node) {
+		this.changed = false;
+		IAstNode root = doExpand(messages, node, Collections.<ISymbol, IAstNode>emptyMap());
 		
 		if (changed) {
 			System.out.println("after expansion:");
 			DumpAST dump = new DumpAST(System.out);
-			node.accept(dump);
+			root.accept(dump);
 		}
+		return root;
+	}
+	
+	/**
+	 * @return the changed
+	 */
+	public boolean isChanged() {
 		return changed;
 	}
 
-	public boolean expand(List<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
-		boolean changed = doExpand(messages, node, replacementMap);
+	public IAstNode expand(List<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
+		this.changed = false;
+		IAstNode root = doExpand(messages, node, replacementMap);
 		if (changed) {
 			System.out.println("after expansion:");
 			DumpAST dump = new DumpAST(System.out);
-			node.accept(dump);
+			root.accept(dump);
 		}
-		return changed;
+		return root;
 	}
-	private boolean doExpand(List<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
-		boolean changed = false;
-		
+	private IAstNode doExpand(List<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
 		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
 				&& !(node instanceof IAstInstanceExpr)) {
 			// go deep first, since node parenting changes as expansion occurs
 			IAstNode[] kids = node.getChildren();
 			for (int i = 0; i < kids.length; i++) {
-				changed |= doExpand(messages, kids[i], replacementMap);
+				doExpand(messages, kids[i], replacementMap);
 			}
 		}
 		
 		try {
+			IAstNode newNode = node;
 			if (node instanceof IAstInstanceExpr) {
-				changed |= expandInstance(messages, (IAstInstanceExpr) node);
-				
+				newNode = expandInstance(messages, (IAstInstanceExpr) node);
 			}
-			else if (node instanceof IAstSymbolExpr) {
-				changed |= expandSymbolExpr(node, replacementMap);
-			} else if (node instanceof IAstFuncCallExpr) {
-				changed |= expandFuncCallExpr(messages, node);
+			else if (!onlyInstances && node instanceof IAstSymbolExpr) {
+				newNode = expandSymbolExpr(node, replacementMap);
+				
+			} else if (!onlyInstances && node instanceof IAstFuncCallExpr) {
+				newNode = expandFuncCallExpr(messages, node);
 			} 
+			
+			return newNode;
 		} catch (ASTException e) {
 			messages.add(new Error(e.getNode(), e.getMessage()));
+			return node;
 		}
 		
-		return changed;
 	}
 
 	/**
@@ -97,24 +111,43 @@ public class ExpandAST {
 	 * @return
 	 * @throws ASTException 
 	 */
-	private boolean expandInstance(List<Message> messages, IAstInstanceExpr instanceExpr) throws ASTException {
+	private IAstNode expandInstance(List<Message> messages, IAstInstanceExpr instanceExpr) throws ASTException {
 		IAstDefineStmt defineStmt = instanceExpr.getSymbolExpr().getDefinition();
 		if (defineStmt == null) 
 			throw new ASTException(instanceExpr.getSymbolExpr(), "can only instantiate definitions");
-		
-		ISymbol[] varSymbols = defineStmt.getScope().getSymbols();
-		if (varSymbols.length != instanceExpr.getExprs().nodeCount()) 
-			throw new ASTException(instanceExpr.getSymbolExpr(), 
-					"must specify the same number of replacements as variables: " + instanceExpr.getExprs().nodeCount() 
-					+ " != " + varSymbols.length);
 		
 		IAstTypedExpr body = defineStmt.getMatchingBodyExpr(instanceExpr.getType());
 		if (body == null) 
 			throw new ASTException(instanceExpr.getSymbolExpr(), 
 					"could not find matching body for instance");
 		
-		IAstTypedExpr bodyCopy = (IAstTypedExpr) body.copy(instanceExpr);
+		ISymbol instanceSymbol = defineStmt.getInstanceForParameters(
+				typeEngine, body.getType(), instanceExpr.getExprs().list());
 		
+		IAstTypedExpr expansion;
+		
+		IAstSymbolExpr symbolExpr = new AstSymbolExpr(instanceSymbol);
+		symbolExpr.setSourceRef(instanceExpr.getSourceRef());
+		
+		try {
+			instanceExpr.getParent().replaceChild(instanceExpr, symbolExpr);
+			expansion = symbolExpr;
+		} catch (ClassCastException e) {
+			IAstType typeExpr = new AstNamedType(symbolExpr.getType(), symbolExpr);
+			typeExpr.setSourceRef(instanceExpr.getSourceRef());
+			instanceExpr.getParent().replaceChild(instanceExpr, typeExpr);
+			expansion = typeExpr;
+		}
+		changed = true;
+		
+		return expansion;
+	}
+
+	public IAstTypedExpr expandInstance(IAstTypedExpr body, ISymbol[] varSymbols, List<IAstTypedExpr> instanceExprs)
+			throws ASTException {
+		IAstTypedExpr bodyCopy = (IAstTypedExpr) body.copy(null);
+		
+		/*
 		ISymbol instanceSymbol = null;
 		if (bodyCopy instanceof IAstDataType) {
 			instanceSymbol = ((IAstDataType) ((IAstDataType) bodyCopy).getScope().getOwner()).getTypeName();
@@ -123,17 +156,13 @@ public class ExpandAST {
 			((IAstDataType) bodyCopy).setTypeName(instanceSymbol);
 			
 			Map<Integer, ISymbol> symbolReplacemap = Collections.singletonMap(instanceSymbol.getNumber(), renamedSymbol);
-			AstNode.replaceSymbols(typeEngine, body, bodyCopy, instanceSymbol.getScope(), symbolReplacemap);
+			AstNode.replaceSymbols(typeEngine, bodyCopy, instanceSymbol.getScope(), symbolReplacemap);
 		}
-			
-		
-		// TODO: could this make a new instance for the define's concrete body list (see code in TypeInference)?
-		// As it is, we expand directly into the tree.
-		
+		*/
 		Map<LLType, LLType> typeReplacementMap = new HashMap<LLType, LLType>();
 		
 		int index = 0;
-		for (IAstTypedExpr expr : instanceExpr.getExprs().list()) {
+		for (IAstTypedExpr expr : instanceExprs) {
 			ISymbol symbol = varSymbols[index];
 			typeReplacementMap.put(symbol.getType(), expr.getType());
 			
@@ -147,17 +176,9 @@ public class ExpandAST {
 	//	typeReplacementMap.put(bodyCopy.getType(), null);
 		AstNode.replaceTypesInTree(typeEngine, bodyCopy, typeReplacementMap);
 		
-		instanceExpr.getParent().replaceChild(instanceExpr, bodyCopy);
 		bodyCopy.uniquifyIds();
-		
-		// every generic should be replaced, or an outer level defines it
-		//removeGenerics(bodyCopy);
-		
-		System.out.println("After expanding generic:");
-		DumpAST dump = new DumpAST(System.out);
-		bodyCopy.accept(dump);
-		
-		return true;
+
+		return bodyCopy;
 	}
 
 	/**
@@ -189,8 +210,7 @@ public class ExpandAST {
 		}
 	}
 
-	private boolean expandFuncCallExpr(List<Message> messages, IAstNode node) throws ASTException {
-		boolean changed = false;
+	private IAstNode expandFuncCallExpr(List<Message> messages, IAstNode node) throws ASTException {
 		IAstFuncCallExpr funcCallExpr = (IAstFuncCallExpr) node;
 		IAstTypedExpr funcExpr = funcCallExpr.getFunction();
 		if (funcExpr instanceof IAstSymbolExpr) {
@@ -202,10 +222,10 @@ public class ExpandAST {
 				// handle later
 				if (!symExpr.getSymbol().getScope().encloses(node.getOwnerScope()))
 					throw new ASTException(node, "no definition found for " + symExpr.getSymbol().getName());
-				return false;
+				return node;
 			}
 			if (symDef == node.getParent() /*|| !(symDef instanceof IAstDefineStmt)*/)
-				return false;
+				return node;
 			
 			IAstTypedExpr value = symExpr.getInstance();
 			if (value != null) {
@@ -241,20 +261,19 @@ public class ExpandAST {
 					(IAstCodeExpr) copy,
 					node.getOwnerScope());
 			
-			if (stmtListExpr != null)
+			if (stmtListExpr != null) 
 				funcCallExpr.getParent().replaceChild(funcCallExpr, stmtListExpr);
 			else
 				funcCallExpr.getParent().replaceChild(funcCallExpr, null);
-			return true;
+			changed = true;
+			return stmtListExpr;
 		}
-		return changed;
+		return node;
 	}
 
-	private boolean expandSymbolExpr(IAstNode node,
+	private IAstNode expandSymbolExpr(IAstNode node,
 			Map<ISymbol, IAstNode> replacementMap)
 			throws ASTException {
-		
-		boolean changed = false;
 		
 		IAstNode value = null;
 		IAstSymbolExpr symExpr = (IAstSymbolExpr)node;
@@ -262,14 +281,14 @@ public class ExpandAST {
 		if (symDef == null) {
 			value = replacementMap.get(symExpr.getSymbol());
 			if (value == null)
-				return false;
+				return node;
 		} else {
 			if (symDef == node.getParent() || !(symDef instanceof IAstDefineStmt))
-				return false;
+				return node;
 			
 			value = symExpr.getInstance();
 			if (value instanceof IAstType)
-				return false;
+				return node;
 		}
 		
 		if (value != null) {
@@ -293,13 +312,14 @@ public class ExpandAST {
 				removeGenerics(copy);
 				try {
 					node.getParent().replaceChild(node, copy);
+					changed = true;
+					return node;
 				} catch (ClassCastException e) {
 					throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
 				}
-				changed = true;
 			}
 		}
-		return changed;
+		return node;
 	}
 	
 	/**
@@ -451,7 +471,7 @@ public class ExpandAST {
 		}
 	}
 
-	private void replaceInTree(IAstNode root,
+	public void replaceInTree(IAstNode root,
 			ISymbol symbol, IAstNode replacement) throws ASTException {
 		for (IAstNode kid : root.getChildren()) {
 			replaceInTree(kid, symbol, replacement);

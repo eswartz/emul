@@ -9,6 +9,7 @@ import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.junit.Test;
 
@@ -34,12 +35,12 @@ public class TestGenerics extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstTypedExpr body = getMainBodyExpr((IAstDefineStmt) mod.getScope().get("bar").getDefinition());
+    	assertTrue(body instanceof IAstSymbolExpr);
+    	body = (IAstTypedExpr) ((IAstSymbolExpr) body).getSymbol().getDefinition();
     	assertTrue(body instanceof IAstBinExpr);
     	IAstBinExpr bin = (IAstBinExpr) body;
-    	assertTrue(bin.getLeft() instanceof IAstDerefExpr);
-    	assertTrue(((IAstDerefExpr)bin.getLeft()).getExpr()  instanceof IAstIntLitExpr);
-    	assertTrue(bin.getRight() instanceof IAstDerefExpr);
-    	assertTrue(((IAstDerefExpr)bin.getRight()).getExpr()  instanceof IAstIntLitExpr);
+    	assertTrue(bin.getLeft() instanceof IAstIntLitExpr);
+    	assertTrue(bin.getRight() instanceof IAstIntLitExpr);
     }
 	@Test
     public void testSimple2() throws Exception {
@@ -55,6 +56,9 @@ public class TestGenerics extends BaseParserTest {
     	sanityTest(mod);
     	
     	IAstTypedExpr body = getMainBodyExpr((IAstDefineStmt) mod.getScope().get("bar").getDefinition());
+    	assertTrue(body instanceof IAstSymbolExpr);
+    	body = (IAstTypedExpr) ((IAstSymbolExpr) body).getSymbol().getDefinition();
+    	
     	assertTrue(body instanceof IAstDataType);
     	
     }

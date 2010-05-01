@@ -153,7 +153,7 @@ public class LLArrayType extends BaseLLType {
 		IAstTypedExpr newDynamicSizeExpr = dynamicSizeExpr;
 		if (newDynamicSizeExpr != null) {
 			newDynamicSizeExpr = (IAstTypedExpr) dynamicSizeExpr.copy(null);
-			boolean changed = AstNode.replaceSymbols(typeEngine, dynamicSizeExpr, newDynamicSizeExpr, origScope, symbolMap);
+			boolean changed = AstNode.replaceSymbols(typeEngine, newDynamicSizeExpr, origScope, symbolMap);
 			if (!changed) {
 				newDynamicSizeExpr = dynamicSizeExpr;
 			}

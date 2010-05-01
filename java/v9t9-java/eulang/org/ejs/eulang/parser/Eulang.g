@@ -195,13 +195,13 @@ argdefsWithTypes: (argdefWithType ( SEMI argdefWithType)+ SEMI?)        -> argde
     ;
 
 // make use of antlr's node replication
-argdefWithType:  ID (COMMA ID)* (COLON type)?   -> ^(ARGDEF ID type* )+
+argdefWithType:  ATSIGN? ID (COMMA ID)* (COLON type)?   -> ^(ARGDEF ATSIGN? ID type* )+
     | MACRO ID (COMMA ID)* (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO ID type* $init?)+
   ;
 
 argdefsWithNames :  (argdefWithName ( COMMA argdefWithName)+ COMMA?)    -> argdefWithName* 
     ;
-argdefWithName: ID   -> ^(ARGDEF ID )
+argdefWithName: ATSIGN? ID   -> ^(ARGDEF ATSIGN? ID )
   ;
 
 // prototype, as for a type or code block (no defaults allowed)
@@ -248,10 +248,9 @@ nonArrayType :
 
 // need to eat up as many array pieces as possible so we can properly order them
 baseType : (typeAtom -> typeAtom)
-     ( //CARET -> ^(TYPE ^(POINTER $baseType ))  
-     //| 
-     AMP -> ^(TYPE ^(REF $baseType ))  
-     )*
+     //( 
+     //AMP -> ^(TYPE ^(REF $baseType ))  
+     //)*
   ; 
 arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
     | LBRACKET RBRACKET -> FALSE
@@ -493,7 +492,7 @@ noIdAtom :
     |   NIL                          -> ^(LIT NIL)
     |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef f=funcCall  -> ^(INLINE idOrScopeRef $f)
     |   ( tuple ) => tuple                          -> tuple
-    |   LPAREN assignExpr RPAREN               -> ^(DEREF assignExpr)
+    |   LPAREN assignExpr RPAREN               -> assignExpr
     |    code                           -> code   
     ;
 
@@ -513,14 +512,14 @@ instanceExpr options { backtrack=true;} : type | atom ;
 // so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 
 appendIdModifiers : nonFieldIdModifier idModifier* ;
 
-nonFieldIdModifier : funcCall | arrayIndex | addrRef ;
-idModifier : fieldRef | funcCall | arrayIndex | addrRef ;
+nonFieldIdModifier : funcCall | arrayIndex | deref;
+idModifier : fieldRef | funcCall | arrayIndex | deref ;
 
 fieldRef : PERIOD ID  -> ^(FIELDREF ID) ;
 
 arrayIndex :  LBRACKET assignExpr RBRACKET -> ^(INDEX assignExpr) ;
 
-addrRef : CARET -> ^(ADDRREF) ;
+deref : CARET -> ^(DEREF) ;
 
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 

@@ -398,15 +398,15 @@ public class BaseParserTest {
 	
 
 	protected IAstNode doExpand(IAstNode node, boolean expectErrors) {
-		ExpandAST expand = new ExpandAST(typeEngine);
+		ExpandAST expand = new ExpandAST(typeEngine, false);
 		
 		List<Message> messages = new ArrayList<Message>();
 		boolean hadAnyErrors = false;
 		for (int passes = 1; passes < 256; passes++) {
 			messages.clear();
-			boolean changed = expand.expand(messages, node);
+			node = expand.expand(messages, node);
 			
-			if (changed) {
+			if (expand.isChanged()) {
 				if (dumpExpand || messages.size() > 0) {
 					System.out.println("After expansion pass " + passes + ":");
 					DumpAST dump = new DumpAST(System.out);

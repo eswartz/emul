@@ -120,8 +120,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 				theScope = theScope.getParent();
 			}
 			assert count != 0;
-			setType(new LLUpType(symbol, count, getType()));
-			changed = true;
+			changed |= updateType(this, new LLUpType(symbol, count, getType()));
 		}
 		/*else {
 			// if the type got concretized, we need to update

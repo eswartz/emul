@@ -241,6 +241,7 @@ public class TestParser extends BaseParserTest  {
     public void testScope2() throws Exception  {
     	parse("{ forward sqrAdd; inner = { foo = code() { sqrAdd() }; }; }");
     }
+    /*
     @Test
     public void testType1() throws Exception  {
     	parseAt("type", "Int&");
@@ -256,7 +257,7 @@ public class TestParser extends BaseParserTest  {
     @Test
     public void testType1d() throws Exception  {
     	parse("foo = code { x : Int& = 0; };");
-    }
+    }*/
     @Test
     public void testCodeExpr1() throws Exception  {
     	parse("codeExpr1 = code { x; } ; ");
@@ -274,10 +275,12 @@ public class TestParser extends BaseParserTest  {
     public void testScopeRef1() throws Exception  {
     	parse("foo = code { Ref.adr; Ref.adr(0x8370); };");
     }
+    /*
     @Test
     public void testRef1() throws Exception  {
     	parse("foo = code { x : Int& = Ref.adr(0x8370); };");
-    }
+    }*/
+    
     @Test
     public void testEmptyMacroCodeBlock() throws Exception  {
     	parse("myICode = macro {};");

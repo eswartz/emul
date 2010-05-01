@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -35,12 +36,11 @@ public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	 * they will be generic or complete.
 	 */
 	List<IAstTypedExpr> bodyList();
-	
+
 	/**
-	 * Get the complete or generic type to definition body map.  This is known only
-	 * after type inference.
+	 * Get the generic arguments for this define, or <code>null</code> if not generic
 	 */
-	//Map<LLType, IAstTypedExpr> typedBodyMap();
+	ISymbol[] getGenericVariables();
 	
 	/**
 	 * Get the body of the definition matching the given type of a symbol
@@ -60,40 +60,58 @@ public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	IAstTypedExpr getMatchingBodyExpr(LLType type);
 	
 	/**
+	 * Find or create an expansion for a given body type and supplied instance parameters,
+	 * used for expanding an IAstInstanceExpr. 
+	 * @param bodyType the generic type of a body from #bodyList or #getMatchingBodyExpr
+	 * @param instanceParams parameters supplied in IAstInstanceExpr
+	 * @return a symbol referencing the expansion produced
+	 * @throws ASTException if expansion is illegal (bad instance params)
+	 * @throws IllegalArgumentException for non-generic or non-matching bodyType
+	 */
+	ISymbol getInstanceForParameters(TypeEngine typeEngine, LLType bodyType, List<IAstTypedExpr> instanceParams) throws ASTException;
+
+	/**
+	 * Get the complete or generic type to definition body map.  This is known only
+	 * after type inference.
+	 */
+	//Map<LLType, IAstTypedExpr> typedBodyMap();
+	
+	/**
 	 * Get the instances of the expressions from {@link #bodyList()} for each concrete
 	 * type.  This mapping only makes sense with generic or complete types.
 	 * @return read-only map of body types to the instances recorded for them.  If the body type
 	 * is not generic, there is only one entry in the list, and it cannot be modified.
 	 */
-	Map<LLType, List<IAstTypedExpr>> bodyToInstanceMap();
+	Map<LLType, List<ISymbol>> bodyToInstanceMap();
 	
 	/**
-	 * Get the symbol for a generated matching resolved version of the definition used for this type.
+	 * Get the symbol for a instantiated version of the definition used for this type.
 	 * The type is a key to locate the unique bodyList element.
 	 * <p>
-	 * For a non-generic body type, the returns the body expression; otherwise,
-	 * this returns the concrete instance registered via {@link #registerInstance(LLType, IAstTypedExpr)}.
+	 * This returns the concrete instance registered via {@link #getInstanceForParameters(TypeEngine, LLType, List)} or
+	 * {@link #registerInstance(IAstTypedExpr, IAstTypedExpr)}.
 	 * @param bodyType the type of an expr for which the instance is searched
 	 * @param instanceType the type of a target expr for which the instance is searched
-	 * @return the expanded and type-specific body of the define, whose definition is the body, or <code>null</code>
+	 * @return the symbol for the expanded and type-specific body of the define, whose definition is the body, or <code>null</code>
+	 * @throws IllegalArgumentException if the bodyType is not generic
 	 */
-	IAstTypedExpr getMatchingInstance(LLType bodyType, LLType instanceType);
+	ISymbol getMatchingInstance(LLType bodyType, LLType instanceType);
 
 	
 	/**
 	 * Add a generated instance for the given generic body type.  
 	 * <p>
-	 * @param bodyType the type of the matching expr for which the instance was made,
-	 * not generic
+	 * @param bodyType the type of the generic expr for which the instance was made
 	 * @param expansion expanded and type-specific body of the define
 	 * @throws IllegalArgumentException if the bodyType is not generic or the symbol does not have a body
 	 */
-	void registerInstance(IAstTypedExpr body, IAstTypedExpr expansion);
+	ISymbol registerInstance(IAstTypedExpr body, IAstTypedExpr expansion);
 	
 	/**
 	 * Get all concrete instances.  These are the non-generic body expressions
 	 * and the generated instances.
 	 */
 	Collection<IAstTypedExpr> getConcreteInstances();
+
 
 }

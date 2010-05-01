@@ -103,6 +103,10 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 				return false;
 		}
 		
+		if (!isGeneric() && otherType.isGeneric())
+			return true;
+		if (isGeneric() && !otherType.isGeneric())
+			return false;
 		if (isComplete() && !otherType.isComplete())
 			return true;
 		

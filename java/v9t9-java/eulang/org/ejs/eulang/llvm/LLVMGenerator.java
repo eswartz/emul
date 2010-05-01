@@ -282,9 +282,10 @@ public class LLVMGenerator {
 		
 			generateGlobalExpr(stmt, expr);
 		}
-		for (List<IAstTypedExpr> instanceList : stmt.bodyToInstanceMap().values()) {
-			for (IAstTypedExpr instance : instanceList)
-				generateGlobalExpr(stmt, instance);
+		// TODO
+		for (List<ISymbol> instanceList : stmt.bodyToInstanceMap().values()) {
+			for (ISymbol instance : instanceList)
+				generateGlobalExpr(stmt, (IAstTypedExpr) instance.getDefinition());
 		}
 	}
 

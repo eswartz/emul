@@ -1,9 +1,12 @@
-// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-04-28 17:05:28
+// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-04-28 21:20:00
 
 package org.ejs.eulang.parser;
 
 
 import org.antlr.runtime.*;
+import java.util.Stack;
+import java.util.List;
+import java.util.ArrayList;
 
 public class EulangLexer extends Lexer {
     public static final int CONDTEST=22;
@@ -17,24 +20,24 @@ public class EulangLexer extends Lexer {
     public static final int DO=83;
     public static final int ARGLIST=11;
     public static final int EQUALS=63;
-    public static final int NOT=98;
+    public static final int NOT=97;
     public static final int EOF=-1;
     public static final int BREAK=88;
     public static final int TYPE=19;
     public static final int CODE=7;
     public static final int LBRACKET=68;
-    public static final int RPAREN=76;
+    public static final int RPAREN=77;
     public static final int TUPLE=47;
-    public static final int GREATER=104;
+    public static final int GREATER=103;
     public static final int STRING_LITERAL=123;
     public static final int ADDRREF=56;
     public static final int ADDSCOPE=5;
-    public static final int COMPLE=101;
-    public static final int CARET=80;
-    public static final int LESS=103;
+    public static final int COMPLE=100;
+    public static final int CARET=81;
+    public static final int LESS=102;
     public static final int INITEXPR=58;
     public static final int INITLIST=59;
-    public static final int ATSIGN=89;
+    public static final int ATSIGN=75;
     public static final int GOTO=45;
     public static final int SELECT=132;
     public static final int ARRAY=52;
@@ -48,21 +51,21 @@ public class EulangLexer extends Lexer {
     public static final int INV=36;
     public static final int LSHIFT=107;
     public static final int ADDROF=57;
-    public static final int ELSE=92;
+    public static final int ELSE=91;
     public static final int NUMBER=119;
     public static final int LIT=41;
     public static final int UDIV=33;
     public static final int LIST=18;
     public static final int MUL=31;
     public static final int ARGDEF=12;
-    public static final int FI=96;
-    public static final int ELIF=95;
+    public static final int FI=95;
+    public static final int ELIF=94;
     public static final int WS=140;
     public static final int BITOR=27;
-    public static final int NIL=78;
+    public static final int NIL=79;
     public static final int UNTIL=134;
     public static final int STMTLIST=9;
-    public static final int OR=97;
+    public static final int OR=96;
     public static final int ALLOC=14;
     public static final int IDLIST=43;
     public static final int REPEAT=85;
@@ -76,7 +79,7 @@ public class EulangLexer extends Lexer {
     public static final int BINDING=49;
     public static final int FORWARD=66;
     public static final int BAR_BAR=131;
-    public static final int AMP=81;
+    public static final int AMP=106;
     public static final int POINTS=130;
     public static final int PLUSPLUS=117;
     public static final int LBRACE_LESS=127;
@@ -89,19 +92,19 @@ public class EulangLexer extends Lexer {
     public static final int AND=86;
     public static final int DEFINE=16;
     public static final int BITAND=26;
-    public static final int LPAREN=75;
-    public static final int IF=90;
+    public static final int LPAREN=76;
+    public static final int IF=89;
     public static final int COLONS=124;
     public static final int COLON_COLON_EQUALS=128;
     public static final int AT=87;
     public static final int INDEX=53;
-    public static final int AS=93;
+    public static final int AS=92;
     public static final int CONDLIST=21;
     public static final int IDSUFFIX=136;
     public static final int EXPR=17;
     public static final int SLASH=112;
     public static final int IN=74;
-    public static final int THEN=94;
+    public static final int THEN=93;
     public static final int SCOPE=4;
     public static final int COMMA=67;
     public static final int PREINC=39;
@@ -112,10 +115,10 @@ public class EulangLexer extends Lexer {
     public static final int DIGIT=138;
     public static final int RBRACKET=69;
     public static final int RSHIFT=108;
-    public static final int WITH=91;
+    public static final int WITH=90;
     public static final int ADD=29;
-    public static final int COMPGE=102;
-    public static final int XOR=106;
+    public static final int COMPGE=101;
+    public static final int XOR=105;
     public static final int PERCENT=114;
     public static final int LIST_COMPREHENSION=6;
     public static final int LETTERLIKE=137;
@@ -126,7 +129,7 @@ public class EulangLexer extends Lexer {
     public static final int REF=13;
     public static final int COLON=62;
     public static final int COLON_EQUALS=65;
-    public static final int QUESTION=79;
+    public static final int QUESTION=80;
     public static final int NEWLINE=139;
     public static final int CHAR_LITERAL=122;
     public static final int LABEL=44;
@@ -136,15 +139,15 @@ public class EulangLexer extends Lexer {
     public static final int NEG=35;
     public static final int ASSIGN=15;
     public static final int URSHIFT=109;
-    public static final int ARROW=77;
-    public static final int COMPEQ=99;
+    public static final int ARROW=78;
+    public static final int COMPEQ=98;
     public static final int IDREF=42;
     public static final int DIV=32;
     public static final int COND=25;
     public static final int PROTO=10;
     public static final int MACRO=8;
-    public static final int COMPNE=100;
-    public static final int BAR=105;
+    public static final int COMPNE=99;
+    public static final int BAR=104;
     public static final int DATA=125;
 
     // delegates
@@ -165,8 +168,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = LBRACE_LESS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:545:13: ( '{<' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:545:15: '{<'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:13: ( '{<' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:15: '{<'
             {
             match("{<"); 
 
@@ -186,8 +189,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = FORWARD;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:547:9: ( 'forward' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:547:11: 'forward'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:9: ( 'forward' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:11: 'forward'
             {
             match("forward"); 
 
@@ -207,8 +210,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = STATIC;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:8: ( 'static' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:10: 'static'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:547:8: ( 'static' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:547:10: 'static'
             {
             match("static"); 
 
@@ -228,8 +231,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COLON;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:7: ( ':' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:9: ':'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:549:7: ( ':' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:549:9: ':'
             {
             match(':'); 
 
@@ -248,8 +251,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COMMA;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:551:7: ( ',' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:551:9: ','
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:7: ( ',' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:9: ','
             {
             match(','); 
 
@@ -268,8 +271,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = EQUALS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:8: ( '=' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:10: '='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:551:8: ( '=' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:551:10: '='
             {
             match('='); 
 
@@ -288,8 +291,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COLON_EQUALS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:553:14: ( ':=' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:553:16: ':='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:14: ( ':=' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:16: ':='
             {
             match(":="); 
 
@@ -309,8 +312,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COLON_COLON_EQUALS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:554:20: ( '::=' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:554:22: '::='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:553:20: ( '::=' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:553:22: '::='
             {
             match("::="); 
 
@@ -330,8 +333,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = PLUS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:6: ( '+' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:8: '+'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:554:6: ( '+' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:554:8: '+'
             {
             match('+'); 
 
@@ -350,8 +353,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = MINUS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:556:7: ( '-' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:556:9: '-'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:7: ( '-' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:9: '-'
             {
             match('-'); 
 
@@ -370,8 +373,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = STAR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:557:6: ( '*' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:557:8: '*'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:556:6: ( '*' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:556:8: '*'
             {
             match('*'); 
 
@@ -390,8 +393,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = SLASH;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:558:7: ( '/' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:558:9: '/'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:557:7: ( '/' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:557:9: '/'
             {
             match('/'); 
 
@@ -410,8 +413,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = LPAREN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:8: ( '(' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:10: '('
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:558:8: ( '(' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:558:10: '('
             {
             match('('); 
 
@@ -430,8 +433,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = RPAREN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:560:8: ( ')' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:560:10: ')'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:8: ( ')' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:10: ')'
             {
             match(')'); 
 
@@ -450,8 +453,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = LBRACE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:561:8: ( '{' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:561:10: '{'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:560:8: ( '{' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:560:10: '{'
             {
             match('{'); 
 
@@ -470,8 +473,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = RBRACE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:562:8: ( '}' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:562:10: '}'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:561:8: ( '}' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:561:10: '}'
             {
             match('}'); 
 
@@ -490,8 +493,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = LBRACKET;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:563:10: ( '[' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:563:12: '['
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:562:10: ( '[' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:562:12: '['
             {
             match('['); 
 
@@ -510,8 +513,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = RBRACKET;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:564:10: ( ']' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:564:12: ']'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:563:10: ( ']' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:563:12: ']'
             {
             match(']'); 
 
@@ -530,8 +533,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = HASH;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:565:6: ( '#' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:565:8: '#'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:564:6: ( '#' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:564:8: '#'
             {
             match('#'); 
 
@@ -550,8 +553,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = NOT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:567:5: ( 'not' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:567:7: 'not'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:566:5: ( 'not' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:566:7: 'not'
             {
             match("not"); 
 
@@ -571,8 +574,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = TILDE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:568:7: ( '~' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:568:9: '~'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:567:7: ( '~' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:567:9: '~'
             {
             match('~'); 
 
@@ -591,8 +594,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = ATSIGN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:569:8: ( '@' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:569:10: '@'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:568:8: ( '@' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:568:10: '@'
             {
             match('@'); 
 
@@ -611,8 +614,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = AMP;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:570:5: ( '&' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:570:7: '&'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:569:5: ( '&' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:569:7: '&'
             {
             match('&'); 
 
@@ -631,8 +634,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = BAR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:571:5: ( '|' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:571:7: '|'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:570:5: ( '|' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:570:7: '|'
             {
             match('|'); 
 
@@ -651,8 +654,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = CARET;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:572:7: ( '^' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:572:9: '^'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:571:7: ( '^' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:571:9: '^'
             {
             match('^'); 
 
@@ -671,8 +674,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = SEMI;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:573:6: ( ';' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:573:8: ';'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:572:6: ( ';' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:572:8: ';'
             {
             match(';'); 
 
@@ -691,8 +694,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = QUESTION;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:574:10: ( '?' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:574:12: '?'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:573:10: ( '?' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:573:12: '?'
             {
             match('?'); 
 
@@ -711,8 +714,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = AND;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:575:5: ( 'and' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:575:7: 'and'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:574:5: ( 'and' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:574:7: 'and'
             {
             match("and"); 
 
@@ -732,8 +735,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = OR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:576:4: ( 'or' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:576:6: 'or'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:575:4: ( 'or' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:575:6: 'or'
             {
             match("or"); 
 
@@ -753,8 +756,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = XOR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:577:5: ( 'xor' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:577:7: 'xor'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:576:5: ( 'xor' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:576:7: 'xor'
             {
             match("xor"); 
 
@@ -774,8 +777,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COMPEQ;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:578:8: ( '==' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:578:10: '=='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:577:8: ( '==' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:577:10: '=='
             {
             match("=="); 
 
@@ -795,8 +798,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COMPNE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:579:8: ( '!=' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:579:10: '!='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:578:8: ( '!=' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:578:10: '!='
             {
             match("!="); 
 
@@ -816,8 +819,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COMPGE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:580:8: ( '>=' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:580:10: '>='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:579:8: ( '>=' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:579:10: '>='
             {
             match(">="); 
 
@@ -837,8 +840,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COMPLE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:581:8: ( '<=' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:581:10: '<='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:580:8: ( '<=' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:580:10: '<='
             {
             match("<="); 
 
@@ -858,8 +861,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = GREATER;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:582:9: ( '>' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:582:11: '>'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:581:9: ( '>' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:581:11: '>'
             {
             match('>'); 
 
@@ -878,8 +881,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = LESS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:583:6: ( '<' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:583:8: '<'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:582:6: ( '<' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:582:8: '<'
             {
             match('<'); 
 
@@ -898,8 +901,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = LSHIFT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:584:8: ( '<<' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:584:10: '<<'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:583:8: ( '<<' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:583:10: '<<'
             {
             match("<<"); 
 
@@ -919,8 +922,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = RSHIFT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:585:8: ( '>>' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:585:10: '>>'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:584:8: ( '>>' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:584:10: '>>'
             {
             match(">>"); 
 
@@ -940,8 +943,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = URSHIFT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:586:9: ( '>>>' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:586:11: '>>>'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:585:9: ( '>>>' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:585:11: '>>>'
             {
             match(">>>"); 
 
@@ -961,8 +964,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = BACKSLASH;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:587:11: ( '\\\\' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:587:13: '\\\\'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:586:11: ( '\\\\' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:586:13: '\\\\'
             {
             match('\\'); 
 
@@ -981,8 +984,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = PERCENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:588:9: ( '%' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:588:11: '%'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:587:9: ( '%' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:587:11: '%'
             {
             match('%'); 
 
@@ -1001,8 +1004,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = UMOD;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:589:6: ( '%%' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:589:8: '%%'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:588:6: ( '%%' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:588:8: '%%'
             {
             match("%%"); 
 
@@ -1022,8 +1025,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = ARROW;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:590:7: ( '=>' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:590:9: '=>'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:589:7: ( '=>' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:589:9: '=>'
             {
             match("=>"); 
 
@@ -1043,8 +1046,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = PERIOD;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:591:8: ( '.' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:591:10: '.'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:590:8: ( '.' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:590:10: '.'
             {
             match('.'); 
 
@@ -1063,8 +1066,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = PLUSPLUS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:592:10: ( '++' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:592:12: '++'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:591:10: ( '++' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:591:12: '++'
             {
             match("++"); 
 
@@ -1084,8 +1087,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = MINUSMINUS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:593:12: ( '--' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:593:14: '--'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:592:12: ( '--' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:592:14: '--'
             {
             match("--"); 
 
@@ -1105,8 +1108,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = POINTS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:595:8: ( '->' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:595:10: '->'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:594:8: ( '->' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:594:10: '->'
             {
             match("->"); 
 
@@ -1126,8 +1129,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = BAR_BAR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:596:9: ( '||' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:596:11: '||'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:595:9: ( '||' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:595:11: '||'
             {
             match("||"); 
 
@@ -1147,8 +1150,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = SELECT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:598:8: ( 'select' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:598:10: 'select'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:597:8: ( 'select' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:597:10: 'select'
             {
             match("select"); 
 
@@ -1168,8 +1171,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = IF;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:600:3: ( 'if' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:600:5: 'if'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:599:3: ( 'if' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:599:5: 'if'
             {
             match("if"); 
 
@@ -1189,8 +1192,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = THEN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:601:6: ( 'then' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:601:8: 'then'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:600:6: ( 'then' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:600:8: 'then'
             {
             match("then"); 
 
@@ -1210,8 +1213,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = ELSE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:602:6: ( 'else' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:602:8: 'else'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:601:6: ( 'else' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:601:8: 'else'
             {
             match("else"); 
 
@@ -1231,8 +1234,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = ELIF;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:603:6: ( 'elif' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:603:8: 'elif'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:602:6: ( 'elif' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:602:8: 'elif'
             {
             match("elif"); 
 
@@ -1252,8 +1255,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = FI;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:604:4: ( 'fi' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:604:6: 'fi'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:603:4: ( 'fi' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:603:6: 'fi'
             {
             match("fi"); 
 
@@ -1273,8 +1276,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = DO;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:605:4: ( 'do' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:605:6: 'do'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:604:4: ( 'do' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:604:6: 'do'
             {
             match("do"); 
 
@@ -1294,8 +1297,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = WHILE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:606:7: ( 'while' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:606:9: 'while'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:605:7: ( 'while' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:605:9: 'while'
             {
             match("while"); 
 
@@ -1315,8 +1318,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = AT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:607:4: ( 'at' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:607:6: 'at'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:606:4: ( 'at' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:606:6: 'at'
             {
             match("at"); 
 
@@ -1336,8 +1339,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = WHEN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:608:6: ( 'when' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:608:8: 'when'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:607:6: ( 'when' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:607:8: 'when'
             {
             match("when"); 
 
@@ -1357,8 +1360,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = UNTIL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:609:7: ( 'until' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:609:9: 'until'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:608:7: ( 'until' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:608:9: 'until'
             {
             match("until"); 
 
@@ -1378,8 +1381,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = BREAK;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:610:7: ( 'break' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:610:9: 'break'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:609:7: ( 'break' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:609:9: 'break'
             {
             match("break"); 
 
@@ -1399,8 +1402,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = REPEAT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:611:8: ( 'repeat' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:611:10: 'repeat'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:610:8: ( 'repeat' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:610:10: 'repeat'
             {
             match("repeat"); 
 
@@ -1420,8 +1423,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = CODE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:614:6: ( 'code' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:614:8: 'code'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:613:6: ( 'code' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:613:8: 'code'
             {
             match("code"); 
 
@@ -1441,8 +1444,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = DATA;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:615:6: ( 'data' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:615:8: 'data'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:614:6: ( 'data' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:614:8: 'data'
             {
             match("data"); 
 
@@ -1462,8 +1465,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = MACRO;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:616:7: ( 'macro' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:616:9: 'macro'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:615:7: ( 'macro' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:615:9: 'macro'
             {
             match("macro"); 
 
@@ -1483,8 +1486,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = FOR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:617:5: ( 'for' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:617:7: 'for'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:616:5: ( 'for' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:616:7: 'for'
             {
             match("for"); 
 
@@ -1504,8 +1507,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = IN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:618:4: ( 'in' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:618:6: 'in'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:617:4: ( 'in' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:617:6: 'in'
             {
             match("in"); 
 
@@ -1525,8 +1528,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = GOTO;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:619:5: ( 'goto' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:619:7: 'goto'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:618:5: ( 'goto' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:618:7: 'goto'
             {
             match("goto"); 
 
@@ -1546,8 +1549,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = FALSE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:620:6: ( 'false' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:620:8: 'false'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:619:6: ( 'false' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:619:8: 'false'
             {
             match("false"); 
 
@@ -1567,8 +1570,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = TRUE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:621:5: ( 'true' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:621:7: 'true'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:620:5: ( 'true' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:620:7: 'true'
             {
             match("true"); 
 
@@ -1588,8 +1591,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = NIL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:622:4: ( ' nil' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:622:6: ' nil'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:621:4: ( ' nil' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:621:6: ' nil'
             {
             match(" nil"); 
 
@@ -1609,8 +1612,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = WITH;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:624:5: ( 'with' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:624:7: 'with'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:623:5: ( 'with' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:623:7: 'with'
             {
             match("with"); 
 
@@ -1630,8 +1633,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = AS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:625:3: ( 'as' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:625:5: 'as'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:624:3: ( 'as' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:624:5: 'as'
             {
             match("as"); 
 
@@ -1651,8 +1654,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = END;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:626:4: ( 'end' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:626:6: 'end'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:625:4: ( 'end' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:625:6: 'end'
             {
             match("end"); 
 
@@ -1672,15 +1675,15 @@ public class EulangLexer extends Lexer {
         try {
             int _type = NUMBER;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:631:7: ( '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:631:9: '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:630:7: ( '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:630:9: '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? )
             {
             matchRange('0','9'); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:631:18: ( IDSUFFIX ( '.' IDSUFFIX )? )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:631:19: IDSUFFIX ( '.' IDSUFFIX )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:630:18: ( IDSUFFIX ( '.' IDSUFFIX )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:630:19: IDSUFFIX ( '.' IDSUFFIX )?
             {
             mIDSUFFIX(); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:631:28: ( '.' IDSUFFIX )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:630:28: ( '.' IDSUFFIX )?
             int alt1=2;
             int LA1_0 = input.LA(1);
 
@@ -1689,7 +1692,7 @@ public class EulangLexer extends Lexer {
             }
             switch (alt1) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:631:30: '.' IDSUFFIX
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:630:30: '.' IDSUFFIX
                     {
                     match('.'); 
                     mIDSUFFIX(); 
@@ -1718,11 +1721,11 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COLONS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:638:8: ( COLON ( COLON )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:638:10: COLON ( COLON )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:637:8: ( COLON ( COLON )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:637:10: COLON ( COLON )+
             {
             mCOLON(); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:638:16: ( COLON )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:637:16: ( COLON )+
             int cnt2=0;
             loop2:
             do {
@@ -1736,7 +1739,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt2) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:638:16: COLON
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:637:16: COLON
             	    {
             	    mCOLON(); 
 
@@ -1768,8 +1771,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = ID;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:640:4: ( LETTERLIKE IDSUFFIX )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:640:6: LETTERLIKE IDSUFFIX
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:639:4: ( LETTERLIKE IDSUFFIX )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:639:6: LETTERLIKE IDSUFFIX
             {
             mLETTERLIKE(); 
             mIDSUFFIX(); 
@@ -1787,10 +1790,10 @@ public class EulangLexer extends Lexer {
     // $ANTLR start "IDSUFFIX"
     public final void mIDSUFFIX() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:641:19: ( ( LETTERLIKE | DIGIT )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:641:21: ( LETTERLIKE | DIGIT )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:640:19: ( ( LETTERLIKE | DIGIT )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:640:21: ( LETTERLIKE | DIGIT )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:641:21: ( LETTERLIKE | DIGIT )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:640:21: ( LETTERLIKE | DIGIT )*
             loop3:
             do {
                 int alt3=2;
@@ -1835,7 +1838,7 @@ public class EulangLexer extends Lexer {
     // $ANTLR start "LETTERLIKE"
     public final void mLETTERLIKE() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:642:20: ( 'a' .. 'z' | 'A' .. 'Z' | '_' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:641:20: ( 'a' .. 'z' | 'A' .. 'Z' | '_' )
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:
             {
             if ( (input.LA(1)>='A' && input.LA(1)<='Z')||input.LA(1)=='_'||(input.LA(1)>='a' && input.LA(1)<='z') ) {
@@ -1859,8 +1862,8 @@ public class EulangLexer extends Lexer {
     // $ANTLR start "DIGIT"
     public final void mDIGIT() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:643:15: ( '0' .. '9' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:643:17: '0' .. '9'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:642:15: ( '0' .. '9' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:642:17: '0' .. '9'
             {
             matchRange('0','9'); 
 
@@ -1877,11 +1880,11 @@ public class EulangLexer extends Lexer {
         try {
             int _type = CHAR_LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:13: ( '\\'' (~ ( '\\'' ) )* '\\'' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:15: '\\'' (~ ( '\\'' ) )* '\\''
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:647:13: ( '\\'' (~ ( '\\'' ) )* '\\'' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:647:15: '\\'' (~ ( '\\'' ) )* '\\''
             {
             match('\''); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:20: (~ ( '\\'' ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:647:20: (~ ( '\\'' ) )*
             loop4:
             do {
                 int alt4=2;
@@ -1894,7 +1897,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt4) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:20: ~ ( '\\'' )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:647:20: ~ ( '\\'' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='&')||(input.LA(1)>='(' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -1931,11 +1934,11 @@ public class EulangLexer extends Lexer {
         try {
             int _type = STRING_LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:649:15: ( '\"' (~ ( '\"' ) )* '\"' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:649:17: '\"' (~ ( '\"' ) )* '\"'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:15: ( '\"' (~ ( '\"' ) )* '\"' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:17: '\"' (~ ( '\"' ) )* '\"'
             {
             match('\"'); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:649:21: (~ ( '\"' ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:21: (~ ( '\"' ) )*
             loop5:
             do {
                 int alt5=2;
@@ -1948,7 +1951,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt5) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:649:21: ~ ( '\"' )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:648:21: ~ ( '\"' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='!')||(input.LA(1)>='#' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -1985,10 +1988,10 @@ public class EulangLexer extends Lexer {
         try {
             int _type = NEWLINE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:8: ( ( ( '\\r' )? '\\n' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:10: ( ( '\\r' )? '\\n' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:653:8: ( ( ( '\\r' )? '\\n' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:653:10: ( ( '\\r' )? '\\n' )+
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:10: ( ( '\\r' )? '\\n' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:653:10: ( ( '\\r' )? '\\n' )+
             int cnt7=0;
             loop7:
             do {
@@ -2002,9 +2005,9 @@ public class EulangLexer extends Lexer {
 
                 switch (alt7) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:11: ( '\\r' )? '\\n'
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:653:11: ( '\\r' )? '\\n'
             	    {
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:11: ( '\\r' )?
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:653:11: ( '\\r' )?
             	    int alt6=2;
             	    int LA6_0 = input.LA(1);
 
@@ -2013,7 +2016,7 @@ public class EulangLexer extends Lexer {
             	    }
             	    switch (alt6) {
             	        case 1 :
-            	            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:11: '\\r'
+            	            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:653:11: '\\r'
             	            {
             	            match('\r'); 
 
@@ -2053,10 +2056,10 @@ public class EulangLexer extends Lexer {
         try {
             int _type = WS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:655:5: ( ( ' ' | '\\t' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:655:9: ( ' ' | '\\t' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:5: ( ( ' ' | '\\t' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:9: ( ' ' | '\\t' )+
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:655:9: ( ' ' | '\\t' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:654:9: ( ' ' | '\\t' )+
             int cnt8=0;
             loop8:
             do {
@@ -2111,12 +2114,12 @@ public class EulangLexer extends Lexer {
         try {
             int _type = SINGLE_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:659:15: ( '//' (~ ( '\\r' | '\\n' ) )* NEWLINE )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:659:17: '//' (~ ( '\\r' | '\\n' ) )* NEWLINE
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:658:15: ( '//' (~ ( '\\r' | '\\n' ) )* NEWLINE )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:658:17: '//' (~ ( '\\r' | '\\n' ) )* NEWLINE
             {
             match("//"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:659:22: (~ ( '\\r' | '\\n' ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:658:22: (~ ( '\\r' | '\\n' ) )*
             loop9:
             do {
                 int alt9=2;
@@ -2129,7 +2132,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt9) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:659:22: ~ ( '\\r' | '\\n' )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:658:22: ~ ( '\\r' | '\\n' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -2167,12 +2170,12 @@ public class EulangLexer extends Lexer {
         try {
             int _type = MULTI_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:664:3: ( '/*' ( . )* '*/' ( NEWLINE )? )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:664:5: '/*' ( . )* '*/' ( NEWLINE )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:663:3: ( '/*' ( . )* '*/' ( NEWLINE )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:663:5: '/*' ( . )* '*/' ( NEWLINE )?
             {
             match("/*"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:664:10: ( . )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:663:10: ( . )*
             loop10:
             do {
                 int alt10=2;
@@ -2197,7 +2200,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt10) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:664:10: .
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:663:10: .
             	    {
             	    matchAny(); 
 
@@ -2211,7 +2214,7 @@ public class EulangLexer extends Lexer {
 
             match("*/"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:664:18: ( NEWLINE )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:663:18: ( NEWLINE )?
             int alt11=2;
             int LA11_0 = input.LA(1);
 
@@ -2220,7 +2223,7 @@ public class EulangLexer extends Lexer {
             }
             switch (alt11) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:664:18: NEWLINE
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:663:18: NEWLINE
                     {
                     mNEWLINE(); 
 

@@ -29,7 +29,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 		doGenerate(mod);
 	}
 	
-
+	/*
 	
 	@Test
     public void testPointers3() throws Exception {
@@ -43,14 +43,13 @@ public class TestLLVMGenerator extends BaseParserTest {
     	doGenerate(mod);
 
     }
-	
-	/*
+	*/
 	
 	@Test
     public void testPointers4() throws Exception {
 		 dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
-    			" genericSwap_testPointers4 := code (@x, @y => null) {\n" +
+    			" genericSwap_testPointers4 := code (@x, y : Int => nil) {\n" +
     			//" x = x + 1; y = y + 1; x = x + 2; y = y - 4; x = x - 4;\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
@@ -59,6 +58,8 @@ public class TestLLVMGenerator extends BaseParserTest {
     	doGenerate(mod);
 
     }
+	
+	/*
 
 	@Test
     public void testPointers2() throws Exception {
@@ -99,7 +100,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	@Test
 	public void testShortCircuitAndOr() throws Exception {
 		dumpTypeInfer = true;
-		IAstModule mod = doFrontend("testShortCircuitAndOr = code (x;y:Int&;z => Int){\n" +
+		IAstModule mod = doFrontend("testShortCircuitAndOr = code (x;y:Int;z => Int){\n" +
 				"if  x > y and y > z then y " +
 				"elif x > z and z > y then z " +
 				"elif y > x and x > z then x " +
@@ -110,7 +111,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	
 	@Test
     public void testTuples4() throws Exception {
-    	IAstModule mod = doFrontend("swap = code (x,y) { (y,x); };\n" +
+    	IAstModule mod = doFrontend("swap = [] code (x,y) { (y,x); };\n" +
     			"testTuples4 = code (a,b) { (a, b) = swap(4, 5); }; \n");
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(2, g.getModule().getSymbolCount());
@@ -123,14 +124,6 @@ public class TestLLVMGenerator extends BaseParserTest {
     	assertEquals(2, g.getModule().getSymbolCount());
     }
 	
-	@Test
-    public void testGenerics0a() throws Exception {
-		// not generic
-    	IAstModule mod = doFrontend("add = code (x,y) { x+y };\n" +
-    			"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
-    	LLVMGenerator g = doGenerate(mod);
-    	assertEquals(2, g.getModule().getSymbolCount());
-    }
 	@Test
 	public void testGenerics0b() throws Exception {
 		IAstModule mod = doFrontend("add = [] code (x,y) { x+y };\n" +
@@ -231,7 +224,7 @@ public class TestLLVMGenerator extends BaseParserTest {
     			"wwhile = macro ( macro test:code; macro body : code) {\n"+
     			"    @loop: if test() then { body(); goto loop } fi;\n"+
     			"};\n"+
-    			"testWhileLoop = code (t; x : Int; y : Float& => Void) {\n" +
+    			"testWhileLoop = code (t; x : Int; y : Float => Void) {\n" +
     			"   wwhile(x > t, { y = y/2; x = x-1; } );\n"+
     			"};");
     	LLVMGenerator g = doGenerate(mod);

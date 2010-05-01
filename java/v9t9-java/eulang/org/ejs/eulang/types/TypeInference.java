@@ -27,6 +27,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNode;
+import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -71,7 +72,7 @@ public class TypeInference {
 	private List<Message> messages;
 
 	private Set<IAstNode> instantiationSet = new HashSet<IAstNode>();
-	private Set<IAstTypedExpr> genericizedSet = new HashSet<IAstTypedExpr>();
+	private Set<Integer> genericizedSet = new HashSet<Integer>();
 	
 	public TypeInference(TypeEngine typeEngine) {
 		this.typeEngine = typeEngine;
@@ -127,48 +128,68 @@ public class TypeInference {
 				if (bodyExpr instanceof IAstCodeExpr && ((IAstCodeExpr) bodyExpr).isMacro())
 					continue;
 				
+
 				// first, see if the top-level type can be inferred, for the case
 				// of overloaded functions calling each other.
-				try {
-					changed |= bodyExpr.inferTypeFromChildren(typeEngine);
-				} catch (TypeException e) {
-					messages.add(new Error(bodyExpr, e.getMessage()));
+				if (bodyExpr.getType() == null) {
+					try {
+						changed |= bodyExpr.inferTypeFromChildren(typeEngine);
+					} catch (TypeException e) {
+						messages.add(new Error(bodyExpr, e.getMessage()));
+					}
 				}
+				
+				
+				if (defineStmt.isGeneric()) {
+					boolean defineChanged = false;
+					
+					// see if we can still infer some types
+					if (!genericizedSet.contains(bodyExpr.getId())) {
+						
 
+						TypeInference inference = subInferenceJob();
+						defineChanged = inference.infer(bodyExpr, false);
+						
+						
+						boolean madeGeneric = false;
+						madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
+						genericizedSet.add(bodyExpr.getId());
+						if (madeGeneric) {
+							defineChanged = true;
+							
+							//inference = subInferenceJob();
+							//defineChanged |= inference.infer(bodyExpr, false);
+							
+							if (DUMP) {
+								System.out.println("After genericizing define:");
+								DumpAST dump = new DumpAST(System.out);
+								bodyExpr.accept(dump);
+							}
+							
+						}
+					}
+					
+					//bodyExpr.setType(origType);
+					changed |= defineChanged;
+					continue;
+				}
 				
 				// Try to determine if the body is generic or not
 				LLType origDefineType = bodyExpr.getType();
-				if (origDefineType == null || !origDefineType.isComplete()) {
+				if (origDefineType == null || !origDefineType.isComplete() ) {
 					
 					boolean defineChanged = false;
 					//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
 					
 					TypeInference inference = subInferenceJob();
 					
-					LLType origType = bodyExpr.getType();
 					defineChanged = inference.infer(bodyExpr, false);
 					
 					
 					if (DUMP) {
-						System.out.println("Inferring on define:");
+						System.out.println("Inferring on define " + defineStmt.getSymbol() + " for body " + bodyExpr.getType() + ":");
 						DumpAST dump = new DumpAST(System.out);
-						defineStmt.accept(dump);
-					}
-					
-					if (defineStmt.isGeneric()) {
-						
-						// see if we can still infer some types
-						if (!genericizedSet.contains(bodyExpr)) {
-							boolean madeGeneric = false;
-							madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
-							genericizedSet.add(bodyExpr);
-							if (madeGeneric) {
-								defineChanged = true;
-							}
-						}
-						
-						//bodyExpr.setType(origType);
-						return defineChanged;
+						bodyExpr.accept(dump);
 					}
 					
 					/*
@@ -282,9 +303,10 @@ public class TypeInference {
 		
 		LLType newType = aggregate.updateTypes(typeEngine, types);
 		defineExpr.setType(newType);
+		//boolean changed = AstTypedNode.updateType(defineExpr, newType);
 		
 		
-		boolean changed = false;
+		boolean changed = true;
 		/*
 		TypeInference inference = subInferenceJob();
 		changed = inference.infer(defineExpr, false);
@@ -317,17 +339,20 @@ public class TypeInference {
 		if (define == null)
 			return false;
 		
-		// Now, does the symbol *still* refer to the definition?  If so, no one has
-		// detected what the type of the symbol should be.
+		// Now, does the symbol *still* refer to the definition?  If so, 
+		// it's a candidate for expansion.
 		
 		IAstNode definition = site.getSymbol().getDefinition();
-		if (definition instanceof IAstDefineStmt)
+		if (!(definition instanceof IAstDefineStmt))
 			return false;
 		
 	
 		// See if it's still generic..,
 		//
-		IAstTypedNode body = (IAstTypedNode) definition;
+		IAstTypedExpr body = site.getBody();
+		
+		if (body == null)
+			return false;
 	
 		if (body.getType() == null || !body.getType().isGeneric() || !expandedType.isMoreComplete(body.getType()))
 			return false;
@@ -351,17 +376,19 @@ public class TypeInference {
 	}
 
 	private boolean doInstantiateGeneric(IAstSymbolExpr site,
-			IAstDefineStmt define, LLType expandedType, IAstTypedNode body) {
-		IAstTypedExpr expansion = define.getMatchingInstance(body.getType(), expandedType);
+			IAstDefineStmt define, LLType expandedType, IAstTypedExpr body) {
+		ISymbol expansionSym = define.getMatchingInstance(body.getType(), expandedType);
 		
-		ISymbol expansionSym = site.getSymbol();
-		
-		if (expansion == null || expansion.getType().isGeneric()) {
+		if (expansionSym == null) {
+			IAstTypedExpr expansion = null;
+	
 			// nothing matched; make a new one
 			if (DUMP) 
 				System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
 			
+			ExpandAST expander = new ExpandAST(typeEngine, true);
 			expansion = (IAstTypedExpr) body.copy(null);
+			expansion = (IAstTypedExpr) expander.expand(messages, expansion);
 			expansion.uniquifyIds();
 			replaceGenericTypes(expansion, expandedType);
 			
@@ -371,27 +398,26 @@ public class TypeInference {
 				expansion.accept(dump);
 			}
 			
-			expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName());
-			expansionSym.setDefinition(expansion);
+			//expansionSym = define.getSymbol().getScope().addTemporary(define.getSymbol().getName());
+			//expansionSym.setDefinition(expansion);
+			
+			
+			// infer types now that generic types are real
+			TypeInference inference = subInferenceJob();
+			boolean updated = inference.infer(expansion, false);
+			expandedType = expansion.getType();
+			if (updated && DUMP) {
+				System.out.println("Updated expansion of " + define.getSymbol() + " for " + expandedType + ":");
+				DumpAST dump = new DumpAST(System.out);
+				expansion.accept(dump);
+			}
+			
+			expansionSym = define.registerInstance(body, expansion);
+			//expansionSym.setType(expandedType);
 		}
-		
-		
-		
-		TypeInference inference = subInferenceJob();
-		boolean updated = inference.infer(expansion, false);
-		expandedType = expansion.getType();
-		if (updated && DUMP) {
-			System.out.println("Updated expansion of " + define.getSymbol() + " for " + expandedType + ":");
-			DumpAST dump = new DumpAST(System.out);
-			expansion.accept(dump);
-		}
-		
-		expansionSym.setType(expandedType);
-		
 		site.setSymbol(expansionSym);
-		site.setType(expandedType);
+		site.setType(expansionSym.getType());
 		
-		define.registerInstance((IAstTypedExpr) body, expansion);
 		return true;
 	}
 
@@ -407,7 +433,6 @@ public class TypeInference {
 		Map<LLType, LLType> expansionMap = new HashMap<LLType, LLType>();
 		getTypeInstanceMap(expansion.getType(), expandedType, expansionMap);
 		
-		ExpandAST expand = new ExpandAST(typeEngine);
 		AstNode.replaceTypesInTree(typeEngine, expansion, expansionMap);
 	}
 

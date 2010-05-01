@@ -152,7 +152,15 @@ public abstract class BaseLLType implements LLType {
 	 */
 	@Override
 	public boolean isMoreComplete(LLType type) {
-		return isComplete() && (type == null || !type.isComplete() || type.isGeneric());
+		if (this == type)
+			return false;
+		
+		if (type == null)
+			return true;
+		
+		if (!isGeneric() && type.isGeneric())
+			return true;
+		return isComplete() && !type.isComplete();
 	}
 	
 	/* (non-Javadoc)
