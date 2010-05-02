@@ -39,6 +39,10 @@
 #  pragma warning(disable:4152) /* nonstandard extension, function/data pointer conversion in expression */
 #  pragma warning(disable:4100) /* unreferenced formal parameter */
 #  pragma warning(disable:4996) /* 'strcpy': This function or variable may be unsafe */
+#  ifdef UNICODE
+/* TCF code uses UTF-8 multibyte character encoding */
+#    undef UNICODE
+#  endif
 #  ifdef _DEBUG
 #    define _CRTDBG_MAP_ALLOC
 #    include <stdlib.h>

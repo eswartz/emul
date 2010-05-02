@@ -17,7 +17,7 @@
  */
 
 #define SYMBOL_MAGIC 0x34875234
-#define SYMBOL_BLOCK_SIZE 16
+#define SYMBOL_BLOCK_SIZE 64
 
 typedef struct SymbolBlock {
     struct SymbolBlock * next;

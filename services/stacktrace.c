@@ -463,7 +463,7 @@ void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     static ContextEventListener listener = {
         NULL,
         flush_stack_trace,
-        flush_stack_trace,
+        NULL,
         flush_stack_trace,
         flush_stack_trace,
         delete_stack_trace

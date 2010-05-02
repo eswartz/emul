@@ -85,8 +85,9 @@ typedef struct GetContextArgs {
 static SafeEvent * safe_event_list = NULL;
 static SafeEvent * safe_event_last = NULL;
 static int safe_event_pid_count = 0;
-static uintptr_t safe_event_generation = 0;
 static int run_ctrl_lock_cnt = 0;
+static int stop_all_timer_posted = 0;
+static int stop_all_timer_cnt = 0;
 
 static TCFBroadcastGroup * broadcast_group = NULL;
 
@@ -709,16 +710,23 @@ int is_all_stopped(Context * mem) {
     return 1;
 }
 
+static void run_safe_events(void * arg);
+
+static void stop_all_timer(void * args) {
+    stop_all_timer_posted = 0;
+    stop_all_timer_cnt++;
+    run_safe_events(NULL);
+}
+
 static void run_safe_events(void * arg) {
     LINK * l;
     Context * mem;
-
-    if ((uintptr_t)arg != safe_event_generation) return;
 
     safe_event_pid_count = 0;
 
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
+        stop_all_timer_cnt = 0;
         for (l = context_root.next; l != &context_root; l = l->next) {
             int n = 0;
             Context * ctx = ctxl2ctxp(l);
@@ -744,57 +752,57 @@ static void run_safe_events(void * arg) {
         return;
     }
 
-    mem = safe_event_list ? safe_event_list->mem : NULL;
+    if (safe_event_list == NULL) return;
+    mem = safe_event_list->mem;
+    context_lock(mem);
 
     for (l = context_root.next; l != &context_root; l = l->next) {
         Context * ctx = ctxl2ctxp(l);
-        if (ctx->exited || ctx->exiting || ctx->stopped || !context_has_state(ctx)) {
-            EXT(ctx)->pending_safe_event = 0;
-            continue;
-        }
-        if (mem != NULL && ctx->mem != mem) {
-            EXT(ctx)->pending_safe_event = 0;
-            continue;
-        }
-        if (!ctx->pending_step || EXT(ctx)->pending_safe_event >= STOP_ALL_MAX_CNT / 2) {
-            if (context_stop(ctx) < 0) {
-                int error = errno;
-#ifdef _WRS_KERNEL
-                if (error == S_vxdbgLib_INVALID_CTX) {
-                    /* Most often this means that context has exited,
-                     * but exit event is not delivered yet.
-                     * Not an error. */
-                    error = 0;
-                }
-#endif
-                if (error) {
-                    trace(LOG_ALWAYS, "error: can't temporary stop %s; error %d: %s",
-                        ctx->id, error, errno_to_str(error));
-                }
-            }
-            assert(!ctx->stopped);
-        }
-        if (EXT(ctx)->pending_safe_event >= STOP_ALL_MAX_CNT) {
+        EXT(ctx)->pending_safe_event = 0;
+        if (ctx->mem != mem) continue;
+        if (ctx->exited || ctx->exiting) continue;
+        if (ctx->stopped || !context_has_state(ctx)) continue;
+        if (stop_all_timer_cnt >= STOP_ALL_MAX_CNT) {
             trace(LOG_ALWAYS, "error: can't temporary stop %s; error: timeout", ctx->id);
             ctx->exiting = 1;
-            EXT(ctx)->pending_safe_event = 0;
         }
         else {
-            EXT(ctx)->pending_safe_event++;
+            if (!ctx->pending_step || stop_all_timer_cnt >= STOP_ALL_MAX_CNT / 2) {
+                if (context_stop(ctx) < 0) {
+                    int error = errno;
+#ifdef _WRS_KERNEL
+                    if (error == S_vxdbgLib_INVALID_CTX) {
+                        /* Most often this means that context has exited,
+                         * but exit event is not delivered yet.
+                         * Not an error. */
+                        error = 0;
+                    }
+#endif
+                    if (error) {
+                        trace(LOG_ALWAYS, "error: can't temporary stop %s; error %d: %s",
+                            ctx->id, error, errno_to_str(error));
+                    }
+                }
+                assert(!ctx->stopped);
+            }
+            EXT(ctx)->pending_safe_event = 1;
             safe_event_pid_count++;
         }
     }
 
-    while (safe_event_list && (uintptr_t)arg == safe_event_generation) {
+    while (safe_event_list) {
         Trap trap;
         SafeEvent * i = safe_event_list;
-        if (safe_event_pid_count > 0) {
-            post_event_with_delay(run_safe_events, (void *)++safe_event_generation, STOP_ALL_TIMEOUT);
-            return;
+        if (i->mem != mem) {
+            post_event(run_safe_events, NULL);
+            break;
         }
-        if (mem != NULL && i->mem != mem) {
-            post_event(run_safe_events, (void *)++safe_event_generation);
-            return;
+        if (safe_event_pid_count > 0) {
+            if (!stop_all_timer_posted) {
+                stop_all_timer_posted = 1;
+                post_event_with_delay(stop_all_timer, NULL, STOP_ALL_TIMEOUT);
+            }
+            break;
         }
         assert(is_all_stopped(i->mem));
         safe_event_list = i->next;
@@ -806,10 +814,11 @@ static void run_safe_events(void * arg) {
             trace(LOG_ALWAYS, "Unhandled exception in \"safe\" event dispatch: %d %s",
                   trap.error, errno_to_str(trap.error));
         }
+        run_ctrl_unlock();
         context_unlock(i->mem);
         loc_free(i);
-        run_ctrl_unlock();
     }
+    context_unlock(mem);
 }
 
 static void check_safe_events(Context * ctx) {
@@ -819,7 +828,7 @@ static void check_safe_events(Context * ctx) {
     EXT(ctx)->pending_safe_event = 0;
     safe_event_pid_count--;
     if (safe_event_pid_count == 0 && run_ctrl_lock_cnt > 0) {
-        post_event(run_safe_events, (void *)++safe_event_generation);
+        post_event(run_safe_events, NULL);
     }
 }
 
@@ -828,8 +837,8 @@ void post_safe_event(Context * mem, EventCallBack * done, void * arg) {
     assert(mem->mem == mem);
     run_ctrl_lock();
     context_lock(mem);
-    if (run_ctrl_lock_cnt > 1 && safe_event_list == NULL) {
-        post_event(run_safe_events, (void *)++safe_event_generation);
+    if (safe_event_list == NULL) {
+        post_event(run_safe_events, NULL);
     }
     i->mem = mem;
     i->done = done;
@@ -843,7 +852,6 @@ void run_ctrl_lock(void) {
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
         cmdline_suspend();
-        post_event(run_safe_events, (void *)++safe_event_generation);
     }
     run_ctrl_lock_cnt++;
 }
@@ -852,9 +860,10 @@ void run_ctrl_unlock(void) {
     assert(run_ctrl_lock_cnt > 0);
     run_ctrl_lock_cnt--;
     if (run_ctrl_lock_cnt == 0) {
+        assert(safe_event_list == NULL);
         cmdline_resume();
         /* Lazily continue execution of temporary stopped contexts */
-        post_event(run_safe_events, (void *)++safe_event_generation);
+        post_event(run_safe_events, NULL);
     }
 }
 

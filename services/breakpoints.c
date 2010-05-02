@@ -557,7 +557,6 @@ static EvaluationRequest * post_evaluation_request(EvaluationRequest * req) {
 }
 
 static void post_location_evaluation_request(Context * ctx) {
-    if (ctx->exited) post_evaluation_request(create_evaluation_request(ctx, 0));
     post_evaluation_request(create_evaluation_request(ctx->mem, 0))->location = 1;
 }
 
@@ -1846,6 +1845,24 @@ void destroy_eventpoint(BreakpointInfo * bp) {
 }
 
 static void event_context_changed(Context * ctx, void * args) {
+    if (ctx->mem != ctx) {
+        /* Optimization: ignore a thread created/exited/changed event
+         * if the thread ID is never used in a BP context ID list.
+         */
+        int cnt = 0;
+        LINK * l = breakpoints.next;
+        while (cnt == 0 && l != &breakpoints) {
+            BreakpointInfo * bp = link_all2bp(l);
+            char ** ids = bp->context_ids;
+            if (ids != NULL && !is_disabled(bp)) {
+                while (*ids != NULL) {
+                    if (strcmp(*ids++, ctx->id) == 0) cnt++;
+                }
+            }
+            l = l->next;
+        }
+        if (cnt == 0) return;
+    }
     post_location_evaluation_request(ctx);
 }
 

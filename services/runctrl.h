@@ -25,26 +25,23 @@
 #include "protocol.h"
 
 /*
- * Lock run control:
- * temporary suspends handling of incoming messages and stops all debuggee threads.
+ * Lock run control: don't resume any thread while run control is locked.
  * Each call to run_ctrl_lock() increments lock counter.
  */
 extern void run_ctrl_lock(void);
 
 /*
- * Unlock run control:
- * resume message handling and debuggee threads that are not intercepted.
+ * Unlock run control: resume debuggee threads that are not intercepted.
  * Each call to run_ctrl_unlock() decrements lock counter, debuggee resumed when the counter reaches zero.
  */
 extern void run_ctrl_unlock(void);
 
 /*
  * Add "safe" event.
- * Temporary suspends handling of incoming messages and stops all debuggee threads.
- * Callback function 'done' will be called when everything is stopped and
+ * Stops debuggee threads.
+ * Callback function 'done' will be called when threads are stopped and
  * it is safe to access debuggee memory, plant breakpoints, etc.
  * 'mem' is memory context, only threads that belong to that memory are stopped.
- * if 'mem' = 0, stop all threads.
  * post_safe_event() uses run_ctrl_lock()/run_ctrl_unlock() to suspend/resume debuggee.
  */
 extern void post_safe_event(Context * mem, EventCallBack * done, void * arg);

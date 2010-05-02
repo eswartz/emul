@@ -22,8 +22,12 @@ fi
 
 if [ ! -d "$WINSDK" ]
 then
-    echo Invalid WINSDK - Microsoft SDK directory name
-    exit 1
+    WINSDK="/cygdrive/c/Program Files/Microsoft SDKs/Windows/v6.0A"
+    if [ ! -d "$WINSDK" ]
+    then
+        echo Invalid WINSDK - Microsoft SDK directory name
+        exit 1
+    fi
 fi
 
 declare -a cmd
