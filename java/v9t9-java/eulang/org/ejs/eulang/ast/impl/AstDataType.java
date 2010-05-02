@@ -266,6 +266,13 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		this.typeName = typeName;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		super.setType(type);
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)

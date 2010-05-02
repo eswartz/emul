@@ -9,8 +9,10 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
@@ -95,7 +97,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 	
 
     protected static boolean canInferTypeFrom(ITyped child) {
-    	return child != null && child.getType() != null; // && child.getType().isComplete(); 
+    	return child != null && child.getType() != null && !(child.getType() instanceof LLInstanceType || child.getType() instanceof LLSymbolType); 
     }
     protected static boolean canReplaceType(ITyped child) {
     	return child != null && (child.getType() == null || !child.getType().isComplete()); 
@@ -103,7 +105,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 
     public static boolean updateType(ITyped child, LLType newType) {
     	
-    	if (child == null || newType == null)
+    	if (child == null || newType == null || newType instanceof LLInstanceType || newType instanceof LLSymbolType)
 			return false;
 		
     	//newType = getConcreteType( child, newType);

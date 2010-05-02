@@ -259,11 +259,17 @@ public class LLVMGenerator {
 		// TODO: simultaneous assignment?
 		for (int i = 0; i < stmt.getSymbolExprs().nodeCount(); i++) {
 			IAstSymbolExpr symbol = stmt.getSymbolExprs().list().get(i);
-			IAstTypedExpr value = stmt.getExprs().list().get(stmt.getExprs().nodeCount() == 1 ? 0 : i);
-			if (stmt.getType() instanceof LLCodeType)
-				generateGlobalCode(symbol.getSymbol(), (IAstCodeExpr) value);
-			else
-				ll.add(new LLGlobalDirective(symbol.getSymbol(), LLVisibility.DEFAULT, LLLinkage.INTERNAL, stmt.getType()));
+			boolean isData = true;
+			if (stmt.getExprs() != null) {
+				IAstTypedExpr value = stmt.getExprs().list().get(stmt.getExprs().nodeCount() == 1 ? 0 : i);
+				if (stmt.getType() instanceof LLCodeType) {
+					generateGlobalCode(symbol.getSymbol(), (IAstCodeExpr) value);
+					isData = false;
+				}
+			}
+			if (isData) {
+				ll.add(new LLGlobalDirective(symbol.getSymbol(), null, stmt.getType()));
+			}
 		}
 	}
 

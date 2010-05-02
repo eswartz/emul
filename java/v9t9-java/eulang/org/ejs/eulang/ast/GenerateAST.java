@@ -1841,18 +1841,18 @@ public class GenerateAST {
 		if (tree.getType() == EulangParser.NIL) {
 			type = new AstType(typeEngine.VOID);
 		} else {
-			Tree kid0 = tree.getChild(0);
 			if (tree.getType() == EulangParser.TUPLE) {
 				LLType[] tupleTypes = new LLType[tree.getChildCount()];
 				for (int idx = 0; idx < tree.getChildCount(); idx++) {
-					assert tree.getChild(idx).getType() == EulangParser.TYPE;
-					tupleTypes[idx] = constructType(tree.getChild(idx)
-							.getChild(0)).getType();	// TODO
+					//assert tree.getChild(idx).getType() == EulangParser.TYPE;
+					IAstType stype = checkConstruct(tree.getChild(idx), IAstType.class);
+					if (stype.getType() == null)
+						throw new GenerateException(tree.getChild(idx), "tuple types must be concrete");
+					tupleTypes[idx] = stype.getType();
 				}
 				type = new AstType(typeEngine.getTupleType(tupleTypes));
 			} else if (tree.getType() == EulangParser.ARRAY) {
-				assert kid0.getType() == EulangParser.TYPE;
-				type = constructType(kid0.getChild(0));
+				type = checkConstruct(tree.getChild(0), IAstType.class);
 				for (int idx = tree.getChildCount(); idx-- > 1 ;) {
 					IAstTypedExpr countExpr = null;
 					Tree kid = tree.getChild(idx);
@@ -1868,11 +1868,11 @@ public class GenerateAST {
 				}
 				
 			} else if (tree.getType() == EulangParser.POINTER) {
-				type = constructType(kid0.getChild(0));
+				type = checkConstruct(tree.getChild(0), IAstType.class);
 				type = new AstPointerType(type);
 				getSource(tree, type);
 			} else if (tree.getType() == EulangParser.REF) {
-				type = constructType(kid0.getChild(0));
+				type = checkConstruct(tree.getChild(0), IAstType.class);
 				type = new AstRefType(type);
 				getSource(tree, type);
 			} else if (tree.getType() == EulangParser.CODE) {
@@ -1883,7 +1883,7 @@ public class GenerateAST {
 					if (tree.getChildCount() > 1)
 						throw new GenerateException(tree.getChild(2),
 								"did not expect code block here");
-					IAstPrototype proto = checkConstruct(kid0, IAstPrototype.class);
+					IAstPrototype proto = checkConstruct(tree.getChild(0), IAstPrototype.class);
 					if (proto.hasDefaultArguments()) {
 						throw new GenerateException(tree.getChild(2),
 								"cannot use default arguments in code type");

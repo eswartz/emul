@@ -19,6 +19,8 @@ import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLInstanceType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
 
@@ -130,7 +132,7 @@ public class LLModule {
 	 */
 	public boolean addExternType(LLType type) {
 		if (type == null|| type.getName() == null || type.getBasicType() == BasicType.VOID) return false;
-		if (type instanceof LLUpType)
+		if (type instanceof LLUpType || type instanceof LLInstanceType || type instanceof LLSymbolType)
 			return false;
 		if (emittedTypes.containsKey(type))
 			return false;

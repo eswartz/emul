@@ -123,6 +123,8 @@ public class LLArrayType extends BaseLLType {
 	 */
 	@Override
 	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
+		if (fromType == null || fromType.equals(this))
+			return toType;
 		if (subType == null)
 			return this;
 		LLType newSub = subType.substitute(typeEngine, fromType, toType);
@@ -164,4 +166,13 @@ public class LLArrayType extends BaseLLType {
 		else
 			return this;
 	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#updateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType[])
+	 */
+	@Override
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
+		return typeEngine.getArrayType(type[0], arrayCount, dynamicSizeExpr);
+	}
+
 }

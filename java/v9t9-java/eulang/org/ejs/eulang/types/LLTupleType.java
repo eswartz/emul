@@ -110,7 +110,7 @@ public class LLTupleType extends BaseLLAggregateType {
 		return types[idx];
 	}
 	
-	public LLTupleType updateTypes(TypeEngine typeEngine, LLType[] type) {
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
 		return typeEngine.getTupleType(type);
 	}
 }

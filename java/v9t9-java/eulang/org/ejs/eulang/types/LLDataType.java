@@ -154,7 +154,7 @@ public class LLDataType extends BaseLLAggregateType {
 		return idx < ifields.length ? ifields[idx].getType() : statics[idx - ifields.length].getType();
 	}
 
-	public LLDataType updateTypes(TypeEngine typeEngine, LLType[] types) {
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] types) {
 		LLInstanceField[] newIFields = new LLInstanceField[ifields.length];
 		for (int idx = 0; idx < newIFields.length; idx++) {
 			LLInstanceField field = ifields[idx];
@@ -240,6 +240,10 @@ public class LLDataType extends BaseLLAggregateType {
 	@Override
 	public boolean isCompatibleWith(LLType target) {
 		if (target instanceof LLUpType)
+			return target.isCompatibleWith(this);
+		if (target instanceof LLInstanceType)
+			return target.isCompatibleWith(this);
+		if (target instanceof LLSymbolType)
 			return target.isCompatibleWith(this);
 		return super.isCompatibleWith(target);
 	}

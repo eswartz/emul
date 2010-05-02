@@ -101,7 +101,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 					&& ((ITyped) returns).getType().isMoreComplete(newType.getRetType())) {
 				LLType[] types = newType.getTypes();
 				types[0] = ((ITyped) returns).getType();
-				newType = newType.updateTypes(typeEngine, types);
+				newType = (LLCodeType) newType.updateTypes(typeEngine, types);
 			}
 		}
 		if (newType == null || protoType.isMoreComplete(newType)) {

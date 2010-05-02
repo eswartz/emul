@@ -1155,6 +1155,30 @@ public class TestTypes extends BaseParserTest {
 	}
 	
 	@Test 
+	public void testGenericTypes2a() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T, U] data {\n" +
+				"        node:T;\n"+
+				"        next:List<U, T>^;\n" +
+				"};\n" + 
+				"foo : List<Int, Double>;\n"+
+				"");
+		sanityTest(mod);
+		IAstAllocStmt alloc = (IAstAllocStmt) mod.getScope().get("foo").getDefinition();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertFalse(dataPtr.isCompatibleWith(nextField.getType()));	
+		doGenerate(mod);
+	}
+	
+	
+	@Test 
 	public void testGenericTypes2() throws Exception {
 		// there are two expansions here; be sure to name the types properly
 		// so they don't get confused in LLVM
@@ -1184,14 +1208,26 @@ public class TestTypes extends BaseParserTest {
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
 		LLPointerType dataPtr = typeEngine.getPointerType(data);
 		LLInstanceField nextField = data.getInstanceFields()[1];
-		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		assertFalse(dataPtr.isCompatibleWith(nextField.getType()));	// different type 
+		
+		IAstAllocStmt alloc2 = (IAstAllocStmt) code.stmts().list().get(1);
+		LLDataType data2 = (LLDataType) alloc2.getType();
+		assertTrue(data2.isComplete() && !data2.isGeneric());
+		assertEquals(2, data2.getInstanceFields().length);
+		assertEquals(typeEngine.DOUBLE, data2.getInstanceFields()[0].getType());
+		LLPointerType data2Ptr = typeEngine.getPointerType(data2);
+		LLInstanceField nextField2 = data2.getInstanceFields()[1];
+		
+		assertFalse(data2Ptr.isCompatibleWith(nextField2.getType()));	// different type
+		
+		assertTrue(dataPtr.isCompatibleWith(nextField2.getType()));	
+		assertTrue(data2Ptr.isCompatibleWith(nextField.getType()));	
 		
 		LLCodeType codeType = (LLCodeType) code.getType();
 		assertEquals(typeEngine.DOUBLE, codeType.getRetType());
 		doGenerate(mod);
 	}
 	
-	// we need global defs for these variables... these are bieng replicated endlessly and not matching
 	@Test 
 	public void testGenericTypes3a() throws Exception {
 		dumpTypeInfer = true;
@@ -1199,7 +1235,7 @@ public class TestTypes extends BaseParserTest {
 		IAstModule mod = doFrontend(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
-				"        next:List<U,T>^;\n" +
+				"        next:List<U,T>^;\n" +		// note: not the same type as parent!
 				"};\n" + 
 				"\n" +
 				"listNextNext = [T,U] code (list:List<T,U>) { list.next.next };\n"+

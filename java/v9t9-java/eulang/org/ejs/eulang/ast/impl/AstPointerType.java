@@ -83,7 +83,7 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 	 */
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
-		if (existing == baseType)
+		if (existing == baseType) 
 			setBaseType((IAstType) another);
 		else
 			throw new IllegalArgumentException();
@@ -95,6 +95,7 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 	@Override
 	public void setBaseType(IAstType typeExpr) {
 		this.baseType = reparent(this.baseType, typeExpr);
+		setType(null);
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstArrayType#getBaseType()

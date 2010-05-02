@@ -17,14 +17,14 @@ public class LLPointerType extends BaseLLType {
 
 	
 	public LLPointerType(String name, int bits, LLType baseType) {
-		super(name, bits, baseType.getLLVMType() + "*", BasicType.POINTER, baseType);
+		super(name, bits, baseType != null ? baseType.getLLVMType() + "*" : "void*", BasicType.POINTER, baseType);
 		
 	}
 	public LLPointerType(int bits, LLType baseType) {
-		super(baseType.getName() != null ? baseType.getName() + "$p" : 
-			fixLLVMName(baseType.getLLVMName()) + "$p", 
+		super(baseType != null ? (baseType.getName() != null ? baseType.getName() + "$p" : 
+			fixLLVMName(baseType.getLLVMName()) + "$p") : "$p", 
 				bits, 
-				(baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*", 
+				baseType != null ? ((baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*") : "void*", 
 				BasicType.POINTER, baseType);
 		
 	}
@@ -42,6 +42,8 @@ public class LLPointerType extends BaseLLType {
 	 */
 	@Override
 	public LLType substitute(TypeEngine typeEngine, LLType fromType, LLType toType) {
+		if (fromType == null || fromType.equals(this))
+			return toType;
 		if (subType == null)
 			return this;
 		LLType newSub = subType.substitute(typeEngine, fromType, toType);
@@ -72,5 +74,13 @@ public class LLPointerType extends BaseLLType {
 	@Override
 	public boolean isCompatibleWith(LLType target) {
 		return super.isCompatibleWith(target);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#updateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType[])
+	 */
+	@Override
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
+		return typeEngine.getPointerType(type[0]);
 	}
 }

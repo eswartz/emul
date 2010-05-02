@@ -167,5 +167,12 @@ public class LLUpType extends BaseLLType {
 		}
 		return this;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#updateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType[])
+	 */
+	@Override
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
+		return new LLUpType(symbol, level, type[0]);
+	}
 }

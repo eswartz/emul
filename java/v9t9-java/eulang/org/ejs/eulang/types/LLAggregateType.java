@@ -12,9 +12,4 @@ import org.ejs.eulang.TypeEngine;
 public interface LLAggregateType extends LLType {
 	/** tell if the type is a stub (e.g. code block or data block with no known content) */
 	boolean isAbstract();
-	int getCount();
-	LLType[] getTypes();
-
-	LLType getType(int idx);
-	LLAggregateType updateTypes(TypeEngine typeEngine, LLType[] type);
 }

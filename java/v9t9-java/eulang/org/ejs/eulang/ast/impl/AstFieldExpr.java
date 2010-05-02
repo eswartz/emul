@@ -13,6 +13,8 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLInstanceType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
@@ -168,6 +170,9 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		if (canInferTypeFrom(expr)) {
 			LLType exprType = getDataType();
 			
+			if (exprType == null || exprType instanceof LLInstanceType)
+				return false;
+			
 			if (!(exprType instanceof LLDataType)) {
 				throw new TypeException(expr, "can only field-dereference data");
 			}
@@ -188,7 +193,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 					LLType[] fieldTypes = dataType.getTypes();
 					fieldTypes[fieldIdx] = getType();
 					
-					dataType = dataType.updateTypes(typeEngine, fieldTypes);
+					dataType = (LLDataType) dataType.updateTypes(typeEngine, fieldTypes);
 					changed |= updateType(expr, dataType);
 				}
 			}
@@ -215,6 +220,9 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			if (upType != null)
 				exprType = upType.getType();
 				*/
+		}
+		if (exprType instanceof LLSymbolType) {
+			return ((LLSymbolType) exprType).getSymbol().getType();
 		}
 		return exprType;
 	}

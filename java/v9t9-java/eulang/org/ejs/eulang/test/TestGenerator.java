@@ -13,18 +13,21 @@ import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
+import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
+import org.ejs.eulang.ast.IAstInstanceExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstNilLitExpr;
+import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -542,6 +545,26 @@ public class TestGenerator extends BaseParserTest {
     }
 
 
+    @Test
+	public void testGenericTypes2() throws Exception {
+		dumpTreeize = true;
+		IAstModule mod = treeize(
+				"List = [T, U] data {\n" +
+				"        node:T;\n"+
+				"        next:List<U, T>^;\n" +
+				"};\n" + 
+				"\n" +
+				"");
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().get("List").getDefinition();
+		IAstDataType data = (IAstDataType) def.getMatchingBodyExpr(null);
+		assertEquals(2, data.getFields().nodeCount());
+		IAstAllocStmt alloc = (IAstAllocStmt) data.getFields().list().get(1);
+		assertTrue(alloc.getTypeExpr() instanceof IAstPointerType);
+		IAstPointerType ptr = (IAstPointerType) alloc.getTypeExpr();
+		assertTrue(ptr.getBaseType() instanceof IAstInstanceExpr);
+		IAstInstanceExpr instance = (IAstInstanceExpr) ptr.getBaseType();
+		assertTrue(instance.getSymbolExpr().getSymbol().getName().equals("List"));
+    }
 }
 
 

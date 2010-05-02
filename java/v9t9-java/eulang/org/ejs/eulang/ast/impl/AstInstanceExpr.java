@@ -4,11 +4,19 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstInstanceExpr;
+import org.ejs.eulang.ast.IAstNamedType;
+import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLInstanceType;
+import org.ejs.eulang.types.LLSymbolType;
+import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -104,6 +112,44 @@ public class AstInstanceExpr extends AstTypedExpr implements IAstInstanceExpr {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		return false;
+
+		boolean changed = false;
+
+		if (getType() == null) {
+			LLType[] types = new LLType[exprs.nodeCount()];
+			int idx = 0;
+			for (IAstTypedExpr expr : exprs.list()) {
+				types[idx++] = expr.getType();
+			}
+			LLInstanceType type = typeEngine.getInstanceType(symbolExpr.getSymbol(), types);
+			
+			this.setType(type);
+			changed = true;
+			//changed |= updateType(this, type);
+			
+			/*
+			IAstTypedExpr body = symbolExpr.getBody();
+			if (body != null) {
+				try {
+					ISymbol instance = symbolExpr.getDefinition().getInstanceForParameters(typeEngine, body.getType(), exprs.list());
+					
+					AstSymbolExpr newSymExpr = new AstSymbolExpr(instance);
+					newSymExpr.setSourceRef(getSourceRef());
+					IAstNamedType namedType = new AstNamedType(instance.getType(), newSymExpr);
+					namedType.setSourceRef(getSourceRef());
+					getParent().replaceChild(this, namedType);
+					return true;
+					
+					
+					//LLSymbolType type = new LLSymbolType(instance);
+					//setType(type);
+					//changed = true;
+				} catch (ASTException e) {
+					throw new TypeException(e.getNode(), e.getMessage());
+				}
+			}
+			*/
+		}
+		return changed;
 	}
 }

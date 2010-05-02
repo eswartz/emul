@@ -26,6 +26,16 @@ public interface LLType {
 	/** Get the subtype, if any */
 	LLType getSubType();
 	
+	
+	int getCount();
+	LLType[] getTypes();
+
+	LLType getType(int idx);
+
+	LLType updateTypes(TypeEngine typeEngine, LLType[] type);
+
+	
+	
 	int getBits();
 	
 	BasicType getBasicType();

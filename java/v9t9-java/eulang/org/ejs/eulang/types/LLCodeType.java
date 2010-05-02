@@ -124,7 +124,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 		return argTypes[idx - 1];
 	}
 	
-	public LLCodeType updateTypes(TypeEngine typeEngine, LLType[] type) {
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
 		LLType retType = type[0];
 		LLType[] argTypes = new LLType[type.length - 1];
 		System.arraycopy(type, 1, argTypes, 0, argTypes.length);

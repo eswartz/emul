@@ -25,6 +25,7 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -127,9 +128,21 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 */
 	@Override
 	public IAstNode[] getDumpChildren() {
-		Collection<IAstTypedExpr> exprs = new ArrayList<IAstTypedExpr>(bodyList.list()); 
-		exprs.addAll(getConcreteInstances());
-		return (IAstTypedExpr[]) exprs.toArray(new IAstTypedExpr[exprs.size()]);
+		Collection<IAstNode> exprs = new ArrayList<IAstNode>(bodyList.list()); 
+		for (IAstTypedExpr expr : bodyList.list()) {
+			if (expr.getType() != null && expr.getType().isComplete() && !expr.getType().isGeneric())
+				exprs.add(expr);
+		}
+		for (List<IAstTypedExpr> alist : instanceIdMap.values()) {
+			exprs.addAll(alist);
+		}
+		for (List<ISymbol> alist : instanceTypeMap.values()) {
+			for (ISymbol sym : alist) {
+				exprs.add(new AstName(sym.getUniqueName()));
+				exprs.add(sym.getDefinition());
+			}
+		}
+		return (IAstNode[]) exprs.toArray(new IAstNode[exprs.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -272,7 +285,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 			}
 			list.addAll(entry.getValue());
 		}
-		return Collections.unmodifiableMap(instanceTypeMap);
+		return Collections.unmodifiableMap(map);
 	}
 	
 	protected boolean typeMatchesExactly(LLType orig, LLType target) {
@@ -360,11 +373,8 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		return null;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstDefineStmt#registerInstance(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstTypedExpr)
-	 */
-	@Override
-	public ISymbol registerInstance(IAstTypedExpr body, IAstTypedExpr expansion) {
+
+	public ISymbol registerInstance(IAstTypedExpr body, IAstTypedExpr expansion, ISymbol expansionSym) {
 		//if (type == null || !type.isGeneric()) {
 		//	throw new IllegalArgumentException();
 		//}
@@ -372,40 +382,23 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		List<ISymbol> list = instanceTypeMap.get(body.getType());
 		if (list == null) {
 			list = new ArrayList<ISymbol>();
-			//instanceIdMap.put(xbody.getId(), list);
 			instanceTypeMap.put(body.getType(), list);
-			//if (list == null)
-			//	throw new IllegalArgumentException("type should match one inferred previously");
 		}
 		
-		/*
-		if (list == null) {
-			list = instanceIdMap.get(body.getId());
-			if (list == null) {
-				
-				//for (IAstTypedExpr body : bodyList.list()) {
-				//	if (typeMatchesExactly(body.getType(), type)) {
-						list = new ArrayList<IAstTypedExpr>();
-						instanceIdMap.put(body.getId(), list);
-						//instanceTypeMap.put(body.getType(), list);
-				//		break;
-				//	}
-				//}
-				if (list == null)
-					throw new IllegalArgumentException("type should match one inferred previously");
-			}
-		}
-		if (!list.contains(expansion)) {
-			list.add(expansion);
-			//expansion.setParent(this);
-		}
-		*/
-		
-		ISymbol expansionSym = getSymbol().getScope().addTemporary(getSymbol().getName());
-		expansionSym.setDefinition(expansion);
 		list.add(expansionSym);
 		
 		return expansionSym;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDefineStmt#registerInstance(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstTypedExpr)
+	 */
+	@Override
+	public ISymbol registerInstance(IAstTypedExpr body, IAstTypedExpr expansion) {
+		ISymbol expansionSym = getSymbol().getScope().addTemporary(getSymbol().getName());
+		expansionSym.setDefinition(expansion);
+
+		return registerInstance(body, expansion, expansionSym);
 	}
 	
 	/* (non-Javadoc)
@@ -452,7 +445,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 			throw new IllegalArgumentException();
 		
 		ISymbol[] varSymbols = getGenericVariables();
-		if (instanceParams.size() != getScope().getSymbols().length) 
+		if (instanceParams.size() > getScope().getSymbols().length) 
 			throw new ASTException(instanceParams.isEmpty() ? this : instanceParams.get(0), 
 					"must specify the same number of replacements as variables: " + instanceParams.size() 
 					+ " != " + varSymbols.length);
@@ -468,45 +461,50 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		ISymbol instanceSymbol = typeMap.get(instanceParams);
 		if (instanceSymbol == null) {
 			ExpandAST expand = new ExpandAST(typeEngine, true);
-			IAstTypedExpr instance = expand.expandInstance(body, varSymbols, instanceParams);
+			instanceSymbol = expand.expandInstance(this, symbol, body, varSymbols, instanceParams);
+			
 			//typeMap.put(instanceParams, instance);
 			
-			instanceSymbol = updateInstanceBody(typeEngine, body, instance);
 			typeMap.put(instanceParams, instanceSymbol);
-			registerInstance(body, instance);
+			IAstTypedExpr instance = (IAstTypedExpr) instanceSymbol.getDefinition();
+			registerInstance(body, instance, instanceSymbol);
 			
 			String paramStr = "";
 			for (IAstTypedExpr expr : instanceParams)
 				paramStr += DumpAST.dumpString(expr)+ " ";
-			System.out.println("After expanding generic of " + symbol + " for type " + bodyType + " with " + paramStr + " as  " + instanceSymbol + ":");
+			System.out.println("After expanding generic of " + symbol + " for type " + bodyType + " with " + paramStr + "as " + instanceSymbol + ":");
 			DumpAST dump = new DumpAST(System.out);
 			instance.accept(dump);
 			
 		}
 		return instanceSymbol;
 	}
-	private ISymbol updateInstanceBody(TypeEngine typeEngine,
-			IAstTypedExpr body, IAstTypedExpr instance) {
-		ISymbol instanceSymbol;
-		
-		ISymbol symbol = getSymbol();
-		instanceSymbol = symbol.getScope().addTemporary(symbol.getName());
-		instanceSymbol.setType(instance.getType());
-		
-		// replace self-refs to symbol
-		ISymbol theSymbol = symbol;
-		if (instance instanceof IAstDataType) {
-			theSymbol = ((IAstDataType) ((IAstDataType) body).getScope().getOwner()).getTypeName();
-			((IAstDataType) instance).setTypeName(instanceSymbol);
-		}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDefineStmt#getInstanceMap(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public Map<LLInstanceType, ISymbol> getInstanceMap(TypeEngine typeEngine, LLType bodyType) {
+		Map<LLInstanceType, ISymbol> map = new HashMap<LLInstanceType, ISymbol>();
 
-		AstNode.replaceSymbols(typeEngine, instance, theSymbol.getScope(), Collections.singletonMap(theSymbol.getNumber(), instanceSymbol));
-		AstNode.replaceTypesInTree(typeEngine, instance, Collections.singletonMap(body.getType(), instance.getType()));
-		instanceSymbol.setDefinition(instance);
-		
-		if (instance instanceof IAstDataType) {
-			((IAstDataType) instance).setTypeName(instanceSymbol);
+		if (!isGeneric())
+			throw new IllegalArgumentException();
+		IAstTypedExpr body = getMatchingBodyExpr(bodyType);
+		if (body == null)
+			throw new IllegalArgumentException();
+
+
+		Map<List<IAstTypedExpr>, ISymbol> typeMap = instanceMap.get(bodyType);
+		if (typeMap != null) {
+			for (Map.Entry<List<IAstTypedExpr>, ISymbol> entry : typeMap.entrySet()) {
+				LLType[] types = new LLType[entry.getKey().size()];
+				for (int i = 0; i < types.length; i++) {
+					types[i] = entry.getKey().get(i).getType();
+				}
+				LLInstanceType instanceType = typeEngine.getInstanceType(getSymbol(), types);
+				map.put(instanceType, entry.getValue());
+			}
 		}
-		return instanceSymbol;
+		return map;
 	}
 }

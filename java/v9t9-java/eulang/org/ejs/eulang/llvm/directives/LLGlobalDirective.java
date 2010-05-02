@@ -15,20 +15,18 @@ import org.ejs.eulang.types.LLType;
 public class LLGlobalDirective extends LLBaseDirective {
 
 	private final ISymbol symbol;
-	private final LLVisibility visibility;
 	private final LLLinkage linkage;
 	private final LLType type;
 
 	/**
 	 * @param symbol
+	 * @param type
 	 * @param default1
 	 * @param internal
-	 * @param type
 	 */
-	public LLGlobalDirective(ISymbol symbol, LLVisibility visibility,
-			LLLinkage linkage, LLType type) {
+	public LLGlobalDirective(ISymbol symbol, LLLinkage linkage,
+			LLType type) {
 		this.symbol = symbol;
-		this.visibility = visibility;
 		this.linkage = linkage;
 		this.type = type;
 	}
@@ -44,9 +42,8 @@ public class LLGlobalDirective extends LLBaseDirective {
 		sb.append(symName).append(" = ");
 		if (linkage != null)
 			sb.append(linkage.getLinkageName()).append(' ');	
-		if (visibility != null)
-			sb.append(visibility.getVisibility()).append(' ');	
-		sb.append(type).append(' ');
+		sb.append("global ");
+		sb.append(type.getLLVMName()).append(' ');
 		
 		// TODO: actual value or code
 		sb.append("zeroinitializer");

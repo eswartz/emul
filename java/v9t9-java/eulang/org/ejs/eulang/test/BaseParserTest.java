@@ -397,8 +397,8 @@ public class BaseParserTest {
 	
 	
 
-	protected IAstNode doExpand(IAstNode node, boolean expectErrors) {
-		ExpandAST expand = new ExpandAST(typeEngine, false);
+	protected IAstNode doExpand(IAstNode node, boolean instances, boolean expectErrors) {
+		ExpandAST expand = new ExpandAST(typeEngine, instances);
 		
 		List<Message> messages = new ArrayList<Message>();
 		boolean hadAnyErrors = false;
@@ -436,6 +436,9 @@ public class BaseParserTest {
 			fail("no messages generated");
 		return node;
 	}
+	protected IAstNode doExpand(IAstNode node, boolean expectErrors) {
+		return doExpand(node, false, expectErrors);
+	}
 
 	protected IAstNode doExpand(IAstNode node) {
 		return doExpand(node, false);
@@ -449,6 +452,8 @@ public class BaseParserTest {
 	protected IAstModule doFrontend(String text) throws Exception {
 		IAstModule mod = treeize(text);
     	sanityTest(mod);
+    	
+    	//mod = (IAstModule) doExpand(mod, true, false);
     	
     	TypeInference infer = new TypeInference(typeEngine);
     	infer.infer(mod, false);

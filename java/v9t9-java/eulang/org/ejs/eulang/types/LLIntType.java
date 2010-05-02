@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * @author ejs
  *
@@ -44,5 +46,13 @@ public class LLIntType extends BaseLLType {
 			return false;
 		LLIntType other = (LLIntType) obj;
 		return other.basicType == basicType && other.bits == bits;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#updateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType[])
+	 */
+	@Override
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
+		return this;
 	}
 }

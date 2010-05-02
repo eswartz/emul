@@ -183,8 +183,6 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		
 		IAstDefineStmt stmt = getDefinition();
 		if (stmt != null && origSymbol == null) {
-			LLType newType = getType();
-			
 			IAstTypedExpr selectedBody = null;
 			/*
 			//boolean isUnique = false;

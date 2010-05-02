@@ -4,11 +4,13 @@
 package org.ejs.eulang.types;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
@@ -123,99 +125,13 @@ public class TypeInference {
 		if (node instanceof IAstDefineStmt) {
 			IAstDefineStmt defineStmt = (IAstDefineStmt) node;
 			
-			for (IAstTypedExpr bodyExpr : defineStmt.bodyList()) {
-				// don't infer on macros
-				if (bodyExpr instanceof IAstCodeExpr && ((IAstCodeExpr) bodyExpr).isMacro())
-					continue;
-				
-
-				// first, see if the top-level type can be inferred, for the case
-				// of overloaded functions calling each other.
-				if (bodyExpr.getType() == null) {
-					try {
-						changed |= bodyExpr.inferTypeFromChildren(typeEngine);
-					} catch (TypeException e) {
-						messages.add(new Error(bodyExpr, e.getMessage()));
-					}
-				}
-				
-				
-				if (defineStmt.isGeneric()) {
-					boolean defineChanged = false;
-					
-					// see if we can still infer some types
-					if (!genericizedSet.contains(bodyExpr.getId())) {
-						
-
-						TypeInference inference = subInferenceJob();
-						defineChanged = inference.infer(bodyExpr, false);
-						
-						
-						boolean madeGeneric = false;
-						madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
-						genericizedSet.add(bodyExpr.getId());
-						if (madeGeneric) {
-							defineChanged = true;
-							
-							//inference = subInferenceJob();
-							//defineChanged |= inference.infer(bodyExpr, false);
-							
-							if (DUMP) {
-								System.out.println("After genericizing define:");
-								DumpAST dump = new DumpAST(System.out);
-								bodyExpr.accept(dump);
-							}
-							
-						}
-					}
-					
-					//bodyExpr.setType(origType);
-					changed |= defineChanged;
-					continue;
-				}
-				
-				// Try to determine if the body is generic or not
-				LLType origDefineType = bodyExpr.getType();
-				if (origDefineType == null || !origDefineType.isComplete() ) {
-					
-					boolean defineChanged = false;
-					//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
-					
-					TypeInference inference = subInferenceJob();
-					
-					defineChanged = inference.infer(bodyExpr, false);
-					
-					
-					if (DUMP) {
-						System.out.println("Inferring on define " + defineStmt.getSymbol() + " for body " + bodyExpr.getType() + ":");
-						DumpAST dump = new DumpAST(System.out);
-						bodyExpr.accept(dump);
-					}
-					
-					/*
-					if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
-						// a standalone define should have a known type based on its references,
-						// so this must be a generic
-						if (defineChanged && bodyExpr.getType() != null && bodyExpr.getType().isGeneric())
-							return false;
-						boolean madeGeneric = genericize(bodyExpr);
-						if (madeGeneric) {
-							return true;
-						}
-					}
-					*/
-					messages.addAll(inference.getMessages());
-					
-					changed |= inferUp(bodyExpr);
-					//bodyExpr.setType(origType);
-				} else if (origDefineType.isGeneric()) {
-					
-				} else {
-					// infer in case expansions introduced more unknown nodes inside
-					//LLType origType = bodyExpr.getType();
-					changed |= inferUp(bodyExpr);
-					//bodyExpr.setType(origType);
-				}
+			Set<Integer> visited = new TreeSet<Integer>();
+			changed = inferDefinitions(defineStmt, visited);
+			
+			Collection<IAstTypedExpr> concreteInstances = defineStmt.getConcreteInstances();
+			while (visited.size() < concreteInstances.size()) {
+				changed = inferDefinitionInstances(defineStmt, concreteInstances, visited);
+				concreteInstances = defineStmt.getConcreteInstances();
 			}
 			
 			changed |= inferUp(defineStmt.getSymbolExpr());
@@ -247,18 +163,175 @@ public class TypeInference {
 				changed |= instantiate((IAstSymbolExpr) typed);
 			}
 			
-			if (/*changed || typed.getType() == null || !typed.getType().isComplete()*/ true) {
-				try {
-					changed |= typed.inferTypeFromChildren(typeEngine);
-				} catch (TypeException e) {
-					messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
-				}
+			try {
+				changed |= typed.inferTypeFromChildren(typeEngine);
+			} catch (TypeException e) {
+				messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
 			}
 		}		
 
 		return changed;
 	}
 
+	private boolean inferDefinitions(IAstDefineStmt defineStmt, Set<Integer> visited) {
+		
+		boolean changed = false;
+		
+		for (IAstTypedExpr bodyExpr : defineStmt.bodyList()) {
+			visited.add(bodyExpr.getId());
+			
+			// don't infer on macros
+			if (bodyExpr instanceof IAstCodeExpr && ((IAstCodeExpr) bodyExpr).isMacro())
+				continue;
+			
+
+			// first, see if the top-level type can be inferred, for the case
+			// of overloaded functions calling each other.
+			if (bodyExpr.getType() == null) {
+				try {
+					changed |= bodyExpr.inferTypeFromChildren(typeEngine);
+				} catch (TypeException e) {
+					messages.add(new Error(bodyExpr, e.getMessage()));
+				}
+			}
+			
+			
+			if (defineStmt.isGeneric()) {
+				boolean defineChanged = false;
+				
+				// see if we can still infer some types
+				if (!genericizedSet.contains(bodyExpr.getId())) {
+					
+
+					TypeInference inference = subInferenceJob();
+					defineChanged = inference.infer(bodyExpr, false);
+					
+					
+					boolean madeGeneric = false;
+					madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
+					genericizedSet.add(bodyExpr.getId());
+					if (madeGeneric) {
+						defineChanged = true;
+						
+						//inference = subInferenceJob();
+						//defineChanged |= inference.infer(bodyExpr, false);
+						
+						if (DUMP) {
+							System.out.println("After genericizing define:");
+							DumpAST dump = new DumpAST(System.out);
+							bodyExpr.accept(dump);
+						}
+						
+					}
+				}
+				
+				//bodyExpr.setType(origType);
+				changed |= defineChanged;
+				continue;
+			}
+			
+			// Try to determine if the body is generic or not
+			LLType origDefineType = bodyExpr.getType();
+			if (origDefineType == null || !origDefineType.isComplete() ) {
+				
+				boolean defineChanged = false;
+				//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
+				
+				TypeInference inference = subInferenceJob();
+				
+				defineChanged = inference.infer(bodyExpr, false);
+				
+				
+				if (DUMP) {
+					System.out.println("Inferring on define " + defineStmt.getSymbol() + " for body " + bodyExpr.getType() + ":");
+					DumpAST dump = new DumpAST(System.out);
+					bodyExpr.accept(dump);
+				}
+				
+				/*
+				if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
+					// a standalone define should have a known type based on its references,
+					// so this must be a generic
+					if (defineChanged && bodyExpr.getType() != null && bodyExpr.getType().isGeneric())
+						return false;
+					boolean madeGeneric = genericize(bodyExpr);
+					if (madeGeneric) {
+						return true;
+					}
+				}
+				*/
+				messages.addAll(inference.getMessages());
+				
+				changed |= inferUp(bodyExpr);
+				//bodyExpr.setType(origType);
+			} else if (origDefineType.isGeneric()) {
+				
+			} else {
+				// infer in case expansions introduced more unknown nodes inside
+				//LLType origType = bodyExpr.getType();
+				changed |= inferUp(bodyExpr);
+				//bodyExpr.setType(origType);
+			}
+		}
+		return changed;
+	}
+
+	private boolean inferDefinitionInstances(IAstDefineStmt defineStmt,
+			Collection<IAstTypedExpr> concreteInstances, Set<Integer> visited) {
+		
+		boolean changed = false;
+		
+		for (IAstTypedExpr bodyExpr : concreteInstances) {
+			if (visited.contains(bodyExpr.getId())) 
+				continue;
+			
+			visited.add(bodyExpr.getId());
+			
+			// Try to determine if the body is generic or not
+			LLType origDefineType = bodyExpr.getType();
+			if (origDefineType == null || !origDefineType.isComplete() ) {
+				
+				boolean defineChanged = false;
+				//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
+				
+				TypeInference inference = subInferenceJob();
+				
+				defineChanged = inference.infer(bodyExpr, false);
+				
+				
+				if (DUMP) {
+					System.out.println("Inferring on define " + defineStmt.getSymbol() + " for body " + bodyExpr.getType() + ":");
+					DumpAST dump = new DumpAST(System.out);
+					bodyExpr.accept(dump);
+				}
+				
+				/*
+				if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
+					// a standalone define should have a known type based on its references,
+					// so this must be a generic
+					if (defineChanged && bodyExpr.getType() != null && bodyExpr.getType().isGeneric())
+						return false;
+					boolean madeGeneric = genericize(bodyExpr);
+					if (madeGeneric) {
+						return true;
+					}
+				}
+				*/
+				messages.addAll(inference.getMessages());
+				
+				changed |= inferUp(bodyExpr);
+				//bodyExpr.setType(origType);
+			} else if (origDefineType.isGeneric()) {
+				
+			} else {
+				// infer in case expansions introduced more unknown nodes inside
+				//LLType origType = bodyExpr.getType();
+				changed |= inferUp(bodyExpr);
+				//bodyExpr.setType(origType);
+			}
+		}
+		return changed;
+	}
 
 	/**
 	 * Ensure the given generic define has a generic expression where all the top-level types are

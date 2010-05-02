@@ -14,7 +14,7 @@ import org.ejs.eulang.TypeEngine;
 public class LLGenericType extends BaseLLType {
 	
 	public LLGenericType(String name) {
-		super(name, 0, null, BasicType.GENERIC, null);
+		super(name, 0, name, BasicType.GENERIC, null);
 	}
 	
 	/* (non-Javadoc)
@@ -59,5 +59,13 @@ public class LLGenericType extends BaseLLType {
 		if (fromType instanceof LLGenericType && ((LLGenericType) fromType).getName() == null)
 			return toType;
 		return super.substitute(typeEngine, fromType, toType);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#updateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType[])
+	 */
+	@Override
+	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
+		return this;
 	}
 }

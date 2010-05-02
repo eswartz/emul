@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLType;
 
 
@@ -113,5 +114,7 @@ public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	 */
 	Collection<IAstTypedExpr> getConcreteInstances();
 
+	Map<LLInstanceType, ISymbol> getInstanceMap(TypeEngine typeEngine, LLType bodyType);
 
+	
 }

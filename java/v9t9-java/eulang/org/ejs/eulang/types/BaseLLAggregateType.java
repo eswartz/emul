@@ -18,8 +18,6 @@ import org.ejs.eulang.symbols.ISymbol;
  */
 public abstract class BaseLLAggregateType extends BaseLLType implements LLAggregateType {
 
-	protected final LLType[] NO_TYPES = new LLType[0];
-	
 	private final boolean isAbstract;
 
 	/**
@@ -196,6 +194,16 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		if (target instanceof LLUpType) {
 			IAstType realType = ((LLUpType) target).getRealType();
 			if (realType != null && realType.getType().equals(this))
+				return true;
+		}
+		if (target instanceof LLInstanceType) {
+			LLInstanceType instanceType = ((LLInstanceType) target);
+			if (instanceType.getSymbol().getName().equals(getName()))
+				return true;
+		}
+		if (target instanceof LLSymbolType) {
+			LLSymbolType symbolType = ((LLSymbolType) target);
+			if (symbolType.getName().equals(getName()))
 				return true;
 		}
 		if (!(target instanceof LLAggregateType)) 

@@ -3,15 +3,19 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.AstVisitor;
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstInstanceExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
@@ -355,6 +359,9 @@ abstract public class AstNode implements IAstNode {
 						assert(false);
 				}
 			}
+		} else if (copyRoot instanceof IAstInstanceExpr) {
+			// don't change names of generic types to specific types
+			return changed;
 		}
 		IAstNode[] copyKids = copyRoot.getChildren();
 		for (int i = 0; i < copyKids.length; i++) {
@@ -447,10 +454,20 @@ abstract public class AstNode implements IAstNode {
 		boolean changed = false;
 		for (Map.Entry<LLType, LLType> entry : typeReplacementMap.entrySet()) {
 			// then, replace known type
-			changed |= replaceTypes(typeEngine, body, entry.getKey(), entry.getValue());
+			LLType from = entry.getKey();
+			LLType to = entry.getValue();
+			changed |= replaceTypes(typeEngine, body, from, to);
 		}
-		for (IAstNode kid : body.getChildren()) {
-			replaceTypesInTree(typeEngine, kid, typeReplacementMap);
+		if (body instanceof IAstDefineStmt) {
+			Collection<IAstTypedExpr> concreteInstances = ((IAstDefineStmt) body).getConcreteInstances();
+			for (IAstTypedExpr expr : concreteInstances) {
+				replaceTypesInTree(typeEngine, expr, typeReplacementMap);
+			}
+		}
+		else {
+			for (IAstNode kid : body.getChildren()) {
+				replaceTypesInTree(typeEngine, kid, typeReplacementMap);
+			}
 		}
 		return changed;
 	}

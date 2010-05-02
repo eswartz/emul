@@ -29,6 +29,7 @@ import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLFloatType;
 import org.ejs.eulang.types.LLInstanceField;
+import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLPointerType;
@@ -36,6 +37,7 @@ import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLStaticField;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.LLVoidType;
 
 /**
@@ -61,8 +63,8 @@ public class TypeEngine {
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 	private Set<LLType> types = new HashSet<LLType>();
-	private Map<LLType, LLPointerType> ptrTypeMap = new HashMap<LLType, LLPointerType>();
-	private Map<LLType, LLRefType> refTypeMap = new HashMap<LLType, LLRefType>();
+	private Map<String, LLPointerType> ptrTypeMap = new HashMap<String, LLPointerType>();
+	private Map<String, LLRefType> refTypeMap = new HashMap<String, LLRefType>();
 	private Map<Tuple, LLArrayType> arrayTypeMap = new HashMap<Tuple, LLArrayType>();
 	private Map<Integer, LLIntType> intMap = new HashMap<Integer, LLIntType>();
 	private Map<String, LLTupleType> tupleTypeMap = new HashMap<String, LLTupleType>();
@@ -497,22 +499,24 @@ public class TypeEngine {
 	}
 
 	public LLPointerType getPointerType(LLType type) {
-		LLPointerType ptrType = ptrTypeMap.get(type);
+		String key = getUniqueTypeName(type);
+		LLPointerType ptrType = ptrTypeMap.get(key);
 		//if (type instanceof LLUpType) {
 		//	ptrType = ptrType;
 		//}
 		if (ptrType == null) {
 			ptrType = new LLPointerType(ptrBits, type);
-			ptrTypeMap.put(type, ptrType);
+			ptrTypeMap.put(key, ptrType);
 		}
 		return ptrType;
 	}
 
 	public LLRefType getRefType(LLType type) {
-		LLRefType refType = refTypeMap.get(type);
+		String key = getUniqueTypeName(type);
+		LLRefType refType = refTypeMap.get(key);
 		if (refType == null) {
 			refType = new LLRefType(type, ptrBits, INT.getBits());
-			refTypeMap.put(type, refType);
+			refTypeMap.put(key, refType);
 		}
 		return refType;
 	}
@@ -586,7 +590,7 @@ public class TypeEngine {
 	}
 
 	private String getUniqueTypeName(LLType type) {
-		return type != null ? (type.isGeneric() ? type.getName() : type.getLLVMType()) : "<u>";
+		return type != null ? (type.getLLVMType() + (type instanceof LLUpType ? "^" : "") + (type.isGeneric() ? "<g>" : "")) : "<u>";
 	}
 	
 	public LLDataType getDataType(ISymbol symbol, List<LLType> fieldTypes) {
@@ -637,6 +641,16 @@ public class TypeEngine {
 			sb.append(getUniqueTypeName(type));
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	public LLInstanceType getInstanceType(ISymbol symbol, LLType[] types) {
+		LLInstanceType instanceType;
+		instanceType = new LLInstanceType(symbol, types);
+		return instanceType;
 	}
 
 }

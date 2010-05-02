@@ -14,6 +14,8 @@ import org.ejs.eulang.symbols.ISymbol;
  *
  */
 public abstract class BaseLLType implements LLType {
+	protected final LLType[] NO_TYPES = new LLType[0];
+	
 
 	protected final int bits;
 
@@ -222,4 +224,36 @@ public abstract class BaseLLType implements LLType {
 			Map<Integer, ISymbol> symbolMap) {
 		return this;
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#getCount()
+	 */
+	@Override
+	public int getCount() {
+		return 1;
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#getType(int)
+	 */
+	@Override
+	public LLType getType(int idx) {
+		return subType;
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#getTypes()
+	 */
+	@Override
+	public LLType[] getTypes() {
+		return new LLType[] { subType };
+	}
+
+
+
 }
