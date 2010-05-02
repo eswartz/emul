@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -289,7 +290,7 @@ public class LLVMGenerator {
 			generateGlobalExpr(stmt, expr);
 		}
 		// TODO
-		for (List<ISymbol> instanceList : stmt.bodyToInstanceMap().values()) {
+		for (Collection<ISymbol> instanceList : stmt.bodyToInstanceMap().values()) {
 			for (ISymbol instance : instanceList)
 				generateGlobalExpr(stmt, (IAstTypedExpr) instance.getDefinition());
 		}

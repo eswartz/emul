@@ -1228,8 +1228,66 @@ public class TestTypes extends BaseParserTest {
 		doGenerate(mod);
 	}
 	
+	@Test
+	public void testGenericFuncs1a() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"neg = [T] code (x:T) { -x };\n"+
+				"testGenericFuncs1a = code (x:Int=>Int) {\n"+
+				"  neg(x);\n"+
+				"};\n"+
+				"");
+		sanityTest(mod);
+		doGenerate(mod);
+	}
+	@Test
+	public void testGenericFuncs1b() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"neg = [T] code (x:T) { -x };\n"+
+				"testGenericFuncs1b = code (x:Int=>Int) {\n"+
+				"  neg<Int>(x);\n"+
+				"};\n"+
+				"");
+		sanityTest(mod);
+		doGenerate(mod);
+	}
 	@Test 
 	public void testGenericTypes3a() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List<T>^;\n" +	
+				"};\n" + 
+				"listNextNext = [T] code (list:List<T>) { list.next.next };\n"+
+				"intList = code (x:Int=>Int) {\n"+
+				"  a,b:List<Int>;\n"+
+				"  a.node=x;\n"+
+				"  a.next=&b;\n"+
+				"  b.next=&a;\n"+
+				"  listNextNext(a);\n"+
+				"};\n"+
+	
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+	@Test 
+	public void testGenericTypes3b() throws Exception {
 		dumpTypeInfer = true;
 		dumpTreeize = true;
 		IAstModule mod = doFrontend(
@@ -1261,9 +1319,8 @@ public class TestTypes extends BaseParserTest {
 		
 		doGenerate(mod);
 	}
-	// we need global defs for these variables... these are bieng replicated endlessly and not matching
 	@Test 
-	public void testGenericTypes3() throws Exception {
+	public void testGenericTypes3c() throws Exception {
 		dumpTypeInfer = true;
 		dumpTreeize = true;
 		IAstModule mod = doFrontend(

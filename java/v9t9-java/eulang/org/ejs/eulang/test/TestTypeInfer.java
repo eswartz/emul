@@ -6,6 +6,8 @@ package org.ejs.eulang.test;
 
 import static junit.framework.Assert.*;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import junit.framework.AssertionFailedError;
@@ -916,14 +918,17 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstTypedExpr addBody = addDef.getMatchingBodyExpr(null);
     	assertNotNull(addBody);
-    	List<ISymbol> exps = addDef.bodyToInstanceMap().get(addBody.getType());
+    	Collection<ISymbol> exps = addDef.bodyToInstanceMap().get(addBody.getType());
     	assertNotNull(exps);
     	assertEquals(2, exps.size());
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT }), exps.get(0).getType());
-    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT }), exps.get(1).getType());
+    	Iterator<ISymbol> iter = exps.iterator();
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT }), iter.next().getType());
+    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT }), iter.next().getType());
 
     	// make sure the casting worked properly
-    	exps.get(1).getDefinition().validateType(typeEngine);
+    	iter = exps.iterator();
+    	iter.next();
+    	iter.next().getDefinition().validateType(typeEngine);
     }
     @Test
     public void testGenerics1() throws Exception {

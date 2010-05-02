@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,8 +42,8 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	private IAstNodeList<IAstTypedExpr> bodyList;
 	//private Map<LLType, IAstTypedExpr> typedBodyMap = new HashMap<LLType, IAstTypedExpr>();
 	
-	private Map<Integer, List<IAstTypedExpr>> instanceIdMap = new HashMap<Integer, List<IAstTypedExpr>>();
-	private Map<LLType, List<ISymbol>> instanceTypeMap = new HashMap<LLType, List<ISymbol>>();
+	private Map<Integer, List<IAstTypedExpr>> instanceIdMap = new LinkedHashMap<Integer, List<IAstTypedExpr>>();
+	private Map<LLType, List<ISymbol>> instanceTypeMap = new LinkedHashMap<LLType, List<ISymbol>>();
 	private boolean generic;
 	private Map<LLType, Map<List<IAstTypedExpr>, ISymbol>> instanceMap = 
 		new HashMap<LLType, Map<List<IAstTypedExpr>, ISymbol>>();
@@ -271,21 +272,21 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.IAstDefineStmt#instanceMap()
 	 */
 	@Override
-	public Map<LLType, List<ISymbol>> bodyToInstanceMap() {
-		Map<LLType, List<ISymbol>> map = new HashMap<LLType, List<ISymbol>>();
+	public Map<LLType, Collection<ISymbol>> bodyToInstanceMap() {
+		Map<LLType, Set<ISymbol>> map = new HashMap<LLType, Set<ISymbol>>();
 		for (Map.Entry<LLType, Map<List<IAstTypedExpr>, ISymbol>> entry : instanceMap.entrySet()) {
-			List<ISymbol> list = new ArrayList<ISymbol>(entry.getValue().values());
+			Set<ISymbol> list = new HashSet<ISymbol>(entry.getValue().values());
 			map.put(entry.getKey(), list);
 		}
 		for (Map.Entry<LLType, List<ISymbol>> entry : instanceTypeMap.entrySet()) {
-			List<ISymbol> list = map.get(entry.getKey());
+			Set<ISymbol> list = map.get(entry.getKey());
 			if (list == null) {
-				list = new ArrayList<ISymbol>();
+				list = new HashSet<ISymbol>();
 				map.put(entry.getKey(), list);
 			}
 			list.addAll(entry.getValue());
 		}
-		return Collections.unmodifiableMap(map);
+		return Collections.<LLType, Collection<ISymbol>>unmodifiableMap(map);
 	}
 	
 	protected boolean typeMatchesExactly(LLType orig, LLType target) {
@@ -462,8 +463,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		if (instanceSymbol == null) {
 			ExpandAST expand = new ExpandAST(typeEngine, true);
 			instanceSymbol = expand.expandInstance(this, symbol, body, varSymbols, instanceParams);
-			
-			//typeMap.put(instanceParams, instance);
 			
 			typeMap.put(instanceParams, instanceSymbol);
 			IAstTypedExpr instance = (IAstTypedExpr) instanceSymbol.getDefinition();

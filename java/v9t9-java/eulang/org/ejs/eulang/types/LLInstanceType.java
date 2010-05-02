@@ -38,6 +38,7 @@ public class LLInstanceType extends BaseLLAggregateType {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + symbol.hashCode();
 		result = prime * result + Arrays.hashCode(types);
 		return result;
 	}
@@ -54,6 +55,8 @@ public class LLInstanceType extends BaseLLAggregateType {
 			return false;
 		}
 		if (!super.equals(obj))
+			return false;
+		if (!symbol.equals(((LLInstanceType) obj).getSymbol()))
 			return false;
 		return true;
 	}

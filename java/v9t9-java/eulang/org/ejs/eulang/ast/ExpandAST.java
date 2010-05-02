@@ -237,10 +237,15 @@ public class ExpandAST {
 			throw new ASTException(instanceExpr.getSymbolExpr(), "can only instantiate definitions");
 		}
 		
-		IAstTypedExpr body = defineStmt.getMatchingBodyExpr(instanceExpr.getType());
-		if (body == null) 
-			throw new ASTException(instanceExpr.getSymbolExpr(), 
-					"could not find matching body for instance");
+		IAstTypedExpr body;
+		body = defineStmt.getMatchingBodyExpr(instanceExpr.getType());
+		if (body == null)  {
+			body = defineStmt.getMatchingBodyExpr(instanceExpr.getSymbolExpr().getType());
+			if (body == null) {
+				throw new ASTException(instanceExpr.getSymbolExpr(), 
+						"could not find matching body for instance");
+			}
+		}
 		
 		ISymbol instanceSymbol = defineStmt.getInstanceForParameters(
 				typeEngine, body.getType(), instanceExpr.getExprs().list());
@@ -248,6 +253,7 @@ public class ExpandAST {
 		IAstTypedExpr expansion = (IAstTypedExpr) instanceSymbol.getDefinition();
 		
 		IAstSymbolExpr symbolExpr = new AstSymbolExpr(instanceSymbol);
+		//symbolExpr.setOriginalSymbol(defineStmt.getSymbol());
 		symbolExpr.setSourceRef(instanceExpr.getSourceRef());
 		
 		IAstTypedExpr ret = null;
@@ -268,7 +274,7 @@ public class ExpandAST {
 		
 		// TODO: some type-holding nodes like IAstPointerType reset their own type
 		// when we change the child; but for this case we know what is wanted
-		if (parent instanceof IAstTypedNode)
+		if (parent instanceof IAstTypedNode && !(parent instanceof IAstFuncCallExpr))
 			((IAstTypedNode) parent).setType(instanceSymbol.getType());
 		
 		// recursively expand
@@ -292,14 +298,15 @@ public class ExpandAST {
 		LLType[] types = new LLType[varSymbols.length];
 		int index = 0;
 		for (IAstTypedExpr expr : instanceExprs) {
-			ISymbol vsymbol = varSymbols[index];
-			typeReplacementMap.put(vsymbol.getType(), expr.getType());
-			
-			types[index] = expr.getType();
-			
-			// replace contents
-			replaceInTree(instance, vsymbol, expr);
-			
+			if (true||!(expr.getType() instanceof LLGenericType)) {
+				ISymbol vsymbol = varSymbols[index];
+				typeReplacementMap.put(vsymbol.getType(), expr.getType());
+				
+				types[index] = expr.getType();
+				
+				// replace contents
+				replaceInTree(instance, vsymbol, expr);
+			}			
 			index++;
 		}
 		
@@ -318,6 +325,11 @@ public class ExpandAST {
 			//theSymbol = ((IAstDataType) ((IAstDataType) body).getScope().getOwner()).getTypeName();
 			((IAstDataType) instance).setTypeName(instanceSymbol);
 		}
+		
+		System.out.println("before expanding types/symbols:");
+		DumpAST dump = new DumpAST(System.out);
+		instance.accept(dump);
+		
 		
 		AstNode.replaceSymbols(typeEngine, instance, theSymbol.getScope(), Collections.singletonMap(theSymbol.getNumber(), instanceSymbol));
 		AstNode.replaceTypesInTree(typeEngine, instance, Collections.singletonMap(body.getType(), instance.getType()));
@@ -341,7 +353,7 @@ public class ExpandAST {
 //		}
 //		
 		System.out.println("before replacing LLSymbolType:");
-		DumpAST dump = new DumpAST(System.out);
+		dump = new DumpAST(System.out);
 		instance.accept(dump);
 		
 		AstNode.replaceTypesInTree(typeEngine, instance, typeReplacementMap);

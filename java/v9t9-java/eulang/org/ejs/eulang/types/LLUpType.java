@@ -106,6 +106,7 @@ public class LLUpType extends BaseLLType {
 		return symbol;
 	}
 	
+	/*
 	public IAstType getRealType() {
 		IAstNode node = getSymbol().getDefinition();
 		if (node instanceof IAstDefineStmt) {
@@ -114,15 +115,18 @@ public class LLUpType extends BaseLLType {
 				return (IAstType) match;
 		}
 		return null;
-	}
+	}*/
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLType#matchesExactly(org.ejs.eulang.types.LLType)
 	 */
 	@Override
 	public boolean matchesExactly(LLType target) {
-		IAstType realType = getRealType();
-		if (realType != null && realType.getType().equals(target))
+		//IAstType realType = getRealType();
+		//if (realType != null && realType.getType().equals(target))
+		//	return true;
+		LLType realType = target.getSubType();
+		if (realType != null && realType.equals(this))
 			return true;
 		return super.matchesExactly(target);
 	}

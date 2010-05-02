@@ -282,8 +282,10 @@ public class TypeInference {
 		boolean changed = false;
 		
 		for (IAstTypedExpr bodyExpr : concreteInstances) {
-			if (visited.contains(bodyExpr.getId())) 
+			if (visited.contains(bodyExpr.getId())) {
+				System.out.println("skipping " +bodyExpr.getId());
 				continue;
+			}
 			
 			visited.add(bodyExpr.getId());
 			
@@ -363,9 +365,10 @@ public class TypeInference {
 				// the AST <-> Symbol <-> LLType stanza...
 				IAstName genericName = new AstName(name);
 				ISymbol genericSym = scope.add(genericName);
+				//genericSym.setTemporary(true);
 				genericSym.setDefinition(genericName);
 				
-				types[i] = new LLGenericType(name);
+				types[i] = new LLGenericType(genericSym);
 				genericSym.setType(types[i]);
 				
 			}
@@ -438,7 +441,7 @@ public class TypeInference {
 
 		try {
 			instantiationSet.add(site);
-			if (site.getType() != null && (expandedType.isGeneric() || body.getType().isGeneric())) {
+			if (site.getType() != null && (!expandedType.isGeneric() && body.getType().isGeneric())) {
 				return doInstantiateGeneric(site, define, expandedType, body);
 			} else {
 				return false;
@@ -463,7 +466,7 @@ public class TypeInference {
 			expansion = (IAstTypedExpr) body.copy(null);
 			expansion = (IAstTypedExpr) expander.expand(messages, expansion);
 			expansion.uniquifyIds();
-			replaceGenericTypes(expansion, expandedType);
+			replaceGenericTypes(define, expansion, expandedType);
 			
 			if (DUMP) {
 				System.out.println("Initial expansion:");
@@ -499,13 +502,19 @@ public class TypeInference {
 	 * This is not the same as expanding an instance since (1) we replace only
 	 * types, not arbitrary ASTS, and (2) we don't know the names of the generic
 	 * type variables, but we already have generic types to replace. 
+	 * @param define 
 	 * @param expansion
 	 * @param expandedType
 	 */
-	private void replaceGenericTypes(IAstTypedExpr expansion, LLType expandedType) {
+	private void replaceGenericTypes(IAstDefineStmt define, IAstTypedExpr expansion, LLType expandedType) {
 		Map<LLType, LLType> expansionMap = new HashMap<LLType, LLType>();
 		getTypeInstanceMap(expansion.getType(), expandedType, expansionMap);
 		
+		if (define.isGeneric()) {
+			int index = 0;
+			for (ISymbol symbol : define.getGenericVariables()) {
+			}
+		}
 		AstNode.replaceTypesInTree(typeEngine, expansion, expansionMap);
 	}
 

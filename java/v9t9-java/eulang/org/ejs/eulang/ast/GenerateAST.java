@@ -1964,7 +1964,8 @@ public class GenerateAST {
 				for (Tree kid : iter(tree.getChild(1))) {
 					IAstSymbolExpr typeVar = createSymbol(kid);
 					typeVars.add(typeVar);
-					typeVar.setType(new LLGenericType(typeVar.getSymbol().getName()));
+					//typeVar.getSymbol().setTemporary(true);
+					typeVar.setType(new LLGenericType(typeVar.getSymbol()));
 					typeVar.getSymbol().setDefinition(typeVar);
 				}
 				idx++;

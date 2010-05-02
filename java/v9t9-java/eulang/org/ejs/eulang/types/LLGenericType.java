@@ -4,6 +4,7 @@
 package org.ejs.eulang.types;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * This is a placeholder type that fills in leaf nodes of types in generic invocation
@@ -13,16 +14,48 @@ import org.ejs.eulang.TypeEngine;
  */
 public class LLGenericType extends BaseLLType {
 	
-	public LLGenericType(String name) {
-		super(name, 0, name, BasicType.GENERIC, null);
+	private final ISymbol symbol;
+
+	public LLGenericType(ISymbol symbol) {
+		super(symbol != null ? symbol.getUniqueName() : null, 0, 
+				symbol != null ? symbol.getUniqueName() : null, 
+						BasicType.GENERIC, null);
+		this.symbol = symbol;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.BaseLLType#toString()
-	 */
+	
 	@Override
-	public String toString() {
-		return name;
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LLGenericType other = (LLGenericType) obj;
+		if (symbol == null) {
+			if (other.symbol != null)
+				return false;
+		} else if (!symbol.equals(other.symbol))
+			return false;
+		return true;
+	}
+
+
+	/**
+	 * @return the symbol
+	 */
+	public ISymbol getSymbol() {
+		return symbol;
 	}
 
 	/* (non-Javadoc)

@@ -103,8 +103,8 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		
 		if (!isGeneric() && otherType.isGeneric())
 			return true;
-		if (isGeneric() && !otherType.isGeneric())
-			return false;
+		//if (isGeneric() && !otherType.isGeneric())
+		//	return false;
 		if (isComplete() && !otherType.isComplete())
 			return true;
 		
@@ -192,8 +192,11 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 			return false;
 
 		if (target instanceof LLUpType) {
-			IAstType realType = ((LLUpType) target).getRealType();
-			if (realType != null && realType.getType().equals(this))
+			//IAstType realType = ((LLUpType) target).getRealType();
+			//if (realType != null && realType.getType().equals(this))
+			//	return true;
+			LLType realType = target.getSubType();
+			if (realType != null && realType.equals(this))
 				return true;
 		}
 		if (target instanceof LLInstanceType) {

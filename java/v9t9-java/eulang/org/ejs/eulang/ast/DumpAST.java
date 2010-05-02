@@ -88,8 +88,11 @@ public class DumpAST extends AstVisitor {
 	private void printIndent(IAstNode node) {
 		if (showSourceRef) {
 			String src = "";
+			//src = (node != null ? node.getId() : "") + "";
+			//while (src.length() < 5)
+			//	src += " ";
 			if (node != null && node.getSourceRef() != null) {
-				src = node.getSourceRef().getLine() + ":" + node.getSourceRef().getColumn();
+				src += node.getSourceRef().getLine() + ":" + node.getSourceRef().getColumn();
 			}
 			str.print(src);
 			int left = 16 - src.length();

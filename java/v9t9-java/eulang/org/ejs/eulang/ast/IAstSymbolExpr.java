@@ -47,4 +47,9 @@ public interface IAstSymbolExpr extends IAstTypedExpr {
 	 * @return expanded and type-specific body of the define, or <code>null</code> if not in a define
 	 */
 	IAstTypedExpr getInstance();
+
+	/**
+	 * @param symbol
+	 */
+	void setOriginalSymbol(ISymbol symbol);
 }

@@ -111,6 +111,10 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     @Override
     public void setSymbol(ISymbol symbol) {
     	Check.checkArg(symbol);
+    	
+    	//if (origSymbol == null)
+    	//	origSymbol = this.symbol;
+    	
     	this.symbol = symbol;
     	setType(symbol.getType());
     }
@@ -384,5 +388,12 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		}
 		return body;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#setOriginalSymbol(org.ejs.eulang.symbols.ISymbol)
+	 */
+	@Override
+	public void setOriginalSymbol(ISymbol symbol) {
+		this.origSymbol = symbol;
+	}
 }

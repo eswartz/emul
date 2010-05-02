@@ -83,7 +83,7 @@ public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	 * @return read-only map of body types to the instances recorded for them.  If the body type
 	 * is not generic, there is only one entry in the list, and it cannot be modified.
 	 */
-	Map<LLType, List<ISymbol>> bodyToInstanceMap();
+	Map<LLType, Collection<ISymbol>> bodyToInstanceMap();
 	
 	/**
 	 * Get the symbol for a instantiated version of the definition used for this type.

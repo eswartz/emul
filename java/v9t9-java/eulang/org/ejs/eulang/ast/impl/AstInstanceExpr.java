@@ -23,7 +23,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstInstanceExpr extends AstTypedExpr implements IAstInstanceExpr {
+public class AstInstanceExpr extends AstType implements IAstInstanceExpr {
 
 	
 	private IAstNodeList<IAstTypedExpr> exprs;
@@ -34,9 +34,45 @@ public class AstInstanceExpr extends AstTypedExpr implements IAstInstanceExpr {
 	 * @param scope
 	 */
 	public AstInstanceExpr(IAstSymbolExpr idExpr, IAstNodeList<IAstTypedExpr> typeVariables) {
+		super(null);
 		setSymbolExpr(idExpr);
 		setExprs(typeVariables);
 	}
+
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((exprs == null) ? 0 : exprs.hashCode());
+		result = prime * result
+				+ ((symbolExpr == null) ? 0 : symbolExpr.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AstInstanceExpr other = (AstInstanceExpr) obj;
+		if (exprs == null) {
+			if (other.exprs != null)
+				return false;
+		} else if (!exprs.equals(other.exprs))
+			return false;
+		if (symbolExpr == null) {
+			if (other.symbolExpr != null)
+				return false;
+		} else if (!symbolExpr.equals(other.symbolExpr))
+			return false;
+		return true;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstTypedNode#toString()
