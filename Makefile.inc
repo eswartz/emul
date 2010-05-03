@@ -3,7 +3,7 @@ CONF = Debug
 OPSYS = $(shell uname -o 2>/dev/null || uname -s)
 MACHINE = $(shell uname -m)
 
-SRCDIRS = . system/$(OPSYS) machine/$(MACHINE) framework services main
+SRCDIRS = . system/$(OPSYS) machine/$(MACHINE) system framework services main
 BINDIR  = obj/$(OPSYS)/$(MACHINE)/$(CONF)
 
 ifeq ($(CONF),Debug)
