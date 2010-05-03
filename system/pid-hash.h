@@ -26,7 +26,7 @@ static size_t pid_hash_link_offset = 0;
 #define ctx2pidlink(ctx) ((LINK *)((char *)(ctx) + pid_hash_link_offset))
 #define pidlink2ctx(lnk) ((Context *)((char *)(lnk) - pid_hash_link_offset))
 
-void link_context(Context * ctx) {
+static void link_context(Context * ctx) {
     LINK * h = context_pid_hash + CONTEXT_PID_HASH(EXT(ctx)->pid);
 
     assert(ctx->mem != NULL);
@@ -66,7 +66,7 @@ static void pid_hash_context_exited(Context * ctx, void * args) {
 static void ini_context_pid_hash(void) {
     int i;
     static ContextEventListener l = { NULL, pid_hash_context_exited };
-    for (i = 0; i < CONTEXT_PID_HASH_SIZE; i++) list_init(&context_pid_hash[i]);
+    for (i = 0; i < CONTEXT_PID_HASH_SIZE; i++) list_init(context_pid_hash + i);
     pid_hash_link_offset = context_extension(sizeof(LINK));
     add_context_event_listener(&l, NULL);
 }

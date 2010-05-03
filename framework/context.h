@@ -185,11 +185,10 @@ extern void send_context_started_event(Context * ctx);
 extern void send_context_exited_event(Context * ctx);
 
 /*
- * Functions that are used to create a Context.
- * They are not supposed to be called by clients.
+ * Create a Context object.
+ * It is not supposed to be called by clients.
  */
 extern Context * create_context(const char * id, size_t regs_size);
-extern void link_context(Context * ctx);
 
 extern void ini_contexts(void);
 extern void init_contexts_sys_dep(void);
