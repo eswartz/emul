@@ -380,6 +380,18 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     dio_gFormDataAddr = NULL;
     dio_gFormDataSize = 0;
     dio_gFormData = 0;
+    if (Attr == AT_stmt_list && sSection->relocate) {
+        U4_T Size = 0;
+        switch (Form) {
+        case FORM_DATA2     : Size = 2; break;
+        case FORM_DATA4     : Size = 4; break;
+        case FORM_DATA8     : Size = 8; break;
+        default: str_exception(ERR_INV_DWARF, "invalid FORM of DW_AT_stmt_list");
+        }
+        dio_gFormData = dio_ReadAddressX(&dio_gFormSection, Size);
+        dio_gFormDataSize = Size;
+        return;
+    }
     switch (Form) {
     case FORM_ADDR      : dio_ReadFormAddr(); break;
     case FORM_REF       : dio_ReadFormRef(); break;
