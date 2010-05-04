@@ -41,6 +41,8 @@ typedef struct StackFrameCache StackFrameCache;
 typedef struct PeerCache PeerCache;
 typedef struct RegisterProps RegisterProps;
 
+#define CTX_ID_HASH_SIZE 101
+
 struct ContextCache {
     char id[256];
     char parent_id[256];
@@ -49,6 +51,7 @@ struct ContextCache {
     char * file;
     Context * ctx;
     PeerCache * peer;
+    LINK id_hash_link;
 
     /* Memory Map */
     AbstractCache mmap_cache;
@@ -127,6 +130,7 @@ struct StackFrameCache {
 struct PeerCache {
     LINK link_all;
     LINK context_list;
+    LINK context_id_hash[CTX_ID_HASH_SIZE];
     Channel * host;
     Channel * target;
     ForwardingInputStream fwd;
@@ -142,6 +146,7 @@ struct PeerCache {
 #define peers2peer(A)    ((PeerCache *)((char *)(A) - offsetof(PeerCache, link_all)))
 #define ctx2mem(A)       ((MemoryCache *)((char *)(A) - offsetof(MemoryCache, link_ctx)))
 #define ctx2stk(A)       ((StackFrameCache *)((char *)(A) - offsetof(StackFrameCache, link_ctx)))
+#define idhashl2ctx(A)   ((ContextCache *)((char *)(A) - offsetof(ContextCache, id_hash_link)))
 
 static LINK peers;
 
@@ -163,16 +168,26 @@ static size_t context_extension_offset = 0;
 
 static const char RUN_CONTROL[] = "RunControl";
 
+static unsigned hash_ctx_id(const char * id) {
+    int i;
+    unsigned h = 0;
+    for (i = 0; id[i]; i++) h += id[i];
+    return h % CTX_ID_HASH_SIZE;
+}
+
 static ContextCache * find_context_cache(PeerCache * p, const char * id) {
-    LINK * l;
-    for (l = p->context_list.next; l != &p->context_list; l = l->next) {
-        Context * c = ctxl2ctxp(l);
-        if (strcmp(c->id, id) == 0) return *EXT(c);
+    LINK * h = p->context_id_hash + hash_ctx_id(id);
+    LINK * l = h->next;
+    while (l != h) {
+        ContextCache * c = idhashl2ctx(l);
+        if (strcmp(c->id, id) == 0) return c;
+        l = l->next;
     }
     return NULL;
 }
 
 static void set_context_links(ContextCache * c) {
+    assert(c->peer->rc_done);
     if (c->parent_id[0]) {
         ContextCache * h = find_context_cache(c->peer, c->parent_id);
         if (h != NULL) {
@@ -198,19 +213,21 @@ static void set_context_links(ContextCache * c) {
             (c->ctx->creator = h->ctx)->ref_count++;
         }
         else {
-            trace(LOG_ALWAYS, "Invalid creater ID: %s", c->creator_id);
+            trace(LOG_ALWAYS, "Invalid creator ID: %s", c->creator_id);
         }
     }
 }
 
 static void add_context_cache(PeerCache * p, ContextCache * c) {
+    LINK * h = p->context_id_hash + hash_ctx_id(c->id);
     c->peer = p;
     c->ctx = create_context(c->id, 0);
     c->ctx->ref_count = 1;
     *EXT(c->ctx) = c;
     list_init(&c->mem_cache_list);
     list_init(&c->stk_cache_list);
-    list_add_first(&c->ctx->ctxl, &c->peer->context_list);
+    list_add_first(&c->id_hash_link, h);
+    list_add_first(&c->ctx->ctxl, &p->context_list);
     if (p->rc_done) set_context_links(c);
     send_context_created_event(c->ctx);
 }
@@ -261,6 +278,9 @@ static void free_context_cache(ContextCache * c) {
         }
         loc_free(c->reg_props);
     }
+    if (!list_is_empty(&c->id_hash_link)) {
+        list_remove(&c->id_hash_link);
+    }
     if (!list_is_empty(&c->mem_cache_list)) {
         LINK * l = c->mem_cache_list.next;
         while (l != &c->mem_cache_list) {
@@ -282,18 +302,17 @@ static void free_context_cache(ContextCache * c) {
 
 static void on_context_suspended(ContextCache * c) {
     LINK * l;
-    Context * ctx = c->ctx;
-    ContextCache * p = NULL;
 
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
-    p = *EXT(ctx);
-
-    l = p->mem_cache_list.next;
-    while (l != &p->mem_cache_list) {
-        MemoryCache * m = ctx2mem(p->mem_cache_list.next);
-        l = l->next;
-        if (!m->pending) free_memory_cache(m);
+    if (c->peer->rc_done) {
+        ContextCache * p = *EXT(c->ctx->mem);
+        l = p->mem_cache_list.next;
+        while (l != &p->mem_cache_list) {
+            MemoryCache * m = ctx2mem(p->mem_cache_list.next);
+            l = l->next;
+            if (!m->pending) free_memory_cache(m);
+        }
     }
+
     l = c->stk_cache_list.next;
     while (l != &c->stk_cache_list) {
         StackFrameCache * f = ctx2stk(c->stk_cache_list.next);
@@ -567,6 +586,7 @@ static void event_container_resumed(Channel * c, void * args) {
 }
 
 void create_context_proxy(Channel * host, Channel * target) {
+    int i;
     LINK * l;
     PeerCache * p;
     for (l = peers.next; l != &peers; l = l->next) {
@@ -578,6 +598,7 @@ void create_context_proxy(Channel * host, Channel * target) {
     p->target = target;
     p->fwd_inp = create_forwarding_input_stream(&p->fwd, &target->inp, &host->out);
     list_init(&p->context_list);
+    for (i = 0; i < CTX_ID_HASH_SIZE; i++) list_init(p->context_id_hash + i);
     list_add_first(&p->link_all, &peers);
     channel_lock(host);
     channel_lock(target);
@@ -616,8 +637,7 @@ static void set_rc_done(PeerCache * p) {
         LINK * l;
         p->rc_done = 1;
         for (l = p->context_list.next; l != &p->context_list; l = l->next) {
-            Context * c = ctxl2ctxp(l);
-            set_context_links(*EXT(c));
+            set_context_links(*EXT(ctxl2ctxp(l)));
         }
         cache_notify(&p->rc_cache);
     }
@@ -835,15 +855,18 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
 }
 
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
-    ContextCache * cache = NULL;
+    ContextCache * cache = *EXT(ctx);
     MemoryCache * m = NULL;
     Channel * c = NULL;
     LINK * l = NULL;
 
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    if (!cache->peer->rc_done) {
+        cache_wait(&cache->peer->rc_cache);
+        return -1;
+    }
 
+    ctx = ctx->mem;
     cache = *EXT(ctx);
-    c = cache->peer->target;
 
     for (l = cache->mem_cache_list.next; l != &cache->mem_cache_list; l = l->next) {
         m = ctx2mem(l);
@@ -855,6 +878,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         }
     }
 
+    c = cache->peer->target;
     m = (MemoryCache *)loc_alloc_zero(sizeof(MemoryCache));
     list_add_first(&m->link_ctx, &cache->mem_cache_list);
     m->ctx = cache;
@@ -906,6 +930,9 @@ static void read_memory_map_item(InputStream * inp, void * args) {
             loc_free(m->file_name);
             m->file_name = loc_strdup(fnm);
         }
+        else {
+            trace(LOG_ALWAYS, "No mapping for object file: %s", m->file_name);
+        }
         if (m->file_name == NULL || stat(m->file_name, &buf) < 0) {
             loc_free(m->file_name);
         }
@@ -921,7 +948,7 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
     ContextCache * cache = (ContextCache *)args;
     Trap trap;
 
-    assert(cache->ctx->parent == NULL);
+    assert(cache->ctx->mem == cache->ctx);
     assert(cache->mmap_regions == NULL);
     assert(cache->pending_get_mmap != NULL);
     if (set_trap(&trap)) {
@@ -949,8 +976,14 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
 }
 
 void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt) {
-    ContextCache * cache = NULL;
-    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    ContextCache * cache = *EXT(ctx);
+
+    if (!cache->peer->rc_done) {
+        cache_wait(&cache->peer->rc_cache);
+        return;
+    }
+
+    ctx = ctx->mem;
     cache = *EXT(ctx);
     assert(cache->ctx == ctx);
     if (cache->pending_get_mmap != NULL) cache_wait(&cache->mmap_cache);

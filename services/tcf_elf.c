@@ -41,7 +41,6 @@
 #  define USE_MMAP
 #endif
 
-#define MAX_CACHED_FILES 32
 #define MAX_FILE_AGE 60
 
 typedef struct FileINode {
@@ -95,7 +94,6 @@ static void elf_dispose(ELF_File * file) {
 }
 
 static void elf_cleanup_event(void * arg) {
-    int cnt = 0;
     ELF_File * prev = NULL;
     ELF_File * file = files;
 
@@ -103,7 +101,7 @@ static void elf_cleanup_event(void * arg) {
     elf_cleanup_posted = 0;
     while (file != NULL) {
         file->age++;
-        if (file->ref_cnt == 0 && (file->age > MAX_FILE_AGE || cnt >= MAX_CACHED_FILES)) {
+        if (file->ref_cnt == 0 && file->age > MAX_FILE_AGE) {
             ELF_File * next = file->next;
             elf_dispose(file);
             file = next;
@@ -113,10 +111,22 @@ static void elf_cleanup_event(void * arg) {
         else {
             prev = file;
             file = file->next;
-            cnt++;
         }
     }
-    if (cnt > 0) {
+
+    file = files;
+    while (file != NULL) {
+        struct stat st;
+        if (!file->mtime_changed && stat(file->name, &st) == 0) {
+            if (st.st_ino == 0) st.st_ino = file->ino;
+            if (file->dev == st.st_dev && file->ino == st.st_ino && file->mtime != st.st_mtime) {
+                file->mtime_changed = 1;
+            }
+        }
+        file = file->next;
+    }
+
+    if (files != NULL) {
         post_event_with_delay(elf_cleanup_event, NULL, 1000000);
         elf_cleanup_posted = 1;
     }
@@ -168,6 +178,27 @@ static ino_t elf_ino(char * fnm) {
     return elf_ino_cnt++;
 }
 
+static ELF_File * find_open_file(dev_t dev, ino_t ino, int64_t mtime) {
+    ELF_File * prev = NULL;
+    ELF_File * file = files;
+    while (file != NULL) {
+        if (file->dev == dev && file->ino == ino &&
+            (mtime ? file->mtime == mtime : !file->mtime_changed)) {
+            if (prev != NULL) {
+                prev->next = file->next;
+                file->next = files;
+                files = file;
+            }
+            file->ref_cnt++;
+            file->age = 0;
+            return file;
+        }
+        prev = file;
+        file = file->next;
+    }
+    return NULL;
+}
+
 void swap_bytes(void * buf, size_t size) {
     size_t i, j, n;
     char * p = (char *)buf;
@@ -182,8 +213,7 @@ void swap_bytes(void * buf, size_t size) {
 ELF_File * elf_open(char * file_name) {
     int error = 0;
     struct stat st;
-    ELF_File * prev = NULL;
-    ELF_File * file = files;
+    ELF_File * file = NULL;
     unsigned str_index = 0;
 
     if (!elf_cleanup_posted) {
@@ -194,20 +224,8 @@ ELF_File * elf_open(char * file_name) {
     if (stat(file_name, &st) < 0) return NULL;
     if (st.st_ino == 0 && (st.st_ino = elf_ino(file_name)) == 0) return NULL;
 
-    while (file != NULL) {
-        if (file->dev == st.st_dev && file->ino == st.st_ino && file->mtime == st.st_mtime) {
-            if (prev != NULL) {
-                prev->next = file->next;
-                file->next = files;
-                files = file;
-            }
-            file->ref_cnt++;
-            file->age = 0;
-            return file;
-        }
-        prev = file;
-        file = file->next;
-    }
+    file = find_open_file(st.st_dev, st.st_ino, st.st_mtime);
+    if (file != NULL) return file;
 
     trace(LOG_ELF, "Create ELF file cache %s", file_name);
 
@@ -539,11 +557,14 @@ static ELF_File * open_memory_region_file(unsigned n, int * error) {
     assert(n < elf_list_region_cnt);
     elf_list_files[n] = NULL;
     if (r->file_name == NULL) return NULL;
-    file = elf_open(r->file_name);
-    if (file == NULL && *error == 0) *error = errno;
-    if (file == NULL) return NULL;
-    if (r->dev != 0 && file->dev != r->dev) return NULL;
-    if (r->ino != 0 && file->ino != r->ino) return NULL;
+    file = find_open_file(r->dev, r->ino, 0);
+    if (file == NULL) {
+        file = elf_open(r->file_name);
+        if (file == NULL && *error == 0) *error = errno;
+        if (file == NULL) return NULL;
+        if (r->dev != 0 && file->dev != r->dev) return NULL;
+        if (r->ino != 0 && file->ino != r->ino) return NULL;
+    }
     return elf_list_files[n] = file;
 }
 
@@ -559,19 +580,18 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
     elf_list_addr0 = addr0;
     elf_list_addr1 = addr1;
     memory_map_get_regions(ctx, &elf_list_regions, &elf_list_region_cnt);
-    if (elf_list_region_cnt > 0) {
-        elf_list_files = (ELF_File **)loc_alloc_zero(sizeof(ELF_File *) * elf_list_region_cnt);
-        for (i = 0; i < elf_list_region_cnt; i++) {
-            MemoryRegion * r = elf_list_regions + i;
-            if (r->addr <= addr1 && r->addr + r->size >= addr0) {
-                if (r->file_name != NULL) {
-                    ELF_File * file = open_memory_region_file(i, &error);
-                    if (file != NULL) {
-                        assert(!file->listed);
-                        file->listed = 1;
-                        elf_list_pos = i + 1;
-                        return file;
-                    }
+    if (elf_list_region_cnt == 0) return NULL;
+    elf_list_files = (ELF_File **)loc_alloc_zero(sizeof(ELF_File *) * elf_list_region_cnt);
+    for (i = 0; i < elf_list_region_cnt; i++) {
+        MemoryRegion * r = elf_list_regions + i;
+        if (r->addr <= addr1 && r->addr + r->size >= addr0) {
+            if (r->file_name != NULL) {
+                ELF_File * file = open_memory_region_file(i, &error);
+                if (file != NULL) {
+                    assert(!file->listed);
+                    file->listed = 1;
+                    elf_list_pos = i + 1;
+                    return file;
                 }
             }
         }

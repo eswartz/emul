@@ -97,7 +97,7 @@ else
 fi
 if [ $Oflag = 0 ]
 then
-    CFLAGS2="/Od"
+    CFLAGS2="/Od /Oy-"
 else
     CFLAGS2="/O2 /Ob1"
 fi

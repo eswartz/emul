@@ -40,6 +40,7 @@ typedef struct MemoryMap {
     unsigned region_cnt;
     unsigned region_max;
     MemoryRegion * regions;
+    ErrorReport * error;
 } MemoryMap;
 
 typedef struct Listener {
@@ -98,6 +99,7 @@ static void event_context_disposed(Context * ctx, void * args) {
         loc_free(r->sect_name);
     }
     loc_free(map->regions);
+    release_error_report(map->error);
     memset(map, 0, sizeof(MemoryMap));
 }
 
@@ -191,8 +193,13 @@ static MemoryMap * get_memory_map(Context * ctx) {
     map = EXT(ctx);
     if (map->valid || ctx->exited) return map;
 
+    release_error_report(map->error);
+    map->error = NULL;
     snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", id2pid(ctx->id, NULL));
-    if ((file = fopen(maps_file_name, "r")) == NULL) return map;
+    if ((file = fopen(maps_file_name, "r")) == NULL) {
+        map->error = get_error_report(errno);
+        return map;
+    }
     for (;;) {
         unsigned long addr0 = 0;
         unsigned long addr1 = 0;
@@ -218,7 +225,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
         }
         file_name[i++] = 0;
 
-        if (inode != 0 && file_name[0]) {
+        if (inode != 0 && file_name[0] && file_name[0] != '[') {
             if (map->region_cnt >= map->region_max) {
                 map->region_max += 8;
                 map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
@@ -251,6 +258,7 @@ void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * c
     MemoryMap * map = get_memory_map(ctx);
     *regions = map->regions;
     *cnt = map->region_cnt;
+    set_error_report_errno(map->error);
 }
 
 void memory_map_event_module_loaded(Context * ctx) {
@@ -311,6 +319,8 @@ static void command_get(char * token, Channel * c) {
     ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_COMMAND;
     else map = get_memory_map(ctx);
+
+    if (!err) err = set_error_report_errno(map->error);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
