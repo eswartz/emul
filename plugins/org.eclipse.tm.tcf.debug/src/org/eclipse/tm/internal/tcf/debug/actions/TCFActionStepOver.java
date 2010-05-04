@@ -104,7 +104,12 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                 else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
             }
         }
-        if (getStackFrameIndex() > 0) {
+        int fno = getStackFrameIndex();
+        if (fno < 0) {
+            exit(null);
+            return;
+        }
+        if (fno > 0) {
             if (ctx.canResume(IRunControl.RM_STEP_OUT)) {
                 ctx.resume(IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
@@ -154,7 +159,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             bp = null;
         }
         if (step_cnt > 0) {
-            if (pc0 == null || pc1 == null || state.getData().suspend_pc == null) {
+            if (pc0 == null && pc1 == null || state.getData().suspend_pc == null) {
                 exit(null);
                 return;
             }
@@ -164,8 +169,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
                 if (ref == null || ref.area == null) {
-                    exit(null);
-                    return;
+                    // No line info for current PC, continue stepping
                 }
                 else if (isSameLine(source_ref.area, ref.area)) {
                     source_ref = ref;
