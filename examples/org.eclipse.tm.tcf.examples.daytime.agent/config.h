@@ -33,36 +33,11 @@
 #  define TARGET_UNIX       1
 #endif
 
-#define SERVICE_FileSystem      1
-#define SERVICE_SysMonitor      TARGET_UNIX
+#define SERVICE_FileSystem  1
+#define SERVICE_SysMonitor  TARGET_UNIX
 
 #define ENABLE_Trace        1
 #define ENABLE_Discovery    1
 
-
-#ifdef CONFIG_MAIN
-/*
- * This part of config.h contains services initialization code,
- * which is executed during agent startup.
- */
-
-#include "discovery.h"
-#include "filesystem.h"
-#include "sysmon.h"
-#include "diagnostics.h"
-#include "daytime.h"
-
-static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
-#if SERVICE_FileSystem
-    ini_file_system_service(proto);
-#endif
-#if SERVICE_SysMonitor
-    ini_sys_mon_service(proto);
-#endif
-    ini_diagnostics_service(proto);
-    ini_daytime_service(proto);
-}
-
-#endif /* CONFIG_MAIN */
 
 #endif /* D_config */
