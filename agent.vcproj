@@ -731,6 +731,26 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\main\server.c"
+				>
+			</File>
+			<File
+				RelativePath=".\main\server.h"
+				>
+			</File>
+			<File
+				RelativePath=".\main\services-ext.h"
+				>
+			</File>
+			<File
+				RelativePath=".\main\services.c"
+				>
+			</File>
+			<File
+				RelativePath=".\main\services.h"
+				>
+			</File>
+			<File
 				RelativePath=".\main\test.c"
 				>
 			</File>

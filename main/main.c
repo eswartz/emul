@@ -16,7 +16,6 @@
  * Agent main module.
  */
 
-#define CONFIG_MAIN
 #include "config.h"
 
 #include <stdio.h>
@@ -30,18 +29,12 @@
 #include "test.h"
 #include "cmdline.h"
 #include "channel_tcp.h"
+#include "discovery.h"
+#include "plugins.h"
+#include "services.h"
+#include "server.h"
 
 static const char * progname;
-static Protocol * proto;
-static ChannelServer * serv;
-static TCFBroadcastGroup * bcg;
-
-static void channel_new_connection(ChannelServer * serv, Channel * c) {
-    protocol_reference(proto);
-    c->protocol = proto;
-    channel_set_broadcast_group(c, bcg);
-    channel_start(c);
-}
 
 #if defined(_WRS_KERNEL)
 int tcf(void) {
@@ -54,7 +47,8 @@ int main(int argc, char ** argv) {
     int interactive = 0;
     const char * log_name = NULL;
     const char * url = "TCP:";
-    PeerServer * ps = NULL;
+    Protocol * proto = NULL;
+    TCFBroadcastGroup * bcg = NULL;
 
     ini_mdep();
     ini_trace();
@@ -153,19 +147,7 @@ int main(int argc, char ** argv) {
 #endif
 
     ini_services(proto, bcg);
-
-    ps = channel_peer_from_url(url);
-    if (ps == NULL) {
-        fprintf(stderr, "%s: invalid server URL (-s option value): %s\n", progname, url);
-        exit(1);
-    }
-    serv = channel_server(ps);
-    if (serv == NULL) {
-        fprintf(stderr, "%s: cannot create TCF server: %s\n", progname, errno_to_str(errno));
-        exit(1);
-    }
-    serv->new_conn = channel_new_connection;
-
+    ini_server(url, proto, bcg);
     discovery_start();
 
     /* Process events - must run on the initial thread since ptrace()

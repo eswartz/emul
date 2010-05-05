@@ -84,46 +84,4 @@
 #  endif
 #endif
 
-#ifdef CONFIG_MAIN
-/*
- * This part of config.h contains services initialization code,
- * which is executed during agent startup.
- */
-
-#include "discovery.h"
-#include "filesystem.h"
-#include "linenumbers.h"
-#include "diagnostics.h"
-#include "symbols.h"
-#include "pathmap.h"
-#include "tcf_elf.h"
-
-static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
-#if SERVICE_Locator
-    ini_locator_service(proto, bcg);
-#endif
-#if SERVICE_FileSystem
-    ini_file_system_service(proto);
-#endif
-#if SERVICE_LineNumbers
-    ini_line_numbers_service(proto);
-#endif
-#if SERVICE_Symbols
-    ini_symbols_service(proto);
-#endif
-#if SERVICE_PathMap
-    ini_path_map_service(proto);
-#endif
-#if ENABLE_DebugContext
-    ini_contexts();
-#endif
-#if ENABLE_ELF
-    ini_elf();
-#endif
-
-    ini_diagnostics_service(proto);
-}
-
-#endif /* CONFIG_MAIN */
-
 #endif /* D_config */
