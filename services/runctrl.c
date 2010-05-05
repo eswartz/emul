@@ -727,9 +727,11 @@ static void run_safe_events(void * arg) {
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
         stop_all_timer_cnt = 0;
-        for (l = context_root.next; l != &context_root; l = l->next) {
+        l = context_root.next;
+        while (l != &context_root) {
             int n = 0;
             Context * ctx = ctxl2ctxp(l);
+            l = l->next; /* Context can be deleted in the loop */
             EXT(ctx)->pending_safe_event = 0;
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
@@ -756,8 +758,10 @@ static void run_safe_events(void * arg) {
     mem = safe_event_list->mem;
     context_lock(mem);
 
-    for (l = context_root.next; l != &context_root; l = l->next) {
+    l = context_root.next;
+    while (l != &context_root) {
         Context * ctx = ctxl2ctxp(l);
+        l = l->next;
         EXT(ctx)->pending_safe_event = 0;
         if (ctx->mem != mem) continue;
         if (ctx->exited || ctx->exiting) continue;

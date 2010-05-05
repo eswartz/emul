@@ -126,6 +126,7 @@ void context_unlock(Context * ctx) {
     if (--(ctx->ref_count) == 0) {
         unsigned i;
 
+        assert(ctx->exited);
         assert(list_is_empty(&ctx->children));
         if (ctx->parent != NULL) {
             list_remove(&ctx->cldl);

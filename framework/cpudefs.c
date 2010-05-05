@@ -35,63 +35,7 @@
 
 /* Register definitions are provided by context proxy */
 
-#elif defined(_WRS_KERNEL)
-
-/* VxWork has its own register definitions and stack crawling function */
-
-static RegisterDefinition * regs_index = NULL;
-
-RegisterDefinition * get_reg_definitions(Context * ctx) {
-    if (regs_index == NULL) {
-        int cnt = 0;
-        REG_INDEX * r;
-        for (r = taskRegName; r->regName; r++) cnt++;
-        regs_index = loc_alloc_zero(sizeof(RegisterDefinition) * (cnt + 1));
-        cnt = 0;
-        for (r = taskRegName; r->regName; r++) {
-            regs_index[cnt].name = r->regName;
-            regs_index[cnt].offset = r->regOff;
-#if defined(_WRS_REG_INDEX_REGWIDTH) || (CPU_FAMILY == COLDFIRE)
-            regs_index[cnt].size = regWidth;
 #else
-            regs_index[cnt].size = 4;
-#endif
-            regs_index[cnt].dwarf_id = -1;
-            regs_index[cnt].eh_frame_id = -1;
-            cnt++;
-        }
-    }
-    return regs_index;
-}
-
-RegisterDefinition * get_PC_definition(Context * ctx) {
-    static RegisterDefinition * reg_def = NULL;
-    if (reg_def == NULL) {
-        RegisterDefinition * r;
-        for (r = get_reg_definitions(ctx); r->name != NULL; r++) {
-            if (r->offset == offsetof(REG_SET, reg_pc)) {
-                reg_def = r;
-                break;
-            }
-        }
-    }
-    return reg_def;
-}
-
-
-ContextAddress get_regs_PC(RegisterData * regs) {
-    return (ContextAddress)((REG_SET *)regs)->reg_pc;
-}
-
-void set_regs_PC(RegisterData * regs, ContextAddress pc) {
-    ((REG_SET *)regs)->reg_pc = (void *)pc;
-}
-
-size_t get_break_size(void) {
-    return sizeof(BREAK_INST);
-}
-
-#else /* _WRS_KERNEL */
 
 #include "cpudefs-mdep.h"
 
@@ -102,10 +46,6 @@ RegisterDefinition * get_reg_definitions(Context * ctx) {
 size_t get_break_size(void) {
     return sizeof(BREAK_INST);
 }
-
-#endif /* _WRS_KERNEL */
-
-#if !ENABLE_ContextProxy
 
 static RegisterDefinition * get_reg_by_dwarf_id(unsigned id) {
     static RegisterDefinition ** map = NULL;

@@ -930,16 +930,14 @@ static void read_memory_map_item(InputStream * inp, void * args) {
             loc_free(m->file_name);
             m->file_name = loc_strdup(fnm);
         }
-        else {
-            trace(LOG_ALWAYS, "No mapping for object file: %s", m->file_name);
-        }
-        if (m->file_name == NULL || stat(m->file_name, &buf) < 0) {
-            loc_free(m->file_name);
-        }
-        else {
+        if (m->file_name != NULL && stat(m->file_name, &buf) == 0) {
             m->dev = buf.st_dev;
             m->ino = buf.st_ino;
             mem_buf_pos++;
+        }
+        else if (m->file_name != NULL) {
+            trace(LOG_ALWAYS, "Object file not found: %s", m->file_name);
+            loc_free(m->file_name);
         }
     }
 }
@@ -1079,6 +1077,8 @@ static void validate_registers_cache(Channel * c, void * args, int error) {
                 unsigned i;
                 RegisterProps props;
                 memset(&props, 0, sizeof(props));
+                props.def.dwarf_id = -1;
+                props.def.eh_frame_id = -1;
                 error = read_errno(&c->inp);
                 json_read_struct(&c->inp, read_register_property, &props);
                 if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);

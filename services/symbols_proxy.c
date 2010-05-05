@@ -191,7 +191,7 @@ static SymbolsCache * get_symbols_cache(void) {
     SymbolsCache * syms = NULL;
     Channel * c = cache_channel();
     if (c == NULL) {
-        str_exception(ERR_SYM_NOT_FOUND, "Illegal cache access");
+        str_exception(ERR_OTHER, "get_symbols_cache(): illegal cache access");
     }
     for (l = root.next; l != &root; l = l->next) {
         SymbolsCache * x = root2syms(l);

@@ -56,7 +56,7 @@
 
 #if defined(_WRS_KERNEL)
 /* Bug in VxWorks: send() crashes if buffer is too large */
-#  define BUF_SIZE 0x400
+#  define BUF_SIZE 0x100
 #else
 #  define BUF_SIZE 0x1000
 #endif

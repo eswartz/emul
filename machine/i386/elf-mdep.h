@@ -61,6 +61,7 @@ static void elf_relocate(void) {
     }
     switch (reloc_type) {
     case R_386_NONE:
+        *destination = NULL;
         break;
     case R_386_32:
         if (data_size < 4) str_exception(ERR_INV_FORMAT, "Invalid relocation record");

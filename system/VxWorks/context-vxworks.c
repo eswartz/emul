@@ -137,6 +137,7 @@ static void event_attach_done(void * x) {
             link_context(parent_ctx);
             send_context_created_event(parent_ctx);
         }
+        assert(parent_ctx->ref_count > 0);
         ctx = create_context(pid2id(args->pid, EXT(parent_ctx)->pid), sizeof(REG_SET));
         EXT(ctx)->pid = args->pid;
         ctx->mem = parent_ctx;
@@ -329,6 +330,11 @@ int context_single_step(Context * ctx) {
 }
 
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    if (address < 0x100) {
+        /* TODO: need proper handling of Access Violation exception in VxWorks version of context_read_mem() */
+        errno = ERR_INV_ADDRESS;
+        return -1;
+    }
 #ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemRead((void *)address, buf, size);
 #else
@@ -338,6 +344,10 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
 }
 
 int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    if (address < 0x100) {
+        errno = ERR_INV_ADDRESS;
+        return -1;
+    }
 #ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemWrite((void *)address, buf, size);
 #else

@@ -16,6 +16,15 @@
  * This module provides CPU specific definitions for X86.
  */
 
+#ifdef _WRS_KERNEL
+#  if CPU_FAMILY == SIMNT || CPU_FAMILY == I80X86
+#    define __i386__ 1
+#    define eip pc
+#    undef BREAK_INST
+#  endif
+#  include "context-vxworks.h"
+#endif
+
 #if defined(__i386__) || defined(__x86_64__)
 
 #include "regset.h"
@@ -24,6 +33,9 @@
 
 RegisterDefinition regs_index[] = {
 #if defined(WIN32) && defined(__i386__)
+#   define REG_SP Esp
+#   define REG_BP Ebp
+#   define REG_IP Eip
     { "eax",    REG_OFFSET(Eax),      4,  0,  0,  0},
     { "ecx",    REG_OFFSET(Ecx),      4,  1,  1,  0},
     { "edx",    REG_OFFSET(Edx),      4,  2,  2,  0},
@@ -36,7 +48,11 @@ RegisterDefinition regs_index[] = {
     { "eflags", REG_OFFSET(EFlags),   4,  9,  9,  0},
     { "cs",     REG_OFFSET(SegCs),    4, -1, -1,  0},
     { "ss",     REG_OFFSET(SegSs),    4, -1, -1,  0},
+
 #elif defined(__APPLE__) && defined(__i386__)
+#   define REG_SP __esp
+#   define REG_BP __ebp
+#   define REG_IP __eip
     { "eax",    REG_OFFSET(__eax),    4,  0,  0,  0},
     { "ecx",    REG_OFFSET(__ecx),    4,  1,  1,  0},
     { "edx",    REG_OFFSET(__edx),    4,  2,  2,  0},
@@ -47,7 +63,11 @@ RegisterDefinition regs_index[] = {
     { "edi",    REG_OFFSET(__edi),    4,  7,  7,  0},
     { "eip",    REG_OFFSET(__eip),    4,  8,  8,  1},
     { "eflags", REG_OFFSET(__eflags), 4,  9,  9,  0},
+
 #elif defined(__APPLE__) && defined(__x86_64__)
+#   define REG_SP __rsp
+#   define REG_BP __rbp
+#   define REG_IP __rip
     { "rax",    REG_OFFSET(__rax),    8,  0,  0,  0},
     { "rdx",    REG_OFFSET(__rdx),    8,  1,  1,  0},
     { "rcx",    REG_OFFSET(__rcx),    8,  2,  2,  0},
@@ -66,7 +86,11 @@ RegisterDefinition regs_index[] = {
     { "r15",    REG_OFFSET(__r15),    8, 15, 15,  0},
     { "rip",    REG_OFFSET(__rip),    8, -1, -1,  1},
     { "eflags", REG_OFFSET(__rflags), 4, 49, -1,  0},
+
 #elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__i386__)
+#   define REG_SP r_esp
+#   define REG_BP r_ebp
+#   define REG_IP r_eip
     { "eax",    REG_OFFSET(r_eax),    4,  0,  0,  0},
     { "ecx",    REG_OFFSET(r_ecx),    4,  1,  1,  0},
     { "edx",    REG_OFFSET(r_edx),    4,  2,  2,  0},
@@ -77,7 +101,11 @@ RegisterDefinition regs_index[] = {
     { "edi",    REG_OFFSET(r_edi),    4,  7,  7,  0},
     { "eip",    REG_OFFSET(r_eip),    4,  8,  8,  1},
     { "eflags", REG_OFFSET(r_eflags), 4,  9,  9,  0},
+
 #elif defined(__x86_64__)
+#   define REG_SP rsp
+#   define REG_BP rbp
+#   define REG_IP rip
     { "rax",    REG_OFFSET(rax),      8,  0,  0,  0},
     { "rdx",    REG_OFFSET(rdx),      8,  1,  1,  0},
     { "rcx",    REG_OFFSET(rcx),      8,  2,  2,  0},
@@ -104,7 +132,11 @@ RegisterDefinition regs_index[] = {
     { "gs",     REG_OFFSET(gs),       4, 55, -1,  0},
     { "fs_base", REG_OFFSET(fs_base), 4, 58, -1,  0},
     { "gs_base", REG_OFFSET(gs_base), 4, 59, -1,  0},
-#elif defined(__i386__)
+
+#else
+#   define REG_SP esp
+#   define REG_BP ebp
+#   define REG_IP eip
     { "eax",    REG_OFFSET(eax),      4,  0,  0,  0},
     { "ecx",    REG_OFFSET(ecx),      4,  1,  1,  0},
     { "edx",    REG_OFFSET(edx),      4,  2,  2,  0},
@@ -115,51 +147,44 @@ RegisterDefinition regs_index[] = {
     { "edi",    REG_OFFSET(edi),      4,  7,  7,  0},
     { "eip",    REG_OFFSET(eip),      4,  8,  8,  1},
     { "eflags", REG_OFFSET(eflags),   4,  9,  9,  0},
-#else
-#  error "Unknown CPU"
+
 #endif
+
     { NULL,     0,                    0,  0,  0,  0},
 };
 
-#if defined(WIN32) || defined(__CYGWIN__)
-#  define REG_SP Esp
-#  define REG_BP Ebp
-#  define REG_IP Eip
-#elif defined(__APPLE__) && defined(__i386__)
-#  define REG_SP __esp
-#  define REG_BP __ebp
-#  define REG_IP __eip
-#elif defined(__APPLE__) && defined(__x86_64__)
-#  define REG_SP __rsp
-#  define REG_BP __rbp
-#  define REG_IP __rip
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-#  define REG_SP r_esp
-#  define REG_BP r_ebp
-#  define REG_IP r_eip
-#elif defined(__x86_64__)
-#  define REG_SP rsp
-#  define REG_BP rbp
-#  define REG_IP rip
-#else
-#  define REG_SP esp
-#  define REG_BP ebp
-#  define REG_IP eip
-#endif
-
+#ifndef _WRS_KERNEL
 #define JMPD08      0xeb
 #define JMPD32      0xe9
+#define PUSH_EBP    0x55
+#define ENTER       0xc8
+#define RET         0xc3
+#define RETADD      0xc2
+#endif
 #define GRP5        0xff
 #define JMPN        0x25
-#define PUSH_EBP    0x55
 #define MOV_ESP00   0x89
 #define MOV_ESP01   0xe5
 #define MOV_ESP10   0x8b
 #define MOV_ESP11   0xec
-#define ENTER       0xc8
-#define RET         0xc3
-#define RETADD      0xc2
 #define REXW        0x48
+
+static int read_stack(Context * ctx, ContextAddress addr, void * buf, size_t size) {
+    if (addr == 0) {
+        errno = ERR_INV_ADDRESS;
+        return -1;
+    }
+#ifdef _WRS_KERNEL
+    {
+        WIND_TCB * tcb = taskTcb(get_context_task_id(ctx));
+        if (addr < (ContextAddress)tcb->pStackEnd || addr > (ContextAddress)tcb->pStackBase) {
+            errno = ERR_INV_ADDRESS;
+            return -1;
+        }
+    }
+#endif
+    return context_read_mem(ctx, addr, buf, size);
+}
 
 /*
  * trace_jump - resolve any JMP instructions to final destination
@@ -232,7 +257,11 @@ static int func_entry(unsigned char * code) {
 #define REGS(x) (*(REG_SET *)(x))
 
 int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
+#ifdef _WRS_KERNEL
+    ContextAddress reg_ip = (ContextAddress)REGS(frame->regs).REG_IP;
+#else
     ContextAddress reg_ip = REGS(frame->regs).REG_IP;
+#endif
     ContextAddress reg_sp = REGS(frame->regs).REG_SP;
     ContextAddress reg_bp = REGS(frame->regs).REG_BP;
 
@@ -294,16 +323,16 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
             }
             else {
                 dwn_sp = reg_bp + sizeof(ContextAddress) * 2;
-                if (context_read_mem(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
+                if (read_stack(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
             }
         }
     }
     else {
         dwn_sp = reg_bp + sizeof(ContextAddress) * 2;
-        if (context_read_mem(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
+        if (read_stack(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
     }
 
-    if (context_read_mem(ctx, dwn_sp - sizeof(ContextAddress), &dwn_ip, sizeof(ContextAddress)) < 0) dwn_ip = 0;
+    if (read_stack(ctx, dwn_sp - sizeof(ContextAddress), &dwn_ip, sizeof(ContextAddress)) < 0) dwn_ip = 0;
 
     if (dwn_bp < reg_sp) dwn_bp = 0;
 
@@ -316,8 +345,13 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
         REGS(down->mask).REG_BP = ~(ContextAddress)0;
     }
     if (dwn_ip != 0) {
+#ifdef _WRS_KERNEL
+        REGS(down->regs).REG_IP = (void *)dwn_ip;
+        memset(&REGS(down->mask).REG_IP, 0xff, sizeof(REGS(down->mask).REG_IP));
+#else
         REGS(down->regs).REG_IP = dwn_ip;
         REGS(down->mask).REG_IP = ~(ContextAddress)0;
+#endif
     }
 
     frame->fp = dwn_sp;
@@ -340,11 +374,19 @@ RegisterDefinition * get_PC_definition(Context * ctx) {
 }
 
 ContextAddress get_regs_PC(RegisterData * regs) {
+#ifdef _WRS_KERNEL
+    return (ContextAddress)REGS(regs).REG_IP;
+#else
     return REGS(regs).REG_IP;
+#endif
 }
 
 void set_regs_PC(RegisterData * regs, ContextAddress pc) {
+#ifdef _WRS_KERNEL
+    REGS(regs).REG_IP = (void *)pc;
+#else
     REGS(regs).REG_IP = pc;
+#endif
 }
 
 unsigned char BREAK_INST[] = { 0xcc };
