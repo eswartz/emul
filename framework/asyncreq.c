@@ -67,7 +67,7 @@ static void * worker_thread_handler(void * x) {
             }
             break;
 
-        case AsyncReqSeekRead:              /* File read at offset */
+        case AsyncReqSeekRead:          /* File read at offset */
             req->u.fio.rval = pread(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, req->u.fio.offset);
             if (req->u.fio.rval == -1) {
                 req->error = errno;
@@ -75,7 +75,7 @@ static void * worker_thread_handler(void * x) {
             }
             break;
 
-        case AsyncReqSeekWrite:             /* File write at offset */
+        case AsyncReqSeekWrite:         /* File write at offset */
             req->u.fio.rval = pwrite(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, req->u.fio.offset);
             if (req->u.fio.rval == -1) {
                 req->error = errno;
@@ -103,6 +103,7 @@ static void * worker_thread_handler(void * x) {
             req->u.sio.rval = recvfrom(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags, req->u.sio.addr, &req->u.sio.addrlen);
             if (req->u.sio.rval == -1) {
                 req->error = errno;
+                trace(LOG_ASYNCREQ, "AsyncReqRecvFrom: req %p, type %d, error %d", req, req->type, req->error);
                 assert(req->error);
             }
             break;
@@ -119,6 +120,7 @@ static void * worker_thread_handler(void * x) {
             req->u.acc.rval = accept(req->u.acc.sock, req->u.acc.addr, req->u.acc.addr ? &req->u.acc.addrlen : NULL);
             if (req->u.acc.rval == -1) {
                 req->error = errno;
+                trace(LOG_ASYNCREQ, "AsyncReqAccept: req %p, type %d, error %d", req, req->type, req->error);
                 assert(req->error);
             }
             break;
@@ -127,6 +129,7 @@ static void * worker_thread_handler(void * x) {
             req->u.con.rval = connect(req->u.con.sock, req->u.con.addr, req->u.con.addrlen);
             if (req->u.con.rval == -1) {
                 req->error = errno;
+                trace(LOG_ASYNCREQ, "AsyncReqConnect: req %p, type %d, error %d", req, req->type, req->error);
                 assert(req->error);
             }
             break;

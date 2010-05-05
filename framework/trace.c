@@ -26,6 +26,7 @@ int log_mode = LOG_EVENTS | LOG_CHILD | LOG_WAITPID | LOG_CONTEXT | LOG_PROTOCOL
 
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
+#elif defined(__SYMBIAN32__)
 #else
 #include <syslog.h>
 #endif
@@ -44,6 +45,7 @@ int print_trace(int mode, const char * fmt, ...) {
     if (is_daemon()) {
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
+#elif defined(__SYMBIAN32__)
 #else
         vsyslog(LOG_MAKEPRI(LOG_DAEMON, LOG_INFO), fmt, ap);
 #endif

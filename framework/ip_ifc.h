@@ -19,7 +19,7 @@
 #ifndef D_ip_ifc
 #define D_ip_ifc
 
-typedef struct {
+typedef struct ip_ifc_info {
     uint32_t addr;
     uint32_t mask;
 } ip_ifc_info;

@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Nokia - Symbian support
  *******************************************************************************/
 
 /*
@@ -722,7 +723,7 @@ int utf8_closedir(DIR * d) {
 
 #endif /* defined(WIN32) && !defined(__CYGWIN__) */
 
-#if defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL)
+#if defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL) || defined(__SYMBIAN32__)
 
 ssize_t pread(int fd, const void * buf, size_t size, off_t offset) {
     off_t offs0;
@@ -744,7 +745,7 @@ ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
     return wr;
 }
 
-#endif /* defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL) */
+#endif /* defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL) || defined(__SYMBIAN32__) */
 
 #if defined(WIN32)
 
@@ -870,6 +871,66 @@ void ini_mdep(void) {
     pthread_attr_init(&pthread_create_attr);
     pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
     pthread_attr_setname(&pthread_create_attr, "tTcf");
+}
+
+#elif defined(__SYMBIAN32__)
+
+int truncate(const char * path, int64_t size) {
+    int res = 0;
+    int f = open(path, O_RDWR | O_BINARY, 0);
+    if (f < 0) return -1;
+    res = ftruncate(f, size);
+    close(f);
+    return res;
+}
+
+char * get_os_name(void) {
+   static char str[] = "SYMBIAN";
+   return str;
+}
+
+char * get_user_home(void) {
+    static char buf[] = "C:";
+    return buf;
+}
+
+void ini_mdep(void) {
+    pthread_attr_init(&pthread_create_attr);
+}
+
+int loc_clock_gettime(int clock_id, struct timespec * now) {
+    /*
+     * OpenC has a bug for several releases using a timezone-sensitive time in clock_realtime().
+     * gettimeofday() is more reliable.
+     */
+    struct timeval timenowval;
+    int ret;
+    assert(clock_id == CLOCK_REALTIME);
+    if (!now) {
+        errno = EINVAL;
+        return -1;
+    }
+    ret = gettimeofday(&timenowval, NULL);
+    if (ret < 0)
+        return ret;
+    now->tv_sec = timenowval.tv_sec;
+    now->tv_nsec = timenowval.tv_usec * 1000L;
+    return 0;
+}
+
+/**
+ * Some of the dynamic IP interface scanning routines are unreliable, so
+ * include a workaround to manually set the desired interface from outside.
+ */
+#include "ip_ifc.h"
+
+static ip_ifc_info* gSelectedIPInterface;
+
+void set_ip_ifc(ip_ifc_info* info) {
+    gSelectedIPInterface = info;
+}
+ip_ifc_info* get_ip_ifc(void) {
+    return gSelectedIPInterface;
 }
 
 #else
@@ -1225,9 +1286,18 @@ const char * loc_gai_strerror(int ecode) {
     return msg;
 }
 
+#elif defined(__SYMBIAN32__)
+
+const char * loc_gai_strerror(int ecode) {
+    static char buf[32];
+    if (ecode == 0) return "Success";
+    snprintf(buf, sizeof(buf), "Error code %d", ecode);
+    return buf;
+}
+
 #endif
 
-#if defined(WIN32) || defined(_WRS_KERNEL)
+#if defined(WIN32) || defined(_WRS_KERNEL) || defined (__SYMBIAN32__)
 
 int is_daemon(void) {
     return 0;

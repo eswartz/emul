@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Nokia - Symbian support
  *******************************************************************************/
 
 /*
@@ -333,6 +334,60 @@ extern void loc_freeaddrinfo(struct addrinfo * ai);
 extern int loc_getaddrinfo(const char * nodename, const char * servname,
        const struct addrinfo * hints, struct addrinfo ** res);
 extern const char * loc_gai_strerror(int ecode);
+
+#elif defined __SYMBIAN32__
+/* Symbian / OpenC */
+
+#include <STDDEF.H>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <socket.h>
+#include <in.h>
+#include <netdb.h>
+#include <errno.h>
+#include <utime.h>
+#include <memory.h>
+#include <string.h>
+#include <limits.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <utime.h>
+#include <inet.h>
+#include <pthreadtypes.h>
+#include <pthread.h>
+#include <timespec.h>
+#include <e32def.h>
+#include <sys/sockio.h>
+#include <net/if.h>
+#include <unistd.h>
+
+#include "link.h"
+
+#define MAX_PATH _POSIX_PATH_MAX
+#define FILE_PATH_SIZE _POSIX_PATH_MAX
+
+#define closesocket close
+#define SIGKILL 1
+
+#define ETIMEDOUT 60
+
+extern const char * loc_gai_strerror(int ecode);
+extern int truncate(const char * path, int64_t size);
+
+extern ssize_t pread(int fd, const void * buf, size_t size, off_t offset);
+extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
+
+#define loc_freeaddrinfo freeaddrinfo
+#define loc_getaddrinfo getaddrinfo
+
+extern int loc_clock_gettime(int, struct timespec *);
+#define clock_gettime loc_clock_gettime /* override Open C impl */
+
+struct ip_ifc_info;
+extern void set_ip_ifc(struct ip_ifc_info * info);
+extern struct ip_ifc_info * get_ip_ifc(void);
 
 #else
 /* Linux, BSD, MacOS, UNIX */

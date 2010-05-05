@@ -22,6 +22,9 @@
 #if ENABLE_AIO
 #  include <aio.h>
 #endif
+#ifdef __SYMBIAN32__
+#  include <select.h>
+#endif
 #include "link.h"
 #include "events.h"
 

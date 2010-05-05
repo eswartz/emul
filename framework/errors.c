@@ -150,6 +150,35 @@ int set_win32_errno(DWORD win32_error_code) {
     return errno;
 }
 
+#elif defined(__SYMBIAN32__)
+
+#include <e32err.h>
+
+static char * system_strerror(int err) {
+    static char static_error[32];
+    switch (err) {
+    case KErrNotFound:
+        return "item not found";
+    case KErrNotSupported:
+        return "functionality is not supported";
+    case KErrBadHandle:
+        return "an invalid handle";
+    case KErrAccessDenied:
+        return "access to a file is denied";
+    case KErrAlreadyExists:
+        return "an object already exists";
+    case KErrWrite:
+        return "error in write operation";
+    case KErrPermissionDenied:
+        return "permission denied";
+    case KErrBadDescriptor:
+        return "bad descriptor";
+    default:
+        snprintf(static_error, sizeof(static_error), "Error code %d", err);
+        return static_error;
+    }
+}
+
 #endif
 
 const char * errno_to_str(int err) {
@@ -200,6 +229,11 @@ const char * errno_to_str(int err) {
                 return errno_to_str(m->error);
             }
         }
+#ifdef __SYMBIAN32__
+        if (err < 0) {
+            return system_strerror(err);
+        }
+#endif
         return strerror(err);
     }
 }
@@ -324,6 +358,8 @@ ErrorReport * get_error_report(int err) {
             add_report_prop_str(report, "AltOrg", "CygWin");
 #elif defined(__linux__)
             add_report_prop_str(report, "AltOrg", "Linux");
+#elif defined(__SYMBIAN32__)
+            add_report_prop_str(report, "AltOrg", "Symbian");
 #else
             add_report_prop_str(report, "AltOrg", "POSIX");
 #endif

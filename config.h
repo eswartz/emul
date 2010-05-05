@@ -32,12 +32,21 @@
 #    define TARGET_MSVC     0
 #  endif
 #  define TARGET_BSD        0
+#  define TARGET_SYMBIAN    0
 #elif defined(_WRS_KERNEL)
 #  define TARGET_WINDOWS    0
 #  define TARGET_VXWORKS    1
 #  define TARGET_UNIX       0
 #  define TARGET_MSVC       0
 #  define TARGET_BSD        0
+#  define TARGET_SYMBIAN    0
+#elif defined(__SYMBIAN32__)
+#  define TARGET_WINDOWS    0
+#  define TARGET_VXWORKS    0
+#  define TARGET_UNIX       0
+#  define TARGET_MSVC       0
+#  define TARGET_BSD        0
+#  define TARGET_SYMBIAN    1
 #else
 #  define TARGET_WINDOWS    0
 #  define TARGET_VXWORKS    0
@@ -48,10 +57,11 @@
 #  else
 #    define TARGET_BSD      0
 #  endif
+#  define TARGET_SYMBIAN    0
 #endif
 
 #if !defined(SERVICE_Locator)
-#define SERVICE_Locator         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#define SERVICE_Locator         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS || TARGET_SYMBIAN)
 #endif
 #if !defined(SERVICE_RunControl)
 #define SERVICE_RunControl      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
@@ -90,7 +100,7 @@
 #define SERVICE_Expressions     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_Streams)
-#define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS || TARGET_SYMBIAN)
 #endif
 #if !defined(SERVICE_PathMap)
 #define SERVICE_PathMap         ENABLE_ELF
@@ -184,7 +194,8 @@
 
 #if !defined(ENABLE_AIO)
 /* Linux implementation of POSIX AIO found to be inefficient */
-#  if !defined(__linux__) && defined(_POSIX_ASYNCHRONOUS_IO)
+/* Symbian impl (OpenC) not desired either */
+#  if !defined(__linux__) && defined(_POSIX_ASYNCHRONOUS_IO) && !TARGET_SYMBIAN
 #    define ENABLE_AIO          1
 #  else
 #    define ENABLE_AIO          0

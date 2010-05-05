@@ -162,7 +162,8 @@ static void trigger_recv(void) {
     recvreq.u.sio.addrlen = sizeof recvreq_addr;
     memset(&recvreq_addr, 0, sizeof recvreq_addr);
     if (recvreq_error_cnt >= MAX_RECV_ERRORS) {
-        /* Delay the request to aviod flooding with error reports */
+        /* Delay the request to avoid flooding with error reports */
+        trace(LOG_ALWAYS, "delayed_server_recv error occured: %d", recvreq_error_cnt);
         post_event_with_delay(delayed_server_recv, NULL, 1000000);
     }
     else {
