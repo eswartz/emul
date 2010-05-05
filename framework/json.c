@@ -585,26 +585,24 @@ char * json_read_alloc_binary(InputStream * inp, int * size) {
     }
     else {
         JsonReadBinaryState state;
-        const size_t BUF_SIZE = 0x1000;
-        size_t buf_size = BUF_SIZE;
 
         json_read_binary_start(&state, inp);
-        if (state.size_start > 0) buf_size = state.size_start;
-        data = (char *)loc_alloc(buf_size);
 
+        buf_pos = 0;
         for (;;) {
             int rd;
-            if (state.size_start <= 0 && buf_size < *size + BUF_SIZE) {
-                buf_size *= 2;
-                data = (char *)loc_realloc(data, buf_size);
-            }
-            rd = json_read_binary_data(&state, data + *size, buf_size - *size);
+            if (buf_pos >= buf_size) realloc_buf();
+            rd = json_read_binary_data(&state, buf + buf_pos, buf_size - buf_pos);
             if (rd == 0) break;
-            *size += rd;
+            buf_pos += rd;
         }
 
-        assert(state.size_start <= 0 || *size == state.size_start);
+        assert(state.size_start <= 0 || (int)buf_pos == state.size_start);
+
         json_read_binary_end(&state);
+        data = (char *)loc_alloc(buf_pos);
+        memcpy(data, buf, buf_pos);
+        *size = buf_pos;
     }
     return data;
 }
