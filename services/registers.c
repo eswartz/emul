@@ -28,6 +28,7 @@
 #include "protocol.h"
 #include "context.h"
 #include "json.h"
+#include "cache.h"
 #include "exceptions.h"
 #include "stacktrace.h"
 #include "registers.h"
@@ -120,24 +121,31 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     write_stream(out, 0);
 }
 
-static void command_get_context(char * token, Channel * c) {
-    int err = 0;
+typedef struct GetContextArgs {
+    char token[256];
     char id[256];
-    int frame = 0;
+} GetContextArgs;
+
+static void command_get_context_cache_client(void * x) {
+    GetContextArgs * args = (GetContextArgs *)x;
+    Channel * c  = cache_channel();
     Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
     RegisterDefinition * reg_def = NULL;
+    Trap trap;
 
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        if (id2register(args->id, &ctx, &frame, &reg_def) < 0) exception(errno);
+        clear_trap(&trap);
+    }
 
-    if (id2register(id, &ctx, &frame, &reg_def) < 0) err = errno;
+    cache_exit();
 
     write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    if (err == 0) {
-        write_context(&c->out, id, ctx, frame, reg_def);
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, trap.error);
+    if (reg_def != NULL) {
+        write_context(&c->out, args->id, ctx, frame, reg_def);
     }
     else {
         write_stringz(&c->out, "null");
@@ -145,42 +153,59 @@ static void command_get_context(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void command_get_children(char * token, Channel * c) {
-    char id[256];
-    Context * ctx = NULL;
-    int frame = STACK_NO_FRAME;
-    StackFrame * frame_info = NULL;
-    int err = 0;
+static void command_get_context(char * token, Channel * c) {
+    GetContextArgs args;
 
-    json_read_string(&c->inp, id, sizeof(id));
+    json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (id2frame(id, &ctx, &frame) == 0) {
-        if (get_frame_info(ctx, frame, &frame_info) < 0) err = errno;
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_get_context_cache_client, c, &args, sizeof(args));
+}
+
+typedef struct GetChildrenArgs {
+    char token[256];
+    char id[256];
+} GetChildrenArgs;
+
+static void command_get_children_cache_client(void * x) {
+    GetChildrenArgs * args = (GetChildrenArgs *)x;
+    Channel * c  = cache_channel();
+    Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
+    StackFrame * frame_info = NULL;
+    RegisterDefinition * defs = NULL;
+    Trap trap;
+
+    if (set_trap(&trap)) {
+        if (id2frame(args->id, &ctx, &frame) == 0) {
+            if (get_frame_info(ctx, frame, &frame_info) < 0) exception(errno);
+        }
+        else {
+            ctx = id2ctx(args->id);
+            frame = STACK_TOP_FRAME;
+        }
+        if (ctx != NULL) defs = get_reg_definitions(ctx);
+        clear_trap(&trap);
     }
-    else {
-        ctx = id2ctx(id);
-        frame = STACK_TOP_FRAME;
-    }
+
+    cache_exit();
 
     write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
+    write_stringz(&c->out, args->token);
 
-    write_errno(&c->out, err);
+    write_errno(&c->out, trap.error);
 
     write_stream(&c->out, '[');
-    if (err == 0 && ctx != NULL) {
-        RegisterDefinition * defs = get_reg_definitions(ctx);
-        if (defs != NULL) {
-            int cnt = 0;
-            RegisterDefinition * reg_def;
-            for (reg_def = defs; reg_def->name != NULL; reg_def++) {
-                if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
-                    if (cnt > 0) write_stream(&c->out, ',');
-                    json_write_string(&c->out, register2id(ctx, frame, reg_def));
-                    cnt++;
-                }
+    if (defs != NULL) {
+        int cnt = 0;
+        RegisterDefinition * reg_def;
+        for (reg_def = defs; reg_def->name != NULL; reg_def++) {
+            if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
+                if (cnt > 0) write_stream(&c->out, ',');
+                json_write_string(&c->out, register2id(ctx, frame, reg_def));
+                cnt++;
             }
         }
     }
@@ -188,6 +213,17 @@ static void command_get_children(char * token, Channel * c) {
     write_stream(&c->out, 0);
 
     write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_children(char * token, Channel * c) {
+    GetChildrenArgs args;
+
+    json_read_string(&c->inp, args.id, sizeof(args.id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_get_children_cache_client, c, &args, sizeof(args));
 }
 
 static void send_event_register_changed(char * id) {
@@ -202,93 +238,113 @@ static void send_event_register_changed(char * id) {
     write_stream(out, MARKER_EOM);
 }
 
-static void command_get(char * token, Channel * c) {
-    int err = 0;
+typedef struct GetArgs {
+    char token[256];
     char id[256];
-    int frame = 0;
-    Context * ctx = NULL;
-    RegisterDefinition * reg_def = NULL;
+} GetArgs;
+
+static void command_get_cache_client(void * x) {
+    GetArgs * args = (GetArgs *)x;
+    Channel * c  = cache_channel();
     uint8_t * data = NULL;
+    int data_len = 0;
+    Trap trap;
 
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (set_trap(&trap)) {
+        int frame = 0;
+        Context * ctx = NULL;
+        RegisterDefinition * reg_def = NULL;
 
-    if (id2register(id, &ctx, &frame, &reg_def) < 0) err = errno;
-    else if (!context_has_state(ctx)) err = ERR_INV_CONTEXT;
-    else if (!ctx->stopped) err = ERR_IS_RUNNING;
+        if (id2register(args->id, &ctx, &frame, &reg_def) < 0) exception(errno);
+        if (!context_has_state(ctx)) exception(ERR_INV_CONTEXT);
+        if (!ctx->stopped) exception(ERR_IS_RUNNING);
 
-    if (!err) {
         if (is_top_frame(ctx, frame)) {
             data = (uint8_t *)ctx->regs + reg_def->offset;
         }
         else {
             StackFrame * info = NULL;
-            if (get_frame_info(ctx, frame, &info)) err = errno;
-            else if (read_reg_value(reg_def, info, NULL) < 0) err = errno;
-            else data = (uint8_t *)info->regs + reg_def->offset;
+            if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
+            if (read_reg_value(reg_def, info, NULL) < 0) exception(errno);
+            data = (uint8_t *)info->regs + reg_def->offset;
         }
+        data_len = reg_def->size;
+        clear_trap(&trap);
     }
 
+    cache_exit();
+
     write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    if (err == 0) {
-        json_write_binary(&c->out, data, reg_def->size);
-        write_stream(&c->out, 0);
-    }
-    else {
-        write_stringz(&c->out, "null");
-    }
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, trap.error);
+    json_write_binary(&c->out, data, data_len);
+    write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void command_set(char * token, Channel * c) {
-    int err = 0;
-    char id[256];
-    char val[256];
-    int val_len = 0;
-    JsonReadBinaryState state;
-    int frame = 0;
-    Context * ctx = NULL;
-    RegisterDefinition * reg_def = NULL;
+static void command_get(char * token, Channel * c) {
+    GetArgs args;
 
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_binary_start(&state, &c->inp);
-    for (;;) {
-        int rd = json_read_binary_data(&state, val + val_len, sizeof(val) - val_len);
-        if (rd == 0) break;
-        val_len += rd;
-    }
-    json_read_binary_end(&state);
+    json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (id2register(id, &ctx, &frame, &reg_def) < 0) err = errno;
-    else if (!is_top_frame(ctx, frame)) err = ERR_INV_CONTEXT;
-    else if (!ctx->stopped) err = ERR_IS_RUNNING;
-
-    if (err == 0) {
-        uint8_t * data = (uint8_t *)ctx->regs + reg_def->offset;
-        int size = reg_def->size;
-        if (val_len != size) {
-            err = ERR_INV_DATA_SIZE;
-        }
-        else {
-            memcpy(data, val, val_len);
-            ctx->regs_dirty = 1;
-            send_event_register_changed(id);
-        }
-    }
-
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    write_stream(&c->out, MARKER_EOM);
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_get_cache_client, c, &args, sizeof(args));
 }
 
-struct Location {
+typedef struct SetArgs {
+    char token[256];
+    char id[256];
+    int data_len;
+    uint8_t * data;
+} SetArgs;
+
+static void command_set_cache_client(void * x) {
+    SetArgs * args = (SetArgs *)x;
+    Channel * c  = cache_channel();
+    Trap trap;
+
+    if (set_trap(&trap)) {
+        int frame = 0;
+        Context * ctx = NULL;
+        RegisterDefinition * reg_def = NULL;
+
+        if (id2register(args->id, &ctx, &frame, &reg_def) < 0) exception(errno);
+        if (!is_top_frame(ctx, frame)) exception(ERR_INV_CONTEXT);
+        if (!ctx->stopped) exception(ERR_IS_RUNNING);
+        if (args->data_len != reg_def->size) exception(ERR_INV_DATA_SIZE);
+
+        memcpy((uint8_t *)ctx->regs + reg_def->offset, args->data, reg_def->size);
+        ctx->regs_dirty = 1;
+        send_event_register_changed(args->id);
+        clear_trap(&trap);
+    }
+
+    cache_exit();
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, trap.error);
+    write_stream(&c->out, MARKER_EOM);
+
+    loc_free(args->data);
+}
+
+static void command_set(char * token, Channel * c) {
+    SetArgs args;
+
+    json_read_string(&c->inp, args.id, sizeof(args.id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args.data = (uint8_t *)json_read_alloc_binary(&c->inp, &args.data_len);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_set_cache_client, c, &args, sizeof(args));
+}
+
+typedef struct Location {
     char id[256];
     Context * ctx;
     int frame;
@@ -296,14 +352,15 @@ struct Location {
     RegisterDefinition * reg_def;
     unsigned offs;
     unsigned size;
-};
-typedef struct Location Location;
+} Location;
 
 static Location * buf = NULL;
-static int buf_pos = 0;
-static int buf_len = 0;
-static int buf_setm = 0;
-static int buf_err = 0;
+static unsigned buf_pos = 0;
+static unsigned buf_len = 0;
+
+static uint8_t * bbf = NULL;
+static unsigned bbf_pos = 0;
+static unsigned bbf_len = 0;
 
 static void read_location(InputStream * inp, void * args) {
     int ch = read_stream(inp);
@@ -321,98 +378,143 @@ static void read_location(InputStream * inp, void * args) {
     if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
     loc->size = (unsigned)json_read_ulong(inp);
     if (read_stream(inp) != ']') exception(ERR_JSON_SYNTAX);
-
-    if (!buf_err) {
-        if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) buf_err = errno;
-        else if (!context_has_state(loc->ctx)) buf_err = ERR_INV_CONTEXT;
-        else if (!loc->ctx->stopped) buf_err = ERR_IS_RUNNING;
-        else if (loc->offs + loc->size > (unsigned)loc->reg_def->size) buf_err = ERR_INV_DATA_SIZE;
-    }
-
-    if (!buf_err && !is_top_frame(loc->ctx, loc->frame)) {
-        if (buf_setm) buf_err = ERR_INV_CONTEXT;
-        else if (get_frame_info(loc->ctx, loc->frame, &loc->frame_info) < 0) buf_err = errno;
-        else if (read_reg_value(loc->reg_def, loc->frame_info, NULL) < 0) buf_err = errno;
-    }
 }
 
-static int read_location_list(Channel * c, int setm) {
+static Location * read_location_list(InputStream * inp, unsigned * cnt) {
+    Location * locs = NULL;
+
     buf_pos = 0;
-    buf_err = 0;
-    buf_setm = setm;
-    json_read_array(&c->inp, read_location, NULL);
-    return buf_err;
+    json_read_array(inp, read_location, NULL);
+    locs = (Location *)loc_alloc(buf_pos * sizeof(Location));
+    memcpy(locs, buf, buf_pos * sizeof(Location));
+    *cnt = buf_pos;
+    return locs;
 }
 
-static void command_getm(char * token, Channel * c) {
-    int err = read_location_list(c, 0);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+static void check_location_list(Location * locs, unsigned cnt, int setm) {
+    unsigned pos;
+    for (pos = 0; pos < cnt; pos++) {
+        Location * loc = locs + pos;
 
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    if (err == 0) {
-        int i = 0;
-        JsonWriteBinaryState state;
-        json_write_binary_start(&state, &c->out, -1);
-        for (i = 0; i < buf_pos; i++) {
-            Location * l = buf + i;
+        if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) exception(errno);
+        if (!context_has_state(loc->ctx)) exception(ERR_INV_CONTEXT);
+        if (!loc->ctx->stopped) exception(ERR_IS_RUNNING);
+        if (loc->offs + loc->size > (unsigned)loc->reg_def->size) exception(ERR_INV_DATA_SIZE);
+
+        if (is_top_frame(loc->ctx, loc->frame)) continue;
+
+        if (setm) exception(ERR_INV_CONTEXT);
+        if (get_frame_info(loc->ctx, loc->frame, &loc->frame_info) < 0) exception(errno);
+        if (read_reg_value(loc->reg_def, loc->frame_info, NULL) < 0) exception(errno);
+    }
+}
+
+typedef struct GetmArgs {
+    char token[256];
+    unsigned locs_cnt;
+    Location * locs;
+} GetmArgs;
+
+static void command_getm_cache_client(void * x) {
+    GetmArgs * args = (GetmArgs *)x;
+    Channel * c  = cache_channel();
+    Trap trap;
+
+    bbf_pos = 0;
+    if (set_trap(&trap)) {
+        unsigned locs_pos = 0;
+        check_location_list(args->locs, args->locs_cnt, 0);
+        while (locs_pos < args->locs_cnt) {
+            Location * l = args->locs + locs_pos++;
             uint8_t * data = l->frame_info == NULL ?
                 (uint8_t *)l->ctx->regs + l->reg_def->offset + l->offs :
                 (uint8_t *)l->frame_info->regs + l->reg_def->offset + l->offs;
-            json_write_binary_data(&state, data, l->size);
+            if (bbf_pos + l->size > bbf_len) {
+                bbf_len += 0x100 + l->size;
+                bbf = (uint8_t *)loc_realloc(bbf, bbf_len);
+            }
+            memcpy(bbf, data, l->size);
         }
-        json_write_binary_end(&state);
-        write_stream(&c->out, 0);
+        clear_trap(&trap);
     }
-    else {
-        write_stringz(&c->out, "null");
-    }
+
+    cache_exit();
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, trap.error);
+    json_write_binary(&c->out, bbf, bbf_pos);
+    write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+
+    loc_free(args->locs);
 }
 
-static void command_setm(char * token, Channel * c) {
-    int i = 0;
-    uint8_t tmp[256];
-    JsonReadBinaryState state;
-    int err = read_location_list(c, 1);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_binary_start(&state, &c->inp);
-    for (i = 0; i < buf_pos; i++) {
-        unsigned rd_done = 0;
-        if (err) {
-            for (;;) {
-                int rd = json_read_binary_data(&state, tmp, sizeof(tmp));
-                if (rd == 0) break;
-                rd_done += rd;
-            }
-        }
-        else {
-            Location * l = buf + i;
-            uint8_t * data = (uint8_t *)(l->frame_info ? l->frame_info->regs : l->ctx->regs) + l->reg_def->offset + l->offs;
-            for (;;) {
-                int rd = 0;
-                if (rd_done < l->size) {
-                    rd = json_read_binary_data(&state, data + rd_done, l->size - rd_done);
-                }
-                else {
-                    rd = json_read_binary_data(&state, tmp, sizeof(tmp));
-                }
-                if (rd == 0) break;
-                rd_done += rd;
-            }
-            send_event_register_changed(l->id);
-        }
-    }
-    json_read_binary_end(&state);
+static void command_getm(char * token, Channel * c) {
+    GetmArgs args;
+
+    args.locs = read_location_list(&c->inp, &args.locs_cnt);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_getm_cache_client, c, &args, sizeof(args));
+}
+
+typedef struct SetmArgs {
+    char token[256];
+    unsigned locs_cnt;
+    Location * locs;
+    int data_len;
+    uint8_t * data;
+} SetmArgs;
+
+static void command_setm_cache_client(void * x) {
+    SetmArgs * args = (SetmArgs *)x;
+    Channel * c  = cache_channel();
+    Trap trap;
+
+    if (set_trap(&trap)) {
+        unsigned locs_pos = 0;
+        unsigned data_pos = 0;
+        check_location_list(args->locs, args->locs_cnt, 1);
+        while (locs_pos < args->locs_cnt) {
+            Location * l = args->locs + locs_pos++;
+            uint8_t * data = (uint8_t *)(l->frame_info ? l->frame_info->regs : l->ctx->regs) + l->reg_def->offset + l->offs;
+            int size = l->size;
+            if (data_pos + size > (unsigned)args->data_len) size = args->data_len - data_pos;
+            memcpy(data, args->data + data_pos, size);
+            data_pos += size;
+            if (size > 0) {
+                l->ctx->regs_dirty = 1;
+                send_event_register_changed(l->id);
+            }
+        }
+        clear_trap(&trap);
+    }
+
+    cache_exit();
+
     write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, trap.error);
     write_stream(&c->out, MARKER_EOM);
+
+    loc_free(args->locs);
+    loc_free(args->data);
+}
+
+static void command_setm(char * token, Channel * c) {
+    SetmArgs args;
+
+    args.locs = read_location_list(&c->inp, &args.locs_cnt);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args.data = (uint8_t *)json_read_alloc_binary(&c->inp, &args.data_len);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_setm_cache_client, c, &args, sizeof(args));
 }
 
 static void read_filter_attrs(InputStream * inp, const char * nm, void * arg) {

@@ -62,6 +62,8 @@ static void run_cache_client(void) {
     }
     if (cache_miss_cnt == 0 && current_client.args_copy) loc_free(current_client.args);
     memset(&current_client, 0, sizeof(current_client));
+    cache_miss_cnt = 0;
+    client_exited = 0;
 }
 
 void cache_enter(CacheClient * client, Channel * channel, void * args, size_t args_size) {
@@ -113,6 +115,11 @@ void cache_wait_dbg(const char * file, int line, AbstractCache * cache) {
         cache->wait_list_buf[cache->wait_list_cnt++] = current_client;
         channel_lock(current_client.channel);
     }
+#ifndef NDEBUG
+    else if (current_client.client == NULL) {
+        trace(LOG_ALWAYS, "cache_wait(): illegal cache access at %s:%d", file, line);
+    }
+#endif
     cache_miss_cnt++;
     exception(ERR_CACHE_MISS);
 }
