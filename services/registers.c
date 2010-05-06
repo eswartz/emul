@@ -426,14 +426,13 @@ static void command_getm_cache_client(void * x) {
         check_location_list(args->locs, args->locs_cnt, 0);
         while (locs_pos < args->locs_cnt) {
             Location * l = args->locs + locs_pos++;
-            uint8_t * data = l->frame_info == NULL ?
-                (uint8_t *)l->ctx->regs + l->reg_def->offset + l->offs :
-                (uint8_t *)l->frame_info->regs + l->reg_def->offset + l->offs;
+            RegisterData * regs = l->frame_info == NULL ? l->ctx->regs : l->frame_info->regs;
             if (bbf_pos + l->size > bbf_len) {
                 bbf_len += 0x100 + l->size;
                 bbf = (uint8_t *)loc_realloc(bbf, bbf_len);
             }
-            memcpy(bbf, data, l->size);
+            memcpy(bbf + bbf_pos, (uint8_t *)regs + l->reg_def->offset + l->offs, l->size);
+            bbf_pos += l->size;
         }
         clear_trap(&trap);
     }
@@ -480,12 +479,12 @@ static void command_setm_cache_client(void * x) {
         check_location_list(args->locs, args->locs_cnt, 1);
         while (locs_pos < args->locs_cnt) {
             Location * l = args->locs + locs_pos++;
-            uint8_t * data = (uint8_t *)(l->frame_info ? l->frame_info->regs : l->ctx->regs) + l->reg_def->offset + l->offs;
-            int size = l->size;
-            if (data_pos + size > (unsigned)args->data_len) size = args->data_len - data_pos;
-            memcpy(data, args->data + data_pos, size);
-            data_pos += size;
-            if (size > 0) {
+            RegisterData * regs = l->ctx->regs;
+            assert(l->frame_info == NULL);
+            if (data_pos + l->size > (unsigned)args->data_len) exception(ERR_INV_DATA_SIZE);
+            memcpy((uint8_t *)regs + l->reg_def->offset + l->offs, args->data + data_pos, l->size);
+            data_pos += l->size;
+            if (l->size > 0) {
                 l->ctx->regs_dirty = 1;
                 send_event_register_changed(l->id);
             }
