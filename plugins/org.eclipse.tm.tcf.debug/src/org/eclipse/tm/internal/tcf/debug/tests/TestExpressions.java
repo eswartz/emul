@@ -135,7 +135,7 @@ class TestExpressions implements ITCFTest,
                                             exit(null);
                                         }
                                         else {
-                                            exit(new Error("Missing 'contextRemoved' event for " + process_id));
+                                            exit(new Error("Missing 'contextRemoved' event for " + test_ctx_id));
                                         }
                                     }
                                 });
@@ -371,16 +371,16 @@ class TestExpressions implements ITCFTest,
                 return;
             }
         }
-        for (final String id : test_expressions) {
-            if (local_vars.length == 0 && id.indexOf("local") >= 0) continue;
-            if (expr_ctx.get(id) == null) {
-                expr.create(stack_trace[stack_trace.length - 2], null, id, new IExpressions.DoneCreate() {
+        for (final String txt : test_expressions) {
+            if (local_vars.length == 0 && txt.indexOf("local") >= 0) continue;
+            if (expr_ctx.get(txt) == null) {
+                expr.create(stack_trace[stack_trace.length - 2], null, txt, new IExpressions.DoneCreate() {
                     public void doneCreate(IToken token, Exception error, IExpressions.Expression ctx) {
                         if (error != null) {
                             exit(error);
                         }
                         else {
-                            expr_ctx.put(id, ctx);
+                            expr_ctx.put(txt, ctx);
                             runTest();
                         }
                     }
@@ -470,7 +470,7 @@ class TestExpressions implements ITCFTest,
             }
         }
         test_done = true;
-        diag.cancelTest(process_id, new IDiagnostics.DoneCancelTest() {
+        diag.cancelTest(test_ctx_id, new IDiagnostics.DoneCancelTest() {
             public void doneCancelTest(IToken token, Throwable error) {
                 if (error != null) exit(error);
             }
@@ -518,7 +518,7 @@ class TestExpressions implements ITCFTest,
     public void contextRemoved(String[] context_ids) {
         for (String id : context_ids) {
             ctx_map.remove(id);
-            if (id.equals(process_id)) {
+            if (id.equals(test_ctx_id)) {
                 if (test_done) {
                     bp.set(null, new IBreakpoints.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {

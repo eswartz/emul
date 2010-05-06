@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.tests;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,7 +92,21 @@ class TestRCBP1 implements ITCFTest,
 
     private final IBreakpoints.BreakpointsListener bp_listener = new IBreakpoints.BreakpointsListener() {
 
+        @SuppressWarnings("unchecked")
         public void breakpointStatusChanged(String id, Map<String,Object> status) {
+            if (bp_list.get(id) != null && context_id != null) {
+                String s = (String)status.get(IBreakpoints.STATUS_ERROR);
+                if (s != null) exit(new Exception("Invalid BP status: " + s));
+                Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
+                if (list == null) return;
+                String err = null;
+                for (Map<String,Object> map : list) {
+                    String ctx = (String)map.get(IBreakpoints.INSTANCE_CONTEXT);
+                    if (context_id.equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) != null)
+                        err = (String)map.get(IBreakpoints.INSTANCE_ERROR);
+                }
+                if (err != null) exit(new Exception("Invalid BP status: " + err));
+            }
         }
 
         public void contextAdded(Map<String,Object>[] bps) {
