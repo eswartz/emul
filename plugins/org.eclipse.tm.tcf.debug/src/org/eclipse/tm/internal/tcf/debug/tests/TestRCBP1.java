@@ -921,22 +921,30 @@ class TestRCBP1 implements ITCFTest,
             }));
         }
         if (!reg_map.isEmpty()) {
+            int data_size = 0;
             List<IRegisters.Location> locs = new ArrayList<IRegisters.Location>();
             String[] ids = reg_map.keySet().toArray(new String[reg_map.size()]);
             for (int i = 0; i < rnd.nextInt(32); i++) {
                 String id = ids[rnd.nextInt(ids.length)];
                 IRegisters.RegistersContext ctx = reg_map.get(id);
                 if (!ctx.isReadable()) continue;
+                if (!ctx.isWriteable()) continue;
                 if (ctx.isReadOnce()) continue;
+                if (ctx.isWriteOnce()) continue;
                 int offs = rnd.nextInt(ctx.getSize());
                 int size = rnd.nextInt(ctx.getSize() - offs) + 1;
                 locs.add(new IRegisters.Location(id, offs, size));
+                data_size += size;
             }
+            final int total_size = data_size;
             final IRegisters.Location[] loc_arr = locs.toArray(new IRegisters.Location[locs.size()]);
             cmds.add(rg.getm(loc_arr, new IRegisters.DoneGet() {
                 public void doneGet(IToken token, Exception error, byte[] value) {
                     cmds.remove(token);
                     if (suspended.get(sc.id) != sc) return;
+                    if (error == null && value.length != total_size) {
+                        error = new Exception("Invalid data size in Registers.getm reply");
+                    }
                     if (error != null) {
                         for (IToken t : cmds) t.cancel();
                         exit(error);
