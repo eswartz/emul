@@ -28,14 +28,31 @@ public interface IPeer {
      * Peer property names. Implementation can define additional properties.
      */
     static final String
+        /** Peer unique ID */
         ATTR_ID = "ID",
+
+        /** Peer name */
         ATTR_NAME = "Name",
+
+        /** Name of the peer operating system */
         ATTR_OS_NAME = "OSName",
+
+        /** Transport name, for example TCP, SSL */
         ATTR_TRANSPORT_NAME = "TransportName",
+
+        /** If present, indicates that the peer can forward traffic to other peers */
         ATTR_PROXY = "Proxy",
+
+        /** Host DNS name or IP address */
         ATTR_IP_HOST = "Host",
+
+        /** Optional list of host aliases */
         ATTR_IP_ALIASES = "Aliases",
+
+        /** Optional list of host addresses */
         ATTR_IP_ADDRESSES = "Addresses",
+
+        /** IP port number, must be decimal number */
         ATTR_IP_PORT = "Port";
 
 

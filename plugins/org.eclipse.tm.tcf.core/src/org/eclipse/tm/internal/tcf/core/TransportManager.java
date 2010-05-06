@@ -51,9 +51,8 @@ public class TransportManager {
                 Map<String,String> attrs = peer.getAttributes();
                 String host = attrs.get(IPeer.ATTR_IP_HOST);
                 String port = attrs.get(IPeer.ATTR_IP_PORT);
-                if (host == null) throw new Error("No host name");
-                if (port == null) throw new Error("No port number");
-                return new ChannelTCP(peer, host, Integer.parseInt(port), false);
+                if (host == null) throw new IllegalArgumentException("No host name");
+                return new ChannelTCP(peer, host, parsePort(port), false);
             }
         });
 
@@ -68,9 +67,8 @@ public class TransportManager {
                 Map<String,String> attrs = peer.getAttributes();
                 String host = attrs.get(IPeer.ATTR_IP_HOST);
                 String port = attrs.get(IPeer.ATTR_IP_PORT);
-                if (host == null) throw new Error("No host name");
-                if (port == null) throw new Error("No port number");
-                return new ChannelTCP(peer, host, Integer.parseInt(port), true);
+                if (host == null) throw new IllegalArgumentException("No host name");
+                return new ChannelTCP(peer, host, parsePort(port), true);
             }
         });
 
@@ -85,6 +83,19 @@ public class TransportManager {
                 return new ChannelLoop(peer);
             }
         });
+    }
+
+    private static int parsePort(String port) {
+        if (port == null) throw new Error("No port number");
+        try {
+            return Integer.parseInt(port);
+        }
+        catch (NumberFormatException x) {
+            IllegalArgumentException y = new IllegalArgumentException(
+                    "Invalid value of \"Port\" attribute. Must be decimal number.");
+            y.initCause(x);
+            throw y;
+        }
     }
 
     public static void addTransportProvider(ITransportProvider transport) {
