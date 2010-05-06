@@ -568,14 +568,17 @@ public class LocatorService implements ILocator {
         try {
             out_buf[4] = CONF_PEER_INFO;
             int i = 8;
+            StringBuffer sb = new StringBuffer(out_buf.length);
             for (String key : attrs.keySet()) {
-                String s = key + "=" + attrs.get(key);
-                byte[] bt = s.getBytes("UTF-8");
-                if (i + bt.length >= out_buf.length) break;
-                System.arraycopy(bt, 0, out_buf, i, bt.length);
-                i += bt.length;
-                out_buf[i++] = 0;
+                sb.append(key);
+                sb.append('=');
+                sb.append(attrs.get(key));
+                sb.append((char)0);
             }
+            byte[] bt = sb.toString().getBytes("UTF-8");
+            if (i + bt.length > out_buf.length) return;
+            System.arraycopy(bt, 0, out_buf, i, bt.length);
+            i += bt.length;
 
             for (SubNet subnet : subnets) {
                 if (peer instanceof RemotePeer) {
