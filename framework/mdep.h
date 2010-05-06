@@ -338,7 +338,7 @@ extern const char * loc_gai_strerror(int ecode);
 #elif defined __SYMBIAN32__
 /* Symbian / OpenC */
 
-#include <STDDEF.H>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
