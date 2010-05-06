@@ -177,6 +177,24 @@ static void command_cancel_test(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+static void write_symbol(Channel * c, ContextAddress address) {
+    if (address == 0) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        write_stream(&c->out, '{');
+        json_write_string(&c->out, "Abs");
+        write_stream(&c->out, ':');
+        json_write_boolean(&c->out, 1);
+        write_stream(&c->out, ',');
+        json_write_string(&c->out, "Value");
+        write_stream(&c->out, ':');
+        json_write_uint64(&c->out, address);
+        write_stream(&c->out, '}');
+        write_stream(&c->out, 0);
+    }
+}
+
 #if ENABLE_Symbols
 
 typedef struct GetSymbolArgs {
@@ -207,21 +225,7 @@ static void get_symbol_cache_client(void * x) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, args->token);
     write_errno(&c->out, error);
-    if (error != 0) {
-        write_stringz(&c->out, "null");
-    }
-    else {
-        write_stream(&c->out, '{');
-        json_write_string(&c->out, "Abs");
-        write_stream(&c->out, ':');
-        json_write_boolean(&c->out, 1);
-        write_stream(&c->out, ',');
-        json_write_string(&c->out, "Value");
-        write_stream(&c->out, ':');
-        json_write_uint64(&c->out, addr);
-        write_stream(&c->out, '}');
-        write_stream(&c->out, 0);
-    }
+    write_symbol(c, addr);
     write_stream(&c->out, MARKER_EOM);
 
     context_unlock(ctx);
@@ -234,6 +238,8 @@ static void command_get_symbol(char * token, Channel * c) {
     char id[256];
     char * name = NULL;
     int error = 0;
+    ContextAddress addr = 0;
+    Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -241,29 +247,32 @@ static void command_get_symbol(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-#if ENABLE_Symbols
-    {
-        Context * ctx = id2ctx(id);
-        if (ctx == NULL || ctx->exited) {
-            error = ERR_INV_CONTEXT;
-        }
-        else {
-            GetSymbolArgs args;
-            strlcpy(args.token, token, sizeof(args.token));
-            context_lock(ctx);
-            args.ctx = ctx;
-            args.name = name;
-            cache_enter(get_symbol_cache_client, c, &args, sizeof(args));
-            return;
-        }
+    ctx = id2ctx(id);
+    if (ctx == NULL || ctx->exited) {
+        error = ERR_INV_CONTEXT;
     }
+    else {
+#if ENABLE_Symbols
+        GetSymbolArgs args;
+        strlcpy(args.token, token, sizeof(args.token));
+        context_lock(ctx);
+        args.ctx = ctx;
+        args.name = name;
+        cache_enter(get_symbol_cache_client, c, &args, sizeof(args));
+        return;
+#elif ENABLE_RCBP_TEST
+        void * ptr = NULL;
+        int cls = 0;
+        if (find_test_symbol(ctx, name, &ptr, &cls) < 0) error = errno;
+        addr = (ContextAddress)ptr;
 #else
-    error = ERR_UNSUPPORTED;
+        error = ERR_UNSUPPORTED;
 #endif
+    }
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, error);
-    write_stringz(&c->out, "null");
+    write_symbol(c, addr);
     write_stream(&c->out, MARKER_EOM);
     loc_free(name);
 }

@@ -36,6 +36,7 @@
 #include "context.h"
 #include "stacktrace.h"
 #include "breakpoints.h"
+#include "test.h"
 #include "symbols.h"
 
 #define STR_POOL_SIZE 1024
@@ -610,6 +611,18 @@ static int identifier(char * name, Value * v) {
             return sym_class;
         }
     }
+#elif ENABLE_RCBP_TEST
+    {
+        void * ptr = NULL;
+        int cls = 0;
+        if (find_test_symbol(expression_context, name, &ptr, &cls) >= 0) {
+            v->type_class = TYPE_CLASS_CARDINAL;
+            set_ctx_word_value(v, (ContextAddress)ptr);
+            return cls;
+        }
+    }
+#else
+    errno = ERR_SYM_NOT_FOUND;
 #endif
     return SYM_CLASS_UNKNOWN;
 }
@@ -1215,8 +1228,8 @@ static void unary_expression(int mode, Value * v) {
 }
 
 static void cast_expression(int mode, Value * v) {
-    if (text_sy == '(') {
 #if ENABLE_Symbols
+    if (text_sy == '(') {
         Symbol * type = NULL;
         int type_class = TYPE_CLASS_UNKNOWN;
         ContextAddress type_size = 0;
@@ -1326,13 +1339,10 @@ static void cast_expression(int mode, Value * v) {
             error(ERR_INV_EXPRESSION, "Invalid type cast: illegal destination type");
             break;
         }
-#else
-    error(ERR_UNSUPPORTED, "Symbols service not available");
+        return;
+    }
 #endif
-    }
-    else {
-        unary_expression(mode, v);
-    }
+    unary_expression(mode, v);
 }
 
 static void multiplicative_expression(int mode, Value * v) {

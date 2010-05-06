@@ -135,6 +135,7 @@ int find_test_symbol(Context * ctx, char * name, void ** addr, int * sym_class) 
         }
         if (*addr != NULL) return 0;
     }
+    errno = ERR_SYM_NOT_FOUND;
     return -1;
 }
 
