@@ -58,6 +58,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/utime.h>
+#include <stdio.h>
 #include <io.h>
 
 #if defined(_MSC_VER)
@@ -123,12 +124,15 @@ extern void usleep(useconds_t useconds);
 
 #define off_t __int64
 #define lseek _lseeki64
-extern int truncate(const char * path, int64_t size);
-extern int ftruncate(int f, int64_t size);
+extern int truncate(const char * path, off_t size);
+extern int ftruncate(int f, off_t size);
+
+#if defined(_MSC_VER)
 #define utimbuf _utimbuf
 #define utime   _utime
 #define futime  _futime
 #define snprintf _snprintf
+#endif
 
 extern int getuid(void);
 extern int geteuid(void);
