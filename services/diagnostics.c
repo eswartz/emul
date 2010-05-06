@@ -239,7 +239,6 @@ static void command_get_symbol(char * token, Channel * c) {
     char * name = NULL;
     int error = 0;
     ContextAddress addr = 0;
-    Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -247,28 +246,35 @@ static void command_get_symbol(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    ctx = id2ctx(id);
-    if (ctx == NULL || ctx->exited) {
-        error = ERR_INV_CONTEXT;
-    }
-    else {
+#if ENABLE_DebugContext
+    {
+        Context *ctx = id2ctx(id);
+        if (ctx == NULL || ctx->exited) {
+            error = ERR_INV_CONTEXT;
+        }
+        else {
 #if ENABLE_Symbols
-        GetSymbolArgs args;
-        strlcpy(args.token, token, sizeof(args.token));
-        context_lock(ctx);
-        args.ctx = ctx;
-        args.name = name;
-        cache_enter(get_symbol_cache_client, c, &args, sizeof(args));
-        return;
+            GetSymbolArgs args;
+            strlcpy(args.token, token, sizeof(args.token));
+            context_lock(ctx);
+            args.ctx = ctx;
+            args.name = name;
+            cache_enter(get_symbol_cache_client, c, &args, sizeof(args));
+            return;
 #elif ENABLE_RCBP_TEST
-        void * ptr = NULL;
-        int cls = 0;
-        if (find_test_symbol(ctx, name, &ptr, &cls) < 0) error = errno;
-        addr = (ContextAddress)ptr;
+            void * ptr = NULL;
+            int cls = 0;
+            if (find_test_symbol(ctx, name, &ptr, &cls) < 0) error = errno;
+            addr = (ContextAddress)ptr;
 #else
-        error = ERR_UNSUPPORTED;
+            error = ERR_UNSUPPORTED;
 #endif
+        }
     }
+#else
+    error = ERR_UNSUPPORTED;
+#endif
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, error);
