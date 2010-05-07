@@ -291,8 +291,10 @@ public class LLVMGenerator {
 		}
 		// TODO
 		for (Collection<ISymbol> instanceList : stmt.bodyToInstanceMap().values()) {
-			for (ISymbol instance : instanceList)
-				generateGlobalExpr(stmt, (IAstTypedExpr) instance.getDefinition());
+			for (ISymbol instance : instanceList) {
+				if (!instance.getType().isGeneric())
+					generateGlobalExpr(stmt, (IAstTypedExpr) instance.getDefinition());
+			}
 		}
 	}
 
@@ -363,7 +365,7 @@ public class LLVMGenerator {
 	 * @throws ASTException 
 	 */
 	private void generateGlobalCode(ISymbol symbol, IAstCodeExpr expr) throws ASTException {
-		if (expr.isMacro())
+		if (expr.isMacro() || expr.getType().isGeneric())
 			return;
 		
 		ensureTypes(expr);

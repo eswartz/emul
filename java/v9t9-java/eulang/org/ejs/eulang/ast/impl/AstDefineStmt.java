@@ -376,10 +376,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	
 
 	public ISymbol registerInstance(IAstTypedExpr body, IAstTypedExpr expansion, ISymbol expansionSym) {
-		//if (type == null || !type.isGeneric()) {
-		//	throw new IllegalArgumentException();
-		//}
-		
 		List<ISymbol> list = instanceTypeMap.get(body.getType());
 		if (list == null) {
 			list = new ArrayList<ISymbol>();
@@ -416,8 +412,10 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 			list.addAll(alist);
 		}
 		for (List<ISymbol> alist : instanceTypeMap.values()) {
-			for (ISymbol sym : alist)
-				list.add((IAstTypedExpr) sym.getDefinition());
+			for (ISymbol sym : alist) {
+				//if (!sym.getType().isGeneric())
+					list.add((IAstTypedExpr) sym.getDefinition());
+			}
 		}
 		return list;
 	}

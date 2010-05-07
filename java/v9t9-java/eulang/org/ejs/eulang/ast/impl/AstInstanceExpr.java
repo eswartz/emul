@@ -155,7 +155,8 @@ public class AstInstanceExpr extends AstType implements IAstInstanceExpr {
 			LLType[] types = new LLType[exprs.nodeCount()];
 			int idx = 0;
 			for (IAstTypedExpr expr : exprs.list()) {
-				types[idx++] = expr.getType();
+				LLType aType = expr.getType();
+				types[idx++] = aType;
 			}
 			LLInstanceType type = typeEngine.getInstanceType(symbolExpr.getSymbol(), types);
 			

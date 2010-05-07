@@ -247,6 +247,17 @@ public class ExpandAST {
 			}
 		}
 		
+		boolean allGeneric = true;
+		for (IAstTypedExpr expr : instanceExpr.getExprs().list()) {
+			if (expr.getType() != null && !expr.getType().isGeneric()) {
+				allGeneric = false;
+				break;
+			}
+		}
+		
+		if (allGeneric) {
+			//return instanceExpr;
+		}
 		ISymbol instanceSymbol = defineStmt.getInstanceForParameters(
 				typeEngine, body.getType(), instanceExpr.getExprs().list());
 		
@@ -298,7 +309,7 @@ public class ExpandAST {
 		LLType[] types = new LLType[varSymbols.length];
 		int index = 0;
 		for (IAstTypedExpr expr : instanceExprs) {
-			if (true||!(expr.getType() instanceof LLGenericType)) {
+			if (true) {
 				ISymbol vsymbol = varSymbols[index];
 				typeReplacementMap.put(vsymbol.getType(), expr.getType());
 				

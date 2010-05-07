@@ -92,16 +92,28 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		
 		IAstStmt returns = stmtList != null ? stmtList.getLast() : null;
 		
-		LLCodeType protoType = getProtoType(typeEngine, returns);
+		boolean hasRetType = false;
+		LLType retType;
+		if (returns instanceof ITyped) {
+			retType = ((ITyped)returns).getType();
+			hasRetType = true;
+		} else {
+			retType = null;
+		}
+		
+		LLCodeType protoType = getProtoType(typeEngine, retType);
 		
 		if (canInferTypeFrom(this) /*&& getType().isComplete()*/) {
 			newType = (LLCodeType) getType();
-			if (returns instanceof ITyped 
-					&& ((ITyped) returns).getType() != null
-					&& ((ITyped) returns).getType().isMoreComplete(newType.getRetType())) {
-				LLType[] types = newType.getTypes();
-				types[0] = ((ITyped) returns).getType();
-				newType = (LLCodeType) newType.updateTypes(typeEngine, types);
+			if (retType != null
+					&& retType.isMoreComplete(newType.getRetType())) {
+				if (true || (!hasRetType && newType.getRetType() == null) || retType.isCompatibleWith(newType.getRetType())) {
+					LLType[] types = newType.getTypes();
+					types[0] = retType;
+					newType = (LLCodeType) newType.updateTypes(typeEngine, types);
+				} else if (hasRetType && newType.getRetType() != null) {
+					throw new TypeException(this, "incompatible return type and final expression type: " + newType.getRetType() + " != " + retType);
+				}
 			}
 		}
 		if (newType == null || protoType.isMoreComplete(newType)) {
@@ -129,7 +141,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		return changed;
 	}
 
-	private LLCodeType getProtoType(TypeEngine typeEngine, IAstStmt returns) {
+	private LLCodeType getProtoType(TypeEngine typeEngine, LLType retType) {
 		LLCodeType protoType = null;
 		
 		LLType[] infArgTypes = new LLType[proto.getArgCount()];
@@ -142,15 +154,17 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		}
 		
 		LLType infRetType = proto.returnType().getType();
-		if (infRetType == null || !infRetType.isComplete()) {
+		if (proto.returnType() == null /* infRetType == null || !infRetType.isComplete()*/) {
 			// see what the return statements do
-			if (returns instanceof ITyped) {
-				if (canInferTypeFrom((ITyped) returns)) {
-					infRetType = ((ITyped)returns).getType(); 
+			/*
+			if (retType instanceof ITyped) {
+				if (canInferTypeFrom((ITyped) retType)) {
+					infRetType = ((ITyped)retType).getType(); 
 				}
 			} else {
 				infRetType = typeEngine.VOID;
-			}
+			}*/
+			infRetType = retType;
 		}
 		
 		protoType = typeEngine.getCodeType(infRetType, infArgTypes);

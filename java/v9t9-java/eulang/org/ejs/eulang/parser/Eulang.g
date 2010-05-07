@@ -80,6 +80,7 @@ tokens {
   INITLIST;
   
   INSTANCE;
+  GENERIC;
 }
 
 @header {
@@ -258,6 +259,7 @@ arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
 typeAtom : idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
      | idOrScopeRef -> ^(TYPE idOrScopeRef)  
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
+     | LESS_GREATER -> ^(TYPE GENERIC)
   ;
 codestmtlist:  codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
     | -> ^(STMTLIST) 
@@ -541,7 +543,7 @@ fieldIdRef : ID (COMMA ID)* -> ^(ALLOC ID)+ ;
 //LBRACE_LPAREN : '{(';
 //LBRACE_STAR : '{*';
 //LBRACE_STAR_LPAREN : '{*(';
-LBRACE_LESS : '{<';
+//LBRACE_LESS : '{<';
 
 FORWARD : 'forward';
 STATIC : 'static';
@@ -591,6 +593,8 @@ PERIOD : '.';
 PLUSPLUS : '++';
 MINUSMINUS : '--';
 
+LESS_GREATER : '<>';
+
 POINTS : '->';
 BAR_BAR : '||';
 
@@ -618,7 +622,7 @@ IN : 'in';
 GOTO: 'goto';
 FALSE: 'false';
 TRUE: 'true';
-NIL: ' nil';
+NIL: 'nil';
 
 WITH: 'with';
 AS: 'as';

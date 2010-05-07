@@ -1954,17 +1954,17 @@ public class GenerateAST {
 
 		int idx = 1;
 		IAstNodeList<IAstSymbolExpr> typeVars = null;
+		// initial guess
 		boolean generic = tree.getChildCount() == 3;
 		
 		pushScope(new LocalScope(currentScope));
 		try {	
 			if (generic) {
-				// get type vars into a scope
+				// get type vars into the scope
 				typeVars = new AstNodeList<IAstSymbolExpr>(IAstSymbolExpr.class);
 				for (Tree kid : iter(tree.getChild(1))) {
 					IAstSymbolExpr typeVar = createSymbol(kid);
 					typeVars.add(typeVar);
-					//typeVar.getSymbol().setTemporary(true);
 					typeVar.setType(new LLGenericType(typeVar.getSymbol()));
 					typeVar.getSymbol().setDefinition(typeVar);
 				}

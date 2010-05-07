@@ -1235,7 +1235,7 @@ public class TestTypes extends BaseParserTest {
 		IAstModule mod = doFrontend(
 				"neg = [T] code (x:T) { -x };\n"+
 				"testGenericFuncs1a = code (x:Int=>Int) {\n"+
-				"  neg(x);\n"+
+				"  neg(x);\n"+	// no explicit <>
 				"};\n"+
 				"");
 		sanityTest(mod);
@@ -1248,12 +1248,44 @@ public class TestTypes extends BaseParserTest {
 		IAstModule mod = doFrontend(
 				"neg = [T] code (x:T) { -x };\n"+
 				"testGenericFuncs1b = code (x:Int=>Int) {\n"+
-				"  neg<Int>(x);\n"+
+				"  neg<Int>(x);\n"+	// explicit <>
 				"};\n"+
 				"");
 		sanityTest(mod);
 		doGenerate(mod);
 	}
+	
+	@Test 
+	public void testGenericFuncs2() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		IAstModule mod = doFrontend(
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List<T>^;\n" +	
+				"};\n" + 
+				"newList = [T] code ( => List<T>) { nil };\n "+
+				"listAdd = [T] code (list:List<T>^; x:T) { new:=newList(); list.next=new; list.node=x; list; };\n"+
+				"intList = code (x:Int=>Int) {\n"+
+				"  a:=newList();\n"+
+				"  a= listAdd(a, 10);\n"+
+				"};\n"+
+	
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLDataType data = (LLDataType) alloc.getType();
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+	
 	@Test 
 	public void testGenericTypes3a() throws Exception {
 		dumpTypeInfer = true;
@@ -1263,13 +1295,13 @@ public class TestTypes extends BaseParserTest {
 				"        node:T;\n"+
 				"        next:List<T>^;\n" +	
 				"};\n" + 
-				"listNextNext = [T] code (list:List<T>) { list.next.next };\n"+
+				"listNextNext = [T] code (list:List<T>) { list.next.next.node };\n"+
 				"intList = code (x:Int=>Int) {\n"+
 				"  a,b:List<Int>;\n"+
 				"  a.node=x;\n"+
 				"  a.next=&b;\n"+
 				"  b.next=&a;\n"+
-				"  listNextNext(a);\n"+
+				"  listNextNext<Int>(a);\n"+
 				"};\n"+
 	
 				"");

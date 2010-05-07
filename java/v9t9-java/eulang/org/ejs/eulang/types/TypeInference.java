@@ -441,7 +441,8 @@ public class TypeInference {
 
 		try {
 			instantiationSet.add(site);
-			if (site.getType() != null && (!expandedType.isGeneric() && body.getType().isGeneric())) {
+			if (site.getType() != null && expandedType.getBasicType() != BasicType.VOID
+					&&(expandedType.isMoreComplete(body.getType()))) {
 				return doInstantiateGeneric(site, define, expandedType, body);
 			} else {
 				return false;
@@ -524,7 +525,7 @@ public class TypeInference {
 			return;
 		if (currentType.isGeneric())
 			expansionMap.put(currentType, expandedType);
-		if (currentType instanceof LLAggregateType && expandedType != null) {
+		if (currentType instanceof LLAggregateType && expandedType instanceof LLAggregateType) {
 			LLType[] types = ((LLAggregateType) currentType).getTypes();
 			LLType[] expandedTypes = ((LLAggregateType) expandedType).getTypes();
 			for (int i = 0; i < types.length; i++) {
