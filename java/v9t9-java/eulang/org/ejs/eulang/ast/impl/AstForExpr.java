@@ -21,14 +21,18 @@ import org.ejs.eulang.types.TypeException;
 public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 
 	private IAstNodeList<IAstSymbolExpr> symExprs;
-
+	private IAstTypedExpr byExpr;
+	
 	/**
 	 * @param scope
 	 * @param expr
 	 * @param body
 	 */
-	public AstForExpr(IScope scope, IAstNodeList<IAstSymbolExpr> symExprs, IAstTypedExpr expr, IAstTypedExpr body) {
+	public AstForExpr(IScope scope, IAstNodeList<IAstSymbolExpr> symExprs,
+			IAstTypedExpr byExpr,
+			IAstTypedExpr expr, IAstTypedExpr body) {
 		super(scope, expr, body);
+		setByExpr(byExpr);
 		setSymbolExprs(symExprs);
 	}
 
@@ -47,9 +51,17 @@ public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 	public IAstForExpr copy(IAstNode c) {
 		return (IAstForExpr) fixupLoop(new AstForExpr(getScope().newInstance(getCopyScope(c)),
 				doCopy(getSymbolExprs(), c),
+				doCopy(getByExpr(),c),
 				 doCopy(getExpr(), c), doCopy(getBody(), c)));
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstBodyLoopExpr#getChildren()
+	 */
+	@Override
+	public IAstNode[] getChildren() {
+		return new IAstNode[] { symExprs, byExpr, expr, body };
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstForExpr#getSymbolExprs()
@@ -68,6 +80,21 @@ public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstForExpr#getByExpr()
+	 */
+	@Override
+	public IAstTypedExpr getByExpr() {
+		return byExpr;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstForExpr#setByExpr(org.ejs.eulang.ast.IAstTypedExpr)
+	 */
+	@Override
+	public void setByExpr(IAstTypedExpr byExpr) {
+		this.byExpr = reparent(this.byExpr, byExpr);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstBodyLoopExpr#replaceChild(org.ejs.eulang.ast.IAstNode, org.ejs.eulang.ast.IAstNode)
 	 */
 	@SuppressWarnings("unchecked")
@@ -75,6 +102,8 @@ public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (existing == symExprs)
 			setSymbolExprs((IAstNodeList<IAstSymbolExpr>) another);
+		else if (existing == byExpr)
+			setByExpr((IAstTypedExpr) another);
 		else
 			super.replaceChild(existing, another);
 	}
@@ -104,6 +133,8 @@ public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 						changed = true;
 					}
 				}
+				
+				changed |= updateType(byExpr, iterType);
 			}
 		}
 		

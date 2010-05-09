@@ -9,6 +9,9 @@ package org.ejs.eulang.ast;
 public interface IAstForExpr extends IAstTestBodyLoopExpr {
 	 IAstForExpr copy(IAstNode copyParent);
 	 
+	 IAstTypedExpr getByExpr();
+	 void setByExpr(IAstTypedExpr byExpr);
+	 
 	 IAstNodeList<IAstSymbolExpr> getSymbolExprs();
 	 void setSymbolExprs(IAstNodeList<IAstSymbolExpr> expr);
 }

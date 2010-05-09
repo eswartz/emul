@@ -324,13 +324,18 @@ whileDo : WHILE rhsExpr DO codeStmtExpr   -> ^(WHILE rhsExpr codeStmtExpr)
 repeat : REPEAT rhsExpr DO codeStmt         -> ^(REPEAT rhsExpr codeStmt)
   ; 
 
-forIter : FOR forIds atId? IN rhsExpr DO codeStmt       -> ^(FOR ^(LIST forIds) atId? rhsExpr codeStmt)
+forIter : FOR forIds forMovement? IN rhsExpr DO codeStmt       -> ^(FOR ^(LIST forIds) forMovement? rhsExpr codeStmt)
   ; 
 
 forIds : ID (AND ID)* -> ID+ ;
 
+forMovement : atId | stepping ;
+
+stepping : BY rhsExpr -> ^(BY rhsExpr); 
+
 atId : AT ID    -> ^(AT ID) 
   ;
+  
   
 breakStmt : BREAK rhsExpr ->  ^(BREAK rhsExpr)
   ; 
@@ -610,6 +615,7 @@ WHEN : 'when';
 UNTIL : 'until';
 BREAK : 'break';
 REPEAT : 'repeat';
+BY : 'by';
 
 //RETURN : 'return';
 CODE : 'code';

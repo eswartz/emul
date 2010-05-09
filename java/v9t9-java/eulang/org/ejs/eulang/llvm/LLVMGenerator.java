@@ -21,6 +21,7 @@ import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.ITarget;
+import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
@@ -43,12 +44,14 @@ import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDoWhileExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
+import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstForExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstInitListExpr;
 import org.ejs.eulang.ast.IAstInitNodeExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstLoopStmt;
@@ -552,6 +555,7 @@ public class LLVMGenerator {
 		private LLVariableOp inductor;
 
 		private LLVariableOp[] inductors;
+		public LLOperand stepping;
 
 		LoopContext(IScope scope, ISymbol bodyLabel, ISymbol enterLabel, ISymbol exitLabel, LLVariableOp loopVal) {
 			this.scope = scope;
@@ -615,12 +619,17 @@ public class LLVMGenerator {
 	 */
 	private LLOperand generateNil(IAstTypedExpr expr) throws ASTException {
 		LLType type = expr.getType();
+		return generateNil(type);
+	}
+
+	private LLOperand generateNil(LLType type)
+			throws ASTException {
 		if (type.getBasicType() == BasicType.BOOL || type.getBasicType() == BasicType.INTEGRAL)
-			return new LLConstOp(expr.getType(), 0);
+			return new LLConstOp(type, 0);
 		else if (type.getBasicType() == BasicType.FLOATING)
-			return new LLConstOp(expr.getType(), 0.0);
+			return new LLConstOp(type, 0.0);
 		else
-			throw new ASTException(expr, "unhandled generating nil for: " + type);
+			throw new ASTException(null, "unhandled generating nil for: " + type);
 	}
 
 	/**
@@ -698,11 +707,39 @@ public class LLVMGenerator {
 		ISymbol iterableSym = context.scope.addTemporary("iterable");
 		iterableSym.setType(forExpr.getExpr().getType());
 
+		boolean isDown = false;
+		IAstTypedExpr by = forExpr.getByExpr();
+		if (by instanceof IAstUnaryExpr && ((IAstUnaryExpr) by).getOp() == IUnaryOperation.CAST) {
+			by = ((IAstUnaryExpr) by).getExpr();
+		}
+		if (by instanceof IAstUnaryExpr && ((IAstUnaryExpr) by).getOp() == IUnaryOperation.NEG) {
+			isDown = true;
+		}
+		else if (by instanceof IAstIntLitExpr && ((IAstIntLitExpr) by).getValue() < 0) {
+			isDown = true;
+		} 
+		else if (by instanceof IAstFloatLitExpr && ((IAstFloatLitExpr) by).getValue() < 0) {
+			isDown = true;
+		}
+		
+		context.stepping = generateTypedExpr(forExpr.getByExpr());
+		
+		
 		// make a var for the count(s)
 		context.inductors = new LLVariableOp[forExpr.getSymbolExprs().nodeCount()];
 		int idx = 0;
 		for (IAstSymbolExpr symExpr : forExpr.getSymbolExprs().list()) {
-			context.inductors[idx++] = makeLocalStorage(symExpr.getSymbol(), null, generateNil(symExpr));
+			LLOperand init;
+			if (!isDown) {
+				init = new LLConstOp(symExpr.getType(), idx);
+			} else {
+				// vals initialized as <total>-1, <total>-2, ...
+				init = currentTarget.newTemp(symExpr.getType());
+				currentTarget.emit(new LLBinaryInstr("sub", init, init.getType(), iterSource, 
+						new LLConstOp(init.getType(), idx + 1)));
+			}
+			context.inductors[idx++] = makeLocalStorage(symExpr.getSymbol(), null, 
+					init);
 		}
 		
 		// now do the test before the body
@@ -710,12 +747,20 @@ public class LLVMGenerator {
 		currentTarget.addBlock(context.enterLabel);
 		
 		LLType indVarType = context.inductors[0].getVariable().getSymbol().getType();
-		LLOperand current = currentTarget.load(indVarType, context.inductors[0]);
 		
-		LLOperand ret = currentTarget.newTemp(typeEngine.BOOL);
-		
-		// ends when the first inductor is >= the limit
-		currentTarget.emit(new LLBinaryInstr("icmp uge", ret, indVarType, current, iterSource));
+		LLOperand ret;
+
+		if (!isDown) {
+			// ends when the first inductor is >= the limit
+			LLOperand current = currentTarget.load(indVarType, context.inductors[0]);
+			ret = currentTarget.newTemp(typeEngine.BOOL);
+			currentTarget.emit(new LLBinaryInstr("icmp uge", ret, indVarType, current, iterSource));
+		} else {
+			// ends when the last inductor is < 0
+			LLOperand current = currentTarget.load(indVarType, context.inductors[context.inductors.length - 1]);
+			ret = currentTarget.newTemp(typeEngine.BOOL);
+			currentTarget.emit(new LLBinaryInstr("icmp slt", ret, indVarType, current, generateNil(indVarType)));
+		}
 		currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, ret, new LLSymbolOp(context.exitLabel), new LLSymbolOp(context.bodyLabel)));
 		
 		currentTarget.addBlock(context.bodyLabel);
@@ -771,13 +816,12 @@ public class LLVMGenerator {
 			IAstForExpr stmt) throws ASTException {
 		// at the end of the loop, increment the counters
 		
-		int stepBy = context.inductors.length;
 		for (int idx = 0; idx < context.inductors.length; idx++) {
 			LLType indVarType = context.inductors[idx].getVariable().getSymbol().getType();
 			LLOperand current = currentTarget.load(indVarType, context.inductors[idx]);
 			LLOperand varTemp = currentTarget.newTemp(indVarType);
 			currentTarget.emit(new LLBinaryInstr(IOperation.ADD.getLLVMName(), varTemp, indVarType, current, 
-					new LLConstOp(indVarType, stepBy)));
+					context.stepping));
 			currentTarget.store(indVarType, varTemp, context.inductors[idx]);
 		}
 		

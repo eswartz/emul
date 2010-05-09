@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import junit.framework.AssertionFailedError;
 
@@ -669,6 +671,12 @@ public class BaseParserTest {
 	protected void assertFoundInOptimizedText(String string, LLVMGenerator generator) {
 		String opt = generator.getOptimizedText();
 		assertTrue(string + " in\n"+ opt, opt.replaceAll("\\s+","").contains(string.replaceAll("\\s+","")));
+		
+	}
+	protected void assertMatchText(String regex, String theText) {
+		Matcher matcher = Pattern.compile(regex).matcher(theText);
+		if (!matcher.find())
+			fail(regex + " in\n"+ theText);
 		
 	}
 	

@@ -82,19 +82,88 @@ public class TestLoopGenerator extends BaseParserTest {
     	
     	LLVMGenerator gen = doGenerate(mod);
     	assertEquals(1, gen.getModule().getSymbolCount());
+    	assertFoundInUnoptimizedText("icmp uge", gen);
+    	assertMatchText("add %Int .*, 1", gen.getUnoptimizedText());
+    }
+    @Test
+    public void testForCountDown() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpLLVMGen =true;
+    	IAstModule mod = doFrontend(
+    			"testForCountDown = code (cnt) {\n" +
+    			"   s := 1.0;\n"+
+    			"	for x by -1 in cnt do s = s + x;\n"+
+    			"};\n");
+    	
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertEquals(1, gen.getModule().getSymbolCount());
+    	assertFoundInUnoptimizedText("icmp slt", gen);
+    	assertMatchText("sub %Int .*, 1", gen.getUnoptimizedText());
     }
     @Test
     public void testForCount2() throws Exception {
     	dumpTypeInfer = true;
     	dumpLLVMGen =true;
     	IAstModule mod = doFrontend(
-    			"testForCount = code (cnt) {\n" +
+    			"testForCount2 = code (cnt) {\n" +
     			"   x := 1.0;\n"+
     			"	for x and y in cnt do :x = :x + x * y;\n"+
     			"};\n");
     	
     	LLVMGenerator gen = doGenerate(mod);
     	assertEquals(1, gen.getModule().getSymbolCount());
+    	assertFoundInUnoptimizedText("icmp uge", gen);
+    	assertMatchText("add %Int .*, 2", gen.getUnoptimizedText());
+    	assertMatchText("store %Int 0,.*\\.x", gen.getUnoptimizedText());
+    	assertMatchText("store %Int 1,.*\\.y", gen.getUnoptimizedText());
+    }
+    @Test
+    public void testForCount3() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpLLVMGen =true;
+    	IAstModule mod = doFrontend(
+    			"testForCount2 = code (cnt) {\n" +
+    			"   x := 1.0;\n"+
+    			"	for x and y by 10 in cnt do :x = :x + x * y;\n"+
+    			"};\n");
+    	
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertEquals(1, gen.getModule().getSymbolCount());
+    	assertMatchText("store %Int 0,.*\\.x", gen.getUnoptimizedText());
+    	assertMatchText("store %Int 1,.*\\.y", gen.getUnoptimizedText());
+    	assertFoundInUnoptimizedText("icmp uge", gen);
+    	assertMatchText("add %Int .*, 10", gen.getUnoptimizedText());
+    }
+    @Test
+    public void testForCountDown2() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpLLVMGen =true;
+    	IAstModule mod = doFrontend(
+    			"testForCountDown2 = code (cnt) {\n" +
+    			"   x := 1;\n"+
+    			"	for x and y by -1 in cnt do :x = :x + x * y;\n"+
+    			"};\n");
+    	
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertEquals(1, gen.getModule().getSymbolCount());
+    	assertMatchText("icmp slt .*, 0", gen.getUnoptimizedText());
+    	assertMatchText("add %Int %1.*, %", gen.getUnoptimizedText());	// late temp
+    }
+    
+    @Test
+    public void testForCountDown3() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpLLVMGen =true;
+    	IAstModule mod = doFrontend(
+    			"testForCountDown3 = code (cnt, step) {\n" +
+    			"   s := 1.;\n"+
+    			"	for x and y by -step in cnt do s = s + x * y;\n"+
+    			"};\n");
+    	
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertEquals(1, gen.getModule().getSymbolCount());
+    	assertMatchText("icmp slt .*, 0", gen.getUnoptimizedText());
+    	assertMatchText("add %Int %1.*, %2", gen.getUnoptimizedText());		// late temp (not %0!)
     }
 }
 

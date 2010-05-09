@@ -8,8 +8,6 @@ import java.util.Arrays;
 import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.llvm.ops.LLOperand;
 
-import v9t9.emulator.runtime.TerminatedException;
-
 /**
  * @author ejs
  *

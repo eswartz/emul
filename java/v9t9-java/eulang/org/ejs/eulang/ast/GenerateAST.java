@@ -871,16 +871,26 @@ public class GenerateAST {
 				sym.getSymbol().setDefinition(sym);
 				symExprs.add(sym);
 			}
+			getSource(tree, symExprs);
+			int count = symExprs.nodeCount();
 			
 			int idx = 1;
-			if (tree.getChild(idx).getType() == EulangParser.AT) 
+			IAstTypedExpr byExpr = null;
+			if (tree.getChild(idx).getType() == EulangParser.AT) { 
 				unhandled(tree.getChild(idx));
+			} else if (tree.getChild(idx).getType() == EulangParser.BY) {
+				byExpr = checkConstruct(tree.getChild(idx++).getChild(0), IAstTypedExpr.class);
+			}
+			if (byExpr == null) {
+				byExpr = new AstIntLitExpr("" + count, typeEngine.INT, count);
+				getEmptySource(tree.getChild(idx), byExpr);
+			}
 			
 			IAstTypedExpr expr = checkConstruct(tree.getChild(idx++),
 					IAstTypedExpr.class);
 			IAstTypedExpr body = checkConstruct(tree.getChild(idx++),
 					IAstTypedExpr.class);
-			IAstForExpr forEx= new AstForExpr(currentScope, symExprs, 
+			IAstForExpr forEx= new AstForExpr(currentScope, symExprs, byExpr,
 					expr, body);
 			getSource(tree, forEx);
 			return forEx;
