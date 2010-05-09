@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -191,14 +190,6 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		if (getBasicType() != target.getBasicType())
 			return false;
 
-		if (target instanceof LLUpType) {
-			//IAstType realType = ((LLUpType) target).getRealType();
-			//if (realType != null && realType.getType().equals(this))
-			//	return true;
-			LLType realType = target.getSubType();
-			if (realType != null && realType.equals(this))
-				return true;
-		}
 		if (target instanceof LLInstanceType) {
 			LLInstanceType instanceType = ((LLInstanceType) target);
 			if (instanceType.getSymbol().getName().equals(getName()))

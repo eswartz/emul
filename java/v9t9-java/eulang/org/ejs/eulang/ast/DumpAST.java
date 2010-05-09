@@ -57,7 +57,7 @@ public class DumpAST extends AstVisitor {
 			str.println("=== Symbols:");
 			for (ISymbol symbol : symbols) {
 				printIndent(null); str.print("=== ");
-				str.println(symbol);
+				str.println(symbol + " " + symbol.getNumber());
 			}
 		} else {
 			str.println("=== (no symbols)"); 

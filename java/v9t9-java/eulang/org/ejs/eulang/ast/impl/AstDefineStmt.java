@@ -16,9 +16,7 @@ import java.util.Set;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
-import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.ExpandAST;
-import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
@@ -26,11 +24,8 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceType;
-import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 

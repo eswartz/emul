@@ -4,11 +4,14 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 import junit.framework.AssertionFailedError;
 
@@ -36,7 +39,6 @@ import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.junit.Test;
 
 /**
@@ -805,7 +807,6 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
     	
 
-    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testTuples1");
     	doTypeInfer(mod);
     	typeTest(mod, false);
     	

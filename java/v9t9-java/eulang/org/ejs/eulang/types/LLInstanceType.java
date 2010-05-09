@@ -4,14 +4,8 @@
 package org.ejs.eulang.types;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.ast.impl.AstNode;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**

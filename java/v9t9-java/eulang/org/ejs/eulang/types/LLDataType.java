@@ -4,14 +4,10 @@
 package org.ejs.eulang.types;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
-import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.impl.AstNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -225,26 +221,10 @@ public class LLDataType extends BaseLLAggregateType {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.types.LLType#isComplete()
-	 */
-	/*
-	@Override
-	public boolean isComplete() {
-		for (int idx = 0; idx < getCount(); idx++) {
-			LLType type = getType(idx);
-			if (type == null || !type.isComplete())
-				return false;
-		}
-		return true;
-	}*/
-	
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLAggregateType#isCompatibleWith(org.ejs.eulang.types.LLType)
 	 */
 	@Override
 	public boolean isCompatibleWith(LLType target) {
-		if (target instanceof LLUpType)
-			return target.isCompatibleWith(this);
 		if (target instanceof LLInstanceType)
 			return target.isCompatibleWith(this);
 		if (target instanceof LLSymbolType)

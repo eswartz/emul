@@ -6,7 +6,6 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDataType;
-import org.ejs.eulang.ast.IAstInstanceExpr;
 import org.ejs.eulang.ast.IAstNamedType;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;

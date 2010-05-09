@@ -9,12 +9,10 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -142,26 +140,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 	 */
 	public static LLType getConcreteType(TypeEngine typeEngine, ITyped child, LLType newType) {
 		
-		// don't put uprefs in normal code
-    	if (newType instanceof LLUpType) {
-    		/*
-    		IAstType actual = ((LLUpType) newType).getRealType();
-    		if(actual == null)
-    			return newType;
-    		IAstNode n = null;
-    		if (child != null) {
-				n = child instanceof IAstNode ? (IAstNode) child : ((ISymbol) child).getDefinition();
-	    		while (n != null) {
-	    			if (n == actual)
-	    				break;
-	    			n = n.getParent();
-	    		}
-    		}
-    		if (n == null)
-    			return actual.getType();
-    			*/
-    		return newType.getSubType();
-    	} else if (newType instanceof LLSymbolType) {
+		if (newType instanceof LLSymbolType) {
     		return ((LLSymbolType)newType).getRealType(typeEngine);
     	} else if (newType instanceof LLPointerType) {
     		LLType sub = getConcreteType(typeEngine, child, newType.getSubType());

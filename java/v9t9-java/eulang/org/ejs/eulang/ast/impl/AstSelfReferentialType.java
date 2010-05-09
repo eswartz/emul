@@ -6,14 +6,13 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDataType;
-import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSelfReferentialType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 

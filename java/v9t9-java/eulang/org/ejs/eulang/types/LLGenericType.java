@@ -16,9 +16,14 @@ public class LLGenericType extends BaseLLType {
 	
 	private final ISymbol symbol;
 
+	private static String getUniqueSymbolName(ISymbol symbol) {
+		if (symbol == null)
+			return null;
+		return symbol.getUniqueName() + "." + symbol.getNumber();
+	}
 	public LLGenericType(ISymbol symbol) {
-		super(symbol != null ? symbol.getUniqueName() : null, 0, 
-				symbol != null ? symbol.getUniqueName() : null, 
+		super(getUniqueSymbolName(symbol), 0, 
+				getUniqueSymbolName(symbol), 
 						BasicType.GENERIC, null);
 		this.symbol = symbol;
 	}

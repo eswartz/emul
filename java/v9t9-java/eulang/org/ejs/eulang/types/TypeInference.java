@@ -20,7 +20,6 @@ import org.ejs.eulang.ast.ExpandAST;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
-import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSelfReferentialType;
@@ -29,7 +28,6 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.ast.impl.AstNode;
-import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 

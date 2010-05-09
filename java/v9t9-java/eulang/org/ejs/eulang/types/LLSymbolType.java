@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.types;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;

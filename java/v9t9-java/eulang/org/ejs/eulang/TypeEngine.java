@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstLitExpr;
@@ -36,10 +35,8 @@ import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLStaticField;
-import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.LLVoidType;
 
 /**
@@ -593,7 +590,8 @@ public class TypeEngine {
 	}
 
 	private String getUniqueTypeName(LLType type) {
-		return type != null ? (type.getLLVMType() + (type instanceof LLUpType ? "^" : "") + (type.isGeneric() ? "<g>" : "")) : "<u>";
+		String name = type != null ? (type.getLLVMType() + (type.isGeneric() ? "<g>" : "")) : "<u>";
+		return name;
 	}
 	
 	public LLDataType getDataType(ISymbol symbol, List<LLType> fieldTypes) {

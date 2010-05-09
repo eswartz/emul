@@ -1319,6 +1319,7 @@ public class TestTypes extends BaseParserTest {
 		dumpTypeInfer = true;
 		dumpTreeize = true;
 		
+		// bug: the 'T' in different scopes was being treated strangely
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
 				"        node:T;\n"+

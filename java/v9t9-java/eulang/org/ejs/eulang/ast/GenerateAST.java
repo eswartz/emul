@@ -17,7 +17,6 @@ import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAddrOfExpr;
-import org.ejs.eulang.ast.impl.AstAddrRefExpr;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstAllocTupleStmt;
 import org.ejs.eulang.ast.impl.AstArgDef;
@@ -744,7 +743,7 @@ public class GenerateAST {
 
 			if (symbol == null) {
 				symbol = currentScope.add(nameNode);
-				System.out.println("Creating " + symbol);
+				System.out.println("Creating " + symbol + " #" + symbol.getNumber());
 			}
 		}
 		return null;
@@ -1256,7 +1255,7 @@ public class GenerateAST {
 
 		if (symbol == null) {
 			symbol = currentScope.add(nameNode);
-			System.out.println("Creating " + symbol);
+			System.out.println("Creating " + symbol + " #" + symbol.getNumber());
 		}
 
 		IAstSymbolExpr symbolExpr = new AstSymbolExpr(symbol);
@@ -1537,14 +1536,6 @@ public class GenerateAST {
 		}*/
 
 		return idExpr;
-	}
-
-	/**
-	 * @param expr
-	 * @return
-	 */
-	private boolean isCast(IAstTypedExpr expr) {
-		return expr instanceof IAstUnaryExpr && ((IAstUnaryExpr) expr).getOp() == IOperation.CAST;
 	}
 
 	public IAstBinExpr constructBinaryExpr(Tree tree) throws GenerateException {

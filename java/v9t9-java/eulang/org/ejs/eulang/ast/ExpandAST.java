@@ -40,6 +40,8 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public class ExpandAST {
+
+	public static boolean DUMP = false;
 	
 	private static final LLType ALL_GENERICS = new LLGenericType(null);
 	private final TypeEngine typeEngine;
@@ -70,7 +72,7 @@ public class ExpandAST {
 			
 		//typeEngine.replaceTypes(globalTypeReplacementMap);	
 		
-		if (changed) {
+		if (changed && DUMP) {
 			System.out.println("after expansion:");
 			DumpAST dump = new DumpAST(System.out);
 			root.accept(dump);
@@ -92,7 +94,7 @@ public class ExpandAST {
 		// handle any leftover types
 		AstNode.replaceTypesInTree(typeEngine, root, globalTypeReplacementMap);
 		
-		if (changed) {
+		if (changed && DUMP) {
 			System.out.println("after expansion:");
 			DumpAST dump = new DumpAST(System.out);
 			root.accept(dump);
@@ -184,14 +186,11 @@ public class ExpandAST {
 		IAstTypedExpr expansion;
 		if (defineStmt.isGeneric()) {
 			boolean any = false;
-			boolean anyGeneric = true;
 			boolean allGeneric = true;
 			for (IAstTypedExpr expr : instanceExpr.getExprs().list()) {
 				any = true;
 				if (expr.getType() != null && !expr.getType().isGeneric()) {
 					allGeneric = false;
-				} else {
-					anyGeneric = true;
 				}
 			}
 			
@@ -214,17 +213,14 @@ public class ExpandAST {
 		symbolExpr.setSourceRef(instanceExpr.getSourceRef());
 		
 		IAstTypedExpr ret = null;
-		IAstNode parent;
 		try {
 			// try plain AST node
-			parent = instanceExpr.getParent();
 			instanceExpr.getParent().replaceChild(instanceExpr, symbolExpr);
 			ret = symbolExpr;
 		} catch (ClassCastException e) {
 			// it's probably a type
 			IAstType typeExpr = new AstNamedType(symbolExpr.getType(), symbolExpr);
 			typeExpr.setSourceRef(instanceExpr.getSourceRef());
-			parent = instanceExpr.getParent();
 			instanceExpr.getParent().replaceChild(instanceExpr, typeExpr);
 			ret = typeExpr;
 		}
@@ -249,17 +245,23 @@ public class ExpandAST {
 
 	public ISymbol expandInstance(AstDefineStmt define, ISymbol symbol, IAstTypedExpr body, ISymbol[] varSymbols, List<IAstTypedExpr> instanceExprs)
 			throws ASTException {
+		DumpAST dump = new DumpAST(System.out);
+		
 		IAstTypedExpr instance = (IAstTypedExpr) body.copy(null);
 
 		String paramStr = "";
+		int idx = 0;
 		for (IAstTypedExpr expr : instanceExprs)
-			paramStr += DumpAST.dumpString(expr)+ " ";
-		System.out.println("Before expanding generic of " + symbol + " for type " + body.getType() + " with " + paramStr + ":");
-		DumpAST dump = new DumpAST(System.out);
-		instance.accept(dump);
-
+			paramStr += (idx <varSymbols.length ? varSymbols[idx].getName() + "." + varSymbols[idx].getNumber() : "?") + "="+ DumpAST.dumpString(expr)+ " ";
+		
+		if (DUMP) {
+			System.out.println("Before expanding generic of " + symbol + " for type " + body.getType() + " with " + paramStr + ":");
+			instance.accept(dump);
+		}
+		
 		Map<LLType, LLType> typeReplacementMap = new HashMap<LLType, LLType>();
 		LLType[] types = new LLType[varSymbols.length];
+		
 		int index = 0;
 		for (IAstTypedExpr expr : instanceExprs) {
 			if (true) {
@@ -288,10 +290,10 @@ public class ExpandAST {
 			((IAstDataType) instance).setTypeName(instanceSymbol);
 		}
 		
-		System.out.println("before expanding types/symbols:");
-		dump = new DumpAST(System.out);
-		instance.accept(dump);
-		
+		if (DUMP) {
+			System.out.println("before expanding types/symbols:");
+			instance.accept(dump);
+		}
 		
 		AstNode.replaceSymbols(typeEngine, instance, theSymbol.getScope(), Collections.singletonMap(theSymbol.getNumber(), instanceSymbol));
 		AstNode.replaceTypesInTree(typeEngine, instance, Collections.singletonMap(body.getType(), instance.getType()));
@@ -306,19 +308,20 @@ public class ExpandAST {
 		
 		typeReplacementMap.put(instanceType, new LLSymbolType(instanceSymbol));
 
-		System.out.println("before replacing LLSymbolType:");
-		dump = new DumpAST(System.out);
-		instance.accept(dump);
-		
+		if (DUMP) {
+			System.out.println("before replacing LLSymbolType:");
+			instance.accept(dump);
+		}
 		AstNode.replaceTypesInTree(typeEngine, instance, typeReplacementMap);
 
 		// this type may be different now 
 		instanceSymbol.setType(instance.getType());
 		
-		System.out.println("After expanding generic of " + symbol + " as " + instanceSymbol + ":");
-		dump = new DumpAST(System.out);
-		instance.accept(dump);
-		
+		if (DUMP) {
+			System.out.println("After expanding generic of " + symbol + " as " + instanceSymbol + ":");
+			dump = new DumpAST(System.out);
+			instance.accept(dump);
+		}
 		instance.uniquifyIds();
 
 		return instanceSymbol;

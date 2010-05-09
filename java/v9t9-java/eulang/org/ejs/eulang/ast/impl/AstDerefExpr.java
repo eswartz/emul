@@ -12,7 +12,6 @@ import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -138,11 +137,8 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 			
 			child = typeEngine.getBaseType(child);
 			
-			if (child instanceof LLUpType && child.getSubType() != null)
-				child = child.getSubType();
 			if (child instanceof LLSymbolType) {
-				//if (((LLSymbolType)child).getSymbol().getType() != null)
-					child = ((LLSymbolType)child).getRealType(typeEngine);
+				child = ((LLSymbolType)child).getRealType(typeEngine);
 			}
 			
 			if (child instanceof LLCodeType) {

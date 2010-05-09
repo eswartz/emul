@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.types;
 
-import org.ejs.eulang.TypeEngine;
-
 /**
  * @author ejs
  *

@@ -6,7 +6,6 @@ import static junit.framework.Assert.assertTrue;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstSymbolExpr;

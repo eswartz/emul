@@ -16,7 +16,6 @@ import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -213,14 +212,6 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 */
 	public LLType getDataType(TypeEngine typeEngine) {
 		LLType exprType = expr.getType();
-		if (exprType instanceof LLUpType) {
-			exprType = exprType.getSubType();
-			/*
-			IAstType upType = ((LLUpType) exprType).getRealType();
-			if (upType != null)
-				exprType = upType.getType();
-				*/
-		}
 		if (exprType instanceof LLInstanceType) {
 			//LLType realType = typeEngine.getInstanceToRealTypeMap().get(exprType);
 			//if (realType != null)
