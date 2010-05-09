@@ -3,6 +3,8 @@
  */
 package v9t9.tools.asm.assembler;
 
+import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+
 
 /**
  * @author Ed
@@ -24,4 +26,22 @@ public class HLInstruction extends AssemblerInstruction {
 		throw new ResolveException(this, null, "Cannot resolve high-level instruction");
 	}
 	
+	public static HLInstruction create(int inst) {
+		HLInstruction instr = new HLInstruction();
+		instr.setInst(inst);
+		return instr;
+	}
+	public static HLInstruction create(int inst, AssemblerOperand op1) {
+		HLInstruction instr = new HLInstruction();
+		instr.setInst(inst);
+		instr.setOp1(op1);
+		return instr;
+	}
+	public static HLInstruction create(int inst, AssemblerOperand op1, AssemblerOperand op2) {
+		HLInstruction instr = new HLInstruction();
+		instr.setInst(inst);
+		instr.setOp1(op1);
+		instr.setOp2(op2);
+		return instr;
+	}
 }

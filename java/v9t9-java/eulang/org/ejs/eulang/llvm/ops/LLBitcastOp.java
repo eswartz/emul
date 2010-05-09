@@ -10,14 +10,10 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class LLBitcastOp implements LLOperand {
+public class LLBitcastOp extends BaseLLOperand {
 	private final LLOperand val;
-	private LLType castTo;
-	/**
-	 * 
-	 */
 	public LLBitcastOp(LLType castTo, LLOperand val) {
-		this.castTo = castTo;
+		super(castTo);
 		this.val = val;
 	}
 	
@@ -30,28 +26,14 @@ public class LLBitcastOp implements LLOperand {
 	}
 	
 	@Override
-	public LLType getType() {
-		return castTo;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.ops.LLOperand#setType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		this.castTo = type;
-	}
-	
-	@Override
 	public String toString() {
-		return "bitcast (" + val.getType().getLLVMName() + " " + val.toString() + " to " + castTo.getLLVMName() + ")" ;
+		return "bitcast (" + val.getType().getLLVMName() + " " + val.toString() + " to " + type.getLLVMName() + ")" ;
 	}
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
+		int result = super.hashCode();
 		result = prime * result + ((val == null) ? 0 : val.hashCode());
-		result = prime * result + ((castTo == null) ? 0 : castTo.hashCode());
 		return result;
 	}
 	@Override
@@ -67,11 +49,6 @@ public class LLBitcastOp implements LLOperand {
 			if (other.val != null)
 				return false;
 		} else if (!val.equals(other.val))
-			return false;
-		if (castTo == null) {
-			if (other.castTo != null)
-				return false;
-		} else if (!castTo.equals(other.castTo))
 			return false;
 		return true;
 	}

@@ -10,9 +10,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import v9t9.engine.cpu.Instruction;
-import v9t9.tools.asm.common.Block;
-import v9t9.tools.asm.common.HighLevelInstruction;
-import v9t9.tools.asm.common.Label;
 import v9t9.tools.asm.common.MemoryRanges;
 
 public interface IDecompileInfo {

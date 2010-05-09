@@ -25,9 +25,11 @@ import org.ejs.eulang.types.TypeException;
 public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	private ISymbol symbol;
 	private ISymbol origSymbol;
+	private boolean owns;
 	
-    public AstSymbolExpr(ISymbol symbol) {
+    public AstSymbolExpr(boolean owns, ISymbol symbol) {
         super();
+        this.owns = owns;
         setSymbol(symbol);
     }
     public AstSymbolExpr(ISymbol symbol, boolean isAddress) {
@@ -39,6 +41,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     	this.origSymbol = other.origSymbol;
     	this.symbol = other.symbol;
     	this.type = other.type;
+    	this.owns = other.owns;
     }
 
     /* (non-Javadoc)
@@ -57,6 +60,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		final int prime = 31;
 		int result = 22;
 		result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
+		//result = prime * result + (owns ? 13942: 0);
 		return result;
 	}
 
@@ -73,6 +77,8 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 				return false;
 		} else if (!symbol.equals(other.symbol))
 			return false;
+		//if (owns != other.owns)
+		//	return false;
 		return true;
 	}
 
@@ -81,9 +87,23 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 */
 	@Override
 	public String toString() {
-		return typedString(symbol.getUniqueName());
+		return typedString(symbol.getUniqueName()) + (owns ? " [owned]" : "");
 	}
     	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#isOwned()
+	 */
+	@Override
+	public boolean isOwned() {
+		return owns;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstSymbolExpr#setOwned(boolean)
+	 */
+	@Override
+	public void setOwned(boolean owned) {
+		this.owns = owned;
+	}
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstNode#getChildren()
      */
@@ -147,7 +167,8 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     public void setType(LLType type) {
     	super.setType(type);
     	if (type != null && !(symbol.getDefinition() instanceof IAstDefineStmt)) {
-    		symbol.setType(type);
+    		if (symbol.getType() == null || owns)
+    			symbol.setType(type);
     	}
     }
     
@@ -198,8 +219,20 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 			
 			changed |= updateType(this, selectedBody.getType());
 		} else if (symbol.getDefinition() instanceof ITyped) {
-			// The symbol's expr should have a type. 
-			changed = inferTypesFromChildren(new ITyped[] { (ITyped) symbol.getDefinition() });
+			if (!owns) {
+				// honor the real type if it differs, but help if we have better info
+				if (getType() != null && symbol.getType() != null && !getType().equals(symbol.getType())) {
+					if (getType().isMoreComplete(symbol.getType()))
+						symbol.setType(getType());
+					else
+						setType(symbol.getType());
+					changed = true;
+				}
+			}
+			else {
+				// The symbol's expr should have a type. 
+				changed = inferTypesFromChildren(new ITyped[] { (ITyped) symbol.getDefinition() });
+			}
 		}
 		
 		return changed;

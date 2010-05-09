@@ -43,6 +43,7 @@ import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDoWhileExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
+import org.ejs.eulang.ast.IAstForExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
@@ -549,7 +550,9 @@ public class LLVMGenerator {
 		private final IScope scope;
 
 		private LLVariableOp inductor;
-		
+
+		private LLVariableOp[] inductors;
+
 		LoopContext(IScope scope, ISymbol bodyLabel, ISymbol enterLabel, ISymbol exitLabel, LLVariableOp loopVal) {
 			this.scope = scope;
 			this.bodyLabel = bodyLabel;
@@ -612,8 +615,10 @@ public class LLVMGenerator {
 	 */
 	private LLOperand generateNil(IAstTypedExpr expr) throws ASTException {
 		LLType type = expr.getType();
-		if (type.getBasicType() == BasicType.BOOL || type.getBasicType() == BasicType.INTEGRAL || type.getBasicType() == BasicType.FLOATING)
+		if (type.getBasicType() == BasicType.BOOL || type.getBasicType() == BasicType.INTEGRAL)
 			return new LLConstOp(expr.getType(), 0);
+		else if (type.getBasicType() == BasicType.FLOATING)
+			return new LLConstOp(expr.getType(), 0.0);
 		else
 			throw new ASTException(expr, "unhandled generating nil for: " + type);
 	}
@@ -667,9 +672,55 @@ public class LLVMGenerator {
 			
 			context.bodyLabel = context.enterLabel;
 			
+		} else if (stmt instanceof IAstForExpr) {
+			// get the expr
+			IAstForExpr forExpr = (IAstForExpr)stmt;
+			
+			generateForCountLoopHeader(context, forExpr);
+			
 		} else {
 			unhandled(stmt);
 		}
+	}
+
+	/**
+	 * Generate a counting for loop, where we go from 0 to some limit,
+	 * feeding values into one or more inductor variables
+	 * @param context
+	 * @param forExpr
+	 * @throws ASTException 
+	 */
+	private void generateForCountLoopHeader(LoopContext context,
+			IAstForExpr forExpr) throws ASTException {
+		LLOperand iterSource = generateTypedExpr(forExpr.getExpr());
+		
+		// make a var to hold it
+		ISymbol iterableSym = context.scope.addTemporary("iterable");
+		iterableSym.setType(forExpr.getExpr().getType());
+
+		// make a var for the count(s)
+		context.inductors = new LLVariableOp[forExpr.getSymbolExprs().nodeCount()];
+		int idx = 0;
+		for (IAstSymbolExpr symExpr : forExpr.getSymbolExprs().list()) {
+			context.inductors[idx++] = makeLocalStorage(symExpr.getSymbol(), null, generateNil(symExpr));
+		}
+		
+		// now do the test before the body
+		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
+		currentTarget.addBlock(context.enterLabel);
+		
+		LLType indVarType = context.inductors[0].getVariable().getSymbol().getType();
+		LLOperand current = currentTarget.load(indVarType, context.inductors[0]);
+		
+		LLOperand ret = currentTarget.newTemp(typeEngine.BOOL);
+		
+		// ends when the first inductor is >= the limit
+		currentTarget.emit(new LLBinaryInstr("icmp uge", ret, indVarType, current, iterSource));
+		currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, ret, new LLSymbolOp(context.exitLabel), new LLSymbolOp(context.bodyLabel)));
+		
+		currentTarget.addBlock(context.bodyLabel);
+		
+		
 	}
 
 	/**
@@ -682,10 +733,10 @@ public class LLVMGenerator {
 			
 			LLType indVarType = context.inductor.getVariable().getSymbol().getType();
 			LLOperand current = currentTarget.load(indVarType, context.inductor);
-			LLOperand minusOne = currentTarget.newTemp(indVarType);
-			currentTarget.emit(new LLBinaryInstr(IOperation.SUB.getLLVMName(), minusOne, indVarType, current, 
+			LLOperand varTemp = currentTarget.newTemp(indVarType);
+			currentTarget.emit(new LLBinaryInstr(IOperation.SUB.getLLVMName(), varTemp, indVarType, current, 
 					new LLConstOp(indVarType, 1)));
-			currentTarget.store(indVarType, minusOne, context.inductor);
+			currentTarget.store(indVarType, varTemp, context.inductor);
 
 			// and jump back
 			
@@ -703,10 +754,38 @@ public class LLVMGenerator {
 			currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, test, new LLSymbolOp(context.bodyLabel), new LLSymbolOp(context.exitLabel)));
 			
 			currentTarget.addBlock(context.exitLabel);
+		} else if (stmt instanceof IAstForExpr) {
+			generateForCountLoopFooter(context, (IAstForExpr) stmt);
 		} else {
 			unhandled(stmt);
 		}
 		
+	}
+
+	/**
+	 * @param context
+	 * @param stmt
+	 * @throws ASTException 
+	 */
+	private void generateForCountLoopFooter(LoopContext context,
+			IAstForExpr stmt) throws ASTException {
+		// at the end of the loop, increment the counters
+		
+		int stepBy = context.inductors.length;
+		for (int idx = 0; idx < context.inductors.length; idx++) {
+			LLType indVarType = context.inductors[idx].getVariable().getSymbol().getType();
+			LLOperand current = currentTarget.load(indVarType, context.inductors[idx]);
+			LLOperand varTemp = currentTarget.newTemp(indVarType);
+			currentTarget.emit(new LLBinaryInstr(IOperation.ADD.getLLVMName(), varTemp, indVarType, current, 
+					new LLConstOp(indVarType, stepBy)));
+			currentTarget.store(indVarType, varTemp, context.inductors[idx]);
+		}
+		
+		// and jump back
+		
+		currentTarget.emit(new LLUncondBranchInstr(new LLSymbolOp(context.enterLabel)));
+		
+		currentTarget.addBlock(context.exitLabel);		
 	}
 
 	private void generateLabelStmt(IAstLabelStmt stmt) {

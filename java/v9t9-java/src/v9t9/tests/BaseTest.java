@@ -27,8 +27,8 @@ import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.StandardInstructionParserStage;
 import v9t9.tools.asm.assembler.Symbol;
 import v9t9.tools.asm.assembler.directive.Directive;
-import v9t9.tools.asm.common.Block;
-import v9t9.tools.asm.common.HighLevelInstruction;
+import v9t9.tools.asm.decomp.Block;
+import v9t9.tools.asm.decomp.HighLevelInstruction;
 import v9t9.tools.asm.decomp.Routine;
 
 public abstract class BaseTest extends TestCase {

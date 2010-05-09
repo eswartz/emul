@@ -8,8 +8,6 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstTestBodyLoopExpr extends IAstLoopStmt {
+public interface IAstTestBodyLoopExpr extends IAstBodyLoopExpr {
 	 
-	IAstTypedExpr getExpr();
-	void setExpr(IAstTypedExpr expr);
 }

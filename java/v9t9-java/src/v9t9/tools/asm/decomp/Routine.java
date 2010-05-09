@@ -11,9 +11,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
-import v9t9.tools.asm.common.Block;
-import v9t9.tools.asm.common.HighLevelInstruction;
-import v9t9.tools.asm.common.Label;
 
 /**
  * A routine, i.e. an entry point which is branched to with a return
@@ -125,4 +122,5 @@ public abstract class Routine implements Comparable<Routine> {
 		}
 		return pcSet;
 	}
+
 }

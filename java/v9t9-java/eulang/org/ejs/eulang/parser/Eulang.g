@@ -324,7 +324,7 @@ whileDo : WHILE rhsExpr DO codeStmtExpr   -> ^(WHILE rhsExpr codeStmtExpr)
 repeat : REPEAT rhsExpr DO codeStmt         -> ^(REPEAT rhsExpr codeStmt)
   ; 
 
-forIter : FOR forIds atId? IN rhsExpr DO codeStmt       -> ^(FOR forIds atId? rhsExpr codeStmt)
+forIter : FOR forIds atId? IN rhsExpr DO codeStmt       -> ^(FOR ^(LIST forIds) atId? rhsExpr codeStmt)
   ; 
 
 forIds : ID (AND ID)* -> ID+ ;

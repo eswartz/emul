@@ -66,7 +66,7 @@ import org.ejs.eulang.symbols.ISymbol;
  */
 public class TypeInference {
 
-	public static boolean DUMP = true;
+	public static boolean DUMP = false;
 	
 	private final TypeEngine typeEngine;
 	private List<Message> messages;

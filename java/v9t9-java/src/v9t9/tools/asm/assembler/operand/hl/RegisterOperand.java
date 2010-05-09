@@ -46,5 +46,10 @@ public class RegisterOperand implements AssemblerOperand {
 	public AssemblerOperand getReg() {
 		return reg;
 	}
+	
+	public boolean isReg(int reg) {
+		return getReg() instanceof NumberOperand &&
+		((NumberOperand) getReg()).getValue() == reg;
+	}
 
 }

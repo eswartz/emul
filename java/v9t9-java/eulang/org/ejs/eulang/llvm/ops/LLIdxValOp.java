@@ -3,34 +3,22 @@
  */
 package org.ejs.eulang.llvm.ops;
 
-import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
  *
  */
-public class LLIdxValOp implements LLOperand {
+public class LLIdxValOp extends BaseLLOperand {
 	private final LLOperand val;
 	private int idx;
 	/**
 	 * 
 	 */
 	public LLIdxValOp(int idx, LLOperand val) {
+		super(val.getType());
 		this.idx = idx;
 		this.val = val;
 	}
-	@Override
-	public LLType getType() {
-		return val.getType();
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.ops.LLOperand#setType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		val.setType(type);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.ops.LLOperand#isConstant()
 	 */
@@ -47,6 +35,7 @@ public class LLIdxValOp implements LLOperand {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + idx;
 		result = prime * result + ((val == null) ? 0 : val.hashCode());
 		return result;
 	}
@@ -59,6 +48,8 @@ public class LLIdxValOp implements LLOperand {
 		if (getClass() != obj.getClass())
 			return false;
 		LLIdxValOp other = (LLIdxValOp) obj;
+		if (idx != other.idx)
+			return false;
 		if (val == null) {
 			if (other.val != null)
 				return false;
@@ -66,6 +57,5 @@ public class LLIdxValOp implements LLOperand {
 			return false;
 		return true;
 	}
-	
 	
 }

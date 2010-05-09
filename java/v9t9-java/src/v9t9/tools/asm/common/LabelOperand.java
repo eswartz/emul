@@ -11,6 +11,7 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
+import v9t9.tools.asm.decomp.Label;
 
 public class LabelOperand implements Operand {
 

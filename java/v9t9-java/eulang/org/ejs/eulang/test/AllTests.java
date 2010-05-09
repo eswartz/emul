@@ -26,6 +26,8 @@ public class AllTests {
 		suite.addTest(new JUnit4TestAdapter(TestLoopGenerator.class));
 		suite.addTest(new JUnit4TestAdapter(TestScopes.class));
 		suite.addTest(new JUnit4TestAdapter(TestTypes.class));
+		suite.addTest(new JUnit4TestAdapter(Test9900Locals.class));
+		suite.addTest(new JUnit4TestAdapter(Test9900InstrGen.class));
 		//$JUnit-END$
 		return suite;
 	}

@@ -11,7 +11,7 @@ import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.tools.asm.common.HighLevelInstruction;
+import v9t9.tools.asm.decomp.HighLevelInstruction;
 
 /** This represents a compiled block of code. */
 public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListener {

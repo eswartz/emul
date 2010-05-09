@@ -12,6 +12,7 @@ import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.llvm.ILLVariable;
 import org.ejs.eulang.llvm.LLAttrType;
 import org.ejs.eulang.llvm.LLBlock;
@@ -337,5 +338,41 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	@Override
 	public TypeEngine getTypeEngine() {
 		return generator.getTypeEngine();
+	}
+
+
+
+
+	/**
+	 * @return
+	 */
+	public IScope getScope() {
+		return localScope;
+	}
+
+
+
+
+	/**
+	 * @return
+	 */
+	public ISymbol getName() {
+		return symbol;
+	}
+	
+	public void accept(ILLCodeVisitor visitor) {
+		try {
+			if (visitor.enterCode(this)) {
+
+				for (LLBlock block : blocks) {
+					block.accept(visitor);
+				}
+				
+			}
+			
+			visitor.exitCode(this);
+		} catch (ILLCodeVisitor.Terminate e) {
+			
+		}
 	}
 }

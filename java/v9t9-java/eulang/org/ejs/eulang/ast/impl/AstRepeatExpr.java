@@ -9,6 +9,7 @@ import org.ejs.eulang.ast.IAstRepeatExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeException;
 
 /**
  * @author ejs

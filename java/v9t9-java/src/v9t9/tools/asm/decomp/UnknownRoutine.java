@@ -3,7 +3,6 @@
  */
 package v9t9.tools.asm.decomp;
 
-import v9t9.tools.asm.common.HighLevelInstruction;
 
 /**
  * @author ejs

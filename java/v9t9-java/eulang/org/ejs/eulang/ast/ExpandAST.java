@@ -208,7 +208,7 @@ public class ExpandAST {
 		}
 		
 		
-		IAstSymbolExpr symbolExpr = new AstSymbolExpr(instanceSymbol);
+		IAstSymbolExpr symbolExpr = new AstSymbolExpr(true, instanceSymbol);
 		//symbolExpr.setOriginalSymbol(defineStmt.getSymbol());
 		symbolExpr.setSourceRef(instanceExpr.getSourceRef());
 		

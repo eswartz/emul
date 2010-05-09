@@ -21,10 +21,7 @@ import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.asm.common.Block;
 import v9t9.tools.asm.common.DataWordListOperand;
-import v9t9.tools.asm.common.HighLevelInstruction;
-import v9t9.tools.asm.common.Label;
 import v9t9.tools.asm.common.LabelOperand;
 
 /**

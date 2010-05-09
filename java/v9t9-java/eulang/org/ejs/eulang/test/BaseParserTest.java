@@ -52,6 +52,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ext.CommandLauncher;
+import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.optimize.SimplifyTree;
 import org.ejs.eulang.parser.EulangLexer;
@@ -116,7 +117,9 @@ public class BaseParserTest {
 				}
 	        		
 	        }
-	        System.out.println("\n"+str);
+	        if (dumpTreeize)
+	        	System.out.println("\n"+str);
+	        
 	        if (!expectError) {
 				if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
 					System.err.println(errors);
@@ -126,7 +129,7 @@ public class BaseParserTest {
 				assertTrue(parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0);
 			}
 	        
-	        if (prog != null && prog.getTree() != null)
+	        if (dumpTreeize && prog != null && prog.getTree() != null)
 	        	System.out.println(((Tree) prog.getTree()).toStringTree());
 	
 	        if (!expectError)
@@ -157,6 +160,7 @@ public class BaseParserTest {
 	protected boolean dumpTreeize;
 	protected boolean dumpTypeInfer;
 	protected boolean dumpExpand;
+	protected boolean dumpFrontend;
 
 	protected IAstNode treeize(String method, String pmethod, String str, boolean expectError) throws Exception {
     	ParserRuleReturnScope ret = parse(method, str, false);
@@ -392,7 +396,8 @@ public class BaseParserTest {
 			}
 			
 		}
-		System.out.println("Simplification: " + passes + " passes");
+		if (dumpSimplify)
+			System.out.println("Simplification: " + passes + " passes");
 	}
 	
 	
@@ -463,10 +468,12 @@ public class BaseParserTest {
 			expanded = (IAstModule) doExpand(mod);
 	    	sanityTest(expanded);
 	    	
-	    	System.err.flush();
-			System.out.println("After doExpand:");
-			expanded.accept(dump);
-			
+	    	if (dumpFrontend) {
+		    	System.err.flush();
+				System.out.println("After doExpand:");
+				expanded.accept(dump);
+	    	}
+	    	
 	    	doTypeInfer(expanded);
 	    	doSimplify(expanded);
 	    	
@@ -479,10 +486,12 @@ public class BaseParserTest {
 		if (failed)
     		fail("expected errors");
 
-    	System.err.flush();
-		System.out.println("After frontend:");
-		dump = new DumpAST(System.out);
-		expanded.accept(dump);
+		if (dumpFrontend) {
+	    	System.err.flush();
+			System.out.println("After frontend:");
+			dump = new DumpAST(System.out);
+			expanded.accept(dump);
+		}
 		
     	return expanded;
 	}
@@ -495,6 +504,7 @@ public class BaseParserTest {
 	}
 
 	protected ITarget v9t9Target = new TargetV9t9(typeEngine);
+	protected boolean dumpLLVMGen;
 	/**
 	 * Generate the module, expecting no errors.
 	 * @param mod
@@ -541,7 +551,8 @@ public class BaseParserTest {
 
 		generator.setIntermediateFile(llfile);
 		generator.setOptimizedFile(llOptFile);
-		System.out.println(text);
+		if (dumpLLVMGen)
+			System.out.println(text);
 		
 		String opts = "-preverify -domtree -verify //-lowersetjmp -raiseallocs -simplifycfg -domtree -domfrontier -mem2reg -globalopt "
 				+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
@@ -620,7 +631,8 @@ public class BaseParserTest {
 		ByteArrayOutputStream err = new ByteArrayOutputStream();
 		int exit = launcher.waitAndRead(out, err);
 		
-		System.out.print(out.toString());
+		if (dumpLLVMGen)
+			System.out.print(out.toString());
 		System.err.print(err.toString());
 		assertEquals(out.toString() + err.toString(), 0, exit);
 		return out.toString();
@@ -670,4 +682,13 @@ public class BaseParserTest {
 		return def.getMatchingBodyExpr(null);
 	}
 
+	protected LLModule getModule(String text) throws Exception {
+		IAstModule mod = doFrontend(text);
+		LLVMGenerator gen = doGenerate(mod);
+		
+		// note: not re-parsing
+		
+		return gen.getModule();
+	}
+	
 }

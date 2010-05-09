@@ -60,7 +60,6 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("AsmInst ");
 		builder.append(InstructionTable.getInstName(inst));
 		if (op1 != null && !(op1 instanceof LLEmptyOperand)) {
 			builder.append(' ');

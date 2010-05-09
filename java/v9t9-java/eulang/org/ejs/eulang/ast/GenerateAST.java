@@ -36,6 +36,7 @@ import org.ejs.eulang.ast.impl.AstDoWhileExpr;
 import org.ejs.eulang.ast.impl.AstExprStmt;
 import org.ejs.eulang.ast.impl.AstFieldExpr;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
+import org.ejs.eulang.ast.impl.AstForExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
 import org.ejs.eulang.ast.impl.AstIndexExpr;
@@ -172,6 +173,8 @@ public class GenerateAST {
 			throw new UnsupportedOperationException();
 		}
 	}
+
+	public boolean DUMP = false;
 
 	private final Map<CharStream, String> fileMap;
 	private final String defaultFile;
@@ -532,6 +535,8 @@ public class GenerateAST {
 			return constructDoWhile(tree);
 		case EulangParser.BREAK:
 			return constructBreak(tree);
+		case EulangParser.FOR:
+			return constructFor(tree);
 
 		default:
 			unhandled(tree);
@@ -743,7 +748,8 @@ public class GenerateAST {
 
 			if (symbol == null) {
 				symbol = currentScope.add(nameNode);
-				System.out.println("Creating " + symbol + " #" + symbol.getNumber());
+				if (DUMP)
+					System.out.println("Creating " + symbol + " #" + symbol.getNumber());
 			}
 		}
 		return null;
@@ -855,6 +861,34 @@ public class GenerateAST {
 		}
 	}
 
+	private IAstNode constructFor(Tree tree) throws GenerateException {
+		pushScope(new LocalScope(currentScope));
+		try {
+			IAstNodeList<IAstSymbolExpr> symExprs = new AstNodeList<IAstSymbolExpr>(IAstSymbolExpr.class); 
+				
+			for (Tree symtree : iter(tree.getChild(0))) {
+				IAstSymbolExpr sym = createSymbol(symtree);
+				sym.getSymbol().setDefinition(sym);
+				symExprs.add(sym);
+			}
+			
+			int idx = 1;
+			if (tree.getChild(idx).getType() == EulangParser.AT) 
+				unhandled(tree.getChild(idx));
+			
+			IAstTypedExpr expr = checkConstruct(tree.getChild(idx++),
+					IAstTypedExpr.class);
+			IAstTypedExpr body = checkConstruct(tree.getChild(idx++),
+					IAstTypedExpr.class);
+			IAstForExpr forEx= new AstForExpr(currentScope, symExprs, 
+					expr, body);
+			getSource(tree, forEx);
+			return forEx;
+		} finally {
+			popScope(tree);
+		}
+	}
+	
 	private IAstNode constructDoWhile(Tree tree) throws GenerateException {
 		pushScope(new LocalScope(currentScope));
 		try {
@@ -1255,10 +1289,11 @@ public class GenerateAST {
 
 		if (symbol == null) {
 			symbol = currentScope.add(nameNode);
-			System.out.println("Creating " + symbol + " #" + symbol.getNumber());
+			if (DUMP)
+				System.out.println("Creating " + symbol + " #" + symbol.getNumber());
 		}
 
-		IAstSymbolExpr symbolExpr = new AstSymbolExpr(symbol);
+		IAstSymbolExpr symbolExpr = new AstSymbolExpr(true, symbol);
 		symbolExpr.setSourceRef(nameNode.getSourceRef());
 
 		return symbolExpr;
@@ -1396,7 +1431,7 @@ public class GenerateAST {
 				}
 				startScope = symbol.getScope();
 
-				symExpr = new AstSymbolExpr(symbol);
+				symExpr = new AstSymbolExpr(false, symbol);
 				getSource(tree, symExpr);
 				
 				idExpr = symExpr;

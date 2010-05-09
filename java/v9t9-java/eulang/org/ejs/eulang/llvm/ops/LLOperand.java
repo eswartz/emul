@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm.ops;
 
+import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -24,4 +25,8 @@ public interface LLOperand {
 	 * @param type
 	 */
 	void setType(LLType type);
+	/**
+	 * @param visitor
+	 */
+	void accept(ILLCodeVisitor visitor);
 }

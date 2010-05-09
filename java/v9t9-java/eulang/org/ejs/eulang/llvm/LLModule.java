@@ -61,6 +61,37 @@ public class LLModule {
 		}
 		return sb.toString();
 	}
+	
+	/**
+	 * @return the directives
+	 */
+	public List<LLBaseDirective> getDirectives() {
+		return directives;
+	}
+	/**
+	 * @return the externDirectives
+	 */
+	public List<LLBaseDirective> getExternDirectives() {
+		return externDirectives;
+	}
+	/**
+	 * @return the emittedTypes
+	 */
+	public Map<LLType, ISymbol> getEmittedTypes() {
+		return emittedTypes;
+	}
+	/**
+	 * @return the globalScope
+	 */
+	public IScope getGlobalScope() {
+		return globalScope;
+	}
+	/**
+	 * @return the moduleScope
+	 */
+	public IScope getModuleScope() {
+		return moduleScope;
+	}
 
 	/**
 	 * Find or create the symbol that uniquely references this expression

@@ -64,28 +64,10 @@ public class MemoryEntryTest extends TestCase {
         }
         assertTrue(bCaught);
         
-        /* illegal size #2 */
-        bCaught = false;
-        try {
-            ent = new MemoryEntry("error 1", CPU, 1024, 123102, anArea);
-        } catch (Throwable e) {
-            bCaught = true;
-        }
-        assertTrue(bCaught);
-
         /* illegal size for normal entry */
         bCaught = false;
         try {
             ent = new MemoryEntry("error 1", CPU, 1024, -1024, anArea);
-        } catch (Throwable e) {
-            bCaught = true;
-        }
-        assertTrue(bCaught);
-
-        /* null params */
-        bCaught = false;
-        try {
-            ent = new MemoryEntry("error 1", CPU, 1024, 1024, null);
         } catch (Throwable e) {
             bCaught = true;
         }

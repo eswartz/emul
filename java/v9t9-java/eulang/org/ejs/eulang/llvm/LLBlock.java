@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.ejs.eulang.llvm.ILLCodeVisitor.Terminate;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.symbols.ISymbol;
@@ -77,5 +78,22 @@ public class LLBlock {
 	 */
 	public boolean endsWithUncondBranch() {
 		return !instrs.isEmpty() && instrs.get(instrs.size() - 1) instanceof LLUncondBranchInstr;
+	}
+
+	/**
+	 * @param visitor
+	 */
+	public void accept(ILLCodeVisitor visitor) {
+		try {
+			if (visitor.enterBlock(this)) {
+
+				for (LLInstr instr : instrs) {
+					instr.accept(visitor);
+				}
+			}
+			visitor.exitBlock(this);
+		} catch (Terminate e) {
+			
+		}
 	}
 }

@@ -69,6 +69,33 @@ public class TestLoopGenerator extends BaseParserTest {
     	LLVMGenerator gen = doGenerate(mod);
     	assertEquals(1, gen.getModule().getSymbolCount());
     }
+    
+    @Test
+    public void testForCount() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpLLVMGen =true;
+    	IAstModule mod = doFrontend(
+    			"testForCount = code (cnt) {\n" +
+    			"   s := 1.0;\n"+
+    			"	for x in cnt do s = s + x;\n"+
+    			"};\n");
+    	
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertEquals(1, gen.getModule().getSymbolCount());
+    }
+    @Test
+    public void testForCount2() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpLLVMGen =true;
+    	IAstModule mod = doFrontend(
+    			"testForCount = code (cnt) {\n" +
+    			"   x := 1.0;\n"+
+    			"	for x and y in cnt do :x = :x + x * y;\n"+
+    			"};\n");
+    	
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertEquals(1, gen.getModule().getSymbolCount());
+    }
 }
 
 

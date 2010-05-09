@@ -8,8 +8,6 @@ package v9t9.tools.asm.decomp;
 
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.tools.asm.common.Block;
-import v9t9.tools.asm.common.HighLevelInstruction;
 
 public class ContextSwitchRoutine extends Routine {
     private short wp;

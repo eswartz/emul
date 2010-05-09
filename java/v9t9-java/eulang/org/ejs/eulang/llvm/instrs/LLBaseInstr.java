@@ -5,7 +5,10 @@ package org.ejs.eulang.llvm.instrs;
 
 import java.util.Arrays;
 
+import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.llvm.ops.LLOperand;
+
+import v9t9.emulator.runtime.TerminatedException;
 
 /**
  * @author ejs
@@ -122,4 +125,20 @@ public abstract class LLBaseInstr implements LLInstr {
 		return ops;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLInstr#accept(org.ejs.eulang.llvm.ILLCodeVisitor)
+	 */
+	@Override
+	public void accept(ILLCodeVisitor visitor) {
+		try {
+			if (!visitor.enterInstr(this)) {
+				for (LLOperand op : ops) {
+					op.accept(visitor);
+				}
+			}
+			visitor.exitInstr(this);
+		} catch (ILLCodeVisitor.Terminate e) {
+			
+		}
+	}
 }

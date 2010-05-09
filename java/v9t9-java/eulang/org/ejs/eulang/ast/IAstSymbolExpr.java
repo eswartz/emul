@@ -14,6 +14,9 @@ import org.ejs.eulang.symbols.ISymbol;
 public interface IAstSymbolExpr extends IAstTypedExpr {
 	IAstSymbolExpr copy(IAstNode copyParent);
 
+	boolean isOwned();
+	void setOwned(boolean owned);
+	
 	/** Get the symbol referenced */
 	public ISymbol getSymbol();
 
