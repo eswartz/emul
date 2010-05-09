@@ -455,30 +455,43 @@ public class BaseParserTest {
 		&& expr.getType().equals(type);
 	}
 	
-
-	protected IAstModule doFrontend(String text) throws Exception {
-		IAstModule mod = treeize(text);
-    	sanityTest(mod);
-    	
-    	//mod = (IAstModule) doExpand(mod, true, false);
-    	
-    	IAstModule expanded = (IAstModule) doExpand(mod);
-    	sanityTest(expanded);
-    	
-    	System.err.flush();
-		System.out.println("After doExpand:");
+	protected IAstModule doFrontend(IAstModule mod, boolean expectErrors) throws Exception {
 		DumpAST dump = new DumpAST(System.out);
-		expanded.accept(dump);
-		
-    	doTypeInfer(expanded);
-    	doSimplify(expanded);
-    	
+		boolean failed= false;
+		IAstModule expanded = mod;
+		try {
+			expanded = (IAstModule) doExpand(mod);
+	    	sanityTest(expanded);
+	    	
+	    	System.err.flush();
+			System.out.println("After doExpand:");
+			expanded.accept(dump);
+			
+	    	doTypeInfer(expanded);
+	    	doSimplify(expanded);
+	    	
+	    	if (expectErrors)
+	    		failed = true;
+		} catch (AssertionError e) {
+			if (!expectErrors)
+				throw e;
+		}
+		if (failed)
+    		fail("expected errors");
+
     	System.err.flush();
 		System.out.println("After frontend:");
 		dump = new DumpAST(System.out);
 		expanded.accept(dump);
 		
     	return expanded;
+	}
+
+	protected IAstModule doFrontend(String text) throws Exception {
+		IAstModule mod = treeize(text);
+    	sanityTest(mod);
+    	
+    	return doFrontend(mod, false);
 	}
 
 	protected ITarget v9t9Target = new TargetV9t9(typeEngine);

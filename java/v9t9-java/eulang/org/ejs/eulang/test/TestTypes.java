@@ -1259,17 +1259,41 @@ public class TestTypes extends BaseParserTest {
 	}
 	
 	@Test 
+	public void testGenericFuncs2Fail() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		
+		IAstModule mod = treeize(
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List<T>^;\n" +	
+				"};\n" + 
+				"newList = [U] code ( => List<U>^) { nil };\n "+
+				"listAdd = [V] code (list:List<V>^; x:V => List<V>^) { new:=newList<V>(); list.next=new; list.node=x; list; };\n"+
+				"intList = code (x:Int=>Int) {\n"+		// wrong return type, should be error
+				"  a:=newList<Int>();\n"+
+				"  a= listAdd<Int>(a, 10);\n"+
+				"};\n"+
+	
+				"");
+		sanityTest(mod);
+		doFrontend(mod, true);
+	}
+	
+	@Test 
 	public void testGenericFuncs2() throws Exception {
 		dumpTypeInfer = true;
 		dumpTreeize = true;
+		
+		// note: using different letters for type vars to test base case; using same letters is another bug 
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
 				"        node:T;\n"+
 				"        next:List<T>^;\n" +	
 				"};\n" + 
-				"newList = [T] code ( => List<T>^) { nil };\n "+
-				"listAdd = [T] code (list:List<T>^; x:T => List<T>^) { new:=newList<T>(); list.next=new; list.node=x; list; };\n"+
-				"intList = code (x:Int=>Int) {\n"+
+				"newList = [U] code ( => List<U>^) { nil };\n "+
+				"listAdd = [V] code (list:List<V>^; x:V => List<V>^) { new:=newList<V>(); list.next=new; list.node=x; list; };\n"+
+				"intList = code (x:Int) {\n"+
 				"  a:=newList<Int>();\n"+
 				"  a= listAdd<Int>(a, 10);\n"+
 				"};\n"+
@@ -1278,8 +1302,41 @@ public class TestTypes extends BaseParserTest {
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLPointerType dataPtr = (LLPointerType) alloc.getType();
-		LLDataType data = (LLDataType) dataPtr.getSubType();
+		LLPointerType dataPtr = (LLPointerType) getRealType(alloc.getType());
+		LLDataType data = (LLDataType) getRealType(dataPtr.getSubType());
+		assertTrue(data.isComplete() && !data.isGeneric());
+		assertEquals(2, data.getInstanceFields().length);
+		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
+		//LLPointerType dataPtr = typeEngine.getPointerType(data);
+		LLInstanceField nextField = data.getInstanceFields()[1];
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		
+		doGenerate(mod);
+	}
+
+	@Test 
+	public void testGenericFuncs2b() throws Exception {
+		dumpTypeInfer = true;
+		dumpTreeize = true;
+		
+		IAstModule mod = doFrontend(
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List<T>^;\n" +	
+				"};\n" + 
+				"newList = [T] code ( => List<T>^) { nil };\n "+
+				"listAdd = [T] code (list:List<T>^; x:T => List<T>^) { new:=newList<T>(); list.next=new; list.node=x; list; };\n"+
+				"intList = code (x:Int) {\n"+
+				"  a:=newList<Int>();\n"+
+				"  a= listAdd<Int>(a, 10);\n"+
+				"};\n"+
+	
+				"");
+		sanityTest(mod);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		LLPointerType dataPtr = (LLPointerType) getRealType(alloc.getType());
+		LLDataType data = (LLDataType) getRealType(dataPtr.getSubType());
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
@@ -1299,7 +1356,7 @@ public class TestTypes extends BaseParserTest {
 				"        node:T;\n"+
 				"        next:List<T>^;\n" +	
 				"};\n" + 
-				"listNextNext = [T] code (list:List<T> => T) { list.next.next.node };\n"+
+				"listNextNext = [Q] code (list:List<Q> => Q) { list.next.next.node };\n"+
 				"intList = code (x:Int=>Int) {\n"+
 				"  a,b:List<Int>;\n"+
 				"  a.node=x;\n"+
@@ -1328,6 +1385,9 @@ public class TestTypes extends BaseParserTest {
 	 */
 	private LLType getRealType(IAstTypedNode node) {
 		LLType type = node.getType();
+		return getRealType(type);
+	}
+	private LLType getRealType(LLType type) {
 		if (type instanceof LLSymbolType)
 			type = ((LLSymbolType) type).getRealType(typeEngine);
 		return type;

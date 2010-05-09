@@ -9,7 +9,9 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -192,7 +194,31 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		return changed;
 	}
 
-
+	@Override
+	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		LLType thisType = ((IAstTypedNode) this).getType();
+		if (thisType == null || !thisType.isComplete())
+			return;
+		
+		for (int i = symExpr.nodeCount(); i-- > 0; ) {
+			IAstTypedExpr theSymbol = getSymbolExprs().list().get(i);
+			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
+			LLType symType = ((IAstTypedNode) theSymbol).getType();
+			if (symType != null && symType.isComplete()) {
+				if (!thisType.equals(symType)) {
+					throw new TypeException(theSymbol, "cannot reconcile assignment type with context");
+				}
+			}
+			if (theExpr != null) {
+				LLType exprType = ((IAstTypedNode) theExpr).getType();
+				if (exprType != null && exprType.isComplete()) {
+					if (!symType.equals(exprType)) {
+						throw new TypeException(theExpr, "cannot assign expression of this type to symbol");
+					}
+				}
+			}
+		}
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAllocStmt#setExpand(boolean)
 	 */

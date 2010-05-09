@@ -429,7 +429,8 @@ abstract public class AstNode implements IAstNode {
 				if (kid instanceof IAstTypedNode) {
 					LLType kidType = ((IAstTypedNode) kid).getType();
 					if (kidType != null && kidType.isComplete()) {
-						if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
+						//if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
+						if (!thisType.equals(kidType)) {
 							throw new TypeException(kid, "expression's type does not match parent");
 						}
 					}

@@ -251,6 +251,13 @@ public class ExpandAST {
 			throws ASTException {
 		IAstTypedExpr instance = (IAstTypedExpr) body.copy(null);
 
+		String paramStr = "";
+		for (IAstTypedExpr expr : instanceExprs)
+			paramStr += DumpAST.dumpString(expr)+ " ";
+		System.out.println("Before expanding generic of " + symbol + " for type " + body.getType() + " with " + paramStr + ":");
+		DumpAST dump = new DumpAST(System.out);
+		instance.accept(dump);
+
 		Map<LLType, LLType> typeReplacementMap = new HashMap<LLType, LLType>();
 		LLType[] types = new LLType[varSymbols.length];
 		int index = 0;
@@ -282,7 +289,7 @@ public class ExpandAST {
 		}
 		
 		System.out.println("before expanding types/symbols:");
-		DumpAST dump = new DumpAST(System.out);
+		dump = new DumpAST(System.out);
 		instance.accept(dump);
 		
 		
@@ -308,7 +315,8 @@ public class ExpandAST {
 		// this type may be different now 
 		instanceSymbol.setType(instance.getType());
 		
-		System.out.println("after replacing LLSymbolType:");
+		System.out.println("After expanding generic of " + symbol + " as " + instanceSymbol + ":");
+		dump = new DumpAST(System.out);
 		instance.accept(dump);
 		
 		instance.uniquifyIds();

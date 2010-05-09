@@ -482,13 +482,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 			IAstTypedExpr instance = (IAstTypedExpr) instanceSymbol.getDefinition();
 			registerInstance(body, instance, instanceSymbol);
 
-			String paramStr = "";
-			for (IAstTypedExpr expr : instanceParams)
-				paramStr += DumpAST.dumpString(expr)+ " ";
-			System.out.println("After expanding generic of " + symbol + " for type " + bodyType + " with " + paramStr + "as " + instanceSymbol + ":");
-			DumpAST dump = new DumpAST(System.out);
-			instance.accept(dump);
-			
 		}
 		return instanceSymbol;
 	}

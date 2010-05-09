@@ -284,12 +284,20 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		if (thisType == null || !thisType.isComplete())
 			return;
 		
-		for (IAstNode kid : getChildren()) {
-			if (kid instanceof IAstTypedNode) {
-				LLType kidType = ((IAstTypedNode) kid).getType();
-				if (kidType != null && kidType.isComplete()) {
-					if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
-						throw new TypeException(kid, "expression's type does not match parent");
+		for (int i = symExpr.nodeCount(); i-- > 0; ) {
+			IAstSymbolExpr theSymbol = getSymbolExprs().list().get(i);
+			IAstTypedExpr theExpr = getDefaultFor(i);
+			LLType symType = ((IAstTypedNode) theSymbol).getType();
+			if (symType != null && symType.isComplete()) {
+				if (!thisType.equals(symType)) {
+					throw new TypeException(theSymbol, "cannot deduce allocation type");
+				}
+			}
+			if (theExpr != null) {
+				LLType exprType = ((IAstTypedNode) theExpr).getType();
+				if (exprType != null && exprType.isComplete()) {
+					if (!symType.equals(exprType)) {
+						throw new TypeException(theExpr, "cannot assign expression of this type to symbol");
 					}
 				}
 			}
