@@ -7,7 +7,9 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -20,10 +22,17 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 	private IAstType baseType;
 
 	/**
+	 * @param typeEngine 
 	 * @param type
 	 */
-	public AstPointerType(IAstType baseType) {
+	public AstPointerType(TypeEngine typeEngine, IAstType baseType) {
 		setBaseType(baseType);
+		if (baseType.getType() != null)
+			setType(typeEngine.getPointerType(baseType.getType()));
+	}
+	protected AstPointerType(IAstType baseType, LLType type) {
+		setBaseType(baseType);
+		setType(type);
 	}
 
 	/* (non-Javadoc)
@@ -31,7 +40,7 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 	 */
 	@Override
 	public IAstPointerType copy(IAstNode copyParent) {
-		return fixup(this, new AstPointerType(doCopy(baseType, copyParent)));
+		return fixup(this, new AstPointerType(doCopy(baseType, copyParent), getType()));
 	}
 	
 	@Override
@@ -67,6 +76,16 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 	@Override
 	public String toString() {
 		return baseType.toString() + "^";
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		assert !(type instanceof LLDataType);
+		super.setType(type);
 	}
 	
 	/* (non-Javadoc)

@@ -17,6 +17,7 @@ import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
@@ -25,6 +26,7 @@ import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
@@ -507,6 +509,7 @@ public class TestTypes extends BaseParserTest {
     }
     @Test
     public void testDataDeref6() throws Exception {
+    	dumpTreeize = true;
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   next:Tuple^; val:Byte; };\n"+
@@ -1074,7 +1077,7 @@ public class TestTypes extends BaseParserTest {
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLDataType data = (LLDataType) getRealType(alloc);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
@@ -1111,7 +1114,7 @@ public class TestTypes extends BaseParserTest {
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLDataType data = (LLDataType) getRealType(alloc);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
@@ -1143,7 +1146,7 @@ public class TestTypes extends BaseParserTest {
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLDataType data = (LLDataType) getRealType(alloc);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
@@ -1167,7 +1170,7 @@ public class TestTypes extends BaseParserTest {
 				"");
 		sanityTest(mod);
 		IAstAllocStmt alloc = (IAstAllocStmt) mod.getScope().get("foo").getDefinition();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLDataType data = (LLDataType) getRealType(alloc);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
@@ -1202,7 +1205,7 @@ public class TestTypes extends BaseParserTest {
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLDataType data = (LLDataType) getRealType(alloc);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
@@ -1211,7 +1214,7 @@ public class TestTypes extends BaseParserTest {
 		assertFalse(dataPtr.isCompatibleWith(nextField.getType()));	// different type 
 		
 		IAstAllocStmt alloc2 = (IAstAllocStmt) code.stmts().list().get(1);
-		LLDataType data2 = (LLDataType) alloc2.getType();
+		LLDataType data2 = (LLDataType) getRealType(alloc2);
 		assertTrue(data2.isComplete() && !data2.isGeneric());
 		assertEquals(2, data2.getInstanceFields().length);
 		assertEquals(typeEngine.DOUBLE, data2.getInstanceFields()[0].getType());
@@ -1264,22 +1267,23 @@ public class TestTypes extends BaseParserTest {
 				"        node:T;\n"+
 				"        next:List<T>^;\n" +	
 				"};\n" + 
-				"newList = [T] code ( => List<T>) { nil };\n "+
-				"listAdd = [T] code (list:List<T>^; x:T) { new:=newList(); list.next=new; list.node=x; list; };\n"+
+				"newList = [T] code ( => List<T>^) { nil };\n "+
+				"listAdd = [T] code (list:List<T>^; x:T => List<T>^) { new:=newList<T>(); list.next=new; list.node=x; list; };\n"+
 				"intList = code (x:Int=>Int) {\n"+
-				"  a:=newList();\n"+
-				"  a= listAdd(a, 10);\n"+
+				"  a:=newList<Int>();\n"+
+				"  a= listAdd<Int>(a, 10);\n"+
 				"};\n"+
 	
 				"");
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLPointerType dataPtr = (LLPointerType) alloc.getType();
+		LLDataType data = (LLDataType) dataPtr.getSubType();
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
-		LLPointerType dataPtr = typeEngine.getPointerType(data);
+		//LLPointerType dataPtr = typeEngine.getPointerType(data);
 		LLInstanceField nextField = data.getInstanceFields()[1];
 		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
 		
@@ -1295,7 +1299,7 @@ public class TestTypes extends BaseParserTest {
 				"        node:T;\n"+
 				"        next:List<T>^;\n" +	
 				"};\n" + 
-				"listNextNext = [T] code (list:List<T>) { list.next.next.node };\n"+
+				"listNextNext = [T] code (list:List<T> => T) { list.next.next.node };\n"+
 				"intList = code (x:Int=>Int) {\n"+
 				"  a,b:List<Int>;\n"+
 				"  a.node=x;\n"+
@@ -1308,7 +1312,7 @@ public class TestTypes extends BaseParserTest {
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLDataType data = (LLDataType) getRealType(alloc);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
@@ -1317,6 +1321,16 @@ public class TestTypes extends BaseParserTest {
 		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
 		
 		doGenerate(mod);
+	}
+	/**
+	 * @param alloc
+	 * @return
+	 */
+	private LLType getRealType(IAstTypedNode node) {
+		LLType type = node.getType();
+		if (type instanceof LLSymbolType)
+			type = ((LLSymbolType) type).getRealType(typeEngine);
+		return type;
 	}
 	@Test 
 	public void testGenericTypes3b() throws Exception {
@@ -1328,26 +1342,19 @@ public class TestTypes extends BaseParserTest {
 				"        next:List<U,T>^;\n" +		// note: not the same type as parent!
 				"};\n" + 
 				"\n" +
-				"listNextNext = [T,U] code (list:List<T,U>) { list.next.next };\n"+
+				// TODO: if this says list.next.next, we fail to detect the type mismatch 
+				// between the proto and the return
+				"listNextNext = [T,U] code (list:List<T,U>) { list.next.next.node };\n"+
 				"intList = code (x:Int;y:Float=>Float) {\n"+
 				"  a:List<Int,Float>;\n"+
 				"  b:List<Float,Int>;\n"+
 				"  a.next=&b;\n"+
 				"  b.next=&a;\n"+
-				"  listNextNext(a);\n"+
+				"  listNextNext<Int,Float>(a);\n"+
 				"};\n"+
 	
 				"");
 		sanityTest(mod);
-		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
-		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
-		assertTrue(data.isComplete() && !data.isGeneric());
-		assertEquals(2, data.getInstanceFields().length);
-		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
-		LLPointerType dataPtr = typeEngine.getPointerType(data);
-		LLInstanceField nextField = data.getInstanceFields()[1];
-		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
 		
 		doGenerate(mod);
 	}
@@ -1358,32 +1365,31 @@ public class TestTypes extends BaseParserTest {
 		IAstModule mod = doFrontend(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
-				"        next:List<U>^;\n" +
+				"        next:List<U, T>^;\n" +
 				"};\n" + 
 				"\n" +
 				"IntDoubleList = List<Int,Double>;\n"+
-				"listNextNext = code (list:IntDoubleList) { list.next.next };\n"+
+				"listNextNext = code (list:IntDoubleList^) { list.next.next.next.node };\n"+
 				"intList = code(x:Int;y:Double) {\n"+
-				"   list1 : List<Int, Double>; list2 : List<Double, Int>;\n" +
+				"   list1 : IntDoubleList; list2 : List<Double, Int>;\n" +
 				"   list1.node = x;\n"+
 				"   list2.node = y;\n"+
 				"   list1.next = &list2;\n"+
 				"   list2.next = &list1;\n"+
-				"   listNextNext(list1);\n"+
+				"   listNextNext(&list1);\n"+
 				"};\n" +
 				"");
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
 		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
-		LLDataType data = (LLDataType) alloc.getType();
+		LLSymbolType symType = (LLSymbolType) alloc.getType();
+		LLDataType data = (LLDataType) symType.getRealType(typeEngine);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
-		LLPointerType dataPtr = typeEngine.getPointerType(data);
-		LLInstanceField nextField = data.getInstanceFields()[1];
-		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
 		
-		doGenerate(mod);
+		LLVMGenerator gen = doGenerate(mod);
+		assertFoundInOptimizedText("ret double %y", gen);
 	}
 }
 

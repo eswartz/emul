@@ -75,11 +75,18 @@ import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.symbols.NamespaceScope;
 import org.ejs.eulang.types.LLGenericType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeException;
 
 /**
  * Transform from the syntax tree to an AST with proper node types, type
  * information, and source references.
- * 
+ * <p>
+ * The outcome of parsing is a representation of the AST as it appears
+ * in source, with types (predefined, referenced through
+ * symbols, or generic) represented both as AST subtrees (IAstType).
+ * <p>
+ * When generic types are involved, any references to generic names will
+ * appear 
  * @author ejs
  * 
  */
@@ -173,6 +180,7 @@ public class GenerateAST {
 	private List<Error> errors = new ArrayList<Error>();
 	private TypeEngine typeEngine;
 	private GlobalScope globalScope;
+	private ISymbol currentName;
 
 	public GenerateAST(TypeEngine typeEngine, String defaultFile,
 			Map<CharStream, String> fileMap) {
@@ -542,7 +550,7 @@ public class GenerateAST {
 	private IAstNode constructInstance(Tree tree) throws GenerateException {
 		IAstSymbolExpr idExpr = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
 		IAstNodeList<IAstTypedExpr> exprs = checkConstruct(tree.getChild(1), IAstNodeList.class);
-		IAstInstanceExpr instance = new AstInstanceExpr(idExpr, exprs);
+		IAstInstanceExpr instance = new AstInstanceExpr(typeEngine, idExpr, exprs);
 		getSource(tree, instance);
 		
 		return instance;
@@ -783,7 +791,7 @@ public class GenerateAST {
 					IAstAllocStmt alloc = (IAstAllocStmt) item;
 					if (alloc.getTypeExpr() != null && alloc.getTypeExpr() instanceof IAstPrototype) {
 						alloc.getTypeExpr().setParent(null);
-						IAstPointerType ptr = new AstPointerType(alloc.getTypeExpr());
+						IAstPointerType ptr = new AstPointerType(typeEngine, alloc.getTypeExpr());
 						ptr.setSourceRef(alloc.getTypeExpr().getSourceRef());
 						alloc.setTypeExpr(ptr);
 					}
@@ -796,7 +804,7 @@ public class GenerateAST {
 			AstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(IAstStmt.class);
 			getEmptySource(tree, stmts);
 			
-			IAstDataType dataType = new AstDataType(null, stmts, 
+			IAstDataType dataType = new AstDataType(typeEngine, currentName, stmts, 
 					fields, statics, currentScope);
 			getSource(tree, dataType);
 
@@ -1388,7 +1396,7 @@ public class GenerateAST {
 					symbol = startScope.add(new AstName(kid.getText()));
 				}
 				startScope = symbol.getScope();
-				
+
 				symExpr = new AstSymbolExpr(symbol);
 				getSource(tree, symExpr);
 				
@@ -1752,6 +1760,8 @@ public class GenerateAST {
 
 		IAstArgDef argDef = new AstArgDef(symExpr, type, defaultVal, isMacro,
 				isVar);
+		//if (type != null)
+		//	argDef.setType(type.getType());
 		getSource(tree, argDef);
 
 		symExpr.getSymbol().setDefinition(argDef);
@@ -1863,17 +1873,21 @@ public class GenerateAST {
 						countExpr = checkConstruct(kid,
 								IAstTypedExpr.class);
 					}
-					type = new AstArrayType(type, countExpr);
+					try {
+						type = new AstArrayType(typeEngine, type, countExpr);
+					} catch (TypeException e) {
+						throw new GenerateException(kid, e.getMessage());
+					}
 					getSource(tree, type);
 				}
 				
 			} else if (tree.getType() == EulangParser.POINTER) {
 				type = checkConstruct(tree.getChild(0), IAstType.class);
-				type = new AstPointerType(type);
+				type = new AstPointerType(typeEngine, type);
 				getSource(tree, type);
 			} else if (tree.getType() == EulangParser.REF) {
 				type = checkConstruct(tree.getChild(0), IAstType.class);
-				type = new AstRefType(type);
+				type = new AstRefType(typeEngine, type);
 				getSource(tree, type);
 			} else if (tree.getType() == EulangParser.CODE) {
 				if (tree.getChildCount() == 0) {
@@ -1903,13 +1917,18 @@ public class GenerateAST {
 				}
 				else if (symbolExpr.getType() != null)
 					type = new AstType(symbolExpr.getType());
-				else
+				else {
+					//assert false;
+					//type = new AstInstanceExpr(typeEngine, 
+					//		symbolExpr, null);
 					type = new AstNamedType(null, symbolExpr);
+				}
 			}
 		}
 		if (type == null)
 			unhandled(tree);
 		
+		//assert type.getType() != null;
 		getSource(tree, type);
 		return type;
 	}
@@ -1958,6 +1977,8 @@ public class GenerateAST {
 		boolean generic = tree.getChildCount() == 3;
 		
 		pushScope(new LocalScope(currentScope));
+		ISymbol previousName = currentName;
+		currentName = symbolExpr.getSymbol();
 		try {	
 			if (generic) {
 				// get type vars into the scope
@@ -1988,9 +2009,9 @@ public class GenerateAST {
 			getSource(tree, stmt);
 	
 			symbolExpr.getSymbol().setDefinition(stmt);
-	
 			return stmt;
 		} finally {
+			currentName = previousName; 
 			popScope(tree);
 		}
 		
@@ -2009,16 +2030,44 @@ public class GenerateAST {
 		if (generic) pushScope(new LocalScope(currentScope));
 		try {
 			IAstTypedExpr expr = checkConstruct(exprTree, IAstTypedExpr.class);
-			if (expr instanceof IAstDataType) { // TODO: other types
+			/*if (expr instanceof IAstDataType) { // TODO: other types
 				ISymbol symbol = symbolExpr.getSymbol();
 				((IAstDataType) expr).setTypeName(symbol);
-			}
+			}*/
 			return expr;
 		} finally {
 			if (generic) popScope(exprTree);
 		}
 	}
 
+	/**
+	 * @param expr
+	 * @param currentName2
+	 * @throws GenerateException 
+	 */
+	/*
+	private void updateGenericSelfRefs(IAstNode node, ISymbol currentName) throws GenerateException {
+		if (node instanceof IAstInstanceExpr)
+			return;
+		if (node instanceof IAstSymbolExpr) {
+			IAstSymbolExpr symExpr = (IAstSymbolExpr) node;
+			if (symExpr.getSymbol().equals(currentName)) {
+				IAstNode parent = symExpr.getParent();
+				symExpr.setParent(null);
+				IAstInstanceExpr instanceExpr = new AstInstanceExpr(typeEngine, symExpr, null);
+				instanceExpr.setSourceRef(symExpr.getSourceRef());
+				try {
+					parent.replaceChild(symExpr, instanceExpr);
+				} catch (ClassCastException e) {
+					throw new GenerateException(node.getSourceRef(), "Cannot refer to generic name in this context without <>");
+				}
+			}
+		}
+		for (IAstNode kid : node.getChildren()) {
+			updateGenericSelfRefs(kid, currentName);
+		}
+	}
+*/
 	/**
 	 * @param tree
 	 * @return
@@ -2083,7 +2132,7 @@ public class GenerateAST {
 		String lit = tree.getChild(0).getText();
 		switch (tree.getChild(0).getType()) {
 		case EulangParser.NIL:
-			litExpr = new AstNilLitExpr(lit, typeEngine.NIL);
+			litExpr = new AstNilLitExpr(lit, null);
 			break;
 		case EulangParser.TRUE:
 			litExpr = new AstBoolLitExpr(lit, typeEngine.BOOL, true);

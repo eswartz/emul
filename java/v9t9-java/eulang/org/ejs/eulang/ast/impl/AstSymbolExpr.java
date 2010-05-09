@@ -82,7 +82,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 	 */
 	@Override
 	public String toString() {
-		return typedString(symbol.getName());
+		return typedString(symbol.getUniqueName());
 	}
     	
     /* (non-Javadoc)
@@ -188,44 +188,16 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 		IAstDefineStmt stmt = getDefinition();
 		if (stmt != null && origSymbol == null) {
 			IAstTypedExpr selectedBody = null;
-			/*
-			//boolean isUnique = false;
-			if (stmt.bodyList().size() == 1) {
-				// no question
-				selectedBody = stmt.bodyList().get(0);
-				//isUnique = true;
-			} else {
-				// Multiple choices.  This expr will take the type from a parent node with more context. 
-				if (getType() == null)
-					return false;
-				
-				selectedBody = stmt.getMatchingBodyExpr(getType());
-				
-				if (selectedBody == null)
-					return false;
-			}
-			
-			// ignore macros here
-			if (selectedBody instanceof IAstCodeExpr && ((IAstCodeExpr) selectedBody).isMacro())
-				return false;
-			
-			if (selectedBody.getType() != null && selectedBody.getType().isMoreComplete(newType)
-					&& !(!newType.isGeneric() && selectedBody.getType().isGeneric()))
-				newType = selectedBody.getType();
-			
-			super.setType(newType);
-			*/
 			selectedBody = getInstance();
 			if (selectedBody == null) {
 				if (getType() == null) {
 					selectedBody = getBody();
 				}
-				if (selectedBody == null)
-					return false;
 			}
+			if (selectedBody == null)
+				return false;
 			
 			changed |= updateType(this, selectedBody.getType());
-			
 		} else if (symbol.getDefinition() instanceof ITyped) {
 			// The symbol's expr should have a type. 
 			changed = inferTypesFromChildren(new ITyped[] { (ITyped) symbol.getDefinition() });

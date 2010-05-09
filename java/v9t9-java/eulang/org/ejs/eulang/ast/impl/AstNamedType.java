@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDataType;
+import org.ejs.eulang.ast.IAstInstanceExpr;
 import org.ejs.eulang.ast.IAstNamedType;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
@@ -28,6 +29,7 @@ public class AstNamedType extends AstType implements IAstNamedType {
 	private IAstSymbolExpr symbolExpr;
 
 	/**
+	 * @param typeEngine 
 	 * @param type
 	 */
 	public AstNamedType(LLType type, IAstSymbolExpr symbolExpr) {
@@ -111,6 +113,7 @@ public class AstNamedType extends AstType implements IAstNamedType {
 			while (ref != null) {
 				if (ref instanceof IAstDataType && ((IAstDataType) ref).getTypeName().equals(symbolExpr.getOriginalSymbol())) {
 					IAstSelfReferentialType selfRef = new AstSelfReferentialType(symbolExpr.copy(this), level);
+					//IAstInstanceExpr selfRef = new AstInstanceExpr(typeEngine, symbolExpr.copy(this), null);
 					selfRef.setSourceRef(getSourceRef());
 					getParent().replaceChild(this, selfRef);
 					return true;

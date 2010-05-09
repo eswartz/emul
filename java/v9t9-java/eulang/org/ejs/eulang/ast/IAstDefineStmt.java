@@ -72,12 +72,6 @@ public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	ISymbol getInstanceForParameters(TypeEngine typeEngine, LLType bodyType, List<IAstTypedExpr> instanceParams) throws ASTException;
 
 	/**
-	 * Get the complete or generic type to definition body map.  This is known only
-	 * after type inference.
-	 */
-	//Map<LLType, IAstTypedExpr> typedBodyMap();
-	
-	/**
 	 * Get the instances of the expressions from {@link #bodyList()} for each concrete
 	 * type.  This mapping only makes sense with generic or complete types.
 	 * @return read-only map of body types to the instances recorded for them.  If the body type
@@ -113,8 +107,8 @@ public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
 	 * and the generated instances.
 	 */
 	Collection<IAstTypedExpr> getConcreteInstances();
+	
+	Collection<IAstTypedExpr> getAllInstances();
 
 	Map<LLInstanceType, ISymbol> getInstanceMap(TypeEngine typeEngine, LLType bodyType);
-
-	
 }

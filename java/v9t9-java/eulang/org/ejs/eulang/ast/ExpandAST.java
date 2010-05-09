@@ -23,7 +23,6 @@ import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
-import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
@@ -32,7 +31,6 @@ import org.ejs.eulang.types.LLGenericType;
 import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLUpType;
 
 /**
  * TODO: unify with TypeInference; these both contain a lot of duplicate logic for ensuring
@@ -51,7 +49,6 @@ public class ExpandAST {
 	private List<IAstTypedExpr> expansions = new ArrayList<IAstTypedExpr>();
 	private Map<LLType, LLType> globalTypeReplacementMap = new HashMap<LLType, LLType>();
 
-
 	public ExpandAST(TypeEngine typeEngine, boolean onlyInstances) {
 		this.typeEngine = typeEngine;
 		this.onlyInstances = onlyInstances;
@@ -63,7 +60,15 @@ public class ExpandAST {
 		
 
 		// handle any leftover types
-		AstNode.replaceTypesInTree(typeEngine, root, globalTypeReplacementMap);
+		boolean globalChanged = false;
+		//do {
+		globalChanged = AstNode.replaceTypesInTree(typeEngine, root, globalTypeReplacementMap);
+		changed |= globalChanged;
+		//globalChanged = AstNode.replaceTypesInTree(typeEngine, root, typeEngine.getInstanceToRealTypeMap());
+		//changed |= globalChanged;
+		//} while (globalChanged);
+			
+		//typeEngine.replaceTypes(globalTypeReplacementMap);	
 		
 		if (changed) {
 			System.out.println("after expansion:");
@@ -97,7 +102,8 @@ public class ExpandAST {
 	private IAstNode doExpand(List<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
 		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
 				&& !(node instanceof IAstInstanceExpr)
-				&& !(node instanceof IAstDefineStmt && ((IAstDefineStmt) node).isGeneric())) {
+				//&& !(node instanceof IAstDefineStmt && ((IAstDefineStmt) node).isGeneric())
+				) {
 			// go deep first, since node parenting changes as expansion occurs
 			IAstNode[] kids = node.getChildren();
 			for (int i = 0; i < kids.length; i++) {
@@ -105,20 +111,30 @@ public class ExpandAST {
 			}
 		}
 		
-		if (node instanceof IAstDefineStmt && ((IAstDefineStmt) node).isGeneric()) {
-			recordInstances((IAstDefineStmt) node);
+		if (node instanceof IAstDefineStmt) {
+			IAstDefineStmt def = ((IAstDefineStmt) node);
+			
+			if (def.isGeneric()) {
+				recordInstances(def);
+			}
 		}
 		try {
 			IAstNode newNode = node;
 			if (node instanceof IAstInstanceExpr) {
 				newNode = expandInstance(messages, (IAstInstanceExpr) node);
 			}
-			else if (!onlyInstances && node instanceof IAstSymbolExpr) {
-				newNode = expandSymbolExpr(node, replacementMap);
+			else if (node instanceof IAstSymbolExpr) {
+				IAstSymbolExpr symbolExpr = (IAstSymbolExpr) node;
+				
+				if (!onlyInstances) {
+					newNode = expandSymbolExpr(symbolExpr, replacementMap);
+				}
 				
 			} else if (!onlyInstances && node instanceof IAstFuncCallExpr) {
 				newNode = expandFuncCallExpr(messages, node);
 			} 
+			
+			//replaceConcreteSymbolRefs(newNode);
 			
 			return newNode;
 		} catch (ASTException e) {
@@ -128,6 +144,7 @@ public class ExpandAST {
 		
 	}
 
+
 	/**
 	 * @param node
 	 */
@@ -136,96 +153,12 @@ public class ExpandAST {
 			if (body.getType() != null && body.getType().isGeneric()) {
 				Map<LLInstanceType, ISymbol> instanceMap = define.getInstanceMap(typeEngine, body.getType());
 				for (Map.Entry<LLInstanceType, ISymbol> entry : instanceMap.entrySet()) {
-					globalTypeReplacementMap.put(entry.getKey(), new LLUpType(entry.getValue(), 1, entry.getValue().getType()));
-				}
-			}
-		}
-				
-	}
-
-	/**
-	 * @param node
-	 */
-	private void expandUnresolvedInstances(IAstDefineStmt define) {
-		// finally, replace the effective type where it appears inside
-		HashMap<LLType, LLType> typeReplacementMap = new HashMap<LLType, LLType>();
-
-		for (IAstTypedExpr body : define.bodyList()) {
-			Map<LLInstanceType, ISymbol> instanceMap = define.getInstanceMap(typeEngine, body.getType());
-			for (Map.Entry<LLInstanceType, ISymbol> entry : instanceMap.entrySet()) {
-				typeReplacementMap.put(entry.getKey(), entry.getValue().getType());
-			}
-		}
-		
-		for (IAstTypedExpr body : define.bodyList()) {
-			Map<LLInstanceType, ISymbol> instanceMap = define.getInstanceMap(typeEngine, body.getType());
-			
-			for (Map.Entry<LLInstanceType, ISymbol> entry : instanceMap.entrySet()) {
-				
-				IAstTypedExpr instance = (IAstTypedExpr) entry.getValue().getDefinition();
-				
-				if (containsInstanceTypes(instance)) {
-					System.out.println("before replacing LLInstanceType:");
-					DumpAST dump = new DumpAST(System.out);
-					instance.accept(dump);
-					
-					if (AstNode.replaceTypesInTree(typeEngine, instance, typeReplacementMap)) {
-						System.out.println("after replacing LLInstanceType:");
-						instance.accept(dump);
-					}
-				}
-			}
-		}
-		
-		for (IAstTypedExpr expansion : expansions) {
-
-			if (containsInstanceTypes(expansion)) {
-				System.out.println("before replacing LLInstanceType:");
-				DumpAST dump = new DumpAST(System.out);
-				expansion.accept(dump);
-				
-				if (AstNode.replaceTypesInTree(typeEngine, expansion, typeReplacementMap)) {
-					System.out.println("after replacing LLInstanceType:");
-					expansion.accept(dump);
+					//globalTypeReplacementMap.put(entry.getKey(), new LLUpType(entry.getValue(), 1, entry.getValue().getType()));
+					globalTypeReplacementMap.put(entry.getKey(), new LLSymbolType(entry.getValue()));
 				}
 			}
 		}
 	}
-
-	/**
-	 * @param instance
-	 * @return
-	 */
-	private boolean containsInstanceTypes(IAstNode node) {
-		if (node instanceof IAstTypedNode) {
-			LLType type = ((IAstTypedNode) node).getType();
-			if (containsInstanceTypes(type))
-				return true;
-		}
-		if (node instanceof IAstSymbolExpr) {
-			LLType type = ((IAstSymbolExpr) node).getSymbol().getType();
-			if (containsInstanceTypes(type))
-				return true;
-		}
-		return false;
-	}
-
-	/**
-	 * @param type
-	 * @return
-	 */
-	private boolean containsInstanceTypes(LLType type) {
-		if (type == null)
-			return false;
-		if (type instanceof LLInstanceType)
-			return true;
-		for (LLType kid : type.getTypes()) {
-			if (containsInstanceTypes(kid))
-				return true;
-		}
-		return false;
-	}
-
 	/**
 	 * @param node
 	 * @return
@@ -247,21 +180,34 @@ public class ExpandAST {
 			}
 		}
 		
-		boolean allGeneric = true;
-		for (IAstTypedExpr expr : instanceExpr.getExprs().list()) {
-			if (expr.getType() != null && !expr.getType().isGeneric()) {
-				allGeneric = false;
-				break;
+		ISymbol instanceSymbol;
+		IAstTypedExpr expansion;
+		if (defineStmt.isGeneric()) {
+			boolean any = false;
+			boolean anyGeneric = true;
+			boolean allGeneric = true;
+			for (IAstTypedExpr expr : instanceExpr.getExprs().list()) {
+				any = true;
+				if (expr.getType() != null && !expr.getType().isGeneric()) {
+					allGeneric = false;
+				} else {
+					anyGeneric = true;
+				}
 			}
+			
+			if (any && allGeneric) {
+				return instanceExpr;
+			}
+			instanceSymbol = defineStmt.getInstanceForParameters(
+					typeEngine, body.getType(), instanceExpr.getExprs().list());
+			expansion = (IAstTypedExpr) instanceSymbol.getDefinition();
+		} else {
+			instanceSymbol = defineStmt.getSymbol();
+			expansion = defineStmt.getMatchingBodyExpr(instanceExpr.getType());
+			if (expansion == null)
+				return instanceExpr;
 		}
 		
-		if (allGeneric) {
-			//return instanceExpr;
-		}
-		ISymbol instanceSymbol = defineStmt.getInstanceForParameters(
-				typeEngine, body.getType(), instanceExpr.getExprs().list());
-		
-		IAstTypedExpr expansion = (IAstTypedExpr) instanceSymbol.getDefinition();
 		
 		IAstSymbolExpr symbolExpr = new AstSymbolExpr(instanceSymbol);
 		//symbolExpr.setOriginalSymbol(defineStmt.getSymbol());
@@ -285,8 +231,8 @@ public class ExpandAST {
 		
 		// TODO: some type-holding nodes like IAstPointerType reset their own type
 		// when we change the child; but for this case we know what is wanted
-		if (parent instanceof IAstTypedNode && !(parent instanceof IAstFuncCallExpr))
-			((IAstTypedNode) parent).setType(instanceSymbol.getType());
+		//if (parent instanceof IAstTypedNode && !(parent instanceof IAstFuncCallExpr))
+		//	((IAstTypedNode) parent).setType(instanceSymbol.getType());
 		
 		// recursively expand
 		IAstTypedExpr recursiveExpansion = (IAstTypedExpr) doExpand(messages, expansion, Collections.<ISymbol, IAstNode>emptyMap());
@@ -321,7 +267,6 @@ public class ExpandAST {
 			index++;
 		}
 		
-		
 		// then replace types
 		AstNode.replaceTypesInTree(typeEngine, instance, typeReplacementMap);
 
@@ -333,7 +278,6 @@ public class ExpandAST {
 		// replace self-refs to symbol
 		ISymbol theSymbol = symbol;
 		if (instance instanceof IAstDataType) {
-			//theSymbol = ((IAstDataType) ((IAstDataType) body).getScope().getOwner()).getTypeName();
 			((IAstDataType) instance).setTypeName(instanceSymbol);
 		}
 		
@@ -345,38 +289,27 @@ public class ExpandAST {
 		AstNode.replaceSymbols(typeEngine, instance, theSymbol.getScope(), Collections.singletonMap(theSymbol.getNumber(), instanceSymbol));
 		AstNode.replaceTypesInTree(typeEngine, instance, Collections.singletonMap(body.getType(), instance.getType()));
 		instanceSymbol.setDefinition(instance);
-		
-		//if (instance instanceof IAstDataType) {
-		//	((IAstDataType) instance).setTypeName(instanceSymbol);
-		//}
-		
+
 		
 		// finally, replace the effective type where it appears inside
+		
 		typeReplacementMap.clear();
 		LLInstanceType instanceType = typeEngine.getInstanceType(symbol, types);
-		typeReplacementMap.put(instanceType, new LLUpType(instanceSymbol, 1, instance.getType()));
-		LLSymbolType symbolType = new LLSymbolType(symbol);
-		typeReplacementMap.put(symbolType, new LLUpType(instanceSymbol, 1, instance.getType()));
+		typeEngine.registerInstanceType(instanceType, instance.getType());
+		
+		typeReplacementMap.put(instanceType, new LLSymbolType(instanceSymbol));
 
-//		Map<LLInstanceType, ISymbol> instanceMap = define.getInstanceMap(typeEngine, body.getType()); 
-//		for (Map.Entry<LLInstanceType, ISymbol> entry : instanceMap.entrySet()) {
-//			typeReplacementMap.put(entry.getKey(), entry.getValue().getType());
-//		}
-//		
 		System.out.println("before replacing LLSymbolType:");
 		dump = new DumpAST(System.out);
 		instance.accept(dump);
 		
 		AstNode.replaceTypesInTree(typeEngine, instance, typeReplacementMap);
-		
 
+		// this type may be different now 
 		instanceSymbol.setType(instance.getType());
 		
 		System.out.println("after replacing LLSymbolType:");
 		instance.accept(dump);
-		
-		
-		//removeGenerics(bodyCopy);
 		
 		instance.uniquifyIds();
 
@@ -473,24 +406,23 @@ public class ExpandAST {
 		return node;
 	}
 
-	private IAstNode expandSymbolExpr(IAstNode node,
+	private IAstNode expandSymbolExpr(IAstSymbolExpr symExpr,
 			Map<ISymbol, IAstNode> replacementMap)
 			throws ASTException {
 		
 		IAstNode value = null;
-		IAstSymbolExpr symExpr = (IAstSymbolExpr)node;
 		IAstNode symDef = symExpr.getDefinition();
 		if (symDef == null) {
 			value = replacementMap.get(symExpr.getSymbol());
 			if (value == null)
-				return node;
+				return symExpr;
 		} else {
-			if (symDef == node.getParent() || !(symDef instanceof IAstDefineStmt))
-				return node;
+			if (symDef == symExpr.getParent() || !(symDef instanceof IAstDefineStmt))
+				return symExpr;
 			
 			value = symExpr.getInstance();
 			if (value instanceof IAstType)
-				return node;
+				return symExpr;
 		}
 		
 		if (value != null) {
@@ -499,29 +431,29 @@ public class ExpandAST {
 				IAstCodeExpr codeExpr = (IAstCodeExpr) value;
 				if (codeExpr.isMacro()) {
 					// directly replace
-					IAstNode copy = value.copy(node);
+					IAstNode copy = value.copy(symExpr);
 					copy.uniquifyIds();
 					removeGenerics(copy);
-					node.getParent().replaceChild(node, copy);
+					symExpr.getParent().replaceChild(symExpr, copy);
 					changed = true;
 				}
 			}
 			else {
 				// directly replace
 				
-				IAstNode copy = value.copy(node);
+				IAstNode copy = value.copy(symExpr);
 				copy.uniquifyIds();
 				removeGenerics(copy);
 				try {
-					node.getParent().replaceChild(node, copy);
+					symExpr.getParent().replaceChild(symExpr, copy);
 					changed = true;
-					return node;
+					return symExpr;
 				} catch (ClassCastException e) {
 					throw new ASTException(copy, "cannot macro-substitute an argument of this syntax type in place of " + symExpr.getSymbol().getName());
 				}
 			}
 		}
-		return node;
+		return symExpr;
 	}
 	
 	/**

@@ -398,6 +398,13 @@ public class BaseParserTest {
 	
 
 	protected IAstNode doExpand(IAstNode node, boolean instances, boolean expectErrors) {
+		
+		// expansion requires initial inference
+    	TypeInference infer = new TypeInference(typeEngine);
+    	infer.infer(node, false);
+    	sanityTest(node);
+    	
+    	
 		ExpandAST expand = new ExpandAST(typeEngine, instances);
 		
 		List<Message> messages = new ArrayList<Message>();
@@ -454,11 +461,6 @@ public class BaseParserTest {
     	sanityTest(mod);
     	
     	//mod = (IAstModule) doExpand(mod, true, false);
-    	
-    	TypeInference infer = new TypeInference(typeEngine);
-    	infer.infer(mod, false);
-    	sanityTest(mod);
-    	
     	
     	IAstModule expanded = (IAstModule) doExpand(mod);
     	sanityTest(expanded);

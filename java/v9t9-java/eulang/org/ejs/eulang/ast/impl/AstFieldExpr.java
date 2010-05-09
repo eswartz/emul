@@ -168,7 +168,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		LLType fieldType = type;
 		
 		if (canInferTypeFrom(expr)) {
-			LLType exprType = getDataType();
+			LLType exprType = getDataType(typeEngine);
 			
 			if (exprType == null || exprType instanceof LLInstanceType)
 				return false;
@@ -211,18 +211,28 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 * @param type
 	 * @return
 	 */
-	public LLType getDataType() {
+	public LLType getDataType(TypeEngine typeEngine) {
 		LLType exprType = expr.getType();
 		if (exprType instanceof LLUpType) {
-			return exprType.getSubType();
+			exprType = exprType.getSubType();
 			/*
 			IAstType upType = ((LLUpType) exprType).getRealType();
 			if (upType != null)
 				exprType = upType.getType();
 				*/
 		}
+		if (exprType instanceof LLInstanceType) {
+			//LLType realType = typeEngine.getInstanceToRealTypeMap().get(exprType);
+			//if (realType != null)
+			//	return realType;
+			exprType = ((LLInstanceType) exprType).getSymbol().getType();
+		}
 		if (exprType instanceof LLSymbolType) {
-			return ((LLSymbolType) exprType).getSymbol().getType();
+			exprType = ((LLSymbolType) exprType).getRealType(typeEngine);
+		}
+		
+		if (exprType instanceof LLDataType) {
+			exprType = typeEngine.getDataType((LLDataType) exprType);
 		}
 		return exprType;
 	}
@@ -244,7 +254,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			if (definition != null)
 				throw new TypeException(theRef, "cannot reference fields in definitions (use an instance instead)");
 		}
-		LLType exprType = getDataType();
+		LLType exprType = getDataType(typeEngine);
 		if (!(exprType instanceof LLDataType)) {
 			throw new TypeException(expr, "can only field-dereference data");
 		}

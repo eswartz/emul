@@ -8,6 +8,7 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstRefType;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.types.LLRefType;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -22,16 +23,23 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 	/**
 	 * @param type
 	 */
-	public AstRefType(IAstType baseType) {
+	public AstRefType(TypeEngine typeEngine, IAstType baseType) {
 		setBaseType(baseType);
+		setType(typeEngine.getRefType(baseType.getType()));
 	}
+	
+	protected AstRefType(IAstType baseType, LLType type) {
+		setBaseType(baseType);
+		setType(type);
+	}
+	
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
 	public IAstRefType copy(IAstNode copyParent) {
-		return fixup(this, new AstRefType(doCopy(baseType, copyParent)));
+		return fixup(this, new AstRefType(doCopy(baseType, copyParent), getType()));
 	}
 	
 	@Override

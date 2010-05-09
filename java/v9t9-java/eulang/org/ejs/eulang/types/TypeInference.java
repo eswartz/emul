@@ -93,6 +93,9 @@ public class TypeInference {
 	public List<Message> getMessages() {
 		return messages;
 	}
+	
+	
+	
 	/**
 	 * Infer the types in the tree from known types.
 	 * @param validateTypes if true, make sure all types are concrete after inferring 
@@ -101,23 +104,44 @@ public class TypeInference {
 		boolean anyChange = false;
 		boolean changed = false;
 		
+		/*
 		do {
 			messages.clear();
-			changed = inferUp(node);
+			try {
+				changed = inferDown(node);
+			} catch (TypeException e) {
+				messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
+				break;
+			}
 			anyChange |= changed;
 		} while (changed);
 		
-		if (validateTypes && messages.isEmpty())
-			validateTypes(node);
+		if (messages.isEmpty())
+			*/
+		{
+			changed = false;
+			do {
+				messages.clear();
+				changed = inferUp(node);
+				anyChange |= changed;
+			} while (changed);
+			
+			if (validateTypes && messages.isEmpty())
+				validateTypes(node);
+		}
 		
 		return anyChange;
 	}
 	
 
 	/**
+	 * Infer types from top down to establish the types of definition bodies and
+	 * allocations.
 	 * @param node
+	 * @throws TypeException 
 	 */
-	private boolean inferUp(IAstNode node) {
+	/*
+	private boolean inferDown(IAstNode node) throws TypeException {
 		
 		boolean changed = false;
 		boolean recurse = true;
@@ -134,13 +158,78 @@ public class TypeInference {
 				concreteInstances = defineStmt.getConcreteInstances();
 			}
 			
+			changed |= inferDown(defineStmt.getSymbolExpr());
+			
+			recurse = false;
+			
+			return changed;
+		}
+		
+		// don't infer on macros (until we know how to remove/instantiate generic args)
+		if (node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
+			return changed;
+		
+		
+		if (node instanceof IAstSelfReferentialType) {
+			recurse = false;
+		}
+		
+		if (recurse) {
+			for (IAstNode kid : node.getChildren()) {
+				changed |= inferDown(kid);
+			}
+		}
+		if (node instanceof IAstSymbolExpr) {
+			IAstSymbolExpr typed = (IAstSymbolExpr) node;
+			
+			// instantiate generic defines
+			//if (typed instanceof IAstSymbolExpr) {
+			//	changed |= instantiate((IAstSymbolExpr) typed);
+			//}
+			
+			try {
+				changed |= typed.inferTypeFromChildren(typeEngine);
+			} catch (TypeException e) {
+				messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
+			}
+		}		
+
+		return changed;
+	}
+*/
+	/**
+	 * Infer types from bottom up.  This assumes that all symbols in a scope have
+	 * a known type.
+	 * @param node
+	 */
+	private boolean inferUp(IAstNode node) {
+		
+		boolean changed = false;
+		boolean recurse = true;
+		
+		if (node instanceof IAstDefineStmt) {
+			IAstDefineStmt defineStmt = (IAstDefineStmt) node;
+			
+			Set<Integer> visited = new TreeSet<Integer>();
+			changed = inferDefinitions(defineStmt, visited);
+			
+			Collection<IAstTypedExpr> concreteInstances = defineStmt.getConcreteInstances();
+			visited.clear();
+			while (visited.size() < concreteInstances.size()) {
+				changed = inferDefinitionInstances(defineStmt, concreteInstances, visited);
+				concreteInstances = defineStmt.getConcreteInstances();
+			}
+			
 			changed |= inferUp(defineStmt.getSymbolExpr());
 			
 			recurse = false;
 			
 			return changed;
 		}
-
+		
+		if (node instanceof IAstSymbolExpr) {
+			
+		}
 		// don't infer on macros (until we know how to remove/instantiate generic args)
 		if (node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
 			return changed;
@@ -169,10 +258,10 @@ public class TypeInference {
 				messages.add(new Error(e.getNode() != null ? e.getNode() : node, e.getMessage()));
 			}
 		}		
-
+		
 		return changed;
 	}
-
+	
 	private boolean inferDefinitions(IAstDefineStmt defineStmt, Set<Integer> visited) {
 		
 		boolean changed = false;
@@ -202,10 +291,11 @@ public class TypeInference {
 				// see if we can still infer some types
 				if (!genericizedSet.contains(bodyExpr.getId())) {
 					
-
-					TypeInference inference = subInferenceJob();
-					defineChanged = inference.infer(bodyExpr, false);
-					
+					//if (bodyExpr.getType() == null || !bodyExpr.getType().isComplete()) 
+					{
+						TypeInference inference = subInferenceJob();
+						defineChanged = inference.infer(bodyExpr, false);
+					}
 					
 					boolean madeGeneric = false;
 					madeGeneric = genericize(defineStmt.getScope(), bodyExpr);
@@ -234,12 +324,11 @@ public class TypeInference {
 			LLType origDefineType = bodyExpr.getType();
 			if (origDefineType == null || !origDefineType.isComplete() ) {
 				
-				boolean defineChanged = false;
 				//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
 				
 				TypeInference inference = subInferenceJob();
 				
-				defineChanged = inference.infer(bodyExpr, false);
+				changed|= inference.infer(bodyExpr, false);
 				
 				
 				if (DUMP) {
@@ -289,47 +378,22 @@ public class TypeInference {
 			
 			visited.add(bodyExpr.getId());
 			
-			// Try to determine if the body is generic or not
-			LLType origDefineType = bodyExpr.getType();
-			if (origDefineType == null || !origDefineType.isComplete() ) {
+			//if (bodyExpr.getType() != null && bodyExpr.getType().isGeneric())
+			//	continue;
+			
+			TypeInference subInference = subInferenceJob();
+			changed |= subInference.inferUp(bodyExpr);
+			
+			List<Message> subMessages = subInference.getMessages();
+			if (!subMessages.isEmpty()) {
+				messages.addAll(subMessages);
+				messages.add(new Error(defineStmt, "Could not resolve definition " + defineStmt.getSymbol()));
+			}
 				
-				boolean defineChanged = false;
-				//boolean wasGeneric = origDefineType != null && origDefineType.isGeneric();
-				
-				TypeInference inference = subInferenceJob();
-				
-				defineChanged = inference.infer(bodyExpr, false);
-				
-				
-				if (DUMP) {
-					System.out.println("Inferring on define " + defineStmt.getSymbol() + " for body " + bodyExpr.getType() + ":");
-					DumpAST dump = new DumpAST(System.out);
-					bodyExpr.accept(dump);
-				}
-				
-				/*
-				if (!defineChanged || (bodyExpr.getType() == null || !bodyExpr.getType().isComplete())) {
-					// a standalone define should have a known type based on its references,
-					// so this must be a generic
-					if (defineChanged && bodyExpr.getType() != null && bodyExpr.getType().isGeneric())
-						return false;
-					boolean madeGeneric = genericize(bodyExpr);
-					if (madeGeneric) {
-						return true;
-					}
-				}
-				*/
-				messages.addAll(inference.getMessages());
-				
-				changed |= inferUp(bodyExpr);
-				//bodyExpr.setType(origType);
-			} else if (origDefineType.isGeneric()) {
-				
-			} else {
-				// infer in case expansions introduced more unknown nodes inside
-				//LLType origType = bodyExpr.getType();
-				changed |= inferUp(bodyExpr);
-				//bodyExpr.setType(origType);
+			if (DUMP) {
+				System.out.println("Inferring on define " + defineStmt.getSymbol() + " for body " + bodyExpr.getType() + ":");
+				DumpAST dump = new DumpAST(System.out);
+				bodyExpr.accept(dump);
 			}
 		}
 		return changed;
@@ -395,9 +459,6 @@ public class TypeInference {
 		return changed;
 	}
 
-	/**
-	 * @param context 
-	 */
 	private boolean instantiate(IAstSymbolExpr site) {
 		// Get the actual type expected for the site (don't use the symbol's site, since that aliases
 		// other definitions and uses)
@@ -451,7 +512,6 @@ public class TypeInference {
 			instantiationSet.remove(site);
 		}
 	}
-
 	private boolean doInstantiateGeneric(IAstSymbolExpr site,
 			IAstDefineStmt define, LLType expandedType, IAstTypedExpr body) {
 		ISymbol expansionSym = define.getMatchingInstance(body.getType(), expandedType);
@@ -511,14 +571,8 @@ public class TypeInference {
 		Map<LLType, LLType> expansionMap = new HashMap<LLType, LLType>();
 		getTypeInstanceMap(expansion.getType(), expandedType, expansionMap);
 		
-		if (define.isGeneric()) {
-			int index = 0;
-			for (ISymbol symbol : define.getGenericVariables()) {
-			}
-		}
 		AstNode.replaceTypesInTree(typeEngine, expansion, expansionMap);
 	}
-
 	private void getTypeInstanceMap(LLType currentType,
 			LLType expandedType, Map<LLType, LLType> expansionMap) {
 		if (currentType == null)
@@ -537,8 +591,8 @@ public class TypeInference {
 	private void validateTypes(IAstNode node) {
 		try {
 			boolean recurse = true;
-			if (node.getParent() == null && !(node instanceof IAstModule))
-				return;
+			//if (node.getParent() == null && !(node instanceof IAstModule))
+			//	return;
 				
 			if (node instanceof IAstDefineStmt) {
 				IAstDefineStmt define = (IAstDefineStmt) node;

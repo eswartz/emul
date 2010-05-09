@@ -156,7 +156,7 @@ public class LLUpType extends BaseLLType {
 	@Override
 	public LLType substitute(TypeEngine typeEngine, IScope origScope,
 			Map<Integer, ISymbol> symbolMap) {
-		ISymbol repl = null;
+		ISymbol repl = symbol;
 		if (origScope == symbol.getScope()) {
 			repl = symbolMap.get(symbol.getNumber());
 			if (repl == null)

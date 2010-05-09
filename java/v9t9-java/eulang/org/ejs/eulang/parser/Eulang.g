@@ -259,7 +259,7 @@ arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
 typeAtom : idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
      | idOrScopeRef -> ^(TYPE idOrScopeRef)  
      | CODE proto? -> ^(TYPE ^(CODE proto?) )
-     | LESS_GREATER -> ^(TYPE GENERIC)
+     | LESS GREATER -> ^(TYPE GENERIC)
   ;
 codestmtlist:  codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
     | -> ^(STMTLIST) 
@@ -592,8 +592,6 @@ ARROW : '=>' ;
 PERIOD : '.';
 PLUSPLUS : '++';
 MINUSMINUS : '--';
-
-LESS_GREATER : '<>';
 
 POINTS : '->';
 BAR_BAR : '||';

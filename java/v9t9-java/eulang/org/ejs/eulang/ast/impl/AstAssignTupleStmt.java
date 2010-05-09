@@ -8,8 +8,10 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAssignTupleStmt;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTupleNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -158,24 +160,28 @@ public class AstAssignTupleStmt extends AstTypedExpr implements IAstAssignTupleS
 		if (!inferTypesFromChildren(new ITyped[] { expr }))
 			return false;
 		
+		boolean changed = false;
 		LLType right = expr.getType();
 		if (right != null) {
 			if (!(right instanceof LLTupleType)) {
 				throw new TypeException("unpacking from non-tuple value");
 			}
 			
-			if (((LLTupleType) right).getTypes().length != tuple.elements().nodeCount())
+			LLTupleType rightTuple = (LLTupleType) right;
+			if (rightTuple.getTypes().length != tuple.elements().nodeCount())
 				//throw new TypeException("mismatch in tuple sizes: "
 				//		+ ((LLTupleType) right).getElementTypes().length + " !=  " + tuple.elements().nodeCount());
 				return false;
 			
 			for (int idx = 0; idx < tuple.elements().nodeCount(); idx++) {
 				IAstTypedExpr sym = tuple.elements().list().get(idx);
-				updateType(sym, ((LLTupleType) right).getTypes()[idx]);
+				if (sym instanceof IAstSymbolExpr && ((IAstSymbolExpr)sym).getSymbol().getScope() instanceof LocalScope) {
+					changed |= updateType(sym, rightTuple.getTypes()[idx]);
+				}
 			}
-			updateType(this, right);
+			changed |= updateType(this, right);
 		}
-		return true;
+		return changed;
 	}
 	
 }

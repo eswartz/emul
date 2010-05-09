@@ -7,7 +7,10 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.impl.AstNode;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -113,7 +116,11 @@ public class LLInstanceType extends BaseLLAggregateType {
 	@Override
 	public boolean isCompatibleWith(LLType target) {
 		if (target != null) {
-			return getSymbol().getUniqueName().equals(target.getName());
+			boolean equal = getSymbol().getUniqueName().equals(target.getName());
+			if (!equal && target instanceof LLDataType) {
+				equal = ((LLDataType) target).getSymbol().getName().equals(getSymbol().getName());
+			}
+			return equal;
 		}
 		return super.isCompatibleWith(target);
 	}
@@ -136,10 +143,12 @@ public class LLInstanceType extends BaseLLAggregateType {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLAggregateType#isGeneric()
 	 */
+	/*
 	@Override
 	public boolean isGeneric() {
 		return false;
 	}
+	*/
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLAggregateType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType, org.ejs.eulang.types.LLType)

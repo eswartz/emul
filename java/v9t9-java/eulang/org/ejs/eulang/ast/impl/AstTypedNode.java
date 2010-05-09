@@ -73,7 +73,8 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 
 	@Override
 	public void setType(LLType type) {
-		this.type = type;
+		if (this.type != type)
+			this.type = type;
 	}
 
 	public String typedString(String input) {
@@ -81,7 +82,10 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		String typeString = (type == null ? "<unknown>" : 
 			(!type.isComplete() ? "<incomplete> : " :
 				(type.isGeneric() ? "<generic> : " : "")
-				) + type.getLLVMType());
+				) + 
+				//type
+				type.getLLVMType()
+				); 
 		return input + " [" + typeString + "]";
 	}
 	
@@ -97,7 +101,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 	
 
     protected static boolean canInferTypeFrom(ITyped child) {
-    	return child != null && child.getType() != null && !(child.getType() instanceof LLInstanceType || child.getType() instanceof LLSymbolType); 
+    	return child != null && child.getType() != null; // && !(child.getType() instanceof LLInstanceType || child.getType() instanceof LLSymbolType); 
     }
     protected static boolean canReplaceType(ITyped child) {
     	return child != null && (child.getType() == null || !child.getType().isComplete()); 
@@ -105,7 +109,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 
     public static boolean updateType(ITyped child, LLType newType) {
     	
-    	if (child == null || newType == null || newType instanceof LLInstanceType || newType instanceof LLSymbolType)
+    	if (child == null || newType == null /*|| newType instanceof LLInstanceType || newType instanceof LLSymbolType*/)
 			return false;
 		
     	//newType = getConcreteType( child, newType);
@@ -157,6 +161,8 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
     			return actual.getType();
     			*/
     		return newType.getSubType();
+    	} else if (newType instanceof LLSymbolType) {
+    		return ((LLSymbolType)newType).getRealType(typeEngine);
     	} else if (newType instanceof LLPointerType) {
     		LLType sub = getConcreteType(typeEngine, child, newType.getSubType());
     		if (sub != newType.getSubType()) {

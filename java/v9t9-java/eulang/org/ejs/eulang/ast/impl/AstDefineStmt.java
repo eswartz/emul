@@ -26,8 +26,11 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -130,10 +133,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	@Override
 	public IAstNode[] getDumpChildren() {
 		Collection<IAstNode> exprs = new ArrayList<IAstNode>(bodyList.list()); 
-		for (IAstTypedExpr expr : bodyList.list()) {
-			if (expr.getType() != null && expr.getType().isComplete() && !expr.getType().isGeneric())
-				exprs.add(expr);
-		}
 		for (List<IAstTypedExpr> alist : instanceIdMap.values()) {
 			exprs.addAll(alist);
 		}
@@ -256,7 +255,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 */
 	@Override
 	public List<IAstTypedExpr> bodyList() {
-		return bodyList.list();
+		return Collections.unmodifiableList(bodyList.list());
 	}
 	
 	
@@ -413,8 +412,25 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		}
 		for (List<ISymbol> alist : instanceTypeMap.values()) {
 			for (ISymbol sym : alist) {
-				//if (!sym.getType().isGeneric())
-					list.add((IAstTypedExpr) sym.getDefinition());
+				IAstTypedExpr definition = (IAstTypedExpr) sym.getDefinition();
+				list.add(definition);
+			}
+		}
+		return list;
+	}
+	
+	@Override
+	public Collection<IAstTypedExpr> getAllInstances() {
+		Set<IAstTypedExpr> list = new HashSet<IAstTypedExpr>();
+		for (IAstTypedExpr expr : bodyList.list()) {
+			list.add(expr);
+		}
+		for (List<IAstTypedExpr> alist : instanceIdMap.values()) {
+			list.addAll(alist);
+		}
+		for (List<ISymbol> alist : instanceTypeMap.values()) {
+			for (ISymbol sym : alist) {
+				list.add((IAstTypedExpr) sym.getDefinition());
 			}
 		}
 		return list;
@@ -465,7 +481,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 			typeMap.put(instanceParams, instanceSymbol);
 			IAstTypedExpr instance = (IAstTypedExpr) instanceSymbol.getDefinition();
 			registerInstance(body, instance, instanceSymbol);
-			
+
 			String paramStr = "";
 			for (IAstTypedExpr expr : instanceParams)
 				paramStr += DumpAST.dumpString(expr)+ " ";

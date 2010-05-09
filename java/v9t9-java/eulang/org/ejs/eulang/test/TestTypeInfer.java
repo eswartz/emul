@@ -33,6 +33,7 @@ import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
@@ -892,6 +893,7 @@ public class TestTypeInfer extends BaseParserTest {
     			"testGenerics0 = code (a:Int;b:Int) { add(a,b);  }; \n");
     	sanityTest(mod);
     	
+    	mod = (IAstModule) doExpand(mod);
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("add");
@@ -908,6 +910,7 @@ public class TestTypeInfer extends BaseParserTest {
     			"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
     	sanityTest(mod);
     	
+    	mod = (IAstModule) doExpand(mod);
     	doTypeInfer(mod);
     	
     	IAstDefineStmt addDef = (IAstDefineStmt) mod.getScope().getNode("add");
@@ -921,14 +924,15 @@ public class TestTypeInfer extends BaseParserTest {
     	Collection<ISymbol> exps = addDef.bodyToInstanceMap().get(addBody.getType());
     	assertNotNull(exps);
     	assertEquals(2, exps.size());
-    	Iterator<ISymbol> iter = exps.iterator();
-    	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT }), iter.next().getType());
-    	assertEquals(typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT }), iter.next().getType());
+    	ISymbol[] symbols = (ISymbol[]) exps.toArray(new ISymbol[exps.size()]);
+    	LLCodeType expType1 = typeEngine.getCodeType(typeEngine.INT, new LLType[] { typeEngine.INT, typeEngine.INT });
+    	assertTrue(expType1+"", symbols[0].getType().equals(expType1) || symbols[1].getType().equals(expType1));
+    	LLCodeType expType2 = typeEngine.getCodeType(typeEngine.FLOAT, new LLType[] { typeEngine.FLOAT, typeEngine.INT });
+    	assertTrue(expType2+"", symbols[0].getType().equals(expType2) || symbols[1].getType().equals(expType2));
 
     	// make sure the casting worked properly
-    	iter = exps.iterator();
-    	iter.next();
-    	iter.next().getDefinition().validateType(typeEngine);
+    	symbols[0].getDefinition().validateType(typeEngine);
+    	symbols[1].getDefinition().validateType(typeEngine);
     }
     @Test
     public void testGenerics1() throws Exception {
@@ -936,6 +940,7 @@ public class TestTypeInfer extends BaseParserTest {
     			"testGenerics1 = code (a,b) { (a, b) = swap(4, 5);  }; \n");
     	sanityTest(mod);
     	
+    	mod = (IAstModule) doExpand(mod);
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("swap");
@@ -951,6 +956,7 @@ public class TestTypeInfer extends BaseParserTest {
     			"testGenerics2 = code (a,b) { (a, b) = swap(4, 5); (x, y) := swap(1.0, 9); }; \n");
     	sanityTest(mod);
     	
+    	mod = (IAstModule) doExpand(mod);
     	doTypeInfer(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("swap");
@@ -1170,9 +1176,11 @@ public class TestTypeInfer extends BaseParserTest {
     			"};\n"+
     	"");
     	sanityTest(mod);
+    	mod = (IAstModule) doExpand(mod);
     	doTypeInfer(mod);
     	ISymbol classSym = mod.getScope().get("Class");
-		IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) classSym.getDefinition()).getMatchingBodyExpr(null);
+    	IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) classSym.getDefinition()).getMatchingBodyExpr(null);
+		//IAstDataType dataNode = (IAstDataType) ((IAstDefineStmt) classSym.getDefinition()).getConcreteSymbols().iterator().next().getDefinition();
     	assertTrue(dataNode.getType().isComplete());
     	System.out.println(dataNode.getType());
     	
@@ -1204,7 +1212,7 @@ public class TestTypeInfer extends BaseParserTest {
     	LLPointerType funcPtr = (LLPointerType) field.getType();
     	LLCodeType code = (LLCodeType) funcPtr.getSubType();
     	assertEquals(typeEngine.INT, code.getArgTypes()[1]);
-    	assertEquals(new LLUpType(classSym, 1, null), code.getArgTypes()[0]);
+    	assertEquals(new LLSymbolType(classSym), code.getArgTypes()[0]);
     }
 
     @Test

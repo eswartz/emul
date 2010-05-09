@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstLitExpr;
@@ -35,6 +36,7 @@ import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLStaticField;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
@@ -69,6 +71,7 @@ public class TypeEngine {
 	private Map<Integer, LLIntType> intMap = new HashMap<Integer, LLIntType>();
 	private Map<String, LLTupleType> tupleTypeMap = new HashMap<String, LLTupleType>();
 	private Map<String, LLDataType> dataTypeMap = new HashMap<String, LLDataType>();
+	private Map<LLInstanceType, LLType> instanceToRealTypeMap = new HashMap<LLInstanceType, LLType>();
 	
 	private boolean isLittleEndian;
 	private int ptrAlign;
@@ -653,4 +656,30 @@ public class TypeEngine {
 		return instanceType;
 	}
 
+	public void registerInstanceType(LLInstanceType instance, LLType realType) {
+		instanceToRealTypeMap.put(instance, realType);
+	}
+	
+	public LLType getInstanceType(LLInstanceType instance) {
+		return instanceToRealTypeMap.get(instance);
+	}
+	
+	/**
+	 * @return the instanceToRealTypeMap
+	 */
+	public Map<LLInstanceType, LLType> getInstanceToRealTypeMap() {
+		return instanceToRealTypeMap;
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	public LLDataType getDataType(LLDataType dataType) {
+		for (LLDataType type : dataTypeMap.values()) {
+			if (type.getName().equals(dataType.getName()) && type.isMoreComplete(dataType))
+				dataType = type;
+		}
+		return dataType;
+	}
 }

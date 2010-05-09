@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -24,12 +25,41 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 	private IAstType baseType;
 	private IAstTypedExpr countExpr;
 
-	/**
-	 * @param type
-	 */
-	public AstArrayType(IAstType baseType, IAstTypedExpr countExpr) {
+	public AstArrayType(TypeEngine typeEngine, IAstType baseType, IAstTypedExpr countExpr) throws TypeException {
 		setBaseType(baseType);
 		setCount(countExpr);
+		initType(typeEngine);
+	}
+
+	protected AstArrayType(IAstType baseType, IAstTypedExpr countExpr, LLType type) {
+		setBaseType(baseType);
+		setCount(countExpr);
+		setType(type);
+	}
+	
+	/**
+	 * @param typeEngine 
+	 * @throws TypeException 
+	 * 
+	 */
+	protected void initType(TypeEngine typeEngine) throws TypeException {
+		int count = 0;
+		IAstTypedExpr countVal = null;
+		if (countExpr != null) {
+			countVal = countExpr.simplify(typeEngine);
+			if (countVal instanceof IAstLitExpr) {
+				if (!(countVal instanceof IAstIntLitExpr)) 
+					throw new TypeException(countExpr, "array size must be integral");
+				count = (int) ((IAstIntLitExpr) countVal).getValue();
+				countVal = null;
+			}
+		}
+		LLArrayType data = typeEngine.getArrayType(baseType.getType(), count, countVal);  
+		setType(data);
+		
+		if (countExpr != null)
+			countExpr.setType(typeEngine.INT);
+				
 	}
 
 	/* (non-Javadoc)
@@ -37,7 +67,7 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 	 */
 	@Override
 	public IAstArrayType copy(IAstNode copyParent) {
-		return fixup(this, new AstArrayType(doCopy(baseType, copyParent), doCopy(countExpr, copyParent)));
+		return fixup(this, new AstArrayType(doCopy(baseType, copyParent), doCopy(countExpr, copyParent), getType()));
 	}
 	
 	@Override

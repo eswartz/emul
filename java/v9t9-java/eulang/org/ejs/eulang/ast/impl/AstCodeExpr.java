@@ -8,6 +8,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -57,6 +58,15 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		super.setType(type);
+	}
+	
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#isMacro()
 	 */
 	@Override
@@ -101,19 +111,15 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 			retType = null;
 		}
 		
-		LLCodeType protoType = getProtoType(typeEngine, retType);
+		LLCodeType protoType = getProtoType(typeEngine, hasRetType ? (ITyped)returns : null);
 		
 		if (canInferTypeFrom(this) /*&& getType().isComplete()*/) {
 			newType = (LLCodeType) getType();
 			if (retType != null
 					&& retType.isMoreComplete(newType.getRetType())) {
-				if (true || (!hasRetType && newType.getRetType() == null) || retType.isCompatibleWith(newType.getRetType())) {
-					LLType[] types = newType.getTypes();
-					types[0] = retType;
-					newType = (LLCodeType) newType.updateTypes(typeEngine, types);
-				} else if (hasRetType && newType.getRetType() != null) {
-					throw new TypeException(this, "incompatible return type and final expression type: " + newType.getRetType() + " != " + retType);
-				}
+				LLType[] types = newType.getTypes();
+				types[0] = retType;
+				newType = (LLCodeType) newType.updateTypes(typeEngine, types);
 			}
 		}
 		if (newType == null || protoType.isMoreComplete(newType)) {
@@ -141,7 +147,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		return changed;
 	}
 
-	private LLCodeType getProtoType(TypeEngine typeEngine, LLType retType) {
+	private LLCodeType getProtoType(TypeEngine typeEngine, ITyped returns) {
 		LLCodeType protoType = null;
 		
 		LLType[] infArgTypes = new LLType[proto.getArgCount()];
@@ -154,7 +160,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		}
 		
 		LLType infRetType = proto.returnType().getType();
-		if (proto.returnType() == null /* infRetType == null || !infRetType.isComplete()*/) {
+		if (proto.returnType().getType() == null /* infRetType == null || !infRetType.isComplete()*/) {
 			// see what the return statements do
 			/*
 			if (retType instanceof ITyped) {
@@ -164,7 +170,10 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 			} else {
 				infRetType = typeEngine.VOID;
 			}*/
-			infRetType = retType;
+			if (returns == null)
+				infRetType = typeEngine.VOID;
+			//else if (returns.getType() != null && returns.getType().isMoreComplete(infRetType))
+			//	infRetType = returns.getType();
 		}
 		
 		protoType = typeEngine.getCodeType(infRetType, infArgTypes);
@@ -193,8 +202,8 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		if (returns instanceof ITyped) {
 			LLType kidType = ((ITyped) returns).getType();
 			if (kidType != null && kidType.isComplete()) {
-				if (!typeEngine.getBaseType(((LLCodeType) thisType).getRetType()).equals(
-						typeEngine.getBaseType(kidType))) {
+				if (!((LLCodeType) thisType).getRetType().equals(
+						kidType)) {
 					throw new TypeException(returns, "code block does not return same type as prototype");
 				}
 			}

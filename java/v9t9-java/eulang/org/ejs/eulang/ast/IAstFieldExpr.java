@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -20,5 +21,5 @@ public interface IAstFieldExpr extends IAstTypedExpr {
 	void setField(IAstName name);
 	
 	/** get the resolved type of the expr, going through LLUpTypes */
-	LLType getDataType();
+	LLType getDataType(TypeEngine typeEngine);
 }

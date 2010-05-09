@@ -114,7 +114,7 @@ public abstract class BaseLLType implements LLType {
 	 */
 	@Override
 	public String toString() {
-		return (name != null ? name : llvmType);
+		return getClass().getSimpleName() +":"+ (name != null ? name : llvmType);
 	}
 	
 	public int getBits() {

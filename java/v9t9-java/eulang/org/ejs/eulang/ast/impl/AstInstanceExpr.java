@@ -30,15 +30,34 @@ public class AstInstanceExpr extends AstType implements IAstInstanceExpr {
 	private IAstSymbolExpr symbolExpr;
 
 	/**
+	 * @param typeEngine 
 	 * @param idExpr 
 	 * @param scope
 	 */
-	public AstInstanceExpr(IAstSymbolExpr idExpr, IAstNodeList<IAstTypedExpr> typeVariables) {
+	public AstInstanceExpr(TypeEngine typeEngine, IAstSymbolExpr idExpr, IAstNodeList<IAstTypedExpr> typeVariables) {
 		super(null);
 		setSymbolExpr(idExpr);
 		setExprs(typeVariables);
+		
+		if (exprs != null) {
+			LLType[] types = new LLType[exprs.nodeCount()];
+			int idx = 0;
+			for (IAstTypedExpr expr : exprs.list()) {
+				LLType aType = expr.getType();
+				types[idx++] = aType;
+			}
+			LLInstanceType type = typeEngine.getInstanceType(symbolExpr.getSymbol(), types);
+			
+			setType(type);
+		}
 	}
+	
 
+	protected AstInstanceExpr(IAstSymbolExpr idExpr, IAstNodeList<IAstTypedExpr> typeVariables, LLType type) {
+		super(type);
+		setSymbolExpr(idExpr);
+		setExprs(typeVariables);
+	}
 	
 	@Override
 	public int hashCode() {
@@ -87,7 +106,7 @@ public class AstInstanceExpr extends AstType implements IAstInstanceExpr {
 	 */
 	@Override
 	public IAstInstanceExpr copy(IAstNode parent) {
-		return fixup(this, new AstInstanceExpr(doCopy(symbolExpr, parent), doCopy(exprs, parent)));
+		return fixup(this, new AstInstanceExpr(doCopy(symbolExpr, parent), doCopy(exprs, parent), getType()));
 	}
 
 	/* (non-Javadoc)
@@ -125,7 +144,10 @@ public class AstInstanceExpr extends AstType implements IAstInstanceExpr {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { symbolExpr, exprs };
+		if (exprs != null)
+			return new IAstNode[] { symbolExpr, exprs };
+		else
+			return new IAstNode[] { symbolExpr };
 	}
 
 	/* (non-Javadoc)
@@ -152,40 +174,24 @@ public class AstInstanceExpr extends AstType implements IAstInstanceExpr {
 		boolean changed = false;
 
 		if (getType() == null) {
-			LLType[] types = new LLType[exprs.nodeCount()];
-			int idx = 0;
-			for (IAstTypedExpr expr : exprs.list()) {
-				LLType aType = expr.getType();
-				types[idx++] = aType;
-			}
-			LLInstanceType type = typeEngine.getInstanceType(symbolExpr.getSymbol(), types);
-			
-			this.setType(type);
-			changed = true;
-			//changed |= updateType(this, type);
-			
-			/*
-			IAstTypedExpr body = symbolExpr.getBody();
-			if (body != null) {
-				try {
-					ISymbol instance = symbolExpr.getDefinition().getInstanceForParameters(typeEngine, body.getType(), exprs.list());
-					
-					AstSymbolExpr newSymExpr = new AstSymbolExpr(instance);
-					newSymExpr.setSourceRef(getSourceRef());
-					IAstNamedType namedType = new AstNamedType(instance.getType(), newSymExpr);
-					namedType.setSourceRef(getSourceRef());
-					getParent().replaceChild(this, namedType);
-					return true;
-					
-					
-					//LLSymbolType type = new LLSymbolType(instance);
-					//setType(type);
-					//changed = true;
-				} catch (ASTException e) {
-					throw new TypeException(e.getNode(), e.getMessage());
+			LLType[] types;
+			LLType type;
+			if (exprs != null) {
+				types = new LLType[exprs.nodeCount()];
+				int idx = 0;
+				for (IAstTypedExpr expr : exprs.list()) {
+					LLType aType = expr.getType();
+					types[idx++] = aType;
 				}
+				type = typeEngine.getInstanceType(symbolExpr.getSymbol(), types);
+			} else {
+				type = symbolExpr.getType();
 			}
-			*/
+			
+			//this.setType(type);
+			//changed = true;
+			changed |= updateType(this, type);
+			
 		}
 		return changed;
 	}

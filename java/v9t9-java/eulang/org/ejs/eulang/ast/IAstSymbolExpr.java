@@ -42,7 +42,7 @@ public interface IAstSymbolExpr extends IAstTypedExpr {
 	/**
 	 * Get the actual resolved version of the definition used for this symbol's type, if it was defined in a define statement.
 	 * <p>
-	 * This returns either the {@link #getBody()}, a concrete instance generated from a generic
+	 * This returns either the {@link #getBody()} or a concrete instance generated from a generic
 	 * type.
 	 * @return expanded and type-specific body of the define, or <code>null</code> if not in a define
 	 */

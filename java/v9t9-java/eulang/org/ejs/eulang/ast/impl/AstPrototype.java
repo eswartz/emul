@@ -25,15 +25,21 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 
 	/** Create with the types; may be null */
 	public AstPrototype(TypeEngine typeEngine, IAstType retType, IAstArgDef[] argumentTypes) {
-		this(/*typeEngine.getCodeType(retType, argumentTypes),*/ retType, argumentTypes);
-	}
-	protected AstPrototype(/*LLType codeType,*/ IAstType retType, IAstArgDef[] argumentTypes) {
 		this.retType = retType;
 		retType.setParent(this);
 		this.argumentTypes = argumentTypes;
 		for (IAstArgDef arg : argumentTypes)
 			arg.setParent(this);
-		//setType(codeType);
+		
+		setType(typeEngine.getCodeType(retType, argumentTypes));
+	}
+	protected AstPrototype(LLType type, IAstType retType, IAstArgDef[] argumentTypes) {
+		this.retType = retType;
+		retType.setParent(this);
+		this.argumentTypes = argumentTypes;
+		for (IAstArgDef arg : argumentTypes)
+			arg.setParent(this);
+		setType(type);
 	}
 	
 	/**
@@ -54,7 +60,7 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 			argTypesCopy[i] = argumentTypes[i].copy(copyParent);
 			argTypesCopy[i] = fixup(argumentTypes[i], argTypesCopy[i]);
 		}
-		return fixup(this, new AstPrototype(/*getType(),*/ doCopy(returnType(), copyParent), argTypesCopy));
+		return fixup(this, new AstPrototype(getType(), doCopy(returnType(), copyParent), argTypesCopy));
 	}
 	
 	@Override
@@ -126,13 +132,17 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (returnType() == existing) {
-			retType = (IAstType) existing;
+			retType = (IAstType) another;
+			if (retType != null)
+				retType.setParent(this);
 			return;
 		}
 		for (int i = 0; i < argumentTypes.length; i++) {
 			IAstArgDef argDef = argumentTypes[i];
 			if (argDef == existing) {
 				argumentTypes[i] = (IAstArgDef) another;
+				if (argumentTypes[i] != null)
+					argumentTypes[i].setParent(this);
 				return;
 			}
 		}
@@ -164,6 +174,8 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	@Override
 	public boolean adaptToType(LLCodeType codeType) {
 		boolean changed = false;
+		if (codeType.getRetType() != null && codeType.getRetType().toString().contains("List.21"))
+			changed = false;
 		changed = AstTypedNode.updateType(retType, codeType.getRetType());
 		for (int  i = 0; i < argumentTypes.length; i++) {
 			changed |= AstTypedNode.updateType(argumentTypes[i], codeType.getArgTypes()[i]);

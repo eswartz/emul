@@ -4,8 +4,12 @@
 package org.ejs.eulang.types;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**
@@ -26,6 +30,7 @@ public class LLSymbolType extends BaseLLType {
 	 */
 	public LLSymbolType(ISymbol symbol) {
 		super(symbol.getUniqueName(), 1, symbol.getLLVMName(), BasicType.DATA, null);
+		//assert symbol.getType() != null;
 		this.symbol = symbol;
 	}
 
@@ -48,11 +53,14 @@ public class LLSymbolType extends BaseLLType {
 			}
 			return false;
 		}
-		if (!super.equals(obj))
+		//if (!super.equals(obj))
+		//	return false;
+		LLSymbolType other = (LLSymbolType) obj;
+		if (!symbol.getUniqueName().equals(other.symbol.getUniqueName()))
 			return false;
 		return true;
 	}
-
+	
 	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
 		return this;
 	}
@@ -77,7 +85,7 @@ public class LLSymbolType extends BaseLLType {
 	 */
 	@Override
 	public boolean isComplete() {
-		return symbol.getType() != null;
+		return true; //symbol.getType() != null;
 	}
 	
 	/* (non-Javadoc)
@@ -99,7 +107,43 @@ public class LLSymbolType extends BaseLLType {
 		return super.substitute(typeEngine, fromType, toType);
 	}
 
+	/*
+	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, org.ejs.eulang.symbols.IScope, java.util.Map)
+	 */
+	@Override
+	public LLType substitute(TypeEngine typeEngine, IScope origScope,
+			Map<Integer, ISymbol> symbolMap) {
+		ISymbol repl = symbol;
+		if (origScope == symbol.getScope()) {
+			repl = symbolMap.get(symbol.getNumber());
+			if (repl == null)
+				repl = symbol;
+		}
+		if (repl != symbol) {
+			return new LLSymbolType(repl);
+		}
+		return this;
+	}
+
 	protected boolean subTypesCompatible(LLType subType) {
 		return true;
+	}
+
+	/**
+	 * @param typeEngine TODO
+	 * @return
+	 */
+	public LLType getRealType(TypeEngine typeEngine) {
+		if (symbol.getType() != null)
+			return symbol.getType();
+		if (symbol.getDefinition() instanceof IAstDefineStmt) {
+			IAstDefineStmt define = (IAstDefineStmt) symbol.getDefinition();
+			if (!define.isGeneric() && define.bodyList().size() == 1) {
+				IAstTypedExpr body = define.getMatchingBodyExpr(null);
+				if (body != null)
+					return body.getType();
+			}
+		}
+		return null;
 	}
 }

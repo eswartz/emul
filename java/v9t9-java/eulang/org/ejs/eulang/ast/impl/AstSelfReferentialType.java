@@ -11,6 +11,8 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLSymbolType;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLUpType;
 import org.ejs.eulang.types.TypeException;
 
@@ -29,7 +31,13 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 * @param type
 	 */
 	public AstSelfReferentialType(IAstSymbolExpr symbolExpr, int level) {
-		super(new LLUpType(symbolExpr.getOriginalSymbol(), level, symbolExpr.getType()));
+		//super(new LLUpType(symbolExpr.getOriginalSymbol(), level, symbolExpr.getType()));
+		super(new LLSymbolType(symbolExpr.getSymbol()));
+		setSymbolExpr(symbolExpr);
+	}
+	
+	protected AstSelfReferentialType(IAstSymbolExpr symbolExpr, LLType type) {
+		super(type);
 		setSymbolExpr(symbolExpr);
 	}
 
@@ -38,7 +46,7 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 */
 	@Override
 	public IAstSelfReferentialType copy(IAstNode copyParent) {
-		AstSelfReferentialType copy = new AstSelfReferentialType(doCopy(symbolExpr, copyParent), ((LLUpType)getType()).getLevel());
+		AstSelfReferentialType copy = new AstSelfReferentialType(doCopy(symbolExpr, copyParent), type);
 		copy.symbol = symbol;
 		copy = fixup(this, copy);
 		return copy;
@@ -120,7 +128,8 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 				theScope = theScope.getParent();
 			}
 			assert count != 0;
-			changed |= updateType(this, new LLUpType(symbol, count, getType()));
+			changed |= updateType(this, new LLSymbolType(symbol));
+			//changed |= updateType(this, new LLUpType(symbol, count, getType()));
 		}
 		/*else {
 			// if the type got concretized, we need to update

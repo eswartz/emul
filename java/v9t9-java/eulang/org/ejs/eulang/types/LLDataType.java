@@ -4,10 +4,14 @@
 package org.ejs.eulang.types;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
+import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.impl.AstNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -257,10 +261,13 @@ public class LLDataType extends BaseLLAggregateType {
 		ISymbol newSym = symbol;
 		if (origScope == symbol.getScope()) {
 			newSym = symbolMap.get(symbol.getNumber());
-			if (newSym != null) {
-				LLType newData = typeEngine.getDataType(newSym, Arrays.asList(ifields), Arrays.asList(statics));
-				return newData.substitute(typeEngine, origScope, symbolMap);
-			}
+			if (newSym == null)
+				newSym = symbol;
+		}
+		if (newSym != symbol) {
+			LLType newData = typeEngine.getDataType(newSym, Arrays.asList(ifields), Arrays.asList(statics));
+			// continue substituting on fields
+			return newData.substitute(typeEngine, origScope, symbolMap);
 		}
 		return super.substitute(typeEngine, origScope, symbolMap);
 	}
@@ -270,5 +277,19 @@ public class LLDataType extends BaseLLAggregateType {
 	 */
 	public ISymbol getSymbol() {
 		return symbol;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLAggregateType#isMoreComplete(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isMoreComplete(LLType otherType) {
+		if (otherType instanceof LLInstanceType) {
+			LLInstanceType instance = (LLInstanceType) otherType;
+			if (instance.getSymbol().getName().equals(symbol.getName()) && instance.getCount() == 0)
+				return true;
+		}
+					
+		return super.isMoreComplete(otherType);
 	}
 }

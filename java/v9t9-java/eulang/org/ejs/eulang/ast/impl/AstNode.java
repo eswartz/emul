@@ -450,23 +450,23 @@ abstract public class AstNode implements IAstNode {
 
 
 	public static boolean replaceTypesInTree(TypeEngine typeEngine, IAstNode body,
-			Map<LLType, LLType> typeReplacementMap) {
+			Map<? extends LLType, ? extends LLType> typeReplacementMap) {
 		boolean changed = false;
-		for (Map.Entry<LLType, LLType> entry : typeReplacementMap.entrySet()) {
+		for (Map.Entry<? extends LLType, ? extends LLType> entry : typeReplacementMap.entrySet()) {
 			// then, replace known type
 			LLType from = entry.getKey();
 			LLType to = entry.getValue();
 			changed |= replaceTypes(typeEngine, body, from, to);
 		}
 		if (body instanceof IAstDefineStmt) {
-			Collection<IAstTypedExpr> concreteInstances = ((IAstDefineStmt) body).getConcreteInstances();
+			Collection<IAstTypedExpr> concreteInstances = ((IAstDefineStmt) body).getAllInstances();
 			for (IAstTypedExpr expr : concreteInstances) {
-				replaceTypesInTree(typeEngine, expr, typeReplacementMap);
+				changed |= replaceTypesInTree(typeEngine, expr, typeReplacementMap);
 			}
 		}
 		else {
 			for (IAstNode kid : body.getChildren()) {
-				replaceTypesInTree(typeEngine, kid, typeReplacementMap);
+				changed |= replaceTypesInTree(typeEngine, kid, typeReplacementMap);
 			}
 		}
 		return changed;

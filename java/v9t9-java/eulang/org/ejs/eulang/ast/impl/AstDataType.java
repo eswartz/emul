@@ -37,7 +37,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	private ISymbol typeName;
 
 		
-	public AstDataType( ISymbol typeName,
+	public AstDataType( TypeEngine typeEngine, ISymbol typeName,
 			IAstNodeList<IAstStmt> stmts,
 			IAstNodeList<IAstTypedNode> fields,
 			IAstNodeList<IAstTypedNode> statics, IScope scope) {
@@ -45,6 +45,18 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		this.typeName = typeName;
 		setFields(fields);
 		setStatics(statics);
+		setType(createDataType(typeEngine));
+	}
+	protected AstDataType( LLType type, 
+			ISymbol typeName,
+			IAstNodeList<IAstStmt> stmts,
+			IAstNodeList<IAstTypedNode> fields,
+			IAstNodeList<IAstTypedNode> statics, IScope scope) {
+		super(stmts, scope);
+		this.typeName = typeName;
+		setFields(fields);
+		setStatics(statics);
+		setType(type);
 	}
 
 	/* (non-Javadoc)
@@ -53,6 +65,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	@Override
 	public IAstDataType copy(IAstNode copyParent) {
 		return (IAstDataType) fixupStmtScope(new AstDataType(
+				type,
 				typeName,
 				doCopy(stmtList, copyParent),
 				doCopy(ifields, copyParent), doCopy(statics, copyParent),
@@ -283,6 +296,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 			doMerge(ifields, ((IAstDataType) added).getFields());
 			doMerge(statics, ((IAstDataType) added).getStatics());
 		} 
+		setType(null);
 		super.merge(added);
 	}
 	

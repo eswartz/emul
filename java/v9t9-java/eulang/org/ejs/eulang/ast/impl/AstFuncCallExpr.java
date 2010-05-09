@@ -157,19 +157,43 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		
 		LLType referencedType = getRealType(function);
 		
-		if (referencedType != null && argCodeType.isCompatibleWith(referencedType)
-				&& !argCodeType.isMoreComplete(referencedType)) {
-			
-			if (!(referencedType instanceof LLCodeType)) {
-				throw new TypeException("calling non-function: " + referencedType.toString());  
+		if (referencedType != null) {
+			if (!argCodeType.isCompatibleWith(referencedType)) {
+				codeType = null;
+				throw new TypeException(this, "arguments do not match prototype");
 			}
-
-			codeType = (LLCodeType) referencedType;
-		} else  {
-			codeType = argCodeType;
+			if (!argCodeType.isMoreComplete(referencedType)) {
+				if (!(referencedType instanceof LLCodeType)) {
+					throw new TypeException("calling non-function: " + referencedType.toString());  
+				}
+				
+				codeType = (LLCodeType) referencedType;
+			}
+			
+		}
+		if (codeType == null) {
+			
+			if (referencedType != null) {
+				// fill in any holes
+				LLType[] argTypes = argCodeType.getTypes();
+				LLType[] refTypes = referencedType.getTypes();
+				if (argTypes.length == refTypes.length) {
+					for (int i = 0; i < argTypes.length; i++) {
+						if (argTypes[i] == null || (refTypes[i] != null && refTypes[i].isMoreComplete(argTypes[i])))
+							argTypes[i] = refTypes[i];
+					}
+					codeType = (LLCodeType) argCodeType.updateTypes(typeEngine, argTypes);
+				} else {
+					codeType = argCodeType;
+				}
+			} else {
+				codeType = argCodeType;
+			}
 		}
 
-		boolean changed = updateType(function, codeType);
+		boolean changed = false;
+		
+		changed |= updateType(function, codeType);
 		if (codeType.getRetType() != null && codeType.getRetType().isComplete()
 				&& !codeType.getRetType().equals(getType())) {
 			setType(codeType.getRetType());

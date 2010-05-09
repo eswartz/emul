@@ -86,6 +86,7 @@ import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
+import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLStructOp;
@@ -306,6 +307,8 @@ public class LLVMGenerator {
 			generateGlobalConstant(stmt.getSymbol(), (IAstLitExpr) expr);
 		} else if (expr instanceof IAstDataType) {
 			generateGlobalData(stmt.getSymbol(), (IAstDataType) expr);
+		} else if (expr instanceof IAstSymbolExpr) {
+			// ignore
 		} else {
 			unhandled(stmt);
 		}
@@ -1233,7 +1236,7 @@ entry:
 
 	private LLOperand generateFieldExpr(IAstFieldExpr expr) throws ASTException {
 		
-		LLDataType dataType = (LLDataType) expr.getDataType();
+		LLDataType dataType = (LLDataType) expr.getDataType(typeEngine);
 		BaseLLField field = dataType.getField(expr.getField().getName());
 		if (field == null)
 			throw new ASTException(expr.getField(), "unknown field '" + expr.getField().getName() + "' in '" + dataType.getName());
@@ -1607,8 +1610,16 @@ entry:
 			return new LLConstOp(expr.getType(), Boolean.TRUE.equals(object) ? 1 : 0);
 		else if (object != null)
 			return new LLConstOp(expr.getType(), (Number) object);
-		else
-			return new LLConstOp(expr.getType(), 0);
+		else {
+			// nil
+			if (expr.getType().getBasicType() == BasicType.INTEGRAL
+					|| expr.getType().getBasicType() == BasicType.FLOATING)
+				return new LLConstOp(expr.getType(), 0);
+			else if (expr.getType().getBasicType() == BasicType.POINTER)
+				return generateCast(expr, expr.getType(), typeEngine.INT, new LLConstOp(0));
+			else
+				throw new ASTException(expr, "cannot generate nil");
+		}
 			
 	}
 
