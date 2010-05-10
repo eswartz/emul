@@ -113,7 +113,7 @@ public class V9t9CallingConvention implements ICallingConvention {
 			//int argEnd = curOffs - endOffs;
 			align.alignAndAdd(arg.getType());
 			locs.add(new StackLocation(((LLArgAttrType) arg).getName(),
-					arg.getType(), -align.sizeof() / 8));
+					arg.getType(), -(align.sizeof() - arg.getType().getBits() ) / 8));
 
 		}
 		return (Location[]) locs.toArray(new Location[locs.size()]);

@@ -4,7 +4,6 @@
 package org.ejs.eulang.llvm.tms9900;
 
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 

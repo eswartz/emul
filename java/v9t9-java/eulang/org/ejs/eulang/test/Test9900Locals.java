@@ -281,12 +281,12 @@ public class Test9900Locals extends BaseParserTest {
 		real = (StackLocal) getLocal(stackLocalMap, "x.");
 		assertNotNull(real);
 		assertEquals(theType, real.getType());
-		assertEquals(10, real.getOffset());	// from caller
+		assertEquals(0, real.getOffset());	// from caller
 		
 		mirror = (StackLocal) getLocal(stackLocalMap, "_.x");
 		assertNotNull(mirror);
 		assertEquals(theType, mirror.getType());
-		assertEquals(10, mirror.getOffset());	// first local, taking same location as caller's
+		assertEquals(0, mirror.getOffset());	// first local, taking same location as caller's
 		
 		// not using the space for the array
 		assertEquals(0, locals.getFrameSize());
