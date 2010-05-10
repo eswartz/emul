@@ -36,11 +36,7 @@ import org.eclipse.tm.tcf.services.IMemory.MemoryError;
 import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 
-class TestRCBP1 implements ITCFTest,
-        IDiagnostics.DoneGetTestList, IDiagnostics.DoneRunTest,
-        IRunControl.DoneGetContext, IRunControl.DoneGetChildren,
-        IRunControl.DoneGetState, IRunControl.RunControlListener,
-        IDiagnostics.DoneGetSymbol {
+class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private final TCFTestSuite test_suite;
     private final int channel_id;
@@ -54,14 +50,15 @@ class TestRCBP1 implements ITCFTest,
     private final Map<String,SuspendedContext> suspended = new HashMap<String,SuspendedContext>();
     private final Map<String,SuspendedContext> suspended_prev = new HashMap<String,SuspendedContext>();
     private final Set<String> running = new HashSet<String>();
-    private final Map<IToken,String> get_state_cmds = new HashMap<IToken,String>();
+    private final Set<IToken> get_state_cmds = new HashSet<IToken>();
     private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
         new HashMap<String,Map<String,IRegisters.RegistersContext>>();
     private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>();
     private final Random rnd = new Random();
 
-    private String context_id; // Test process context ID
-    private IRunControl.RunControlContext context;
+    private String[] test_list;
+    private String test_ctx_id; // Test context ID
+    private IRunControl.RunControlContext test_context;
     private String main_thread_id;
     private Runnable pending_cancel;
     private ISymbol func0;
@@ -70,7 +67,7 @@ class TestRCBP1 implements ITCFTest,
     private ISymbol func3;
     private ISymbol array;
     private int bp_cnt = 0;
-    private boolean done_starting_test_process;
+    private boolean done_get_state;
     private int resume_cnt = 0;
     private IToken cancel_test_cmd;
     private boolean bp_set_done;
@@ -94,7 +91,7 @@ class TestRCBP1 implements ITCFTest,
 
         @SuppressWarnings("unchecked")
         public void breakpointStatusChanged(String id, Map<String,Object> status) {
-            if (bp_list.get(id) != null && context_id != null) {
+            if (bp_list.get(id) != null && test_context != null) {
                 String s = (String)status.get(IBreakpoints.STATUS_ERROR);
                 if (s != null) exit(new Exception("Invalid BP status: " + s));
                 Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
@@ -102,7 +99,7 @@ class TestRCBP1 implements ITCFTest,
                 String err = null;
                 for (Map<String,Object> map : list) {
                     String ctx = (String)map.get(IBreakpoints.INSTANCE_CONTEXT);
-                    if (context_id.equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) != null)
+                    if (test_context.getProcessID().equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) != null)
                         err = (String)map.get(IBreakpoints.INSTANCE_ERROR);
                 }
                 if (err != null) exit(new Exception("Invalid BP status: " + err));
@@ -126,6 +123,13 @@ class TestRCBP1 implements ITCFTest,
         }
 
         public void contextRemoved(String[] ids) {
+            if (!bp_change_done) return;
+            for (String id : ids) {
+                if (bp_list.get(id) != null) {
+                    exit(new Exception("Invalid Breakpoints.contextRemoved event"));
+                    return;
+                }
+            }
         }
 
         private boolean checkBPData(Map<String,Object> m0, Map<String,Object> m1) {
@@ -160,88 +164,154 @@ class TestRCBP1 implements ITCFTest,
             exit(new Exception("Remote Breakpoints service not found"));
         }
         else {
-            diag.getTestList(this);
+            runTest();
         }
         if (bp != null) bp.addListener(bp_listener);
     }
 
-    public void doneGetTestList(IToken token, Throwable error, String[] list) {
-        assert test_suite.isActive(this);
-        if (error != null) {
-            exit(error);
+    private void runTest() {
+        if (test_list == null) {
+            getTestList();
+            return;
         }
-        else {
-            for (int i = 0; i < list.length; i++) {
-                if (list[i].equals("RCBP1")) {
-                    diag.runTest("RCBP1", this);
-                    return;
+        if (test_ctx_id == null) {
+            startTestContext();
+            return;
+        }
+        if (test_context == null) {
+            getTestContext();
+            return;
+        }
+        if (func0 == null) {
+            getSymbols();
+            return;
+        }
+        if (!bp_set_done) {
+            iniBreakpoints();
+            return;
+        }
+        if (!done_get_state) {
+            assert get_state_cmds.isEmpty();
+            assert threads.isEmpty();
+            assert running.isEmpty();
+            assert suspended.isEmpty();
+            getContextState(test_ctx_id);
+            return;
+        }
+        if (!bp_change_done) {
+            changeBreakpoints();
+            return;
+        }
+        for (SuspendedContext s : suspended.values()) resume(s.id);
+    }
+
+    private void getTestList() {
+        diag.getTestList(new IDiagnostics.DoneGetTestList() {
+            public void doneGetTestList(IToken token, Throwable error, String[] list) {
+                assert test_suite.isActive(TestRCBP1.this);
+                if (error != null) {
+                    exit(error);
                 }
+                else {
+                    test_list = list;
+                    runTest();
+                }
+            }
+        });
+    }
+
+    private void startTestContext() {
+        for (int i = 0; i < test_list.length; i++) {
+            if (test_list[i].equals("RCBP1")) {
+                diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
+                    public void doneRunTest(IToken token, Throwable error, String context_id) {
+                        if (error != null) {
+                            exit(error);
+                        }
+                        else {
+                            assert test_suite.isActive(TestRCBP1.this);
+                            assert test_ctx_id == null;
+                            test_ctx_id = context_id;
+                            if (pending_cancel != null) {
+                                exit(null);
+                            }
+                            else {
+                                runTest();
+                            }
+                        }
+                    }
+                });
+                return;
             }
         }
         exit(null);
     }
 
-    public void doneRunTest(IToken token, Throwable error, String context_id) {
-        if (error != null) {
-            exit(error);
-        }
-        else {
-            assert test_suite.isActive(this);
-            assert this.context_id == null;
-            this.context_id = context_id;
-            if (pending_cancel != null) {
-                exit(null);
+    private void getTestContext() {
+        rc.getContext(test_ctx_id, new IRunControl.DoneGetContext() {
+            public void doneGetContext(IToken token, Exception error, RunControlContext context) {
+                get_state_cmds.remove(token);
+                if (test_suite.cancel) return;
+                if (error != null) {
+                    exit(error);
+                    return;
+                }
+                test_context = context;
+                assert test_ctx_id.equals(context.getID());
+                rc.addListener(TestRCBP1.this);
+                runTest();
             }
-            else {
-                diag.getSymbol(context_id, "tcf_test_func0", this);
-                diag.getSymbol(context_id, "tcf_test_func1", this);
-                diag.getSymbol(context_id, "tcf_test_func2", this);
-                diag.getSymbol(context_id, "tcf_test_func3", this);
-                diag.getSymbol(context_id, "tcf_test_array", this);
-            }
-        }
+        });
     }
 
-    public void doneGetSymbol(IToken token, Throwable error, ISymbol symbol) {
-        if (error != null) {
-            exit(error);
-            return;
-        }
-        if (!test_suite.isActive(this)) return;
-        assert this.context_id != null;
-        if (!symbol.isAbs()) {
-            exit(new Exception("Symbols 'tcf_test_*' must be absolute"));
-        }
-        else if (symbol.getValue().longValue() == 0) {
-            exit(new Exception("Symbols 'tcf_test_*' must not be NULL"));
-        }
-        else if (func0 == null) {
-            func0 = symbol;
-        }
-        else if (func1 == null) {
-            func1 = symbol;
-        }
-        else if (func2 == null) {
-            func2 = symbol;
-        }
-        else if (func3 == null) {
-            func3 = symbol;
-        }
-        else {
-            array = symbol;
-            // Reset breakpoint list (previous tests might left breakpoints)
-            bp.set(null, new IBreakpoints.DoneCommand() {
-                public void doneCommand(IToken token, Exception error) {
-                    if (error != null) {
-                        exit(error);
-                    }
-                    else {
-                        // Create initial set of breakpoints
-                        iniBreakpoints();
-                    }
+    private void getSymbols() {
+        IDiagnostics.DoneGetSymbol d = new IDiagnostics.DoneGetSymbol() {
+            public void doneGetSymbol(IToken token, Throwable error, ISymbol symbol) {
+                if (error != null) {
+                    exit(error);
+                    return;
                 }
-            });
-        }
+                if (!test_suite.isActive(TestRCBP1.this)) return;
+                assert test_ctx_id != null;
+                if (!symbol.isAbs()) {
+                    exit(new Exception("Symbols 'tcf_test_*' must be absolute"));
+                }
+                else if (symbol.getValue().longValue() == 0) {
+                    exit(new Exception("Symbols 'tcf_test_*' must not be NULL"));
+                }
+                else if (func0 == null) {
+                    func0 = symbol;
+                }
+                else if (func1 == null) {
+                    func1 = symbol;
+                }
+                else if (func2 == null) {
+                    func2 = symbol;
+                }
+                else if (func3 == null) {
+                    func3 = symbol;
+                }
+                else {
+                    array = symbol;
+                    // Reset breakpoint list (previous tests might left breakpoints)
+                    bp.set(null, new IBreakpoints.DoneCommand() {
+                        public void doneCommand(IToken token, Exception error) {
+                            if (error != null) {
+                                exit(error);
+                                return;
+                            }
+                            runTest();
+                        }
+                    });
+                }
+            }
+        };
+        String prs = test_context.getProcessID();
+        diag.getSymbol(prs, "tcf_test_func0", d);
+        diag.getSymbol(prs, "tcf_test_func1", d);
+        diag.getSymbol(prs, "tcf_test_func2", d);
+        diag.getSymbol(prs, "tcf_test_func3", d);
+        diag.getSymbol(prs, "tcf_test_array", d);
     }
 
     @SuppressWarnings("unchecked")
@@ -294,121 +364,99 @@ class TestRCBP1 implements ITCFTest,
                 bp_set_done = true;
                 if (error != null) {
                     exit(error);
+                    return;
                 }
-                else {
-                    get_state_cmds.put(rc.getContext(context_id, TestRCBP1.this), context_id);
-                }
+                runTest();
             }
         });
     }
 
-    public void doneGetContext(IToken token, Exception error, RunControlContext context) {
-        get_state_cmds.remove(token);
-        if (test_suite.cancel) return;
-        if (error != null) {
-            exit(error);
-            return;
-        }
-        if (this.context == null) {
-            this.context = context;
-            assert context_id.equals(context.getID());
-            assert threads.isEmpty();
-            assert running.isEmpty();
-            assert suspended.isEmpty();
-            rc.addListener(this);
-        }
-        get_state_cmds.put(rc.getChildren(context.getID(), this), context.getID());
-        if (context.hasState()) {
-            threads.put(context.getID(), context);
-            get_state_cmds.put(context.getState(this), context.getID());
-        }
-    }
-
-    public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-        get_state_cmds.remove(token);
-        if (test_suite.cancel) return;
-        if (error != null) {
-            exit(error);
-            return;
-        }
-        for (String id : contexts) {
-            get_state_cmds.put(rc.getContext(id, this), id);
-        }
-        if (get_state_cmds.isEmpty()) {
-            // No more pending commands
-            doneStartingTestProcess();
-        }
-    }
-
-    public void doneGetState(IToken token, Exception error,
-            boolean suspended, String pc, String reason,
-            Map<String, Object> params) {
-        final String id = get_state_cmds.remove(token);
-        if (test_suite.cancel) return;
-        if (error != null) {
-            exit(error);
-            return;
-        }
-        if (id == null) {
-            exit(new Exception("Invalid getState responce"));
-        }
-        else if (!suspended) {
-            if (this.suspended.get(id) != null) {
-                exit(new Exception("Invalid result of getState command"));
-            }
-            else {
-                running.add(id);
-            }
-        }
-        else {
-            assert threads.get(id) != null;
-            if (running.contains(id)) {
-                exit(new Exception("Invalid result of getState command"));
-            }
-            else {
-                SuspendedContext sc = this.suspended.get(id);
-                if (sc != null) {
-                    if (!sc.pc.equals(pc) || !sc.reason.equals(reason)) {
-                        exit(new Exception("Invalid result of getState command"));
-                    }
-                    else {
-                        resume(id);
-                    }
+    private void getContextState(final String id) {
+        get_state_cmds.add(rc.getChildren(id, new IRunControl.DoneGetChildren() {
+            public void doneGetChildren(IToken token, Exception error, String[] contexts) {
+                get_state_cmds.remove(token);
+                if (test_suite.cancel) return;
+                if (error != null) {
+                    exit(error);
+                    return;
                 }
-                else {
-                    // Receiving context state for the first time
-                    if (resume_cnt > 0) {
-                        exit(new Exception("Missing contextSuspended event for " + id));
-                    }
-                    else if ("Breakpoint".equals(reason)) {
-                        exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
-                    }
-                    else {
-                        this.suspended.put(id, new SuspendedContext(id, pc, reason, params));
-                    }
-                }
+                for (String s : contexts) getContextState(s);
+                if (get_state_cmds.isEmpty()) doneContextState();
             }
-        }
-        if (get_state_cmds.isEmpty()) {
-            // No more pending commands
-            if (!test_suite.isActive(this)) return;
-            doneStartingTestProcess();
-        }
+        }));
+        get_state_cmds.add(rc.getContext(id, new IRunControl.DoneGetContext() {
+            public void doneGetContext(IToken token, Exception error, RunControlContext context) {
+                get_state_cmds.remove(token);
+                if (test_suite.cancel) return;
+                if (error != null) {
+                    exit(error);
+                    return;
+                }
+                if (context.hasState()) {
+                    threads.put(id, context);
+                    get_state_cmds.add(context.getState(new IRunControl.DoneGetState() {
+                        public void doneGetState(IToken token, Exception error,
+                                boolean susp, String pc, String reason,
+                                Map<String, Object> params) {
+                            get_state_cmds.remove(token);
+                            if (test_suite.cancel) return;
+                            if (error != null) {
+                                exit(error);
+                                return;
+                            }
+                            if (!susp) {
+                                if (suspended.get(id) != null) {
+                                    exit(new Exception("Invalid result of getState command"));
+                                    return;
+                                }
+                                running.add(id);
+                            }
+                            else {
+                                assert threads.get(id) != null;
+                                if (running.contains(id)) {
+                                    exit(new Exception("Invalid result of getState command"));
+                                    return;
+                                }
+                                SuspendedContext sc = suspended.get(id);
+                                if (sc != null) {
+                                    if (!sc.pc.equals(pc) || !sc.reason.equals(reason)) {
+                                        exit(new Exception("Invalid result of getState command"));
+                                        return;
+                                    }
+                                }
+                                if ("Breakpoint".equals(reason)) {
+                                    exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
+                                    return;
+                                }
+                                suspended.put(id, new SuspendedContext(id, pc, reason, params));
+                            }
+                            if (get_state_cmds.isEmpty()) doneContextState();
+                        }
+                    }));
+                }
+                if (get_state_cmds.isEmpty()) doneContextState();
+            }
+        }));
     }
 
-    private void doneStartingTestProcess() {
-        assert !done_starting_test_process;
+    private void doneContextState() {
+        assert !done_get_state;
         assert get_state_cmds.isEmpty();
         assert resume_cnt == 0;
         assert threads.size() == suspended.size() + running.size();
         assert bp_set_done;
         assert !bp_change_done;
+        done_get_state = true;
         if (threads.size() == 0) return;
-        done_starting_test_process = true;
+        runTest();
+    }
+
+    private void changeBreakpoints() {
+        assert !bp_change_done;
         final String bp_id = "TcfTestBP5" + channel_id;
         final Map<String,Object> m = bp_list.get(bp_id);
         ArrayList<String> l = new ArrayList<String>();
-        l.add(context_id);
+        l.add(test_context.getProcessID());
         m.put(IBreakpoints.PROP_CONTEXTIDS, l);
         m.put(IBreakpoints.PROP_STOP_GROUP, l);
         StringBuffer bf = new StringBuffer();
@@ -489,7 +537,7 @@ class TestRCBP1 implements ITCFTest,
                         if (error != null) exit(error);
                     }
                 });
-                for (SuspendedContext s : suspended.values()) resume(s.id);
+                runTest();
             }
         });
     }
@@ -509,20 +557,22 @@ class TestRCBP1 implements ITCFTest,
     }
 
     public void contextAdded(RunControlContext[] contexts) {
-        for (int i = 0; i < contexts.length; i++) {
-            if (threads.get(contexts[i].getID()) != null) {
+        for (RunControlContext ctx : contexts) {
+            String id = ctx.getID();
+            if (threads.get(id) != null) {
                 exit(new Exception("Invalid contextAdded event"));
                 return;
             }
-            String p = contexts[i].getParentID();
-            if (context.getID().equals(p) || threads.get(p) != null) {
-                if (contexts[i].hasState()) {
-                    threads.put(contexts[i].getID(), contexts[i]);
-                    if (!done_starting_test_process) {
-                        get_state_cmds.put(contexts[i].getState(this), contexts[i].getID());
+            String p = ctx.getParentID();
+            String c = ctx.getCreatorID();
+            if (test_ctx_id.equals(c) || test_ctx_id.equals(p)) {
+                if (ctx.hasState()) {
+                    threads.put(id, ctx);
+                    if (!done_get_state) {
+                        getContextState(id);
                     }
                     else {
-                        running.add(contexts[i].getID());
+                        running.add(id);
                     }
                 }
             }
@@ -530,20 +580,15 @@ class TestRCBP1 implements ITCFTest,
     }
 
     public void contextChanged(RunControlContext[] contexts) {
-        for (int i = 0; i < contexts.length; i++) {
-            if (contexts[i].getID().equals(context.getID())) {
-                context = contexts[i];
-            }
-            if (threads.get(contexts[i].getID()) != null) {
-                threads.put(contexts[i].getID(), contexts[i]);
-            }
+        for (RunControlContext ctx : contexts) {
+            String id = ctx.getID();
+            if (id.equals(test_ctx_id)) test_context = ctx;
+            if (threads.get(id) != null) threads.put(id, ctx);
         }
     }
 
-    public void contextException(String context, String msg) {
-        if (context.equals(this.context.getID()) || threads.get(context) != null) {
-            exit(new Exception(msg));
-        }
+    public void contextException(String id, String msg) {
+        if (threads.get(id) != null) exit(new Exception(msg));
     }
 
     public void contextRemoved(String[] contexts) {
@@ -559,6 +604,7 @@ class TestRCBP1 implements ITCFTest,
                 }
                 rc.removeListener(this);
                 // Reset breakpoint list
+                bp_list.clear();
                 bp.set(null, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         exit(error);
@@ -617,8 +663,9 @@ class TestRCBP1 implements ITCFTest,
         running.remove(id);
         SuspendedContext sc = suspended.get(id);
         if (sc != null) {
-            if (!sc.pc.equals(pc) || !sc.reason.equals(reason)) {
+            if (done_get_state || !sc.pc.equals(pc) || !sc.reason.equals(reason)) {
                 exit(new Exception("Invalid contextSuspended event"));
+                return;
             }
         }
         else {
@@ -627,7 +674,7 @@ class TestRCBP1 implements ITCFTest,
         }
         if (main_thread_id == null && "Breakpoint".equals(reason) && isMyBreakpoint(sc)) {
             // Process main thread should be the first to hit a breakpoint in the test
-            if (!done_starting_test_process) {
+            if (!done_get_state) {
                 exit(new Exception("Unexpeceted breakpoint hit"));
                 return;
             }
@@ -691,8 +738,8 @@ class TestRCBP1 implements ITCFTest,
     }
 
     private void resume(final String id) {
-        assert done_starting_test_process || resume_cnt == 0;
-        if (!done_starting_test_process) return;
+        assert done_get_state || resume_cnt == 0;
+        if (!done_get_state) return;
         resume_cnt++;
         SuspendedContext sc = suspended.get(id);
         IRunControl.RunControlContext ctx = threads.get(id);
@@ -716,7 +763,7 @@ class TestRCBP1 implements ITCFTest,
             return;
         }
         test_suite.target_lock = true;
-        mm.getContext(context_id, new IMemory.DoneGetContext() {
+        mm.getContext(test_context.getProcessID(), new IMemory.DoneGetContext() {
             public void doneGetContext(IToken token, Exception error, final MemoryContext mem_ctx) {
                 if (suspended.get(sc.id) != sc) {
                     test_suite.target_lock = false;
@@ -726,12 +773,8 @@ class TestRCBP1 implements ITCFTest,
                     exit(error);
                     return;
                 }
-                if (!context_id.equals(mem_ctx.getID())) {
+                if (!test_context.getProcessID().equals(mem_ctx.getID())) {
                     exit(new Exception("Bad memory context data: invalid ID"));
-                }
-                Object pid = context.getProcessID();
-                if (pid != null && !pid.equals(mem_ctx.getProcessID())) {
-                    exit(new Exception("Bad memory context data: invalid ProcessID"));
                 }
                 final boolean big_endian = mem_ctx.isBigEndian();
                 final int addr_size = mem_ctx.getAddressSize();
@@ -989,7 +1032,7 @@ class TestRCBP1 implements ITCFTest,
 
     void cancel(final Runnable done) {
         if (rc != null) rc.removeListener(this);
-        if (context_id == null) {
+        if (test_ctx_id == null) {
             if (pending_cancel != null) {
                 exit(null);
             }
@@ -998,7 +1041,7 @@ class TestRCBP1 implements ITCFTest,
             }
         }
         else if (cancel_test_cmd == null) {
-            cancel_test_cmd = diag.cancelTest(context_id, new IDiagnostics.DoneCancelTest() {
+            cancel_test_cmd = diag.cancelTest(test_ctx_id, new IDiagnostics.DoneCancelTest() {
                 public void doneCancelTest(IToken token, Throwable error) {
                     cancel_test_cmd = null;
                     exit(error);
