@@ -487,12 +487,14 @@ public class TestTypes extends BaseParserTest {
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
     			"testDataDeref4 = code() {\n"+
-    			"  foo:Tuple[10];\n"+
+    			"  foo:Tuple[10]=[];\n"+
+    			"  foo[1].z = 7;\n"+
     			"  foo[7].x = 33;\n"+		// don't deref LHS
-    			"  foo[1].x = foo[2].x;\n"+	// do deref RHS
+    			"  foo[1].x = foo[2].x + foo[foo[1].z].x;\n"+	// do deref RHS
     			"};\n"+
     	"");
-    	doGenerate(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("ret i8 33", gen); // ensure not "undef"
     }
     
     @Test
@@ -652,11 +654,33 @@ public class TestTypes extends BaseParserTest {
     	
     }
 
+	
+	@Test
+	public void testArrayAccess2() throws Exception {
+		IAstModule mod = doFrontend(
+				"testArrayAccess3 = code(foo:Byte[3][3]^) {\n"+
+				"  foo[1][2] + (foo[2])[2];"+	// auto deref
+				"};\n"+
+		"");
+		IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testArrayAccess3").getDefinition());
+		assertTrue(code.getType().isComplete());
+		
+		ISymbol sym = code.getScope().get("foo");
+		assertTrue(sym.getType() instanceof LLPointerType);
+		LLArrayType arrayType = (LLArrayType) sym.getType().getSubType();
+		assertEquals(3, ((LLArrayType) arrayType).getArrayCount());
+		assertEquals(3, ((LLArrayType)((LLArrayType) arrayType).getSubType()).getArrayCount());
+		
+		LLVMGenerator gen = doGenerate(mod);
+		assertFoundInOptimizedText("%foo, i16 0, i16 1, i16 2", gen);
+		assertFoundInOptimizedText("%foo, i16 0, i16 2, i16 2", gen);
+		
+	}
 
 	@Test
     public void testArrayAccess3() throws Exception {
     	IAstModule mod = doFrontend(
-    			"testArrayAccess3 = code(foo:Byte[3][3]) {\n"+
+    			"testArrayAccess3 = code(foo:Byte[3][3]) {\n"+	// passed by value (!)
     			"  foo[1][2] + (foo[2])[2];"+
     			"};\n"+
     	"");
@@ -668,8 +692,8 @@ public class TestTypes extends BaseParserTest {
     	assertEquals(3, ((LLArrayType)((LLArrayType) sym.getType()).getSubType()).getArrayCount());
     	
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInOptimizedText("%foo, i16 0, i16 1, i16 2", gen);
-    	assertFoundInOptimizedText("%foo, i16 0, i16 2, i16 2", gen);
+    	assertFoundInOptimizedText("extractvalue %Bytex3x3 %foo, 1", gen);
+    	assertMatchText("extractvalue %Bytex3 %foo.*, 2", gen.getOptimizedText());
     	
     }
 	@Test
@@ -689,7 +713,33 @@ public class TestTypes extends BaseParserTest {
     	LLVMGenerator gen = doGenerate(mod);
     	assertFoundInUnoptimizedText("%Bytex3x3 [ %Bytex3 [ %Byte 1, %Byte 2, %Byte 3 ], %Bytex3 [ %Byte 4, %Byte 5, %Byte 6 ], %Bytex3 [ %Byte 7, %Byte 8, %Byte 9 ] ], %Bytex3x3*", gen);
     }
-	
+
+	@Test
+	public void testDataInit5() throws Exception {
+		dumpLLVMGen = true;
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend(
+				"Tuple = data { x : Int^; y :Int; };\n"+
+				"testDataInit5 = code(x:Int^) {\n"+
+				"  foo:Tuple=[x,-x^];\n"+
+				"};\n"+
+		"");
+		LLVMGenerator gen = doGenerate(mod);
+		assertFoundInOptimizedText("insertvalue", gen);
+	}
+	@Test
+	public void testDataInit5b() throws Exception {
+		dumpLLVMGen = true;
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend(
+				"Tuple = data { x : Byte; y :Int; };\n"+
+				"testDataInit5 = code(x:Int^) {\n"+
+				"  foo:Tuple=[x^,-x^];\n"+	// forced to use version without zero-init padding
+				"};\n"+
+		"");
+		LLVMGenerator gen = doGenerate(mod);
+		assertFoundInOptimizedText("insertvalue", gen);
+	}
 	@Test
 	public void testPointerDecl1() throws Exception {
     	IAstModule mod = doFrontend(
@@ -1451,6 +1501,41 @@ public class TestTypes extends BaseParserTest {
 		
 		LLVMGenerator gen = doGenerate(mod);
 		assertFoundInOptimizedText("ret double %y", gen);
+	}
+	
+	@Test
+    public void testDataAccess1() throws Exception {
+		dumpLLVMGen = true;
+		dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"Tuple = data { x ,y :Int; };\n"+
+    			"tupleThingy = code (t :Tuple=>(Float,Float)) { (t.x, t.y) };\n"+
+    			"testDataAccess1 = code(foo:Tuple) {\n"+
+    			"  tupleThingy(foo);"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInOptimizedText("extractvalue", gen);
+    	assertFoundInOptimizedText("insertvalue", gen);
+    	assertFoundInOptimizedText("sitofp", gen);
+    }
+	
+	@Test
+	public void testDataAccess1b() throws Exception {
+		dumpLLVMGen = true;
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend(
+				"Tuple = data { x ,y :Int; };\n"+
+				"tupleThingy = code (t :Tuple^=>(Float,Float)) { (t.x, t.y) };\n"+
+				"testDataAccess1 = code(x:Int^) {\n"+
+				"  foo:Tuple=[x^,-x^];\n"+
+				"  tupleThingy(&foo);"+
+				"};\n"+
+		"");
+		LLVMGenerator gen = doGenerate(mod);
+		assertFoundInOptimizedText("getelementptr", gen);
+		assertFoundInOptimizedText("insertvalue", gen);
+		assertFoundInOptimizedText("sitofp", gen);
 	}
 }
 

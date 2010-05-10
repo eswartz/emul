@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.llvm.directives;
 
+import org.ejs.eulang.llvm.FunctionConvention;
+import org.ejs.eulang.llvm.LLArgAttrType;
 import org.ejs.eulang.llvm.LLAttrType;
 import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLLinkage;
@@ -20,13 +22,13 @@ public class LLDeclareDirective extends LLBaseDirective  {
 	private final LLVisibility visibility;
 	private final String cconv;
 	private final LLAttrType retType;
-	private final LLAttrType[] argTypes;
+	private final LLArgAttrType[] argTypes;
 	private final LLFuncAttrs funcAttrs;
 	private final String gc;
 
 	public LLDeclareDirective(
 			ISymbol symbol, LLLinkage linkage, LLVisibility visibility, String cconv, LLAttrType retType,
-			LLAttrType argTypes[], LLFuncAttrs funcAttrs, String gc) {
+			LLArgAttrType argTypes[], LLFuncAttrs funcAttrs, String gc) {
 		this.symbol = symbol;
 		this.linkage = linkage;
 		this.visibility = visibility;
@@ -38,6 +40,9 @@ public class LLDeclareDirective extends LLBaseDirective  {
 	}
 
 			
+	public FunctionConvention getConvention() {
+		return new FunctionConvention(linkage, visibility, cconv, retType, argTypes, funcAttrs, gc);
+	}
 			
 			
 	/* (non-Javadoc)

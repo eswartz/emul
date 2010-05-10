@@ -13,15 +13,18 @@ import org.ejs.eulang.types.LLType;
 public class BaseLocal implements ILocal {
 
 	private LLType type;
-	private int size;
 	private ISymbol name;
+	private ILocal incoming;
 
-	
-	public BaseLocal(ISymbol name, LLType type, int size) {
-		super();
+	/**
+	 * 
+	 * @param name
+	 * @param type
+	 * @param size in bits
+	 */
+	public BaseLocal(ISymbol name, LLType type) {
 		this.name = name;
 		this.type = type;
-		this.size = size;
 	}
 	
 	/* (non-Javadoc)
@@ -29,7 +32,7 @@ public class BaseLocal implements ILocal {
 	 */
 	@Override
 	public String toString() {
-		return "local " + name.getName() + " [" + type + "] size = " + size;
+		return "local " + name.getName() + " [" + type + "]";
 	}
 
 	@Override
@@ -37,7 +40,6 @@ public class BaseLocal implements ILocal {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + size;
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
@@ -58,8 +60,6 @@ public class BaseLocal implements ILocal {
 				return false;
 		} else if (!name.equals(other.name))
 			return false;
-		if (size != other.size)
-			return false;
 		if (type == null) {
 			if (other.type != null)
 				return false;
@@ -78,13 +78,6 @@ public class BaseLocal implements ILocal {
 		return name;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getSize()
-	 */
-	@Override
-	public int getSize() {
-		return size;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getType()
@@ -94,4 +87,18 @@ public class BaseLocal implements ILocal {
 		return type;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getIncoming()
+	 */
+	@Override
+	public ILocal getIncoming() {
+		return incoming;
+	}
+	
+	/**
+	 * @param incoming the incoming to set
+	 */
+	public void setIncoming(ILocal incoming) {
+		this.incoming = incoming;
+	}
 }

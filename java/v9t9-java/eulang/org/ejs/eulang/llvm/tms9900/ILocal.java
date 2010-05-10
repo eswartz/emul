@@ -16,6 +16,7 @@ public interface ILocal {
 	ISymbol getName();
 	/** Get the type chosen to represent the local: should generally match ISymbol#getType() */
 	LLType getType();
-	/** Get the size in bytes used for the local: should generally match #getType()#getBits()/8 */
-	int getSize();
+	
+	/** If this local is elected to occupy an incoming register, this is set */
+	ILocal getIncoming();
 }

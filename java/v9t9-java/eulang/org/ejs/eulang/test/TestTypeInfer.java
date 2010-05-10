@@ -129,6 +129,23 @@ public class TestTypeInfer extends BaseParserTest {
     	
     }
 	@Test
+    public void testVoidReturn2() throws Exception {
+    	IAstModule mod = treeize(
+    			"testVoidReturn2= code ( => nil) { y : Int[10]; };");
+    	sanityTest(mod);
+
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testVoidReturn2");
+    	doTypeInfer(mod);
+    	typeTest(mod, false);
+    	
+    	assertEquals(typeEngine.getCodeType(typeEngine.VOID, 
+    			new LLType[] {}), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+		IAstPrototype prototype = codeExpr.getPrototype();
+		assertEquals(typeEngine.VOID, prototype.returnType().getType());
+    	
+    }
+	@Test
     public void testPromotedCast1() throws Exception {
     	IAstModule mod = treeize(
     			"testPromotedCast1 = code (x : Int; y : Int) {\n" +

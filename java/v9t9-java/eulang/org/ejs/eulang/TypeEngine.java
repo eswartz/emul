@@ -146,13 +146,6 @@ public class TypeEngine {
 				align = minAlign;
 			
 			int fieldOffset = offset;
-			/*if (alignToField) {
-				if (fieldOffset % align != 0) {
-					fieldOffset += (align - fieldOffset % align);
-				}
-			}
-			*/
-			
 			int nextOffset = fieldOffset;
 
 			nextOffset += bits; 
@@ -187,6 +180,37 @@ public class TypeEngine {
 			offset += gap;
 		}
 
+		/**
+		 * @param type
+		 * @return
+		 */
+		public int alignedSize(LLType type) {
+			LLType alignType = type;
+			while (alignType != null && alignType instanceof LLArrayType) {
+				alignType = alignType.getSubType();
+			}
+			
+			int bits = type != null ? type.getBits() : 0;
+			int alignBits = alignType != null ? alignType.getBits() : 0;
+			
+			int minAlign = target == Target.STRUCT ? getStructMinAlign() : getStackMinAlign();
+			int align = target == Target.STRUCT ? getStructAlign() : getStackAlign();
+			
+			if (bits != 0 && bits < minAlign)
+				bits = minAlign;
+			if (alignBits < align)
+				align = minAlign;
+			
+			int fieldOffset = offset;
+			int nextOffset = fieldOffset;
+
+			nextOffset += bits; 
+			if (nextOffset % align != 0)
+				nextOffset += (align - offset % align);
+			
+			return nextOffset - fieldOffset;
+		}
+
 	}
 	
 	public int getStackMinAlign() {
@@ -209,28 +233,6 @@ public class TypeEngine {
 	 * 
 	 */
 	public TypeEngine() {
-		isLittleEndian = false;
-		setPtrBits(16);
-		setPtrAlign(16);
-		setStackMinAlign(16);
-		setStackAlign(16);
-		setStructAlign(16);
-		setStructMinAlign(8);
-		
-		VOID = register(new LLVoidType(null));
-		NIL = register(new LLVoidType(null));
-		LABEL = register(new LLLabelType());
-		BOOL = register(new LLBoolType("Bool", 1));
-		LLBOOL = register(new LLBoolType(null, 1));
-		BYTE = register(new LLIntType("Byte", 8));
-		INT = register(new LLIntType("Int", 16));
-		FLOAT = register(new LLFloatType("Float", 32, 23));
-		DOUBLE = register(new LLFloatType("Double", 64, 53));
-		//REFPTR = register(new LLRefType(new LLPointerType(ptrBits, VOID), ptrBits));
-		REFPTR = register(new LLPointerType("RefPtr", ptrBits, 
-				getRefType(BYTE)));
-		
-		INT_ANY = new LLIntType("Int*", 0);
 	}
 	
 	/**
@@ -679,5 +681,12 @@ public class TypeEngine {
 				dataType = type;
 		}
 		return dataType;
+	}
+
+	/**
+	 * @param b
+	 */
+	public void setLittleEndian(boolean b) {
+		this.isLittleEndian = b;
 	}
 }

@@ -3,8 +3,13 @@
  */
 package org.ejs.eulang;
 
+import java.util.List;
+
+import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -26,17 +31,23 @@ public interface ITarget {
 	
 	/**
 	 * Increment a reference to a ref-counted object with the given id (may be 0)
-	 * @param target TODO
-	 * @param valueType TODO
+	 * @param target 
+	 * @param valueType 
 	 * @param value
 	 */
 	void incRef(ILLCodeTarget target, LLType valueType, LLOperand value);
 
 	/**
 	 * Decrement a reference to a ref-counted object with the given id (may be  0)
-	 * @param target TODO
-	 * @param valueType TODO
+	 * @param target 
+	 * @param valueType 
 	 * @param value
 	 */
 	void decRef(ILLCodeTarget target, LLType valueType, LLOperand value);
+
+	/** Get all the supported register classes, in preference order */
+	IRegClass[] getRegisterClasses();
+	
+	/** Get the calling convention that applies to this code */
+	ICallingConvention getCallingConvention(FunctionConvention convention);
 }

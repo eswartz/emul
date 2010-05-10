@@ -15,12 +15,12 @@ import org.ejs.eulang.types.LLType;
 public class StackLocal extends BaseLocal {
 
 	private final ISymbol startLabel;
-	private int offset;
+	private int byteOffset;
 
-	public StackLocal(ISymbol name, LLType type, int size, ISymbol startLabel, int offset) {
-		super(name, type, size);
+	public StackLocal(ISymbol name, LLType type, ISymbol startLabel, int byteOffset) {
+		super(name, type);
 		this.startLabel = startLabel;
-		this.offset = offset;
+		this.byteOffset = byteOffset;
 	}
 	
 	/* (non-Javadoc)
@@ -28,7 +28,7 @@ public class StackLocal extends BaseLocal {
 	 */
 	@Override
 	public String toString() {
-		return "stack " + super.toString() + " @FP+>" + HexUtils.toHex4(offset);
+		return "stack " + super.toString() + " @FP+>" + HexUtils.toHex4(byteOffset);
 	}
 
 	public ISymbol getStartLabel() {
@@ -36,15 +36,15 @@ public class StackLocal extends BaseLocal {
 	}
 	
 	/**
-	 * @return the offset
+	 * @return the offset in bytes, relative to the canonical frame pointer
 	 */
 	public int getOffset() {
-		return offset;
+		return byteOffset;
 	}
 	/**
-	 * @param offset the offset to set
+	 * @param offset the offset to set in bytes, relative to the canonical frame pointer
 	 */
 	public void setOffset(int offset) {
-		this.offset = offset;
+		this.byteOffset = offset;
 	}
 }

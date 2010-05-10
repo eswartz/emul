@@ -6,12 +6,14 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstTupleExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLSymbolType;
+import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -251,6 +253,22 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		//	if (child.getType().getBasicType() != BasicType.VOID && newType.getBasicType() != BasicType.VOID)
 		//		return child;
 		//}
+		
+		// do some magic with tuple casts
+		if (newType instanceof LLTupleType && child.getType() instanceof LLTupleType
+				&& (((LLTupleType)newType).getCount() == ((LLTupleType)child.getType()).getCount())
+				&& child instanceof IAstTupleExpr) {
+			LLTupleType newTupleType = (LLTupleType) newType;
+			IAstTupleExpr orig = (IAstTupleExpr) child;
+			int idx = 0;
+			for (IAstTypedExpr expr : orig.elements().list()) {
+				orig.elements().replaceChild(expr, createCastOn(typeEngine, expr, newTupleType.getType(idx)));
+				idx++;
+			}
+			orig.setType(newType);
+			return child;
+		} 
+		
 		child.setParent(null);
 		IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST, child);
 		castExpr.setSourceRef(child.getSourceRef());

@@ -11,9 +11,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import org.ejs.coffee.core.utils.Pair;
@@ -355,7 +357,6 @@ public class LLVMGenerator {
 			if (argumentTypes[i].isVar() || !isArgumentPassedByValue(argumentTypes[i].getType()))
 				argType = typeEngine.getPointerType(argType);
 			LLAttrs attrs = null; //new LLAttrs("noalias");
-			// /*ISymbol typeSymbol =*/ ll.addExternType(argumentTypes[i].getType());
 			attrTypes[i] = new LLArgAttrType(argumentTypes[i].getName(),  attrs, argType);
 		}
 		return attrTypes;
@@ -1146,10 +1147,12 @@ entry:
 		if (notAgg)
 			return generateTypedExpr(expr.getInitExprs().getFirst().getExpr());
 
-		// constant init ops stored here, with zeroinits for nonconstant ones
+		// constant init ops stored here, with zeroinits for nonconstant ones, plus padding
 		List<LLOperand> constOps = new ArrayList<LLOperand>();
 		// non-const ops evaluated and stored here by position in constOps
 		Map<Integer, LLOperand> nonConstOps = new LinkedHashMap<Integer,LLOperand>();
+		// the op positions that are for added padding
+		Set<Integer> paddingOps = new HashSet<Integer>();
 
 		ArrayList<IAstInitNodeExpr> sortedFields = new ArrayList<IAstInitNodeExpr>(expr.getInitExprs().list());
 		Collections.sort(sortedFields, new Comparator<IAstInitNodeExpr>() {
@@ -1233,7 +1236,7 @@ entry:
 				if (needAlignment) {
 					// add zero init if we skipped anything
 					int gap = align.alignmentGap(op.getType()) + (align.sizeof() - curOffs);
-					addZeroInitGap(gap, constOps, initFieldTypes, isArray, align);
+					addZeroInitGap(gap, constOps, paddingOps, initFieldTypes, isArray, align);
 					curOffs = align.sizeof();
 				}
 				
@@ -1279,33 +1282,73 @@ entry:
 		if (needAlignment) {
 			// fill final gap
 			int gap = align.sizeof() - curOffs;
-			addZeroInitGap(gap, constOps, initFieldTypes, isArray, align);
+			addZeroInitGap(gap, constOps, paddingOps, initFieldTypes, isArray, align);
 		}
 		
-		LLOperand initOp;
 		LLType initType;
+		
+		
 		if (isArray) {
 			int size = ((LLArrayType) expr.getType()).getArrayCount();
 			if (size == 0)
 				size = constOps.size();
 			initType = typeEngine.getArrayType(initFieldTypes.get(0), size, null);
-			initOp = new LLArrayOp((LLArrayType) initType, constOps.toArray(new LLOperand[constOps.size()]));
 		} else {
 			ISymbol dataSym = ((LLDataType) expr.getType()).getSymbol();
 			ISymbol initSym = dataSym.getScope().add(dataSym.getUniqueName() + "$init", true);
 			
 			initType = typeEngine.getDataType(initSym, initFieldTypes);
-			initOp = new LLStructOp((LLAggregateType) initType, constOps.toArray(new LLOperand[constOps.size()]));
 		}
 		
+		LLOperand initOp;
+		boolean notUsingInitType = false;
+		Map<Integer, Integer> origToRealMap = new HashMap<Integer, Integer>();
+		
+		if (nonConstOps.isEmpty() || initType.matchesExactly(expr.getType())) { 
+			if (isArray) {
+				initOp = new LLArrayOp((LLArrayType) initType, constOps.toArray(new LLOperand[constOps.size()]));
+			} else {
+				initOp = new LLStructOp((LLAggregateType) initType, constOps.toArray(new LLOperand[constOps.size()]));
+			}
+		} else {
+			// must explicitly copy the elements in, since we can't put the non-const op
+			// in a slot of a different type
+			notUsingInitType = true;
+			int idx = 0;
+			int opPos = 0;
+			initType = expr.getType();
+			initOp = new LLUndefOp(initType); 
+			for (LLOperand op : constOps) {
+				if (!paddingOps.contains(opPos)) {
+					// skip stock zero-inits which are overriden by nonconsts
+					if (!nonConstOps.containsKey(opPos)) {
+						LLOperand temp = currentTarget.newTemp(initType);
+						currentTarget.emit(new LLInsertValueInstr(temp, initType, initOp, 
+								op.getType(), op, idx));
+						initOp = temp;
+					}
+					origToRealMap.put(opPos, idx);
+					idx++;
+				}
+				opPos++;
+			}
+			
+		}
 		ll.emitTypes(initType);
 		
-		// inject non-consts
-		for (Map.Entry<Integer, LLOperand> entry : nonConstOps.entrySet()) {
-			LLOperand temp = currentTarget.newTemp(initType);
-			currentTarget.emit(new LLInsertValueInstr(temp, initType, initOp, 
-					entry.getValue().getType(), entry.getValue(), entry.getKey()));
-			initOp = temp;
+		if (!nonConstOps.isEmpty()) {
+			// inject non-consts
+			for (Map.Entry<Integer, LLOperand> entry : nonConstOps.entrySet()) {
+				LLOperand temp = currentTarget.newTemp(initType);
+				Integer opPos = entry.getKey();
+				if (notUsingInitType) {
+					opPos = origToRealMap.get(opPos);
+					assert opPos != null;
+				}
+				currentTarget.emit(new LLInsertValueInstr(temp, initType, initOp, 
+						entry.getValue().getType(), entry.getValue(), opPos));
+				initOp = temp;
+			}
 		}
 		
 		return initOp;
@@ -1313,7 +1356,7 @@ entry:
 	}
 
 	private void addZeroInitGap(int gap, List<LLOperand> initOps,
-			List<LLType> initFieldTypes, boolean isArray, Alignment align) {
+			Set<Integer> paddingOps, List<LLType> initFieldTypes, boolean isArray, Alignment align) {
 		if (gap > 0) {
 			assert gap % 8 == 0;
 			LLType fillType;
@@ -1327,6 +1370,7 @@ entry:
 				align.add(gap);
 
 			while (gap > 0) {
+				paddingOps.add(initOps.size());
 				initOps.add(new LLZeroInit(fillType));
 				if (!isArray) initFieldTypes.add(fillType);
 				gap -= fillType.getBits();
@@ -1692,15 +1736,6 @@ entry:
 			} else {
 				// point to the element 
 				LLType argPointerType = typeEngine.getPointerType(funcType.getArgTypes()[idx]);
-				
-				/*
-				LLTempOp argPtr = currentTarget.newTemp(argPointerType);
-				currentTarget.emit(new LLGetElementPtrInstr(argPtr, 
-						argPointerType, 
-						argAddr, 
-						new LLTypeIdxOp(typeEngine.getIntType(32), 0)));
-				argAddr = argPtr;
-				*/
 				realArgTypes[idx] = argPointerType;
 			}
 			ops[idx++] = argAddr;
@@ -1722,6 +1757,7 @@ entry:
 	 * @return
 	 */
 	private boolean isArgumentPassedByValue(LLType type) {
+		if (true) return true;
 		return (type.getBasicType().getClassMask() & LLType.TYPECLASS_MEMORY) == 0 || type.getBasicType() == BasicType.REF
 			|| type.getBasicType() == BasicType.POINTER;
 	}

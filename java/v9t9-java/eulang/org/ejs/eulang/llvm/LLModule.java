@@ -145,13 +145,14 @@ public class LLModule {
 	public ISymbol addExtern(String name, LLCodeType codeType,
 			LLLinkage linkage, LLVisibility visibility,
 			String cconv, LLAttrType retType,
-			LLAttrType argTypes[], LLFuncAttrs funcAttrs, String gc) {
+			LLArgAttrType[] argTypes, LLFuncAttrs funcAttrs, String gc) {
 		ISymbol symbol = globalScope.get(name);
 		if (symbol == null) {
 			symbol = globalScope.add(new AstName(name));
 			symbol.setType(codeType);
 			
-			externDirectives.add(new LLDeclareDirective(symbol, linkage, visibility, cconv, retType, argTypes, funcAttrs, gc));
+			externDirectives.add(new LLDeclareDirective(symbol, linkage, visibility, cconv, 
+					retType, argTypes, funcAttrs, gc));
 		}
 		return symbol;
 	}

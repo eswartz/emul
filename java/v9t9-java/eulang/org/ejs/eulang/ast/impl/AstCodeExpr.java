@@ -13,6 +13,7 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtScope;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.BasicType;
@@ -134,8 +135,11 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 			changed = true;
 		
 		// see what the return statements do
-		if (returns instanceof ITyped) {
-			changed |= updateType((ITyped) returns, newType.getRetType());
+		if (returns instanceof IAstTypedExpr) {
+			// don't override a void return
+			if (!(newType.getRetType() != null &&  newType.getRetType().getBasicType() == BasicType.VOID)) {
+				changed |= updateType((ITyped) returns, newType.getRetType());
+			}
 		}
 		
 		changed |= updateType(this, newType);
@@ -159,20 +163,10 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		}
 		
 		LLType infRetType = proto.returnType().getType();
-		if (proto.returnType().getType() == null /* infRetType == null || !infRetType.isComplete()*/) {
+		if (proto.returnType().getType() == null) {
 			// see what the return statements do
-			/*
-			if (retType instanceof ITyped) {
-				if (canInferTypeFrom((ITyped) retType)) {
-					infRetType = ((ITyped)retType).getType(); 
-				}
-			} else {
-				infRetType = typeEngine.VOID;
-			}*/
 			if (returns == null)
 				infRetType = typeEngine.VOID;
-			//else if (returns.getType() != null && returns.getType().isMoreComplete(infRetType))
-			//	infRetType = returns.getType();
 		}
 		
 		protoType = typeEngine.getCodeType(infRetType, infArgTypes);

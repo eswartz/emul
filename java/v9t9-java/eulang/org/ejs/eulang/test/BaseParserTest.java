@@ -524,6 +524,11 @@ public class BaseParserTest {
 		//doExpand(mod);
 		//doSimplify(mod);
 		
+		if (dumpLLVMGen) {
+			System.out.println("Before generating:");
+			DumpAST dump = new DumpAST(System.out);
+			mod.accept(dump);
+		}
 		LLVMGenerator generator = new LLVMGenerator(v9t9Target);
 		generator.generate(mod);
 		

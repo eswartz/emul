@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm;
 
+import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -20,11 +21,13 @@ public class LLArgAttrType extends LLAttrType {
 	 */
 	public LLArgAttrType(String name, LLAttrs attrs, LLType type) {
 		super(attrs, type);
+		Check.checkArg(name);
 		this.name = name;
 	}
 	
 	public LLArgAttrType(String name, LLAttrs attrs, LLType type, ISymbol typeSymbol) {
 		super(attrs, type, typeSymbol);
+		Check.checkArg(name);
 		this.name = name;
 	}
 	
@@ -34,6 +37,13 @@ public class LLArgAttrType extends LLAttrType {
 	@Override
 	public String toString() {
 		return super.toString() + " " + "%" + name;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getName() {
+		return name;
 	}
 	
 

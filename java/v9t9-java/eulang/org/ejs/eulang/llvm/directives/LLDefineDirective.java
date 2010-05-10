@@ -11,9 +11,11 @@ import java.util.Map;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.llvm.ILLVariable;
+import org.ejs.eulang.llvm.LLArgAttrType;
 import org.ejs.eulang.llvm.LLAttrType;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLFuncAttrs;
@@ -48,7 +50,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	private final LLVisibility visibility;
 	private final String cconv;
 	private final LLAttrType retType;
-	private final LLAttrType[] argTypes;
+	private final LLArgAttrType[] argTypes;
 	private final LLFuncAttrs funcAttrs;
 	private final String section;
 	private final int align;
@@ -63,10 +65,11 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	private final ITarget target;
 	private final LLModule module;
 	private final LLVMGenerator generator;
+	private FunctionConvention convention;
 	
 	public LLDefineDirective(LLVMGenerator generator, ITarget target, LLModule module, IScope localScope,
 			ISymbol symbol, LLLinkage linkage, LLVisibility visibility, String cconv, LLAttrType retType,
-			LLAttrType argTypes[], LLFuncAttrs funcAttrs, String section, int align, String gc) {
+			LLArgAttrType argTypes[], LLFuncAttrs funcAttrs, String section, int align, String gc) {
 		this.generator = generator;
 		this.target = target;
 		this.module = module;
@@ -81,6 +84,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 		this.section = section;
 		this.align = align;
 		this.gc = gc;
+		this.convention = new FunctionConvention(linkage, visibility, cconv, retType, argTypes, funcAttrs, gc);
 		
 		this.blocks = new ArrayList<LLBlock>();
 		labelMap = new LinkedHashMap<ISymbol, LLBlock>();
@@ -88,6 +92,10 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 
 			
 			
+	public FunctionConvention getConvention() {
+		return convention;
+	}
+
 			
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.directives.LLBaseDirective#toString()
@@ -290,6 +298,11 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 				return source;
 			} else if ((valueType instanceof LLAggregateType || valueType instanceof LLArrayType)
 					&& (source.getType() instanceof LLAggregateType || source.getType() instanceof LLArrayType)) {
+				
+				// HACK!
+				if (valueType.matchesExactly(source.getType())) 
+					return source;
+				
 				LLOperand cast = new LLBitcastOp(valueType, source);
 				return cast;
 			}
@@ -374,5 +387,14 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 		} catch (ILLCodeVisitor.Terminate e) {
 			
 		}
+	}
+
+
+
+	/**
+	 * @return
+	 */
+	public LLBlock getEntryBlock() {
+		return blocks.get(0);
 	}
 }

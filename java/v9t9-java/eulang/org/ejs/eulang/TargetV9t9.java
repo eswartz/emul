@@ -3,7 +3,12 @@
  */
 package org.ejs.eulang;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLArgAttrType;
 import org.ejs.eulang.llvm.LLAttrType;
 import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLVisibility;
@@ -13,8 +18,15 @@ import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLFloatType;
+import org.ejs.eulang.types.LLIntType;
+import org.ejs.eulang.types.LLLabelType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLVoidType;
 
 /**
  * @author ejs
@@ -22,11 +34,65 @@ import org.ejs.eulang.types.LLType;
  */
 public class TargetV9t9 implements ITarget {
 
+	/**
+	 * @author ejs
+	 *
+	 */
+	private static final class IntRegClass implements IRegClass {
+		@Override
+		public int hashCode() {
+			int result = 1;
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			return true;
+		}
+
+		@Override
+		public BasicType getBasicType() {
+			return BasicType.INTEGRAL;
+		}
+
+		@Override
+		public int getRegisterCount() {
+			return 16;
+		}
+
+		@Override
+		public int getRegisterSize() {
+			return 16;
+		}
+
+		@Override
+		public boolean supportsType(LLType type) {
+			BasicType basic = type.getBasicType();
+			if (basic == BasicType.POINTER || basic == BasicType.BOOL)
+				basic = BasicType.INTEGRAL;
+			
+			return basic == getBasicType();
+		}
+
+		@Override
+		public int getByteSize(LLType type) {
+			return type.getBits() <= 8 ? 1 : 2;
+		}
+	}
+
 	private TypeEngine typeEngine;
 	
 	private ISymbol intrinsic_IncRef;
 
 	private ISymbol intrinsic_DecRef;
+
+	private IRegClass intRegClass;
 
 	//private ISymbol refType;
 
@@ -35,6 +101,36 @@ public class TargetV9t9 implements ITarget {
 	 */
 	public TargetV9t9(TypeEngine typeEngine) {
 		this.typeEngine = typeEngine;
+		
+		initTypes();
+		
+		intRegClass = new IntRegClass();
+	}
+	/**
+	 * 
+	 */
+	private void initTypes() {
+		typeEngine.setLittleEndian(false);
+		typeEngine.setPtrBits(16);
+		typeEngine.setPtrAlign(16);
+		typeEngine.setStackMinAlign(8);
+		typeEngine.setStackAlign(16);
+		typeEngine.setStructMinAlign(8);
+		typeEngine.setStructAlign(16);
+		
+		typeEngine.VOID = typeEngine.register(new LLVoidType(null));
+		typeEngine.NIL = typeEngine.register(new LLVoidType(null));
+		typeEngine.LABEL = typeEngine.register(new LLLabelType());
+		typeEngine.BOOL = typeEngine.register(new LLBoolType("Bool", 1));
+		typeEngine.LLBOOL = typeEngine.register(new LLBoolType(null, 1));
+		typeEngine.BYTE = typeEngine.register(new LLIntType("Byte", 8));
+		typeEngine.INT = typeEngine.register(new LLIntType("Int", 16));
+		typeEngine.FLOAT = typeEngine.register(new LLFloatType("Float", 32, 23));
+		typeEngine.DOUBLE = typeEngine.register(new LLFloatType("Double", 64, 53));
+		typeEngine.REFPTR = typeEngine.register(new LLPointerType("RefPtr", typeEngine.getPtrBits(), 
+				typeEngine.getRefType(typeEngine.BYTE)));
+		
+		typeEngine.INT_ANY = new LLIntType("Int*", 0);		
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ITarget#createTypeEngine()
@@ -72,7 +168,7 @@ public class TargetV9t9 implements ITarget {
 					codeType,
 					null, LLVisibility.DEFAULT, null /*cconv*/,
 					new LLAttrType(null, codeType.getRetType()),
-					new LLAttrType[] { new LLAttrType(null, codeType.getArgTypes()[0]) },
+					new LLArgAttrType[] { new LLArgAttrType("ref", null, codeType.getArgTypes()[0]) },
 					new LLFuncAttrs(), 
 					null /*gc*/);
 		}
@@ -95,7 +191,7 @@ public class TargetV9t9 implements ITarget {
 					codeType,
 					null, LLVisibility.DEFAULT, null /*cconv*/,
 					new LLAttrType(null, codeType.getRetType()),
-					new LLAttrType[] { new LLAttrType(null, codeType.getArgTypes()[0]) },
+					new LLArgAttrType[] { new LLArgAttrType("ref", null, codeType.getArgTypes()[0]) },
 					new LLFuncAttrs(), 
 					null /*gc*/);
 		}
@@ -104,5 +200,24 @@ public class TargetV9t9 implements ITarget {
 		target.emit(new LLCastInstr(temp, ECast.BITCAST, valueType, value, typeEngine.REFPTR));
 		target.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(intrinsic_DecRef), 
 				(LLCodeType) intrinsic_DecRef.getType(), temp));
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITarget#getRegisterClasses()
+	 */
+	@Override
+	public IRegClass[] getRegisterClasses() {
+		return new IRegClass[] { 
+			intRegClass	
+		};
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITarget#getCallingConvention(org.ejs.eulang.llvm.FunctionConvention)
+	 */
+	@Override
+	public ICallingConvention getCallingConvention(FunctionConvention convention) {
+		return new V9t9CallingConvention(this, convention);
 	}
 }

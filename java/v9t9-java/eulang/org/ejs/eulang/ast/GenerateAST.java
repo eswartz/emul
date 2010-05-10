@@ -1497,6 +1497,8 @@ public class GenerateAST {
 			
 			if (kid.getType() == EulangParser.INDEX) {
 				IAstTypedExpr index = checkConstruct(kid.getChild(0), IAstTypedExpr.class);
+				idExpr = new AstDerefExpr(idExpr, false);
+				getSource(tree.getChild(0), idExpr);
 				idExpr = new AstIndexExpr(idExpr, index);
 				getSource(kid, index);
 				getSource(kid, idExpr);
