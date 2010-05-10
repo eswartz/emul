@@ -36,7 +36,14 @@ public class StackLocal extends BaseLocal {
 	}
 	
 	/**
+	 * Get the offset in bytes, relative to the canonical frame pointer. such that
+	 * 0 = the first argument, S1 = the second argument, S2 + S1 = the third ... (if args
+	 * are pushed in reverse order) and -S1 = the first local, -S1 - S2 = the second local, ...
+	 * <p>
+	 * The actual offset in code will be different -- e.g., the offset to non-register
+	 * arguments might be larger once pushed register space (including the previous FP) is accounted for.
 	 * @return the offset in bytes, relative to the canonical frame pointer
+	 * 
 	 */
 	public int getOffset() {
 		return byteOffset;

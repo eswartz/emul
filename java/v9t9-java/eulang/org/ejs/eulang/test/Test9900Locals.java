@@ -21,6 +21,7 @@ import org.ejs.eulang.types.LLArrayType;
 import org.junit.Test;
 
 /**
+ *    
  * @author ejs
  *
  */
@@ -246,46 +247,49 @@ public class Test9900Locals extends BaseParserTest {
 	public void testArgs1() throws Exception {
 		// all go in regs except 'x'
 		Locals locals = doLocals("foo = code(a:Int; b:Int^; x:Int[5]; c:Bool; d:Byte) { };\n");
-		Map<ISymbol, ? extends ILocal> localMap;
-		
+		Map<ISymbol, ? extends ILocal> stackLocalMap;
+
 		RegisterLocal reg;
-		localMap = locals.getRegLocals();
+		Map<ISymbol, ? extends ILocal> regLocalMap;
+		regLocalMap = locals.getRegLocals();
 		
-		// four regstered arguments
-		assertEquals(4, localMap.size());
-		reg = (RegisterLocal) getLocal(localMap, "a");
+		// four enregistered arguments
+		assertEquals(4, regLocalMap.size());
+		reg = (RegisterLocal) getLocal(regLocalMap, "a");
 		assertEquals(0, reg.getVr());
 		assertEquals(typeEngine.INT, reg.getType());
-		reg = (RegisterLocal) getLocal(localMap, "b");
+		reg = (RegisterLocal) getLocal(regLocalMap, "b");
 		assertEquals(1, reg.getVr());
 		assertEquals(typeEngine.getPointerType(typeEngine.INT), reg.getType());
-		reg = (RegisterLocal) getLocal(localMap, "c");
+		reg = (RegisterLocal) getLocal(regLocalMap, "c");
 		assertEquals(2, reg.getVr());
 		assertEquals(typeEngine.BOOL, reg.getType());
-		reg = (RegisterLocal) getLocal(localMap, "d");
+		reg = (RegisterLocal) getLocal(regLocalMap, "d");
 		assertEquals(3, reg.getVr());
 		assertEquals(typeEngine.BYTE, reg.getType());
 		
-		localMap = locals.getStackLocals();
-		
-		// one mirror for each a,b,c,d,x and x's actual location
-		assertEquals(6, localMap.size());
+		// one mirror for c and x's actual location;
+		// all regs shunted to registers
+		stackLocalMap = locals.getStackLocals();
+		assertEquals(2, stackLocalMap.size());
 		
 		StackLocal real;
-		real = (StackLocal) getLocal(localMap, "x.");
-		assertNotNull(real);
-		LLArrayType theType = typeEngine.getArrayType(typeEngine.INT, 5, null);
-		assertEquals(theType, real.getType());
-		assertEquals(2, real.getOffset());	// from caller
-		
 		StackLocal mirror;
-		mirror = (StackLocal) getLocal(localMap, "_.x");
+
+		LLArrayType theType = typeEngine.getArrayType(typeEngine.INT, 5, null);
+
+		real = (StackLocal) getLocal(stackLocalMap, "x.");
+		assertNotNull(real);
+		assertEquals(theType, real.getType());
+		assertEquals(10, real.getOffset());	// from caller
+		
+		mirror = (StackLocal) getLocal(stackLocalMap, "_.x");
 		assertNotNull(mirror);
 		assertEquals(theType, mirror.getType());
-		assertEquals(2, mirror.getOffset());	// first local, taking same location as caller's
+		assertEquals(10, mirror.getOffset());	// first local, taking same location as caller's
 		
 		// not using the space for the array
-		assertEquals(2 + 2 + 1 + 1, locals.getFrameSize());
+		assertEquals(0, locals.getFrameSize());
 	}
 	
 
@@ -294,7 +298,7 @@ public class Test9900Locals extends BaseParserTest {
 		// arguments may have mirror locals, but if we know the argument comes in
 		// on the stack, then alloc the argument at that spot
 		dumpLLVMGen = true;
-		Locals locals = doLocals("foo = code(a,b,c,d:Int; x:Int) { };\n");
+		Locals locals = doLocals("foo = code(a,b,c,d:Int; x:Int; y:Bool; z:Float) { };\n");
 		Map<ISymbol, ? extends ILocal> localMap;
 		
 		RegisterLocal reg;
@@ -313,22 +317,75 @@ public class Test9900Locals extends BaseParserTest {
 		
 		localMap = locals.getStackLocals();
 		
-		// one mirror for each a,b,c,d,x and x's actual location
+		// one mirror for each x,y,z and their actual location.
+		// The args are ordered in reverse.
 		assertEquals(6, localMap.size());
 		
 		StackLocal real;
+		StackLocal mirror;
+		
 		real = (StackLocal) getLocal(localMap, "x.");
 		assertNotNull(real);
 		assertEquals(typeEngine.INT, real.getType());
-		assertEquals(2, real.getOffset());	// from caller
+		assertEquals(6, real.getOffset());	// from caller
 		
-		StackLocal mirror;
 		mirror = (StackLocal) getLocal(localMap, "_.x");
 		assertNotNull(mirror);
 		assertEquals(typeEngine.INT, mirror.getType());
-		assertEquals(2, mirror.getOffset());	// first local, taking same location as caller's
+		assertEquals(6, mirror.getOffset());	// third local, taking same location as caller's
+		
+		real = (StackLocal) getLocal(localMap, "y.");
+		assertNotNull(real);
+		assertEquals(typeEngine.BOOL, real.getType());
+		assertEquals(4, real.getOffset());	// from caller
+		
+		mirror = (StackLocal) getLocal(localMap, "_.y");
+		assertNotNull(mirror);
+		assertEquals(typeEngine.BOOL, mirror.getType());
+		assertEquals(4, mirror.getOffset());	// second local, taking same location as caller's
+		
+		real = (StackLocal) getLocal(localMap, "z.");
+		assertNotNull(real);
+		assertEquals(typeEngine.FLOAT, real.getType());
+		assertEquals(0, real.getOffset());	// from caller
+		
+		mirror = (StackLocal) getLocal(localMap, "_.z");
+		assertNotNull(mirror);
+		assertEquals(typeEngine.FLOAT, mirror.getType());
+		assertEquals(0, mirror.getOffset());	// first local, taking same location as caller's
 		
 		// not using the space for the last
-		assertEquals(4 * 2, locals.getFrameSize());
+		assertEquals(0, locals.getFrameSize());
+	}
+	
+
+	@Test
+	public void testArgs3() throws Exception {
+		// arguments may have mirror locals, but if we know the argument comes in
+		// on the stack, then alloc the argument at that spot
+		dumpLLVMGen = true;
+		Locals locals = doLocals("foo = code(a:Int => nil) { p:Float; };\n");
+		Map<ISymbol, ? extends ILocal> localMap;
+		
+		RegisterLocal reg;
+		localMap = locals.getRegLocals();
+		
+		// ome arguments
+		assertEquals(1, localMap.size());
+		reg = (RegisterLocal) getLocal(localMap, "a");
+		assertEquals(0, reg.getVr());
+		
+		localMap = locals.getStackLocals();
+		
+		// one for p's actual location
+		assertEquals(1, localMap.size());
+		
+		StackLocal mirror;
+		mirror = (StackLocal) getLocal(localMap, "_.p");
+		assertNotNull(mirror);
+		assertEquals(typeEngine.FLOAT, mirror.getType());
+		assertEquals(0, mirror.getOffset());	
+		
+		assertEquals(4, locals.getFrameSize());
 	}
 }

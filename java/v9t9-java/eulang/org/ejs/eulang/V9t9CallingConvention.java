@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 import org.ejs.eulang.ICallingConvention.Location;
 import org.ejs.eulang.ICallingConvention.RegisterLocation;
@@ -93,17 +94,28 @@ public class V9t9CallingConvention implements ICallingConvention {
 		
 		Alignment align = target.getTypeEngine().new Alignment(Target.STACK);
 		
+		List<LLArgAttrType> stackArgs = new ArrayList<LLArgAttrType>();
 		for (LLArgAttrType arg : conv.getArgTypes()) {
 			boolean alloced = false;
 			alloced = allocInt(locs, argRegs, arg, arg.getName());
 
 			if (!alloced) {
-				// stack
-				locs.add(new StackLocation(((LLArgAttrType) arg).getName(),
-						arg.getType(), align.alignAndAdd(arg.getType()) / 8));
+				stackArgs.add(arg);
 			}
 		}
 		
+		// stack args ordered reverse
+		for (ListIterator<LLArgAttrType> iter = stackArgs.listIterator(stackArgs.size()); iter.hasPrevious(); ) {
+			LLArgAttrType arg = iter.previous();
+			//int alignedSize = align.alignedSize(arg.getType());
+			//int curOffs = align.sizeof();
+			//int endOffs = align.alignAndAdd(arg.getType());
+			//int argEnd = curOffs - endOffs;
+			align.alignAndAdd(arg.getType());
+			locs.add(new StackLocation(((LLArgAttrType) arg).getName(),
+					arg.getType(), -align.sizeof() / 8));
+
+		}
 		return (Location[]) locs.toArray(new Location[locs.size()]);
 	}
 	/* (non-Javadoc)

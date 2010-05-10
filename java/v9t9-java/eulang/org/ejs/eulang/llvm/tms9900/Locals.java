@@ -31,6 +31,78 @@ import org.ejs.eulang.types.LLType;
 
 /**
  * Manage locals for a routine.
+ * <p>
+ * The stack looks like this:
+ * 
+ * When a frame pointer is used:
+ * 
+ * <pre>
+ * SP -K  location of next callee's args
+ *    -s3 ...
+ *    -s2 local 2
+ *    -s1 local 1
+ *     0  saved FP
+ *     2  saved reg 0
+ *     4  saved ...
+ *     6  last saved register
+ *     8  last non-reg arg
+ *    10  non-reg arg N-1
+ *    12  ...
+ *    +K  non-reg arg 1
+ * </pre>
+ * 
+ * This is handled with:
+ * 
+ * <pre>
+ *    AI SP, -saved*2+2	// save any registers (plus room for FP)
+ *    MOV R11, *SP		// if called
+ *    MOV R..., @2(SP)		
+ *    //DECT SP			// only if no saved registers			
+ *    MOV FP, *SP		// save FP
+ *    MOV SP, FP		// new FP
+ *    AI  SP, -K		// locals
+ *    ...
+ *    MOV FP, SP		// remove locals
+ *    MOV *SP+, FP  	// restore FP
+ *    MOV *SP+, R11		// restore registers
+ *    MOV *SP+, R...	// restore registers
+ *    B *R11
+ * </pre>
+ * (min overhead, with no saved regs, no calls, and locals: 10, 6 = 16 bytes)
+ * (min overhead, with no saved regs, calls, and no locals: 8, 8 = 16 bytes)
+ * 
+ * When no frame pointer is used:
+ * 
+ * <pre>
+ * SP -K  location of next callee's args
+ *    -s3 ...
+ *    -s2 local 2
+ *    -s1 local 1
+ *     0  saved reg 0
+ *     2  saved ...
+ *     4  last saved register
+ *     6  last non-reg arg
+ *     8  non-reg arg N-1
+ *    10  ...
+ *    +K  non-reg arg 1
+ * </pre>
+ * 
+ * This is handled with:
+ * 
+ * <pre>
+ *    AI SP, -saved*2-K	// save any registers and get local space
+ *    MOV R11, *SP		// if calls
+ *    MOV R..., @2(SP)		
+ *    ...
+ *    AI SP, K  	  	// remove locals (only)
+ *    MOV *SP+, R11		// restore registers
+ *    MOV *SP+, R...	// restore registers
+ *    B *R11
+ * </pre>
+ * (min overhead: no locals, no calls: 0, 2) 
+ * (min overhead: no locals, calls: 10) 
+ * (min overhead: locals, calls: 16) 
+
  * @author ejs
  *
  */
@@ -126,14 +198,18 @@ public class Locals {
 		if (ops[0] instanceof LLSymbolOp && ops[1] instanceof LLSymbolOp) {
 			ISymbol argSym = ((LLSymbolOp) ops[0]).getSymbol();
 			ILocal arg = argumentLocals.get(argSym);
-			if (arg instanceof StackLocal && arg.getIncoming() == null) {
+			if (arg.getIncoming() == null) {
 				ISymbol mirrorSym = ((LLSymbolOp) ops[1]).getSymbol();
 				StackLocal mirror = stackLocals.get(mirrorSym);
 				System.out.println("Reassigning " + mirror + " to " + arg);
 				
 				int curOffset = mirror.getOffset();
-				mirror.setOffset(((StackLocal) arg).getOffset());
 				mirror.setIncoming(arg);
+				if (arg instanceof StackLocal) {
+					mirror.setOffset(((StackLocal) arg).getOffset());
+				} else {
+					stackLocals.remove(mirrorSym);
+				}
 				
 				// recover stack space: should always work since we store
 				// immediately after allocating
@@ -164,9 +240,7 @@ public class Locals {
 			else if (loc instanceof ICallingConvention.StackLocation) {
 				ICallingConvention.StackLocation stackLoc = (StackLocation) loc;
 				
-				// location is relative to the canonical frame pointer: there is a return addr in between
-				int frameOffs = -target.getTypeEngine().getPtrBits() / 8 - stackLoc.offset;
-				local = allocateLocal(localScope.add(loc.name, true), loc.type, frameOffs); 
+				local = allocateLocal(localScope.add(loc.name, true), loc.type, stackLoc.offset); 
 			}
 			else
 				assert false;
