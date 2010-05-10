@@ -165,7 +165,7 @@ static void command_get_context(char * token, Channel * c) {
 
     ctx = id2ctx(id);
 
-    if (ctx == NULL) err = ERR_INV_CONTEXT;
+    if (ctx == NULL || ctx->mem != ctx) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
     write_stringz(&c->out, "R");
@@ -200,7 +200,7 @@ static void command_get_children(char * token, Channel * c) {
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             Context * ctx = ctxl2ctxp(qp);
             if (ctx->exited) continue;
-            if (ctx->parent != NULL) continue;
+            if (ctx->mem != ctx) continue;
             if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, ctx->id);
             cnt++;
