@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.services.local;
 
 import java.lang.reflect.Method;
-import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -286,7 +285,7 @@ public class LocatorService implements ILocator {
             try {
                 socket = new DatagramSocket(DISCOVEY_PORT);
             }
-            catch (BindException x) {
+            catch (SocketException x) {
                 socket = new DatagramSocket();
             }
             socket.setBroadcast(true);
