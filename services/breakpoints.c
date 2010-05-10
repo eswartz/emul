@@ -141,8 +141,9 @@ struct EvaluationRequest {
 };
 
 struct ContextExtension {
+    int                 bp_eval_started;
     BreakInstruction *  stepping_over_bp;   /* if not NULL context is stepping over a breakpoint instruction */
-    char **             bp_ids; /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
+    char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     EvaluationRequest * req;
 };
 
@@ -860,29 +861,28 @@ static void evaluate_condition(void * x) {
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
     assert(cache_enter_cnt > 0);
+    assert(ctx->intercepted == 0);
 
-    if (!ctx->intercepted) {
-        for (i = 0; i < req->bp_cnt; i++) {
-            BreakpointInfo * bp = req->bp_arr[i].bp;
+    for (i = 0; i < req->bp_cnt; i++) {
+        BreakpointInfo * bp = req->bp_arr[i].bp;
 
-            if (is_disabled(bp)) continue;
-            if (!check_context_ids(bp, ctx, 0)) continue;
+        if (is_disabled(bp)) continue;
+        if (!check_context_ids(bp, ctx, 0)) continue;
 
-            if (bp->condition != NULL) {
-                Value v;
-                if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0) {
-                    if (get_error_code(errno) == ERR_CACHE_MISS) break;
-                    trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
-                    req->bp_arr[i].condition_ok = 1;
-                }
-                else if (value_to_boolean(&v)) {
-                    req->bp_arr[i].condition_ok = 1;
-                }
-                continue;
+        if (bp->condition != NULL) {
+            Value v;
+            if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0) {
+                if (get_error_code(errno) == ERR_CACHE_MISS) continue;
+                trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
+                req->bp_arr[i].condition_ok = 1;
             }
-
-            req->bp_arr[i].condition_ok = 1;
+            else if (value_to_boolean(&v)) {
+                req->bp_arr[i].condition_ok = 1;
+            }
+            continue;
         }
+
+        req->bp_arr[i].condition_ok = 1;
     }
 
     expr_cache_exit(args);
@@ -895,6 +895,7 @@ static void event_replant_breakpoints(void * arg) {
     if ((uintptr_t)arg != generation_posted) return;
     if (cache_enter_cnt > 0) return;
 
+    assert(list_is_empty(&evaluations_active));
     cache_enter_cnt++;
     generation_active = generation_posted;
     q = evaluations_posted.next;
@@ -1689,6 +1690,7 @@ void evaluate_breakpoint(Context * ctx) {
     assert(ctx->intercepted == 0);
     assert(EXT(ctx)->bp_ids == NULL);
 
+    EXT(ctx)->bp_eval_started = 1;
     if (bi == NULL || !bi->planted || bi->ref_cnt == 0) return;
 
     bp_cnt = bi->ref_cnt;
@@ -1726,7 +1728,7 @@ char ** get_context_breakpoint_ids(Context * ctx) {
 
 int are_breakpoints_in_sync(Context * ctx) {
     ContextExtension * ext = EXT(ctx);
-    if (ctx->stopped_by_bp && ctx->event_notification) return 0;
+    if (ctx->stopped_by_bp && !ext->bp_eval_started) return 0;
     if (ext->stepping_over_bp != NULL) return 0;
     if (ext->req != NULL) {
          if (!list_is_empty(&ext->req->link_posted)) return 0;
@@ -1868,6 +1870,7 @@ static void event_context_changed(Context * ctx, void * args) {
 
 static void event_context_started(Context * ctx, void * args) {
     ContextExtension * ext = EXT(ctx);
+    ext->bp_eval_started = 0;
     if (ext->bp_ids != NULL) {
         loc_free(ext->bp_ids);
         ext->bp_ids = NULL;

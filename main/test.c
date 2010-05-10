@@ -119,7 +119,6 @@ void test_proc(void) {
 
 int find_test_symbol(Context * ctx, char * name, void ** addr, int * sym_class) {
     /* This code allows to run TCF diagnostic tests when symbols info is not available */
-    if (ctx->parent != NULL) ctx = ctx->parent;
     if (is_test_process(ctx) && strncmp(name, "tcf_test_", 9) == 0) {
         *addr = NULL;
         if (strcmp(name, "tcf_test_array") == 0) {

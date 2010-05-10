@@ -59,8 +59,8 @@ typedef struct SymInfoCache {
     char * base_type_id;
     char * index_type_id;
     char * pointer_type_id;
-    char * owner_id;
     char * name;
+    Context * update_owner;
     int update_policy;
     int sym_class;
     int type_class;
@@ -107,6 +107,7 @@ typedef struct FindSymCache {
     AbstractCache cache;
     ReplyHandlerInfo * pending;
     ErrorReport * error;
+    int update_policy;
     Context * ctx;
     uint64_t ip;
     char * name;
@@ -120,6 +121,7 @@ typedef struct ListSymCache {
     AbstractCache cache;
     ReplyHandlerInfo * pending;
     ErrorReport * error;
+    int update_policy;
     Context * ctx;
     uint64_t ip;
     char ** list;
@@ -242,10 +244,10 @@ static void free_sym_info_cache(SymInfoCache * c) {
         loc_free(c->base_type_id);
         loc_free(c->index_type_id);
         loc_free(c->pointer_type_id);
-        loc_free(c->owner_id);
         loc_free(c->name);
         loc_free(c->value);
         loc_free(c->children_ids);
+        if (c->update_owner != NULL) context_unlock(c->update_owner);
         release_error_report(c->error_get_context);
         release_error_report(c->error_get_children);
         while (!list_is_empty(&c->array_syms)) {
@@ -327,7 +329,7 @@ static void read_context_data(InputStream * inp, const char * name, void * args)
     char id[256];
     SymInfoCache * s = (SymInfoCache *)args;
     if (strcmp(name, "ID") == 0) { json_read_string(inp, id, sizeof(id)); assert(strcmp(id, s->id) == 0); }
-    else if (strcmp(name, "OwnerID") == 0) s->owner_id = json_read_alloc_string(inp);
+    else if (strcmp(name, "OwnerID") == 0) { json_read_string(inp, id, sizeof(id)); s->update_owner = id2ctx(id); }
     else if (strcmp(name, "Name") == 0) s->name = json_read_alloc_string(inp);
     else if (strcmp(name, "UpdatePolicy") == 0) s->update_policy = json_read_long(inp);
     else if (strcmp(name, "Class") == 0) s->sym_class = json_read_long(inp);
@@ -350,6 +352,7 @@ static void validate_context(Channel * c, void * args, int error) {
     SymInfoCache * s = (SymInfoCache *)args;
     assert(s->pending_get_context != NULL);
     assert(s->error_get_context == NULL);
+    assert(s->update_owner == NULL);
     assert(!s->done_context);
     if (set_trap(&trap)) {
         s->pending_get_context = NULL;
@@ -359,11 +362,15 @@ static void validate_context(Channel * c, void * args, int error) {
             json_read_struct(&c->inp, read_context_data, s);
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            if (!error && s->update_owner == NULL) error = ERR_INV_CONTEXT;
+            if (!error && s->update_owner->exited) error = ERR_ALREADY_EXITED;
         }
         clear_trap(&trap);
+        if (s->update_owner != NULL) context_lock(s->update_owner);
     }
     else {
         error = trap.error;
+        s->update_owner = NULL;
     }
     s->error_get_context = get_error_report(error);
     cache_notify(&s->cache);
@@ -454,28 +461,20 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     }
 
 #if ENABLE_RCBP_TEST
-    if (f == NULL && !syms->service_available && ctx->parent == NULL) {
+    if (f == NULL && !syms->service_available) {
         void * address = NULL;
         int sym_class = 0;
         if (find_test_symbol(ctx, name, &address, &sym_class) >= 0) {
-            SymInfoCache * s = (SymInfoCache *)loc_alloc_zero(sizeof(SymInfoCache));
+            char bf[256];
             f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
             list_add_first(&f->link_syms, syms->link_find + h);
             context_lock(f->ctx = ctx);
-            f->ip = ip;
             f->name = loc_strdup(name);
-            f->id = loc_strdup(name);
-            s->magic = SYM_CACHE_MAGIC;
-            s->id = loc_strdup(name);
-            s->name = loc_strdup(name);
-            s->done_context = 1;
-            s->has_address = 1;
-            s->address = (ContextAddress)address;
-            s->sym_class = sym_class;
-            s->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
-            s->owner_id = loc_strdup(ctx->id);
-            list_add_first(&s->link_syms, syms->link_sym + hash_sym_id(name));
-            list_init(&s->array_syms);
+            f->ip = ip;
+            f->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
+            snprintf(bf, sizeof(bf), "TEST.%X.%llX.%s", sym_class,
+                    (unsigned long long)(uintptr_t)address, ctx->mem->id);
+            f->id = loc_strdup(bf);
         }
     }
 #endif
@@ -487,6 +486,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         context_lock(f->ctx = ctx);
         f->ip = ip;
         f->name = loc_strdup(name);
+        f->update_policy = ip ? UPDATE_ON_EXE_STATE_CHANGES : UPDATE_ON_MEMORY_MAP_CHANGES;
         f->pending = protocol_send_command(c, SYMBOLS, "find", validate_find, f);
         if (frame != STACK_NO_FRAME) {
             json_write_string(&c->out, frame2id(ctx, frame));
@@ -586,6 +586,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
         list_add_first(&f->link_syms, syms->link_list + h);
         context_lock(f->ctx = ctx);
         f->ip = ip;
+        f->update_policy = ip ? UPDATE_ON_EXE_STATE_CHANGES : UPDATE_ON_MEMORY_MAP_CHANGES;
         f->pending = protocol_send_command(c, SYMBOLS, "list", validate_list, f);
         if (frame != STACK_NO_FRAME) {
             json_write_string(&c->out, frame2id(ctx, frame));
@@ -641,6 +642,22 @@ int id2symbol(const char * id, Symbol ** sym) {
         s->id = loc_strdup(id);
         list_add_first(&s->link_syms, syms->link_sym + h);
         list_init(&s->array_syms);
+#if ENABLE_RCBP_TEST
+        if (strncmp(id, "TEST.", 5) == 0) {
+            int sym_class = 0;
+            unsigned long long address = 0;
+            char ctx_id[256];
+            if (sscanf(id, "TEST.%X.%llX.%255s", &sym_class, &address, ctx_id) == 3) {
+                s->done_context = 1;
+                s->has_address = 1;
+                s->address = (ContextAddress)address;
+                s->sym_class = sym_class;
+                s->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
+                s->update_owner = id2ctx(ctx_id);
+                if (s->update_owner != NULL) context_lock(s->update_owner);
+            }
+        }
+#endif
     }
     *sym = alloc_symbol();
     (*sym)->cache = s;
@@ -673,7 +690,11 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
 int get_symbol_update_policy(const Symbol * sym, char ** id, int * policy) {
     SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
-    *id = c->owner_id;
+    if (c->update_owner == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    *id = c->update_owner->id;
     *policy = c->update_policy;
     return 0;
 }
@@ -1059,7 +1080,10 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
 
     assert(f == NULL || f->pending == NULL);
 
-    if (f == NULL) {
+    if (f == NULL && !syms->service_available) {
+        /* nothing */
+    }
+    else if (f == NULL) {
         Channel * c = get_channel(syms);
         f = (StackFrameCache *)loc_alloc_zero(sizeof(StackFrameCache));
         list_add_first(&f->link_syms, syms->link_frame + h);
@@ -1093,7 +1117,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
 
 /*************************************************************************************************/
 
-static void flush_syms(Context * ctx, int mode, int keep_pending) {
+static void flush_syms(Context * ctx, int mode) {
     LINK * l;
     LINK * m;
     int i;
@@ -1105,14 +1129,13 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
             while (l != syms->link_sym + i) {
                 SymInfoCache * c = syms2sym(l);
                 l = l->next;
-                if (!c->done_context) {
-                    if (keep_pending && list_is_empty(&c->array_syms)) continue;
+                if (!c->done_context || c->error_get_context != NULL) {
                     free_sym_info_cache(c);
                 }
-                else if (c->update_policy == 0 || c->owner_id == NULL) {
+                else if (c->update_policy == 0 || c->update_owner == NULL || c->update_owner->exited) {
                     free_sym_info_cache(c);
                 }
-                else if ((mode & (1 << c->update_policy)) != 0 && strcmp(ctx->id, c->owner_id) == 0) {
+                else if ((mode & (1 << c->update_policy)) && ctx == c->update_owner) {
                     free_sym_info_cache(c);
                 }
             }
@@ -1120,23 +1143,24 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
             while (l != syms->link_find + i) {
                 FindSymCache * c = syms2find(l);
                 l = l->next;
-                if (c->ctx == ctx && (c->pending == NULL || !keep_pending))
+                if ((mode & (1 << c->update_policy)) && c->ctx == ctx) {
                     free_find_sym_cache(c);
+                }
             }
             l = syms->link_list[i].next;
             while (l != syms->link_list + i) {
                 ListSymCache * c = syms2list(l);
                 l = l->next;
-                if (c->ctx == ctx && (c->pending == NULL || !keep_pending))
+                if ((mode & (1 << c->update_policy)) && c->ctx == ctx) {
                     free_list_sym_cache(c);
+                }
             }
-            if ((mode & (1 << UPDATE_ON_MEMORY_MAP_CHANGES)) != 0) {
+            if (mode & (1 << UPDATE_ON_MEMORY_MAP_CHANGES)) {
                 l = syms->link_frame[i].next;
                 while (l != syms->link_frame + i) {
                     StackFrameCache * c = syms2frame(l);
                     l = l->next;
-                    if (c->ctx == ctx->mem && (c->pending == NULL || !keep_pending))
-                        free_stack_frame_cache(c);
+                    if (c->ctx == ctx->mem) free_stack_frame_cache(c);
                 }
             }
         }
@@ -1144,23 +1168,23 @@ static void flush_syms(Context * ctx, int mode, int keep_pending) {
 }
 
 static void event_context_created(Context * ctx, void * x) {
-    flush_syms(ctx, (1 << UPDATE_ON_MEMORY_MAP_CHANGES) | (1 << UPDATE_ON_EXE_STATE_CHANGES), 0);
+    flush_syms(ctx, ~0);
 }
 
 static void event_context_exited(Context * ctx, void * x) {
-    flush_syms(ctx, (1 << UPDATE_ON_MEMORY_MAP_CHANGES) | (1 << UPDATE_ON_EXE_STATE_CHANGES), 0);
+    flush_syms(ctx, ~0);
 }
 
 static void event_context_stopped(Context * ctx, void * x) {
-    flush_syms(ctx, (1 << UPDATE_ON_EXE_STATE_CHANGES), 1);
+    flush_syms(ctx, (1 << UPDATE_ON_EXE_STATE_CHANGES));
 }
 
 static void event_context_started(Context * ctx, void * x) {
-    flush_syms(ctx, (1 << UPDATE_ON_EXE_STATE_CHANGES), 1);
+    flush_syms(ctx, (1 << UPDATE_ON_EXE_STATE_CHANGES));
 }
 
 static void event_context_changed(Context * ctx, void * x) {
-    flush_syms(ctx, (1 << UPDATE_ON_MEMORY_MAP_CHANGES) | (1 << UPDATE_ON_EXE_STATE_CHANGES), 1);
+    flush_syms(ctx, (1 << UPDATE_ON_MEMORY_MAP_CHANGES) | (1 << UPDATE_ON_EXE_STATE_CHANGES));
 }
 
 static void channel_close_listener(Channel * c) {

@@ -645,6 +645,7 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx) {
     assert(!ctx->exited);
     assert(!ctx->intercepted);
     assert(!ctx->pending_step);
+    assert(are_breakpoints_in_sync(ctx));
     ctx->intercepted = 1;
     ctx->pending_intercept = 0;
     if (get_context_breakpoint_ids(ctx) != NULL) EXT(ctx)->intercepted_by_bp++;
@@ -894,7 +895,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
         send_event_context_exception(&broadcast_group->out, ctx);
     }
     if (ctx->pending_intercept) {
-        send_event_context_suspended(&broadcast_group->out, ctx);
+        suspend_debug_context(ctx);
     }
     if (!ctx->intercepted && run_ctrl_lock_cnt == 0) {
         context_continue(ctx);

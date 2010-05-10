@@ -53,7 +53,11 @@ static size_t context_extension_offset = 0;
 #define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
 
 int is_test_process(Context * ctx) {
-    return EXT(ctx)->test_process;
+#if defined(_WRS_KERNEL)
+    return 1;
+#else
+    return EXT(ctx->mem)->test_process;
+#endif
 }
 
 #endif /* ENABLE_RCBP_TEST */
@@ -108,7 +112,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     RunTestDoneArgs * data = (RunTestDoneArgs *)arg;
     Channel * c = data->c;
 
-    if (ctx != NULL) EXT(ctx)->test_process = 1;
+    if (ctx != NULL) EXT(ctx->mem)->test_process = 1;
     if (!is_channel_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
@@ -211,8 +215,8 @@ static void get_symbol_cache_client(void * x) {
     ContextAddress addr = 0;
     int error = 0;
 
-    if (ctx == NULL || ctx->exited) {
-        error = ERR_INV_CONTEXT;
+    if (ctx->exited) {
+        error = ERR_ALREADY_EXITED;
     }
     else if (find_symbol(ctx, STACK_NO_FRAME, args->name, &sym) < 0) {
         error = errno;
@@ -249,8 +253,11 @@ static void command_get_symbol(char * token, Channel * c) {
 #if ENABLE_DebugContext
     {
         Context *ctx = id2ctx(id);
-        if (ctx == NULL || ctx->exited) {
+        if (ctx == NULL) {
             error = ERR_INV_CONTEXT;
+        }
+        else if (ctx->exited) {
+            error = ERR_ALREADY_EXITED;
         }
         else {
 #if ENABLE_Symbols
