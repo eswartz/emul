@@ -6,12 +6,9 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import org.ejs.eulang.ITarget;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
-import org.ejs.eulang.symbols.ISymbol;
 
 import v9t9.engine.cpu.InstructionTable;
-import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;

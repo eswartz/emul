@@ -4,20 +4,12 @@
 package org.ejs.eulang.llvm.tms9900;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
-import org.ejs.eulang.llvm.instrs.LLInstr;
-import org.ejs.eulang.llvm.instrs.LLRetInstr;
-import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.symbols.IScope;
-import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.symbols.LocalScope;
 
 import v9t9.tools.asm.assembler.SymbolTable;
 

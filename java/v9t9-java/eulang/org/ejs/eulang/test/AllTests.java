@@ -28,6 +28,7 @@ public class AllTests {
 		suite.addTest(new JUnit4TestAdapter(TestTypes.class));
 		suite.addTest(new JUnit4TestAdapter(Test9900Locals.class));
 		suite.addTest(new JUnit4TestAdapter(Test9900InstrGen.class));
+		suite.addTest(new JUnit4TestAdapter(Test9900InstrSelection.class));
 		//$JUnit-END$
 		return suite;
 	}

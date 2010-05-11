@@ -7,7 +7,6 @@ import java.util.HashMap;
 
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLCodeVisitor;
-import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
@@ -15,6 +14,8 @@ import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
+
+import v9t9.tools.asm.assembler.HLInstruction;
 
 /**
  * @author ejs
@@ -110,7 +111,9 @@ public class CodeGenVisitor extends LLCodeVisitor {
 			unhandled(instr);
 		}
 		
-		routine.generateReturn(block);
+		HLInstruction[] rets = routine.generateReturn();
+		for (HLInstruction ret : rets)
+			block.addInst(ret);
 	}
 
 }

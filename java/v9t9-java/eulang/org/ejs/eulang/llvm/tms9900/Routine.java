@@ -6,13 +6,11 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.ArrayList;
 
-import org.ejs.eulang.ITarget;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.symbols.ISymbol;
 
