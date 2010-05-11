@@ -120,7 +120,6 @@ static void run_test_done(int error, Context * ctx, void * arg) {
         json_write_string(&c->out, ctx ? ctx->id : NULL);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
     }
     channel_unlock(c);
     loc_free(data);

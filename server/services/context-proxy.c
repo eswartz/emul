@@ -664,7 +664,6 @@ static void validate_peer_cache_children(Channel * c, void * args, int error) {
             json_read_array(&c->inp, read_rc_children_item, p);
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-            flush_stream(&p->target->out);
         }
         clear_trap(&trap);
     }
@@ -702,7 +701,6 @@ static void validate_peer_cache_context(Channel * c, void * args, int error) {
                 json_write_string(&p->target->out, x->id);
                 write_stream(&p->target->out, 0);
                 write_stream(&p->target->out, MARKER_EOM);
-                flush_stream(&p->target->out);
                 p->rc_pending_cnt++;
             }
             else {
@@ -711,7 +709,6 @@ static void validate_peer_cache_context(Channel * c, void * args, int error) {
                 json_write_string(&p->target->out, x->id);
                 write_stream(&p->target->out, 0);
                 write_stream(&p->target->out, MARKER_EOM);
-                flush_stream(&p->target->out);
                 p->rc_pending_cnt++;
             }
         }
@@ -765,7 +762,6 @@ static void validate_peer_cache_state(Channel * c, void * args, int error) {
                 json_write_string(&p->target->out, x->id);
                 write_stream(&p->target->out, 0);
                 write_stream(&p->target->out, MARKER_EOM);
-                flush_stream(&p->target->out);
                 p->rc_pending_cnt++;
             }
         }
@@ -796,7 +792,6 @@ Context * id2ctx(const char * id) {
                 protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
                 write_stringz(&p->target->out, "null");
                 write_stream(&p->target->out, MARKER_EOM);
-                flush_stream(&p->target->out);
                 p->rc_pending_cnt++;
                 cache_wait(&p->rc_cache);
             }
@@ -897,7 +892,6 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     json_write_long(&c->out, 0);
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
-    flush_stream(&c->out);
     context_lock(ctx);
     cache_wait(&m->cache);
     return -1;
@@ -991,7 +985,6 @@ void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * c
         json_write_string(&c->out, cache->id);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         context_lock(ctx);
         cache_wait(&cache->mmap_cache);
     }
@@ -1126,7 +1119,6 @@ static void check_registers_cache(ContextCache * cache) {
         json_write_string(&c->out, cache->ctx->id);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         context_lock(cache->ctx);
         cache_wait(&cache->regs_cache);
     }
@@ -1141,7 +1133,6 @@ static void check_registers_cache(ContextCache * cache) {
             json_write_string(&c->out, cache->reg_ids[i]);
             write_stream(&c->out, 0);
             write_stream(&c->out, MARKER_EOM);
-            flush_stream(&c->out);
             context_lock(cache->ctx);
         }
         cache_wait(&cache->regs_cache);
@@ -1276,7 +1267,6 @@ static void validate_reg_children_cache(Channel * c, void * args, int error) {
                     write_stream(&c->out, ']');
                     write_stream(&c->out, 0);
                     write_stream(&c->out, MARKER_EOM);
-                    flush_stream(&c->out);
                     clear_trap(&trap);
                     return;
                 }
@@ -1344,7 +1334,6 @@ static void validate_stack_frame_cache(Channel * c, void * args, int error) {
                 }
                 write_stream(&c->out, 0);
                 write_stream(&c->out, MARKER_EOM);
-                flush_stream(&c->out);
                 clear_trap(&trap);
                 return;
             }
@@ -1406,7 +1395,6 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
     write_stream(&c->out, ']');
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
-    flush_stream(&c->out);
     context_lock(ctx);
     cache_wait(&s->cache);
     return -1;

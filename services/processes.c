@@ -367,7 +367,6 @@ static void attach_done(int error, Context * ctx, void * arg) {
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
     }
     channel_unlock(c);
     loc_free(data);
@@ -487,7 +486,6 @@ static void start_done(int error, Context * ctx, void * arg) {
         else write_context(&c->out, id2pid(ctx->id, NULL));
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
     }
     channel_unlock(c);
     loc_free(data);
@@ -650,7 +648,6 @@ static void command_get_environment(char * token, Channel * c) {
 
 static void process_exited(ChildProcess * prs) {
     send_event_process_exited(&prs->bcg->out, prs);
-    flush_stream(&prs->bcg->out);
 #if defined(_WRS_KERNEL)
     semTake(prs_list_lock, WAIT_FOREVER);
 #endif

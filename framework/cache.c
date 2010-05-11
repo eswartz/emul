@@ -46,7 +46,6 @@ static LINK cache_list;
 
 static void run_cache_client(void) {
     Trap trap;
-    OutputStream * out = &current_client.channel->bcg->out;
 
     cache_miss_cnt = 0;
     client_exited = 0;
@@ -55,7 +54,6 @@ static void run_cache_client(void) {
         clear_trap(&trap);
         assert(cache_miss_cnt == 0);
         assert(client_exited);
-        flush_stream(out);
     }
     else if (get_error_code(trap.error) != ERR_CACHE_MISS || client_exited || cache_miss_cnt == 0) {
         trace(LOG_ALWAYS, "Unhandled exception in data cache client: %d %s", trap.error, errno_to_str(trap.error));

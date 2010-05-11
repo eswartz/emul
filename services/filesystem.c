@@ -529,7 +529,6 @@ static void done_io_request(void * arg) {
                 loc_free(req->info.u.fio.bufp);
                 loc_free(req);
             }
-            flush_stream(handle->out);
             delete_open_file_info(handle);
             return;
         }
@@ -541,7 +540,6 @@ static void done_io_request(void * arg) {
     loc_free(req->info.u.fio.bufp);
     loc_free(req);
     post_io_requst(handle);
-    flush_stream(handle->out);
 }
 
 static void post_io_requst(OpenFileInfo * handle) {

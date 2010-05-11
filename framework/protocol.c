@@ -528,7 +528,6 @@ void send_hello_message(Channel * c) {
     write_stream(&c->out, ']');
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
-    flush_stream(&c->out);
     if (c->state == ChannelStateStarted) {
         c->state = ChannelStateHelloSent;
     }

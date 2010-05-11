@@ -200,7 +200,6 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
         }
     }
     while (i != MARKER_EOM && i != MARKER_EOS);
-    flush_stream(out);
     if (log_mode & LOG_TCFLOG) {
         *p = '\0';
         trace(LOG_TCFLOG, "%d: %s", proxy->instance, logbuf);

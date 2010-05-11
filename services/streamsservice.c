@@ -156,7 +156,6 @@ static void send_event_stream_created(OutputStream * out, VirtualStream * stream
     json_write_string(out, context_id);
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
-    flush_stream(out);
 }
 
 static void send_event_stream_disposed(OutputStream * out, VirtualStream * stream) {
@@ -172,7 +171,6 @@ static void send_event_stream_disposed(OutputStream * out, VirtualStream * strea
     json_write_string(out, id);
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
-    flush_stream(out);
 }
 
 static void delete_read_request(ReadRequest * r) {
@@ -189,7 +187,6 @@ static void delete_read_request(ReadRequest * r) {
         json_write_boolean(&c->out, 1);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         clear_trap(&trap);
     }
     else {
@@ -209,7 +206,6 @@ static void delete_write_request(WriteRequest * r, int error) {
         write_stringz(&c->out, r->token);
         write_errno(&c->out, error);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         clear_trap(&trap);
     }
     else {
@@ -397,7 +393,6 @@ static void send_read_reply(StreamClient * client, char * token, size_t size) {
     json_write_boolean(&c->out, eos);
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
-    flush_stream(&c->out);
 }
 
 void virtual_stream_create(const char * type, const char * context_id, size_t buf_len, unsigned access,

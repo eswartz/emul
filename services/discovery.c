@@ -163,7 +163,6 @@ static void peer_change_event(PeerServer * ps, int type, void * arg) {
     }
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
-    flush_stream(out);
 }
 
 void ini_locator_service(Protocol * p, TCFBroadcastGroup * bcg) {

@@ -1036,7 +1036,6 @@ static int lua_channel_send_message(lua_State *L)
         write_stream(out, (*s++) & 0xff);
     }
     write_stream(out, MARKER_EOM);
-    flush_stream(out);
     return 0;
 }
 
@@ -1113,7 +1112,6 @@ static int lua_channel_send_command(lua_State *L)
         write_stream(out, (*s++) & 0xff);
     }
     write_stream(out, MARKER_EOM);
-    flush_stream(out);
     return 1;
 }
 
@@ -1175,7 +1173,6 @@ static int lua_channel_redirect(lua_State *L)
     cmd->replyinfo = send_redirect_command(ce->c,
                                            lua_tostring(L, 2),
                                            channel_redirect_cb, cmd);
-    flush_stream(&ce->c->out);
     trace(LOG_LUA, "lua_channel_redirect %p %d %s", ce->c, cmd->result_cbrefp->ref, lua_tostring(L, 2));
     return 1;
 }

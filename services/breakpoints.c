@@ -602,7 +602,7 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp);
 }
 
-static void done_locations_evaluation(int * need_to_flush) {
+static void done_locations_evaluation(void) {
     LINK * l = NULL;
     assert(cache_enter_cnt == 0);
     assert(generation_done != generation_active);
@@ -658,13 +658,12 @@ static void done_locations_evaluation(int * need_to_flush) {
                 bp->status_unsupported = bp->unsupported != NULL;
                 bp->status_error = bp->error;
                 bp->status_planted = bp->instruction_cnt;
-                *need_to_flush = 1;
             }
         }
     }
 }
 
-static void done_condition_evaluation(EvaluationRequest * req, int * need_to_flush) {
+static void done_condition_evaluation(EvaluationRequest * req) {
     Context * ctx = req->ctx;
     size_t size = 0;
     int i;
@@ -708,14 +707,12 @@ static void done_condition_evaluation(EvaluationRequest * req, int * need_to_flu
             BreakpointInfo * bp = req->bp_arr[i].bp;
             if (req->bp_arr[i].triggered && bp->stop_group == NULL) {
                 suspend_debug_context(ctx);
-                *need_to_flush = 1;
             }
         }
     }
 }
 
 static void done_all_evaluations(void) {
-    int need_to_flush = 0;
     LINK * l = evaluations_active.next;
 
     while (l != &evaluations_active) {
@@ -728,7 +725,7 @@ static void done_all_evaluations(void) {
                 ctx->stopped_by_bp = 0;
             }
             else {
-                done_condition_evaluation(req, &need_to_flush);
+                done_condition_evaluation(req);
             }
         }
     }
@@ -750,7 +747,6 @@ static void done_all_evaluations(void) {
                     Context * c = id2ctx(*ids++);
                     if (c != NULL) {
                         suspend_debug_context(c);
-                        need_to_flush = 1;
                     }
                 }
             }
@@ -761,7 +757,6 @@ static void done_all_evaluations(void) {
         if (list_is_empty(&req->link_posted)) {
             if (!ctx->exited && ctx->pending_intercept) {
                 suspend_debug_context(ctx);
-                need_to_flush = 1;
             }
             assert(!ctx->pending_intercept || ctx->event_notification);
         }
@@ -769,11 +764,9 @@ static void done_all_evaluations(void) {
     }
 
     if (list_is_empty(&evaluations_posted)) {
-        done_locations_evaluation(&need_to_flush);
+        done_locations_evaluation();
         generation_done = generation_active;
     }
-
-    if (need_to_flush) flush_stream(&broadcast_group->out);
 }
 
 static void done_evaluation(void) {
@@ -1715,9 +1708,7 @@ void evaluate_breakpoint(Context * ctx) {
         post_evaluation_request(req);
     }
     else {
-        int need_to_flush = 0;
-        done_condition_evaluation(req, &need_to_flush);
-        if (need_to_flush) flush_stream(&broadcast_group->out);
+        done_condition_evaluation(req);
         req->bp_cnt = 0;
     }
 }
@@ -1756,7 +1747,6 @@ static void safe_restore_breakpoint(void * arg) {
         }
         if (ctx->pending_intercept) {
             suspend_debug_context(ctx);
-            flush_stream(&broadcast_group->out);
         }
     }
     context_unlock(ctx);
@@ -1915,7 +1905,6 @@ static void channel_close_listener(Channel * c) {
 #if !defined(_WRS_KERNEL)
 static void eventpoint_at_main(Context * ctx, void * args) {
     suspend_debug_context(ctx);
-    flush_stream(&broadcast_group->out);
 }
 #endif
 

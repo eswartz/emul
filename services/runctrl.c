@@ -267,7 +267,6 @@ static void event_get_context(void * arg) {
         }
 
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
     }
     channel_unlock(c);
     context_unlock(ctx);
@@ -556,7 +555,6 @@ static void event_terminate(void * x) {
     if (ctx->intercepted) send_event_context_resumed(&c->bcg->out, ctx);
     ctx->pending_intercept = 0;
     ctx->pending_signals |= 1 << SIGKILL;
-    flush_stream(&c->bcg->out);
     context_unlock(ctx);
     channel_unlock(c);
     loc_free(args);
@@ -877,12 +875,10 @@ static void event_context_created(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     assert(!ctx->stopped);
     send_event_context_added(&broadcast_group->out, ctx);
-    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
     send_event_context_changed(&broadcast_group->out, ctx);
-    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_stopped(Context * ctx, void * client_data) {
@@ -900,7 +896,6 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     if (!ctx->intercepted && run_ctrl_lock_cnt == 0) {
         context_continue(ctx);
     }
-    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_started(Context * ctx, void * client_data) {
@@ -918,7 +913,6 @@ static void event_context_started(Context * ctx, void * client_data) {
             safe_event_pid_count++;
         }
     }
-    flush_stream(&broadcast_group->out);
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
@@ -926,7 +920,6 @@ static void event_context_exited(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     if (EXT(ctx)->pending_safe_event) check_safe_events(ctx);
     send_event_context_removed(&broadcast_group->out, ctx);
-    flush_stream(&broadcast_group->out);
 }
 
 void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {

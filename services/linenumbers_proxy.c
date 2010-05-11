@@ -239,7 +239,6 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineNumber
         json_write_long(&c->out, column);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         cache_wait(&f->cache);
     }
     else if (f->pending != NULL) {

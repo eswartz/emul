@@ -137,7 +137,6 @@ static int cmd_tcf(char *s) {
         write_stringz(&c->out, args[i]);
     }
     write_stream(&c->out, MARKER_EOM);
-    flush_stream(&c->out);
     return 1;
 }
 

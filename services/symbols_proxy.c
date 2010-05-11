@@ -398,7 +398,6 @@ static SymInfoCache * get_sym_info_cache(const Symbol * sym) {
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         cache_wait(&s->cache);
     }
     clear_trap(&trap);
@@ -498,7 +497,6 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         json_write_string(&c->out, name);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         cache_wait(&f->cache);
     }
     else if (f->pending != NULL) {
@@ -596,7 +594,6 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
         }
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         cache_wait(&f->cache);
     }
     else if (f->pending != NULL) {
@@ -837,7 +834,6 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         cache_wait(&s->cache);
     }
     else if (s->children_count > 0) {
@@ -909,7 +905,6 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
         json_write_uint64(&c->out, length);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         cache_wait(&a->cache);
     }
     else if (a->pending != NULL) {
@@ -1096,7 +1091,6 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
         json_write_uint64(&c->out, ip);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
-        flush_stream(&c->out);
         cache_wait(&f->cache);
     }
     else if (f->error != NULL) {

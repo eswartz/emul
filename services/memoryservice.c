@@ -341,7 +341,6 @@ static void safe_memory_set(void * parm) {
                 write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
             }
             write_stream(out, MARKER_EOM);
-            flush_stream(&c->bcg->out);
             clear_trap(&trap);
         }
         else {
@@ -409,7 +408,6 @@ static void safe_memory_get(void * parm) {
                 write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, err);
             }
             write_stream(out, MARKER_EOM);
-            flush_stream(out);
             clear_trap(&trap);
         }
         else {
@@ -503,7 +501,6 @@ static void safe_memory_fill(void * parm) {
                 write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
             }
             write_stream(out, MARKER_EOM);
-            flush_stream(&c->bcg->out);
             clear_trap(&trap);
         }
         else {
@@ -569,7 +566,6 @@ static void event_context_created(Context * ctx, void * client_data) {
 
     if (ctx->parent != NULL) return;
     send_event_context_added(&bcg->out, ctx);
-    flush_stream(&bcg->out);
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
@@ -577,7 +573,6 @@ static void event_context_changed(Context * ctx, void * client_data) {
 
     if (ctx->parent != NULL) return;
     send_event_context_changed(&bcg->out, ctx);
-    flush_stream(&bcg->out);
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
@@ -585,7 +580,6 @@ static void event_context_exited(Context * ctx, void * client_data) {
 
     if (ctx->parent != NULL) return;
     send_event_context_removed(&bcg->out, ctx);
-    flush_stream(&bcg->out);
 }
 
 void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg) {
