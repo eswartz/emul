@@ -5,10 +5,8 @@ package org.ejs.eulang.llvm.tms9900;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
 import org.ejs.eulang.ITarget;
@@ -27,7 +25,6 @@ import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
-import org.ejs.eulang.llvm.tms9900.InstrSelection.IPattern;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;

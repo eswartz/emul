@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences.INodeChangeListener;
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.TypeEngine;
@@ -28,7 +27,6 @@ import org.ejs.eulang.llvm.instrs.LLAssignInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
-import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLTypedInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -42,7 +40,6 @@ import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 
 /**
  * This selects the 9900 instructions from the LLVM code.  Subclass
@@ -183,7 +180,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		int inst;
 		int[] ops;
 		
-		@SuppressWarnings("unchecked")
 		Do(int inst, int... ops) {
 			this.inst = inst;
 			this.ops = ops;
