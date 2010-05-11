@@ -53,7 +53,7 @@ public class RegAlloc {
 	 * @param symbol
 	 * @return
 	 */
-	public ILocal allocate(ISymbol symbol) throws UnsupportedOperationException {
+	public RegisterLocal allocate(ISymbol symbol) throws UnsupportedOperationException {
 		LLType type = symbol.getType();
 		BasicType basic = type.getBasicType();
 		if (basic == BasicType.POINTER || basic == BasicType.BOOL)
@@ -76,7 +76,7 @@ public class RegAlloc {
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		ILocal local = new RegisterLocal(regClass, symbol, 
+		RegisterLocal local = new RegisterLocal(regClass, symbol, 
 				type,
 				vr);
 		return local;

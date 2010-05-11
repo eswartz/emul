@@ -10,7 +10,7 @@ import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
-import org.ejs.eulang.llvm.instrs.LLRetInst;
+import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
@@ -47,7 +47,7 @@ public class CodeGenVisitor extends LLCodeVisitor {
 		llScope = def.getScope();
 		vrScope = new LocalScope(llScope);
 		
-		routine = new LinkedRoutine(def.getName());
+		routine = new LinkedRoutine(def);
 		
 		return true;
 	}
@@ -77,11 +77,11 @@ public class CodeGenVisitor extends LLCodeVisitor {
 	 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterInstr(org.ejs.eulang.llvm.instrs.LLInstr)
 	 */
 	@Override
-	public boolean enterInstr(LLInstr llinstr) {
+	public boolean enterInstr(LLBlock block, LLInstr llinstr) {
 		System.out.println(llinstr);
 
-		if (llinstr instanceof LLRetInst) {
-			generateReturn((LLRetInst) llinstr);
+		if (llinstr instanceof LLRetInstr) {
+			generateReturn((LLRetInstr) llinstr);
 		} else {
 			unhandled(llinstr);
 		}
@@ -100,7 +100,7 @@ public class CodeGenVisitor extends LLCodeVisitor {
 	/**
 	 * @param llinstr
 	 */
-	private void generateReturn(LLRetInst instr) {
+	private void generateReturn(LLRetInstr instr) {
 		LLOperand[] llops = instr.getOperands();
 		if (llops.length == 0) {
 			

@@ -16,7 +16,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
  * @author ejs
  *
  */
-public class RegOffsOperand extends RegisterOperand {
+public class RegOffsOperand extends RegisterOperand  {
 
 	private final AssemblerOperand addr;
 
@@ -66,6 +66,21 @@ public class RegOffsOperand extends RegisterOperand {
 			return false;
 		}
 		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isMemory()
+	 */
+	@Override
+	public boolean isMemory() {
+		return true;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isRegister()
+	 */
+	@Override
+	public boolean isRegister() {
+		return false;
 	}
 	
 	@Override

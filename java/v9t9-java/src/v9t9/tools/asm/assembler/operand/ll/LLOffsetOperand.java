@@ -54,8 +54,16 @@ public class LLOffsetOperand extends LLNonImmediateOperand {
 	}
 
 
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
 
-
+	
 	public int getOffset() {
 		return offset;
 	}

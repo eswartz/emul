@@ -44,7 +44,21 @@ public class PcRelativeOperand implements AssemblerOperand {
 		return true;
 	}
 
-
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isMemory()
+	 */
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isRegister()
+	 */
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.AssemblerOperand#resolve(v9t9.tools.asm.Assembler, v9t9.engine.cpu.Instruction)
 	 */

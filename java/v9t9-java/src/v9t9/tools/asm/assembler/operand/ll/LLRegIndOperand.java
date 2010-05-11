@@ -61,6 +61,17 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 			return false;
 		return true;
 	}
+	
+	@Override
+	public boolean isMemory() {
+		return true;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
+
+	
 	public int getRegister() {
 		return register;
 	}

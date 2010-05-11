@@ -5,8 +5,10 @@ package org.ejs.eulang.llvm.tms9900;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
 import org.ejs.eulang.ITarget;
@@ -25,6 +27,7 @@ import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
+import org.ejs.eulang.llvm.tms9900.InstrSelection.IPattern;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
@@ -108,7 +111,6 @@ import org.ejs.eulang.types.LLType;
  */
 public class Locals {
 
-	private final ITarget target;
 	private Map<ISymbol, ILocal> argumentLocals;
 	private Map<ISymbol, StackLocal> stackLocals;
 	private Map<ISymbol, RegisterLocal> regLocals;
@@ -121,10 +123,10 @@ public class Locals {
 	private boolean forceLocalsToStack;
 	private ICallingConvention cc;
 	
-	public Locals(ITarget target, LLDefineDirective def) {
-		this.target = target;
+	public Locals(LLDefineDirective def) {
 		this.def = def;
 		
+		ITarget target = def.getTarget();
 		this.cc = target.getCallingConvention(def.getConvention());
 
 		argumentLocals = new LinkedHashMap<ISymbol, ILocal>();
@@ -152,9 +154,6 @@ public class Locals {
 	public Map<ISymbol, StackLocal> getStackLocals() {
 		return stackLocals;
 	}
-	/**
-	 * @return the regLocals
-	 */
 	public Map<ISymbol, RegisterLocal> getRegLocals() {
 		return regLocals;
 	}
@@ -170,7 +169,7 @@ public class Locals {
 				System.out.println("Block " + currentBlock.getLabel());
 				return true;
 			}
-			public boolean enterInstr(LLInstr instr) {
+			public boolean enterInstr(LLBlock block, LLInstr instr) {
 				if (instr instanceof LLAssignInstr) {
 					LLAssignInstr assign = (LLAssignInstr) instr;
 					if (assign.getResult() instanceof LLSymbolOp)
@@ -299,7 +298,8 @@ public class Locals {
 		
 		LLTempOp result = (LLTempOp) instr.getResult();
 		
-		ISymbol name = localScope.add(result.getName(), true);
+		// must not fail: these names are not legal ids and LLVM guarantees they're unique
+		ISymbol name = localScope.add(result.getName(), false);
 		name.setType(result.getType());
 		
 		allocateTemp(name, result.getType());
@@ -327,6 +327,12 @@ public class Locals {
 		return local;
 	}
 
+	public ILocal allocateTemp(LLType type) {
+		ISymbol name = localScope.addTemporary("%reg");
+		name.setType(type);
+		return allocateTemp(name, type);
+	}
+
 	private void unhandled(LLOperand op) {
 		throw new IllegalStateException(op.toString());
 	}
@@ -336,6 +342,53 @@ public class Locals {
 	 */
 	public int getFrameSize() {
 		return alignment.sizeof() / 8;
+	}
+
+	/**
+	 * @return
+	 */
+	public IScope getScope() {
+		return localScope;
+	}
+
+	/**
+	 * @param symbol
+	 */
+	public boolean forceToRegister(ISymbol symbol, int reg) {
+		RegisterLocal regLocal = regLocals.get(symbol);
+		if (regLocal == null)
+			return false;
+		regLocal.setVr(reg);
+		return true;
+	}
+
+	/**
+	 * @param operand
+	 * @return
+	 */
+	public ILocal getLocal(LLOperand operand) {
+		ISymbol sym = null;
+		if (operand instanceof LLTempOp) {
+			sym = localScope.get(((LLTempOp) operand).getName());
+		} else if (operand instanceof LLSymbolOp) {
+			sym = ((LLSymbolOp) operand).getSymbol();
+		} 
+		if (sym == null)
+			return null;
+		return getLocal(sym);
+	}
+
+	/**
+	 * @param sym
+	 * @return
+	 */
+	public ILocal getLocal(ISymbol sym) {
+		ILocal local = regLocals.get(sym);
+		if (local == null)
+			local = stackLocals.get(sym);
+		if (local == null)
+			local = argumentLocals.get(sym);
+		return local;
 	}
 
 

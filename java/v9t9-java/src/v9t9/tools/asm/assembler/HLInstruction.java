@@ -44,4 +44,14 @@ public class HLInstruction extends AssemblerInstruction {
 		instr.setOp2(op2);
 		return instr;
 	}
+
+	public static HLInstruction create(int inst, AssemblerOperand op1,
+			AssemblerOperand op2, AssemblerOperand op3) {
+		HLInstruction instr = new HLInstruction();
+		instr.setInst(inst);
+		instr.setOp1(op1);
+		instr.setOp2(op2);
+		instr.setOp3(op3);
+		return instr;
+	}
 }

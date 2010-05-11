@@ -28,11 +28,11 @@ public interface ILLCodeVisitor {
 	
 	void exitBlock(LLBlock block);
 	
-	boolean enterInstr(LLInstr instr);
+	boolean enterInstr(LLBlock block, LLInstr instr);
 	
-	void exitInstr(LLInstr instr);
+	void exitInstr(LLBlock block, LLInstr instr);
 	
-	boolean enterOperand(LLOperand operand);
+	boolean enterOperand(LLInstr instr, int num, LLOperand operand);
 	
-	void exitOperand(LLOperand operand);
+	void exitOperand(LLInstr instr, int num, LLOperand operand);
 }

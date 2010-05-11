@@ -15,6 +15,7 @@ public class RegisterLocal extends BaseLocal {
 
 	private final IRegClass regClass;
 	private int vr;
+	private boolean singleBlock;
 
 	/**
 	 * @param name
@@ -84,5 +85,17 @@ public class RegisterLocal extends BaseLocal {
 	 */
 	public void setVr(int vr) {
 		this.vr = vr;
+	}
+
+	/**
+	 * Tell whether the register is used only in a single block
+	 * (which is usually a guarantee that it will get a register in codegen)
+	 * @return
+	 */
+	public boolean isSingleBlock() {
+		return singleBlock;
+	}
+	public void setSingleBlock(boolean single) {
+		this.singleBlock = single;
 	}
 }

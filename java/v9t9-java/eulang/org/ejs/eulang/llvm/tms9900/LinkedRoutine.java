@@ -6,6 +6,8 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import org.ejs.eulang.ITarget;
+import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.symbols.ISymbol;
 
 import v9t9.engine.cpu.InstructionTable;
@@ -20,8 +22,8 @@ public class LinkedRoutine extends Routine {
 
     public int returnReg;
 
-    public LinkedRoutine(ISymbol name) {
-        super(name);
+    public LinkedRoutine(LLDefineDirective def) {
+        super(def);
         returnReg = 11;
     }
     
@@ -39,8 +41,10 @@ public class LinkedRoutine extends Routine {
         return false;
     }
     
-    public void generateReturn(Block block) {
-    	block.addInst(HLInstruction.create(InstructionTable.Ib, 
-    			new RegIndOperand(new NumberOperand(returnReg))));
+    public HLInstruction[] generateReturn() {
+    	return new HLInstruction[] { 
+    			HLInstruction.create(InstructionTable.Ib, 
+    					new RegIndOperand(new NumberOperand(returnReg)))
+    	};
     }
 }

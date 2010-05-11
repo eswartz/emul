@@ -6,6 +6,7 @@ package org.ejs.eulang.llvm.instrs;
 import java.util.Arrays;
 
 import org.ejs.eulang.llvm.ILLCodeVisitor;
+import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.ops.LLOperand;
 
 /**
@@ -127,14 +128,14 @@ public abstract class LLBaseInstr implements LLInstr {
 	 * @see org.ejs.eulang.llvm.instrs.LLInstr#accept(org.ejs.eulang.llvm.ILLCodeVisitor)
 	 */
 	@Override
-	public void accept(ILLCodeVisitor visitor) {
+	public void accept(LLBlock block, ILLCodeVisitor visitor) {
 		try {
-			if (!visitor.enterInstr(this)) {
-				for (LLOperand op : ops) {
-					op.accept(visitor);
+			if (visitor.enterInstr(block, this)) {
+				for (int j = 0; j < ops.length; j++) {
+					ops[j].accept(this, j, visitor);
 				}
+				visitor.exitInstr(block, this);
 			}
-			visitor.exitInstr(this);
 		} catch (ILLCodeVisitor.Terminate e) {
 			
 		}

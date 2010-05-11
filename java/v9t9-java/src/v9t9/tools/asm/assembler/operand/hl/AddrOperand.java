@@ -59,6 +59,16 @@ public class AddrOperand implements AssemblerOperand {
 		return true;
 	}
 	
+	@Override
+	public boolean isMemory() {
+		return true;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
+
+	
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		LLOperand lop = getAddr().resolve(assembler, inst);

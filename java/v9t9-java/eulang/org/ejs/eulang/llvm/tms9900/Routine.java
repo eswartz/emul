@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
 
+import org.ejs.eulang.ITarget;
+import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.symbols.ISymbol;
 
 import v9t9.tools.asm.assembler.HLInstruction;
@@ -35,10 +37,15 @@ public abstract class Routine {
     
     protected int dataWords;
 	private ISymbol name;
+	
+	private Locals locals;
+	private final LLDefineDirective def;
     
-    public Routine(ISymbol name) {
-        this.name = name;
+    public Routine(LLDefineDirective def) {
+        this.def = def;
+		this.name = def.getName();
 		blocks = new ArrayList<Block>();
+		locals = new Locals(def);
     }
     
     @Override
@@ -69,8 +76,16 @@ public abstract class Routine {
     public String toString() {
         return "Routine " + name;
     }
+    
+    /**
+	 * @return the locals
+	 */
+	public Locals getLocals() {
+		return locals;
+	}
+	
     abstract public boolean isReturn(HLInstruction inst);
-    abstract public void generateReturn(Block block);
+    abstract public HLInstruction[] generateReturn();
     
     /** Get the blocks spanned by the routine.  Requires that the flowgraph info is complete. */
 	public Collection<Block> getSpannedBlocks() {
@@ -104,6 +119,13 @@ public abstract class Routine {
 	 */
 	public List<Block> getBlocks() {
 		return blocks;
+	}
+
+	/**
+	 * @return
+	 */
+	public LLDefineDirective getDefinition() {
+		return def;
 	}
 
 }

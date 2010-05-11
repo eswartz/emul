@@ -88,10 +88,10 @@ public class LLBlock {
 			if (visitor.enterBlock(this)) {
 
 				for (LLInstr instr : instrs) {
-					instr.accept(visitor);
+					instr.accept(this, visitor);
 				}
+				visitor.exitBlock(this);
 			}
-			visitor.exitBlock(this);
 		} catch (Terminate e) {
 			
 		}

@@ -39,6 +39,14 @@ public class LLEmptyOperand extends LLNonImmediateOperand implements Operand {
 		return true;
 	}
 
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
 
 	@Override
 	public MachineOperand createMachineOperand() throws ResolveException {

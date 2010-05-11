@@ -46,6 +46,16 @@ public class LLForwardOperand extends LLOperand {
 	}
 
 	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
+
+	
+	@Override
 	public int getImmediate() {
 		return 0;
 	}

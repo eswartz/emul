@@ -86,7 +86,7 @@ import org.ejs.eulang.llvm.instrs.LLExtractValueInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLInsertValueInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
-import org.ejs.eulang.llvm.instrs.LLRetInst;
+import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
@@ -459,9 +459,9 @@ public class LLVMGenerator {
 			
 			if (returnType.getBasicType() != BasicType.VOID) {
 				LLOperand retVal = currentTarget.load(returnType, ret);
-				currentTarget.emit(new LLRetInst(returnType, retVal));
+				currentTarget.emit(new LLRetInstr(returnType, retVal));
 			} else {
-				currentTarget.emit(new LLRetInst(returnType));
+				currentTarget.emit(new LLRetInstr(returnType));
 			}
 		} finally {
 			currentTarget = oldDefine;

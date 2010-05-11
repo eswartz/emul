@@ -25,12 +25,12 @@ public class LLCodeVisitor implements ILLCodeVisitor {
 	}
 
 	@Override
-	public boolean enterInstr(LLInstr instr) {
+	public boolean enterInstr(LLBlock block, LLInstr instr) {
 		return true;
 	}
 
 	@Override
-	public boolean enterOperand(LLOperand operand) {
+	public boolean enterOperand(LLInstr instr, int num, LLOperand operand) {
 		return true;
 	}
 
@@ -54,7 +54,7 @@ public class LLCodeVisitor implements ILLCodeVisitor {
 	 * @see org.ejs.eulang.llvm.ILLCodeVisitor#exitInstr(org.ejs.eulang.llvm.instrs.LLInstr)
 	 */
 	@Override
-	public void exitInstr(LLInstr instr) {
+	public void exitInstr(LLBlock block, LLInstr instr) {
 
 	}
 
@@ -62,7 +62,7 @@ public class LLCodeVisitor implements ILLCodeVisitor {
 	 * @see org.ejs.eulang.llvm.ILLCodeVisitor#exitOperand(org.ejs.eulang.llvm.ops.LLOperand)
 	 */
 	@Override
-	public void exitOperand(LLOperand operand) {
+	public void exitOperand(LLInstr instr, int num, LLOperand operand) {
 	}
 
 }

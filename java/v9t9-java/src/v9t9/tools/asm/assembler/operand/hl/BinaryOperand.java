@@ -73,6 +73,20 @@ public class BinaryOperand implements AssemblerOperand {
 		return true;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isMemory()
+	 */
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isRegister()
+	 */
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		LLOperand leftRes = left.resolve(assembler, inst);

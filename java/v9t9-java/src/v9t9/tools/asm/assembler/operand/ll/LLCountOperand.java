@@ -51,6 +51,14 @@ public class LLCountOperand extends LLNonImmediateOperand {
 		return true;
 	}
 
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
 
 
 	public int getCount() {

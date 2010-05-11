@@ -4,6 +4,7 @@
 package org.ejs.eulang.llvm.ops;
 
 import org.ejs.eulang.llvm.ILLCodeVisitor;
+import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -44,12 +45,12 @@ public abstract class BaseLLOperand implements LLOperand {
 	 * @see org.ejs.eulang.llvm.ops.LLOperand#accept(org.ejs.eulang.llvm.ILLCodeVisitor)
 	 */
 	@Override
-	public void accept(ILLCodeVisitor visitor) {
+	public void accept(LLInstr instr, int num, ILLCodeVisitor visitor) {
 		try {
-			if (!visitor.enterOperand(this)) {
+			if (visitor.enterOperand(instr, num, this)) {
 				
+				visitor.exitOperand(instr, num, this);
 			}
-			visitor.exitOperand(this);
 		} catch (ILLCodeVisitor.Terminate e) {
 			
 		}

@@ -51,6 +51,14 @@ public class LLRegIncOperand extends LLNonImmediateOperand implements Operand {
 	}
 
 
+	@Override
+	public boolean isMemory() {
+		return true;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
 
 	public int getRegister() {
 		return register;

@@ -4,6 +4,7 @@
 package org.ejs.eulang.llvm.ops;
 
 import org.ejs.eulang.llvm.ILLCodeVisitor;
+import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -26,7 +27,9 @@ public interface LLOperand {
 	 */
 	void setType(LLType type);
 	/**
+	 * @param instr TODO
+	 * @param num TODO
 	 * @param visitor
 	 */
-	void accept(ILLCodeVisitor visitor);
+	void accept(LLInstr instr, int num, ILLCodeVisitor visitor);
 }

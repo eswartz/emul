@@ -376,6 +376,10 @@ public class InstructionTable {
 	public static final int Idbgf = 75;
 	public static final int Ibyte = 76;
 	public static final int Idelete = 77;	// noop
+	
+	/** user instructions */
+	public static final int Iuser = 100;
+	
 	public static Map<String, Integer> nameToInst = new HashMap<String, Integer>();
 	public static Map<Integer, String> instToName = new HashMap<Integer, String>();
 	

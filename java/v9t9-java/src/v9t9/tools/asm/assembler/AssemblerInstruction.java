@@ -25,6 +25,7 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 	private int inst;
 	private AssemblerOperand op1;
 	private AssemblerOperand op2;
+	private AssemblerOperand op3;
 	
 	
 	public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass)
@@ -44,6 +45,10 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 		setPc(pc);
 		LLOperand lop1 = getOp1() != null ? getOp1().resolve(assembler, this) : null;
 		LLOperand lop2 = getOp2() != null ? getOp2().resolve(assembler, this) : null;
+		LLOperand lop3 = getOp3() != null ? getOp3().resolve(assembler, this) : null;
+		
+		if (lop3 != null)
+			throw new ResolveException(lop3, "cannot resolve third operand");
 		
 		LLInstruction target = new LLInstruction();
 		target.setPc(pc);
@@ -67,6 +72,10 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 			if (op2 != null && !(op2 instanceof LLEmptyOperand)) {
 				builder.append(',');
 				builder.append(op2);
+				if(op3 != null && !(op3 instanceof LLEmptyOperand)) {
+					builder.append(',');
+					builder.append(op3);
+				}
 			}
 		}
 		return builder.toString();
@@ -96,6 +105,14 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 		this.op2 = op2;
 	}
 
+	public AssemblerOperand getOp3() {
+		return op3;
+	}
+	
+	public void setOp3(AssemblerOperand op3) {
+		this.op3 = op3;
+	}
+	
 	public boolean isJumpInst() {
 		return getInst() >= InstructionTable.Ijmp && getInst() <= InstructionTable.Ijop;
 	}

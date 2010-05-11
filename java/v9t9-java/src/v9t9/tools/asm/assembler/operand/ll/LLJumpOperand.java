@@ -52,6 +52,15 @@ public class LLJumpOperand extends LLNonImmediateOperand implements Operand {
 		return true;
 	}
 
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
+
 
 	public int getOffset() {
 		return offset;

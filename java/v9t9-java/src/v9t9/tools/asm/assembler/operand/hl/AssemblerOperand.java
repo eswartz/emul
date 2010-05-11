@@ -22,5 +22,14 @@ public interface AssemblerOperand extends Operand {
 	 * @throws ResolveException if cannot resolve
 	 */
 	LLOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException;
- 
+
+	/**
+	 * Is this classified as a register?
+	 */
+	boolean isRegister();
+	
+	/**
+	 * Is this classified as memory?
+	 */
+	boolean isMemory();
 }

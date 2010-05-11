@@ -34,7 +34,7 @@ public class Test9900Locals extends BaseParserTest {
 		for (LLBaseDirective dir : mod.getDirectives()) {
 			if (dir instanceof LLDefineDirective) {
 				LLDefineDirective def = (LLDefineDirective) dir;
-				Locals locals = new Locals(v9t9Target, def);
+				Locals locals = new Locals(def);
 				locals.setForceLocalsToStack(forceLocalsToStack);
 				locals.buildLocalTable();
 				return locals;

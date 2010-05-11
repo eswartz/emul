@@ -52,7 +52,14 @@ public class LLAddrOperand extends LLOperand implements Operand {
 		return true;
 	}
 
-
+	@Override
+	public boolean isMemory() {
+		return true;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
 
 	public int getAddress() {
 		return address;

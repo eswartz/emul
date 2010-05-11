@@ -30,6 +30,21 @@ public class StringOperand implements AssemblerOperand {
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isMemory()
+	 */
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isRegister()
+	 */
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Operand#resolve(v9t9.tools.asm.Assembler, v9t9.engine.cpu.RawInstruction)
 	 */
 	public LLOperand resolve(Assembler assembler, IInstruction inst)

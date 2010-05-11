@@ -10,14 +10,14 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class LLRetInst extends LLTypedInstr {
+public class LLRetInstr extends LLTypedInstr {
 
 	/**
 	 * @param name
 	 * @param type
 	 * @param ops
 	 */
-	public LLRetInst(LLType type, LLOperand... ops) {
+	public LLRetInstr(LLType type, LLOperand... ops) {
 		super("ret", type, ops);
 	}
 

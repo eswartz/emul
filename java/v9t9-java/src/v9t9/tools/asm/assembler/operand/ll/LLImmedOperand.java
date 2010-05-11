@@ -55,6 +55,16 @@ public class LLImmedOperand extends LLOperand {
 		return true;
 	}
 
+	@Override
+	public boolean isMemory() {
+		return false;
+	}
+	@Override
+	public boolean isRegister() {
+		return false;
+	}
+
+	
 	public int getValue() {
 		return value;
 	}
