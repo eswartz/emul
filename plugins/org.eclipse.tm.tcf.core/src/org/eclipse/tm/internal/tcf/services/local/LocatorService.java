@@ -80,9 +80,10 @@ public class LocatorService implements ILocator {
         }
 
         boolean contains(InetAddress addr) {
-            if (addr == null) return false;
+            if (addr == null || broadcast == null) return false;
             byte[] a1 = addr.getAddress();
             byte[] a2 = broadcast.getAddress();
+            if (a1.length != a2.length) return false;
             int i = 0;
             while (i + 8 <= prefix_length) {
                 int n = i / 8;
@@ -501,8 +502,20 @@ public class LocatorService implements ILocator {
                         int network_prefix_len = (Short)m1.invoke(ia);
                         InetAddress address = (InetAddress)m2.invoke(ia);
                         InetAddress broadcast = (InetAddress)m3.invoke(ia);
-                        if (broadcast == null) broadcast = address;
-                        set.add(new SubNet(network_prefix_len, address, broadcast));
+                        if (network_prefix_len <= 0) {
+                            // Windows XP reports network prefix length 0
+                            // for loopback interface when IP V6 is enabled.
+                            // Is it bug or feature?
+                            byte[] buf = address.getAddress();
+                            if (buf.length == 4 && buf[0] == 127) {
+                                network_prefix_len = 8;
+                                buf[1] = buf[2] = buf[3] = (byte)255;
+                                broadcast = InetAddress.getByAddress(buf);
+                            }
+                        }
+                        if (network_prefix_len > 0 && address != null && broadcast != null) {
+                            set.add(new SubNet(network_prefix_len, address, broadcast));
+                        }
                     }
                 }
                 catch (Exception x) {
