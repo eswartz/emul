@@ -54,4 +54,5 @@ public class HLInstruction extends AssemblerInstruction {
 		instr.setOp3(op3);
 		return instr;
 	}
+
 }

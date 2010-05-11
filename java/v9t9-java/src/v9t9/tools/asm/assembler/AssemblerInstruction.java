@@ -122,4 +122,18 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 		|| inst == Isb || inst == Iszcb || inst == Imovb;
 	}
 
+	/**
+	 * @param i
+	 * @return
+	 */
+	public AssemblerOperand getOp(int i) {
+		if (i == 1)
+			return op1;
+		else if (i == 2)
+			return op2;
+		else if (i == 3)
+			return op3;
+		throw new IllegalArgumentException();
+	}
+
 }

@@ -20,14 +20,21 @@ import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
 import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.RegisterTempOperand;
+import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.llvm.tms9900.StackLocalOperand;
+import org.ejs.eulang.llvm.tms9900.SymbolOperand;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
+import org.omg.CORBA.LocalObject;
 
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 
 /**
  * @author ejs
@@ -147,7 +154,64 @@ public class Test9900InstrSelection extends BaseParserTest {
 		inst = instrs.get(3);
 		assertEquals("B *R11", inst.toString());
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	protected void matchInstr(HLInstruction instr, String name, Object... stuff) {
+		assertEquals(instr+"", name.toLowerCase(), InstructionTable.getInstName(instr.getInst()).toLowerCase());
+		int opidx = 1;
+		for( int i = 0; i < stuff.length; ) {
+			AssemblerOperand op = instr.getOp(opidx++);
+			if (stuff[i] instanceof Class) {
+				assertEquals(instr+":"+i, stuff[i], op.getClass());
+				i++;
+				if (i >= stuff.length)
+					break;
+				if (stuff[i] instanceof String) {
+					String string = (String) stuff[i];
+					i++;
+					if (op instanceof AddrOperand)
+						op = ((AddrOperand) op).getAddr();
+					if (op instanceof RegisterOperand)
+						op = ((RegisterOperand) op).getReg();
+					
+					if (op instanceof SymbolOperand)
+						assertSameSymbol(instr, ((SymbolOperand) op).getSymbol(), string);
+					else if (op instanceof RegisterTempOperand)
+						assertSameSymbol(instr, ((RegisterTempOperand) op).getLocal().getName(), string);
+					else if (op instanceof StackLocalOperand)
+						assertSameSymbol(instr, ((StackLocalOperand) op).getLocal().getName(), string);
+					else
+						assertEquals(instr+":"+op, string, op.toString());
+						
+				}
+				else if (stuff[i] instanceof Integer) {
+					Integer num = (Integer) stuff[i];
+					i++;
+					if (op instanceof RegisterOperand)
+						assertTrue(instr+":"+op, ((RegisterOperand) op).isReg(num));
+					else if (op instanceof RegisterTempOperand)
+						assertEquals(instr+":"+op, num, (Integer)((RegisterTempOperand) op).getLocal().getVr());
+					else 
+						assertEquals(instr+":"+op, num, op);
+				}
+			}
+			else if (stuff[i] instanceof AssemblerOperand) {
+				assertEquals(instr+":"+op, stuff[i], op);
+				i++;
+			}
+			else
+				fail("unknown handling " + stuff[i]);
+		}
+	}
+
+	protected void assertSameSymbol(HLInstruction instr,
+			ISymbol sym, String string) {
+		assertTrue(instr+":"+sym, sym.getUniqueName().equals(string)
+				 || sym.getName().equals(string)
+				 || sym.getUniqueName().startsWith("%" + string)
+				 || sym.getUniqueName().contains("." + string + ".")
+				 );
+	}
 
 	@Test
 	public void testAddAndRet1() throws Exception {
@@ -157,21 +221,17 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		HLInstruction inst;
 		inst = instrs.get(0);
-		assertTrue(inst.toString(), inst.toString().matches("MOV R0.*,.*\\.x\\..*"));
+		matchInstr(inst, "MOV", RegisterTempOperand.class, 0, AddrOperand.class, "x"); 
 		inst = instrs.get(1);
-		assertTrue(inst.toString(), inst.toString().matches("MOV R1.*,.*\\.y\\..*"));
+		matchInstr(inst, "MOV", RegisterTempOperand.class, 1, AddrOperand.class, "y"); 
 		inst = instrs.get(2);
 		AssemblerOperand res = inst.getOp2();
-		assertTrue(inst.toString(), inst.toString().matches("MOV .*\\.x\\..*,R.*"));
+		matchInstr(inst, "MOV", AddrOperand.class, "x", RegisterTempOperand.class); 
 		inst = instrs.get(3);
-		assertTrue(inst.toString(), inst.toString().matches("A .*\\.y\\..*,R.*"));
-		assertEquals(res, inst.getOp2());
+		matchInstr(inst, "A", AddrOperand.class, "y", res); 
 		
 		HLInstruction inst3 = instrs.get(4);
-		assertEquals(Imov, inst3.getInst());
-		assertEquals(res, inst3.getOp1());
-		assertTrue(inst3.getOp2().isRegister());
-		assertTrue(((RegisterTempOperand)inst3.getOp2()).getLocal().getVr() == 0);
+		matchInstr(inst3, "MOV", res, RegisterTempOperand.class, 0); 
 
 		inst = instrs.get(5);
 		assertEquals("B *R11", inst.toString());
