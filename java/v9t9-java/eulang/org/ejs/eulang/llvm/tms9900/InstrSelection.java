@@ -147,6 +147,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		REG_0_W,
 		/** put the LL operand into an immediate */
 		IMM,
+		/** put the LL operand into an immediate, negated */
+		IMM_NEG,
 		
 		/** reuse the asm operand generated for operand #0 */
 		SAME_0,
@@ -283,15 +285,46 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				 new As[] { As.REG_RW, As.IMM },
 				 new DoRes( 0, Iai, 0, 1 )
 		),
+		new IPattern( BasicType.INTEGRAL, 8, "add", 
+				new If[] { If.PASS, If.IS_CONST },
+				new As[] { As.REG_RW, As.IMM },
+				new DoRes( 0, Iai, 0, 1 )
+		),
 		new IPattern( BasicType.INTEGRAL, 16, "add", 
 		 		null,
 		 		new As[] { As.GEN_RW, As.GEN_R },
 		 		new DoRes( 1, Ia, 1, 0 )
 		),
+		new IPattern( BasicType.INTEGRAL, 8, "add", 
+				null,
+				new As[] { As.GEN_RW, As.GEN_R },
+				new DoRes( 1, Iab, 1, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, 16, "sub", 
+				 new If[] { If.PASS, If.IS_CONST },
+				 new As[] { As.REG_RW, As.IMM_NEG },
+				 new DoRes( 0, Iai, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, 8, "sub", 
+				new If[] { If.PASS, If.IS_CONST },
+				new As[] { As.REG_RW, As.IMM_NEG },
+				new DoRes( 0, Iai, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, 16, "sub", 
+		 		null,
+		 		new As[] { As.GEN_RW, As.GEN_R },
+		 		new DoRes( 1, Is, 1, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, 8, "sub", 
+				null,
+				new As[] { As.GEN_RW, As.GEN_R },
+				new DoRes( 1, Isb, 1, 0 )
+		),
 	};
 	
-	/** Called to fetch a new temp register */
-	abstract protected RegisterLocal newRegister(LLType type);
+	/** Called to fetch a new temp register 
+	 * @param instr TODO*/
+	abstract protected RegisterLocal newTempRegister(LLInstr instr, LLType type);
 	
 	/** Called when an instruction has been generated */
 	abstract protected void emit(HLInstruction instr);
@@ -311,6 +344,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private HashMap<ISymbol, Block> blockMap;
 	private TypeEngine typeEngine;
 	private HashMap<LLOperand, AssemblerOperand> tempTable;
+	private LLInstr instr;
 	
 	/**
 	 * 
@@ -395,6 +429,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	@Override
 	public boolean enterInstr(LLBlock block, LLInstr instr) {
 		asmOps[0] = asmOps[1] = asmOps[2] = null;
+		this.instr = instr;
 		
 		if (instr instanceof LLAllocaInstr)
 			return false;
@@ -529,7 +564,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				return true;
 			}
 			else if (opcond == If.IS_TEMP_LAST_USE) {
-				return isLastUse(instr, op);
+				return isLastUse(op);
 			} 
 			else
 				assert false;
@@ -633,11 +668,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public boolean enterOperand(LLInstr instr, int num, LLOperand operand) {
 		assert thePattern != null;
 		
-		handleAs(instr, num, operand);
+		handleAs(num, operand);
 		return false;
 	}
 
-	private void handleAs(LLInstr instr, int num, LLOperand operand) {
+	private void handleAs(int num, LLOperand operand) {
 		AssemblerOperand asmOp = operand != null ? generateOperand(operand) : null;
 
 		As as = thePattern.ases[num];
@@ -648,7 +683,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case GEN_RW:
 			asmOp = generateGeneralOperand(operand, asmOp);
-			if (!isLastUse(instr, operand))
+			if (!isLastUse(operand))
 				asmOp = moveToTemp(operand, asmOp);
 			break;
 		case REG_R:
@@ -656,7 +691,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case REG_RW:
 			asmOp = generateRegisterOperand(operand, asmOp);
-			if (!isLastUse(instr, operand))
+			if (!isLastUse(operand))
 				asmOp = moveToTemp(operand, asmOp);
 			break;
 		case REG_0_W:
@@ -664,6 +699,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case IMM:
 			assert asmOp instanceof NumberOperand;
+			break;
+		case IMM_NEG:
+			assert asmOp instanceof NumberOperand;
+			asmOp = new NumberOperand(-((NumberOperand) asmOp).getValue());
 			break;
 		case IMM_8:
 			asmOp = new NumberOperand(8);
@@ -731,7 +770,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @param num
 	 */
 	private AssemblerOperand copyIntoRegister(LLOperand llOperand, AssemblerOperand operand, int num) {
-		RegisterLocal regLocal = newRegister(llOperand.getType());
+		RegisterLocal regLocal = newTempRegister(instr, llOperand.getType());
 		if (!locals.forceToRegister(regLocal.getName(), num))
 			assert false;
 		AssemblerOperand ret = new RegisterTempOperand(regLocal);
@@ -745,7 +784,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand.isRegister())
 			return operand;
 
-		AssemblerOperand dest = new RegisterTempOperand(newRegister(llOp.getType()));
+		AssemblerOperand dest = new RegisterTempOperand(newTempRegister(instr, llOp.getType()));
 		
 		return moveTo(llOp, operand, dest);
 	}
@@ -762,7 +801,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		if (operand instanceof NumberOperand) {
 			if (isIntOp(llOp)) {
-				RegisterLocal regLocal = newRegister(llOp.getType());
+				RegisterLocal regLocal = newTempRegister(instr, llOp.getType());
+				regLocal.setSingleBlock(true);
+				regLocal.setLastUse(instr);
 				AssemblerOperand ret = new RegisterTempOperand(regLocal);
 				if (isIntOp(llOp, 16)) {
 					emitInstr(HLInstruction.create(Ili, ret, operand));
@@ -800,7 +841,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 
 	private AssemblerOperand moveToTemp(LLOperand llOp, AssemblerOperand operand) {
-		AssemblerOperand dest = new RegisterTempOperand(newRegister(llOp.getType()));
+		AssemblerOperand dest = new RegisterTempOperand(newTempRegister(instr, llOp.getType()));
 		return moveTo(llOp, operand, dest);
 	}
 
@@ -822,7 +863,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		return dest;
 	}
 	
-	private boolean isLastUse(LLInstr instr, LLOperand operand) {
+	private boolean isLastUse(LLOperand operand) {
+		if (!(operand instanceof LLSymbolOp))
+			return true;
 		ILocal local = locals.getLocal(operand);
 		if (local != null)
 			return instr.equals(local.getLastUse());
@@ -837,7 +880,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (thePattern != null) {
 			// any leftover ones synthesize operands
 			for (int i = instr.getOperands().length; i < thePattern.ases.length; i++) {
-				handleAs(instr, i, null);
+				handleAs(i, null);
 			}
 			for (Do d : thePattern.dos) {
 				if (d.inst != -1) {

@@ -191,9 +191,14 @@ public class Locals {
 				ILocal local = getLocal(operand);
 				if (local != null) {
 					LLBlock lastBlock = lastLocalUse.get(local);
-					if (lastBlock != null && lastBlock != currentBlock)
+					if (lastBlock != null && lastBlock != currentBlock) {
 						local.setSingleBlock(false);
+						if (local.getIncoming() != null)
+							local.getIncoming().setSingleBlock(false);
+					}
 					local.setLastUse(instr);
+					if (local.getIncoming() != null)
+						local.getIncoming().setLastUse(instr);
 				}
 				return true;
 			}

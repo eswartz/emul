@@ -15,6 +15,7 @@ import java.util.List;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
+import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
@@ -59,7 +60,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 				InstrSelection isel = new InstrSelection(routine) {
 					
 					@Override
-					protected RegisterLocal newRegister(LLType type) {
+					protected RegisterLocal newTempRegister(LLInstr instr, LLType type) {
 						ILocal local = locals.allocateTemp(type);
 						if (!(local instanceof RegisterLocal))
 							throw new IllegalStateException("cannot force " + type + " into a register");
@@ -280,7 +281,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 	}
 	@Test
 	public void testAddAndRet1() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code(x,y:Int ) { x+y };\n");
 		
 		// X is not used again, and both come in in regs
@@ -288,7 +288,77 @@ public class Test9900InstrSelection extends BaseParserTest {
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "A", RegisterTempOperand.class, "y", RegisterTempOperand.class, "x"); 
 	}
-	
+	@Test
+	public void testSubAndRet1() throws Exception {
+		doIsel("foo = code(x,y:Int ) { x-y };\n");
+		
+		// X is not used again, and both come in in regs
+		int idx = findInstrWithInst(instrs, "S");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "S", RegisterTempOperand.class, "y", RegisterTempOperand.class, "x"); 
+	}
+	@Test
+	public void testSubAndRet2() throws Exception {
+		doIsel("foo = code(x,y:Int ) { y-x };\n");
+		
+		// X is not used again, and both come in in regs
+		int idx = findInstrWithInst(instrs, "S");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "S", RegisterTempOperand.class, "x", RegisterTempOperand.class, "y"); 
+	}
+	@Test
+	public void testSubRev1() throws Exception {
+		doIsel("foo = code(x:Int ) { 100-x };\n");
+		
+		int idx = findInstrWithInst(instrs, "LI");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 100);
+		AssemblerOperand temp = inst.getOp1();
+		idx = findInstrWithInst(instrs, "S");
+		inst = instrs.get(idx);
+		matchInstr(inst, "S", RegisterTempOperand.class, "x", temp);
+	}
+	@Test
+	public void testSubRev2() throws Exception {
+		doIsel("x : Byte; foo = code(y:Int ) { x-y };\n");
+		
+		int idx = findInstrWithInst(instrs, "MOVB");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", AddrOperand.class, "x", RegisterTempOperand.class);
+		AssemblerOperand temp = inst.getOp2();
+		
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", temp, NumberOperand.class, 8);
+
+		idx = findInstrWithInst(instrs, "S");
+		inst = instrs.get(idx);
+		matchInstr(inst, "S", RegisterTempOperand.class, "y", temp);
+	}
+	@Test
+	public void testSubRevAss1() throws Exception {
+		doIsel("x : Byte; foo = code(y:Int ) { x=x-y };\n");
+		
+		/*
+		SLA R0, 8
+		SB R0, @X
+		 */
+		int idx = findInstrWithInst(instrs, "SLA");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "SLA", AddrOperand.class, "y", NumberOperand.class, 8);
+		
+		idx = findInstrWithInst(instrs, "SB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SB", RegisterTempOperand.class, "y", AddrOperand.class, "x");
+	}
+	@Test
+	public void testSubImm1() throws Exception {
+		doIsel("foo = code(x:Int ) { x-1923 };\n");
+		
+		int idx = findInstrWithInst(instrs, "AI");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "AI", RegisterTempOperand.class, "x", NumberOperand.class, -1923); 
+	}
 	@Test
 	public void testTrunc16_to_8_1_Local() throws Exception {
 		dumpLLVMGen = true;
