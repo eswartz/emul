@@ -104,13 +104,10 @@ size_t context_extension(size_t size) {
     return offs;
 }
 
-Context * create_context(const char * id, size_t regs_size) {
+Context * create_context(const char * id) {
     Context * ctx = (Context *)loc_alloc_zero(sizeof(Context) + extension_size);
 
     strlcpy(ctx->id, id, sizeof(ctx->id));
-    if ((ctx->regs_size = regs_size) > 0) {
-        ctx->regs = (RegisterData *)loc_alloc_zero(regs_size);
-    }
     list_init(&ctx->children);
     context_created = 1;
     return ctx;
@@ -147,8 +144,6 @@ void context_unlock(Context * ctx) {
         }
         ctx->event_notification = 0;
         list_remove(&ctx->ctxl);
-        release_error_report(ctx->regs_error);
-        loc_free(ctx->regs);
         loc_free(ctx);
     }
 }

@@ -61,6 +61,11 @@ extern void tcf_test_func2(void);
 extern void tcf_test_func1(void);
 extern void tcf_test_func0(enum test_enum);
 
+/* Main purpose of this declaration is to pull basic types info into DWARF */
+char tcf_test_char = 0;
+short tcf_test_short = 0;
+long tcf_test_long = 0;
+
 void tcf_test_func3(void) {
     usleep(1000);
 }

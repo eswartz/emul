@@ -58,8 +58,8 @@ static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {
     StackFrame * frame;
     if (get_frame_info(Value->mContext, Value->mFrame, &frame) < 0) return -1;
     def = get_reg_by_id(Value->mContext, (unsigned)Value->mValue, REGNUM_DWARF);
-    if (write) return write_reg_value(def, frame, *Data);
-    return read_reg_value(def, frame, Data);
+    if (write) return write_reg_value(frame, def, *Data);
+    return read_reg_value(frame, def, Data);
 }
 
 static U8_T read_memory(PropertyValue * Value, U8_T Addr, size_t Size) {
@@ -437,7 +437,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_breg31:
             {
                 RegisterDefinition * def = get_reg_by_id(Value->mContext, Op - OP_breg0, REGNUM_DWARF);
-                if (read_reg_value(def, sStackFrame, sExprStack + sExprStackLen) < 0) exception(errno);
+                if (read_reg_value(sStackFrame, def, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
             break;
@@ -462,7 +462,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_bregx:
             {
                 RegisterDefinition * def = get_reg_by_id(Value->mContext, dio_ReadULEB128(), REGNUM_DWARF);
-                if (read_reg_value(def, sStackFrame, sExprStack + sExprStackLen) < 0) exception(errno);
+                if (read_reg_value(sStackFrame, def, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
             break;
@@ -502,7 +502,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
     Offset = dio_ReadUX(Value->mSize);
     dio_ExitSection();
     Base = Unit->mLowPC;
-    if (read_reg_value(get_PC_definition(Value->mContext), sStackFrame, &IP) < 0) exception(errno);
+    if (read_reg_value(sStackFrame, get_PC_definition(Value->mContext), &IP) < 0) exception(errno);
     dio_EnterSection(&Unit->mDesc, Cache->mDebugLoc, Offset);
     for (;;) {
         ELF_Section * S0 = NULL;

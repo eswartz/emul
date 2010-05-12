@@ -75,7 +75,7 @@ static int get_sym_context(Context * ctx, int frame) {
     else {
         StackFrame * info = NULL;
         if (get_frame_info(ctx, frame, &info) < 0) return -1;
-        if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) return -1;
+        if (read_reg_value(info, get_PC_definition(ctx), &ip) < 0) return -1;
     }
     sym_ctx = ctx;
     sym_frame = frame;
@@ -299,6 +299,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
                         else if (strcmp(name, "signed long long") == 0) s = "long long int";
                         else if (strcmp(name, "signed long long int") == 0) s = "long long int";
                         else if (strcmp(name, "unsigned long long") == 0) s = "unsigned long long int";
+                        else if (strcmp(name, "char") == 0) s = "signed char";
                         if (s != NULL) found = find_in_dwarf(cache, s, res);
                     }
                     clear_trap(&trap);
@@ -608,12 +609,13 @@ int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo 
     return 0;
 }
 
-int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
+int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
     int error = 0;
     uint64_t ip = 0;
+    Context * ctx = frame->ctx;
     StackTracingInfo * info = NULL;
 
-    if (read_reg_value(get_PC_definition(ctx), frame, &ip) < 0) {
+    if (read_reg_value(frame, get_PC_definition(ctx), &ip) < 0) {
         if (frame->is_top_frame) error = errno;
     }
     else if (get_stack_tracing_info(ctx, ip, &info) < 0) {
@@ -626,7 +628,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
             frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, dwarf_stack_trace_fp);
             for (i = 0; i < dwarf_stack_trace_regs_cnt; i++) {
                 uint64_t v = evaluate_stack_trace_commands(ctx, frame, dwarf_stack_trace_regs[i]);
-                if (write_reg_value(dwarf_stack_trace_regs[i]->reg, down, v) < 0) exception(errno);
+                if (write_reg_value(down, dwarf_stack_trace_regs[i]->reg, v) < 0) exception(errno);
             }
             clear_trap(&trap);
         }
@@ -985,7 +987,12 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
             }
             if (ok) sz *= length;
         }
-        if (ok) *size = (ContextAddress)sz;
+        if (!ok && obj->mTag == TAG_pointer_type) {
+            sz = obj->mCompUnit->mDesc.mAddressSize;
+            ok = sz > 0;
+        }
+        if (!ok) str_exception(ERR_INV_DWARF, "Object has no size attribute");
+        *size = (ContextAddress)sz;
         clear_trap(&trap);
     }
     else if (sym_info != NULL) {

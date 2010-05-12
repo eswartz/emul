@@ -43,6 +43,11 @@ typedef struct RegisterProps RegisterProps;
 
 #define CTX_ID_HASH_SIZE 101
 
+struct RegisterData {
+    uint8_t * data;
+    uint8_t * mask;
+};
+
 struct ContextCache {
     char id[256];
     char parent_id[256];
@@ -121,8 +126,9 @@ struct StackFrameCache {
     ContextAddress ip;
     ContextAddress rp;
     StackFrame info;
-    RegisterDefinition ** regs;
-    int regs_cnt;
+    RegisterData reg_data;
+    RegisterDefinition ** reg_defs;
+    int reg_cnt;
     ReplyHandlerInfo * pending;
     int disposed;
 };
@@ -221,7 +227,7 @@ static void set_context_links(ContextCache * c) {
 static void add_context_cache(PeerCache * p, ContextCache * c) {
     LINK * h = p->context_id_hash + hash_ctx_id(c->id);
     c->peer = p;
-    c->ctx = create_context(c->id, 0);
+    c->ctx = create_context(c->id);
     c->ctx->ref_count = 1;
     *EXT(c->ctx) = c;
     list_init(&c->mem_cache_list);
@@ -249,9 +255,9 @@ static void free_stack_frame_cache(StackFrameCache * s) {
     if (s->pending == NULL) {
         release_error_report(s->error);
         cache_dispose(&s->cache);
-        loc_free(s->info.mask);
-        loc_free(s->info.regs);
-        loc_free(s->regs);
+        loc_free(s->reg_data.data);
+        loc_free(s->reg_data.mask);
+        loc_free(s->reg_defs);
         loc_free(s);
     }
 }
@@ -786,7 +792,7 @@ Context * id2ctx(const char * id) {
                 cache_wait(&p->rc_cache);
             }
             else if (p->rc_error != NULL) {
-                errno = set_error_report_errno(p->rc_error);
+                set_error_report_errno(p->rc_error);
             }
             else if (!p->rc_done) {
                 protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
@@ -868,7 +874,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         if (address >= m->addr && address + size <= m->addr + m->size) {
             if (m->pending != NULL) cache_wait(&m->cache);
             memcpy(buf, (int8_t *)m->buf + (address - m->addr), size);
-            errno = set_error_report_errno(m->error);
+            set_error_report_errno(m->error);
             return !errno ? 0 : -1;
         }
     }
@@ -894,6 +900,16 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     write_stream(&c->out, MARKER_EOM);
     context_lock(ctx);
     cache_wait(&m->cache);
+    return -1;
+}
+
+int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
+    errno = EINVAL;
+    return -1;
+}
+
+int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
+    errno = EINVAL;
     return -1;
 }
 
@@ -1017,10 +1033,11 @@ static void read_register_property(InputStream * inp, const char * name, void * 
     if (strcmp(name, "ID") == 0) p->id = json_read_alloc_string(inp);
     else if (strcmp(name, "Role") == 0) p->role = json_read_alloc_string(inp);
     else if (strcmp(name, "Name") == 0) p->def.name = json_read_alloc_string(inp);
-    else if (strcmp(name, "Size") == 0) p->def.size = json_read_long(inp);
-    else if (strcmp(name, "DwarfID") == 0) p->def.dwarf_id = json_read_long(inp);
-    else if (strcmp(name, "EhFrameID") == 0) p->def.eh_frame_id = json_read_long(inp);
-    else if (strcmp(name, "Traceable") == 0) p->def.traceable = json_read_boolean(inp);
+    else if (strcmp(name, "Size") == 0) p->def.size = (uint16_t)json_read_long(inp);
+    else if (strcmp(name, "DwarfID") == 0) p->def.dwarf_id = (int16_t)json_read_long(inp);
+    else if (strcmp(name, "EhFrameID") == 0) p->def.eh_frame_id = (int16_t)json_read_long(inp);
+    else if (strcmp(name, "Traceable") == 0) p->def.traceable = (uint8_t)json_read_boolean(inp);
+    else if (strcmp(name, "BigEndian") == 0) p->def.big_endian = (uint8_t)json_read_boolean(inp);
     else json_skip_object(inp);
 }
 
@@ -1181,17 +1198,17 @@ static void validate_reg_values_cache(Channel * c, void * args, int error) {
         s->pending = NULL;
         if (!error) {
             int r = 0;
-            int n = s->info.is_top_frame ? s->ctx->reg_cnt : s->regs_cnt;
+            int n = s->info.is_top_frame ? s->ctx->reg_cnt : s->reg_cnt;
             JsonReadBinaryState state;
             error = read_errno(&c->inp);
             json_read_binary_start(&state, &c->inp);
             for (r = 0; r < n; r++) {
-                int pos = 0;
-                RegisterDefinition * reg = s->info.is_top_frame ? s->ctx->reg_defs + r : s->regs[r];
-                uint8_t * regs = (uint8_t *)s->info.regs + reg->offset;
-                uint8_t * mask = (uint8_t *)s->info.mask + reg->offset;
+                size_t pos = 0;
+                RegisterDefinition * reg = s->info.is_top_frame ? s->ctx->reg_defs + r : s->reg_defs[r];
+                uint8_t * data = s->reg_data.data + reg->offset;
+                uint8_t * mask = s->reg_data.mask + reg->offset;
                 while (pos < reg->size) {
-                    size_t rd = json_read_binary_data(&state, regs + pos, reg->size - pos);
+                    size_t rd = json_read_binary_data(&state, data + pos, reg->size - pos);
                     memset(mask + pos, ~0, rd);
                     if (rd == 0) break;
                     pos += rd;
@@ -1231,9 +1248,9 @@ static void validate_reg_children_cache(Channel * c, void * args, int error) {
             if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
             if (!error && !s->disposed) {
                 int n = 0;
-                s->regs_cnt = ids_buf_pos;
-                s->regs = (RegisterDefinition **)loc_alloc_zero(sizeof(RegisterDefinition *) * s->regs_cnt);
-                for (n = 0; n < s->regs_cnt; n++) {
+                s->reg_cnt = ids_buf_pos;
+                s->reg_defs = (RegisterDefinition **)loc_alloc_zero(sizeof(RegisterDefinition *) * s->reg_cnt);
+                for (n = 0; n < s->reg_cnt; n++) {
                     unsigned r = 0;
                     char * id = str_buf + ids_buf[n];
                     if (*id++ != 'R') {
@@ -1247,13 +1264,13 @@ static void validate_reg_children_cache(Channel * c, void * args, int error) {
                         error = ERR_INV_CONTEXT;
                         break;
                     }
-                    s->regs[n] = s->ctx->reg_defs + r;
+                    s->reg_defs[n] = s->ctx->reg_defs + r;
                 }
                 if (!error) {
                     s->pending = protocol_send_command(c, "Registers", "getm", validate_reg_values_cache, s);
                     write_stream(&c->out, '[');
-                    for (n = 0; n < s->regs_cnt; n++) {
-                        RegisterDefinition * reg = s->regs[n];
+                    for (n = 0; n < s->reg_cnt; n++) {
+                        RegisterDefinition * reg = s->reg_defs[n];
                         char * id = str_buf + ids_buf[n];
                         if (n > 0) write_stream(&c->out, ',');
                         write_stream(&c->out, '[');
@@ -1374,7 +1391,7 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
             assert(!s->disposed);
             if (s->pending != NULL) cache_wait(&s->cache);
             *info = &s->info;
-            errno = set_error_report_errno(s->error);
+            set_error_report_errno(s->error);
             return !errno ? 0 : -1;
         }
     }
@@ -1386,9 +1403,10 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
     list_add_first(&s->link_ctx, &cache->stk_cache_list);
     s->ctx = cache;
     s->frame = frame;
-    s->info.regs_size = cache->reg_size;
-    s->info.regs = (RegisterData *)loc_alloc_zero(cache->reg_size);
-    s->info.mask = (RegisterData *)loc_alloc_zero(cache->reg_size);
+    s->info.ctx = ctx;
+    s->info.regs = &s->reg_data;
+    s->reg_data.data = (uint8_t *)loc_alloc_zero(cache->reg_size);
+    s->reg_data.mask = (uint8_t *)loc_alloc_zero(cache->reg_size);
     s->pending = protocol_send_command(c, "StackTrace", "getContext", validate_stack_frame_cache, s);
     write_stream(&c->out, '[');
     json_write_string(&c->out, id);
@@ -1403,6 +1421,49 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
 int get_top_frame(Context * ctx) {
     set_errno(ERR_UNSUPPORTED, "get_top_frame()");
     return STACK_TOP_FRAME;
+}
+
+int read_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf) {
+    if (reg_def == NULL || frame == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    else {
+        size_t i;
+        uint8_t * r_addr = frame->regs->data + reg_def->offset;
+        uint8_t * m_addr = frame->regs->mask + reg_def->offset;
+        for (i = 0; i < size; i++) {
+            if (m_addr[offs + i] != 0xff) {
+                errno = ERR_INV_CONTEXT;
+                return -1;
+            }
+        }
+        if (offs + size > reg_def->size) {
+            errno = ERR_INV_DATA_SIZE;
+            return -1;
+        }
+        memcpy(buf, r_addr + offs, size);
+    }
+    return 0;
+}
+
+int write_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf) {
+    if (reg_def == NULL || frame == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    else {
+        uint8_t * r_addr = frame->regs->data + reg_def->offset;
+        uint8_t * m_addr = frame->regs->mask + reg_def->offset;
+
+        if (offs + size > reg_def->size) {
+            errno = ERR_INV_DATA_SIZE;
+            return -1;
+        }
+        memcpy(r_addr + offs, buf, size);
+        memset(m_addr + offs, 0xff, size);
+    }
+    return 0;
 }
 
 static void channel_close_listener(Channel * c) {

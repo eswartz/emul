@@ -186,6 +186,13 @@ static int read_stack(Context * ctx, ContextAddress addr, void * buf, size_t siz
     return context_read_mem(ctx, addr, buf, size);
 }
 
+static int read_reg(StackFrame * frame, RegisterDefinition * def, ContextAddress * addr) {
+    uint64_t v = 0;
+    int r = read_reg_value(frame, def, &v);
+    *addr = (ContextAddress)v;
+    return r;
+}
+
 /*
  * trace_jump - resolve any JMP instructions to final destination
  *
@@ -254,31 +261,38 @@ static int func_entry(unsigned char * code) {
     return 0;
 }
 
-#define REGS(x) (*(REG_SET *)(x))
+int crawl_stack_frame(StackFrame * frame, StackFrame * down) {
 
-int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
-#ifdef _WRS_KERNEL
-    ContextAddress reg_ip = (ContextAddress)REGS(frame->regs).REG_IP;
-#else
-    ContextAddress reg_ip = REGS(frame->regs).REG_IP;
-#endif
-    ContextAddress reg_sp = REGS(frame->regs).REG_SP;
-    ContextAddress reg_bp = REGS(frame->regs).REG_BP;
+    static RegisterDefinition * pc_def = NULL;
+    static RegisterDefinition * sp_def = NULL;
+    static RegisterDefinition * bp_def = NULL;
 
-    ContextAddress dwn_ip = 0;
+    ContextAddress reg_pc = 0;
+    ContextAddress reg_sp = 0;
+    ContextAddress reg_bp = 0;
+
+    ContextAddress dwn_pc = 0;
     ContextAddress dwn_sp = 0;
     ContextAddress dwn_bp = 0;
 
-    assert(frame->regs_size == sizeof(REG_SET));
-    assert(down->regs_size == sizeof(REG_SET));
+    Context * ctx = frame->ctx;
 
-    if ((ContextAddress)REGS(frame->mask).REG_IP != ~(ContextAddress)0) return 0;
-    if ((ContextAddress)REGS(frame->mask).REG_SP != ~(ContextAddress)0) return 0;
-    if ((ContextAddress)REGS(frame->mask).REG_BP != ~(ContextAddress)0) return 0;
+    if (pc_def == NULL) {
+        RegisterDefinition * r;
+        for (r = get_reg_definitions(ctx); r->name != NULL; r++) {
+            if (r->offset == offsetof(REG_SET, REG_IP)) pc_def = r;
+            if (r->offset == offsetof(REG_SET, REG_SP)) sp_def = r;
+            if (r->offset == offsetof(REG_SET, REG_BP)) bp_def = r;
+        }
+    }
+
+    if (read_reg(frame, pc_def, &reg_pc) < 0) return 0;
+    if (read_reg(frame, sp_def, &reg_sp) < 0) return 0;
+    if (read_reg(frame, bp_def, &reg_bp) < 0) return 0;
 
     if (frame->is_top_frame) {
         /* Top frame */
-        ContextAddress addr = trace_jump(ctx, reg_ip);
+        ContextAddress addr = trace_jump(ctx, reg_pc);
 #if ENABLE_Symbols
         ContextAddress plt = is_plt_section(ctx, addr);
 #else
@@ -332,27 +346,13 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
         if (read_stack(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
     }
 
-    if (read_stack(ctx, dwn_sp - sizeof(ContextAddress), &dwn_ip, sizeof(ContextAddress)) < 0) dwn_ip = 0;
+    if (read_stack(ctx, dwn_sp - sizeof(ContextAddress), &dwn_pc, sizeof(ContextAddress)) < 0) dwn_pc = 0;
 
     if (dwn_bp < reg_sp) dwn_bp = 0;
 
-    if (dwn_sp != 0) {
-        REGS(down->regs).REG_SP = dwn_sp;
-        REGS(down->mask).REG_SP = ~(ContextAddress)0;
-    }
-    if (dwn_bp != 0) {
-        REGS(down->regs).REG_BP = dwn_bp;
-        REGS(down->mask).REG_BP = ~(ContextAddress)0;
-    }
-    if (dwn_ip != 0) {
-#ifdef _WRS_KERNEL
-        REGS(down->regs).REG_IP = (void *)dwn_ip;
-        memset(&REGS(down->mask).REG_IP, 0xff, sizeof(REGS(down->mask).REG_IP));
-#else
-        REGS(down->regs).REG_IP = dwn_ip;
-        REGS(down->mask).REG_IP = ~(ContextAddress)0;
-#endif
-    }
+    if (dwn_pc != 0 && write_reg_value(down, pc_def, dwn_pc) < 0) return -1;
+    if (dwn_sp != 0 && write_reg_value(down, sp_def, dwn_sp) < 0) return -1;
+    if (dwn_bp != 0 && write_reg_value(down, bp_def, dwn_bp) < 0) return -1;
 
     frame->fp = dwn_sp;
 
@@ -371,22 +371,6 @@ RegisterDefinition * get_PC_definition(Context * ctx) {
         }
     }
     return reg_def;
-}
-
-ContextAddress get_regs_PC(RegisterData * regs) {
-#ifdef _WRS_KERNEL
-    return (ContextAddress)REGS(regs).REG_IP;
-#else
-    return REGS(regs).REG_IP;
-#endif
-}
-
-void set_regs_PC(RegisterData * regs, ContextAddress pc) {
-#ifdef _WRS_KERNEL
-    REGS(regs).REG_IP = (void *)pc;
-#else
-    REGS(regs).REG_IP = pc;
-#endif
 }
 
 unsigned char BREAK_INST[] = { 0xcc };

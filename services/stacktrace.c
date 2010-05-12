@@ -66,8 +66,8 @@ static void invalidate_stack_trace(StackTrace * stack) {
     int i;
     release_error_report(stack->error);
     for (i = 0; i < stack->frame_cnt; i++) {
-        if (!stack->frames[i].is_top_frame) loc_free(stack->frames[i].regs);
-        loc_free(stack->frames[i].mask);
+        loc_free(stack->frames[i].regs);
+        stack->frames[i].regs = NULL;
     }
     stack->error = NULL;
     stack->frame_cnt = 0;
@@ -82,41 +82,32 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
     stack->frame_cnt = 0;
     memset(&frame, 0, sizeof(frame));
     frame.is_top_frame = 1;
-    frame.regs_size = ctx->regs_size;
-    frame.regs = ctx->regs;
-    frame.mask = (RegisterData *)loc_alloc(frame.regs_size);
-    memset(frame.mask, 0xff, frame.regs_size);
+    frame.ctx = ctx;
     while (stack->frame_cnt < MAX_FRAMES) {
         StackFrame down;
         memset(&down, 0, sizeof(down));
-        down.regs_size = ctx->regs_size;
-        down.regs = (RegisterData *)loc_alloc_zero(down.regs_size);
-        down.mask = (RegisterData *)loc_alloc_zero(down.regs_size);
+        down.ctx = ctx;
 #if ENABLE_Symbols
-        if (get_next_stack_frame(ctx, &frame, &down) < 0) {
+        if (get_next_stack_frame(&frame, &down) < 0) {
             error = errno;
             loc_free(down.regs);
-            loc_free(down.mask);
             break;
         }
 #endif
-        if (frame.fp == 0 && crawl_stack_frame(ctx, &frame, &down) < 0) {
+        if (frame.fp == 0 && crawl_stack_frame(&frame, &down) < 0) {
             error = errno;
             loc_free(down.regs);
-            loc_free(down.mask);
             break;
         }
         if (stack->frame_cnt > 0 && frame.fp == 0) {
             loc_free(down.regs);
-            loc_free(down.mask);
             break;
         }
         add_frame(stack, &frame);
         frame = down;
     }
 
-    if (!frame.is_top_frame) loc_free(frame.regs);
-    loc_free(frame.mask);
+    loc_free(frame.regs);
 
     if (get_error_code(error) == ERR_CACHE_MISS) {
         invalidate_stack_trace(stack);
@@ -136,12 +127,7 @@ static StackTrace * create_stack_trace(Context * ctx) {
     if (!stack->valid) {
         stack->frame_cnt = 0;
         stack->valid = 1;
-        if (ctx->regs_error != NULL) {
-            stack->error = get_error_report(set_error_report_errno(ctx->regs_error));
-        }
-        else {
-            trace_stack(ctx, stack);
-        }
+        trace_stack(ctx, stack);
     }
     return stack;
 }
@@ -185,14 +171,14 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
         json_write_uint64(out, frame->fp);
     }
 
-    if (read_reg_value(reg_def, frame, &v) == 0) {
+    if (read_reg_value(frame, reg_def, &v) == 0) {
         write_stream(out, ',');
         json_write_string(out, "IP");
         write_stream(out, ':');
         json_write_uint64(out, v);
     }
 
-    if (down != NULL && read_reg_value(reg_def, down, &v) == 0) {
+    if (down != NULL && read_reg_value(down, reg_def, &v) == 0) {
         write_stream(out, ',');
         json_write_string(out, "RP");
         write_stream(out, ':');

@@ -37,7 +37,7 @@
 #include "signames.h"
 #include "context-win32.h"
 
-typedef struct ContextExtension {
+typedef struct ContextExtensionWin32 {
     pid_t               pid;
     HANDLE              handle;
     HANDLE              file_handle;
@@ -50,11 +50,15 @@ typedef struct ContextExtension {
     EXCEPTION_DEBUG_INFO pending_event;
     EXCEPTION_DEBUG_INFO suspend_reason;
     int                 context_stopped_async_pending;
-} ContextExtension;
+    REG_SET *           regs;               /* copy of context registers, updated when context stops */
+    ErrorReport *       regs_error;         /* if not NULL, 'regs' is invalid */
+    int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
+    int                 trace_flag;
+} ContextExtensionWin32;
 
 static size_t context_extension_offset = 0;
 
-#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+#define EXT(ctx) ((ContextExtensionWin32 *)((char *)(ctx) + context_extension_offset))
 
 typedef struct DebugThreadArgs {
     int error;
@@ -80,12 +84,13 @@ typedef struct DebugEvent {
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
 
 const char * context_suspend_reason(Context * ctx) {
-    DWORD exception_code = EXT(ctx)->suspend_reason.ExceptionRecord.ExceptionCode;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
     const char * desc = NULL;
     static char buf[64];
 
     if (exception_code == 0) return "Suspended";
-    if (EXT(ctx)->debug_started && exception_code == EXCEPTION_BREAKPOINT) return "Suspended";
+    if (ext->debug_started && exception_code == EXCEPTION_BREAKPOINT) return "Suspended";
     if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
 
     desc = signal_description(get_signal_from_code(exception_code));
@@ -96,10 +101,11 @@ const char * context_suspend_reason(Context * ctx) {
 }
 
 static int get_signal_index(Context * ctx) {
-    DWORD exception_code = EXT(ctx)->suspend_reason.ExceptionRecord.ExceptionCode;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
 
     if (exception_code == 0) return 0;
-    if (EXT(ctx)->debug_started && exception_code == EXCEPTION_BREAKPOINT) return 0;
+    if (ext->debug_started && exception_code == EXCEPTION_BREAKPOINT) return 0;
     return get_signal_from_code(exception_code);
 }
 
@@ -135,21 +141,43 @@ static int log_error(char * fn, int ok) {
 
 static void event_win32_context_exited(Context * ctx);
 
+static void get_registers(Context * ctx) {
+    ContextExtensionWin32 * ext = EXT(ctx);
+
+    if (ext->regs->ContextFlags) return;
+
+    assert(!ctx->exited);
+    assert(context_has_state(ctx));
+    assert(ctx->stopped);
+
+    ext->regs->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    if (GetThreadContext(ext->handle, ext->regs) == 0) {
+        ext->regs_error = get_error_report(log_error("GetThreadContext", 0));
+    }
+    else {
+        ext->trace_flag = (ext->regs->EFlags & 0x100) != 0;
+        trace(LOG_CONTEXT, "context: get regs OK: ctx %#lx, id %s, PC %#lx",
+            ctx, ctx->id, ext->regs->Eip);
+    }
+}
+
 static void event_win32_context_stopped(Context * ctx) {
-    DWORD exception_code = EXT(ctx)->pending_event.ExceptionRecord.ExceptionCode;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    DWORD exception_code = ext->pending_event.ExceptionRecord.ExceptionCode;
 
     if (ctx->exited || ctx->stopped && exception_code == 0) return;
-    memcpy(&EXT(ctx)->suspend_reason, &EXT(ctx)->pending_event, sizeof(EXCEPTION_DEBUG_INFO));
-    memset(&EXT(ctx)->pending_event, 0, sizeof(EXCEPTION_DEBUG_INFO));
+    memcpy(&ext->suspend_reason, &ext->pending_event, sizeof(EXCEPTION_DEBUG_INFO));
+    memset(&ext->pending_event, 0, sizeof(EXCEPTION_DEBUG_INFO));
 
     trace(LOG_CONTEXT, "context: stopped: ctx %#lx, id %s, exception %#lx",
         ctx, ctx->id, exception_code);
     assert(is_dispatch_thread());
     assert(!ctx->stopped);
-    assert(EXT(ctx)->handle != NULL);
+    assert(!ctx->exited);
+    assert(ext->handle != NULL);
     assert(ctx->parent != NULL);
 
-    if (SuspendThread(EXT(ctx)->handle) == (DWORD)-1) {
+    if (SuspendThread(ext->handle) == (DWORD)-1) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED && exception_code == 0) {
             /* Already exited */
@@ -160,19 +188,11 @@ static void event_win32_context_stopped(Context * ctx) {
         return;
     }
 
-    if (ctx->regs_error) {
-        release_error_report(ctx->regs_error);
-        ctx->regs_error = NULL;
+    if (ext->regs_error) {
+        release_error_report(ext->regs_error);
+        ext->regs_error = NULL;
     }
-    memset(ctx->regs, 0, ctx->regs_size);
-    ((REG_SET *)ctx->regs)->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
-    if (GetThreadContext(EXT(ctx)->handle, (REG_SET *)ctx->regs) == 0) {
-        ctx->regs_error = get_error_report(log_error("GetThreadContext", 0));
-    }
-    else {
-        trace(LOG_CONTEXT, "context: get regs OK: ctx %#lx, id %s, PC %#lx",
-            ctx, ctx->id, get_regs_PC(ctx->regs));
-    }
+    memset(ext->regs, 0, sizeof(REG_SET));
 
     ctx->signal = get_signal_index(ctx);
     ctx->pending_signals = 0;
@@ -185,9 +205,10 @@ static void event_win32_context_stopped(Context * ctx) {
     case EXCEPTION_SINGLE_STEP:
         break;
     case EXCEPTION_BREAKPOINT:
-        if (!ctx->regs_error && is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE)) {
-            set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - BREAK_SIZE);
-            ctx->regs_dirty = 1;
+        get_registers(ctx);
+        if (!ext->regs_error && is_breakpoint_address(ctx, ext->regs->Eip - BREAK_SIZE)) {
+            ext->regs->Eip -= BREAK_SIZE;
+            ext->regs_dirty = 1;
             ctx->stopped_by_bp = 1;
         }
         else {
@@ -196,7 +217,7 @@ static void event_win32_context_stopped(Context * ctx) {
         break;
     case EXCEPTION_DEBUGGER_IO:
         trace(LOG_ALWAYS, "Debugger IO request %#lx",
-            EXT(ctx)->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
+            ext->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
         break;
     default:
         ctx->pending_signals |= 1 << ctx->signal;
@@ -211,20 +232,23 @@ static void event_win32_context_stopped(Context * ctx) {
 
 static void event_win32_context_stopped_async(void * arg) {
     Context * ctx = (Context *)arg;
-    EXT(ctx)->context_stopped_async_pending = 0;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    ext->context_stopped_async_pending = 0;
     event_win32_context_stopped(ctx);
     context_unlock(ctx);
 }
 
 static void event_win32_context_started(Context * ctx) {
-    DWORD exception_code = EXT(ctx)->suspend_reason.ExceptionRecord.ExceptionCode;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
     trace(LOG_CONTEXT, "context: started: ctx %#lx, id %s", ctx, ctx->id);
     assert(ctx->stopped);
-    if (EXT(ctx)->debug_started && exception_code == EXCEPTION_BREAKPOINT) EXT(ctx)->debug_started = 0;
+    if (ext->debug_started && exception_code == EXCEPTION_BREAKPOINT) ext->debug_started = 0;
     send_context_started_event(ctx);
 }
 
 static void event_win32_context_exited(Context * ctx) {
+    ContextExtensionWin32 * ext = EXT(ctx);
     LINK * l = NULL;
     assert(!ctx->exited);
     context_lock(ctx);
@@ -236,27 +260,40 @@ static void event_win32_context_exited(Context * ctx) {
         assert(c->parent == ctx);
         if (!c->exited) event_win32_context_exited(c);
     }
+    release_error_report(ext->regs_error);
+    loc_free(ext->regs);
+    ext->regs_error = NULL;
+    ext->regs = NULL;
     send_context_exited_event(ctx);
-    if (EXT(ctx)->handle != NULL) {
+    if (ext->handle != NULL) {
         if (ctx->mem == ctx) {
-            log_error("CloseHandle", CloseHandle(EXT(ctx)->handle));
+            log_error("CloseHandle", CloseHandle(ext->handle));
         }
-        EXT(ctx)->handle = NULL;
+        ext->handle = NULL;
     }
-    if (EXT(ctx)->file_handle != NULL) {
-        log_error("CloseHandle", CloseHandle(EXT(ctx)->file_handle));
-        EXT(ctx)->file_handle = NULL;
+    if (ext->file_handle != NULL) {
+        log_error("CloseHandle", CloseHandle(ext->file_handle));
+        ext->file_handle = NULL;
     }
     context_unlock(ctx);
 }
 
 static int win32_resume(Context * ctx) {
-    if (ctx->regs_dirty && SetThreadContext(EXT(ctx)->handle, (REG_SET *)ctx->regs) == 0) {
-        errno = log_error("SetThreadContext", 0);
-        return -1;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    if (ext->regs_dirty) {
+        if (ext->regs_error) {
+            trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, id %s", ctx, ctx->id);
+            errno = set_error_report_errno(ext->regs_error);
+            return -1;
+        }
+        if (SetThreadContext(ext->handle, ext->regs) == 0) {
+            errno = log_error("SetThreadContext", 0);
+            return -1;
+        }
+        ext->trace_flag = (ext->regs->EFlags & 0x100) != 0;
+        ext->regs_dirty = 0;
     }
-    ctx->regs_dirty = 0;
-    if (EXT(ctx)->pending_event.ExceptionRecord.ExceptionCode != 0) {
+    if (ext->pending_event.ExceptionRecord.ExceptionCode != 0) {
         event_win32_context_started(ctx);
         context_lock(ctx);
         post_event(event_win32_context_stopped_async, ctx);
@@ -271,7 +308,7 @@ static int win32_resume(Context * ctx) {
         ctx->parent->exiting = 1;
     }
     for (;;) {
-        DWORD cnt = ResumeThread(EXT(ctx)->handle);
+        DWORD cnt = ResumeThread(ext->handle);
         if (cnt == (DWORD)-1) {
             errno = log_error("ResumeThread", 0);
             return -1;
@@ -291,6 +328,7 @@ static void debug_event_handler(void * x) {
         DEBUG_EVENT * debug_event = &args->event;
         Context * prs = context_find_from_pid(debug_event->dwProcessId, 0);
         Context * ctx = context_find_from_pid(debug_event->dwThreadId, 1);
+        ContextExtensionWin32 * ext = NULL;
 
         assert(ctx == NULL || ctx->parent == prs);
 
@@ -298,23 +336,24 @@ static void debug_event_handler(void * x) {
         case CREATE_PROCESS_DEBUG_EVENT:
             assert(prs == NULL);
             assert(ctx == NULL);
-            prs = create_context(pid2id(debug_event->dwProcessId, 0), sizeof(REG_SET));
+            ext = EXT(prs = create_context(pid2id(debug_event->dwProcessId, 0)));
             prs->mem = prs;
-            EXT(prs)->pid = debug_event->dwProcessId;
-            EXT(prs)->handle = debug_event->u.CreateProcessInfo.hProcess;
-            EXT(prs)->file_handle = debug_event->u.CreateProcessInfo.hFile;
-            EXT(prs)->base_address = (uintptr_t)debug_event->u.CreateProcessInfo.lpBaseOfImage;
-            assert(EXT(prs)->handle != NULL);
+            ext->pid = debug_event->dwProcessId;
+            ext->handle = debug_event->u.CreateProcessInfo.hProcess;
+            ext->file_handle = debug_event->u.CreateProcessInfo.hFile;
+            ext->base_address = (uintptr_t)debug_event->u.CreateProcessInfo.lpBaseOfImage;
+            assert(ext->handle != NULL);
             link_context(prs);
             send_context_created_event(prs);
             args->debug_thread_args->attach_callback(0, prs, args->debug_thread_args->attach_data);
             args->debug_thread_args->attach_callback = NULL;
             args->debug_thread_args->attach_data = NULL;
-            ctx = create_context(pid2id(debug_event->dwThreadId, debug_event->dwProcessId), sizeof(REG_SET));
+            ext = EXT(ctx = create_context(pid2id(debug_event->dwThreadId, debug_event->dwProcessId)));
             ctx->mem = prs;
-            EXT(ctx)->pid = debug_event->dwThreadId;
-            EXT(ctx)->handle = debug_event->u.CreateProcessInfo.hThread;
-            EXT(ctx)->debug_started = 1;
+            ext->regs = (REG_SET *)loc_alloc_zero(sizeof(REG_SET));
+            ext->pid = debug_event->dwThreadId;
+            ext->handle = debug_event->u.CreateProcessInfo.hThread;
+            ext->debug_started = 1;
             (ctx->parent = prs)->ref_count++;
             list_add_first(&ctx->cldl, &prs->children);
             link_context(ctx);
@@ -323,10 +362,11 @@ static void debug_event_handler(void * x) {
         case CREATE_THREAD_DEBUG_EVENT:
             assert(prs != NULL);
             assert(ctx == NULL);
-            ctx = create_context(pid2id(debug_event->dwThreadId, debug_event->dwProcessId), sizeof(REG_SET));
+            ext = EXT(ctx = create_context(pid2id(debug_event->dwThreadId, debug_event->dwProcessId)));
             ctx->mem = prs;
-            EXT(ctx)->pid = debug_event->dwThreadId;
-            EXT(ctx)->handle = debug_event->u.CreateThread.hThread;
+            ext->regs = (REG_SET *)loc_alloc_zero(sizeof(REG_SET));
+            ext->pid = debug_event->dwThreadId;
+            ext->handle = debug_event->u.CreateThread.hThread;
             (ctx->parent = prs)->ref_count++;
             list_add_first(&ctx->cldl, &prs->children);
             link_context(ctx);
@@ -337,7 +377,8 @@ static void debug_event_handler(void * x) {
             assert(prs != NULL);
             if (ctx == NULL) break;
             if (args->early_event) break; /* Can anything be done about such exceptions? */
-            assert(EXT(ctx)->pending_event.ExceptionRecord.ExceptionCode == 0);
+            ext = EXT(ctx);
+            assert(ext->pending_event.ExceptionRecord.ExceptionCode == 0);
             switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
             case EXCEPTION_SINGLE_STEP:
             case EXCEPTION_BREAKPOINT:
@@ -348,12 +389,12 @@ static void debug_event_handler(void * x) {
                 args->continue_status = DBG_EXCEPTION_NOT_HANDLED;
                 break;
             }
-            memcpy(&EXT(ctx)->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
+            memcpy(&ext->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
             if (!ctx->stopped) {
                 int signal = 0;
-                if (EXT(ctx)->context_stopped_async_pending) {
+                if (ext->context_stopped_async_pending) {
                     cancel_event(event_win32_context_stopped_async, ctx, 0);
-                    EXT(ctx)->context_stopped_async_pending = 0;
+                    ext->context_stopped_async_pending = 0;
                 }
                 else {
                     context_lock(ctx);
@@ -377,24 +418,26 @@ static void debug_event_handler(void * x) {
             break;
         case LOAD_DLL_DEBUG_EVENT:
             assert(prs != NULL);
-            EXT(prs)->module_loaded = 1;
-            EXT(prs)->module_handle = args->event.u.LoadDll.hFile;
-            EXT(prs)->module_address = (uintptr_t)args->event.u.LoadDll.lpBaseOfDll;
+            ext = EXT(prs);
+            ext->module_loaded = 1;
+            ext->module_handle = args->event.u.LoadDll.hFile;
+            ext->module_address = (uintptr_t)args->event.u.LoadDll.lpBaseOfDll;
             send_context_changed_event(prs);
-            if (EXT(prs)->module_handle != NULL) {
-                log_error("CloseHandle", CloseHandle(EXT(prs)->module_handle));
+            if (ext->module_handle != NULL) {
+                log_error("CloseHandle", CloseHandle(ext->module_handle));
             }
-            EXT(prs)->module_handle = NULL;
-            EXT(prs)->module_address = 0;
-            EXT(prs)->module_loaded = 0;
+            ext->module_handle = NULL;
+            ext->module_address = 0;
+            ext->module_loaded = 0;
             break;
         case UNLOAD_DLL_DEBUG_EVENT:
             assert(prs != NULL);
-            EXT(prs)->module_unloaded = 1;
-            EXT(prs)->module_address = (uintptr_t)args->event.u.UnloadDll.lpBaseOfDll;
+            ext = EXT(prs);
+            ext->module_unloaded = 1;
+            ext->module_address = (uintptr_t)args->event.u.UnloadDll.lpBaseOfDll;
             send_context_changed_event(prs);
-            EXT(prs)->module_address = 0;
-            EXT(prs)->module_unloaded = 0;
+            ext->module_address = 0;
+            ext->module_unloaded = 0;
             break;
         case RIP_EVENT:
             trace(LOG_ALWAYS, "System debugging error: debuggee pid %d, error type %d, error code %d",
@@ -613,26 +656,30 @@ int context_has_state(Context * ctx) {
 }
 
 int context_stop(Context * ctx) {
+    ContextExtensionWin32 * ext = EXT(ctx);
+
     trace(LOG_CONTEXT, "context:%s suspending ctx %#lx id %s",
         ctx->pending_intercept ? "" : " temporary", ctx, ctx->id);
     assert(context_has_state(ctx));
     assert(!ctx->stopped);
     assert(!ctx->exited);
-    if (SuspendThread(EXT(ctx)->handle) == (DWORD)-1) {
+    if (SuspendThread(ext->handle) == (DWORD)-1) {
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             errno = log_error("SuspendThread", 0);
             return -1;
         }
     }
-    if (!EXT(ctx)->context_stopped_async_pending) {
+    if (!ext->context_stopped_async_pending) {
         context_lock(ctx);
         post_event(event_win32_context_stopped_async, ctx);
-        EXT(ctx)->context_stopped_async_pending = 1;
+        ext->context_stopped_async_pending = 1;
     }
     return 0;
 }
 
 int context_continue(Context * ctx) {
+    ContextExtensionWin32 * ext = EXT(ctx);
+
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
@@ -643,19 +690,17 @@ int context_continue(Context * ctx) {
     if (skip_breakpoint(ctx, 0)) return 0;
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, id %s", ctx, ctx->id);
-    if ((((REG_SET *)ctx->regs)->EFlags & 0x100) != 0) {
-        ((REG_SET *)ctx->regs)->EFlags &= ~0x100;
-        ctx->regs_dirty = 1;
-    }
-    if (ctx->regs_dirty && ctx->regs_error) {
-        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, id %d", ctx, ctx->id);
-        errno = set_error_report_errno(ctx->regs_error);
-        return -1;
+    if (ext->trace_flag) {
+        get_registers(ctx);
+        ext->regs->EFlags &= ~0x100;
+        ext->regs_dirty = 1;
     }
     return win32_resume(ctx);
 }
 
 int context_single_step(Context * ctx) {
+    ContextExtensionWin32 * ext = EXT(ctx);
+
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
@@ -665,26 +710,23 @@ int context_single_step(Context * ctx) {
     if (skip_breakpoint(ctx, 1)) return 0;
 
     trace(LOG_CONTEXT, "context: single step ctx %#lx, id %s", ctx, ctx->id);
-    if (ctx->regs_error) {
-        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, id %d", ctx, ctx->id);
-        errno = set_error_report_errno(ctx->regs_error);
-        return -1;
-    }
-    if ((((REG_SET *)ctx->regs)->EFlags & 0x100) == 0) {
-        ((REG_SET *)ctx->regs)->EFlags |= 0x100;
-        ctx->regs_dirty = 1;
+    if (!ext->trace_flag) {
+        get_registers(ctx);
+        ext->regs->EFlags |= 0x100;
+        ext->regs_dirty = 1;
     }
     ctx->pending_step = 1;
     return win32_resume(ctx);
 }
 
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    ContextExtensionWin32 * ext = EXT(ctx = ctx->mem);
     SIZE_T bcnt = 0;
+
     trace(LOG_CONTEXT, "context: read memory ctx %#lx, id %s, address %#lx, size %zd",
         ctx, ctx->id, address, size);
     assert(is_dispatch_thread());
-    ctx = ctx->mem;
-    if (ReadProcessMemory(EXT(ctx)->handle, (LPCVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
+    if (ReadProcessMemory(ext->handle, (LPCVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
         errno = log_error("ReadProcessMemory", 0);
         return -1;
     }
@@ -693,22 +735,55 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
 }
 
 int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    ContextExtensionWin32 * ext = EXT(ctx = ctx->mem);
     SIZE_T bcnt = 0;
+
     trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %zd",
         ctx, ctx->id, address, size);
     assert(is_dispatch_thread());
     ctx = ctx->mem;
     check_breakpoints_on_memory_write(ctx, address, buf, size);
-    if (WriteProcessMemory(EXT(ctx)->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
+    if (WriteProcessMemory(ext->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED) errno = set_win32_errno(err);
         else errno = log_error("WriteProcessMemory", 0);
         return -1;
     }
-    if (FlushInstructionCache(EXT(ctx)->handle, (LPCVOID)address, size) == 0) {
+    if (FlushInstructionCache(ext->handle, (LPCVOID)address, size) == 0) {
         errno = log_error("FlushInstructionCache", 0);
         return -1;
     }
+    return 0;
+}
+
+int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
+    ContextExtensionWin32 * ext = EXT(ctx);
+
+    assert(is_dispatch_thread());
+    assert(offs + size <= def->size);
+
+    get_registers(ctx);
+    if (ext->regs_error) {
+        set_error_report_errno(ext->regs_error);
+        return -1;
+    }
+    memcpy((uint8_t *)ext->regs + def->offset + offs, buf, size);
+    ext->regs_dirty = 1;
+    return 0;
+}
+
+int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
+    ContextExtensionWin32 * ext = EXT(ctx);
+
+    assert(is_dispatch_thread());
+    assert(offs + size <= def->size);
+
+    get_registers(ctx);
+    if (ext->regs_error) {
+        set_error_report_errno(ext->regs_error);
+        return -1;
+    }
+    memcpy(buf, (uint8_t *)ext->regs + def->offset + offs, size);
     return 0;
 }
 
@@ -717,35 +792,42 @@ unsigned context_word_size(Context * ctx) {
 }
 
 HANDLE get_context_handle(Context * ctx) {
-    return EXT(ctx)->handle;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    return ext->handle;
 }
 
 HANDLE get_context_file_handle(Context * ctx) {
-    return EXT(ctx)->file_handle;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    return ext->file_handle;
 }
 
 HANDLE get_context_module_handle(Context * ctx) {
-    return EXT(ctx)->module_handle;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    return ext->module_handle;
 }
 
 DWORD64 get_context_base_address(Context * ctx) {
-    return EXT(ctx)->base_address;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    return ext->base_address;
 }
 
 DWORD64 get_context_module_address(Context * ctx) {
-    return EXT(ctx)->module_address;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    return ext->module_address;
 }
 
 int is_context_module_loaded(Context * ctx) {
-    return EXT(ctx)->module_loaded;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    return ext->module_loaded;
 }
 
 int is_context_module_unloaded(Context * ctx) {
-    return EXT(ctx)->module_unloaded;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    return ext->module_unloaded;
 }
 
 void init_contexts_sys_dep(void) {
-    context_extension_offset = context_extension(sizeof(ContextExtension));
+    context_extension_offset = context_extension(sizeof(ContextExtensionWin32));
     ini_context_pid_hash();
 }
 

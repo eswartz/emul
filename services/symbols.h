@@ -162,7 +162,7 @@ extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
  * If frame info is not available, do nothing.
  * Return -1 and set errno in case of an error.
  */
-extern int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down);
+extern int get_next_stack_frame(StackFrame * frame, StackFrame * down);
 
 /*
  * For given context and instruction address,

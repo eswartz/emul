@@ -42,16 +42,19 @@
 
 #define TRACE_EVENT_STEP        2
 
-typedef struct ContextExtension {
+typedef struct ContextExtensionVxWorks {
     pid_t               pid;
     VXDBG_BP_INFO       bp_info;        /* breakpoint information */
     pid_t               bp_pid;         /* process or thread that hit breakpoint */
     int                 event;
-} ContextExtension;
+    REG_SET *           regs;           /* copy of context registers, updated when context stops */
+    ErrorReport *       regs_error;     /* if not NULL, 'regs' is invalid */
+    int                 regs_dirty;     /* if not 0, 'regs' is modified and needs to be saved before context is continued */
+} ContextExtensionVxWorks;
 
 static size_t context_extension_offset = 0;
 
-#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+#define EXT(ctx) ((ContextExtensionVxWorks *)((char *)(ctx) + context_extension_offset))
 
 #include "system/pid-hash.h"
 
@@ -131,15 +134,16 @@ static void event_attach_done(void * x) {
         Context * ctx = NULL;
         if (parent_ctx == NULL) {
             pid_t pid = taskIdSelf();
-            parent_ctx = create_context(pid2id(pid, 0), 0);
+            parent_ctx = create_context(pid2id(pid, 0));
             EXT(parent_ctx)->pid = pid;
             parent_ctx->mem = parent_ctx;
             link_context(parent_ctx);
             send_context_created_event(parent_ctx);
         }
         assert(parent_ctx->ref_count > 0);
-        ctx = create_context(pid2id(args->pid, EXT(parent_ctx)->pid), sizeof(REG_SET));
+        ctx = create_context(pid2id(args->pid, EXT(parent_ctx)->pid));
         EXT(ctx)->pid = args->pid;
+        EXT(ctx)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
         ctx->mem = parent_ctx;
         (ctx->parent = parent_ctx)->ref_count++;
         list_add_first(&ctx->cldl, &parent_ctx->children);
@@ -185,7 +189,7 @@ int context_stop(Context * ctx) {
     assert(ctx->parent != NULL);
     assert(!ctx->stopped);
     assert(!ctx->exited);
-    assert(!ctx->regs_dirty);
+    assert(!EXT(ctx)->regs_dirty);
     assert(!ctx->intercepted);
     if (ctx->pending_intercept) {
         trace(LOG_CONTEXT, "context: stop ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
@@ -196,19 +200,19 @@ int context_stop(Context * ctx) {
 
     taskLock();
     if (taskIsStopped(EXT(ctx)->pid)) {
-        taskUnlock();
         trace(LOG_CONTEXT, "context: already stopped ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
-        return 0;
     }
-    vxdbg_ctx.ctxId = EXT(ctx)->pid;
-    vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
-    if (vxdbgStop(vxdbg_clnt_id, &vxdbg_ctx) != OK) {
-        int error = errno;
-        taskUnlock();
-        if (error == S_vxdbgLib_INVALID_CTX) return 0;
-        trace(LOG_ALWAYS, "context: can't stop ctx %#lx, id %#x: %s",
-                ctx, EXT(ctx)->pid, errno_to_str(error));
-        return -1;
+    else {
+        vxdbg_ctx.ctxId = EXT(ctx)->pid;
+        vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
+        if (vxdbgStop(vxdbg_clnt_id, &vxdbg_ctx) != OK) {
+            int error = errno;
+            taskUnlock();
+            if (error == S_vxdbgLib_INVALID_CTX) return 0;
+            trace(LOG_ALWAYS, "context: can't stop ctx %#lx, id %#x: %s",
+                    ctx, EXT(ctx)->pid, errno_to_str(error));
+            return -1;
+        }
     }
     assert(taskIsStopped(EXT(ctx)->pid));
     info = event_info_alloc(EVENT_HOOK_STOP);
@@ -234,6 +238,10 @@ static int kill_context(Context * ctx) {
     }
     send_context_started_event(ctx);
     trace(LOG_CONTEXT, "context: killed ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
+    release_error_report(EXT(ctx)->regs_error);
+    loc_free(EXT(ctx)->regs);
+    EXT(ctx)->regs_error = NULL;
+    EXT(ctx)->regs = NULL;
     send_context_exited_event(ctx);
     return 0;
 }
@@ -253,14 +261,14 @@ int context_continue(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: continue ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
 
-    if (ctx->regs_dirty) {
-        if (taskRegsSet(EXT(ctx)->pid, (REG_SET *)ctx->regs) != OK) {
+    if (EXT(ctx)->regs_dirty) {
+        if (taskRegsSet(EXT(ctx)->pid, EXT(ctx)->regs) != OK) {
             int error = errno;
             trace(LOG_ALWAYS, "context: can't set regs ctx %#lx, id %#x: %s",
                     ctx, EXT(ctx)->pid, errno_to_str(error));
             return -1;
         }
-        ctx->regs_dirty = 0;
+        EXT(ctx)->regs_dirty = 0;
     }
 
     if (ctx->pending_signals & (1 << SIGKILL)) {
@@ -299,14 +307,14 @@ int context_single_step(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: single step ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
 
-    if (ctx->regs_dirty) {
-        if (taskRegsSet(EXT(ctx)->pid, (REG_SET *)ctx->regs) != OK) {
+    if (EXT(ctx)->regs_dirty) {
+        if (taskRegsSet(EXT(ctx)->pid, EXT(ctx)->regs) != OK) {
             int error = errno;
             trace(LOG_ALWAYS, "context: can't set regs ctx %#lx, id %#x: %s",
                     ctx, EXT(ctx)->pid, errno_to_str(error));
             return -1;
         }
-        ctx->regs_dirty = 0;
+        EXT(ctx)->regs_dirty = 0;
     }
 
     if (ctx->pending_signals & (1 << SIGKILL)) {
@@ -356,6 +364,41 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     return 0;
 }
 
+int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
+    ContextExtensionVxWorks * ext = EXT(ctx);
+
+    assert(is_dispatch_thread());
+    assert(context_has_state(ctx));
+    assert(ctx->stopped);
+    assert(!ctx->exited);
+    assert(offs + size <= def->size);
+
+    if (ext->regs_error) {
+        set_error_report_errno(ext->regs_error);
+        return -1;
+    }
+    memcpy((uint8_t *)ext->regs + def->offset + offs, buf, size);
+    ext->regs_dirty = 1;
+    return 0;
+}
+
+int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
+    ContextExtensionVxWorks * ext = EXT(ctx);
+
+    assert(is_dispatch_thread());
+    assert(context_has_state(ctx));
+    assert(ctx->stopped);
+    assert(!ctx->exited);
+    assert(offs + size <= def->size);
+
+    if (ext->regs_error) {
+        set_error_report_errno(ext->regs_error);
+        return -1;
+    }
+    memcpy(buf, (uint8_t *)ext->regs + def->offset + offs, size);
+    return 0;
+}
+
 unsigned context_word_size(Context * ctx) {
     return sizeof(void *);
 }
@@ -373,21 +416,21 @@ static void event_handler(void * arg) {
     case EVENT_HOOK_BREAKPOINT:
         if (stopped_ctx == NULL) break;
         assert(!stopped_ctx->stopped);
-        assert(!stopped_ctx->regs_dirty);
+        assert(!EXT(stopped_ctx)->regs_dirty);
         assert(!stopped_ctx->intercepted);
-        if (stopped_ctx->regs_error) {
-            release_error_report(stopped_ctx->regs_error);
-            stopped_ctx->regs_error = NULL;
+        if (EXT(stopped_ctx)->regs_error) {
+            release_error_report(EXT(stopped_ctx)->regs_error);
+            EXT(stopped_ctx)->regs_error = NULL;
         }
-        memcpy(stopped_ctx->regs, &info->regs, stopped_ctx->regs_size);
-        stopped_ctx->signal = SIGTRAP;
-        assert(get_regs_PC(stopped_ctx->regs) == info->addr);
+        memcpy(EXT(stopped_ctx)->regs, &info->regs, sizeof(REG_SET));
         EXT(stopped_ctx)->event = 0;
+        stopped_ctx->signal = SIGTRAP;
         stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = info->bp_info_ok;
         stopped_ctx->stopped_by_exception = 0;
-        if (stopped_ctx->stopped_by_bp && !is_breakpoint_address(stopped_ctx, get_regs_PC(stopped_ctx->regs))) {
+        assert(get_regs_PC(stopped_ctx) == info->addr);
+        if (stopped_ctx->stopped_by_bp && !is_breakpoint_address(stopped_ctx, info->addr)) {
             /* Break instruction that is not planted by us */
             stopped_ctx->stopped_by_bp = 0;
             stopped_ctx->pending_intercept = 1;
@@ -402,13 +445,13 @@ static void event_handler(void * arg) {
     case EVENT_HOOK_STEP_DONE:
         if (current_ctx == NULL) break;
         assert(!current_ctx->stopped);
-        assert(!current_ctx->regs_dirty);
+        assert(!EXT(current_ctx)->regs_dirty);
         assert(!current_ctx->intercepted);
-        if (current_ctx->regs_error) {
-            release_error_report(current_ctx->regs_error);
-            current_ctx->regs_error = NULL;
+        if (EXT(current_ctx)->regs_error) {
+            release_error_report(EXT(current_ctx)->regs_error);
+            EXT(current_ctx)->regs_error = NULL;
         }
-        memcpy(current_ctx->regs, &info->regs, current_ctx->regs_size);
+        memcpy(EXT(current_ctx)->regs, &info->regs, sizeof(REG_SET));
         EXT(current_ctx)->event = TRACE_EVENT_STEP;
         current_ctx->signal = SIGTRAP;
         current_ctx->pending_step = 0;
@@ -422,14 +465,15 @@ static void event_handler(void * arg) {
         break;
     case EVENT_HOOK_STOP:
         if (stopped_ctx == NULL) break;
-        assert(!stopped_ctx->stopped);
-        if (stopped_ctx->regs_error) {
-            release_error_report(stopped_ctx->regs_error);
-            stopped_ctx->regs_error = NULL;
+        assert(!stopped_ctx->exited);
+        if (stopped_ctx->stopped) break;
+        if (EXT(stopped_ctx)->regs_error) {
+            release_error_report(EXT(stopped_ctx)->regs_error);
+            EXT(stopped_ctx)->regs_error = NULL;
         }
-        if (taskRegsGet(EXT(stopped_ctx)->pid, (REG_SET *)stopped_ctx->regs) != OK) {
-            stopped_ctx->regs_error = get_error_report(errno);
-            assert(stopped_ctx->regs_error != NULL);
+        if (taskRegsGet(EXT(stopped_ctx)->pid, EXT(stopped_ctx)->regs) != OK) {
+            EXT(stopped_ctx)->regs_error = get_error_report(errno);
+            assert(EXT(stopped_ctx)->regs_error != NULL);
         }
         EXT(stopped_ctx)->event = 0;
         stopped_ctx->signal = SIGSTOP;
@@ -445,10 +489,9 @@ static void event_handler(void * arg) {
     case EVENT_HOOK_TASK_ADD:
         if (current_ctx == NULL) break;
         assert(stopped_ctx == NULL);
-        stopped_ctx = create_context(
-                pid2id((pid_t)info->stopped_ctx.ctxId,
-                EXT(current_ctx->parent)->pid), sizeof(REG_SET));
+        stopped_ctx = create_context(pid2id((pid_t)info->stopped_ctx.ctxId, EXT(current_ctx->parent)->pid));
         EXT(stopped_ctx)->pid = (pid_t)info->stopped_ctx.ctxId;
+        EXT(stopped_ctx)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
         stopped_ctx->mem = current_ctx->mem;
         (stopped_ctx->creator = current_ctx)->ref_count++;
         (stopped_ctx->parent = current_ctx->parent)->ref_count++;
@@ -536,6 +579,10 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
             assert(!stopped_ctx->exited);
             stopped_ctx->pending_step = 0;
             trace(LOG_CONTEXT, "context: exited ctx %#lx, id %#x", stopped_ctx, EXT(stopped_ctx)->pid);
+            release_error_report(EXT(stopped_ctx)->regs_error);
+            loc_free(EXT(stopped_ctx)->regs);
+            EXT(stopped_ctx)->regs_error = NULL;
+            EXT(stopped_ctx)->regs = NULL;
             send_context_exited_event(stopped_ctx);
         }
     }
@@ -550,7 +597,7 @@ void init_contexts_sys_dep(void) {
     if (vxdbg_clnt_id == NULL) {
         check_error(errno);
     }
-    context_extension_offset = context_extension(sizeof(ContextExtension));
+    context_extension_offset = context_extension(sizeof(ContextExtensionVxWorks));
     taskCreateHookAdd((FUNCPTR)task_create_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_BP, vxdbg_event_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);

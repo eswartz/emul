@@ -60,14 +60,14 @@
 
 static const char RUN_CONTROL[] = "RunControl";
 
-typedef struct ContextExtension {
+typedef struct ContextExtensionRC {
     int pending_safe_event; /* safe events are waiting for this context to be stopped */
     int intercepted_by_bp;
-} ContextExtension;
+} ContextExtensionRC;
 
 static size_t context_extension_offset = 0;
 
-#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+#define EXT(ctx) ((ContextExtensionRC *)((char *)(ctx) + context_extension_offset))
 
 typedef struct SafeEvent {
     Context * mem;
@@ -203,7 +203,7 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     }
 
     /* Number: PC */
-    json_write_ulong(out, get_regs_PC(ctx->regs));
+    json_write_ulong(out, get_regs_PC(ctx));
     write_stream(out, 0);
 
     /* String: Reason */
@@ -449,9 +449,6 @@ static void command_resume(char * token, Channel * c) {
         }
         else if (context_has_state(ctx) && !ctx->intercepted) {
             err = ERR_ALREADY_RUNNING;
-        }
-        else if (ctx->regs_error) {
-            err = set_error_report_errno(ctx->regs_error);
         }
         else if (count != 1) {
             err = EINVAL;
@@ -932,7 +929,7 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     };
     broadcast_group = bcg;
     add_context_event_listener(&listener, NULL);
-    context_extension_offset = context_extension(sizeof(ContextExtension));
+    context_extension_offset = context_extension(sizeof(ContextExtensionRC));
     add_command_handler(proto, RUN_CONTROL, "getContext", command_get_context);
     add_command_handler(proto, RUN_CONTROL, "getChildren", command_get_children);
     add_command_handler(proto, RUN_CONTROL, "getState", command_get_state);

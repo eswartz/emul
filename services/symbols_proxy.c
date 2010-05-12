@@ -446,7 +446,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         StackFrame * info = NULL;
         if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);;
         if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
-        if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
+        if (read_reg_value(info, get_PC_definition(ctx), &ip) < 0) exception(errno);
     }
 
     h = hash_find(ctx, name, ip);
@@ -565,7 +565,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
         StackFrame * info = NULL;
         if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);;
         if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
-        if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
+        if (read_reg_value(info, get_PC_definition(ctx), &ip) < 0) exception(errno);
     }
 
     h = hash_list(ctx, ip);
@@ -1041,17 +1041,18 @@ static void validate_frame(Channel * c, void * args, int error) {
     if (trap.error) exception(trap.error);
 }
 
-int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
+int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
     Trap trap;
     unsigned h;
     LINK * l;
     uint64_t ip = 0;
+    Context * ctx = frame->ctx;
     SymbolsCache * syms = NULL;
     StackFrameCache * f = NULL;
 
     if (!set_trap(&trap)) return -1;
 
-    if (read_reg_value(get_PC_definition(ctx), frame, &ip) < 0) {
+    if (read_reg_value(frame, get_PC_definition(ctx), &ip) < 0) {
         if (frame->is_top_frame) exception(errno);
         clear_trap(&trap);
         return 0;
@@ -1101,7 +1102,7 @@ int get_next_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
         frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, f->fp);
         for (i = 0; i < f->regs_cnt; i++) {
             uint64_t v = evaluate_stack_trace_commands(ctx, frame, f->regs[i]);
-            if (write_reg_value(f->regs[i]->reg, down, v) < 0) exception(errno);
+            if (write_reg_value(down, f->regs[i]->reg, v) < 0) exception(errno);
         }
     }
 

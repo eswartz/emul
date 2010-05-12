@@ -44,13 +44,13 @@ static const char * DIAGNOSTICS = "Diagnostics";
 
 #if ENABLE_RCBP_TEST
 
-typedef struct ContextExtension {
+typedef struct ContextExtensionDiag {
     int test_process;
-} ContextExtension;
+} ContextExtensionDiag;
 
 static size_t context_extension_offset = 0;
 
-#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+#define EXT(ctx) ((ContextExtensionDiag *)((char *)(ctx) + context_extension_offset))
 
 int is_test_process(Context * ctx) {
 #if defined(_WRS_KERNEL)
@@ -406,7 +406,7 @@ void ini_diagnostics_service(Protocol * proto) {
     add_command_handler(proto, DIAGNOSTICS, "createTestStreams", command_create_test_streams);
     add_command_handler(proto, DIAGNOSTICS, "disposeTestStream", command_dispose_test_stream);
 #if ENABLE_RCBP_TEST
-    context_extension_offset = context_extension(sizeof(ContextExtension));
+    context_extension_offset = context_extension(sizeof(ContextExtensionDiag));
 #endif
 }
 

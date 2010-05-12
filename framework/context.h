@@ -53,12 +53,6 @@ struct Context {
     unsigned long       sig_dont_stop;      /* bitset of signals that should not be intercepted by the debugger */
     unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
     int                 signal;             /* signal that stopped this context */
-#if ENABLE_DebugContext
-    RegisterData *      regs;               /* copy of context registers, updated when context stops */
-    size_t              regs_size;          /* size of data pointed by "regs" */
-    ErrorReport *       regs_error;         /* if not NULL, 'regs' is invalid */
-    int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
-#endif
 };
 
 /*
@@ -165,9 +159,21 @@ extern int context_write_mem(Context * ctx, ContextAddress address, void * buf, 
 /*
  * Read context memory.
  * Implementation calls check_breakpoints_on_memory_read() after reading context memory.
- * Return -1 and set errno if the context cannot be read.
+ * Return -1 and set errno if the context memory cannot be read.
  */
 extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
+
+/*
+ * Write 'size' byte into context register starting at offset 'offs'.
+ * Return -1 and set errno if the register cannot be written.
+ */
+extern int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf);
+
+/*
+ * Read 'size' bytes from context register starting at offset 'offs'.
+ * Return -1 and set errno if the register cannot be read.
+ */
+extern int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf);
 
 /*
  * Return context memory word size in bytes.
@@ -188,7 +194,7 @@ extern void send_context_exited_event(Context * ctx);
  * Create a Context object.
  * It is not supposed to be called by clients.
  */
-extern Context * create_context(const char * id, size_t regs_size);
+extern Context * create_context(const char * id);
 
 extern void ini_contexts(void);
 extern void init_contexts_sys_dep(void);

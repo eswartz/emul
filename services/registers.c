@@ -35,10 +35,11 @@
 
 static const char * REGISTERS = "Registers";
 
-static short endianess_test = 0x0201;
-#define BIG_ENDIAN_DATA (*(char *)&endianess_test == 0x02)
-
 static TCFBroadcastGroup * broadcast_group = NULL;
+
+static uint8_t * bbf = NULL;
+static unsigned bbf_pos = 0;
+static unsigned bbf_len = 0;
 
 static void write_context(OutputStream * out, char * id, Context * ctx, int frame, RegisterDefinition * reg_def) {
     assert(!ctx->exited);
@@ -115,7 +116,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     write_stream(out, ',');
     json_write_string(out, "BigEndian");
     write_stream(out, ':');
-    json_write_boolean(out, BIG_ENDIAN_DATA);
+    json_write_boolean(out, reg_def->big_endian);
 
     write_stream(out, '}');
     write_stream(out, 0);
@@ -202,7 +203,7 @@ static void command_get_children_cache_client(void * x) {
         int cnt = 0;
         RegisterDefinition * reg_def;
         for (reg_def = defs; reg_def->name != NULL; reg_def++) {
-            if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
+            if (frame == STACK_TOP_FRAME || read_reg_value(frame_info, reg_def, NULL) == 0) {
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, register2id(ctx, frame, reg_def));
                 cnt++;
@@ -246,10 +247,9 @@ typedef struct GetArgs {
 static void command_get_cache_client(void * x) {
     GetArgs * args = (GetArgs *)x;
     Channel * c  = cache_channel();
-    uint8_t * data = NULL;
-    int data_len = 0;
     Trap trap;
 
+    bbf_pos = 0;
     if (set_trap(&trap)) {
         int frame = 0;
         Context * ctx = NULL;
@@ -257,18 +257,24 @@ static void command_get_cache_client(void * x) {
 
         if (id2register(args->id, &ctx, &frame, &reg_def) < 0) exception(errno);
         if (!context_has_state(ctx)) exception(ERR_INV_CONTEXT);
+        if (ctx->exited) exception(ERR_ALREADY_EXITED);
         if (!ctx->stopped) exception(ERR_IS_RUNNING);
 
+        if (reg_def->size > bbf_len) {
+            bbf_len += 0x100 + reg_def->size;
+            bbf = (uint8_t *)loc_realloc(bbf, bbf_len);
+        }
+
+        bbf_pos = reg_def->size;
         if (is_top_frame(ctx, frame)) {
-            data = (uint8_t *)ctx->regs + reg_def->offset;
+            if (context_read_reg(ctx, reg_def, 0, reg_def->size, bbf) < 0) exception(errno);
         }
         else {
             StackFrame * info = NULL;
             if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
-            if (read_reg_value(reg_def, info, NULL) < 0) exception(errno);
-            data = (uint8_t *)info->regs + reg_def->offset;
+            if (read_reg_bytes(info, reg_def, 0, reg_def->size, bbf) < 0) exception(errno);
         }
-        data_len = reg_def->size;
+
         clear_trap(&trap);
     }
 
@@ -277,7 +283,7 @@ static void command_get_cache_client(void * x) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, args->token);
     write_errno(&c->out, trap.error);
-    json_write_binary(&c->out, data, data_len);
+    json_write_binary(&c->out, bbf, bbf_pos);
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
 }
@@ -312,12 +318,13 @@ static void command_set_cache_client(void * x) {
 
         if (id2register(args->id, &ctx, &frame, &reg_def) < 0) exception(errno);
         if (!is_top_frame(ctx, frame)) exception(ERR_INV_CONTEXT);
+        if (ctx->exited) exception(ERR_ALREADY_EXITED);
         if (!ctx->stopped) exception(ERR_IS_RUNNING);
-        if (args->data_len != reg_def->size) exception(ERR_INV_DATA_SIZE);
-
-        memcpy((uint8_t *)ctx->regs + reg_def->offset, args->data, reg_def->size);
-        ctx->regs_dirty = 1;
-        send_event_register_changed(args->id);
+        if ((size_t)args->data_len > reg_def->size) exception(ERR_INV_DATA_SIZE);
+        if (args->data_len > 0) {
+            if (context_write_reg(ctx, reg_def, 0, args->data_len, args->data) < 0) exception(errno);
+            send_event_register_changed(args->id);
+        }
         clear_trap(&trap);
     }
 
@@ -358,10 +365,6 @@ static Location * buf = NULL;
 static unsigned buf_pos = 0;
 static unsigned buf_len = 0;
 
-static uint8_t * bbf = NULL;
-static unsigned bbf_pos = 0;
-static unsigned bbf_len = 0;
-
 static void read_location(InputStream * inp, void * args) {
     int ch = read_stream(inp);
     Location * loc = NULL;
@@ -374,9 +377,9 @@ static void read_location(InputStream * inp, void * args) {
     memset(loc, 0, sizeof(Location));
     json_read_string(inp, loc->id, sizeof(loc->id));
     if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
-    loc->offs = (unsigned)json_read_ulong(inp);
+    loc->offs = json_read_ulong(inp);
     if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
-    loc->size = (unsigned)json_read_ulong(inp);
+    loc->size = json_read_ulong(inp);
     if (read_stream(inp) != ']') exception(ERR_JSON_SYNTAX);
 }
 
@@ -398,14 +401,14 @@ static void check_location_list(Location * locs, unsigned cnt, int setm) {
 
         if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) exception(errno);
         if (!context_has_state(loc->ctx)) exception(ERR_INV_CONTEXT);
+        if (loc->ctx->exited) exception(ERR_ALREADY_EXITED);
         if (!loc->ctx->stopped) exception(ERR_IS_RUNNING);
-        if (loc->offs + loc->size > (unsigned)loc->reg_def->size) exception(ERR_INV_DATA_SIZE);
+        if (loc->offs + loc->size > loc->reg_def->size) exception(ERR_INV_DATA_SIZE);
 
         if (is_top_frame(loc->ctx, loc->frame)) continue;
 
         if (setm) exception(ERR_INV_CONTEXT);
         if (get_frame_info(loc->ctx, loc->frame, &loc->frame_info) < 0) exception(errno);
-        if (read_reg_value(loc->reg_def, loc->frame_info, NULL) < 0) exception(errno);
     }
 }
 
@@ -426,12 +429,16 @@ static void command_getm_cache_client(void * x) {
         check_location_list(args->locs, args->locs_cnt, 0);
         while (locs_pos < args->locs_cnt) {
             Location * l = args->locs + locs_pos++;
-            RegisterData * regs = l->frame_info == NULL ? l->ctx->regs : l->frame_info->regs;
             if (bbf_pos + l->size > bbf_len) {
                 bbf_len += 0x100 + l->size;
                 bbf = (uint8_t *)loc_realloc(bbf, bbf_len);
             }
-            memcpy(bbf + bbf_pos, (uint8_t *)regs + l->reg_def->offset + l->offs, l->size);
+            if (l->frame_info == NULL) {
+                if (context_read_reg(l->ctx, l->reg_def, l->offs, l->size, bbf + bbf_pos) < 0) exception(errno);
+            }
+            else {
+                if (read_reg_bytes(l->frame_info, l->reg_def, l->offs, l->size, bbf + bbf_pos) < 0) exception(errno);
+            }
             bbf_pos += l->size;
         }
         clear_trap(&trap);
@@ -479,13 +486,10 @@ static void command_setm_cache_client(void * x) {
         check_location_list(args->locs, args->locs_cnt, 1);
         while (locs_pos < args->locs_cnt) {
             Location * l = args->locs + locs_pos++;
-            RegisterData * regs = l->ctx->regs;
             assert(l->frame_info == NULL);
-            if (data_pos + l->size > (unsigned)args->data_len) exception(ERR_INV_DATA_SIZE);
-            memcpy((uint8_t *)regs + l->reg_def->offset + l->offs, args->data + data_pos, l->size);
-            data_pos += l->size;
             if (l->size > 0) {
-                l->ctx->regs_dirty = 1;
+                if (context_write_reg(l->ctx, l->reg_def, l->offs, l->size, args->data + data_pos) < 0) exception(errno);
+                data_pos += l->size;
                 send_event_register_changed(l->id);
             }
         }

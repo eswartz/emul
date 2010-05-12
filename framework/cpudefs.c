@@ -39,6 +39,11 @@
 
 #include "cpudefs-mdep.h"
 
+struct RegisterData {
+    REG_SET data;
+    REG_SET mask;
+};
+
 RegisterDefinition * get_reg_definitions(Context * ctx) {
     return regs_index;
 }
@@ -89,60 +94,129 @@ RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munberin
     return NULL;
 }
 
-#endif /* !ENABLE_ContextProxy */
-
-int read_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t * value) {
+int read_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf) {
     if (reg_def != NULL && frame != NULL) {
-        size_t size = reg_def->size;
-        if (size <= 8) {
-            static uint8_t ones[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-            uint8_t * r_addr = (uint8_t *)frame->regs + reg_def->offset;
-            uint8_t * m_addr = (uint8_t *)frame->mask + reg_def->offset;
-            assert(reg_def->offset + size <= frame->regs_size);
-            if (memcmp(m_addr, ones, size) == 0) {
-                if (value != NULL) {
-                    switch (size) {
-                    case 1: *value = *(uint8_t *)r_addr; break;
-                    case 2: *value = *(uint16_t *)r_addr; break;
-                    case 4: *value = *(uint32_t *)r_addr; break;
-                    case 8: *value = *(uint64_t *)r_addr; break;
-                    }
-                }
-                return 0;
-            }
+        if (frame->is_top_frame) {
+            return context_read_reg(frame->ctx, reg_def, offs, size, buf);
         }
-        else {
-            errno = ERR_INV_DATA_SIZE;
-            return -1;
+        if (frame->regs != NULL) {
+            size_t i;
+            uint8_t * r_addr = (uint8_t *)&frame->regs->data + reg_def->offset;
+            uint8_t * m_addr = (uint8_t *)&frame->regs->mask + reg_def->offset;
+            for (i = 0; i < size; i++) {
+                if (m_addr[offs + i] != 0xff) {
+                    errno = ERR_INV_CONTEXT;
+                    return -1;
+                }
+            }
+            assert(reg_def->offset + reg_def->size <= sizeof(REG_SET));
+            if (offs + size > reg_def->size) {
+                errno = ERR_INV_DATA_SIZE;
+                return -1;
+            }
+            memcpy(buf, r_addr + offs, size);
+            return 0;
         }
     }
     errno = ERR_INV_CONTEXT;
     return -1;
 }
 
-int write_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t value) {
+int write_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf) {
     if (reg_def != NULL && frame != NULL) {
-        size_t size = reg_def->size;
-        if (size <= 8) {
-            uint8_t * r_addr = (uint8_t *)frame->regs + reg_def->offset;
-            uint8_t * m_addr = (uint8_t *)frame->mask + reg_def->offset;
-            assert(reg_def->offset + size <= frame->regs_size);
-            memset(m_addr, 0xff, size);
-            switch (size) {
-            case 1: *(uint8_t *)r_addr = (uint8_t)value; break;
-            case 2: *(uint16_t *)r_addr = (uint16_t)value; break;
-            case 4: *(uint32_t *)r_addr = (uint32_t)value; break;
-            case 8: *(uint64_t *)r_addr = (uint64_t)value; break;
-            }
-            return 0;
+        if (frame->is_top_frame) {
+            return context_write_reg(frame->ctx, reg_def, offs, size, buf);
         }
-        else {
-            errno = ERR_INV_DATA_SIZE;
-            return -1;
+        if (frame->regs == NULL && context_has_state(frame->ctx)) {
+            frame->regs = (RegisterData *)loc_alloc_zero(sizeof(RegisterData));
+        }
+        if (frame->regs != NULL) {
+            uint8_t * r_addr = (uint8_t *)&frame->regs->data + reg_def->offset;
+            uint8_t * m_addr = (uint8_t *)&frame->regs->mask + reg_def->offset;
+
+            assert(reg_def->offset + reg_def->size <= sizeof(REG_SET));
+            if (offs + size > reg_def->size) {
+                errno = ERR_INV_DATA_SIZE;
+                return -1;
+            }
+            memcpy(r_addr + offs, buf, size);
+            memset(m_addr + offs, 0xff, size);
+            return 0;
         }
     }
     errno = ERR_INV_CONTEXT;
     return -1;
+}
+
+#endif /* !ENABLE_ContextProxy */
+
+int read_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t * value) {
+    uint8_t buf[8];
+    if (reg_def == NULL || frame == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (reg_def->size > sizeof(buf)) {
+        errno = ERR_INV_DATA_SIZE;
+        return -1;
+    }
+    if (read_reg_bytes(frame, reg_def, 0, reg_def->size, buf) < 0) return -1;
+    if (value != NULL) {
+        size_t i;
+        uint64_t n = 0 ;
+        for (i = 0; i < reg_def->size; i++) {
+            n = n << 8;
+            n |= buf[reg_def->big_endian ? i : reg_def->size - i - 1];
+        }
+        *value = n;
+    }
+    return 0;
+}
+
+int write_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t value) {
+    size_t i;
+    uint8_t buf[8];
+    if (reg_def == NULL || frame == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (reg_def->size > sizeof(buf)) {
+        errno = ERR_INV_DATA_SIZE;
+        return -1;
+    }
+    for (i = 0; i < reg_def->size; i++) {
+        buf[reg_def->big_endian ? reg_def->size - i - 1 : i] = (uint8_t)value;
+        value = value >> 8;
+    }
+    return write_reg_bytes(frame, reg_def, 0, reg_def->size, buf);
+}
+
+ContextAddress get_regs_PC(Context * ctx) {
+    size_t i;
+    uint8_t buf[8];
+    ContextAddress pc = 0;
+    RegisterDefinition * def = get_PC_definition(ctx);
+    if (def == NULL) return 0;
+    assert(def->size <= sizeof(buf));
+    if (context_read_reg(ctx, def, 0, def->size, buf) < 0) return 0;
+    for (i = 0; i < def->size; i++) {
+        pc = pc << 8;
+        pc |= buf[def->big_endian ? i : def->size - i - 1];
+    }
+    return pc;
+}
+
+void set_regs_PC(Context * ctx, ContextAddress pc) {
+    size_t i;
+    uint8_t buf[8];
+    RegisterDefinition * def = get_PC_definition(ctx);
+    if (def == NULL) return;
+    assert(def->size <= sizeof(buf));
+    for (i = 0; i < def->size; i++) {
+        buf[def->big_endian ? def->size - i - 1 : i] = (uint8_t)pc;
+        pc = pc >> 8;
+    }
+    context_write_reg(ctx, def, 0, def->size, buf);
 }
 
 int id2frame(const char * id, Context ** ctx, int * frame) {
@@ -268,7 +342,7 @@ uint64_t evaluate_stack_trace_commands(Context * ctx, StackFrame * frame, StackT
             stk[stk_pos++] = cmd->num;
             break;
         case SFT_CMD_REGISTER:
-            if (read_reg_value(cmd->reg, frame, stk + stk_pos) < 0) exception(errno);
+            if (read_reg_value(frame, cmd->reg, stk + stk_pos) < 0) exception(errno);
             stk_pos++;
             break;
         case SFT_CMD_FP:

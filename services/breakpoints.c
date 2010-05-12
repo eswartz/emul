@@ -55,7 +55,7 @@ typedef struct BreakInstruction BreakInstruction;
 typedef struct EvaluationArgs EvaluationArgs;
 typedef struct EvaluationRequest EvaluationRequest;
 typedef struct ConditionEvaluationRequest ConditionEvaluationRequest;
-typedef struct ContextExtension ContextExtension;
+typedef struct ContextExtensionBP ContextExtensionBP;
 
 struct BreakpointClient {
     LINK link_inp;
@@ -140,7 +140,7 @@ struct EvaluationRequest {
     ConditionEvaluationRequest * bp_arr;
 };
 
-struct ContextExtension {
+struct ContextExtensionBP {
     int                 bp_eval_started;
     BreakInstruction *  stepping_over_bp;   /* if not NULL context is stepping over a breakpoint instruction */
     char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
@@ -151,7 +151,7 @@ static const char * BREAKPOINTS = "Breakpoints";
 
 static size_t context_extension_offset = 0;
 
-#define EXT(ctx) ((ContextExtension *)((char *)(ctx) + context_extension_offset))
+#define EXT(ctx) ((ContextExtensionBP *)((char *)(ctx) + context_extension_offset))
 
 #define is_readable(ctx) (!(ctx)->exited && !(ctx)->exiting && ((ctx)->stopped || !context_has_state(ctx)))
 #define is_disabled(bp) (bp->enabled == 0 || bp->client_cnt == 0 || bp->unsupported != NULL)
@@ -1673,7 +1673,7 @@ void evaluate_breakpoint(Context * ctx) {
     int i;
     int bp_cnt = 0;
     int need_to_post = 0;
-    BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
+    BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx));
     EvaluationRequest * req = NULL;
 
     assert(context_has_state(ctx));
@@ -1718,7 +1718,7 @@ char ** get_context_breakpoint_ids(Context * ctx) {
 }
 
 int are_breakpoints_in_sync(Context * ctx) {
-    ContextExtension * ext = EXT(ctx);
+    ContextExtensionBP * ext = EXT(ctx);
     if (ctx->stopped_by_bp && !ext->bp_eval_started) return 0;
     if (ext->stepping_over_bp != NULL) return 0;
     if (ext->req != NULL) {
@@ -1736,8 +1736,8 @@ static void safe_restore_breakpoint(void * arg) {
 
     assert(bi->stepping_over_bp > 0);
     assert(find_instruction(ctx, bi->address) == bi);
-    if (!ctx->exiting && ctx->stopped && get_regs_PC(ctx->regs) == bi->address) {
-        trace(LOG_ALWAYS, "Skip breakpoint error: wrong PC %#lx", get_regs_PC(ctx->regs));
+    if (!ctx->exiting && ctx->stopped && get_regs_PC(ctx) == bi->address) {
+        trace(LOG_ALWAYS, "Skip breakpoint error: wrong PC %#lx", get_regs_PC(ctx));
     }
     EXT(ctx)->stepping_over_bp = NULL;
     bi->stepping_over_bp--;
@@ -1768,8 +1768,7 @@ static void safe_skip_breakpoint(void * arg) {
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
     assert(!ctx->intercepted);
-    assert(!ctx->regs_error);
-    assert(bi->address == get_regs_PC(ctx->regs));
+    assert(bi->address == get_regs_PC(ctx));
 
     if (bi->planted) remove_instruction(bi);
     if (bi->error) error = set_error_report_errno(bi->error);
@@ -1803,8 +1802,7 @@ int skip_breakpoint(Context * ctx, int single_step) {
     /* VxWork debug library can skip breakpoint when neccesary, no code is needed here */
     return 0;
 #else
-    assert(!ctx->regs_error);
-    bi = find_instruction(ctx, get_regs_PC(ctx->regs));
+    bi = find_instruction(ctx, get_regs_PC(ctx));
     if (bi == NULL || bi->error) return 0;
     bi->stepping_over_bp++;
     EXT(ctx)->stepping_over_bp = bi;
@@ -1859,7 +1857,7 @@ static void event_context_changed(Context * ctx, void * args) {
 }
 
 static void event_context_started(Context * ctx, void * args) {
-    ContextExtension * ext = EXT(ctx);
+    ContextExtensionBP * ext = EXT(ctx);
     ext->bp_eval_started = 0;
     if (ext->bp_ids != NULL) {
         loc_free(ext->bp_ids);
@@ -1868,7 +1866,7 @@ static void event_context_started(Context * ctx, void * args) {
 }
 
 static void event_context_disposed(Context * ctx, void * args) {
-    ContextExtension * ext = EXT(ctx);
+    ContextExtensionBP * ext = EXT(ctx);
     EvaluationRequest * req = ext->req;
     if (req != NULL) {
         loc_free(req->bp_arr);
@@ -1948,7 +1946,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     add_command_handler(proto, BREAKPOINTS, "getProperties", command_get_properties);
     add_command_handler(proto, BREAKPOINTS, "getStatus", command_get_status);
     add_command_handler(proto, BREAKPOINTS, "getCapabilities", command_get_capabilities);
-    context_extension_offset = context_extension(sizeof(ContextExtension));
+    context_extension_offset = context_extension(sizeof(ContextExtensionBP));
 #if !defined(_WRS_KERNEL)
     create_eventpoint("main", eventpoint_at_main, NULL);
 #endif

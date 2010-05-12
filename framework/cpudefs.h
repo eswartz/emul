@@ -41,11 +41,12 @@ typedef struct RegisterDefinition RegisterDefinition;
 
 struct RegisterDefinition {
     const char * name;           /* pointer to register name */
-    int          offset;         /* offset to entry in REG_SET */
-    int          size;           /* register size in bytes */
-    int          dwarf_id;       /* ID of the register in DWARF sections */
-    int          eh_frame_id;    /* ID of the register in .eh_frame section */
-    int          traceable;      /* register value can be traced using .eh_frame of .debug_frame */
+    size_t       offset;         /* offset to entry in REG_SET */
+    size_t       size;           /* register size in bytes */
+    int16_t      dwarf_id;       /* ID of the register in DWARF sections, or -1 */
+    int16_t      eh_frame_id;    /* ID of the register in .eh_frame section, or -1 */
+    uint8_t      traceable;      /* register value can be traced using .eh_frame of .debug_frame */
+    uint8_t      big_endian;     /* 0 - little endian, 1 -  big endian */
 };
 
 /* Stack tracing command codes */
@@ -89,13 +90,12 @@ typedef struct StackFrame StackFrame;
 
 struct StackFrame {
     int is_top_frame;
+    Context * ctx;
     ContextAddress fp;      /* frame address */
-    size_t regs_size;       /* size of "regs" and "mask" */
     RegisterData * regs;    /* register values */
-    RegisterData * mask;    /* registers valid bits mask */
 };
 
-/* Return array of CPU regiter definitions. LAst item in the array has name == NULL */
+/* Return array of CPU register definitions. Last item in the array has name == NULL */
 extern RegisterDefinition * get_reg_definitions(Context * ctx);
 
 /* Search register definition for given register ID, return NULL if not found */
@@ -105,16 +105,22 @@ extern RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned n
 extern RegisterDefinition * get_PC_definition(Context * ctx);
 
 /* Read register value from stack frame data, return 0 on success, return -1 and set errno if register is not available  */
-extern int read_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t * value);
+extern int read_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t * value);
 
 /* Write register value into stack frame data, return 0 on success, return -1 and set errno if register is not available  */
-extern int write_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t value);
+extern int write_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t value);
+
+/* Read register bytes from stack frame data, return 0 on success, return -1 and set errno if register is not available  */
+extern int read_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf);
+
+/* Write register bytes into stack frame data, return 0 on success, return -1 and set errno if register is not available  */
+extern int write_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf);
 
 /* Get instruction pointer (PC) value */
-extern ContextAddress get_regs_PC(RegisterData * regs);
+extern ContextAddress get_regs_PC(Context * ctx);
 
 /* Set instruction pointer (PC) value */
-extern void set_regs_PC(RegisterData * x, ContextAddress y);
+extern void set_regs_PC(Context * ctx, ContextAddress y);
 
 /* Get TCF ID of a stack frame */
 extern char * frame2id(Context * ctx, int frame);
@@ -145,7 +151,7 @@ extern size_t get_break_size(void);
  * The function uses register values in current frame to calculate frame address "frame->fp",
  * and calculate register values in the next frame.
  */
-extern int crawl_stack_frame(struct Context * ctx, StackFrame * frame, StackFrame * down);
+extern int crawl_stack_frame(StackFrame * frame, StackFrame * down);
 
 /*
  * Execute stack tracing command sequence.
