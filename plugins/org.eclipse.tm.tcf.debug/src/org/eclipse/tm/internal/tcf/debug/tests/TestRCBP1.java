@@ -54,6 +54,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
         new HashMap<String,Map<String,IRegisters.RegistersContext>>();
     private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>();
+    private final Map<String,IDiagnostics.ISymbol> sym_list = new HashMap<String,IDiagnostics.ISymbol>();
     private final Random rnd = new Random();
 
     private String[] test_list;
@@ -61,15 +62,11 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private IRunControl.RunControlContext test_context;
     private String main_thread_id;
     private Runnable pending_cancel;
-    private ISymbol func0;
-    private ISymbol func1;
-    private ISymbol func2;
-    private ISymbol func3;
-    private ISymbol array;
     private int bp_cnt = 0;
     private boolean done_get_state;
     private int resume_cnt = 0;
     private IToken cancel_test_cmd;
+    private boolean bp_reset_done;
     private boolean bp_set_done;
     private boolean bp_change_done;
 
@@ -182,8 +179,22 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             getTestContext();
             return;
         }
-        if (func0 == null) {
+        if (sym_list.isEmpty()) {
             getSymbols();
+            return;
+        }
+        if (!bp_reset_done) {
+            // Reset breakpoint list (previous tests might left breakpoints)
+            bp.set(null, new IBreakpoints.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    if (error != null) {
+                        exit(error);
+                        return;
+                    }
+                    bp_reset_done = true;
+                    runTest();
+                }
+            });
             return;
         }
         if (!bp_set_done) {
@@ -265,8 +276,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void getSymbols() {
-        IDiagnostics.DoneGetSymbol d = new IDiagnostics.DoneGetSymbol() {
+        final HashMap<IToken,String> cmds = new HashMap<IToken,String>();
+        IDiagnostics.DoneGetSymbol done = new IDiagnostics.DoneGetSymbol() {
             public void doneGetSymbol(IToken token, Throwable error, ISymbol symbol) {
+                String name = cmds.remove(token);
                 if (error != null) {
                     exit(error);
                     return;
@@ -274,44 +287,26 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 if (!test_suite.isActive(TestRCBP1.this)) return;
                 assert test_ctx_id != null;
                 if (!symbol.isAbs()) {
-                    exit(new Exception("Symbols 'tcf_test_*' must be absolute"));
+                    exit(new Exception("Symbols must be absolute: " + name));
                 }
-                else if (symbol.getValue().longValue() == 0) {
-                    exit(new Exception("Symbols 'tcf_test_*' must not be NULL"));
-                }
-                else if (func0 == null) {
-                    func0 = symbol;
-                }
-                else if (func1 == null) {
-                    func1 = symbol;
-                }
-                else if (func2 == null) {
-                    func2 = symbol;
-                }
-                else if (func3 == null) {
-                    func3 = symbol;
+                else if (symbol.getValue() == null || symbol.getValue().longValue() == 0) {
+                    exit(new Exception("Symbols must not be NULL: " + name));
                 }
                 else {
-                    array = symbol;
-                    // Reset breakpoint list (previous tests might left breakpoints)
-                    bp.set(null, new IBreakpoints.DoneCommand() {
-                        public void doneCommand(IToken token, Exception error) {
-                            if (error != null) {
-                                exit(error);
-                                return;
-                            }
-                            runTest();
-                        }
-                    });
+                    sym_list.put(name, symbol);
+                    if (cmds.isEmpty()) runTest();
                 }
             }
         };
+        String[] syms = {
+                "tcf_test_func0",
+                "tcf_test_func1",
+                "tcf_test_func2",
+                "tcf_test_func3",
+                "tcf_test_array"
+        };
         String prs = test_context.getProcessID();
-        diag.getSymbol(prs, "tcf_test_func0", d);
-        diag.getSymbol(prs, "tcf_test_func1", d);
-        diag.getSymbol(prs, "tcf_test_func2", d);
-        diag.getSymbol(prs, "tcf_test_func3", d);
-        diag.getSymbol(prs, "tcf_test_array", d);
+        for (String name : syms) cmds.put(diag.getSymbol(prs, name, done), name);
     }
 
     @SuppressWarnings("unchecked")
@@ -324,12 +319,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             m[i].put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
             switch (i) {
             case 0:
-                m[i].put(IBreakpoints.PROP_LOCATION, func0.getValue().toString());
+                m[i].put(IBreakpoints.PROP_LOCATION, sym_list.get("tcf_test_func0").getValue().toString());
                 // Condition is always true
                 m[i].put(IBreakpoints.PROP_CONDITION, "$thread!=\"\"");
                 break;
             case 1:
-                m[i].put(IBreakpoints.PROP_LOCATION, func0.getValue().toString());
+                m[i].put(IBreakpoints.PROP_LOCATION, sym_list.get("tcf_test_func0").getValue().toString());
                 // Condition is always false
                 m[i].put(IBreakpoints.PROP_CONDITION, "$thread==\"\"");
                 break;
@@ -626,19 +621,24 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         running.add(id);
     }
 
+    private long getSymAddr(String sym) {
+        return sym_list.get(sym).getValue().longValue();
+    }
+
     private String toSymName(long addr) {
-        if (func0.getValue().longValue() == addr) return "tcf_test_func0";
-        if (func1.getValue().longValue() == addr) return "tcf_test_func1";
-        if (func2.getValue().longValue() == addr) return "tcf_test_func2";
-        if (func3.getValue().longValue() == addr) return "tcf_test_func3";
+        for (String name : sym_list.keySet()) {
+            if (getSymAddr(name) == addr) return name;
+        }
         return "0x" + Long.toHexString(addr);
     }
 
-    private void checkSuspendedContext(SuspendedContext sc, ISymbol sym) {
-        long pc =  Long.parseLong(sc.pc);
-        if (pc != sym.getValue().longValue() || !"Breakpoint".equals(sc.reason)) {
-            exit(new Exception("Invalid contextSuspended event: " + sc.id + " '" + toSymName(pc) + "' " + sc.pc + " " + sc.reason +
-                    ", expected breakpoint at '" + toSymName(sym.getValue().longValue()) + "' " + sym.getValue()));
+    private void checkSuspendedContext(SuspendedContext sc, String sym) {
+        long pc = Long.parseLong(sc.pc);
+        long ss = getSymAddr(sym);
+        if (pc != ss || !"Breakpoint".equals(sc.reason)) {
+            exit(new Exception("Invalid contextSuspended event: " +
+                    sc.id + " '" + toSymName(pc) + "' " + sc.pc + " " + sc.reason +
+                    ", expected breakpoint at '" + sym + "' " + ss));
         }
     }
 
@@ -646,10 +646,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         // Check if context suspended by a one of our breakpoint
         if (!"Breakpoint".equals(sc.reason)) return false;
         long pc =  Long.parseLong(sc.pc);
-        if (pc == func0.getValue().longValue()) return true;
-        if (pc == func1.getValue().longValue()) return true;
-        if (pc == func2.getValue().longValue()) return true;
-        if (pc == func3.getValue().longValue()) return true;
+        for (IDiagnostics.ISymbol sym : sym_list.values()) {
+            if (pc == sym.getValue().longValue()) return true;
+        }
         return false;
     }
 
@@ -672,7 +671,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             sc = new SuspendedContext(id, pc, reason, params);
             suspended.put(id, sc);
         }
-        if (main_thread_id == null && "Breakpoint".equals(reason) && isMyBreakpoint(sc)) {
+        if (main_thread_id == null && isMyBreakpoint(sc)) {
             // Process main thread should be the first to hit a breakpoint in the test
             if (!done_get_state) {
                 exit(new Exception("Unexpeceted breakpoint hit"));
@@ -685,27 +684,28 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             return;
         }
         if (isMyBreakpoint(sc)) {
-            if ("Breakpoint".equals(reason) && id.equals(main_thread_id)) bp_cnt++;
+            if (id.equals(main_thread_id)) bp_cnt++;
             SuspendedContext sp = suspended_prev.get(id);
+            String sp_sym = sp == null ? null : toSymName(Long.parseLong(sp.pc));
             if (sp == null) {
-                checkSuspendedContext(sc, func0);
+                checkSuspendedContext(sc, "tcf_test_func0");
             }
-            else if (Long.parseLong(sp.pc) == func0.getValue().longValue()) {
-                checkSuspendedContext(sc, func1);
+            else if ("tcf_test_func0".equals(sp_sym)) {
+                checkSuspendedContext(sc, "tcf_test_func1");
             }
-            else if (Long.parseLong(sp.pc) == func1.getValue().longValue()) {
+            else if ("tcf_test_func1".equals(sp_sym)) {
                 if (id.equals(main_thread_id)) {
-                    checkSuspendedContext(sc, func2);
+                    checkSuspendedContext(sc, "tcf_test_func2");
                 }
                 else {
-                    checkSuspendedContext(sc, func3);
+                    checkSuspendedContext(sc, "tcf_test_func3");
                 }
             }
-            else if (Long.parseLong(sp.pc) == func2.getValue().longValue()) {
-                checkSuspendedContext(sc, func3);
+            else if ("tcf_test_func2".equals(sp_sym)) {
+                checkSuspendedContext(sc, "tcf_test_func3");
             }
-            else if (Long.parseLong(sp.pc) == func3.getValue().longValue()) {
-                checkSuspendedContext(sc, func0);
+            else if ("tcf_test_func3".equals(sp_sym)) {
+                checkSuspendedContext(sc, "tcf_test_func0");
             }
         }
         if (!test_suite.isActive(this)) return;
@@ -779,7 +779,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 final boolean big_endian = mem_ctx.isBigEndian();
                 final int addr_size = mem_ctx.getAddressSize();
                 final byte[] buf = new byte[0x1000];
-                mem_ctx.get(array.getValue(), 1, buf, 0, addr_size, 0, new IMemory.DoneMemory() {
+                mem_ctx.get(sym_list.get("tcf_test_array").getValue(), 1, buf, 0, addr_size, 0, new IMemory.DoneMemory() {
                     public void doneMemory(IToken token, MemoryError error) {
                         if (suspended.get(sc.id) != sc) {
                             test_suite.target_lock = false;
