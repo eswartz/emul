@@ -13,7 +13,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public abstract class BaseHLOperand implements AssemblerOperand {
+public abstract class BaseHLOperand implements AssemblerOperand, ISymbolOperand {
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#resolve(v9t9.tools.asm.assembler.Assembler, v9t9.engine.cpu.IInstruction)

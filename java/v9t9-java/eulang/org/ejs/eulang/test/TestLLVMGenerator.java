@@ -3,11 +3,17 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.*;
 
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.tms9900.RegisterTempOperand;
+import org.ejs.eulang.symbols.ISymbol;
 import org.junit.Test;
+
+import v9t9.tools.asm.assembler.HLInstruction;
+import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 
 /**
  * @author ejs
@@ -302,6 +308,7 @@ public class TestLLVMGenerator extends BaseParserTest {
     }
     @Test
     public void testIncsDecs() throws Exception  {
+    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend("maker1 = code(u,v:Int) { u++ * ++v }; " +
     			"maker2 = code(u,v:Int) { u-- * --v }; " +
     			"\n" +
@@ -312,4 +319,37 @@ public class TestLLVMGenerator extends BaseParserTest {
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(3, g.getModule().getSymbolCount());
     }
+    
+    @Test
+    public void testGlobal1() throws Exception {
+    	IAstModule mod = doFrontend("bat := 10;\n" +
+    			"foo = code(x,y:Int => nil) { bat = x+y };\n"+
+    			"");
+    	
+    	LLVMGenerator g = doGenerate(mod);
+    	ISymbol batSym = g.getModule().getGlobalScope().get("bat");
+		assertNotNull(batSym);
+		
+		LLSymbolOp op = new LLSymbolOp(batSym);
+		assertEquals("@bat", op.toString());
+		
+    }
+    
+
+	@Test
+	public void testTrunc16_to_8_1_Mem() throws Exception {
+		dumpLLVMGen = true;
+		IAstModule mod = doFrontend("x := 11; foo = code( ) { Byte(x) };\n");
+    	LLVMGenerator g = doGenerate(mod);
+	}
+	
+	@Test
+	public void testTrunc16_to_8_1_Mem_to_Mem() throws Exception {
+		dumpTypeInfer = true;
+		dumpLLVMGen = true;
+		IAstModule mod = doFrontend("x := 11; foo = code( ) { x = Byte(x) };\n");
+		LLVMGenerator g = doGenerate(mod);
+		assertFoundInUnoptimizedText("trunc", g);
+	}
+
 }

@@ -275,7 +275,9 @@ public class LLVMGenerator {
 				}
 			}
 			if (isData) {
-				ll.add(new LLGlobalDirective(symbol.getSymbol(), null, stmt.getType()));
+				ISymbol modSymbol = ll.getModuleSymbol(symbol.getSymbol(), stmt.getType());
+
+				ll.add(new LLGlobalDirective(modSymbol, null, stmt.getType()));
 			}
 		}
 	}
@@ -944,12 +946,31 @@ public class LLVMGenerator {
 
 	private LLOperand generateSymbolAddr(ISymbol symbol, LLType type) {
 		// TODO: out-of-scope variables
-		if (!(symbol.getScope() instanceof LocalScope))
+		ILLVariable var;
+		if (!(symbol.getScope() instanceof LocalScope)) {
 			symbol = ll.getModuleSymbol(symbol, type);
-		ILLVariable var = varStorage.lookupVariable(symbol);
+			var = getGlobalVariable(symbol);
+		}
+		else
+			var = varStorage.lookupVariable(symbol);
 		if (var != null)
 			return new LLVariableOp(var);
 		return new LLSymbolOp(symbol);
+	}
+
+	/**
+	 * @param moduleSymbol
+	 * @return
+	 */
+	private ILLVariable getGlobalVariable(ISymbol moduleSymbol) {
+		if (moduleSymbol.getType() instanceof LLCodeType)
+			return null;
+		ILLVariable var = varStorage.lookupVariable(moduleSymbol);
+		if (var != null)
+			return var;
+		var = new LLGlobalVariable(moduleSymbol, typeEngine);
+		varStorage.registerVariable(moduleSymbol, var);
+		return var;
 	}
 
 	private LLOperand generateStmtListExpr(
@@ -1020,6 +1041,10 @@ public class LLVMGenerator {
 			temp = generateTupleExpr((IAstTupleExpr) expr);
 		else if (expr instanceof IAstAssignStmt)
 			temp = generateAssignStmt((IAstAssignStmt) expr);
+		else if (expr instanceof IAstAllocStmt)
+			temp = generateLocalAllocStmt((IAstAllocStmt) expr);
+		else if (expr instanceof IAstAllocTupleStmt)
+			temp = generateLocalAllocTupleStmt((IAstAllocTupleStmt) expr);
 		else if (expr instanceof IAstInitListExpr)
 			temp = generateInitListExpr((IAstInitListExpr) expr);
 		else if (expr instanceof IAstBlockStmt)
@@ -1686,6 +1711,7 @@ entry:
 			}
 			
 			LLOperand temp = currentTarget.newTemp(type);
+			value = currentTarget.load(value.getType(), value);
 			currentTarget.emit(new LLCastInstr(temp, cast, origType, value, type));
 			
 			value = temp;

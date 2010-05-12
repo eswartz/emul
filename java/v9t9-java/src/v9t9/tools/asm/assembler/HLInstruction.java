@@ -4,6 +4,7 @@
 package v9t9.tools.asm.assembler;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 
 
 /**
@@ -54,5 +55,9 @@ public class HLInstruction extends AssemblerInstruction {
 		instr.setOp3(op3);
 		return instr;
 	}
+
+	/**
+	 * @return
+	 */
 
 }

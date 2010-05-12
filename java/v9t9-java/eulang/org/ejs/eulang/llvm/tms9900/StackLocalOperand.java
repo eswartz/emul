@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import org.ejs.eulang.symbols.ISymbol;
+
 
 /**
  * @author ejs
@@ -73,5 +75,14 @@ public class StackLocalOperand extends BaseHLOperand {
 		return false;
 	}
 
+
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ISymbolOperand#getSymbol()
+	 */
+	@Override
+	public ISymbol getSymbol() {
+		return local.getName();
+	}
 
 }

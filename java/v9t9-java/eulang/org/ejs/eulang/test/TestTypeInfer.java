@@ -390,7 +390,6 @@ public class TestTypeInfer extends BaseParserTest {
 		assertTrue(isCastTo(binExpr.getLeft(), typeEngine.FLOAT));
 		assertEquals(typeEngine.FLOAT, binExpr.getRight().getType());
     }
-	
 
 	@Test
     public void testCast1() throws Exception {
@@ -462,6 +461,26 @@ public class TestTypeInfer extends BaseParserTest {
 		IAstBinExpr mulExpr = (IAstBinExpr) ((IAstUnaryExpr) binExpr.getLeft()).getExpr();
 		assertTrue(isCastTo(mulExpr.getLeft(), typeEngine.FLOAT));
 		assertEquals(typeEngine.FLOAT, mulExpr.getRight().getType());
+    }
+    
+    @Test
+    public void testCast3() throws Exception {
+    	// we have one cast of the int to the byte, and another cast of the assignment to an int for the return
+    	dumpLLVMGen = true;
+    	IAstModule mod = treeize("x : Byte; testCast3 = code( => Int ) { x = 0x1234; };\n");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCast3");
+    	doTypeInfer(mod);
+    	
+    	typeTest(mod, false);
+    	
+    	assertEquals(typeEngine.getCodeType(typeEngine.INT, new LLType[0]), getMainBodyExpr(def).getType());
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().getFirst();
+    	assertTrue(isCastTo(exprStmt.getExpr(), typeEngine.INT));
+    	IAstAssignStmt assn = (IAstAssignStmt) ((IAstUnaryExpr) exprStmt.getExpr()).getExpr();
+    	assertTrue(isCastTo(assn.getExprs().getFirst(), typeEngine.BYTE));
     }
 
 	@Test

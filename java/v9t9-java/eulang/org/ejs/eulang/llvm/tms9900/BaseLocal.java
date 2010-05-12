@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -15,6 +16,8 @@ public class BaseLocal implements ILocal {
 	private LLType type;
 	private ISymbol name;
 	private ILocal incoming;
+	private LLInstr lastUse;
+	private boolean single;
 
 	/**
 	 * 
@@ -101,4 +104,36 @@ public class BaseLocal implements ILocal {
 	public void setIncoming(ILocal incoming) {
 		this.incoming = incoming;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getLastUse()
+	 */
+	@Override
+	public LLInstr getLastUse() {
+		return lastUse;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setLastUse(org.ejs.eulang.llvm.instrs.LLInstr)
+	 */
+	@Override
+	public void setLastUse(LLInstr instr) {
+		this.lastUse = instr;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#isSingleBlock()
+	 */
+	@Override
+	public boolean isSingleBlock() {
+		return single;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setSingleBlock(boolean)
+	 */
+	@Override
+	public void setSingleBlock(boolean single) {
+		this.single = single;
+	}
+	
 }

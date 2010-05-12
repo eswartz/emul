@@ -159,6 +159,8 @@ public class Locals {
 		currentBlock = def.getEntryBlock();
 		allocateParams();
 		
+		final Map<ILocal, LLBlock> lastLocalUse = new HashMap<ILocal, LLBlock>();
+		
 		ILLCodeVisitor visitor = new LLCodeVisitor() {
 			@Override
 			public boolean enterBlock(LLBlock block) {
@@ -166,13 +168,14 @@ public class Locals {
 				System.out.println("Block " + currentBlock.getLabel());
 				return true;
 			}
+			@Override
 			public boolean enterInstr(LLBlock block, LLInstr instr) {
 				if (instr instanceof LLAssignInstr) {
 					LLAssignInstr assign = (LLAssignInstr) instr;
 					if (assign.getResult() instanceof LLSymbolOp)
-						allocateLocal(assign);
+						allocateLocal(assign).setLastUse(instr);
 					else if (assign.getResult() instanceof LLTempOp)
-						allocateTemp(assign);
+						allocateTemp(assign).setLastUse(instr);
 					else
 						assert false;
 				}
@@ -180,7 +183,19 @@ public class Locals {
 					// see if we're storing into an argument local
 					matchLocalAllocation((LLStoreInstr) instr);
 				}
-				return false;
+				return true;
+			}
+			@Override
+			public boolean enterOperand(LLInstr instr, int num,
+					LLOperand operand) {
+				ILocal local = getLocal(operand);
+				if (local != null) {
+					LLBlock lastBlock = lastLocalUse.get(local);
+					if (lastBlock != null && lastBlock != currentBlock)
+						local.setSingleBlock(false);
+					local.setLastUse(instr);
+				}
+				return true;
 			}
 		};
 		def.accept(visitor);
@@ -203,8 +218,9 @@ public class Locals {
 				mirror.setIncoming(arg);
 				if (arg instanceof StackLocal) {
 					mirror.setOffset(((StackLocal) arg).getOffset());
-				} else {
+				} else if (arg instanceof RegisterLocal) {
 					stackLocals.remove(mirrorSym);
+					regLocals.put(mirrorSym, (RegisterLocal) arg);
 				}
 				
 				// recover stack space: should always work since we store
@@ -275,6 +291,8 @@ public class Locals {
 		stackLocals.put(name, local);
 		System.out.println("Allocated " + local);
 		
+		local.setSingleBlock(false);
+		
 		return local;
 	}
 
@@ -291,7 +309,7 @@ public class Locals {
 		return local;
 	}
 
-	public void allocateTemp(LLAssignInstr instr) {
+	public ILocal allocateTemp(LLAssignInstr instr) {
 		
 		LLTempOp result = (LLTempOp) instr.getResult();
 		
@@ -299,7 +317,7 @@ public class Locals {
 		ISymbol name = localScope.add(result.getName(), false);
 		name.setType(result.getType());
 		
-		allocateTemp(name, result.getType());
+		return allocateTemp(name, result.getType());
 	}
 	
 	public ILocal allocateTemp(ISymbol name, LLType type) {
@@ -320,7 +338,10 @@ public class Locals {
 		
 		System.out.println("Allocated " + local);
 		regLocals.put(name, (RegisterLocal) local);
-		
+
+		// guess
+		local.setSingleBlock(true);	
+
 		return local;
 	}
 

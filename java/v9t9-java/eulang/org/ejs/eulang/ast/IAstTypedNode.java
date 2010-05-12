@@ -22,4 +22,9 @@ public interface IAstTypedNode extends IAstNode, ITyped {
 	 * @throws TypeException if the inference detected illegal type combinations
 	 */
 	boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException;
+	
+	/** Tell if the type is fixed and should not be changed */
+	boolean isTypeFixed();
+	
+	void setTypeFixed(boolean fixed);
 }

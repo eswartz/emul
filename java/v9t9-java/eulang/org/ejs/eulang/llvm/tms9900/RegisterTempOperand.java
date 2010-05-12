@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import org.ejs.eulang.symbols.ISymbol;
+
 
 /**
  * @author ejs
@@ -48,8 +50,10 @@ public class RegisterTempOperand extends BaseHLOperand {
 		if (local == null) {
 			if (other.local != null)
 				return false;
-		} else if (!local.equals(other.local))
-			return false;
+		} else if (!local.equals(other.local)) {
+			if (local.getVr() != other.local.getVr())
+				return false;
+		}
 		return true;
 	}
 
@@ -70,4 +74,13 @@ public class RegisterTempOperand extends BaseHLOperand {
 	public RegisterLocal getLocal() {
 		return local;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ISymbolOperand#getSymbol()
+	 */
+	@Override
+	public ISymbol getSymbol() {
+		return local.getName();
+	}
+	
 }

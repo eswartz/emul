@@ -35,6 +35,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		setExprs(expr);
 		setSymbolExprs(id);
 		setExpand(expand);
+		setTypeFixed(true);
 	}
 
 	public IAstAssignStmt copy(IAstNode copyParent) {
@@ -170,7 +171,9 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 			IAstTypedExpr theSym = symExpr.list().get(i);
 			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
 			// don't use the expr's type as our own type, since this will change the LHS type
+			setTypeFixed(false);
 			changed |= inferTypesFromChildren(new ITyped[] { theSym /*, theExpr*/ });
+			setTypeFixed(true);
 			
 			LLType left = theSym.getType();
 			LLType right = theExpr.getType();

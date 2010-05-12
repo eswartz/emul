@@ -250,23 +250,32 @@ public class Test9900Locals extends BaseParserTest {
 		Map<ISymbol, ? extends ILocal> stackLocalMap;
 
 		RegisterLocal reg;
+		RegisterLocal regM;
 		Map<ISymbol, ? extends ILocal> regLocalMap;
 		regLocalMap = locals.getRegLocals();
 		
-		// four enregistered arguments
-		assertEquals(4, regLocalMap.size());
+		// four enregistered arguments, and mirrors mapping 
+		assertEquals(8, regLocalMap.size());
 		reg = (RegisterLocal) getLocal(regLocalMap, "a");
 		assertEquals(0, reg.getVr());
 		assertEquals(typeEngine.INT, reg.getType());
+		regM = (RegisterLocal) getLocal(regLocalMap, "_.a");
+		assertEquals(reg, regM);
 		reg = (RegisterLocal) getLocal(regLocalMap, "b");
 		assertEquals(1, reg.getVr());
 		assertEquals(typeEngine.getPointerType(typeEngine.INT), reg.getType());
+		regM = (RegisterLocal) getLocal(regLocalMap, "_.b");
+		assertEquals(reg, regM);
 		reg = (RegisterLocal) getLocal(regLocalMap, "c");
 		assertEquals(2, reg.getVr());
 		assertEquals(typeEngine.BOOL, reg.getType());
+		regM = (RegisterLocal) getLocal(regLocalMap, "_.c");
+		assertEquals(reg, regM);
 		reg = (RegisterLocal) getLocal(regLocalMap, "d");
 		assertEquals(3, reg.getVr());
 		assertEquals(typeEngine.BYTE, reg.getType());
+		regM = (RegisterLocal) getLocal(regLocalMap, "_.d");
+		assertEquals(reg, regM);
 		
 		// one mirror for c and x's actual location;
 		// all regs shunted to registers
@@ -304,8 +313,8 @@ public class Test9900Locals extends BaseParserTest {
 		RegisterLocal reg;
 		localMap = locals.getRegLocals();
 		
-		// four arguments
-		assertEquals(4, localMap.size());
+		// four arguments, enregistered + mirrored
+		assertEquals(8, localMap.size());
 		reg = (RegisterLocal) getLocal(localMap, "a");
 		assertEquals(0, reg.getVr());
 		reg = (RegisterLocal) getLocal(localMap, "b");
@@ -370,8 +379,8 @@ public class Test9900Locals extends BaseParserTest {
 		RegisterLocal reg;
 		localMap = locals.getRegLocals();
 		
-		// ome arguments
-		assertEquals(1, localMap.size());
+		// ome arguments, enregistered + mirrored
+		assertEquals(2, localMap.size());
 		reg = (RegisterLocal) getLocal(localMap, "a");
 		assertEquals(0, reg.getVr());
 		

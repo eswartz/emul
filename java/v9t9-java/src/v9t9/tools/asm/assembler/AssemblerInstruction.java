@@ -22,6 +22,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  */
 public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 
+	private static final AssemblerOperand[] NO_OPS = new AssemblerOperand[0];
 	private int inst;
 	private AssemblerOperand op1;
 	private AssemblerOperand op2;
@@ -134,6 +135,16 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 		else if (i == 3)
 			return op3;
 		throw new IllegalArgumentException();
+	}
+
+	public AssemblerOperand[] getOps() {
+		if (op3 != null && !(op3 instanceof LLEmptyOperand))
+			return new AssemblerOperand[] { op1, op2, op3 };
+		if (op2 != null && !(op2 instanceof LLEmptyOperand))
+			return new AssemblerOperand[] { op1, op2  };
+		if (op1 != null && !(op1 instanceof LLEmptyOperand))
+			return new AssemblerOperand[] { op1 };
+		return NO_OPS;
 	}
 
 }

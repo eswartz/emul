@@ -389,8 +389,6 @@ abstract public class AstNode implements IAstNode {
 	protected <T extends IAstNode> T fixup(T orig, T copy) {
     	((AstNode)copy).id = ((AstNode)orig).id;
     	copy.setSourceRef(orig.getSourceRef());
-    	if (orig instanceof IAstTypedNode)
-    		((IAstTypedNode) copy).setType(((IAstTypedNode) orig).getType());
     	return copy;
     }
 	

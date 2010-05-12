@@ -10,30 +10,30 @@ import static v9t9.engine.cpu.InstructionTable.Ili;
 import static v9t9.engine.cpu.InstructionTable.Imov;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.tms9900.ILocal;
+import org.ejs.eulang.llvm.tms9900.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
 import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.RegisterTempOperand;
-import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.llvm.tms9900.StackLocalOperand;
 import org.ejs.eulang.llvm.tms9900.SymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
-import org.omg.CORBA.LocalObject;
 
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 
 /**
@@ -155,6 +155,26 @@ public class Test9900InstrSelection extends BaseParserTest {
 		assertEquals("B *R11", inst.toString());
 	}
 
+
+	@Test
+	public void testSetGlobal1() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("bat := Byte;\n"+
+				"foo = code(x,y:Int => nil) { bat = 10; };\n");
+		
+		HLInstruction inst;
+		int idx = findInstrWithInst(instrs, "LI");
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 0xA00);
+		
+		idx = findInstrWithSymbol(instrs, "bat");
+		inst = instrs.get(idx);
+		
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, AddrOperand.class, "bat"); 
+		ISymbol sym = getOperandSymbol(inst.getOp2());
+		assertTrue(sym+"", sym.getScope() instanceof ModuleScope);
+		
+	}
 	@SuppressWarnings("unchecked")
 	protected void matchInstr(HLInstruction instr, String name, Object... stuff) {
 		assertEquals(instr+"", name.toLowerCase(), InstructionTable.getInstName(instr.getInst()).toLowerCase());
@@ -191,6 +211,8 @@ public class Test9900InstrSelection extends BaseParserTest {
 						assertTrue(instr+":"+op, ((RegisterOperand) op).isReg(num));
 					else if (op instanceof RegisterTempOperand)
 						assertEquals(instr+":"+op, num, (Integer)((RegisterTempOperand) op).getLocal().getVr());
+					else if (op instanceof NumberOperand)
+						assertEquals(instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
 					else 
 						assertEquals(instr+":"+op, num, op);
 				}
@@ -204,36 +226,142 @@ public class Test9900InstrSelection extends BaseParserTest {
 		}
 	}
 
+	
+	protected ISymbol getOperandSymbol(AssemblerOperand op) {
+		if (op instanceof AddrOperand)
+			op = ((AddrOperand) op).getAddr();
+		if (op instanceof RegisterOperand)
+			op = ((RegisterOperand) op).getReg();
+		
+		if (op instanceof ISymbolOperand)
+			return ((ISymbolOperand) op).getSymbol();
+		return null;
+	}
 	protected void assertSameSymbol(HLInstruction instr,
 			ISymbol sym, String string) {
-		assertTrue(instr+":"+sym, sym.getUniqueName().equals(string)
-				 || sym.getName().equals(string)
-				 || sym.getUniqueName().startsWith("%" + string)
-				 || sym.getUniqueName().contains("." + string + ".")
+		assertTrue(instr+":"+sym, symbolMatches(sym, string)
 				 );
 	}
 
+	protected boolean symbolMatches(ISymbol sym, String string) {
+		return sym.getUniqueName().equals(string)
+				 || sym.getName().equals(string)
+				 || sym.getUniqueName().startsWith("%" + string)
+				 || sym.getUniqueName().startsWith("@" + string)
+				 || sym.getUniqueName().startsWith(string + ".")
+				 || sym.getUniqueName().contains("." + string + ".");
+	}
+	
+	protected int findInstrWithSymbol(List<HLInstruction> instrs, String string) {
+		int idx = 0;
+		for (HLInstruction instr : instrs) {
+			for (AssemblerOperand op : instr.getOps()) {
+				ISymbol sym = getOperandSymbol(op);
+				if (sym != null && symbolMatches(sym, string))
+					return idx;
+			}
+			idx++;
+		}
+		return -1;
+	}
+
+
+	protected int findInstrWithInst(List<HLInstruction> instrs, String string) {
+		return findInstrWithInst(instrs, string, 0);
+	}
+
+	protected int findInstrWithInst(List<HLInstruction> instrs, String string, int from) {
+		for (int i = from; i < instrs.size(); i++) {
+			HLInstruction instr = instrs.get(i);
+			if (InstructionTable.getInstName(instr.getInst()).equalsIgnoreCase(string))
+				return i;
+		}
+		return -1;
+	}
 	@Test
 	public void testAddAndRet1() throws Exception {
 		dumpLLVMGen = true;
 		doIsel("foo = code(x,y:Int ) { x+y };\n");
-		assertEquals(6, instrs.size());
 		
+		// X is not used again, and both come in in regs
+		int idx = findInstrWithInst(instrs, "A");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "A", RegisterTempOperand.class, "y", RegisterTempOperand.class, "x"); 
+	}
+	
+	@Test
+	public void testTrunc16_to_8_1_Local() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("foo = code(x,y:Int ) { z : Byte = x+y };\n");
+		
+		int idx = findInstrWithInst(instrs, "SLA");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, NumberOperand.class, 8);
+	}
+	
+	@Test
+	public void testTrunc16_to_8_1_Mem_to_Temp() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("x := 11; foo = code( ) { Byte(x) };\n");
+		
+		int idx = findInstrWithInst(instrs, "SLA");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, NumberOperand.class, 8);
+	}
+	@Test
+	public void testTrunc16_to_8_1_Mem_to_Mem() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("x := 11; foo = code( ) { x = Byte(x) };\n");
+		
+		int idx;
 		HLInstruction inst;
-		inst = instrs.get(0);
-		matchInstr(inst, "MOV", RegisterTempOperand.class, 0, AddrOperand.class, "x"); 
-		inst = instrs.get(1);
-		matchInstr(inst, "MOV", RegisterTempOperand.class, 1, AddrOperand.class, "y"); 
-		inst = instrs.get(2);
-		AssemblerOperand res = inst.getOp2();
-		matchInstr(inst, "MOV", AddrOperand.class, "x", RegisterTempOperand.class); 
-		inst = instrs.get(3);
-		matchInstr(inst, "A", AddrOperand.class, "y", res); 
+		idx = findInstrWithSymbol(instrs, "x");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", AddrOperand.class, "x", RegisterTempOperand.class);
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, NumberOperand.class, 8);
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, NumberOperand.class, 8);
+	}
+	@Test
+	public void testTrunc16_to_8_1_Imm_to_Mem() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("x : Byte; foo = code( => Int ) { x = 0x1234; };\n");
 		
-		HLInstruction inst3 = instrs.get(4);
-		matchInstr(inst3, "MOV", res, RegisterTempOperand.class, 0); 
+		int idx;
+		HLInstruction inst;
+		
+		// downcast on the immed
+		idx = findInstrWithInst(instrs, "LI");
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 0x3400);
 
-		inst = instrs.get(5);
-		assertEquals("B *R11", inst.toString());
+		idx = findInstrWithSymbol(instrs, "x");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, AddrOperand.class, "x");
+		
+		// upcast again
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, NumberOperand.class, 8);
+	}
+	@Test
+	public void testExt8_to_16_1_Mem_to_Mem() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("x : Byte = 11; foo = code( ) { x = Int(x) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		idx = findInstrWithSymbol(instrs, "x");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", AddrOperand.class, "x", RegisterTempOperand.class);
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, NumberOperand.class, 8);
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, NumberOperand.class, 8);
 	}
 }

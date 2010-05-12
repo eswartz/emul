@@ -64,4 +64,11 @@ public class LLCastInstr extends LLAssignInstr {
 		sb.append(" to " + toType.getLLVMName());
 	}
 
+	/**
+	 * @return
+	 */
+	public LLType getToType() {
+		return toType;
+	}
+
 }

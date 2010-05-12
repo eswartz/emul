@@ -8,6 +8,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -18,6 +19,7 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -136,10 +138,36 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		
 		// see what the return statements do
 		if (returns instanceof IAstTypedExpr) {
+			IAstTypedExpr returnExpr = (IAstTypedExpr) returns;
 			// don't override a void return
-			if (!(newType.getRetType() != null &&  newType.getRetType().getBasicType() == BasicType.VOID)) {
-				changed |= updateType((ITyped) returns, newType.getRetType());
+			if (newType.getRetType() != null && newType.getRetType().getBasicType() != BasicType.VOID) {
+				// force the expr type if we need to propagate generics, force a special tuple conversion,
+				// and the expr doesn't have its own ideas
+				if ((returnExpr.getType() != null || !returnExpr.isTypeFixed()) 
+						|| newType.getRetType().isGeneric() || newType.getRetType() instanceof LLTupleType)
+					changed |= updateType(returnExpr, newType.getRetType());
 			}
+			/*
+			if (newType.getRetType() != null && !(newType.getRetType() != null &&  newType.getRetType().getBasicType() == BasicType.VOID)) {
+				if (returnExpr.getType() != null
+						&& newType.getRetType().isComplete() && returnExpr.getType().isComplete()
+						&& !(newType.getRetType() instanceof LLTupleType)) {
+					IAstNode parent = returnExpr.getParent();
+					IAstTypedExpr castExpr = createCastOn(typeEngine, returnExpr, newType.getRetType());
+					if (castExpr != returnExpr) {
+						castExpr.setParent(null);
+						IAstExprStmt newRet = new AstExprStmt(castExpr);
+						newRet.setSourceRef(returnExpr.getSourceRef());
+						parent.replaceChild(returnExpr, newRet);
+					}
+				}
+				else {
+					if (((ITyped) returns).getType() != null || newType.getRetType().isGeneric()) {
+						changed |= updateType((ITyped) returns, newType.getRetType());
+					}
+				}
+			}
+			 */
 		}
 		
 		changed |= updateType(this, newType);
@@ -192,12 +220,29 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 			return;
 			
 		IAstStmt returns = stmtList != null ? stmtList.getLast() : null;
-		if (returns instanceof ITyped) {
-			LLType kidType = ((ITyped) returns).getType();
+		if (returns instanceof IAstTypedExpr) {
+			IAstTypedExpr returnExpr = (IAstTypedExpr) returns;
+			LLType kidType = returnExpr.getType();
 			if (kidType != null && kidType.isComplete()) {
-				if (!((LLCodeType) thisType).getRetType().equals(
-						kidType)) {
-					throw new TypeException(returns, "code block does not return same type as prototype");
+				LLType retType = ((LLCodeType) thisType).getRetType();
+				if (!retType.equals(kidType)) {
+					boolean fixed = false;
+					
+					if (!(retType instanceof LLTupleType)) {
+						IAstNode parent = returnExpr.getParent();
+						IAstTypedExpr castExpr = createCastOn(typeEngine, returnExpr, retType);
+						if (castExpr != returnExpr) {
+							castExpr.setParent(null);
+							IAstExprStmt newRet = new AstExprStmt(castExpr);
+							newRet.setType(retType);
+							newRet.setSourceRef(returnExpr.getSourceRef());
+							parent.replaceChild(returnExpr, newRet);
+							fixed = true;
+						}
+					}
+					
+					if (!fixed)
+						throw new TypeException(returns, "code block does not return same type as prototype");
 				}
 			}
 		}

@@ -1104,7 +1104,20 @@ public class GenerateAST {
 
 		IAstTypedExpr function = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
-		IAstNodeList<IAstTypedExpr> args = checkConstruct(tree.getChild(1),
+		
+		return constructCallOrCast(tree.getChild(1), function);
+	}
+	
+	
+	/**
+	 * @param child
+	 * @param function
+	 * @return
+	 * @throws GenerateException 
+	 */
+	@SuppressWarnings("unchecked")
+	private IAstTypedExpr constructCallOrCast(Tree tree, IAstTypedExpr function) throws GenerateException {
+		IAstNodeList<IAstTypedExpr> args = checkConstruct(tree,
 				IAstNodeList.class);
 
 		// check for a cast
@@ -1122,6 +1135,7 @@ public class GenerateAST {
 				IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST,
 						argNodes[0]);
 				castExpr.setType(((IAstType) symdef).getType());
+				castExpr.setTypeFixed(true);
 				getSource(tree, castExpr);
 				return castExpr;
 			}
@@ -1529,47 +1543,7 @@ public class GenerateAST {
 			}
 			else if (kid.getType() == EulangParser.CALL) {
 		
-				IAstNodeList<IAstTypedExpr> args = checkConstruct(kid.getChild(0),
-						IAstNodeList.class);
-
-				IAstTypedExpr functionSym = idExpr;
-				if (functionSym instanceof IAstDerefExpr) {
-					idExpr = ((IAstDerefExpr) idExpr).getExpr();
-					idExpr.setParent(null);
-				}
-				
-				// check for a cast
-				if (args.nodeCount() == 1 && idExpr instanceof IAstSymbolExpr) {
-					ISymbol funcSym = ((IAstSymbolExpr) idExpr).getSymbol();
-					IAstNode symdef = funcSym.getDefinition();
-					if (symdef instanceof IAstType
-							&& ((IAstType) symdef).getType() != null) {
-						IAstTypedExpr[] argNodes = args.getNodes(IAstTypedExpr.class);
-						argNodes[0].setParent(null);
-						IAstUnaryExpr castExpr = new AstUnaryExpr(IOperation.CAST,
-								argNodes[0]);
-						castExpr.setType(((IAstType) symdef).getType());
-						getSource(tree, castExpr);
-						idExpr = castExpr;
-						continue;
-					}
-				}
-
-				//if (function instanceof IAstSymbolExpr)
-				//	((IAstSymbolExpr) function).setAddress(true);
-
-				
-				for (IAstTypedExpr arg : args.list()) {
-					if (arg instanceof IAstDerefExpr) {
-						IAstTypedExpr expr = ((IAstDerefExpr) arg).getExpr();
-						expr.setParent(null);
-						arg.getParent().replaceChild(arg, expr);
-					}
-				}
-
-				IAstFuncCallExpr funcCall = new AstFuncCallExpr(idExpr, args);
-				getSource(tree, funcCall);
-				idExpr = funcCall;
+				idExpr = constructCallOrCast(kid.getChild(0), idExpr);
 			}
 			else
 				unhandled(kid);
