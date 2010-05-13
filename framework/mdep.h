@@ -287,7 +287,9 @@ extern char * canonicalize_file_name(const char * path);
 #elif defined(_WRS_KERNEL)
 /* VxWork kernel module */
 
-#define INET
+#if !defined(INET)
+#  define INET
+#endif
 
 #include <vxWorks.h>
 #include <inetLib.h>
