@@ -62,8 +62,9 @@ public interface ITarget {
 
 	/**
 	 * Get an intrinsic function
+	 * @param type 
 	 * @param string
 	 * @return symbol
 	 */
-	ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic);
+	ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic, LLType type);
 }

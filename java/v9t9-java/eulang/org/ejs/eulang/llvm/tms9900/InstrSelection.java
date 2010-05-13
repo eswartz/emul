@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.ITarget;
-import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ITarget.Intrinsic;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLCodeVisitor;
@@ -34,8 +33,10 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -125,6 +126,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		REG_W,
 		/** put the LL operand into a register operand which will be read and written */
 		REG_RW,
+		/** put the byte value of the LL operand into two halves of a register operand  */
+		REG_RW_DUP,
 		/** put the LL operand into physical register #0 */
 		REG_0_W,
 		/** put the LL operand into an immediate */
@@ -411,6 +414,26 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		 		new As[] { As.REG_RW, As.REG_0_W },
 		 		new DoRes( 0, Isrc, 0, 1 )
 		),
+		
+		new IPattern( BasicType.INTEGRAL, I8, "src", 
+		 		new If[] { If.PASS, If.IS_CONST_0 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "src", 
+		 		new If[] { If.PASS, If.IS_CONST_16 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "src", 
+				new If[] { If.PASS, If.IS_CONST_1_15 },
+				new As[] { As.REG_RW_DUP, As.IMM }, 
+				new DoRes( 0, Isrc, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "src", 
+		 		new If[] { If.PASS, If.PASS },
+		 		new As[] { As.REG_RW_DUP, As.REG_0_W },
+		 		new DoRes( 0, Isrc, 0, 1 )
+		),
+		
 	};
 	
 	/** Called to fetch a new temp register 
@@ -775,6 +798,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			if (isIntrinsic(symOp, ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR)) {
 				LLInstr instr = new LLBinaryInstr("src", llinst.getResult(), llinst.getType(), 
 						llinst.getOperands()[0], llinst.getOperands()[1]);
+				instr.setNumber(llinst.getNumber());
 				instr.accept(llblock, this);
 				return;
 			}
@@ -784,7 +808,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 
 	private boolean isIntrinsic(LLSymbolOp symOp, Intrinsic intrinsic) {
-		return symOp.getSymbol().equals(def.getTarget().getIntrinsic(def, intrinsic));
+		LLType type = symOp.getType();
+		if (type instanceof LLCodeType)
+			type = ((LLCodeType) type).getRetType();
+		return symOp.getSymbol().equals(def.getTarget().getIntrinsic(def, intrinsic, type));
 	}
 
 	@Override
@@ -816,10 +843,17 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case REG_R:
 			asmOp = generateRegisterOperand(operand, asmOp);
 			break;
+		case REG_RW_DUP:
 		case REG_RW:
 			asmOp = generateRegisterOperand(operand, asmOp);
 			if (!isLastUse(operand) || !isLastUse(asmOp))
 				asmOp = moveToTemp(operand, asmOp);
+			if (as == As.REG_RW_DUP) {
+				AssemblerOperand copy = moveToTemp(operand, asmOp);
+				emit(HLInstruction.create(InstructionTable.Iswpb, copy));
+				emit(HLInstruction.create(InstructionTable.Imovb, asmOp, copy));
+				asmOp = copy;
+			}
 			break;
 		case REG_0_W:
 			asmOp = copyIntoRegister(operand, asmOp, 0);

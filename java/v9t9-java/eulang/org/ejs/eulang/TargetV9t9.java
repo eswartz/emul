@@ -231,7 +231,7 @@ public class TargetV9t9 implements ITarget {
 	 * @see org.ejs.eulang.ITarget#getIntrinsic(org.ejs.eulang.ITarget.Intrinsic)
 	 */
 	@Override
-	public ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic) {
+	public ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic, LLType type) {
 		ISymbol sym = intrinsicMap.get(intrinsic);
 		if (sym == null) {
 			switch (intrinsic) {
@@ -261,8 +261,15 @@ public class TargetV9t9 implements ITarget {
 			break;
 			case SHIFT_RIGHT_CIRCULAR:
 			{
-				LLCodeType codeType = typeEngine.getCodeType(typeEngine.INT, 
-						new LLType[] { typeEngine.INT, typeEngine.INT });
+				LLCodeType codeType;
+				if (type.getBits() == 16)
+					codeType = typeEngine.getCodeType(typeEngine.INT, 
+							new LLType[] { typeEngine.INT, typeEngine.INT });
+				else if (type.getBits() <= 8)
+					codeType = typeEngine.getCodeType(typeEngine.BYTE, 
+							new LLType[] { typeEngine.BYTE, typeEngine.INT});
+				else
+					return null;
 				sym = target.getModule().addExtern("intrinsic.src",
 						codeType,
 						null, LLVisibility.DEFAULT, null /*cconv*/,

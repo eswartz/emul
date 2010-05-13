@@ -118,7 +118,7 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 			//	call %intrinsic.src(i16, i16)
 			//
 			ISymbol intrinsicSrc = currentTarget.getTarget().getIntrinsic(
-					currentTarget, ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR);
+					currentTarget, ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR, left.getType());
 			currentTarget.emit(new LLCallInstr(ret, left.getType(), 
 					new LLSymbolOp(intrinsicSrc), (LLCodeType) intrinsicSrc.getType(),
 					left, right));

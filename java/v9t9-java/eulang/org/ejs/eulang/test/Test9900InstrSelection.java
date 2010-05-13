@@ -3,7 +3,11 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.*;
 import static v9t9.engine.cpu.InstructionTable.Ili;
 import static v9t9.engine.cpu.InstructionTable.Imov;
 
@@ -23,7 +27,6 @@ import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.RegisterTempOperand;
 import org.ejs.eulang.llvm.tms9900.RenumberInstructionsVisitor;
 import org.ejs.eulang.llvm.tms9900.StackLocalOperand;
-import org.ejs.eulang.llvm.tms9900.SymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.LLType;
@@ -599,17 +602,34 @@ public class Test9900InstrSelection extends BaseParserTest {
 	@Test
 	public void testCShiftRightVar() throws Exception {
 		dumpLLVMGen =true;
-		doIsel("foo = code(x,y:Int ) { (x>>>y) };\n");
+		doIsel("foo = code(x,y:Int ) { (x>>|y) };\n");
 		
 		int idx;
 		idx = findInstrWithSymbol(instrs, "y");
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
 		
-		idx = findInstrWithInst(instrs, "SRL");
+		idx = findInstrWithInst(instrs, "SRC");
 		inst = instrs.get(idx);
-		matchInstr(inst, "SRL", RegisterTempOperand.class, "x", RegisterTempOperand.class, 0);
+		matchInstr(inst, "SRC", RegisterTempOperand.class, "x", RegisterTempOperand.class, 0);
 		
+	}
+
+	@Test
+	public void testCShiftRight8Bit() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x,y:Byte ) { (x>>|1) + (x>>|y) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		idx = findInstrWithInst(instrs, "SWPB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SWPB", RegisterTempOperand.class, "~x");
+		HLInstruction copy = inst;
+		
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, copy.getOp1());
 	}
 
 	@Test
