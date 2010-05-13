@@ -860,6 +860,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case IMM:
 			assert asmOp instanceof NumberOperand;
+			if (operand.getType().getBits() == 8)
+				asmOp = new NumberOperand(((NumberOperand) asmOp).getValue() << 8);
+				
 			break;
 		case IMM_NEG:
 			assert asmOp instanceof NumberOperand;

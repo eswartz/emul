@@ -81,7 +81,19 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 	@Override
 	public void castTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		LLType common = typeEngine.getPromotionType(types.left, types.right);
+		LLType common;
+		if (types.left.getBasicType() != types.right.getBasicType()
+				|| (types.leftIsSymbol == types.rightIsSymbol)) {
+			common = typeEngine.getPromotionType(types.left, types.right);
+		} else if (types.leftIsSymbol) {
+			common = types.left;
+		} else if (types.rightIsSymbol) {
+			common = types.right;
+		} else {
+			common = typeEngine.getPromotionType(types.left, types.right);
+		}
+		
+		//common = typeEngine.getPromotionType(types.left, types.right);
 		if (common == null)
 			throw new TypeException("cannot find compatible type for comparing "
 					+ types.left.toString() + " and " + types.right.toString());

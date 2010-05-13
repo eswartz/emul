@@ -8,6 +8,8 @@ import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolDefiner;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.TypeException;
 
@@ -240,7 +242,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		
 		IBinaryOperation.OpTypes types = new IBinaryOperation.OpTypes();
 		types.left = left.getType();
+		types.leftIsSymbol = left instanceof IAstSymbolExpr;
 		types.right = right.getType();
+		types.rightIsSymbol = right instanceof IAstSymbolExpr;
 		types.result = getType();
 		oper.inferTypes(typeEngine, types);
 		

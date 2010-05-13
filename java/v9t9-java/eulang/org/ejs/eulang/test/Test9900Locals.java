@@ -268,10 +268,9 @@ public class Test9900Locals extends BaseParserTest {
 		assertEquals(3, reg.getVr());
 		assertEquals(typeEngine.BYTE, reg.getType());
 		
-		// one mirror for c and x's actual location;
-		// all regs shunted to registers
+		// one mirror for c and x's actual location; and mirrors
 		stackLocalMap = locals.getStackLocals();
-		assertEquals(2, stackLocalMap.size());
+		assertEquals(6, stackLocalMap.size());
 		
 		StackLocal real;
 		StackLocal mirror;
@@ -317,9 +316,8 @@ public class Test9900Locals extends BaseParserTest {
 		
 		localMap = locals.getStackLocals();
 		
-		// one mirror for each x,y,z and their actual location.
-		// The args are ordered in reverse.
-		assertEquals(6, localMap.size());
+		// one mirror for each x,y,z and their actual location, and locals
+		assertEquals(10, localMap.size());
 		
 		StackLocal real;
 		StackLocal mirror;
@@ -377,8 +375,8 @@ public class Test9900Locals extends BaseParserTest {
 		
 		localMap = locals.getStackLocals();
 		
-		// one for p's actual location
-		assertEquals(1, localMap.size());
+		// one for p's actual location, and mirror
+		assertEquals(2, localMap.size());
 		
 		StackLocal mirror;
 		mirror = (StackLocal) getLocal(localMap, "_.p");

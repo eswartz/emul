@@ -214,13 +214,11 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
-		IAstUnaryExpr castExpr = (IAstUnaryExpr) allocStmt.getExprs().getFirst();
-		assertEquals(typeEngine.INT, castExpr.getExpr().getType());
-		IAstBinExpr addExpr = (IAstBinExpr) castExpr.getExpr();
-		assertEquals(typeEngine.INT, addExpr.getType());
-		assertEquals(typeEngine.INT, addExpr.getLeft().getType());
-		assertEquals(typeEngine.INT, addExpr.getRight().getType());
-		assertTrue(isCastTo(addExpr.getLeft(), typeEngine.INT));
+		IAstBinExpr addExpr = (IAstBinExpr) allocStmt.getExprs().getFirst();
+		assertEquals(typeEngine.BYTE, addExpr.getType());
+		assertEquals(typeEngine.BYTE, addExpr.getLeft().getType());
+		assertEquals(typeEngine.BYTE, addExpr.getRight().getType());
+		assertTrue(isCastTo(addExpr.getRight(), typeEngine.BYTE));
     }
 	@Test
     public void testPromotedCond1() throws Exception {
@@ -1272,6 +1270,106 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) ((IAstDefineStmt) mod.getScope().get("testSelfRef3").getDefinition()).getMatchingBodyExpr(null);
     	assertTrue(code.getType().isComplete());
     	System.out.println(code.getType());
+    }
+    
+    @Test
+	public void testLogicalOpsByte1() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpTreeize = true;
+    	IAstModule mod = treeize("testLogicalOpsByte1 = code(x, y:Byte => Byte) { " +
+    			"(x|15)" +
+    			//" + (x|y) + (x&41) + (x&y) + (x~9) + (x~y) " +
+    			"};\n");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testLogicalOpsByte1");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	assertTrue(codeExpr.getType().isComplete());
+
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().getFirst();
+    	assertEquals(typeEngine.BYTE, exprStmt.getType());
+    	IAstBinExpr orExpr = (IAstBinExpr) exprStmt.getExpr();
+    	assertEquals(typeEngine.BYTE, orExpr.getType());
+    	assertEquals(typeEngine.BYTE, orExpr.getLeft().getType());
+    	assertEquals(typeEngine.BYTE, orExpr.getRight().getType());
+    }
+    @Test
+    public void testLogicalOpsByte2() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpTreeize = true;
+    	IAstModule mod = treeize("testLogicalOpsByte2 = code(x, y:Byte ) { " +
+    			"(x|15) + (x|y) + (x&41) + (x&y) + (x~9) + (x~y) " +
+    	"};\n");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testLogicalOpsByte2");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	assertTrue(codeExpr.getType().isComplete());
+    	
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().getFirst();
+    	assertEquals(typeEngine.BYTE, exprStmt.getType());
+    	IAstBinExpr orExpr = (IAstBinExpr) exprStmt.getExpr();
+    	assertEquals(typeEngine.BYTE, orExpr.getType());
+    	assertEquals(typeEngine.BYTE, orExpr.getLeft().getType());
+    	assertEquals(typeEngine.BYTE, orExpr.getRight().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) orExpr.getLeft()).getLeft().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) ((IAstBinExpr) orExpr.getLeft()).getLeft()).getLeft().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) ((IAstBinExpr) orExpr.getLeft()).getLeft()).getRight().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) ((IAstBinExpr) orExpr.getLeft()).getRight()).getRight().getType());
+    }
+    @Test
+    public void testArithOpsByte1() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpTreeize = true;
+    	IAstModule mod = treeize("testArithOpsByte1 = code(x, y:Byte ) { " +
+    			"(x-15) + (x+y) + (x*41) + (x/y) + (x%9) + (x%%y) " +
+    	"};\n");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testArithOpsByte1");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	assertTrue(codeExpr.getType().isComplete());
+    	
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().getFirst();
+    	assertEquals(typeEngine.BYTE, exprStmt.getType());
+    	IAstBinExpr orExpr = (IAstBinExpr) exprStmt.getExpr();
+    	assertEquals(typeEngine.BYTE, orExpr.getType());
+    	assertEquals(typeEngine.BYTE, orExpr.getLeft().getType());
+    	assertEquals(typeEngine.BYTE, orExpr.getRight().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) orExpr.getLeft()).getLeft().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) ((IAstBinExpr) orExpr.getLeft()).getLeft()).getLeft().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) ((IAstBinExpr) orExpr.getLeft()).getLeft()).getRight().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) ((IAstBinExpr) orExpr.getLeft()).getRight()).getRight().getType());
+    }
+    @Test
+    public void testCompareOpsByte1() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpTreeize = true;
+    	IAstModule mod = treeize("testCompareOpsByte1 = code(x, y:Byte ) { " +
+    			"(x<15) and(x>=y) " +
+    	"};\n");
+    	sanityTest(mod);
+    	doTypeInfer(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCompareOpsByte1");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	assertTrue(codeExpr.getType().isComplete());
+    	
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().getFirst();
+    	assertEquals(typeEngine.BOOL, exprStmt.getType());
+    	IAstBinExpr andExpr = (IAstBinExpr) exprStmt.getExpr();
+    	assertEquals(typeEngine.BOOL, andExpr.getType());
+    	IAstTypedExpr ltExpr = andExpr.getLeft();
+		assertEquals(typeEngine.BOOL, ltExpr.getType());
+		assertEquals(typeEngine.BYTE, ((IAstBinExpr) ltExpr).getLeft().getType());
+		assertEquals(typeEngine.BYTE, ((IAstBinExpr) ltExpr).getRight().getType());
+    	IAstTypedExpr geExpr = andExpr.getRight();
+		assertEquals(typeEngine.BOOL, geExpr.getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) geExpr).getLeft().getType());
+    	assertEquals(typeEngine.BYTE, ((IAstBinExpr) geExpr).getRight().getType());
     }
 }
 

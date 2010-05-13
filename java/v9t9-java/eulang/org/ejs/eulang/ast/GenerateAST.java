@@ -2214,7 +2214,10 @@ public class GenerateAST {
 			}
 			try {
 				Long l = Long.parseLong(lit, radix);
-				litExpr = new AstIntLitExpr(lit, typeEngine.INT, l);
+				LLType type = typeEngine.INT;
+				//if (l < 256 && l >= -128)
+				//	type = typeEngine.BYTE;
+				litExpr = new AstIntLitExpr(lit, type, l);
 			} catch (NumberFormatException e) {
 				try {
 					Double d = Double.parseDouble(lit);

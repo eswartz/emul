@@ -19,7 +19,9 @@ import org.ejs.eulang.types.TypeException;
 public interface IBinaryOperation extends IOperation {
 	class OpTypes {
 		public LLType left;
+		public boolean leftIsSymbol;
 		public LLType right;
+		public boolean rightIsSymbol;
 		public LLType result;
 	}
 	

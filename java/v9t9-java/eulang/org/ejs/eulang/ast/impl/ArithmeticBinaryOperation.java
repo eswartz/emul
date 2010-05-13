@@ -70,7 +70,18 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 	@Override
 	public void inferTypes(TypeEngine typeEngine, OpTypes types) throws TypeException {
 		if (types.left != null && types.right != null) {
-			LLType commonType = typeEngine.getPromotionType(types.left, types.right);
+			LLType commonType;
+			if (types.left.getBasicType() != types.right.getBasicType()
+					|| (types.leftIsSymbol == types.rightIsSymbol))
+				commonType = typeEngine.getPromotionType(types.left, types.right);
+			else if (types.leftIsSymbol)
+				commonType = types.left;
+			else 
+				commonType = types.right;
+			if (commonType != null && commonType.getBits() == 0)
+				commonType = typeEngine.INT;
+			
+			//commonType = typeEngine.getPromotionType(types.left, types.right);
 			if (commonType == null)
 				throw new TypeException("cannot find compatible type for '" + getName() + "' on " 
 						+ types.left.toString() + " and " + types.right.toString());
@@ -102,8 +113,17 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 	@Override
 	public void castTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		LLType newLeft = typeEngine.getPromotionType(types.left, types.result);
-		LLType newRight = typeEngine.getPromotionType(types.right, types.result);
+		LLType newLeft;
+		LLType newRight;
+		if (types.left.getBasicType() != types.right.getBasicType()
+				|| (types.leftIsSymbol == types.rightIsSymbol)) {
+			newLeft = typeEngine.getPromotionType(types.left, types.result);
+			newRight = typeEngine.getPromotionType(types.right, types.result);
+		} else {
+			newLeft = types.leftIsSymbol ? types.left : types.rightIsSymbol ? types.right : typeEngine.getPromotionType(types.left, types.result);
+			newRight = types.rightIsSymbol ? types.right : types.leftIsSymbol ? types.left : typeEngine.getPromotionType(types.right, types.result);
+		}
+			
 		if (newLeft == null || newRight == null) {
 			if ((this == IOperation.ADD || this == IOperation.SUB) &&
 					types.left.getBasicType() == BasicType.POINTER && types.right.getBasicType() == BasicType.INTEGRAL) {

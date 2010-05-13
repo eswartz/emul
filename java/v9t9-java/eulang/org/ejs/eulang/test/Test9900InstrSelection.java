@@ -671,4 +671,43 @@ public class Test9900InstrSelection extends BaseParserTest {
 		matchInstr(inst, "XOR", RegisterTempOperand.class, "y", RegisterTempOperand.class, "x"); // last use
 		
 	}
+	@Test
+	public void testLogicalOpsByte() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x, y:Byte ) { (x|15) + (x|y) + (x&41) + (x&y) + (x~9) + (x~y) };\n");
+		
+		int idx = -1;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "ORI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ORI", RegisterTempOperand.class, "~x", NumberOperand.class, 15*256);
+		
+		idx = findInstrWithInst(instrs, "SOCB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SOCB", RegisterTempOperand.class, "y", RegisterTempOperand.class, "~x");
+		
+		idx = findInstrWithInst(instrs, "ANDI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ANDI", RegisterTempOperand.class, "~x", NumberOperand.class, (41*256) & 0xff00);
+		
+		idx = findInstrWithInst(instrs, "SZCB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SZCB", RegisterTempOperand.class, "y", RegisterTempOperand.class, "~x");
+
+		// XOR more complex
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 9*256);
+		HLInstruction loadinst = inst;
+		
+		idx = findInstrWithInst(instrs, "XOR", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "XOR", loadinst.getOp(1), RegisterTempOperand.class, "~x");
+		
+		idx = findInstrWithInst(instrs, "XOR", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "XOR", RegisterTempOperand.class, "y", RegisterTempOperand.class, "x"); // last use
+		
+	}
 }

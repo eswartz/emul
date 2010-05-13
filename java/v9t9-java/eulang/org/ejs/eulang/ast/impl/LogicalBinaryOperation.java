@@ -51,7 +51,12 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 			types.right = typeEngine.INT;
 		}
 		if (types.result == null) {
-			types.result = typeEngine.getPromotionType(types.left, types.right);
+			if (!types.leftIsSymbol && !types.rightIsSymbol)
+				types.result = typeEngine.getPromotionType(types.left, types.right);
+			else if (types.leftIsSymbol)
+				types.result = types.left;
+			else 
+				types.result = types.right;
 			if (types.result.getBits() == 0)
 				types.result = typeEngine.INT;
 		}
@@ -61,8 +66,8 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 	@Override
 	public void castTypes(TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		LLType newLeft = typeEngine.getPromotionType(types.left, types.result);
-		LLType newRight = typeEngine.getPromotionType(types.right, types.result);
+		LLType newLeft = types.leftIsSymbol ? types.left : types.rightIsSymbol ? types.right : typeEngine.getPromotionType(types.left, types.result);
+		LLType newRight = types.rightIsSymbol ? types.right : types.leftIsSymbol ? types.left : typeEngine.getPromotionType(types.right, types.result);
 		if (newLeft == null || newRight == null)
 			throw new TypeException("cannot convert result of '" + getName() + "' on " 
 					+ types.left.toString() + " and " + types.right.toString() + " to " + types.result.toString());
