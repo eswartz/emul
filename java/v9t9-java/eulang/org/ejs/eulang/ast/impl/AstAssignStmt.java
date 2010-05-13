@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAssignStmt;
@@ -25,13 +26,16 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	private IAstNodeList<IAstTypedExpr> symExpr;
 	private IAstNodeList<IAstTypedExpr> expr;
 	private boolean expand;
+	private IOperation op;
 
 	/**
+	 * @param op 
 	 * @param expr2 
 	 * @param left
 	 * @param right
 	 */
-	public AstAssignStmt(IAstNodeList<IAstTypedExpr> id, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
+	public AstAssignStmt(IOperation op, IAstNodeList<IAstTypedExpr> id, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
+		this.op = op;
 		setExprs(expr);
 		setSymbolExprs(id);
 		setExpand(expand);
@@ -39,13 +43,15 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	}
 
 	public IAstAssignStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstAssignStmt(doCopy(symExpr, copyParent), doCopy(expr, copyParent), expand));
+		return fixup(this, new AstAssignStmt(op, 
+				doCopy(symExpr, copyParent), doCopy(expr, copyParent), expand));
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + ((op == null) ? 0 : op.hashCode());
 		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
 		result = prime * result + ((symExpr == null) ? 0 : symExpr.hashCode());
 		result = prime * result + (expand ? 0 : 111);
@@ -62,6 +68,11 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		if (getClass() != obj.getClass())
 			return false;
 		AstAssignStmt other = (AstAssignStmt) obj;
+		if (op == null) {
+			if (other.op != null)
+				return false;
+		} else if (!op.equals(other.op))
+			return false;
 		if (expr == null) {
 			if (other.expr != null)
 				return false;
@@ -83,8 +94,21 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 	 */
 	@Override
 	public String toString() {
-		return typedString("=");
+		if (op == IOperation.MOV)
+			return typedString(op.getName());
+		else
+			return typedString(op.getName() + "=");
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAssignStmt#getOperation()
+	 */
+	@Override
+	public IOperation getOperation() {
+		return op;
+	}
+	
+	
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()

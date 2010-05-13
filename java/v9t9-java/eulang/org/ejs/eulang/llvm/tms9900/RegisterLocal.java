@@ -87,15 +87,4 @@ public class RegisterLocal extends BaseLocal {
 		this.vr = vr;
 	}
 
-	/**
-	 * Tell whether the register is used only in a single block
-	 * (which is usually a guarantee that it will get a register in codegen)
-	 * @return
-	 */
-	public boolean isSingleBlock() {
-		return singleBlock;
-	}
-	public void setSingleBlock(boolean single) {
-		this.singleBlock = single;
-	}
 }

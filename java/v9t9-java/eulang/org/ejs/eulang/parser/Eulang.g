@@ -289,19 +289,26 @@ varDecl: ID COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID TYPE assignOrIni
         -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignOrInitExpr+)?)
     ;
 
-
-assignStmt : (idExpr EQUALS) => idExpr EQUALS assignOrInitExpr        -> ^(ASSIGN idExpr assignOrInitExpr)
-    | idTuple EQUALS assignOrInitExpr               -> ^(ASSIGN idTuple assignOrInitExpr)
-    | idExpr (COMMA idExpr)+ EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
-        -> ^(ASSIGN ^(LIST idExpr+) PLUS? ^(LIST assignOrInitExpr+))
+// assignment statement (statement level) 
+assignStmt : (idExpr assignEqOp) => idExpr assignEqOp assignOrInitExpr        -> ^(ASSIGN assignEqOp idExpr assignOrInitExpr)
+    | idTuple EQUALS assignOrInitExpr               -> ^(ASSIGN EQUALS idTuple assignOrInitExpr)
+    // possible multi-assign statement
+    | (idExpr (COMMA idExpr)+ assignEqOp ) => idExpr (COMMA idExpr)+ assignEqOp PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
+        -> ^(ASSIGN EQUALS ^(LIST idExpr+) PLUS? ^(LIST assignOrInitExpr+))
     ;
       
 assignOrInitExpr : assignExpr | initList ;
 
-assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN idExpr assignExpr)
-    | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN idTuple assignExpr)
+// assign expr
+assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN EQUALS idExpr assignExpr)
+    | (idExpr assignOp) => idExpr assignOp assignExpr        -> ^(ASSIGN assignOp idExpr assignExpr)
+    | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN EQUALS idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
+
+assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ
+  | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CRSHIFT_EQ | BACKSLASH_EQ ;
+assignEqOp : EQUALS | assignOp ;
 
 initList : LBRACKET (initExpr (COMMA initExpr)*)? RBRACKET     -> ^(INITLIST initExpr* ) ;
 initExpr options { backtrack=true;} 
@@ -449,7 +456,7 @@ bitor: ( bitxor      -> bitxor )
       ( BAR r=bitxor  -> ^(BITOR $bitor $r) ) *
 ;
 bitxor: ( bitand      -> bitand )       
-      ( XOR r=bitand  -> ^(BITXOR $bitxor $r) )*
+      ( TILDE r=bitand  -> ^(BITXOR $bitxor $r) )*
 ;
 bitand: ( shift      -> shift )       
       ( AMP r=shift  -> ^(BITAND $bitand $r) )*
@@ -459,6 +466,7 @@ shift:  ( factor        -> factor )
       ( ( LSHIFT r=factor   -> ^(LSHIFT $shift $r) ) 
       | ( RSHIFT r=factor   -> ^(RSHIFT $shift $r) )
       | ( URSHIFT r=factor   -> ^(URSHIFT $shift $r) )
+      | ( CRSHIFT r=factor   -> ^(CRSHIFT $shift $r) )
       )*
   ;
 factor 
@@ -559,9 +567,13 @@ EQUALS : '=';
 COLON_EQUALS : ':=';
 COLON_COLON_EQUALS : '::=';
 PLUS : '+';
+PLUS_EQ : '+=';
 MINUS : '-';
+MINUS_EQ : '-=';
 STAR : '*';
+STAR_EQ : '*=';
 SLASH : '/';
+SLASH_EQ : '/=';
 LPAREN : '(';
 RPAREN : ')';
 LBRACE : '{';
@@ -579,8 +591,11 @@ CARET : '^';
 SEMI : ';';
 QUESTION : '?';
 AND : 'and';
+AND_EQ : '&=';
 OR : 'or';
-XOR : 'xor';
+OR_EQ : '|=';
+//XOR : 'xor';
+XOR_EQ : '~=';
 COMPEQ : '==';
 COMPNE : '!=';
 COMPGE : '>=';
@@ -588,11 +603,19 @@ COMPLE : '<=';
 GREATER : '>';
 LESS : '<';
 LSHIFT : '<<';
+LSHIFT_EQ : '<<=';
 RSHIFT : '>>';
+RSHIFT_EQ : '>>=';
 URSHIFT : '>>>';
+URSHIFT_EQ : '>>>=';
+CRSHIFT : '>>|';
+CRSHIFT_EQ : '>>|=';
 BACKSLASH : '\\';
+BACKSLASH_EQ : '\\=';
 PERCENT : '%';
+PERCENT_EQ : '%=';
 UMOD : '%%';
+UMOD_EQ : '%%=';
 ARROW : '=>' ;
 PERIOD : '.';
 PLUSPLUS : '++';

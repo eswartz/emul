@@ -8,6 +8,7 @@ import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
@@ -151,12 +152,16 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 		LLOperand right;
 		right = generator.generateTypedExpr(expr.getRight());
 		
-		
+		return generate(generator, currentTarget, expr, left, right);
+	}
+	
+	public LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left, LLOperand right) throws ASTException {
+		LLType type = expr.getType();
 		// pointer math
 		if ((this == IOperation.ADD || this == IOperation.SUB) &&
 				left.getType().getBasicType() == BasicType.POINTER && right.getType().getBasicType() == BasicType.INTEGRAL) {
 			
-			LLOperand ret = currentTarget.newTemp(expr.getType());
+			LLOperand ret = currentTarget.newTemp(type);
 			currentTarget.emit(new LLGetElementPtrInstr(ret, ret.getType(), 
 					left, right));
 			return ret;
@@ -165,32 +170,32 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 		if (this == IOperation.SUB &&
 				left.getType().getBasicType() == BasicType.POINTER && right.getType().getBasicType() == BasicType.POINTER) {
 			// make into ints
-			LLOperand tempLeft = currentTarget.newTemp(expr.getType());
-			currentTarget.emit(new LLCastInstr(tempLeft, ECast.PTRTOINT, expr.getLeft().getType(), left, tempLeft.getType()));
-			LLOperand tempRight = currentTarget.newTemp(expr.getType());
-			currentTarget.emit(new LLCastInstr(tempRight, ECast.PTRTOINT, expr.getRight().getType(), right, tempRight.getType()));
-			LLOperand diff = currentTarget.newTemp(expr.getType());
-			currentTarget.emit(new LLBinaryInstr(getLLVMName(), diff, expr.getType(), tempLeft, tempRight));
+			LLOperand tempLeft = currentTarget.newTemp(type);
+			currentTarget.emit(new LLCastInstr(tempLeft, ECast.PTRTOINT, left.getType(), left, tempLeft.getType()));
+			LLOperand tempRight = currentTarget.newTemp(type);
+			currentTarget.emit(new LLCastInstr(tempRight, ECast.PTRTOINT, right.getType(), right, tempRight.getType()));
+			LLOperand diff = currentTarget.newTemp(type);
+			currentTarget.emit(new LLBinaryInstr(getLLVMName(), diff, type, tempLeft, tempRight));
 			
 			// now, scale down
-			LLOperand ret = currentTarget.newTemp(expr.getType());
+			LLOperand ret = currentTarget.newTemp(type);
 			int size = left.getType().getBits() / 8;
-			currentTarget.emit(new LLBinaryInstr("sdiv exact", ret, expr.getType(), diff, new LLConstOp(expr.getType(), size)));
+			currentTarget.emit(new LLBinaryInstr("sdiv exact", ret, type, diff, new LLConstOp(type, size)));
 			return ret;
 		}
 
-		LLOperand ret = currentTarget.newTemp(expr.getType());
+		LLOperand ret = currentTarget.newTemp(type);
 		
 		String instr = this.getLLVMName();
 		if (instr != null) {
-			String prefix = (expr.getLeft().getType().getBasicType() == BasicType.FLOATING) ? 
+			String prefix = (left.getType().getBasicType() == BasicType.FLOATING) ? 
 					((ArithmeticBinaryOperation) this).getFloatPrefix() : ((ArithmeticBinaryOperation) this).getIntPrefix();
 			if (prefix != null) 
 				instr = prefix + instr;
-			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
+			currentTarget.emit(new LLBinaryInstr(instr, ret, left.getType(), left, right));
 			
 		} else {
-			generator.unhandled(expr);
+			generator.unhandled(null);
 		}
 		return ret;
 	}

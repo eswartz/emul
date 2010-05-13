@@ -182,11 +182,11 @@ public class TestParser extends BaseParserTest  {
     }
     @Test
     public void testExpr2c() throws Exception  {
-    	parseAt("rhsExpr", "y & z xor d");
+    	parseAt("rhsExpr", "y & z ~ d");
     }
     @Test
     public void testExpr2d() throws Exception  {
-    	parseAt("rhsExpr", "y | z >>> a \\ c xor d & 11");
+    	parseAt("rhsExpr", "y | z >>> a \\ c ~ d & 11");
     }
     @Test
     public void testCondExpr2b() throws Exception  {
@@ -337,21 +337,21 @@ public class TestParser extends BaseParserTest  {
     
     @Test 
     public void testOpPrec1a() throws Exception {
-    	parse("opPrec1 = code { x=1*2+3>>4&5 xor 6|7==8 and 9 or 10; };");
+    	parse("opPrec1 = code { x=1*2+3>>4&5 ~ 6|7==8 and 9 or 10; };");
     }
     @Test 
     public void testOpPrec2a() throws Exception {
-    	parse("opPrec1 = code { x=1 or 2 and 3==4|5 xor 6&7>>8+9*10; };");
+    	parse("opPrec1 = code { x=1 or 2 and 3==4|5 ~ 6&7>>8+9*10; };");
     }
     @Test 
     public void testOpPrec1b() throws Exception {
     	// TODO: make sure all tokens used
-    	parse("opPrec1 = code { x=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9 xor 10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
+    	parse("opPrec1 = code { x=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9 ~ 10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
     }
     @Test 
     public void testOpPrec2b() throws Exception {
     	// TODO: make sure all tokens used
-    	parse("opPrec1 = code { x=1 or 2 and 3!=4==5>=6<=7>8<9|10 xor 11&12<<13>>14-15+16%17/18*19; };");
+    	parse("opPrec1 = code { x=1 or 2 and 3!=4==5>=6<=7>8<9|10 ~ 11&12<<13>>14-15+16%17/18*19; };");
     }
     @Test 
     public void testOpPrec3() throws Exception {

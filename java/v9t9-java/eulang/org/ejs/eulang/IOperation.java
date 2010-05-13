@@ -10,6 +10,7 @@ import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonUnaryOperation;
 import org.ejs.eulang.ast.impl.LogicalBinaryOperation;
 import org.ejs.eulang.ast.impl.LogicalUnaryOperation;
+import org.ejs.eulang.ast.impl.MovOperation;
 import org.ejs.eulang.ast.impl.ShiftOperation;
 
 /**
@@ -23,6 +24,7 @@ import org.ejs.eulang.ast.impl.ShiftOperation;
 public interface IOperation {
 	//IUnaryOperation INDIRECT = new IndirectOperation("INDIRECT");
 	
+	
 	IUnaryOperation NEG = new ArithmeticUnaryOperation("-");
 
 	IUnaryOperation POSTINC = new ArithmeticUnaryOperation("()++");
@@ -30,6 +32,7 @@ public interface IOperation {
 	IUnaryOperation PREINC = new ArithmeticUnaryOperation("++()");
 	IUnaryOperation PREDEC = new ArithmeticUnaryOperation("--()");
 	
+	IOperation MOV = new MovOperation("=");
 	IBinaryOperation ADD = new ArithmeticBinaryOperation("+", "add", true);
 	IBinaryOperation SUB = new ArithmeticBinaryOperation("-", "sub", false);
 	IBinaryOperation MUL = new ArithmeticBinaryOperation("*", "mul", true);
@@ -41,11 +44,13 @@ public interface IOperation {
 	IBinaryOperation SHL = new ShiftOperation("<<", "shl");
 	IBinaryOperation SHR = new ShiftOperation(">>>", "lshr");
 	IBinaryOperation SAR = new ShiftOperation(">>", "ashr");
+	IBinaryOperation SRC = new ShiftOperation(">>|", null);
 	
 	IUnaryOperation INV = new LogicalUnaryOperation("~");
-	IBinaryOperation BITOR = new LogicalBinaryOperation("|", "or", true);
-	IBinaryOperation BITAND = new LogicalBinaryOperation("&", "and", true);
-	IBinaryOperation BITXOR = new LogicalBinaryOperation("^", "xor", true);
+	
+	IBinaryOperation BITOR = new LogicalBinaryOperation("or", "or", true);
+	IBinaryOperation BITAND = new LogicalBinaryOperation("and", "and", true);
+	IBinaryOperation BITXOR = new LogicalBinaryOperation("xor", "xor", true);
 	
 	IUnaryOperation NOT = new ComparisonUnaryOperation("not");
 	

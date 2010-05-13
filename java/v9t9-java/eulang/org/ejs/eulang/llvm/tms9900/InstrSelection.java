@@ -6,6 +6,7 @@ package org.ejs.eulang.llvm.tms9900;
 import static v9t9.engine.cpu.InstructionTable.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,12 +14,15 @@ import java.util.regex.Pattern;
 
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
+import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ITarget.Intrinsic;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
 import org.ejs.eulang.llvm.instrs.LLAssignInstr;
+import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
@@ -41,41 +45,17 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
  * This selects the 9900 instructions from the LLVM code.  Subclass
  * to make use of the instructions or handle register allocation.
  * <p>
- * Most instructions are handled by patterns like this:
- * 
- * <pre>
- * { BasicType.INTEGRAL, 16, "add", 
- * 		{ If.PASS, If.IS_CONST },
- * 		{ { Iai, Act.MODIFY_1_REG, Act.COPY_2_IMM, Act.RESULT_1 } }
- * },
- * { BasicType.INTEGRAL, 16, "add", 
- * 		{ },
- * 		{ { Ia, Act.COPY_2_GEN, Act.MODIFY_1_GEN, Act.RESULT_2 } }
- * }
- * </pre>
- * 
- * This is organized as tests and then results.
- * <p>
- *  The first line is a general tests, for the result type and the LL opcode.
- *  The second line describes constraints on the LL operands.
- * <p>
- * In the first example, if the result type is i16 and the opcode is "add"; then, 
- * if the LL operand #1 (source) is in a register and the LL operand #2 is
- * a constant (int), then generate Iai (add immediate), setting the first operand to a
- * register operand for the incoming operand #1, which is modified in place, then 
- * copying the incoming operand #2 to the second operand as an immediate.  The
- * result is in (9900) operand 1.
- * <p>
- * In the second example, there are no conditions for the generic add instruction
- * (testing stops when the array ends).
- * We generate Ia ("A"=add), copying the LL operand #2 into the first operand 
- * using a general addressing mode, then set the second operand to the LL operand #1,
- * which is modified in place.  The result is in 9900 operand 2.
- *   
+ * Most instructions are handled by patterns which encode a dense
+ * set of checks.  Operands are constructed implicitly.
  * @author ejs
  *
  */
 public abstract class InstrSelection extends LLCodeVisitor {
+	
+	/** Codes for type checking */
+	public static final int I8 = 1;
+	public static final int I16 = 2;
+	public static final int I1 = 4;
 	
 	/** Tests for instruction selection.  These correspond to LL operand positions. */
 	enum If {
@@ -99,6 +79,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		IS_CONST_N2,
 		/** if the LL operand is a constant from 1 to 15 */
 		IS_CONST_1_15,
+		/** if the LL operand is a constant from 16 */
+		IS_CONST_16,
 		
 		/** if the LL operand is allocated to a physical register */
 		IN_PHYS_REG,
@@ -205,15 +187,15 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 	static class IPattern {
 		BasicType basicType;
-		int bits;
+		int typeMask;
 		String llInst;
 		If[] opconds;
 		As[] ases;
 		Do[] dos;
-		public IPattern(BasicType basicType, int bits, String llInst,
+		public IPattern(BasicType basicType, int typeMask, String llInst,
 				If[] opconds, As[] ases, Do... dos) {
 			this.basicType = basicType;
-			this.bits = bits;
+			this.typeMask = typeMask;
 			this.llInst = llInst;
 			this.opconds = opconds != null ? opconds : NO_IFS;
 			this.ases = ases != null ? ases : NO_AS; 
@@ -229,96 +211,205 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	
 	/** Raw patterns.  These are converted at runtime. */ 
 	private static final IPattern[] patterns = {
-		new IPattern( BasicType.INTEGRAL, 16, "store", 
+		new IPattern( BasicType.INTEGRAL, I16, "store", 
 				new If[] { If.IS_CONST, If.IN_REG_LOCAL },
-		 		new As[] { As.IMM, As.REG_RW },
+		 		new As[] { As.IMM, As.REG_RW }, 
 		 		new Do( Ili, 1, 0 )
 		),
-		new IPattern( BasicType.INTEGRAL, 16, "store", 
+		new IPattern( BasicType.INTEGRAL, I16, "store", 
 				new If[] { If.PASS, If.PASS },
-				new As[] { As.GEN_R, As.GEN_W },
+				new As[] { As.GEN_R, As.GEN_W }, 
 				new Do( Imov, 0, 1 )
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "store", 
+		new IPattern( BasicType.INTEGRAL, I8, "store", 
 				new If[] { If.PASS, If.PASS },
-				new As[] { As.GEN_R, As.GEN_W },
+				new As[] { As.GEN_R, As.GEN_W }, 
 				new Do( Imovb, 0, 1 )
 		),
-		new IPattern( BasicType.INTEGRAL, 16, "load", 
+		new IPattern( BasicType.INTEGRAL, I16 | I8, "load", 
 				new If[] { If.PASS },
 				new As[] { As.GEN_R },
 				new DoRes( 0, -1, 0 )
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "load", 
-				new If[] { If.PASS },
-				new As[] { As.GEN_R },
-				new DoRes( 0, -1, 0 )
-		),
-		
-		new IPattern( BasicType.INTEGRAL, 16, "trunc", 
+		new IPattern( BasicType.INTEGRAL, I16, "trunc", 
 				new If[] { 
 					If.IN_REG_LOCAL,
 					If.IS_I8,
 				},
-				new As[] { As.REG_RW, As.IMM_8 },
+				new As[] { As.REG_RW, As.IMM_8 }, 
 				new DoRes( 0, Isla, 0, 1 ) 
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "sext", 
+		new IPattern( BasicType.INTEGRAL, I8, "sext", 
 				new If[] { 
 					If.PASS,
 					If.IS_I16,
 				},
-				new As[] { As.REG_RW, As.IMM_8 },
+				new As[] { As.REG_RW, As.IMM_8 }, 
 				new DoRes( 0, Isra, 0, 1 ) 
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "zext", 
+		new IPattern( BasicType.INTEGRAL, I8, "zext", 
 				new If[] { 
 					If.PASS,
 					If.IS_I16,
 				},
-				new As[] { As.REG_RW, As.IMM_8 },
+				new As[] { As.REG_RW, As.IMM_8 }, 
 				new DoRes( 0, Isrl, 0, 1 ) 
 			),
 		
-		new IPattern( BasicType.INTEGRAL, 16, "add", 
+		new IPattern( BasicType.INTEGRAL, I16|I8, "add", 
 				 new If[] { If.PASS, If.IS_CONST },
-				 new As[] { As.REG_RW, As.IMM },
+				 new As[] { As.REG_RW, As.IMM }, 
 				 new DoRes( 0, Iai, 0, 1 )
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "add", 
-				new If[] { If.PASS, If.IS_CONST },
-				new As[] { As.REG_RW, As.IMM },
-				new DoRes( 0, Iai, 0, 1 )
-		),
-		new IPattern( BasicType.INTEGRAL, 16, "add", 
+		new IPattern( BasicType.INTEGRAL, I16, "add", 
 		 		null,
-		 		new As[] { As.GEN_RW, As.GEN_R },
+		 		new As[] { As.GEN_RW, As.GEN_R }, 
 		 		new DoRes( 1, Ia, 1, 0 )
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "add", 
+		new IPattern( BasicType.INTEGRAL, I8, "add", 
 				null,
-				new As[] { As.GEN_RW, As.GEN_R },
+				new As[] { As.GEN_RW, As.GEN_R }, 
 				new DoRes( 1, Iab, 1, 0 )
 		),
-		new IPattern( BasicType.INTEGRAL, 16, "sub", 
+		
+		new IPattern( BasicType.INTEGRAL, I16 | I8, "sub", 
 				 new If[] { If.PASS, If.IS_CONST },
-				 new As[] { As.REG_RW, As.IMM_NEG },
+				 new As[] { As.REG_RW, As.IMM_NEG }, 
 				 new DoRes( 0, Iai, 0, 1 )
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "sub", 
-				new If[] { If.PASS, If.IS_CONST },
-				new As[] { As.REG_RW, As.IMM_NEG },
-				new DoRes( 0, Iai, 0, 1 )
-		),
-		new IPattern( BasicType.INTEGRAL, 16, "sub", 
+		new IPattern( BasicType.INTEGRAL, I16, "sub", 
 		 		null,
-		 		new As[] { As.GEN_RW, As.GEN_R },
+		 		new As[] { As.GEN_RW, As.GEN_R }, 
 		 		new DoRes( 1, Is, 1, 0 )
 		),
-		new IPattern( BasicType.INTEGRAL, 8, "sub", 
+		new IPattern( BasicType.INTEGRAL, I8, "sub", 
+				null,
+				new As[] { As.GEN_RW, As.GEN_R }, 
+				new DoRes( 1, Isb, 1, 0 )
+		),
+		
+		new IPattern( BasicType.INTEGRAL, I16|I8, "and", 
+				 new If[] { If.PASS, If.IS_CONST },
+				 new As[] { As.REG_RW, As.IMM }, 
+				 new DoRes( 0, Iandi, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "and", 
+		 		null,
+		 		new As[] { As.GEN_RW, As.GEN_R }, 
+		 		new DoRes( 1, Iszc, 1, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "and", 
+				null,
+				new As[] { As.GEN_RW, As.GEN_R }, 
+				new DoRes( 1, Iszcb, 1, 0 )
+		),
+
+		new IPattern( BasicType.INTEGRAL, I16|I8, "or", 
+				 new If[] { If.PASS, If.IS_CONST },
+				 new As[] { As.REG_RW, As.IMM }, 
+				 new DoRes( 0, Iori, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "or", 
+		 		null,
+		 		new As[] { As.GEN_RW, As.GEN_R }, 
+		 		new DoRes( 1, Isoc, 1, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "or", 
+				null,
+				new As[] { As.GEN_RW, As.GEN_R }, 
+				new DoRes( 1, Isocb, 1, 0 )
+		),
+		
+		new IPattern( BasicType.INTEGRAL, I16, "xor", 
+		 		null,
+		 		new As[] { As.REG_RW, As.GEN_R }, 
+		 		new DoRes( 1, Ixor, 1, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "xor", 
 				null,
 				new As[] { As.GEN_RW, As.GEN_R },
-				new DoRes( 1, Isb, 1, 0 )
+				new DoRes( 1, Ixor, 1, 0 )
+		),
+		
+		
+		new IPattern( BasicType.INTEGRAL, I16, "shl", 
+		 		new If[] { If.PASS, If.IS_CONST_0 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "shl", 
+				new If[] { If.PASS, If.IS_CONST_16 },
+				new As[] { As.IMM_0 },
+				new DoRes( 0, -1, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "shl", 
+				new If[] { If.PASS, If.IS_CONST_1_15 },
+				new As[] { As.REG_RW, As.IMM }, 
+				new DoRes( 0, Isla, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "shl", 
+		 		new If[] { If.PASS, If.PASS },
+		 		new As[] { As.REG_RW, As.REG_0_W },
+		 		new DoRes( 0, Isla, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "ashr", 
+		 		new If[] { If.PASS, If.IS_CONST_0 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "ashr", 
+				new If[] { If.PASS, If.IS_CONST_16 },
+				new As[] { As.REG_RW, As.REG_0_W },
+				new Do( Iclr, 1 ),
+				new DoRes( 0, Isra, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "ashr", 
+				new If[] { If.PASS, If.IS_CONST_1_15 },
+				new As[] { As.REG_RW, As.IMM }, 
+				new DoRes( 0, Isra, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "ashr", 
+		 		new If[] { If.PASS, If.PASS },
+		 		new As[] { As.REG_RW, As.REG_0_W },
+		 		new DoRes( 0, Isra, 0, 1 )
+		),
+		
+		new IPattern( BasicType.INTEGRAL, I16, "lshr", 
+		 		new If[] { If.PASS, If.IS_CONST_0 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "lshr", 
+				new If[] { If.PASS, If.IS_CONST_16 },
+				new As[] { As.IMM_0 },
+				new DoRes( 0, -1, 0  )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "lshr", 
+				new If[] { If.PASS, If.IS_CONST_1_15 },
+				new As[] { As.REG_RW, As.IMM }, 
+				new DoRes( 0, Isrl, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "lshr", 
+		 		new If[] { If.PASS, If.PASS },
+		 		new As[] { As.REG_RW, As.REG_0_W },
+		 		new DoRes( 0, Isrl, 0, 1 )
+		),
+		
+		// synthetic instr generated by intrinsic
+		new IPattern( BasicType.INTEGRAL, I16, "src", 
+		 		new If[] { If.PASS, If.IS_CONST_0 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "src", 
+		 		new If[] { If.PASS, If.IS_CONST_16 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "src", 
+				new If[] { If.PASS, If.IS_CONST_1_15 },
+				new As[] { As.REG_RW, As.IMM }, 
+				new DoRes( 0, Isrc, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "src", 
+		 		new If[] { If.PASS, If.PASS },
+		 		new As[] { As.REG_RW, As.REG_0_W },
+		 		new DoRes( 0, Isrc, 0, 1 )
 		),
 	};
 	
@@ -331,7 +422,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	
 	private final LLDefineDirective def;
 	private final ICallingConvention cc;
-	private HashMap<Pair<LLType, String>, List<IPattern>> patternMap;
+	private HashMap<Pair<Pair<BasicType, Integer>, String>, List<IPattern>> patternMap;
 	private List<IPattern> otherPatterns;
 
 	private IPattern thePattern;
@@ -342,9 +433,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private Block block;
 	
 	private HashMap<ISymbol, Block> blockMap;
-	private TypeEngine typeEngine;
 	private HashMap<LLOperand, AssemblerOperand> tempTable;
 	private LLInstr instr;
+	private LLBlock llblock;
 	
 	/**
 	 * 
@@ -353,7 +444,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		this.routine = routine;
 		locals = routine.getLocals();
 		def = routine.getDefinition();
-		typeEngine = def.getTarget().getTypeEngine();
 		this.cc = def.getTarget().getCallingConvention(def.getConvention());
 		
 		setupPatterns();
@@ -365,30 +455,37 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * linearly.
 	 */
 	private void setupPatterns() {
-		patternMap = new LinkedHashMap<Pair<LLType, String>, List<IPattern>>();
+		patternMap = new LinkedHashMap<Pair<Pair<BasicType, Integer>, String>, List<IPattern>>();
 		otherPatterns = new ArrayList<IPattern>();
 		for (IPattern pattern : patterns) {
 
 			assert !hardcodedInstrs.matcher(pattern.llInst).matches() : 
 				"these instructions are handled specially";
 			
-			LLType type;
+			BasicType basicType;
 			switch (pattern.basicType) {
 			case INTEGRAL:
-				type = typeEngine.getIntType(pattern.bits);
+			case POINTER:
+			case BOOL:
+				basicType = BasicType.INTEGRAL;
 				break;
 			default:
 				otherPatterns.add(pattern);
 				continue;
 			}
 			
-			Pair<LLType, String> key = new Pair<LLType, String>(type, pattern.llInst);
-			List<IPattern> list = patternMap.get(key);
-			if (list == null) {
-				list = new ArrayList<IPattern>();
-				patternMap.put(key, list);
+			for (int i = 1; i <= pattern.typeMask; i+=i) {
+				if ((pattern.typeMask & i) != 0) {
+					Pair<Pair<BasicType, Integer>, String> key = new Pair<Pair<BasicType, Integer>, String>(
+							new Pair<BasicType, Integer>(basicType, i), pattern.llInst);
+					List<IPattern> list = patternMap.get(key);
+					if (list == null) {
+						list = new ArrayList<IPattern>();
+						patternMap.put(key, list);
+					}
+					list.add(pattern);
+				}
 			}
-			list.add(pattern);
 		}
 	}
 
@@ -409,6 +506,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public boolean enterBlock(LLBlock llblock) {
 		ISymbol lllabelSym = llblock.getLabel();
 		Label label = new Label(lllabelSym.getUniqueName());
+		this.llblock = llblock;
 		block = new Block(label);
 		blockMap.put(lllabelSym, block);
 		
@@ -421,6 +519,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	@Override
 	public void exitBlock(LLBlock llblock) {
 		routine.addBlock(block);
+		this.llblock = null;
 	}
 	
 	/* (non-Javadoc)
@@ -453,24 +552,33 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		if (instr instanceof LLTypedInstr) {
 			LLTypedInstr typed = (LLTypedInstr) instr;
-			Pair<LLType, String> key = new Pair<LLType, String>(typed.getType(), instr.getName());
+			int bitMask = typed.getType().getBits() == 1 ? I1 : 
+				typed.getType().getBits() == 8 ? I8 :
+					typed.getType().getBits() == 16 ? I16 : 0;
+			
+			BasicType basicType = typed.getType().getBasicType();
+			if (isIntType(typed.getType()))
+				basicType = BasicType.INTEGRAL;
+			
+			Pair<Pair<BasicType, Integer>, String> key = new Pair<Pair<BasicType, Integer>, String>(
+					new Pair<BasicType, Integer>(basicType, bitMask), instr.getName());
 			List<IPattern> patterns = patternMap.get(key);
 			if (patterns != null) {
 				for (IPattern pattern : patterns) {
-					if (matches(pattern, typed)) {
+					if (matches(pattern, bitMask, typed)) {
 						thePattern = pattern;
 						return true;
 					}
 				}
 			}
 			for (IPattern pattern : otherPatterns) {
-				if (matches(pattern, typed)) {
+				if (matches(pattern, bitMask, typed)) {
 					thePattern = pattern;
 					return true;
 				}
 			}
 		}
-		assert false : "unhandled instr";
+		assert false : "unhandled instr " + instr;
 		return false;
 	}
 	
@@ -483,9 +591,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @param typed
 	 * @return
 	 */
-	private boolean matches(IPattern pattern, LLTypedInstr typed) {
+	private boolean matches(IPattern pattern, int bitMask, LLTypedInstr typed) {
 		if (!(pattern.basicType == null || pattern.basicType.equals(typed.getType().getBasicType()))
-				&&  !((pattern.bits == 0 || pattern.bits == typed.getType().getBits()))) 
+				&&  (pattern.typeMask & bitMask) == 0)
 			return false;
 
 		int opidx = 0;
@@ -538,13 +646,15 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			return op instanceof LLConstOp && isInt((LLConstOp) op, -2, -2);
 		case IS_CONST_1_15:
 			return op instanceof LLConstOp && isInt((LLConstOp) op, 1, 15);
+		case IS_CONST_16:
+			return op instanceof LLConstOp && isInt((LLConstOp) op, 16, 16);
 
 		case IS_TEMP_LAST_USE:
 		case IN_PHYS_REG: 
 		case IN_PHYS_REG_0: 
 		case IN_REG_LOCAL:
 		case IN_REG_BLOCK: {
-			ILocal local = locals.getLocal(op);
+			ILocal local = locals.getFinalLocal(op);
 			RegisterLocal regLocal = null;
 			if (local instanceof RegisterLocal)
 				regLocal = (RegisterLocal) local;
@@ -558,7 +668,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				return regLocal.getVr() == 0;
 			}
 			else if (opcond == If.IN_REG_BLOCK) {
-				return regLocal.isSingleBlock();
+				return regLocal.getUses().size() == 1;
 			}
 			else if (opcond == If.IN_REG_LOCAL) {
 				return true;
@@ -573,7 +683,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case ON_STACK:
 		case IN_MEMORY:
 		{
-			ILocal local = locals.getLocal(op);
+			ILocal local = locals.getFinalLocal(op);
 			if (local instanceof StackLocal)
 				return true;
 			
@@ -660,8 +770,21 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 	}
 	private void handleCallInstr(LLCallInstr llinst) {
+		if (llinst.getFunction() instanceof LLSymbolOp) {
+			LLSymbolOp symOp = (LLSymbolOp) llinst.getFunction();
+			if (isIntrinsic(symOp, ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR)) {
+				LLInstr instr = new LLBinaryInstr("src", llinst.getResult(), llinst.getType(), 
+						llinst.getOperands()[0], llinst.getOperands()[1]);
+				instr.accept(llblock, this);
+				return;
+			}
+		}
 		assert false;
 		
+	}
+
+	private boolean isIntrinsic(LLSymbolOp symOp, Intrinsic intrinsic) {
+		return symOp.getSymbol().equals(def.getTarget().getIntrinsic(def, intrinsic));
 	}
 
 	@Override
@@ -675,6 +798,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private void handleAs(int num, LLOperand operand) {
 		AssemblerOperand asmOp = operand != null ? generateOperand(operand) : null;
 
+		if (num >= thePattern.ases.length) {
+			asmOps[num] = asmOp;
+			return;
+		}
 		As as = thePattern.ases[num];
 		switch (as) {
 		case GEN_R:
@@ -683,7 +810,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case GEN_RW:
 			asmOp = generateGeneralOperand(operand, asmOp);
-			if (!isLastUse(operand))
+			if (!isLastUse(operand) || !isLastUse(asmOp))
 				asmOp = moveToTemp(operand, asmOp);
 			break;
 		case REG_R:
@@ -691,7 +818,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case REG_RW:
 			asmOp = generateRegisterOperand(operand, asmOp);
-			if (!isLastUse(operand))
+			if (!isLastUse(operand) || !isLastUse(asmOp))
 				asmOp = moveToTemp(operand, asmOp);
 			break;
 		case REG_0_W:
@@ -739,7 +866,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		if (operand instanceof LLTempOp) {
 			if (isIntOp(operand)) {
-				ILocal local = locals.getLocal(operand);
+				ILocal local = locals.getFinalLocal(operand);
 				if (local instanceof RegisterLocal)
 					return new RegisterTempOperand((RegisterLocal) local);
 				else if (local instanceof StackLocal)
@@ -802,8 +929,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand instanceof NumberOperand) {
 			if (isIntOp(llOp)) {
 				RegisterLocal regLocal = newTempRegister(instr, llOp.getType());
-				regLocal.setSingleBlock(true);
-				regLocal.setLastUse(instr);
 				AssemblerOperand ret = new RegisterTempOperand(regLocal);
 				if (isIntOp(llOp, 16)) {
 					emitInstr(HLInstruction.create(Ili, ret, operand));
@@ -819,7 +944,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand instanceof SymbolOperand) {
 			// we're dereferencing it
 			ISymbol sym = ((SymbolOperand) operand).getSymbol();
-			ILocal local = locals.getLocal(sym);
+			ILocal local = locals.getFinalLocal(sym);
 			if (local instanceof RegisterLocal)
 				return new RegisterTempOperand((RegisterLocal) local);
 			else if (local instanceof StackLocal)
@@ -836,8 +961,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @param inst
 	 */
 	private void emitInstr(HLInstruction inst) {
-		if (!isNoOp(inst))
+		if (inst.getInst() == Ili && isZero(inst.getOp2()))
+			emit(HLInstruction.create(Iclr, inst.getOp1()));
+		else if (!isNoOp(inst))
 			emit(inst);
+	}
+
+	private boolean isZero(AssemblerOperand op) {
+		return op instanceof NumberOperand && ((NumberOperand) op).getValue() == 0;
 	}
 
 	private AssemblerOperand moveToTemp(LLOperand llOp, AssemblerOperand operand) {
@@ -867,8 +998,48 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (!(operand instanceof LLSymbolOp))
 			return true;
 		ILocal local = locals.getLocal(operand);
-		if (local != null)
-			return instr.equals(local.getLastUse());
+		return isLastUse(local);
+	}
+	private boolean isLastUse(AssemblerOperand operand) {
+		if (!(operand instanceof ISymbolOperand))
+			return true;
+		ISymbol sym = ((ISymbolOperand) operand).getSymbol();
+		ILocal local = locals.getLocal(sym);
+		return isLastUse(local);
+	}
+
+	/**
+	 * @param local
+	 * @return
+	 */
+	private boolean isLastUse(ILocal local) {
+		if (local != null) {
+			List<Integer> list = local.getUses().get(llblock);
+			// a temp
+			if (list == null)
+				return true;
+			int indexOf = Collections.binarySearch(list, instr.getNumber());
+			if (indexOf < 0)
+				// between instructions
+				indexOf = -(indexOf + 1);
+			if (instr.getNumber() >= list.get(list.size() - 1))
+				return !isLocalUsedIn(local, llblock.succ);
+		}
+		return false;
+	}
+
+	/**
+	 * @param succ
+	 * @return
+	 */
+	private boolean isLocalUsedIn(ILocal local, List<LLBlock> succ) {
+		if (succ == null || succ.isEmpty())
+			return false;
+		for (LLBlock s : succ)
+			if (local.getUses().containsKey(s))
+				return false;
+			else
+				return isLocalUsedIn(local, s.succ);
 		return false;
 	}
 

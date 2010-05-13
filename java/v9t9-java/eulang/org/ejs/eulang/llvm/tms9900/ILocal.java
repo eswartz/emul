@@ -3,6 +3,11 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import java.util.List;
+import java.util.Map;
+
+import org.ejs.coffee.core.utils.Pair;
+import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
@@ -21,12 +26,11 @@ public interface ILocal {
 	/** If this local is elected to occupy an incoming register, this is set, and should
 	 * be used instead of this local */
 	ILocal getIncoming();
-	
-	/** Tell if local is used in more than one block.  */
-	boolean isSingleBlock();
-	void setSingleBlock(boolean single);
-	
-	/** The last instruction that uses this local */
-	LLInstr getLastUse();
-	void setLastUse(LLInstr instr);
+
+	/** Get the initialization of the local.  Pair(null, null) means argument. */
+	Pair<LLBlock, LLInstr> getInit();
+	/** Get the initialization of the local.  Pair(null, null) means argument. */
+	void setInit(Pair<LLBlock, LLInstr> init);
+	/** Get uses of the local. */
+	Map<LLBlock, List<Integer>> getUses();
 }

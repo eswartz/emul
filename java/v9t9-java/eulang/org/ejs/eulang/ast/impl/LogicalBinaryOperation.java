@@ -7,6 +7,7 @@ import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
@@ -91,11 +92,21 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 		LLOperand left = generator.generateTypedExpr(expr.getLeft());
 		LLOperand right = generator.generateTypedExpr(expr.getRight());
 		
+		return generate(generator, currentTarget, expr, left, right);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#generate(org.ejs.eulang.llvm.LLVMGenerator, org.ejs.eulang.llvm.ILLCodeTarget, org.ejs.eulang.ast.IAstTypedExpr, org.ejs.eulang.llvm.ops.LLOperand, org.ejs.eulang.llvm.ops.LLOperand)
+	 */
+	@Override
+	public LLOperand generate(LLVMGenerator generator,
+			ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left,
+			LLOperand right) throws ASTException {
 		LLOperand ret = currentTarget.newTemp(expr.getType());
 		
 		String instr = this.getLLVMName();
 		if (instr != null) {
-			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
+			currentTarget.emit(new LLBinaryInstr(instr, ret, left.getType(), left, right));
 		} else {
 			generator.unhandled(expr);
 		}

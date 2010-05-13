@@ -5,6 +5,10 @@ package org.ejs.eulang.test;
 
 import static junit.framework.Assert.*;
 
+import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
@@ -98,7 +102,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	@Test
 	public void testBinOps() throws Exception {
 		dumpTypeInfer = true;
-		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4%%45+5-6>>7<<8>>>85&9 xor 10|11<12>13<=14>=15==16!=17 and Bool(18) or Bool(19); };");
+		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4%%45+5-6>>7<<8>>>85&9 ~ 10|11<12>13<=14>=15==16!=17 and Bool(18) or Bool(19); };");
 		doGenerate(mod);
 	}
 	
@@ -352,4 +356,14 @@ public class TestLLVMGenerator extends BaseParserTest {
 		assertFoundInUnoptimizedText("trunc", g);
 	}
 
+	@Test
+    public void testAssignOps() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend("testAssignOps = code { x:=1;" +
+    			//"x+=x-=x*=x/=x\\=x%=x%%=x>>=x<<=x>>>=2;\n"+
+    			"x+=(x-=(x*=x/=x\\=x%=(x%%=x>>=(x<<=x>>>=2))));\n"+
+    			"x|=x~=x&=111;\n"+
+    			"};");
+    	doGenerate(mod);
+    }
 }

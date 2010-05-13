@@ -444,6 +444,7 @@ public class GenerateAST {
 		case EulangParser.LSHIFT:
 		case EulangParser.RSHIFT:
 		case EulangParser.URSHIFT:
+		case EulangParser.CRSHIFT:
 		case EulangParser.BITAND:
 		case EulangParser.BITOR:
 		case EulangParser.BITXOR:
@@ -1337,27 +1338,29 @@ public class GenerateAST {
 	 * @return
 	 */
 	public IAstNode constructAssign(Tree tree) throws GenerateException {
-		if (tree.getChild(0).getType() == EulangParser.IDEXPR) {
-			IAstTypedExpr left = checkConstruct(tree.getChild(0),
+		if (tree.getChild(1).getType() == EulangParser.IDEXPR) {
+			IOperation op = getOperation(tree.getChild(0));
+			IAstTypedExpr left = checkConstruct(tree.getChild(1),
 					IAstTypedExpr.class);
-			IAstTypedExpr right = checkConstruct(tree.getChild(1),
+			IAstTypedExpr right = checkConstruct(tree.getChild(2),
 					IAstTypedExpr.class);
-			IAstAssignStmt assign = new AstAssignStmt(
+			IAstAssignStmt assign = new AstAssignStmt(op,
 					AstNodeList.<IAstTypedExpr> singletonList(
-							IAstTypedExpr.class, left), AstNodeList
-							.<IAstTypedExpr> singletonList(IAstTypedExpr.class,
-									right), false);
+							IAstTypedExpr.class, left), 
+					AstNodeList.<IAstTypedExpr> singletonList(IAstTypedExpr.class,
+							right), false);
 			setLHS(assign.getSymbolExprs());
 			getSource(tree, assign);
 			return assign;
-		} else if (tree.getChild(0).getType() == EulangParser.LIST) {
+		} else if (tree.getChild(1).getType() == EulangParser.LIST) {
+			IOperation op = getOperation(tree.getChild(0));
 			IAstNodeList<IAstTypedExpr> symbols = new AstNodeList<IAstTypedExpr>(
 					IAstTypedExpr.class);
 			IAstNodeList<IAstTypedExpr> exprs = new AstNodeList<IAstTypedExpr>(
 					IAstTypedExpr.class);
 
 			boolean expand = false;
-			int idx = 0;
+			int idx = 1;
 			for (Tree kid : iter(tree.getChild(idx))) {
 				IAstTypedExpr left = checkConstruct(kid, IAstTypedExpr.class);
 				symbols.add(left);
@@ -1373,13 +1376,14 @@ public class GenerateAST {
 				exprs.add(right);
 			}
 			getSource(tree.getChild(idx), exprs);
-			IAstAssignStmt assign = new AstAssignStmt(symbols, exprs, expand);
+			IAstAssignStmt assign = new AstAssignStmt(op, symbols, exprs, expand);
 			setLHS(exprs);
 			getSource(tree, assign);
 			return assign;
-		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
-			IAstTupleNode left = constructIdTuple(tree.getChild(0));
-			IAstTypedExpr right = checkConstruct(tree.getChild(1),
+		} else if (tree.getChild(1).getType() == EulangParser.TUPLE) {
+			// no operation
+			IAstTupleNode left = constructIdTuple(tree.getChild(1));
+			IAstTypedExpr right = checkConstruct(tree.getChild(2),
 					IAstTypedExpr.class);
 			IAstAssignTupleStmt assign = new AstAssignTupleStmt(left, right);
 			setLHS(left);
@@ -1389,6 +1393,48 @@ public class GenerateAST {
 		} else {
 			unhandled(tree);
 			return null;
+		}
+	}
+
+	/**
+	 * @param child
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IOperation getOperation(Tree child) throws GenerateException {
+		switch (child.getType()) {
+		case EulangParser.EQUALS:
+			return IOperation.MOV;
+		case EulangParser.PLUS_EQ:
+			return IOperation.ADD;
+		case EulangParser.MINUS_EQ:
+			return IOperation.SUB;
+		case EulangParser.STAR_EQ:
+			return IOperation.MUL;
+		case EulangParser.SLASH_EQ:
+			return IOperation.DIV;
+		case EulangParser.BACKSLASH_EQ:
+			return IOperation.UDIV;
+		case EulangParser.PERCENT_EQ:
+			return IOperation.MOD;
+		case EulangParser.UMOD_EQ:
+			return IOperation.UMOD;
+		case EulangParser.LSHIFT_EQ:
+			return IOperation.SHL;
+		case EulangParser.RSHIFT_EQ:
+			return IOperation.SAR;
+		case EulangParser.URSHIFT_EQ:
+			return IOperation.SHR;
+		case EulangParser.CRSHIFT_EQ:
+			return IOperation.SRC;
+		case EulangParser.XOR_EQ:
+			return IOperation.BITXOR;
+		case EulangParser.OR_EQ:
+			return IOperation.BITOR;
+		case EulangParser.AND_EQ:
+			return IOperation.BITAND;
+		default:
+			throw new GenerateException(child, "unknown assign operation");
 		}
 	}
 
@@ -1598,6 +1644,9 @@ public class GenerateAST {
 			break;
 		case EulangParser.LSHIFT:
 			binop = new AstBinExpr(IOperation.SHL, left, right);
+			break;
+		case EulangParser.CRSHIFT:
+			binop = new AstBinExpr(IOperation.SRC, left, right);
 			break;
 
 		case EulangParser.COMPEQ:

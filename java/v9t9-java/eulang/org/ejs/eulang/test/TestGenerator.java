@@ -7,6 +7,7 @@ import static junit.framework.Assert.*;
 
 import java.util.List;
 
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBlockStmt;
@@ -29,6 +30,7 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -139,7 +141,7 @@ public class TestGenerator extends BaseParserTest {
     }
     @Test 
     public void testBinOps() throws Exception {
-    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7<<8>>>8.5&9 xor 10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
+    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4%%4.5+5-6>>7>>|7.5<<8>>>8.5&9 ~ 10|11<12>13<=14>=15==16!=17 and 18 or 19; };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("opPrec1");
@@ -565,6 +567,34 @@ public class TestGenerator extends BaseParserTest {
 		IAstInstanceExpr instance = (IAstInstanceExpr) ptr.getBaseType();
 		assertTrue(instance.getSymbolExpr().getSymbol().getName().equals("List"));
     }
+    
+    @Test 
+    public void testAssignOps() throws Exception {
+    	dumpTreeize = true;
+    	IAstModule mod = treeize("testAssignOps = code { x:=1;" +
+    			//"x+=x-=x*=x/=x\\=x%=x%%=x>>=x<<=x>>>=2;\n"+
+    			"x+=(x-=(x*=x/=x\\=x%=(x%%=x>>=(x<<=x>>>=(x>>|=2)))));\n"+
+    			"x|=x~=x&=111;\n"+
+    			"};");
+    	sanityTest(mod);
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testAssignOps");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+
+    	IAstAssignStmt stmt;
+		stmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
+    	assertEquals(IOperation.ADD, stmt.getOperation());
+    	assertTrue(stmt.getExprs().getFirst() instanceof IAstAssignStmt);
+    	IAstAssignStmt stmt2 = (IAstAssignStmt) stmt.getExprs().getFirst();
+		assertEquals(IOperation.SUB, stmt2.getOperation());
+    	stmt = (IAstAssignStmt) codeExpr.stmts().list().get(2);
+    	assertEquals(IOperation.BITOR, stmt.getOperation());
+    	assertTrue(stmt.getExprs().getFirst() instanceof IAstAssignStmt);
+    	stmt2 = (IAstAssignStmt) stmt.getExprs().getFirst();
+    	assertEquals(IOperation.BITXOR, stmt2.getOperation());
+    	assertEquals(IOperation.BITAND, ((IAstAssignStmt) stmt2.getExprs().getFirst()).getOperation());
+    }
+    
 }
 
 

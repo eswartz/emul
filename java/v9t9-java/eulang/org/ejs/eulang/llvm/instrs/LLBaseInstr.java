@@ -17,7 +17,8 @@ public abstract class LLBaseInstr implements LLInstr {
 
 	protected final String name;
 	protected final LLOperand[] ops;
-
+	protected int number;
+	
 	/**
 	 * 
 	 */
@@ -140,4 +141,19 @@ public abstract class LLBaseInstr implements LLInstr {
 			
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLInstr#getNumber()
+	 */
+	@Override
+	public int getNumber() {
+		return number;
+	}
+	/**
+	 * @param number the number to set
+	 */
+	public void setNumber(int number) {
+		this.number = number;
+	}
+	
 }

@@ -4,14 +4,21 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
+import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
+import org.ejs.eulang.llvm.instrs.LLCallInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -90,12 +97,31 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 	public LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException {
 		LLOperand left = generator.generateTypedExpr(expr.getLeft());
 		LLOperand right = generator.generateTypedExpr(expr.getRight());
-		
+		return generate(generator, currentTarget, expr, left, right);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#generate(org.ejs.eulang.llvm.LLVMGenerator, org.ejs.eulang.llvm.ILLCodeTarget, org.ejs.eulang.ast.IAstTypedExpr, org.ejs.eulang.llvm.ops.LLOperand, org.ejs.eulang.llvm.ops.LLOperand)
+	 */
+	@Override
+	public LLOperand generate(LLVMGenerator generator,
+			ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left,
+			LLOperand right) throws ASTException {
+
 		LLOperand ret = currentTarget.newTemp(expr.getType());
 		
 		String instr = this.getLLVMName();
 		if (instr != null) {
-			currentTarget.emit(new LLBinaryInstr(instr, ret, expr.getLeft().getType(), left, right));
+			currentTarget.emit(new LLBinaryInstr(instr, ret, left.getType(), left, right));
+		} else if (this == IBinaryOperation.SRC) {
+			//
+			//	call %intrinsic.src(i16, i16)
+			//
+			ISymbol intrinsicSrc = currentTarget.getTarget().getIntrinsic(
+					currentTarget, ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR);
+			currentTarget.emit(new LLCallInstr(ret, left.getType(), 
+					new LLSymbolOp(intrinsicSrc), (LLCodeType) intrinsicSrc.getType(),
+					left, right));
 		} else {
 			generator.unhandled(expr);
 		}

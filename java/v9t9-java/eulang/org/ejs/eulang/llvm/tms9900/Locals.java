@@ -3,10 +3,13 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
 import org.ejs.eulang.ITarget;
@@ -159,8 +162,6 @@ public class Locals {
 		currentBlock = def.getEntryBlock();
 		allocateParams();
 		
-		final Map<ILocal, LLBlock> lastLocalUse = new HashMap<ILocal, LLBlock>();
-		
 		ILLCodeVisitor visitor = new LLCodeVisitor() {
 			@Override
 			public boolean enterBlock(LLBlock block) {
@@ -173,9 +174,9 @@ public class Locals {
 				if (instr instanceof LLAssignInstr) {
 					LLAssignInstr assign = (LLAssignInstr) instr;
 					if (assign.getResult() instanceof LLSymbolOp)
-						allocateLocal(assign).setLastUse(instr);
+						allocateLocal(assign).setInit(new Pair<LLBlock, LLInstr>(block, instr));
 					else if (assign.getResult() instanceof LLTempOp)
-						allocateTemp(assign).setLastUse(instr);
+						allocateTemp(assign).setInit(new Pair<LLBlock, LLInstr>(block, instr));
 					else
 						assert false;
 				}
@@ -190,18 +191,28 @@ public class Locals {
 					LLOperand operand) {
 				ILocal local = getLocal(operand);
 				if (local != null) {
-					LLBlock lastBlock = lastLocalUse.get(local);
-					if (lastBlock != null && lastBlock != currentBlock) {
-						local.setSingleBlock(false);
-						if (local.getIncoming() != null)
-							local.getIncoming().setSingleBlock(false);
-					}
-					local.setLastUse(instr);
-					if (local.getIncoming() != null)
-						local.getIncoming().setLastUse(instr);
+					updateLocalUsage(instr, local);
 				}
 				return true;
 			}
+
+			/**
+			 * @param currentBlock2
+			 * @param instr
+			 */
+			protected void updateLocalUsage(LLInstr instr, ILocal local) {
+				Map<LLBlock, List<Integer>> blockMap = local.getUses();
+				List<Integer> instrs = blockMap.get(currentBlock);
+				if (instrs == null) {
+					instrs = new ArrayList<Integer>();
+					blockMap.put(currentBlock, instrs);
+				}
+				instrs.add(instr.getNumber());
+				
+				if (local.getIncoming() != null)
+					updateLocalUsage(instr, local.getIncoming());
+			}
+			
 		};
 		def.accept(visitor);
 	}
@@ -224,8 +235,8 @@ public class Locals {
 				if (arg instanceof StackLocal) {
 					mirror.setOffset(((StackLocal) arg).getOffset());
 				} else if (arg instanceof RegisterLocal) {
-					stackLocals.remove(mirrorSym);
-					regLocals.put(mirrorSym, (RegisterLocal) arg);
+					//stackLocals.remove(mirrorSym);
+					//regLocals.put(mirrorSym, (RegisterLocal) arg);
 				}
 				
 				// recover stack space: should always work since we store
@@ -253,11 +264,13 @@ public class Locals {
 				ICallingConvention.RegisterLocation regLoc = (RegisterLocation) loc;
 				local = allocateRegister(localScope.add(loc.name, true),
 						loc.type, regLoc.regClass, regLoc.number);
+				local.setInit(new Pair<LLBlock, LLInstr>(null, null));
 			}
 			else if (loc instanceof ICallingConvention.StackLocation) {
 				ICallingConvention.StackLocation stackLoc = (StackLocation) loc;
 				
-				local = allocateLocal(localScope.add(loc.name, true), loc.type, stackLoc.offset); 
+				local = allocateLocal(localScope.add(loc.name, true), loc.type, stackLoc.offset);
+				local.setInit(new Pair<LLBlock, LLInstr>(null, null));
 			}
 			else
 				assert false;
@@ -295,8 +308,6 @@ public class Locals {
 		
 		stackLocals.put(name, local);
 		System.out.println("Allocated " + local);
-		
-		local.setSingleBlock(false);
 		
 		return local;
 	}
@@ -343,9 +354,6 @@ public class Locals {
 		
 		System.out.println("Allocated " + local);
 		regLocals.put(name, (RegisterLocal) local);
-
-		// guess
-		local.setSingleBlock(true);	
 
 		return local;
 	}
@@ -411,6 +419,32 @@ public class Locals {
 			local = stackLocals.get(sym);
 		if (local == null)
 			local = argumentLocals.get(sym);
+		return local;
+	}
+
+	/**
+	 * @param op
+	 * @return
+	 */
+	public ILocal getFinalLocal(LLOperand op) {
+		ILocal local = getLocal(op);
+		if (local == null)
+			return null;
+		if (local.getIncoming() != null)
+			local = local.getIncoming();
+		return local;
+	}
+
+	/**
+	 * @param sym
+	 * @return
+	 */
+	public ILocal getFinalLocal(ISymbol sym) {
+		ILocal local = getLocal(sym);
+		if (local == null)
+			return null;
+		if (local.getIncoming() != null)
+			local = local.getIncoming();
 		return local;
 	}
 

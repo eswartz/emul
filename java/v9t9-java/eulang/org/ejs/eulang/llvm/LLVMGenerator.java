@@ -252,7 +252,10 @@ public class LLVMGenerator {
 	}
 
 	public void unhandled(IAstNode node) throws ASTException {
-		throw new ASTException(node, "unhandled generating: " + node.toString());
+		if (node != null)
+			throw new ASTException(node, "unhandled generating: " + node.toString());
+		else
+			throw new ASTException(null, "unhandled generating node");
 	}
 	
 	/**
@@ -876,6 +879,18 @@ public class LLVMGenerator {
 			IAstTypedExpr symbol = stmt.getSymbolExprs().list().get(i);
 			
 			LLOperand var = generateTypedExprCore(symbol);
+			
+			// %0 = load %var
+			// %1 = rhs
+			// %2 = add %0, %1
+			//  store %2, %var
+			if (stmt.getOperation() != IOperation.MOV) {
+				LLOperand cur = currentTarget.load(vals[i].getType(), var);
+				vals[i] = ((IBinaryOperation) stmt.getOperation()).generate(this, currentTarget, 
+						stmt, cur, vals[i]);
+						
+			}
+			
 			currentTarget.store(vals[i].getType(), vals[i], var);
 			
 			if (i == 0)

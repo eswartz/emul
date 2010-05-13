@@ -3,6 +3,12 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.ejs.coffee.core.utils.Pair;
+import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
@@ -16,8 +22,8 @@ public class BaseLocal implements ILocal {
 	private LLType type;
 	private ISymbol name;
 	private ILocal incoming;
-	private LLInstr lastUse;
-	private boolean single;
+	private Pair<LLBlock, LLInstr> init;
+	private Map<LLBlock, List<Integer>> uses;
 
 	/**
 	 * 
@@ -28,6 +34,8 @@ public class BaseLocal implements ILocal {
 	public BaseLocal(ISymbol name, LLType type) {
 		this.name = name;
 		this.type = type;
+		this.init = null;
+		this.uses = new HashMap<LLBlock, List<Integer>>();
 	}
 	
 	/* (non-Javadoc)
@@ -106,34 +114,27 @@ public class BaseLocal implements ILocal {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getLastUse()
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getInit()
 	 */
 	@Override
-	public LLInstr getLastUse() {
-		return lastUse;
+	public Pair<LLBlock, LLInstr> getInit() {
+		return init;
 	}
+
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setLastUse(org.ejs.eulang.llvm.instrs.LLInstr)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getUses()
 	 */
 	@Override
-	public void setLastUse(LLInstr instr) {
-		this.lastUse = instr;
+	public Map<LLBlock, List<Integer>> getUses() {
+		return uses;
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.ILocal#isSingleBlock()
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setInit(org.ejs.coffee.core.utils.Pair)
 	 */
 	@Override
-	public boolean isSingleBlock() {
-		return single;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setSingleBlock(boolean)
-	 */
-	@Override
-	public void setSingleBlock(boolean single) {
-		this.single = single;
+	public void setInit(Pair<LLBlock, LLInstr> init) {
+		this.init = init;
 	}
 	
 }

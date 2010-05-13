@@ -50,10 +50,8 @@ public class RegisterTempOperand extends BaseHLOperand {
 		if (local == null) {
 			if (other.local != null)
 				return false;
-		} else if (!local.equals(other.local)) {
-			if (local.getVr() != other.local.getVr())
-				return false;
-		}
+		} else if (!local.equals(other.local))
+			return false;
 		return true;
 	}
 

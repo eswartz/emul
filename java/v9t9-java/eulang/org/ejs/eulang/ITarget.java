@@ -9,6 +9,7 @@ import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
@@ -18,6 +19,14 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public interface ITarget {
+	enum Intrinsic {
+		/** shift right circular */
+		SHIFT_RIGHT_CIRCULAR,
+		/** increment reference */
+		INCREF,
+		/** decrement reference */
+		DECREF,
+	};
 	TypeEngine getTypeEngine();
 	
 	/** e.g. "ccc", "fastcc", "cc &lt;n&gt;" */
@@ -50,4 +59,11 @@ public interface ITarget {
 	
 	/** Get the calling convention that applies to this code */
 	ICallingConvention getCallingConvention(FunctionConvention convention);
+
+	/**
+	 * Get an intrinsic function
+	 * @param string
+	 * @return symbol
+	 */
+	ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic);
 }

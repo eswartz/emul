@@ -8,6 +8,7 @@ import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
@@ -119,6 +120,17 @@ public class BooleanComparisonBinaryOperation extends Operation implements IBina
 			generator.unhandled(expr);
 			return null;
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#generate(org.ejs.eulang.llvm.LLVMGenerator, org.ejs.eulang.llvm.ILLCodeTarget, org.ejs.eulang.ast.IAstTypedExpr, org.ejs.eulang.llvm.ops.LLOperand, org.ejs.eulang.llvm.ops.LLOperand)
+	 */
+	@Override
+	public LLOperand generate(LLVMGenerator generator,
+			ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left,
+			LLOperand right) throws ASTException {
+		generator.unhandled(expr);
+		return null;
 	}
 	
 	private LLOperand generateShortCircuitAnd(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException {

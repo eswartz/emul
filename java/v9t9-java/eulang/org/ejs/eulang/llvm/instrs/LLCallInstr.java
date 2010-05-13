@@ -62,4 +62,11 @@ public class LLCallInstr extends LLAssignInstr {
 		sb.append(funcType.getArgTypes()[idx].getLLVMName()).append(' ');
 		super.appendOperandString(sb, idx, op);
 	}
+	
+	/**
+	 * @return the func
+	 */
+	public LLOperand getFunction() {
+		return func;
+	}
 }

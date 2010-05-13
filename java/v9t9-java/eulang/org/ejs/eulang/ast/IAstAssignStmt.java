@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.IOperation;
+
 
 /**
  * This node assigns one or more values to the location of the symbols.
@@ -14,6 +16,8 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstAssignStmt extends IAstStmt, IAstTypedExpr {
+	IOperation getOperation();
+	
 	IAstAssignStmt copy(IAstNode copyParent);
 	IAstNodeList<IAstTypedExpr> getSymbolExprs();
 	void setSymbolExprs(IAstNodeList<IAstTypedExpr> id);

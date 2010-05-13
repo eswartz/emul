@@ -74,7 +74,7 @@ public class TestTypeInfer extends BaseParserTest {
 
 	 @Test 
     public void testBinOps() throws Exception {
-    	IAstModule mod = treeize("testBinOps = code { x:=(Bool(1*2/3) and Bool(4%%45 )or 5<=6>>7<<8>>>85&9 xor 10)or(11<12)>(13<=(14-15)==(16!=17%18+19)); };");
+    	IAstModule mod = treeize("testBinOps = code { x:=(Bool(1*2/3) and Bool(4%%45 )or 5<=6>>7<<8>>>85&9 ~ 10)or(11<12)>(13<=(14-15)==(16!=17%18+19)); };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testBinOps");

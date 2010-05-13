@@ -5,6 +5,7 @@ package org.ejs.eulang;
 
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -43,10 +44,8 @@ public interface IBinaryOperation extends IOperation {
 	 */
 	void validateTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
 
-	/**
-	 * @param generator TODO
-	 * @param currentTarget
-	 * @return
-	 */
 	LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstBinExpr expr) throws ASTException;
+	/** Only allowed with operations that don't have sequencing issues (e.g. || and &&) 
+	 * @param expr TODO*/
+	LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left, LLOperand right) throws ASTException;
 }

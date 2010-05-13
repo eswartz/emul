@@ -4,8 +4,10 @@
 package org.ejs.eulang;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
+import org.ejs.eulang.ITarget.Intrinsic;
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLArgAttrType;
@@ -94,6 +96,8 @@ public class TargetV9t9 implements ITarget {
 
 	private IRegClass intRegClass;
 
+	private HashMap<Intrinsic, ISymbol> intrinsicMap;
+
 	//private ISymbol refType;
 
 	/**
@@ -105,6 +109,8 @@ public class TargetV9t9 implements ITarget {
 		initTypes();
 		
 		intRegClass = new IntRegClass();
+		
+		intrinsicMap = new HashMap<Intrinsic, ISymbol>();
 	}
 	/**
 	 * 
@@ -220,4 +226,64 @@ public class TargetV9t9 implements ITarget {
 	public ICallingConvention getCallingConvention(FunctionConvention convention) {
 		return new V9t9CallingConvention(this, convention);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITarget#getIntrinsic(org.ejs.eulang.ITarget.Intrinsic)
+	 */
+	@Override
+	public ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic) {
+		ISymbol sym = intrinsicMap.get(intrinsic);
+		if (sym == null) {
+			switch (intrinsic) {
+			case DECREF:
+			{
+				LLCodeType codeType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { typeEngine.REFPTR });
+				sym = target.getModule().addExtern("DecRef",
+						codeType,
+						null, LLVisibility.DEFAULT, null /*cconv*/,
+						new LLAttrType(null, codeType.getRetType()),
+						new LLArgAttrType[] { new LLArgAttrType("ref", null, codeType.getArgTypes()[0]) },
+						new LLFuncAttrs(), 
+						null /*gc*/);
+			}
+			break;
+			case INCREF:
+			{
+				LLCodeType codeType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { typeEngine.REFPTR });
+				sym = target.getModule().addExtern("DecRef",
+						codeType,
+						null, LLVisibility.DEFAULT, null /*cconv*/,
+						new LLAttrType(null, codeType.getRetType()),
+						new LLArgAttrType[] { new LLArgAttrType("ref", null, codeType.getArgTypes()[0]) },
+						new LLFuncAttrs(), 
+						null /*gc*/);
+			}
+			break;
+			case SHIFT_RIGHT_CIRCULAR:
+			{
+				LLCodeType codeType = typeEngine.getCodeType(typeEngine.INT, 
+						new LLType[] { typeEngine.INT, typeEngine.INT });
+				sym = target.getModule().addExtern("intrinsic.src",
+						codeType,
+						null, LLVisibility.DEFAULT, null /*cconv*/,
+						new LLAttrType(null, codeType.getRetType()),
+						new LLArgAttrType[] { 
+							new LLArgAttrType("src", null, codeType.getArgTypes()[0]), 
+							new LLArgAttrType("cnt", null, codeType.getArgTypes()[1]) 
+						},
+						new LLFuncAttrs(), 
+						null /*gc*/);
+			}
+			break;
+			default:
+				assert false;
+			}
+			intrinsicMap.put(intrinsic, sym);
+		}
+
+		return sym;
+
+	}
+	
+	
 }
