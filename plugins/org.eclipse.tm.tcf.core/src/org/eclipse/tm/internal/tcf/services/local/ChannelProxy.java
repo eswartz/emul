@@ -90,12 +90,11 @@ class ChannelProxy {
         }
 
         public void result(IToken token, byte[] data) {
-            ch_x.sendResult(tokens_x.get(token), data);
-            tokens_x.remove(token);
+            ch_x.sendResult(tokens_x.remove(token), data);
         }
 
         public void terminated(IToken token, Exception error) {
-            tokens_x.remove(token);
+            ch_x.rejectCommand(tokens_x.remove(token));
         }
     };
 
@@ -106,12 +105,11 @@ class ChannelProxy {
         }
 
         public void result(IToken token, byte[] data) {
-            ch_y.sendResult(tokens_y.get(token), data);
-            tokens_y.remove(token);
+            ch_y.sendResult(tokens_y.remove(token), data);
         }
 
         public void terminated(IToken token, Exception error) {
-            tokens_y.remove(token);
+            ch_y.rejectCommand(tokens_y.remove(token));
         }
     };
 
