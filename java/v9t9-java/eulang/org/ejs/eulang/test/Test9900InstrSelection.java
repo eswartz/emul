@@ -557,7 +557,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 	@Test
 	public void testUShiftRightConst() throws Exception {
 		dumpLLVMGen =true;
-		doIsel("foo = code(x:Int ) { (x>>>1) + (x>>>0) + (x>>>4) + (x>>>16) };\n");
+		doIsel("foo = code(x:Int ) { (x+>>1) + (x+>>0) + (x+>>4) + (x+>>16) };\n");
 		
 		int idx = findInstrWithInst(instrs, "SRL");
 		HLInstruction inst = instrs.get(idx);
@@ -569,7 +569,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "SRL", RegisterTempOperand.class, "~x", NumberOperand.class, 4);
 
-		// >>>16 = 0
+		// +>>16 = 0
 		idx = findInstrWithInst(instrs, "CLR", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "CLR", RegisterTempOperand.class);
@@ -578,7 +578,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 	@Test
 	public void testUShiftRightVar() throws Exception {
 		dumpLLVMGen =true;
-		doIsel("foo = code(x,y:Int ) { (x>>>y) };\n");
+		doIsel("foo = code(x,y:Int ) { (x+>>y) };\n");
 		
 		int idx;
 		idx = findInstrWithSymbol(instrs, "y");
@@ -606,7 +606,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "SRC", RegisterTempOperand.class, "~x", NumberOperand.class, 4);
 
-		// >>>16 = no-op
+		// +>>16 = no-op
 		idx = findInstrWithInst(instrs, "SRC", idx);
 		assertEquals(-1, idx);
 		
@@ -631,6 +631,65 @@ public class Test9900InstrSelection extends BaseParserTest {
 	public void testCShiftRight8Bit() throws Exception {
 		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Byte ) { (x>>|1) + (x>>|y) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		idx = findInstrWithInst(instrs, "SWPB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SWPB", RegisterTempOperand.class, "~x");
+		HLInstruction copy = inst;
+		
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, copy.getOp1());
+	}
+	
+	
+	@Test
+	public void testCShiftLeftConst() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Int ) { (x<<|1) + (x<<|0) + (x<<|4) + (x<<|16) };\n");
+		
+		int idx = findInstrWithInst(instrs, "SRC");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "SRC", RegisterTempOperand.class, "~x", NumberOperand.class, 15);
+		
+		// ignore shift by zero
+		
+		idx = findInstrWithInst(instrs, "SRC", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRC", RegisterTempOperand.class, "~x", NumberOperand.class, 12);
+
+		// +>>16 = no-op
+		idx = findInstrWithInst(instrs, "SRC", idx);
+		assertEquals(-1, idx);
+		
+	}
+	@Test
+	public void testCShiftLeftVar() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x,y:Int ) { (x<<|y) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		idx = findInstrWithSymbol(instrs, "y");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
+		
+		idx = findInstrWithInst(instrs, "NEG");
+		inst = instrs.get(idx);
+		matchInstr(inst, "NEG", RegisterTempOperand.class, 0);
+		
+		idx = findInstrWithInst(instrs, "SRC");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRC", RegisterTempOperand.class, "x", RegisterTempOperand.class, 0);
+		
+	}
+
+	@Test
+	public void testCShiftLeft8Bit() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x,y:Byte ) { (x<<|1) + (x<<|y) };\n");
 		
 		int idx;
 		HLInstruction inst;

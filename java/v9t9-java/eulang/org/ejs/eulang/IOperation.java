@@ -45,6 +45,7 @@ public interface IOperation {
 	IBinaryOperation SHR = new ShiftOperation(">>>", "lshr");
 	IBinaryOperation SAR = new ShiftOperation(">>", "ashr");
 	IBinaryOperation SRC = new ShiftOperation(">>|", null);
+	IBinaryOperation SLC = new ShiftOperation("<<|", null);
 	
 	IUnaryOperation INV = new LogicalUnaryOperation("~");
 	

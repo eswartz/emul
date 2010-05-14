@@ -122,6 +122,15 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 			currentTarget.emit(new LLCallInstr(ret, left.getType(), 
 					new LLSymbolOp(intrinsicSrc), (LLCodeType) intrinsicSrc.getType(),
 					left, right));
+		} else if (this == IBinaryOperation.SLC) {
+			//
+			//	call %intrinsic.slc(i16, i16)
+			//
+			ISymbol intrinsicSlc = currentTarget.getTarget().getIntrinsic(
+					currentTarget, ITarget.Intrinsic.SHIFT_LEFT_CIRCULAR, left.getType());
+			currentTarget.emit(new LLCallInstr(ret, left.getType(), 
+					new LLSymbolOp(intrinsicSlc), (LLCodeType) intrinsicSlc.getType(),
+					left, right));
 		} else {
 			generator.unhandled(expr);
 		}

@@ -306,8 +306,8 @@ assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN EQUA
     | rhsExpr                             -> rhsExpr
     ;
 
-assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ
-  | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CRSHIFT_EQ | BACKSLASH_EQ ;
+assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | BACKSLASH_EQ 
+  | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ ;
 assignEqOp : EQUALS | assignOp ;
 
 initList : LBRACKET (initExpr (COMMA initExpr)*)? RBRACKET     -> ^(INITLIST initExpr* ) ;
@@ -467,6 +467,7 @@ shift:  ( factor        -> factor )
       | ( RSHIFT r=factor   -> ^(RSHIFT $shift $r) )
       | ( URSHIFT r=factor   -> ^(URSHIFT $shift $r) )
       | ( CRSHIFT r=factor   -> ^(CRSHIFT $shift $r) )
+      | ( CLSHIFT r=factor   -> ^(CLSHIFT $shift $r) )
       )*
   ;
 factor 
@@ -606,10 +607,12 @@ LSHIFT : '<<';
 LSHIFT_EQ : '<<=';
 RSHIFT : '>>';
 RSHIFT_EQ : '>>=';
-URSHIFT : '>>>';
-URSHIFT_EQ : '>>>=';
+URSHIFT : '+>>';
+URSHIFT_EQ : '+>>=';
 CRSHIFT : '>>|';
 CRSHIFT_EQ : '>>|=';
+CLSHIFT : '<<|';
+CLSHIFT_EQ : '<<|=';
 BACKSLASH : '\\';
 BACKSLASH_EQ : '\\=';
 PERCENT : '%';

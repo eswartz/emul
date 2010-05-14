@@ -445,6 +445,7 @@ public class GenerateAST {
 		case EulangParser.RSHIFT:
 		case EulangParser.URSHIFT:
 		case EulangParser.CRSHIFT:
+		case EulangParser.CLSHIFT:
 		case EulangParser.BITAND:
 		case EulangParser.BITOR:
 		case EulangParser.BITXOR:
@@ -1427,6 +1428,8 @@ public class GenerateAST {
 			return IOperation.SHR;
 		case EulangParser.CRSHIFT_EQ:
 			return IOperation.SRC;
+		case EulangParser.CLSHIFT_EQ:
+			return IOperation.SLC;
 		case EulangParser.XOR_EQ:
 			return IOperation.BITXOR;
 		case EulangParser.OR_EQ:
@@ -1647,6 +1650,9 @@ public class GenerateAST {
 			break;
 		case EulangParser.CRSHIFT:
 			binop = new AstBinExpr(IOperation.SRC, left, right);
+			break;
+		case EulangParser.CLSHIFT:
+			binop = new AstBinExpr(IOperation.SLC, left, right);
 			break;
 
 		case EulangParser.COMPEQ:

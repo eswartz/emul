@@ -22,6 +22,8 @@ public interface ITarget {
 	enum Intrinsic {
 		/** shift right circular */
 		SHIFT_RIGHT_CIRCULAR,
+		/** shift left circular */
+		SHIFT_LEFT_CIRCULAR,
 		/** increment reference */
 		INCREF,
 		/** decrement reference */

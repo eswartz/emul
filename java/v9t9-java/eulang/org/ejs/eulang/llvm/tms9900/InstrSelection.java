@@ -141,6 +141,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		IMM,
 		/** put the LL operand into an immediate, negated */
 		IMM_NEG,
+		/** put the LL operand into an immediate, negated and masked to 15 */
+		IMM_NEG_15,
 		
 		/** reuse the asm operand generated for operand #0 */
 		SAME_0,
@@ -433,7 +435,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		 		new As[] { As.REG_RW, As.REG_0_W },
 		 		new DoRes( 0, Isrc, 0, 1 )
 		),
-		
 		new IPattern( BasicType.INTEGRAL, I8, "src", 
 		 		new If[] { If.PASS, If.IS_CONST_0 },
 		 		null
@@ -450,7 +451,48 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		new IPattern( BasicType.INTEGRAL, I8, "src", 
 		 		new If[] { If.PASS, If.PASS },
 		 		new As[] { As.REG_RW_DUP, As.REG_0_W },
+				new DoRes( 0, Isrc, 0, 1 )
+		),
+		
+		// another variant
+		new IPattern( BasicType.INTEGRAL, I16, "slc", 
+		 		new If[] { If.PASS, If.IS_CONST_0 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "slc", 
+		 		new If[] { If.PASS, If.IS_CONST_16 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "slc", 
+				new If[] { If.PASS, If.IS_CONST_1_15 },
+				new As[] { As.REG_RW, As.IMM_NEG_15 }, 
+				new DoRes( 0, Isrc, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "slc", 
+		 		new If[] { If.PASS, If.PASS },
+		 		new As[] { As.REG_RW, As.REG_0_W },
+		 		new Do( Ineg, 1 ),
 		 		new DoRes( 0, Isrc, 0, 1 )
+		),
+		
+		new IPattern( BasicType.INTEGRAL, I8, "slc", 
+		 		new If[] { If.PASS, If.IS_CONST_0 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "slc", 
+		 		new If[] { If.PASS, If.IS_CONST_16 },
+		 		null
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "slc", 
+				new If[] { If.PASS, If.IS_CONST_1_15 },
+				new As[] { As.REG_RW_DUP, As.IMM_NEG_15 }, 
+				new DoRes( 0, Isrc, 0, 1 )
+		),
+		new IPattern( BasicType.INTEGRAL, I8, "slc", 
+		 		new If[] { If.PASS, If.PASS },
+		 		new As[] { As.REG_RW_DUP, As.REG_0_W },
+		 		new Do( Ineg, 1 ),
+				new DoRes( 0, Isrc, 0, 1 )
 		),
 		
 		new IPattern( BasicType.BOOL, I1, "icmp", 
@@ -860,6 +902,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				instr.accept(llblock, this);
 				return;
 			}
+			if (isIntrinsic(symOp, ITarget.Intrinsic.SHIFT_LEFT_CIRCULAR)) {
+				LLInstr instr = new LLBinaryInstr("slc", llinst.getResult(), llinst.getType(), 
+						llinst.getOperands()[0], llinst.getOperands()[1]);
+				instr.setNumber(llinst.getNumber());
+				instr.accept(llblock, this);
+				return;
+			}
 		}
 		assert false;
 		
@@ -930,6 +979,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case IMM_NEG:
 			assert asmOp instanceof NumberOperand;
 			asmOp = new NumberOperand(-((NumberOperand) asmOp).getValue());
+			break;
+		case IMM_NEG_15:
+			assert asmOp instanceof NumberOperand;
+			asmOp = new NumberOperand((-((NumberOperand) asmOp).getValue()) & 15);
 			break;
 		case IMM_8:
 			asmOp = new NumberOperand(8);

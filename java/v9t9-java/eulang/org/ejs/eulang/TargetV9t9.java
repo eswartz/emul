@@ -260,6 +260,7 @@ public class TargetV9t9 implements ITarget {
 			}
 			break;
 			case SHIFT_RIGHT_CIRCULAR:
+			case SHIFT_LEFT_CIRCULAR:
 			{
 				LLCodeType codeType;
 				if (type.getBits() == 16)
@@ -270,7 +271,8 @@ public class TargetV9t9 implements ITarget {
 							new LLType[] { typeEngine.BYTE, typeEngine.INT});
 				else
 					return null;
-				sym = target.getModule().addExtern("intrinsic.src",
+				sym = target.getModule().addExtern(intrinsic == Intrinsic.SHIFT_RIGHT_CIRCULAR 
+						? "intrinsic.src" : "intrinsic.slc",
 						codeType,
 						null, LLVisibility.DEFAULT, null /*cconv*/,
 						new LLAttrType(null, codeType.getRetType()),
