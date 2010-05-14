@@ -80,9 +80,9 @@ public class LocatorService implements ILocator {
         }
 
         boolean contains(InetAddress addr) {
-            if (addr == null || broadcast == null) return false;
+            if (addr == null || address == null) return false;
             byte[] a1 = addr.getAddress();
-            byte[] a2 = broadcast.getAddress();
+            byte[] a2 = address.getAddress();
             if (a1.length != a2.length) return false;
             int i = 0;
             while (i + 8 <= prefix_length) {
@@ -111,12 +111,12 @@ public class LocatorService implements ILocator {
 
         @Override
         public int hashCode() {
-            return broadcast.hashCode();
+            return address.hashCode();
         }
 
         @Override
         public String toString() {
-            return broadcast.getHostAddress() + "/" + prefix_length;
+            return address.getHostAddress() + "/" + prefix_length;
         }
     }
 
@@ -513,6 +513,29 @@ public class LocatorService implements ILocator {
                                 broadcast = InetAddress.getByAddress(buf);
                             }
                         }
+
+                        // TODO: discovery over IPv6
+
+                        /* Create IPv6 broadcast address.
+                         * The code does not work - commented out until fixed.
+                        if (broadcast == null &&
+                                address instanceof Inet6Address &&
+                                !address.isAnyLocalAddress() &&
+                                !address.isLinkLocalAddress() &&
+                                !address.isMulticastAddress() &&
+                                !address.isLoopbackAddress()) {
+                            byte[] net = address.getAddress();
+                            byte[] buf = new byte[16];
+                            buf[0] = (byte)0xff; // multicast
+                            buf[1] = (byte)0x32; // flags + scope
+                            buf[2] = (byte)0x00; // reserved
+                            buf[3] = (byte)network_prefix_len;
+                            int n = (network_prefix_len + 7) / 8;
+                            for (int i = 0; i < n; i++) buf[i + 4] = net[i];
+                            broadcast = Inet6Address.getByAddress(null, buf);
+                        }
+                        */
+
                         if (network_prefix_len > 0 && address != null && broadcast != null) {
                             set.add(new SubNet(network_prefix_len, address, broadcast));
                         }
