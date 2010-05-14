@@ -589,14 +589,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				new DoRes( 0, Isrl, 0, 1 )
 		),
 
-		new IPattern( BasicType.INTEGRAL, I16, "udiv", 
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "udiv", 
 				 new If[] { If.PASS, If.PASS },
 				 new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W },
 				 new Do( Iclr, 2 ),
 				 new DoRes( 2, Idiv, 1, 2, 0 )		// fake 3rd op
 		),
 		
-		new IPattern( BasicType.INTEGRAL, I16, "sdiv", 
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sdiv", 
 				new If[] { If.PASS, If.PASS },
 				new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W, As.IMM_15 },
 				new Do( Imov, 0, 2 ),
@@ -604,14 +604,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				new DoRes( 2, Idiv, 1, 2, 0 )		// fake 3rd op
 		),
 
-		new IPattern( BasicType.INTEGRAL, I16, "urem", 
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "urem", 
 				 new If[] { If.PASS, If.PASS },
 				 new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W },
 				 new Do( Iclr, 2 ),
 				 new DoRes( 1, Idiv, 1, 2, 0 )		// fake 3rd op
 		),
 		
-		new IPattern( BasicType.INTEGRAL, I16, "srem", 
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "srem", 
 				new If[] { If.PASS, If.PASS },
 				new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W, As.IMM_15 },
 				new Do( Imov, 0, 2 ),

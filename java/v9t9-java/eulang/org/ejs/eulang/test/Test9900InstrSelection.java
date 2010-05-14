@@ -1187,4 +1187,106 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 	}
 
+
+	@Test
+	public void testDivByte1() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x,y:Byte ) { (x/123) + (x+/y) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "LI", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 123*256);
+		HLInstruction val = inst;
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, RegisterTempOperand.class, 0);	// high word
+		HLInstruction xval = inst;
+		
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, 0, NumberOperand.class, 15);	// low word
+		
+		
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", val.getOp1(), xval.getOp2());
+		HLInstruction div1 = inst;
+		
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, "x", RegisterTempOperand.class, 1);	// low word
+		xval = inst;
+		
+		idx = findInstrWithInst(instrs, "CLR", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CLR", RegisterTempOperand.class, 0);	// high word
+		
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
+		HLInstruction div2 = inst;
+		
+		idx = findInstrWithInst(instrs, "AB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AB", div2.getOp3(), div1.getOp3());	// low words are result
+		
+
+	}
+	
+	@Test
+	public void testModByte1() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x,y:Byte) { (x%123) + (x+%y) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "LI", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 123*256);
+		HLInstruction val = inst;
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, RegisterTempOperand.class, 0);	// high word
+		HLInstruction xval = inst;
+		
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, 0, NumberOperand.class, 15);	// low word
+		
+		
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", val.getOp1(), xval.getOp2());
+		HLInstruction div1 = inst;
+		
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, "x", RegisterTempOperand.class, 1);	// low word
+		xval = inst;
+		
+		idx = findInstrWithInst(instrs, "CLR", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CLR", RegisterTempOperand.class, 0);	// high word
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
+		HLInstruction div2 = inst;
+		
+		idx = findInstrWithInst(instrs, "AB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AB", div2.getOp2(), div1.getOp2());	// high words are result
+		
+		
+
+	}
 }
