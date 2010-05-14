@@ -82,6 +82,7 @@ import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr;
+import org.ejs.eulang.llvm.instrs.LLCompareInstr;
 import org.ejs.eulang.llvm.instrs.LLExtractValueInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLInsertValueInstr;
@@ -663,7 +664,7 @@ public class LLVMGenerator {
 			LLOperand current = currentTarget.load(indVarType, context.inductor);
 			
 			LLOperand ret = currentTarget.newTemp(typeEngine.BOOL);
-			currentTarget.emit(new LLBinaryInstr("icmp eq", ret, indVarType, current, new LLConstOp(indVarType, 0)));
+			currentTarget.emit(new LLCompareInstr("icmp", "eq", ret, indVarType, current, new LLConstOp(indVarType, 0)));
 			currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, ret, new LLSymbolOp(context.exitLabel), new LLSymbolOp(context.bodyLabel)));
 			
 			currentTarget.addBlock(context.bodyLabel);
@@ -760,12 +761,12 @@ public class LLVMGenerator {
 			// ends when the first inductor is >= the limit
 			LLOperand current = currentTarget.load(indVarType, context.inductors[0]);
 			ret = currentTarget.newTemp(typeEngine.BOOL);
-			currentTarget.emit(new LLBinaryInstr("icmp uge", ret, indVarType, current, iterSource));
+			currentTarget.emit(new LLCompareInstr("icmp", "uge", ret, indVarType, current, iterSource));
 		} else {
 			// ends when the last inductor is < 0
 			LLOperand current = currentTarget.load(indVarType, context.inductors[context.inductors.length - 1]);
 			ret = currentTarget.newTemp(typeEngine.BOOL);
-			currentTarget.emit(new LLBinaryInstr("icmp slt", ret, indVarType, current, generateNil(indVarType)));
+			currentTarget.emit(new LLCompareInstr("icmp", "slt", ret, indVarType, current, generateNil(indVarType)));
 		}
 		currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, ret, new LLSymbolOp(context.exitLabel), new LLSymbolOp(context.bodyLabel)));
 		
@@ -1538,6 +1539,7 @@ entry:
 	private LLOperand generateCondList(IAstCondList condList) throws ASTException {
 		IScope scope = condList.getOwnerScope();
 		ISymbol retvalSym = scope.addTemporary("cond");
+		retvalSym.setType(condList.getType());
 		LLOperand retval = new LLSymbolOp(retvalSym);
 		currentTarget.emit(new LLAllocaInstr(retval, condList.getType()));
 		

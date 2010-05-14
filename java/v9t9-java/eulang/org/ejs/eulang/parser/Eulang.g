@@ -294,7 +294,7 @@ assignStmt : (idExpr assignEqOp) => idExpr assignEqOp assignOrInitExpr        ->
     | idTuple EQUALS assignOrInitExpr               -> ^(ASSIGN EQUALS idTuple assignOrInitExpr)
     // possible multi-assign statement
     | (idExpr (COMMA idExpr)+ assignEqOp ) => idExpr (COMMA idExpr)+ assignEqOp PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
-        -> ^(ASSIGN EQUALS ^(LIST idExpr+) PLUS? ^(LIST assignOrInitExpr+))
+        -> ^(ASSIGN assignEqOp ^(LIST idExpr+) PLUS? ^(LIST assignOrInitExpr+))
     ;
       
 assignOrInitExpr : assignExpr | initList ;

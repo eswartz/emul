@@ -15,7 +15,7 @@ public class RegisterLocal extends BaseLocal {
 
 	private final IRegClass regClass;
 	private int vr;
-	private boolean singleBlock;
+	private boolean regPair;
 
 	/**
 	 * @param name
@@ -34,7 +34,7 @@ public class RegisterLocal extends BaseLocal {
 	 */
 	@Override
 	public String toString() {
-		return "register " + super.toString() + " vr." + vr;
+		return "register " + super.toString() + " vr." + vr + (regPair ? " (pair)" : "");
 	}
 	
 	
@@ -85,6 +85,13 @@ public class RegisterLocal extends BaseLocal {
 	 */
 	public void setVr(int vr) {
 		this.vr = vr;
+	}
+	
+	public boolean isRegPair() {
+		return regPair;
+	}
+	public void setRegPair(boolean regPair) {
+		this.regPair = regPair;
 	}
 
 }

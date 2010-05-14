@@ -146,6 +146,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		REG_0_W,
 		/** put the LL operand into physical register #1 */
 		REG_1_W,
+		/** put the LL operand into a high entry (N) of an adjacent physical register pair */
+		REG_HI_W,
+		/** put the LL operand into a low entry (N + 1) of an adjacent physical register pair */
+		REG_LO_W,
+		
 		/** put the LL operand into an immediate */
 		IMM,
 		/** put the LL operand into an immediate, negated */
@@ -299,13 +304,17 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				},
 				new As[] { As.REG_RW, As.IMM_8 }, 
 				new DoRes( 0, Isrl, 0, 1 ) 
-			),
+		),
 		
-		// negative constants
-		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sub", 
-				 new If[] { If.IS_CONST_0, If.IS_CONST },
-				 new As[] { As.REG_W, As.IMM_NEG }, 
-				 new DoRes( 0, Ili, 0, 1 )
+		new IPattern( BasicType.INTEGRAL, I16, "add", 
+				new If[] { If.PASS, If.IS_CONST_1 },
+				new As[] { As.GEN_RW }, 
+				new DoRes( 0, Iinc, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "add", 
+				new If[] { If.PASS, If.IS_CONST_2 },
+				new As[] { As.GEN_RW }, 
+				new DoRes( 0, Iinct, 0 )
 		),
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "add", 
 				new If[] { If.PASS, If.IS_CONST },
@@ -323,6 +332,32 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				new DoRes( 1, Iab, 1, 0 )
 		),
 		
+		// negative constants
+		new IPattern( BasicType.INTEGRAL, I16, "sub", 
+				new If[] { If.PASS, If.IS_CONST_1 },
+				new As[] { As.GEN_RW }, 
+				new DoRes( 0, Idec, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16, "sub", 
+				new If[] { If.PASS, If.IS_CONST_2 },
+				new As[] { As.GEN_RW }, 
+				new DoRes( 0, Idect, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sub", 
+				new If[] { If.PASS, If.IS_CONST_N1 },
+				new As[] { As.GEN_RW }, 
+				new DoRes( 0, Iinc, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sub", 
+				new If[] { If.PASS, If.IS_CONST_N2 },
+				new As[] { As.GEN_RW }, 
+				new DoRes( 0, Iinct, 0 )
+		),
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sub", 
+				new If[] { If.IS_CONST_0, If.IS_CONST },
+				new As[] { As.REG_W, As.IMM_NEG }, 
+				new DoRes( 0, Ili, 0, 1 )
+		),
 		new IPattern( BasicType.INTEGRAL, I16 | I8, "sub", 
 				 new If[] { If.PASS, If.IS_CONST },
 				 new As[] { As.REG_RW, As.IMM_NEG }, 
@@ -518,7 +553,21 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		new IPattern( BasicType.BOOL, I1, "icmp", 
 				new If[] { If.IS_I16, 
-					If.IS_CONST },
+					If.IS_CONST_0 },
+				new As[] { As.REG_R, As.CMP, As.REG_W },
+				new Do( Ic, 0, 0 ),
+				new DoRes( 1, Iiset, 1, 2 )
+		),
+		new IPattern( BasicType.BOOL, I1, "icmp", 
+				new If[] { If.IS_INT, 
+				If.IS_CONST_0 },
+				new As[] { As.REG_R, As.CMP, As.REG_W },
+				new Do( Icb, 0, 0 ),
+				new DoRes( 1, Iiset, 1, 2 )
+		),
+		new IPattern( BasicType.BOOL, I1, "icmp", 
+				new If[] { If.IS_I16, 
+				If.IS_CONST },
 				new As[] { As.REG_R, As.IMM, As.CMP, As.REG_W },
 				new Do( Ici, 0, 1 ),
 				new DoRes( 1, Iiset, 2, 3 )
@@ -564,7 +613,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "mul", 
 				 new If[] { If.PASS, If.PASS },
-				 new As[] { As.REG_0_W, As.REG_1_W },
+				 new As[] { As.REG_HI_W, As.REG_LO_W },
 				 new DoRes( 1, Impy, 1, 0 )
 		),
 
@@ -591,14 +640,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "udiv", 
 				 new If[] { If.PASS, If.PASS },
-				 new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W },
+				 new As[] { As.REG_LO_W, As.GEN_R, As.REG_HI_W },
 				 new Do( Iclr, 2 ),
 				 new DoRes( 2, Idiv, 1, 2, 0 )		// fake 3rd op
 		),
 		
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sdiv", 
 				new If[] { If.PASS, If.PASS },
-				new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W, As.IMM_15 },
+				new As[] { As.REG_LO_W, As.GEN_R, As.REG_HI_W, As.IMM_15 },
 				new Do( Imov, 0, 2 ),
 				new Do( Isra, 2, 3 ),
 				new DoRes( 2, Idiv, 1, 2, 0 )		// fake 3rd op
@@ -606,14 +655,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "urem", 
 				 new If[] { If.PASS, If.PASS },
-				 new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W },
+				 new As[] { As.REG_LO_W, As.GEN_R, As.REG_HI_W },
 				 new Do( Iclr, 2 ),
 				 new DoRes( 1, Idiv, 1, 2, 0 )		// fake 3rd op
 		),
 		
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "srem", 
 				new If[] { If.PASS, If.PASS },
-				new As[] { As.REG_1_W, As.GEN_R, As.REG_0_W, As.IMM_15 },
+				new As[] { As.REG_LO_W, As.GEN_R, As.REG_HI_W, As.IMM_15 },
 				new Do( Imov, 0, 2 ),
 				new Do( Isra, 2, 3 ),
 				new DoRes( 1, Idiv, 1, 2, 0 )		// fake 3rd op
@@ -648,6 +697,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private LLInstr instr;
 	private LLBlock llblock;
 	private TypeEngine typeEngine;
+	private RegisterLocal regPair;
 	
 	/**
 	 * 
@@ -742,6 +792,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public boolean enterInstr(LLBlock block, LLInstr instr) {
 		asmOps[0] = asmOps[1] = asmOps[2] = null;
 		this.instr = instr;
+		regPair = null;
 		
 		if (instr instanceof LLAllocaInstr)
 			return false;
@@ -1106,6 +1157,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			asmOp = copyIntoRegister(instr,operand, asmOp, 1);
 			break;
 
+		case REG_HI_W: 
+			asmOp = copyIntoRegPair(instr, operand, asmOp, true);
+			break;
+		case REG_LO_W:
+			asmOp = copyIntoRegPair(instr, operand, asmOp, false);
+			break;
+			
 			
 		case CONST_POOL:
 			assert asmOp instanceof NumberOperand;
@@ -1225,6 +1283,25 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			moveTo(llOperand, operand, ret);
 		}
 		return ret;
+	}
+	private AssemblerOperand copyIntoRegPair(LLInstr instr, LLOperand llOperand, AssemblerOperand operand, boolean high) {
+		RegisterLocal regLocal = getRegisterPair();
+		AssemblerOperand ret = new RegisterTempOperand(regLocal, high);
+		if (llOperand != null) {
+			moveTo(llOperand, operand, ret);
+		}
+		return ret;
+	}
+
+	/**
+	 * @return
+	 */
+	private RegisterLocal getRegisterPair() {
+		if (regPair == null) {
+			regPair = newTempRegister(instr, typeEngine.INT);
+			regPair.setRegPair(true);
+		}
+		return regPair;
 	}
 
 	private AssemblerOperand generateRegisterOperand(LLOperand llOp, AssemblerOperand operand) {

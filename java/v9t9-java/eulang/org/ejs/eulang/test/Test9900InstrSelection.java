@@ -13,10 +13,13 @@ import static v9t9.engine.cpu.InstructionTable.Imov;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLModule;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
+import org.ejs.eulang.llvm.tms9900.BaseHLOperand;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.ISymbolOperand;
@@ -50,6 +53,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 	private Locals locals;
 	private ArrayList<HLInstruction> instrs;
 	private ArrayList<Block> blocks;
+	private Block currentBlock;
 
 	protected void doIsel(String text) throws Exception {
 		LLModule mod = getModule(text);
@@ -64,6 +68,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 				LinkedRoutine routine = new LinkedRoutine(def);
 				locals = routine.getLocals();
 				locals.buildLocalTable();
+				currentBlock = null; 
 
 				InstrSelection isel = new InstrSelection(routine) {
 					
@@ -80,6 +85,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 					protected void emit(HLInstruction instr) {
 						System.out.println("\t"+ instr);
 						instrs.add(instr);
+						currentBlock.addInst(instr);
 					}
 					
 					/* (non-Javadoc)
@@ -88,6 +94,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 					@Override
 					protected void newBlock(Block block) {
 						System.out.println(block.getLabel());
+						currentBlock = block;
 						blocks.add(block);
 					}
 				};
@@ -200,7 +207,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		for( int i = 0; i < stuff.length; ) {
 			AssemblerOperand op = instr.getOp(opidx++);
 			if (stuff[i] instanceof Class) {
-				assertEquals(instr+":"+i, stuff[i], op.getClass());
+				assertTrue(instr+":"+i, ((Class)stuff[i]).isInstance(op));
 				i++;
 				if (i >= stuff.length)
 					break;
@@ -345,6 +352,32 @@ public class Test9900InstrSelection extends BaseParserTest {
 		int idx = findInstrWithInst(instrs, "A");
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "A", RegisterTempOperand.class, "y", RegisterTempOperand.class, "~x"); 
+	}
+	@Test
+	public void testAddConst1() throws Exception {
+		doIsel("foo = code(x,y:Int ) { (x+1)+(x+2)+(y-1)+(y-2) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		idx = findInstrWithInst(instrs, "INC");
+		inst = instrs.get(idx);
+		idx = findInstrWithInst(instrs, "INCT");
+		inst = instrs.get(idx);
+		idx = findInstrWithInst(instrs, "DEC");
+		inst = instrs.get(idx);
+		idx = findInstrWithInst(instrs, "DECT");
+		inst = instrs.get(idx);
+	}
+	@Test
+	public void testAddConst2() throws Exception {
+		doIsel("foo = code(x,y:Int ) { (x-(-1))+(x-(-2)) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		idx = findInstrWithInst(instrs, "INC");
+		inst = instrs.get(idx);
+		idx = findInstrWithInst(instrs, "INCT");
+		inst = instrs.get(idx);
 	}
 
 	@Test
@@ -1288,5 +1321,40 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		
 
+	}
+	
+	@Test
+    public void testRepeatLoopBreak3() throws Exception {
+    	dumpLLVMGen = true;
+    	doIsel("testRepeatLoopBreak = code (x) {\n" +
+    			"   s := 0;\n"+
+    			"   b := 1;\n"+
+    			"	repeat x do { s, b += b;\n" +
+    			"  		if s > 100 then break s else s }\n"+
+    			"};\n");
+
+		int idx;
+		HLInstruction inst;
+
+		// make sure we compare against 0 with "C r,r" not "CI r,0"
+		idx = findInstrWithLabel("loopEnter");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", AssemblerOperand.class, "counter", RegisterTempOperand.class);
+		HLInstruction mov = inst;
+		idx = findInstrWithInst(instrs, "C", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "C", mov.getOp2(), mov.getOp2());
+		idx = findInstrWithInst(instrs, "DEC", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DEC", AssemblerOperand.class, "counter");
+		
+
+    }
+
+	private int findInstrWithLabel(String string) {
+		for (Block block : blocks) 
+			if (block.getLabel().getName().startsWith(string))
+				return instrs.indexOf(block.getFirst());
+		return -1;
 	}
 }
