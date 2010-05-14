@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -39,9 +40,36 @@ public class ServerTCP extends ServerSocket {
         }
     }
 
-    private static class RemotePeer extends AbstractPeer {
-        RemotePeer(Map<String,String> attrs) {
-            super(attrs);
+    private static class TransientPeer implements IPeer {
+
+        private final Map<String,String> attrs;
+
+        TransientPeer(Map<String,String> attrs) {
+            this.attrs = attrs;
+        }
+
+        public Map<String, String> getAttributes() {
+            return attrs;
+        }
+
+        public String getID() {
+            return attrs.get(ATTR_ID);
+        }
+
+        public String getName() {
+            return attrs.get(ATTR_NAME);
+        }
+
+        public String getOSName() {
+            return attrs.get(ATTR_OS_NAME);
+        }
+
+        public String getTransportName() {
+            return attrs.get(ATTR_TRANSPORT_NAME);
+        }
+
+        public IChannel openChannel() {
+            throw new Error("Cannot open channel for transient peer");
         }
     }
 
@@ -57,9 +85,7 @@ public class ServerTCP extends ServerSocket {
         while (e.hasMoreElements()) {
             NetworkInterface f = e.nextElement();
             Enumeration<InetAddress> n = f.getInetAddresses();
-            while (n.hasMoreElements()) {
-                peers.add(getLocalPeer(n.nextElement().getHostAddress()));
-            }
+            while (n.hasMoreElements()) getServerPeer(n.nextElement());
         }
         thread = new Thread() {
             @Override
@@ -70,7 +96,10 @@ public class ServerTCP extends ServerSocket {
                         Protocol.invokeLater(new Runnable() {
                             public void run() {
                                 try {
-                                    new ChannelTCP(getLocalPeer(socket), getRemotePeer(socket), socket);
+                                    new ChannelTCP(
+                                            getServerPeer(socket.getLocalAddress()),
+                                            getTransientPeer(socket.getInetAddress()),
+                                            socket);
                                 }
                                 catch (final Throwable x) {
                                     Protocol.log("TCF Server: failed to create a channel", x);
@@ -94,37 +123,35 @@ public class ServerTCP extends ServerSocket {
         thread.start();
     }
 
-    private ServerPeer getLocalPeer(String addr) {
+    private IPeer getServerPeer(InetAddress addr) {
+        if (addr.isAnyLocalAddress()) return getTransientPeer(addr);
+        if (addr.isMulticastAddress()) return getTransientPeer(addr);
+        if (addr.isLinkLocalAddress()) return getTransientPeer(addr);
+        String host = addr.getHostAddress();
         for (ServerPeer p : peers) {
             if (addr.equals(p.getAttributes().get(IPeer.ATTR_IP_HOST))) return p;
         }
+        String port = Integer.toString(getLocalPort());
         Map<String,String> attrs = new HashMap<String,String>();
-        attrs.put(IPeer.ATTR_ID, "TCP:" + addr + ":" + getLocalPort());
+        attrs.put(IPeer.ATTR_ID, "TCP:" + host + ":" + port);
         attrs.put(IPeer.ATTR_NAME, name);
         attrs.put(IPeer.ATTR_OS_NAME, System.getProperty("os.name"));
         attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP");
-        attrs.put(IPeer.ATTR_IP_HOST, addr);
-        attrs.put(IPeer.ATTR_IP_PORT, Integer.toString(getLocalPort()));
+        attrs.put(IPeer.ATTR_IP_HOST, host);
+        attrs.put(IPeer.ATTR_IP_PORT, port);
         attrs.put(IPeer.ATTR_PROXY, "");
         ServerPeer p = new ServerPeer(attrs);
         peers.add(p);
         return p;
     }
 
-    private IPeer getLocalPeer(Socket socket) {
-        return getLocalPeer(socket.getLocalAddress().getHostAddress());
-    }
-
-    private IPeer getRemotePeer(Socket socket) {
-        String addr = socket.getInetAddress().getHostAddress();
-        for (IPeer p : Protocol.getLocator().getPeers().values()) {
-            if (addr.equals(p.getAttributes().get(IPeer.ATTR_IP_HOST))) return p;
-        }
+    private IPeer getTransientPeer(InetAddress addr) {
+        String host = addr.getHostAddress();
         Map<String,String> attrs = new HashMap<String,String>();
-        attrs.put(IPeer.ATTR_ID, "TCP:" + addr + ":");
+        attrs.put(IPeer.ATTR_ID, "TCP:Transient:" + host + ":" + getLocalPort());
         attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP");
-        attrs.put(IPeer.ATTR_IP_HOST, addr);
-        return new RemotePeer(attrs);
+        attrs.put(IPeer.ATTR_IP_HOST, host);
+        return new TransientPeer(attrs);
     }
 
     @Override
