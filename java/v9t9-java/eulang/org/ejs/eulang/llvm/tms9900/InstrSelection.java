@@ -343,12 +343,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				new As[] { As.GEN_RW }, 
 				new DoRes( 0, Idect, 0 )
 		),
-		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sub", 
+		new IPattern( BasicType.INTEGRAL, I16, "sub", 
 				new If[] { If.PASS, If.IS_CONST_N1 },
 				new As[] { As.GEN_RW }, 
 				new DoRes( 0, Iinc, 0 )
 		),
-		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sub", 
+		new IPattern( BasicType.INTEGRAL, I16, "sub", 
 				new If[] { If.PASS, If.IS_CONST_N2 },
 				new As[] { As.GEN_RW }, 
 				new DoRes( 0, Iinct, 0 )
