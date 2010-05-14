@@ -11,6 +11,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
+import org.ejs.eulang.llvm.instrs.LLCompareInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
@@ -134,11 +135,15 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 		
 		String instr = this.getLLVMName();
 		if (instr != null) {
-			if (left.getType().getBasicType() == BasicType.FLOATING)
-				instr = "fcmp " + getLLFloatPrefix()  + instr;
-			else
-				instr = "icmp " + getLLIntPrefix() + instr;
-			currentTarget.emit(new LLBinaryInstr(instr, ret, left.getType(), left, right));
+			String cmp;
+			if (left.getType().getBasicType() == BasicType.FLOATING) {
+				cmp = getLLFloatPrefix()  + instr;
+				instr = "fcmp"; 
+			} else {
+				cmp = getLLIntPrefix() + instr;
+				instr = "icmp";
+			}
+			currentTarget.emit(new LLCompareInstr(instr, cmp, ret, expr.getType(), left, right));
 		} else {
 			generator.unhandled(expr);
 		}

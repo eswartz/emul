@@ -7,7 +7,6 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
-import static org.junit.Assert.*;
 import static v9t9.engine.cpu.InstructionTable.Ili;
 import static v9t9.engine.cpu.InstructionTable.Imov;
 
@@ -18,6 +17,7 @@ import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
+import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
@@ -27,6 +27,7 @@ import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.RegisterTempOperand;
 import org.ejs.eulang.llvm.tms9900.RenumberInstructionsVisitor;
 import org.ejs.eulang.llvm.tms9900.StackLocalOperand;
+import org.ejs.eulang.llvm.tms9900.SymbolLabelOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.LLType;
@@ -47,6 +48,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 	private Locals locals;
 	private ArrayList<HLInstruction> instrs;
+	private ArrayList<Block> blocks;
 
 	protected void doIsel(String text) throws Exception {
 		LLModule mod = getModule(text);
@@ -57,6 +59,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 				def.accept(new RenumberInstructionsVisitor());
 		
 				instrs = new ArrayList<HLInstruction>();
+				blocks = new ArrayList<Block>();
 				LinkedRoutine routine = new LinkedRoutine(def);
 				locals = routine.getLocals();
 				locals.buildLocalTable();
@@ -74,8 +77,17 @@ public class Test9900InstrSelection extends BaseParserTest {
 					
 					@Override
 					protected void emit(HLInstruction instr) {
-						System.out.println(instr);
+						System.out.println("\t"+ instr);
 						instrs.add(instr);
+					}
+					
+					/* (non-Javadoc)
+					 * @see org.ejs.eulang.llvm.tms9900.InstrSelection#newBlock(org.ejs.eulang.llvm.tms9900.Block)
+					 */
+					@Override
+					protected void newBlock(Block block) {
+						System.out.println(block.getLabel());
+						blocks.add(block);
 					}
 				};
 				
@@ -709,5 +721,74 @@ public class Test9900InstrSelection extends BaseParserTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "XOR", RegisterTempOperand.class, "y", RegisterTempOperand.class, "x"); // last use
 		
+	}
+	
+	@Test
+	public void testComparisonOpsInExpr() throws Exception {
+		dumpLLVMGen =true;
+		
+		// this generates boolean comparisons and stores them for logical manipulation;
+		doIsel("foo = code(x, y : Int) { (x<y) | (x==9) };\n");
+		
+		int idx = -1;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "C", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "C", RegisterTempOperand.class, "x", RegisterTempOperand.class, "y");
+		
+		idx = findInstrWithInst(instrs, "ISET", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegisterTempOperand.class, "~y");
+		HLInstruction set1 = inst;
+		
+		idx = findInstrWithInst(instrs, "CI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CI", RegisterTempOperand.class, "x", NumberOperand.class, 9);
+
+		idx = findInstrWithInst(instrs, "ISET", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_EQ, RegisterTempOperand.class, "~x");
+		HLInstruction set2 = inst;
+
+		idx = findInstrWithInst(instrs, "SOCB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SOCB", set2.getOp2(), set1.getOp2());
+	}
+	@Test
+	public void testComparisonOpsInJmp() throws Exception {
+		dumpLLVMGen =true;
+		
+		// this generates boolean comparisons and jumps on them
+		doIsel("foo = code(x, y : Int) { (x<y) or (x==9) };\n");
+		
+		int idx = -1;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "C", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "C", RegisterTempOperand.class, "x", RegisterTempOperand.class, "y");
+		
+		idx = findInstrWithInst(instrs, "ISET", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegisterTempOperand.class, "~y");
+		HLInstruction set1 = inst;
+
+		idx = findInstrWithInst(instrs, "JCC", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "JCC", set1.getOp2(), SymbolLabelOperand.class, SymbolLabelOperand.class);
+
+		idx = findInstrWithInst(instrs, "CI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CI", RegisterTempOperand.class, "x", NumberOperand.class, 9);
+
+		idx = findInstrWithInst(instrs, "ISET", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_EQ, RegisterTempOperand.class, "~x");
+		HLInstruction set2 = inst;
+
+		idx = findInstrWithInst(instrs, "JMP", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "JMP", SymbolLabelOperand.class);
 	}
 }

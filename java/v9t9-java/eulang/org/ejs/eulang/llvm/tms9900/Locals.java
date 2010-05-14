@@ -286,7 +286,7 @@ public class Locals {
 		LLSymbolOp result = (LLSymbolOp) instr.getResult();
 		ISymbol name = result.getSymbol();
 		
-		if (name.getType().getBits() % 8 != 0)
+		if (name.getType().getBits() > 1 && name.getType().getBits() % 8 != 0)
 			unhandled(result);
 		return allocateLocal(name, instr.getType());
 	}

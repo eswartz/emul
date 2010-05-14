@@ -14,6 +14,14 @@ public class Pair<T, U> implements Comparable<Pair<T, U>>{
 		this.first = first;
 		this.second = second;
 	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return first +" | " + second;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

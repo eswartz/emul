@@ -38,9 +38,13 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 	@Override
 	public void inferTypes(TypeEngine typeEngine, OpTypes types) throws TypeException {
 		// first, check errors
-		if (types.left != null && types.left.getBasicType() != BasicType.INTEGRAL)
-			throw new TypeException(getName() + " requires an integer left operand, got " + types.left.toString());
-		if (types.right != null && types.right.getBasicType() != BasicType.INTEGRAL)
+		if (types.left != null && !types.left.isGeneric() 
+				&& types.left.getBasicType() != BasicType.INTEGRAL
+				&& types.left.getBasicType() != BasicType.BOOL)
+			throw new TypeException(getName() + " requires an integer or bool left operand, got " + types.left.toString());
+		if (types.right != null && !types.right.isGeneric() 
+				&& types.right.getBasicType() != BasicType.INTEGRAL
+				&& types.right.getBasicType() != BasicType.BOOL)
 			throw new TypeException(getName() + " requires an integer right operand, got " + types.right.toString());
 
 		// now, prefer integers
@@ -83,7 +87,8 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 			throws TypeException {
 		if (!types.left.equals(types.right) 
 				|| !types.result.equals(types.left)
-				|| types.result.getBasicType() != BasicType.INTEGRAL) {
+				|| (types.result.getBasicType() != BasicType.INTEGRAL
+						&& types.result.getBasicType() != BasicType.BOOL)) {
 			throw new TypeException("inconsistent types in expression");
 		}
 	}

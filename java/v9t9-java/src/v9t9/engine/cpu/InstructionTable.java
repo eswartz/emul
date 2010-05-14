@@ -464,12 +464,12 @@ public class InstructionTable {
 	static { registerAlias(InstructionTable.Ijeq, "je"); }
 	static { registerAlias(InstructionTable.Ijoc, "jc"); }
 
-	private static void registerInstruction(int inst, String str) {
+	public static void registerInstruction(int inst, String str) {
 	    Integer i = new Integer(inst);
 	    nameToInst.put(str.toUpperCase(), i);
 	    instToName.put(i, str.toUpperCase());
 	}
-	private static void registerAlias(int inst, String str) {
+	public static void registerAlias(int inst, String str) {
 	    Integer i = new Integer(inst);
 	    nameToInst.put(str.toUpperCase(), i);
 	}
