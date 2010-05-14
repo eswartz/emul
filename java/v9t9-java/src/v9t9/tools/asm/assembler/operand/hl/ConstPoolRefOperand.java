@@ -22,6 +22,14 @@ public class ConstPoolRefOperand extends ImmediateOperand implements AssemblerOp
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.ImmediateOperand#toString()
+	 */
+	@Override
+	public String toString() {
+		return "#" + super.toString();
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isMemory()
 	 */
 	@Override
@@ -54,5 +62,12 @@ public class ConstPoolRefOperand extends ImmediateOperand implements AssemblerOp
 		LLOperand resOp = addr.resolve(assembler, inst);
 		resOp.setOriginal(this);
 		return resOp;
+	}
+
+	/**
+	 * @return
+	 */
+	public Integer getValue() {
+		return ((NumberOperand) immed).getValue();
 	}
 }

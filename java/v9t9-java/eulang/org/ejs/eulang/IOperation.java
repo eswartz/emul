@@ -61,9 +61,13 @@ public interface IOperation {
 	IBinaryOperation COMPEQ = new ComparisonBinaryOperation("==", "eq", true, "", "o");
 	IBinaryOperation COMPNE = new ComparisonBinaryOperation("!=", "ne", true, "", "o");
 	IBinaryOperation COMPGT = new ComparisonBinaryOperation(">", "gt", false, "s", "o");
+	IBinaryOperation COMPUGT = new ComparisonBinaryOperation("+>", "gt", false, "u", "u");
 	IBinaryOperation COMPLT = new ComparisonBinaryOperation("<", "lt", false, "s", "o");
+	IBinaryOperation COMPULT = new ComparisonBinaryOperation("+<", "lt", false, "u", "u");
 	IBinaryOperation COMPLE = new ComparisonBinaryOperation("<=", "le", false, "s", "o");
+	IBinaryOperation COMPULE = new ComparisonBinaryOperation("+<=", "le", false, "u", "u");
 	IBinaryOperation COMPGE = new ComparisonBinaryOperation(">=", "ge", false, "s", "o");
+	IBinaryOperation COMPUGE = new ComparisonBinaryOperation("+>=", "ge", false, "u", "u");
 	
 	IUnaryOperation CAST = new CastOperation("<cast>");
 

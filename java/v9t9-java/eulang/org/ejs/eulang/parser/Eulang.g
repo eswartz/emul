@@ -306,7 +306,7 @@ assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN EQUA
     | rhsExpr                             -> rhsExpr
     ;
 
-assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | BACKSLASH_EQ 
+assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | UDIV_EQ 
   | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ ;
 assignEqOp : EQUALS | assignOp ;
 
@@ -446,8 +446,12 @@ comp:   ( bitor        -> bitor )
       | COMPNE r=bitor -> ^(COMPNE $comp $r)
       | COMPLE r=bitor    -> ^(COMPLE $comp $r)
       | COMPGE r=bitor    -> ^(COMPGE $comp $r)
+      | COMPULE r=bitor    -> ^(COMPULE $comp $r)
+      | COMPUGE r=bitor    -> ^(COMPUGE $comp $r)
       | LESS r=bitor     -> ^(LESS $comp $r)
+      | ULESS r=bitor     -> ^(ULESS $comp $r)
       | GREATER r=bitor    -> ^(GREATER $comp $r)
+      | UGREATER r=bitor    -> ^(UGREATER $comp $r)
       )*
 ;               
 
@@ -480,7 +484,7 @@ factor
 term : ( unary                  -> unary )
         ( ( STAR unary) => STAR r=unary            -> ^(MUL  $term $r)
         | SLASH r=unary            -> ^(DIV $term $r)
-        | BACKSLASH r=unary            -> ^(UDIV $term $r)
+        | UDIV r=unary            -> ^(UDIV $term $r)
         | PERCENT r=unary            -> ^(MOD $term $r)
         | UMOD r=unary            -> ^(UMOD $term $r)
         )*                        
@@ -600,9 +604,13 @@ XOR_EQ : '~=';
 COMPEQ : '==';
 COMPNE : '!=';
 COMPGE : '>=';
+COMPUGE : '+>=';
 COMPLE : '<=';
+COMPULE : '+<=';
 GREATER : '>';
+UGREATER : '+>';
 LESS : '<';
+ULESS : '+<';
 LSHIFT : '<<';
 LSHIFT_EQ : '<<=';
 RSHIFT : '>>';
@@ -613,12 +621,12 @@ CRSHIFT : '>>|';
 CRSHIFT_EQ : '>>|=';
 CLSHIFT : '<<|';
 CLSHIFT_EQ : '<<|=';
-BACKSLASH : '\\';
-BACKSLASH_EQ : '\\=';
+UDIV : '+/';
+UDIV_EQ : '+/=';
 PERCENT : '%';
 PERCENT_EQ : '%=';
-UMOD : '%%';
-UMOD_EQ : '%%=';
+UMOD : '+%';
+UMOD_EQ : '+%=';
 ARROW : '=>' ;
 PERIOD : '.';
 PLUSPLUS : '++';

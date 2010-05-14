@@ -455,8 +455,12 @@ public class GenerateAST {
 		case EulangParser.COMPNE:
 		case EulangParser.COMPLE:
 		case EulangParser.COMPGE:
+		case EulangParser.COMPULE:
+		case EulangParser.COMPUGE:
 		case EulangParser.LESS:
 		case EulangParser.GREATER:
+		case EulangParser.ULESS:
+		case EulangParser.UGREATER:
 			return constructBinaryExpr(tree);
 		case EulangParser.INV:
 		case EulangParser.NEG:
@@ -1414,7 +1418,7 @@ public class GenerateAST {
 			return IOperation.MUL;
 		case EulangParser.SLASH_EQ:
 			return IOperation.DIV;
-		case EulangParser.BACKSLASH_EQ:
+		case EulangParser.UDIV_EQ:
 			return IOperation.UDIV;
 		case EulangParser.PERCENT_EQ:
 			return IOperation.MOD;
@@ -1664,14 +1668,26 @@ public class GenerateAST {
 		case EulangParser.GREATER:
 			binop = new AstBinExpr(IOperation.COMPGT, left, right);
 			break;
+		case EulangParser.UGREATER:
+			binop = new AstBinExpr(IOperation.COMPUGT, left, right);
+			break;
 		case EulangParser.COMPGE:
 			binop = new AstBinExpr(IOperation.COMPGE, left, right);
+			break;
+		case EulangParser.COMPUGE:
+			binop = new AstBinExpr(IOperation.COMPUGE, left, right);
 			break;
 		case EulangParser.LESS:
 			binop = new AstBinExpr(IOperation.COMPLT, left, right);
 			break;
+		case EulangParser.ULESS:
+			binop = new AstBinExpr(IOperation.COMPULT, left, right);
+			break;
 		case EulangParser.COMPLE:
 			binop = new AstBinExpr(IOperation.COMPLE, left, right);
+			break;
+		case EulangParser.COMPULE:
+			binop = new AstBinExpr(IOperation.COMPULE, left, right);
 			break;
 
 		case EulangParser.AND:

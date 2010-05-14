@@ -359,7 +359,7 @@ public class Locals {
 	}
 
 	public ILocal allocateTemp(LLType type) {
-		ISymbol name = localScope.addTemporary("%reg");
+		ISymbol name = localScope.add("%reg", true);
 		name.setType(type);
 		return allocateTemp(name, type);
 	}

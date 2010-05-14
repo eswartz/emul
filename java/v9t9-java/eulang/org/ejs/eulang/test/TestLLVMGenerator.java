@@ -27,6 +27,17 @@ public class TestLLVMGenerator extends BaseParserTest {
 
 
 	@Test
+	public void testConsts() throws Exception {
+		dumpLLVMGen = true;
+		IAstModule mod = doFrontend(
+				"main := code () { x:=123; x=456; };\n");
+		
+		LLVMGenerator gen  = doGenerate(mod);
+		assertFoundInUnoptimizedText("123",gen);
+		assertFoundInUnoptimizedText("456",gen);
+	}
+	
+	@Test
 	public void testSimple() throws Exception {
 		IAstModule mod = doFrontend("FOO = 3;\n"+
 				"helper = code (x : Int => Int) { -x; };\n"+
@@ -102,7 +113,9 @@ public class TestLLVMGenerator extends BaseParserTest {
 	@Test
 	public void testBinOps() throws Exception {
 		dumpTypeInfer = true;
-		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4%%45+5-6>>7<<8+>>85&9 ~ 10|11<12>13<=14>=15==16!=17 and Bool(18) or Bool(19); };");
+		dumpLLVMGen = true;
+		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4+%45+5-6>>7>>|4<<|75<<8+>>85&9 ~" + 
+				"10|11+<-11<12+>-12>13+<=-33<=14+>=0>=15==16!=17 and Bool(18) or Bool(19); };");
 		doGenerate(mod);
 	}
 	
@@ -360,8 +373,8 @@ public class TestLLVMGenerator extends BaseParserTest {
     public void testAssignOps() throws Exception {
     	dumpLLVMGen = true;
     	IAstModule mod = doFrontend("testAssignOps = code { x:=1;" +
-    			//"x+=x-=x*=x/=x\\=x%=x%%=x>>=x<<=x+>>=2;\n"+
-    			"x+=(x-=(x*=x/=x\\=x%=(x%%=x>>=(x<<=x+>>=2))));\n"+
+    			//"x+=x-=x*=x/=x+/=x%=x+%=x>>=x<<=x+>>=2;\n"+
+    			"x+=(x-=(x*=x/=x+/=x%=(x+%=x>>=(x<<=x+>>=2))));\n"+
     			"x|=x~=x&=111;\n"+
     			"};");
     	doGenerate(mod);

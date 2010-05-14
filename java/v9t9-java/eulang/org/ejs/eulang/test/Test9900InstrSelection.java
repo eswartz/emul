@@ -37,6 +37,7 @@ import v9t9.engine.cpu.InstructionTable;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 
@@ -241,6 +242,8 @@ public class Test9900InstrSelection extends BaseParserTest {
 						assertEquals(instr+":"+op, num, (Integer)((RegisterTempOperand) op).getLocal().getVr());
 					else if (op instanceof NumberOperand)
 						assertEquals(instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
+					else if (op instanceof ConstPoolRefOperand)
+						assertEquals(instr+":"+op, num, (Integer)((ConstPoolRefOperand) op).getValue());
 					else 
 						assertEquals(instr+":"+op, num, op);
 				}
@@ -310,6 +313,29 @@ public class Test9900InstrSelection extends BaseParserTest {
 				return i;
 		}
 		return -1;
+	}
+	@Test
+	public void testConsts1() throws Exception {
+		doIsel("foo = code( ) { x:=123; x=-3849 };\n");
+		
+		int idx = findInstrWithInst(instrs, "LI");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 123); 
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, -3849); 
+	}
+	@Test
+	public void testConstsByte1() throws Exception {
+		dumpTreeize = true;
+		doIsel("foo = code( ) { x:Byte=123; x=-112 };\n");
+		
+		int idx = findInstrWithInst(instrs, "LI");
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 123*256); 
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, (-112*256) & 0xff00); 
 	}
 	@Test
 	public void testAdd() throws Exception {
@@ -815,6 +841,39 @@ public class Test9900InstrSelection extends BaseParserTest {
 		matchInstr(inst, "SOCB", set2.getOp2(), set1.getOp2());
 	}
 	@Test
+	public void testComparisonOpsInExprByte() throws Exception {
+		dumpLLVMGen =true;
+		
+		// this generates boolean comparisons and stores them for logical manipulation;
+		doIsel("foo = code(x, y : Byte) { (x<y) | (x==9) };\n");
+		
+		int idx = -1;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "CB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CB", RegisterTempOperand.class, "x", RegisterTempOperand.class, "y");
+		
+		idx = findInstrWithInst(instrs, "ISET", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegisterTempOperand.class, "~y");
+		HLInstruction set1 = inst;
+		
+		// don't use CI with bytes, since the low byte is unknown
+		idx = findInstrWithInst(instrs, "CB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CB", RegisterTempOperand.class, "x", ConstPoolRefOperand.class, 9);
+
+		idx = findInstrWithInst(instrs, "ISET", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_EQ, RegisterTempOperand.class, "~x");
+		HLInstruction set2 = inst;
+
+		idx = findInstrWithInst(instrs, "SOCB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SOCB", set2.getOp2(), set1.getOp2());
+	}
+	@Test
 	public void testComparisonOpsInJmp() throws Exception {
 		dumpLLVMGen =true;
 		
@@ -850,4 +909,282 @@ public class Test9900InstrSelection extends BaseParserTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "JMP", SymbolLabelOperand.class);
 	}
+	
+	@Test
+	public void testComparisonOps() throws Exception {
+		dumpLLVMGen =true;
+		
+		// this generates boolean comparisons and jumps on them
+		doIsel("foo = code(x, y : Int) { (x<y) or (x>=y) or (x+<y) == (x+>=y) or (x+>y) != (x+<=y) };\n");
+	}
+	
+	@Test
+	public void testMulPow2() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Int ) { (x*0) + (x*1) + (x*4) + (x*128) + (x*32768) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "CLR");
+		inst = instrs.get(idx);
+		matchInstr(inst, "CLR", RegisterTempOperand.class, "~x");
+		
+		// ignore * 1
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, "~x", NumberOperand.class, 2); // * 4
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, "~x", NumberOperand.class, 7);	// * 128
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, "x", NumberOperand.class, 15);	// * 32768
+		
+	}
+
+
+	@Test
+	public void testMulBytePow2() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Byte ) { (x*0) + (x*1) + (x*4) + (x*64) + (x*32768) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "CLR");
+		inst = instrs.get(idx);
+		matchInstr(inst, "CLR", RegisterTempOperand.class, "~x");
+		
+		// ignore * 1
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, "~x", NumberOperand.class, 2); // * 4
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegisterTempOperand.class, "~x", NumberOperand.class, 6);	// * 64
+		
+		idx = findInstrWithInst(instrs, "CLR", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CLR", RegisterTempOperand.class);	// * 32768
+		
+	}
+	
+
+	@Test
+	public void testMul1() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Int ) { (x*123) + (x*-999) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "MOV");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, "x", RegisterTempOperand.class, 0);
+		HLInstruction xval = inst;
+		
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 123);
+		HLInstruction val = inst;
+		
+		idx = findInstrWithInst(instrs, "MPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MPY", val.getOp1(), xval.getOp2());
+		
+	}
+
+	@Test
+	public void testMulByte1() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x,y:Byte) { (x*y) + (y*x) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "MOVB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, "x", RegisterTempOperand.class, 0);
+		HLInstruction xval = inst;
+		
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegisterTempOperand.class, "y", RegisterTempOperand.class, 1);
+		HLInstruction yval = inst;
+		
+		idx = findInstrWithInst(instrs, "MPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MPY", yval.getOp2(), xval.getOp2());
+		
+	}
+	
+
+	@Test
+	public void testDiv2() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Int ) { (x/1) + (x/4) + (x/128) + (x/32768) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		
+		// ignore / 1
+		
+		idx = findInstrWithInst(instrs, "SRA");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, "~x", NumberOperand.class, 2); // * 4
+		
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, "~x", NumberOperand.class, 7);	// * 128
+		
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, "x", NumberOperand.class, 15);	// * 32768
+		
+	}
+
+	@Test
+	public void testUDiv2() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Int ) { (x+/1) + (x+/4) + (x+/128) + (x+/32768) };\n");
+		
+		int idx;
+		HLInstruction inst;
+		
+		// ignore / 1
+		
+		idx = findInstrWithInst(instrs, "SRL");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRL", RegisterTempOperand.class, "~x", NumberOperand.class, 2); // * 4
+		
+		idx = findInstrWithInst(instrs, "SRL", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRL", RegisterTempOperand.class, "~x", NumberOperand.class, 7);	// * 128
+		
+		idx = findInstrWithInst(instrs, "SRL", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRL", RegisterTempOperand.class, "x", NumberOperand.class, 15);	// * 32768
+		
+	}
+	
+
+	@Test
+	public void testDiv1() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Int ) { (x/123) + (x+/999) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "LI", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 123);
+		HLInstruction val = inst;
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, RegisterTempOperand.class, 0);	// high word
+		HLInstruction xval = inst;
+		
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, 0, NumberOperand.class, 15);	// low word
+		
+		
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", val.getOp1(), xval.getOp2());
+		HLInstruction div1 = inst;
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, "x", RegisterTempOperand.class, 1);	// low word
+		xval = inst;
+		
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 999);
+		val = inst;
+		
+		idx = findInstrWithInst(instrs, "CLR", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CLR", RegisterTempOperand.class, 0);	// high word
+		
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", val.getOp1(), RegisterTempOperand.class, 0);
+		HLInstruction div2 = inst;
+		
+		idx = findInstrWithInst(instrs, "A", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "A", div2.getOp3(), div1.getOp3());	// low words are result
+		
+
+	}
+	
+	@Test
+	public void testMod1() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x:Int ) { (x%123) + (x+%999) };\n");
+		
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "LI", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 123);
+		HLInstruction val = inst;
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, RegisterTempOperand.class, 0);	// high word
+		HLInstruction xval = inst;
+		
+		idx = findInstrWithInst(instrs, "SRA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, 0, NumberOperand.class, 15);	// low word
+		
+		
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", val.getOp1(), xval.getOp2());
+		HLInstruction div1 = inst;
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, "x", RegisterTempOperand.class, 1);	// low word
+		xval = inst;
+		
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, NumberOperand.class, 999);
+		val = inst;
+		
+		idx = findInstrWithInst(instrs, "CLR", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "CLR", RegisterTempOperand.class, 0);	// high word
+		
+		
+		idx = findInstrWithInst(instrs, "DIV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "DIV", val.getOp1(), RegisterTempOperand.class, 0);
+		HLInstruction div2 = inst;
+		
+		idx = findInstrWithInst(instrs, "A", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "A", div2.getOp2(), div1.getOp2());	// high words are result
+		
+		
+
+	}
+
 }

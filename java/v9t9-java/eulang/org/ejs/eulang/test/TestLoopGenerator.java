@@ -147,7 +147,7 @@ public class TestLoopGenerator extends BaseParserTest {
     	LLVMGenerator gen = doGenerate(mod);
     	assertEquals(1, gen.getModule().getSymbolCount());
     	assertMatchText("icmp slt .*, 0", gen.getUnoptimizedText());
-    	assertMatchText("add %Int %1.*, %", gen.getUnoptimizedText());	// late temp
+    	assertMatchText("add %Int %1.*, -1", gen.getUnoptimizedText());	// late temp
     }
     
     @Test

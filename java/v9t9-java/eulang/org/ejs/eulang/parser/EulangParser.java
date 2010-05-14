@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-05-13 20:29:21
+// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-05-13 22:35:08
 
 package org.ejs.eulang.parser;
 
@@ -14,10 +14,10 @@ import org.antlr.runtime.tree.*;
 
 public class EulangParser extends Parser {
     public static final String[] tokenNames = new String[] {
-        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "SCOPE", "ADDSCOPE", "LIST_COMPREHENSION", "CODE", "MACRO", "STMTLIST", "PROTO", "ARGLIST", "ARGDEF", "REF", "ALLOC", "ASSIGN", "DEFINE", "EXPR", "LIST", "TYPE", "STMTEXPR", "CONDLIST", "CONDTEST", "CALL", "INLINE", "COND", "BITAND", "BITOR", "BITXOR", "ADD", "SUB", "MUL", "DIV", "UDIV", "MOD", "NEG", "INV", "POSTINC", "POSTDEC", "PREINC", "PREDEC", "LIT", "IDREF", "IDLIST", "LABEL", "GOTO", "BLOCK", "TUPLE", "LABELSTMT", "BINDING", "IDEXPR", "FIELDREF", "ARRAY", "INDEX", "POINTER", "DEREF", "ADDRREF", "ADDROF", "INITEXPR", "INITLIST", "INSTANCE", "GENERIC", "ID", "COLON", "EQUALS", "SEMI", "COLON_EQUALS", "FORWARD", "COMMA", "LBRACKET", "RBRACKET", "PLUS", "LBRACE", "RBRACE", "FOR", "IN", "ATSIGN", "LPAREN", "RPAREN", "ARROW", "NIL", "QUESTION", "CARET", "LESS", "GREATER", "PLUS_EQ", "MINUS_EQ", "STAR_EQ", "SLASH_EQ", "PERCENT_EQ", "UMOD_EQ", "BACKSLASH_EQ", "AND_EQ", "OR_EQ", "XOR_EQ", "LSHIFT_EQ", "RSHIFT_EQ", "URSHIFT_EQ", "CLSHIFT_EQ", "CRSHIFT_EQ", "PERIOD", "DO", "WHILE", "REPEAT", "AND", "BY", "AT", "BREAK", "IF", "WITH", "ELSE", "AS", "THEN", "ELIF", "FI", "OR", "NOT", "COMPEQ", "COMPNE", "COMPLE", "COMPGE", "BAR", "TILDE", "AMP", "LSHIFT", "RSHIFT", "URSHIFT", "CRSHIFT", "CLSHIFT", "MINUS", "STAR", "SLASH", "BACKSLASH", "PERCENT", "UMOD", "PLUSPLUS", "MINUSMINUS", "NUMBER", "FALSE", "TRUE", "CHAR_LITERAL", "STRING_LITERAL", "COLONS", "DATA", "STATIC", "COLON_COLON_EQUALS", "HASH", "POINTS", "BAR_BAR", "SELECT", "WHEN", "UNTIL", "END", "IDSUFFIX", "LETTERLIKE", "DIGIT", "NEWLINE", "WS", "SINGLE_COMMENT", "MULTI_COMMENT"
+        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "SCOPE", "ADDSCOPE", "LIST_COMPREHENSION", "CODE", "MACRO", "STMTLIST", "PROTO", "ARGLIST", "ARGDEF", "REF", "ALLOC", "ASSIGN", "DEFINE", "EXPR", "LIST", "TYPE", "STMTEXPR", "CONDLIST", "CONDTEST", "CALL", "INLINE", "COND", "BITAND", "BITOR", "BITXOR", "ADD", "SUB", "MUL", "DIV", "UDIV", "MOD", "NEG", "INV", "POSTINC", "POSTDEC", "PREINC", "PREDEC", "LIT", "IDREF", "IDLIST", "LABEL", "GOTO", "BLOCK", "TUPLE", "LABELSTMT", "BINDING", "IDEXPR", "FIELDREF", "ARRAY", "INDEX", "POINTER", "DEREF", "ADDRREF", "ADDROF", "INITEXPR", "INITLIST", "INSTANCE", "GENERIC", "ID", "COLON", "EQUALS", "SEMI", "COLON_EQUALS", "FORWARD", "COMMA", "LBRACKET", "RBRACKET", "PLUS", "LBRACE", "RBRACE", "FOR", "IN", "ATSIGN", "LPAREN", "RPAREN", "ARROW", "NIL", "QUESTION", "CARET", "LESS", "GREATER", "PLUS_EQ", "MINUS_EQ", "STAR_EQ", "SLASH_EQ", "PERCENT_EQ", "UMOD_EQ", "UDIV_EQ", "AND_EQ", "OR_EQ", "XOR_EQ", "LSHIFT_EQ", "RSHIFT_EQ", "URSHIFT_EQ", "CLSHIFT_EQ", "CRSHIFT_EQ", "PERIOD", "DO", "WHILE", "REPEAT", "AND", "BY", "AT", "BREAK", "IF", "WITH", "ELSE", "AS", "THEN", "ELIF", "FI", "OR", "NOT", "COMPEQ", "COMPNE", "COMPLE", "COMPGE", "COMPULE", "COMPUGE", "ULESS", "UGREATER", "BAR", "TILDE", "AMP", "LSHIFT", "RSHIFT", "URSHIFT", "CRSHIFT", "CLSHIFT", "MINUS", "STAR", "SLASH", "PERCENT", "UMOD", "PLUSPLUS", "MINUSMINUS", "NUMBER", "FALSE", "TRUE", "CHAR_LITERAL", "STRING_LITERAL", "COLONS", "DATA", "STATIC", "COLON_COLON_EQUALS", "HASH", "POINTS", "BAR_BAR", "SELECT", "WHEN", "UNTIL", "END", "IDSUFFIX", "LETTERLIKE", "DIGIT", "NEWLINE", "WS", "SINGLE_COMMENT", "MULTI_COMMENT"
     };
     public static final int CONDTEST=22;
-    public static final int STAR=130;
+    public static final int STAR=134;
     public static final int WHILE=102;
     public static final int GENERIC=61;
     public static final int MOD=34;
@@ -27,7 +27,7 @@ public class EulangParser extends Parser {
     public static final int PREDEC=40;
     public static final int UMOD_EQ=90;
     public static final int DEREF=55;
-    public static final int MINUSMINUS=136;
+    public static final int MINUSMINUS=139;
     public static final int DO=101;
     public static final int ARGLIST=11;
     public static final int EQUALS=64;
@@ -39,7 +39,7 @@ public class EulangParser extends Parser {
     public static final int LBRACKET=69;
     public static final int TUPLE=47;
     public static final int RPAREN=78;
-    public static final int STRING_LITERAL=141;
+    public static final int STRING_LITERAL=144;
     public static final int GREATER=84;
     public static final int ADDRREF=56;
     public static final int ADDSCOPE=5;
@@ -52,25 +52,26 @@ public class EulangParser extends Parser {
     public static final int INITLIST=59;
     public static final int ATSIGN=76;
     public static final int GOTO=45;
-    public static final int SELECT=149;
+    public static final int SELECT=152;
     public static final int CLSHIFT_EQ=98;
     public static final int ARRAY=52;
     public static final int LABELSTMT=48;
     public static final int IDEXPR=50;
-    public static final int CRSHIFT=127;
+    public static final int CRSHIFT=131;
     public static final int RBRACE=73;
     public static final int STMTEXPR=20;
-    public static final int STATIC=144;
-    public static final int UMOD=134;
+    public static final int STATIC=147;
+    public static final int UMOD=137;
     public static final int PERIOD=100;
-    public static final int LSHIFT=124;
+    public static final int LSHIFT=128;
     public static final int INV=36;
     public static final int ADDROF=57;
     public static final int ELSE=110;
-    public static final int NUMBER=137;
+    public static final int NUMBER=140;
     public static final int LIT=41;
     public static final int UDIV=33;
     public static final int CRSHIFT_EQ=99;
+    public static final int UDIV_EQ=91;
     public static final int LIST=18;
     public static final int PLUS_EQ=85;
     public static final int MUL=31;
@@ -79,11 +80,11 @@ public class EulangParser extends Parser {
     public static final int FI=114;
     public static final int MINUS_EQ=86;
     public static final int ELIF=113;
-    public static final int WS=157;
+    public static final int WS=160;
     public static final int OR_EQ=93;
     public static final int BITOR=27;
     public static final int NIL=80;
-    public static final int UNTIL=151;
+    public static final int UNTIL=154;
     public static final int STMTLIST=9;
     public static final int OR=115;
     public static final int ALLOC=14;
@@ -92,18 +93,19 @@ public class EulangParser extends Parser {
     public static final int INLINE=24;
     public static final int CALL=23;
     public static final int POSTINC=37;
-    public static final int END=152;
-    public static final int FALSE=138;
-    public static final int BACKSLASH=132;
+    public static final int END=155;
+    public static final int FALSE=141;
+    public static final int COMPULE=121;
     public static final int POSTDEC=38;
     public static final int BINDING=49;
     public static final int FORWARD=67;
-    public static final int BAR_BAR=148;
-    public static final int AMP=123;
-    public static final int POINTS=147;
-    public static final int PLUSPLUS=135;
+    public static final int BAR_BAR=151;
+    public static final int AMP=127;
+    public static final int POINTS=150;
+    public static final int PLUSPLUS=138;
+    public static final int UGREATER=124;
     public static final int LBRACE=72;
-    public static final int MULTI_COMMENT=159;
+    public static final int MULTI_COMMENT=162;
     public static final int FIELDREF=51;
     public static final int FOR=74;
     public static final int SUB=30;
@@ -113,15 +115,14 @@ public class EulangParser extends Parser {
     public static final int BITAND=26;
     public static final int LPAREN=77;
     public static final int IF=108;
-    public static final int COLONS=142;
-    public static final int COLON_COLON_EQUALS=145;
+    public static final int COLONS=145;
+    public static final int COLON_COLON_EQUALS=148;
     public static final int AT=106;
     public static final int AS=111;
     public static final int INDEX=53;
-    public static final int BACKSLASH_EQ=91;
     public static final int CONDLIST=21;
-    public static final int IDSUFFIX=153;
-    public static final int SLASH=131;
+    public static final int IDSUFFIX=156;
+    public static final int SLASH=135;
     public static final int EXPR=17;
     public static final int THEN=112;
     public static final int IN=75;
@@ -129,39 +130,40 @@ public class EulangParser extends Parser {
     public static final int COMMA=68;
     public static final int PREINC=39;
     public static final int BITXOR=28;
-    public static final int TILDE=122;
+    public static final int TILDE=126;
     public static final int PLUS=71;
-    public static final int SINGLE_COMMENT=158;
-    public static final int DIGIT=155;
+    public static final int SINGLE_COMMENT=161;
+    public static final int DIGIT=158;
     public static final int RBRACKET=70;
-    public static final int RSHIFT=125;
+    public static final int RSHIFT=129;
     public static final int WITH=109;
     public static final int ADD=29;
     public static final int COMPGE=120;
     public static final int URSHIFT_EQ=97;
+    public static final int ULESS=123;
     public static final int BY=105;
-    public static final int PERCENT=133;
-    public static final int LETTERLIKE=154;
+    public static final int PERCENT=136;
+    public static final int LETTERLIKE=157;
     public static final int LIST_COMPREHENSION=6;
-    public static final int HASH=146;
-    public static final int CLSHIFT=128;
+    public static final int HASH=149;
+    public static final int CLSHIFT=132;
     public static final int STAR_EQ=87;
-    public static final int MINUS=129;
-    public static final int TRUE=139;
+    public static final int MINUS=133;
+    public static final int TRUE=142;
     public static final int SEMI=65;
     public static final int REF=13;
     public static final int COLON=63;
     public static final int COLON_EQUALS=66;
-    public static final int NEWLINE=156;
+    public static final int NEWLINE=159;
     public static final int QUESTION=81;
-    public static final int CHAR_LITERAL=140;
+    public static final int CHAR_LITERAL=143;
     public static final int LABEL=44;
-    public static final int WHEN=150;
+    public static final int WHEN=153;
     public static final int INSTANCE=60;
     public static final int BLOCK=46;
     public static final int NEG=35;
     public static final int ASSIGN=15;
-    public static final int URSHIFT=126;
+    public static final int URSHIFT=130;
     public static final int ARROW=79;
     public static final int COMPEQ=117;
     public static final int IDREF=42;
@@ -170,8 +172,9 @@ public class EulangParser extends Parser {
     public static final int MACRO=8;
     public static final int PROTO=10;
     public static final int COMPNE=118;
-    public static final int DATA=143;
-    public static final int BAR=121;
+    public static final int DATA=146;
+    public static final int BAR=125;
+    public static final int COMPUGE=122;
     public static final int SLASH_EQ=88;
 
     // delegates
@@ -458,7 +461,7 @@ public class EulangParser extends Parser {
                 else if ( (LA4_1==COLON_EQUALS) && (synpred2_Eulang())) {
                     alt4=3;
                 }
-                else if ( (LA4_1==SEMI||LA4_1==LBRACKET||LA4_1==PLUS||LA4_1==LPAREN||(LA4_1>=QUESTION && LA4_1<=GREATER)||LA4_1==PERIOD||LA4_1==AND||LA4_1==OR||(LA4_1>=COMPEQ && LA4_1<=MINUSMINUS)) ) {
+                else if ( (LA4_1==UDIV||LA4_1==SEMI||LA4_1==LBRACKET||LA4_1==PLUS||LA4_1==LPAREN||(LA4_1>=QUESTION && LA4_1<=GREATER)||LA4_1==PERIOD||LA4_1==AND||LA4_1==OR||(LA4_1>=COMPEQ && LA4_1<=MINUSMINUS)) ) {
                     alt4=5;
                 }
                 else {
@@ -547,7 +550,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, type, rhsExprOrInitList
+                    // elements: ID, rhsExprOrInitList, type
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -603,7 +606,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, rhsExprOrInitList
+                    // elements: rhsExprOrInitList, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -962,7 +965,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idlistOrEmpty, ID, toplevelvalue
+                    // elements: ID, toplevelvalue, idlistOrEmpty
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -1141,7 +1144,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: data, ID
+                    // elements: ID, data
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -1188,7 +1191,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: xscope, ID
+                    // elements: ID, xscope
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -1824,7 +1827,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: forIn, listiterable
+            // elements: listiterable, forIn
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -1931,7 +1934,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: idlist, FOR, list
+            // elements: FOR, list, idlist
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -2671,7 +2674,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: codestmtlist, CODE, proto
+            // elements: codestmtlist, proto, CODE
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -3284,7 +3287,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, ATSIGN, ID
+                    // elements: type, ID, ATSIGN
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -3425,7 +3428,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, ID, MACRO, init
+                    // elements: ID, MACRO, init, type
                     // token labels: 
                     // rule labels: retval, init
                     // token list labels: 
@@ -3701,7 +3704,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: ID, ATSIGN
+            // elements: ATSIGN, ID
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -5077,7 +5080,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: instantiation, idOrScopeRef
+                    // elements: idOrScopeRef, instantiation
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5178,7 +5181,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: CODE, proto
+                    // elements: proto, CODE
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -5529,7 +5532,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: codeStmtExpr, labelStmt
+                    // elements: labelStmt, codeStmtExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6036,7 +6039,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idTuple, assignOrInitExpr
+                    // elements: assignOrInitExpr, idTuple
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6110,7 +6113,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignOrInitExpr, ID, type
+                    // elements: type, ID, assignOrInitExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6192,7 +6195,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idTuple, assignOrInitExpr, type
+                    // elements: assignOrInitExpr, type, idTuple
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6334,7 +6337,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, assignOrInitExpr, PLUS
+                    // elements: assignOrInitExpr, PLUS, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6533,7 +6536,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, ID, PLUS, assignOrInitExpr
+                    // elements: ID, type, assignOrInitExpr, PLUS
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6756,7 +6759,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idExpr, assignOrInitExpr, assignEqOp
+                    // elements: assignEqOp, idExpr, assignOrInitExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6807,7 +6810,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignOrInitExpr, EQUALS, idTuple
+                    // elements: idTuple, EQUALS, assignOrInitExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -6953,7 +6956,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: PLUS, assignOrInitExpr, idExpr
+                    // elements: idExpr, PLUS, assignOrInitExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -7195,7 +7198,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idExpr, EQUALS, assignExpr
+                    // elements: EQUALS, idExpr, assignExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -7249,7 +7252,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignOp, assignExpr, idExpr
+                    // elements: assignExpr, idExpr, assignOp
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -7300,7 +7303,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idTuple, assignExpr, EQUALS
+                    // elements: EQUALS, idTuple, assignExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -7390,7 +7393,7 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "assignOp"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:309:1: assignOp : ( PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | BACKSLASH_EQ | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:309:1: assignOp : ( PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | UDIV_EQ | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ );
     public final EulangParser.assignOp_return assignOp() throws RecognitionException {
         EulangParser.assignOp_return retval = new EulangParser.assignOp_return();
         retval.start = input.LT(1);
@@ -7402,7 +7405,7 @@ public class EulangParser extends Parser {
         CommonTree set225_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:309:10: ( PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | BACKSLASH_EQ | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:309:10: ( PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | UDIV_EQ | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ )
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:
             {
             root_0 = (CommonTree)adaptor.nil();
@@ -7787,7 +7790,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, ei
+                    // elements: ei, ID
                     // token labels: 
                     // rule labels: retval, ei
                     // token list labels: 
@@ -7844,7 +7847,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ei, i
+                    // elements: i, ei
                     // token labels: 
                     // rule labels: retval, ei, i
                     // token list labels: 
@@ -8184,7 +8187,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: DO, rhsExpr, codeStmtExpr
+            // elements: codeStmtExpr, rhsExpr, DO
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8284,7 +8287,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: codeStmtExpr, rhsExpr, WHILE
+            // elements: rhsExpr, WHILE, codeStmtExpr
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8384,7 +8387,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: REPEAT, codeStmt, rhsExpr
+            // elements: rhsExpr, REPEAT, codeStmt
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8525,7 +8528,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: forMovement, FOR, codeStmt, rhsExpr, forIds
+            // elements: forIds, rhsExpr, codeStmt, forMovement, FOR
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8823,7 +8826,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: BY, rhsExpr
+            // elements: rhsExpr, BY
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8905,7 +8908,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: ID, AT
+            // elements: AT, ID
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -8989,7 +8992,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: BREAK, rhsExpr
+            // elements: rhsExpr, BREAK
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -9193,7 +9196,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: idOrScopeRef, GOTO, rhsExpr
+            // elements: GOTO, rhsExpr, idOrScopeRef
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -10413,7 +10416,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: WITH, b, bindings, e
+            // elements: bindings, e, WITH, b
             // token labels: 
             // rule labels: retval, e, b
             // token list labels: 
@@ -10849,7 +10852,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: elses, thenClause
+            // elements: thenClause, elses
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -11152,7 +11155,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: v, t
+            // elements: t, v
             // token labels: 
             // rule labels: v, retval, t
             // token list labels: 
@@ -11560,7 +11563,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: t, f, cond
+            	    // elements: cond, t, f
             	    // token labels: 
             	    // rule labels: f, retval, t
             	    // token list labels: 
@@ -11706,7 +11709,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: logor, OR, r
+            	    // elements: OR, r, logor
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -11850,7 +11853,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: AND, r, logand
+            	    // elements: r, logand, AND
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -11997,7 +12000,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: NOT, u
+                    // elements: u, NOT
                     // token labels: 
                     // rule labels: retval, u
                     // token list labels: 
@@ -12054,7 +12057,7 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "comp"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:1: comp : ( bitor -> bitor ) ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:1: comp : ( bitor -> bitor ) ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | COMPULE r= bitor -> ^( COMPULE $comp $r) | COMPUGE r= bitor -> ^( COMPUGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | ULESS r= bitor -> ^( ULESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) | UGREATER r= bitor -> ^( UGREATER $comp $r) )* ;
     public final EulangParser.comp_return comp() throws RecognitionException {
         EulangParser.comp_return retval = new EulangParser.comp_return();
         retval.start = input.LT(1);
@@ -12065,8 +12068,12 @@ public class EulangParser extends Parser {
         Token COMPNE347=null;
         Token COMPLE348=null;
         Token COMPGE349=null;
-        Token LESS350=null;
-        Token GREATER351=null;
+        Token COMPULE350=null;
+        Token COMPUGE351=null;
+        Token LESS352=null;
+        Token ULESS353=null;
+        Token GREATER354=null;
+        Token UGREATER355=null;
         EulangParser.bitor_return r = null;
 
         EulangParser.bitor_return bitor345 = null;
@@ -12076,18 +12083,26 @@ public class EulangParser extends Parser {
         CommonTree COMPNE347_tree=null;
         CommonTree COMPLE348_tree=null;
         CommonTree COMPGE349_tree=null;
-        CommonTree LESS350_tree=null;
-        CommonTree GREATER351_tree=null;
+        CommonTree COMPULE350_tree=null;
+        CommonTree COMPUGE351_tree=null;
+        CommonTree LESS352_tree=null;
+        CommonTree ULESS353_tree=null;
+        CommonTree GREATER354_tree=null;
+        CommonTree UGREATER355_tree=null;
         RewriteRuleTokenStream stream_COMPGE=new RewriteRuleTokenStream(adaptor,"token COMPGE");
+        RewriteRuleTokenStream stream_ULESS=new RewriteRuleTokenStream(adaptor,"token ULESS");
         RewriteRuleTokenStream stream_COMPEQ=new RewriteRuleTokenStream(adaptor,"token COMPEQ");
         RewriteRuleTokenStream stream_GREATER=new RewriteRuleTokenStream(adaptor,"token GREATER");
         RewriteRuleTokenStream stream_COMPLE=new RewriteRuleTokenStream(adaptor,"token COMPLE");
         RewriteRuleTokenStream stream_COMPNE=new RewriteRuleTokenStream(adaptor,"token COMPNE");
+        RewriteRuleTokenStream stream_COMPULE=new RewriteRuleTokenStream(adaptor,"token COMPULE");
+        RewriteRuleTokenStream stream_UGREATER=new RewriteRuleTokenStream(adaptor,"token UGREATER");
+        RewriteRuleTokenStream stream_COMPUGE=new RewriteRuleTokenStream(adaptor,"token COMPUGE");
         RewriteRuleTokenStream stream_LESS=new RewriteRuleTokenStream(adaptor,"token LESS");
         RewriteRuleSubtreeStream stream_bitor=new RewriteRuleSubtreeStream(adaptor,"rule bitor");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:5: ( ( bitor -> bitor ) ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:9: ( bitor -> bitor ) ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:5: ( ( bitor -> bitor ) ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | COMPULE r= bitor -> ^( COMPULE $comp $r) | COMPUGE r= bitor -> ^( COMPUGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | ULESS r= bitor -> ^( ULESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) | UGREATER r= bitor -> ^( UGREATER $comp $r) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:9: ( bitor -> bitor ) ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | COMPULE r= bitor -> ^( COMPULE $comp $r) | COMPUGE r= bitor -> ^( COMPUGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | ULESS r= bitor -> ^( ULESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) | UGREATER r= bitor -> ^( UGREATER $comp $r) )*
             {
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:9: ( bitor -> bitor )
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:444:11: bitor
@@ -12121,10 +12136,10 @@ public class EulangParser extends Parser {
             retval.tree = root_0;}
             }
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:445:7: ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:445:7: ( COMPEQ r= bitor -> ^( COMPEQ $comp $r) | COMPNE r= bitor -> ^( COMPNE $comp $r) | COMPLE r= bitor -> ^( COMPLE $comp $r) | COMPGE r= bitor -> ^( COMPGE $comp $r) | COMPULE r= bitor -> ^( COMPULE $comp $r) | COMPUGE r= bitor -> ^( COMPUGE $comp $r) | LESS r= bitor -> ^( LESS $comp $r) | ULESS r= bitor -> ^( ULESS $comp $r) | GREATER r= bitor -> ^( GREATER $comp $r) | UGREATER r= bitor -> ^( UGREATER $comp $r) )*
             loop91:
             do {
-                int alt91=7;
+                int alt91=11;
                 switch ( input.LA(1) ) {
                 case COMPEQ:
                     {
@@ -12146,14 +12161,34 @@ public class EulangParser extends Parser {
                     alt91=4;
                     }
                     break;
-                case LESS:
+                case COMPULE:
                     {
                     alt91=5;
                     }
                     break;
-                case GREATER:
+                case COMPUGE:
                     {
                     alt91=6;
+                    }
+                    break;
+                case LESS:
+                    {
+                    alt91=7;
+                    }
+                    break;
+                case ULESS:
+                    {
+                    alt91=8;
+                    }
+                    break;
+                case GREATER:
+                    {
+                    alt91=9;
+                    }
+                    break;
+                case UGREATER:
+                    {
+                    alt91=10;
                     }
                     break;
 
@@ -12175,7 +12210,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, r, COMPEQ
+            	    // elements: COMPEQ, r, comp
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12220,7 +12255,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: COMPNE, comp, r
+            	    // elements: COMPNE, r, comp
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12265,7 +12300,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: COMPLE, r, comp
+            	    // elements: r, comp, COMPLE
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12310,7 +12345,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, COMPGE, comp
+            	    // elements: comp, r, COMPGE
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12341,10 +12376,10 @@ public class EulangParser extends Parser {
             	    }
             	    break;
             	case 5 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:449:9: LESS r= bitor
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:449:9: COMPULE r= bitor
             	    {
-            	    LESS350=(Token)match(input,LESS,FOLLOW_LESS_in_comp4782); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_LESS.add(LESS350);
+            	    COMPULE350=(Token)match(input,COMPULE,FOLLOW_COMPULE_in_comp4782); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_COMPULE.add(COMPULE350);
 
             	    pushFollow(FOLLOW_bitor_in_comp4786);
             	    r=bitor();
@@ -12355,7 +12390,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, r, LESS
+            	    // elements: COMPULE, comp, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12367,9 +12402,99 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 449:26: -> ^( LESS $comp $r)
+            	    // 449:28: -> ^( COMPULE $comp $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:449:29: ^( LESS $comp $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:449:31: ^( COMPULE $comp $r)
+            	        {
+            	        CommonTree root_1 = (CommonTree)adaptor.nil();
+            	        root_1 = (CommonTree)adaptor.becomeRoot(stream_COMPULE.nextNode(), root_1);
+
+            	        adaptor.addChild(root_1, stream_retval.nextTree());
+            	        adaptor.addChild(root_1, stream_r.nextTree());
+
+            	        adaptor.addChild(root_0, root_1);
+            	        }
+
+            	    }
+
+            	    retval.tree = root_0;}
+            	    }
+            	    break;
+            	case 6 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:450:9: COMPUGE r= bitor
+            	    {
+            	    COMPUGE351=(Token)match(input,COMPUGE,FOLLOW_COMPUGE_in_comp4811); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_COMPUGE.add(COMPUGE351);
+
+            	    pushFollow(FOLLOW_bitor_in_comp4815);
+            	    r=bitor();
+
+            	    state._fsp--;
+            	    if (state.failed) return retval;
+            	    if ( state.backtracking==0 ) stream_bitor.add(r.getTree());
+
+
+            	    // AST REWRITE
+            	    // elements: COMPUGE, r, comp
+            	    // token labels: 
+            	    // rule labels: retval, r
+            	    // token list labels: 
+            	    // rule list labels: 
+            	    // wildcard labels: 
+            	    if ( state.backtracking==0 ) {
+            	    retval.tree = root_0;
+            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
+            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
+
+            	    root_0 = (CommonTree)adaptor.nil();
+            	    // 450:28: -> ^( COMPUGE $comp $r)
+            	    {
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:450:31: ^( COMPUGE $comp $r)
+            	        {
+            	        CommonTree root_1 = (CommonTree)adaptor.nil();
+            	        root_1 = (CommonTree)adaptor.becomeRoot(stream_COMPUGE.nextNode(), root_1);
+
+            	        adaptor.addChild(root_1, stream_retval.nextTree());
+            	        adaptor.addChild(root_1, stream_r.nextTree());
+
+            	        adaptor.addChild(root_0, root_1);
+            	        }
+
+            	    }
+
+            	    retval.tree = root_0;}
+            	    }
+            	    break;
+            	case 7 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:451:9: LESS r= bitor
+            	    {
+            	    LESS352=(Token)match(input,LESS,FOLLOW_LESS_in_comp4840); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_LESS.add(LESS352);
+
+            	    pushFollow(FOLLOW_bitor_in_comp4844);
+            	    r=bitor();
+
+            	    state._fsp--;
+            	    if (state.failed) return retval;
+            	    if ( state.backtracking==0 ) stream_bitor.add(r.getTree());
+
+
+            	    // AST REWRITE
+            	    // elements: comp, LESS, r
+            	    // token labels: 
+            	    // rule labels: retval, r
+            	    // token list labels: 
+            	    // rule list labels: 
+            	    // wildcard labels: 
+            	    if ( state.backtracking==0 ) {
+            	    retval.tree = root_0;
+            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
+            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
+
+            	    root_0 = (CommonTree)adaptor.nil();
+            	    // 451:26: -> ^( LESS $comp $r)
+            	    {
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:451:29: ^( LESS $comp $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_LESS.nextNode(), root_1);
@@ -12385,13 +12510,13 @@ public class EulangParser extends Parser {
             	    retval.tree = root_0;}
             	    }
             	    break;
-            	case 6 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:450:9: GREATER r= bitor
+            	case 8 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:452:9: ULESS r= bitor
             	    {
-            	    GREATER351=(Token)match(input,GREATER,FOLLOW_GREATER_in_comp4812); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_GREATER.add(GREATER351);
+            	    ULESS353=(Token)match(input,ULESS,FOLLOW_ULESS_in_comp4870); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_ULESS.add(ULESS353);
 
-            	    pushFollow(FOLLOW_bitor_in_comp4816);
+            	    pushFollow(FOLLOW_bitor_in_comp4874);
             	    r=bitor();
 
             	    state._fsp--;
@@ -12400,7 +12525,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, GREATER, r
+            	    // elements: comp, r, ULESS
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12412,12 +12537,102 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 450:28: -> ^( GREATER $comp $r)
+            	    // 452:27: -> ^( ULESS $comp $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:450:31: ^( GREATER $comp $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:452:30: ^( ULESS $comp $r)
+            	        {
+            	        CommonTree root_1 = (CommonTree)adaptor.nil();
+            	        root_1 = (CommonTree)adaptor.becomeRoot(stream_ULESS.nextNode(), root_1);
+
+            	        adaptor.addChild(root_1, stream_retval.nextTree());
+            	        adaptor.addChild(root_1, stream_r.nextTree());
+
+            	        adaptor.addChild(root_0, root_1);
+            	        }
+
+            	    }
+
+            	    retval.tree = root_0;}
+            	    }
+            	    break;
+            	case 9 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:453:9: GREATER r= bitor
+            	    {
+            	    GREATER354=(Token)match(input,GREATER,FOLLOW_GREATER_in_comp4900); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_GREATER.add(GREATER354);
+
+            	    pushFollow(FOLLOW_bitor_in_comp4904);
+            	    r=bitor();
+
+            	    state._fsp--;
+            	    if (state.failed) return retval;
+            	    if ( state.backtracking==0 ) stream_bitor.add(r.getTree());
+
+
+            	    // AST REWRITE
+            	    // elements: r, GREATER, comp
+            	    // token labels: 
+            	    // rule labels: retval, r
+            	    // token list labels: 
+            	    // rule list labels: 
+            	    // wildcard labels: 
+            	    if ( state.backtracking==0 ) {
+            	    retval.tree = root_0;
+            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
+            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
+
+            	    root_0 = (CommonTree)adaptor.nil();
+            	    // 453:28: -> ^( GREATER $comp $r)
+            	    {
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:453:31: ^( GREATER $comp $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_GREATER.nextNode(), root_1);
+
+            	        adaptor.addChild(root_1, stream_retval.nextTree());
+            	        adaptor.addChild(root_1, stream_r.nextTree());
+
+            	        adaptor.addChild(root_0, root_1);
+            	        }
+
+            	    }
+
+            	    retval.tree = root_0;}
+            	    }
+            	    break;
+            	case 10 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:454:9: UGREATER r= bitor
+            	    {
+            	    UGREATER355=(Token)match(input,UGREATER,FOLLOW_UGREATER_in_comp4929); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_UGREATER.add(UGREATER355);
+
+            	    pushFollow(FOLLOW_bitor_in_comp4933);
+            	    r=bitor();
+
+            	    state._fsp--;
+            	    if (state.failed) return retval;
+            	    if ( state.backtracking==0 ) stream_bitor.add(r.getTree());
+
+
+            	    // AST REWRITE
+            	    // elements: UGREATER, r, comp
+            	    // token labels: 
+            	    // rule labels: retval, r
+            	    // token list labels: 
+            	    // rule list labels: 
+            	    // wildcard labels: 
+            	    if ( state.backtracking==0 ) {
+            	    retval.tree = root_0;
+            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
+            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
+
+            	    root_0 = (CommonTree)adaptor.nil();
+            	    // 454:29: -> ^( UGREATER $comp $r)
+            	    {
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:454:32: ^( UGREATER $comp $r)
+            	        {
+            	        CommonTree root_1 = (CommonTree)adaptor.nil();
+            	        root_1 = (CommonTree)adaptor.becomeRoot(stream_UGREATER.nextNode(), root_1);
 
             	        adaptor.addChild(root_1, stream_retval.nextTree());
             	        adaptor.addChild(root_1, stream_r.nextTree());
@@ -12465,35 +12680,35 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "bitor"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:455:1: bitor : ( bitxor -> bitxor ) ( BAR r= bitxor -> ^( BITOR $bitor $r) )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:1: bitor : ( bitxor -> bitxor ) ( BAR r= bitxor -> ^( BITOR $bitor $r) )* ;
     public final EulangParser.bitor_return bitor() throws RecognitionException {
         EulangParser.bitor_return retval = new EulangParser.bitor_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token BAR353=null;
+        Token BAR357=null;
         EulangParser.bitxor_return r = null;
 
-        EulangParser.bitxor_return bitxor352 = null;
+        EulangParser.bitxor_return bitxor356 = null;
 
 
-        CommonTree BAR353_tree=null;
+        CommonTree BAR357_tree=null;
         RewriteRuleTokenStream stream_BAR=new RewriteRuleTokenStream(adaptor,"token BAR");
         RewriteRuleSubtreeStream stream_bitxor=new RewriteRuleSubtreeStream(adaptor,"rule bitxor");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:455:6: ( ( bitxor -> bitxor ) ( BAR r= bitxor -> ^( BITOR $bitor $r) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:455:8: ( bitxor -> bitxor ) ( BAR r= bitxor -> ^( BITOR $bitor $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:6: ( ( bitxor -> bitxor ) ( BAR r= bitxor -> ^( BITOR $bitor $r) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:8: ( bitxor -> bitxor ) ( BAR r= bitxor -> ^( BITOR $bitor $r) )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:455:8: ( bitxor -> bitxor )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:455:10: bitxor
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:8: ( bitxor -> bitxor )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:10: bitxor
             {
-            pushFollow(FOLLOW_bitxor_in_bitor4866);
-            bitxor352=bitxor();
+            pushFollow(FOLLOW_bitxor_in_bitor4983);
+            bitxor356=bitxor();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_bitxor.add(bitxor352.getTree());
+            if ( state.backtracking==0 ) stream_bitxor.add(bitxor356.getTree());
 
 
             // AST REWRITE
@@ -12508,7 +12723,7 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 455:22: -> bitxor
+            // 459:22: -> bitxor
             {
                 adaptor.addChild(root_0, stream_bitxor.nextTree());
 
@@ -12517,7 +12732,7 @@ public class EulangParser extends Parser {
             retval.tree = root_0;}
             }
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:456:7: ( BAR r= bitxor -> ^( BITOR $bitor $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:460:7: ( BAR r= bitxor -> ^( BITOR $bitor $r) )*
             loop92:
             do {
                 int alt92=2;
@@ -12530,12 +12745,12 @@ public class EulangParser extends Parser {
 
                 switch (alt92) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:456:9: BAR r= bitxor
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:460:9: BAR r= bitxor
             	    {
-            	    BAR353=(Token)match(input,BAR,FOLLOW_BAR_in_bitor4894); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_BAR.add(BAR353);
+            	    BAR357=(Token)match(input,BAR,FOLLOW_BAR_in_bitor5011); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_BAR.add(BAR357);
 
-            	    pushFollow(FOLLOW_bitxor_in_bitor4898);
+            	    pushFollow(FOLLOW_bitxor_in_bitor5015);
             	    r=bitxor();
 
             	    state._fsp--;
@@ -12556,9 +12771,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 456:23: -> ^( BITOR $bitor $r)
+            	    // 460:23: -> ^( BITOR $bitor $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:456:26: ^( BITOR $bitor $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:460:26: ^( BITOR $bitor $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(BITOR, "BITOR"), root_1);
@@ -12609,35 +12824,35 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "bitxor"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:458:1: bitxor : ( bitand -> bitand ) ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:1: bitxor : ( bitand -> bitand ) ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )* ;
     public final EulangParser.bitxor_return bitxor() throws RecognitionException {
         EulangParser.bitxor_return retval = new EulangParser.bitxor_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token TILDE355=null;
+        Token TILDE359=null;
         EulangParser.bitand_return r = null;
 
-        EulangParser.bitand_return bitand354 = null;
+        EulangParser.bitand_return bitand358 = null;
 
 
-        CommonTree TILDE355_tree=null;
+        CommonTree TILDE359_tree=null;
         RewriteRuleTokenStream stream_TILDE=new RewriteRuleTokenStream(adaptor,"token TILDE");
         RewriteRuleSubtreeStream stream_bitand=new RewriteRuleSubtreeStream(adaptor,"rule bitand");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:458:7: ( ( bitand -> bitand ) ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:458:9: ( bitand -> bitand ) ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:7: ( ( bitand -> bitand ) ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:9: ( bitand -> bitand ) ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:458:9: ( bitand -> bitand )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:458:11: bitand
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:9: ( bitand -> bitand )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:11: bitand
             {
-            pushFollow(FOLLOW_bitand_in_bitxor4924);
-            bitand354=bitand();
+            pushFollow(FOLLOW_bitand_in_bitxor5041);
+            bitand358=bitand();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_bitand.add(bitand354.getTree());
+            if ( state.backtracking==0 ) stream_bitand.add(bitand358.getTree());
 
 
             // AST REWRITE
@@ -12652,7 +12867,7 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 458:23: -> bitand
+            // 462:23: -> bitand
             {
                 adaptor.addChild(root_0, stream_bitand.nextTree());
 
@@ -12661,7 +12876,7 @@ public class EulangParser extends Parser {
             retval.tree = root_0;}
             }
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:7: ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:463:7: ( TILDE r= bitand -> ^( BITXOR $bitxor $r) )*
             loop93:
             do {
                 int alt93=2;
@@ -12674,12 +12889,12 @@ public class EulangParser extends Parser {
 
                 switch (alt93) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:9: TILDE r= bitand
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:463:9: TILDE r= bitand
             	    {
-            	    TILDE355=(Token)match(input,TILDE,FOLLOW_TILDE_in_bitxor4952); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_TILDE.add(TILDE355);
+            	    TILDE359=(Token)match(input,TILDE,FOLLOW_TILDE_in_bitxor5069); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_TILDE.add(TILDE359);
 
-            	    pushFollow(FOLLOW_bitand_in_bitxor4956);
+            	    pushFollow(FOLLOW_bitand_in_bitxor5073);
             	    r=bitand();
 
             	    state._fsp--;
@@ -12688,7 +12903,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: bitxor, r
+            	    // elements: r, bitxor
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12700,9 +12915,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 459:25: -> ^( BITXOR $bitxor $r)
+            	    // 463:25: -> ^( BITXOR $bitxor $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:459:28: ^( BITXOR $bitxor $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:463:28: ^( BITXOR $bitxor $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(BITXOR, "BITXOR"), root_1);
@@ -12753,35 +12968,35 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "bitand"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:461:1: bitand : ( shift -> shift ) ( AMP r= shift -> ^( BITAND $bitand $r) )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:1: bitand : ( shift -> shift ) ( AMP r= shift -> ^( BITAND $bitand $r) )* ;
     public final EulangParser.bitand_return bitand() throws RecognitionException {
         EulangParser.bitand_return retval = new EulangParser.bitand_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token AMP357=null;
+        Token AMP361=null;
         EulangParser.shift_return r = null;
 
-        EulangParser.shift_return shift356 = null;
+        EulangParser.shift_return shift360 = null;
 
 
-        CommonTree AMP357_tree=null;
+        CommonTree AMP361_tree=null;
         RewriteRuleTokenStream stream_AMP=new RewriteRuleTokenStream(adaptor,"token AMP");
         RewriteRuleSubtreeStream stream_shift=new RewriteRuleSubtreeStream(adaptor,"rule shift");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:461:7: ( ( shift -> shift ) ( AMP r= shift -> ^( BITAND $bitand $r) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:461:9: ( shift -> shift ) ( AMP r= shift -> ^( BITAND $bitand $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:7: ( ( shift -> shift ) ( AMP r= shift -> ^( BITAND $bitand $r) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:9: ( shift -> shift ) ( AMP r= shift -> ^( BITAND $bitand $r) )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:461:9: ( shift -> shift )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:461:11: shift
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:9: ( shift -> shift )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:11: shift
             {
-            pushFollow(FOLLOW_shift_in_bitand4981);
-            shift356=shift();
+            pushFollow(FOLLOW_shift_in_bitand5098);
+            shift360=shift();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_shift.add(shift356.getTree());
+            if ( state.backtracking==0 ) stream_shift.add(shift360.getTree());
 
 
             // AST REWRITE
@@ -12796,7 +13011,7 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 461:22: -> shift
+            // 465:22: -> shift
             {
                 adaptor.addChild(root_0, stream_shift.nextTree());
 
@@ -12805,7 +13020,7 @@ public class EulangParser extends Parser {
             retval.tree = root_0;}
             }
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:7: ( AMP r= shift -> ^( BITAND $bitand $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:7: ( AMP r= shift -> ^( BITAND $bitand $r) )*
             loop94:
             do {
                 int alt94=2;
@@ -12818,12 +13033,12 @@ public class EulangParser extends Parser {
 
                 switch (alt94) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:9: AMP r= shift
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:9: AMP r= shift
             	    {
-            	    AMP357=(Token)match(input,AMP,FOLLOW_AMP_in_bitand5009); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_AMP.add(AMP357);
+            	    AMP361=(Token)match(input,AMP,FOLLOW_AMP_in_bitand5126); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_AMP.add(AMP361);
 
-            	    pushFollow(FOLLOW_shift_in_bitand5013);
+            	    pushFollow(FOLLOW_shift_in_bitand5130);
             	    r=shift();
 
             	    state._fsp--;
@@ -12844,9 +13059,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 462:22: -> ^( BITAND $bitand $r)
+            	    // 466:22: -> ^( BITAND $bitand $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:462:25: ^( BITAND $bitand $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:25: ^( BITAND $bitand $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(BITAND, "BITAND"), root_1);
@@ -12897,28 +13112,28 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "shift"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:1: shift : ( factor -> factor ) ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:1: shift : ( factor -> factor ) ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )* ;
     public final EulangParser.shift_return shift() throws RecognitionException {
         EulangParser.shift_return retval = new EulangParser.shift_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token LSHIFT359=null;
-        Token RSHIFT360=null;
-        Token URSHIFT361=null;
-        Token CRSHIFT362=null;
-        Token CLSHIFT363=null;
+        Token LSHIFT363=null;
+        Token RSHIFT364=null;
+        Token URSHIFT365=null;
+        Token CRSHIFT366=null;
+        Token CLSHIFT367=null;
         EulangParser.factor_return r = null;
 
-        EulangParser.factor_return factor358 = null;
+        EulangParser.factor_return factor362 = null;
 
 
-        CommonTree LSHIFT359_tree=null;
-        CommonTree RSHIFT360_tree=null;
-        CommonTree URSHIFT361_tree=null;
-        CommonTree CRSHIFT362_tree=null;
-        CommonTree CLSHIFT363_tree=null;
+        CommonTree LSHIFT363_tree=null;
+        CommonTree RSHIFT364_tree=null;
+        CommonTree URSHIFT365_tree=null;
+        CommonTree CRSHIFT366_tree=null;
+        CommonTree CLSHIFT367_tree=null;
         RewriteRuleTokenStream stream_URSHIFT=new RewriteRuleTokenStream(adaptor,"token URSHIFT");
         RewriteRuleTokenStream stream_CLSHIFT=new RewriteRuleTokenStream(adaptor,"token CLSHIFT");
         RewriteRuleTokenStream stream_CRSHIFT=new RewriteRuleTokenStream(adaptor,"token CRSHIFT");
@@ -12926,18 +13141,18 @@ public class EulangParser extends Parser {
         RewriteRuleTokenStream stream_LSHIFT=new RewriteRuleTokenStream(adaptor,"token LSHIFT");
         RewriteRuleSubtreeStream stream_factor=new RewriteRuleSubtreeStream(adaptor,"rule factor");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:6: ( ( factor -> factor ) ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:9: ( factor -> factor ) ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:6: ( ( factor -> factor ) ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:9: ( factor -> factor ) ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:9: ( factor -> factor )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:465:11: factor
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:9: ( factor -> factor )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:11: factor
             {
-            pushFollow(FOLLOW_factor_in_shift5040);
-            factor358=factor();
+            pushFollow(FOLLOW_factor_in_shift5157);
+            factor362=factor();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_factor.add(factor358.getTree());
+            if ( state.backtracking==0 ) stream_factor.add(factor362.getTree());
 
 
             // AST REWRITE
@@ -12952,7 +13167,7 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 465:25: -> factor
+            // 469:25: -> factor
             {
                 adaptor.addChild(root_0, stream_factor.nextTree());
 
@@ -12961,7 +13176,7 @@ public class EulangParser extends Parser {
             retval.tree = root_0;}
             }
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:7: ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:7: ( ( LSHIFT r= factor -> ^( LSHIFT $shift $r) ) | ( RSHIFT r= factor -> ^( RSHIFT $shift $r) ) | ( URSHIFT r= factor -> ^( URSHIFT $shift $r) ) | ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) ) | ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) ) )*
             loop95:
             do {
                 int alt95=6;
@@ -12996,15 +13211,15 @@ public class EulangParser extends Parser {
 
                 switch (alt95) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:9: ( LSHIFT r= factor -> ^( LSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:9: ( LSHIFT r= factor -> ^( LSHIFT $shift $r) )
             	    {
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:9: ( LSHIFT r= factor -> ^( LSHIFT $shift $r) )
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:11: LSHIFT r= factor
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:9: ( LSHIFT r= factor -> ^( LSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:11: LSHIFT r= factor
             	    {
-            	    LSHIFT359=(Token)match(input,LSHIFT,FOLLOW_LSHIFT_in_shift5074); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_LSHIFT.add(LSHIFT359);
+            	    LSHIFT363=(Token)match(input,LSHIFT,FOLLOW_LSHIFT_in_shift5191); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_LSHIFT.add(LSHIFT363);
 
-            	    pushFollow(FOLLOW_factor_in_shift5078);
+            	    pushFollow(FOLLOW_factor_in_shift5195);
             	    r=factor();
 
             	    state._fsp--;
@@ -13025,9 +13240,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 466:29: -> ^( LSHIFT $shift $r)
+            	    // 470:29: -> ^( LSHIFT $shift $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:466:32: ^( LSHIFT $shift $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:32: ^( LSHIFT $shift $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_LSHIFT.nextNode(), root_1);
@@ -13047,15 +13262,15 @@ public class EulangParser extends Parser {
             	    }
             	    break;
             	case 2 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:467:9: ( RSHIFT r= factor -> ^( RSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:471:9: ( RSHIFT r= factor -> ^( RSHIFT $shift $r) )
             	    {
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:467:9: ( RSHIFT r= factor -> ^( RSHIFT $shift $r) )
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:467:11: RSHIFT r= factor
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:471:9: ( RSHIFT r= factor -> ^( RSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:471:11: RSHIFT r= factor
             	    {
-            	    RSHIFT360=(Token)match(input,RSHIFT,FOLLOW_RSHIFT_in_shift5107); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_RSHIFT.add(RSHIFT360);
+            	    RSHIFT364=(Token)match(input,RSHIFT,FOLLOW_RSHIFT_in_shift5224); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_RSHIFT.add(RSHIFT364);
 
-            	    pushFollow(FOLLOW_factor_in_shift5111);
+            	    pushFollow(FOLLOW_factor_in_shift5228);
             	    r=factor();
 
             	    state._fsp--;
@@ -13064,7 +13279,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: shift, r, RSHIFT
+            	    // elements: RSHIFT, r, shift
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13076,9 +13291,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 467:29: -> ^( RSHIFT $shift $r)
+            	    // 471:29: -> ^( RSHIFT $shift $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:467:32: ^( RSHIFT $shift $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:471:32: ^( RSHIFT $shift $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_RSHIFT.nextNode(), root_1);
@@ -13098,15 +13313,15 @@ public class EulangParser extends Parser {
             	    }
             	    break;
             	case 3 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:468:9: ( URSHIFT r= factor -> ^( URSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:472:9: ( URSHIFT r= factor -> ^( URSHIFT $shift $r) )
             	    {
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:468:9: ( URSHIFT r= factor -> ^( URSHIFT $shift $r) )
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:468:11: URSHIFT r= factor
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:472:9: ( URSHIFT r= factor -> ^( URSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:472:11: URSHIFT r= factor
             	    {
-            	    URSHIFT361=(Token)match(input,URSHIFT,FOLLOW_URSHIFT_in_shift5139); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_URSHIFT.add(URSHIFT361);
+            	    URSHIFT365=(Token)match(input,URSHIFT,FOLLOW_URSHIFT_in_shift5256); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_URSHIFT.add(URSHIFT365);
 
-            	    pushFollow(FOLLOW_factor_in_shift5143);
+            	    pushFollow(FOLLOW_factor_in_shift5260);
             	    r=factor();
 
             	    state._fsp--;
@@ -13115,7 +13330,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, URSHIFT, shift
+            	    // elements: r, shift, URSHIFT
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13127,9 +13342,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 468:30: -> ^( URSHIFT $shift $r)
+            	    // 472:30: -> ^( URSHIFT $shift $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:468:33: ^( URSHIFT $shift $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:472:33: ^( URSHIFT $shift $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_URSHIFT.nextNode(), root_1);
@@ -13149,15 +13364,15 @@ public class EulangParser extends Parser {
             	    }
             	    break;
             	case 4 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:9: ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:473:9: ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) )
             	    {
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:9: ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) )
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:11: CRSHIFT r= factor
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:473:9: ( CRSHIFT r= factor -> ^( CRSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:473:11: CRSHIFT r= factor
             	    {
-            	    CRSHIFT362=(Token)match(input,CRSHIFT,FOLLOW_CRSHIFT_in_shift5171); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_CRSHIFT.add(CRSHIFT362);
+            	    CRSHIFT366=(Token)match(input,CRSHIFT,FOLLOW_CRSHIFT_in_shift5288); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_CRSHIFT.add(CRSHIFT366);
 
-            	    pushFollow(FOLLOW_factor_in_shift5175);
+            	    pushFollow(FOLLOW_factor_in_shift5292);
             	    r=factor();
 
             	    state._fsp--;
@@ -13166,7 +13381,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: CRSHIFT, shift, r
+            	    // elements: shift, r, CRSHIFT
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13178,9 +13393,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 469:30: -> ^( CRSHIFT $shift $r)
+            	    // 473:30: -> ^( CRSHIFT $shift $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:469:33: ^( CRSHIFT $shift $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:473:33: ^( CRSHIFT $shift $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_CRSHIFT.nextNode(), root_1);
@@ -13200,15 +13415,15 @@ public class EulangParser extends Parser {
             	    }
             	    break;
             	case 5 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:9: ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:9: ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) )
             	    {
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:9: ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) )
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:11: CLSHIFT r= factor
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:9: ( CLSHIFT r= factor -> ^( CLSHIFT $shift $r) )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:11: CLSHIFT r= factor
             	    {
-            	    CLSHIFT363=(Token)match(input,CLSHIFT,FOLLOW_CLSHIFT_in_shift5203); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_CLSHIFT.add(CLSHIFT363);
+            	    CLSHIFT367=(Token)match(input,CLSHIFT,FOLLOW_CLSHIFT_in_shift5320); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_CLSHIFT.add(CLSHIFT367);
 
-            	    pushFollow(FOLLOW_factor_in_shift5207);
+            	    pushFollow(FOLLOW_factor_in_shift5324);
             	    r=factor();
 
             	    state._fsp--;
@@ -13217,7 +13432,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, CLSHIFT, shift
+            	    // elements: CLSHIFT, r, shift
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13229,9 +13444,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 470:30: -> ^( CLSHIFT $shift $r)
+            	    // 474:30: -> ^( CLSHIFT $shift $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:470:33: ^( CLSHIFT $shift $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:33: ^( CLSHIFT $shift $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_CLSHIFT.nextNode(), root_1);
@@ -13285,38 +13500,38 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "factor"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:473:1: factor : ( term -> term ) ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:477:1: factor : ( term -> term ) ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )* ;
     public final EulangParser.factor_return factor() throws RecognitionException {
         EulangParser.factor_return retval = new EulangParser.factor_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token PLUS365=null;
-        Token MINUS366=null;
+        Token PLUS369=null;
+        Token MINUS370=null;
         EulangParser.term_return r = null;
 
-        EulangParser.term_return term364 = null;
+        EulangParser.term_return term368 = null;
 
 
-        CommonTree PLUS365_tree=null;
-        CommonTree MINUS366_tree=null;
+        CommonTree PLUS369_tree=null;
+        CommonTree MINUS370_tree=null;
         RewriteRuleTokenStream stream_PLUS=new RewriteRuleTokenStream(adaptor,"token PLUS");
         RewriteRuleTokenStream stream_MINUS=new RewriteRuleTokenStream(adaptor,"token MINUS");
         RewriteRuleSubtreeStream stream_term=new RewriteRuleSubtreeStream(adaptor,"rule term");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:5: ( ( term -> term ) ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:7: ( term -> term ) ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:478:5: ( ( term -> term ) ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:478:7: ( term -> term ) ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:7: ( term -> term )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:474:9: term
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:478:7: ( term -> term )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:478:9: term
             {
-            pushFollow(FOLLOW_term_in_factor5249);
-            term364=term();
+            pushFollow(FOLLOW_term_in_factor5366);
+            term368=term();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_term.add(term364.getTree());
+            if ( state.backtracking==0 ) stream_term.add(term368.getTree());
 
 
             // AST REWRITE
@@ -13331,7 +13546,7 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 474:27: -> term
+            // 478:27: -> term
             {
                 adaptor.addChild(root_0, stream_term.nextTree());
 
@@ -13340,7 +13555,7 @@ public class EulangParser extends Parser {
             retval.tree = root_0;}
             }
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:475:9: ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:479:9: ( PLUS r= term -> ^( ADD $factor $r) | ( MINUS term )=> MINUS r= term -> ^( SUB $factor $r) )*
             loop96:
             do {
                 int alt96=3;
@@ -13356,12 +13571,12 @@ public class EulangParser extends Parser {
 
                 switch (alt96) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:475:13: PLUS r= term
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:479:13: PLUS r= term
             	    {
-            	    PLUS365=(Token)match(input,PLUS,FOLLOW_PLUS_in_factor5282); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_PLUS.add(PLUS365);
+            	    PLUS369=(Token)match(input,PLUS,FOLLOW_PLUS_in_factor5399); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_PLUS.add(PLUS369);
 
-            	    pushFollow(FOLLOW_term_in_factor5286);
+            	    pushFollow(FOLLOW_term_in_factor5403);
             	    r=term();
 
             	    state._fsp--;
@@ -13382,9 +13597,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 475:33: -> ^( ADD $factor $r)
+            	    // 479:33: -> ^( ADD $factor $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:475:36: ^( ADD $factor $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:479:36: ^( ADD $factor $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(ADD, "ADD"), root_1);
@@ -13401,12 +13616,12 @@ public class EulangParser extends Parser {
             	    }
             	    break;
             	case 2 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:476:12: ( MINUS term )=> MINUS r= term
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:12: ( MINUS term )=> MINUS r= term
             	    {
-            	    MINUS366=(Token)match(input,MINUS,FOLLOW_MINUS_in_factor5328); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_MINUS.add(MINUS366);
+            	    MINUS370=(Token)match(input,MINUS,FOLLOW_MINUS_in_factor5445); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_MINUS.add(MINUS370);
 
-            	    pushFollow(FOLLOW_term_in_factor5332);
+            	    pushFollow(FOLLOW_term_in_factor5449);
             	    r=term();
 
             	    state._fsp--;
@@ -13427,9 +13642,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 476:49: -> ^( SUB $factor $r)
+            	    // 480:49: -> ^( SUB $factor $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:476:52: ^( SUB $factor $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:52: ^( SUB $factor $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(SUB, "SUB"), root_1);
@@ -13480,47 +13695,47 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "term"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:1: term : ( unary -> unary ) ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | BACKSLASH r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:484:1: term : ( unary -> unary ) ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | UDIV r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )* ;
     public final EulangParser.term_return term() throws RecognitionException {
         EulangParser.term_return retval = new EulangParser.term_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token STAR368=null;
-        Token SLASH369=null;
-        Token BACKSLASH370=null;
-        Token PERCENT371=null;
-        Token UMOD372=null;
+        Token STAR372=null;
+        Token SLASH373=null;
+        Token UDIV374=null;
+        Token PERCENT375=null;
+        Token UMOD376=null;
         EulangParser.unary_return r = null;
 
-        EulangParser.unary_return unary367 = null;
+        EulangParser.unary_return unary371 = null;
 
 
-        CommonTree STAR368_tree=null;
-        CommonTree SLASH369_tree=null;
-        CommonTree BACKSLASH370_tree=null;
-        CommonTree PERCENT371_tree=null;
-        CommonTree UMOD372_tree=null;
+        CommonTree STAR372_tree=null;
+        CommonTree SLASH373_tree=null;
+        CommonTree UDIV374_tree=null;
+        CommonTree PERCENT375_tree=null;
+        CommonTree UMOD376_tree=null;
         RewriteRuleTokenStream stream_STAR=new RewriteRuleTokenStream(adaptor,"token STAR");
         RewriteRuleTokenStream stream_SLASH=new RewriteRuleTokenStream(adaptor,"token SLASH");
         RewriteRuleTokenStream stream_PERCENT=new RewriteRuleTokenStream(adaptor,"token PERCENT");
         RewriteRuleTokenStream stream_UMOD=new RewriteRuleTokenStream(adaptor,"token UMOD");
-        RewriteRuleTokenStream stream_BACKSLASH=new RewriteRuleTokenStream(adaptor,"token BACKSLASH");
+        RewriteRuleTokenStream stream_UDIV=new RewriteRuleTokenStream(adaptor,"token UDIV");
         RewriteRuleSubtreeStream stream_unary=new RewriteRuleSubtreeStream(adaptor,"rule unary");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:6: ( ( unary -> unary ) ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | BACKSLASH r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:8: ( unary -> unary ) ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | BACKSLASH r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:484:6: ( ( unary -> unary ) ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | UDIV r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:484:8: ( unary -> unary ) ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | UDIV r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:8: ( unary -> unary )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:10: unary
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:484:8: ( unary -> unary )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:484:10: unary
             {
-            pushFollow(FOLLOW_unary_in_term5377);
-            unary367=unary();
+            pushFollow(FOLLOW_unary_in_term5494);
+            unary371=unary();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_unary.add(unary367.getTree());
+            if ( state.backtracking==0 ) stream_unary.add(unary371.getTree());
 
 
             // AST REWRITE
@@ -13535,7 +13750,7 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 480:33: -> unary
+            // 484:33: -> unary
             {
                 adaptor.addChild(root_0, stream_unary.nextTree());
 
@@ -13544,7 +13759,7 @@ public class EulangParser extends Parser {
             retval.tree = root_0;}
             }
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:481:9: ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | BACKSLASH r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:485:9: ( ( STAR unary )=> STAR r= unary -> ^( MUL $term $r) | SLASH r= unary -> ^( DIV $term $r) | UDIV r= unary -> ^( UDIV $term $r) | PERCENT r= unary -> ^( MOD $term $r) | UMOD r= unary -> ^( UMOD $term $r) )*
             loop97:
             do {
                 int alt97=6;
@@ -13556,7 +13771,7 @@ public class EulangParser extends Parser {
                 else if ( (LA97_0==SLASH) ) {
                     alt97=2;
                 }
-                else if ( (LA97_0==BACKSLASH) ) {
+                else if ( (LA97_0==UDIV) ) {
                     alt97=3;
                 }
                 else if ( (LA97_0==PERCENT) ) {
@@ -13569,147 +13784,12 @@ public class EulangParser extends Parser {
 
                 switch (alt97) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:481:11: ( STAR unary )=> STAR r= unary
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:485:11: ( STAR unary )=> STAR r= unary
             	    {
-            	    STAR368=(Token)match(input,STAR,FOLLOW_STAR_in_term5421); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_STAR.add(STAR368);
+            	    STAR372=(Token)match(input,STAR,FOLLOW_STAR_in_term5538); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_STAR.add(STAR372);
 
-            	    pushFollow(FOLLOW_unary_in_term5425);
-            	    r=unary();
-
-            	    state._fsp--;
-            	    if (state.failed) return retval;
-            	    if ( state.backtracking==0 ) stream_unary.add(r.getTree());
-
-
-            	    // AST REWRITE
-            	    // elements: term, r
-            	    // token labels: 
-            	    // rule labels: retval, r
-            	    // token list labels: 
-            	    // rule list labels: 
-            	    // wildcard labels: 
-            	    if ( state.backtracking==0 ) {
-            	    retval.tree = root_0;
-            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
-            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
-
-            	    root_0 = (CommonTree)adaptor.nil();
-            	    // 481:52: -> ^( MUL $term $r)
-            	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:481:55: ^( MUL $term $r)
-            	        {
-            	        CommonTree root_1 = (CommonTree)adaptor.nil();
-            	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(MUL, "MUL"), root_1);
-
-            	        adaptor.addChild(root_1, stream_retval.nextTree());
-            	        adaptor.addChild(root_1, stream_r.nextTree());
-
-            	        adaptor.addChild(root_0, root_1);
-            	        }
-
-            	    }
-
-            	    retval.tree = root_0;}
-            	    }
-            	    break;
-            	case 2 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:482:11: SLASH r= unary
-            	    {
-            	    SLASH369=(Token)match(input,SLASH,FOLLOW_SLASH_in_term5461); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_SLASH.add(SLASH369);
-
-            	    pushFollow(FOLLOW_unary_in_term5465);
-            	    r=unary();
-
-            	    state._fsp--;
-            	    if (state.failed) return retval;
-            	    if ( state.backtracking==0 ) stream_unary.add(r.getTree());
-
-
-            	    // AST REWRITE
-            	    // elements: term, r
-            	    // token labels: 
-            	    // rule labels: retval, r
-            	    // token list labels: 
-            	    // rule list labels: 
-            	    // wildcard labels: 
-            	    if ( state.backtracking==0 ) {
-            	    retval.tree = root_0;
-            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
-            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
-
-            	    root_0 = (CommonTree)adaptor.nil();
-            	    // 482:36: -> ^( DIV $term $r)
-            	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:482:39: ^( DIV $term $r)
-            	        {
-            	        CommonTree root_1 = (CommonTree)adaptor.nil();
-            	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(DIV, "DIV"), root_1);
-
-            	        adaptor.addChild(root_1, stream_retval.nextTree());
-            	        adaptor.addChild(root_1, stream_r.nextTree());
-
-            	        adaptor.addChild(root_0, root_1);
-            	        }
-
-            	    }
-
-            	    retval.tree = root_0;}
-            	    }
-            	    break;
-            	case 3 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:483:11: BACKSLASH r= unary
-            	    {
-            	    BACKSLASH370=(Token)match(input,BACKSLASH,FOLLOW_BACKSLASH_in_term5500); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_BACKSLASH.add(BACKSLASH370);
-
-            	    pushFollow(FOLLOW_unary_in_term5504);
-            	    r=unary();
-
-            	    state._fsp--;
-            	    if (state.failed) return retval;
-            	    if ( state.backtracking==0 ) stream_unary.add(r.getTree());
-
-
-            	    // AST REWRITE
-            	    // elements: term, r
-            	    // token labels: 
-            	    // rule labels: retval, r
-            	    // token list labels: 
-            	    // rule list labels: 
-            	    // wildcard labels: 
-            	    if ( state.backtracking==0 ) {
-            	    retval.tree = root_0;
-            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
-            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
-
-            	    root_0 = (CommonTree)adaptor.nil();
-            	    // 483:40: -> ^( UDIV $term $r)
-            	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:483:43: ^( UDIV $term $r)
-            	        {
-            	        CommonTree root_1 = (CommonTree)adaptor.nil();
-            	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(UDIV, "UDIV"), root_1);
-
-            	        adaptor.addChild(root_1, stream_retval.nextTree());
-            	        adaptor.addChild(root_1, stream_r.nextTree());
-
-            	        adaptor.addChild(root_0, root_1);
-            	        }
-
-            	    }
-
-            	    retval.tree = root_0;}
-            	    }
-            	    break;
-            	case 4 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:484:11: PERCENT r= unary
-            	    {
-            	    PERCENT371=(Token)match(input,PERCENT,FOLLOW_PERCENT_in_term5539); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_PERCENT.add(PERCENT371);
-
-            	    pushFollow(FOLLOW_unary_in_term5543);
+            	    pushFollow(FOLLOW_unary_in_term5542);
             	    r=unary();
 
             	    state._fsp--;
@@ -13730,9 +13810,144 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 484:38: -> ^( MOD $term $r)
+            	    // 485:52: -> ^( MUL $term $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:484:41: ^( MOD $term $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:485:55: ^( MUL $term $r)
+            	        {
+            	        CommonTree root_1 = (CommonTree)adaptor.nil();
+            	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(MUL, "MUL"), root_1);
+
+            	        adaptor.addChild(root_1, stream_retval.nextTree());
+            	        adaptor.addChild(root_1, stream_r.nextTree());
+
+            	        adaptor.addChild(root_0, root_1);
+            	        }
+
+            	    }
+
+            	    retval.tree = root_0;}
+            	    }
+            	    break;
+            	case 2 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:486:11: SLASH r= unary
+            	    {
+            	    SLASH373=(Token)match(input,SLASH,FOLLOW_SLASH_in_term5578); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_SLASH.add(SLASH373);
+
+            	    pushFollow(FOLLOW_unary_in_term5582);
+            	    r=unary();
+
+            	    state._fsp--;
+            	    if (state.failed) return retval;
+            	    if ( state.backtracking==0 ) stream_unary.add(r.getTree());
+
+
+            	    // AST REWRITE
+            	    // elements: r, term
+            	    // token labels: 
+            	    // rule labels: retval, r
+            	    // token list labels: 
+            	    // rule list labels: 
+            	    // wildcard labels: 
+            	    if ( state.backtracking==0 ) {
+            	    retval.tree = root_0;
+            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
+            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
+
+            	    root_0 = (CommonTree)adaptor.nil();
+            	    // 486:36: -> ^( DIV $term $r)
+            	    {
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:486:39: ^( DIV $term $r)
+            	        {
+            	        CommonTree root_1 = (CommonTree)adaptor.nil();
+            	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(DIV, "DIV"), root_1);
+
+            	        adaptor.addChild(root_1, stream_retval.nextTree());
+            	        adaptor.addChild(root_1, stream_r.nextTree());
+
+            	        adaptor.addChild(root_0, root_1);
+            	        }
+
+            	    }
+
+            	    retval.tree = root_0;}
+            	    }
+            	    break;
+            	case 3 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:487:11: UDIV r= unary
+            	    {
+            	    UDIV374=(Token)match(input,UDIV,FOLLOW_UDIV_in_term5617); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_UDIV.add(UDIV374);
+
+            	    pushFollow(FOLLOW_unary_in_term5621);
+            	    r=unary();
+
+            	    state._fsp--;
+            	    if (state.failed) return retval;
+            	    if ( state.backtracking==0 ) stream_unary.add(r.getTree());
+
+
+            	    // AST REWRITE
+            	    // elements: UDIV, term, r
+            	    // token labels: 
+            	    // rule labels: retval, r
+            	    // token list labels: 
+            	    // rule list labels: 
+            	    // wildcard labels: 
+            	    if ( state.backtracking==0 ) {
+            	    retval.tree = root_0;
+            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
+            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
+
+            	    root_0 = (CommonTree)adaptor.nil();
+            	    // 487:35: -> ^( UDIV $term $r)
+            	    {
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:487:38: ^( UDIV $term $r)
+            	        {
+            	        CommonTree root_1 = (CommonTree)adaptor.nil();
+            	        root_1 = (CommonTree)adaptor.becomeRoot(stream_UDIV.nextNode(), root_1);
+
+            	        adaptor.addChild(root_1, stream_retval.nextTree());
+            	        adaptor.addChild(root_1, stream_r.nextTree());
+
+            	        adaptor.addChild(root_0, root_1);
+            	        }
+
+            	    }
+
+            	    retval.tree = root_0;}
+            	    }
+            	    break;
+            	case 4 :
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:488:11: PERCENT r= unary
+            	    {
+            	    PERCENT375=(Token)match(input,PERCENT,FOLLOW_PERCENT_in_term5656); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_PERCENT.add(PERCENT375);
+
+            	    pushFollow(FOLLOW_unary_in_term5660);
+            	    r=unary();
+
+            	    state._fsp--;
+            	    if (state.failed) return retval;
+            	    if ( state.backtracking==0 ) stream_unary.add(r.getTree());
+
+
+            	    // AST REWRITE
+            	    // elements: term, r
+            	    // token labels: 
+            	    // rule labels: retval, r
+            	    // token list labels: 
+            	    // rule list labels: 
+            	    // wildcard labels: 
+            	    if ( state.backtracking==0 ) {
+            	    retval.tree = root_0;
+            	    RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
+            	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
+
+            	    root_0 = (CommonTree)adaptor.nil();
+            	    // 488:38: -> ^( MOD $term $r)
+            	    {
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:488:41: ^( MOD $term $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(MOD, "MOD"), root_1);
@@ -13749,12 +13964,12 @@ public class EulangParser extends Parser {
             	    }
             	    break;
             	case 5 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:485:11: UMOD r= unary
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:489:11: UMOD r= unary
             	    {
-            	    UMOD372=(Token)match(input,UMOD,FOLLOW_UMOD_in_term5578); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_UMOD.add(UMOD372);
+            	    UMOD376=(Token)match(input,UMOD,FOLLOW_UMOD_in_term5695); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_UMOD.add(UMOD376);
 
-            	    pushFollow(FOLLOW_unary_in_term5582);
+            	    pushFollow(FOLLOW_unary_in_term5699);
             	    r=unary();
 
             	    state._fsp--;
@@ -13763,7 +13978,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: UMOD, r, term
+            	    // elements: UMOD, term, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13775,9 +13990,9 @@ public class EulangParser extends Parser {
             	    RewriteRuleSubtreeStream stream_r=new RewriteRuleSubtreeStream(adaptor,"rule r",r!=null?r.tree:null);
 
             	    root_0 = (CommonTree)adaptor.nil();
-            	    // 485:35: -> ^( UMOD $term $r)
+            	    // 489:35: -> ^( UMOD $term $r)
             	    {
-            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:485:38: ^( UMOD $term $r)
+            	        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:489:38: ^( UMOD $term $r)
             	        {
             	        CommonTree root_1 = (CommonTree)adaptor.nil();
             	        root_1 = (CommonTree)adaptor.becomeRoot(stream_UMOD.nextNode(), root_1);
@@ -13828,40 +14043,40 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "unary"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:490:1: unary : ( MINUS u= unary -> ^( NEG $u) | TILDE u= unary -> ^( INV $u) | ( noIdAtom idModifier )=> noIdAtom ( idModifier )+ -> ^( IDEXPR noIdAtom ( idModifier )+ ) | ( atom PLUSPLUS )=>a= atom PLUSPLUS -> ^( POSTINC $a) | ( atom MINUSMINUS )=>a= atom MINUSMINUS -> ^( POSTDEC $a) | ( atom -> atom ) | PLUSPLUS a= atom -> ^( PREINC $a) | MINUSMINUS a= atom -> ^( PREDEC $a) | AMP idExpr -> ^( ADDROF idExpr ) );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:1: unary : ( MINUS u= unary -> ^( NEG $u) | TILDE u= unary -> ^( INV $u) | ( noIdAtom idModifier )=> noIdAtom ( idModifier )+ -> ^( IDEXPR noIdAtom ( idModifier )+ ) | ( atom PLUSPLUS )=>a= atom PLUSPLUS -> ^( POSTINC $a) | ( atom MINUSMINUS )=>a= atom MINUSMINUS -> ^( POSTDEC $a) | ( atom -> atom ) | PLUSPLUS a= atom -> ^( PREINC $a) | MINUSMINUS a= atom -> ^( PREDEC $a) | AMP idExpr -> ^( ADDROF idExpr ) );
     public final EulangParser.unary_return unary() throws RecognitionException {
         EulangParser.unary_return retval = new EulangParser.unary_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token MINUS373=null;
-        Token TILDE374=null;
-        Token PLUSPLUS377=null;
-        Token MINUSMINUS378=null;
-        Token PLUSPLUS380=null;
-        Token MINUSMINUS381=null;
-        Token AMP382=null;
+        Token MINUS377=null;
+        Token TILDE378=null;
+        Token PLUSPLUS381=null;
+        Token MINUSMINUS382=null;
+        Token PLUSPLUS384=null;
+        Token MINUSMINUS385=null;
+        Token AMP386=null;
         EulangParser.unary_return u = null;
 
         EulangParser.atom_return a = null;
 
-        EulangParser.noIdAtom_return noIdAtom375 = null;
+        EulangParser.noIdAtom_return noIdAtom379 = null;
 
-        EulangParser.idModifier_return idModifier376 = null;
+        EulangParser.idModifier_return idModifier380 = null;
 
-        EulangParser.atom_return atom379 = null;
+        EulangParser.atom_return atom383 = null;
 
-        EulangParser.idExpr_return idExpr383 = null;
+        EulangParser.idExpr_return idExpr387 = null;
 
 
-        CommonTree MINUS373_tree=null;
-        CommonTree TILDE374_tree=null;
-        CommonTree PLUSPLUS377_tree=null;
-        CommonTree MINUSMINUS378_tree=null;
-        CommonTree PLUSPLUS380_tree=null;
-        CommonTree MINUSMINUS381_tree=null;
-        CommonTree AMP382_tree=null;
+        CommonTree MINUS377_tree=null;
+        CommonTree TILDE378_tree=null;
+        CommonTree PLUSPLUS381_tree=null;
+        CommonTree MINUSMINUS382_tree=null;
+        CommonTree PLUSPLUS384_tree=null;
+        CommonTree MINUSMINUS385_tree=null;
+        CommonTree AMP386_tree=null;
         RewriteRuleTokenStream stream_MINUSMINUS=new RewriteRuleTokenStream(adaptor,"token MINUSMINUS");
         RewriteRuleTokenStream stream_MINUS=new RewriteRuleTokenStream(adaptor,"token MINUS");
         RewriteRuleTokenStream stream_AMP=new RewriteRuleTokenStream(adaptor,"token AMP");
@@ -13873,17 +14088,17 @@ public class EulangParser extends Parser {
         RewriteRuleSubtreeStream stream_idExpr=new RewriteRuleSubtreeStream(adaptor,"rule idExpr");
         RewriteRuleSubtreeStream stream_noIdAtom=new RewriteRuleSubtreeStream(adaptor,"rule noIdAtom");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:490:6: ( MINUS u= unary -> ^( NEG $u) | TILDE u= unary -> ^( INV $u) | ( noIdAtom idModifier )=> noIdAtom ( idModifier )+ -> ^( IDEXPR noIdAtom ( idModifier )+ ) | ( atom PLUSPLUS )=>a= atom PLUSPLUS -> ^( POSTINC $a) | ( atom MINUSMINUS )=>a= atom MINUSMINUS -> ^( POSTDEC $a) | ( atom -> atom ) | PLUSPLUS a= atom -> ^( PREINC $a) | MINUSMINUS a= atom -> ^( PREDEC $a) | AMP idExpr -> ^( ADDROF idExpr ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:6: ( MINUS u= unary -> ^( NEG $u) | TILDE u= unary -> ^( INV $u) | ( noIdAtom idModifier )=> noIdAtom ( idModifier )+ -> ^( IDEXPR noIdAtom ( idModifier )+ ) | ( atom PLUSPLUS )=>a= atom PLUSPLUS -> ^( POSTINC $a) | ( atom MINUSMINUS )=>a= atom MINUSMINUS -> ^( POSTDEC $a) | ( atom -> atom ) | PLUSPLUS a= atom -> ^( PREINC $a) | MINUSMINUS a= atom -> ^( PREDEC $a) | AMP idExpr -> ^( ADDROF idExpr ) )
             int alt99=9;
             alt99 = dfa99.predict(input);
             switch (alt99) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:490:9: MINUS u= unary
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:9: MINUS u= unary
                     {
-                    MINUS373=(Token)match(input,MINUS,FOLLOW_MINUS_in_unary5655); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_MINUS.add(MINUS373);
+                    MINUS377=(Token)match(input,MINUS,FOLLOW_MINUS_in_unary5772); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_MINUS.add(MINUS377);
 
-                    pushFollow(FOLLOW_unary_in_unary5659);
+                    pushFollow(FOLLOW_unary_in_unary5776);
                     u=unary();
 
                     state._fsp--;
@@ -13904,9 +14119,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_u=new RewriteRuleSubtreeStream(adaptor,"rule u",u!=null?u.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 490:23: -> ^( NEG $u)
+                    // 494:23: -> ^( NEG $u)
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:490:26: ^( NEG $u)
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:26: ^( NEG $u)
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(NEG, "NEG"), root_1);
@@ -13922,12 +14137,12 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:491:9: TILDE u= unary
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:495:9: TILDE u= unary
                     {
-                    TILDE374=(Token)match(input,TILDE,FOLLOW_TILDE_in_unary5679); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_TILDE.add(TILDE374);
+                    TILDE378=(Token)match(input,TILDE,FOLLOW_TILDE_in_unary5796); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_TILDE.add(TILDE378);
 
-                    pushFollow(FOLLOW_unary_in_unary5683);
+                    pushFollow(FOLLOW_unary_in_unary5800);
                     u=unary();
 
                     state._fsp--;
@@ -13948,9 +14163,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_u=new RewriteRuleSubtreeStream(adaptor,"rule u",u!=null?u.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 491:27: -> ^( INV $u)
+                    // 495:27: -> ^( INV $u)
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:491:30: ^( INV $u)
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:495:30: ^( INV $u)
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(INV, "INV"), root_1);
@@ -13966,15 +14181,15 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:492:9: ( noIdAtom idModifier )=> noIdAtom ( idModifier )+
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:9: ( noIdAtom idModifier )=> noIdAtom ( idModifier )+
                     {
-                    pushFollow(FOLLOW_noIdAtom_in_unary5715);
-                    noIdAtom375=noIdAtom();
+                    pushFollow(FOLLOW_noIdAtom_in_unary5832);
+                    noIdAtom379=noIdAtom();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_noIdAtom.add(noIdAtom375.getTree());
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:492:43: ( idModifier )+
+                    if ( state.backtracking==0 ) stream_noIdAtom.add(noIdAtom379.getTree());
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:43: ( idModifier )+
                     int cnt98=0;
                     loop98:
                     do {
@@ -13988,14 +14203,14 @@ public class EulangParser extends Parser {
 
                         switch (alt98) {
                     	case 1 :
-                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:492:43: idModifier
+                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:43: idModifier
                     	    {
-                    	    pushFollow(FOLLOW_idModifier_in_unary5717);
-                    	    idModifier376=idModifier();
+                    	    pushFollow(FOLLOW_idModifier_in_unary5834);
+                    	    idModifier380=idModifier();
 
                     	    state._fsp--;
                     	    if (state.failed) return retval;
-                    	    if ( state.backtracking==0 ) stream_idModifier.add(idModifier376.getTree());
+                    	    if ( state.backtracking==0 ) stream_idModifier.add(idModifier380.getTree());
 
                     	    }
                     	    break;
@@ -14013,7 +14228,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: noIdAtom, idModifier
+                    // elements: idModifier, noIdAtom
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -14024,9 +14239,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 492:55: -> ^( IDEXPR noIdAtom ( idModifier )+ )
+                    // 496:55: -> ^( IDEXPR noIdAtom ( idModifier )+ )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:492:58: ^( IDEXPR noIdAtom ( idModifier )+ )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:58: ^( IDEXPR noIdAtom ( idModifier )+ )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(IDEXPR, "IDEXPR"), root_1);
@@ -14050,16 +14265,16 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 4 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:493:9: ( atom PLUSPLUS )=>a= atom PLUSPLUS
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:497:9: ( atom PLUSPLUS )=>a= atom PLUSPLUS
                     {
-                    pushFollow(FOLLOW_atom_in_unary5751);
+                    pushFollow(FOLLOW_atom_in_unary5868);
                     a=atom();
 
                     state._fsp--;
                     if (state.failed) return retval;
                     if ( state.backtracking==0 ) stream_atom.add(a.getTree());
-                    PLUSPLUS377=(Token)match(input,PLUSPLUS,FOLLOW_PLUSPLUS_in_unary5753); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_PLUSPLUS.add(PLUSPLUS377);
+                    PLUSPLUS381=(Token)match(input,PLUSPLUS,FOLLOW_PLUSPLUS_in_unary5870); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_PLUSPLUS.add(PLUSPLUS381);
 
 
 
@@ -14076,9 +14291,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_a=new RewriteRuleSubtreeStream(adaptor,"rule a",a!=null?a.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 493:46: -> ^( POSTINC $a)
+                    // 497:46: -> ^( POSTINC $a)
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:493:49: ^( POSTINC $a)
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:497:49: ^( POSTINC $a)
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(POSTINC, "POSTINC"), root_1);
@@ -14094,16 +14309,16 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 5 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:9: ( atom MINUSMINUS )=>a= atom MINUSMINUS
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:498:9: ( atom MINUSMINUS )=>a= atom MINUSMINUS
                     {
-                    pushFollow(FOLLOW_atom_in_unary5784);
+                    pushFollow(FOLLOW_atom_in_unary5901);
                     a=atom();
 
                     state._fsp--;
                     if (state.failed) return retval;
                     if ( state.backtracking==0 ) stream_atom.add(a.getTree());
-                    MINUSMINUS378=(Token)match(input,MINUSMINUS,FOLLOW_MINUSMINUS_in_unary5786); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_MINUSMINUS.add(MINUSMINUS378);
+                    MINUSMINUS382=(Token)match(input,MINUSMINUS,FOLLOW_MINUSMINUS_in_unary5903); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_MINUSMINUS.add(MINUSMINUS382);
 
 
 
@@ -14120,9 +14335,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_a=new RewriteRuleSubtreeStream(adaptor,"rule a",a!=null?a.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 494:49: -> ^( POSTDEC $a)
+                    // 498:49: -> ^( POSTDEC $a)
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:52: ^( POSTDEC $a)
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:498:52: ^( POSTDEC $a)
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(POSTDEC, "POSTDEC"), root_1);
@@ -14138,17 +14353,17 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 6 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:9: ( atom -> atom )
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:500:9: ( atom -> atom )
                     {
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:9: ( atom -> atom )
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:11: atom
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:500:9: ( atom -> atom )
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:500:11: atom
                     {
-                    pushFollow(FOLLOW_atom_in_unary5814);
-                    atom379=atom();
+                    pushFollow(FOLLOW_atom_in_unary5931);
+                    atom383=atom();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_atom.add(atom379.getTree());
+                    if ( state.backtracking==0 ) stream_atom.add(atom383.getTree());
 
 
                     // AST REWRITE
@@ -14163,7 +14378,7 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 496:23: -> atom
+                    // 500:23: -> atom
                     {
                         adaptor.addChild(root_0, stream_atom.nextTree());
 
@@ -14176,12 +14391,12 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 7 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:497:9: PLUSPLUS a= atom
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:501:9: PLUSPLUS a= atom
                     {
-                    PLUSPLUS380=(Token)match(input,PLUSPLUS,FOLLOW_PLUSPLUS_in_unary5845); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_PLUSPLUS.add(PLUSPLUS380);
+                    PLUSPLUS384=(Token)match(input,PLUSPLUS,FOLLOW_PLUSPLUS_in_unary5962); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_PLUSPLUS.add(PLUSPLUS384);
 
-                    pushFollow(FOLLOW_atom_in_unary5849);
+                    pushFollow(FOLLOW_atom_in_unary5966);
                     a=atom();
 
                     state._fsp--;
@@ -14202,9 +14417,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_a=new RewriteRuleSubtreeStream(adaptor,"rule a",a!=null?a.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 497:27: -> ^( PREINC $a)
+                    // 501:27: -> ^( PREINC $a)
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:497:30: ^( PREINC $a)
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:501:30: ^( PREINC $a)
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(PREINC, "PREINC"), root_1);
@@ -14220,12 +14435,12 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 8 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:498:9: MINUSMINUS a= atom
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:502:9: MINUSMINUS a= atom
                     {
-                    MINUSMINUS381=(Token)match(input,MINUSMINUS,FOLLOW_MINUSMINUS_in_unary5870); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_MINUSMINUS.add(MINUSMINUS381);
+                    MINUSMINUS385=(Token)match(input,MINUSMINUS,FOLLOW_MINUSMINUS_in_unary5987); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_MINUSMINUS.add(MINUSMINUS385);
 
-                    pushFollow(FOLLOW_atom_in_unary5874);
+                    pushFollow(FOLLOW_atom_in_unary5991);
                     a=atom();
 
                     state._fsp--;
@@ -14246,9 +14461,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_a=new RewriteRuleSubtreeStream(adaptor,"rule a",a!=null?a.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 498:27: -> ^( PREDEC $a)
+                    // 502:27: -> ^( PREDEC $a)
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:498:30: ^( PREDEC $a)
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:502:30: ^( PREDEC $a)
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(PREDEC, "PREDEC"), root_1);
@@ -14264,17 +14479,17 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 9 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:499:9: AMP idExpr
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:503:9: AMP idExpr
                     {
-                    AMP382=(Token)match(input,AMP,FOLLOW_AMP_in_unary5893); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_AMP.add(AMP382);
+                    AMP386=(Token)match(input,AMP,FOLLOW_AMP_in_unary6010); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_AMP.add(AMP386);
 
-                    pushFollow(FOLLOW_idExpr_in_unary5895);
-                    idExpr383=idExpr();
+                    pushFollow(FOLLOW_idExpr_in_unary6012);
+                    idExpr387=idExpr();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_idExpr.add(idExpr383.getTree());
+                    if ( state.backtracking==0 ) stream_idExpr.add(idExpr387.getTree());
 
 
                     // AST REWRITE
@@ -14289,9 +14504,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 499:27: -> ^( ADDROF idExpr )
+                    // 503:27: -> ^( ADDROF idExpr )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:499:30: ^( ADDROF idExpr )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:503:30: ^( ADDROF idExpr )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(ADDROF, "ADDROF"), root_1);
@@ -14334,42 +14549,42 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "noIdAtom"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:502:1: noIdAtom : ( NUMBER -> ^( LIT NUMBER ) | FALSE -> ^( LIT FALSE ) | TRUE -> ^( LIT TRUE ) | CHAR_LITERAL -> ^( LIT CHAR_LITERAL ) | STRING_LITERAL -> ^( LIT STRING_LITERAL ) | NIL -> ^( LIT NIL ) | ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall -> ^( INLINE idOrScopeRef $f) | ( tuple )=> tuple -> tuple | LPAREN assignExpr RPAREN -> assignExpr | code -> code );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:506:1: noIdAtom : ( NUMBER -> ^( LIT NUMBER ) | FALSE -> ^( LIT FALSE ) | TRUE -> ^( LIT TRUE ) | CHAR_LITERAL -> ^( LIT CHAR_LITERAL ) | STRING_LITERAL -> ^( LIT STRING_LITERAL ) | NIL -> ^( LIT NIL ) | ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall -> ^( INLINE idOrScopeRef $f) | ( tuple )=> tuple -> tuple | LPAREN assignExpr RPAREN -> assignExpr | code -> code );
     public final EulangParser.noIdAtom_return noIdAtom() throws RecognitionException {
         EulangParser.noIdAtom_return retval = new EulangParser.noIdAtom_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token NUMBER384=null;
-        Token FALSE385=null;
-        Token TRUE386=null;
-        Token CHAR_LITERAL387=null;
-        Token STRING_LITERAL388=null;
-        Token NIL389=null;
-        Token STAR390=null;
-        Token LPAREN393=null;
-        Token RPAREN395=null;
+        Token NUMBER388=null;
+        Token FALSE389=null;
+        Token TRUE390=null;
+        Token CHAR_LITERAL391=null;
+        Token STRING_LITERAL392=null;
+        Token NIL393=null;
+        Token STAR394=null;
+        Token LPAREN397=null;
+        Token RPAREN399=null;
         EulangParser.funcCall_return f = null;
 
-        EulangParser.idOrScopeRef_return idOrScopeRef391 = null;
+        EulangParser.idOrScopeRef_return idOrScopeRef395 = null;
 
-        EulangParser.tuple_return tuple392 = null;
+        EulangParser.tuple_return tuple396 = null;
 
-        EulangParser.assignExpr_return assignExpr394 = null;
+        EulangParser.assignExpr_return assignExpr398 = null;
 
-        EulangParser.code_return code396 = null;
+        EulangParser.code_return code400 = null;
 
 
-        CommonTree NUMBER384_tree=null;
-        CommonTree FALSE385_tree=null;
-        CommonTree TRUE386_tree=null;
-        CommonTree CHAR_LITERAL387_tree=null;
-        CommonTree STRING_LITERAL388_tree=null;
-        CommonTree NIL389_tree=null;
-        CommonTree STAR390_tree=null;
-        CommonTree LPAREN393_tree=null;
-        CommonTree RPAREN395_tree=null;
+        CommonTree NUMBER388_tree=null;
+        CommonTree FALSE389_tree=null;
+        CommonTree TRUE390_tree=null;
+        CommonTree CHAR_LITERAL391_tree=null;
+        CommonTree STRING_LITERAL392_tree=null;
+        CommonTree NIL393_tree=null;
+        CommonTree STAR394_tree=null;
+        CommonTree LPAREN397_tree=null;
+        CommonTree RPAREN399_tree=null;
         RewriteRuleTokenStream stream_RPAREN=new RewriteRuleTokenStream(adaptor,"token RPAREN");
         RewriteRuleTokenStream stream_STAR=new RewriteRuleTokenStream(adaptor,"token STAR");
         RewriteRuleTokenStream stream_STRING_LITERAL=new RewriteRuleTokenStream(adaptor,"token STRING_LITERAL");
@@ -14385,15 +14600,15 @@ public class EulangParser extends Parser {
         RewriteRuleSubtreeStream stream_assignExpr=new RewriteRuleSubtreeStream(adaptor,"rule assignExpr");
         RewriteRuleSubtreeStream stream_funcCall=new RewriteRuleSubtreeStream(adaptor,"rule funcCall");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:502:10: ( NUMBER -> ^( LIT NUMBER ) | FALSE -> ^( LIT FALSE ) | TRUE -> ^( LIT TRUE ) | CHAR_LITERAL -> ^( LIT CHAR_LITERAL ) | STRING_LITERAL -> ^( LIT STRING_LITERAL ) | NIL -> ^( LIT NIL ) | ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall -> ^( INLINE idOrScopeRef $f) | ( tuple )=> tuple -> tuple | LPAREN assignExpr RPAREN -> assignExpr | code -> code )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:506:10: ( NUMBER -> ^( LIT NUMBER ) | FALSE -> ^( LIT FALSE ) | TRUE -> ^( LIT TRUE ) | CHAR_LITERAL -> ^( LIT CHAR_LITERAL ) | STRING_LITERAL -> ^( LIT STRING_LITERAL ) | NIL -> ^( LIT NIL ) | ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall -> ^( INLINE idOrScopeRef $f) | ( tuple )=> tuple -> tuple | LPAREN assignExpr RPAREN -> assignExpr | code -> code )
             int alt100=10;
             alt100 = dfa100.predict(input);
             switch (alt100) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:503:7: NUMBER
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:507:7: NUMBER
                     {
-                    NUMBER384=(Token)match(input,NUMBER,FOLLOW_NUMBER_in_noIdAtom5925); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_NUMBER.add(NUMBER384);
+                    NUMBER388=(Token)match(input,NUMBER,FOLLOW_NUMBER_in_noIdAtom6042); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_NUMBER.add(NUMBER388);
 
 
 
@@ -14409,9 +14624,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 503:39: -> ^( LIT NUMBER )
+                    // 507:39: -> ^( LIT NUMBER )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:503:42: ^( LIT NUMBER )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:507:42: ^( LIT NUMBER )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(LIT, "LIT"), root_1);
@@ -14427,10 +14642,10 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:504:9: FALSE
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:508:9: FALSE
                     {
-                    FALSE385=(Token)match(input,FALSE,FOLLOW_FALSE_in_noIdAtom5968); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_FALSE.add(FALSE385);
+                    FALSE389=(Token)match(input,FALSE,FOLLOW_FALSE_in_noIdAtom6085); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_FALSE.add(FALSE389);
 
 
 
@@ -14446,9 +14661,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 504:39: -> ^( LIT FALSE )
+                    // 508:39: -> ^( LIT FALSE )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:504:42: ^( LIT FALSE )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:508:42: ^( LIT FALSE )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(LIT, "LIT"), root_1);
@@ -14464,10 +14679,10 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:505:9: TRUE
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:509:9: TRUE
                     {
-                    TRUE386=(Token)match(input,TRUE,FOLLOW_TRUE_in_noIdAtom6010); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_TRUE.add(TRUE386);
+                    TRUE390=(Token)match(input,TRUE,FOLLOW_TRUE_in_noIdAtom6127); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_TRUE.add(TRUE390);
 
 
 
@@ -14483,9 +14698,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 505:39: -> ^( LIT TRUE )
+                    // 509:39: -> ^( LIT TRUE )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:505:42: ^( LIT TRUE )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:509:42: ^( LIT TRUE )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(LIT, "LIT"), root_1);
@@ -14501,10 +14716,10 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 4 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:506:9: CHAR_LITERAL
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:510:9: CHAR_LITERAL
                     {
-                    CHAR_LITERAL387=(Token)match(input,CHAR_LITERAL,FOLLOW_CHAR_LITERAL_in_noIdAtom6053); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_CHAR_LITERAL.add(CHAR_LITERAL387);
+                    CHAR_LITERAL391=(Token)match(input,CHAR_LITERAL,FOLLOW_CHAR_LITERAL_in_noIdAtom6170); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_CHAR_LITERAL.add(CHAR_LITERAL391);
 
 
 
@@ -14520,9 +14735,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 506:39: -> ^( LIT CHAR_LITERAL )
+                    // 510:39: -> ^( LIT CHAR_LITERAL )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:506:42: ^( LIT CHAR_LITERAL )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:510:42: ^( LIT CHAR_LITERAL )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(LIT, "LIT"), root_1);
@@ -14538,10 +14753,10 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 5 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:507:9: STRING_LITERAL
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:511:9: STRING_LITERAL
                     {
-                    STRING_LITERAL388=(Token)match(input,STRING_LITERAL,FOLLOW_STRING_LITERAL_in_noIdAtom6088); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_STRING_LITERAL.add(STRING_LITERAL388);
+                    STRING_LITERAL392=(Token)match(input,STRING_LITERAL,FOLLOW_STRING_LITERAL_in_noIdAtom6205); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_STRING_LITERAL.add(STRING_LITERAL392);
 
 
 
@@ -14557,9 +14772,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 507:39: -> ^( LIT STRING_LITERAL )
+                    // 511:39: -> ^( LIT STRING_LITERAL )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:507:42: ^( LIT STRING_LITERAL )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:511:42: ^( LIT STRING_LITERAL )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(LIT, "LIT"), root_1);
@@ -14575,10 +14790,10 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 6 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:508:9: NIL
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:512:9: NIL
                     {
-                    NIL389=(Token)match(input,NIL,FOLLOW_NIL_in_noIdAtom6121); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_NIL.add(NIL389);
+                    NIL393=(Token)match(input,NIL,FOLLOW_NIL_in_noIdAtom6238); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_NIL.add(NIL393);
 
 
 
@@ -14594,9 +14809,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 508:38: -> ^( LIT NIL )
+                    // 512:38: -> ^( LIT NIL )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:508:41: ^( LIT NIL )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:512:41: ^( LIT NIL )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(LIT, "LIT"), root_1);
@@ -14612,18 +14827,18 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 7 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:509:9: ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:513:9: ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall
                     {
-                    STAR390=(Token)match(input,STAR,FOLLOW_STAR_in_noIdAtom6175); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_STAR.add(STAR390);
+                    STAR394=(Token)match(input,STAR,FOLLOW_STAR_in_noIdAtom6292); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_STAR.add(STAR394);
 
-                    pushFollow(FOLLOW_idOrScopeRef_in_noIdAtom6177);
-                    idOrScopeRef391=idOrScopeRef();
+                    pushFollow(FOLLOW_idOrScopeRef_in_noIdAtom6294);
+                    idOrScopeRef395=idOrScopeRef();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_idOrScopeRef.add(idOrScopeRef391.getTree());
-                    pushFollow(FOLLOW_funcCall_in_noIdAtom6181);
+                    if ( state.backtracking==0 ) stream_idOrScopeRef.add(idOrScopeRef395.getTree());
+                    pushFollow(FOLLOW_funcCall_in_noIdAtom6298);
                     f=funcCall();
 
                     state._fsp--;
@@ -14644,9 +14859,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 509:70: -> ^( INLINE idOrScopeRef $f)
+                    // 513:70: -> ^( INLINE idOrScopeRef $f)
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:509:73: ^( INLINE idOrScopeRef $f)
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:513:73: ^( INLINE idOrScopeRef $f)
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(INLINE, "INLINE"), root_1);
@@ -14663,14 +14878,14 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 8 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:510:9: ( tuple )=> tuple
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:514:9: ( tuple )=> tuple
                     {
-                    pushFollow(FOLLOW_tuple_in_noIdAtom6211);
-                    tuple392=tuple();
+                    pushFollow(FOLLOW_tuple_in_noIdAtom6328);
+                    tuple396=tuple();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_tuple.add(tuple392.getTree());
+                    if ( state.backtracking==0 ) stream_tuple.add(tuple396.getTree());
 
 
                     // AST REWRITE
@@ -14685,7 +14900,7 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 510:53: -> tuple
+                    // 514:53: -> tuple
                     {
                         adaptor.addChild(root_0, stream_tuple.nextTree());
 
@@ -14695,19 +14910,19 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 9 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:511:9: LPAREN assignExpr RPAREN
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:515:9: LPAREN assignExpr RPAREN
                     {
-                    LPAREN393=(Token)match(input,LPAREN,FOLLOW_LPAREN_in_noIdAtom6250); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_LPAREN.add(LPAREN393);
+                    LPAREN397=(Token)match(input,LPAREN,FOLLOW_LPAREN_in_noIdAtom6367); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_LPAREN.add(LPAREN397);
 
-                    pushFollow(FOLLOW_assignExpr_in_noIdAtom6252);
-                    assignExpr394=assignExpr();
+                    pushFollow(FOLLOW_assignExpr_in_noIdAtom6369);
+                    assignExpr398=assignExpr();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_assignExpr.add(assignExpr394.getTree());
-                    RPAREN395=(Token)match(input,RPAREN,FOLLOW_RPAREN_in_noIdAtom6254); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_RPAREN.add(RPAREN395);
+                    if ( state.backtracking==0 ) stream_assignExpr.add(assignExpr398.getTree());
+                    RPAREN399=(Token)match(input,RPAREN,FOLLOW_RPAREN_in_noIdAtom6371); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_RPAREN.add(RPAREN399);
 
 
 
@@ -14723,7 +14938,7 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 511:48: -> assignExpr
+                    // 515:48: -> assignExpr
                     {
                         adaptor.addChild(root_0, stream_assignExpr.nextTree());
 
@@ -14733,14 +14948,14 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 10 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:512:10: code
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:516:10: code
                     {
-                    pushFollow(FOLLOW_code_in_noIdAtom6283);
-                    code396=code();
+                    pushFollow(FOLLOW_code_in_noIdAtom6400);
+                    code400=code();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_code.add(code396.getTree());
+                    if ( state.backtracking==0 ) stream_code.add(code400.getTree());
 
 
                     // AST REWRITE
@@ -14755,7 +14970,7 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 512:41: -> code
+                    // 516:41: -> code
                     {
                         adaptor.addChild(root_0, stream_code.nextTree());
 
@@ -14792,21 +15007,21 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "atom"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:515:1: atom : ( noIdAtom | idExpr );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:1: atom : ( noIdAtom | idExpr );
     public final EulangParser.atom_return atom() throws RecognitionException {
         EulangParser.atom_return retval = new EulangParser.atom_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        EulangParser.noIdAtom_return noIdAtom397 = null;
+        EulangParser.noIdAtom_return noIdAtom401 = null;
 
-        EulangParser.idExpr_return idExpr398 = null;
+        EulangParser.idExpr_return idExpr402 = null;
 
 
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:515:6: ( noIdAtom | idExpr )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:6: ( noIdAtom | idExpr )
             int alt101=2;
             int LA101_0 = input.LA(1);
 
@@ -14825,30 +15040,30 @@ public class EulangParser extends Parser {
             }
             switch (alt101) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:515:8: noIdAtom
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:8: noIdAtom
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_noIdAtom_in_atom6329);
-                    noIdAtom397=noIdAtom();
+                    pushFollow(FOLLOW_noIdAtom_in_atom6446);
+                    noIdAtom401=noIdAtom();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, noIdAtom397.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, noIdAtom401.getTree());
 
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:515:19: idExpr
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:19: idExpr
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_idExpr_in_atom6333);
-                    idExpr398=idExpr();
+                    pushFollow(FOLLOW_idExpr_in_atom6450);
+                    idExpr402=idExpr();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, idExpr398.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, idExpr402.getTree());
 
                     }
                     break;
@@ -14880,29 +15095,29 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "idExpr"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:517:1: idExpr options {backtrack=true; } : ( idOrScopeRef instantiation ( appendIdModifiers )? -> ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* ) | idOrScopeRef ( appendIdModifiers )? -> ^( IDEXPR idOrScopeRef ( appendIdModifiers )* ) );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:521:1: idExpr options {backtrack=true; } : ( idOrScopeRef instantiation ( appendIdModifiers )? -> ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* ) | idOrScopeRef ( appendIdModifiers )? -> ^( IDEXPR idOrScopeRef ( appendIdModifiers )* ) );
     public final EulangParser.idExpr_return idExpr() throws RecognitionException {
         EulangParser.idExpr_return retval = new EulangParser.idExpr_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        EulangParser.idOrScopeRef_return idOrScopeRef399 = null;
+        EulangParser.idOrScopeRef_return idOrScopeRef403 = null;
 
-        EulangParser.instantiation_return instantiation400 = null;
+        EulangParser.instantiation_return instantiation404 = null;
 
-        EulangParser.appendIdModifiers_return appendIdModifiers401 = null;
+        EulangParser.appendIdModifiers_return appendIdModifiers405 = null;
 
-        EulangParser.idOrScopeRef_return idOrScopeRef402 = null;
+        EulangParser.idOrScopeRef_return idOrScopeRef406 = null;
 
-        EulangParser.appendIdModifiers_return appendIdModifiers403 = null;
+        EulangParser.appendIdModifiers_return appendIdModifiers407 = null;
 
 
         RewriteRuleSubtreeStream stream_idOrScopeRef=new RewriteRuleSubtreeStream(adaptor,"rule idOrScopeRef");
         RewriteRuleSubtreeStream stream_appendIdModifiers=new RewriteRuleSubtreeStream(adaptor,"rule appendIdModifiers");
         RewriteRuleSubtreeStream stream_instantiation=new RewriteRuleSubtreeStream(adaptor,"rule instantiation");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:517:35: ( idOrScopeRef instantiation ( appendIdModifiers )? -> ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* ) | idOrScopeRef ( appendIdModifiers )? -> ^( IDEXPR idOrScopeRef ( appendIdModifiers )* ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:521:35: ( idOrScopeRef instantiation ( appendIdModifiers )? -> ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* ) | idOrScopeRef ( appendIdModifiers )? -> ^( IDEXPR idOrScopeRef ( appendIdModifiers )* ) )
             int alt104=2;
             int LA104_0 = input.LA(1);
 
@@ -14949,21 +15164,21 @@ public class EulangParser extends Parser {
             }
             switch (alt104) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:6: idOrScopeRef instantiation ( appendIdModifiers )?
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:6: idOrScopeRef instantiation ( appendIdModifiers )?
                     {
-                    pushFollow(FOLLOW_idOrScopeRef_in_idExpr6355);
-                    idOrScopeRef399=idOrScopeRef();
+                    pushFollow(FOLLOW_idOrScopeRef_in_idExpr6472);
+                    idOrScopeRef403=idOrScopeRef();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_idOrScopeRef.add(idOrScopeRef399.getTree());
-                    pushFollow(FOLLOW_instantiation_in_idExpr6357);
-                    instantiation400=instantiation();
+                    if ( state.backtracking==0 ) stream_idOrScopeRef.add(idOrScopeRef403.getTree());
+                    pushFollow(FOLLOW_instantiation_in_idExpr6474);
+                    instantiation404=instantiation();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_instantiation.add(instantiation400.getTree());
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:33: ( appendIdModifiers )?
+                    if ( state.backtracking==0 ) stream_instantiation.add(instantiation404.getTree());
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:33: ( appendIdModifiers )?
                     int alt102=2;
                     int LA102_0 = input.LA(1);
 
@@ -14972,14 +15187,14 @@ public class EulangParser extends Parser {
                     }
                     switch (alt102) {
                         case 1 :
-                            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:33: appendIdModifiers
+                            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:33: appendIdModifiers
                             {
-                            pushFollow(FOLLOW_appendIdModifiers_in_idExpr6359);
-                            appendIdModifiers401=appendIdModifiers();
+                            pushFollow(FOLLOW_appendIdModifiers_in_idExpr6476);
+                            appendIdModifiers405=appendIdModifiers();
 
                             state._fsp--;
                             if (state.failed) return retval;
-                            if ( state.backtracking==0 ) stream_appendIdModifiers.add(appendIdModifiers401.getTree());
+                            if ( state.backtracking==0 ) stream_appendIdModifiers.add(appendIdModifiers405.getTree());
 
                             }
                             break;
@@ -14989,7 +15204,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: appendIdModifiers, instantiation, idOrScopeRef
+                    // elements: instantiation, appendIdModifiers, idOrScopeRef
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -15000,14 +15215,14 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 518:52: -> ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* )
+                    // 522:52: -> ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:55: ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:55: ^( IDEXPR ^( INSTANCE idOrScopeRef instantiation ) ( appendIdModifiers )* )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(IDEXPR, "IDEXPR"), root_1);
 
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:64: ^( INSTANCE idOrScopeRef instantiation )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:64: ^( INSTANCE idOrScopeRef instantiation )
                         {
                         CommonTree root_2 = (CommonTree)adaptor.nil();
                         root_2 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(INSTANCE, "INSTANCE"), root_2);
@@ -15017,7 +15232,7 @@ public class EulangParser extends Parser {
 
                         adaptor.addChild(root_1, root_2);
                         }
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:103: ( appendIdModifiers )*
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:103: ( appendIdModifiers )*
                         while ( stream_appendIdModifiers.hasNext() ) {
                             adaptor.addChild(root_1, stream_appendIdModifiers.nextTree());
 
@@ -15033,15 +15248,15 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:7: idOrScopeRef ( appendIdModifiers )?
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:523:7: idOrScopeRef ( appendIdModifiers )?
                     {
-                    pushFollow(FOLLOW_idOrScopeRef_in_idExpr6386);
-                    idOrScopeRef402=idOrScopeRef();
+                    pushFollow(FOLLOW_idOrScopeRef_in_idExpr6503);
+                    idOrScopeRef406=idOrScopeRef();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_idOrScopeRef.add(idOrScopeRef402.getTree());
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:20: ( appendIdModifiers )?
+                    if ( state.backtracking==0 ) stream_idOrScopeRef.add(idOrScopeRef406.getTree());
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:523:20: ( appendIdModifiers )?
                     int alt103=2;
                     int LA103_0 = input.LA(1);
 
@@ -15050,14 +15265,14 @@ public class EulangParser extends Parser {
                     }
                     switch (alt103) {
                         case 1 :
-                            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:20: appendIdModifiers
+                            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:523:20: appendIdModifiers
                             {
-                            pushFollow(FOLLOW_appendIdModifiers_in_idExpr6388);
-                            appendIdModifiers403=appendIdModifiers();
+                            pushFollow(FOLLOW_appendIdModifiers_in_idExpr6505);
+                            appendIdModifiers407=appendIdModifiers();
 
                             state._fsp--;
                             if (state.failed) return retval;
-                            if ( state.backtracking==0 ) stream_appendIdModifiers.add(appendIdModifiers403.getTree());
+                            if ( state.backtracking==0 ) stream_appendIdModifiers.add(appendIdModifiers407.getTree());
 
                             }
                             break;
@@ -15078,15 +15293,15 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 519:39: -> ^( IDEXPR idOrScopeRef ( appendIdModifiers )* )
+                    // 523:39: -> ^( IDEXPR idOrScopeRef ( appendIdModifiers )* )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:42: ^( IDEXPR idOrScopeRef ( appendIdModifiers )* )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:523:42: ^( IDEXPR idOrScopeRef ( appendIdModifiers )* )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(IDEXPR, "IDEXPR"), root_1);
 
                         adaptor.addChild(root_1, stream_idOrScopeRef.nextTree());
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:519:64: ( appendIdModifiers )*
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:523:64: ( appendIdModifiers )*
                         while ( stream_appendIdModifiers.hasNext() ) {
                             adaptor.addChild(root_1, stream_appendIdModifiers.nextTree());
 
@@ -15129,36 +15344,36 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "instantiation"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:1: instantiation : LESS ( instanceExpr ( COMMA instanceExpr )* )? GREATER -> ^( LIST ( instanceExpr )* ) ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:1: instantiation : LESS ( instanceExpr ( COMMA instanceExpr )* )? GREATER -> ^( LIST ( instanceExpr )* ) ;
     public final EulangParser.instantiation_return instantiation() throws RecognitionException {
         EulangParser.instantiation_return retval = new EulangParser.instantiation_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token LESS404=null;
-        Token COMMA406=null;
-        Token GREATER408=null;
-        EulangParser.instanceExpr_return instanceExpr405 = null;
+        Token LESS408=null;
+        Token COMMA410=null;
+        Token GREATER412=null;
+        EulangParser.instanceExpr_return instanceExpr409 = null;
 
-        EulangParser.instanceExpr_return instanceExpr407 = null;
+        EulangParser.instanceExpr_return instanceExpr411 = null;
 
 
-        CommonTree LESS404_tree=null;
-        CommonTree COMMA406_tree=null;
-        CommonTree GREATER408_tree=null;
+        CommonTree LESS408_tree=null;
+        CommonTree COMMA410_tree=null;
+        CommonTree GREATER412_tree=null;
         RewriteRuleTokenStream stream_GREATER=new RewriteRuleTokenStream(adaptor,"token GREATER");
         RewriteRuleTokenStream stream_COMMA=new RewriteRuleTokenStream(adaptor,"token COMMA");
         RewriteRuleTokenStream stream_LESS=new RewriteRuleTokenStream(adaptor,"token LESS");
         RewriteRuleSubtreeStream stream_instanceExpr=new RewriteRuleSubtreeStream(adaptor,"rule instanceExpr");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:15: ( LESS ( instanceExpr ( COMMA instanceExpr )* )? GREATER -> ^( LIST ( instanceExpr )* ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:17: LESS ( instanceExpr ( COMMA instanceExpr )* )? GREATER
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:15: ( LESS ( instanceExpr ( COMMA instanceExpr )* )? GREATER -> ^( LIST ( instanceExpr )* ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:17: LESS ( instanceExpr ( COMMA instanceExpr )* )? GREATER
             {
-            LESS404=(Token)match(input,LESS,FOLLOW_LESS_in_instantiation6414); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_LESS.add(LESS404);
+            LESS408=(Token)match(input,LESS,FOLLOW_LESS_in_instantiation6531); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_LESS.add(LESS408);
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:22: ( instanceExpr ( COMMA instanceExpr )* )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:22: ( instanceExpr ( COMMA instanceExpr )* )?
             int alt106=2;
             int LA106_0 = input.LA(1);
 
@@ -15167,15 +15382,15 @@ public class EulangParser extends Parser {
             }
             switch (alt106) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:23: instanceExpr ( COMMA instanceExpr )*
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:23: instanceExpr ( COMMA instanceExpr )*
                     {
-                    pushFollow(FOLLOW_instanceExpr_in_instantiation6417);
-                    instanceExpr405=instanceExpr();
+                    pushFollow(FOLLOW_instanceExpr_in_instantiation6534);
+                    instanceExpr409=instanceExpr();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_instanceExpr.add(instanceExpr405.getTree());
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:36: ( COMMA instanceExpr )*
+                    if ( state.backtracking==0 ) stream_instanceExpr.add(instanceExpr409.getTree());
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:36: ( COMMA instanceExpr )*
                     loop105:
                     do {
                         int alt105=2;
@@ -15188,17 +15403,17 @@ public class EulangParser extends Parser {
 
                         switch (alt105) {
                     	case 1 :
-                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:37: COMMA instanceExpr
+                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:37: COMMA instanceExpr
                     	    {
-                    	    COMMA406=(Token)match(input,COMMA,FOLLOW_COMMA_in_instantiation6420); if (state.failed) return retval; 
-                    	    if ( state.backtracking==0 ) stream_COMMA.add(COMMA406);
+                    	    COMMA410=(Token)match(input,COMMA,FOLLOW_COMMA_in_instantiation6537); if (state.failed) return retval; 
+                    	    if ( state.backtracking==0 ) stream_COMMA.add(COMMA410);
 
-                    	    pushFollow(FOLLOW_instanceExpr_in_instantiation6422);
-                    	    instanceExpr407=instanceExpr();
+                    	    pushFollow(FOLLOW_instanceExpr_in_instantiation6539);
+                    	    instanceExpr411=instanceExpr();
 
                     	    state._fsp--;
                     	    if (state.failed) return retval;
-                    	    if ( state.backtracking==0 ) stream_instanceExpr.add(instanceExpr407.getTree());
+                    	    if ( state.backtracking==0 ) stream_instanceExpr.add(instanceExpr411.getTree());
 
                     	    }
                     	    break;
@@ -15214,8 +15429,8 @@ public class EulangParser extends Parser {
 
             }
 
-            GREATER408=(Token)match(input,GREATER,FOLLOW_GREATER_in_instantiation6428); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_GREATER.add(GREATER408);
+            GREATER412=(Token)match(input,GREATER,FOLLOW_GREATER_in_instantiation6545); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_GREATER.add(GREATER412);
 
 
 
@@ -15231,14 +15446,14 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 522:70: -> ^( LIST ( instanceExpr )* )
+            // 526:70: -> ^( LIST ( instanceExpr )* )
             {
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:73: ^( LIST ( instanceExpr )* )
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:73: ^( LIST ( instanceExpr )* )
                 {
                 CommonTree root_1 = (CommonTree)adaptor.nil();
                 root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(LIST, "LIST"), root_1);
 
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:80: ( instanceExpr )*
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:526:80: ( instanceExpr )*
                 while ( stream_instanceExpr.hasNext() ) {
                     adaptor.addChild(root_1, stream_instanceExpr.nextTree());
 
@@ -15279,49 +15494,49 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "instanceExpr"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:525:1: instanceExpr options {backtrack=true; } : ( type | atom );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:1: instanceExpr options {backtrack=true; } : ( type | atom );
     public final EulangParser.instanceExpr_return instanceExpr() throws RecognitionException {
         EulangParser.instanceExpr_return retval = new EulangParser.instanceExpr_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        EulangParser.type_return type409 = null;
+        EulangParser.type_return type413 = null;
 
-        EulangParser.atom_return atom410 = null;
+        EulangParser.atom_return atom414 = null;
 
 
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:525:41: ( type | atom )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:41: ( type | atom )
             int alt107=2;
             alt107 = dfa107.predict(input);
             switch (alt107) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:525:43: type
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:43: type
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_type_in_instanceExpr6460);
-                    type409=type();
+                    pushFollow(FOLLOW_type_in_instanceExpr6577);
+                    type413=type();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, type409.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, type413.getTree());
 
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:525:50: atom
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:50: atom
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_atom_in_instanceExpr6464);
-                    atom410=atom();
+                    pushFollow(FOLLOW_atom_in_instanceExpr6581);
+                    atom414=atom();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, atom410.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, atom414.getTree());
 
                     }
                     break;
@@ -15353,32 +15568,32 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "appendIdModifiers"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:1: appendIdModifiers : nonFieldIdModifier ( idModifier )* ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:533:1: appendIdModifiers : nonFieldIdModifier ( idModifier )* ;
     public final EulangParser.appendIdModifiers_return appendIdModifiers() throws RecognitionException {
         EulangParser.appendIdModifiers_return retval = new EulangParser.appendIdModifiers_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        EulangParser.nonFieldIdModifier_return nonFieldIdModifier411 = null;
+        EulangParser.nonFieldIdModifier_return nonFieldIdModifier415 = null;
 
-        EulangParser.idModifier_return idModifier412 = null;
+        EulangParser.idModifier_return idModifier416 = null;
 
 
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:19: ( nonFieldIdModifier ( idModifier )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:21: nonFieldIdModifier ( idModifier )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:533:19: ( nonFieldIdModifier ( idModifier )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:533:21: nonFieldIdModifier ( idModifier )*
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_nonFieldIdModifier_in_appendIdModifiers6475);
-            nonFieldIdModifier411=nonFieldIdModifier();
+            pushFollow(FOLLOW_nonFieldIdModifier_in_appendIdModifiers6592);
+            nonFieldIdModifier415=nonFieldIdModifier();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) adaptor.addChild(root_0, nonFieldIdModifier411.getTree());
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:40: ( idModifier )*
+            if ( state.backtracking==0 ) adaptor.addChild(root_0, nonFieldIdModifier415.getTree());
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:533:40: ( idModifier )*
             loop108:
             do {
                 int alt108=2;
@@ -15391,14 +15606,14 @@ public class EulangParser extends Parser {
 
                 switch (alt108) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:40: idModifier
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:533:40: idModifier
             	    {
-            	    pushFollow(FOLLOW_idModifier_in_appendIdModifiers6477);
-            	    idModifier412=idModifier();
+            	    pushFollow(FOLLOW_idModifier_in_appendIdModifiers6594);
+            	    idModifier416=idModifier();
 
             	    state._fsp--;
             	    if (state.failed) return retval;
-            	    if ( state.backtracking==0 ) adaptor.addChild(root_0, idModifier412.getTree());
+            	    if ( state.backtracking==0 ) adaptor.addChild(root_0, idModifier416.getTree());
 
             	    }
             	    break;
@@ -15437,23 +15652,23 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "nonFieldIdModifier"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:531:1: nonFieldIdModifier : ( funcCall | arrayIndex | deref );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:535:1: nonFieldIdModifier : ( funcCall | arrayIndex | deref );
     public final EulangParser.nonFieldIdModifier_return nonFieldIdModifier() throws RecognitionException {
         EulangParser.nonFieldIdModifier_return retval = new EulangParser.nonFieldIdModifier_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        EulangParser.funcCall_return funcCall413 = null;
+        EulangParser.funcCall_return funcCall417 = null;
 
-        EulangParser.arrayIndex_return arrayIndex414 = null;
+        EulangParser.arrayIndex_return arrayIndex418 = null;
 
-        EulangParser.deref_return deref415 = null;
+        EulangParser.deref_return deref419 = null;
 
 
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:531:20: ( funcCall | arrayIndex | deref )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:535:20: ( funcCall | arrayIndex | deref )
             int alt109=3;
             switch ( input.LA(1) ) {
             case LPAREN:
@@ -15481,44 +15696,44 @@ public class EulangParser extends Parser {
 
             switch (alt109) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:531:22: funcCall
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:535:22: funcCall
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_funcCall_in_nonFieldIdModifier6487);
-                    funcCall413=funcCall();
+                    pushFollow(FOLLOW_funcCall_in_nonFieldIdModifier6604);
+                    funcCall417=funcCall();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, funcCall413.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, funcCall417.getTree());
 
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:531:33: arrayIndex
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:535:33: arrayIndex
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_arrayIndex_in_nonFieldIdModifier6491);
-                    arrayIndex414=arrayIndex();
+                    pushFollow(FOLLOW_arrayIndex_in_nonFieldIdModifier6608);
+                    arrayIndex418=arrayIndex();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, arrayIndex414.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, arrayIndex418.getTree());
 
                     }
                     break;
                 case 3 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:531:46: deref
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:535:46: deref
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_deref_in_nonFieldIdModifier6495);
-                    deref415=deref();
+                    pushFollow(FOLLOW_deref_in_nonFieldIdModifier6612);
+                    deref419=deref();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, deref415.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, deref419.getTree());
 
                     }
                     break;
@@ -15550,25 +15765,25 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "idModifier"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:532:1: idModifier : ( fieldRef | funcCall | arrayIndex | deref );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:1: idModifier : ( fieldRef | funcCall | arrayIndex | deref );
     public final EulangParser.idModifier_return idModifier() throws RecognitionException {
         EulangParser.idModifier_return retval = new EulangParser.idModifier_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        EulangParser.fieldRef_return fieldRef416 = null;
+        EulangParser.fieldRef_return fieldRef420 = null;
 
-        EulangParser.funcCall_return funcCall417 = null;
+        EulangParser.funcCall_return funcCall421 = null;
 
-        EulangParser.arrayIndex_return arrayIndex418 = null;
+        EulangParser.arrayIndex_return arrayIndex422 = null;
 
-        EulangParser.deref_return deref419 = null;
+        EulangParser.deref_return deref423 = null;
 
 
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:532:12: ( fieldRef | funcCall | arrayIndex | deref )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:12: ( fieldRef | funcCall | arrayIndex | deref )
             int alt110=4;
             switch ( input.LA(1) ) {
             case PERIOD:
@@ -15601,58 +15816,58 @@ public class EulangParser extends Parser {
 
             switch (alt110) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:532:14: fieldRef
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:14: fieldRef
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_fieldRef_in_idModifier6502);
-                    fieldRef416=fieldRef();
+                    pushFollow(FOLLOW_fieldRef_in_idModifier6619);
+                    fieldRef420=fieldRef();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, fieldRef416.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, fieldRef420.getTree());
 
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:532:25: funcCall
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:25: funcCall
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_funcCall_in_idModifier6506);
-                    funcCall417=funcCall();
+                    pushFollow(FOLLOW_funcCall_in_idModifier6623);
+                    funcCall421=funcCall();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, funcCall417.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, funcCall421.getTree());
 
                     }
                     break;
                 case 3 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:532:36: arrayIndex
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:36: arrayIndex
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_arrayIndex_in_idModifier6510);
-                    arrayIndex418=arrayIndex();
+                    pushFollow(FOLLOW_arrayIndex_in_idModifier6627);
+                    arrayIndex422=arrayIndex();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, arrayIndex418.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, arrayIndex422.getTree());
 
                     }
                     break;
                 case 4 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:532:49: deref
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:49: deref
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_deref_in_idModifier6514);
-                    deref419=deref();
+                    pushFollow(FOLLOW_deref_in_idModifier6631);
+                    deref423=deref();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) adaptor.addChild(root_0, deref419.getTree());
+                    if ( state.backtracking==0 ) adaptor.addChild(root_0, deref423.getTree());
 
                     }
                     break;
@@ -15684,30 +15899,30 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "fieldRef"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:534:1: fieldRef : PERIOD ID -> ^( FIELDREF ID ) ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:1: fieldRef : PERIOD ID -> ^( FIELDREF ID ) ;
     public final EulangParser.fieldRef_return fieldRef() throws RecognitionException {
         EulangParser.fieldRef_return retval = new EulangParser.fieldRef_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token PERIOD420=null;
-        Token ID421=null;
+        Token PERIOD424=null;
+        Token ID425=null;
 
-        CommonTree PERIOD420_tree=null;
-        CommonTree ID421_tree=null;
+        CommonTree PERIOD424_tree=null;
+        CommonTree ID425_tree=null;
         RewriteRuleTokenStream stream_ID=new RewriteRuleTokenStream(adaptor,"token ID");
         RewriteRuleTokenStream stream_PERIOD=new RewriteRuleTokenStream(adaptor,"token PERIOD");
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:534:10: ( PERIOD ID -> ^( FIELDREF ID ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:534:12: PERIOD ID
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:10: ( PERIOD ID -> ^( FIELDREF ID ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:12: PERIOD ID
             {
-            PERIOD420=(Token)match(input,PERIOD,FOLLOW_PERIOD_in_fieldRef6523); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_PERIOD.add(PERIOD420);
+            PERIOD424=(Token)match(input,PERIOD,FOLLOW_PERIOD_in_fieldRef6640); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_PERIOD.add(PERIOD424);
 
-            ID421=(Token)match(input,ID,FOLLOW_ID_in_fieldRef6525); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_ID.add(ID421);
+            ID425=(Token)match(input,ID,FOLLOW_ID_in_fieldRef6642); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_ID.add(ID425);
 
 
 
@@ -15723,9 +15938,9 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 534:23: -> ^( FIELDREF ID )
+            // 538:23: -> ^( FIELDREF ID )
             {
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:534:26: ^( FIELDREF ID )
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:26: ^( FIELDREF ID )
                 {
                 CommonTree root_1 = (CommonTree)adaptor.nil();
                 root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(FIELDREF, "FIELDREF"), root_1);
@@ -15766,38 +15981,38 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "arrayIndex"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:1: arrayIndex : LBRACKET assignExpr RBRACKET -> ^( INDEX assignExpr ) ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:1: arrayIndex : LBRACKET assignExpr RBRACKET -> ^( INDEX assignExpr ) ;
     public final EulangParser.arrayIndex_return arrayIndex() throws RecognitionException {
         EulangParser.arrayIndex_return retval = new EulangParser.arrayIndex_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token LBRACKET422=null;
-        Token RBRACKET424=null;
-        EulangParser.assignExpr_return assignExpr423 = null;
+        Token LBRACKET426=null;
+        Token RBRACKET428=null;
+        EulangParser.assignExpr_return assignExpr427 = null;
 
 
-        CommonTree LBRACKET422_tree=null;
-        CommonTree RBRACKET424_tree=null;
+        CommonTree LBRACKET426_tree=null;
+        CommonTree RBRACKET428_tree=null;
         RewriteRuleTokenStream stream_LBRACKET=new RewriteRuleTokenStream(adaptor,"token LBRACKET");
         RewriteRuleTokenStream stream_RBRACKET=new RewriteRuleTokenStream(adaptor,"token RBRACKET");
         RewriteRuleSubtreeStream stream_assignExpr=new RewriteRuleSubtreeStream(adaptor,"rule assignExpr");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:12: ( LBRACKET assignExpr RBRACKET -> ^( INDEX assignExpr ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:15: LBRACKET assignExpr RBRACKET
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:12: ( LBRACKET assignExpr RBRACKET -> ^( INDEX assignExpr ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:15: LBRACKET assignExpr RBRACKET
             {
-            LBRACKET422=(Token)match(input,LBRACKET,FOLLOW_LBRACKET_in_arrayIndex6544); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_LBRACKET.add(LBRACKET422);
+            LBRACKET426=(Token)match(input,LBRACKET,FOLLOW_LBRACKET_in_arrayIndex6661); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_LBRACKET.add(LBRACKET426);
 
-            pushFollow(FOLLOW_assignExpr_in_arrayIndex6546);
-            assignExpr423=assignExpr();
+            pushFollow(FOLLOW_assignExpr_in_arrayIndex6663);
+            assignExpr427=assignExpr();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_assignExpr.add(assignExpr423.getTree());
-            RBRACKET424=(Token)match(input,RBRACKET,FOLLOW_RBRACKET_in_arrayIndex6548); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_RBRACKET.add(RBRACKET424);
+            if ( state.backtracking==0 ) stream_assignExpr.add(assignExpr427.getTree());
+            RBRACKET428=(Token)match(input,RBRACKET,FOLLOW_RBRACKET_in_arrayIndex6665); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_RBRACKET.add(RBRACKET428);
 
 
 
@@ -15813,9 +16028,9 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 536:44: -> ^( INDEX assignExpr )
+            // 540:44: -> ^( INDEX assignExpr )
             {
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:536:47: ^( INDEX assignExpr )
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:47: ^( INDEX assignExpr )
                 {
                 CommonTree root_1 = (CommonTree)adaptor.nil();
                 root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(INDEX, "INDEX"), root_1);
@@ -15856,24 +16071,24 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "deref"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:1: deref : CARET -> ^( DEREF ) ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:542:1: deref : CARET -> ^( DEREF ) ;
     public final EulangParser.deref_return deref() throws RecognitionException {
         EulangParser.deref_return retval = new EulangParser.deref_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token CARET425=null;
+        Token CARET429=null;
 
-        CommonTree CARET425_tree=null;
+        CommonTree CARET429_tree=null;
         RewriteRuleTokenStream stream_CARET=new RewriteRuleTokenStream(adaptor,"token CARET");
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:7: ( CARET -> ^( DEREF ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:9: CARET
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:542:7: ( CARET -> ^( DEREF ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:542:9: CARET
             {
-            CARET425=(Token)match(input,CARET,FOLLOW_CARET_in_deref6565); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_CARET.add(CARET425);
+            CARET429=(Token)match(input,CARET,FOLLOW_CARET_in_deref6682); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_CARET.add(CARET429);
 
 
 
@@ -15889,9 +16104,9 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 538:15: -> ^( DEREF )
+            // 542:15: -> ^( DEREF )
             {
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:538:18: ^( DEREF )
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:542:18: ^( DEREF )
                 {
                 CommonTree root_1 = (CommonTree)adaptor.nil();
                 root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(DEREF, "DEREF"), root_1);
@@ -15930,33 +16145,33 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "idOrScopeRef"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:1: idOrScopeRef : ( ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) | c= colons ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:1: idOrScopeRef : ( ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) | c= colons ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) );
     public final EulangParser.idOrScopeRef_return idOrScopeRef() throws RecognitionException {
         EulangParser.idOrScopeRef_return retval = new EulangParser.idOrScopeRef_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token ID426=null;
-        Token PERIOD427=null;
-        Token ID428=null;
-        Token ID429=null;
-        Token PERIOD430=null;
-        Token ID431=null;
+        Token ID430=null;
+        Token PERIOD431=null;
+        Token ID432=null;
+        Token ID433=null;
+        Token PERIOD434=null;
+        Token ID435=null;
         EulangParser.colons_return c = null;
 
 
-        CommonTree ID426_tree=null;
-        CommonTree PERIOD427_tree=null;
-        CommonTree ID428_tree=null;
-        CommonTree ID429_tree=null;
-        CommonTree PERIOD430_tree=null;
-        CommonTree ID431_tree=null;
+        CommonTree ID430_tree=null;
+        CommonTree PERIOD431_tree=null;
+        CommonTree ID432_tree=null;
+        CommonTree ID433_tree=null;
+        CommonTree PERIOD434_tree=null;
+        CommonTree ID435_tree=null;
         RewriteRuleTokenStream stream_ID=new RewriteRuleTokenStream(adaptor,"token ID");
         RewriteRuleTokenStream stream_PERIOD=new RewriteRuleTokenStream(adaptor,"token PERIOD");
         RewriteRuleSubtreeStream stream_colons=new RewriteRuleSubtreeStream(adaptor,"rule colons");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:14: ( ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) | c= colons ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:14: ( ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) | c= colons ID ( PERIOD ID )* -> ^( IDREF ( ID )+ ) )
             int alt113=2;
             int LA113_0 = input.LA(1);
 
@@ -15975,12 +16190,12 @@ public class EulangParser extends Parser {
             }
             switch (alt113) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:16: ID ( PERIOD ID )*
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:16: ID ( PERIOD ID )*
                     {
-                    ID426=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6580); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_ID.add(ID426);
+                    ID430=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6697); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_ID.add(ID430);
 
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:19: ( PERIOD ID )*
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:19: ( PERIOD ID )*
                     loop111:
                     do {
                         int alt111=2;
@@ -15993,13 +16208,13 @@ public class EulangParser extends Parser {
 
                         switch (alt111) {
                     	case 1 :
-                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:21: PERIOD ID
+                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:21: PERIOD ID
                     	    {
-                    	    PERIOD427=(Token)match(input,PERIOD,FOLLOW_PERIOD_in_idOrScopeRef6584); if (state.failed) return retval; 
-                    	    if ( state.backtracking==0 ) stream_PERIOD.add(PERIOD427);
+                    	    PERIOD431=(Token)match(input,PERIOD,FOLLOW_PERIOD_in_idOrScopeRef6701); if (state.failed) return retval; 
+                    	    if ( state.backtracking==0 ) stream_PERIOD.add(PERIOD431);
 
-                    	    ID428=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6586); if (state.failed) return retval; 
-                    	    if ( state.backtracking==0 ) stream_ID.add(ID428);
+                    	    ID432=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6703); if (state.failed) return retval; 
+                    	    if ( state.backtracking==0 ) stream_ID.add(ID432);
 
 
                     	    }
@@ -16024,9 +16239,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 540:35: -> ^( IDREF ( ID )+ )
+                    // 544:35: -> ^( IDREF ( ID )+ )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:540:38: ^( IDREF ( ID )+ )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:38: ^( IDREF ( ID )+ )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(IDREF, "IDREF"), root_1);
@@ -16049,18 +16264,18 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:541:9: c= colons ID ( PERIOD ID )*
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:545:9: c= colons ID ( PERIOD ID )*
                     {
-                    pushFollow(FOLLOW_colons_in_idOrScopeRef6613);
+                    pushFollow(FOLLOW_colons_in_idOrScopeRef6730);
                     c=colons();
 
                     state._fsp--;
                     if (state.failed) return retval;
                     if ( state.backtracking==0 ) stream_colons.add(c.getTree());
-                    ID429=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6615); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_ID.add(ID429);
+                    ID433=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6732); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_ID.add(ID433);
 
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:541:21: ( PERIOD ID )*
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:545:21: ( PERIOD ID )*
                     loop112:
                     do {
                         int alt112=2;
@@ -16073,13 +16288,13 @@ public class EulangParser extends Parser {
 
                         switch (alt112) {
                     	case 1 :
-                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:541:23: PERIOD ID
+                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:545:23: PERIOD ID
                     	    {
-                    	    PERIOD430=(Token)match(input,PERIOD,FOLLOW_PERIOD_in_idOrScopeRef6619); if (state.failed) return retval; 
-                    	    if ( state.backtracking==0 ) stream_PERIOD.add(PERIOD430);
+                    	    PERIOD434=(Token)match(input,PERIOD,FOLLOW_PERIOD_in_idOrScopeRef6736); if (state.failed) return retval; 
+                    	    if ( state.backtracking==0 ) stream_PERIOD.add(PERIOD434);
 
-                    	    ID431=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6621); if (state.failed) return retval; 
-                    	    if ( state.backtracking==0 ) stream_ID.add(ID431);
+                    	    ID435=(Token)match(input,ID,FOLLOW_ID_in_idOrScopeRef6738); if (state.failed) return retval; 
+                    	    if ( state.backtracking==0 ) stream_ID.add(ID435);
 
 
                     	    }
@@ -16104,9 +16319,9 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 541:37: -> ^( IDREF ( ID )+ )
+                    // 545:37: -> ^( IDREF ( ID )+ )
                     {
-                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:541:40: ^( IDREF ( ID )+ )
+                        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:545:40: ^( IDREF ( ID )+ )
                         {
                         CommonTree root_1 = (CommonTree)adaptor.nil();
                         root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(IDREF, "IDREF"), root_1);
@@ -16157,24 +16372,24 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "colons"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:1: colons : ( COLON | COLONS )+ ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:1: colons : ( COLON | COLONS )+ ;
     public final EulangParser.colons_return colons() throws RecognitionException {
         EulangParser.colons_return retval = new EulangParser.colons_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token set432=null;
+        Token set436=null;
 
-        CommonTree set432_tree=null;
+        CommonTree set436_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:8: ( ( COLON | COLONS )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:10: ( COLON | COLONS )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:8: ( ( COLON | COLONS )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:10: ( COLON | COLONS )+
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:544:10: ( COLON | COLONS )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:10: ( COLON | COLONS )+
             int cnt114=0;
             loop114:
             do {
@@ -16190,10 +16405,10 @@ public class EulangParser extends Parser {
             	case 1 :
             	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:
             	    {
-            	    set432=(Token)input.LT(1);
+            	    set436=(Token)input.LT(1);
             	    if ( input.LA(1)==COLON||input.LA(1)==COLONS ) {
             	        input.consume();
-            	        if ( state.backtracking==0 ) adaptor.addChild(root_0, (CommonTree)adaptor.create(set432));
+            	        if ( state.backtracking==0 ) adaptor.addChild(root_0, (CommonTree)adaptor.create(set436));
             	        state.errorRecovery=false;state.failed=false;
             	    }
             	    else {
@@ -16245,37 +16460,37 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "data"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:1: data : DATA LBRACE ( fieldDecl )* RBRACE -> ^( DATA ( fieldDecl )* ) ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:1: data : DATA LBRACE ( fieldDecl )* RBRACE -> ^( DATA ( fieldDecl )* ) ;
     public final EulangParser.data_return data() throws RecognitionException {
         EulangParser.data_return retval = new EulangParser.data_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token DATA433=null;
-        Token LBRACE434=null;
-        Token RBRACE436=null;
-        EulangParser.fieldDecl_return fieldDecl435 = null;
+        Token DATA437=null;
+        Token LBRACE438=null;
+        Token RBRACE440=null;
+        EulangParser.fieldDecl_return fieldDecl439 = null;
 
 
-        CommonTree DATA433_tree=null;
-        CommonTree LBRACE434_tree=null;
-        CommonTree RBRACE436_tree=null;
+        CommonTree DATA437_tree=null;
+        CommonTree LBRACE438_tree=null;
+        CommonTree RBRACE440_tree=null;
         RewriteRuleTokenStream stream_RBRACE=new RewriteRuleTokenStream(adaptor,"token RBRACE");
         RewriteRuleTokenStream stream_DATA=new RewriteRuleTokenStream(adaptor,"token DATA");
         RewriteRuleTokenStream stream_LBRACE=new RewriteRuleTokenStream(adaptor,"token LBRACE");
         RewriteRuleSubtreeStream stream_fieldDecl=new RewriteRuleSubtreeStream(adaptor,"rule fieldDecl");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:6: ( DATA LBRACE ( fieldDecl )* RBRACE -> ^( DATA ( fieldDecl )* ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:8: DATA LBRACE ( fieldDecl )* RBRACE
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:6: ( DATA LBRACE ( fieldDecl )* RBRACE -> ^( DATA ( fieldDecl )* ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:8: DATA LBRACE ( fieldDecl )* RBRACE
             {
-            DATA433=(Token)match(input,DATA,FOLLOW_DATA_in_data6668); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_DATA.add(DATA433);
+            DATA437=(Token)match(input,DATA,FOLLOW_DATA_in_data6785); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_DATA.add(DATA437);
 
-            LBRACE434=(Token)match(input,LBRACE,FOLLOW_LBRACE_in_data6670); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_LBRACE.add(LBRACE434);
+            LBRACE438=(Token)match(input,LBRACE,FOLLOW_LBRACE_in_data6787); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_LBRACE.add(LBRACE438);
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:20: ( fieldDecl )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:20: ( fieldDecl )*
             loop115:
             do {
                 int alt115=2;
@@ -16288,14 +16503,14 @@ public class EulangParser extends Parser {
 
                 switch (alt115) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:20: fieldDecl
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:20: fieldDecl
             	    {
-            	    pushFollow(FOLLOW_fieldDecl_in_data6672);
-            	    fieldDecl435=fieldDecl();
+            	    pushFollow(FOLLOW_fieldDecl_in_data6789);
+            	    fieldDecl439=fieldDecl();
 
             	    state._fsp--;
             	    if (state.failed) return retval;
-            	    if ( state.backtracking==0 ) stream_fieldDecl.add(fieldDecl435.getTree());
+            	    if ( state.backtracking==0 ) stream_fieldDecl.add(fieldDecl439.getTree());
 
             	    }
             	    break;
@@ -16305,8 +16520,8 @@ public class EulangParser extends Parser {
                 }
             } while (true);
 
-            RBRACE436=(Token)match(input,RBRACE,FOLLOW_RBRACE_in_data6675); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_RBRACE.add(RBRACE436);
+            RBRACE440=(Token)match(input,RBRACE,FOLLOW_RBRACE_in_data6792); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_RBRACE.add(RBRACE440);
 
 
 
@@ -16322,14 +16537,14 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 546:39: -> ^( DATA ( fieldDecl )* )
+            // 550:39: -> ^( DATA ( fieldDecl )* )
             {
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:42: ^( DATA ( fieldDecl )* )
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:42: ^( DATA ( fieldDecl )* )
                 {
                 CommonTree root_1 = (CommonTree)adaptor.nil();
                 root_1 = (CommonTree)adaptor.becomeRoot(stream_DATA.nextNode(), root_1);
 
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:546:49: ( fieldDecl )*
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:49: ( fieldDecl )*
                 while ( stream_fieldDecl.hasNext() ) {
                     adaptor.addChild(root_1, stream_fieldDecl.nextTree());
 
@@ -16370,37 +16585,37 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "staticVarDecl"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:1: staticVarDecl : STATIC varDecl -> ^( STATIC varDecl ) ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:1: staticVarDecl : STATIC varDecl -> ^( STATIC varDecl ) ;
     public final EulangParser.staticVarDecl_return staticVarDecl() throws RecognitionException {
         EulangParser.staticVarDecl_return retval = new EulangParser.staticVarDecl_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token STATIC437=null;
-        EulangParser.varDecl_return varDecl438 = null;
+        Token STATIC441=null;
+        EulangParser.varDecl_return varDecl442 = null;
 
 
-        CommonTree STATIC437_tree=null;
+        CommonTree STATIC441_tree=null;
         RewriteRuleTokenStream stream_STATIC=new RewriteRuleTokenStream(adaptor,"token STATIC");
         RewriteRuleSubtreeStream stream_varDecl=new RewriteRuleSubtreeStream(adaptor,"rule varDecl");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:15: ( STATIC varDecl -> ^( STATIC varDecl ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:17: STATIC varDecl
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:15: ( STATIC varDecl -> ^( STATIC varDecl ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:17: STATIC varDecl
             {
-            STATIC437=(Token)match(input,STATIC,FOLLOW_STATIC_in_staticVarDecl6694); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_STATIC.add(STATIC437);
+            STATIC441=(Token)match(input,STATIC,FOLLOW_STATIC_in_staticVarDecl6811); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_STATIC.add(STATIC441);
 
-            pushFollow(FOLLOW_varDecl_in_staticVarDecl6696);
-            varDecl438=varDecl();
+            pushFollow(FOLLOW_varDecl_in_staticVarDecl6813);
+            varDecl442=varDecl();
 
             state._fsp--;
             if (state.failed) return retval;
-            if ( state.backtracking==0 ) stream_varDecl.add(varDecl438.getTree());
+            if ( state.backtracking==0 ) stream_varDecl.add(varDecl442.getTree());
 
 
             // AST REWRITE
-            // elements: varDecl, STATIC
+            // elements: STATIC, varDecl
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -16411,9 +16626,9 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 548:32: -> ^( STATIC varDecl )
+            // 552:32: -> ^( STATIC varDecl )
             {
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:548:35: ^( STATIC varDecl )
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:552:35: ^( STATIC varDecl )
                 {
                 CommonTree root_1 = (CommonTree)adaptor.nil();
                 root_1 = (CommonTree)adaptor.becomeRoot(stream_STATIC.nextNode(), root_1);
@@ -16454,27 +16669,27 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "fieldDecl"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:1: fieldDecl : ( staticVarDecl SEMI -> staticVarDecl | varDecl SEMI -> varDecl );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:554:1: fieldDecl : ( staticVarDecl SEMI -> staticVarDecl | varDecl SEMI -> varDecl );
     public final EulangParser.fieldDecl_return fieldDecl() throws RecognitionException {
         EulangParser.fieldDecl_return retval = new EulangParser.fieldDecl_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token SEMI440=null;
-        Token SEMI442=null;
-        EulangParser.staticVarDecl_return staticVarDecl439 = null;
+        Token SEMI444=null;
+        Token SEMI446=null;
+        EulangParser.staticVarDecl_return staticVarDecl443 = null;
 
-        EulangParser.varDecl_return varDecl441 = null;
+        EulangParser.varDecl_return varDecl445 = null;
 
 
-        CommonTree SEMI440_tree=null;
-        CommonTree SEMI442_tree=null;
+        CommonTree SEMI444_tree=null;
+        CommonTree SEMI446_tree=null;
         RewriteRuleTokenStream stream_SEMI=new RewriteRuleTokenStream(adaptor,"token SEMI");
         RewriteRuleSubtreeStream stream_staticVarDecl=new RewriteRuleSubtreeStream(adaptor,"rule staticVarDecl");
         RewriteRuleSubtreeStream stream_varDecl=new RewriteRuleSubtreeStream(adaptor,"rule varDecl");
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:11: ( staticVarDecl SEMI -> staticVarDecl | varDecl SEMI -> varDecl )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:554:11: ( staticVarDecl SEMI -> staticVarDecl | varDecl SEMI -> varDecl )
             int alt116=2;
             int LA116_0 = input.LA(1);
 
@@ -16493,16 +16708,16 @@ public class EulangParser extends Parser {
             }
             switch (alt116) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:550:13: staticVarDecl SEMI
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:554:13: staticVarDecl SEMI
                     {
-                    pushFollow(FOLLOW_staticVarDecl_in_fieldDecl6713);
-                    staticVarDecl439=staticVarDecl();
+                    pushFollow(FOLLOW_staticVarDecl_in_fieldDecl6830);
+                    staticVarDecl443=staticVarDecl();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_staticVarDecl.add(staticVarDecl439.getTree());
-                    SEMI440=(Token)match(input,SEMI,FOLLOW_SEMI_in_fieldDecl6715); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_SEMI.add(SEMI440);
+                    if ( state.backtracking==0 ) stream_staticVarDecl.add(staticVarDecl443.getTree());
+                    SEMI444=(Token)match(input,SEMI,FOLLOW_SEMI_in_fieldDecl6832); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_SEMI.add(SEMI444);
 
 
 
@@ -16518,7 +16733,7 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 550:32: -> staticVarDecl
+                    // 554:32: -> staticVarDecl
                     {
                         adaptor.addChild(root_0, stream_staticVarDecl.nextTree());
 
@@ -16528,16 +16743,16 @@ public class EulangParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:551:7: varDecl SEMI
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:7: varDecl SEMI
                     {
-                    pushFollow(FOLLOW_varDecl_in_fieldDecl6728);
-                    varDecl441=varDecl();
+                    pushFollow(FOLLOW_varDecl_in_fieldDecl6845);
+                    varDecl445=varDecl();
 
                     state._fsp--;
                     if (state.failed) return retval;
-                    if ( state.backtracking==0 ) stream_varDecl.add(varDecl441.getTree());
-                    SEMI442=(Token)match(input,SEMI,FOLLOW_SEMI_in_fieldDecl6730); if (state.failed) return retval; 
-                    if ( state.backtracking==0 ) stream_SEMI.add(SEMI442);
+                    if ( state.backtracking==0 ) stream_varDecl.add(varDecl445.getTree());
+                    SEMI446=(Token)match(input,SEMI,FOLLOW_SEMI_in_fieldDecl6847); if (state.failed) return retval; 
+                    if ( state.backtracking==0 ) stream_SEMI.add(SEMI446);
 
 
 
@@ -16553,7 +16768,7 @@ public class EulangParser extends Parser {
                     RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
                     root_0 = (CommonTree)adaptor.nil();
-                    // 551:20: -> varDecl
+                    // 555:20: -> varDecl
                     {
                         adaptor.addChild(root_0, stream_varDecl.nextTree());
 
@@ -16590,31 +16805,31 @@ public class EulangParser extends Parser {
     };
 
     // $ANTLR start "fieldIdRef"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:1: fieldIdRef : ID ( COMMA ID )* -> ( ^( ALLOC ID ) )+ ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:1: fieldIdRef : ID ( COMMA ID )* -> ( ^( ALLOC ID ) )+ ;
     public final EulangParser.fieldIdRef_return fieldIdRef() throws RecognitionException {
         EulangParser.fieldIdRef_return retval = new EulangParser.fieldIdRef_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token ID443=null;
-        Token COMMA444=null;
-        Token ID445=null;
+        Token ID447=null;
+        Token COMMA448=null;
+        Token ID449=null;
 
-        CommonTree ID443_tree=null;
-        CommonTree COMMA444_tree=null;
-        CommonTree ID445_tree=null;
+        CommonTree ID447_tree=null;
+        CommonTree COMMA448_tree=null;
+        CommonTree ID449_tree=null;
         RewriteRuleTokenStream stream_ID=new RewriteRuleTokenStream(adaptor,"token ID");
         RewriteRuleTokenStream stream_COMMA=new RewriteRuleTokenStream(adaptor,"token COMMA");
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:12: ( ID ( COMMA ID )* -> ( ^( ALLOC ID ) )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:14: ID ( COMMA ID )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:12: ( ID ( COMMA ID )* -> ( ^( ALLOC ID ) )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:14: ID ( COMMA ID )*
             {
-            ID443=(Token)match(input,ID,FOLLOW_ID_in_fieldIdRef6753); if (state.failed) return retval; 
-            if ( state.backtracking==0 ) stream_ID.add(ID443);
+            ID447=(Token)match(input,ID,FOLLOW_ID_in_fieldIdRef6870); if (state.failed) return retval; 
+            if ( state.backtracking==0 ) stream_ID.add(ID447);
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:17: ( COMMA ID )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:17: ( COMMA ID )*
             loop117:
             do {
                 int alt117=2;
@@ -16627,13 +16842,13 @@ public class EulangParser extends Parser {
 
                 switch (alt117) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:18: COMMA ID
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:18: COMMA ID
             	    {
-            	    COMMA444=(Token)match(input,COMMA,FOLLOW_COMMA_in_fieldIdRef6756); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_COMMA.add(COMMA444);
+            	    COMMA448=(Token)match(input,COMMA,FOLLOW_COMMA_in_fieldIdRef6873); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_COMMA.add(COMMA448);
 
-            	    ID445=(Token)match(input,ID,FOLLOW_ID_in_fieldIdRef6758); if (state.failed) return retval; 
-            	    if ( state.backtracking==0 ) stream_ID.add(ID445);
+            	    ID449=(Token)match(input,ID,FOLLOW_ID_in_fieldIdRef6875); if (state.failed) return retval; 
+            	    if ( state.backtracking==0 ) stream_ID.add(ID449);
 
 
             	    }
@@ -16658,13 +16873,13 @@ public class EulangParser extends Parser {
             RewriteRuleSubtreeStream stream_retval=new RewriteRuleSubtreeStream(adaptor,"rule retval",retval!=null?retval.tree:null);
 
             root_0 = (CommonTree)adaptor.nil();
-            // 555:29: -> ( ^( ALLOC ID ) )+
+            // 559:29: -> ( ^( ALLOC ID ) )+
             {
                 if ( !(stream_ID.hasNext()) ) {
                     throw new RewriteEarlyExitException();
                 }
                 while ( stream_ID.hasNext() ) {
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:555:32: ^( ALLOC ID )
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:559:32: ^( ALLOC ID )
                     {
                     CommonTree root_1 = (CommonTree)adaptor.nil();
                     root_1 = (CommonTree)adaptor.becomeRoot((CommonTree)adaptor.create(ALLOC, "ALLOC"), root_1);
@@ -17073,11 +17288,11 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred26_Eulang
     public final void synpred26_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:476:12: ( MINUS term )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:476:14: MINUS term
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:12: ( MINUS term )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:480:14: MINUS term
         {
-        match(input,MINUS,FOLLOW_MINUS_in_synpred26_Eulang5321); if (state.failed) return ;
-        pushFollow(FOLLOW_term_in_synpred26_Eulang5323);
+        match(input,MINUS,FOLLOW_MINUS_in_synpred26_Eulang5438); if (state.failed) return ;
+        pushFollow(FOLLOW_term_in_synpred26_Eulang5440);
         term();
 
         state._fsp--;
@@ -17089,11 +17304,11 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred27_Eulang
     public final void synpred27_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:481:11: ( STAR unary )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:481:13: STAR unary
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:485:11: ( STAR unary )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:485:13: STAR unary
         {
-        match(input,STAR,FOLLOW_STAR_in_synpred27_Eulang5414); if (state.failed) return ;
-        pushFollow(FOLLOW_unary_in_synpred27_Eulang5416);
+        match(input,STAR,FOLLOW_STAR_in_synpred27_Eulang5531); if (state.failed) return ;
+        pushFollow(FOLLOW_unary_in_synpred27_Eulang5533);
         unary();
 
         state._fsp--;
@@ -17105,15 +17320,15 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred28_Eulang
     public final void synpred28_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:492:9: ( noIdAtom idModifier )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:492:10: noIdAtom idModifier
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:9: ( noIdAtom idModifier )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:496:10: noIdAtom idModifier
         {
-        pushFollow(FOLLOW_noIdAtom_in_synpred28_Eulang5708);
+        pushFollow(FOLLOW_noIdAtom_in_synpred28_Eulang5825);
         noIdAtom();
 
         state._fsp--;
         if (state.failed) return ;
-        pushFollow(FOLLOW_idModifier_in_synpred28_Eulang5710);
+        pushFollow(FOLLOW_idModifier_in_synpred28_Eulang5827);
         idModifier();
 
         state._fsp--;
@@ -17125,15 +17340,15 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred29_Eulang
     public final void synpred29_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:493:9: ( atom PLUSPLUS )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:493:11: atom PLUSPLUS
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:497:9: ( atom PLUSPLUS )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:497:11: atom PLUSPLUS
         {
-        pushFollow(FOLLOW_atom_in_synpred29_Eulang5742);
+        pushFollow(FOLLOW_atom_in_synpred29_Eulang5859);
         atom();
 
         state._fsp--;
         if (state.failed) return ;
-        match(input,PLUSPLUS,FOLLOW_PLUSPLUS_in_synpred29_Eulang5744); if (state.failed) return ;
+        match(input,PLUSPLUS,FOLLOW_PLUSPLUS_in_synpred29_Eulang5861); if (state.failed) return ;
 
         }
     }
@@ -17141,15 +17356,15 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred30_Eulang
     public final void synpred30_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:9: ( atom MINUSMINUS )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:494:11: atom MINUSMINUS
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:498:9: ( atom MINUSMINUS )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:498:11: atom MINUSMINUS
         {
-        pushFollow(FOLLOW_atom_in_synpred30_Eulang5775);
+        pushFollow(FOLLOW_atom_in_synpred30_Eulang5892);
         atom();
 
         state._fsp--;
         if (state.failed) return ;
-        match(input,MINUSMINUS,FOLLOW_MINUSMINUS_in_synpred30_Eulang5777); if (state.failed) return ;
+        match(input,MINUSMINUS,FOLLOW_MINUSMINUS_in_synpred30_Eulang5894); if (state.failed) return ;
 
         }
     }
@@ -17157,16 +17372,16 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred31_Eulang
     public final void synpred31_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:509:9: ( STAR idOrScopeRef LPAREN )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:509:11: STAR idOrScopeRef LPAREN
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:513:9: ( STAR idOrScopeRef LPAREN )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:513:11: STAR idOrScopeRef LPAREN
         {
-        match(input,STAR,FOLLOW_STAR_in_synpred31_Eulang6166); if (state.failed) return ;
-        pushFollow(FOLLOW_idOrScopeRef_in_synpred31_Eulang6168);
+        match(input,STAR,FOLLOW_STAR_in_synpred31_Eulang6283); if (state.failed) return ;
+        pushFollow(FOLLOW_idOrScopeRef_in_synpred31_Eulang6285);
         idOrScopeRef();
 
         state._fsp--;
         if (state.failed) return ;
-        match(input,LPAREN,FOLLOW_LPAREN_in_synpred31_Eulang6170); if (state.failed) return ;
+        match(input,LPAREN,FOLLOW_LPAREN_in_synpred31_Eulang6287); if (state.failed) return ;
 
         }
     }
@@ -17174,10 +17389,10 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred32_Eulang
     public final void synpred32_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:510:9: ( tuple )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:510:11: tuple
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:514:9: ( tuple )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:514:11: tuple
         {
-        pushFollow(FOLLOW_tuple_in_synpred32_Eulang6205);
+        pushFollow(FOLLOW_tuple_in_synpred32_Eulang6322);
         tuple();
 
         state._fsp--;
@@ -17189,20 +17404,20 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred33_Eulang
     public final void synpred33_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:6: ( idOrScopeRef instantiation ( appendIdModifiers )? )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:6: idOrScopeRef instantiation ( appendIdModifiers )?
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:6: ( idOrScopeRef instantiation ( appendIdModifiers )? )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:6: idOrScopeRef instantiation ( appendIdModifiers )?
         {
-        pushFollow(FOLLOW_idOrScopeRef_in_synpred33_Eulang6355);
+        pushFollow(FOLLOW_idOrScopeRef_in_synpred33_Eulang6472);
         idOrScopeRef();
 
         state._fsp--;
         if (state.failed) return ;
-        pushFollow(FOLLOW_instantiation_in_synpred33_Eulang6357);
+        pushFollow(FOLLOW_instantiation_in_synpred33_Eulang6474);
         instantiation();
 
         state._fsp--;
         if (state.failed) return ;
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:33: ( appendIdModifiers )?
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:33: ( appendIdModifiers )?
         int alt120=2;
         int LA120_0 = input.LA(1);
 
@@ -17211,9 +17426,9 @@ public class EulangParser extends Parser {
         }
         switch (alt120) {
             case 1 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:518:33: appendIdModifiers
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:522:33: appendIdModifiers
                 {
-                pushFollow(FOLLOW_appendIdModifiers_in_synpred33_Eulang6359);
+                pushFollow(FOLLOW_appendIdModifiers_in_synpred33_Eulang6476);
                 appendIdModifiers();
 
                 state._fsp--;
@@ -17231,10 +17446,10 @@ public class EulangParser extends Parser {
 
     // $ANTLR start synpred34_Eulang
     public final void synpred34_Eulang_fragment() throws RecognitionException {   
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:525:43: ( type )
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:525:43: type
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:43: ( type )
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:529:43: type
         {
-        pushFollow(FOLLOW_type_in_synpred34_Eulang6460);
+        pushFollow(FOLLOW_type_in_synpred34_Eulang6577);
         type();
 
         state._fsp--;
@@ -17681,31 +17896,31 @@ public class EulangParser extends Parser {
     protected DFA100 dfa100 = new DFA100(this);
     protected DFA107 dfa107 = new DFA107(this);
     static final String DFA6_eotS =
-        "\u0097\uffff";
+        "\u009f\uffff";
     static final String DFA6_eofS =
-        "\u0097\uffff";
+        "\u009f\uffff";
     static final String DFA6_minS =
-        "\1\76\1\100\2\7\41\uffff\1\104\7\uffff\1\7\6\uffff\1\7\57\uffff"+
-        "\1\104\62\uffff";
+        "\1\76\1\100\2\7\41\uffff\1\41\7\uffff\1\7\2\uffff\1\7\67\uffff\1"+
+        "\41\66\uffff";
     static final String DFA6_maxS =
-        "\1\76\1\100\1\u008f\1\u008e\41\uffff\1\u0088\7\uffff\1\u008f\6\uffff"+
-        "\1\u008e\57\uffff\1\u0088\62\uffff";
+        "\1\76\1\100\1\u0092\1\u0091\41\uffff\1\u008b\7\uffff\1\u0092\2\uffff"+
+        "\1\u0091\67\uffff\1\u008b\66\uffff";
     static final String DFA6_acceptS =
-        "\4\uffff\41\2\1\uffff\7\2\1\uffff\6\2\1\uffff\30\2\26\1\1\2\1\uffff"+
-        "\62\2";
+        "\4\uffff\41\2\1\uffff\7\2\1\uffff\2\2\1\uffff\40\2\26\1\1\2\1\uffff"+
+        "\66\2";
     static final String DFA6_specialS =
-        "\2\uffff\1\2\1\1\41\uffff\1\5\7\uffff\1\3\6\uffff\1\4\57\uffff\1"+
-        "\0\62\uffff}>";
+        "\2\uffff\1\4\1\2\41\uffff\1\0\7\uffff\1\1\2\uffff\1\5\67\uffff\1"+
+        "\3\66\uffff}>";
     static final String[] DFA6_transitionS = {
             "\1\1",
             "\1\2",
             "\1\20\1\30\65\uffff\1\5\1\21\5\uffff\1\3\2\uffff\1\4\4\uffff"+
-            "\1\17\2\uffff\1\15\33\uffff\1\26\7\uffff\1\25\5\uffff\1\7\1"+
-            "\24\5\uffff\1\6\1\16\4\uffff\1\22\1\23\1\10\1\11\1\12\1\13\1"+
+            "\1\17\2\uffff\1\15\33\uffff\1\26\7\uffff\1\25\11\uffff\1\7\1"+
+            "\24\5\uffff\1\6\1\16\3\uffff\1\22\1\23\1\10\1\11\1\12\1\13\1"+
             "\14\1\21\1\27",
             "\1\31\1\32\65\uffff\1\45\1\46\6\uffff\1\55\3\uffff\1\54\2\uffff"+
-            "\1\44\2\uffff\1\42\33\uffff\1\53\7\uffff\1\52\5\uffff\1\34\1"+
-            "\51\5\uffff\1\33\1\43\4\uffff\1\47\1\50\1\35\1\36\1\37\1\40"+
+            "\1\44\2\uffff\1\42\33\uffff\1\53\7\uffff\1\52\11\uffff\1\34"+
+            "\1\51\5\uffff\1\33\1\43\3\uffff\1\47\1\50\1\35\1\36\1\37\1\40"+
             "\1\41\1\46",
             "",
             "",
@@ -17740,10 +17955,11 @@ public class EulangParser extends Parser {
             "",
             "",
             "",
-            "\1\64\1\61\1\55\1\72\5\uffff\1\60\3\uffff\1\113\1\62\1\57\1"+
-            "\110\17\uffff\1\56\3\uffff\1\111\12\uffff\1\112\1\uffff\1\104"+
-            "\1\105\1\106\1\107\1\103\1\102\1\101\1\74\1\75\1\76\1\77\1\100"+
-            "\1\73\1\65\1\66\1\67\1\70\1\71\1\114\1\63",
+            "\1\67\42\uffff\1\60\1\62\1\55\1\72\5\uffff\1\61\3\uffff\1\117"+
+            "\1\63\1\57\1\113\17\uffff\1\56\3\uffff\1\115\12\uffff\1\116"+
+            "\1\uffff\1\104\1\105\1\106\1\107\1\110\1\111\1\112\1\114\1\103"+
+            "\1\102\1\101\1\74\1\75\1\76\1\77\1\100\1\73\1\65\1\66\1\70\1"+
+            "\71\1\120\1\64",
             "",
             "",
             "",
@@ -17751,25 +17967,16 @@ public class EulangParser extends Parser {
             "",
             "",
             "",
-            "\1\132\1\142\65\uffff\1\116\1\133\1\uffff\1\143\3\uffff\1\117"+
-            "\2\uffff\1\115\4\uffff\1\131\2\uffff\1\127\33\uffff\1\140\7"+
-            "\uffff\1\137\5\uffff\1\121\1\136\5\uffff\1\120\1\130\4\uffff"+
-            "\1\134\1\135\1\122\1\123\1\124\1\125\1\126\1\133\1\141",
+            "\1\136\1\146\65\uffff\1\122\1\137\1\uffff\1\147\3\uffff\1\123"+
+            "\2\uffff\1\121\4\uffff\1\135\2\uffff\1\133\33\uffff\1\144\7"+
+            "\uffff\1\143\11\uffff\1\125\1\142\5\uffff\1\124\1\134\3\uffff"+
+            "\1\140\1\141\1\126\1\127\1\130\1\131\1\132\1\137\1\145",
             "",
             "",
-            "",
-            "",
-            "",
-            "",
-            "\1\145\1\146\65\uffff\1\144\1\161\6\uffff\1\170\3\uffff\1\167"+
-            "\2\uffff\1\160\2\uffff\1\156\33\uffff\1\166\7\uffff\1\165\5"+
-            "\uffff\1\150\1\164\5\uffff\1\147\1\157\4\uffff\1\162\1\163\1"+
-            "\151\1\152\1\153\1\154\1\155\1\161",
-            "",
-            "",
-            "",
-            "",
-            "",
+            "\1\151\1\152\65\uffff\1\150\1\165\6\uffff\1\174\3\uffff\1\173"+
+            "\2\uffff\1\164\2\uffff\1\162\33\uffff\1\172\7\uffff\1\171\11"+
+            "\uffff\1\154\1\170\5\uffff\1\153\1\163\3\uffff\1\166\1\167\1"+
+            "\155\1\156\1\157\1\160\1\161\1\165",
             "",
             "",
             "",
@@ -17812,11 +18019,29 @@ public class EulangParser extends Parser {
             "",
             "",
             "",
-            "\1\64\1\173\1\55\1\u0084\5\uffff\1\172\3\uffff\1\u0095\1\174"+
-            "\1\176\1\u0092\17\uffff\1\171\3\uffff\1\u0093\12\uffff\1\u0094"+
-            "\1\uffff\1\u008e\1\u008f\1\u0090\1\u0091\1\u008d\1\u008c\1\u008b"+
-            "\1\u0086\1\u0087\1\u0088\1\u0089\1\u008a\1\u0085\1\177\1\u0080"+
-            "\1\u0081\1\u0082\1\u0083\1\u0096\1\175",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\1\u0085\42\uffff\1\60\1\177\1\55\1\u0088\5\uffff\1\176\3\uffff"+
+            "\1\u009d\1\u0080\1\u0082\1\u0099\17\uffff\1\175\3\uffff\1\u009b"+
+            "\12\uffff\1\u009c\1\uffff\1\u0092\1\u0093\1\u0094\1\u0095\1"+
+            "\u0096\1\u0097\1\u0098\1\u009a\1\u0091\1\u0090\1\u008f\1\u008a"+
+            "\1\u008b\1\u008c\1\u008d\1\u008e\1\u0089\1\u0083\1\u0084\1\u0086"+
+            "\1\u0087\1\u009e\1\u0081",
+            "",
+            "",
+            "",
+            "",
             "",
             "",
             "",
@@ -17906,81 +18131,146 @@ public class EulangParser extends Parser {
         	int _s = s;
             switch ( s ) {
                     case 0 : 
-                        int LA6_100 = input.LA(1);
+                        int LA6_37 = input.LA(1);
 
                          
-                        int index6_100 = input.index();
+                        int index6_37 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (LA6_100==PERIOD) && (synpred5_Eulang())) {s = 121;}
+                        if ( (LA6_37==PERIOD) && (synpred5_Eulang())) {s = 46;}
 
-                        else if ( (LA6_100==LPAREN) && (synpred5_Eulang())) {s = 122;}
+                        else if ( (LA6_37==LESS) && (synpred5_Eulang())) {s = 47;}
 
-                        else if ( (LA6_100==LBRACKET) && (synpred5_Eulang())) {s = 123;}
+                        else if ( (LA6_37==COMMA) ) {s = 48;}
 
-                        else if ( (LA6_100==CARET) && (synpred5_Eulang())) {s = 124;}
+                        else if ( (LA6_37==RBRACKET) ) {s = 45;}
 
-                        else if ( (LA6_100==MINUSMINUS) && (synpred5_Eulang())) {s = 125;}
+                        else if ( (LA6_37==LPAREN) && (synpred5_Eulang())) {s = 49;}
 
-                        else if ( (LA6_100==RBRACKET) ) {s = 45;}
+                        else if ( (LA6_37==LBRACKET) && (synpred5_Eulang())) {s = 50;}
 
-                        else if ( (LA6_100==COMMA) ) {s = 52;}
+                        else if ( (LA6_37==CARET) && (synpred5_Eulang())) {s = 51;}
 
-                        else if ( (LA6_100==LESS) && (synpred5_Eulang())) {s = 126;}
+                        else if ( (LA6_37==MINUSMINUS) && (synpred5_Eulang())) {s = 52;}
 
-                        else if ( (LA6_100==STAR) && (synpred5_Eulang())) {s = 127;}
+                        else if ( (LA6_37==STAR) && (synpred5_Eulang())) {s = 53;}
 
-                        else if ( (LA6_100==SLASH) && (synpred5_Eulang())) {s = 128;}
+                        else if ( (LA6_37==SLASH) && (synpred5_Eulang())) {s = 54;}
 
-                        else if ( (LA6_100==BACKSLASH) && (synpred5_Eulang())) {s = 129;}
+                        else if ( (LA6_37==UDIV) && (synpred5_Eulang())) {s = 55;}
 
-                        else if ( (LA6_100==PERCENT) && (synpred5_Eulang())) {s = 130;}
+                        else if ( (LA6_37==PERCENT) && (synpred5_Eulang())) {s = 56;}
 
-                        else if ( (LA6_100==UMOD) && (synpred5_Eulang())) {s = 131;}
+                        else if ( (LA6_37==UMOD) && (synpred5_Eulang())) {s = 57;}
 
-                        else if ( (LA6_100==PLUS) && (synpred5_Eulang())) {s = 132;}
+                        else if ( (LA6_37==PLUS) && (synpred5_Eulang())) {s = 58;}
 
-                        else if ( (LA6_100==MINUS) && (synpred5_Eulang())) {s = 133;}
+                        else if ( (LA6_37==MINUS) && (synpred5_Eulang())) {s = 59;}
 
-                        else if ( (LA6_100==LSHIFT) && (synpred5_Eulang())) {s = 134;}
+                        else if ( (LA6_37==LSHIFT) && (synpred5_Eulang())) {s = 60;}
 
-                        else if ( (LA6_100==RSHIFT) && (synpred5_Eulang())) {s = 135;}
+                        else if ( (LA6_37==RSHIFT) && (synpred5_Eulang())) {s = 61;}
 
-                        else if ( (LA6_100==URSHIFT) && (synpred5_Eulang())) {s = 136;}
+                        else if ( (LA6_37==URSHIFT) && (synpred5_Eulang())) {s = 62;}
 
-                        else if ( (LA6_100==CRSHIFT) && (synpred5_Eulang())) {s = 137;}
+                        else if ( (LA6_37==CRSHIFT) && (synpred5_Eulang())) {s = 63;}
 
-                        else if ( (LA6_100==CLSHIFT) && (synpred5_Eulang())) {s = 138;}
+                        else if ( (LA6_37==CLSHIFT) && (synpred5_Eulang())) {s = 64;}
 
-                        else if ( (LA6_100==AMP) && (synpred5_Eulang())) {s = 139;}
+                        else if ( (LA6_37==AMP) && (synpred5_Eulang())) {s = 65;}
 
-                        else if ( (LA6_100==TILDE) && (synpred5_Eulang())) {s = 140;}
+                        else if ( (LA6_37==TILDE) && (synpred5_Eulang())) {s = 66;}
 
-                        else if ( (LA6_100==BAR) && (synpred5_Eulang())) {s = 141;}
+                        else if ( (LA6_37==BAR) && (synpred5_Eulang())) {s = 67;}
 
-                        else if ( (LA6_100==COMPEQ) && (synpred5_Eulang())) {s = 142;}
+                        else if ( (LA6_37==COMPEQ) && (synpred5_Eulang())) {s = 68;}
 
-                        else if ( (LA6_100==COMPNE) && (synpred5_Eulang())) {s = 143;}
+                        else if ( (LA6_37==COMPNE) && (synpred5_Eulang())) {s = 69;}
 
-                        else if ( (LA6_100==COMPLE) && (synpred5_Eulang())) {s = 144;}
+                        else if ( (LA6_37==COMPLE) && (synpred5_Eulang())) {s = 70;}
 
-                        else if ( (LA6_100==COMPGE) && (synpred5_Eulang())) {s = 145;}
+                        else if ( (LA6_37==COMPGE) && (synpred5_Eulang())) {s = 71;}
 
-                        else if ( (LA6_100==GREATER) && (synpred5_Eulang())) {s = 146;}
+                        else if ( (LA6_37==COMPULE) && (synpred5_Eulang())) {s = 72;}
 
-                        else if ( (LA6_100==AND) && (synpred5_Eulang())) {s = 147;}
+                        else if ( (LA6_37==COMPUGE) && (synpred5_Eulang())) {s = 73;}
 
-                        else if ( (LA6_100==OR) && (synpred5_Eulang())) {s = 148;}
+                        else if ( (LA6_37==ULESS) && (synpred5_Eulang())) {s = 74;}
 
-                        else if ( (LA6_100==QUESTION) && (synpred5_Eulang())) {s = 149;}
+                        else if ( (LA6_37==GREATER) && (synpred5_Eulang())) {s = 75;}
 
-                        else if ( (LA6_100==PLUSPLUS) && (synpred5_Eulang())) {s = 150;}
+                        else if ( (LA6_37==UGREATER) && (synpred5_Eulang())) {s = 76;}
+
+                        else if ( (LA6_37==AND) && (synpred5_Eulang())) {s = 77;}
+
+                        else if ( (LA6_37==OR) && (synpred5_Eulang())) {s = 78;}
+
+                        else if ( (LA6_37==QUESTION) && (synpred5_Eulang())) {s = 79;}
+
+                        else if ( (LA6_37==PLUSPLUS) && (synpred5_Eulang())) {s = 80;}
 
                          
-                        input.seek(index6_100);
+                        input.seek(index6_37);
                         if ( s>=0 ) return s;
                         break;
                     case 1 : 
+                        int LA6_45 = input.LA(1);
+
+                         
+                        int index6_45 = input.index();
+                        input.rewind();
+                        s = -1;
+                        if ( (LA6_45==LBRACE) && (synpred4_Eulang())) {s = 81;}
+
+                        else if ( (LA6_45==ID) && (synpred4_Eulang())) {s = 82;}
+
+                        else if ( (LA6_45==LBRACKET) && (synpred4_Eulang())) {s = 83;}
+
+                        else if ( (LA6_45==MINUS) && (synpred4_Eulang())) {s = 84;}
+
+                        else if ( (LA6_45==TILDE) && (synpred4_Eulang())) {s = 85;}
+
+                        else if ( (LA6_45==NUMBER) && (synpred4_Eulang())) {s = 86;}
+
+                        else if ( (LA6_45==FALSE) && (synpred4_Eulang())) {s = 87;}
+
+                        else if ( (LA6_45==TRUE) && (synpred4_Eulang())) {s = 88;}
+
+                        else if ( (LA6_45==CHAR_LITERAL) && (synpred4_Eulang())) {s = 89;}
+
+                        else if ( (LA6_45==STRING_LITERAL) && (synpred4_Eulang())) {s = 90;}
+
+                        else if ( (LA6_45==NIL) && (synpred4_Eulang())) {s = 91;}
+
+                        else if ( (LA6_45==STAR) && (synpred4_Eulang())) {s = 92;}
+
+                        else if ( (LA6_45==LPAREN) && (synpred4_Eulang())) {s = 93;}
+
+                        else if ( (LA6_45==CODE) && (synpred4_Eulang())) {s = 94;}
+
+                        else if ( (LA6_45==COLON||LA6_45==COLONS) && (synpred4_Eulang())) {s = 95;}
+
+                        else if ( (LA6_45==PLUSPLUS) && (synpred4_Eulang())) {s = 96;}
+
+                        else if ( (LA6_45==MINUSMINUS) && (synpred4_Eulang())) {s = 97;}
+
+                        else if ( (LA6_45==AMP) && (synpred4_Eulang())) {s = 98;}
+
+                        else if ( (LA6_45==NOT) && (synpred4_Eulang())) {s = 99;}
+
+                        else if ( (LA6_45==IF) && (synpred4_Eulang())) {s = 100;}
+
+                        else if ( (LA6_45==DATA) && (synpred4_Eulang())) {s = 101;}
+
+                        else if ( (LA6_45==MACRO) && (synpred4_Eulang())) {s = 102;}
+
+                        else if ( (LA6_45==SEMI) && (synpred5_Eulang())) {s = 103;}
+
+                         
+                        input.seek(index6_45);
+                        if ( s>=0 ) return s;
+                        break;
+                    case 2 : 
                         int LA6_3 = input.LA(1);
 
                          
@@ -18033,7 +18323,90 @@ public class EulangParser extends Parser {
                         input.seek(index6_3);
                         if ( s>=0 ) return s;
                         break;
-                    case 2 : 
+                    case 3 : 
+                        int LA6_104 = input.LA(1);
+
+                         
+                        int index6_104 = input.index();
+                        input.rewind();
+                        s = -1;
+                        if ( (LA6_104==RBRACKET) ) {s = 45;}
+
+                        else if ( (LA6_104==COMMA) ) {s = 48;}
+
+                        else if ( (LA6_104==PERIOD) && (synpred5_Eulang())) {s = 125;}
+
+                        else if ( (LA6_104==LPAREN) && (synpred5_Eulang())) {s = 126;}
+
+                        else if ( (LA6_104==LBRACKET) && (synpred5_Eulang())) {s = 127;}
+
+                        else if ( (LA6_104==CARET) && (synpred5_Eulang())) {s = 128;}
+
+                        else if ( (LA6_104==MINUSMINUS) && (synpred5_Eulang())) {s = 129;}
+
+                        else if ( (LA6_104==LESS) && (synpred5_Eulang())) {s = 130;}
+
+                        else if ( (LA6_104==STAR) && (synpred5_Eulang())) {s = 131;}
+
+                        else if ( (LA6_104==SLASH) && (synpred5_Eulang())) {s = 132;}
+
+                        else if ( (LA6_104==UDIV) && (synpred5_Eulang())) {s = 133;}
+
+                        else if ( (LA6_104==PERCENT) && (synpred5_Eulang())) {s = 134;}
+
+                        else if ( (LA6_104==UMOD) && (synpred5_Eulang())) {s = 135;}
+
+                        else if ( (LA6_104==PLUS) && (synpred5_Eulang())) {s = 136;}
+
+                        else if ( (LA6_104==MINUS) && (synpred5_Eulang())) {s = 137;}
+
+                        else if ( (LA6_104==LSHIFT) && (synpred5_Eulang())) {s = 138;}
+
+                        else if ( (LA6_104==RSHIFT) && (synpred5_Eulang())) {s = 139;}
+
+                        else if ( (LA6_104==URSHIFT) && (synpred5_Eulang())) {s = 140;}
+
+                        else if ( (LA6_104==CRSHIFT) && (synpred5_Eulang())) {s = 141;}
+
+                        else if ( (LA6_104==CLSHIFT) && (synpred5_Eulang())) {s = 142;}
+
+                        else if ( (LA6_104==AMP) && (synpred5_Eulang())) {s = 143;}
+
+                        else if ( (LA6_104==TILDE) && (synpred5_Eulang())) {s = 144;}
+
+                        else if ( (LA6_104==BAR) && (synpred5_Eulang())) {s = 145;}
+
+                        else if ( (LA6_104==COMPEQ) && (synpred5_Eulang())) {s = 146;}
+
+                        else if ( (LA6_104==COMPNE) && (synpred5_Eulang())) {s = 147;}
+
+                        else if ( (LA6_104==COMPLE) && (synpred5_Eulang())) {s = 148;}
+
+                        else if ( (LA6_104==COMPGE) && (synpred5_Eulang())) {s = 149;}
+
+                        else if ( (LA6_104==COMPULE) && (synpred5_Eulang())) {s = 150;}
+
+                        else if ( (LA6_104==COMPUGE) && (synpred5_Eulang())) {s = 151;}
+
+                        else if ( (LA6_104==ULESS) && (synpred5_Eulang())) {s = 152;}
+
+                        else if ( (LA6_104==GREATER) && (synpred5_Eulang())) {s = 153;}
+
+                        else if ( (LA6_104==UGREATER) && (synpred5_Eulang())) {s = 154;}
+
+                        else if ( (LA6_104==AND) && (synpred5_Eulang())) {s = 155;}
+
+                        else if ( (LA6_104==OR) && (synpred5_Eulang())) {s = 156;}
+
+                        else if ( (LA6_104==QUESTION) && (synpred5_Eulang())) {s = 157;}
+
+                        else if ( (LA6_104==PLUSPLUS) && (synpred5_Eulang())) {s = 158;}
+
+                         
+                        input.seek(index6_104);
+                        if ( s>=0 ) return s;
+                        break;
+                    case 4 : 
                         int LA6_2 = input.LA(1);
 
                          
@@ -18088,189 +18461,57 @@ public class EulangParser extends Parser {
                         input.seek(index6_2);
                         if ( s>=0 ) return s;
                         break;
-                    case 3 : 
-                        int LA6_45 = input.LA(1);
-
-                         
-                        int index6_45 = input.index();
-                        input.rewind();
-                        s = -1;
-                        if ( (LA6_45==LBRACE) && (synpred4_Eulang())) {s = 77;}
-
-                        else if ( (LA6_45==ID) && (synpred4_Eulang())) {s = 78;}
-
-                        else if ( (LA6_45==LBRACKET) && (synpred4_Eulang())) {s = 79;}
-
-                        else if ( (LA6_45==MINUS) && (synpred4_Eulang())) {s = 80;}
-
-                        else if ( (LA6_45==TILDE) && (synpred4_Eulang())) {s = 81;}
-
-                        else if ( (LA6_45==NUMBER) && (synpred4_Eulang())) {s = 82;}
-
-                        else if ( (LA6_45==FALSE) && (synpred4_Eulang())) {s = 83;}
-
-                        else if ( (LA6_45==TRUE) && (synpred4_Eulang())) {s = 84;}
-
-                        else if ( (LA6_45==CHAR_LITERAL) && (synpred4_Eulang())) {s = 85;}
-
-                        else if ( (LA6_45==STRING_LITERAL) && (synpred4_Eulang())) {s = 86;}
-
-                        else if ( (LA6_45==NIL) && (synpred4_Eulang())) {s = 87;}
-
-                        else if ( (LA6_45==STAR) && (synpred4_Eulang())) {s = 88;}
-
-                        else if ( (LA6_45==LPAREN) && (synpred4_Eulang())) {s = 89;}
-
-                        else if ( (LA6_45==CODE) && (synpred4_Eulang())) {s = 90;}
-
-                        else if ( (LA6_45==COLON||LA6_45==COLONS) && (synpred4_Eulang())) {s = 91;}
-
-                        else if ( (LA6_45==PLUSPLUS) && (synpred4_Eulang())) {s = 92;}
-
-                        else if ( (LA6_45==MINUSMINUS) && (synpred4_Eulang())) {s = 93;}
-
-                        else if ( (LA6_45==AMP) && (synpred4_Eulang())) {s = 94;}
-
-                        else if ( (LA6_45==NOT) && (synpred4_Eulang())) {s = 95;}
-
-                        else if ( (LA6_45==IF) && (synpred4_Eulang())) {s = 96;}
-
-                        else if ( (LA6_45==DATA) && (synpred4_Eulang())) {s = 97;}
-
-                        else if ( (LA6_45==MACRO) && (synpred4_Eulang())) {s = 98;}
-
-                        else if ( (LA6_45==SEMI) && (synpred5_Eulang())) {s = 99;}
-
-                         
-                        input.seek(index6_45);
-                        if ( s>=0 ) return s;
-                        break;
-                    case 4 : 
-                        int LA6_52 = input.LA(1);
-
-                         
-                        int index6_52 = input.index();
-                        input.rewind();
-                        s = -1;
-                        if ( (LA6_52==ID) ) {s = 100;}
-
-                        else if ( (LA6_52==CODE) && (synpred5_Eulang())) {s = 101;}
-
-                        else if ( (LA6_52==MACRO) && (synpred5_Eulang())) {s = 102;}
-
-                        else if ( (LA6_52==MINUS) && (synpred5_Eulang())) {s = 103;}
-
-                        else if ( (LA6_52==TILDE) && (synpred5_Eulang())) {s = 104;}
-
-                        else if ( (LA6_52==NUMBER) && (synpred5_Eulang())) {s = 105;}
-
-                        else if ( (LA6_52==FALSE) && (synpred5_Eulang())) {s = 106;}
-
-                        else if ( (LA6_52==TRUE) && (synpred5_Eulang())) {s = 107;}
-
-                        else if ( (LA6_52==CHAR_LITERAL) && (synpred5_Eulang())) {s = 108;}
-
-                        else if ( (LA6_52==STRING_LITERAL) && (synpred5_Eulang())) {s = 109;}
-
-                        else if ( (LA6_52==NIL) && (synpred5_Eulang())) {s = 110;}
-
-                        else if ( (LA6_52==STAR) && (synpred5_Eulang())) {s = 111;}
-
-                        else if ( (LA6_52==LPAREN) && (synpred5_Eulang())) {s = 112;}
-
-                        else if ( (LA6_52==COLON||LA6_52==COLONS) && (synpred5_Eulang())) {s = 113;}
-
-                        else if ( (LA6_52==PLUSPLUS) && (synpred5_Eulang())) {s = 114;}
-
-                        else if ( (LA6_52==MINUSMINUS) && (synpred5_Eulang())) {s = 115;}
-
-                        else if ( (LA6_52==AMP) && (synpred5_Eulang())) {s = 116;}
-
-                        else if ( (LA6_52==NOT) && (synpred5_Eulang())) {s = 117;}
-
-                        else if ( (LA6_52==IF) && (synpred5_Eulang())) {s = 118;}
-
-                        else if ( (LA6_52==FOR) && (synpred5_Eulang())) {s = 119;}
-
-                        else if ( (LA6_52==RBRACKET) && (synpred5_Eulang())) {s = 120;}
-
-                         
-                        input.seek(index6_52);
-                        if ( s>=0 ) return s;
-                        break;
                     case 5 : 
-                        int LA6_37 = input.LA(1);
+                        int LA6_48 = input.LA(1);
 
                          
-                        int index6_37 = input.index();
+                        int index6_48 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (LA6_37==PERIOD) && (synpred5_Eulang())) {s = 46;}
+                        if ( (LA6_48==ID) ) {s = 104;}
 
-                        else if ( (LA6_37==LESS) && (synpred5_Eulang())) {s = 47;}
+                        else if ( (LA6_48==CODE) && (synpred5_Eulang())) {s = 105;}
 
-                        else if ( (LA6_37==LPAREN) && (synpred5_Eulang())) {s = 48;}
+                        else if ( (LA6_48==MACRO) && (synpred5_Eulang())) {s = 106;}
 
-                        else if ( (LA6_37==LBRACKET) && (synpred5_Eulang())) {s = 49;}
+                        else if ( (LA6_48==MINUS) && (synpred5_Eulang())) {s = 107;}
 
-                        else if ( (LA6_37==CARET) && (synpred5_Eulang())) {s = 50;}
+                        else if ( (LA6_48==TILDE) && (synpred5_Eulang())) {s = 108;}
 
-                        else if ( (LA6_37==MINUSMINUS) && (synpred5_Eulang())) {s = 51;}
+                        else if ( (LA6_48==NUMBER) && (synpred5_Eulang())) {s = 109;}
 
-                        else if ( (LA6_37==COMMA) ) {s = 52;}
+                        else if ( (LA6_48==FALSE) && (synpred5_Eulang())) {s = 110;}
 
-                        else if ( (LA6_37==RBRACKET) ) {s = 45;}
+                        else if ( (LA6_48==TRUE) && (synpred5_Eulang())) {s = 111;}
 
-                        else if ( (LA6_37==STAR) && (synpred5_Eulang())) {s = 53;}
+                        else if ( (LA6_48==CHAR_LITERAL) && (synpred5_Eulang())) {s = 112;}
 
-                        else if ( (LA6_37==SLASH) && (synpred5_Eulang())) {s = 54;}
+                        else if ( (LA6_48==STRING_LITERAL) && (synpred5_Eulang())) {s = 113;}
 
-                        else if ( (LA6_37==BACKSLASH) && (synpred5_Eulang())) {s = 55;}
+                        else if ( (LA6_48==NIL) && (synpred5_Eulang())) {s = 114;}
 
-                        else if ( (LA6_37==PERCENT) && (synpred5_Eulang())) {s = 56;}
+                        else if ( (LA6_48==STAR) && (synpred5_Eulang())) {s = 115;}
 
-                        else if ( (LA6_37==UMOD) && (synpred5_Eulang())) {s = 57;}
+                        else if ( (LA6_48==LPAREN) && (synpred5_Eulang())) {s = 116;}
 
-                        else if ( (LA6_37==PLUS) && (synpred5_Eulang())) {s = 58;}
+                        else if ( (LA6_48==COLON||LA6_48==COLONS) && (synpred5_Eulang())) {s = 117;}
 
-                        else if ( (LA6_37==MINUS) && (synpred5_Eulang())) {s = 59;}
+                        else if ( (LA6_48==PLUSPLUS) && (synpred5_Eulang())) {s = 118;}
 
-                        else if ( (LA6_37==LSHIFT) && (synpred5_Eulang())) {s = 60;}
+                        else if ( (LA6_48==MINUSMINUS) && (synpred5_Eulang())) {s = 119;}
 
-                        else if ( (LA6_37==RSHIFT) && (synpred5_Eulang())) {s = 61;}
+                        else if ( (LA6_48==AMP) && (synpred5_Eulang())) {s = 120;}
 
-                        else if ( (LA6_37==URSHIFT) && (synpred5_Eulang())) {s = 62;}
+                        else if ( (LA6_48==NOT) && (synpred5_Eulang())) {s = 121;}
 
-                        else if ( (LA6_37==CRSHIFT) && (synpred5_Eulang())) {s = 63;}
+                        else if ( (LA6_48==IF) && (synpred5_Eulang())) {s = 122;}
 
-                        else if ( (LA6_37==CLSHIFT) && (synpred5_Eulang())) {s = 64;}
+                        else if ( (LA6_48==FOR) && (synpred5_Eulang())) {s = 123;}
 
-                        else if ( (LA6_37==AMP) && (synpred5_Eulang())) {s = 65;}
-
-                        else if ( (LA6_37==TILDE) && (synpred5_Eulang())) {s = 66;}
-
-                        else if ( (LA6_37==BAR) && (synpred5_Eulang())) {s = 67;}
-
-                        else if ( (LA6_37==COMPEQ) && (synpred5_Eulang())) {s = 68;}
-
-                        else if ( (LA6_37==COMPNE) && (synpred5_Eulang())) {s = 69;}
-
-                        else if ( (LA6_37==COMPLE) && (synpred5_Eulang())) {s = 70;}
-
-                        else if ( (LA6_37==COMPGE) && (synpred5_Eulang())) {s = 71;}
-
-                        else if ( (LA6_37==GREATER) && (synpred5_Eulang())) {s = 72;}
-
-                        else if ( (LA6_37==AND) && (synpred5_Eulang())) {s = 73;}
-
-                        else if ( (LA6_37==OR) && (synpred5_Eulang())) {s = 74;}
-
-                        else if ( (LA6_37==QUESTION) && (synpred5_Eulang())) {s = 75;}
-
-                        else if ( (LA6_37==PLUSPLUS) && (synpred5_Eulang())) {s = 76;}
+                        else if ( (LA6_48==RBRACKET) && (synpred5_Eulang())) {s = 124;}
 
                          
-                        input.seek(index6_37);
+                        input.seek(index6_48);
                         if ( s>=0 ) return s;
                         break;
             }
@@ -18286,26 +18527,26 @@ public class EulangParser extends Parser {
     static final String DFA7_eofS =
         "\12\uffff";
     static final String DFA7_minS =
-        "\1\7\1\uffff\1\101\4\uffff\1\7\2\uffff";
+        "\1\7\1\uffff\1\41\4\uffff\1\7\2\uffff";
     static final String DFA7_maxS =
-        "\1\u008f\1\uffff\1\u0088\4\uffff\1\u008f\2\uffff";
+        "\1\u0092\1\uffff\1\u008b\4\uffff\1\u0092\2\uffff";
     static final String DFA7_acceptS =
         "\1\uffff\1\1\1\uffff\1\4\1\5\1\6\1\7\1\uffff\1\3\1\2";
     static final String DFA7_specialS =
         "\1\0\11\uffff}>";
     static final String[] DFA7_transitionS = {
             "\1\4\1\6\65\uffff\1\2\1\4\5\uffff\1\3\2\uffff\1\1\4\uffff\1"+
-            "\4\2\uffff\1\4\33\uffff\1\4\7\uffff\1\4\5\uffff\2\4\5\uffff"+
-            "\2\4\4\uffff\10\4\1\5",
+            "\4\2\uffff\1\4\33\uffff\1\4\7\uffff\1\4\11\uffff\2\4\5\uffff"+
+            "\2\4\3\uffff\10\4\1\5",
             "",
-            "\1\4\2\uffff\3\4\1\7\5\uffff\1\4\3\uffff\4\4\17\uffff\1\4\3"+
-            "\uffff\1\4\12\uffff\1\4\1\uffff\24\4",
-            "",
-            "",
+            "\1\4\37\uffff\1\4\2\uffff\3\4\1\7\5\uffff\1\4\3\uffff\4\4\17"+
+            "\uffff\1\4\3\uffff\1\4\12\uffff\1\4\1\uffff\27\4",
             "",
             "",
-            "\1\4\66\uffff\2\4\10\uffff\1\10\4\uffff\1\4\2\uffff\1\4\51"+
-            "\uffff\2\4\5\uffff\2\4\4\uffff\10\4\1\11",
+            "",
+            "",
+            "\1\4\66\uffff\2\4\10\uffff\1\10\4\uffff\1\4\2\uffff\1\4\55"+
+            "\uffff\2\4\5\uffff\2\4\3\uffff\10\4\1\11",
             "",
             ""
     };
@@ -18384,14 +18625,14 @@ public class EulangParser extends Parser {
     static final String DFA11_minS =
         "\1\7\1\0\24\uffff";
     static final String DFA11_maxS =
-        "\1\u008e\1\0\24\uffff";
+        "\1\u0091\1\0\24\uffff";
     static final String DFA11_acceptS =
         "\2\uffff\1\2\1\3\20\uffff\1\4\1\1";
     static final String DFA11_specialS =
         "\1\uffff\1\0\24\uffff}>";
     static final String[] DFA11_transitionS = {
             "\1\1\1\2\65\uffff\2\3\12\uffff\1\24\2\uffff\1\3\2\uffff\1\3"+
-            "\33\uffff\1\3\7\uffff\1\3\5\uffff\2\3\5\uffff\2\3\4\uffff\10"+
+            "\33\uffff\1\3\7\uffff\1\3\11\uffff\2\3\5\uffff\2\3\3\uffff\10"+
             "\3",
             "\1\uffff",
             "",
@@ -18630,16 +18871,16 @@ public class EulangParser extends Parser {
     static final String DFA43_minS =
         "\1\7\1\100\1\76\2\uffff\1\76\2\uffff\2\100\1\76\1\100";
     static final String DFA43_maxS =
-        "\1\u008e\1\150\1\u008e\2\uffff\1\76\2\uffff\2\150\1\76\1\150";
+        "\1\u0091\1\150\1\u0091\2\uffff\1\76\2\uffff\2\150\1\76\1\150";
     static final String DFA43_acceptS =
         "\3\uffff\1\3\1\4\1\uffff\1\1\1\2\4\uffff";
     static final String DFA43_specialS =
         "\14\uffff}>";
     static final String[] DFA43_transitionS = {
-            "\1\3\66\uffff\1\1\1\2\23\uffff\1\4\72\uffff\1\2",
+            "\1\3\66\uffff\1\1\1\2\23\uffff\1\4\75\uffff\1\2",
             "\2\7\2\uffff\2\7\3\uffff\1\7\4\uffff\2\7\2\uffff\1\7\1\6\1"+
             "\7\17\uffff\1\5\1\uffff\1\7\1\uffff\1\7",
-            "\1\10\1\2\116\uffff\1\2",
+            "\1\10\1\2\121\uffff\1\2",
             "",
             "",
             "\1\11",
@@ -18694,7 +18935,7 @@ public class EulangParser extends Parser {
     static final String DFA48_minS =
         "\1\7\3\0\27\uffff";
     static final String DFA48_maxS =
-        "\1\u008e\3\0\27\uffff";
+        "\1\u0091\3\0\27\uffff";
     static final String DFA48_acceptS =
         "\4\uffff\1\3\16\uffff\1\4\1\5\1\6\3\uffff\1\1\1\2";
     static final String DFA48_specialS =
@@ -18702,7 +18943,7 @@ public class EulangParser extends Parser {
     static final String[] DFA48_transitionS = {
             "\1\4\45\uffff\1\24\20\uffff\1\1\1\3\10\uffff\1\23\1\uffff\1"+
             "\25\2\uffff\1\2\2\uffff\1\4\24\uffff\3\25\4\uffff\1\4\7\uffff"+
-            "\1\4\5\uffff\2\4\5\uffff\2\4\4\uffff\7\4\1\3",
+            "\1\4\11\uffff\2\4\5\uffff\2\4\3\uffff\7\4\1\3",
             "\1\uffff",
             "\1\uffff",
             "\1\uffff",
@@ -18857,8 +19098,8 @@ public class EulangParser extends Parser {
         "\1\76\1\77\1\76\2\uffff\1\76\1\104\1\76\1\77\2\76\1\104\2\uffff"+
         "\2\104\3\76\1\77\3\104\2\uffff\1\76\1\104";
     static final String DFA58_maxS =
-        "\1\115\1\104\1\u008e\2\uffff\1\76\1\144\1\u008e\1\104\1\76\1\u008e"+
-        "\1\144\2\uffff\2\144\1\u008e\2\76\1\102\3\144\2\uffff\1\76\1\144";
+        "\1\115\1\104\1\u0091\2\uffff\1\76\1\144\1\u0091\1\104\1\76\1\u0091"+
+        "\1\144\2\uffff\2\144\1\u0091\2\76\1\102\3\144\2\uffff\1\76\1\144";
     static final String DFA58_acceptS =
         "\3\uffff\1\1\1\3\7\uffff\1\5\1\6\11\uffff\1\4\1\2\2\uffff";
     static final String DFA58_specialS =
@@ -18866,21 +19107,21 @@ public class EulangParser extends Parser {
     static final String[] DFA58_transitionS = {
             "\1\1\16\uffff\1\2",
             "\1\4\2\uffff\1\3\1\uffff\1\5",
-            "\1\6\1\7\116\uffff\1\7",
+            "\1\6\1\7\121\uffff\1\7",
             "",
             "",
             "\1\10",
             "\1\12\37\uffff\1\11",
-            "\1\13\1\7\116\uffff\1\7",
+            "\1\13\1\7\121\uffff\1\7",
             "\1\15\2\uffff\1\14\1\uffff\1\5",
             "\1\16",
-            "\1\17\1\20\116\uffff\1\20",
+            "\1\17\1\20\121\uffff\1\20",
             "\1\12\37\uffff\1\21",
             "",
             "",
             "\1\12\37\uffff\1\11",
             "\1\12\11\uffff\1\23\25\uffff\1\22",
-            "\1\24\1\20\116\uffff\1\20",
+            "\1\24\1\20\121\uffff\1\20",
             "\1\25",
             "\1\26",
             "\1\27\2\uffff\1\30",
@@ -18933,14 +19174,14 @@ public class EulangParser extends Parser {
     static final String DFA64_minS =
         "\1\7\3\0\22\uffff";
     static final String DFA64_maxS =
-        "\1\u008e\3\0\22\uffff";
+        "\1\u0091\3\0\22\uffff";
     static final String DFA64_acceptS =
         "\4\uffff\1\4\16\uffff\1\1\1\2\1\3";
     static final String DFA64_specialS =
         "\1\uffff\1\0\1\1\1\2\22\uffff}>";
     static final String[] DFA64_transitionS = {
             "\1\4\66\uffff\1\1\1\2\15\uffff\1\3\2\uffff\1\4\33\uffff\1\4"+
-            "\7\uffff\1\4\5\uffff\2\4\5\uffff\2\4\4\uffff\7\4\1\2",
+            "\7\uffff\1\4\11\uffff\2\4\5\uffff\2\4\3\uffff\7\4\1\2",
             "\1\uffff",
             "\1\uffff",
             "\1\uffff",
@@ -19064,14 +19305,14 @@ public class EulangParser extends Parser {
     static final String DFA68_minS =
         "\1\7\23\uffff\1\0\2\uffff";
     static final String DFA68_maxS =
-        "\1\u008e\23\uffff\1\0\2\uffff";
+        "\1\u0091\23\uffff\1\0\2\uffff";
     static final String DFA68_acceptS =
         "\1\uffff\1\1\21\uffff\1\2\1\uffff\1\3\1\4";
     static final String DFA68_specialS =
         "\24\uffff\1\0\2\uffff}>";
     static final String[] DFA68_transitionS = {
             "\1\1\66\uffff\2\1\5\uffff\1\24\7\uffff\1\1\2\uffff\1\1\23\uffff"+
-            "\1\23\7\uffff\1\1\7\uffff\1\1\5\uffff\2\1\5\uffff\2\1\4\uffff"+
+            "\1\23\7\uffff\1\1\7\uffff\1\1\11\uffff\2\1\5\uffff\2\1\3\uffff"+
             "\10\1",
             "",
             "",
@@ -19163,14 +19404,14 @@ public class EulangParser extends Parser {
     static final String DFA99_minS =
         "\1\7\2\uffff\13\0\7\uffff";
     static final String DFA99_maxS =
-        "\1\u008e\2\uffff\13\0\7\uffff";
+        "\1\u0091\2\uffff\13\0\7\uffff";
     static final String DFA99_acceptS =
         "\1\uffff\1\1\1\2\13\uffff\1\7\1\10\1\11\1\3\1\4\1\5\1\6";
     static final String DFA99_specialS =
         "\3\uffff\1\0\1\1\1\2\1\3\1\4\1\5\1\6\1\7\1\10\1\11\1\12\7\uffff}>";
     static final String[] DFA99_transitionS = {
-            "\1\13\66\uffff\1\14\1\15\15\uffff\1\12\2\uffff\1\10\51\uffff"+
-            "\1\2\1\20\5\uffff\1\1\1\11\4\uffff\1\16\1\17\1\3\1\4\1\5\1\6"+
+            "\1\13\66\uffff\1\14\1\15\15\uffff\1\12\2\uffff\1\10\55\uffff"+
+            "\1\2\1\20\5\uffff\1\1\1\11\3\uffff\1\16\1\17\1\3\1\4\1\5\1\6"+
             "\1\7\1\15",
             "",
             "",
@@ -19224,7 +19465,7 @@ public class EulangParser extends Parser {
             this.transition = DFA99_transition;
         }
         public String getDescription() {
-            return "490:1: unary : ( MINUS u= unary -> ^( NEG $u) | TILDE u= unary -> ^( INV $u) | ( noIdAtom idModifier )=> noIdAtom ( idModifier )+ -> ^( IDEXPR noIdAtom ( idModifier )+ ) | ( atom PLUSPLUS )=>a= atom PLUSPLUS -> ^( POSTINC $a) | ( atom MINUSMINUS )=>a= atom MINUSMINUS -> ^( POSTDEC $a) | ( atom -> atom ) | PLUSPLUS a= atom -> ^( PREINC $a) | MINUSMINUS a= atom -> ^( PREDEC $a) | AMP idExpr -> ^( ADDROF idExpr ) );";
+            return "494:1: unary : ( MINUS u= unary -> ^( NEG $u) | TILDE u= unary -> ^( INV $u) | ( noIdAtom idModifier )=> noIdAtom ( idModifier )+ -> ^( IDEXPR noIdAtom ( idModifier )+ ) | ( atom PLUSPLUS )=>a= atom PLUSPLUS -> ^( POSTINC $a) | ( atom MINUSMINUS )=>a= atom MINUSMINUS -> ^( POSTDEC $a) | ( atom -> atom ) | PLUSPLUS a= atom -> ^( PREINC $a) | MINUSMINUS a= atom -> ^( PREDEC $a) | AMP idExpr -> ^( ADDROF idExpr ) );";
         }
         public int specialStateTransition(int s, IntStream _input) throws NoViableAltException {
             TokenStream input = (TokenStream)_input;
@@ -19450,13 +19691,13 @@ public class EulangParser extends Parser {
     static final String DFA100_minS =
         "\1\7\7\uffff\1\0\3\uffff";
     static final String DFA100_maxS =
-        "\1\u008d\7\uffff\1\0\3\uffff";
+        "\1\u0090\7\uffff\1\0\3\uffff";
     static final String DFA100_acceptS =
         "\1\uffff\1\1\1\2\1\3\1\4\1\5\1\6\1\7\1\uffff\1\12\1\10\1\11";
     static final String DFA100_specialS =
         "\1\0\7\uffff\1\1\3\uffff}>";
     static final String[] DFA100_transitionS = {
-            "\1\11\105\uffff\1\10\2\uffff\1\6\61\uffff\1\7\6\uffff\1\1\1"+
+            "\1\11\105\uffff\1\10\2\uffff\1\6\65\uffff\1\7\5\uffff\1\1\1"+
             "\2\1\3\1\4\1\5",
             "",
             "",
@@ -19501,7 +19742,7 @@ public class EulangParser extends Parser {
             this.transition = DFA100_transition;
         }
         public String getDescription() {
-            return "502:1: noIdAtom : ( NUMBER -> ^( LIT NUMBER ) | FALSE -> ^( LIT FALSE ) | TRUE -> ^( LIT TRUE ) | CHAR_LITERAL -> ^( LIT CHAR_LITERAL ) | STRING_LITERAL -> ^( LIT STRING_LITERAL ) | NIL -> ^( LIT NIL ) | ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall -> ^( INLINE idOrScopeRef $f) | ( tuple )=> tuple -> tuple | LPAREN assignExpr RPAREN -> assignExpr | code -> code );";
+            return "506:1: noIdAtom : ( NUMBER -> ^( LIT NUMBER ) | FALSE -> ^( LIT FALSE ) | TRUE -> ^( LIT TRUE ) | CHAR_LITERAL -> ^( LIT CHAR_LITERAL ) | STRING_LITERAL -> ^( LIT STRING_LITERAL ) | NIL -> ^( LIT NIL ) | ( STAR idOrScopeRef LPAREN )=> STAR idOrScopeRef f= funcCall -> ^( INLINE idOrScopeRef $f) | ( tuple )=> tuple -> tuple | LPAREN assignExpr RPAREN -> assignExpr | code -> code );";
         }
         public int specialStateTransition(int s, IntStream _input) throws NoViableAltException {
             TokenStream input = (TokenStream)_input;
@@ -19566,14 +19807,14 @@ public class EulangParser extends Parser {
     static final String DFA107_minS =
         "\1\7\3\0\11\uffff";
     static final String DFA107_maxS =
-        "\1\u008e\3\0\11\uffff";
+        "\1\u0091\3\0\11\uffff";
     static final String DFA107_acceptS =
         "\4\uffff\1\1\1\2\7\uffff";
     static final String DFA107_specialS =
         "\1\uffff\1\0\1\1\1\2\11\uffff}>";
     static final String[] DFA107_transitionS = {
-            "\1\3\66\uffff\1\1\1\2\15\uffff\1\5\2\uffff\1\5\2\uffff\1\4\56"+
-            "\uffff\1\5\6\uffff\5\5\1\2",
+            "\1\3\66\uffff\1\1\1\2\15\uffff\1\5\2\uffff\1\5\2\uffff\1\4\62"+
+            "\uffff\1\5\5\uffff\5\5\1\2",
             "\1\uffff",
             "\1\uffff",
             "\1\uffff",
@@ -19618,7 +19859,7 @@ public class EulangParser extends Parser {
             this.transition = DFA107_transition;
         }
         public String getDescription() {
-            return "525:1: instanceExpr options {backtrack=true; } : ( type | atom );";
+            return "529:1: instanceExpr options {backtrack=true; } : ( type | atom );";
         }
         public int specialStateTransition(int s, IntStream _input) throws NoViableAltException {
             TokenStream input = (TokenStream)_input;
@@ -19681,16 +19922,16 @@ public class EulangParser extends Parser {
 
     public static final BitSet FOLLOW_toplevelstmts_in_prog404 = new BitSet(new long[]{0x0000000000000000L});
     public static final BitSet FOLLOW_EOF_in_prog406 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_toplevelstat_in_toplevelstmts435 = new BitSet(new long[]{0xC000000000000082L,0x0C10100000012108L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_toplevelstat_in_toplevelstmts435 = new BitSet(new long[]{0xC000000000000082L,0xC010100000012108L,0x000000000003FC60L});
     public static final BitSet FOLLOW_defineStmt_in_toplevelstat468 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_toplevelstat485 = new BitSet(new long[]{0x8000000000000000L});
-    public static final BitSet FOLLOW_COLON_in_toplevelstat487 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COLON_in_toplevelstat487 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_toplevelstat489 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000003L});
-    public static final BitSet FOLLOW_EQUALS_in_toplevelstat492 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_toplevelstat492 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExprOrInitList_in_toplevelstat494 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
     public static final BitSet FOLLOW_SEMI_in_toplevelstat502 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_toplevelstat533 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000004L});
-    public static final BitSet FOLLOW_COLON_EQUALS_in_toplevelstat535 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COLON_EQUALS_in_toplevelstat535 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExprOrInitList_in_toplevelstat537 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
     public static final BitSet FOLLOW_SEMI_in_toplevelstat540 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_FORWARD_in_toplevelstat561 = new BitSet(new long[]{0x4000000000000000L});
@@ -19707,40 +19948,40 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_EQUALS_in_defineStmt671 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000020L});
     public static final BitSet FOLLOW_LBRACKET_in_defineStmt673 = new BitSet(new long[]{0x4000000000000000L,0x0000000000000040L});
     public static final BitSet FOLLOW_idlistOrEmpty_in_defineStmt675 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
-    public static final BitSet FOLLOW_RBRACKET_in_defineStmt677 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012128L,0x000000000000FF86L});
+    public static final BitSet FOLLOW_RBRACKET_in_defineStmt677 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012128L,0x000000000007FC60L});
     public static final BitSet FOLLOW_toplevelvalue_in_defineStmt680 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
     public static final BitSet FOLLOW_SEMI_in_defineStmt686 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_defineStmt716 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_defineStmt718 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012128L,0x000000000000FF86L});
+    public static final BitSet FOLLOW_EQUALS_in_defineStmt718 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012128L,0x000000000007FC60L});
     public static final BitSet FOLLOW_toplevelvalue_in_defineStmt720 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
     public static final BitSet FOLLOW_SEMI_in_defineStmt726 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_xscope_in_toplevelvalue755 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_toplevelvalue763 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000080L});
-    public static final BitSet FOLLOW_PLUS_in_toplevelvalue765 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000008000L});
+    public static final BitSet FOLLOW_PLUS_in_toplevelvalue765 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000040000L});
     public static final BitSet FOLLOW_data_in_toplevelvalue767 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_toplevelvalue785 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000080L});
-    public static final BitSet FOLLOW_PLUS_in_toplevelvalue787 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012108L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_PLUS_in_toplevelvalue787 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012108L,0x000000000003FC60L});
     public static final BitSet FOLLOW_xscope_in_toplevelvalue789 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_selector_in_toplevelvalue807 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_rhsExpr_in_toplevelvalue815 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_data_in_toplevelvalue823 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_macro_in_toplevelvalue831 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACKET_in_selector850 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012568L,0x000000000000FF86L});
+    public static final BitSet FOLLOW_LBRACKET_in_selector850 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012568L,0x000000000007FC60L});
     public static final BitSet FOLLOW_selectors_in_selector852 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
     public static final BitSet FOLLOW_RBRACKET_in_selector854 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_selectoritem_in_selectors880 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_selectors884 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012528L,0x000000000000FF86L});
+    public static final BitSet FOLLOW_COMMA_in_selectors884 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012528L,0x000000000007FC60L});
     public static final BitSet FOLLOW_selectoritem_in_selectors886 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_COMMA_in_selectors891 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_code_in_selectoritem930 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_macro_in_selectoritem934 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_rhsExpr_in_selectoritem938 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_listCompr_in_selectoritem942 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACE_in_xscope952 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012108L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACE_in_xscope952 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012108L,0x000000000003FC60L});
     public static final BitSet FOLLOW_toplevelstmts_in_xscope954 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000200L});
     public static final BitSet FOLLOW_RBRACE_in_xscope956 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_forIn_in_listCompr983 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012528L,0x000000000000FF86L});
-    public static final BitSet FOLLOW_COLON_in_listCompr986 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012128L,0x000000000000FF86L});
+    public static final BitSet FOLLOW_forIn_in_listCompr983 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012528L,0x000000000007FC60L});
+    public static final BitSet FOLLOW_COLON_in_listCompr986 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012128L,0x000000000007FC60L});
     public static final BitSet FOLLOW_listiterable_in_listCompr988 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_FOR_in_forIn1020 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_idlist_in_forIn1022 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000800L});
@@ -19752,22 +19993,22 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_idlist_in_idlistOrEmpty1082 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_code_in_listiterable1105 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_macro_in_listiterable1109 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACKET_in_list1124 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012168L,0x000000000000FF86L});
+    public static final BitSet FOLLOW_LBRACKET_in_list1124 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012168L,0x000000000007FC60L});
     public static final BitSet FOLLOW_listitems_in_list1126 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
     public static final BitSet FOLLOW_RBRACKET_in_list1128 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_listitem_in_listitems1158 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_listitems1162 = new BitSet(new long[]{0xC000000000000180L,0x0C10100000012128L,0x000000000000FF86L});
+    public static final BitSet FOLLOW_COMMA_in_listitems1162 = new BitSet(new long[]{0xC000000000000180L,0xC010100000012128L,0x000000000007FC60L});
     public static final BitSet FOLLOW_listitem_in_listitems1164 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_COMMA_in_listitems1169 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_toplevelvalue_in_listitem1195 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_CODE_in_code1213 = new BitSet(new long[]{0x0000000000000000L,0x0000000000002100L});
     public static final BitSet FOLLOW_proto_in_code1215 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000100L});
-    public static final BitSet FOLLOW_LBRACE_in_code1218 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013700L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACE_in_code1218 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013700L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codestmtlist_in_code1220 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000200L});
     public static final BitSet FOLLOW_RBRACE_in_code1222 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_MACRO_in_macro1250 = new BitSet(new long[]{0x0000000000000000L,0x0000000000002100L});
     public static final BitSet FOLLOW_proto_in_macro1252 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000100L});
-    public static final BitSet FOLLOW_LBRACE_in_macro1256 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013700L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACE_in_macro1256 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013700L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codestmtlist_in_macro1258 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000200L});
     public static final BitSet FOLLOW_RBRACE_in_macro1260 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_argdefsWithTypes_in_argdefs1305 = new BitSet(new long[]{0x0000000000000002L});
@@ -19781,15 +20022,15 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_ID_in_argdefWithType1379 = new BitSet(new long[]{0x8000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_COMMA_in_argdefWithType1382 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_argdefWithType1384 = new BitSet(new long[]{0x8000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COLON_in_argdefWithType1389 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COLON_in_argdefWithType1389 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_argdefWithType1391 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_MACRO_in_argdefWithType1419 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_argdefWithType1421 = new BitSet(new long[]{0x8000000000000002L,0x0000000000000011L});
     public static final BitSet FOLLOW_COMMA_in_argdefWithType1424 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_argdefWithType1426 = new BitSet(new long[]{0x8000000000000002L,0x0000000000000011L});
-    public static final BitSet FOLLOW_COLON_in_argdefWithType1431 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COLON_in_argdefWithType1431 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_argdefWithType1433 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_argdefWithType1438 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_argdefWithType1438 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_argdefWithType1442 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_argdefWithName_in_argdefsWithNames1478 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
     public static final BitSet FOLLOW_COMMA_in_argdefsWithNames1482 = new BitSet(new long[]{0x4000000000000000L,0x0000000000001000L});
@@ -19801,17 +20042,17 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_argdefs_in_proto1541 = new BitSet(new long[]{0x0000000000000000L,0x000000000000C000L});
     public static final BitSet FOLLOW_xreturns_in_proto1543 = new BitSet(new long[]{0x0000000000000000L,0x0000000000004000L});
     public static final BitSet FOLLOW_RPAREN_in_proto1546 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_ARROW_in_xreturns1589 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_ARROW_in_xreturns1589 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_xreturns1591 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ARROW_in_xreturns1606 = new BitSet(new long[]{0x0000000000000000L,0x0000000000002000L});
     public static final BitSet FOLLOW_argtuple_in_xreturns1608 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ARROW_in_xreturns1628 = new BitSet(new long[]{0x0000000000000000L,0x0000000000010000L});
     public static final BitSet FOLLOW_NIL_in_xreturns1630 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAREN_in_argtuple1660 = new BitSet(new long[]{0xC000000000000080L,0x00000000000A0010L,0x0000000000004000L});
+    public static final BitSet FOLLOW_LPAREN_in_argtuple1660 = new BitSet(new long[]{0xC000000000000080L,0x00000000000A0010L,0x0000000000020000L});
     public static final BitSet FOLLOW_tupleargdefs_in_argtuple1662 = new BitSet(new long[]{0x0000000000000000L,0x0000000000004000L});
     public static final BitSet FOLLOW_RPAREN_in_argtuple1664 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_tupleargdef_in_tupleargdefs1686 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_tupleargdefs1690 = new BitSet(new long[]{0xC000000000000080L,0x00000000000A0010L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COMMA_in_tupleargdefs1690 = new BitSet(new long[]{0xC000000000000080L,0x00000000000A0010L,0x0000000000020000L});
     public static final BitSet FOLLOW_tupleargdef_in_tupleargdefs1692 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_type_in_tupleargdef1737 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_QUESTION_in_tupleargdef1750 = new BitSet(new long[]{0x0000000000000002L});
@@ -19820,7 +20061,7 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_CARET_in_type1899 = new BitSet(new long[]{0x0000000000000002L,0x0000000000040020L});
     public static final BitSet FOLLOW_baseType_in_nonArrayType1951 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_typeAtom_in_baseType1989 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACKET_in_arraySuff2023 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACKET_in_arraySuff2023 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_arraySuff2025 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
     public static final BitSet FOLLOW_RBRACKET_in_arraySuff2027 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_LBRACKET_in_arraySuff2039 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
@@ -19833,9 +20074,9 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_LESS_in_typeAtom2124 = new BitSet(new long[]{0x0000000000000000L,0x0000000000100000L});
     public static final BitSet FOLLOW_GREATER_in_typeAtom2126 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_codeStmt_in_codestmtlist2144 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000002L});
-    public static final BitSet FOLLOW_SEMI_in_codestmtlist2147 = new BitSet(new long[]{0xC000200000000082L,0x0C1010E000013502L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_SEMI_in_codestmtlist2147 = new BitSet(new long[]{0xC000200000000082L,0xC01010E000013502L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codeStmt_in_codestmtlist2149 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000002L});
-    public static final BitSet FOLLOW_labelStmt_in_codeStmt2193 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013500L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_labelStmt_in_codeStmt2193 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013500L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codeStmtExpr_in_codeStmt2195 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_codeStmtExpr_in_codeStmt2216 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_varDecl_in_codeStmtExpr2249 = new BitSet(new long[]{0x0000000000000002L});
@@ -19845,82 +20086,82 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_gotoStmt_in_codeStmtExpr2338 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_controlStmt_in_codeStmtExpr2364 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_varDecl2387 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000004L});
-    public static final BitSet FOLLOW_COLON_EQUALS_in_varDecl2389 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COLON_EQUALS_in_varDecl2389 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2391 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idTuple_in_varDecl2419 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000004L});
-    public static final BitSet FOLLOW_COLON_EQUALS_in_varDecl2421 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COLON_EQUALS_in_varDecl2421 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2423 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_varDecl2451 = new BitSet(new long[]{0x8000000000000000L});
-    public static final BitSet FOLLOW_COLON_in_varDecl2453 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COLON_in_varDecl2453 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_varDecl2455 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_varDecl2458 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_varDecl2458 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2460 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idTuple_in_varDecl2484 = new BitSet(new long[]{0x8000000000000000L});
-    public static final BitSet FOLLOW_COLON_in_varDecl2486 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COLON_in_varDecl2486 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_varDecl2488 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_varDecl2491 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_varDecl2491 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2493 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_varDecl2517 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
     public static final BitSet FOLLOW_COMMA_in_varDecl2520 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_varDecl2522 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000014L});
-    public static final BitSet FOLLOW_COLON_EQUALS_in_varDecl2526 = new BitSet(new long[]{0xC000000000000080L,0x0C101000000120A0L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_PLUS_in_varDecl2528 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COLON_EQUALS_in_varDecl2526 = new BitSet(new long[]{0xC000000000000080L,0xC0101000000120A0L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_PLUS_in_varDecl2528 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2531 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_varDecl2534 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COMMA_in_varDecl2534 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2536 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_ID_in_varDecl2580 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
     public static final BitSet FOLLOW_COMMA_in_varDecl2583 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_varDecl2585 = new BitSet(new long[]{0x8000000000000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COLON_in_varDecl2589 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COLON_in_varDecl2589 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_varDecl2591 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_varDecl2594 = new BitSet(new long[]{0xC000000000000080L,0x0C101000000120A0L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_PLUS_in_varDecl2596 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_varDecl2594 = new BitSet(new long[]{0xC000000000000080L,0xC0101000000120A0L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_PLUS_in_varDecl2596 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2599 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_varDecl2602 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COMMA_in_varDecl2602 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_varDecl2604 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_idExpr_in_assignStmt2666 = new BitSet(new long[]{0x0000000000000000L,0x0000000FFFE00001L});
-    public static final BitSet FOLLOW_assignEqOp_in_assignStmt2668 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_assignEqOp_in_assignStmt2668 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_assignStmt2670 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idTuple_in_assignStmt2697 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_assignStmt2699 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_assignStmt2699 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_assignStmt2701 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idExpr_in_assignStmt2756 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_assignStmt2759 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x0000000000007E04L});
+    public static final BitSet FOLLOW_COMMA_in_assignStmt2759 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x000000000003F040L});
     public static final BitSet FOLLOW_idExpr_in_assignStmt2761 = new BitSet(new long[]{0x0000000000000000L,0x0000000FFFE00011L});
-    public static final BitSet FOLLOW_assignEqOp_in_assignStmt2765 = new BitSet(new long[]{0xC000000000000080L,0x0C101000000120A0L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_PLUS_in_assignStmt2767 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_assignEqOp_in_assignStmt2765 = new BitSet(new long[]{0xC000000000000080L,0xC0101000000120A0L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_PLUS_in_assignStmt2767 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_assignStmt2770 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_assignStmt2773 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COMMA_in_assignStmt2773 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignOrInitExpr_in_assignStmt2775 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_assignExpr_in_assignOrInitExpr2836 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_initList_in_assignOrInitExpr2840 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idExpr_in_assignExpr2858 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_assignExpr2860 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_assignExpr2860 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignExpr_in_assignExpr2862 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idExpr_in_assignExpr2897 = new BitSet(new long[]{0x0000000000000000L,0x0000000FFFE00001L});
-    public static final BitSet FOLLOW_assignOp_in_assignExpr2899 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_assignOp_in_assignExpr2899 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignExpr_in_assignExpr2901 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idTuple_in_assignExpr2936 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_assignExpr2938 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_assignExpr2938 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignExpr_in_assignExpr2940 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_rhsExpr_in_assignExpr2974 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_assignOp0 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_EQUALS_in_assignEqOp3086 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_assignOp_in_assignEqOp3090 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACKET_in_initList3099 = new BitSet(new long[]{0xC000000000000080L,0x0C10101000012060L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACKET_in_initList3099 = new BitSet(new long[]{0xC000000000000080L,0xC010101000012060L,0x000000000003FC60L});
     public static final BitSet FOLLOW_initExpr_in_initList3102 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000050L});
-    public static final BitSet FOLLOW_COMMA_in_initList3105 = new BitSet(new long[]{0xC000000000000080L,0x0C10101000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COMMA_in_initList3105 = new BitSet(new long[]{0xC000000000000080L,0xC010101000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_initExpr_in_initList3107 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000050L});
     public static final BitSet FOLLOW_RBRACKET_in_initList3113 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_rhsExpr_in_initExpr3150 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_PERIOD_in_initExpr3213 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_initExpr3215 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_initExpr3217 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_initExpr3217 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_initElement_in_initExpr3221 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACKET_in_initExpr3274 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACKET_in_initExpr3274 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_initExpr3278 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
     public static final BitSet FOLLOW_RBRACKET_in_initExpr3280 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_initExpr3282 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_initExpr3282 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_initElement_in_initExpr3286 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_initList_in_initExpr3323 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_rhsExpr_in_initElement3337 = new BitSet(new long[]{0x0000000000000002L});
@@ -19929,246 +20170,254 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_whileDo_in_controlStmt3357 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_repeat_in_controlStmt3361 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_forIter_in_controlStmt3365 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_DO_in_doWhile3374 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013500L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_DO_in_doWhile3374 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013500L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codeStmtExpr_in_doWhile3376 = new BitSet(new long[]{0x0000000000000000L,0x0000004000000000L});
-    public static final BitSet FOLLOW_WHILE_in_doWhile3378 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_WHILE_in_doWhile3378 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_doWhile3380 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_WHILE_in_whileDo3403 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_WHILE_in_whileDo3403 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_whileDo3405 = new BitSet(new long[]{0x0000000000000000L,0x0000002000000000L});
-    public static final BitSet FOLLOW_DO_in_whileDo3407 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013500L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_DO_in_whileDo3407 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013500L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codeStmtExpr_in_whileDo3409 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_REPEAT_in_repeat3434 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_REPEAT_in_repeat3434 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_repeat3436 = new BitSet(new long[]{0x0000000000000000L,0x0000002000000000L});
-    public static final BitSet FOLLOW_DO_in_repeat3438 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013500L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_DO_in_repeat3438 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013500L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codeStmt_in_repeat3440 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_FOR_in_forIter3470 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_forIds_in_forIter3472 = new BitSet(new long[]{0x0000000000000000L,0x0000060000000800L});
     public static final BitSet FOLLOW_forMovement_in_forIter3474 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000800L});
-    public static final BitSet FOLLOW_IN_in_forIter3477 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_IN_in_forIter3477 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_forIter3479 = new BitSet(new long[]{0x0000000000000000L,0x0000002000000000L});
-    public static final BitSet FOLLOW_DO_in_forIter3481 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013500L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_DO_in_forIter3481 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013500L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codeStmt_in_forIter3483 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_forIds3520 = new BitSet(new long[]{0x0000000000000002L,0x0000010000000000L});
     public static final BitSet FOLLOW_AND_in_forIds3523 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_forIds3525 = new BitSet(new long[]{0x0000000000000002L,0x0000010000000000L});
     public static final BitSet FOLLOW_atId_in_forMovement3541 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_stepping_in_forMovement3545 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_BY_in_stepping3554 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_BY_in_stepping3554 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_stepping3556 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_AT_in_atId3573 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_atId3575 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_BREAK_in_breakStmt3603 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_BREAK_in_breakStmt3603 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_breakStmt3605 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ATSIGN_in_labelStmt3633 = new BitSet(new long[]{0x4000000000000000L});
     public static final BitSet FOLLOW_ID_in_labelStmt3635 = new BitSet(new long[]{0x8000000000000000L});
     public static final BitSet FOLLOW_COLON_in_labelStmt3637 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_GOTO_in_gotoStmt3673 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_GOTO_in_gotoStmt3673 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000020000L});
     public static final BitSet FOLLOW_idOrScopeRef_in_gotoStmt3675 = new BitSet(new long[]{0x0000000000000002L,0x0000100000000000L});
-    public static final BitSet FOLLOW_IF_in_gotoStmt3678 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_IF_in_gotoStmt3678 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_gotoStmt3680 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACE_in_blockStmt3715 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013700L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACE_in_blockStmt3715 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013700L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codestmtlist_in_blockStmt3717 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000200L});
     public static final BitSet FOLLOW_RBRACE_in_blockStmt3719 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAREN_in_tuple3742 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LPAREN_in_tuple3742 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_tupleEntries_in_tuple3744 = new BitSet(new long[]{0x0000000000000000L,0x0000000000004000L});
     public static final BitSet FOLLOW_RPAREN_in_tuple3746 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_assignExpr_in_tupleEntries3774 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_tupleEntries3777 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COMMA_in_tupleEntries3777 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_assignExpr_in_tupleEntries3779 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_LPAREN_in_idTuple3798 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_LPAREN_in_idTuple3798 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000020000L});
     public static final BitSet FOLLOW_idTupleEntries_in_idTuple3800 = new BitSet(new long[]{0x0000000000000000L,0x0000000000004000L});
     public static final BitSet FOLLOW_RPAREN_in_idTuple3802 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idOrScopeRef_in_idTupleEntries3830 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_idTupleEntries3833 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_COMMA_in_idTupleEntries3833 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000020000L});
     public static final BitSet FOLLOW_idOrScopeRef_in_idTupleEntries3835 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_condStar_in_rhsExpr3856 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAREN_in_funcCall3877 = new BitSet(new long[]{0xC000200000000080L,0x0C10100000016100L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LPAREN_in_funcCall3877 = new BitSet(new long[]{0xC000200000000080L,0xC010100000016100L,0x000000000003FC60L});
     public static final BitSet FOLLOW_arglist_in_funcCall3879 = new BitSet(new long[]{0x0000000000000000L,0x0000000000004000L});
     public static final BitSet FOLLOW_RPAREN_in_funcCall3881 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_arg_in_arglist3910 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_arglist3914 = new BitSet(new long[]{0xC000200000000080L,0x0C10100000012100L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COMMA_in_arglist3914 = new BitSet(new long[]{0xC000200000000080L,0xC010100000012100L,0x000000000003FC60L});
     public static final BitSet FOLLOW_arg_in_arglist3916 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_COMMA_in_arglist3920 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_assignExpr_in_arg3969 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACE_in_arg4002 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013700L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACE_in_arg4002 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013700L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codestmtlist_in_arg4004 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000200L});
     public static final BitSet FOLLOW_RBRACE_in_arg4006 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_gotoStmt_in_arg4030 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_WITH_in_withStmt4083 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_WITH_in_withStmt4083 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_bindings_in_withStmt4085 = new BitSet(new long[]{0x0000000000000000L,0x0000000000008000L});
-    public static final BitSet FOLLOW_ARROW_in_withStmt4087 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_ARROW_in_withStmt4087 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_withStmt4091 = new BitSet(new long[]{0x0000000000000002L,0x0000400000000000L});
-    public static final BitSet FOLLOW_ELSE_in_withStmt4094 = new BitSet(new long[]{0xC000200000000080L,0x0C1010E000013500L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_ELSE_in_withStmt4094 = new BitSet(new long[]{0xC000200000000080L,0xC01010E000013500L,0x000000000003FC60L});
     public static final BitSet FOLLOW_codeStmtExpr_in_withStmt4098 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_binding_in_bindings4126 = new BitSet(new long[]{0x0000000000000002L,0x0000010000000000L});
-    public static final BitSet FOLLOW_AND_in_bindings4129 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_AND_in_bindings4129 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_binding_in_bindings4131 = new BitSet(new long[]{0x0000000000000002L,0x0000010000000000L});
     public static final BitSet FOLLOW_rhsExpr_in_binding4149 = new BitSet(new long[]{0x0000000000000000L,0x0000800000000000L});
-    public static final BitSet FOLLOW_AS_in_binding4151 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_AS_in_binding4151 = new BitSet(new long[]{0xC000000000000080L,0x0000000000080000L,0x0000000000020000L});
     public static final BitSet FOLLOW_type_in_binding4153 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_cond_in_condStar4178 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_IF_in_condStar4189 = new BitSet(new long[]{0xC000200000000080L,0x0C10180000012100L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_IF_in_condStar4189 = new BitSet(new long[]{0xC000200000000080L,0xC010180000012100L,0x000000000003FC60L});
     public static final BitSet FOLLOW_ifExprs_in_condStar4191 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_thenClause_in_ifExprs4211 = new BitSet(new long[]{0x0000000000000000L,0x0006400000000000L});
     public static final BitSet FOLLOW_elses_in_ifExprs4213 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_condStmtExpr_in_thenClause4235 = new BitSet(new long[]{0x0000000000000000L,0x0001000000000000L});
-    public static final BitSet FOLLOW_THEN_in_thenClause4237 = new BitSet(new long[]{0xC000200000000080L,0x0C10180000012100L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_THEN_in_thenClause4237 = new BitSet(new long[]{0xC000200000000080L,0xC010180000012100L,0x000000000003FC60L});
     public static final BitSet FOLLOW_condStmtExpr_in_thenClause4241 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_elif_in_elses4269 = new BitSet(new long[]{0x0000000000000000L,0x0006400000000000L});
     public static final BitSet FOLLOW_elseClause_in_elses4272 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_ELIF_in_elif4295 = new BitSet(new long[]{0xC000200000000080L,0x0C10180000012100L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_ELIF_in_elif4295 = new BitSet(new long[]{0xC000200000000080L,0xC010180000012100L,0x000000000003FC60L});
     public static final BitSet FOLLOW_condStmtExpr_in_elif4299 = new BitSet(new long[]{0x0000000000000000L,0x0001000000000000L});
-    public static final BitSet FOLLOW_THEN_in_elif4301 = new BitSet(new long[]{0xC000200000000080L,0x0C10180000012100L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_THEN_in_elif4301 = new BitSet(new long[]{0xC000200000000080L,0xC010180000012100L,0x000000000003FC60L});
     public static final BitSet FOLLOW_condStmtExpr_in_elif4305 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_ELSE_in_elseClause4331 = new BitSet(new long[]{0xC000200000000080L,0x0C10180000012100L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_ELSE_in_elseClause4331 = new BitSet(new long[]{0xC000200000000080L,0xC010180000012100L,0x000000000003FC60L});
     public static final BitSet FOLLOW_condStmtExpr_in_elseClause4333 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_FI_in_elseClause4360 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_arg_in_condStmtExpr4389 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_breakStmt_in_condStmtExpr4393 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_logor_in_cond4410 = new BitSet(new long[]{0x0000000000000002L,0x0000000000020000L});
-    public static final BitSet FOLLOW_QUESTION_in_cond4427 = new BitSet(new long[]{0xC000000000000080L,0x0C10000000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_QUESTION_in_cond4427 = new BitSet(new long[]{0xC000000000000080L,0xC010000000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_logor_in_cond4431 = new BitSet(new long[]{0x8000000000000000L});
-    public static final BitSet FOLLOW_COLON_in_cond4433 = new BitSet(new long[]{0xC000000000000080L,0x0C10000000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_COLON_in_cond4433 = new BitSet(new long[]{0xC000000000000080L,0xC010000000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_logor_in_cond4437 = new BitSet(new long[]{0x0000000000000002L,0x0000000000020000L});
     public static final BitSet FOLLOW_logand_in_logor4467 = new BitSet(new long[]{0x0000000000000002L,0x0008000000000000L});
-    public static final BitSet FOLLOW_OR_in_logor4484 = new BitSet(new long[]{0xC000000000000080L,0x0C10000000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_OR_in_logor4484 = new BitSet(new long[]{0xC000000000000080L,0xC010000000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_logand_in_logor4488 = new BitSet(new long[]{0x0000000000000002L,0x0008000000000000L});
     public static final BitSet FOLLOW_not_in_logand4519 = new BitSet(new long[]{0x0000000000000002L,0x0000010000000000L});
-    public static final BitSet FOLLOW_AND_in_logand4535 = new BitSet(new long[]{0xC000000000000080L,0x0C10000000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_AND_in_logand4535 = new BitSet(new long[]{0xC000000000000080L,0xC010000000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_not_in_logand4539 = new BitSet(new long[]{0x0000000000000002L,0x0000010000000000L});
     public static final BitSet FOLLOW_comp_in_not4585 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_NOT_in_not4601 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_NOT_in_not4601 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_comp_in_not4605 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_bitor_in_comp4639 = new BitSet(new long[]{0x0000000000000002L,0x01E0000000180000L});
-    public static final BitSet FOLLOW_COMPEQ_in_comp4672 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitor_in_comp4676 = new BitSet(new long[]{0x0000000000000002L,0x01E0000000180000L});
-    public static final BitSet FOLLOW_COMPNE_in_comp4698 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitor_in_comp4702 = new BitSet(new long[]{0x0000000000000002L,0x01E0000000180000L});
-    public static final BitSet FOLLOW_COMPLE_in_comp4724 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitor_in_comp4728 = new BitSet(new long[]{0x0000000000000002L,0x01E0000000180000L});
-    public static final BitSet FOLLOW_COMPGE_in_comp4753 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitor_in_comp4757 = new BitSet(new long[]{0x0000000000000002L,0x01E0000000180000L});
-    public static final BitSet FOLLOW_LESS_in_comp4782 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitor_in_comp4786 = new BitSet(new long[]{0x0000000000000002L,0x01E0000000180000L});
-    public static final BitSet FOLLOW_GREATER_in_comp4812 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitor_in_comp4816 = new BitSet(new long[]{0x0000000000000002L,0x01E0000000180000L});
-    public static final BitSet FOLLOW_bitxor_in_bitor4866 = new BitSet(new long[]{0x0000000000000002L,0x0200000000000000L});
-    public static final BitSet FOLLOW_BAR_in_bitor4894 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitxor_in_bitor4898 = new BitSet(new long[]{0x0000000000000002L,0x0200000000000000L});
-    public static final BitSet FOLLOW_bitand_in_bitxor4924 = new BitSet(new long[]{0x0000000000000002L,0x0400000000000000L});
-    public static final BitSet FOLLOW_TILDE_in_bitxor4952 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_bitand_in_bitxor4956 = new BitSet(new long[]{0x0000000000000002L,0x0400000000000000L});
-    public static final BitSet FOLLOW_shift_in_bitand4981 = new BitSet(new long[]{0x0000000000000002L,0x0800000000000000L});
-    public static final BitSet FOLLOW_AMP_in_bitand5009 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_shift_in_bitand5013 = new BitSet(new long[]{0x0000000000000002L,0x0800000000000000L});
-    public static final BitSet FOLLOW_factor_in_shift5040 = new BitSet(new long[]{0x0000000000000002L,0xF000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_LSHIFT_in_shift5074 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_factor_in_shift5078 = new BitSet(new long[]{0x0000000000000002L,0xF000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_RSHIFT_in_shift5107 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_factor_in_shift5111 = new BitSet(new long[]{0x0000000000000002L,0xF000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_URSHIFT_in_shift5139 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_factor_in_shift5143 = new BitSet(new long[]{0x0000000000000002L,0xF000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_CRSHIFT_in_shift5171 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_factor_in_shift5175 = new BitSet(new long[]{0x0000000000000002L,0xF000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_CLSHIFT_in_shift5203 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_factor_in_shift5207 = new BitSet(new long[]{0x0000000000000002L,0xF000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_term_in_factor5249 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000080L,0x0000000000000002L});
-    public static final BitSet FOLLOW_PLUS_in_factor5282 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_term_in_factor5286 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000080L,0x0000000000000002L});
-    public static final BitSet FOLLOW_MINUS_in_factor5328 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_term_in_factor5332 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000080L,0x0000000000000002L});
-    public static final BitSet FOLLOW_unary_in_term5377 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000007CL});
-    public static final BitSet FOLLOW_STAR_in_term5421 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_term5425 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000007CL});
-    public static final BitSet FOLLOW_SLASH_in_term5461 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_term5465 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000007CL});
-    public static final BitSet FOLLOW_BACKSLASH_in_term5500 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_term5504 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000007CL});
-    public static final BitSet FOLLOW_PERCENT_in_term5539 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_term5543 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000007CL});
-    public static final BitSet FOLLOW_UMOD_in_term5578 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_term5582 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000007CL});
-    public static final BitSet FOLLOW_MINUS_in_unary5655 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_unary5659 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_TILDE_in_unary5679 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_unary5683 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_noIdAtom_in_unary5715 = new BitSet(new long[]{0x0000000000000000L,0x0000001000042020L});
-    public static final BitSet FOLLOW_idModifier_in_unary5717 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
-    public static final BitSet FOLLOW_atom_in_unary5751 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000080L});
-    public static final BitSet FOLLOW_PLUSPLUS_in_unary5753 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_atom_in_unary5784 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000100L});
-    public static final BitSet FOLLOW_MINUSMINUS_in_unary5786 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_atom_in_unary5814 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_PLUSPLUS_in_unary5845 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x0000000000007E04L});
-    public static final BitSet FOLLOW_atom_in_unary5849 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_MINUSMINUS_in_unary5870 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x0000000000007E04L});
-    public static final BitSet FOLLOW_atom_in_unary5874 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_AMP_in_unary5893 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x0000000000007E04L});
-    public static final BitSet FOLLOW_idExpr_in_unary5895 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_NUMBER_in_noIdAtom5925 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_FALSE_in_noIdAtom5968 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_TRUE_in_noIdAtom6010 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_CHAR_LITERAL_in_noIdAtom6053 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_STRING_LITERAL_in_noIdAtom6088 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_NIL_in_noIdAtom6121 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_STAR_in_noIdAtom6175 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000004000L});
-    public static final BitSet FOLLOW_idOrScopeRef_in_noIdAtom6177 = new BitSet(new long[]{0x0000000000000000L,0x0000000000002000L});
-    public static final BitSet FOLLOW_funcCall_in_noIdAtom6181 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_tuple_in_noIdAtom6211 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAREN_in_noIdAtom6250 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_assignExpr_in_noIdAtom6252 = new BitSet(new long[]{0x0000000000000000L,0x0000000000004000L});
-    public static final BitSet FOLLOW_RPAREN_in_noIdAtom6254 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_code_in_noIdAtom6283 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_noIdAtom_in_atom6329 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_idExpr_in_atom6333 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_idOrScopeRef_in_idExpr6355 = new BitSet(new long[]{0x0000000000000000L,0x0000000000080000L});
-    public static final BitSet FOLLOW_instantiation_in_idExpr6357 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
-    public static final BitSet FOLLOW_appendIdModifiers_in_idExpr6359 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_idOrScopeRef_in_idExpr6386 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
-    public static final BitSet FOLLOW_appendIdModifiers_in_idExpr6388 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LESS_in_instantiation6414 = new BitSet(new long[]{0xC000000000000080L,0x0000000000192000L,0x0000000000007E04L});
-    public static final BitSet FOLLOW_instanceExpr_in_instantiation6417 = new BitSet(new long[]{0x0000000000000000L,0x0000000000100010L});
-    public static final BitSet FOLLOW_COMMA_in_instantiation6420 = new BitSet(new long[]{0xC000000000000080L,0x0000000000092000L,0x0000000000007E04L});
-    public static final BitSet FOLLOW_instanceExpr_in_instantiation6422 = new BitSet(new long[]{0x0000000000000000L,0x0000000000100010L});
-    public static final BitSet FOLLOW_GREATER_in_instantiation6428 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_type_in_instanceExpr6460 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_atom_in_instanceExpr6464 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_nonFieldIdModifier_in_appendIdModifiers6475 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
-    public static final BitSet FOLLOW_idModifier_in_appendIdModifiers6477 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
-    public static final BitSet FOLLOW_funcCall_in_nonFieldIdModifier6487 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_arrayIndex_in_nonFieldIdModifier6491 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_deref_in_nonFieldIdModifier6495 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_fieldRef_in_idModifier6502 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_funcCall_in_idModifier6506 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_arrayIndex_in_idModifier6510 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_deref_in_idModifier6514 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_PERIOD_in_fieldRef6523 = new BitSet(new long[]{0x4000000000000000L});
-    public static final BitSet FOLLOW_ID_in_fieldRef6525 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACKET_in_arrayIndex6544 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_assignExpr_in_arrayIndex6546 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
-    public static final BitSet FOLLOW_RBRACKET_in_arrayIndex6548 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_CARET_in_deref6565 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_ID_in_idOrScopeRef6580 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
-    public static final BitSet FOLLOW_PERIOD_in_idOrScopeRef6584 = new BitSet(new long[]{0x4000000000000000L});
-    public static final BitSet FOLLOW_ID_in_idOrScopeRef6586 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
-    public static final BitSet FOLLOW_colons_in_idOrScopeRef6613 = new BitSet(new long[]{0x4000000000000000L});
-    public static final BitSet FOLLOW_ID_in_idOrScopeRef6615 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
-    public static final BitSet FOLLOW_PERIOD_in_idOrScopeRef6619 = new BitSet(new long[]{0x4000000000000000L});
-    public static final BitSet FOLLOW_ID_in_idOrScopeRef6621 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
-    public static final BitSet FOLLOW_set_in_colons6652 = new BitSet(new long[]{0x8000000000000002L,0x0000000000000000L,0x0000000000004000L});
-    public static final BitSet FOLLOW_DATA_in_data6668 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000100L});
-    public static final BitSet FOLLOW_LBRACE_in_data6670 = new BitSet(new long[]{0x4000000000000000L,0x0000000000002200L,0x0000000000010000L});
-    public static final BitSet FOLLOW_fieldDecl_in_data6672 = new BitSet(new long[]{0x4000000000000000L,0x0000000000002200L,0x0000000000010000L});
-    public static final BitSet FOLLOW_RBRACE_in_data6675 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_STATIC_in_staticVarDecl6694 = new BitSet(new long[]{0x4000000000000000L,0x0000000000002000L});
-    public static final BitSet FOLLOW_varDecl_in_staticVarDecl6696 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_staticVarDecl_in_fieldDecl6713 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
-    public static final BitSet FOLLOW_SEMI_in_fieldDecl6715 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_varDecl_in_fieldDecl6728 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
-    public static final BitSet FOLLOW_SEMI_in_fieldDecl6730 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_ID_in_fieldIdRef6753 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_fieldIdRef6756 = new BitSet(new long[]{0x4000000000000000L});
-    public static final BitSet FOLLOW_ID_in_fieldIdRef6758 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
+    public static final BitSet FOLLOW_bitor_in_comp4639 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_COMPEQ_in_comp4672 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4676 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_COMPNE_in_comp4698 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4702 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_COMPLE_in_comp4724 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4728 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_COMPGE_in_comp4753 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4757 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_COMPULE_in_comp4782 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4786 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_COMPUGE_in_comp4811 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4815 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_LESS_in_comp4840 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4844 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_ULESS_in_comp4870 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4874 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_GREATER_in_comp4900 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4904 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_UGREATER_in_comp4929 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitor_in_comp4933 = new BitSet(new long[]{0x0000000000000002L,0x1FE0000000180000L});
+    public static final BitSet FOLLOW_bitxor_in_bitor4983 = new BitSet(new long[]{0x0000000000000002L,0x2000000000000000L});
+    public static final BitSet FOLLOW_BAR_in_bitor5011 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitxor_in_bitor5015 = new BitSet(new long[]{0x0000000000000002L,0x2000000000000000L});
+    public static final BitSet FOLLOW_bitand_in_bitxor5041 = new BitSet(new long[]{0x0000000000000002L,0x4000000000000000L});
+    public static final BitSet FOLLOW_TILDE_in_bitxor5069 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_bitand_in_bitxor5073 = new BitSet(new long[]{0x0000000000000002L,0x4000000000000000L});
+    public static final BitSet FOLLOW_shift_in_bitand5098 = new BitSet(new long[]{0x0000000000000002L,0x8000000000000000L});
+    public static final BitSet FOLLOW_AMP_in_bitand5126 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_shift_in_bitand5130 = new BitSet(new long[]{0x0000000000000002L,0x8000000000000000L});
+    public static final BitSet FOLLOW_factor_in_shift5157 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000001FL});
+    public static final BitSet FOLLOW_LSHIFT_in_shift5191 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_factor_in_shift5195 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000001FL});
+    public static final BitSet FOLLOW_RSHIFT_in_shift5224 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_factor_in_shift5228 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000001FL});
+    public static final BitSet FOLLOW_URSHIFT_in_shift5256 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_factor_in_shift5260 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000001FL});
+    public static final BitSet FOLLOW_CRSHIFT_in_shift5288 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_factor_in_shift5292 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000001FL});
+    public static final BitSet FOLLOW_CLSHIFT_in_shift5320 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_factor_in_shift5324 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000000L,0x000000000000001FL});
+    public static final BitSet FOLLOW_term_in_factor5366 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000080L,0x0000000000000020L});
+    public static final BitSet FOLLOW_PLUS_in_factor5399 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_term_in_factor5403 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000080L,0x0000000000000020L});
+    public static final BitSet FOLLOW_MINUS_in_factor5445 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_term_in_factor5449 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000080L,0x0000000000000020L});
+    public static final BitSet FOLLOW_unary_in_term5494 = new BitSet(new long[]{0x0000000200000002L,0x0000000000000000L,0x00000000000003C0L});
+    public static final BitSet FOLLOW_STAR_in_term5538 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_term5542 = new BitSet(new long[]{0x0000000200000002L,0x0000000000000000L,0x00000000000003C0L});
+    public static final BitSet FOLLOW_SLASH_in_term5578 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_term5582 = new BitSet(new long[]{0x0000000200000002L,0x0000000000000000L,0x00000000000003C0L});
+    public static final BitSet FOLLOW_UDIV_in_term5617 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_term5621 = new BitSet(new long[]{0x0000000200000002L,0x0000000000000000L,0x00000000000003C0L});
+    public static final BitSet FOLLOW_PERCENT_in_term5656 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_term5660 = new BitSet(new long[]{0x0000000200000002L,0x0000000000000000L,0x00000000000003C0L});
+    public static final BitSet FOLLOW_UMOD_in_term5695 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_term5699 = new BitSet(new long[]{0x0000000200000002L,0x0000000000000000L,0x00000000000003C0L});
+    public static final BitSet FOLLOW_MINUS_in_unary5772 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_unary5776 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_TILDE_in_unary5796 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_unary5800 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_noIdAtom_in_unary5832 = new BitSet(new long[]{0x0000000000000000L,0x0000001000042020L});
+    public static final BitSet FOLLOW_idModifier_in_unary5834 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
+    public static final BitSet FOLLOW_atom_in_unary5868 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000400L});
+    public static final BitSet FOLLOW_PLUSPLUS_in_unary5870 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_atom_in_unary5901 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000800L});
+    public static final BitSet FOLLOW_MINUSMINUS_in_unary5903 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_atom_in_unary5931 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_PLUSPLUS_in_unary5962 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x000000000003F040L});
+    public static final BitSet FOLLOW_atom_in_unary5966 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_MINUSMINUS_in_unary5987 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x000000000003F040L});
+    public static final BitSet FOLLOW_atom_in_unary5991 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_AMP_in_unary6010 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x000000000003F040L});
+    public static final BitSet FOLLOW_idExpr_in_unary6012 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_NUMBER_in_noIdAtom6042 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_FALSE_in_noIdAtom6085 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_TRUE_in_noIdAtom6127 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_CHAR_LITERAL_in_noIdAtom6170 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_STRING_LITERAL_in_noIdAtom6205 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_NIL_in_noIdAtom6238 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_STAR_in_noIdAtom6292 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000020000L});
+    public static final BitSet FOLLOW_idOrScopeRef_in_noIdAtom6294 = new BitSet(new long[]{0x0000000000000000L,0x0000000000002000L});
+    public static final BitSet FOLLOW_funcCall_in_noIdAtom6298 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_tuple_in_noIdAtom6328 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LPAREN_in_noIdAtom6367 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_assignExpr_in_noIdAtom6369 = new BitSet(new long[]{0x0000000000000000L,0x0000000000004000L});
+    public static final BitSet FOLLOW_RPAREN_in_noIdAtom6371 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_code_in_noIdAtom6400 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_noIdAtom_in_atom6446 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_idExpr_in_atom6450 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_idOrScopeRef_in_idExpr6472 = new BitSet(new long[]{0x0000000000000000L,0x0000000000080000L});
+    public static final BitSet FOLLOW_instantiation_in_idExpr6474 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
+    public static final BitSet FOLLOW_appendIdModifiers_in_idExpr6476 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_idOrScopeRef_in_idExpr6503 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
+    public static final BitSet FOLLOW_appendIdModifiers_in_idExpr6505 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LESS_in_instantiation6531 = new BitSet(new long[]{0xC000000000000080L,0x0000000000192000L,0x000000000003F040L});
+    public static final BitSet FOLLOW_instanceExpr_in_instantiation6534 = new BitSet(new long[]{0x0000000000000000L,0x0000000000100010L});
+    public static final BitSet FOLLOW_COMMA_in_instantiation6537 = new BitSet(new long[]{0xC000000000000080L,0x0000000000092000L,0x000000000003F040L});
+    public static final BitSet FOLLOW_instanceExpr_in_instantiation6539 = new BitSet(new long[]{0x0000000000000000L,0x0000000000100010L});
+    public static final BitSet FOLLOW_GREATER_in_instantiation6545 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_type_in_instanceExpr6577 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_atom_in_instanceExpr6581 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_nonFieldIdModifier_in_appendIdModifiers6592 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
+    public static final BitSet FOLLOW_idModifier_in_appendIdModifiers6594 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
+    public static final BitSet FOLLOW_funcCall_in_nonFieldIdModifier6604 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_arrayIndex_in_nonFieldIdModifier6608 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_deref_in_nonFieldIdModifier6612 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_fieldRef_in_idModifier6619 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_funcCall_in_idModifier6623 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_arrayIndex_in_idModifier6627 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_deref_in_idModifier6631 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_PERIOD_in_fieldRef6640 = new BitSet(new long[]{0x4000000000000000L});
+    public static final BitSet FOLLOW_ID_in_fieldRef6642 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LBRACKET_in_arrayIndex6661 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_assignExpr_in_arrayIndex6663 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
+    public static final BitSet FOLLOW_RBRACKET_in_arrayIndex6665 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_CARET_in_deref6682 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_ID_in_idOrScopeRef6697 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
+    public static final BitSet FOLLOW_PERIOD_in_idOrScopeRef6701 = new BitSet(new long[]{0x4000000000000000L});
+    public static final BitSet FOLLOW_ID_in_idOrScopeRef6703 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
+    public static final BitSet FOLLOW_colons_in_idOrScopeRef6730 = new BitSet(new long[]{0x4000000000000000L});
+    public static final BitSet FOLLOW_ID_in_idOrScopeRef6732 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
+    public static final BitSet FOLLOW_PERIOD_in_idOrScopeRef6736 = new BitSet(new long[]{0x4000000000000000L});
+    public static final BitSet FOLLOW_ID_in_idOrScopeRef6738 = new BitSet(new long[]{0x0000000000000002L,0x0000001000000000L});
+    public static final BitSet FOLLOW_set_in_colons6769 = new BitSet(new long[]{0x8000000000000002L,0x0000000000000000L,0x0000000000020000L});
+    public static final BitSet FOLLOW_DATA_in_data6785 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000100L});
+    public static final BitSet FOLLOW_LBRACE_in_data6787 = new BitSet(new long[]{0x4000000000000000L,0x0000000000002200L,0x0000000000080000L});
+    public static final BitSet FOLLOW_fieldDecl_in_data6789 = new BitSet(new long[]{0x4000000000000000L,0x0000000000002200L,0x0000000000080000L});
+    public static final BitSet FOLLOW_RBRACE_in_data6792 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_STATIC_in_staticVarDecl6811 = new BitSet(new long[]{0x4000000000000000L,0x0000000000002000L});
+    public static final BitSet FOLLOW_varDecl_in_staticVarDecl6813 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_staticVarDecl_in_fieldDecl6830 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_SEMI_in_fieldDecl6832 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_varDecl_in_fieldDecl6845 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_SEMI_in_fieldDecl6847 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_ID_in_fieldIdRef6870 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
+    public static final BitSet FOLLOW_COMMA_in_fieldIdRef6873 = new BitSet(new long[]{0x4000000000000000L});
+    public static final BitSet FOLLOW_ID_in_fieldIdRef6875 = new BitSet(new long[]{0x0000000000000002L,0x0000000000000010L});
     public static final BitSet FOLLOW_ID_in_synpred1_Eulang478 = new BitSet(new long[]{0x8000000000000000L});
     public static final BitSet FOLLOW_COLON_in_synpred1_Eulang480 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_ID_in_synpred2_Eulang526 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000004L});
@@ -20191,7 +20440,7 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_idExpr_in_synpred18_Eulang2659 = new BitSet(new long[]{0x0000000000000000L,0x0000000FFFE00001L});
     public static final BitSet FOLLOW_assignEqOp_in_synpred18_Eulang2661 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idExpr_in_synpred19_Eulang2741 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_COMMA_in_synpred19_Eulang2744 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x0000000000007E04L});
+    public static final BitSet FOLLOW_COMMA_in_synpred19_Eulang2744 = new BitSet(new long[]{0xC000000000000080L,0x0000000000012000L,0x000000000003F040L});
     public static final BitSet FOLLOW_idExpr_in_synpred19_Eulang2746 = new BitSet(new long[]{0x0000000000000000L,0x0000000FFFE00011L});
     public static final BitSet FOLLOW_assignEqOp_in_synpred19_Eulang2750 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idExpr_in_synpred20_Eulang2851 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
@@ -20200,28 +20449,28 @@ public class EulangParser extends Parser {
     public static final BitSet FOLLOW_assignOp_in_synpred21_Eulang2892 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_idTuple_in_synpred22_Eulang2929 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
     public static final BitSet FOLLOW_EQUALS_in_synpred22_Eulang2931 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LBRACKET_in_synpred25_Eulang3274 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012000L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_LBRACKET_in_synpred25_Eulang3274 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012000L,0x000000000003FC60L});
     public static final BitSet FOLLOW_rhsExpr_in_synpred25_Eulang3278 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000040L});
     public static final BitSet FOLLOW_RBRACKET_in_synpred25_Eulang3280 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
-    public static final BitSet FOLLOW_EQUALS_in_synpred25_Eulang3282 = new BitSet(new long[]{0xC000000000000080L,0x0C10100000012020L,0x0000000000007F86L});
+    public static final BitSet FOLLOW_EQUALS_in_synpred25_Eulang3282 = new BitSet(new long[]{0xC000000000000080L,0xC010100000012020L,0x000000000003FC60L});
     public static final BitSet FOLLOW_initElement_in_synpred25_Eulang3286 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_MINUS_in_synpred26_Eulang5321 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_term_in_synpred26_Eulang5323 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_STAR_in_synpred27_Eulang5414 = new BitSet(new long[]{0xC000000000000080L,0x0C00000000012000L,0x0000000000007F86L});
-    public static final BitSet FOLLOW_unary_in_synpred27_Eulang5416 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_noIdAtom_in_synpred28_Eulang5708 = new BitSet(new long[]{0x0000000000000000L,0x0000001000042020L});
-    public static final BitSet FOLLOW_idModifier_in_synpred28_Eulang5710 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_atom_in_synpred29_Eulang5742 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000080L});
-    public static final BitSet FOLLOW_PLUSPLUS_in_synpred29_Eulang5744 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_atom_in_synpred30_Eulang5775 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000100L});
-    public static final BitSet FOLLOW_MINUSMINUS_in_synpred30_Eulang5777 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_STAR_in_synpred31_Eulang6166 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000004000L});
-    public static final BitSet FOLLOW_idOrScopeRef_in_synpred31_Eulang6168 = new BitSet(new long[]{0x0000000000000000L,0x0000000000002000L});
-    public static final BitSet FOLLOW_LPAREN_in_synpred31_Eulang6170 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_tuple_in_synpred32_Eulang6205 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_idOrScopeRef_in_synpred33_Eulang6355 = new BitSet(new long[]{0x0000000000000000L,0x0000000000080000L});
-    public static final BitSet FOLLOW_instantiation_in_synpred33_Eulang6357 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
-    public static final BitSet FOLLOW_appendIdModifiers_in_synpred33_Eulang6359 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_type_in_synpred34_Eulang6460 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_MINUS_in_synpred26_Eulang5438 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_term_in_synpred26_Eulang5440 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_STAR_in_synpred27_Eulang5531 = new BitSet(new long[]{0xC000000000000080L,0xC000000000012000L,0x000000000003FC60L});
+    public static final BitSet FOLLOW_unary_in_synpred27_Eulang5533 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_noIdAtom_in_synpred28_Eulang5825 = new BitSet(new long[]{0x0000000000000000L,0x0000001000042020L});
+    public static final BitSet FOLLOW_idModifier_in_synpred28_Eulang5827 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_atom_in_synpred29_Eulang5859 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000400L});
+    public static final BitSet FOLLOW_PLUSPLUS_in_synpred29_Eulang5861 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_atom_in_synpred30_Eulang5892 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x0000000000000800L});
+    public static final BitSet FOLLOW_MINUSMINUS_in_synpred30_Eulang5894 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_STAR_in_synpred31_Eulang6283 = new BitSet(new long[]{0xC000000000000000L,0x0000000000000000L,0x0000000000020000L});
+    public static final BitSet FOLLOW_idOrScopeRef_in_synpred31_Eulang6285 = new BitSet(new long[]{0x0000000000000000L,0x0000000000002000L});
+    public static final BitSet FOLLOW_LPAREN_in_synpred31_Eulang6287 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_tuple_in_synpred32_Eulang6322 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_idOrScopeRef_in_synpred33_Eulang6472 = new BitSet(new long[]{0x0000000000000000L,0x0000000000080000L});
+    public static final BitSet FOLLOW_instantiation_in_synpred33_Eulang6474 = new BitSet(new long[]{0x0000000000000002L,0x0000001000042020L});
+    public static final BitSet FOLLOW_appendIdModifiers_in_synpred33_Eulang6476 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_type_in_synpred34_Eulang6577 = new BitSet(new long[]{0x0000000000000002L});
 
 }

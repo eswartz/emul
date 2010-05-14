@@ -7,6 +7,8 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstFloatLitExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -97,6 +99,20 @@ public class AstUnaryExpr extends AstTypedExpr implements
     }
 
     public IAstTypedExpr simplify(TypeEngine typeEngine) {
+    	if (oper == IOperation.NEG) {
+    		if (expr instanceof IAstIntLitExpr) {
+				IAstLitExpr lit = typeEngine.createLiteralNode(getType(), -((IAstIntLitExpr) expr).getValue());
+				if (lit != null)
+					lit.setSourceRef(getSourceRef());
+				return lit;
+			}
+    		if (expr instanceof IAstFloatLitExpr) {
+    			IAstLitExpr lit = typeEngine.createLiteralNode(getType(), -((IAstFloatLitExpr) expr).getValue());
+    			if (lit != null)
+    				lit.setSourceRef(getSourceRef());
+    			return lit;
+    		}
+    	}
 		if (oper == IOperation.CAST) {
 			if (expr instanceof IAstLitExpr) {
 				IAstLitExpr lit = typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
