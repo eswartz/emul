@@ -146,7 +146,26 @@ public interface ICallingConvention {
 		
 		
 	};
-	class TempLocation extends Location {
+	
+	public class StackBarrierLocation extends Location {
+
+		private final int pushedArgsSize;
+
+		/**
+		 * @param name
+		 * @param type
+		 */
+		public StackBarrierLocation(String name, LLType type, int pushedArgsSize) {
+			super(name, type);
+			this.pushedArgsSize = pushedArgsSize;
+		}
+		
+		public int getPushedArgumentsSize() {
+			return pushedArgsSize;
+		}
+	}
+	
+	public class TempLocation extends Location {
 		public IRegClass regClass;
 		/** offset into actual data, 0=low */
 		public int bitOffset;
@@ -188,7 +207,7 @@ public interface ICallingConvention {
 		
 	};
 
-	class CallerStackLocation extends Location {
+	public class CallerStackLocation extends Location {
 
 		public CallerStackLocation(String name, LLType type) {
 			super(name, type);

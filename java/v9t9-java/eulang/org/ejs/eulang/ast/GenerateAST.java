@@ -438,9 +438,10 @@ public class GenerateAST {
 		case EulangParser.SUB:
 		case EulangParser.MUL:
 		case EulangParser.DIV:
-		case EulangParser.MOD:
+		case EulangParser.REM:
 		case EulangParser.UDIV:
-		case EulangParser.UMOD:
+		case EulangParser.UREM:
+		case EulangParser.MOD:
 		case EulangParser.LSHIFT:
 		case EulangParser.RSHIFT:
 		case EulangParser.URSHIFT:
@@ -1418,12 +1419,14 @@ public class GenerateAST {
 			return IOperation.MUL;
 		case EulangParser.SLASH_EQ:
 			return IOperation.DIV;
+		case EulangParser.REM_EQ:
+			return IOperation.REM;
 		case EulangParser.UDIV_EQ:
 			return IOperation.UDIV;
-		case EulangParser.PERCENT_EQ:
+		case EulangParser.UREM_EQ:
+			return IOperation.UREM;
+		case EulangParser.MOD_EQ:
 			return IOperation.MOD;
-		case EulangParser.UMOD_EQ:
-			return IOperation.UMOD;
 		case EulangParser.LSHIFT_EQ:
 			return IOperation.SHL;
 		case EulangParser.RSHIFT_EQ:
@@ -1633,14 +1636,17 @@ public class GenerateAST {
 		case EulangParser.DIV:
 			binop = new AstBinExpr(IOperation.DIV, left, right);
 			break;
+		case EulangParser.REM:
+			binop = new AstBinExpr(IOperation.REM, left, right);
+			break;
 		case EulangParser.UDIV:
 			binop = new AstBinExpr(IOperation.UDIV, left, right);
 			break;
+		case EulangParser.UREM:
+			binop = new AstBinExpr(IOperation.UREM, left, right);
+			break;
 		case EulangParser.MOD:
 			binop = new AstBinExpr(IOperation.MOD, left, right);
-			break;
-		case EulangParser.UMOD:
-			binop = new AstBinExpr(IOperation.UMOD, left, right);
 			break;
 
 		case EulangParser.URSHIFT:

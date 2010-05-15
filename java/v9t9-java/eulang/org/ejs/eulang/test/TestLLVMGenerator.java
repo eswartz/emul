@@ -114,7 +114,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	public void testBinOps() throws Exception {
 		dumpTypeInfer = true;
 		dumpLLVMGen = true;
-		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4+%45+5-6>>7>>|4<<|75<<8+>>85&9 ~" + 
+		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4\\99+\\45+5-6>>7>>|4<<|75<<8+>>85&9 ~" + 
 				"10|11+<-11<12+>-12>13+<=-33<=14+>=0>=15==16!=17 and Bool(18) or Bool(19); };");
 		doGenerate(mod);
 	}
@@ -374,7 +374,7 @@ public class TestLLVMGenerator extends BaseParserTest {
     	dumpLLVMGen = true;
     	IAstModule mod = doFrontend("testAssignOps = code { x:=1;" +
     			//"x+=x-=x*=x/=x+/=x%=x+%=x>>=x<<=x+>>=2;\n"+
-    			"x+=(x-=(x*=x/=x+/=x%=(x+%=x>>=(x<<=x+>>=2))));\n"+
+    			"x+=(x-=(x*=x/=x+/=x%=(x\\=x>>=(x<<=x+>>=x\\=2))));\n"+
     			"x|=x~=x&=111;\n"+
     			"};");
     	doGenerate(mod);

@@ -306,7 +306,7 @@ assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN EQUA
     | rhsExpr                             -> rhsExpr
     ;
 
-assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | PERCENT_EQ | UMOD_EQ | UDIV_EQ 
+assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | REM_EQ | UDIV_EQ | UREM_EQ | MOD_EQ
   | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ ;
 assignEqOp : EQUALS | assignOp ;
 
@@ -484,9 +484,10 @@ factor
 term : ( unary                  -> unary )
         ( ( STAR unary) => STAR r=unary            -> ^(MUL  $term $r)
         | SLASH r=unary            -> ^(DIV $term $r)
+        | REM r=unary            -> ^(REM $term $r)
         | UDIV r=unary            -> ^(UDIV $term $r)
-        | PERCENT r=unary            -> ^(MOD $term $r)
-        | UMOD r=unary            -> ^(UMOD $term $r)
+        | UREM r=unary            -> ^(UREM $term $r)
+        | MOD r=unary            -> ^(MOD $term $r)
         )*                        
     ; 
 
@@ -579,6 +580,14 @@ STAR : '*';
 STAR_EQ : '*=';
 SLASH : '/';
 SLASH_EQ : '/=';
+UDIV : '+/';
+UDIV_EQ : '+/=';
+REM : '\\';
+REM_EQ : '\\=';
+UREM : '+\\';
+UREM_EQ : '+\\=';
+MOD : '%';
+MOD_EQ : '%=';
 LPAREN : '(';
 RPAREN : ')';
 LBRACE : '{';
@@ -621,12 +630,6 @@ CRSHIFT : '>>|';
 CRSHIFT_EQ : '>>|=';
 CLSHIFT : '<<|';
 CLSHIFT_EQ : '<<|=';
-UDIV : '+/';
-UDIV_EQ : '+/=';
-PERCENT : '%';
-PERCENT_EQ : '%=';
-UMOD : '+%';
-UMOD_EQ : '+%=';
 ARROW : '=>' ;
 PERIOD : '.';
 PLUSPLUS : '++';

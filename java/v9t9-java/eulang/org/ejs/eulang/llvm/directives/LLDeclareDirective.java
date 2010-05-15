@@ -79,5 +79,13 @@ public class LLDeclareDirective extends LLBaseDirective  {
 		return sb.toString();
 	}
 
+
+	/**
+	 * @return
+	 */
+	public ISymbol getSymbol() {
+		return symbol;
+	}
+
 	
 }

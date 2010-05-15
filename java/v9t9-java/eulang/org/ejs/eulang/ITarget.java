@@ -20,6 +20,12 @@ import org.ejs.eulang.types.LLType;
  */
 public interface ITarget {
 	enum Intrinsic {
+		/** signed division */
+		SIGNED_DIVISION,
+		/** signed remainder */
+		SIGNED_REMAINDER,
+		/** modulo */
+		MODULO,
 		/** shift right circular */
 		SHIFT_RIGHT_CIRCULAR,
 		/** shift left circular */
@@ -69,4 +75,6 @@ public interface ITarget {
 	 * @return symbol
 	 */
 	ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic, LLType type);
+	
+	int getSP();
 }

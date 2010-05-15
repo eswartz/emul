@@ -4,6 +4,8 @@
 package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLType;
 
 /**
  * Package of the function attributes, argument attributes, calling convention,
@@ -21,7 +23,18 @@ public class FunctionConvention {
 	private final LLArgAttrType[] argTypes;
 	private final LLFuncAttrs funcAttrs;
 	private final String gc;
-	
+
+	public static FunctionConvention create(String cconv, LLCodeType codeType) {
+		LLArgAttrType[] argAttrs = new LLArgAttrType[codeType.getArgTypes().length];
+		for (int i = 0; i < argAttrs.length; i++)
+			argAttrs[i] = new LLArgAttrType("arg"+i, null, codeType.getArgTypes()[i]);
+		return new FunctionConvention(null, LLVisibility.DEFAULT, null /*cconv*/,
+			new LLAttrType(null, codeType.getRetType()),
+			argAttrs,
+			new LLFuncAttrs(), 
+			null /*gc*/);
+	}
+			
 	public FunctionConvention(LLLinkage linkage, LLVisibility visibility,
 			String cconv, LLAttrType retType, LLArgAttrType argTypes[],
 			LLFuncAttrs funcAttrs, String gc) {

@@ -397,4 +397,13 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	public LLBlock getEntryBlock() {
 		return blocks.get(0);
 	}
+
+
+
+	/**
+	 * @return
+	 */
+	public ISymbol getSymbol() {
+		return symbol;
+	}
 }

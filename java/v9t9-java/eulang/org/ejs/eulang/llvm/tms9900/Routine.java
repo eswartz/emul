@@ -38,6 +38,7 @@ public abstract class Routine {
 	
 	private Locals locals;
 	private final LLDefineDirective def;
+	private boolean hasCalls;
     
     public Routine(LLDefineDirective def) {
         this.def = def;
@@ -124,6 +125,20 @@ public abstract class Routine {
 	 */
 	public LLDefineDirective getDefinition() {
 		return def;
+	}
+
+	/**
+	 * @param b
+	 */
+	public void setHasBlCalls(boolean b) {
+		this.hasCalls = b;
+	}
+	
+	/**
+	 * @return the hasCalls
+	 */
+	public boolean hasCalls() {
+		return hasCalls;
 	}
 
 }

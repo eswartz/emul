@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
@@ -12,12 +13,16 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
+import org.ejs.eulang.llvm.instrs.LLCallInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -214,8 +219,22 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 				instr = prefix + instr;
 			currentTarget.emit(new LLBinaryInstr(instr, ret, left.getType(), left, right));
 			
+		} else if (this == IOperation.MOD) {
+			//
+			//	call %intrinsic.mod(i16, i16)
+			//
+			if (left.getType().getBasicType() == BasicType.FLOATING) {
+				currentTarget.emit(new LLBinaryInstr("frem", ret, left.getType(), left, right));
+				
+			} else {
+				ISymbol intrinsicSrc = currentTarget.getTarget().getIntrinsic(
+						currentTarget, ITarget.Intrinsic.MODULO, left.getType());
+				currentTarget.emit(new LLCallInstr(ret, left.getType(), 
+						new LLSymbolOp(intrinsicSrc), (LLCodeType) intrinsicSrc.getType(),
+						left, right));
+			}
 		} else {
-			generator.unhandled(null);
+			generator.unhandled(expr);
 		}
 		return ret;
 	}

@@ -1,0 +1,36 @@
+
+Instructions:
+
+-- unary
+
+-- casting
+
+-- data related:
+    store/load data
+    insertvalue
+    extractvalue
+    getelementptr
+    
+-- calls
+
+--  
+
+Overall:
+
+-- register coloring
+
+-- instruction lowering
+
+-- frame setup
+
+-- jump fixing
+
+-- object generation
+
+
+Finally:
+
+-- llvm optimization
+
+-- phi handling
+

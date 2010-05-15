@@ -11,6 +11,7 @@ import java.util.ListIterator;
 
 import org.ejs.eulang.ICallingConvention.Location;
 import org.ejs.eulang.ICallingConvention.RegisterLocation;
+import org.ejs.eulang.ICallingConvention.StackBarrierLocation;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.FunctionConvention;
@@ -116,6 +117,10 @@ public class V9t9CallingConvention implements ICallingConvention {
 					arg.getType(), -(align.sizeof() - arg.getType().getBits() ) / 8));
 
 		}
+		
+		locs.add(new StackBarrierLocation("%stacksize", this.target.getTypeEngine().VOID, 
+				align.sizeof() / 8));
+		
 		return (Location[]) locs.toArray(new Location[locs.size()]);
 	}
 	/* (non-Javadoc)

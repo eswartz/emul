@@ -272,7 +272,10 @@ public class Locals {
 				local = allocateLocal(localScope.add(loc.name, true), loc.type, stackLoc.offset);
 				local.setInit(new Pair<LLBlock, LLInstr>(null, null));
 			}
-			else
+			else if (loc instanceof ICallingConvention.StackBarrierLocation) {
+				continue;
+			}
+			else 
 				assert false;
 			
 			ISymbol arg = localScope.get(loc.name);

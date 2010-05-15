@@ -282,8 +282,34 @@ public class TargetV9t9 implements ITarget {
 						},
 						new LLFuncAttrs(), 
 						null /*gc*/);
+				break;
 			}
-			break;
+			case SIGNED_DIVISION:
+			case SIGNED_REMAINDER:
+			case MODULO:
+			{
+				LLCodeType codeType;
+				if (type.getBits() == 16)
+					codeType = typeEngine.getCodeType(typeEngine.INT, 
+							new LLType[] { typeEngine.INT, typeEngine.INT });
+				else if (type.getBits() <= 8)
+					codeType = typeEngine.getCodeType(typeEngine.BYTE, 
+							new LLType[] { typeEngine.BYTE, typeEngine.BYTE});
+				else
+					return null;
+				sym = target.getModule().addExtern(intrinsic == Intrinsic.SIGNED_DIVISION 
+						? "intrinsic.sdiv" : intrinsic == Intrinsic.SIGNED_REMAINDER ? "intrinsic.srem" : "intrinsic.modulo",
+								codeType,
+								null, LLVisibility.DEFAULT, null /*cconv*/,
+								new LLAttrType(null, codeType.getRetType()),
+								new LLArgAttrType[] { 
+					new LLArgAttrType("dividend", null, codeType.getArgTypes()[0]), 
+					new LLArgAttrType("divisor", null, codeType.getArgTypes()[1]) 
+				},
+				new LLFuncAttrs(), 
+				null /*gc*/);
+				break;
+			}
 			default:
 				assert false;
 			}
@@ -294,5 +320,13 @@ public class TargetV9t9 implements ITarget {
 
 	}
 	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITarget#getSP()
+	 */
+	@Override
+	public int getSP() {
+		return 10;
+	}
 	
 }

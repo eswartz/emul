@@ -142,7 +142,7 @@ public class TestGenerator extends BaseParserTest {
     @Test 
     public void testBinOps() throws Exception {
     	dumpTreeize = true;
-    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4+%4.5+5-6>>7>>|4<<|7.5<<8+>>8.5&9 ~" +
+    	IAstModule mod = treeize("opPrec1 = code { x:=1*2/3%4+\\4.5+5-6>>7>>|4<<|7.5<<8+>>8.5&9 ~" +
     			" 10|11+<-11<12+>-12>13+<=-33<=14+>=0>=15==16!=17 and 18 or 19; };");
     	sanityTest(mod);
     	
@@ -575,7 +575,7 @@ public class TestGenerator extends BaseParserTest {
     	dumpTreeize = true;
     	IAstModule mod = treeize("testAssignOps = code { x:=1;" +
     			//"x+=x-=x*=x/=x+/=x%=x+%=x>>=x<<=x+>>=2;\n"+
-    			"x+=(x-=(x*=x/=x+/=x%=(x+%=x>>=(x<<=x+>>=(x>>|=x<<|=32)))));\n"+
+    			"x+=(x-=(x*=x/=x+/=x\\=(x+\\=x>>=(x<<=x+>>=(x>>|=x<<|=x%=32)))));\n"+
     			"x|=x~=x&=111;\n"+
     			"};");
     	sanityTest(mod);

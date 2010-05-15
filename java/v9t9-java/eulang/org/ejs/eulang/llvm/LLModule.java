@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
+import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLTypeDirective;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
@@ -100,24 +101,29 @@ public class LLModule {
 	 * @return unique symbol
 	 */
 	public ISymbol getModuleSymbol(ISymbol astSymbol, LLType type) {
-		StringBuilder sb = new StringBuilder();
-		
-		// put a unique scope
-		getScopePrefix(sb, astSymbol.getScope());
-		
-		// and the name
-		sb.append(astSymbol.getName());
-		
-		// and the exact type
-		sb.append('.').append(type.getSymbolicName());
-		
-		String symName = sb.toString();
+		String symName = constructModuleSymName(astSymbol.getScope(), astSymbol.getName(), type);
 		ISymbol modSymbol = moduleScope.get(symName);
 		if (modSymbol == null) {
 			modSymbol = moduleScope.add(symName, false);
 			modSymbol.setType(type);
 		}
 		return modSymbol;
+	}
+
+	private String constructModuleSymName(IScope scope, String name, LLType type) {
+		StringBuilder sb = new StringBuilder();
+		
+		// put a unique scope
+		getScopePrefix(sb, scope);
+		
+		// and the name
+		sb.append(name);
+		
+		// and the exact type
+		sb.append('.').append(type.getSymbolicName());
+		
+		String symName = sb.toString();
+		return symName;
 	}
 	
 	/**
@@ -146,15 +152,17 @@ public class LLModule {
 			LLLinkage linkage, LLVisibility visibility,
 			String cconv, LLAttrType retType,
 			LLArgAttrType[] argTypes, LLFuncAttrs funcAttrs, String gc) {
-		ISymbol symbol = globalScope.get(name);
-		if (symbol == null) {
-			symbol = globalScope.add(new AstName(name));
-			symbol.setType(codeType);
+		name = constructModuleSymName(moduleScope, name, codeType);
+		
+		ISymbol modSymbol = globalScope.get(name);
+		if (modSymbol == null) {
+			modSymbol = globalScope.add(new AstName(name));
+			modSymbol.setType(codeType);
 			
-			externDirectives.add(new LLDeclareDirective(symbol, linkage, visibility, cconv, 
+			externDirectives.add(new LLDeclareDirective(modSymbol, linkage, visibility, cconv, 
 					retType, argTypes, funcAttrs, gc));
 		}
-		return symbol;
+		return modSymbol;
 	}
 
 	/**
@@ -213,5 +221,15 @@ public class LLModule {
 		changed |= emitTypes(type.getSubType());
 		return changed;
 	};
+	
+	public LLBaseDirective lookup(ISymbol symbol) {
+		for (LLBaseDirective dir : directives) {
+			if (dir instanceof LLDeclareDirective && ((LLDeclareDirective) dir).getSymbol().equals(symbol))
+				return dir;
+			if (dir instanceof LLDefineDirective && ((LLDefineDirective) dir).getSymbol().equals(symbol))
+				return dir;
+		}
+		return null;
+	}
 	
 }
