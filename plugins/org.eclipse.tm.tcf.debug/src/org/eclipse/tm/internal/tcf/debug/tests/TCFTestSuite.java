@@ -195,7 +195,7 @@ public class TCFTestSuite {
                             }
                         }
                         if (channels[i] == null) continue;
-                        if (active_tests.isEmpty() && pending_tests.isEmpty() &&
+                        if ((error != null || active_tests.isEmpty() && pending_tests.isEmpty()) &&
                                 channels[i].getState() != IChannel.STATE_CLOSED) channels[i].close();
                         cnt++;
                     }
