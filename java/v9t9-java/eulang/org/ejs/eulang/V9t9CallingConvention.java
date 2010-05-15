@@ -92,6 +92,15 @@ public class V9t9CallingConvention implements ICallingConvention {
 		argRegs.add(1);
 		argRegs.add(2);
 		argRegs.add(3);
+
+		// see if we have a struct return and let it eat the first register argument
+		Location[] retLocs = getReturnLocations();
+		for (int i = 0; i < retLocs.length; i++) {
+			if (retLocs[i] instanceof CallerStackLocation) {
+				locs.add(retLocs[i]);
+				argRegs.remove(((CallerStackLocation) retLocs[i]).number);
+			}
+		}
 		
 		Alignment align = target.getTypeEngine().new Alignment(Target.STACK);
 		
@@ -130,20 +139,24 @@ public class V9t9CallingConvention implements ICallingConvention {
 	public Location[] getReturnLocations() {
 		List<Location> locs = new ArrayList<Location>();
 		
-		// available
+		// available return regs
 		LinkedList<Integer> retRegs = new LinkedList<Integer>();
 		retRegs.add(0);
 		retRegs.add(1);
 		
 		LLType type = conv.getRetType().getType();
 		
-		boolean alloced = allocInt(locs, retRegs, conv.getRetType(), "return");
-
-		if (!alloced) {
-			// stack
-			locs.add(new CallerStackLocation("return", type));
+		if (type.getBits() > 0) {
+			
+			boolean alloced = allocInt(locs, retRegs, conv.getRetType(), "return");
+	
+			if (!alloced) {
+				// stack
+				Alignment align = target.getTypeEngine().new Alignment(Target.STACK);
+				align.alignAndAdd(type);
+				locs.add(new CallerStackLocation("callerRet", type, intClass, 0 /* R0 holds pointer */));
+			}
 		}
-		
 		return (Location[]) locs.toArray(new Location[locs.size()]);
 	
 	}
@@ -154,7 +167,7 @@ public class V9t9CallingConvention implements ICallingConvention {
 	@Override
 	public int[] getFixedRegisters(IRegClass regClass) {
 		if (regClass.equals(intClass))
-			return new int[] { 10 }; 
+			return new int[] { target.getSP() }; 
 		return new int[0];
 	}
 }

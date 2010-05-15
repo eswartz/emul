@@ -22,7 +22,7 @@ public class StackLocalOperand extends BaseHLOperand {
 	
 	@Override
 	public String toString() {
-		return "Local." + local.getName().getName();
+		return "@Local." + local.getName().getName();
 	}
 
 	

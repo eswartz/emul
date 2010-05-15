@@ -13,8 +13,10 @@ import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
 import org.ejs.eulang.ITarget;
+import org.ejs.eulang.ICallingConvention.CallerStackLocation;
 import org.ejs.eulang.ICallingConvention.Location;
 import org.ejs.eulang.ICallingConvention.RegisterLocation;
+import org.ejs.eulang.ICallingConvention.StackBarrierLocation;
 import org.ejs.eulang.ICallingConvention.StackLocation;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
@@ -53,6 +55,7 @@ import org.ejs.eulang.types.LLType;
  *    10  non-reg arg N-1
  *    12  ...
  *    +K  non-reg arg 1
+ *    +K+w ptr to callee-return location, if any
  * </pre>
  * 
  * This is handled with:
@@ -181,13 +184,14 @@ public class Locals {
 							allocateLocal(result.getSymbol(), alloca.getType()).setInit(new Pair<LLBlock, LLInstr>(block, instr));
 						else
 							allocateTemp(result.getSymbol(), alloca.getType()).setInit(new Pair<LLBlock, LLInstr>(block, instr));
-					}
+					} else
+						assert false;
 				} else if (instr instanceof LLAssignInstr) {
 					// normal expression temp; try for a register again
 					LLAssignInstr assign = (LLAssignInstr) instr;
 					if (assign.getResult() instanceof LLTempOp)
 						allocateTemp(assign).setInit(new Pair<LLBlock, LLInstr>(block, instr));
-					else
+					else if (assign.getResult() != null)
 						assert false;
 				}
 				else if (instr instanceof LLStoreInstr) {
@@ -271,20 +275,27 @@ public class Locals {
 		
 		for (Location loc : locations) {
 			ILocal local = null;
-			if (loc instanceof ICallingConvention.RegisterLocation) {
+			if (loc instanceof CallerStackLocation) {
+				// fixed register
+				ICallingConvention.CallerStackLocation regLoc = (CallerStackLocation) loc;
+				local = allocateRegister(localScope.add(loc.name, true),
+						loc.type, regLoc.regClass, regLoc.number);
+				local.setInit(new Pair<LLBlock, LLInstr>(null, null));				
+			} 
+			else if (loc instanceof RegisterLocation) {
 				// fixed register
 				ICallingConvention.RegisterLocation regLoc = (RegisterLocation) loc;
-				local = allocateRegister(localScope.add(loc.name, true),
+				local = allocateRegister(localScope.get(loc.name),
 						loc.type, regLoc.regClass, regLoc.number);
 				local.setInit(new Pair<LLBlock, LLInstr>(null, null));
 			}
-			else if (loc instanceof ICallingConvention.StackLocation) {
+			else if (loc instanceof StackLocation) {
 				ICallingConvention.StackLocation stackLoc = (StackLocation) loc;
 				
-				local = allocateLocal(localScope.add(loc.name, true), loc.type, stackLoc.offset);
+				local = allocateLocal(localScope.get(loc.name), loc.type, stackLoc.offset);
 				local.setInit(new Pair<LLBlock, LLInstr>(null, null));
 			}
-			else if (loc instanceof ICallingConvention.StackBarrierLocation) {
+			else if (loc instanceof StackBarrierLocation) {
 				continue;
 			}
 			else 
@@ -306,17 +317,12 @@ public class Locals {
 		return allocateLocal(name, instr.getType());
 	}
 
-	public ILocal allocateLocal(ISymbol name, LLType type) {
-		
-		if (!forceLocalsToStack) {
-			// TODO
-		}
-		
+	public StackLocal allocateLocal(ISymbol name, LLType type) {
 		int offs = alignment.alignAndAdd(type);
 		return allocateLocal(name, type, offs / 8);
 	}
 
-	private ILocal allocateLocal(ISymbol name, LLType type, int byteOffs) {
+	private StackLocal allocateLocal(ISymbol name, LLType type, int byteOffs) {
 		StackLocal local = new StackLocal(name, type, currentBlock.getLabel(), -byteOffs);
 		
 		assert !stackLocals.containsKey(name);
@@ -401,11 +407,9 @@ public class Locals {
 	/**
 	 * @param symbol
 	 */
-	public boolean forceToRegister(ISymbol symbol, int reg) {
-		RegisterLocal regLocal = regLocals.get(symbol);
-		if (regLocal == null)
-			return false;
+	public boolean forceToRegister(RegisterLocal regLocal, int reg) {
 		regLocal.setVr(reg);
+		System.out.println("Reassigned " + regLocal);
 		return true;
 	}
 

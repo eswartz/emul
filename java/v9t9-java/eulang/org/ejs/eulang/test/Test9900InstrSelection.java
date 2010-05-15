@@ -42,6 +42,7 @@ import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 
 /**
@@ -224,8 +225,14 @@ public class Test9900InstrSelection extends BaseParserTest {
 				else if (stuff[i] instanceof Integer) {
 					Integer num = (Integer) stuff[i];
 					i++;
-					if (op instanceof RegisterOperand)
+					if (op instanceof RegisterOperand) {
 						assertTrue(instr+":"+op, ((RegisterOperand) op).isReg(num));
+						if (op instanceof RegOffsOperand && i < stuff.length && stuff[i] instanceof Integer) {
+							num = (Integer) stuff[i++];
+							AssemblerOperand offs = ((RegOffsOperand) op).getAddr();
+							assertTrue(instr+":"+op, offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
+						}
+					}
 					else if (op instanceof RegisterTempOperand)
 						assertEquals(instr+":"+op, num, (Integer)((RegisterTempOperand) op).getLocal().getVr());
 					else if (op instanceof NumberOperand)
@@ -1401,5 +1408,72 @@ public class Test9900InstrSelection extends BaseParserTest {
 			if (block.getLabel().getName().startsWith(string))
 				return instrs.indexOf(block.getFirst());
 		return -1;
+	}
+	
+	@Test
+	public void testCalls1() throws Exception {
+		dumpLLVMGen = true;
+    	doIsel("forward util;\n"+
+    			"testCalls1 = code (=>nil) {\n" +
+    			"   util();\n" +
+    			"};\n"+
+    			"util = code () { };\n");
+
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "AI");
+		if (idx >= 0)
+			fail("need no stack");
+		
+		// caller stack op in R0
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		if (idx >= 0)
+			fail("need no stack temp");
+		
+		idx = findInstrWithInst(instrs, "BL", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "BL", AddrOperand.class, "util");
+	}
+	
+
+	@Test
+	public void testCalls2() throws Exception {
+		dumpLLVMGen = true;
+    	doIsel("forward util;\n"+
+    			"testCalls1 = code (a,b,c,d:Float=>nil) {\n" +
+    			"   util(a,b,c,d);\n" +
+    			"};\n"+
+    			"util = code (a,b,c,d : Float => Float) { 0. };\n");
+
+		int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "AI");
+		inst = instrs.get(idx);
+		matchInstr(inst, "AI", RegisterOperand.class, 10, NumberOperand.class, -16);
+		
+		// caller stack op in R0
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", StackLocalOperand.class, "callerRet", RegisterTempOperand.class, 0);
+		assertEquals(typeEngine.FLOAT, ((StackLocalOperand) inst.getOp1()).getLocal().getType());
+		
+		idx = findInstrWithInst(instrs, "COPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "COPY", StackLocalOperand.class, "a", RegOffsOperand.class, 10, 16);
+		idx = findInstrWithInst(instrs, "COPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "COPY", StackLocalOperand.class, "b", RegOffsOperand.class, 10, 12);
+		idx = findInstrWithInst(instrs, "COPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "COPY", StackLocalOperand.class, "c", RegOffsOperand.class, 10, 8);
+		idx = findInstrWithInst(instrs, "COPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "COPY", StackLocalOperand.class, "d", RegOffsOperand.class, 10, 4);
+		
+		idx = findInstrWithInst(instrs, "BL", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "BL", AddrOperand.class, "util");
 	}
 }

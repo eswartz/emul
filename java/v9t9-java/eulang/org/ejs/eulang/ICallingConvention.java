@@ -207,13 +207,18 @@ public interface ICallingConvention {
 		
 	};
 
-	public class CallerStackLocation extends Location {
+	/** 
+	 * This is a caller-allocated memory location used to store a large memory return 
+	 * value from a function. 
+	 * This appears both in the argument locations and in the return location.
+	 */
+	public class CallerStackLocation extends RegisterLocation {
 
-		public CallerStackLocation(String name, LLType type) {
-			super(name, type);
+		public CallerStackLocation(String name, LLType type, IRegClass regClass, int reg) {
+			super(name, type, 0, regClass, reg);
 		}
-
 	}
+	
 	/** Get locations for canonical arguments */
 	Location[] getArgumentLocations();
 	/** Get locations for canonical return value */

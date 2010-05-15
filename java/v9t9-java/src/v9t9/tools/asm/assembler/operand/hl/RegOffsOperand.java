@@ -94,5 +94,12 @@ public class RegOffsOperand extends RegisterOperand  {
 			throw new ResolveException(addrRes, "Expected an immediate");
 		return new LLRegIndOperand(this, regRes.getRegister(), addrRes.getImmediate());
 	}
+
+	/**
+	 * @return
+	 */
+	public AssemblerOperand getAddr() {
+		return addr;
+	}
 	
 }
