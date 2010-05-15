@@ -22,12 +22,12 @@
 #    define eip pc
 #    undef BREAK_INST
 #  endif
-#  include "context-vxworks.h"
+#  include <system/VxWorks/context-vxworks.h>
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
 
-#include "regset.h"
+#include <regset.h>
 
 #define REG_OFFSET(name) offsetof(REG_SET, name)
 

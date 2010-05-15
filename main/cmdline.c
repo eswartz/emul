@@ -17,7 +17,7 @@
  * Command line interpreter.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_Cmdline
 
@@ -26,15 +26,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "cmdline.h"
-#include "events.h"
-#include "errors.h"
-#include "myalloc.h"
-#include "peer.h"
-#include "protocol.h"
-#include "trace.h"
-#include "channel.h"
-#include "plugins.h"
+#include <framework/events.h>
+#include <framework/errors.h>
+#include <framework/myalloc.h>
+#include <framework/peer.h>
+#include <framework/protocol.h>
+#include <framework/trace.h>
+#include <framework/channel.h>
+#include <framework/plugins.h>
+#include <main/cmdline.h>
 
 struct cmd {
     char * cmd;

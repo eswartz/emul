@@ -16,7 +16,7 @@
  * This module handles process/thread OS contexts and their state machine.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if defined(_WRS_KERNEL)
 
@@ -26,14 +26,14 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
-#include "context-vxworks.h"
-#include "events.h"
-#include "errors.h"
-#include "trace.h"
-#include "myalloc.h"
-#include "breakpoints.h"
-#include "waitpid.h"
-#include "signames.h"
+#include <framework/events.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <framework/myalloc.h>
+#include <framework/waitpid.h>
+#include <framework/signames.h>
+#include <services/breakpoints.h>
+#include <system/VxWorks/context-vxworks.h>
 
 /* TODO: VxWorks RTP support */
 
@@ -56,7 +56,7 @@ static size_t context_extension_offset = 0;
 
 #define EXT(ctx) ((ContextExtensionVxWorks *)((char *)(ctx) + context_extension_offset))
 
-#include "system/pid-hash.h"
+#include <system/pid-hash.h>
 
 #define EVENT_HOOK_BREAKPOINT   2
 #define EVENT_HOOK_STEP_DONE    3

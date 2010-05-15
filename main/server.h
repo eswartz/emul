@@ -19,8 +19,8 @@
 #ifndef D_server
 #define D_server
 
-#include "config.h"
-#include "protocol.h"
+#include <config.h>
+#include <framework/protocol.h>
 
 extern void ini_server(const char * url, Protocol * proto, TCFBroadcastGroup * bcg);
 

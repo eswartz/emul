@@ -23,7 +23,7 @@
 #ifndef D_protocol
 #define D_protocol
 
-#include "channel.h"
+#include <framework/channel.h>
 
 /* Time in seconds to keep remote peer data */
 #define PEER_DATA_RETENTION_PERIOD 60

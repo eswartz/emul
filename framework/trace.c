@@ -12,8 +12,8 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
-#include "config.h"
-#include "trace.h"
+#include <config.h>
+#include <framework/trace.h>
 
 int log_mode = LOG_EVENTS | LOG_CHILD | LOG_WAITPID | LOG_CONTEXT | LOG_PROTOCOL;
 

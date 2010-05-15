@@ -19,19 +19,19 @@
  * machine instruction addresses in the executable object.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_LineNumbersProxy
 
 #include <assert.h>
 #include <stdio.h>
-#include "context.h"
-#include "cache.h"
-#include "json.h"
-#include "events.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "linenumbers.h"
+#include <framework/context.h>
+#include <framework/cache.h>
+#include <framework/json.h>
+#include <framework/events.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <services/linenumbers.h>
 
 #define HASH_SIZE 511
 

@@ -16,7 +16,7 @@
  * Target service implementation: file system access (TCF name FileSystem)
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_FileSystem
 
@@ -31,16 +31,16 @@
 #  include <utime.h>
 #  include <dirent.h>
 #endif
-#include "myalloc.h"
-#include "asyncreq.h"
-#include "streams.h"
-#include "channel.h"
-#include "link.h"
-#include "trace.h"
-#include "json.h"
-#include "exceptions.h"
-#include "protocol.h"
-#include "filesystem.h"
+#include <framework/myalloc.h>
+#include <framework/asyncreq.h>
+#include <framework/streams.h>
+#include <framework/channel.h>
+#include <framework/link.h>
+#include <framework/trace.h>
+#include <framework/json.h>
+#include <framework/exceptions.h>
+#include <framework/protocol.h>
+#include <services/filesystem.h>
 
 #define BUF_SIZE 0x1000
 

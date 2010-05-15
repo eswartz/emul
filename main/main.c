@@ -16,23 +16,23 @@
  * Agent main module.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <assert.h>
-#include "asyncreq.h"
-#include "events.h"
-#include "errors.h"
-#include "trace.h"
-#include "test.h"
-#include "cmdline.h"
-#include "channel_tcp.h"
-#include "discovery.h"
-#include "plugins.h"
-#include "services.h"
-#include "server.h"
+#include <framework/asyncreq.h>
+#include <framework/events.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <framework/channel_tcp.h>
+#include <framework/plugins.h>
+#include <services/discovery.h>
+#include <main/test.h>
+#include <main/cmdline.h>
+#include <main/services.h>
+#include <main/server.h>
 
 static const char * progname;
 

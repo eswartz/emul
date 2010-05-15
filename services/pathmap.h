@@ -20,8 +20,8 @@
 #ifndef D_pathmap
 #define D_pathmap
 
-#include "config.h"
-#include "protocol.h"
+#include <config.h>
+#include <framework/protocol.h>
 
 /*
  * Translate debug file name to local name using file path mapping table of given channel.

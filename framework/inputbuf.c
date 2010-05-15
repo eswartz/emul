@@ -17,13 +17,13 @@
  * Implements input buffer used by unbuffered channel transports.
  */
 
-#include "config.h"
+#include <config.h>
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "exceptions.h"
-#include "trace.h"
-#include "inputbuf.h"
+#include <framework/exceptions.h>
+#include <framework/trace.h>
+#include <framework/inputbuf.h>
 
 static void ibuf_new_message(InputBuf * ibuf) {
     ibuf->message_count++;

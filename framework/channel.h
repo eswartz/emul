@@ -19,9 +19,9 @@
 #ifndef D_channel
 #define D_channel
 
-#include "streams.h"
-#include "link.h"
-#include "peer.h"
+#include <framework/streams.h>
+#include <framework/link.h>
+#include <framework/peer.h>
 
 typedef struct TCFBroadcastGroup TCFBroadcastGroup;
 struct TCFBroadcastGroup {

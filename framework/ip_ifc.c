@@ -16,15 +16,15 @@
  * Implements IP interface list.
  */
 
-#include "config.h"
+#include <config.h>
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "ip_ifc.h"
-#include "myalloc.h"
-#include "events.h"
-#include "errors.h"
-#include "trace.h"
+#include <framework/ip_ifc.h>
+#include <framework/myalloc.h>
+#include <framework/events.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
 
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 

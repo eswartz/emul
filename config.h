@@ -20,7 +20,7 @@
 #ifndef D_config
 #define D_config
 
-#include "mdep.h"
+#include <framework/mdep.h>
 
 #if defined(WIN32)
 #  define TARGET_WINDOWS    1

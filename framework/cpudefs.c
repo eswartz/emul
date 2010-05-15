@@ -16,20 +16,19 @@
  * This module contains definitions of target CPU registers and stack frames.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_DebugContext
 
 #include <stddef.h>
 #include <stdio.h>
 #include <assert.h>
-#include "cpudefs.h"
-#include "errors.h"
-#include "context.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "breakpoints.h"
-#include "symbols.h"
+#include <framework/cpudefs.h>
+#include <framework/errors.h>
+#include <framework/context.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <services/symbols.h>
 
 #if ENABLE_ContextProxy
 
@@ -37,7 +36,7 @@
 
 #else
 
-#include "cpudefs-mdep.h"
+#include <cpudefs-mdep.h>
 
 struct RegisterData {
     REG_SET data;

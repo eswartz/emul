@@ -16,7 +16,7 @@
  * This module handles process/thread OS contexts and their state machine.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if defined(__linux__)
 
@@ -26,21 +26,21 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
+#include <sched.h>
 #include <asm/unistd.h>
 #include <sys/ptrace.h>
-#include <sched.h>
-#include "context.h"
-#include "regset.h"
-#include "events.h"
-#include "errors.h"
-#include "trace.h"
-#include "myalloc.h"
-#include "breakpoints.h"
-#include "expressions.h"
-#include "memorymap.h"
-#include "waitpid.h"
-#include "tcf_elf.h"
-#include "signames.h"
+#include <framework/context.h>
+#include <framework/events.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <framework/myalloc.h>
+#include <framework/waitpid.h>
+#include <framework/signames.h>
+#include <services/breakpoints.h>
+#include <services/expressions.h>
+#include <services/memorymap.h>
+#include <services/tcf_elf.h>
+#include <system/GNU/Linux/regset.h>
 
 #if !defined(PTRACE_SETOPTIONS)
 #define PTRACE_SETOPTIONS       0x4200
@@ -101,7 +101,7 @@ static size_t context_extension_offset = 0;
 
 #define EXT(ctx) ((ContextExtensionLinux *)((char *)(ctx) + context_extension_offset))
 
-#include "system/pid-hash.h"
+#include <system/pid-hash.h>
 
 static LINK pending_list;
 

@@ -16,7 +16,7 @@
  * Expression evaluation service.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_Expressions
 
@@ -25,19 +25,15 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include "myalloc.h"
-#include "exceptions.h"
-#include "stacktrace.h"
-#include "symbols.h"
-#include "breakpoints.h"
-#include "expressions.h"
-#include "json.h"
-#include "cache.h"
-#include "context.h"
-#include "stacktrace.h"
-#include "breakpoints.h"
-#include "test.h"
-#include "symbols.h"
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <framework/json.h>
+#include <framework/cache.h>
+#include <framework/context.h>
+#include <services/symbols.h>
+#include <services/stacktrace.h>
+#include <services/expressions.h>
+#include <main/test.h>
 
 #define STR_POOL_SIZE 1024
 

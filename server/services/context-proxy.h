@@ -19,7 +19,8 @@
 #ifndef D_context_proxy
 #define D_context_proxy
 
-#include "channel.h"
+#include <config.h>
+#include <framework/channel.h>
 
 extern void create_context_proxy(Channel * host, Channel * target);
 

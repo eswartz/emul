@@ -12,7 +12,7 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_SysMonitor
 
@@ -23,13 +23,13 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include "sysmon.h"
-#include "protocol.h"
-#include "exceptions.h"
-#include "myalloc.h"
-#include "json.h"
-#include "context.h"
-#include "errors.h"
+#include <framework/protocol.h>
+#include <framework/exceptions.h>
+#include <framework/myalloc.h>
+#include <framework/json.h>
+#include <framework/context.h>
+#include <framework/errors.h>
+#include <services/sysmon.h>
 
 static const char SYS_MON[] = "SysMonitor";
 

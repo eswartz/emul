@@ -19,26 +19,26 @@
  * machine instruction addresses in the executable object.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && ENABLE_ELF
 
 #include <errno.h>
 #include <assert.h>
 #include <stdio.h>
-#include "linenumbers.h"
-#include "context.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "cache.h"
-#include "json.h"
-#include "protocol.h"
-#include "tcf_elf.h"
-#include "dwarfio.h"
-#include "dwarf.h"
-#include "dwarfcache.h"
-#include "stacktrace.h"
-#include "trace.h"
+#include <framework/context.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <framework/cache.h>
+#include <framework/trace.h>
+#include <framework/json.h>
+#include <framework/protocol.h>
+#include <services/linenumbers.h>
+#include <services/tcf_elf.h>
+#include <services/dwarfio.h>
+#include <services/dwarf.h>
+#include <services/dwarfcache.h>
+#include <services/stacktrace.h>
 
 static CompUnit * find_unit(Context * ctx, DWARFCache * cache, ContextAddress addr0, ContextAddress addr1, ContextAddress * addr_next) {
     U4_T i;

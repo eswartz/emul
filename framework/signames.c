@@ -16,10 +16,10 @@
  * This module provides POSIX signal names and descriptions.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <signal.h>
-#include "signames.h"
+#include <framework/signames.h>
 
 #if defined(WIN32)
 

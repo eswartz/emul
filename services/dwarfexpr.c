@@ -16,20 +16,20 @@
  * This module implements DWARF expressions evaluation.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
 #include <assert.h>
 #include <stdio.h>
-#include "myalloc.h"
-#include "dwarf.h"
-#include "dwarfio.h"
-#include "dwarfexpr.h"
-#include "exceptions.h"
-#include "stacktrace.h"
-#include "errors.h"
-#include "trace.h"
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <services/dwarf.h>
+#include <services/dwarfio.h>
+#include <services/dwarfexpr.h>
+#include <services/stacktrace.h>
 
 static U8_T * sExprStack = NULL;
 static unsigned sExprStackLen = 0;

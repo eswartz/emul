@@ -3,7 +3,8 @@ CONF = Debug
 OPSYS = $(shell uname -o 2>/dev/null || uname -s)
 MACHINE = $(shell uname -m)
 
-SRCDIRS = . system/$(OPSYS) machine/$(MACHINE) system framework services main
+INCDIRS = . system/$(OPSYS) machine/$(MACHINE)
+SRCDIRS = $(INCDIRS) system framework services main
 BINDIR  = obj/$(OPSYS)/$(MACHINE)/$(CONF)
 
 ifeq ($(CONF),Debug)
@@ -78,6 +79,6 @@ ifdef SERVICES
   OPTS += $(shell $(TCF_AGENT_DIR)/bin/services-to-cflags $(SERVICES))
 endif
 
-OPTS += $(foreach dir,$(SRCDIRS),-I$(TCF_AGENT_DIR)/$(dir))
+OPTS += $(foreach dir,$(INCDIRS),-I$(TCF_AGENT_DIR)/$(dir))
 
 override CFLAGS += $(OPTS)

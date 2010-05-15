@@ -19,8 +19,8 @@
 #ifndef D_symbols
 #define D_symbols
 
-#include "context.h"
-#include "protocol.h"
+#include <framework/context.h>
+#include <framework/protocol.h>
 
 /*
  * Symbol information can change at any time as result of target background activities.

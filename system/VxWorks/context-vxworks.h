@@ -19,8 +19,8 @@
 #ifndef D_context_vxworks
 #define D_context_vxworks
 
-#include "config.h"
-#include "context.h"
+#include <config.h>
+#include <framework/context.h>
 
 extern VXDBG_CLNT_ID vxdbg_clnt_id;
 

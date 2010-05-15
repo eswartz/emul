@@ -16,7 +16,7 @@
  * Target service implementation: run control (TCF name RunControl)
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_RunControl
 
@@ -25,18 +25,18 @@
 #include <signal.h>
 #include <errno.h>
 #include <assert.h>
-#include "runctrl.h"
-#include "protocol.h"
-#include "channel.h"
-#include "json.h"
-#include "context.h"
-#include "myalloc.h"
-#include "trace.h"
-#include "events.h"
-#include "exceptions.h"
-#include "breakpoints.h"
-#include "signames.h"
-#include "cmdline.h"
+#include <framework/protocol.h>
+#include <framework/channel.h>
+#include <framework/json.h>
+#include <framework/context.h>
+#include <framework/myalloc.h>
+#include <framework/trace.h>
+#include <framework/events.h>
+#include <framework/exceptions.h>
+#include <framework/signames.h>
+#include <services/runctrl.h>
+#include <services/breakpoints.h>
+#include <main/cmdline.h>
 
 #define RM_RESUME                   0
 #define RM_STEP_OVER                1
@@ -940,7 +940,7 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
 
 #else
 
-#include "runctrl.h"
+#include <services/runctrl.h>
 #include <assert.h>
 
 void post_safe_event(Context * mem, EventCallBack * done, void * arg) {

@@ -18,17 +18,17 @@
  * Functions in this module use exceptions to report errors, see exceptions.h
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
 #include <assert.h>
 #include <string.h>
-#include "dwarfio.h"
-#include "dwarfreloc.h"
-#include "dwarf.h"
-#include "myalloc.h"
-#include "exceptions.h"
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <services/dwarfio.h>
+#include <services/dwarfreloc.h>
+#include <services/dwarf.h>
 
 #define ABBREV_TABLE_SIZE       127
 

@@ -16,11 +16,11 @@
  * Local memory heap manager.
  */
 
-#include "config.h"
+#include <config.h>
 #include <string.h>
 #include <assert.h>
-#include "trace.h"
-#include "myalloc.h"
+#include <framework/trace.h>
+#include <framework/myalloc.h>
 
 void * loc_alloc(size_t size) {
     void * p;

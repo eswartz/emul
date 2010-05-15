@@ -19,7 +19,7 @@
 #ifndef D_registers
 #define D_registers
 
-#include "protocol.h"
+#include <framework/protocol.h>
 
 /*
  * Initialize registers service.

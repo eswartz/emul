@@ -16,7 +16,7 @@
  * This module handles process/thread OS contexts and their state machine.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if defined(WIN32)
 
@@ -26,16 +26,16 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
-#include "context.h"
-#include "events.h"
-#include "errors.h"
-#include "trace.h"
-#include "myalloc.h"
-#include "breakpoints.h"
-#include "waitpid.h"
-#include "regset.h"
-#include "signames.h"
-#include "context-win32.h"
+#include <framework/context.h>
+#include <framework/events.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <framework/myalloc.h>
+#include <framework/waitpid.h>
+#include <framework/signames.h>
+#include <services/breakpoints.h>
+#include <system/Windows/context-win32.h>
+#include <system/Windows/regset.h>
 
 typedef struct ContextExtensionWin32 {
     pid_t               pid;
@@ -79,7 +79,7 @@ typedef struct DebugEvent {
     struct DebugEvent * next;
 } DebugEvent;
 
-#include "system/pid-hash.h"
+#include <system/pid-hash.h>
 
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
 

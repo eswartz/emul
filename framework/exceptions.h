@@ -34,7 +34,7 @@
 #define D_exceptions
 
 #include <setjmp.h>
-#include "errors.h"
+#include <framework/errors.h>
 
 typedef struct Trap Trap;
 

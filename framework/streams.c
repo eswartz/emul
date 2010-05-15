@@ -16,10 +16,10 @@
  * Abstract byte stream. Bytes in the stream can be divided into groups - messages.
  */
 
-#include "config.h"
-#include "stddef.h"
-#include "myalloc.h"
-#include "streams.h"
+#include <config.h>
+#include <stddef.h>
+#include <framework/myalloc.h>
+#include <framework/streams.h>
 
 void write_string(OutputStream * out, const char * str) {
     while (*str) write_stream(out, (*str++) & 0xff);

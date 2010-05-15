@@ -16,7 +16,7 @@
  * Agent self-testing service.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_RCBP_TEST
 
@@ -25,13 +25,13 @@
 #include <errno.h>
 #include <signal.h>
 #include <assert.h>
-#include "myalloc.h"
-#include "test.h"
-#include "trace.h"
-#include "diagnostics.h"
-#include "errors.h"
+#include <framework/myalloc.h>
+#include <framework/trace.h>
+#include <framework/errors.h>
+#include <services/diagnostics.h>
+#include <main/test.h>
 #if defined(WIN32)
-#  include "system/Windows/context-win32.h"
+#  include <system/Windows/context-win32.h>
 #endif
 
 typedef enum test_enum {

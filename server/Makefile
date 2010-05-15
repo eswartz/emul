@@ -2,7 +2,7 @@ TCF_AGENT_DIR=../agent
 
 include $(TCF_AGENT_DIR)/Makefile.inc
 
-override CFLAGS := $(foreach dir,$(SRCDIRS),-I$(dir)) $(CFLAGS)
+override CFLAGS := $(foreach dir,$(INCDIRS),-I$(dir)) $(CFLAGS)
 
 HFILES := $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.h)) $(HFILES)
 CFILES := $(sort $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c)) $(CFILES))

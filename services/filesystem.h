@@ -19,7 +19,7 @@
 #ifndef D_filesystem
 #define D_filesystem
 
-#include "protocol.h"
+#include <framework/protocol.h>
 /*
  * Initialize file system service.
  */

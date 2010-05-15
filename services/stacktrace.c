@@ -16,7 +16,7 @@
  * Target service implementation: stack trace (TCF name StackTrace)
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_StackTrace
 
@@ -25,17 +25,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include "myalloc.h"
-#include "protocol.h"
-#include "trace.h"
-#include "context.h"
-#include "json.h"
-#include "cache.h"
-#include "exceptions.h"
-#include "stacktrace.h"
-#include "breakpoints.h"
-#include "memorymap.h"
-#include "symbols.h"
+#include <framework/myalloc.h>
+#include <framework/protocol.h>
+#include <framework/trace.h>
+#include <framework/context.h>
+#include <framework/json.h>
+#include <framework/cache.h>
+#include <framework/exceptions.h>
+#include <services/stacktrace.h>
+#include <services/symbols.h>
 
 #define MAX_FRAMES  1000
 

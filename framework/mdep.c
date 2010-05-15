@@ -19,13 +19,13 @@
  * agent code portable between Linux, Windows, VxWorks and potentially other OSes.
  */
 
-#include "mdep.h"
+#include <config.h>
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
-#include "myalloc.h"
-#include "errors.h"
+#include <framework/myalloc.h>
+#include <framework/errors.h>
 
 pthread_attr_t pthread_create_attr;
 
@@ -922,7 +922,7 @@ int loc_clock_gettime(int clock_id, struct timespec * now) {
  * Some of the dynamic IP interface scanning routines are unreliable, so
  * include a workaround to manually set the desired interface from outside.
  */
-#include "ip_ifc.h"
+#include <framework/ip_ifc.h>
 
 static ip_ifc_info* gSelectedIPInterface;
 

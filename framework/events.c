@@ -25,13 +25,13 @@
  * while allows for high level of concurrency.
  */
 
-#include "config.h"
+#include <config.h>
 #include <time.h>
 #include <assert.h>
-#include "myalloc.h"
-#include "errors.h"
-#include "trace.h"
-#include "events.h"
+#include <framework/myalloc.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <framework/events.h>
 
 typedef struct event_node event_node;
 

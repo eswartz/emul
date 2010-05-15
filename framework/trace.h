@@ -19,7 +19,7 @@
 #ifndef D_trace
 #define D_trace
 
-#include "config.h"
+#include <config.h>
 #include <stdio.h>
 
 #define LOG_ALWAYS      0x0

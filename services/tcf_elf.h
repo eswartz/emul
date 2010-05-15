@@ -18,14 +18,14 @@
 #ifndef D_elf
 #define D_elf
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
 #if !defined(WIN32) && !defined(__APPLE__)
 #  include <elf.h>
 #endif
-#include "context.h"
+#include <framework/context.h>
 
 #if defined(WIN32) || defined(__APPLE__)
 

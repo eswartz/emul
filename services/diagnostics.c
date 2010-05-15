@@ -17,28 +17,28 @@
  * This service is used for framework and agents testing.
  */
 
-#include "config.h"
+#include <config.h>
 #include <signal.h>
 #include <assert.h>
 #include <stdio.h>
-#include "diagnostics.h"
-#include "protocol.h"
-#include "json.h"
-#include "exceptions.h"
-#include "context.h"
-#include "myalloc.h"
+#include <framework/protocol.h>
+#include <framework/json.h>
+#include <framework/exceptions.h>
+#include <framework/context.h>
+#include <framework/myalloc.h>
+#include <framework/cache.h>
 #if ENABLE_Symbols
-#  include "symbols.h"
-#  include "stacktrace.h"
-#  include "cache.h"
+#  include <services/symbols.h>
+#  include <services/stacktrace.h>
 #endif
 #if SERVICE_Streams
-#  include "streamsservice.h"
+#  include <services/streamsservice.h>
 #endif
 #if ENABLE_RCBP_TEST
-#  include "test.h"
-#  include "runctrl.h"
+#  include <main/test.h>
+#  include <services/runctrl.h>
 #endif
+#include <services/diagnostics.h>
 
 static const char * DIAGNOSTICS = "Diagnostics";
 

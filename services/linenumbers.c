@@ -19,22 +19,21 @@
  * machine instruction addresses in the executable object.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_LineNumbers
 
 #include <errno.h>
 #include <assert.h>
 #include <stdio.h>
-#include "linenumbers.h"
-#include "context.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "cache.h"
-#include "json.h"
-#include "protocol.h"
-#include "stacktrace.h"
-#include "trace.h"
+#include <framework/context.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <framework/cache.h>
+#include <framework/json.h>
+#include <framework/protocol.h>
+#include <framework/trace.h>
+#include <services/linenumbers.h>
 
 typedef struct MapToSourceArgs {
     char token[256];

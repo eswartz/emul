@@ -16,14 +16,14 @@
  * Abstract asynchronous data cache support.
  */
 
-#include "config.h"
+#include <config.h>
 #include <assert.h>
-#include "errors.h"
-#include "exceptions.h"
-#include "myalloc.h"
-#include "events.h"
-#include "trace.h"
-#include "cache.h"
+#include <framework/errors.h>
+#include <framework/exceptions.h>
+#include <framework/myalloc.h>
+#include <framework/events.h>
+#include <framework/trace.h>
+#include <framework/cache.h>
 
 typedef struct WaitingCacheClient {
     CacheClient * client;

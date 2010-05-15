@@ -16,22 +16,22 @@
  * Implements auto-discovery and Locator service.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "discovery.h"
-#include "discovery_udp.h"
-#include "protocol.h"
-#include "channel.h"
-#include "proxy.h"
-#include "myalloc.h"
-#include "events.h"
-#include "trace.h"
-#include "exceptions.h"
-#include "json.h"
-#include "peer.h"
+#include <framework/protocol.h>
+#include <framework/channel.h>
+#include <framework/proxy.h>
+#include <framework/myalloc.h>
+#include <framework/events.h>
+#include <framework/trace.h>
+#include <framework/exceptions.h>
+#include <framework/json.h>
+#include <framework/peer.h>
+#include <services/discovery.h>
+#include <services/discovery_udp.h>
 
 #if SERVICE_Locator
 

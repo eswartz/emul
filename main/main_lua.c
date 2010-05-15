@@ -16,7 +16,7 @@
  * Agent main module.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,15 +37,15 @@ extern "C" {
 }
 #endif
 
-#include "asyncreq.h"
-#include "events.h"
-#include "trace.h"
-#include "channel.h"
-#include "protocol.h"
-#include "proxy.h"
-#include "discovery.h"
-#include "myalloc.h"
-#include "errors.h"
+#include <framework/asyncreq.h>
+#include <framework/events.h>
+#include <framework/trace.h>
+#include <framework/channel.h>
+#include <framework/protocol.h>
+#include <framework/proxy.h>
+#include <framework/myalloc.h>
+#include <framework/errors.h>
+#include <services/discovery.h>
 
 static const char * progname;
 static lua_State *luastate;

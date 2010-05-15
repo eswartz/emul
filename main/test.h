@@ -19,12 +19,12 @@
 #ifndef D_test
 #define D_test
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_RCBP_TEST
 
-#include "context.h"
-#include "symbols.h"
+#include <framework/context.h>
+#include <services/symbols.h>
 
 extern void test_proc(void);
 extern int run_test_process(ContextAttachCallBack * done, void * data);
@@ -32,7 +32,7 @@ extern int find_test_symbol(Context * ctx, char * name, void ** addr, int * sym_
 
 #else /* ENABLE_RCBP_TEST */
 
-#include "errors.h"
+#include <framework/errors.h>
 
 #define find_test_symbol(ctx, name, addr, sym_class) (errno = ERR_SYM_NOT_FOUND, -1)
 

@@ -21,13 +21,13 @@
  * JSON is TCF preffered marshaling format.
  */
 
-#include "config.h"
+#include <config.h>
 #include <stdio.h>
-#include "json.h"
-#include "assert.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "base64.h"
+#include <assert.h>
+#include <framework/json.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <framework/base64.h>
 
 #define ENCODING_BINARY     0
 #define ENCODING_BASE64     1

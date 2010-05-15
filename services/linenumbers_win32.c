@@ -18,22 +18,20 @@
  * machine instruction addresses in the executable object.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && defined(_MSC_VER) && !ENABLE_ELF
 
 #include <errno.h>
 #include <assert.h>
 #include <stdio.h>
-#include "linenumbers.h"
-#include "breakpoints.h"
-#include "windbgcache.h"
-#include "context-win32.h"
-#include "context.h"
-#include "exceptions.h"
-#include "symbols.h"
-#include "json.h"
-#include "protocol.h"
+#include <framework/json.h>
+#include <framework/protocol.h>
+#include <framework/context.h>
+#include <framework/exceptions.h>
+#include <services/linenumbers.h>
+#include <system/Windows/windbgcache.h>
+#include <system/Windows/context-win32.h>
 
 int line_to_address(Context * ctx, char * file, int line, int column, LineNumbersCallBack * callback, void * user_args) {
     int err = 0;

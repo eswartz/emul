@@ -18,22 +18,22 @@
 
 /* TODO: need to cleanup symbols cache from data that not used for long time */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_SymbolsProxy
 
 #include <assert.h>
 #include <stdio.h>
-#include "context.h"
-#include "cache.h"
-#include "json.h"
-#include "events.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "stacktrace.h"
-#include "symbols.h"
+#include <framework/context.h>
+#include <framework/cache.h>
+#include <framework/json.h>
+#include <framework/events.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <services/stacktrace.h>
+#include <services/symbols.h>
 #if ENABLE_RCBP_TEST
-#  include "test.h"
+#  include <main/test.h>
 #endif
 
 #define HASH_SIZE 101
@@ -160,7 +160,7 @@ struct Symbol {
     SymInfoCache * cache;
 };
 
-#include "symbols_alloc.h"
+#include <services/symbols_alloc.h>
 
 static LINK root;
 

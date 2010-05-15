@@ -20,8 +20,8 @@
 #ifndef D_input_buf
 #define D_input_buf
 
-#include "config.h"
-#include "streams.h"
+#include <config.h>
+#include <framework/streams.h>
 
 #define INPUT_BUF_SIZE 0x1000
 

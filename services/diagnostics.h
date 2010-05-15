@@ -20,8 +20,8 @@
 #ifndef D_diagnostics
 #define D_diagnostics
 
-#include "protocol.h"
-#include "context.h"
+#include <framework/protocol.h>
+#include <framework/context.h>
 
 extern int is_test_process(Context * ctx);
 

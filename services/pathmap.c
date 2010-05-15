@@ -17,16 +17,16 @@
  * The service manages file path mapping rules.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_PathMap
 
 #include <stdio.h>
-#include "json.h"
-#include "events.h"
-#include "exceptions.h"
-#include "myalloc.h"
-#include "pathmap.h"
+#include <framework/json.h>
+#include <framework/events.h>
+#include <framework/exceptions.h>
+#include <framework/myalloc.h>
+#include <services/pathmap.h>
 
 typedef struct PathMapRuleAttr {
     char * name;

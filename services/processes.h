@@ -23,7 +23,7 @@
 #ifndef D_processes
 #define D_processes
 
-#include "protocol.h"
+#include <framework/protocol.h>
 
 /*
  * Initialize process control service.

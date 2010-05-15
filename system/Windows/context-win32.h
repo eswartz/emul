@@ -19,8 +19,8 @@
 #ifndef D_context_win32
 #define D_context_win32
 
-#include "config.h"
-#include "context.h"
+#include <config.h>
+#include <framework/context.h>
 
 extern HANDLE get_context_handle(Context * ctx);
 extern HANDLE get_context_file_handle(Context * ctx);

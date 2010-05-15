@@ -16,7 +16,7 @@
  * Symbols service - Windows version
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_Symbols && !ENABLE_SymbolsProxy && defined(_MSC_VER) && !ENABLE_ELF
 
@@ -25,17 +25,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <wchar.h>
-#include "errors.h"
-#include "events.h"
-#include "tcf_elf.h"
-#include "myalloc.h"
-#include "symbols.h"
-#include "stacktrace.h"
-#include "windbgcache.h"
-#include "context-win32.h"
-#include "trace.h"
+#include <framework/errors.h>
+#include <framework/events.h>
+#include <framework/myalloc.h>
+#include <framework/trace.h>
+#include <services/symbols.h>
+#include <services/stacktrace.h>
+#include <system/Windows/windbgcache.h>
+#include <system/Windows/context-win32.h>
 #if ENABLE_RCBP_TEST
-#  include "test.h"
+#  include <main/test.h>
 #endif
 
 #define SYM_SEARCH_PATH ""
@@ -103,7 +102,7 @@ struct Symbol {
     void * address;
 };
 
-#include "symbols_alloc.h"
+#include <services/symbols_alloc.h>
 
 typedef struct SymbolCacheEntry {
     HANDLE process;

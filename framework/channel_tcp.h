@@ -19,7 +19,7 @@
 #ifndef D_channel_tcp
 #define D_channel_tcp
 
-#include "channel.h"
+#include <framework/channel.h>
 
 /*
  * Start TCP channel listener.

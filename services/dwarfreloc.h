@@ -21,11 +21,11 @@
 #ifndef D_dwarfreloc
 #define D_dwarfreloc
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
-#include "tcf_elf.h"
+#include <services/tcf_elf.h>
 
 extern void drl_relocate(ELF_Section * s, U8_T offset, void * buf, size_t size, ELF_Section ** dst);
 

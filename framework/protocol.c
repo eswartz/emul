@@ -20,18 +20,18 @@
  * protocol is used and what services do.
  */
 
-#include "config.h"
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <assert.h>
-#include "protocol.h"
-#include "trace.h"
-#include "events.h"
-#include "events.h"
-#include "exceptions.h"
-#include "json.h"
-#include "myalloc.h"
+#include <framework/protocol.h>
+#include <framework/trace.h>
+#include <framework/events.h>
+#include <framework/events.h>
+#include <framework/exceptions.h>
+#include <framework/json.h>
+#include <framework/myalloc.h>
 
 static const char * LOCATOR = "Locator";
 

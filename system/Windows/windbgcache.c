@@ -17,14 +17,14 @@
  * Current implementation delegates all its job to DBGHELP.DLL.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if defined(WIN32) && !ENABLE_ELF
 
 #include <assert.h>
 #include <stdio.h>
 #include <wchar.h>
-#include "windbgcache.h"
+#include <system/Windows/windbgcache.h>
 
 static HINSTANCE dbghelp_dll = NULL;
 

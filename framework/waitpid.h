@@ -19,7 +19,7 @@
 #ifndef D_waitpid
 #define D_waitpid
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_DebugContext || SERVICE_Processes
 

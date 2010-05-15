@@ -20,7 +20,7 @@
  * require a process to be attached before they can access it.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_Processes
 
@@ -31,29 +31,27 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <assert.h>
-#include "myalloc.h"
-#include "protocol.h"
-#include "trace.h"
-#include "context.h"
-#include "json.h"
-#include "asyncreq.h"
-#include "exceptions.h"
-#include "runctrl.h"
-#include "filesystem.h"
-#include "streamsservice.h"
-#include "waitpid.h"
-#include "signames.h"
-#include "processes.h"
+#include <framework/myalloc.h>
+#include <framework/protocol.h>
+#include <framework/trace.h>
+#include <framework/context.h>
+#include <framework/json.h>
+#include <framework/asyncreq.h>
+#include <framework/exceptions.h>
+#include <framework/waitpid.h>
+#include <framework/signames.h>
+#include <services/streamsservice.h>
+#include <services/processes.h>
 
 static const char * PROCESSES = "Processes";
 
 #if defined(WIN32)
-#  include "tlhelp32.h"
+#  include <tlhelp32.h>
 #  ifdef _MSC_VER
 #    pragma warning(disable:4201) /* nonstandard extension used : nameless struct/union (in winternl.h) */
-#    include "winternl.h"
+#    include <winternl.h>
 #  else
-#    include "ntdef.h"
+#    include <ntdef.h>
 #  endif
 #  ifndef STATUS_INFO_LENGTH_MISMATCH
 #   define STATUS_INFO_LENGTH_MISMATCH      ((NTSTATUS)0xC0000004L)

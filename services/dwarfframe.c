@@ -18,16 +18,16 @@
  * Functions in this module use exceptions to report errors, see exceptions.h
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
 #include <assert.h>
 #include <stdio.h>
-#include "dwarfio.h"
-#include "dwarfframe.h"
-#include "exceptions.h"
-#include "myalloc.h"
+#include <framework/exceptions.h>
+#include <framework/myalloc.h>
+#include <services/dwarfio.h>
+#include <services/dwarfframe.h>
 
 #define EH_PE_omit              0xff
 

@@ -19,8 +19,8 @@
 #ifndef D_stacktrace
 #define D_stacktrace
 
-#include "protocol.h"
-#include "context.h"
+#include <framework/protocol.h>
+#include <framework/context.h>
 
 #if SERVICE_StackTrace || ENABLE_ContextProxy
 

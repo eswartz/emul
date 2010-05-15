@@ -19,7 +19,7 @@
 #ifndef D_sysmon
 #define D_sysmon
 
-#include "protocol.h"
+#include <framework/protocol.h>
 
 /*
  * Initialize system monitor service.

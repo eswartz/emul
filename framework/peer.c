@@ -16,16 +16,16 @@
  * Implements peer server management.
  */
 
-#include "config.h"
+#include <config.h>
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "tcf.h"
-#include "peer.h"
-#include "myalloc.h"
-#include "events.h"
-#include "protocol.h"
-#include "trace.h"
+#include <framework/tcf.h>
+#include <framework/peer.h>
+#include <framework/myalloc.h>
+#include <framework/events.h>
+#include <framework/protocol.h>
+#include <framework/trace.h>
 
 typedef struct PeersListener {
     peer_server_listener fnp;

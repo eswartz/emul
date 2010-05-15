@@ -19,34 +19,34 @@
  * when a program's execution should be interrupted.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_Breakpoints
 
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "breakpoints.h"
-#include "expressions.h"
-#include "channel.h"
-#include "protocol.h"
-#include "errors.h"
-#include "trace.h"
-#include "runctrl.h"
-#include "context.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "symbols.h"
-#include "cache.h"
-#include "json.h"
-#include "link.h"
-#include "linenumbers.h"
-#include "stacktrace.h"
-#include "memorymap.h"
+#include <framework/channel.h>
+#include <framework/protocol.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <framework/context.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <framework/cache.h>
+#include <framework/json.h>
+#include <framework/link.h>
+#include <services/symbols.h>
+#include <services/runctrl.h>
+#include <services/breakpoints.h>
+#include <services/expressions.h>
+#include <services/linenumbers.h>
+#include <services/stacktrace.h>
+#include <services/memorymap.h>
 
 #if defined(_WRS_KERNEL)
 #  include <private/vxdbgLibP.h>
-#  include "system/VxWorks/context-vxworks.h"
+#  include <system/VxWorks/context-vxworks.h>
 #endif
 
 typedef struct BreakpointClient BreakpointClient;

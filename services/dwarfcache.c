@@ -18,17 +18,17 @@
  * Functions in this module use exceptions to report errors, see exceptions.h
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
 #include <assert.h>
-#include "dwarf.h"
-#include "dwarfio.h"
-#include "dwarfcache.h"
-#include "dwarfexpr.h"
-#include "exceptions.h"
-#include "myalloc.h"
+#include <framework/exceptions.h>
+#include <framework/myalloc.h>
+#include <services/dwarf.h>
+#include <services/dwarfio.h>
+#include <services/dwarfcache.h>
+#include <services/dwarfexpr.h>
 
 #define OBJ_HASH_SIZE          (0x10000-1)
 

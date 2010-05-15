@@ -23,7 +23,7 @@ extern "C" {
 #ifndef D_windbgcache
 #define D_windbgcache
 
-#include "config.h"
+#include <config.h>
 
 #if defined(WIN32)
 

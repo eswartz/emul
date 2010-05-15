@@ -16,24 +16,24 @@
  * This module forwards handling of process/thread OS contexts to remote peer.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_DebugContext && ENABLE_ContextProxy
 
 #include <errno.h>
 #include <stdio.h>
 #include <assert.h>
-#include "context.h"
-#include "myalloc.h"
-#include "trace.h"
-#include "exceptions.h"
-#include "protocol.h"
-#include "json.h"
-#include "cache.h"
-#include "pathmap.h"
-#include "memorymap.h"
-#include "stacktrace.h"
-#include "context-proxy.h"
+#include <framework/context.h>
+#include <framework/myalloc.h>
+#include <framework/trace.h>
+#include <framework/exceptions.h>
+#include <framework/protocol.h>
+#include <framework/json.h>
+#include <framework/cache.h>
+#include <services/pathmap.h>
+#include <services/memorymap.h>
+#include <services/stacktrace.h>
+#include <services/context-proxy.h>
 
 typedef struct ContextCache ContextCache;
 typedef struct MemoryCache MemoryCache;

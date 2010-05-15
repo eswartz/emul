@@ -18,13 +18,13 @@
  * Functions in this module use exceptions to report errors, see exceptions.h
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
 #include <assert.h>
-#include "exceptions.h"
-#include "dwarfreloc.h"
+#include <framework/exceptions.h>
+#include <services/dwarfreloc.h>
 
 static ELF_Section * section = NULL;
 static ELF_Section * relocs = NULL;
@@ -40,7 +40,7 @@ static void * data_buf = NULL;
 static size_t data_size = 0;
 
 #define elf_relocate elf_relocate_i386
-#include "machine/i386/elf-mdep.h"
+#include <machine/i386/elf-mdep.h>
 #undef elf_relocate
 
 typedef struct ElfRelocateFunc {

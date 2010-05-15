@@ -20,7 +20,7 @@
  * Plugins system.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_Plugins
 
@@ -32,9 +32,9 @@
 #include <dlfcn.h>
 #include <errno.h>
 
-#include "trace.h"
-#include "myalloc.h"
-#include "plugins.h"
+#include <framework/trace.h>
+#include <framework/myalloc.h>
+#include <framework/plugins.h>
 
 #define _QUOTEME(x)     #x
 #define QUOTE(x)      _QUOTEME(x)

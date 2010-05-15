@@ -16,7 +16,7 @@
  * Symbols service - ELF version.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_Symbols && !ENABLE_SymbolsProxy && ENABLE_ELF
 
@@ -29,19 +29,19 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "errors.h"
-#include "tcf_elf.h"
-#include "dwarf.h"
-#include "myalloc.h"
-#include "events.h"
-#include "exceptions.h"
-#include "dwarfcache.h"
-#include "dwarfexpr.h"
-#include "dwarfframe.h"
-#include "stacktrace.h"
-#include "symbols.h"
+#include <framework/errors.h>
+#include <framework/myalloc.h>
+#include <framework/events.h>
+#include <framework/exceptions.h>
+#include <services/tcf_elf.h>
+#include <services/dwarf.h>
+#include <services/dwarfcache.h>
+#include <services/dwarfexpr.h>
+#include <services/dwarfframe.h>
+#include <services/stacktrace.h>
+#include <services/symbols.h>
 #if ENABLE_RCBP_TEST
-#  include "test.h"
+#  include <main/test.h>
 #endif
 
 struct Symbol {
@@ -58,7 +58,7 @@ struct Symbol {
     Symbol * base;
 };
 
-#include "symbols_alloc.h"
+#include <services/symbols_alloc.h>
 
 static Context * sym_ctx;
 static int sym_frame;

@@ -21,7 +21,7 @@
 
 #if ENABLE_Cmdline
 
-#include "protocol.h"
+#include <framework/protocol.h>
 
 extern void cmdline_suspend(void);
 extern void cmdline_resume(void);

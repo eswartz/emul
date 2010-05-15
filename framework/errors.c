@@ -16,17 +16,17 @@
  * This module defines agent error codes in addition to system codes defined in errno.h
  */
 
-#include "config.h"
+#include <config.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "errors.h"
-#include "events.h"
-#include "streams.h"
-#include "myalloc.h"
-#include "json.h"
-#include "trace.h"
+#include <framework/errors.h>
+#include <framework/events.h>
+#include <framework/streams.h>
+#include <framework/myalloc.h>
+#include <framework/json.h>
+#include <framework/trace.h>
 
 #define ERR_MESSAGE_MIN         (STD_ERR_BASE + 100)
 #define ERR_MESSAGE_MAX         (STD_ERR_BASE + 199)

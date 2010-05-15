@@ -23,7 +23,7 @@
 #ifndef D_plugins
 #define D_plugins
 
-#include "protocol.h"
+#include <framework/protocol.h>
 
 /*
  * Loads ALL plugins from the directory PATH_Plugins (from `config.h') in

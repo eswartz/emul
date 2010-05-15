@@ -16,19 +16,11 @@
  * This module handles process/thread OS contexts and their state machine.
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <stdlib.h>
 #include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include "context.h"
-#include "events.h"
-#include "errors.h"
-#include "trace.h"
-#include "myalloc.h"
-#include "breakpoints.h"
-#include "waitpid.h"
+#include <framework/context.h>
+#include <framework/myalloc.h>
 
 typedef struct Listener {
     ContextEventListener * func;

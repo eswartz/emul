@@ -25,8 +25,8 @@
 #ifdef __SYMBIAN32__
 #  include <select.h>
 #endif
-#include "link.h"
-#include "events.h"
+#include <framework/link.h>
+#include <framework/events.h>
 
 enum {
     AsyncReqRead,                       /* File read */

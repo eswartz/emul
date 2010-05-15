@@ -21,8 +21,8 @@
 #ifndef D_linenumbers
 #define D_linenumbers
 
-#include "protocol.h"
-#include "context.h"
+#include <framework/protocol.h>
+#include <framework/context.h>
 
 typedef struct CodeArea {
     char * directory;

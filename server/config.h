@@ -15,7 +15,7 @@
 #ifndef D_config
 #define D_config
 
-#include "mdep.h"
+#include <framework/mdep.h>
 
 #if !defined(SERVICE_Locator)
 #define SERVICE_Locator         1

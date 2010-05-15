@@ -16,7 +16,7 @@
  * This module holds execution context memory maps.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_MemoryMap
 
@@ -29,11 +29,11 @@
 #if defined(_WRS_KERNEL)
 #  include <moduleLib.h>
 #endif
-#include "memorymap.h"
-#include "myalloc.h"
-#include "json.h"
-#include "events.h"
-#include "exceptions.h"
+#include <framework/myalloc.h>
+#include <framework/json.h>
+#include <framework/events.h>
+#include <framework/exceptions.h>
+#include <services/memorymap.h>
 
 typedef struct MemoryMap {
     int valid;

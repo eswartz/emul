@@ -19,10 +19,10 @@
 #ifndef D_runctrl
 #define D_runctrl
 
-#include "config.h"
-#include "events.h"
-#include "context.h"
-#include "protocol.h"
+#include <config.h>
+#include <framework/events.h>
+#include <framework/context.h>
+#include <framework/protocol.h>
 
 /*
  * Lock run control: don't resume any thread while run control is locked.

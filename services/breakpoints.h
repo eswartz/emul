@@ -22,8 +22,8 @@
 #ifndef D_breakpoints
 #define D_breakpoints
 
-#include "context.h"
-#include "protocol.h"
+#include <framework/context.h>
+#include <framework/protocol.h>
 
 typedef struct BreakpointInfo BreakpointInfo;
 

@@ -22,7 +22,7 @@
 #ifndef D_base64
 #define D_base64
 
-#include "streams.h"
+#include <framework/streams.h>
 
 /*
  * Write BASE64 encoded array of bytes to output stream.

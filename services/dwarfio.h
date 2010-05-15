@@ -20,11 +20,11 @@
 #ifndef D_dwarfio
 #define D_dwarfio
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
-#include "tcf_elf.h"
+#include <services/tcf_elf.h>
 
 typedef struct DIO_UnitDescriptor {
     ELF_File * mFile;

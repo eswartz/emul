@@ -12,7 +12,7 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
-#include "config.h"
+#include <config.h>
 #include <assert.h>
 #include <stddef.h>
 #if defined(WIN32)
@@ -20,12 +20,12 @@
 #else
 #  include <sys/wait.h>
 #endif
-#include "myalloc.h"
-#include "trace.h"
-#include "events.h"
-#include "link.h"
-#include "asyncreq.h"
-#include "errors.h"
+#include <framework/myalloc.h>
+#include <framework/trace.h>
+#include <framework/events.h>
+#include <framework/link.h>
+#include <framework/asyncreq.h>
+#include <framework/errors.h>
 
 #define MAX_WORKER_THREADS 32
 

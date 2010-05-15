@@ -34,23 +34,23 @@
  * and uses unicast packets to sent info to agents from the list.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_Discovery
 
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "tcf.h"
-#include "discovery.h"
-#include "discovery_udp.h"
-#include "myalloc.h"
-#include "events.h"
-#include "errors.h"
-#include "trace.h"
-#include "peer.h"
-#include "ip_ifc.h"
-#include "asyncreq.h"
+#include <framework/tcf.h>
+#include <framework/myalloc.h>
+#include <framework/events.h>
+#include <framework/errors.h>
+#include <framework/trace.h>
+#include <framework/peer.h>
+#include <framework/ip_ifc.h>
+#include <framework/asyncreq.h>
+#include <services/discovery.h>
+#include <services/discovery_udp.h>
 
 #define MAX_IFC                 10
 #define MAX_RECV_ERRORS         8

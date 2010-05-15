@@ -369,7 +369,7 @@ extern const char * loc_gai_strerror(int ecode);
 #include <net/if.h>
 #include <unistd.h>
 
-#include "link.h"
+#include <framework/link.h>
 
 #define MAX_PATH _POSIX_PATH_MAX
 #define FILE_PATH_SIZE _POSIX_PATH_MAX

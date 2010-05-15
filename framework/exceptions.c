@@ -30,13 +30,13 @@
  * Only main thread is allowed to use exceptions.
  */
 
-#include "config.h"
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "exceptions.h"
-#include "events.h"
-#include "trace.h"
+#include <framework/exceptions.h>
+#include <framework/events.h>
+#include <framework/trace.h>
 
 static Trap * chain = NULL;
 

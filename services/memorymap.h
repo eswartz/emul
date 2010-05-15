@@ -18,9 +18,9 @@
 #ifndef D_memorymap
 #define D_memorymap
 
-#include "config.h"
-#include "context.h"
-#include "protocol.h"
+#include <config.h>
+#include <framework/context.h>
+#include <framework/protocol.h>
 
 typedef struct MemoryRegion MemoryRegion;
 

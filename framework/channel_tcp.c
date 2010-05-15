@@ -18,7 +18,7 @@
  * Implements input and output stream over TCP/IP transport.
  */
 
-#include "config.h"
+#include <config.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <errno.h>
@@ -34,21 +34,21 @@
 #else
    typedef void SSL;
 #endif
-#include "tcf.h"
-#include "channel.h"
-#include "channel_tcp.h"
-#include "discovery.h"
-#include "myalloc.h"
-#include "protocol.h"
-#include "errors.h"
-#include "events.h"
-#include "exceptions.h"
-#include "trace.h"
-#include "json.h"
-#include "peer.h"
-#include "ip_ifc.h"
-#include "asyncreq.h"
-#include "inputbuf.h"
+#include <framework/tcf.h>
+#include <framework/channel.h>
+#include <framework/channel_tcp.h>
+#include <framework/myalloc.h>
+#include <framework/protocol.h>
+#include <framework/errors.h>
+#include <framework/events.h>
+#include <framework/exceptions.h>
+#include <framework/trace.h>
+#include <framework/json.h>
+#include <framework/peer.h>
+#include <framework/ip_ifc.h>
+#include <framework/asyncreq.h>
+#include <framework/inputbuf.h>
+#include <services/discovery.h>
 
 #ifndef MSG_MORE
 #define MSG_MORE 0

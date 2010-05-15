@@ -20,7 +20,7 @@
 #ifndef D_proxy
 #define D_proxy
 
-#include "channel.h"
+#include <framework/channel.h>
 
 /*
  * Register channel redirection callback.

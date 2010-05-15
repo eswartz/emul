@@ -19,7 +19,7 @@
 #ifndef D_streamsservice
 #define D_streamsservice
 
-#include "protocol.h"
+#include <framework/protocol.h>
 
 typedef struct VirtualStream VirtualStream;
 

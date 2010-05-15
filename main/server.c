@@ -16,11 +16,11 @@
  * Server initialization code.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <stdio.h>
-#include "errors.h"
-#include "server.h"
+#include <framework/errors.h>
+#include <main/server.h>
 
 static Protocol * proto;
 static TCFBroadcastGroup * bcg;

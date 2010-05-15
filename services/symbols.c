@@ -13,17 +13,17 @@
  *******************************************************************************/
 
 
-#include "config.h"
+#include <config.h>
 
 #if SERVICE_Symbols
 
-#include "channel.h"
-#include "json.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "stacktrace.h"
-#include "symbols.h"
-#include "cache.h"
+#include <framework/channel.h>
+#include <framework/json.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <framework/cache.h>
+#include <services/stacktrace.h>
+#include <services/symbols.h>
 
 static const char * SYMBOLS = "Symbols";
 

@@ -19,9 +19,9 @@
 #ifndef D_expression
 #define D_expression
 
-#include "protocol.h"
-#include "context.h"
-#include "symbols.h"
+#include <framework/protocol.h>
+#include <framework/context.h>
+#include <services/symbols.h>
 
 /* Value represents result of expression evaluation */
 struct Value {

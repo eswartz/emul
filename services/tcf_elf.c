@@ -16,7 +16,7 @@
  * This module implements reading and caching of ELF files.
  */
 
-#include "config.h"
+#include <config.h>
 
 #if ENABLE_ELF
 
@@ -27,12 +27,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
-#include "tcf_elf.h"
-#include "myalloc.h"
-#include "exceptions.h"
-#include "memorymap.h"
-#include "events.h"
-#include "trace.h"
+#include <services/tcf_elf.h>
+#include <framework/myalloc.h>
+#include <framework/exceptions.h>
+#include <services/memorymap.h>
+#include <framework/events.h>
+#include <framework/trace.h>
 
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)

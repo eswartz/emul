@@ -16,30 +16,30 @@
  * Services initialization code.
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "services.h"
-#include "discovery.h"
-#include "runctrl.h"
-#include "breakpoints.h"
-#include "memoryservice.h"
-#include "memorymap.h"
-#include "registers.h"
-#include "stacktrace.h"
-#include "symbols.h"
-#include "linenumbers.h"
-#include "processes.h"
-#include "filesystem.h"
-#include "sysmon.h"
-#include "diagnostics.h"
-#include "expressions.h"
-#include "streamsservice.h"
-#include "pathmap.h"
-#include "proxy.h"
-#include "tcf_elf.h"
-#include "plugins.h"
+#include <framework/proxy.h>
+#include <framework/plugins.h>
+#include <services/discovery.h>
+#include <services/runctrl.h>
+#include <services/breakpoints.h>
+#include <services/memoryservice.h>
+#include <services/memorymap.h>
+#include <services/registers.h>
+#include <services/stacktrace.h>
+#include <services/symbols.h>
+#include <services/linenumbers.h>
+#include <services/processes.h>
+#include <services/filesystem.h>
+#include <services/sysmon.h>
+#include <services/diagnostics.h>
+#include <services/expressions.h>
+#include <services/streamsservice.h>
+#include <services/pathmap.h>
+#include <services/tcf_elf.h>
+#include <main/services.h>
 
-#include <services-ext.h>
+#include <main/services-ext.h>
 
 void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
 #if SERVICE_Locator
