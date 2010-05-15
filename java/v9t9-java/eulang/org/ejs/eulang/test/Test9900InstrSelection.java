@@ -73,10 +73,10 @@ public class Test9900InstrSelection extends BaseParserTest {
 				InstrSelection isel = new InstrSelection(mod, routine) {
 					
 					@Override
-					protected RegisterLocal newTempRegister(LLInstr instr, LLType type) {
-						ILocal local = locals.allocateTemp(type);
+					protected RegisterLocal newTempRegister(LLInstr instr, ISymbol symbol, LLType type) {
+						ILocal local = locals.allocateTemp(symbol, type);
 						if (!(local instanceof RegisterLocal))
-							throw new IllegalStateException("cannot force " + type + " into a register");
+							throw new IllegalStateException("cannot force " + symbol + " of " + type + " into a register");
 						RegisterLocal regLocal = (RegisterLocal) local;
 						return regLocal;
 					}
@@ -134,20 +134,12 @@ public class Test9900InstrSelection extends BaseParserTest {
 	public void testInitLocal1() throws Exception {
 		dumpLLVMGen = true;
 		doIsel("foo = code( => nil) { x := 1 };\n");
-		assertEquals(3, instrs.size());
+		assertEquals(2, instrs.size());
 		HLInstruction inst;
 		inst = instrs.get(0);
-		assertEquals(Ili, inst.getInst());
-		assertTrue(inst.getOp1().isRegister());
-		assertTrue(inst.getOp2() instanceof NumberOperand);
+		matchInstr(inst, "LI", RegisterTempOperand.class, "x", NumberOperand.class, 1);
 		
-		HLInstruction inst2 = instrs.get(1);
-		assertEquals(Imov, inst2.getInst());
-		assertEquals(inst.getOp1(), inst2.getOp1());
-		assertTrue(inst2.getOp2() instanceof AddrOperand);
-		assertTrue(((AddrOperand)inst2.getOp2()).getAddr() instanceof StackLocalOperand);
-		
-		inst = instrs.get(2);
+		inst = instrs.get(1);
 		assertEquals("B *R11", inst.toString());
 	}
 	
@@ -156,27 +148,16 @@ public class Test9900InstrSelection extends BaseParserTest {
 	public void testInitLocalAndRet1() throws Exception {
 		dumpLLVMGen = true;
 		doIsel("foo = code( ) { x := 1 };\n");
-		assertEquals(4, instrs.size());
+		assertEquals(3, instrs.size());
 		
 		HLInstruction inst;
 		inst = instrs.get(0);
-		assertEquals(Ili, inst.getInst());
-		assertTrue(inst.getOp1().isRegister());
-		assertTrue(inst.getOp2() instanceof NumberOperand);
+		matchInstr(inst, "LI", RegisterTempOperand.class, "x", NumberOperand.class, 1);
 		
 		HLInstruction inst2 = instrs.get(1);
-		assertEquals(Imov, inst2.getInst());
-		assertEquals(inst.getOp1(), inst2.getOp1());
-		assertTrue(inst2.getOp2() instanceof AddrOperand);
-		assertTrue(((AddrOperand)inst2.getOp2()).getAddr() instanceof StackLocalOperand);
+		matchInstr(inst2, "MOV", inst.getOp1(), RegisterTempOperand.class, 0);
 
-		HLInstruction inst3 = instrs.get(2);
-		assertEquals(Imov, inst3.getInst());
-		assertEquals(inst3.getOp1(), inst2.getOp2());
-		assertTrue(inst3.getOp2().isRegister());
-		assertTrue(((RegisterTempOperand)inst3.getOp2()).getLocal().getVr() == 0);
-
-		inst = instrs.get(3);
+		inst = instrs.get(2);
 		assertEquals("B *R11", inst.toString());
 	}
 
@@ -355,7 +336,8 @@ public class Test9900InstrSelection extends BaseParserTest {
 	}
 	@Test
 	public void testAdd() throws Exception {
-		doIsel("foo = code(x,y:Int ) { z:=x+y; x; y; };\n");
+		dumpLLVMGen =true;
+		doIsel("foo = code(x,y:Int ) { z:=x+y; x+ y; };\n");
 		
 		// X is used again, and both come in in regs
 		int idx = findInstrWithInst(instrs, "A");
@@ -427,20 +409,20 @@ public class Test9900InstrSelection extends BaseParserTest {
 	}
 	@Test
 	public void testSubRev2() throws Exception {
+		dumpLLVMGen = true;
 		doIsel("x : Byte; foo = code(y:Int ) { x-y };\n");
 		
 		int idx = findInstrWithInst(instrs, "MOVB");
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "MOVB", AddrOperand.class, "x", RegisterTempOperand.class);
-		AssemblerOperand temp = inst.getOp2();
 		
 		idx = findInstrWithInst(instrs, "SRA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SRA", temp, NumberOperand.class, 8);
+		matchInstr(inst, "SRA", RegisterTempOperand.class, NumberOperand.class, 8);
 
 		idx = findInstrWithInst(instrs, "S");
 		inst = instrs.get(idx);
-		matchInstr(inst, "S", RegisterTempOperand.class, "y", temp);
+		matchInstr(inst, "S", RegisterTempOperand.class, "y", RegisterTempOperand.class);
 	}
 	@Test
 	public void testSubRevAss1() throws Exception {
@@ -448,8 +430,12 @@ public class Test9900InstrSelection extends BaseParserTest {
 		doIsel("x : Byte; foo = code(y:Int ) { x-=y };\n");
 		
 		/*
+		This is optimal:
+		
 		SLA R0, 8
 		SB R0, @X
+		
+		But for SSA, we need to read memory -> temp, change, then temp -> memory
 		 */
 		int idx = findInstrWithInst(instrs, "SLA");
 		HLInstruction inst = instrs.get(idx);
@@ -457,7 +443,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "SB");
 		inst = instrs.get(idx);
-		matchInstr(inst, "SB", RegisterTempOperand.class, "~y", AddrOperand.class, "x");
+		matchInstr(inst, "SB", RegisterTempOperand.class, "~y", RegisterTempOperand.class);
 	}
 	@Test
 	public void testSubImm1() throws Exception {
@@ -569,15 +555,45 @@ public class Test9900InstrSelection extends BaseParserTest {
 		doIsel("foo = code(x, y:Int ) { x<<y };\n");
 		
 		int idx;
-		idx = findInstrWithSymbol(instrs, "y");
+		idx = findInstrWithSymbol(instrs, "y", 2);
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
 		
 		idx = findInstrWithInst(instrs, "SLA");
 		inst = instrs.get(idx);
+		// don't change 'x'
 		matchInstr(inst, "SLA", RegisterTempOperand.class, "~x", RegisterTempOperand.class, 0);
 	}
-	
+	@Test
+	public void testShiftLeftEqVar() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x, y:Int ) { x<<=y };\n");
+		
+		int idx;
+		idx = findInstrWithSymbol(instrs, "y", 2);
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
+		
+		idx = findInstrWithInst(instrs, "SLA");
+		inst = instrs.get(idx);
+		// don't reuse 'x'; we store later
+		matchInstr(inst, "SLA", RegisterTempOperand.class, "~x", RegisterTempOperand.class, 0);
+	}
+	@Test
+	public void testShiftLeftVarLoop() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x, y:Int ) { repeat 100 do x<<y };\n");
+		
+		int idx;
+		idx = findInstrWithSymbol(instrs, "y", 1);
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
+		
+		idx = findInstrWithInst(instrs, "SLA");
+		inst = instrs.get(idx);
+		// do not reuse 'x': not last use
+		matchInstr(inst, "SLA", RegisterTempOperand.class, "~x", RegisterTempOperand.class, 0);
+	}
 	@Test
 	public void testShiftRightConst() throws Exception {
 		dumpLLVMGen =true;
@@ -609,7 +625,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		doIsel("foo = code(x,y:Int ) { (x>>y) };\n");
 		
 		int idx;
-		idx = findInstrWithSymbol(instrs, "y");
+		idx = findInstrWithSymbol(instrs, "y", 2);
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
 		
@@ -646,7 +662,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		doIsel("foo = code(x,y:Int ) { (x+>>y) };\n");
 		
 		int idx;
-		idx = findInstrWithSymbol(instrs, "y");
+		idx = findInstrWithSymbol(instrs, "y", 2);
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
 		
@@ -682,7 +698,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		doIsel("foo = code(x,y:Int ) { (x>>|y) };\n");
 		
 		int idx;
-		idx = findInstrWithSymbol(instrs, "y");
+		idx = findInstrWithSymbol(instrs, "y", 2);
 		HLInstruction inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
 		
@@ -737,7 +753,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		int idx;
 		HLInstruction inst;
-		idx = findInstrWithSymbol(instrs, "y");
+		idx = findInstrWithSymbol(instrs, "y", 2);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, "y", RegisterTempOperand.class, 0);
 		
@@ -864,7 +880,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegisterTempOperand.class, "~y");
-		HLInstruction set1 = inst;
 		
 		idx = findInstrWithInst(instrs, "CI", idx);
 		inst = instrs.get(idx);
@@ -877,7 +892,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 		idx = findInstrWithInst(instrs, "SOCB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SOCB", set2.getOp2(), set1.getOp2());
+		matchInstr(inst, "SOCB", set2.getOp2(), RegisterTempOperand.class);
 	}
 	@Test
 	public void testComparisonOpsInExprByte() throws Exception {
@@ -896,7 +911,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegisterTempOperand.class, "~y");
-		HLInstruction set1 = inst;
 		
 		// don't use CI with bytes, since the low byte is unknown
 		idx = findInstrWithInst(instrs, "CB", idx);
@@ -910,7 +924,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 		idx = findInstrWithInst(instrs, "SOCB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SOCB", set2.getOp2(), set1.getOp2());
+		matchInstr(inst, "SOCB", set2.getOp2(), RegisterTempOperand.class);
 	}
 	@Test
 	public void testComparisonOpsInJmp() throws Exception {
@@ -1023,7 +1037,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		int idx;
 		HLInstruction inst;
 
-		idx = findInstrWithInst(instrs, "MOV");
+		idx = findInstrWithInst(instrs, "MOV", 0);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, "x", RegisterTempOperand.class, true);
 		HLInstruction xval = inst;
@@ -1047,7 +1061,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		int idx;
 		HLInstruction inst;
 
-		idx = findInstrWithInst(instrs, "MOVB");
+		idx = findInstrWithInst(instrs, "MOVB", 1);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOVB", RegisterTempOperand.class, "x", RegisterTempOperand.class, true);
 		HLInstruction xval = inst;
@@ -1121,7 +1135,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		int idx;
 		HLInstruction inst;
 
-		idx = findInstrWithSymbol(instrs, "x");
+		idx = findInstrWithSymbol(instrs, "x", 0);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, RegisterTempOperand.class, 0);	// arg 0
 		
@@ -1137,7 +1151,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterOperand.class, 0, RegisterTempOperand.class);			// save result
-		HLInstruction div1 = inst;
 		
 		idx = findInstrWithInst(instrs, "LI", idx);
 		inst = instrs.get(idx);
@@ -1156,7 +1169,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "A", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "A", div2.getOp3(), div1.getOp2());	// low words are result
+		matchInstr(inst, "A", div2.getOp3(), RegisterTempOperand.class);	// low words are result
 		
 
 	}
@@ -1170,7 +1183,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		HLInstruction inst;
 
 
-		idx = findInstrWithSymbol(instrs, "x");
+		idx = findInstrWithSymbol(instrs, "x", 0);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterTempOperand.class, RegisterTempOperand.class, 0);
 		
@@ -1211,7 +1224,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "A", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "A", div2.getOp2(), RegisterTempOperand.class);	// use result
-		AssemblerOperand add1 = inst.getOp2();
 		
 		idx = findInstrWithSymbol(instrs, "x", idx);
 		inst = instrs.get(idx);
@@ -1232,7 +1244,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "A", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "A", div3.getOp2(), add1);	// high words are result
+		matchInstr(inst, "A", div3.getOp2(), RegisterTempOperand.class);	// high words are result
 		
 		
 
@@ -1247,14 +1259,13 @@ public class Test9900InstrSelection extends BaseParserTest {
 		int idx;
 		HLInstruction inst;
 
-		idx = findInstrWithSymbol(instrs, "x");
+		idx = findInstrWithSymbol(instrs, "x", 0);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOVB", RegisterTempOperand.class, RegisterTempOperand.class, 0);	// arg 0
 		
 		idx = findInstrWithInst(instrs, "LI", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "LI", RegisterTempOperand.class, 1, NumberOperand.class, 123 * 256);	// arg 1
-		HLInstruction val = inst;
 		
 		idx = findInstrWithInst(instrs, "BL", idx);
 		inst = instrs.get(idx);
@@ -1263,7 +1274,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOVB", RegisterOperand.class, 0, RegisterTempOperand.class);	// save
-		HLInstruction div1 = inst;
 		
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
@@ -1281,7 +1291,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "AB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "AB", div2.getOp3(), div1.getOp2());	// low words are result
+		matchInstr(inst, "AB", div2.getOp3(), RegisterTempOperand.class);	// low words are result
 		
 
 	}
@@ -1295,7 +1305,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		HLInstruction inst;
 
 
-		idx = findInstrWithSymbol(instrs, "x");
+		idx = findInstrWithSymbol(instrs, "x", 0);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOVB", RegisterTempOperand.class, RegisterTempOperand.class, 0);
 		
@@ -1311,8 +1321,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOVB", RegisterOperand.class, 0, RegisterTempOperand.class);	// save result
-		HLInstruction div1 = inst;
-		
 		
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
@@ -1336,7 +1344,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "AB", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "AB", div2.getOp2(), RegisterTempOperand.class);	// use result
-		AssemblerOperand add1 = inst.getOp2();
 		
 		idx = findInstrWithSymbol(instrs, "x", idx);
 		inst = instrs.get(idx);
@@ -1357,7 +1364,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "AB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "AB", div3.getOp2(), add1);	// high words are result
+		matchInstr(inst, "AB", div3.getOp2(), RegisterTempOperand.class);	// high words are result
 		
 		
 		
@@ -1379,15 +1386,12 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 		// make sure we compare against 0 with "C r,r" not "CI r,0"
 		idx = findInstrWithLabel("loopEnter");
+		idx = findInstrWithInst(instrs, "C", idx-1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AssemblerOperand.class, "counter", RegisterTempOperand.class);
-		HLInstruction mov = inst;
-		idx = findInstrWithInst(instrs, "C", idx);
-		inst = instrs.get(idx);
-		matchInstr(inst, "C", mov.getOp2(), mov.getOp2());
+		matchInstr(inst, "C", RegisterTempOperand.class, "counter", RegisterTempOperand.class, "counter");
 		idx = findInstrWithInst(instrs, "DEC", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "DEC", AssemblerOperand.class, "counter");
+		matchInstr(inst, "DEC", RegisterTempOperand.class, "~counter");
 		
 
     }

@@ -38,6 +38,7 @@ import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLCompareInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
+import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLTypedInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
@@ -681,8 +682,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	};
 	
 	/** Called to fetch a new temp register 
-	 * @param instr TODO*/
-	abstract protected RegisterLocal newTempRegister(LLInstr instr, LLType type);
+	 * @param instr TODO
+	 * @param symbol TODO*/
+	abstract protected RegisterLocal newTempRegister(LLInstr instr, ISymbol symbol, LLType type);
 	
 	/** Called when an instruction has been generated */
 	abstract protected void emit(HLInstruction instr);
@@ -703,7 +705,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private Block block;
 	
 	private HashMap<ISymbol, Block> blockMap;
-	private HashMap<LLOperand, AssemblerOperand> tempTable;
+	/** dests of SSA operands, which do not change value */
+	private HashMap<LLOperand, AssemblerOperand> ssaTempTable;
 	private LLInstr instr;
 	private LLBlock llblock;
 	private TypeEngine typeEngine;
@@ -770,10 +773,23 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	@Override
 	public boolean enterCode(LLDefineDirective directive) {
 		blockMap = new LinkedHashMap<ISymbol, Block>();
-		tempTable = new HashMap<LLOperand, AssemblerOperand>();
+		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.LLCodeVisitor#exitCode(org.ejs.eulang.llvm.directives.LLDefineDirective)
+	 */
+	@Override
+	public void exitCode(LLDefineDirective directive) {
+		super.exitCode(directive);
+		
+		System.out.println("SSA Temp Table:");
+		for (Map.Entry<LLOperand, AssemblerOperand> entry : ssaTempTable.entrySet()) {
+			System.out.println("\t" + entry.getKey() + " [" + entry.getKey().getType() + "] -> " + entry.getValue());
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterBlock(org.ejs.eulang.llvm.LLBlock)
 	 */
@@ -1164,17 +1180,18 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		// handle the return value
 		Location[] retLocs = cconv.getReturnLocations();
 	
+		LLOperand result = ((LLAssignInstr) instr).getResult();
 		for (int i = 0; i < retLocs.length; i++) {
 			if (retLocs[i] instanceof RegisterLocation) {
 				RegisterLocation regLoc = (RegisterLocation) retLocs[i];
 				
 				RegisterOperand retOp = new RegisterOperand(new NumberOperand(regLoc.number));
-				RegisterLocal regLocal = newTempRegister(instr, regLoc.type);
+				RegisterLocal regLocal = newTempRegister(instr, getTempSymbol(result), regLoc.type);
 				RegisterTempOperand asmOp = new RegisterTempOperand(regLocal);
 				moveTo(regLoc.type, retOp, asmOp);
 				
 				asmOps[0] = asmOp;
-				tempTable.put(((LLAssignInstr) instr).getResult(), asmOp);
+				ssaTempTable.put(result, asmOp);
 			}
 			else 
 				assert false;
@@ -1220,8 +1237,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case GEN_RW:
 			asmOp = generateGeneralOperand(operand, asmOp);
-			if (!isLastUse(operand) || !isLastUse(asmOp))
-				asmOp = moveToTemp(operand, asmOp);
+			//if (!isFirstUse(operand)) {
+			//	if (!isLastUse(operand) || !isLastUse(asmOp))
+			if (operandNeedsTemp(operand, asmOp)) {
+					asmOp = moveToTemp(operand, asmOp);
+			}
 			break;
 		case REG_R:
 			asmOp = generateRegisterOperand(operand, asmOp);
@@ -1229,8 +1249,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case REG_RW_DUP:
 		case REG_RW:
 			asmOp = generateRegisterOperand(operand, asmOp);
-			if (!isLastUse(operand) || !isLastUse(asmOp))
-				asmOp = moveToTemp(operand, asmOp);
+			//if (!isFirstUse(operand)) {
+			//	if (!isLastUse(operand) || !isLastUse(asmOp))
+			if (operandNeedsTemp(operand, asmOp)) {
+					asmOp = moveToTemp(operand, asmOp);
+			}
 			if (as == As.REG_RW_DUP) {
 				AssemblerOperand copy = moveToTemp(operand, asmOp);
 				emit(HLInstruction.create(InstructionTable.Iswpb, copy));
@@ -1239,7 +1262,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			}
 			break;
 		case REG_W: {
-			RegisterLocal temp = newTempRegister(instr, operand != null ? operand.getType() : ((LLTypedInstr) instr).getType());
+			RegisterLocal temp = newTempRegister(instr, getTempSymbol(operand), 
+					operand != null ? operand.getType() : ((LLTypedInstr) instr).getType());
 			asmOp = new RegisterTempOperand(temp); 
 			break;
 		}
@@ -1317,14 +1341,44 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		asmOps[num] = asmOp;
 	}
+
+	/**
+	 * When using an operand for both reads and writes, it must live in a 
+	 * general operand.  Also, we must not modify an SSA value. 
+	 * @param operand
+	 * @param asmOp
+	 * @return
+	 */
+	private boolean operandNeedsTemp(LLOperand operand, AssemblerOperand asmOp) {
+		// when defining a value, certainly it needs no new temp
+		if (isDefinition(operand) && isGeneralOperand(asmOp)) 
+			return false;
+		if ((ssaTempTable.containsKey(operand) || asmOpMatchesTemp(operand, asmOp)))
+			return true;
+		return !isGeneralOperand(asmOp);
+	}
+
+	private boolean asmOpMatchesTemp(LLOperand operand, AssemblerOperand asmOp) {
+		return operand instanceof LLTempOp && asmOp instanceof ISymbolOperand && 
+			((ISymbolOperand) asmOp).getSymbol().equals(locals.getScope().get(((LLTempOp) operand).getName()));
+	}
 	
+	/**
+	 * @param operand
+	 * @return
+	 */
+	private boolean isDefinition(LLOperand operand) {
+		return (instr instanceof LLAssignInstr && ((LLAssignInstr) instr).getResult().equals(operand))
+		|| (instr instanceof LLStoreInstr && ((LLStoreInstr) instr).getOperands()[1].equals(operand));
+	}
+
 	/**
 	 * Put the operand into an assembler operand.
 	 * @param operand
 	 * @return
 	 */
 	private AssemblerOperand generateOperand(LLOperand operand) {
-		AssemblerOperand asmOp = tempTable.get(operand);
+		AssemblerOperand asmOp = ssaTempTable.get(operand);
 		if (asmOp != null)
 			return asmOp;
 		
@@ -1347,7 +1401,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			}
 		}
 		if (operand instanceof LLSymbolOp) {
-			return new SymbolOperand(((LLSymbolOp) operand).getSymbol());
+			ISymbol symbol = ((LLSymbolOp) operand).getSymbol();
+			ILocal local = locals.getFinalLocal(symbol);
+			if (local instanceof RegisterLocal)
+				return new RegisterTempOperand((RegisterLocal) local);
+			else if (local instanceof StackLocal)
+				return new StackLocalOperand((StackLocal) local);
+			return new SymbolOperand(symbol);
 		}
 		
 		assert false;
@@ -1376,7 +1436,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @param num
 	 */
 	private AssemblerOperand copyIntoRegister(LLInstr instr, LLOperand llOperand, AssemblerOperand operand, int num) {
-		RegisterLocal regLocal = newTempRegister(instr, llOperand != null ? llOperand.getType() : ((LLTypedInstr) instr).getType());
+		RegisterLocal regLocal = newTempRegister(instr, getTempSymbol(llOperand), 
+				llOperand != null ? llOperand.getType() : ((LLTypedInstr) instr).getType());
 		if (!locals.forceToRegister(regLocal.getName(), num))
 			assert false;
 		AssemblerOperand ret = new RegisterTempOperand(regLocal);
@@ -1386,7 +1447,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		return ret;
 	}
 	private AssemblerOperand copyIntoRegPair(LLInstr instr, LLOperand llOperand, AssemblerOperand operand, boolean high) {
-		RegisterLocal regLocal = getRegisterPair();
+		RegisterLocal regLocal = getRegisterPair(llOperand);
 		AssemblerOperand ret = new RegisterTempOperand(regLocal, high);
 		if (llOperand != null) {
 			moveTo(llOperand, operand, ret);
@@ -1395,11 +1456,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 
 	/**
+	 * @param llOperand 
 	 * @return
 	 */
-	private RegisterLocal getRegisterPair() {
+	private RegisterLocal getRegisterPair(LLOperand llOperand) {
 		if (regPair == null) {
-			regPair = newTempRegister(instr, typeEngine.INT);
+			regPair = newTempRegister(instr, getTempSymbol(llOperand), typeEngine.INT);
 			regPair.setRegPair(true);
 		}
 		return regPair;
@@ -1409,7 +1471,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand.isRegister())
 			return operand;
 
-		AssemblerOperand dest = new RegisterTempOperand(newTempRegister(instr, llOp.getType()));
+		AssemblerOperand dest = new RegisterTempOperand(newTempRegister(instr, getTempSymbol(llOp), llOp.getType()));
 		
 		return moveTo(llOp, operand, dest);
 	}
@@ -1426,7 +1488,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		if (operand instanceof NumberOperand) {
 			if (isIntOp(llOp)) {
-				RegisterLocal regLocal = newTempRegister(instr, llOp.getType());
+				RegisterLocal regLocal = newTempRegister(instr, getTempSymbol(llOp), llOp.getType());
 				AssemblerOperand ret = new RegisterTempOperand(regLocal);
 				if (isIntOp(llOp)) {
 					emitInstr(HLInstruction.create(Ili, ret, operand));
@@ -1441,7 +1503,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					assert false;
 				return ret;
 			} else if (isBoolOp(llOp)) {
-				RegisterLocal regLocal = newTempRegister(instr, llOp.getType());
+				RegisterLocal regLocal = newTempRegister(instr, getTempSymbol(llOp), llOp.getType());
 				AssemblerOperand ret = new RegisterTempOperand(regLocal);
 				if (((NumberOperand) operand).getValue() == 0)
 					emitInstr(HLInstruction.create(Iclr, ret));
@@ -1482,8 +1544,23 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 
 	private AssemblerOperand moveToTemp(LLOperand llOp, AssemblerOperand operand) {
-		AssemblerOperand dest = new RegisterTempOperand(newTempRegister(instr, llOp.getType()));
+		AssemblerOperand dest = new RegisterTempOperand(newTempRegister(instr, 
+				getTempSymbol(llOp),
+				llOp.getType()));
 		return moveTo(llOp, operand, dest);
+	}
+
+	private ISymbol getTempSymbol(LLOperand llOp) {
+		String baseName;
+		if (llOp instanceof LLTempOp) {
+			baseName = ((LLTempOp) llOp).getName();
+		} else if (llOp instanceof LLSymbolOp)
+			baseName = ((LLSymbolOp) llOp).getSymbol().getUniqueName();
+		else
+			baseName = "reg";
+		ISymbol temp = locals.getScope().add(baseName, true);
+		temp.setType(llOp != null ? llOp.getType() : ((LLTypedInstr) instr).getType());
+		return temp;
 	}
 
 	private AssemblerOperand moveTo(LLOperand llOp, AssemblerOperand from, AssemblerOperand dest) {
@@ -1495,6 +1572,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			} else if (from instanceof NumberOperand) {
 				HLInstruction inst = HLInstruction.create(Ili, dest, from);
 				emitInstr(inst);
+			} else if (from instanceof ISymbolOperand) {
+				ILocal local = locals.getFinalLocal(((ISymbolOperand) from).getSymbol());
+				if (local != null) {
+					// it has a location
+					
+				} else {
+					assert false;
+				}
 			} else {
 				assert false;
 			}
@@ -1521,6 +1606,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		return dest;
 	}
 	
+	private boolean isGeneralOperand(AssemblerOperand asmOp) {
+		return asmOp.isRegister() || asmOp.isMemory();
+		
+	}
 	private boolean isLastUse(LLOperand operand) {
 		if (!(operand instanceof LLSymbolOp))
 			return true;
@@ -1540,14 +1629,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			// a temp
 			if (list == null)
 				return true;
-			/*
 			int indexOf = Collections.binarySearch(list, instr.getNumber());
 			if (indexOf < 0)
 				// between instructions
 				indexOf = -(indexOf + 1);
 			if (instr.getNumber() >= list.get(list.size() - 1))
 				return !isLocalUsedIn(local, llblock.succ);
-			*/
 		}
 		return false;
 	}
@@ -1602,7 +1689,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					assert instr instanceof LLAssignInstr;
 					
 					AssemblerOperand dest = asmOps[d.ops[((DoRes) d).result]];
-					tempTable.put(((LLAssignInstr) instr).getResult(), dest);
+					ssaTempTable.put(((LLAssignInstr) instr).getResult(), dest);
 				}
 			}
 			

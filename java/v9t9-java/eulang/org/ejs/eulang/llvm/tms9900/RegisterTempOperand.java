@@ -33,7 +33,10 @@ public class RegisterTempOperand extends BaseHLOperand {
 	 */
 	@Override
 	public String toString() {
-		return "R" + local.getVr() + "(" + local.getName().getName() + ")"
+		String prefix = "vr";
+		if (local.getVr() < local.getRegClass().getRegisterCount())
+			prefix = "R";
+		return prefix + local.getVr() + "(" + local.getName().getName() + ")"
 		+ (isRegPair ? high ? ".hi" : ".lo" : "");
 	}
 

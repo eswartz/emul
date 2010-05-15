@@ -3,9 +3,7 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
+import static junit.framework.Assert.*;
 
 import java.util.Map;
 
@@ -76,6 +74,7 @@ public class Test9900Locals extends BaseParserTest {
 	@Test
 	public void testOnlyLocals1() throws Exception {
 		forceLocalsToStack = true;
+		dumpLLVMGen =true;
 		Locals locals = doLocals("foo = code() { x : Int = 10; };\n");
 		Map<ISymbol, ? extends ILocal> localMap = locals.getStackLocals();
 		assertEquals(1, localMap.size());
@@ -253,8 +252,8 @@ public class Test9900Locals extends BaseParserTest {
 		Map<ISymbol, ? extends ILocal> regLocalMap;
 		regLocalMap = locals.getRegLocals();
 		
-		// four enregistered arguments 
-		assertEquals(4, regLocalMap.size());
+		// four enregistered arguments; four mirrors
+		assertEquals(8, regLocalMap.size());
 		reg = (RegisterLocal) getLocal(regLocalMap, "a");
 		assertEquals(0, reg.getVr());
 		assertEquals(typeEngine.INT, reg.getType());
@@ -268,9 +267,9 @@ public class Test9900Locals extends BaseParserTest {
 		assertEquals(3, reg.getVr());
 		assertEquals(typeEngine.BYTE, reg.getType());
 		
-		// one mirror for c and x's actual location; and mirrors
+		// x and x's actual location
 		stackLocalMap = locals.getStackLocals();
-		assertEquals(6, stackLocalMap.size());
+		assertEquals(2, stackLocalMap.size());
 		
 		StackLocal real;
 		StackLocal mirror;
@@ -303,8 +302,8 @@ public class Test9900Locals extends BaseParserTest {
 		RegisterLocal reg;
 		localMap = locals.getRegLocals();
 		
-		// four arguments, enregistered 
-		assertEquals(4, localMap.size());
+		// four arguments, enregistered, and mirrors; mirrors of x and y 
+		assertEquals(10, localMap.size());
 		reg = (RegisterLocal) getLocal(localMap, "a");
 		assertEquals(0, reg.getVr());
 		reg = (RegisterLocal) getLocal(localMap, "b");
@@ -313,11 +312,13 @@ public class Test9900Locals extends BaseParserTest {
 		assertEquals(2, reg.getVr());
 		reg = (RegisterLocal) getLocal(localMap, "d");
 		assertEquals(3, reg.getVr());
+		assertNotNull(getLocal(localMap, "x"));
+		assertNotNull(getLocal(localMap, "y"));
 		
 		localMap = locals.getStackLocals();
 		
-		// one mirror for each x,y,z and their actual location, and locals
-		assertEquals(10, localMap.size());
+		// z & mirrors; x,y  
+		assertEquals(4, localMap.size());
 		
 		StackLocal real;
 		StackLocal mirror;
@@ -328,9 +329,7 @@ public class Test9900Locals extends BaseParserTest {
 		assertEquals(6, real.getOffset());	// from caller
 		
 		mirror = (StackLocal) getLocal(localMap, "_.x");
-		assertNotNull(mirror);
-		assertEquals(typeEngine.INT, mirror.getType());
-		assertEquals(6, mirror.getOffset());	// third local, taking same location as caller's
+		assertNull(mirror);
 		
 		real = (StackLocal) getLocal(localMap, "y.");
 		assertNotNull(real);
@@ -338,9 +337,7 @@ public class Test9900Locals extends BaseParserTest {
 		assertEquals(4, real.getOffset());	// from caller
 		
 		mirror = (StackLocal) getLocal(localMap, "_.y");
-		assertNotNull(mirror);
-		assertEquals(typeEngine.BOOL, mirror.getType());
-		assertEquals(4, mirror.getOffset());	// second local, taking same location as caller's
+		assertNull(mirror);
 		
 		real = (StackLocal) getLocal(localMap, "z.");
 		assertNotNull(real);

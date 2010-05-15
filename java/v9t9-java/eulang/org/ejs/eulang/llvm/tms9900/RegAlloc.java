@@ -50,11 +50,11 @@ public class RegAlloc {
 	}
 
 	/**
-	 * @param symbol
+	 * @param symbol symbol needing storage
+	 * @param type type to allocate (may differ; e.g. the symbol may be a pointer to stack while we want the content allocated)
 	 * @return
 	 */
-	public RegisterLocal allocate(ISymbol symbol) throws UnsupportedOperationException {
-		LLType type = symbol.getType();
+	public RegisterLocal allocate(ISymbol symbol, LLType type) throws UnsupportedOperationException {
 		BasicType basic = type.getBasicType();
 		if (basic == BasicType.POINTER || basic == BasicType.BOOL)
 			basic = BasicType.INTEGRAL;

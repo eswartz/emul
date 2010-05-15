@@ -22,6 +22,7 @@ import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
+import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
 import org.ejs.eulang.llvm.instrs.LLAssignInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
@@ -171,11 +172,20 @@ public class Locals {
 			}
 			@Override
 			public boolean enterInstr(LLBlock block, LLInstr instr) {
-				if (instr instanceof LLAssignInstr) {
+				if (instr instanceof LLAllocaInstr) {
+					// allocating space for a variable; try to put it in a register
+					LLAllocaInstr alloca = (LLAllocaInstr) instr;
+					if (alloca.getResult() instanceof LLSymbolOp) {
+						LLSymbolOp result = (LLSymbolOp) alloca.getResult();
+						if (forceLocalsToStack)
+							allocateLocal(result.getSymbol(), alloca.getType()).setInit(new Pair<LLBlock, LLInstr>(block, instr));
+						else
+							allocateTemp(result.getSymbol(), alloca.getType()).setInit(new Pair<LLBlock, LLInstr>(block, instr));
+					}
+				} else if (instr instanceof LLAssignInstr) {
+					// normal expression temp; try for a register again
 					LLAssignInstr assign = (LLAssignInstr) instr;
-					if (assign.getResult() instanceof LLSymbolOp)
-						allocateLocal(assign).setInit(new Pair<LLBlock, LLInstr>(block, instr));
-					else if (assign.getResult() instanceof LLTempOp)
+					if (assign.getResult() instanceof LLTempOp)
 						allocateTemp(assign).setInit(new Pair<LLBlock, LLInstr>(block, instr));
 					else
 						assert false;
@@ -225,27 +235,29 @@ public class Locals {
 		if (ops[0] instanceof LLSymbolOp && ops[1] instanceof LLSymbolOp) {
 			ISymbol argSym = ((LLSymbolOp) ops[0]).getSymbol();
 			ILocal arg = argumentLocals.get(argSym);
-			if (arg.getIncoming() == null) {
+			if (arg != null && arg.getIncoming() == null) {
 				ISymbol mirrorSym = ((LLSymbolOp) ops[1]).getSymbol();
 				StackLocal mirror = stackLocals.get(mirrorSym);
-				System.out.println("Reassigning " + mirror + " to " + arg);
-				
-				int curOffset = mirror.getOffset();
-				mirror.setIncoming(arg);
-				if (arg instanceof StackLocal) {
-					mirror.setOffset(((StackLocal) arg).getOffset());
-				} else if (arg instanceof RegisterLocal) {
-					//stackLocals.remove(mirrorSym);
-					//regLocals.put(mirrorSym, (RegisterLocal) arg);
-				}
-				
-				// recover stack space: should always work since we store
-				// immediately after allocating
-				int argStackSize = alignment.alignedSize(mirror.getType());
-				if (-curOffset * 8 + argStackSize == alignment.sizeof()) {
-					alignment.add(-argStackSize);
-				} else {
-					System.err.println("Failed to recover stack space");
+				if (mirror != null) {
+					System.out.println("Reassigning " + mirror + " to " + arg);
+					
+					int curOffset = mirror.getOffset();
+					mirror.setIncoming(arg);
+					if (arg instanceof StackLocal) {
+						mirror.setOffset(((StackLocal) arg).getOffset());
+					} else if (arg instanceof RegisterLocal) {
+						//stackLocals.remove(mirrorSym);
+						//regLocals.put(mirrorSym, (RegisterLocal) arg);
+					}
+					
+					// recover stack space: should always work since we store
+					// immediately after allocating
+					int argStackSize = alignment.alignedSize(mirror.getType());
+					if (-curOffset * 8 + argStackSize == alignment.sizeof()) {
+						alignment.add(-argStackSize);
+					} else {
+						System.err.println("Failed to recover stack space");
+					}
 				}
 			}
 		}
@@ -344,7 +356,7 @@ public class Locals {
 		
 		for (RegAlloc regAlloc : regAllocs.values()) {
 			try {
-				local = regAlloc.allocate(name);
+				local = regAlloc.allocate(name, type);
 				break;
 			} catch (UnsupportedOperationException e) {
 				
@@ -356,6 +368,7 @@ public class Locals {
 		}
 		
 		System.out.println("Allocated " + local);
+		assert !regLocals.containsKey(name);
 		regLocals.put(name, (RegisterLocal) local);
 
 		return local;
