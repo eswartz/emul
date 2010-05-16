@@ -154,7 +154,8 @@ public class V9t9CallingConvention implements ICallingConvention {
 				// stack
 				Alignment align = target.getTypeEngine().new Alignment(Target.STACK);
 				align.alignAndAdd(type);
-				locs.add(new CallerStackLocation("callerRet", type, intClass, 0 /* R0 holds pointer */));
+				locs.add(new CallerStackLocation(".callerRet", target.getTypeEngine().getPointerType(type), 
+						intClass, 0 /* R0 holds pointer */));
 			}
 		}
 		return (Location[]) locs.toArray(new Location[locs.size()]);

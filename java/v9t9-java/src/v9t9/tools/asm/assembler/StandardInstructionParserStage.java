@@ -56,18 +56,12 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
     	
     	HLInstruction inst = new HLInstruction();
     	String name = tokenizer.currentToken().toUpperCase();
-        //inst.name = tokenizer.currentToken().toUpperCase();
-        //inst.size = 2;
     	AssemblerOperand op1 = null, op2 = null;
         if (name.equals("RT")) {
-        	//inst.name = "B";
         	inst.setInst(InstructionTable.Ib);
-        	//inst.size = 2;
             op1 = new LLRegIndOperand(11);
         } else if (name.equals("NOP")) {
-        	//inst.name = "JMP";
         	inst.setInst(InstructionTable.Ijmp);
-        	//inst.size = 2;
             op1 = new LLJumpOperand(null, 2);
         } else {
         	inst.setInst(InstructionTable.lookupInst(name));

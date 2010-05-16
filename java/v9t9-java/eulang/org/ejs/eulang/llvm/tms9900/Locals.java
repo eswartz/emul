@@ -278,7 +278,7 @@ public class Locals {
 			if (loc instanceof CallerStackLocation) {
 				// fixed register
 				ICallingConvention.CallerStackLocation regLoc = (CallerStackLocation) loc;
-				local = allocateRegister(localScope.add(loc.name, true),
+				local = allocateRegister(localScope.add(loc.name, false),
 						loc.type, regLoc.regClass, regLoc.number);
 				local.setInit(new Pair<LLBlock, LLInstr>(null, null));				
 			} 

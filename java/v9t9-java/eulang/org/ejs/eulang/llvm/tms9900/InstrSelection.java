@@ -50,6 +50,7 @@ import org.ejs.eulang.parser.EulangParser.binding_return;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.engine.cpu.InstructionTable;
@@ -1133,8 +1134,32 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			LLOperand operand = llops[0];
 			AssemblerOperand asmOp = generateOperand(operand);
 			
-			// TODO: use cconv
-			asmOp = copyIntoRegister(instr, operand, asmOp, 0);
+			FunctionConvention fconv = def.getConvention();
+			ICallingConvention cconv = def.getTarget().getCallingConvention(fconv);
+			
+			Location[] retLocs = cconv.getReturnLocations();
+			for (Location retLoc : retLocs) {
+				if (retLoc instanceof CallerStackLocation) {
+					CallerStackLocation stackLoc = (CallerStackLocation) retLoc;
+					
+					ISymbol retName = locals.getScope().get(stackLoc.name);
+					assert retName != null;
+					
+					// should be a pointer
+					RegisterLocal local = (RegisterLocal) locals.getFinalLocal(retName);
+					assert local != null;
+					
+					RegisterTempOperand retRegOp = new RegisterTempOperand(local);
+					AssemblerOperand mem = new RegIndOperand(retRegOp);
+					moveTo(operand, asmOp, mem);
+				} else if (retLoc instanceof RegisterLocation) {
+					RegisterLocation regLoc = (RegisterLocation) retLoc;
+					assert regLoc.bitOffset == 0;
+					copyIntoRegister(instr, operand, asmOp, regLoc.number);
+					
+				}
+			}
+			
 		} else {
 			assert false;
 		}
@@ -1210,13 +1235,17 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				// allocate space for return value
 				CallerStackLocation stackLoc = (CallerStackLocation) argLocs[i];
 				ISymbol retName = locals.getScope().add(stackLoc.name, true);
-				retName.setType(stackLoc.type);
-				StackLocal local = locals.allocateLocal(retName, stackLoc.type);
+				
+				assert stackLoc.type instanceof LLPointerType;
+				LLType objType = stackLoc.type.getSubType();
+				
+				retName.setType(objType);
+				StackLocal local = locals.allocateLocal(retName, objType);
 				StackLocalOperand asmOp = new StackLocalOperand(local);
 				
 				// make tmp pointing to local for the arg
 				ISymbol retAddrName = locals.getScope().add(local.getName().getName() + "$p", true);
-				retAddrName.setType(typeEngine.getPointerType(stackLoc.type));
+				retAddrName.setType(stackLoc.type);
 				RegisterLocal retAddr = (RegisterLocal) locals.allocateTemp(retAddrName, retAddrName.getType());
 				if (!locals.forceToRegister(retAddr, stackLoc.number))
 					assert false;

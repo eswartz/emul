@@ -14,7 +14,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
  * @author ejs
  * 
  */
-public class RegisterOperand implements AssemblerOperand {
+public class RegisterOperand implements AssemblerOperand, IRegisterOperand {
 	private final AssemblerOperand reg;
 
 	public RegisterOperand(AssemblerOperand reg) {
@@ -61,13 +61,24 @@ public class RegisterOperand implements AssemblerOperand {
 		return resolveRegister(assembler, inst, reg);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.IRegisterOperand#getReg()
+	 */
 	public AssemblerOperand getReg() {
 		return reg;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.IRegisterOperand#isReg(int)
+	 */
 	public boolean isReg(int reg) {
-		return getReg() instanceof NumberOperand &&
-		((NumberOperand) getReg()).getValue() == reg;
+		if (getReg() instanceof NumberOperand) {
+			return ((NumberOperand) getReg()).getValue() == reg;
+		} else if (getReg() instanceof IRegisterOperand) {
+			return ((IRegisterOperand) getReg()).isReg(reg);
+		} else {
+			return false;
+		}
 	}
 
 }

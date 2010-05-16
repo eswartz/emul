@@ -5,12 +5,16 @@ package org.ejs.eulang.llvm.tms9900;
 
 import org.ejs.eulang.symbols.ISymbol;
 
+import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
+import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+
 
 /**
  * @author ejs
  *
  */
-public class RegisterTempOperand extends BaseHLOperand {
+public class RegisterTempOperand extends BaseHLOperand implements IRegisterOperand {
 
 	private final RegisterLocal local;
 	private boolean isRegPair;
@@ -106,6 +110,20 @@ public class RegisterTempOperand extends BaseHLOperand {
 	@Override
 	public ISymbol getSymbol() {
 		return local.getName();
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.IRegisterOperand#getReg()
+	 */
+	@Override
+	public AssemblerOperand getReg() {
+		return new NumberOperand(local.getVr());
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.IRegisterOperand#isReg(int)
+	 */
+	@Override
+	public boolean isReg(int reg) {
+		return local.getVr() == reg;
 	}
 	
 }
