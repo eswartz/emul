@@ -38,6 +38,7 @@ import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLCompareInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
+import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLTypedInstr;
@@ -146,6 +147,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	enum As {
 		/** throw away */
 		IGNORE,
+		/** self */
+		SELF,
 		/** put the LL operand into a general operand which be used */
 		GEN_R,
 		/** put the LL operand into a general operand which be killed */
@@ -289,10 +292,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	
 	/** These ll instructions are handled specially; do not make patterns for them */
 	private static final Pattern hardcodedInstrs = 
-		Pattern.compile("\\b(call|ret|br|switch|phi|getelementptr)\\b");
+		Pattern.compile("\\b(load|store|call|ret|br|switch|phi|getelementptr)\\b");
 	
 	/** Raw patterns.  These are converted at runtime. */ 
 	private static final IPattern[] patterns = {
+		/*
 		new IPattern( BasicType.INTEGRAL, I16, "store", 
 				new If[] { If.IS_CONST, If.IN_REG_LOCAL },
 		 		new As[] { As.IMM, As.REG_W }, 
@@ -313,6 +317,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		 		new As[] { As.GEN_R, As.GEN_W }, 
 		 		new Do( Pcopy, 0, 1 )
 		),
+		*/
+		/*
 		new IPattern( BasicType.INTEGRAL, -1, "load", 
 				new If[] { If.PASS },
 				new As[] { As.GEN_R },
@@ -323,6 +329,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				new As[] { As.GEN_R },
 				new DoRes( 0, -1, 0 )
 		),
+		*/
+		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "bitcast", 
+				new If[] { If.PASS },
+				new As[] { As.SELF },
+				new DoRes( 0, -1, 0 )
+		),
+		
 		new IPattern( BasicType.INTEGRAL, I16, "trunc", 
 				new If[] { 
 					If.IN_REG_LOCAL,
@@ -861,7 +874,15 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (instr instanceof LLAllocaInstr)
 			return false;
 		
-		if (instr instanceof LLCallInstr) {
+		if (instr instanceof LLLoadInstr) {
+			handleLoadInstr((LLLoadInstr) instr);
+			return false;
+		}
+		if (instr instanceof LLStoreInstr) {
+			handleStoreInstr((LLStoreInstr) instr);
+			return false;
+		}
+		else if (instr instanceof LLCallInstr) {
 			handleCallInstr((LLCallInstr) instr);
 			return false;
 		}
@@ -877,7 +898,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			handleBranchInstr((LLBranchInstr) instr);
 			return false;
 		} 
-		else if (instr.getName().equals("getelementptr")) {
+		else if (instr instanceof LLGetElementPtrInstr) {
 			handleGetElementPtrInstr((LLGetElementPtrInstr) instr);
 			return false;
 		}
@@ -930,6 +951,41 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		assert false : "unhandled instr " + instr;
 		return false;
+	}
+
+	private void handleLoadInstr(LLLoadInstr instr) {
+		LLOperand src = instr.getOperands()[0];
+		AssemblerOperand asmOp = generateOperand(src);
+		if (!asmOp.isMemory() && !asmOp.isRegister()) {
+			asmOp = generateGeneralOperand(src, asmOp);
+			ssaTempTable.put(instr.getResult(), asmOp);
+		} else {
+			asmOp = asmOp instanceof IRegisterOperand ? new RegIndOperand(asmOp) : new AddrOperand(asmOp); 
+			AssemblerOperand tmpOp = moveToTemp(src, asmOp);
+			ssaTempTable.put(instr.getResult(), tmpOp);
+		}
+	}
+
+	private void handleStoreInstr(LLStoreInstr instr) {
+		LLOperand src = instr.getOperands()[0];
+		AssemblerOperand srcOp = generateOperand(src);
+		if (!srcOp.isMemory() && !srcOp.isRegister()) {
+			if (!src.isConstant())
+				srcOp = generateGeneralOperand(src, srcOp);
+		} else {
+			srcOp = srcOp instanceof IRegisterOperand ? new RegIndOperand(srcOp) : new AddrOperand(srcOp); 
+		}
+		LLOperand dst = instr.getOperands()[1];
+		AssemblerOperand dstOp = generateOperand(dst);
+		if (!dstOp.isMemory() && !dstOp.isRegister()) {
+			dstOp = generateGeneralOperand(dst, dstOp);
+		} else {
+			dstOp = dstOp instanceof IRegisterOperand ? new RegIndOperand(dstOp) : new AddrOperand(dstOp);
+		}
+		
+		if (dstOp.isMemory() && srcOp instanceof NumberOperand)
+			srcOp = generateGeneralOperand(src, srcOp);
+		moveTo(instr.getType(), srcOp, dstOp);
 	}
 	
 	static class Mismatch extends Exception {
@@ -1404,6 +1460,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		//boolean isByte = !(instr instanceof LLCastInstr) && ((LLTypedInstr) instr).getType().getBits() <= 8;
 		LLType type = !(instr instanceof LLStoreInstr) && operand != null ? operand.getType() : ((LLTypedInstr) instr).getType();
 		switch (as) {
+		case SELF:
+			break;
 		case GEN_R:
 		case GEN_W:
 			if (asmOp != null) {
@@ -1745,7 +1803,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private AssemblerOperand moveToTemp(LLOperand llOp, AssemblerOperand operand) {
 		AssemblerOperand dest = new RegisterTempOperand(newTempRegister(instr, 
 				getTempSymbol(llOp),
-				llOp.getType()));
+				llOp != null ? llOp.getType() : ((LLTypedInstr) instr).getType()));
 		return moveTo(llOp.getType(), operand, dest);
 	}
 

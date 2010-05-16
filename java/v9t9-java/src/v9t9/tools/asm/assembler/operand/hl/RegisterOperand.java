@@ -25,6 +25,8 @@ public class RegisterOperand implements AssemblerOperand, IRegisterOperand {
 	public String toString() {
 		if (getReg() instanceof NumberOperand)
 			return "R" + ((NumberOperand)getReg()).getValue();
+		else if (getReg() instanceof IRegisterOperand)
+			return "[" + getReg().toString() + "]";
 		else
 			return "R(" + getReg().toString() + ")";
 	}

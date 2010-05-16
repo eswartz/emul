@@ -11,7 +11,6 @@ import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.ICallingConvention.Location;
 import org.ejs.eulang.ICallingConvention.StackBarrierLocation;
 import org.ejs.eulang.ICallingConvention.StackLocation;
-import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;

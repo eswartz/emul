@@ -26,6 +26,7 @@ import org.ejs.eulang.llvm.tms9900.RegisterTempOperand;
 import org.ejs.eulang.llvm.tms9900.RenumberInstructionsVisitor;
 import org.ejs.eulang.llvm.tms9900.StackLocalOperand;
 import org.ejs.eulang.llvm.tms9900.SymbolLabelOperand;
+import org.ejs.eulang.llvm.tms9900.SymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.LLType;
@@ -167,6 +168,28 @@ public class Test9900InstrSelection extends BaseParserTest {
 		assertEquals("B *R11", inst.toString());
 	}
 
+
+	@Test
+	public void testPtrDeref1() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("foo = code(x:Int^ => Int) { x^ };\n");
+		
+		int idx;
+		HLInstruction inst;
+		
+		idx = findInstrWithInst(instrs, "MOV");
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, "x", RegisterTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegIndOperand.class, RegisterTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "B", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "B", RegIndOperand.class, 11);
+	}
+	
 
 	@Test
 	public void testSetGlobal1() throws Exception {
@@ -1514,7 +1537,15 @@ public class Test9900InstrSelection extends BaseParserTest {
     	int idx;
 		HLInstruction inst;
 
-		idx = findInstrWithInst(instrs, "COPY");
+		idx = findInstrWithInst(instrs, "LI");
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, SymbolOperand.class, "doDraw");
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, AddrOperand.class, "inst");
+		
+		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "COPY", AddrOperand.class, "inst", RegOffsOperand.class, 10, 2);
 		
@@ -1522,6 +1553,53 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "BL");
 		inst = instrs.get(idx);
-		matchInstr(inst, "BL", RegIndOperand.class, "3");
+		matchInstr(inst, "BL", RegIndOperand.class);
     }
+    
+    @Test
+    public void testSelfRef3b() throws Exception {
+    	dumpLLVMGen = true;
+    	doIsel(
+    			"Class = data {\n"+
+    			"  draw:code(this:Class^; count:Int => nil);\n"+
+    			"};\n"+
+    			"forward doDraw;\n"+
+    			"testSelfRef3 = code() {\n"+
+    			"  inst : Class^;\n"+
+    			"  inst.draw = doDraw;\n"+
+    			"  inst.draw(inst, 5);\n"+
+    			"};\n"+
+    			"doDraw = code(this:Class^; count:Int => nil) { count*count };\n"+
+    	"");
+    	int idx;
+		HLInstruction inst;
+
+
+		idx = findInstrWithInst(instrs, "LI");
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, SymbolOperand.class, "doDraw");
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, RegIndOperand.class, "inst");
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegIndOperand.class, "inst", RegisterTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterTempOperand.class, RegisterTempOperand.class, 0);
+		
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegisterTempOperand.class, 1, NumberOperand.class, 5);
+		
+		
+		
+		idx = findInstrWithInst(instrs, "BL", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "BL", RegIndOperand.class);
+    }
+
 }
