@@ -360,7 +360,7 @@ public class LLVMGenerator {
 	private LLArgAttrType[] getArgAttrTypes(IAstArgDef[] argumentTypes) {
 		LLArgAttrType[] attrTypes = new LLArgAttrType[argumentTypes.length];
 		for (int i = 0; i < attrTypes.length; i++) {
-			LLType argType = argumentTypes[i].getType();
+			LLType argType = typeEngine.getRealType(argumentTypes[i].getType());
 			if (argumentTypes[i].isVar() || !isArgumentPassedByValue(argumentTypes[i].getType()))
 				argType = typeEngine.getPointerType(argType);
 			LLAttrs attrs = null; //new LLAttrs("noalias");
@@ -371,7 +371,7 @@ public class LLVMGenerator {
 
 	private LLAttrType getRetAttrType(IAstType returnType) {
 		// /*ISymbol typeSymbol =*/ ll.addExternType(returnType.getType());
-		return new LLAttrType(null, returnType.getType());
+		return new LLAttrType(null, typeEngine.getRealType(returnType.getType()));
 	}
 	/**
 	 * @param symbol

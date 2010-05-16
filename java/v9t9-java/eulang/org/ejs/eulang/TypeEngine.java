@@ -35,6 +35,7 @@ import org.ejs.eulang.types.LLLabelType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLRefType;
 import org.ejs.eulang.types.LLStaticField;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
@@ -92,6 +93,9 @@ public class TypeEngine {
 		 * @return bit offset
 		 */
 		public int alignmentGap(LLType type) {
+			if (type instanceof LLSymbolType) {
+				type = ((LLSymbolType) type).getRealType(TypeEngine.this);
+			}
 			while (type != null && type instanceof LLArrayType) {
 				type = type.getSubType();
 			}
@@ -128,6 +132,10 @@ public class TypeEngine {
 		 * @return the bit offset of the type
 		 */
 		public int addAtOffset(LLType type) {
+			if (type instanceof LLSymbolType) {
+				type = ((LLSymbolType) type).getRealType(TypeEngine.this);
+			}
+			
 			LLType alignType = type;
 			while (alignType != null && alignType instanceof LLArrayType) {
 				alignType = alignType.getSubType();
@@ -185,6 +193,9 @@ public class TypeEngine {
 		 * @return
 		 */
 		public int alignedSize(LLType type) {
+			if (type instanceof LLSymbolType) {
+				type = ((LLSymbolType) type).getRealType(TypeEngine.this);
+			}
 			LLType alignType = type;
 			while (alignType != null && alignType instanceof LLArrayType) {
 				alignType = alignType.getSubType();
@@ -688,5 +699,15 @@ public class TypeEngine {
 	 */
 	public void setLittleEndian(boolean b) {
 		this.isLittleEndian = b;
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	public LLType getRealType(LLType type) {
+		if (type instanceof LLSymbolType)
+			type = ((LLSymbolType) type).getRealType(this);
+		return type;
 	}
 }

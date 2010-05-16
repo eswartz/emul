@@ -27,6 +27,7 @@ import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
@@ -1270,6 +1271,9 @@ public class TestTypeInfer extends BaseParserTest {
     	IAstCodeExpr code = (IAstCodeExpr) ((IAstDefineStmt) mod.getScope().get("testSelfRef3").getDefinition()).getMatchingBodyExpr(null);
     	assertTrue(code.getType().isComplete());
     	System.out.println(code.getType());
+    	
+    	IAstDataType dataType = (IAstDataType) ((IAstDefineStmt) mod.getScope().get("Class").getDefinition()).getMatchingBodyExpr(null);
+    	assertEquals(16, dataType.getType().getBits());
     }
     
     @Test

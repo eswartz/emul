@@ -7,6 +7,12 @@ import static junit.framework.Assert.*;
 
 import java.util.Map;
 
+import org.ejs.eulang.ICallingConvention;
+import org.ejs.eulang.ICallingConvention.Location;
+import org.ejs.eulang.ICallingConvention.StackBarrierLocation;
+import org.ejs.eulang.ICallingConvention.StackLocation;
+import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
@@ -16,6 +22,9 @@ import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLSymbolType;
+import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -382,5 +391,79 @@ public class Test9900Locals extends BaseParserTest {
 		assertEquals(0, mirror.getOffset());	
 		
 		assertEquals(4, locals.getFrameSize());
+	}
+	
+
+	@Test
+	public void testArgs4() throws Exception {
+		// arg locs should be in same order even if stack and reg args are interleaved 
+		dumpLLVMGen = true;
+		Locals locals = doLocals("foo = code(a,b:Float; x:Int; c,d:Float) { };\n");
+		Map<ISymbol, ? extends ILocal> localMap;
+		
+		localMap = locals.getRegLocals();
+		RegisterLocal reg = (RegisterLocal) getLocal(localMap, "x");
+		assertEquals(0, reg.getVr());
+
+		localMap = locals.getStackLocals();
+		
+		// stack and mirrors  
+		assertEquals(8, localMap.size());
+		
+		StackLocal real;
+		
+		real = (StackLocal) getLocal(localMap, "a");
+		assertNotNull(real);
+		assertEquals(typeEngine.FLOAT, real.getType());
+		assertEquals(12, real.getOffset());	// from caller
+		
+		real = (StackLocal) getLocal(localMap, "b");
+		assertNotNull(real);
+		assertEquals(typeEngine.FLOAT, real.getType());
+		assertEquals(8, real.getOffset());	// from caller
+		
+		real = (StackLocal) getLocal(localMap, "c");
+		assertNotNull(real);
+		assertEquals(typeEngine.FLOAT, real.getType());
+		assertEquals(4, real.getOffset());	// from caller
+		
+		real = (StackLocal) getLocal(localMap, "d");
+		assertNotNull(real);
+		assertEquals(typeEngine.FLOAT, real.getType());
+		assertEquals(0, real.getOffset());	// from caller
+		
+	}
+	
+	@Test
+	public void testClassArgs() throws Exception {
+		dumpLLVMGen = true;
+		Locals locals = doLocals(
+				"Class = data {\n"+
+				"  draw:code(this:Class; count:Int => nil);\n"+
+				"};\n"+
+    			"testSelfRef3 = code() {\n"+
+    			"  inst : Class;\n"+
+    			"  inst.draw(inst, 5);\n"+
+    			"};\n"+
+    	"");
+		Map<ISymbol, ? extends ILocal> localMap;
+		
+		localMap = locals.getStackLocals();
+		StackLocal klass;
+		klass = (StackLocal) getLocal(localMap, "inst");
+		assertEquals(16, klass.getType().getBits());
+		assertEquals(4, locals.getFrameSize());
+		
+		FunctionConvention fconv = FunctionConvention.create(typeEngine, null, typeEngine.getCodeType(typeEngine.VOID, 
+				new LLType[] { new LLSymbolType(((LLDataType)klass.getType()).getSymbol()), typeEngine.INT }));
+		ICallingConvention cconv = v9t9Target.getCallingConvention(fconv);
+		Location[] argLocs = cconv.getArgumentLocations();
+		assertTrue(argLocs[0] instanceof ICallingConvention.StackLocation);
+		ICallingConvention.StackLocation sloc = (StackLocation) argLocs[0];
+		assertEquals(klass.getType(), sloc.type);
+		assertTrue(argLocs[1] instanceof ICallingConvention.RegisterLocation);
+		assertTrue(argLocs[2] instanceof ICallingConvention.StackBarrierLocation);
+		ICallingConvention.StackBarrierLocation sbloc = (StackBarrierLocation) argLocs[2];
+		assertEquals(2, sbloc.getPushedArgumentsSize());
 	}
 }

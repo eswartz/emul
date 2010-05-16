@@ -36,6 +36,7 @@ import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLCompareInstr;
+import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
@@ -47,7 +48,10 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 
@@ -56,6 +60,7 @@ import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
+import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
@@ -284,7 +289,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	
 	/** These ll instructions are handled specially; do not make patterns for them */
 	private static final Pattern hardcodedInstrs = 
-		Pattern.compile("\\b(call|ret|br|switch|phi)\\b");
+		Pattern.compile("\\b(call|ret|br|switch|phi|getelementptr)\\b");
 	
 	/** Raw patterns.  These are converted at runtime. */ 
 	private static final IPattern[] patterns = {
@@ -872,6 +877,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			handleBranchInstr((LLBranchInstr) instr);
 			return false;
 		} 
+		else if (instr.getName().equals("getelementptr")) {
+			handleGetElementPtrInstr((LLGetElementPtrInstr) instr);
+			return false;
+		}
 		else if (instr.getName().equals("phi")) {
 			handlePhiInstr((LLAssignInstr) instr);
 			return false;
@@ -1170,8 +1179,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private void handleCallInstr(LLCallInstr llinst) {
 		LLBaseDirective directive = null;
 		
-		if (llinst.getFunction() instanceof LLSymbolOp) {
-			LLSymbolOp symOp = (LLSymbolOp) llinst.getFunction();
+		LLOperand function = llinst.getFunction();
+		if (function instanceof LLSymbolOp) {
+			LLSymbolOp symOp = (LLSymbolOp) function;
 			if (isIntrinsic(symOp, ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR)) {
 				LLInstr instr = new LLBinaryInstr("src", llinst.getResult(), llinst.getType(), 
 						llinst.getOperands()[0], llinst.getOperands()[1]);
@@ -1197,8 +1207,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		else if (directive instanceof LLDefineDirective)
 			fconv = ((LLDefineDirective) directive).getConvention();
 		
-		if (fconv == null)
-			fconv = FunctionConvention.create(null, (LLCodeType) llinst.getFunction().getType());
+		if (fconv == null) {
+			LLType fType = function.getType();
+			if (fType instanceof LLPointerType)
+				fType = fType.getSubType();
+			fconv = FunctionConvention.create(typeEngine, null, (LLCodeType) fType);
+		}
 		
 		ICallingConvention cconv = def.getTarget().getCallingConvention(fconv);
 		
@@ -1253,7 +1267,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				AssemblerOperand arg = generateOperand(ops[argIdx]);
 				RegisterLocation regLoc = (RegisterLocation) argLocs[i];
 				assert regLoc.bitOffset == 0;
-				arg = copyIntoRegister(llinst, ops[i], arg, regLoc.number);
+				arg = copyIntoRegister(llinst, ops[argIdx], arg, regLoc.number);
 				argIdx++;
 			}
 			else if (argLocs[i] instanceof StackLocation) {
@@ -1273,10 +1287,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		
 		// now call
-		AssemblerOperand func = generateOperand(llinst.getFunction());
+		AssemblerOperand func = generateOperand(function);
 		
 		// TODO: other func types
-		emitInstr(HLInstruction.create(Ibl, new AddrOperand(func)));
+		if (function.getType().getBasicType() == BasicType.POINTER) {
+			func = moveToTemp(function, func);
+		}
+			
+		emitInstr(HLInstruction.create(Ibl, func instanceof IRegisterOperand ? new RegIndOperand(func) : new AddrOperand(func)));
 		routine.setHasBlCalls(true);
 		
 		// handle the return value
@@ -1316,6 +1334,48 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			type = ((LLCodeType) type).getRetType();
 		return symOp.getSymbol().equals(def.getTarget().getIntrinsic(def, intrinsic, type));
 	}
+
+	/**
+	 * 
+	 */
+	private void handleGetElementPtrInstr(LLGetElementPtrInstr instr) {
+		LLOperand[] ops = instr.getOperands();
+		
+		LLType type = ops[0].getType();
+		AssemblerOperand asmOp = generateOperand(ops[0]);
+		int offs = 0;
+		
+		for (int idx = 1; idx < ops.length; idx++) {
+			int item = ((LLConstOp) ops[idx]).getValue().intValue();
+			if (idx == 1) {
+				// step over pointer
+				offs += type.getBits() * item / 8;
+				type = typeEngine.getRealType(type.getSubType());
+			} else {
+				if (type instanceof LLDataType) {
+					LLDataType dataType = (LLDataType) type;
+					LLInstanceField field = dataType.getInstanceFields()[item];
+					type = field.getType();
+					assert field.getOffset() % 8 == 0;
+					offs += field.getOffset() / 8;
+				} else if (type instanceof LLArrayType) {
+					LLArrayType arrayType = (LLArrayType) type;
+					type = arrayType.getSubType();
+					offs += type.getBits() * item / 8;
+				} else {
+					assert false;
+				}
+			}
+		}
+		
+		if (offs != 0) {
+			asmOp = moveToTemp(ops[1], asmOp);
+			asmOp = new RegOffsOperand(new NumberOperand(offs), asmOp);
+		}
+		asmOps[0] = asmOp;
+		ssaTempTable.put(instr.getResult(), asmOp);
+	}
+
 
 	@Override
 	public boolean enterOperand(LLInstr instr, int num, LLOperand operand) {
@@ -1526,11 +1586,17 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		if (operand instanceof LLSymbolOp) {
 			ISymbol symbol = ((LLSymbolOp) operand).getSymbol();
-			ILocal local = locals.getFinalLocal(symbol);
-			if (local instanceof RegisterLocal)
-				return new RegisterTempOperand((RegisterLocal) local);
-			else if (local instanceof StackLocal)
-				return new StackLocalOperand((StackLocal) local);
+			/*
+			if (operand.getType().equals(symbol.getType())) {
+				ILocal local = locals.getFinalLocal(symbol);
+				if (local instanceof RegisterLocal)
+					return new RegisterTempOperand((RegisterLocal) local);
+				else if (local instanceof StackLocal)
+					return new StackLocalOperand((StackLocal) local);
+				
+				// deref
+				moveToTemp(operand, new SymbolOperand(symbol));
+			}*/
 			return new SymbolOperand(symbol);
 		}
 		
@@ -1648,8 +1714,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				return new RegisterTempOperand((RegisterLocal) local);
 			else if (local instanceof StackLocal)
 				return new AddrOperand(new StackLocalOperand((StackLocal) local));
-			else
-				return new AddrOperand(new SymbolOperand(sym));
+			else {
+				if (sym.getType().matchesExactly(llOp.getType().getSubType())) {
+					// get the address in a var
+					return moveToTemp(llOp, new SymbolOperand(sym));
+				} else {
+					return new AddrOperand(new SymbolOperand(sym));
+				}
+			}
 				
 		}
 		assert false;
@@ -1705,9 +1777,17 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				ILocal local = locals.getFinalLocal(((ISymbolOperand) from).getSymbol());
 				if (local != null) {
 					// it has a location
-					
+					if (local instanceof RegisterLocal) {
+						dest = new RegisterTempOperand((RegisterLocal) local);
+					} 
+					else if (local instanceof StackLocal) {
+						dest = new StackLocalOperand((StackLocal) local);
+					}
+					else 
+						assert false;
 				} else {
-					assert false;
+					HLInstruction inst = HLInstruction.create(Ili, dest, from);
+					emitInstr(inst);
 				}
 			} else {
 				assert false;

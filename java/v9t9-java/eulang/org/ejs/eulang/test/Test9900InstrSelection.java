@@ -7,21 +7,14 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
-import static v9t9.engine.cpu.InstructionTable.Ili;
-import static v9t9.engine.cpu.InstructionTable.Imov;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLModule;
-import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
-import org.ejs.eulang.llvm.tms9900.BaseHLOperand;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.ISymbolOperand;
@@ -238,11 +231,11 @@ public class Test9900InstrSelection extends BaseParserTest {
 					Integer num = (Integer) stuff[i];
 					i++;
 					if (op instanceof IRegisterOperand) {
-						assertTrue(instr+":"+op, ((IRegisterOperand) op).isReg(num));
+						assertTrue(instr+":"+op+" #", ((IRegisterOperand) op).isReg(num));
 						if (op instanceof RegOffsOperand && i < stuff.length && stuff[i] instanceof Integer) {
 							num = (Integer) stuff[i++];
 							AssemblerOperand offs = ((RegOffsOperand) op).getAddr();
-							assertTrue(instr+":"+op, offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
+							assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
 						}
 					}
 					else if (op instanceof RegisterTempOperand)
@@ -368,26 +361,24 @@ public class Test9900InstrSelection extends BaseParserTest {
 		doIsel("foo = code(x,y:Int ) { (x+1)+(x+2)+(y-1)+(y-2) };\n");
 		
 		int idx;
-		HLInstruction inst;
 		idx = findInstrWithInst(instrs, "INC");
-		inst = instrs.get(idx);
+		instrs.get(idx);
 		idx = findInstrWithInst(instrs, "INCT");
-		inst = instrs.get(idx);
+		instrs.get(idx);
 		idx = findInstrWithInst(instrs, "DEC");
-		inst = instrs.get(idx);
+		instrs.get(idx);
 		idx = findInstrWithInst(instrs, "DECT");
-		inst = instrs.get(idx);
+		instrs.get(idx);
 	}
 	@Test
 	public void testAddConst2() throws Exception {
 		doIsel("foo = code(x,y:Int ) { (x-(-1))+(x-(-2)) };\n");
 		
 		int idx;
-		HLInstruction inst;
 		idx = findInstrWithInst(instrs, "INC");
-		inst = instrs.get(idx);
+		instrs.get(idx);
 		idx = findInstrWithInst(instrs, "INCT");
-		inst = instrs.get(idx);
+		instrs.get(idx);
 	}
 
 	@Test
@@ -976,7 +967,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_EQ, RegisterTempOperand.class, "~x");
-		HLInstruction set2 = inst;
 
 		idx = findInstrWithInst(instrs, "JMP", idx);
 		inst = instrs.get(idx);
@@ -1219,8 +1209,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegisterOperand.class, 0, RegisterTempOperand.class);	// save result
-		HLInstruction div1 = inst;
-		
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
@@ -1474,16 +1462,16 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", StackLocalOperand.class, "a", RegOffsOperand.class, 10, 16);
+		matchInstr(inst, "COPY", AddrOperand.class, "a", RegOffsOperand.class, 10, 16);
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", StackLocalOperand.class, "b", RegOffsOperand.class, 10, 12);
+		matchInstr(inst, "COPY", AddrOperand.class, "b", RegOffsOperand.class, 10, 12);
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", StackLocalOperand.class, "c", RegOffsOperand.class, 10, 8);
+		matchInstr(inst, "COPY", AddrOperand.class, "c", RegOffsOperand.class, 10, 8);
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", StackLocalOperand.class, "d", RegOffsOperand.class, 10, 4);
+		matchInstr(inst, "COPY", AddrOperand.class, "d", RegOffsOperand.class, 10, 4);
 		
 		idx = findInstrWithInst(instrs, "BL", idx);
 		inst = instrs.get(idx);
@@ -1504,7 +1492,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 		idx = findInstrWithInst(instrs, "COPY");
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", StackLocalOperand.class, "x", RegIndOperand.class, 0);
+		matchInstr(inst, "COPY", AddrOperand.class, "x", RegIndOperand.class, 0);
 	}
 	
 
@@ -1515,12 +1503,25 @@ public class Test9900InstrSelection extends BaseParserTest {
     			"Class = data {\n"+
     			"  draw:code(this:Class; count:Int => nil);\n"+
     			"};\n"+
-    			//"doDraw = code(this:Class; count:Int) { count*count };\n"+
+    			"forward doDraw;\n"+
     			"testSelfRef3 = code() {\n"+
     			"  inst : Class;\n"+
-    			//"  inst.draw = doDraw;\n"+
+    			"  inst.draw = doDraw;\n"+
     			"  inst.draw(inst, 5);\n"+
     			"};\n"+
+    			"doDraw = code(this:Class; count:Int => nil) { count*count };\n"+
     	"");
+    	int idx;
+		HLInstruction inst;
+
+		idx = findInstrWithInst(instrs, "COPY");
+		inst = instrs.get(idx);
+		matchInstr(inst, "COPY", AddrOperand.class, "inst", RegOffsOperand.class, 10, 2);
+		
+		
+		
+		idx = findInstrWithInst(instrs, "BL");
+		inst = instrs.get(idx);
+		matchInstr(inst, "BL", RegIndOperand.class, "3");
     }
 }

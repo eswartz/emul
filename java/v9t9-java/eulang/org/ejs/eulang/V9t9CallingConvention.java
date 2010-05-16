@@ -105,11 +105,14 @@ public class V9t9CallingConvention implements ICallingConvention {
 		Alignment align = target.getTypeEngine().new Alignment(Target.STACK);
 		
 		List<LLArgAttrType> stackArgs = new ArrayList<LLArgAttrType>();
+		List<Integer> stackIndices = new ArrayList<Integer>();
 		for (LLArgAttrType arg : conv.getArgTypes()) {
 			boolean alloced = false;
 			alloced = allocInt(locs, argRegs, arg, arg.getName());
 
 			if (!alloced) {
+				stackIndices.add(locs.size());
+				locs.add(null);
 				stackArgs.add(arg);
 			}
 		}
@@ -122,7 +125,7 @@ public class V9t9CallingConvention implements ICallingConvention {
 			//int endOffs = align.alignAndAdd(arg.getType());
 			//int argEnd = curOffs - endOffs;
 			align.alignAndAdd(arg.getType());
-			locs.add(new StackLocation(((LLArgAttrType) arg).getName(),
+			locs.set(stackIndices.remove(0), new StackLocation(((LLArgAttrType) arg).getName(),
 					arg.getType(), -(align.sizeof() - arg.getType().getBits() ) / 8));
 
 		}

@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
@@ -24,12 +25,13 @@ public class FunctionConvention {
 	private final LLFuncAttrs funcAttrs;
 	private final String gc;
 
-	public static FunctionConvention create(String cconv, LLCodeType codeType) {
-		LLArgAttrType[] argAttrs = new LLArgAttrType[codeType.getArgTypes().length];
+	public static FunctionConvention create(TypeEngine typeEngine, String cconv, LLCodeType codeType) {
+		LLType[] argTypes = codeType.getArgTypes();
+		LLArgAttrType[] argAttrs = new LLArgAttrType[argTypes.length];
 		for (int i = 0; i < argAttrs.length; i++)
-			argAttrs[i] = new LLArgAttrType("arg"+i, null, codeType.getArgTypes()[i]);
+			argAttrs[i] = new LLArgAttrType("arg"+i, null, typeEngine.getRealType(argTypes[i]));
 		return new FunctionConvention(null, LLVisibility.DEFAULT, null /*cconv*/,
-			new LLAttrType(null, codeType.getRetType()),
+			new LLAttrType(null, typeEngine.getRealType(codeType.getRetType())),
 			argAttrs,
 			new LLFuncAttrs(), 
 			null /*gc*/);
