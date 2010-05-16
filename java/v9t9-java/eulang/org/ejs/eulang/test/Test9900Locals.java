@@ -235,11 +235,11 @@ public class Test9900Locals extends BaseParserTest {
 	@Test
 	public void testLocalsRegsNoFloat() throws Exception {
 		// no float regs supported; all should go to stack
-		Locals locals = doLocals("foo = code() { y : Float = 10; y = y * 10; };\n");
+		Locals locals = doLocals("foo = code(=>nil) { y : Float = 10; y = y * 10; };\n");
 		Map<ISymbol, ? extends ILocal> localMap = locals.getRegLocals();
 		assertEquals(0, localMap.size());
 		localMap = locals.getStackLocals();
-		assertEquals(4, localMap.size());
+		assertEquals(3, localMap.size());
 	}
 
 	@Test
@@ -276,7 +276,7 @@ public class Test9900Locals extends BaseParserTest {
 
 		LLArrayType theType = typeEngine.getArrayType(typeEngine.INT, 5, null);
 
-		real = (StackLocal) getLocal(stackLocalMap, "x.");
+		real = (StackLocal) getLocal(stackLocalMap, "x");
 		assertNotNull(real);
 		assertEquals(theType, real.getType());
 		assertEquals(0, real.getOffset());	// from caller
@@ -323,7 +323,7 @@ public class Test9900Locals extends BaseParserTest {
 		StackLocal real;
 		StackLocal mirror;
 		
-		real = (StackLocal) getLocal(localMap, "x.");
+		real = (StackLocal) getLocal(localMap, "x");
 		assertNotNull(real);
 		assertEquals(typeEngine.INT, real.getType());
 		assertEquals(6, real.getOffset());	// from caller
@@ -331,7 +331,7 @@ public class Test9900Locals extends BaseParserTest {
 		mirror = (StackLocal) getLocal(localMap, "_.x");
 		assertNull(mirror);
 		
-		real = (StackLocal) getLocal(localMap, "y.");
+		real = (StackLocal) getLocal(localMap, "y");
 		assertNotNull(real);
 		assertEquals(typeEngine.BOOL, real.getType());
 		assertEquals(4, real.getOffset());	// from caller
@@ -339,7 +339,7 @@ public class Test9900Locals extends BaseParserTest {
 		mirror = (StackLocal) getLocal(localMap, "_.y");
 		assertNull(mirror);
 		
-		real = (StackLocal) getLocal(localMap, "z.");
+		real = (StackLocal) getLocal(localMap, "z");
 		assertNotNull(real);
 		assertEquals(typeEngine.FLOAT, real.getType());
 		assertEquals(0, real.getOffset());	// from caller
@@ -365,15 +365,15 @@ public class Test9900Locals extends BaseParserTest {
 		RegisterLocal reg;
 		localMap = locals.getRegLocals();
 		
-		// ome arguments, enregistered
-		assertEquals(1, localMap.size());
+		// one arguments, enregistered; float arg
+		assertEquals(2, localMap.size());
 		reg = (RegisterLocal) getLocal(localMap, "a");
 		assertEquals(0, reg.getVr());
 		
 		localMap = locals.getStackLocals();
 		
-		// one for p's actual location, and mirror
-		assertEquals(2, localMap.size());
+		// one for p's actual location
+		assertEquals(1, localMap.size());
 		
 		StackLocal mirror;
 		mirror = (StackLocal) getLocal(localMap, "_.p");

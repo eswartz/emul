@@ -13,6 +13,8 @@ import static v9t9.engine.cpu.InstructionTable.Imov;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
@@ -1504,4 +1506,21 @@ public class Test9900InstrSelection extends BaseParserTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "COPY", StackLocalOperand.class, "x", RegIndOperand.class, 0);
 	}
+	
+
+    @Test
+    public void testSelfRef3() throws Exception {
+    	dumpLLVMGen = true;
+    	doIsel(
+    			"Class = data {\n"+
+    			"  draw:code(this:Class; count:Int => nil);\n"+
+    			"};\n"+
+    			//"doDraw = code(this:Class; count:Int) { count*count };\n"+
+    			"testSelfRef3 = code() {\n"+
+    			"  inst : Class;\n"+
+    			//"  inst.draw = doDraw;\n"+
+    			"  inst.draw(inst, 5);\n"+
+    			"};\n"+
+    	"");
+    }
 }

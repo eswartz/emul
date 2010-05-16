@@ -113,6 +113,7 @@ import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLStaticField;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
@@ -1655,6 +1656,13 @@ entry:
 		
 		if (type.getBasicType() == BasicType.VOID)
 			return null;
+		
+		if (type instanceof LLSymbolType) {
+			type = ((LLSymbolType)type).getRealType(typeEngine);
+		}
+		if (origType instanceof LLSymbolType) {
+			origType = ((LLSymbolType)origType).getRealType(typeEngine);
+		}
 		
 		if (origType.equals(type)) {
 			// good
