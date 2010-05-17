@@ -557,7 +557,7 @@ static ELF_File * open_memory_region_file(unsigned n, int * error) {
     assert(n < elf_list_region_cnt);
     elf_list_files[n] = NULL;
     if (r->file_name == NULL) return NULL;
-    file = find_open_file(r->dev, r->ino, 0);
+    file = find_open_file(r->dev, r->ino ? r->ino : elf_ino(r->file_name), 0);
     if (file == NULL) {
         file = elf_open(r->file_name);
         if (file == NULL && *error == 0) *error = errno;

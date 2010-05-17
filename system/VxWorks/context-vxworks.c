@@ -190,7 +190,6 @@ int context_stop(Context * ctx) {
     assert(!ctx->stopped);
     assert(!ctx->exited);
     assert(!EXT(ctx)->regs_dirty);
-    assert(!ctx->intercepted);
     if (ctx->pending_intercept) {
         trace(LOG_CONTEXT, "context: stop ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
     }
@@ -417,7 +416,6 @@ static void event_handler(void * arg) {
         if (stopped_ctx == NULL) break;
         assert(!stopped_ctx->stopped);
         assert(!EXT(stopped_ctx)->regs_dirty);
-        assert(!stopped_ctx->intercepted);
         if (EXT(stopped_ctx)->regs_error) {
             release_error_report(EXT(stopped_ctx)->regs_error);
             EXT(stopped_ctx)->regs_error = NULL;
@@ -446,7 +444,6 @@ static void event_handler(void * arg) {
         if (current_ctx == NULL) break;
         assert(!current_ctx->stopped);
         assert(!EXT(current_ctx)->regs_dirty);
-        assert(!current_ctx->intercepted);
         if (EXT(current_ctx)->regs_error) {
             release_error_report(EXT(current_ctx)->regs_error);
             EXT(current_ctx)->regs_error = NULL;
@@ -575,7 +572,6 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
              * assert(!stopped_ctx->stopped) can fail if a task is resumed outside TCF agent.
              */
             assert(!stopped_ctx->stopped);
-            assert(!stopped_ctx->intercepted);
             assert(!stopped_ctx->exited);
             stopped_ctx->pending_step = 0;
             trace(LOG_CONTEXT, "context: exited ctx %#lx, id %#x", stopped_ctx, EXT(stopped_ctx)->pid);

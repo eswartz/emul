@@ -162,7 +162,7 @@ int read_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t * 
     if (read_reg_bytes(frame, reg_def, 0, reg_def->size, buf) < 0) return -1;
     if (value != NULL) {
         size_t i;
-        uint64_t n = 0 ;
+        uint64_t n = 0;
         for (i = 0; i < reg_def->size; i++) {
             n = n << 8;
             n |= buf[reg_def->big_endian ? i : reg_def->size - i - 1];

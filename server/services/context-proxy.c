@@ -433,7 +433,6 @@ static void read_container_suspended_item(InputStream * inp, void * args) {
         assert(*EXT(c->ctx) == c);
         if (!c->ctx->stopped) {
             c->ctx->stopped = 1;
-            c->ctx->intercepted = 1;
             on_context_suspended(c);
             send_context_stopped_event(c->ctx);
         }
@@ -453,7 +452,6 @@ static void read_container_resumed_item(InputStream * inp, void * args) {
         assert(*EXT(c->ctx) == c);
         if (c->ctx->stopped) {
             c->ctx->stopped = 0;
-            c->ctx->intercepted = 0;
             clear_context_suspended_data(c);
             send_context_started_event(c->ctx);
         }
@@ -521,7 +519,6 @@ static void event_context_suspended(Channel * ch, void * args) {
         c->pc_valid = 1;
         if (!c->ctx->stopped) {
             c->ctx->stopped = 1;
-            c->ctx->intercepted = 1;
             on_context_suspended(c);
             send_context_stopped_event(c->ctx);
         }
@@ -549,7 +546,6 @@ static void event_context_resumed(Channel * ch, void * args) {
         assert(*EXT(c->ctx) == c);
         if (c->ctx->stopped) {
             c->ctx->stopped = 0;
-            c->ctx->intercepted = 0;
             clear_context_suspended_data(c);
             send_context_started_event(c->ctx);
         }
@@ -759,7 +755,7 @@ static void validate_peer_cache_state(Channel * c, void * args, int error) {
             }
             else {
                 add_context_cache(p, x);
-                x->ctx->stopped = x->ctx->intercepted = x->pc_valid;
+                x->ctx->stopped = x->pc_valid;
                 if (x->pc_valid) {
                     on_context_suspended(x);
                     send_context_stopped_event(x->ctx);

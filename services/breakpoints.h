@@ -31,7 +31,7 @@ typedef struct BreakpointInfo BreakpointInfo;
 
 /*
  * The function is called from context.c every time a context is stopped by breakpoint.
- * The function evaluates breakpoint condition and sets ctx->intercepted = 1 if the condition is true.
+ * The function evaluates breakpoint condition and calls suspend_debug_context() if the condition is true.
  */
 extern void evaluate_breakpoint(Context * ctx);
 
@@ -40,11 +40,6 @@ extern void evaluate_breakpoint(Context * ctx);
  * Otherwise return NULL.
  */
 extern char ** get_context_breakpoint_ids(Context * ctx);
-
-/*
- * Return 1 if breakpoints for given context are in consistent state.
- */
-extern int are_breakpoints_in_sync(Context * ctx);
 
 /*
  * When a context is stopped by breakpoint, it is necessary to disable

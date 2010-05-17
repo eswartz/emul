@@ -43,7 +43,6 @@ struct Context {
     int                 stopped;            /* OS kernel has stopped this context */
     int                 stopped_by_bp;      /* stopped by breakpoint */
     int                 stopped_by_exception;/* stopped by runtime exception (like SIGSEGV, etc.) */
-    int                 intercepted;        /* context is reported to a host as suspended */
     int                 exiting;            /* context is about to exit */
     int                 exited;             /* context exited */
     int                 event_notification; /* set to 1 when calling one of ContextEventListener call-backs for this context */

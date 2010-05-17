@@ -62,12 +62,13 @@ static const char RUN_CONTROL[] = "RunControl";
 
 typedef struct ContextExtensionRC {
     int pending_safe_event; /* safe events are waiting for this context to be stopped */
+    int intercepted;        /* context is reported to a host as suspended */
     int intercepted_by_bp;
 } ContextExtensionRC;
 
 static size_t context_extension_offset = 0;
 
-#define EXT(ctx) ((ContextExtensionRC *)((char *)(ctx) + context_extension_offset))
+#define EXT(ctx) (ctx ? ((ContextExtensionRC *)((char *)(ctx) + context_extension_offset)) : NULL)
 
 typedef struct SafeEvent {
     Context * mem;
@@ -86,8 +87,9 @@ static SafeEvent * safe_event_list = NULL;
 static SafeEvent * safe_event_last = NULL;
 static int safe_event_pid_count = 0;
 static int run_ctrl_lock_cnt = 0;
-static int stop_all_timer_posted = 0;
 static int stop_all_timer_cnt = 0;
+static int stop_all_timer_posted = 0;
+static int run_safe_events_posted = 0;
 
 static TCFBroadcastGroup * broadcast_group = NULL;
 
@@ -166,15 +168,12 @@ static void write_context(OutputStream * out, Context * ctx) {
         write_stream(out, ':');
         json_write_boolean(out, 1);
     }
-
-#if !defined(_WRS_KERNEL)
-    if (ctx->parent == NULL) {
+    else {
         write_stream(out, ',');
         json_write_string(out, "IsContainer");
         write_stream(out, ':');
         json_write_boolean(out, 1);
     }
-#endif
 
 #ifdef WIN32
     if (ctx->parent == NULL)
@@ -193,9 +192,11 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     int fst = 1;
     const char * reason = NULL;
     char ** bp_ids = NULL;
+    ContextExtensionRC * ext = EXT(ctx);
+
     assert(!ctx->exited);
 
-    if (!ctx->intercepted) {
+    if (!ext->intercepted) {
         write_stringz(out, "0");
         write_stringz(out, "null");
         write_stringz(out, "null");
@@ -207,7 +208,7 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     write_stream(out, 0);
 
     /* String: Reason */
-    if (EXT(ctx)->intercepted_by_bp == 1) bp_ids = get_context_breakpoint_ids(ctx);
+    if (ext->intercepted_by_bp == 1) bp_ids = get_context_breakpoint_ids(ctx);
     if (bp_ids != NULL) reason = "Breakpoint";
     else reason = context_suspend_reason(ctx);
     json_write_string(out, reason);
@@ -358,6 +359,7 @@ static void command_get_children(char * token, Channel * c) {
 static void command_get_state(char * token, Channel * c) {
     char id[256];
     Context * ctx = NULL;
+    ContextExtensionRC * ext = NULL;
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
@@ -365,6 +367,8 @@ static void command_get_state(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
+    ext = EXT(ctx);
+
     if (ctx == NULL || !context_has_state(ctx)) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
@@ -373,7 +377,7 @@ static void command_get_state(char * token, Channel * c) {
 
     write_errno(&c->out, err);
 
-    json_write_boolean(&c->out, ctx != NULL && ctx->intercepted);
+    json_write_boolean(&c->out, ctx != NULL && ext->intercepted);
     write_stream(&c->out, 0);
 
     if (err) {
@@ -395,7 +399,7 @@ static void send_simple_result(Channel * c, char * token, int err) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void send_event_context_resumed(OutputStream * out, Context * ctx);
+static void send_event_context_resumed(Context * ctx);
 
 static void resume_params_callback(InputStream * inp, const char * name, void * args) {
     int * err = (int *)args;
@@ -404,17 +408,21 @@ static void resume_params_callback(InputStream * inp, const char * name, void * 
     *err = ERR_UNSUPPORTED;
 }
 
-static int context_continue_recursive(OutputStream * out, Context * ctx) {
-    LINK * l;
+static int context_continue_recursive(Context * ctx) {
     int err = 0;
+
     if (context_has_state(ctx)) {
-        send_event_context_resumed(out, ctx);
+        send_event_context_resumed(ctx);
         if (run_ctrl_lock_cnt == 0 && context_continue(ctx) < 0) err = errno;
     }
-    for (l = ctx->children.next; l != &ctx->children; l = l->next) {
-        Context * cld = cldl2ctxp(l);
-        if (cld->exited || context_has_state(cld) && !cld->intercepted) continue;
-        context_continue_recursive(out, cld);
+    else {
+        LINK * l;
+        for (l = ctx->children.next; l != &ctx->children; l = l->next) {
+            Context * x = cldl2ctxp(l);
+            ContextExtensionRC * y = EXT(x);
+            if (x->exited || context_has_state(x) && !y->intercepted) continue;
+            context_continue_recursive(x);
+        }
     }
     if (err == 0) return 0;
     errno = err;
@@ -440,6 +448,7 @@ static void command_resume(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     if (err == 0) {
         Context * ctx = id2ctx(id);
+        ContextExtensionRC * ext = EXT(ctx);
 
         if (ctx == NULL) {
             err = ERR_INV_CONTEXT;
@@ -447,14 +456,14 @@ static void command_resume(char * token, Channel * c) {
         else if (ctx->exited) {
             err = ERR_ALREADY_EXITED;
         }
-        else if (context_has_state(ctx) && !ctx->intercepted) {
+        else if (context_has_state(ctx) && !ext->intercepted) {
             err = ERR_ALREADY_RUNNING;
         }
         else if (count != 1) {
             err = EINVAL;
         }
         else if (context_has_state(ctx) && mode == RM_STEP_INTO) {
-            send_event_context_resumed(&c->bcg->out, ctx);
+            send_event_context_resumed(ctx);
             if (run_ctrl_lock_cnt > 0) {
                 ctx->pending_step = 1;
             }
@@ -462,12 +471,12 @@ static void command_resume(char * token, Channel * c) {
                 err = errno;
             }
             else {
-                assert(!ctx->intercepted);
+                assert(!ext->intercepted);
                 ctx->pending_intercept = 1;
             }
         }
         else if (mode == RM_RESUME) {
-            if (context_continue_recursive(&c->bcg->out, ctx) < 0) err = errno;
+            if (context_continue_recursive(ctx) < 0) err = errno;
         }
         else {
             err = EINVAL;
@@ -476,43 +485,53 @@ static void command_resume(char * token, Channel * c) {
     send_simple_result(c, token, err);
 }
 
-static void send_event_context_suspended(OutputStream * out, Context * ctx);
+static void send_event_context_suspended(Context * ctx);
 
 int suspend_debug_context(Context * ctx) {
-    LINK * l;
-    if (context_has_state(ctx) && !ctx->exited) {
+    ContextExtensionRC * ext = EXT(ctx);
+
+    if (ctx->exited) {
+        /* do nothing */
+    }
+    else if (context_has_state(ctx)) {
         if (!ctx->stopped) {
-            assert(!ctx->intercepted);
+            assert(!ext->intercepted);
             if (!ctx->exiting) {
                 ctx->pending_intercept = 1;
                 if (!ctx->pending_step && context_stop(ctx) < 0) return -1;
             }
         }
-        else if (!ctx->intercepted) {
-            if (!are_breakpoints_in_sync(ctx)) {
+        else if (!ext->intercepted) {
+            if (run_ctrl_lock_cnt > 0) {
                 ctx->pending_intercept = 1;
             }
             else {
                 ctx->pending_step = 0;
-                send_event_context_suspended(&broadcast_group->out, ctx);
+                send_event_context_suspended(ctx);
             }
         }
     }
-    for (l = ctx->children.next; l != &ctx->children; l = l->next) {
-        suspend_debug_context(cldl2ctxp(l));
+    else {
+        LINK * l;
+        for (l = ctx->children.next; l != &ctx->children; l = l->next) {
+            suspend_debug_context(cldl2ctxp(l));
+        }
     }
     return 0;
 }
 
 static void command_suspend(char * token, Channel * c) {
     char id[256];
-    Context * ctx;
+    Context * ctx = NULL;
+    ContextExtensionRC * ext = NULL;
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
     ctx = id2ctx(id);
+    ext = EXT(ctx);
 
     if (ctx == NULL) {
         err = ERR_INV_CONTEXT;
@@ -520,7 +539,7 @@ static void command_suspend(char * token, Channel * c) {
     else if (ctx->exited) {
         err = ERR_ALREADY_EXITED;
     }
-    else if (ctx->intercepted) {
+    else if (ext->intercepted) {
         err = ERR_ALREADY_STOPPED;
     }
     else if (suspend_debug_context(ctx) < 0) {
@@ -538,18 +557,20 @@ typedef struct TerminateArgs {
 static void event_terminate(void * x) {
     TerminateArgs * args = (TerminateArgs *)x;
     Context * ctx = args->ctx;
+    ContextExtensionRC * ext = EXT(ctx);
     Channel * c = args->channel;
     LINK * l = ctx->children.next;
     while (l != &ctx->children) {
         Context * x = cldl2ctxp(l);
+        ContextExtensionRC * y = EXT(x);
         if (!x->exited) {
-            if (x->intercepted) send_event_context_resumed(&c->bcg->out, x);
+            if (y->intercepted) send_event_context_resumed(x);
             x->pending_intercept = 0;
             x->pending_signals |= 1 << SIGKILL;
         }
         l = l->next;
     }
-    if (ctx->intercepted) send_event_context_resumed(&c->bcg->out, ctx);
+    if (ext->intercepted) send_event_context_resumed(ctx);
     ctx->pending_intercept = 0;
     ctx->pending_signals |= 1 << SIGKILL;
     context_unlock(ctx);
@@ -593,7 +614,9 @@ static void command_terminate(char * token, Channel * c) {
     send_simple_result(c, token, err);
 }
 
-static void send_event_context_added(OutputStream * out, Context * ctx) {
+static void send_event_context_added(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
     write_stringz(out, "contextAdded");
@@ -607,7 +630,9 @@ static void send_event_context_added(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_changed(OutputStream * out, Context * ctx) {
+static void send_event_context_changed(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
     write_stringz(out, "contextChanged");
@@ -621,7 +646,9 @@ static void send_event_context_changed(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_removed(OutputStream * out, Context * ctx) {
+static void send_event_context_removed(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
     write_stringz(out, "contextRemoved");
@@ -635,15 +662,17 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_suspended(OutputStream * out, Context * ctx) {
+static void send_event_context_suspended(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+    ContextExtensionRC * ext = EXT(ctx);
+
     assert(ctx->stopped);
     assert(!ctx->exited);
-    assert(!ctx->intercepted);
+    assert(!ext->intercepted);
     assert(!ctx->pending_step);
-    assert(are_breakpoints_in_sync(ctx));
-    ctx->intercepted = 1;
+    ext->intercepted = 1;
     ctx->pending_intercept = 0;
-    if (get_context_breakpoint_ids(ctx) != NULL) EXT(ctx)->intercepted_by_bp++;
+    if (get_context_breakpoint_ids(ctx) != NULL) ext->intercepted_by_bp++;
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -657,11 +686,14 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_resumed(OutputStream * out, Context * ctx) {
-    assert(ctx->intercepted);
+static void send_event_context_resumed(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+    ContextExtensionRC * ext = EXT(ctx);
+
+    assert(ext->intercepted);
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
-    ctx->intercepted = 0;
+    ext->intercepted = 0;
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -674,8 +706,9 @@ static void send_event_context_resumed(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_exception(OutputStream * out, Context * ctx) {
+static void send_event_context_exception(Context * ctx) {
     char buf[128];
+    OutputStream * out = &broadcast_group->out;
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -711,12 +744,16 @@ static void run_safe_events(void * arg);
 static void stop_all_timer(void * args) {
     stop_all_timer_posted = 0;
     stop_all_timer_cnt++;
-    run_safe_events(NULL);
+    run_safe_events_posted++;
+    post_event(run_safe_events, NULL);
 }
 
 static void run_safe_events(void * arg) {
     LINK * l;
     Context * mem;
+
+    run_safe_events_posted--;
+    if (run_safe_events_posted > 0) return;
 
     safe_event_pid_count = 0;
 
@@ -727,11 +764,17 @@ static void run_safe_events(void * arg) {
         while (l != &context_root) {
             int n = 0;
             Context * ctx = ctxl2ctxp(l);
+            ContextExtensionRC * ext = EXT(ctx);
             l = l->next; /* Context can be deleted in the loop */
-            EXT(ctx)->pending_safe_event = 0;
+            ext->pending_safe_event = 0;
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
-            if (ctx->intercepted) continue;
+            if (ext->intercepted) continue;
+            if (ctx->pending_intercept) {
+                ctx->pending_step = 0;
+                send_event_context_suspended(ctx);
+                continue;
+            }
             assert(!ctx->pending_intercept);
             if (ctx->pending_step) {
                 ctx->pending_step = 0;
@@ -746,6 +789,7 @@ static void run_safe_events(void * arg) {
                 trace(LOG_ALWAYS, "error: can't resume %s; error %d: %s",
                     ctx->id, error, errno_to_str(error));
             }
+            if (run_ctrl_lock_cnt > 0) break;
         }
         return;
     }
@@ -757,8 +801,9 @@ static void run_safe_events(void * arg) {
     l = context_root.next;
     while (l != &context_root) {
         Context * ctx = ctxl2ctxp(l);
+        ContextExtensionRC * ext = EXT(ctx);
         l = l->next;
-        EXT(ctx)->pending_safe_event = 0;
+        ext->pending_safe_event = 0;
         if (ctx->mem != mem) continue;
         if (ctx->exited || ctx->exiting) continue;
         if (ctx->stopped || !context_has_state(ctx)) continue;
@@ -769,23 +814,12 @@ static void run_safe_events(void * arg) {
         else {
             if (!ctx->pending_step || stop_all_timer_cnt >= STOP_ALL_MAX_CNT / 2) {
                 if (context_stop(ctx) < 0) {
-                    int error = errno;
-#ifdef _WRS_KERNEL
-                    if (error == S_vxdbgLib_INVALID_CTX) {
-                        /* Most often this means that context has exited,
-                         * but exit event is not delivered yet.
-                         * Not an error. */
-                        error = 0;
-                    }
-#endif
-                    if (error) {
-                        trace(LOG_ALWAYS, "error: can't temporary stop %s; error %d: %s",
-                            ctx->id, error, errno_to_str(error));
-                    }
+                    trace(LOG_ALWAYS, "error: can't temporary stop %s; error %d: %s",
+                        ctx->id, errno, errno_to_str(errno));
                 }
                 assert(!ctx->stopped);
             }
-            EXT(ctx)->pending_safe_event = 1;
+            ext->pending_safe_event = 1;
             safe_event_pid_count++;
         }
     }
@@ -794,6 +828,8 @@ static void run_safe_events(void * arg) {
         Trap trap;
         SafeEvent * i = safe_event_list;
         if (i->mem != mem) {
+            assert(run_safe_events_posted == 0);
+            run_safe_events_posted++;
             post_event(run_safe_events, NULL);
             break;
         }
@@ -822,12 +858,14 @@ static void run_safe_events(void * arg) {
 }
 
 static void check_safe_events(Context * ctx) {
+    ContextExtensionRC * ext = EXT(ctx);
     assert(ctx->stopped || ctx->exited);
-    assert(EXT(ctx)->pending_safe_event);
+    assert(ext->pending_safe_event);
     assert(safe_event_pid_count > 0);
-    EXT(ctx)->pending_safe_event = 0;
+    ext->pending_safe_event = 0;
     safe_event_pid_count--;
     if (safe_event_pid_count == 0 && run_ctrl_lock_cnt > 0) {
+        run_safe_events_posted++;
         post_event(run_safe_events, NULL);
     }
 }
@@ -838,6 +876,7 @@ void post_safe_event(Context * mem, EventCallBack * done, void * arg) {
     run_ctrl_lock();
     context_lock(mem);
     if (safe_event_list == NULL) {
+        run_safe_events_posted++;
         post_event(run_safe_events, NULL);
     }
     i->mem = mem;
@@ -863,60 +902,58 @@ void run_ctrl_unlock(void) {
         assert(safe_event_list == NULL);
         cmdline_resume();
         /* Lazily continue execution of temporary stopped contexts */
+        run_safe_events_posted++;
         post_event(run_safe_events, NULL);
     }
 }
 
 static void event_context_created(Context * ctx, void * client_data) {
     assert(!ctx->exited);
-    assert(!ctx->intercepted);
     assert(!ctx->stopped);
-    send_event_context_added(&broadcast_group->out, ctx);
+    send_event_context_added(ctx);
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
-    send_event_context_changed(&broadcast_group->out, ctx);
+    send_event_context_changed(ctx);
 }
 
 static void event_context_stopped(Context * ctx, void * client_data) {
+    ContextExtensionRC * ext = EXT(ctx);
     assert(ctx->stopped);
-    assert(!ctx->intercepted);
     assert(!ctx->exited);
+    assert(!ext->intercepted);
     if (ctx->stopped_by_bp) evaluate_breakpoint(ctx);
-    if (EXT(ctx)->pending_safe_event) check_safe_events(ctx);
-    if (ctx->stopped_by_exception) {
-        send_event_context_exception(&broadcast_group->out, ctx);
-    }
-    if (ctx->pending_intercept) {
-        suspend_debug_context(ctx);
-    }
-    if (!ctx->intercepted && run_ctrl_lock_cnt == 0) {
-        context_continue(ctx);
+    if (ext->pending_safe_event) check_safe_events(ctx);
+    if (ctx->stopped_by_exception) send_event_context_exception(ctx);
+    if (!ext->intercepted && run_ctrl_lock_cnt == 0 && run_safe_events_posted < 4) {
+        /* Lazily continue execution of temporary stopped contexts */
+        run_safe_events_posted++;
+        post_event(run_safe_events, NULL);
     }
 }
 
 static void event_context_started(Context * ctx, void * client_data) {
+    ContextExtensionRC * ext = EXT(ctx);
     assert(!ctx->stopped);
-    if (ctx->intercepted) {
-        send_event_context_resumed(&broadcast_group->out, ctx);
-    }
-    EXT(ctx)->intercepted_by_bp = 0;
+    if (ext->intercepted) send_event_context_resumed(ctx);
+    ext->intercepted_by_bp = 0;
     if (safe_event_list) {
         if (!ctx->pending_step) {
             context_stop(ctx);
         }
-        if (!EXT(ctx)->pending_safe_event) {
-            EXT(ctx)->pending_safe_event = 1;
+        if (!ext->pending_safe_event) {
+            ext->pending_safe_event = 1;
             safe_event_pid_count++;
         }
     }
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
+    ContextExtensionRC * ext = EXT(ctx);
     assert(!ctx->stopped);
-    assert(!ctx->intercepted);
-    if (EXT(ctx)->pending_safe_event) check_safe_events(ctx);
-    send_event_context_removed(&broadcast_group->out, ctx);
+    assert(!ext->intercepted);
+    if (ext->pending_safe_event) check_safe_events(ctx);
+    send_event_context_removed(ctx);
 }
 
 void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {

@@ -719,14 +719,8 @@ static void done_all_evaluations(void) {
         EvaluationRequest * req = link_active2erl(l);
         l = l->next;
         if (req->bp_cnt) {
-            Context * ctx = req->ctx;
-            assert(ctx->stopped_by_bp);
-            if (ctx->intercepted) {
-                ctx->stopped_by_bp = 0;
-            }
-            else {
-                done_condition_evaluation(req);
-            }
+            assert(req->ctx->stopped_by_bp);
+            done_condition_evaluation(req);
         }
     }
 
@@ -754,12 +748,6 @@ static void done_all_evaluations(void) {
 
         req->bp_cnt = 0;
         list_remove(&req->link_active);
-        if (list_is_empty(&req->link_posted)) {
-            if (!ctx->exited && ctx->pending_intercept) {
-                suspend_debug_context(ctx);
-            }
-            assert(!ctx->pending_intercept || ctx->event_notification);
-        }
         context_unlock(ctx);
     }
 
@@ -854,7 +842,6 @@ static void evaluate_condition(void * x) {
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
     assert(cache_enter_cnt > 0);
-    assert(ctx->intercepted == 0);
 
     for (i = 0; i < req->bp_cnt; i++) {
         BreakpointInfo * bp = req->bp_arr[i].bp;
@@ -1680,7 +1667,6 @@ void evaluate_breakpoint(Context * ctx) {
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
     assert(ctx->exiting == 0);
-    assert(ctx->intercepted == 0);
     assert(EXT(ctx)->bp_ids == NULL);
 
     EXT(ctx)->bp_eval_started = 1;
@@ -1717,17 +1703,6 @@ char ** get_context_breakpoint_ids(Context * ctx) {
     return EXT(ctx)->bp_ids;
 }
 
-int are_breakpoints_in_sync(Context * ctx) {
-    ContextExtensionBP * ext = EXT(ctx);
-    if (ctx->stopped_by_bp && !ext->bp_eval_started) return 0;
-    if (ext->stepping_over_bp != NULL) return 0;
-    if (ext->req != NULL) {
-         if (!list_is_empty(&ext->req->link_posted)) return 0;
-         if (!list_is_empty(&ext->req->link_active)) return 0;
-    }
-    return 1;
-}
-
 #ifndef _WRS_KERNEL
 
 static void safe_restore_breakpoint(void * arg) {
@@ -1741,13 +1716,9 @@ static void safe_restore_breakpoint(void * arg) {
     }
     EXT(ctx)->stepping_over_bp = NULL;
     bi->stepping_over_bp--;
-    if (!ctx->exited) {
-        if (generation_done == generation_posted && bi->stepping_over_bp == 0 && bi->ref_cnt > 0 && !bi->planted) {
-            plant_instruction(bi);
-        }
-        if (ctx->pending_intercept) {
-            suspend_debug_context(ctx);
-        }
+    if (!ctx->exited && generation_done == generation_posted &&
+            bi->stepping_over_bp == 0 && bi->ref_cnt > 0 && !bi->planted) {
+        plant_instruction(bi);
     }
     context_unlock(ctx);
 }
@@ -1767,7 +1738,6 @@ static void safe_skip_breakpoint(void * arg) {
 
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
-    assert(!ctx->intercepted);
     assert(bi->address == get_regs_PC(ctx));
 
     if (bi->planted) remove_instruction(bi);
@@ -1791,7 +1761,6 @@ int skip_breakpoint(Context * ctx, int single_step) {
 
     assert(ctx->stopped);
     assert(!ctx->exited);
-    assert(!ctx->intercepted);
     assert(!ctx->pending_step);
     assert(single_step || EXT(ctx)->stepping_over_bp == NULL);
 

@@ -130,7 +130,6 @@ int context_stop(Context * ctx) {
     assert(!ctx->exited);
     assert(!ctx->stopped);
     assert(!EXT(ctx)->regs_dirty);
-    assert(!ctx->intercepted);
     if (kill(EXT(ctx)->pid, SIGSTOP) < 0) {
         int err = errno;
         if (err != ESRCH) {
@@ -426,9 +425,9 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
     else {
         if (EXT(ctx->parent)->pid == pid) ctx = ctx->parent;
         assert(EXT(ctx)->attach_callback == NULL);
-        if (ctx->stopped || ctx->intercepted || ctx->exited) {
-            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
-                ctx, pid, status, ctx->stopped, ctx->intercepted, ctx->exited);
+        if (ctx->stopped || ctx->exited) {
+            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, exited %d",
+                ctx, pid, status, ctx->stopped, ctx->exited);
             if (ctx->stopped) send_context_started_event(ctx);
         }
         else {
@@ -498,7 +497,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         assert(signal < 32);
         ctx->pending_signals |= 1 << signal;
         if ((ctx->sig_dont_stop & (1 << signal)) == 0) {
-            if (!ctx->intercepted) ctx->pending_intercept = 1;
+            ctx->pending_intercept = 1;
             stopped_by_exception = 1;
         }
     }
@@ -513,7 +512,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         ContextAddress pc1 = 0;
 
         assert(!EXT(ctx)->regs_dirty);
-        assert(!ctx->intercepted);
 
         EXT(ctx)->end_of_step = 0;
         EXT(ctx)->ptrace_event = event;

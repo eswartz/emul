@@ -683,7 +683,6 @@ int context_continue(Context * ctx) {
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
-    assert(!ctx->intercepted);
     assert(!ctx->exited);
     assert(!ctx->pending_step);
 

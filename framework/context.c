@@ -142,7 +142,6 @@ void context_unlock(Context * ctx) {
 
 const char * context_state_name(Context * ctx) {
     if (ctx->exited) return "exited";
-    if (ctx->intercepted) return "intercepted";
     if (ctx->stopped) return "stopped";
     return "running";
 }
@@ -183,6 +182,7 @@ void send_context_stopped_event(Context * ctx) {
         Listener * l = listeners + i;
         if (l->func->context_stopped == NULL) continue;
         l->func->context_stopped(ctx, l->args);
+        assert(ctx->stopped != 0);
     }
     ctx->event_notification = 0;
 }
