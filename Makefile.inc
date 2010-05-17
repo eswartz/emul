@@ -41,7 +41,10 @@ endif
 
 ifneq ($(OPSYS),Windows)
   OPTS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
-  OPTS += -Wall -Wno-parentheses
+  OPTS += -Wall
+  ifneq ($(CC),icc)
+    OPTS += -Wno-parentheses
+  endif
   ifneq ($(CC),g++)
     OPTS += -Wmissing-prototypes
   endif
