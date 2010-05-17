@@ -12,7 +12,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class StringOperand implements AssemblerOperand {
+public class StringOperand extends BaseOperand {
 
 	private String string;
 

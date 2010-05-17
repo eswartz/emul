@@ -4,7 +4,6 @@
 package org.ejs.eulang.llvm.instrs;
 
 import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
@@ -16,7 +15,7 @@ public class LLCompareInstr extends LLBinaryInstr {
 	/**
 	 * Create with ops= {ret, op1, op2}; 
 	 */
-	public LLCompareInstr(String opName, String cmp, LLOperand ret, LLType type, LLOperand... ops) {
+	public LLCompareInstr(String opName, String cmp, LLOperand ret, LLOperand... ops) {
 		super(opName, ret, ret.getType(), ops);
 		this.cmp = cmp;
 		if (ops.length != 2)

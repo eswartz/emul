@@ -29,7 +29,7 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 	 */
 	public AstDerefExpr(IAstTypedExpr expr, boolean isLHS) {
 		setExpr(expr);
-		setLHS(lhs);
+		setLHS(isLHS);
 	}
 
 	/* (non-Javadoc)

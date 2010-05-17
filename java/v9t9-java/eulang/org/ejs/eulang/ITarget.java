@@ -3,14 +3,10 @@
  */
 package org.ejs.eulang;
 
-import java.util.List;
-
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
-import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
 /**

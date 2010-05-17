@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.llvm.tms9900.asm.Label;
 
 import v9t9.tools.asm.assembler.HLInstruction;
 

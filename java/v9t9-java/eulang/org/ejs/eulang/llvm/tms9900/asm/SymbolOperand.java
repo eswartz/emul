@@ -1,9 +1,10 @@
 /**
  * 
  */
-package org.ejs.eulang.llvm.tms9900;
+package org.ejs.eulang.llvm.tms9900.asm;
 
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
@@ -16,7 +17,8 @@ public class SymbolOperand extends BaseHLOperand {
 	/**
 	 * @param symbol
 	 */
-	public SymbolOperand(ISymbol symbol) {
+	public SymbolOperand(LLType type, ISymbol symbol) {
+		super(type);
 		this.symbol = symbol;
 	}
 

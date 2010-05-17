@@ -4,7 +4,6 @@
 package org.ejs.eulang.llvm.directives;
 
 import org.ejs.eulang.llvm.LLLinkage;
-import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 

@@ -14,7 +14,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class UnaryOperand implements AssemblerOperand {
+public class UnaryOperand extends BaseOperand {
 
 	private final int type;
 	private final AssemblerOperand op;

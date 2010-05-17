@@ -353,7 +353,7 @@ public class LLVMGenerator {
 	}
 
 
-	private LLFuncAttrs getFuncAttrType(IAstCodeExpr expr) {
+	private LLFuncAttrs getFuncAttrType(@SuppressWarnings("unused") IAstCodeExpr expr) {
 		return new LLFuncAttrs("optsize");
 	}
 
@@ -400,7 +400,7 @@ public class LLVMGenerator {
 				null /*gc*/);
 		ll.add(define);
 		
-		generateCode(define, symbol, expr);
+		generateCode(define, expr);
 	}
 
 	/**
@@ -434,7 +434,7 @@ public class LLVMGenerator {
 	 * @param stmts
 	 * @throws ASTException 
 	 */
-	private void generateCode(ILLCodeTarget define, ISymbol symbol, IAstCodeExpr code) throws ASTException {
+	private void generateCode(ILLCodeTarget define, IAstCodeExpr code) throws ASTException {
 		ILLCodeTarget oldDefine = currentTarget;
 		
 		//IAstCodeExpr code = codeOrig.copy(null);
@@ -665,7 +665,7 @@ public class LLVMGenerator {
 			LLOperand current = currentTarget.load(indVarType, context.inductor);
 			
 			LLOperand ret = currentTarget.newTemp(typeEngine.BOOL);
-			currentTarget.emit(new LLCompareInstr("icmp", "eq", ret, indVarType, current, new LLConstOp(indVarType, 0)));
+			currentTarget.emit(new LLCompareInstr("icmp", "eq", ret, current, new LLConstOp(indVarType, 0)));
 			currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, ret, new LLSymbolOp(context.exitLabel), new LLSymbolOp(context.bodyLabel)));
 			
 			currentTarget.addBlock(context.bodyLabel);
@@ -762,12 +762,12 @@ public class LLVMGenerator {
 			// ends when the first inductor is >= the limit
 			LLOperand current = currentTarget.load(indVarType, context.inductors[0]);
 			ret = currentTarget.newTemp(typeEngine.BOOL);
-			currentTarget.emit(new LLCompareInstr("icmp", "uge", ret, indVarType, current, iterSource));
+			currentTarget.emit(new LLCompareInstr("icmp", "uge", ret, current, iterSource));
 		} else {
 			// ends when the last inductor is < 0
 			LLOperand current = currentTarget.load(indVarType, context.inductors[context.inductors.length - 1]);
 			ret = currentTarget.newTemp(typeEngine.BOOL);
-			currentTarget.emit(new LLCompareInstr("icmp", "slt", ret, indVarType, current, generateNil(indVarType)));
+			currentTarget.emit(new LLCompareInstr("icmp", "slt", ret, current, generateNil(indVarType)));
 		}
 		currentTarget.emit(new LLBranchInstr(typeEngine.BOOL, ret, new LLSymbolOp(context.exitLabel), new LLSymbolOp(context.bodyLabel)));
 		

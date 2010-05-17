@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang;
 
-import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.types.LLType;
 
 /**

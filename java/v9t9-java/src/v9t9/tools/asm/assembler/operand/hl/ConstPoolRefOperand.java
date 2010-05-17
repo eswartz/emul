@@ -15,7 +15,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author Ed
  *
  */
-public class ConstPoolRefOperand extends ImmediateOperand implements AssemblerOperand {
+public class ConstPoolRefOperand extends ImmediateOperand {
 
 	public ConstPoolRefOperand(AssemblerOperand op) {
 		super(op);

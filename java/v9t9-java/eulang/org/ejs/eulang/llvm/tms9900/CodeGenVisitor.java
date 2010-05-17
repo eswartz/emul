@@ -11,6 +11,7 @@ import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;

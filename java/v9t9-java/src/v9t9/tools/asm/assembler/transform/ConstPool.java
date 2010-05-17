@@ -155,7 +155,7 @@ public class ConstPool {
 		if (operand instanceof AddrOperand) {
 			if (((AddrOperand) operand).getAddr() instanceof BinaryOperand) {
 				BinaryOperand binop = (BinaryOperand) ((AddrOperand) operand).getAddr();
-				if (binop.getType() == '+'
+				if (binop.getKind() == '+'
 					&& binop.getLeft() instanceof SymbolOperand
 					&& ((SymbolOperand) binop.getLeft()).getSymbol().equals(tableAddr)
 					&& binop.getRight() instanceof NumberOperand)

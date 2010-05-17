@@ -10,7 +10,6 @@ import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
-import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;

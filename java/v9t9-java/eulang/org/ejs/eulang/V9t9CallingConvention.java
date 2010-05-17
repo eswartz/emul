@@ -4,14 +4,10 @@
 package org.ejs.eulang;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.ejs.eulang.ICallingConvention.Location;
-import org.ejs.eulang.ICallingConvention.RegisterLocation;
-import org.ejs.eulang.ICallingConvention.StackBarrierLocation;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.FunctionConvention;

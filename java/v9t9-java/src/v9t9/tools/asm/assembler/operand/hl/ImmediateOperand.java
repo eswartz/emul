@@ -14,7 +14,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class ImmediateOperand implements AssemblerOperand {
+public class ImmediateOperand extends BaseOperand {
 
 	protected final AssemblerOperand immed;
 

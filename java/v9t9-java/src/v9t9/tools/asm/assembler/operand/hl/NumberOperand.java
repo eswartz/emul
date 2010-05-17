@@ -15,7 +15,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class NumberOperand implements AssemblerOperand {
+public class NumberOperand extends BaseOperand {
 
 	private int i;
 

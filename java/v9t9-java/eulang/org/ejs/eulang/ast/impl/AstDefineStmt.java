@@ -369,7 +369,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	}
 	
 
-	public ISymbol registerInstance(IAstTypedExpr body, IAstTypedExpr expansion, ISymbol expansionSym) {
+	public ISymbol registerInstance(IAstTypedExpr body, ISymbol expansionSym) {
 		List<ISymbol> list = instanceTypeMap.get(body.getType());
 		if (list == null) {
 			list = new ArrayList<ISymbol>();
@@ -389,7 +389,7 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		ISymbol expansionSym = getSymbol().getScope().addTemporary(getSymbol().getName());
 		expansionSym.setDefinition(expansion);
 
-		return registerInstance(body, expansion, expansionSym);
+		return registerInstance(body, expansionSym);
 	}
 	
 	/* (non-Javadoc)
@@ -471,11 +471,10 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		ISymbol instanceSymbol = typeMap.get(instanceParams);
 		if (instanceSymbol == null) {
 			ExpandAST expand = new ExpandAST(typeEngine, true);
-			instanceSymbol = expand.expandInstance(this, symbol, body, varSymbols, instanceParams);
+			instanceSymbol = expand.expandInstance(symbol, body, varSymbols, instanceParams);
 			
 			typeMap.put(instanceParams, instanceSymbol);
-			IAstTypedExpr instance = (IAstTypedExpr) instanceSymbol.getDefinition();
-			registerInstance(body, instance, instanceSymbol);
+			registerInstance(body, instanceSymbol);
 
 		}
 		return instanceSymbol;

@@ -1,9 +1,11 @@
 /**
  * 
  */
-package org.ejs.eulang.llvm.tms9900;
+package org.ejs.eulang.llvm.tms9900.asm;
 
+import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 
 
 /**
@@ -14,7 +16,8 @@ public class StackLocalOperand extends BaseHLOperand {
 
 	private final StackLocal local;
 
-	public StackLocalOperand(StackLocal local) {
+	public StackLocalOperand(LLType type, StackLocal local) {
+		super(type);
 		assert local != null;
 		this.local = local;
 		
@@ -83,6 +86,13 @@ public class StackLocalOperand extends BaseHLOperand {
 	@Override
 	public ISymbol getSymbol() {
 		return local.getName();
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#getType()
+	 */
+	@Override
+	public LLType getType() {
+		return local.getType();
 	}
 
 }

@@ -1105,7 +1105,6 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException
 	 */
-	@SuppressWarnings("unchecked")
 	public IAstNode constructCallOrCast(Tree tree) throws GenerateException {
 		assert tree.getChildCount() == 2;
 
@@ -1550,13 +1549,10 @@ public class GenerateAST {
 		return idExpr;
 	}
 
-	@SuppressWarnings("unchecked")
 	public IAstTypedExpr constructIdExpr(Tree tree) throws GenerateException {
 		// idref is first
 		IAstTypedExpr symExpr = checkConstruct(tree.getChild(0), IAstTypedExpr.class);
 		
-		//IAstTypedExpr idExpr = new AstValueExpr(symExpr);
-		//getSource(tree.getChild(0), idExpr);
 		IAstTypedExpr idExpr = symExpr;
 		
 		
@@ -1582,16 +1578,6 @@ public class GenerateAST {
 				idExpr = new AstFieldExpr(idExpr, name); 
 				getSource(tree, idExpr);
 			}
-			
-			/*else if (kid.getType() == EulangParser.ADDRREF) {
-				assert kid.getChildCount() == 0;
-				if (idExpr instanceof IAstDerefExpr) {
-					idExpr = ((IAstDerefExpr)idExpr).getExpr();
-					idExpr.setParent(null);
-				}
-				idExpr = new AstAddrRefExpr(idExpr);
-				getSource(tree, idExpr);
-			}*/
 			else if (kid.getType() == EulangParser.DEREF) {
 				assert kid.getChildCount() == 0;
 				idExpr = new AstDerefExpr(idExpr, false);
@@ -1604,13 +1590,6 @@ public class GenerateAST {
 			else
 				unhandled(kid);
 		}
-		
-		/*
-		if (!(idExpr instanceof IAstDerefExpr) &&  !(idExpr instanceof IAstAddrRefExpr) && !isCast(idExpr)
-				&& !(idExpr instanceof IAstInstanceExpr)) {
-			idExpr = new AstDerefExpr(idExpr, false);
-			getSource(tree.getChild(0), idExpr);
-		}*/
 
 		return idExpr;
 	}

@@ -15,7 +15,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class PcRelativeOperand implements AssemblerOperand {
+public class PcRelativeOperand extends BaseOperand {
 
 	public PcRelativeOperand() {
 	}

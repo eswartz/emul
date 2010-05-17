@@ -16,7 +16,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class AddrOperand implements AssemblerOperand {
+public class AddrOperand extends BaseOperand {
 
 	private final AssemblerOperand addr;
 

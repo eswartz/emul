@@ -17,7 +17,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class JumpOperand implements AssemblerOperand {
+public class JumpOperand extends BaseOperand {
 
 	private final AssemblerOperand op;
 

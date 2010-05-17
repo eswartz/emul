@@ -14,7 +14,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
  * @author ejs
  * 
  */
-public class RegisterOperand implements AssemblerOperand, IRegisterOperand {
+public class RegisterOperand extends BaseOperand implements IRegisterOperand {
 	private final AssemblerOperand reg;
 
 	public RegisterOperand(AssemblerOperand reg) {

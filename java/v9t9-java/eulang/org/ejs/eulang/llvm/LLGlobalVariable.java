@@ -4,7 +4,6 @@
 package org.ejs.eulang.llvm;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -92,7 +91,9 @@ public class LLGlobalVariable implements ILLVariable {
 	 */
 	@Override
 	public LLOperand address(ILLCodeTarget target) {
-		return new LLSymbolOp(symbol);
+		LLSymbolOp op = new LLSymbolOp(symbol);
+		op.setType(addrType);
+		return op;
 	}
 
 

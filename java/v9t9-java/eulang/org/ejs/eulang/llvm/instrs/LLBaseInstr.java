@@ -97,12 +97,14 @@ public abstract class LLBaseInstr implements LLInstr {
 
 	/**
 	 * Override if the #toString() method has options before operands
+	 * @param sb 
 	 */
 	protected void appendOptionString(StringBuilder sb) {
 	}
 	
 	/**
 	 * Override if the operand needs special tuning
+	 * @param idx 
 	 */
 	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
 		sb.append(op.toString());

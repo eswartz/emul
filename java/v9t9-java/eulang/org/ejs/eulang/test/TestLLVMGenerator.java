@@ -5,19 +5,11 @@ package org.ejs.eulang.test;
 
 import static junit.framework.Assert.*;
 
-import org.ejs.eulang.IOperation;
-import org.ejs.eulang.ast.IAstAssignStmt;
-import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
-import org.ejs.eulang.llvm.tms9900.RegisterTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.junit.Test;
-
-import v9t9.tools.asm.assembler.HLInstruction;
-import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 
 /**
  * @author ejs
@@ -377,6 +369,21 @@ public class TestLLVMGenerator extends BaseParserTest {
     			"x+=(x-=(x*=x/=x+/=x%=(x\\=x>>=(x<<=x+>>=x\\=2))));\n"+
     			"x|=x~=x&=111;\n"+
     			"};");
+    	doGenerate(mod);
+    }
+	
+
+    @Test
+    public void testRetAddr2() throws Exception {
+    	dumpLLVMGen = true;
+    	// make sure global var is addressed with the right type
+    	IAstModule mod = doFrontend(
+    			"x : Byte;\n"+
+    			"testRetAddr2 = code() {\n"+
+    			" y : Byte^;\n"+
+    			" y = &x;\n"+
+    			"};\n"+
+    	"");
     	doGenerate(mod);
     }
 }

@@ -8,7 +8,6 @@ import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.TypeException;

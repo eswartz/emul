@@ -14,7 +14,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class BinaryOperand implements AssemblerOperand {
+public class BinaryOperand extends BaseOperand {
 
 	private final int type;
 	private final AssemblerOperand left;
@@ -118,7 +118,7 @@ public class BinaryOperand implements AssemblerOperand {
 		throw new IllegalStateException("unknown operation: " + (char)type);
 	}
 
-	public int getType() {
+	public int getKind() {
 		return type;
 	}
 

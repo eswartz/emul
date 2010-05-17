@@ -27,7 +27,6 @@ import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;

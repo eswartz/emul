@@ -30,7 +30,6 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstPrototype;
-import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;

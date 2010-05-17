@@ -3,11 +3,7 @@
  */
 package org.ejs.eulang;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-
-import org.ejs.eulang.ITarget.Intrinsic;
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLArgAttrType;

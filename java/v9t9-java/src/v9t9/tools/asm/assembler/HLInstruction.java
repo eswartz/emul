@@ -4,7 +4,6 @@
 package v9t9.tools.asm.assembler;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 
 
 /**

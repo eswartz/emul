@@ -10,7 +10,6 @@ import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
-import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLCompareInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.BasicType;
@@ -143,7 +142,7 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 				cmp = getLLIntPrefix() + instr;
 				instr = "icmp";
 			}
-			currentTarget.emit(new LLCompareInstr(instr, cmp, ret, expr.getType(), left, right));
+			currentTarget.emit(new LLCompareInstr(instr, cmp, ret, left, right));
 		} else {
 			generator.unhandled(expr);
 		}

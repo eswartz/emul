@@ -1,9 +1,11 @@
 /**
  * 
  */
-package org.ejs.eulang.llvm.tms9900;
+package org.ejs.eulang.llvm.tms9900.asm;
 
+import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
@@ -14,7 +16,7 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
  * @author ejs
  *
  */
-public class RegisterTempOperand extends BaseHLOperand implements IRegisterOperand {
+public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 
 	private final RegisterLocal local;
 	private boolean isRegPair;
@@ -23,10 +25,12 @@ public class RegisterTempOperand extends BaseHLOperand implements IRegisterOpera
 	/**
 	 * @param reg
 	 */
-	public RegisterTempOperand(RegisterLocal local) {
+	public RegTempOperand(LLType type, RegisterLocal local) {
+		super(type);
 		this.local = local;
 	}
-	public RegisterTempOperand(RegisterLocal local, boolean high) {
+	public RegTempOperand(LLType type, RegisterLocal local, boolean high) {
+		super(type);
 		this.local = local;
 		this.isRegPair = true;
 		this.high = high;
@@ -63,7 +67,7 @@ public class RegisterTempOperand extends BaseHLOperand implements IRegisterOpera
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		RegisterTempOperand other = (RegisterTempOperand) obj;
+		RegTempOperand other = (RegTempOperand) obj;
 		if (high != other.high)
 			return false;
 		if (isRegPair != other.isRegPair)
@@ -124,6 +128,13 @@ public class RegisterTempOperand extends BaseHLOperand implements IRegisterOpera
 	@Override
 	public boolean isReg(int reg) {
 		return local.getVr() == reg;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#getType()
+	 */
+	@Override
+	public LLType getType() {
+		return local.getType();
 	}
 	
 }

@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.llvm;
 
-import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;

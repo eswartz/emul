@@ -15,7 +15,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class SymbolOperand implements AssemblerOperand {
+public class SymbolOperand extends BaseOperand {
 
 	private final Symbol symbol;
 

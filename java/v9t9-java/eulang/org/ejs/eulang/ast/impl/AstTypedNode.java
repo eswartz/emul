@@ -67,6 +67,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		return type != null ? type.toString() : "<unknown>";
 	}
 
+	@SuppressWarnings("unchecked")
 	protected <T extends IAstNode> T fixup(T orig_, T copy_) {
 		IAstTypedNode orig = (IAstTypedNode) orig_;
 		IAstTypedNode copy = (IAstTypedNode) copy_;

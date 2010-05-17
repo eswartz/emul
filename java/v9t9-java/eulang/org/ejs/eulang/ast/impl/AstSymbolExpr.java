@@ -32,10 +32,6 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
         this.owns = owns;
         setSymbol(symbol);
     }
-    public AstSymbolExpr(ISymbol symbol, boolean isAddress) {
-    	super();
-    	setSymbol(symbol);
-    }
     public AstSymbolExpr(AstSymbolExpr other) {
     	// avoid side effects
     	this.origSymbol = other.origSymbol;

@@ -14,7 +14,6 @@ import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
-import org.ejs.eulang.ast.impl.AstDefineStmt;
 import org.ejs.eulang.ast.impl.AstExprStmt;
 import org.ejs.eulang.ast.impl.AstNamedType;
 import org.ejs.eulang.ast.impl.AstNode;
@@ -243,7 +242,7 @@ public class ExpandAST {
 		return ret;
 	}
 
-	public ISymbol expandInstance(AstDefineStmt define, ISymbol symbol, IAstTypedExpr body, ISymbol[] varSymbols, List<IAstTypedExpr> instanceExprs)
+	public ISymbol expandInstance(ISymbol symbol, IAstTypedExpr body, ISymbol[] varSymbols, List<IAstTypedExpr> instanceExprs)
 			throws ASTException {
 		DumpAST dump = new DumpAST(System.out);
 		
@@ -403,7 +402,6 @@ public class ExpandAST {
 			removeGenerics(copy);
 
 			IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(messages, funcCallExpr, funcCallExpr.arguments(),
-					null,
 					(IAstCodeExpr) copy,
 					node.getOwnerScope());
 			
@@ -479,8 +477,7 @@ public class ExpandAST {
 	 */
 	private IAstStmtListExpr doExpandFuncCallExpr(
 			List<Message> messages, IAstNode node, IAstNodeList<IAstTypedExpr> args,
-			ISymbol funcName,
-			IAstCodeExpr codeExpr, 
+			IAstCodeExpr codeExpr,
 			IScope parentScope
 			) throws ASTException {
 		

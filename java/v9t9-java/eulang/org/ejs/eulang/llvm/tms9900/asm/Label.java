@@ -1,4 +1,4 @@
-package org.ejs.eulang.llvm.tms9900;
+package org.ejs.eulang.llvm.tms9900.asm;
 
 
 public class Label {

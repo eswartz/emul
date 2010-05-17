@@ -6,11 +6,8 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.*;
 
 import java.util.List;
-import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLModule;
-import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
-import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.BackEnd;
