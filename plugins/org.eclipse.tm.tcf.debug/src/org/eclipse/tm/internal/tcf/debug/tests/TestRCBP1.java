@@ -69,6 +69,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private boolean bp_reset_done;
     private boolean bp_set_done;
     private boolean bp_change_done;
+    private boolean bp_sync_done;
 
     private class SuspendedContext {
         final String id;
@@ -532,6 +533,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         if (error != null) exit(error);
                     }
                 });
+                bp_sync_done = true;
                 runTest();
             }
         });
@@ -739,7 +741,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private void resume(final String id) {
         assert done_get_state || resume_cnt == 0;
-        if (!done_get_state) return;
+        if (!bp_sync_done) return;
         resume_cnt++;
         SuspendedContext sc = suspended.get(id);
         IRunControl.RunControlContext ctx = threads.get(id);
