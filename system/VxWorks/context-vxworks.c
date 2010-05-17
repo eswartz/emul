@@ -292,7 +292,6 @@ int context_continue(Context * ctx) {
 
 int context_single_step(Context * ctx) {
     VXDBG_CTX vxdbg_ctx;
-    struct event_info * info;
 
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
@@ -531,6 +530,7 @@ static void * event_thread_func(void * arg) {
         post_event(event_handler, info);
     }
     post_event(event_error, NULL);
+    return NULL;
 }
 
 static void vxdbg_event_hook(

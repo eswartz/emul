@@ -1185,7 +1185,6 @@ int loc_getaddrinfo(const char * nodename, const char * servname,
     }
     if (family == AF_UNSPEC) {
         struct addrinfo lhints;
-        struct addrinfo ** tmp;
         int err_v6;
 
         if (hints == NULL) memset(&lhints, 0, sizeof(lhints));
