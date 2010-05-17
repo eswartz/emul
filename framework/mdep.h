@@ -309,7 +309,7 @@ extern char * canonicalize_file_name(const char * path);
 
 #define closesocket close
 
-#if _WRS_VXWORKS_MAJOR < 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR < 8
+#if _WRS_VXWORKS_MAJOR < 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR < 9
 typedef unsigned long uintptr_t;
 #define send(s, buf, len, flags) (send)(s, (char *)(buf), len, flags)
 #endif

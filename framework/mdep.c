@@ -1328,7 +1328,7 @@ void become_daemon(void) {
 }
 #endif
 
-#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__)
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__) && !defined(__VXWORKS__)
 
 size_t strlcpy(char * dst, const char * src, size_t size) {
     char ch;
