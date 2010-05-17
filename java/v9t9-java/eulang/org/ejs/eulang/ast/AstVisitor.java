@@ -22,16 +22,21 @@ public class AstVisitor {
 
     public boolean visitDumpChildren = false;
     
-    /** Visit the node and its children */
+    /** Visit the node and its children 
+     * @param node */
     public int visit(IAstNode node) {
         
         return PROCESS_CONTINUE;
     }
 
+    /**
+	 * @param node  
+	 */
     public void visitChildren(IAstNode node) {
     	
     }
-    /** Done visiting node and children */
+    /** Done visiting node and children 
+     * @param node */
     public int visitEnd(IAstNode node) {
     	return PROCESS_CONTINUE;
     	

@@ -26,18 +26,18 @@ public class RegAlloc {
 	private HashSet<Integer> fixedRegs;
 	private int vrNum;
 	private int regSize;
-	private final IScope localScope;
-	private final ITarget target;
-	private final ICallingConvention cc;
+	//private final IScope localScope;
+	//private final ITarget target;
+	//private final ICallingConvention cc;
 
 	/**
 	 * @param regClass
 	 */
-	public RegAlloc(ITarget target, ICallingConvention cc, IRegClass regClass, IScope localScope) {
-		this.target = target;
-		this.cc = cc;
+	public RegAlloc(@SuppressWarnings("unused") ITarget target, ICallingConvention cc, IRegClass regClass, @SuppressWarnings("unused") IScope localScope) {
+		//this.target = target;
+		//this.cc = cc;
 		this.regClass = regClass;
-		this.localScope = localScope;
+		//this.localScope = localScope;
 		this.fixedRegs = new HashSet<Integer>();
 		
 		for (int reg : cc.getFixedRegisters(regClass)) {

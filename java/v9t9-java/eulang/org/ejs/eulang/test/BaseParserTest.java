@@ -164,7 +164,7 @@ public class BaseParserTest {
 	protected boolean dumpExpand;
 	protected boolean dumpFrontend;
 
-	protected IAstNode treeize(String method, String pmethod, String str, boolean expectError) throws Exception {
+	protected IAstNode treeize(String method, String str, boolean expectError) throws Exception {
     	ParserRuleReturnScope ret = parse(method, str, false);
     	if (ret == null)
     		return null;
@@ -224,10 +224,10 @@ public class BaseParserTest {
 	}
 
 	protected IAstModule treeize(String str) throws Exception {
-    	return (IAstModule) treeize(null, null, str, false);
+    	return (IAstModule) treeize(null, str, false);
     }
 	protected IAstModule treeizeFail(String str) throws Exception {
-    	return (IAstModule) treeize(null, null, str, true);
+    	return (IAstModule) treeize(null, str, true);
     }
     
     

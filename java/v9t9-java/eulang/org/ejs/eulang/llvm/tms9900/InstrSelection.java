@@ -1174,6 +1174,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		moveTo(src, instr.getType(), srcOp, dstOp);
 	}
 	
+	/**
+	 * @param llinst  
+	 */
 	private void handlePhiInstr(LLAssignInstr llinst) {
 		assert false;
 	}

@@ -349,7 +349,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	public void testTrunc16_to_8_1_Mem() throws Exception {
 		dumpLLVMGen = true;
 		IAstModule mod = doFrontend("x := 11; foo = code( ) { Byte(x) };\n");
-    	LLVMGenerator g = doGenerate(mod);
+    	doGenerate(mod);
 	}
 	
 	@Test

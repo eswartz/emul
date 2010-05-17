@@ -107,6 +107,9 @@ public class BinaryOperand extends BaseOperand {
 		
 	}
 
+	/**
+	 * @param inst  
+	 */
 	private int doOp(IInstruction inst, int l, int r) throws ResolveException {
 		switch (type) {
 		case '+': return (l + r);

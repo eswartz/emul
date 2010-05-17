@@ -12,9 +12,7 @@ import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
-import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.symbols.LocalScope;
 
 import v9t9.tools.asm.assembler.HLInstruction;
 
@@ -24,8 +22,6 @@ import v9t9.tools.asm.assembler.HLInstruction;
  */
 public class CodeGenVisitor extends LLCodeVisitor {
 
-	private IScope llScope;
-	private LocalScope vrScope;
 	private Routine routine;
 	private Block block;
 	private HashMap<ISymbol, Block> blockMap;
@@ -46,9 +42,6 @@ public class CodeGenVisitor extends LLCodeVisitor {
 	 */
 	@Override
 	public boolean enterCode(LLDefineDirective def) {
-		llScope = def.getScope();
-		vrScope = new LocalScope(llScope);
-		
 		routine = new LinkedRoutine(def);
 		
 		return true;

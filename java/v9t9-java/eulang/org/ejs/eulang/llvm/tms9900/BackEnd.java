@@ -11,24 +11,26 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 
-import v9t9.tools.asm.assembler.SymbolTable;
-
 /**
  * @author ejs
  *
  */
 public class BackEnd {
 
-	private final TypeEngine typeEngine;
-	private final ITarget target;
-	private SymbolTable table;
+	//private final TypeEngine typeEngine;
+	//private final ITarget target;
+	//private SymbolTable table;
 
 	private List<Routine> routines;
 
+	/**
+	 * @param typeEngine  
+	 * @param target 
+	 */
 	public BackEnd(TypeEngine typeEngine, ITarget target) {
-		this.typeEngine = typeEngine;
-		this.target = target;
-		this.table = new SymbolTable();
+		//this.typeEngine = typeEngine;
+		//this.target = target;
+		//this.table = new SymbolTable();
 		this.routines = new ArrayList<Routine>();
 	}
 

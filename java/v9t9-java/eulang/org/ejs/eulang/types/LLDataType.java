@@ -26,7 +26,7 @@ public class LLDataType extends BaseLLAggregateType {
 	private final ISymbol symbol;
 
 	public LLDataType(TypeEngine engine, ISymbol symbol, LLInstanceField[] ifields, LLStaticField[] statics) {
-		super(symbol.getUniqueName(), sumTypeBits(engine, ifields), toLLVMString(symbol.getUniqueName(), ifields), BasicType.DATA, null, ifields == null);
+		super(symbol.getUniqueName(), sumTypeBits(engine, ifields), toLLVMString(ifields), BasicType.DATA, null, ifields == null);
 		this.symbol = symbol;
 		this.ifields = ifields != null ? ifields : NO_FIELDS;
 		this.statics = statics != null ? statics : NO_STATIC_FIELDS;
@@ -83,7 +83,7 @@ public class LLDataType extends BaseLLAggregateType {
 	 * @param fields
 	 * @return
 	 */
-	private static String toLLVMString(String name, LLInstanceField[] fields) {
+	private static String toLLVMString(LLInstanceField[] fields) {
 		if (fields == null)
 			return "<data>";
 		
