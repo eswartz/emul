@@ -272,4 +272,19 @@ public class LLDataType extends BaseLLAggregateType {
 					
 		return super.isMoreComplete(otherType);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLAggregateType#isComplete()
+	 */
+	/*
+	@Override
+	public boolean isComplete() {
+		for (int idx = 0; idx < getCount(); idx++) {
+			LLType type = getType(idx);
+			if (type == null || type.isGeneric())
+				return false;
+		}
+		return true;
+	}
+	*/
 }

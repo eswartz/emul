@@ -86,7 +86,7 @@ public class LLSymbolType extends BaseLLType {
 	 */
 	@Override
 	public boolean isComplete() {
-		return true; //symbol.getType() != null;
+		return symbol != null; //symbol.getType() != null;
 	}
 	
 	/* (non-Javadoc)

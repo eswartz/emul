@@ -595,7 +595,25 @@ public class TestGenerator extends BaseParserTest {
     	assertEquals(IOperation.BITXOR, stmt2.getOperation());
     	assertEquals(IOperation.BITAND, ((IAstAssignStmt) stmt2.getExprs().getFirst()).getOperation());
     }
-    
+
+
+    //@Test
+    public void testInnerData1() throws Exception {
+    	IAstModule mod = treeize(
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  Inner = data {\n"+
+    			"    d1,d2:Float;\n"+
+    			"    p : Complex^;\n"+
+    			"  };\n"+
+    			"  d : Inner;\n"+
+    			" };\n"+
+    			"testPtrCalc6 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  c.d.p.d.d2;\n"+
+    			"};\n"+
+    	"");
+    }
 }
 
 

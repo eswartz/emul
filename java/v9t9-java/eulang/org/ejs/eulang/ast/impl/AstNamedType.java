@@ -76,7 +76,7 @@ public class AstNamedType extends AstType implements IAstNamedType {
 	 */
 	@Override
 	public String toString() {
-		return symbolExpr.getSymbol() + ": " + super.toString();
+		return (symbolExpr != null ? symbolExpr.getSymbol() : null)+ ": " + super.toString();
 	}
 	
 	/* (non-Javadoc)

@@ -83,7 +83,9 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 */
 	@Override
 	public String toString() {
-		return typedString(symbol.getName());
+		if (symbolExpr == null)
+			return "???";
+		return typedString(symbol != null ? symbol.getName() : symbolExpr.getSymbol() != null ? symbolExpr.getSymbol().getName() : "<<unnamed>>");
 	}
 	
 	/* (non-Javadoc)

@@ -1754,6 +1754,75 @@ public class Test9900InstrSelection extends BaseParserTest {
 		assertEquals(-1, idx);
     }
 
+
+    @Test
+    public void testPtrCalc6() throws Exception {
+    	dumpLLVMGen = true;
+    	doIsel(
+    			"forward Complex;\n"+
+    			"Inner = data {\n"+
+    			"  d1,d2:Float;\n"+
+    			"  p : Complex^;\n"+
+    			"};\n"+
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  d : Inner;\n"+
+    			" };\n"+
+    			"testPtrCalc6 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  c.d.p.d.d2;\n"+
+    			"};\n"+
+    	"");
+    	int idx;
+		HLInstruction inst;
+
+
+		idx = findInstrWithInst(instrs, "LI");
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 100);
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "%reg", 2);
+		
+		// addr goes here
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", AddrOperand.class, "loc", RegTempOperand.class, "inst");
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegIndOperand.class, "inst", RegTempOperand.class);
+		
+		// ptr derefs
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
+		
+		// copy
+		//idx = findInstrWithInst(instrs, "MOV", idx);
+		//inst = instrs.get(idx);
+		//matchInstr(inst, "MOV", RegTempOperand.class, RegTempOperand.class);
+		
+		// hard to find the next instr since it depends on a temp
+		while (idx < instrs.size()) {
+			inst = instrs.get(idx);
+			if (inst.getInst() == InstructionTable.Imov) {
+				if (inst.getOp1() instanceof AddrOffsOperand) {
+					assertEquals(2, ((NumberOperand)((AddrOffsOperand) inst.getOp1()).getOffset()).getValue());
+					idx = -1;
+					break;
+				}
+			}
+			idx++;
+		}
+		assertEquals(-1, idx);
+    }
+
     @Test
     public void testRetAddr1() throws Exception {
     	dumpLLVMGen = true;

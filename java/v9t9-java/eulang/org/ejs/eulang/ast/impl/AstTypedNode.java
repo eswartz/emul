@@ -26,6 +26,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 
 	protected LLType type;
 	private boolean fixed;
+	public static boolean DUMP;
 
 	/**
 	 * 
@@ -86,8 +87,12 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 	@Override
 	public void setType(LLType type) {
 		if (this.type != type) {
-			if (!fixed || this.type == null)
+			if (!fixed || this.type == null) {
+				if (DUMP) {
+					System.out.println("Updating type on " + this + " to " + type);
+				}
 				this.type = type;
+			}
 		}
 	}
 

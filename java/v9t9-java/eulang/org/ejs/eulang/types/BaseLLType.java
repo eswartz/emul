@@ -14,7 +14,7 @@ import org.ejs.eulang.symbols.ISymbol;
  *
  */
 public abstract class BaseLLType implements LLType {
-	protected final LLType[] NO_TYPES = new LLType[0];
+	protected static final LLType[] NO_TYPES = new LLType[0];
 	
 
 	protected final int bits;

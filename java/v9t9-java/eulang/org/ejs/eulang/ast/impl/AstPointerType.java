@@ -148,7 +148,7 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		if (baseType.getType() != null && baseType.getType().isComplete()) {
-			if (!baseType.getType().equals(getType().getSubType()))
+			if (!baseType.getType().matchesExactly(getType().getSubType()))
 				throw new TypeException(this, "pointer base type does not match in parent");
 		}
 	}

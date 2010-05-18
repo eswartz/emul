@@ -30,6 +30,7 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
@@ -39,6 +40,7 @@ import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.TypeInference;
 import org.junit.Test;
 
 /**
@@ -1373,6 +1375,52 @@ public class TestTypeInfer extends BaseParserTest {
 		assertEquals(typeEngine.BOOL, geExpr.getType());
     	assertEquals(typeEngine.BYTE, ((IAstBinExpr) geExpr).getLeft().getType());
     	assertEquals(typeEngine.BYTE, ((IAstBinExpr) geExpr).getRight().getType());
+    }
+    
+    @Test
+    public void testTwoData1() throws Exception {
+    	dumpTypeInfer = true;
+    	doFrontend(
+    			"forward Complex;\n"+
+    			"Inner = data {\n"+
+    			"  d1,d2:Float;\n"+
+    			"  p : Inner^;\n"+
+    			"};\n"+
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  d : Inner;\n"+
+    			" };\n"+
+    			"testPtrCalc6 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  c.d.p.d2;\n"+
+    			"};\n"+
+    	"");
+    }
+    @Test
+    public void testTwoData2() throws Exception {
+    	AstTypedNode.DUMP = true;
+    	TypeInference.DUMP = true;
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"forward Complex;\n"+
+    			"Inner = data {\n"+
+    			"  p : Complex^;\n"+
+    			"};\n"+
+    			"Complex = data {\n"+
+    			"  d : Inner;\n"+
+    			" };\n"+
+    	"");
+    	IAstDefineStmt def;
+    	IAstDataType inner;
+    	
+		def = (IAstDefineStmt) mod.getScope().getNode("Inner");
+		inner = (IAstDataType)getMainBodyExpr(def);
+    	assertTrue(inner.getType().isComplete());
+    	
+		def = (IAstDefineStmt) mod.getScope().getNode("Complex");
+		inner = (IAstDataType)getMainBodyExpr(def);
+    	assertTrue(inner.getType().isComplete());
+
     }
 }
 
