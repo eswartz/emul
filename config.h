@@ -147,19 +147,24 @@
 #  define ENABLE_ContextProxy   0
 #endif
 
-#if !defined(ENABLE_SymbolsProxy)
-#  define ENABLE_SymbolsProxy   TARGET_VXWORKS
-#endif
-#if !defined(ENABLE_LineNumbersProxy)
-#  define ENABLE_LineNumbersProxy TARGET_VXWORKS
+#if !defined(ENABLE_DebugContext)
+#  define ENABLE_DebugContext   (ENABLE_ContextProxy || SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
 #endif
 
-#if ENABLE_SymbolsProxy
+#if !defined(ENABLE_SymbolsProxy)
+#  define ENABLE_SymbolsProxy   (ENABLE_DebugContext && TARGET_VXWORKS)
+#endif
+
+#if !defined(ENABLE_LineNumbersProxy)
+#  define ENABLE_LineNumbersProxy (ENABLE_DebugContext && TARGET_VXWORKS)
+#endif
+
+#if ENABLE_SymbolsProxy || !ENABLE_DebugContext
 #  undef SERVICE_Symbols
 #  define SERVICE_Symbols       0
 #endif
 
-#if ENABLE_LineNumbersProxy
+#if ENABLE_LineNumbersProxy || !ENABLE_DebugContext
 #  undef SERVICE_LineNumbers
 #  define SERVICE_LineNumbers    0
 #endif
@@ -170,10 +175,6 @@
 
 #if !defined(ENABLE_LineNumbers)
 #  define ENABLE_LineNumbers    (ENABLE_LineNumbersProxy || SERVICE_LineNumbers)
-#endif
-
-#if !defined(ENABLE_DebugContext)
-#  define ENABLE_DebugContext   (ENABLE_ContextProxy || SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
 #endif
 
 #if !defined(ENABLE_ELF)
@@ -211,4 +212,3 @@
 #endif
 
 #endif /* D_config */
-
