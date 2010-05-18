@@ -22,6 +22,8 @@ import org.ejs.eulang.ICallingConvention.RegisterLocation;
 import org.ejs.eulang.ICallingConvention.StackBarrierLocation;
 import org.ejs.eulang.ICallingConvention.StackLocation;
 import org.ejs.eulang.ITarget.Intrinsic;
+import org.ejs.eulang.TypeEngine.Alignment;
+import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLCodeVisitor;
@@ -36,7 +38,9 @@ import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLCompareInstr;
+import org.ejs.eulang.llvm.instrs.LLExtractValueInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
+import org.ejs.eulang.llvm.instrs.LLInsertValueInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
@@ -47,6 +51,7 @@ import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
+import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
@@ -56,8 +61,10 @@ import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
+import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
@@ -233,7 +240,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	
 	/** Pseudo-instructions */
 	final static int Ipseudo = Iuser;
-	final static int Piset = Ipseudo + 1,
+	final public static int Piset = Ipseudo + 1,
 		Pjcc = Ipseudo + 2,
 		Pcopy = Ipseudo + 3,
 		Penter = Ipseudo + 4,
@@ -301,7 +308,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	
 	/** These ll instructions are handled specially; do not make patterns for them */
 	private static final Pattern hardcodedInstrs = 
-		Pattern.compile("\\b(load|store|call|ret|br|switch|phi|getelementptr)\\b");
+		Pattern.compile("\\b(load|store|call|ret|br|switch|phi|getelementptr|insertvalue|extractvalue)\\b");
 	
 	/** Raw patterns.  These are converted at runtime. */ 
 	private static final IPattern[] patterns = {
@@ -643,8 +650,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "mul", 
 				 new If[] { If.PASS, If.PASS },
-				 new As[] { As.REG_HI_W, As.REG_LO_W },
-				 new DoRes( 1, Impy, 1, 0 )
+				 new As[] { As.REG_HI_W, As.REG_R, As.REG_LO_W },
+				 new DoRes( 2, Impy, 1, 0, 2 )	// fake 3rd op
 		),
 
 		new IPattern( BasicType.INTEGRAL, I16|I8|I1, "sdiv", 
@@ -876,6 +883,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		} 
 		else if (instr instanceof LLGetElementPtrInstr) {
 			handleGetElementPtrInstr((LLGetElementPtrInstr) instr);
+			return false;
+		}
+		else if (instr instanceof LLInsertValueInstr) {
+			handleInsertValueInstr((LLInsertValueInstr) instr);
+			return false;
+		}
+		else if (instr instanceof LLExtractValueInstr) {
+			handleExtractValueInstr((LLExtractValueInstr) instr);
 			return false;
 		}
 		else if (instr.getName().equals("phi")) {
@@ -1317,7 +1332,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				
 				retName.setType(objType);
 				StackLocal local = locals.allocateLocal(retName, objType);
-				StackLocalOperand asmOp = new StackLocalOperand(llinst.getResult().getType(),  local);
+				AssemblerOperand asmOp = new StackLocalOperand(llinst.getResult().getType(),  local);
 				
 				// make tmp pointing to local for the arg
 				ISymbol retAddrName = locals.getScope().add(local.getName().getName() + "$p", true);
@@ -1326,8 +1341,23 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				if (!locals.forceToRegister(retAddr, stackLoc.number))
 					assert false;
 				RegTempOperand ptr = new RegTempOperand(llinst.getResult().getType(), retAddr);
-				emitInstr(HLInstruction.create(Plea, asmOp, ptr));
-				callerRets.put(stackLoc.number, ptr);
+				AddrOperand retVal = new AddrOperand(asmOp);
+				emitInstr(HLInstruction.create(Plea, retVal, ptr));
+				
+				if (objType instanceof LLAggregateType) {
+					// return is a tuple
+					TupleTempOperand tup = new TupleTempOperand(objType);
+					LLAggregateType agg = (LLAggregateType) objType;
+					Alignment align = typeEngine.new Alignment(Target.STACK);
+					for (int j = 0; j < agg.getCount(); j++) {
+						LLType comp = agg.getType(j);
+						int offs = align.alignAndAdd(comp);
+						tup = tup.put(j, new AddrOffsOperand(llinst.getResult(), 
+								comp, new NumberOperand(offs / 8), asmOp));
+					}
+					asmOp = tup;
+				}
+				callerRets.put(stackLoc.number, asmOp);
 
 			}
 			else if (argLocs[i] instanceof RegisterLocation) {
@@ -1445,6 +1475,40 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		ssaTempTable.put(instr.getResult(), asmOp);
 	}
 
+
+	/**
+	 * 
+	 * @param instr
+	 */
+	private void handleExtractValueInstr(LLExtractValueInstr instr) {
+		// get current base
+		TupleTempOperand op = (TupleTempOperand) generateOperand(instr.getOperands()[0]);
+		assert op != null;
+		AssemblerOperand asmOp = op.get(instr.getIndex());
+		AssemblerOperand val = moveToTemp(instr.getResult(), instr.getResult().getType(), asmOp);
+		ssaTempTable.put(instr.getResult(), val);
+	}
+
+	/**
+	 * When inserting values, we don't actually duplicate the entirety of
+	 * the possibly huge tuple.  Instead, we track individual temps
+	 * for every component of the tuple and keep track of the state of
+	 * temps for each temp. 
+	 * @param instr
+	 */
+	private void handleInsertValueInstr(LLInsertValueInstr instr) {
+		// calculate new piece
+		AssemblerOperand val = generateOperand(instr.getElement());
+		
+		// get current base
+		TupleTempOperand op = (TupleTempOperand) generateOperand(instr.getOperands()[0]);
+		if (op == null) {
+			op = new TupleTempOperand(instr.getType());
+		}
+		op = op.put(instr.getIndex(), val);
+		
+		ssaTempTable.put(instr.getResult(), op);
+	}
 
 	@Override
 	public boolean enterOperand(LLInstr instr, int num, LLOperand operand) {
@@ -1667,7 +1731,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			}*/
 			return new SymbolOperand(operand.getType(), symbol);
 		}
-		
+		if (operand instanceof LLUndefOp) {
+			return null;
+		}
 		assert false;
 		return null;
 	}
@@ -1676,7 +1742,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (local instanceof RegisterLocal)
 			return new RegTempOperand(type, (RegisterLocal) local);
 		else if (local instanceof StackLocal)
-			return new StackLocalOperand(type, (StackLocal) local);
+			return new AddrOperand(new StackLocalOperand(type, (StackLocal) local));
 		else 
 			assert false;
 		return null;
@@ -1940,12 +2006,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					// cheat and avoid new temp
 					RegTempOperand ptr = new RegTempOperand(type, (RegisterLocal) dstLocal);
 					emitInstr(HLInstruction.create(Plea, from, ptr));
-					from = ptr;
+					dest = ptr;
 				} else {
 					RegisterLocal addr = (RegisterLocal) locals.allocateTemp(type);
 					RegTempOperand ptr = new RegTempOperand(type, addr);
 					emitInstr(HLInstruction.create(Plea, from, ptr));
-					from = ptr;
+					dest = ptr;
 				}
 			} else {
 				// getting the address

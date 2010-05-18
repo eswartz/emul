@@ -4,14 +4,15 @@ Instructions:
 //-- unary  // none!
 
 -- casting
-
+    //-- bitcast
+    
 -- data related:
-    store/load data
+    //store/load data
     insertvalue
     extractvalue
-    getelementptr
+    //getelementptr
     
--- calls
+//-- calls
 
 --  
 

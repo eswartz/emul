@@ -943,7 +943,7 @@ public class LLVMGenerator {
 				throw new ASTException(sym, "can only tuple-allocate a symbol");
 			
 			LLOperand val = currentTarget.newTemp(sym.getType());
-			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, new LLConstOp(idx)));
+			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, idx));
 			
 			// add a cast if needed
 			val = generateCast(sym, sym.getType(), val.getType(), val);
@@ -1525,8 +1525,7 @@ entry:
 			IAstTypedExpr sym = syms.list().get(idx);
 			
 			LLOperand val = currentTarget.newTemp(tupleType.getType(idx));
-			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, 
-					new LLConstOp(idx)));
+			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(), value, idx));
 			
 			// add a cast if needed
 			val = generateCast(sym, sym.getType(), val.getType(), val);

@@ -30,4 +30,23 @@ public class LLInsertValueInstr extends LLAssignInstr {
 		super.appendInstrString(sb);
 		sb.append(", ").append(eltType.getLLVMName()).append(" ").append(elt).append(", ").append(idx);
 	}
+	
+	/**
+	 * @return the eltType
+	 */
+	public LLType getElementType() {
+		return eltType;
+	}
+	/**
+	 * @return the elt
+	 */
+	public LLOperand getElement() {
+		return elt;
+	}
+	/**
+	 * @return the idx
+	 */
+	public int getIndex() {
+		return idx;
+	}
 }

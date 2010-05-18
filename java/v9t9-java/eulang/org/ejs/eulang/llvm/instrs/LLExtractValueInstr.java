@@ -11,8 +11,25 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public class LLExtractValueInstr extends LLAssignInstr {
-	public LLExtractValueInstr(LLOperand temp, LLType type, LLOperand ... valueAndIdxOps) {
-		super("extractvalue", temp, type, valueAndIdxOps);
+	private final int index;
+
+	public LLExtractValueInstr(LLOperand temp, LLType type, LLOperand value, int index) {
+		super("extractvalue", temp, type, value);
+		this.index = index;
+	}
+	
+	@Override
+	protected void appendInstrString(StringBuilder sb) {
+		super.appendInstrString(sb);
+		sb.append(", ").append(index);
+	}
+	
+
+	/**
+	 * @return
+	 */
+	public int getIndex() {
+		return index;
 	}
 
 }

@@ -7,6 +7,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,14 +23,17 @@ import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
 import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.RenumberInstructionsVisitor;
+import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
+import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
@@ -229,7 +233,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "x", 10);
+		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "%reg", 10);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -248,11 +252,11 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "COPY", 1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", RegIndOperand.class, "y", StackLocalOperand.class);
+		matchInstr(inst, "COPY", RegIndOperand.class, "y", AddrOperand.class);
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", StackLocalOperand.class, AddrOffsOperand.class, "x", 32);
+		matchInstr(inst, "COPY", AddrOperand.class, AddrOffsOperand.class, "%reg", 32);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -1160,7 +1164,12 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "MPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MPY", val.getOp1(), xval.getOp2());
+		matchInstr(inst, "MPY", val.getOp1(), xval.getOp2(), RegTempOperand.class, false);
+		
+		// low part is result
+		idx = findInstrWithInst(instrs, "A", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "A", RegTempOperand.class, false, RegTempOperand.class);
 		
 	}
 
@@ -1177,15 +1186,15 @@ public class Test9900InstrSelection extends BaseParserTest {
 		matchInstr(inst, "MOVB", RegTempOperand.class, "x", RegTempOperand.class, true);
 		HLInstruction xval = inst;
 		
-		idx = findInstrWithInst(instrs, "MOVB", idx);
-		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", RegTempOperand.class, "y", RegTempOperand.class, false);
-		HLInstruction yval = inst;
-		
 		idx = findInstrWithInst(instrs, "MPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MPY", yval.getOp2(), xval.getOp2());
+		matchInstr(inst, "MPY", RegTempOperand.class, "y", xval.getOp2(), RegTempOperand.class, false);
 		
+		
+		// low part is result
+		idx = findInstrWithInst(instrs, "AB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AB", RegTempOperand.class, false, RegTempOperand.class);
 	}
 	
 
@@ -1558,8 +1567,8 @@ public class Test9900InstrSelection extends BaseParserTest {
 		// caller stack op in R0
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", StackLocalOperand.class, ".callerRet", RegTempOperand.class, 0);
-		assertEquals(typeEngine.FLOAT, ((StackLocalOperand) inst.getOp1()).getLocal().getType());
+		matchInstr(inst, "LEA", AddrOperand.class, ".callerRet", RegTempOperand.class, 0);
+		assertEquals(typeEngine.FLOAT, ((StackLocalOperand)((AddrOperand) inst.getOp1()).getAddr()).getLocal().getType());
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
@@ -1705,7 +1714,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "loc", 2);
+		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "%reg", 2);
 		
 		// addr goes here
 		idx = findInstrWithInst(instrs, "LEA", idx);
@@ -1791,6 +1800,106 @@ public class Test9900InstrSelection extends BaseParserTest {
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegTempOperand.class, "y",  RegTempOperand.class, 0);
+		
+    }
+    
+    @Test
+    public void testTuples1() throws Exception {
+    	dumpLLVMGen = true;
+    	doIsel(
+    			"makeTuple = code(x:Int;y) { (x,y*x,66) };\n"+
+    	"");
+    	boolean found = false;
+		for (HLInstruction inst : instrs) {
+			if (inst.getInst() == InstrSelection.Pcopy) {
+				if (found) fail("too many copies");
+				found = true;
+				assertTrue(inst.getOp1() instanceof TupleTempOperand);
+				AssemblerOperand[] cs = ((TupleTempOperand)inst.getOp1()).getComponents();
+				assertEquals(3, cs.length);
+				assertNotNull(cs[0]);
+				assertNotNull(cs[1]);
+				assertNotNull(cs[2]);
+				assertTrue(inst.getOp2() instanceof RegIndOperand);
+				assertTrue(((RegIndOperand)inst.getOp2()).isReg(0));
+				break;
+			}
+		}
+
+    }
+    @Test
+    public void testTuples2() throws Exception {
+    	dumpLLVMGen = true;
+    	doIsel(
+    			"forward makeTuple;\n"+
+    			"useTuple = code(i:Int) { (x,y) := makeTuple(19, i); x+y; };\n"+
+    			"makeTuple = code(x,y:Int) { (x,y) };\n"+
+    	"");
+    	int idx;
+		HLInstruction inst;
+
+		// caller stack op in R0
+		idx = findInstrWithInst(instrs, "LEA", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", AddrOperand.class, ".callerRet", RegTempOperand.class, 0);
+		AddrOperand addrOperand = (AddrOperand) inst.getOp1();
+		StackLocal local = ((StackLocalOperand)addrOperand.getAddr()).getLocal();
+		assertTrue(local.getType() instanceof LLTupleType);
+
+		// extract instrs copy pieces from the operand
+		idx = findInstrWithInst(instrs, "BL", idx);
+		
+		idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", AddrOffsOperand.class, ".callerRet", 0, RegTempOperand.class);
+		
+		idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", AddrOffsOperand.class, ".callerRet", 2, RegTempOperand.class);
+		
+    }
+
+    @Test
+    public void testDataFields() throws Exception {
+    	dumpLLVMGen = true;
+    	doIsel(
+    			"Class = data { x,b:Byte; y:Float; };\n"+
+    			"useClass = code(i:Int) { c : Class; x := c.x + c.b; y := c.y;  };\n"+
+    	"");
+    	int idx;
+		HLInstruction inst;
+		
+
+		// c.x fetched directly
+		idx = findInstrWithInst(instrs, "MOVB", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", AddrOperand.class, "c", RegTempOperand.class);
+
+		// get an address for c.y
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", AddrOperand.class, "c", RegTempOperand.class);
+
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", AddrOffsOperand.class, "%reg", 1, RegTempOperand.class);
+		
+		// skip...
+		
+		// get the c.y
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", AddrOperand.class, "c", RegTempOperand.class);
+		
+		// copy float out
+		idx = findInstrWithInst(instrs, "COPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "COPY", AddrOffsOperand.class, "%reg", 2, AddrOperand.class);
+
+		// and, sadly, copy again
+		idx = findInstrWithInst(instrs, "COPY", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "COPY", AddrOperand.class, AddrOperand.class, "y");
 		
     }
 }
