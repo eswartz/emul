@@ -1,6 +1,7 @@
 TCF_AGENT_DIR=.
 
 include $(TCF_AGENT_DIR)/Makefile.inc
+override CFLAGS += $(OPTS)
 
 all:	$(EXECS)
 

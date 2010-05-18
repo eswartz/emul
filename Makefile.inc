@@ -84,4 +84,3 @@ endif
 
 OPTS += $(foreach dir,$(INCDIRS),-I$(TCF_AGENT_DIR)/$(dir))
 
-override CFLAGS += $(OPTS)
