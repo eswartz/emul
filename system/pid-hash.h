@@ -17,6 +17,9 @@
  * System specific debug context code can use this module to implement context lookup.
  */
 
+/* TODO: consider splitting the code into two files: some clients might want to reuse PID hash table for context_find_from_pid(),
+ * but use some other means to implement id2ctx() */
+
 #define CONTEXT_PID_HASH_SIZE 1024
 #define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_HASH_SIZE)
 
