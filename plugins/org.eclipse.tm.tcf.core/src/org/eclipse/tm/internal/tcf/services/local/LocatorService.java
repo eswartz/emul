@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.services.local;
 import java.lang.reflect.Method;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -85,12 +86,13 @@ public class LocatorService implements ILocator {
             byte[] a2 = address.getAddress();
             if (a1.length != a2.length) return false;
             int i = 0;
-            while (i + 8 <= prefix_length) {
+            int l = prefix_length <= a1.length * 8 ? prefix_length : a1.length * 8;
+            while (i + 8 <= l) {
                 int n = i / 8;
                 if (a1[n] != a2[n]) return false;
                 i += 8;
             }
-            while (i < prefix_length) {
+            while (i < l) {
                 int n = i / 8;
                 int m = 1 << (7 - i % 8);
                 if ((a1[n] & m) != (a2[n] & m)) return false;
@@ -512,6 +514,19 @@ public class LocatorService implements ILocator {
                                 buf[1] = buf[2] = buf[3] = (byte)255;
                                 broadcast = InetAddress.getByAddress(buf);
                             }
+                        }
+
+                        if (address instanceof Inet4Address && network_prefix_len > 32) {
+                            /*
+                             * Workaround for JVM bug:
+                             * InterfaceAddress.getNetworkPrefixLength() does not conform to Javadoc
+                             * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6707289
+                             *
+                             * The bug shows up only when IPv6 is enabled.
+                             * The bug is supposed to be fixed in Java 1.7.
+                             */
+                            // TODO: need a better way to get network prefix length on Java 1.6 VM
+                            network_prefix_len = 24;
                         }
 
                         // TODO: discovery over IPv6
