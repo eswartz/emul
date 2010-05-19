@@ -40,7 +40,8 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	public AstDataType( TypeEngine typeEngine, ISymbol typeName,
 			IAstNodeList<IAstStmt> stmts,
 			IAstNodeList<IAstTypedNode> fields,
-			IAstNodeList<IAstTypedNode> statics, IScope scope) {
+			IAstNodeList<IAstTypedNode> statics, 
+			IScope scope) {
 		super(stmts, scope);
 		this.typeName = typeName;
 		setFields(fields);

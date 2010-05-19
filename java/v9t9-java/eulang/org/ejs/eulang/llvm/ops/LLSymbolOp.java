@@ -4,6 +4,7 @@
 package org.ejs.eulang.llvm.ops;
 
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
@@ -16,6 +17,15 @@ public class LLSymbolOp extends BaseLLOperand {
 		this.symbol = symbol;
 	}
 	
+	/**
+	 * @param symbol2
+	 * @param type
+	 */
+	public LLSymbolOp(ISymbol symbol, LLType type) {
+		super(type);
+		this.symbol = symbol;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

@@ -554,6 +554,7 @@ staticVarDecl : STATIC varDecl -> ^(STATIC varDecl) ;
 
 fieldDecl : staticVarDecl SEMI -> staticVarDecl 
     | varDecl SEMI -> varDecl 
+    | defineStmt
     //| fieldIdRef SEMI -> fieldIdRef
     ;
 

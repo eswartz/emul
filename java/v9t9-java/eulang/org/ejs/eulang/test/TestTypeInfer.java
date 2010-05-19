@@ -24,10 +24,13 @@ import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
+import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstSymbolDefiner;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.impl.AstTypedNode;
@@ -1446,6 +1449,193 @@ public class TestTypeInfer extends BaseParserTest {
 		inner = (IAstDataType)getMainBodyExpr(def);
     	assertTrue(inner.getType().isComplete());
 
+    }
+    
+
+    @Test
+    public void testInnerData1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  Inner = data {\n"+
+    			"    d1,d2:Float;\n"+
+    			"    p : Complex^;\n"+
+    			"  };\n"+
+    			"  Inner2 = data {\n"+
+    			"    parent : Inner^;\n"+
+    			"    next : Inner2^;\n"+
+    			"  };\n"+
+    			"  d : Inner^;\n"+
+    			"  e : Inner2^;\n"+
+    			" };\n"+
+    			"testInnerData1 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  c.e.next.parent.p.b;\n"+
+    			"};\n"+
+    	"");
+
+    	IAstDefineStmt def;
+    	def = (IAstDefineStmt) mod.getScope().getNode("Inner");
+    	assertNull(def);
+		def = (IAstDefineStmt) mod.getScope().getNode("Complex");
+		assertNotNull(def);
+		
+		IAstDataType complex = (IAstDataType) getMainBodyExpr(def);
+		IAstDefineStmt inner = (IAstDefineStmt) complex.getScope().getNode("Inner");
+		assertNotNull(inner);
+		
+		IAstDataType innerData = (IAstDataType) getMainBodyExpr(inner);
+		assertTrue(innerData.getType().isComplete());
+    	
+    	
+    }
+    
+
+
+    /** Normal old-style method call */
+    @Test
+    public void testInnerCode0() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  Inner = data {\n"+
+    			"    d1,d2:Float;\n"+
+    			"    p : Complex^;\n"+
+    			"  };\n"+
+    			"  summer = code(@this:Complex) {\n"+
+    			"    this.d.d1 + this.d.p.c;\n"+
+    			"  };\n"+
+    			"  d : Inner^;\n"+
+    			" };\n"+
+    			"testInnerData1 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  Complex.summer(c);\n" +
+    			"};\n"+
+    	"");
+
+    	IAstDefineStmt def;
+    	def = (IAstDefineStmt) mod.getScope().getNode("Inner");
+    	assertNull(def);
+		def = (IAstDefineStmt) mod.getScope().getNode("Complex");
+		assertNotNull(def);
+		
+		IAstDataType complex = (IAstDataType) getMainBodyExpr(def);
+		IAstDefineStmt inner = (IAstDefineStmt) complex.getScope().getNode("Inner");
+		assertNotNull(inner);
+		
+		IAstDataType innerData = (IAstDataType) getMainBodyExpr(inner);
+		assertTrue(innerData.getType().isComplete());
+    	
+		// the call to summer as a field ref should be replaced with a direct symbol ref 
+		def = (IAstDefineStmt) mod.getScope().getNode("testInnerData1");
+		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	assertTrue(codeExpr.getType().isComplete());
+    	
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) exprStmt.getExpr();
+    	assertTrue(funcCall.getFunction() instanceof IAstSymbolExpr);
+    	IAstSymbolExpr symExpr = (IAstSymbolExpr) funcCall.getFunction();
+    	assertEquals("summer", symExpr.getSymbol().getName());
+    	assertEquals(complex.getScope(), symExpr.getSymbol().getScope());
+    	
+    }
+    
+    /** Non-canonical method call, through instance */
+    @Test
+    public void testInnerCode1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  Inner = data {\n"+
+    			"    d1,d2:Float;\n"+
+    			"    p : Complex^;\n"+
+    			"  };\n"+
+    			"  summer = code(@this:Complex) {\n"+
+    			"    this.d.d1 + this.d.p.c;\n"+
+    			"  };\n"+
+    			"  d : Inner^;\n"+
+    			" };\n"+
+    			"testInnerData1 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  c.summer(c);\n" +
+    			"};\n"+
+    	"");
+
+    	IAstDefineStmt def;
+    	def = (IAstDefineStmt) mod.getScope().getNode("Inner");
+    	assertNull(def);
+		def = (IAstDefineStmt) mod.getScope().getNode("Complex");
+		assertNotNull(def);
+		
+		IAstDataType complex = (IAstDataType) getMainBodyExpr(def);
+		IAstDefineStmt inner = (IAstDefineStmt) complex.getScope().getNode("Inner");
+		assertNotNull(inner);
+		
+		IAstDataType innerData = (IAstDataType) getMainBodyExpr(inner);
+		assertTrue(innerData.getType().isComplete());
+    	
+		// the call to summer as a field ref should be replaced with a direct symbol ref 
+		def = (IAstDefineStmt) mod.getScope().getNode("testInnerData1");
+		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	assertTrue(codeExpr.getType().isComplete());
+    	
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) exprStmt.getExpr();
+    	assertTrue(funcCall.getFunction() instanceof IAstSymbolExpr);
+    	IAstSymbolExpr symExpr = (IAstSymbolExpr) funcCall.getFunction();
+    	assertEquals("summer", symExpr.getSymbol().getName());
+    	assertEquals(complex.getScope(), symExpr.getSymbol().getScope());
+    	
+    }
+    
+
+    /** Non-canonical method call, through instance */
+    @Test
+    public void testInnerCode2() throws Exception {
+    	dumpTreeize = true;
+    	IAstModule mod = doFrontend(
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  Inner = data {\n"+
+    			"    d1,d2:Float;\n"+
+    			"    p : Complex^;\n"+
+    			"  };\n"+
+    			"  summer = code(@this:Complex) {\n"+
+    			"    this.d.d1 + this.d.p.c;\n"+
+    			"  };\n"+
+    			"  d : Inner^;\n"+
+    			" };\n"+
+    			"testInnerData1 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  c.d.p.summer(c);\n" +
+    			"};\n"+
+    	"");
+
+    	IAstDefineStmt def;
+    	def = (IAstDefineStmt) mod.getScope().getNode("Inner");
+    	assertNull(def);
+		def = (IAstDefineStmt) mod.getScope().getNode("Complex");
+		assertNotNull(def);
+		
+		IAstDataType complex = (IAstDataType) getMainBodyExpr(def);
+		IAstDefineStmt inner = (IAstDefineStmt) complex.getScope().getNode("Inner");
+		assertNotNull(inner);
+		
+		IAstDataType innerData = (IAstDataType) getMainBodyExpr(inner);
+		assertTrue(innerData.getType().isComplete());
+    	
+		// the call to summer as a field ref should be replaced with a direct symbol ref 
+		def = (IAstDefineStmt) mod.getScope().getNode("testInnerData1");
+		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainBodyExpr(def);
+    	assertTrue(codeExpr.getType().isComplete());
+    	
+    	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
+    	IAstFuncCallExpr funcCall = (IAstFuncCallExpr) exprStmt.getExpr();
+    	assertTrue(funcCall.getFunction() instanceof IAstSymbolExpr);
+    	IAstSymbolExpr symExpr = (IAstSymbolExpr) funcCall.getFunction();
+    	assertEquals("summer", symExpr.getSymbol().getName());
+    	assertEquals(complex.getScope(), symExpr.getSymbol().getScope());
+    	
     }
 }
 

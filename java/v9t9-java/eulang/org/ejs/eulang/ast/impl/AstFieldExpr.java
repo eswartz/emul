@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstFieldExpr;
@@ -11,6 +12,7 @@ import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceType;
@@ -165,6 +167,8 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		
 		LLDataType dataType = null;
 		LLType fieldType = type;
+		int fieldIdx = -1;
+		ISymbol nonFieldSym = null;
 		
 		if (canInferTypeFrom(expr)) {
 			LLType exprType = getDataType(typeEngine);
@@ -177,21 +181,50 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			}
 			dataType = (LLDataType) exprType;
 			BaseLLField field = dataType.getField(this.field.getName());
-			if (field == null)
-				throw new TypeException(this.field, "no field '"+ this.field.getName() + "' in data '" + dataType.getName() + "'");
+			boolean matched = false;
+			if (field != null) {
+				matched = true;
+				fieldIdx = dataType.getFieldIndex(field);
+				fieldType = field.getType();
+			} else {
+				// try for something in the same scope
+				IAstDefineStmt def = (IAstDefineStmt) dataType.getSymbol().getDefinition();
+				IAstDataType astDataType = (IAstDataType) def.getMatchingBodyExpr(dataType);
+				if (astDataType != null) {
+					nonFieldSym = astDataType.getScope().get(this.field.getName());
+					if (nonFieldSym != null) {
+						// now replace this with the proper call
+						
+						IAstSymbolExpr symbolExpr = new AstSymbolExpr(false, nonFieldSym);
+						symbolExpr.setSourceRef(getSourceRef());
+						getParent().replaceChild(this, symbolExpr);
+						return true;
+						/*
+						IAstNode nonField = nonFieldSym.getDefinition();
+						if (nonField instanceof IAstDefineStmt) {
+							IAstTypedExpr nonFieldExpr = ((IAstDefineStmt) nonField).getMatchingBodyExpr(getType());
+							if (nonFieldExpr != null) {
+								fieldType = nonFieldExpr.getType();
+							}
+						}
+						
+						matched = true;
+						*/
+					}
+				}
+				if (!matched)
+					throw new TypeException(this.field, "no field '"+ this.field.getName() + "' in data '" + dataType.getName() + "'");
+			}
 			
-			int fieldIdx = dataType.getFieldIndex(field);
-			fieldType = field.getType();
 			
-			//fieldType = fieldType.substitute(typeEngine, this, fieldType);
 			
 			changed |= updateType(this, fieldType);
 			
-			if (dataType != null && (fieldType == null || !fieldType.isComplete())) {
+			if (dataType != null && fieldIdx >= 0 && (fieldType == null || !fieldType.isComplete())) {
 				if (canInferTypeFrom(this)) {
 					LLType[] fieldTypes = dataType.getTypes();
 					fieldTypes[fieldIdx] = getType();
-					
+				
 					dataType = (LLDataType) dataType.updateTypes(typeEngine, fieldTypes);
 					changed |= updateType(expr, dataType);
 				}
@@ -201,7 +234,6 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
     	if (dataType == null || !dataType.isComplete()) {
     		// cannot infer the expr type from the name (yet)
     	} 
-		
 
 		return changed;
 	}

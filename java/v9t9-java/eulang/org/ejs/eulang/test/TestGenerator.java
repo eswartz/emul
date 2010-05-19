@@ -597,8 +597,9 @@ public class TestGenerator extends BaseParserTest {
     }
 
 
-    //@Test
+    @Test
     public void testInnerData1() throws Exception {
+    	dumpTreeize = true;
     	IAstModule mod = treeize(
     			"Complex = data {\n"+
     			"  a,b,c:Byte;\n"+
@@ -613,6 +614,20 @@ public class TestGenerator extends BaseParserTest {
     			"  c.d.p.d.d2;\n"+
     			"};\n"+
     	"");
+    	sanityTest(mod);
+
+    	IAstDefineStmt def;
+    	def = (IAstDefineStmt) mod.getScope().getNode("Inner");
+    	assertNull(def);
+		def = (IAstDefineStmt) mod.getScope().getNode("Complex");
+		assertNotNull(def);
+		
+		IAstDataType complex = (IAstDataType) getMainBodyExpr(def);
+		IAstDefineStmt inner = (IAstDefineStmt) complex.getScope().getNode("Inner");
+		assertNotNull(inner);
+		
+    	
+    	
     }
 }
 

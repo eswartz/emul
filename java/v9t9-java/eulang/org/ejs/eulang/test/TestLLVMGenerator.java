@@ -5,7 +5,13 @@ package org.ejs.eulang.test;
 
 import static junit.framework.Assert.*;
 
+import org.ejs.eulang.ast.IAstCodeExpr;
+import org.ejs.eulang.ast.IAstDataType;
+import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstExprStmt;
+import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.ISymbol;
@@ -385,5 +391,32 @@ public class TestLLVMGenerator extends BaseParserTest {
     			"};\n"+
     	"");
     	doGenerate(mod);
+    }
+    
+
+    /** Non-canonical method call, through instance */
+    /** Test that we export defines inside data */
+    @Test
+    public void testInnerCode2() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  Inner = data {\n"+
+    			"    d1,d2:Float;\n"+
+    			"    p : Complex^;\n"+
+    			"  };\n"+
+    			"  summer = code(this:Complex^) {\n"+
+    			"    this.d.d1 + this.d.p.c;\n"+
+    			"  };\n"+
+    			"  d : Inner^;\n"+
+    			" };\n"+
+    			"testInnerData1 = code() {\n"+
+    			"  c : Complex;\n" +
+    			"  c.d.p.summer(&c);\n" +
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    	
     }
 }

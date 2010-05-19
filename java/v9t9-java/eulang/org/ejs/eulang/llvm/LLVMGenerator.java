@@ -337,6 +337,14 @@ public class LLVMGenerator {
 		
 		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
 		//ll.add(new LLConstantDirective(modSymbol, true, expr.getType(), new LLConstant(expr.getLiteral())));
+
+		for (IAstStmt stmt : expr.stmts().list()) {
+			if (stmt instanceof IAstDefineStmt)
+				generateGlobalDefine((IAstDefineStmt)stmt);
+			else
+				generateStmt(stmt);
+		}
+		
 	}
 
 	/**
@@ -972,7 +980,7 @@ public class LLVMGenerator {
 			var = varStorage.lookupVariable(symbol);
 		if (var != null)
 			return new LLVariableOp(var);
-		return new LLSymbolOp(symbol);
+		return new LLSymbolOp(symbol, type);
 	}
 
 	/**
@@ -1710,7 +1718,7 @@ entry:
 			} else if (origType.getBasicType() == BasicType.INTEGRAL && type.getBasicType() == BasicType.POINTER) {
 				cast = ECast.INTTOPTR;
 			} else if (origType.getBasicType() == BasicType.POINTER && type.getBasicType() == BasicType.POINTER) {
-				if (origType.equals(type))
+				if (origType.getLLVMName().equals(type.getLLVMName()))
 					return value;
 				cast = ECast.BITCAST;
 			} else if (origType.getBasicType() == BasicType.CODE && type.getBasicType() == BasicType.POINTER) {
@@ -1718,7 +1726,7 @@ entry:
 				if (value instanceof LLSymbolOp) {
 					origType = typeEngine.getPointerType(origType);
 				}
-				if (origType.equals(type)) {
+				if (origType.getLLVMName().equals(type.getLLVMName())) {
 					value.setType(type);
 					return value;
 				}

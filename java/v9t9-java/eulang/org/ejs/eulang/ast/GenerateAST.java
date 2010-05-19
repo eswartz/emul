@@ -73,6 +73,7 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.symbols.NamespaceScope;
+import org.ejs.eulang.symbols.ISymbol.Visibility;
 import org.ejs.eulang.types.LLGenericType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -768,13 +769,20 @@ public class GenerateAST {
 	 * @throws GenerateException
 	 */
 	private IAstNode constructData(Tree tree) throws GenerateException {
-		pushScope(new LocalScope(currentScope));
+		pushScope(new NamespaceScope(currentScope));
 		try {
 			IAstNodeList<IAstTypedNode> fields = new AstNodeList<IAstTypedNode>(
 					IAstTypedNode.class);
 			IAstNodeList<IAstTypedNode> statics = new AstNodeList<IAstTypedNode>(
 					IAstTypedNode.class);
+			AstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(IAstStmt.class);
 			for (Tree kid : iter(tree)) {
+				if (kid.getType() == EulangParser.DEFINE) {
+					IAstDefineStmt define = constructDefine(kid);
+					stmts.add(define);
+					continue;
+				}
+				
 				IAstNodeList<IAstTypedNode> theList = fields;
 				if (kid.getType() == EulangParser.STATIC) {
 					theList = statics;
@@ -813,7 +821,6 @@ public class GenerateAST {
 			getSource(tree, statics);
 			getSource(tree, fields);
 
-			AstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(IAstStmt.class);
 			getEmptySource(tree, stmts);
 			
 			IAstDataType dataType = new AstDataType(typeEngine, currentName, stmts, 
