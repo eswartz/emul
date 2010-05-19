@@ -758,7 +758,8 @@ static void skip_object(InputStream * inp) {
     if (ch == '-' || ch >= '0' && ch <= '9') {
         for (;;) {
             ch = peek_stream(inp);
-            if (ch < '0' || ch > '9') break;
+            if ((ch < '0' || ch > '9') && ch != '.' 
+                    && ch != 'e' && ch != 'E' && ch != '-' && ch != '+') break;
             skip_char(inp);
         }
         return;
