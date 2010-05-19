@@ -22,7 +22,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 	 * 
 	 */
 	public LLCodeType(LLType retType, LLType[] argTypes, int ptrBits) {
-		super(fixLLVMName(toString(retType, argTypes)), ptrBits, toString(retType, argTypes), BasicType.CODE, null, argTypes == null);
+		super(fixLLVMName(toString(retType, argTypes, true)), ptrBits, toString(retType, argTypes, false), BasicType.CODE, null, argTypes == null);
 		this.retType = retType;
 		this.argTypes = argTypes != null ? argTypes : NO_TYPES;
 		this.types = new LLType[1 + this.argTypes.length];
@@ -64,15 +64,17 @@ public class LLCodeType extends BaseLLAggregateType  {
 
 
 
-	public static String toString(LLType retType, LLType[] argTypes) {
+	public static String toString(LLType retType, LLType[] argTypes, boolean allowIncomplete) {
 		if (retType == null && argTypes == null)
-			return "<code>";
+			return allowIncomplete ? "<code>" : null;
 
 		StringBuilder sb = new StringBuilder();
-		if (retType != null)
+		if (retType != null && retType.isComplete())
 			sb.append(retType.getLLVMName());
-		else
+		else if (allowIncomplete)
 			sb.append("<unknown>");
+		else
+			return null;
 		
 		sb.append(" (");
 		boolean first = true;
@@ -81,8 +83,13 @@ public class LLCodeType extends BaseLLAggregateType  {
 				first = false;
 			else
 				sb.append(',');
+			if (!allowIncomplete && (type == null || !type.isComplete()))
+				return null;
 			if (type != null)
-				sb.append(type.getLLVMName());
+				if (type.isComplete())
+					sb.append(type.getLLVMName());
+				else
+					sb.append(type);
 			else
 				sb.append("<unknown>");
 		}

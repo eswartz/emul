@@ -8,6 +8,7 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -164,6 +165,8 @@ public class Symbol implements ISymbol {
 		if (type != this.type) {
 			// the symbol itself should not have a type for defines
 			assert !(def instanceof IAstDefineStmt);
+			if (type instanceof LLSymbolType && ((LLSymbolType) type).getSymbol() == this)
+				return;
 			//assert !(scope.getOwner() instanceof IAstDefineStmt); 
 			this.type = type;
 			llvmName = null;

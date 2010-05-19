@@ -16,10 +16,12 @@ public class LLVoidType extends BaseLLType {
 		super(name, 0, "void", BasicType.VOID, null);
 		
 	}
+	/*
 	@Override
 	public boolean isComplete() {
 		return true;
 	}
+	*/
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#updateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType[])

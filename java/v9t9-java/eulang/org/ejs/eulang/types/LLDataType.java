@@ -85,7 +85,7 @@ public class LLDataType extends BaseLLAggregateType {
 	 */
 	private static String toLLVMString(LLInstanceField[] fields) {
 		if (fields == null)
-			return "<data>";
+			return null;
 		
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
@@ -94,6 +94,8 @@ public class LLDataType extends BaseLLAggregateType {
 			if (first) first = false; else sb.append(',');
 			LLType type = field.getType();
 			String typeName = null;
+			if (type == null || !type.isComplete())
+				return null;
 			/*
 			if (type instanceof LLUpType) {
 				IAstType realType = ((LLUpType) type).getRealType();

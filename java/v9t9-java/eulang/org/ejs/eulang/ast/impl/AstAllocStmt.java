@@ -109,7 +109,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 */
 	@Override
 	public IAstNode[] getDumpChildren() {
-		if (true||getType() == null)
+		if (getType() == null)
 			return getChildren();
 		
 		if (getExprs() != null) {

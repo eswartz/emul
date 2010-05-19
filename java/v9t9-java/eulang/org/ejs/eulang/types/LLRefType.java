@@ -17,7 +17,7 @@ public class LLRefType extends BaseLLType {
 
 	public LLRefType(LLType baseType, int ptrBits, int refCntBits) {
 		super(baseType.getName() + "$ref", ptrBits, 
-				 "{ " + (baseType != null ? baseType.getLLVMType() : "") + "*, i" + refCntBits + "}*",
+				baseType != null && baseType.isComplete() ? ("{ " + (baseType != null ? baseType.getLLVMType() : "") + "*, i" + refCntBits + "}*") : null,
 				 BasicType.REF, baseType);
 		if (baseType instanceof LLRefType)
 			throw new IllegalArgumentException();
@@ -27,10 +27,12 @@ public class LLRefType extends BaseLLType {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isComplete()
 	 */
+	/*
 	@Override
 	public boolean isComplete() {
 		return subType != null;
 	}
+	*/
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)

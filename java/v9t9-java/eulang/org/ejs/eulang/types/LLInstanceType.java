@@ -26,7 +26,7 @@ public class LLInstanceType extends BaseLLAggregateType {
 	 * @param subType
 	 */
 	public LLInstanceType(ISymbol symbol, LLType[] types) {
-		super(toLLVMString(symbol, types), 1, toLLVMString(symbol, types), BasicType.DATA, null, types == null);
+		super(toLLVMString(symbol, types), 1, null /*toLLVMString(symbol, types)*/, BasicType.DATA, null, types == null);
 		this.symbol = symbol;
 		this.types = types != null ? types : NO_TYPES;
 	}
@@ -129,10 +129,12 @@ public class LLInstanceType extends BaseLLAggregateType {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLAggregateType#isComplete()
 	 */
+	/*
 	@Override
 	public boolean isComplete() {
 		return false;
 	}
+	*/
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLAggregateType#isGeneric()

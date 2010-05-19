@@ -133,13 +133,13 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 		
 		// the type is fixed to be the base type of the dereferenced child.
 		if (canInferTypeFrom(expr)) {
-			LLType child = expr.getType();
+			LLType child = typeEngine.getRealType(expr.getType());
 			
-			child = typeEngine.getBaseType(child);
+			child = typeEngine.getRealType(typeEngine.getBaseType(child));
 			
-			if (child instanceof LLSymbolType) {
-				child = ((LLSymbolType)child).getRealType(typeEngine);
-			}
+			//if (child instanceof LLSymbolType) {
+			//	child = ((LLSymbolType)child).getRealType(typeEngine);
+			//}
 			
 			if (child instanceof LLCodeType) {
 				expr.setParent(null);

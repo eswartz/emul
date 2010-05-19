@@ -347,7 +347,20 @@ public class Test9900InstrSelection extends BaseParserTest {
 						fail("expected register temp");
 					i++;
 				}
-				
+				else if (stuff[i] instanceof AssemblerOperand) {
+					AssemblerOperand testOp = null;
+					if (op instanceof AddrOperand)
+						testOp = ((AddrOperand) op).getAddr();
+					else if (op instanceof AddrOffsOperand)
+						testOp = ((AddrOffsOperand) op).getAddr();
+					else if (op instanceof IRegisterOperand && op.isMemory())
+						testOp = ((IRegisterOperand) op).getReg();
+					
+					if (testOp != null) {
+						assertEquals(instr+":"+op+" subop", stuff[i], testOp);
+						i++;
+					}
+				}
 				if (i < stuff.length && stuff[i] instanceof Integer) {
 					int num = (Integer) stuff[i++];
 					if (op instanceof RegOffsOperand) {
@@ -1757,7 +1770,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 
     @Test
     public void testPtrCalc6() throws Exception {
-    	dumpLLVMGen = true;
     	doIsel(
     			"forward Complex;\n"+
     			"Inner = data {\n"+
@@ -1777,50 +1789,30 @@ public class Test9900InstrSelection extends BaseParserTest {
 		HLInstruction inst;
 
 
-		idx = findInstrWithInst(instrs, "LI");
+		// get addr of c to Complex*
+		idx = findInstrWithInst(instrs, "LEA");
 		inst = instrs.get(idx);
-		matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 100);
+		matchInstr(inst, "LEA", AddrOperand.class, "c", RegTempOperand.class);
 		
-		idx = findInstrWithInst(instrs, "MOV", idx);
-		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "%reg", 2);
-		
-		// addr goes here
+		// get 'd' offset inside, to Inner*
 		idx = findInstrWithInst(instrs, "LEA", idx);
-		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", AddrOperand.class, "loc", RegTempOperand.class, "inst");
+		HLInstruction inst2 = instrs.get(idx);
+		matchInstr(inst2, "LEA", AddrOffsOperand.class, inst.getOp2(), 4, RegTempOperand.class);
 		
+		// then, deref 'p' to Complex* 
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, "inst", RegTempOperand.class);
+		matchInstr(inst, "MOV", AddrOffsOperand.class, inst2.getOp2(), RegTempOperand.class);
 		
-		// ptr derefs
-		idx = findInstrWithInst(instrs, "MOV", idx);
+		// get 'd' offset inside, to Inner*
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst2 = instrs.get(idx);
+		matchInstr(inst2, "LEA", AddrOffsOperand.class, inst.getOp2(), RegTempOperand.class);
+		
+		// read 'd2'
+		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
-		
-		idx = findInstrWithInst(instrs, "MOV", idx);
-		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
-		
-		// copy
-		//idx = findInstrWithInst(instrs, "MOV", idx);
-		//inst = instrs.get(idx);
-		//matchInstr(inst, "MOV", RegTempOperand.class, RegTempOperand.class);
-		
-		// hard to find the next instr since it depends on a temp
-		while (idx < instrs.size()) {
-			inst = instrs.get(idx);
-			if (inst.getInst() == InstructionTable.Imov) {
-				if (inst.getOp1() instanceof AddrOffsOperand) {
-					assertEquals(2, ((NumberOperand)((AddrOffsOperand) inst.getOp1()).getOffset()).getValue());
-					idx = -1;
-					break;
-				}
-			}
-			idx++;
-		}
-		assertEquals(-1, idx);
+		matchInstr(inst, "COPY", AddrOffsOperand.class, inst2.getOp2(), 4, AddrOperand.class);
     }
 
     @Test

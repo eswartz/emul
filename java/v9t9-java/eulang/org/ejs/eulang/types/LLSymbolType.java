@@ -84,10 +84,12 @@ public class LLSymbolType extends BaseLLType {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLAggregateType#isComplete()
 	 */
+	/*
 	@Override
 	public boolean isComplete() {
 		return symbol != null; //symbol.getType() != null;
 	}
+	*/
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLAggregateType#isGeneric()

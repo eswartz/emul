@@ -360,7 +360,11 @@ public class BaseParserTest {
 		TypeInference infer = new TypeInference(typeEngine);
 		List<Message> messages = infer.getMessages();
 		
-		
+		if (dumpTypeInfer) {
+			System.out.println("Before inference:");
+			DumpAST dump = new DumpAST(System.out);
+			mod.accept(dump);
+		}
 		infer.infer(mod, true);
 		if (dumpTypeInfer || (!expectErrors && messages.size() > 0)) {
 			DumpAST dump = new DumpAST(System.out);

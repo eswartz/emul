@@ -218,7 +218,7 @@ public class LLVMGenerator {
 		for (Map.Entry<String, String> nfEnt : module.getNonFileText().entrySet())
 			fileText.put(nfEnt.getKey(), nfEnt.getValue().split("\n"));
 		
-		this.ll = new LLModule(module.getOwnerScope());
+		this.ll = new LLModule(typeEngine, module.getOwnerScope());
 
 		currentTarget = null;
 		

@@ -17,14 +17,26 @@ public class LLPointerType extends BaseLLType {
 
 	
 	public LLPointerType(String name, int bits, LLType baseType) {
-		super(name, bits, baseType != null ? baseType.getLLVMType() + "*" : "void*", BasicType.POINTER, baseType);
+		super(name, bits, getLLVMName(baseType), BasicType.POINTER, baseType);
 		
+	}
+	
+	private static String getLLVMName(LLType baseType) {
+		//  baseType != null && baseType.isComplete() ? ((baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*") : null
+		if (baseType == null)
+			return null;
+		if (baseType.isComplete())
+			return (baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*";
+		// exceptions for named types
+		if (baseType instanceof LLDataType)
+			return "%" + ((LLDataType) baseType).getName() + "*";
+		return null;
 	}
 	public LLPointerType(int bits, LLType baseType) {
 		super(baseType != null ? (baseType.getName() != null ? baseType.getName() + "$p" : 
 			fixLLVMName(baseType.getLLVMName()) + "$p") : "$p", 
 				bits, 
-				baseType != null ? ((baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*") : "void*", 
+				getLLVMName(baseType), 
 				BasicType.POINTER, baseType);
 		
 	}
@@ -32,10 +44,12 @@ public class LLPointerType extends BaseLLType {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isComplete()
 	 */
+	/*
 	@Override
 	public boolean isComplete() {
 		return subType != null && subType.isComplete();
 	}
+	*/
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)

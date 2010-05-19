@@ -18,10 +18,12 @@ public class LLBoolType extends BaseLLType  {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isComplete()
 	 */
+	/*
 	@Override
 	public boolean isComplete() {
 		return true;
 	}
+	*/
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#updateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.types.LLType[])

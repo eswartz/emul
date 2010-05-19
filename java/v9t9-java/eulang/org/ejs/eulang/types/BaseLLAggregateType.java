@@ -62,6 +62,7 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isComplete()
 	 */
+	/*
 	@Override
 	public boolean isComplete() {
 		for (int idx = 0; idx < getCount(); idx++) {
@@ -70,7 +71,7 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 				return false;
 		}
 		return true;
-	}
+	}*/
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLType#isMoreComplete(org.ejs.eulang.types.LLType)

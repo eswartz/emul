@@ -254,6 +254,13 @@ public abstract class BaseLLType implements LLType {
 		return new LLType[] { subType };
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#isComplete()
+	 */
+	@Override
+	final public boolean isComplete() {
+		return llvmType != null;
+	}
 
 
 }

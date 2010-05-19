@@ -23,7 +23,7 @@ public class LLGenericType extends BaseLLType {
 	}
 	public LLGenericType(ISymbol symbol) {
 		super(getUniqueSymbolName(symbol), 0, 
-				getUniqueSymbolName(symbol), 
+				/*getUniqueSymbolName(symbol)*/ null, 
 						BasicType.GENERIC, null);
 		this.symbol = symbol;
 	}
@@ -66,10 +66,12 @@ public class LLGenericType extends BaseLLType {
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.LLType#isComplete()
 	 */
+	/*
 	@Override
 	public boolean isComplete() {
 		return false;
 	}
+	*/
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLType#isMoreComplete(org.ejs.eulang.types.LLType)

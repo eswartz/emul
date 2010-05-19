@@ -603,7 +603,7 @@ public class TypeEngine {
 	}
 
 	private String getUniqueTypeName(LLType type) {
-		String name = type != null ? (type.getLLVMType() + (type.isGeneric() ? "<g>" : "")) : "<u>";
+		String name = type != null ? (type.getLLVMType() != null ? type.getLLVMType() : type.toString() + (type.isGeneric() ? "<g>" : "")) : "<u>";
 		return name;
 	}
 	
@@ -708,6 +708,9 @@ public class TypeEngine {
 	public LLType getRealType(LLType type) {
 		if (type instanceof LLSymbolType)
 			type = ((LLSymbolType) type).getRealType(this);
+		if (type instanceof LLDataType) {
+			type = getDataType((LLDataType) type);
+		}
 		return type;
 	}
 }

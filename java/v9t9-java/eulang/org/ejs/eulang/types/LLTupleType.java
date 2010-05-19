@@ -57,12 +57,15 @@ public class LLTupleType extends BaseLLAggregateType {
 	 */
 	private static String toLLVMString(LLType[] types) {
 		if (types == null)
-			return "<tuple>";
+			return null;
+			//return "<tuple>";
 		
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		sb.append("{");
 		for (LLType type : types) {
+			if (type == null || !type.isComplete())
+				return null;
 			if (first) first = false; else sb.append(',');
 			sb.append(type != null ? (type.getLLVMName() != null ? type.getLLVMName() : type.getName()) : "<unknown>");
 		}

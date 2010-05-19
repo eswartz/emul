@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
@@ -37,11 +38,13 @@ public class LLModule {
 	private IScope moduleScope;
 	
 	private Map<LLType, ISymbol> emittedTypes = new HashMap<LLType, ISymbol>();
+	private final TypeEngine typeEngine;
 	
 	/**
 	 * 
 	 */
-	public LLModule(IScope globalScope) {
+	public LLModule(TypeEngine typeEngine, IScope globalScope) {
+		this.typeEngine = typeEngine;
 		this.globalScope = globalScope;
 		directives = new ArrayList<LLBaseDirective>();
 		externDirectives = new ArrayList<LLBaseDirective>();
@@ -209,6 +212,7 @@ public class LLModule {
 	public boolean emitTypes(LLType type) {
 		if (type == null)
 			return false;
+		type = typeEngine.getRealType(type);
 		if (emittedTypes.containsKey(type))
 			return false;
 		if (!addExternType(type))

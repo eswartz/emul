@@ -1467,7 +1467,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		
 		if (offs != 0) {
-			asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
+			if (!asmOp.isRegister())
+				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
 			//asmOp = moveToTemp(null, typeEngine.getPointerType(type), asmOp);
 			asmOp = new AddrOffsOperand(ops[0], type, new NumberOperand(offs), asmOp);
 		}
@@ -2002,7 +2003,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		{
 			// getting the address
 			if (fromLocal != null) {
-				if (dstLocal != null && dstLocal instanceof RegisterLocal) {
+				if (dstLocal != null && dstLocal instanceof RegisterLocal && !dstLocal.equals(fromLocal)) {
 					// cheat and avoid new temp
 					RegTempOperand ptr = new RegTempOperand(type, (RegisterLocal) dstLocal);
 					emitInstr(HLInstruction.create(Plea, from, ptr));

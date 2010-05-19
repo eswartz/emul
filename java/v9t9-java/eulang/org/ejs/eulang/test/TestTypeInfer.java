@@ -1398,15 +1398,40 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testTwoData2() throws Exception {
-    	AstTypedNode.DUMP = true;
-    	TypeInference.DUMP = true;
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"forward Complex;\n"+
     			"Inner = data {\n"+
     			"  p : Complex^;\n"+
     			"};\n"+
     			"Complex = data {\n"+
+    			"  d : Inner;\n"+
+    			" };\n"+
+    	"");
+    	IAstDefineStmt def;
+    	IAstDataType inner;
+    	
+		def = (IAstDefineStmt) mod.getScope().getNode("Inner");
+		inner = (IAstDataType)getMainBodyExpr(def);
+    	assertTrue(inner.getType().isComplete());
+    	
+		def = (IAstDefineStmt) mod.getScope().getNode("Complex");
+		inner = (IAstDataType)getMainBodyExpr(def);
+    	assertTrue(inner.getType().isComplete());
+
+    }
+    @Test
+    public void testTwoData3() throws Exception {
+    	AstTypedNode.DUMP = true;
+    	TypeInference.DUMP = true;
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"forward Complex;\n"+
+    			"Inner = data {\n"+
+    			"  d1,d2:Float;\n"+
+    			"  p : Complex^;\n"+
+    			"};\n"+
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
     			"  d : Inner;\n"+
     			" };\n"+
     	"");
