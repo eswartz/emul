@@ -325,6 +325,8 @@ C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; start &bull; <i>&lt;string
         <li><i>&lt;string: working directory&gt;</i> - initial value of working directory for the process.
         <li><i>&lt;string: program image file&gt;</i> - image file to start process with.
         <li><i>&lt;string array: command line&gt;</i> - command line arguments for the process.
+                  Note: the service does NOT add image file name as first argument for the process.
+                  If a client wants first parameter to be the file name, it should add it itself.
         <li><i>&lt;object: environment variables&gt;</i> - list of environment variables for the process,
         they will be added to default process environment.
         <li><i>&lt;boolean: attach&gt;</i> - if true debugger should be attached to the process.</p>
@@ -594,6 +596,8 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
      * <font color=#7F9FBF>@param</font> directory - initial value of working directory for the process.
      * <font color=#7F9FBF>@param</font> file - process image file.
      * <font color=#7F9FBF>@param</font> command_line - command line arguments for the process.
+     * Note: the service does NOT add image file name as first argument for the process.
+     * If a client wants first parameter to be the file name, it should add it itself.
      * <font color=#7F9FBF>@param</font> environment - list of environment variables for the process.
      * if null then default set of environment variables will be used.
      * <font color=#7F9FBF>@param</font> attach - if true debugger should be attached to the process.

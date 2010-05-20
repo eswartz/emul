@@ -276,6 +276,8 @@ public interface IProcesses extends IService {
      * @param directory - initial value of working directory for the process.
      * @param file - process image file.
      * @param command_line - command line arguments for the process.
+     * Note: the service does NOT add image file name as first argument for the process.
+     * If a client wants first parameter to be the file name, it should add it itself.
      * @param environment - map of environment variables for the process,
      * if null then default set of environment variables will be used.
      * @param attach - if true debugger should be attached to the process.
