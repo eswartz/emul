@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.symbols.ISymbol.Visibility;
 
 
@@ -277,4 +278,31 @@ public abstract class Scope implements IScope {
 		copySymbol.setType(symbol.getType());
 		return copySymbol;
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#getUniqueName()
+	 */
+	@Override
+	public String getUniqueName() {
+		StringBuilder sb = new StringBuilder();
+		getScopePrefix(sb, this);
+		return sb.toString();
+	}
+	/**
+	 * @param sb 
+	 * @param scope
+	 * @return
+	 */
+	private void getScopePrefix(StringBuilder sb, IScope scope) {
+		if (scope == null)
+			return;
+		getScopePrefix(sb, scope.getParent());
+		if (scope.getOwner() != null && scope.getOwner() instanceof IAstSymbolDefiner) {
+			ISymbol scopeSymbol = ((IAstSymbolDefiner) scope.getOwner()).getSymbol();
+			if (scopeSymbol != null)
+				sb.append(scopeSymbol.getName()).append('.');
+		}
+	}
+
 }

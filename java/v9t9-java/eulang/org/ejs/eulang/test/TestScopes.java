@@ -19,7 +19,6 @@ public class TestScopes extends BaseParserTest {
 
 	@Test 
 	public void testScopeAdd1() throws Exception {
-		dumpTreeize = true;
 		IAstModule mod = treeize(
 				" Base = {\n" + 
 				"        x:Int;\n" + 
@@ -34,7 +33,6 @@ public class TestScopes extends BaseParserTest {
 	}
 	@Test 
 	public void testScopeDataAdd1() throws Exception {
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				" Base = data {\n" + 
 				"        x:Int;\n" + 

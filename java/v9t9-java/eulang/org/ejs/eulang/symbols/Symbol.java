@@ -8,6 +8,7 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 
@@ -108,7 +109,7 @@ public class Symbol implements ISymbol {
 	 */
 	@Override
 	public String getUniqueName() {
-		return name  + (temp ? "." + number : "");
+		return (name  + (temp ? "." + number : ""));
 	}
 	
 	@Override
@@ -247,7 +248,7 @@ public class Symbol implements ISymbol {
 			}
 			String safeName = getUniqueName().replace(" => ","$");
 			safeName = safeName.replaceAll("[^a-zA-Z0-9_$]", ".");
-			llvmName = prefix + safeName;
+			llvmName = prefix + (scope != null && vis != Visibility.LOCAL ? scope.getUniqueName() : "") + safeName;
 		}
 		return llvmName;
 	}

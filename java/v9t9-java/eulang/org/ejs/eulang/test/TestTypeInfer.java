@@ -52,7 +52,7 @@ import org.junit.Test;
  */
 public class TestTypeInfer extends BaseParserTest {
 	{
-		dumpTypeInfer = true;
+		//dumpTypeInfer = true;
 	}
 
 	@Test
@@ -1120,7 +1120,6 @@ public class TestTypeInfer extends BaseParserTest {
 	
 	@Test
     public void testWhileLoop() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"testWhileLoop := code (t; x : Int; y : Float) {\n" +
     			"    @loop: if x > t then { y = y / 2; x = x - 1; goto loop } else goto loop;\n"+
@@ -1180,7 +1179,6 @@ public class TestTypeInfer extends BaseParserTest {
     
     @Test
     public void testForwardReferences() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = treeize("forward bar;\n"+
     			"foo = code(p) { bar(p-1, p+1); };\n"+
     			"bar = code(a:Int; b:Int => Int ) { a*b };\n");
@@ -1192,7 +1190,6 @@ public class TestTypeInfer extends BaseParserTest {
     // base case
     @Test
     public void testSelfRef0() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"Class = data {\n"+
     			"  next:Int^;\n"+
@@ -1206,7 +1203,6 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testSelfRef1() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"Class = data {\n"+
     			"  next:Class^;\n"+
@@ -1233,7 +1229,6 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test 
     public void testSelfRef2() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"Class = data {\n"+
     			"  draw:code(this:Class; count:Int => nil);\n"+
@@ -1257,7 +1252,6 @@ public class TestTypeInfer extends BaseParserTest {
 
     @Test
     public void testSelfRef3() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"Class = data {\n"+
     			"  draw:code(this:Class; count:Int => nil);\n"+
@@ -1282,8 +1276,6 @@ public class TestTypeInfer extends BaseParserTest {
     
     @Test
 	public void testLogicalOpsByte1() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpTreeize = true;
     	IAstModule mod = treeize("testLogicalOpsByte1 = code(x, y:Byte => Byte) { " +
     			"(x|15)" +
     			//" + (x|y) + (x&41) + (x&y) + (x~9) + (x~y) " +
@@ -1304,8 +1296,6 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testLogicalOpsByte2() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpTreeize = true;
     	IAstModule mod = treeize("testLogicalOpsByte2 = code(x, y:Byte ) { " +
     			"(x|15) + (x|y) + (x&41) + (x&y) + (x~9) + (x~y) " +
     	"};\n");
@@ -1329,8 +1319,6 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testArithOpsByte1() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpTreeize = true;
     	IAstModule mod = treeize("testArithOpsByte1 = code(x, y:Byte ) { " +
     			"(x-15) + (x+y) + (x*41) + (x/y) + (x%9) + (x+\\y) " +
     	"};\n");
@@ -1354,8 +1342,6 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testCompareOpsByte1() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpTreeize = true;
     	IAstModule mod = treeize("testCompareOpsByte1 = code(x, y:Byte ) { " +
     			"(x<15) and(x>=y) " +
     	"};\n");
@@ -1382,7 +1368,6 @@ public class TestTypeInfer extends BaseParserTest {
     
     @Test
     public void testTwoData1() throws Exception {
-    	dumpTypeInfer = true;
     	doFrontend(
     			"forward Complex;\n"+
     			"Inner = data {\n"+
@@ -1424,9 +1409,6 @@ public class TestTypeInfer extends BaseParserTest {
     }
     @Test
     public void testTwoData3() throws Exception {
-    	AstTypedNode.DUMP = true;
-    	TypeInference.DUMP = true;
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"forward Complex;\n"+
     			"Inner = data {\n"+
@@ -1592,7 +1574,6 @@ public class TestTypeInfer extends BaseParserTest {
     /** Non-canonical method call, through instance */
     @Test
     public void testInnerCode2() throws Exception {
-    	dumpTreeize = true;
     	IAstModule mod = doFrontend(
     			"Complex = data {\n"+
     			"  a,b,c:Byte;\n"+

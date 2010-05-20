@@ -20,9 +20,6 @@ import org.junit.Test;
  * 
  */
 public class TestMacroCall extends BaseParserTest {
-	{
-		dumpExpand = true;
-	}
 	@Test
     public void testSimple1() throws Exception {
     	IAstModule mod = treeize(
@@ -44,7 +41,6 @@ public class TestMacroCall extends BaseParserTest {
 	
 	@Test
 	public void testForCount() throws Exception {
-		dumpTreeize = true;
 		IAstModule mod = treeize(
 				"\n" + 
 				"  forCountUntil = macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
@@ -185,8 +181,6 @@ public class TestMacroCall extends BaseParserTest {
 
     @Test
     public void testImplicitBlocks4() throws Exception {
-    	dumpTreeize = true;
-    	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"wwhile = macro ( macro test:code; macro body : code) {\n"+
     			"    @loop: if test() then body() else goto loop;\n"+

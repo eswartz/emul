@@ -9,9 +9,6 @@ import org.junit.Test;
  *
  */
 public class TestParser extends BaseParserTest  {
-	{
-		dumpTreeize = true;
-	}
     @Test
     public void testEmpty() throws Exception {
     	parse("  \n\n");

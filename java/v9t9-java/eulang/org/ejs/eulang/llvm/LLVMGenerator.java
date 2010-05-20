@@ -63,6 +63,7 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstRepeatExpr;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
+import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTupleExpr;
 import org.ejs.eulang.ast.IAstType;
@@ -225,7 +226,22 @@ public class LLVMGenerator {
 		ll.addModuleDirective(new LLTargetDataTypeDirective(typeEngine));
 		ll.addModuleDirective(new LLTargetTripleDirective(target));
 		
-		for (IAstStmt stmt : module.stmts().list()) {
+		generateGlobalStmtList(module);
+		
+/*
+		for (LLType type : typeEngine.getTypes()) {
+			if (type.getLLVMName() != null && type.isComplete() && !type.isGeneric()) {
+				type = AstTypedNode.getConcreteType(typeEngine, null, type);
+				ll.addExternType(type);
+			}
+		}*/
+	}
+
+	/**
+	 * @param stmtScope
+	 */
+	private void generateGlobalStmtList(IAstStmtScope stmtScope) {
+		for (IAstStmt stmt : stmtScope.stmts().list()) {
 			// TODO: rules for module scopes, exports, visibility... right now we export everything
 			try {
 				if (stmt instanceof IAstAllocStmt)
@@ -240,13 +256,6 @@ public class LLVMGenerator {
 			}
 		}
 		
-/*
-		for (LLType type : typeEngine.getTypes()) {
-			if (type.getLLVMName() != null && type.isComplete() && !type.isGeneric()) {
-				type = AstTypedNode.getConcreteType(typeEngine, null, type);
-				ll.addExternType(type);
-			}
-		}*/
 	}
 
 	public void recordError(ASTException e) {
@@ -321,6 +330,8 @@ public class LLVMGenerator {
 			generateGlobalData(stmt.getSymbol(), (IAstDataType) expr);
 		} else if (expr instanceof IAstSymbolExpr) {
 			// ignore
+		} else if (expr instanceof IAstStmtScope) {
+			generateGlobalStmtList(((IAstStmtScope) expr));
 		} else {
 			unhandled(stmt);
 		}

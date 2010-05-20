@@ -122,7 +122,7 @@ public interface IScope extends Iterable<ISymbol> {
 	public boolean encloses(IScope otherScope);
 
 
-
+	String getUniqueName();
 
 
 }

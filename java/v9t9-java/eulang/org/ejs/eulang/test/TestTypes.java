@@ -482,7 +482,6 @@ public class TestTypes extends BaseParserTest {
     
     @Test
     public void testDataDeref4() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
@@ -511,7 +510,6 @@ public class TestTypes extends BaseParserTest {
     }
     @Test
     public void testDataDeref6() throws Exception {
-    	dumpTreeize = true;
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   next:Tuple^; val:Byte; };\n"+
@@ -716,8 +714,6 @@ public class TestTypes extends BaseParserTest {
 
 	@Test
 	public void testDataInit5() throws Exception {
-		dumpLLVMGen = true;
-		dumpTypeInfer = true;
 		IAstModule mod = doFrontend(
 				"Tuple = data { x : Int^; y :Int; };\n"+
 				"testDataInit5 = code(x:Int^) {\n"+
@@ -729,8 +725,6 @@ public class TestTypes extends BaseParserTest {
 	}
 	@Test
 	public void testDataInit5b() throws Exception {
-		dumpLLVMGen = true;
-		dumpTypeInfer = true;
 		IAstModule mod = doFrontend(
 				"Tuple = data { x : Byte; y :Int; };\n"+
 				"testDataInit5 = code(x:Int^) {\n"+
@@ -1077,8 +1071,6 @@ public class TestTypes extends BaseParserTest {
 	 */
 	@Test 
 	public void testGenericTypes0() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [] data {\n" +
 				"        next:List^;\n" + 	//no <>
@@ -1108,8 +1100,6 @@ public class TestTypes extends BaseParserTest {
 	 */
 	@Test 
 	public void testGenericTypes1() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
 				"        node:T;\n"+
@@ -1144,8 +1134,6 @@ public class TestTypes extends BaseParserTest {
 	 */
 	@Test 
 	public void testGenericTypes1a() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
 				"        node:T;\n"+
@@ -1177,8 +1165,6 @@ public class TestTypes extends BaseParserTest {
 
 	@Test 
 	public void testGenericTypes1b() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
 				"        node:T;\n"+
@@ -1209,8 +1195,6 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test 
 	public void testGenericTypes2a() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
@@ -1235,8 +1219,6 @@ public class TestTypes extends BaseParserTest {
 	public void testGenericTypes2() throws Exception {
 		// there are two expansions here; be sure to name the types properly
 		// so they don't get confused in LLVM
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
@@ -1283,8 +1265,6 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test
 	public void testGenericFuncs1a() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"neg = [T] code (x:T) { -x };\n"+
 				"testGenericFuncs1a = code (x:Int=>Int) {\n"+
@@ -1296,8 +1276,6 @@ public class TestTypes extends BaseParserTest {
 	}
 	@Test
 	public void testGenericFuncs1b() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"neg = [T] code (x:T) { -x };\n"+
 				"testGenericFuncs1b = code (x:Int=>Int) {\n"+
@@ -1310,9 +1288,6 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test 
 	public void testGenericFuncs2Fail() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
-		
 		IAstModule mod = treeize(
 				"List = [T] data {\n" +
 				"        node:T;\n"+
@@ -1332,9 +1307,6 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test 
 	public void testGenericFuncs2() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
-		
 		// note: using different letters for type vars to test base case; using same letters is another bug 
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
@@ -1366,9 +1338,6 @@ public class TestTypes extends BaseParserTest {
 
 	@Test 
 	public void testGenericFuncs2b() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
-		
 		// bug: the 'T' in different scopes was being treated strangely
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
@@ -1400,8 +1369,6 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test 
 	public void testGenericTypes3a() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T] data {\n" +
 				"        node:T;\n"+
@@ -1445,8 +1412,6 @@ public class TestTypes extends BaseParserTest {
 	}
 	@Test 
 	public void testGenericTypes3b() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
@@ -1471,8 +1436,6 @@ public class TestTypes extends BaseParserTest {
 	}
 	@Test 
 	public void testGenericTypes3c() throws Exception {
-		dumpTypeInfer = true;
-		dumpTreeize = true;
 		IAstModule mod = doFrontend(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
@@ -1505,8 +1468,6 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test
     public void testDataAccess1() throws Exception {
-		dumpLLVMGen = true;
-		dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"Tuple = data { x ,y :Int; };\n"+
     			"tupleThingy = code (t :Tuple=>(Float,Float)) { (t.x, t.y) };\n"+
@@ -1522,8 +1483,6 @@ public class TestTypes extends BaseParserTest {
 	
 	@Test
 	public void testDataAccess1b() throws Exception {
-		dumpLLVMGen = true;
-		dumpTypeInfer = true;
 		IAstModule mod = doFrontend(
 				"Tuple = data { x ,y :Int; };\n"+
 				"tupleThingy = code (t :Tuple^=>(Float,Float)) { (t.x, t.y) };\n"+

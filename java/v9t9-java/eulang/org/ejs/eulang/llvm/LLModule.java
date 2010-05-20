@@ -117,7 +117,7 @@ public class LLModule {
 		StringBuilder sb = new StringBuilder();
 		
 		// put a unique scope
-		getScopePrefix(sb, scope);
+		sb.append(scope.getUniqueName());
 		
 		// and the name
 		sb.append(name);
@@ -127,18 +127,6 @@ public class LLModule {
 		
 		String symName = sb.toString();
 		return symName;
-	}
-	
-	/**
-	 * @param sb 
-	 * @param scope
-	 * @return
-	 */
-	private void getScopePrefix(StringBuilder sb, IScope scope) {
-		if (scope.getOwner() != null && scope.getOwner() instanceof IAstSymbolDefiner) {
-			ISymbol scopeSymbol = ((IAstSymbolDefiner) scope.getOwner()).getSymbol();
-			sb.append(scopeSymbol.getName()).append('.');
-		}
 	}
 
 	/**
@@ -178,20 +166,21 @@ public class LLModule {
 			return false;
 		if (emittedTypes.containsKey(type))
 			return false;
-		ISymbol typeSymbol = globalScope.get(type.getName());
+		String typeSymbolName = type.getSymbolicName();
+		ISymbol typeSymbol = globalScope.get(typeSymbolName);
 		if (typeSymbol == null) {
 			//typeSymbol = globalScope.add(new LocalSymbol(globalScope.nextId(), new AstName(type.getName()), null));
-			typeSymbol = globalScope.add(ISymbol.Visibility.LOCAL, new AstName(type.getName()));
+			typeSymbol = globalScope.add(ISymbol.Visibility.LOCAL, new AstName(typeSymbolName));
 			typeSymbol.setType(type);
 			externDirectives.add(new LLTypeDirective(typeSymbol, type));
 		} else if (typeSymbol.getVisibility() != ISymbol.Visibility.LOCAL) {
-			typeSymbol = moduleScope.get(type.getName());
+			typeSymbol = moduleScope.get(typeSymbolName);
 			if (typeSymbol != null) {
 				if (typeSymbol.getType().isMoreComplete(type))
 					return false;
 				moduleScope.remove(typeSymbol);
 			}
-			typeSymbol = moduleScope.add(ISymbol.Visibility.LOCAL, new AstName(type.getName()));
+			typeSymbol = moduleScope.add(ISymbol.Visibility.LOCAL, new AstName(typeSymbolName));
 			typeSymbol.setType(type);
 			externDirectives.add(new LLTypeDirective(typeSymbol, type));
 		}

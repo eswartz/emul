@@ -19,7 +19,7 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstStmtScope extends AstTypedExpr implements IAstStmtScope, IAstTypedNode {
+public abstract class AstStmtScope extends AstTypedExpr implements IAstStmtScope, IAstTypedNode {
 
 	protected IAstNodeList<IAstStmt> stmtList;
 
@@ -35,13 +35,6 @@ public class AstStmtScope extends AstTypedExpr implements IAstStmtScope, IAstTyp
 		
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
-	 */
-	@Override
-	public IAstNode copy(IAstNode copyParent) {
-		return fixupStmtScope(new AstStmtScope(doCopy(stmtList, copyParent), scope.newInstance(getCopyScope(copyParent))));
-	}
 	protected IAstStmtScope fixupStmtScope(IAstStmtScope copied) {
 		remapScope(getScope(), copied.getScope(), copied);
 		return fixup(this, copied);

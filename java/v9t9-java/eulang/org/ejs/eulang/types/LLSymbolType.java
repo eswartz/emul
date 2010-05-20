@@ -28,8 +28,7 @@ public class LLSymbolType extends BaseLLType {
 	 * @param subType
 	 */
 	public LLSymbolType(ISymbol symbol) {
-		super(symbol.getUniqueName(), 1, symbol.getLLVMName(), BasicType.DATA, null);
-		//assert symbol.getType() != null;
+		super(symbol.getScope().getUniqueName() + symbol.getUniqueName(), 1, symbol.getLLVMName(), BasicType.DATA, null);
 		this.symbol = symbol;
 	}
 
@@ -50,7 +49,7 @@ public class LLSymbolType extends BaseLLType {
 			return true;
 		if (getClass() != obj.getClass()) {
 			if (obj instanceof LLType) {
-				return symbol.getUniqueName().equals(((LLType) obj).getName());
+				return (symbol.getScope().getUniqueName() + symbol.getUniqueName()).equals(((LLType) obj).getName());
 			}
 			return false;
 		}

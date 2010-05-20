@@ -37,6 +37,7 @@ public class TestLLVMGenerator extends BaseParserTest {
 	
 	@Test
 	public void testSimple() throws Exception {
+		dumpLLVMGen = true;
 		IAstModule mod = doFrontend("FOO = 3;\n"+
 				"helper = code (x : Int => Int) { -x; };\n"+
 				"main := code (p, q) {\n" +
@@ -66,7 +67,6 @@ public class TestLLVMGenerator extends BaseParserTest {
 	
 	@Test
     public void testPointers4() throws Exception {
-		 dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			" genericSwap_testPointers4 := code (@x, y : Int => nil) {\n" +
     			//" x = x + 1; y = y + 1; x = x + 2; y = y - 4; x = x - 4;\n" +
@@ -110,8 +110,6 @@ public class TestLLVMGenerator extends BaseParserTest {
 	
 	@Test
 	public void testBinOps() throws Exception {
-		dumpTypeInfer = true;
-		dumpLLVMGen = true;
 		IAstModule mod = doFrontend("testBinOps = code { x:=1*2/3%4\\99+\\45+5-6>>7>>|4<<|75<<8+>>85&9 ~" + 
 				"10|11+<-11<12+>-12>13+<=-33<=14+>=0>=15==16!=17 and Bool(18) or Bool(19); };");
 		doGenerate(mod);
@@ -120,7 +118,6 @@ public class TestLLVMGenerator extends BaseParserTest {
 
 	@Test
 	public void testShortCircuitAndOr() throws Exception {
-		dumpTypeInfer = true;
 		IAstModule mod = doFrontend("testShortCircuitAndOr = code (x;y:Int;z => Int){\n" +
 				"if  x > y and y > z then y " +
 				"elif x > z and z > y then z " +
@@ -240,7 +237,6 @@ public class TestLLVMGenerator extends BaseParserTest {
   	
     @Test
     public void testWhileLoop() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"wwhile = macro ( macro test:code; macro body : code) {\n"+
     			"    @loop: if test() then { body(); goto loop } fi;\n"+
@@ -253,7 +249,6 @@ public class TestLLVMGenerator extends BaseParserTest {
     }
     @Test
     public void testDoWhile() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"doWhile = macro ( macro body : code; macro test:code) {\n"+
     			"    @loop: body(); goto loop if (not test()) ;\n"+
@@ -267,7 +262,6 @@ public class TestLLVMGenerator extends BaseParserTest {
     
     @Test
     public void testBlockScopes() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"testBlockScopes = code (t; x : Int; y : Float) {\n" +
     			"  if t then { z := Float(x); z = z * 8 } else { z := y; };"+
@@ -360,8 +354,6 @@ public class TestLLVMGenerator extends BaseParserTest {
 	
 	@Test
 	public void testTrunc16_to_8_1_Mem_to_Mem() throws Exception {
-		dumpTypeInfer = true;
-		dumpLLVMGen = true;
 		IAstModule mod = doFrontend("x := 11; foo = code( ) { x = Byte(x) };\n");
 		LLVMGenerator g = doGenerate(mod);
 		assertFoundInUnoptimizedText("trunc", g);
@@ -369,7 +361,6 @@ public class TestLLVMGenerator extends BaseParserTest {
 
 	@Test
     public void testAssignOps() throws Exception {
-    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend("testAssignOps = code { x:=1;" +
     			//"x+=x-=x*=x/=x+/=x%=x+%=x>>=x<<=x+>>=2;\n"+
     			"x+=(x-=(x*=x/=x+/=x%=(x\\=x>>=(x<<=x+>>=x\\=2))));\n"+
@@ -419,4 +410,71 @@ public class TestLLVMGenerator extends BaseParserTest {
     	doGenerate(mod);
     	
     }
+
+    /** Non-canonical symbol references */
+    /** Test that we export defines inside data */
+    /** Test that we export nested scopes */
+    /** Test that we give unique symbols */
+    @Test
+    public void testInnerCode3() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Nest1 = {\n"+
+    			"  a=code(=>nil) { };\n"+
+    			"  Nest2 = data {\n"+
+    			"    a=code(=>nil) { :a() };\n"+
+    			"    Inner = data {\n"+
+    			"	   p : Nest2^;\n"+
+    			"      a=code(=>nil) { ::a(); :a(); };\n"+
+    			"      Nest3 = {\n"+
+    			"        a=code(=>nil) { :::a(); ::a(); :a(); };\n"+
+    			"      };\n"+
+    			"    };\n"+
+    			"  };\n"+
+    			" };\n"+
+    			"testInnerData1 = code() {\n"+
+    			"  c : Nest1.Nest2.Inner;\n" +
+    			"  c.a();\n"+
+    			"  c.Nest3.a();\n"+
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    	
+    }
+    
+    /** Test lots of uniquifying */
+    @Test
+    public void testInnerTypes1() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Nest1 = data {\n"+
+    			"  x:Int;\n"+
+    			"  Nest1 = data {\n"+
+    			"    y:Byte;\n"+
+    			"    Inner = data {\n"+
+    			"      Nest1 = data {\n"+
+    			"		 z:Float;\n"+
+    			"      };\n"+
+    			"    };\n"+
+    			"  };\n"+
+    			" };\n"+
+    			"func1 = [ code(a:Nest1 => nil) {},\n"+
+    			"	code(a:Nest1.Nest1 => nil) {},\n"+
+    			"   code(a:Nest1.Nest1.Inner.Nest1 => nil) {} ];\n"+
+    			"testInnerTypes1 = code() {\n"+
+    			"  c : Nest1;\n" +
+    			"  d : Nest1.Nest1;\n" +
+    			"  e : Nest1.Nest1.Inner.Nest1;\n" +
+    			"  func1(c);\n"+
+    			"  func1(d);\n"+
+    			"  func1(e);\n"+
+    			"};\n"+
+    	"");
+    	LLVMGenerator gen = doGenerate(mod);
+    	
+    	assertMatchText("call.*Nest1_", gen.getUnoptimizedText());  
+    	assertMatchText("call.*Nest1.Nest1_", gen.getUnoptimizedText());  
+    	assertMatchText("call.*Nest1.Nest1.Inner.Nest1_", gen.getUnoptimizedText());  
+    }
+
 }

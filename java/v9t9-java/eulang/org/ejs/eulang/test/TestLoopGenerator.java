@@ -73,7 +73,6 @@ public class TestLoopGenerator extends BaseParserTest {
     }
     @Test
     public void testWhile() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"testWhile = code (x) {\n" +
     			"   s := 0;\n"+
@@ -87,7 +86,6 @@ public class TestLoopGenerator extends BaseParserTest {
     
     @Test
     public void testDoWhile() throws Exception {
-    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"testDoWhile = code (x) {\n" +
     			"   s := 0;\n"+
@@ -101,8 +99,6 @@ public class TestLoopGenerator extends BaseParserTest {
     
     @Test
     public void testForCount() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpLLVMGen =true;
     	IAstModule mod = doFrontend(
     			"testForCount = code (cnt) {\n" +
     			"   s := 1.0;\n"+
@@ -116,8 +112,6 @@ public class TestLoopGenerator extends BaseParserTest {
     }
     @Test
     public void testForCountDown() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpLLVMGen =true;
     	IAstModule mod = doFrontend(
     			"testForCountDown = code (cnt) {\n" +
     			"   s := 1.0;\n"+
@@ -131,8 +125,6 @@ public class TestLoopGenerator extends BaseParserTest {
     }
     @Test
     public void testForCount2() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpLLVMGen =true;
     	IAstModule mod = doFrontend(
     			"testForCount2 = code (cnt) {\n" +
     			"   x := 1.0;\n"+
@@ -148,8 +140,6 @@ public class TestLoopGenerator extends BaseParserTest {
     }
     @Test
     public void testForCount3() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpLLVMGen =true;
     	IAstModule mod = doFrontend(
     			"testForCount2 = code (cnt) {\n" +
     			"   x := 1.0;\n"+
@@ -165,8 +155,6 @@ public class TestLoopGenerator extends BaseParserTest {
     }
     @Test
     public void testForCountDown2() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpLLVMGen =true;
     	IAstModule mod = doFrontend(
     			"testForCountDown2 = code (cnt) {\n" +
     			"   x := 1;\n"+
@@ -181,8 +169,6 @@ public class TestLoopGenerator extends BaseParserTest {
     
     @Test
     public void testForCountDown3() throws Exception {
-    	dumpTypeInfer = true;
-    	dumpLLVMGen =true;
     	IAstModule mod = doFrontend(
     			"testForCountDown3 = code (cnt, step) {\n" +
     			"   s := 1.;\n"+

@@ -22,7 +22,6 @@ public class TestGenerics extends BaseParserTest {
 	}
 	@Test
     public void testSimple1() throws Exception {
-		dumpTreeize = true;
     	IAstModule mod = treeize(
     			"foo = [T,U] T+U;\n"+
     			"bar = foo<10,20>;\n"+
@@ -43,7 +42,6 @@ public class TestGenerics extends BaseParserTest {
     }
 	@Test
     public void testSimple2() throws Exception {
-		dumpTreeize = true;
     	IAstModule mod = treeize(
     			"foo = [T,U] data { node:T; next:U^; };\n"+
     			"bar = foo<Int, Float>;\n"+

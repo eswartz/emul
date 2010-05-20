@@ -454,7 +454,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 	}
 	@Test
 	public void testConstsByte1() throws Exception {
-		dumpTreeize = true;
 		doIsel("foo = code( ) { x:Byte=123; x=-112 };\n");
 		
 		int idx = findInstrWithInst(instrs, "LI");
@@ -466,7 +465,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 	}
 	@Test
 	public void testAdd() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Int ) { z:=x+y; x+ y; };\n");
 		
 		// X is used again, and both come in in regs
