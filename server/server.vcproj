@@ -279,14 +279,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\agent\services\stacktrace.c"
-				>
-			</File>
-			<File
-				RelativePath="..\agent\services\stacktrace.h"
-				>
-			</File>
-			<File
 				RelativePath="..\agent\services\symbols.c"
 				>
 			</File>
@@ -500,6 +492,14 @@
 			</File>
 			<File
 				RelativePath="..\agent\framework\trace.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="machine"
+			>
+			<File
+				RelativePath=".\machine\cpudefs-ext.h"
 				>
 			</File>
 		</Filter>

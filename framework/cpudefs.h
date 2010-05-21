@@ -134,11 +134,8 @@ extern char * register2id(Context * ctx, int frame, RegisterDefinition * reg);
 /* Get register for TCF ID */
 extern int id2register(const char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def);
 
-#if !defined(_WRS_KERNEL)
-extern unsigned char BREAK_INST[];  /* breakpoint instruction */
-#define BREAK_SIZE get_break_size() /* breakpoint instruction size */
-extern size_t get_break_size(void);
-#endif
+/* Get breakpoint instruction code and size */
+extern uint8_t * get_break_instruction(Context * ctx, size_t * size);
 
 /*
  * Retrieve stack frame information by examining stack data in memory.

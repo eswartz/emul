@@ -22,6 +22,11 @@
 #include <config.h>
 #include <framework/channel.h>
 
+struct RegisterData {
+    uint8_t * data;
+    uint8_t * mask;
+};
+
 extern void create_context_proxy(Channel * host, Channel * target);
 
 #endif /* D_context_proxy */

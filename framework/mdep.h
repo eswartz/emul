@@ -454,7 +454,7 @@ extern int tkill(pid_t pid, int signal);
 
 #endif
 
-#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__)
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__) && !defined(__VXWORKS__)
 extern size_t strlcpy(char * dst, const char * src, size_t size);
 extern size_t strlcat(char * dst, const char * src, size_t size);
 #endif

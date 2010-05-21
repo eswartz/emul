@@ -954,6 +954,10 @@
 		<Filter
 			Name="machine"
 			>
+			<File
+				RelativePath=".\machine\cpudefs-ext.h"
+				>
+			</File>
 			<Filter
 				Name="x86_64"
 				>

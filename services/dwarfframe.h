@@ -27,7 +27,6 @@
 
 #include <framework/context.h>
 #include <services/dwarfcache.h>
-#include <services/stacktrace.h>
 
 /*
  * Lookup stack tracing information in ELF file, in .debug_frame and .eh_frame sections.

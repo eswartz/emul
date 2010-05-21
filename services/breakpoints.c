@@ -110,6 +110,7 @@ struct BreakInstruction {
     VXDBG_BP_ID vxdbg_id;
 #else
     char saved_code[16];
+    size_t saved_size;
 #endif
     ErrorReport * error;
     int stepping_over_bp;
@@ -240,16 +241,17 @@ static void plant_instruction(BreakInstruction * bi) {
         assert(bi->error != NULL);
     }
 #else
-    assert(sizeof(bi->saved_code) >= BREAK_SIZE);
     if (select_valid_context(&bi->ctx) < 0) {
         bi->error = get_error_report(errno);
     }
     else {
+        uint8_t * break_inst = get_break_instruction(bi->ctx, &bi->saved_size);
+        assert(sizeof(bi->saved_code) >= bi->saved_size);
         planting_instruction = 1;
-        if (context_read_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
+        if (context_read_mem(bi->ctx, bi->address, bi->saved_code, bi->saved_size) < 0) {
             bi->error = get_error_report(errno);
         }
-        else if (context_write_mem(bi->ctx, bi->address, &BREAK_INST, BREAK_SIZE) < 0) {
+        else if (context_write_mem(bi->ctx, bi->address, break_inst, bi->saved_size) < 0) {
             bi->error = get_error_report(errno);
         }
         planting_instruction = 0;
@@ -288,7 +290,7 @@ static void remove_instruction(BreakInstruction * bi) {
 #else
     if (select_valid_context(&bi->ctx) == 0) {
         planting_instruction = 1;
-        if (context_write_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
+        if (context_write_mem(bi->ctx, bi->address, bi->saved_code, bi->saved_size) < 0) {
             bi->error = get_error_report(errno);
         }
         planting_instruction = 0;
@@ -363,7 +365,7 @@ static void flush_instructions(void) {
 void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void * p, size_t size) {
 #if !defined(_WRS_KERNEL)
     if (!planting_instruction) {
-        int i;
+        size_t i;
         char * buf = (char *)p;
         LINK * l = instructions.next;
         while (l != &instructions) {
@@ -371,9 +373,9 @@ void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, voi
             l = l->next;
             if (!bi->planted) continue;
             if (bi->ctx->mem != ctx->mem) continue;
-            if (bi->address + BREAK_SIZE <= address) continue;
+            if (bi->address + bi->saved_size <= address) continue;
             if (bi->address >= address + size) continue;
-            for (i = 0; i < (int)BREAK_SIZE; i++) {
+            for (i = 0; i < bi->saved_size; i++) {
                 if (bi->address + i < address) continue;
                 if (bi->address + i >= address + size) continue;
                 buf[bi->address + i - address] = bi->saved_code[i];
@@ -386,7 +388,6 @@ void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, voi
 void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, void * p, size_t size) {
 #if !defined(_WRS_KERNEL)
     if (!planting_instruction) {
-        int i;
         char * buf = (char *)p;
         LINK * l = instructions.next;
         while (l != &instructions) {
@@ -394,13 +395,18 @@ void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, vo
             l = l->next;
             if (!bi->planted) continue;
             if (bi->ctx->mem != ctx->mem) continue;
-            if (bi->address + BREAK_SIZE <= address) continue;
+            if (bi->address + bi->saved_size <= address) continue;
             if (bi->address >= address + size) continue;
-            for (i = 0; i < (int)BREAK_SIZE; i++) {
-                if (bi->address + i < address) continue;
-                if (bi->address + i >= address + size) continue;
-                bi->saved_code[i] = buf[bi->address + i - address];
-                buf[bi->address + i - address] = BREAK_INST[i];
+            {
+                size_t i;
+                uint8_t * break_inst = get_break_instruction(bi->ctx, &i);
+                assert(i == bi->saved_size);
+                for (i = 0; i < bi->saved_size; i++) {
+                    if (bi->address + i < address) continue;
+                    if (bi->address + i >= address + size) continue;
+                    bi->saved_code[i] = buf[bi->address + i - address];
+                    buf[bi->address + i - address] = break_inst[i];
+                }
             }
         }
     }

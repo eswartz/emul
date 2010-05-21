@@ -43,11 +43,6 @@ typedef struct RegisterProps RegisterProps;
 
 #define CTX_ID_HASH_SIZE 101
 
-struct RegisterData {
-    uint8_t * data;
-    uint8_t * mask;
-};
-
 struct ContextCache {
     char id[256];
     char parent_id[256];
@@ -1164,25 +1159,6 @@ RegisterDefinition * get_PC_definition(Context * ctx) {
     return cache->pc_def;
 }
 
-RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munbering_convention) {
-    RegisterDefinition * defs;
-    ContextCache * cache = *EXT(ctx);
-    check_registers_cache(cache);
-    defs = cache->reg_defs;
-    while (defs != NULL && defs->name != NULL) {
-        switch (munbering_convention) {
-        case REGNUM_DWARF:
-            if (defs->dwarf_id == (int)id) return defs;
-            break;
-        case REGNUM_EH_FRAME:
-            if (defs->eh_frame_id == (int)id) return defs;
-            break;
-        }
-        defs++;
-    }
-    return NULL;
-}
-
 static void validate_reg_values_cache(Channel * c, void * args, int error) {
     StackFrameCache * s = (StackFrameCache *)args;
     Context * ctx = s->ctx->ctx;
@@ -1417,49 +1393,6 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
 int get_top_frame(Context * ctx) {
     set_errno(ERR_UNSUPPORTED, "get_top_frame()");
     return STACK_TOP_FRAME;
-}
-
-int read_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf) {
-    if (reg_def == NULL || frame == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    else {
-        size_t i;
-        uint8_t * r_addr = frame->regs->data + reg_def->offset;
-        uint8_t * m_addr = frame->regs->mask + reg_def->offset;
-        for (i = 0; i < size; i++) {
-            if (m_addr[offs + i] != 0xff) {
-                errno = ERR_INV_CONTEXT;
-                return -1;
-            }
-        }
-        if (offs + size > reg_def->size) {
-            errno = ERR_INV_DATA_SIZE;
-            return -1;
-        }
-        memcpy(buf, r_addr + offs, size);
-    }
-    return 0;
-}
-
-int write_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf) {
-    if (reg_def == NULL || frame == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    else {
-        uint8_t * r_addr = frame->regs->data + reg_def->offset;
-        uint8_t * m_addr = frame->regs->mask + reg_def->offset;
-
-        if (offs + size > reg_def->size) {
-            errno = ERR_INV_DATA_SIZE;
-            return -1;
-        }
-        memcpy(r_addr + offs, buf, size);
-        memset(m_addr + offs, 0xff, size);
-    }
-    return 0;
 }
 
 static void channel_close_listener(Channel * c) {

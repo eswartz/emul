@@ -29,7 +29,6 @@
 #include <framework/cache.h>
 #if ENABLE_Symbols
 #  include <services/symbols.h>
-#  include <services/stacktrace.h>
 #endif
 #if SERVICE_Streams
 #  include <services/streamsservice.h>

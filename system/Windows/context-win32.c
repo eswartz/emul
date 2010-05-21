@@ -164,6 +164,7 @@ static void get_registers(Context * ctx) {
 static void event_win32_context_stopped(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
     DWORD exception_code = ext->pending_event.ExceptionRecord.ExceptionCode;
+    size_t break_size = 0;
 
     if (ctx->exited || ctx->stopped && exception_code == 0) return;
     memcpy(&ext->suspend_reason, &ext->pending_event, sizeof(EXCEPTION_DEBUG_INFO));
@@ -205,9 +206,10 @@ static void event_win32_context_stopped(Context * ctx) {
     case EXCEPTION_SINGLE_STEP:
         break;
     case EXCEPTION_BREAKPOINT:
+        get_break_instruction(ctx, &break_size);
         get_registers(ctx);
-        if (!ext->regs_error && is_breakpoint_address(ctx, ext->regs->Eip - BREAK_SIZE)) {
-            ext->regs->Eip -= BREAK_SIZE;
+        if (!ext->regs_error && is_breakpoint_address(ctx, ext->regs->Eip - break_size)) {
+            ext->regs->Eip -= break_size;
             ext->regs_dirty = 1;
             ctx->stopped_by_bp = 1;
         }

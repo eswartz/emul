@@ -554,15 +554,16 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
 
         if (signal == SIGTRAP && event == 0 && !syscall) {
-            ctx->stopped_by_bp = !EXT(ctx)->regs_error &&
-                is_breakpoint_address(ctx, pc1 - BREAK_SIZE);
+            size_t break_size = 0;
+            get_break_instruction(ctx, &break_size);
+            ctx->stopped_by_bp = !EXT(ctx)->regs_error && is_breakpoint_address(ctx, pc1 - break_size);
             EXT(ctx)->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
+            if (ctx->stopped_by_bp) {
+                set_regs_PC(ctx, pc1 - break_size);
+                EXT(ctx)->regs_dirty = 1;
+            }
         }
         ctx->pending_step = 0;
-        if (ctx->stopped_by_bp) {
-            set_regs_PC(ctx, pc1 - BREAK_SIZE);
-            EXT(ctx)->regs_dirty = 1;
-        }
         send_context_stopped_event(ctx);
     }
 }
