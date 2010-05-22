@@ -5,6 +5,7 @@ package org.ejs.eulang.llvm.tms9900;
 
 import static v9t9.engine.cpu.InstructionTable.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,6 +63,7 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
@@ -399,7 +401,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		newBlock(block);
 		
 		if (blockMap.isEmpty()) {
-			emitInstr(HLInstruction.create(Pprolog));
+			HLInstruction inst = HLInstruction.create(Pprolog);
+			emitInstr(inst);
 		}
 		
 		blockMap.put(lllabelSym, block);
@@ -779,7 +782,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		AssemblerOperand trueOp = new SymbolLabelOperand(trueTarget.getType(), trueTarget.getSymbol());
 		AssemblerOperand falseOp = new SymbolLabelOperand(falseTarget.getType(), falseTarget.getSymbol());
 		
-		emitInstr(HLInstruction.create(Pjcc, test, trueOp, falseOp));
+		HLInstruction inst = HLInstruction.create(Pjcc, test, trueOp, falseOp);
+		inst.setImplicitTargets(new ISymbol[0]);
+		emitInstr(inst);
 	}
 	private void handleUncondBranchInstr(LLUncondBranchInstr instr) {
 		LLOperand[] llops = instr.getOperands();
@@ -787,7 +792,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		LLSymbolOp target = (LLSymbolOp) llops[0];
 		AssemblerOperand asmOp = new SymbolLabelOperand(target.getType(), target.getSymbol());
 		
-		emitInstr(HLInstruction.create(Ijmp, asmOp));
+		HLInstruction inst = HLInstruction.create(Ijmp, asmOp);
+		emitInstr(inst);
 	}
 	private void handleRetInstr(LLRetInstr instr) {
 		LLOperand[] llops = instr.getOperands();
@@ -826,7 +832,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
 			// we generate only one return, but the optimizer may add more
-			emitInstr(HLInstruction.create(Ijmp, new SymbolLabelOperand(typeEngine.LABEL, epilogLabel)));
+			HLInstruction inst = HLInstruction.create(Ijmp, new SymbolLabelOperand(typeEngine.LABEL, epilogLabel));
+			emitInstr(inst);
 		}
 		
 	}
@@ -891,7 +898,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		
 		Map<Integer, AssemblerOperand> callerRets = new HashMap<Integer, AssemblerOperand>();
-		
+		List<ISymbol> sources = new ArrayList<ISymbol>();
+
 		int argIdx = 0;
 		for (int i = 0; i < argLocs.length; i++) {
 			if (argLocs[i] instanceof CallerStackLocation) {
@@ -938,6 +946,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				assert regLoc.bitOffset == 0;
 				arg = copyIntoRegister(ops[argIdx], llinst, arg, regLoc.number);
 				argIdx++;
+				addSymbol(sources, arg);
 			}
 			else if (argLocs[i] instanceof StackLocation) {
 				AssemblerOperand arg = generateOperand(ops[argIdx]);
@@ -947,6 +956,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 						sp);
 				moveTo(ops[argIdx], ops[argIdx].getType(), arg, stackOp);
 				argIdx++;
+				addSymbol(sources, stackOp);
 			}
 			else if (argLocs[i] instanceof StackBarrierLocation) {
 				// ignore
@@ -959,16 +969,41 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		AssemblerOperand func = generateOperand(function);
 		
 		// TODO: other func types
-		if (function.getType().getBasicType() == BasicType.POINTER) {
+		if (function.getType().getBasicType() == BasicType.POINTER && !func.isRegister()) {
 			func = moveToTemp(function, function.getType(), func);
 		}
-			
-		emitInstr(HLInstruction.create(Ibl, func instanceof IRegisterOperand ? new RegIndOperand(func) : new AddrOperand(func)));
+		
+		addSymbol(sources, func);
+		
+		HLInstruction blInst = HLInstruction.create(Ibl, func instanceof IRegisterOperand ? new RegIndOperand(func) : new AddrOperand(func));
+		
+		List<ISymbol> targets = new ArrayList<ISymbol>();
+		Location[] retLocs = cconv.getReturnLocations();
+		for (int i = 0; i < retLocs.length; i++) {
+			if (retLocs[i] instanceof CallerStackLocation) {
+
+				ICallingConvention.CallerStackLocation stackLoc = (CallerStackLocation) argLocs[i];
+				AssemblerOperand callerRet = callerRets.get(stackLoc.number);
+				addSymbol(targets, callerRet);
+			}
+			else if (retLocs[i] instanceof RegisterLocation) {
+				RegisterLocation regLoc = (RegisterLocation) retLocs[i];
+				
+				RegisterOperand retOp = new RegisterOperand(new NumberOperand(regLoc.number));
+				addSymbol(targets, retOp);
+			}
+			else 
+				assert false;
+		}
+		
+		blInst.setImplicitTargets((ISymbol[]) targets.toArray(new ISymbol[targets.size()]));
+		blInst.setImplicitSources((ISymbol[]) sources.toArray(new ISymbol[sources.size()]));
+		
+		emitInstr(blInst);
+		
 		routine.setHasBlCalls(true);
 		
 		// handle the return value
-		Location[] retLocs = cconv.getReturnLocations();
-
 		LLOperand result = ((LLAssignInstr) instr).getResult();
 		for (int i = 0; i < retLocs.length; i++) {
 			if (retLocs[i] instanceof CallerStackLocation) {
@@ -977,6 +1012,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				AssemblerOperand callerRet = callerRets.get(stackLoc.number);
 
 				asmOps[0] = callerRet;
+				addSymbol(targets, callerRet);
 				if (result != null)
 					ssaTempTable.put(result, callerRet);
 				
@@ -990,10 +1026,25 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				moveTo(result, regLoc.type, retOp, asmOp);
 				
 				asmOps[0] = asmOp;
+				addSymbol(targets, asmOp);
 				ssaTempTable.put(result, asmOp);
 			}
 			else 
 				assert false;
+		}
+		
+		blInst.setImplicitTargets((ISymbol[]) targets.toArray(new ISymbol[targets.size()]));
+	}
+
+	/**
+	 * @param targets
+	 * @param asmOp
+	 */
+	private void addSymbol(List<ISymbol> syms, AssemblerOperand asmOp) {
+		if (asmOp instanceof ISymbolOperand) {
+			ISymbol sym = ((ISymbolOperand) asmOp).getSymbol();
+			if (sym != null && sym.getScope() instanceof LocalScope)
+				syms.add(sym);
 		}
 	}
 
@@ -1672,6 +1723,15 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					AssemblerOperand op3 = d.ops.length >= 3 ? getAsmOp(d, 2) : null;
 					HLInstruction inst = HLInstruction.create(d.inst, op1, op2, op3);
 					
+					// HACK
+					if (inst.getInst() == InstructionTable.Impy || inst.getInst() == InstructionTable.Idiv) {
+						inst.setImplicitSources(new ISymbol[] {
+								((ISymbolOperand)inst.getOp1()).getSymbol(),
+								((ISymbolOperand)inst.getOp2()).getSymbol() });
+						inst.setImplicitTargets(new ISymbol[] { 
+								((ISymbolOperand)inst.getOp2()).getSymbol(), 
+								((ISymbolOperand)inst.getOp3()).getSymbol() });
+					}
 					emitInstr(inst);
 				}
 

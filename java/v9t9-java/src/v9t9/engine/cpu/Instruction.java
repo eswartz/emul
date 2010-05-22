@@ -210,11 +210,11 @@ public class Instruction extends RawInstruction implements IInstruction {
 	    } else if (inst >= InstructionTable.Ili && inst <= InstructionTable.Ici) {
 	        org.ejs.coffee.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
 	        mop2.convertToImmedate();
-	        mop1.dest = MachineOperand.OP_DEST_TRUE;
+	        mop1.dest = Operand.OP_DEST_TRUE;
 	        switch (inst) {
 	        case InstructionTable.Ili:
 	            this.stsetAfter = Instruction.st_LAE_1;
-	            mop1.dest = MachineOperand.OP_DEST_KILLED;
+	            mop1.dest = Operand.OP_DEST_KILLED;
 	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Iai:
@@ -231,7 +231,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            break;
 	        case InstructionTable.Ici:
 	            this.stsetAfter = Instruction.st_CMP;
-	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.dest = Operand.OP_DEST_FALSE;
 	            this.cycles += 14;
 	            break;
 	        }
@@ -239,14 +239,14 @@ public class Instruction extends RawInstruction implements IInstruction {
 	    } else if (inst == InstructionTable.Istwp) {
 	        org.ejs.coffee.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
 	        org.ejs.coffee.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
-	        mop1.dest = MachineOperand.OP_DEST_KILLED;
+	        mop1.dest = Operand.OP_DEST_KILLED;
 	        this.reads |= INST_RSRC_WP;
 	        this.cycles += 8;
 	    } else if (inst == InstructionTable.Istst) {
 	        org.ejs.coffee.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
 	        this.reads |= INST_RSRC_ST;
 	        this.stReads = 0xffff;
-	        mop1.dest = MachineOperand.OP_DEST_KILLED;
+	        mop1.dest = Operand.OP_DEST_KILLED;
 	        
 	        org.ejs.coffee.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        mop2.type = MachineOperand.OP_STATUS;
@@ -278,7 +278,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.stsetAfter = Instruction.st_ALL;
 	            this.writes |= INST_RSRC_WP + INST_RSRC_ST + INST_RSRC_PC;
 	            mop1.type = MachineOperand.OP_STATUS;
-	            //mop1.dest = MachineOperand.OP_DEST_KILLED;	// compiler doesn't seem to depend on this
+	            //mop1.dest = Operand.OP_DEST_KILLED;	// compiler doesn't seem to depend on this
 	            this.jump = Instruction.INST_JUMP_TRUE;
 	            this.cycles += 14;
 	            break;
@@ -300,7 +300,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        org.ejs.coffee.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
 			&& mop1.type != MachineOperand.OP_IMMED));
 	        org.ejs.coffee.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
-	        mop1.dest = MachineOperand.OP_DEST_TRUE;
+	        mop1.dest = Operand.OP_DEST_TRUE;
 	
 	        switch (inst) {
 	        case InstructionTable.Iblwp:
@@ -308,13 +308,13 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.stReads = 0xffff;
 	            this.reads |= INST_RSRC_ST;
 	            this.writes |= INST_RSRC_WP + INST_RSRC_PC + INST_RSRC_CTX;
-	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.dest = Operand.OP_DEST_FALSE;
 	            mop1.bIsCodeDest = true;
 	            this.jump = Instruction.INST_JUMP_TRUE;
 	            this.cycles += 26;
 	            break;
 	        case InstructionTable.Ib:
-	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.dest = Operand.OP_DEST_FALSE;
 	            mop1.bIsCodeDest = true;
 	            this.jump = Instruction.INST_JUMP_TRUE;
 	            this.cycles += 8;
@@ -323,12 +323,12 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            //this.stsetBefore = Instruction.st_ALL;
 	            this.stReads = 0xffff;
 	            this.reads |= INST_RSRC_ST;
-	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.dest = Operand.OP_DEST_FALSE;
 	            mop2.type = MachineOperand.OP_INST;
 	            this.cycles += 8;
 	            break;
 	        case InstructionTable.Iclr:
-	            mop1.dest = MachineOperand.OP_DEST_KILLED;
+	            mop1.dest = Operand.OP_DEST_KILLED;
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Ineg:
@@ -367,7 +367,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Ibl:
-	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.dest = Operand.OP_DEST_FALSE;
 	            mop1.bIsCodeDest = true;
 	            this.jump = Instruction.INST_JUMP_TRUE;
 	            this.cycles += 12;
@@ -376,7 +376,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iseto:
-	            mop1.dest = MachineOperand.OP_DEST_KILLED;
+	            mop1.dest = Operand.OP_DEST_KILLED;
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iabs:
@@ -384,14 +384,14 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.cycles += 12;
 	            break;
 	        default:
-	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.dest = Operand.OP_DEST_FALSE;
 	            break;
 	        }
 	
 	    } else if (inst >= InstructionTable.Isra && inst <= InstructionTable.Isrc) {
 	        org.ejs.coffee.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
 	        org.ejs.coffee.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_IMMED || mop2.type == MachineOperand.OP_CNT));
-	        mop1.dest = MachineOperand.OP_DEST_TRUE;
+	        mop1.dest = Operand.OP_DEST_TRUE;
 	        mop2.type = MachineOperand.OP_CNT;
 	
 	        // shift of zero comes from R0
@@ -503,18 +503,18 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        org.ejs.coffee.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
 			&& mop1.type != MachineOperand.OP_IMMED));
 	        org.ejs.coffee.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_REG));
-	        mop1.dest = MachineOperand.OP_DEST_FALSE;
-	        mop2.dest = MachineOperand.OP_DEST_TRUE;
+	        mop1.dest = Operand.OP_DEST_FALSE;
+	        mop2.dest = Operand.OP_DEST_TRUE;
 	
 	        switch (inst) {
 	        case InstructionTable.Icoc:
 	            this.stsetAfter = Instruction.st_CMP;
-	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            mop2.dest = Operand.OP_DEST_FALSE;
 	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Iczc:
 	            this.stsetAfter = Instruction.st_CMP;
-	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            mop2.dest = Operand.OP_DEST_FALSE;
 	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ixor:
@@ -527,7 +527,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.writes |= INST_RSRC_WP + INST_RSRC_PC + INST_RSRC_CTX;
 	            mop2.bIsCodeDest = true;
 	            mop2.type = MachineOperand.OP_CNT;
-	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            mop2.dest = Operand.OP_DEST_FALSE;
 	            this.stsetAfter = Instruction.st_XOP;
 	            this.jump = Instruction.INST_JUMP_TRUE;
 	            this.cycles += 36;
@@ -556,13 +556,13 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        if (inst == InstructionTable.Ildcr) {
 	            this.stsetBefore = mop1.byteop ? Instruction.st_BYTE_LAEP_1
 	                    : Instruction.st_LAE_1;
-	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.dest = Operand.OP_DEST_FALSE;
 	            this.cycles += (20 + 2 * mop1.val);
 	            this.writes |= INST_RSRC_IO;
 	        } else {
 	            this.stsetAfter = mop1.byteop ? Instruction.st_BYTE_LAEP_1
 	                    : Instruction.st_LAE_1;
-	            mop1.dest = MachineOperand.OP_DEST_TRUE;
+	            mop1.dest = Operand.OP_DEST_TRUE;
 	            this.cycles += (mop1.val < 8 ? 42
 				: mop1.val == 8 ? 44 : 58);
 	            this.reads |= INST_RSRC_IO;
@@ -571,7 +571,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	    } else if (inst == InstructionTable.Idsr) {
 	    	
 	    } else if (inst == InstructionTable.Iticks) {
-	    	mop1.dest = MachineOperand.OP_DEST_TRUE;
+	    	mop1.dest = Operand.OP_DEST_TRUE;
 	    	this.reads |= INST_RSRC_IO;
 	    	this.cycles += 6;
 	    } else {
@@ -579,7 +579,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 			&& mop1.type != MachineOperand.OP_IMMED));
 	        org.ejs.coffee.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
 			&& mop1.type != MachineOperand.OP_IMMED));
-	        mop2.dest = MachineOperand.OP_DEST_TRUE;
+	        mop2.dest = Operand.OP_DEST_TRUE;
 	        mop1.byteop = mop2.byteop = (inst - InstructionTable.Iszc & 1) != 0;
 	
 	        switch (inst) {
@@ -601,12 +601,12 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            break;
 	        case InstructionTable.Ic:
 	            this.stsetAfter = Instruction.st_CMP;
-	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            mop2.dest = Operand.OP_DEST_FALSE;
 	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Icb:
 	            this.stsetAfter = Instruction.st_BYTE_CMP;
-	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            mop2.dest = Operand.OP_DEST_FALSE;
 	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ia:
@@ -619,12 +619,12 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            break;
 	        case InstructionTable.Imov:
 	            this.stsetAfter = Instruction.st_LAE;
-	            mop2.dest = MachineOperand.OP_DEST_KILLED;
+	            mop2.dest = Operand.OP_DEST_KILLED;
 	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Imovb:
 	            this.stsetAfter = Instruction.st_BYTE_LAEP;
-	            mop2.dest = MachineOperand.OP_DEST_KILLED;
+	            mop2.dest = Operand.OP_DEST_KILLED;
 	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Isoc:
@@ -661,6 +661,357 @@ public class Instruction extends RawInstruction implements IInstruction {
 	   
 	}
 
+    public static class Effects {
+        public int stsetBefore; // method status is set after operands parsed, before execution (st_xxx)
+        public int stsetAfter; // method status is set after execution (st_xxx)
+        public int stReads;     // bits read by instruction (Status.ST_xxx mask)
+        /** operand is a jump (INST_JUMP_COND = conditional) */
+        public int jump; 
+
+        public int reads, writes;	// what resources (INST_RSRC_xxx) are read and written?
+        public int mop1_dest, mop2_dest;
+    }
+
+	/**
+     * Get static effects of an instruction.
+     *
+     */
+    public static Effects getInstructionEffects(int inst) {
+    	Effects fx = new Effects();
+    	
+	    fx.stsetBefore = Instruction.st_NONE;
+	    fx.stsetAfter = Instruction.st_NONE;
+	    fx.stReads = 0;
+	    fx.jump = Instruction.INST_JUMP_FALSE;
+	    fx.reads = 0;
+	    fx.writes = 0;
+	
+	    if (inst == InstructionTable.Idata) {
+	    } else if (inst >= InstructionTable.Ili && inst <= InstructionTable.Ici) {
+	        fx.mop1_dest = Operand.OP_DEST_TRUE;
+	        switch (inst) {
+	        case InstructionTable.Ili:
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            fx.mop1_dest = Operand.OP_DEST_KILLED;
+	            break;
+	        case InstructionTable.Iai:
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            break;
+	        case InstructionTable.Iandi:
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case InstructionTable.Iori:
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case InstructionTable.Ici:
+	            fx.stsetAfter = Instruction.st_CMP;
+	            fx.mop1_dest = Operand.OP_DEST_FALSE;
+	            break;
+	        }
+	
+	    } else if (inst == InstructionTable.Istwp) {
+	        fx.mop1_dest = Operand.OP_DEST_KILLED;
+	        fx.reads |= INST_RSRC_WP;
+	    } else if (inst == InstructionTable.Istst) {
+	        fx.reads |= INST_RSRC_ST;
+	        fx.stReads = 0xffff;
+	        fx.mop1_dest = Operand.OP_DEST_KILLED;
+	    } else if (inst == InstructionTable.Ilwpi) {
+	        fx.writes |= INST_RSRC_WP;
+	    } else if (inst == InstructionTable.Ilimi) {
+	        fx.stsetAfter = Instruction.st_INT;
+	    } else if (inst >= InstructionTable.Iidle && inst <= InstructionTable.Ilrex) {
+	        switch (inst) {
+	        case InstructionTable.Iidle:
+	            fx.writes |= INST_RSRC_IO;
+	            break;
+	        case InstructionTable.Irset:
+	            fx.stsetAfter = Instruction.st_INT;
+	            fx.writes |= INST_RSRC_IO;
+	            break;
+	        case InstructionTable.Irtwp:
+	            fx.stsetAfter = Instruction.st_ALL;
+	            fx.writes |= INST_RSRC_WP + INST_RSRC_ST + INST_RSRC_PC;
+	            //fx.mop1_dest = Operand.OP_DEST_KILLED;	// compiler doesn't seem to depend on this
+	            fx.jump = Instruction.INST_JUMP_TRUE;
+	            break;
+	        case InstructionTable.Ickon:
+	            fx.writes |= INST_RSRC_IO;
+	            break;
+	        case InstructionTable.Ickof:
+	            fx.writes |= INST_RSRC_IO;
+	            break;
+	        case InstructionTable.Ilrex:
+	            fx.writes |= INST_RSRC_IO;
+	            break;
+	        }
+	
+	    } else if (inst >= InstructionTable.Iblwp && inst <= InstructionTable.Iabs) {
+	        fx.mop1_dest = Operand.OP_DEST_TRUE;
+	
+	        switch (inst) {
+	        case InstructionTable.Iblwp:
+	            //fx.stsetBefore = Instruction.st_ALL;
+	            fx.stReads = 0xffff;
+	            fx.reads |= INST_RSRC_ST;
+	            fx.writes |= INST_RSRC_WP + INST_RSRC_PC + INST_RSRC_CTX;
+	            fx.mop1_dest = Operand.OP_DEST_FALSE;
+	            //mop1.bIsCodeDest = true;
+	            fx.jump = Instruction.INST_JUMP_TRUE;
+	            break;
+	        case InstructionTable.Ib:
+	            fx.mop1_dest = Operand.OP_DEST_FALSE;
+	            //mop1.bIsCodeDest = true;
+	            fx.jump = Instruction.INST_JUMP_TRUE;
+	            break;
+	        case InstructionTable.Ix:
+	            //fx.stsetBefore = Instruction.st_ALL;
+	            fx.stReads = 0xffff;
+	            fx.reads |= INST_RSRC_ST;
+	            fx.mop1_dest = Operand.OP_DEST_FALSE;
+	            //mop2.type = MachineOperand.OP_INST;
+	            break;
+	        case InstructionTable.Iclr:
+	            fx.mop1_dest = Operand.OP_DEST_KILLED;
+	            break;
+	        case InstructionTable.Ineg:
+	            fx.stsetAfter = Instruction.st_LAEO;
+	            break;
+	        case InstructionTable.Iinv:
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case InstructionTable.Iinc:
+	        	// these instructions use the 2nd operand in the status calculation
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            break;
+	        case InstructionTable.Iinct:
+	        	// these instructions use the 2nd operand in the status calculation
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            break;
+	        case InstructionTable.Idec:
+	        	// these instructions use the 2nd operand in the status calculation
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            break;
+	        case InstructionTable.Idect:
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            break;
+	        case InstructionTable.Ibl:
+	            fx.mop1_dest = Operand.OP_DEST_FALSE;
+	            //mop1.bIsCodeDest = true;
+	            fx.jump = Instruction.INST_JUMP_TRUE;
+	            break;
+	        case InstructionTable.Iswpb:
+	            break;
+	        case InstructionTable.Iseto:
+	            fx.mop1_dest = Operand.OP_DEST_KILLED;
+	            break;
+	        case InstructionTable.Iabs:
+	            fx.stsetBefore = Instruction.st_LAEO;
+	            break;
+	        default:
+	            fx.mop1_dest = Operand.OP_DEST_FALSE;
+	            break;
+	        }
+	
+	    } else if (inst >= InstructionTable.Isra && inst <= InstructionTable.Isrc) {
+	        fx.mop1_dest = Operand.OP_DEST_TRUE;
+	
+	        switch (inst) {
+	        case InstructionTable.Isra:
+	            fx.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case InstructionTable.Isrl:
+	            fx.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case InstructionTable.Isla:
+	            fx.stsetBefore = Instruction.st_SHIFT_LEFT_CO;
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case InstructionTable.Isrc:
+	            fx.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
+	            fx.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        }
+	
+	    } else if (false) {
+	        // TODO: extended instructions
+	    } else if (inst >= InstructionTable.Ijmp && inst <= InstructionTable.Itb) {
+	        if (inst < InstructionTable.Isbo) {
+	            fx.reads |= INST_RSRC_ST;
+	            fx.jump = inst == InstructionTable.Ijmp ? Instruction.INST_JUMP_TRUE
+	                    : Instruction.INST_JUMP_COND;
+	        }
+	
+	        switch (inst) {
+	        case InstructionTable.Ijmp:
+	            fx.reads &= ~INST_RSRC_ST;
+	            break;
+	        case InstructionTable.Ijlt:
+	            fx.stReads = Status.ST_A + Status.ST_E;
+	            break;
+	        case InstructionTable.Ijle:
+	            fx.stReads = Status.ST_A + Status.ST_E;
+	            break;
+	        case InstructionTable.Ijeq:
+	            fx.stReads = Status.ST_E;
+	            break;
+	        case InstructionTable.Ijhe:
+	            fx.stReads = Status.ST_L + Status.ST_E;
+	            break;
+	        case InstructionTable.Ijgt:
+	            fx.stReads = Status.ST_L +Status.ST_E;
+	            break;
+	        case InstructionTable.Ijne:
+	            fx.stReads = Status.ST_E;
+	            break;
+	        case InstructionTable.Ijnc:
+	            fx.stReads = Status.ST_C;
+	            break;
+	        case InstructionTable.Ijoc:
+	            fx.stReads = Status.ST_C;
+	            break;
+	        case InstructionTable.Ijno:
+	            fx.stReads = Status.ST_O;
+	            break;
+	        case InstructionTable.Ijl:
+	            fx.stReads = Status.ST_L + Status.ST_E;
+	            break;
+	        case InstructionTable.Ijh:
+	            fx.stReads = Status.ST_L + Status.ST_E;
+	            break;
+	        case InstructionTable.Ijop:
+	            fx.stReads = Status.ST_P;
+	            break;
+	        case InstructionTable.Isbo:
+	            fx.writes |= INST_RSRC_IO;
+	            break;
+	        case InstructionTable.Isbz:
+	            fx.writes |= INST_RSRC_IO;
+	            break;
+	        case InstructionTable.Itb:
+	            fx.stsetAfter = Instruction.st_CMP;
+	            fx.reads |= INST_RSRC_IO;
+	            break;
+	        }
+	
+	    } else if (inst < InstructionTable.Iszc && inst != InstructionTable.Ildcr && inst != InstructionTable.Istcr) {
+	        fx.mop1_dest = Operand.OP_DEST_FALSE;
+	        fx.mop2_dest = Operand.OP_DEST_TRUE;
+	
+	        switch (inst) {
+	        case InstructionTable.Icoc:
+	            fx.stsetAfter = Instruction.st_CMP;
+	            fx.mop2_dest = Operand.OP_DEST_FALSE;
+	            break;
+	        case InstructionTable.Iczc:
+	            fx.stsetAfter = Instruction.st_CMP;
+	            fx.mop2_dest = Operand.OP_DEST_FALSE;
+	            break;
+	        case InstructionTable.Ixor:
+	            fx.stsetAfter = Instruction.st_LAE;
+	            break;
+	        case InstructionTable.Ixop:
+	        	fx.stReads = 0xffff;
+	            fx.reads |= INST_RSRC_ST;
+	            fx.writes |= INST_RSRC_WP + INST_RSRC_PC + INST_RSRC_CTX;
+	            //mop2.bIsCodeDest = true;
+	            fx.mop2_dest = Operand.OP_DEST_FALSE;
+	            fx.stsetAfter = Instruction.st_XOP;
+	            fx.jump = Instruction.INST_JUMP_TRUE;
+	            break;
+	        case InstructionTable.Impy:
+	            //              ((MachineOperand) fx.op2).type = MachineOperand.OP_MPY;
+	            break;
+	        case InstructionTable.Idiv:
+	            fx.stsetBefore = Instruction.st_DIV_O;
+	            //              ((MachineOperand) fx.op2).type = MachineOperand.OP_DIV;
+	            break;
+	        }
+	
+	    } else if (inst == InstructionTable.Ildcr || inst == InstructionTable.Istcr) {
+	        if (inst == InstructionTable.Ildcr) {
+	            fx.stsetBefore = true /*mop1.byteop*/ ? Instruction.st_BYTE_LAEP_1
+	                    : Instruction.st_LAE_1;
+	            fx.mop1_dest = Operand.OP_DEST_FALSE;
+	            fx.writes |= INST_RSRC_IO;
+	        } else {
+	            fx.stsetAfter = true /*mop1.byteop*/ ? Instruction.st_BYTE_LAEP_1
+	                    : Instruction.st_LAE_1;
+	            fx.mop1_dest = Operand.OP_DEST_TRUE;
+	            fx.reads |= INST_RSRC_IO;
+	        }
+	
+	    } else if (inst == InstructionTable.Idsr) {
+	    	
+	    } else if (inst == InstructionTable.Iticks) {
+	    	fx.mop1_dest = Operand.OP_DEST_TRUE;
+	    	fx.reads |= INST_RSRC_IO;
+	    } else if (inst < InstructionTable.Iuser) {
+	        fx.mop2_dest = Operand.OP_DEST_TRUE;
+	
+	        switch (inst) {
+	        case InstructionTable.Iszc:
+	            fx.stsetAfter = Instruction.st_LAE;
+	            break;
+	        case InstructionTable.Iszcb:
+	            fx.stsetAfter = Instruction.st_BYTE_LAEP;
+	            break;
+	        case InstructionTable.Is:
+	            fx.stsetBefore = Instruction.st_SUB_LAECO;
+	            break;
+	        case InstructionTable.Isb:
+	            fx.stsetBefore = Instruction.st_SUB_BYTE_LAECOP;
+	            break;
+	        case InstructionTable.Ic:
+	            fx.stsetAfter = Instruction.st_CMP;
+	            fx.mop2_dest = Operand.OP_DEST_FALSE;
+	            break;
+	        case InstructionTable.Icb:
+	            fx.stsetAfter = Instruction.st_BYTE_CMP;
+	            fx.mop2_dest = Operand.OP_DEST_FALSE;
+	            break;
+	        case InstructionTable.Ia:
+	            fx.stsetBefore = Instruction.st_ADD_LAECO;
+	            break;
+	        case InstructionTable.Iab:
+	            fx.stsetBefore = Instruction.st_ADD_BYTE_LAECOP;
+	            break;
+	        case InstructionTable.Imov:
+	            fx.stsetAfter = Instruction.st_LAE;
+	            fx.mop2_dest = Operand.OP_DEST_KILLED;
+	            break;
+	        case InstructionTable.Imovb:
+	            fx.stsetAfter = Instruction.st_BYTE_LAEP;
+	            fx.mop2_dest = Operand.OP_DEST_KILLED;
+	            break;
+	        case InstructionTable.Isoc:
+	            fx.stsetAfter = Instruction.st_LAE;
+	            break;
+	        case InstructionTable.Isocb:
+	            fx.stsetAfter = Instruction.st_BYTE_LAEP;
+	            break;
+	        }
+	    } else {
+	    	return null;
+	    }
+	
+	    // synthesize bits from other info
+	    if (fx.jump != INST_JUMP_FALSE) {
+	        fx.writes |= INST_RSRC_PC;
+	        fx.reads |= INST_RSRC_PC;
+	    }
+	    if (fx.stsetBefore != st_NONE || fx.stsetAfter != st_NONE) {
+	        fx.writes |= INST_RSRC_ST;
+	    }
+	    //if (mop1.isRegisterReference() || mop2.isRegisterReference()) {
+	        //fx.reads |= INST_RSRC_WP;
+	    //}
+	    return fx;
+    }
+
+    
 	/** 
      * Update a previously decoded instruction, only rebuilding it
      * if its memory changed (self-modifying code).
