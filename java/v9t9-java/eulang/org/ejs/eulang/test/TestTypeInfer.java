@@ -29,11 +29,9 @@ import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
-import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
@@ -43,7 +41,6 @@ import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TypeInference;
 import org.junit.Test;
 
 /**
@@ -640,8 +637,8 @@ public class TestTypeInfer extends BaseParserTest {
     	sanityTest(mod);
 
     	//IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testExample1");
-    	doTypeInfer(mod);
     	try {
+    		doTypeInfer(mod);
     		typeTest(mod, false);
     		fail();
     	} catch (AssertionFailedError e) {
@@ -1175,10 +1172,19 @@ public class TestTypeInfer extends BaseParserTest {
     	
     	
     }
-    
+    @Test
+    public void testArrayAccess2() throws Exception {
+		dumpTypeInfer = true;
+		IAstModule mod = treeize("foo = code(x:Int[10]^) { (x-1)[2] };\n");
+		
+		sanityTest(mod);
+		doTypeInfer(mod);
+
+    }
     
     @Test
     public void testForwardReferences() throws Exception {
+    	dumpTypeInfer = true;
     	IAstModule mod = treeize("forward bar;\n"+
     			"foo = code(p) { bar(p-1, p+1); };\n"+
     			"bar = code(a:Int; b:Int => Int ) { a*b };\n");

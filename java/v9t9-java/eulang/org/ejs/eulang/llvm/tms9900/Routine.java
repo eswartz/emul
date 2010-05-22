@@ -1,9 +1,3 @@
-/*
- * (c) Ed Swartz, 2005
- * 
- * Created on Feb 22, 2006
- *
- */
 package org.ejs.eulang.llvm.tms9900;
 
 import java.util.ArrayList;
@@ -33,17 +27,20 @@ public abstract class Routine {
     public static final int fSubroutine = 2;
     public int flags;
     
-    protected int dataWords;
 	private ISymbol name;
 	
 	private Locals locals;
 	private final LLDefineDirective def;
-	private boolean hasCalls;
+	private boolean hasBlCalls;
+	private Block entry;
+	private Block exit;
     
     public Routine(LLDefineDirective def) {
         this.def = def;
 		this.name = def.getName();
 		blocks = new ArrayList<Block>();
+		entry = null; 
+		exit = null;
 		locals = new Locals(def);
     }
     
@@ -75,7 +72,12 @@ public abstract class Routine {
     public String toString() {
         return "Routine " + name;
     }
-    
+
+	public ISymbol getName() {
+		return name;
+	}
+
+
     /**
 	 * @return the locals
 	 */
@@ -85,7 +87,8 @@ public abstract class Routine {
 	
     abstract public boolean isReturn(HLInstruction inst);
     abstract public HLInstruction[] generateReturn();
-    
+
+
     /** Get the blocks spanned by the routine.  Requires that the flowgraph info is complete. */
 	public Collection<Block> getSpannedBlocks() {
 		Collection<Block> spannedBlocks = new ArrayList<Block>();
@@ -99,23 +102,19 @@ public abstract class Routine {
 		return Collections.unmodifiableCollection(spannedBlocks);
 	}
 
-	/**
-	 * @param block
-	 */
 	public void addBlock(Block block) {
 		blocks.add(block);
 	}
-
-	/**
-	 * @return
-	 */
-	public ISymbol getName() {
-		return name;
+	
+	public void setEntry(Block block) {
+		assert entry == null && blocks.contains(block);
+		entry = block;
+	}
+	public void setExit(Block block) {
+		assert exit == null && blocks.contains(block);
+		exit = block;
 	}
 
-	/**
-	 * 
-	 */
 	public List<Block> getBlocks() {
 		return blocks;
 	}
@@ -131,14 +130,14 @@ public abstract class Routine {
 	 * @param b
 	 */
 	public void setHasBlCalls(boolean b) {
-		this.hasCalls = b;
+		this.hasBlCalls = b;
 	}
 	
 	/**
 	 * @return the hasCalls
 	 */
-	public boolean hasCalls() {
-		return hasCalls;
+	public boolean hasBlCalls() {
+		return hasBlCalls;
 	}
 
 }

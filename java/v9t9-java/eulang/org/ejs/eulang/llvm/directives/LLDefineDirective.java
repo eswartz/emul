@@ -4,9 +4,11 @@
 package org.ejs.eulang.llvm.directives;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
@@ -45,6 +47,9 @@ import org.ejs.eulang.types.LLType;
  */
 public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget {
 
+	/** Multiple return instructions exist */
+	public static final String MULTI_RET = "multiRet";
+	
 	private final ISymbol symbol;
 	private final LLLinkage linkage;
 	private final LLVisibility visibility;
@@ -66,6 +71,8 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	private final LLModule module;
 	private final LLVMGenerator generator;
 	private FunctionConvention convention;
+
+	private Set<String> flags = new HashSet<String>();
 	
 	public LLDefineDirective(LLVMGenerator generator, ITarget target, LLModule module, IScope localScope,
 			ISymbol symbol, LLLinkage linkage, LLVisibility visibility, String cconv, LLAttrType retType,
@@ -405,5 +412,15 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	 */
 	public ISymbol getSymbol() {
 		return symbol;
+	}
+
+
+
+	/**
+	 * Get flags for the routine as a whole (for code generation)
+	 * @return
+	 */
+	public Set<String> flags() {
+		return flags;
 	}
 }

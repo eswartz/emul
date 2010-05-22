@@ -225,6 +225,9 @@ tupleargdef: type    -> type
   |                 -> ^(TYPE NIL)
   ;
   
+// note: the warning can be ignored: we want to consume as many arraySuffs
+// as possible, otherwise multi-dimensional arrays are not constructed as
+// desired.
 type : 
     (nonArrayType -> nonArrayType)
      ( 

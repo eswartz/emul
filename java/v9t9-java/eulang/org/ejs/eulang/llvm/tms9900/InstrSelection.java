@@ -54,6 +54,7 @@ import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
@@ -221,38 +222,22 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		CMP,
 	};
 	
-	final static Map<String, Integer> compareToInt = new HashMap<String, Integer>();
-	public final static int CMP_EQ = 0, CMP_NE = 1, CMP_SGT = 2, CMP_SLT = 3, CMP_SGE = 4, 
-	CMP_SLE = 5, CMP_UGT = 6, CMP_ULT = 7, CMP_UGE = 8, CMP_ULE = 9;
-	
-	static {
-		compareToInt.put("eq", CMP_EQ);
-		compareToInt.put("ne", CMP_NE);
-		compareToInt.put("sgt", CMP_SGT);
-		compareToInt.put("slt", CMP_SLT);
-		compareToInt.put("sge", CMP_SGE);
-		compareToInt.put("sle", CMP_SLE);
-		compareToInt.put("ugt", CMP_UGT);
-		compareToInt.put("ult", CMP_ULT);
-		compareToInt.put("uge", CMP_UGE);
-		compareToInt.put("ule", CMP_ULE);
-	}
-	
 	/** Pseudo-instructions */
 	final static int Ipseudo = Iuser;
-	final public static int Piset = Ipseudo + 1,
-		Pjcc = Ipseudo + 2,
-		Pcopy = Ipseudo + 3,
-		Penter = Ipseudo + 4,
-		Pexit = Ipseudo + 5,
-		Plea = Ipseudo + 6
+	final public static int 
+		Pprolog = Ipseudo + 0,
+		Pepilog = Ipseudo + 1,
+		Piset = Ipseudo + 2,
+		Pjcc = Ipseudo + 3,
+		Pcopy = Ipseudo + 4,
+		Plea = Ipseudo + 5
 	;
 	static {
+		InstructionTable.registerInstruction(Pprolog, "PROLOG");
+		InstructionTable.registerInstruction(Pepilog, "EPILOG");
 		InstructionTable.registerInstruction(Piset, "ISET");
 		InstructionTable.registerInstruction(Pjcc, "JCC");
 		InstructionTable.registerInstruction(Pcopy, "COPY");
-		InstructionTable.registerInstruction(Penter, "ENTER");
-		InstructionTable.registerInstruction(Pexit, "EXIT");
 		InstructionTable.registerInstruction(Plea, "LEA");
 	}
 	public static final As[] NO_AS = new As[0];
@@ -700,7 +685,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				new DoIntrinsic( Intrinsic.SIGNED_REMAINDER, 0, 1)
 		),
 	};
-	
+
+	private static HashMap<Pair<Pair<BasicType, Integer>, String>, List<IPattern>> patternMap;
+	private static List<IPattern> otherPatterns;
+
 	/** Called to fetch a new temp register 
 	 * @param instr 
 	 * @param symbol the symbol on which to base the name 
@@ -715,8 +703,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	
 	private final LLDefineDirective def;
 	private final ICallingConvention cc;
-	private HashMap<Pair<Pair<BasicType, Integer>, String>, List<IPattern>> patternMap;
-	private List<IPattern> otherPatterns;
 
 	private IPattern thePattern;
 	private AssemblerOperand[] asmOps = new AssemblerOperand[4];
@@ -733,6 +719,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private TypeEngine typeEngine;
 	private RegisterLocal regPair;
 	private final LLModule module;
+	/** may be null */
+	private Block epilogBlock;
+	/** may be null */
+	private ISymbol epilogLabel;
 	
 	/**
 	 * 
@@ -753,7 +743,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * go into patternMap, while others are in otherPatterns and scanned
 	 * linearly.
 	 */
-	private void setupPatterns() {
+	private static void setupPatterns() {
+		if (patternMap != null)
+			return;
+		
 		patternMap = new LinkedHashMap<Pair<Pair<BasicType, Integer>, String>, List<IPattern>>();
 		otherPatterns = new ArrayList<IPattern>();
 		for (IPattern pattern : patterns) {
@@ -795,6 +788,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public boolean enterCode(LLDefineDirective directive) {
 		blockMap = new LinkedHashMap<ISymbol, Block>();
 		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();
+
+		if (def.flags().contains(LLDefineDirective.MULTI_RET))
+			epilogLabel = locals.getScope().add("$exit", true);
+
 		return true;
 	}
 
@@ -805,7 +802,26 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public void exitCode(LLDefineDirective directive) {
 		super.exitCode(directive);
 		
-		// exit blocks ended with 'ret'; no Pexit here
+		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
+			// although we generate only one return, the optimizer may add more,
+			// so divert all returns to the tail block
+			
+			epilogBlock = new Block(new Label(epilogLabel.getUniqueName()));
+			
+			newBlock(epilogBlock);
+			routine.addBlock(epilogBlock);
+			routine.setExit(epilogBlock);
+		}
+		
+		emitInstr(HLInstruction.create(Pepilog));
+		
+		HLInstruction[] rets = routine.generateReturn();
+		for (HLInstruction ret : rets) {
+			emitInstr(ret);
+		}
+		
+		
+		///
 		
 		System.out.println("SSA Temp Table:");
 		for (Map.Entry<LLOperand, AssemblerOperand> entry : ssaTempTable.entrySet()) {
@@ -822,12 +838,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		Label label = new Label(lllabelSym.getUniqueName());
 		this.llblock = llblock;
 		block = new Block(label);
+		
 		newBlock(block);
 		
 		if (blockMap.isEmpty()) {
-			// at start
-			emitInstr(HLInstruction.create(Penter));
+			emitInstr(HLInstruction.create(Pprolog));
 		}
+		
 		blockMap.put(lllabelSym, block);
 
 		return true;
@@ -1250,11 +1267,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			assert false;
 		}
 		
-		emitInstr(HLInstruction.create(Pexit));
-		
-		HLInstruction[] rets = routine.generateReturn();
-		for (HLInstruction ret : rets) {
-			emitInstr(ret);
+		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
+			// we generate only one return, but the optimizer may add more
+			emitInstr(HLInstruction.create(Ijmp, new SymbolLabelOperand(typeEngine.LABEL, epilogLabel)));
 		}
 		
 	}
@@ -1653,8 +1668,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			break;
 		case CMP: {
 			assert instr instanceof LLCompareInstr;
-			int code = compareToInt.get(((LLCompareInstr) instr).getCmp());
-			asmOp = new NumOperand(operand, code);
+			asmOp = new CompareOperand(((LLCompareInstr) instr).getCmp());
 			break;
 		}
 		default:

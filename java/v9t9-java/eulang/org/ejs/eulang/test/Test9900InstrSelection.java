@@ -12,19 +12,31 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ejs.eulang.llvm.LLArgAttrType;
+import org.ejs.eulang.llvm.LLAttrType;
+import org.ejs.eulang.llvm.LLAttrs;
+import org.ejs.eulang.llvm.LLBlock;
+import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLModule;
+import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
+import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLInstr;
+import org.ejs.eulang.llvm.instrs.LLRetInstr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
 import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
-import org.ejs.eulang.llvm.tms9900.RenumberInstructionsVisitor;
+import org.ejs.eulang.llvm.tms9900.RenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
@@ -33,6 +45,8 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
@@ -65,64 +79,317 @@ public class Test9900InstrSelection extends BaseParserTest {
 			if (dir instanceof LLDefineDirective) {
 				LLDefineDirective def = (LLDefineDirective) dir;
 				
-				def.accept(new RenumberInstructionsVisitor());
-		
-				instrs = new ArrayList<HLInstruction>();
-				blocks = new ArrayList<Block>();
-				LinkedRoutine routine = new LinkedRoutine(def);
-				locals = routine.getLocals();
-				locals.buildLocalTable();
-				currentBlock = null; 
-
-				InstrSelection isel = new InstrSelection(mod, routine) {
-					
-					@Override
-					protected RegisterLocal newTempRegister(LLInstr instr, ISymbol symbol, LLType type) {
-						ILocal local = locals.allocateTemp(symbol, type);
-						if (!(local instanceof RegisterLocal))
-							throw new IllegalStateException("cannot force " + symbol + " of " + type + " into a register");
-						RegisterLocal regLocal = (RegisterLocal) local;
-						return regLocal;
-					}
-					
-					@Override
-					protected void emit(HLInstruction instr) {
-						System.out.println();
-						System.out.println("\t"+ instr);
-						instrs.add(instr);
-						currentBlock.addInst(instr);
-					}
-					
-					/* (non-Javadoc)
-					 * @see org.ejs.eulang.llvm.tms9900.InstrSelection#newBlock(org.ejs.eulang.llvm.tms9900.Block)
-					 */
-					@Override
-					protected void newBlock(Block block) {
-						System.out.println(block.getLabel());
-						currentBlock = block;
-						blocks.add(block);
-					}
-				};
-				
-				def.accept(isel);
+				doIsel(mod, def);
 				return;
 			}
 		}
 		fail("no code generated:\n" + mod);
 	}
+
+	protected void doIsel(LLModule mod, LLDefineDirective def) {
+		def.accept(new RenumberAndStatisticsVisitor());
+
+		instrs = new ArrayList<HLInstruction>();
+		blocks = new ArrayList<Block>();
+		LinkedRoutine routine = new LinkedRoutine(def);
+		locals = routine.getLocals();
+		locals.buildLocalTable();
+		currentBlock = null; 
+
+		InstrSelection isel = new InstrSelection(mod, routine) {
+			
+			@Override
+			protected RegisterLocal newTempRegister(LLInstr instr, ISymbol symbol, LLType type) {
+				ILocal local = locals.allocateTemp(symbol, type);
+				if (!(local instanceof RegisterLocal))
+					throw new IllegalStateException("cannot force " + symbol + " of " + type + " into a register");
+				RegisterLocal regLocal = (RegisterLocal) local;
+				return regLocal;
+			}
+			
+			@Override
+			protected void emit(HLInstruction instr) {
+				System.out.println();
+				System.out.println("\t"+ instr);
+				instrs.add(instr);
+				currentBlock.addInst(instr);
+			}
+			
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.tms9900.InstrSelection#newBlock(org.ejs.eulang.llvm.tms9900.Block)
+			 */
+			@Override
+			protected void newBlock(Block block) {
+				System.out.println(block.getLabel());
+				currentBlock = block;
+				blocks.add(block);
+			}
+		};
+		
+		def.accept(isel);
+	}
 	
+	@SuppressWarnings("unchecked")
+	protected void matchInstr(HLInstruction instr, String name, Object... stuff) {
+		assertEquals(instr+"", name.toLowerCase(), InstructionTable.getInstName(instr.getInst()).toLowerCase());
+		int opidx = 1;
+		for( int i = 0; i < stuff.length; ) {
+			AssemblerOperand op = instr.getOp(opidx++);
+			if (stuff[i] instanceof Class) {
+				assertTrue(instr+":"+i, ((Class)stuff[i]).isInstance(op));
+				i++;
+				if (i >= stuff.length)
+					break;
+				if (stuff[i] instanceof String) {
+					String string = (String) stuff[i];
+					AssemblerOperand testOp = op;
+					i++;
+					if (op instanceof AddrOperand)
+						testOp = ((AddrOperand) op).getAddr();
+					if (op instanceof IRegisterOperand && op.isMemory())
+						testOp = ((IRegisterOperand) op).getReg();
+					
+					boolean eq = true;
+					if (string.startsWith("~")) {
+						string = string.substring(1);
+						eq = false;
+					}
+					
+					ISymbol sym = getOperandSymbol(testOp);
+					if (sym != null) {
+						if (eq)
+							assertSameSymbol(instr, sym, string);
+						else
+							assertNotSameSymbol(instr, sym, string);
+					} else {
+						if (eq)
+							assertEquals(instr+":"+op, string, op.toString());
+						else
+							if (string.equals(testOp.toString()))
+								fail(instr+":"+testOp);
+					}
+						
+				}
+				else if (stuff[i] instanceof Integer) {
+					Integer num = (Integer) stuff[i];
+					i++;
+					if (op instanceof IRegisterOperand) {
+						assertTrue(instr+":"+op+" #", ((IRegisterOperand) op).isReg(num));
+					}
+					else if (op instanceof RegTempOperand)
+						assertEquals(instr+":"+op, num, (Integer)((RegTempOperand) op).getLocal().getVr());
+					else if (op instanceof NumberOperand)
+						assertEquals(instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
+					else if (op instanceof ConstPoolRefOperand)
+						assertEquals(instr+":"+op, num, (Integer)((ConstPoolRefOperand) op).getValue());
+					else 
+						assertEquals(instr+":"+op, num, op);
+				}
+				else if (stuff[i] instanceof Boolean) {
+					if (op instanceof RegTempOperand)
+						assertEquals(instr+":"+op, stuff[i], ((RegTempOperand) op).isHighReg());
+					else
+						fail("expected register temp");
+					i++;
+				}
+				else if (stuff[i] instanceof AssemblerOperand) {
+					AssemblerOperand testOp = null;
+					if (op instanceof AddrOperand)
+						testOp = ((AddrOperand) op).getAddr();
+					else if (op instanceof AddrOffsOperand)
+						testOp = ((AddrOffsOperand) op).getAddr();
+					else if (op instanceof IRegisterOperand && op.isMemory())
+						testOp = ((IRegisterOperand) op).getReg();
+					
+					if (testOp != null) {
+						assertEquals(instr+":"+op+" subop", stuff[i], testOp);
+						i++;
+					}
+				}
+				if (i < stuff.length && stuff[i] instanceof Integer) {
+					int num = (Integer) stuff[i++];
+					if (op instanceof RegOffsOperand) {
+						AssemblerOperand offs = ((RegOffsOperand) op).getAddr();
+						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
+					}
+					if (op instanceof AddrOffsOperand) {
+						AssemblerOperand offs = ((AddrOffsOperand) op).getOffset();
+						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
+					}
+				}
+			}
+			else if (stuff[i] instanceof AssemblerOperand) {
+				assertEquals(instr+":"+op, stuff[i], op);
+				i++;
+			}
+			else
+				fail("unknown handling " + stuff[i]);
+		}
+	}
+
+	protected ISymbol getOperandSymbol(AssemblerOperand op) {
+		if (op instanceof AddrOperand)
+			op = ((AddrOperand) op).getAddr();
+		if (op instanceof IRegisterOperand && op.isMemory())
+			op = ((IRegisterOperand) op).getReg();
+		
+		if (op instanceof ISymbolOperand)
+			return ((ISymbolOperand) op).getSymbol();
+		return null;
+	}
+
+	protected void assertSameSymbol(HLInstruction instr,
+			ISymbol sym, String string) {
+		assertTrue(instr+":"+sym, symbolMatches(sym, string)
+				 );
+	}
+
+	protected void assertNotSameSymbol(HLInstruction instr,
+			ISymbol sym, String string) {
+		assertFalse(instr+":"+sym, symbolMatches(sym, string)
+		);
+	}
+
+	protected boolean symbolMatches(ISymbol sym, String string) {
+		return sym.getUniqueName().equals(string)
+				 || sym.getName().equals(string)
+				 || sym.getUniqueName().startsWith("%" + string)
+				 || sym.getUniqueName().startsWith("@" + string)
+				 || sym.getUniqueName().startsWith(string + ".")
+				 || sym.getUniqueName().contains("." + string + ".");
+	}
+
+	protected int findInstrWithSymbol(List<HLInstruction> instrs, String string, int idx) {
+		for (int i = idx + 1; i < instrs.size(); i++) {
+			HLInstruction instr = instrs.get(i);	
+			for (AssemblerOperand op : instr.getOps()) {
+				ISymbol sym = getOperandSymbol(op);
+				if (sym != null && symbolMatches(sym, string))
+					return i;
+			}
+		}
+		return -1;
+	}
+
+	protected int findInstrWithSymbol(List<HLInstruction> instrs, String string) {
+		return findInstrWithSymbol(instrs, string, -1);
+	}
+
+	protected int findInstrWithInst(List<HLInstruction> instrs, String string) {
+		return findInstrWithInst(instrs, string, -1);
+	}
+
+	protected int findInstrWithInst(List<HLInstruction> instrs, String string, int from) {
+		for (int i = from + 1; i < instrs.size(); i++) {
+			HLInstruction instr = instrs.get(i);
+			if (InstructionTable.getInstName(instr.getInst()).equalsIgnoreCase(string))
+				return i;
+		}
+		return -1;
+	}
+
+	protected int findInstrWithLabel(String string) {
+		for (Block block : blocks) 
+			if (block.getLabel().getName().startsWith(string))
+				return instrs.indexOf(block.getFirst());
+		return -1;
+	}
+
 	@Test
 	public void testEmpty() throws Exception {
-		doIsel("foo = code() { };\n");
+		// no multi-ret
+		
+		LLModule mod = getModule("");
+		LLDefineDirective def = createDefine(mod, "test",
+				typeEngine.INT,
+				new LLType[0]);
+		LLBlock block;
+		block = def.addBlock(def.getScope().addTemporary("entry"));
+		block.instrs().add(new LLRetInstr(typeEngine.VOID)); 
+				
+		doIsel(mod, def);
+		assertFalse(def.flags().contains(LLDefineDirective.MULTI_RET));
+		
+		assertEquals(1, blocks.size());
+		
 		assertEquals(3, instrs.size());
 		HLInstruction inst = instrs.get(0);
-		assertEquals("ENTER", inst.toString());
+		assertEquals("PROLOG", inst.toString());
 		inst = instrs.get(1);
-		assertEquals("EXIT", inst.toString());
+		assertEquals("EPILOG", inst.toString());
 		inst = instrs.get(2);
 		assertEquals("B *R11", inst.toString());
 	}
+	@Test
+	public void testMultiRet() throws Exception {
+		// should get multi-ret
+		
+		LLModule mod = getModule("");
+		LLDefineDirective def = createDefine(mod, "test",
+				typeEngine.INT,
+				new LLType[0]);
+		LLBlock block;
+		block = def.addBlock(def.getScope().addTemporary("entry"));
+		ISymbol trueSym = def.getScope().addTemporary("true");
+		ISymbol falseSym = def.getScope().addTemporary("false");
+		block.instrs().add(new LLBranchInstr(typeEngine.BOOL, 
+				new LLConstOp(typeEngine.INT, 1), 
+				new LLSymbolOp(trueSym, typeEngine.LABEL),
+				new LLSymbolOp(falseSym, typeEngine.LABEL)));
+		
+		block = def.addBlock(trueSym);
+		block.instrs().add(new LLRetInstr(typeEngine.INT, 
+				new LLConstOp(typeEngine.INT, 10)));
+		block = def.addBlock(falseSym);
+		block.instrs().add(new LLRetInstr(typeEngine.INT, 
+				new LLConstOp(typeEngine.INT, -10)));
+				
+		doIsel(mod, def);
+		
+		assertTrue(def.flags().contains(LLDefineDirective.MULTI_RET));
+		
+		assertEquals(4, blocks.size());
+	}
 	
+
+	/**
+	 * @param mod
+	 * @param string
+	 * @param iNT
+	 * @param llTypes
+	 * @return
+	 */
+	private LLDefineDirective createDefine(LLModule mod, String string,
+			LLType ret, LLType[] argTypes) {
+
+		LLCodeType codeType = typeEngine.getCodeType(ret, argTypes);
+		ISymbol symbol = mod.getModuleScope().add(string, false);
+		ISymbol modSymbol = mod.getModuleSymbol(symbol, codeType);
+		
+		LLVMGenerator gen = new LLVMGenerator(v9t9Target);
+		LLArgAttrType[] argAttrTypes = new LLArgAttrType[argTypes.length];
+		for (int i = 0; i < argAttrTypes.length; i++) {
+			LLType argType = typeEngine.getRealType(argTypes[i]);
+			LLAttrs attrs = null;
+			argAttrTypes[i] = new LLArgAttrType("arg" + i,  attrs, argType);
+		}
+		LLDefineDirective define = new LLDefineDirective(gen, 
+				v9t9Target, mod, 
+				symbol.getScope(),
+				modSymbol,
+				null /*linkage*/, 
+				LLVisibility.DEFAULT,
+				null,
+				new LLAttrType(null, ret),
+				argAttrTypes,
+				new LLFuncAttrs(),
+				null /*section*/,
+				0 /*align*/,
+				null /*gc*/);
+		mod.add(define);
+		
+		return define;
+	}
 
 	@Test
 	public void testRetInt() throws Exception {
@@ -264,7 +531,24 @@ public class Test9900InstrSelection extends BaseParserTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "B", RegIndOperand.class, 11);
 	}
-
+	@Test
+	public void testPtrDeref4() throws Exception {
+		dumpLLVMGen = true;
+		doIsel("foo = code(x:Int[10]^) { (x-1)[2] };\n");
+		
+		int idx;
+		HLInstruction inst;
+		
+		idx = findInstrWithInst(instrs, "LEA", 1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", AddrOffsOperand.class, "x", -2, RegTempOperand.class);
+		HLInstruction inst0 = inst;
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", AddrOffsOperand.class, ((RegTempOperand) inst0.getOp2()).getSymbol().getName(), 4, RegTempOperand.class);
+		
+	}
 	@Test
 	public void testSetGlobal1() throws Exception {
 		dumpLLVMGen = true;
@@ -283,163 +567,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 		ISymbol sym = getOperandSymbol(inst.getOp2());
 		assertTrue(sym+"", sym.getScope() instanceof ModuleScope);
 		
-	}
-	@SuppressWarnings("unchecked")
-	protected void matchInstr(HLInstruction instr, String name, Object... stuff) {
-		assertEquals(instr+"", name.toLowerCase(), InstructionTable.getInstName(instr.getInst()).toLowerCase());
-		int opidx = 1;
-		for( int i = 0; i < stuff.length; ) {
-			AssemblerOperand op = instr.getOp(opidx++);
-			if (stuff[i] instanceof Class) {
-				assertTrue(instr+":"+i, ((Class)stuff[i]).isInstance(op));
-				i++;
-				if (i >= stuff.length)
-					break;
-				if (stuff[i] instanceof String) {
-					String string = (String) stuff[i];
-					AssemblerOperand testOp = op;
-					i++;
-					if (op instanceof AddrOperand)
-						testOp = ((AddrOperand) op).getAddr();
-					if (op instanceof IRegisterOperand && op.isMemory())
-						testOp = ((IRegisterOperand) op).getReg();
-					
-					boolean eq = true;
-					if (string.startsWith("~")) {
-						string = string.substring(1);
-						eq = false;
-					}
-					
-					ISymbol sym = getOperandSymbol(testOp);
-					if (sym != null) {
-						if (eq)
-							assertSameSymbol(instr, sym, string);
-						else
-							assertNotSameSymbol(instr, sym, string);
-					} else {
-						if (eq)
-							assertEquals(instr+":"+op, string, op.toString());
-						else
-							if (string.equals(testOp.toString()))
-								fail(instr+":"+testOp);
-					}
-						
-				}
-				else if (stuff[i] instanceof Integer) {
-					Integer num = (Integer) stuff[i];
-					i++;
-					if (op instanceof IRegisterOperand) {
-						assertTrue(instr+":"+op+" #", ((IRegisterOperand) op).isReg(num));
-					}
-					else if (op instanceof RegTempOperand)
-						assertEquals(instr+":"+op, num, (Integer)((RegTempOperand) op).getLocal().getVr());
-					else if (op instanceof NumberOperand)
-						assertEquals(instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
-					else if (op instanceof ConstPoolRefOperand)
-						assertEquals(instr+":"+op, num, (Integer)((ConstPoolRefOperand) op).getValue());
-					else 
-						assertEquals(instr+":"+op, num, op);
-				}
-				else if (stuff[i] instanceof Boolean) {
-					if (op instanceof RegTempOperand)
-						assertEquals(instr+":"+op, stuff[i], ((RegTempOperand) op).isHighReg());
-					else
-						fail("expected register temp");
-					i++;
-				}
-				else if (stuff[i] instanceof AssemblerOperand) {
-					AssemblerOperand testOp = null;
-					if (op instanceof AddrOperand)
-						testOp = ((AddrOperand) op).getAddr();
-					else if (op instanceof AddrOffsOperand)
-						testOp = ((AddrOffsOperand) op).getAddr();
-					else if (op instanceof IRegisterOperand && op.isMemory())
-						testOp = ((IRegisterOperand) op).getReg();
-					
-					if (testOp != null) {
-						assertEquals(instr+":"+op+" subop", stuff[i], testOp);
-						i++;
-					}
-				}
-				if (i < stuff.length && stuff[i] instanceof Integer) {
-					int num = (Integer) stuff[i++];
-					if (op instanceof RegOffsOperand) {
-						AssemblerOperand offs = ((RegOffsOperand) op).getAddr();
-						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
-					}
-					if (op instanceof AddrOffsOperand) {
-						AssemblerOperand offs = ((AddrOffsOperand) op).getOffset();
-						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
-					}
-				}
-			}
-			else if (stuff[i] instanceof AssemblerOperand) {
-				assertEquals(instr+":"+op, stuff[i], op);
-				i++;
-			}
-			else
-				fail("unknown handling " + stuff[i]);
-		}
-	}
-
-	
-	protected ISymbol getOperandSymbol(AssemblerOperand op) {
-		if (op instanceof AddrOperand)
-			op = ((AddrOperand) op).getAddr();
-		if (op instanceof IRegisterOperand && op.isMemory())
-			op = ((IRegisterOperand) op).getReg();
-		
-		if (op instanceof ISymbolOperand)
-			return ((ISymbolOperand) op).getSymbol();
-		return null;
-	}
-	protected void assertSameSymbol(HLInstruction instr,
-			ISymbol sym, String string) {
-		assertTrue(instr+":"+sym, symbolMatches(sym, string)
-				 );
-	}
-	protected void assertNotSameSymbol(HLInstruction instr,
-			ISymbol sym, String string) {
-		assertFalse(instr+":"+sym, symbolMatches(sym, string)
-		);
-	}
-
-	protected boolean symbolMatches(ISymbol sym, String string) {
-		return sym.getUniqueName().equals(string)
-				 || sym.getName().equals(string)
-				 || sym.getUniqueName().startsWith("%" + string)
-				 || sym.getUniqueName().startsWith("@" + string)
-				 || sym.getUniqueName().startsWith(string + ".")
-				 || sym.getUniqueName().contains("." + string + ".");
-	}
-	
-	protected int findInstrWithSymbol(List<HLInstruction> instrs, String string, int idx) {
-		for (int i = idx + 1; i < instrs.size(); i++) {
-			HLInstruction instr = instrs.get(i);	
-			for (AssemblerOperand op : instr.getOps()) {
-				ISymbol sym = getOperandSymbol(op);
-				if (sym != null && symbolMatches(sym, string))
-					return i;
-			}
-		}
-		return -1;
-	}
-
-	protected int findInstrWithSymbol(List<HLInstruction> instrs, String string) {
-		return findInstrWithSymbol(instrs, string, -1);
-	}
-
-	protected int findInstrWithInst(List<HLInstruction> instrs, String string) {
-		return findInstrWithInst(instrs, string, -1);
-	}
-
-	protected int findInstrWithInst(List<HLInstruction> instrs, String string, int from) {
-		for (int i = from + 1; i < instrs.size(); i++) {
-			HLInstruction instr = instrs.get(i);
-			if (InstructionTable.getInstName(instr.getInst()).equalsIgnoreCase(string))
-				return i;
-		}
-		return -1;
 	}
 	@Test
 	public void testConsts1() throws Exception {
@@ -1006,7 +1133,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegTempOperand.class, "~y");
+		matchInstr(inst, "ISET", NumberOperand.class, CompareOperand.CMP_SLT, RegTempOperand.class, "~y");
 		
 		idx = findInstrWithInst(instrs, "CI", idx);
 		inst = instrs.get(idx);
@@ -1014,7 +1141,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_EQ, RegTempOperand.class, "~x");
+		matchInstr(inst, "ISET", NumberOperand.class, CompareOperand.CMP_EQ, RegTempOperand.class, "~x");
 		HLInstruction set2 = inst;
 
 		idx = findInstrWithInst(instrs, "SOCB", idx);
@@ -1037,7 +1164,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegTempOperand.class, "~y");
+		matchInstr(inst, "ISET", NumberOperand.class, CompareOperand.CMP_SLT, RegTempOperand.class, "~y");
 		
 		// don't use CI with bytes, since the low byte is unknown
 		idx = findInstrWithInst(instrs, "CB", idx);
@@ -1046,7 +1173,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_EQ, RegTempOperand.class, "~x");
+		matchInstr(inst, "ISET", NumberOperand.class, CompareOperand.CMP_EQ, RegTempOperand.class, "~x");
 		HLInstruction set2 = inst;
 
 		idx = findInstrWithInst(instrs, "SOCB", idx);
@@ -1069,7 +1196,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 		
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_SLT, RegTempOperand.class, "~y");
+		matchInstr(inst, "ISET", NumberOperand.class, CompareOperand.CMP_SLT, RegTempOperand.class, "~y");
 		HLInstruction set1 = inst;
 
 		idx = findInstrWithInst(instrs, "JCC", idx);
@@ -1082,7 +1209,7 @@ public class Test9900InstrSelection extends BaseParserTest {
 
 		idx = findInstrWithInst(instrs, "ISET", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "ISET", NumberOperand.class, InstrSelection.CMP_EQ, RegTempOperand.class, "~x");
+		matchInstr(inst, "ISET", NumberOperand.class, CompareOperand.CMP_EQ, RegTempOperand.class, "~x");
 
 		idx = findInstrWithInst(instrs, "JMP", idx);
 		inst = instrs.get(idx);
@@ -1525,13 +1652,6 @@ public class Test9900InstrSelection extends BaseParserTest {
 
     }
 
-	private int findInstrWithLabel(String string) {
-		for (Block block : blocks) 
-			if (block.getLabel().getName().startsWith(string))
-				return instrs.indexOf(block.getFirst());
-		return -1;
-	}
-	
 	@Test
 	public void testCalls1() throws Exception {
 		dumpLLVMGen = true;
@@ -1961,4 +2081,22 @@ public class Test9900InstrSelection extends BaseParserTest {
 		matchInstr(inst, "COPY", AddrOperand.class, AddrOperand.class, "y");
 		
     }
+    
+	@Test
+	public void testReturnMulti() throws Exception {
+		dumpLLVMGen =true;
+		doIsel("foo = code(x, y:Int ) { if x < y then -1 elif x == y then 0 else { repeat 100 do x<<y } };\n");
+		
+		int idx;
+		idx = findInstrWithLabel("loopEnter");
+		idx = findInstrWithSymbol(instrs, "y", idx);
+		HLInstruction inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegTempOperand.class, "y", RegTempOperand.class, 0);
+		
+		idx = findInstrWithInst(instrs, "SLA");
+		inst = instrs.get(idx);
+		// do not reuse 'x': not last use
+		matchInstr(inst, "SLA", RegTempOperand.class, "~x", RegTempOperand.class, 0);
+	}
+
 }

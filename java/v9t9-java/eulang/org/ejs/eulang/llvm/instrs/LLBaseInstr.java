@@ -4,6 +4,9 @@
 package org.ejs.eulang.llvm.instrs;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.llvm.LLBlock;
@@ -18,6 +21,7 @@ public abstract class LLBaseInstr implements LLInstr {
 	protected final String name;
 	protected final LLOperand[] ops;
 	protected int number;
+	protected Set<String> flags = Collections.emptySet();
 	
 	/**
 	 * 
@@ -157,5 +161,15 @@ public abstract class LLBaseInstr implements LLInstr {
 	public void setNumber(int number) {
 		this.number = number;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLInstr#flags()
+	 */
+	@Override
+	public Set<String> flags() {
+		if (flags == Collections.EMPTY_SET) {
+			flags = new HashSet<String>();
+		}
+		return flags;
+	}
 }

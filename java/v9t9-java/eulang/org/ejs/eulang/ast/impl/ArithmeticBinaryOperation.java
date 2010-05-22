@@ -20,6 +20,7 @@ import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
@@ -91,7 +92,7 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 				throw new TypeException("cannot find compatible type for '" + getName() + "' on " 
 						+ types.left.toString() + " and " + types.right.toString());
 			
-			if (commonType.getBasicType() == BasicType.POINTER && this == IOperation.SUB) {
+			if (this == IOperation.SUB && commonType.getBasicType() == BasicType.POINTER && types.right.getBasicType() == BasicType.POINTER) {
 				commonType = typeEngine.PTRDIFF;
 			}
 			if (types.result == null || types.result.isGeneric()) {
@@ -187,6 +188,15 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 				left.getType().getBasicType() == BasicType.POINTER && right.getType().getBasicType() == BasicType.INTEGRAL) {
 			
 			LLOperand ret = currentTarget.newTemp(type);
+			if (this == IOperation.SUB) {
+				if (right instanceof LLConstOp) {
+					right = new LLConstOp(right.getType(), 0 - ((LLConstOp) right).getValue().longValue());
+				} else {
+					LLTempOp neg = currentTarget.newTemp(right.getType());
+					currentTarget.emit(new LLBinaryInstr("sub", neg, neg.getType(), new LLConstOp(0), right));
+					right = neg;
+				}
+			}
 			currentTarget.emit(new LLGetElementPtrInstr(ret, ret.getType(), 
 					left, right));
 			return ret;

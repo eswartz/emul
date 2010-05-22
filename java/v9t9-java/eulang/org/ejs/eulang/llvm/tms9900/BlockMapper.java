@@ -11,6 +11,7 @@ import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 
 /**
+ * Make a map of LLBlock to integers.
  * @author ejs
  *
  */

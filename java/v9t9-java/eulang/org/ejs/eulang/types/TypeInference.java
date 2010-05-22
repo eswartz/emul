@@ -594,7 +594,12 @@ public class TypeInference {
 				
 			if (node instanceof IAstDefineStmt) {
 				IAstDefineStmt define = (IAstDefineStmt) node;
-				for (IAstTypedExpr expr : define.getConcreteInstances()) {
+				Collection<IAstTypedExpr> concreteInstances = define.getConcreteInstances();
+				if (!define.isGeneric() && concreteInstances.isEmpty() && !define.bodyList().isEmpty()) {
+					concreteInstances = define.bodyList();
+					//throw new TypeException(define, "unresolved define instances encountered; add some type specifications");
+				}
+				for (IAstTypedExpr expr : concreteInstances) {
 					validateTypes(expr);
 				}
 				return;
@@ -607,12 +612,12 @@ public class TypeInference {
 				IAstTypedNode typed = (IAstTypedNode) node;
 				if (typed instanceof IAstCodeExpr && ((IAstCodeExpr) typed).isMacro()) {
 					// okay 
-				} else if (typed.getType() == null ) {
-					throw new TypeException(node, "unknown types encountered; add some type specifications");
+					recurse = false;
+				} else {
+					node.validateType(typeEngine);
 				}
 			}
 			
-			node.validateType(typeEngine);
 			
 			try {
 				node.validateChildTypes(typeEngine);

@@ -92,7 +92,46 @@ public class TestTypes extends BaseParserTest {
     	
     	
     }
-    
+    /**
+     * 
+int xes[10][5][2];
+     * @xes = common global [10 x [5 x [2 x i32]]] zeroinitializer, align 32 ; <[10 x [5 x [2 x i32]]]*> [#uses=1]
+     * 
+     * 
+xes[3][2][1]
+  %7 = tail call i32 (i8*, ...)* @printf(i8* noalias getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %6) nounwind ; <i32> [#uses=0]
+
+     * @throws Exception
+     */
+    @Test
+    public void testArrayDecls3() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"p : Int[10][5][2];\n"+
+    			""
+    			);
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt stmt = (IAstAllocStmt) mod.getScope().get("p").getDefinition();
+    	
+    	assertTrue(stmt.getType() instanceof LLArrayType);
+    	LLArrayType array10 = (LLArrayType)stmt.getType();
+		assertEquals(10, array10.getArrayCount());
+		
+    	LLArrayType array5 = (LLArrayType) array10.getSubType();
+		assertTrue(array5 instanceof LLArrayType);
+    	assertEquals(5, array5.getArrayCount());
+    	
+    	LLArrayType array2 = (LLArrayType) array5.getSubType();
+    	assertTrue(array2 instanceof LLArrayType);
+    	assertEquals(2, array2.getArrayCount());
+    	
+		assertEquals(typeEngine.INT, array2.getSubType());
+
+    	assertTrue(stmt.getType().isCompatibleWith(stmt.getType()));
+    	assertNull(array10.getDynamicSizeExpr());
+    	
+    }
     @Test
     public void testArrayAccess0() throws Exception {
     	IAstModule mod = doFrontend(

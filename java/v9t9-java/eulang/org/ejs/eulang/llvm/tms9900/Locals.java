@@ -338,7 +338,6 @@ public class Locals {
 		assert alloc != null;
 		
 		RegisterLocal local = new RegisterLocal(regClass, name, type, number);
-		alloc.allocateRegister(number);
 		
 		System.out.println("Allocated " + local);
 		regLocals.put(name, (RegisterLocal) local);

@@ -3,15 +3,10 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
-import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstDataType;
-import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstExprStmt;
-import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.ISymbol;
@@ -477,4 +472,12 @@ public class TestLLVMGenerator extends BaseParserTest {
     	assertMatchText("call.*Nest1.Nest1.Inner.Nest1_", gen.getUnoptimizedText());  
     }
 
+    @Test
+    public void testArrayAccess2() throws Exception {
+		dumpLLVMGen = true;
+		IAstModule mod = doFrontend("foo = code(x:Int[10]^) { (x-1)[2] };\n");
+		LLVMGenerator gen = doGenerate(mod);
+		assertMatchText("getelementptr.*, %Int -1", gen.getUnoptimizedText());
+
+    }
 }

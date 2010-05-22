@@ -21,7 +21,7 @@ public class RegAlloc {
 
 	private final IRegClass regClass;
 	/** in-use physical registers */
-	private HashSet<Integer> physRegs;
+	//private HashSet<Integer> physRegs;
 	/** never-used physical registers */
 	private HashSet<Integer> fixedRegs;
 	private int vrNum;
@@ -43,7 +43,7 @@ public class RegAlloc {
 		for (int reg : cc.getFixedRegisters(regClass)) {
 			fixedRegs.add(reg);
 		}
-		this.physRegs = new HashSet<Integer>(fixedRegs);
+		//this.physRegs = new HashSet<Integer>(fixedRegs);
 		
 		this.regSize = regClass.getRegisterSize();
 		this.vrNum = regClass.getRegisterCount();
@@ -80,11 +80,6 @@ public class RegAlloc {
 				type,
 				vr);
 		return local;
-	}
-
-	public void allocateRegister(int number) {
-		assert !physRegs.contains(number);
-		physRegs.add(number);
 	}
 
 }
