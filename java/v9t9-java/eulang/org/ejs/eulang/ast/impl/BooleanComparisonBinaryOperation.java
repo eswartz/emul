@@ -154,7 +154,9 @@ public class BooleanComparisonBinaryOperation extends Operation implements IBina
 		currentTarget.store(expr.getType(), left, retval);
 		
 		rhsLabel = scope.addTemporary("rhsOut");
+		rhsLabel.setType(generator.getTypeEngine().LABEL);
 		outLabel = scope.addTemporary("andOut");
+		outLabel.setType(generator.getTypeEngine().LABEL);
 		
 		// if it was false, done
 		currentTarget.emit(new LLBranchInstr(
@@ -202,7 +204,9 @@ public class BooleanComparisonBinaryOperation extends Operation implements IBina
 		
 		// if it was true, done
 		rhsLabel = scope.addTemporary("rhsOut");
+		rhsLabel.setType(generator.getTypeEngine().LABEL);
 		outLabel = scope.addTemporary("andOut");
+		outLabel.setType(generator.getTypeEngine().LABEL);
 		currentTarget.emit(new LLBranchInstr(
 				expr.getLeft().getType(),
 				//typeEngine.LLBOOL,

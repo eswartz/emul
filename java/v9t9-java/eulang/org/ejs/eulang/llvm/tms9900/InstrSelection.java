@@ -348,8 +348,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		blockMap = new LinkedHashMap<ISymbol, Block>();
 		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();
 
-		if (def.flags().contains(LLDefineDirective.MULTI_RET))
+		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
 			epilogLabel = locals.getScope().add("$exit", true);
+			epilogLabel.setType(typeEngine.LABEL);
+		}
 
 		return true;
 	}
@@ -783,6 +785,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		AssemblerOperand falseOp = new SymbolLabelOperand(falseTarget.getType(), falseTarget.getSymbol());
 		
 		HLInstruction inst = HLInstruction.create(Pjcc, test, trueOp, falseOp);
+		if (test instanceof ISymbolOperand)
+			inst.setImplicitSources(new ISymbol[] { ((ISymbolOperand) test).getSymbol() });
+		else
+			inst.setImplicitSources(new ISymbol[0]);
 		inst.setImplicitTargets(new ISymbol[0]);
 		emitInstr(inst);
 	}

@@ -36,6 +36,7 @@ import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.RenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
@@ -126,8 +127,32 @@ public class Test9900InstrSelection extends BaseParserTest {
 		};
 		
 		def.accept(isel);
+		
+		for (HLInstruction instr : instrs) {
+			validateInstr(instr);
+		}
 	}
 	
+	/**
+	 * @param instr
+	 */
+	private void validateInstr(HLInstruction instr) {
+		assertNotNull(instr);
+		for (AssemblerOperand op : instr.getOps()) {
+			assertNotNull(op);
+			if (op instanceof AsmOperand)
+				assertNotNull(instr+":"+op+"", ((AsmOperand) op).getType() != null);
+		}
+		for (ISymbol sym : instr.getSources()) {
+			assertNotNull(sym);
+			assertNotNull(instr+":"+sym, sym.getType());
+		}
+		for (ISymbol sym : instr.getTargets()) {
+			assertNotNull(sym);
+			assertNotNull(instr+":"+sym, sym.getType());
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	protected void matchInstr(HLInstruction instr, String name, Object... stuff) {
 		assertEquals(instr+"", name.toLowerCase(), InstructionTable.getInstName(instr.getInst()).toLowerCase());
@@ -352,17 +377,14 @@ public class Test9900InstrSelection extends BaseParserTest {
 	
 
 	/**
-	 * @param mod
-	 * @param string
-	 * @param iNT
-	 * @param llTypes
+	 * Create a stock define directive
 	 * @return
 	 */
-	private LLDefineDirective createDefine(LLModule mod, String string,
+	protected LLDefineDirective createDefine(LLModule mod, String funcName,
 			LLType ret, LLType[] argTypes) {
 
 		LLCodeType codeType = typeEngine.getCodeType(ret, argTypes);
-		ISymbol symbol = mod.getModuleScope().add(string, false);
+		ISymbol symbol = mod.getModuleScope().add(funcName, false);
 		ISymbol modSymbol = mod.getModuleSymbol(symbol, codeType);
 		
 		LLVMGenerator gen = new LLVMGenerator(v9t9Target);
