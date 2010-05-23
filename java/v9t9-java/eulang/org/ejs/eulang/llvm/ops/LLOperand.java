@@ -26,10 +26,5 @@ public interface LLOperand {
 	 * @param type
 	 */
 	void setType(LLType type);
-	/**
-	 * @param instr TODO
-	 * @param num TODO
-	 * @param visitor
-	 */
 	void accept(LLInstr instr, int num, ILLCodeVisitor visitor);
 }

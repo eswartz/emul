@@ -8,7 +8,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestParser extends BaseParserTest  {
+public class TestParser extends BaseTest  {
     @Test
     public void testEmpty() throws Exception {
     	parse("  \n\n");

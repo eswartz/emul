@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
+import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -13,13 +14,15 @@ import org.ejs.eulang.types.LLType;
 public class SymbolOperand extends BaseHLOperand {
 
 	private final ISymbol symbol;
+	private final ILocal local;
 
 	/**
 	 * @param symbol
 	 */
-	public SymbolOperand(LLType type, ISymbol symbol) {
+	public SymbolOperand(LLType type, ISymbol symbol, ILocal local) {
 		super(type);
 		this.symbol = symbol;
+		this.local = local;
 	}
 
 	/* (non-Javadoc)
@@ -62,6 +65,14 @@ public class SymbolOperand extends BaseHLOperand {
 	 */
 	public ISymbol getSymbol() {
 		return symbol;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand#getLocal()
+	 */
+	@Override
+	public ILocal getLocal() {
+		return local;
 	}
 	
 	@Override

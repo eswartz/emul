@@ -3,13 +3,11 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
 import org.ejs.eulang.ITarget;
@@ -33,6 +31,7 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -114,10 +113,18 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public class Locals {
+	public boolean DUMP = false;
 
-	private Map<ISymbol, ILocal> argumentLocals;
+	/** any locals defined on the stack */
 	private Map<ISymbol, StackLocal> stackLocals;
+	/** any locals defined in registers */
 	private Map<ISymbol, RegisterLocal> regLocals;
+
+	/** only those locals defined as incoming arguments */
+	private Map<ISymbol, ILocal> argumentLocals;
+	/** only those locals defined as expression temps */
+	private Map<ISymbol, RegisterLocal> tempLocals;
+	
 	protected LLBlock currentBlock;
 	private Alignment alignment;
 	
@@ -133,9 +140,12 @@ public class Locals {
 		ITarget target = def.getTarget();
 		this.cc = target.getCallingConvention(def.getConvention());
 
-		argumentLocals = new LinkedHashMap<ISymbol, ILocal>();
 		stackLocals = new LinkedHashMap<ISymbol, StackLocal>();
 		regLocals = new LinkedHashMap<ISymbol, RegisterLocal>();
+		
+		argumentLocals = new LinkedHashMap<ISymbol, ILocal>();
+		tempLocals = new LinkedHashMap<ISymbol, RegisterLocal>();
+		
 		localScope = def.getScope();
 		
 		alignment = target.getTypeEngine().new Alignment(Target.STACK);
@@ -155,11 +165,27 @@ public class Locals {
 		return forceLocalsToStack;
 	}
 
+	/** Get locals allocated on the stack */
 	public Map<ISymbol, StackLocal> getStackLocals() {
 		return stackLocals;
 	}
+	/** Get locals allocated as registers */
 	public Map<ISymbol, RegisterLocal> getRegLocals() {
 		return regLocals;
+	}
+	
+	/**
+	 * Get the locals defined for arguments, which may contain entries from stackLocals or regLocals
+	 */
+	public Collection<ILocal> getArgumentLocals() {
+		return argumentLocals.values();
+	}
+	/**
+	 * Get the locals which are expression temps that go into registers.
+	 * @return the tempLocals
+	 */
+	public Collection<RegisterLocal> getTempLocals() {
+		return tempLocals.values();
 	}
 	
 	public void buildLocalTable() {
@@ -170,7 +196,7 @@ public class Locals {
 			@Override
 			public boolean enterBlock(LLBlock block) {
 				currentBlock = block;
-				System.out.println("Block " + currentBlock.getLabel());
+				if (DUMP) System.out.println("Block " + currentBlock.getLabel());
 				return true;
 			}
 			@Override
@@ -181,21 +207,21 @@ public class Locals {
 					if (alloca.getResult() instanceof LLSymbolOp) {
 						LLSymbolOp result = (LLSymbolOp) alloca.getResult();
 						if (forceLocalsToStack)
-							allocateLocal(result.getSymbol(), alloca.getType()).setInit(new Pair<LLBlock, LLInstr>(block, instr));
+							allocateLocal(result.getSymbol(), alloca.getType());
 						else
-							allocateTemp(result.getSymbol(), alloca.getType()).setInit(new Pair<LLBlock, LLInstr>(block, instr));
+							allocateTemp(result.getSymbol(), alloca.getType());
 					} else
 						assert false;
 				} else if (instr instanceof LLAssignInstr) {
 					// normal expression temp; try for a register again
 					LLAssignInstr assign = (LLAssignInstr) instr;
 					if (assign.getResult() instanceof LLTempOp)
-						allocateTemp(assign).setInit(new Pair<LLBlock, LLInstr>(block, instr));
+						allocateTemp(assign);
 					else if (assign.getResult() != null)
 						assert false;
 				}
 				else if (instr instanceof LLStoreInstr) {
-					// see if we're storing into an argument local
+					// see if we're initially storing into an argument local
 					matchLocalAllocation((LLStoreInstr) instr);
 				}
 				return true;
@@ -215,14 +241,6 @@ public class Locals {
 			 * @param instr
 			 */
 			protected void updateLocalUsage(LLInstr instr, ILocal local) {
-				Map<LLBlock, List<Integer>> blockMap = local.getUses();
-				List<Integer> instrs = blockMap.get(currentBlock);
-				if (instrs == null) {
-					instrs = new ArrayList<Integer>();
-					blockMap.put(currentBlock, instrs);
-				}
-				instrs.add(instr.getNumber());
-				
 				if (local.getIncoming() != null)
 					updateLocalUsage(instr, local.getIncoming());
 			}
@@ -243,15 +261,12 @@ public class Locals {
 				ISymbol mirrorSym = ((LLSymbolOp) ops[1]).getSymbol();
 				StackLocal mirror = stackLocals.get(mirrorSym);
 				if (mirror != null) {
-					System.out.println("Reassigning " + mirror + " to " + arg);
+					if (DUMP) System.out.println("Reassigning " + mirror + " to " + arg);
 					
 					int curOffset = mirror.getOffset();
 					mirror.setIncoming(arg);
 					if (arg instanceof StackLocal) {
 						mirror.setOffset(((StackLocal) arg).getOffset());
-					} else if (arg instanceof RegisterLocal) {
-						//stackLocals.remove(mirrorSym);
-						//regLocals.put(mirrorSym, (RegisterLocal) arg);
 					}
 					
 					// recover stack space: should always work since we store
@@ -278,22 +293,19 @@ public class Locals {
 			if (loc instanceof CallerStackLocation) {
 				// fixed register
 				ICallingConvention.CallerStackLocation regLoc = (CallerStackLocation) loc;
-				local = allocateRegister(localScope.add(loc.name, false),
+				local = allocateVarRegister(localScope.add(loc.name, false),
 						loc.type, regLoc.regClass, regLoc.number);
-				local.setInit(new Pair<LLBlock, LLInstr>(null, null));				
 			} 
 			else if (loc instanceof RegisterLocation) {
 				// fixed register
 				ICallingConvention.RegisterLocation regLoc = (RegisterLocation) loc;
-				local = allocateRegister(localScope.get(loc.name),
+				local = allocateVarRegister(localScope.get(loc.name),
 						loc.type, regLoc.regClass, regLoc.number);
-				local.setInit(new Pair<LLBlock, LLInstr>(null, null));
 			}
 			else if (loc instanceof StackLocation) {
 				ICallingConvention.StackLocation stackLoc = (StackLocation) loc;
 				
 				local = allocateLocal(localScope.get(loc.name), loc.type, stackLoc.offset);
-				local.setInit(new Pair<LLBlock, LLInstr>(null, null));
 			}
 			else if (loc instanceof StackBarrierLocation) {
 				continue;
@@ -328,19 +340,21 @@ public class Locals {
 		assert !stackLocals.containsKey(name);
 		
 		stackLocals.put(name, local);
-		System.out.println("Allocated " + local);
+		if (DUMP) System.out.println("Allocated " + local);
 		
 		return local;
 	}
 
-	public RegisterLocal allocateRegister(ISymbol name, LLType type, IRegClass regClass, int number) {
+	private RegisterLocal allocateVarRegister(ISymbol name, LLType type, IRegClass regClass, int number) {
 		RegAlloc alloc = regAllocs.get(regClass);
 		assert alloc != null;
 		
 		RegisterLocal local = new RegisterLocal(regClass, name, type, number);
 		
-		System.out.println("Allocated " + local);
+		if (DUMP) System.out.println("Allocated " + local);
 		regLocals.put(name, (RegisterLocal) local);
+		
+		// not a temp
 		
 		return local;
 	}
@@ -372,9 +386,11 @@ public class Locals {
 			return allocateLocal(name, type);
 		}
 		
-		System.out.println("Allocated " + local);
+		if (DUMP) System.out.println("Allocated " + local);
+		
 		assert !regLocals.containsKey(name);
 		regLocals.put(name, (RegisterLocal) local);
+		tempLocals.put(name, (RegisterLocal) local);
 
 		return local;
 	}
@@ -408,11 +424,12 @@ public class Locals {
 	 */
 	public boolean forceToRegister(RegisterLocal regLocal, int reg) {
 		regLocal.setVr(reg);
-		System.out.println("Reassigned " + regLocal);
+		if (DUMP) System.out.println("Reassigned " + regLocal);
 		return true;
 	}
 
 	/**
+	 * Get the local referenced by this operand.
 	 * @param operand
 	 * @return
 	 */
@@ -429,21 +446,21 @@ public class Locals {
 	}
 
 	/**
+	 * Get the local referenced by this symbol.
 	 * @param sym
-	 * @return
+	 * @return local or <code>null</code> if not local or not a variable/temp
 	 */
 	public ILocal getLocal(ISymbol sym) {
 		ILocal local = regLocals.get(sym);
 		if (local == null)
 			local = stackLocals.get(sym);
-		if (local == null)
-			local = argumentLocals.get(sym);
 		return local;
 	}
 
 	/**
+	 * Get the local that is used for the operand's storage (if it is a symbol)
 	 * @param op
-	 * @return
+	 * @return local or <code>null</code> if not a local
 	 */
 	public ILocal getFinalLocal(LLOperand op) {
 		ILocal local = getLocal(op);
@@ -455,6 +472,7 @@ public class Locals {
 	}
 
 	/**
+	 * Get the local that is used for the symbol's storage
 	 * @param sym
 	 * @return
 	 */
@@ -467,5 +485,20 @@ public class Locals {
 		return local;
 	}
 
+	/**
+	 * Get all the locals (stack, register, temp)
+	 * @return
+	 */
+	public ILocal[] getAllLocals() {
+		Map<ISymbol, ILocal> map = new LinkedHashMap<ISymbol, ILocal>();
+		for (Map.Entry<ISymbol, ? extends ILocal> entry : stackLocals.entrySet()) {
+			map.put(entry.getKey(), entry.getValue());
+		}
+		for (Map.Entry<ISymbol, ? extends ILocal> entry : regLocals.entrySet()) {
+			map.put(entry.getKey(), entry.getValue());
+		}
+		return (ILocal[]) map.values().toArray(new ILocal[map.values().size()]);
+	}
+	
 
 }

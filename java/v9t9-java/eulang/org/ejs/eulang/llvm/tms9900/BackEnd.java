@@ -53,7 +53,7 @@ public class BackEnd {
 
 	
 	public Routine generateDefine(LLDefineDirective def) {
-		def.accept(new RenumberAndStatisticsVisitor());
+		def.accept(new LLRenumberAndStatisticsVisitor());
 		
 		CodeGenVisitor cg = new CodeGenVisitor();
 		def.accept(cg);

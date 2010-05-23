@@ -46,13 +46,9 @@ public abstract class BaseLLOperand implements LLOperand {
 	 */
 	@Override
 	public void accept(LLInstr instr, int num, ILLCodeVisitor visitor) {
-		try {
-			if (visitor.enterOperand(instr, num, this)) {
-				
-				visitor.exitOperand(instr, num, this);
-			}
-		} catch (ILLCodeVisitor.Terminate e) {
+		if (visitor.enterOperand(instr, num, this)) {
 			
+			visitor.exitOperand(instr, num, this);
 		}
 	}
 }

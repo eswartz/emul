@@ -3,12 +3,14 @@ package org.ejs.eulang.llvm.tms9900;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.symbols.ISymbol;
-
-import v9t9.tools.asm.assembler.HLInstruction;
 
 
 /**
@@ -85,8 +87,8 @@ public abstract class Routine {
 		return locals;
 	}
 	
-    abstract public boolean isReturn(HLInstruction inst);
-    abstract public HLInstruction[] generateReturn();
+    abstract public boolean isReturn(AsmInstruction inst);
+    abstract public AsmInstruction[] generateReturn();
 
 
     /** Get the blocks spanned by the routine.  Requires that the flowgraph info is complete. */
@@ -106,9 +108,21 @@ public abstract class Routine {
 		blocks.add(block);
 	}
 	
+	/**
+	 * @return the entry
+	 */
+	public Block getEntry() {
+		return entry;
+	}
 	public void setEntry(Block block) {
 		assert entry == null && blocks.contains(block);
 		entry = block;
+	}
+	/**
+	 * @return the exit
+	 */
+	public Block getExit() {
+		return exit;
 	}
 	public void setExit(Block block) {
 		assert exit == null && blocks.contains(block);
@@ -138,6 +152,92 @@ public abstract class Routine {
 	 */
 	public boolean hasBlCalls() {
 		return hasBlCalls;
+	}
+
+	/**
+	 * @param visitor
+	 */
+	public void accept(ICodeVisitor visitor) {
+		LinkedList<Block> toVisit = new LinkedList<Block>();
+		
+		if (visitor.enterRoutine(this)) {
+			switch (visitor.getWalk()) {
+			case LINEAR:
+				for (Block block : blocks) {
+					block.accept(visitor);
+				}
+				break;
+			case SUCCESSOR: {
+				assert entry != null;
+				toVisit.add(entry);
+				
+				Set<Block> visited = new HashSet<Block>();
+				while (!toVisit.isEmpty()) {
+					Block block = toVisit.pop();
+					for (Block succ : block.getSucc()) {
+						if (!visited.contains(succ))
+							toVisit.add(succ);
+					}
+					visited.add(block);
+					block.accept(visitor);
+				}
+				break;
+			}
+			case DOMINATOR:
+				assert entry != null;
+				toVisit.add(entry);
+				
+				while (!toVisit.isEmpty()) {
+					Block block = toVisit.pop();
+					for (Block child : block.getDominatedChildren()) {
+						toVisit.add(child);
+					}
+					block.accept(visitor);
+				}
+				break;
+			case DOMINATOR_PATHS: {
+				assert entry != null ;
+				
+				List<List<Block>> paths = new ArrayList<List<Block>>();
+				
+				visitPaths(paths);
+				
+				for (List<Block> path : paths) {
+					for (Block block : path) {
+						block.accept(visitor);
+					}
+				}
+				
+				break;
+			}
+			}
+			visitor.exitRoutine(this);
+		}
+	}
+
+	/**
+	 * Get all the paths through the dominator tree.
+	 * @param paths
+	 */
+	private void visitPaths(List<List<Block>> paths) {
+		
+		LinkedList<Pair<Block, List<Block>>> toVisit = new LinkedList<Pair<Block,List<Block>>>();
+		toVisit.add(new Pair<Block, List<Block>>(entry, new ArrayList<Block>()));
+		
+		while (!toVisit.isEmpty()) {
+			Pair<Block, List<Block>> pair = toVisit.pop();
+			Block block = pair.first;
+			List<Block> path = pair.second;
+			path.add(block);
+			if (!block.getDominatedChildren().isEmpty()) {
+				for (Block succ : block.getDominatedChildren()) {
+					toVisit.add(new Pair<Block, List<Block>>(succ, new ArrayList<Block>(path)));
+				}
+			} else {
+				paths.add(path);
+			}
+		}
+
 	}
 
 }

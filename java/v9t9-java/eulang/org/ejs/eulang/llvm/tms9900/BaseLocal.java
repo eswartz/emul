@@ -3,13 +3,12 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.ejs.coffee.core.utils.Pair;
-import org.ejs.eulang.llvm.LLBlock;
-import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -22,8 +21,9 @@ public class BaseLocal implements ILocal {
 	private LLType type;
 	private ISymbol name;
 	private ILocal incoming;
-	private Pair<LLBlock, LLInstr> init;
-	private Map<LLBlock, List<Integer>> uses;
+	private Pair<Block, AsmInstruction> init;
+	private Map<Block, List<AsmInstruction>> instUses;
+	private BitSet uses;
 
 	/**
 	 * 
@@ -35,7 +35,8 @@ public class BaseLocal implements ILocal {
 		this.name = name;
 		this.type = type;
 		this.init = null;
-		this.uses = new HashMap<LLBlock, List<Integer>>();
+		this.instUses = new HashMap<Block, List<AsmInstruction>>();
+		this.uses = new BitSet();
 	}
 	
 	/* (non-Javadoc)
@@ -112,29 +113,25 @@ public class BaseLocal implements ILocal {
 	public void setIncoming(ILocal incoming) {
 		this.incoming = incoming;
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getInit()
-	 */
-	@Override
-	public Pair<LLBlock, LLInstr> getInit() {
+
+	public Pair<Block, AsmInstruction> getInit() {
 		return init;
+	}
+
+	public void setInit(Pair<Block, AsmInstruction> init) {
+		this.init = init;
+	}
+
+	public Map<Block, List<AsmInstruction>> getInstUses() {
+		return instUses;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getUses()
 	 */
 	@Override
-	public Map<LLBlock, List<Integer>> getUses() {
+	public BitSet getUses() {
 		return uses;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setInit(org.ejs.coffee.core.utils.Pair)
-	 */
-	@Override
-	public void setInit(Pair<LLBlock, LLInstr> init) {
-		this.init = init;
 	}
 	
 }

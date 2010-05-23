@@ -47,7 +47,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestTypeInfer extends BaseParserTest {
+public class TestTypeInfer extends BaseTest {
 	{
 		//dumpTypeInfer = true;
 	}

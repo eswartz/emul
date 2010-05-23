@@ -34,7 +34,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestTypes extends BaseParserTest {
+public class TestTypes extends BaseTest {
 
     @Test
     public void testArrayDecls() throws Exception {

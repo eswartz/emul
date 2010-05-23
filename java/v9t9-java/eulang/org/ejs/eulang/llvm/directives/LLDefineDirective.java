@@ -381,19 +381,15 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	}
 	
 	public void accept(ILLCodeVisitor visitor) {
-		try {
-			if (visitor.enterCode(this)) {
+		if (visitor.enterCode(this)) {
 
-				for (LLBlock block : blocks) {
-					block.accept(visitor);
-				}
-				
+			for (LLBlock block : blocks) {
+				block.accept(visitor);
 			}
 			
-			visitor.exitCode(this);
-		} catch (ILLCodeVisitor.Terminate e) {
-			
 		}
+		
+		visitor.exitCode(this);
 	}
 
 

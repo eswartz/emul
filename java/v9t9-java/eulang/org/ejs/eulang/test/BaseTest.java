@@ -69,12 +69,12 @@ import org.ejs.eulang.types.TypeInference;
  * @author ejs
  *
  */
-public class BaseParserTest {
+public class BaseTest {
 
 	/**
 	 * 
 	 */
-	public BaseParserTest() {
+	public BaseTest() {
 		super();
 	}
 	

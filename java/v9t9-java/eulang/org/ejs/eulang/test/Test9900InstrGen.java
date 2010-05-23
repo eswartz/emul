@@ -20,7 +20,7 @@ import v9t9.tools.asm.assembler.HLInstruction;
  * @author ejs
  *
  */
-public class Test9900InstrGen extends BaseParserTest {
+public class Test9900InstrGen extends BaseTest {
 
 	protected BackEnd doCodeGen(String text) throws Exception {
 		LLModule mod = getModule(text);

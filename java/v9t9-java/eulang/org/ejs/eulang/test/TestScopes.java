@@ -15,7 +15,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestScopes extends BaseParserTest {
+public class TestScopes extends BaseTest {
 
 	@Test 
 	public void testScopeAdd1() throws Exception {

@@ -3,12 +3,11 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 
 import org.ejs.coffee.core.utils.Pair;
-import org.ejs.eulang.llvm.LLBlock;
-import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -28,9 +27,12 @@ public interface ILocal {
 	ILocal getIncoming();
 
 	/** Get the initialization of the local.  Pair(null, null) means argument. */
-	Pair<LLBlock, LLInstr> getInit();
+	Pair<Block, AsmInstruction> getInit();
 	/** Get the initialization of the local.  Pair(null, null) means argument. */
-	void setInit(Pair<LLBlock, LLInstr> init);
-	/** Get uses of the local. */
-	Map<LLBlock, List<Integer>> getUses();
+	void setInit(Pair<Block, AsmInstruction> init);
+	/** Get instruction uses of the local. */
+	Map<Block, List<AsmInstruction>> getInstUses();
+	/** Get instruction numbers for uses of the local */
+	BitSet getUses();
 }
+

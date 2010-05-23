@@ -16,7 +16,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestLLVMGenerator extends BaseParserTest {
+public class TestLLVMGenerator extends BaseTest {
 
 
 	@Test

@@ -14,8 +14,6 @@ import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.ISymbol;
 
-import v9t9.tools.asm.assembler.HLInstruction;
-
 /**
  * @author ejs
  *
@@ -105,8 +103,8 @@ public class CodeGenVisitor extends LLCodeVisitor {
 			unhandled(instr);
 		}
 		
-		HLInstruction[] rets = routine.generateReturn();
-		for (HLInstruction ret : rets)
+		AsmInstruction[] rets = routine.generateReturn();
+		for (AsmInstruction ret : rets)
 			block.addInst(ret);
 	}
 

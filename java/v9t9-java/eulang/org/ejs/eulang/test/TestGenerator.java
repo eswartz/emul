@@ -39,7 +39,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestGenerator extends BaseParserTest {
+public class TestGenerator extends BaseTest {
 
 	{
 		//dumpTreeize = true;

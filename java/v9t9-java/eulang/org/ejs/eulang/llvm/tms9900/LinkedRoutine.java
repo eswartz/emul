@@ -10,7 +10,6 @@ import org.ejs.eulang.llvm.directives.LLDefineDirective;
 
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.Operand;
-import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
@@ -25,7 +24,7 @@ public class LinkedRoutine extends Routine {
     }
     
     @Override
-    public boolean isReturn(HLInstruction inst) {
+    public boolean isReturn(AsmInstruction inst) {
         if (inst.getInst() != InstructionTable.Ib)
         	return false;
         Operand op1 = inst.getOp1();
@@ -38,9 +37,9 @@ public class LinkedRoutine extends Routine {
         return false;
     }
     
-    public HLInstruction[] generateReturn() {
-    	return new HLInstruction[] { 
-    			HLInstruction.create(InstructionTable.Ib, 
+    public AsmInstruction[] generateReturn() {
+    	return new AsmInstruction[] { 
+    			AsmInstruction.create(InstructionTable.Ib, 
     					new RegIndOperand(new NumberOperand(returnReg)))
     	};
     }

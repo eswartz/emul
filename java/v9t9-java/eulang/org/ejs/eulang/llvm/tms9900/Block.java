@@ -1,29 +1,42 @@
 package org.ejs.eulang.llvm.tms9900;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
 
-import v9t9.tools.asm.assembler.HLInstruction;
-
 public class Block {
 
 	static int nextId;
+
+	public enum Edge {
+		TREE,
+		FORWARD,
+		CROSS,
+		BACK
+	}
 	
 	private int id;
 
-	private LinkedList<HLInstruction> instrs;
-    public List<Block> succ;
-    public List<Block> pred;
+	private LinkedList<AsmInstruction> instrs;
+    private List<Block> succ;
+    private List<Block> pred;
+    
+    private Map<Block, Edge> edges;
+    
+    private Block idom;
+    private List<Block> children;
     
     public static final int fVisited = 1;
-    static final int fInsideInstruction = 2;
+    public static final int fInsideInstruction = 2;
     
     private int flags;
 
@@ -32,16 +45,43 @@ public class Block {
     public Block(Label label) {
     	this.label = label;
 		this.id = nextId++;
-		instrs = new LinkedList<HLInstruction>();
+		instrs = new LinkedList<AsmInstruction>();
+		edges = new LinkedHashMap<Block, Edge>();
         succ = new ArrayList<Block>(2);
         pred = new ArrayList<Block>(2);
+        children = new LinkedList<Block>();
     }
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((label == null) ? 0 : label.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Block other = (Block) obj;
+		if (label == null) {
+			if (other.label != null)
+				return false;
+		} else if (!label.equals(other.label))
+			return false;
+		return true;
+	}
 
 	@Override
     public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("block " + id + ": " + label.toString()+"\n");
-        for (HLInstruction instr : instrs) {
+        for (AsmInstruction instr : instrs) {
         	sb.append(instr);
         	sb.append('\n');
         }
@@ -52,18 +92,24 @@ public class Block {
 	public Label getLabel() {
 		return label;
 	}
-    public String format() {
+    public void setId(int id) {
+		this.id = id;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public String format() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(this.toString());
         buffer.append(" pred = [");
-        for (Object element : pred) {
-            Block block = (Block) element;
+        for (Block block : pred) {
             buffer.append(block.id);
             buffer.append(' ');
         }
         buffer.append("] succ = [");
-        for (Object element : succ) {
-            Block block = (Block) element;
+        for (Block block : succ) {
             buffer.append(block.id);
             buffer.append(' ');
         }
@@ -71,20 +117,8 @@ public class Block {
         return buffer.toString();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-			return true;
-		}
-        if (obj instanceof Block) {
-            Block b = (Block) obj;
-            return b.label.equals(label);
-        }
-        return false;
-    }
-
     
-    public Iterator<HLInstruction> iterator() {
+    public Iterator<AsmInstruction> iterator() {
         return instrs.iterator();
     }
 
@@ -93,17 +127,17 @@ public class Block {
     }
     
 
-    public HLInstruction get(int index) {
+    public AsmInstruction get(int index) {
     	return instrs.get(index);
     }
     
-	public HLInstruction getFirst() {
+	public AsmInstruction getFirst() {
 		if (instrs.isEmpty())
 			return null;
 		return instrs.get(0);
 	}
 
-	public HLInstruction getLast() {
+	public AsmInstruction getLast() {
 		if (instrs.isEmpty())
 			return null;
 		return instrs.get(instrs.size() - 1);
@@ -118,10 +152,11 @@ public class Block {
     }
 
     public void addSucc(Block block) {
-    	Check.checkArg(block.getFirst());
+    	//Check.checkArg(block.getFirst());
     	
         if (!succ.contains(block)) {
 			succ.add(block);
+			edges.put(block, Edge.TREE);
 		}
             
         if (!block.pred.contains(this)) {
@@ -155,14 +190,6 @@ public class Block {
 		return spanned;
 	}
 
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public int getId() {
-		return id;
-	}
-
 	public void clear() {
 		for (Block blk : pred)
 			blk.succ.remove(this);
@@ -181,15 +208,64 @@ public class Block {
 		return flags;
 	}
 
-	public void addInst(HLInstruction inst) {
+	public void addInst(AsmInstruction inst) {
 		instrs.add(inst);
+	}
+
+	public List<AsmInstruction> getInstrs() {
+		return instrs;
+	}
+
+	public void accept(ICodeVisitor visitor) {
+		if (visitor.enterBlock(this)) {
+			for (AsmInstruction instr : instrs) {
+				instr.accept(this, visitor);
+			}
+			visitor.exitBlock(this);
+		}
+	}
+
+	/**
+	 * Set the immediate dominator
+	 * @param idom the idom to set
+	 */
+	void setIdom(Block idom) {
+		this.idom = idom;
+	}
+	/**
+	 * Get the immediate dominator
+	 * @return the idom
+	 */
+	public Block getIdom() {
+		return idom;
+	}
+	/**
+	 * Get the children for which this block is the immediate dominator.
+	 * @return the children
+	 */
+	public List<Block> getDominatedChildren() {
+		return children;
+	}
+	/**
+	 * Get mapping of successors to edge types.
+	 * @return
+	 */
+	public Map<Block, Edge> getEdges() {
+		return edges;
 	}
 
 	/**
 	 * @return
 	 */
-	public List<HLInstruction> getInstrs() {
-		return instrs;
+	public List<Block> pred() {
+		return pred;
+	}
+
+	/**
+	 * @return
+	 */
+	public List<Block> succ() {
+		return succ;
 	}
 
 }

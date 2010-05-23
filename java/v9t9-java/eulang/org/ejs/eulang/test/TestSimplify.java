@@ -22,7 +22,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestSimplify extends BaseParserTest {
+public class TestSimplify extends BaseTest {
 	{
 		dumpSimplify = true;
 	}

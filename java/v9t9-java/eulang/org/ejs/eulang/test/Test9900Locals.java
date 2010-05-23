@@ -31,7 +31,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class Test9900Locals extends BaseParserTest {
+public class Test9900Locals extends BaseTest {
 
 	protected boolean forceLocalsToStack = false;
 

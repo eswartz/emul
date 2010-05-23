@@ -16,7 +16,7 @@ import org.junit.Test;
  * Test that we can inject macro calls.
  * 
  */
-public class TestGenerics extends BaseParserTest {
+public class TestGenerics extends BaseTest {
 	{
 		dumpExpand = true;
 	}

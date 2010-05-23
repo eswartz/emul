@@ -3,7 +3,34 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import static v9t9.engine.cpu.InstructionTable.*;
+import static v9t9.engine.cpu.InstructionTable.Ia;
+import static v9t9.engine.cpu.InstructionTable.Iab;
+import static v9t9.engine.cpu.InstructionTable.Iai;
+import static v9t9.engine.cpu.InstructionTable.Iandi;
+import static v9t9.engine.cpu.InstructionTable.Ic;
+import static v9t9.engine.cpu.InstructionTable.Icb;
+import static v9t9.engine.cpu.InstructionTable.Ici;
+import static v9t9.engine.cpu.InstructionTable.Iclr;
+import static v9t9.engine.cpu.InstructionTable.Idec;
+import static v9t9.engine.cpu.InstructionTable.Idect;
+import static v9t9.engine.cpu.InstructionTable.Idiv;
+import static v9t9.engine.cpu.InstructionTable.Iinc;
+import static v9t9.engine.cpu.InstructionTable.Iinct;
+import static v9t9.engine.cpu.InstructionTable.Ili;
+import static v9t9.engine.cpu.InstructionTable.Impy;
+import static v9t9.engine.cpu.InstructionTable.Ineg;
+import static v9t9.engine.cpu.InstructionTable.Iori;
+import static v9t9.engine.cpu.InstructionTable.Is;
+import static v9t9.engine.cpu.InstructionTable.Isb;
+import static v9t9.engine.cpu.InstructionTable.Isla;
+import static v9t9.engine.cpu.InstructionTable.Isoc;
+import static v9t9.engine.cpu.InstructionTable.Isocb;
+import static v9t9.engine.cpu.InstructionTable.Isra;
+import static v9t9.engine.cpu.InstructionTable.Isrc;
+import static v9t9.engine.cpu.InstructionTable.Isrl;
+import static v9t9.engine.cpu.InstructionTable.Iszc;
+import static v9t9.engine.cpu.InstructionTable.Iszcb;
+import static v9t9.engine.cpu.InstructionTable.Ixor;
 
 import java.util.ArrayList;
 import java.util.HashMap;

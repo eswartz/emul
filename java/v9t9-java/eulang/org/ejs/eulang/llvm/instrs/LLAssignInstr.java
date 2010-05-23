@@ -7,14 +7,15 @@ import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.LLType;
 
 /**
- * Any assignment instruction like "foo = bar"
+ * Any assignment instruction like "foo = bar" that writes to a temp.
  * @author ejs
  *
  */
 public abstract class LLAssignInstr extends LLTypedInstr {
 
 	private final LLOperand result;
-
+	private int uses;
+	
 	/**
 	 * @param name
 	 * @param type
@@ -39,6 +40,20 @@ public abstract class LLAssignInstr extends LLTypedInstr {
 		if (result != null)
 			sb.append(result).append(" = ");
 		super.appendInstrString(sb);
+		if (uses > 0) {
+			while (sb.length() < 40)
+				sb.append(' ');
+			sb.append(" ; uses = ").append(uses);
+		}
 	}
-	
+
+	/**
+	 * @return the uses
+	 */
+	public int getUses() {
+		return uses;
+	}
+	public void setUses(int count) {
+		this.uses = count;
+	}
 }

@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author ejs
  *
  */
-public class TestLoopGenerator extends BaseParserTest {
+public class TestLoopGenerator extends BaseTest {
 
     @Test
     public void testRepeatLoop() throws Exception {

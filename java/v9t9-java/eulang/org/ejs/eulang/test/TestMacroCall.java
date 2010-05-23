@@ -19,7 +19,7 @@ import org.junit.Test;
  * Test that we can inject macro calls.
  * 
  */
-public class TestMacroCall extends BaseParserTest {
+public class TestMacroCall extends BaseTest {
 	@Test
     public void testSimple1() throws Exception {
     	IAstModule mod = treeize(
