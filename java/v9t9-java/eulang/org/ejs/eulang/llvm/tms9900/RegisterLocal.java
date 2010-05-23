@@ -87,6 +87,10 @@ public class RegisterLocal extends BaseLocal {
 		this.vr = vr;
 	}
 	
+	public boolean isPhysReg() {
+		return vr < regClass.getRegisterCount();
+	}
+	
 	public boolean isRegPair() {
 		return regPair;
 	}

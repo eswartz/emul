@@ -57,6 +57,8 @@ public interface ICodeVisitor {
 	
 	void exitOperand(AsmInstruction instr, int num, AssemblerOperand operand);
 	
+	/** Visit source operands.  These are visited before targets. */
 	void handleSource(AsmInstruction instr, ISymbol source);
+	/** Visit target operands.  These are visited after sources. */
 	void handleTarget(AsmInstruction instr, ISymbol target);
 }

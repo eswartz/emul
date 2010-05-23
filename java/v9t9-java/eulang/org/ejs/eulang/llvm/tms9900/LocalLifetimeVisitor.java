@@ -14,21 +14,22 @@ import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * This assigns a unique number to each {@link AsmInstruction} and finds the
- * usage statistics for each expr and var temp.
+ * usage statistics for each local, including identifying whether in its usage
+ * it is an expr or var temp.  This also deletes unused locals.
  * @author ejs
  *
  */
 public class LocalLifetimeVisitor extends CodeVisitor {
+	private Map<ILocal, Block> firstBlockRefs = new HashMap<ILocal, Block>();
 	private Map<ILocal, AsmInstruction> tempDefs = new HashMap<ILocal, AsmInstruction>();
 
-	private final Locals locals;
+	private Locals locals;
 
 	private Routine routine;
 
 	private Block block;
 
-	public LocalLifetimeVisitor(Locals locals) {
-		this.locals = locals;
+	public LocalLifetimeVisitor() {
 	}
 	
 	/* (non-Javadoc)
@@ -45,7 +46,17 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	@Override
 	public boolean enterRoutine(Routine routine) {
 		this.routine = routine;
+		this.locals = routine.getLocals();
+		
 		tempDefs.clear();
+		firstBlockRefs.clear();
+		
+		for (ILocal local : locals.getAllLocals()) {
+			local.getDefs().clear();
+			local.getUses().clear();
+			local.setExprTemp(true);
+			local.setSingleBlock(true);
+		}
 		return super.enterRoutine(routine);
 	}
 	
@@ -54,6 +65,11 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	 */
 	@Override
 	public void exitRoutine(Routine routine) {
+		for (ILocal local : locals.getAllLocals()) {
+			if (local.getDefs().isEmpty() && local.getUses().isEmpty()) {
+				locals.removeLocal(local);
+			}
+		}
 		super.exitRoutine(routine);
 	}
 
@@ -73,12 +89,38 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	public boolean enterInstr(Block block, AsmInstruction instr) {
 		if (instr.getInst() == InstrSelection.Pprolog) {
 			for (ILocal local : locals.getArgumentLocals()) {
-				local.setInit(new Pair<Block, AsmInstruction>(block, instr));
+				addLocalDef(instr, local);
 			}
+		}
+		else if (instr.getInst() == InstrSelection.Pepilog) {
+			for (ILocal local : locals.getAllLocals()) {
+				if (local.isOutgoing()) {
+					addLocalUse(instr, local);
+				}
+			}			
 		}
 		return true;
 	}
 	
+	/**
+	 * @param instr
+	 * @param local
+	 */
+	private void addLocalDef(AsmInstruction instr, ILocal local) {
+		if (local.getDefs().isEmpty()) {
+			local.setInit(instr.getNumber());
+			firstBlockRefs.put(local, block);
+		} else {
+			// due to 2-op nature, we can read and write in same instruction; 
+			// this is not considered a kill 
+			if (local.getUses().get(instr.getNumber()))
+				return;
+			
+			local.setExprTemp(false);
+		}
+		local.getDefs().set(instr.getNumber());
+	}
+
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.CodeVisitor#handleSource(v9t9.tools.asm.assembler.AsmInstruction, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
 	 */
@@ -88,18 +130,17 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 		if (local == null)
 			return;
 
+		addLocalUse(instr, local);
+		
+	}
+
+	private void addLocalUse(AsmInstruction instr, ILocal local) {
+		boolean isFirst = local.getUses().isEmpty();
 		local.getUses().set(instr.getNumber());
-		
-		Map<Block, List<AsmInstruction>> uses = local.getInstUses();
-		List<AsmInstruction> list = uses.get(block);
-		if (list == null) {
-			list = new ArrayList<AsmInstruction>();
-			uses.put(block, list);
-		}
-		if (!list.contains(instr))
-			list.add(instr);
-		
-		super.handleSource(instr, sym);
+		if (isFirst)
+			firstBlockRefs.put(local, block);
+		else if (firstBlockRefs.containsKey(local) && firstBlockRefs.get(local) != block)
+			local.setSingleBlock(false);
 	}
 	
 	/* (non-Javadoc)
@@ -110,11 +151,10 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 		ILocal local = getLocal(sym);
 		if (local == null)
 			return;
-		if (local.getInit() == null) {
-			local.setInit(new Pair<Block, AsmInstruction>(block, instr));
-		}
-		super.handleTarget(instr, sym);
+
+		addLocalDef(instr, local);
 	}
+	
 	/**
 	 * @param sym
 	 * @return

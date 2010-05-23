@@ -83,4 +83,27 @@ public class RegisterOperand extends BaseOperand implements IRegisterOperand {
 		}
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.BaseOperand#replaceOperand(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
+	 */
+	@Override
+	public AssemblerOperand replaceOperand(AssemblerOperand src,
+			AssemblerOperand dst) {
+		if (src.equals(this))
+			return dst;
+		AssemblerOperand newReg = reg.replaceOperand(src, dst);
+		if (newReg != reg) {
+			return new RegisterOperand(newReg);
+		}
+		return this;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		return new AssemblerOperand[] { reg };
+	}
 }

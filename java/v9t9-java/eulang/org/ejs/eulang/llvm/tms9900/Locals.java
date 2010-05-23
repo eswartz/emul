@@ -315,6 +315,7 @@ public class Locals {
 			
 			ISymbol arg = localScope.get(loc.name);
 			assert arg != null;
+			arg.setType(loc.type);
 			argumentLocals.put(arg, local);
 		}
 	}
@@ -391,6 +392,8 @@ public class Locals {
 		assert !regLocals.containsKey(name);
 		regLocals.put(name, (RegisterLocal) local);
 		tempLocals.put(name, (RegisterLocal) local);
+		
+		local.setExprTemp(true);
 
 		return local;
 	}
@@ -498,6 +501,20 @@ public class Locals {
 			map.put(entry.getKey(), entry.getValue());
 		}
 		return (ILocal[]) map.values().toArray(new ILocal[map.values().size()]);
+	}
+
+	/**
+	 * @param local
+	 */
+	public void removeLocal(ILocal local) {
+		assert !argumentLocals.containsValue(local);
+		tempLocals.remove(local.getName());
+		if (local instanceof RegisterLocal)
+			regLocals.remove(local.getName());
+		else if (local instanceof StackLocal)
+			stackLocals.remove(local.getName());
+		else
+			assert false;
 	}
 	
 

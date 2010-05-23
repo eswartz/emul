@@ -381,7 +381,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			routine.setExit(epilogBlock);
 		}
 		
-		emitInstr(AsmInstruction.create(Pepilog));
+		AsmInstruction epilog = AsmInstruction.create(Pepilog);
+		List<ISymbol> retSyms = new ArrayList<ISymbol>();
+		for (ILocal local : locals.getAllLocals()) {
+			if (local.isOutgoing())
+				retSyms.add(local.getName());
+		}
+		epilog.setImplicitSources((ISymbol[]) retSyms.toArray(new ISymbol[retSyms.size()]));
+		emitInstr(epilog);
 		
 		AsmInstruction[] rets = routine.generateReturn();
 		for (AsmInstruction ret : rets) {
@@ -625,7 +632,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				return false;
 			
 			if (opcond == If.IN_PHYS_REG) {
-				return regLocal.getVr() < regLocal.getRegClass().getRegisterCount();
+				return regLocal.isPhysReg();
 			}
 			else if (opcond == If.IN_PHYS_REG_0) {
 				return regLocal.getVr() == 0;
@@ -831,11 +838,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					RegTempOperand retRegOp = new RegTempOperand(operand.getType(), local);
 					AssemblerOperand mem = new RegIndOperand(retRegOp);
 					moveTo(llops[0], stackLoc.type.getSubType(), asmOp, mem);
+					
+					local.setOutgoing(true);
 				} else if (retLoc instanceof RegisterLocation) {
 					RegisterLocation regLoc = (RegisterLocation) retLoc;
 					assert regLoc.bitOffset == 0;
-					copyIntoRegister(operand, instr, asmOp, regLoc.number);
-					
+					AssemblerOperand ret = copyIntoRegister(operand, instr, asmOp, regLoc.number);
+					ILocal local = ((ISymbolOperand) ret).getLocal();
+					local.setOutgoing(true);
 				}
 			}
 			
@@ -934,8 +944,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				if (!locals.forceToRegister(retAddr, stackLoc.number))
 					assert false;
 				RegTempOperand ptr = new RegTempOperand(llinst.getResult().getType(), retAddr);
-				AddrOperand retVal = new AddrOperand(asmOp);
-				emitInstr(AsmInstruction.create(Plea, retVal, ptr));
+				AddrOperand asmAddrOp = new AddrOperand(asmOp);
+				emitInstr(AsmInstruction.create(Plea, asmAddrOp, ptr));
 				
 				if (objType instanceof LLAggregateType) {
 					// return is a tuple

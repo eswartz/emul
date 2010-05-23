@@ -3,7 +3,9 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
+import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
+import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -42,7 +44,7 @@ public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 	@Override
 	public String toString() {
 		String prefix = "vr";
-		if (local.getVr() < local.getRegClass().getRegisterCount())
+		if (local.isPhysReg())
 			prefix = "R";
 		return prefix + local.getVr() + "(" + local.getName().getName() + ")"
 		+ (isRegPair ? high ? ".hi" : ".lo" : "");
@@ -136,5 +138,12 @@ public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 	public LLType getType() {
 		return local.getType();
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		return new AssemblerOperand[0];
+	}
 }

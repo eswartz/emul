@@ -3,11 +3,8 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
@@ -16,12 +13,9 @@ import org.ejs.eulang.symbols.ISymbol;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.Operand;
-import v9t9.engine.cpu.Status;
 import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.tools.asm.assembler.HLInstruction;
-import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
-import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 
 
 /**
@@ -140,9 +134,6 @@ public class AsmInstruction extends HLInstruction {
 	 */
 	public ISymbol[] getTargets() {
 		if (targets == null) {
-			Instruction.Effects fx = Instruction.getInstructionEffects(getInst());
-			//assert fx != null;	// this instr should explicitly define targets
-			
 			Set<ISymbol> targets = new LinkedHashSet<ISymbol>();
 			if (implTargets != null) {
 				targets.addAll(Arrays.asList(implTargets));
@@ -163,8 +154,7 @@ public class AsmInstruction extends HLInstruction {
 					addSymbol(targets, getOp3());
 				}
 			}
-			this.targets = (ISymbol[]) targets.toArray(new ISymbol[targets
-					.size()]);
+			this.targets = (ISymbol[]) targets.toArray(new ISymbol[targets.size()]);
 		}
 		return targets;
 	}
@@ -175,9 +165,6 @@ public class AsmInstruction extends HLInstruction {
 	 */
 	public ISymbol[] getSources() {
 		if (sources == null) {
-			Instruction.Effects fx = Instruction.getInstructionEffects(getInst());
-			//assert fx != null;	// this instr should explicitly define targets
-			
 			Set<ISymbol> sources = new LinkedHashSet<ISymbol>();
 			if (implSources != null) {
 				sources.addAll(Arrays.asList(implSources));
@@ -198,8 +185,7 @@ public class AsmInstruction extends HLInstruction {
 					addSymbol(sources, getOp3());
 				}
 			}
-			this.sources = (ISymbol[]) sources.toArray(new ISymbol[sources
-			                                                                         .size()]);
+			this.sources = (ISymbol[]) sources.toArray(new ISymbol[sources.size()]);
 		}
 		return sources;
 	}
@@ -209,16 +195,13 @@ public class AsmInstruction extends HLInstruction {
 	 * @param op3
 	 */
 	private void addSymbol(Set<ISymbol> list, AssemblerOperand op) {
-		if (!(op instanceof ISymbolOperand)) {
-			if (op instanceof AddrOperand)
-				op = ((AddrOperand) op).getAddr();
-			if (op instanceof IRegisterOperand)
-				op = ((IRegisterOperand) op).getReg();
-		}
 		if (op instanceof ISymbolOperand) {
 			ISymbol symbol = ((ISymbolOperand) op).getSymbol();
 			if (symbol != null)
 				list.add(symbol);
+		}
+		for (AssemblerOperand kid : op.getChildren()) {
+			addSymbol(list, kid);
 		}
 	}
 
@@ -252,6 +235,16 @@ public class AsmInstruction extends HLInstruction {
 		sources = null;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.AssemblerInstruction#setOp(int, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
+	 */
+	@Override
+	public void setOp(int i, AssemblerOperand op) {
+		super.setOp(i, op);
+		targets = null;
+		sources = null;
+	}
+	
 	/**
 	 * @param implTargets the implicit targets to set
 	 */
@@ -357,4 +350,6 @@ public class AsmInstruction extends HLInstruction {
 		}
 		assert false;
 	}
+
+
 }

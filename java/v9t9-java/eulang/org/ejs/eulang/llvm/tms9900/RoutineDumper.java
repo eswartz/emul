@@ -27,11 +27,13 @@ public class RoutineDumper extends CodeVisitor {
 	@Override
 	public boolean enterRoutine(Routine routine) {
 		System.out.println("Routine: " + routine.getName());
+		boolean any = false;
 		
 		Locals locals = routine.getLocals();
 		Collection<? extends ILocal> values;
 		values = locals.getArgumentLocals();
 		if (!values.isEmpty()) {
+			any = true;
 			System.out.println("Arguments:");
 			for (ILocal local : values) {
 				dumpLocal(local);
@@ -39,6 +41,7 @@ public class RoutineDumper extends CodeVisitor {
 		}
 		values = locals.getRegLocals().values();
 		if (!values.isEmpty()) {
+			any = true;
 			System.out.println("Registers:");
 			for (ILocal local : values) {
 				dumpLocal(local);
@@ -46,11 +49,14 @@ public class RoutineDumper extends CodeVisitor {
 		}
 		values = locals.getStackLocals().values();
 		if (!values.isEmpty()) {
+			any = true;
 			System.out.println("Stack:");
 			for (ILocal local : values) {
 				dumpLocal(local);
 			}
 		}
+		if (any)
+			System.out.println();
 		return super.enterRoutine(routine);
 	}
 	
@@ -65,13 +71,18 @@ public class RoutineDumper extends CodeVisitor {
 
 	private void dumpLocal(ILocal local) {
 		System.out.print("\t" + local + " ");
-		Pair<Block, AsmInstruction> init = local.getInit();
-		if (init == null)
-			System.out.println("; no init");
-		else if (init.first == null)
-			System.out.println("; argument");
+		int init = local.getDefs().nextSetBit(0);
+		if (init < 0) {
+			System.out.println("; no init"); return; 
+		}
+		else if (init == 0)
+			System.out.print("; argument");
 		else
-			System.out.println("; initialized: " + init.first.getLabel() + " at " + init.second.getNumber());
+			System.out.print("; initialized: " + init);
+		if (local.isOutgoing())
+			System.out.print("; return");
+		System.out.print("; uses: " + local.getUses());
+		System.out.println("; defs: " + local.getDefs());
 	}
 	
 	/* (non-Javadoc)

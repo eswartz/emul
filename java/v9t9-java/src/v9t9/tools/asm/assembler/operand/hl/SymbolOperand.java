@@ -85,5 +85,12 @@ public class SymbolOperand extends BaseOperand {
 	public Symbol getSymbol() {
 		return symbol;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		return new AssemblerOperand[0];
+	}
 }

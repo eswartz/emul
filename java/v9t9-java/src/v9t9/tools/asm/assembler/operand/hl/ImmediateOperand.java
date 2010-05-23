@@ -83,4 +83,27 @@ public class ImmediateOperand extends BaseOperand {
 		return op;
 	}
 	
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.BaseOperand#replaceOperand(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
+	 */
+	@Override
+	public AssemblerOperand replaceOperand(AssemblerOperand src,
+			AssemblerOperand dst) {
+		if (src.equals(this))
+			return dst;
+		AssemblerOperand newVal = immed.replaceOperand(src, dst);
+		if (newVal != immed) {
+			return new ImmediateOperand(newVal);
+		}
+		return this;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		return new AssemblerOperand[] { immed };
+	}
 }

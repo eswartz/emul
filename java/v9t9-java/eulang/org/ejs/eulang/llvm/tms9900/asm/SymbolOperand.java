@@ -7,6 +7,8 @@ import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
+import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+
 /**
  * @author ejs
  *
@@ -85,4 +87,11 @@ public class SymbolOperand extends BaseHLOperand {
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		return new AssemblerOperand[0];
+	}
 }

@@ -71,4 +71,11 @@ public class PcRelativeOperand extends BaseOperand {
 		return op;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		return new AssemblerOperand[0];
+	}
 }

@@ -32,4 +32,14 @@ public interface AssemblerOperand extends Operand {
 	 * Is this classified as memory?
 	 */
 	boolean isMemory();
+	
+	/**
+	 * Replace the src with dst and return this or a new operand.
+	 * @param src
+	 * @param dst
+	 * @return
+	 */
+	AssemblerOperand replaceOperand(AssemblerOperand src, AssemblerOperand dst);
+	
+	AssemblerOperand[] getChildren();
 }

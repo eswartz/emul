@@ -3,9 +3,13 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
+import org.ejs.eulang.llvm.tms9900.ILocal;
+import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
+
+import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 
 /**
@@ -61,7 +65,7 @@ public class StackLocalOperand extends BaseHLOperand {
 	public StackLocal getLocal() {
 		return local;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isMemory()
 	 */
@@ -95,4 +99,11 @@ public class StackLocalOperand extends BaseHLOperand {
 		return local.getType();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		return new AssemblerOperand[0];
+	}
 }

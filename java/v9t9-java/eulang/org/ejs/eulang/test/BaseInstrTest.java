@@ -32,6 +32,8 @@ import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.LocalScope;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
@@ -144,10 +146,16 @@ public class BaseInstrTest extends BaseTest {
 		for (ISymbol sym : instr.getSources()) {
 			assertNotNull(sym);
 			assertNotNull(instr+":"+sym, sym.getType());
+			if (sym.getScope() instanceof LocalScope)
+				assertTrue(sym+"", locals.getRegLocals().containsKey(sym) || locals.getStackLocals().containsKey(sym)
+						|| sym.getType().getBasicType() == BasicType.LABEL);
 		}
 		for (ISymbol sym : instr.getTargets()) {
 			assertNotNull(sym);
 			assertNotNull(instr+":"+sym, sym.getType());
+			if (sym.getScope() instanceof LocalScope)
+				assertTrue(sym+"", locals.getRegLocals().containsKey(sym) || locals.getStackLocals().containsKey(sym)
+						|| sym.getType().getBasicType() == BasicType.LABEL);
 		}
 	}
 

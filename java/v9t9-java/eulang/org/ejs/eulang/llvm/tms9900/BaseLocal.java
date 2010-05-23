@@ -21,10 +21,13 @@ public class BaseLocal implements ILocal {
 	private LLType type;
 	private ISymbol name;
 	private ILocal incoming;
-	private Pair<Block, AsmInstruction> init;
-	private Map<Block, List<AsmInstruction>> instUses;
 	private BitSet uses;
-
+	private BitSet defs;
+	private boolean exprTemp;
+	private boolean singleBlock;
+	private int init;
+	private boolean outgoing;
+	
 	/**
 	 * 
 	 * @param name
@@ -34,9 +37,8 @@ public class BaseLocal implements ILocal {
 	public BaseLocal(ISymbol name, LLType type) {
 		this.name = name;
 		this.type = type;
-		this.init = null;
-		this.instUses = new HashMap<Block, List<AsmInstruction>>();
 		this.uses = new BitSet();
+		this.defs = new BitSet();
 	}
 	
 	/* (non-Javadoc)
@@ -114,18 +116,6 @@ public class BaseLocal implements ILocal {
 		this.incoming = incoming;
 	}
 
-	public Pair<Block, AsmInstruction> getInit() {
-		return init;
-	}
-
-	public void setInit(Pair<Block, AsmInstruction> init) {
-		this.init = init;
-	}
-
-	public Map<Block, List<AsmInstruction>> getInstUses() {
-		return instUses;
-	}
-
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getUses()
 	 */
@@ -133,5 +123,64 @@ public class BaseLocal implements ILocal {
 	public BitSet getUses() {
 		return uses;
 	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#getDefs()
+	 */
+	@Override
+	public BitSet getDefs() {
+		return defs;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#isExprTemp()
+	 */
+	@Override
+	public boolean isExprTemp() {
+		return exprTemp;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#isSingleBlock()
+	 */
+	@Override
+	public boolean isSingleBlock() {
+		return singleBlock;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setExprTemp(boolean)
+	 */
+	@Override
+	public void setExprTemp(boolean temp) {
+		this.exprTemp = temp;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.ILocal#setSingleBlock(boolean)
+	 */
+	@Override
+	public void setSingleBlock(boolean single) {
+		this.singleBlock = single;
+	}
+
+	public int getInit() {
+		return init;
+	}
+
+	public void setInit(int init) {
+		this.init = init;
+	}
+
+	public boolean isOutgoing() {
+		return outgoing;
+	}
+
+	public void setOutgoing(boolean outgoing) {
+		this.outgoing = outgoing;
+	}
+	
+
+	
 	
 }

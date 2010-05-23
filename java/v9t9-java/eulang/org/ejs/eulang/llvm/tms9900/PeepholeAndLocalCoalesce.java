@@ -5,11 +5,14 @@ package org.ejs.eulang.llvm.tms9900;
 
 import java.util.*;
 
+import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
+import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
 import org.ejs.eulang.symbols.ISymbol;
 
 import static v9t9.engine.cpu.InstructionTable.*;
 import static org.ejs.eulang.llvm.tms9900.InstrSelection.*;
 
+import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
@@ -30,6 +33,78 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	public PeepholeAndLocalCoalesce() {
 	}
 	
+	/**
+	 * @param asmInstruction
+	 * @param from
+	 * @param to
+	 */
+	private void replaceUses(AsmInstruction asmInstruction, AssemblerOperand from, AssemblerOperand to, ILocal fromLocal, ILocal toLocal) {
+		assert asmInstruction != null;
+		AssemblerOperand[] ops = asmInstruction.getOps();
+		System.out.print("From " + asmInstruction + " -- > ");
+		for (int idx = 0; idx < ops.length; idx++) {
+			AssemblerOperand newOp = ops[idx].replaceOperand(from, to);
+			if (newOp != ops[idx]) {
+				if (fromLocal != null) {
+					if (ops[idx].equals(asmInstruction.getSrcOp()))
+						fromLocal.getUses().clear(asmInstruction.getNumber());
+					else if (ops[idx].equals(asmInstruction.getDestOp()))
+						fromLocal.getDefs().clear(asmInstruction.getNumber());
+				}
+				if (toLocal != null) {
+					if (ops[idx].equals(asmInstruction.getSrcOp()))
+						toLocal.getUses().set(asmInstruction.getNumber());
+					else if (ops[idx].equals(asmInstruction.getDestOp()))
+						toLocal.getDefs().set(asmInstruction.getNumber());
+				}
+				asmInstruction.setOp(idx + 1, newOp);
+			}
+		}
+		System.out.println(asmInstruction);
+	}
+
+	/**
+	 * @param instrs 
+	 * @param inst
+	 */
+	private void removeInst(List<AsmInstruction> instrs, AsmInstruction inst) {
+		System.out.println("Deleting " + inst);
+		
+		for (ISymbol sym : inst.getSources()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null) {
+				local.getUses().clear(inst.getNumber());
+				local.getDefs().clear(inst.getNumber());
+			}
+		}
+		for (ISymbol sym : inst.getTargets()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null) {
+				local.getUses().clear(inst.getNumber());
+				local.getDefs().clear(inst.getNumber());
+			}
+		}
+		instrs.remove(inst);
+	}
+
+	private ILocal getTargetLocal(AsmInstruction inst) {
+		for (ISymbol sym : inst.getTargets()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null)
+				return local;
+		}
+		return null;
+	}
+
+	private ILocal getSourceLocal(AsmInstruction inst) {
+		for (ISymbol sym : inst.getSources()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null)
+				return local;
+		}
+		return null;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.ICodeVisitor#getWalk()
 	 */
@@ -48,11 +123,12 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 
 		changed = false;
 		instrMap = new TreeMap<Integer, AsmInstruction>();
-		for (Block block : routine.getBlocks())
+		for (Block block : routine.getBlocks()) {
 			for (AsmInstruction instr : block.getInstrs()) {
 				assert !instrMap.containsKey(instr.getNumber());
 				instrMap.put(instr.getNumber(), instr);
 			}
+		}
 		return super.enterRoutine(routine);
 	}
 	
@@ -63,8 +139,10 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	public void exitRoutine(Routine directive) {
 		super.exitRoutine(directive);
 	}
-	/**
-	 * @return the changed
+	
+	/** Tell if any changes occurred.  This means that instructions were deleted from
+	 * blocks, but instruction numbers were not re-calculated.
+	 * @return
 	 */
 	public boolean isChanged() {
 		return changed;
@@ -88,10 +166,14 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			
 			switch (inst.getInst()) {
 			case Imov:
-				if (coalesceLoadOpStore(instrs, inst, idx)) {
+				if (coalesceLoadOpStore(instrs, inst)) {
 					applied = true;
 				}
 				break;
+			}
+
+			if (!applied && combineStackAddressOperands(instrs, inst)) {
+				applied = true;
 			}
 			
 			if (applied) {
@@ -107,64 +189,111 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	 * Convert a MOV from memory/local to a temp, operation on that temp, and MOV back to the memory/local
 	 * into an operation on the memory/local directly. 
 	 * @param instrs
-	 * @param inst
+	 * @param mov last MOV
 	 * @return
 	 */
 	private boolean coalesceLoadOpStore(List<AsmInstruction> instrs,
-			AsmInstruction mov, int index) {
-		if (instrs.size() >= index + 3) {
-			// the temp for the copy
-			ILocal tmpLocal = getTargetLocal(mov);
-			if (tmpLocal == null)
-				return false;
-			
-			AsmInstruction opinst = getNextUse(tmpLocal, mov);
-			if (opinst == null)
-				return false;
-			
-			// src is the stored local
-			AssemblerOperand src = mov.getOp1();
-			AssemblerOperand dst = mov.getOp2();
-
-			if (opinst != null && dst.equals(opinst.getDestOp())) {
-				AsmInstruction mov2 = getNextUse(tmpLocal, opinst);
-				if (mov2 != null && dst.equals(mov2.getSrcOp()) && src.equals(mov2.getDestOp())) {
-					if (getNextUse(tmpLocal, mov2) == null) {
-						instrs.remove(mov);
-						instrs.remove(mov2);
-						opinst.setDestOp(src);
-						return true;
-					}
-				}
-			}
-
-		}
-		return false;
-	}
-
-	private AsmInstruction getNextUse(ILocal local, AsmInstruction inst) {
-		BitSet uses = local.getUses();
-
-		int next = uses.nextSetBit(inst.getNumber() + 1);
-		AsmInstruction nextInst = instrMap.get(next);
+			AsmInstruction mov) {
+		// the temp for the copy must be a register
+		ILocal tmpLocal = getSourceLocal(mov);
+		if (!(tmpLocal instanceof RegisterLocal))
+			return false;
 		
-		return nextInst;
+		// the temp for the source must be a register if we want to substitute;
+		// and avoid physical regs until coloring time to avoid conflicts
+		ILocal origLocal = getTargetLocal(mov);
+		if (!(origLocal instanceof RegisterLocal) || ((RegisterLocal) origLocal).isPhysReg())
+			return false;
+		
+		// see if the temp is only defined once and this is its last use
+		if (!tmpLocal.isExprTemp() || !tmpLocal.isSingleBlock()
+				|| tmpLocal.getUses().nextSetBit(mov.getNumber() + 1) >= 0)
+			return false;
+		
+		// and see if the definition is a read from the same target
+		AsmInstruction def = instrMap.get(tmpLocal.getInit());
+		assert def != null;
+		
+		if (!mov.getOp2().equals(def.getSrcOp()))
+			return false;
+		
+		// okay, replace all uses of the source with the target
+		AssemblerOperand fromOp = new RegTempOperand(tmpLocal.getType(), (RegisterLocal) tmpLocal);
+		AssemblerOperand toOp = new RegTempOperand(origLocal.getType(), (RegisterLocal) origLocal);
+	
+		System.out.println("In " + mov.getNumber() +":  Replacing " + fromOp + " with " + toOp);
+		
+		for (int use = tmpLocal.getUses().nextSetBit(tmpLocal.getInit()); use >= 0; use = tmpLocal.getUses().nextSetBit(use + 1)) {
+			replaceUses(instrMap.get(use), fromOp, toOp, tmpLocal, origLocal);
+		}
+	
+		// and delete the moves
+		removeInst(instrs, mov);
+		
+		if (def.getInst() == Imov)
+			removeInst(instrs, def);
+		
+		return true;
+	}
+	
+
+	/**
+	 * In an instruction that uses an address operand using a register defined
+	 * from LEA of a stack operand, convert to AddrOffsOperand. 
+	 * @param instrs
+	 * @param inst 
+	 * @return
+	 */
+	private boolean combineStackAddressOperands(List<AsmInstruction> instrs,
+			AsmInstruction inst) {
+		
+		boolean changed = false;
+		for (ISymbol sym : inst.getSources()) {
+			ILocal addrLocal = locals.getLocal(sym);
+			if (addrLocal == null)
+				continue;
+			
+			// the temp for the copy must be a register
+			if (!(addrLocal instanceof RegisterLocal))
+				continue;
+
+			// see if the definition is an LEA on a stack local
+			AsmInstruction def = instrMap.get(addrLocal.getInit());
+			assert def != null;
+			
+			if (def.getInst() != Plea)
+				continue;
+
+			if (!(def.getOp1() instanceof AddrOperand))
+				continue;
+			
+			// and just be sure we're talking about a stack local...
+			// else we want to replace LEA with STWP/AI
+			ILocal origLocal = getSourceLocal(def);
+			if (!(origLocal instanceof StackLocal)) 
+				continue;
+			
+			// see if the temp is only defined once and this is its last use
+			if (!addrLocal.isExprTemp() || !addrLocal.isSingleBlock()
+					|| addrLocal.getUses().nextSetBit(inst.getNumber() + 1) >= 0)
+				continue;
+		
+			// okay, replace all uses of the source with the target
+			AssemblerOperand fromOp = new RegTempOperand(addrLocal.getType(), (RegisterLocal) addrLocal);
+			AssemblerOperand toOp = new StackLocalOperand(origLocal.getType(), (StackLocal) origLocal);
+	
+			System.out.println("In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
+			
+			changed = true;
+			for (int use = addrLocal.getUses().nextSetBit(addrLocal.getInit()); use >= 0; use = addrLocal.getUses().nextSetBit(use + 1)) {
+				replaceUses(instrMap.get(use), fromOp, toOp, addrLocal, null);
+			}
+			
+			// and delete the LEA
+			removeInst(instrs, def);
+		}
+		
+		return changed;
 	}
 
-	private ILocal getTargetLocal(AsmInstruction inst) {
-		for (ISymbol sym : inst.getTargets()) {
-			ILocal local = locals.getLocal(sym);
-			if (local != null)
-				return local;
-		}
-		return null;
-	}
-	private ILocal getSourceLocal(AsmInstruction inst) {
-		for (ISymbol sym : inst.getSources()) {
-			ILocal local = locals.getLocal(sym);
-			if (local != null)
-				return local;
-		}
-		return null;
-	}
 }

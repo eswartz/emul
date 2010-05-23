@@ -11,6 +11,7 @@ import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
@@ -132,6 +133,40 @@ public class TupleTempOperand implements AsmOperand {
 	 * @return
 	 */
 	public AssemblerOperand[] getComponents() {
+		return components;
+	}
+	
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.BaseOperand#replaceOperand(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
+	 */
+	@Override
+	public AssemblerOperand replaceOperand(AssemblerOperand src,
+			AssemblerOperand dst) {
+		if (src.equals(this))
+			return dst;
+		AssemblerOperand[] newComponents = null;
+		for (int idx = 0; idx < components.length; idx++) {
+			AssemblerOperand newComp = null;
+			if (components[idx] != null)
+				newComp = components[idx].replaceOperand(src, dst);
+			if (newComp != components[idx]) {
+				if (newComponents == null)
+					newComponents = Arrays.copyOf(components, components.length);
+				newComponents[idx] = newComp;
+			}
+		}
+		if (newComponents != null)
+			return new TupleTempOperand(type, newComponents);
+		return this;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
 		return components;
 	}
 }

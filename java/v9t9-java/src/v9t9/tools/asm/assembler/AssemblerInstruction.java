@@ -123,10 +123,6 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 		|| inst == Isb || inst == Iszcb || inst == Imovb;
 	}
 
-	/**
-	 * @param i
-	 * @return
-	 */
 	public AssemblerOperand getOp(int i) {
 		if (i == 1)
 			return op1;
@@ -136,7 +132,16 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 			return op3;
 		throw new IllegalArgumentException();
 	}
-
+	public void setOp(int i, AssemblerOperand op) {
+		if (i == 1)
+			op1 = op;
+		else if (i == 2)
+			op2 = op;
+		else if (i == 3)
+			op3 = op;
+		else
+			throw new IllegalArgumentException();
+	}
 	public AssemblerOperand[] getOps() {
 		if (op3 != null && !(op3 instanceof LLEmptyOperand))
 			return new AssemblerOperand[] { op1, op2, op3 };

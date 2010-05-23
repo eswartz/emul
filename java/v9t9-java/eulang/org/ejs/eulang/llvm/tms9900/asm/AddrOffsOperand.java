@@ -96,5 +96,20 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 	public AssemblerOperand getOffset() {
 		return offset;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.BaseOperand#replaceOperand(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
+	 */
+	@Override
+	public AssemblerOperand replaceOperand(AssemblerOperand src,
+			AssemblerOperand dst) {
+		if (src.equals(this))
+			return dst;
+		AssemblerOperand newAddr = getAddr().replaceOperand(src, dst);
+		AssemblerOperand newOffs = offset.replaceOperand(src, dst);
+		if (newAddr != getAddr() || newOffs != offset) {
+			return new AddrOffsOperand(llOp, type, newOffs, newAddr);
+		}
+		return this;
+	}
 }

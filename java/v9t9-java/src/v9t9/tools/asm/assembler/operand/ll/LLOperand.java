@@ -9,6 +9,7 @@ import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 
 /**
  * This is an operation that has been reduced from an HLOperand
@@ -109,5 +110,27 @@ public abstract class LLOperand implements AssemblerOperand {
 		op.symbol = symbol;
 		return op;
 	}*/
+
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.BaseOperand#replaceOperand(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
+	 */
+	@Override
+	public AssemblerOperand replaceOperand(AssemblerOperand src,
+			AssemblerOperand dst) {
+		if (src.equals(this))
+			return dst;
+		assert false : "not implemented";
+		return this;
+	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
+	 */
+	@Override
+	public AssemblerOperand[] getChildren() {
+		assert false : "not implemented";
+		return new AssemblerOperand[0];
+	}
 }
