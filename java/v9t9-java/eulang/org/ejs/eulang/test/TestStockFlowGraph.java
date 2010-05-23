@@ -17,7 +17,6 @@ import org.ejs.eulang.llvm.tms9900.CodeVisitor;
 import org.ejs.eulang.llvm.tms9900.FlowGraphVisitor;
 import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
 import org.ejs.eulang.llvm.tms9900.Block.Edge;
-import org.ejs.eulang.llvm.tms9900.ICodeVisitor.Walk;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.types.LLType;

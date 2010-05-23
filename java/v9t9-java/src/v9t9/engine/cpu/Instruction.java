@@ -669,7 +669,7 @@ public class Instruction extends RawInstruction implements IInstruction {
         public int jump; 
 
         public int reads, writes;	// what resources (INST_RSRC_xxx) are read and written?
-        public int mop1_dest, mop2_dest;
+        public int mop1_dest, mop2_dest, mop3_dest;
     }
 
 	/**

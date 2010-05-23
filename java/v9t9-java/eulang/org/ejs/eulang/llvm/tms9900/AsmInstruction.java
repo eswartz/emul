@@ -14,7 +14,10 @@ import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.Operand;
+import v9t9.engine.cpu.Status;
+import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -34,6 +37,8 @@ public class AsmInstruction extends HLInstruction {
 	private ISymbol[] implTargets;
 	private ISymbol[] implSources;
 
+	private Effects fx;
+
 	public AsmInstruction() {
 		targets = implTargets = null;
 		sources = implSources = null;
@@ -48,7 +53,6 @@ public class AsmInstruction extends HLInstruction {
 	public void setNumber(int number) {
 		this.number = number;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.AssemblerInstruction#toString()
@@ -95,6 +99,40 @@ public class AsmInstruction extends HLInstruction {
 		return sb.toString();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.AssemblerInstruction#setInst(int)
+	 */
+	@Override
+	public void setInst(int inst) {
+		super.setInst(inst);
+		fx = Instruction.getInstructionEffects(inst);
+		if (fx == null) {
+			fx = new Instruction.Effects();
+			switch (inst) {
+			case InstrSelection.Pcopy:
+			case InstrSelection.Piset:
+				fx.mop1_dest = Operand.OP_DEST_FALSE;
+				fx.mop2_dest = Operand.OP_DEST_KILLED;
+				break;
+			case InstrSelection.Pepilog:
+			case InstrSelection.Pprolog:
+				break;
+			case InstrSelection.Pjcc:
+				fx.jump = Instruction.INST_JUMP_COND;
+				fx.mop1_dest = Operand.OP_DEST_FALSE;
+				fx.mop2_dest = Operand.OP_DEST_FALSE;
+				fx.stReads = ~0;	// TODO
+				break;
+			case InstrSelection.Plea:
+				fx.mop1_dest = Operand.OP_DEST_FALSE;
+				fx.mop2_dest = Operand.OP_DEST_KILLED;
+				break;
+			}
+		}
+		if (getInst() == InstructionTable.Impy || getInst() == InstructionTable.Idiv) {
+			fx.mop3_dest = Operand.OP_DEST_KILLED;
+		}
+	}
 	
 	/** Get the operands (either explicitly specified as operands or implicit
 	 * in the calling convention, etc.) that the instruction modifies
@@ -274,5 +312,49 @@ public class AsmInstruction extends HLInstruction {
 			}
 			visitor.exitInstr(block, this);
 		}
+	}
+
+
+	public AssemblerOperand getDestOp() {
+		if (fx != null) {
+			if (getOp1() != null && fx.mop1_dest != Operand.OP_DEST_FALSE)
+				return getOp1();
+			if (getOp2() != null && fx.mop2_dest != Operand.OP_DEST_FALSE)
+				return getOp2();
+			if (getOp3() != null && fx.mop2_dest != Operand.OP_DEST_FALSE)
+				return getOp3();
+		}
+		return null;
+	}
+	public AssemblerOperand getSrcOp() {
+		if (fx != null) {
+			if (getOp1() != null && fx.mop1_dest != Operand.OP_DEST_KILLED)
+				return getOp1();
+			if (getOp2() != null && fx.mop2_dest != Operand.OP_DEST_KILLED)
+				return getOp2();
+			if (getOp3() != null && fx.mop2_dest != Operand.OP_DEST_KILLED)
+				return getOp3();
+		}
+		return null;
+	}
+
+
+	/**
+	 * @param dst
+	 */
+	public void setDestOp(AssemblerOperand dst) {
+		if (fx != null) {
+			if (getOp1() != null && fx.mop1_dest != Operand.OP_DEST_FALSE) {
+				setOp1(dst);
+				return;
+			} else if (getOp2() != null && fx.mop2_dest != Operand.OP_DEST_FALSE) {
+				setOp2(dst);
+				return;
+			} else if (getOp3() != null && fx.mop3_dest != Operand.OP_DEST_FALSE) {
+				setOp3(dst);
+				return;
+			}
+		}
+		assert false;
 	}
 }

@@ -240,4 +240,14 @@ public abstract class Routine {
 
 	}
 
+	/**
+	 * 
+	 */
+	public void setupForOptimization() {
+		accept(new RenumberVisitor());		
+		accept(new FlowGraphVisitor());		
+		accept(new LocalLifetimeVisitor(locals));		
+		accept(new RoutineDumper());		
+	}
+
 }

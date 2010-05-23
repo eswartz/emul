@@ -44,11 +44,15 @@ public class Test9900Optimizer extends BaseInstrTest {
 	 */
 	private void doOpt(String string) throws Exception {
 		doIsel(string);
-		routine.accept(new RenumberVisitor());		
-		routine.accept(new FlowGraphVisitor());		
-		routine.accept(new LocalLifetimeVisitor(locals));		
-		routine.accept(new RoutineDumper());
-		routine.accept(new PeepholeAndLocalCoalesce(routine));		
+		routine.setupForOptimization();
+		PeepholeAndLocalCoalesce peepholeAndLocalCoalesce = new PeepholeAndLocalCoalesce();
+		routine.accept(peepholeAndLocalCoalesce);
+		if (peepholeAndLocalCoalesce.isChanged()) {
+			System.out.println("After optimization:");
+			routine.accept(new RoutineDumper());
+			routine.setupForOptimization();
+		}
+		System.out.println("After resetting:");
 		routine.accept(new RoutineDumper());
 	}
 	
@@ -71,7 +75,8 @@ public class Test9900Optimizer extends BaseInstrTest {
 
 	@Test
 	public void testDefOnly() throws Exception {
-		doOpt("foo = code( => nil) { x := 1 };\n");
+		doIsel("foo = code( => nil) { x := 1 };\n");
+		routine.setupForOptimization();
 		
 		ILocal local;
 		local = getLocal("x");
@@ -83,7 +88,8 @@ public class Test9900Optimizer extends BaseInstrTest {
 	@Test
 	public void testDefUse1() throws Exception {
 		dumpIsel = true;
-		doOpt("foo = code() { x := 1 };\n");
+		doIsel("foo = code() { x := 1 };\n");
+		routine.setupForOptimization();
 		
 		ILocal local;
 		local = getLocal("x");
@@ -100,7 +106,8 @@ public class Test9900Optimizer extends BaseInstrTest {
 	@Test
 	public void testDefUse2() throws Exception {
 		dumpIsel = true;
-		doOpt("foo = code() { x := 1; x += 11; };\n");
+		doIsel("foo = code() { x := 1; x += 11; };\n");
+		routine.setupForOptimization();
 		
 		ILocal local;
 		local = getLocal("x");
@@ -113,6 +120,26 @@ public class Test9900Optimizer extends BaseInstrTest {
 		List<AsmInstruction> list = uses.get(local.getInit().first);
 		assertNotNull(list);
 		assertEquals(2, list.size());
+	}
+	
+	@Test
+	public void testPeephole1() throws Exception {
+		dumpIsel = true;
+		doOpt("foo = code() { x := 1; x += 11; };\n");
+
+		routine.accept(new PeepholeAndLocalCoalesce());
+		
+		ILocal local;
+		local = getLocal("x");
+		assertNotNull(local.getInit());
+		assertNotNull(local.getInit().first);
+		assertNotNull(local.getInit().second);
+		
+		Map<Block, List<AsmInstruction>> uses = local.getInstUses();
+		assertEquals(1, uses.size());
+		List<AsmInstruction> list = uses.get(local.getInit().first);
+		assertNotNull(list);
+		assertEquals(3, list.size());
 	}
 }
 

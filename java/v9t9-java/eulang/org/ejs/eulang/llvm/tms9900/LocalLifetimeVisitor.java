@@ -87,6 +87,8 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 		ILocal local = getLocal(sym);
 		if (local == null)
 			return;
+
+		local.getUses().set(instr.getNumber());
 		
 		Map<Block, List<AsmInstruction>> uses = local.getInstUses();
 		List<AsmInstruction> list = uses.get(block);
