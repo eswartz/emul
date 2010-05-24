@@ -31,8 +31,8 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.LLVoidType;
 
 /**
  * Manage locals for a routine.
@@ -133,7 +133,7 @@ public class Locals {
 	private HashMap<IRegClass, RegAlloc> regAllocs;
 	private boolean forceLocalsToStack;
 	private ICallingConvention cc;
-	
+
 	public Locals(LLDefineDirective def) {
 		this.def = def;
 		
@@ -516,6 +516,4 @@ public class Locals {
 		else
 			assert false;
 	}
-	
-
 }

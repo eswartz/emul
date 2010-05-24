@@ -17,6 +17,7 @@ import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.junit.Test;
 
@@ -458,9 +459,9 @@ public class Test9900Optimizer extends BaseInstrTest {
 		int idx;
 
 		// make sure jump was converted
-		//idx = findInstrWithInst(enter.getInstrs(), "JEQ");
-		//inst = enter.getInstrs().get(idx);
-
+		idx = findInstrWithInst(enter.getInstrs(), "JCC");
+		inst = enter.getInstrs().get(idx);
+		assertFalse(inst.getOp1() instanceof CompareOperand);
 		
 		// be sure we read and write the value to memory every time
 		idx = findInstrWithInst(body.getInstrs(), "MOV");
@@ -501,6 +502,19 @@ public class Test9900Optimizer extends BaseInstrTest {
 		inst = exit.getInstrs().get(idx);
 		matchInstr(inst, "MOV", RegTempOperand.class, "loopValue", RegTempOperand.class, 0);
 
+	}
+	
+	/**
+	 * Can't coalesce with register pairs  
+	 * @throws Exception
+	 */
+	@Test
+	public void testPeepholeRegPairs() throws Exception {
+		dumpIsel = true;
+		doOpt("foo = code(x:Int;y:Int) { p := x*y; q := y*x; (p, q) };\n");
+
+		// validation checks the hi/lo usage
+		
 	}
 }
 

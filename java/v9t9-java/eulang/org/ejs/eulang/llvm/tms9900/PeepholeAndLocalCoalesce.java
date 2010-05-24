@@ -10,6 +10,7 @@ import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
+import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
 
 import static v9t9.engine.cpu.InstructionTable.*;
@@ -39,6 +40,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	private Locals locals;
 	private TreeMap<Integer, AsmInstruction> instrMap;
 	private TreeMap<Integer, Block> instrBlockMap;
+	private Routine routine;
 
 	public PeepholeAndLocalCoalesce() {
 	}
@@ -153,6 +155,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	 */
 	@Override
 	public boolean enterRoutine(Routine routine) {
+		this.routine = routine;
 		this.locals = routine.getLocals();
 
 		changed = false;
@@ -268,6 +271,10 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		return false;
 	}
 
+	private boolean isSingleRegister(ILocal local) {
+		return local instanceof RegisterLocal && !((RegisterLocal) local).isRegPair();
+	}
+	
 	/**
 	 * Track register values used in the instructions, for later substitution. 
 	 * @param inst current inst
@@ -279,7 +286,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			return false;
 		
 		AssemblerOperand destOp = inst.getDestOp();
-		if (!(targetLocal instanceof RegisterLocal)) {
+		if (!isSingleRegister(targetLocal)) {
 			return false;
 		}
 		
@@ -323,7 +330,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			src = null;
 		}
 		
-		if (targetLocal instanceof RegisterLocal && destOp.isRegister()) {
+		if (isSingleRegister(targetLocal) && destOp.isRegister()) {
 			if (src != null) {
 				localValues.put(targetLocal, src);
 				changedValues = true;
@@ -350,7 +357,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	private boolean coalesceLoadOpStore(AsmInstruction mov) {
 		// the temp for the copy must be a register
 		ILocal tmpLocal = getSourceLocal(mov);
-		if (!(tmpLocal instanceof RegisterLocal))
+		if (!isSingleRegister(tmpLocal))
 			return false;
 		
 		// the temp for the source must be a register if we want to substitute;
@@ -358,7 +365,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		if (mov.getOp2().isMemory())
 			return false;
 		ILocal origLocal = getTargetLocal(mov);
-		if (!(origLocal instanceof RegisterLocal) || ((RegisterLocal) origLocal).isPhysReg())
+		if (!isSingleRegister(origLocal) || ((RegisterLocal) origLocal).isPhysReg())
 			return false;
 		
 		// see if the temp is only defined once and this is its last use
@@ -471,7 +478,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 				continue;
 			
 			// the temp for the copy must be a register
-			if (!(addrLocal instanceof RegisterLocal))
+			if (!isSingleRegister(addrLocal))
 				continue;
 
 			// see if the definition is an LEA on a stack local
@@ -527,7 +534,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		
 		// look for register temp used by value (e.g. not inside address)
 		ILocal tmpLocal = getSourceLocal(inst);
-		if (!(tmpLocal instanceof RegisterLocal))
+		if (!isSingleRegister(tmpLocal))
 			return false;
 		
 		if (!(inst.getSrcOp() instanceof RegTempOperand))
@@ -586,7 +593,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		AssemblerOperand valOp = stackValues.get(srcOp);
 		if (valOp == null || valOp.equals(inst.getOp2())) {
 			for (Map.Entry<ILocal, AssemblerOperand> known : localValues.entrySet()) {
-				if (inst.getOp1().equals(known.getValue()) && known.getKey() instanceof RegisterLocal) {
+				if (inst.getOp1().equals(known.getValue()) && isSingleRegister(known.getKey())) {
 					valOp = new RegTempOperand(known.getKey().getType(), (RegisterLocal) known.getKey());
 					if (!valOp.equals(inst.getOp2()))
 						break;
@@ -636,7 +643,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		
 		// allow phys registers here
 		ILocal origLocal = getTargetLocal(inst);
-		if (!(origLocal instanceof RegisterLocal))
+		if (!isSingleRegister(origLocal))
 			return false;
 		AssemblerOperand destOp = inst.getDestOp();
 		if (destOp == null || !destOp.isRegister())
@@ -718,23 +725,19 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	}
 	
 	/**
-	 * Change JCC to a real jump, and throw away the temp, if it's not used.
+	 * Change JCC to use the status register instead of a temp, if the value
+	 * is not used.
 	 * @param inst
 	 * @return
 	 */
 	private boolean replaceActualJump(AsmInstruction inst) {
 
-		// TODO: change the compare operation to implicitly use a status object
-		// and modify the Pjcc instruction to use that -- otherwise we create
-		// code where there is no obvious relationship between a comparison and its jump.
-		// Also, we can't convert all kinds of jumps into instructions (no JGT+EQ or JLT+EQ),
+		// Note: we don't flatten JCC here, because 
+		// we can't convert all kinds of jumps into instructions (no JGT+EQ or JLT+EQ),
 		// meaning we'd have to introduce new jumps and break blocks into little pieces.
 		// Finally, we may want to modify the jumps again later to handle short/long
 		// jumping.
 		// All that should be done when flattening, not here.
-		
-		if (true)
-			return false;
 		
 		// the first one should be the variable
 		ILocal local = getSourceLocal(inst);
@@ -747,24 +750,27 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		AsmInstruction def = instrMap.get(local.getInit());
 		assert def != null;
 		
+		// this boolean came from ISET, right?
 		if (def.getInst() != Piset)
 			return false;
 		
-		CompareOperand cmp = (CompareOperand) def.getOp1();
-		int jumpInst = cmp.getJumpInstr();
+		// assume (!) the previous instruction generated the CC
+		List<AsmInstruction> list = instrBlockMap.get(inst.getNumber()).getInstrs();
+		AsmInstruction ccinst = list.get(list.indexOf(def) - 1);
 		
-		// TODO
-		if (jumpInst == 0)
-			return false;
-		
-		inst.setInst(jumpInst);
-		inst.setOp1(inst.getOp2());
-		inst.setOp2(inst.getOp3());
-		inst.setOp3(null);
+		ISymbol statusSym = routine.getDefinition().getTarget().
+			getStatusRegister(locals.getScope());
 
-		local.getUses().clear();
-		local.getDefs().clear();
-		local.setInit(0);
+		// comparison defines status reg now
+		SymbolOperand status = new SymbolOperand(statusSym);
+		assert ccinst.getTargets().length == 0;
+		ccinst.setImplicitTargets(new ISymbol[] { statusSym });
+		
+		// jump uses the status
+		inst.setOp1(status);
+
+		// no more ISET
+		removeInst(def);
 		
 		return true;
 	}

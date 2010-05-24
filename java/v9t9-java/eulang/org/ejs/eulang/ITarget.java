@@ -6,6 +6,7 @@ package org.ejs.eulang;
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -72,5 +73,17 @@ public interface ITarget {
 	 */
 	ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic, LLType type);
 	
+	/**
+	 * Get the stack pointer register
+	 * @return
+	 */
 	int getSP();
+	
+
+	/**
+	 * Get a symbol representing the status register
+	 * @return the statusRegister
+	 */
+	ISymbol getStatusRegister(IScope scope);
+
 }

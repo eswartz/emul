@@ -82,7 +82,9 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		LLBlock block;
 		block = def.addBlock(def.getScope().addTemporary("entry"));
 		ISymbol trueSym = def.getScope().addTemporary("true");
+		trueSym.setType(typeEngine.LABEL);
 		ISymbol falseSym = def.getScope().addTemporary("false");
+		falseSym.setType(typeEngine.LABEL);
 		block.instrs().add(new LLBranchInstr(typeEngine.BOOL, 
 				new LLConstOp(typeEngine.INT, 1), 
 				new LLSymbolOp(trueSym, typeEngine.LABEL),
@@ -1765,7 +1767,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
     
     @Test
     public void testTuples1() throws Exception {
-    	dumpLLVMGen = true;
+    	dumpIsel = true;
     	doIsel(
     			"makeTuple = code(x:Int;y) { (x,y*x,66) };\n"+
     	"");
@@ -1821,7 +1823,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testDataFields() throws Exception {
-    	dumpLLVMGen = true;
+    	dumpIsel = true;
     	doIsel(
     			"Class = data { x,b:Byte; y:Float; };\n"+
     			"useClass = code(i:Int) { c : Class; x := c.x + c.b; y := c.y;  };\n"+

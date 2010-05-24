@@ -27,6 +27,13 @@ public class SymbolOperand extends BaseHLOperand {
 		this.local = local;
 	}
 
+	/**
+	 * @param sym
+	 */
+	public SymbolOperand(ISymbol sym) {
+		this(sym.getType(), sym, null);
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

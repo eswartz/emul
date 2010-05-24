@@ -480,7 +480,7 @@ public class LLVMGenerator {
 			currentTarget = define;
 
 			IScope scope = code.getScope();
-			define.addBlock(scope.addTemporary("entry"));
+			define.addBlock(addLabel(scope, "entry"));
 
 			// get return value
 			LLType returnType = code.getPrototype().returnType().getType();
@@ -528,8 +528,7 @@ public class LLVMGenerator {
 						.getSymbol());
 				continue;
 			} else if (currentTarget.getCurrentBlock() == null) {
-				currentTarget.addBlock(stmts.getOwnerScope().addTemporary(
-						"block"));
+				currentTarget.addBlock(addLabel(stmts.getOwnerScope(), "block"));
 			}
 
 			result = generateStmt(stmt);
@@ -622,6 +621,12 @@ public class LLVMGenerator {
 	private File intermediateFile;
 	private String optimizedText;
 
+	private ISymbol addLabel(IScope scope, String name) {
+		ISymbol sym = scope.addTemporary(name);
+		sym.setType(typeEngine.LABEL);
+		return sym;
+	}
+	
 	/**
 	 * Generate a loop. This has an implicit return value which can be set by a
 	 * 'break' statement
@@ -640,13 +645,10 @@ public class LLVMGenerator {
 		LLVariableOp loopVal = makeLocalStorage(loopValSym, null,
 				generateNil(stmt));
 
-		ISymbol loopEnter = currentTarget.getScope().addTemporary("loopEnter");
-		loopEnter.setType(typeEngine.LABEL);
+		ISymbol loopEnter = addLabel(currentTarget.getScope(), "loopEnter");
+		ISymbol loopBody = addLabel(currentTarget.getScope(), "loopBody");
 
-		ISymbol loopBody = currentTarget.getScope().addTemporary("loopBody");
-		loopBody.setType(typeEngine.LABEL);
-
-		ISymbol loopExit = currentTarget.getScope().addTemporary("loopExit");
+		ISymbol loopExit = addLabel(currentTarget.getScope(), "loopExit");
 		loopExit.setType(typeEngine.LABEL);
 
 		LoopContext context = new LoopContext(scope, loopBody, loopEnter,
@@ -936,7 +938,7 @@ public class LLVMGenerator {
 		ISymbol falseBlock = null;
 		if (stmt.getExpr() != null) {
 			LLOperand test = generateTypedExpr(stmt.getExpr());
-			falseBlock = stmt.getOwnerScope().addTemporary("gt");
+			falseBlock = addLabel(stmt.getOwnerScope(), "gt");
 			currentTarget.emit(new LLBranchInstr(stmt.getExpr().getType(),
 					test, new LLSymbolOp(stmt.getLabel().getSymbol()),
 					new LLSymbolOp(falseBlock)));
@@ -1675,8 +1677,9 @@ public class LLVMGenerator {
 			}
 			if (idx + 1 < condList.getCondExprs().nodeCount()) {
 				LLOperand test = generateTypedExpr(expr.getTest());
-				resultLabel = scope.addTemporary("cb");
-				nextTest = scope.addTemporary("ct");
+				resultLabel = addLabel(scope, "cb");
+				nextTest = addLabel(scope, "ct");
+				nextTest.setType(typeEngine.LABEL);
 				currentTarget.emit(new LLBranchInstr(
 						// expr.getTest().getType(),
 						typeEngine.LLBOOL, test, new LLSymbolOp(resultLabel),
@@ -1696,7 +1699,7 @@ public class LLVMGenerator {
 			conds[idx++] = currentTarget.getPreviousBlock();
 		}
 
-		ISymbol condSetSym = scope.addTemporary("cs");
+		ISymbol condSetSym = addLabel(scope, "cs");
 		condSetSym.setType(typeEngine.LABEL);
 		currentTarget.addBlock(condSetSym);
 

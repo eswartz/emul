@@ -258,10 +258,12 @@ public class AsmInstruction extends HLInstruction {
 	 */
 	public void setImplicitTargets(ISymbol[] implTargets) {
 		this.implTargets = implTargets;
+		this.targets = null;
 	}
 	
 	public void setImplicitSources(ISymbol[] implSources) {
 		this.implSources = implSources;
+		this.sources = null;
 	}
 	
 	public static AsmInstruction create(int inst) {

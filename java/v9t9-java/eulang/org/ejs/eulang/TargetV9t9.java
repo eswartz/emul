@@ -15,6 +15,7 @@ import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLBoolType;
@@ -324,5 +325,19 @@ public class TargetV9t9 implements ITarget {
 	public int getSP() {
 		return 10;
 	}
-	
+
+
+	/**
+	 * Get a symbol representing the status register
+	 * @return the statusRegister
+	 */
+	public ISymbol getStatusRegister(IScope scope) {
+		ISymbol statusRegister = scope.get(".status");
+		if (statusRegister == null) {
+			statusRegister = scope.add(".status", false);
+			statusRegister.setType(new LLVoidType(""));
+		}
+		return statusRegister;
+	}
+
 }

@@ -26,6 +26,7 @@ import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.Locals;
+import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
@@ -140,8 +141,16 @@ public class BaseInstrTest extends BaseTest {
 		assertNotNull(instr);
 		for (AssemblerOperand op : instr.getOps()) {
 			assertNotNull(op);
-			if (op instanceof AsmOperand)
-				assertNotNull(instr+":"+op+"", ((AsmOperand) op).getType() != null);
+			if (op instanceof AsmOperand) {
+				AsmOperand asmOp = (AsmOperand) op;
+				assertNotNull(instr+":"+op+"", asmOp.getType() != null);
+				if (asmOp instanceof RegTempOperand) {
+					RegTempOperand reg = (RegTempOperand) asmOp;
+					RegisterLocal local = locals.getRegLocals().get(reg.getSymbol());
+					assertNotNull(reg+"", local);
+					assertEquals(reg+"", reg.isRegPair(), local.isRegPair());
+				}
+			}
 		}
 		for (ISymbol sym : instr.getSources()) {
 			assertNotNull(sym);
