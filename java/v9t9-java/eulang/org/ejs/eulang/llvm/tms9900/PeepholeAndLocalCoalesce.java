@@ -6,6 +6,7 @@ package org.ejs.eulang.llvm.tms9900;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
@@ -213,6 +214,12 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 					applied = true;
 				} 
 				else if (replaceConstant(inst)) {
+					applied = true;
+				}
+				break;
+				
+			case Pjcc:
+				if (replaceActualJump(inst)) {
 					applied = true;
 				}
 				break;
@@ -709,4 +716,57 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 
 		return true;
 	}
+	
+	/**
+	 * Change JCC to a real jump, and throw away the temp, if it's not used.
+	 * @param inst
+	 * @return
+	 */
+	private boolean replaceActualJump(AsmInstruction inst) {
+
+		// TODO: change the compare operation to implicitly use a status object
+		// and modify the Pjcc instruction to use that -- otherwise we create
+		// code where there is no obvious relationship between a comparison and its jump.
+		// Also, we can't convert all kinds of jumps into instructions (no JGT+EQ or JLT+EQ),
+		// meaning we'd have to introduce new jumps and break blocks into little pieces.
+		// Finally, we may want to modify the jumps again later to handle short/long
+		// jumping.
+		// All that should be done when flattening, not here.
+		
+		if (true)
+			return false;
+		
+		// the first one should be the variable
+		ILocal local = getSourceLocal(inst);
+		if (local == null)
+			return false;
+		
+		if (local.getUses().cardinality() > 1)
+			return false;
+		
+		AsmInstruction def = instrMap.get(local.getInit());
+		assert def != null;
+		
+		if (def.getInst() != Piset)
+			return false;
+		
+		CompareOperand cmp = (CompareOperand) def.getOp1();
+		int jumpInst = cmp.getJumpInstr();
+		
+		// TODO
+		if (jumpInst == 0)
+			return false;
+		
+		inst.setInst(jumpInst);
+		inst.setOp1(inst.getOp2());
+		inst.setOp2(inst.getOp3());
+		inst.setOp3(null);
+
+		local.getUses().clear();
+		local.getDefs().clear();
+		local.setInit(0);
+		
+		return true;
+	}
+
 }

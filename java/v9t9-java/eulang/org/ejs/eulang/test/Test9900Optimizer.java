@@ -457,6 +457,11 @@ public class Test9900Optimizer extends BaseInstrTest {
 		AsmInstruction inst;
 		int idx;
 
+		// make sure jump was converted
+		//idx = findInstrWithInst(enter.getInstrs(), "JEQ");
+		//inst = enter.getInstrs().get(idx);
+
+		
 		// be sure we read and write the value to memory every time
 		idx = findInstrWithInst(body.getInstrs(), "MOV");
 		inst = body.getInstrs().get(idx);
@@ -485,12 +490,17 @@ public class Test9900Optimizer extends BaseInstrTest {
 		inst = body.getInstrs().get(idx);
 		assertFalse(symbolMatches(getOperandSymbol(inst.getOp1()), "foo"));
 		
+		// double-check DEC usage
+		idx = findInstrWithInst(body.getInstrs(), "DEC");
+		inst = body.getInstrs().get(idx);
+		matchInstr(inst, "DEC", RegTempOperand.class, "counter");
+		
 		// Don't read and write same memory  (loopValue = ...).  
 		// And ensure we can cleanly put loop value into return.
 		idx = findInstrWithInst(exit.getInstrs(), "MOV");
 		inst = exit.getInstrs().get(idx);
 		matchInstr(inst, "MOV", RegTempOperand.class, "loopValue", RegTempOperand.class, 0);
-		
+
 	}
 }
 

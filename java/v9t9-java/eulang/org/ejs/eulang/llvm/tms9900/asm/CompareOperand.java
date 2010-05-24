@@ -6,6 +6,7 @@ package org.ejs.eulang.llvm.tms9900.asm;
 import java.util.HashMap;
 import java.util.Map;
 
+import static v9t9.engine.cpu.InstructionTable.*;
 import org.ejs.eulang.llvm.instrs.LLCompareInstr;
 
 import v9t9.engine.cpu.IInstruction;
@@ -21,6 +22,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  */
 public class CompareOperand extends NumberOperand {
 	public final static Map<String, Integer> compareToInt = new HashMap<String, Integer>();
+	public final static Map<Integer, Integer> compareToJump  = new HashMap<Integer, Integer>();
 	public final static int CMP_EQ = 0, CMP_NE = 1, CMP_SGT = 2, CMP_SLT = 3, CMP_SGE = 4, 
 	CMP_SLE = 5, CMP_UGT = 6, CMP_ULT = 7, CMP_UGE = 8, CMP_ULE = 9;
 	
@@ -35,6 +37,17 @@ public class CompareOperand extends NumberOperand {
 		compareToInt.put("ult", CMP_ULT);
 		compareToInt.put("uge", CMP_UGE);
 		compareToInt.put("ule", CMP_ULE);
+		
+		compareToJump.put(CMP_EQ, Ijeq);
+		compareToJump.put(CMP_NE, Ijne);
+		compareToJump.put(CMP_SGT, Ijgt);
+		compareToJump.put(CMP_SLT, Ijlt);
+		compareToJump.put(CMP_SGE, 0);
+		compareToJump.put(CMP_SLE, 0);
+		compareToJump.put(CMP_UGT, Ijh);
+		compareToJump.put(CMP_ULT, Ijl);
+		compareToJump.put(CMP_UGE, Ijhe);
+		compareToJump.put(CMP_ULE, Ijle);
 	}
 
 	private String cmp;
@@ -75,6 +88,13 @@ public class CompareOperand extends NumberOperand {
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		throw new ResolveException(inst, null, "Should not have this operand in assembler code!");
+	}
+
+	/**
+	 * @return
+	 */
+	public int getJumpInstr() {
+		return compareToJump.get(getValue());
 	}
 
 }
