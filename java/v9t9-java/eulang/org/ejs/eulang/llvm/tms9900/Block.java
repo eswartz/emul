@@ -1,7 +1,6 @@
 package org.ejs.eulang.llvm.tms9900;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -10,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
 
 public class Block {
@@ -79,15 +77,19 @@ public class Block {
 
 	@Override
     public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("block " + id + ": " + label.toString()+"\n");
-        for (AsmInstruction instr : instrs) {
-        	sb.append(instr);
-        	sb.append('\n');
-        }
-        return sb.toString();
+		return ("block " + id + ": " + label.toString());
         
     }
+	public String toText() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("block " + id + ": " + label.toString()+"\n");
+		for (AsmInstruction instr : instrs) {
+			sb.append(instr);
+			sb.append('\n');
+		}
+		return sb.toString();
+		
+	}
 
 	public Label getLabel() {
 		return label;

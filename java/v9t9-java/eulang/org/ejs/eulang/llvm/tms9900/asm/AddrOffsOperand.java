@@ -14,8 +14,6 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
  *
  */
 public class AddrOffsOperand extends AddrOperand implements AsmOperand {
-
-	private LLOperand llOp;
 	private final AssemblerOperand offset;
 	private final LLType type;
 
@@ -23,12 +21,10 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 	 * @param llOp
 	 * @param local
 	 */
-	public AddrOffsOperand(org.ejs.eulang.llvm.ops.LLOperand llOp,
-			LLType type,
+	public AddrOffsOperand(LLType type,
 			AssemblerOperand offset,
 			AssemblerOperand addr) {
 		super(addr);
-		this.llOp = llOp;
 		this.type = type;
 		this.offset = offset;
 	}
@@ -49,7 +45,6 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((llOp == null) ? 0 : llOp.hashCode());
 		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
@@ -64,11 +59,6 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 		if (getClass() != obj.getClass())
 			return false;
 		AddrOffsOperand other = (AddrOffsOperand) obj;
-		if (llOp == null) {
-			if (other.llOp != null)
-				return false;
-		} else if (!llOp.equals(other.llOp))
-			return false;
 		if (offset == null) {
 			if (other.offset != null)
 				return false;
@@ -108,7 +98,7 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 		AssemblerOperand newAddr = getAddr().replaceOperand(src, dst);
 		AssemblerOperand newOffs = offset.replaceOperand(src, dst);
 		if (newAddr != getAddr() || newOffs != offset) {
-			return new AddrOffsOperand(llOp, type, newOffs, newAddr);
+			return new AddrOffsOperand(type, newOffs, newAddr);
 		}
 		return this;
 	}

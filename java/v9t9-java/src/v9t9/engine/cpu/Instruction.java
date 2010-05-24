@@ -668,7 +668,8 @@ public class Instruction extends RawInstruction implements IInstruction {
         /** operand is a jump (INST_JUMP_COND = conditional) */
         public int jump; 
 
-        public int reads, writes;	// what resources (INST_RSRC_xxx) are read and written?
+        /** what resources (INST_RSRC_xxx) are read and written? */
+        public int reads, writes;	
         public int mop1_dest, mop2_dest, mop3_dest;
     }
 

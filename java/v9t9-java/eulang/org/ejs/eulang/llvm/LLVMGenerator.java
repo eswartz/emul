@@ -640,13 +640,13 @@ public class LLVMGenerator {
 		LLVariableOp loopVal = makeLocalStorage(loopValSym, null,
 				generateNil(stmt));
 
-		ISymbol loopEnter = scope.addTemporary("loopEnter");
+		ISymbol loopEnter = currentTarget.getScope().addTemporary("loopEnter");
 		loopEnter.setType(typeEngine.LABEL);
 
-		ISymbol loopBody = scope.addTemporary("loopBody");
+		ISymbol loopBody = currentTarget.getScope().addTemporary("loopBody");
 		loopBody.setType(typeEngine.LABEL);
 
-		ISymbol loopExit = scope.addTemporary("loopExit");
+		ISymbol loopExit = currentTarget.getScope().addTemporary("loopExit");
 		loopExit.setType(typeEngine.LABEL);
 
 		LoopContext context = new LoopContext(scope, loopBody, loopEnter,

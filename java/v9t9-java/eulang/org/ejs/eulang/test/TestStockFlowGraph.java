@@ -74,7 +74,11 @@ public class TestStockFlowGraph extends BaseInstrTest {
 		
 		B6.addSucc(B3);
 		rout.addBlock(B6);
-		
+
+		FlowGraphVisitor visitor = new FlowGraphVisitor();
+		visitor.setupFlow(false);		// no explicit instrs
+		rout.accept(visitor);
+
 	}
 	/**
 	 * Test the basic flowgraph visitor and edge analyzer
@@ -82,8 +86,6 @@ public class TestStockFlowGraph extends BaseInstrTest {
 	 */
 	@Test
 	public void testFlowgraph1() throws Exception {
-		
-		rout.accept(new FlowGraphVisitor());
 		
 		Map<Block, Edge> edges;
 		edges = B0.getEdges();
@@ -125,9 +127,6 @@ public class TestStockFlowGraph extends BaseInstrTest {
 	 */
 	@Test
 	public void testDominators1() throws Exception {
-		
-		rout.accept(new FlowGraphVisitor());
-		
 		assertEquals(B0, B1.getIdom());
 		
 		assertEquals(B0, B5.getIdom());
@@ -163,7 +162,6 @@ public class TestStockFlowGraph extends BaseInstrTest {
 	
 	@Test
 	public void testDominatorPaths() throws Exception {
-		rout.accept(new FlowGraphVisitor());
 		
 		final List<List<Block>> paths = new ArrayList<List<Block>>();
 		rout.accept(new CodeVisitor() {

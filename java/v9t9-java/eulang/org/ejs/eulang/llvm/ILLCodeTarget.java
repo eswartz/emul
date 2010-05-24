@@ -11,6 +11,7 @@ import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLTempOp;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -21,6 +22,7 @@ import org.ejs.eulang.types.LLType;
  */
 public interface ILLCodeTarget {
 
+	IScope getScope();
 	/**
 	 * @return the blocks
 	 */

@@ -799,10 +799,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		AssemblerOperand falseOp = new SymbolLabelOperand(falseTarget.getType(), falseTarget.getSymbol());
 		
 		AsmInstruction inst = AsmInstruction.create(Pjcc, test, trueOp, falseOp);
-		if (test instanceof ISymbolOperand)
-			inst.setImplicitSources(new ISymbol[] { ((ISymbolOperand) test).getSymbol() });
-		else
-			inst.setImplicitSources(new ISymbol[0]);
 		inst.setImplicitTargets(new ISymbol[0]);
 		emitInstr(inst);
 	}
@@ -955,8 +951,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					for (int j = 0; j < agg.getCount(); j++) {
 						LLType comp = agg.getType(j);
 						int offs = align.alignAndAdd(comp);
-						tup = tup.put(j, new AddrOffsOperand(llinst.getResult(), 
-								comp, new NumberOperand(offs / 8), asmOp));
+						tup = tup.put(j, new AddrOffsOperand(comp, new NumberOperand(offs / 8), asmOp));
 					}
 					asmOp = tup;
 				}
@@ -1117,7 +1112,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			if (!asmOp.isRegister())
 				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
 			//asmOp = moveToTemp(null, typeEngine.getPointerType(type), asmOp);
-			asmOp = new AddrOffsOperand(ops[0], type, new NumberOperand(offs), asmOp);
+			asmOp = new AddrOffsOperand(type, new NumberOperand(offs), asmOp);
 		}
 		asmOps[0] = asmOp;
 		ssaTempTable.put(instr.getResult(), asmOp);

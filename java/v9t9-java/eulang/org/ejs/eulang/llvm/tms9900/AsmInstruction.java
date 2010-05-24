@@ -38,6 +38,42 @@ public class AsmInstruction extends HLInstruction {
 		sources = implSources = null;
 	}
 
+	/**
+	 * @return the fx
+	 */
+	public Effects getEffects() {
+		if (fx == null) {
+			fx = Instruction.getInstructionEffects(getInst());
+			if (fx == null) {
+				fx = new Instruction.Effects();
+				switch (getInst()) {
+				case InstrSelection.Pcopy:
+				case InstrSelection.Piset:
+					fx.mop1_dest = Operand.OP_DEST_FALSE;
+					fx.mop2_dest = Operand.OP_DEST_KILLED;
+					break;
+				case InstrSelection.Pepilog:
+				case InstrSelection.Pprolog:
+					break;
+				case InstrSelection.Pjcc:
+					fx.jump = Instruction.INST_JUMP_COND;
+					fx.mop1_dest = Operand.OP_DEST_FALSE;
+					fx.mop2_dest = Operand.OP_DEST_FALSE;
+					fx.mop3_dest = Operand.OP_DEST_FALSE;
+					fx.stReads = ~0;	// TODO
+					break;
+				case InstrSelection.Plea:
+					fx.mop1_dest = Operand.OP_DEST_FALSE;
+					fx.mop2_dest = Operand.OP_DEST_KILLED;
+					break;
+				}
+			}
+			if (getInst() == InstructionTable.Impy || getInst() == InstructionTable.Idiv) {
+				fx.mop3_dest = Operand.OP_DEST_KILLED;
+			}
+		}
+		return fx;
+	}
 	
 	public int getNumber() {
 		return number;
@@ -99,33 +135,7 @@ public class AsmInstruction extends HLInstruction {
 	@Override
 	public void setInst(int inst) {
 		super.setInst(inst);
-		fx = Instruction.getInstructionEffects(inst);
-		if (fx == null) {
-			fx = new Instruction.Effects();
-			switch (inst) {
-			case InstrSelection.Pcopy:
-			case InstrSelection.Piset:
-				fx.mop1_dest = Operand.OP_DEST_FALSE;
-				fx.mop2_dest = Operand.OP_DEST_KILLED;
-				break;
-			case InstrSelection.Pepilog:
-			case InstrSelection.Pprolog:
-				break;
-			case InstrSelection.Pjcc:
-				fx.jump = Instruction.INST_JUMP_COND;
-				fx.mop1_dest = Operand.OP_DEST_FALSE;
-				fx.mop2_dest = Operand.OP_DEST_FALSE;
-				fx.stReads = ~0;	// TODO
-				break;
-			case InstrSelection.Plea:
-				fx.mop1_dest = Operand.OP_DEST_FALSE;
-				fx.mop2_dest = Operand.OP_DEST_KILLED;
-				break;
-			}
-		}
-		if (getInst() == InstructionTable.Impy || getInst() == InstructionTable.Idiv) {
-			fx.mop3_dest = Operand.OP_DEST_KILLED;
-		}
+		fx = null;
 	}
 	
 	/** Get the operands (either explicitly specified as operands or implicit
@@ -138,20 +148,20 @@ public class AsmInstruction extends HLInstruction {
 			if (implTargets != null) {
 				targets.addAll(Arrays.asList(implTargets));
 			} else {
-				if (fx != null) {
+				if (getEffects() != null) {
 					if (getOp1() != null) {
 						if (fx.mop1_dest != Operand.OP_DEST_FALSE) {
-							addSymbol(targets, getOp1());
+							getSymbolRefs(targets, getOp1());
 						}
 						if (getOp2() != null) {
 							if (fx.mop2_dest != Operand.OP_DEST_FALSE) {
-								addSymbol(targets, getOp2());
+								getSymbolRefs(targets, getOp2());
 							}
 						}
 					}
 				}
 				if (getOp3() != null) {
-					addSymbol(targets, getOp3());
+					getSymbolRefs(targets, getOp3());
 				}
 			}
 			this.targets = (ISymbol[]) targets.toArray(new ISymbol[targets.size()]);
@@ -169,20 +179,17 @@ public class AsmInstruction extends HLInstruction {
 			if (implSources != null) {
 				sources.addAll(Arrays.asList(implSources));
 			} else {
-				if (fx != null) {
+				if (getEffects() != null) {
 					if (getOp1() != null) {
-						if (fx.mop1_dest != Operand.OP_DEST_KILLED) {
-							addSymbol(sources, getOp1());
-						}
+						// be sure to get refs to the indirect registers in a read
+						getSymbolRefs(sources, getOp1(), fx.mop1_dest != Operand.OP_DEST_KILLED);
 						if (getOp2() != null) {
-							if (fx.mop2_dest != Operand.OP_DEST_KILLED) {
-								addSymbol(sources, getOp2());
+							getSymbolRefs(sources, getOp2(), fx.mop2_dest != Operand.OP_DEST_KILLED);
+							if (getOp3() != null) {
+								getSymbolRefs(sources, getOp3(), fx.mop3_dest != Operand.OP_DEST_KILLED);
 							}
 						}
 					}
-				}
-				if (getOp3() != null) {
-					addSymbol(sources, getOp3());
 				}
 			}
 			this.sources = (ISymbol[]) sources.toArray(new ISymbol[sources.size()]);
@@ -190,18 +197,19 @@ public class AsmInstruction extends HLInstruction {
 		return sources;
 	}
 	
-	/**
-	 * @param sources2
-	 * @param op3
-	 */
-	private void addSymbol(Set<ISymbol> list, AssemblerOperand op) {
-		if (op instanceof ISymbolOperand) {
-			ISymbol symbol = ((ISymbolOperand) op).getSymbol();
-			if (symbol != null)
-				list.add(symbol);
+	public static void getSymbolRefs(Set<ISymbol> list, AssemblerOperand op) {
+		getSymbolRefs(list, op, true);
+	}
+	private static void getSymbolRefs(Set<ISymbol> list, AssemblerOperand op, boolean includeTop) {
+		if (includeTop) {
+			if (op instanceof ISymbolOperand) {
+				ISymbol symbol = ((ISymbolOperand) op).getSymbol();
+				if (symbol != null)
+					list.add(symbol);
+			}
 		}
 		for (AssemblerOperand kid : op.getChildren()) {
-			addSymbol(list, kid);
+			getSymbolRefs(list, kid, true);
 		}
 	}
 
@@ -309,7 +317,7 @@ public class AsmInstruction extends HLInstruction {
 
 
 	public AssemblerOperand getDestOp() {
-		if (fx != null) {
+		if (getEffects() != null) {
 			if (getOp1() != null && fx.mop1_dest != Operand.OP_DEST_FALSE)
 				return getOp1();
 			if (getOp2() != null && fx.mop2_dest != Operand.OP_DEST_FALSE)
@@ -320,7 +328,7 @@ public class AsmInstruction extends HLInstruction {
 		return null;
 	}
 	public AssemblerOperand getSrcOp() {
-		if (fx != null) {
+		if (getEffects() != null) {
 			if (getOp1() != null && fx.mop1_dest != Operand.OP_DEST_KILLED)
 				return getOp1();
 			if (getOp2() != null && fx.mop2_dest != Operand.OP_DEST_KILLED)
@@ -336,7 +344,7 @@ public class AsmInstruction extends HLInstruction {
 	 * @param dst
 	 */
 	public void setDestOp(AssemblerOperand dst) {
-		if (fx != null) {
+		if (getEffects() != null) {
 			if (getOp1() != null && fx.mop1_dest != Operand.OP_DEST_FALSE) {
 				setOp1(dst);
 				return;

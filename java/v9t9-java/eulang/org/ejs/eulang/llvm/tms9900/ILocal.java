@@ -48,7 +48,7 @@ public interface ILocal {
 
 	/** Get instruction numbers for definitions of the local */
 	BitSet getDefs();
-	
+
 	/**
 	 * Get the (first) definition of the local
 	 */

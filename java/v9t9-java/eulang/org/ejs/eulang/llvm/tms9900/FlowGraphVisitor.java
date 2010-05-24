@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.ejs.eulang.llvm.tms9900.Block.Edge;
+import org.ejs.eulang.symbols.ISymbol;
 
 /**
  * Construct the tree edges and the dominator information for a block tree.
@@ -21,11 +22,21 @@ import org.ejs.eulang.llvm.tms9900.Block.Edge;
 public class FlowGraphVisitor extends CodeVisitor {
 
 	public boolean DUMP = false;
+
+	private boolean setupFlow = true;
 	
 	private Map<Integer, Integer> pre = new HashMap<Integer, Integer>();
 	private Map<Integer, Integer> rpost = new HashMap<Integer, Integer>();
 	private int preorder;
 	private int rpostorder;
+	
+	public FlowGraphVisitor() {
+	}
+	
+	/** Tell whether the successor/predecessor links should be established (default: true) */
+	public void setupFlow(boolean setup) {
+		this.setupFlow = setup;
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.ICodeVisitor#getWalk()
@@ -41,6 +52,9 @@ public class FlowGraphVisitor extends CodeVisitor {
 	 */
 	@Override
 	public boolean enterRoutine(Routine routine) {
+		if (setupFlow)
+			setupSuccessors(routine);
+		
 		constructEdges(routine);
 
 		constructDominators(routine);
@@ -48,6 +62,34 @@ public class FlowGraphVisitor extends CodeVisitor {
 		return false;
 	}
 
+
+	/**
+	 * @param routine
+	 */
+	private void setupSuccessors(Routine routine) {
+		Map<ISymbol, Block> labelBlockMap = new HashMap<ISymbol, Block>();
+		
+		for (Block block : routine.getBlocks()) {
+			block.succ().clear();
+			block.pred().clear();
+			
+			ISymbol label = routine.getLocals().getScope().get(block.getLabel().getName());
+			assert label != null;
+			labelBlockMap.put(label, block);
+		}
+		
+		for (Block block : routine.getBlocks()) {
+			AsmInstruction last = block.getLast();
+			assert last != null;
+			
+			for (ISymbol sym : last.getSources()) {
+				Block succ = labelBlockMap.get(sym);
+				if (succ != null) {
+					block.addSucc(succ);
+				}
+			}
+		}
+	}
 
 	private void constructEdges(Routine routine) {
 		preorder = 1;

@@ -3,13 +3,9 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**
@@ -24,8 +20,6 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	private Map<ILocal, AsmInstruction> tempDefs = new HashMap<ILocal, AsmInstruction>();
 
 	private Locals locals;
-
-	private Routine routine;
 
 	private Block block;
 
@@ -45,7 +39,6 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	 */
 	@Override
 	public boolean enterRoutine(Routine routine) {
-		this.routine = routine;
 		this.locals = routine.getLocals();
 		
 		tempDefs.clear();
@@ -113,10 +106,8 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 		} else {
 			// due to 2-op nature, we can read and write in same instruction; 
 			// this is not considered a kill 
-			if (local.getUses().get(instr.getNumber()))
-				return;
-			
-			local.setExprTemp(false);
+			if (!local.getUses().get(instr.getNumber()))
+				local.setExprTemp(false);
 		}
 		local.getDefs().set(instr.getNumber());
 	}
