@@ -63,6 +63,13 @@ public class TCFModelManager {
             TCFModel model = models.get(launch);
             if (model != null) model.onProcessOutput(process_id, stream_id, data);
         }
+
+        public void onProcessStreamError(TCFLaunch launch, String process_id,
+                int stream_id, Exception error, int lost_size) {
+            assert Protocol.isDispatchThread();
+            TCFModel model = models.get(launch);
+            if (model != null) model.onProcessStreamError(process_id, stream_id, error, lost_size);
+        }
     };
 
     private final ILaunchesListener debug_launch_listener = new ILaunchesListener() {

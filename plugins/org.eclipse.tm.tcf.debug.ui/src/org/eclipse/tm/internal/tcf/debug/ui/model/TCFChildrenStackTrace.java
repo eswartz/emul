@@ -51,6 +51,10 @@ public class TCFChildrenStackTrace extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onRegistersChanged();
     }
 
+    void onMemoryMapChanged() {
+        for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onMemoryMapChanged();
+    }
+
     void onRegisterValueChanged() {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onRegisterValueChanged();
     }

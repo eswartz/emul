@@ -29,6 +29,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -44,6 +45,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     private final TCFDataCache<IMemory.MemoryContext> mem_context;
     private final TCFDataCache<IRunControl.RunControlContext> run_context;
+    private final TCFDataCache<MemoryRegion[]> memory_map;
     private final TCFDataCache<IProcesses.ProcessContext> prs_context;
     private final TCFDataCache<TCFContextState> state;
     private final TCFDataCache<BigInteger> address; // Current PC as BigInteger
@@ -55,6 +57,40 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private int resumed_cnt;
 
     private static int seq_cnt;
+
+    /**
+     * Wrapper class for IMemoryMap.MemoryRegion.
+     * The class help to search memory region by address by
+     * providing contains() method.
+     */
+    public static class MemoryRegion {
+
+        private final BigInteger addr_start;
+        private final BigInteger addr_end;
+
+        public final IMemoryMap.MemoryRegion region;
+
+        private MemoryRegion(IMemoryMap.MemoryRegion region) {
+            this.region = region;
+            Number addr = region.getAddress();
+            Number size = region.getSize();
+            if (addr == null || size == null) {
+                addr_start = null;
+                addr_end = null;
+            }
+            else {
+                addr_start = addr instanceof BigInteger ? (BigInteger)addr : new BigInteger(addr.toString());
+                addr_end = addr_start.add(size instanceof BigInteger ? (BigInteger)size : new BigInteger(size.toString()));
+            }
+        }
+
+        public boolean contains(BigInteger addr) {
+            return
+                addr_start != null && addr_end != null &&
+                addr_start.compareTo(addr) <= 0 &&
+                addr_end.compareTo(addr) > 0;
+        }
+    }
 
     TCFNodeExecContext(TCFNode parent, final String id) {
         super(parent, id);
@@ -113,6 +149,29 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 command = prs.getContext(id, new IProcesses.DoneGetContext() {
                     public void doneGetContext(IToken token, Exception error, IProcesses.ProcessContext context) {
                         set(token, error, context);
+                    }
+                });
+                return false;
+            }
+        };
+        memory_map = new TCFDataCache<MemoryRegion[]>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                assert command == null;
+                IMemoryMap mmap = model.getLaunch().getService(IMemoryMap.class);
+                if (mmap == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = mmap.get(id, new IMemoryMap.DoneGet() {
+                    public void doneGet(IToken token, Exception error, IMemoryMap.MemoryRegion[] map) {
+                        MemoryRegion[] arr = null;
+                        if (map != null) {
+                            int i = 0;
+                            arr = new MemoryRegion[map.length];
+                            for (IMemoryMap.MemoryRegion r : map) arr[i++] = new MemoryRegion(r);
+                        }
+                        set(token, error, arr);
                     }
                 });
                 return false;
@@ -197,6 +256,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void setMemoryContext(IMemory.MemoryContext ctx) {
         mem_context.reset(ctx);
+    }
+
+    TCFDataCache<MemoryRegion[]> getMemoryMap() {
+        return memory_map;
     }
 
     public void addSymbol(TCFNodeSymbol s) {
@@ -473,6 +536,12 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void onMemoryChanged(Number[] addr, long[] size) {
         assert !disposed;
+    }
+
+    void onMemoryMapChanged() {
+        memory_map.reset();
+        children_exec.onMemoryMapChanged();
+        children_stack.onMemoryMapChanged();
     }
 
     void onRegistersChanged() {

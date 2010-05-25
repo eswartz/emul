@@ -94,6 +94,7 @@ import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -112,7 +113,8 @@ import org.eclipse.ui.texteditor.ITextEditor;
 /**
  * TCFModel represents remote target state as it is known to host.
  * The main job of the model is caching remote data,
- * keeping the cache in a coherent state, and feeding UI with up-to-date data.
+ * keeping the cache in a coherent state,
+ * and feeding UI with up-to-date data.
  */
 public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay, ISuspendTrigger {
@@ -159,7 +161,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                             if (len < 0) break;
                             Protocol.invokeAndWait(new Runnable() {
                                 public void run() {
-                                    launch.writeProcessInputStream(buf, 0, len);
+                                    try {
+                                        launch.writeProcessInputStream(buf, 0, len);
+                                    }
+                                    catch (Exception x) {
+                                        onProcessStreamError(null, 0, x, 0);
+                                    }
                                 }
                             });
                         }
@@ -327,12 +334,23 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         public void contextSuspended(final String context, String pc, String reason, Map<String,Object> params) {
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
-                final TCFNodeExecContext exe = (TCFNodeExecContext)node;
+                TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onContextSuspended(pc, reason, params);
             }
             setDebugViewSelection(context);
             runSuspendTrigger(node);
             finished_actions.remove(context);
+        }
+    };
+
+    private final IMemoryMap.MemoryMapListener mmap_listenr = new IMemoryMap.MemoryMapListener() {
+
+        public void changed(String context) {
+            TCFNode node = getNode(context);
+            if (node instanceof TCFNodeExecContext) {
+                TCFNodeExecContext exe = (TCFNodeExecContext)node;
+                exe.onMemoryMapChanged();
+            }
         }
     };
 
@@ -430,6 +448,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (mem != null) mem.addListener(mem_listener);
         IRunControl run = launch.getService(IRunControl.class);
         if (run != null) run.addListener(run_listener);
+        IMemoryMap mmap = launch.getService(IMemoryMap.class);
+        if (mmap != null) mmap.addListener(mmap_listenr);
         IRegisters reg = launch.getService(IRegisters.class);
         if (reg != null) reg.addListener(reg_listener);
         IProcesses prs = launch.getService(IProcesses.class);
@@ -499,6 +519,22 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         catch (Throwable x) {
             Activator.log("Cannot write to console", x);
         }
+    }
+
+    void onProcessStreamError(String process_id, int stream_id, Exception x, int lost_size) {
+        StringBuffer bf = new StringBuffer();
+        bf.append("Debugger console IO error");
+        if (process_id != null) {
+            bf.append(". Process ID ");
+            bf.append(process_id);
+        }
+        bf.append(". Stream ");
+        bf.append(stream_id);
+        if (lost_size > 0) {
+            bf.append(". Lost data size ");
+            bf.append(lost_size);
+        }
+        Activator.log(bf.toString(), x);
     }
 
     void onContextActionsStart(String id) {

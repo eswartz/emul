@@ -28,8 +28,8 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
-import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TCFNodeStackFrame extends TCFNode {
@@ -124,7 +124,7 @@ public class TCFNodeStackFrame extends TCFNode {
                 final BigInteger n1 = n0.add(BigInteger.valueOf(1));
                 final IMemory.MemoryContext ctx = mem_ctx;
                 command = ln.mapToSource(parent.id, n0, n1, new ILineNumbers.DoneMapToSource() {
-                    public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
+                    public void doneMapToSource(IToken token, Exception error, ILineNumbers.CodeArea[] areas) {
                         TCFSourceRef l = new TCFSourceRef();
                         l.context = ctx;
                         l.address = n0;
@@ -292,7 +292,7 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else {
             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();
-            if (!state_cache.validate()) return false;
+            if (!state_cache.validate(done)) return false;
             Throwable error = state_cache.getError();
             if (error == null) error = stack_trace_cache.getError();
             if (error == null) {
@@ -325,7 +325,9 @@ public class TCFNodeStackFrame extends TCFNode {
                     result.setLabel("...", 0);
                 }
                 else {
-                    String label = makeHexAddrString(l.context, l.address);
+                    String module = getModuleName(l.address, done);
+                    if (module == null) return false;
+                    String label = makeHexAddrString(l.context, l.address) + module;
                     if (l.area != null && l.area.file != null) {
                         label += ": " + l.area.file + ", line " + l.area.start_line;
                     }
@@ -337,11 +339,32 @@ public class TCFNodeStackFrame extends TCFNode {
         return true;
     }
 
-    private String makeHexAddrString(IMemory.MemoryContext m, Number n) {
-        BigInteger i = null;
-        if (n instanceof BigInteger) i = (BigInteger)n;
-        else i = new BigInteger(n.toString());
-        String s = i.toString(16);
+    private String getModuleName(BigInteger pc, Runnable done) {
+        TCFDataCache<IRunControl.RunControlContext> parent_dc = ((TCFNodeExecContext)parent).getRunContext();
+        if (!parent_dc.validate(done)) return null;
+        IRunControl.RunControlContext parent_ctx = parent_dc.getData();
+        if (parent_ctx == null) return "";
+        String prs_id = parent_ctx.getProcessID();
+        if (prs_id == null) return "";
+        TCFNodeExecContext prs_node = (TCFNodeExecContext)model.getNode(prs_id);
+        TCFDataCache<TCFNodeExecContext.MemoryRegion[]> map_dc = prs_node.getMemoryMap();
+        if (!map_dc.validate(done)) return null;
+        TCFNodeExecContext.MemoryRegion[] map = map_dc.getData();
+        if (map == null) return "";
+        for (TCFNodeExecContext.MemoryRegion r : map) {
+            String fnm = r.region.getFileName();
+            if (fnm != null && r.contains(pc)) {
+                fnm = fnm.replace('\\', '/');
+                int x = fnm.lastIndexOf('/');
+                if (x >= 0) fnm = fnm.substring(x + 1);
+                return " [" + fnm + "]";
+            }
+        }
+        return "";
+    }
+
+    private String makeHexAddrString(IMemory.MemoryContext m, BigInteger n) {
+        String s = n.toString(16);
         int sz = (m != null ? m.getAddressSize() : 4) * 2;
         int l = sz - s.length();
         if (l < 0) l = 0;
@@ -362,6 +385,10 @@ public class TCFNodeStackFrame extends TCFNode {
         children_vars.onSuspended();
         children_exps.onSuspended();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+    }
+
+    void onMemoryMapChanged() {
+        addModelDelta(IModelDelta.STATE);
     }
 
     void onRegistersChanged() {

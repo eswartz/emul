@@ -60,6 +60,10 @@ public class TCFLaunch extends Launch {
         public void onContextActionsDone(TCFLaunch launch, String ctx_id, String result);
 
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data);
+
+        public void onProcessStreamError(
+                TCFLaunch launch, String process_id, int stream_id,
+                Exception error, int lost_size);
     }
 
     private abstract class LaunchStep implements Runnable {
@@ -459,20 +463,24 @@ public class TCFLaunch extends Launch {
         final String peocess_id = process.getID();
         final IStreams streams = getService(IStreams.class);
         IStreams.DoneRead done = new IStreams.DoneRead() {
-            boolean disconnected;
             public void doneRead(IToken token, Exception error, int lost_size, byte[] data, boolean eos) {
-                if (disconnected) return;
-                // TODO: handle process output data loss
+                if (stream_ids.get(id) == null) return;
+                if (lost_size > 0) {
+                    Exception x = new IOException("Process output data lost due buffer overflow");
+                    for (Listener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, x, lost_size);
+                }
                 if (data != null && data.length > 0) {
                     for (Listener l : listeners) l.onProcessOutput(TCFLaunch.this, peocess_id, no, data);
                 }
-                if (eos || error != null) {
-                    disconnected = true;
-                    // TODO: report error reading process output
-                    disconnectStream(id);
-                    return;
+                if (error != null) {
+                    for (Listener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, error, 0);
                 }
-                streams.read(id, 0x1000, this);
+                if (eos || error != null) {
+                    disconnectStream(id);
+                }
+                else {
+                    streams.read(id, 0x1000, this);
+                }
             }
         };
         streams.read(id, 0x1000, done);
@@ -539,15 +547,21 @@ public class TCFLaunch extends Launch {
         return process;
     }
 
-    public void writeProcessInputStream(byte[] buf, int pos, int len) {
+    public void writeProcessInputStream(byte[] buf, int pos, final int len) throws Exception {
         assert Protocol.isDispatchThread();
-        if (channel.getState() != IChannel.STATE_OPEN) return;
-        if (process_input_stream_id == null) return;
+        final String id = process_input_stream_id;
+        if (channel.getState() != IChannel.STATE_OPEN) throw new IOException("Connection closed");
+        if (process == null) throw new IOException("No target process");
+        final String prs = process.getID();
         IStreams streams = getService(IStreams.class);
-        if (streams == null) return;
-        streams.write(process_input_stream_id, buf, pos, len, new IStreams.DoneWrite() {
+        if (streams == null) throw new IOException("Streams service not available");
+        if (stream_ids.get(id) == null) throw new IOException("Input stream not available");
+        streams.write(id, buf, pos, len, new IStreams.DoneWrite() {
             public void doneWrite(IToken token, Exception error) {
-                // TODO: stream write error handling
+                if (error == null) return;
+                if (stream_ids.get(id) == null) return;
+                for (Listener l : listeners) l.onProcessStreamError(TCFLaunch.this, prs, 0, error, len);
+                disconnectStream(id);
             }
         });
     }

@@ -150,6 +150,10 @@ public class TCFAnnotationManager {
 
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
         }
+
+        public void onProcessStreamError(TCFLaunch launch, String process_id,
+                int stream_id, Exception error, int lost_size) {
+        }
     };
 
     private final ISelectionListener selection_listener = new ISelectionListener() {

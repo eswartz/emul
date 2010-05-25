@@ -152,4 +152,8 @@ public class TCFChildrenExecContext extends TCFChildren {
         mem_children.add(n);
         n.setMemoryContext(context);
     }
+
+    void onMemoryMapChanged() {
+        for (TCFNode n : getNodes()) ((TCFNodeExecContext)n).onMemoryMapChanged();
+    }
 }
