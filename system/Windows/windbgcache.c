@@ -222,5 +222,14 @@ BOOL SymCleanup(HANDLE hProcess) {
     return proc(hProcess);
 }
 
+BOOL LocEnumerateLoadedModulesW64(HANDLE hProcess, PENUMLOADED_MODULES_CALLBACKW64 Callback, PVOID UserContext) {
+    typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PENUMLOADED_MODULES_CALLBACKW64, PVOID);
+    static ProcType proc = NULL;
+    if (proc == NULL) {
+        proc = (ProcType)GetProc("EnumerateLoadedModulesW64");
+        if (proc == NULL) return 0;
+    }
+    return proc(hProcess, Callback, UserContext);
+}
 
 #endif /* defined(WIN32) */

@@ -29,7 +29,12 @@
 #if defined(_WRS_KERNEL)
 #  include <moduleLib.h>
 #endif
+#if defined(_MSC_VER)
+#  include <system/Windows/windbgcache.h>
+#  include <system/Windows/context-win32.h>
+#endif
 #include <framework/myalloc.h>
+#include <framework/trace.h>
 #include <framework/json.h>
 #include <framework/events.h>
 #include <framework/exceptions.h>
@@ -172,8 +177,74 @@ static MemoryMap * get_memory_map(Context * ctx) {
 
 #elif defined(WIN32)
 
+#if defined(_MSC_VER)
+static void add_map_region(MemoryMap * map, DWORD64 addr, ULONG size, char * file) {
+    MemoryRegion * r = NULL;
+    if (map->region_cnt >= map->region_max) {
+        map->region_max += 8;
+        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+    }
+    r = map->regions + map->region_cnt++;
+    memset(r, 0, sizeof(MemoryRegion));
+    r->addr = (ContextAddress)addr;
+    r->size = (ContextAddress)size;
+    r->file_name = loc_strdup(file);
+}
+
+static BOOL CALLBACK modules_callback(PCWSTR ModuleName, DWORD64 ModuleBase, ULONG ModuleSize, PVOID UserContext) {
+    MemoryMap * map = (MemoryMap *)UserContext;
+    static char * fnm_buf = NULL;
+    static int fnm_max = 0;
+    int fnm_len = 0;
+    int fnm_err = 0;
+
+    if (fnm_buf == NULL) {
+        fnm_max = 256;
+        fnm_buf = loc_alloc(fnm_max);
+    }
+    for (;;) {
+        fnm_len = WideCharToMultiByte(CP_UTF8, 0, ModuleName, -1, fnm_buf, fnm_max - 1, NULL, NULL);
+        if (fnm_len != 0) break;
+        fnm_err = GetLastError();
+        if (fnm_err != ERROR_INSUFFICIENT_BUFFER) {
+            set_win32_errno(fnm_err);
+            trace(LOG_ALWAYS, "Can't get module name: %s", errno_to_str(errno));
+            return TRUE;
+        }
+        fnm_max *= 2;
+        fnm_buf = loc_realloc(fnm_buf, fnm_max);
+    }
+    fnm_buf[fnm_len] = 0;
+
+    add_map_region(map, ModuleBase, ModuleSize, fnm_buf);
+
+    return TRUE;
+}
+#endif
+
 static MemoryMap * get_memory_map(Context * ctx) {
-    return EXT(ctx->mem);
+    MemoryMap * map = NULL;
+
+    ctx = ctx->mem;
+    map = EXT(ctx);
+    if (map->valid || ctx->exited) return map;
+
+    release_error_report(map->error);
+    map->error = NULL;
+    map->region_cnt = 0;
+
+#if defined(_MSC_VER)
+    {
+        HANDLE process = get_context_handle(ctx);
+        map->region_cnt = 0;
+        if (!EnumerateLoadedModulesW64(process, modules_callback, map)) {
+            map->error = get_error_report(set_win32_errno(GetLastError()));
+        }
+        map->valid = 1;
+    }
+#endif
+
+    return map;
 }
 
 #elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
@@ -195,6 +266,8 @@ static MemoryMap * get_memory_map(Context * ctx) {
 
     release_error_report(map->error);
     map->error = NULL;
+    map->region_cnt = 0;
+
     snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", id2pid(ctx->id, NULL));
     if ((file = fopen(maps_file_name, "r")) == NULL) {
         map->error = get_error_report(errno);

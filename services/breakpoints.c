@@ -1877,6 +1877,9 @@ static void channel_close_listener(Channel * c) {
 
 #if !defined(_WRS_KERNEL)
 static void eventpoint_at_main(Context * ctx, void * args) {
+#if defined(__linux__)
+    send_context_changed_event(ctx->mem);
+#endif
     suspend_debug_context(ctx);
 }
 #endif

@@ -217,6 +217,8 @@ enum DataKind {
 #define SymUnloadModule64 LocSymUnloadModule64
 #define SymCleanup LocSymCleanup
 
+#define EnumerateLoadedModulesW64 LocEnumerateLoadedModulesW64
+
 extern BOOL SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess);
 extern BOOL SymSetOptions(DWORD Options);
 extern BOOL SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName, DWORD dwLineNumber, PLONG plDisplacement, PIMAGEHLP_LINE Line);
@@ -232,6 +234,8 @@ extern DWORD64 SymGetModuleBase64(HANDLE hProcess, ULONG64 Address);
 extern BOOL SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName, PCSTR ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll);
 extern BOOL SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll);
 extern BOOL SymCleanup(HANDLE hProcess);
+
+extern BOOL LocEnumerateLoadedModulesW64(HANDLE hProcess, PENUMLOADED_MODULES_CALLBACKW64 Callback, PVOID UserContext);
 
 #endif /* defined(WIN32) */
 #endif /* D_windbgcache */
