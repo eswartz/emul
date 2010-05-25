@@ -15,7 +15,7 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
  */
 public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 	private final AssemblerOperand offset;
-	private final LLType type;
+	private LLType type;
 
 	/**
 	 * @param llOp
@@ -36,9 +36,6 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 	public String toString() {
 		return super.toString() + "+" + offset.toString();
 	}
-	
-
-	
 
 
 	@Override
@@ -80,6 +77,13 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 		return type;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		this.type = type;
+	}
 	/**
 	 * @return the offset
 	 */
@@ -101,5 +105,13 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 			return new AddrOffsOperand(type, newOffs, newAddr);
 		}
 		return this;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
 	}
 }

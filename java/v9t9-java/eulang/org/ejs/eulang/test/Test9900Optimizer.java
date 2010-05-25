@@ -21,6 +21,7 @@ import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.junit.Test;
 
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -70,6 +71,10 @@ public class Test9900Optimizer extends BaseInstrTest {
 		instrs.clear();
 		for (Block block : routine.getBlocks())
 			instrs.addAll(block.getInstrs());
+		
+		for (AsmInstruction instr : instrs) {
+			validateInstr(instr);
+		}
 		
 		return anyChanges;
 		
@@ -516,5 +521,65 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// validation checks the hi/lo usage
 		
 	}
+	
+
+	@Test
+	public void testDataLocalUse1() throws Exception {
+		dumpIsel = true;
+	   	boolean changed = doOpt(
+	   			"Tuple = data {\n"+
+	   			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+	   			"testDataInit1 = code() {\n"+
+	   			"  foo:Tuple;\n"+
+	   			"  foo.x = 3; foo.f = 1; foo.y = 0x20; foo.z = 0x10;\n"+
+	   			"  if foo.f then foo.x else foo.y<<foo.z;\n" +
+	   			"};\n"+
+	   	"");
+	   	assertTrue(changed);
+	   	
+	   	for (AsmInstruction inst : instrs) {
+    		if (inst.getInst() == InstructionTable.Ili) {
+    			if (((NumberOperand)inst.getOp2()).getValue() == 1)
+    				fail(inst+": expected >0100");
+    		}
+    	}
+	   	
+	   	fail("write tests");
+	   	int idx;
+	   	AsmInstruction inst;
+		idx = findInstrWithInst(instrs, "SWPB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SWPB", RegTempOperand.class, 0);
+		AssemblerOperand shift = inst.getOp1();
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegTempOperand.class, shift);
+	 }
+	@Test
+    public void testDataInit1() throws Exception {
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+    			"testDataInit1 = code() {\n"+
+    			"  foo:Tuple = [ 3, 1, .z=0x10, .y=0x20 ];\n"+
+    			"   if foo.f then foo.x else foo.y<<foo.z;\n" +
+    			"};\n"+
+    	"");
+    	assertTrue(changed);
+    	
+    	fail("write tests");
+    	int idx;
+    	AsmInstruction inst;
+		idx = findInstrWithInst(instrs, "SWPB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SWPB", RegTempOperand.class, 0);
+		AssemblerOperand shift = inst.getOp1();
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegTempOperand.class, shift);
+    }
 }
 

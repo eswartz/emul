@@ -72,7 +72,7 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 			throw new TypeException("cannot convert result of '" + getName() + "' on " 
 					+ types.left.toString() + " and " + types.right.toString() + " to " + types.result.toString());
 		types.left = newLeft;
-		types.right = newRight;
+		types.right = newLeft;	// must be the same
 	}
 	
 	/* (non-Javadoc)
@@ -83,8 +83,10 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 			throws TypeException {
 		if (types.left.getBasicType() != BasicType.INTEGRAL
 				|| types.right.getBasicType() != BasicType.INTEGRAL
+				|| types.result.getBasicType() != BasicType.INTEGRAL
 				|| !types.result.equals(types.left)
-				|| types.result.getBasicType() != BasicType.INTEGRAL) {
+				|| !types.right.equals(types.left)
+				) {
 			throw new TypeException("inconsistent types in expression");
 		}
 	}

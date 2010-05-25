@@ -131,13 +131,6 @@ public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 	public boolean isReg(int reg) {
 		return local.getVr() == reg;
 	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#getType()
-	 */
-	@Override
-	public LLType getType() {
-		return local.getType();
-	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
@@ -146,4 +139,13 @@ public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 	public AssemblerOperand[] getChildren() {
 		return new AssemblerOperand[0];
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
+	
 }

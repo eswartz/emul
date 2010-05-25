@@ -12,6 +12,7 @@ import org.ejs.eulang.llvm.tms9900.FlowGraphVisitor;
 import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.GlobalScope;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
@@ -36,7 +37,9 @@ public class TestFlowGraphPerf extends BaseInstrTest {
 		
 		Block[] blocks = new Block[numBlocks];
 		for (int i = 0; i < numBlocks; i++) {
-			blocks[i] = new Block(new Label("B" + i));
+			String name = "B" + i;
+			ISymbol sym = def.getScope().add(name, true);
+			blocks[i] = new Block(new Label(sym.getName()));
 			rout.addBlock(blocks[i]);
 			if (i == 0)
 				rout.setEntry(blocks[i]);
@@ -61,6 +64,7 @@ public class TestFlowGraphPerf extends BaseInstrTest {
 		long start = System.currentTimeMillis();
 		for (int cnt = 0; cnt < 10; cnt++) {
 			FlowGraphVisitor visitor = new FlowGraphVisitor();
+			visitor.setupFlow(false);
 			rout.accept(visitor);
 		}
 		long end = System.currentTimeMillis();

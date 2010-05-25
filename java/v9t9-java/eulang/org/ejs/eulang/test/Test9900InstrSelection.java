@@ -1881,5 +1881,76 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		// do not reuse 'x': not last use
 		matchInstr(inst, "SLA", RegTempOperand.class, "~x", RegTempOperand.class, 0);
 	}
+	
+    @Test
+    public void testDataInit1() throws Exception {
+    	dumpLLVMGen = true;
+    	dumpIsel = true;
+    	doIsel(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+    			"testDataInit1 = code() {\n"+
+    			"  foo:Tuple = [ 3, 1, .z=0x10, .y=0x20 ];\n"+
+    			"   if foo.f then foo.x else foo.y<<foo.z;\n" +
+    			"};\n"+
+    	"");
+    	int idx;
+    	AsmInstruction inst;
+    	
+		idx = findInstrWithInst(instrs, "SWPB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SWPB", RegTempOperand.class, 0);
+		AssemblerOperand shift = inst.getOp1();
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegTempOperand.class, shift);
+    }
 
+    @Test
+    public void testDataInitVar1() throws Exception {
+    	doIsel(
+    			"testDataInit2 = code() {\n"+
+    			"  val := 10;\n"+
+    			"  foo:Int[10] = [ [5] = val, [1] = 11 ];\n"+
+    			"};\n"+
+    	"");
+    }
+
+	@Test
+    public void testDataInit4() throws Exception {
+		doIsel(
+    			"testDataInit4 = code() {\n"+
+    			"  foo:Byte[][3] = [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9]];\n"+
+    			"};\n"+
+    	"");
+    }
+
+	@Test
+	public void testDataLocalUse1() throws Exception {
+		dumpIsel = true;
+	   	doIsel(
+	   			"Tuple = data {\n"+
+	   			"   x:Byte; f:Bool; };\n"+
+	   			"testDataInit1 = code() {\n"+
+	   			"  foo:Tuple;\n"+
+	   			"  foo.x = 3; foo.f = 1; ;\n"+
+	   			"  if foo.f then foo.x else 123;\n" +
+	   			"};\n"+
+	   	"");
+	   	
+	   	for (AsmInstruction inst : instrs) {
+    		if (inst.getInst() == InstructionTable.Ili) {
+    			if (((NumberOperand)inst.getOp2()).getValue() == 3)
+    				fail(inst+": expected >0300");
+    			if (((NumberOperand)inst.getOp2()).getValue() == 1)
+    				fail(inst+": expected >0100");
+    			if (((NumberOperand)inst.getOp2()).getValue() == 0x20)
+    				fail(inst+": expected >2000");
+    			if (((NumberOperand)inst.getOp2()).getValue() == 0x10)
+    				fail(inst+": expected >1000");
+    		}
+    	}
+	}
+    
 }

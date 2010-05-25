@@ -39,6 +39,14 @@ public abstract class BaseHLOperand implements AsmOperand, ISymbolOperand {
 		return llType;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		this.llType = type;
+	}
+	
 	@Override
 	public ISymbolOperand setLocal(ILocal local) {
 		if (local instanceof RegisterLocal)

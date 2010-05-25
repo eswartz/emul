@@ -106,4 +106,13 @@ public class StackLocalOperand extends BaseHLOperand {
 	public AssemblerOperand[] getChildren() {
 		return new AssemblerOperand[0];
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
+	
 }

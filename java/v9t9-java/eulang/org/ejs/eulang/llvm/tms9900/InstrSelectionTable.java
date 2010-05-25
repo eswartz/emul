@@ -190,63 +190,63 @@ public class InstrSelectionTable {
 		 		new InstrSelection.DoRes( 1, Ixor, 1, 0 )
 		),
 		
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "shl", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "shl", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_0 },
 		 		null
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "shl", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "shl", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_16 },
 				new InstrSelection.As[] { InstrSelection.As.IMM_0 },
 				new InstrSelection.DoRes( 0, -1, 0 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "shl", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "shl", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_1_15 },
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM }, 
 				new InstrSelection.DoRes( 0, Isla, 0, 1 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "shl", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "shl", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
-		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_W },
+		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_CNT_W },
 		 		new InstrSelection.DoRes( 0, Isla, 0, 1 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "ashr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "ashr", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_0 },
 		 		null
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "ashr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "ashr", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_16 },
-				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_W },
+				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_CNT_W },
 				new InstrSelection.Do( Iclr, 1 ),
 				new InstrSelection.DoRes( 0, Isra, 0, 1 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "ashr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "ashr", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_1_15 },
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM }, 
 				new InstrSelection.DoRes( 0, Isra, 0, 1 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "ashr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "ashr", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
-		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_W },
+		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_CNT_W },
 		 		new InstrSelection.DoRes( 0, Isra, 0, 1 )
 		),
 		
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "lshr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "lshr", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_0 },
 		 		null
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "lshr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "lshr", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_16 },
 				new InstrSelection.As[] { InstrSelection.As.IMM_0 },
 				new InstrSelection.DoRes( 0, -1, 0  )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "lshr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "lshr", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_1_15 },
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM }, 
 				new InstrSelection.DoRes( 0, Isrl, 0, 1 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "lshr", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "lshr", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
-		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_W },
+		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_CNT_W },
 		 		new InstrSelection.DoRes( 0, Isrl, 0, 1 )
 		),
 		
@@ -266,7 +266,7 @@ public class InstrSelectionTable {
 		),
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "src", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
-		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_W },
+		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_CNT_W },
 		 		new InstrSelection.DoRes( 0, Isrc, 0, 1 )
 		),
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I8, "src", 
@@ -284,7 +284,7 @@ public class InstrSelectionTable {
 		),
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I8, "src", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
-		 		new InstrSelection.As[] { InstrSelection.As.REG_RW_DUP, InstrSelection.As.REG_0_W },
+		 		new InstrSelection.As[] { InstrSelection.As.REG_RW_DUP, InstrSelection.As.REG_0_CNT_W },
 				new InstrSelection.DoRes( 0, Isrc, 0, 1 )
 		),
 		
@@ -304,7 +304,7 @@ public class InstrSelectionTable {
 		),
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "slc", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
-		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_W },
+		 		new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.REG_0_CNT_W },
 		 		new InstrSelection.Do( Ineg, 1 ),
 		 		new InstrSelection.DoRes( 0, Isrc, 0, 1 )
 		),
@@ -324,7 +324,7 @@ public class InstrSelectionTable {
 		),
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I8, "slc", 
 		 		new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
-		 		new InstrSelection.As[] { InstrSelection.As.REG_RW_DUP, InstrSelection.As.REG_0_W },
+		 		new InstrSelection.As[] { InstrSelection.As.REG_RW_DUP, InstrSelection.As.REG_0_CNT_W },
 		 		new InstrSelection.Do( Ineg, 1 ),
 				new InstrSelection.DoRes( 0, Isrc, 0, 1 )
 		),

@@ -15,6 +15,7 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 public class NumOperand extends NumberOperand implements AsmOperand {
 
 	private final LLOperand llOp;
+	private LLType type;
 
 	/**
 	 * @param i
@@ -22,6 +23,7 @@ public class NumOperand extends NumberOperand implements AsmOperand {
 	public NumOperand(LLOperand llOp, int i) {
 		super(i);
 		this.llOp = llOp;
+		this.type = llOp != null ? llOp.getType() : null;
 	}
 
 
@@ -30,7 +32,21 @@ public class NumOperand extends NumberOperand implements AsmOperand {
 	}
 	
 	public LLType getType() {
-		return llOp != null ? llOp.getType() : null;
+		return type;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		this.type = type;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return true;
+	}
 }

@@ -602,6 +602,28 @@ xes[3][2][1]
     	LLVMGenerator gen = doGenerate(mod);
     	assertFoundInUnoptimizedText("store %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 4.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple*", gen);
     }
+    
+    @Test
+    public void testDataInit1c() throws Exception {
+    	dumpLLVMGen = true;
+    	// ensure Bool is not aligned as if 1 bit
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+    			"testDataInit1c = code() {\n"+
+    			"  foo:Tuple = [ 3, 2, .z=0x10, .y=0x20 ];\n"+
+    			"};\n"+
+    	"");
+    	LLDataType type = (LLDataType) typeEngine.getNamedType(mod.getScope().get("Tuple"));
+    	assertEquals(4*8, type.getBits());
+    	assertEquals(2*8, ((LLInstanceField) type.getField("y")).getOffset());
+    	
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("%Tuple = type {i8,i1,i8,i8}", gen);
+    	assertFoundInUnoptimizedText("store %Tuple { %Byte 3, %Bool 1, %Byte 32, %Byte 16 }, %Tuple* ", gen);
+    }
+
+    
     @Test
     public void testDataInit2() throws Exception {
     	IAstModule mod = doFrontend(
@@ -650,6 +672,22 @@ xes[3][2][1]
     	LLVMGenerator gen = doGenerate(mod);
     	assertFoundInUnoptimizedText("store %Tuplex5 [ %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 2.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init.0 { %Byte 1, %Bytex6 zeroinitializer, %Byte 55 } to %Tuple), %Tuple zeroinitializer ], %Tuplex5*", gen);
     }
+    
+    @Test
+    public void testDataAccess4() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+    			"testDataAccess4 = code() {\n"+
+    			"  foo:Tuple = [ 3, 1, .z=0x10, .y=0x20 ];\n"+
+    			"   if foo.f then foo.x else foo.y<<foo.z;\n" +
+    			"};\n"+
+    	"");
+    	doGenerate(mod);
+    }
+
     
     @Test
     public void testDataInitVar1() throws Exception {

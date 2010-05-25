@@ -172,6 +172,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	 */
 	public LLBlock addBlock(ISymbol symbol) {
 		LLBlock block = new LLBlock(symbol);
+		assert !labelMap.containsKey(symbol);
 		labelMap.put(symbol, block);
 		current = block;
 		blocks.add(block);

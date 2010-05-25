@@ -3,13 +3,16 @@ package org.ejs.eulang.llvm.tms9900;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
+import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.ISymbol;
 
 
@@ -19,7 +22,7 @@ import org.ejs.eulang.symbols.ISymbol;
  * @author ejs
  */
 public abstract class Routine {
-	
+	private Map<Label, Block> labelBlockMap = new HashMap<Label, Block>();
 	private Block mainBlock;
     private ArrayList<Block> blocks;
     
@@ -105,7 +108,9 @@ public abstract class Routine {
 	}
 
 	public void addBlock(Block block) {
+		assert !labelBlockMap.containsKey(block);
 		blocks.add(block);
+		labelBlockMap.put(block.getLabel(), block);
 	}
 	
 	/**

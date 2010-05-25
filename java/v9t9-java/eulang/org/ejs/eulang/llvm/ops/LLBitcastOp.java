@@ -17,6 +17,12 @@ public class LLBitcastOp extends BaseLLOperand {
 		this.val = val;
 	}
 	
+	/**
+	 * @return the original value, whose type is original
+	 */
+	public LLOperand getValue() {
+		return val;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.ops.LLOperand#isConstant()
 	 */

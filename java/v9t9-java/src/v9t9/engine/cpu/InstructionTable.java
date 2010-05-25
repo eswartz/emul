@@ -142,6 +142,10 @@ public class InstructionTable {
 
 	};
 
+	public static InstEncodePattern getInstEncodePattern(int inst) {
+		return instEntries.get(inst);
+	}
+	
 	public static short[] encode(RawInstruction rawInstruction) throws IllegalArgumentException {
 		Integer opcodeI = instOpcodes.get(rawInstruction.inst);
 		if (opcodeI == null)

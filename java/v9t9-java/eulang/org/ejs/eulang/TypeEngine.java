@@ -59,7 +59,7 @@ public class TypeEngine {
 	public LLLabelType LABEL;
 	public LLType NIL;
 	
-	private Map<String, LLType> llvmNameToTypeMap = new HashMap<String, LLType>();
+	private Map<ISymbol, LLType> llvmNameToTypeMap = new HashMap<ISymbol, LLType>();
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
 	private Set<LLType> types = new HashSet<LLType>();
@@ -575,9 +575,17 @@ public class TypeEngine {
 		return type;
 	}
 	
+
+	/**
+	 * @param sym
+	 */
+	public LLType getNamedType(ISymbol sym) {
+		LLType type = llvmNameToTypeMap.get(sym);
+		return type;
+	}
+	
 	public LLDataType getDataType(ISymbol symbol, List<LLInstanceField> ifields, List<LLStaticField> statics) {
-		String name = symbol.getUniqueName();
-		String key = getDataTypeKey(name, ifields, statics);
+		String key = getDataTypeKey(symbol.getScope().getUniqueName() + symbol.getUniqueName(), ifields, statics);
 		LLDataType data = dataTypeMap.get(key);
 		if (data == null) {
 			//name = uniquify(name);
@@ -586,7 +594,7 @@ public class TypeEngine {
 					(LLStaticField[]) statics.toArray(new LLStaticField[statics.size()]));
 			
 			dataTypeMap.put(key, data);
-			llvmNameToTypeMap.put(name, data);
+			llvmNameToTypeMap.put(symbol, data);
 		}
 		return data;
 	}
@@ -608,8 +616,7 @@ public class TypeEngine {
 	}
 	
 	public LLDataType getDataType(ISymbol symbol, List<LLType> fieldTypes) {
-		String name = symbol.getUniqueName();
-		String key = getDataTypeKey(name, fieldTypes);
+		String key = getDataTypeKey(symbol.getScope().getUniqueName() + symbol.getUniqueName(), fieldTypes);
 		LLDataType data = dataTypeMap.get(key);
 		if (data == null) {
 			List<LLInstanceField> ifields = new ArrayList<LLInstanceField>(fieldTypes.size());
@@ -619,8 +626,8 @@ public class TypeEngine {
 			data = new LLDataType(this, symbol,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
 					null);
-			llvmNameToTypeMap.put(name, data);
 			dataTypeMap.put(key, data);
+			llvmNameToTypeMap.put(symbol, data);
 		}
 		return data;
 	}
@@ -713,4 +720,5 @@ public class TypeEngine {
 		}
 		return type;
 	}
+
 }

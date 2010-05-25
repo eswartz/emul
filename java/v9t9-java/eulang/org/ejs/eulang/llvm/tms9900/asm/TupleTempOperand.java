@@ -36,7 +36,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 public class TupleTempOperand implements AsmOperand {
 
 	private AssemblerOperand[] components;
-	private final LLType type;
+	private LLType type;
 
 	public TupleTempOperand(LLType type, AssemblerOperand[] components) {
 		this.type = type;
@@ -115,6 +115,13 @@ public class TupleTempOperand implements AsmOperand {
 		return type;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		this.type = type;
+	}
 	@Override
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
@@ -168,5 +175,21 @@ public class TupleTempOperand implements AsmOperand {
 	@Override
 	public AssemblerOperand[] getChildren() {
 		return components;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		for (AssemblerOperand op : components) {
+			if (op instanceof AsmOperand) {
+				if (!((AsmOperand) op).isConst())
+					return false;
+			} else {
+				return false;
+			}
+		}
+		return true;
 	}
 }

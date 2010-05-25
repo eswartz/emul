@@ -101,7 +101,7 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
-import org.ejs.eulang.llvm.ops.LLZeroInit;
+import org.ejs.eulang.llvm.ops.LLZeroInitOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
@@ -1382,9 +1382,15 @@ public class LLVMGenerator {
 					op = generateTypedExpr(initExpr);
 
 				}
+				
+				// don't allocate 1 bit for bools
+				LLType opType = op.getType();
+				if (opType.getBits() < 8)
+					opType = typeEngine.BYTE; 
+						
 				if (needAlignment) {
 					// add zero init if we skipped anything
-					int gap = align.alignmentGap(op.getType())
+					int gap = align.alignmentGap(opType)
 							+ (align.sizeof() - curOffs);
 					addZeroInitGap(gap, constOps, paddingOps, initFieldTypes,
 							isArray, align);
@@ -1394,17 +1400,17 @@ public class LLVMGenerator {
 				if (op.isConstant()) {
 					constOps.add(op);
 				} else {
-					if (op.getType() instanceof LLAggregateType
-							|| op.getType() instanceof LLArrayType)
+					if (opType instanceof LLAggregateType
+							|| opType instanceof LLArrayType)
 						throw new ASTException(initNode,
 								"cannot initialize with variable aggregates");
 					int idx = constOps.size();
-					constOps.add(new LLZeroInit(op.getType()));
+					constOps.add(new LLZeroInitOp(opType));
 					nonConstOps.put(idx, op);
 				}
 
-				curOffs += op.getType().getBits();
-				align.addAtOffset(op.getType());
+				curOffs += opType.getBits();
+				align.addAtOffset(opType);
 				if (!isArray)
 					initFieldTypes.add(initInfo.second);
 
@@ -1531,7 +1537,7 @@ public class LLVMGenerator {
 
 			while (gap > 0) {
 				paddingOps.add(initOps.size());
-				initOps.add(new LLZeroInit(fillType));
+				initOps.add(new LLZeroInitOp(fillType));
 				if (!isArray)
 					initFieldTypes.add(fillType);
 				gap -= fillType.getBits();
@@ -1684,12 +1690,12 @@ public class LLVMGenerator {
 						// expr.getTest().getType(),
 						typeEngine.LLBOOL, test, new LLSymbolOp(resultLabel),
 						new LLSymbolOp(nextTest)));
+				currentTarget.addBlock(resultLabel);
 			} else {
 				// last test is always true
 				resultLabel = nextTest;
 			}
 
-			currentTarget.addBlock(resultLabel);
 
 			LLOperand result = generateTypedExpr(expr.getExpr());
 

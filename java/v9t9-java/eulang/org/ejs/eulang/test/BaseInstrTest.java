@@ -38,6 +38,7 @@ import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
+import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -137,7 +138,7 @@ public class BaseInstrTest extends BaseTest {
 	/**
 	 * @param instr
 	 */
-	private void validateInstr(AsmInstruction instr) {
+	protected void validateInstr(AsmInstruction instr) {
 		assertNotNull(instr);
 		for (AssemblerOperand op : instr.getOps()) {
 			assertNotNull(op);
@@ -166,6 +167,44 @@ public class BaseInstrTest extends BaseTest {
 				assertTrue(sym+"", locals.getRegLocals().containsKey(sym) || locals.getStackLocals().containsKey(sym)
 						|| sym.getType().getBasicType() == BasicType.LABEL);
 		}
+		
+		// make sure operands are valid
+		InstEncodePattern pattern = InstructionTable.getInstEncodePattern(instr.getInst());
+		if (pattern != null) {
+			validateOperand(instr, instr.getOp1(), pattern.op1);
+			validateOperand(instr, instr.getOp2(), pattern.op2);
+		}
+	}
+
+	/**
+	 * @param instr
+	 * @param op1
+	 * @param op12
+	 */
+	protected void validateOperand(AsmInstruction instr, AssemblerOperand op,
+			int opType) {
+		String prefix = instr+":"+op;
+		switch (opType) {
+		case InstEncodePattern.CNT:
+			if (op.isRegister()) {
+				if ((op instanceof IRegisterOperand)) {
+					assertTrue(prefix, ((IRegisterOperand) op).isReg(0));
+					break;
+				}
+			}
+			// fall through
+		case InstEncodePattern.IMM:
+		case InstEncodePattern.OFF:
+			assertTrue(prefix, op instanceof NumberOperand || ((op instanceof AsmOperand) && ((AsmOperand) op).isConst()));
+			break;
+		case InstEncodePattern.REG:
+			assertTrue(prefix, op.isRegister());
+			break;
+		case InstEncodePattern.GEN:
+			assertTrue(prefix, op.isRegister() || op.isMemory());
+			break;
+		}
+		
 	}
 
 	@SuppressWarnings("unchecked")

@@ -9,10 +9,10 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class LLZeroInit extends BaseLLOperand {/**
+public class LLZeroInitOp extends BaseLLOperand {/**
 	 * @param type
 	 */
-	public LLZeroInit(LLType type) {
+	public LLZeroInitOp(LLType type) {
 		super(type);
 	}
 
