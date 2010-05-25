@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.adapters;
 
+import java.util.Collection;
+import java.util.Map;
+
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
@@ -17,6 +20,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
+import org.eclipse.tm.tcf.services.IProcesses;
 
 class TCFLaunchLabelProvider implements IElementLabelProvider {
 
@@ -33,7 +37,21 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
                 status = "Exited";
                 int code = launch.getExitCode();
                 if (code > 0) status += ", exit code " + code;
-                if (code < 0) status += ", signal " + (-code); // TODO: signal name
+                if (code < 0) {
+                    status += ", signal " + (-code);
+                    Collection<Map<String,Object>> sigs = launch.getSignalList();
+                    if (sigs != null) {
+                        for (Map<String,Object> m : sigs) {
+                            Number num = (Number)m.get(IProcesses.SIG_CODE);
+                            if (num == null) continue;
+                            if (num.intValue() != -code) continue;
+                            String s = (String)m.get(IProcesses.SIG_NAME);
+                            if (s == null) continue;
+                            status += " (" + s + ")";
+                            break;
+                        }
+                    }
+                }
             }
             else if (launch.isDisconnected()) {
                 status = "Disconnected";

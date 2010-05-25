@@ -148,8 +148,7 @@ public class RegistersProxy implements IRegisters {
         }
 
         public String getRole() {
-            // TODO Auto-generated method stub
-            return null;
+            return (String)props.get(PROP_ROLE);
         }
 
         public IToken get(final DoneGet done) {

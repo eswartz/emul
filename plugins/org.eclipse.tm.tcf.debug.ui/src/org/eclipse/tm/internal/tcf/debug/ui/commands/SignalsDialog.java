@@ -12,9 +12,12 @@ package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -36,10 +39,15 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
+import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildrenExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext.SignalMask;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IProcesses;
@@ -54,64 +62,47 @@ class SignalsDialog extends Dialog {
 
     private static final String[] column_names = { "Code", "Name", "Description", "Don't stop", "Don't pass", "Pending" };
 
+    private static class Signal extends SignalMask {
+
+        Signal(Map<String,Object> m) {
+            props = m;
+        }
+
+        Signal(SignalMask m) {
+            props = m.getProperties();
+            dont_stop = m.isDontStop();
+            dont_pass = m.isDontPass();
+            pending = m.isPending();
+        }
+
+        void setDontStop(boolean b) {
+            dont_stop = b;
+        }
+
+        void setDontPass(boolean b) {
+            dont_pass = b;
+        }
+
+        void setPending(boolean b) {
+            pending = b;
+        }
+    }
+
     private Table signal_table;
     private TableViewer table_viewer;
     private Map<Number,Signal> org_signals;
+    private Signal[] cur_signals;
 
     private final TCFModel model;
     private final IChannel channel;
-    private final TCFDataCache<SignalList> signal_list;
-    private final TCFDataCache<SignalState> signal_state;
+    private final TCFNode selection;
 
-    private static class SignalList {
-        String context_id;
-        Collection<Map<String,Object>> list;
-    }
-
-    private static class SignalState {
-        String context_id;
-        Signal[] list;
-    }
-
-    private class Signal implements Cloneable {
-        Map<String,Object> attrs;
-        boolean dont_stop;
-        boolean dont_pass;
-        boolean pending;
-
-        public Signal copy() {
-            try {
-                return (Signal)clone();
-            }
-            catch (CloneNotSupportedException e) {
-                throw new Error(e);
-            }
-        }
-
-        @Override
-        public String toString() {
-            StringBuffer bf = new StringBuffer();
-            bf.append("[attrs=");
-            bf.append(attrs.toString());
-            if (dont_stop) bf.append(",don't stop");
-            if (dont_pass) bf.append(",don't pass");
-            if (pending) bf.append(",pending");
-            bf.append(']');
-            return bf.toString();
-        }
-    }
+    private TCFNodeExecContext node;
 
     private final IStructuredContentProvider content_provider = new IStructuredContentProvider() {
 
         public Object[] getElements(Object input) {
-            return new TCFTask<Signal[]>(channel) {
-
-                public void run() {
-                    if (!signal_state.validate(this)) return;
-                    if (signal_state.getError() != null) error(signal_state.getError());
-                    else done(signal_state.getData().list);
-                }
-            }.getE();
+            return cur_signals;
         }
 
         public void dispose() {
@@ -129,31 +120,31 @@ class SignalsDialog extends Dialog {
         final Image img_ds = ImageCache.getImage("icons/full/elcl16/disabled_co.gif");
 
         public Image getColumnImage(Object element, int column) {
-            Signal s = (Signal)element;
+            SignalMask s = (SignalMask)element;
             switch (column) {
             case 3:
-                return s.dont_stop ? img_rs : img_ds;
+                return s.isDontStop() ? img_rs : img_ds;
             case 4:
-                return s.dont_pass ? img_dl : img_ds;
+                return s.isDontPass() ? img_dl : img_ds;
             case 5:
-                return s.pending ? img_en : img_ds;
+                return s.isPending() ? img_en : img_ds;
             }
             return null;
         }
 
         public String getColumnText(Object element, int column) {
-            Signal s = (Signal)element;
+            SignalMask s = (SignalMask)element;
             switch (column) {
             case 0:
-                long n = ((Number)s.attrs.get(IProcesses.SIG_CODE)).longValue();
+                long n = s.getCode().longValue();
                 if (n < 32) return Long.toString(n);
                 String q = Long.toHexString(n);
                 if (q.length() < 8) q = "00000000".substring(q.length()) + q;
                 return "0x" + q;
             case 1:
-                return (String)s.attrs.get(IProcesses.SIG_NAME);
+                return (String)s.getProperties().get(IProcesses.SIG_NAME);
             case 2:
-                return (String)s.attrs.get(IProcesses.SIG_DESCRIPTION);
+                return (String)s.getProperties().get(IProcesses.SIG_DESCRIPTION);
             }
             return "";
         }
@@ -163,89 +154,11 @@ class SignalsDialog extends Dialog {
         }
     }
 
-    SignalsDialog(Shell parent, final TCFNode node) {
+    SignalsDialog(Shell parent, TCFNode node) {
         super(parent);
         model = node.getModel();
         channel = node.getChannel();
-        signal_list = new TCFTask<TCFDataCache<SignalList>>(channel) {
-
-            public void run() {
-                done(new TCFDataCache<SignalList>(channel) {
-
-                    @Override
-                    protected boolean startDataRetrieval() {
-                        IProcesses prs = channel.getRemoteService(IProcesses.class);
-                        TCFNode n = node;
-                        while (n != null) {
-                            if (n instanceof TCFNodeExecContext) break;
-                            n = n.getParent();
-                        }
-                        if (n == null || prs == null) {
-                            set(null, null, null);
-                            return true;
-                        }
-                        final SignalList l = new SignalList();
-                        l.context_id = n.getID();
-                        command = prs.getSignalList(l.context_id, new IProcesses.DoneGetSignalList() {
-                            public void doneGetSignalList(IToken token, Exception error, Collection<Map<String, Object>> list) {
-                                l.list = list;
-                                set(token, error, l);
-                            }
-                        });
-                        return false;
-                    }
-                });
-            }
-        }.getE();
-        signal_state = new TCFTask<TCFDataCache<SignalState>>(channel) {
-
-            public void run() {
-                done(new TCFDataCache<SignalState>(channel) {
-
-                    @Override
-                    protected boolean startDataRetrieval() {
-                        if (!signal_list.validate(this)) return false;
-                        IProcesses prs = channel.getRemoteService(IProcesses.class);
-                        final SignalList sigs = signal_list.getData();
-                        if (prs == null || sigs == null) {
-                            set(null, null, null);
-                            return true;
-                        }
-                        command = prs.getSignalMask(sigs.context_id, new IProcesses.DoneGetSignalMask() {
-                            public void doneGetSignalMask(IToken token, Exception error, int dont_stop, int dont_pass, int pending) {
-                                int n = 0;
-                                Signal[] list = new Signal[sigs.list.size()];
-                                for (Map<String,Object> m : sigs.list) {
-                                    Signal s = list[n++] = new Signal();
-                                    int mask = 1 << ((Number)m.get(IProcesses.SIG_INDEX)).intValue();
-                                    s.attrs = m;
-                                    s.dont_stop = (dont_stop & mask) != 0;
-                                    s.dont_pass = (dont_pass & mask) != 0;
-                                    s.pending = (pending & mask) != 0;
-                                }
-                                SignalState state = new SignalState();
-                                state.context_id = sigs.context_id;
-                                state.list = list;
-                                set(token, error, state);
-                            }
-                        });
-                        return false;
-                    }
-                });
-            }
-        }.getE();
-    }
-
-    @Override
-    public boolean close() {
-        new TCFTask<Boolean>() {
-
-            public void run() {
-                signal_list.dispose();
-                done(Boolean.TRUE);
-            }
-        }.getE();
-        return super.close();
+        selection = node;
     }
 
     @Override
@@ -314,29 +227,31 @@ class SignalsDialog extends Dialog {
         signal_table.addMouseListener(new MouseListener() {
 
             public void mouseDoubleClick(MouseEvent e) {
+            }
+
+            public void mouseDown(MouseEvent e) {
                 int count = signal_table.getColumnCount();
                 for (int row = 0; row < signal_table.getItemCount(); row++) {
                     for (int col = 0; col < count; col++) {
                         TableItem item = signal_table.getItem(row);
                         if (item.getBounds(col).contains(e.x, e.y)) {
-                            Object[] arr = content_provider.getElements(null);
-                            if (arr == null || row < 0 || row >= arr.length) break;
-                            Signal s = (Signal)arr[row];
+                            if (row < 0 || row >= cur_signals.length) break;
+                            Signal s = cur_signals[row];
                             switch (col) {
                             case 3:
-                                s.dont_stop = !s.dont_stop;
+                                s.setDontStop(!s.isDontStop());
                                 break;
                             case 4:
-                                s.dont_pass = !s.dont_pass;
+                                s.setDontPass(!s.isDontPass());
                                 break;
                             case 5:
-                                if (s.pending) {
+                                if (node == null) break;
+                                if (s.isPending()) {
                                     // Cannot clear a signal that is already generated
-                                    Number code = (Number)s.attrs.get(IProcesses.SIG_INDEX);
-                                    Signal x = org_signals.get(code);
-                                    if (x != null && x.pending) break;
+                                    Signal x = org_signals.get(s.getIndex());
+                                    if (x != null && x.isPending()) break;
                                 }
-                                s.pending = !s.pending;
+                                s.setPending(!s.isPending());
                                 break;
                             }
                             table_viewer.refresh(s);
@@ -344,9 +259,6 @@ class SignalsDialog extends Dialog {
                         }
                     }
                 }
-            }
-
-            public void mouseDown(MouseEvent e) {
             }
 
             public void mouseUp(MouseEvent e) {
@@ -357,76 +269,156 @@ class SignalsDialog extends Dialog {
         table_viewer.setUseHashlookup(true);
         table_viewer.setColumnProperties(column_names);
 
+        cur_signals = new TCFTask<Signal[]>(channel) {
+            public void run() {
+                TCFNode n = selection;
+                while (n != null && !(n instanceof TCFNodeExecContext)) n = n.getParent();
+                node = (TCFNodeExecContext)n;
+                if (node == null) {
+                    TCFLaunch launch = selection.getModel().getLaunch();
+                    Collection<Map<String,Object>> sigs = launch.getSignalList();
+                    if (sigs == null) {
+                        done(new Signal[0]);
+                    }
+                    else {
+                        int i = 0;
+                        int no_stop = 0;
+                        int no_pass = 0;
+                        Signal[] arr = new Signal[sigs.size()];
+                        try {
+                            ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+                            String dont_stop = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_STOP, "");
+                            String dont_pass = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_PASS, "");
+                            if (dont_stop.length() > 0) no_stop = Integer.parseInt(dont_stop, 16);
+                            if (dont_pass.length() > 0) no_pass = Integer.parseInt(dont_pass, 16);
+                        }
+                        catch (Exception x) {
+                            Activator.log("Invalid launch cofiguration attribute", x);
+                        }
+                        for (Map<String,Object> m : sigs) {
+                            Signal s = arr[i++] = new Signal(m);
+                            Number num = s.getIndex();
+                            int j = num == null ? 0 : 1 << num.intValue();
+                            s.setDontStop((no_stop & j) != 0);
+                            s.setDontPass((no_pass & j) != 0);
+                        }
+                        done(arr);
+                    }
+                }
+                else {
+                    TCFDataCache<SignalMask[]> dc = node.getSignalMask();
+                    if (!dc.validate(this)) return;
+                    if (dc.getError() != null) {
+                        error(dc.getError());
+                    }
+                    else if (dc.getData() == null) {
+                        done(new Signal[0]);
+                    }
+                    else {
+                        int i = 0;
+                        Signal[] arr = new Signal[dc.getData().length];
+                        for (SignalMask m : dc.getData()) arr[i++] = new Signal(m);
+                        done(arr);
+                    }
+                }
+            }
+        }.getE();
+        org_signals = new HashMap<Number,Signal>();
+        for (Signal m : cur_signals) org_signals.put(m.getIndex(), new Signal(m));
         table_viewer.setContentProvider(content_provider);
 
         table_viewer.setLabelProvider(new SignalLabelProvider());
         table_viewer.setInput(this);
-
-        org_signals = new HashMap<Number,Signal>();
-        for (Signal s : (Signal[])content_provider.getElements(null)) {
-            org_signals.put((Number)s.attrs.get(IProcesses.SIG_INDEX), s.copy());
-        }
     }
 
     @Override
     protected void okPressed() {
         try {
-            final SignalState state = new TCFTask<SignalState>(channel) {
-                public void run() {
-                    if (!signal_state.validate(this)) return;
-                    if (signal_state.getError() != null) error(signal_state.getError());
-                    else done(signal_state.getData());
-                }
-            }.getE();
-
-            if (state != null && state.list != null) {
-                boolean set_mask = false;
-                int dont_stop_set = 0;
-                int dont_pass_set = 0;
-                final LinkedList<Number> send_list = new LinkedList<Number>();
-                for (Signal s : state.list) {
-                    Number index = (Number)s.attrs.get(IProcesses.SIG_INDEX);
-                    Signal x = org_signals.get(index);
-                    if (!set_mask) set_mask = x == null || x.dont_stop != s.dont_stop || x.dont_pass != s.dont_pass;
-                    if (s.dont_stop) dont_stop_set |= 1 << index.intValue();
-                    if (s.dont_pass) dont_pass_set |= 1 << index.intValue();
-                    if ((x == null || !x.pending) && s.pending) send_list.add((Number)s.attrs.get(IProcesses.SIG_CODE));
-                }
-                if (set_mask) {
-                    final int dont_stop = dont_stop_set;
-                    final int dont_pass = dont_pass_set;
-                    new TCFTask<Boolean>(channel) {
-                        public void run() {
-                            IProcesses prs = channel.getRemoteService(IProcesses.class);
-                            prs.setSignalMask(state.context_id, dont_stop, dont_pass, new IProcesses.DoneCommand() {
-                                public void doneCommand(IToken token, Exception error) {
-                                    if (error != null) error(error);
-                                    else done(Boolean.TRUE);
-                                }
-                            });
+            boolean set_mask = false;
+            int dont_stop_set = 0;
+            int dont_pass_set = 0;
+            final LinkedList<Number> send_list = new LinkedList<Number>();
+            for (Signal s : cur_signals) {
+                Number index = s.getIndex();
+                Signal x = org_signals.get(index);
+                if (!set_mask) set_mask = x == null || x.isDontStop() != s.isDontStop() || x.isDontPass() != s.isDontPass();
+                if (s.isDontStop()) dont_stop_set |= 1 << index.intValue();
+                if (s.isDontPass()) dont_pass_set |= 1 << index.intValue();
+                if ((x == null || !x.isPending()) && s.isPending()) send_list.add(s.getCode());
+            }
+            if (set_mask) {
+                TCFLaunch launch = selection.getModel().getLaunch();
+                ILaunchConfigurationWorkingCopy cfg = launch.getLaunchConfiguration().getWorkingCopy();
+                cfg.setAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_STOP, Integer.toHexString(dont_stop_set));
+                cfg.setAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_PASS, Integer.toHexString(dont_pass_set));
+                cfg.doSave();
+                final int dont_stop = dont_stop_set;
+                final int dont_pass = dont_pass_set;
+                new TCFTask<Boolean>(channel) {
+                    final HashSet<IToken> cmds = new HashSet<IToken>();
+                    final LinkedList<TCFNodeExecContext> nodes = new LinkedList<TCFNodeExecContext>();
+                    TCFDataCache<?> pending;
+                    public void run() {
+                        nodes.clear();
+                        pending = null;
+                        addNodes(model.getRootNode().getChildren());
+                        if (pending != null) {
+                            pending.wait(this);
                         }
-                    }.getE();
-                }
-                if (send_list.size() > 0) {
-                    new TCFTask<Boolean>(channel) {
-                        public void run() {
-                            final IProcesses prs = channel.getRemoteService(IProcesses.class);
-                            prs.signal(state.context_id, send_list.removeFirst().longValue(), new IProcesses.DoneCommand() {
-                                public void doneCommand(IToken token, Exception error) {
-                                    if (error != null) {
-                                        error(error);
+                        else {
+                            while (nodes.size() > 0) {
+                                TCFNodeExecContext exe = nodes.removeFirst();
+                                exe.getSignalMask().reset();
+                                IProcesses prs = channel.getRemoteService(IProcesses.class);
+                                cmds.add(prs.setSignalMask(exe.getID(), dont_stop, dont_pass, new IProcesses.DoneCommand() {
+                                    public void doneCommand(IToken token, Exception error) {
+                                        cmds.remove(token);
+                                        if (isDone()) return;
+                                        if (error != null) error(error);
+                                        if (cmds.size() == 0) done(Boolean.TRUE);
                                     }
-                                    else if (send_list.isEmpty()) {
-                                        done(Boolean.TRUE);
-                                    }
-                                    else {
-                                        prs.signal(state.context_id, send_list.removeFirst().longValue(), this);
-                                    }
-                                }
-                            });
+                                }));
+                            }
                         }
-                    }.getE();
-                }
+                    }
+                    private void addNodes(TCFChildrenExecContext children) {
+                        if (!children.validate()) {
+                            pending = children;
+                        }
+                        else {
+                            Map<String,TCFNode> map = children.getData();
+                            if (map != null) {
+                                for (TCFNode n : map.values()) {
+                                    TCFNodeExecContext exe = (TCFNodeExecContext)n;
+                                    addNodes(exe.getChildren());
+                                    nodes.add(exe);
+                                }
+                            }
+                        }
+                    }
+                }.getE();
+            }
+            if (send_list.size() > 0 && node != null) {
+                new TCFTask<Boolean>(channel) {
+                    public void run() {
+                        node.getSignalMask().reset();
+                        final IProcesses prs = channel.getRemoteService(IProcesses.class);
+                        prs.signal(node.getID(), send_list.removeFirst().longValue(), new IProcesses.DoneCommand() {
+                            public void doneCommand(IToken token, Exception error) {
+                                if (error != null) {
+                                    error(error);
+                                }
+                                else if (send_list.isEmpty()) {
+                                    done(Boolean.TRUE);
+                                }
+                                else {
+                                    node.getSignalMask().reset();
+                                    prs.signal(node.getID(), send_list.removeFirst().longValue(), this);
+                                }
+                            }
+                        });
+                    }
+                }.getE();
             }
         }
         catch (Throwable x) {

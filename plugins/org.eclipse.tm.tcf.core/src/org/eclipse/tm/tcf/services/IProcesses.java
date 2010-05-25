@@ -148,7 +148,7 @@ public interface IProcesses extends IService {
          * Get all available context properties.
          * @return Map 'property name' -> 'property value'
          */
-        Map<String, Object> getProperties();
+        Map<String,Object> getProperties();
 
         /**
          * Attach debugger to a process.
@@ -316,7 +316,8 @@ public interface IProcesses extends IService {
         /**
          * Called when a process exits.
          * @param process_id - process context ID
-         * @param exit_code - process exit code
+         * @param exit_code - if >= 0 - the process exit code,
+         * if < 0 - process was terminated by a signal, the signal code = -exit_code.
          */
         void exited(String process_id, int exit_code);
     }

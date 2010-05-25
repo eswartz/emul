@@ -12,23 +12,25 @@ package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 
 public class SignalsCommand extends AbstractActionDelegate {
 
+    private static boolean isValidNode(TCFNode n) {
+        if (n instanceof TCFNodeLaunch) return true;
+        if (n instanceof TCFNodeExecContext) return true;
+        if (n instanceof TCFNodeStackFrame) return true;
+        return false;
+    }
 
     protected void selectionChanged() {
-        boolean e = false;
         TCFNode n = getSelectedNode();
-        if (n instanceof TCFNodeExecContext) e = true;
-        if (n instanceof TCFNodeStackFrame) e = true;
-        getAction().setEnabled(e);
+        getAction().setEnabled(isValidNode(n));
     }
 
     protected void run() {
         TCFNode n = getSelectedNode();
-        if (n instanceof TCFNodeStackFrame || n instanceof TCFNodeExecContext) {
-            new SignalsDialog(getWindow().getShell(), n).open();
-        }
+        if (isValidNode(n)) new SignalsDialog(getWindow().getShell(), n).open();
     }
 }

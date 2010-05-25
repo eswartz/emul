@@ -522,6 +522,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void onProcessStreamError(String process_id, int stream_id, Exception x, int lost_size) {
+        if (channel != null && channel.getState() == IChannel.STATE_CLOSED) return;
         StringBuffer bf = new StringBuffer();
         bf.append("Debugger console IO error");
         if (process_id != null) {
@@ -662,7 +663,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return channel;
     }
 
-    public TCFNode getRootNode() {
+    public TCFNodeLaunch getRootNode() {
         return launch_node;
     }
 

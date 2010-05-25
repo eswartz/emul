@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -49,6 +50,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFDataCache<IProcesses.ProcessContext> prs_context;
     private final TCFDataCache<TCFContextState> state;
     private final TCFDataCache<BigInteger> address; // Current PC as BigInteger
+    private final TCFDataCache<Collection<Map<String,Object>>> signal_list;
+    private final TCFDataCache<SignalMask[]> signal_mask;
 
     private final Map<BigInteger,TCFSourceRef> line_info_cache;
 
@@ -89,6 +92,55 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 addr_start != null && addr_end != null &&
                 addr_start.compareTo(addr) <= 0 &&
                 addr_end.compareTo(addr) > 0;
+        }
+
+        @Override
+        public String toString() {
+            return region.getProperties().toString();
+        }
+    }
+
+    public static class SignalMask {
+
+        protected Map<String,Object> props;
+        protected boolean dont_stop;
+        protected boolean dont_pass;
+        protected boolean pending;
+
+        public Number getIndex() {
+            return (Number)props.get(IProcesses.SIG_INDEX);
+        }
+
+        public Number getCode() {
+            return (Number)props.get(IProcesses.SIG_CODE);
+        }
+
+        public Map<String,Object> getProperties() {
+            return props;
+        }
+
+        public boolean isDontStop() {
+            return dont_stop;
+        }
+
+        public boolean isDontPass() {
+            return dont_pass;
+        }
+
+        public boolean isPending() {
+            return pending;
+        }
+
+        @Override
+        public String toString() {
+            StringBuffer bf = new StringBuffer();
+            bf.append("[attrs=");
+            bf.append(props.toString());
+            if (dont_stop) bf.append(",don't stop");
+            if (dont_pass) bf.append(",don't pass");
+            if (pending) bf.append(",pending");
+            bf.append(']');
+            return bf.toString();
         }
     }
 
@@ -223,6 +275,50 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return true;
             }
         };
+        signal_list = new TCFDataCache<Collection<Map<String,Object>>>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                IProcesses prs = channel.getRemoteService(IProcesses.class);
+                if (prs == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = prs.getSignalList(id, new IProcesses.DoneGetSignalList() {
+                    public void doneGetSignalList(IToken token, Exception error, Collection<Map<String, Object>> list) {
+                        set(token, error, list);
+                    }
+                });
+                return false;
+            }
+        };
+        signal_mask = new TCFDataCache<SignalMask[]>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                if (!signal_list.validate(this)) return false;
+                IProcesses prs = channel.getRemoteService(IProcesses.class);
+                final Collection<Map<String,Object>> sigs = signal_list.getData();
+                if (prs == null || sigs == null) {
+                    set(null, signal_list.getError(), null);
+                    return true;
+                }
+                command = prs.getSignalMask(id, new IProcesses.DoneGetSignalMask() {
+                    public void doneGetSignalMask(IToken token, Exception error, int dont_stop, int dont_pass, int pending) {
+                        int n = 0;
+                        SignalMask[] list = new SignalMask[sigs.size()];
+                        for (Map<String,Object> m : sigs) {
+                            SignalMask s = list[n++] = new SignalMask();
+                            s.props = m;
+                            int mask = 1 << s.getIndex().intValue();
+                            s.dont_stop = (dont_stop & mask) != 0;
+                            s.dont_pass = (dont_pass & mask) != 0;
+                            s.pending = (pending & mask) != 0;
+                        }
+                        set(token, error, list);
+                    }
+                });
+                return false;
+            }
+        };
     }
 
     @Override
@@ -230,8 +326,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         run_context.dispose();
         prs_context.dispose();
         mem_context.dispose();
+        memory_map.dispose();
         state.dispose();
         address.dispose();
+        signal_list.dispose();
+        signal_mask.dispose();
         children_exec.dispose();
         children_stack.dispose();
         ArrayList<TCFNodeSymbol> l = new ArrayList<TCFNodeSymbol>(symbols.values());
@@ -258,21 +357,19 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         mem_context.reset(ctx);
     }
 
-    TCFDataCache<MemoryRegion[]> getMemoryMap() {
+    public TCFDataCache<MemoryRegion[]> getMemoryMap() {
         return memory_map;
     }
 
-    public void addSymbol(TCFNodeSymbol s) {
-        assert symbols.get(s.id) == null;
-        symbols.put(s.id, s);
+    public TCFDataCache<Collection<Map<String,Object>>> getSignalList() {
+        return signal_list;
     }
 
-    public void removeSymbol(TCFNodeSymbol s) {
-        assert symbols.get(s.id) == s;
-        symbols.remove(s.id);
+    public TCFDataCache<SignalMask[]> getSignalMask() {
+        return signal_mask;
     }
 
-    Map<BigInteger,TCFSourceRef> getLineInfoCache() {
+    public Map<BigInteger,TCFSourceRef> getLineInfoCache() {
         return line_info_cache;
     }
 
@@ -302,6 +399,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     public TCFChildrenExecContext getChildren() {
         return children_exec;
+    }
+
+    public void addSymbol(TCFNodeSymbol s) {
+        assert symbols.get(s.id) == null;
+        symbols.put(s.id, s);
+    }
+
+    public void removeSymbol(TCFNodeSymbol s) {
+        assert symbols.get(s.id) == s;
+        symbols.remove(s.id);
     }
 
     @Override
@@ -437,6 +544,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     void onContextChanged(IRunControl.RunControlContext context) {
         assert !disposed;
         run_context.reset(context);
+        signal_mask.reset();
         state.reset();
         children_stack.reset();
         children_stack.onSourceMappingChange();
@@ -501,6 +609,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             state.reset();
         }
         address.reset();
+        signal_mask.reset();
         resumed_cnt++;
         children_stack.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();

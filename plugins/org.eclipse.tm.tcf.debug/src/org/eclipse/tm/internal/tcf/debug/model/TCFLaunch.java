@@ -39,6 +39,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.services.IProcesses;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
 import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
@@ -101,6 +102,7 @@ public class TCFLaunch extends Launch {
     private boolean last_context_exited;
 
     private ProcessContext process;
+    private Collection<Map<String,Object>> process_signals;
     private IToken process_start_command;
     private String process_input_stream_id;
     private int process_exit_code;
@@ -433,6 +435,57 @@ public class TCFLaunch extends Launch {
                     });
                 }
             };
+            // Get process signal list
+            new LaunchStep() {
+                @Override
+                void start() {
+                    ps.getSignalList(process.getID(), new IProcesses.DoneGetSignalList() {
+                        public void doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list) {
+                            if (error != null) Activator.log("Can't get process signal list", error);
+                            process_signals = list;
+                            done();
+                        }
+                    });
+                }
+            };
+            // Set process signal masks
+            String dont_stop = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_STOP, "");
+            String dont_pass = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_PASS, "");
+            final int no_stop = dont_stop.length() > 0 ? Integer.parseInt(dont_stop, 16) : 0;
+            final int no_pass = dont_pass.length() > 0 ? Integer.parseInt(dont_pass, 16) : 0;
+            if (no_stop != 0 || no_pass != 0) {
+                new LaunchStep() {
+                    @Override
+                    void start() {
+                        final HashSet<IToken> cmds = new HashSet<IToken>();
+                        final IProcesses.DoneCommand done_set_mask = new IProcesses.DoneCommand() {
+                            public void doneCommand(IToken token, Exception error) {
+                                cmds.remove(token);
+                                if (error != null) channel.terminate(error);
+                                else if (cmds.size() == 0) done();
+                            }
+                        };
+                        cmds.add(ps.setSignalMask(process.getID(), no_stop, no_pass, done_set_mask));
+                        final IRunControl rc = channel.getRemoteService(IRunControl.class);
+                        if (rc != null) {
+                            final IRunControl.DoneGetChildren done_get_children = new IRunControl.DoneGetChildren() {
+                                public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
+                                    if (context_ids != null) {
+                                        for (String id : context_ids) {
+                                            cmds.add(ps.setSignalMask(id, no_stop, no_pass, done_set_mask));
+                                            cmds.add(rc.getChildren(id, this));
+                                        }
+                                    }
+                                    cmds.remove(token);
+                                    if (error != null) channel.terminate(error);
+                                    else if (cmds.size() == 0) done();
+                                }
+                            };
+                            cmds.add(rc.getChildren(process.getID(), done_get_children));
+                        }
+                    }
+                };
+            }
         }
     }
 
@@ -644,6 +697,10 @@ public class TCFLaunch extends Launch {
 
     public int getExitCode() {
         return process_exit_code;
+    }
+
+    public Collection<Map<String,Object>> getSignalList() {
+        return process_signals;
     }
 
     public void launchTCF(String mode, String id) {

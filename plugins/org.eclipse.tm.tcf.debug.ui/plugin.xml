@@ -204,6 +204,19 @@
    </extension>
    
    <extension point="org.eclipse.ui.popupMenus">
+      <!-- TCFLaunch popup menu contributions -->
+      <objectContribution
+            id="org.eclipse.tm.tcf.debug.ui.TCFLaunch"
+            objectClass="org.eclipse.tm.internal.tcf.debug.model.TCFLaunch">
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.Signals"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.SignalsCommand"
+            icon="icons/signals.gif"
+            label="%SignalsCommand.label"
+            menubarPath="additions">
+         </action>
+      </objectContribution>
+
       <!-- TCFNode popup menu contributions -->
       <objectContribution
             id="org.eclipse.tm.tcf.debug.ui.TCFNode"
@@ -218,8 +231,8 @@
       </objectContribution>
       
       <objectContribution
-            objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType"
-            id="org.eclipse.tm.tcf.debug.ui.CastToType">
+            id="org.eclipse.tm.tcf.debug.ui.CastToType"
+            objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType">
          <action
                label="%RestoreDefaultTypeAction.label"
                helpContextId="restore_default_type_action_context"
