@@ -112,7 +112,7 @@ public class StackLocalOperand extends BaseHLOperand {
 	 */
 	@Override
 	public boolean isConst() {
-		return false;
+		return true;
 	}
 	
 }

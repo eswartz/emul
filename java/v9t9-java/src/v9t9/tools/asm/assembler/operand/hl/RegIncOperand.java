@@ -88,7 +88,11 @@ public class RegIncOperand extends RegisterOperand {
 			return dst;
 		AssemblerOperand newReg = getReg().replaceOperand(src, dst);
 		if (newReg != getReg()) {
-			return new RegIncOperand(newReg);
+			if (newReg.isRegister() || newReg instanceof NumberOperand) {
+				return new RegIncOperand(newReg);
+			} else {
+				assert false;
+			}
 		}
 		return this;
 	}

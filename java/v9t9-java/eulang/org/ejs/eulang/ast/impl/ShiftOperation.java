@@ -13,6 +13,7 @@ import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.ISymbol;
@@ -109,31 +110,28 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 			ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left,
 			LLOperand right) throws ASTException {
 
-		LLOperand ret = currentTarget.newTemp(expr.getType());
-		
 		String instr = this.getLLVMName();
+		LLOperand ret = null;
 		if (instr != null) {
+			ret = currentTarget.newTemp(expr.getType());
 			currentTarget.emit(new LLBinaryInstr(instr, ret, left.getType(), left, right));
-		} else if (this == IBinaryOperation.SRC) {
-			//
-			//	call %intrinsic.src(i16, i16)
-			//
-			ISymbol intrinsicSrc = currentTarget.getTarget().getIntrinsic(
-					currentTarget, ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR, left.getType());
+		} else if (this == IBinaryOperation.SRC || this == IBinaryOperation.SLC) {
+			ISymbol intrinsicSym = currentTarget.getTarget().getIntrinsic(
+					currentTarget, 
+					this == IBinaryOperation.SRC ? ITarget.Intrinsic.SHIFT_RIGHT_CIRCULAR : ITarget.Intrinsic.SHIFT_LEFT_CIRCULAR, 
+					left.getType());
+			
+			LLCodeType intrinsicFuncType = (LLCodeType) intrinsicSym.getType();
+			left = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[0], left.getType(), left);
+			right = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[1], right.getType(), right);
+
+			ret = currentTarget.newTemp(expr.getType());
 			currentTarget.emit(new LLCallInstr(ret, left.getType(), 
-					new LLSymbolOp(intrinsicSrc), (LLCodeType) intrinsicSrc.getType(),
-					left, right));
-		} else if (this == IBinaryOperation.SLC) {
-			//
-			//	call %intrinsic.slc(i16, i16)
-			//
-			ISymbol intrinsicSlc = currentTarget.getTarget().getIntrinsic(
-					currentTarget, ITarget.Intrinsic.SHIFT_LEFT_CIRCULAR, left.getType());
-			currentTarget.emit(new LLCallInstr(ret, left.getType(), 
-					new LLSymbolOp(intrinsicSlc), (LLCodeType) intrinsicSlc.getType(),
+					new LLSymbolOp(intrinsicSym), intrinsicFuncType,
 					left, right));
 		} else {
 			generator.unhandled(expr);
+			left = new LLConstOp(0);
 		}
 		return ret;
 	}

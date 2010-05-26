@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -15,6 +17,7 @@ import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.tools.asm.assembler.HLInstruction;
+import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 
@@ -151,23 +154,49 @@ public class AsmInstruction extends HLInstruction {
 				if (getEffects() != null) {
 					if (getOp1() != null) {
 						if (fx.mop1_dest != Operand.OP_DEST_FALSE) {
-							getSymbolRefs(targets, getOp1());
+							getTargetSymbolRefs(targets, getOp1());
 						}
 						if (getOp2() != null) {
 							if (fx.mop2_dest != Operand.OP_DEST_FALSE) {
-								getSymbolRefs(targets, getOp2());
+								getTargetSymbolRefs(targets, getOp2());
 							}
 						}
 					}
 				}
 				if (getOp3() != null) {
-					getSymbolRefs(targets, getOp3());
+					getTargetSymbolRefs(targets, getOp3());
 				}
 			}
 			this.targets = (ISymbol[]) targets.toArray(new ISymbol[targets.size()]);
 		}
 		return targets;
 	}
+	
+	/** Get the symbols whose contents are modified if the operand 
+	 * is written*/
+	private static void getTargetSymbolRefs(Set<ISymbol> list, AssemblerOperand op) {
+		if (op.isRegister()) {
+			getOperandSymbol(list, op);
+			return;
+		}
+		
+		if (op instanceof AsmOperand && ((AsmOperand) op).isConst())
+			return;
+		
+		// else, look for the address 
+		if (op instanceof AddrOperand) {
+			op = ((AddrOperand) op).getAddr();
+			getOperandSymbol(list, op);
+		}
+		else if (op instanceof AddrOffsOperand) {
+			op = ((AddrOffsOperand) op).getAddr();
+			getOperandSymbol(list, op);
+		}
+		else {
+			getOperandSymbol(list, op);
+		}
+	}
+
 	
 	/** Get the operands (either explicitly specified as operands or implicit
 	 * in the calling convention, etc.) that the instruction reads
@@ -181,12 +210,12 @@ public class AsmInstruction extends HLInstruction {
 			} else {
 				if (getEffects() != null) {
 					if (getOp1() != null) {
-						// be sure to get refs to the indirect registers in a read
-						getSymbolRefs(sources, getOp1(), fx.mop1_dest != Operand.OP_DEST_KILLED);
+						// be sure to get refs to the indirect registers
+						getSourceSymbolRefs(sources, getOp1(), fx.mop1_dest != Operand.OP_DEST_KILLED);
 						if (getOp2() != null) {
-							getSymbolRefs(sources, getOp2(), fx.mop2_dest != Operand.OP_DEST_KILLED);
+							getSourceSymbolRefs(sources, getOp2(), fx.mop2_dest != Operand.OP_DEST_KILLED);
 							if (getOp3() != null) {
-								getSymbolRefs(sources, getOp3(), fx.mop3_dest != Operand.OP_DEST_KILLED);
+								getSourceSymbolRefs(sources, getOp3(), fx.mop3_dest != Operand.OP_DEST_KILLED);
 							}
 						}
 					}
@@ -197,22 +226,40 @@ public class AsmInstruction extends HLInstruction {
 		return sources;
 	}
 	
-	public static void getSymbolRefs(Set<ISymbol> list, AssemblerOperand op) {
-		getSymbolRefs(list, op, true);
-	}
-	private static void getSymbolRefs(Set<ISymbol> list, AssemblerOperand op, boolean includeTop) {
-		if (includeTop) {
-			if (op instanceof ISymbolOperand) {
-				ISymbol symbol = ((ISymbolOperand) op).getSymbol();
-				if (symbol != null)
-					list.add(symbol);
-			}
+	private static void getSourceSymbolRefs(Set<ISymbol> list, AssemblerOperand op, boolean includeTop) {
+		// skip top memory level if it is an address, since there is no actual read of the memory
+		if (op instanceof AddrOffsOperand) {
+			getSourceSymbolRefs(list, ((AddrOffsOperand) op).getOffset(), true);
+			if (((AddrOperand) op).getAddr().isMemory())
+				op = ((AddrOperand) op).getAddr();
+		} else if (op instanceof AddrOperand) {
+			if (((AddrOperand) op).getAddr().isMemory())
+				op = ((AddrOperand) op).getAddr();
 		}
+		
+		if (includeTop)
+			getOperandSymbol(list, op);
+		
 		for (AssemblerOperand kid : op.getChildren()) {
-			getSymbolRefs(list, kid, true);
+			getSymbolRefs(list, kid);
+		}
+	}
+	
+	public static void getSymbolRefs(Set<ISymbol> list, AssemblerOperand op) {
+		getOperandSymbol(list, op);
+		for (AssemblerOperand kid : op.getChildren()) {
+			getSymbolRefs(list, kid);
 		}
 	}
 
+	private static void getOperandSymbol(Set<ISymbol> list, AssemblerOperand op) {
+		if (op instanceof ISymbolOperand) {
+			ISymbol symbol = ((ISymbolOperand) op).getSymbol();
+			if (symbol != null)
+				list.add(symbol);
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.AssemblerInstruction#setOp1(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
 	 */

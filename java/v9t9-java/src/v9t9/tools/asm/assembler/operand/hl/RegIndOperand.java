@@ -86,7 +86,14 @@ public class RegIndOperand extends RegisterOperand {
 			return dst;
 		AssemblerOperand newReg = getReg().replaceOperand(src, dst);
 		if (newReg != getReg()) {
-			return new RegIndOperand(newReg);
+			if (newReg.isRegister() || newReg instanceof NumberOperand) {
+				return new RegIndOperand(newReg);
+			} else if (newReg.isMemory()) {
+				// assume we replaced a reg with an address with the address, as in "MOV *R(local), ..."
+				return new AddrOperand(newReg);
+			} else {
+				assert false;
+			}
 		}
 		return this;
 	}

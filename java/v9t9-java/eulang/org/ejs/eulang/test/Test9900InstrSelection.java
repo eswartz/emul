@@ -17,6 +17,7 @@ import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
+import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
@@ -1606,6 +1607,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
     @Test
     public void testPtrRef5() throws Exception {
     	dumpLLVMGen = true;
+    	dumpIsel = true;
     	doIsel(
     			"List = [T] data {\n"+
     			"  next:List^; node:T;\n"+
@@ -1635,9 +1637,10 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "LEA", AddrOperand.class, "loc", RegTempOperand.class, "inst");
 		
+		// set the 'next' field
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, "inst", RegTempOperand.class);
+		matchInstr(inst, "MOV", RegTempOperand.class, "inst", RegIndOperand.class);
 		
 		// ptr derefs
 		idx = findInstrWithInst(instrs, "MOV", idx);
@@ -1894,10 +1897,10 @@ public class Test9900InstrSelection extends BaseInstrTest {
     			"   if foo.f then foo.x else foo.y<<foo.z;\n" +
     			"};\n"+
     	"");
-    	int idx;
+    	int idx = -1;
     	AsmInstruction inst;
     	
-		idx = findInstrWithInst(instrs, "SWPB");
+		idx = findInstrWithInst(instrs, "SWPB", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "SWPB", RegTempOperand.class, 0);
 		AssemblerOperand shift = inst.getOp1();

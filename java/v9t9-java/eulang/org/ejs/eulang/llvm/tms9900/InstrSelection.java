@@ -1245,6 +1245,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			
 		case CONST_POOL:
 			assert asmOp instanceof NumOperand;
+			// unadjust
+			if (((NumOperand) asmOp).getType().getBits() <= 8)
+				asmOp = new NumOperand(((NumOperand) asmOp).getLLOperand(), (((NumOperand) asmOp).getValue() >> 8) & 0xff);
 			asmOp = new ConstPoolRefOperand(asmOp);
 			break;
 		case IMM:
@@ -1347,7 +1350,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand instanceof LLConstOp) {
 			if (isIntOp(operand)) {
 				int val = ((LLConstOp) operand).getValue().intValue();
-				if (((LLTypedInstr) instr).getType().getBits() <= 8)
+				if (((LLConstOp) operand).getType().getBits() <= 8)
 					val = (val << 8) & 0xff00;
 				return new NumOperand(operand, val);
 			}

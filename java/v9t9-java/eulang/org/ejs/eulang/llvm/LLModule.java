@@ -150,6 +150,8 @@ public class LLModule {
 			modSymbol = globalScope.add(new AstName(name));
 			modSymbol.setType(codeType);
 			
+			emitTypes(codeType);
+			
 			externDirectives.add(new LLDeclareDirective(modSymbol, linkage, visibility, cconv, 
 					retType, argTypes, funcAttrs, gc));
 		}

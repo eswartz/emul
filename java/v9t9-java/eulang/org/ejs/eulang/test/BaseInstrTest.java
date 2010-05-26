@@ -45,6 +45,8 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
 /**
@@ -202,6 +204,11 @@ public class BaseInstrTest extends BaseTest {
 			break;
 		case InstEncodePattern.GEN:
 			assertTrue(prefix, op.isRegister() || op.isMemory());
+			
+			if (op instanceof IRegisterOperand) {
+				AssemblerOperand reg = ((IRegisterOperand) op).getReg();
+				assertTrue(op+"", reg.isRegister() || reg instanceof NumberOperand);
+			}
 			break;
 		}
 		

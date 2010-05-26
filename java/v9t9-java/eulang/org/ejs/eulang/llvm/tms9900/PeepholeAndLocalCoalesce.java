@@ -10,6 +10,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
@@ -32,10 +33,10 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 
 /**
  * Iterate blocks and peephole instruction patterns introduced during instruction
- * selection.  Also, eliminate register copies -- such as copying memory
+ * selection.  Also, propagate known constants through the instructions, to remove
+ * unnecessary copies or loads.  Also, eliminate register copies -- such as copying memory
  * into a reg temp and then placing the value back -- when they are not needed.
- * 
- * TODO: constant val + JCC (val); remove constant jumps; remove unreachable blocks
+ * <p>
  * @author ejs
  *
  */
@@ -296,7 +297,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 				else if (removeStackToRegisterCopies(inst)) {
 					applied = true;
 				}
-				else if (replaceStackRead(inst)) {
+				else if (replaceMemoryWithRegisterRead(inst)) {
 					applied = true;
 				}
 				else if (removeDeadInst(inst)) {
@@ -317,7 +318,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 						
 						if (replaceConstant(inst))
 							applied = true;
-						else if (replaceConstantFromMemory(inst))
+						else if (replaceMemoryReadWithConstant(inst))
 							applied = true;
 					}
 					
@@ -346,10 +347,6 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	 */
 	private boolean trackValues(AsmInstruction inst) {
 		// look at target of instruction (either reg or stack)
-		ILocal targetLocal = getTargetLocal(inst);
-		if (targetLocal == null)
-			return false;
-		
 		AssemblerOperand destOp = inst.getDestOp();
 		
 		// see if the source has a well-known value
@@ -394,6 +391,8 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			src = null;
 		}
 		
+		ILocal targetLocal = getTargetLocal(inst);
+
 		if (isSingleRegister(targetLocal) && destOp.isRegister()) {
 			if (src != null) {
 				localValues.put(targetLocal, src);
@@ -423,6 +422,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			AssemblerOperand val) {
 		if (!op.isMemory())
 			return false;
+		op = getSimplestAddr(op);
 		val = getSimplestValue(val);
 		if (val instanceof NumberOperand) {
 			memNumberValues.put(op, (NumberOperand) val);
@@ -442,8 +442,11 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 					int offs = align.alignAndAdd(types[i]);
 					assert offs % 8 == 0;
 					AssemblerOperand subval = components[i];
-					AddrOffsOperand subop = new AddrOffsOperand(types[i], new NumberOperand(offs / 8), ((AddrOperand) op).getAddr());
+					AssemblerOperand subop = new AddrOffsOperand(types[i], new NumberOperand(offs / 8), ((AddrOperand) op).getAddr());
 					storeMemoryValue(subop, subval);
+					if (i == 0) {
+						storeMemoryValue(op, subval);
+					}
 				}
 				return true;
 			}
@@ -453,10 +456,6 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		}
 	}
 
-	/**
-	 * @param op1
-	 * @return
-	 */
 	private AssemblerOperand getSimplestValue(AssemblerOperand op) {
 		if (op instanceof NumberOperand)
 			return op;
@@ -473,6 +472,25 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 				val = localValues.get(local);
 				if (val != null)
 					return val;
+			}
+		}
+		return op;
+	}
+
+	private AssemblerOperand getSimplestAddr(AssemblerOperand op) {
+		if (!op.isMemory())
+			return op;
+		
+		if (op instanceof AddrOperand) {
+			AssemblerOperand addr = ((AddrOperand) op).getAddr();
+			if (addr.isRegister()) {
+				ILocal local = getReffedLocal(op);
+				if (isSingleRegister(local)) {
+					AssemblerOperand val = localValues.get(local);
+					if (val != null) {
+						op = op.replaceOperand(addr, val);
+					}
+				}
 			}
 		}
 		return op;
@@ -711,7 +729,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	 * @param inst 
 	 * @return
 	 */
-	private boolean replaceStackRead(AsmInstruction inst) {
+	private boolean replaceMemoryWithRegisterRead(AsmInstruction inst) {
 		if (inst.getInst() == Plea)
 			return false;
 		
@@ -770,7 +788,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	 * @param inst last MOV
 	 * @return
 	 */
-	private boolean replaceConstantFromMemory(AsmInstruction inst) {
+	private boolean replaceMemoryReadWithConstant(AsmInstruction inst) {
 		
 		AssemblerOperand valOp = memNumberValues.get(inst.getSrcOp());
 		
@@ -782,7 +800,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		if (!isSingleRegister(origLocal))
 			return false;
 		AssemblerOperand destOp = inst.getDestOp();
-		if (destOp == null || !destOp.isRegister())
+		if (destOp == null || !destOp.isRegister() || !(destOp instanceof AsmOperand))
 			return false;
 		
 		AssemblerOperand fromOp = inst.getSrcOp();
@@ -794,6 +812,10 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 
 		inst.setInst(Ili);
 		inst.setOp1(destOp);
+		
+		//if (((AsmOperand) destOp).getType().getBits() <= 8)
+		//	valOp = new NumberOperand(((NumberOperand) valOp).getValue() << 8);
+		
 		inst.setOp2(valOp);
 		
 		System.out.println("with\t" + inst);
@@ -888,9 +910,19 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		if (((fx.reads | fx.writes) & ~(Instruction.INST_RSRC_ST | Instruction.INST_RSRC_WP | Instruction.INST_RSRC_PC)) != 0)
 			return false;
 		
-		// be sure this isn't a memory write
-		if (inst.getDestOp() == null || inst.getDestOp().isMemory())
+		// be sure this isn't an unknown memory write
+		AssemblerOperand destOp = inst.getDestOp();
+		if (destOp == null)
 			return false;
+		
+		if (destOp.isMemory()) {
+			if (destOp instanceof StackLocalOperand ||
+					(destOp instanceof AddrOperand && ((AddrOperand) destOp).getAddr() instanceof StackLocalOperand)) {
+				// okay, since this is known
+			} else {
+				return false;
+			}
+		}
 		
 		ISymbol[] targets = inst.getTargets();
 		if (targets.length == 0)

@@ -539,14 +539,19 @@ public class Test9900Optimizer extends BaseInstrTest {
 	   	
 	   	for (AsmInstruction inst : instrs) {
     		if (inst.getInst() == InstructionTable.Ili) {
-    			if (((NumberOperand)inst.getOp2()).getValue() == 1)
-    				fail(inst+": expected >0100");
+    			if ((((NumberOperand)inst.getOp2()).getValue() & 0xffff) == 0)
+    				fail(inst+": lost value");
     		}
     	}
 	   	
-	   	fail("write tests");
 	   	int idx;
 	   	AsmInstruction inst;
+	   	
+	   	// we should have substituted all values and no longer need the memory
+    	idx = findInstrWithSymbol(instrs, "foo");
+    	assertEquals(-1, idx);
+    	
+    	
 		idx = findInstrWithInst(instrs, "SWPB");
 		inst = instrs.get(idx);
 		matchInstr(inst, "SWPB", RegTempOperand.class, 0);
@@ -556,22 +561,96 @@ public class Test9900Optimizer extends BaseInstrTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "SLA", RegTempOperand.class, shift);
 	 }
+	
+
+	@Test
+	public void testDataNonLocalUse1() throws Exception {
+		dumpIsel = true;
+	   	boolean changed = doOpt(
+	   			"Tuple = data {\n"+
+	   			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+	   			"testDataInit1 = code(foo:Tuple^) {\n"+
+	   			"  foo.x = 3; foo.f = 1; foo.y = 0x20; foo.z = 0x10;\n"+
+	   			"  if foo.f then foo.x else foo.y<<foo.z;\n" +
+	   			"};\n"+
+	   	"");
+	   	assertTrue(changed);
+	   	
+	   	for (AsmInstruction inst : instrs) {
+    		if (inst.getInst() == InstructionTable.Ili) {
+    			if ((((NumberOperand)inst.getOp2()).getValue() & 0xffff) == 0)
+    				fail(inst+": lost value");
+    		}
+    	}
+	   	
+	   	int idx;
+	   	AsmInstruction inst;
+	   	
+	   	// we should keep refs to the symbol
+    	idx = findInstrWithSymbol(instrs, "foo");
+    	assertFalse(-1 == idx);
+    	
+    	
+		idx = findInstrWithInst(instrs, "SWPB");
+		inst = instrs.get(idx);
+		matchInstr(inst, "SWPB", RegTempOperand.class, 0);
+		AssemblerOperand shift = inst.getOp1();
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegTempOperand.class, shift);
+	 }
+	
 	@Test
     public void testDataInit1() throws Exception {
 		dumpIsel = true;
-    	boolean changed = doOpt(
+		routine = doIsel(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Bool; y,z:Byte; };\n"+
     			"testDataInit1 = code() {\n"+
-    			"  foo:Tuple = [ 3, 1, .z=0x10, .y=0x20 ];\n"+
+    			"  foo:Tuple = [ 3, 1, .z=0x4, .y=0x20 ];\n"+
     			"   if foo.f then foo.x else foo.y<<foo.z;\n" +
     			"};\n"+
     	"");
-    	assertTrue(changed);
-    	
-    	fail("write tests");
+		
     	int idx;
     	AsmInstruction inst;
+
+    	routine.setupForOptimization();
+    	
+    	// validate def/use
+		idx = findInstrWithInst(instrs, "COPY");
+		inst = instrs.get(idx);
+		ILocal foo = locals.getLocal(getOperandSymbol(inst.getOp2()));
+		assertNotNull(foo);
+		assertEquals(1, foo.getDefs().cardinality());
+		assertEquals(4, foo.getUses().cardinality());	// four reads
+		assertFalse(foo.getUses().get(foo.getDefs().nextSetBit(0)));	// is not read where written
+    	
+		
+		boolean changed = doOpt(routine);
+    	assertTrue(changed);
+    	
+    	// ensure we use proper byte-shifted version of constants
+	   	for (AsmInstruction ins : instrs) {
+    		if (ins.getInst() == InstructionTable.Ili) {
+    			if ((((NumberOperand)ins.getOp2()).getValue() & 0xffff) == 0)
+    				fail(inst+": lost value");
+    			if (((NumberOperand)ins.getOp2()).getValue() == 0x4)
+    				fail(ins+": expected >0400");
+    			if (((NumberOperand)ins.getOp2()).getValue() == 0x20)
+    				fail(ins+": expected >2000");
+    			if (((NumberOperand)ins.getOp2()).getValue() == 0x3)
+    				fail(ins+": expected >0300");
+    			if (((NumberOperand)ins.getOp2()).getValue() == 0x1)
+    				fail(ins+": expected >0100");
+    		}
+    	}
+	   	
+    	// we should have substituted all values and no longer need the memory
+    	idx = findInstrWithSymbol(instrs, "foo");
+    	assertEquals(-1, idx);
+    	
 		idx = findInstrWithInst(instrs, "SWPB");
 		inst = instrs.get(idx);
 		matchInstr(inst, "SWPB", RegTempOperand.class, 0);
@@ -581,5 +660,62 @@ public class Test9900Optimizer extends BaseInstrTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "SLA", RegTempOperand.class, shift);
     }
+	
+	@Test
+    public void testLocalAddrRef1() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+    			"testDataInit1 = code() {\n"+
+    			"  foo:Tuple;\n"+
+    			"  fooptr:Tuple^=&foo;\n"+
+    			"  fooptr.y+fooptr.x;\n" +
+    			"};\n"+
+    	"");
+		
+    	int idx;
+    	AsmInstruction inst;
+		
+    	assertTrue(changed);
+		
+		idx = findInstrWithInst(instrs, "MOVB", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", AddrOffsOperand.class, "foo", 2, RegTempOperand.class);
+		
+		// don't do   AB *R(Local._.foo),vr26(%6.2)
+		idx = findInstrWithInst(instrs, "AB",   idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AB", AddrOperand.class, "foo", RegTempOperand.class);
+    }
+	
+
+	@Test
+    public void testLocalAddrRef2() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Bool; y,z:Byte; };\n"+
+    			"testDataInit1 = code() {\n"+
+    			"  foo:Tuple;\n"+
+    			"  fooptr:Tuple^=&foo;\n"+
+    			"  fooptr.y+fooptr.z;\n" +
+    			"};\n"+
+    	"");
+		
+    	int idx;
+    	AsmInstruction inst;
+		
+    	assertTrue(changed);
+		
+		idx = findInstrWithInst(instrs, "MOVB", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", AddrOffsOperand.class, "foo", 2, RegTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "AB",   idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AB", AddrOffsOperand.class, "foo", 3, RegTempOperand.class);
+    }
+	
 }
 

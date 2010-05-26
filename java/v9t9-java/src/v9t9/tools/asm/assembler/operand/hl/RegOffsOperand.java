@@ -115,6 +115,7 @@ public class RegOffsOperand extends RegisterOperand  {
 		AssemblerOperand newReg = getReg().replaceOperand(src, dst);
 		AssemblerOperand newAddr = addr.replaceOperand(src, dst);
 		if (newReg != getReg() || newAddr != addr) {
+			assert newReg.isRegister();
 			return new RegOffsOperand(newAddr, newReg);
 		}
 		return this;
