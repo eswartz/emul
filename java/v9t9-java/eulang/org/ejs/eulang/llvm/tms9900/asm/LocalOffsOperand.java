@@ -10,10 +10,12 @@ import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
+ * A reference to a local plus an offset -- may refer to the address or the
+ * value of the local, depending on subclass.
  * @author ejs
  *
  */
-public class AddrOffsOperand extends AddrOperand implements AsmOperand {
+public abstract class LocalOffsOperand extends AddrOperand implements AsmOperand {
 	private final AssemblerOperand offset;
 	private LLType type;
 
@@ -21,7 +23,7 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 	 * @param llOp
 	 * @param local
 	 */
-	public AddrOffsOperand(LLType type,
+	public LocalOffsOperand(LLType type,
 			AssemblerOperand offset,
 			AssemblerOperand addr) {
 		super(addr);
@@ -29,12 +31,13 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 		this.offset = offset;
 	}
 	
+
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.AddrOperand#toString()
 	 */
 	@Override
 	public String toString() {
-		return super.toString() + "+" + offset.toString();
+		return "@" + offset.toString() + "(" + getAddr() + ")";
 	}
 
 
@@ -55,7 +58,7 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AddrOffsOperand other = (AddrOffsOperand) obj;
+		LocalOffsOperand other = (LocalOffsOperand) obj;
 		if (offset == null) {
 			if (other.offset != null)
 				return false;
@@ -94,18 +97,8 @@ public class AddrOffsOperand extends AddrOperand implements AsmOperand {
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.BaseOperand#replaceOperand(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
 	 */
-	@Override
-	public AssemblerOperand replaceOperand(AssemblerOperand src,
-			AssemblerOperand dst) {
-		if (src.equals(this))
-			return dst;
-		AssemblerOperand newAddr = getAddr().replaceOperand(src, dst);
-		AssemblerOperand newOffs = offset.replaceOperand(src, dst);
-		if (newAddr != getAddr() || newOffs != offset) {
-			return new AddrOffsOperand(type, newOffs, newAddr);
-		}
-		return this;
-	}
+	abstract public AssemblerOperand replaceOperand(AssemblerOperand src,
+			AssemblerOperand dst);
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#isConst()

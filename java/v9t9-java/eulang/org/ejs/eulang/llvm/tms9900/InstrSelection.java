@@ -54,7 +54,8 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLZeroInitOp;
-import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
@@ -948,7 +949,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					for (int j = 0; j < agg.getCount(); j++) {
 						LLType comp = agg.getType(j);
 						int offs = align.alignAndAdd(comp);
-						tup = tup.put(j, new AddrOffsOperand(comp, new NumberOperand(offs / 8), asmOp));
+						tup = tup.put(j, new StackLocalOffsOperand(comp, new NumberOperand(offs / 8), 
+								asmOp));
 					}
 					asmOp = tup;
 				}
@@ -1109,7 +1111,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			if (!asmOp.isRegister())
 				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
 			//asmOp = moveToTemp(null, typeEngine.getPointerType(type), asmOp);
-			asmOp = new AddrOffsOperand(type, new NumberOperand(offs), asmOp);
+			asmOp = new RegTempOffsOperand(type, new NumberOperand(offs), 
+					asmOp);
 		}
 		asmOps[0] = asmOp;
 		ssaTempTable.put(instr.getResult(), asmOp);

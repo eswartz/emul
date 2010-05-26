@@ -20,7 +20,8 @@ import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
-import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
@@ -214,7 +215,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "%reg", 10);
+		matchInstr(inst, "MOV", RegTempOperand.class, RegTempOffsOperand.class, "%reg", 10);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -237,7 +238,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOperand.class, AddrOffsOperand.class, "%reg", 32);
+		matchInstr(inst, "COPY", AddrOperand.class, RegTempOffsOperand.class, "%reg", 32);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -255,12 +256,12 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "LEA", 1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", AddrOffsOperand.class, "x", -2, RegTempOperand.class);
+		matchInstr(inst, "LEA", RegTempOffsOperand.class, "x", -2, RegTempOperand.class);
 		AsmInstruction inst0 = inst;
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AddrOffsOperand.class, ((RegTempOperand) inst0.getOp2()).getSymbol().getName(), 4, RegTempOperand.class);
+		matchInstr(inst, "MOV", RegTempOffsOperand.class, ((RegTempOperand) inst0.getOp2()).getSymbol().getName(), 4, RegTempOperand.class);
 		
 	}
 	@Test
@@ -1630,7 +1631,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, AddrOffsOperand.class, "%reg", 2);
+		matchInstr(inst, "MOV", RegTempOperand.class, RegTempOffsOperand.class, "%reg", 2);
 		
 		// addr goes here
 		idx = findInstrWithInst(instrs, "LEA", idx);
@@ -1660,8 +1661,8 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		while (idx < instrs.size()) {
 			inst = instrs.get(idx);
 			if (inst.getInst() == InstructionTable.Imov) {
-				if (inst.getOp1() instanceof AddrOffsOperand) {
-					assertEquals(2, ((NumberOperand)((AddrOffsOperand) inst.getOp1()).getOffset()).getValue());
+				if (inst.getOp1() instanceof RegTempOffsOperand) {
+					assertEquals(2, ((NumberOperand)((RegTempOffsOperand) inst.getOp1()).getOffset()).getValue());
 					idx = -1;
 					break;
 				}
@@ -1674,6 +1675,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testPtrCalc6() throws Exception {
+    	dumpIsel = true;
     	doIsel(
     			"forward Complex;\n"+
     			"Inner = data {\n"+
@@ -1701,22 +1703,22 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		// get 'd' offset inside, to Inner*
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		AsmInstruction inst2 = instrs.get(idx);
-		matchInstr(inst2, "LEA", AddrOffsOperand.class, inst.getOp2(), 4, RegTempOperand.class);
+		matchInstr(inst2, "LEA", RegTempOffsOperand.class, inst.getOp2(), 4, RegTempOperand.class);
 		
 		// then, deref 'p' to Complex* 
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AddrOffsOperand.class, inst2.getOp2(), RegTempOperand.class);
+		matchInstr(inst, "MOV", RegTempOffsOperand.class, inst2.getOp2(), 8, RegTempOperand.class);
 		
 		// get 'd' offset inside, to Inner*
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst2 = instrs.get(idx);
-		matchInstr(inst2, "LEA", AddrOffsOperand.class, inst.getOp2(), RegTempOperand.class);
+		matchInstr(inst2, "LEA", RegTempOffsOperand.class, inst.getOp2(), 4, RegTempOperand.class);
 		
 		// read 'd2'
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOffsOperand.class, inst2.getOp2(), 4, AddrOperand.class);
+		matchInstr(inst, "COPY", RegTempOffsOperand.class, inst2.getOp2(), 4, AddrOperand.class);
     }
 
     @Test
@@ -1816,11 +1818,11 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithSymbol(instrs, ".callerRet", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AddrOffsOperand.class, ".callerRet", 0, RegTempOperand.class);
+		matchInstr(inst, "MOV", StackLocalOffsOperand.class, ".callerRet", 0, RegTempOperand.class);
 		
 		idx = findInstrWithSymbol(instrs, ".callerRet", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AddrOffsOperand.class, ".callerRet", 2, RegTempOperand.class);
+		matchInstr(inst, "MOV", StackLocalOffsOperand.class, ".callerRet", 2, RegTempOperand.class);
 		
     }
 
@@ -1847,7 +1849,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", AddrOffsOperand.class, "%reg", 1, RegTempOperand.class);
+		matchInstr(inst, "MOVB", RegTempOffsOperand.class, "%reg", 1, RegTempOperand.class);
 		
 		// skip...
 		
@@ -1859,7 +1861,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		// copy float out
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOffsOperand.class, "%reg", 2, AddrOperand.class);
+		matchInstr(inst, "COPY", RegTempOffsOperand.class, "%reg", 2, AddrOperand.class);
 
 		// and, sadly, copy again
 		idx = findInstrWithInst(instrs, "COPY", idx);

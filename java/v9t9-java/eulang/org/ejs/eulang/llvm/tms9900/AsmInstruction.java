@@ -7,7 +7,9 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
@@ -184,12 +186,12 @@ public class AsmInstruction extends HLInstruction {
 			return;
 		
 		// else, look for the address 
-		if (op instanceof AddrOperand) {
-			op = ((AddrOperand) op).getAddr();
-			getOperandSymbol(list, op);
+		if (op instanceof RegTempOffsOperand) {
+			// the register itself is not the target 
 		}
-		else if (op instanceof AddrOffsOperand) {
-			op = ((AddrOffsOperand) op).getAddr();
+		else if (op instanceof AddrOperand) {
+			// op itself is an indirection
+			op = ((AddrOperand) op).getAddr();
 			getOperandSymbol(list, op);
 		}
 		else {
@@ -227,12 +229,10 @@ public class AsmInstruction extends HLInstruction {
 	}
 	
 	private static void getSourceSymbolRefs(Set<ISymbol> list, AssemblerOperand op, boolean includeTop) {
-		// skip top memory level if it is an address, since there is no actual read of the memory
-		if (op instanceof AddrOffsOperand) {
-			getSourceSymbolRefs(list, ((AddrOffsOperand) op).getOffset(), true);
-			if (((AddrOperand) op).getAddr().isMemory())
-				op = ((AddrOperand) op).getAddr();
+		if (op instanceof LocalOffsOperand) {
+			// fine
 		} else if (op instanceof AddrOperand) {
+			// the @ is just an indirection to actual content
 			if (((AddrOperand) op).getAddr().isMemory())
 				op = ((AddrOperand) op).getAddr();
 		}

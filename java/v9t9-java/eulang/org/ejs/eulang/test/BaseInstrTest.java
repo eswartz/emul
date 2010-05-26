@@ -28,7 +28,7 @@ import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
-import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
@@ -45,8 +45,6 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
 /**
@@ -281,8 +279,8 @@ public class BaseInstrTest extends BaseTest {
 					AssemblerOperand testOp = null;
 					if (op instanceof AddrOperand)
 						testOp = ((AddrOperand) op).getAddr();
-					else if (op instanceof AddrOffsOperand)
-						testOp = ((AddrOffsOperand) op).getAddr();
+					else if (op instanceof LocalOffsOperand)
+						testOp = ((LocalOffsOperand) op).getAddr();
 					else if (op instanceof IRegisterOperand && op.isMemory())
 						testOp = ((IRegisterOperand) op).getReg();
 					
@@ -297,8 +295,8 @@ public class BaseInstrTest extends BaseTest {
 						AssemblerOperand offs = ((RegOffsOperand) op).getAddr();
 						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
 					}
-					if (op instanceof AddrOffsOperand) {
-						AssemblerOperand offs = ((AddrOffsOperand) op).getOffset();
+					if (op instanceof LocalOffsOperand) {
+						AssemblerOperand offs = ((LocalOffsOperand) op).getOffset();
 						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
 					}
 				}

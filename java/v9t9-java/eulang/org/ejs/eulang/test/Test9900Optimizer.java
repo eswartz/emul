@@ -16,7 +16,8 @@ import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
-import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.junit.Test;
@@ -240,11 +241,11 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "A", AddrOffsOperand.class, "foo", 2, val1);
+		matchInstr(inst, "A", StackLocalOffsOperand.class, "foo", 2, val1);
 		
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "A", AddrOffsOperand.class, "foo", 4, val1);
+		matchInstr(inst, "A", StackLocalOffsOperand.class, "foo", 4, val1);
 
 		assertEquals(-1, findInstrWithSymbol(instrs, "foo", idx));
 		
@@ -279,7 +280,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// this must go in R0, so another move
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AddrOffsOperand.class, "foo", 2, RegTempOperand.class, 0);
+		matchInstr(inst, "MOV", StackLocalOffsOperand.class, "foo", 2, RegTempOperand.class, 0);
 		AssemblerOperand val2 = inst.getOp2();
 		
 		idx = findInstrWithInst(instrs, "SRA", idx);
@@ -288,7 +289,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SOC", AddrOffsOperand.class, "foo", 4, val1);
+		matchInstr(inst, "SOC", StackLocalOffsOperand.class, "foo", 4, val1);
 		
 		assertEquals(-1, findInstrWithSymbol(instrs, "foo", idx));
 		
@@ -367,7 +368,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// get foo[4]
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AddrOffsOperand.class, "foo", 8, RegTempOperand.class);
+		matchInstr(inst, "MOV", RegTempOffsOperand.class, "foo", 8, RegTempOperand.class);
 		AssemblerOperand val1 = inst.getOp2();
 		
 		// this must go in R0, so another move -- but we have a value to use
@@ -383,7 +384,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// we've trashed the vr holding the stack var, so one more read
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SOC", AddrOffsOperand.class, "foo", 8, val1);
+		matchInstr(inst, "SOC", RegTempOffsOperand.class, "foo", 8, val1);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
@@ -471,7 +472,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// be sure we read and write the value to memory every time
 		idx = findInstrWithInst(body.getInstrs(), "MOV");
 		inst = body.getInstrs().get(idx);
-		matchInstr(inst, "MOV", AddrOffsOperand.class, "foo", 8, RegTempOperand.class);
+		matchInstr(inst, "MOV", RegTempOffsOperand.class, "foo", 8, RegTempOperand.class);
 		AssemblerOperand mem = inst.getOp1();
 		AssemblerOperand v = inst.getOp2();
 		
@@ -681,7 +682,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOVB", -1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", AddrOffsOperand.class, "foo", 2, RegTempOperand.class);
+		matchInstr(inst, "MOVB", StackLocalOffsOperand.class, "foo", 2, RegTempOperand.class);
 		
 		// don't do   AB *R(Local._.foo),vr26(%6.2)
 		idx = findInstrWithInst(instrs, "AB",   idx);
@@ -710,11 +711,11 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOVB", -1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", AddrOffsOperand.class, "foo", 2, RegTempOperand.class);
+		matchInstr(inst, "MOVB", StackLocalOffsOperand.class, "foo", 2, RegTempOperand.class);
 		
 		idx = findInstrWithInst(instrs, "AB",   idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "AB", AddrOffsOperand.class, "foo", 3, RegTempOperand.class);
+		matchInstr(inst, "AB", StackLocalOffsOperand.class, "foo", 3, RegTempOperand.class);
     }
 	
 }

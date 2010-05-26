@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
-import org.ejs.eulang.llvm.tms9900.asm.AddrOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
@@ -442,7 +442,8 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 					int offs = align.alignAndAdd(types[i]);
 					assert offs % 8 == 0;
 					AssemblerOperand subval = components[i];
-					AssemblerOperand subop = new AddrOffsOperand(types[i], new NumberOperand(offs / 8), ((AddrOperand) op).getAddr());
+					AssemblerOperand subop = new StackLocalOffsOperand(types[i], 
+							new NumberOperand(offs / 8), ((AddrOperand) op).getAddr());
 					storeMemoryValue(subop, subval);
 					if (i == 0) {
 						storeMemoryValue(op, subval);
