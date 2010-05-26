@@ -161,7 +161,7 @@ static int certificate_verify_callback(int preverify_ok, X509_STORE_CTX * ctx) {
     }
     if (dir != NULL && closedir(dir) < 0 && !err) err = errno;
     if (err) trace(LOG_ALWAYS, "Cannot read certificate: %s",
-        err == ERR_SSL ? (char *)ERR_error_string(ERR_get_error(), NULL) : (char *)errno_to_str(err));
+        err == ERR_SSL ? ERR_error_string(ERR_get_error(), NULL) : errno_to_str(err));
     return err == 0 && found;
 }
 #endif /* ENABLE_SSL */
@@ -685,7 +685,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
             if (!err && fclose(fp) != 0) err = errno;
             if (err) {
                 trace(LOG_ALWAYS, "Cannot read server certificate: %s",
-                    err == ERR_SSL ? (char *)ERR_error_string(ERR_get_error(), NULL) : (char *)errno_to_str(err));
+                    err == ERR_SSL ? ERR_error_string(ERR_get_error(), NULL) : errno_to_str(err));
                 errno = ERR_SSL ? EINVAL : err;
                 return NULL;
             }
@@ -1089,8 +1089,7 @@ void generate_ssl_certificate(void) {
     FILE * fp = NULL;
 
     ini_ssl();
-    /* TODO: Cleanup void* cast to "RSA."  The cast was required for g++ to compile */
-    if (!err && (rsa = RSA_generate_key(2048, 3, NULL, (void*)"RSA")) == NULL) err = (int)ERR_SSL;
+    if (!err && (rsa = RSA_generate_key(2048, 3, NULL, (void *)"RSA")) == NULL) err = ERR_SSL;
     if (!err && !RSA_check_key(rsa)) err = ERR_SSL;
     if (!err && gethostname(subject_name, sizeof(subject_name)) != 0) err = errno;
     if (!err) {
@@ -1129,7 +1128,7 @@ void generate_ssl_certificate(void) {
     if (!err && chmod(fnm, S_IRWXU) != 0) err = errno;
     if (err) {
         fprintf(stderr, "Cannot create server certificate: %s\n",
-            err == ERR_SSL ? (char *)ERR_error_string(ERR_get_error(), NULL) : (char *)errno_to_str(err));
+            err == ERR_SSL ? ERR_error_string(ERR_get_error(), NULL) : errno_to_str(err));
     }
     if (cert != NULL) X509_free(cert);
     if (rsa != NULL) RSA_free(rsa);

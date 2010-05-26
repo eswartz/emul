@@ -16,6 +16,9 @@
  * Transport agnostic channel implementation.
  */
 
+/* TODO: Somehow we should make it clear what needs to be done to add another transport layer.
+ * Perhaps have a template or a readme file for it. */
+
 #include <config.h>
 #include <stddef.h>
 #include <errno.h>

@@ -593,6 +593,8 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             Context * prs2 = NULL;
             Context * ctx2 = NULL;
             if (event == PTRACE_EVENT_CLONE) {
+                /* TODO: using the PTRACE_EVENT_CLONE to determine if the new context is a thread is not correct.
+                 * The only way I know of is to look at the Tgid field of /proc/<pid>/status */
                 prs2 = ctx->parent;
             }
             else {

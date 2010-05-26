@@ -132,10 +132,10 @@ int find_test_symbol(Context * ctx, char * name, void ** addr, int * sym_class) 
         }
         else {
             *sym_class = SYM_CLASS_FUNCTION;
-            if (strcmp(name, "tcf_test_func0") == 0) *addr = (void*)&tcf_test_func0;
-            else if (strcmp(name, "tcf_test_func1") == 0) *addr = (void*)&tcf_test_func1;
-            else if (strcmp(name, "tcf_test_func2") == 0) *addr = (void*)&tcf_test_func2;
-            else if (strcmp(name, "tcf_test_func3") == 0) *addr = (void*)&tcf_test_func3;
+            if (strcmp(name, "tcf_test_func0") == 0) *addr = (void *)&tcf_test_func0;
+            else if (strcmp(name, "tcf_test_func1") == 0) *addr = (void *)&tcf_test_func1;
+            else if (strcmp(name, "tcf_test_func2") == 0) *addr = (void *)&tcf_test_func2;
+            else if (strcmp(name, "tcf_test_func3") == 0) *addr = (void *)&tcf_test_func3;
         }
         if (*addr != NULL) return 0;
     }

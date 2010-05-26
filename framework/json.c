@@ -39,7 +39,7 @@ static unsigned buf_size = 0;
 static void realloc_buf(void) {
     if (buf == NULL) {
         buf_size = 0x1000;
-        buf = (char*)loc_alloc(buf_size);
+        buf = (char *)loc_alloc(buf_size);
     }
     else {
         buf_size *= 2;

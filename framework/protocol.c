@@ -360,7 +360,7 @@ static void message_handler_old(Channel * c, char ** args, int nargs, void * cli
 }
 
 void set_default_message_handler(Protocol * p, ProtocolMessageHandler handler) {
-    set_default_message_handler2(p, (ProtocolMessageHandler2)message_handler_old, (void*)handler);
+    set_default_message_handler2(p, (ProtocolMessageHandler2)message_handler_old, (void *)handler);
 }
 
 void set_default_message_handler2(Protocol * p, ProtocolMessageHandler2 handler, void * client_data) {
@@ -395,7 +395,7 @@ static void event_handler_old(Channel * c, void * client_data) {
 }
 
 void add_event_handler(Channel * c, const char * service, const char * name, ProtocolEventHandler handler) {
-    add_event_handler2(c, service, name, (ProtocolEventHandler2)event_handler_old, (void*)handler);
+    add_event_handler2(c, service, name, (ProtocolEventHandler2)event_handler_old, (void *)handler);
 }
 
 void add_event_handler2(Channel * c, const char * service, const char * name, ProtocolEventHandler2 handler, void * client_data) {
