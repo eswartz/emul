@@ -978,6 +978,6 @@ public abstract class AbstractChannel implements IChannel {
      */
     protected void write(byte[] buf) throws IOException {
         assert Thread.currentThread() == out_thread;
-        for (int i = 0; i < buf.length; i++) write(buf[i]);
+        for (int i = 0; i < buf.length; i++) write(buf[i] & 0xff);
     }
 }
