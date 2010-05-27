@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 Philippe Proulx, École Polytechnique de Montréal
+ * Copyright (c) 2009, 2010 Philippe Proulx, École Polytechnique de Montréal
  *                    Michael Sills-Lavoie, École Polytechnique de Montréal
  * and others. All rights reserved.
  * This program and the accompanying materials
