@@ -17,9 +17,10 @@ import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
-import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
+import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
@@ -30,6 +31,8 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
@@ -1914,21 +1917,87 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testDataInitVar1() throws Exception {
+    	dumpIsel = true;
     	doIsel(
-    			"testDataInit2 = code() {\n"+
+    			"testDataInit2 = code(=>nil) {\n"+
     			"  val := 10;\n"+
-    			"  foo:Int[10] = [ [5] = val, [1] = 11 ];\n"+
+    			"  foo:Int[10] = [ [5] = val, [1] = 11, 22 ];\n"+
     			"};\n"+
     	"");
+    	
+    	int idx;
+    	AsmInstruction inst;
+    	
+		idx = findInstrWithInst(instrs, "COPY", -1);
+		inst = instrs.get(idx);
+		LLIntType I = typeEngine.INT;
+		AssemblerOperand z = new NumOperand(I, 0);
+		AssemblerOperand val = new RegTempOperand(I, locals.getRegLocals().values().iterator().next());
+		matchInstr(inst, "COPY", new TupleTempOperand(typeEngine.getArrayType(I, 10, null), 
+				new AssemblerOperand[] { z, new NumOperand(I, 11), new NumOperand(I, 22),
+			z, z, val, z, z, z, z }), AddrOperand.class);
     }
 
 	@Test
     public void testDataInit4() throws Exception {
+		dumpIsel = true;
 		doIsel(
-    			"testDataInit4 = code() {\n"+
+    			"testDataInit4 = code(=>nil) {\n"+
     			"  foo:Byte[][3] = [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9]];\n"+
+    			"  foo[1][2] + foo[2][1];\n"+
     			"};\n"+
     	"");
+		int idx;
+    	AsmInstruction inst;
+    	
+		idx = findInstrWithInst(instrs, "COPY", -1);
+		inst = instrs.get(idx);
+		LLIntType I = typeEngine.BYTE;
+		LLArrayType Ix3 = typeEngine.getArrayType(I, 3, null);
+		matchInstr(inst, "COPY", new TupleTempOperand(
+				typeEngine.getArrayType(
+						Ix3,
+						3, null), 
+				new AssemblerOperand[] {
+					new TupleTempOperand(Ix3, new AssemblerOperand[] { new NumOperand(I, 1), new NumOperand(I, 2), new NumOperand(I, 3) }),
+					new TupleTempOperand(Ix3, new AssemblerOperand[] { new NumOperand(I, 4), new NumOperand(I, 5), new NumOperand(I, 6) }),
+					new TupleTempOperand(Ix3, new AssemblerOperand[] { new NumOperand(I, 7), new NumOperand(I, 8), new NumOperand(I, 9) }) }), 
+					AddrOperand.class);
+
+		// array
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", AddrOperand.class, "foo", RegTempOperand.class);
+		
+		// row 1
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", LocalOffsOperand.class, "reg", 3, RegTempOperand.class);
+
+		// col 2
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", LocalOffsOperand.class, "reg", 2, RegTempOperand.class);
+		
+		
+		// array
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", AddrOperand.class, "foo", RegTempOperand.class);
+		
+		// row 2
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", LocalOffsOperand.class, "reg", 6, RegTempOperand.class);
+		
+		// col 1
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", LocalOffsOperand.class, "reg", 1, RegTempOperand.class);
+
+		idx = findInstrWithInst(instrs, "AB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AB", RegTempOperand.class, RegTempOperand.class);
     }
 
 	@Test

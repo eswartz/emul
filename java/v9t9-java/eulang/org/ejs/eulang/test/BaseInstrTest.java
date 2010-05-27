@@ -246,10 +246,10 @@ public class BaseInstrTest extends BaseTest {
 							assertNotSameSymbol(instr, sym, string);
 					} else {
 						if (eq)
-							assertEquals(instr+":"+op, string, op.toString());
+							assertEquals("mismatched operand: " + instr+":"+op, string, op.toString());
 						else
 							if (string.equals(testOp.toString()))
-								fail(instr+":"+testOp);
+								fail("expected mismatch: " + instr+":"+testOp);
 					}
 						
 				}
@@ -257,20 +257,20 @@ public class BaseInstrTest extends BaseTest {
 					Integer num = (Integer) stuff[i];
 					i++;
 					if (op instanceof IRegisterOperand) {
-						assertTrue(instr+":"+op+" #", ((IRegisterOperand) op).isReg(num));
+						assertTrue("mismatched int: " + instr+":"+op+" #", ((IRegisterOperand) op).isReg(num));
 					}
 					else if (op instanceof RegTempOperand)
-						assertEquals(instr+":"+op, num, (Integer)((RegTempOperand) op).getLocal().getVr());
+						assertEquals("mismatched vr: " + instr+":"+op, num, (Integer)((RegTempOperand) op).getLocal().getVr());
 					else if (op instanceof NumberOperand)
-						assertEquals(instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
+						assertEquals("mismatched number: " + instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
 					else if (op instanceof ConstPoolRefOperand)
-						assertEquals(instr+":"+op, num, (Integer)((ConstPoolRefOperand) op).getValue());
+						assertEquals("mismatched const pool ref: " + instr+":"+op, num, (Integer)((ConstPoolRefOperand) op).getValue());
 					else 
-						assertEquals(instr+":"+op, num, op);
+						assertEquals("mismatched operand: " + instr+":"+op, num, op);
 				}
 				else if (stuff[i] instanceof Boolean) {
 					if (op instanceof RegTempOperand)
-						assertEquals(instr+":"+op, stuff[i], ((RegTempOperand) op).isHighReg());
+						assertEquals("mismatched low/hi flag: " + instr+":"+op, stuff[i], ((RegTempOperand) op).isHighReg());
 					else
 						fail("expected register temp");
 					i++;
@@ -285,7 +285,7 @@ public class BaseInstrTest extends BaseTest {
 						testOp = ((IRegisterOperand) op).getReg();
 					
 					if (testOp != null) {
-						assertEquals(instr+":"+op+" subop", stuff[i], testOp);
+						assertEquals("mismatched operand: " + instr+":"+op+" subop", stuff[i], testOp);
 						i++;
 					}
 				}
@@ -293,16 +293,16 @@ public class BaseInstrTest extends BaseTest {
 					int num = (Integer) stuff[i++];
 					if (op instanceof RegOffsOperand) {
 						AssemblerOperand offs = ((RegOffsOperand) op).getAddr();
-						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
+						assertTrue("mismatched offset: " + instr+":"+op, offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
 					}
 					if (op instanceof LocalOffsOperand) {
 						AssemblerOperand offs = ((LocalOffsOperand) op).getOffset();
-						assertTrue(instr+":"+op+" offset", offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
+						assertTrue("mismatched offset: " + instr+":"+op, offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
 					}
 				}
 			}
 			else if (stuff[i] instanceof AssemblerOperand) {
-				assertEquals(instr+":"+op, stuff[i], op);
+				assertEquals("mismatched operand: " + instr+":"+op, stuff[i], op);
 				i++;
 			}
 			else

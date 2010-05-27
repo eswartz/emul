@@ -14,23 +14,17 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
  */
 public class NumOperand extends NumberOperand implements AsmOperand {
 
-	private final LLOperand llOp;
 	private LLType type;
 
 	/**
 	 * @param i
 	 */
-	public NumOperand(LLOperand llOp, int i) {
+	public NumOperand(LLType type, int i) {
 		super(i);
-		this.llOp = llOp;
-		this.type = llOp != null ? llOp.getType() : null;
+		this.type = type;
 	}
 
 
-	public org.ejs.eulang.llvm.ops.LLOperand getLLOperand() {
-		return llOp;
-	}
-	
 	public LLType getType() {
 		return type;
 	}

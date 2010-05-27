@@ -46,6 +46,7 @@ import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
 import org.ejs.eulang.llvm.instrs.LLTypedInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
+import org.ejs.eulang.llvm.ops.LLArrayOp;
 import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -54,6 +55,7 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLZeroInitOp;
+import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
@@ -1171,7 +1173,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		As as = thePattern.ases[num];
 		
 		if (as == As.IGNORE) {
-			asmOps[num] = new NumOperand(operand, 0);
+			asmOps[num] = new NumOperand(operand.getType(), 0);
 			return;
 		}
 		
@@ -1248,23 +1250,22 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			
 		case CONST_POOL:
 			assert asmOp instanceof NumOperand;
-			// unadjust
-			if (((NumOperand) asmOp).getType().getBits() <= 8)
-				asmOp = new NumOperand(((NumOperand) asmOp).getLLOperand(), (((NumOperand) asmOp).getValue() >> 8) & 0xff);
 			asmOp = new ConstPoolRefOperand(asmOp);
 			break;
 		case IMM:
 			assert asmOp instanceof NumOperand;
+			if (type.getBits() <= 8)
+				asmOp = new NumOperand(typeEngine.INT, (((NumOperand) asmOp).getValue() << 8) & 0xff00);
+
 			break;
 		case IMM_NEG:
 			assert asmOp instanceof NumOperand;
-			asmOp = new NumOperand(((NumOperand) asmOp).getLLOperand(), -((NumOperand) asmOp).getValue());
+			asmOp = new NumOperand(typeEngine.INT, -((NumOperand) asmOp).getValue());
 			break;
 		case IMM_NEG_15: {
 			assert asmOp instanceof NumOperand;
-			//int mask = isByte ? 0xf00 : 0xf; 
 			int mask = 0xf; 
-			asmOp = new NumOperand(((NumOperand) asmOp).getLLOperand(), (-((NumOperand) asmOp).getValue()) & mask);
+			asmOp = new NumOperand(typeEngine.INT, (-((NumOperand) asmOp).getValue()) & mask);
 			break;
 		}
 		case IMM_LOG_2: {
@@ -1275,26 +1276,24 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				val >>>= 1;
 				log++;
 			}
-			//if (isByte)
-			//	log <<= 8;
-			asmOp = new NumOperand(((NumOperand) asmOp).getLLOperand(), log);
+			asmOp = new NumOperand(typeEngine.INT, log);
 			break;
 		}
 			
 		case IMM_15:
-			asmOp = new NumOperand(operand, 15);
+			asmOp = new NumOperand(typeEngine.INT, 15);
 			break;
 		case IMM_8:
-			asmOp = new NumOperand(operand, 8);
+			asmOp = new NumOperand(typeEngine.INT, 8);
 			break;
 		case IMM_1:
-			asmOp = new NumOperand(operand, 1);
+			asmOp = new NumOperand(typeEngine.INT, 1);
 			break;
 		case IMM_0:
-			asmOp = new NumOperand(operand, 0);
+			asmOp = new NumOperand(typeEngine.INT, 0);
 			break;
 		case IMM_N1:
-			asmOp = new NumOperand(operand, -1);
+			asmOp = new NumOperand(typeEngine.INT, -1);
 			break;
 		case CMP: {
 			assert instr instanceof LLCompareInstr;
@@ -1353,9 +1352,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand instanceof LLConstOp) {
 			if (isIntOp(operand)) {
 				int val = ((LLConstOp) operand).getValue().intValue();
-				if (((LLConstOp) operand).getType().getBits() <= 8)
-					val = (val << 8) & 0xff00;
-				return new NumOperand(operand, val);
+				//if (((LLConstOp) operand).getType().getBits() <= 8)
+				//	val = (val << 8) & 0xff00;
+				return new NumOperand(operand.getType(), val);
 			}
 			assert false;
 		}
@@ -1369,7 +1368,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			return new SymbolOperand(operand.getType(), symbol, local);
 		}
 		if (operand instanceof LLStructOp) {
-			return generateTupleTempOperand((LLStructOp) operand);
+			return generateTupleTempOperand(((LLStructOp) operand));
+		}
+		if (operand instanceof LLArrayOp) {
+			return generateTupleTempOperand(((LLArrayOp) operand));
 		}
 		if (operand instanceof LLBitcastOp) {
 			LLBitcastOp bop = ((LLBitcastOp) operand);
@@ -1381,6 +1383,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			return op;
 		}
 		if (operand instanceof LLZeroInitOp) {
+			if (isIntOp(operand)) {
+				return new NumOperand(operand.getType(), 0);
+			}
 			return new ZeroInitOperand(operand.getType());
 		}
 		if (operand instanceof LLUndefOp) {
@@ -1390,15 +1395,26 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		return null;
 	}
 
-	/**
-	 * @param llOp
-	 * @return
-	 */
 	private TupleTempOperand generateTupleTempOperand(LLStructOp llOp) {
 		if (llOp.getType() instanceof LLAggregateType) {
 			LLAggregateType type = (LLAggregateType) llOp.getType();
 			LLOperand[] elements = llOp.getElements();
 			assert elements.length == type.getCount();
+			AssemblerOperand[] ops = new AssemblerOperand[elements.length];
+			for (int i= 0; i < elements.length; i++) {
+				ops[i] = generateOperand(elements[i]);
+			}
+			return new TupleTempOperand(type, ops);
+		} else {
+			assert false;
+			return null;
+		}
+	}
+	private TupleTempOperand generateTupleTempOperand(LLArrayOp llOp) {
+		if (llOp.getType() instanceof LLArrayType) {
+			LLArrayType type = (LLArrayType) llOp.getType();
+			LLOperand[] elements = llOp.getElements();
+			assert elements.length == type.getArrayCount();
 			AssemblerOperand[] ops = new AssemblerOperand[elements.length];
 			for (int i= 0; i < elements.length; i++) {
 				ops[i] = generateOperand(elements[i]);
@@ -1523,6 +1539,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				RegisterLocal regLocal = newTempRegister(routine, instr, getTempSymbol(llOp), llOp.getType());
 				AssemblerOperand ret = new RegTempOperand(llOp.getType(), regLocal);
 				if (isIntOp(llOp)) {
+					if (llOp.getType().getBits() <= 8)
+						operand = new NumOperand(typeEngine.INT, (((NumOperand) operand).getValue() << 8) & 0xff00);
+
 					emitInstr(AsmInstruction.create(Ili, ret, operand));
 					/*
 				} if (isIntOp(llOp, 16)) {
@@ -1602,6 +1621,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				AsmInstruction inst = AsmInstruction.create(op, from, dest);
 				emitInstr(inst);
 			} else if (from instanceof NumOperand) {
+				if (((NumOperand) from).getType().getBits() <= 8)
+					from = new NumOperand(((NumOperand) from).getType(), (((NumOperand) from).getValue() << 8) & 0xff00);
+
 				AsmInstruction inst = AsmInstruction.create(Ili, dest, from);
 				emitInstr(inst);
 			} else if (from instanceof ISymbolOperand) {

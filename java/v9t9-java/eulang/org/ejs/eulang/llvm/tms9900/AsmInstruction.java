@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;

@@ -4,21 +4,23 @@
 package org.ejs.eulang.llvm.tms9900;
 
 import java.util.*;
-import java.util.Map.Entry;
 
-import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
+import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
+import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
-import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
+import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLAggregateType;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 
 import static v9t9.engine.cpu.InstructionTable.*;
@@ -28,8 +30,11 @@ import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.BinaryOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
 /**
  * Iterate blocks and peephole instruction patterns introduced during instruction
@@ -63,7 +68,6 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	 * @param from
 	 * @param to
 	 */
-	@SuppressWarnings("unchecked")
 	private void replaceUses(AsmInstruction asmInstruction, AssemblerOperand from, AssemblerOperand to, ILocal fromLocal, ILocal toLocal) {
 		assert asmInstruction != null;
 		AssemblerOperand[] ops = asmInstruction.getOps();
@@ -71,50 +75,13 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		for (int idx = 0; idx < ops.length; idx++) {
 			AssemblerOperand newOp = ops[idx].replaceOperand(from, to);
 			if (newOp != ops[idx]) {
-				// update usage
-				if (fromLocal != null) {
-					if (ops[idx].equals(asmInstruction.getSrcOp()))
-						fromLocal.getUses().clear(asmInstruction.getNumber());
-					else if (ops[idx].equals(asmInstruction.getDestOp()))
-						fromLocal.getDefs().clear(asmInstruction.getNumber());
-				}
-				if (toLocal != null) {
-					if (ops[idx].equals(asmInstruction.getSrcOp()))
-						toLocal.getUses().set(asmInstruction.getNumber());
-					else if (ops[idx].equals(asmInstruction.getDestOp())) {
-						toLocal.getDefs().set(asmInstruction.getNumber());
-						if (asmInstruction.getNumber() < toLocal.getInit())
-							toLocal.setInit(asmInstruction.getNumber());
-					}
-				}
+				updateLocalUsage(asmInstruction, fromLocal, toLocal, ops[idx]);
 
 				// update op
 				asmInstruction.setOp(idx + 1, newOp);
 			}
 		}
-		if (localValues.containsKey(fromLocal)) {
-			if (toLocal != null)
-				localValues.put(toLocal, localValues.get(fromLocal));
-			localValues.remove(fromLocal);
-		}
-		
-		// update stored numbers
-		NumberOperand fromVal = memNumberValues.get(from);
-		if (fromVal != null && to.isMemory())
-			memNumberValues.put(to, fromVal);
-		for (Iterator<Map.Entry<AssemblerOperand, RegTempOperand>> iter = memRegisterValues.entrySet().iterator(); iter.hasNext();) {
-			Map.Entry<AssemblerOperand, RegTempOperand> entry = iter.next();
-			if (entry.getValue().equals(from)) {
-				if (to instanceof RegTempOperand)
-					entry.setValue((RegTempOperand) to);
-				else
-					iter.remove();
-			}
-			else if (fromLocal != null && fromLocal.equals(getReffedLocal(entry.getKey()))) {
-				// don't update
-				iter.remove();
-			}
-		}
+		updateLocalValues(from, to, fromLocal, toLocal);
 		/*
 		Object[] entryArray = stackValues.entrySet().toArray();
 		for (Object o : entryArray) {
@@ -435,19 +402,39 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 				StackLocal local = ((StackLocalOperand)(((AddrOperand) op).getAddr())).getLocal();
 				AssemblerOperand[] components = ((TupleTempOperand) val).getComponents();
 				Alignment align = routine.getDefinition().getTypeEngine().new Alignment(Target.STACK);
-				LLType[] types = ((LLAggregateType) local.getType()).getTypes();
-				assert types.length == components.length;
-				
-				for (int i = 0; i < components.length; i++) {
-					int offs = align.alignAndAdd(types[i]);
-					assert offs % 8 == 0;
-					AssemblerOperand subval = components[i];
-					AssemblerOperand subop = new StackLocalOffsOperand(types[i], 
-							new NumberOperand(offs / 8), ((AddrOperand) op).getAddr());
-					storeMemoryValue(subop, subval);
-					if (i == 0) {
-						storeMemoryValue(op, subval);
+				if (local.getType() instanceof LLAggregateType) {
+					LLType[] types = ((LLAggregateType) local.getType()).getTypes();
+					assert types.length == components.length;
+					
+					for (int i = 0; i < components.length; i++) {
+						int offs = align.alignAndAdd(types[i]);
+						assert offs % 8 == 0;
+						AssemblerOperand subval = components[i];
+						// TODO: handle zero
+						AssemblerOperand subop = new StackLocalOffsOperand(types[i], 
+								new NumberOperand(offs / 8), ((AddrOperand) op).getAddr());
+						storeMemoryValue(subop, subval);
+						if (i == 0) {
+							storeMemoryValue(op, subval);
+						}
 					}
+				} else if (local.getType() instanceof LLArrayType) {
+					LLArrayType arrayType = (LLArrayType) local.getType();
+					
+					for (int i = 0; i < components.length; i++) {
+						int offs = align.alignAndAdd(arrayType.getSubType());
+						assert offs % 8 == 0;
+						AssemblerOperand subval = components[i];
+						// TODO: handle zero
+						AssemblerOperand subop = new StackLocalOffsOperand(arrayType.getSubType(), 
+								new NumberOperand(offs / 8), ((AddrOperand) op).getAddr());
+						storeMemoryValue(subop, subval);
+						if (i == 0) {
+							storeMemoryValue(op, subval);
+						}
+					}
+				} else {
+					assert false;
 				}
 				return true;
 			}
@@ -621,8 +608,11 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	private boolean combineStackAddressOperands(AsmInstruction inst) {
 		
 		boolean changed = false;
-		for (ISymbol sym : inst.getSources()) {
-			ILocal addrLocal = locals.getLocal(sym);
+		
+		for (AssemblerOperand srcOp : inst.getOps()) {
+			if (!(srcOp instanceof AddrOperand) && !(srcOp instanceof RegIndOperand))
+				continue;
+			ILocal addrLocal = getReffedLocal(srcOp);
 			if (addrLocal == null)
 				continue;
 			
@@ -642,7 +632,9 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			
 			// and just be sure we're talking about a stack local...
 			// else we want to replace LEA with STWP/AI
-			ILocal origLocal = getSourceLocal(def);
+			if (!(def.getOp1() instanceof AddrOperand))
+				continue;
+			ILocal origLocal = getReffedLocal(def.getOp1());
 			if (!(origLocal instanceof StackLocal)) 
 				continue;
 			
@@ -652,14 +644,24 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 				continue;
 		
 			// okay, replace all uses of the source with the target
-			AssemblerOperand fromOp = new RegTempOperand(addrLocal.getType(), (RegisterLocal) addrLocal);
-			AssemblerOperand toOp = new StackLocalOperand(origLocal.getType(), (StackLocal) origLocal);
+			AssemblerOperand fromOp;
+			AssemblerOperand toOp;
+			fromOp = def.getOp2(); // new RegTempOperand(addrLocal.getType(), (RegisterLocal) addrLocal);
+			AssemblerOperand offset = null;
+			if (def.getOp1() instanceof StackLocalOffsOperand)
+				offset = ((StackLocalOffsOperand) def.getOp1()).getOffset();
+			else if (def.getOp1() instanceof RegTempOffsOperand)
+				offset = ((RegTempOffsOperand) def.getOp1()).getAddr();
+			else if (def.getOp1() instanceof RegOffsOperand)
+				offset = ((RegOffsOperand) def.getOp1()).getAddr();
+				
+			toOp = ((AddrOperand)def.getOp1()).getAddr(); // new StackLocalOperand(origLocal.getType(), (StackLocal) origLocal);
 	
 			System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
 			
 			changed = true;
 			for (int use = addrLocal.getUses().nextSetBit(addrLocal.getInit()); use >= 0; use = addrLocal.getUses().nextSetBit(use + 1)) {
-				replaceUses(instrMap.get(use), fromOp, toOp, addrLocal, null);
+				replaceAddrUses(instrMap.get(use), (RegTempOperand) fromOp, toOp, offset, addrLocal, null);
 			}
 			
 			// and delete the LEA
@@ -668,6 +670,136 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		
 		return changed;
 	}
+
+	/**
+	 * @param asmInstruction
+	 * @param from
+	 * @param toOp
+	 */
+	private void replaceAddrUses(AsmInstruction asmInstruction, RegTempOperand from, AssemblerOperand toOp, AssemblerOperand offset, ILocal fromLocal, ILocal toLocal) {
+		assert asmInstruction != null;
+		AssemblerOperand[] ops = asmInstruction.getOps();
+		System.out.print("From\t" + asmInstruction + "\n-- >\t");
+		for (int idx = 0; idx < ops.length; idx++) {
+			
+			AssemblerOperand op = ops[idx];
+			AssemblerOperand newOp = op;
+			
+			// MOV @>0002(vr), ...
+			AssemblerOperand origOffset = null;
+			LLType type = (op instanceof AsmOperand ) ? ((AsmOperand) op).getType() : null;
+			
+			if (op instanceof LocalOffsOperand) {
+				origOffset = ((LocalOffsOperand) op).getOffset();
+				op = ((LocalOffsOperand) op).getAddr();
+			} else if (op instanceof RegOffsOperand) {
+				origOffset = ((RegOffsOperand) op).getAddr();
+				op = ((RegOffsOperand) op).getReg();
+			} else if (op instanceof RegIndOperand) {
+				op = ((RegIndOperand) op).getReg();
+			}
+			
+			if (op.equals(from)) {
+				AssemblerOperand newOffset = addOffsets(offset, origOffset);
+				if (newOffset == null)
+					newOp = new AddrOperand(toOp);
+				else {
+					if (toOp instanceof StackLocalOperand)
+							newOp = new StackLocalOffsOperand(type, 
+								newOffset, 
+								toOp);
+					else
+						newOp = new AddrOperand(
+									new BinaryOperand('+', toOp,  
+										newOffset));
+				}
+			}
+			
+			if (newOp != op) {
+				updateLocalUsage(asmInstruction, fromLocal, toLocal, op);
+
+				// update op
+				asmInstruction.setOp(idx + 1, newOp);
+			}
+		}
+		updateLocalValues(from, toOp, fromLocal, toLocal);
+
+		System.out.println(asmInstruction);
+	}
+
+	/**
+	 * @param offset
+	 * @param offset2
+	 * @return
+	 */
+	private AssemblerOperand addOffsets(AssemblerOperand off1, AssemblerOperand off2) {
+		if (off1 == null)
+			return off2;
+		if (off2 == null)
+			return null;
+		
+		if (off2 instanceof ISymbolOperand) {
+			AssemblerOperand t = off1;
+			off1 = off2;
+			off2 = t;
+		}
+		if (off1 instanceof NumberOperand && off2 instanceof NumberOperand) {
+			return new NumberOperand(((NumberOperand) off1).getValue() + ((NumberOperand) off2).getValue());
+		}
+		if (off1 instanceof ISymbolOperand && off2 instanceof NumberOperand) {
+			return new BinaryOperand('+', off1, off2);
+		}
+		assert false;
+		return null;
+	}
+
+	private void updateLocalValues(AssemblerOperand from, AssemblerOperand to,
+			ILocal fromLocal, ILocal toLocal) {
+		if (localValues.containsKey(fromLocal)) {
+			if (toLocal != null)
+				localValues.put(toLocal, localValues.get(fromLocal));
+			localValues.remove(fromLocal);
+		}
+		
+		// update stored numbers
+		NumberOperand fromVal = memNumberValues.get(from);
+		if (fromVal != null && to.isMemory())
+			memNumberValues.put(to, fromVal);
+		for (Iterator<Map.Entry<AssemblerOperand, RegTempOperand>> iter = memRegisterValues.entrySet().iterator(); iter.hasNext();) {
+			Map.Entry<AssemblerOperand, RegTempOperand> entry = iter.next();
+			if (entry.getValue().equals(from)) {
+				if (to instanceof RegTempOperand)
+					entry.setValue((RegTempOperand) to);
+				else
+					iter.remove();
+			}
+			else if (fromLocal != null && fromLocal.equals(getReffedLocal(entry.getKey()))) {
+				// don't update
+				iter.remove();
+			}
+		}
+	}
+
+	private void updateLocalUsage(AsmInstruction asmInstruction,
+			ILocal fromLocal, ILocal toLocal, AssemblerOperand op) {
+		// update usage
+		if (fromLocal != null) {
+			if (op.equals(asmInstruction.getSrcOp()))
+				fromLocal.getUses().clear(asmInstruction.getNumber());
+			else if (op.equals(asmInstruction.getDestOp()))
+				fromLocal.getDefs().clear(asmInstruction.getNumber());
+		}
+		if (toLocal != null) {
+			if (op.equals(asmInstruction.getSrcOp()))
+				toLocal.getUses().set(asmInstruction.getNumber());
+			else if (op.equals(asmInstruction.getDestOp())) {
+				toLocal.getDefs().set(asmInstruction.getNumber());
+				if (asmInstruction.getNumber() < toLocal.getInit())
+					toLocal.setInit(asmInstruction.getNumber());
+			}
+		}
+	}
+
 
 
 	/**
@@ -814,8 +946,8 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		inst.setInst(Ili);
 		inst.setOp1(destOp);
 		
-		//if (((AsmOperand) destOp).getType().getBits() <= 8)
-		//	valOp = new NumberOperand(((NumberOperand) valOp).getValue() << 8);
+		if ( ((AsmOperand) valOp).getType().getBits() <= 8)
+			valOp = new NumOperand(this.routine.getDefinition().getTypeEngine().INT, (((NumberOperand) valOp).getValue() << 8) & 0xff00);
 		
 		inst.setOp2(valOp);
 		

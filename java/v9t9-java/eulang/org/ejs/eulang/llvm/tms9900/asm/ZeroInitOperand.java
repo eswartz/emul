@@ -10,7 +10,8 @@ import org.ejs.eulang.types.LLType;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
- * Represents zero-initialized memory of the given type
+ * Represents zero-initialized memory of the given type.  This is usually
+ * intended for structured types (otherwise use NumberOperand(0)).
  * @author ejs
  *
  */
@@ -23,6 +24,14 @@ public class ZeroInitOperand extends BaseHLOperand {
 		super(type);
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "0";
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#getChildren()
 	 */

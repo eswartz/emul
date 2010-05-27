@@ -3,11 +3,8 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
-import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.types.LLType;
 
-import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**

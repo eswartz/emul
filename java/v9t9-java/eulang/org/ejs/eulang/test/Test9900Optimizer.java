@@ -16,6 +16,7 @@ import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
+import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
@@ -717,6 +718,58 @@ public class Test9900Optimizer extends BaseInstrTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "AB", StackLocalOffsOperand.class, "foo", 3, RegTempOperand.class);
     }
-	
+
+
+    @Test
+    public void testDataInitVar1() throws Exception {
+    	dumpIsel = true;
+    	boolean changed = doOpt(
+    			"testDataInit2 = code() {\n"+
+    			"  val := 10;\n"+
+    			"  foo:Int[10] = [ [5] = val, [1] = 11, 22 ];\n"+
+    			"  foo[1]+foo[4]+foo[5];" +
+    			"};\n"+
+    	"");
+    	
+    	assertTrue(changed);
+    	
+    	int idx;
+    	AsmInstruction inst;
+
+    	idx = findInstrWithSymbol(instrs, "foo");
+    	assertEquals(-1, idx);
+		idx = findInstrWithInst(instrs, "LI", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegTempOperand.class, 0, NumberOperand.class, 10);
+    }
+
+	@Test
+    public void testDataInit4() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+    			"testDataInit4 = code() {\n"+
+    			"  foo:Byte[][3] = [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9]];\n"+
+    			"  foo[1][2] + foo[2][1];\n"+
+    			"};\n"+
+    	"");
+		assertTrue(changed);
+    	
+    	int idx;
+    	AsmInstruction inst;
+
+    	idx = findInstrWithSymbol(instrs, "foo");
+    	if (idx == -1) {
+			idx = findInstrWithInst(instrs, "LI", -1);
+			inst = instrs.get(idx);
+			matchInstr(inst, "LI", RegTempOperand.class, 0, NumberOperand.class, 13);
+    	} else {
+    		idx = findInstrWithInst(instrs, "MOVB", -1);
+			inst = instrs.get(idx);
+			matchInstr(inst, "MOVB", LocalOffsOperand.class, "foo", 1*3+2, RegTempOperand.class);
+			idx = findInstrWithInst(instrs, "AB", idx);
+			inst = instrs.get(idx);
+			matchInstr(inst, "AB", LocalOffsOperand.class, "foo", 2*3+1, RegTempOperand.class);
+    	}
+    }
 }
 
