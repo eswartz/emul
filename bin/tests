@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# This script builds and runs TCF tests.
+# Command line:
+#  tests <peer description>
+# Enviroment variables:
+#  JAVAHOME - path to Java SDK directory
+#  TCFROOT  - path to TCF source code root directory
+# Example:
+#  tests ID=Test:TransportName=TCP:Host=127.0.0.1:Port=1534
+
+if [ -z "$JAVAHOME" ]
+then
+  DIR="/cygdrive/c/Program Files/Java/jdk1.6.0_12"
+  if [ -d "$DIR" ]
+  then
+    JAVAHOME="$DIR"
+  fi
+fi
+
+if [ -z "$TCFROOT" ]
+then
+  cd `dirname "$0"`/../.. || exit 1
+  TCFROOT="`pwd`"
+fi
+
+if [ ! -d "$JAVAHOME" ]
+then
+  echo Invalid JAVAHOME
+  exit 1
+fi
+
+if [ ! -d "$TCFROOT" ]
+then
+  echo Invalid TCFROOT
+  exit 1
+fi
+
+rm -rf "$TCFROOT/agent/obj/java" || exit 1
+mkdir -p "$TCFROOT/agent/obj/java" || exit 1
+
+TCFROOTJC="$TCFROOT"
+if [ -f /usr/bin/cygpath ]
+then
+  TCFROOTJC="`/usr/bin/cygpath -w "$TCFROOTJC"`"
+fi
+
+SRCPATH="$TCFROOTJC/plugins/org.eclipse.tm.tcf"
+
+"$JAVAHOME/bin/javac" -g \
+  -sourcepath "$SRCPATH.core/src"\;"$SRCPATH.debug/src" \
+  -d "$TCFROOTJC/agent/obj/java" \
+  "$SRCPATH.debug/src/org/eclipse/tm/internal/tcf/debug/tests/Main.java" \
+  || exit 1
+
+cd "$TCFROOT/plugins/org.eclipse.tm.tcf.core/src/org/eclipse/tm/internal/tcf/services/remote" || exit 1
+for FILE in `ls *.java`
+do
+  "$JAVAHOME/bin/javac" -g \
+    -classpath "$TCFROOTJC/agent/obj/java" \
+    -sourcepath "$SRCPATH.core/src" \
+    -d "$TCFROOTJC/agent/obj/java" \
+    "$SRCPATH.core/src/org/eclipse/tm/internal/tcf/services/remote/$FILE" \
+    || exit 1
+done
+
+cd "$TCFROOT/agent/obj/java" || exit 1
+
+"$JAVAHOME/bin/java" \
+  -classpath "$TCFROOTJC/agent/obj/java" \
+  org.eclipse.tm.internal.tcf.debug.tests.Main \
+  $1 || exit 1
+
+
+
+
