@@ -1573,6 +1573,31 @@ xes[3][2][1]
 		assertFoundInOptimizedText("insertvalue", gen);
 		assertFoundInOptimizedText("sitofp", gen);
 	}
+	
+	@Test 
+	public void testGenericTypesCasting() throws Exception {
+		dumpTypeInfer = true;
+		dumpLLVMGen = true;
+		IAstModule mod = doFrontend(
+				"List = [T] data {\n" +
+				"        next:List^;\n" +
+				"        node:T;\n"+
+				"};\n" + 
+				"makeList : code( => Void^);"+
+				"intList = code(x:Int;y:Double) {\n"+
+				"   list1 : List<Int>^ = makeList(); list2 : List<Double>^ = makeList();\n" +
+				"   list1.node = x;\n"+
+				"   list2.node = y;\n"+
+				"   list1.next = list2;\n"+
+				"   list2.next = (list1{List<Double>^}).next;\n"+
+				"};\n" +
+				"");
+		sanityTest(mod);
+		LLVMGenerator gen = doGenerate(mod);
+		assertMatchText("load.*makeList", gen.getUnoptimizedText());
+		assertMatchText("call.*%", gen.getUnoptimizedText());
+	}
+
 }
 
 

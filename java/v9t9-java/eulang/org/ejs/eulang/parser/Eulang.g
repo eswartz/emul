@@ -32,7 +32,8 @@ tokens {
   
   CALL;
   INLINE;   // modifier on CALL
-  
+
+  CAST;  
   COND;
   BITAND;
   BITOR;
@@ -242,28 +243,15 @@ type :
   ; 
   
 nonArrayType :  
-     baseType -> baseType
-//     | CARET nonArrayType -> ^(TYPE ^(POINTER nonArrayType))
- //    | CARET LPAREN type RPAREN -> ^(TYPE ^(POINTER type))
-      ;
-        
-   //( logor  -> logor )
-//      ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
-
-// need to eat up as many array pieces as possible so we can properly order them
-baseType : (typeAtom -> typeAtom)
-     //( 
-     //AMP -> ^(TYPE ^(REF $baseType ))  
-     //)*
+    (idOrScopeRef instantiation) => idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
+     | idOrScopeRef -> ^(TYPE idOrScopeRef)  
+     | LESS GREATER -> ^(TYPE GENERIC)
+     | CODE proto? -> ^(TYPE ^(CODE proto?) )
+     
   ; 
 arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
     | LBRACKET RBRACKET -> FALSE
     ;
-typeAtom : idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
-     | idOrScopeRef -> ^(TYPE idOrScopeRef)  
-     | CODE proto? -> ^(TYPE ^(CODE proto?) )
-     | LESS GREATER -> ^(TYPE GENERIC)
-  ;
 codestmtlist:  codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
     | -> ^(STMTLIST) 
     ;
@@ -400,13 +388,13 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 //  with <expr> as <type> [and <expr2> as <type2>] => <expr> [else <stmt>]
 //
 
-withStmt : WITH bindings ARROW b=rhsExpr (ELSE e=codeStmtExpr)? -> ^(WITH bindings $b $e?) 
-  ;
+//withStmt : WITH bindings ARROW b=rhsExpr (ELSE e=codeStmtExpr)? -> ^(WITH bindings $b $e?) 
+//  ;
 
-bindings: binding (AND binding)* -> binding+
-  ;  
-binding: rhsExpr AS type   -> ^(BINDING type rhsExpr) 
-  ;  
+//bindings: binding (AND binding)* -> binding+
+//  ;  
+//binding: condStar AS type   -> ^(BINDING type condStar) 
+ // ;  
 
 condStar: cond -> cond
    | IF ifExprs -> ifExprs
@@ -517,10 +505,12 @@ noIdAtom :
     |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef f=funcCall  -> ^(INLINE idOrScopeRef $f)
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
-    |    code                           -> code   
+    |    code                           -> code
     ;
 
-atom : noIdAtom | idExpr ;
+atom : ( noIdAtom -> noIdAtom | idExpr -> idExpr )
+    ( ( LBRACE type RBRACE) -> ^(CAST type $atom ) 
+      | ( AS type -> ^(CAST type $atom) ) )?  ;
 
 idExpr options { backtrack=true;} :
      idOrScopeRef instantiation appendIdModifiers? -> ^(IDEXPR ^(INSTANCE idOrScopeRef instantiation) appendIdModifiers*) 
@@ -549,7 +539,7 @@ idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ )
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
       ;
 
-colons : (COLON | COLONS)+ ;
+colons : (COLON | COLONS | COLON_COLON)+ ;
 
 data : DATA LBRACE fieldDecl* RBRACE  -> ^(DATA fieldDecl*) ;
 
@@ -572,6 +562,7 @@ FORWARD : 'forward';
 STATIC : 'static';
 
 COLON : ':';
+COLON_COLON : '::';
 COMMA : ',';
 EQUALS : '=';
 COLON_EQUALS : ':=';

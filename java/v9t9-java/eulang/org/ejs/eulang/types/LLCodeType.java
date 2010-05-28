@@ -16,7 +16,8 @@ public class LLCodeType extends BaseLLAggregateType  {
 	private final LLType retType;
 	private final LLType[] argTypes;
 	private final LLType[] types;
-
+	private boolean isEmpty;
+	
 	/**
 	 * @param retType 
 	 * 
@@ -25,6 +26,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 		super(fixLLVMName(toString(retType, argTypes, true)), ptrBits, toString(retType, argTypes, false), BasicType.CODE, null, argTypes == null);
 		this.retType = retType;
 		this.argTypes = argTypes != null ? argTypes : NO_TYPES;
+		this.isEmpty = argTypes == null;
 		this.types = new LLType[1 + this.argTypes.length];
 		types[0] = retType;
 		if (argTypes != null)
@@ -38,6 +40,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(argTypes);
 		result = prime * result + ((retType == null) ? 0 : retType.hashCode());
+		result = prime * result + (isEmpty ? 1234 : 0);
 		return result;
 	}
 
@@ -52,6 +55,8 @@ public class LLCodeType extends BaseLLAggregateType  {
 		if (getClass() != obj.getClass())
 			return false;
 		LLCodeType other = (LLCodeType) obj;
+		if (isEmpty != other.isEmpty)
+			return false;
 		if (!Arrays.equals(argTypes, other.argTypes))
 			return false;
 		if (retType == null) {
@@ -63,6 +68,12 @@ public class LLCodeType extends BaseLLAggregateType  {
 	}
 
 
+	/**
+	 * @return the isEmpty
+	 */
+	public boolean isEmpty() {
+		return isEmpty;
+	}
 
 	public static String toString(LLType retType, LLType[] argTypes, boolean allowIncomplete) {
 		if (retType == null && argTypes == null)
@@ -138,4 +149,17 @@ public class LLCodeType extends BaseLLAggregateType  {
 		return typeEngine.getCodeType(retType, argTypes);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLAggregateType#isMoreComplete(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public boolean isMoreComplete(LLType otherType) {
+		if (otherType instanceof LLCodeType) {
+			if (isEmpty && !((LLCodeType) otherType).isEmpty)
+				return false;
+			else if (!isEmpty && ((LLCodeType) otherType).isEmpty)
+				return true;
+		}
+		return super.isMoreComplete(otherType);
+	}
 }

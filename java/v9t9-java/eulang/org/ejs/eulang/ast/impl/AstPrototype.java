@@ -174,8 +174,6 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	@Override
 	public boolean adaptToType(LLCodeType codeType) {
 		boolean changed = false;
-		if (codeType.getRetType() != null && codeType.getRetType().toString().contains("List.21"))
-			changed = false;
 		changed = AstTypedNode.updateType(retType, codeType.getRetType());
 		for (int  i = 0; i < argumentTypes.length; i++) {
 			changed |= AstTypedNode.updateType(argumentTypes[i], codeType.getArgTypes()[i]);

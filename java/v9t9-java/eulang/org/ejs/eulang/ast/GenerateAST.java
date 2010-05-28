@@ -27,6 +27,7 @@ import org.ejs.eulang.ast.impl.AstBinExpr;
 import org.ejs.eulang.ast.impl.AstBlockStmt;
 import org.ejs.eulang.ast.impl.AstBoolLitExpr;
 import org.ejs.eulang.ast.impl.AstBreakStmt;
+import org.ejs.eulang.ast.impl.AstCastNamedTypeExpr;
 import org.ejs.eulang.ast.impl.AstCodeExpr;
 import org.ejs.eulang.ast.impl.AstCondExpr;
 import org.ejs.eulang.ast.impl.AstCondList;
@@ -58,7 +59,6 @@ import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
-import org.ejs.eulang.ast.impl.AstStmtScope;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
@@ -74,7 +74,6 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.symbols.NamespaceScope;
-import org.ejs.eulang.symbols.ISymbol.Visibility;
 import org.ejs.eulang.types.LLGenericType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -437,6 +436,8 @@ public class GenerateAST {
 			return constructArgDef(tree);
 			// case EulangParser.RETURN:
 			// return constructReturn(tree);
+		case EulangParser.CAST:
+			return constructCast(tree);
 		case EulangParser.ADD:
 		case EulangParser.SUB:
 		case EulangParser.MUL:
@@ -501,7 +502,7 @@ public class GenerateAST {
 			return constructInitNodeExpr(tree);
 
 		case EulangParser.CALL:
-			return constructCallOrCast(tree);
+			return constructCallOrConstruct(tree);
 		case EulangParser.ARGLIST:
 			return constructArgList(tree);
 
@@ -550,6 +551,28 @@ public class GenerateAST {
 			return null;
 		}
 
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructCast(Tree tree) throws GenerateException {
+		IAstType type = checkConstruct( tree.getChild(0), IAstType.class);
+		IAstTypedExpr expr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+		
+		IAstTypedExpr castExpr;
+		/*if (type.getType() != null && type.getType().isComplete()) {
+			castExpr = new AstUnaryExpr(IOperation.CAST,
+					expr);
+			castExpr.setType(type.getType());
+			castExpr.setTypeFixed(true);
+		} else*/ {
+			castExpr = new AstCastNamedTypeExpr(type, expr);
+		}
+		getSource(tree, castExpr);
+		return castExpr;
 	}
 
 	/**
@@ -1126,13 +1149,13 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException
 	 */
-	public IAstNode constructCallOrCast(Tree tree) throws GenerateException {
+	public IAstNode constructCallOrConstruct(Tree tree) throws GenerateException {
 		assert tree.getChildCount() == 2;
 
 		IAstTypedExpr function = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
 
-		return constructCallOrCast(tree.getChild(1), function);
+		return constructCallOrConstruct(tree.getChild(1), function);
 	}
 
 	/**
@@ -1142,12 +1165,12 @@ public class GenerateAST {
 	 * @throws GenerateException
 	 */
 	@SuppressWarnings("unchecked")
-	private IAstTypedExpr constructCallOrCast(Tree tree, IAstTypedExpr function)
+	private IAstTypedExpr constructCallOrConstruct(Tree tree, IAstTypedExpr function)
 			throws GenerateException {
 		IAstNodeList<IAstTypedExpr> args = checkConstruct(tree,
 				IAstNodeList.class);
 
-		// check for a cast
+		// check for a constructor
 		IAstTypedExpr functionSym = function;
 		if (functionSym instanceof IAstDerefExpr)
 			functionSym = ((IAstDerefExpr) functionSym).getExpr();
@@ -1178,6 +1201,15 @@ public class GenerateAST {
 		IAstType type = tree.getChildCount() > 1 ? checkConstruct(tree
 				.getChild(1), IAstType.class) : null;
 
+		// promote code allocs to pointers to function
+		if (type instanceof IAstPrototype) {
+			type.setParent(null);
+			IAstPointerType ptr = new AstPointerType(typeEngine,
+					type);
+			ptr.setSourceRef(type.getSourceRef());
+			type = ptr;
+		}
+		
 		IAstAllocStmt alloc = null;
 
 		if (tree.getChild(0).getType() == EulangParser.ID) {
@@ -1639,7 +1671,7 @@ public class GenerateAST {
 				getSource(tree, idExpr);
 			} else if (kid.getType() == EulangParser.CALL) {
 
-				idExpr = constructCallOrCast(kid.getChild(0), idExpr);
+				idExpr = constructCallOrConstruct(kid.getChild(0), idExpr);
 			} else
 				unhandled(kid);
 		}
@@ -2032,7 +2064,7 @@ public class GenerateAST {
 					// .argumentTypes()));
 					type = proto;
 				}
-			} else if (tree.getType() == EulangParser.IDREF) {
+			} else if (tree.getType() == EulangParser.IDREF || tree.getType() == EulangParser.IDEXPR) {
 				IAstSymbolExpr symbolExpr = checkConstruct(tree,
 						IAstSymbolExpr.class);
 

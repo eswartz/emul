@@ -94,7 +94,9 @@ import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
+import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.llvm.ops.LLNullOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLStructOp;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
@@ -503,6 +505,8 @@ public class LLVMGenerator {
 			}
 
 			if (returnType.getBasicType() != BasicType.VOID) {
+				if (ret == null)
+					ret = generateNil(returnType);
 				LLOperand retVal = currentTarget.load(returnType, ret);
 				currentTarget.emit(new LLRetInstr(returnType, retVal));
 			} else {
@@ -686,6 +690,8 @@ public class LLVMGenerator {
 			return new LLConstOp(type, 0);
 		else if (type.getBasicType() == BasicType.FLOATING)
 			return new LLConstOp(type, 0.0);
+		else if (type.getBasicType() == BasicType.POINTER)
+			return new LLNullOp(type); //BitcastOp(type, new LLConstOp(typeEngine.getPointerType(typeEngine.BYTE), 0));
 		else
 			throw new ASTException(null, "unhandled generating nil for: "
 					+ type);

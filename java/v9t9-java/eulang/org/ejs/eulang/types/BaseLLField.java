@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.types;
 
+import org.ejs.eulang.ITyped;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -13,7 +14,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
  * @author ejs
  *
  */
-public class BaseLLField {
+public class BaseLLField implements ITyped {
 
 	protected LLType type;
 	protected final String name;
@@ -59,6 +60,15 @@ public class BaseLLField {
 		return type;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITyped#setType(org.ejs.eulang.types.LLType)
+	 */
+	@Override
+	public void setType(LLType type) {
+		this.type = type;
+		if (def instanceof ITyped)
+			((ITyped) def).setType(type);
+	}
 	/**
 	 * @return the defaul
 	 */

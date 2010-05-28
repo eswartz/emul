@@ -6,10 +6,12 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
@@ -155,7 +157,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 
 		LLCodeType argCodeType = getArgInferredType(typeEngine);
 		
-		LLType referencedType = getRealType(function);
+		ITyped realFunction = getRealFunction(function);
+		LLType referencedType = realFunction != null ? realFunction.getType() : null;
+		if (referencedType instanceof LLPointerType)
+			referencedType = referencedType.getSubType();
 		
 		if (referencedType != null) {
 			if (!argCodeType.isCompatibleWith(referencedType)) {
@@ -193,7 +198,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 
 		boolean changed = false;
 		
-		changed |= updateType(function, codeType);
+		changed |= updateType(realFunction, codeType);
+		if (function != null && !(function.getType() instanceof LLPointerType))
+			changed |= updateType(function, codeType);
+		
 		if (codeType.getRetType() != null && codeType.getRetType().isComplete()
 				&& !codeType.getRetType().equals(getType())) {
 			setType(codeType.getRetType());
@@ -228,6 +236,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		return codeType;
 	}
 	
+	/*
 	private LLType getRealType(IAstTypedExpr node) {
 		if (node instanceof IAstSymbolExpr) {
 			IAstSymbolExpr symbolExpr = (IAstSymbolExpr) node;
@@ -237,6 +246,13 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			}
 			if (!(symbolExpr.getSymbol().getDefinition() instanceof ITyped))
 				return null;
+			
+			IAstTypedNode typedNode = (IAstTypedNode) symbolExpr.getSymbol().getDefinition();
+			if (typedNode instanceof IAstAllocStmt) {
+				if (typedNode.getType() instanceof LLPointerType) {
+					return typedNode.getType().getSubType();
+				}
+			}
 			return ((IAstTypedNode)node).getType();
 		} 
 		else if (node instanceof IAstFieldExpr) {
@@ -254,8 +270,42 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			}
 		}
 		return null;
+	}*/
+
+	private ITyped getRealFunction(IAstTypedExpr node) {
+		if (node instanceof IAstSymbolExpr) {
+			IAstSymbolExpr symbolExpr = (IAstSymbolExpr) node;
+			if (symbolExpr.getDefinition() != null) {
+				IAstTypedExpr expr = symbolExpr.getInstance();
+				return expr;
+			}
+			if (!(symbolExpr.getSymbol().getDefinition() instanceof ITyped))
+				return null;
+			
+			IAstTypedNode typedNode = (IAstTypedNode) symbolExpr.getSymbol().getDefinition();
+			if (typedNode.getType() instanceof LLPointerType) {
+				if (typedNode instanceof IAstAllocStmt) {
+					IAstAllocStmt alloc = (IAstAllocStmt) typedNode;
+					if (alloc.getTypeExpr() instanceof IAstPointerType)
+						return ((IAstPointerType) alloc.getTypeExpr()).getBaseType();
+				}
+			}
+			return (IAstTypedNode)node;
+		} 
+		else if (node instanceof IAstFieldExpr) {
+			IAstFieldExpr fieldExpr = (IAstFieldExpr) node;
+			if (fieldExpr.getExpr().getType() instanceof LLDataType) {
+				LLDataType data = (LLDataType) fieldExpr.getExpr().getType();
+				BaseLLField field = data.getField(fieldExpr.getField().getName());
+				if (field == null) {
+					return null;
+				}
+				return field;
+			}
+		}
+		return null;
 	}
-	
+
 	 /* (non-Javadoc)
      * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
      */

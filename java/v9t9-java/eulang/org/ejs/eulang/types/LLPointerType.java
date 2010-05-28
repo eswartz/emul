@@ -25,12 +25,17 @@ public class LLPointerType extends BaseLLType {
 		//  baseType != null && baseType.isComplete() ? ((baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*") : null
 		if (baseType == null)
 			return null;
+		
+		String llvmName = null;
 		if (baseType.isComplete())
-			return (baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*";
+			llvmName = (baseType.getName() != null ? "%" + baseType.getName() : baseType.getLLVMType()) + "*";
 		// exceptions for named types
-		if (baseType instanceof LLDataType)
-			return "%" + ((LLDataType) baseType).getName() + "*";
-		return null;
+		else if (baseType instanceof LLDataType)
+			llvmName = "%" + ((LLDataType) baseType).getName() + "*";
+		
+		if ("void*".equals(llvmName))
+			llvmName = "i8*";
+		return llvmName;
 	}
 	public LLPointerType(int bits, LLType baseType) {
 		super(baseType != null ? (baseType.getName() != null ? baseType.getName() + "$p" : 

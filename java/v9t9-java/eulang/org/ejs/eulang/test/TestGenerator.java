@@ -3,14 +3,21 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertSame;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.List;
 
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBlockStmt;
+import org.ejs.eulang.ast.IAstCastNamedTypeExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
@@ -25,13 +32,14 @@ import org.ejs.eulang.ast.IAstInstanceExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.junit.Test;
 
@@ -623,6 +631,49 @@ public class TestGenerator extends BaseTest {
 		
     	
     	
+    }
+    
+    @Test
+    public void testNewCast1() throws Exception {
+    	IAstModule mod = treeize(
+    			"Complex = data {\n"+
+    			"  a,b,c:Byte;\n"+
+    			"  Inner = data {\n"+
+    			"    d1,d2:Float;\n"+
+    			"    p : Complex^;\n"+
+    			"  };\n"+
+    			"  d : Inner;\n"+
+    			" };\n"+
+    			"testNewCast1 = code() {\n"+
+    			"  c : Complex^;\n" +
+    			"  d : Complex.Inner^;\n" +
+    			"  d = c{Complex.Inner^};\n"+
+    			"};\n"+
+    	"");
+    	sanityTest(mod);
+    }
+    @Test
+    public void testNewCast2() throws Exception {
+    	// is:  z := z > (100{Byte}); 
+    	IAstModule mod = treeize(
+    			"testNewCast2 = code () {\n" +
+    			"   z := z > 100{Byte};\n" +
+    			"};");
+    	sanityTest(mod);
+    	
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testNewCast2");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+
+    	IAstAllocStmt stmt;
+		stmt = (IAstAllocStmt) codeExpr.stmts().getFirst();
+		IAstTypedExpr expr = stmt.getExprs().getFirst();
+		assertTrue(expr instanceof IAstBinExpr);
+		expr = ((IAstBinExpr) expr).getRight();
+		assertTrue(expr instanceof IAstCastNamedTypeExpr);
+		IAstType type = ((IAstCastNamedTypeExpr) expr).getTypeExpr();
+		assertEquals(typeEngine.BYTE, type.getType());
+		expr = ((IAstCastNamedTypeExpr) expr).getExpr();
     }
 }
 

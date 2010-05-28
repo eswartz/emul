@@ -76,7 +76,7 @@ public class TestTypeInfer extends BaseTest {
 
 	 @Test 
     public void testBinOps() throws Exception {
-    	IAstModule mod = treeize("testBinOps = code { x:=(Bool(1*2/3) and Bool(4+\\45 )or 5<=6>>7<<8+>>85&9 ~ 10)or(11<12)>(13<=(14-15)==(16!=17%18+19)); };");
+    	IAstModule mod = treeize("testBinOps = code { x:=((1*2/3){Bool} and (4+\\45){Bool} or 5<=6>>7<<8+>>85&9 ~ 10)or(11<12)>(13<=(14-15)==(16!=17%18+19)); };");
     	sanityTest(mod);
     	
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testBinOps");
@@ -170,7 +170,7 @@ public class TestTypeInfer extends BaseTest {
 		assertTrue(isCastTo(binExpr.getLeft(), typeEngine.FLOAT));
     }
 	@Test
-    public void testPromotedCast2() throws Exception {
+    public void testPromotedConstructorCast2() throws Exception {
     	IAstModule mod = treeize(
     			"testPromotedCast2 = code () {\n" +
     			"   z : Byte;\n" +
@@ -247,11 +247,11 @@ public class TestTypeInfer extends BaseTest {
 		
     }
 	@Test
-    public void testPromotedCond2() throws Exception {
+    public void testPromotedConstructorCond2() throws Exception {
     	IAstModule mod = treeize(
     			"testPromotedCond2 = code () {\n" +
     			"   z : Byte;\n" +
-    			"	z = z > Byte(100);\n" +
+    			"	z = z > 100{Byte};\n" +
     			"};");
     	sanityTest(mod);
 
@@ -1106,6 +1106,7 @@ public class TestTypeInfer extends BaseTest {
 	
 	@Test
 	public void testFunctionTypes() throws Exception {
+		dumpTypeInfer = true;
 		IAstModule mod = doFrontend("" +
 				" funcptr : code;\n"+     
 				"func = code(x:Int;y:Float => Float) { funcptr(x,y) };\n");
@@ -1258,6 +1259,7 @@ public class TestTypeInfer extends BaseTest {
 
     @Test
     public void testSelfRef3() throws Exception {
+    	dumpTypeInfer = true;
     	IAstModule mod = treeize(
     			"Class = data {\n"+
     			"  draw:code(this:Class; count:Int => nil);\n"+
