@@ -713,17 +713,7 @@ public class GenerateAST {
 		return idExpr;
 	}
 	
-	/*
-	 * private IAstTypedExpr constructAddrRef(Tree tree) throws
-	 * GenerateException { IAstTypedExpr expr = checkConstruct(tree.getChild(0),
-	 * IAstTypedExpr.class);
-	 * 
-	 * if (expr instanceof IAstDerefExpr) { expr = ((IAstDerefExpr)
-	 * expr).getExpr(); expr.setParent(null); }
-	 * 
-	 * IAstAddrRefExpr addr = new AstAddrRefExpr(expr); getSource(tree, addr);
-	 * return addr; }
-	 */private IAstTypedExpr constructAddrOf(Tree tree)
+	private IAstTypedExpr constructAddrOf(Tree tree)
 			throws GenerateException {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
@@ -905,7 +895,7 @@ public class GenerateAST {
 		expr = new AstDerefExpr(expr, false);
 		getSource(tree.getChild(0), expr);
 
-		IAstTypedExpr at = checkConstruct(tree.getChild(1).getChild(0), IAstTypedExpr.class);
+		IAstTypedExpr at = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
 		IAstIndexExpr index = new AstIndexExpr(expr, at);
 		
 		
@@ -1186,7 +1176,7 @@ public class GenerateAST {
 		IAstTypedExpr function = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
 
-		return constructCallOrConstruct(tree.getChild(1).getChild(0), function);
+		return constructCallOrConstruct(tree.getChild(1), function);
 	}
 
 	/**

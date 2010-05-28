@@ -147,7 +147,7 @@ selector: LBRACKET selectors RBRACKET    -> ^(LIST selectors*)
 selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    -> selectoritem*
   ;
         
-selectoritem options { backtrack=true; } : code | macro | rhsExpr | listCompr;
+selectoritem :  macro | rhsExpr | listCompr;
 
 //  scope
 //
@@ -244,9 +244,8 @@ type :
   
 nonArrayType :  
     (idOrScopeRef instantiation) => idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
-     | idOrScopeRef -> ^(TYPE idOrScopeRef)  
-     | LESS GREATER -> ^(TYPE GENERIC)
-     | CODE proto? -> ^(TYPE ^(CODE proto?) )
+    |  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )
+     | ( CODE proto? -> ^(TYPE ^(CODE proto?) ) )
      
   ; 
 arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
@@ -291,8 +290,7 @@ assignStmt : (atom assignEqOp) => atom assignEqOp assignOrInitExpr        -> ^(A
 assignOrInitExpr : assignExpr | initList ;
 
 // assign expr
-assignExpr : (atom EQUALS) => atom EQUALS assignExpr        -> ^(ASSIGN EQUALS atom assignExpr)
-    | (atom assignOp) => atom assignOp assignExpr        -> ^(ASSIGN assignOp atom assignExpr)
+assignExpr : (atom assignEqOp) => atom assignEqOp assignExpr        -> ^(ASSIGN assignEqOp atom assignExpr)
     | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN EQUALS idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
@@ -302,10 +300,10 @@ assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | REM_EQ | UDIV_EQ | UREM_EQ 
 assignEqOp : EQUALS | assignOp ;
 
 initList : LBRACKET (initExpr (COMMA initExpr)*)? RBRACKET     -> ^(INITLIST initExpr* ) ;
-initExpr options { backtrack=true;} 
-    : e=rhsExpr                                              -> ^(INITEXPR $e) 
+initExpr 
+    : (rhsExpr) => e=rhsExpr                                              -> ^(INITEXPR $e) 
     | PERIOD ID EQUALS ei=initElement                                  -> ^(INITEXPR $ei ID) 
-    | LBRACKET i=rhsExpr RBRACKET EQUALS ei=initElement                  -> ^(INITEXPR $ei $i)
+    | (LBRACKET i=rhsExpr RBRACKET) => LBRACKET i=rhsExpr RBRACKET EQUALS ei=initElement                  -> ^(INITEXPR $ei $i)
     | initList 
     ;
 
@@ -366,10 +364,6 @@ idTupleEntries : idOrScopeRef (COMMA idOrScopeRef)+  -> idOrScopeRef+
 rhsExpr :   condStar -> condStar
     ;
     
-funcCall : LPAREN arglist RPAREN   ->     ^(CALL arglist) 
-    ;
-
-
 arglist: (arg ( COMMA arg)* COMMA?)?                        -> ^(ARGLIST arg*) 
     ;
 
@@ -489,33 +483,32 @@ unary:  MINUS u=unary -> ^(NEG $u )
       //| idExpr      -> idExpr 
       | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
       | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
-      //| ( atom CARET ) => a=atom CARET -> ^(ADDRREF $a)
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)
       | AMP atom        -> ^(ADDROF atom)
 ;
 
-noIdAtom :
+atom :
+  ( 
       NUMBER                          -> ^(LIT NUMBER)
     |   FALSE                         -> ^(LIT FALSE)
     |   TRUE                          -> ^(LIT TRUE)
     |   CHAR_LITERAL                  -> ^(LIT CHAR_LITERAL)
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
     |   NIL                          -> ^(LIT NIL)
-    |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef f=funcCall  -> ^(INLINE idOrScopeRef $f)
+    |   idExpr                          -> idExpr
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |    code                           -> code
-    
-    ;
+    |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
+   ) 
 
-atom : ( noIdAtom -> noIdAtom | idExpr -> idExpr )
     ( 
       ( PERIOD ID  -> ^(FIELDREF $atom ID) )
-    | ( funcCall -> ^(CALL $atom funcCall) )
-    | ( arrayIndex -> ^(INDEX $atom arrayIndex) )
-    | ( deref -> ^(DEREF $atom) )
+    | (  LPAREN arglist RPAREN   -> ^(CALL $atom arglist) )
+    | ( LBRACKET assignExpr RBRACKET  -> ^(INDEX $atom assignExpr) )
+    | ( CARET -> ^(DEREF $atom) )
     | ( ( LBRACE type RBRACE) -> ^(CAST type $atom ) ) 
     )*
 
@@ -529,28 +522,10 @@ idExpr :
     ( (instantiation ) => instantiation -> ^(INSTANCE $idExpr instantiation) ) ?
     ;
 
-    //( appendIdModifiers -> ^(IDEXPR $idExpr appendIdModifiers) ) ?
-//     idOrScopeRef instantiation appendIdModifiers? -> ^(IDEXPR ^(INSTANCE idOrScopeRef instantiation) appendIdModifiers*) 
-//    | idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) 
-    
 instantiation : LESS (instanceExpr (COMMA instanceExpr)*)? GREATER   -> ^(LIST instanceExpr*) 
   ; 
 
 instanceExpr options { backtrack=true;} : type | atom ;
-
-// an idOrScopeRef can have dotted parts that interpreted either as scope derefs or field refs,
-// so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 
-//appendIdModifiers : nonFieldIdModifier idModifier* ;
-
-//nonFieldIdModifier : funcCall | arrayIndex | deref;
-//idModifier : fieldRef | funcCall | arrayIndex | deref ;
-
-//fieldRef : PERIOD ID  -> ^(FIELDREF ID) ;
-
-arrayIndex :  LBRACKET assignExpr RBRACKET -> ^(INDEX assignExpr) ;
-
-deref : CARET -> ^(DEREF) ;
-
 idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
       ;

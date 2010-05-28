@@ -556,6 +556,7 @@ public class TestGenerator extends BaseTest {
 
     @Test
 	public void testGenericTypes2() throws Exception {
+    	dumpTreeize = true;
 		IAstModule mod = treeize(
 				"List = [T, U] data {\n" +
 				"        node:T;\n"+
