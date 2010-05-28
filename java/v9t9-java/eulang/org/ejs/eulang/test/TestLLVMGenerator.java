@@ -311,7 +311,7 @@ public class TestLLVMGenerator extends BaseTest {
     	assertEquals(2, g.getModule().getSymbolCount());
     }
     @Test
-    public void testIncsDecs() throws Exception  {
+    public void testInXtcsDecs() throws Exception  {
     	dumpLLVMGen = true;
     	IAstModule mod = doFrontend("maker1 = code(u,v:Int) { u++ * ++v }; " +
     			"maker2 = code(u,v:Int) { u-- * --v }; " +

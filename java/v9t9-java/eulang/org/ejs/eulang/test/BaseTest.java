@@ -71,6 +71,8 @@ import org.ejs.eulang.types.TypeInference;
  */
 public class BaseTest {
 
+	private static final String DIR = File.separatorChar == '\\' ? "c:/temp/" : "/tmp/";
+
 	/**
 	 * 
 	 */
@@ -565,14 +567,20 @@ public class BaseTest {
 		if (dumpLLVMGen)
 			System.out.println(text);
 		
-		String opts = "-preverify -domtree -verify //-lowersetjmp -raiseallocs -simplifycfg -domtree -domfrontier -mem2reg -globalopt "
+		String opts = "-preverify -domtree -verify //-lowersetjmp"
+				//+ "-raiseallocs "
+				+ "-simplifycfg -domtree -domfrontier -mem2reg -globalopt "
 				+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
 				+ " -simplify-libcalls -instcombine -jump-threading -simplifycfg -domtree -domfrontier -scalarrepl -instcombine "
-				+ "-break-crit-edges -condprop -tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
+				+ "-break-crit-edges "
+				//+ "-condprop "
+				+ "-tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
 				+ "-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -lcssa -iv-users "
 				//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
 				+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
-				+ "-break-crit-edges -condprop -domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
+				+ "-break-crit-edges "
+				//+ "-condprop "
+				+ "-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
 				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
 				+ "-std-link-opts -verify";
 		try {
@@ -665,7 +673,7 @@ public class BaseTest {
 				break;
 			}
 		}
-		return new File("/tmp/" + name + ext);
+		return new File(DIR + name + ext);
 	}
 
 	protected IAstTypedExpr getMainExpr(IAstDefineStmt def) {
