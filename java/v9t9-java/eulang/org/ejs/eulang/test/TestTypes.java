@@ -132,6 +132,36 @@ xes[3][2][1]
     	assertNull(array10.getDynamicSizeExpr());
     	
     }
+    
+    @Test
+    public void testArrayDecls3b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"p : Int[10,5,2];\n"+
+    			""
+    			);
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt stmt = (IAstAllocStmt) mod.getScope().get("p").getDefinition();
+    	
+    	assertTrue(stmt.getType() instanceof LLArrayType);
+    	LLArrayType array10 = (LLArrayType)stmt.getType();
+		assertEquals(10, array10.getArrayCount());
+		
+    	LLArrayType array5 = (LLArrayType) array10.getSubType();
+		assertTrue(array5 instanceof LLArrayType);
+    	assertEquals(5, array5.getArrayCount());
+    	
+    	LLArrayType array2 = (LLArrayType) array5.getSubType();
+    	assertTrue(array2 instanceof LLArrayType);
+    	assertEquals(2, array2.getArrayCount());
+    	
+		assertEquals(typeEngine.INT, array2.getSubType());
+
+    	assertTrue(stmt.getType().isCompatibleWith(stmt.getType()));
+    	assertNull(array10.getDynamicSizeExpr());
+    	
+    }
     @Test
     public void testArrayAccess0() throws Exception {
     	IAstModule mod = doFrontend(
@@ -752,6 +782,30 @@ xes[3][2][1]
 		assertFoundInOptimizedText("%foo, i16 0, i16 2, i16 2", gen);
 		
 	}
+
+	
+	@Test
+	public void testArrayAccess2b() throws Exception {
+		IAstModule mod = doFrontend(
+				"testArrayAccess3 = code(foo:Byte[3,3]^) {\n"+
+				"  foo[1,2] + (foo[2])[2];"+	// auto deref
+				"};\n"+
+		"");
+		IAstCodeExpr code = (IAstCodeExpr) getMainExpr((IAstDefineStmt) mod.getScope().get("testArrayAccess3").getDefinition());
+		assertTrue(code.getType().isComplete());
+		
+		ISymbol sym = code.getScope().get("foo");
+		assertTrue(sym.getType() instanceof LLPointerType);
+		LLArrayType arrayType = (LLArrayType) sym.getType().getSubType();
+		assertEquals(3, ((LLArrayType) arrayType).getArrayCount());
+		assertEquals(3, ((LLArrayType)((LLArrayType) arrayType).getSubType()).getArrayCount());
+		
+		LLVMGenerator gen = doGenerate(mod);
+		assertFoundInOptimizedText("%foo, i16 0, i16 1, i16 2", gen);
+		assertFoundInOptimizedText("%foo, i16 0, i16 2, i16 2", gen);
+		
+	}
+
 
 	@Test
     public void testArrayAccess3() throws Exception {

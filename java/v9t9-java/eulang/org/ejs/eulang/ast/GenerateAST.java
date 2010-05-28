@@ -895,12 +895,13 @@ public class GenerateAST {
 		expr = new AstDerefExpr(expr, false);
 		getSource(tree.getChild(0), expr);
 
-		IAstTypedExpr at = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
-		IAstIndexExpr index = new AstIndexExpr(expr, at);
-		
-		
-		getSource(tree, index);
-		return index;
+		for (int  i = 1; i < tree.getChildCount(); i++) {
+			IAstTypedExpr at = checkConstruct(tree.getChild(i), IAstTypedExpr.class);
+			expr = new AstIndexExpr(expr, at);
+			
+			getSource(tree, expr);
+		}
+		return expr;
 	}
 
 	/**

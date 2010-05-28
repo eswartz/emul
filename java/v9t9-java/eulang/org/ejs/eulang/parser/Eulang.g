@@ -233,8 +233,12 @@ type :
     (nonArrayType -> nonArrayType)
      ( 
 	     (
-	       arraySuff+ -> ^(TYPE ^(ARRAY $type arraySuff+))
+	       (arraySuff+) => arraySuff+ -> ^(TYPE ^(ARRAY $type arraySuff+))
 	      )
+	      |
+	      ( 
+	       LBRACKET rhsExpr ( COMMA rhsExpr )+ RBRACKET -> ^(TYPE ^(ARRAY $type rhsExpr+ ) ) 
+	      ) 
 	      | 
 	      (
 	        CARET -> ^(TYPE ^(POINTER $type))
@@ -499,7 +503,7 @@ atom :
     |   NIL                          -> ^(LIT NIL)
     |   idExpr                          -> idExpr
     |   ( tuple ) => tuple                          -> tuple
-    |   LPAREN assignExpr RPAREN               -> assignExpr
+    |   LPAREN a1=assignExpr RPAREN               -> $a1
     |    code                           -> code
     |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
    ) 
@@ -507,7 +511,8 @@ atom :
     ( 
       ( PERIOD ID  -> ^(FIELDREF $atom ID) )
     | (  LPAREN arglist RPAREN   -> ^(CALL $atom arglist) )
-    | ( LBRACKET assignExpr RBRACKET  -> ^(INDEX $atom assignExpr) )
+    | arrayAccess   -> ^(INDEX $atom arrayAccess)
+    //| ( LBRACKET assignExpr RBRACKET  -> ^(INDEX $atom assignExpr) )
     | ( CARET -> ^(DEREF $atom) )
     | ( ( LBRACE type RBRACE) -> ^(CAST type $atom ) ) 
     )*
@@ -517,6 +522,8 @@ atom :
     )?  
     ;
 
+arrayAccess : LBRACKET assignExpr (COMMA assignExpr)* RBRACKET  -> assignExpr+
+  ;
 idExpr :
     ( idOrScopeRef -> idOrScopeRef) 
     ( (instantiation ) => instantiation -> ^(INSTANCE $idExpr instantiation) ) ?
