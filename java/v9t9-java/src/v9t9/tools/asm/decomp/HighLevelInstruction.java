@@ -4,7 +4,7 @@
  * Created on Feb 22, 2006
  *
  */
-package v9t9.tools.asm.common;
+package v9t9.tools.asm.decomp;
 
 import java.util.Collection;
 import java.util.Set;
@@ -15,7 +15,8 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.tools.asm.decomp.RoutineOperand;
+import v9t9.tools.asm.common.DataWordListOperand;
+import v9t9.tools.asm.common.LabelOperand;
 
 /**
  * Instruction augmented with decompiler info

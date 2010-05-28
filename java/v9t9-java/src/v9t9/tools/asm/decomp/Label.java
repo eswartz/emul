@@ -4,7 +4,7 @@
  * Created on Feb 21, 2006
  *
  */
-package v9t9.tools.asm.common;
+package v9t9.tools.asm.decomp;
 
 import org.ejs.coffee.core.utils.HexUtils;
 

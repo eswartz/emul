@@ -4,7 +4,7 @@
  * Created on Feb 21, 2006
  *
  */
-package v9t9.tools.asm.common;
+package v9t9.tools.asm.decomp;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -323,7 +323,9 @@ public class Block implements Comparable<Block> {
 			first = last = inst;
 		} else {
 			last.setNext(inst);
+			last = inst;
 		}
+		inst.setBlock(this);
 	}
 
 }
