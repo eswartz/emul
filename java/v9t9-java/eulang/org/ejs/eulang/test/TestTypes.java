@@ -618,11 +618,13 @@ xes[3][2][1]
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Tuple bitcast (%Tuple$init { %Byte 1, %Bytex1 zeroinitializer, %Float 2.0, %Byte 32, %Byte 16 } to %Tuple), %Tuple*", gen);
+    	//assertFoundInUnoptimizedText("store %Tuple bitcast (%Tuple$init { %Byte 1, %Bytex1 zeroinitializer, %Float 2.0, %Byte 32, %Byte 16 } to %Tuple), %Tuple*", gen);
+    	assertFoundInUnoptimizedText("store %Tuple { %Byte 1, %Float 2.0, %Byte 32, %Byte 16 }, %Tuple*", gen);
     }
 
     @Test
     public void testDataInit1b() throws Exception {
+    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
@@ -631,7 +633,8 @@ xes[3][2][1]
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 4.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple*", gen);
+    	//assertFoundInUnoptimizedText("store %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 4.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple*", gen);
+    	assertFoundInUnoptimizedText("store %Tuple { %Byte zeroinitializer, %Float 4.0, %Byte zeroinitializer, %Byte zeroinitializer }, %Tuple*", gen);
     }
     
     @Test
@@ -701,7 +704,8 @@ xes[3][2][1]
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("store %Tuplex5 [ %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 2.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init.0 { %Byte 1, %Bytex6 zeroinitializer, %Byte 55 } to %Tuple), %Tuple zeroinitializer ], %Tuplex5*", gen);
+    	//assertFoundInUnoptimizedText("store %Tuplex5 [ %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init { %Bytex2 zeroinitializer, %Float 2.0, %Bytex3 zeroinitializer } to %Tuple), %Tuple zeroinitializer, %Tuple bitcast (%Tuple$init.0 { %Byte 1, %Bytex6 zeroinitializer, %Byte 55 } to %Tuple), %Tuple zeroinitializer ], %Tuplex5*", gen);
+    	assertFoundInUnoptimizedText("store %Tuplex5 [ %Tuple zeroinitializer, %Tuple { %Byte zeroinitializer, %Float 2.0, %Byte zeroinitializer, %Byte zeroinitializer }, %Tuple zeroinitializer, %Tuple { %Byte 1, %Float zeroinitializer, %Byte zeroinitializer, %Byte 55 }, %Tuple zeroinitializer ], %Tuplex5*", gen);
     }
     
     @Test
@@ -1081,13 +1085,15 @@ xes[3][2][1]
 	}
 	@Test
 	public void testPointerMath2() throws Exception {
+		dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"testPointerMath2 = code(foo:Int^) {\n"+
     			"  foo+4-foo;\n"+
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInOptimizedText("ashr i16", gen);
+    	//assertFoundInOptimizedText("ashr i16", gen);
+    	assertFoundInOptimizedText("ret i16 4", gen);
 	}
 	@Test
 	public void testPointerMath3() throws Exception {

@@ -1327,7 +1327,7 @@ public class LLVMGenerator {
 		int initIdx = 0;
 
 		boolean isArray = expr.getType() instanceof LLArrayType;
-		boolean needAlignment = true;
+		boolean needAlignment = false;		// in llvm 2.7, cannot bitcast structs anymore
 
 		int fieldCount;
 		if (expr.getType() instanceof LLAggregateType) {
@@ -1430,6 +1430,12 @@ public class LLVMGenerator {
 						: expr.getType().getSubType();
 
 				align.alignAndAdd(fieldType);
+				
+				if (!needAlignment) {
+					constOps.add(new LLZeroInitOp(fieldType));
+					if (!isArray)
+						initFieldTypes.add(fieldType);
+				}
 			}
 		}
 
@@ -1442,6 +1448,12 @@ public class LLVMGenerator {
 					: expr.getType().getSubType();
 
 			align.alignAndAdd(fieldType);
+			
+			if (!needAlignment) {
+				constOps.add(new LLZeroInitOp(fieldType));
+				if (!isArray)
+					initFieldTypes.add(fieldType);
+			}
 		}
 
 		if (needAlignment) {
