@@ -534,6 +534,10 @@ public class GenerateAST {
 
 		case EulangParser.INDEX:
 			return constructIndex(tree);
+		case EulangParser.DEREF:
+			return constructDeref(tree);
+		case EulangParser.FIELDREF:
+			return constructFieldRef(tree);
 
 		case EulangParser.REPEAT:
 			return constructRepeat(tree);
@@ -681,12 +685,34 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException
 	 */
-	/*
-	 * private IAstNode constructDeref(Tree tree) throws GenerateException {
-	 * IAstTypedExpr expr = checkConstruct(tree.getChild(0),
-	 * IAstTypedExpr.class); IAstDerefExpr value = new AstDerefExpr(expr,
-	 * false); getSource(tree, value); return value; }
-	 */
+	
+	private IAstNode constructDeref(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
+				IAstTypedExpr.class);
+		IAstDerefExpr value = new AstDerefExpr(expr, false);
+		getSource(tree, value);
+		return value;
+	}
+	
+	private IAstNode constructFieldRef(Tree tree) throws GenerateException {
+		// this may be a static member, in which case just directly go there
+		IAstTypedExpr idExpr = checkConstruct(tree.getChild(0),IAstTypedExpr.class);
+		IScope theScope = (idExpr instanceof IAstSymbolExpr) ? ((IAstSymbolExpr) idExpr).getSymbol().getScope() : null;
+		String name = tree.getChild(1).getText();
+		if (theScope != null && theScope.get(name) != null) {
+			idExpr = new AstSymbolExpr(false, theScope.get(name));
+			getSource(tree, idExpr);
+		} else {
+			IAstName nameNode = new AstName(name, null);
+			getSource(tree, nameNode);
+			idExpr = new AstDerefExpr(idExpr, false);
+			getSource(tree, idExpr);
+			idExpr = new AstFieldExpr(idExpr, nameNode);
+			getSource(tree, idExpr);
+		}
+		return idExpr;
+	}
+	
 	/*
 	 * private IAstTypedExpr constructAddrRef(Tree tree) throws
 	 * GenerateException { IAstTypedExpr expr = checkConstruct(tree.getChild(0),
@@ -876,8 +902,13 @@ public class GenerateAST {
 	private IAstNode constructIndex(Tree tree) throws GenerateException {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
-		IAstTypedExpr at = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+		expr = new AstDerefExpr(expr, false);
+		getSource(tree.getChild(0), expr);
+
+		IAstTypedExpr at = checkConstruct(tree.getChild(1).getChild(0), IAstTypedExpr.class);
 		IAstIndexExpr index = new AstIndexExpr(expr, at);
+		
+		
 		getSource(tree, index);
 		return index;
 	}
@@ -1155,7 +1186,7 @@ public class GenerateAST {
 		IAstTypedExpr function = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
 
-		return constructCallOrConstruct(tree.getChild(1), function);
+		return constructCallOrConstruct(tree.getChild(1).getChild(0), function);
 	}
 
 	/**
@@ -1402,20 +1433,8 @@ public class GenerateAST {
 	 * @return
 	 */
 	public IAstNode constructAssign(Tree tree) throws GenerateException {
-		if (tree.getChild(1).getType() == EulangParser.IDEXPR) {
-			IOperation op = getOperation(tree.getChild(0));
-			IAstTypedExpr left = checkConstruct(tree.getChild(1),
-					IAstTypedExpr.class);
-			IAstTypedExpr right = checkConstruct(tree.getChild(2),
-					IAstTypedExpr.class);
-			IAstAssignStmt assign = new AstAssignStmt(op, AstNodeList
-					.<IAstTypedExpr> singletonList(IAstTypedExpr.class, left),
-					AstNodeList.<IAstTypedExpr> singletonList(
-							IAstTypedExpr.class, right), false);
-			setLHS(assign.getSymbolExprs());
-			getSource(tree, assign);
-			return assign;
-		} else if (tree.getChild(1).getType() == EulangParser.LIST) {
+		int child1Type = tree.getChild(1).getType();
+		if (child1Type == EulangParser.LIST) {
 			IOperation op = getOperation(tree.getChild(0));
 			IAstNodeList<IAstTypedExpr> symbols = new AstNodeList<IAstTypedExpr>(
 					IAstTypedExpr.class);
@@ -1444,7 +1463,7 @@ public class GenerateAST {
 			setLHS(exprs);
 			getSource(tree, assign);
 			return assign;
-		} else if (tree.getChild(1).getType() == EulangParser.TUPLE) {
+		} else if (child1Type == EulangParser.TUPLE) {
 			// no operation
 			IAstTupleNode left = constructIdTuple(tree.getChild(1));
 			IAstTypedExpr right = checkConstruct(tree.getChild(2),
@@ -1455,8 +1474,23 @@ public class GenerateAST {
 			return assign;
 
 		} else {
-			unhandled(tree);
-			return null;
+			//if (child1Type == EulangParser.IDEXPR || child1Type == EulangParser.IDREF) {
+			
+				IOperation op = getOperation(tree.getChild(0));
+				IAstTypedExpr left = checkConstruct(tree.getChild(1),
+						IAstTypedExpr.class);
+				IAstTypedExpr right = checkConstruct(tree.getChild(2),
+						IAstTypedExpr.class);
+				IAstAssignStmt assign = new AstAssignStmt(op, AstNodeList
+						.<IAstTypedExpr> singletonList(IAstTypedExpr.class, left),
+						AstNodeList.<IAstTypedExpr> singletonList(
+								IAstTypedExpr.class, right), false);
+				setLHS(assign.getSymbolExprs());
+				getSource(tree, assign);
+				return assign;
+			//} else 
+			//unhandled(tree);
+			//return null;
 		}
 	}
 

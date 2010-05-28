@@ -474,6 +474,7 @@ public class TestLLVMGenerator extends BaseTest {
 
     @Test
     public void testArrayAccess2() throws Exception {
+    	dumpTreeize = true;
 		dumpLLVMGen = true;
 		IAstModule mod = doFrontend("foo = code(x:Int[10]^) { (x-1)[2] };\n");
 		LLVMGenerator gen = doGenerate(mod);

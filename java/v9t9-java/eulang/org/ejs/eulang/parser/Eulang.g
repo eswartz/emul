@@ -189,7 +189,7 @@ macro : MACRO proto ? LBRACE codestmtlist RBRACE -> ^(MACRO proto? codestmtlist*
 // or a list of declarations, types, and initializers (with multiple args per type allowed) separated with semicolons
 argdefs options {  backtrack = true; } :
   | argdefsWithTypes 
-  | argdefWithType? 
+  | argdefWithType
   |  argdefsWithNames 
   ;
     
@@ -260,9 +260,9 @@ codeStmt : labelStmt codeStmtExpr  -> ^(LABELSTMT labelStmt codeStmtExpr)
       | codeStmtExpr -> codeStmtExpr
       ;
 
-codeStmtExpr options { backtrack=true; } :
-     varDecl    -> varDecl
-      | assignStmt    -> assignStmt
+codeStmtExpr :
+      ( varDecl) => varDecl    -> varDecl
+      | (assignStmt) => assignStmt    -> assignStmt
       | rhsExpr       ->  ^(STMTEXPR rhsExpr)
       | ( LBRACE ) => blockStmt         -> blockStmt
       | gotoStmt      -> gotoStmt
@@ -281,18 +281,18 @@ varDecl: ID COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID TYPE assignOrIni
     ;
 
 // assignment statement (statement level) 
-assignStmt : (idExpr assignEqOp) => idExpr assignEqOp assignOrInitExpr        -> ^(ASSIGN assignEqOp idExpr assignOrInitExpr)
+assignStmt : (atom assignEqOp) => atom assignEqOp assignOrInitExpr        -> ^(ASSIGN assignEqOp atom assignOrInitExpr)
     | idTuple EQUALS assignOrInitExpr               -> ^(ASSIGN EQUALS idTuple assignOrInitExpr)
     // possible multi-assign statement
-    | (idExpr (COMMA idExpr)+ assignEqOp ) => idExpr (COMMA idExpr)+ assignEqOp PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
-        -> ^(ASSIGN assignEqOp ^(LIST idExpr+) PLUS? ^(LIST assignOrInitExpr+))
+    | (atom (COMMA atom)+ assignEqOp ) => atom (COMMA atom)+ assignEqOp PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
+        -> ^(ASSIGN assignEqOp ^(LIST atom+) PLUS? ^(LIST assignOrInitExpr+))
     ;
       
 assignOrInitExpr : assignExpr | initList ;
 
 // assign expr
-assignExpr : (idExpr EQUALS) => idExpr EQUALS assignExpr        -> ^(ASSIGN EQUALS idExpr assignExpr)
-    | (idExpr assignOp) => idExpr assignOp assignExpr        -> ^(ASSIGN assignOp idExpr assignExpr)
+assignExpr : (atom EQUALS) => atom EQUALS assignExpr        -> ^(ASSIGN EQUALS atom assignExpr)
+    | (atom assignOp) => atom assignOp assignExpr        -> ^(ASSIGN assignOp atom assignExpr)
     | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN EQUALS idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
@@ -485,14 +485,15 @@ term : ( unary                  -> unary )
 
 unary:  MINUS u=unary -> ^(NEG $u )
       | TILDE u=unary     -> ^(INV $u )
-      | (noIdAtom idModifier) => noIdAtom idModifier+ -> ^(IDEXPR noIdAtom idModifier+) 
+      //| (noIdAtom idModifier) => noIdAtom idModifier+ -> ^(IDEXPR noIdAtom idModifier+)
+      //| idExpr      -> idExpr 
       | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
       | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
       //| ( atom CARET ) => a=atom CARET -> ^(ADDRREF $a)
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)
-      | AMP idExpr        -> ^(ADDROF idExpr)
+      | AMP atom        -> ^(ADDROF atom)
 ;
 
 noIdAtom :
@@ -506,16 +507,31 @@ noIdAtom :
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN assignExpr RPAREN               -> assignExpr
     |    code                           -> code
+    
     ;
 
 atom : ( noIdAtom -> noIdAtom | idExpr -> idExpr )
-    ( ( LBRACE type RBRACE) -> ^(CAST type $atom ) 
-      | ( AS type -> ^(CAST type $atom) ) )?  ;
+    ( 
+      ( PERIOD ID  -> ^(FIELDREF $atom ID) )
+    | ( funcCall -> ^(CALL $atom funcCall) )
+    | ( arrayIndex -> ^(INDEX $atom arrayIndex) )
+    | ( deref -> ^(DEREF $atom) )
+    | ( ( LBRACE type RBRACE) -> ^(CAST type $atom ) ) 
+    )*
 
-idExpr options { backtrack=true;} :
-     idOrScopeRef instantiation appendIdModifiers? -> ^(IDEXPR ^(INSTANCE idOrScopeRef instantiation) appendIdModifiers*) 
-    | idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) 
-;
+    ( 
+      AS type -> ^(CAST type $atom) 
+    )?  
+    ;
+
+idExpr :
+    ( idOrScopeRef -> idOrScopeRef) 
+    ( (instantiation ) => instantiation -> ^(INSTANCE $idExpr instantiation) ) ?
+    ;
+
+    //( appendIdModifiers -> ^(IDEXPR $idExpr appendIdModifiers) ) ?
+//     idOrScopeRef instantiation appendIdModifiers? -> ^(IDEXPR ^(INSTANCE idOrScopeRef instantiation) appendIdModifiers*) 
+//    | idOrScopeRef appendIdModifiers? -> ^(IDEXPR idOrScopeRef appendIdModifiers*) 
     
 instantiation : LESS (instanceExpr (COMMA instanceExpr)*)? GREATER   -> ^(LIST instanceExpr*) 
   ; 
@@ -524,12 +540,12 @@ instanceExpr options { backtrack=true;} : type | atom ;
 
 // an idOrScopeRef can have dotted parts that interpreted either as scope derefs or field refs,
 // so appendIdModifiers skips field derefs the first time to avoid complaints about ambiguities 
-appendIdModifiers : nonFieldIdModifier idModifier* ;
+//appendIdModifiers : nonFieldIdModifier idModifier* ;
 
-nonFieldIdModifier : funcCall | arrayIndex | deref;
-idModifier : fieldRef | funcCall | arrayIndex | deref ;
+//nonFieldIdModifier : funcCall | arrayIndex | deref;
+//idModifier : fieldRef | funcCall | arrayIndex | deref ;
 
-fieldRef : PERIOD ID  -> ^(FIELDREF ID) ;
+//fieldRef : PERIOD ID  -> ^(FIELDREF ID) ;
 
 arrayIndex :  LBRACKET assignExpr RBRACKET -> ^(INDEX assignExpr) ;
 
@@ -539,7 +555,7 @@ idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ )
       | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
       ;
 
-colons : (COLON | COLONS | COLON_COLON)+ ;
+colons : (COLON | COLONS )+ ;
 
 data : DATA LBRACE fieldDecl* RBRACE  -> ^(DATA fieldDecl*) ;
 
@@ -562,7 +578,7 @@ FORWARD : 'forward';
 STATIC : 'static';
 
 COLON : ':';
-COLON_COLON : '::';
+//COLON_COLON : '::';
 COMMA : ',';
 EQUALS : '=';
 COLON_EQUALS : ':=';

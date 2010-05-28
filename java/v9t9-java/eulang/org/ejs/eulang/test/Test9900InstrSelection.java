@@ -846,7 +846,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	@Test
 	public void testComparisonOpsInExpr() throws Exception {
 		dumpLLVMGen =true;
-		
+		dumpTreeize = true;
 		// this generates boolean comparisons and stores them for logical manipulation;
 		doIsel("foo = code(x, y : Int) { (x<y) | (x==9) };\n");
 		

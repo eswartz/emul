@@ -268,7 +268,7 @@ public class LLVMGenerator {
 	}
 
 	public void recordError(ASTException e) {
-		messages.add(new Message(e.getNode().getSourceRef(), e.getMessage()));
+		messages.add(new Message(e.getNode() != null ? e.getNode().getSourceRef() : null, e.getMessage()));
 	}
 
 	public void unhandled(IAstNode node) throws ASTException {

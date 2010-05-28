@@ -432,6 +432,7 @@ xes[3][2][1]
 	}
 	@Test
     public void testDataDeref2() throws Exception {
+		dumpTreeize = true;
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+
