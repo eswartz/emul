@@ -21,8 +21,10 @@ import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
+import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
+import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.Locals;
@@ -414,5 +416,55 @@ public class BaseInstrTest extends BaseTest {
 		
 		return define;
 	}
+	
+
+	protected DataBlock doData(String text) throws Exception {
+		LLModule mod = getModule(text);
+		for (LLBaseDirective dir : mod.getDirectives()) {
+			if (dir instanceof LLGlobalDirective) {
+				LLGlobalDirective global = (LLGlobalDirective) dir;
+				
+				return doData(mod, global);
+			}
+		}
+		fail("no data generated:\n" + mod);
+		return null;
+	}
+
+	/**
+	 * @param mod
+	 * @param global
+	 * @return
+	 */
+	protected DataBlock doData(LLModule mod, LLGlobalDirective global) {
+
+		InstrSelection isel = new InstrSelection(mod) {
+			
+			{
+				if (dumpIsel)
+					DUMP = true;
+				
+			}
+			@Override
+			protected void newRoutine(Routine routine) {
+			}
+			@Override
+			protected void emit(AsmInstruction instr) {
+				
+			}
+			@Override
+			protected void newBlock(Block block) {
+				
+			}
+			
+		};
+		
+		AssemblerOperand asmOp = isel.generateOperand(global.getInit());
+		assert asmOp instanceof AsmOperand;
+		
+		DataBlock block = new DataBlock(global.getSymbol(), (AsmOperand) asmOp);
+		return block;
+	}
+
 
 }

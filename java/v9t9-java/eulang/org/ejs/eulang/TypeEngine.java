@@ -333,6 +333,18 @@ public class TypeEngine {
 		if (a.getBasicType() != BasicType.VOID && b.getBasicType() == BasicType.VOID)
 			return null;
 		
+		
+		if (a.getBasicType() == BasicType.TUPLE && b.getBasicType() == BasicType.TUPLE) {
+			if (!a.isCompatibleWith(b))
+				return null;
+			int subCount = ((LLAggregateType) a).getCount();
+			LLType[] common = new LLType[subCount];
+			for (int i = 0; i < subCount; i++) {
+				common[i] = getPromotionType(((LLAggregateType) a).getType(i), ((LLAggregateType) b).getType(i));
+			}
+			return getTupleType(common);
+		}
+
 		if (a.getBasicType() == BasicType.ARRAY && b.getBasicType() == BasicType.ARRAY) {
 			if (a.getSubType() == null && b.getSubType() == null)
 				return a;

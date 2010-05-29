@@ -61,7 +61,7 @@ public class InstrSelectionTable {
 		
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "trunc", 
 				new InstrSelection.If[] { 
-					InstrSelection.If.IN_REG_LOCAL,
+					InstrSelection.If.PASS,
 					InstrSelection.If.IS_I8,
 				},
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM_8 }, 

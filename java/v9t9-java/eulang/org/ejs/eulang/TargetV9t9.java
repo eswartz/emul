@@ -100,8 +100,8 @@ public class TargetV9t9 implements ITarget {
 	/**
 	 * 
 	 */
-	public TargetV9t9(TypeEngine typeEngine) {
-		this.typeEngine = typeEngine;
+	public TargetV9t9() {
+		this.typeEngine = new TypeEngine();
 		
 		initTypes();
 		
@@ -109,6 +109,7 @@ public class TargetV9t9 implements ITarget {
 		
 		intrinsicMap = new HashMap<Intrinsic, ISymbol>();
 	}
+	
 	/**
 	 * 
 	 */

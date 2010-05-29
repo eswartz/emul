@@ -62,6 +62,7 @@ public class TestLLVMGenerator extends BaseTest {
 	
 	@Test
     public void testPointers4() throws Exception {
+		dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			" genericSwap_testPointers4 := code (@x, y : Int => nil) {\n" +
     			//" x = x + 1; y = y + 1; x = x + 2; y = y - 4; x = x - 4;\n" +
@@ -136,6 +137,14 @@ public class TestLLVMGenerator extends BaseTest {
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(2, g.getModule().getSymbolCount());
     }
+	@Test
+	public void testTuples5() throws Exception {
+		dumpLLVMGen = true;
+		// emitting constant tuples, tuple casting, cond list common type, etc.
+		IAstModule mod = doFrontend("swap = code (x) { (if x<10 then (1,(x+2){Byte}) else (2,1){(Byte,Byte)}){(Int,Int)}; };\n");
+		LLVMGenerator g = doGenerate(mod);
+		assertEquals(1, g.getModule().getSymbolCount());
+	}
 	
 	@Test
 	public void testGenerics0b() throws Exception {

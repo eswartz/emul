@@ -270,7 +270,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	@Test
 	public void testSetGlobal1() throws Exception {
 		dumpLLVMGen = true;
-		doIsel("bat := Byte;\n"+
+		doIsel("bat : Byte;\n"+
 				"foo = code(x,y:Int => nil) { bat = 10; };\n");
 		
 		AsmInstruction inst;

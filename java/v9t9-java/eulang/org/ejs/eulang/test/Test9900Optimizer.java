@@ -9,6 +9,8 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.*;
 
+import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
@@ -17,10 +19,13 @@ import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
 import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
+import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
+import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.junit.Test;
 
 import v9t9.engine.cpu.InstructionTable;
@@ -468,7 +473,8 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// make sure jump was converted
 		idx = findInstrWithInst(enter.getInstrs(), "JCC");
 		inst = enter.getInstrs().get(idx);
-		assertFalse(inst.getOp1() instanceof CompareOperand);
+		matchInstr(inst, "JCC", CompareOperand.class, CompareOperand.CMP_EQ, SymbolLabelOperand.class, SymbolLabelOperand.class);
+		assertSameSymbol(inst, inst.getSources()[0], ".status");
 		
 		// be sure we read and write the value to memory every time
 		idx = findInstrWithInst(body.getInstrs(), "MOV");
@@ -634,20 +640,25 @@ public class Test9900Optimizer extends BaseInstrTest {
     	assertTrue(changed);
     	
     	// ensure we use proper byte-shifted version of constants
+    	int matches = 0;
 	   	for (AsmInstruction ins : instrs) {
     		if (ins.getInst() == InstructionTable.Ili) {
-    			if ((((NumberOperand)ins.getOp2()).getValue() & 0xffff) == 0)
+    			int v = ((NumberOperand)ins.getOp2()).getValue();
+				if ((v & 0xffff) == 0)
     				fail(inst+": lost value");
-    			if (((NumberOperand)ins.getOp2()).getValue() == 0x4)
+    			if (v == 0x4)
     				fail(ins+": expected >0400");
-    			if (((NumberOperand)ins.getOp2()).getValue() == 0x20)
+    			if (v == 0x20)
     				fail(ins+": expected >2000");
-    			if (((NumberOperand)ins.getOp2()).getValue() == 0x3)
+    			if (v == 0x3)
     				fail(ins+": expected >0300");
-    			if (((NumberOperand)ins.getOp2()).getValue() == 0x1)
+    			if (v == 0x1)
     				fail(ins+": expected >0100");
+    			if (v == 0x100 || v == 0x300 || v == 0x2000 || v == 0x400)
+    				matches++;
     		}
     	}
+	   	assertTrue(matches > 2);
 	   	
     	// we should have substituted all values and no longer need the memory
     	idx = findInstrWithSymbol(instrs, "foo");
@@ -669,7 +680,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		boolean changed = doOpt(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Bool; y,z:Byte; };\n"+
-    			"testDataInit1 = code() {\n"+
+    			"testLocalAddrRef1 = code() {\n"+
     			"  foo:Tuple;\n"+
     			"  fooptr:Tuple^=&foo;\n"+
     			"  fooptr.y+fooptr.x;\n" +
@@ -698,7 +709,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		boolean changed = doOpt(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Bool; y,z:Byte; };\n"+
-    			"testDataInit1 = code() {\n"+
+    			"testLocalAddrRef2 = code() {\n"+
     			"  foo:Tuple;\n"+
     			"  fooptr:Tuple^=&foo;\n"+
     			"  fooptr.y+fooptr.z;\n" +
@@ -724,7 +735,7 @@ public class Test9900Optimizer extends BaseInstrTest {
     public void testDataInitVar1() throws Exception {
     	dumpIsel = true;
     	boolean changed = doOpt(
-    			"testDataInit2 = code() {\n"+
+    			"testDataInitVar1 = code() {\n"+
     			"  val := 10;\n"+
     			"  foo:Int[10] = [ [5] = val, [1] = 11, 22 ];\n"+
     			"  foo[1]+foo[4]+foo[5];" +
@@ -771,5 +782,70 @@ public class Test9900Optimizer extends BaseInstrTest {
 			matchInstr(inst, "AB", LocalOffsOperand.class, "foo", 2*3+1, RegTempOperand.class);
     	}
     }
+	
+	@Test
+	public void testTuples5() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+		// emitting constant tuples, tuple casting, cond list common type, etc.
+		boolean changed = doOpt("swap = code (x) { (if x<10 then (1,(x+2){Byte}) else (2,1){(Byte,Byte)}){(Int,Int)}; };\n");
+		assertTrue(changed);
+		
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	idx = findInstrWithInst(instrs, "JCC", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "JCC", CompareOperand.class, CompareOperand.CMP_SLT);
+
+    	idx = findInstrWithInst(instrs, "COPY", idx);
+    	assertTrue(idx != -1);
+    	idx = findInstrWithInst(instrs, "JMP", idx);
+    	assertTrue(idx != -1);
+    	
+    	idx = findInstrWithInst(instrs, "COPY", idx);
+    	assertTrue(idx != -1);
+    	AssemblerOperand op = instrs.get(idx).getOp1();
+    	
+    	assertTrue(op instanceof TupleTempOperand);
+    	// the regs should have one def only (but not necc. become constants, since we'll just 
+    	// have to reconstruct regs for LI ops anyway)
+    	AssemblerOperand top = ((TupleTempOperand) op).get(0);
+		ILocal local = locals.getLocal(getOperandSymbol(top));
+    	assertNotNull(local);
+    	assertEquals(1, local.getDefs().cardinality());
+    	assertEquals(1, local.getUses().cardinality());
+    	
+    	top = ((TupleTempOperand) op).get(1);
+		local = locals.getLocal(getOperandSymbol(top));
+    	assertNotNull(local);
+    	assertEquals(1, local.getDefs().cardinality());
+    	assertEquals(1, local.getUses().cardinality());
+    	
+    	/// other branch needs a cast
+    	
+    	idx = findInstrWithInst(instrs, "MOVB", idx);
+    	assertTrue(idx != -1);
+
+    	idx = findInstrWithInst(instrs, "COPY", idx);
+    	assertTrue(idx != -1);
+    	op = instrs.get(idx).getOp1();
+    	
+    	assertTrue(op instanceof TupleTempOperand);
+    	top = ((TupleTempOperand) op).get(0);
+		local = locals.getLocal(getOperandSymbol(top));
+    	assertNotNull(local);
+    	assertEquals(1, local.getDefs().cardinality());
+    	assertEquals(1, local.getUses().cardinality());
+    	
+    	top = ((TupleTempOperand) op).get(1);
+		local = locals.getLocal(getOperandSymbol(top));
+    	assertNotNull(local);
+    	assertEquals(2, local.getDefs().cardinality());
+    	assertEquals(2, local.getUses().cardinality());
+    	
+
+	}
 }
 

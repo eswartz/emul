@@ -63,6 +63,7 @@ tokens {
   BLOCK;
   
   TUPLE;
+  TUPLETYPE;
   
   LABELSTMT;
   BINDING;
@@ -211,11 +212,11 @@ proto : LPAREN argdefs xreturns? RPAREN                   -> ^(PROTO xreturns? a
     ;
 
 xreturns : ARROW type      -> type
-  | ARROW argtuple           -> argtuple
+ // | ARROW argtuple           -> argtuple
   | ARROW NIL            -> ^(TYPE NIL)
   ;
 
-argtuple : LPAREN tupleargdefs RPAREN    -> ^(TUPLE tupleargdefs)
+argtuple : LPAREN tupleargdefs RPAREN    -> ^(TUPLETYPE tupleargdefs)
   ;
 
 tupleargdefs: (tupleargdef ( COMMA tupleargdef)+ )                        -> tupleargdef* 
@@ -250,7 +251,7 @@ nonArrayType :
     (idOrScopeRef instantiation) => idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
     |  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )
      | ( CODE proto? -> ^(TYPE ^(CODE proto?) ) )
-     
+  | argtuple     
   ; 
 arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr
     | LBRACKET RBRACKET -> FALSE

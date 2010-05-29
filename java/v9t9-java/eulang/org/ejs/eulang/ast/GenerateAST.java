@@ -528,6 +528,8 @@ public class GenerateAST {
 
 		case EulangParser.TUPLE:
 			return constructTuple(tree);
+		case EulangParser.TUPLETYPE:
+			return constructType(tree);
 
 		case EulangParser.LIST:
 			return constructList(tree);
@@ -2000,7 +2002,7 @@ public class GenerateAST {
 			retTypeNode = new AstType(typeEngine.UNSPECIFIED);
 			getEmptySource(tree, retTypeNode);
 			start = 0;
-		} else if (tree.getChild(0).getType() == EulangParser.TUPLE) {
+		} else if (tree.getChild(0).getType() == EulangParser.TUPLETYPE) {
 			retTypeNode = constructType(tree.getChild(0));
 			getSource(tree, retTypeNode);
 		} else {
@@ -2030,7 +2032,7 @@ public class GenerateAST {
 		if (tree.getType() == EulangParser.NIL) {
 			type = new AstType(typeEngine.VOID);
 		} else {
-			if (tree.getType() == EulangParser.TUPLE) {
+			if (tree.getType() == EulangParser.TUPLETYPE) {
 				LLType[] tupleTypes = new LLType[tree.getChildCount()];
 				for (int idx = 0; idx < tree.getChildCount(); idx++) {
 					// assert tree.getChild(idx).getType() == EulangParser.TYPE;

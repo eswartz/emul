@@ -330,7 +330,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public InstrSelection(LLModule module) {
 		this.module = module;
 		this.routine = null;
-		
+		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();;
 		InstrSelectionTable.setupPatterns();
 	}
 	
@@ -349,7 +349,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		locals.buildLocalTable();
 		
 		blockMap = new LinkedHashMap<ISymbol, Block>();
-		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();
+		ssaTempTable.clear();
 
 		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
 			epilogLabel = locals.getScope().add("$exit", true);
@@ -1112,7 +1112,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (offs != 0) {
 			if (!asmOp.isRegister())
 				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
-			//asmOp = moveToTemp(null, typeEngine.getPointerType(type), asmOp);
 			asmOp = new RegTempOffsOperand(type, new NumberOperand(offs), 
 					asmOp);
 		}
@@ -1127,9 +1126,27 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 */
 	private void handleExtractValueInstr(LLExtractValueInstr instr) {
 		// get current base
-		TupleTempOperand op = (TupleTempOperand) generateOperand(instr.getOperands()[0]);
-		assert op != null;
-		AssemblerOperand asmOp = op.get(instr.getIndex());
+		AssemblerOperand aggOp = generateOperand(instr.getOperands()[0]);
+		AssemblerOperand asmOp = null;
+		if (aggOp instanceof TupleTempOperand) {
+			TupleTempOperand op = (TupleTempOperand) aggOp;
+			assert op != null;
+			asmOp = op.get(instr.getIndex());
+		} else if (aggOp instanceof AddrOperand) {
+			// not straight-line code; get value from local
+			Alignment align = typeEngine.new Alignment(Target.STACK);
+			int offs = 0;
+			for (int i = 0; i <= instr.getIndex(); i++)
+				offs = align.alignAndAdd(((LLAggregateType) instr.getOperands()[0].getType()).getType(i));
+			assert offs % 8 == 0;
+			offs /= 8;
+			
+			asmOp = getEffectiveAddress(typeEngine.getPointerType(instr.getType()), aggOp, aggOp);
+			asmOp = new RegTempOffsOperand(instr.getType(), new NumberOperand(offs), 
+					asmOp);
+		} else {
+			assert false;
+		}
 		AssemblerOperand val = moveToTemp(instr.getResult(), instr.getResult().getType(), asmOp);
 		ssaTempTable.put(instr.getResult(), val);
 	}
@@ -1344,7 +1361,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @param operand
 	 * @return
 	 */
-	private AssemblerOperand generateOperand(LLOperand operand) {
+	public AssemblerOperand generateOperand(LLOperand operand) {
 		AssemblerOperand asmOp = ssaTempTable.get(operand);
 		if (asmOp != null)
 			return asmOp;

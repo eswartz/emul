@@ -76,4 +76,13 @@ public class FunctionConvention {
 		return gc;
 	}
 	
+	public LLCodeType getActualType(TypeEngine typeEngine) {
+		LLType ret = retType.getType();
+		LLType[] args = new LLType[argTypes.length];
+		for (int i = 0; i < argTypes.length; i++) {
+			args[i] = argTypes[i].getType();
+		}
+		return typeEngine.getCodeType(ret, args);
+	}
+	
 }

@@ -3,13 +3,13 @@ Instructions:
 
 //-- unary  // none!
 
--- casting
+//-- casting
     //-- bitcast
     
 -- data related:
     //store/load data
-    insertvalue
-    extractvalue
+    //insertvalue
+    //extractvalue
     //getelementptr
     
 //-- calls

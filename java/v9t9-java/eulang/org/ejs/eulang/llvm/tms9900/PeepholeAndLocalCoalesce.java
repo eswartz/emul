@@ -332,17 +332,41 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 		boolean gotStackValue = false;
 		
 		// look for well-known instructions
-		if (inst.getInst() == Ili) {
+		switch (inst.getInst()) {
+		case Ili:
 			if (inst.getOp2() instanceof NumberOperand)
 				src = inst.getOp2();
-		} 
-		else if (inst.getInst() == Iai) {
-			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand)
-				src = new NumberOperand( ((NumberOperand) src).getValue() + ((NumberOperand) inst.getOp2()).getValue() );
-			else
+			break;
+		case Iai:
+			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
+				int l = ((NumberOperand) src).getValue() ;
+				int r = ((NumberOperand) inst.getOp2()).getValue() ;
+				src = new NumberOperand( l + r );
+			} else {
 				src = null;
-		} 
-		else if (inst.getInst() == Imov || inst.getInst() == Imovb || inst.getInst() == Pcopy) {
+			}
+			break;
+			
+		case Isla:
+		case Isra:
+		case Isrl:
+			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
+				int l = ((NumberOperand) src).getValue() ;
+				int r = ((NumberOperand) inst.getOp2()).getValue() ;
+				if (inst.getInst() == Isla)
+					src = new NumberOperand( ( l << r ) & 0xffff );
+				else if (inst.getInst() == Isra)
+					src = new NumberOperand( ( l >> r ) & 0xffff );
+				else /*if (inst.getInst() == Isrl)*/
+					src = new NumberOperand( ( l >>> r ) & 0xffff );
+			} else {
+				src = null;
+			}
+			break;
+		
+		case Imov:
+		case Imovb:
+		case Pcopy:
 			if (getSourceLocal(inst) instanceof StackLocal) {
 				src = inst.getOp1();
 				gotStackValue = storeMemoryValue(inst.getOp2(), inst.getOp1());
@@ -353,7 +377,8 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			} else if (inst.getOp2().isMemory()) {
 				gotStackValue = storeMemoryValue(inst.getOp2(), inst.getOp1());
 			}
-		} else {
+			break;
+		default:
 			// dunno what to do here
 			src = null;
 		}
@@ -1071,7 +1096,14 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 				return false;
 			
 			int nextUse = local.getUses().nextSetBit(inst.getNumber() + 1);
-			if (nextUse >= 0) {
+			int nextDef = local.getDefs().nextSetBit(inst.getNumber() + 1);
+			if (nextDef >= 0) {
+				// if not defined in the same block, ignore
+				if (instrBlockMap.get(inst.getNumber()) != instrBlockMap.get(nextDef))
+					return false;
+			}
+			
+			if (nextUse >= 0 && !(nextDef >= 0 && nextUse > nextDef)) {
 				return false;
 			}
 		}
@@ -1090,7 +1122,7 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 	}
 	
 	/**
-	 * Change JCC to use the status register instead of a temp, if the value
+	 * Change JCC to use a compare operand instead of a temp, if the bool value
 	 * is not used.
 	 * @param inst
 	 * @return
@@ -1127,12 +1159,13 @@ public class PeepholeAndLocalCoalesce extends CodeVisitor {
 			getStatusRegister(routine.getDefinition().getModule().getModuleScope());
 
 		// comparison defines status reg now
-		SymbolOperand status = new SymbolOperand(statusSym);
 		assert ccinst.getTargets().length == 0;
 		ccinst.setImplicitTargets(new ISymbol[] { statusSym });
 		
 		// jump uses the status
-		inst.setOp1(status);
+		inst.setOp1(def.getOp1());
+		inst.setImplicitSources(new ISymbol[] { statusSym, ((ISymbolOperand) inst.getOp2()).getSymbol(), 
+				((ISymbolOperand) inst.getOp3()).getSymbol() });
 
 		// no more ISET
 		removeInst(def);

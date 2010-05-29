@@ -73,6 +73,7 @@ import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
 import org.ejs.eulang.ast.impl.AstTypedNode;
+import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
@@ -94,7 +95,6 @@ import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
-import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLNullOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -291,21 +291,43 @@ public class LLVMGenerator {
 		// TODO: simultaneous assignment?
 		for (int i = 0; i < stmt.getSymbolExprs().nodeCount(); i++) {
 			IAstSymbolExpr symbol = stmt.getSymbolExprs().list().get(i);
-			boolean isData = true;
+			
+			LLOperand dataOp = null;
+			LLType dataType = null;
+			
+			dataType = stmt.getType();
+			ll.emitTypes(dataType);
+			
 			if (stmt.getExprs() != null) {
 				IAstTypedExpr value = stmt.getExprs().list().get(
 						stmt.getExprs().nodeCount() == 1 ? 0 : i);
 				if (stmt.getType() instanceof LLCodeType) {
-					generateGlobalCode(symbol.getSymbol(), (IAstCodeExpr) value);
-					isData = false;
+					ISymbol initSymbol = symbol.getSymbol().getScope().addTemporary(symbol.getSymbol().getUniqueName());
+					Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(initSymbol, (IAstCodeExpr) value);
+					if (info == null)
+						continue;
+					// var/etc args change the effective type
+					dataType = info.first.getConvention().getActualType(typeEngine);
+					dataType = typeEngine.getPointerType(dataType);
+					ll.emitTypes(dataType);
+					dataOp = new LLSymbolOp(info.second, dataType);
+				}
+				else {
+					currentTarget = new StaticDataCodeTarget(this, target, ll, ll.getModuleScope());
+					try {
+						dataOp = generateTypedExprCore(value);
+					} catch (UnsupportedOperationException e) {
+						throw new ASTException(value, "cannot initialize global data with code");
+					}
+					
 				}
 			}
-			if (isData) {
-				ISymbol modSymbol = ll.getModuleSymbol(symbol.getSymbol(), stmt
-						.getType());
-
-				ll.add(new LLGlobalDirective(modSymbol, null, stmt.getType()));
-			}
+			
+			if (dataOp == null)
+				dataOp = new LLZeroInitOp(dataType);
+			
+			ISymbol modSymbol = ll.getModuleSymbol(symbol.getSymbol(), dataType);
+			ll.add(new LLGlobalDirective(modSymbol, null, dataOp));
 		}
 	}
 
@@ -420,10 +442,10 @@ public class LLVMGenerator {
 	 * @param expr
 	 * @throws ASTException
 	 */
-	private void generateGlobalCode(ISymbol symbol, IAstCodeExpr expr)
+	private Pair<LLDefineDirective, ISymbol> generateGlobalCode(ISymbol symbol, IAstCodeExpr expr)
 			throws ASTException {
 		if (expr.isMacro() || expr.getType().isGeneric())
-			return;
+			return null;
 
 		ensureTypes(expr);
 
@@ -438,6 +460,8 @@ public class LLVMGenerator {
 		ll.add(define);
 
 		generateCode(define, expr);
+		
+		return new Pair<LLDefineDirective, ISymbol>(define, modSymbol);
 	}
 
 	/**
@@ -1106,7 +1130,8 @@ public class LLVMGenerator {
 		LLOperand temp = generateTypedExprCore(expr);
 		if (temp == null)
 			return null;
-		temp = currentTarget.load(expr.getType(), temp);
+		if (!temp.isConstant() || !temp.getType().equals(expr.getType()))
+			temp = currentTarget.load(expr.getType(), temp);
 		return temp;
 	}
 
@@ -1641,17 +1666,31 @@ public class LLVMGenerator {
 		// tupleSym.setType(tuple.getType());
 		// LLVariableOp ret = makeLocalStorage(tupleSym, false, null);
 
-		LLOperand ret = new LLUndefOp(typeEngine.VOID);
+		LLOperand[] vals = new LLOperand[tuple.elements().nodeCount()];
+		boolean isConst = true;
+		
 		for (int idx = 0; idx < tuple.elements().nodeCount(); idx++) {
 			IAstTypedExpr expr = tuple.elements().list().get(idx);
 			LLOperand el = generateTypedExpr(expr);
-
-			LLOperand tmp = currentTarget.newTemp(tuple.getType());
-			currentTarget.emit(new LLInsertValueInstr(tmp, tuple.getType(),
-					ret, expr.getType(), el, idx));
-			ret = tmp;
+			vals[idx] = el;
+			if (!el.isConstant()) {
+				isConst = false;
+			}
 		}
-
+		
+		LLOperand ret;
+		if (!isConst) {
+			ret = new LLUndefOp(typeEngine.VOID);
+			for (int idx = 0; idx < tuple.elements().nodeCount(); idx++) {
+				
+				LLOperand tmp = currentTarget.newTemp(tuple.getType());
+				currentTarget.emit(new LLInsertValueInstr(tmp, tuple.getType(),
+						ret, vals[idx].getType(), vals[idx], idx));
+				ret = tmp;
+			}
+		} else {
+			ret = new LLStructOp((LLAggregateType) tuple.getType(), vals);
+		}
 		return ret;
 	}
 
@@ -1873,6 +1912,39 @@ public class LLVMGenerator {
 				if (origType.getLLVMName().equals(type.getLLVMName()))
 					return value;
 				cast = ECast.BITCAST;
+			} else if (origType instanceof LLAggregateType
+					&& type instanceof LLAggregateType) {
+				// piecewise cast
+				int count = ((LLAggregateType) origType).getCount();
+				LLOperand[] pieces = new LLOperand[count];
+				boolean isConst = true;
+				for (int i = 0; i < count; i++) {
+					LLOperand current;
+					LLType theType = ((LLAggregateType) origType).getType(i);
+					if (value instanceof LLStructOp) {
+						current = ((LLStructOp) value).getElements()[i];
+					} else {
+						current = currentTarget.newTemp(theType);
+						currentTarget.emit(new LLExtractValueInstr(current, origType, value, i));
+					}
+					pieces[i] = generateCast(node, 
+							((LLAggregateType) type).getType(i),
+							theType,
+							current);
+					isConst &= pieces[i].isConstant();
+				}
+				if (isConst) {
+					return new LLStructOp((LLAggregateType) type, pieces);
+				} else {
+					LLOperand ret = new LLUndefOp(type);
+					for (int i = 0; i < count; i++) {
+						LLOperand tmp = currentTarget.newTemp(type);
+						LLType theType = ((LLAggregateType) type).getType(i);
+						currentTarget.emit(new LLInsertValueInstr(tmp, type, ret, theType, pieces[i], i));
+						ret = tmp;
+					}
+					return ret;
+				}
 			} else if (origType.getBasicType() == BasicType.CODE
 					&& type.getBasicType() == BasicType.POINTER) {
 				// not really a cast: take the address

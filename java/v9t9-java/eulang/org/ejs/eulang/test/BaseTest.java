@@ -159,7 +159,8 @@ public class BaseTest {
 		parse(method, str, false);
 	}
 
-	protected TypeEngine typeEngine = new TypeEngine();
+	protected ITarget v9t9Target = new TargetV9t9();
+	protected TypeEngine typeEngine = v9t9Target.getTypeEngine();
 	protected boolean dumpSimplify;
 	protected boolean dumpTreeize;
 	protected boolean dumpTypeInfer;
@@ -511,7 +512,6 @@ public class BaseTest {
     	return doFrontend(mod, false);
 	}
 
-	protected ITarget v9t9Target = new TargetV9t9(typeEngine);
 	protected boolean dumpLLVMGen;
 	/**
 	 * Generate the module, expecting no errors.
@@ -583,10 +583,12 @@ public class BaseTest {
 				+ "-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
 				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
 				+ "-std-link-opts -verify";
+		
 		try {
 			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
 			List<String> optList = new ArrayList<String>();
-			optList.addAll(Arrays.asList(opts.split(" ")));
+			if (opts.length() > 0)
+				optList.addAll(Arrays.asList(opts.split(" ")));
 			for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
 				String val = iter.next();
 				if (val.startsWith("//")) {
