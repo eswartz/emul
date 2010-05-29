@@ -319,7 +319,7 @@ public class TestTypeInfer extends BaseTest {
     	IAstExprStmt allocStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BOOL, allocStmt.getType());
 		IAstBinExpr cmpExpr = (IAstBinExpr) allocStmt.getExpr();
-		assertTrue(cmpExpr.getOp() == IOperation.COMPNE);
+		assertTrue(cmpExpr.getOp() == IOperation.COMPEQ);
 		assertEquals(typeEngine.BOOL, cmpExpr.getType());
 		assertEquals(typeEngine.BYTE, cmpExpr.getLeft().getType());
 		

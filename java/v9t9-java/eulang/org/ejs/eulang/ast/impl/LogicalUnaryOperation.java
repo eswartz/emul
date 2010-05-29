@@ -3,9 +3,14 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstIntLitExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -62,4 +67,28 @@ public class LogicalUnaryOperation extends Operation implements IUnaryOperation 
 		}
 	}
 
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr expr) {
+		Number value = null;
+		
+		if (type.getBasicType() == BasicType.INTEGRAL
+				&& expr instanceof IAstIntLitExpr) {
+			long l = ((IAstIntLitExpr) expr).getValue();
+			
+			int bits = type.getBits();
+			long limit = bits == 1 ? 1 : bits == 8 ? 0xff : bits == 16 
+					? 0xffff : bits == 32 ? 0xffffffff : Long.MAX_VALUE;
+			
+			if (this == IOperation.INV) {
+				value = (~l) & limit;
+			}
+		}
+		if (value != null)
+			return new LLConstOp(type, value);
+		return null;
+	}
 }

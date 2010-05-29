@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstCondExpr;
 import org.ejs.eulang.ast.IAstCondList;
 import org.ejs.eulang.ast.IAstGotoStmt;
@@ -153,6 +154,41 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 		
 		return changed;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public IAstTypedExpr simplify(TypeEngine engine) {
+		IAstNodeList<IAstCondExpr> newCondList = new AstNodeList<IAstCondExpr>(IAstCondExpr.class);
+		newCondList.setSourceRef(condList.getSourceRef());
+		boolean changed = false;
+		boolean allBools = true;
+		for (int i = 0; i < condList.nodeCount(); i++) {
+			IAstCondExpr expr = (IAstCondExpr) condList.list().get(i).simplify(engine);
+			if (expr.getTest() instanceof IAstBoolLitExpr) {
+				if (allBools && ((IAstBoolLitExpr) expr.getTest()).getValue()) {
+					// a match!
+					return (IAstTypedExpr) expr.getExpr().copy(expr);
+				}
+			} else {
+				allBools = false;
+			}
+				
+			if (expr != condList.list().get(i)) {
+				newCondList.add(expr);
+				changed = true;
+			} else {
+				newCondList.add(expr.copy(condList));
+			}
+		}
+		if (changed) {
+			IAstCondList newList = new AstCondList(newCondList);
+			newList.setType(getType());
+			newList.setSourceRef(getSourceRef());
+			return newList;
+		}
+		return super.simplify(engine);
+	}
 	
 }

@@ -1855,7 +1855,7 @@ public class GenerateAST {
 				IAstTypedExpr.class);
 		IAstLitExpr zero = createZero(expr.getType());
 		getEmptySource(tree, zero);
-		IAstBinExpr binary = new AstBinExpr(IOperation.COMPNE, expr, zero);
+		IAstBinExpr binary = new AstBinExpr(IOperation.COMPEQ, expr, zero);
 
 		getSource(tree, binary);
 		return binary;

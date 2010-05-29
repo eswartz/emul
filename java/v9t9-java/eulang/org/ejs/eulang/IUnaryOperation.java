@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang;
 
+import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -36,4 +38,12 @@ public interface IUnaryOperation extends IOperation {
 	 * @param types
 	 */
 	void validateTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
+
+	/**
+	 * Evaluate constant 
+	 * @param llType destination type
+	 * @param simExpr
+	 * @return
+	 */
+	LLConstOp evaluate(LLType llType, IAstLitExpr simExpr);
 }

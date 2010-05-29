@@ -610,6 +610,8 @@ xes[3][2][1]
     }
     @Test
     public void testDataInit1() throws Exception {
+    	dumpSimplify = true;
+    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Float; y,z:Byte; };\n"+

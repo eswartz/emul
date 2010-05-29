@@ -10,7 +10,6 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 

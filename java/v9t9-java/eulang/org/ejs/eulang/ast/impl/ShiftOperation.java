@@ -4,10 +4,13 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
@@ -136,4 +139,38 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 		return ret;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr litLeft,
+			IAstLitExpr litRight) {
+		Number value = null;
+		
+		if (litLeft.getType().getBasicType() == BasicType.INTEGRAL
+				&& litLeft instanceof IAstIntLitExpr
+				&& litRight instanceof IAstIntLitExpr) {
+			long l = ((IAstIntLitExpr) litLeft).getValue();
+			long r = ((IAstIntLitExpr) litRight).getValue();
+			
+			long limit = type.getBits() == 1 ? 1 : type.getBits() == 8 ? 0xff : type.getBits() == 16 ? 0xffff : type.getBits() == 32 ? 0xffffffff : Long.MAX_VALUE;
+			
+			if (this == IOperation.SAR) {
+				value = (l >> r) & limit;
+			} else if (this == IOperation.SHR) {
+				if (l < 0)
+					l += limit + 1;
+				value = (l >>> r) & limit;
+			} else if (this == IOperation.SHL) {
+				value = (l << r) & limit;
+			} else if (this == IOperation.SLC) {
+				value = ((l << r) & limit) | ((l >>> (type.getBits() - r)) & limit);
+			} else if (this == IOperation.SRC) {
+				value = ((l >>> r) & limit) | ((l << (type.getBits() - r)) & limit);
+			}
+		}
+		if (value != null)
+			return new LLConstOp(type, value);
+		return null;
+	}
 }

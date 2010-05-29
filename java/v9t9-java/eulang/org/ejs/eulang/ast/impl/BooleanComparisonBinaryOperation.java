@@ -8,6 +8,8 @@ import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstBoolLitExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
@@ -15,6 +17,7 @@ import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
 import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.IScope;
@@ -228,5 +231,30 @@ public class BooleanComparisonBinaryOperation extends Operation implements IBina
 		currentTarget.emit(new LLLoadInstr(retTemp, expr.getType(), retval));
 		
 		return retTemp;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr litLeft,
+			IAstLitExpr litRight) {
+		Boolean value = null;
+		
+		if (litLeft.getType().getBasicType() == BasicType.BOOL
+				&& litLeft instanceof IAstBoolLitExpr
+				&& litRight instanceof IAstBoolLitExpr) {
+			boolean l = ((IAstBoolLitExpr) litLeft).getValue();
+			boolean r = ((IAstBoolLitExpr) litRight).getValue();
+			
+			if (this == IOperation.COMPAND) {
+				value = l && r;
+			} else if (this == IOperation.COMPOR) {
+				value = l || r;
+			}
+		}
+		if (value != null)
+			return new LLConstOp(type, value ? 1 : 0);
+		return null;
 	}
 }

@@ -29,7 +29,7 @@ public class TestFlowGraphPerf extends BaseInstrTest {
 	private LinkedRoutine rout;
 	
 	protected void makeRoutine(int numBlocks) {
-		mod = new LLModule(typeEngine, new GlobalScope());
+		mod = new LLModule(typeEngine, v9t9Target, new GlobalScope());
 		def = createDefine(mod, "test", typeEngine.VOID, new LLType[0]);
 		rout = new LinkedRoutine(def);
 		

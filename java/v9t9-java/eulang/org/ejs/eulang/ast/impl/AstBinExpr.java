@@ -7,9 +7,11 @@ import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.IBinaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -117,6 +119,7 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	@Override
 	public boolean equalValue(IAstTypedExpr expr) {
 		  if (expr instanceof IAstBinExpr
+				  && expr.getType() != null
 	        && ((IAstBinExpr) expr).getType().equals(getType())
 	        && ((IAstBinExpr) expr).getOp() == getOp()) {
 			  if (((IAstBinExpr) expr).getLeft().equalValue(getLeft())
@@ -129,107 +132,42 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		  return false;
 	        
 	}
-	/*
-    public IAstTypedExpr simplify() {
-        IAstTypedExpr newLeft = left.simplify();
-        IAstTypedExpr newRight = right.simplify();
+	@Override
+    public IAstTypedExpr simplify(TypeEngine typeEngine) {
+        IAstTypedExpr newLeft = left.simplify(typeEngine);
+        IAstTypedExpr newRight = right.simplify(typeEngine);
         
         // it is simplifiable?
-        if (operator != K_SUBSCRIPT
-                && newLeft instanceof IAstIntegralExpr
-                && newRight instanceof IAstIntegralExpr) {
+        if (newLeft instanceof IAstLitExpr
+                && newRight instanceof IAstLitExpr) {
         
-            IAstIntegralExpr litLeft = (IAstIntegralExpr) newLeft;
-            IAstIntegralExpr litRight = (IAstIntegralExpr) newRight;
+            IAstLitExpr litLeft = (IAstLitExpr) newLeft;
+            IAstLitExpr litRight = (IAstLitExpr) newRight;
             
-            switch (operator) {
-            case K_ADD:
-            case K_SUB:
-            case K_MUL:
-            case K_DIV: {
-                    int intLeft = litLeft.getValue();
-                    int intRight = litRight.getValue();
-                    int intResult = 0;
-                    switch (operator) {
-                    case K_ADD:
-                        intResult = intLeft + intRight; 
-                        break;
-                    case K_SUB:
-                        intResult = intLeft - intRight; 
-                        break;
-                    case K_MUL:
-                        intResult = intLeft * intRight; 
-                        break;
-                    case K_DIV:
-                        intResult = intLeft / intRight; 
-                        break;
-                    }
-                    IAstIntegralExpr lit = new AstIntegralExpression( 
-                            intResult);
-                    lit.setParent(getParent());
-                    return lit;
-                }
-            
-            case K_AND:
-            case K_OR:
-            case K_XOR:
-            case K_MOD: {
-                    int intLeft = litLeft.getValue();
-                    int intRight = litRight.getValue();
-                    int intResult = 0;
-                    switch (operator) {
-                    case K_AND:
-                        intResult = intLeft & intRight; 
-                        break;
-                    case K_OR:
-                        intResult = intLeft | intRight; 
-                        break;
-                    case K_XOR:
-                        intResult = intLeft ^ intRight; 
-                        break;
-                    case K_MOD:
-                        intResult = intLeft % intRight; 
-                        break;
-                    }
-                    IAstIntegralExpr lit = new AstIntegralExpression(
-                            intResult);
-                    lit.setParent(getParent());
-                    return lit;
+            LLConstOp op = oper.evaluate(getType(), litLeft, litRight);
+            if (op != null) {
+            	IAstLitExpr lit = typeEngine.createLiteralNode(
+            			op.getType(), op.getValue());
+            	lit.setSourceRef(getSourceRef());
+            	return lit;
             }
-                }
         }
         
         // fallthrough: make new binary expression if children changed
         if (!newLeft.equalValue(left) || !newRight.equalValue(right)) {
-            newLeft.setParent(null);
-            newRight.setParent(null);
-            IAstBinaryExpression bin = new AstBinaryExpression(operator, newLeft, newRight);
-            bin.setParent(getParent());
+        	if (newLeft == left)
+        		newLeft = (IAstTypedExpr) newLeft.copy(this);
+        	if (newRight == right)
+        		newRight = (IAstTypedExpr) newRight.copy(this);
+            IAstBinExpr bin = new AstBinExpr(oper, newLeft, newRight);
+            bin.setType(getType());
+            bin.setSourceRef(getSourceRef());
             return bin;
         } else {
 			return this;
 		}
     }
 
-    public boolean equalValue(IAstTypedExpr expr) {
-        if (!(expr instanceof IAstBinaryExpression)) {
-			return false;
-		}
-        if (((IAstBinaryExpression) expr).getOperator() != getOperator()) {
-			return false;
-		}
-        if (((IAstBinaryExpression) expr).getLeftOperand().equalValue(getLeftOperand())
-        && ((IAstBinaryExpression) expr).getRightOperand().equalValue(getRightOperand())) {
-			return true;
-		}
-        if (isCommutative() 
-                && ((IAstBinaryExpression) expr).getLeftOperand().equalValue(getRightOperand())
-                && ((IAstBinaryExpression) expr).getRightOperand().equalValue(getLeftOperand())) {
-			return true;
-		}
-        return false;
-    }
-	*/
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstTypedNode#inferTypeFromChildren()

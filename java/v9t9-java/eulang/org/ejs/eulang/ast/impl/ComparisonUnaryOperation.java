@@ -5,7 +5,11 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstBoolLitExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -58,4 +62,22 @@ public class ComparisonUnaryOperation extends Operation implements IUnaryOperati
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IUnaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr expr) {
+
+		Boolean value = null;
+		
+		if (type.getBasicType() == BasicType.BOOL
+				&& expr instanceof IAstBoolLitExpr) {
+			value = !((IAstBoolLitExpr) expr).getValue();
+		}
+		else
+			return null;
+		if (value != null)
+			return new LLConstOp(type, value ? 1 : 0);
+		return null;
+	}
 }

@@ -314,6 +314,8 @@ public class LLVMGenerator {
 				}
 				else {
 					currentTarget = new StaticDataCodeTarget(this, target, ll, ll.getModuleScope());
+					
+					value = value.simplify(typeEngine);
 					try {
 						dataOp = generateTypedExprCore(value);
 					} catch (UnsupportedOperationException e) {

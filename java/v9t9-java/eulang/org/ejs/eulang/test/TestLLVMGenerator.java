@@ -148,6 +148,7 @@ public class TestLLVMGenerator extends BaseTest {
 	
 	@Test
 	public void testGenerics0b() throws Exception {
+		dumpTypeInfer = true;
 		IAstModule mod = doFrontend("add = [] code (x,y) { x+y };\n" +
 		"testGenerics0b = code (a:Int;b:Int) { add(a,b) + add(10.0,b);  }; \n");
 		LLVMGenerator g = doGenerate(mod);

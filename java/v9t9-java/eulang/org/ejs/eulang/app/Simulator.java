@@ -14,6 +14,6 @@ public class Simulator {
 	/**
 	 * 
 	 */
-	public Simulator(ITarget target, ) {
+	public Simulator(ITarget target) {
 	}
 }

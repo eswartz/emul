@@ -5,6 +5,9 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -51,6 +54,14 @@ public class IndirectOperation extends Operation implements IUnaryOperation {
 		if (!types.expr.equals(types.result)) {
 			throw new TypeException("inconsistent types in expression");
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IUnaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType llType, IAstLitExpr simExpr) {
+		return null;
 	}
 
 }

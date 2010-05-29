@@ -4,15 +4,13 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
-import org.ejs.eulang.IOperation;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstFloatLitExpr;
-import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -99,29 +97,23 @@ public class AstUnaryExpr extends AstTypedExpr implements
     }
 
     public IAstTypedExpr simplify(TypeEngine typeEngine) {
-    	if (oper == IOperation.NEG) {
-    		if (expr instanceof IAstIntLitExpr) {
-				IAstLitExpr lit = typeEngine.createLiteralNode(getType(), -((IAstIntLitExpr) expr).getValue());
-				if (lit != null)
-					lit.setSourceRef(getSourceRef());
+    	IAstTypedExpr simExpr = expr.simplify(typeEngine);
+    	
+    	if (simExpr instanceof IAstLitExpr) {
+    		LLConstOp val = oper.evaluate(getType(), (IAstLitExpr) simExpr);
+    		if (val != null) {
+    			IAstLitExpr lit = typeEngine.createLiteralNode(val.getType(), val.getValue());
+    			lit.setSourceRef(getSourceRef());
 				return lit;
-			}
-    		if (expr instanceof IAstFloatLitExpr) {
-    			IAstLitExpr lit = typeEngine.createLiteralNode(getType(), -((IAstFloatLitExpr) expr).getValue());
-    			if (lit != null)
-    				lit.setSourceRef(getSourceRef());
-    			return lit;
     		}
     	}
-		if (oper == IOperation.CAST) {
-			if (expr instanceof IAstLitExpr) {
-				IAstLitExpr lit = typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
-				if (lit != null)
-					lit.setSourceRef(getSourceRef());
-				return lit;
-			}
+    	
+		if (simExpr != expr) {
+			IAstUnaryExpr unExpr = new AstUnaryExpr(oper, simExpr);
+			unExpr.setType(getType());
+			unExpr.setSourceRef(getSourceRef());
+			return unExpr;
 		}
-
         return this;
     }
     

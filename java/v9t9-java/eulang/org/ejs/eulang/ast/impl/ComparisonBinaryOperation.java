@@ -4,13 +4,18 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstBoolLitExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLCompareInstr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
@@ -147,5 +152,82 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 			generator.unhandled(expr);
 		}
 		return ret;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr litLeft,
+			IAstLitExpr litRight) {
+		Boolean value = null;
+		
+		long l, r;
+		
+		int bits = litLeft.getType().getBits();
+		long limit = bits == 1 ? 1 : bits == 8 ? 0xff : bits == 16 
+				? 0xffff : bits == 32 ? 0xffffffff : Long.MAX_VALUE;
+		if (litLeft.getType().getBasicType() == BasicType.INTEGRAL
+				&& litLeft instanceof IAstIntLitExpr
+				&& litRight instanceof IAstIntLitExpr) {
+			l = ((IAstIntLitExpr) litLeft).getValue();
+			r = ((IAstIntLitExpr) litRight).getValue();
+		} 
+		else if (litLeft.getType().getBasicType() == BasicType.BOOL
+				&& litLeft instanceof IAstBoolLitExpr
+				&& litRight instanceof IAstBoolLitExpr) {
+			l = ((IAstBoolLitExpr) litLeft).getValue() ? 1 : 0;
+			r = ((IAstBoolLitExpr) litRight).getValue() ? 1 : 0;
+		}
+		else
+			return null;
+	
+		long sl = (bits == 8) ? (byte) l : (bits == 16) ? (short) l : (bits == 32) ? (int) l : l;
+		long sr = (bits == 8) ? (byte) r : (bits == 16) ? (short) r : (bits == 32) ? (int) r : r;
+		
+		long ul = (l < 0 ? (l + limit + 1) : l) & limit;
+		long ur = (r < 0 ? (r + limit + 1) : r) & limit;
+
+		l &= limit;
+		r &= limit;
+		
+
+		if (this == IOperation.COMPEQ) {
+			value = l == r;
+		} else if (this == IOperation.COMPNE) {
+			value = l != r;
+		} else if (this == IOperation.COMPGE) {
+			value = sl >= sr;
+		} else if (this == IOperation.COMPGT) {
+			value = sl > sr;
+		} else if (this == IOperation.COMPUGE) {
+			value = ul >= ur;
+		} else if (this == IOperation.COMPUGT) {
+			value = ul > ur;
+		} else if (this == IOperation.COMPLE) {
+			value = sl <= sr;
+		} else if (this == IOperation.COMPLT) {
+			value = sl < sr;
+		} else if (this == IOperation.COMPULE) {
+			value = ul <= ur;
+		} else if (this == IOperation.COMPULT) {
+			value = ul < ur;
+		}
+		/*
+		else if (litLeft.getType().getBasicType() == BasicType.BOOL
+				&& litLeft instanceof IAstBoolLitExpr
+				&& litRight instanceof IAstBoolLitExpr) {
+			boolean l = ((IAstBoolLitExpr) litLeft).getValue();
+			boolean r = ((IAstBoolLitExpr) litRight).getValue();
+			
+			if (this == IOperation.COMPAND) {
+				value = l && r;
+			} else if (this == IOperation.COMPOR) {
+				value = l || r;
+			}
+		}*/
+		if (value != null)
+			return new LLConstOp(type, value ? 1 : 0);
+		return null;
 	}
 }

@@ -5,9 +5,11 @@ package org.ejs.eulang;
 
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -50,4 +52,12 @@ public interface IBinaryOperation extends IOperation {
 	/** Only allowed with operations that don't have sequencing issues (e.g. || and &&) 
 	 * @param expr TODO*/
 	LLOperand generate(LLVMGenerator generator, ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left, LLOperand right) throws ASTException;
+
+	/**
+	 * Evaluate constant expression
+	 * @param litLeft
+	 * @param litRight
+	 * @return
+	 */
+	LLConstOp evaluate(LLType type, IAstLitExpr litLeft, IAstLitExpr litRight);
 }

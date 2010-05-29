@@ -3,8 +3,11 @@
  */
 package org.ejs.eulang;
 
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.impl.Operation;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -74,6 +77,43 @@ public class CastOperation extends Operation implements IUnaryOperation {
 				throw new TypeException("cannot cast from " + types.expr +  " to " + types.result);
 		}
 		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IUnaryOperation#evaluate(org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr simExpr) {
+		Number value = null;
+		if (type.getBasicType() == BasicType.INTEGRAL) {
+			if (simExpr.getObject() instanceof Number)
+				value = ((Number)simExpr.getObject()).longValue();
+			else if (simExpr.getObject() instanceof Boolean)
+				value = ((Boolean)simExpr.getObject()).booleanValue() ? 1 : 0;
+			else
+				assert false;
+		}
+		else if (type.getBasicType() == BasicType.BOOL) {
+			if (simExpr.getObject() instanceof Number)
+				value = ((Number)simExpr.getObject()).doubleValue() != 0 ? 1 : 0;
+			else if (simExpr.getObject() instanceof Boolean)
+				value = ((Boolean)simExpr.getObject()).booleanValue() ? 1 : 0;
+			else
+				assert false;
+			
+		}
+		else if (type.getBasicType() == BasicType.FLOATING) {
+			if (simExpr.getObject() instanceof Number)
+				value = ((Number)simExpr.getObject()).doubleValue();
+			else if (simExpr.getObject() instanceof Boolean)
+				value = ((Boolean)simExpr.getObject()).booleanValue() ? 1. : 0.;
+			else
+				assert false;
+		}
+		if (value != null) {
+			return new LLConstOp(type, value);
+		}
+		return null;
 	}
 
 }

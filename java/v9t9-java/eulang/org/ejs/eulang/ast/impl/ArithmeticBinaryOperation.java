@@ -9,6 +9,8 @@ import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
@@ -250,5 +252,64 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 			generator.unhandled(expr);
 		}
 		return ret;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr litLeft,
+			IAstLitExpr litRight) {
+		Number value = null;
+		
+		if (litLeft.getType().getBasicType() == BasicType.INTEGRAL
+				&& litLeft instanceof IAstIntLitExpr
+				&& litRight instanceof IAstIntLitExpr) {
+			long l = ((IAstIntLitExpr) litLeft).getValue();
+			long r = ((IAstIntLitExpr) litRight).getValue();
+			
+			int bits = type.getBits();
+			long limit = bits == 1 ? 1 : bits == 8 ? 0xff : bits == 16 ? 0xffff : bits == 32 ? 0xffffffff : Long.MAX_VALUE;
+			
+			long sl = (bits == 8) ? (byte) l : (bits == 16) ? (short) l : (bits == 32) ? (int) l : l;
+			long sr = (bits == 8) ? (byte) r : (bits == 16) ? (short) r : (bits == 32) ? (int) r : r;
+			
+			long ul = (l < 0 ? (l + limit + 1) : l) & limit;
+			long ur = (r < 0 ? (r + limit + 1) : r) & limit;
+
+			l &= limit;
+			r &= limit;
+			
+			if (this == IOperation.ADD) {
+				value = sl + sr;
+			} else if (this == IOperation.SUB) {
+				value = sl - sr;
+			} else if (this == IOperation.MUL) {
+				value = ul * ur;
+			} else if (this == IOperation.DIV) {
+				if (r == 0)
+					return null;
+				value = sl / sr;
+			} else if (this == IOperation.UDIV) {
+				if (ur == 0)
+					return null;
+				value = ul / ur;
+			} else if (this == IOperation.MOD) {
+				if (ur == 0)
+					return null;
+				value = ul % ur;
+			} else if (this == IOperation.REM) {
+				if (r == 0)
+					return null;
+				value = l - (l / r) * r;
+			} else if (this == IOperation.UREM) {
+				if (ur == 0)
+					return null;
+				value = ul - (ul / ur) * ur;
+			}
+		}
+		if (value != null)
+			return new LLConstOp(type, value);
+		return null;
 	}
 }

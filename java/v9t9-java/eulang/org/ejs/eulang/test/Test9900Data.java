@@ -79,4 +79,23 @@ public class Test9900Data extends BaseInstrTest {
 		assertTrue(data.getValue() instanceof SymbolOperand);
 		assertSameSymbol(((SymbolOperand) data.getValue()).getSymbol(), "defaultNew");
 	}
+	
+
+	@Test
+	public void testConstExpr1() throws Exception {
+		DataBlock data = doData(
+				"defaultNew = code(x:Int=>Int^) { nil };\n"+
+				"otherNew = code(x:Int=>Int^) { nil };\n"+
+				"FLAG1=1;\n"+
+				"FLAG2=false;\n"+
+				"FLAG3=0;\n"+
+				// main simplification tests in TestSimplify
+				"new : code(x:Int=>Int^) = if (FLAG2 and FLAG1+3>FLAG3 or FLAG3 == 9 or not (FLAG1<<2)&2){Bool} then defaultNew else otherNew;\n"+
+				"");
+		assertNotNull(data);
+		LLCodeType code = typeEngine.getCodeType(typeEngine.getPointerType(typeEngine.INT), new LLType[] { typeEngine.INT });
+		assertEquals(typeEngine.getPointerType(code), data.getValue().getType());
+		assertTrue(data.getValue() instanceof SymbolOperand);
+		assertSameSymbol(((SymbolOperand) data.getValue()).getSymbol(), "defaultNew");
+	}
 }

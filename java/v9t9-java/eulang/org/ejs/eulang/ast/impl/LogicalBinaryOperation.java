@@ -4,13 +4,17 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IBinaryOperation;
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBinExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
@@ -123,4 +127,30 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 		return ret;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.IBinaryOperation#evaluate(org.ejs.eulang.types.LLType, org.ejs.eulang.ast.IAstLitExpr, org.ejs.eulang.ast.IAstLitExpr)
+	 */
+	@Override
+	public LLConstOp evaluate(LLType type, IAstLitExpr litLeft,
+			IAstLitExpr litRight) {
+		Number value = null;
+		
+		if (litLeft.getType().getBasicType() == BasicType.INTEGRAL
+				&& litLeft instanceof IAstIntLitExpr
+				&& litRight instanceof IAstIntLitExpr) {
+			long l = ((IAstIntLitExpr) litLeft).getValue();
+			long r = ((IAstIntLitExpr) litRight).getValue();
+			
+			if (this == IOperation.BITAND) {
+				value = l & r;
+			} else if (this == IOperation.BITOR) {
+				value = l | r;
+			} else if (this == IOperation.BITXOR) {
+				value = l ^ r;
+			}
+		}
+		if (value != null)
+			return new LLConstOp(type, value);
+		return null;
+	}
 }
