@@ -39,8 +39,8 @@ public class AstTupleExpr extends AstTypedExpr implements IAstTupleExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstTupleExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstTupleExpr(doCopy(elements, copyParent)));
+	public IAstTupleExpr copy() {
+		return fixup(this, new AstTupleExpr(doCopy(elements)));
 	}
 
 	@Override

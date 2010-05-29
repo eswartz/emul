@@ -12,7 +12,7 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public interface IAstFieldExpr extends IAstTypedExpr {
-	IAstFieldExpr copy(IAstNode parent);
+	IAstFieldExpr copy();
 	
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);

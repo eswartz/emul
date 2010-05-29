@@ -34,8 +34,8 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstStmtListExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstStmtListExpr(/*doCopy(result, copyParent),*/ doCopy(stmtList, copyParent)));
+	public IAstStmtListExpr copy() {
+		return fixup(this, new AstStmtListExpr(/*doCopy(result, copyParent),*/ doCopy(stmtList)));
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()

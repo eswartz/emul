@@ -38,8 +38,8 @@ public class AstLabelStmt extends AstTypedExpr implements IAstLabelStmt {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstLabelStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstLabelStmt(doCopy(label, copyParent)));
+	public IAstLabelStmt copy() {
+		return fixup(this, new AstLabelStmt(doCopy(label)));
 	}
 	
 	/* (non-Javadoc)

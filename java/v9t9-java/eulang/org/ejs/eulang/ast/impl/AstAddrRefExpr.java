@@ -31,8 +31,8 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstAddrRefExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstAddrRefExpr(doCopy(expr, copyParent)));
+	public IAstAddrRefExpr copy() {
+		return fixup(this, new AstAddrRefExpr(doCopy(expr)));
 	}
 	
 	@Override
@@ -149,7 +149,7 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	@Override
 	public IAstTypedExpr simplify(TypeEngine engine) {
 		if (expr instanceof IAstDerefExpr) {
-			return (IAstTypedExpr) ((IAstDerefExpr) expr).getExpr().copy(this);
+			return (IAstTypedExpr) ((IAstDerefExpr) expr).getExpr().copy();
 		}
 		return super.simplify(engine);
 	}

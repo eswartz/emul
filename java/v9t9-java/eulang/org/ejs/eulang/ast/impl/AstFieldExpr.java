@@ -93,8 +93,8 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 * @see org.ejs.eulang.ast.IAstFieldExpr#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstFieldExpr copy(IAstNode parent) {
-		return fixup(this, new AstFieldExpr(doCopy(expr, parent), doCopy(field, parent)));
+	public IAstFieldExpr copy() {
+		return fixup(this, new AstFieldExpr(doCopy(expr), doCopy(field)));
 	}
 
 	/* (non-Javadoc)

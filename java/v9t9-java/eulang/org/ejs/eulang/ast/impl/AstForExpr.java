@@ -48,11 +48,11 @@ public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 	 * @see org.ejs.eulang.ast.IAstForExpr#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstForExpr copy(IAstNode c) {
-		return (IAstForExpr) fixupLoop(new AstForExpr(getScope().newInstance(getCopyScope(c)),
-				doCopy(getSymbolExprs(), c),
-				doCopy(getByExpr(),c),
-				 doCopy(getExpr(), c), doCopy(getBody(), c)));
+	public IAstForExpr copy() {
+		return (IAstForExpr) fixupLoop(new AstForExpr(getScope().newInstance(getCopyScope()),
+				doCopy(getSymbolExprs()),
+				doCopy(getByExpr()),
+				 doCopy(getExpr()), doCopy(getBody())));
 	}
 	
 	/* (non-Javadoc)

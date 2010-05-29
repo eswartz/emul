@@ -29,8 +29,8 @@ public class AstIndexExpr extends AstTypedExpr implements IAstIndexExpr {
 	 * @see org.ejs.eulang.ast.IAstIndexExpr#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstIndexExpr copy(IAstNode parent) {
-		return fixup(this, new AstIndexExpr(doCopy(expr, parent), doCopy(index, parent)));
+	public IAstIndexExpr copy() {
+		return fixup(this, new AstIndexExpr(doCopy(expr), doCopy(index)));
 	}
 
 	/* (non-Javadoc)

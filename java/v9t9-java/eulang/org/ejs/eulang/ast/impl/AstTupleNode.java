@@ -36,8 +36,8 @@ public class AstTupleNode extends AstNode implements IAstTupleNode {
 	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstTupleNode copy(IAstNode copyParent) {
-		return fixup(this, new AstTupleNode(doCopy(elements, copyParent)));
+	public IAstTupleNode copy() {
+		return fixup(this, new AstTupleNode(doCopy(elements)));
 	}
 
 	@Override

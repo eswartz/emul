@@ -58,11 +58,11 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstDefineStmt copy(IAstNode copyParent) {
+	public IAstDefineStmt copy() {
 		// TODO: copy expansions
-		return (IAstDefineStmt) fixupScope(new AstDefineStmt(doCopy(id, copyParent), isGeneric(), 
-				scope.newInstance(getCopyScope(copyParent)),
-				doCopy(bodyList, copyParent)));
+		return (IAstDefineStmt) fixupScope(new AstDefineStmt(doCopy(id), isGeneric(), 
+				scope.newInstance(getCopyScope()),
+				doCopy(bodyList)));
 	}
 
 	

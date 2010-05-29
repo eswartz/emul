@@ -8,7 +8,6 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 

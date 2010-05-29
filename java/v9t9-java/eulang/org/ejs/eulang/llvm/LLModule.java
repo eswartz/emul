@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstSymbolDefiner;
 import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;

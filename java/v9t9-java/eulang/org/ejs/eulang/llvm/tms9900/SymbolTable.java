@@ -6,8 +6,6 @@ package org.ejs.eulang.llvm.tms9900;
 import java.util.*;
 
 import org.ejs.eulang.symbols.*;
-import org.ejs.eulang.llvm.tms9900.*;
-import org.ejs.eulang.llvm.tms9900.asm.*;
 
 /**
  * Lookups from ISymbol to backend structures

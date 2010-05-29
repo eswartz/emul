@@ -8,7 +8,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstIndexExpr extends IAstTypedExpr {
-	IAstIndexExpr copy(IAstNode parent);
+	IAstIndexExpr copy();
 	
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);

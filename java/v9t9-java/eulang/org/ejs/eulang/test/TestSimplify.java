@@ -15,7 +15,6 @@ import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
-import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -156,7 +155,7 @@ public class TestSimplify extends BaseTest {
 	protected void noSimplifyTest(String text) throws Exception {
 		IAstModule mod = treeize(text);
 		sanityTest(mod);
-		IAstModule orig = mod.copy(null);
+		IAstModule orig = mod.copy();
 		assertEquals(orig, mod);
 		doTypeInfer(orig);
 		System.out.println(DumpAST.dumpString(orig));

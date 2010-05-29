@@ -4,7 +4,6 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstRepeatExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.IScope;
@@ -36,9 +35,9 @@ public class AstRepeatExpr extends AstTestBodyLoopExpr implements IAstRepeatExpr
 	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstRepeatExpr copy(IAstNode c) {
-		return (IAstRepeatExpr) fixupLoop(new AstRepeatExpr(getScope().newInstance(getCopyScope(c)), 
-				doCopy(getExpr(), c), doCopy(getBody(), c)));
+	public IAstRepeatExpr copy() {
+		return (IAstRepeatExpr) fixupLoop(new AstRepeatExpr(getScope().newInstance(getCopyScope()), 
+				doCopy(getExpr()), doCopy(getBody())));
 	}
 
 	/* (non-Javadoc)

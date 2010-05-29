@@ -10,7 +10,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstSelfReferentialType extends IAstType {
-	IAstSelfReferentialType copy(IAstNode copyParent);
+	IAstSelfReferentialType copy();
 	IAstSymbolExpr getSymbolExpr();
 	void setSymbolExpr(IAstSymbolExpr name);
 }

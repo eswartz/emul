@@ -44,8 +44,8 @@ public class AstSelfReferentialType extends AstType implements IAstSelfReferenti
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstSelfReferentialType copy(IAstNode copyParent) {
-		AstSelfReferentialType copy = new AstSelfReferentialType(doCopy(symbolExpr, copyParent), type);
+	public IAstSelfReferentialType copy() {
+		AstSelfReferentialType copy = new AstSelfReferentialType(doCopy(symbolExpr), type);
 		copy.symbol = symbol;
 		copy = fixup(this, copy);
 		return copy;

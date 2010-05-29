@@ -10,7 +10,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstAssignTupleStmt extends IAstStmt, IAstTypedExpr {
-	IAstAssignTupleStmt copy(IAstNode copyParent);
+	IAstAssignTupleStmt copy();
 	IAstTupleNode getSymbols();
 	void setSymbols(IAstTupleNode id);
 	IAstTypedExpr getExpr();

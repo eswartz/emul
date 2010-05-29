@@ -4,11 +4,6 @@
 package org.ejs.eulang.llvm.tms9900;
 
 import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 

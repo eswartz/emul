@@ -12,7 +12,7 @@ import org.ejs.eulang.symbols.ISymbol;
  * 
  */
 public interface IAstSymbolExpr extends IAstTypedExpr {
-	IAstSymbolExpr copy(IAstNode copyParent);
+	IAstSymbolExpr copy();
 
 	boolean isOwned();
 	void setOwned(boolean owned);

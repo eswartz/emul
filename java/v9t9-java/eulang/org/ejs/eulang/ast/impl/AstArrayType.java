@@ -66,8 +66,8 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstArrayType copy(IAstNode copyParent) {
-		return fixup(this, new AstArrayType(doCopy(baseType, copyParent), doCopy(countExpr, copyParent), getType()));
+	public IAstArrayType copy() {
+		return fixup(this, new AstArrayType(doCopy(baseType), doCopy(countExpr), getType()));
 	}
 	
 	@Override

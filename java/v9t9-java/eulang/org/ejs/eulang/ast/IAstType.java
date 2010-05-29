@@ -8,5 +8,5 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstType extends IAstTypedExpr {
-	IAstType copy(IAstNode copyParent);
+	IAstType copy();
 }

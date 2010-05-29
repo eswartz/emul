@@ -37,8 +37,8 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstAllocTupleStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstAllocTupleStmt(doCopy(syms, copyParent), doCopy(typeExpr, copyParent), doCopy(expr, copyParent)));
+	public IAstAllocTupleStmt copy() {
+		return fixup(this, new AstAllocTupleStmt(doCopy(syms), doCopy(typeExpr), doCopy(expr)));
 	}
 	
 	@Override

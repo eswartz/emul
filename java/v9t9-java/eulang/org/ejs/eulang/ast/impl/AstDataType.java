@@ -64,13 +64,13 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstDataType copy(IAstNode copyParent) {
+	public IAstDataType copy() {
 		return (IAstDataType) fixupStmtScope(new AstDataType(
 				type,
 				typeName,
-				doCopy(stmtList, copyParent),
-				doCopy(ifields, copyParent), doCopy(statics, copyParent),
-				getScope().newInstance(getCopyScope(copyParent))));
+				doCopy(stmtList),
+				doCopy(ifields), doCopy(statics),
+				getScope().newInstance(getCopyScope())));
 	}
 
 	

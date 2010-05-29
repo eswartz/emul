@@ -43,8 +43,8 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 	 * @see org.ejs.eulang.ast.IAstInitExpr#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstInitNodeExpr copy(IAstNode parent) {
-		return fixup(this,new AstInitNodeExpr(doCopy(context, parent), doCopy(expr, parent)));
+	public IAstInitNodeExpr copy() {
+		return fixup(this,new AstInitNodeExpr(doCopy(context), doCopy(expr)));
 	}
 
 	/* (non-Javadoc)

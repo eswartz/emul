@@ -522,7 +522,7 @@ public class TypeInference {
 				System.out.println("Creating expansion of " + define.getSymbol() +  " for " + expandedType + ":");
 			
 			ExpandAST expander = new ExpandAST(typeEngine, true);
-			expansion = (IAstTypedExpr) body.copy(null);
+			expansion = (IAstTypedExpr) body.copy();
 			expansion = (IAstTypedExpr) expander.expand(messages, expansion);
 			expansion.uniquifyIds();
 			replaceGenericTypes(define, expansion, expandedType);

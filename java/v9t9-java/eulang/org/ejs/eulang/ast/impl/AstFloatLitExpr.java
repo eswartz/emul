@@ -5,7 +5,6 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -27,7 +26,7 @@ public class AstFloatLitExpr extends AstLitExpr implements
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstFloatLitExpr copy(IAstNode copyParent) {
+	public IAstFloatLitExpr copy() {
 		return fixup(this, new AstFloatLitExpr(getLiteral(), type, value));
 	}
 	

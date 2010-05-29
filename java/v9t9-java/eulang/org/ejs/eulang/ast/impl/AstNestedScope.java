@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstSymbolDefiner;
@@ -29,9 +28,9 @@ public class AstNestedScope extends AstStmtScope implements IAstSymbolDefiner {
 		this.symbol = symbol;
 	}
 
-	public AstNestedScope copy(IAstNode copyParent) {
+	public AstNestedScope copy() {
 		return (AstNestedScope) fixupStmtScope(new AstNestedScope(
-				doCopy(stmtList, copyParent), getScope().newInstance(getCopyScope(copyParent)),
+				doCopy(stmtList), getScope().newInstance(getCopyScope()),
 				symbol));
 	}
 

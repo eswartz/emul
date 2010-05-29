@@ -12,7 +12,7 @@ import org.ejs.eulang.IUnaryOperation;
  *
  */
 public interface IAstUnaryExpr extends IAstTypedExpr {
-	IAstUnaryExpr copy(IAstNode copyParent);
+	IAstUnaryExpr copy();
 	
     public IUnaryOperation getOp();
 

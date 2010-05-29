@@ -43,7 +43,7 @@ public class AstName extends AstNode implements IAstName {
      * @see org.ejs.eulang.ast.IAstNode#copy()
      */
     @Override
-    public IAstName copy(IAstNode copyParent) {
+    public IAstName copy() {
     	return fixup(this, new AstName(getName(), null));
     }
     

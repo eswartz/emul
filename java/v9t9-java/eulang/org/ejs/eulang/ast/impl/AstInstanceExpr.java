@@ -99,8 +99,8 @@ public class AstInstanceExpr extends AstType implements IAstInstanceExpr {
 	 * @see org.ejs.eulang.ast.IAstGenericExpr#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstInstanceExpr copy(IAstNode parent) {
-		return fixup(this, new AstInstanceExpr(doCopy(symbolExpr, parent), doCopy(exprs, parent), getType()));
+	public IAstInstanceExpr copy() {
+		return fixup(this, new AstInstanceExpr(doCopy(symbolExpr), doCopy(exprs), getType()));
 	}
 
 	/* (non-Javadoc)

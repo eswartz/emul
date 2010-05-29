@@ -218,10 +218,10 @@ abstract public class AstNode implements IAstNode {
     }
 
     @SuppressWarnings("unchecked")
-	protected <T extends IAstNode> T doCopy(T node, IAstNode copyParent) {
+	protected <T extends IAstNode> T doCopy(T node) {
     	if (node == null)
 			return null;
-    	T copy = (T) node.copy(copyParent);
+    	T copy = (T) node.copy();
     	return copy;
     }
     
@@ -242,7 +242,8 @@ abstract public class AstNode implements IAstNode {
     	return null;
     }
 
-    protected IScope getCopyScope(IAstNode copyParent) {
+    protected IScope getCopyScope() {
+    	IAstNode copyParent = this;
     	while (copyParent != null) {
     		if (copyParent instanceof IAstScope) {
     			return ((IAstScope) copyParent).getScope();

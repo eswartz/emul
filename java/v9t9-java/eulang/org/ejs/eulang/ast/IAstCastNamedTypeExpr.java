@@ -12,7 +12,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstCastNamedTypeExpr extends IAstTypedExpr {
-	IAstCastNamedTypeExpr copy(IAstNode copyParent);
+	IAstCastNamedTypeExpr copy();
 
     public IAstType getTypeExpr();
 

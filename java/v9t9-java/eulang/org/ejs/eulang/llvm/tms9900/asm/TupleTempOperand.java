@@ -11,7 +11,6 @@ import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**

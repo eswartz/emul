@@ -11,7 +11,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstInstanceExpr extends IAstTypedExpr, IAstType {
-	IAstInstanceExpr copy(IAstNode parent);
+	IAstInstanceExpr copy();
 	
 	IAstSymbolExpr getSymbolExpr();
 	void setSymbolExpr(IAstSymbolExpr symExpr);

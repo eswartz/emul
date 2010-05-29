@@ -12,6 +12,6 @@ import java.util.Map;
  *
  */
 public interface IAstModule extends IAstStmtScope {
-	IAstModule copy(IAstNode copyParent);
+	IAstModule copy();
 	Map<String, String> getNonFileText();
 }

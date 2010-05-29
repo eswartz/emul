@@ -8,7 +8,6 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstGotoStmt;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtScope;
@@ -30,9 +29,9 @@ public class AstBlockStmt extends AstStmtScope implements IAstBlockStmt {
 		super(stmtList, scope);
 	}
 
-	public IAstBlockStmt copy(IAstNode copyParent) {
+	public IAstBlockStmt copy() {
 		return (IAstBlockStmt) fixupStmtScope(new AstBlockStmt(
-				doCopy(stmtList, copyParent), getScope().newInstance(getCopyScope(copyParent))));
+				doCopy(stmtList), getScope().newInstance(getCopyScope())));
 	}
 	
 

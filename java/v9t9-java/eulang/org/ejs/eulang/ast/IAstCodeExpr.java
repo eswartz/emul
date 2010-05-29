@@ -9,7 +9,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstCodeExpr extends IAstTypedExpr, IAstStmtScope {
-	IAstCodeExpr copy(IAstNode copyParent);
+	IAstCodeExpr copy();
 	
 	IAstPrototype getPrototype();
 	

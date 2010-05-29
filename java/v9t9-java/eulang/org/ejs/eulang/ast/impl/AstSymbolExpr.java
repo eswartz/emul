@@ -44,7 +44,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
      * @see org.ejs.eulang.ast.IAstNode#copy()
      */
     @Override
-    public IAstSymbolExpr copy(IAstNode copyParent) {
+    public IAstSymbolExpr copy() {
     	//return fixup(this, new AstSymbolExpr(this));
     	AstSymbolExpr copy = new AstSymbolExpr(this);
     	copy.setSourceRef(getSourceRef());
@@ -283,7 +283,7 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
 			if (!isUnique || (newType != null &&  newType.isGeneric())) {
 				ISymbol instanceSymbol = symbol.getScope().addTemporary(symbol.getName());
 				instanceSymbol.setType(newType);
-				IAstTypedExpr copy = (IAstTypedExpr) selectedBody.copy(null);
+				IAstTypedExpr copy = (IAstTypedExpr) selectedBody.copy();
 				copy.setType(newType);
 				// replace self-refs to symbol
 				ISymbol theSymbol = symbol;

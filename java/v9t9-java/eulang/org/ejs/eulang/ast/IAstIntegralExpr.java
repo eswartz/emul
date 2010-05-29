@@ -11,7 +11,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstIntegralExpr extends IAstTypedExpr {
-	IAstIntegralExpr copy(IAstNode copyParent);
+	IAstIntegralExpr copy();
 	
     /** Get the value (never null) */
     public int getValue();

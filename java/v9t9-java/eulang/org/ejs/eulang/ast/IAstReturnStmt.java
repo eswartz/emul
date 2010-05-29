@@ -9,7 +9,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstReturnStmt extends IAstTypedNode, IAstStmt {
-	IAstReturnStmt copy(IAstNode copyParent);
+	IAstReturnStmt copy();
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);
 }

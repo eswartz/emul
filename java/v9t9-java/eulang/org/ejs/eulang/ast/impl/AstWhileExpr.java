@@ -4,7 +4,6 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
 import org.ejs.eulang.symbols.IScope;
@@ -37,9 +36,9 @@ public class AstWhileExpr extends AstTestBodyLoopExpr implements IAstWhileExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstWhileExpr copy(IAstNode c) {
-		return (IAstWhileExpr) fixupLoop(new AstWhileExpr(getScope().newInstance(getCopyScope(c)), 
-				doCopy(getExpr(), c), doCopy(getBody(), c)));
+	public IAstWhileExpr copy() {
+		return (IAstWhileExpr) fixupLoop(new AstWhileExpr(getScope().newInstance(getCopyScope()), 
+				doCopy(getExpr()), doCopy(getBody())));
 	}
 
 	/* (non-Javadoc)

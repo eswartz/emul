@@ -35,8 +35,8 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstDerefExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstDerefExpr(doCopy(expr, copyParent), lhs));
+	public IAstDerefExpr copy() {
+		return fixup(this, new AstDerefExpr(doCopy(expr), lhs));
 	}
 	
 	@Override

@@ -9,5 +9,5 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstRepeatExpr extends IAstTestBodyLoopExpr {
-	 IAstRepeatExpr copy(IAstNode copyParent);
+	 IAstRepeatExpr copy();
 }

@@ -42,9 +42,9 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 		setTypeFixed(true);
 	}
 
-	public IAstAssignStmt copy(IAstNode copyParent) {
+	public IAstAssignStmt copy() {
 		return fixup(this, new AstAssignStmt(op, 
-				doCopy(symExpr, copyParent), doCopy(expr, copyParent), expand));
+				doCopy(symExpr), doCopy(expr), expand));
 	}
 	
 	@Override

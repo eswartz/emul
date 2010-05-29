@@ -8,5 +8,5 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstBlockStmt extends IAstStmt, IAstStmtScope {
-	IAstBlockStmt copy(IAstNode copyParent);
+	IAstBlockStmt copy();
 }

@@ -264,7 +264,7 @@ public class BaseTest {
     	Set<Integer> nodeIds = new HashSet<Integer>();
     	doSanityTest(node, nodeIds);
     	
-    	IAstNode copy = node.copy(null);
+    	IAstNode copy = node.copy();
     	
     	//DumpAST dump = new DumpAST(System.out);
     	//copy.accept(dump);

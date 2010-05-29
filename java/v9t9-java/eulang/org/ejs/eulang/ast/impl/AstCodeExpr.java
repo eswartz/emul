@@ -45,9 +45,9 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstCodeExpr copy(IAstNode copyParent) {
+	public IAstCodeExpr copy() {
 		return (IAstCodeExpr) fixupStmtScope(new AstCodeExpr(
-				doCopy(proto, copyParent), getScope().newInstance(getCopyScope(copyParent)), doCopy(stmtList, copyParent), macro));
+				doCopy(proto), getScope().newInstance(getCopyScope()), doCopy(stmtList), macro));
 	}
 	
 	

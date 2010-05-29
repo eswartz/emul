@@ -29,8 +29,8 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
      * @see org.ejs.eulang.ast.IAstNode#copy()
      */
     @Override
-    public IAstCastNamedTypeExpr copy(IAstNode copyParent) {
-    	return fixup(this, new AstCastNamedTypeExpr(doCopy(typeExpr, copyParent), doCopy(expr, copyParent)));
+    public IAstCastNamedTypeExpr copy() {
+    	return fixup(this, new AstCastNamedTypeExpr(doCopy(typeExpr), doCopy(expr)));
     }
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#toString()

@@ -12,7 +12,7 @@ import org.ejs.eulang.IBinaryOperation;
  *
  */
 public interface IAstBinExpr extends IAstTypedExpr {
-	IAstBinExpr copy(IAstNode copyParent);
+	IAstBinExpr copy();
 	
     public IBinaryOperation getOp();
 

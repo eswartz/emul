@@ -160,7 +160,7 @@ public class GenerateAST {
 		}
 
 		@Override
-		public IAstNode copy(IAstNode copyParent) {
+		public IAstNode copy() {
 			return null;
 		}
 
@@ -624,7 +624,7 @@ public class GenerateAST {
 					"symbol is not a scope: " + name);
 		}
 
-		IAstStmtScope combined = (IAstStmtScope) def.copy(def);
+		IAstStmtScope combined = (IAstStmtScope) def.copy();
 
 		// make sure the new scope can see the original one...
 		pushScope(combined.getScope());

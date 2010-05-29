@@ -5,8 +5,6 @@ package org.ejs.eulang.llvm.tms9900;
 
 import java.util.Collection;
 
-import org.ejs.coffee.core.utils.Pair;
-
 /**
  * @author ejs
  *

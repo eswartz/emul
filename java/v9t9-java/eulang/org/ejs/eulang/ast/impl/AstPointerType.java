@@ -39,8 +39,8 @@ public class AstPointerType extends AstTypedExpr implements IAstPointerType {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstPointerType copy(IAstNode copyParent) {
-		return fixup(this, new AstPointerType(doCopy(baseType, copyParent), getType()));
+	public IAstPointerType copy() {
+		return fixup(this, new AstPointerType(doCopy(baseType), getType()));
 	}
 	
 	@Override

@@ -3,9 +3,7 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
-import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
-import org.ejs.eulang.llvm.tms9900.StackLocal;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 

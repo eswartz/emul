@@ -8,7 +8,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstPointerType extends IAstType {
-	IAstPointerType copy(IAstNode copyParent);
+	IAstPointerType copy();
 	
 	IAstType getBaseType();
 	void setBaseType(IAstType typeExpr);

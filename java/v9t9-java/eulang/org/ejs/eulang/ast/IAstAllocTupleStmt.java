@@ -11,7 +11,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstAllocTupleStmt extends IAstStmt, IAstTypedNode {
-	IAstAllocTupleStmt copy(IAstNode copyParent);
+	IAstAllocTupleStmt copy();
 	
 	IAstTupleNode getSymbols();
 	void setSymbols(IAstTupleNode id);

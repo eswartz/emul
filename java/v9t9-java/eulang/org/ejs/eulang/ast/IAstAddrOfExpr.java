@@ -9,7 +9,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstAddrOfExpr extends IAstTypedExpr {
-	IAstAddrOfExpr copy(IAstNode copyParent);
+	IAstAddrOfExpr copy();
 	
 	IAstTypedExpr getExpr();
 	void setExpr(IAstTypedExpr expr);

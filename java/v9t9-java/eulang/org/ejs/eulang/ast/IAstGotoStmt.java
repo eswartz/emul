@@ -9,7 +9,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstGotoStmt extends IAstStmt, IAstTypedExpr {
-	IAstGotoStmt copy(IAstNode copyParent);
+	IAstGotoStmt copy();
 	IAstSymbolExpr getLabel();
 	void setLabel(IAstSymbolExpr symbol);
 	IAstTypedExpr getExpr();

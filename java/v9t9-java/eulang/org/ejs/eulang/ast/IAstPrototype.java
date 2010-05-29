@@ -11,7 +11,7 @@ import org.ejs.eulang.types.LLCodeType;
  *
  */
 public interface IAstPrototype extends IAstTypedNode, IAstType {
-	IAstPrototype copy(IAstNode copyParent);
+	IAstPrototype copy();
 	
 	IAstType returnType();
 	

@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.symbols.IScope;
@@ -28,9 +27,9 @@ public class AstModule extends AstStmtScope implements IAstModule {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstModule copy(IAstNode copyParent) {
-		return (IAstModule) fixupStmtScope(new AstModule(getScope().newInstance(getCopyScope(copyParent)), 
-				doCopy(stmtList, copyParent)));
+	public IAstModule copy() {
+		return (IAstModule) fixupStmtScope(new AstModule(getScope().newInstance(getCopyScope()), 
+				doCopy(stmtList)));
 	}
 	
 	/* (non-Javadoc)

@@ -4,9 +4,6 @@
 package org.ejs.eulang.llvm.tms9900;
 
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.ejs.eulang.symbols.ISymbol;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;

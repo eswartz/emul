@@ -38,8 +38,8 @@ public class AstRefType extends AstTypedExpr implements IAstRefType {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstRefType copy(IAstNode copyParent) {
-		return fixup(this, new AstRefType(doCopy(baseType, copyParent), getType()));
+	public IAstRefType copy() {
+		return fixup(this, new AstRefType(doCopy(baseType), getType()));
 	}
 	
 	@Override

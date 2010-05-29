@@ -40,8 +40,8 @@ public class AstNamedType extends AstType implements IAstNamedType {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstNamedType copy(IAstNode copyParent) {
-		return fixup(this, new AstNamedType(getType(), doCopy(symbolExpr, copyParent)));
+	public IAstNamedType copy() {
+		return fixup(this, new AstNamedType(getType(), doCopy(symbolExpr)));
 	}
 	
 	@Override
@@ -111,7 +111,7 @@ public class AstNamedType extends AstType implements IAstNamedType {
 			int level = 1;
 			while (ref != null) {
 				if (ref instanceof IAstDataType && ((IAstDataType) ref).getTypeName().equals(symbolExpr.getOriginalSymbol())) {
-					IAstSelfReferentialType selfRef = new AstSelfReferentialType(symbolExpr.copy(this), level);
+					IAstSelfReferentialType selfRef = new AstSelfReferentialType(symbolExpr.copy(), level);
 					//IAstInstanceExpr selfRef = new AstInstanceExpr(typeEngine, symbolExpr.copy(this), null);
 					selfRef.setSourceRef(getSourceRef());
 					getParent().replaceChild(this, selfRef);

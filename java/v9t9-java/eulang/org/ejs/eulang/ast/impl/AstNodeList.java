@@ -37,10 +37,10 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstNodeList<T> copy(IAstNode copyParent) {
+	public IAstNodeList<T> copy() {
 		List<T> copyList = new ArrayList<T>();
 		for (T t : list) {
-			copyList.add(doCopy(t, copyParent));
+			copyList.add(doCopy(t));
 		}
 		AstNodeList<T> newList = new AstNodeList<T>(copyList);
 		newList.theClass = theClass;

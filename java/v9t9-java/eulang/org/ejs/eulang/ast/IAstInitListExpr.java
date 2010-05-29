@@ -9,7 +9,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstInitListExpr extends IAstInitNodeExpr {
-	IAstInitListExpr copy(IAstNode parent);
+	IAstInitListExpr copy();
 	
 	IAstNodeList<IAstInitNodeExpr> getInitExprs();
 	void setInitExprs(IAstNodeList<IAstInitNodeExpr> exprs);

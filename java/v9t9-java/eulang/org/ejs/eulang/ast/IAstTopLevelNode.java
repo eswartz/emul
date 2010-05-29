@@ -9,5 +9,5 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstTopLevelNode extends IAstNode, IAstTypedExpr {
-	IAstTopLevelNode copy(IAstNode copyParent);
+	IAstTopLevelNode copy();
 }

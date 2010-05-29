@@ -73,7 +73,6 @@ import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
 import org.ejs.eulang.ast.impl.AstTypedNode;
-import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;

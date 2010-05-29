@@ -18,7 +18,7 @@ import org.ejs.eulang.IOperation;
 public interface IAstAssignStmt extends IAstStmt, IAstTypedExpr {
 	IOperation getOperation();
 	
-	IAstAssignStmt copy(IAstNode copyParent);
+	IAstAssignStmt copy();
 	IAstNodeList<IAstTypedExpr> getSymbolExprs();
 	void setSymbolExprs(IAstNodeList<IAstTypedExpr> id);
 	IAstNodeList<IAstTypedExpr> getExprs();

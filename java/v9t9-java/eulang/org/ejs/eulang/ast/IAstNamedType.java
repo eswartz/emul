@@ -8,7 +8,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstNamedType extends IAstType {
-	IAstNamedType copy(IAstNode copyParent);
+	IAstNamedType copy();
 	IAstSymbolExpr getSymbol();
 	void setSymbol(IAstSymbolExpr symbolExpr);
 }

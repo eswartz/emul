@@ -11,7 +11,7 @@ import java.util.List;
  *
  */
 public interface IAstNodeList <T extends IAstNode> extends IAstNode {
-	IAstNodeList<T> copy(IAstNode copyParent);
+	IAstNodeList<T> copy();
 	/** modifiable list of contents.  If you add or remove items, you must manually reparent them */
 	List<T> list();
 	int nodeCount();

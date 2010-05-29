@@ -9,8 +9,6 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.*;
 
-import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
@@ -19,7 +17,6 @@ import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
 import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;

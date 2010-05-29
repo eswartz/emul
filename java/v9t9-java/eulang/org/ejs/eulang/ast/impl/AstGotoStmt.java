@@ -39,8 +39,8 @@ public class AstGotoStmt extends AstTypedExpr implements IAstGotoStmt {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstGotoStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstGotoStmt(doCopy(label, copyParent), doCopy(expr, copyParent)));
+	public IAstGotoStmt copy() {
+		return fixup(this, new AstGotoStmt(doCopy(label), doCopy(expr)));
 	}
 	
 	/* (non-Javadoc)

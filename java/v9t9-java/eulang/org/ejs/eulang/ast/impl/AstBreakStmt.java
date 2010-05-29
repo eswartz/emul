@@ -29,8 +29,8 @@ public class AstBreakStmt extends AstTypedExpr implements IAstBreakStmt  {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstBreakStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstBreakStmt(doCopy(expr, copyParent)));
+	public IAstBreakStmt copy() {
+		return fixup(this, new AstBreakStmt(doCopy(expr)));
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#toString()

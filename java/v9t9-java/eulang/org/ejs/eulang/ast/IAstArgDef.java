@@ -12,7 +12,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstArgDef extends IAstTypedNode {
-	IAstArgDef copy(IAstNode copyParent);
+	IAstArgDef copy();
 	
 	boolean isMacro();
 	void setMacro(boolean isMacro);

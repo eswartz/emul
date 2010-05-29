@@ -6,8 +6,6 @@ package org.ejs.eulang.llvm.directives;
 import org.ejs.eulang.llvm.LLLinkage;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLType;
 
 /**
  * Global data

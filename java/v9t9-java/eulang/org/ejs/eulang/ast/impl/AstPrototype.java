@@ -54,13 +54,13 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstPrototype copy(IAstNode copyParent) {
+	public IAstPrototype copy() {
 		IAstArgDef[] argTypesCopy = new IAstArgDef[argumentTypes.length];
 		for (int i = 0; i < argTypesCopy.length; i++) {
-			argTypesCopy[i] = argumentTypes[i].copy(copyParent);
+			argTypesCopy[i] = argumentTypes[i].copy();
 			argTypesCopy[i] = fixup(argumentTypes[i], argTypesCopy[i]);
 		}
-		return fixup(this, new AstPrototype(getType(), doCopy(returnType(), copyParent), argTypesCopy));
+		return fixup(this, new AstPrototype(getType(), doCopy(returnType()), argTypesCopy));
 	}
 	
 	@Override

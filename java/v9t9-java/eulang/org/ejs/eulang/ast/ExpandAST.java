@@ -246,7 +246,7 @@ public class ExpandAST {
 			throws ASTException {
 		DumpAST dump = new DumpAST(System.out);
 		
-		IAstTypedExpr instance = (IAstTypedExpr) body.copy(null);
+		IAstTypedExpr instance = (IAstTypedExpr) body.copy();
 
 		String paramStr = "";
 		int idx = 0;
@@ -378,7 +378,7 @@ public class ExpandAST {
 					IAstCodeExpr codeExpr = (IAstCodeExpr) value;
 					if (codeExpr.isMacro()) {
 						// "call" it
-						IAstNode copy = value.copy(node);
+						IAstNode copy = value.copy();
 						copy.uniquifyIds();
 						removeGenerics(copy);
 						funcCallExpr.replaceChild(funcExpr, copy);
@@ -397,7 +397,7 @@ public class ExpandAST {
 			//
 			// (We may have produced this ourselves.)
 			
-			IAstNode copy = funcExpr.copy(funcCallExpr);
+			IAstNode copy = funcExpr.copy();
 			copy.uniquifyIds();
 			removeGenerics(copy);
 
@@ -440,7 +440,7 @@ public class ExpandAST {
 				IAstCodeExpr codeExpr = (IAstCodeExpr) value;
 				if (codeExpr.isMacro()) {
 					// directly replace
-					IAstNode copy = value.copy(symExpr);
+					IAstNode copy = value.copy();
 					copy.uniquifyIds();
 					removeGenerics(copy);
 					symExpr.getParent().replaceChild(symExpr, copy);
@@ -450,7 +450,7 @@ public class ExpandAST {
 			else {
 				// directly replace
 				
-				IAstNode copy = value.copy(symExpr);
+				IAstNode copy = value.copy();
 				copy.uniquifyIds();
 				removeGenerics(copy);
 				try {
@@ -523,7 +523,7 @@ public class ExpandAST {
 				expandedArgs.put(protoArg.getSymbolExpr().getSymbol(), realArg);
 			}
 			else {
-				realArg = (IAstTypedExpr) protoArg.getDefaultValue().copy(codeExpr);
+				realArg = (IAstTypedExpr) protoArg.getDefaultValue().copy();
 				
 				// allow defaults to reference other arguments
 				doExpand(messages, realArg, expandedArgs);
@@ -546,7 +546,7 @@ public class ExpandAST {
 					throw new ASTException(realArg, "cannot pass expression as an implicit code block since named arguments are required");
 				IAstNodeList<IAstStmt> stmtlist = new AstNodeList<IAstStmt>(IAstStmt.class);
 				
-				IAstTypedExpr retVal = (IAstTypedExpr) realArg.copy(null);
+				IAstTypedExpr retVal = (IAstTypedExpr) realArg.copy();
 				retVal.uniquifyIds();
 				if (!protoArg.isMacro())
 					stmtlist.add(new AstReturnStmt(retVal));
@@ -622,7 +622,7 @@ public class ExpandAST {
 			//if (replacement instanceof IAstDerefExpr)
 //				replacement = ((IAstDerefExpr) replacement).getExpr();
 			
-			IAstNode copy = replacement.copy(null);
+			IAstNode copy = replacement.copy();
 			if (copy instanceof IAstTypedNode)
 				((IAstTypedNode) copy).setType(((IAstTypedNode)replacement).getType());
 			copy.uniquifyIds();

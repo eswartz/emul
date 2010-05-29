@@ -30,8 +30,8 @@ public class AstReturnStmt extends AstTypedExpr implements IAstReturnStmt {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstReturnStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstReturnStmt(doCopy(expr, copyParent)));
+	public IAstReturnStmt copy() {
+		return fixup(this, new AstReturnStmt(doCopy(expr)));
 	}
 
 	@Override

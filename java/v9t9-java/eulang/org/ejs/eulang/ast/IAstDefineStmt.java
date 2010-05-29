@@ -20,7 +20,7 @@ import org.ejs.eulang.types.LLType;
  *
  */
 public interface IAstDefineStmt extends IAstScope, IAstStmt, IAstSymbolDefiner {
-	IAstDefineStmt copy(IAstNode copyParent);
+	IAstDefineStmt copy();
 	
 	IAstSymbolExpr getSymbolExpr();
 	void setSymbolExpr(IAstSymbolExpr id);

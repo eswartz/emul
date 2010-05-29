@@ -31,8 +31,8 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		setRight(right);
 	}
 	
-	public IAstBinExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstBinExpr(oper, doCopy(left, copyParent), doCopy(right, copyParent)));
+	public IAstBinExpr copy() {
+		return fixup(this, new AstBinExpr(oper, doCopy(left), doCopy(right)));
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.impl.AstNode#toString()
@@ -156,9 +156,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
         // fallthrough: make new binary expression if children changed
         if (!newLeft.equalValue(left) || !newRight.equalValue(right)) {
         	if (newLeft == left)
-        		newLeft = (IAstTypedExpr) newLeft.copy(this);
+        		newLeft = (IAstTypedExpr) newLeft.copy();
         	if (newRight == right)
-        		newRight = (IAstTypedExpr) newRight.copy(this);
+        		newRight = (IAstTypedExpr) newRight.copy();
             IAstBinExpr bin = new AstBinExpr(oper, newLeft, newRight);
             bin.setType(getType());
             bin.setSourceRef(getSourceRef());

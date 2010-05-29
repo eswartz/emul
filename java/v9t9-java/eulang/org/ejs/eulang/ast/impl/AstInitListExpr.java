@@ -37,8 +37,8 @@ public class AstInitListExpr extends AstInitNodeExpr implements IAstInitListExpr
 	 * @see org.ejs.eulang.ast.IAstInitExpr#copy(org.ejs.eulang.ast.IAstNode)
 	 */
 	@Override
-	public IAstInitListExpr copy(IAstNode parent) {
-		return fixup(this,new AstInitListExpr(doCopy(getContext(), parent), doCopy(initExprs, parent)));
+	public IAstInitListExpr copy() {
+		return fixup(this,new AstInitListExpr(doCopy(getContext()), doCopy(initExprs)));
 	}
 	
 	

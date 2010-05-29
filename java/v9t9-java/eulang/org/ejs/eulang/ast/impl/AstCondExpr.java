@@ -33,8 +33,8 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 		setTest(test);
 	}
 
-	public IAstCondExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstCondExpr(doCopy(test, copyParent), doCopy(expr, copyParent)));
+	public IAstCondExpr copy() {
+		return fixup(this, new AstCondExpr(doCopy(test), doCopy(expr)));
 	}
 	
 	@Override
@@ -179,9 +179,9 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 		IAstTypedExpr simTest = test.simplify(engine);
 		if (simTest != test || simExpr != expr) {
 			if (simTest == test)
-				simTest = (IAstTypedExpr) test.copy(this);
+				simTest = (IAstTypedExpr) test.copy();
 			if (simExpr == expr)
-				simExpr= (IAstTypedExpr) expr.copy(this);
+				simExpr= (IAstTypedExpr) expr.copy();
 			IAstCondExpr sim = new AstCondExpr(simTest, simExpr);
 			sim.setType(getType());
 			sim.setSourceRef(getSourceRef());

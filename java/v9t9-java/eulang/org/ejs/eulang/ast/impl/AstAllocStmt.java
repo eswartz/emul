@@ -47,9 +47,9 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstAllocStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstAllocStmt(doCopy(symExpr, copyParent), 
-				doCopy(typeExpr, copyParent), doCopy(expr, copyParent), expand));
+	public IAstAllocStmt copy() {
+		return fixup(this, new AstAllocStmt(doCopy(symExpr), 
+				doCopy(typeExpr), doCopy(expr), expand));
 	}
 	
 	@Override

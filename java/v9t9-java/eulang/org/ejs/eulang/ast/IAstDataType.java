@@ -10,7 +10,7 @@ import org.ejs.eulang.symbols.ISymbol;
  *
  */
 public interface IAstDataType extends IAstTypedExpr, IAstStmtScope, IAstType {
-	IAstDataType copy(IAstNode parent);
+	IAstDataType copy();
 	
 	ISymbol getTypeName();
 	void setTypeName(ISymbol typeName);

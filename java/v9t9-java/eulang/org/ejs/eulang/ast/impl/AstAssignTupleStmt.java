@@ -36,8 +36,8 @@ public class AstAssignTupleStmt extends AstTypedExpr implements IAstAssignTupleS
 		setSymbols(id);
 	}
 
-	public IAstAssignTupleStmt copy(IAstNode copyParent) {
-		return fixup(this, new AstAssignTupleStmt(doCopy(tuple, copyParent), doCopy(expr, copyParent)));
+	public IAstAssignTupleStmt copy() {
+		return fixup(this, new AstAssignTupleStmt(doCopy(tuple), doCopy(expr)));
 	}
 	
 	@Override

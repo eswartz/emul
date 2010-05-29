@@ -271,7 +271,7 @@ public class TestLLVMGenerator extends BaseTest {
     			"testBlockScopes = code (t; x : Int; y : Float) {\n" +
     			"  if t then { z := Float(x); z = z * 8 } else { z := y; };"+
     			"};");
-    	mod = mod.copy(null);
+    	mod = mod.copy();
     	LLVMGenerator g = doGenerate(mod);
     	assertEquals(1, g.getModule().getSymbolCount());
     	

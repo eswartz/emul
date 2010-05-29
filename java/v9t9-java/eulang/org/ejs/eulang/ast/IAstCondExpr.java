@@ -8,7 +8,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstCondExpr extends IAstTypedExpr {
-	IAstCondExpr copy(IAstNode parent);
+	IAstCondExpr copy();
 	
 	IAstTypedExpr getTest();
 	void setTest(IAstTypedExpr test);

@@ -35,8 +35,8 @@ public class AstUnaryExpr extends AstTypedExpr implements
      * @see org.ejs.eulang.ast.IAstNode#copy()
      */
     @Override
-    public IAstUnaryExpr copy(IAstNode copyParent) {
-    	return fixup(this, new AstUnaryExpr(oper, doCopy(expr, copyParent)));
+    public IAstUnaryExpr copy() {
+    	return fixup(this, new AstUnaryExpr(oper, doCopy(expr)));
     }
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#toString()

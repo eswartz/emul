@@ -9,7 +9,6 @@ import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 
 /**
  * This is an operation that has been reduced from an HLOperand

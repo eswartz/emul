@@ -10,7 +10,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstDerefExpr extends IAstTypedExpr {
-	IAstDerefExpr copy(IAstNode copyParent);
+	IAstDerefExpr copy();
 	
 	boolean isLHS();
 	void setLHS(boolean lhs);

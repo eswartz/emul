@@ -8,7 +8,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstIntLitExpr extends IAstLitExpr {
-	IAstIntLitExpr copy(IAstNode copyParent);
+	IAstIntLitExpr copy();
 	long getValue();
 
 }

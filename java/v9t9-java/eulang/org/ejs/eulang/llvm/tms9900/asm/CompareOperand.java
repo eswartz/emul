@@ -7,12 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static v9t9.engine.cpu.InstructionTable.*;
-import org.ejs.eulang.llvm.instrs.LLCompareInstr;
-
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
-import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 

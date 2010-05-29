@@ -44,9 +44,9 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstArgDef copy(IAstNode copyParent) {
+	public IAstArgDef copy() {
 		return fixup(this, new AstArgDef(
-				doCopy(name, copyParent), doCopy(typeExpr, copyParent), doCopy(defaultVal, copyParent), 
+				doCopy(name), doCopy(typeExpr), doCopy(defaultVal), 
 				isMacro(), isVar()));
 	}
 	

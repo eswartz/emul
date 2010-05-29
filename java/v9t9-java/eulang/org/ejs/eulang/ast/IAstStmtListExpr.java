@@ -15,7 +15,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstStmtListExpr extends IAstTypedExpr {
-	IAstStmtListExpr copy(IAstNode copyParent);
+	IAstStmtListExpr copy();
 	
 	IAstTypedExpr getValue();
 	

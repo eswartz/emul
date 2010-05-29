@@ -22,9 +22,8 @@ public interface IAstNode {
     /** Get the unique id of the node */
     public int getId();
     
-    /** Fully copy the node 
-     * @param copyParent the parent of the copy into which the copy goes */
-    IAstNode copy(IAstNode copyParent);
+    /** Fully copy the node */
+    IAstNode copy();
     
     /** Tell whether the node is dirty (changed with respect to original source)
      * @see #isDirtyTree()

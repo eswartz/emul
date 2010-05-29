@@ -3,13 +3,6 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.ejs.coffee.core.utils.Pair;
-import org.ejs.eulang.symbols.ISymbol;
-
 /**
  * This assigns a unique number to each {@link AsmInstruction} 
  * @author ejs

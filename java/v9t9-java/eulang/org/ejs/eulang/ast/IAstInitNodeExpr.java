@@ -23,7 +23,7 @@ import org.ejs.eulang.types.TypeException;
  *
  */
 public interface IAstInitNodeExpr extends IAstTypedExpr {
-	IAstInitNodeExpr copy(IAstNode parent);
+	IAstInitNodeExpr copy();
 	
 	IAstTypedExpr getContext();
 	void setContext(IAstTypedExpr context);

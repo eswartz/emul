@@ -9,7 +9,7 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstLitExpr extends IAstTypedExpr {
-	IAstLitExpr copy(IAstNode copyParent);
+	IAstLitExpr copy();
 	String getLiteral();
 	
 	Object getObject();

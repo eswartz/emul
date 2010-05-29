@@ -8,6 +8,6 @@ package org.ejs.eulang.ast;
  *
  */
 public interface IAstTupleExpr extends IAstTypedExpr {
-	IAstTupleExpr copy(IAstNode parent);
+	IAstTupleExpr copy();
 	IAstNodeList<IAstTypedExpr> elements();
 }

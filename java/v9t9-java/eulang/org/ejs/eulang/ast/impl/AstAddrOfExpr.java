@@ -30,8 +30,8 @@ public class AstAddrOfExpr extends AstTypedExpr implements IAstAddrOfExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstAddrOfExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstAddrOfExpr(doCopy(expr, copyParent)));
+	public IAstAddrOfExpr copy() {
+		return fixup(this, new AstAddrOfExpr(doCopy(expr)));
 	}
 	
 	@Override

@@ -132,7 +132,7 @@ public class LLArrayType extends BaseLLType {
 		LLType newSub = subType.substitute(typeEngine, fromType, toType);
 		IAstTypedExpr newDynamicSizeExpr = dynamicSizeExpr;
 		if (newDynamicSizeExpr != null) {
-			newDynamicSizeExpr = (IAstTypedExpr) dynamicSizeExpr.copy(null);
+			newDynamicSizeExpr = (IAstTypedExpr) dynamicSizeExpr.copy();
 			boolean changed = AstNode.replaceTypesInTree(typeEngine, newDynamicSizeExpr, Collections.singletonMap(fromType, toType));
 			if (!changed) {
 				newDynamicSizeExpr = dynamicSizeExpr;
@@ -156,7 +156,7 @@ public class LLArrayType extends BaseLLType {
 		
 		IAstTypedExpr newDynamicSizeExpr = dynamicSizeExpr;
 		if (newDynamicSizeExpr != null) {
-			newDynamicSizeExpr = (IAstTypedExpr) dynamicSizeExpr.copy(null);
+			newDynamicSizeExpr = (IAstTypedExpr) dynamicSizeExpr.copy();
 			boolean changed = AstNode.replaceSymbols(typeEngine, newDynamicSizeExpr, origScope, symbolMap);
 			if (!changed) {
 				newDynamicSizeExpr = dynamicSizeExpr;

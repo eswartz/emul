@@ -42,8 +42,8 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstFuncCallExpr copy(IAstNode copyParent) {
-		return fixup(this, new AstFuncCallExpr(doCopy(function, copyParent), doCopy(arguments, copyParent)));
+	public IAstFuncCallExpr copy() {
+		return fixup(this, new AstFuncCallExpr(doCopy(function), doCopy(arguments)));
 	}
 	
 	

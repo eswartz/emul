@@ -33,8 +33,8 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 		setCondExprs(condList);
 	}
 
-	public IAstCondList copy(IAstNode copyParent) {
-		return fixup(this, new AstCondList(doCopy(condList, copyParent)));
+	public IAstCondList copy() {
+		return fixup(this, new AstCondList(doCopy(condList)));
 	}
 	
 	@Override
@@ -169,7 +169,7 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 			if (expr.getTest() instanceof IAstBoolLitExpr) {
 				if (allBools && ((IAstBoolLitExpr) expr.getTest()).getValue()) {
 					// a match!
-					return (IAstTypedExpr) expr.getExpr().copy(expr);
+					return (IAstTypedExpr) expr.getExpr().copy();
 				}
 			} else {
 				allBools = false;
@@ -179,7 +179,7 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 				newCondList.add(expr);
 				changed = true;
 			} else {
-				newCondList.add(expr.copy(condList));
+				newCondList.add(expr.copy());
 			}
 		}
 		if (changed) {
