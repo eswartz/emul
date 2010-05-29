@@ -7,9 +7,10 @@ import static org.junit.Assert.*;
 
 import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
+import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
-import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
@@ -65,5 +66,17 @@ public class Test9900Data extends BaseInstrTest {
 				new NumOperand(B, 0), new NumOperand(B, 0), new NumOperand(B, 0),
 				}),
 				 data.getValue());
+	}
+	
+	@Test
+	public void testFuncPtr1() throws Exception {
+		DataBlock data = doData(
+				"defaultNew = code(x:Int=>Int^) { nil };\n"+
+				"new : code(x:Int=>Int^) = defaultNew;\n");
+		assertNotNull(data);
+		LLCodeType code = typeEngine.getCodeType(typeEngine.getPointerType(typeEngine.INT), new LLType[] { typeEngine.INT });
+		assertEquals(typeEngine.getPointerType(code), data.getValue().getType());
+		assertTrue(data.getValue() instanceof SymbolOperand);
+		assertSameSymbol(((SymbolOperand) data.getValue()).getSymbol(), "defaultNew");
 	}
 }

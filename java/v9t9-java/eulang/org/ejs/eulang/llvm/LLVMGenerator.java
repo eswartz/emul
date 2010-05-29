@@ -228,7 +228,7 @@ public class LLVMGenerator {
 				.entrySet())
 			fileText.put(nfEnt.getKey(), nfEnt.getValue().split("\n"));
 
-		this.ll = new LLModule(typeEngine, module.getOwnerScope());
+		this.ll = new LLModule(typeEngine, target, module.getOwnerScope());
 
 		currentTarget = null;
 
@@ -454,7 +454,7 @@ public class LLVMGenerator {
 		LLDefineDirective define = new LLDefineDirective(this, target, ll, expr
 				.getScope(), modSymbol, null /* linkage */,
 				LLVisibility.DEFAULT, null,
-				getRetAttrType(expr.getPrototype().returnType()), // target.getLLCallingConvention(),
+				getRetAttrType(expr.getPrototype().returnType()),
 				getArgAttrTypes(expr.getPrototype().argumentTypes()),
 				getFuncAttrType(expr), null /* section */, 0 /* align */, null /* gc */);
 		ll.add(define);

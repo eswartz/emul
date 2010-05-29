@@ -55,7 +55,6 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLZeroInitOp;
-import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
@@ -331,6 +330,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		this.module = module;
 		this.routine = null;
 		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();;
+		locals = new Locals(module.getTarget());
 		InstrSelectionTable.setupPatterns();
 	}
 	
@@ -346,7 +346,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		cc = def.getTarget().getCallingConvention(def.getConvention());
 
 		newRoutine(routine);
-		locals.buildLocalTable();
+		locals.buildLocalTable(def);
 		
 		blockMap = new LinkedHashMap<ISymbol, Block>();
 		ssaTempTable.clear();
@@ -398,6 +398,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				System.out.println("\t" + entry.getKey() + " [" + entry.getKey().getType() + "] -> " + entry.getValue());
 			}
 		}
+		
+		// reset
+		locals = new Locals(module.getTarget());
 	}
 	
 	/* (non-Javadoc)
@@ -1381,7 +1384,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		if (operand instanceof LLSymbolOp) {
 			ISymbol symbol = ((LLSymbolOp) operand).getSymbol();
-			ILocal local = locals.getFinalLocal(symbol);
+			ILocal local = locals.getFinalLocal(symbol); // may be null
 			return new SymbolOperand(operand.getType(), symbol, local);
 		}
 		if (operand instanceof LLStructOp) {

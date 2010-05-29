@@ -32,7 +32,6 @@ import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.LLVoidType;
 
 /**
  * Manage locals for a routine.
@@ -129,30 +128,18 @@ public class Locals {
 	private Alignment alignment;
 	
 	private IScope localScope;
-	private final LLDefineDirective def;
 	private HashMap<IRegClass, RegAlloc> regAllocs;
 	private boolean forceLocalsToStack;
-	private ICallingConvention cc;
 
-	public Locals(LLDefineDirective def) {
-		this.def = def;
-		
-		ITarget target = def.getTarget();
-		this.cc = target.getCallingConvention(def.getConvention());
-
+	public Locals(ITarget target) {
 		stackLocals = new LinkedHashMap<ISymbol, StackLocal>();
 		regLocals = new LinkedHashMap<ISymbol, RegisterLocal>();
 		
 		argumentLocals = new LinkedHashMap<ISymbol, ILocal>();
 		tempLocals = new LinkedHashMap<ISymbol, RegisterLocal>();
 		
-		localScope = def.getScope();
-		
 		alignment = target.getTypeEngine().new Alignment(Target.STACK);
 		regAllocs = new HashMap<IRegClass, RegAlloc>();
-		for (IRegClass regClass : target.getRegisterClasses()) {
-			regAllocs.put(regClass, new RegAlloc(target, cc, regClass, localScope));
-		}
 	}
 	
 	public void setForceLocalsToStack(boolean forceLocalsToStack) {
@@ -188,11 +175,28 @@ public class Locals {
 		return tempLocals.values();
 	}
 	
-	public void buildLocalTable() {
-		currentBlock = def.getEntryBlock();
-		allocateParams();
+	public void buildLocalTable(LLDefineDirective def) {
 		
 		ILLCodeVisitor visitor = new LLCodeVisitor() {
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterCode(org.ejs.eulang.llvm.directives.LLDefineDirective)
+			 */
+			@Override
+			public boolean enterCode(LLDefineDirective directive) {
+				ITarget target = directive.getTarget();
+				currentBlock = directive.getEntryBlock();
+				localScope = directive.getScope();
+				
+				ICallingConvention cc = target.getCallingConvention(directive.getConvention());
+
+				regAllocs.clear();
+				for (IRegClass regClass : target.getRegisterClasses()) {
+					regAllocs.put(regClass, new RegAlloc(target, cc, regClass, localScope));
+				}
+				
+				allocateParams(cc);
+				return super.enterCode(directive);
+			}
 			@Override
 			public boolean enterBlock(LLBlock block) {
 				currentBlock = block;
@@ -285,7 +289,7 @@ public class Locals {
 	/**
 	 * Find where we want to place the arguments.
 	 */
-	private void allocateParams() {
+	private void allocateParams(ICallingConvention cc) {
 		Location[] locations = cc.getArgumentLocations();
 		
 		for (Location loc : locations) {

@@ -36,7 +36,7 @@ public class TestStockFlowGraph extends BaseInstrTest {
 	
 	@Before
 	public void makeRoutine() {
-		mod = new LLModule(typeEngine, new GlobalScope());
+		mod = new LLModule(typeEngine, v9t9Target, new GlobalScope());
 		def = createDefine(mod, "test", typeEngine.VOID, new LLType[0]);
 		rout = new LinkedRoutine(def);
 		

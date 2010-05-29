@@ -46,7 +46,7 @@ public abstract class Routine {
 		blocks = new ArrayList<Block>();
 		entry = null; 
 		exit = null;
-		locals = new Locals(def);
+		locals = new Locals(def.getTarget());
     }
     
     @Override

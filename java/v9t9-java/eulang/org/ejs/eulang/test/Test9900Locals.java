@@ -40,9 +40,9 @@ public class Test9900Locals extends BaseTest {
 		for (LLBaseDirective dir : mod.getDirectives()) {
 			if (dir instanceof LLDefineDirective) {
 				LLDefineDirective def = (LLDefineDirective) dir;
-				Locals locals = new Locals(def);
+				Locals locals = new Locals(def.getTarget());
 				locals.setForceLocalsToStack(forceLocalsToStack);
-				locals.buildLocalTable();
+				locals.buildLocalTable(def);
 				return locals;
 				
 			}

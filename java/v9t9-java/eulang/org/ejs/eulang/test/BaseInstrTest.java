@@ -323,10 +323,14 @@ public class BaseInstrTest extends BaseTest {
 		return null;
 	}
 
+	protected void assertSameSymbol(ISymbol sym, String string) {
+		assertTrue(sym+"", symbolMatches(sym, string)
+				 );
+	}
 	protected void assertSameSymbol(AsmInstruction instr,
 			ISymbol sym, String string) {
 		assertTrue(instr+":"+sym, symbolMatches(sym, string)
-				 );
+		);
 	}
 
 	protected void assertNotSameSymbol(AsmInstruction instr,
