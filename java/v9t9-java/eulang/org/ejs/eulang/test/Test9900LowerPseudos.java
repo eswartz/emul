@@ -180,6 +180,12 @@ public class Test9900LowerPseudos extends BaseInstrTest {
     	idx = findInstrWithInst(instrs, "MOV", idx);
     	inst = instrs.get(idx);
     	matchInstr(inst, "MOV", RegIncOperand.class, RegIncOperand.class);
+    	
+    	// make sure *R+ is properly recorded
+    	ILocal loc1 = locals.getLocal(getOperandSymbol(inst.getOp1()));
+    	assertTrue(loc1.getUses().get(inst.getNumber()));
+    	assertTrue(loc1.getDefs().get(inst.getNumber()));
+    	
     	idx = findInstrWithInst(instrs, "DECT", idx);
     	inst = instrs.get(idx);
     	matchInstr(inst, "DECT", RegTempOperand.class);

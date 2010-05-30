@@ -21,6 +21,7 @@ import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 
 
 /**
@@ -179,9 +180,15 @@ public class AsmInstruction extends HLInstruction {
 					if (fx.mop1_dest != Operand.OP_DEST_FALSE) {
 						getTargetSymbolRefs(targets, getOp1());
 					}
+					if (getOp1() instanceof RegIncOperand) {
+						getTargetSymbolRefs(targets, ((RegIncOperand) getOp1()).getReg());
+					}
 					if (getOp2() != null) {
 						if (fx.mop2_dest != Operand.OP_DEST_FALSE) {
 							getTargetSymbolRefs(targets, getOp2());
+						}
+						if (getOp2() instanceof RegIncOperand) {
+							getTargetSymbolRefs(targets, ((RegIncOperand) getOp2()).getReg());
 						}
 					}
 				}
