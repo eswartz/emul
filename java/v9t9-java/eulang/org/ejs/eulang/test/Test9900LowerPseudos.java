@@ -4,34 +4,21 @@
 package org.ejs.eulang.test;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
-import static org.junit.Assert.*;
-
-import java.util.BitSet;
+import static junit.framework.Assert.*;
 
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
-import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ICodeVisitor;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.LowerPseudoInstructions;
-import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
-import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
-import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
-import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.junit.Test;
 
-import v9t9.engine.cpu.InstructionTable;
-import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
-import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
@@ -177,11 +164,28 @@ public class Test9900LowerPseudos extends BaseInstrTest {
 
     	assertEquals(-1, findInstrWithInst(instrs, "COPY", -1));
     	
-    	// the copies are expanded as MOVs
+    	// the copies are expanded as a loop
     	
     	idx = findInstrWithSymbol(instrs, "x", idx);
     	inst = instrs.get(idx);
+    	idx = findInstrWithSymbol(instrs, "y", idx);
+    	inst = instrs.get(idx);
+    	idx = findInstrWithInst(instrs, "LI", idx);
+    	inst = instrs.get(idx);
     	
+    	matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 20);
+    	
+    	idx = findInstrWithInst(instrs, "JMP", idx);
+    	inst = instrs.get(idx);
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegIncOperand.class, RegIncOperand.class);
+    	idx = findInstrWithInst(instrs, "DECT", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "DECT", RegTempOperand.class);
+    	idx = findInstrWithInst(instrs, "JCC", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "JCC", CompareOperand.class, CompareOperand.CMP_SGT);
 
 	}
 

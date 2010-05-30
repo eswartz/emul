@@ -294,7 +294,6 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		TypeEngine typeEngine = routine.getDefinition().getTypeEngine();
 		
-		AsmInstruction last = inst;
 		Block block = instrBlockMap.get(inst.getNumber());
 		
 		// insert LEAs
@@ -303,24 +302,21 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		ILocal t1Local = locals.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
 		AssemblerOperand t1 = new RegTempOperand((RegisterLocal) t1Local);
 		lp = AsmInstruction.create(Plea, from, t1);
-		block.addInstAfter(last, lp);
+		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
-		last = lp;
 		
 		ILocal t2Local = locals.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
 		AssemblerOperand t2 = new RegTempOperand((RegisterLocal) t2Local);
 		lp = AsmInstruction.create(Plea, to, t2);
-		block.addInstAfter(last, lp);
+		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
-		last = lp;
 		
 		// get size of copy
 		ILocal t3Local = locals.allocateTemp(typeEngine.INT);
 		AssemblerOperand t3 = new RegTempOperand((RegisterLocal) t3Local);
 		lp = AsmInstruction.create(Ili, t3, new NumberOperand(type.getBits() / 8));
-		block.addInstAfter(last, lp);
+		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
-		last = lp;
 		
 		// make block for copy loop
 		ISymbol labelSym = locals.getScope().addTemporary(".copy");
@@ -331,8 +327,11 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		ISymbol afterSym = locals.getScope().addTemporary(block.getLabel().getName());
 		afterSym.setType(typeEngine.LABEL);
-		Block after = routine.splitBlockAt(block, last, afterSym);
+		
+		Block after = routine.splitBlockAt(block, inst, afterSym);
 		System.out.println(here() +" added " + after);
+		
+		instrBlockMap.put(inst.getNumber(), after);
 		
 		lp = AsmInstruction.create(Ijmp, new SymbolLabelOperand(labelSym.getType(), labelSym));
 		block.addInst(lp);

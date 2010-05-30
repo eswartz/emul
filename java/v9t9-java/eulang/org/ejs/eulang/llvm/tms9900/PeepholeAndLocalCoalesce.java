@@ -125,7 +125,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		int idx = 0;
 		while (idx < instrs.size()) {
 			AsmInstruction inst = instrs.get(idx);
-			System.out.println(inst);
+			System.out.println("?" + inst.toString().substring(1));
 			
 			boolean applied = false;
 			
