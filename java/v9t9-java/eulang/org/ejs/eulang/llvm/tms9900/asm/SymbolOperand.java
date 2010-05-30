@@ -5,7 +5,6 @@ package org.ejs.eulang.llvm.tms9900.asm;
 
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.BinaryOperand;
@@ -23,7 +22,7 @@ public class SymbolOperand extends BaseHLOperand {
 	/**
 	 * @param symbol
 	 */
-	public SymbolOperand(LLType type, ISymbol symbol, ILocal local) {
+	public SymbolOperand(ISymbol symbol, ILocal local) {
 		super();
 		this.symbol = symbol;
 		this.local = local;
@@ -33,7 +32,7 @@ public class SymbolOperand extends BaseHLOperand {
 	 * @param sym
 	 */
 	public SymbolOperand(ISymbol sym) {
-		this(sym.getType(), sym, null);
+		this(sym, null);
 	}
 
 	/* (non-Javadoc)

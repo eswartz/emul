@@ -3,10 +3,18 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
+import static v9t9.engine.cpu.InstructionTable.Ijeq;
+import static v9t9.engine.cpu.InstructionTable.Ijgt;
+import static v9t9.engine.cpu.InstructionTable.Ijh;
+import static v9t9.engine.cpu.InstructionTable.Ijhe;
+import static v9t9.engine.cpu.InstructionTable.Ijl;
+import static v9t9.engine.cpu.InstructionTable.Ijle;
+import static v9t9.engine.cpu.InstructionTable.Ijlt;
+import static v9t9.engine.cpu.InstructionTable.Ijne;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static v9t9.engine.cpu.InstructionTable.*;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;

@@ -332,7 +332,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		instrBlockMap.put(inst.getNumber(), after);
 		
-		lp = AsmInstruction.create(Ijmp, new SymbolLabelOperand(labelSym.getType(), labelSym));
+		lp = AsmInstruction.create(Ijmp, new SymbolLabelOperand(labelSym));
 		block.addInst(lp);
 		System.out.println(here() +" " + lp);
 		
@@ -347,8 +347,8 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		System.out.println(here() +" " + lp);
 		lp = AsmInstruction.create(Pjcc, 
 				new CompareOperand(type.getBits() / 8 < 32768 ? "sgt" : "ugt"),		
-				new SymbolLabelOperand(labelSym.getType(), labelSym),
-				new SymbolLabelOperand(afterSym.getType(), afterSym));
+				new SymbolLabelOperand(labelSym),
+				new SymbolLabelOperand(afterSym));
 		lp.setImplicitSources(new ISymbol[] { getStatusSymbol(), labelSym, afterSym });
 		loop.addInst(lp);
 		System.out.println(here() +" " + lp);

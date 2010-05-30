@@ -9,11 +9,6 @@ import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
-import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLIntType;
-import org.ejs.eulang.types.LLTupleType;
-import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -36,8 +31,6 @@ public class Test9900Data extends BaseInstrTest {
 	public void testTuple1() throws Exception {
 		DataBlock data = doData("foo := (5, 100{Byte});\n");
 		assertNotNull(data);
-		LLTupleType tupleType = typeEngine.getTupleType(new LLType[] { typeEngine.INT, typeEngine.BYTE });
-		//assertEquals(tupleType, data.getValue().getType());
 		assertEquals(new TupleTempOperand(new AssemblerOperand[] { new NumOperand(5), new NumOperand(100) }),
 				 data.getValue());
 	}
@@ -46,8 +39,6 @@ public class Test9900Data extends BaseInstrTest {
 	public void testArray1() throws Exception {
 		DataBlock data = doData("foo : Byte[] = [5, 100{Byte}];\n");
 		assertNotNull(data);
-		LLArrayType arrayType = typeEngine.getArrayType(typeEngine.BYTE, 2, null);
-		//assertEquals(arrayType, data.getValue().getType());
 		assertEquals(new TupleTempOperand(new AssemblerOperand[] { new NumOperand(5), new NumOperand(100) }),
 				data.getValue());
 	}
@@ -56,9 +47,6 @@ public class Test9900Data extends BaseInstrTest {
 	public void testArray1b() throws Exception {
 		DataBlock data = doData("foo : Byte[5] = [5, 100{Byte}];\n");
 		assertNotNull(data);
-		LLIntType B = typeEngine.BYTE;
-		LLArrayType arrayType = typeEngine.getArrayType(B,5, null);
-		//assertEquals(arrayType, data.getValue().getType());
 		assertEquals(new TupleTempOperand(new AssemblerOperand[] { new NumOperand(5), new NumOperand(100),
 		new NumOperand(0), new NumOperand(0), new NumOperand(0),
 		}),
@@ -71,8 +59,6 @@ public class Test9900Data extends BaseInstrTest {
 				"defaultNew = code(x:Int=>Int^) { nil };\n"+
 				"new : code(x:Int=>Int^) = defaultNew;\n");
 		assertNotNull(data);
-		LLCodeType code = typeEngine.getCodeType(typeEngine.getPointerType(typeEngine.INT), new LLType[] { typeEngine.INT });
-		//assertEquals(typeEngine.getPointerType(code), data.getValue().getType());
 		assertTrue(data.getValue() instanceof SymbolOperand);
 		assertSameSymbol(((SymbolOperand) data.getValue()).getSymbol(), "defaultNew");
 	}
@@ -90,8 +76,6 @@ public class Test9900Data extends BaseInstrTest {
 				"new : code(x:Int=>Int^) = if (FLAG2 and FLAG1+3>FLAG3 or FLAG3 == 9 or not (FLAG1<<2)&2){Bool} then defaultNew else otherNew;\n"+
 				"");
 		assertNotNull(data);
-		LLCodeType code = typeEngine.getCodeType(typeEngine.getPointerType(typeEngine.INT), new LLType[] { typeEngine.INT });
-		//assertEquals(typeEngine.getPointerType(code), data.getValue().getType());
 		assertTrue(data.getValue() instanceof SymbolOperand);
 		assertSameSymbol(((SymbolOperand) data.getValue()).getSymbol(), "defaultNew");
 	}

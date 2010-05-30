@@ -19,8 +19,6 @@ import org.junit.Test;
 
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
 /**
  * @author ejs

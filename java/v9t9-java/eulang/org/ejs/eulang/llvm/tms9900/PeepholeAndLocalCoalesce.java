@@ -216,9 +216,10 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		// see if the source has a well-known value
 		ILocal srcLocal = getSourceLocal(inst);
 		AssemblerOperand src = null; 
-		src = memRegisterValues.get(inst.getSrcOp());
+		AssemblerOperand simplestAddr = getSimplestAddr(inst.getSrcOp());
+		src = memRegisterValues.get(simplestAddr);
 		if (src == null) {
-			src = memNumberValues.get(inst.getSrcOp());
+			src = memNumberValues.get(simplestAddr);
 			if (src == null) {
 				if (srcLocal != null)
 					src = localValues.get(srcLocal);
@@ -317,7 +318,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			memNumberValues.put(op, (NumberOperand) val);
 			return true;
 		} else if (val instanceof RegTempOperand) {
-			memRegisterValues.put(op, (RegTempOperand) val);
+			memRegisterValues.put(getSimplestAddr(op), (RegTempOperand) val);
 			return true;
 		} else if (val instanceof TupleTempOperand) {
 			if (op instanceof AddrOperand && ((AddrOperand) op).getAddr() instanceof StackLocalOperand) {
@@ -388,7 +389,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	}
 
 	private AssemblerOperand getSimplestAddr(AssemblerOperand op) {
-		if (!op.isMemory())
+		/*
+		if (op == null || !op.isMemory())
 			return op;
 		
 		if (op instanceof AddrOperand) {
@@ -403,6 +405,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				}
 			}
 		}
+		*/
 		return op;
 	}
 
@@ -693,6 +696,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		}
 		
 		// update stored numbers
+		from = getSimplestAddr(from);
 		NumberOperand fromVal = memNumberValues.get(from);
 		if (fromVal != null && to.isMemory())
 			memNumberValues.put(to, fromVal);
@@ -787,6 +791,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		// do we know the value?
 		AssemblerOperand destOp = inst.getDestOp();
 		AssemblerOperand valOp;
+		
+		srcOp = getSimplestAddr(srcOp);
 		valOp = memRegisterValues.get(srcOp);
 		if (valOp == null || valOp.equals(srcOp)) {
 			for (Map.Entry<ILocal, AssemblerOperand> known : localValues.entrySet()) {
@@ -880,7 +886,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		AssemblerOperand valOp = localValues.get(tmpLocal);
 		if (valOp == null)
-			valOp = memNumberValues.get(inst.getSrcOp());
+			valOp = memNumberValues.get(getSimplestAddr(inst.getSrcOp()));
 		
 		if (!(valOp instanceof NumberOperand))
 			return false;

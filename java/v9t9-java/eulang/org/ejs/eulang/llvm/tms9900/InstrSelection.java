@@ -816,8 +816,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		AssemblerOperand test = generateOperand(llops[0]);
 		LLSymbolOp trueTarget = (LLSymbolOp) llops[1];
 		LLSymbolOp falseTarget = (LLSymbolOp) llops[2];
-		AssemblerOperand trueOp = new SymbolLabelOperand(trueTarget.getType(), trueTarget.getSymbol());
-		AssemblerOperand falseOp = new SymbolLabelOperand(falseTarget.getType(), falseTarget.getSymbol());
+		AssemblerOperand trueOp = new SymbolLabelOperand(trueTarget.getSymbol());
+		AssemblerOperand falseOp = new SymbolLabelOperand(falseTarget.getSymbol());
 		
 		AsmInstruction inst = AsmInstruction.create(Pjcc, test, trueOp, falseOp);
 		inst.setImplicitTargets(new ISymbol[0]);
@@ -827,7 +827,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		LLOperand[] llops = instr.getOperands();
 		
 		LLSymbolOp target = (LLSymbolOp) llops[0];
-		AssemblerOperand asmOp = new SymbolLabelOperand(target.getType(), target.getSymbol());
+		AssemblerOperand asmOp = new SymbolLabelOperand(target.getSymbol());
 		
 		AsmInstruction inst = AsmInstruction.create(Ijmp, asmOp);
 		emitInstr(inst);
@@ -872,7 +872,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
 			// we generate only one return, but the optimizer may add more
-			AsmInstruction inst = AsmInstruction.create(Ijmp, new SymbolLabelOperand(typeEngine.LABEL, epilogLabel));
+			AsmInstruction inst = AsmInstruction.create(Ijmp, new SymbolLabelOperand(epilogLabel));
 			emitInstr(inst);
 		}
 		
@@ -1404,7 +1404,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand instanceof LLSymbolOp) {
 			ISymbol symbol = ((LLSymbolOp) operand).getSymbol();
 			ILocal local = locals.getFinalLocal(symbol); // may be null
-			return new SymbolOperand(operand.getType(), symbol, local);
+			return new SymbolOperand(symbol, local);
 		}
 		if (operand instanceof LLStructOp) {
 			return generateTupleTempOperand(((LLStructOp) operand));
@@ -1614,9 +1614,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			else {
 				if (sym.getType().matchesExactly(llOp.getType().getSubType())) {
 					// get the address in a var
-					return moveToTemp(llOp, llOp.getType(), new SymbolOperand(llOp.getType(), sym, local));
+					return moveToTemp(llOp, llOp.getType(), new SymbolOperand(sym, local));
 				} else {
-					return new AddrOperand(new SymbolOperand(llOp.getType(), sym, local));
+					return new AddrOperand(new SymbolOperand(sym, local));
 				}
 			}
 				
