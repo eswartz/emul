@@ -21,7 +21,7 @@ public class ZeroInitOperand extends BaseHLOperand {
 	 * @param type
 	 */
 	public ZeroInitOperand(LLType type) {
-		super(type);
+		super();
 	}
 
 	/* (non-Javadoc)

@@ -174,11 +174,9 @@ public class MachineOperand implements Operand {
 	    switch (type)
 	    {
 	    case MachineOperand.OP_ADDR:    // @>xxxx or @>xxxx(Rx)
-	        //this.cycles += 8 + Instruction.getMemoryCycles(addr);
 	        addr += 2;
 	        break;
 	    case MachineOperand.OP_IMMED:   // immediate
-	        //this.cycles += Instruction.getMemoryCycles(addr);
 	        addr += 2;
 	        break;
 	    }
@@ -203,12 +201,10 @@ public class MachineOperand implements Operand {
     	switch (type) {
     	case MachineOperand.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
     		immed = domain.readWord(addr); 
-    		//this.cycles += 8 + Instruction.getMemoryCycles(addr);
     		addr += 2;
     		break;
     	case MachineOperand.OP_IMMED:	// immediate
     		immed = domain.readWord(addr);
-    		//this.cycles += Instruction.getMemoryCycles(addr);
     		addr += 2;
     		break;
     	}

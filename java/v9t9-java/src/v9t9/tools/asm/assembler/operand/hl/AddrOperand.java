@@ -110,4 +110,20 @@ public class AddrOperand extends BaseOperand {
 	public AssemblerOperand[] getChildren() {
 		return new AssemblerOperand[] { addr };
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#addOffset(int)
+	 */
+	@Override
+	public AssemblerOperand addOffset(int i) {
+		if (addr instanceof BinaryOperand && ((BinaryOperand) addr).getRight() instanceof NumberOperand
+				&& ((BinaryOperand) addr).getKind() == '+') {
+			AssemblerOperand offs = (NumberOperand) ((BinaryOperand) addr).getRight();
+			offs = offs.addOffset(i); 
+			return new AddrOperand(new BinaryOperand('+',  ((BinaryOperand) addr).getLeft(), offs)); 
+		}
+		if (i == 0)
+			return new AddrOperand(addr);
+		return new AddrOperand(new BinaryOperand('+', addr, new NumberOperand(i)));
+	}
 }

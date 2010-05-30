@@ -93,4 +93,12 @@ public class SymbolOperand extends BaseOperand {
 	public AssemblerOperand[] getChildren() {
 		return new AssemblerOperand[0];
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#addOffset(int)
+	 */
+	@Override
+	public AssemblerOperand addOffset(int i) {
+		return new BinaryOperand('+', this, new NumberOperand(i));
+	}
 }

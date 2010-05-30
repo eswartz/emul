@@ -7,11 +7,12 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
+import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLType;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
@@ -34,13 +35,28 @@ public class AsmInstruction extends HLInstruction {
 	private ISymbol[] sources;
 	private ISymbol[] implTargets;
 	private ISymbol[] implSources;
+	private ISymbol[] explTargets;
+	private ISymbol[] explSources;
 
 	private Effects fx;
 
+	private LLType type;
+	
 	public AsmInstruction() {
 		targets = implTargets = null;
 		sources = implSources = null;
 	}
+
+	
+	public LLType getType() {
+		return type;
+	}
+
+
+	public void setType(LLType type) {
+		this.type = type;
+	}
+
 
 	/**
 	 * @return the fx
@@ -140,6 +156,7 @@ public class AsmInstruction extends HLInstruction {
 	public void setInst(int inst) {
 		super.setInst(inst);
 		fx = null;
+		targets = sources = null;
 	}
 	
 	/** Get the operands (either explicitly specified as operands or implicit
@@ -148,25 +165,29 @@ public class AsmInstruction extends HLInstruction {
 	 */
 	public ISymbol[] getTargets() {
 		if (targets == null) {
+			if (explTargets != null) {
+				targets = explTargets;
+				return targets;
+			}
+			
 			Set<ISymbol> targets = new LinkedHashSet<ISymbol>();
 			if (implTargets != null) {
 				targets.addAll(Arrays.asList(implTargets));
-			} else {
-				if (getEffects() != null) {
-					if (getOp1() != null) {
-						if (fx.mop1_dest != Operand.OP_DEST_FALSE) {
-							getTargetSymbolRefs(targets, getOp1());
-						}
-						if (getOp2() != null) {
-							if (fx.mop2_dest != Operand.OP_DEST_FALSE) {
-								getTargetSymbolRefs(targets, getOp2());
-							}
+			} 
+			if (getEffects() != null) {
+				if (getOp1() != null) {
+					if (fx.mop1_dest != Operand.OP_DEST_FALSE) {
+						getTargetSymbolRefs(targets, getOp1());
+					}
+					if (getOp2() != null) {
+						if (fx.mop2_dest != Operand.OP_DEST_FALSE) {
+							getTargetSymbolRefs(targets, getOp2());
 						}
 					}
 				}
-				if (getOp3() != null) {
-					getTargetSymbolRefs(targets, getOp3());
-				}
+			}
+			if (getOp3() != null) {
+				getTargetSymbolRefs(targets, getOp3());
 			}
 			this.targets = (ISymbol[]) targets.toArray(new ISymbol[targets.size()]);
 		}
@@ -205,19 +226,23 @@ public class AsmInstruction extends HLInstruction {
 	 */
 	public ISymbol[] getSources() {
 		if (sources == null) {
+			if (explSources != null) {
+				sources = explSources;
+				return sources;
+			}
+			
 			Set<ISymbol> sources = new LinkedHashSet<ISymbol>();
 			if (implSources != null) {
 				sources.addAll(Arrays.asList(implSources));
-			} else {
-				if (getEffects() != null) {
-					if (getOp1() != null) {
-						// be sure to get refs to the indirect registers
-						getSourceSymbolRefs(sources, getOp1(), fx.mop1_dest != Operand.OP_DEST_KILLED);
-						if (getOp2() != null) {
-							getSourceSymbolRefs(sources, getOp2(), fx.mop2_dest != Operand.OP_DEST_KILLED);
-							if (getOp3() != null) {
-								getSourceSymbolRefs(sources, getOp3(), fx.mop3_dest != Operand.OP_DEST_KILLED);
-							}
+			} 
+			if (getEffects() != null) {
+				if (getOp1() != null) {
+					// be sure to get refs to the indirect registers
+					getSourceSymbolRefs(sources, getOp1(), fx.mop1_dest != Operand.OP_DEST_KILLED);
+					if (getOp2() != null) {
+						getSourceSymbolRefs(sources, getOp2(), fx.mop2_dest != Operand.OP_DEST_KILLED);
+						if (getOp3() != null) {
+							getSourceSymbolRefs(sources, getOp3(), fx.mop3_dest != Operand.OP_DEST_KILLED);
 						}
 					}
 				}
@@ -227,18 +252,31 @@ public class AsmInstruction extends HLInstruction {
 		return sources;
 	}
 	
-	private static void getSourceSymbolRefs(Set<ISymbol> list, AssemblerOperand op, boolean includeTop) {
-		if (op instanceof LocalOffsOperand) {
-			// fine
+	private static void getSourceSymbolRefs(Set<ISymbol> list, AssemblerOperand op, boolean isOpRead) {
+		boolean skipTop = false;
+		if (op instanceof RegTempOffsOperand) {
+			if (!isOpRead) {
+				skipTop = true;
+				// op = ((LocalOffsOperand) op).getAddr();
+			}
+		} else if (op instanceof StackLocalOffsOperand) {
+			// we're accessing part of a composite; cannot be a kill
+			isOpRead = true;
 		} else if (op instanceof AddrOperand) {
 			// the @ is just an indirection to actual content
-			if (((AddrOperand) op).getAddr().isMemory())
+			if (!isOpRead) {
+				skipTop = true;
 				op = ((AddrOperand) op).getAddr();
+				// if (op instanceof StackLocalOperand)
+
+			}
+		} else if (!op.isMemory()) {
+			if (!isOpRead)
+				return;
 		}
-		
-		if (includeTop)
+		if (!skipTop)
 			getOperandSymbol(list, op);
-		
+
 		for (AssemblerOperand kid : op.getChildren()) {
 			getSymbolRefs(list, kid);
 		}
@@ -312,6 +350,17 @@ public class AsmInstruction extends HLInstruction {
 		this.sources = null;
 	}
 	
+	
+	public void setExplicitTargets(ISymbol[] explTargets) {
+		this.explTargets = new LinkedHashSet<ISymbol>(Arrays.asList(explTargets)).toArray(new ISymbol[0]);
+	}
+
+
+	public void setExplicitSources(ISymbol[] explSources) {
+		this.explSources = new LinkedHashSet<ISymbol>(Arrays.asList(explSources)).toArray(new ISymbol[0]);
+	}
+
+
 	public static AsmInstruction create(int inst) {
 		AsmInstruction instr = new AsmInstruction();
 		instr.setInst(inst);

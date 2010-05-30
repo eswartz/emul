@@ -12,7 +12,5 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
  *
  */
 public interface AsmOperand extends AssemblerOperand {
-	LLType getType();
-	void setType(LLType type);
 	boolean isConst();
 }

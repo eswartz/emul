@@ -33,6 +33,7 @@ public class AllTests {
 		suite.addTest(new JUnit4TestAdapter(TestStockFlowGraph.class));
 		suite.addTest(new JUnit4TestAdapter(TestFlowGraphPerf.class));
 		suite.addTest(new JUnit4TestAdapter(Test9900Optimizer.class));
+		suite.addTest(new JUnit4TestAdapter(Test9900LowerPseudos.class));
 		//$JUnit-END$
 		return suite;
 	}

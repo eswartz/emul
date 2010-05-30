@@ -203,7 +203,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testPtrDeref2() throws Exception {
-		dumpLLVMGen = true;
+		dumpIsel = true;
 		doIsel("foo = code(x:Int[10]; y:Int^) { x[5]=y^ };\n");
 		
 		int idx;
@@ -1931,11 +1931,10 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		idx = findInstrWithInst(instrs, "COPY", -1);
 		inst = instrs.get(idx);
 		LLIntType I = typeEngine.INT;
-		AssemblerOperand z = new NumOperand(I, 0);
-		AssemblerOperand val = new RegTempOperand(I, locals.getRegLocals().values().iterator().next());
-		matchInstr(inst, "COPY", new TupleTempOperand(typeEngine.getArrayType(I, 10, null), 
-				new AssemblerOperand[] { z, new NumOperand(I, 11), new NumOperand(I, 22),
-			z, z, val, z, z, z, z }), AddrOperand.class);
+		AssemblerOperand z = new NumOperand(0);
+		AssemblerOperand val = new RegTempOperand(locals.getRegLocals().values().iterator().next());
+		matchInstr(inst, "COPY", new TupleTempOperand(new AssemblerOperand[] { z, new NumOperand(11), new NumOperand(22),
+z, z, val, z, z, z, z }), AddrOperand.class);
     }
 
 	@Test
@@ -1955,13 +1954,10 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		LLIntType I = typeEngine.BYTE;
 		LLArrayType Ix3 = typeEngine.getArrayType(I, 3, null);
 		matchInstr(inst, "COPY", new TupleTempOperand(
-				typeEngine.getArrayType(
-						Ix3,
-						3, null), 
 				new AssemblerOperand[] {
-					new TupleTempOperand(Ix3, new AssemblerOperand[] { new NumOperand(I, 1), new NumOperand(I, 2), new NumOperand(I, 3) }),
-					new TupleTempOperand(Ix3, new AssemblerOperand[] { new NumOperand(I, 4), new NumOperand(I, 5), new NumOperand(I, 6) }),
-					new TupleTempOperand(Ix3, new AssemblerOperand[] { new NumOperand(I, 7), new NumOperand(I, 8), new NumOperand(I, 9) }) }), 
+					new TupleTempOperand(new AssemblerOperand[] { new NumOperand(1), new NumOperand(2), new NumOperand(3) }),
+					new TupleTempOperand(new AssemblerOperand[] { new NumOperand(4), new NumOperand(5), new NumOperand(6) }),
+					new TupleTempOperand(new AssemblerOperand[] { new NumOperand(7), new NumOperand(8), new NumOperand(9) }) }), 
 					AddrOperand.class);
 
 		// array

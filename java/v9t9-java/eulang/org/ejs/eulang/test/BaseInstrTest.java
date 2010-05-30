@@ -10,6 +10,7 @@ import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import org.ejs.eulang.llvm.LLArgAttrType;
@@ -25,11 +26,14 @@ import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.DataBlock;
+import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.Locals;
+import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
+import org.ejs.eulang.llvm.tms9900.RoutineDumper;
 import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
@@ -146,7 +150,7 @@ public class BaseInstrTest extends BaseTest {
 			assertNotNull(op);
 			if (op instanceof AsmOperand) {
 				AsmOperand asmOp = (AsmOperand) op;
-				assertNotNull(instr+":"+op+"", asmOp.getType() != null);
+				//assertNotNull(instr+":"+op+"", asmOp.getType() != null);
 				if (asmOp instanceof RegTempOperand) {
 					RegTempOperand reg = (RegTempOperand) asmOp;
 					RegisterLocal local = locals.getRegLocals().get(reg.getSymbol());
@@ -267,6 +271,8 @@ public class BaseInstrTest extends BaseTest {
 						assertEquals("mismatched number: " + instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
 					else if (op instanceof ConstPoolRefOperand)
 						assertEquals("mismatched const pool ref: " + instr+":"+op, num, (Integer)((ConstPoolRefOperand) op).getValue());
+					else if (op instanceof LocalOffsOperand)
+						assertEquals("mismatched local offset: " + instr+":"+op, num, (Integer)((NumberOperand)((LocalOffsOperand) op).getOffset()).getValue());
 					else 
 						assertEquals("mismatched operand: " + instr+":"+op, num, op);
 				}
@@ -471,4 +477,103 @@ public class BaseInstrTest extends BaseTest {
 	}
 
 
+
+	/**
+	 * @param routine
+	 * @param string
+	 * @return
+	 */
+	protected Block getBlock(Routine routine, String string) {
+		for (Block block : routine.getBlocks()) {
+			if (block.getLabel().getName().equals(string))
+				return block;
+		}
+		string += ".";
+		for (Block block : routine.getBlocks()) {
+			if (block.getLabel().getName().startsWith(string))
+				return block;
+		}
+		return null;
+	}
+	/**
+	 * @param string
+	 * @return
+	 */
+	protected ILocal getLocal(String name) {
+		for (ILocal local : locals.getAllLocals()) {
+			if (local.getName().getName().equals(name))
+				return local;
+		}
+		name = "." + name + ".";
+		for (ILocal local : locals.getAllLocals()) {
+			if (local.getName().getUniqueName().contains(name))
+				return local;
+		}
+		return null;
+	}
+
+	/**
+	 * @param locals
+	 */
+	protected void assertNoUndefinedLocals(Locals locals) {
+		for (ILocal local : locals.getAllLocals()) {
+			if (local.getDefs().isEmpty() && local.getUses().isEmpty()) {
+				fail(local+" still present");
+			}
+		}
+		
+	}
+	
+
+	protected boolean runPeepholePhase(Routine routine) {
+		System.out.println("\n*** Before peepholing:\n");
+		routine.accept(new RoutineDumper());
+		
+		PeepholeAndLocalCoalesce peepholeAndLocalCoalesce = new PeepholeAndLocalCoalesce();
+		boolean anyChanges = false;
+		do {
+			routine.accept(peepholeAndLocalCoalesce);
+			if (peepholeAndLocalCoalesce.isChanged()) {
+				System.out.println("\n*** After peepholing pass:\n");
+				routine.accept(new RoutineDumper());
+				anyChanges = true;
+				routine.setupForOptimization();
+			}
+		} while (peepholeAndLocalCoalesce.isChanged());
+		
+		if (!anyChanges)
+			System.out.println("\n*** No changes");
+		else {
+			System.out.println("\n*** Done peepholing:\n");
+			routine.accept(new RoutineDumper());
+		}
+		
+		validateInstrsAndResync(routine);
+		
+		return anyChanges;
+	}
+	
+	protected void validateInstrsAndResync(Routine routine) {
+
+		assertNoUndefinedLocals(routine.getLocals());
+		
+		instrs.clear();
+		for (Block block : routine.getBlocks())
+			instrs.addAll(block.getInstrs());
+		
+		for (AsmInstruction instr : instrs) {
+			validateInstr(instr);
+		}
+		
+	}
+	
+
+	/**
+	 * @param local
+	 */
+	protected void assertLocalIsNeverKilled(ILocal local) {
+    	BitSet inter = (BitSet) local.getDefs().clone();
+    	inter.andNot(local.getUses());
+    	assertTrue(inter.isEmpty());
+	}
 }

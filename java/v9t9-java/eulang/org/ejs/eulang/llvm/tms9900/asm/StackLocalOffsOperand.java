@@ -3,9 +3,9 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
-import org.ejs.eulang.types.LLType;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 
 /**
  * A reference to a memory location and offset (e.g. offset into a stack local)
@@ -18,12 +18,19 @@ public class StackLocalOffsOperand extends LocalOffsOperand implements AsmOperan
 	 * @param llOp
 	 * @param local
 	 */
-	public StackLocalOffsOperand(LLType type,
-			AssemblerOperand offset,
+	public StackLocalOffsOperand(AssemblerOperand offset,
 			AssemblerOperand addr) {
-		super(type, offset, addr);
+		super(offset, addr);
 	}
-	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AddrOperand#toString()
+	 */
+	@Override
+	public String toString() {
+		if (getOffset() == null || (getOffset() instanceof NumberOperand && ((NumberOperand) getOffset()).getValue() == 0))
+			return "@" + getAddr();
+		return "@" + getAddr() + "+" +  getOffset().toString();
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.BaseOperand#replaceOperand(v9t9.tools.asm.assembler.operand.hl.AssemblerOperand, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
@@ -38,10 +45,19 @@ public class StackLocalOffsOperand extends LocalOffsOperand implements AsmOperan
 		if (newAddr != getAddr() || newOffs != getOffset()) {
 			// swap types (e.g. replace stack ref with something pointed to by reg): ASSUMED that we intend to do this
 			if (newAddr.isRegister())
-				return new RegTempOffsOperand(getType(), newOffs, newAddr);
+				return new RegTempOffsOperand(newOffs, newAddr);
 			else
-				return new StackLocalOffsOperand(getType(), newOffs, newAddr);
+				return new StackLocalOffsOperand(newOffs, newAddr);
 		}
 		return this;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AddrOperand#addOffset(int)
+	 */
+	@Override
+	public AssemblerOperand addOffset(int i) {
+		return new StackLocalOffsOperand(getOffset().addOffset(i), getAddr());
+	}
+
 }

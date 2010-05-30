@@ -254,4 +254,32 @@ public abstract class Routine {
 		accept(new LocalLifetimeVisitor());		
 	}
 
+	/**
+	 * Split the given block at the given instruction, which must be somewhere
+	 * other than the start or end of the block, and make a new block with the
+	 * new context (including 'at') labeled 'afterLabel'.
+	 * @param block
+	 * @param at
+	 * @return
+	 */
+	public Block splitBlockAt(Block block, AsmInstruction at, ISymbol afterLabel) {
+		int idx = block.getInstrs().indexOf(at);
+		assert idx > 0 && idx < block.getInstrs().size();
+		
+		List<AsmInstruction> tail = block.getInstrs().subList(idx, block.getInstrs().size());
+		
+		Block after = new Block(new Label(afterLabel.getUniqueName()));
+		after.getInstrs().addAll(tail);
+		
+		for (Block s : block.succ())
+			after.addSucc(s);
+		block.succ().clear();
+		
+		tail.clear();
+		
+		addBlock(after);
+		
+		return after;
+	}
+
 }

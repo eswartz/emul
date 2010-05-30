@@ -128,4 +128,12 @@ public class RegOffsOperand extends RegisterOperand  {
 	public AssemblerOperand[] getChildren() {
 		return new AssemblerOperand[] { getReg(), addr };
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.RegisterOperand#addOffset(int)
+	 */
+	@Override
+	public AssemblerOperand addOffset(int i) {
+		return new RegOffsOperand(addr.addOffset(i), getReg());
+	}
 }

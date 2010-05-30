@@ -106,4 +106,12 @@ public class ImmediateOperand extends BaseOperand {
 	public AssemblerOperand[] getChildren() {
 		return new AssemblerOperand[] { immed };
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#addOffset(int)
+	 */
+	@Override
+	public AssemblerOperand addOffset(int i) {
+		return new ImmediateOperand(immed.addOffset(i));
+	}
 }

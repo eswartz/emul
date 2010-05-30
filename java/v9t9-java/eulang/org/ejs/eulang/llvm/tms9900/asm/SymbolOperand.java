@@ -8,6 +8,8 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.BinaryOperand;
+import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 
 /**
  * @author ejs
@@ -22,7 +24,7 @@ public class SymbolOperand extends BaseHLOperand {
 	 * @param symbol
 	 */
 	public SymbolOperand(LLType type, ISymbol symbol, ILocal local) {
-		super(type);
+		super();
 		this.symbol = symbol;
 		this.local = local;
 	}
@@ -108,5 +110,13 @@ public class SymbolOperand extends BaseHLOperand {
 	@Override
 	public boolean isConst() {
 		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#addOffset(int)
+	 */
+	@Override
+	public AssemblerOperand addOffset(int i) {
+		return new BinaryOperand('+', this, new NumberOperand(i));
 	}
 }

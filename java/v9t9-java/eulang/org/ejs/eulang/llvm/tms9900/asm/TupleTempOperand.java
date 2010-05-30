@@ -5,6 +5,8 @@ package org.ejs.eulang.llvm.tms9900.asm;
 
 import java.util.Arrays;
 
+import org.ejs.eulang.llvm.tms9900.ILocal;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.engine.cpu.IInstruction;
@@ -32,17 +34,16 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public class TupleTempOperand implements AsmOperand {
+public class TupleTempOperand extends BaseHLOperand {
 
 	private AssemblerOperand[] components;
-	private LLType type;
 
-	public TupleTempOperand(LLType type, AssemblerOperand[] components) {
-		this.type = type;
+	public TupleTempOperand(AssemblerOperand[] components) {
+		super();
 		this.components = components;
 	}
 	public TupleTempOperand(LLType type) {
-		this(type, new AssemblerOperand[type.getCount()]);
+		this(new AssemblerOperand[type.getCount()]);
 	}
 
 	/* (non-Javadoc)
@@ -67,9 +68,8 @@ public class TupleTempOperand implements AsmOperand {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
+		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(components);
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
 	@Override
@@ -78,15 +78,10 @@ public class TupleTempOperand implements AsmOperand {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!super.equals(obj))
 			return false;
 		TupleTempOperand other = (TupleTempOperand) obj;
 		if (!Arrays.equals(components, other.components))
-			return false;
-		if (type == null) {
-			if (other.type != null)
-				return false;
-		} else if (!type.equals(other.type))
 			return false;
 		return true;
 	}
@@ -106,21 +101,6 @@ public class TupleTempOperand implements AsmOperand {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#getType()
-	 */
-	@Override
-	public LLType getType() {
-		return type;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#setType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		this.type = type;
-	}
 	@Override
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
@@ -133,7 +113,7 @@ public class TupleTempOperand implements AsmOperand {
 	public TupleTempOperand put(int index, AssemblerOperand op) {
 		AssemblerOperand[] copy = Arrays.copyOf(components, components.length);
 		copy[index] = op;
-		return new TupleTempOperand(type, copy);
+		return new TupleTempOperand(copy);
 	}
 	/**
 	 * @return
@@ -164,7 +144,7 @@ public class TupleTempOperand implements AsmOperand {
 			}
 		}
 		if (newComponents != null)
-			return new TupleTempOperand(type, newComponents);
+			return new TupleTempOperand(newComponents);
 		return this;
 	}
 	
@@ -190,5 +170,19 @@ public class TupleTempOperand implements AsmOperand {
 			}
 		}
 		return true;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand#getLocal()
+	 */
+	@Override
+	public ILocal getLocal() {
+		return null;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand#getSymbol()
+	 */
+	@Override
+	public ISymbol getSymbol() {
+		return null;
 	}
 }

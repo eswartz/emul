@@ -270,4 +270,15 @@ public class Block {
 		return succ;
 	}
 
+	public void addInstBefore(AsmInstruction newInst, AsmInstruction inst) {
+		int idx = instrs.indexOf(inst);
+		assert idx >= 0;
+		instrs.add(idx, newInst);
+	}
+	public void addInstAfter(AsmInstruction inst, AsmInstruction newInst) {
+		int idx = instrs.indexOf(inst);
+		assert idx >= 0;
+		instrs.add(idx + 1, newInst);
+	}
+
 }

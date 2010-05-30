@@ -42,4 +42,10 @@ public interface AssemblerOperand extends Operand {
 	AssemblerOperand replaceOperand(AssemblerOperand src, AssemblerOperand dst);
 	
 	AssemblerOperand[] getChildren();
+
+	/**
+	 * @param i
+	 * @return
+	 */
+	AssemblerOperand addOffset(int i);
 }

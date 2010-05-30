@@ -18,8 +18,8 @@ public class StackLocalOperand extends BaseHLOperand {
 
 	private final StackLocal local;
 
-	public StackLocalOperand(LLType type, StackLocal local) {
-		super(type);
+	public StackLocalOperand(StackLocal local) {
+		super();
 		assert local != null;
 		this.local = local;
 		
@@ -88,13 +88,6 @@ public class StackLocalOperand extends BaseHLOperand {
 	@Override
 	public ISymbol getSymbol() {
 		return local.getName();
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#getType()
-	 */
-	@Override
-	public LLType getType() {
-		return local.getType();
 	}
 
 	/* (non-Javadoc)

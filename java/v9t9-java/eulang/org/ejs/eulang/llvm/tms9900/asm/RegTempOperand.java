@@ -25,12 +25,12 @@ public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 	/**
 	 * @param reg
 	 */
-	public RegTempOperand(LLType type, RegisterLocal local) {
-		super(type);
+	public RegTempOperand(RegisterLocal local) {
+		super();
 		this.local = local;
 	}
 	public RegTempOperand(LLType type, RegisterLocal local, boolean high) {
-		super(type);
+		super();
 		this.local = local;
 		this.isRegPair = true;
 		this.high = high;

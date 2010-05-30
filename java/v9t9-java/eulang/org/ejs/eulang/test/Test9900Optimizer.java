@@ -12,10 +12,7 @@ import static org.junit.Assert.*;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
-import org.ejs.eulang.llvm.tms9900.Locals;
-import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.Routine;
-import org.ejs.eulang.llvm.tms9900.RoutineDumper;
 import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
@@ -48,76 +45,10 @@ public class Test9900Optimizer extends BaseInstrTest {
 		return doOpt(routine);
 	}
 	private boolean doOpt(Routine routine) {
-		System.out.println("\n*** Initial:\n");
-		routine.accept(new RoutineDumper());
-		
-		PeepholeAndLocalCoalesce peepholeAndLocalCoalesce = new PeepholeAndLocalCoalesce();
-		boolean anyChanges = false;
-		do {
-			routine.accept(peepholeAndLocalCoalesce);
-			if (peepholeAndLocalCoalesce.isChanged()) {
-				System.out.println("\n*** After pass:\n");
-				routine.accept(new RoutineDumper());
-				anyChanges = true;
-				routine.setupForOptimization();
-			}
-		} while (peepholeAndLocalCoalesce.isChanged());
-		
-		assertNoUndefinedLocals(routine.getLocals());
-
-		if (!anyChanges)
-			System.out.println("\n*** No changes");
-		else {
-			System.out.println("\n*** Final:\n");
-			routine.accept(new RoutineDumper());
-		}
-		
-		instrs.clear();
-		for (Block block : routine.getBlocks())
-			instrs.addAll(block.getInstrs());
-		
-		for (AsmInstruction instr : instrs) {
-			validateInstr(instr);
-		}
-		
-		return anyChanges;
+		return runPeepholePhase(routine);
 		
 	}
 	
-	/**
-	 * @param routine
-	 * @param string
-	 * @return
-	 */
-	protected Block getBlock(Routine routine, String string) {
-		for (Block block : routine.getBlocks()) {
-			if (block.getLabel().getName().equals(string))
-				return block;
-		}
-		string += ".";
-		for (Block block : routine.getBlocks()) {
-			if (block.getLabel().getName().startsWith(string))
-				return block;
-		}
-		return null;
-	}
-	/**
-	 * @param string
-	 * @return
-	 */
-	protected ILocal getLocal(String name) {
-		for (ILocal local : locals.getAllLocals()) {
-			if (local.getName().getName().equals(name))
-				return local;
-		}
-		name = "." + name + ".";
-		for (ILocal local : locals.getAllLocals()) {
-			if (local.getName().getUniqueName().contains(name))
-				return local;
-		}
-		return null;
-	}
-
 	@Test
 	public void testDefOnly() throws Exception {
 		doIsel("foo = code( => nil) { x := 1 };\n");
@@ -179,17 +110,6 @@ public class Test9900Optimizer extends BaseInstrTest {
 		}			
 	}
 
-	/**
-	 * @param locals
-	 */
-	protected void assertNoUndefinedLocals(Locals locals) {
-		for (ILocal local : locals.getAllLocals()) {
-			if (local.getDefs().isEmpty() && local.getUses().isEmpty()) {
-				fail(local+" still present");
-			}
-		}
-		
-	}
 	@Test
 	public void testPeephole1() throws Exception {
 		dumpIsel = true;
@@ -629,8 +549,8 @@ public class Test9900Optimizer extends BaseInstrTest {
 		ILocal foo = locals.getLocal(getOperandSymbol(inst.getOp2()));
 		assertNotNull(foo);
 		assertEquals(1, foo.getDefs().cardinality());
-		assertEquals(4, foo.getUses().cardinality());	// four reads
 		assertFalse(foo.getUses().get(foo.getDefs().nextSetBit(0)));	// is not read where written
+		assertEquals(4, foo.getUses().cardinality());	// four reads
     	
 		
 		boolean changed = doOpt(routine);
@@ -798,6 +718,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 
     	idx = findInstrWithInst(instrs, "COPY", idx);
     	assertTrue(idx != -1);
+    	
     	idx = findInstrWithInst(instrs, "JMP", idx);
     	assertTrue(idx != -1);
     	
@@ -842,6 +763,31 @@ public class Test9900Optimizer extends BaseInstrTest {
     	assertEquals(2, local.getDefs().cardinality());
     	assertEquals(2, local.getUses().cardinality());
     	
+
+	}
+
+	@Test
+	public void testCopyExpand() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+		boolean changed = doOpt("swap = code (x:Int[10]; y:Int[10]^) { y^=x; };\n");
+
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+    	
+    	// make sure there are only two copies:  one from x -> y^ and one for return
+
+    	idx = findInstrWithInst(instrs, "COPY", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "COPY", AddrOperand.class, "x", RegIndOperand.class, "y");
+    	
+    	idx = findInstrWithInst(instrs, "COPY", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "COPY", RegIndOperand.class, "y", RegIndOperand.class, 0);
+    	
+    	assertEquals(-1, findInstrWithInst(instrs, "COPY", idx));
 
 	}
 }

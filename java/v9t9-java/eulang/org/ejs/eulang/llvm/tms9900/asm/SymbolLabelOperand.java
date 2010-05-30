@@ -18,7 +18,7 @@ public class SymbolLabelOperand extends BaseHLOperand {
 	private final ISymbol symbol;
 
 	public SymbolLabelOperand(LLType type, ISymbol symbol) {
-		super(type);
+		super();
 		this.symbol = symbol;
 	}
 	/* (non-Javadoc)
@@ -59,14 +59,6 @@ public class SymbolLabelOperand extends BaseHLOperand {
 	@Override
 	public ILocal getLocal() {
 		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#getType()
-	 */
-	@Override
-	public LLType getType() {
-		return symbol.getType();
 	}
 	
 	/* (non-Javadoc)

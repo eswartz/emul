@@ -97,4 +97,12 @@ public class RegIndOperand extends RegisterOperand {
 		}
 		return this;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.RegisterOperand#addOffset(int)
+	 */
+	@Override
+	public AssemblerOperand addOffset(int i) {
+		return new RegOffsOperand(new NumberOperand(i), getReg());
+	}
 }
