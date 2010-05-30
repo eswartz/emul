@@ -127,8 +127,10 @@ public class TargetV9t9 implements ITarget {
 		typeEngine.LABEL = typeEngine.register(new LLLabelType());
 		typeEngine.BOOL = typeEngine.register(new LLBoolType("Bool", 1));
 		typeEngine.LLBOOL = typeEngine.register(new LLBoolType(null, 1));
-		typeEngine.BYTE = typeEngine.register(new LLIntType("Byte", 8));
-		typeEngine.INT = typeEngine.register(new LLIntType("Int", 16));
+		
+		typeEngine.BYTE = typeEngine.register(typeEngine.getIntType("Byte", 8));
+		typeEngine.INT = typeEngine.register(typeEngine.getIntType("Int", 16));
+		
 		typeEngine.FLOAT = typeEngine.register(new LLFloatType("Float", 32, 23));
 		typeEngine.DOUBLE = typeEngine.register(new LLFloatType("Double", 64, 53));
 		typeEngine.REFPTR = typeEngine.register(new LLPointerType("RefPtr", typeEngine.getPtrBits(), 

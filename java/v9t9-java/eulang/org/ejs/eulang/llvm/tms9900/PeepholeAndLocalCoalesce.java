@@ -329,18 +329,18 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 					assert types.length == components.length;
 					
 					for (int i = 0; i < components.length; i++) {
-						int offs = align.alignAndAdd(types[i]);
+						LLType compType = types[i];
+						int offs = align.alignAndAdd(compType);
 						assert offs % 8 == 0;
 						AssemblerOperand subval = components[i];
-						if (subval instanceof NumberOperand && types[i].getBits() <= 8)
+						if (subval instanceof NumberOperand && compType.getBits() <= 8) {
 							subval = new NumberOperand((((NumberOperand) subval).getValue() << 8) & 0xff00);
+							compType = typeEngine.BYTE;	// allow BOOL/BYTE interchange
+						}
 						// TODO: handle zero
 						AssemblerOperand subop = new StackLocalOffsOperand(new NumberOperand(offs / 8), 
-								((AddrOperand) op).getAddr());
+								((AddrOperand) op).getAddr(), compType);
 						storeMemoryValue(subop, subval);
-						if (i == 0) {
-							storeMemoryValue(op, subval);
-						}
 					}
 				} else if (local.getType() instanceof LLArrayType) {
 					LLArrayType arrayType = (LLArrayType) local.getType();
@@ -351,7 +351,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 						AssemblerOperand subval = components[i];
 						// TODO: handle zero
 						AssemblerOperand subop = new StackLocalOffsOperand(new NumberOperand(offs / 8), 
-								((AddrOperand) op).getAddr());
+								((AddrOperand) op).getAddr(), arrayType.getSubType());
 						storeMemoryValue(subop, subval);
 						if (i == 0) {
 							storeMemoryValue(op, subval);
@@ -567,7 +567,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				offset = ((RegTempOffsOperand) def.getOp1()).getAddr();
 			else if (def.getOp1() instanceof RegOffsOperand)
 				offset = ((RegOffsOperand) def.getOp1()).getAddr();
-				
+			
 			toOp = ((AddrOperand)def.getOp1()).getAddr(); // new StackLocalOperand(origLocal.getType(), (StackLocal) origLocal);
 	
 			System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
@@ -593,6 +593,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		assert asmInstruction != null;
 		AssemblerOperand[] ops = asmInstruction.getOps();
 		System.out.print("From\t" + asmInstruction + "\n-- >\t");
+		
+		LLType theType = typeEngine.getIntType(asmInstruction.getInst() == Imovb ? 8 : 16);
 		for (int idx = 0; idx < ops.length; idx++) {
 			
 			AssemblerOperand op = ops[idx];
@@ -617,8 +619,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 					newOp = new AddrOperand(toOp);
 				else {
 					if (toOp instanceof StackLocalOperand)
-							newOp = new StackLocalOffsOperand(newOffset, 
-								toOp);
+						newOp = new StackLocalOffsOperand(newOffset, toOp, theType);
 					else
 						newOp = new AddrOperand(
 									new BinaryOperand('+', toOp,  

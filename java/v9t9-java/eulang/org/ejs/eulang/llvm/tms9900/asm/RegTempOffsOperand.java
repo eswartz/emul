@@ -38,7 +38,7 @@ public class RegTempOffsOperand extends LocalOffsOperand implements AsmOperand {
 		if (newAddr != getAddr() || newOffs != getOffset()) {
 			// swap types (e.g. replace ptr ref with direct value ref): ASSUMED that we intend to do this
 			if (newAddr.isMemory())
-				return new StackLocalOffsOperand(newOffs, newAddr);
+				return new StackLocalOffsOperand(newOffs, newAddr, null);
 			else
 				return new RegTempOffsOperand(newOffs, newAddr);
 		}

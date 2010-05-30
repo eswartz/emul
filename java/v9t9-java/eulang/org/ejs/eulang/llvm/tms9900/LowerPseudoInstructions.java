@@ -13,7 +13,6 @@ import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
@@ -375,17 +374,15 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		AssemblerOperand[] components = fromTuple.getComponents();
 		LLType[] types = inst.getType().getTypes(); // fromTuple.getType().getTypes();
 		
-		AssemblerOperand toBase = to;
-		if (to.getClass().equals(AddrOperand.class) && ((AddrOperand) to).getAddr() instanceof StackLocalOperand) {
-			// ensure piecewise access to stack is in partial operand format
-			toBase = new StackLocalOffsOperand(new NumberOperand(0), ((AddrOperand) to).getAddr());
-		}
+		AssemblerOperand toBase = InstrSelection.ensurePiecewiseAccess(to, null);
 		
 		for (int i = 0; i < components.length; i++) {
 			int offs = align.alignAndAdd(types[i]);
 			assert offs % 8 == 0;
 			
 			to = toBase.addOffset(offs / 8);
+			if (to instanceof StackLocalOffsOperand)
+				((StackLocalOffsOperand) to).setType(types[i]);
 			
 			AssemblerOperand from = components[i];
 			
@@ -399,6 +396,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			if (from instanceof NumberOperand && ins != Pcopy) {
 				// oops, const copy
 				ins = Ili; 
+				to = new RegTempOperand((RegisterLocal) locals.allocateTemp(types[i]));
 				if (types[i].getBits() <= 8)
 					from = new NumberOperand((((NumberOperand) from).getValue() << 8) & 0xff00);
 				copy = AsmInstruction.create(ins, to, from);
@@ -416,14 +414,9 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		AssemblerOperand to = inst.getOp2();
 		assert to instanceof RegIndOperand || to instanceof AddrOperand;
 		
-		if (to.getClass().equals(AddrOperand.class) && ((AddrOperand) to).getAddr() instanceof StackLocalOperand) {
-			// ensure piecewise access to stack is in partial operand format
-			to = new StackLocalOffsOperand(new NumberOperand(0), ((AddrOperand) to).getAddr());
-		}
-		if (from.getClass().equals(AddrOperand.class) && ((AddrOperand) from).getAddr() instanceof StackLocalOperand) {
-			// ensure piecewise access to stack is in partial operand format
-			from = new StackLocalOffsOperand(new NumberOperand(0), ((AddrOperand) from).getAddr());
-		}
+		to = InstrSelection.ensurePiecewiseAccess(to, null);
+		from = InstrSelection.ensurePiecewiseAccess(from, null);
+		
 		TypeEngine typeEngine = routine.getDefinition().getTypeEngine();
 		
 		AsmInstruction last = inst;
@@ -432,10 +425,17 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		for (int i = 0; i < type.getBits(); i += 16) {
 			int left = type.getBits() - i;
 			int use = Math.min(typeEngine.INT.getBits(), left);
+			LLType theType = typeEngine.getIntType(use);
 			int ins = Imov;
 			if (use <= 8) {
 				ins = Imovb;
 			}
+			
+			if (to instanceof StackLocalOffsOperand)
+				((StackLocalOffsOperand) to).setType(theType);
+			if (from instanceof StackLocalOffsOperand)
+				((StackLocalOffsOperand) from).setType(theType);
+			
 			AsmInstruction copy = AsmInstruction.create(ins, from, to);
 			block.addInstAfter(last, copy);
 			last = copy;

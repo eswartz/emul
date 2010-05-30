@@ -953,7 +953,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					for (int j = 0; j < agg.getCount(); j++) {
 						LLType comp = agg.getType(j);
 						int offs = align.alignAndAdd(comp);
-						tup = tup.put(j, new StackLocalOffsOperand(new NumberOperand(offs / 8), asmOp));
+						tup = tup.put(j, new StackLocalOffsOperand(new NumberOperand(offs / 8), asmOp, comp));
 					}
 					asmOp = tup;
 				}
@@ -1111,8 +1111,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		
 		// use StackLocalOffsOperand to indicate partial access to locals
-		if (ops.length >= 2 && asmOp.getClass().equals(AddrOperand.class) && ((AddrOperand) asmOp).getAddr() instanceof StackLocalOperand) {
-			asmOp = new StackLocalOffsOperand(new NumberOperand(0), ((AddrOperand) asmOp).getAddr());
+		if (ops.length >= 2) {
+			asmOp = ensurePiecewiseAccess(asmOp, type);
 		}
 		if (offs != 0) {
 			if (!asmOp.isRegister())
@@ -1509,7 +1509,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		//LLOperand llOperand = getLLOperand(operand);
 		RegisterLocal regLocal = getRegisterPair(llOperand);
 		LLOperand llOp = llOperand != null ? llOperand : ((LLAssignInstr) instr).getResult();
-		AssemblerOperand ret = new RegTempOperand(llOp.getType(), regLocal, high);
+		AssemblerOperand ret = new RegTempOperand(regLocal, high);
 		if (llOperand != null) {
 			moveTo(llOp, ((LLAssignInstr) instr).getResult().getType(), operand, ret);
 		}
@@ -1865,5 +1865,19 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Ensure piecewise access to stack is in partial operand format
+	 * @param to
+	 * @param type 
+	 * @return
+	 */
+	public static AssemblerOperand ensurePiecewiseAccess(AssemblerOperand to, LLType type) {
+		if (to.getClass().equals(AddrOperand.class) && ((AddrOperand) to).getAddr() instanceof StackLocalOperand) {
+			// 
+			to = new StackLocalOffsOperand(new NumberOperand(0), ((AddrOperand) to).getAddr(), type);
+		}
+		return to;
 	}
 }

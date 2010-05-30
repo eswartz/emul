@@ -579,9 +579,13 @@ public class TypeEngine {
 	}
 
 	public LLIntType getIntType(int bits) {
+		return getIntType(null, bits);
+	}
+	
+	public LLIntType getIntType(String name, int bits) {
 		LLIntType type = intMap.get(bits);
-		if (type == null) {
-			type = new LLIntType(null, bits);
+		if (type == null || (name != null && !name.equals(type.getName()))) {
+			type = new LLIntType(name, bits);
 			intMap.put(bits, type);
 		}
 		return type;

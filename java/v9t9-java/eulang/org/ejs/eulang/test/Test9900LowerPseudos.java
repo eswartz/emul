@@ -195,5 +195,36 @@ public class Test9900LowerPseudos extends BaseInstrTest {
 
 	}
 
+
+	@Test
+	public void testTupleCopy() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"Tuple = data { a, b : Byte; c: Int; };\n"+
+    			"testTupleCopy = code(x, y, z : Int) {\n"+
+    			"  t : Tuple = [ .a=x, .b=y, .c=10 ];\n"+
+    			"  val := 10;\n"+
+    			"  t.b += val;\n"+
+    			"  t;\n"+
+    			"};\n"+
+    	"");
+    	
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// don't substitute byte-valued register here (the temps are bytes, not ints) 
+    	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", StackLocalOffsOperand.class, "t", 0, RegIndOperand.class, 0);
+    	
+    	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", StackLocalOffsOperand.class, "t", 2, RegOffsOperand.class, 0, 2);
+
+	}
+	
 }
 

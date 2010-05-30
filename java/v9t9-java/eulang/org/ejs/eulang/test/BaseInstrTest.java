@@ -225,7 +225,7 @@ public class BaseInstrTest extends BaseTest {
 		for( int i = 0; i < stuff.length; ) {
 			AssemblerOperand op = instr.getOp(opidx++);
 			if (stuff[i] instanceof Class) {
-				assertTrue(instr+":"+i, ((Class)stuff[i]).isInstance(op));
+				assertTrue("type mismatch: " + instr+":"+i+":" + ((Class)stuff[i]), ((Class)stuff[i]).isInstance(op));
 				i++;
 				if (i >= stuff.length)
 					break;

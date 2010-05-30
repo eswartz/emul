@@ -5,7 +5,6 @@ package org.ejs.eulang.llvm.tms9900.asm;
 
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
@@ -26,11 +25,9 @@ public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 	 * @param reg
 	 */
 	public RegTempOperand(RegisterLocal local) {
-		super();
 		this.local = local;
 	}
-	public RegTempOperand(LLType type, RegisterLocal local, boolean high) {
-		super();
+	public RegTempOperand(RegisterLocal local, boolean high) {
 		this.local = local;
 		this.isRegPair = true;
 		this.high = high;
@@ -145,5 +142,5 @@ public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
 	public boolean isConst() {
 		return false;
 	}
-	
+
 }
