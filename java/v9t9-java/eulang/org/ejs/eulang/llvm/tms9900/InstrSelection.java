@@ -55,8 +55,7 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLUndefOp;
 import org.ejs.eulang.llvm.ops.LLZeroInitOp;
-import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
@@ -734,8 +733,19 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			ssaTempTable.put(instr.getResult(), asmOp);
 		} else {
 			AssemblerOperand asmOp = generateOperand(src);
-			if (!asmOp.isMemory())
-				asmOp = asmOp instanceof IRegisterOperand ? new RegIndOperand(asmOp) : new AddrOperand(asmOp); 
+			if (!asmOp.isMemory()) {
+				if (asmOp instanceof RegTempOperand) {
+					ILocal alocal = locals.getLocal(((RegTempOperand) asmOp).getSymbol());
+					if (local.getType().matchesExactly(alocal.getType()))
+						asmOp = new RegIndOperand(asmOp);
+					else
+						asmOp = new CompositePieceOperand(new NumberOperand(0), asmOp, instr.getType());
+				}
+				else if (asmOp instanceof IRegisterOperand)
+					asmOp = new RegIndOperand(asmOp);
+				else
+					asmOp = new AddrOperand(asmOp);
+			}
 			AssemblerOperand tmpOp = moveToTemp(null, instr.getType(), asmOp);
 			ssaTempTable.put(instr.getResult(), tmpOp);
 		}
@@ -776,7 +786,16 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			if (!dstOp.isMemory() && !dstOp.isRegister())
 				dstOp = generateGeneralOperand(dst, dstOp);
 			else if (dstOp instanceof AsmOperand) {
-				dstOp = dstOp instanceof IRegisterOperand ? new RegIndOperand(dstOp) : dstOp;
+				if (dstOp instanceof RegTempOperand) {
+					ILocal local = locals.getLocal(((RegTempOperand) dstOp).getSymbol());
+					if (dstLocal.getType().matchesExactly(local.getType()))
+						dstOp = new RegIndOperand(dstOp);
+					else
+						dstOp = new CompositePieceOperand(new NumberOperand(0), dstOp, instr.getType());
+				}
+				else if (dstOp instanceof IRegisterOperand) {
+					dstOp = new RegIndOperand(dstOp);
+				}
 			}
 		}
 		if (dstOp.isMemory() && srcOp instanceof NumOperand)
@@ -953,7 +972,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					for (int j = 0; j < agg.getCount(); j++) {
 						LLType comp = agg.getType(j);
 						int offs = align.alignAndAdd(comp);
-						tup = tup.put(j, new StackLocalOffsOperand(new NumberOperand(offs / 8), asmOp, comp));
+						tup = tup.put(j, new CompositePieceOperand(new NumberOperand(offs / 8), asmOp, comp));
 					}
 					asmOp = tup;
 				}
@@ -1117,7 +1136,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (offs != 0) {
 			if (!asmOp.isRegister())
 				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
-			asmOp = new RegTempOffsOperand(new NumberOperand(offs), asmOp);
+			asmOp = new CompositePieceOperand(new NumberOperand(offs), asmOp, type);
 		}
 		asmOps[0] = asmOp;
 		ssaTempTable.put(instr.getResult(), asmOp);
@@ -1146,7 +1165,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			offs /= 8;
 			
 			asmOp = getEffectiveAddress(typeEngine.getPointerType(instr.getType()), aggOp, aggOp);
-			asmOp = new RegTempOffsOperand(new NumberOperand(offs), asmOp);
+			asmOp = new CompositePieceOperand(new NumberOperand(offs), asmOp, instr.getType());
 		} else {
 			assert false;
 		}
@@ -1874,9 +1893,15 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @return
 	 */
 	public static AssemblerOperand ensurePiecewiseAccess(AssemblerOperand to, LLType type) {
-		if (to.getClass().equals(AddrOperand.class) && ((AddrOperand) to).getAddr() instanceof StackLocalOperand) {
-			// 
-			to = new StackLocalOffsOperand(new NumberOperand(0), ((AddrOperand) to).getAddr(), type);
+		if (to.getClass().equals(AddrOperand.class)) {
+			//if (((AddrOperand) to).getAddr() instanceof StackLocalOperand) {
+				to = new CompositePieceOperand(new NumberOperand(0), ((AddrOperand) to).getAddr(), type);
+			//} else  {
+			//	to = to.addOffset(0);
+			//}
+		}
+		else if (to instanceof RegIndOperand) {
+			to = new CompositePieceOperand(new NumberOperand(0), ((RegIndOperand) to).getReg(), type);
 		}
 		return to;
 	}

@@ -7,10 +7,9 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
@@ -21,6 +20,7 @@ import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 
 
@@ -213,8 +213,15 @@ public class AsmInstruction extends HLInstruction {
 			return;
 		
 		// else, look for the address 
-		if (op instanceof RegTempOffsOperand) {
-			// the register itself is not the target 
+		if (op instanceof CompositePieceOperand) {
+			if (((CompositePieceOperand) op).getAddr() instanceof IRegisterOperand) {
+				// the register itself is not the target
+			} else {
+				// op itself is an indirection
+				op = ((AddrOperand) op).getAddr();
+				getOperandSymbol(list, op);
+				
+			}
 		}
 		else if (op instanceof AddrOperand) {
 			// op itself is an indirection
@@ -261,14 +268,20 @@ public class AsmInstruction extends HLInstruction {
 	
 	private static void getSourceSymbolRefs(Set<ISymbol> list, AssemblerOperand op, boolean isOpRead) {
 		boolean skipTop = false;
-		if (op instanceof RegTempOffsOperand) {
-			if (!isOpRead) {
-				skipTop = true;
-				// op = ((LocalOffsOperand) op).getAddr();
+		if (op instanceof CompositePieceOperand) {
+			if (((CompositePieceOperand) op).getAddr() instanceof IRegisterOperand) {
+				if (!isOpRead) {
+					skipTop = true;
+				}
+			} else {
+				// we're accessing part of a composite; cannot be a kill
+				isOpRead = true;
 			}
-		} else if (op instanceof StackLocalOffsOperand) {
-			// we're accessing part of a composite; cannot be a kill
-			isOpRead = true;
+				// op = ((LocalOffsOperand) op).getAddr();
+			//}
+		//} else if (op instanceof StackLocalPieceOperand) {
+		//	// we're accessing part of a composite; cannot be a kill
+		//	isOpRead = true;
 		} else if (op instanceof AddrOperand) {
 			// the @ is just an indirection to actual content
 			if (!isOpRead) {

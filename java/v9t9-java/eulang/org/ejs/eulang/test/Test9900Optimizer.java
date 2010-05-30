@@ -13,9 +13,7 @@ import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
-import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
@@ -23,6 +21,7 @@ import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.junit.Test;
 
 import v9t9.engine.cpu.InstructionTable;
+import static v9t9.engine.cpu.InstructionTable.*;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -164,11 +163,11 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "A", StackLocalOffsOperand.class, "foo", 2, val1);
+		matchInstr(inst, "A", CompositePieceOperand.class, "foo", 2, val1);
 		
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "A", StackLocalOffsOperand.class, "foo", 4, val1);
+		matchInstr(inst, "A", CompositePieceOperand.class, "foo", 4, val1);
 
 		assertEquals(-1, findInstrWithSymbol(instrs, "foo", idx));
 		
@@ -203,7 +202,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// this must go in R0, so another move
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", StackLocalOffsOperand.class, "foo", 2, RegTempOperand.class, 0);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, "foo", 2, RegTempOperand.class, 0);
 		AssemblerOperand val2 = inst.getOp2();
 		
 		idx = findInstrWithInst(instrs, "SRA", idx);
@@ -212,7 +211,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SOC", StackLocalOffsOperand.class, "foo", 4, val1);
+		matchInstr(inst, "SOC", CompositePieceOperand.class, "foo", 4, val1);
 		
 		assertEquals(-1, findInstrWithSymbol(instrs, "foo", idx));
 		
@@ -291,7 +290,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// get foo[4]
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOffsOperand.class, "foo", 8, RegTempOperand.class);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, "foo", 8, RegTempOperand.class);
 		AssemblerOperand val1 = inst.getOp2();
 		
 		// this must go in R0, so another move -- but we have a value to use
@@ -307,7 +306,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// we've trashed the vr holding the stack var, so one more read
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SOC", RegTempOffsOperand.class, "foo", 8, val1);
+		matchInstr(inst, "SOC", CompositePieceOperand.class, "foo", 8, val1);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
@@ -336,7 +335,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithSymbol(instrs, "foo", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, RegIndOperand.class);
+		matchInstr(inst, "MOV", RegTempOperand.class, RegIndOperand.class, "foo");
 		AssemblerOperand val = inst.getOp1();
 		
 		// don't re-read from memory
@@ -396,14 +395,14 @@ public class Test9900Optimizer extends BaseInstrTest {
 		// be sure we read and write the value to memory every time
 		idx = findInstrWithInst(body.getInstrs(), "MOV");
 		inst = body.getInstrs().get(idx);
-		matchInstr(inst, "MOV", RegTempOffsOperand.class, "foo", 8, RegTempOperand.class);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, "foo", 8, RegTempOperand.class);
 		AssemblerOperand mem = inst.getOp1();
 		AssemblerOperand v = inst.getOp2();
 		
 		// move shift into R0
 		idx = findInstrWithInst(body.getInstrs(), "MOV", idx);
 		inst = body.getInstrs().get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, "foo", RegTempOperand.class, 0);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, "foo", 0, RegTempOperand.class, 0);
 		
 		// do shift
 		idx = findInstrWithInst(body.getInstrs(), "SRA", idx);
@@ -611,7 +610,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOVB", -1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", StackLocalOffsOperand.class, "foo", 2, RegTempOperand.class);
+		matchInstr(inst, "MOVB", CompositePieceOperand.class, "foo", 2, RegTempOperand.class);
 		
 		// don't do   AB *R(Local._.foo),vr26(%6.2)
 		idx = findInstrWithInst(instrs, "AB",   idx);
@@ -640,11 +639,11 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOVB", -1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", StackLocalOffsOperand.class, "foo", 2, RegTempOperand.class);
+		matchInstr(inst, "MOVB", CompositePieceOperand.class, "foo", 2, RegTempOperand.class);
 		
 		idx = findInstrWithInst(instrs, "AB",   idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "AB", StackLocalOffsOperand.class, "foo", 3, RegTempOperand.class);
+		matchInstr(inst, "AB", CompositePieceOperand.class, "foo", 3, RegTempOperand.class);
     }
 
 
@@ -693,10 +692,10 @@ public class Test9900Optimizer extends BaseInstrTest {
     	} else {
     		idx = findInstrWithInst(instrs, "MOVB", -1);
 			inst = instrs.get(idx);
-			matchInstr(inst, "MOVB", LocalOffsOperand.class, "foo", 1*3+2, RegTempOperand.class);
+			matchInstr(inst, "MOVB", CompositePieceOperand.class, "foo", 1*3+2, RegTempOperand.class);
 			idx = findInstrWithInst(instrs, "AB", idx);
 			inst = instrs.get(idx);
-			matchInstr(inst, "AB", LocalOffsOperand.class, "foo", 2*3+1, RegTempOperand.class);
+			matchInstr(inst, "AB", CompositePieceOperand.class, "foo", 2*3+1, RegTempOperand.class);
     	}
     }
 	
@@ -790,5 +789,39 @@ public class Test9900Optimizer extends BaseInstrTest {
     	assertEquals(-1, findInstrWithInst(instrs, "COPY", idx));
 
 	}
+	
+	@Test
+	public void testTupleCopy2() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"Tuple = data { a, b : Byte; c: Int; };\n"+
+    			"glob : Tuple;\n"+
+    			"testTupleCopy = code(x, y, z : Int => nil) {\n"+
+    			"  glob.a=x; glob.b=y; glob.c=10;\n"+
+    			"  val := 10;\n"+
+    			"  glob.b += val;\n"+
+    			"};\n"+
+    	"");
+    	
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// make sure we don't use LI/LEA for the global
+    	
+    	idx = findInstrWithSymbol(instrs, "glob", idx);
+    	inst = instrs.get(idx);
+    	assertTrue(inst+"", inst.getInst() != Ili);
+
+    	// don't lose the ADD
+    	idx = findInstrWithInst(instrs, "AI", -1);
+    	if (idx == -1) {
+    		idx = findInstrWithInst(instrs, "AB", -1);
+    	}
+    	assertTrue(idx != -1);
+	}
+	
 }
 

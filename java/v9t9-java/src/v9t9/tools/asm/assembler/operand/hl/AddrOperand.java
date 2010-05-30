@@ -122,8 +122,6 @@ public class AddrOperand extends BaseOperand {
 			offs = offs.addOffset(i); 
 			return new AddrOperand(new BinaryOperand('+',  ((BinaryOperand) addr).getLeft(), offs)); 
 		}
-		if (i == 0)
-			return new AddrOperand(addr);
 		return new AddrOperand(new BinaryOperand('+', addr, new NumberOperand(i)));
 	}
 }

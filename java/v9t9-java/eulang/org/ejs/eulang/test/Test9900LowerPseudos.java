@@ -12,7 +12,7 @@ import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.LowerPseudoInstructions;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.junit.Test;
@@ -122,25 +122,25 @@ public class Test9900LowerPseudos extends BaseInstrTest {
     	
     	idx = findInstrWithSymbol(instrs, "cond", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", RegTempOperand.class, "x", StackLocalOffsOperand.class);
+    	matchInstr(inst, "MOV", RegTempOperand.class, "x", CompositePieceOperand.class);
     	idx = findInstrWithSymbol(instrs, "cond", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", RegTempOperand.class, "y", StackLocalOffsOperand.class, 2);
+    	matchInstr(inst, "MOV", RegTempOperand.class, "y", CompositePieceOperand.class, 2);
     	
     	idx = findInstrWithSymbol(instrs, "cond", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", RegTempOperand.class, "y", StackLocalOffsOperand.class);
+    	matchInstr(inst, "MOV", RegTempOperand.class, "y", CompositePieceOperand.class);
     	idx = findInstrWithSymbol(instrs, "cond", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", RegTempOperand.class, "x", StackLocalOffsOperand.class, 2);
+    	matchInstr(inst, "MOV", RegTempOperand.class, "x", CompositePieceOperand.class, 2);
     	
     	// be sure we don't incorrectly optimize 
     	idx = findInstrWithSymbol(instrs, "cond", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", StackLocalOffsOperand.class, RegIndOperand.class, 0);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, CompositePieceOperand.class, ".callerRet", 0);
     	idx = findInstrWithSymbol(instrs, "cond", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", StackLocalOffsOperand.class, 2, RegOffsOperand.class, 0, 2);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, 2, CompositePieceOperand.class, ".callerRet", 2);
 
     	// make sure we have piecewise access that doesn't kill on each write
     	ILocal local = locals.getLocal(getOperandSymbol(inst.getOp1()));
@@ -218,13 +218,76 @@ public class Test9900LowerPseudos extends BaseInstrTest {
     	// don't substitute byte-valued register here (the temps are bytes, not ints) 
     	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", StackLocalOffsOperand.class, "t", 0, RegIndOperand.class, 0);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, "t", 0, CompositePieceOperand.class, ".callerRet", 0);
     	
     	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "MOV", StackLocalOffsOperand.class, "t", 2, RegOffsOperand.class, 0, 2);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, "t", 2, CompositePieceOperand.class, ".callerRet", 2);
 
 	}
-	
+
+	@Test
+	public void testTupleCopy2() throws Exception {
+		// test with globals
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"Tuple = data { a, b : Byte; c: Int; };\n"+
+    			"t : Tuple;\n"+
+    			"testTupleCopy = code(x, y, z : Int) {\n"+
+    			"  t.a=x; t.b=y; t.c=10;\n"+
+    			"  val := 10;\n"+
+    			"  t.b += val;\n"+
+    			"  t;\n"+
+    			"};\n"+
+    	"");
+    	
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// don't substitute byte-valued register here (the temps are bytes, not ints) 
+    	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, "t", 0, CompositePieceOperand.class, ".callerRet", 0);
+    	
+    	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, "t", 2, CompositePieceOperand.class, ".callerRet", 2);
+
+	}
+
+	@Test
+	public void testTupleCopy3() throws Exception {
+		// test with pointer
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"Tuple = data { a, b : Byte; c: Int; };\n"+
+    			"testTupleCopy = code(x, y, z : Int; t:Tuple^) {\n"+
+    			"  t.a=x; t.b=y; t.c=10;\n"+
+    			"  val := 10;\n"+
+    			"  t.b += val;\n"+
+    			"  t^;\n"+
+    			"};\n"+
+    	"");
+    	
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// don't substitute byte-valued register here (the temps are bytes, not ints) 
+    	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, "t", 0, CompositePieceOperand.class, ".callerRet", 0);
+    	
+    	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, "t", 2, CompositePieceOperand.class, ".callerRet", 2);
+
+	}
+
 }
 

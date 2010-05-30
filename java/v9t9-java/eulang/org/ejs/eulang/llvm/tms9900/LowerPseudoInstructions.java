@@ -9,10 +9,10 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
@@ -381,8 +381,8 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			assert offs % 8 == 0;
 			
 			to = toBase.addOffset(offs / 8);
-			if (to instanceof StackLocalOffsOperand)
-				((StackLocalOffsOperand) to).setType(types[i]);
+			if (to instanceof CompositePieceOperand)
+				((CompositePieceOperand) to).setType(types[i]);
 			
 			AssemblerOperand from = components[i];
 			
@@ -431,10 +431,10 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 				ins = Imovb;
 			}
 			
-			if (to instanceof StackLocalOffsOperand)
-				((StackLocalOffsOperand) to).setType(theType);
-			if (from instanceof StackLocalOffsOperand)
-				((StackLocalOffsOperand) from).setType(theType);
+			if (to instanceof CompositePieceOperand)
+				((CompositePieceOperand) to).setType(theType);
+			if (from instanceof CompositePieceOperand)
+				((CompositePieceOperand) from).setType(theType);
 			
 			AsmInstruction copy = AsmInstruction.create(ins, from, to);
 			block.addInstAfter(last, copy);

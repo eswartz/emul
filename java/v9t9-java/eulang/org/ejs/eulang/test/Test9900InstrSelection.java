@@ -19,10 +19,8 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
-import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
-import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
@@ -218,7 +216,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, RegTempOffsOperand.class, "%reg", 10);
+		matchInstr(inst, "MOV", RegTempOperand.class, CompositePieceOperand.class, "%reg", 10);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -241,7 +239,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOperand.class, RegTempOffsOperand.class, "%reg", 32);
+		matchInstr(inst, "COPY", AddrOperand.class, CompositePieceOperand.class, "%reg", 32);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -259,12 +257,12 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "LEA", 1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", RegTempOffsOperand.class, "x", -2, RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "x", -2, RegTempOperand.class);
 		AsmInstruction inst0 = inst;
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOffsOperand.class, ((RegTempOperand) inst0.getOp2()).getSymbol().getName(), 4, RegTempOperand.class);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, ((RegTempOperand) inst0.getOp2()).getSymbol().getName(), 4, RegTempOperand.class);
 		
 	}
 	@Test
@@ -1587,11 +1585,11 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, RegIndOperand.class, "inst");
+		matchInstr(inst, "MOV", RegTempOperand.class, CompositePieceOperand.class, "inst", 0);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, "inst", RegTempOperand.class);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, "inst", 0, RegTempOperand.class);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
@@ -1634,7 +1632,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, RegTempOffsOperand.class, "%reg", 2);
+		matchInstr(inst, "MOV", RegTempOperand.class, CompositePieceOperand.class, "%reg", 2);
 		
 		// addr goes here
 		idx = findInstrWithInst(instrs, "LEA", idx);
@@ -1644,16 +1642,16 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		// set the 'next' field
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, "inst", RegIndOperand.class);
+		matchInstr(inst, "MOV", RegTempOperand.class, "inst", CompositePieceOperand.class, "inst", 0);
 		
 		// ptr derefs
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
+		matchInstr(inst, "MOV",  CompositePieceOperand.class, "inst", 0, RegTempOperand.class);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
+		matchInstr(inst, "MOV",  CompositePieceOperand.class, "", 0, RegTempOperand.class);
 		
 		// copy
 		//idx = findInstrWithInst(instrs, "MOV", idx);
@@ -1664,10 +1662,11 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		while (idx < instrs.size()) {
 			inst = instrs.get(idx);
 			if (inst.getInst() == InstructionTable.Imov) {
-				if (inst.getOp1() instanceof RegTempOffsOperand) {
-					assertEquals(2, ((NumberOperand)((RegTempOffsOperand) inst.getOp1()).getOffset()).getValue());
-					idx = -1;
-					break;
+				if (inst.getOp1() instanceof CompositePieceOperand) {
+					if (2 == ((NumberOperand)((CompositePieceOperand) inst.getOp1()).getOffset()).getValue()) {
+						idx = -1;
+						break;
+					}
 				}
 			}
 			idx++;
@@ -1706,22 +1705,22 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		// get 'd' offset inside, to Inner*
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		AsmInstruction inst2 = instrs.get(idx);
-		matchInstr(inst2, "LEA", RegTempOffsOperand.class, inst.getOp2(), 4, RegTempOperand.class);
+		matchInstr(inst2, "LEA", CompositePieceOperand.class, inst.getOp2(), 4, RegTempOperand.class);
 		
 		// then, deref 'p' to Complex* 
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOffsOperand.class, inst2.getOp2(), 8, RegTempOperand.class);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, inst2.getOp2(), 8, RegTempOperand.class);
 		
 		// get 'd' offset inside, to Inner*
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst2 = instrs.get(idx);
-		matchInstr(inst2, "LEA", RegTempOffsOperand.class, inst.getOp2(), 4, RegTempOperand.class);
+		matchInstr(inst2, "LEA", CompositePieceOperand.class, inst.getOp2(), 4, RegTempOperand.class);
 		
 		// read 'd2'
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", RegTempOffsOperand.class, inst2.getOp2(), 4, AddrOperand.class);
+		matchInstr(inst, "COPY", CompositePieceOperand.class, inst2.getOp2(), 4, AddrOperand.class);
     }
 
     @Test
@@ -1821,11 +1820,11 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithSymbol(instrs, ".callerRet", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", StackLocalOffsOperand.class, ".callerRet", 0, RegTempOperand.class);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, ".callerRet", 0, RegTempOperand.class);
 		
 		idx = findInstrWithSymbol(instrs, ".callerRet", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", StackLocalOffsOperand.class, ".callerRet", 2, RegTempOperand.class);
+		matchInstr(inst, "MOV", CompositePieceOperand.class, ".callerRet", 2, RegTempOperand.class);
 		
     }
 
@@ -1852,7 +1851,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", RegTempOffsOperand.class, "%reg", 1, RegTempOperand.class);
+		matchInstr(inst, "MOVB", CompositePieceOperand.class, "%reg", 1, RegTempOperand.class);
 		
 		// skip...
 		
@@ -1864,7 +1863,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		// copy float out
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", RegTempOffsOperand.class, "%reg", 2, AddrOperand.class);
+		matchInstr(inst, "COPY", CompositePieceOperand.class, "%reg", 2, AddrOperand.class);
 
 		// and, sadly, copy again
 		idx = findInstrWithInst(instrs, "COPY", idx);
@@ -1968,12 +1967,12 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		// row 1
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", LocalOffsOperand.class, "reg", 3, RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 3, RegTempOperand.class);
 
 		// col 2
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", LocalOffsOperand.class, "reg", 2, RegTempOperand.class);
+		matchInstr(inst, "MOVB", CompositePieceOperand.class, "reg", 2, RegTempOperand.class);
 		
 		
 		// array
@@ -1984,12 +1983,12 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		// row 2
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", LocalOffsOperand.class, "reg", 6, RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 6, RegTempOperand.class);
 		
 		// col 1
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", LocalOffsOperand.class, "reg", 1, RegTempOperand.class);
+		matchInstr(inst, "MOVB", CompositePieceOperand.class, "reg", 1, RegTempOperand.class);
 
 		idx = findInstrWithInst(instrs, "AB", idx);
 		inst = instrs.get(idx);

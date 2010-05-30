@@ -7,13 +7,12 @@ import java.util.*;
 
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
-import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.RegTempOffsOperand;
-import org.ejs.eulang.llvm.tms9900.asm.StackLocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
+import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLAggregateType;
@@ -159,7 +158,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 
 			// apply value-specific peepholes
 			if (!applied) {
-				if (combineStackAddressOperands(inst)) {
+				if (combineAddressOperands(inst)) {
 					applied = true;
 				}
 				else if (removeStackToRegisterCopies(inst)) {
@@ -186,7 +185,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 						
 						if (replaceConstant(inst))
 							applied = true;
-						else if (replaceMemoryReadWithConstant(inst))
+						else 
+						if (replaceMemoryReadWithConstant(inst))
 							applied = true;
 					}
 					
@@ -337,8 +337,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 							subval = new NumberOperand((((NumberOperand) subval).getValue() << 8) & 0xff00);
 							compType = typeEngine.BYTE;	// allow BOOL/BYTE interchange
 						}
-						// TODO: handle zero
-						AssemblerOperand subop = new StackLocalOffsOperand(new NumberOperand(offs / 8), 
+						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
 								((AddrOperand) op).getAddr(), compType);
 						storeMemoryValue(subop, subval);
 					}
@@ -349,8 +348,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 						int offs = align.alignAndAdd(arrayType.getSubType());
 						assert offs % 8 == 0;
 						AssemblerOperand subval = components[i];
-						// TODO: handle zero
-						AssemblerOperand subop = new StackLocalOffsOperand(new NumberOperand(offs / 8), 
+						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
 								((AddrOperand) op).getAddr(), arrayType.getSubType());
 						storeMemoryValue(subop, subval);
 						if (i == 0) {
@@ -517,11 +515,11 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	
 	/**
 	 * In an instruction that uses an address operand using a register defined
-	 * from LEA of a stack operand, convert to AddrOffsOperand. 
+	 * from LEA of a stack operand or LI of a symbol, convert to a direct reference 
 	 * @param inst 
 	 * @return
 	 */
-	private boolean combineStackAddressOperands(AsmInstruction inst) {
+	private boolean combineAddressOperands(AsmInstruction inst) {
 		
 		boolean changed = false;
 		
@@ -540,15 +538,34 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			AsmInstruction def = instrMap.get(addrLocal.getInit());
 			assert def != null;
 			
-			if (def.getInst() != Plea)
-				continue;
+			AssemblerOperand toOp;
+			AssemblerOperand fromOp;
+			AssemblerOperand offset = null;
 
-			// and just be sure we're talking about a stack local...
-			// else we want to replace LEA with STWP/AI
-			if (!(def.getOp1() instanceof AddrOperand))
-				continue;
-			ILocal origLocal = getReffedLocal(def.getOp1());
-			if (!(origLocal instanceof StackLocal)) 
+			if (def.getInst() == Plea) {
+				// and just be sure we're talking about a stack local...
+				// else we want to replace LEA with STWP/AI
+				if (!(def.getOp1() instanceof AddrOperand))
+					continue;
+				ILocal origLocal = getReffedLocal(def.getOp1());
+				if (!(origLocal instanceof StackLocal)) 
+					continue;
+				
+				toOp = ((AddrOperand)def.getOp1()).getAddr(); // new StackLocalOperand(origLocal.getType(), (StackLocal) origLocal);
+				fromOp = def.getOp2();
+				offset = getOperandOffset(def.getOp1());
+			}
+			else if (def.getInst() == Ili) {
+				// and just be sure we're talking about a stack local...
+				// else we want to replace LEA with STWP/AI
+				if (!(def.getOp2() instanceof SymbolOperand))
+					continue;
+				
+				toOp = def.getOp2();
+				fromOp = def.getOp1();
+				offset = getOperandOffset(def.getOp2());
+			}
+			else
 				continue;
 			
 			// see if the temp is only defined once and this is its last use
@@ -557,19 +574,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				continue;
 		
 			// okay, replace all uses of the source with the target
-			AssemblerOperand fromOp;
-			AssemblerOperand toOp;
-			fromOp = def.getOp2(); // new RegTempOperand(addrLocal.getType(), (RegisterLocal) addrLocal);
-			AssemblerOperand offset = null;
-			if (def.getOp1() instanceof StackLocalOffsOperand)
-				offset = ((StackLocalOffsOperand) def.getOp1()).getOffset();
-			else if (def.getOp1() instanceof RegTempOffsOperand)
-				offset = ((RegTempOffsOperand) def.getOp1()).getAddr();
-			else if (def.getOp1() instanceof RegOffsOperand)
-				offset = ((RegOffsOperand) def.getOp1()).getAddr();
 			
-			toOp = ((AddrOperand)def.getOp1()).getAddr(); // new StackLocalOperand(origLocal.getType(), (StackLocal) origLocal);
-	
 			System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
 			
 			changed = true;
@@ -577,11 +582,30 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				replaceAddrUses(instrMap.get(use), (RegTempOperand) fromOp, toOp, offset, addrLocal, null);
 			}
 			
-			// and delete the LEA
+			// and delete the LEA/LI
 			removeInst(def);
 		}
 		
 		return changed;
+	}
+	private AssemblerOperand getOperandOffset(AssemblerOperand op) {
+		AssemblerOperand offset = null;
+		if (op instanceof CompositePieceOperand)
+			offset = ((CompositePieceOperand) op).getOffset();
+		else if (op instanceof RegOffsOperand)
+			offset = ((RegOffsOperand) op).getAddr();
+		else if (op instanceof BinaryOperand) {
+			if (((BinaryOperand) op).getKind() == '+')
+				offset = ((BinaryOperand) op).getRight();
+			else
+				assert false;
+		}
+		else if (op instanceof RegIndOperand || op instanceof AddrOperand) {
+			// ok
+		}
+		else if (op.isMemory())
+			assert false;
+		return offset;
 	}
 
 	/**
@@ -603,9 +627,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			// MOV @>0002(vr), ...
 			AssemblerOperand origOffset = null;
 			
-			if (op instanceof LocalOffsOperand) {
-				origOffset = ((LocalOffsOperand) op).getOffset();
-				op = ((LocalOffsOperand) op).getAddr();
+			if (op instanceof CompositePieceOperand) {
+				origOffset = ((CompositePieceOperand) op).getOffset();
+				op = ((CompositePieceOperand) op).getAddr();
 			} else if (op instanceof RegOffsOperand) {
 				origOffset = ((RegOffsOperand) op).getAddr();
 				op = ((RegOffsOperand) op).getReg();
@@ -616,14 +640,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			if (op.equals(from)) {
 				AssemblerOperand newOffset = addOffsets(offset, origOffset);
 				if (newOffset == null)
-					newOp = new AddrOperand(toOp);
+					newOp = InstrSelection.ensurePiecewiseAccess(new AddrOperand(toOp), theType);
 				else {
-					if (toOp instanceof StackLocalOperand)
-						newOp = new StackLocalOffsOperand(newOffset, toOp, theType);
-					else
-						newOp = new AddrOperand(
-									new BinaryOperand('+', toOp,  
-										newOffset));
+					newOp = new CompositePieceOperand(newOffset, toOp, theType);
 				}
 			}
 			
@@ -631,7 +650,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				updateLocalUsage(asmInstruction, fromLocal, toLocal, op);
 
 				// update op
-				asmInstruction.setOp(idx + 1, newOp);
+				asmInstruction.setOp(idx + 1, InstrSelection.ensurePiecewiseAccess(newOp, theType));
 			}
 		}
 		updateLocalValues(from, toOp, fromLocal, toLocal);
@@ -879,8 +898,14 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		// remove the tmp if it's not used elsewhere
 		boolean singleUse = tmpLocal.getUses().cardinality() == 1;
-		if ((inst.getInst() == Imov || inst.getInst() == Imovb) && !singleUse)
-			 return false;
+		if (inst.getInst() == Imov || inst.getInst() == Imovb) {
+			if (!singleUse)
+				return false;
+		} else {
+			// else, only replace in an inst where we're modifying a value
+			if (!origLocal.equals(tmpLocal))
+				return false;
+		}
 		
 		AsmInstruction initInstr = instrMap.get(tmpLocal.getInit());
 		if (singleUse && !dependsOnStatus(initInstr))

@@ -34,7 +34,7 @@ import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
-import org.ejs.eulang.llvm.tms9900.asm.LocalOffsOperand;
+import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
@@ -225,7 +225,7 @@ public class BaseInstrTest extends BaseTest {
 		for( int i = 0; i < stuff.length; ) {
 			AssemblerOperand op = instr.getOp(opidx++);
 			if (stuff[i] instanceof Class) {
-				assertTrue("type mismatch: " + instr+":"+i+":" + ((Class)stuff[i]), ((Class)stuff[i]).isInstance(op));
+				assertTrue("type mismatch: " + instr+":"+i+":" + op.getClass(), ((Class)stuff[i]).isInstance(op));
 				i++;
 				if (i >= stuff.length)
 					break;
@@ -271,8 +271,8 @@ public class BaseInstrTest extends BaseTest {
 						assertEquals("mismatched number: " + instr+":"+op, num, (Integer)((NumberOperand) op).getValue());
 					else if (op instanceof ConstPoolRefOperand)
 						assertEquals("mismatched const pool ref: " + instr+":"+op, num, (Integer)((ConstPoolRefOperand) op).getValue());
-					else if (op instanceof LocalOffsOperand)
-						assertEquals("mismatched local offset: " + instr+":"+op, num, (Integer)((NumberOperand)((LocalOffsOperand) op).getOffset()).getValue());
+					else if (op instanceof CompositePieceOperand)
+						assertEquals("mismatched local offset: " + instr+":"+op, num, (Integer)((NumberOperand)((CompositePieceOperand) op).getOffset()).getValue());
 					else 
 						assertEquals("mismatched operand: " + instr+":"+op, num, op);
 				}
@@ -287,8 +287,8 @@ public class BaseInstrTest extends BaseTest {
 					AssemblerOperand testOp = null;
 					if (op instanceof AddrOperand)
 						testOp = ((AddrOperand) op).getAddr();
-					else if (op instanceof LocalOffsOperand)
-						testOp = ((LocalOffsOperand) op).getAddr();
+					else if (op instanceof CompositePieceOperand)
+						testOp = ((CompositePieceOperand) op).getAddr();
 					else if (op instanceof IRegisterOperand && op.isMemory())
 						testOp = ((IRegisterOperand) op).getReg();
 					
@@ -303,8 +303,8 @@ public class BaseInstrTest extends BaseTest {
 						AssemblerOperand offs = ((RegOffsOperand) op).getAddr();
 						assertTrue("mismatched offset: " + instr+":"+op, offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
 					}
-					if (op instanceof LocalOffsOperand) {
-						AssemblerOperand offs = ((LocalOffsOperand) op).getOffset();
+					if (op instanceof CompositePieceOperand) {
+						AssemblerOperand offs = ((CompositePieceOperand) op).getOffset();
 						assertTrue("mismatched offset: " + instr+":"+op, offs instanceof NumberOperand && ((NumberOperand) offs).getValue() == num);
 					}
 				}
