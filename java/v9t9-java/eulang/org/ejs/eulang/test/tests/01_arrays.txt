@@ -40,7 +40,7 @@ call testArraySum
 assert R0 == 21
 >>>
 
-<<< oblique test of locals being copied
+<<< oblique test of locals being copied (and CLR/NEG peephole)
 vals: Int[3,3];
 doSum = code(arr: Int[3,3]) {
   s := 0;
@@ -53,4 +53,25 @@ testArrayAndCopy = code() {
 ===
 call testArrayAndCopy
 assert vals == -4
+>>>
+
+<<< array copies
+vals: Int[3,3];
+doSum = code() {
+  s := 0;
+  arr: Int[3];
+  for i in 3 do arr[2-i] = 100*(i+1);
+  for i in 3 do for j in 3 do vals[i] = arr;
+};
+===
+call doSum
+assert vals == 300
+assert vals + 2 == 200
+assert vals + 4 == 100
+assert vals + 6 == 300
+assert vals + 8 == 200
+assert vals + 10 == 100
+assert vals + 12 == 300
+assert vals + 14 == 200
+assert vals + 16 == 100
 >>>

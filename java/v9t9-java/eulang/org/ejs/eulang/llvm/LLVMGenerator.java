@@ -707,6 +707,8 @@ public class LLVMGenerator {
 			return new LLConstOp(type, 0.0);
 		else if (type.getBasicType() == BasicType.POINTER)
 			return new LLNullOp(type); //BitcastOp(type, new LLConstOp(typeEngine.getPointerType(typeEngine.BYTE), 0));
+		else if (type.getBasicType() == BasicType.TUPLE || type.getBasicType() == BasicType.DATA || type.getBasicType() == BasicType.ARRAY)
+			return new LLZeroInitOp(type);
 		else
 			throw new ASTException(null, "unhandled generating nil for: "
 					+ type);

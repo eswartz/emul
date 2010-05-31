@@ -12,8 +12,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
+import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.ejs.eulang.llvm.tms9900.DataBlock;
@@ -28,7 +30,7 @@ public class Test9900Simulation  {
 
 	public static TestSuite suite()  {
 	
-		TestSuite suite = new TestSuite();
+		DebuggableTestSuite suite = new DebuggableTestSuite();
 		
 		try {
 			addSuite(suite, "00_simple.txt");
@@ -45,7 +47,7 @@ public class Test9900Simulation  {
 		TEST_SOURCE,
 		ACTIONS,
 	}
-	private static void addSuite(TestSuite suite, String fname) throws IOException {
+	private static void addSuite(DebuggableTestSuite suite, String fname) throws IOException {
 		InputStream is = Test9900Simulation.class.getResourceAsStream("tests/" + fname);
 		InputStreamReader ir = new InputStreamReader(is);
 		BufferedReader reader = new BufferedReader(ir);
@@ -58,7 +60,7 @@ public class Test9900Simulation  {
 		int startLine = 0;
 		String comment = "";
 		
-		boolean skipping = false;
+		boolean only = false;
 		
 		String line;
 		int lineNum = 0;
@@ -79,12 +81,15 @@ public class Test9900Simulation  {
 					startLine = lineNum;
 					continue;
 				}
-				else if (line.equals("skip")) {
-					skipping = true;
-					continue;
-				}
-				else if (line.equals("noskip")) {
-					skipping = false;
+				else if (line.equals("only")) {
+					only = true;
+					suite.setOnlyOneTest(true);
+					Enumeration<Test> testEnum = suite.tests();
+					while (testEnum.hasMoreElements()) {
+						Test test = testEnum.nextElement();
+						if (test instanceof DebuggableTest)
+							((DebuggableTest) test).setSkipping(true);
+					}
 					continue;
 				}
 				throw new IOException("unexpected: " + line);
@@ -102,7 +107,7 @@ public class Test9900Simulation  {
 				if (line.isEmpty())
 					continue;
 				if (line.equals(">>>")) {
-					addTestCase(suite, skipping, fname, startLine, comment, source, 
+					addTestCase(suite, suite.isOnlyOneTest(), only, fname, startLine, comment, source, 
 							prereqs.toArray(new SimulationRunnable[prereqs.size()]),
 							routineName,
 							tests.toArray(new SimulationRunnable[tests.size()]));
@@ -224,10 +229,10 @@ public class Test9900Simulation  {
 		return Integer.parseInt(string, radix);
 	}
 
-	private static void addTestCase(TestSuite suite, boolean skipping, String fname, int line,
+	private static void addTestCase(TestSuite suite, boolean skipping, boolean only, String fname, int line,
 			String comment, StringBuilder source, SimulationRunnable[] prereqs, String routineName,
 			SimulationRunnable[] tests) {
-		suite.addTest(new SimulationTestCase(fname + ":" + line, comment, source.toString(), skipping, 
+		suite.addTest(new SimulationTestCase(fname + ":" + line, comment, source.toString(), skipping && !only, only, 
 				prereqs, routineName, tests));
 	}
 	

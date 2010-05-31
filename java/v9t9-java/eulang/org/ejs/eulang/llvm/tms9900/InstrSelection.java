@@ -1724,7 +1724,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			}
 				
 		}
-		if (operand instanceof TupleTempOperand) {
+		if (operand instanceof TupleTempOperand || operand instanceof ZeroInitOperand) {
 			return operand;
 		}
 		assert false;

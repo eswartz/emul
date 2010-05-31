@@ -14,6 +14,7 @@ import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
+import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLType;
@@ -147,6 +148,18 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	min: 18, max: 22		plus possibility of spilling 3 registers
 	cycles: 42 + 44*K
 	
+	basic clear loop:
+	
+	4/6		LEA addr1, t1		e.g. MOV SP, t1 / AI t1, >20  (28 cycles) or LI t1, symbol (14 cycles)	 
+	4		LI t3, size					// 14 cycles
+		loop:
+	2		CLR *t2+				// 10 + 6 cycles
+	2		DECT T3						// 10
+	2		JGT loop					// 8
+	
+	min: 14 max: 16	-- 8 clears		plus possiblility of spilling 2 registers
+	cycles: 28/42 + 34*K
+
 	basic copy loop (global-local):
 	
 	2		MOV SP, t1					// 14 cycles
@@ -160,13 +173,19 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	
 	min: 20					plus possibility of spilling 2 registers
 	cycles:  38 + 60*K
-	
+
 	piecewise-copy (global-global):
 	
 	6		MOV @global1(t1), @global2(t2)
 	6		MOV @global1+2(t1), @global2+2(t2)
 	6		MOV @global1+4(t1), @global2+4(t2)		// 14 + 8 + 8 = 30 each 
+
+	piecewise-clear:
 	
+	6		CLR @x(t1)
+	6		CLR @x+2(t1)
+	6		CLR @x+4(t1)				// 10 + 8 = 18 each 
+
 	piecewise-copy (local-local):
 	
 	6		MOV @K(SP), @L(SP)
@@ -212,14 +231,16 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		if (type == null)
 			assert false;
 
-		/** # of ops */
-		final int THRESHOLD = 4;
-		
 		AssemblerOperand from = inst.getOp1();
 		
 		// 16-bit copies
 		int work = type.getBits() / 8 / 2;
 		
+		boolean isZero = from instanceof ZeroInitOperand;
+		
+		/** # of ops */
+		int THRESHOLD = isZero ? 8 : 4;
+
 		boolean isTuple = from instanceof TupleTempOperand;
 		boolean isConstTuple = isTuple && ((TupleTempOperand) from).isConst();
 		if (isConstTuple) {
@@ -228,12 +249,14 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		if (work >= THRESHOLD && (!isTuple || isConstTuple)) {
 			if (isConstTuple) {
-				from = makeInternalData(inst.getOp1());
+				from = makeInternalData(from);
 			}
-			expandCopyLoop(type, inst, from);
+			expandCopyOrClearLoop(type, inst, from);
 		} else {
 			if (isTuple) {
-				expandCopyTuplePiecewise(type, inst, (TupleTempOperand) from);
+				expandCopyTuplePiecewise(inst, (TupleTempOperand) from);
+			} else if (isZero) {
+				clearPiecewise(type, inst);
 			} else {
 				expandCopyPiecewise(type, inst, from);
 			}
@@ -269,13 +292,13 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	 * @return
 	 */
 	private AssemblerOperand makeInternalData(AssemblerOperand op1) {
-		// TODO Auto-generated method stub
+		assert false;
 		return null;
 	}
 
 	/**
-	 * <pre>
 	 basic copy loop:
+	 <pre>
 	
 	4/6		LEA addr1, t1		e.g. MOV SP, t1 / AI t1, >20  (28 cycles) or LI t1, symbol (14 cycles)	 
 	4/6		LEA addr2, t2
@@ -285,11 +308,25 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	2		DECT T3						// 10
 	2		JGT loop					// 8
 	</pre>
+	
+	 basic clear loop:
+	<pre>
+	4/6		LEA addr1, t1		e.g. MOV SP, t1 / AI t1, >20  (28 cycles) or LI t1, symbol (14 cycles)	 
+	4		LI t3, size					// 14 cycles
+		loop:
+	2		CLR *t2+				// 10 + 6 cycles
+	2		DECT T3						// 10
+	2		JGT loop					// 8
+	</pre>
+	14/16	-- 8 clears
+	
 	 */
-	private void expandCopyLoop(LLType type, AsmInstruction inst, AssemblerOperand from) {
-		assert from instanceof RegIndOperand || from instanceof AddrOperand;
+	private void expandCopyOrClearLoop(LLType type, AsmInstruction inst, AssemblerOperand from) {
+		assert from instanceof RegIndOperand || from instanceof AddrOperand || from instanceof ZeroInitOperand || from == null;
 		AssemblerOperand to = inst.getOp2();
 		assert to instanceof RegIndOperand || to instanceof AddrOperand || to instanceof RegOffsOperand;
+		
+		boolean isClear = from == null || from instanceof ZeroInitOperand;
 		
 		TypeEngine typeEngine = routine.getDefinition().getTypeEngine();
 		
@@ -298,11 +335,15 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		// insert LEAs
 		AsmInstruction lp;
 		
-		ILocal t1Local = locals.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
-		AssemblerOperand t1 = new RegTempOperand((RegisterLocal) t1Local);
-		lp = AsmInstruction.create(Plea, from, t1);
-		block.addInstBefore(lp, inst);
-		System.out.println(here() +" " + lp);
+		ILocal t1Local = null;
+		AssemblerOperand t1 = null;
+		if (!isClear) {
+			t1Local = locals.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
+			t1 = new RegTempOperand((RegisterLocal) t1Local);
+			lp = AsmInstruction.create(Plea, from, t1);
+			block.addInstBefore(lp, inst);
+			System.out.println(here() +" " + lp);
+		}
 		
 		ILocal t2Local = locals.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
 		AssemblerOperand t2 = new RegTempOperand((RegisterLocal) t2Local);
@@ -310,15 +351,15 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
 		
-		// get size of copy
+		// get size of copy/clear
 		ILocal t3Local = locals.allocateTemp(typeEngine.INT);
 		AssemblerOperand t3 = new RegTempOperand((RegisterLocal) t3Local);
 		lp = AsmInstruction.create(Ili, t3, new NumberOperand(type.getBits() / 8));
 		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
 		
-		// make block for copy loop
-		ISymbol labelSym = locals.getScope().addTemporary(".copy");
+		// make block for copy/clear loop
+		ISymbol labelSym = locals.getScope().addTemporary(isClear ? ".clear" : ".copy");
 		labelSym.setType(typeEngine.LABEL);
 		Block loop = new Block(labelSym);
 		routine.addBlock(loop);
@@ -338,7 +379,11 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		// add new stuff to 'loop'
 		
-		lp = AsmInstruction.create(Imov, new RegIncOperand(t1), new RegIncOperand(t2));
+		if (!isClear) {
+			lp = AsmInstruction.create(Imov, new RegIncOperand(t1), new RegIncOperand(t2));
+		} else {
+			lp = AsmInstruction.create(Iclr, new RegIncOperand(t2));
+		}
 		loop.addInst(lp);
 		System.out.println(here() +" " + lp);
 		lp = AsmInstruction.create(Idect, t3);
@@ -356,11 +401,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		changedBlocks = true;
 	}
 	
-	/**
-	 * @param type 
-	 * @param inst
-	 */
-	private void expandCopyTuplePiecewise(LLType type, AsmInstruction inst, TupleTempOperand fromTuple) {
+	private void expandCopyTuplePiecewise(AsmInstruction inst, TupleTempOperand fromTuple) {
 		AssemblerOperand to = inst.getOp2();
 		assert to instanceof RegIndOperand || to instanceof AddrOperand;
 		
@@ -444,5 +485,29 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			to = to.addOffset(use / 8);
 		}
 	}
-
+	
+	private void clearPiecewise(LLType type, AsmInstruction inst) {
+		AssemblerOperand to = inst.getOp2();
+		assert to instanceof RegIndOperand || to instanceof AddrOperand;
+		
+		TypeEngine typeEngine = routine.getDefinition().getTypeEngine();
+		
+		to = InstrSelection.ensurePiecewiseAccess(to, null);
+		
+		AsmInstruction last = inst;
+		Block block = instrBlockMap.get(inst.getNumber());
+		
+		LLType theType = typeEngine.INT;
+		
+		for (int i = 0; i < type.getBits(); i += theType.getBits()) {
+			if (to instanceof CompositePieceOperand)
+				((CompositePieceOperand) to).setType(theType);
+			
+			AsmInstruction clr = AsmInstruction.create(Iclr, to);
+			block.addInstAfter(last, clr);
+			last = clr;
+			
+			to = to.addOffset(theType.getBits() / 8);
+		}
+	}
 }

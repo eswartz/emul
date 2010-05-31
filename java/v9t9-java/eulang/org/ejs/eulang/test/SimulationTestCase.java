@@ -36,7 +36,7 @@ import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
  * @author ejs
  *
  */
-public class SimulationTestCase extends BaseInstrTest implements Test {
+public class SimulationTestCase extends BaseInstrTest implements Test, DebuggableTest {
 	protected boolean doOptimize;
 	protected Simulator simulator;
 	
@@ -47,23 +47,41 @@ public class SimulationTestCase extends BaseInstrTest implements Test {
 	private final SimulationRunnable[] checks;
 	private final String callRoutineName;
 	private final String testName;
-	private final boolean skipping;
 	private final String comment;
+	
+	private boolean skipping;
+	private boolean only;
 
 	public interface SimulationRunnable {
 		void run(Simulator sim) throws Exception;
 	}
+	
+	public boolean isSkipping() {
+		return skipping;
+	}
+	public void setSkipping(boolean skipping) {
+		this.skipping = skipping;
+	}
+	
+	public boolean isOnlyTest() {
+		return only;
+	}
+	public void setOnlyTest(boolean only) {
+		this.only = only;
+	}
 	/**
 	 * @param comment 
 	 * @param skipping 
+	 * @param only2 
 	 * 
 	 */
 	public SimulationTestCase(String testName, String comment,  String program, boolean skipping, 
-			SimulationRunnable[] setups, String callRoutineName, SimulationRunnable[] checks) {
+			boolean only, SimulationRunnable[] setups, String callRoutineName, SimulationRunnable[] checks) {
 		this.testName = testName;
 		this.program = program;
 		this.comment = comment;
 		this.skipping = skipping;
+		this.only = only;
 		this.setups = setups;
 		this.callRoutineName = callRoutineName;
 		this.checks = checks;
@@ -220,16 +238,29 @@ public class SimulationTestCase extends BaseInstrTest implements Test {
 			result.endTest(this);
 			return;
 		}
-		result.startTest(this);
 		
+		result.startTest(this);
 		
 		PrintStream oldOut = System.out;
 		PrintStream oldErr = System.err;
 		
 		final ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
 		final ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
-		final PrintStream outStr = new MirrorPrintStream(outBuf, oldOut);
-		final PrintStream errStr = new MirrorPrintStream(errBuf, oldErr);
+		final PrintStream outStr;
+		final PrintStream errStr;
+		
+		if (isOnlyTest()) {
+			// special
+			outStr = new MirrorPrintStream(outBuf, oldOut);
+			errStr = new MirrorPrintStream(errBuf, oldErr);
+			dumpTreeize = true;
+			dumpLLVMGen = true;
+			dumpIsel = true;
+		} else {
+			outStr = new PrintStream(outBuf);
+			errStr = new PrintStream(errBuf);
+		}
+			
 		
 		result.runProtected(this, new Protectable() {
 			
