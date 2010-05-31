@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
-import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.ISymbol;
 
 
@@ -22,7 +21,7 @@ import org.ejs.eulang.symbols.ISymbol;
  * @author ejs
  */
 public abstract class Routine {
-	private Map<Label, Block> labelBlockMap = new HashMap<Label, Block>();
+	private Map<ISymbol, Block> labelBlockMap = new HashMap<ISymbol, Block>();
 	private Block mainBlock;
     private ArrayList<Block> blocks;
     
@@ -268,7 +267,7 @@ public abstract class Routine {
 		
 		List<AsmInstruction> tail = block.getInstrs().subList(idx, block.getInstrs().size());
 		
-		Block after = new Block(new Label(afterLabel.getUniqueName()));
+		Block after = new Block(afterLabel);
 		after.getInstrs().addAll(tail);
 		
 		for (Block s : block.succ())

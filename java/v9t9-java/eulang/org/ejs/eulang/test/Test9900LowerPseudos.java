@@ -7,9 +7,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.*;
 
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
-import org.ejs.eulang.llvm.tms9900.ICodeVisitor;
 import org.ejs.eulang.llvm.tms9900.ILocal;
-import org.ejs.eulang.llvm.tms9900.LowerPseudoInstructions;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
@@ -58,41 +56,6 @@ public class Test9900LowerPseudos extends BaseInstrTest {
 		return anyLowered;
 	}
 	
-	protected boolean runLowerPseudoPhase(Routine routine) {
-		System.out.println("\n*** Before lowering:\n");
-		routine.accept(new RoutineDumper());
-		
-		LowerPseudoInstructions lower = new LowerPseudoInstructions();
-		boolean anyChanges = false;
-		do {
-			try {
-				routine.accept(lower);
-			} catch (ICodeVisitor.Terminate e) {
-				
-			}
-			if (lower.isChanged()) {
-				System.out.println("\n*** After lowering pass:\n");
-				routine.accept(new RoutineDumper());
-				anyChanges = true;
-				
-				routine.setupForOptimization();
-			}
-		} while (lower.isChanged());
-		
-
-		if (!anyChanges)
-			System.out.println("\n*** No changes");
-		else {
-			System.out.println("\n*** Done lowering:\n");
-			routine.accept(new RoutineDumper());
-		}
-		
-		validateInstrsAndResync(routine);
-		return anyChanges;
-		
-	}
-	
-
 	@Test
 	public void testTuplesSwap() throws Exception {
 		dumpLLVMGen = true;

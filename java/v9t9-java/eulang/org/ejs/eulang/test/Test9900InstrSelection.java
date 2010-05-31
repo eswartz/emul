@@ -2016,5 +2016,124 @@ z, z, val, z, z, z, z }), AddrOperand.class);
     		}
     	}
 	}
-    
+
+
+	@Test
+	public void testNonConstGetElementPtrAccess1() throws Exception {
+		dumpIsel = true;
+	   	doIsel(
+	   			"Tuple = data {\n"+
+	   			"   a:Byte[5]; f:Bool; };\n"+
+	   			"testNonConstGetElementPtrAccess2 = code(x) {\n"+
+	   			"  arr:Tuple[10];\n"+
+	   			"  arr[x].a[4];\n"+
+	   			"};\n"+
+	   	"");
+	 
+
+	   	int idx = -1;
+	   	AsmInstruction inst;
+
+		// array
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "arr", 0, RegTempOperand.class);
+		
+		// var element
+		idx = findInstrWithInst(instrs, "LI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 6);
+
+		// calc row
+		idx = findInstrWithInst(instrs, "MPY", idx);
+		inst = instrs.get(idx);
+		
+		// add
+		idx = findInstrWithInst(instrs, "A", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "A", RegTempOperand.class, false, RegTempOperand.class);
+		
+		// another array
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", CompositePieceOperand.class, "reg", 4, RegTempOperand.class);
+	}
+	
+	@Test
+	public void testNonConstGetElementPtrAccess2() throws Exception {
+		dumpIsel = true;
+	   	doIsel(
+	   			"Tuple = data {\n"+
+	   			"   x:Byte; f:Bool; };\n"+
+	   			"holder = data { p:Int; t:Tuple[10]; };\n"+
+	   			"testNonConstGetElementPtrAccess2 = code() {\n"+
+	   			"  holder : :holder;\n"+
+	   			"  for x in 10 do holder.t[x].x = x;\n"+
+	   			"};\n"+
+	   	"");
+
+	   	int idx = -1;
+	   	AsmInstruction inst;
+
+	   	do {
+			idx = findInstrWithSymbol(instrs, "x", idx);
+			inst = instrs.get(idx);
+	   	} while (inst.getInst() != InstructionTable.Imov);
+	   	
+		
+		// holder
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "holder", 0, RegTempOperand.class);
+		
+		// 't'
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 2, RegTempOperand.class);
+
+		// shift
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegTempOperand.class, "x", RegTempOperand.class);
+
+		// var element
+		idx = findInstrWithInst(instrs, "SLA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegTempOperand.class, NumberOperand.class, 1);
+
+		// add
+		idx = findInstrWithInst(instrs, "A", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "A", RegTempOperand.class, RegTempOperand.class);
+		
+		// copy
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegTempOperand.class, CompositePieceOperand.class, 0);
+	}
+	
+	@Test
+	public void testArrayPtrAccess2() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+		doIsel(
+				"vals:Int[10];\n"+
+				"testArraySum = code() {\n"+
+				"  valp : Int[]^ = &vals;\n"+
+				"};\n"+
+				"");
+
+	  	int idx = -1;
+	   	AsmInstruction inst;
+
+		idx = findInstrWithSymbol(instrs, "vals", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", SymbolOperand.class, "vals", RegTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegTempOperand.class, RegTempOperand.class, "valp");
+		
+	}
+
 }

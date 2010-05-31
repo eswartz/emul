@@ -328,6 +328,14 @@ public class TargetV9t9 implements ITarget {
 	public int getSP() {
 		return 10;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITarget#getFP()
+	 */
+	@Override
+	public int getFP() {
+		return 9;
+	}
 
 
 	/**

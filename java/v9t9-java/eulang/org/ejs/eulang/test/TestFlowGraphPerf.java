@@ -10,7 +10,6 @@ import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.FlowGraphVisitor;
 import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
-import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
@@ -39,7 +38,7 @@ public class TestFlowGraphPerf extends BaseInstrTest {
 		for (int i = 0; i < numBlocks; i++) {
 			String name = "B" + i;
 			ISymbol sym = def.getScope().add(name, true);
-			blocks[i] = new Block(new Label(sym.getName()));
+			blocks[i] = new Block(sym);
 			rout.addBlock(blocks[i]);
 			if (i == 0)
 				rout.setEntry(blocks[i]);

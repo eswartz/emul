@@ -79,6 +79,12 @@ public interface ITarget {
 	 */
 	int getSP();
 	
+	/**
+	 * Get the frame pointer register
+	 * @return
+	 */
+	int getFP();
+	
 
 	/**
 	 * Get a symbol representing the status register

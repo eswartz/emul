@@ -143,6 +143,13 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				}
 				break;
 				
+			case Is:
+			case Isb:
+				if (replaceZeroSubWithNegate(inst)) {
+					applied = true;
+				}
+				break;
+				
 			case Pcopy:
 				if (coalesceCopy(inst)) {
 					applied = true;
@@ -276,6 +283,13 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				gotStackValue = storeMemoryValue(inst.getOp2(), inst.getOp1());
 			}
 			break;
+		case Ibl:
+		case Iblwp:
+			memNumberValues.clear();
+			memRegisterValues.clear();
+			src = null;
+			changedValues = true;
+			break;
 		default:
 			// dunno what to do here
 			src = null;
@@ -283,7 +297,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		ILocal targetLocal = getTargetLocal(inst);
 
-		if (isSingleRegister(targetLocal) && destOp.isRegister()) {
+		if (isSingleRegister(targetLocal) && (destOp == null || destOp.isRegister())) {
 			if (src != null) {
 				localValues.put(targetLocal, src);
 				changedValues = true;
@@ -484,14 +498,13 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				|| tmpLocal.getDefs().cardinality() != 1
 				|| tmpLocal.getUses().nextSetBit(inst.getNumber() + 1) >= 0)
 			return false;
-		
+
 		// and see if the definition is a read from the same target
 		AsmInstruction def = instrMap.get(tmpLocal.getInit());
 		assert def != null;
 		
 		ILocal origLocal = getSourceLocal(def);
-		if (!inst.getOp1().equals(def.getDestOp()) || !(def.getSrcOp().isMemory() || def.getSrcOp().isRegister())
-				/*|| (def.getInst() != Pcopy && !(def.getSrcOp() instanceof ISymbolOperand))*/)
+		if (!inst.getOp1().equals(def.getDestOp()) || !(def.getSrcOp().isMemory() || def.getSrcOp().isRegister()))
 			return false;
 		
 		// okay, replace all uses of the source with the target
@@ -500,7 +513,23 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		if (fromOp.equals(toOp))
 			return false;
-	
+
+		// make sure the inst allows the replaced operand 
+		for (int use = tmpLocal.getUses().nextSetBit(tmpLocal.getInit()); use >= 0; use = tmpLocal.getUses().nextSetBit(use + 1)) {
+			AsmInstruction useInst = instrMap.get(use);
+			if (useInst.getOp1() != null) {
+				if (useInst.getOp1().equals(fromOp) && !useInst.supportsOp(1, toOp))
+					return false;
+				if (useInst.getOp2() != null) {
+					if (useInst.getOp2().equals(fromOp) && !useInst.supportsOp(2, toOp))
+						return false;
+				}
+			}
+			replaceUses(instrMap.get(use), fromOp, toOp, tmpLocal, origLocal);
+			changed = true;
+		}
+
+
 		System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
 		boolean changed = false;
 		
@@ -540,6 +569,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			// see if the definition is an LEA on a stack local
 			AsmInstruction def = instrMap.get(addrLocal.getInit());
 			assert def != null;
+			
+			if (addrLocal.getDefs().cardinality() > 1)
+				continue;
 			
 			AssemblerOperand toOp;
 			AssemblerOperand fromOp;
@@ -1074,5 +1106,44 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		return false;
 		
 	}
-	
+
+	/**
+	 * Convert the LLVM-required "clr" + "s" back to NEG. 
+	 * @param mov last S
+	 * @return
+	 */
+	private boolean replaceZeroSubWithNegate(AsmInstruction sub) {
+		// the temp for the copy must be a register
+		ILocal tmpLocal = getTargetLocal(sub);
+		if (!isSingleRegister(tmpLocal) || !(sub.getOp2().isRegister()))
+			return false;
+
+		// find def, which should be previous
+		AsmInstruction clr = instrMap.get(tmpLocal.getInit());
+		assert clr != null;
+		if (clr.getInst() != Iclr)
+			return false;
+		if (tmpLocal.getUses().nextSetBit(tmpLocal.getInit() + 1) != sub.getNumber())
+			return false;
+
+		System.out.println(here() + "In " + sub.getNumber() +":  Replacing CLR/S with NEG");
+
+		System.out.println("From\t"+clr);
+		
+		clr.setInst(sub.getInst() == Isb ? Imovb : Imov);
+		clr.setOp2(clr.getOp1());
+		clr.setOp1(sub.getOp1());
+		
+		System.out.println("to\t"+clr);
+		
+		System.out.println("From\t"+sub);
+		
+		sub.setInst(Ineg);
+		sub.setOp1(sub.getOp2());
+		sub.setOp2(null);
+		
+		System.out.println("to\t"+sub);
+		
+		return true;
+	}
 }

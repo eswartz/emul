@@ -23,6 +23,7 @@ public class All9900Tests {
 		suite.addTest(new JUnit4TestAdapter(TestStockFlowGraph.class));
 		suite.addTest(new JUnit4TestAdapter(Test9900Optimizer.class));
 		suite.addTest(new JUnit4TestAdapter(Test9900LowerPseudos.class));
+		suite.addTest(new JUnit4TestAdapter(Test9900Simulation.class));
 		//$JUnit-END$
 		return suite;
 	}

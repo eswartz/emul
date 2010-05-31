@@ -17,8 +17,8 @@ import org.ejs.eulang.llvm.tms9900.CodeVisitor;
 import org.ejs.eulang.llvm.tms9900.FlowGraphVisitor;
 import org.ejs.eulang.llvm.tms9900.LinkedRoutine;
 import org.ejs.eulang.llvm.tms9900.Block.Edge;
-import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.GlobalScope;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,13 +40,13 @@ public class TestStockFlowGraph extends BaseInstrTest {
 		def = createDefine(mod, "test", typeEngine.VOID, new LLType[0]);
 		rout = new LinkedRoutine(def);
 		
-		B0 = new Block(new Label("B0"));
-		B1 = new Block(new Label("B1"));
-		B2 = new Block(new Label("B2"));
-		B3 = new Block(new Label("B3"));
-		B4 = new Block(new Label("B4"));
-		B5 = new Block(new Label("B5"));
-		B6 = new Block(new Label("B6"));
+		B0 = new Block(getSym("B0"));
+		B1 = new Block(getSym("B1"));
+		B2 = new Block(getSym("B2"));
+		B3 = new Block(getSym("B3"));
+		B4 = new Block(getSym("B4"));
+		B5 = new Block(getSym("B5"));
+		B6 = new Block(getSym("B6"));
 		
 		B0.addSucc(B1);
 		B0.addSucc(B5);
@@ -79,6 +79,13 @@ public class TestStockFlowGraph extends BaseInstrTest {
 		visitor.setupFlow(false);		// no explicit instrs
 		rout.accept(visitor);
 
+	}
+	/**
+	 * @param string
+	 * @return
+	 */
+	private ISymbol getSym(String string) {
+		return def.getScope().addTemporary(string);
 	}
 	/**
 	 * Test the basic flowgraph visitor and edge analyzer

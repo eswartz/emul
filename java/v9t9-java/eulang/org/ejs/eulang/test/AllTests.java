@@ -26,14 +26,7 @@ public class AllTests {
 		suite.addTest(new JUnit4TestAdapter(TestLoopGenerator.class));
 		suite.addTest(new JUnit4TestAdapter(TestScopes.class));
 		suite.addTest(new JUnit4TestAdapter(TestTypes.class));
-		suite.addTest(new JUnit4TestAdapter(Test9900Locals.class));
-		suite.addTest(new JUnit4TestAdapter(Test9900InstrGen.class));
-		suite.addTest(new JUnit4TestAdapter(Test9900InstrSelection.class));
-		suite.addTest(new JUnit4TestAdapter(Test9900Data.class));
-		suite.addTest(new JUnit4TestAdapter(TestStockFlowGraph.class));
-		suite.addTest(new JUnit4TestAdapter(TestFlowGraphPerf.class));
-		suite.addTest(new JUnit4TestAdapter(Test9900Optimizer.class));
-		suite.addTest(new JUnit4TestAdapter(Test9900LowerPseudos.class));
+		suite.addTest(new JUnit4TestAdapter(All9900Tests.class));
 		//$JUnit-END$
 		return suite;
 	}

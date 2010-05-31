@@ -11,7 +11,6 @@ import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLRetInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**
@@ -51,8 +50,7 @@ public class CodeGenVisitor extends LLCodeVisitor {
 	@Override
 	public boolean enterBlock(LLBlock llblock) {
 		ISymbol lllabelSym = llblock.getLabel();
-		Label label = new Label(lllabelSym.getUniqueName());
-		block = new Block(label);
+		block = new Block(lllabelSym);
 		blockMap.put(lllabelSym, block);
 		
 		return true;

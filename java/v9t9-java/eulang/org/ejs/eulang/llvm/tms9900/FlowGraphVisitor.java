@@ -73,7 +73,7 @@ public class FlowGraphVisitor extends CodeVisitor {
 			block.succ().clear();
 			block.pred().clear();
 			
-			ISymbol label = routine.getLocals().getScope().get(block.getLabel().getName());
+			ISymbol label = block.getLabel();
 			assert label != null;
 			labelBlockMap.put(label, block);
 		}

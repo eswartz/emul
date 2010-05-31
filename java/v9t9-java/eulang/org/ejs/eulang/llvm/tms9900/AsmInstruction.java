@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import static junit.framework.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -13,6 +15,7 @@ import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
+import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.Operand;
@@ -21,6 +24,7 @@ import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
+import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 
 
@@ -105,12 +109,15 @@ public class AsmInstruction extends HLInstruction {
 		this.number = number;
 	}
 
+	public String toBaseString() {
+		return super.toString();
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.AssemblerInstruction#toString()
 	 */
 	@Override
 	public String toString() {
-		String str = super.toString();
+		String str = toBaseString();
 		StringBuilder sb = new StringBuilder();
 		String num = number + "";
 		while (sb.length() < 5 - num.length())
@@ -474,6 +481,44 @@ public class AsmInstruction extends HLInstruction {
 			}
 		}
 		assert false;
+	}
+
+	/**
+	 * @param i 
+	 * @param op
+	 * @return
+	 */
+	public boolean supportsOp(int i, AssemblerOperand op) {
+		InstEncodePattern pattern = InstructionTable.lookupEncodePattern(getInst());
+		if (pattern == null)
+			return true;
+
+		int opType = i == 1 ? pattern.op1 : pattern.op2;
+		
+		switch (opType) {
+		case InstEncodePattern.CNT:
+			if (op.isRegister()) {
+				if ((op instanceof IRegisterOperand)) {
+					return ((IRegisterOperand) op).isReg(0);
+				}
+			}
+			// fall through
+		case InstEncodePattern.IMM:
+		case InstEncodePattern.OFF:
+			return op instanceof NumberOperand || ((op instanceof AsmOperand) && ((AsmOperand) op).isConst());
+		case InstEncodePattern.REG:
+			return op.isRegister();
+		case InstEncodePattern.GEN:
+			if (!(op.isRegister() || op.isMemory()))
+				return false;
+			
+			if (op instanceof IRegisterOperand) {
+				AssemblerOperand reg = ((IRegisterOperand) op).getReg();
+				return reg.isRegister() || reg instanceof NumberOperand;
+			}
+			return true;
+		}
+		return false;
 	}
 
 

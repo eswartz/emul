@@ -13,6 +13,7 @@ import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
+import org.ejs.eulang.llvm.tms9900.app.Simulator;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
@@ -821,6 +822,58 @@ public class Test9900Optimizer extends BaseInstrTest {
     		idx = findInstrWithInst(instrs, "AB", -1);
     	}
     	assertTrue(idx != -1);
+	}
+
+	@Test
+	public void testPeepholeNeg() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+				"x := 100;\n"+
+				"negate = code(x:Int) { -x; };\n"+
+				"");
+
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// note: this is three insts (copy R0 -> temp, NEG temp, MOV temp -> R0)
+    	// but will stay that way until we color registers later.
+    	idx = findInstrWithInst(instrs, "NEG", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "NEG", RegTempOperand.class);
+
+	}
+	
+	@Test
+	public void testArraySum() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+				"testArraySum = code() {\n"+
+				"  vals : Int[10];\n"+
+				"  s := 0;\n"+
+				"  for i in 10 do vals[i] = i;\n"+
+				"  for i in 10 do s += vals[i];\n"+
+				"};\n"+
+				"");
+    	assertTrue(changed);
+    	
+    	int idx = -1;
+    	AsmInstruction inst;
+    	idx = findInstrWithInst(instrs, "SLA", idx);
+    	inst = instrs.get(idx);
+    	idx = findInstrWithInst(instrs, "A", idx);
+    	inst = instrs.get(idx);
+    	
+    	if (inst.getOp2() instanceof  AddrOperand)
+    		fail(inst+": should not substitute addr here");
+    	matchInstr(inst, "A", RegTempOperand.class, RegTempOperand.class);
+    	
+    	idx = findInstrWithInst(instrs, "A", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "A", RegTempOperand.class, RegTempOperand.class);
 	}
 	
 }

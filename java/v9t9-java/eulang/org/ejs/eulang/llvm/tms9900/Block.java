@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.ejs.eulang.llvm.tms9900.asm.Label;
+import org.ejs.eulang.symbols.ISymbol;
 
 public class Block {
 
@@ -38,9 +38,9 @@ public class Block {
     
     private int flags;
 
-	private Label label;
+	private ISymbol label;
 
-    public Block(Label label) {
+    public Block(ISymbol label) {
     	this.label = label;
 		this.id = nextId++;
 		instrs = new LinkedList<AsmInstruction>();
@@ -91,7 +91,7 @@ public class Block {
 		
 	}
 
-	public Label getLabel() {
+	public ISymbol getLabel() {
 		return label;
 	}
     public void setId(int id) {

@@ -25,11 +25,14 @@ import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
+import org.ejs.eulang.llvm.tms9900.BuildOutput;
 import org.ejs.eulang.llvm.tms9900.DataBlock;
+import org.ejs.eulang.llvm.tms9900.ICodeVisitor;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.Locals;
+import org.ejs.eulang.llvm.tms9900.LowerPseudoInstructions;
 import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
@@ -43,6 +46,7 @@ import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
+import org.junit.Before;
 
 import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.InstructionTable;
@@ -67,6 +71,12 @@ public class BaseInstrTest extends BaseTest {
 	protected Block currentBlock;
 	protected Routine routine;
 
+	protected BuildOutput buildOutput;
+
+	@Before
+	public void setup() {
+		buildOutput = new BuildOutput();
+	}
 	protected Routine doIsel(String text) throws Exception {
 		LLModule mod = getModule(text);
 		for (LLBaseDirective dir : mod.getDirectives()) {
@@ -100,6 +110,8 @@ public class BaseInstrTest extends BaseTest {
 			 */
 			@Override
 			protected void newRoutine(Routine routine) {
+				buildOutput.register(routine);
+				
 				instrs.clear();
 				blocks.clear();
 				currentBlock = null;
@@ -175,11 +187,8 @@ public class BaseInstrTest extends BaseTest {
 		}
 		
 		// make sure operands are valid
-		InstEncodePattern pattern = InstructionTable.getInstEncodePattern(instr.getInst());
-		if (pattern != null) {
-			validateOperand(instr, instr.getOp1(), pattern.op1);
-			validateOperand(instr, instr.getOp2(), pattern.op2);
-		}
+		validateOperand(instr, 1, instr.getOp1());
+		validateOperand(instr, 2, instr.getOp2());
 	}
 
 	/**
@@ -187,35 +196,11 @@ public class BaseInstrTest extends BaseTest {
 	 * @param op1
 	 * @param op12
 	 */
-	protected void validateOperand(AsmInstruction instr, AssemblerOperand op,
-			int opType) {
+	protected void validateOperand(AsmInstruction instr, int i, AssemblerOperand op) {
+		if (op == null)
+			return;
 		String prefix = instr+":"+op;
-		switch (opType) {
-		case InstEncodePattern.CNT:
-			if (op.isRegister()) {
-				if ((op instanceof IRegisterOperand)) {
-					assertTrue(prefix, ((IRegisterOperand) op).isReg(0));
-					break;
-				}
-			}
-			// fall through
-		case InstEncodePattern.IMM:
-		case InstEncodePattern.OFF:
-			assertTrue(prefix, op instanceof NumberOperand || ((op instanceof AsmOperand) && ((AsmOperand) op).isConst()));
-			break;
-		case InstEncodePattern.REG:
-			assertTrue(prefix, op.isRegister());
-			break;
-		case InstEncodePattern.GEN:
-			assertTrue(prefix, op.isRegister() || op.isMemory());
-			
-			if (op instanceof IRegisterOperand) {
-				AssemblerOperand reg = ((IRegisterOperand) op).getReg();
-				assertTrue(op+"", reg.isRegister() || reg instanceof NumberOperand);
-			}
-			break;
-		}
-		
+		assertTrue(prefix, instr.supportsOp(i, op));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -473,6 +458,8 @@ public class BaseInstrTest extends BaseTest {
 		assert asmOp instanceof AsmOperand;
 		
 		DataBlock block = new DataBlock(global.getSymbol(), (AsmOperand) asmOp);
+		buildOutput.register(block);
+		
 		return block;
 	}
 
@@ -576,4 +563,39 @@ public class BaseInstrTest extends BaseTest {
     	inter.andNot(local.getUses());
     	assertTrue(inter.isEmpty());
 	}
+	
+	protected boolean runLowerPseudoPhase(Routine routine) {
+		System.out.println("\n*** Before lowering:\n");
+		routine.accept(new RoutineDumper());
+		
+		LowerPseudoInstructions lower = new LowerPseudoInstructions();
+		boolean anyChanges = false;
+		do {
+			try {
+				routine.accept(lower);
+			} catch (ICodeVisitor.Terminate e) {
+				
+			}
+			if (lower.isChanged()) {
+				System.out.println("\n*** After lowering pass:\n");
+				routine.accept(new RoutineDumper());
+				anyChanges = true;
+				
+				routine.setupForOptimization();
+			}
+		} while (lower.isChanged());
+		
+
+		if (!anyChanges)
+			System.out.println("\n*** No changes");
+		else {
+			System.out.println("\n*** Done lowering:\n");
+			routine.accept(new RoutineDumper());
+		}
+		
+		validateInstrsAndResync(routine);
+		return anyChanges;
+		
+	}
+	
 }

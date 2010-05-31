@@ -671,6 +671,8 @@ public class Instruction extends RawInstruction implements IInstruction {
         /** what resources (INST_RSRC_xxx) are read and written? */
         public int reads, writes;	
         public int mop1_dest, mop2_dest, mop3_dest;
+        
+        public boolean byteop;
     }
 
 	/**
@@ -686,6 +688,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	    fx.jump = Instruction.INST_JUMP_FALSE;
 	    fx.reads = 0;
 	    fx.writes = 0;
+	    fx.byteop = false;
 	
 	    if (inst == InstructionTable.Idata) {
 	    } else if (inst >= InstructionTable.Ili && inst <= InstructionTable.Ici) {
@@ -958,12 +961,14 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            break;
 	        case InstructionTable.Iszcb:
 	            fx.stsetAfter = Instruction.st_BYTE_LAEP;
+	            fx.byteop = true;
 	            break;
 	        case InstructionTable.Is:
 	            fx.stsetBefore = Instruction.st_SUB_LAECO;
 	            break;
 	        case InstructionTable.Isb:
 	            fx.stsetBefore = Instruction.st_SUB_BYTE_LAECOP;
+	            fx.byteop = true;
 	            break;
 	        case InstructionTable.Ic:
 	            fx.stsetAfter = Instruction.st_CMP;
@@ -972,12 +977,14 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        case InstructionTable.Icb:
 	            fx.stsetAfter = Instruction.st_BYTE_CMP;
 	            fx.mop2_dest = Operand.OP_DEST_FALSE;
+	            fx.byteop = true;
 	            break;
 	        case InstructionTable.Ia:
 	            fx.stsetBefore = Instruction.st_ADD_LAECO;
 	            break;
 	        case InstructionTable.Iab:
 	            fx.stsetBefore = Instruction.st_ADD_BYTE_LAECOP;
+	            fx.byteop = true;
 	            break;
 	        case InstructionTable.Imov:
 	            fx.stsetAfter = Instruction.st_LAE;
@@ -986,12 +993,14 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        case InstructionTable.Imovb:
 	            fx.stsetAfter = Instruction.st_BYTE_LAEP;
 	            fx.mop2_dest = Operand.OP_DEST_KILLED;
+	            fx.byteop = true;
 	            break;
 	        case InstructionTable.Isoc:
 	            fx.stsetAfter = Instruction.st_LAE;
 	            break;
 	        case InstructionTable.Isocb:
 	            fx.stsetAfter = Instruction.st_BYTE_LAEP;
+	            fx.byteop = true;
 	            break;
 	        }
 	    } else {

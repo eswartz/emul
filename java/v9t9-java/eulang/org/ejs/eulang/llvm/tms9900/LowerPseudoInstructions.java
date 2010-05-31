@@ -10,7 +10,6 @@ import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
-import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
@@ -320,7 +319,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		// make block for copy loop
 		ISymbol labelSym = locals.getScope().addTemporary(".copy");
 		labelSym.setType(typeEngine.LABEL);
-		Block loop = new Block(new Label(labelSym.getUniqueName()));
+		Block loop = new Block(labelSym);
 		routine.addBlock(loop);
 		System.out.println(here() +" added " + loop);
 		

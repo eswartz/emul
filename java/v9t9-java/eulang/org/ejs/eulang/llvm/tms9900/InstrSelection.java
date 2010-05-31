@@ -59,7 +59,6 @@ import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
-import org.ejs.eulang.llvm.tms9900.asm.Label;
 import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
@@ -370,7 +369,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			// although we generate only one return, the optimizer may add more,
 			// so divert all returns to the tail block
 			
-			epilogBlock = new Block(new Label(epilogLabel.getUniqueName()));
+			epilogBlock = new Block(epilogLabel);
 			
 			newBlock(epilogBlock);
 			routine.addBlock(epilogBlock);
@@ -409,9 +408,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	@Override
 	public boolean enterBlock(LLBlock llblock) {
 		ISymbol lllabelSym = llblock.getLabel();
-		Label label = new Label(lllabelSym.getUniqueName());
 		this.llblock = llblock;
-		block = new Block(label);
+		block = new Block(lllabelSym);
 		
 		newBlock(block);
 		routine.addBlock(block);
@@ -1103,43 +1101,141 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		LLType type = ops[0].getType();
 		AssemblerOperand asmOp = generateOperand(ops[0]);
-		int offs = 0;
 		
-		for (int idx = 1; idx < ops.length; idx++) {
-			int item = ((LLConstOp) ops[idx]).getValue().intValue();
+		boolean flushOffs = false;
+		int offs = 0;
+		int idx = 1;
+		
+		// handle const indices: try to hold the last offset
+		// in a complex memory operand if possible
+		while (idx < ops.length) {
+			if (ops[idx] instanceof LLConstOp) {
+				int item = ((LLConstOp) ops[idx]).getValue().intValue();
+				if (idx == 1) {
+					// step over pointer
+					offs += type.getBits() * item / 8;
+					type = typeEngine.getRealType(type.getSubType());
+					asmOp = generateGeneralOperand(ops[0], asmOp);
+					flushOffs = true;
+				} else {
+					if (type instanceof LLDataType) {
+						LLDataType dataType = (LLDataType) type;
+						LLInstanceField field = dataType.getInstanceFields()[item];
+						type = field.getType();
+						assert field.getOffset() % 8 == 0;
+						offs += field.getOffset() / 8;
+						flushOffs = true;
+					} else if (type instanceof LLArrayType) {
+						LLArrayType arrayType = (LLArrayType) type;
+						type = arrayType.getSubType();
+						offs += type.getBits() * item / 8;
+						flushOffs = true;
+					} else {
+						assert false;
+					}
+				}
+			} else 
+				break;
+			idx++;
+		}
+
+		if (flushOffs)
+			asmOp = applyOffset(asmOp, idx, type, offs, idx < ops.length);
+		flushOffs = false;
+
+		// handle non-const indices: immediately generate a temp with the address
+		while (idx < ops.length) {
+			AssemblerOperand item = generateOperand(ops[idx]);
+			
 			if (idx == 1) {
 				// step over pointer
-				offs += type.getBits() * item / 8;
-				type = typeEngine.getRealType(type.getSubType());
 				asmOp = generateGeneralOperand(ops[0], asmOp);
+				
+				item = generateMultiply(item, type.getBits() / 8);
+				
+				emitInstr(AsmInstruction.create(Ia, item, asmOp));
+				
+				type = typeEngine.getRealType(type.getSubType());
+				
+				flushOffs = false;
 			} else {
 				if (type instanceof LLDataType) {
+					assert item instanceof NumberOperand;
 					LLDataType dataType = (LLDataType) type;
-					LLInstanceField field = dataType.getInstanceFields()[item];
+					LLInstanceField field = dataType.getInstanceFields()[((NumberOperand) item).getValue()];
 					type = field.getType();
 					assert field.getOffset() % 8 == 0;
 					offs += field.getOffset() / 8;
+					flushOffs = true;
 				} else if (type instanceof LLArrayType) {
 					LLArrayType arrayType = (LLArrayType) type;
 					type = arrayType.getSubType();
-					offs += type.getBits() * item / 8;
+					
+					if (flushOffs) {
+						asmOp = applyOffset(asmOp, idx, type, offs, true);
+					}
+					
+					item = generateMultiply(item, type.getBits() / 8);
+					
+					emitInstr(AsmInstruction.create(Ia, item, asmOp));
+					
+					flushOffs = false;
 				} else {
 					assert false;
 				}
 			}
+			idx++;
 		}
 		
-		// use StackLocalOffsOperand to indicate partial access to locals
-		if (ops.length >= 2) {
-			asmOp = ensurePiecewiseAccess(asmOp, type);
-		}
-		if (offs != 0) {
-			if (!asmOp.isRegister())
-				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
-			asmOp = new CompositePieceOperand(new NumberOperand(offs), asmOp, type);
-		}
 		asmOps[0] = asmOp;
 		ssaTempTable.put(instr.getResult(), asmOp);
+	}
+
+	/**
+	 * @param item
+	 * @param i
+	 * @return
+	 */
+	private AssemblerOperand generateMultiply(AssemblerOperand item, int by) {
+		LLOperand llOp = new LLConstOp(typeEngine.INT, 0);
+		if ((by & (by - 1)) != 0) {
+			// urgh, slow path
+			
+			item = copyIntoRegPair(llOp, instr, item, true);
+			
+			AssemblerOperand val = moveToTemp(llOp, typeEngine.INT, new NumberOperand(by));
+			
+			emitInstr(AsmInstruction.create(Impy, val, item));
+			
+			RegisterLocal regLocal = getRegisterPair(llOp);
+			RegTempOperand result = new RegTempOperand(regLocal, false);  
+			
+			return result;
+		} else {
+			int log2 = getLog2(by);
+			
+			AssemblerOperand val = moveToTemp(llOp, typeEngine.INT, item);
+			emitInstr(AsmInstruction.create(Isla, val, new NumberOperand(log2)));
+			return val;
+		}
+	}
+
+	private AssemblerOperand applyOffset(AssemblerOperand asmOp, int idx,
+			LLType type, int offs, boolean forceToReg) {
+		// use StackLocalOffsOperand to indicate partial access to locals
+		if (idx >= 2) {
+			asmOp = ensurePiecewiseAccess(asmOp, type);
+		}
+		if (forceToReg || offs != 0) {
+			if (!asmOp.isRegister())
+				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
+			else if (forceToReg) 
+				asmOp = moveToTemp(new LLConstOp(typeEngine.INT, 0), typeEngine.INT, asmOp);
+		}
+		if (offs != 0) {
+			asmOp = new CompositePieceOperand(new NumberOperand(offs), asmOp, type);
+		}
+		return asmOp;
 	}
 
 
@@ -1309,12 +1405,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		case IMM_LOG_2: {
 			assert asmOp instanceof NumOperand && isIntPow2((LLConstOp) operand);
-			int log = 0;
 			int val = ((LLConstOp) operand).getValue().intValue();
-			while (val != 1) {
-				val >>>= 1;
-				log++;
-			}
+			int log = getLog2(val);
 			asmOp = new NumOperand(log);
 			break;
 		}
@@ -1344,6 +1436,15 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		
 		asmOps[num] = asmOp;
+	}
+
+	private int getLog2(int val) {
+		int log = 0;
+		while (val != 1) {
+			val >>>= 1;
+			log++;
+		}
+		return log;
 	}
 
 	/**
@@ -1659,9 +1760,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				int op = (type.getBits() <= 8) ? Imovb : Imov;
 				AsmInstruction inst = AsmInstruction.create(op, from, dest);
 				emitInstr(inst);
-			} else if (from instanceof NumOperand) {
+			} else if (from instanceof NumberOperand) {
 				if (llOp.getType().getBits() <= 8)
-					from = new NumOperand((((NumOperand) from).getValue() << 8) & 0xff00);
+					from = new NumberOperand((((NumberOperand) from).getValue() << 8) & 0xff00);
 
 				AsmInstruction inst = AsmInstruction.create(Ili, dest, from);
 				emitInstr(inst);
