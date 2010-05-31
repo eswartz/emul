@@ -55,7 +55,7 @@ public class InstrSelectionTable {
 	static final InstrSelection.IPattern[] patterns = {
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "bitcast", 
 				new InstrSelection.If[] { InstrSelection.If.PASS },
-				new InstrSelection.As[] { InstrSelection.As.SELF },
+				new InstrSelection.As[] { InstrSelection.As.GEN_R },
 				new InstrSelection.DoRes( 0, -1, 0 )
 		),
 		

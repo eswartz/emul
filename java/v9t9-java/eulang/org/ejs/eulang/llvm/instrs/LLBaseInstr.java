@@ -89,8 +89,17 @@ public abstract class LLBaseInstr implements LLInstr {
 			appendOperandString(sb, idx, op);
 			idx++;
 		}
+		appendFinalString(sb);
 	}
 	
+	/**
+	 * @param sb
+	 */
+	protected void appendFinalString(StringBuilder sb) {
+		
+	}
+
+
 	/**
 	 * @return
 	 */

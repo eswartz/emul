@@ -150,7 +150,6 @@ public class Test9900Simulation extends BaseInstrTest {
 	}
 	@Test
 	public void testArraySum2() throws Exception {
-		//doOptimize = false;
 		Simulator sim = makeSimulate(
 				"vals:Int[10];\n"+
 				"testArraySum = code() {\n"+

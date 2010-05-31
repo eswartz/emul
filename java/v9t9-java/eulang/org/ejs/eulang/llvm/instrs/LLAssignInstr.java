@@ -40,6 +40,14 @@ public abstract class LLAssignInstr extends LLTypedInstr {
 		if (result != null)
 			sb.append(result).append(" = ");
 		super.appendInstrString(sb);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLBaseInstr#appendFinalString(java.lang.StringBuilder)
+	 */
+	@Override
+	protected void appendFinalString(StringBuilder sb) {
+		super.appendFinalString(sb);
 		if (uses > 0) {
 			while (sb.length() < 40)
 				sb.append(' ');

@@ -2128,7 +2128,7 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 
 		idx = findInstrWithSymbol(instrs, "vals", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", SymbolOperand.class, "vals", RegTempOperand.class);
+		matchInstr(inst, "LI", RegTempOperand.class, SymbolOperand.class, "vals");
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);

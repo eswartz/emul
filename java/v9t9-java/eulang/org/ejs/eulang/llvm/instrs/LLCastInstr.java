@@ -61,9 +61,17 @@ public class LLCastInstr extends LLAssignInstr {
 	@Override
 	protected void appendInstrString(StringBuilder sb) {
 		super.appendInstrString(sb);
-		sb.append(" to " + toType.getLLVMName());
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLAssignInstr#appendFinalString(java.lang.StringBuilder)
+	 */
+	@Override
+	protected void appendFinalString(StringBuilder sb) {
+		sb.append(" to " + toType.getLLVMName());
+		super.appendFinalString(sb);
+	}
+	
 	/**
 	 * @return
 	 */
