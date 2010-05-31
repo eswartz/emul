@@ -128,6 +128,7 @@ toplevelstat:  defineStmt
 rhsExprOrInitList : rhsExpr | initList ;
 
 defineStmt : (ID EQUALS LBRACKET) => ID EQUALS LBRACKET idlistOrEmpty RBRACKET  toplevelvalue     SEMI  -> ^(DEFINE ID idlistOrEmpty toplevelvalue) 
+    | (ID EQUALS_COLON) => ID EQUALS_COLON type     SEMI  -> ^(DEFINE ID type)
     | (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
   ;
 
@@ -564,6 +565,7 @@ COLON : ':';
 //COLON_COLON : '::';
 COMMA : ',';
 EQUALS : '=';
+EQUALS_COLON : '=:';
 COLON_EQUALS : ':=';
 COLON_COLON_EQUALS : '::=';
 PLUS : '+';
@@ -652,6 +654,8 @@ BY : 'by';
 CODE : 'code';
 DATA : 'data';
 MACRO : 'macro';
+//TYPE : 'type';
+
 FOR : 'for';
 IN : 'in';
 GOTO: 'goto';

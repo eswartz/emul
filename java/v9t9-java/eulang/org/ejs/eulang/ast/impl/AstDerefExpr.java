@@ -155,14 +155,17 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 			}
 		}
 		
-		if (canInferTypeFrom(this) && canInferTypeFrom(expr) && !typeEngine.getBaseType(expr.getType()).equals(getType())) {
-			if (getType().getBasicType() != BasicType.VOID) {
-				if (!lhs || !(expr instanceof IAstFieldExpr)) {
-					setExpr(createCastOn(typeEngine, expr, typeEngine.getPointerType(getType())));
-				} else {
-					if (!getType().equals(expr.getType())) {
-						setType(expr.getType());
-						changed = true;
+		if (canInferTypeFrom(this) && canInferTypeFrom(expr)) {
+			LLType baseType = typeEngine.getBaseType(expr.getType());
+			if (baseType != null && !baseType.equals(getType())) {
+				if (getType().getBasicType() != BasicType.VOID) {
+					if (!lhs || !(expr instanceof IAstFieldExpr)) {
+						setExpr(createCastOn(typeEngine, expr, typeEngine.getPointerType(getType())));
+					} else {
+						if (!getType().equals(expr.getType())) {
+							setType(expr.getType());
+							changed = true;
+						}
 					}
 				}
 			}

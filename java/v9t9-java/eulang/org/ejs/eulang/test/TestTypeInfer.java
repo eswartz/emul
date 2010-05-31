@@ -17,6 +17,7 @@ import junit.framework.AssertionFailedError;
 
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstArrayType;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
@@ -1626,6 +1627,34 @@ public class TestTypeInfer extends BaseTest {
     	assertEquals(complex.getScope(), symExpr.getSymbol().getScope());
     	
     }
+    
+    @Test
+	public void testArraySum3() throws Exception {
+    	IAstModule mod = doFrontend(
+				"ARRAY =: Int[3,3];\n"+	// typedef
+				"vals:ARRAY;\n"+
+				"doSum = code(valp:ARRAY^) {\n"+
+				"};\n"+
+				"testArraySum = code() {\n"+
+				"  valp := &vals;\n"+
+				"  doSum(valp);\n"+
+				"};\n"+
+				"");
+    	IAstDefineStmt def;
+    	def = (IAstDefineStmt) mod.getScope().getNode("ARRAY");
+		assertNotNull(def);
+		
+		IAstArrayType array = (IAstArrayType) getMainBodyExpr(def);
+		LLArrayType arrayType = typeEngine.getArrayType(typeEngine.getArrayType(typeEngine.INT, 3, null), 3, null);
+		assertEquals(arrayType, array.getType());
+		
+    	def = (IAstDefineStmt) mod.getScope().getNode("doSum");
+		assertNotNull(def);
+		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr(def);
+		assertEquals(typeEngine.getPointerType(arrayType), ((LLCodeType)code.getType()).getArgTypes()[0]);
+		
+	}
+
 }
 
 

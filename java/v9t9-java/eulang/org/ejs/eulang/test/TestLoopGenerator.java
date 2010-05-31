@@ -169,6 +169,7 @@ public class TestLoopGenerator extends BaseTest {
     
     @Test
     public void testForCountDown3() throws Exception {
+    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"testForCountDown3 = code (cnt, step) {\n" +
     			"   s := 1.;\n"+

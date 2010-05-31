@@ -67,9 +67,15 @@ public class LLDataType extends BaseLLAggregateType {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
+		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (getClass() != obj.getClass()) {
+			if (obj instanceof LLType) {
+				return (symbol.getScope().getUniqueName() + symbol.getUniqueName()).equals(((LLType) obj).getName());
+			}
+			return false;
+		}
+		if (!super.equals(obj))
 			return false;
 		LLDataType other = (LLDataType) obj;
 		if (!Arrays.equals(ifields, other.ifields))

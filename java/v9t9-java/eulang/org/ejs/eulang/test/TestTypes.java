@@ -1582,7 +1582,7 @@ xes[3][2][1]
 				"        next:List<U, T>^;\n" +
 				"};\n" + 
 				"\n" +
-				"IntDoubleList = List<Int,Double>;\n"+
+				"IntDoubleList =: List<Int,Double>;\n"+
 				"listNextNext = code (list:IntDoubleList^) { list.next.next.next.node };\n"+
 				"intList = code(x:Int;y:Double) {\n"+
 				"   list1 : IntDoubleList; list2 : List<Double, Int>;\n" +

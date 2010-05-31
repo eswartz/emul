@@ -368,6 +368,8 @@ public class LLVMGenerator {
 			generateGlobalData(stmt.getSymbol(), (IAstDataType) expr);
 		} else if (expr instanceof IAstSymbolExpr) {
 			// ignore
+		} else if (expr instanceof IAstType) {
+			// ignore
 		} else if (expr instanceof IAstStmtScope) {
 			generateGlobalStmtList(((IAstStmtScope) expr));
 		} else {
@@ -385,7 +387,7 @@ public class LLVMGenerator {
 		// ignore for now, even though it may have initializers
 		ensureTypes(expr);
 
-		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
+		//ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
 		// ll.add(new LLConstantDirective(modSymbol, true, expr.getType(), new
 		// LLConstant(expr.getLiteral())));
 
@@ -573,22 +575,8 @@ public class LLVMGenerator {
 	private LLOperand generateStmt(IAstStmt stmt) throws ASTException {
 
 		LLOperand result = null;
-		if (stmt instanceof IAstExprStmt)
-			result = generateExprStmt((IAstExprStmt) stmt);
-		else if (stmt instanceof IAstAllocStmt)
-			result = generateLocalAllocStmt((IAstAllocStmt) stmt);
-		else if (stmt instanceof IAstAllocTupleStmt)
-			result = generateLocalAllocTupleStmt((IAstAllocTupleStmt) stmt);
-		else if (stmt instanceof IAstAssignStmt)
-			result = generateAssignStmt((IAstAssignStmt) stmt);
-		else if (stmt instanceof IAstAssignTupleStmt)
-			result = generateAssignTupleStmt((IAstAssignTupleStmt) stmt);
-		else if (stmt instanceof IAstBlockStmt)
+		if (stmt instanceof IAstBlockStmt)
 			result = generateStmtList(((IAstBlockStmt) stmt).stmts());
-		else if (stmt instanceof IAstLoopStmt)
-			result = generateLoopStmt((IAstLoopStmt) stmt);
-		else if (stmt instanceof IAstBreakStmt)
-			result = generateBreakStmt((IAstBreakStmt) stmt);
 		else if (stmt instanceof IAstDefineStmt)
 			; // ignore
 		else if (stmt instanceof IAstLabelStmt)
@@ -597,6 +585,8 @@ public class LLVMGenerator {
 		else if (stmt instanceof IAstGotoStmt)
 			// no val
 			generateGotoStmt((IAstGotoStmt) stmt);
+		else if (stmt instanceof IAstTypedExpr)
+			result = generateTypedExprCore((IAstTypedExpr) stmt);
 		else
 			unhandled(stmt);
 		return result;
@@ -1180,6 +1170,8 @@ public class LLVMGenerator {
 			temp = generateTupleExpr((IAstTupleExpr) expr);
 		else if (expr instanceof IAstAssignStmt)
 			temp = generateAssignStmt((IAstAssignStmt) expr);
+		else if (expr instanceof IAstAssignTupleStmt)
+			temp = generateAssignTupleStmt((IAstAssignTupleStmt) expr);
 		else if (expr instanceof IAstAllocStmt)
 			temp = generateLocalAllocStmt((IAstAllocStmt) expr);
 		else if (expr instanceof IAstAllocTupleStmt)
@@ -1188,6 +1180,8 @@ public class LLVMGenerator {
 			temp = generateInitListExpr((IAstInitListExpr) expr);
 		else if (expr instanceof IAstBlockStmt)
 			temp = generateStmtList(((IAstBlockStmt) expr).stmts());
+		else if (expr instanceof IAstLoopStmt)
+			temp = generateLoopStmt((IAstLoopStmt) expr);
 		else if (expr instanceof IAstBreakStmt)
 			temp = generateBreakStmt((IAstBreakStmt) expr);
 		else if (expr instanceof IAstGotoStmt)

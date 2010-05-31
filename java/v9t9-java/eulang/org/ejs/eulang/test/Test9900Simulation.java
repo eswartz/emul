@@ -6,6 +6,9 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
@@ -14,6 +17,7 @@ import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
 import org.ejs.eulang.llvm.tms9900.app.Simulator;
+import org.ejs.eulang.llvm.tms9900.app.Simulator.InstructionWorkBlock;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,15 +57,25 @@ public class Test9900Simulation extends BaseInstrTest {
 		final Simulator sim = new Simulator(v9t9Target, buildOutput);
 		
 		sim.addInstructionListener(sim.new DumpFullReporter());
+		final List<Short> changes = new ArrayList<Short>();
+		sim.addInstructionListener(new Simulator.InstructionListener() {
+			
+			@Override
+			public void executed(Simulator.InstructionWorkBlock before, Simulator.InstructionWorkBlock after) {
+				int wp = sim.getCPU().getWP() & 0xffff;
+				for (short addr : changes)
+					System.out.println("\t==> " + ((addr >= wp && addr <= wp + 32) ?
+							"R" + (addr - wp) / 2 :
+								HexUtils.toHex4(addr))
+								+ " = " + HexUtils.toHex4(sim.getMemory().readWord(addr)));
+				changes.clear();
+			}
+		});
 		sim.getMemory().addWriteListener(new MemoryWriteListener() {
 			
 			@Override
 			public void changed(MemoryEntry entry, int addr) {
-				int wp = sim.getCPU().getWP() & 0xffff;
-				System.out.println("\t==> " + ((addr >= wp && addr <= wp + 32) ?
-						"R" + (addr - wp) / 2 :
-						HexUtils.toHex4(addr))
-						+ " = " + HexUtils.toHex4(entry.readWord(addr)));
+				changes.add((short) addr);
 			}
 		});
 		return sim;
@@ -161,6 +175,24 @@ public class Test9900Simulation extends BaseInstrTest {
 				"");
 		short val = doSimulate(sim, "testArraySum", 500);
 		assertEquals(55, val);
+	}
+	@Test
+	public void testArraySum3() throws Exception {
+		Simulator sim = makeSimulate(
+				"ARRAY =: Int[3,3];\n"+
+				"vals:ARRAY;\n"+
+				"doSum = code(valp:ARRAY^) {\n"+
+				"  s := 0;\n"+
+				"  for i in 3 do for j in 3 do valp[i,j] = i*3+j;\n"+		// 0,1,2 | 3,4,5 | 6,7,8
+				"  for i in 3 do s += valp[i,i]+3;\n"+		// 0+3 | 4+3 | 8+3
+				"};\n"+
+				"testArraySum = code() {\n"+
+				"  valp := &vals;\n"+
+				"  doSum(valp);\n"+
+				"};\n"+
+				"");
+		short val = doSimulate(sim, "testArraySum", 500);
+		assertEquals(21, val);
 	}
 
 }
