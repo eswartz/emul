@@ -14,6 +14,10 @@ public class TestParser extends BaseTest  {
     	parse("  \n\n");
     }
     @Test
+    public void testCommentsEmpty() throws Exception {
+    	parse("//a test\n");
+    }
+    @Test
     public void testNumber1() throws Exception {
     	parseAt("atom", "3192");
     }
@@ -60,6 +64,7 @@ public class TestParser extends BaseTest  {
     @Test
     public void testTopLevelAssign() throws Exception  {
     	parse("i = 3 + 6 ;");
+    	parse("//a test\ni = 3 + 6 ;");
     }
     @Test
     public void testTopLevelStmtList() throws Exception  {
@@ -67,7 +72,7 @@ public class TestParser extends BaseTest  {
     }
     @Test
     public void testEmptyCodeBlock() throws Exception  {
-    	parse("myCode = code {};");
+    	parse("myCode = code {}; /* squadoosh */");
     }
     @Test
     public void testExprCodeBlock() throws Exception  {
