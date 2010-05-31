@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,17 +48,21 @@ public class SimulationTestCase extends BaseInstrTest implements Test {
 	private final String callRoutineName;
 	private final String testName;
 	private final boolean skipping;
+	private final String comment;
 
 	public interface SimulationRunnable {
 		void run(Simulator sim) throws Exception;
 	}
 	/**
+	 * @param comment 
 	 * @param skipping 
 	 * 
 	 */
-	public SimulationTestCase(String testName, String program, boolean skipping, SimulationRunnable[] setups, String callRoutineName, SimulationRunnable[] checks) {
+	public SimulationTestCase(String testName, String comment,  String program, boolean skipping, 
+			SimulationRunnable[] setups, String callRoutineName, SimulationRunnable[] checks) {
 		this.testName = testName;
 		this.program = program;
+		this.comment = comment;
 		this.skipping = skipping;
 		this.setups = setups;
 		this.callRoutineName = callRoutineName;
@@ -161,7 +166,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test {
 	 */
 	@Override
 	public String toString() {
-		return testName;
+		return (comment.isEmpty() ? "" : comment + "\n") + testName ;
 	}
 	
 	/* (non-Javadoc)
@@ -171,7 +176,39 @@ public class SimulationTestCase extends BaseInstrTest implements Test {
 	public int countTestCases() {
 		return 1;
 	}
+	
+	static class MirrorPrintStream extends PrintStream {
 
+		private final PrintStream mirror;
+
+		/**
+		 * @param out
+		 */
+		public MirrorPrintStream(OutputStream out, PrintStream mirror) {
+			super(out);
+			this.mirror = mirror;
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.io.PrintStream#write(byte[], int, int)
+		 */
+		@Override
+		public void write(byte[] buf, int off, int len) {
+			super.write(buf, off, len);
+			mirror.write(buf, off, len);
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.io.PrintStream#write(int)
+		 */
+		@Override
+		public void write(int b) {
+			super.write(b);
+			mirror.write(b);
+		}
+		
+		
+	}
 	/* (non-Javadoc)
 	 * @see junit.framework.Test#run(junit.framework.TestResult)
 	 */
@@ -191,13 +228,14 @@ public class SimulationTestCase extends BaseInstrTest implements Test {
 		
 		final ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
 		final ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
-		final PrintStream outStr = new PrintStream(outBuf);
-		final PrintStream errStr = new PrintStream(errBuf);
+		final PrintStream outStr = new MirrorPrintStream(outBuf, oldOut);
+		final PrintStream errStr = new MirrorPrintStream(errBuf, oldErr);
 		
 		result.runProtected(this, new Protectable() {
 			
 			@Override
 			public void protect() throws Throwable {
+				System.out.println(SimulationTestCase.this.toString());
 				System.setOut(outStr);
 				System.setErr(errStr);
 				setup();

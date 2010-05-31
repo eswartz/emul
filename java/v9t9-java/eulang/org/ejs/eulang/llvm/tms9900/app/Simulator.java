@@ -321,7 +321,7 @@ public class Simulator {
 	}
 	
 	private short emitDataBlock(short addr, DataBlock data) {
-		System.out.println(HexUtils.toHex4(addr)+": " + data.getName() + " = " + data.getValue());
+		System.out.println("alloc " + HexUtils.toHex4(addr)+": " + data.getName() + " = " + data.getValue());
 		symbolToAddrMap.put(data.getName(), addr);
 		addrToSymbolMap.put(addr, data.getName());
 		
@@ -414,7 +414,7 @@ public class Simulator {
         iblock.cycles = cpu.getCurrentCycleCount();
         
         /* get current operand values and instruction timings */
-        fetchOperands(cpu, ins, cpu.getWP(), cpu.getStatus());
+        fetchOperands(cpu, ins);
 
         InstructionWorkBlock block = new InstructionWorkBlock();
         this.iblock.copyTo(block);
@@ -471,7 +471,8 @@ public class Simulator {
      * @param ins
      * @param memory2
      */
-    private void fetchOperands(Cpu cpu, AsmInstruction ins, short wp, Status st) {
+    private void fetchOperands(Cpu cpu, AsmInstruction ins) {
+    	Status st = cpu.getStatus();
     	short pc = cpu.getPC();
         iblock.inst = ins;
         iblock.instPC = pc;
@@ -539,21 +540,29 @@ public class Simulator {
 		} else if (op instanceof NumberOperand) {
 			return (short) ((NumberOperand) op).getValue();
 		} else if (op instanceof RegIndOperand) {
-			short ea = (short) (iblock.wp + evaluate(((RegisterOperand) op).getReg()) * 2);
+			short ea = getEA(((RegisterOperand) op).getReg());
 			ea = memory.readWord(ea);
 			return ea;
 		} else if (op instanceof RegIncOperand) {
-			short ea = (short) (iblock.wp + evaluate(((RegisterOperand) op).getReg()) * 2);
+			short ea = getEA(((RegisterOperand) op).getReg());
 			short val = memory.readWord(ea);
 			memory.writeWord(ea, (short)(val + (iblock.inst.getEffects().byteop ? 1 : 2)));
 			return val;
 		} else if (op instanceof RegOffsOperand) {
-			assert false;
+			short ea = (short) (iblock.wp + evaluate(((RegisterOperand) op).getReg()) * 2);
+			ea = memory.readWord(ea);
+			ea += evaluate(((RegOffsOperand) op).getAddr());
+			return ea;
 		} else if (op instanceof RegisterOperand) {
 			short ea = (short) (iblock.wp + evaluate(((RegisterOperand) op).getReg()) * 2);
 			return ea;
 		} else if (op instanceof RegTempOperand) {
-			short ea = (short) (iblock.wp + evaluate(((RegTempOperand) op).getReg()) * 2);
+			AssemblerOperand reg = ((RegTempOperand) op).getReg();
+			short ea;
+			if (((RegTempOperand) op).getLocal().isPhysReg())
+				ea = (short) (iblock.wp + evaluate(reg) * 2);
+			else
+				ea = symbolToAddrMap.get(((RegTempOperand) op).getLocal().getName());
 			if (((RegTempOperand) op).isRegPair() && !((RegTempOperand) op).isHighReg())
 				ea += 2;
 			return ea;
@@ -806,7 +815,7 @@ public class Simulator {
         			addr = 0;
         		}
         		
-        		System.out.println(HexUtils.toHex4(addr)+": " + local);
+        		System.out.println("alloc " + HexUtils.toHex4(addr)+": " + local);
         		vrToAddrMap.put(local.getName(), addr);
         		symbolToAddrMap.put(local.getName(), addr);
         	}

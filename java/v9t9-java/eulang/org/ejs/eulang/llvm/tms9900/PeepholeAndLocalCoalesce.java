@@ -125,7 +125,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		int idx = 0;
 		while (idx < instrs.size()) {
 			AsmInstruction inst = instrs.get(idx);
-			System.out.println("?" + inst.toString().substring(1));
+			System.out.println("?" + inst.getAnnotatedString().substring(1));
 			
 			boolean applied = false;
 			
@@ -474,11 +474,11 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		}
 	
 		// and delete the moves
-		if (mov.getOp1().equals(mov.getOp2()) && !dependsOnStatus(mov))
-			removeInst(mov);
-		
 		if (mov.getOp2().equals(def.getSrcOp()) && !dependsOnStatus(mov))
 			removeInst(def);
+		
+		if (mov.getOp1().equals(mov.getOp2()) && !dependsOnStatus(mov))
+			removeInst(mov);
 		
 		// maintain forced reg
 		if (((RegisterLocal)tmpLocal).isPhysReg()) {
@@ -531,8 +531,6 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 						return false;
 				}
 			}
-			replaceUses(instrMap.get(use), fromOp, toOp, tmpLocal, origLocal);
-			changed = true;
 		}
 
 
@@ -659,7 +657,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	private void replaceAddrUses(AsmInstruction asmInstruction, RegTempOperand from, AssemblerOperand toOp, AssemblerOperand offset, ILocal fromLocal, ILocal toLocal) {
 		assert asmInstruction != null;
 		AssemblerOperand[] ops = asmInstruction.getOps();
-		System.out.print("From\t" + asmInstruction + "\n-- >\t");
+		emitChangePrefix(asmInstruction);
 		
 		LLType theType = typeEngine.getIntType(asmInstruction.getInst() == Imovb ? 8 : 16);
 		for (int idx = 0; idx < ops.length; idx++) {
@@ -690,17 +688,20 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			}
 			
 			if (newOp != op) {
-				updateLocalUsage(asmInstruction, fromLocal, null, op);
-				if (toLocal != null)
-					toLocal.getUses().set(asmInstruction.getNumber());
+				//updateLocalUsage(asmInstruction, fromLocal, null, op);
+				//if (toLocal != null)
+				//	toLocal.getUses().set(asmInstruction.getNumber());
 				
 				// update op
-				asmInstruction.setOp(idx + 1, InstrSelection.ensurePiecewiseAccess(newOp, theType));
+				updateOperandUsage(asmInstruction, op, false);
+				newOp = InstrSelection.ensurePiecewiseAccess(newOp, theType);
+				asmInstruction.setOp(idx + 1, newOp);
+				updateOperandUsage(asmInstruction, newOp, true);
 			}
 		}
 		updateLocalValues(from, toOp, fromLocal, toLocal);
 
-		System.out.println(asmInstruction);
+		emitChangeSuffix(asmInstruction);
 	}
 
 	/**
@@ -805,7 +806,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 
 		System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
 		
-		replaceUses(inst, fromOp, toOp, tmpLocal, null);
+		replaceUses(inst, fromOp, toOp, tmpLocal, getReffedLocal(toOp));
 			
 		// and delete the definition
 		if (!dependsOnStatus(def))
@@ -986,11 +987,15 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
 		
 		// make dummy replacement just to take care of the def/use accounting
-		replaceUses(inst, fromOp, toOp, tmpLocal, null);
+		//replaceUses(inst, fromOp, toOp, tmpLocal, null);
 
+		updateOperandUsage(inst, inst.getOp1(), false);
+		updateOperandUsage(inst, inst.getOp2(), false);
 		inst.setInst(Ili);
 		inst.setOp1(destOp);
 		inst.setOp2(valOp);
+		updateOperandUsage(inst, destOp, true);
+		updateOperandUsage(inst, valOp, true);
 		
 		System.out.println("with\t" + inst);
 		
@@ -1133,26 +1138,41 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		assert clr != null;
 		if (clr.getInst() != Iclr)
 			return false;
-		if (tmpLocal.getUses().nextSetBit(tmpLocal.getInit() + 1) != sub.getNumber())
+		
+		int nextDef = tmpLocal.getDefs().nextSetBit(tmpLocal.getInit() + 1); 
+		if (tmpLocal.getUses().nextSetBit(tmpLocal.getInit() + 1) != sub.getNumber()
+				|| (nextDef != -1 && nextDef < sub.getNumber()))
 			return false;
 
 		System.out.println(here() + "In " + sub.getNumber() +":  Replacing CLR/S with NEG");
 
-		System.out.println("From\t"+clr);
+		emitChangePrefix(clr);
+		
+		updateOperandUsage(clr, clr.getOp1(), false);
+		updateOperandUsage(clr, sub.getOp1(), false);
 		
 		clr.setInst(sub.getInst() == Isb ? Imovb : Imov);
 		clr.setOp2(clr.getOp1());
 		clr.setOp1(sub.getOp1());
 		
-		System.out.println("to\t"+clr);
+		updateOperandUsage(clr, clr.getOp1(), true);
+		updateOperandUsage(clr, sub.getOp1(), true);
 		
-		System.out.println("From\t"+sub);
+
+		emitChangeSuffix(clr);
+
+		emitChangePrefix(sub);
+		
+		updateOperandUsage(sub, sub.getOp1(), false);
+		updateOperandUsage(sub, sub.getOp2(), false);
 		
 		sub.setInst(Ineg);
 		sub.setOp1(sub.getOp2());
 		sub.setOp2(null);
 		
-		System.out.println("to\t"+sub);
+		updateOperandUsage(sub, sub.getOp1(), true);
+		
+		emitChangeSuffix(sub);
 		
 		return true;
 	}

@@ -32,6 +32,7 @@ public class Test9900Simulation  {
 		
 		try {
 			addSuite(suite, "00_simple.txt");
+			addSuite(suite, "01_arrays.txt");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -55,6 +56,7 @@ public class Test9900Simulation  {
 		List<SimulationRunnable> tests = new ArrayList<SimulationRunnable>();
 		String routineName = null;
 		int startLine = 0;
+		String comment = "";
 		
 		boolean skipping = false;
 		
@@ -67,11 +69,12 @@ public class Test9900Simulation  {
 			if (state == State.OUTSIDE_TEST) {
 				if (line.isEmpty())
 					continue;
-				if (line.equals("<<<")) {
+				if (line.startsWith("<<<")) {
 					state = State.TEST_SOURCE;
 					source.setLength(0);
 					prereqs.clear();
 					tests.clear();
+					comment = line.substring(3).trim();
 					routineName = null;
 					startLine = lineNum;
 					continue;
@@ -99,7 +102,7 @@ public class Test9900Simulation  {
 				if (line.isEmpty())
 					continue;
 				if (line.equals(">>>")) {
-					addTestCase(suite, skipping, fname, startLine, source, 
+					addTestCase(suite, skipping, fname, startLine, comment, source, 
 							prereqs.toArray(new SimulationRunnable[prereqs.size()]),
 							routineName,
 							tests.toArray(new SimulationRunnable[tests.size()]));
@@ -222,9 +225,9 @@ public class Test9900Simulation  {
 	}
 
 	private static void addTestCase(TestSuite suite, boolean skipping, String fname, int line,
-			StringBuilder source, SimulationRunnable[] prereqs, String routineName,
+			String comment, StringBuilder source, SimulationRunnable[] prereqs, String routineName,
 			SimulationRunnable[] tests) {
-		suite.addTest(new SimulationTestCase(fname + ":" + line, source.toString(), skipping, 
+		suite.addTest(new SimulationTestCase(fname + ":" + line, comment, source.toString(), skipping, 
 				prereqs, routineName, tests));
 	}
 	

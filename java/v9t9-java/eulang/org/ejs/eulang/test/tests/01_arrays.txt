@@ -1,0 +1,56 @@
+<<< sum of array
+testArraySum = code() {
+  vals : Int[10];
+  s := 0;
+  for i in 10 do vals[i] = i+1;
+  for i in 10 do s += vals[i];
+};
+===
+call testArraySum 
+assert R0 == 55
+>>>
+
+<<< sum of array through pointer
+vals:Int[10];
+testArraySum = code() {
+  valp : Int[]^ = &vals;
+  s := 0;
+  for i in 10 do valp[i] = i+1;
+  for i in 10 do s += valp[i];
+};
+===
+call testArraySum
+assert R0 == 55
+>>>
+
+<<< sum of array row/col
+ARRAY =: Int[3,3];
+vals:ARRAY;
+doSum = code(valp:ARRAY^) {
+  s := 0;
+  for i in 3 do for j in 3 do valp[i,j] = i*3+j;       // 0,1,2 | 3,4,5 | 6,7,8
+  for i in 3 do s += valp[i,i]+3;     // 0+3 | 4+3 | 8+3
+};
+testArraySum = code() {
+  valp := &vals;
+  doSum(valp);
+};
+===
+call testArraySum
+assert R0 == 21
+>>>
+
+<<< oblique test of locals being copied
+vals: Int[3,3];
+doSum = code(arr: Int[3,3]) {
+  s := 0;
+  for i in 3 do for j in 3 do arr[i,j] = (i+2)*(j+2);       // 4,6,8 | 6,9,12 | 8,12,16
+  for i in 3 do for j in 3 do vals[i][j] -= arr[i][j];
+};
+testArrayAndCopy = code() {
+  doSum(vals);
+};
+===
+call testArrayAndCopy
+assert vals == -4
+>>>

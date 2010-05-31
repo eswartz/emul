@@ -11,6 +11,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.symbols.ISymbol;
 
+import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
@@ -26,6 +27,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 	protected TreeMap<Integer, Block> instrBlockMap;
 	protected TypeEngine typeEngine;
 	protected LLModule module;
+	private HashSet<ILocal> origLocals;
 
 	public AbstractCodeModificationVisitor() {
 	}
@@ -60,17 +62,82 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 	protected void replaceUses(AsmInstruction asmInstruction, AssemblerOperand from, AssemblerOperand to, ILocal fromLocal, ILocal toLocal) {
 		assert asmInstruction != null;
 		AssemblerOperand[] ops = asmInstruction.getOps();
-		System.out.print("From\t" + asmInstruction + "\n-- >\t");
+		emitChangePrefix(asmInstruction);
 		for (int idx = 0; idx < ops.length; idx++) {
 			AssemblerOperand newOp = ops[idx].replaceOperand(from, to);
 			if (newOp != ops[idx]) {
-				updateLocalUsage(asmInstruction, fromLocal, toLocal, ops[idx]);
+				//updateLocalUsage(asmInstruction, fromLocal, toLocal, ops[idx]);
+				updateOperandUsage(asmInstruction, ops[idx], false);
 
 				// update op
 				asmInstruction.setOp(idx + 1, newOp);
+				
+				updateOperandUsage(asmInstruction, newOp, true);
 			}
 		}
-		System.out.println(asmInstruction);
+		emitChangeSuffix(asmInstruction);
+	}
+
+	protected void emitChangePrefix(AsmInstruction asmInstruction) {
+		System.out.println("From\t" + asmInstruction);
+		gatherUsageInfo(asmInstruction);
+	}
+
+
+	protected void gatherUsageInfo(AsmInstruction asmInstruction) {
+		origLocals = new HashSet<ILocal>();
+		
+		for (ISymbol sym : asmInstruction.getTargets()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null) {
+				origLocals.add(local);
+			}
+		}
+		for (ISymbol sym : asmInstruction.getSources()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null) {
+				origLocals.add(local);
+			}
+		}
+	}
+
+	/**
+	 * @param asmInstruction
+	 * @param origLocals2 
+	 */
+	protected void emitUsageInfo(AsmInstruction asmInstruction) {
+		Set<ILocal> seen = new HashSet<ILocal>();
+		for (ISymbol sym : asmInstruction.getTargets()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null) {
+				if (!origLocals.contains(local)) {
+					System.out.println("\t\t+" + local.getName() + "\tdefs: " + local.getDefs());
+				} else {
+					seen.add(local);
+				}
+			}
+		}
+		for (ISymbol sym : asmInstruction.getSources()) {
+			ILocal local = locals.getLocal(sym);
+			if (local != null) {
+				if (!origLocals.contains(local)) {
+					System.out.println("\t\t+" + local.getName() + "\tuses: " + local.getUses());
+				} else {
+					seen.add(local);
+				}
+			}
+		}
+		origLocals.removeAll(seen);
+		for (ILocal local : origLocals) {
+			System.out.println("\t\t-" + local.getName() + "\tuses: " + local.getUses());
+			System.out.println("\t\t-" + local.getName() + "\tdefs: " + local.getDefs());
+		}
+	}
+
+
+	protected void emitChangeSuffix(AsmInstruction asmInstruction) {
+		System.out.println("to\t" + asmInstruction);
+		emitUsageInfo(asmInstruction);
 	}
 
 	/**
@@ -88,12 +155,44 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 		return null;
 	}
 
+
+	protected void updateOperandUsage(AsmInstruction asmInstruction, AssemblerOperand op, boolean adding) {
+		Set<ISymbol> syms = new HashSet<ISymbol>(); 
+		AsmInstruction.getSymbolRefs(syms, op);
+		
+		for (ISymbol sym : asmInstruction.getSources()) {
+			if (syms.contains(sym)) {
+				ILocal local = locals.getLocal(sym);
+				if (local != null) {
+					if (adding)
+						local.getUses().set(asmInstruction.getNumber());
+					else
+						local.getUses().clear(asmInstruction.getNumber());
+				}
+			}
+		}
+	
+		for (ISymbol sym : asmInstruction.getTargets()) {
+			if (syms.contains(sym)) {
+				ILocal local = locals.getLocal(sym);
+				if (local != null) {
+					if (adding)
+						local.getDefs().set(asmInstruction.getNumber());
+					else
+						local.getDefs().clear(asmInstruction.getNumber());
+				}
+			}
+		}
+	}
+
 	/**
 	 * @param instrs 
 	 * @param inst
 	 */
 	protected void removeInst(AsmInstruction inst) {
 		System.out.println("Deleting " + inst);
+		
+		gatherUsageInfo(inst);
 		
 		for (ISymbol sym : inst.getSources()) {
 			ILocal local = locals.getLocal(sym);
@@ -111,6 +210,12 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 		}
 		Block block = instrBlockMap.get(inst.getNumber());
 		block.getInstrs().remove(inst);
+
+		inst.setOp1(null);
+		inst.setOp2(null);
+		inst.setOp3(null);
+		
+		emitUsageInfo(inst);
 	}
 
 	protected ILocal getTargetLocal(AsmInstruction inst) {

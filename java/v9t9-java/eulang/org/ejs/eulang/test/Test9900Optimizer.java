@@ -903,5 +903,26 @@ public class Test9900Optimizer extends BaseInstrTest {
     	matchInstr(inst, "MOV", CompositePieceOperand.class, 5*2, RegTempOperand.class, 0);
 
 	}
+	
+	@Test
+	public void testArraySubAss1() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+				"vals: Int[3,3];\n" + 
+				"doSum = code(arr: Int[3,3]) {\n" + 
+				"  s := 0;\n" + 
+				"  for i in 3 do for j in 3 do arr[i,j] = (i+2)*(j+2);       // 4,6,8 | 6,9,12 | 8,12,16\n" + 
+				"  for i in 3 do for j in 3 do vals[i][j] -= arr[i][j];\n" + 
+				"};");
+
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	idx = findInstrWithInst(instrs, "S");
+    	assertTrue(idx != -1);
+    	
+	}
 }
 

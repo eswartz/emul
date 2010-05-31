@@ -1,4 +1,4 @@
-<<<
+<<< simple
 x : Int = 5;
 getX = code() { x; };
 ===
@@ -6,7 +6,7 @@ call getX
 assert R0 == 5
 >>>
 
-<<<
+<<< shifting
 x : Int = 5;
 testShift1 = code() { y := 4; z := ((x << y) << 8); y = 16; z |= x << y; };
 ===
@@ -14,53 +14,11 @@ call testShift1
 assert R0 == 0x5000
 >>>
 
-<<<
+<<< call negate
 x := 100;
 negate = [T] code(x) { -x; };
 testSimpleCall1 = code() { y := x*2; z := negate(y);  };
 ===
 call testSimpleCall1
 assert R0 == -200
->>>
-
-<<<
-testArraySum = code() {
-  vals : Int[10];
-  s := 0;
-  for i in 10 do vals[i] = i+1;
-  for i in 10 do s += vals[i];
-};
-===
-call testArraySum 
-assert R0 == 55
->>>
-
-<<<
-vals:Int[10];
-testArraySum = code() {
-  valp : Int[]^ = &vals;
-  s := 0;
-  for i in 10 do valp[i] = i+1;
-  for i in 10 do s += valp[i];
-};
-===
-call testArraySum
-assert R0 == 55
->>>
-
-<<<
-ARRAY =: Int[3,3];
-vals:ARRAY;
-doSum = code(valp:ARRAY^) {
-  s := 0;
-  for i in 3 do for j in 3 do valp[i,j] = i*3+j;       // 0,1,2 | 3,4,5 | 6,7,8
-  for i in 3 do s += valp[i,i]+3;     // 0+3 | 4+3 | 8+3
-};
-testArraySum = code() {
-  valp := &vals;
-  doSum(valp);
-};
-===
-call testArraySum
-assert R0 == 21
 >>>

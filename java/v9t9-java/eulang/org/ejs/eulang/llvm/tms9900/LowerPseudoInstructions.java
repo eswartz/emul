@@ -26,6 +26,7 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
 /**
  * Change pseudo-instructions into actual instructions.  This should be run after
@@ -288,7 +289,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	private void expandCopyLoop(LLType type, AsmInstruction inst, AssemblerOperand from) {
 		assert from instanceof RegIndOperand || from instanceof AddrOperand;
 		AssemblerOperand to = inst.getOp2();
-		assert to instanceof RegIndOperand || to instanceof AddrOperand;
+		assert to instanceof RegIndOperand || to instanceof AddrOperand || to instanceof RegOffsOperand;
 		
 		TypeEngine typeEngine = routine.getDefinition().getTypeEngine();
 		

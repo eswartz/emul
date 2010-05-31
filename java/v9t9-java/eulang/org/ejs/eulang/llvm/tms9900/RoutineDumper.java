@@ -105,7 +105,7 @@ public class RoutineDumper extends CodeVisitor {
 	 */
 	@Override
 	public boolean enterInstr(Block block, AsmInstruction instr) {
-		System.out.println(instr);
+		System.out.println(instr.getAnnotatedString());
 		return false;
 	}
 }
