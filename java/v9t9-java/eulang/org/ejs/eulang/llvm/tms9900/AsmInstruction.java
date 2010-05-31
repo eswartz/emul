@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import static junit.framework.Assert.assertTrue;
-
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -124,6 +122,17 @@ public class AsmInstruction extends HLInstruction {
 			sb.append(' ');
 		sb.append(num).append(":  ");
 		sb.append(str);
+		return sb.toString();
+	}
+
+	public String getAnnotatedString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(toString());
+		appendSourceTargetString(sb);
+		return sb.toString();
+	}
+
+	private void appendSourceTargetString(StringBuilder sb) {
 		ISymbol[] srcs = getSources();
 		ISymbol[] targs = getTargets();
 		boolean anySrcs = (srcs != null && srcs.length > 0);
@@ -154,7 +163,6 @@ public class AsmInstruction extends HLInstruction {
 				}
 			}
 		}
-		return sb.toString();
 	}
 	
 	/* (non-Javadoc)

@@ -107,7 +107,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testRetInt() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code() { 1 };\n");
 		int idx;
 		AsmInstruction inst;
@@ -119,7 +118,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testInitLocal1() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code( => nil) { x := 1 };\n");
 		
 		int idx;
@@ -137,7 +135,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testInitLocalAndRet1() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code( ) { x := 1 };\n");
 		
 		int idx;
@@ -158,7 +155,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testPtrDeref1() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code(x:Int^ => Int) { x^ };\n");
 		
 		int idx;
@@ -179,7 +175,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testPtrDeref1b() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code(x:Int^; y:Int) { x^=y };\n");
 		
 		int idx;
@@ -199,7 +194,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testPtrDeref2() throws Exception {
-		dumpIsel = true;
 		doIsel("foo = code(x:Int[10]; y:Int^) { x[5]=y^ };\n");
 		
 		int idx;
@@ -208,13 +202,19 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		idx = findInstrWithInst(instrs, "COPY");
 		assertTrue(idx < 0);
 		
-		idx = findInstrWithInst(instrs, "MOV", 1);
+		// pt to x
+		idx = findInstrWithInst(instrs, "LEA", 1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegIndOperand.class, "y", RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "x", 0, RegTempOperand.class);
+		
+		// pt to x[5]
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "", 10, RegTempOperand.class);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, CompositePieceOperand.class, "%reg", 10);
+		matchInstr(inst, "MOV", RegTempOperand.class, RegIndOperand.class);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -225,7 +225,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testPtrDeref3() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code(x:Int[10][4]; y:Int[4]^) { x[4]=y^ };\n");
 		
 		int idx;
@@ -235,9 +234,19 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "COPY", RegIndOperand.class, "y", AddrOperand.class);
 		
+		// pt to x
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "x", 0, RegTempOperand.class);
+		
+		// pt to x[4]
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "", 32, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOperand.class, CompositePieceOperand.class, "%reg", 32);
+		matchInstr(inst, "COPY", AddrOperand.class, RegIndOperand.class);
 		
 		// TODO: this also re-reads contents from X^ before returning... blah!
 		
@@ -247,25 +256,28 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testPtrDeref4() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code(x:Int[10]^) { (x-1)[2] };\n");
 		
 		int idx;
 		AsmInstruction inst;
 		
+		// pt to x-1
 		idx = findInstrWithInst(instrs, "LEA", 1);
 		inst = instrs.get(idx);
 		matchInstr(inst, "LEA", CompositePieceOperand.class, "x", -2, RegTempOperand.class);
-		AsmInstruction inst0 = inst;
+		
+		// pt to [2]
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, 4, RegTempOperand.class);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", CompositePieceOperand.class, ((RegTempOperand) inst0.getOp2()).getSymbol().getName(), 4, RegTempOperand.class);
+		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
 		
 	}
 	@Test
 	public void testSetGlobal1() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("bat : Byte;\n"+
 				"foo = code(x,y:Int => nil) { bat = 10; };\n");
 		
@@ -384,7 +396,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testSubRev2() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("x : Byte; foo = code(y:Int ) { x-y };\n");
 		
 		int idx = findInstrWithInst(instrs, "MOVB");
@@ -401,7 +412,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testSubRevAss1() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("x : Byte; foo = code(y:Int ) { x-=y };\n");
 		
 		/*
@@ -430,7 +440,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testTrunc16_to_8_1_Local() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("foo = code(x,y:Int ) { z : Byte = x+y };\n");
 		
 		int idx = findInstrWithInst(instrs, "SLA");
@@ -440,7 +449,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testTrunc16_to_8_1_Mem_to_Temp() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("x := 11; foo = code( ) { Byte(x) };\n");
 		
 		int idx = findInstrWithInst(instrs, "SLA");
@@ -449,7 +457,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testTrunc16_to_8_1_Mem_to_Mem() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("x := 11; foo = code( ) { x = Byte(x) };\n");
 		
 		int idx;
@@ -466,7 +473,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testTrunc16_to_8_1_Imm_to_Mem() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("x : Byte; foo = code( => Int ) { x = 0x1234; };\n");
 		
 		int idx;
@@ -488,7 +494,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testExt8_to_16_1_Mem_to_Mem() throws Exception {
-		dumpLLVMGen = true;
 		doIsel("x : Byte = 11; foo = code( ) { x = Int(x) };\n");
 		
 		int idx;
@@ -505,7 +510,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testShiftLeftConst() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x<<1) + (x<<0) + (x<<4) + (x<<16) };\n");
 		
 		int idx = findInstrWithInst(instrs, "SLA");
@@ -526,7 +530,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testShiftLeftVar() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x, y:Int ) { x<<y };\n");
 		
 		int idx;
@@ -541,7 +544,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testShiftLeftEqVar() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x, y:Int ) { x<<=y };\n");
 		
 		int idx;
@@ -556,7 +558,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testShiftLeftVarLoop() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x, y:Int ) { repeat 100 do x<<y };\n");
 		
 		int idx;
@@ -572,7 +573,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testShiftRightConst() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x>>1) + (x>>0) + (x>>4) + (x>>16) };\n");
 		
 		int idx = findInstrWithInst(instrs, "SRA");
@@ -597,7 +597,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testShiftRightVar() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Int ) { (x>>y) };\n");
 		
 		int idx;
@@ -613,7 +612,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testUShiftRightConst() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x+>>1) + (x+>>0) + (x+>>4) + (x+>>16) };\n");
 		
 		int idx = findInstrWithInst(instrs, "SRL");
@@ -634,7 +632,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testUShiftRightVar() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Int ) { (x+>>y) };\n");
 		
 		int idx;
@@ -650,7 +647,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testCShiftRightConst() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x>>|1) + (x>>|0) + (x>>|4) + (x>>|16) };\n");
 		
 		int idx = findInstrWithInst(instrs, "SRC");
@@ -670,7 +666,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testCShiftRightVar() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Int ) { (x>>|y) };\n");
 		
 		int idx;
@@ -686,7 +681,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testCShiftRight8Bit() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Byte ) { (x>>|1) + (x>>|y) };\n");
 		
 		int idx;
@@ -704,7 +698,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testCShiftLeftConst() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x<<|1) + (x<<|0) + (x<<|4) + (x<<|16) };\n");
 		
 		int idx = findInstrWithInst(instrs, "SRC");
@@ -724,7 +717,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testCShiftLeftVar() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Int ) { (x<<|y) };\n");
 		
 		int idx;
@@ -745,7 +737,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testCShiftLeft8Bit() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Byte ) { (x<<|1) + (x<<|y) };\n");
 		
 		int idx;
@@ -762,7 +753,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testLogicalOps() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x, y:Int ) { (x|15) + (x|y) + (x&4111) + (x&y) + (x~9) + (x~y) };\n");
 		
 		int idx = -1;
@@ -801,7 +791,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testLogicalOpsByte() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x, y:Byte ) { (x|15) + (x|y) + (x&41) + (x&y) + (x~9) + (x~y) };\n");
 		
 		int idx = -1;
@@ -841,8 +830,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testComparisonOpsInExpr() throws Exception {
-		dumpLLVMGen =true;
-		dumpTreeize = true;
 		// this generates boolean comparisons and stores them for logical manipulation;
 		doIsel("foo = code(x, y : Int) { (x<y) | (x==9) };\n");
 		
@@ -872,8 +859,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testComparisonOpsInExprByte() throws Exception {
-		dumpLLVMGen =true;
-		
 		// this generates boolean comparisons and stores them for logical manipulation;
 		doIsel("foo = code(x, y : Byte) { (x<y) | (x==9) };\n");
 		
@@ -904,8 +889,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	}
 	@Test
 	public void testComparisonOpsInJmp() throws Exception {
-		dumpLLVMGen =true;
-		
 		// this generates boolean comparisons and jumps on them
 		doIsel("foo = code(x, y : Int) { (x<y) or (x==9) };\n");
 		
@@ -940,15 +923,12 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testComparisonOps() throws Exception {
-		dumpLLVMGen =true;
-		
 		// this generates boolean comparisons and jumps on them
 		doIsel("foo = code(x, y : Int) { (x<y) or (x>=y) or (x+<y) == (x+>=y) or (x+>y) != (x+<=y) };\n");
 	}
 	
 	@Test
 	public void testMulPow2() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x*0) + (x*1) + (x*4) + (x*128) + (x*32768) };\n");
 		
 		int idx;
@@ -977,7 +957,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testMulBytePow2() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Byte ) { (x*0) + (x*1) + (x*4) + (x*64) + (x*32768) };\n");
 		
 		int idx;
@@ -1006,7 +985,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testMul1() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x*123) + (x*-999) };\n");
 		
 		int idx;
@@ -1035,7 +1013,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testMulByte1() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Byte) { (x*y) + (y*x) };\n");
 		
 		int idx;
@@ -1078,7 +1055,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testDiv2() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x/1) + (x/4) + (x/128) + (x/32768) };\n");
 		
 		int idx;
@@ -1102,7 +1078,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testUDiv2() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x+/1) + (x+/4) + (x+/128) + (x+/32768) };\n");
 		
 		int idx;
@@ -1127,7 +1102,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testDiv1() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x/123) + (x+/999) };\n");
 		
 		int idx;
@@ -1182,7 +1156,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testRemMod1() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x:Int ) { (x\\123) + (x+\\555) + (x%999) };\n");
 		
 		int idx;
@@ -1257,7 +1230,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testDivByte1() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Byte ) { (x/123) + (x+/y) };\n");
 		
 		int idx;
@@ -1302,7 +1274,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
 	public void testModByte1() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x,y:Byte) { (x\\123) + (x+\\55) + (x%y) };\n");
 		
 		int idx;
@@ -1377,7 +1348,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
     public void testRepeatLoopBreak3() throws Exception {
-    	dumpLLVMGen = true;
     	doIsel("testRepeatLoopBreak = code (x) {\n" +
     			"   s := 0;\n"+
     			"   b := 1;\n"+
@@ -1402,7 +1372,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testCalls1() throws Exception {
-		dumpLLVMGen = true;
     	doIsel("forward util;\n"+
     			"testCalls1 = code (=>nil) {\n" +
     			"   util();\n" +
@@ -1435,7 +1404,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testCallsBigRet1() throws Exception {
-		dumpLLVMGen = true;
     	doIsel("forward util;\n"+
     			"testCallsBigRet1 = code (a,b,c,d:Float=>nil) {\n" +
     			"   util(a,b,c,d);\n" +
@@ -1488,7 +1456,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testCallsBigRet2() throws Exception {
-		dumpLLVMGen = true;
     	doIsel(
     			"testCallsBigRet2 = code (x:Float=>Float) {\n" +
     			" x;\n" +
@@ -1505,7 +1472,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testSelfRef3() throws Exception {
-    	dumpLLVMGen = true;
     	doIsel(
     			"Class = data {\n"+
     			"  draw:code(this:Class; count:Int => nil);\n"+
@@ -1521,17 +1487,26 @@ public class Test9900InstrSelection extends BaseInstrTest {
     	int idx;
 		AsmInstruction inst;
 
-		idx = findInstrWithInst(instrs, "LI");
+		// ptr to inst
+		idx = findInstrWithInst(instrs, "LEA");
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "inst", 0, RegTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "LI", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "LI", RegTempOperand.class, SymbolOperand.class, "doDraw");
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, AddrOperand.class, "inst");
+		matchInstr(inst, "MOV", RegTempOperand.class, RegIndOperand.class);
+		
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "inst", 0, RegTempOperand.class);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", AddrOperand.class, "inst", RegTempOperand.class);
+		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
 		AsmInstruction getFuncInst = inst;
 		
 		
@@ -1560,7 +1535,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
     
     @Test
     public void testPtrRef4() throws Exception {
-    	dumpLLVMGen = true;
     	doIsel(
     			"Class = data {\n"+
     			"  draw:code(this:Class^; count:Int => nil);\n"+
@@ -1606,8 +1580,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testPtrRef5() throws Exception {
-    	dumpLLVMGen = true;
-    	dumpIsel = true;
     	doIsel(
     			"List = [T] data {\n"+
     			"  next:List^; node:T;\n"+
@@ -1628,16 +1600,11 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 100);
 		
-		idx = findInstrWithInst(instrs, "MOV", idx);
-		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, CompositePieceOperand.class, "%reg", 2);
-		
-		// addr goes here
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", AddrOperand.class, "loc", RegTempOperand.class, "inst");
+		matchInstr(inst, "LEA", AddrOperand.class, "loc", RegTempOperand.class);
 		
-		// set the 'next' field
+		// inst.next = inst
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegTempOperand.class, "inst", CompositePieceOperand.class, "inst", 0);
@@ -1649,33 +1616,17 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV",  CompositePieceOperand.class, "", 0, RegTempOperand.class);
+		matchInstr(inst, "MOV",  CompositePieceOperand.class, 0, RegTempOperand.class);
 		
-		// copy
-		//idx = findInstrWithInst(instrs, "MOV", idx);
-		//inst = instrs.get(idx);
-		//matchInstr(inst, "MOV", RegTempOperand.class, RegTempOperand.class);
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, 2, RegTempOperand.class);
 		
-		// hard to find the next instr since it depends on a temp
-		while (idx < instrs.size()) {
-			inst = instrs.get(idx);
-			if (inst.getInst() == InstructionTable.Imov) {
-				if (inst.getOp1() instanceof CompositePieceOperand) {
-					if (2 == ((NumberOperand)((CompositePieceOperand) inst.getOp1()).getOffset()).getValue()) {
-						idx = -1;
-						break;
-					}
-				}
-			}
-			idx++;
-		}
-		assertEquals(-1, idx);
     }
 
 
     @Test
     public void testPtrCalc6() throws Exception {
-    	dumpIsel = true;
     	doIsel(
     			"forward Complex;\n"+
     			"Inner = data {\n"+
@@ -1706,9 +1657,13 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		matchInstr(inst2, "LEA", CompositePieceOperand.class, inst.getOp2(), 4, RegTempOperand.class);
 		
 		// then, deref 'p' to Complex* 
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, inst2.getOp2(), 8, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", CompositePieceOperand.class, inst2.getOp2(), 8, RegTempOperand.class);
+		matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
 		
 		// get 'd' offset inside, to Inner*
 		idx = findInstrWithInst(instrs, "LEA", idx);
@@ -1716,14 +1671,17 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		matchInstr(inst2, "LEA", CompositePieceOperand.class, inst.getOp2(), 4, RegTempOperand.class);
 		
 		// read 'd2'
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, inst2.getOp2(), 4, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", CompositePieceOperand.class, inst2.getOp2(), 4, AddrOperand.class);
+		matchInstr(inst, "COPY", RegIndOperand.class, AddrOperand.class);
     }
 
     @Test
     public void testRetAddr1() throws Exception {
-    	dumpLLVMGen = true;
     	doIsel(
     			"List = [T] data {\n"+
     			"  next:List^; node:T;\n"+
@@ -1745,7 +1703,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testRetAddr2() throws Exception {
-    	dumpLLVMGen = true;
     	doIsel(
     			"x : Byte;\n"+
     			"testRetAddr2 = code() {\n"+
@@ -1772,7 +1729,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
     
     @Test
     public void testTuples1() throws Exception {
-    	dumpIsel = true;
     	doIsel(
     			"makeTuple = code(x:Int;y) { (x,y*x,66) };\n"+
     	"");
@@ -1796,7 +1752,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
     }
     @Test
     public void testTuples2() throws Exception {
-    	dumpLLVMGen = true;
     	doIsel(
     			"forward makeTuple;\n"+
     			"useTuple = code(i:Int) { (x,y) := makeTuple(19, i); x+y; };\n"+
@@ -1828,28 +1783,35 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testDataFields() throws Exception {
-    	dumpIsel = true;
     	doIsel(
     			"Class = data { x,b:Byte; y:Float; };\n"+
     			"useClass = code(i:Int) { c : Class; x := c.x + c.b; y := c.y;  };\n"+
     	"");
-    	int idx;
+    	int idx = -1;
 		AsmInstruction inst;
 		
-
-		// c.x fetched directly
-		idx = findInstrWithInst(instrs, "MOVB", -1);
+		// ptr to c.x
+		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", AddrOperand.class, "c", RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "c", 0, RegTempOperand.class);
+		
+		// c.x fetched directly
+		idx = findInstrWithInst(instrs, "MOVB", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOVB", RegIndOperand.class, RegTempOperand.class);
 
 		// get an address for c.y
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", AddrOperand.class, "c", RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "c", 0, RegTempOperand.class);
 
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, 1, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", CompositePieceOperand.class, "%reg", 1, RegTempOperand.class);
+		matchInstr(inst, "MOVB", RegIndOperand.class, RegTempOperand.class);
 		
 		// skip...
 		
@@ -1859,9 +1821,13 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		matchInstr(inst, "LEA", AddrOperand.class, "c", RegTempOperand.class);
 		
 		// copy float out
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, 2, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", CompositePieceOperand.class, "%reg", 2, AddrOperand.class);
+		matchInstr(inst, "COPY", RegIndOperand.class, AddrOperand.class);
 
 		// and, sadly, copy again
 		idx = findInstrWithInst(instrs, "COPY", idx);
@@ -1872,7 +1838,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
     
 	@Test
 	public void testReturnMulti() throws Exception {
-		dumpLLVMGen =true;
 		doIsel("foo = code(x, y:Int ) { if x < y then -1 elif x == y then 0 else { repeat 100 do x<<y } };\n");
 		
 		int idx;
@@ -1889,8 +1854,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
     @Test
     public void testDataInit1() throws Exception {
-    	dumpLLVMGen = true;
-    	dumpIsel = true;
     	doIsel(
     			"Tuple = data {\n"+
     			"   x:Byte; f:Bool; y,z:Byte; };\n"+
@@ -1914,7 +1877,6 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testDataInitVar1() throws Exception {
-    	dumpIsel = true;
     	doIsel(
     			"testDataInit2 = code(=>nil) {\n"+
     			"  val := 10;\n"+
@@ -1935,7 +1897,6 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 
 	@Test
     public void testDataInit4() throws Exception {
-		dumpIsel = true;
 		doIsel(
     			"testDataInit4 = code(=>nil) {\n"+
     			"  foo:Byte[][3] = [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9]];\n"+
@@ -1957,7 +1918,7 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		// array
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", AddrOperand.class, "foo", RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "foo", 0, RegTempOperand.class);
 		
 		// row 1
 		idx = findInstrWithInst(instrs, "LEA", idx);
@@ -1965,10 +1926,13 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 3, RegTempOperand.class);
 
 		// col 2
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 2, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", CompositePieceOperand.class, "reg", 2, RegTempOperand.class);
-		
+		matchInstr(inst, "MOVB", RegIndOperand.class, RegTempOperand.class);
 		
 		// array
 		idx = findInstrWithInst(instrs, "LEA", idx);
@@ -1981,9 +1945,13 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 6, RegTempOperand.class);
 		
 		// col 1
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 1, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", CompositePieceOperand.class, "reg", 1, RegTempOperand.class);
+		matchInstr(inst, "MOVB", RegIndOperand.class, RegTempOperand.class);
 
 		idx = findInstrWithInst(instrs, "AB", idx);
 		inst = instrs.get(idx);
@@ -1992,7 +1960,6 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 
 	@Test
 	public void testDataLocalUse1() throws Exception {
-		dumpIsel = true;
 	   	doIsel(
 	   			"Tuple = data {\n"+
 	   			"   x:Byte; f:Bool; };\n"+
@@ -2020,7 +1987,6 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 
 	@Test
 	public void testNonConstGetElementPtrAccess1() throws Exception {
-		dumpIsel = true;
 	   	doIsel(
 	   			"Tuple = data {\n"+
 	   			"   a:Byte[5]; f:Bool; };\n"+
@@ -2054,14 +2020,17 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		matchInstr(inst, "A", RegTempOperand.class, false, RegTempOperand.class);
 		
 		// another array
+		idx = findInstrWithInst(instrs, "LEA", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 4, RegTempOperand.class);
+		
 		idx = findInstrWithInst(instrs, "MOVB", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOVB", CompositePieceOperand.class, "reg", 4, RegTempOperand.class);
+		matchInstr(inst, "MOVB", RegIndOperand.class, RegTempOperand.class);
 	}
 	
 	@Test
 	public void testNonConstGetElementPtrAccess2() throws Exception {
-		dumpIsel = true;
 	   	doIsel(
 	   			"Tuple = data {\n"+
 	   			"   x:Byte; f:Bool; };\n"+
@@ -2090,6 +2059,9 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "LEA", CompositePieceOperand.class, "reg", 2, RegTempOperand.class);
+		
+		// copy addr
+		idx = findInstrWithInst(instrs, "MOV", idx);
 
 		// shift
 		idx = findInstrWithInst(instrs, "MOV", idx);
@@ -2114,8 +2086,6 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 	
 	@Test
 	public void testArrayPtrAccess2() throws Exception {
-		dumpLLVMGen = true;
-		dumpIsel = true;
 		doIsel(
 				"vals:Int[10];\n"+
 				"testArraySum = code() {\n"+
@@ -2134,6 +2104,56 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOV", RegTempOperand.class, RegTempOperand.class, "valp");
 		
+	}
+
+	@Test
+	public void testAddrCalc1() throws Exception {
+		dumpIsel = true;
+
+		doIsel(
+				"arr : Int[10,10];\n"+
+				"negate = code(x:Int) { \n" +
+				"	rowp:=&arr[5];\n" +
+				"   colp:=&rowp[5];\n"+
+				"   colp^;\n"+
+				"};\n"+
+				"");
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// pt to arr
+    	idx = findInstrWithInst(instrs, "LI", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LI", RegTempOperand.class, SymbolOperand.class, "arr");
+
+    	// get to row
+    	idx = findInstrWithInst(instrs, "LEA", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LEA", CompositePieceOperand.class, 5*10*2, RegTempOperand.class);
+    	
+    	// copy rowp
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegTempOperand.class, RegTempOperand.class);
+    	
+    	// get to col
+    	idx = findInstrWithInst(instrs, "LEA", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LEA", CompositePieceOperand.class, "rowp", 5*2, RegTempOperand.class);
+    	
+    	// copy colp
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegTempOperand.class, RegTempOperand.class);
+    	
+    	// read
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegIndOperand.class, RegTempOperand.class);
+    	
+    	
+    	
 	}
 
 }

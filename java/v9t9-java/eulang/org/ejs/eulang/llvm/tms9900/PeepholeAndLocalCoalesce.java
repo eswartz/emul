@@ -15,6 +15,7 @@ import org.ejs.eulang.llvm.tms9900.asm.StackLocalOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
@@ -479,6 +480,11 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		if (mov.getOp2().equals(def.getSrcOp()) && !dependsOnStatus(mov))
 			removeInst(def);
 		
+		// maintain forced reg
+		if (((RegisterLocal)tmpLocal).isPhysReg()) {
+			((RegisterLocal)origLocal).setVr(((RegisterLocal) tmpLocal).getVr());
+		}
+		
 		return changed;
 	}
 	
@@ -577,13 +583,15 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			AssemblerOperand fromOp;
 			AssemblerOperand offset = null;
 
+			ILocal origLocal = null;
+			
 			if (def.getInst() == Plea) {
 				// and just be sure we're talking about a stack local...
 				// else we want to replace LEA with STWP/AI
 				if (!(def.getOp1() instanceof AddrOperand))
 					continue;
-				ILocal origLocal = getReffedLocal(def.getOp1());
-				if (!(origLocal instanceof StackLocal)) 
+				origLocal = getReffedLocal(def.getOp1());
+				if (origLocal == null || !(origLocal instanceof StackLocal) && origLocal.getType().getBasicType() != BasicType.POINTER) 
 					continue;
 				
 				toOp = ((AddrOperand)def.getOp1()).getAddr(); // new StackLocalOperand(origLocal.getType(), (StackLocal) origLocal);
@@ -614,7 +622,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			
 			changed = true;
 			for (int use = addrLocal.getUses().nextSetBit(addrLocal.getInit()); use >= 0; use = addrLocal.getUses().nextSetBit(use + 1)) {
-				replaceAddrUses(instrMap.get(use), (RegTempOperand) fromOp, toOp, offset, addrLocal, null);
+				replaceAddrUses(instrMap.get(use), (RegTempOperand) fromOp, toOp, offset, addrLocal, origLocal);
 			}
 			
 			// and delete the LEA/LI
@@ -682,8 +690,10 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			}
 			
 			if (newOp != op) {
-				updateLocalUsage(asmInstruction, fromLocal, toLocal, op);
-
+				updateLocalUsage(asmInstruction, fromLocal, null, op);
+				if (toLocal != null)
+					toLocal.getUses().set(asmInstruction.getNumber());
+				
 				// update op
 				asmInstruction.setOp(idx + 1, InstrSelection.ensurePiecewiseAccess(newOp, theType));
 			}
@@ -702,7 +712,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		if (off1 == null)
 			return off2;
 		if (off2 == null)
-			return null;
+			return off1;
 		
 		if (off2 instanceof ISymbolOperand) {
 			AssemblerOperand t = off1;

@@ -13,7 +13,6 @@ import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
-import org.ejs.eulang.llvm.tms9900.app.Simulator;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
@@ -304,10 +303,10 @@ public class Test9900Optimizer extends BaseInstrTest {
 		inst = instrs.get(idx);
 		matchInstr(inst, "SRA", val1, val2);
 
-		// we've trashed the vr holding the stack var, so one more read
-		idx = findInstrWithSymbol(instrs, "foo", idx);
+		// R0 holds the foo[4] still
+		idx = findInstrWithInst(instrs, "SOC", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "SOC", CompositePieceOperand.class, "foo", 8, val1);
+		matchInstr(inst, "SOC", val2, val1);
 		
 		idx = findInstrWithInst(instrs, "MOV", idx);
 		inst = instrs.get(idx);
@@ -608,7 +607,8 @@ public class Test9900Optimizer extends BaseInstrTest {
     	AsmInstruction inst;
 		
     	assertTrue(changed);
-		
+
+    	// fold fooptr into the accesses
 		idx = findInstrWithInst(instrs, "MOVB", -1);
 		inst = instrs.get(idx);
 		matchInstr(inst, "MOVB", CompositePieceOperand.class, "foo", 2, RegTempOperand.class);
@@ -875,6 +875,33 @@ public class Test9900Optimizer extends BaseInstrTest {
     	inst = instrs.get(idx);
     	matchInstr(inst, "A", RegTempOperand.class, RegTempOperand.class);
 	}
-	
+
+	@Test
+	public void testAddrCalc1() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+				"arr : Int[10,10];\n"+
+				"negate = code(x:Int) { \n" +
+				"	rowp:=&arr[5];\n" +
+				"   colp:=&rowp[5];\n"+
+				"   colp^;\n"+
+				"};\n"+
+				"");
+
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	idx = findInstrWithInst(instrs, "LEA", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LEA", CompositePieceOperand.class, "arr", 5*10*2, RegTempOperand.class);
+
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, 5*2, RegTempOperand.class, 0);
+
+	}
 }
 

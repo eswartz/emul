@@ -1226,15 +1226,17 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (idx >= 2) {
 			asmOp = ensurePiecewiseAccess(asmOp, type);
 		}
-		if (forceToReg || offs != 0) {
-			if (!asmOp.isRegister())
-				asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
-			else if (forceToReg) 
-				asmOp = moveToTemp(new LLConstOp(typeEngine.INT, 0), typeEngine.INT, asmOp);
-		}
+		//if (forceToReg || offs != 0) {
+		if (!asmOp.isRegister())
+			asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
+		else if (forceToReg) 
+			asmOp = moveToTemp(new LLConstOp(typeEngine.INT, 0), typeEngine.INT, asmOp);
+		//}
 		if (offs != 0) {
 			asmOp = new CompositePieceOperand(new NumberOperand(offs), asmOp, type);
 		}
+		if (!asmOp.isRegister())
+			asmOp = getEffectiveAddress(typeEngine.getPointerType(type), asmOp, asmOp);
 		return asmOp;
 	}
 

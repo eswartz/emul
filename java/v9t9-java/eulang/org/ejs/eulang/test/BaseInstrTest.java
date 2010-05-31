@@ -48,7 +48,6 @@ import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Before;
 
-import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -126,7 +125,7 @@ public class BaseInstrTest extends BaseTest {
 			protected void emit(AsmInstruction instr) {
 				if (dumpIsel) {
 					System.out.println();
-					System.out.println("\t"+ instr);
+					System.out.println("\t"+ instr.getAnnotatedString());
 				}
 				instrs.add(instr);
 				currentBlock.addInst(instr);
