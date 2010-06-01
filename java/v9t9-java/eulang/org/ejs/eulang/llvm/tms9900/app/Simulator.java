@@ -357,13 +357,14 @@ public class Simulator {
 				memory.writeByte(addr + i, (byte) 0);
 			}
 		} else if (op instanceof TupleTempOperand) {
+			// TODO: clean up this pattern
 			TupleTempOperand tto = (TupleTempOperand) op;
 			AssemblerOperand[] components = tto.getComponents();
 			Alignment subAlign = target.getTypeEngine().new Alignment(Target.STRUCT);
 			for (int i = 0; i < components.length; i++) {
 				LLType subType = type instanceof LLAggregateType ? ((LLAggregateType) type).getType(i) : type.getSubType();
 				AssemblerOperand subOp = components[i];
-				short subAddr = (short) (addr + subAlign.sizeof() / 8);
+				short subAddr = (short) (addr + (subAlign.sizeof() + subAlign.alignmentGap(subType)) / 8);
 				emitData(subAddr, subAlign, subType, subOp);
 			}
 		} else {

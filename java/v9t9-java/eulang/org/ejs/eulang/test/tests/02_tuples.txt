@@ -21,7 +21,7 @@ call testTupleCopy
 assert R0 == 501
 >>>
 
-<<< tuple consts
+<<< tuple const init
 Tuple = data {
     x:Int[5];
     y:Byte[4];
@@ -34,4 +34,19 @@ tupleUser = code() {
 ===
 call tupleUser
 assert R0 == 0x321
+>>>
+
+<<< tuple const init #2
+Tuple = data {
+    x:Byte[3];
+    y:Int;
+    z : Byte[32];
+};
+u:Tuple = [.x=[0x10,0x20,0x30], .y=12345 ];
+tupleUser = code() {
+  u.y;
+};
+===
+call tupleUser
+assert R0 == 12345
 >>>
