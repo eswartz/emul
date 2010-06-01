@@ -58,6 +58,7 @@ public class LocatorService implements ILocator {
     private static LocatorService locator;
     private static final Map<String,IPeer> peers = new HashMap<String,IPeer>();
     private static final ArrayList<LocatorListener> listeners = new ArrayList<LocatorListener>();
+    private static final HashMap<String,Throwable> error_log = new HashMap<String,Throwable>();
 
     private final HashSet<SubNet> subnets = new HashSet<SubNet>();
     private final ArrayList<Slave> slaves = new ArrayList<Slave>();
@@ -178,7 +179,7 @@ public class LocatorService implements ILocator {
                     return;
                 }
                 catch (Throwable x) {
-                    Protocol.log("Unhandled exception in TCF discovery timer thread", x);
+                    log("Unhandled exception in TCF discovery timer thread", x);
                 }
             }
         }
@@ -224,7 +225,7 @@ public class LocatorService implements ILocator {
                     }
                 }
                 catch (Throwable x) {
-                    Protocol.log("Unhandled exception in TCF discovery DNS lookup thread", x);
+                    log("Unhandled exception in TCF discovery DNS lookup thread", x);
                 }
             }
         }
@@ -249,7 +250,7 @@ public class LocatorService implements ILocator {
                 }
                 catch (Exception x) {
                     if (socket != LocatorService.this.socket) continue;
-                    Protocol.log("Cannot read from datagram socket", x);
+                    log("Cannot read from datagram socket at port " + socket.getLocalPort(), x);
                 }
             }
         }
@@ -322,7 +323,7 @@ public class LocatorService implements ILocator {
             sendAll(null, 0, null, System.currentTimeMillis());
         }
         catch (Exception x) {
-            Protocol.log("Cannot open UDP socket for TCF discovery protocol", x);
+            log("Cannot open UDP socket for TCF discovery protocol", x);
         }
     }
 
@@ -389,6 +390,14 @@ public class LocatorService implements ILocator {
         }
         catch (Throwable x) {
             channel.terminate(x);
+        }
+    }
+
+    private void log(String msg, Throwable x) {
+        // Don't report same error multiple times to avoid filling up the log file.
+        if (error_log.get(msg) == null) {
+            error_log.put(msg, x);
+            Protocol.log(msg, x);
         }
     }
 
@@ -575,7 +584,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (SocketException x) {
-            Protocol.log("Cannot get list of network interfaces", x);
+            log("Cannot get list of network interfaces", x);
         }
         for (Iterator<SubNet> i = subnets.iterator(); i.hasNext();) {
             SubNet s = i.next();
@@ -589,23 +598,37 @@ public class LocatorService implements ILocator {
         }
     }
 
+    private byte[] getUTF8Bytes(String s) {
+        try {
+            return s.getBytes("UTF-8");
+        }
+        catch (Exception x) {
+            log("UTF-8 character encoder is not available", x);
+            return s.getBytes();
+        }
+    }
+
+    private void sendDatagramPacket(DatagramPacket p) {
+        try {
+            socket.send(p);
+        }
+        catch (Exception x) {
+            log("Cannot send datagram packet to " + p.getAddress(), x);
+        }
+    }
+
     private void sendPeersRequest(InetAddress addr, int port) {
         out_buf[4] = CONF_REQ_INFO;
         for (SubNet n : subnets) {
-            try {
-                if (addr == null) {
-                    socket.send(new DatagramPacket(out_buf, 8, n.broadcast, DISCOVEY_PORT));
-                    for (Slave slave : slaves) {
-                        if (!n.contains(slave.address)) continue;
-                        socket.send(new DatagramPacket(out_buf, 8, slave.address, slave.port));
-                    }
-                }
-                else if (n.contains(addr)) {
-                    socket.send(new DatagramPacket(out_buf, 8, addr, port));
+            if (addr == null) {
+                sendDatagramPacket(new DatagramPacket(out_buf, 8, n.broadcast, DISCOVEY_PORT));
+                for (Slave slave : slaves) {
+                    if (!n.contains(slave.address)) continue;
+                    sendDatagramPacket(new DatagramPacket(out_buf, 8, slave.address, slave.port));
                 }
             }
-            catch (Exception x) {
-                Protocol.log("Cannot send datagram packet", x);
+            else if (n.contains(addr)) {
+                sendDatagramPacket(new DatagramPacket(out_buf, 8, addr, port));
             }
         }
     }
@@ -615,45 +638,40 @@ public class LocatorService implements ILocator {
         InetAddress peer_addr = getInetAddress(attrs.get(IPeer.ATTR_IP_HOST));
         if (peer_addr == null) return;
         if (attrs.get(IPeer.ATTR_IP_PORT) == null) return;
-        try {
-            out_buf[4] = CONF_PEER_INFO;
-            int i = 8;
-            StringBuffer sb = new StringBuffer(out_buf.length);
-            for (String key : attrs.keySet()) {
-                sb.append(key);
-                sb.append('=');
-                sb.append(attrs.get(key));
-                sb.append((char)0);
-            }
-            byte[] bt = sb.toString().getBytes("UTF-8");
-            if (i + bt.length > out_buf.length) return;
-            System.arraycopy(bt, 0, out_buf, i, bt.length);
-            i += bt.length;
-
-            for (SubNet subnet : subnets) {
-                if (peer instanceof RemotePeer) {
-                    if (socket.getLocalPort() != DISCOVEY_PORT) return;
-                    if (!subnet.address.equals(loopback_addr) && !subnet.address.equals(peer_addr)) continue;
-                }
-                if (!subnet.address.equals(loopback_addr)) {
-                    if (!subnet.contains(peer_addr)) continue;
-                }
-                if (addr == null) {
-                    socket.send(new DatagramPacket(out_buf, i, subnet.broadcast, DISCOVEY_PORT));
-                    for (Slave slave : slaves) {
-                        if (!subnet.contains(slave.address)) continue;
-                        socket.send(new DatagramPacket(out_buf, i, slave.address, slave.port));
-                    }
-                    subnet.send_all_ok = true;
-                }
-                else if (subnet.contains(addr)) {
-                    socket.send(new DatagramPacket(out_buf, i, addr, port));
-                    subnet.send_all_ok = true;
-                }
-            }
+        out_buf[4] = CONF_PEER_INFO;
+        int i = 8;
+        StringBuffer sb = new StringBuffer(out_buf.length);
+        for (String key : attrs.keySet()) {
+            sb.append(key);
+            sb.append('=');
+            sb.append(attrs.get(key));
+            sb.append((char)0);
         }
-        catch (Exception x) {
-            Protocol.log("Cannot send datagram packet", x);
+        byte[] bt = getUTF8Bytes(sb.toString());
+        if (i + bt.length > out_buf.length) return;
+        System.arraycopy(bt, 0, out_buf, i, bt.length);
+        i += bt.length;
+
+        for (SubNet subnet : subnets) {
+            if (peer instanceof RemotePeer) {
+                if (socket.getLocalPort() != DISCOVEY_PORT) return;
+                if (!subnet.address.equals(loopback_addr) && !subnet.address.equals(peer_addr)) continue;
+            }
+            if (!subnet.address.equals(loopback_addr)) {
+                if (!subnet.contains(peer_addr)) continue;
+            }
+            if (addr == null) {
+                sendDatagramPacket(new DatagramPacket(out_buf, i, subnet.broadcast, DISCOVEY_PORT));
+                for (Slave slave : slaves) {
+                    if (!subnet.contains(slave.address)) continue;
+                    sendDatagramPacket(new DatagramPacket(out_buf, i, slave.address, slave.port));
+                }
+                subnet.send_all_ok = true;
+            }
+            else if (subnet.contains(addr)) {
+                sendDatagramPacket(new DatagramPacket(out_buf, i, addr, port));
+                subnet.send_all_ok = true;
+            }
         }
     }
 
@@ -661,20 +679,15 @@ public class LocatorService implements ILocator {
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet n : subnets) {
             if (n.send_all_ok) continue;
-            try {
-                if (addr == null) {
-                    socket.send(new DatagramPacket(out_buf, 8, n.broadcast, DISCOVEY_PORT));
-                    for (Slave slave : slaves) {
-                        if (!n.contains(slave.address)) continue;
-                        socket.send(new DatagramPacket(out_buf, 8, slave.address, slave.port));
-                    }
-                }
-                else if (n.contains(addr)) {
-                    socket.send(new DatagramPacket(out_buf, 8, addr, port));
+            if (addr == null) {
+                sendDatagramPacket(new DatagramPacket(out_buf, 8, n.broadcast, DISCOVEY_PORT));
+                for (Slave slave : slaves) {
+                    if (!n.contains(slave.address)) continue;
+                    sendDatagramPacket(new DatagramPacket(out_buf, 8, slave.address, slave.port));
                 }
             }
-            catch (Exception x) {
-                Protocol.log("Cannot send datagram packet", x);
+            else if (n.contains(addr)) {
+                sendDatagramPacket(new DatagramPacket(out_buf, 8, addr, port));
             }
         }
     }
@@ -689,34 +702,24 @@ public class LocatorService implements ILocator {
     }
 
     private void sendSlavesRequest(InetAddress addr, int port) {
-        try {
-            out_buf[4] = CONF_REQ_SLAVES;
-            socket.send(new DatagramPacket(out_buf, 8, addr, port));
-        }
-        catch (Exception x) {
-            Protocol.log("Cannot send datagram packet", x);
-        }
+        out_buf[4] = CONF_REQ_SLAVES;
+        sendDatagramPacket(new DatagramPacket(out_buf, 8, addr, port));
     }
 
     private void sendSlaveInfo(Slave x, long time) {
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet n : subnets) {
             if (!n.contains(x.address)) continue;
-            try {
-                int i = 8;
-                String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
-                byte[] bt = s.getBytes("UTF-8");
-                System.arraycopy(bt, 0, out_buf, i, bt.length);
-                i += bt.length;
-                out_buf[i++] = 0;
-                for (Slave y : slaves) {
-                    if (!n.contains(y.address)) continue;
-                    if (y.last_req_slaves_time + DATA_RETENTION_PERIOD < time) continue;
-                    socket.send(new DatagramPacket(out_buf, i, y.address, y.port));
-                }
-            }
-            catch (Exception z) {
-                Protocol.log("Cannot send datagram packet", z);
+            int i = 8;
+            String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
+            byte[] bt = getUTF8Bytes(s);
+            System.arraycopy(bt, 0, out_buf, i, bt.length);
+            i += bt.length;
+            out_buf[i++] = 0;
+            for (Slave y : slaves) {
+                if (!n.contains(y.address)) continue;
+                if (y.last_req_slaves_time + DATA_RETENTION_PERIOD < time) continue;
+                sendDatagramPacket(new DatagramPacket(out_buf, i, y.address, y.port));
             }
         }
     }
@@ -725,30 +728,25 @@ public class LocatorService implements ILocator {
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet n : subnets) {
             if (!n.contains(addr)) continue;
-            try {
-                int i = 8;
-                for (Slave x : slaves) {
-                    if (x.last_packet_time + DATA_RETENTION_PERIOD < time) continue;
-                    if (x.port == port && x.address.equals(addr)) continue;
-                    if (!n.address.equals(loopback_addr)) {
-                        if (!n.contains(x.address)) continue;
-                    }
-                    n.send_all_ok = true;
-                    String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
-                    byte[] bt = s.getBytes("UTF-8");
-                    if (i > 8 && i + bt.length >= PREF_PACKET_SIZE) {
-                        socket.send(new DatagramPacket(out_buf, i, addr, port));
-                        i = 8;
-                    }
-                    System.arraycopy(bt, 0, out_buf, i, bt.length);
-                    i += bt.length;
-                    out_buf[i++] = 0;
+            int i = 8;
+            for (Slave x : slaves) {
+                if (x.last_packet_time + DATA_RETENTION_PERIOD < time) continue;
+                if (x.port == port && x.address.equals(addr)) continue;
+                if (!n.address.equals(loopback_addr)) {
+                    if (!n.contains(x.address)) continue;
                 }
-                if (i > 8) socket.send(new DatagramPacket(out_buf, i, addr, port));
+                n.send_all_ok = true;
+                String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
+                byte[] bt = getUTF8Bytes(s);
+                if (i > 8 && i + bt.length >= PREF_PACKET_SIZE) {
+                    sendDatagramPacket(new DatagramPacket(out_buf, i, addr, port));
+                    i = 8;
+                }
+                System.arraycopy(bt, 0, out_buf, i, bt.length);
+                i += bt.length;
+                out_buf[i++] = 0;
             }
-            catch (Exception x) {
-                Protocol.log("Cannot send datagram packet", x);
-            }
+            if (i > 8) sendDatagramPacket(new DatagramPacket(out_buf, i, addr, port));
         }
     }
 
@@ -807,7 +805,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Throwable x) {
-            Protocol.log("Invalid datagram packet received", x);
+            log("Invalid datagram packet received from " + p.getAddress(), x);
         }
     }
 
@@ -847,7 +845,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Exception x) {
-            Protocol.log("Invalid datagram packet received", x);
+            log("Invalid datagram packet received from " + p.getAddress(), x);
         }
     }
 
@@ -885,7 +883,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Exception x) {
-            Protocol.log("Invalid datagram packet received", x);
+            log("Invalid datagram packet received from " + p.getAddress(), x);
         }
     }
 
