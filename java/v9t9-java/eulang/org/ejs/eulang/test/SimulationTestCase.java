@@ -276,10 +276,11 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 			
 			@Override
 			public void protect() throws Throwable {
-				System.out.println(SimulationTestCase.this.toString());
 				System.setOut(outStr);
 				System.setErr(errStr);
-				
+
+				System.out.println("#### " + SimulationTestCase.this.toString());
+
 				setup();
 				
 				Simulator sim = makeSimulator(program);
@@ -299,7 +300,8 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		
 		FileOutputStream fos;
 		
-		String ftestName = testName.replaceAll("[:_\\.]", "_");
+		String ftestName = this.getClass().getSimpleName() + "_" + (comment.isEmpty() ? testName : comment);
+		ftestName = ftestName.replaceAll("[:_\\. /]", "_");
 		try {
 			File outFile = new File(TMP + ftestName + ".out");
 			fos = new FileOutputStream(outFile);
@@ -311,11 +313,13 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 			fos.write(errBuf.toByteArray());
 			fos.close();
 			
-			System.out.println("wrote " + outFile + " and " + errFile);
+			System.out.println(toString() + ": wrote\n\t" + outFile + "\n\tand\n\t" + errFile);
 		} catch (IOException e) {
 			result.addError(this, e);
 		}
 		
 		result.endTest(this);
+		
+		System.out.println();
 	}
 }

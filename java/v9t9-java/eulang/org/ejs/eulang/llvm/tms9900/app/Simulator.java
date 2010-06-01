@@ -340,6 +340,7 @@ public class Simulator {
         
         vrAddr = addr; 
         
+        System.out.println("\n\n### Ready to execute\n\n");
 	}
 
 	
