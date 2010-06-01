@@ -305,7 +305,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private IPattern thePattern;
 	private AssemblerOperand[] asmOps = new AssemblerOperand[4];
 	
-	private Locals locals;
+	private StackFrame stackFrame;
 	private Routine routine;
 	private Block block;
 	
@@ -329,7 +329,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		this.module = module;
 		this.routine = null;
 		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();;
-		locals = new Locals(module.getTarget());
+		stackFrame = new StackFrame(module.getTarget());
 		InstrSelectionTable.setupPatterns();
 	}
 	
@@ -340,18 +340,18 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public boolean enterCode(LLDefineDirective directive) {
 		def = directive;
 		routine = new LinkedRoutine(def);
-		locals = routine.getLocals();
+		stackFrame = routine.getStackFrame();
 		typeEngine = def.getTarget().getTypeEngine();
 		cc = def.getTarget().getCallingConvention(def.getConvention());
 
 		newRoutine(routine);
-		locals.buildLocalTable(def);
+		stackFrame.buildLocalTable(def);
 		
 		blockMap = new LinkedHashMap<ISymbol, Block>();
 		ssaTempTable.clear();
 
 		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
-			epilogLabel = locals.getScope().add("$exit", true);
+			epilogLabel = stackFrame.getScope().add("$exit", true);
 			epilogLabel.setType(typeEngine.LABEL);
 		}
 
@@ -378,7 +378,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		AsmInstruction epilog = AsmInstruction.create(Pepilog);
 		List<ISymbol> retSyms = new ArrayList<ISymbol>();
-		for (ILocal local : locals.getAllLocals()) {
+		for (ILocal local : stackFrame.getAllLocals()) {
 			if (local.isOutgoing())
 				retSyms.add(local.getName());
 		}
@@ -399,7 +399,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		
 		// reset
-		locals = new Locals(module.getTarget());
+		stackFrame = new StackFrame(module.getTarget());
 	}
 	
 	/* (non-Javadoc)
@@ -621,7 +621,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case IN_PHYS_REG_0: 
 		case IN_REG_LOCAL:
 		{
-			ILocal local = locals.getFinalLocal(op);
+			ILocal local = stackFrame.getFinalLocal(op);
 			RegisterLocal regLocal = null;
 			if (local instanceof RegisterLocal)
 				regLocal = (RegisterLocal) local;
@@ -649,7 +649,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case ON_STACK:
 		case IN_MEMORY:
 		{
-			ILocal local = locals.getFinalLocal(op);
+			ILocal local = stackFrame.getFinalLocal(op);
 			if (local instanceof StackLocal)
 				return true;
 			
@@ -723,7 +723,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 	private void handleLoadInstr(LLLoadInstr instr) {
 		LLOperand src = instr.getOperands()[0];
-		ILocal local = locals.getFinalLocal(src);
+		ILocal local = stackFrame.getFinalLocal(src);
 		if (local != null && local.getType().equals(instr.getType())) {
 			//if (!asmOp.isMemory() && !asmOp.isRegister()) {
 			AssemblerOperand asmOp = generateOperand(src);
@@ -733,7 +733,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			AssemblerOperand asmOp = generateOperand(src);
 			if (!asmOp.isMemory()) {
 				if (asmOp instanceof RegTempOperand) {
-					ILocal alocal = locals.getLocal(((RegTempOperand) asmOp).getSymbol());
+					ILocal alocal = stackFrame.getLocal(((RegTempOperand) asmOp).getSymbol());
 					if (local.getType().matchesExactly(alocal.getType()))
 						asmOp = new RegIndOperand(asmOp);
 					else
@@ -754,11 +754,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		AssemblerOperand srcOp = generateOperand(src);
 
 		LLOperand dst = instr.getOperands()[1];
-		ILocal dstLocal = locals.getFinalLocal(dst);
+		ILocal dstLocal = stackFrame.getFinalLocal(dst);
 
 		if (srcOp instanceof SymbolOperand) {
 			// storing an address into the destination
-			ILocal local = locals.getFinalLocal(src);
+			ILocal local = stackFrame.getFinalLocal(src);
 			srcOp = generateGeneralOperand(src, srcOp);
 			if (local != null && !local.getType().equals(src.getType())) {
 				AssemblerOperand dstOp = generateOperand(dst);
@@ -785,7 +785,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				dstOp = generateGeneralOperand(dst, dstOp);
 			else if (dstOp instanceof AsmOperand) {
 				if (dstOp instanceof RegTempOperand) {
-					ILocal local = locals.getLocal(((RegTempOperand) dstOp).getSymbol());
+					ILocal local = stackFrame.getLocal(((RegTempOperand) dstOp).getSymbol());
 					if (dstLocal.getType().matchesExactly(local.getType()))
 						dstOp = new RegIndOperand(dstOp);
 					else
@@ -843,11 +843,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				if (retLoc instanceof CallerStackLocation) {
 					CallerStackLocation stackLoc = (CallerStackLocation) retLoc;
 					
-					ISymbol retName = locals.getScope().get(stackLoc.name);
+					ISymbol retName = stackFrame.getScope().get(stackLoc.name);
 					assert retName != null;
 					
 					// should be a pointer
-					RegisterLocal local = (RegisterLocal) locals.getFinalLocal(retName);
+					RegisterLocal local = (RegisterLocal) stackFrame.getFinalLocal(retName);
 					assert local != null;
 					
 					RegTempOperand retRegOp = new RegTempOperand(local);
@@ -943,20 +943,20 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			if (argLocs[i] instanceof CallerStackLocation) {
 				// allocate space for return value
 				CallerStackLocation stackLoc = (CallerStackLocation) argLocs[i];
-				ISymbol retName = locals.getScope().add(stackLoc.name, true);
+				ISymbol retName = stackFrame.getScope().add(stackLoc.name, true);
 				
 				assert stackLoc.type instanceof LLPointerType;
 				LLType objType = stackLoc.type.getSubType();
 				
 				retName.setType(objType);
-				StackLocal local = locals.allocateLocal(retName, objType);
+				StackLocal local = stackFrame.allocateLocal(retName, objType);
 				AssemblerOperand asmOp = new StackLocalOperand(local);
 				
 				// make tmp pointing to local for the arg
-				ISymbol retAddrName = locals.getScope().add(local.getName().getName() + "$p", true);
+				ISymbol retAddrName = stackFrame.getScope().add(local.getName().getName() + "$p", true);
 				retAddrName.setType(stackLoc.type);
-				RegisterLocal retAddr = (RegisterLocal) locals.allocateTemp(retAddrName, retAddrName.getType());
-				if (!locals.forceToRegister(retAddr, stackLoc.number))
+				RegisterLocal retAddr = (RegisterLocal) stackFrame.allocateTemp(retAddrName, retAddrName.getType());
+				if (!stackFrame.forceToRegister(retAddr, stackLoc.number))
 					assert false;
 				RegTempOperand ptr = new RegTempOperand(retAddr);
 				AddrOperand asmAddrOp = new AddrOperand(asmOp);
@@ -1327,7 +1327,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				asmOp = generateGeneralOperand(operand, asmOp);
 			} else {
 				// make a new temp
-				ILocal temp = locals.allocateTemp(getTempSymbol(operand), type);
+				ILocal temp = stackFrame.allocateTemp(getTempSymbol(operand), type);
 				if (temp instanceof RegisterLocal)
 					asmOp = new RegTempOperand((RegisterLocal) temp);
 				else
@@ -1501,12 +1501,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			assert false;
 		}
 		if (operand instanceof LLTempOp) {
-			ILocal local = locals.getFinalLocal(operand);
+			ILocal local = stackFrame.getFinalLocal(operand);
 			return createLocalOperand(operand.getType(), local);
 		}
 		if (operand instanceof LLSymbolOp) {
 			ISymbol symbol = ((LLSymbolOp) operand).getSymbol();
-			ILocal local = locals.getFinalLocal(symbol); // may be null
+			ILocal local = stackFrame.getFinalLocal(symbol); // may be null
 			return new SymbolOperand(symbol, local);
 		}
 		if (operand instanceof LLStructOp) {
@@ -1600,7 +1600,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @param symbol the symbol on which to base the name 
 	 * */
 	protected RegisterLocal newTempRegister(Routine routine, LLInstr instr, ISymbol symbol, LLType type) {
-		ILocal local = routine.getLocals().allocateTemp(symbol, type);
+		ILocal local = routine.getStackFrame().allocateTemp(symbol, type);
 		if (!(local instanceof RegisterLocal))
 			throw new IllegalStateException("cannot force " + symbol + " of " + type + " into a register");
 		RegisterLocal regLocal = (RegisterLocal) local;
@@ -1618,7 +1618,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		LLType type = llOperand.getType();
 		RegisterLocal regLocal = newTempRegister(routine, instr, 
 				getTempSymbol(llOperand), llOperand != null ? type : ((LLTypedInstr) instr).getType());
-		if (!locals.forceToRegister(regLocal, num))
+		if (!stackFrame.forceToRegister(regLocal, num))
 			assert false;
 		AssemblerOperand ret = new RegTempOperand(regLocal);
 		if (llOperand != null && !ret.equals(operand)) {
@@ -1708,7 +1708,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand instanceof SymbolOperand) {
 			// we're dereferencing it
 			ISymbol sym = ((SymbolOperand) operand).getSymbol();
-			ILocal local = locals.getFinalLocal(sym);
+			ILocal local = stackFrame.getFinalLocal(sym);
 			if (local instanceof RegisterLocal)
 				return new RegTempOperand((RegisterLocal) local);
 			else if (local instanceof StackLocal)
@@ -1736,7 +1736,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 
 	private AssemblerOperand moveToTemp(LLOperand llOp, LLType type, AssemblerOperand operand) {
-		ILocal temp = locals.allocateTemp(getTempSymbol(null), type != null ? type : ((LLTypedInstr) instr).getType());
+		ILocal temp = stackFrame.allocateTemp(getTempSymbol(null), type != null ? type : ((LLTypedInstr) instr).getType());
 		AssemblerOperand dest = createLocalOperand(type, temp);
 		return moveTo(llOp, type, operand, dest);
 	}
@@ -1751,7 +1751,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			return getTempSymbol(((LLAssignInstr) instr).getResult());
 		else
 			baseName = "reg";
-		ISymbol temp = locals.getScope().add(baseName, true);
+		ISymbol temp = stackFrame.getScope().add(baseName, true);
 		temp.setType(llOp != null ? llOp.getType() : ((LLTypedInstr) instr).getType());
 		return temp;
 	}
@@ -1773,7 +1773,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				ILocal fromLocal = ((ISymbolOperand) from).getLocal();
 				ILocal dstLocal = null;
 				if (dest instanceof ISymbolOperand)
-					dstLocal = locals.getLocal(((ISymbolOperand) dest).getSymbol());
+					dstLocal = stackFrame.getLocal(((ISymbolOperand) dest).getSymbol());
 				// getting the address
 				if (fromLocal != null) {
 					if (!from.isMemory() && !from.isRegister()) {
@@ -1785,7 +1785,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 						emitInstr(AsmInstruction.create(Plea, from, ptr));
 						from = ptr;
 					} else {
-						RegisterLocal addr = (RegisterLocal) locals.allocateTemp(type);
+						RegisterLocal addr = (RegisterLocal) stackFrame.allocateTemp(type);
 						RegTempOperand ptr = new RegTempOperand(addr);
 						emitInstr(AsmInstruction.create(Plea, from, ptr));
 						from = ptr;
@@ -1820,7 +1820,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		ILocal dstLocal = null;
 		if (dest instanceof ISymbolOperand)
-			dstLocal = locals.getFinalLocal(((ISymbolOperand) dest).getSymbol());
+			dstLocal = stackFrame.getFinalLocal(((ISymbolOperand) dest).getSymbol());
 		
 		if (from instanceof SymbolOperand && fromLocal != null) {
 			if (fromLocal instanceof RegisterLocal) {
@@ -1843,7 +1843,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					emitInstr(AsmInstruction.create(Plea, from, ptr));
 					dest = ptr;
 				} else {
-					RegisterLocal addr = (RegisterLocal) locals.allocateTemp(type);
+					RegisterLocal addr = (RegisterLocal) stackFrame.allocateTemp(type);
 					RegTempOperand ptr = new RegTempOperand(addr);
 					emitInstr(AsmInstruction.create(Plea, from, ptr));
 					dest = ptr;
@@ -1851,7 +1851,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			} else {
 				// getting the address
 				if (!dest.isRegister()) {
-					RegisterLocal addr = (RegisterLocal) locals.allocateTemp(type);
+					RegisterLocal addr = (RegisterLocal) stackFrame.allocateTemp(type);
 					dest = new RegTempOperand(addr);
 				}
 				AsmInstruction inst = AsmInstruction.create(Ili, dest, from);

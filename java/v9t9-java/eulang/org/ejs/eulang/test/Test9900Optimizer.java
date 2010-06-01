@@ -104,7 +104,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 			assertEquals(1, inst.getSources().length);
 			assertEquals(1, inst.getTargets().length);
 			
-			ILocal target = locals.getLocal(inst.getTargets()[0]);
+			ILocal target = stackFrame.getLocal(inst.getTargets()[0]);
 			assertEquals(1, target.getUses().cardinality());
 		}			
 	}
@@ -115,7 +115,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		doOpt("foo = code() { x := 1; x += 11; };\n");
 
 		// should boil down to "li r0, 12"
-		assertEquals(1, locals.getAllLocals().length);
+		assertEquals(1, stackFrame.getAllLocals().length);
 		
 		ILocal local;
 		local = getLocal("x");
@@ -132,7 +132,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		assertTrue(anyChanges);
 		
 		// only the R0 return temp should be left
-		assertEquals(1, locals.getAllLocals().length);
+		assertEquals(1, stackFrame.getAllLocals().length);
 		
 
 		AsmInstruction inst = instrs.get(findInstrWithInst(instrs, "LI"));
@@ -545,7 +545,7 @@ public class Test9900Optimizer extends BaseInstrTest {
     	// validate def/use
 		idx = findInstrWithInst(instrs, "COPY");
 		inst = instrs.get(idx);
-		ILocal foo = locals.getLocal(getOperandSymbol(inst.getOp2()));
+		ILocal foo = stackFrame.getLocal(getOperandSymbol(inst.getOp2()));
 		assertNotNull(foo);
 		assertEquals(1, foo.getDefs().cardinality());
 		assertFalse(foo.getUses().get(foo.getDefs().nextSetBit(0)));	// is not read where written
@@ -730,13 +730,13 @@ public class Test9900Optimizer extends BaseInstrTest {
     	// the regs should have one def only (but not necc. become constants, since we'll just 
     	// have to reconstruct regs for LI ops anyway)
     	AssemblerOperand top = ((TupleTempOperand) op).get(0);
-		ILocal local = locals.getLocal(getOperandSymbol(top));
+		ILocal local = stackFrame.getLocal(getOperandSymbol(top));
     	assertNotNull(local);
     	assertEquals(1, local.getDefs().cardinality());
     	assertEquals(1, local.getUses().cardinality());
     	
     	top = ((TupleTempOperand) op).get(1);
-		local = locals.getLocal(getOperandSymbol(top));
+		local = stackFrame.getLocal(getOperandSymbol(top));
     	assertNotNull(local);
     	assertEquals(1, local.getDefs().cardinality());
     	assertEquals(1, local.getUses().cardinality());
@@ -752,13 +752,13 @@ public class Test9900Optimizer extends BaseInstrTest {
     	
     	assertTrue(op instanceof TupleTempOperand);
     	top = ((TupleTempOperand) op).get(0);
-		local = locals.getLocal(getOperandSymbol(top));
+		local = stackFrame.getLocal(getOperandSymbol(top));
     	assertNotNull(local);
     	assertEquals(1, local.getDefs().cardinality());
     	assertEquals(1, local.getUses().cardinality());
     	
     	top = ((TupleTempOperand) op).get(1);
-		local = locals.getLocal(getOperandSymbol(top));
+		local = stackFrame.getLocal(getOperandSymbol(top));
     	assertNotNull(local);
     	assertEquals(2, local.getDefs().cardinality());
     	assertEquals(2, local.getUses().cardinality());

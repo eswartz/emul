@@ -110,7 +110,7 @@ import org.ejs.eulang.types.LLType;
  * @author ejs
  *
  */
-public class Locals {
+public class StackFrame {
 	public boolean DUMP = false;
 
 	/** any locals defined on the stack */
@@ -130,7 +130,7 @@ public class Locals {
 	private HashMap<IRegClass, RegAlloc> regAllocs;
 	private boolean forceLocalsToStack;
 
-	public Locals(ITarget target) {
+	public StackFrame(ITarget target) {
 		stackLocals = new LinkedHashMap<ISymbol, StackLocal>();
 		regLocals = new LinkedHashMap<ISymbol, RegisterLocal>();
 		

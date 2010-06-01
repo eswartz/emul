@@ -22,7 +22,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 	protected boolean changed;
 	protected Routine routine;
 
-	protected Locals locals;
+	protected StackFrame stackFrame;
 	protected TreeMap<Integer, AsmInstruction> instrMap;
 	protected TreeMap<Integer, Block> instrBlockMap;
 	protected TypeEngine typeEngine;
@@ -88,13 +88,13 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 		origLocals = new HashSet<ILocal>();
 		
 		for (ISymbol sym : asmInstruction.getTargets()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null) {
 				origLocals.add(local);
 			}
 		}
 		for (ISymbol sym : asmInstruction.getSources()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null) {
 				origLocals.add(local);
 			}
@@ -108,7 +108,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 	protected void emitUsageInfo(AsmInstruction asmInstruction) {
 		Set<ILocal> seen = new HashSet<ILocal>();
 		for (ISymbol sym : asmInstruction.getTargets()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null) {
 				if (!origLocals.contains(local)) {
 					System.out.println("\t\t+" + local.getName() + "\tdefs: " + local.getDefs());
@@ -118,7 +118,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 			}
 		}
 		for (ISymbol sym : asmInstruction.getSources()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null) {
 				if (!origLocals.contains(local)) {
 					System.out.println("\t\t+" + local.getName() + "\tuses: " + local.getUses());
@@ -148,7 +148,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 		Set<ISymbol> syms = new HashSet<ISymbol>(); 
 		AsmInstruction.getSymbolRefs(syms, key);
 		for (ISymbol sym : syms) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null)
 				return local;
 		}
@@ -162,7 +162,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 		
 		for (ISymbol sym : asmInstruction.getSources()) {
 			if (syms.contains(sym)) {
-				ILocal local = locals.getLocal(sym);
+				ILocal local = stackFrame.getLocal(sym);
 				if (local != null) {
 					if (adding)
 						local.getUses().set(asmInstruction.getNumber());
@@ -174,7 +174,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 	
 		for (ISymbol sym : asmInstruction.getTargets()) {
 			if (syms.contains(sym)) {
-				ILocal local = locals.getLocal(sym);
+				ILocal local = stackFrame.getLocal(sym);
 				if (local != null) {
 					if (adding)
 						local.getDefs().set(asmInstruction.getNumber());
@@ -195,14 +195,14 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 		gatherUsageInfo(inst);
 		
 		for (ISymbol sym : inst.getSources()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null) {
 				local.getUses().clear(inst.getNumber());
 				local.getDefs().clear(inst.getNumber());
 			}
 		}
 		for (ISymbol sym : inst.getTargets()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null) {
 				local.getUses().clear(inst.getNumber());
 				local.getDefs().clear(inst.getNumber());
@@ -220,7 +220,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 
 	protected ILocal getTargetLocal(AsmInstruction inst) {
 		for (ISymbol sym : inst.getTargets()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null)
 				return local;
 		}
@@ -243,7 +243,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 
 	protected ILocal getSourceLocal(AsmInstruction inst) {
 		for (ISymbol sym : inst.getSources()) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null)
 				return local;
 		}
@@ -265,7 +265,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 	@Override
 	public boolean enterRoutine(Routine routine) {
 		this.routine = routine;
-		this.locals = routine.getLocals();
+		this.stackFrame = routine.getStackFrame();
 		this.typeEngine = routine.getDefinition().getTypeEngine();
 		this.module = routine.getDefinition().getModule();
 		

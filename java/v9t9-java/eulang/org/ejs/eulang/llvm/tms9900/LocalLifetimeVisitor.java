@@ -19,7 +19,7 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	private Map<ILocal, Block> firstBlockRefs = new HashMap<ILocal, Block>();
 	private Map<ILocal, AsmInstruction> tempDefs = new HashMap<ILocal, AsmInstruction>();
 
-	private Locals locals;
+	private StackFrame stackFrame;
 
 	private Block block;
 
@@ -39,12 +39,12 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	 */
 	@Override
 	public boolean enterRoutine(Routine routine) {
-		this.locals = routine.getLocals();
+		this.stackFrame = routine.getStackFrame();
 		
 		tempDefs.clear();
 		firstBlockRefs.clear();
 		
-		for (ILocal local : locals.getAllLocals()) {
+		for (ILocal local : stackFrame.getAllLocals()) {
 			local.getDefs().clear();
 			local.getUses().clear();
 			local.setExprTemp(true);
@@ -58,9 +58,9 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	 */
 	@Override
 	public void exitRoutine(Routine routine) {
-		for (ILocal local : locals.getAllLocals()) {
+		for (ILocal local : stackFrame.getAllLocals()) {
 			if (local.getDefs().isEmpty() && local.getUses().isEmpty()) {
-				locals.removeLocal(local);
+				stackFrame.removeLocal(local);
 			}
 		}
 		super.exitRoutine(routine);
@@ -81,12 +81,12 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	@Override
 	public boolean enterInstr(Block block, AsmInstruction instr) {
 		if (instr.getInst() == InstrSelection.Pprolog) {
-			for (ILocal local : locals.getArgumentLocals()) {
+			for (ILocal local : stackFrame.getArgumentLocals()) {
 				addLocalDef(instr, local);
 			}
 		}
 		else if (instr.getInst() == InstrSelection.Pepilog) {
-			for (ILocal local : locals.getAllLocals()) {
+			for (ILocal local : stackFrame.getAllLocals()) {
 				if (local.isOutgoing()) {
 					addLocalUse(instr, local);
 				}
@@ -156,6 +156,6 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	 * @return
 	 */
 	private ILocal getLocal(ISymbol sym) {
-		return locals.getLocal(sym);
+		return stackFrame.getLocal(sym);
 	}
 }

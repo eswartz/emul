@@ -27,9 +27,9 @@ public class RoutineDumper extends CodeVisitor {
 		System.out.println("Routine: " + routine.getName());
 		boolean any = false;
 		
-		Locals locals = routine.getLocals();
+		StackFrame stackFrame = routine.getStackFrame();
 		Collection<? extends ILocal> values;
-		values = locals.getArgumentLocals();
+		values = stackFrame.getArgumentLocals();
 		if (!values.isEmpty()) {
 			any = true;
 			System.out.println("Arguments:");
@@ -37,7 +37,7 @@ public class RoutineDumper extends CodeVisitor {
 				dumpLocal(local);
 			}
 		}
-		values = locals.getRegLocals().values();
+		values = stackFrame.getRegLocals().values();
 		if (!values.isEmpty()) {
 			any = true;
 			System.out.println("Registers:");
@@ -45,7 +45,7 @@ public class RoutineDumper extends CodeVisitor {
 				dumpLocal(local);
 			}
 		}
-		values = locals.getStackLocals().values();
+		values = stackFrame.getStackLocals().values();
 		if (!values.isEmpty()) {
 			any = true;
 			System.out.println("Stack:");

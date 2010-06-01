@@ -345,34 +345,34 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		ILocal t1Local = null;
 		AssemblerOperand t1 = null;
 		if (!isClear) {
-			t1Local = locals.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
+			t1Local = stackFrame.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
 			t1 = new RegTempOperand((RegisterLocal) t1Local);
 			lp = AsmInstruction.create(Plea, from, t1);
 			block.addInstBefore(lp, inst);
 			System.out.println(here() +" " + lp);
 		}
 		
-		ILocal t2Local = locals.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
+		ILocal t2Local = stackFrame.allocateTemp(typeEngine.getPointerType(typeEngine.INT));
 		AssemblerOperand t2 = new RegTempOperand((RegisterLocal) t2Local);
 		lp = AsmInstruction.create(Plea, to, t2);
 		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
 		
 		// get size of copy/clear
-		ILocal t3Local = locals.allocateTemp(typeEngine.INT);
+		ILocal t3Local = stackFrame.allocateTemp(typeEngine.INT);
 		AssemblerOperand t3 = new RegTempOperand((RegisterLocal) t3Local);
 		lp = AsmInstruction.create(Ili, t3, new NumberOperand(type.getBits() / 8));
 		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
 		
 		// make block for copy/clear loop
-		ISymbol labelSym = locals.getScope().addTemporary(isClear ? ".clear" : ".copy");
+		ISymbol labelSym = stackFrame.getScope().addTemporary(isClear ? ".clear" : ".copy");
 		labelSym.setType(typeEngine.LABEL);
 		Block loop = new Block(labelSym);
 		routine.addBlock(loop);
 		System.out.println(here() +" added " + loop);
 		
-		ISymbol afterSym = locals.getScope().addTemporary(block.getLabel().getName());
+		ISymbol afterSym = stackFrame.getScope().addTemporary(block.getLabel().getName());
 		afterSym.setType(typeEngine.LABEL);
 		
 		Block after = routine.splitBlockAt(block, inst, afterSym);
@@ -444,7 +444,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			if (from instanceof NumberOperand && ins != Pcopy) {
 				// oops, const copy
 				ins = Ili; 
-				to = new RegTempOperand((RegisterLocal) locals.allocateTemp(types[i]));
+				to = new RegTempOperand((RegisterLocal) stackFrame.allocateTemp(types[i]));
 				if (types[i].getBits() <= 8)
 					from = new NumberOperand((((NumberOperand) from).getValue() << 8) & 0xff00);
 				copy = AsmInstruction.create(ins, to, from);

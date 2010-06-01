@@ -104,7 +104,7 @@ public class Test9900LowerPseudos extends BaseInstrTest {
     	matchInstr(inst, "MOV", CompositePieceOperand.class, 2, CompositePieceOperand.class, ".callerRet", 2);
 
     	// make sure we have piecewise access that doesn't kill on each write
-    	ILocal local = locals.getLocal(getOperandSymbol(inst.getOp1()));
+    	ILocal local = stackFrame.getLocal(getOperandSymbol(inst.getOp1()));
     	assertLocalIsNeverKilled(local);
     	assertEquals(4, local.getDefs().cardinality());
     	assertEquals(6, local.getUses().cardinality());
@@ -143,7 +143,7 @@ public class Test9900LowerPseudos extends BaseInstrTest {
     	matchInstr(inst, "MOV", RegIncOperand.class, RegIncOperand.class);
     	
     	// make sure *R+ is properly recorded
-    	ILocal loc1 = locals.getLocal(getOperandSymbol(inst.getOp1()));
+    	ILocal loc1 = stackFrame.getLocal(getOperandSymbol(inst.getOp1()));
     	assertTrue(loc1.getUses().get(inst.getNumber()));
     	assertTrue(loc1.getDefs().get(inst.getNumber()));
     	

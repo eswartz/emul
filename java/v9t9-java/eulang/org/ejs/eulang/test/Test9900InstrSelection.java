@@ -1891,7 +1891,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		idx = findInstrWithInst(instrs, "COPY", -1);
 		inst = instrs.get(idx);
 		AssemblerOperand z = new NumOperand(0);
-		AssemblerOperand val = new RegTempOperand(locals.getRegLocals().values().iterator().next());
+		AssemblerOperand val = new RegTempOperand(stackFrame.getRegLocals().values().iterator().next());
 		matchInstr(inst, "COPY", new TupleTempOperand(new AssemblerOperand[] { z, new NumOperand(11), new NumOperand(22),
 z, z, val, z, z, z, z }), AddrOperand.class);
     }

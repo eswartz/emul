@@ -33,7 +33,7 @@ public abstract class Routine {
     
 	private ISymbol name;
 	
-	private Locals locals;
+	private StackFrame stackFrame;
 	private final LLDefineDirective def;
 	private boolean hasBlCalls;
 	private Block entry;
@@ -45,7 +45,7 @@ public abstract class Routine {
 		blocks = new ArrayList<Block>();
 		entry = null; 
 		exit = null;
-		locals = new Locals(def.getTarget());
+		stackFrame = new StackFrame(def.getTarget());
     }
     
     @Override
@@ -85,8 +85,8 @@ public abstract class Routine {
     /**
 	 * @return the locals
 	 */
-	public Locals getLocals() {
-		return locals;
+	public StackFrame getStackFrame() {
+		return stackFrame;
 	}
 	
     abstract public boolean isReturn(AsmInstruction inst);

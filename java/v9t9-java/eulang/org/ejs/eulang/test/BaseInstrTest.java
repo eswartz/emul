@@ -31,7 +31,7 @@ import org.ejs.eulang.llvm.tms9900.ICodeVisitor;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
-import org.ejs.eulang.llvm.tms9900.Locals;
+import org.ejs.eulang.llvm.tms9900.StackFrame;
 import org.ejs.eulang.llvm.tms9900.LowerPseudoInstructions;
 import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
@@ -64,7 +64,7 @@ public class BaseInstrTest extends BaseTest {
 
 	protected boolean dumpIsel;
 	
-	protected Locals locals;
+	protected StackFrame stackFrame;
 	protected ArrayList<AsmInstruction> instrs;
 	protected ArrayList<Block> blocks;
 	protected Block currentBlock;
@@ -115,9 +115,9 @@ public class BaseInstrTest extends BaseTest {
 				blocks.clear();
 				currentBlock = null;
 				BaseInstrTest.this.routine = routine;
-				BaseInstrTest.this.locals = routine.getLocals();
+				BaseInstrTest.this.stackFrame = routine.getStackFrame();
 				if (dumpIsel) {
-					locals.DUMP = true;
+					stackFrame.DUMP = true;
 				}
 			}
 			
@@ -164,7 +164,7 @@ public class BaseInstrTest extends BaseTest {
 				//assertNotNull(instr+":"+op+"", asmOp.getType() != null);
 				if (asmOp instanceof RegTempOperand) {
 					RegTempOperand reg = (RegTempOperand) asmOp;
-					RegisterLocal local = locals.getRegLocals().get(reg.getSymbol());
+					RegisterLocal local = stackFrame.getRegLocals().get(reg.getSymbol());
 					assertNotNull(reg+"", local);
 					assertEquals(reg+"", reg.isRegPair(), local.isRegPair());
 				}
@@ -174,14 +174,14 @@ public class BaseInstrTest extends BaseTest {
 			assertNotNull(sym);
 			assertNotNull(instr+":"+sym, sym.getType());
 			if (sym.getScope() instanceof LocalScope)
-				assertTrue(sym+"", locals.getRegLocals().containsKey(sym) || locals.getStackLocals().containsKey(sym)
+				assertTrue(sym+"", stackFrame.getRegLocals().containsKey(sym) || stackFrame.getStackLocals().containsKey(sym)
 						|| sym.getType().getBasicType() == BasicType.LABEL);
 		}
 		for (ISymbol sym : instr.getTargets()) {
 			assertNotNull(sym);
 			assertNotNull(instr+":"+sym, sym.getType());
 			if (sym.getScope() instanceof LocalScope)
-				assertTrue(sym+"", locals.getRegLocals().containsKey(sym) || locals.getStackLocals().containsKey(sym)
+				assertTrue(sym+"", stackFrame.getRegLocals().containsKey(sym) || stackFrame.getStackLocals().containsKey(sym)
 						|| sym.getType().getBasicType() == BasicType.LABEL);
 		}
 		
@@ -486,12 +486,12 @@ public class BaseInstrTest extends BaseTest {
 	 * @return
 	 */
 	protected ILocal getLocal(String name) {
-		for (ILocal local : locals.getAllLocals()) {
+		for (ILocal local : stackFrame.getAllLocals()) {
 			if (local.getName().getName().equals(name))
 				return local;
 		}
 		name = "." + name + ".";
-		for (ILocal local : locals.getAllLocals()) {
+		for (ILocal local : stackFrame.getAllLocals()) {
 			if (local.getName().getUniqueName().contains(name))
 				return local;
 		}
@@ -499,10 +499,10 @@ public class BaseInstrTest extends BaseTest {
 	}
 
 	/**
-	 * @param locals
+	 * @param stackFrame
 	 */
-	protected void assertNoUndefinedLocals(Locals locals) {
-		for (ILocal local : locals.getAllLocals()) {
+	protected void assertNoUndefinedStackFrame(StackFrame stackFrame) {
+		for (ILocal local : stackFrame.getAllLocals()) {
 			if (local.getDefs().isEmpty() && local.getUses().isEmpty()) {
 				fail(local+" still present");
 			}
@@ -541,7 +541,7 @@ public class BaseInstrTest extends BaseTest {
 	
 	protected void validateInstrsAndResync(Routine routine) {
 
-		assertNoUndefinedLocals(routine.getLocals());
+		assertNoUndefinedStackFrame(routine.getStackFrame());
 		
 		instrs.clear();
 		for (Block block : routine.getBlocks())

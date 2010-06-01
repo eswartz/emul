@@ -21,7 +21,7 @@ import org.ejs.eulang.llvm.tms9900.CodeVisitor;
 import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
-import org.ejs.eulang.llvm.tms9900.Locals;
+import org.ejs.eulang.llvm.tms9900.StackFrame;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
@@ -826,7 +826,7 @@ public class Simulator {
         	
         	Routine routine = getBuildOutput().getRoutine(getSymbol(iblock.instPC));
         	assert routine != null;
-        	Locals locals = routine.getLocals();
+        	StackFrame stackFrame = routine.getStackFrame();
         	
         	int theSP = target.getSP();
         	int theFP = target.getFP();
@@ -844,11 +844,11 @@ public class Simulator {
         	
         	writeRegister(theFP, FP);
         	
-        	SP -= locals.getFrameSize();
+        	SP -= stackFrame.getFrameSize();
         	writeRegister(theSP, SP);
         	
         	
-			for (ILocal local : locals.getAllLocals()) {
+			for (ILocal local : stackFrame.getAllLocals()) {
         		short addr;
         		if (local instanceof RegisterLocal) {
         			int vr = ((RegisterLocal) local).getVr();

@@ -923,7 +923,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		AsmInstruction.getSymbolRefs(copySyms, toOp);
 
 		for (ISymbol sym : copySyms) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local != null)
 				local.getUses().set(inst.getNumber());
 		}
@@ -1091,7 +1091,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			return false;
 		
 		for (ISymbol sym : targets) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local == null)
 				return false;		// not a local
 			
@@ -1117,7 +1117,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		// forget the source
 		for (ISymbol sym : targets) {
-			ILocal local = locals.getLocal(sym);
+			ILocal local = stackFrame.getLocal(sym);
 			if (local.getInit() == inst.getNumber())
 				localValues.remove(local);
 		}
