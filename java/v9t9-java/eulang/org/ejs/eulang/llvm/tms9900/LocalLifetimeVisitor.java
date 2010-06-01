@@ -100,10 +100,14 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	 * @param local
 	 */
 	private void addLocalDef(AsmInstruction instr, ILocal local) {
-		if (local.getDefs().isEmpty()) {
+		boolean isFirst = local.getDefs().isEmpty();
+		if (isFirst) {
 			local.setInit(instr.getNumber());
 			firstBlockRefs.put(local, block);
 		} else {
+			if (firstBlockRefs.containsKey(local) && firstBlockRefs.get(local) != block) {
+				local.setSingleBlock(false);
+			}
 			// due to 2-op nature, we can read and write in same instruction; 
 			// this is not considered a kill 
 			if (!local.getUses().get(instr.getNumber()))
@@ -111,6 +115,16 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 		}
 		local.getDefs().set(instr.getNumber());
 	}
+
+	private void addLocalUse(AsmInstruction instr, ILocal local) {
+		boolean isFirst = local.getUses().isEmpty();
+		local.getUses().set(instr.getNumber());
+		if (isFirst)
+			firstBlockRefs.put(local, block);
+		else if (firstBlockRefs.containsKey(local) && firstBlockRefs.get(local) != block)
+			local.setSingleBlock(false);
+	}
+	
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.CodeVisitor#handleSource(v9t9.tools.asm.assembler.AsmInstruction, v9t9.tools.asm.assembler.operand.hl.AssemblerOperand)
@@ -125,15 +139,6 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 		
 	}
 
-	private void addLocalUse(AsmInstruction instr, ILocal local) {
-		boolean isFirst = local.getUses().isEmpty();
-		local.getUses().set(instr.getNumber());
-		if (isFirst)
-			firstBlockRefs.put(local, block);
-		else if (firstBlockRefs.containsKey(local) && firstBlockRefs.get(local) != block)
-			local.setSingleBlock(false);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.CodeVisitor#handleTarget(v9t9.tools.asm.assembler.AsmInstruction, org.ejs.eulang.symbols.ISymbol)
 	 */

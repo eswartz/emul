@@ -71,7 +71,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		int idx = 0;
 		while (idx < instrs.size()) {
 			AsmInstruction inst = instrs.get(idx);
-			System.out.println(inst);
+			System.out.println("?" + inst.getAnnotatedString());
 			
 			boolean applied = false;
 			
@@ -460,7 +460,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	private void expandCopyPiecewise(LLType type, AsmInstruction inst, AssemblerOperand from) {
 		assert from instanceof RegIndOperand || from instanceof AddrOperand;
 		AssemblerOperand to = inst.getOp2();
-		assert to instanceof RegIndOperand || to instanceof AddrOperand;
+		assert to instanceof RegIndOperand || to instanceof AddrOperand || to instanceof RegOffsOperand;
 		
 		to = InstrSelection.ensurePiecewiseAccess(to, null);
 		from = InstrSelection.ensurePiecewiseAccess(from, null);

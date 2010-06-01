@@ -47,3 +47,15 @@ call doFac
 assert R0 == 40320
 >>>
 
+<<< factorial w/stack copy
+Bloat =: Byte[8];
+fac = code(x:Int; b:Bloat) {
+    if x <= 1 then 1 else x * fac(x-1, b)
+};
+b : Bloat;
+doFac = code() { fac(8, b); };
+===
+call doFac
+assert R0 == 40320
+>>>
+
