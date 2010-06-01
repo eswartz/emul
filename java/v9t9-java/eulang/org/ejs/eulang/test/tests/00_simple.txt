@@ -37,3 +37,13 @@ call testSimpleCall1
 assert R0 == -200
 >>>
 
+<<< factorial!
+fac = code(x:Int) {
+    if x <= 1 then 1 else x * fac(x-1)
+};
+doFac = code() { fac(8); };
+===
+call doFac
+assert R0 == 40320
+>>>
+

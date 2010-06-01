@@ -220,6 +220,9 @@ public class Test9900Simulation  {
 				}
 			}
 		}
+		
+		if (state != State.OUTSIDE_TEST)
+			throw new IOException("truncated test " + fname + ":" + comment);
 	}
 	
 	private static int parseInt(String string) {

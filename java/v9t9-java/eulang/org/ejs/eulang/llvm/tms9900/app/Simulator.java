@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
@@ -64,14 +65,32 @@ public class Simulator {
 
 	private MemoryDomain memory;
 	private TreeMap<Short, AsmInstruction> pcToInstrMap;
-	private HashMap<ISymbol, Short> symbolToAddrMap;
-	private TreeMap<Short, ISymbol> addrToSymbolMap;
 	private BuildOutput buildOutput;
 	private Cpu cpu;
-	private HashMap<ISymbol, Short> vrToAddrMap;
+	private HashMap<ISymbol, Short> symbolToAddrMap;
+	private TreeMap<Short, ISymbol> addrToSymbolMap;
 	private short vrAddr;
 	private final ITarget target;
 
+	static class Frame {
+		/**
+		 * @param symbolToAddrMap2
+		 * @param addrToSymbolMap2
+		 * @param vrAddr2
+		 */
+		public Frame(HashMap<ISymbol, Short> symbolToAddrMap,
+				TreeMap<Short, ISymbol> addrToSymbolMap, short vrAddr) {
+			this.symbolToAddrMap = symbolToAddrMap;
+			this.addrToSymbolMap = addrToSymbolMap;
+			this.vrAddr = vrAddr;
+		}
+		HashMap<ISymbol, Short> symbolToAddrMap;
+		TreeMap<Short, ISymbol> addrToSymbolMap;
+		short vrAddr;
+		
+	}
+	
+	Stack<Frame> stackFrames;
 
 	/**
 	 * This interface receives details about an instruction's effects
@@ -296,7 +315,7 @@ public class Simulator {
         symbolToAddrMap = new HashMap<ISymbol, Short>();
         addrToSymbolMap = new TreeMap<Short, ISymbol>();
         
-        vrToAddrMap = new HashMap<ISymbol, Short>();
+        stackFrames = new Stack<Frame>();
 	}
 	
 	/**
@@ -304,10 +323,10 @@ public class Simulator {
 	 */
 	public void init() {
 		
+		stackFrames.clear();
         pcToInstrMap.clear();
         symbolToAddrMap.clear();
         addrToSymbolMap.clear();
-        vrToAddrMap.clear();
         
         short pc = 0x100;
         for (Routine routine : buildOutput.getRoutines()) {
@@ -320,6 +339,7 @@ public class Simulator {
         }
         
         vrAddr = addr; 
+        
 	}
 
 	
@@ -798,6 +818,11 @@ public class Simulator {
     private void interpret(final Cpu cpu, AsmInstruction ins) {
         switch (ins.getInst()) {
         case InstrSelection.Pprolog: {
+            Frame frame = new Frame(symbolToAddrMap, addrToSymbolMap, vrAddr);
+            stackFrames.push(frame);
+            symbolToAddrMap = new HashMap<ISymbol, Short>(symbolToAddrMap);
+            addrToSymbolMap = new TreeMap<Short, ISymbol>(addrToSymbolMap);
+        	
         	Routine routine = getBuildOutput().getRoutine(getSymbol(iblock.instPC));
         	assert routine != null;
         	Locals locals = routine.getLocals();
@@ -821,6 +846,7 @@ public class Simulator {
         	SP -= locals.getFrameSize();
         	writeRegister(theSP, SP);
         	
+        	
 			for (ILocal local : locals.getAllLocals()) {
         		short addr;
         		if (local instanceof RegisterLocal) {
@@ -831,13 +857,8 @@ public class Simulator {
         				int size = 2;
         				if (((RegisterLocal) local).isRegPair())
         					size = 4;
-        				Short vrAddr = vrToAddrMap.get(local.getName());
-        				if (vrAddr != null)
-        					addr = vrAddr;
-        				else {
-        					addr = this.vrAddr;
-        					this.vrAddr += size;
-        				}
+        				addr = this.vrAddr;
+        				this.vrAddr += size;
         			}
         		}
         		else if (local instanceof StackLocal) {
@@ -853,7 +874,6 @@ public class Simulator {
         		}
         		
         		System.out.println("alloc " + HexUtils.toHex4(addr)+": " + local);
-        		vrToAddrMap.put(local.getName(), addr);
         		symbolToAddrMap.put(local.getName(), addr);
         	}
 
@@ -873,6 +893,12 @@ public class Simulator {
         	writeRegister(11, ret); SP += 2;
         	writeRegister(theSP, SP);
         	writeRegister(theFP, FP);
+        	
+            Frame frame = stackFrames.pop();
+            symbolToAddrMap = frame.symbolToAddrMap;
+            addrToSymbolMap = frame.addrToSymbolMap;
+            vrAddr = frame.vrAddr;
+
         	break;
         }
         
