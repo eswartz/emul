@@ -14,7 +14,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.AssertionFailedError;
 import junit.framework.Protectable;
 import junit.framework.Test;
 import junit.framework.TestResult;
@@ -165,7 +164,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		short pc = sim.getAddress(routine.getName());
 		short wp = (short) 0xff80;
 		
-		sim.getMemory().writeWord(wp + v9t9Target.getSP() * 2, wp);
+		sim.getMemory().writeWord(wp + v9t9Target.getSP() * 2, (short) wp);
 		
 		sim.executeAt(pc, wp, timeout);
 		
@@ -233,9 +232,6 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 	@Override
 	public void run(TestResult result) {
 		if (skipping) {
-			result.startTest(this);
-			result.addFailure(this, new AssertionFailedError("skipped " + testName));
-			result.endTest(this);
 			return;
 		}
 		
@@ -269,12 +265,14 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 				System.out.println(SimulationTestCase.this.toString());
 				System.setOut(outStr);
 				System.setErr(errStr);
+				
 				setup();
+				
 				Simulator sim = makeSimulator(program);
 				for (SimulationRunnable r : setups) {
 					r.run(sim);
 				}
-				doSimulate(sim, callRoutineName, 1000);
+				doSimulate(sim, callRoutineName, 5000);
 				for (SimulationRunnable r : checks) {
 					r.run(sim);
 				}

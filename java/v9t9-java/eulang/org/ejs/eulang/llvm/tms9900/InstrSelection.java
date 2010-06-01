@@ -989,7 +989,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				AssemblerOperand arg = generateOperand(ops[argIdx]);
 				StackLocation stackLoc = (StackLocation) argLocs[i];
 				AssemblerOperand stackOp = new RegOffsOperand(
-						new NumberOperand(stackLoc.offset + stackSpace),
+						new NumberOperand(stackLoc.offset),
 						sp);
 				moveTo(ops[argIdx], ops[argIdx].getType(), arg, stackOp);
 				argIdx++;

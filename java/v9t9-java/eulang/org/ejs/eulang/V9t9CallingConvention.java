@@ -120,9 +120,11 @@ public class V9t9CallingConvention implements ICallingConvention {
 			//int curOffs = align.sizeof();
 			//int endOffs = align.alignAndAdd(arg.getType());
 			//int argEnd = curOffs - endOffs;
-			align.alignAndAdd(arg.getType());
-			locs.set(stackIndices.remove(0), new StackLocation(((LLArgAttrType) arg).getName(),
-					arg.getType(), -(align.sizeof() - arg.getType().getBits() ) / 8));
+			int argOffs = align.alignAndAdd(arg.getType()) / 8;
+			//int argOffs = -(align.sizeof() - arg.getType().getBits() ) / 8;
+			StackLocation argLoc = new StackLocation(((LLArgAttrType) arg).getName(),
+					arg.getType(), argOffs);
+			locs.set(stackIndices.remove(0), argLoc);
 
 		}
 		

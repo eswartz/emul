@@ -7,13 +7,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.eulang.ITarget;
-import org.ejs.eulang.TargetV9t9;
-import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.BuildOutput;
@@ -25,7 +22,6 @@ import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
-import org.ejs.eulang.llvm.tms9900.ICodeVisitor.Walk;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
@@ -37,21 +33,16 @@ import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.EnhancedRamArea;
-import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
-import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.ZeroWordMemoryArea;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
@@ -206,7 +197,7 @@ public class Simulator {
 			
 			ISymbol sym = getSymbol(iinstructionWorkBlock.instPC);
 			if (sym != null)
-				dumpfull.println('"' + sym.getName() + "\" ");
+				dumpfull.println('"' + sym.getUniqueName() + "\" ");
 			StringBuilder sb = new StringBuilder();
 			sb.append(HexUtils.toHex4(iinstructionWorkBlock.instPC)).append(": ").append(ins.toBaseString());
 			while (sb.length() < 40)
@@ -540,29 +531,30 @@ public class Simulator {
 		} else if (op instanceof NumberOperand) {
 			return (short) ((NumberOperand) op).getValue();
 		} else if (op instanceof RegIndOperand) {
-			short ea = getEA(((RegisterOperand) op).getReg());
+			short ea = getRegisterEA(((RegisterOperand) op).getReg());
 			ea = memory.readWord(ea);
 			return ea;
 		} else if (op instanceof RegIncOperand) {
-			short ea = getEA(((RegisterOperand) op).getReg());
+			short ea = getRegisterEA(((RegisterOperand) op).getReg());
 			short val = memory.readWord(ea);
 			memory.writeWord(ea, (short)(val + (iblock.inst.getEffects().byteop ? 1 : 2)));
 			return val;
 		} else if (op instanceof RegOffsOperand) {
-			short ea = (short) (iblock.wp + evaluate(((RegisterOperand) op).getReg()) * 2);
+			short ea = (short) getRegisterEA(((RegOffsOperand) op).getReg());
 			ea = memory.readWord(ea);
 			ea += evaluate(((RegOffsOperand) op).getAddr());
 			return ea;
 		} else if (op instanceof RegisterOperand) {
-			short ea = (short) (iblock.wp + evaluate(((RegisterOperand) op).getReg()) * 2);
+			//short ea = (short) (iblock.wp + evaluate(((RegisterOperand) op).getReg()) * 2);
+			short ea = getRegisterEA(((RegisterOperand) op).getReg());
 			return ea;
 		} else if (op instanceof RegTempOperand) {
-			AssemblerOperand reg = ((RegTempOperand) op).getReg();
 			short ea;
-			if (((RegTempOperand) op).getLocal().isPhysReg())
-				ea = (short) (iblock.wp + evaluate(reg) * 2);
-			else
+			if (((RegTempOperand) op).getLocal().isPhysReg()) {
+				ea = getRegisterEA(((RegTempOperand) op).getReg());
+			} else {
 				ea = symbolToAddrMap.get(((RegTempOperand) op).getLocal().getName());
+			}
 			if (((RegTempOperand) op).isRegPair() && !((RegTempOperand) op).isHighReg())
 				ea += 2;
 			return ea;
@@ -572,6 +564,15 @@ public class Simulator {
 		assert false;
 		return 0;
 	}
+
+	private short getRegisterEA(AssemblerOperand reg) {
+		short ea;
+		if (reg instanceof NumberOperand)
+			ea = (short) (iblock.wp + evaluate(reg) * 2);
+		else
+			ea = symbolToAddrMap.get(((ISymbolOperand) reg).getSymbol());
+		return ea;
+	}
 	
     /**
 	 * @param op
@@ -580,14 +581,14 @@ public class Simulator {
 	private short evaluate(AssemblerOperand op) {
 		if (op instanceof NumberOperand)
 			return (short) ((NumberOperand) op).getValue();
-		if (op instanceof SymbolOperand) {
-			return symbolToAddrMap.get(((SymbolOperand) op).getSymbol());
-		}
 		if (op.isRegister()) {
 			if (op instanceof ISymbolOperand)
 				return memory.readWord(symbolToAddrMap.get(((ISymbolOperand) op).getSymbol()));
 			else
 				return memory.readWord(iblock.wp + evaluate(((IRegisterOperand) op).getReg()));
+		}
+		if (op instanceof ISymbolOperand) {
+			return symbolToAddrMap.get(((ISymbolOperand) op).getSymbol());
 		}
 		assert false;
 		return 0;
@@ -772,14 +773,17 @@ public class Simulator {
         	int theFP = target.getFP();
         	
         	short SP = readRegister(theSP);
-        	short FP = SP;
+        	short FP = readRegister(theFP);
         	
-        	SP -= 2;
-        	memory.writeWord(SP, readRegister(11));
-        	SP -= 2;
-        	memory.writeWord(SP, readRegister(theFP));
+        	short savedRegsSize = 4 + 0;// R11 and FP
+        	
+        	SP -= savedRegsSize;		
+        	
+        	memory.writeWord(SP, FP);
+        	memory.writeWord(SP+2, readRegister(11));
         	FP = SP;
-        	writeRegister(theFP, SP);
+        	
+        	writeRegister(theFP, FP);
         	
         	SP -= locals.getFrameSize();
         	writeRegister(theSP, SP);
@@ -804,10 +808,10 @@ public class Simulator {
         			}
         		}
         		else if (local instanceof StackLocal) {
-        			if (locals.getArgumentLocals().contains(local)) {
+        			if (((StackLocal)local).getOffset() < 0) {
         				addr = (short) (((StackLocal) local).getOffset() + FP);
         			} else {
-        				addr = (short) (((StackLocal) local).getOffset() + SP);
+        				addr = (short) (((StackLocal) local).getOffset() + FP + savedRegsSize);
         			}
         		}
         		else {
@@ -1208,7 +1212,7 @@ public class Simulator {
         	break;
         }
         case InstructionTable.Idbg:
-        	int oldCount = debugCount; 
+        	//int oldCount = debugCount; 
         	if (iblock.val1 == 0)
         		debugCount++;
         	else

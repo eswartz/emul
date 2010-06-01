@@ -1404,6 +1404,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testCallsBigRet1() throws Exception {
+		dumpIsel = true;
     	doIsel("forward util;\n"+
     			"testCallsBigRet1 = code (a,b,c,d:Float=>nil) {\n" +
     			"   util(a,b,c,d);\n" +
@@ -1426,11 +1427,11 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOperand.class, "a", RegOffsOperand.class, 10, 16);
+		matchInstr(inst, "COPY", AddrOperand.class, "a", RegOffsOperand.class, 10, 0);
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOperand.class, "b", RegOffsOperand.class, 10, 12);
+		matchInstr(inst, "COPY", AddrOperand.class, "b", RegOffsOperand.class, 10, 4);
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
@@ -1438,7 +1439,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOperand.class, "d", RegOffsOperand.class, 10, 4);
+		matchInstr(inst, "COPY", AddrOperand.class, "d", RegOffsOperand.class, 10, 12);
 		
 		idx = findInstrWithInst(instrs, "BL", idx);
 		inst = instrs.get(idx);
@@ -1512,7 +1513,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		
 		idx = findInstrWithInst(instrs, "COPY", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "COPY", AddrOperand.class, "inst", RegOffsOperand.class, 10, 2);
+		matchInstr(inst, "COPY", AddrOperand.class, "inst", RegOffsOperand.class, 10, 0);
 		
 		idx = findInstrWithInst(instrs, "LI", idx);
 		inst = instrs.get(idx);

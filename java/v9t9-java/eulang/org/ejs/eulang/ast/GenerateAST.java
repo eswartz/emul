@@ -903,6 +903,8 @@ public class GenerateAST {
 			
 			getSource(tree, expr);
 		}
+		expr = new AstDerefExpr(expr, false);
+		getSource(tree, expr);
 		return expr;
 	}
 

@@ -10,24 +10,10 @@ import org.ejs.eulang.types.LLType;
  * logical argument list and return type are prepared for passing and returning
  * from a function.  The passing and returning mechanisms are also used by the 
  * function when it is compiled, to ensure there are no mismatches.
- * <p>
- * For example, a simple case may be a register-only convention with "(Int => Int)".
- * Here, we could say that the argument locations are { Place=REGISTER, number=0 } (R0)
  * @author ejs
  *
  */
 public interface ICallingConvention {
-
-	enum Operation {
-		COPY,
-		SPLIT
-	};
-	class Action {
-		/** for arguments, 0 ... to original arg count */
-		public int inpos;
-		public Operation operation;
-		public int l; 
-	};
 
 	class Location  {
 		/** symbol */
@@ -111,8 +97,16 @@ public interface ICallingConvention {
 		
 		
 	};
+	
+	/** 
+	 * An argument on the stack is viewed as relative to a canonical FP value,
+	 * where 0 = start, +N = next entry, etc.
+	 * <p>
+	 * For a caller, construct in SP the top of the stack arguments block
+	 * (subtracting {@link StackBarrierLocation#getPushedArgumentsSize()})
+	 * and then add the offset to that to get the location where to push.  
+	 */
 	class StackLocation extends Location {
-		/** offset in bytes into a stack frame; 0 = start, +N = next entry, etc. */
 		public int offset;
 
 		public StackLocation(String name, LLType type, int offset) {
@@ -146,6 +140,11 @@ public interface ICallingConvention {
 		
 	};
 	
+	/**
+	 * This represents the size of the pushed arguments.
+	 * @author ejs
+	 *
+	 */
 	public class StackBarrierLocation extends Location {
 
 		private final int pushedArgsSize;
@@ -218,7 +217,7 @@ public interface ICallingConvention {
 		}
 	}
 	
-	/** Get locations for canonical arguments */
+	/** Get locations for canonical arguments.  These are viewed relative to the callee. */
 	Location[] getArgumentLocations();
 	/** Get locations for canonical return value */
 	Location[] getReturnLocations();

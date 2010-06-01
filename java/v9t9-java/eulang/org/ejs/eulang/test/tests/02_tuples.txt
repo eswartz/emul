@@ -1,0 +1,23 @@
+<<< big tuple copies
+Tuple = data {
+    x:Int[5];
+    y:Byte[4];
+};
+doTupleCopy = code(t:Tuple; tp:Tuple^ => nil) {
+  u:Tuple ;
+  u.x = t.x;
+  u.y = t.y;
+  tp^ = u;
+};
+t1, t2 : Tuple;
+testTupleCopy = code() {
+    t1.x[3] = 500;
+    t1.y[2] = 0x1;
+    doTupleCopy(t1, &t2);
+    t2.x[3] + t2.y[2];
+};
+===
+call testTupleCopy 
+assert R0 == 501
+>>>
+

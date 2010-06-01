@@ -117,14 +117,36 @@ prog:   toplevelstmts EOF!
 toplevelstmts: toplevelstat*      -> ^(STMTLIST toplevelstat*)
     ; 
     
-toplevelstat:  defineStmt
-    |  (ID COLON) => ID COLON type (EQUALS rhsExprOrInitList)?     SEMI  -> ^(ALLOC ID type rhsExprOrInitList?)
-    |  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExprOrInitList  SEMI  -> ^(ALLOC ID TYPE rhsExprOrInitList)
+toplevelstat: defineStmt
+    //|  (ID COLON) => ID COLON type (EQUALS rhsExprOrInitList)?     SEMI  -> ^(ALLOC ID type rhsExprOrInitList?)
+    //|  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExprOrInitList  SEMI  -> ^(ALLOC ID TYPE rhsExprOrInitList)
+    | toplevelAlloc SEMI -> toplevelAlloc
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     | rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
     | (LBRACE ) => xscope 
     ;
 
+toplevelAlloc : toplevelSingleVarDecl | toplevelTupleVarDecl;
+
+toplevelSingleVarDecl:
+    ID (
+        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC ID TYPE rhsExprOrInitList) )
+      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC ID type rhsExprOrInitList*) )
+      | ( COMMA ID )+ 
+        (  ( COLON_EQUALS PLUS? rhsExprOrInitList (COMMA rhsExprOrInitList)* )
+              -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST rhsExprOrInitList+)) 
+        |  ( COLON type (EQUALS PLUS? rhsExprOrInitList (COMMA rhsExprOrInitList)*)? )  
+              -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST rhsExprOrInitList+)?) 
+        )
+      )
+    ;
+toplevelTupleVarDecl:    
+    idTuple 
+      (  ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC idTuple TYPE rhsExprOrInitList) )
+      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC idTuple type rhsExprOrInitList*) )
+      )
+    ;
+    
 rhsExprOrInitList : rhsExpr | initList ;
 
 defineStmt : (ID EQUALS LBRACKET) => ID EQUALS LBRACKET idlistOrEmpty RBRACKET  toplevelvalue     SEMI  -> ^(DEFINE ID idlistOrEmpty toplevelvalue) 
@@ -275,14 +297,25 @@ codeStmtExpr :
       | controlStmt      -> controlStmt
       ;
 
-varDecl: ID COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID TYPE assignOrInitExpr)
-    | idTuple COLON_EQUALS assignOrInitExpr         -> ^(ALLOC idTuple TYPE assignOrInitExpr)
-    | ID COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC ID type assignOrInitExpr*)
-    | idTuple COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC idTuple type assignOrInitExpr*)
-    | ID (COMMA ID)+ COLON_EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)* 
-        -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST assignOrInitExpr+))
-    | ID (COMMA ID)+ COLON type (EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*)?  
-        -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignOrInitExpr+)?)
+varDecl: singleVarDecl | tupleVarDecl ;
+
+singleVarDecl:
+    ID (
+        ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID TYPE assignOrInitExpr) )
+      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC ID type assignOrInitExpr*) )
+      | ( COMMA ID )+ 
+        (  ( COLON_EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)* )
+              -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST assignOrInitExpr+)) 
+        |  ( COLON type (EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*)? )  
+              -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignOrInitExpr+)?) 
+        )
+      )
+    ;
+tupleVarDecl:    
+    idTuple 
+      (  ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC idTuple TYPE assignOrInitExpr) )
+      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC idTuple type assignOrInitExpr*) )
+      )
     ;
 
 // assignment statement (statement level) 
@@ -506,17 +539,17 @@ atom :
     |   idExpr                          -> idExpr
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN a1=assignExpr RPAREN               -> $a1
-    |    code                           -> code
+    |   ( CODE ) =>  code                           -> code
     |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
    ) 
 
     ( 
       ( PERIOD ID  -> ^(FIELDREF $atom ID) )
     | (  LPAREN arglist RPAREN   -> ^(CALL $atom arglist) )
-    | arrayAccess   -> ^(INDEX $atom arrayAccess)
+    | ( ( LBRACKET ) => arrayAccess   -> ^(INDEX $atom arrayAccess) )
     //| ( LBRACKET assignExpr RBRACKET  -> ^(INDEX $atom assignExpr) )
     | ( CARET -> ^(DEREF $atom) )
-    | ( ( LBRACE type RBRACE) -> ^(CAST type $atom ) ) 
+    | ( LBRACE type RBRACE -> ^(CAST type $atom ) ) 
     )*
 
     ( 

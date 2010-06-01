@@ -41,36 +41,35 @@ import org.ejs.eulang.types.LLType;
  * When a frame pointer is used:
  * 
  * <pre>
- * SP -K  location of next callee's args
+ * SP -K  end location of next callee's args
  *    -s3 ...
  *    -s2 local 2
- *    -s1 local 1
- *     0  saved FP
- *     2  saved reg 0
- *     4  saved ...
+ *    -s1 local 1		(end of local 2)
+ * FP  0  saved FP		(end of local 1)
+ *     2  saved reg R11
+ *     4  saved reg #0, ...
  *     6  last saved register
  *     8  last non-reg arg
  *    10  non-reg arg N-1
  *    12  ...
  *    +K  non-reg arg 1
- *    +K+w ptr to callee-return location, if any
+ *    +K+w callee-return location, if any
  * </pre>
  * 
  * This is handled with:
  * 
  * <pre>
  *    AI SP, -saved*2+2	// save any registers (plus room for FP)
- *    MOV R11, *SP		// if called
- *    MOV R..., @2(SP)		
- *    //DECT SP			// only if no saved registers			
+ *    MOV R..., @4(SP)	// saved regs		
+ *    MOV R11, @2(SP)	// if called
  *    MOV FP, *SP		// save FP
  *    MOV SP, FP		// new FP
  *    AI  SP, -K		// locals
  *    ...
  *    MOV FP, SP		// remove locals
  *    MOV *SP+, FP  	// restore FP
- *    MOV *SP+, R11		// restore registers
  *    MOV *SP+, R...	// restore registers
+ *    MOV *SP+, R11		// restore registers
  *    B *R11
  * </pre>
  * (min overhead, with no saved regs, no calls, and locals: 10, 6 = 16 bytes)
@@ -83,8 +82,8 @@ import org.ejs.eulang.types.LLType;
  *    -s3 ...
  *    -s2 local 2
  *    -s1 local 1
- *     0  saved reg 0
- *     2  saved ...
+ *     0  saved reg R11
+ *     2  saved reg #...
  *     4  last saved register
  *     6  last non-reg arg
  *     8  non-reg arg N-1
@@ -96,12 +95,12 @@ import org.ejs.eulang.types.LLType;
  * 
  * <pre>
  *    AI SP, -saved*2-K	// save any registers and get local space
- *    MOV R11, *SP		// if calls
- *    MOV R..., @2(SP)		
+ *    MOV R...,*SP			// saved regs
+ *    MOV R11, @(K)SP		// if calls
  *    ...
  *    AI SP, K  	  	// remove locals (only)
- *    MOV *SP+, R11		// restore registers
  *    MOV *SP+, R...	// restore registers
+ *    MOV *SP+, R11		// restore registers
  *    B *R11
  * </pre>
  * (min overhead: no locals, no calls: 0, 2) 
@@ -309,7 +308,7 @@ public class Locals {
 			else if (loc instanceof StackLocation) {
 				ICallingConvention.StackLocation stackLoc = (StackLocation) loc;
 				
-				local = allocateLocal(localScope.get(loc.name), loc.type, stackLoc.offset);
+				local = allocateLocal(localScope.get(loc.name), loc.type, -stackLoc.offset);
 			}
 			else if (loc instanceof StackBarrierLocation) {
 				continue;

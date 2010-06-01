@@ -35,6 +35,7 @@ public class Test9900Simulation  {
 		try {
 			addSuite(suite, "00_simple.txt");
 			addSuite(suite, "01_arrays.txt");
+			addSuite(suite, "02_tuples.txt");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -112,6 +113,7 @@ public class Test9900Simulation  {
 							routineName,
 							tests.toArray(new SimulationRunnable[tests.size()]));
 					state = State.OUTSIDE_TEST;
+					only = false;
 					continue;
 				}
 				
