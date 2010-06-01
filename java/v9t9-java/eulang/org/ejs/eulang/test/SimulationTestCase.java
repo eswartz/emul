@@ -111,6 +111,20 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		
 		final Simulator sim = new Simulator(v9t9Target, buildOutput);
 		
+		MemoryWriteListener globalMemoryListener = new MemoryWriteListener() {
+			
+			@Override
+			public void changed(MemoryEntry entry, int addr) {
+				System.out.println("\t==> " + 
+							HexUtils.toHex4(addr)
+							+ " = " + HexUtils.toHex4(sim.getMemory().readWord(addr)));
+			}
+		};
+		
+		sim.getMemory().addWriteListener(globalMemoryListener);
+		sim.init();
+		sim.getMemory().removeWriteListener(globalMemoryListener);
+		
 		sim.addInstructionListener(sim.new DumpFullReporter());
 		final List<Short> changes = new ArrayList<Short>();
 		sim.addInstructionListener(new Simulator.InstructionListener() {

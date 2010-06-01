@@ -8,11 +8,13 @@ import java.util.*;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
+import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
+import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
@@ -41,8 +43,10 @@ import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
  */
 public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	protected boolean changedBlocks;
+	protected final BuildOutput buildOutput;
 	
-	public LowerPseudoInstructions() {
+	public LowerPseudoInstructions(BuildOutput buildOutput) {
+		this.buildOutput = buildOutput;
 	}
 	
 	public boolean changedBlocks() {
@@ -244,12 +248,12 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		boolean isTuple = from instanceof TupleTempOperand;
 		boolean isConstTuple = isTuple && ((TupleTempOperand) from).isConst();
 		if (isConstTuple) {
-			work = calculateConstTupleWork((TupleTempOperand) from);
+			work = calculateConstTupleWork((TupleTempOperand) from, type);
 		}
 		
 		if (work >= THRESHOLD && (!isTuple || isConstTuple)) {
 			if (isConstTuple) {
-				from = makeInternalData(from);
+				from = makeInternalData(from, type);
 			}
 			expandCopyOrClearLoop(type, inst, from);
 		} else {
@@ -272,10 +276,11 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	 * consists of constant values).  We need to copy each piece
 	 * in a type-safe way to maximize optimization. 
 	 * @param from
+	 * @param type 
 	 * @return approximate number of operations
 	 */
-	private int calculateConstTupleWork(TupleTempOperand from) {
-		LLType[] types = ((LLAggregateType) from).getTypes();
+	private int calculateConstTupleWork(TupleTempOperand from, LLType type) {
+		LLType[] types = ((LLAggregateType) type).getTypes();
 		int sum = 0;
 		for (LLType sub : types) {
 			if (sub.getBits() <= 16)
@@ -291,9 +296,11 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	 * @param op1
 	 * @return
 	 */
-	private AssemblerOperand makeInternalData(AssemblerOperand op1) {
-		assert false;
-		return null;
+	private AssemblerOperand makeInternalData(AssemblerOperand op1, LLType type) {
+		ISymbol sym = module.getModuleSymbol(module.getModuleScope().add(routine.getName().getLLVMName() + "$data", true), type);
+		DataBlock dataBlock = new DataBlock(sym, (AsmOperand) op1);
+		buildOutput.register(dataBlock);
+		return new AddrOperand(new SymbolOperand(sym));
 	}
 
 	/**

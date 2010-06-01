@@ -221,7 +221,6 @@ public class TypeEngine {
 			
 			return nextOffset - fieldOffset;
 		}
-
 	}
 	
 	public int getStackMinAlign() {

@@ -567,7 +567,7 @@ public class BaseInstrTest extends BaseTest {
 		System.out.println("\n*** Before lowering:\n");
 		routine.accept(new RoutineDumper());
 		
-		LowerPseudoInstructions lower = new LowerPseudoInstructions();
+		LowerPseudoInstructions lower = new LowerPseudoInstructions(buildOutput);
 		boolean anyChanges = false;
 		do {
 			try {

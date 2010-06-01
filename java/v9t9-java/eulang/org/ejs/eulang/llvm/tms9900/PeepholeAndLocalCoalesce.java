@@ -338,6 +338,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		} else if (val instanceof TupleTempOperand) {
 			if (op instanceof AddrOperand && ((AddrOperand) op).getAddr() instanceof StackLocalOperand) {
 				StackLocal local = ((StackLocalOperand)(((AddrOperand) op).getAddr())).getLocal();
+				return storeMemoryValue(op, val, local.getType());
+				/*
 				AssemblerOperand[] components = ((TupleTempOperand) val).getComponents();
 				Alignment align = routine.getDefinition().getTypeEngine().new Alignment(Target.STACK);
 				if (local.getType() instanceof LLAggregateType) {
@@ -355,7 +357,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 						}
 						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
 								((AddrOperand) op).getAddr(), compType);
-						storeMemoryValue(subop, subval);
+						storeMemoryValue(subop, subval, types[i]);
 					}
 				} else if (local.getType() instanceof LLArrayType) {
 					LLArrayType arrayType = (LLArrayType) local.getType();
@@ -375,6 +377,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 					assert false;
 				}
 				return true;
+				*/
 			}
 			return false;
 		} else {
@@ -382,6 +385,59 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		}
 	}
 
+	/**
+	 * @param op
+	 * @param val
+	 * @param type
+	 */
+	private boolean storeMemoryValue(AssemblerOperand op, AssemblerOperand val,
+			LLType type) {
+		if (val instanceof TupleTempOperand) {
+			if (op instanceof AddrOperand && ((AddrOperand) op).getAddr() instanceof StackLocalOperand) {
+				AssemblerOperand[] components = ((TupleTempOperand) val).getComponents();
+				Alignment align = routine.getDefinition().getTypeEngine().new Alignment(Target.STACK);
+				if (type instanceof LLAggregateType) {
+					LLType[] types = ((LLAggregateType) type).getTypes();
+					assert types.length == components.length;
+					
+					for (int i = 0; i < components.length; i++) {
+						LLType compType = types[i];
+						int offs = align.alignAndAdd(compType);
+						assert offs % 8 == 0;
+						AssemblerOperand subval = components[i];
+						if (subval instanceof NumberOperand && compType.getBits() <= 8) {
+							subval = new NumberOperand((((NumberOperand) subval).getValue() << 8) & 0xff00);
+							compType = typeEngine.BYTE;	// allow BOOL/BYTE interchange
+						}
+						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
+								((AddrOperand) op).getAddr(), compType);
+						storeMemoryValue(subop, subval, types[i]);
+					}
+				} else if (type instanceof LLArrayType) {
+					LLArrayType arrayType = (LLArrayType) type;
+					
+					for (int i = 0; i < components.length; i++) {
+						int offs = align.alignAndAdd(arrayType.getSubType());
+						assert offs % 8 == 0;
+						AssemblerOperand subval = components[i];
+						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
+								((AddrOperand) op).getAddr(), arrayType.getSubType());
+						storeMemoryValue(subop, subval, arrayType.getSubType());
+						//if (i == 0) {
+						//	storeMemoryValue(op, subval);
+						//}
+					}
+				} else {
+					assert false;
+				}
+			}
+			return true;
+		} else {
+			return storeMemoryValue(op, val);
+		}
+
+		
+	}
 	private AssemblerOperand getSimplestValue(AssemblerOperand op) {
 		if (op instanceof NumberOperand)
 			return op;

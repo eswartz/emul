@@ -11,6 +11,8 @@ import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.eulang.ITarget;
+import org.ejs.eulang.TypeEngine.Alignment;
+import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
 import org.ejs.eulang.llvm.tms9900.BuildOutput;
@@ -22,7 +24,6 @@ import org.ejs.eulang.llvm.tms9900.Locals;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.StackLocal;
-import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
@@ -31,6 +32,7 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.emulator.hardware.memory.EnhancedRamArea;
@@ -282,42 +284,63 @@ public class Simulator {
 		
 		this.cpu = new Cpu();
 		
-		memory = new MemoryDomain("CPU");
-		MemoryArea anArea = new EnhancedRamArea(0, 0x10000); 
-		MemoryEntry ent = new MemoryEntry("RAM", memory, 0, MemoryDomain.PHYSMEMORYSIZE, 
-				anArea);
-		memory.mapEntry(ent);
-		
         iblock = new InstructionWorkBlock();
-
+        
+        memory = new MemoryDomain("CPU");
+		MemoryArea bigRamArea = new EnhancedRamArea(0, 0x10000); 
+		MemoryEntry bigRamEntry = new MemoryEntry("RAM", memory, 0, MemoryDomain.PHYSMEMORYSIZE, 
+				bigRamArea);
+		memory.mapEntry(bigRamEntry);
+		
         pcToInstrMap = new TreeMap<Short, AsmInstruction>();
         symbolToAddrMap = new HashMap<ISymbol, Short>();
         addrToSymbolMap = new TreeMap<Short, ISymbol>();
         
         vrToAddrMap = new HashMap<ISymbol, Short>();
+	}
+	
+	/**
+	 * 
+	 */
+	public void init() {
+		
+        pcToInstrMap.clear();
+        symbolToAddrMap.clear();
+        addrToSymbolMap.clear();
+        vrToAddrMap.clear();
         
         short pc = 0x100;
-        for (Routine routine : output.getRoutines()) {
+        for (Routine routine : buildOutput.getRoutines()) {
         	pc = emitRoutine(pc, routine);
         }
         
         short addr = (short) 0x8000;
-        for (DataBlock data : output.getDataBlocks()) {
+        for (DataBlock data : buildOutput.getDataBlocks()) {
         	addr = emitDataBlock(addr, data);
         }
         
         vrAddr = addr; 
-
-        System.out.println("\n\n");
 	}
+
 	
 	private short emitDataBlock(short addr, DataBlock data) {
 		System.out.println("alloc " + HexUtils.toHex4(addr)+": " + data.getName() + " = " + data.getValue());
 		symbolToAddrMap.put(data.getName(), addr);
 		addrToSymbolMap.put(addr, data.getName());
 		
-		LLType type = data.getName().getType();
-		AsmOperand op = data.getValue();
+		Alignment align = target.getTypeEngine().new Alignment(Target.STRUCT);
+		emitData(addr, align, data.getName().getType(), data.getValue());
+		return (short) (addr + align.sizeof() / 8);
+	}
+
+	/**
+	 * @param addr
+	 * @param align
+	 * @param type
+	 * @param op
+	 */
+	private void emitData(short addr, Alignment align, LLType type,
+			AssemblerOperand op) {
 		if (op instanceof NumberOperand) {
 			if (type.getBits() <= 8) {
 				memory.writeByte(addr, (byte) ((NumberOperand) op).getValue());
@@ -334,11 +357,20 @@ public class Simulator {
 				memory.writeByte(addr + i, (byte) 0);
 			}
 		} else if (op instanceof TupleTempOperand) {
+			TupleTempOperand tto = (TupleTempOperand) op;
+			AssemblerOperand[] components = tto.getComponents();
+			Alignment subAlign = target.getTypeEngine().new Alignment(Target.STRUCT);
+			for (int i = 0; i < components.length; i++) {
+				LLType subType = type instanceof LLAggregateType ? ((LLAggregateType) type).getType(i) : type.getSubType();
+				AssemblerOperand subOp = components[i];
+				short subAddr = (short) (addr + subAlign.sizeof() / 8);
+				emitData(subAddr, subAlign, subType, subOp);
+			}
+		} else {
 			assert false;
 		}
 		
-		addr += data.getName().getType().getBits() / 8;
-		return addr;
+		align.alignAndAdd(type);
 	}
 
 	private short emitRoutine(final short pc, Routine routine) {
@@ -1277,5 +1309,6 @@ public class Simulator {
 	public Cpu getCPU() {
 		return cpu;
 	}
+
 
 }

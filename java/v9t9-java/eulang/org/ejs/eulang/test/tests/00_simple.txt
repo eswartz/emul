@@ -36,3 +36,4 @@ testSimpleCall1 = code() { y := x*2; z := negate(y);  };
 call testSimpleCall1
 assert R0 == -200
 >>>
+

@@ -1661,6 +1661,58 @@ xes[3][2][1]
 		assertMatchText("call.*%", gen.getUnoptimizedText());
 	}
 
+    @Test
+    public void testDataAnon1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"X : data {\n"+
+    			"   a, b: Int; };\n"+
+    			"foo = code() { x : X; x.b; };\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	IAstDataType type = (IAstDataType) ((IAstAllocStmt) mod.getScope().get("X").getDefinition()).getTypeExpr();
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
+    	assertFalse(data.isGeneric());
+    	assertEquals(2, data.getTypes().length);
+    	assertEquals(2, data.getInstanceFields().length);
+    	assertEquals(0, data.getStaticFields().length);
+    	
+    	assertEquals(4 * 8, data.getSizeof());	
+    }
+    @Test
+    public void testDataAnon2() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Outer = data {\n"+
+    			"	inner : data {\n"+
+    			"   	a, b: Int; };\n"+
+    			"	inner2 : data {\n"+
+    			"   	a, b: Int; };\n"+
+    			"};\n"+
+    			"foo = code() { x : Outer; x.inner.b; };\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Outer").getDefinition());
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
+    	assertFalse(data.isGeneric());
+    	assertEquals(2, data.getTypes().length);
+    	assertEquals(2, data.getInstanceFields().length);
+    	assertEquals(0, data.getStaticFields().length);
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("inner");
+    	assertTrue(field.getType().getName(), field.getType().getName().startsWith("Outer.$anon"));
+    	
+    	LLInstanceField field2 = (LLInstanceField) data.getField("inner2");
+    	assertTrue(field2.getType().getName(), field2.getType().getName().startsWith("Outer.$anon"));
+    	
+    	assertNotSame(field.getType().getName(), field2.getType().getName());
+
+    	
+    	assertEquals(8 * 8, data.getSizeof());	
+    }
 }
 
 

@@ -272,8 +272,9 @@ type :
   
 nonArrayType :  
     (idOrScopeRef instantiation) => idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
-    |  ( idOrScopeRef -> ^(TYPE idOrScopeRef) )
-     | ( CODE proto? -> ^(TYPE ^(CODE proto?) ) )
+  | ( idOrScopeRef -> ^(TYPE idOrScopeRef) )
+  | ( CODE proto? -> ^(TYPE ^(CODE proto?) ) )
+  | data -> ^(TYPE data ) 
   | argtuple     
   ; 
 arraySuff : LBRACKET rhsExpr RBRACKET -> rhsExpr

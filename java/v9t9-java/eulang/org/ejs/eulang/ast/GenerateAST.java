@@ -2093,6 +2093,15 @@ public class GenerateAST {
 					// .argumentTypes()));
 					type = proto;
 				}
+			} else if (tree.getType() == EulangParser.DATA) {
+				IAstDataType dataType = checkConstruct(tree, IAstDataType.class);
+				// ensure there's a good name (ignore an existing name lifted from the current parent)
+				ISymbol anonName = currentScope.add("$anon", true);
+				anonName.setDefinition(dataType);
+				dataType.setTypeName(anonName);
+				dataType.setType(null);
+				type = dataType;
+				getSource(tree, type);
 			} else if (tree.getType() == EulangParser.IDREF || tree.getType() == EulangParser.IDEXPR) {
 				IAstSymbolExpr symbolExpr = checkConstruct(tree,
 						IAstSymbolExpr.class);

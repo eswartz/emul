@@ -21,3 +21,17 @@ call testTupleCopy
 assert R0 == 501
 >>>
 
+<<< tuple consts
+Tuple = data {
+    x:Int[5];
+    y:Byte[4];
+    z : data { a,b : Byte; };
+};
+tupleUser = code() {
+  u:Tuple = [.x=[0x100,0x200,0x300,0x400,0x500], .y=[0x10,0x20,0x30,0x40], .z=[1,2] ];
+  u.x[2] | u.y[1] | u.z.a;
+};
+===
+call tupleUser
+assert R0 == 0x321
+>>>

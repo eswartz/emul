@@ -46,7 +46,8 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		this.typeName = typeName;
 		setFields(fields);
 		setStatics(statics);
-		setType(createDataType(typeEngine));
+		if (typeName != null)
+			setType(createDataType(typeEngine));
 	}
 	protected AstDataType( LLType type, 
 			ISymbol typeName,
@@ -258,7 +259,6 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		}
 		
 		ISymbol sym = getTypeName();
-		assert sym != null;
 		LLDataType data = typeEngine.getDataType(sym, newIFields, newSFields);
 		
 		/*data = (LLDataType) data.substitute(typeEngine, 
