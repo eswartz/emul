@@ -111,8 +111,7 @@ extern int get_error_code(int no);
 /*
  * Return TCF error report that describes given error code 'no'.
  * Clients should call release_error_report() when done using it.
- * Return NULL if 'no' = 0, or if 'no' was not creted by
- * set_error_report_errno() and 'create' = 0.
+ * Return NULL if 'no' = 0.
  */
 extern ErrorReport * get_error_report(int no);
 
@@ -123,7 +122,7 @@ extern ErrorReport * get_error_report(int no);
 extern ErrorReport * create_error_report(void);
 
 /*
- * Release error report that was obtained by get_error_report().
+ * Release error report that was obtained by get_error_report() or create_error_report().
  */
 extern void release_error_report(ErrorReport * report);
 
