@@ -75,3 +75,17 @@ assert vals + 12 == 300
 assert vals + 14 == 200
 assert vals + 16 == 100
 >>>
+
+skip
+<<< variable-sized arrays
+mySummer = code(size:Int) {
+    arr:Int[size];
+    for x in size do arr[x] = x; 
+    s : Int;
+    for x in size do s += arr[x];
+};
+===
+write R0 10
+call mySummer
+assert R0 == 45
+>>>

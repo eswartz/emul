@@ -62,6 +62,7 @@ public class Test9900Simulation  {
 		String comment = "";
 		
 		boolean only = false;
+		boolean skip = false;
 		
 		String line;
 		int lineNum = 0;
@@ -93,6 +94,10 @@ public class Test9900Simulation  {
 					}
 					continue;
 				}
+				else if (line.equals("skip")) {
+					skip = true;
+					continue;
+				}
 				throw new IOException("unexpected: " + line);
 			}
 			else if (state == State.TEST_SOURCE) {
@@ -108,7 +113,7 @@ public class Test9900Simulation  {
 				if (line.isEmpty())
 					continue;
 				if (line.equals(">>>")) {
-					addTestCase(suite, suite.isOnlyOneTest(), only, fname, startLine, comment, source, 
+					addTestCase(suite, suite.isOnlyOneTest() || skip, only, fname, startLine, comment, source, 
 							prereqs.toArray(new SimulationRunnable[prereqs.size()]),
 							routineName,
 							tests.toArray(new SimulationRunnable[tests.size()]));
@@ -184,7 +189,7 @@ public class Test9900Simulation  {
 								short addr;
 								if (!isReg) {
 									DataBlock dataBlock = sim.getBuildOutput().lookupDataBlock(symbol);
-									assertNotNull(dataBlock);
+									assertNotNull("Failed to find data: " + symbol, dataBlock);
 									addr = (short) (sim.getAddress(dataBlock.getName()) + offs);
 								} else {
 									addr = (short) (sim.getCPU().getWP() + offs);

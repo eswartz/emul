@@ -94,6 +94,7 @@ import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
+import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLNullOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -1590,14 +1591,26 @@ public class LLVMGenerator {
 		LLOperand array = generateTypedExprAddr(expr.getExpr());
 
 		// point to the array
-		LLType arrayPointerType = typeEngine.getPointerType(expr.getExpr()
-				.getType());
+		LLType arrayType = expr.getExpr().getType();
+		
+		boolean isAlloca = false;
+		if (arrayType instanceof LLArrayType && ((LLArrayType) arrayType).getDynamicSizeExpr() != null) {
+			// convert to bare pointer
+			arrayType = arrayType.getSubType();
+			isAlloca = true;
+		}
+		
+		LLType arrayPointerType = typeEngine.getPointerType(arrayType);
 		// point to the element
 		LLType elementType = typeEngine.getPointerType(expr.getType());
 
 		LLTempOp elPtr = currentTarget.newTemp(elementType);
-		currentTarget.emit(new LLGetElementPtrInstr(elPtr, arrayPointerType,
-				array, new LLConstOp(0), index));
+		if (!isAlloca)
+			currentTarget.emit(new LLGetElementPtrInstr(elPtr, arrayPointerType,
+					array, new LLConstOp(0), index));
+		else
+			currentTarget.emit(new LLGetElementPtrInstr(elPtr, arrayPointerType,
+					array, index));
 
 		// and load value
 		// LLOperand ret = currentTarget.newTemp(expr.getType());

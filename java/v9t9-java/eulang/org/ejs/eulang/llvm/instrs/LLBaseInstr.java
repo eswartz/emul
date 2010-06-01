@@ -177,4 +177,12 @@ public abstract class LLBaseInstr implements LLInstr {
 		}
 		return flags;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLInstr#hasFlag(java.lang.String)
+	 */
+	@Override
+	public boolean hasFlag(String flag) {
+		return flags.contains(flag);
+	}
 }

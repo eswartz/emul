@@ -15,6 +15,7 @@ public class StackLocal extends BaseLocal {
 
 	private final ISymbol startLabel;
 	private int byteOffset;
+	private boolean isAlloca;
 
 	public StackLocal(ISymbol name, LLType type, ISymbol startLabel, int byteOffset) {
 		super(name, type);
@@ -52,5 +53,19 @@ public class StackLocal extends BaseLocal {
 	 */
 	public void setOffset(int offset) {
 		this.byteOffset = offset;
+	}
+
+	/**
+	 * @param b
+	 */
+	public void setIsAlloca(boolean b) {
+		isAlloca = b;
+	}
+	
+	/**
+	 * @return the isAlloca
+	 */
+	public boolean isAlloca() {
+		return isAlloca;
 	}
 }

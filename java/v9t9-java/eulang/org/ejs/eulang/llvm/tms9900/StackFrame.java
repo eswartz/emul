@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
@@ -31,6 +32,7 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -129,6 +131,8 @@ public class StackFrame {
 	private IScope localScope;
 	private HashMap<IRegClass, RegAlloc> regAllocs;
 	private boolean forceLocalsToStack;
+	
+	private boolean requiresFramePointer;
 
 	public StackFrame(ITarget target) {
 		stackLocals = new LinkedHashMap<ISymbol, StackLocal>();
@@ -174,9 +178,23 @@ public class StackFrame {
 		return tempLocals.values();
 	}
 	
-	public void buildLocalTable(LLDefineDirective def) {
+	/**
+	 * Initialize the stack frame, scanning for argument and local references
+	 * to determine their FP offsets, and performing the initial determination
+	 * of whether a stack frame is needed (e.g. if variable-sized arrays
+	 * are allocated).
+	 * @param def
+	 */
+	public void buildLocalTable(final LLDefineDirective def) {
+		stackLocals.clear();
+		regLocals.clear();
+		argumentLocals.clear();
+		tempLocals.clear();
+		requiresFramePointer = false;
 		
 		ILLCodeVisitor visitor = new LLCodeVisitor() {
+			private Map<Integer, LLAssignInstr> tempDefs = new TreeMap<Integer, LLAssignInstr>();
+			
 			/* (non-Javadoc)
 			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterCode(org.ejs.eulang.llvm.directives.LLDefineDirective)
 			 */
@@ -209,7 +227,9 @@ public class StackFrame {
 					LLAllocaInstr alloca = (LLAllocaInstr) instr;
 					if (alloca.getResult() instanceof LLSymbolOp) {
 						LLSymbolOp result = (LLSymbolOp) alloca.getResult();
-						if (forceLocalsToStack)
+						if (isDynamicVariable(alloca.getResult().getType().getSubType())) 
+							allocateDynamicArray(result.getSymbol(), alloca);
+						else if (forceLocalsToStack)
 							allocateLocal(result.getSymbol(), alloca.getType());
 						else
 							allocateTemp(result.getSymbol(), alloca.getType());
@@ -218,8 +238,10 @@ public class StackFrame {
 				} else if (instr instanceof LLAssignInstr) {
 					// normal expression temp; try for a register again
 					LLAssignInstr assign = (LLAssignInstr) instr;
-					if (assign.getResult() instanceof LLTempOp)
+					if (assign.getResult() instanceof LLTempOp) {
 						allocateTemp(assign);
+						tempDefs.put(((LLTempOp) assign.getResult()).getNumber(), assign);
+					}
 					else if (assign.getResult() != null)
 						assert false;
 				}
@@ -247,7 +269,28 @@ public class StackFrame {
 				if (local.getIncoming() != null)
 					updateLocalUsage(instr, local.getIncoming());
 			}
-			
+
+
+			/**
+			 * @param symbol
+			 * @param alloca
+			 */
+			protected void allocateDynamicArray(ISymbol symbol, LLAllocaInstr alloca) {
+				
+				assert false;  // not implemented
+				
+				LLOperand sizeOp = alloca.getOperands()[0];
+				
+				// fix up the unneeded cast-to-i32
+				if (sizeOp instanceof LLTempOp) {
+					LLAssignInstr instr = tempDefs.get(((LLTempOp) sizeOp).getNumber());
+					instr.flags().add(LLInstr.FLAG_USE_INT_TYPE);
+					alloca.flags().add(LLInstr.FLAG_USE_INT_TYPE);
+				}
+
+				allocateTemp(symbol, def.getTypeEngine().getPointerType(alloca.getResult().getType().getSubType().getSubType()));
+			}
+
 		};
 		def.accept(visitor);
 	}
@@ -323,19 +366,22 @@ public class StackFrame {
 		}
 	}
 
-	protected ILocal allocateLocal(LLAssignInstr instr) {
-		
-		LLSymbolOp result = (LLSymbolOp) instr.getResult();
-		ISymbol name = result.getSymbol();
-		
-		if (name.getType().getBits() > 1 && name.getType().getBits() % 8 != 0)
-			unhandled(result);
-		return allocateLocal(name, instr.getType());
-	}
-
 	public StackLocal allocateLocal(ISymbol name, LLType type) {
+		assert !isDynamicVariable(type);
 		int offs = alignment.alignAndAdd(type);
 		return allocateLocal(name, type, offs / 8);
+	}
+
+	/**
+	 * @param symbol
+	 * @param type
+	 * @param size 
+	 * @return 
+	 */
+	protected StackLocal allocateDynamicArray(ISymbol symbol, LLType type) {
+		StackLocal local = allocateLocal(symbol, type, 0);
+		local.setIsAlloca(true);
+		return local;
 	}
 
 	private StackLocal allocateLocal(ISymbol name, LLType type, int byteOffs) {
@@ -405,10 +451,6 @@ public class StackFrame {
 		ISymbol name = localScope.add("%reg", true);
 		name.setType(type);
 		return allocateTemp(name, type);
-	}
-
-	private void unhandled(LLOperand op) {
-		throw new IllegalStateException(op.toString());
 	}
 
 	/**
@@ -506,9 +548,6 @@ public class StackFrame {
 		return (ILocal[]) map.values().toArray(new ILocal[map.values().size()]);
 	}
 
-	/**
-	 * @param local
-	 */
 	public void removeLocal(ILocal local) {
 		assert !argumentLocals.containsValue(local);
 		tempLocals.remove(local.getName());
@@ -519,4 +558,18 @@ public class StackFrame {
 		else
 			assert false;
 	}
+
+	public boolean requiresFramePointer() {
+		return requiresFramePointer;
+	}
+
+	public void setRequiresFramePointer(boolean requiresFramePointer) {
+		this.requiresFramePointer = requiresFramePointer;
+	}
+
+	private boolean isDynamicVariable(LLType llType) {
+		return llType instanceof LLArrayType && ((LLArrayType) llType).getDynamicSizeExpr() != null;
+	}
+
+	
 }

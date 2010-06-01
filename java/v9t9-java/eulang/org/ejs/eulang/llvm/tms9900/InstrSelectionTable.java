@@ -67,6 +67,12 @@ public class InstrSelectionTable {
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM_8 }, 
 				new InstrSelection.DoRes( 0, Isla, 0, 1 ) 
 		),
+		/** ignored cast */
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "sext", 
+				new InstrSelection.If[] { InstrSelection.If.PASS },
+				new InstrSelection.As[] { InstrSelection.As.GEN_R },
+				new InstrSelection.DoRes( 0, -1, 0 )
+		),
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I8, "sext", 
 				new InstrSelection.If[] { 
 					InstrSelection.If.PASS,

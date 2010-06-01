@@ -493,8 +493,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		if (instr instanceof LLTypedInstr) {
 			LLTypedInstr typed = (LLTypedInstr) instr;
+			LLType type = typed.getType();
 			int bitMask = 0;
-			switch (typed.getType().getBits()) {
+
+			if (instr.hasFlag(LLInstr.FLAG_USE_INT_TYPE)) {
+				type = typeEngine.INT;
+			}
+			
+			switch (type.getBits()) {
 			case 1:
 				bitMask = I1;
 				break;
@@ -511,8 +517,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				assert false;
 			}
 			
-			BasicType basicType = typed.getType().getBasicType();
-			if (isIntType(typed.getType()))
+			BasicType basicType = type.getBasicType();
+			if (isIntType(type))
 				basicType = BasicType.INTEGRAL;
 			
 			Pair<Pair<BasicType, Integer>, String> key = new Pair<Pair<BasicType, Integer>, String>(
