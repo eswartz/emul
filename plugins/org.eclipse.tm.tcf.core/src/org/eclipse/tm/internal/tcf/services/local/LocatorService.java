@@ -476,6 +476,11 @@ public class LocatorService implements ILocator {
             }
         }
         refreshSubNetList();
+        if (socket.getLocalPort() != DISCOVEY_PORT) {
+            for (SubNet subnet : subnets) {
+                addSlave(subnet.address, socket.getLocalPort(), time);
+            }
+        }
         sendAll(null, 0, null, time);
     }
 
@@ -608,28 +613,30 @@ public class LocatorService implements ILocator {
         }
     }
 
-    private void sendDatagramPacket(DatagramPacket p) {
+    private boolean sendDatagramPacket(SubNet subnet, int size, InetAddress addr, int port) {
         try {
-            socket.send(p);
+            if (addr == null) {
+                addr = subnet.broadcast;
+                port = DISCOVEY_PORT;
+                for (Slave slave : slaves) {
+                    sendDatagramPacket(subnet, size, slave.address, slave.port);
+                }
+            }
+            if (!subnet.contains(addr)) return false;
+            if (port == socket.getLocalPort() && addr.equals(subnet.address)) return false;
+            socket.send(new DatagramPacket(out_buf, size, addr, port));
         }
         catch (Exception x) {
-            log("Cannot send datagram packet to " + p.getAddress(), x);
+            log("Cannot send datagram packet to " + addr, x);
+            return false;
         }
+        return true;
     }
 
     private void sendPeersRequest(InetAddress addr, int port) {
         out_buf[4] = CONF_REQ_INFO;
-        for (SubNet n : subnets) {
-            if (addr == null) {
-                sendDatagramPacket(new DatagramPacket(out_buf, 8, n.broadcast, DISCOVEY_PORT));
-                for (Slave slave : slaves) {
-                    if (!n.contains(slave.address)) continue;
-                    sendDatagramPacket(new DatagramPacket(out_buf, 8, slave.address, slave.port));
-                }
-            }
-            else if (n.contains(addr)) {
-                sendDatagramPacket(new DatagramPacket(out_buf, 8, addr, port));
-            }
+        for (SubNet subnet : subnets) {
+            sendDatagramPacket(subnet, 8, addr, port);
         }
     }
 
@@ -640,17 +647,6 @@ public class LocatorService implements ILocator {
         if (attrs.get(IPeer.ATTR_IP_PORT) == null) return;
         out_buf[4] = CONF_PEER_INFO;
         int i = 8;
-        StringBuffer sb = new StringBuffer(out_buf.length);
-        for (String key : attrs.keySet()) {
-            sb.append(key);
-            sb.append('=');
-            sb.append(attrs.get(key));
-            sb.append((char)0);
-        }
-        byte[] bt = getUTF8Bytes(sb.toString());
-        if (i + bt.length > out_buf.length) return;
-        System.arraycopy(bt, 0, out_buf, i, bt.length);
-        i += bt.length;
 
         for (SubNet subnet : subnets) {
             if (peer instanceof RemotePeer) {
@@ -660,40 +656,33 @@ public class LocatorService implements ILocator {
             if (!subnet.address.equals(loopback_addr)) {
                 if (!subnet.contains(peer_addr)) continue;
             }
-            if (addr == null) {
-                sendDatagramPacket(new DatagramPacket(out_buf, i, subnet.broadcast, DISCOVEY_PORT));
-                for (Slave slave : slaves) {
-                    if (!subnet.contains(slave.address)) continue;
-                    sendDatagramPacket(new DatagramPacket(out_buf, i, slave.address, slave.port));
+            if (i == 8) {
+                StringBuffer sb = new StringBuffer(out_buf.length);
+                for (String key : attrs.keySet()) {
+                    sb.append(key);
+                    sb.append('=');
+                    sb.append(attrs.get(key));
+                    sb.append((char)0);
                 }
-                subnet.send_all_ok = true;
+                byte[] bt = getUTF8Bytes(sb.toString());
+                if (i + bt.length > out_buf.length) return;
+                System.arraycopy(bt, 0, out_buf, i, bt.length);
+                i += bt.length;
             }
-            else if (subnet.contains(addr)) {
-                sendDatagramPacket(new DatagramPacket(out_buf, i, addr, port));
-                subnet.send_all_ok = true;
-            }
+            if (sendDatagramPacket(subnet, i, addr, port)) subnet.send_all_ok = true;
         }
     }
 
     private void sendEmptyPacket(InetAddress addr, int port) {
         out_buf[4] = CONF_SLAVES_INFO;
-        for (SubNet n : subnets) {
-            if (n.send_all_ok) continue;
-            if (addr == null) {
-                sendDatagramPacket(new DatagramPacket(out_buf, 8, n.broadcast, DISCOVEY_PORT));
-                for (Slave slave : slaves) {
-                    if (!n.contains(slave.address)) continue;
-                    sendDatagramPacket(new DatagramPacket(out_buf, 8, slave.address, slave.port));
-                }
-            }
-            else if (n.contains(addr)) {
-                sendDatagramPacket(new DatagramPacket(out_buf, 8, addr, port));
-            }
+        for (SubNet subnet : subnets) {
+            if (subnet.send_all_ok) continue;
+            sendDatagramPacket(subnet, 8, addr, port);
         }
     }
 
     private void sendAll(InetAddress addr, int port, Slave sl, long time) {
-        for (SubNet n : subnets) n.send_all_ok = false;
+        for (SubNet subnet : subnets) subnet.send_all_ok = false;
         for (IPeer peer : peers.values()) sendPeerInfo(peer, addr, port);
         if (addr != null && sl != null && sl.last_req_slaves_time + DATA_RETENTION_PERIOD >= time) {
             sendSlavesInfo(addr, port, time);
@@ -701,15 +690,15 @@ public class LocatorService implements ILocator {
         sendEmptyPacket(addr, port);
     }
 
-    private void sendSlavesRequest(InetAddress addr, int port) {
+    private void sendSlavesRequest(SubNet subnet, InetAddress addr, int port) {
         out_buf[4] = CONF_REQ_SLAVES;
-        sendDatagramPacket(new DatagramPacket(out_buf, 8, addr, port));
+        sendDatagramPacket(subnet, 8, addr, port);
     }
 
     private void sendSlaveInfo(Slave x, long time) {
         out_buf[4] = CONF_SLAVES_INFO;
-        for (SubNet n : subnets) {
-            if (!n.contains(x.address)) continue;
+        for (SubNet subnet : subnets) {
+            if (!subnet.contains(x.address)) continue;
             int i = 8;
             String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
             byte[] bt = getUTF8Bytes(s);
@@ -717,36 +706,36 @@ public class LocatorService implements ILocator {
             i += bt.length;
             out_buf[i++] = 0;
             for (Slave y : slaves) {
-                if (!n.contains(y.address)) continue;
+                if (!subnet.contains(y.address)) continue;
                 if (y.last_req_slaves_time + DATA_RETENTION_PERIOD < time) continue;
-                sendDatagramPacket(new DatagramPacket(out_buf, i, y.address, y.port));
+                sendDatagramPacket(subnet, i, y.address, y.port);
             }
         }
     }
 
     private void sendSlavesInfo(InetAddress addr, int port, long time) {
         out_buf[4] = CONF_SLAVES_INFO;
-        for (SubNet n : subnets) {
-            if (!n.contains(addr)) continue;
+        for (SubNet subnet : subnets) {
+            if (!subnet.contains(addr)) continue;
             int i = 8;
             for (Slave x : slaves) {
                 if (x.last_packet_time + DATA_RETENTION_PERIOD < time) continue;
                 if (x.port == port && x.address.equals(addr)) continue;
-                if (!n.address.equals(loopback_addr)) {
-                    if (!n.contains(x.address)) continue;
+                if (!subnet.address.equals(loopback_addr)) {
+                    if (!subnet.contains(x.address)) continue;
                 }
-                n.send_all_ok = true;
+                subnet.send_all_ok = true;
                 String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
                 byte[] bt = getUTF8Bytes(s);
                 if (i > 8 && i + bt.length >= PREF_PACKET_SIZE) {
-                    sendDatagramPacket(new DatagramPacket(out_buf, i, addr, port));
+                    sendDatagramPacket(subnet, i, addr, port);
                     i = 8;
                 }
                 System.arraycopy(bt, 0, out_buf, i, bt.length);
                 i += bt.length;
                 out_buf[i++] = 0;
             }
-            if (i > 8) sendDatagramPacket(new DatagramPacket(out_buf, i, addr, port));
+            if (i > 8) sendDatagramPacket(subnet, i, addr, port);
         }
     }
 
@@ -772,7 +761,7 @@ public class LocatorService implements ILocator {
             InetAddress remote_address = p.getAddress();
             if (isRemote(remote_address, remote_port)) {
                 Slave sl = null;
-                if (p.getPort() != DISCOVEY_PORT) {
+                if (remote_port != DISCOVEY_PORT) {
                     sl = addSlave(remote_address, remote_port, time);
                 }
                 switch (buf[4]) {
@@ -789,16 +778,16 @@ public class LocatorService implements ILocator {
                     handleReqSlavesPacket(p, sl, time);
                     break;
                 }
-                for (SubNet s : subnets) {
-                    if (!s.contains(remote_address)) continue;
+                for (SubNet subnet : subnets) {
+                    if (!subnet.contains(remote_address)) continue;
                     long delay = DATA_RETENTION_PERIOD / 3;
                     if (remote_port != DISCOVEY_PORT) delay = DATA_RETENTION_PERIOD / 3 * 2;
-                    else if (!s.address.equals(remote_address)) delay = DATA_RETENTION_PERIOD / 2;
-                    if (s.last_slaves_req_time + delay <= time) {
-                        sendSlavesRequest(remote_address, remote_port);
-                        s.last_slaves_req_time = time;
+                    else if (!subnet.address.equals(remote_address)) delay = DATA_RETENTION_PERIOD / 2;
+                    if (subnet.last_slaves_req_time + delay <= time) {
+                        sendSlavesRequest(subnet, remote_address, remote_port);
+                        subnet.last_slaves_req_time = time;
                     }
-                    if (s.address.equals(remote_address) && remote_port == DISCOVEY_PORT) {
+                    if (subnet.address.equals(remote_address) && remote_port == DISCOVEY_PORT) {
                         last_master_packet_time = time;
                     }
                 }
@@ -876,8 +865,15 @@ public class LocatorService implements ILocator {
                     String host = s.substring(host0, host1);
                     InetAddress addr = getInetAddress(host);
                     if (addr != null) {
-                        long time = time0 != time1 ? Long.parseLong(s.substring(time0, time1)) : System.currentTimeMillis();
-                        addSlave(addr, port, time);
+                        long time_now = System.currentTimeMillis();
+                        long time = time0 != time1 ? Long.parseLong(s.substring(time0, time1)) : time_now;
+                        if (time < time_now - 600000 || time > time_now + 600000) {
+                            log("Invalid datagram packet received from " + p.getAddress(),
+                                    new Exception("Invalid slave info timestamp: " + time));
+                        }
+                        else {
+                            addSlave(addr, port, time);
+                        }
                     }
                 }
             }
