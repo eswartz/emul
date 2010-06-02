@@ -197,8 +197,8 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		}
 		return changed;
 	}
-	
-	 /* (non-Javadoc)
+
+	/* (non-Javadoc)
      * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
      */
     @Override

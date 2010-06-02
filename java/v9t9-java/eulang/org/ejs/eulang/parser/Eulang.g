@@ -526,7 +526,7 @@ unary:  MINUS u=unary -> ^(NEG $u )
       | ( atom        -> atom )        
       | PLUSPLUS a=atom   -> ^(PREINC $a)
       | MINUSMINUS a=atom -> ^(PREDEC $a)
-      | AMP atom        -> ^(ADDROF atom)
+    |   AMP atom                        -> ^(ADDROF atom)
 ;
 
 atom :
@@ -582,21 +582,14 @@ staticVarDecl : STATIC varDecl -> ^(STATIC varDecl) ;
 fieldDecl : staticVarDecl SEMI -> staticVarDecl 
     | varDecl SEMI -> varDecl 
     | defineStmt
-    //| fieldIdRef SEMI -> fieldIdRef
     ;
 
 fieldIdRef : ID (COMMA ID)* -> ^(ALLOC ID)+ ;
-
-//LBRACE_LPAREN : '{(';
-//LBRACE_STAR : '{*';
-//LBRACE_STAR_LPAREN : '{*(';
-//LBRACE_LESS : '{<';
 
 FORWARD : 'forward';
 STATIC : 'static';
 
 COLON : ':';
-//COLON_COLON : '::';
 COMMA : ',';
 EQUALS : '=';
 EQUALS_COLON : '=:';

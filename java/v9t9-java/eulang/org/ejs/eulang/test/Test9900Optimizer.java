@@ -918,11 +918,35 @@ public class Test9900Optimizer extends BaseInstrTest {
 		assertTrue(changed);
 
     	int idx = -1;
-    	AsmInstruction inst;
 
     	idx = findInstrWithInst(instrs, "S");
     	assertTrue(idx != -1);
     	
+	}
+
+	@Test
+	public void testPointerMath1() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+				"vals: Int[3,3]; \n" + 
+				"doSum = code() {\n" + 
+				"    valp : Int^ = (&vals){Int^};\n" + 
+				"    s := 0;\n" + 
+				"    for i in 3 do for j in 3 do (valp+(i*3+j))^ = i*3+j+1;\n" + 
+				"//    for i in 9 do (valp+i)^ = i+1;\n" + 
+				"    for i in 3 do for j in 3 do s += vals[i][j];\n" + 
+				"};"+ 
+		"");
+		
+		assertTrue(changed);
+		
+		int idx = -1;
+		
+		// don't coalesce valp with a temp (correctly detect cross-block usage)
+		idx = findInstrWithSymbol(instrs, "valp");
+		assertTrue(idx != -1);
+		
+		
 	}
 }
 

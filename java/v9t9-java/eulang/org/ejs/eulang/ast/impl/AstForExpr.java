@@ -77,6 +77,9 @@ public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 	@Override
 	public void setSymbolExprs(IAstNodeList<IAstSymbolExpr> exprs) {
 		this.symExprs = reparent(this.symExprs, exprs);
+		for (IAstSymbolExpr symExpr : symExprs.list()) {
+			symExpr.setOwned(true);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -139,6 +142,7 @@ public class AstForExpr extends AstBodyLoopExpr implements IAstForExpr {
 		}
 		
 		changed |= super.inferTypeFromChildren(typeEngine);
+		
 		return changed;
 	}
 

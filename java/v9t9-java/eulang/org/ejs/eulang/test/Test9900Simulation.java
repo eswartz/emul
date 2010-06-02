@@ -119,6 +119,7 @@ public class Test9900Simulation  {
 							tests.toArray(new SimulationRunnable[tests.size()]));
 					state = State.OUTSIDE_TEST;
 					only = false;
+					skip = false;
 					continue;
 				}
 				

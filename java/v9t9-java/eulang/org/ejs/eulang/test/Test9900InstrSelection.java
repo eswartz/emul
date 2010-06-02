@@ -8,6 +8,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertNotNull;
+import static v9t9.engine.cpu.InstructionTable.Ia;
 
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLModule;
@@ -2156,5 +2157,33 @@ z, z, val, z, z, z, z }), AddrOperand.class);
     	
     	
 	}
+	
+	
+	@Test
+	public void testPointerMath1() throws Exception {
+		dumpIsel = true;
+		doIsel(
+				"vals: Int[3,3];\n" + 
+				"doSum = code(arr: Int[3,3]) {\n" +
+				"  valp : Int^ = (&vals){Int^};\n"+
+				"  s := 0;\n"+
+				"  for i in 3 do for j in 3 do (valp+i*3+j)^ = i+j;\n" + 
+				"  for i in 3 do for j in 3 do s += vals[i][j];\n" + 
+				"};");
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// be sure cast worked
+    	idx = findInstrWithInst(instrs, "LI");
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LI", RegTempOperand.class, SymbolOperand.class, "vals");
+    	
+    	// don't destroy valp here
+    	idx = findInstrWithSymbol(instrs, "valp", idx + 2);		// skip any copy
+    	inst = instrs.get(idx);
+    	assertFalse(inst+"", inst.getInst() == Ia);
+	}
+
 
 }

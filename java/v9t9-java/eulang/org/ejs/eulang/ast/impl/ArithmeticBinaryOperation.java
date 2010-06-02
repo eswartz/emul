@@ -102,7 +102,10 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 			}
 		} 
 		else if (types.left != null) {
-			types.right = types.left;
+			if (this == IOperation.ADD && types.left.getBasicType() == BasicType.POINTER)
+				types.right = typeEngine.PTRDIFF;
+			else
+				types.right = types.left;
 			types.result = types.left;
 		}
 		else if (types.right != null) {

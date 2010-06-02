@@ -1655,6 +1655,17 @@ public class TestTypeInfer extends BaseTest {
 		
 	}
 
+    @Test
+    public void testPointerMath4() throws Exception{
+    	// don't freak about pointer math (don't make 'j' a pointer)
+    	doFrontend("vals: Int[3,3]; \n" + 
+    			"doSum = code() {\n" + 
+    			"    valp : Int^ = (&vals){Int^};\n" + 
+    			"    s := 0;\n" + 
+    			"    for i in 3 do for j in 3 do (valp+i*3+j)^ = (i+1)*3+(j+1);\n" + 
+    			"};");
+    	
+    }
 }
 
 

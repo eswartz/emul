@@ -1159,6 +1159,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				
 				item = generateMultiply(item, type.getBits() / 8);
 				
+				if (operandNeedsTemp(ops[0], asmOp)) {
+					asmOp = moveToTemp(ops[0], ops[0].getType(), asmOp);
+				}
 				emitInstr(AsmInstruction.create(Ia, item, asmOp));
 				
 				type = typeEngine.getRealType(type.getSubType());

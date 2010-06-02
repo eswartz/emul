@@ -119,7 +119,7 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	private void addLocalUse(AsmInstruction instr, ILocal local) {
 		boolean isFirst = local.getUses().isEmpty();
 		local.getUses().set(instr.getNumber());
-		if (isFirst)
+		if (isFirst && !firstBlockRefs.containsKey(local))
 			firstBlockRefs.put(local, block);
 		else if (firstBlockRefs.containsKey(local) && firstBlockRefs.get(local) != block)
 			local.setSingleBlock(false);
