@@ -676,6 +676,33 @@ public class TestGenerator extends BaseTest {
 		assertEquals(typeEngine.BYTE, type.getType());
 		expr = ((IAstCastNamedTypeExpr) expr).getExpr();
     }
+    
+    //@Test
+    public void testStrings1() throws Exception {
+    	IAstModule mod = treeize(
+    			"testStrings = code () {\n" +
+    			"   z := \"hello\";\n" +
+    			"};");
+    	sanityTest(mod);
+    	
+    	
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testStrings");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+
+    	//IAstAllocStmt stmt;
+		//stmt = (IAstAllocStmt) codeExpr.stmts().getFirst();
+    }
+    
+    @Test
+    public void testStringData() throws Exception {
+    	IAstModule mod = treeize(
+    			"String = data { size:Int; chars:Byte[0]; };\n"+
+    			"testStrings = code () {\n" +
+    			"   z : String; z.chars[1];\n" +
+    			"};");
+    	sanityTest(mod);
+    	
+    }
 }
 
 

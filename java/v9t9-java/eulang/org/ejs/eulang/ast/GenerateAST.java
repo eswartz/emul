@@ -1380,9 +1380,9 @@ public class GenerateAST {
 	 * @return
 	 */
 	private boolean isZero(IAstTypedExpr count) {
-		return count == null
-				|| (count instanceof IAstIntLitExpr && ((IAstIntLitExpr) count)
-						.getValue() == 0);
+		return count == null;
+				/*|| (count instanceof IAstIntLitExpr && ((IAstIntLitExpr) count)
+						.getValue() == 0)*/
 	}
 
 	/**

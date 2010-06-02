@@ -207,8 +207,6 @@ public class TestSimplify extends BaseTest {
 	@Test
 	public void testUnaryOps() throws Exception {
 		doSimplifyTest("-255{Byte}", typeEngine.BYTE, 1);
-		doSimplifyTest("255++", typeEngine.INT, 256);
-		doSimplifyTest("255{Byte}++", typeEngine.BYTE, 0);
 		doSimplifyTest("~255{Byte}", typeEngine.BYTE, 0);
 		doSimplifyTest("~255", typeEngine.INT, (short)0xff00);
 	}

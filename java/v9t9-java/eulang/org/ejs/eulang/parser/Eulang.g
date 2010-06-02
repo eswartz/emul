@@ -320,17 +320,17 @@ tupleVarDecl:
     ;
 
 // assignment statement (statement level) 
-assignStmt : (atom assignEqOp) => atom assignEqOp assignOrInitExpr        -> ^(ASSIGN assignEqOp atom assignOrInitExpr)
+assignStmt : (lhs assignEqOp) => lhs assignEqOp assignOrInitExpr        -> ^(ASSIGN assignEqOp lhs assignOrInitExpr)
     | idTuple EQUALS assignOrInitExpr               -> ^(ASSIGN EQUALS idTuple assignOrInitExpr)
     // possible multi-assign statement
-    | (atom (COMMA atom)+ assignEqOp ) => atom (COMMA atom)+ assignEqOp PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
-        -> ^(ASSIGN assignEqOp ^(LIST atom+) PLUS? ^(LIST assignOrInitExpr+))
+    | (lhs (COMMA lhs)+ assignEqOp ) => lhs (COMMA lhs)+ assignEqOp PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*       
+        -> ^(ASSIGN assignEqOp ^(LIST lhs+) PLUS? ^(LIST assignOrInitExpr+))
     ;
       
 assignOrInitExpr : assignExpr | initList ;
 
 // assign expr
-assignExpr : (atom assignEqOp) => atom assignEqOp assignExpr        -> ^(ASSIGN assignEqOp atom assignExpr)
+assignExpr : (lhs assignEqOp) => lhs assignEqOp assignExpr        -> ^(ASSIGN assignEqOp lhs assignExpr)
     | (idTuple EQUALS) => idTuple EQUALS assignExpr               -> ^(ASSIGN EQUALS idTuple assignExpr)
     | rhsExpr                             -> rhsExpr
     ;
@@ -519,16 +519,33 @@ term : ( unary                  -> unary )
 
 unary:  MINUS u=unary -> ^(NEG $u )
       | TILDE u=unary     -> ^(INV $u )
-      //| (noIdAtom idModifier) => noIdAtom idModifier+ -> ^(IDEXPR noIdAtom idModifier+)
-      //| idExpr      -> idExpr 
-      | ( atom PLUSPLUS) => a=atom PLUSPLUS  -> ^(POSTINC $a)
-      | ( atom MINUSMINUS) => a=atom MINUSMINUS -> ^(POSTDEC $a)
+      | ( lhs PLUSPLUS) => a=lhs PLUSPLUS  -> ^(POSTINC $a)
+      | ( lhs MINUSMINUS) => a=lhs MINUSMINUS -> ^(POSTDEC $a)
       | ( atom        -> atom )        
-      | PLUSPLUS a=atom   -> ^(PREINC $a)
-      | MINUSMINUS a=atom -> ^(PREDEC $a)
-    |   AMP atom                        -> ^(ADDROF atom)
+      | PLUSPLUS a=lhs   -> ^(PREINC $a)
+      | MINUSMINUS a=lhs -> ^(PREDEC $a)
+      |  AMP lhs                        -> ^(ADDROF lhs)
 ;
 
+lhs :
+  ( 
+       idExpr                          -> idExpr
+    |   ( tuple ) => tuple                          -> tuple
+    |   LPAREN a1=assignExpr RPAREN               -> $a1
+   )  
+    ( 
+      ( PERIOD ID  -> ^(FIELDREF $lhs ID) )
+    | (  LPAREN arglist RPAREN   -> ^(CALL $lhs arglist) )
+    | ( ( LBRACKET ) => arrayAccess   -> ^(INDEX $lhs arrayAccess) )
+    | ( CARET -> ^(DEREF $lhs) )
+    | ( LBRACE type RBRACE -> ^(CAST type $lhs ) ) 
+    )*
+
+    ( 
+      AS type -> ^(CAST type $lhs) 
+    )?  
+    ;
+ 
 atom :
   ( 
       NUMBER                          -> ^(LIT NUMBER)
@@ -548,7 +565,6 @@ atom :
       ( PERIOD ID  -> ^(FIELDREF $atom ID) )
     | (  LPAREN arglist RPAREN   -> ^(CALL $atom arglist) )
     | ( ( LBRACKET ) => arrayAccess   -> ^(INDEX $atom arrayAccess) )
-    //| ( LBRACKET assignExpr RBRACKET  -> ^(INDEX $atom assignExpr) )
     | ( CARET -> ^(DEREF $atom) )
     | ( LBRACE type RBRACE -> ^(CAST type $atom ) ) 
     )*
