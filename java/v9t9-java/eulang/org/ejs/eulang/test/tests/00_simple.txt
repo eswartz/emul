@@ -59,3 +59,19 @@ call doFac
 assert R0 == 40320
 >>>
 
+<<< integer multiply
+mulBy = macro(macro val : Int; macro K : Int) {
+    val * K
+};
+stuff = code(x : Byte; y : Int) {
+    // TODO: we can't do an unsigned trunc cast!  (Byte -> Int sign extends)
+    //(mulBy(x, 10) + mulBy(x, 100){+Byte} + mulBy(y, -5) + mulBy(y, -17);
+    ((mulBy(x, 10) + mulBy(x, 100))&0xff) + mulBy(y, -5) + mulBy(y, -17);
+};
+mulper = code() {
+    stuff(2, 9);
+};
+===
+call mulper
+assert R0 == 22
+>>>

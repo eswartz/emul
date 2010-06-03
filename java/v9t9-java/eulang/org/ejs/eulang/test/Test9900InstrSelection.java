@@ -986,6 +986,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	@Test
 	public void testMul1() throws Exception {
+		dumpIsel = true;
 		doIsel("foo = code(x:Int ) { (x*123) + (x*-999) };\n");
 		
 		int idx;
@@ -993,19 +994,12 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 		idx = findInstrWithSymbol(instrs, "x", 1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "MOV", RegTempOperand.class, "x", RegTempOperand.class, true);
-		AsmInstruction xval = inst;
+		matchInstr(inst, "MOV", RegTempOperand.class, "x", RegTempOperand.class);
 		
-		idx = findInstrWithInst(instrs, "LI", idx);
+		idx = findInstrWithInst(instrs, "IMUL", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 123);
-		AsmInstruction val = inst;
+		matchInstr(inst, "IMUL", RegTempOperand.class, NumberOperand.class, 123);
 		
-		idx = findInstrWithInst(instrs, "MPY", idx);
-		inst = instrs.get(idx);
-		matchInstr(inst, "MPY", val.getOp1(), xval.getOp2(), RegTempOperand.class, false);
-		
-		// low part is result
 		idx = findInstrWithInst(instrs, "A", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "A", RegTempOperand.class, false, RegTempOperand.class);
@@ -1989,6 +1983,9 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 
 	@Test
 	public void testNonConstGetElementPtrAccess1() throws Exception {
+		dumpIsel = true;
+
+
 	   	doIsel(
 	   			"Tuple = data {\n"+
 	   			"   a:Byte[5]; f:Bool; };\n"+
@@ -2007,19 +2004,19 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 		inst = instrs.get(idx);
 		matchInstr(inst, "LEA", CompositePieceOperand.class, "arr", 0, RegTempOperand.class);
 		
-		// var element
-		idx = findInstrWithInst(instrs, "LI", idx);
+		// var element -- access with SLA/A
+		idx = findInstrWithInst(instrs, "SLA", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 6);
-
-		// calc row
-		idx = findInstrWithInst(instrs, "MPY", idx);
+		matchInstr(inst, "SLA", RegTempOperand.class, NumberOperand.class, 1);
+		
+		idx = findInstrWithInst(instrs, "SLA", idx);
 		inst = instrs.get(idx);
+		matchInstr(inst, "SLA", RegTempOperand.class, NumberOperand.class, 2);
 		
 		// add
 		idx = findInstrWithInst(instrs, "A", idx);
 		inst = instrs.get(idx);
-		matchInstr(inst, "A", RegTempOperand.class, false, RegTempOperand.class);
+		matchInstr(inst, "A", RegTempOperand.class, RegTempOperand.class);
 		
 		// another array
 		idx = findInstrWithInst(instrs, "LEA", idx);
@@ -2110,8 +2107,6 @@ z, z, val, z, z, z, z }), AddrOperand.class);
 
 	@Test
 	public void testAddrCalc1() throws Exception {
-		dumpIsel = true;
-
 		doIsel(
 				"arr : Int[10,10];\n"+
 				"negate = code(x:Int) { \n" +

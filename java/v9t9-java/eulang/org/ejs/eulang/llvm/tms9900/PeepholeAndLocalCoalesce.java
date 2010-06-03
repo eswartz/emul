@@ -55,7 +55,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	public PeepholeAndLocalCoalesce() {
 	}
 	protected void replaceUses(AsmInstruction asmInstruction, AssemblerOperand from, AssemblerOperand to, ILocal fromLocal, ILocal toLocal) {
-		super.replaceUses(asmInstruction, from, to, fromLocal, toLocal);
+		super.replaceUses(asmInstruction, from, to);
 		updateLocalValues(from, to, fromLocal, toLocal);
 	}
 

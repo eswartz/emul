@@ -31,6 +31,8 @@ import static v9t9.engine.cpu.InstructionTable.Isrl;
 import static v9t9.engine.cpu.InstructionTable.Iszc;
 import static v9t9.engine.cpu.InstructionTable.Iszcb;
 import static v9t9.engine.cpu.InstructionTable.Ixor;
+import static org.ejs.eulang.llvm.tms9900.InstrSelection.Pimul;
+import static org.ejs.eulang.llvm.tms9900.InstrSelection.Pbmul;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -393,6 +395,16 @@ public class InstrSelectionTable {
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_POW_2 },
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM_LOG_2 }, 
 				new InstrSelection.DoRes( 0, Isla, 0, 1 )
+		),
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "mul", 
+				 new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST },
+				 new InstrSelection.As[] { InstrSelection.As.GEN_RW, InstrSelection.As.IMM },
+				 new InstrSelection.DoRes( 0, Pimul, 0, 1 )
+		),
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I8|InstrSelection.I1, "mul", 
+				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST },
+				new InstrSelection.As[] { InstrSelection.As.GEN_RW, InstrSelection.As.IMM },
+				new InstrSelection.DoRes( 0, Pbmul, 0, 1 )
 		),
 	
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "mul", 

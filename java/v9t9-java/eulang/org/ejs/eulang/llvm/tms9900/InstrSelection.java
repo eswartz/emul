@@ -32,6 +32,7 @@ import org.ejs.eulang.llvm.directives.LLDeclareDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
 import org.ejs.eulang.llvm.instrs.LLAssignInstr;
+import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
 import org.ejs.eulang.llvm.instrs.LLBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCallInstr;
@@ -230,6 +231,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		Pjcc = Ipseudo + 3,
 		Pcopy = Ipseudo + 4,
 		Plea = Ipseudo + 5,
+		Pimul = Ipseudo + 6,
+		Pbmul = Ipseudo + 7,
 		Plast = Ipseudo + 100
 	;
 	static {
@@ -239,6 +242,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		InstructionTable.registerInstruction(Pjcc, "JCC");
 		InstructionTable.registerInstruction(Pcopy, "COPY");
 		InstructionTable.registerInstruction(Plea, "LEA");
+		InstructionTable.registerInstruction(Pimul, "IMUL");
+		InstructionTable.registerInstruction(Pbmul, "BMUL");
 	}
 	public static final As[] NO_AS = new As[0];
 	public static final Do[] NO_DO = new Do[0];
@@ -328,8 +333,16 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	public InstrSelection(LLModule module) {
 		this.module = module;
 		this.routine = null;
-		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();;
+		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();
 		stackFrame = new StackFrame(module.getTarget());
+		InstrSelectionTable.setupPatterns();
+	}
+	
+	InstrSelection(LLModule module, Routine routine) {
+		this.module = module;
+		this.routine = routine;
+		ssaTempTable = new LinkedHashMap<LLOperand, AssemblerOperand>();
+		this.stackFrame = routine.getStackFrame();
 		InstrSelectionTable.setupPatterns();
 	}
 	
@@ -1157,7 +1170,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				// step over pointer
 				asmOp = generateGeneralOperand(ops[0], asmOp);
 				
-				item = generateMultiply(item, type.getBits() / 8);
+				item = generateMultiply(item, typeEngine.INT, type.getBits() / 8);
 				
 				if (operandNeedsTemp(ops[0], asmOp)) {
 					asmOp = moveToTemp(ops[0], ops[0].getType(), asmOp);
@@ -1184,7 +1197,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 						asmOp = applyOffset(asmOp, idx, type, offs, true);
 					}
 					
-					item = generateMultiply(item, type.getBits() / 8);
+					item = generateMultiply(item, typeEngine.INT, type.getBits() / 8);
 					
 					emitInstr(AsmInstruction.create(Ia, item, asmOp));
 					
@@ -1205,25 +1218,68 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @param i
 	 * @return
 	 */
-	private AssemblerOperand generateMultiply(AssemblerOperand item, int by) {
-		LLOperand llOp = new LLConstOp(typeEngine.INT, 0);
+	AssemblerOperand generateMultiply(AssemblerOperand item, LLType type, int by) {
+		LLOperand llOp = new LLConstOp(type, 0);
 		if ((by & (by - 1)) != 0) {
-			// urgh, slow path
+			// real multiply is so slow and has such stringent requirements on register
+			// allocation that we'll use up to three instructions to multiply with shifts.
 			
-			item = copyIntoRegPair(llOp, instr, item, true);
+			boolean isNeg = by < 0;
 			
-			AssemblerOperand val = moveToTemp(llOp, typeEngine.INT, new NumberOperand(by));
+			AssemblerOperand result;
 			
-			emitInstr(AsmInstruction.create(Impy, val, item));
+			by = Math.abs(by);
+			int bits = 0;
+			for (int pos = 1; pos <= by; pos += pos) {
+				if ((by & pos) != 0) {
+					bits++;
+				}
+			}
 			
-			RegisterLocal regLocal = getRegisterPair(llOp);
-			RegTempOperand result = new RegTempOperand(regLocal, false);  
+			if (bits > 3) {
+				// urgh, slow path
+				item = copyIntoRegPair(llOp, instr, item, true);
+				
+				AssemblerOperand val = moveToTemp(llOp, type, new NumberOperand(by));
+				
+				emitInstr(AsmInstruction.create(Impy, val, item));
+				
+				RegisterLocal regLocal = getRegisterPair(llOp);
+				result = new RegTempOperand(regLocal, false);  
+				
+			} else {
+				// the base value, copied into temps
+				AssemblerOperand val = moveToTemp(llOp, type, item);
+				
+				result = null;
+				
+				int shift = 0;
+				while (by > 0) {
+					if ((by & 1) != 0) {
+						AssemblerOperand shifted = moveToTemp(llOp, type, val);
+						if (shift != 0)
+							emitInstr(AsmInstruction.create(Isla, shifted, new NumberOperand(shift)));
+						if (result == null) {
+							result = shifted;
+						} else {
+							emitInstr(AsmInstruction.create(type.getBits() <= 8 ? Iab : Ia, shifted, result));
+						}
+					}
+					by >>>= 1;
+					shift++;
+				}
+			}
+			
+			if (isNeg) {
+				emitInstr(AsmInstruction.create(Ineg, result));
+			}
 			
 			return result;
+			
 		} else {
 			int log2 = getLog2(by);
 			
-			AssemblerOperand val = moveToTemp(llOp, typeEngine.INT, item);
+			AssemblerOperand val = moveToTemp(llOp, type, item);
 			emitInstr(AsmInstruction.create(Isla, val, new NumberOperand(log2)));
 			return val;
 		}
@@ -1756,7 +1812,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			baseName = ((LLTempOp) llOp).getName();
 		} else if (llOp instanceof LLSymbolOp)
 			baseName = ((LLSymbolOp) llOp).getSymbol().getUniqueName();
-		else if (instr instanceof LLAssignInstr && ((LLAssignInstr) instr).getResult() != null)
+		else if (instr instanceof LLAssignInstr && ((LLAssignInstr) instr).getResult() != null
+				&& ((LLAssignInstr) instr).getResult() != llOp)
 			return getTempSymbol(((LLAssignInstr) instr).getResult());
 		else
 			baseName = "reg";
@@ -2016,5 +2073,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			to = new CompositePieceOperand(new NumberOperand(0), ((RegIndOperand) to).getReg(), type);
 		}
 		return to;
+	}
+
+	/**
+	 * @param instr
+	 */
+	public void setInstr(LLBaseInstr instr) {
+		this.instr = instr;
 	}
 }

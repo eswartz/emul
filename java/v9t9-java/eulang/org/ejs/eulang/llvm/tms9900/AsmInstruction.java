@@ -78,6 +78,13 @@ public class AsmInstruction extends HLInstruction {
 				case InstrSelection.Pepilog:
 				case InstrSelection.Pprolog:
 					break;
+				case InstrSelection.Pbmul:
+					fx.byteop = true;
+					//$FALL-THROUGH$
+				case InstrSelection.Pimul:
+					fx.mop1_dest = Operand.OP_DEST_TRUE;
+					fx.mop2_dest = Operand.OP_DEST_FALSE;
+					break;
 				case InstrSelection.Pjcc:
 					fx.jump = Instruction.INST_JUMP_COND;
 					fx.mop1_dest = Operand.OP_DEST_FALSE;

@@ -8,6 +8,10 @@ import java.util.*;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
+import org.ejs.eulang.llvm.instrs.LLCastInstr;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
+import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.llvm.ops.LLZeroInitOp;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompareOperand;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
@@ -19,6 +23,7 @@ import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLAggregateType;
+import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLType;
 
 import static v9t9.engine.cpu.InstructionTable.*;
@@ -83,6 +88,12 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 				break;
 			case Pcopy:
 				if (expandCopy(inst)) {
+					applied = true;
+				}
+				break;
+			case Pimul:
+			case Pbmul:
+				if (expandIntMultiply(inst)) {
 					applied = true;
 				}
 				break;
@@ -517,4 +528,66 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			to = to.addOffset(theType.getBits() / 8);
 		}
 	}
+	
+	/**
+	 * Expand IMUL to be either shifts and adds or a MPY.
+	 * 
+	 * @param inst
+	 * @return
+	 */
+	private boolean expandIntMultiply(AsmInstruction inst) {
+		AssemblerOperand srcDest = inst.getOp1();
+		
+		if (!(inst.getOp2() instanceof NumberOperand)) {
+			assert false;
+		}
+		
+		int by = ((NumberOperand) inst.getOp2()).getValue();
+		
+		LLIntType type = typeEngine.INT;
+		if (inst.getInst() == InstrSelection.Pbmul) {
+			type = typeEngine.BYTE;
+			by = (by >> 8) & 0xff;	// fix up shifted operand
+			assert by != 0;
+		}
+
+		
+		final AsmInstruction last = inst;
+		final Block block = instrBlockMap.get(inst.getNumber());
+		
+		System.out.println(here() +" for " + inst);
+		InstrSelection isel = new InstrSelection(module, routine) {
+
+			@Override
+			protected void emit(AsmInstruction instr) {
+				System.out.println(instr);
+				block.addInstBefore(instr, last);
+			}
+
+			@Override
+			protected void newBlock(Block block) {
+				assert false;
+			}
+
+			@Override
+			protected void newRoutine(Routine routine) {
+				assert false;
+			}
+			
+		};
+		
+		// DUMMY
+		isel.setInstr(new LLCastInstr(new LLZeroInitOp(type), ECast.BITCAST, type, new LLConstOp(type, 0), type)); 
+		
+		AssemblerOperand answer = isel.generateMultiply(srcDest, type, by);
+		
+		AsmInstruction movBack = AsmInstruction.create(type.getBits() <= 8 ? Imovb : Imov, answer, srcDest);
+		System.out.println(here() +" " + movBack);
+		block.addInstBefore(movBack, last);
+		
+		removeInst(last);
+		
+		return true;
+	}
+
 }

@@ -90,14 +90,26 @@ call mySummer
 assert R0 == 45
 >>>
 
-<<< pointer math
+<<< pointer math 1
+vals: Int[3,3]; 
+doSum = code() {
+    valp : Int^ = (&vals){Int^};
+    s := 0;
+    for i in 9 do (valp+i)^ = i+1;
+    for i in 3 do for j in 3 do s += vals[i][j];
+};
+===
+call doSum
+assert R0 == 45
+>>>
+
+<<< pointer math 2
 vals: Int[3,3]; 
 doSum = code() {
     valp : Int^ = (&vals){Int^};
     s := 0;
     for i in 3 do for j in 3 do (valp+(i*3+j))^ = i*3+j+1;
-//    for i in 9 do (valp+i)^ = i+1;
-    for i in 3 do for j in 3 do s += vals[i][j];
+    for i in 3 do for j in 3 do s += vals[j][i];
 };
 ===
 call doSum

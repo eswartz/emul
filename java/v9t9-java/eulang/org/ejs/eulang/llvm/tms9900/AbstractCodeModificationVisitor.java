@@ -11,7 +11,6 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.symbols.ISymbol;
 
-import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
@@ -59,7 +58,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 	 * @param from
 	 * @param to
 	 */
-	protected void replaceUses(AsmInstruction asmInstruction, AssemblerOperand from, AssemblerOperand to, ILocal fromLocal, ILocal toLocal) {
+	protected void replaceUses(AsmInstruction asmInstruction, AssemblerOperand from, AssemblerOperand to) {
 		assert asmInstruction != null;
 		AssemblerOperand[] ops = asmInstruction.getOps();
 		emitChangePrefix(asmInstruction);

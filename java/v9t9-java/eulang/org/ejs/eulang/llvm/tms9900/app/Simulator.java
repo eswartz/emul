@@ -374,8 +374,18 @@ public class Simulator {
 			assert type.getBits() == 16;
 			memory.writeWord(addr, getAddress(((SymbolOperand) op).getSymbol()));
 		} else if (op instanceof ZeroInitOperand) {
-			for (int i = 0; i < type.getBits() / 8; i++) {
-				memory.writeByte(addr + i, (byte) 0);
+			int bytes = type.getBits() / 8;
+			if (bytes > 0 && addr % 2 != 0) {
+				memory.writeByte(addr++, (byte) 0);
+				bytes--;
+			}
+			while (bytes >= 2) {
+				memory.writeWord(addr, (short) 0);
+				addr += 2;
+				bytes -= 2;
+			}
+			if (bytes != 0) {
+				memory.writeByte(addr++, (byte) 0);
 			}
 		} else if (op instanceof TupleTempOperand) {
 			// TODO: clean up this pattern
