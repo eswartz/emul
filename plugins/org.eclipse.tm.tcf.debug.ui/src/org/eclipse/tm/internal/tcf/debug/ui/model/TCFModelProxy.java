@@ -266,6 +266,14 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         return delta;
     }
 
+    private void postDelta(final ModelDelta root) {
+        model.getDisplay().asyncExec(new Runnable() {
+            public void run() {
+                fireModelChanged(root);
+            }
+        });
+    }
+
     public void run() {
         assert Protocol.isDispatchThread();
         if (disposed) return;
@@ -281,7 +289,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         if (pending_node == null) {
             node2flags.clear();
             if ((root.getFlags() != 0 || node2delta.size() > 0) && (root.getFlags() & IModelDelta.REMOVED) == 0) {
-                fireModelChanged(root);
+                postDelta(root);
             }
             node2delta.clear();
             last_update_time = System.currentTimeMillis();
@@ -290,7 +298,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 makeDelta(root, selection, IModelDelta.SELECT | IModelDelta.EXPAND, true);
                 node2delta.clear();
                 if (pending_node == null) {
-                    fireModelChanged(root);
+                    postDelta(root);
                     selection = null;
                 }
             }
