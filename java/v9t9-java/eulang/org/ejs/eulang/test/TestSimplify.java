@@ -6,6 +6,8 @@ package org.ejs.eulang.test;
 
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import junit.framework.AssertionFailedError;
 
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.DumpAST;
@@ -198,11 +200,20 @@ public class TestSimplify extends BaseTest {
 	@Test
     public void testCastOps() throws Exception {
 		doSimplifyTest("255{Byte}", typeEngine.BYTE, -1);
+		doSimplifyTest("255{Byte}{+Int}", typeEngine.INT, 255);
 		doSimplifyTest("Byte(255)", typeEngine.BYTE, -1);
 		doSimplifyTest("0x1001{Byte}", typeEngine.BYTE, 1);
 		doSimplifyTest("Byte(0x1001)", typeEngine.BYTE, 1);
 		doSimplifyTest("0x1001{Int}", typeEngine.INT, 0x1001);
+		doSimplifyTest("true{+Byte}", typeEngine.BYTE, 1);
 		doSimplifyTest("Int(0x1001)", typeEngine.INT, 0x1001);
+		
+		try {
+			doSimplifyTest("255{Byte}{+Float}", typeEngine.INT, 255);
+			fail();
+		} catch(AssertionFailedError e) {
+			
+		}
     }
 	@Test
 	public void testUnaryOps() throws Exception {

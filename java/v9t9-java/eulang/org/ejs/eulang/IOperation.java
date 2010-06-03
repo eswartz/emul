@@ -70,8 +70,8 @@ public interface IOperation {
 	IBinaryOperation COMPGE = new ComparisonBinaryOperation(">=", "ge", false, "s", "o");
 	IBinaryOperation COMPUGE = new ComparisonBinaryOperation("+>=", "ge", false, "u", "u");
 	
-	IUnaryOperation CAST = new CastOperation("<cast>");
-	IUnaryOperation UCAST = new CastOperation("<unsigned cast>");
+	IUnaryOperation CAST = new CastOperation("<cast>", false);
+	IUnaryOperation UCAST = new CastOperation("<unsigned cast>", true);
 
 	String getName();
 	String getLLVMName();

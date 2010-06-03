@@ -16,12 +16,15 @@ import org.ejs.eulang.types.TypeException;
  */
 public class CastOperation extends Operation implements IUnaryOperation {
 
+	private final boolean isUnsigned;
+
 	/**
 	 * @param name
 	 * @param isCommutative
 	 */
-	public CastOperation(String name) {
+	public CastOperation(String name, boolean isUnsigned) {
 		super(name, null, false);
+		this.isUnsigned = isUnsigned;
 	}
 
 	/* (non-Javadoc)
@@ -86,12 +89,22 @@ public class CastOperation extends Operation implements IUnaryOperation {
 	public LLConstOp evaluate(LLType type, IAstLitExpr simExpr) {
 		Number value = null;
 		if (type.getBasicType() == BasicType.INTEGRAL) {
-			if (simExpr.getObject() instanceof Number)
-				value = ((Number)simExpr.getObject()).longValue();
-			else if (simExpr.getObject() instanceof Boolean)
+			if (simExpr.getObject() instanceof Number) {
+				long l = ((Number)simExpr.getObject()).longValue();
+				if (isUnsigned) {
+					if (simExpr.getType().getBits() <= 8)
+						l &= 0xff;
+					else if (simExpr.getType().getBits() == 16)
+						l &= 0xffff;
+					else
+						assert false;
+				}
+				value = l;
+			} else if (simExpr.getObject() instanceof Boolean) {
 				value = ((Boolean)simExpr.getObject()).booleanValue() ? 1 : 0;
-			else
+			} else {
 				assert false;
+			}
 		}
 		else if (type.getBasicType() == BasicType.BOOL) {
 			if (simExpr.getObject() instanceof Number)
