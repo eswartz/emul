@@ -514,14 +514,9 @@ static void udp_send_all(struct sockaddr_in * addr, SlaveInfo * s) {
     udp_send_empty_packet(addr);
 }
 
-static SlaveInfo * add_slave(struct sockaddr_in * addr, time_t timenow, time_t timestamp) {
+static SlaveInfo * add_slave(struct sockaddr_in * addr, time_t timestamp) {
     int i = 0;
     SlaveInfo * s = NULL;
-    if (timestamp < timenow - 600 || timestamp > timenow + 600) {
-        trace(LOG_ALWAYS, "Discovery: invalid slave info timestamp %lld from %s:%d",
-            (long long)timestamp * 1000, inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
-        timestamp = timenow;
-    }
     while (i < slave_cnt) {
         s = slave_info + i++;
         if (memcmp(&s->addr, addr, sizeof(struct sockaddr_in)) == 0) {
@@ -582,7 +577,7 @@ static void udp_refresh_timer(void * arg) {
             addr.sin_family = AF_INET;
             addr.sin_port = htons((short)udp_server_port);
             addr.sin_addr.s_addr = ifc_list[i].addr;
-            add_slave(&addr, timenow, timenow);
+            add_slave(&addr, timenow);
         }
     }
 
@@ -663,7 +658,13 @@ static void udp_receive_ack_slaves(time_t timenow) {
             trace(LOG_DISCOVERY, "ACK_SLAVES %lld:%u:%s from %s:%d",
                 (long long)timestamp * 1000, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr),
                 inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-            add_slave(&addr, timenow, timestamp);
+            if (timestamp < timenow - 600 || timestamp > timenow + 600) {
+                trace(LOG_ALWAYS, "Discovery: invalid slave info timestamp %lld from %s:%d",
+                    (long long)timestamp * 1000, inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
+            }
+            else {
+                add_slave(&addr, timestamp);
+            }
         }
     }
 }
@@ -694,7 +695,7 @@ static void udp_server_recv(void * x) {
             SlaveInfo * s = NULL;
             if (ntohs(recvreq_addr.sin_port) != DISCOVERY_TCF_PORT) {
                 /* Packet from a slave, save its address */
-                s = add_slave(&recvreq_addr, timenow, timenow);
+                s = add_slave(&recvreq_addr, timenow);
             }
             switch (recv_buf[4]) {
             case UDP_REQ_INFO:
