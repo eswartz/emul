@@ -12,6 +12,7 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.TypeException;
 
 public class AstCastNamedTypeExpr extends AstTypedExpr implements
@@ -19,9 +20,11 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
 
     protected IAstTypedExpr expr;
     protected IAstType typeExpr;
+	private boolean isUnsigned;
 
-    public AstCastNamedTypeExpr(IAstType typeExpr, IAstTypedExpr expr) {
-        setExpr(expr);
+    public AstCastNamedTypeExpr(IAstType typeExpr, IAstTypedExpr expr, boolean isUnsigned) {
+        this.isUnsigned = isUnsigned;
+		setExpr(expr);
         setTypeExpr(typeExpr);
     }
     
@@ -30,7 +33,7 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
      */
     @Override
     public IAstCastNamedTypeExpr copy() {
-    	return fixup(this, new AstCastNamedTypeExpr(doCopy(typeExpr), doCopy(expr)));
+    	return fixup(this, new AstCastNamedTypeExpr(doCopy(typeExpr), doCopy(expr), isUnsigned));
     }
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#toString()
@@ -40,7 +43,44 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
         return "AS " + typeExpr.toString();
     }
     
-     /* (non-Javadoc)
+    
+    
+     @Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
+		result = prime * result + (isUnsigned ? 1231 : 1237);
+		result = prime * result
+				+ ((typeExpr == null) ? 0 : typeExpr.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AstCastNamedTypeExpr other = (AstCastNamedTypeExpr) obj;
+		if (expr == null) {
+			if (other.expr != null)
+				return false;
+		} else if (!expr.equals(other.expr))
+			return false;
+		if (isUnsigned != other.isUnsigned)
+			return false;
+		if (typeExpr == null) {
+			if (other.typeExpr != null)
+				return false;
+		} else if (!typeExpr.equals(other.typeExpr))
+			return false;
+		return true;
+	}
+
+	/* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.impl.AstNode#getChildren()
      */
     public IAstNode[] getChildren() {
@@ -60,6 +100,19 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
 		}
 	}
 
+	/**
+	 * @return the isUnsigned
+	 */
+	public boolean isUnsigned() {
+		return isUnsigned;
+	}
+	/**
+	 * @param isUnsigned the isUnsigned to set
+	 */
+	public void setUnsigned(boolean isUnsigned) {
+		this.isUnsigned = isUnsigned;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstCastExpr#getTypeExpr()
 	 */
@@ -110,7 +163,14 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
     	boolean changed = inferTypesFromChildren(new ITyped[] { typeExpr });
     	if (typeExpr.getType() != null && typeExpr.getType().isComplete()) {
     		expr.setParent(null);
-    		IAstUnaryExpr castExpr = new AstUnaryExpr(IUnaryOperation.CAST, expr);
+    		
+    		if (isUnsigned() && typeExpr.getType().getBasicType() != BasicType.INTEGRAL) {
+    			throw new TypeException(typeExpr, "'unsigned' modifier makes no sense on non-integral type");
+    		}
+    		
+    		IAstUnaryExpr castExpr = new AstUnaryExpr(
+    				isUnsigned ? IUnaryOperation.UCAST : IUnaryOperation.CAST, 
+    						expr);
     		castExpr.setType(typeExpr.getType());
     		castExpr.setTypeFixed(true);
     		castExpr.setSourceRef(getSourceRef());

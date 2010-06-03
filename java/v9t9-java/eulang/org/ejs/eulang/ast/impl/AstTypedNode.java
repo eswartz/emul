@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITyped;
+import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTupleExpr;
@@ -243,16 +244,15 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		}
 		
 		// ignore when we're already a cast
-		if (this instanceof IAstUnaryExpr && ((IAstUnaryExpr) this).getOp() == IOperation.CAST
-				&& !child.isTypeFixed()) {
+		if (getCastedChild(this) != null && !child.isTypeFixed()) {
 			if (canReplaceType(this))
 				setType(newType);
 			return child;
 		}
 		
 		// modify cast when child is a cast and this is legal
-		if (child instanceof IAstUnaryExpr && ((IAstUnaryExpr) child).getOp() == IOperation.CAST 
-				&& ((IAstUnaryExpr)child).getExpr().getType().getBasicType() == newType.getBasicType()
+		if (getCastedChild(child) != null
+				&& getCastedChild(child).getType().getBasicType() == newType.getBasicType()
 				&& !child.isTypeFixed()) {
 			child.setType(newType);
 			return child;
@@ -314,6 +314,14 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 	public void setTypeFixed(boolean fixed) {
 		this.fixed = fixed;
 	}
-	
+
+	public static IAstTypedExpr getCastedChild(IAstTypedNode node) {
+		if (node instanceof IAstUnaryExpr
+				&& ( ((IAstUnaryExpr) node).getOp() == IUnaryOperation.CAST
+						|| ((IAstUnaryExpr) node).getOp() == IUnaryOperation.UCAST ) ) {
+			return ((IAstUnaryExpr) node).getExpr();
+		}
+		return null;
+	}
 
 }

@@ -37,7 +37,6 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
-import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TargetV9t9;
@@ -52,7 +51,7 @@ import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.ast.IAstUnaryExpr;
+import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
@@ -465,8 +464,7 @@ public class BaseTest {
 		return doExpand(node, false);
 	}
 	protected boolean isCastTo(IAstTypedExpr expr, LLType type) {
-		return (expr instanceof IAstUnaryExpr && ((IAstUnaryExpr) expr).getOp() == IOperation.CAST)
-		&& expr.getType().equals(type);
+		return AstTypedNode.getCastedChild(expr) != null && expr.getType().equals(type);
 	}
 	
 	protected IAstModule doFrontend(IAstModule mod, boolean expectErrors) throws Exception {

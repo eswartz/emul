@@ -71,6 +71,7 @@ public interface IOperation {
 	IBinaryOperation COMPUGE = new ComparisonBinaryOperation("+>=", "ge", false, "u", "u");
 	
 	IUnaryOperation CAST = new CastOperation("<cast>");
+	IUnaryOperation UCAST = new CastOperation("<unsigned cast>");
 
 	String getName();
 	String getLLVMName();

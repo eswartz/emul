@@ -55,7 +55,7 @@ public class LLLocalArrayVariable extends LLLocalVariable {
 			LLIntType int32Type = target.getGenerator().getTypeEngine().getIntType(32);
 			LLOperand i32Size;
 			try {
-				i32Size = target.getGenerator().generateCast(dynamicArraySize, int32Type, dynamicArraySize.getType(), arraySizeOp);
+				i32Size = target.getGenerator().generateCast(dynamicArraySize, int32Type, dynamicArraySize.getType(), arraySizeOp, false);
 			} catch (ASTException e) {
 				target.getGenerator().recordError(e);
 				return;

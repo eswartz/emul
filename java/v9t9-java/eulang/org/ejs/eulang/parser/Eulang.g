@@ -538,11 +538,11 @@ lhs :
     | (  LPAREN arglist RPAREN   -> ^(CALL $lhs arglist) )
     | ( ( LBRACKET ) => arrayAccess   -> ^(INDEX $lhs arrayAccess) )
     | ( CARET -> ^(DEREF $lhs) )
-    | ( LBRACE type RBRACE -> ^(CAST type $lhs ) ) 
+    | ( LBRACE PLUS? type RBRACE -> ^(CAST PLUS? type $lhs ) ) 
     )*
 
     ( 
-      AS type -> ^(CAST type $lhs) 
+      AS PLUS? type -> ^(CAST PLUS? type $lhs) 
     )?  
     ;
  
@@ -566,7 +566,7 @@ atom :
     | (  LPAREN arglist RPAREN   -> ^(CALL $atom arglist) )
     | ( ( LBRACKET ) => arrayAccess   -> ^(INDEX $atom arrayAccess) )
     | ( CARET -> ^(DEREF $atom) )
-    | ( LBRACE type RBRACE -> ^(CAST type $atom ) ) 
+    | ( LBRACE PLUS? type RBRACE -> ^(CAST PLUS? type $atom ) ) 
     )*
 
     ( 

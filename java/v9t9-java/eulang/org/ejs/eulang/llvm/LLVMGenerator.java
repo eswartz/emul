@@ -94,7 +94,6 @@ import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
-import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLNullOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -804,9 +803,9 @@ public class LLVMGenerator {
 
 		boolean isDown = false;
 		IAstTypedExpr by = forExpr.getByExpr();
-		if (by instanceof IAstUnaryExpr
-				&& ((IAstUnaryExpr) by).getOp() == IUnaryOperation.CAST) {
-			by = ((IAstUnaryExpr) by).getExpr();
+		IAstTypedExpr castedChild = AstTypedNode.getCastedChild(by);
+		if (castedChild != null) {
+			by = castedChild;
 		}
 		if (by instanceof IAstUnaryExpr
 				&& ((IAstUnaryExpr) by).getOp() == IUnaryOperation.NEG) {
@@ -1063,7 +1062,7 @@ public class LLVMGenerator {
 					value, idx));
 
 			// add a cast if needed
-			val = generateCast(sym, sym.getType(), val.getType(), val);
+			val = generateCast(sym, sym.getType(), val.getType(), val, false);
 
 			makeLocalStorage(((IAstSymbolExpr) sym).getSymbol(), null, val);
 		}
@@ -1721,7 +1720,7 @@ public class LLVMGenerator {
 					value, idx));
 
 			// add a cast if needed
-			val = generateCast(sym, sym.getType(), val.getType(), val);
+			val = generateCast(sym, sym.getType(), val.getType(), val, false);
 
 			LLOperand var = generateTypedExprCore(sym);
 			currentTarget.store(sym.getType(), val, var);
@@ -1832,10 +1831,11 @@ public class LLVMGenerator {
 				currentTarget.store(expr.getType(), decd, opAddr);
 				// and yield
 				ret = expr.getOp() == IOperation.POSTDEC ? op : decd;
-			} else if (expr.getOp() == IOperation.CAST) {
+			} else if (expr.getOp() == IOperation.CAST
+					|| expr.getOp() == IOperation.UCAST) {
 				LLOperand op = generateTypedExpr(expr.getExpr());
 				ret = generateCast(expr, expr.getType(), expr.getExpr()
-						.getType(), op);
+						.getType(), op, expr.getOp() == IOperation.UCAST);
 			} else {
 				unhandled(expr);
 				ret = null;
@@ -1858,9 +1858,10 @@ public class LLVMGenerator {
 	 * <p>
 	 * We handle casting from reference, pointer, etc. to value by dereferencing
 	 * implicitly.
+	 * @param isUnsigned 
 	 */
 	public LLOperand generateCast(IAstNode node, LLType type, LLType origType,
-			LLOperand value) throws ASTException {
+			LLOperand value, boolean isUnsigned) throws ASTException {
 
 		if (type.getBasicType() == BasicType.VOID)
 			return null;
@@ -1884,7 +1885,7 @@ public class LLVMGenerator {
 					cast = ECast.TRUNC;
 				} else if (origType.getBits() < type.getBits()) {
 					// TODO: signedness
-					cast = ECast.SEXT;
+					cast = isUnsigned ? ECast.ZEXT : ECast.SEXT;
 				} else {
 					cast = ECast.BITCAST;
 				}
@@ -1900,13 +1901,11 @@ public class LLVMGenerator {
 			} else if ((origType.getBasicType() == BasicType.INTEGRAL || origType
 					.getBasicType() == BasicType.BOOL)
 					&& type.getBasicType() == BasicType.FLOATING) {
-				// TODO: signedness
-				cast = ECast.SITOFP;
+				cast = isUnsigned ? ECast.UITOFP : ECast.SITOFP;
 			} else if (origType.getBasicType() == BasicType.FLOATING
 					&& (type.getBasicType() == BasicType.INTEGRAL || type
 							.getBasicType() == BasicType.BOOL)) {
-				// TODO: signedness
-				cast = ECast.FPTOSI;
+				cast = isUnsigned ? ECast.FPTOUI : ECast.FPTOSI;
 			} else if (origType.getBasicType() == BasicType.VOID) {
 				// not really a cast
 				type = origType;
@@ -1940,7 +1939,7 @@ public class LLVMGenerator {
 					pieces[i] = generateCast(node, 
 							((LLAggregateType) type).getType(i),
 							theType,
-							current);
+							current, isUnsigned);
 					isConst &= pieces[i].isConstant();
 				}
 				if (isConst) {
@@ -2074,7 +2073,7 @@ public class LLVMGenerator {
 				return new LLConstOp(expr.getType(), 0);
 			else if (expr.getType().getBasicType() == BasicType.POINTER)
 				return generateCast(expr, expr.getType(), typeEngine.INT,
-						new LLConstOp(0));
+						new LLConstOp(0), false);
 			else
 				throw new ASTException(expr, "cannot generate nil");
 		}

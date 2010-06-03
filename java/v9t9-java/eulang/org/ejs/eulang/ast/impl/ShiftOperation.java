@@ -125,8 +125,8 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 					left.getType());
 			
 			LLCodeType intrinsicFuncType = (LLCodeType) intrinsicSym.getType();
-			left = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[0], left.getType(), left);
-			right = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[1], right.getType(), right);
+			left = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[0], left.getType(), left, false);
+			right = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[1], right.getType(), right, false);
 
 			ret = currentTarget.newTemp(expr.getType());
 			currentTarget.emit(new LLCallInstr(ret, left.getType(), 

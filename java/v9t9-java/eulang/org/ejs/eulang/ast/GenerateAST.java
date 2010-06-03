@@ -565,8 +565,15 @@ public class GenerateAST {
 	 * @throws GenerateException 
 	 */
 	private IAstNode constructCast(Tree tree) throws GenerateException {
-		IAstType type = checkConstruct( tree.getChild(0), IAstType.class);
-		IAstTypedExpr expr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+		boolean isUnsigned = false;
+		
+		int idx = 0;
+		if (tree.getChild(idx).getType() == EulangParser.PLUS) {
+			isUnsigned = true;
+			idx++;
+		}
+		IAstType type = checkConstruct( tree.getChild(idx++), IAstType.class);
+		IAstTypedExpr expr = checkConstruct(tree.getChild(idx++), IAstTypedExpr.class);
 		
 		IAstTypedExpr castExpr;
 		/*if (type.getType() != null && type.getType().isComplete()) {
@@ -575,7 +582,7 @@ public class GenerateAST {
 			castExpr.setType(type.getType());
 			castExpr.setTypeFixed(true);
 		} else*/ {
-			castExpr = new AstCastNamedTypeExpr(type, expr);
+			castExpr = new AstCastNamedTypeExpr(type, expr, isUnsigned);
 		}
 		getSource(tree, castExpr);
 		return castExpr;
