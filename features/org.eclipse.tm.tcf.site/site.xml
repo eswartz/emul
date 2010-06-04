@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><!--
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
     Copyright (c) 2010 Wind River Systems, Inc. and others.
     All rights reserved. This program and the accompanying materials
     are made available under the terms of the Eclipse Public License v1.0
@@ -10,10 +11,10 @@
  -->
 
 <site>
-   <description url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/releases/0.2.0">
+   <description url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/releases/0.3.0">
       TCF update site
    </description>
-   <feature url="features/org.eclipse.tm.tcf.feature_0.2.0.200910051347.jar" id="org.eclipse.tm.tcf.feature" version="0.2.0.200910051347">
+   <feature url="features/org.eclipse.tm.tcf.feature_0.3.0.200910051347.jar" id="org.eclipse.tm.tcf.feature" version="0.3.0.200910051347">
       <category name="org.eclipse.tm"/>
    </feature>
    <category-def name="org.eclipse.tm" label="Remote Access and Device Development"/>

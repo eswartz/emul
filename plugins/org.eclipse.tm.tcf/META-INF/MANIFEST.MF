@@ -9,7 +9,7 @@ Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
 Require-Bundle: org.eclipse.core.runtime
 Bundle-Activator: org.eclipse.tm.tcf.Activator
-Import-Package: org.eclipse.tm.tcf.core;version="0.2.0",
- org.eclipse.tm.tcf.protocol;version="0.2.0"
+Import-Package: org.eclipse.tm.tcf.core;version="0.3.0",
+ org.eclipse.tm.tcf.protocol;version="0.3.0"
 Export-Package: org.eclipse.tm.tcf.extensions,
- org.eclipse.tm.tcf.ssl;version="0.2.0"
+ org.eclipse.tm.tcf.ssl;version="0.3.0"

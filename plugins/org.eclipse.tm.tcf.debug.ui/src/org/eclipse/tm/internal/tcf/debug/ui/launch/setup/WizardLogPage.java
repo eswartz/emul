@@ -136,7 +136,7 @@ class WizardLogPage extends WizardPage implements Runnable {
             String os = waitPrompt().replace('\n', ' ').trim();
             send("uname -m", true);
             String machine = waitPrompt().replace('\n', ' ').trim();
-            String version = "0.0.1";
+            String version = "0.3.0";
             Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 
             URL url = FileLocator.find(bundle, new Path("agent/get-os-tag"), null);
