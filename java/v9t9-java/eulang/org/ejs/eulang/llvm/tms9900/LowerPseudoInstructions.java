@@ -6,7 +6,6 @@ package org.ejs.eulang.llvm.tms9900;
 import java.util.*;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.instrs.LLCastInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
@@ -419,44 +418,39 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		changedBlocks = true;
 	}
 	
-	private void expandCopyTuplePiecewise(AsmInstruction inst, TupleTempOperand fromTuple) {
-		AssemblerOperand to = inst.getOp2();
-		assert to instanceof RegIndOperand || to instanceof AddrOperand;
-		
-		TypeEngine typeEngine = routine.getDefinition().getTypeEngine();
-		
-		AsmInstruction last = inst;
-		Block block = instrBlockMap.get(inst.getNumber());
-		
-		Alignment align = typeEngine.new Alignment(Target.STACK);
-		
-		AssemblerOperand[] components = fromTuple.getComponents();
-		LLType[] types = inst.getType().getTypes(); // fromTuple.getType().getTypes();
-		
-		AssemblerOperand toBase = InstrSelection.ensurePiecewiseAccess(to, null);
-		
-		for (int i = 0; i < components.length; i++) {
-			int offs = align.alignAndAdd(types[i]);
-			assert offs % 8 == 0;
-			
-			to = toBase.addOffset(offs / 8);
+	class TuplePiecewiseCopier extends OperandDepthFirstVisitor {
+
+		private AssemblerOperand toBase;
+		private AsmInstruction last;
+		private Block block;
+
+		public TuplePiecewiseCopier(TypeEngine typeEngine, Target target, AsmInstruction last, AssemblerOperand to) {
+			super(typeEngine, target);
+			this.toBase = InstrSelection.ensurePiecewiseAccess(to, null);
+			this.last = last;
+			this.block = instrBlockMap.get(last.getNumber()); 
+		}
+
+		@Override
+		protected void handleOperand(AssemblerOperand from, LLType type,
+				int byteOffset) {
+
+			AssemblerOperand to = toBase.addOffset(byteOffset);
 			if (to instanceof CompositePieceOperand)
-				((CompositePieceOperand) to).setType(types[i]);
-			
-			AssemblerOperand from = components[i];
-			
+				((CompositePieceOperand) to).setType(type);
+				
 			int ins = Imov;
-			if (types[i].getBits() > 16)
+			if (type.getBits() > 16)
 				ins = Pcopy;
-			else if (types[i].getBits() <= 8)
+			else if (type.getBits() <= 8)
 				ins = Imovb;
 			
 			AsmInstruction copy;
 			if (from instanceof NumberOperand && ins != Pcopy) {
 				// oops, const copy
 				ins = Ili; 
-				to = new RegTempOperand((RegisterLocal) stackFrame.allocateTemp(types[i]));
-				if (types[i].getBits() <= 8)
+				to = new RegTempOperand((RegisterLocal) stackFrame.allocateTemp(type));
+				if (type.getBits() <= 8)
 					from = new NumberOperand((((NumberOperand) from).getValue() << 8) & 0xff00);
 				copy = AsmInstruction.create(ins, to, from);
 			} else {
@@ -466,6 +460,16 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			block.addInstAfter(last, copy);
 			last = copy;
 		}
+	}	
+		
+	private void expandCopyTuplePiecewise(AsmInstruction inst, TupleTempOperand fromTuple) {
+		AssemblerOperand to = inst.getOp2();
+		assert to instanceof RegIndOperand || to instanceof AddrOperand;
+		
+		TypeEngine typeEngine = routine.getDefinition().getTypeEngine();
+		
+		TuplePiecewiseCopier copier = new TuplePiecewiseCopier(typeEngine, Target.STACK, inst, to);
+		copier.accept(fromTuple, inst.getType(), 0);
 	}
 	
 	private void expandCopyPiecewise(LLType type, AsmInstruction inst, AssemblerOperand from) {

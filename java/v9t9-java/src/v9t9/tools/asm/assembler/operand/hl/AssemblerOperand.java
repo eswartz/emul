@@ -48,4 +48,6 @@ public interface AssemblerOperand extends Operand {
 	 * @return
 	 */
 	AssemblerOperand addOffset(int i);
+	
+	void accept(IOperandVisitor visitor);
 }

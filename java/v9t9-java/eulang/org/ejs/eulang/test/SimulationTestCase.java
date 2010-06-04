@@ -197,7 +197,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 	 */
 	@Override
 	public String toString() {
-		return (comment.isEmpty() ? "" : comment + "\n") + testName ;
+		return (comment.isEmpty() ? "" : comment + ": ") + testName ;
 	}
 	
 	/* (non-Javadoc)

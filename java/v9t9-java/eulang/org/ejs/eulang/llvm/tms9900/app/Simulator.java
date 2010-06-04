@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.eulang.ITarget;
-import org.ejs.eulang.TypeEngine.Alignment;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
@@ -21,6 +21,7 @@ import org.ejs.eulang.llvm.tms9900.CodeVisitor;
 import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
+import org.ejs.eulang.llvm.tms9900.OperandDepthFirstVisitor;
 import org.ejs.eulang.llvm.tms9900.StackFrame;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
@@ -30,10 +31,8 @@ import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
-import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.emulator.hardware.memory.EnhancedRamArea;
@@ -344,14 +343,69 @@ public class Simulator {
 	}
 
 	
+	/**
+	 * @author ejs
+	 *
+	 */
+	private final class DataEmitter extends OperandDepthFirstVisitor {
+
+		/**
+		 * @param typeEngine
+		 * @param target
+		 */
+		private DataEmitter(TypeEngine typeEngine, Target target) {
+			super(typeEngine, target);
+		}
+		
+		@Override
+		protected void handleOperand(AssemblerOperand op, LLType type,
+				int byteOffset) {
+			short addr = (short) byteOffset;
+			if (op instanceof NumberOperand) {
+				if (type.getBits() <= 8) {
+					memory.writeByte(addr, (byte) ((NumberOperand) op).getValue());
+				} else if (type.getBits() == 16) {
+					memory.writeWord(addr, (short) ((NumberOperand) op).getValue());
+				} else {
+					assert false;
+				}
+			} else if (op instanceof SymbolOperand) {
+				assert type.getBits() == 16;
+				memory.writeWord(addr, getAddress(((SymbolOperand) op).getSymbol()));
+			} else if (op instanceof ZeroInitOperand) {
+				int bytes = type.getBits() / 8;
+				if (bytes > 0 && addr % 2 != 0) {
+					memory.writeByte(addr++, (byte) 0);
+					bytes--;
+				}
+				while (bytes >= 2) {
+					memory.writeWord(addr, (short) 0);
+					addr += 2;
+					bytes -= 2;
+				}
+				if (bytes != 0) {
+					memory.writeByte(addr++, (byte) 0);
+				}
+			} else {
+				assert false;
+			}
+		}
+	}
+
 	private short emitDataBlock(short addr, DataBlock data) {
 		System.out.println("alloc " + HexUtils.toHex4(addr)+": " + data.getName() + " = " + data.getValue());
 		symbolToAddrMap.put(data.getName(), addr);
 		addrToSymbolMap.put(addr, data.getName());
 		
+		DataEmitter emitter = new DataEmitter(target.getTypeEngine(), Target.STRUCT);
+		
+		return (short) emitter.accept(data.getValue(), data.getName().getType(), addr);
+		
+		/*
 		Alignment align = target.getTypeEngine().new Alignment(Target.STRUCT);
 		emitData(addr, align, data.getName().getType(), data.getValue());
 		return (short) (addr + align.sizeof() / 8);
+		*/
 	}
 
 	/**
@@ -360,6 +414,7 @@ public class Simulator {
 	 * @param type
 	 * @param op
 	 */
+	/*
 	private void emitData(short addr, Alignment align, LLType type,
 			AssemblerOperand op) {
 		if (op instanceof NumberOperand) {
@@ -404,7 +459,8 @@ public class Simulator {
 		
 		align.alignAndAdd(type);
 	}
-
+*/
+	
 	private short emitRoutine(final short pc, Routine routine) {
 		final short[] thePc = { pc };
 		routine.accept(new CodeVisitor() {

@@ -668,7 +668,7 @@ public class Test9900Optimizer extends BaseInstrTest {
     	assertEquals(-1, idx);
 		idx = findInstrWithInst(instrs, "LI", -1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LI", RegTempOperand.class, 0, NumberOperand.class, 10);
+		matchInstr(inst, "LI", RegTempOperand.class, 0, NumberOperand.class, 21);
     }
 
 	@Test
@@ -685,20 +685,29 @@ public class Test9900Optimizer extends BaseInstrTest {
     	int idx;
     	AsmInstruction inst;
 
-    	idx = findInstrWithSymbol(instrs, "foo");
-    	if (idx == -1) {
-			idx = findInstrWithInst(instrs, "LI", -1);
-			inst = instrs.get(idx);
-			matchInstr(inst, "LI", RegTempOperand.class, 0, NumberOperand.class, 13);
-    	} else {
-    		idx = findInstrWithInst(instrs, "MOVB", -1);
-			inst = instrs.get(idx);
-			matchInstr(inst, "MOVB", CompositePieceOperand.class, "foo", 1*3+2, RegTempOperand.class);
-			idx = findInstrWithInst(instrs, "AB", idx);
-			inst = instrs.get(idx);
-			matchInstr(inst, "AB", CompositePieceOperand.class, "foo", 2*3+1, RegTempOperand.class);
-    	}
+		idx = findInstrWithInst(instrs, "LI", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegTempOperand.class, 0, NumberOperand.class, 0xe00);
     }
+	
+	@Test
+	public void testDataInit4b() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+				"testDataInit4 = code() {\n"+
+				"  foo:Byte[][3] = [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9]];\n"+
+				"  foo[0][2] & foo[2][2];\n"+
+				"};\n"+
+		"");
+		assertTrue(changed);
+		
+		int idx;
+		AsmInstruction inst;
+		
+		idx = findInstrWithInst(instrs, "LI", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "LI", RegTempOperand.class, 0, NumberOperand.class, 0x100);
+	}
 	
 	@Test
 	public void testTuples5() throws Exception {

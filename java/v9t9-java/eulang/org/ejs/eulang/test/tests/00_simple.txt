@@ -74,7 +74,6 @@ call mulper
 assert R0 == 22
 >>>
 
-only
 <<< unsigned cast
 mulper = code() {
     255{Byte}{+Int}

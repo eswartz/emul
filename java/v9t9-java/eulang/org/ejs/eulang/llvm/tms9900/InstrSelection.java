@@ -1633,9 +1633,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (local instanceof RegisterLocal)
 			return new RegTempOperand((RegisterLocal) local);
 		else if (local instanceof StackLocal)
-			//return new StackLocalOffsOperand(type, new NumberOperand(0), new StackLocalOperand(type, (StackLocal) local));
 			return type.matchesExactly(local.getType()) ? 
-					//new StackLocalOffsOperand(new NumberOperand(0), new StackLocalOperand((StackLocal) local))
 					new AddrOperand(new StackLocalOperand((StackLocal) local))
 					: new StackLocalOperand((StackLocal) local);
 		else 
@@ -1693,7 +1691,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 	
 	private AssemblerOperand copyIntoRegPair(LLOperand llOperand, LLInstr instr, AssemblerOperand operand, boolean high) {
-		//LLOperand llOperand = getLLOperand(operand);
 		RegisterLocal regLocal = getRegisterPair(llOperand);
 		LLOperand llOp = llOperand != null ? llOperand : ((LLAssignInstr) instr).getResult();
 		AssemblerOperand ret = new RegTempOperand(regLocal, high);
@@ -1703,10 +1700,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		return ret;
 	}
 
-	/**
-	 * @param llOperand 
-	 * @return
-	 */
 	private RegisterLocal getRegisterPair(LLOperand llOperand) {
 		if (regPair == null) {
 			regPair = newTempRegister(routine, instr, getTempSymbol(llOperand), typeEngine.INT);
@@ -1716,8 +1709,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	}
 
 	private AssemblerOperand generateRegisterOperand(LLOperand llOp, AssemblerOperand operand) {
-		//LLOperand llOp = getLLOperand(operand);
-		LLType type = llOp.getType(); // getLLType(operand);
+		LLType type = llOp.getType();
 		
 		if (operand != null && operand.isRegister())
 			return operand;
@@ -1749,13 +1741,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 						operand = new NumOperand((((NumOperand) operand).getValue() << 8) & 0xff00);
 
 					emitInstr(AsmInstruction.create(Ili, ret, operand));
-					/*
-				} if (isIntOp(llOp, 16)) {
-					emitInstr(AsmInstruction.create(Ili, ret, operand));
-				} else if (isIntOp(llOp, 8)) {
-					operand = new NumOperand((((NumOperand) operand).getValue() << 8) & 0xFF00);
-					emitInstr(AsmInstruction.create(Ili, ret, operand));
-					*/
 				} else
 					assert false;
 				return ret;
@@ -1777,7 +1762,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			if (local instanceof RegisterLocal)
 				return new RegTempOperand((RegisterLocal) local);
 			else if (local instanceof StackLocal)
-				//return new StackLocalOffsOperand(new NumberOperand(0), new StackLocalOperand((StackLocal) local));
 				return new AddrOperand(new StackLocalOperand((StackLocal) local));
 			else {
 				if (sym.getType().matchesExactly(llOp.getType().getSubType())) {
@@ -1931,48 +1915,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		return asmOp.isRegister() || asmOp.isMemory();
 		
 	}
-	
-	/*
-	private boolean isLastUse(LLOperand operand) {
-		if (!(operand instanceof LLSymbolOp))
-			return true;
-		ILocal local = locals.getLocal(operand);
-		return isLastUse(local);
-	}
-	private boolean isLastUse(AssemblerOperand operand) {
-		if (!(operand instanceof ISymbolOperand))
-			return true;
-		ISymbol sym = ((ISymbolOperand) operand).getSymbol();
-		ILocal local = locals.getLocal(sym);
-		return isLastUse(local);
-	}
-	private boolean isLastUse(ILocal local) {
-		if (local != null) {
-			List<Integer> list = local.getUses().get(llblock);
-			// a temp
-			if (list == null)
-				return true;
-			int indexOf = Collections.binarySearch(list, instr.getNumber());
-			if (indexOf < 0)
-				// between instructions
-				indexOf = -(indexOf + 1);
-			if (instr.getNumber() >= list.get(list.size() - 1))
-				return !isLocalUsedIn(local, llblock.succ);
-		}
-		return false;
-	}
-	private boolean isLocalUsedIn(ILocal local, List<LLBlock> succ) {
-		if (succ == null || succ.isEmpty())
-			return false;
-		for (LLBlock s : succ)
-			if (local.getUses().containsKey(s))
-				return false;
-			else
-				return isLocalUsedIn(local, s.succ);
-		return false;
-	}
-	*/
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.LLCodeVisitor#exitInstr(org.ejs.eulang.llvm.instrs.LLInstr)
 	 */
@@ -2025,11 +1967,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 	}
 
-	/**
-	 * @param d
-	 * @param result
-	 * @return
-	 */
 	private AssemblerOperand getAsmOp(Do d, int i) {
 		int idx = d.ops[i];
 		if (idx < 0) {
@@ -2063,11 +2000,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 */
 	public static AssemblerOperand ensurePiecewiseAccess(AssemblerOperand to, LLType type) {
 		if (to.getClass().equals(AddrOperand.class)) {
-			//if (((AddrOperand) to).getAddr() instanceof StackLocalOperand) {
-				to = new CompositePieceOperand(new NumberOperand(0), ((AddrOperand) to).getAddr(), type);
-			//} else  {
-			//	to = to.addOffset(0);
-			//}
+			to = new CompositePieceOperand(new NumberOperand(0), ((AddrOperand) to).getAddr(), type);
 		}
 		else if (to instanceof RegIndOperand) {
 			to = new CompositePieceOperand(new NumberOperand(0), ((RegIndOperand) to).getReg(), type);

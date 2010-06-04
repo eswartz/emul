@@ -9,6 +9,7 @@ import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
+import v9t9.tools.asm.assembler.operand.hl.IOperandVisitor;
 
 /**
  * This is an operation that has been reduced from an HLOperand
@@ -140,5 +141,17 @@ public abstract class LLOperand implements AssemblerOperand {
 	public AssemblerOperand addOffset(int i) {
 		assert false : "not implemented";
 		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#accept(v9t9.tools.asm.assembler.operand.hl.IOperandVisitor)
+	 */
+	@Override
+	public void accept(IOperandVisitor visitor) {
+		if (visitor.enterOperand(this)) {
+			for (AssemblerOperand kid : getChildren())
+				kid.accept(visitor);
+			visitor.exitOperand(this);
+		}
 	}
 }

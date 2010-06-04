@@ -265,7 +265,6 @@ public class TestSimplify extends BaseTest {
 		doSimplifyTest("10{Bool} and true", typeEngine.BOOL, 1);
 		doSimplifyTest("10{Bool} and (1>2)", typeEngine.BOOL, 0);
 		doSimplifyTest("false or true", typeEngine.BOOL, 1);
-		dumpTreeize = true;
 		doSimplifyTest("(not false) and true", typeEngine.BOOL, 1);
 	}
 	

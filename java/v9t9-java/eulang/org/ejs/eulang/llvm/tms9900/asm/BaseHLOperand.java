@@ -11,6 +11,7 @@ import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.IOperandVisitor;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
@@ -81,5 +82,17 @@ public abstract class BaseHLOperand implements AsmOperand, ISymbolOperand {
 	@Override
 	public AssemblerOperand addOffset(int i) {
 		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#accept(v9t9.tools.asm.assembler.operand.hl.IOperandVisitor)
+	 */
+	@Override
+	public void accept(IOperandVisitor visitor) {
+		if (visitor.enterOperand(this)) {
+			for (AssemblerOperand kid : getChildren())
+				kid.accept(visitor);
+			visitor.exitOperand(this);
+		}
 	}
 }

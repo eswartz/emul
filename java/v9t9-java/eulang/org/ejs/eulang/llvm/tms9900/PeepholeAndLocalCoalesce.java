@@ -5,7 +5,7 @@ package org.ejs.eulang.llvm.tms9900;
 
 import java.util.*;
 
-import org.ejs.eulang.TypeEngine.Alignment;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
@@ -16,8 +16,6 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
-import org.ejs.eulang.types.LLAggregateType;
-import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 
 import static v9t9.engine.cpu.InstructionTable.*;
@@ -252,6 +250,24 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				src = null;
 			}
 			break;
+		case Iandi:
+			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
+				int l = ((NumberOperand) src).getValue() ;
+				int r = ((NumberOperand) inst.getOp2()).getValue() ;
+				src = new NumberOperand( l & r );
+			} else {
+				src = null;
+			}
+			break;
+		case Iori:
+			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
+				int l = ((NumberOperand) src).getValue() ;
+				int r = ((NumberOperand) inst.getOp2()).getValue() ;
+				src = new NumberOperand( l | r );
+			} else {
+				src = null;
+			}
+			break;
 			
 		case Isla:
 		case Isra:
@@ -318,6 +334,31 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 	}
 
+	class TupleValueStorer extends OperandDepthFirstVisitor {
+
+		private boolean recorded;
+		private final AddrOperand baseAddr;
+		
+		public TupleValueStorer(TypeEngine typeEngine, Target target, AddrOperand op) {
+			super(typeEngine, target);
+			this.baseAddr = op;
+		}
+		@Override
+		protected void handleOperand(AssemblerOperand operand, LLType type,
+				int byteOffset) {
+			if (operand instanceof NumberOperand && type.getBits() <= 8) {
+				operand = new NumberOperand((((NumberOperand) operand).getValue() << 8) & 0xff00);
+				type = typeEngine.BYTE;	// allow BOOL/BYTE interchange
+			}
+			AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(byteOffset), 
+					baseAddr.getAddr(), type);
+			recorded |= storeMemoryValue(subop, operand);
+		}
+		public boolean isRecorded() {
+			return recorded;
+		}
+		
+	}
 	/**
 	 * @param op
 	 * @param simplestValue
@@ -338,46 +379,10 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		} else if (val instanceof TupleTempOperand) {
 			if (op instanceof AddrOperand && ((AddrOperand) op).getAddr() instanceof StackLocalOperand) {
 				StackLocal local = ((StackLocalOperand)(((AddrOperand) op).getAddr())).getLocal();
-				return storeMemoryValue(op, val, local.getType());
-				/*
-				AssemblerOperand[] components = ((TupleTempOperand) val).getComponents();
-				Alignment align = routine.getDefinition().getTypeEngine().new Alignment(Target.STACK);
-				if (local.getType() instanceof LLAggregateType) {
-					LLType[] types = ((LLAggregateType) local.getType()).getTypes();
-					assert types.length == components.length;
-					
-					for (int i = 0; i < components.length; i++) {
-						LLType compType = types[i];
-						int offs = align.alignAndAdd(compType);
-						assert offs % 8 == 0;
-						AssemblerOperand subval = components[i];
-						if (subval instanceof NumberOperand && compType.getBits() <= 8) {
-							subval = new NumberOperand((((NumberOperand) subval).getValue() << 8) & 0xff00);
-							compType = typeEngine.BYTE;	// allow BOOL/BYTE interchange
-						}
-						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
-								((AddrOperand) op).getAddr(), compType);
-						storeMemoryValue(subop, subval, types[i]);
-					}
-				} else if (local.getType() instanceof LLArrayType) {
-					LLArrayType arrayType = (LLArrayType) local.getType();
-					
-					for (int i = 0; i < components.length; i++) {
-						int offs = align.alignAndAdd(arrayType.getSubType());
-						assert offs % 8 == 0;
-						AssemblerOperand subval = components[i];
-						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
-								((AddrOperand) op).getAddr(), arrayType.getSubType());
-						storeMemoryValue(subop, subval);
-						if (i == 0) {
-							storeMemoryValue(op, subval);
-						}
-					}
-				} else {
-					assert false;
-				}
-				return true;
-				*/
+				//return storeMemoryValue(op, val, local.getType());
+				TupleValueStorer storer = new TupleValueStorer(typeEngine, Target.STACK, (AddrOperand) op);
+				storer.accept(val, local.getType(), 0);
+				return storer.isRecorded();
 			}
 			return false;
 		} else {
@@ -385,11 +390,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		}
 	}
 
-	/**
-	 * @param op
-	 * @param val
-	 * @param type
-	 */
+	/*
 	private boolean storeMemoryValue(AssemblerOperand op, AssemblerOperand val,
 			LLType type) {
 		if (val instanceof TupleTempOperand) {
@@ -423,9 +424,6 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 						AssemblerOperand subop = new CompositePieceOperand(new NumberOperand(offs / 8), 
 								((AddrOperand) op).getAddr(), arrayType.getSubType());
 						storeMemoryValue(subop, subval, arrayType.getSubType());
-						//if (i == 0) {
-						//	storeMemoryValue(op, subval);
-						//}
 					}
 				} else {
 					assert false;
@@ -435,9 +433,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		} else {
 			return storeMemoryValue(op, val);
 		}
-
-		
 	}
+	*/
+	
 	private AssemblerOperand getSimplestValue(AssemblerOperand op) {
 		if (op instanceof NumberOperand)
 			return op;
@@ -954,6 +952,36 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		AssemblerOperand fromOp = inst.getSrcOp();
 		AssemblerOperand toOp = valOp;
 		
+		// make sure the inst allows the replaced operand 
+		int newInst;
+		switch (inst.getInst()) {
+		case Imov:
+		case Imovb:
+		case Pcopy:
+			newInst = Ili;
+			break;
+		case Ia:
+		case Iab:
+			if (!inst.getOp2().isRegister())
+				return false;
+			newInst = Iai;
+			break;
+		case Isoc:
+		case Isocb:
+			if (!inst.getOp2().isRegister())
+				return false;
+			newInst = Iori;
+			break;
+		case Iszc:
+		case Iszcb:
+			if (!inst.getOp2().isRegister())
+				return false;
+			newInst = Iandi;
+			break;
+		default:
+			return false;
+		}
+
 		System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
 		
 		replaceUses(inst, fromOp, toOp, null, null);
@@ -963,7 +991,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		//if (inst.getInst() == Imovb)
 		//	valOp = new NumOperand(this.routine.getDefinition().getTypeEngine().INT, (((NumberOperand) valOp).getValue() << 8) & 0xff00);
 		
-		inst.setInst(Ili);
+		inst.setInst(newInst);
 		inst.setOp1(destOp);
 		inst.setOp2(valOp);
 		
