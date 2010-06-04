@@ -1,5 +1,5 @@
 %define name tcf-agent
-%define version 0.0.1
+%define version 0.3.0
 %define release 1.%(bin/get-os-tag)
 
 Name: %{name}
@@ -55,5 +55,7 @@ fi
 %{_sbindir}/%{name}
 
 %changelog
+* Thu Jun 03 2010 Eugene Tarassov <eugene.tarassov@windriver.com> 0.3.0
+- Eclipse 3.6.0 Helios release
 * Thu Mar 12 2009 Eugene Tarassov <eugene.tarassov@windriver.com> 0.0.1
 - first release
