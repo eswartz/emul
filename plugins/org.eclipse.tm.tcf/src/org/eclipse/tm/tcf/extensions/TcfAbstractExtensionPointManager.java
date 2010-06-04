@@ -50,7 +50,7 @@ public abstract class TcfAbstractExtensionPointManager<V> {
     /**
      * Returns if or if not the service provider extension point manager
      * got initialized. Initialized means that the manager read the
-     * contributitions for the managed extension point.
+     * contributions for the managed extension point.
      *
      * @return <code>True</code> if already initialized, <code>false</code> otherwise.
      */
@@ -61,7 +61,7 @@ public abstract class TcfAbstractExtensionPointManager<V> {
     /**
      * Sets if or if not the service provider extension point manager
      * is initialized. Initialized means that the manager has read
-     * the contributitions for the managed extension point.
+     * the contributions for the managed extension point.
      *
      * @return <code>True</code> to set the extension point manager is initialized, <code>false</code> otherwise.
      */
@@ -74,11 +74,11 @@ public abstract class TcfAbstractExtensionPointManager<V> {
      * this methods trigger the loading of the extensions to the managed
      * extension point.
      *
-     * @return The map of contributables.
+     * @return The map of contributions.
      */
     protected Map<String, TcfExtensionProxy<V>> getExtensions() {
-            if (!isInitialized()) { loadExtensions(); setInitialized(true); }
-            return fExtensions;
+        if (!isInitialized()) { loadExtensions(); setInitialized(true); }
+        return fExtensions;
     }
 
     /**
@@ -143,7 +143,7 @@ public abstract class TcfAbstractExtensionPointManager<V> {
      * @param element The configuration element of the extension. Must be not <code>null</code>.
      * @return The extension proxy instance.
      *
-     * @throws CoreException If the extension proxy instanciation failed.
+     * @throws CoreException If the extension proxy instantiation failed.
      */
     protected TcfExtensionProxy<V> doCreateExtensionProxy(IConfigurationElement element) throws CoreException {
         assert element != null;
@@ -168,7 +168,7 @@ public abstract class TcfAbstractExtensionPointManager<V> {
                         try {
                             TcfExtensionProxy<V> candidate = doCreateExtensionProxy(element);
                             if (candidate.getId() != null) {
-                                // If no contributable with this id had been registered before, register now.
+                                // If no contribution with this id had been registered before, register now.
                                 if (!fExtensions.containsKey(candidate.getId())) {
                                     fExtensions.put(candidate.getId(), candidate);
                                 }
@@ -179,14 +179,16 @@ public abstract class TcfAbstractExtensionPointManager<V> {
                                             NLS.bind(TcfPluginMessages.Extension_error_duplicateExtension, candidate.getId(), element.getContributor().getName()),
                                             null));
                                 }
-                            } else {
+                            }
+                            else {
                                 throw new CoreException(new Status(IStatus.ERROR,
                                         Activator.PLUGIN_ID,
                                         0,
                                         NLS.bind(TcfPluginMessages.Extension_error_missingRequiredAttribute, "id", element.getAttribute("label")), //$NON-NLS-1$ //$NON-NLS-2$
                                         null));
                             }
-                        } catch (CoreException e) {
+                        }
+                        catch (CoreException e) {
                             IStatus status = new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                                                         NLS.bind(TcfPluginMessages.Extension_error_invalidExtensionPoint, element.getDeclaringExtension().getUniqueIdentifier()),
                                                         e);

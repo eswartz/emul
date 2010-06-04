@@ -209,9 +209,8 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
         button_remove.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
         button_remove.addSelectionListener(new SelectionAdapter() {
             @Override
-            @SuppressWarnings("unchecked")
             public void widgetSelected(SelectionEvent e) {
-                for (Iterator i = ((IStructuredSelection)viewer.getSelection()).iterator(); i.hasNext();) {
+                for (Iterator<?> i = ((IStructuredSelection)viewer.getSelection()).iterator(); i.hasNext();) {
                     PathMapRule a = (PathMapRule)i.next();
                     map.remove(a);
                     viewer.remove(a);

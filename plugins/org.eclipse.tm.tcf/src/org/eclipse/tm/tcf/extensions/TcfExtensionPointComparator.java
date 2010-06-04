@@ -33,7 +33,7 @@ public class TcfExtensionPointComparator implements Comparator<IExtension> {
      * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
      */
     public int compare(IExtension o1, IExtension o2) {
-        // We ignore any comparisation with null and
+        // We ignore any comparison with null and
         if (o1 == null || o2 == null) return 0;
         // Check if it is the exact same element
         if (o1 == o2) return 0;
@@ -49,10 +49,10 @@ public class TcfExtensionPointComparator implements Comparator<IExtension> {
             return 1;
         if (contributor1.startsWith(TCF_PLUGIN_PATTERN) && contributor2.startsWith(TCF_PLUGIN_PATTERN)) {
             int value = contributor1.compareTo(contributor2);
-            // Within the same plugins, the extension are sorted by thier unique id (if available)
+            // Within the same plugins, the extension are sorted by their unique id (if available)
             if (value == 0 && o1.getUniqueIdentifier() != null && o2.getUniqueIdentifier() != null)
                 return o1.getUniqueIdentifier().compareTo(o2.getUniqueIdentifier());
-            // Otherwise, just return the comparisation result from the contributors
+            // Otherwise, just return the comparison result from the contributors
             return value;
         }
 
@@ -61,8 +61,7 @@ public class TcfExtensionPointComparator implements Comparator<IExtension> {
         // Within the same plugins, the extension are sorted by thier unique id (if available)
         if (value == 0 && o1.getUniqueIdentifier() != null && o2.getUniqueIdentifier() != null)
             return o1.getUniqueIdentifier().compareTo(o2.getUniqueIdentifier());
-        // Otherwise, just return the comparisation result from the contributors
+        // Otherwise, just return the comparison result from the contributors
         return value;
     }
-
 }

@@ -196,7 +196,7 @@ public class RunControlProxy implements IRunControl {
                         listener.containerSuspended(
                                 (String)args[0],
                                 args[1] == null ? null : ((Number)args[1]).toString(),
-                                        (String)args[2], (Map)args[3],
+                                        (String)args[2], (Map<String,Object>)args[3],
                                         toStringArray(args[4]));
                     }
                     else if (name.equals("containerResumed")) {

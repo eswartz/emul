@@ -315,7 +315,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         assert !bp_set_done;
         Map<String,Object> m[] = new Map[7];
         for (int i = 0; i < m.length; i++) {
-            m[i] = new HashMap();
+            m[i] = new HashMap<String,Object>();
             m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i + "" + channel_id);
             m[i].put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
             switch (i) {

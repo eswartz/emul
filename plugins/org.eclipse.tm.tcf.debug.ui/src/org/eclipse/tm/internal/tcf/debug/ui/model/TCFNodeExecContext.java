@@ -150,8 +150,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_exec = new TCFChildrenExecContext(this);
         children_stack = new TCFChildrenStackTrace(this);
         line_info_cache = new LinkedHashMap<BigInteger,TCFSourceRef>() {
-            @SuppressWarnings("unchecked")
-            protected boolean removeEldestEntry(Map.Entry eldest) {
+            protected boolean removeEldestEntry(Map.Entry<BigInteger,TCFSourceRef> eldest) {
                 return size() > 256;
             }
         };

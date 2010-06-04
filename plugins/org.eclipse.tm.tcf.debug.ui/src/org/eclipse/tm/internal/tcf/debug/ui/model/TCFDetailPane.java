@@ -54,14 +54,13 @@ public class TCFDetailPane implements IDetailPane {
         return control;
     }
 
-    @SuppressWarnings("unchecked")
     public void display(IStructuredSelection selection) {
         if (source_viewer == null) return;
         generation++;
         final int g = generation;
         final ArrayList<TCFNode> nodes = new ArrayList<TCFNode>();
         if (selection != null) {
-            Iterator iterator = selection.iterator();
+            Iterator<?> iterator = selection.iterator();
             while (iterator.hasNext()) {
                 Object next = iterator.next();
                 if (next instanceof TCFNode) nodes.add((TCFNode)next);
