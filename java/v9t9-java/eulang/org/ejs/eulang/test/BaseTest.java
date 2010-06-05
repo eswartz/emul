@@ -13,6 +13,7 @@ import static junit.framework.Assert.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -519,7 +520,9 @@ public class BaseTest {
 	}
 
 	protected boolean dumpLLVMGen;
+	protected boolean doAssemble;
 	protected boolean doOptimize;
+	
 	/**
 	 * Generate the module, expecting no errors.
 	 * @param mod
@@ -534,9 +537,6 @@ public class BaseTest {
 	 * @throws Exception 
 	 */
 	protected LLVMGenerator doGenerate(IAstModule mod, boolean expectErrors) throws Exception {
-		//doExpand(mod);
-		//doSimplify(mod);
-		
 		if (dumpLLVMGen) {
 			System.out.println("Before generating:");
 			DumpAST dump = new DumpAST(System.out);
@@ -553,9 +553,23 @@ public class BaseTest {
 		else if (!messages.isEmpty())
 			return generator;
 		
+		if (doAssemble) {
+			File file = getTempFile("");
+			doAssemble(generator, file, expectErrors);
+		}
+		
+		if (expectErrors)
+			assertTrue("expected errors", messages.size() > 0);
+		
+		
+		return generator;
+	}
+
+	protected void doAssemble(LLVMGenerator generator, File file, boolean expectErrors)
+			throws IOException, FileNotFoundException, CoreException,
+			AssertionFailedError {
 		String text = generator.getUnoptimizedText();
 		
-		File file = getTempFile("");
 		File llfile = new File(file.getAbsolutePath() + ".ll");
 		FileOutputStream os = new FileOutputStream(llfile);
 		os.write(text.getBytes());
@@ -564,14 +578,7 @@ public class BaseTest {
 		File bcFile = new File(file.getAbsolutePath() + ".bc");
 		bcFile.delete();
 
-		File bcOptFile = new File(file.getAbsolutePath() + ".opt.bc");
-		bcOptFile.delete();
-
-		File llOptFile = new File(file.getAbsolutePath() + ".opt.ll");
-		llOptFile.delete();
-
 		generator.setIntermediateFile(llfile);
-		generator.setOptimizedFile(llOptFile);
 		if (dumpLLVMGen)
 			System.out.println(text);
 
@@ -579,62 +586,69 @@ public class BaseTest {
 			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
 		} catch (AssertionFailedError e) {
 			if (expectErrors)
-				return generator;
+				return;
 			else
 				throw e;
 		}
 
 		if (doOptimize) {
-			String opts = "-preverify -domtree -verify //-lowersetjmp"
-					//+ "-raiseallocs "
-					+ "-simplifycfg -domtree -domfrontier -mem2reg -globalopt "
-					+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
-					+ " -simplify-libcalls -instcombine -jump-threading -simplifycfg -domtree -domfrontier -scalarrepl -instcombine "
-					+ "-break-crit-edges "
-					//+ "-condprop "
-					+ "-tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
-					+ "-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -lcssa -iv-users "
-					//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
-					+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
-					+ "-break-crit-edges "
-					//+ "-condprop "
-					+ "-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
-					+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
-					+ "-std-link-opts -verify";
-			
-			try {
-				run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
-				List<String> optList = new ArrayList<String>();
-				if (opts.length() > 0)
-					optList.addAll(Arrays.asList(opts.split(" ")));
-				for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
-					String val = iter.next();
-					if (val.startsWith("//")) {
-						iter.remove();
-					}
-				}
-				optList.add(0, bcFile.getAbsolutePath());
-				optList.add("-f");
-				optList.add("-o");
-				optList.add(bcOptFile.getAbsolutePath());
-				run("opt", (String[]) optList.toArray(new String[optList.size()]));
-				runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
-				generator.setOptimizedText(readFile(llOptFile.getAbsoluteFile()));
-			} catch (AssertionFailedError e) {
-				if (expectErrors)
-					return generator;
-				else
-					throw e;
-			}
+			doOptimize(generator, file, llfile, bcFile, expectErrors);
 		} else {
 			generator.setOptimizedText(text);
 		}
+	}
+
+	protected void doOptimize(LLVMGenerator generator, File file, File llfile,
+			File bcFile, boolean expectErrors) throws CoreException,
+			IOException, AssertionFailedError {
+		File bcOptFile = new File(file.getAbsolutePath() + ".opt.bc");
+		bcOptFile.delete();
+
+		File llOptFile = new File(file.getAbsolutePath() + ".opt.ll");
+		llOptFile.delete();
+
+		generator.setOptimizedFile(llOptFile);
+		String opts = "-preverify -domtree -verify //-lowersetjmp"
+				//+ "-raiseallocs "
+				+ "-simplifycfg -domtree -domfrontier -mem2reg -globalopt "
+				+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
+				+ " -simplify-libcalls -instcombine -jump-threading -simplifycfg -domtree -domfrontier -scalarrepl -instcombine "
+				+ "-break-crit-edges "
+				//+ "-condprop "
+				+ "-tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
+				+ "-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -lcssa -iv-users "
+				//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
+				+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
+				+ "-break-crit-edges "
+				//+ "-condprop "
+				+ "-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
+				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
+				+ "-std-link-opts -verify";
 		
-		if (expectErrors)
-			assertTrue("expected errors", messages.size() > 0);
-		
-		
-		return generator;
+		try {
+			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+			List<String> optList = new ArrayList<String>();
+			if (opts.length() > 0)
+				optList.addAll(Arrays.asList(opts.split(" ")));
+			for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
+				String val = iter.next();
+				if (val.startsWith("//")) {
+					iter.remove();
+				}
+			}
+			optList.add(0, bcFile.getAbsolutePath());
+			optList.add("-f");
+			optList.add("-o");
+			optList.add(bcOptFile.getAbsolutePath());
+			run("opt", (String[]) optList.toArray(new String[optList.size()]));
+			runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+			generator.setOptimizedText(readFile(llOptFile.getAbsoluteFile()));
+		} catch (AssertionFailedError e) {
+			if (expectErrors)
+				return;
+			else
+				throw e;
+		}
 	}
 	/**
 	 * @param absoluteFile

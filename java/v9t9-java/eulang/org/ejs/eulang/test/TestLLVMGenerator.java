@@ -10,6 +10,7 @@ import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.ISymbol;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -18,6 +19,11 @@ import org.junit.Test;
  */
 public class TestLLVMGenerator extends BaseTest {
 
+
+	@Before
+	public void setupOptimization() {
+		doAssemble = true;
+	}
 
 	@Test
 	public void testConsts() throws Exception {

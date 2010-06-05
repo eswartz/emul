@@ -25,7 +25,6 @@ import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
-import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
@@ -40,6 +39,7 @@ public class TestTypes extends BaseTest {
 
 	@Before
 	public void setupOptimization() {
+		doAssemble = true;
 		doOptimize = true;
 	}
     @Test
