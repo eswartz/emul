@@ -1666,6 +1666,48 @@ public class TestTypeInfer extends BaseTest {
     			"};");
     	
     }
+    
+    /**
+     * Char arith is just int arith, preserving the expected types
+     * @throws Exception
+     */
+    @Test
+    public void testCharArith() throws Exception {
+    	IAstModule mod = doFrontend(
+        			"testCharLits = code (x:Char) {\n" +
+        			"   v := '0' + (x - 'A');\n" +
+        			"   z := '\\xFA\\xCE';\n"+
+        			"   y := x + 4;\n"+
+        			"};");
+        	
+
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCharLits");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+
+    	IAstAllocStmt stmt;
+    	IAstIntLitExpr lit;
+    	
+		stmt = (IAstAllocStmt) codeExpr.stmts().getFirst();
+		assertEquals(typeEngine.CHAR, stmt.getType());
+		
+    	IAstBinExpr plus = (IAstBinExpr) stmt.getExprs().getFirst();
+    	lit = ((IAstIntLitExpr) plus.getLeft());
+    	assertEquals("'0'", lit.getLiteral());
+    	assertEquals(48, lit.getValue());
+    	assertEquals(typeEngine.CHAR, lit.getType());
+    	
+		stmt = (IAstAllocStmt) codeExpr.stmts().list().get(1);
+		assertEquals(typeEngine.INT, stmt.getType());
+		
+		lit = (IAstIntLitExpr) stmt.getExprs().getFirst();
+    	assertEquals("'\\xFA\\xCE'", lit.getLiteral());
+    	assertEquals(0xface, lit.getValue());
+    	assertEquals(typeEngine.INT, lit.getType());
+    	
+
+    	stmt = (IAstAllocStmt) codeExpr.stmts().list().get(2);
+    	assertEquals(typeEngine.CHAR, stmt.getType());
+    }
 }
 
 

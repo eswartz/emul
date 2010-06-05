@@ -13,6 +13,7 @@ import org.antlr.runtime.CharStream;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.Tree;
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
@@ -2366,6 +2367,26 @@ public class GenerateAST {
 		case EulangParser.FALSE:
 			litExpr = new AstBoolLitExpr(lit, typeEngine.BOOL, false);
 			break;
+		case EulangParser.CHAR_LITERAL: {
+			assert (lit.startsWith("'") && lit.endsWith("'"));
+			boolean interpret = true;
+			LLType type = null;
+			String origLit = lit;
+			lit = lit.substring(1, lit.length() - 1);
+			int chval = 0;
+			for (int idx = 0; idx < lit.length(); ) {
+				Pair<Integer, Integer> next = parseCharacter(tree, lit, idx, interpret);
+				idx = next.first;
+				int cur = next.second;
+				chval = (chval << 8) | (cur & 0xff);
+				if (type == null)
+					type = typeEngine.CHAR;
+				else 
+					type = typeEngine.INT;
+			}
+			litExpr = new AstIntLitExpr(origLit, type, chval);
+			break;
+		}
 		case EulangParser.NUMBER: {
 			int radix = 10;
 			if (lit.startsWith("0x") || lit.startsWith("0X")) {
@@ -2400,6 +2421,56 @@ public class GenerateAST {
 		getSource(tree, litExpr);
 		return litExpr;
 
+	}
+
+	/**
+	 * @param lit
+	 * @param idx
+	 * @return
+	 * @throws GenerateException 
+	 */
+	private Pair<Integer, Integer> parseCharacter(Tree tree, String lit, int idx, boolean interpret) throws GenerateException {
+		int cur = 0;
+		char ch = lit.charAt(idx++);
+		if (interpret) {
+			if (ch == '\\') {
+				ch = lit.charAt(idx++);
+				switch (ch) {
+				case '\\': cur = ch; break;
+				case '\'': cur = ch; break;
+				case 'x':
+					if (idx + 2 > lit.length())
+						throw new GenerateException(tree, "expected two characters for \\xNN");
+					cur = fromHex(tree, lit.charAt(idx++)) << 4;
+					cur |= fromHex(tree, lit.charAt(idx++));
+					break;
+				case 'r':
+					cur = 13; break;
+				case 'n':
+					cur = 10; break;
+				case 't':
+					cur = 9; break;
+				default:
+					throw new GenerateException(tree, "unknown escape sequence \\" + ch);
+				}
+			} else {
+				cur = ch;
+			}
+		} else {
+			cur = ch;
+		}
+		return new Pair<Integer, Integer>(idx, cur);
+	}
+
+	/**
+	 * @param charAt
+	 * @return
+	 */
+	private int fromHex(Tree tree, char ch) throws GenerateException {
+		int idx = "0123456789ABCDEF".indexOf(Character.toUpperCase(ch));
+		if (idx < 0)
+			throw new GenerateException(tree, "invalid hex constant at '" + ch+ "'");
+		return idx;
 	}
 
 	/**

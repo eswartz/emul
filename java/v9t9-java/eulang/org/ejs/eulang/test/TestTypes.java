@@ -20,6 +20,7 @@ import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
@@ -910,28 +911,28 @@ xes[3][2][1]
     	IAstAllocStmt stmt;
 		stmt = (IAstAllocStmt) code.stmts().list().get(0);
     	assertTrue(stmt.getType() instanceof LLPointerType);
-    	assertTrue(stmt.getType().getSubType() instanceof LLIntType);
+    	assertTrue(stmt.getType().getSubType().getBasicType() == BasicType.INTEGRAL);
     	
     	stmt = (IAstAllocStmt) code.stmts().list().get(1);
     	assertTrue(stmt.getType() instanceof LLPointerType);
     	assertTrue(stmt.getType().getSubType() instanceof LLPointerType);
-    	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLIntType);
+    	assertTrue(stmt.getType().getSubType().getSubType().getBasicType() == BasicType.INTEGRAL);
 		
     	stmt = (IAstAllocStmt) code.stmts().list().get(2);
     	assertTrue(stmt.getType() instanceof LLArrayType);
     	assertTrue(stmt.getType().getSubType() instanceof LLPointerType);
-    	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLIntType);
+    	assertTrue(stmt.getType().getSubType().getSubType().getBasicType() == BasicType.INTEGRAL);
     	
     	stmt = (IAstAllocStmt) code.stmts().list().get(3);
     	assertTrue(stmt.getType() instanceof LLPointerType);
     	assertTrue(stmt.getType().getSubType() instanceof LLArrayType);
-    	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLIntType);
+    	assertTrue(stmt.getType().getSubType().getSubType().getBasicType() == BasicType.INTEGRAL);
     	
     	stmt = (IAstAllocStmt) code.stmts().list().get(4);
     	assertTrue(stmt.getType() instanceof LLPointerType);
     	assertTrue(stmt.getType().getSubType() instanceof LLArrayType);
     	assertTrue(stmt.getType().getSubType().getSubType() instanceof LLPointerType);
-    	assertTrue(stmt.getType().getSubType().getSubType().getSubType() instanceof LLIntType);
+    	assertTrue(stmt.getType().getSubType().getSubType().getSubType().getBasicType() == BasicType.INTEGRAL);
     	
 	}
 	

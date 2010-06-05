@@ -80,7 +80,6 @@ public class TestScopes extends BaseTest {
 				"    newData : Int;\n"+
 				"};\n" +
 				"foo : Base;\n"+
-				"main = code() { foo.LIT; };\n"+
 				"");
 		
 	}

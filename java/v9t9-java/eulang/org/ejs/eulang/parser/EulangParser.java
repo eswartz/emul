@@ -1,4 +1,4 @@
-// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-06-05 10:26:15
+// $ANTLR 3.1.3 Mar 17, 2009 19:23:44 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-06-05 13:12:34
 
 package org.ejs.eulang.parser;
 
@@ -1188,7 +1188,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, ID, rhsExprOrInitList
+                    // elements: type, rhsExprOrInitList, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -1357,7 +1357,7 @@ public class EulangParser extends Parser {
 
 
                             // AST REWRITE
-                            // elements: ID, rhsExprOrInitList, PLUS
+                            // elements: rhsExprOrInitList, ID, PLUS
                             // token labels: 
                             // rule labels: retval
                             // token list labels: 
@@ -1523,7 +1523,7 @@ public class EulangParser extends Parser {
 
 
                             // AST REWRITE
-                            // elements: PLUS, rhsExprOrInitList, type, ID
+                            // elements: ID, PLUS, type, rhsExprOrInitList
                             // token labels: 
                             // rule labels: retval
                             // token list labels: 
@@ -1706,7 +1706,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idTuple, rhsExprOrInitList
+                    // elements: rhsExprOrInitList, idTuple
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -1980,7 +1980,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: xscopeNoAlloc, namespaceRef
+            // elements: namespaceRef, xscopeNoAlloc
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -2120,7 +2120,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idlistOrEmpty, ID, toplevelvalue
+                    // elements: toplevelvalue, idlistOrEmpty, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -2171,7 +2171,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, ID
+                    // elements: ID, type
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -2221,7 +2221,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: toplevelvalue, ID
+                    // elements: ID, toplevelvalue
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -2352,7 +2352,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: data, namespaceRef
+                    // elements: namespaceRef, data
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -2402,7 +2402,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: namespaceRef, xscope
+                    // elements: xscope, namespaceRef
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -3264,7 +3264,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: idlist, FOR, list
+            // elements: list, idlist, FOR
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -4004,7 +4004,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: proto, codestmtlist, CODE
+            // elements: codestmtlist, proto, CODE
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -4137,7 +4137,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: MACRO, proto, codestmtlist
+            // elements: proto, MACRO, codestmtlist
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -4677,7 +4677,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, ID, ATSIGN
+                    // elements: type, ATSIGN, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -4818,7 +4818,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: MACRO, type, init, ID
+                    // elements: init, type, MACRO, ID
                     // token labels: 
                     // rule labels: retval, init
                     // token list labels: 
@@ -5094,7 +5094,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: ATSIGN, ID
+            // elements: ID, ATSIGN
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -5216,7 +5216,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: xreturns, argdefs
+            // elements: argdefs, xreturns
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -5944,7 +5944,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: type, arraySuff
+            	    // elements: arraySuff, type
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -6322,7 +6322,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: CODE, proto
+                    // elements: proto, CODE
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -7462,7 +7462,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignOrInitExpr, ID, type
+                    // elements: type, ID, assignOrInitExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -7631,7 +7631,7 @@ public class EulangParser extends Parser {
 
 
                             // AST REWRITE
-                            // elements: ID, PLUS, assignOrInitExpr
+                            // elements: PLUS, ID, assignOrInitExpr
                             // token labels: 
                             // rule labels: retval
                             // token list labels: 
@@ -7797,7 +7797,7 @@ public class EulangParser extends Parser {
 
 
                             // AST REWRITE
-                            // elements: assignOrInitExpr, type, ID, PLUS
+                            // elements: type, assignOrInitExpr, ID, PLUS
                             // token labels: 
                             // rule labels: retval
                             // token list labels: 
@@ -7980,7 +7980,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignOrInitExpr, idTuple
+                    // elements: idTuple, assignOrInitExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -8057,7 +8057,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: idTuple, assignOrInitExpr, type
+                    // elements: type, idTuple, assignOrInitExpr
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -8268,7 +8268,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: lhs, assignEqOp, assignOrInitExpr
+                    // elements: assignEqOp, assignOrInitExpr, lhs
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -8319,7 +8319,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: EQUALS, idTuple, assignOrInitExpr
+                    // elements: assignOrInitExpr, idTuple, EQUALS
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -8465,7 +8465,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignEqOp, assignOrInitExpr, PLUS, lhs
+                    // elements: lhs, assignOrInitExpr, PLUS, assignEqOp
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -8704,7 +8704,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: assignExpr, assignEqOp, lhs
+                    // elements: assignEqOp, assignExpr, lhs
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -8755,7 +8755,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: EQUALS, idTuple, assignExpr
+                    // elements: idTuple, assignExpr, EQUALS
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -9242,7 +9242,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ei, ID
+                    // elements: ID, ei
                     // token labels: 
                     // rule labels: retval, ei
                     // token list labels: 
@@ -9639,7 +9639,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: rhsExpr, codeStmtExpr, DO
+            // elements: DO, codeStmtExpr, rhsExpr
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -9739,7 +9739,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: rhsExpr, WHILE, codeStmtExpr
+            // elements: codeStmtExpr, rhsExpr, WHILE
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -9839,7 +9839,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: codeStmt, REPEAT, rhsExpr
+            // elements: REPEAT, rhsExpr, codeStmt
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -9980,7 +9980,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: codeStmt, forIds, forMovement, FOR, rhsExpr
+            // elements: rhsExpr, forMovement, codeStmt, FOR, forIds
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -10278,7 +10278,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: rhsExpr, BY
+            // elements: BY, rhsExpr
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -10360,7 +10360,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: ID, AT
+            // elements: AT, ID
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -10444,7 +10444,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: rhsExpr, BREAK
+            // elements: BREAK, rhsExpr
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -12071,7 +12071,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: elif, elseClause
+            // elements: elseClause, elif
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -12575,7 +12575,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: t, cond, f
+            	    // elements: t, f, cond
             	    // token labels: 
             	    // rule labels: f, retval, t
             	    // token list labels: 
@@ -12721,7 +12721,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: OR, logor, r
+            	    // elements: logor, OR, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -12865,7 +12865,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: logand, AND, r
+            	    // elements: logand, r, AND
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13222,7 +13222,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, COMPEQ, r
+            	    // elements: comp, r, COMPEQ
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13312,7 +13312,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: COMPLE, r, comp
+            	    // elements: COMPLE, comp, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13357,7 +13357,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: COMPGE, comp, r
+            	    // elements: comp, r, COMPGE
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13402,7 +13402,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, r, COMPULE
+            	    // elements: r, comp, COMPULE
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13447,7 +13447,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, COMPUGE, r
+            	    // elements: comp, r, COMPUGE
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13492,7 +13492,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: comp, r, LESS
+            	    // elements: comp, LESS, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13537,7 +13537,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, ULESS, comp
+            	    // elements: comp, ULESS, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13582,7 +13582,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: GREATER, comp, r
+            	    // elements: r, GREATER, comp
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13627,7 +13627,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, UGREATER, comp
+            	    // elements: UGREATER, r, comp
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -13771,7 +13771,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, bitor
+            	    // elements: bitor, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14240,7 +14240,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: LSHIFT, r, shift
+            	    // elements: r, LSHIFT, shift
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14291,7 +14291,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: RSHIFT, shift, r
+            	    // elements: shift, r, RSHIFT
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14342,7 +14342,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: shift, URSHIFT, r
+            	    // elements: r, shift, URSHIFT
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14393,7 +14393,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: shift, CRSHIFT, r
+            	    // elements: shift, r, CRSHIFT
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14444,7 +14444,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: shift, CLSHIFT, r
+            	    // elements: CLSHIFT, shift, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14642,7 +14642,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: factor, r
+            	    // elements: r, factor
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14861,7 +14861,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, term
+            	    // elements: term, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14906,7 +14906,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: term, REM, r
+            	    // elements: term, r, REM
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14951,7 +14951,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: term, UDIV, r
+            	    // elements: r, term, UDIV
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -14996,7 +14996,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: r, UREM, term
+            	    // elements: UREM, term, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -15041,7 +15041,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: term, r, MOD
+            	    // elements: term, MOD, r
             	    // token labels: 
             	    // rule labels: retval, r
             	    // token list labels: 
@@ -15764,7 +15764,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: lhs, ID
+            	    // elements: ID, lhs
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -15864,7 +15864,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: lhs, arrayAccess
+            	    // elements: arrayAccess, lhs
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -15980,7 +15980,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: type, lhs, PLUS
+            	    // elements: PLUS, type, lhs
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -16721,7 +16721,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: atom, arrayAccess
+            	    // elements: arrayAccess, atom
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -16837,7 +16837,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: type, atom, PLUS
+            	    // elements: type, PLUS, atom
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -16904,7 +16904,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: atom, type
+                    // elements: type, atom
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -17178,7 +17178,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: ID, idExpr
+            	    // elements: idExpr, ID
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -18128,7 +18128,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: varDecl, STATIC
+            // elements: STATIC, varDecl
             // token labels: 
             // rule labels: retval
             // token list labels: 

@@ -19,6 +19,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLBoolType;
+import org.ejs.eulang.types.LLCharType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
 import org.ejs.eulang.types.LLIntType;
@@ -130,6 +131,7 @@ public class TargetV9t9 implements ITarget {
 		
 		typeEngine.BYTE = typeEngine.register(typeEngine.getIntType("Byte", 8));
 		typeEngine.INT = typeEngine.register(typeEngine.getIntType("Int", 16));
+		typeEngine.CHAR = typeEngine.register(new LLCharType("Char", 8));
 		
 		typeEngine.FLOAT = typeEngine.register(new LLFloatType("Float", 32, 23));
 		typeEngine.DOUBLE = typeEngine.register(new LLFloatType("Double", 64, 53));

@@ -25,6 +25,7 @@ import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLBoolType;
+import org.ejs.eulang.types.LLCharType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLFloatType;
@@ -52,13 +53,21 @@ public class TypeEngine {
 	public LLIntType BYTE;
 	public LLFloatType FLOAT;
 	public LLFloatType DOUBLE;
+	public LLCharType CHAR;
 
 	public LLIntType INT_ANY;
 	public LLBoolType BOOL;
 	public LLVoidType VOID;
 	public LLLabelType LABEL;
 	public LLType NIL;
+
+	public LLType INTPTR;
+	public LLType REFPTR;
+	public LLIntType PTRDIFF;
 	
+	/** llvm bool type */
+	public LLBoolType LLBOOL;
+
 	private Map<ISymbol, LLType> llvmNameToTypeMap = new HashMap<ISymbol, LLType>();
 	
 	private Map<String, LLCodeType> codeTypes = new HashMap<String, LLCodeType>();
@@ -234,10 +243,6 @@ public class TypeEngine {
 	private int stackAlign;
 	private int structAlign;
 	private int structMinAlign;
-	public LLType INTPTR;
-	public LLType REFPTR;
-	public LLBoolType LLBOOL;
-	public LLIntType PTRDIFF;
 	
 	/**
 	 * 
@@ -256,6 +261,7 @@ public class TypeEngine {
 		populateType(globalScope, "Void", VOID);		
 		populateType(globalScope, "Bool", BOOL);		
 		populateType(globalScope, "Byte", BYTE);		
+		populateType(globalScope, "Char", CHAR);		
 	}
 
 
@@ -478,7 +484,7 @@ public class TypeEngine {
 
 	public void setPtrBits(int ptrBits) {
 		this.ptrBits = ptrBits;
-		INTPTR = getPointerType(new LLIntType("Int", ptrBits));
+		INTPTR = getPointerType(getIntType(ptrBits));
 		PTRDIFF = getIntType(ptrBits);
 	}
 

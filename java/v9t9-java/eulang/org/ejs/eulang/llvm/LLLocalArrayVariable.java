@@ -18,7 +18,7 @@ import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLIntType;
+import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
@@ -52,7 +52,7 @@ public class LLLocalArrayVariable extends LLLocalVariable {
 			super.allocate(target, value);
 		} else {
 			LLSymbolOp tempOp = new LLSymbolOp(addrSymbol);
-			LLIntType int32Type = target.getGenerator().getTypeEngine().getIntType(32);
+			LLType int32Type = target.getGenerator().getTypeEngine().getIntType(32);
 			LLOperand i32Size;
 			try {
 				i32Size = target.getGenerator().generateCast(dynamicArraySize, int32Type, dynamicArraySize.getType(), arraySizeOp, false);

@@ -10,6 +10,7 @@ import static junit.framework.Assert.assertSame;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.ejs.eulang.IOperation;
@@ -28,9 +29,12 @@ import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
+import org.ejs.eulang.ast.IAstInitListExpr;
+import org.ejs.eulang.ast.IAstInitNodeExpr;
 import org.ejs.eulang.ast.IAstInstanceExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLabelStmt;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNilLitExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -41,6 +45,7 @@ import org.ejs.eulang.ast.IAstStmtListExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 /**
@@ -676,8 +681,64 @@ public class TestGenerator extends BaseTest {
 		assertEquals(typeEngine.BYTE, type.getType());
 		expr = ((IAstCastNamedTypeExpr) expr).getExpr();
     }
-    
-    //@Test
+
+    @Test
+    public void testCharLits() throws Exception {
+    	IAstModule mod = treeize(
+    			"testCharLits = code (x:Char) {\n" +
+    			"   v := '0' + (x - 'A');\n" +
+    			"   z := '\\xFA\\xCE';\n"+
+    			"};");
+    	sanityTest(mod);
+    	
+
+    	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCharLits");
+    	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+
+    	IAstAllocStmt stmt;
+    	IAstIntLitExpr lit;
+		stmt = (IAstAllocStmt) codeExpr.stmts().getFirst();
+    	IAstBinExpr plus = (IAstBinExpr) stmt.getExprs().getFirst();
+    	lit = ((IAstIntLitExpr) plus.getLeft());
+    	assertEquals("'0'", lit.getLiteral());
+    	assertEquals(48, lit.getValue());
+    	assertEquals(typeEngine.CHAR, lit.getType());
+    	
+		stmt = (IAstAllocStmt) codeExpr.stmts().list().get(1);
+		lit = (IAstIntLitExpr) stmt.getExprs().getFirst();
+    	assertEquals("'\\xFA\\xCE'", lit.getLiteral());
+    	assertEquals(0xface, lit.getValue());
+    	assertEquals(typeEngine.INT, lit.getType());
+
+    }
+    @Test
+    public void testCharLits2() throws Exception {
+    	IAstModule mod = treeize(
+    			"foo:Char[] = ['a', 'b', '\\\\', '\\'', '\"', '\\r', '\\n', '\\t', 'Tr', '\\r\\n' ];\n"+
+    			"");
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt alloc = (IAstAllocStmt) mod.getScope().getNode("foo");
+    	IAstInitListExpr initListExpr = (IAstInitListExpr) alloc.getExprs().getFirst();
+    	Iterator<IAstInitNodeExpr> iter = initListExpr.getInitExprs().list().iterator();
+    	matchLitInit(typeEngine.CHAR, 'a', iter.next());
+    	matchLitInit(typeEngine.CHAR, 'b', iter.next());
+    	matchLitInit(typeEngine.CHAR, '\\', iter.next());
+    	matchLitInit(typeEngine.CHAR, '\'', iter.next());
+    	matchLitInit(typeEngine.CHAR, '"', iter.next());
+    	matchLitInit(typeEngine.CHAR, '\r', iter.next());
+    	matchLitInit(typeEngine.CHAR, '\n', iter.next());
+    	matchLitInit(typeEngine.CHAR, '\t', iter.next());
+    	matchLitInit(typeEngine.INT, ('T'<<8)|'r', iter.next());
+    	matchLitInit(typeEngine.INT, ('\r'<<8)|'\n', iter.next());
+    }
+	private void matchLitInit(LLType type, int v, IAstInitNodeExpr expr) {
+		IAstLitExpr lit = (IAstLitExpr) expr.getExpr();
+		assertEquals(type, lit.getType());
+		assertEquals(v, ((Number)lit.getObject()).intValue());
+	}
+
+	//@Test
     public void testStrings1() throws Exception {
     	IAstModule mod = treeize(
     			"testStrings = code () {\n" +
@@ -703,6 +764,8 @@ public class TestGenerator extends BaseTest {
     	sanityTest(mod);
     	
     }
+    
+    
 }
 
 

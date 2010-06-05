@@ -548,7 +548,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		int by = ((NumberOperand) inst.getOp2()).getValue();
 		
-		LLIntType type = typeEngine.INT;
+		LLType type = typeEngine.INT;
 		if (inst.getInst() == InstrSelection.Pbmul) {
 			type = typeEngine.BYTE;
 			by = (by >> 8) & 0xff;	// fix up shifted operand

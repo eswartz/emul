@@ -743,9 +743,37 @@ fragment DIGIT: '0'..'9';
 //
 //  Strings
 //  
-CHAR_LITERAL: '\'' ~('\'') * '\'';
-STRING_LITERAL: '"' ~('"') * '"';
+//CHAR_LITERAL: '\'' (('\\' .) | ~('\'')) * '\'';
+CHAR_LITERAL : '\'' {
+  while (true) {
+		 int ch = input.LA(1);
+		 if (ch == '\\') {
+		    input.consume();
+		    input.consume();
+		 } else if (ch != '\'') {
+		    input.consume();
+		 } else {
+		    match('\'');
+		    break;
+		 }
+  }
 
+};
+//STRING_LITERAL: '"' (('\\' .) | ~('"')) * '"';
+STRING_LITERAL: '"' {
+  while (true) {
+		 int ch = input.LA(1);
+		 if (ch == '\\') {
+		    input.consume();
+		    input.consume();
+		 } else if (ch != '\"') {
+		    input.consume();
+		 } else {
+		    match('\"');
+		    break;
+		 }
+  }
+};
 //
 //  Whitespace
 //
