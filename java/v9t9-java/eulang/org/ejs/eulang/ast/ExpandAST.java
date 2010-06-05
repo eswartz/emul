@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +56,7 @@ public class ExpandAST {
 		this.onlyInstances = onlyInstances;
 	}
 
-	public IAstNode expand(List<Message> messages, IAstNode node) {
+	public IAstNode expand(Collection<Message> messages, IAstNode node) {
 		this.changed = false;
 		IAstNode root = doExpand(messages, node, Collections.<ISymbol, IAstNode>emptyMap());
 		
@@ -100,7 +101,7 @@ public class ExpandAST {
 		}
 		return root;
 	}
-	private IAstNode doExpand(List<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
+	private IAstNode doExpand(Collection<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
 		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
 				&& !(node instanceof IAstInstanceExpr)
 				//&& !(node instanceof IAstDefineStmt && ((IAstDefineStmt) node).isGeneric())
@@ -165,7 +166,7 @@ public class ExpandAST {
 	 * @return
 	 * @throws ASTException 
 	 */
-	private IAstNode expandInstance(List<Message> messages, IAstInstanceExpr instanceExpr) throws ASTException {
+	private IAstNode expandInstance(Collection<Message> messages, IAstInstanceExpr instanceExpr) throws ASTException {
 		IAstDefineStmt defineStmt = instanceExpr.getSymbolExpr().getDefinition();
 		if (defineStmt == null) {
 			throw new ASTException(instanceExpr.getSymbolExpr(), "can only instantiate definitions");
@@ -355,7 +356,7 @@ public class ExpandAST {
 		}
 	}
 
-	private IAstNode expandFuncCallExpr(List<Message> messages, IAstNode node) throws ASTException {
+	private IAstNode expandFuncCallExpr(Collection<Message> messages, IAstNode node) throws ASTException {
 		IAstFuncCallExpr funcCallExpr = (IAstFuncCallExpr) node;
 		IAstTypedExpr funcExpr = funcCallExpr.getFunction();
 		if (funcExpr instanceof IAstSymbolExpr) {
@@ -476,7 +477,7 @@ public class ExpandAST {
 	 * @return node containing the return value, or <code>null</code>
 	 */
 	private IAstStmtListExpr doExpandFuncCallExpr(
-			List<Message> messages, IAstNode node, IAstNodeList<IAstTypedExpr> args,
+			Collection<Message> messages, IAstNode node, IAstNodeList<IAstTypedExpr> args,
 			IAstCodeExpr codeExpr,
 			IScope parentScope
 			) throws ASTException {

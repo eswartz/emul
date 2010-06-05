@@ -3,11 +3,10 @@
  */
 package org.ejs.eulang.types;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -69,14 +68,14 @@ public class TypeInference {
 	public static boolean DUMP = false;
 	
 	private final TypeEngine typeEngine;
-	private List<Message> messages;
+	private Set<Message> messages;
 
 	private Set<IAstNode> instantiationSet = new HashSet<IAstNode>();
 	private Set<Integer> genericizedSet = new HashSet<Integer>();
 	
 	public TypeInference(TypeEngine typeEngine) {
 		this.typeEngine = typeEngine;
-		messages = new ArrayList<Message>();
+		messages = new LinkedHashSet<Message>();
 	}
 	
 	public TypeInference subInferenceJob() {
@@ -88,7 +87,7 @@ public class TypeInference {
 	/**
 	 * @return the messages
 	 */
-	public List<Message> getMessages() {
+	public Collection<Message> getMessages() {
 		return messages;
 	}
 	
@@ -382,7 +381,7 @@ public class TypeInference {
 			TypeInference subInference = subInferenceJob();
 			changed |= subInference.inferUp(bodyExpr);
 			
-			List<Message> subMessages = subInference.getMessages();
+			Collection<Message> subMessages = subInference.getMessages();
 			if (!subMessages.isEmpty()) {
 				messages.addAll(subMessages);
 				messages.add(new Error(defineStmt, "Could not resolve definition " + defineStmt.getSymbol()));

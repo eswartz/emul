@@ -306,7 +306,8 @@ xes[3][2][1]
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Int=66; y:Float;\n" +
-    			" static f,g,h:Byte=9; };\n"+
+    			" static f,g,h:Byte=9; \n" +
+    			"  CONST=66; };\n"+
     			"");
 
     	sanityTest(mod);
@@ -319,6 +320,8 @@ xes[3][2][1]
     	assertEquals(3, data.getStaticFields().length);
     	
     	assertEquals((2 + 4) * 8, data.getSizeof());
+    	
+    	assertEquals(1, type.stmts().nodeCount());
     }
     
     @Test
@@ -449,6 +452,24 @@ xes[3][2][1]
     	assertEquals(data.getField("x").getType(), stmt.getType());
     	
     	doGenerate(mod);
+    }
+    
+    @Test
+    public void testDataDeref1b() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Tuple = data {\n"+
+    			"   x:Byte; f:Float; y,z:Byte;\n" +
+    			"   CONST=3; };\n"+
+    			"testDataDeref1b = code() {\n"+
+    			"  foo:Tuple;\n"+
+    			"  Tuple.CONST + "+
+    			"  foo.CONST;\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertFoundInUnoptimizedText("ret %Int 6", gen);
     }
     
     /**

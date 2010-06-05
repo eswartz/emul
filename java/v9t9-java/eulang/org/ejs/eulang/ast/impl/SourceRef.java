@@ -27,6 +27,49 @@ public class SourceRef implements ISourceRef {
 		
 	}
 	
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + column;
+		result = prime * result + endColumn;
+		result = prime * result + endLine;
+		result = prime * result + ((file == null) ? 0 : file.hashCode());
+		result = prime * result + length;
+		result = prime * result + line;
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SourceRef other = (SourceRef) obj;
+		if (column != other.column)
+			return false;
+		if (endColumn != other.endColumn)
+			return false;
+		if (endLine != other.endLine)
+			return false;
+		if (file == null) {
+			if (other.file != null)
+				return false;
+		} else if (!file.equals(other.file))
+			return false;
+		if (length != other.length)
+			return false;
+		if (line != other.line)
+			return false;
+		return true;
+	}
+
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

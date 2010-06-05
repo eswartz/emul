@@ -13,6 +13,7 @@ import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.TypeException;
 
 /**
@@ -146,6 +147,9 @@ public abstract class AstStmtScope extends AstTypedExpr implements IAstStmtScope
 	@Override
 	public void merge(IAstStmtScope added) throws ASTException {
 		doMerge(stmtList, added.stmts());
+		for (ISymbol sym : added.getScope()) {
+			getScope().copySymbol(sym);
+		}
 	}
 
 	protected <T extends IAstNode> void doMerge(IAstNodeList<T> nodes, IAstNodeList<T> added) throws ASTException {

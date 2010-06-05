@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -167,7 +168,14 @@ public class BaseTest {
 	protected boolean dumpFrontend;
 
 	protected IAstNode treeize(String method, String str, boolean expectError) throws Exception {
-    	ParserRuleReturnScope ret = parse(method, str, false);
+    	ParserRuleReturnScope ret = null;
+    	try {
+    		ret = parse(method, str, false);
+    	} catch (AssertionFailedError e) {
+    		if (expectError)
+    			return null;
+    		throw e;
+    	}
     	if (ret == null)
     		return null;
     	
@@ -216,7 +224,7 @@ public class BaseTest {
 	 * @param errors
 	 * @return
 	 */
-	protected String catenate(List<? extends Message> errors) {
+	protected String catenate(Collection<? extends Message> errors) {
 		StringBuilder sb = new StringBuilder();
 		for (Message e : errors) {
 			sb.append(e.toString());
@@ -360,7 +368,7 @@ public class BaseTest {
 	}
 	protected void doTypeInfer(IAstNode mod, boolean expectErrors) {
 		TypeInference infer = new TypeInference(typeEngine);
-		List<Message> messages = infer.getMessages();
+		Collection<Message> messages = infer.getMessages();
 		
 		if (dumpTypeInfer) {
 			System.out.println("Before inference:");

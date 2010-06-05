@@ -59,7 +59,6 @@ import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
-import org.ejs.eulang.ast.impl.AstStmtScope;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
@@ -551,6 +550,8 @@ public class GenerateAST {
 		case EulangParser.FOR:
 			return constructFor(tree);
 
+		case EulangParser.EXTENDSCOPE:
+			return constructExtendScope(tree);
 		default:
 			unhandled(tree);
 			return null;
@@ -610,14 +611,61 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException
 	 */
-	private IAstNode constructAddScope(Tree tree) throws GenerateException {
-		String name = tree.getChild(0).getText();
-		ISymbol fromScope = currentScope.search(name);
-		if (fromScope == null)
-			throw new GenerateException(tree.getChild(0), "cannot find scope "
-					+ name);
+	private IAstNode constructExtendScope(Tree tree) throws GenerateException {
+		IAstSymbolExpr symExpr = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
+		
+		String name =  symExpr.getSymbol().getUniqueName();
+		
+		IAstScope astScope = (IAstScope) symExpr.getSymbol().getDefinition();
+		
+		IAstNode def = symExpr.getSymbol().getDefinition();
 
-		IAstNode def = fromScope.getDefinition();
+		if (def instanceof IAstDefineStmt) {
+			if (((IAstDefineStmt) def).bodyList().size() != 1)
+				throw new GenerateException(tree.getChild(0),
+						"symbol is not a simple scope: " + name);
+			def = ((IAstDefineStmt) def).getMatchingBodyExpr(null);
+		}
+		if (!(def instanceof IAstStmtScope)) {
+			throw new GenerateException(tree.getChild(0),
+					"symbol is not a scope: " + name);
+		}
+		
+		IAstStmtScope stmtScope = (IAstStmtScope) def;
+
+		IScope save = currentScope;
+		currentScope = astScope.getScope();
+
+		try {
+			// make the new scope
+			IAstStmtScope added = checkConstruct(tree.getChild(1),
+					IAstStmtScope.class);
+
+			try {
+				stmtScope.merge(added);
+			} catch (ASTException e) {
+				throw new GenerateException(e.getNode().getSourceRef(), e
+						.getMessage());
+			}
+
+			return null;
+		} finally {
+			currentScope = save;
+		}
+
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException
+	 */
+	private IAstNode constructAddScope(Tree tree) throws GenerateException {
+		IAstSymbolExpr symExpr = checkConstruct(tree.getChild(0), IAstSymbolExpr.class);
+		
+		String name =  symExpr.getSymbol().getUniqueName();
+		
+		IAstNode def = symExpr.getSymbol().getDefinition();
 
 		if (def instanceof IAstDefineStmt) {
 			if (((IAstDefineStmt) def).bodyList().size() != 1)

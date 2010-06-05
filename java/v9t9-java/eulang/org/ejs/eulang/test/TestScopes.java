@@ -49,5 +49,39 @@ public class TestScopes extends BaseTest {
 		assertEquals(2, data.getInstanceFields().length);
 		
 	}
-	
+	@Test 
+	public void testScopeExtend1() throws Exception {
+		IAstModule mod = doFrontend(
+				" Base = data {\n" + 
+				"        x:Int;\n" + 
+				"        func=code(this:Base^) { this.x; };\n"+
+				"};\n" + 
+				"\n" + 
+				" Base += {\n" +
+				"    LIT = 3;\n"+
+				"    util=code(this:Base^) { this.LIT; };\n"+
+				"};\n" +
+				"foo : Base;\n"+
+				"main = code() { foo.LIT; };\n"+
+				"");
+		sanityTest(mod);
+		
+	}
+	@Test 
+	public void testScopeExtend2() throws Exception {
+		// nope, don't allow adding fields
+		treeizeFail(
+				" Base = data {\n" + 
+				"        x:Int;\n" + 
+				"        func=code(this:Base^) { this.x; };\n"+
+				"};\n" + 
+				"\n" + 
+				" Base += {\n" +
+				"    newData : Int;\n"+
+				"};\n" +
+				"foo : Base;\n"+
+				"main = code() { foo.LIT; };\n"+
+				"");
+		
+	}
 }

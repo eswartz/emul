@@ -8,6 +8,7 @@ options {
 tokens {
   SCOPE;
   ADDSCOPE;
+  EXTENDSCOPE;
   
   LIST_COMPREHENSION;
   CODE;
@@ -115,14 +116,17 @@ prog:   toplevelstmts EOF!
                 
 toplevelstmts: toplevelstat*      -> ^(STMTLIST toplevelstat*)
     ; 
-    
-toplevelstat: defineStmt
-    //|  (ID COLON) => ID COLON type (EQUALS rhsExprOrInitList)?     SEMI  -> ^(ALLOC ID type rhsExprOrInitList?)
-    //|  (ID COLON_EQUALS) => ID COLON_EQUALS rhsExprOrInitList  SEMI  -> ^(ALLOC ID TYPE rhsExprOrInitList)
+toplevelstmtsNoAlloc: toplevelstatNoAlloc*      -> ^(STMTLIST toplevelstatNoAlloc*)
+    ; 
+
+toplevelstat : toplevelstatNoAlloc -> toplevelstatNoAlloc 
     | toplevelAlloc SEMI -> toplevelAlloc
+    ;
+toplevelstatNoAlloc: defineStmt
+    | scopeExtension SEMI? -> scopeExtension 
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     | rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
-    | (LBRACE ) => xscope 
+    | (LBRACE) => xscope SEMI? 
     ;
 
 toplevelAlloc : toplevelSingleVarDecl | toplevelTupleVarDecl;
@@ -139,23 +143,27 @@ toplevelSingleVarDecl:
         )
       )
     ;
+    
 toplevelTupleVarDecl:    
     idTuple 
-      (  ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC idTuple TYPE rhsExprOrInitList) )
+      ( 
+        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC idTuple TYPE rhsExprOrInitList) )
       | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC idTuple type rhsExprOrInitList*) )
       )
     ;
     
 rhsExprOrInitList : rhsExpr | initList ;
 
+scopeExtension : namespaceRef PLUS_EQ xscopeNoAlloc -> ^(EXTENDSCOPE namespaceRef xscopeNoAlloc) ;
+
 defineStmt : (ID EQUALS LBRACKET) => ID EQUALS LBRACKET idlistOrEmpty RBRACKET  toplevelvalue     SEMI  -> ^(DEFINE ID idlistOrEmpty toplevelvalue) 
     | (ID EQUALS_COLON) => ID EQUALS_COLON type     SEMI  -> ^(DEFINE ID type)
     | (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
   ;
 
-toplevelvalue : (LBRACE ) => xscope
-    | ID PLUS data -> ^(ADDSCOPE ID data)
-    | ID PLUS xscope -> ^(ADDSCOPE ID xscope)
+toplevelvalue : (LBRACE) => xscope
+    | namespaceRef PLUS data -> ^(ADDSCOPE namespaceRef data)
+    | namespaceRef PLUS xscope -> ^(ADDSCOPE namespaceRef xscope)
     | selector
     | rhsExpr
     | data
@@ -175,6 +183,8 @@ selectoritem :  macro | rhsExpr | listCompr;
 //  scope
 //
 xscope : LBRACE toplevelstmts RBRACE    -> ^(SCOPE toplevelstmts* )
+    ;
+xscopeNoAlloc : LBRACE toplevelstmtsNoAlloc RBRACE    -> ^(SCOPE toplevelstmtsNoAlloc* )
     ;
 
 //  list comprehension
@@ -579,6 +589,10 @@ idExpr :
       ( PERIOD ID  -> ^(FIELDREF $idExpr ID) )*
     ( (instantiation ) => instantiation -> ^(INSTANCE $idExpr instantiation) ) ?
     ;
+namespaceRef :
+	   ID (PERIOD ID) * -> ^(IDREF ID+ ) 
+	   | c=colons ID (PERIOD ID) * -> ^(IDREF {split($c.tree)} ID+) 
+     ;
 
 instantiation : LESS (instanceExpr (COMMA instanceExpr)*)? GREATER   -> ^(LIST instanceExpr*) 
   ; 
@@ -587,9 +601,6 @@ instanceExpr options { backtrack=true;} : type | atom ;
 idOrScopeRef : ID  -> ^(IDREF ID ) 
       | c=colons ID -> ^(IDREF {split($c.tree)} ID) 
       ;
-//idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
-//      | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
-//      ;
 
 colons : (COLON | COLONS )+ ;
 
