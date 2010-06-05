@@ -76,17 +76,14 @@ public class Simulator {
 	private final ITarget target;
 
 	static class Frame {
-		/**
-		 * @param symbolToAddrMap2
-		 * @param addrToSymbolMap2
-		 * @param vrAddr2
-		 */
-		public Frame(HashMap<ISymbol, Short> symbolToAddrMap,
+		public Frame(Routine routine, HashMap<ISymbol, Short> symbolToAddrMap,
 				TreeMap<Short, ISymbol> addrToSymbolMap, short vrAddr) {
+			this.routine = routine;
 			this.symbolToAddrMap = symbolToAddrMap;
 			this.addrToSymbolMap = addrToSymbolMap;
 			this.vrAddr = vrAddr;
 		}
+		Routine routine;
 		HashMap<ISymbol, Short> symbolToAddrMap;
 		TreeMap<Short, ISymbol> addrToSymbolMap;
 		short vrAddr;
@@ -529,7 +526,11 @@ public class Simulator {
             dumpFullEnd(cpu, origCycleCount, mop1, mop2, dumpfull);
         }*/
 		
-        /* notify listeners */
+        fireInstructionListeners(block);
+	}
+
+	private void fireInstructionListeners(InstructionWorkBlock block) {
+		/* notify listeners */
         if (listeners != null) {
         	for (InstructionListener listener : listeners) {
         		listener.executed(block, iblock);
@@ -543,6 +544,25 @@ public class Simulator {
 	 */
 	private void emulateIntrinsic(Intrinsic intrinsic, LLType type) {
 		System.out.println("Intrinsic: " + intrinsic + " for " + type);
+		
+		// the instr we care about is the caller
+		AsmInstruction instr = pcToInstrMap.get((short)(readRegister(11) - 2));	/* TODO: 4 in real life */
+
+		InstructionWorkBlock block = new InstructionWorkBlock();
+		block.inst = instr; 
+
+		// copy any registers
+		StackFrame stackFrame = stackFrames.peek().routine.getStackFrame();
+		for (ISymbol sym : instr.getSources()) {
+			ILocal local = stackFrame.getLocal(sym);
+			if (local instanceof RegisterLocal) {
+				int vr = ((RegisterLocal) local).getVr();
+				if (vr < 16) {
+					writeRegister(vr, memory.readWord(symbolToAddrMap.get(sym)));
+				}
+			}
+		}
+		
 		switch (intrinsic) {
 		case DECREF:
 		case INCREF:
@@ -590,7 +610,38 @@ public class Simulator {
 			writeRegister(0, val);
 			break;
 		}
+		case MODULO: {
+			short val = readRegister(0);
+			int div = readRegister(1);
+			if (div < 0)
+				div += 65536;
+			while (val < 0)
+				val += div;
+			if (type.getBits() <= 8) {
+				val = (short) (( ((val >> 8) & 0xff) % div ) << 8);
+			} else {
+				val = (short) ( val % div );
+			}
+			writeRegister(0, val);
+			break;
 		}
+		default:
+			assert false;
+		}
+
+		// write any registers
+		for (ISymbol sym : instr.getTargets()) {
+			ILocal local = stackFrame.getLocal(sym);
+			if (local instanceof RegisterLocal) {
+				int vr = ((RegisterLocal) local).getVr();
+				if (vr < 16) {
+					memory.writeWord(symbolToAddrMap.get(sym), readRegister(vr));
+				}
+			}
+		}
+		
+		iblock.inst = block.inst;
+		fireInstructionListeners(block);
 	}
 
 	private short doSignedDiv(LLType type) {
@@ -710,9 +761,10 @@ public class Simulator {
 			return ea;
 		} else if (op instanceof RegTempOperand) {
 			short ea;
-			if (((RegTempOperand) op).getLocal().isPhysReg()) {
-				ea = getRegisterEA(((RegTempOperand) op).getReg());
-			} else {
+			//if (((RegTempOperand) op).getLocal().isPhysReg()) {
+			//	ea = getRegisterEA(((RegTempOperand) op).getReg());
+			//} else 
+			{
 				ea = symbolToAddrMap.get(((RegTempOperand) op).getLocal().getName());
 			}
 			if (((RegTempOperand) op).isRegPair() && !((RegTempOperand) op).isHighReg())
@@ -930,13 +982,14 @@ public class Simulator {
     private void interpret(final Cpu cpu, AsmInstruction ins) {
         switch (ins.getInst()) {
         case InstrSelection.Pprolog: {
-            Frame frame = new Frame(symbolToAddrMap, addrToSymbolMap, vrAddr);
+        	Routine routine = getBuildOutput().getRoutine(getSymbol(iblock.instPC));
+        	assert routine != null;
+        	
+            Frame frame = new Frame(routine, symbolToAddrMap, addrToSymbolMap, vrAddr);
             stackFrames.push(frame);
             symbolToAddrMap = new HashMap<ISymbol, Short>(symbolToAddrMap);
             addrToSymbolMap = new TreeMap<Short, ISymbol>(addrToSymbolMap);
         	
-        	Routine routine = getBuildOutput().getRoutine(getSymbol(iblock.instPC));
-        	assert routine != null;
         	StackFrame stackFrame = routine.getStackFrame();
         	
         	int theSP = target.getSP();
@@ -962,16 +1015,12 @@ public class Simulator {
 			for (ILocal local : stackFrame.getAllLocals()) {
         		short addr;
         		if (local instanceof RegisterLocal) {
-        			int vr = ((RegisterLocal) local).getVr();
-        			if (vr < 16) {
-        				addr = (short) (iblock.wp + vr * 2);
-        			} else {
-        				int size = 2;
-        				if (((RegisterLocal) local).isRegPair())
-        					size = 4;
-        				addr = this.vrAddr;
-        				this.vrAddr += size;
-        			}
+        			// always put VRs in separate addresses
+    				int size = 2;
+    				if (((RegisterLocal) local).isRegPair())
+    					size = 4;
+    				addr = this.vrAddr;
+    				this.vrAddr += size;
         		}
         		else if (local instanceof StackLocal) {
         			if (((StackLocal)local).getOffset() < 0) {
@@ -988,6 +1037,18 @@ public class Simulator {
         		System.out.println("alloc " + HexUtils.toHex4(addr)+": " + local);
         		symbolToAddrMap.put(local.getName(), addr);
         	}
+
+        	// read any register args
+        	for (ILocal local : stackFrame.getArgumentLocals()) {
+        		if (local instanceof RegisterLocal) {
+        			int reg = ((RegisterLocal) local).getVr();
+        			if (reg < 16) {
+        				short localAddr = symbolToAddrMap.get(local.getName());
+        				memory.writeWord(localAddr, readRegister(reg));
+        			}
+        		}
+        	}
+        	
 
         	break;
         }
@@ -1006,7 +1067,21 @@ public class Simulator {
         	writeRegister(theSP, SP);
         	writeRegister(theFP, FP);
         	
-            Frame frame = stackFrames.pop();
+        	Frame frame = stackFrames.pop();
+
+        	// save any register args
+            StackFrame stackFrame = frame.routine.getStackFrame();
+            for (ISymbol sym : ins.getSources()) {
+            	ILocal local = stackFrame.getLocal(sym);
+        		if (local instanceof RegisterLocal) {
+        			int reg = ((RegisterLocal) local).getVr();
+        			if (reg < 16) {
+        				short localAddr = symbolToAddrMap.get(local.getName());
+        				writeRegister(reg, memory.readWord(localAddr));
+        			}
+        		}
+        	}
+
             symbolToAddrMap = frame.symbolToAddrMap;
             addrToSymbolMap = frame.addrToSymbolMap;
             vrAddr = frame.vrAddr;
@@ -1156,10 +1231,23 @@ public class Simulator {
         case InstructionTable.Idect:
         	iblock.val1 -= 2;
             break;
-        case InstructionTable.Ibl:
+        case InstructionTable.Ibl: {
+        	// flush reg args to real registers
+        	StackFrame stackFrame = stackFrames.peek().routine.getStackFrame();
+        	for (ISymbol sym : iblock.inst.getSources()) {
+    			ILocal local = stackFrame.getLocal(sym);
+    			if (local instanceof RegisterLocal) {
+    				int vr = ((RegisterLocal) local).getVr();
+    				if (vr < 16) {
+    					writeRegister(vr, memory.readWord(symbolToAddrMap.get(sym)));
+    				}
+    			}
+    		}
+        	
         	memory.writeWord(iblock.wp + 11 * 2, iblock.pc);
         	iblock.pc = iblock.val1;
             break;
+        }
         case InstructionTable.Iswpb:
         	iblock.val1 = (short) (iblock.val1 >> 8 & 0xff | iblock.val1 << 8 & 0xff00);
             break;

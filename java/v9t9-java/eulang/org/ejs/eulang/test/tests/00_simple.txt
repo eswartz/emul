@@ -219,3 +219,57 @@ call main
 assert R0 == -1
 
 >>>
+
+<<< remainder intrinsics #2
+main = code(x,y:Int) {
+    (x / y) * y + (x \ y) 
+};
+===
+// note: this is ALSO testing reuse of registers R0 and R1 in different contexts
+write R0 15
+write R1 7
+call main
+assert R0 == 15
+
+write R0 -15
+write R1 7
+call main
+assert R0 == -15
+
+write R0 15
+write R1 -7
+call main
+assert R0 == 15
+
+write R0 -15
+write R1 -7
+call main
+assert R0 == -15
+
+>>>
+
+<<< modulo
+main = code(x,y:Int) {
+    x % y  // modulo, which treats negative 'x' sensibly
+};
+===
+write R0 7
+write R1 6
+call main
+assert R0 == 1
+
+write R0 -1
+write R1 6
+call main
+assert R0 == 5
+
+write R0 -8
+write R1 6
+call main
+assert R0 == 4
+
+write R0 11
+write R1 -5     // treated as positive
+call main
+assert R0 == 11
+>>>

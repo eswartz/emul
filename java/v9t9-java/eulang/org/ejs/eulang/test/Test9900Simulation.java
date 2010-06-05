@@ -105,6 +105,7 @@ public class Test9900Simulation  {
 				source.append('\n');
 			}
 			else if (state == State.ACTIONS) {
+				line = line.replaceAll("//.*", "");
 				if (line.isEmpty())
 					continue;
 				if (line.equals(">>>")) {
@@ -169,6 +170,7 @@ public class Test9900Simulation  {
 						boolean equalToken = "==".equals(tokens[idx]);
 						boolean notEqualToken = "!=".equals(tokens[idx]);
 						final boolean isEquals = equalToken && !notEqualToken;
+						final int theLine = lineNum;
 						
 						if (equalToken || notEqualToken)
 							idx++;
@@ -201,9 +203,9 @@ public class Test9900Simulation  {
 								}
 								
 								if (isEquals)
-									assertEquals(exp + " != " + val, exp_, val);
+									assertEquals(theLine +": " + exp + " != " + val, exp_, val);
 								else
-									assertFalse(exp_ == val);
+									assertFalse(theLine+"", exp_ == val);
 							}
 						};
 						actions.add(run);
