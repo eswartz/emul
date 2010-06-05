@@ -358,6 +358,19 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		idx = findInstrWithInst(instrs, "INCT");
 		instrs.get(idx);
 	}
+	@Test
+	public void testAddConst3() throws Exception {
+		doIsel("foo = code(x:Byte ) { x-42; x+42; };\n");
+		
+		int idx = -1;
+		AsmInstruction inst;
+		idx = findInstrWithInst(instrs, "AI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AI", RegTempOperand.class, NumberOperand.class, -0x2A00);
+		idx = findInstrWithInst(instrs, "AI", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "AI", RegTempOperand.class, NumberOperand.class, 0x2A00);
+	}
 
 	@Test
 	public void testAddAndRet1() throws Exception {

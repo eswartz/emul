@@ -94,4 +94,13 @@ write R0 1
 call test
 assert byte R0 == 0x5
 >>>
-    
+
+<<< char literals
+foo:Char[] = ['a', 'b', '\\', '\'', '"', '\r', '\n', '\t' ];
+main = code() {
+    foo[2] - '\\' + foo[6];
+};        
+===
+call main
+assert byte R0 == 10
+>>>

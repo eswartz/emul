@@ -92,6 +92,17 @@ package org.ejs.eulang.parser;
 package org.ejs.eulang.parser;
 }
 
+@lexer::members {
+  class EOFException extends RecognitionException {
+    String message;
+    EOFException(IntStream input, String message) {
+       super(input);
+       this.message = message;
+    }
+    public String toString() { return message; } 
+  }
+  
+}
 @members {
     public String getTokenErrorDisplay(Token t) {
         return '\'' + t.getText() + '\'';
@@ -750,6 +761,8 @@ CHAR_LITERAL : '\'' {
 		 if (ch == '\\') {
 		    input.consume();
 		    input.consume();
+		 } else if (ch == -1) {
+        match('\'');
 		 } else if (ch != '\'') {
 		    input.consume();
 		 } else {
@@ -766,6 +779,8 @@ STRING_LITERAL: '"' {
 		 if (ch == '\\') {
 		    input.consume();
 		    input.consume();
+     } else if (ch == -1) {
+        match('\"');
 		 } else if (ch != '\"') {
 		    input.consume();
 		 } else {
