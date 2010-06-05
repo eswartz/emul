@@ -82,3 +82,16 @@ mulper = code() {
 call mulper
 assert R0 == 255
 >>>
+
+<<< test some complex pointers
+dat:Byte[]=[0,1,2,3,4,5,6,7,8,9];
+test = code(idx:Int) {
+ p:Byte^=&dat;
+ (p + idx*3 + idx + 1)^;
+};
+===
+write R0 1
+call test
+assert byte R0 == 0x5
+>>>
+    

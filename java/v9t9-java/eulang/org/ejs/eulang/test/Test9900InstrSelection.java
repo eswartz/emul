@@ -262,10 +262,10 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		int idx;
 		AsmInstruction inst;
 		
-		// pt to x-1
+		// pt to x-1 (a whole array's length behind)
 		idx = findInstrWithInst(instrs, "LEA", 1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "LEA", CompositePieceOperand.class, "x", -2, RegTempOperand.class);
+		matchInstr(inst, "LEA", CompositePieceOperand.class, "x", -20, RegTempOperand.class);
 		
 		// pt to [2]
 		idx = findInstrWithInst(instrs, "LEA", idx);

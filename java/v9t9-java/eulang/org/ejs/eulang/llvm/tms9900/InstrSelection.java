@@ -1132,8 +1132,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				int item = ((LLConstOp) ops[idx]).getValue().intValue();
 				if (idx == 1) {
 					// step over pointer
-					offs += type.getBits() * item / 8;
 					type = typeEngine.getRealType(type.getSubType());
+					offs += type.getBits() * item / 8;
 					asmOp = generateGeneralOperand(ops[0], asmOp);
 					flushOffs = true;
 				} else {
@@ -1170,6 +1170,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				// step over pointer
 				asmOp = generateGeneralOperand(ops[0], asmOp);
 				
+				type = typeEngine.getRealType(type.getSubType());
 				item = generateMultiply(item, typeEngine.INT, type.getBits() / 8);
 				
 				if (operandNeedsTemp(ops[0], asmOp)) {
@@ -1177,7 +1178,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				}
 				emitInstr(AsmInstruction.create(Ia, item, asmOp));
 				
-				type = typeEngine.getRealType(type.getSubType());
 				
 				flushOffs = false;
 			} else {

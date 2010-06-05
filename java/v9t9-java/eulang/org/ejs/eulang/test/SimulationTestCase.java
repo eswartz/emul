@@ -176,7 +176,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		assertNotNull(routine);
 		
 		short pc = sim.getAddress(routine.getName());
-		short wp = (short) 0xff80;
+		short wp = sim.getCPU().getWP();
 		
 		sim.getMemory().writeWord(wp + v9t9Target.getSP() * 2, (short) wp);
 		
@@ -283,7 +283,11 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 
 				setup();
 				
+				short wp = (short) 0xff80;
+
 				Simulator sim = makeSimulator(program);
+				sim.getCPU().setWP(wp);
+				
 				for (SimulationRunnable r : setups) {
 					r.run(sim);
 				}
