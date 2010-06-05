@@ -68,7 +68,6 @@ tokens {
   LABELSTMT;
   BINDING;
   
-  IDEXPR;
   FIELDREF;
   ARRAY;
   INDEX;
@@ -271,8 +270,7 @@ type :
   ; 
   
 nonArrayType :  
-    (idOrScopeRef instantiation) => idOrScopeRef instantiation -> ^(INSTANCE idOrScopeRef instantiation )
-  | ( idOrScopeRef -> ^(TYPE idOrScopeRef) )
+   ( idExpr -> ^(TYPE idExpr) )
   | ( CODE proto? -> ^(TYPE ^(CODE proto?) ) )
   | data -> ^(TYPE data ) 
   | argtuple     
@@ -558,7 +556,7 @@ atom :
     |   ( tuple ) => tuple                          -> tuple
     |   LPAREN a1=assignExpr RPAREN               -> $a1
     |   ( CODE ) =>  code                           -> code
-    |   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
+    //|   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
    ) 
 
     ( 
@@ -578,6 +576,7 @@ arrayAccess : LBRACKET assignExpr (COMMA assignExpr)* RBRACKET  -> assignExpr+
   ;
 idExpr :
     ( idOrScopeRef -> idOrScopeRef) 
+      ( PERIOD ID  -> ^(FIELDREF $idExpr ID) )*
     ( (instantiation ) => instantiation -> ^(INSTANCE $idExpr instantiation) ) ?
     ;
 
@@ -585,9 +584,12 @@ instantiation : LESS (instanceExpr (COMMA instanceExpr)*)? GREATER   -> ^(LIST i
   ; 
 
 instanceExpr options { backtrack=true;} : type | atom ;
-idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
-      | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
+idOrScopeRef : ID  -> ^(IDREF ID ) 
+      | c=colons ID -> ^(IDREF {split($c.tree)} ID) 
       ;
+//idOrScopeRef : ID ( PERIOD ID ) * -> ^(IDREF ID+ ) 
+//      | c=colons ID ( PERIOD ID ) * -> ^(IDREF {split($c.tree)} ID+) 
+//      ;
 
 colons : (COLON | COLONS )+ ;
 

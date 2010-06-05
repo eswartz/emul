@@ -422,6 +422,7 @@ public class TestLLVMGenerator extends BaseTest {
     /** Test that we give unique symbols */
     @Test
     public void testInnerCode3() throws Exception {
+    	dumpTreeize = true;
     	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"Nest1 = {\n"+

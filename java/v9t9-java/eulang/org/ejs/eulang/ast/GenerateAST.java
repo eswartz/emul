@@ -59,6 +59,7 @@ import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
+import org.ejs.eulang.ast.impl.AstStmtScope;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
@@ -477,10 +478,8 @@ public class GenerateAST {
 		case EulangParser.NOT:
 			return constructLogicalNot(tree);
 
-		case EulangParser.IDEXPR:
-			return constructIdExpr(tree);
 		case EulangParser.IDREF:
-			return constructIdRef(tree);
+			return constructIdRef(tree, true);
 		case EulangParser.INSTANCE:
 			return constructInstance(tree);
 
@@ -706,7 +705,18 @@ public class GenerateAST {
 	private IAstNode constructFieldRef(Tree tree) throws GenerateException {
 		// this may be a static member, in which case just directly go there
 		IAstTypedExpr idExpr = checkConstruct(tree.getChild(0),IAstTypedExpr.class);
-		IScope theScope = (idExpr instanceof IAstSymbolExpr) ? ((IAstSymbolExpr) idExpr).getSymbol().getScope() : null;
+		IScope theScope = null;
+		
+		if (idExpr instanceof IAstSymbolExpr) {
+			IAstSymbolExpr symExpr = (IAstSymbolExpr) idExpr;
+			IAstNode def = symExpr.getBody();
+			if (def == null) {
+				def = symExpr.getSymbol().getDefinition();
+			}
+			if (def instanceof IAstScope)
+				theScope = ((IAstScope) def).getScope();
+		}
+		
 		String name = tree.getChild(1).getText();
 		if (theScope != null && theScope.get(name) != null) {
 			idExpr = new AstSymbolExpr(false, theScope.get(name));
@@ -1559,7 +1569,7 @@ public class GenerateAST {
 		return node;
 	}
 
-	public IAstTypedExpr constructIdRef(Tree tree) throws GenerateException {
+	public IAstTypedExpr constructIdRef(Tree tree, boolean allowFields) throws GenerateException {
 		// could have ':'s
 		IScope startScope = currentScope;
 		int idx = 0;
@@ -1592,7 +1602,7 @@ public class GenerateAST {
 
 		if (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx);
-			if (kid.getType() == EulangParser.ID) {
+			if (kid.getType() == EulangParser.ID || kid.getType() == EulangParser.IDREF) {
 				ISymbol symbol = null;
 				if (inScope) {
 					symbol = startScope.get(kid.getText());
@@ -1636,6 +1646,12 @@ public class GenerateAST {
 		// idExpr = new AstValueExpr(idExpr);
 		// getSource(tree.getChild(0), idExpr);
 
+		if (false&& !allowFields) {
+			if (idx <tree.getChildCount()) {
+				throw new GenerateException(tree.getChild(idx), "cannot continue searching static field in scope");
+			}
+		}
+
 		// may have field references
 		while (idx < tree.getChildCount()) {
 			Tree kid = tree.getChild(idx++);
@@ -1661,57 +1677,6 @@ public class GenerateAST {
 			getSource(tree, idExpr);
 			symExpr = null;
 		}
-		return idExpr;
-	}
-
-	public IAstTypedExpr constructIdExpr(Tree tree) throws GenerateException {
-		// idref is first
-		IAstTypedExpr symExpr = checkConstruct(tree.getChild(0),
-				IAstTypedExpr.class);
-
-		IAstTypedExpr idExpr = symExpr;
-		IScope theScope = currentScope;
-		if (symExpr instanceof IAstSymbolExpr) 
-			theScope = ((IAstSymbolExpr) symExpr).getSymbol().getScope();
-		
-		// then, possible other fun
-		int idx = 1;
-		while (idx < tree.getChildCount()) {
-			Tree kid = tree.getChild(idx++);
-			if (kid.getType() == EulangParser.INDEX) {
-				IAstTypedExpr index = checkConstruct(kid.getChild(0),
-						IAstTypedExpr.class);
-				idExpr = new AstDerefExpr(idExpr, false);
-				getSource(tree.getChild(0), idExpr);
-				idExpr = new AstIndexExpr(idExpr, index);
-				getSource(kid, index);
-				getSource(kid, idExpr);
-				symExpr = null;
-			} else if (kid.getType() == EulangParser.FIELDREF) {
-				// this may be a static member, in which case just directly go there
-				String name = kid.getChild(0).getText();
-				if (theScope != null && theScope.get(name) != null) {
-					idExpr = new AstSymbolExpr(false, theScope.get(name));
-					getSource(kid, idExpr);
-				} else {
-					IAstName nameNode = new AstName(name, null);
-					getSource(kid, nameNode);
-					idExpr = new AstDerefExpr(idExpr, false);
-					getSource(tree, idExpr);
-					idExpr = new AstFieldExpr(idExpr, nameNode);
-					getSource(tree, idExpr);
-				}
-			} else if (kid.getType() == EulangParser.DEREF) {
-				assert kid.getChildCount() == 0;
-				idExpr = new AstDerefExpr(idExpr, false);
-				getSource(tree, idExpr);
-			} else if (kid.getType() == EulangParser.CALL) {
-
-				idExpr = constructCallOrConstruct(kid.getChild(0), idExpr);
-			} else
-				unhandled(kid);
-		}
-
 		return idExpr;
 	}
 
@@ -2040,6 +2005,8 @@ public class GenerateAST {
 		IAstType type = null;
 		if (tree.getType() == EulangParser.NIL) {
 			type = new AstType(typeEngine.VOID);
+		} else if (tree.getType() == EulangParser.INSTANCE) {
+			type = checkConstruct(tree, IAstType.class);
 		} else {
 			if (tree.getType() == EulangParser.TUPLETYPE) {
 				LLType[] tupleTypes = new LLType[tree.getChildCount()];
@@ -2109,21 +2076,26 @@ public class GenerateAST {
 				dataType.setType(null);
 				type = dataType;
 				getSource(tree, type);
-			} else if (tree.getType() == EulangParser.IDREF || tree.getType() == EulangParser.IDEXPR) {
-				IAstSymbolExpr symbolExpr = checkConstruct(tree,
-						IAstSymbolExpr.class);
+			} else if (tree.getType() == EulangParser.IDREF || tree.getType() == EulangParser.FIELDREF) {
+				IAstTypedExpr typedExpr = checkConstruct(tree, IAstTypedExpr.class);
+				
+				if (typedExpr instanceof IAstSymbolExpr) {
+					IAstSymbolExpr symbolExpr = (IAstSymbolExpr) typedExpr;
 
-				if (symbolExpr.getType() instanceof LLGenericType) {
-					// shunt type variables into the scope below the define's
-					symbolExpr = moveSymbolOutOfDefine(symbolExpr);
-					type = new AstNamedType(symbolExpr.getType(), symbolExpr);
-				} else if (symbolExpr.getType() != null)
-					type = new AstType(symbolExpr.getType());
-				else {
-					// assert false;
-					// type = new AstInstanceExpr(typeEngine,
-					// symbolExpr, null);
-					type = new AstNamedType(null, symbolExpr);
+					if (symbolExpr.getType() instanceof LLGenericType) {
+						// shunt type variables into the scope below the define's
+						symbolExpr = moveSymbolOutOfDefine(symbolExpr);
+						type = new AstNamedType(symbolExpr.getType(), symbolExpr);
+					} else if (symbolExpr.getType() != null)
+						type = new AstType(symbolExpr.getType());
+					else {
+						// assert false;
+						// type = new AstInstanceExpr(typeEngine,
+						// symbolExpr, null);
+						type = new AstNamedType(null, symbolExpr);
+					}
+				} else {
+					unhandled(tree);
 				}
 			}
 		}
