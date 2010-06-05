@@ -29,6 +29,7 @@ import org.ejs.eulang.types.LLIntType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -37,6 +38,10 @@ import org.junit.Test;
  */
 public class TestTypes extends BaseTest {
 
+	@Before
+	public void setupOptimization() {
+		doOptimize = true;
+	}
     @Test
     public void testArrayDecls() throws Exception {
     	IAstModule mod = doFrontend(

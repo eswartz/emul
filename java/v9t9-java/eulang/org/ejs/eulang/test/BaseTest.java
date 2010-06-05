@@ -519,6 +519,7 @@ public class BaseTest {
 	}
 
 	protected boolean dumpLLVMGen;
+	protected boolean doOptimize;
 	/**
 	 * Generate the module, expecting no errors.
 	 * @param mod
@@ -553,6 +554,7 @@ public class BaseTest {
 			return generator;
 		
 		String text = generator.getUnoptimizedText();
+		
 		File file = getTempFile("");
 		File llfile = new File(file.getAbsolutePath() + ".ll");
 		FileOutputStream os = new FileOutputStream(llfile);
@@ -572,47 +574,60 @@ public class BaseTest {
 		generator.setOptimizedFile(llOptFile);
 		if (dumpLLVMGen)
 			System.out.println(text);
-		
-		String opts = "-preverify -domtree -verify //-lowersetjmp"
-				//+ "-raiseallocs "
-				+ "-simplifycfg -domtree -domfrontier -mem2reg -globalopt "
-				+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
-				+ " -simplify-libcalls -instcombine -jump-threading -simplifycfg -domtree -domfrontier -scalarrepl -instcombine "
-				+ "-break-crit-edges "
-				//+ "-condprop "
-				+ "-tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
-				+ "-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -lcssa -iv-users "
-				//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
-				+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
-				+ "-break-crit-edges "
-				//+ "-condprop "
-				+ "-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
-				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
-				+ "-std-link-opts -verify";
-		
+
 		try {
 			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
-			List<String> optList = new ArrayList<String>();
-			if (opts.length() > 0)
-				optList.addAll(Arrays.asList(opts.split(" ")));
-			for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
-				String val = iter.next();
-				if (val.startsWith("//")) {
-					iter.remove();
-				}
-			}
-			optList.add(0, bcFile.getAbsolutePath());
-			optList.add("-f");
-			optList.add("-o");
-			optList.add(bcOptFile.getAbsolutePath());
-			run("opt", (String[]) optList.toArray(new String[optList.size()]));
-			runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
-			generator.setOptimizedText(readFile(llOptFile.getAbsoluteFile()));
 		} catch (AssertionFailedError e) {
 			if (expectErrors)
 				return generator;
 			else
 				throw e;
+		}
+
+		if (doOptimize) {
+			String opts = "-preverify -domtree -verify //-lowersetjmp"
+					//+ "-raiseallocs "
+					+ "-simplifycfg -domtree -domfrontier -mem2reg -globalopt "
+					+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
+					+ " -simplify-libcalls -instcombine -jump-threading -simplifycfg -domtree -domfrontier -scalarrepl -instcombine "
+					+ "-break-crit-edges "
+					//+ "-condprop "
+					+ "-tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
+					+ "-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -lcssa -iv-users "
+					//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
+					+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
+					+ "-break-crit-edges "
+					//+ "-condprop "
+					+ "-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
+					+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
+					+ "-std-link-opts -verify";
+			
+			try {
+				run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+				List<String> optList = new ArrayList<String>();
+				if (opts.length() > 0)
+					optList.addAll(Arrays.asList(opts.split(" ")));
+				for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
+					String val = iter.next();
+					if (val.startsWith("//")) {
+						iter.remove();
+					}
+				}
+				optList.add(0, bcFile.getAbsolutePath());
+				optList.add("-f");
+				optList.add("-o");
+				optList.add(bcOptFile.getAbsolutePath());
+				run("opt", (String[]) optList.toArray(new String[optList.size()]));
+				runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+				generator.setOptimizedText(readFile(llOptFile.getAbsoluteFile()));
+			} catch (AssertionFailedError e) {
+				if (expectErrors)
+					return generator;
+				else
+					throw e;
+			}
+		} else {
+			generator.setOptimizedText(text);
 		}
 		
 		if (expectErrors)
