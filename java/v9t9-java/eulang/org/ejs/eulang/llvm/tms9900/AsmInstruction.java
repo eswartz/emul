@@ -44,22 +44,31 @@ public class AsmInstruction extends HLInstruction {
 	private Effects fx;
 
 	private LLType type;
+	private boolean partialWrite;
 	
 	public AsmInstruction() {
 		targets = implTargets = null;
 		sources = implSources = null;
 	}
 
-	
 	public LLType getType() {
 		return type;
 	}
-
 
 	public void setType(LLType type) {
 		this.type = type;
 	}
 
+
+	public boolean isPartialWrite() {
+		return partialWrite;
+	}
+
+	public void setPartialWrite(boolean partialWrite) {
+		this.partialWrite = partialWrite;
+		this.sources = null;
+		this.targets = null;
+	}
 
 	/**
 	 * @return the fx
@@ -274,11 +283,11 @@ public class AsmInstruction extends HLInstruction {
 			if (getEffects() != null) {
 				if (getOp1() != null) {
 					// be sure to get refs to the indirect registers
-					getSourceSymbolRefs(sources, getOp1(), fx.mop1_dest != Operand.OP_DEST_KILLED);
+					getSourceSymbolRefs(sources, getOp1(), fx.mop1_dest != Operand.OP_DEST_KILLED || isPartialWrite());
 					if (getOp2() != null) {
-						getSourceSymbolRefs(sources, getOp2(), fx.mop2_dest != Operand.OP_DEST_KILLED);
+						getSourceSymbolRefs(sources, getOp2(), fx.mop2_dest != Operand.OP_DEST_KILLED || isPartialWrite());
 						if (getOp3() != null) {
-							getSourceSymbolRefs(sources, getOp3(), fx.mop3_dest != Operand.OP_DEST_KILLED);
+							getSourceSymbolRefs(sources, getOp3(), fx.mop3_dest != Operand.OP_DEST_KILLED || isPartialWrite());
 						}
 					}
 				}
@@ -299,18 +308,11 @@ public class AsmInstruction extends HLInstruction {
 				// we're accessing part of a composite; cannot be a kill
 				isOpRead = true;
 			}
-				// op = ((LocalOffsOperand) op).getAddr();
-			//}
-		//} else if (op instanceof StackLocalPieceOperand) {
-		//	// we're accessing part of a composite; cannot be a kill
-		//	isOpRead = true;
 		} else if (op instanceof AddrOperand) {
 			// the @ is just an indirection to actual content
 			if (!isOpRead) {
 				skipTop = true;
 				op = ((AddrOperand) op).getAddr();
-				// if (op instanceof StackLocalOperand)
-
 			}
 		} else if (!op.isMemory()) {
 			if (!isOpRead)

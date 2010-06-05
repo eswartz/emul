@@ -934,6 +934,22 @@ public class Test9900Optimizer extends BaseInstrTest {
 	}
 
 	@Test
+	public void testSwpb() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+				"src = code(x, y : Byte) {\n" +
+				"  x <<| y;"+
+				"};"+ 
+		"");
+		
+		assertTrue(changed);
+		
+		int idx = -1;
+		
+		idx = findInstrWithInst(instrs, "SWPB");
+		assertTrue(idx != -1);
+	}
+	@Test
 	public void testPointerMath1() throws Exception {
 		dumpIsel = true;
 		boolean changed = doOpt(

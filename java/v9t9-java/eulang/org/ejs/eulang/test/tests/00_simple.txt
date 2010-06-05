@@ -104,3 +104,118 @@ main = code() {
 call main
 assert byte R0 == 10
 >>>
+
+<<< rotate left intrinsics
+main = code(x,y:Int) {
+    x <<| y
+};
+mainB = code(x,y:Byte) {
+    x <<| y
+};
+===
+write R0 0xF000
+write R1 1
+call main
+assert R0 == 0xE001
+
+write R0 0x000F
+write R1 15
+call main
+assert R0 == 0x8007
+
+write R0 0xF000
+write R1 0x0100
+call mainB
+assert byte R0 == 0xE1
+
+write R0 0x0F00
+write R1 0x0700
+call mainB
+assert byte R0 == 0x87
+
+>>>
+
+<<< rotate right intrinsics
+main = code(x,y:Int) {
+    x >>| y
+};
+mainB = code(x,y:Byte) {
+    x >>| y
+};
+===
+write R0 0xF000
+write R1 15
+call main
+assert R0 == 0xE001
+
+write R0 0x000F
+write R1 1
+call main
+assert R0 == 0x8007
+
+write R0 0xF000
+write R1 0x0700
+call mainB
+assert byte R0 == 0xE1
+
+write R0 0x0F00
+write R1 0x0100
+call mainB
+assert byte R0 == 0x87
+
+>>>
+
+<<< divisor intrinsics
+main = code(x,y:Int) {
+    x / y  // signed
+};
+===
+write R0 15
+write R1 7
+call main
+assert R0 == 2
+
+write R0 -15
+write R1 7
+call main
+assert R0 == -2
+
+write R0 -15
+write R1 -7
+call main
+assert R0 == 2
+
+write R0 15
+write R1 -7
+call main
+assert R0 == -2
+
+
+>>>
+
+<<< remainder intrinsics
+main = code(x,y:Int) {
+    x \ y  // remainder
+};
+===
+write R0 15
+write R1 7
+call main
+assert R0 == 1
+
+write R0 -15
+write R1 7
+call main
+assert R0 == -1
+
+write R0 15
+write R1 -7
+call main
+assert R0 == 1
+
+write R0 -15
+write R1 -7
+call main
+assert R0 == -1
+
+>>>

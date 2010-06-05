@@ -7,12 +7,15 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ITarget.Intrinsic;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
@@ -64,6 +67,7 @@ public class Simulator {
 
 	private MemoryDomain memory;
 	private TreeMap<Short, AsmInstruction> pcToInstrMap;
+	private Map<Short, Pair<ITarget.Intrinsic, LLType>> intrinsicAddrMap;
 	private BuildOutput buildOutput;
 	private Cpu cpu;
 	private HashMap<ISymbol, Short> symbolToAddrMap;
@@ -311,6 +315,7 @@ public class Simulator {
 		memory.mapEntry(bigRamEntry);
 		
         pcToInstrMap = new TreeMap<Short, AsmInstruction>();
+        intrinsicAddrMap = new TreeMap<Short, Pair<Intrinsic,LLType>>();
         symbolToAddrMap = new HashMap<ISymbol, Short>();
         addrToSymbolMap = new TreeMap<Short, ISymbol>();
         
@@ -330,6 +335,17 @@ public class Simulator {
         short pc = 0x100;
         for (Routine routine : buildOutput.getRoutines()) {
         	pc = emitRoutine(pc, routine);
+        }
+
+        // write stubs for intrinsics
+        for (Map.Entry<Pair<ITarget.Intrinsic, LLType>, ISymbol> entry : target.getIntrinsicSymbols().entrySet()) {
+        	if (!addrToSymbolMap.values().contains(entry.getValue())) {
+	        	pcToInstrMap.put(pc, AsmInstruction.create(InstructionTable.Idata));
+	        	addrToSymbolMap.put(pc, entry.getValue());
+	        	symbolToAddrMap.put(entry.getValue(), pc);
+	        	intrinsicAddrMap.put(pc, entry.getKey());
+				pc += 2;
+        	}
         }
         
         short addr = (short) 0x8000;
@@ -400,67 +416,8 @@ public class Simulator {
 		DataEmitter emitter = new DataEmitter(target.getTypeEngine(), Target.STRUCT);
 		
 		return (short) emitter.accept(data.getValue(), data.getName().getType(), addr);
-		
-		/*
-		Alignment align = target.getTypeEngine().new Alignment(Target.STRUCT);
-		emitData(addr, align, data.getName().getType(), data.getValue());
-		return (short) (addr + align.sizeof() / 8);
-		*/
 	}
 
-	/**
-	 * @param addr
-	 * @param align
-	 * @param type
-	 * @param op
-	 */
-	/*
-	private void emitData(short addr, Alignment align, LLType type,
-			AssemblerOperand op) {
-		if (op instanceof NumberOperand) {
-			if (type.getBits() <= 8) {
-				memory.writeByte(addr, (byte) ((NumberOperand) op).getValue());
-			} else if (type.getBits() == 16) {
-				memory.writeWord(addr, (short) ((NumberOperand) op).getValue());
-			} else {
-				assert false;
-			}
-		} else if (op instanceof SymbolOperand) {
-			assert type.getBits() == 16;
-			memory.writeWord(addr, getAddress(((SymbolOperand) op).getSymbol()));
-		} else if (op instanceof ZeroInitOperand) {
-			int bytes = type.getBits() / 8;
-			if (bytes > 0 && addr % 2 != 0) {
-				memory.writeByte(addr++, (byte) 0);
-				bytes--;
-			}
-			while (bytes >= 2) {
-				memory.writeWord(addr, (short) 0);
-				addr += 2;
-				bytes -= 2;
-			}
-			if (bytes != 0) {
-				memory.writeByte(addr++, (byte) 0);
-			}
-		} else if (op instanceof TupleTempOperand) {
-			// TODO: clean up this pattern
-			TupleTempOperand tto = (TupleTempOperand) op;
-			AssemblerOperand[] components = tto.getComponents();
-			Alignment subAlign = target.getTypeEngine().new Alignment(Target.STRUCT);
-			for (int i = 0; i < components.length; i++) {
-				LLType subType = type instanceof LLAggregateType ? ((LLAggregateType) type).getType(i) : type.getSubType();
-				AssemblerOperand subOp = components[i];
-				short subAddr = (short) (addr + (subAlign.sizeof() + subAlign.alignmentGap(subType)) / 8);
-				emitData(subAddr, subAlign, subType, subOp);
-			}
-		} else {
-			assert false;
-		}
-		
-		align.alignAndAdd(type);
-	}
-*/
-	
 	private short emitRoutine(final short pc, Routine routine) {
 		final short[] thePc = { pc };
 		routine.accept(new CodeVisitor() {
@@ -512,6 +469,16 @@ public class Simulator {
 		//PrintWriter dumpfull = machine.getExecutor().getDumpfull();
 		
         AsmInstruction ins = getInstruction(cpu);
+        
+        if (ins.getInst() == InstructionTable.Idata) {
+        	Pair<Intrinsic, LLType> info = intrinsicAddrMap.get(cpu.getPC());
+        	if (info != null) {
+        		emulateIntrinsic(info.first, info.second);
+        		cpu.setPC(readRegister(11));
+        		return;
+        	}
+        }
+        
         Effects fx = ins.getEffects();
         
         /*
@@ -568,6 +535,79 @@ public class Simulator {
         		listener.executed(block, iblock);
         	}
         }
+	}
+
+	/**
+	 * @param intrinsic
+	 * @param type
+	 */
+	private void emulateIntrinsic(Intrinsic intrinsic, LLType type) {
+		System.out.println("Intrinsic: " + intrinsic + " for " + type);
+		switch (intrinsic) {
+		case DECREF:
+		case INCREF:
+			assert false;
+		case SHIFT_LEFT_CIRCULAR: {
+			short val = readRegister(0);
+			int cnt = readRegister(1) & 0xf;
+			if (type.getBits() <= 8) {
+				int b = (val >> 8) & 0xff;
+				val = (short) ((b << cnt) | ((b >>> cnt)));
+				val <<= 8;
+			} else {
+				val = (short) ((val << cnt) | ((val >>> cnt)));
+			}
+			writeRegister(0, val);
+			break;
+		}
+		case SHIFT_RIGHT_CIRCULAR: {
+			short val = readRegister(0);
+			int cnt = readRegister(1) & 0xf;
+			if (type.getBits() <= 8) {
+				int b = (val >> 8) & 0xff;
+				val = (short) ((b >>> cnt) | ((b << cnt)));
+				val <<= 8;
+			} else {
+				val = (short) ((val >>> cnt) | ((val << cnt)));
+			}
+			writeRegister(0, val);
+			break;
+		}
+		case SIGNED_DIVISION: {
+			short val = doSignedDiv(type);
+			writeRegister(0, val);
+			break;
+		}
+		case SIGNED_REMAINDER: {
+			short val = readRegister(0);
+			short div = readRegister(1);
+			short quot = doSignedDiv(type);
+			if (type.getBits() <= 8) {
+				val = (short) ( (((val >> 8) & 0xff) - (((quot >> 8) & 0xff) * ((div >> 8) & 0xff))) << 8);
+			} else {
+				val = (short) ( val - quot * div );
+			}
+			writeRegister(0, val);
+			break;
+		}
+		}
+	}
+
+	private short doSignedDiv(LLType type) {
+		short val = readRegister(0);
+		short div = readRegister(1);
+		try {
+			if (type.getBits() <= 8) {
+				val = (short) ((val >> 8) / (div >> 8));
+			} else {
+				val = (short) (val / div);
+			}
+			cpu.getStatus().set_O(false);
+		} catch (ArithmeticException e) {
+			val = (short) 0x8000;
+			cpu.getStatus().set_O(true);
+		}
+		return val;
 	}
 
 	private AsmInstruction getInstruction(Cpu cpu) {
@@ -702,13 +742,18 @@ public class Simulator {
 		if (op instanceof NumberOperand)
 			return (short) ((NumberOperand) op).getValue();
 		if (op.isRegister()) {
-			if (op instanceof ISymbolOperand)
-				return memory.readWord(symbolToAddrMap.get(((ISymbolOperand) op).getSymbol()));
+			if (op instanceof ISymbolOperand) {
+				ISymbol symbol = ((ISymbolOperand) op).getSymbol();
+				assert symbolToAddrMap.containsKey(symbol);
+				return memory.readWord(symbolToAddrMap.get(symbol));
+			}
 			else
 				return memory.readWord(iblock.wp + evaluate(((IRegisterOperand) op).getReg()));
 		}
 		if (op instanceof ISymbolOperand) {
-			return symbolToAddrMap.get(((ISymbolOperand) op).getSymbol());
+			ISymbol symbol = ((ISymbolOperand) op).getSymbol();
+			assert symbolToAddrMap.containsKey(symbol);
+			return symbolToAddrMap.get(symbol);
 		}
 		assert false;
 		return 0;
@@ -1402,6 +1447,13 @@ public class Simulator {
 	 */
 	public Cpu getCPU() {
 		return cpu;
+	}
+
+	/**
+	 * @return
+	 */
+	public ITarget getTarget() {
+		return target;
 	}
 
 

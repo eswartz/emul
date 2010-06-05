@@ -3,9 +3,7 @@
  */
 package org.ejs.eulang.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +17,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.ejs.eulang.llvm.tms9900.DataBlock;
+import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.app.Simulator;
 import org.ejs.eulang.test.SimulationTestCase.SimulationRunnable;
 
@@ -55,9 +54,7 @@ public class Test9900Simulation  {
 		State state = State.OUTSIDE_TEST;
 
 		StringBuilder source = new StringBuilder();
-		List<SimulationRunnable> prereqs = new ArrayList<SimulationRunnable>();
-		List<SimulationRunnable> tests = new ArrayList<SimulationRunnable>();
-		String routineName = null;
+		List<SimulationRunnable> actions = new ArrayList<SimulationRunnable>();
 		int startLine = 0;
 		String comment = "";
 		
@@ -76,10 +73,8 @@ public class Test9900Simulation  {
 				if (line.startsWith("<<<")) {
 					state = State.TEST_SOURCE;
 					source.setLength(0);
-					prereqs.clear();
-					tests.clear();
+					actions.clear();
 					comment = line.substring(3).trim();
-					routineName = null;
 					startLine = lineNum;
 					continue;
 				}
@@ -114,9 +109,7 @@ public class Test9900Simulation  {
 					continue;
 				if (line.equals(">>>")) {
 					addTestCase(suite, suite.isOnlyOneTest() || skip, only, fname, startLine, comment, source, 
-							prereqs.toArray(new SimulationRunnable[prereqs.size()]),
-							routineName,
-							tests.toArray(new SimulationRunnable[tests.size()]));
+							actions.toArray(new SimulationRunnable[actions.size()]));
 					state = State.OUTSIDE_TEST;
 					only = false;
 					skip = false;
@@ -170,7 +163,7 @@ public class Test9900Simulation  {
 									sim.getMemory().writeWord(addr, (short) val);
 							}
 						};
-						prereqs.add(run);
+						actions.add(run);
 					} else if ("assert".equals(tokens[0])) {
 						// test
 						boolean equalToken = "==".equals(tokens[idx]);
@@ -213,13 +206,35 @@ public class Test9900Simulation  {
 									assertFalse(exp_ == val);
 							}
 						};
-						tests.add(run);
+						actions.add(run);
 						
 					}
 					
 				}
 				else if ("call".equals(tokens[0])) {
-					routineName = tokens[1];
+					final String callRoutineName = tokens[1];
+					SimulationRunnable run = new SimulationRunnable() {
+						protected short doSimulate(Simulator sim, String routineName, int timeout) {
+							Routine routine = sim.getBuildOutput().lookupRoutine(routineName);
+							assertNotNull(routine);
+							
+							short pc = sim.getAddress(routine.getName());
+							short wp = sim.getCPU().getWP();
+							
+							sim.getMemory().writeWord(wp + sim.getTarget().getSP() * 2, (short) wp);
+							
+							sim.executeAt(pc, wp, timeout);
+							
+							// return R0
+							return sim.getMemory().readWord(wp);
+						}
+						
+						@Override
+						public void run(Simulator sim) throws Exception {
+							doSimulate(sim, callRoutineName, 5000);
+						}
+					};
+					actions.add(run);
 				}
 				else {
 					throw new IOException("unknown command: " + tokens[0]);
@@ -241,10 +256,9 @@ public class Test9900Simulation  {
 	}
 
 	private static void addTestCase(TestSuite suite, boolean skipping, boolean only, String fname, int line,
-			String comment, StringBuilder source, SimulationRunnable[] prereqs, String routineName,
-			SimulationRunnable[] tests) {
+			String comment, StringBuilder source, SimulationRunnable[] actions) {
 		suite.addTest(new SimulationTestCase(fname + ":" + line, comment, source.toString(), skipping && !only, only, 
-				prereqs, routineName, tests));
+				actions));
 	}
 	
 	

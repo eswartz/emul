@@ -485,6 +485,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	 * @return
 	 */
 	private boolean coalesceLoadOpStore(AsmInstruction mov) {
+		if (mov.isPartialWrite())
+			return false;
+		
 		// the temp for the copy must be a register
 		ILocal tmpLocal = getSourceLocal(mov);
 		if (!isSingleRegister(tmpLocal))
@@ -506,6 +509,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		// and see if the definition is a read from the same target
 		AsmInstruction def = instrMap.get(tmpLocal.getInit());
 		assert def != null;
+		
+		if (def.isPartialWrite())
+			return false;
 		
 		if (!mov.getOp1().equals(def.getDestOp()))
 			return false;
@@ -548,6 +554,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	 * @return
 	 */
 	private boolean coalesceCopy(AsmInstruction inst) {
+		if (inst.isPartialWrite())
+			return false;
+		
 		// the temp for the copy must be a register
 		ILocal tmpLocal = getSourceLocal(inst);
 		if (tmpLocal == null)
@@ -562,6 +571,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		// and see if the definition is a read from the same target
 		AsmInstruction def = instrMap.get(tmpLocal.getInit());
 		assert def != null;
+		
+		if (def.isPartialWrite())
+			return false;
 		
 		ILocal origLocal = getSourceLocal(def);
 		if (!inst.getOp1().equals(def.getDestOp()) || !(def.getSrcOp().isMemory() || def.getSrcOp().isRegister()))

@@ -1413,16 +1413,17 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case REG_RW_DUP:
 		case REG_RW:
 			asmOp = generateRegisterOperand(operand, asmOp);
-			//if (!isFirstUse(operand)) {
-			//	if (!isLastUse(operand) || !isLastUse(asmOp))
 			if (operandNeedsTemp(operand, asmOp)) {
-					asmOp = moveToTemp(operand, operand.getType(), asmOp);
+				asmOp = moveToTemp(operand, operand.getType(), asmOp);
 			}
 			if (as == As.REG_RW_DUP) {
 				AssemblerOperand copy = moveToTemp(operand, operand.getType(), asmOp);
-				emit(AsmInstruction.create(InstructionTable.Iswpb, copy));
-				emit(AsmInstruction.create(InstructionTable.Imovb, asmOp, copy));
-				asmOp = copy;
+				AsmInstruction byteOp;
+				byteOp = AsmInstruction.create(InstructionTable.Iswpb, asmOp);
+				emit(byteOp);
+				byteOp = AsmInstruction.create(InstructionTable.Imovb, copy, asmOp);
+				byteOp.setPartialWrite(true);
+				emit(byteOp);
 			}
 			break;
 		case REG_W:

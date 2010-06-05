@@ -3,7 +3,11 @@
  */
 package org.ejs.eulang;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
+
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.LLArgAttrType;
@@ -94,7 +98,7 @@ public class TargetV9t9 implements ITarget {
 
 	private IRegClass intRegClass;
 
-	private HashMap<Intrinsic, ISymbol> intrinsicMap;
+	private HashMap<Pair<Intrinsic, LLType>, ISymbol> intrinsicMap;
 
 	//private ISymbol refType;
 
@@ -108,7 +112,7 @@ public class TargetV9t9 implements ITarget {
 		
 		intRegClass = new IntRegClass();
 		
-		intrinsicMap = new HashMap<Intrinsic, ISymbol>();
+		intrinsicMap = new HashMap<Pair<Intrinsic,LLType>, ISymbol>();
 	}
 	
 	/**
@@ -234,7 +238,8 @@ public class TargetV9t9 implements ITarget {
 	 */
 	@Override
 	public ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic, LLType type) {
-		ISymbol sym = intrinsicMap.get(intrinsic);
+		Pair<Intrinsic, LLType> key = new Pair<Intrinsic, LLType>(intrinsic, type);
+		ISymbol sym = intrinsicMap.get(key);
 		if (sym == null) {
 			switch (intrinsic) {
 			case DECREF:
@@ -315,13 +320,20 @@ public class TargetV9t9 implements ITarget {
 			default:
 				assert false;
 			}
-			intrinsicMap.put(intrinsic, sym);
+			intrinsicMap.put(key, sym);
 		}
 
 		return sym;
 
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ITarget#getIntrinsicSymbols()
+	 */
+	@Override
+	public Map<Pair<Intrinsic, LLType>, ISymbol> getIntrinsicSymbols() {
+		return intrinsicMap;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ITarget#getSP()

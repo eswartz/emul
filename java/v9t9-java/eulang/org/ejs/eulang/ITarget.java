@@ -3,6 +3,10 @@
  */
 package org.ejs.eulang;
 
+import java.util.Collection;
+import java.util.Map;
+
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.llvm.FunctionConvention;
 import org.ejs.eulang.llvm.ILLCodeTarget;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -72,6 +76,8 @@ public interface ITarget {
 	 * @return symbol
 	 */
 	ISymbol getIntrinsic(ILLCodeTarget target, Intrinsic intrinsic, LLType type);
+	
+	Map<Pair<Intrinsic, LLType>, ISymbol> getIntrinsicSymbols();
 	
 	/**
 	 * Get the stack pointer register

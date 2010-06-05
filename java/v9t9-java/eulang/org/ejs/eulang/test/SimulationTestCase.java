@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.test;
 
-import static org.junit.Assert.assertNotNull;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,9 +40,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 	private final String TMP = File.separatorChar == '\\' ? "c:/temp/" : "/tmp/";
 	
 	private final String program;
-	private final SimulationRunnable[] setups;
-	private final SimulationRunnable[] checks;
-	private final String callRoutineName;
+	private final SimulationRunnable[] actions;
 	private final String testName;
 	private final String comment;
 	
@@ -75,15 +71,13 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 	 * 
 	 */
 	public SimulationTestCase(String testName, String comment,  String program, boolean skipping, 
-			boolean only, SimulationRunnable[] setups, String callRoutineName, SimulationRunnable[] checks) {
+			boolean only, SimulationRunnable[] actions) {
 		this.testName = testName;
 		this.program = program;
 		this.comment = comment;
 		this.skipping = skipping;
 		this.only = only;
-		this.setups = setups;
-		this.callRoutineName = callRoutineName;
-		this.checks = checks;
+		this.actions = actions;
 	}
 	
 	protected Simulator makeSimulator(String string) throws Exception {
@@ -171,21 +165,6 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		return anyLowered;
 	}
 	
-	protected short doSimulate(Simulator sim, String routineName, int timeout) {
-		Routine routine = buildOutput.lookupRoutine(routineName);
-		assertNotNull(routine);
-		
-		short pc = sim.getAddress(routine.getName());
-		short wp = sim.getCPU().getWP();
-		
-		sim.getMemory().writeWord(wp + v9t9Target.getSP() * 2, (short) wp);
-		
-		sim.executeAt(pc, wp, timeout);
-		
-		// return R0
-		return sim.getMemory().readWord(wp);
-	}
-
 	@Before
 	public void setup() {
 		super.setup();
@@ -288,14 +267,9 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 				Simulator sim = makeSimulator(program);
 				sim.getCPU().setWP(wp);
 				
-				for (SimulationRunnable r : setups) {
+				for (SimulationRunnable r : actions) {
 					r.run(sim);
 				}
-				doSimulate(sim, callRoutineName, 5000);
-				for (SimulationRunnable r : checks) {
-					r.run(sim);
-				}
-				
 			}
 		});
 		
