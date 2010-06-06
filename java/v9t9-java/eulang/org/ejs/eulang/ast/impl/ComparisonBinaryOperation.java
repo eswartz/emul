@@ -84,7 +84,7 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 	 * @see org.ejs.eulang.ast.IBinaryOperation#castTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IBinaryOperation.OpTypes)
 	 */
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstBinExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		LLType common;
 		if (types.left.getBasicType() != types.right.getBasicType()
@@ -102,7 +102,13 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 		if (common == null)
 			throw new TypeException("cannot find compatible type for comparing "
 					+ types.left.toString() + " and " + types.right.toString());
+		
 		types.left = types.right = common;
+		boolean changed = false;
+		changed |= expr.setLeft(AstTypedNode.createCastOn(typeEngine, expr.getLeft(), types.left));
+		changed |= expr.setRight(AstTypedNode.createCastOn(typeEngine, expr.getRight(), types.right));
+		return changed;
+
 	}
 	
 	/* (non-Javadoc)

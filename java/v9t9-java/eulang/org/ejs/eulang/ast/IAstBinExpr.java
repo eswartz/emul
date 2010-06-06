@@ -22,11 +22,11 @@ public interface IAstBinExpr extends IAstTypedExpr {
     public IAstTypedExpr getLeft();
 
     /** Set the left-hand side of the expression */
-    public void setLeft(IAstTypedExpr expr);
+    public boolean setLeft(IAstTypedExpr expr);
 
     /** Get the right-hand side of the expression */
     public IAstTypedExpr getRight();
 
     /** Set the right-hand side of the expression */
-    public void setRight(IAstTypedExpr expr);
+    public boolean setRight(IAstTypedExpr expr);
 }

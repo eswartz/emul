@@ -4,6 +4,7 @@
 package org.ejs.eulang;
 
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -27,10 +28,12 @@ public interface IUnaryOperation extends IOperation {
 	/**
 	 * Update 'expr' to the type expected by 'result'.  All the entries
 	 * in 'types' are set.
+	 * @param expr 
 	 * @param typeEngine
 	 * @param types
+	 * @return true if changed structure 
 	 */
-	void castTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
+	boolean transformExpr(IAstUnaryExpr expr, TypeEngine typeEngine, OpTypes types) throws TypeException;
 
 	/**
 	 * Ensure these types work

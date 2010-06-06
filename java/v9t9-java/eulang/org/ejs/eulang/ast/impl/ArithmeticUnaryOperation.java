@@ -9,6 +9,7 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstBoolLitExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
@@ -44,9 +45,13 @@ public class ArithmeticUnaryOperation extends Operation implements IUnaryOperati
 	 * @see org.ejs.eulang.ast.IUnaryOperation#castTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IUnaryOperation.OpTypes)
 	 */
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstUnaryExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		types.expr = types.result;
+		
+		return expr.setExpr(AstTypedNode.createCastOn(typeEngine, expr.getExpr(), types.expr));
+
+		
 	}
 
 	/* (non-Javadoc)

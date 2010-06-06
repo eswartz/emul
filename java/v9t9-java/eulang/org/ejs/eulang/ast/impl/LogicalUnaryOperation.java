@@ -8,6 +8,7 @@ import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
@@ -50,9 +51,11 @@ public class LogicalUnaryOperation extends Operation implements IUnaryOperation 
 	}
 
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstUnaryExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		types.expr = types.result;
+		return expr.setExpr(AstTypedNode.createCastOn(typeEngine, expr.getExpr(), types.expr));
+		
 	}
 
 	/* (non-Javadoc)

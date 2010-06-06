@@ -788,7 +788,7 @@ xes[3][2][1]
     			"};\n"+
     	"");
     	LLVMGenerator gen = doGenerate(mod);
-    	assertFoundInUnoptimizedText("tore %Tuplex10 [ %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer, %Tuple zeroinitializer ], %Tuplex10*", gen);
+    	assertFoundInUnoptimizedText("tore %Tuplex10 zeroinitializer, %Tuplex10*", gen);
     }
     
     @Test

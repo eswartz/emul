@@ -122,7 +122,7 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 	 * @see org.ejs.eulang.ast.IBinaryOperation#castTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IBinaryOperation.OpTypes)
 	 */
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstBinExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		LLType newLeft;
 		LLType newRight;
@@ -139,13 +139,18 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 			if ((this == IOperation.ADD || this == IOperation.SUB) &&
 					types.left.getBasicType() == BasicType.POINTER && types.right.getBasicType() == BasicType.INTEGRAL) {
 				// fine
-				return;
+				return false;
 			}
 			throw new TypeException("cannot convert result of '" + getName() + "' on " 
 					+ types.left.toString() + " and " + types.right.toString() + " to " + types.result.toString());
 		}
+		boolean changed = false;
 		types.left = newLeft;
 		types.right = newRight;
+		changed |= expr.setLeft(AstTypedNode.createCastOn(typeEngine, expr.getLeft(), types.left));
+		changed |= expr.setRight(AstTypedNode.createCastOn(typeEngine, expr.getRight(), types.right));
+
+		return changed;
 	}
 	
 	/* (non-Javadoc)

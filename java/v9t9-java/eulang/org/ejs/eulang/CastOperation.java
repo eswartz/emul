@@ -4,6 +4,7 @@
 package org.ejs.eulang;
 
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.impl.Operation;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.BasicType;
@@ -41,9 +42,17 @@ public class CastOperation extends Operation implements IUnaryOperation {
 	 * @see org.ejs.eulang.ast.IUnaryOperation#castTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IUnaryOperation.OpTypes)
 	 */
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstUnaryExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
-		
+		/*
+		// ignore when we're already a cast
+		if (getCastedChild(this) != null && !child.isTypeFixed()) {
+			if (canReplaceType(this))
+				setType(newType);
+			return child;
+		}
+		*/
+		return false;
 	}
 	
 	/* (non-Javadoc)

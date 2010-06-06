@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstLitExpr;
+import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -40,9 +41,11 @@ public class IndirectOperation extends Operation implements IUnaryOperation {
 	 * @see org.ejs.eulang.ast.IUnaryOperation#castTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IUnaryOperation.OpTypes)
 	 */
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstUnaryExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		types.expr = types.result;
+		return expr.setExpr(AstTypedNode.createCastOn(typeEngine, expr.getExpr(), types.expr));
+		
 	}
 	
 	/* (non-Javadoc)

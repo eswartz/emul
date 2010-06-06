@@ -36,10 +36,12 @@ public interface IBinaryOperation extends IOperation {
 	/**
 	 * Update 'left' and 'right' to the type expected by 'result'.  All the entries
 	 * in 'types' are set.
+	 * @param expr TODO
 	 * @param typeEngine
 	 * @param types
+	 * @return TODO
 	 */
-	void castTypes(TypeEngine typeEngine, OpTypes types) throws TypeException;
+	boolean transformExpr(IAstBinExpr expr, TypeEngine typeEngine, OpTypes types) throws TypeException;
 
 	/**
 	 * Make sure the types can be generated.

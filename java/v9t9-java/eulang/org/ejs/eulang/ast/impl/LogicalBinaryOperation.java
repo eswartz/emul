@@ -72,7 +72,7 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 	}
 
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstBinExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		LLType newLeft = types.leftIsSymbol ? types.left : types.rightIsSymbol ? types.right : typeEngine.getPromotionType(types.left, types.result);
 		LLType newRight = types.rightIsSymbol ? types.right : types.leftIsSymbol ? types.left : typeEngine.getPromotionType(types.right, types.result);
@@ -81,6 +81,10 @@ public class LogicalBinaryOperation extends Operation implements IBinaryOperatio
 					+ types.left.toString() + " and " + types.right.toString() + " to " + types.result.toString());
 		types.left = newLeft;
 		types.right = newRight;
+		boolean changed = false;
+		changed |= expr.setLeft(AstTypedNode.createCastOn(typeEngine, expr.getLeft(), types.left));
+		changed |= expr.setRight(AstTypedNode.createCastOn(typeEngine, expr.getRight(), types.right));
+		return changed;
 	}
 	
 	/* (non-Javadoc)

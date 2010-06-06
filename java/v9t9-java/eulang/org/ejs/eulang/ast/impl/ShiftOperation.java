@@ -68,7 +68,7 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 	 * @see org.ejs.eulang.ast.IBinaryOperation#castTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IBinaryOperation.OpTypes)
 	 */
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstBinExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		LLType newLeft = typeEngine.getPromotionType(types.left, types.result);
 		LLType newRight = typeEngine.getPromotionType(types.right, typeEngine.INT);
@@ -77,6 +77,10 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 					+ types.left.toString() + " and " + types.right.toString() + " to " + types.result.toString());
 		types.left = newLeft;
 		types.right = newLeft;	// must be the same
+		boolean changed = false;
+		changed |= expr.setLeft(AstTypedNode.createCastOn(typeEngine, expr.getLeft(), types.left));
+		changed |= expr.setRight(AstTypedNode.createCastOn(typeEngine, expr.getRight(), types.right));
+		return changed;
 	}
 	
 	/* (non-Javadoc)

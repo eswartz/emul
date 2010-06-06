@@ -22,6 +22,6 @@ public interface IAstUnaryExpr extends IAstTypedExpr {
     public IAstTypedExpr getExpr();
 
     /** Set the target of the expression */
-    public void setExpr(IAstTypedExpr expr);
+    public boolean setExpr(IAstTypedExpr expr);
 
 }

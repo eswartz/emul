@@ -231,7 +231,7 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
     	return changed;
     	
     }
-	protected IAstTypedExpr createCastOn(TypeEngine typeEngine,
+	public static IAstTypedExpr createCastOn(TypeEngine typeEngine,
 			IAstTypedExpr child, LLType newType) {
 		if (child == null)
 			return null;
@@ -240,13 +240,6 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		if (child.getType() == null 
 				|| child.getType().equals(newType)) {
 			child.setType(newType);
-			return child;
-		}
-		
-		// ignore when we're already a cast
-		if (getCastedChild(this) != null && !child.isTypeFixed()) {
-			if (canReplaceType(this))
-				setType(newType);
 			return child;
 		}
 		

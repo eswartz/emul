@@ -55,8 +55,9 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 	 * @see org.ejs.eulang.ast.IBinaryOperation#castTypes(org.ejs.eulang.ast.TypeEngine, org.ejs.eulang.ast.IBinaryOperation.OpTypes)
 	 */
 	@Override
-	public void castTypes(TypeEngine typeEngine, OpTypes types)
+	public boolean transformExpr(IAstBinExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
+		return false;
 	}
 	
 	/* (non-Javadoc)

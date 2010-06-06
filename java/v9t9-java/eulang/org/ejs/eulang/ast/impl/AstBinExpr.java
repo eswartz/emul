@@ -101,16 +101,24 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	 * @see org.ejs.eulang.ast.IAstBinExpr#setLeft(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public void setLeft(IAstTypedExpr expr) {
-		left = reparent(left, expr);
+	public boolean setLeft(IAstTypedExpr expr) {
+		if (left != expr) {
+			left = reparent(left, expr);
+			return true;
+		}
+		return false;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstBinExpr#setRight(v9t9.tools.ast.expr.IAstExpression)
 	 */
 	@Override
-	public void setRight(IAstTypedExpr expr) {
-		right = reparent(right, expr);
+	public boolean setRight(IAstTypedExpr expr) {
+		if (right != expr) {
+			right = reparent(right, expr);
+			return true;
+		}
+		return false;
 	}
 
 	/* (non-Javadoc)
@@ -191,9 +199,7 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 		types.right = right.getType();
 		types.result = getType();
 		if (types.left != null && types.right != null && types.result != null) {
-			oper.castTypes(typeEngine, types);
-			setLeft(createCastOn(typeEngine, left, types.left));
-			setRight(createCastOn(typeEngine, right, types.right));
+			changed |= oper.transformExpr(this, typeEngine, types);
 		}
 		return changed;
 	}

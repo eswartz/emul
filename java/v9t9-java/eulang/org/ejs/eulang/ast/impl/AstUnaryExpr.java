@@ -90,10 +90,14 @@ public class AstUnaryExpr extends AstTypedExpr implements
     /* (non-Javadoc)
      * @see v9t9.tools.decomp.expr.IAstUnaryExpression#setOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
-    public void setExpr(IAstTypedExpr expr) {
+    public boolean setExpr(IAstTypedExpr expr) {
         org.ejs.coffee.core.utils.Check.checkArg(expr);
-        this.expr = reparent(this.expr, expr);
-        dirty = true;
+        if (expr != this.expr) {
+	        this.expr = reparent(this.expr, expr);
+	        dirty = true;
+	        return true;
+        }
+        return false;
     }
 
     public IAstTypedExpr simplify(TypeEngine typeEngine) {
@@ -141,8 +145,7 @@ public class AstUnaryExpr extends AstTypedExpr implements
     	boolean changed = updateType(expr, types.expr) | updateType(this, types.result);
     	
     	if (types.expr != null && types.result != null) {
-			oper.castTypes(typeEngine, types);
-			setExpr(createCastOn(typeEngine, expr, types.expr));
+			changed |= oper.transformExpr(this, typeEngine, types);
 		}
     	return changed;
     }
