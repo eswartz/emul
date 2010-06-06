@@ -16,6 +16,7 @@ import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ITarget.Intrinsic;
+import org.ejs.eulang.TypeEngine.Alignment;
 import org.ejs.eulang.TypeEngine.Target;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
 import org.ejs.eulang.llvm.tms9900.Block;
@@ -347,6 +348,7 @@ public class Simulator {
         
         short addr = (short) 0x8000;
         for (DataBlock data : buildOutput.getDataBlocks()) {
+        	addr = alignForType(addr, data.getName().getType());
         	addr = emitDataBlock(addr, data);
         }
         
@@ -356,6 +358,23 @@ public class Simulator {
 	}
 
 	
+	/**
+	 * @param addr
+	 * @param type
+	 * @return
+	 */
+	private short alignForType(short addr, LLType type) {
+		if (addr % 2 != 0) {
+			// urgh... need to align global memory
+			Alignment align = target.getTypeEngine().new Alignment(Target.STRUCT);
+			align.add(8);
+			addr += align.alignmentGap(type) / 8;
+		}
+
+		return addr;
+	}
+
+
 	/**
 	 * @author ejs
 	 *
@@ -411,7 +430,6 @@ public class Simulator {
 		addrToSymbolMap.put(addr, data.getName());
 		
 		DataEmitter emitter = new DataEmitter(target.getTypeEngine(), Target.STRUCT);
-		
 		return (short) emitter.accept(data.getValue(), data.getName().getType(), addr);
 	}
 
@@ -1008,7 +1026,9 @@ public class Simulator {
         	
         	writeRegister(theFP, FP);
         	
-        	SP -= stackFrame.getFrameSize();
+        	int frameSize = stackFrame.getFrameSize();
+        	SP -= frameSize;
+        	
         	writeRegister(theSP, SP);
         	
         	
@@ -1019,13 +1039,15 @@ public class Simulator {
     				int size = 2;
     				if (((RegisterLocal) local).isRegPair())
     					size = 4;
-    				addr = this.vrAddr;
-    				this.vrAddr += size;
+    				addr = alignForType(this.vrAddr, local.getType());
+    				this.vrAddr = (short) (addr + size);
         		}
         		else if (local instanceof StackLocal) {
         			if (((StackLocal)local).getOffset() < 0) {
+        				// our local
         				addr = (short) (((StackLocal) local).getOffset() + FP);
         			} else {
+        				// from caller
         				addr = (short) (((StackLocal) local).getOffset() + FP + savedRegsSize);
         			}
         		}

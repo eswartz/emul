@@ -90,7 +90,7 @@ public class Test9900Locals extends BaseTest {
 		l = (StackLocal) getLocal(localMap, "x");
 		assertNotNull(l);
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(0, l.getOffset());
+		assertEquals(-2, l.getOffset());
 		assertEquals(2, stackFrame.getFrameSize());
 	}
 	@Test
@@ -102,10 +102,10 @@ public class Test9900Locals extends BaseTest {
 		StackLocal l;
 		l = (StackLocal) getLocal(localMap, "x");
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(0, l.getOffset());
+		assertEquals(-2, l.getOffset());
 		l = (StackLocal) getLocal(localMap, "y");
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(-2, l.getOffset());
+		assertEquals(-4, l.getOffset());
 		assertEquals(4, stackFrame.getFrameSize());
 	}
 	@Test
@@ -121,15 +121,15 @@ public class Test9900Locals extends BaseTest {
 		StackLocal l;
 		l = (StackLocal) getLocal(localMap, "x");
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(0, l.getOffset());
+		assertEquals(-2, l.getOffset());
 		
 		l = (StackLocal) getLocal(localMap, "y");
 		assertEquals(typeEngine.FLOAT, l.getType());
-		assertEquals(-2, l.getOffset());
+		assertEquals(-6, l.getOffset());
 		
 		l = (StackLocal) getLocal(localMap, "z");
 		assertEquals(typeEngine.getArrayType(typeEngine.INT, 10, null), l.getType());
-		assertEquals(-6, l.getOffset());
+		assertEquals(-26, l.getOffset());
 		
 		assertEquals(26, stackFrame.getFrameSize());
 	}
@@ -145,10 +145,10 @@ public class Test9900Locals extends BaseTest {
 		l = (StackLocal) getLocal(localMap, "x");
 		
 		assertEquals(typeEngine.BOOL, l.getType());
-		assertEquals(0, l.getOffset());
+		assertEquals(-1, l.getOffset());
 		
 		// aligned
-		assertEquals(1, stackFrame.getFrameSize());
+		assertEquals(2, stackFrame.getFrameSize());
 	}
 	@Test
 	public void testOnlyLocalsAlign1b() throws Exception {
@@ -160,12 +160,12 @@ public class Test9900Locals extends BaseTest {
 		StackLocal l;
 		l = (StackLocal) getLocal(localMap, "x");
 		assertEquals(typeEngine.BOOL, l.getType());
-		assertEquals(0, l.getOffset());
+		assertEquals(-1, l.getOffset());
 		
 		l = (StackLocal) getLocal(localMap, "y");
 		assertEquals(typeEngine.BOOL, l.getType());
 		// conserve space
-		assertEquals(-1, l.getOffset());
+		assertEquals(-2, l.getOffset());
 		
 		// aligned
 		assertEquals(2, stackFrame.getFrameSize());
@@ -180,12 +180,12 @@ public class Test9900Locals extends BaseTest {
 		StackLocal l;
 		l = (StackLocal) getLocal(localMap, "x");
 		assertEquals(typeEngine.BOOL, l.getType());
-		assertEquals(0, l.getOffset());
+		assertEquals(-1, l.getOffset());
 		
 		l = (StackLocal) getLocal(localMap, "y");
 		assertEquals(typeEngine.FLOAT, l.getType());
 		// aligned 
-		assertEquals(-2, l.getOffset());
+		assertEquals(-6, l.getOffset());
 		
 		
 		assertEquals(6, stackFrame.getFrameSize());
@@ -209,19 +209,19 @@ public class Test9900Locals extends BaseTest {
 		StackLocal l;
 		l = (StackLocal) getLocal(localMap, "x");
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(0, l.getOffset());
+		assertEquals(-2, l.getOffset());
 		
 		l = (StackLocal) getLocal(localMap, "loopValue");
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(-2, l.getOffset());
+		assertEquals(-4, l.getOffset());
 		
 		l = (StackLocal) getLocal(localMap, "counter");
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(-4, l.getOffset());
+		assertEquals(-6, l.getOffset());
 		
 		l = (StackLocal) getLocal(localMap, "y");
 		assertEquals(typeEngine.INT, l.getType());
-		assertEquals(-6, l.getOffset());
+		assertEquals(-8, l.getOffset());
 		
 		assertEquals(8, stackFrame.getFrameSize());
 		
@@ -387,7 +387,7 @@ public class Test9900Locals extends BaseTest {
 		mirror = (StackLocal) getLocal(localMap, "_.p");
 		assertNotNull(mirror);
 		assertEquals(typeEngine.FLOAT, mirror.getType());
-		assertEquals(0, mirror.getOffset());	
+		assertEquals(-4, mirror.getOffset());	
 		
 		assertEquals(4, stackFrame.getFrameSize());
 	}

@@ -49,7 +49,9 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 		if (types.left != null) {
 			if (types.left instanceof LLArrayType || types.left instanceof LLPointerType) {
 				types.result = types.left.getSubType();
-			}			
+			} else if (isStringType(types.left)) { // temporary
+				types.result = typeEngine.CHAR;
+			}
 		} 
 	}
 
@@ -60,8 +62,8 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 	public boolean transformExpr(IAstBinExpr expr, TypeEngine typeEngine, OpTypes types)
 			throws TypeException {
 		// is this a string type?
-		if (types.left.getName().startsWith("Str$") && types.left instanceof LLDataType
-				&& ((LLDataType) types.left).getType(1) instanceof LLArrayType) {
+		LLType sourceType = types.left;
+		if (isStringType(sourceType)) {
 			// if so, promote str[] to str.s[]
 			LLDataType strType = ((LLDataType) types.left);
 			LLInstanceField field = strType.getInstanceFields()[1];
@@ -80,6 +82,11 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 			return true;
 		}
 		return false;
+	}
+
+	private boolean isStringType(LLType sourceType) {
+		return sourceType.getName().startsWith("Str$") && sourceType instanceof LLDataType
+				&& ((LLDataType) sourceType).getType(1) instanceof LLArrayType;
 	}
 	
 	/* (non-Javadoc)
@@ -135,9 +142,6 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 			currentTarget.emit(new LLGetElementPtrInstr(elPtr, arrayPointerType,
 					array, index));
 
-		// and load value
-		// LLOperand ret = currentTarget.newTemp(expr.getType());
-		// currentTarget.emit(new LLLoadInstr(ret, expr.getType(), elPtr));
 		return elPtr;
 	}
 	

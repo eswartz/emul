@@ -12,6 +12,7 @@ import java.util.TreeMap;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
 import org.ejs.eulang.ITarget;
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ICallingConvention.CallerStackLocation;
 import org.ejs.eulang.ICallingConvention.Location;
 import org.ejs.eulang.ICallingConvention.RegisterLocation;
@@ -134,7 +135,11 @@ public class StackFrame {
 	
 	private boolean requiresFramePointer;
 
+	private TypeEngine typeEngine;
+
 	public StackFrame(ITarget target) {
+		typeEngine = target.getTypeEngine();
+		
 		stackLocals = new LinkedHashMap<ISymbol, StackLocal>();
 		regLocals = new LinkedHashMap<ISymbol, RegisterLocal>();
 		
@@ -318,7 +323,7 @@ public class StackFrame {
 					// recover stack space: should always work since we store
 					// immediately after allocating
 					int argStackSize = alignment.alignedSize(mirror.getType());
-					if (-curOffset * 8 + argStackSize == alignment.sizeof()) {
+					if (-curOffset * 8 /*+ argStackSize*/ == alignment.sizeof()) {
 						alignment.add(-argStackSize);
 					} else {
 						System.err.println("Failed to recover stack space");
@@ -368,8 +373,12 @@ public class StackFrame {
 
 	public StackLocal allocateLocal(ISymbol name, LLType type) {
 		assert !isDynamicVariable(type);
+		// we measure from the end of the type; align once for the next address
+		// and bump again for the end of the type.
 		int offs = alignment.alignAndAdd(type);
-		return allocateLocal(name, type, offs / 8);
+		int size = alignment.alignedSize(type);
+		int gap = alignment.alignmentGap(type);	
+		return allocateLocal(name, type, (offs + size + gap) / 8);
 	}
 
 	/**
@@ -457,7 +466,10 @@ public class StackFrame {
 	 * @return size in bytes
 	 */
 	public int getFrameSize() {
-		return alignment.sizeof() / 8;
+		int size = alignment.sizeof() / 8;
+		if (size % 2 != 0)
+			size++;
+		return size;
 	}
 
 	/**

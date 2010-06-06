@@ -31,7 +31,7 @@ public class LocalLifetimeVisitor extends CodeVisitor {
 	 */
 	@Override
 	public Walk getWalk() {
-		return Walk.LINEAR;
+		return Walk.SUCCESSOR;		// so we notice defs before uses
 	}
 	
 	/* (non-Javadoc)

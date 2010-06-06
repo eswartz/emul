@@ -18,3 +18,19 @@ testStrings = code () {
 call testStrings
 assert byte R0 == 0x68
 >>>
+
+<<< string access 2
+// this one tests stack alignment (7 byte string objects) and
+// the copy-loop expansion moves the lifetime of 'z.length' to a later
+// linear block, which also tests proper local lifetime allocation 
+// (it shouldn't be removed as dead, making the loop exit immediately)
+testStrings = code () {
+   z := "hello";
+  y := "there";
+  s := 0;
+  for x in z.length do s += z[x] - y[x];
+};
+===
+call testStrings
+assert R0 == -4
+>>>
