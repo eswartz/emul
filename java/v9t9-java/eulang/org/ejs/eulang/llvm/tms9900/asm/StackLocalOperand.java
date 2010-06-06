@@ -13,7 +13,7 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
  * @author ejs
  *
  */
-public class StackLocalOperand extends BaseHLOperand {
+public class StackLocalOperand extends BaseHLOperand implements ISymbolOperand {
 
 	private final StackLocal local;
 

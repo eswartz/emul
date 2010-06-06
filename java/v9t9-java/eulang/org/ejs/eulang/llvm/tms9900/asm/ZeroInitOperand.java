@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
-import org.ejs.eulang.llvm.tms9900.ILocal;
-import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -17,13 +15,18 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
  */
 public class ZeroInitOperand extends BaseHLOperand {
 
+	private final LLType type;
+
 	/**
 	 * @param type
 	 */
 	public ZeroInitOperand(LLType type) {
 		super();
+		this.type = type;
 	}
 
+	// note: no equals or hashcode -- all zeros are the same
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -57,26 +60,17 @@ public class ZeroInitOperand extends BaseHLOperand {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand#getLocal()
-	 */
-	@Override
-	public ILocal getLocal() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand#getSymbol()
-	 */
-	@Override
-	public ISymbol getSymbol() {
-		return null;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.tms9900.asm.AsmOperand#isConst()
 	 */
 	@Override
 	public boolean isConst() {
 		return true;
+	}
+
+	/**
+	 * @return
+	 */
+	public LLType getType() {
+		return type;
 	}
 }

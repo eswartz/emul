@@ -18,7 +18,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public abstract class BaseHLOperand implements AsmOperand, ISymbolOperand {
+public abstract class BaseHLOperand implements AsmOperand {
 
 	public BaseHLOperand() {
 	}
@@ -52,7 +52,6 @@ public abstract class BaseHLOperand implements AsmOperand, ISymbolOperand {
 		throw new ResolveException(inst, null, "Should not have this operand in assembler code!");
 	}
 
-	@Override
 	public ISymbolOperand setLocal(ILocal local) {
 		if (local instanceof RegisterLocal)
 			return new RegTempOperand((RegisterLocal) local);
@@ -60,7 +59,7 @@ public abstract class BaseHLOperand implements AsmOperand, ISymbolOperand {
 			return new StackLocalOperand((StackLocal) local);
 		else {
 			assert false;
-			return this;
+			return null;
 		}
 	}
 

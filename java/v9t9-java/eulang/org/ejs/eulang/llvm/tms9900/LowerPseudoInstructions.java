@@ -36,14 +36,16 @@ import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
 /**
- * Change pseudo-instructions into actual instructions.  This should be run after
- * one initial peephole phase (which might remove them entirely) and before
- * register allocation or coloring, since it may introduce temp registers for 
- * holding immediates or for looping.
+ * Change pseudo-instructions into actual instructions, and move complex
+ * literals into external data. This should be run after one initial peephole
+ * phase (which might remove them entirely) and before register allocation or
+ * coloring, since it may introduce temp registers for holding immediates or for
+ * looping.
  * <p>
  * This phase will likely increase code size and register pressure.
+ * 
  * @author ejs
- *
+ * 
  */
 public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	protected boolean changedBlocks;
@@ -98,6 +100,9 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 				break;
 			}
 
+			if (!applied) {
+				applied = moveOutLiterals(inst);
+			}
 			if (applied) {
 				changed = true;
 				System.out.println();
@@ -107,6 +112,25 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			
 		}			
 		return false;
+	}
+
+	/**
+	 * @param inst
+	 * @return
+	 */
+	private boolean moveOutLiterals(AsmInstruction inst) {
+		boolean changed = false;
+		for (int i = 1; i <= 3; i++) {
+			AssemblerOperand op = inst.getOp(i);
+			if (op instanceof TupleTempOperand) {
+				inst.setOp(i, makeInternalData(op, ((TupleTempOperand) op).getType()));
+				changed = true;
+			} else if (op instanceof ZeroInitOperand) {
+				inst.setOp(i, makeInternalData(op, ((ZeroInitOperand) op).getType())); 
+				changed = true;
+			}
+		}
+		return changed;
 	}
 
 	/**
@@ -263,7 +287,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		if (work >= THRESHOLD && (!isTuple || isConstTuple)) {
 			if (isConstTuple && !isZero) {
-				from = makeInternalData(from, type);
+				from = new AddrOperand(makeInternalData(from, type));
 			}
 			expandCopyOrClearLoop(type, inst, from);
 		} else {
@@ -320,7 +344,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		ISymbol sym = module.getModuleSymbol(module.getModuleScope().add(routine.getName().getLLVMName() + "$data", true), type);
 		DataBlock dataBlock = new DataBlock(sym, (AsmOperand) op1);
 		buildOutput.register(dataBlock);
-		return new AddrOperand(new SymbolOperand(sym));
+		return new SymbolOperand(sym);
 	}
 
 	/**

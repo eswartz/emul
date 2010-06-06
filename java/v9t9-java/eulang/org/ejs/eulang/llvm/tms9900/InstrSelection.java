@@ -1614,7 +1614,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			for (int i= 0; i < elements.length; i++) {
 				ops[i] = generateOperand(elements[i]);
 			}
-			return new TupleTempOperand(ops);
+			return new TupleTempOperand(llOp.getType(), ops);
 		} else {
 			assert false;
 			return null;
@@ -1629,7 +1629,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			for (int i= 0; i < elements.length; i++) {
 				ops[i] = generateOperand(elements[i]);
 			}
-			return new TupleTempOperand(ops);
+			return new TupleTempOperand(llOp.getType(), ops);
 		} else {
 			assert false;
 			return null;
@@ -1641,7 +1641,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		for (int i= 0; i < str.length(); i++) {
 			ops[i] = new NumberOperand(str.charAt(i));
 		}
-		return new TupleTempOperand(ops);
+		return new TupleTempOperand(llOp.getType(), ops);
 	}
 
 	private AssemblerOperand createLocalOperand(LLType type, ILocal local) {
@@ -1833,9 +1833,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 				AsmInstruction inst = AsmInstruction.create(Ili, dest, from);
 				emitInstr(inst);
-			} else if (from instanceof ISymbolOperand) {
+			} else if (from instanceof AsmOperand) {
 				// when loading the address of a local, just construct an operand if possible
-				ILocal fromLocal = ((ISymbolOperand) from).getLocal();
+				ILocal fromLocal = from instanceof ISymbolOperand ? ((ISymbolOperand) from).getLocal() : null;
 				ILocal dstLocal = null;
 				if (dest instanceof ISymbolOperand)
 					dstLocal = stackFrame.getLocal(((ISymbolOperand) dest).getSymbol());

@@ -267,11 +267,7 @@ public class TypeEngine {
 		REFPTR = register(new LLPointerType("RefPtr", getPtrBits(), 
 				getRefType(BYTE)));
 		
-		List<LLType> strFields = new ArrayList<LLType>();
-		strFields.add(INT);
-		strFields.add(getArrayType(CHAR, 0, null));
-		STR = register(getDataType(globalScope.add("Str", false), 
-				strFields));
+		STR = register(getStringLiteralType("", globalScope.add("Str", false)));
 		
 		//INT_ANY = new LLIntType("Int*", 0);
 		
@@ -768,21 +764,40 @@ public class TypeEngine {
 		int len = str.length();
 		LLDataType strLitType = stringLitTypeMap.get(len);
 		if (strLitType == null) {
+			
+			String name;
+			name = STR.getSymbol().getName() + "$" + len;
+			ISymbol sym;
+			sym = STR.getSymbol().getScope().get(name);
+			if (sym == null) {
+				sym = STR.getSymbol().getScope().add(name, false);
+			}
+			
+			return getStringLiteralType(str, sym);
+		}
+		return strLitType;
+	}
+	protected LLDataType getStringLiteralType(String str, ISymbol sym) {
+		int len = str.length();
+		LLDataType strLitType = stringLitTypeMap.get(len);
+		if (strLitType == null) {
 			List<LLInstanceField> strFields = new ArrayList<LLInstanceField>();
 			strFields.add(new LLInstanceField("length", INT, null, null));
 			LLArrayType arrayType = getArrayType(CHAR, len, null); 
 			strFields.add(new LLInstanceField("s", arrayType, null, null));
-			
-			String name = STR.getSymbol().getName() + "$" + len;
-			ISymbol sym = STR.getSymbol().getScope().get(name);
-			if (sym == null) {
-				sym = STR.getSymbol().getScope().add(name, false);
-			}
 			strLitType = getDataType(sym, strFields, Collections.<LLStaticField>emptyList());
 			sym.setType(strLitType);
 			stringLitTypeMap.put(len, strLitType);
 		}
 		return strLitType;
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	public boolean isStringType(LLType type) {
+		return stringLitTypeMap.values().contains(type);
 	}
 
 }

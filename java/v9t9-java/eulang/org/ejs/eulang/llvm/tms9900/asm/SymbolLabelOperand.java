@@ -12,7 +12,7 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
  * @author ejs
  *
  */
-public class SymbolLabelOperand extends BaseHLOperand {
+public class SymbolLabelOperand extends BaseHLOperand implements ISymbolOperand {
 
 	private final ISymbol symbol;
 

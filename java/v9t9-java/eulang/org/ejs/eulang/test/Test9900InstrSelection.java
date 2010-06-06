@@ -30,6 +30,7 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.ModuleScope;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
@@ -1900,8 +1901,10 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		inst = instrs.get(idx);
 		AssemblerOperand z = new NumOperand(0);
 		AssemblerOperand val = new RegTempOperand(stackFrame.getRegLocals().values().iterator().next());
-		matchInstr(inst, "COPY", new TupleTempOperand(new AssemblerOperand[] { z, new NumOperand(11), new NumOperand(22),
-z, z, val, z, z, z, z }), AddrOperand.class);
+		matchInstr(inst, "COPY", new TupleTempOperand(
+				typeEngine.getArrayType(typeEngine.INT, 10, null),
+				new AssemblerOperand[] { z, new NumOperand(11), new NumOperand(22),
+						z, z, val, z, z, z, z }), AddrOperand.class);
     }
 
 	@Test
@@ -1917,11 +1920,13 @@ z, z, val, z, z, z, z }), AddrOperand.class);
     	
 		idx = findInstrWithInst(instrs, "COPY", -1);
 		inst = instrs.get(idx);
+		LLArrayType bytex3 = typeEngine.getArrayType(typeEngine.BYTE, 3, null);
 		matchInstr(inst, "COPY", new TupleTempOperand(
+				typeEngine.getArrayType(bytex3, 3, null),
 				new AssemblerOperand[] {
-					new TupleTempOperand(new AssemblerOperand[] { new NumOperand(1), new NumOperand(2), new NumOperand(3) }),
-					new TupleTempOperand(new AssemblerOperand[] { new NumOperand(4), new NumOperand(5), new NumOperand(6) }),
-					new TupleTempOperand(new AssemblerOperand[] { new NumOperand(7), new NumOperand(8), new NumOperand(9) }) }), 
+					new TupleTempOperand(bytex3, new AssemblerOperand[] { new NumOperand(1), new NumOperand(2), new NumOperand(3) }),
+					new TupleTempOperand(bytex3, new AssemblerOperand[] { new NumOperand(4), new NumOperand(5), new NumOperand(6) }),
+					new TupleTempOperand(bytex3, new AssemblerOperand[] { new NumOperand(7), new NumOperand(8), new NumOperand(9) }) }), 
 					AddrOperand.class);
 
 		// array

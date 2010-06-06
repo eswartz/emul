@@ -34,3 +34,15 @@ testStrings = code () {
 call testStrings
 assert R0 == -4
 >>>
+
+<<< string access 3
+testStrings = code () {
+   z := &"hello";
+  y := &"there";
+  s := 0;
+  for x in z.length do s += z[x] - y[x];
+};
+===
+call testStrings
+assert R0 == -4
+>>>

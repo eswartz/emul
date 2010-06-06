@@ -15,7 +15,7 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
  * @author ejs
  *
  */
-public class RegTempOperand extends BaseHLOperand implements IRegisterOperand {
+public class RegTempOperand extends BaseHLOperand implements IRegisterOperand, ISymbolOperand {
 
 	private final RegisterLocal local;
 	private boolean isRegPair;

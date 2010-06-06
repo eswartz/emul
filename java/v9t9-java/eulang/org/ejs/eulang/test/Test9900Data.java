@@ -9,6 +9,7 @@ import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.asm.NumOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
+import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -31,7 +32,9 @@ public class Test9900Data extends BaseInstrTest {
 	public void testTuple1() throws Exception {
 		DataBlock data = doData("foo := (5, 100{Byte});\n");
 		assertNotNull(data);
-		assertEquals(new TupleTempOperand(new AssemblerOperand[] { new NumOperand(5), new NumOperand(100) }),
+		assertEquals(new TupleTempOperand(
+				typeEngine.getTupleType(new LLType[] { typeEngine.INT, typeEngine.BYTE }),
+				new AssemblerOperand[] { new NumOperand(5), new NumOperand(100) }),
 				 data.getValue());
 	}
 
@@ -39,7 +42,9 @@ public class Test9900Data extends BaseInstrTest {
 	public void testArray1() throws Exception {
 		DataBlock data = doData("foo : Byte[] = [5, 100{Byte}];\n");
 		assertNotNull(data);
-		assertEquals(new TupleTempOperand(new AssemblerOperand[] { new NumOperand(5), new NumOperand(100) }),
+		assertEquals(new TupleTempOperand(
+				typeEngine.getArrayType(typeEngine.BYTE, 2, null),
+				new AssemblerOperand[] { new NumOperand(5), new NumOperand(100) }),
 				data.getValue());
 	}
 	
@@ -47,7 +52,9 @@ public class Test9900Data extends BaseInstrTest {
 	public void testArray1b() throws Exception {
 		DataBlock data = doData("foo : Byte[5] = [5, 100{Byte}];\n");
 		assertNotNull(data);
-		assertEquals(new TupleTempOperand(new AssemblerOperand[] { new NumOperand(5), new NumOperand(100),
+		assertEquals(new TupleTempOperand(
+				typeEngine.getArrayType(typeEngine.BYTE, 5, null),
+				new AssemblerOperand[] { new NumOperand(5), new NumOperand(100),
 		new NumOperand(0), new NumOperand(0), new NumOperand(0),
 		}),
 				 data.getValue());

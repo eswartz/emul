@@ -49,7 +49,7 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 		if (types.left != null) {
 			if (types.left instanceof LLArrayType || types.left instanceof LLPointerType) {
 				types.result = types.left.getSubType();
-			} else if (isStringType(types.left)) { // temporary
+			} else if (typeEngine.isStringType(types.left)) { // temporary
 				types.result = typeEngine.CHAR;
 			}
 		} 
@@ -63,7 +63,7 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 			throws TypeException {
 		// is this a string type?
 		LLType sourceType = types.left;
-		if (isStringType(sourceType)) {
+		if (typeEngine.isStringType(sourceType)) {
 			// if so, promote str[] to str.s[]
 			LLDataType strType = ((LLDataType) types.left);
 			LLInstanceField field = strType.getInstanceFields()[1];
@@ -84,11 +84,6 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 		return false;
 	}
 
-	private boolean isStringType(LLType sourceType) {
-		return sourceType.getName().startsWith("Str$") && sourceType instanceof LLDataType
-				&& ((LLDataType) sourceType).getType(1) instanceof LLArrayType;
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.IBinaryOperation#validateTypes(org.ejs.eulang.TypeEngine, org.ejs.eulang.IBinaryOperation.OpTypes)
 	 */

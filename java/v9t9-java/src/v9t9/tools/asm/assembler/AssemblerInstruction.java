@@ -123,6 +123,7 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 		|| inst == Isb || inst == Iszcb || inst == Imovb;
 	}
 
+	/** Get an operand by traditional number (1,2,3) */
 	public AssemblerOperand getOp(int i) {
 		if (i == 1)
 			return op1;

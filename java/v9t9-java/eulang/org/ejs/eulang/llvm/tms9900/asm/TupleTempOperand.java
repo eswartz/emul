@@ -5,8 +5,6 @@ package org.ejs.eulang.llvm.tms9900.asm;
 
 import java.util.Arrays;
 
-import org.ejs.eulang.llvm.tms9900.ILocal;
-import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.engine.cpu.IInstruction;
@@ -38,13 +36,15 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 public class TupleTempOperand extends BaseHLOperand {
 
 	private AssemblerOperand[] components;
+	private final LLType type;
 
-	public TupleTempOperand(AssemblerOperand[] components) {
+	public TupleTempOperand(LLType type, AssemblerOperand[] components) {
 		super();
+		this.type = type;
 		this.components = components;
 	}
 	public TupleTempOperand(LLType type) {
-		this(new AssemblerOperand[type.getCount()]);
+		this(type, new AssemblerOperand[type.getCount()]);
 	}
 
 	/* (non-Javadoc)
@@ -65,24 +65,31 @@ public class TupleTempOperand extends BaseHLOperand {
 		sb.append('}');
 		return sb.toString();
 	}
+
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(components);
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj == null)
-			return false;
 		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
 			return false;
 		TupleTempOperand other = (TupleTempOperand) obj;
 		if (!Arrays.equals(components, other.components))
+			return false;
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
 			return false;
 		return true;
 	}
@@ -114,7 +121,7 @@ public class TupleTempOperand extends BaseHLOperand {
 	public TupleTempOperand put(int index, AssemblerOperand op) {
 		AssemblerOperand[] copy = Arrays.copyOf(components, components.length);
 		copy[index] = op;
-		return new TupleTempOperand(copy);
+		return new TupleTempOperand(type, copy);
 	}
 	/**
 	 * @return
@@ -145,7 +152,7 @@ public class TupleTempOperand extends BaseHLOperand {
 			}
 		}
 		if (newComponents != null)
-			return new TupleTempOperand(newComponents);
+			return new TupleTempOperand(type, newComponents);
 		return this;
 	}
 	
@@ -174,18 +181,10 @@ public class TupleTempOperand extends BaseHLOperand {
 		}
 		return true;
 	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand#getLocal()
+	/**
+	 * @return
 	 */
-	@Override
-	public ILocal getLocal() {
-		return null;
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand#getSymbol()
-	 */
-	@Override
-	public ISymbol getSymbol() {
-		return null;
+	public LLType getType() {
+		return type;
 	}
 }
