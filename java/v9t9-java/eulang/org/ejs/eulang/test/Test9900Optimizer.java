@@ -33,17 +33,13 @@ import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
  */
 public class Test9900Optimizer extends BaseInstrTest {
 
-	/**
-	 * @param string
-	 * @throws Exception 
-	 */
-	private boolean doOpt(String string) throws Exception {
+	protected boolean doOpt(String string) throws Exception {
 		routine = doIsel(string);
 		routine.setupForOptimization();
 	
 		return doOpt(routine);
 	}
-	private boolean doOpt(Routine routine) {
+	protected boolean doOpt(Routine routine) {
 		return runPeepholePhase(routine);
 		
 	}

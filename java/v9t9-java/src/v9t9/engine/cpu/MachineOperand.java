@@ -413,6 +413,9 @@ public class MachineOperand implements Operand {
 		throw new IllegalArgumentException("Non-compilable operand: " + this);
 	}
 	
+	/**
+	 * @param inst  
+	 */
 	public Operand resolve(RawInstruction inst) {
 		return this;
 	}
@@ -460,6 +463,9 @@ public class MachineOperand implements Operand {
 		return type;
 	}
 
+	/**
+	 * @param assembler  
+	 */
 	public MachineOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		if (symbol != null && !symbolResolved) {

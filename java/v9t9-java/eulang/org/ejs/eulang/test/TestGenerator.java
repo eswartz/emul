@@ -42,6 +42,7 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstStmtListExpr;
+import org.ejs.eulang.ast.IAstStringLitExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -738,7 +739,7 @@ public class TestGenerator extends BaseTest {
 		assertEquals(v, ((Number)lit.getObject()).intValue());
 	}
 
-	//@Test
+	@Test
     public void testStrings1() throws Exception {
     	IAstModule mod = treeize(
     			"testStrings = code () {\n" +
@@ -750,8 +751,11 @@ public class TestGenerator extends BaseTest {
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testStrings");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
 
-    	//IAstAllocStmt stmt;
-		//stmt = (IAstAllocStmt) codeExpr.stmts().getFirst();
+    	IAstAllocStmt stmt;
+		stmt = (IAstAllocStmt) codeExpr.stmts().getFirst();
+		IAstTypedExpr expr = stmt.getExprs().getFirst();
+		assertEquals(typeEngine.STR, expr.getType());
+		assertEquals("hello", (((IAstStringLitExpr) expr).getLiteral()));
     }
     
     @Test

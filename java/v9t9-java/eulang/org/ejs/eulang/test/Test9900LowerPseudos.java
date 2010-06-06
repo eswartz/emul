@@ -24,17 +24,13 @@ import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
  */
 public class Test9900LowerPseudos extends BaseInstrTest {
 
-	/**
-	 * @param string
-	 * @throws Exception 
-	 */
-	private boolean doOpt(String string) throws Exception {
+	protected boolean doOpt(String string) throws Exception {
 		routine = doIsel(string);
 		routine.setupForOptimization();
 	
 		return doOpt(routine);
 	}
-	private boolean doOpt(Routine routine) {
+	protected boolean doOpt(Routine routine) {
 		
 		boolean anyLowered = false;
 		do {

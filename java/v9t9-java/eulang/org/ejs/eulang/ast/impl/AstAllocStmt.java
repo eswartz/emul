@@ -8,8 +8,10 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstInitListExpr;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstStringLitExpr;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -268,8 +270,19 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 						theExpr.setType(left);
 						changed = true;
 					}
-				} else
+				} else if (theExpr instanceof IAstStringLitExpr) {
+					left = typeEngine.getStringLiteralType(((IAstStringLitExpr) theExpr).getLiteral());
+					theSymbol.setType(left);
+					if (typeExpr != null)
+						typeExpr.setType(left);
+					setType(left);
+					if (!left.equals(right)) {
+						theExpr.setType(left);
+						changed = true;
+					}
+				} else {
 					theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
+				}
 			}
 		}
 		return changed;

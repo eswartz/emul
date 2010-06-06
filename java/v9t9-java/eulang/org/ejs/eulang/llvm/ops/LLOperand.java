@@ -27,4 +27,5 @@ public interface LLOperand {
 	 */
 	void setType(LLType type);
 	void accept(LLInstr instr, int num, ILLCodeVisitor visitor);
+	
 }

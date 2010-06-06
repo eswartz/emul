@@ -498,4 +498,21 @@ public class TestLLVMGenerator extends BaseTest {
 		assertMatchText("getelementptr.*, %Int -1", gen.getUnoptimizedText());
 
     }
+    
+
+    @Test
+    public void testStringData() throws Exception {
+    	dumpLLVMGen = true;
+    	// two identical string types, plus escapes
+    	IAstModule mod = doFrontend(
+    			"a := \"SUCKA!!! \\r\\n\\t\\xff\\x7f\\x00\\x02\";\n" +
+    			"testStrings = code () {\n" +
+    			"   z := \"hello\";\n" +
+    			"   y := \"there\";\n" +
+    			"};");
+    	LLVMGenerator gen = doGenerate(mod);
+    	assertMatchText("c\"hello\"", gen.getUnoptimizedText());
+		assertMatchText("c\"SUCKA!!! \\\\0d\\\\0a\\\\09\\\\ff\\\\7f\\\\00\\\\02\"", gen.getUnoptimizedText());
+    	
+    }
 }

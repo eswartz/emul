@@ -26,7 +26,10 @@ public class LabelOperand implements Operand {
     public String toString() {
         return label.toString();
     }
-
+    /**
+	 * @param assembler  
+	 * @param inst 
+	 */
     public MachineOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
 		throw new ResolveException(this, "Unresolvable operand");
 	}

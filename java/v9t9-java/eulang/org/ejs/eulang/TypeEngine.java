@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstLitExpr;
@@ -20,6 +21,7 @@ import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
@@ -54,8 +56,9 @@ public class TypeEngine {
 	public LLFloatType FLOAT;
 	public LLFloatType DOUBLE;
 	public LLCharType CHAR;
+	public LLDataType STR;
 
-	public LLIntType INT_ANY;
+	//public LLIntType INT_ANY;
 	public LLBoolType BOOL;
 	public LLVoidType VOID;
 	public LLLabelType LABEL;
@@ -78,6 +81,7 @@ public class TypeEngine {
 	private Map<Integer, LLIntType> intMap = new HashMap<Integer, LLIntType>();
 	private Map<String, LLTupleType> tupleTypeMap = new HashMap<String, LLTupleType>();
 	private Map<String, LLDataType> dataTypeMap = new HashMap<String, LLDataType>();
+	private Map<Integer, LLDataType> stringLitTypeMap = new TreeMap<Integer, LLDataType>();
 	private Map<LLInstanceType, LLType> instanceToRealTypeMap = new HashMap<LLInstanceType, LLType>();
 	
 	private boolean isLittleEndian;
@@ -255,6 +259,21 @@ public class TypeEngine {
 	 * @param globalScope
 	 */
 	public void populateTypes(GlobalScope globalScope) {
+		VOID = register(new LLVoidType(null));
+		NIL = register(new LLVoidType(null));
+		LABEL = register(new LLLabelType());
+
+		REFPTR = register(new LLPointerType("RefPtr", getPtrBits(), 
+				getRefType(BYTE)));
+		
+		List<LLType> strFields = new ArrayList<LLType>();
+		strFields.add(INT);
+		strFields.add(getArrayType(CHAR, 0, null));
+		STR = register(getDataType(globalScope.add("Str", false), 
+				strFields));
+		
+		//INT_ANY = new LLIntType("Int*", 0);
+		
 		populateType(globalScope, "Int", INT);
 		populateType(globalScope, "Float", FLOAT);		
 		populateType(globalScope, "Double", DOUBLE);		
@@ -262,8 +281,8 @@ public class TypeEngine {
 		populateType(globalScope, "Bool", BOOL);		
 		populateType(globalScope, "Byte", BYTE);		
 		populateType(globalScope, "Char", CHAR);		
+		
 	}
-
 
 	/**
 	 * @param globalScope 
@@ -562,6 +581,7 @@ public class TypeEngine {
 		types.addAll(arrayTypeMap.values());
 		types.addAll(dataTypeMap.values());
 		types.addAll(tupleTypeMap.values());
+		types.addAll(stringLitTypeMap.values());
 		//types.addAll(codeTypes.values());
 		return types;
 	}
@@ -740,6 +760,26 @@ public class TypeEngine {
 			type = getDataType((LLDataType) type);
 		}
 		return type;
+	}
+
+
+	public LLDataType getStringLiteralType(String str) {
+		int len = str.length();
+		LLDataType strLitType = stringLitTypeMap.get(len);
+		if (strLitType == null) {
+			List<LLType> strFields = new ArrayList<LLType>();
+			strFields.add(INT);
+			strFields.add(getArrayType(CHAR, len, null));
+			String name = STR.getSymbol().getName() + "$" + len;
+			ISymbol sym = STR.getSymbol().getScope().get(name);
+			if (sym == null) {
+				sym = STR.getSymbol().getScope().add(name, false);
+			}
+			strLitType = getDataType(sym, strFields);
+			sym.setType(strLitType);
+			stringLitTypeMap.put(len, strLitType);
+		}
+		return strLitType;
 	}
 
 }

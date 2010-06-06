@@ -8,16 +8,13 @@ import org.ejs.eulang.ast.impl.ArithmeticUnaryOperation;
 import org.ejs.eulang.ast.impl.BooleanComparisonBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonBinaryOperation;
 import org.ejs.eulang.ast.impl.ComparisonUnaryOperation;
+import org.ejs.eulang.ast.impl.IndexBinaryOperation;
 import org.ejs.eulang.ast.impl.LogicalBinaryOperation;
 import org.ejs.eulang.ast.impl.LogicalUnaryOperation;
 import org.ejs.eulang.ast.impl.MovOperation;
 import org.ejs.eulang.ast.impl.ShiftOperation;
 
 /**
- * The operations we know about.
- * 
- * Note that the strings in the constructors are for output only; they must match those
- * parsed by the *.g file.
  * @author ejs
  *
  */
@@ -33,6 +30,10 @@ public interface IOperation {
 	IUnaryOperation PREDEC = new ArithmeticUnaryOperation("--()");
 	
 	IOperation MOV = new MovOperation("=");
+	
+	IBinaryOperation INDEX = new IndexBinaryOperation("[]");
+
+	
 	IBinaryOperation ADD = new ArithmeticBinaryOperation("+", "add", true);
 	IBinaryOperation SUB = new ArithmeticBinaryOperation("-", "sub", false);
 	IBinaryOperation MUL = new ArithmeticBinaryOperation("*", "mul", true);
@@ -50,9 +51,9 @@ public interface IOperation {
 	
 	IUnaryOperation INV = new LogicalUnaryOperation("~");
 	
-	IBinaryOperation BITOR = new LogicalBinaryOperation("or", "or", true);
-	IBinaryOperation BITAND = new LogicalBinaryOperation("and", "and", true);
-	IBinaryOperation BITXOR = new LogicalBinaryOperation("xor", "xor", true);
+	IBinaryOperation BITOR = new LogicalBinaryOperation("|", "or", true);
+	IBinaryOperation BITAND = new LogicalBinaryOperation("&", "and", true);
+	IBinaryOperation BITXOR = new LogicalBinaryOperation("~", "xor", true);
 	
 	IUnaryOperation NOT = new ComparisonUnaryOperation("not");
 	

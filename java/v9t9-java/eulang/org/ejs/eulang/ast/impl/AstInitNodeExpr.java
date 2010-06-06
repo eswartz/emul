@@ -6,7 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstFieldExpr;
-import org.ejs.eulang.ast.IAstIndexExpr;
+import org.ejs.eulang.ast.IAstInitIndexExpr;
 import org.ejs.eulang.ast.IAstInitNodeExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -147,8 +147,8 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 					throw new TypeException(expr, "no such field '" + fieldName + "' in type " + dataType.getName());
 				fieldIdx = dataType.getFieldIndex(field);
 			} 
-			else if (context instanceof IAstIndexExpr) {
-				fieldIdx = getIndex((IAstIndexExpr) context, aggType);
+			else if (context instanceof IAstInitIndexExpr) {
+				fieldIdx = getIndex((IAstInitIndexExpr) context, aggType);
 			}
 			else if (context instanceof IAstIntLitExpr) {
 				fieldIdx = (int) ((IAstIntLitExpr) context).getValue();
@@ -163,8 +163,8 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 				String fieldName = ((IAstFieldExpr)context).getField().getName();
 				throw new TypeException(expr, "cannot set field '" + fieldName + "' in non-data type " + exprType.getName());
 			} 
-			else if (context instanceof IAstIndexExpr) {
-				fieldIdx = getIndex((IAstIndexExpr) context, exprType);
+			else if (context instanceof IAstInitIndexExpr) {
+				fieldIdx = getIndex((IAstInitIndexExpr) context, exprType);
 			}
 			else if (context instanceof IAstIntLitExpr) {
 				fieldIdx = (int) ((IAstIntLitExpr) context).getValue();
@@ -177,8 +177,8 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 		} else {
 			if (context instanceof IAstIntLitExpr) {
 				fieldIdx = (int) ((IAstIntLitExpr) context).getValue();
-			} else  if (context instanceof IAstIndexExpr) {
-				fieldIdx = getIndex((IAstIndexExpr) context, expr.getType());
+			} else  if (context instanceof IAstInitIndexExpr) {
+				fieldIdx = getIndex((IAstInitIndexExpr) context, expr.getType());
 			} else if (context instanceof IAstFieldExpr) {
 				throw new TypeException(context, "cannot initialize field in scalar " + expr.getType().getName());
 			} else {
@@ -192,7 +192,7 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 	}
 	
 
-	private int getIndex(IAstIndexExpr context, LLType type)
+	private int getIndex(IAstInitIndexExpr context, LLType type)
 			throws TypeException {
 		int fieldIdx;
 		IAstTypedExpr indexExpr = context.getIndex();

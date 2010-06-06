@@ -8,12 +8,12 @@ import static junit.framework.Assert.*;
 import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
-import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
@@ -184,12 +184,12 @@ xes[3][2][1]
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
-    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
+    	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
-    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
-    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     	doGenerate(mod);
     	
@@ -215,12 +215,12 @@ xes[3][2][1]
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
+    	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
-    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
-    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     	doGenerate(mod);
     	
@@ -241,12 +241,12 @@ xes[3][2][1]
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
+    	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
-    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
-    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     	doGenerate(mod);
     	
@@ -267,13 +267,13 @@ xes[3][2][1]
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
+    	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
     	//assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
     	assertEquals(typeEngine.INT, index.getType());
-    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
-    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     	doGenerate(mod);
     	
@@ -295,12 +295,12 @@ xes[3][2][1]
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) stmt.getExpr();
+    	IAstBinExpr index = (IAstBinExpr) stmt.getExpr();
     	assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
-    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
-    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     	doGenerate(mod);
     	

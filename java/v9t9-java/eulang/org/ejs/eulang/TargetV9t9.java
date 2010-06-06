@@ -127,9 +127,6 @@ public class TargetV9t9 implements ITarget {
 		typeEngine.setStructMinAlign(8);
 		typeEngine.setStructAlign(16);
 		
-		typeEngine.VOID = typeEngine.register(new LLVoidType(null));
-		typeEngine.NIL = typeEngine.register(new LLVoidType(null));
-		typeEngine.LABEL = typeEngine.register(new LLLabelType());
 		typeEngine.BOOL = typeEngine.register(new LLBoolType("Bool", 1));
 		typeEngine.LLBOOL = typeEngine.register(new LLBoolType(null, 1));
 		
@@ -139,10 +136,6 @@ public class TargetV9t9 implements ITarget {
 		
 		typeEngine.FLOAT = typeEngine.register(new LLFloatType("Float", 32, 23));
 		typeEngine.DOUBLE = typeEngine.register(new LLFloatType("Double", 64, 53));
-		typeEngine.REFPTR = typeEngine.register(new LLPointerType("RefPtr", typeEngine.getPtrBits(), 
-				typeEngine.getRefType(typeEngine.BYTE)));
-		
-		typeEngine.INT_ANY = new LLIntType("Int*", 0);		
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ITarget#createTypeEngine()

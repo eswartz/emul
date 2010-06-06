@@ -50,7 +50,6 @@ import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstForExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
-import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstInitListExpr;
 import org.ejs.eulang.ast.IAstInitNodeExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
@@ -97,6 +96,7 @@ import org.ejs.eulang.llvm.ops.LLArrayOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLNullOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLStringLitOp;
 import org.ejs.eulang.llvm.ops.LLStructOp;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
@@ -1128,7 +1128,7 @@ public class LLVMGenerator {
 		return temp;
 	}
 
-	private LLOperand generateTypedExprAddr(IAstTypedExpr expr)
+	public LLOperand generateTypedExprAddr(IAstTypedExpr expr)
 			throws ASTException {
 		LLOperand op = generateTypedExprCore(expr);
 		if (op instanceof LLVariableOp) {
@@ -1162,8 +1162,8 @@ public class LLVMGenerator {
 			temp = generateUnaryExpr((IAstUnaryExpr) expr);
 		else if (expr instanceof IAstBinExpr)
 			temp = generateBinExpr((IAstBinExpr) expr);
-		else if (expr instanceof IAstIndexExpr)
-			temp = generateIndexExpr((IAstIndexExpr) expr);
+		//else if (expr instanceof IAstInitIndexExpr)
+		//	temp = generateIndexExpr((IAstInitIndexExpr) expr);
 		else if (expr instanceof IAstFieldExpr)
 			temp = generateFieldExpr((IAstFieldExpr) expr);
 		else if (expr instanceof IAstCondList)
@@ -1585,7 +1585,8 @@ public class LLVMGenerator {
 		}
 	}
 
-	private LLOperand generateIndexExpr(IAstIndexExpr expr) throws ASTException {
+	/*
+	private LLOperand generateIndexExpr(IAstInitIndexExpr expr) throws ASTException {
 		LLOperand index = generateTypedExpr(expr.getIndex());
 		LLOperand array = generateTypedExprAddr(expr.getExpr());
 
@@ -1616,7 +1617,7 @@ public class LLVMGenerator {
 		// currentTarget.emit(new LLLoadInstr(ret, expr.getType(), elPtr));
 		return elPtr;
 	}
-
+*/
 	private LLOperand generateFieldExpr(IAstFieldExpr expr) throws ASTException {
 
 		LLDataType dataType = (LLDataType) expr.getDataType(typeEngine);
@@ -2064,6 +2065,8 @@ public class LLVMGenerator {
 		if (object instanceof Boolean)
 			return new LLConstOp(expr.getType(),
 					Boolean.TRUE.equals(object) ? 1 : 0);
+		else if (object instanceof String)
+			return createStringInitializer(expr);
 		else if (object != null)
 			return new LLConstOp(expr.getType(), (Number) object);
 		else {
@@ -2078,6 +2081,33 @@ public class LLVMGenerator {
 				throw new ASTException(expr, "cannot generate nil");
 		}
 
+	}
+
+	/**
+	 * @param expr
+	 * @return
+	 */
+	private LLOperand createStringInitializer(IAstLitExpr expr) {
+		LLDataType dataType = (LLDataType) expr.getType();
+		
+		LLOperand[] els = new LLOperand[2];
+		String str = expr.getLiteral();
+		els[0] = new LLConstOp(dataType.getType(0), str.length());
+		
+		LLDataType strLitType = typeEngine.getStringLiteralType(str);
+
+		/*
+		LLOperand[] chars = new LLOperand[str.length()];
+		for (int i = 0; i < str.length(); i++) {
+			chars[i] = new LLConstOp(typeEngine.CHAR, (int) str.charAt(i)); 
+		}
+		
+		els[1] = new LLArrayOp((LLArrayType) strLitType.getType(1), chars);
+		*/
+		els[1] = new LLStringLitOp((LLArrayType) strLitType.getType(1), str);
+		LLStructOp structOp = new LLStructOp(strLitType, els); 
+		
+		return structOp;
 	}
 
 	/**

@@ -41,7 +41,7 @@ import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstForExpr;
 import org.ejs.eulang.ast.impl.AstFuncCallExpr;
 import org.ejs.eulang.ast.impl.AstGotoStmt;
-import org.ejs.eulang.ast.impl.AstIndexExpr;
+import org.ejs.eulang.ast.impl.AstInitIndexExpr;
 import org.ejs.eulang.ast.impl.AstInitListExpr;
 import org.ejs.eulang.ast.impl.AstInitNodeExpr;
 import org.ejs.eulang.ast.impl.AstInstanceExpr;
@@ -60,6 +60,7 @@ import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
+import org.ejs.eulang.ast.impl.AstStringLitExpr;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
@@ -815,8 +816,8 @@ public class GenerateAST {
 						typeEngine.INT, index);
 				getEmptySource(tree, context);
 				initNode.setContext(context);
-			} else if (initNode.getContext() instanceof IAstIndexExpr) {
-				index = (int) ((IAstIntLitExpr) ((IAstIndexExpr) initNode
+			} else if (initNode.getContext() instanceof IAstInitIndexExpr) {
+				index = (int) ((IAstIntLitExpr) ((IAstInitIndexExpr) initNode
 						.getContext()).getIndex()).getValue();
 			} else if (initNode.getContext() instanceof IAstIntLitExpr) {
 				index = (int) ((IAstIntLitExpr) initNode.getContext())
@@ -850,7 +851,7 @@ public class GenerateAST {
 			if (!(indexExpr instanceof IAstIntLitExpr))
 				throw new GenerateException(tree.getChild(1),
 						"an index expression must be a compile-time constant");
-			context = new AstIndexExpr(null, indexExpr);
+			context = new AstInitIndexExpr(indexExpr);
 			getSource(tree, context);
 			// index = (int) ((IAstIntLitExpr) indexExpr).getValue();
 		}
@@ -965,7 +966,8 @@ public class GenerateAST {
 
 		for (int  i = 1; i < tree.getChildCount(); i++) {
 			IAstTypedExpr at = checkConstruct(tree.getChild(i), IAstTypedExpr.class);
-			expr = new AstIndexExpr(expr, at);
+			//expr = new AstIndexExpr(expr, at);
+			expr = new AstBinExpr(IOperation.INDEX, expr, at);
 			
 			getSource(tree, expr);
 		}
@@ -2385,6 +2387,20 @@ public class GenerateAST {
 					type = typeEngine.INT;
 			}
 			litExpr = new AstIntLitExpr(origLit, type, chval);
+			break;
+		}
+		case EulangParser.STRING_LITERAL: {
+			assert (lit.startsWith("\"") && lit.endsWith("\""));
+			boolean interpret = true;
+			LLType type = typeEngine.STR;
+			lit = lit.substring(1, lit.length() - 1);
+			StringBuilder sb = new StringBuilder(); 
+			for (int idx = 0; idx < lit.length(); ) {
+				Pair<Integer, Integer> next = parseCharacter(tree, lit, idx, interpret);
+				idx = next.first;
+				sb.append((char) (int) next.second);
+			}
+			litExpr = new AstStringLitExpr(sb.toString(), type);
 			break;
 		}
 		case EulangParser.NUMBER: {

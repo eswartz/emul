@@ -29,6 +29,7 @@ import org.ejs.eulang.llvm.tms9900.BuildOutput;
 import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.ICodeVisitor;
 import org.ejs.eulang.llvm.tms9900.ILocal;
+import org.ejs.eulang.llvm.tms9900.InductionVariables;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
 import org.ejs.eulang.llvm.tms9900.StackFrame;
@@ -538,7 +539,35 @@ public class BaseInstrTest extends BaseTest {
 		
 		return anyChanges;
 	}
-	
+
+	protected boolean runInductionPhase(Routine routine) {
+		System.out.println("\n*** Before induction:\n");
+		routine.accept(new RoutineDumper());
+		
+		InductionVariables inductionVariables = new InductionVariables();
+		boolean anyChanges = false;
+		do {
+			routine.accept(inductionVariables);
+			if (inductionVariables.isChanged()) {
+				System.out.println("\n*** After induction pass:\n");
+				routine.accept(new RoutineDumper());
+				anyChanges = true;
+				routine.setupForOptimization();
+			}
+		} while (inductionVariables.isChanged());
+		
+		if (!anyChanges)
+			System.out.println("\n*** No changes");
+		else {
+			System.out.println("\n*** Done with induction:\n");
+			routine.accept(new RoutineDumper());
+		}
+		
+		validateInstrsAndResync(routine);
+		
+		return anyChanges;
+	}
+
 	protected void validateInstrsAndResync(Routine routine) {
 
 		assertNoUndefinedStackFrame(routine.getStackFrame());

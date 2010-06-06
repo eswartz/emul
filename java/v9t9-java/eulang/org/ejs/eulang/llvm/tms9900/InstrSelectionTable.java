@@ -407,53 +407,74 @@ public class InstrSelectionTable {
 				new InstrSelection.DoRes( 0, Pbmul, 0, 1 )
 		),
 	
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "mul", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"mul", 
 				 new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
 				 new InstrSelection.As[] { InstrSelection.As.REG_HI_W, InstrSelection.As.REG_R, InstrSelection.As.REG_LO_W },
 				 new InstrSelection.DoRes( 2, Impy, 1, 0, 2 )	// fake 3rd op
 		),
 	
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "sdiv", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"sdiv", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_1 },
 				new InstrSelection.As[] { InstrSelection.As.GEN_R },
 				new InstrSelection.DoRes( 0, -1, 0 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "udiv", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"udiv", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_1 },
 				new InstrSelection.As[] { InstrSelection.As.GEN_R },
 				new InstrSelection.DoRes( 0, -1, 0 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "sdiv", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"sdiv", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_POW_2 },
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM_LOG_2 }, 
 				new InstrSelection.DoRes( 0, Isra, 0, 1 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "udiv", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"sdiv exact", 
+				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_POW_2 },
+				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM_LOG_2 }, 
+				new InstrSelection.DoRes( 0, Isra, 0, 1 )
+		),
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"udiv", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.IS_CONST_POW_2 },
 				new InstrSelection.As[] { InstrSelection.As.REG_RW, InstrSelection.As.IMM_LOG_2 }, 
 				new InstrSelection.DoRes( 0, Isrl, 0, 1 )
 		),
 	
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "udiv", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"udiv", 
 				 new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
 				 new InstrSelection.As[] { InstrSelection.As.REG_LO_W, InstrSelection.As.GEN_R, InstrSelection.As.REG_HI_W },
 				 new InstrSelection.Do( Iclr, 2 ),
 				 new InstrSelection.DoRes( 2, Idiv, 1, 2, 0 )		// fake 3rd op
 		),
 		
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "sdiv", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"sdiv", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
 				new InstrSelection.As[] { InstrSelection.As.GEN_R, InstrSelection.As.GEN_R },
 				new InstrSelection.DoIntrinsic( Intrinsic.SIGNED_DIVISION, 0, 1 )
 		),
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "urem", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"sdiv exact", 
+				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
+				new InstrSelection.As[] { InstrSelection.As.GEN_R, InstrSelection.As.GEN_R },
+				new InstrSelection.DoIntrinsic( Intrinsic.SIGNED_DIVISION, 0, 1 )
+		),
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"urem", 
 				 new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
 				 new InstrSelection.As[] { InstrSelection.As.REG_LO_W, InstrSelection.As.GEN_R, InstrSelection.As.REG_HI_W },
 				 new InstrSelection.Do( Iclr, 2 ),
 				 new InstrSelection.DoRes( 1, Idiv, 1, 2, 0 )		// fake 3rd op
 		),
 		
-		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "srem", 
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, 
+				"srem", 
 				new InstrSelection.If[] { InstrSelection.If.PASS, InstrSelection.If.PASS },
 				new InstrSelection.As[] { InstrSelection.As.GEN_R, InstrSelection.As.GEN_R },
 				new InstrSelection.DoIntrinsic( Intrinsic.SIGNED_REMAINDER, 0, 1)

@@ -37,6 +37,10 @@ public class DataWordListOperand implements Operand {
 		return builder.toString();
 	}
 	
+	/**
+	 * @param assembler  
+	 * @param inst 
+	 */
 	public MachineOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		throw new ResolveException(this, "Unresolvable operand");

@@ -26,7 +26,6 @@ import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
-import org.ejs.eulang.ast.IAstIndexExpr;
 import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -1142,12 +1141,12 @@ public class TestTypeInfer extends BaseTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
+    	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
-    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
-    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     }
     @Test
@@ -1165,12 +1164,12 @@ public class TestTypeInfer extends BaseTest {
     	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
-    	IAstIndexExpr index = (IAstIndexExpr) getValue(stmt.getExpr());
+    	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
     	assertEquals(typeEngine.INT, index.getType());
-    	LLArrayType arrayType = (LLArrayType)index.getExpr().getType();
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
     	assertEquals(10, arrayType.getArrayCount());
     	assertNull(arrayType.getDynamicSizeExpr());
-    	assertEquals(typeEngine.INT, index.getIndex().getType());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     	
     }
