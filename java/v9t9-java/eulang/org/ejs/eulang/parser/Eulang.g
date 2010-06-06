@@ -12,6 +12,7 @@ tokens {
   
   LIST_COMPREHENSION;
   CODE;
+  METHOD;
   MACRO;
   STMTLIST;
   PROTO;
@@ -189,7 +190,7 @@ selector: LBRACKET selectors RBRACKET    -> ^(LIST selectors*)
 selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    -> selectoritem*
   ;
         
-selectoritem :  macro | rhsExpr | listCompr;
+selectoritem :  macro | rhsExpr; // | listCompr;
 
 //  scope
 //

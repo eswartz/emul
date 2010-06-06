@@ -210,27 +210,29 @@ public class TestParser extends BaseTest  {
     public void testNoTopLevelStmts() throws Exception  {
     	parseFail(" @label:");
     }
-    @Test
+    
+    //@Test
     public void testListCompr0() throws Exception  {
     	parseAt("listCompr", "for T in [ Int, Float ] : code ( x : T; y : T => T ) { x*x+y }");
     }
-    @Test
+    //@Test
     public void testListCompr1() throws Exception  {
     	parse("sqrAdd = [ for T in [ Int, Float ] : code( x : T; y : T => T ) { x*x+y } ] ; ");
     }
-    @Test
+    //@Test
     public void testListCompr2() throws Exception  {
     	parse("sqrAdd = [ for T, U in [ Int, Float ] : code ( x : T; y : U )  { x*x+y } ] ; ") ;
     }
-    @Test
+    //@Test
     public void testListCompr3() throws Exception  {
     	parse("sqrAdd = [ for T in [ Int, Float ] for U in [ Byte, Double ] : code ( x : T; y : U ) {  x*x+y } ];") ;
     }
-    @Test
+    //@Test
     public void testListCompr4() throws Exception  {
     	// TODO: be sure the outer list has three items
     	parse("sqrAdd = [ code ( x, y, z ) {} , for T in [ Byte, Double ] : code ( x : T; y : U ) {  x*x+y }, code ( a, b, c ) {}];") ;
     }
+    
     @Test
     public void testForward1() throws Exception  {
     	parse("forward sqrAdd;");
