@@ -87,6 +87,7 @@ public interface IAstNode {
     
     public ISourceRef getSourceRef();
     public void setSourceRef(ISourceRef sourceRef);
+    public void setSourceRefTree(ISourceRef sourceRef);
 
 	/**
 	 * @return

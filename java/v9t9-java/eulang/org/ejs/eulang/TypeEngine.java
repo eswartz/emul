@@ -5,6 +5,7 @@ package org.ejs.eulang;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -767,15 +768,17 @@ public class TypeEngine {
 		int len = str.length();
 		LLDataType strLitType = stringLitTypeMap.get(len);
 		if (strLitType == null) {
-			List<LLType> strFields = new ArrayList<LLType>();
-			strFields.add(INT);
-			strFields.add(getArrayType(CHAR, len, null));
+			List<LLInstanceField> strFields = new ArrayList<LLInstanceField>();
+			strFields.add(new LLInstanceField("length", INT, null, null));
+			LLArrayType arrayType = getArrayType(CHAR, len, null); 
+			strFields.add(new LLInstanceField("s", arrayType, null, null));
+			
 			String name = STR.getSymbol().getName() + "$" + len;
 			ISymbol sym = STR.getSymbol().getScope().get(name);
 			if (sym == null) {
 				sym = STR.getSymbol().getScope().add(name, false);
 			}
-			strLitType = getDataType(sym, strFields);
+			strLitType = getDataType(sym, strFields, Collections.<LLStaticField>emptyList());
 			sym.setType(strLitType);
 			stringLitTypeMap.put(len, strLitType);
 		}

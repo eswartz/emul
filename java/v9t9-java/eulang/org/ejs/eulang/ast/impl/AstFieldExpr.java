@@ -85,6 +85,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 */
 	@Override
 	public void setField(IAstName field) {
+		assert field.getName().length() > 0;
 		this.field = reparent(this.field, field);
 		field.setScope(null);
 	}

@@ -186,6 +186,17 @@ abstract public class AstNode implements IAstNode {
     	this.sourceRef = sourceRef;
     }
     
+    /* (non-Javadoc)
+     * @see org.ejs.eulang.ast.IAstNode#setSourceRefTree(org.ejs.eulang.ISourceRef)
+     */
+    @Override
+    public void setSourceRefTree(ISourceRef sourceRef) {
+    	setSourceRef(sourceRef);
+    	for (IAstNode node : getChildren()) {
+    		node.setSourceRefTree(sourceRef);
+    	}
+    }
+    
     /** Reparent newkid to this, being sure to ensure we don't try to set parents where one is already set.
      * Reset existing's parent, if set.
      * @param <T>
