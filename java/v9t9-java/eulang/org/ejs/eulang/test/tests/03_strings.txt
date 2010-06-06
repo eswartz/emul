@@ -1,0 +1,20 @@
+<<< string data
+a := "SUCKA!!! \r\n\t\xff\x7f\x00\x02";
+testStrings = code () {
+   z := "hello";
+  y := "there";
+};
+===
+call testStrings
+>>>
+
+<<< string access
+testStrings = code () {
+   z := "hello";
+  y := "there";
+  z[1]-'e'+y[1]
+};
+===
+call testStrings
+assert byte R0 == 0x68
+>>>

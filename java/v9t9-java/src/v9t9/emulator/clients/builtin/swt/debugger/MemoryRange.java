@@ -52,7 +52,7 @@ public class MemoryRange {
 	public void attachMemoryListener() {
 		memoryWriteListener = new MemoryDomain.MemoryWriteListener() {
 
-			public void changed(MemoryEntry entry, int addr) {
+			public void changed(MemoryEntry entry, int addr, boolean isByte) {
 				synchronized (MemoryRange.this) {
 					if (contains(entry, addr)) {
 						lowRange = Math.min(lowRange, addr);

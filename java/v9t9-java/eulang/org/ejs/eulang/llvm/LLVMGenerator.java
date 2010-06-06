@@ -1139,7 +1139,7 @@ public class LLVMGenerator {
 		return op;
 	}
 
-	private LLOperand generateTypedExprCore(IAstTypedExpr expr)
+	public LLOperand generateTypedExprCore(IAstTypedExpr expr)
 			throws ASTException {
 		LLOperand temp = null;
 		if (expr instanceof IAstExprStmt)

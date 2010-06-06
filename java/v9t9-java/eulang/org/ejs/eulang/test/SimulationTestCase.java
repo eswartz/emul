@@ -9,8 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.BitSet;
 
 import junit.framework.Protectable;
 import junit.framework.Test;
@@ -34,7 +33,6 @@ import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
  *
  */
 public class SimulationTestCase extends BaseInstrTest implements Test, DebuggableTest {
-	protected boolean doOptimize;
 	protected Simulator simulator;
 	
 	private final String TMP = File.separatorChar == '\\' ? "c:/temp/" : "/tmp/";
@@ -105,40 +103,94 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		
 		final Simulator sim = new Simulator(v9t9Target, buildOutput);
 		
+		final BitSet globalChanges = new BitSet();
 		MemoryWriteListener globalMemoryListener = new MemoryWriteListener() {
 			
 			@Override
-			public void changed(MemoryEntry entry, int addr) {
-				System.out.println("\t==> " + 
-							HexUtils.toHex4(addr)
-							+ " = " + HexUtils.toHex4(sim.getMemory().readWord(addr)));
+			public void changed(MemoryEntry entry, int addr, boolean isByte) {
+				if (isByte) {
+					globalChanges.set(addr);
+				} else {
+					globalChanges.set((addr & 0xfffe));
+					globalChanges.set((addr & 0xfffe) + 1);
+				}
 			}
 		};
 		
 		sim.getMemory().addWriteListener(globalMemoryListener);
+		
 		sim.init();
+		
+		if (!globalChanges.isEmpty()) {
+			System.out.println("Global memory:");
+			for (int addr = globalChanges.nextSetBit(0); addr >= 0; ) {
+				StringBuilder sb = new StringBuilder();
+				sb.append("\t==> ").append(HexUtils.toHex4(addr)).append(" = ");
+				int endAddr = addr + 1;
+				while (globalChanges.nextSetBit(endAddr) == endAddr) {
+					endAddr++;
+					if (endAddr % 16 == 0)
+						break;
+				}
+				
+				if ((addr & 1) == 1) {
+					sb.append(HexUtils.toHex2(sim.getMemory().readByte(addr)));
+					sb.append(' ');
+					addr++;
+				}
+				while (addr + 2 <= endAddr) {
+					sb.append(HexUtils.toHex4(sim.getMemory().readWord(addr)));
+					sb.append(' ');
+					addr += 2;
+				}
+				if (addr < endAddr) {
+					sb.append(HexUtils.toHex2(sim.getMemory().readByte(addr)));
+					sb.append(' ');
+					addr++;
+				}
+				System.out.println(sb);
+				
+				if (!globalChanges.get(addr))
+					addr = globalChanges.nextSetBit(addr + 1);
+			}
+			System.out.println();
+		}
 		sim.getMemory().removeWriteListener(globalMemoryListener);
 		
 		sim.addInstructionListener(sim.new DumpFullReporter());
-		final List<Short> changes = new ArrayList<Short>();
+		final BitSet changes = new BitSet();
 		sim.addInstructionListener(new Simulator.InstructionListener() {
 			
 			@Override
 			public void executed(Simulator.InstructionWorkBlock before, Simulator.InstructionWorkBlock after) {
 				int wp = sim.getCPU().getWP() & 0xffff;
-				for (short addr : changes)
-					System.out.println("\t==> " + ((addr >= wp && addr <= wp + 32) ?
+				for (int addr = changes.nextSetBit(0); addr != -1; addr = changes.nextSetBit(addr+1)) {
+					String loc = ((addr >= wp && addr <= wp + 32) ?
 							"R" + (addr - wp) / 2 :
-								HexUtils.toHex4(addr))
-								+ " = " + HexUtils.toHex4(sim.getMemory().readWord(addr)));
+								HexUtils.toHex4(addr));
+					if ((addr & 1) == 0 && changes.nextSetBit(addr + 1) == addr + 1) {
+						// word
+						System.out.println("\t==> " + loc
+									+ " = " + HexUtils.toHex4(sim.getMemory().readWord(addr)));
+						addr++;
+					} else {
+						System.out.println("\t==> " + loc
+									+ " = " + HexUtils.toHex2(sim.getMemory().readByte(addr)));
+					}
+				}
 				changes.clear();
 			}
 		});
 		sim.getMemory().addWriteListener(new MemoryWriteListener() {
 			
 			@Override
-			public void changed(MemoryEntry entry, int addr) {
-				changes.add((short) addr);
+			public void changed(MemoryEntry entry, int addr, boolean isByte) {
+				if (isByte) {
+					changes.set(addr);
+				} else {
+					changes.set((addr & 0xfffe));
+					changes.set((addr & 0xfffe) + 1);
+				}
 			}
 		});
 		return sim;

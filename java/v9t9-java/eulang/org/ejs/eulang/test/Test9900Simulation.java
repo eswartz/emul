@@ -6,9 +6,12 @@ package org.ejs.eulang.test;
 import static junit.framework.Assert.*;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -31,10 +34,21 @@ public class Test9900Simulation  {
 	
 		DebuggableTestSuite suite = new DebuggableTestSuite();
 		
+		URL url = Test9900Simulation.class.getResource("tests");
+		assert url.getProtocol().equals("file");
+		
+		File dir = new File(url.getPath());
+		String[] files = dir.list(new FilenameFilter() {
+			
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.endsWith(".txt");
+			}
+		});
 		try {
-			addSuite(suite, "00_simple.txt");
-			addSuite(suite, "01_arrays.txt");
-			addSuite(suite, "02_tuples.txt");
+			for (String file : files) {
+				addSuite(suite, file);
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

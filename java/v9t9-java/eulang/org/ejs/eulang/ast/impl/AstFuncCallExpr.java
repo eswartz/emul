@@ -163,9 +163,27 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			referencedType = referencedType.getSubType();
 		
 		if (referencedType != null) {
+			if (!(referencedType instanceof LLCodeType)) {
+				throw new TypeException(function, "called function does not have code type");
+			}
 			if (!argCodeType.isCompatibleWith(referencedType)) {
-				codeType = null;
-				throw new TypeException(this, "arguments do not match prototype");
+				LLType[] argCodeTypes = argCodeType.getArgTypes();
+				LLType[] refTypes = ((LLCodeType)referencedType).getArgTypes();
+				StringBuilder sb = new StringBuilder();
+				sb.append("arguments do not match prototype");
+				if (argCodeTypes.length != refTypes.length)
+					sb.append(": expected " + refTypes.length + " arguments but got " + argCodeTypes.length);
+				else {
+					boolean first = true;
+					for (int i = 0; i < argCodeTypes.length; i++) {
+						if (argCodeTypes[i] != null && refTypes[i] != null && !argCodeTypes[i].isCompatibleWith(refTypes[i])) {
+							if (first) sb.append(": "); else sb.append("; ");
+							sb.append("argument " + (i+1) + " should be type " + refTypes[i] + " but got " + argCodeTypes[i]);
+						}
+					}
+				}
+					
+				throw new TypeException(this, sb.toString());
 			}
 			if (!argCodeType.isMoreComplete(referencedType)) {
 				if (!(referencedType instanceof LLCodeType)) {

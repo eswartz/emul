@@ -46,7 +46,7 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 			if (types.left instanceof LLArrayType || types.left instanceof LLPointerType) {
 				types.result = types.left.getSubType();
 			} else if (!types.left.isGeneric()) {
-				throw new TypeException("cannot find index on type " + types.left.toString());
+				throw new TypeException("cannot perform indexing on type " + types.left.toString());
 			}			
 		} 
 	}
@@ -68,7 +68,7 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 		
 		if (types.left instanceof LLArrayType || types.left instanceof LLPointerType) {
 			if (!types.result.matchesExactly(types.left.getSubType())) {
-				throw new TypeException("inconsistent types in index expression");
+				throw new TypeException("inconsistent types in index expression: " + types.result + " vs " + types.left.getSubType());
 			}
 		}
 	}

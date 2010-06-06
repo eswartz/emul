@@ -5,11 +5,14 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstInitListExpr;
 import org.ejs.eulang.ast.IAstInitNodeExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -126,10 +129,61 @@ public class AstInitListExpr extends AstInitNodeExpr implements IAstInitListExpr
 				assert fieldType != null;
 				
 				if (!fieldType.equals(expr.getType())) {
-					expr.replaceChild(expr.getExpr(), createCastOn(typeEngine, expr.getExpr(), fieldType));
+					// gaaaar... deal with our automagic casting to array types (see below) but don't
+					// thwart cases where we actually know the type.
+					if (expr.getType() != null && expr.getExpr() != null &&
+							((expr.getType().getBasicType().getClassMask() & fieldType.getBasicType().getClassMask()) == 0
+							|| ((expr.getType().getBasicType().getClassMask() | fieldType.getBasicType().getClassMask()) & LLType.TYPECLASS_DATA + LLType.TYPECLASS_MEMORY) != 0)) {
+						expr.getExpr().setType(fieldType);
+					} else {
+						expr.replaceChild(expr.getExpr(), createCastOn(typeEngine, expr.getExpr(), fieldType));
+					}
 					expr.setType(fieldType);
 					changed = true;
 				}
+			}
+		}
+		else if (getType() == null) {
+			// no idea -- make one
+			LLType commonType = null;
+			boolean hasStructOps = false;
+			
+			for (int i = 0; i < initExprs.nodeCount(); i++) {
+				IAstInitNodeExpr expr = initExprs.list().get(i);
+				if (expr.getContext() instanceof IAstFieldExpr) {
+					hasStructOps = true;
+					break;
+				}
+				LLType fieldType = expr.getType();
+				if (fieldType != null) {
+					if (commonType == null) {
+						commonType = fieldType;
+					} else {
+						commonType = typeEngine.getPromotionType(commonType, fieldType);
+					}
+				}
+			}
+			if (commonType != null && !hasStructOps) {
+				int maxIndex = 0;
+				int curIndex = 0;
+				for (int i = 0; i < initExprs.nodeCount(); i++) {
+					IAstInitNodeExpr expr = initExprs.list().get(i);
+
+					if (expr.getContext() instanceof IAstIntLitExpr) {
+						curIndex = (int) ((IAstIntLitExpr) expr.getContext()).getValue();
+					}
+					if (!commonType.equals(expr.getType())) {
+						expr.replaceChild(expr.getExpr(), createCastOn(typeEngine, expr.getExpr(), commonType));
+						expr.setType(commonType);
+						changed = true;
+					}
+					
+					curIndex++;
+					if (curIndex > maxIndex)
+						maxIndex = curIndex;
+				}
+				LLArrayType arrayType = typeEngine.getArrayType(commonType, maxIndex, null);
+				changed |= updateType(this, arrayType);
 			}
 		}
 		return changed;

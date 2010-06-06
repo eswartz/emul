@@ -111,6 +111,8 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
 		boolean changed = false;
+		
+		// list may look like an array while the context is a field; mungle
 		if (canReplaceType(context))
 			changed |= updateType(context, expr.getType());
 		changed |= updateType(this, expr.getType());

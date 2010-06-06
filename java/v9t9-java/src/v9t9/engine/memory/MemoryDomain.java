@@ -45,7 +45,7 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
     
     /** Listener for noticing memory writes. */
     public interface MemoryWriteListener {
-    	void changed(MemoryEntry entry, int addr);
+    	void changed(MemoryEntry entry, int addr, boolean isByte);
     }
     
     public MemoryAccessListener nullMemoryAccessListener = new MemoryAccessListener() {
@@ -57,7 +57,7 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
     
     public MemoryWriteListener nullMemoryWriteListener = new MemoryWriteListener() {
 
-		public void changed(MemoryEntry entry, int addr) {
+		public void changed(MemoryEntry entry, int addr, boolean isByte) {
 		}
     	
     };
@@ -181,12 +181,12 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
         accessListener.access(entry);
         entry.writeByte(addr, val);
         if (writeListeners != null)
-        	fireWriteEvent(entry, addr & 0xffff);
+        	fireWriteEvent(entry, addr & 0xffff, true);
     }
 
-    private void fireWriteEvent(MemoryEntry entry, int addr) {
+    private void fireWriteEvent(MemoryEntry entry, int addr, boolean isByte) {
     	for (MemoryWriteListener listener : writeListeners) {
-    		listener.changed(entry, addr);
+    		listener.changed(entry, addr, isByte);
     	}
 	}
 
@@ -195,7 +195,7 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
         accessListener.access(entry);
         entry.writeWord(addr, val);
         if (writeListeners != null)
-        	fireWriteEvent(entry, addr & 0xfffe);
+        	fireWriteEvent(entry, addr & 0xfffe, false);
     }
 
     public final boolean hasRamAccess(int addr) {
@@ -430,7 +430,7 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
 
 	public void writeMemory(int addr) {
 		if (writeListeners != null)
-			fireWriteEvent(getEntryAt(addr), addr);
+			fireWriteEvent(getEntryAt(addr), addr, true);
 	}
 
 	public String getName() {

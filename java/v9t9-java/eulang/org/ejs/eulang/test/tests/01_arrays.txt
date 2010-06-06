@@ -116,14 +116,14 @@ call doSum
 assert R0 == 45
 >>>
 
-<<< string data
-a := "SUCKA!!! \r\n\t\xff\x7f\x00\x02";
-testStrings = code () {
-   z := "hello";
-  y := "there";
-  z[1]-'e'+y[1]
+<<< pointers on arrays
+mycode := code(p:Int[]^; i) {
+    ip: Int[]^ = p;     // if you want to access an array as a pointer
+    ip[i] + ip[i+1];    // and then a pointer as an array
 };
+ints := [ 1, 2, 3, 4, 5];   // inferred init type
+getSum = code() { mycode(&ints, 2); };
 ===
-call testStrings
-assert byte R0 == 0x68
+call getSum
+assert R0 == 7
 >>>

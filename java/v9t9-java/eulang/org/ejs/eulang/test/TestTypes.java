@@ -306,6 +306,74 @@ xes[3][2][1]
     	
     	
     }*/
+    @Test
+    public void testArrayAccess1e() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"mycode := code(p:Int[10]; i => nil) {\n"+
+    			"   ip:=&p;\n"+
+    			"   ip[i];"+
+    			"};\n"+
+    			"");
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
+    	assertTrue(astmt.getType() instanceof LLCodeType);
+    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	
+    	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
+    	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
+    	//assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
+    	assertEquals(typeEngine.INT, index.getType());
+    	LLArrayType arrayType = (LLArrayType)index.getLeft().getType();
+    	assertEquals(10, arrayType.getArrayCount());
+    	assertNull(arrayType.getDynamicSizeExpr());
+    	assertEquals(typeEngine.INT, index.getRight().getType());
+    	
+    	doGenerate(mod);
+    	
+    	
+    }
+    
+    @Test
+    public void testArrayAccess1f() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"mycode := code(p:Int[10]; i => nil) {\n"+
+    			"   ip: Int[]^ =&p;\n"+		// if you want to access an array as a pointer
+    			"   ip[i] + ip[i+1];"+
+    			"};\n"+
+    			"");
+
+    	sanityTest(mod);
+    	
+    	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
+    	assertTrue(astmt.getType() instanceof LLCodeType);
+    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	
+    	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
+    	IAstBinExpr add = (IAstBinExpr) getValue(stmt.getExpr());
+    	//assertEquals(typeEngine.getRefType(typeEngine.INT), index.getType());
+    	assertEquals(typeEngine.INT, add.getType());
+    	
+    	IAstBinExpr index1 = (IAstBinExpr) ((IAstDerefExpr) add.getLeft()).getExpr();
+    	IAstBinExpr index2 = (IAstBinExpr) ((IAstDerefExpr) add.getRight()).getExpr();
+    	
+    	LLArrayType arrayType = (LLArrayType)index1.getLeft().getType();
+    	assertEquals(0, arrayType.getArrayCount());
+    	assertNull(arrayType.getDynamicSizeExpr());
+    	assertEquals(typeEngine.INT, add.getRight().getType());
+    	
+    	arrayType = (LLArrayType)index2.getLeft().getType();
+    	assertEquals(0, arrayType.getArrayCount());
+    	assertNull(arrayType.getDynamicSizeExpr());
+    	assertEquals(typeEngine.INT, add.getRight().getType());
+
+    	doGenerate(mod);
+    	
+    	
+    }
+
     
     @Test
     public void testData0() throws Exception {

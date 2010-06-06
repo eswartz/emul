@@ -51,6 +51,7 @@ import org.ejs.eulang.llvm.ops.LLArrayOp;
 import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLStringLitOp;
 import org.ejs.eulang.llvm.ops.LLStructOp;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
@@ -1583,6 +1584,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (operand instanceof LLArrayOp) {
 			return generateTupleTempOperand(((LLArrayOp) operand));
 		}
+		if (operand instanceof LLStringLitOp) {
+			return generateTupleTempOperand(((LLStringLitOp) operand));
+		}
 		if (operand instanceof LLBitcastOp) {
 			LLBitcastOp bop = ((LLBitcastOp) operand);
 			AssemblerOperand op = generateOperand(bop.getValue());
@@ -1630,6 +1634,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			assert false;
 			return null;
 		}
+	}
+	private TupleTempOperand generateTupleTempOperand(LLStringLitOp llOp) {
+		String str = llOp.getText();
+		AssemblerOperand[] ops = new AssemblerOperand[str.length()];
+		for (int i= 0; i < str.length(); i++) {
+			ops[i] = new NumberOperand(str.charAt(i));
+		}
+		return new TupleTempOperand(ops);
 	}
 
 	private AssemblerOperand createLocalOperand(LLType type, ILocal local) {
