@@ -36,6 +36,7 @@ assert R0 == -4
 >>>
 
 <<< string access 3
+// allow addressing string literals, and be sure to externalize them to data
 testStrings = code () {
    z := &"hello";
   y := &"there";

@@ -12,7 +12,6 @@ import java.util.TreeMap;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.IRegClass;
 import org.ejs.eulang.ITarget;
-import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ICallingConvention.CallerStackLocation;
 import org.ejs.eulang.ICallingConvention.Location;
 import org.ejs.eulang.ICallingConvention.RegisterLocation;
@@ -135,11 +134,7 @@ public class StackFrame {
 	
 	private boolean requiresFramePointer;
 
-	private TypeEngine typeEngine;
-
 	public StackFrame(ITarget target) {
-		typeEngine = target.getTypeEngine();
-		
 		stackLocals = new LinkedHashMap<ISymbol, StackLocal>();
 		regLocals = new LinkedHashMap<ISymbol, RegisterLocal>();
 		

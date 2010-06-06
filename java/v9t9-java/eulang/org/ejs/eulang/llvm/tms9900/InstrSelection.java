@@ -1220,6 +1220,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @return
 	 */
 	AssemblerOperand generateMultiply(AssemblerOperand item, LLType type, int by) {
+		if (by == 1)
+			return item;
+		
 		LLOperand llOp = new LLConstOp(type, 0);
 		if ((by & (by - 1)) != 0) {
 			// real multiply is so slow and has such stringent requirements on register

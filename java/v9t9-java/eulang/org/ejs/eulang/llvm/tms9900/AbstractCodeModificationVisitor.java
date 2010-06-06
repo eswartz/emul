@@ -213,6 +213,7 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 		inst.setOp1(null);
 		inst.setOp2(null);
 		inst.setOp3(null);
+		inst.setInst(0);
 		
 		emitUsageInfo(inst);
 	}

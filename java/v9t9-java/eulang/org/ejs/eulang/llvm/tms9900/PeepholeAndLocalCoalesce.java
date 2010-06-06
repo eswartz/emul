@@ -137,6 +137,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				else if (coalesceCopy(inst)) {
 					applied = true;
 				} 
+				//else if (coalesceCopy2(inst)) {
+				//	applied = true;
+				//} 
 				else if (replaceConstant(inst)) {
 					applied = true;
 				}
@@ -153,10 +156,22 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				if (coalesceCopy(inst)) {
 					applied = true;
 				} 
+				//else if (coalesceCopy2(inst)) {
+				//	applied = true;
+				//} 
 				break;
 				
 			case Pjcc:
 				if (replaceIsetWithStatusJump(inst)) {
+					applied = true;
+				}
+				break;
+				
+			case Isla:
+			case Isrl:
+			case Isra:
+			case Isrc:
+				if (removeDeadShift(inst)) {
 					applied = true;
 				}
 				break;
@@ -212,6 +227,19 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	}
 
 	/**
+	 * @param inst
+	 * @return
+	 */
+	private boolean removeDeadShift(AsmInstruction inst) {
+		if (inst.getOp2() instanceof NumberOperand &&
+				(((NumberOperand) inst.getOp2()).getValue() & 0xf) == 0) {
+			System.out.println(here());
+			removeInst(inst);
+			return true;
+		}
+		return false;
+	}
+	/**
 	 * Track register values used in the instructions, for later substitution. 
 	 * @param inst current inst
 	 */
@@ -231,6 +259,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 					src = localValues.get(srcLocal);
 			}
 		}
+		//if (src == null)
+		//	src = inst.getSrcOp();
 		
 		boolean changedValues = false;
 		boolean gotStackValue = false;
@@ -281,6 +311,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 					src = new NumberOperand( ( l >> r ) & 0xffff );
 				else /*if (inst.getInst() == Isrl)*/
 					src = new NumberOperand( ( l >>> r ) & 0xffff );
+			} else if (inst.getOp2() instanceof NumberOperand &&
+					(((NumberOperand) inst.getOp2()).getValue() & 0xf) == 0) {
+				// no-op
 			} else {
 				src = null;
 			}
@@ -503,7 +536,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		// see if the temp is only defined once and this is its last use
 		if (!tmpLocal.isExprTemp() || !tmpLocal.isSingleBlock()
-				|| tmpLocal.getUses().nextSetBit(mov.getNumber() + 1) >= 0)
+				|| tmpLocal.getUses().nextSetBit(mov.getNumber() + 1) >= 0
+				)
 			return false;
 		
 		// and see if the definition is a read from the same target
@@ -515,6 +549,14 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		if (!mov.getOp1().equals(def.getDestOp()))
 			return false;
+
+		/*
+		// don't do it if the orig changes
+		int nextTmpDef = tmpLocal.getDefs().nextSetBit(mov.getNumber() + 1);
+		int nextOrigUse = origLocal.getUses().nextSetBit(def.getNumber() + 1);
+		if (nextTmpDef > 0 && nextTmpDef <= nextOrigUse)
+			return false;
+		 */
 		
 		// okay, replace all uses of the source with the target
 		AssemblerOperand fromOp = new RegTempOperand((RegisterLocal) tmpLocal);
@@ -549,8 +591,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	}
 	
 	/**
-	 * Convert a COPY from a temp to another place, when that temp is only used once.
-	 * @param inst last COPY
+	 * Convert a copy from a temp to another place, when that temp is only used once.
+	 * @param inst last copy
 	 * @return
 	 */
 	private boolean coalesceCopy(AsmInstruction inst) {
@@ -614,6 +656,83 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			
 		return changed;
 	}
+	
+	/**
+	 * If we copy a temp A into a temp B, and never reference temp A again, combine them into A.
+	 * @param inst first MOV
+	 * @return
+	 */
+	/*
+	private boolean coalesceCopy2(AsmInstruction inst) {
+		if (inst.isPartialWrite())
+			return false;
+		
+		// only replace temps in registers and don't extend lifetime of phys reg access
+		ILocal tmpLocal = getTargetLocal(inst);
+		if (tmpLocal == null || !(tmpLocal instanceof RegisterLocal) || ((RegisterLocal) tmpLocal).isPhysReg())
+			return false;
+		
+		// see if the temp is only defined once and this is its only def, and there is only one use
+		if (!tmpLocal.isExprTemp() || !tmpLocal.isSingleBlock()
+				|| tmpLocal.getDefs().cardinality() != 1
+				|| tmpLocal.getInit() != inst.getNumber())
+			return false;
+
+		ILocal origLocal = getSourceLocal(inst);
+		if (!(origLocal instanceof RegisterLocal) || ((RegisterLocal) origLocal).isPhysReg())
+			return false;
+		if (inst.getSrcOp().isMemory())
+			return false;
+
+		// we can safely replace uses until the orig is modified next
+		int replaceLimit = origLocal.getDefs().nextSetBit(inst.getNumber() + 1);
+		if (replaceLimit < 0)
+			replaceLimit = Integer.MAX_VALUE;
+		
+		// okay, replace all uses of the source with the target
+		AssemblerOperand fromOp = inst.getDestOp();
+		AssemblerOperand toOp = inst.getSrcOp();
+		
+		if (fromOp.equals(toOp)) {
+			removeInst(inst);
+			return true;
+		}
+
+		// make sure the inst allows the replaced operand 
+		for (int use = tmpLocal.getUses().nextSetBit(tmpLocal.getInit()); 
+			use < replaceLimit && use >= 0; 
+			use = tmpLocal.getUses().nextSetBit(use + 1)) 
+		{
+			AsmInstruction useInst = instrMap.get(use);
+			if (useInst.getOp1() != null) {
+				if (useInst.getOp1().equals(fromOp) && !useInst.supportsOp(1, toOp))
+					return false;
+				if (useInst.getOp2() != null) {
+					if (useInst.getOp2().equals(fromOp) && !useInst.supportsOp(2, toOp))
+						return false;
+				}
+			}
+		}
+
+
+		System.out.println(here() + "In " + inst.getNumber() +":  Replacing " + fromOp + " with " + toOp);
+		boolean changed = false;
+		
+		for (int use = tmpLocal.getUses().nextSetBit(tmpLocal.getInit()); 
+			use < replaceLimit && use >= 0; 
+			use = tmpLocal.getUses().nextSetBit(use + 1)) 
+		{
+			replaceUses(instrMap.get(use), fromOp, toOp, tmpLocal, origLocal);
+			changed = true;
+		}
+		
+		// and delete the move
+		if (!dependsOnStatus(inst))
+			removeInst(inst);
+			
+		return changed;
+	}
+	*/
 	
 	/**
 	 * In an instruction that uses an address operand using a register defined
