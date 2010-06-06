@@ -1317,6 +1317,9 @@ public class LLVMGenerator {
 		if (notAgg)
 			return generateTypedExpr(expr.getInitExprs().getFirst().getExpr());
 
+		if (expr.getInitExprs().nodeCount() == 0) 
+			return new LLZeroInitOp(expr.getType());
+		
 		// constant init ops stored here, with zeroinits for nonconstant ones,
 		// plus padding
 		List<LLOperand> constOps = new ArrayList<LLOperand>();
@@ -2105,7 +2108,7 @@ public class LLVMGenerator {
 		els[1] = new LLArrayOp((LLArrayType) strLitType.getType(1), chars);
 		*/
 		els[1] = new LLStringLitOp((LLArrayType) strLitType.getType(1), str);
-		LLStructOp structOp = new LLStructOp(strLitType, els); 
+		LLStructOp structOp = new LLStructOp(strLitType, els);
 		
 		return structOp;
 	}

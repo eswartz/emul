@@ -22,7 +22,7 @@ import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLAggregateType;
-import org.ejs.eulang.types.LLIntType;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 
 import static v9t9.engine.cpu.InstructionTable.*;
@@ -262,7 +262,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		}
 		
 		if (work >= THRESHOLD && (!isTuple || isConstTuple)) {
-			if (isConstTuple) {
+			if (isConstTuple && !isZero) {
 				from = makeInternalData(from, type);
 			}
 			expandCopyOrClearLoop(type, inst, from);
@@ -290,16 +290,26 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 	 * @return approximate number of operations
 	 */
 	private int calculateConstTupleWork(TupleTempOperand from, LLType type) {
-		LLType[] types = ((LLAggregateType) type).getTypes();
-		int sum = 0;
-		for (LLType sub : types) {
-			if (sub.getBits() <= 16)
-				sum += 2;						// LI and MOV
-			else 
-				sum += sub.getBits() / 16;		// maybe judge MORE because these are new copy insts
+		if (type instanceof LLAggregateType) {
+			LLType[] types = ((LLAggregateType) type).getTypes();
+			int sum = 0;
+			for (LLType sub : types) {
+				if (sub.getBits() <= 16)
+					sum += 2;						// LI and MOV
+				else 
+					sum += sub.getBits() / 16;		// maybe judge MORE because these are new copy insts
+			}
+			return sum;
+		}
+		if (type instanceof LLArrayType) {
+			if (type.getSubType().getBits() <= 16)
+				return ((LLArrayType) type).getArrayCount();
+			else
+				return type.getBits() / 16;
 		}
 		
-		return sum;
+		assert false;
+		return 999;
 	}
 	
 	/**
@@ -371,7 +381,8 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		// get size of copy/clear
 		ILocal t3Local = stackFrame.allocateTemp(typeEngine.INT);
 		AssemblerOperand t3 = new RegTempOperand((RegisterLocal) t3Local);
-		lp = AsmInstruction.create(Ili, t3, new NumberOperand(type.getBits() / 8));
+		int bytes = type.getBits() / 8;
+		lp = AsmInstruction.create(Ili, t3, new NumberOperand(bytes));
 		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
 		
@@ -408,13 +419,23 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		loop.addInst(lp);
 		System.out.println(here() +" " + lp);
 		lp = AsmInstruction.create(Pjcc, 
-				new CompareOperand(type.getBits() / 8 < 32768 ? "sgt" : "ugt"),		
+				new CompareOperand(bytes < 32768 ? "sgt" : "ugt"),		
 				new SymbolLabelOperand(labelSym),
 				new SymbolLabelOperand(afterSym));
 		lp.setImplicitSources(new ISymbol[] { getStatusSymbol(), labelSym, afterSym });
 		loop.addInst(lp);
 		System.out.println(here() +" " + lp);
 		
+		if (bytes % 2 != 0) {
+			if (!isClear) {
+				lp = AsmInstruction.create(Imovb, new RegIndOperand(t1), new RegIndOperand(t2));
+			} else {
+				lp = AsmInstruction.create(Isb, new RegIndOperand(t2), new RegIndOperand(t2));
+			}
+			after.addInstBefore(lp, after.getFirst());
+			System.out.println(here() +" " + lp);
+			
+		}
 		changedBlocks = true;
 	}
 	
@@ -448,11 +469,14 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			AsmInstruction copy;
 			if (from instanceof NumberOperand && ins != Pcopy) {
 				// oops, const copy
-				ins = Ili; 
-				to = new RegTempOperand((RegisterLocal) stackFrame.allocateTemp(type));
+				RegTempOperand tmp = new RegTempOperand((RegisterLocal) stackFrame.allocateTemp(type));
 				if (type.getBits() <= 8)
 					from = new NumberOperand((((NumberOperand) from).getValue() << 8) & 0xff00);
-				copy = AsmInstruction.create(ins, to, from);
+				copy = AsmInstruction.create(Ili, tmp, from);
+				System.out.println(here() + " adding " + copy);
+				block.addInstAfter(last, copy);
+				last = copy;
+				copy = AsmInstruction.create(ins, tmp, to);
 			} else {
 				copy = AsmInstruction.create(ins, from, to);
 			}
@@ -525,7 +549,11 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			if (to instanceof CompositePieceOperand)
 				((CompositePieceOperand) to).setType(theType);
 			
-			AsmInstruction clr = AsmInstruction.create(Iclr, to);
+			AsmInstruction clr; 
+			if (type.getBits() - i <= 8)
+				clr = AsmInstruction.create(Isb, to, to);
+			else
+				clr = AsmInstruction.create(Iclr, to);
 			block.addInstAfter(last, clr);
 			last = clr;
 			

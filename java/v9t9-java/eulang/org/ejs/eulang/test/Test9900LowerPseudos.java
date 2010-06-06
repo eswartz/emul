@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
 
 /**
  * @author ejs
@@ -245,6 +246,131 @@ public class Test9900LowerPseudos extends BaseInstrTest {
     	matchInstr(inst, "MOV", CompositePieceOperand.class, "t", 2, CompositePieceOperand.class, ".callerRet", 2);
 
 	}
+
+
+	@Test
+	public void testDataCopy1() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"Tuple = data { x,y,z,a : Byte; };\n"+
+    			"testDataCopy1 = code(p,q,r,s:Byte) {\n"+
+    			"  y : Tuple = [p,2,3,4];\n"+
+    			"};\n"+
+    	"");
+    	
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+    	
+    	// be sure we actually load AND store the stuff
+    	idx = findInstrWithInst(instrs, "LI", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 0x0200);
+    	
+    	idx = findInstrWithInst(instrs, "MOVB", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOVB", RegTempOperand.class, CompositePieceOperand.class, "y", 1);
+    	
+    	idx = findInstrWithInst(instrs, "LI", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 0x0300);
+    	
+    	idx = findInstrWithInst(instrs, "MOVB", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOVB", RegTempOperand.class, CompositePieceOperand.class, "y", 2);
+    	
+    	idx = findInstrWithInst(instrs, "LI", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 0x0400);
+    	
+    	idx = findInstrWithInst(instrs, "MOVB", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOVB", RegTempOperand.class, CompositePieceOperand.class, "y", 3);
+    	
+    	idx = findInstrWithSymbol(instrs, ".callerRet", idx);
+    	
+
+	}
+
+	
+	@Test
+	public void testStringCopy1() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"testTupleCopy = code() {\n"+
+    			"  y := \"Hello\";\n"+
+    			"};\n"+
+    	"");
+    	
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+    	
+    	// string is const so use loop to copy
+    	idx = findInstrWithInst(instrs, "LI", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 0x0007);
+    	
+    	idx = findInstrWithInst(instrs, "JMP", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "JMP");
+    	
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegIncOperand.class, RegIncOperand.class);
+    	
+    	idx = findInstrWithInst(instrs, "DECT", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "DECT", RegTempOperand.class);
+    	
+    	idx = findInstrWithInst(instrs, "JCC", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "JCC", CompareOperand.class, CompareOperand.CMP_SGT);
+    	
+    	// now, we need one last copy
+    	idx = findInstrWithInst(instrs, "MOVB", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOVB", RegIndOperand.class, RegIndOperand.class);
+    	
+    	
+
+	}
+
+	@Test
+	public void testClearOdd1() throws Exception {
+		dumpLLVMGen = true;
+		dumpIsel = true;
+    	boolean changed = doOpt(
+    			"testClearOdd1 = code() {\n"+
+    			"  y : Byte[7] = [];\n"+
+    			"};\n"+
+    	"");
+    	
+		assertTrue(changed);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+    	
+    	// clear items
+    	idx = findInstrWithInst(instrs, "CLR", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "CLR", CompositePieceOperand.class, "y", 0);
+    	idx = findInstrWithInst(instrs, "CLR", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "CLR", CompositePieceOperand.class, "y", 2);
+    	idx = findInstrWithInst(instrs, "CLR", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "CLR", CompositePieceOperand.class, "y", 4);
+    	idx = findInstrWithInst(instrs, "SB", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "SB", CompositePieceOperand.class, "y", 6, CompositePieceOperand.class, "y", 6);
+
+	}
+
 
 }
 

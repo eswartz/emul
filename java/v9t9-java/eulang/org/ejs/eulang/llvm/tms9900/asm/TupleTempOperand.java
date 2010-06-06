@@ -13,6 +13,7 @@ import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
@@ -165,6 +166,8 @@ public class TupleTempOperand extends BaseHLOperand {
 			if (op instanceof AsmOperand) {
 				if (!((AsmOperand) op).isConst())
 					return false;
+			} else if (op instanceof NumberOperand) {
+				return true;
 			} else {
 				return false;
 			}
