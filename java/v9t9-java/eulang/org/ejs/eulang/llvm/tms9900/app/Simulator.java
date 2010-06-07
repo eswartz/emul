@@ -88,6 +88,7 @@ public class Simulator {
 		HashMap<ISymbol, Short> symbolToAddrMap;
 		TreeMap<Short, ISymbol> addrToSymbolMap;
 		short vrAddr;
+		public int savedRegsSize;
 		
 	}
 	
@@ -1010,21 +1011,36 @@ public class Simulator {
         	
         	StackFrame stackFrame = routine.getStackFrame();
         	
+        	boolean usesFP = stackFrame.requiresFramePointer();
+        	
         	int theSP = target.getSP();
-        	int theFP = target.getFP();
-        	
         	short SP = readRegister(theSP);
-        	short FP = readRegister(theFP);
-        	
-        	short savedRegsSize = 4 + 0;// R11 and FP
-        	
-        	SP -= savedRegsSize;		
-        	
-        	memory.writeWord(SP, FP);
-        	memory.writeWord(SP+2, readRegister(11));
-        	FP = SP;
-        	
-        	writeRegister(theFP, FP);
+        	short basePtr;
+        	if (usesFP) {
+	        	int theFP = target.getFP();
+	        	
+	        	short FP = readRegister(theFP);
+	        	
+	        	frame.savedRegsSize = 4 + 0;// R11 and FP
+	        	
+	        	SP -= frame.savedRegsSize;		
+	        	
+	        	memory.writeWord(SP, FP);
+	        	memory.writeWord(SP+2, readRegister(11));
+	        	FP = SP;
+	        	
+	        	writeRegister(theFP, FP);
+	        	
+	        	basePtr = FP;
+        	} else {
+	        	
+        		frame.savedRegsSize = 2 + 0;// R11
+	        	
+	        	SP -= frame.savedRegsSize;		
+	        	
+	        	memory.writeWord(SP, readRegister(11));
+	        	basePtr = SP;
+        	}
         	
         	int frameSize = stackFrame.getFrameSize();
         	SP -= frameSize;
@@ -1045,10 +1061,10 @@ public class Simulator {
         		else if (local instanceof StackLocal) {
         			if (((StackLocal)local).getOffset() < 0) {
         				// our local
-        				addr = (short) (((StackLocal) local).getOffset() + FP);
+        				addr = (short) (((StackLocal) local).getOffset() + basePtr);
         			} else {
         				// from caller
-        				addr = (short) (((StackLocal) local).getOffset() + FP + savedRegsSize);
+        				addr = (short) (((StackLocal) local).getOffset() + basePtr + frame.savedRegsSize);
         			}
         		}
         		else {
@@ -1077,22 +1093,30 @@ public class Simulator {
         
         case InstrSelection.Pepilog: {
         	int theSP = target.getSP();
-        	int theFP = target.getFP();
-        	
         	short SP = readRegister(theSP);
-        	short FP = readRegister(theFP);
-        	
-        	SP = FP;
-        	FP = memory.readWord(SP); SP += 2;
-        	short ret = memory.readWord(SP);
-        	writeRegister(11, ret); SP += 2;
-        	writeRegister(theSP, SP);
-        	writeRegister(theFP, FP);
-        	
-        	Frame frame = stackFrames.pop();
 
-        	// save any register args
-            StackFrame stackFrame = frame.routine.getStackFrame();
+        	Frame frame = stackFrames.pop();
+        	StackFrame stackFrame = frame.routine.getStackFrame();
+			boolean usesFP = stackFrame.requiresFramePointer();
+        	
+        	if (usesFP) {
+	        	int theFP = target.getFP();
+	        	short FP = readRegister(theFP);
+	        	
+	        	SP = FP;
+	        	FP = memory.readWord(SP); SP += 2;
+	        	short ret = memory.readWord(SP);
+	        	writeRegister(11, ret); SP += 2;
+	        	writeRegister(theSP, SP);
+	        	writeRegister(theFP, FP);
+        	} else {
+	        	SP += stackFrame.getFrameSize();
+	        	short ret = memory.readWord(SP);
+	        	writeRegister(11, ret); SP += 2;
+	        	writeRegister(theSP, SP);
+        	}
+
+        	// save any register returns
             for (ISymbol sym : ins.getSources()) {
             	ILocal local = stackFrame.getLocal(sym);
         		if (local instanceof RegisterLocal) {

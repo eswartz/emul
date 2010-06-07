@@ -1061,6 +1061,14 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		routine.setHasBlCalls(true);
 		
+		// clean up the stack
+		if (stackSpace == 1 || stackSpace == 2) {
+			emitInstr(AsmInstruction.create(Iinct, new RegisterOperand(sp)));
+		} else if (stackSpace > 2) {
+			emitInstr(AsmInstruction.create(Iai, new RegisterOperand(sp), new NumberOperand(stackSpace)));
+		}
+		
+		
 		// handle the return value
 		LLOperand result = ((LLAssignInstr) instr).getResult();
 		for (int i = 0; i < retLocs.length; i++) {
