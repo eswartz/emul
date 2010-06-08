@@ -202,7 +202,7 @@ const char * errno_to_str(int err) {
     case ERR_INV_DWARF:         return "Error reading DWARF data";
     case ERR_UNSUPPORTED:       return "Unsupported command";
     case ERR_CHANNEL_CLOSED:    return "Channel closed";
-    case ERR_COMMAND_CANCELLED: return "Command cancelled";
+    case ERR_COMMAND_CANCELLED: return "Command canceled";
     case ERR_UNKNOWN_PEER:      return "Unknown peer ID";
     case ERR_INV_DATA_SIZE:     return "Invalid data size";
     case ERR_INV_DATA_TYPE:     return "Invalid data type";
