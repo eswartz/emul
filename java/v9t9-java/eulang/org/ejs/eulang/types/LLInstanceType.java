@@ -109,6 +109,8 @@ public class LLInstanceType extends BaseLLAggregateType {
 
 	@Override
 	public boolean isCompatibleWith(LLType target) {
+		if (this == target)
+			return true;
 		if (target != null) {
 			boolean equal = getSymbol().getUniqueName().equals(target.getName());
 			if (!equal && target instanceof LLDataType) {

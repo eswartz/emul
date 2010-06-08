@@ -496,7 +496,10 @@ abstract public class AstNode implements IAstNode {
 			if (typedType != null) {
 				LLType noGeneric = typedType.substitute(typeEngine, varType, type);
 				if (noGeneric != typedType) {
+					boolean wasFixed = typed.isTypeFixed();
+					typed.setTypeFixed(false);
 					typed.setType(noGeneric);
+					typed.setTypeFixed(wasFixed);
 					changed = true;
 				}
 			}
@@ -518,4 +521,20 @@ abstract public class AstNode implements IAstNode {
 		return changed;
 	}
 
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstTypedExpr#simplify(org.ejs.eulang.ast.TypeEngine)
+	 */
+	@Override
+	public IAstNode simplify(TypeEngine engine) {
+		IAstNode[] kids = getChildren();
+		for (int i = 0; i < kids.length; i++) {
+			IAstNode simpl = kids[i].simplify(engine);
+			if (simpl != kids[i]) {
+				replaceChild(kids[i], simpl);
+			}
+		}
+		return this;
+	}
+	
 }

@@ -126,5 +126,18 @@ public interface IAstNode {
 	void validateChildTypes(TypeEngine typeEngine) throws TypeException;
 	
 	void uniquifyIds();
+	
+    /** 
+     * Get a simplified version of the expression, by removing
+     * meaningless nodes and attempting to replace constant operations 
+     * with literal values or simpler variants.
+     * <p>
+     * This does NOT necessarily return a unique IAstNode!
+     * 
+     * @return IAstNode
+     */
+    public IAstNode simplify(TypeEngine engine);
+    
+
 }
 

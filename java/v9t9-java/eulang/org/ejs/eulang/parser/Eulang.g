@@ -78,6 +78,7 @@ tokens {
   DEREF;
   ADDRREF;
   ADDROF;
+  SIZEOF;
   
   INITEXPR;
   INITLIST;
@@ -545,6 +546,7 @@ unary:  MINUS u=unary -> ^(NEG $u )
       | PLUSPLUS a=lhs   -> ^(PREINC $a)
       | MINUSMINUS a=lhs -> ^(PREDEC $a)
       |  AMP lhs                        -> ^(ADDROF lhs)
+      | SIZEOF atom       -> ^(SIZEOF atom)
 ;
 
 lhs :
@@ -552,6 +554,7 @@ lhs :
        idExpr                          -> idExpr
     |   ( tuple ) => tuple                          -> tuple
     |   NUMBER                          -> ^(LIT NUMBER)
+    |   CHAR_LITERAL                  -> ^(LIT CHAR_LITERAL)
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
     |   LPAREN a1=assignExpr RPAREN               -> $a1
    )  
@@ -736,6 +739,8 @@ NIL: 'nil';
 WITH: 'with';
 AS: 'as';
 END: 'end';
+
+SIZEOF: 'sizeof';
 
 //
 //  Numbers

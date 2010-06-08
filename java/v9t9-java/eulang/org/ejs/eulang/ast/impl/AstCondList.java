@@ -159,7 +159,7 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
-	public IAstTypedExpr simplify(TypeEngine engine) {
+	public IAstNode simplify(TypeEngine engine) {
 		IAstNodeList<IAstCondExpr> newCondList = new AstNodeList<IAstCondExpr>(IAstCondExpr.class);
 		newCondList.setSourceRef(condList.getSourceRef());
 		boolean changed = false;

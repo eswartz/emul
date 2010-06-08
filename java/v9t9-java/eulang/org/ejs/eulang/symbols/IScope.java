@@ -124,5 +124,12 @@ public interface IScope extends Iterable<ISymbol> {
 
 	String getUniqueName();
 
+	/**
+	 * Get a symbol by id
+	 * @param number
+	 * @return
+	 */
+	public ISymbol get(int number);
+
 
 }

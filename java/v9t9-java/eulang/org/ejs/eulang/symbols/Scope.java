@@ -305,4 +305,14 @@ public abstract class Scope implements IScope {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.symbols.IScope#get(int)
+	 */
+	@Override
+	public ISymbol get(int number) {
+		for (ISymbol sym : entries.values())
+			if (sym.getNumber() == number)
+				return sym;
+		return null;
+	}
 }

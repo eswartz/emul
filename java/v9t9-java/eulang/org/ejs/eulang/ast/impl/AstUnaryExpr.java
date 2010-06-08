@@ -100,8 +100,8 @@ public class AstUnaryExpr extends AstTypedExpr implements
         return false;
     }
 
-    public IAstTypedExpr simplify(TypeEngine typeEngine) {
-    	IAstTypedExpr simExpr = expr.simplify(typeEngine);
+    public IAstNode simplify(TypeEngine typeEngine) {
+    	IAstTypedExpr simExpr = (IAstTypedExpr) expr.simplify(typeEngine);
     	
     	if (simExpr instanceof IAstLitExpr) {
     		LLConstOp val = oper.evaluate(getType(), (IAstLitExpr) simExpr);

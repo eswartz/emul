@@ -144,7 +144,7 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
         dirty = true;
     }
 
-    public IAstTypedExpr simplify(TypeEngine typeEngine) {
+    public IAstNode simplify(TypeEngine typeEngine) {
 		if (expr instanceof IAstLitExpr) {
 			IAstLitExpr lit = typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
 			if (lit != null)

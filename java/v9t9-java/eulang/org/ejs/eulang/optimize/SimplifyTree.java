@@ -3,7 +3,10 @@
  */
 package org.ejs.eulang.optimize;
 
+import java.util.Collection;
+
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 
@@ -30,7 +33,14 @@ public class SimplifyTree {
 	public boolean simplify(IAstNode node) {
 
 		boolean changed = false;
-		for (IAstNode kid : node.getChildren()) {
+		IAstNode[] children;
+		if (node instanceof IAstDefineStmt) {
+			Collection<IAstTypedExpr> c = ((IAstDefineStmt) node).getConcreteInstances();
+			children = (IAstNode[]) c.toArray(new IAstNode[c.size()]);
+		}
+		else
+			children = node.getChildren();
+		for (IAstNode kid : children) {
 			changed |= simplify(kid);
 		}
 		
@@ -43,14 +53,9 @@ public class SimplifyTree {
 	}
 
 	private IAstNode doSimplify(IAstNode node) {
-		if (!(node instanceof IAstTypedExpr)) 
-			return null;
-		
-		IAstTypedExpr expr = (IAstTypedExpr) node;
-		
 		// change cast of literal to casted literal
-		IAstNode simple = expr.simplify(typeEngine);
-		if (simple != expr) {
+		IAstNode simple = node.simplify(typeEngine);
+		if (simple != node) {
 			return simple;
 		}
 		

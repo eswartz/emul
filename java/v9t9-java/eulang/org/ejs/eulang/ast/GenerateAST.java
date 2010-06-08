@@ -58,6 +58,7 @@ import org.ejs.eulang.ast.impl.AstPrototype;
 import org.ejs.eulang.ast.impl.AstRefType;
 import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
+import org.ejs.eulang.ast.impl.AstSizeOfExpr;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
 import org.ejs.eulang.ast.impl.AstStringLitExpr;
@@ -495,6 +496,8 @@ public class GenerateAST {
 			 */
 		case EulangParser.ADDROF:
 			return constructAddrOf(tree);
+		case EulangParser.SIZEOF:
+			return constructSizeOf(tree);
 
 		case EulangParser.INITLIST:
 			return constructInitList(tree);
@@ -786,11 +789,15 @@ public class GenerateAST {
 			throws GenerateException {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
-		/*
-		 * if (expr instanceof IAstDerefExpr) { expr = ((IAstDerefExpr)
-		 * expr).getExpr(); expr.setParent(null); }
-		 */
 		IAstAddrOfExpr addr = new AstAddrOfExpr(expr);
+		getSource(tree, addr);
+		return addr;
+	}
+	private IAstTypedExpr constructSizeOf(Tree tree)
+	throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
+				IAstTypedExpr.class);
+		IAstSizeOfExpr addr = new AstSizeOfExpr(expr);
 		getSource(tree, addr);
 		return addr;
 	}
@@ -847,7 +854,7 @@ public class GenerateAST {
 		} else {
 			IAstTypedExpr indexExpr = checkConstruct(tree.getChild(1),
 					IAstTypedExpr.class);
-			indexExpr = indexExpr.simplify(typeEngine);
+			indexExpr = (IAstTypedExpr) indexExpr.simplify(typeEngine);
 			if (!(indexExpr instanceof IAstIntLitExpr))
 				throw new GenerateException(tree.getChild(1),
 						"an index expression must be a compile-time constant");

@@ -141,9 +141,9 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	        
 	}
 	@Override
-    public IAstTypedExpr simplify(TypeEngine typeEngine) {
-        IAstTypedExpr newLeft = left.simplify(typeEngine);
-        IAstTypedExpr newRight = right.simplify(typeEngine);
+    public IAstNode simplify(TypeEngine typeEngine) {
+        IAstTypedExpr newLeft = (IAstTypedExpr) left.simplify(typeEngine);
+        IAstTypedExpr newRight = (IAstTypedExpr) right.simplify(typeEngine);
         
         // it is simplifiable?
         if (newLeft instanceof IAstLitExpr

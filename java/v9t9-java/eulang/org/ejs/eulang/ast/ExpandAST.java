@@ -629,14 +629,18 @@ public class ExpandAST {
 			copy.uniquifyIds();
 			
 			try {
-				// if a slot refers to a type, directly replace the type
-				if (root.getParent() instanceof IAstNamedType)
-					root.getParent().getParent().replaceChild(root.getParent(), copy);
-				else
-					root.getParent().replaceChild(root, copy);
+				root.getParent().replaceChild(root, copy);
 			} catch (ClassCastException e) {
-				throw new ASTException(replacement, "cannot macro-substitute an argument of this syntax type in place of " + symbol.getName());
-			}
+				// if a slot refers to a type, directly replace the type
+				try {
+					if (root.getParent() instanceof IAstNamedType)
+						root.getParent().getParent().replaceChild(root.getParent(), copy);
+					else
+						throw e;
+				} catch (ClassCastException e2) {
+					throw new ASTException(replacement, "cannot macro-substitute an argument of this syntax type in place of " + symbol.getName());
+				}
+			}	
 		} 
 		
 	}

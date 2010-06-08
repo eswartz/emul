@@ -4,11 +4,10 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstAddrRefExpr;
-import org.ejs.eulang.ast.IAstDerefExpr;
+import org.ejs.eulang.ast.IAstIntLitExpr;
 import org.ejs.eulang.ast.IAstNode;
+import org.ejs.eulang.ast.IAstSizeOfExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
 
@@ -16,14 +15,14 @@ import org.ejs.eulang.types.TypeException;
  * @author ejs
  *
  */
-public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
+public class AstSizeOfExpr extends AstTypedExpr implements IAstSizeOfExpr {
 
-	private IAstTypedExpr expr;
+	private IAstTypedExpr node;
 
 	/**
 	 * @param type
 	 */
-	public AstAddrRefExpr(IAstTypedExpr expr) {
+	public AstSizeOfExpr(IAstTypedExpr expr) {
 		setExpr(expr);
 	}
 
@@ -31,15 +30,15 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 * @see org.ejs.eulang.ast.IAstNode#copy()
 	 */
 	@Override
-	public IAstAddrRefExpr copy() {
-		return fixup(this, new AstAddrRefExpr(doCopy(expr)));
+	public IAstSizeOfExpr copy() {
+		return fixup(this, new AstSizeOfExpr(doCopy(node)));
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
+		result = prime * result + ((node == null) ? 0 : node.hashCode());
 		return result;
 	}
 
@@ -52,11 +51,11 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AstAddrRefExpr other = (AstAddrRefExpr) obj;
-		if (expr == null) {
-			if (other.expr != null)
+		AstSizeOfExpr other = (AstSizeOfExpr) obj;
+		if (node == null) {
+			if (other.node != null)
 				return false;
-		} else if (!expr.equals(other.expr))
+		} else if (!node.equals(other.node))
 			return false;
 		return true;
 	}
@@ -67,7 +66,7 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 */
 	@Override
 	public String toString() {
-		return typedString("ADDRREF");
+		return typedString("SIZEOF");
 	}
 	
 	/* (non-Javadoc)
@@ -75,7 +74,7 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 */
 	@Override
 	public IAstNode[] getChildren() {
-		return new IAstNode[] { expr };
+		return new IAstNode[] { node };
 	}
 	
 	
@@ -84,7 +83,7 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 */
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
-		if (existing == expr)
+		if (existing == node)
 			setExpr((IAstTypedExpr) another);
 		else
 			throw new IllegalArgumentException();
@@ -95,14 +94,14 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 */
 	@Override
 	public void setExpr(IAstTypedExpr expr) {
-		this.expr = reparent(this.expr, expr);
+		this.node = reparent(this.node, expr);
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstType#getSymbol()
 	 */
 	@Override
 	public IAstTypedExpr getExpr() {
-		return expr;
+		return node;
 	}
 	
 	/* (non-Javadoc)
@@ -113,20 +112,7 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 			throws TypeException {
 		boolean changed = false;
 		
-		// the type is fixed to be the pointer-to the dereferenced child.
-		if (canInferTypeFrom(expr)) {
-			IAstTypedExpr theExpr = expr;
-			LLType child = typeEngine.getBaseType(expr.getType());
-			do {
-				child = typeEngine.getPointerType(child);
-				if (theExpr instanceof IAstAddrRefExpr)
-					theExpr = ((IAstAddrRefExpr) theExpr).getExpr();
-				else
-					break;
-			}
-			while (true);
-			changed |= updateType(this, child);
-		}
+		changed |= updateType(this, typeEngine.PTRDIFF);
 		
 		return changed;
 	}
@@ -136,22 +122,27 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
-		if (getType() != null && getType().isComplete() && expr.getType() != null) {
-			if (!expr.getType().equals(getType().getSubType())
-					&& !expr.getType().equals(getType()))
-				throw new TypeException(expr, "pointer base type does not match in parent");
+		if (getType() == null || !getType().isCompatibleWith(typeEngine.PTRDIFF)) {
+			throw new TypeException(this, "sizeof should have int type");
+		}
+		if (node.getType() == null || !node.getType().isComplete()) {
+			throw new TypeException(this, "cannot determine type of expression in sizeof");
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
 	public IAstNode simplify(TypeEngine engine) {
-		if (expr instanceof IAstDerefExpr) {
-			return (IAstTypedExpr) ((IAstDerefExpr) expr).getExpr().simplify(engine).copy();
+		IAstTypedExpr simpl = (IAstTypedExpr) node.simplify(engine);
+		if (simpl.getType() == null || !simpl.getType().isComplete()) {
+			setExpr(simpl);
+			return this;
 		}
-		return super.simplify(engine);
+		IAstIntLitExpr sizeof = new AstIntLitExpr(toString(), getType(), 
+				node.getType().getBits() / 8);
+		sizeof.setSourceRef(getSourceRef());
+		return sizeof;
 	}
-
 }

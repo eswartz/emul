@@ -40,7 +40,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	private IAstNodeList<IAstTypedExpr> bodyList;
 	//private Map<LLType, IAstTypedExpr> typedBodyMap = new HashMap<LLType, IAstTypedExpr>();
 	
-	private Map<Integer, List<IAstTypedExpr>> instanceIdMap = new LinkedHashMap<Integer, List<IAstTypedExpr>>();
 	private Map<LLType, List<ISymbol>> instanceTypeMap = new LinkedHashMap<LLType, List<ISymbol>>();
 	private boolean generic;
 	private Map<LLType, Map<List<IAstTypedExpr>, ISymbol>> instanceMap = 
@@ -59,10 +58,44 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	 */
 	@Override
 	public IAstDefineStmt copy() {
-		// TODO: copy expansions
-		return (IAstDefineStmt) fixupScope(new AstDefineStmt(doCopy(id), isGeneric(), 
+		AstDefineStmt def = (AstDefineStmt) fixupScope(new AstDefineStmt(doCopy(id), isGeneric(), 
 				scope.newInstance(getCopyScope()),
 				doCopy(bodyList)));
+
+		// copy expansions (#1)
+		for (Map.Entry<LLType, Map<List<IAstTypedExpr>, ISymbol>> entry : instanceMap.entrySet()) {
+			Map<List<IAstTypedExpr>, ISymbol> mapCpy = new HashMap<List<IAstTypedExpr>, ISymbol>();
+			for (Map.Entry<List<IAstTypedExpr>, ISymbol> mEntry : entry.getValue().entrySet()) {
+				List<IAstTypedExpr> params = new ArrayList<IAstTypedExpr>();
+				for (IAstTypedExpr p : mEntry.getKey())
+					params.add((IAstTypedExpr) p.copy());
+				ISymbol msym = def.scope.getParent().getParent().get(mEntry.getValue().getNumber());
+				if (msym != null) {
+					IAstNode edef = mEntry.getValue().getDefinition();
+					if (edef != null)
+						msym.setDefinition(edef.copy());
+					mapCpy.put(params, msym);
+				}
+			}
+			def.instanceMap.put(entry.getKey(), mapCpy);
+		}
+		
+		// copy expansions (#2)
+		for (Map.Entry<LLType, List<ISymbol>> entry : instanceTypeMap.entrySet()) {
+			List<ISymbol> syms = new ArrayList<ISymbol>();
+			for (ISymbol p : entry.getValue()) {
+				ISymbol msym = def.scope.getParent().getParent().get(p.getNumber());
+				if (msym != null) {
+					IAstNode edef = p.getDefinition();
+					if (edef != null)
+						msym.setDefinition(edef.copy());
+					syms.add(msym);
+				}
+			}
+			def.instanceTypeMap.put(entry.getKey(), syms);
+		}
+
+		return def;
 	}
 
 	
@@ -128,9 +161,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 	@Override
 	public IAstNode[] getDumpChildren() {
 		Collection<IAstNode> exprs = new ArrayList<IAstNode>(bodyList.list()); 
-		for (List<IAstTypedExpr> alist : instanceIdMap.values()) {
-			exprs.addAll(alist);
-		}
 		for (List<ISymbol> alist : instanceTypeMap.values()) {
 			for (ISymbol sym : alist) {
 				exprs.add(new AstName(sym.getUniqueName()));
@@ -402,9 +432,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 			if (expr.getType() != null && expr.getType().isComplete() && !expr.getType().isGeneric())
 				list.add(expr);
 		}
-		for (List<IAstTypedExpr> alist : instanceIdMap.values()) {
-			list.addAll(alist);
-		}
 		for (List<ISymbol> alist : instanceTypeMap.values()) {
 			for (ISymbol sym : alist) {
 				IAstTypedExpr definition = (IAstTypedExpr) sym.getDefinition();
@@ -419,9 +446,6 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		Set<IAstTypedExpr> list = new HashSet<IAstTypedExpr>();
 		for (IAstTypedExpr expr : bodyList.list()) {
 			list.add(expr);
-		}
-		for (List<IAstTypedExpr> alist : instanceIdMap.values()) {
-			list.addAll(alist);
 		}
 		for (List<ISymbol> alist : instanceTypeMap.values()) {
 			for (ISymbol sym : alist) {

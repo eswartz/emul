@@ -1,11 +1,11 @@
-<<< dynamic linked list
+<<< dynamic linked list #1
 brk := 0xa000;
 _new = code(s:Int) {
     ret : Int;
     ret, brk = brk, (brk+((s+1)&~1));
 };
 new = [T] code( =>T^) {
-    _new(16){T^};
+    _new(sizeof(T)){T^};
 };
 
 List = [T] data {   // 10
@@ -17,6 +17,43 @@ makeList = code () {
     head, prev : List<Int>^ = nil, nil;
     for x in 100 do {
         node := new<List<Int> >();
+        node.node = x;
+        if prev != nil then prev.next = node else head = node; // 20
+        prev = node;
+    };
+    head;
+};
+
+main = code() {
+    list := makeList();
+    c : Int = 0;
+    n := list; while n != nil do c, n = c+1, n.next;
+    0xf000{Int^}^ = c;
+};
+===
+call main
+assert 0xf000 == 100
+>>>
+
+<<< dynamic linked list #2
+brk := 0xa000;
+_new = code(s:Int) {
+    ret : Int;
+    ret, brk = brk, (brk+((s+1)&~1));
+};
+new = macro(macro T) {
+    _new(sizeof(T)){T^};
+};
+
+List = [T] data {   // 10
+    node : T;
+    next : List^;
+};
+
+makeList = code () {
+    head, prev : List<Int>^ = nil, nil;
+    for x in 100 do {
+        node := new(List<Int>);
         node.node = x;
         if prev != nil then prev.next = node else head = node; // 20
         prev = node;
