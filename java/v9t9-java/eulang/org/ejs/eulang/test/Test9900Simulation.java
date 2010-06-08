@@ -143,9 +143,12 @@ public class Test9900Simulation  {
 					
 					final String symbol = tokens[idx++];
 					final boolean isReg = symbol.matches("R\\d+");
+					final boolean isAddr = symbol.matches("0x[0-9A-Fa-f]+");
 					
 					int offs_ = 0;
-					if (!isReg) {
+					if (isAddr) {
+						offs_ = parseInt(symbol);
+					} else if (!isReg) {
 						if ("+".equals(tokens[idx])) {
 							idx++;
 							offs_ = parseInt(tokens[idx++]);
@@ -165,7 +168,10 @@ public class Test9900Simulation  {
 							public void run(Simulator sim)
 									throws Exception {
 								short addr;
-								if (!isReg) {
+								if (isAddr) {
+									addr = (short) offs;
+								}
+								else if (!isReg) {
 									DataBlock dataBlock = sim.getBuildOutput().lookupDataBlock(symbol);
 									assertNotNull(dataBlock);
 									addr = (short) (sim.getAddress(dataBlock.getName()) + offs);
@@ -197,7 +203,10 @@ public class Test9900Simulation  {
 							@Override
 							public void run(Simulator sim) throws Exception {
 								short addr;
-								if (!isReg) {
+								if (isAddr) {
+									addr = (short) offs;
+								}
+								else if (!isReg) {
 									DataBlock dataBlock = sim.getBuildOutput().lookupDataBlock(symbol);
 									assertNotNull("Failed to find data: " + symbol, dataBlock);
 									addr = (short) (sim.getAddress(dataBlock.getName()) + offs);

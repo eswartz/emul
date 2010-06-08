@@ -203,7 +203,7 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 					right = new LLConstOp(right.getType(), 0 - ((LLConstOp) right).getValue().longValue());
 				} else {
 					LLTempOp neg = currentTarget.newTemp(right.getType());
-					currentTarget.emit(new LLBinaryInstr("sub", neg, neg.getType(), new LLConstOp(0), right));
+					currentTarget.emit(new LLBinaryInstr("sub", neg, neg.getType(), new LLConstOp(neg.getType(), 0), right));
 					right = neg;
 				}
 			}

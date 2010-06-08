@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.Arrays;
+
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
@@ -119,7 +121,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 			newType = (LLCodeType) getType();
 			if (retType != null
 					&& retType.isMoreComplete(newType.getRetType())) {
-				LLType[] types = newType.getTypes();
+				LLType[] types = Arrays.copyOf(newType.getTypes(), newType.getCount());
 				types[0] = retType;
 				newType = (LLCodeType) newType.updateTypes(typeEngine, types);
 			}

@@ -118,7 +118,7 @@ public class LLRefLocalVariable implements ILLVariable {
 		target.emit(new LLAllocaInstr(tempOp, symbol.getType()));
 		if (address == null) {
 			LLOperand nullTemp = target.newTemp(symbol.getType());
-			address = new LLConstOp(0);
+			address = new LLConstOp(target.getTypeEngine().INT, 0);
 			target.emit(new LLCastInstr(nullTemp, ECast.PTRTOINT, target.getTarget().getTypeEngine().INT, address,
 					symbol.getType()));
 			address = nullTemp;

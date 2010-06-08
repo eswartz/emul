@@ -230,7 +230,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 			IAstTypedExpr theSymbol = getSymbolExprs().list().get(i);
 			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
 			LLType symType = ((IAstTypedNode) theSymbol).getType();
-			if (symType != null && symType.isComplete()) {
+			if (i == 0 && symType != null && symType.isComplete()) {
 				if (!thisType.equals(symType)) {
 					throw new TypeException(theSymbol, "cannot reconcile assignment type with context");
 				}

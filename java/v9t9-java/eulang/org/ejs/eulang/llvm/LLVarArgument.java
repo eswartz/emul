@@ -100,7 +100,7 @@ public class LLVarArgument implements ILLVariable {
 		target.emit(new LLAllocaInstr(tempOp, addrSymbol.getType().getSubType()));
 		if (address == null) {
 			LLOperand nullTemp = target.newTemp(addrSymbol.getType().getSubType());
-			address = new LLConstOp(0);
+			address = new LLConstOp(target.getTypeEngine().INT, 0);
 			target.emit(new LLCastInstr(nullTemp, ECast.PTRTOINT, target.getTarget().getTypeEngine().INT, address,
 					addrSymbol.getType().getSubType()));
 			address = nullTemp;

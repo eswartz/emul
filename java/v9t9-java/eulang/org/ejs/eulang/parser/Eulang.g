@@ -551,6 +551,7 @@ lhs :
   ( 
        idExpr                          -> idExpr
     |   ( tuple ) => tuple                          -> tuple
+    |   NUMBER                          -> ^(LIT NUMBER)
     |   STRING_LITERAL                -> ^(LIT STRING_LITERAL)
     |   LPAREN a1=assignExpr RPAREN               -> $a1
    )  

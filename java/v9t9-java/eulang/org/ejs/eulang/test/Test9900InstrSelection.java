@@ -1482,6 +1482,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testSelfRef3() throws Exception {
+    	dumpIsel = true;
     	doIsel(
     			"Class = data {\n"+
     			"  draw:code(this:Class; count:Int => nil);\n"+

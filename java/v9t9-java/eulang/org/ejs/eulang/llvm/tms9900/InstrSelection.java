@@ -50,6 +50,7 @@ import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
 import org.ejs.eulang.llvm.ops.LLBitcastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.llvm.ops.LLNullOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLStringLitOp;
 import org.ejs.eulang.llvm.ops.LLStructOp;
@@ -1603,7 +1604,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			AssemblerOperand op = generateOperand(bop.getValue());
 			return op;
 		}
-		if (operand instanceof LLZeroInitOp) {
+		if (operand instanceof LLZeroInitOp || operand instanceof LLNullOp) {
 			if (isIntOp(operand)) {
 				return new NumOperand(0);
 			}

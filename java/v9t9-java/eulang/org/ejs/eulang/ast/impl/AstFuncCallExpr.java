@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.Arrays;
+
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
@@ -198,7 +200,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 			
 			if (referencedType != null) {
 				// fill in any holes
-				LLType[] argTypes = argCodeType.getTypes();
+				LLType[] argTypes = Arrays.copyOf(argCodeType.getTypes(), argCodeType.getCount());
 				LLType[] refTypes = referencedType.getTypes();
 				if (argTypes.length == refTypes.length) {
 					for (int i = 0; i < argTypes.length; i++) {

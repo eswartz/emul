@@ -60,6 +60,16 @@ public class InstrSelectionTable {
 				new InstrSelection.As[] { InstrSelection.As.GEN_R },
 				new InstrSelection.DoRes( 0, -1, 0 )
 		),
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "inttoptr", 
+				new InstrSelection.If[] { InstrSelection.If.PASS },
+				new InstrSelection.As[] { InstrSelection.As.GEN_R },
+				new InstrSelection.DoRes( 0, -1, 0 )
+		),
+		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16|InstrSelection.I8|InstrSelection.I1, "ptrtoint", 
+				new InstrSelection.If[] { InstrSelection.If.PASS },
+				new InstrSelection.As[] { InstrSelection.As.GEN_R },
+				new InstrSelection.DoRes( 0, -1, 0 )
+		),
 		
 		new InstrSelection.IPattern( BasicType.INTEGRAL, InstrSelection.I16, "trunc", 
 				new InstrSelection.If[] { 

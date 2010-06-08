@@ -2079,7 +2079,7 @@ public class LLVMGenerator {
 				return new LLConstOp(expr.getType(), 0);
 			else if (expr.getType().getBasicType() == BasicType.POINTER)
 				return generateCast(expr, expr.getType(), typeEngine.INT,
-						new LLConstOp(0), false);
+						new LLConstOp(typeEngine.PTRDIFF, 0), false);
 			else
 				throw new ASTException(expr, "cannot generate nil");
 		}

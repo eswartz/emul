@@ -319,15 +319,15 @@ public class TypeEngine {
 	 * @return one of the types, or <code>null</code>
 	 */
 	public LLType getPromotionType(LLType a, LLType b) {
-		if (a.equals(b))
-			return a;
-		
 		//a = getBaseType(a);
 		//b = getBaseType(b);
 		
 		if (a == null || b == null)
 			return null;
-		
+
+		if (a.equals(b))
+			return a;
+
 		if (a.getBasicType() == BasicType.INTEGRAL && b.getBasicType() == BasicType.INTEGRAL)
 			return a.getBits() > b.getBits() ? a : b;
 		if (a.getBasicType() == BasicType.FLOATING && b.getBasicType() == BasicType.FLOATING)

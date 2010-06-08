@@ -28,10 +28,19 @@ public class LLSymbolType extends BaseLLType {
 	 * @param subType
 	 */
 	public LLSymbolType(ISymbol symbol) {
-		super(symbol.getScope().getUniqueName() + symbol.getUniqueName(), 1, symbol.getLLVMName(), BasicType.DATA, null);
+		super(symbol.getScope().getUniqueName() + symbol.getUniqueName(), 1, symbol.getLLVMName(), BasicType.VOID, null);
 		this.symbol = symbol;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#getBasicType()
+	 */
+	@Override
+	public BasicType getBasicType() {
+		if (symbol.getType() != null)
+			return symbol.getType().getBasicType();
+		return super.getBasicType();
+	}
 	@Override
 	public int hashCode() {
 		final int prime = 31;
