@@ -83,6 +83,18 @@ extern OutputStream * create_byte_array_output_stream(ByteArrayOutputStream * bu
 extern void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data, size_t * size);
 
 /*
+ * Implementation of an input stream that reads the data from a byte array.
+ */
+typedef struct ByteArrayInputStream {
+    InputStream inp;
+    char * buf;
+    size_t pos;
+    size_t max;
+} ByteArrayInputStream;
+
+extern InputStream * create_byte_array_input_stream(ByteArrayInputStream * buf, char * data, size_t size);
+
+/*
  * Implementation of an input stream that forwards all data being read
  * into an output stream.
  */

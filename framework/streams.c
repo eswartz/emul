@@ -76,6 +76,27 @@ void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data
     buf->pos = 0;
 }
 
+static int read_byte_array_input_stream(InputStream * inp) {
+    ByteArrayInputStream * buf = (ByteArrayInputStream *)((char *)inp - offsetof(ByteArrayInputStream, inp));
+    if (buf->pos >= buf->max) return -1;
+    return ((unsigned char *)buf->buf)[buf->pos++];
+}
+
+static int peek_byte_array_input_stream(InputStream * inp) {
+    ByteArrayInputStream * buf = (ByteArrayInputStream *)((char *)inp - offsetof(ByteArrayInputStream, inp));
+    if (buf->pos >= buf->max) return -1;
+    return ((unsigned char *)buf->buf)[buf->pos];
+}
+
+InputStream * create_byte_array_input_stream(ByteArrayInputStream * buf, char * data, size_t size) {
+    memset(buf, 0, sizeof(ByteArrayInputStream));
+    buf->inp.read = read_byte_array_input_stream;
+    buf->inp.peek = peek_byte_array_input_stream;
+    buf->buf = data;
+    buf->max = size;
+    return &buf->inp;
+}
+
 static int read_forwarding_input_stream(InputStream * inp) {
     ForwardingInputStream * buf = (ForwardingInputStream *)((char *)inp - offsetof(ForwardingInputStream, fwd));
     int ch = read_stream(buf->inp);
