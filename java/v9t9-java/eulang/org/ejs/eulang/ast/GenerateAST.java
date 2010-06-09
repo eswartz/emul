@@ -66,6 +66,7 @@ import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
 import org.ejs.eulang.ast.impl.AstTupleNode;
 import org.ejs.eulang.ast.impl.AstType;
+import org.ejs.eulang.ast.impl.AstTypeOfExpr;
 import org.ejs.eulang.ast.impl.AstUnaryExpr;
 import org.ejs.eulang.ast.impl.AstDerefExpr;
 import org.ejs.eulang.ast.impl.AstWhileExpr;
@@ -498,6 +499,8 @@ public class GenerateAST {
 			return constructAddrOf(tree);
 		case EulangParser.SIZEOF:
 			return constructSizeOf(tree);
+		case EulangParser.TYPEOF:
+			return constructTypeOf(tree);
 
 		case EulangParser.INITLIST:
 			return constructInitList(tree);
@@ -785,19 +788,24 @@ public class GenerateAST {
 		return idExpr;
 	}
 	
-	private IAstTypedExpr constructAddrOf(Tree tree)
-			throws GenerateException {
+	private IAstTypedExpr constructAddrOf(Tree tree) throws GenerateException {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
 		IAstAddrOfExpr addr = new AstAddrOfExpr(expr);
 		getSource(tree, addr);
 		return addr;
 	}
-	private IAstTypedExpr constructSizeOf(Tree tree)
-	throws GenerateException {
+	private IAstTypedExpr constructSizeOf(Tree tree) throws GenerateException {
 		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
 				IAstTypedExpr.class);
 		IAstSizeOfExpr addr = new AstSizeOfExpr(expr);
+		getSource(tree, addr);
+		return addr;
+	}
+	private IAstTypedExpr constructTypeOf(Tree tree) throws GenerateException {
+		IAstTypedExpr expr = checkConstruct(tree.getChild(0),
+				IAstTypedExpr.class);
+		IAstTypeOfExpr addr = new AstTypeOfExpr(expr);
 		getSource(tree, addr);
 		return addr;
 	}

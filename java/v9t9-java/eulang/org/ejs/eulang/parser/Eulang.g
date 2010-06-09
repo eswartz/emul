@@ -79,6 +79,7 @@ tokens {
   ADDRREF;
   ADDROF;
   SIZEOF;
+  TYPEOF;
   
   INITEXPR;
   INITLIST;
@@ -547,6 +548,7 @@ unary:  MINUS u=unary -> ^(NEG $u )
       | MINUSMINUS a=lhs -> ^(PREDEC $a)
       |  AMP lhs                        -> ^(ADDROF lhs)
       | SIZEOF atom       -> ^(SIZEOF atom)
+      | TYPEOF atom       -> ^(TYPEOF atom)
 ;
 
 lhs :
@@ -741,6 +743,7 @@ AS: 'as';
 END: 'end';
 
 SIZEOF: 'sizeof';
+TYPEOF: 'typeof';
 
 //
 //  Numbers

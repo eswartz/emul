@@ -35,6 +35,7 @@ call main
 assert 0xf000 == 100
 >>>
 
+only
 <<< dynamic linked list #2
 brk := 0xa000;
 _new = code(s:Int) {
@@ -53,7 +54,7 @@ List = [T] data {   // 10
 makeList = code () {
     head, prev : List<Int>^ = nil, nil;
     for x in 100 do {
-        node := new(List<Int>);
+        node := new(typeof(head^));
         node.node = x;
         if prev != nil then prev.next = node else head = node; // 20
         prev = node;

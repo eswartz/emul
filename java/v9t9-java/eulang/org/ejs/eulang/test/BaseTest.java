@@ -434,7 +434,7 @@ public class BaseTest {
 			node = expand.expand(messages, node);
 			
 			if (expand.isChanged()) {
-				if (true||dumpExpand || messages.size() > 0) {
+				if (dumpExpand || messages.size() > 0) {
 					System.out.println("After expansion pass " + passes + ":");
 					DumpAST dump = new DumpAST(System.out);
 					node.accept(dump);
