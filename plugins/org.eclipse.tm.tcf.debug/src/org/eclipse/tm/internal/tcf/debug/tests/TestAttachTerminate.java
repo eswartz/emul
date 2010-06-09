@@ -48,7 +48,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
             rc.addListener(this);
             diag.getTestList(new IDiagnostics.DoneGetTestList() {
                 public void doneGetTestList(IToken token, Throwable error, String[] list) {
-                    assert test_suite.isActive(TestAttachTerminate.this);
+                    if (!test_suite.isActive(TestAttachTerminate.this)) return;
                     if (error != null) {
                         exit(error);
                     }

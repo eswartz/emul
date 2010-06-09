@@ -12,10 +12,12 @@ package org.eclipse.tm.internal.tcf.services.remote;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
 
@@ -104,6 +106,32 @@ public class DiagnosticsProxy implements IDiagnostics {
                     }
                 }
                 done.doneEchoFP(token, error, n);
+            }
+        }.token;
+    }
+
+    public IToken echoERR(Throwable err, final DoneEchoERR done) {
+        Map<String,Object> map = null;
+        if (err instanceof IErrorReport) {
+            map = ((IErrorReport)err).getAttributes();
+        }
+        else {
+            map = new HashMap<String,Object>();
+            map.put(IErrorReport.ERROR_TIME, new Long(System.currentTimeMillis()));
+            map.put(IErrorReport.ERROR_CODE, new Integer(IErrorReport.TCF_ERROR_OTHER));
+            map.put(IErrorReport.ERROR_FORMAT, err.getMessage());
+        }
+        return new Command(channel, this, "echoERR", new Object[]{ map }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                Throwable err = null;
+                String str = null;
+                if (error == null) {
+                    assert args.length == 2;
+                    err = toError(args[0]);
+                    str = (String)args[1];
+                }
+                done.doneEchoERR(token, error, err, str);
             }
         }.token;
     }

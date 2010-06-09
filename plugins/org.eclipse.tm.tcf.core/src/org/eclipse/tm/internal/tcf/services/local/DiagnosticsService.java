@@ -11,9 +11,12 @@
 package org.eclipse.tm.internal.tcf.services.local;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.Token;
+import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -45,6 +48,12 @@ public class DiagnosticsService implements IDiagnostics {
                 if (args.length != 1) throw new Exception("Invalid number of arguments");
                 Number n = (Number)args[0];
                 channel.sendResult(token, JSON.toJSONSequence(new Object[]{ n }));
+            }
+            else if (name.equals("echoERR")) {
+                if (args.length != 1) throw new Exception("Invalid number of arguments");
+                @SuppressWarnings("unchecked")
+                Map<String,Object> err = (Map<String,Object>)args[0];
+                channel.sendResult(token, JSON.toJSONSequence(new Object[]{ err, Command.toErrorString(err) }));
             }
             else if (name.equals("getTestList")) {
                 if (args.length != 0) throw new Exception("Invalid number of arguments");
@@ -80,6 +89,21 @@ public class DiagnosticsService implements IDiagnostics {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 done.doneEchoFP(token, null, n);
+            }
+        });
+        return token;
+    }
+
+    public IToken echoERR(final Throwable err, final DoneEchoERR done) {
+        final IToken token = new Token();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                if (err instanceof IErrorReport) {
+                    done.doneEchoERR(token, null, err, Command.toErrorString(((IErrorReport)err).getAttributes()));
+                }
+                else {
+                    done.doneEchoERR(token, null, err, err.getMessage());
+                }
             }
         });
         return token;

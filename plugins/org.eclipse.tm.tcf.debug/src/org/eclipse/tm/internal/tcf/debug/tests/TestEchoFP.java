@@ -18,7 +18,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
 
-public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
+class TestEchoFP implements ITCFTest, IDiagnostics.DoneEchoFP {
 
     private final TCFTestSuite test_suite;
     private final IDiagnostics diag;

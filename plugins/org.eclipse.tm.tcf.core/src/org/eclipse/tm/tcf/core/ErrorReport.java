@@ -15,13 +15,13 @@ import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 
-class ErrorReport extends Exception implements IErrorReport {
+public class ErrorReport extends Exception implements IErrorReport {
 
     private static final long serialVersionUID = 3687543884858739977L;
     private final Map<String,Object> attrs;
 
     @SuppressWarnings("unchecked")
-    ErrorReport(String msg, Map<String,Object> attrs) {
+    public ErrorReport(String msg, Map<String,Object> attrs) {
         super(msg);
         this.attrs = attrs;
         Object caused_by = attrs.get(IErrorReport.ERROR_CAUSED_BY);
@@ -35,7 +35,7 @@ class ErrorReport extends Exception implements IErrorReport {
         }
     }
 
-    ErrorReport(String msg, int code) {
+    public ErrorReport(String msg, int code) {
         super(msg);
         attrs = new HashMap<String,Object>();
         attrs.put(ERROR_CODE, code);

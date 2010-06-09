@@ -72,6 +72,29 @@ public interface IDiagnostics extends IService {
     }
 
     /**
+     * 'echoERR' command result returns same error report that was given as command argument.
+     * The command is used to test remote agent ability to receive and transmit TCF error reports.
+     * @param error - an error object.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken echoERR(Throwable error, DoneEchoERR done);
+
+    /**
+     * Call back interface for 'echoERR' command.
+     */
+    interface DoneEchoERR {
+        /**
+         * Called when 'echoERR' command is done.
+         * @param token - command handle.
+         * @param error - communication error report or null.
+         * @param error_obj - error object, should be equal to the command argument.
+         * @param error_msg - error object converted to a human readable string.
+         */
+        void doneEchoERR(IToken token, Throwable error, Throwable error_obj, String error_msg);
+    }
+
+    /**
      * Get list of test names that are implemented by the service.
      * Clients can request remote peer to run a test from the list.
      * When started, a test performs a predefined set actions.

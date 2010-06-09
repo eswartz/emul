@@ -75,6 +75,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         final String id;
         final String pc;
         final String reason;
+        @SuppressWarnings("unused")
         final Map<String,Object> params;
 
         SuspendedContext(String id, String pc, String reason, Map<String,Object> params) {
@@ -220,7 +221,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private void getTestList() {
         diag.getTestList(new IDiagnostics.DoneGetTestList() {
             public void doneGetTestList(IToken token, Throwable error, String[] list) {
-                assert test_suite.isActive(TestRCBP1.this);
+                if (!test_suite.isActive(TestRCBP1.this)) return;
                 if (error != null) {
                     exit(error);
                 }
