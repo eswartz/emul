@@ -157,6 +157,7 @@ static int readHexChar(InputStream * inp) {
 }
 
 static int read_esc_char(InputStream * inp) {
+    /* TODO: read_esc_char() should return UTF-8 encoded character */
     int ch = read_stream(inp);
     switch (ch) {
     case '"': break;
@@ -186,6 +187,7 @@ int json_read_string(InputStream * inp, char * str, size_t size) {
     if (ch != '"') exception(ERR_JSON_SYNTAX);
     for (;;) {
         ch = read_stream(inp);
+        if (ch < 0) exception(ERR_EOF);
         if (ch == '"') break;
         if (ch == '\\') ch = read_esc_char(inp);
         if (i < size - 1) str[i] = (char)ch;
@@ -209,6 +211,7 @@ char * json_read_alloc_string(InputStream * inp) {
     if (ch != '"') exception(ERR_JSON_SYNTAX);
     for (;;) {
         ch = read_stream(inp);
+        if (ch < 0) exception(ERR_EOF);
         if (ch == '"') break;
         if (ch == '\\') ch = read_esc_char(inp);
         buf_add(ch);
@@ -816,6 +819,15 @@ void json_skip_object(InputStream * inp) {
     skip_object(inp);
 }
 
+static void read_errno_param(InputStream * inp, void * x) {
+    ErrorReport * err = (ErrorReport *)x;
+    if (err->param_cnt >= err->param_max) {
+        err->param_max += 4;
+        err->params = (char **)loc_realloc(err->params, err->param_max * sizeof(char *));
+    }
+    err->params[err->param_cnt++] = json_read_object(inp);
+}
+
 int read_errno(InputStream * inp) {
     int no = 0;
     ErrorReport * err = NULL;
@@ -839,6 +851,9 @@ int read_errno(InputStream * inp) {
             }
             else if (strcmp(name, "Format") == 0) {
                 err->format = json_read_alloc_string(inp);
+            }
+            else if (strcmp(name, "Params") == 0) {
+                json_read_array(inp, read_errno_param, err);
             }
             else {
                 ErrorReportItem * i = (ErrorReportItem *)loc_alloc_zero(sizeof(ErrorReportItem));
@@ -875,6 +890,19 @@ static void write_error_props(OutputStream * out, ErrorReport * rep) {
         json_write_string(out, "Format");
         write_stream(out, ':');
         json_write_string(out, rep->format);
+    }
+
+    if (rep->param_cnt > 0) {
+        int n = 0;
+        write_stream(out, ',');
+        json_write_string(out, "Params");
+        write_stream(out, ':');
+        write_stream(out, '[');
+        for (n = 0; n < rep->param_cnt; n++) {
+            if (n > 0) write_stream(out, ',');
+            write_string(out, rep->params[n]);
+        }
+        write_stream(out, ']');
     }
 
     while (i != NULL) {

@@ -93,6 +93,17 @@ static void command_echo_fp(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+static void command_echo_err(char * token, Channel * c) {
+    int no = read_errno(&c->inp);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, no);
+    json_write_string(&c->out, errno_to_str(no));
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
+}
+
 static void command_get_test_list(char * token, Channel * c) {
     const char * arr = "[]";
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -398,6 +409,7 @@ static void command_dispose_test_stream(char * token, Channel * c) {
 void ini_diagnostics_service(Protocol * proto) {
     add_command_handler(proto, DIAGNOSTICS, "echo", command_echo);
     add_command_handler(proto, DIAGNOSTICS, "echoFP", command_echo_fp);
+    add_command_handler(proto, DIAGNOSTICS, "echoERR", command_echo_err);
     add_command_handler(proto, DIAGNOSTICS, "getTestList", command_get_test_list);
     add_command_handler(proto, DIAGNOSTICS, "runTest", command_run_test);
     add_command_handler(proto, DIAGNOSTICS, "cancelTest", command_cancel_test);

@@ -60,6 +60,9 @@ typedef struct ErrorReportItem {
 typedef struct ErrorReport {
     int code;
     char * format;
+    char ** params;
+    int param_cnt;
+    int param_max;
     uint64_t time_stamp;
     ErrorReportItem * props;
 } ErrorReport;

@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <framework/errors.h>
 #include <framework/events.h>
+#include <framework/exceptions.h>
 #include <framework/streams.h>
 #include <framework/myalloc.h>
 #include <framework/json.h>
@@ -54,6 +55,18 @@ typedef struct ErrorMessage {
 static ErrorMessage msgs[MESSAGE_CNT];
 static int msgs_pos = 0;
 
+static char * msg_buf = NULL;
+static size_t msg_max = 0;
+static size_t msg_len = 0;
+
+static void realloc_msg_buf(void) {
+    assert(is_dispatch_thread());
+    if (msg_max <= msg_len + 128 || msg_max > msg_len + 2048) {
+        msg_max = msg_len + 256;
+        msg_buf = (char *)loc_realloc(msg_buf, msg_max);
+    }
+}
+
 static void release_report(ReportBuffer * report) {
     if (report == NULL) return;
     assert(report->refs > report->gets);
@@ -66,6 +79,10 @@ static void release_report(ReportBuffer * report) {
             loc_free(i->value);
             loc_free(i);
         }
+        while (report->pub.param_cnt > 0) {
+            loc_free(report->pub.params[--report->pub.param_cnt]);
+        }
+        loc_free(report->pub.params);
         loc_free(report->pub.format);
         loc_free(report);
     }
@@ -88,24 +105,30 @@ static ErrorMessage * alloc_msg(int source) {
 #ifdef WIN32
 
 static char * system_strerror(DWORD errno_win32) {
-    static char msg[512];
     WCHAR * buf = NULL;
     assert(is_dispatch_thread());
-    if (!FormatMessageW(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS |
-        FORMAT_MESSAGE_MAX_WIDTH_MASK,
-        NULL,
-        errno_win32,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
-        (LPWSTR)&buf, 0, NULL) ||
-        !WideCharToMultiByte(CP_UTF8, 0, buf, -1, msg, sizeof(msg), NULL, NULL))
-    {
-        snprintf(msg, sizeof(msg), "System Error Code %lu", (unsigned long)errno_win32);
+    msg_len = 0;
+    if (FormatMessageW(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS |
+            FORMAT_MESSAGE_MAX_WIDTH_MASK,
+            NULL,
+            errno_win32,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
+            (LPWSTR)&buf, 0, NULL)) {
+        msg_len = WideCharToMultiByte(CP_UTF8, 0, buf, -1, NULL, 0, NULL, NULL);
+        if (msg_len > 0) {
+            realloc_msg_buf();
+            msg_len = WideCharToMultiByte(CP_UTF8, 0, buf, -1, msg_buf, msg_max, NULL, NULL);
+        }
+    }
+    if (msg_len == 0) {
+        realloc_msg_buf();
+        msg_len = snprintf(msg_buf, msg_max, "System Error Code %lu", (unsigned long)errno_win32);
     }
     if (buf != NULL) LocalFree(buf);
-    return msg;
+    return msg_buf;
 }
 
 typedef struct EventArgs {
@@ -181,7 +204,113 @@ static char * system_strerror(int err) {
 
 #endif
 
+static void append_format_parameter(char * type, char * style, char * param) {
+    /* Note: 'param' is UTF-8 encoded JSON text */
+    char str[64];
+    if (param != NULL && (*param == '"' || strcmp(type, "number") == 0)) {
+        Trap trap;
+        ByteArrayInputStream buf;
+        InputStream * inp = create_byte_array_input_stream(&buf, param, strlen(param));
+        if (set_trap(&trap)) {
+            if (*param == '"') {
+                char * x = json_read_alloc_string(inp);
+                if (x != NULL) {
+                    char * s = x;
+                    while (*s) {
+                        realloc_msg_buf();
+                        msg_buf[msg_len++] = *s++;
+                    }
+                    loc_free(x);
+                }
+                param = NULL;
+            }
+            else {
+                double x = json_read_double(inp);
+                if (strcmp(style, "percent") == 0) {
+                    snprintf(str, sizeof(str), "%ld%%", (long)(x * 100));
+                }
+                else if (strcmp(style, "integer") == 0) {
+                    snprintf(str, sizeof(str), "%ld", (long)x);
+                }
+                else {
+                    snprintf(str, sizeof(str), "%g", x);
+                }
+                param = str;
+            }
+            clear_trap(&trap);
+        }
+    }
+    if (param != NULL) {
+        while (*param) {
+            realloc_msg_buf();
+            msg_buf[msg_len++] = *param++;
+        }
+    }
+}
+
+static const char * format_error_report_message(const char * fmt, char ** params, int param_cnt) {
+    int fmt_pos = 0;
+    int in_quotes = 0;
+
+    msg_len = 0;
+    while (fmt[fmt_pos]) {
+        char ch = fmt[fmt_pos++];
+        realloc_msg_buf();
+        if (in_quotes && ch == '\'') {
+            in_quotes = 0;
+        }
+        else if (in_quotes) {
+            msg_buf[msg_len++] = ch;
+        }
+        else if (ch == '\'' && fmt[fmt_pos] == '\'') {
+            msg_buf[msg_len++] = ch;
+            fmt_pos++;
+        }
+        else if (ch =='\'') {
+            in_quotes = 1;
+        }
+        else if (ch == '{') {
+            size_t j = 0;
+            int index = 0;
+            char type[16];
+            char style[16];
+            type[0] = style[0] = 0;
+            while (fmt[fmt_pos] >= '0' && fmt[fmt_pos] <= '9') {
+                index = index * 10 + (fmt[fmt_pos++] - '0');
+            }
+            if (fmt[fmt_pos] == ',') {
+                fmt_pos++;
+                j = 0;
+                while (fmt[fmt_pos] >= 'a' && fmt[fmt_pos] <= 'z') {
+                    ch = fmt[fmt_pos++];
+                    if (j < sizeof(type) - 1) type[j++] = ch;
+                }
+                type[j++] = 0;
+                if (fmt[fmt_pos] == ',') {
+                    fmt_pos++;
+                    j = 0;
+                    while (fmt[fmt_pos] >= 'a' && fmt[fmt_pos] <= 'z') {
+                        ch = fmt[fmt_pos++];
+                        if (j < sizeof(style) - 1) style[j++] = ch;
+                    }
+                    style[j++] = 0;
+                }
+            }
+            if (index < param_cnt) append_format_parameter(type, style, params[index]);
+            while (fmt[fmt_pos] && fmt[fmt_pos] != '}') fmt_pos++;
+            if (fmt[fmt_pos] == '}') fmt_pos++;
+        }
+        else {
+            msg_buf[msg_len++] = ch;
+        }
+    }
+    realloc_msg_buf();
+    msg_buf[msg_len++] = 0;
+    return msg_buf;
+}
+
 const char * errno_to_str(int err) {
+    assert(is_dispatch_thread());
     switch (err) {
     case ERR_ALREADY_STOPPED:   return "Already stopped";
     case ERR_ALREADY_EXITED:    return "Already exited";
@@ -213,8 +342,7 @@ const char * errno_to_str(int err) {
         if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
             ErrorMessage * m = msgs + (err - ERR_MESSAGE_MIN);
             if (m->report != NULL && m->report->pub.format != NULL) {
-                /* TODO: error report args */
-                return m->report->pub.format;
+                return format_error_report_message(m->report->pub.format, m->report->pub.params, m->report->pub.param_cnt);
             }
             switch (m->source) {
 #ifdef WIN32
