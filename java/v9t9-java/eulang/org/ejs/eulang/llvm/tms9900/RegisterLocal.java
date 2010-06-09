@@ -34,7 +34,7 @@ public class RegisterLocal extends BaseLocal {
 	 */
 	@Override
 	public String toString() {
-		return "register " + super.toString() + " vr." + vr + (regPair ? " (pair)" : "");
+		return "register local vr" + vr + "("+ getName().getName() +") [" + getType() +"]"+  (regPair ? " (pair)" : "");
 	}
 	
 	
