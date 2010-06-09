@@ -100,25 +100,18 @@ public class AstUnaryExpr extends AstTypedExpr implements
         return false;
     }
 
-    public IAstNode simplify(TypeEngine typeEngine) {
-    	IAstTypedExpr simExpr = (IAstTypedExpr) expr.simplify(typeEngine);
-    	
-    	if (simExpr instanceof IAstLitExpr) {
-    		LLConstOp val = oper.evaluate(getType(), (IAstLitExpr) simExpr);
+    public boolean simplify(TypeEngine typeEngine) {
+    	boolean changed = super.simplify(typeEngine);
+    	if (expr instanceof IAstLitExpr) {
+    		LLConstOp val = oper.evaluate(getType(), (IAstLitExpr) expr);
     		if (val != null) {
     			IAstLitExpr lit = typeEngine.createLiteralNode(val.getType(), val.getValue());
     			lit.setSourceRef(getSourceRef());
-				return lit;
+    			getParent().replaceChild(this, lit);
+				return true;
     		}
     	}
-    	
-		if (simExpr != expr) {
-			IAstUnaryExpr unExpr = new AstUnaryExpr(oper, simExpr);
-			unExpr.setType(getType());
-			unExpr.setSourceRef(getSourceRef());
-			return unExpr;
-		}
-        return this;
+        return changed;
     }
     
     /* (non-Javadoc)

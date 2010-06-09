@@ -141,39 +141,27 @@ public class AstBinExpr extends AstTypedExpr implements IAstBinExpr {
 	        
 	}
 	@Override
-    public IAstNode simplify(TypeEngine typeEngine) {
-        IAstTypedExpr newLeft = (IAstTypedExpr) left.simplify(typeEngine);
-        IAstTypedExpr newRight = (IAstTypedExpr) right.simplify(typeEngine);
+    public boolean simplify(TypeEngine typeEngine) {
+		boolean changed = super.simplify(typeEngine);
         
         // it is simplifiable?
-        if (newLeft instanceof IAstLitExpr
-                && newRight instanceof IAstLitExpr) {
+        if (left instanceof IAstLitExpr
+                && right instanceof IAstLitExpr) {
         
-            IAstLitExpr litLeft = (IAstLitExpr) newLeft;
-            IAstLitExpr litRight = (IAstLitExpr) newRight;
+            IAstLitExpr litLeft = (IAstLitExpr) left;
+            IAstLitExpr litRight = (IAstLitExpr) right;
             
             LLConstOp op = oper.evaluate(getType(), litLeft, litRight);
             if (op != null) {
             	IAstLitExpr lit = typeEngine.createLiteralNode(
             			op.getType(), op.getValue());
             	lit.setSourceRef(getSourceRef());
-            	return lit;
+            	getParent().replaceChild(this, lit);
+            	return true;
             }
         }
-        
-        // fallthrough: make new binary expression if children changed
-        if (!newLeft.equalValue(left) || !newRight.equalValue(right)) {
-        	if (newLeft == left)
-        		newLeft = (IAstTypedExpr) newLeft.copy();
-        	if (newRight == right)
-        		newRight = (IAstTypedExpr) newRight.copy();
-            IAstBinExpr bin = new AstBinExpr(oper, newLeft, newRight);
-            bin.setType(getType());
-            bin.setSourceRef(getSourceRef());
-            return bin;
-        } else {
-			return this;
-		}
+
+        return changed;
     }
 
 	

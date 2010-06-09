@@ -531,4 +531,18 @@ public class AstDefineStmt extends AstScope implements IAstDefineStmt {
 		}
 		return map;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#simplify(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public boolean simplify(TypeEngine engine) {
+		boolean changed = false;
+
+		for (IAstTypedExpr expr : getConcreteInstances()) {
+			changed |= expr.simplify(engine);
+		}
+		
+		return changed;
+	}
 }

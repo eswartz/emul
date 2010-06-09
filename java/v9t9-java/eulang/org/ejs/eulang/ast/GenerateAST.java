@@ -854,7 +854,7 @@ public class GenerateAST {
 		} else {
 			IAstTypedExpr indexExpr = checkConstruct(tree.getChild(1),
 					IAstTypedExpr.class);
-			indexExpr = (IAstTypedExpr) indexExpr.simplify(typeEngine);
+			indexExpr.simplify(typeEngine);
 			if (!(indexExpr instanceof IAstIntLitExpr))
 				throw new GenerateException(tree.getChild(1),
 						"an index expression must be a compile-time constant");

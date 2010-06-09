@@ -144,14 +144,16 @@ public class AstCastNamedTypeExpr extends AstTypedExpr implements
         dirty = true;
     }
 
-    public IAstNode simplify(TypeEngine typeEngine) {
+    public boolean simplify(TypeEngine typeEngine) {
 		if (expr instanceof IAstLitExpr) {
 			IAstLitExpr lit = typeEngine.createLiteralNode(getType(), ((IAstLitExpr) expr).getObject());
-			if (lit != null)
+			if (lit != null) {
 				lit.setSourceRef(getSourceRef());
-			return lit;
+				getParent().replaceChild(this, lit);
+				return true;
+			}
 		}
-        return this;
+        return super.simplify(typeEngine);
     }
     
     /* (non-Javadoc)

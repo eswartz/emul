@@ -526,15 +526,13 @@ abstract public class AstNode implements IAstNode {
 	 * @see org.ejs.eulang.ast.IAstTypedExpr#simplify(org.ejs.eulang.ast.TypeEngine)
 	 */
 	@Override
-	public IAstNode simplify(TypeEngine engine) {
+	public boolean simplify(TypeEngine engine) {
+		boolean changed = false;
 		IAstNode[] kids = getChildren();
 		for (int i = 0; i < kids.length; i++) {
-			IAstNode simpl = kids[i].simplify(engine);
-			if (simpl != kids[i]) {
-				replaceChild(kids[i], simpl);
-			}
+			changed |= kids[i].simplify(engine);
 		}
-		return this;
+		return changed;
 	}
 	
 }

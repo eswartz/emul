@@ -159,36 +159,23 @@ public class AstCondList extends AstTypedExpr implements IAstCondList {
 	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
-	public IAstNode simplify(TypeEngine engine) {
-		IAstNodeList<IAstCondExpr> newCondList = new AstNodeList<IAstCondExpr>(IAstCondExpr.class);
-		newCondList.setSourceRef(condList.getSourceRef());
-		boolean changed = false;
+	public boolean simplify(TypeEngine engine) {
+		boolean changed = super.simplify(engine);
 		boolean allBools = true;
 		for (int i = 0; i < condList.nodeCount(); i++) {
-			IAstCondExpr expr = (IAstCondExpr) condList.list().get(i).simplify(engine);
+			IAstCondExpr expr = (IAstCondExpr) condList.list().get(i);
 			if (expr.getTest() instanceof IAstBoolLitExpr) {
 				if (allBools && ((IAstBoolLitExpr) expr.getTest()).getValue()) {
 					// a match!
-					return (IAstTypedExpr) expr.getExpr().copy();
+					expr.getExpr().setParent(null);
+					getParent().replaceChild(this, expr.getExpr());
+					return true;
 				}
 			} else {
 				allBools = false;
 			}
-				
-			if (expr != condList.list().get(i)) {
-				newCondList.add(expr);
-				changed = true;
-			} else {
-				newCondList.add(expr.copy());
-			}
 		}
-		if (changed) {
-			IAstCondList newList = new AstCondList(newCondList);
-			newList.setType(getType());
-			newList.setSourceRef(getSourceRef());
-			return newList;
-		}
-		return super.simplify(engine);
+		return changed;
 	}
 	
 }

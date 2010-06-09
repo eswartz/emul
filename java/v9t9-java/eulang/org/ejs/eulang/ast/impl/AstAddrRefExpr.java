@@ -147,11 +147,15 @@ public class AstAddrRefExpr extends AstTypedExpr implements IAstAddrRefExpr {
 	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
-	public IAstNode simplify(TypeEngine engine) {
+	public boolean simplify(TypeEngine engine) {
+		boolean changed = super.simplify(engine);
 		if (expr instanceof IAstDerefExpr) {
-			return (IAstTypedExpr) ((IAstDerefExpr) expr).getExpr().simplify(engine).copy();
+			IAstTypedExpr sub = ((IAstDerefExpr) expr).getExpr();
+			sub.setParent(null);
+			getParent().replaceChild(this, sub);
+			return true;
 		}
-		return super.simplify(engine);
+		return changed;
 	}
 
 }

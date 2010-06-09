@@ -128,15 +128,12 @@ public interface IAstNode {
 	void uniquifyIds();
 	
     /** 
-     * Get a simplified version of the expression, by removing
+     * Simply the node, e.g. by removing
      * meaningless nodes and attempting to replace constant operations 
      * with literal values or simpler variants.
-     * <p>
-     * This does NOT necessarily return a unique IAstNode!
-     * 
-     * @return IAstNode
+     * @return true if changed
      */
-    public IAstNode simplify(TypeEngine engine);
+    public boolean simplify(TypeEngine engine);
     
 
 }

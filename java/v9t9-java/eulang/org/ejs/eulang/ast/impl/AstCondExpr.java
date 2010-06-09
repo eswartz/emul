@@ -169,24 +169,4 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 			}
 		}
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
-	 */
-	@Override
-	public IAstNode simplify(TypeEngine engine) {
-		IAstTypedExpr simExpr = (IAstTypedExpr) expr.simplify(engine);
-		IAstTypedExpr simTest = (IAstTypedExpr) test.simplify(engine);
-		if (simTest != test || simExpr != expr) {
-			if (simTest == test)
-				simTest = (IAstTypedExpr) test.copy();
-			if (simExpr == expr)
-				simExpr= (IAstTypedExpr) expr.copy();
-			IAstCondExpr sim = new AstCondExpr(simTest, simExpr);
-			sim.setType(getType());
-			sim.setSourceRef(getSourceRef());
-			return sim;
-		}
-		return super.simplify(engine);
-	}
 }

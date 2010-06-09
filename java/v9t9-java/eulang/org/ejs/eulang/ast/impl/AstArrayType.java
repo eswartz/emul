@@ -46,7 +46,8 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 		int count = 0;
 		IAstTypedExpr countVal = null;
 		if (countExpr != null) {
-			countVal = (IAstTypedExpr) countExpr.simplify(typeEngine);
+			countExpr.simplify(typeEngine);
+			countVal = countExpr;
 			if (countVal instanceof IAstLitExpr) {
 				if (!(countVal instanceof IAstIntLitExpr)) 
 					throw new TypeException(countExpr, "array size must be integral");
@@ -178,7 +179,10 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 			int count = 0;
 			IAstTypedExpr countVal = null;
 			if (countExpr != null) {
-				countVal = (IAstTypedExpr) countExpr.simplify(typeEngine);
+				if (countExpr.simplify(typeEngine)) {
+					changed = true;
+				}
+				countVal = countExpr;
 				if (countVal instanceof IAstLitExpr) {
 					if (!(countVal instanceof IAstIntLitExpr)) 
 						throw new TypeException(countExpr, "array size must be integral");

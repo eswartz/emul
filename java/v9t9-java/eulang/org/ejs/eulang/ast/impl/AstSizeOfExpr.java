@@ -134,15 +134,15 @@ public class AstSizeOfExpr extends AstTypedExpr implements IAstSizeOfExpr {
 	 * @see org.ejs.eulang.ast.impl.AstTypedExpr#simplify(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
-	public IAstNode simplify(TypeEngine engine) {
-		IAstTypedExpr simpl = (IAstTypedExpr) node.simplify(engine);
-		if (simpl.getType() == null || !simpl.getType().isComplete()) {
-			setExpr(simpl);
-			return this;
+	public boolean simplify(TypeEngine engine) {
+		boolean changed = super.simplify(engine);
+		if (node.getType() != null && node.getType().isComplete()) {
+			IAstIntLitExpr sizeof = new AstIntLitExpr(toString(), getType(), 
+					node.getType().getBits() / 8);
+			sizeof.setSourceRef(getSourceRef());
+			getParent().replaceChild(this, sizeof);
+			return true;
 		}
-		IAstIntLitExpr sizeof = new AstIntLitExpr(toString(), getType(), 
-				node.getType().getBits() / 8);
-		sizeof.setSourceRef(getSourceRef());
-		return sizeof;
+		return changed;
 	}
 }

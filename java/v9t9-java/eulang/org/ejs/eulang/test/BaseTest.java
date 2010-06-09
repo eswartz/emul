@@ -57,7 +57,6 @@ import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
-import org.ejs.eulang.optimize.SimplifyTree;
 import org.ejs.eulang.parser.EulangLexer;
 import org.ejs.eulang.parser.EulangParser;
 import org.ejs.eulang.symbols.GlobalScope;
@@ -391,7 +390,6 @@ public class BaseTest {
 	}
 	
 	protected void doSimplify(IAstNode mod) {
-		SimplifyTree simplify = new SimplifyTree(typeEngine);
 		
 		// must infer types first
 		doTypeInfer(mod);
@@ -400,7 +398,7 @@ public class BaseTest {
 		
 		int passes = 0;
 		while (passes++ <= depth) {
-			boolean changed = simplify.simplify(mod);
+			boolean changed = mod.simplify(typeEngine);
 			
 			if (!changed) 
 				break;
