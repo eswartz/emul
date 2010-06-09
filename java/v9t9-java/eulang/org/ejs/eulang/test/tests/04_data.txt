@@ -35,7 +35,6 @@ call main
 assert 0xf000 == 100
 >>>
 
-only
 <<< dynamic linked list #2
 brk := 0xa000;
 _new = code(s:Int) {
