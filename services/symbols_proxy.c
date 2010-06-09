@@ -471,8 +471,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
             f->name = loc_strdup(name);
             f->ip = ip;
             f->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
-            snprintf(bf, sizeof(bf), "TEST.%X.%llX.%s", sym_class,
-                    (unsigned long long)(uintptr_t)address, ctx->mem->id);
+            snprintf(bf, sizeof(bf), "TEST.%X.%"PRIX64".%s", sym_class,
+                    (uint64_t)(uintptr_t)address, ctx->mem->id);
             f->id = loc_strdup(bf);
         }
     }
@@ -642,9 +642,9 @@ int id2symbol(const char * id, Symbol ** sym) {
 #if ENABLE_RCBP_TEST
         if (strncmp(id, "TEST.", 5) == 0) {
             int sym_class = 0;
-            unsigned long long address = 0;
+            uint64_t address = 0;
             char ctx_id[256];
-            if (sscanf(id, "TEST.%X.%llX.%255s", &sym_class, &address, ctx_id) == 3) {
+            if (sscanf(id, "TEST.%X.%"SCNx64".%255s", &sym_class, &address, ctx_id) == 3) {
                 s->done_context = 1;
                 s->has_address = 1;
                 s->address = (ContextAddress)address;

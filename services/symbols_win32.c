@@ -228,14 +228,27 @@ const char * symbol2id(const Symbol * sym) {
         assert(sym->ctx == sym->base->ctx);
         assert(sym->sym_class == SYM_CLASS_TYPE);
         strcpy(base, symbol2id(sym->base));
-        snprintf(buf, sizeof(buf), "PTR%X.%s", sym->length, base);
+        snprintf(buf, sizeof(buf), "PTR%"PRIX64".%s", (uint64_t)sym->length, base);
     }
     else {
         int i = sym->info ? sym->info - basic_type_info + 1 : 0;
-        snprintf(buf, sizeof(buf), "SYM%llX.%lX.%X.%X.%s",
-            sym->module, sym->index, sym->frame, i, sym->ctx->id);
+        snprintf(buf, sizeof(buf), "SYM%"PRIX64".%lX.%X.%X.%s",
+            (uint64_t)sym->module, sym->index, sym->frame, i, sym->ctx->id);
     }
     return buf;
+}
+
+static uint64_t read_hex(const char ** s) {
+    uint64_t res = 0;
+    const char * p = *s;
+    for (;;) {
+        if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
+        else if (*p >= 'A' && *p <= 'F') res = (res << 4) | (*p - 'A' + 10);
+        else break;
+        p++;
+    }
+    *s = p;
+    return res;
 }
 
 int id2symbol(const char * id, Symbol ** res) {
@@ -251,63 +264,23 @@ int id2symbol(const char * id, Symbol ** res) {
 
     if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
         p = id + 3;
-        for (;;) {
-            if (*p >= '0' && *p <= '9') length = (length << 4) | (*p - '0');
-            else if (*p >= 'A' && *p <= 'F') length = (length << 4) | (*p - 'A' + 10);
-            else break;
-            p++;
-        }
-        if (*p++ != '.') {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
+        length = (size_t)read_hex(&p);
+        if (*p == '.') p++;
         if (id2symbol(p, (Symbol **)&base)) return -1;
         ctx = base->ctx;
     }
     else if (id != NULL && id[0] == 'S' && id[1] == 'Y' && id[2] == 'M') {
         unsigned idx = 0;
         p = id + 3;
-        for (;;) {
-            if (*p >= '0' && *p <= '9') module = (module << 4) | (*p - '0');
-            else if (*p >= 'A' && *p <= 'F') module = (module << 4) | (*p - 'A' + 10);
-            else break;
-            p++;
-        }
-        if (*p++ != '.') {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
-        for (;;) {
-            if (*p >= '0' && *p <= '9') index = (index << 4) | (*p - '0');
-            else if (*p >= 'A' && *p <= 'F') index = (index << 4) | (*p - 'A' + 10);
-            else break;
-            p++;
-        }
-        if (*p++ != '.') {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
-        for (;;) {
-            if (*p >= '0' && *p <= '9') frame = (frame << 4) | (*p - '0');
-            else if (*p >= 'A' && *p <= 'F') frame = (frame << 4) | (*p - 'A' + 10);
-            else break;
-            p++;
-        }
-        if (*p++ != '.') {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
-        for (;;) {
-            if (*p >= '0' && *p <= '9') idx = (idx << 4) | (*p - '0');
-            else if (*p >= 'A' && *p <= 'F') idx = (idx << 4) | (*p - 'A' + 10);
-            else break;
-            p++;
-        }
+        module = (ULONG64)read_hex(&p);
+        if (*p == '.') p++;
+        index = (ULONG)read_hex(&p);
+        if (*p == '.') p++;
+        frame = (unsigned)read_hex(&p);
+        if (*p == '.') p++;
+        idx = (unsigned)read_hex(&p);
         if (idx) info = basic_type_info + (idx - 1);
-        if (*p++ != '.') {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
+        if (*p == '.') p++;
         ctx = id2ctx(p);
     }
     else {

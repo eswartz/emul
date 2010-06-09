@@ -453,7 +453,7 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
 
         send_size = 8;
         send_buf[4] = UDP_ACK_SLAVES;
-        snprintf(str, sizeof(str), "%lld:%u:%s", (long long)s->last_packet_time * 1000,
+        snprintf(str, sizeof(str), "%" PRId64 ":%u:%s", (int64_t)s->last_packet_time * 1000,
             ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
         app_strz(str);
 
@@ -488,7 +488,7 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr, time_t timenow) {
                     continue;
                 }
             }
-            snprintf(str, sizeof(str), "%lld:%u:%s", (long long)s->last_packet_time * 1000,
+            snprintf(str, sizeof(str), "%"PRId64":%u:%s", (int64_t)s->last_packet_time * 1000,
                 ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
             if (send_size + strlen(str) >= PREF_PACKET_SIZE) {
                 send_packet(ifc, addr);
@@ -655,12 +655,12 @@ static void udp_receive_ack_slaves(time_t timenow) {
         struct sockaddr_in addr;
         time_t timestamp;
         if (get_slave_addr(recv_buf, &pos, &addr, &timestamp)) {
-            trace(LOG_DISCOVERY, "ACK_SLAVES %lld:%u:%s from %s:%d",
-                (long long)timestamp * 1000, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr),
+            trace(LOG_DISCOVERY, "ACK_SLAVES %"PRId64":%u:%s from %s:%d",
+                (int64_t)timestamp * 1000, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr),
                 inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
             if (timestamp < timenow - 600 || timestamp > timenow + 600) {
-                trace(LOG_ALWAYS, "Discovery: invalid slave info timestamp %lld from %s:%d",
-                    (long long)timestamp * 1000, inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
+                trace(LOG_ALWAYS, "Discovery: invalid slave info timestamp %"PRId64" from %s:%d",
+                    (int64_t)timestamp * 1000, inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
             }
             else {
                 add_slave(&addr, timestamp);

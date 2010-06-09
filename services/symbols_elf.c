@@ -427,39 +427,26 @@ const char * symbol2id(const Symbol * sym) {
         assert(sym->ctx == sym->base->ctx);
         assert(sym->sym_class == SYM_CLASS_TYPE);
         strcpy(base, symbol2id(sym->base));
-        snprintf(id, sizeof(id), "PTR%llX.%s", (unsigned long long)sym->size, base);
+        snprintf(id, sizeof(id), "PTR%"PRIX64".%s", (uint64_t)sym->size, base);
     }
     else {
         ELF_File * file = NULL;
-        unsigned long long obj_index = 0;
+        uint64_t obj_index = 0;
         unsigned tbl_index = 0;
         if (sym->obj != NULL) file = sym->obj->mCompUnit->mFile;
         if (sym->tbl != NULL) file = sym->tbl->mFile;
         if (file == NULL) return "SYM";
         if (sym->obj != NULL) obj_index = sym->obj->mID;
         if (sym->tbl != NULL) tbl_index = sym->tbl->mIndex + 1;
-        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%lX.%llX.%X.%X.%X.%X.%llX.%s",
-            sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino, (unsigned long)file->mtime, obj_index, tbl_index,
-            sym->frame, sym->index, sym->dimension, (unsigned long long)sym->size, sym->ctx->id);
+        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%"PRIX64".%"PRIX64".%X.%X.%X.%X.%"PRIX64".%s",
+            sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino, file->mtime, obj_index, tbl_index,
+            sym->frame, sym->index, sym->dimension, (uint64_t)sym->size, sym->ctx->id);
     }
     return id;
 }
 
-static unsigned long read_hex(const char ** s) {
-    unsigned long res = 0;
-    const char * p = *s;
-    for (;;) {
-        if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
-        else if (*p >= 'A' && *p <= 'F') res = (res << 4) | (*p - 'A' + 10);
-        else break;
-        p++;
-    }
-    *s = p;
-    return res;
-}
-
-static unsigned long long read_hex_ll(const char ** s) {
-    unsigned long long res = 0;
+static uint64_t read_hex(const char ** s) {
+    uint64_t res = 0;
     const char * p = *s;
     for (;;) {
         if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
@@ -473,10 +460,10 @@ static unsigned long long read_hex_ll(const char ** s) {
 
 int id2symbol(const char * id, Symbol ** res) {
     Symbol * sym = alloc_symbol();
-    unsigned long dev = 0;
-    unsigned long ino = 0;
-    unsigned long mtime;
-    unsigned long long obj_index = 0;
+    dev_t dev = 0;
+    ino_t ino = 0;
+    int64_t mtime;
+    uint64_t obj_index = 0;
     unsigned tbl_index = 0;
     ELF_File * file = NULL;
     const char * p;
@@ -485,7 +472,7 @@ int id2symbol(const char * id, Symbol ** res) {
     *res = sym;
     if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
         p = id + 3;
-        sym->size = (ContextAddress)read_hex_ll(&p);
+        sym->size = (ContextAddress)read_hex(&p);
         if (*p == '.') p++;
         if (id2symbol(p, &sym->base)) return -1;
         sym->ctx = sym->base->ctx;
@@ -495,25 +482,25 @@ int id2symbol(const char * id, Symbol ** res) {
     else if (id != NULL && id[0] == 'S' && id[1] == 'Y' && id[2] == 'M') {
         p = id + 3;
         if (*p == 0) return 0;
-        sym->sym_class = read_hex(&p);
+        sym->sym_class = (int)read_hex(&p);
         if (*p == '.') p++;
-        dev = read_hex(&p);
+        dev = (dev_t)read_hex(&p);
         if (*p == '.') p++;
-        ino = read_hex(&p);
+        ino = (ino_t)read_hex(&p);
         if (*p == '.') p++;
-        mtime = read_hex(&p);
+        mtime = (int64_t)read_hex(&p);
         if (*p == '.') p++;
-        obj_index = read_hex_ll(&p);
+        obj_index = read_hex(&p);
         if (*p == '.') p++;
-        tbl_index = read_hex(&p);
+        tbl_index = (unsigned)read_hex(&p);
         if (*p == '.') p++;
-        sym->frame = read_hex(&p);
+        sym->frame = (unsigned)read_hex(&p);
         if (*p == '.') p++;
-        sym->index = read_hex(&p);
+        sym->index = (unsigned)read_hex(&p);
         if (*p == '.') p++;
-        sym->dimension = read_hex(&p);
+        sym->dimension = (unsigned)read_hex(&p);
         if (*p == '.') p++;
-        sym->size = (ContextAddress)read_hex_ll(&p);
+        sym->size = (ContextAddress)read_hex(&p);
         if (*p == '.') p++;
         sym->ctx = id2ctx(p);
         if (sym->ctx == NULL) {
@@ -523,7 +510,7 @@ int id2symbol(const char * id, Symbol ** res) {
         if (get_sym_context(sym->ctx, sym->frame + STACK_NO_FRAME) < 0) return -1;
         file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) return -1;
-        while ((unsigned long)file->dev != dev || (unsigned long)file->ino != ino || (unsigned long)file->mtime != mtime) {
+        while (file->dev != dev || file->ino != ino || file->mtime != mtime) {
             file = elf_list_next(sym_ctx);
             if (file == NULL) break;
         }

@@ -24,6 +24,8 @@
 #ifndef D_mdep
 #define D_mdep
 
+#define __STDC_FORMAT_MACROS 1
+
 #if defined(WIN32) || defined(__CYGWIN__)
 /* MS Windows NT/XP */
 
@@ -62,17 +64,20 @@
 #include <io.h>
 
 #if defined(_MSC_VER)
-typedef signed __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef signed __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef signed __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef signed __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-typedef int ssize_t;
+   typedef signed __int8 int8_t;
+   typedef unsigned __int8 uint8_t;
+   typedef signed __int16 int16_t;
+   typedef unsigned __int16 uint16_t;
+   typedef signed __int32 int32_t;
+   typedef unsigned __int32 uint32_t;
+   typedef signed __int64 int64_t;
+   typedef unsigned __int64 uint64_t;
+   typedef int ssize_t;
+#  define PRId64 "I64d"
+#  define PRIX64 "I64X"
+#  define SCNx64 "I64x"
 #else
-#  include <stdint.h>
+#  include <inttypes.h>
 #endif
 
 #define FILE_PATH_SIZE MAX_PATH
@@ -357,7 +362,7 @@ extern const char * loc_gai_strerror(int ecode);
 #include <memory.h>
 #include <string.h>
 #include <limits.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <fcntl.h>
 #include <utime.h>
 #include <inet.h>
@@ -419,7 +424,7 @@ extern struct ip_ifc_info * get_ip_ifc(void);
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <limits.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #define loc_freeaddrinfo freeaddrinfo
 #define loc_getaddrinfo getaddrinfo
@@ -452,6 +457,16 @@ extern int tkill(pid_t pid, int signal);
 
 #define closesocket close
 
+#endif
+
+#ifndef PRId64
+#  define PRId64 "lld"
+#endif
+#ifndef PRIX64
+#  define PRIX64 "llX"
+#endif
+#ifndef SCNx64
+#  define SCNx64 "llx"
 #endif
 
 #if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__) && !defined(__VXWORKS__)
