@@ -376,13 +376,13 @@ controlStmt : doWhile | whileDo | repeat | forIter ;
 doWhile : DO codeStmtExpr WHILE rhsExpr   -> ^(DO codeStmtExpr rhsExpr)
   ;
 
-whileDo : WHILE rhsExpr DO codeStmtExpr   -> ^(WHILE rhsExpr codeStmtExpr)
+whileDo : WHILE rhsExpr (COLON|DO) codeStmtExpr   -> ^(WHILE rhsExpr codeStmtExpr)
   ;
   
-repeat : REPEAT rhsExpr DO codeStmt         -> ^(REPEAT rhsExpr codeStmt)
+repeat : REPEAT rhsExpr (COLON|DO) codeStmt         -> ^(REPEAT rhsExpr codeStmt)
   ; 
 
-forIter : FOR forIds forMovement? IN rhsExpr DO codeStmt       -> ^(FOR ^(LIST forIds) forMovement? rhsExpr codeStmt)
+forIter : FOR forIds forMovement? IN rhsExpr (COLON|DO) codeStmt       -> ^(FOR ^(LIST forIds) forMovement? rhsExpr codeStmt)
   ; 
 
 forIds : ID (AND ID)* -> ID+ ;

@@ -1,4 +1,3 @@
-only
 <<< test function pointers
 a : code ( => Int);
 
