@@ -168,6 +168,7 @@ public class LLModule {
 		if (type == null|| type.getName() == null || type.getBasicType() == BasicType.VOID) return false;
 		if (type instanceof LLInstanceType || type instanceof LLSymbolType)
 			return false;
+		
 		if (emittedTypes.containsKey(type))
 			return false;
 		String typeSymbolName = type.getSymbolicName();

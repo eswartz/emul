@@ -511,6 +511,8 @@ public class BaseTest {
 	}
 
 	protected IAstModule doFrontend(String text) throws Exception {
+		if (dumpLLVMGen)
+			System.out.println(text);
 		IAstModule mod = treeize(text);
     	sanityTest(mod);
     	

@@ -1,0 +1,18 @@
+only
+<<< test function pointers
+a : code ( => Int);
+
+summer = code (provider:code(=>Int) => Int) {
+    s := 0; while (t := provider()) != 0 do s += t;     // also tests that while() does a proper comparison
+};
+
+v : Int;
+inner = code(=>Int) { if v < 5: v++ else 0  };      // also tests that inc of global works
+testOne = code () {
+   v = 1;
+   summer(inner);
+};
+===
+call testOne
+assert R0 == 10
+>>>

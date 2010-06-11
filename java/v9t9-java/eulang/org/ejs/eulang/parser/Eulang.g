@@ -454,27 +454,28 @@ arg:  assignExpr                    -> ^(EXPR assignExpr)
 
 condStar: cond -> cond
    | IF ifExprs -> ifExprs
-    ;
+   ;
 
 //
 //  if TEST then VALUE [elif TEST then VALUE]+ else VALUE
 //
 ifExprs : thenClause elses -> ^(CONDLIST thenClause elses)
   ;
-thenClause : t=condStmtExpr THEN v=condStmtExpr   -> ^(CONDTEST $t $v) 
+thenClause : t=assignExpr 
+  (THEN|COLON) v=condStmtExpr   -> ^(CONDTEST $t $v) 
     ; 
 elses : elif* elseClause    -> elif* elseClause 
     ;
-elif : ELIF t=condStmtExpr THEN v=condStmtExpr  -> ^(CONDTEST $t $v )
+elif : ELIF t=assignExpr (THEN|COLON) v=condStmtExpr  -> ^(CONDTEST $t $v )
     ;
 elseClause : ELSE condStmtExpr       -> ^(CONDTEST ^(LIT TRUE) condStmtExpr)
    | FI -> ^(CONDTEST ^(LIT TRUE) ^(LIT NIL))
   ;
-
+  
 condStmtExpr : arg | breakStmt ;
     
 cond:    ( logor  -> logor )
-      ( QUESTION t=logor COLON f=logor -> ^(COND $cond $t $f ) )*
+      ( QUESTION t=logor COLON f=logor -> ^(CONDLIST ^(CONDTEST $cond $t) ^(CONDTEST ^(LIT TRUE) $f )) )*
 ;
 
 logor : ( logand  -> logand )
@@ -583,6 +584,7 @@ atom :
     |   NIL                          -> ^(LIT NIL)
     |   idExpr                          -> idExpr
     |   ( tuple ) => tuple                          -> tuple
+    |   ( LPAREN varDecl ) => LPAREN a0=varDecl RPAREN               -> $a0
     |   LPAREN a1=assignExpr RPAREN               -> $a1
     |   ( CODE ) =>  code                           -> code
     //|   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
@@ -711,6 +713,7 @@ BAR_BAR : '||';
 
 SELECT : 'select';
 
+COND: 'cond';
 IF: 'if';
 THEN : 'then';
 ELSE : 'else';

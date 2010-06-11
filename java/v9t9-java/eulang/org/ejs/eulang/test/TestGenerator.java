@@ -403,6 +403,29 @@ public class TestGenerator extends BaseTest {
 		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
     }
     @Test
+    public void testCondStar2b() throws Exception {
+    	IAstModule mod = treeize(
+    		" testCondStar2 = code (t) { if 1>t: 1 elif\n" +
+    		"		t!=2 and t!=1: { x:= 9+t; -x; } else\n" +
+    		"		0.4;" +
+    		"11 \n" +
+    		"		; };\n");
+		sanityTest(mod);
+		
+		IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testCondStar2");
+		IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
+		IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(0);
+		IAstCondList condList = (IAstCondList) exprStmt.getExpr();
+		assertEquals(3, condList.getCondExprs().nodeCount());
+		IAstCondExpr condExpr;
+		condExpr = condList.getCondExprs().list().get(0);
+		assertTrue(condExpr.getExpr() instanceof IAstIntLitExpr);
+		condExpr = condList.getCondExprs().list().get(1);
+		assertTrue(condExpr.getExpr() instanceof IAstStmtListExpr);
+		condExpr = condList.getCondExprs().list().get(2);
+		assertTrue(condExpr.getExpr() instanceof IAstFloatLitExpr);
+    }
+    @Test
     public void testCondStar3() throws Exception {
     	// 'fi' means 'else nil'
     	IAstModule mod = treeize(

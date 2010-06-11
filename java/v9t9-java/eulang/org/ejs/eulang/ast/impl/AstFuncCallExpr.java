@@ -8,6 +8,7 @@ import java.util.Arrays;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
@@ -179,6 +180,29 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 					boolean first = true;
 					for (int i = 0; i < argCodeTypes.length; i++) {
 						if (argCodeTypes[i] != null && refTypes[i] != null && !argCodeTypes[i].isCompatibleWith(refTypes[i])) {
+							
+							// may be false alarm: if passing a code block to something expecting code (or ptr to code),
+							// fix up here
+							
+							if (argCodeTypes[i] instanceof LLCodeType && refTypes[i] instanceof LLPointerType && argCodeTypes[i].isCompatibleWith(refTypes[i].getSubType())) {
+								// replace with ADDROF(...)
+								
+								IAstTypedExpr arg = arguments.list().get(i);
+								arg.setParent(null);
+								IAstAddrOfExpr addrOf = new AstAddrOfExpr(arg);
+								addrOf.setSourceRef(arg.getSourceRef());
+								arguments.replaceChild(arg, addrOf);
+								LLType argType = argCodeTypes[i];
+								argType = typeEngine.getPointerType(argType);
+								addrOf.setType(argType);
+								return true;
+								/*
+								if (arg instanceof IAstSymbolExpr)
+									((IAstSymbolExpr) arg).getSymbol().setType(argType.getSubType());
+								*/
+							}
+
+							
 							if (first) sb.append(": "); else sb.append("; ");
 							sb.append("argument " + (i+1) + " should be type " + refTypes[i] + " but got " + argCodeTypes[i]);
 						}
@@ -245,8 +269,10 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		int argIdx = 0;
 		
 		for (IAstTypedExpr arg : arguments.list()) {
-			if (canInferTypeFrom(arg))
-				infArgTypes[argIdx] = arg.getType();
+			if (canInferTypeFrom(arg)) {
+				LLType argType = arg.getType();
+				infArgTypes[argIdx] = argType;
+			}
 			argIdx++;
 		}
 		

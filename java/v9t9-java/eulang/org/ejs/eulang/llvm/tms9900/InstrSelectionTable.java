@@ -4,6 +4,8 @@
 package org.ejs.eulang.llvm.tms9900;
 
 import static v9t9.engine.cpu.InstructionTable.Ia;
+import static v9t9.engine.cpu.InstructionTable.Imov;
+import static v9t9.engine.cpu.InstructionTable.Imovb;
 import static v9t9.engine.cpu.InstructionTable.Iab;
 import static v9t9.engine.cpu.InstructionTable.Iai;
 import static v9t9.engine.cpu.InstructionTable.Iandi;
@@ -350,15 +352,15 @@ public class InstrSelectionTable {
 		new InstrSelection.IPattern( BasicType.BOOL, InstrSelection.I1, "icmp", 
 				new InstrSelection.If[] { InstrSelection.If.IS_I16, 
 					InstrSelection.If.IS_CONST_0 },
-				new InstrSelection.As[] { InstrSelection.As.REG_R, InstrSelection.As.CMP, InstrSelection.As.REG_W },
-				new InstrSelection.Do( Ic, 0, 0 ),
+				new InstrSelection.As[] { InstrSelection.As.REG_R, InstrSelection.As.CMP, InstrSelection.As.REG_W, InstrSelection.As.STATUS },
+				new InstrSelection.Do( Imov, 0, 0, 3 ),
 				new InstrSelection.DoRes( 1, InstrSelection.Piset, 1, 2 )
 		),
 		new InstrSelection.IPattern( BasicType.BOOL, InstrSelection.I1, "icmp", 
 				new InstrSelection.If[] { InstrSelection.If.IS_INT, 
 				InstrSelection.If.IS_CONST_0 },
-				new InstrSelection.As[] { InstrSelection.As.REG_R, InstrSelection.As.CMP, InstrSelection.As.REG_W },
-				new InstrSelection.Do( Icb, 0, 0 ),
+				new InstrSelection.As[] { InstrSelection.As.REG_R, InstrSelection.As.CMP, InstrSelection.As.REG_W, InstrSelection.As.STATUS  },
+				new InstrSelection.Do( Imovb, 0, 0, 3 ),
 				new InstrSelection.DoRes( 1, InstrSelection.Piset, 1, 2 )
 		),
 		new InstrSelection.IPattern( BasicType.BOOL, InstrSelection.I1, "icmp", 

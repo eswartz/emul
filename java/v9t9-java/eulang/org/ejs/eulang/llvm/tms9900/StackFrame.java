@@ -33,6 +33,7 @@ import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 
 /**

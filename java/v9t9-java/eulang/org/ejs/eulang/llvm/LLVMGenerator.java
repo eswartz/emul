@@ -1188,6 +1188,12 @@ public class LLVMGenerator {
 			temp = generateBreakStmt((IAstBreakStmt) expr);
 		else if (expr instanceof IAstGotoStmt)
 			generateGotoStmt((IAstGotoStmt) expr);
+		else if (expr instanceof IAstCodeExpr) {
+			ISymbol codeSym = currentTarget.getScope().addTemporary("$inner");
+			codeSym.setType(expr.getType());
+			Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(codeSym, (IAstCodeExpr) expr);
+			temp = new LLSymbolOp(info.second);
+		}
 		else {
 			unhandled(expr);
 			return null;

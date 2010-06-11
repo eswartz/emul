@@ -327,8 +327,7 @@ public class TestLLVMGenerator extends BaseTest {
     	assertEquals(2, g.getModule().getSymbolCount());
     }
     @Test
-    public void testInXtcsDecs() throws Exception  {
-    	dumpLLVMGen = true;
+    public void testIncsDecs() throws Exception  {
     	IAstModule mod = doFrontend("maker1 = code(u,v:Int) { u++ * ++v }; " +
     			"maker2 = code(u,v:Int) { u-- * --v }; " +
     			"\n" +
@@ -358,7 +357,6 @@ public class TestLLVMGenerator extends BaseTest {
 
 	@Test
 	public void testTrunc16_to_8_1_Mem() throws Exception {
-		dumpLLVMGen = true;
 		IAstModule mod = doFrontend("x := 11; foo = code( ) { Byte(x) };\n");
     	doGenerate(mod);
 	}
@@ -383,7 +381,6 @@ public class TestLLVMGenerator extends BaseTest {
 
     @Test
     public void testRetAddr2() throws Exception {
-    	dumpLLVMGen = true;
     	// make sure global var is addressed with the right type
     	IAstModule mod = doFrontend(
     			"x : Byte;\n"+
@@ -400,7 +397,6 @@ public class TestLLVMGenerator extends BaseTest {
     /** Test that we export defines inside data */
     @Test
     public void testInnerCode2() throws Exception {
-    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"Complex = data {\n"+
     			"  a,b,c:Byte;\n"+
@@ -428,8 +424,6 @@ public class TestLLVMGenerator extends BaseTest {
     /** Test that we give unique symbols */
     @Test
     public void testInnerCode3() throws Exception {
-    	dumpTreeize = true;
-    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"Nest1 = {\n"+
     			"  a=code(=>nil) { };\n"+
@@ -457,7 +451,6 @@ public class TestLLVMGenerator extends BaseTest {
     /** Test lots of uniquifying */
     @Test
     public void testInnerTypes1() throws Exception {
-    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"Nest1 = data {\n"+
     			"  x:Int;\n"+
@@ -491,8 +484,6 @@ public class TestLLVMGenerator extends BaseTest {
 
     @Test
     public void testArrayAccess2() throws Exception {
-    	dumpTreeize = true;
-		dumpLLVMGen = true;
 		IAstModule mod = doFrontend("foo = code(x:Int[10]^) { (x-1)[2] };\n");
 		LLVMGenerator gen = doGenerate(mod);
 		assertMatchText("getelementptr.*, %Int -1", gen.getUnoptimizedText());
@@ -502,7 +493,6 @@ public class TestLLVMGenerator extends BaseTest {
 
     @Test
     public void testStringData() throws Exception {
-    	dumpLLVMGen = true;
     	// two identical string types, plus escapes
     	IAstModule mod = doFrontend(
     			"a := \"SUCKA!!! \\r\\n\\t\\xff\\x7f\\x00\\x02\";\n" +
@@ -515,4 +505,36 @@ public class TestLLVMGenerator extends BaseTest {
 		assertMatchText("c\"SUCKA!!! \\\\0d\\\\0a\\\\09\\\\ff\\\\7f\\\\00\\\\02\"", gen.getUnoptimizedText());
     	
     }
+    
+    
+    @Test
+    public void testFuncPtrs1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"a : code ( => Int);\n" +
+    			"summer = code (provider:code(=>Int) => Int) {\n"+
+    			"  s := 0; while (t := provider()) != 0 do s += t;\n"+
+    			"};\n"+
+    			"v : Int;\n"+
+    			"inner = code(=>Int) { if v <= 5 then v++ else 0; };\n"+
+    			"testOne = code () {\n" +
+    			"   v := 1;\n"+
+    			"   summer(inner);\n"+
+    			"};");
+    	doGenerate(mod);
+    }
+    @Test
+    public void testClosures1() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"summer = code (provider:code(=>Int) => Int) {\n"+
+    			"  s := 0; while (t := provider()) != 0 do s += t;\n"+
+    			"};\n"+
+    			"testOne = code () {\n" +
+    			"   a := 1;\n"+
+    			"   summer(code(=>Int) { if a <= 5 then a++ else 0; });\n"+
+    			"};");
+    	LLVMGenerator gen = doGenerate(mod);
+    	
+    }
+
 }

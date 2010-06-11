@@ -200,6 +200,8 @@ public class TestSimplify extends BaseTest {
 	@Test
     public void testCastOps() throws Exception {
 		doSimplifyTest("255{Byte}", typeEngine.BYTE, -1);
+		doSimplifyTest("42{Char}", typeEngine.CHAR, 42);
+		doSimplifyTest("'$'{Byte}", typeEngine.BYTE, 36);
 		doSimplifyTest("255{Byte}{+Int}", typeEngine.INT, 255);
 		doSimplifyTest("Byte(255)", typeEngine.BYTE, -1);
 		doSimplifyTest("0x1001{Byte}", typeEngine.BYTE, 1);

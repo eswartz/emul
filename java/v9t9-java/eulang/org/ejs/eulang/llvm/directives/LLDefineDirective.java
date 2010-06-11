@@ -275,6 +275,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 			
 			source = var.load(this);
 		} 
+		assert source != null;
 		if (valueType != null && valueType.equals(source.getType().getSubType())) {
 			// TODO: this is copied from ILLVariable impls
 			

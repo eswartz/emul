@@ -985,6 +985,11 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		if (mem.equals(inst.getDestOp()))
 			return false;
 
+		// and make sure the memory arg is actually allowed
+		if (((inst.getSrcOp() == inst.getOp1() && !inst.supportsOp(0, mem)))
+				|| ((inst.getSrcOp() == inst.getOp2() && !inst.supportsOp(1, mem))))
+			return false;
+		
 		// okay, replace all uses of the source with the target
 		AssemblerOperand fromOp = inst.getSrcOp();
 		AssemblerOperand toOp = mem;
@@ -1319,7 +1324,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			AsmInstruction ccinst = list.get(list.indexOf(def) - 1);
 			
 			// comparison defines status reg now
-			assert ccinst.getTargets().length == 0;
+			assert ccinst.getTargets().length == 0 || (ccinst.getTargets().length == 2);	// C/CB/CI or MOV/MOVB with status 
 			ccinst.setImplicitTargets(new ISymbol[] { statusSym });
 			
 			// jump uses the status

@@ -1357,6 +1357,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	
 	@Test
     public void testRepeatLoopBreak3() throws Exception {
+		dumpIsel = true;
     	doIsel("testRepeatLoopBreak = code (x) {\n" +
     			"   s := 0;\n"+
     			"   b := 1;\n"+
@@ -1367,11 +1368,14 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		int idx;
 		AsmInstruction inst;
 
-		// make sure we compare against 0 with "C r,r" not "CI r,0"
+		// make sure we compare against 0 with "MOV r,r" not "CI r,0"
 		idx = findInstrWithLabel("loopEnter");
-		idx = findInstrWithInst(instrs, "C", idx-1);
+		idx = findInstrWithSymbol(instrs, "counter", idx-1);
 		inst = instrs.get(idx);
-		matchInstr(inst, "C", RegTempOperand.class, "counter", RegTempOperand.class, "counter");
+		matchInstr(inst, "MOV", RegTempOperand.class, "counter", RegTempOperand.class, "counter");
+		assertEquals(2, inst.getTargets().length);
+		assertSameSymbol(inst.getTargets()[0], ".status");
+				
 		idx = findInstrWithInst(instrs, "DEC", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "DEC", RegTempOperand.class, "~counter");
@@ -2199,5 +2203,36 @@ public class Test9900InstrSelection extends BaseInstrTest {
     	assertFalse(inst+"", inst.getInst() == Ia);
 	}
 
+	@Test
+	public void testGlobalInc() throws Exception {
+		dumpIsel = true;
+		doIsel(
+				"val: Int;\n" + 
+				"doSum = code() {\n" +
+				"  val++;\n"+
+				"};");
+
+    	int idx = -1;
+    	AsmInstruction inst;
+
+    	// this is a weird sequence
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", AddrOperand.class, "val", RegTempOperand.class);
+    	
+    	idx = findInstrWithInst(instrs, "INC", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "INC", RegTempOperand.class);
+    	
+    	idx = findInstrWithInst(instrs, "LI", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LI", RegTempOperand.class, SymbolOperand.class, "val");
+
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegTempOperand.class, RegIndOperand.class);
+
+
+	}
 
 }

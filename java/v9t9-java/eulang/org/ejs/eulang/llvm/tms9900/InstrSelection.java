@@ -222,6 +222,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		/** for ICMP or FCMP, the comparison (NumOperand, value: CMP_xxx) */
 		CMP,
+		
+		/** symbol for status register */
+		STATUS,
 	};
 	
 	/** Pseudo-instructions */
@@ -804,16 +807,19 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			dstOp = generateOperand(dst);
 			if (!dstOp.isMemory() && !dstOp.isRegister())
 				dstOp = generateGeneralOperand(dst, dstOp);
-			else if (dstOp instanceof AsmOperand) {
+			if (dstOp instanceof AsmOperand) {
 				if (dstOp instanceof RegTempOperand) {
 					ILocal local = stackFrame.getLocal(((RegTempOperand) dstOp).getSymbol());
-					if (dstLocal.getType().matchesExactly(local.getType()))
+					if (dst.getType().matchesExactly(local.getType()))
 						dstOp = new RegIndOperand(dstOp);
 					else
 						dstOp = new CompositePieceOperand(new NumberOperand(0), dstOp, instr.getType());
 				}
 				else if (dstOp instanceof IRegisterOperand) {
 					dstOp = new RegIndOperand(dstOp);
+				}
+				else {
+					assert false;
 				}
 			}
 		}
@@ -1514,6 +1520,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			asmOp = new CompareOperand(((LLCompareInstr) instr).getCmp());
 			break;
 		}
+		case STATUS:
+			asmOp = new SymbolOperand(routine.getDefinition().getTarget().
+					getStatusRegister(routine.getDefinition().getModule().getModuleScope()));
+			break;
 		default:
 				assert false;
 		}
@@ -1706,6 +1716,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 */
 	private AssemblerOperand copyIntoRegister(LLOperand llOperand, LLInstr instr, AssemblerOperand operand, int num) {
 		LLType type = llOperand.getType();
+		if (type instanceof LLCodeType)
+			type = typeEngine.getPointerType(type);
+
 		RegisterLocal regLocal = newTempRegister(routine, instr, 
 				getTempSymbol(llOperand), llOperand != null ? type : ((LLTypedInstr) instr).getType());
 		if (!stackFrame.forceToRegister(regLocal, num))
@@ -1791,8 +1804,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			else if (local instanceof StackLocal)
 				return new AddrOperand(new StackLocalOperand((StackLocal) local));
 			else {
-				if (sym.getType().matchesExactly(llOp.getType().getSubType())) {
-					// get the address in a var
+				LLType destType = llOp.getType().getSubType();
+				if (sym.getType().matchesExactly(destType) /*&& sym.getType() instanceof LLCodeType*/) {
+					// get the code address in a var
 					return moveToTemp(llOp, llOp.getType(), new SymbolOperand(sym, local));
 				} else {
 					return new AddrOperand(new SymbolOperand(sym, local));
@@ -1979,6 +1993,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 								((ISymbolOperand)inst.getOp2()).getSymbol(), 
 								((ISymbolOperand)inst.getOp3()).getSymbol() });
 					}
+					else if (op3 instanceof SymbolOperand && (inst.getInst() == Imov || inst.getInst() == Imovb)) {
+						inst.setImplicitTargets(new ISymbol[] { ((SymbolOperand) op3).getSymbol() });
+						inst.setOp3(null);
+					}
 					emitInstr(inst);
 				}
 
@@ -2013,8 +2031,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				|| inst.getInst() == Pcopy) {
 			AssemblerOperand op1 = inst.getOp1();
 			AssemblerOperand op2 = inst.getOp2();
-			if (op1.equals(op2))
-				return true;
+			if (op1.equals(op2)) {
+				if (inst.getTargets().length == 1) {
+					return true;
+				}
+			}
 		}
 		return false;
 	}
