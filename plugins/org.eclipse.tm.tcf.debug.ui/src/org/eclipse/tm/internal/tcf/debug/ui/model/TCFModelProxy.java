@@ -146,8 +146,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 assert !disposed;
-                IPresentationContext p = getPresentationContext();
-                if (p != null) model.onProxyInstalled(p, TCFModelProxy.this);
+                model.onProxyInstalled(TCFModelProxy.this);
             }
         });
     }
@@ -156,8 +155,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 assert !disposed;
-                IPresentationContext p = getPresentationContext();
-                if (p != null) model.onProxyDisposed(p);
+                model.onProxyDisposed(TCFModelProxy.this);
                 disposed = true;
             }
         });

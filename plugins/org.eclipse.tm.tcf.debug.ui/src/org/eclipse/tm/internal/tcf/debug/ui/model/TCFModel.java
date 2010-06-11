@@ -130,8 +130,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Set<String> running_actions = new HashSet<String>();
     private final Map<String,String> finished_actions = new HashMap<String,String>();
 
-    private final Map<IPresentationContext,TCFModelProxy> model_proxies =
-        new HashMap<IPresentationContext,TCFModelProxy>();
+    private final Set<TCFModelProxy> model_proxies = new HashSet<TCFModelProxy>();
 
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
 
@@ -544,7 +543,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onContextActionsDone(String id, String result) {
         running_actions.remove(id);
-        for (TCFModelProxy p : model_proxies.values()) p.run();
+        for (TCFModelProxy p : model_proxies) p.run();
         finished_actions.put(id, result);
         setDebugViewSelection(id);
     }
@@ -557,13 +556,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return finished_actions.containsKey(id);
     }
 
-    void onProxyInstalled(final IPresentationContext p, final TCFModelProxy mp) {
-        model_proxies.put(p, mp);
+    void onProxyInstalled(TCFModelProxy mp) {
+        model_proxies.add(mp);
     }
 
-    void onProxyDisposed(final IPresentationContext p) {
-        assert model_proxies.containsKey(p);
-        model_proxies.remove(p);
+    void onProxyDisposed(TCFModelProxy mp) {
+        assert model_proxies.contains(mp);
+        model_proxies.remove(mp);
     }
 
     private void onContextRemoved(final String[] context_ids) {
@@ -608,7 +607,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
      */
     final void addDelta(TCFNode node, int flags) {
-        for (TCFModelProxy p : model_proxies.values()) {
+        for (TCFModelProxy p : model_proxies) {
             int f = flags & node.getRelevantModelDeltaFlags(p.getPresentationContext());
             if (f != 0) p.addDelta(node, f);
         }
@@ -797,7 +796,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node == null) return;
                 if (node.disposed) return;
                 if (running_actions.contains(node_id)) return;
-                for (TCFModelProxy proxy : model_proxies.values()) {
+                for (TCFModelProxy proxy : model_proxies) {
                     if (proxy.getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
                         proxy.setSelection(node);
                     }
