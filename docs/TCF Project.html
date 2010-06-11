@@ -62,15 +62,23 @@ can run on Windows, Linux and VxWorks.  On Linux it is implemented
 using PTRACE, on VxWorks is uses vxdbgLib, on Windows it uses Debug API and dbghelp.dll.
 The agent provides the following services:
 <UL>
-    <LI>Run Control - provides threads and processes run control functionality
-    sufficient for debugging of user space programs.
-    <LI>Breakpoints - provides basic breakpoints support.
+    <LI>Run Control - provides threads and processes run control functionality.
+
+    <LI>Breakpoints - provides debugger breakpoints support.
 
     <LI>Registers - allows inspection and modification of CPU registers.
 
-    <LI>Stack Trace - execution thread stack back-tracing.
+    <LI>Stack Trace - thread stack back-tracing.
 
     <LI>Memory - program memory access.
+
+        <LI>Expressions - expression evaluation on remote target.
+
+        <LI>Memory Map - information about executable modules (files) mapped (loaded) into target memory.
+
+        <LI>Path Map - manages file path translation across systems.
+
+        <LI>Symbols - debugger symbols information.
 
     <LI>Processes - provides access to the target OS's process
     information, allows starting new and terminating existing processes,

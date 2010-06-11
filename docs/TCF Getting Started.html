@@ -30,20 +30,15 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
 
 <ul>
    <li>Install JDK 1.5.0 or later, recommended 1.6.0
-   <li>Install <b>Eclipse Classic SDK 3.4</b>, last tested with 3.4.2, recommended 3.4.2<br>
+   <li>Install <b>Eclipse SDK 3.5</b>, last tested with 3.5.2, recommended 3.5.2<br>
        <a href='http://download.eclipse.org/eclipse/downloads/'>http://download.eclipse.org/eclipse/downloads/</a>
-   <li>Install <b>TM RSE SDK 3.0</b> or later, last tested with 3.0.3, recommended 3.0.3<br>
+   <li>Install <b>TM RSE SDK 3.1</b> or later, last tested with 3.1.2, recommended 3.1.2<br>
        <a href='http://download.eclipse.org/dsdp/tm/downloads/'>http://download.eclipse.org/dsdp/tm/downloads/</a>
-   <li><b>Optional</b> dependencies for TCF/DSF/CDT integration: these are not required by
-       TCF itself, and not needed for RSE integration or for TCF based debugger demo,
-       use these for future development:
+   <li><b>Optional</b> dependencies for TCF/CDT integration: these are not required by
+       TCF itself, and not needed for RSE integration or for TCF based debugger.
        <ul>
-       <li>CDT (Eclipse C/C++ Development Tools SDK) 5.0 or later, last tested with 5.0.2, recommended 5.0.2<br>
+       <li>CDT (Eclipse C/C++ Development Tools SDK) 6.0 or later, last tested with 6.0.2, recommended 6.0.2<br>
        <a href='http://www.eclipse.org/cdt/downloads.php'>http://www.eclipse.org/cdt/downloads.php</a>
-       <li>DD (Device Debug) SDK 1.0.0<br>
-       <a href='http://download.eclipse.org/dsdp/dd/downloads/'>http://download.eclipse.org/dsdp/dd/downloads/</a><br>
-           DSF has released version 2.0 with the CDT project. A patch is available for TCF/DSF integration code that adds support for DSF 2.0, see
-           <a href='https://bugs.eclipse.org/bugs/show_bug.cgi?id=269567'>Bugzilla Bug 269567: Migrate TCF - DSF integration to DSF 2.0m6</a>
        </ul>
    <li>Checkout TCF code from <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk'>Eclipse SVN repository</a>:
        <pre>svn co svn://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk</pre>
@@ -54,10 +49,8 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
    <li>Select "General/Existing Projects into Workspace" and click "Next".
    <li>Select root directory: &lt;TCF Root&gt;\plugins, and click "Next".
        <ul>
-       <li>If DD-DSF and/or CDT are not installed, don't import the following plugins into your workspace:
+       <li>If CDT is not installed, don't import the following plugins into your workspace:
            <ul>
-           <li>org.eclipse.tm.tcf.dsf
-           <li>org.eclipse.tm.tcf.dsf.ui
            <li>org.eclipse.tm.tcf.cdt.ui
            </ul>
        <li>If RSE is not installed, don't import the following plugins into your workspace:
@@ -65,35 +58,7 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
            <li>org.eclipse.tm.tcf.rse
            </ul>
        </ul>
-   <!--
-   <li><b>Optional</b> for browsing dependencies:<ul>
-       <li>In Package Explorer: do right click and select "Import...".
-       <li>Select "Plug-in Development/Plug-ins and Fragments" and click "Next".
-       <li>Select "Import plug-ins and fragments required by existig workspace plug-ins" and click "Next".
-       <li>Click "Select All", then click "Finish".
-   </ul></li>
-   -->
 </ul>
-
-<!--
-<p>Alternative way to get CDT, DSF and RSE installed:
-<ul>
-   <li>Get Eclipse for C/C++ Package from <a href='http://www.eclipse.org/downloads/'>
-       http://www.eclipse.org/downloads/</a> - it includes CDT.
-   <li>Do "Help > Software Updates > Find and Install > Search for New Features to Install > Next"
-   <li>Select "Europa Discovery Site", press "Finish"
-   <li>Select following:
-     <ul>
-       <li>Remote Access and Device Development
-       <ul>
-          <li>Remote System Explorer End-User Runtime
-          <li>Debugger Services Framework end-user and extender SDK
-       </ul>
-     </ul>
-   <li>Press "Select Required" if in Error
-   <li>Press "Next", "Accept", "Next", "Finish"
-</ul>
--->
 
 <h2><a name='Plugins'>TCF Plugins</a></h2>
 
@@ -114,10 +79,6 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
     It allows to launch Eclipse debug session by connecting to a target running TCF agent,
     and then perform basic debugging tasks, like resuming, suspending, single-stepping, setting/removing breakpoints, etc.
     The code can be used as a reference for developing new TCF clients.
-    <p>
-    <dt><b>org.eclipse.tm.tcf.dsf, org.eclipse.tm.tcf.dsf.ui</b>
-    <dd>This code allows Debugger Services Framework (DSF) clients to access targets using TCF as comminucation protocol.
-    It includes implementation of DSF services as TCF clients.
     <p>
     <dt><b>org.eclipse.tm.tcf.rse</b>
     <dd>This plugin allows Remote System Explorer (RSE) to connect to remote machines using TCF as communication protocol.
@@ -391,9 +352,10 @@ by connecting to a machine runnning TCF agent.
    <li>Do "Run/Open Debug Dialog..." command.
    <li>In "Debug" dialog box: select "Target Comminucation Framework" configuration type and press "New" button.
    <li>Enter a name for the configuration.
+   <li>On "Target" page, uncheck "Run instance of..." and "Use local host...".
    <li>Select a target machine in "Available targtes" list. The list shows targets autodetected on local network.
    <li>Press "Run Diagnostics" button to test connectivity for selected target.
-   <li>Enter a program name to run in debug session, for example "/bin/ls".
+   <li>On "Main" page, enter a program name to run in debug session, for example "/bin/ls".
    <li>Press "Debug" to start the debugger.
 </ul>
 
