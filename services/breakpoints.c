@@ -495,7 +495,7 @@ static void address_expression_error(BreakpointInfo * bp, int error) {
     /* TODO: per-context address expression error report */
     assert(error != 0);
     assert(bp->instruction_cnt == 0 || bp->error == NULL);
-    if (bp->instruction_cnt == 0) {
+    if (bp->instruction_cnt == 0 && get_error_code(errno) != ERR_CACHE_MISS) {
         release_error_report(bp->error);
         bp->error = get_error_report(error);
         assert(bp->error != NULL);
@@ -784,20 +784,17 @@ static void expr_cache_exit(EvaluationArgs * args) {
 static void evaluate_address_expression(void * x) {
     EvaluationArgs * args = (EvaluationArgs *)x;
     BreakpointInfo * bp = args->bp;
+    ContextAddress a = 0;
     Value v;
 
     assert(cache_enter_cnt > 0);
-    if (select_valid_context(&args->ctx) < 0) {
+    if (select_valid_context(&args->ctx) < 0 ||
+            evaluate_expression(args->ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0 ||
+            value_to_address(&v, &a) < 0) {
         address_expression_error(bp, errno);
-    }
-    else if (evaluate_expression(args->ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
-        address_expression_error(bp, errno);
-    }
-    else if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL && v.type_class != TYPE_CLASS_POINTER) {
-        address_expression_error(bp, ERR_INV_DATA_TYPE);
     }
     else {
-        plant_breakpoint_at_address(bp, args->ctx, value_to_address(&v));
+        plant_breakpoint_at_address(bp, args->ctx, a);
     }
     expr_cache_exit(args);
 }
@@ -813,10 +810,8 @@ static void evaluate_text_location(void * x) {
     BreakpointInfo * bp = args->bp;
 
     assert(cache_enter_cnt > 0);
-    if (select_valid_context(&args->ctx) < 0) {
-        address_expression_error(bp, errno);
-    }
-    else if (line_to_address(args->ctx, bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, args) < 0) {
+    if (select_valid_context(&args->ctx) < 0 ||
+            line_to_address(args->ctx, bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, args) < 0) {
         address_expression_error(bp, errno);
     }
     expr_cache_exit(args);
@@ -857,12 +852,13 @@ static void evaluate_condition(void * x) {
 
         if (bp->condition != NULL) {
             Value v;
-            if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0) {
+            int b = 0;
+            if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0 || value_to_boolean(&v, &b) < 0) {
                 if (get_error_code(errno) == ERR_CACHE_MISS) continue;
                 trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
                 req->bp_arr[i].condition_ok = 1;
             }
-            else if (value_to_boolean(&v)) {
+            else if (b) {
                 req->bp_arr[i].condition_ok = 1;
             }
             continue;

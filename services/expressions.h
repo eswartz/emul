@@ -52,11 +52,17 @@ typedef int ExpressionIdentifierCallBack(Context *, int /*frame*/, char * /*name
  */
 extern int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v);
 
-/* Cast a Value to a boolean - 0 or 1 */
-extern int value_to_boolean(Value * v);
+/*
+ * Cast a Value to a boolean - 0 or 1.
+ * Return 0 if no errors, otherwise return -1 and sets errno.
+ */
+extern int value_to_boolean(Value * v, int * res);
 
-/* Cast a Value to an address */
-extern ContextAddress value_to_address(Value * v);
+/*
+ * Cast a Value to an address.
+ * Return 0 if no errors, otherwise return -1 and sets errno.
+ */
+extern int value_to_address(Value * v, ContextAddress * res);
 
 /*
  * Allocate and fill local data buffer for a value.

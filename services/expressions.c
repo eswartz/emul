@@ -1804,24 +1804,20 @@ int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v)
     return 0;
 }
 
-int value_to_boolean(Value * v) {
-    /* TODO: error handling in value_to_boolean() */
-    int r = 0;
+int value_to_boolean(Value * v, int * res) {
     Trap trap;
-    if (!set_trap(&trap)) return 0;
-    r = to_boolean(MODE_NORMAL, v);
+    if (!set_trap(&trap)) return -1;
+    *res = to_boolean(MODE_NORMAL, v);
     clear_trap(&trap);
-    return r;
+    return 0;
 }
 
-ContextAddress value_to_address(Value * v) {
-    /* TODO: error handling in value_to_address() */
-    ContextAddress r = 0;
+int value_to_address(Value * v, ContextAddress * res) {
     Trap trap;
-    if (!set_trap(&trap)) return 0;
-    r = (ContextAddress)to_uns(MODE_NORMAL, v);
+    if (!set_trap(&trap)) return -1;
+    *res = (ContextAddress)to_uns(MODE_NORMAL, v);
     clear_trap(&trap);
-    return r;
+    return 0;
 }
 
 /********************** Commands **************************/
