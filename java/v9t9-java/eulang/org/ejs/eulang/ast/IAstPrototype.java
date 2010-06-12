@@ -24,5 +24,7 @@ public interface IAstPrototype extends IAstTypedNode, IAstType {
 	
 	/** index of first default argument, or # of arguments if none */
 	int getDefaultArgumentIndex();
+
+	void addArgument(int position, IAstArgDef newArgDef);
 	
 }

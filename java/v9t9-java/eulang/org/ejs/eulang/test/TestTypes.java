@@ -14,7 +14,9 @@ import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstExprStmt;
 import org.ejs.eulang.ast.IAstFieldExpr;
+import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstModule;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
@@ -1801,6 +1803,80 @@ xes[3][2][1]
 
     	
     	assertEquals(8 * 8, data.getSizeof());	
+    }
+    
+    
+    @Test
+    public void testDataMethod1() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"	val : Int;\n"+
+    			"   get = code #this () { val };\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   x.val = 123;\n"+
+    			"   x.get();\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	// 'get' is a statement, not part of the data
+    	assertEquals(1, type.stmts().nodeCount());
+    	
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
+    	assertFalse(data.isGeneric());
+    	assertEquals(1, data.getTypes().length);
+    	assertEquals(1, data.getInstanceFields().length);
+    	assertEquals(0, data.getStaticFields().length);
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("get");
+    	assertNull(field);
+    	
+    	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.stmts().getFirst());
+    	assertTrue(meth.isMethod());
+    	
+    	assertEquals(2 * 8, data.getSizeof());	
+    	
+    	// for #this code, all references to symbols in the scope are converted to "this.<field>"
+    	IAstExprStmt methExpr = (IAstExprStmt) meth.stmts().getLast();
+    	assertTrue(methExpr.getExpr() instanceof IAstFieldExpr);
+    	IAstFieldExpr fieldExpr = (IAstFieldExpr) methExpr.getExpr();
+    	assertTrue(fieldExpr.getExpr() instanceof IAstDerefExpr);
+    	assertEquals("val", fieldExpr.getField().getName());
+    	assertEquals(typeEngine.INT, fieldExpr.getType());
+    	
+    	///////
+    	
+    	// after type inference, the method call is converted. 
+    	IAstCodeExpr main = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("foo").getDefinition());
+    	IAstExprStmt expr = (IAstExprStmt) main.stmts().getLast();
+    	
+    	assertTrue(expr.getExpr() instanceof IAstFuncCallExpr);
+    	IAstFuncCallExpr funccall = (IAstFuncCallExpr)expr.getExpr();
+		IAstTypedExpr func = funccall.getFunction();
+    	assertFalse(func instanceof IAstFieldExpr);
+		assertTrue(func instanceof IAstSymbolExpr);
+    	
+		// one arg: 'x'  
+		assertEquals(1, funccall.arguments().nodeCount());
+    	
+		// and the type is pointer-to-data
+		IAstTypedExpr thisarg = funccall.arguments().getFirst();
+		assertEquals(typeEngine.getPointerType(data), thisarg.getType());
+		
+		// and value of &(original arg)
+		assertTrue(thisarg instanceof IAstAddrOfExpr);
+		IAstTypedExpr deref = ((IAstAddrOfExpr)thisarg).getExpr();
+		assertTrue(((IAstDerefExpr)deref).getExpr() instanceof IAstSymbolExpr);
+		
+		dumpLLVMGen = true;
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertFoundInOptimizedText("ret i16 123", gen);
     }
 }
 

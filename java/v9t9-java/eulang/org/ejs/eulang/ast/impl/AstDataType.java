@@ -136,6 +136,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	@Override
 	public void setFields(IAstNodeList<IAstTypedNode> fields) {
 		this.ifields = reparent(this.ifields, fields);
+		setType(null);
 	}
 
 	/* (non-Javadoc)
@@ -144,7 +145,6 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	@Override
 	public void setStatics(IAstNodeList<IAstTypedNode> statics) {
 		this.statics = reparent(this.statics, statics);
-
 	}
 
 	/* (non-Javadoc)

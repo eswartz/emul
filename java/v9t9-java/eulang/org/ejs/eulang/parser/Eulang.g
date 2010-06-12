@@ -10,6 +10,8 @@ tokens {
   ADDSCOPE;
   EXTENDSCOPE;
   
+  ATTRS;
+  
   LIST_COMPREHENSION;
   CODE;
   METHOD;
@@ -22,6 +24,7 @@ tokens {
   REF;
   
   ALLOC;
+  ALLOC_TUPLE;
   ASSIGN;
   DEFINE;
   EXPR;
@@ -161,8 +164,8 @@ toplevelSingleVarDecl:
 toplevelTupleVarDecl:    
     idTuple 
       ( 
-        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC idTuple TYPE rhsExprOrInitList) )
-      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC idTuple type rhsExprOrInitList*) )
+        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC_TUPLE idTuple TYPE rhsExprOrInitList) )
+      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC_TUPLE idTuple type rhsExprOrInitList*) )
       )
     ;
     
@@ -181,8 +184,6 @@ toplevelvalue : (LBRACE) => xscope
     | selector
     | rhsExpr
     | data
-    | macro
-     
     ;
 
 // one or more selectors
@@ -192,7 +193,7 @@ selector: LBRACKET selectors RBRACKET    -> ^(LIST selectors*)
 selectors: (selectoritem ( COMMA selectoritem )* COMMA?)?    -> selectoritem*
   ;
         
-selectoritem :  macro | rhsExpr; // | listCompr;
+selectoritem :  rhsExpr; // | listCompr;
 
 //  scope
 //
@@ -212,7 +213,7 @@ idlist : ID (COMMA ID)*    -> ^(IDLIST ID+)
     ;
 idlistOrEmpty : idlist -> idlist | -> ^(IDLIST) ;
 
-listiterable : ( code | macro ) ;
+listiterable : code  ;
     
 list : LBRACKET listitems RBRACKET     -> ^(LIST listitems*)
     ;
@@ -225,11 +226,10 @@ listitem : toplevelvalue ;
   
 // code block
 
-code : CODE proto? LBRACE codestmtlist RBRACE -> ^(CODE proto? codestmtlist*)  
+code : CODE attrs? proto? LBRACE codestmtlist RBRACE -> ^(CODE attrs? proto? codestmtlist*)  
     ;
 
-// macro code block
-macro : MACRO proto ? LBRACE codestmtlist RBRACE -> ^(MACRO proto? codestmtlist*)  
+attrs : ATTR+   ->^(ATTRS ATTR+)  
     ;
 
 // argument definitions:  allow a list of names separated with commas,
@@ -336,8 +336,8 @@ singleVarDecl:
     ;
 tupleVarDecl:    
     idTuple 
-      (  ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC idTuple TYPE assignOrInitExpr) )
-      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC idTuple type assignOrInitExpr*) )
+      (  ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC_TUPLE idTuple TYPE assignOrInitExpr) )
+      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC_TUPLE idTuple type assignOrInitExpr*) )
       )
     ;
 
@@ -586,7 +586,7 @@ atom :
     |   ( tuple ) => tuple                          -> tuple
     |   ( LPAREN varDecl ) => LPAREN a0=varDecl RPAREN               -> $a0
     |   LPAREN a1=assignExpr RPAREN               -> $a1
-    |   ( CODE ) =>  code                           -> code
+    |  (MACRO? CODE) => code                           -> code
     //|   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
    ) 
 
@@ -732,6 +732,7 @@ BY : 'by';
 CODE : 'code';
 DATA : 'data';
 MACRO : 'macro';
+METHOD  : 'method';
 //TYPE : 'type';
 
 FOR : 'for';
@@ -759,6 +760,8 @@ NUMBER: '0'..'9' (IDSUFFIX ( '.' IDSUFFIX)?);
 
 //  Handle multiple colons which aren't ':' or '::='.  (We ignore spaces so we have to account for this)
 COLONS : COLON COLON+ ;
+
+ATTR : '#' ID ;
 
 ID : LETTERLIKE IDSUFFIX ;
 fragment IDSUFFIX : ( LETTERLIKE | DIGIT )*;

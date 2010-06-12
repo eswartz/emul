@@ -60,7 +60,7 @@ assert R0 == 40320
 >>>
 
 <<< integer multiply and unsigned cast
-mulBy = macro(macro val : Int; macro K : Int) {
+mulBy = code #macro (macro val : Int; macro K : Int) {
     val * K
 };
 stuff = code(x : Byte; y : Int) {

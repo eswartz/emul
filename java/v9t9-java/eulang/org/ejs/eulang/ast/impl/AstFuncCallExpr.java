@@ -10,6 +10,7 @@ import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstNode;
@@ -156,12 +157,14 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
 		
+		ITyped realFunction = getRealFunction(function);
+		
 		LLCodeType codeType = null;
 
 		LLCodeType argCodeType = getArgInferredType(typeEngine);
 		
-		ITyped realFunction = getRealFunction(function);
 		LLType referencedType = realFunction != null ? realFunction.getType() : null;
+		
 		// XXX codeptr
 		if (referencedType instanceof LLPointerType)
 			referencedType = referencedType.getSubType();
@@ -277,42 +280,6 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		codeType = typeEngine.getCodeType(infRetType, infArgTypes);
 		return codeType;
 	}
-	
-	/*
-	private LLType getRealType(IAstTypedExpr node) {
-		if (node instanceof IAstSymbolExpr) {
-			IAstSymbolExpr symbolExpr = (IAstSymbolExpr) node;
-			if (symbolExpr.getDefinition() != null) {
-				IAstTypedExpr expr = symbolExpr.getInstance();
-				return expr != null ? expr.getType() : null;
-			}
-			if (!(symbolExpr.getSymbol().getDefinition() instanceof ITyped))
-				return null;
-			
-			IAstTypedNode typedNode = (IAstTypedNode) symbolExpr.getSymbol().getDefinition();
-			if (typedNode instanceof IAstAllocStmt) {
-				if (typedNode.getType() instanceof LLPointerType) {
-					return typedNode.getType().getSubType();
-				}
-			}
-			return ((IAstTypedNode)node).getType();
-		} 
-		else if (node instanceof IAstFieldExpr) {
-			IAstFieldExpr fieldExpr = (IAstFieldExpr) node;
-			if (fieldExpr.getExpr().getType() instanceof LLDataType) {
-				LLDataType data = (LLDataType) fieldExpr.getExpr().getType();
-				BaseLLField field = data.getField(fieldExpr.getField().getName());
-				if (field == null) {
-					return null;
-				}
-				LLType type = field.getType();
-				if (type instanceof LLPointerType)
-					type = type.getSubType();
-				return type;
-			}
-		}
-		return null;
-	}*/
 
 	private ITyped getRealFunction(IAstTypedExpr node) {
 		if (node instanceof IAstSymbolExpr) {

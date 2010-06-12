@@ -4,9 +4,11 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstFieldExpr;
+import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstName;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstScope;
@@ -180,7 +182,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			IAstTypedExpr baseExpr = expr;
 			if (baseExpr instanceof IAstDerefExpr)
 				baseExpr = ((IAstDerefExpr) baseExpr).getExpr();
-			if (baseExpr instanceof IAstSymbolExpr && replaceWithStaticReference(exprType, ((IAstSymbolExpr)baseExpr).getDefinition()))
+			if (baseExpr instanceof IAstSymbolExpr && replaceWithStaticOrMethodReference(exprType, ((IAstSymbolExpr)baseExpr).getDefinition()))
 				return true;
 			
 			if (!(exprType instanceof LLDataType)) {
@@ -195,7 +197,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 				fieldType = field.getType();
 			} else {
 				// try for something in the same scope
-				if (replaceWithStaticReference(dataType, dataType.getSymbol().getDefinition()))
+				if (replaceWithStaticOrMethodReference(dataType, dataType.getSymbol().getDefinition()))
 					return true;
 				if (!matched)
 					throw new TypeException(this.field, "no field '"+ this.field.getName() + "' in data '" + dataType.getName() + "'");
@@ -224,17 +226,51 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	/**
 	 * @param symbol
 	 * @return
+	 * @throws TypeException 
 	 */
-	private boolean replaceWithStaticReference(LLType type, IAstNode node) {
+	private boolean replaceWithStaticOrMethodReference(LLType type, IAstNode node) throws TypeException {
 		if (node instanceof IAstDefineStmt) {
 			IAstTypedExpr body = ((IAstDefineStmt) node).getMatchingBodyExpr(type);
 			if (body instanceof IAstScope) {
 				ISymbol nonFieldSym = ((IAstScope) body).getScope().get(this.field.getName());
 				if (nonFieldSym != null) {
-					// now replace this with the proper call
+					// now replace this with the proper symbol
+					//
+					//	FIELDREF
+					//		something
+					//		fieldname
+					// -->
+					//
+					//	scoped.something.fieldname
 					
 					IAstSymbolExpr symbolExpr = new AstSymbolExpr(false, nonFieldSym);
 					symbolExpr.setSourceRef(getSourceRef());
+					
+					IAstNode ref = symbolExpr.getBody();
+					
+					if (ref == null) {
+						return false;		// not static
+					}
+					
+					if (ref instanceof IAstCodeExpr && ((IAstCodeExpr) ref).isMethod()) {
+						// and put the referent into the argument list
+						if (!(getParent() instanceof IAstFuncCallExpr)) {
+							throw new TypeException(node, "cannot reference method outside of function call"); 	// for now
+						}
+						
+						IAstFuncCallExpr funcCall = (IAstFuncCallExpr) getParent();
+						IAstTypedExpr referent = getExpr();
+						referent.setParent(null);
+						
+						referent = new AstAddrOfExpr(referent);
+						referent.setSourceRef(getExpr().getSourceRef());
+						funcCall.arguments().add(0, referent);
+						
+						funcCall.getFunction().setType(null);
+						
+					} else {
+						// it's a static ref; we can lose the referent
+					}
 					getParent().replaceChild(this, symbolExpr);
 					return true;
 				}
@@ -251,9 +287,6 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	public LLType getDataType(TypeEngine typeEngine) {
 		LLType exprType = expr.getType();
 		if (exprType instanceof LLInstanceType) {
-			//LLType realType = typeEngine.getInstanceToRealTypeMap().get(exprType);
-			//if (realType != null)
-			//	return realType;
 			exprType = ((LLInstanceType) exprType).getSymbol().getType();
 		}
 		if (exprType instanceof LLSymbolType) {

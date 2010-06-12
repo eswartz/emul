@@ -1,4 +1,4 @@
-// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-06-11 16:16:41
+// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-06-12 14:12:11
 
 package org.ejs.eulang.parser;
 
@@ -9,173 +9,176 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class EulangLexer extends Lexer {
-    public static final int CAST=27;
-    public static final int CONDTEST=24;
-    public static final int STAR=139;
-    public static final int WHILE=107;
-    public static final int GENERIC=66;
-    public static final int MOD=37;
-    public static final int POINTER=57;
-    public static final int LSHIFT_EQ=100;
-    public static final int PREDEC=43;
-    public static final int REM_EQ=93;
-    public static final int DEREF=58;
-    public static final int MINUSMINUS=144;
-    public static final int DO=106;
-    public static final int ARGLIST=13;
-    public static final int EQUALS=73;
-    public static final int NOT=119;
+    public static final int CAST=29;
+    public static final int CONDTEST=26;
+    public static final int STAR=142;
+    public static final int WHILE=110;
+    public static final int GENERIC=68;
+    public static final int MOD=39;
+    public static final int POINTER=59;
+    public static final int LSHIFT_EQ=103;
+    public static final int PREDEC=45;
+    public static final int REM_EQ=96;
+    public static final int DEREF=60;
+    public static final int MINUSMINUS=147;
+    public static final int DO=109;
+    public static final int ARGLIST=14;
+    public static final int EQUALS=75;
+    public static final int NOT=122;
     public static final int EOF=-1;
-    public static final int BREAK=112;
-    public static final int TYPE=21;
-    public static final int CODE=8;
-    public static final int LBRACKET=76;
-    public static final int RPAREN=85;
-    public static final int TUPLE=50;
-    public static final int GREATER=128;
-    public static final int STRING_LITERAL=147;
-    public static final int ADDRREF=59;
+    public static final int BREAK=115;
+    public static final int TYPE=23;
+    public static final int CODE=9;
+    public static final int LBRACKET=78;
+    public static final int RPAREN=88;
+    public static final int TUPLE=52;
+    public static final int GREATER=131;
+    public static final int STRING_LITERAL=150;
+    public static final int ADDRREF=61;
     public static final int ADDSCOPE=5;
     public static final int EXTENDSCOPE=6;
-    public static final int UREM_EQ=95;
-    public static final int COMPLE=122;
-    public static final int AND_EQ=97;
-    public static final int CARET=89;
-    public static final int XOR_EQ=99;
-    public static final int LESS=126;
-    public static final int INITEXPR=63;
-    public static final int INITLIST=64;
-    public static final int ATSIGN=83;
-    public static final int GOTO=48;
-    public static final int SELECT=158;
-    public static final int CLSHIFT_EQ=103;
-    public static final int ARRAY=55;
-    public static final int LABELSTMT=52;
-    public static final int CRSHIFT=136;
-    public static final int RBRACE=80;
-    public static final int STMTEXPR=22;
-    public static final int STATIC=153;
-    public static final int PERIOD=105;
-    public static final int LSHIFT=133;
-    public static final int INV=39;
-    public static final int ADDROF=60;
-    public static final int ELSE=116;
-    public static final int NUMBER=145;
-    public static final int UDIV=36;
-    public static final int LIT=44;
-    public static final int CRSHIFT_EQ=104;
-    public static final int UDIV_EQ=94;
-    public static final int LIST=20;
-    public static final int PLUS_EQ=75;
-    public static final int MUL=34;
-    public static final int RSHIFT_EQ=101;
-    public static final int ARGDEF=14;
-    public static final int FI=117;
-    public static final int MINUS_EQ=90;
-    public static final int ELIF=115;
-    public static final int WS=167;
-    public static final int OR_EQ=98;
-    public static final int BITOR=30;
-    public static final int NIL=87;
-    public static final int TYPEOF=62;
-    public static final int UNTIL=160;
-    public static final int STMTLIST=11;
-    public static final int OR=118;
-    public static final int SIZEOF=61;
-    public static final int ALLOC=16;
-    public static final int IDLIST=46;
-    public static final int REPEAT=108;
-    public static final int INLINE=26;
-    public static final int CALL=25;
-    public static final int POSTINC=40;
-    public static final int END=162;
-    public static final int FALSE=149;
-    public static final int COMPULE=124;
-    public static final int POSTDEC=41;
-    public static final int MOD_EQ=96;
-    public static final int BINDING=53;
-    public static final int FORWARD=68;
-    public static final int BAR_BAR=157;
-    public static final int AMP=132;
-    public static final int PLUSPLUS=143;
-    public static final int POINTS=156;
-    public static final int UGREATER=129;
-    public static final int LBRACE=79;
-    public static final int FIELDREF=54;
-    public static final int MULTI_COMMENT=169;
-    public static final int FOR=81;
-    public static final int SUB=33;
-    public static final int ID=69;
-    public static final int AND=109;
-    public static final int DEFINE=18;
-    public static final int UREM=142;
-    public static final int BITAND=29;
-    public static final int LPAREN=84;
-    public static final int IF=113;
-    public static final int COLONS=151;
-    public static final int AT=111;
-    public static final int COLON_COLON_EQUALS=154;
-    public static final int INDEX=56;
-    public static final int AS=148;
-    public static final int CONDLIST=23;
-    public static final int IDSUFFIX=163;
-    public static final int EXPR=19;
-    public static final int SLASH=140;
-    public static final int IN=82;
-    public static final int THEN=114;
+    public static final int UREM_EQ=98;
+    public static final int COMPLE=125;
+    public static final int AND_EQ=100;
+    public static final int CARET=92;
+    public static final int XOR_EQ=102;
+    public static final int LESS=129;
+    public static final int INITEXPR=65;
+    public static final int INITLIST=66;
+    public static final int ATSIGN=86;
+    public static final int GOTO=50;
+    public static final int SELECT=161;
+    public static final int CLSHIFT_EQ=106;
+    public static final int ARRAY=57;
+    public static final int LABELSTMT=54;
+    public static final int CRSHIFT=139;
+    public static final int RBRACE=82;
+    public static final int STMTEXPR=24;
+    public static final int STATIC=156;
+    public static final int PERIOD=108;
+    public static final int LSHIFT=136;
+    public static final int INV=41;
+    public static final int ADDROF=62;
+    public static final int ELSE=119;
+    public static final int NUMBER=148;
+    public static final int UDIV=38;
+    public static final int LIT=46;
+    public static final int CRSHIFT_EQ=107;
+    public static final int UDIV_EQ=97;
+    public static final int LIST=22;
+    public static final int PLUS_EQ=77;
+    public static final int MUL=36;
+    public static final int RSHIFT_EQ=104;
+    public static final int ARGDEF=15;
+    public static final int FI=120;
+    public static final int MINUS_EQ=93;
+    public static final int ELIF=118;
+    public static final int WS=170;
+    public static final int OR_EQ=101;
+    public static final int BITOR=32;
+    public static final int NIL=90;
+    public static final int TYPEOF=64;
+    public static final int UNTIL=163;
+    public static final int STMTLIST=12;
+    public static final int OR=121;
+    public static final int SIZEOF=63;
+    public static final int ALLOC=17;
+    public static final int IDLIST=48;
+    public static final int REPEAT=111;
+    public static final int INLINE=28;
+    public static final int CALL=27;
+    public static final int POSTINC=42;
+    public static final int END=165;
+    public static final int FALSE=152;
+    public static final int COMPULE=127;
+    public static final int POSTDEC=43;
+    public static final int MOD_EQ=99;
+    public static final int BINDING=55;
+    public static final int FORWARD=70;
+    public static final int BAR_BAR=160;
+    public static final int AMP=135;
+    public static final int PLUSPLUS=146;
+    public static final int POINTS=159;
+    public static final int UGREATER=132;
+    public static final int LBRACE=81;
+    public static final int FIELDREF=56;
+    public static final int MULTI_COMMENT=172;
+    public static final int FOR=83;
+    public static final int SUB=35;
+    public static final int ID=71;
+    public static final int AND=112;
+    public static final int DEFINE=20;
+    public static final int UREM=145;
+    public static final int BITAND=31;
+    public static final int LPAREN=87;
+    public static final int IF=116;
+    public static final int COLONS=154;
+    public static final int AT=114;
+    public static final int COLON_COLON_EQUALS=157;
+    public static final int INDEX=58;
+    public static final int AS=151;
+    public static final int CONDLIST=25;
+    public static final int IDSUFFIX=166;
+    public static final int EXPR=21;
+    public static final int SLASH=143;
+    public static final int IN=84;
+    public static final int THEN=117;
     public static final int SCOPE=4;
-    public static final int COMMA=70;
-    public static final int PREINC=42;
-    public static final int BITXOR=31;
-    public static final int TILDE=131;
-    public static final int PLUS=74;
-    public static final int SINGLE_COMMENT=168;
-    public static final int DIGIT=165;
-    public static final int RBRACKET=77;
-    public static final int RSHIFT=134;
-    public static final int WITH=161;
-    public static final int EQUALS_COLON=78;
-    public static final int ADD=32;
-    public static final int URSHIFT_EQ=102;
-    public static final int COMPGE=123;
-    public static final int BY=110;
-    public static final int ULESS=127;
-    public static final int LIST_COMPREHENSION=7;
-    public static final int LETTERLIKE=164;
-    public static final int HASH=155;
-    public static final int CLSHIFT=137;
-    public static final int STAR_EQ=91;
-    public static final int MINUS=138;
-    public static final int REM=141;
-    public static final int SEMI=67;
-    public static final int TRUE=150;
-    public static final int REF=15;
-    public static final int COLON=72;
-    public static final int TUPLETYPE=51;
-    public static final int COLON_EQUALS=71;
-    public static final int QUESTION=88;
-    public static final int NEWLINE=166;
-    public static final int CHAR_LITERAL=146;
-    public static final int LABEL=47;
-    public static final int WHEN=159;
-    public static final int INSTANCE=65;
-    public static final int BLOCK=49;
-    public static final int NEG=38;
-    public static final int ASSIGN=17;
-    public static final int URSHIFT=135;
-    public static final int ARROW=86;
-    public static final int COMPEQ=120;
-    public static final int IDREF=45;
-    public static final int DIV=35;
-    public static final int COND=28;
-    public static final int PROTO=12;
-    public static final int MACRO=10;
-    public static final int METHOD=9;
-    public static final int COMPNE=121;
-    public static final int BAR=130;
-    public static final int DATA=152;
-    public static final int COMPUGE=125;
-    public static final int SLASH_EQ=92;
+    public static final int COMMA=72;
+    public static final int PREINC=44;
+    public static final int BITXOR=33;
+    public static final int TILDE=134;
+    public static final int PLUS=76;
+    public static final int SINGLE_COMMENT=171;
+    public static final int DIGIT=168;
+    public static final int RBRACKET=79;
+    public static final int RSHIFT=137;
+    public static final int ATTR=85;
+    public static final int WITH=164;
+    public static final int EQUALS_COLON=80;
+    public static final int ADD=34;
+    public static final int URSHIFT_EQ=105;
+    public static final int COMPGE=126;
+    public static final int BY=113;
+    public static final int ULESS=130;
+    public static final int LIST_COMPREHENSION=8;
+    public static final int LETTERLIKE=167;
+    public static final int HASH=158;
+    public static final int ATTRS=7;
+    public static final int CLSHIFT=140;
+    public static final int STAR_EQ=94;
+    public static final int MINUS=141;
+    public static final int REM=144;
+    public static final int SEMI=69;
+    public static final int TRUE=153;
+    public static final int REF=16;
+    public static final int COLON=74;
+    public static final int TUPLETYPE=53;
+    public static final int COLON_EQUALS=73;
+    public static final int QUESTION=91;
+    public static final int NEWLINE=169;
+    public static final int CHAR_LITERAL=149;
+    public static final int LABEL=49;
+    public static final int WHEN=162;
+    public static final int INSTANCE=67;
+    public static final int BLOCK=51;
+    public static final int NEG=40;
+    public static final int ASSIGN=19;
+    public static final int URSHIFT=138;
+    public static final int ARROW=89;
+    public static final int COMPEQ=123;
+    public static final int IDREF=47;
+    public static final int DIV=37;
+    public static final int COND=30;
+    public static final int PROTO=13;
+    public static final int MACRO=11;
+    public static final int METHOD=10;
+    public static final int COMPNE=124;
+    public static final int BAR=133;
+    public static final int DATA=155;
+    public static final int ALLOC_TUPLE=18;
+    public static final int COMPUGE=128;
+    public static final int SLASH_EQ=95;
 
       class EOFException extends RecognitionException {
         String message;
@@ -2023,13 +2026,34 @@ public class EulangLexer extends Lexer {
     }
     // $ANTLR end "MACRO"
 
+    // $ANTLR start "METHOD"
+    public final void mMETHOD() throws RecognitionException {
+        try {
+            int _type = METHOD;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:735:9: ( 'method' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:735:11: 'method'
+            {
+            match("method"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "METHOD"
+
     // $ANTLR start "FOR"
     public final void mFOR() throws RecognitionException {
         try {
             int _type = FOR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:737:5: ( 'for' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:737:7: 'for'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:738:5: ( 'for' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:738:7: 'for'
             {
             match("for"); 
 
@@ -2049,8 +2073,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = IN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:738:4: ( 'in' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:738:6: 'in'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:739:4: ( 'in' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:739:6: 'in'
             {
             match("in"); 
 
@@ -2070,8 +2094,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = GOTO;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:739:5: ( 'goto' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:739:7: 'goto'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:740:5: ( 'goto' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:740:7: 'goto'
             {
             match("goto"); 
 
@@ -2091,8 +2115,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = FALSE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:740:6: ( 'false' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:740:8: 'false'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:741:6: ( 'false' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:741:8: 'false'
             {
             match("false"); 
 
@@ -2112,8 +2136,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = TRUE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:741:5: ( 'true' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:741:7: 'true'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:742:5: ( 'true' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:742:7: 'true'
             {
             match("true"); 
 
@@ -2133,8 +2157,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = NIL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:742:4: ( 'nil' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:742:6: 'nil'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:743:4: ( 'nil' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:743:6: 'nil'
             {
             match("nil"); 
 
@@ -2154,8 +2178,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = WITH;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:744:5: ( 'with' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:744:7: 'with'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:745:5: ( 'with' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:745:7: 'with'
             {
             match("with"); 
 
@@ -2175,8 +2199,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = AS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:745:3: ( 'as' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:745:5: 'as'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:746:3: ( 'as' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:746:5: 'as'
             {
             match("as"); 
 
@@ -2196,8 +2220,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = END;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:746:4: ( 'end' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:746:6: 'end'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:747:4: ( 'end' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:747:6: 'end'
             {
             match("end"); 
 
@@ -2217,8 +2241,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = SIZEOF;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:748:7: ( 'sizeof' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:748:9: 'sizeof'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:749:7: ( 'sizeof' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:749:9: 'sizeof'
             {
             match("sizeof"); 
 
@@ -2238,8 +2262,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = TYPEOF;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:749:7: ( 'typeof' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:749:9: 'typeof'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:750:7: ( 'typeof' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:750:9: 'typeof'
             {
             match("typeof"); 
 
@@ -2259,15 +2283,15 @@ public class EulangLexer extends Lexer {
         try {
             int _type = NUMBER;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:754:7: ( '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:754:9: '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:755:7: ( '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:755:9: '0' .. '9' ( IDSUFFIX ( '.' IDSUFFIX )? )
             {
             matchRange('0','9'); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:754:18: ( IDSUFFIX ( '.' IDSUFFIX )? )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:754:19: IDSUFFIX ( '.' IDSUFFIX )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:755:18: ( IDSUFFIX ( '.' IDSUFFIX )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:755:19: IDSUFFIX ( '.' IDSUFFIX )?
             {
             mIDSUFFIX(); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:754:28: ( '.' IDSUFFIX )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:755:28: ( '.' IDSUFFIX )?
             int alt1=2;
             int LA1_0 = input.LA(1);
 
@@ -2276,7 +2300,7 @@ public class EulangLexer extends Lexer {
             }
             switch (alt1) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:754:30: '.' IDSUFFIX
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:755:30: '.' IDSUFFIX
                     {
                     match('.'); 
                     mIDSUFFIX(); 
@@ -2305,11 +2329,11 @@ public class EulangLexer extends Lexer {
         try {
             int _type = COLONS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:761:8: ( COLON ( COLON )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:761:10: COLON ( COLON )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:762:8: ( COLON ( COLON )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:762:10: COLON ( COLON )+
             {
             mCOLON(); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:761:16: ( COLON )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:762:16: ( COLON )+
             int cnt2=0;
             loop2:
             do {
@@ -2323,7 +2347,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt2) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:761:16: COLON
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:762:16: COLON
             	    {
             	    mCOLON(); 
 
@@ -2350,13 +2374,34 @@ public class EulangLexer extends Lexer {
     }
     // $ANTLR end "COLONS"
 
+    // $ANTLR start "ATTR"
+    public final void mATTR() throws RecognitionException {
+        try {
+            int _type = ATTR;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:764:6: ( '#' ID )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:764:8: '#' ID
+            {
+            match('#'); 
+            mID(); 
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "ATTR"
+
     // $ANTLR start "ID"
     public final void mID() throws RecognitionException {
         try {
             int _type = ID;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:763:4: ( LETTERLIKE IDSUFFIX )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:763:6: LETTERLIKE IDSUFFIX
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:766:4: ( LETTERLIKE IDSUFFIX )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:766:6: LETTERLIKE IDSUFFIX
             {
             mLETTERLIKE(); 
             mIDSUFFIX(); 
@@ -2374,10 +2419,10 @@ public class EulangLexer extends Lexer {
     // $ANTLR start "IDSUFFIX"
     public final void mIDSUFFIX() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:764:19: ( ( LETTERLIKE | DIGIT )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:764:21: ( LETTERLIKE | DIGIT )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:767:19: ( ( LETTERLIKE | DIGIT )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:767:21: ( LETTERLIKE | DIGIT )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:764:21: ( LETTERLIKE | DIGIT )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:767:21: ( LETTERLIKE | DIGIT )*
             loop3:
             do {
                 int alt3=2;
@@ -2422,7 +2467,7 @@ public class EulangLexer extends Lexer {
     // $ANTLR start "LETTERLIKE"
     public final void mLETTERLIKE() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:765:20: ( 'a' .. 'z' | 'A' .. 'Z' | '_' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:768:20: ( 'a' .. 'z' | 'A' .. 'Z' | '_' )
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:
             {
             if ( (input.LA(1)>='A' && input.LA(1)<='Z')||input.LA(1)=='_'||(input.LA(1)>='a' && input.LA(1)<='z') ) {
@@ -2446,8 +2491,8 @@ public class EulangLexer extends Lexer {
     // $ANTLR start "DIGIT"
     public final void mDIGIT() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:766:15: ( '0' .. '9' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:766:17: '0' .. '9'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:769:15: ( '0' .. '9' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:769:17: '0' .. '9'
             {
             matchRange('0','9'); 
 
@@ -2464,8 +2509,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = CHAR_LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:772:14: ( '\\'' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:772:16: '\\''
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:775:14: ( '\\'' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:775:16: '\\''
             {
             match('\''); 
 
@@ -2501,8 +2546,8 @@ public class EulangLexer extends Lexer {
         try {
             int _type = STRING_LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:790:15: ( '\"' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:790:17: '\"'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:793:15: ( '\"' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:793:17: '\"'
             {
             match('\"'); 
 
@@ -2537,10 +2582,10 @@ public class EulangLexer extends Lexer {
         try {
             int _type = NEWLINE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:809:8: ( ( ( '\\r' )? '\\n' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:809:10: ( ( '\\r' )? '\\n' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:812:8: ( ( ( '\\r' )? '\\n' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:812:10: ( ( '\\r' )? '\\n' )+
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:809:10: ( ( '\\r' )? '\\n' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:812:10: ( ( '\\r' )? '\\n' )+
             int cnt5=0;
             loop5:
             do {
@@ -2554,9 +2599,9 @@ public class EulangLexer extends Lexer {
 
                 switch (alt5) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:809:11: ( '\\r' )? '\\n'
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:812:11: ( '\\r' )? '\\n'
             	    {
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:809:11: ( '\\r' )?
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:812:11: ( '\\r' )?
             	    int alt4=2;
             	    int LA4_0 = input.LA(1);
 
@@ -2565,7 +2610,7 @@ public class EulangLexer extends Lexer {
             	    }
             	    switch (alt4) {
             	        case 1 :
-            	            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:809:11: '\\r'
+            	            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:812:11: '\\r'
             	            {
             	            match('\r'); 
 
@@ -2605,10 +2650,10 @@ public class EulangLexer extends Lexer {
         try {
             int _type = WS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:810:5: ( ( ' ' | '\\t' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:810:9: ( ' ' | '\\t' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:813:5: ( ( ' ' | '\\t' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:813:9: ( ' ' | '\\t' )+
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:810:9: ( ' ' | '\\t' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:813:9: ( ' ' | '\\t' )+
             int cnt6=0;
             loop6:
             do {
@@ -2663,12 +2708,12 @@ public class EulangLexer extends Lexer {
         try {
             int _type = SINGLE_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:814:15: ( '//' (~ ( '\\r' | '\\n' ) )* NEWLINE )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:814:17: '//' (~ ( '\\r' | '\\n' ) )* NEWLINE
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:817:15: ( '//' (~ ( '\\r' | '\\n' ) )* NEWLINE )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:817:17: '//' (~ ( '\\r' | '\\n' ) )* NEWLINE
             {
             match("//"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:814:22: (~ ( '\\r' | '\\n' ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:817:22: (~ ( '\\r' | '\\n' ) )*
             loop7:
             do {
                 int alt7=2;
@@ -2681,7 +2726,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt7) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:814:22: ~ ( '\\r' | '\\n' )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:817:22: ~ ( '\\r' | '\\n' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -2719,12 +2764,12 @@ public class EulangLexer extends Lexer {
         try {
             int _type = MULTI_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:819:3: ( '/*' ( . )* '*/' ( NEWLINE )? )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:819:5: '/*' ( . )* '*/' ( NEWLINE )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:822:3: ( '/*' ( . )* '*/' ( NEWLINE )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:822:5: '/*' ( . )* '*/' ( NEWLINE )?
             {
             match("/*"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:819:10: ( . )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:822:10: ( . )*
             loop8:
             do {
                 int alt8=2;
@@ -2749,7 +2794,7 @@ public class EulangLexer extends Lexer {
 
                 switch (alt8) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:819:10: .
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:822:10: .
             	    {
             	    matchAny(); 
 
@@ -2763,7 +2808,7 @@ public class EulangLexer extends Lexer {
 
             match("*/"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:819:18: ( NEWLINE )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:822:18: ( NEWLINE )?
             int alt9=2;
             int LA9_0 = input.LA(1);
 
@@ -2772,7 +2817,7 @@ public class EulangLexer extends Lexer {
             }
             switch (alt9) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:819:18: NEWLINE
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:822:18: NEWLINE
                     {
                     mNEWLINE(); 
 
@@ -2794,8 +2839,8 @@ public class EulangLexer extends Lexer {
     // $ANTLR end "MULTI_COMMENT"
 
     public void mTokens() throws RecognitionException {
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:8: ( FORWARD | STATIC | COLON | COMMA | EQUALS | EQUALS_COLON | COLON_EQUALS | COLON_COLON_EQUALS | PLUS | PLUS_EQ | MINUS | MINUS_EQ | STAR | STAR_EQ | SLASH | SLASH_EQ | UDIV | UDIV_EQ | REM | REM_EQ | UREM | UREM_EQ | MOD | MOD_EQ | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | HASH | NOT | TILDE | ATSIGN | AMP | BAR | CARET | SEMI | QUESTION | AND | AND_EQ | OR | OR_EQ | XOR_EQ | COMPEQ | COMPNE | COMPGE | COMPUGE | COMPLE | COMPULE | GREATER | UGREATER | LESS | ULESS | LSHIFT | LSHIFT_EQ | RSHIFT | RSHIFT_EQ | URSHIFT | URSHIFT_EQ | CRSHIFT | CRSHIFT_EQ | CLSHIFT | CLSHIFT_EQ | ARROW | PERIOD | PLUSPLUS | MINUSMINUS | POINTS | BAR_BAR | SELECT | COND | IF | THEN | ELSE | ELIF | FI | DO | WHILE | AT | WHEN | UNTIL | BREAK | REPEAT | BY | CODE | DATA | MACRO | FOR | IN | GOTO | FALSE | TRUE | NIL | WITH | AS | END | SIZEOF | TYPEOF | NUMBER | COLONS | ID | CHAR_LITERAL | STRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT )
-        int alt10=108;
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:8: ( FORWARD | STATIC | COLON | COMMA | EQUALS | EQUALS_COLON | COLON_EQUALS | COLON_COLON_EQUALS | PLUS | PLUS_EQ | MINUS | MINUS_EQ | STAR | STAR_EQ | SLASH | SLASH_EQ | UDIV | UDIV_EQ | REM | REM_EQ | UREM | UREM_EQ | MOD | MOD_EQ | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | HASH | NOT | TILDE | ATSIGN | AMP | BAR | CARET | SEMI | QUESTION | AND | AND_EQ | OR | OR_EQ | XOR_EQ | COMPEQ | COMPNE | COMPGE | COMPUGE | COMPLE | COMPULE | GREATER | UGREATER | LESS | ULESS | LSHIFT | LSHIFT_EQ | RSHIFT | RSHIFT_EQ | URSHIFT | URSHIFT_EQ | CRSHIFT | CRSHIFT_EQ | CLSHIFT | CLSHIFT_EQ | ARROW | PERIOD | PLUSPLUS | MINUSMINUS | POINTS | BAR_BAR | SELECT | COND | IF | THEN | ELSE | ELIF | FI | DO | WHILE | AT | WHEN | UNTIL | BREAK | REPEAT | BY | CODE | DATA | MACRO | METHOD | FOR | IN | GOTO | FALSE | TRUE | NIL | WITH | AS | END | SIZEOF | TYPEOF | NUMBER | COLONS | ATTR | ID | CHAR_LITERAL | STRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT )
+        int alt10=110;
         alt10 = dfa10.predict(input);
         switch (alt10) {
             case 1 :
@@ -3415,140 +3460,154 @@ public class EulangLexer extends Lexer {
                 }
                 break;
             case 89 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:615: FOR
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:615: METHOD
+                {
+                mMETHOD(); 
+
+                }
+                break;
+            case 90 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:622: FOR
                 {
                 mFOR(); 
 
                 }
                 break;
-            case 90 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:619: IN
+            case 91 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:626: IN
                 {
                 mIN(); 
 
                 }
                 break;
-            case 91 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:622: GOTO
+            case 92 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:629: GOTO
                 {
                 mGOTO(); 
 
                 }
                 break;
-            case 92 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:627: FALSE
+            case 93 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:634: FALSE
                 {
                 mFALSE(); 
 
                 }
                 break;
-            case 93 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:633: TRUE
+            case 94 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:640: TRUE
                 {
                 mTRUE(); 
 
                 }
                 break;
-            case 94 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:638: NIL
+            case 95 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:645: NIL
                 {
                 mNIL(); 
 
                 }
                 break;
-            case 95 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:642: WITH
+            case 96 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:649: WITH
                 {
                 mWITH(); 
 
                 }
                 break;
-            case 96 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:647: AS
+            case 97 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:654: AS
                 {
                 mAS(); 
 
                 }
                 break;
-            case 97 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:650: END
+            case 98 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:657: END
                 {
                 mEND(); 
 
                 }
                 break;
-            case 98 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:654: SIZEOF
+            case 99 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:661: SIZEOF
                 {
                 mSIZEOF(); 
 
                 }
                 break;
-            case 99 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:661: TYPEOF
+            case 100 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:668: TYPEOF
                 {
                 mTYPEOF(); 
 
                 }
                 break;
-            case 100 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:668: NUMBER
+            case 101 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:675: NUMBER
                 {
                 mNUMBER(); 
 
                 }
                 break;
-            case 101 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:675: COLONS
+            case 102 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:682: COLONS
                 {
                 mCOLONS(); 
 
                 }
                 break;
-            case 102 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:682: ID
+            case 103 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:689: ATTR
+                {
+                mATTR(); 
+
+                }
+                break;
+            case 104 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:694: ID
                 {
                 mID(); 
 
                 }
                 break;
-            case 103 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:685: CHAR_LITERAL
+            case 105 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:697: CHAR_LITERAL
                 {
                 mCHAR_LITERAL(); 
 
                 }
                 break;
-            case 104 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:698: STRING_LITERAL
+            case 106 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:710: STRING_LITERAL
                 {
                 mSTRING_LITERAL(); 
 
                 }
                 break;
-            case 105 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:713: NEWLINE
+            case 107 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:725: NEWLINE
                 {
                 mNEWLINE(); 
 
                 }
                 break;
-            case 106 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:721: WS
+            case 108 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:733: WS
                 {
                 mWS(); 
 
                 }
                 break;
-            case 107 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:724: SINGLE_COMMENT
+            case 109 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:736: SINGLE_COMMENT
                 {
                 mSINGLE_COMMENT(); 
 
                 }
                 break;
-            case 108 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:739: MULTI_COMMENT
+            case 110 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:1:751: MULTI_COMMENT
                 {
                 mMULTI_COMMENT(); 
 
@@ -3563,68 +3622,70 @@ public class EulangLexer extends Lexer {
     protected DFA10 dfa10 = new DFA10(this);
     static final String DFA10_eotS =
         "\1\uffff\2\55\1\72\1\uffff\1\76\1\105\1\111\1\113\1\117\1\121\1"+
-        "\123\7\uffff\1\55\1\127\1\uffff\1\131\1\134\3\uffff\2\55\1\uffff"+
-        "\1\143\1\146\1\uffff\13\55\6\uffff\1\55\1\172\4\55\1\uffff\1\u0080"+
-        "\6\uffff\1\u0082\1\u0084\1\u0087\1\u0089\20\uffff\2\55\7\uffff\1"+
-        "\55\1\u008d\1\u008e\1\u008f\1\uffff\1\u0092\2\uffff\1\u0095\1\uffff"+
-        "\1\55\1\u0098\1\u0099\5\55\1\u00a0\5\55\1\u00a7\3\55\1\u00ac\1\uffff"+
-        "\4\55\7\uffff\1\u00b2\3\uffff\1\u00b3\1\u00b4\1\u00b5\4\uffff\1"+
-        "\u00b7\2\uffff\1\u00b9\1\uffff\2\55\2\uffff\5\55\1\u00c1\1\uffff"+
-        "\6\55\1\uffff\4\55\1\uffff\4\55\11\uffff\1\u00d0\1\u00d1\1\u00d2"+
-        "\1\u00d3\1\55\1\u00d5\1\u00d6\1\uffff\1\u00d7\1\55\1\u00d9\1\u00da"+
-        "\4\55\1\u00df\1\55\1\u00e1\3\55\4\uffff\1\55\3\uffff\1\u00e6\2\uffff"+
-        "\1\u00e7\1\u00e8\1\55\1\u00ea\1\uffff\1\55\1\uffff\1\u00ec\1\u00ed"+
-        "\1\u00ee\1\u00ef\3\uffff\1\u00f0\1\uffff\1\u00f1\6\uffff";
+        "\123\6\uffff\1\124\1\55\1\131\1\uffff\1\133\1\136\3\uffff\2\55\1"+
+        "\uffff\1\145\1\150\1\uffff\13\55\6\uffff\1\55\1\175\4\55\1\uffff"+
+        "\1\u0083\6\uffff\1\u0085\1\u0087\1\u008a\1\u008c\22\uffff\2\55\7"+
+        "\uffff\1\55\1\u0090\1\u0091\1\u0092\1\uffff\1\u0095\2\uffff\1\u0098"+
+        "\1\uffff\1\55\1\u009b\1\u009c\5\55\1\u00a3\5\55\1\u00aa\4\55\1\u00b0"+
+        "\1\uffff\4\55\7\uffff\1\u00b6\3\uffff\1\u00b7\1\u00b8\1\u00b9\4"+
+        "\uffff\1\u00bb\2\uffff\1\u00bd\1\uffff\2\55\2\uffff\5\55\1\u00c5"+
+        "\1\uffff\6\55\1\uffff\5\55\1\uffff\4\55\11\uffff\1\u00d5\1\u00d6"+
+        "\1\u00d7\1\u00d8\1\55\1\u00da\1\u00db\1\uffff\1\u00dc\1\55\1\u00de"+
+        "\1\u00df\5\55\1\u00e5\1\55\1\u00e7\3\55\4\uffff\1\55\3\uffff\1\u00ec"+
+        "\2\uffff\1\u00ed\1\u00ee\1\55\1\u00f0\1\55\1\uffff\1\55\1\uffff"+
+        "\1\u00f3\1\u00f4\1\u00f5\1\u00f6\3\uffff\1\u00f7\1\uffff\1\u00f8"+
+        "\1\u00f9\7\uffff";
     static final String DFA10_eofS =
-        "\u00f2\uffff";
+        "\u00fa\uffff";
     static final String DFA10_minS =
-        "\1\11\1\141\1\145\1\72\1\uffff\1\72\1\53\1\55\1\75\1\52\2\75\7\uffff"+
-        "\1\151\1\75\1\uffff\2\75\3\uffff\1\156\1\162\1\uffff\1\75\1\74\1"+
-        "\uffff\1\157\1\146\1\150\1\154\1\141\1\150\1\156\1\162\1\145\1\141"+
-        "\1\157\6\uffff\1\162\1\60\1\154\1\141\1\154\1\172\1\uffff\1\75\6"+
-        "\uffff\4\75\20\uffff\1\164\1\154\7\uffff\1\144\3\60\1\uffff\1\75"+
-        "\2\uffff\1\75\1\uffff\1\144\2\60\1\145\1\165\1\160\1\151\1\144\1"+
-        "\60\1\164\1\145\2\164\1\145\1\60\1\160\1\143\1\164\1\60\1\uffff"+
-        "\1\163\1\164\2\145\7\uffff\1\75\3\uffff\3\60\4\uffff\1\75\2\uffff"+
-        "\1\75\1\uffff\1\144\1\145\2\uffff\1\156\3\145\1\146\1\60\1\uffff"+
-        "\1\141\1\154\1\156\1\150\1\151\1\141\1\uffff\1\145\1\162\1\157\1"+
-        "\141\1\uffff\1\145\1\151\1\143\1\157\11\uffff\4\60\1\157\2\60\1"+
-        "\uffff\1\60\1\145\2\60\1\154\1\153\1\141\1\157\1\60\1\162\1\60\1"+
-        "\143\1\164\1\146\4\uffff\1\146\3\uffff\1\60\2\uffff\2\60\1\164\1"+
-        "\60\1\uffff\1\144\1\uffff\4\60\3\uffff\1\60\1\uffff\1\60\6\uffff";
+        "\1\11\1\141\1\145\1\72\1\uffff\1\72\1\53\1\55\1\75\1\52\2\75\6\uffff"+
+        "\1\101\1\151\1\75\1\uffff\2\75\3\uffff\1\156\1\162\1\uffff\1\75"+
+        "\1\74\1\uffff\1\157\1\146\1\150\1\154\1\141\1\150\1\156\1\162\1"+
+        "\145\1\141\1\157\6\uffff\1\162\1\60\1\154\1\141\1\154\1\172\1\uffff"+
+        "\1\75\6\uffff\4\75\22\uffff\1\164\1\154\7\uffff\1\144\3\60\1\uffff"+
+        "\1\75\2\uffff\1\75\1\uffff\1\144\2\60\1\145\1\165\1\160\1\151\1"+
+        "\144\1\60\1\164\1\145\2\164\1\145\1\60\1\160\1\143\2\164\1\60\1"+
+        "\uffff\1\163\1\164\2\145\7\uffff\1\75\3\uffff\3\60\4\uffff\1\75"+
+        "\2\uffff\1\75\1\uffff\1\144\1\145\2\uffff\1\156\3\145\1\146\1\60"+
+        "\1\uffff\1\141\1\154\1\156\1\150\1\151\1\141\1\uffff\1\145\1\162"+
+        "\1\150\1\157\1\141\1\uffff\1\145\1\151\1\143\1\157\11\uffff\4\60"+
+        "\1\157\2\60\1\uffff\1\60\1\145\2\60\1\154\1\153\1\141\2\157\1\60"+
+        "\1\162\1\60\1\143\1\164\1\146\4\uffff\1\146\3\uffff\1\60\2\uffff"+
+        "\2\60\1\164\1\60\1\144\1\uffff\1\144\1\uffff\4\60\3\uffff\1\60\1"+
+        "\uffff\2\60\7\uffff";
     static final String DFA10_maxS =
-        "\1\176\1\157\1\164\1\75\1\uffff\1\76\1\134\1\76\4\75\7\uffff\1\157"+
-        "\1\75\1\uffff\1\75\1\174\3\uffff\1\164\1\162\1\uffff\1\76\1\75\1"+
-        "\uffff\1\157\1\156\1\171\1\156\1\157\1\151\1\156\1\171\1\145\1\141"+
-        "\1\157\6\uffff\1\162\1\172\1\154\1\141\1\154\1\172\1\uffff\1\75"+
-        "\6\uffff\2\75\1\76\1\75\20\uffff\1\164\1\154\7\uffff\1\144\3\172"+
-        "\1\uffff\1\174\2\uffff\1\174\1\uffff\1\156\2\172\1\145\1\165\1\160"+
-        "\1\163\1\144\1\172\1\164\1\151\2\164\1\145\1\172\1\160\1\143\1\164"+
-        "\1\172\1\uffff\1\163\1\164\2\145\7\uffff\1\75\3\uffff\3\172\4\uffff"+
-        "\1\75\2\uffff\1\75\1\uffff\1\144\1\145\2\uffff\1\156\3\145\1\146"+
-        "\1\172\1\uffff\1\141\1\154\1\156\1\150\1\151\1\141\1\uffff\1\145"+
-        "\1\162\1\157\1\141\1\uffff\1\145\1\151\1\143\1\157\11\uffff\4\172"+
-        "\1\157\2\172\1\uffff\1\172\1\145\2\172\1\154\1\153\1\141\1\157\1"+
-        "\172\1\162\1\172\1\143\1\164\1\146\4\uffff\1\146\3\uffff\1\172\2"+
-        "\uffff\2\172\1\164\1\172\1\uffff\1\144\1\uffff\4\172\3\uffff\1\172"+
-        "\1\uffff\1\172\6\uffff";
+        "\1\176\1\157\1\164\1\75\1\uffff\1\76\1\134\1\76\4\75\6\uffff\1\172"+
+        "\1\157\1\75\1\uffff\1\75\1\174\3\uffff\1\164\1\162\1\uffff\1\76"+
+        "\1\75\1\uffff\1\157\1\156\1\171\1\156\1\157\1\151\1\156\1\171\2"+
+        "\145\1\157\6\uffff\1\162\1\172\1\154\1\141\1\154\1\172\1\uffff\1"+
+        "\75\6\uffff\2\75\1\76\1\75\22\uffff\1\164\1\154\7\uffff\1\144\3"+
+        "\172\1\uffff\1\174\2\uffff\1\174\1\uffff\1\156\2\172\1\145\1\165"+
+        "\1\160\1\163\1\144\1\172\1\164\1\151\2\164\1\145\1\172\1\160\1\143"+
+        "\2\164\1\172\1\uffff\1\163\1\164\2\145\7\uffff\1\75\3\uffff\3\172"+
+        "\4\uffff\1\75\2\uffff\1\75\1\uffff\1\144\1\145\2\uffff\1\156\3\145"+
+        "\1\146\1\172\1\uffff\1\141\1\154\1\156\1\150\1\151\1\141\1\uffff"+
+        "\1\145\1\162\1\150\1\157\1\141\1\uffff\1\145\1\151\1\143\1\157\11"+
+        "\uffff\4\172\1\157\2\172\1\uffff\1\172\1\145\2\172\1\154\1\153\1"+
+        "\141\2\157\1\172\1\162\1\172\1\143\1\164\1\146\4\uffff\1\146\3\uffff"+
+        "\1\172\2\uffff\2\172\1\164\1\172\1\144\1\uffff\1\144\1\uffff\4\172"+
+        "\3\uffff\1\172\1\uffff\2\172\7\uffff";
     static final String DFA10_acceptS =
-        "\4\uffff\1\4\7\uffff\1\31\1\32\1\33\1\34\1\35\1\36\1\37\2\uffff"+
-        "\1\42\2\uffff\1\45\1\46\1\47\2\uffff\1\56\2\uffff\1\102\13\uffff"+
-        "\1\144\1\146\1\147\1\150\1\151\1\152\6\uffff\1\7\1\uffff\1\3\1\6"+
-        "\1\55\1\101\1\5\1\12\4\uffff\1\103\1\11\1\14\1\104\1\105\1\13\1"+
-        "\16\1\15\1\20\1\153\1\154\1\17\1\24\1\23\1\30\1\27\2\uffff\1\54"+
-        "\1\41\1\51\1\43\1\53\1\106\1\44\4\uffff\1\57\1\uffff\1\63\1\61\1"+
-        "\uffff\1\65\23\uffff\1\115\4\uffff\1\10\1\145\1\22\1\21\1\26\1\25"+
-        "\1\60\1\uffff\1\64\1\62\1\66\3\uffff\1\120\1\140\1\52\1\72\1\uffff"+
-        "\1\71\1\70\1\uffff\1\67\2\uffff\1\111\1\132\6\uffff\1\116\6\uffff"+
-        "\1\125\4\uffff\1\131\4\uffff\1\74\1\73\1\40\1\136\1\50\1\76\1\75"+
-        "\1\100\1\77\7\uffff\1\141\16\uffff\1\110\1\126\1\112\1\135\1\uffff"+
-        "\1\113\1\114\1\127\1\uffff\1\121\1\137\4\uffff\1\133\1\uffff\1\134"+
-        "\4\uffff\1\117\1\122\1\123\1\uffff\1\130\1\uffff\1\2\1\107\1\142"+
-        "\1\143\1\124\1\1";
+        "\4\uffff\1\4\7\uffff\1\31\1\32\1\33\1\34\1\35\1\36\3\uffff\1\42"+
+        "\2\uffff\1\45\1\46\1\47\2\uffff\1\56\2\uffff\1\102\13\uffff\1\145"+
+        "\1\150\1\151\1\152\1\153\1\154\6\uffff\1\7\1\uffff\1\3\1\6\1\55"+
+        "\1\101\1\5\1\12\4\uffff\1\103\1\11\1\14\1\104\1\105\1\13\1\16\1"+
+        "\15\1\20\1\155\1\156\1\17\1\24\1\23\1\30\1\27\1\37\1\147\2\uffff"+
+        "\1\54\1\41\1\51\1\43\1\53\1\106\1\44\4\uffff\1\57\1\uffff\1\63\1"+
+        "\61\1\uffff\1\65\24\uffff\1\115\4\uffff\1\10\1\146\1\22\1\21\1\26"+
+        "\1\25\1\60\1\uffff\1\64\1\62\1\66\3\uffff\1\120\1\141\1\52\1\72"+
+        "\1\uffff\1\71\1\70\1\uffff\1\67\2\uffff\1\111\1\133\6\uffff\1\116"+
+        "\6\uffff\1\125\5\uffff\1\132\4\uffff\1\74\1\73\1\40\1\137\1\50\1"+
+        "\76\1\75\1\100\1\77\7\uffff\1\142\17\uffff\1\110\1\126\1\112\1\136"+
+        "\1\uffff\1\113\1\114\1\127\1\uffff\1\121\1\140\5\uffff\1\134\1\uffff"+
+        "\1\135\4\uffff\1\117\1\122\1\123\1\uffff\1\130\2\uffff\1\2\1\107"+
+        "\1\143\1\144\1\124\1\131\1\1";
     static final String DFA10_specialS =
-        "\u00f2\uffff}>";
+        "\u00fa\uffff}>";
     static final String[] DFA10_transitionS = {
             "\1\61\1\60\2\uffff\1\60\22\uffff\1\61\1\35\1\57\1\22\1\uffff"+
             "\1\13\1\26\1\56\1\14\1\15\1\10\1\6\1\4\1\7\1\40\1\11\12\54\1"+
@@ -3649,73 +3710,55 @@ public class EulangLexer extends Lexer {
             "",
             "",
             "",
-            "",
-            "\1\125\5\uffff\1\124",
-            "\1\126",
-            "",
+            "\32\125\4\uffff\1\125\1\uffff\32\125",
+            "\1\127\5\uffff\1\126",
             "\1\130",
-            "\1\132\76\uffff\1\133",
+            "",
+            "\1\132",
+            "\1\134\76\uffff\1\135",
             "",
             "",
             "",
-            "\1\135\4\uffff\1\137\1\136",
-            "\1\140",
+            "\1\137\4\uffff\1\141\1\140",
+            "\1\142",
             "",
-            "\1\141\1\142",
-            "\1\145\1\144",
+            "\1\143\1\144",
+            "\1\147\1\146",
             "",
-            "\1\147",
-            "\1\150\7\uffff\1\151",
-            "\1\152\11\uffff\1\153\6\uffff\1\154",
-            "\1\155\1\uffff\1\156",
-            "\1\160\15\uffff\1\157",
-            "\1\161\1\162",
-            "\1\163",
-            "\1\164\6\uffff\1\165",
-            "\1\166",
-            "\1\167",
+            "\1\151",
+            "\1\152\7\uffff\1\153",
+            "\1\154\11\uffff\1\155\6\uffff\1\156",
+            "\1\157\1\uffff\1\160",
+            "\1\162\15\uffff\1\161",
+            "\1\163\1\164",
+            "\1\165",
+            "\1\166\6\uffff\1\167",
             "\1\170",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "\1\171",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\171\3\uffff\1\172",
             "\1\173",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
             "\1\174",
-            "\1\175",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "\1\176",
-            "",
             "\1\177",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
+            "\1\u0080",
             "\1\u0081",
-            "\1\u0083",
-            "\1\u0085\1\u0086",
-            "\1\u0088",
+            "",
+            "\1\u0082",
             "",
             "",
             "",
             "",
             "",
             "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "\1\u008a",
+            "\1\u0084",
+            "\1\u0086",
+            "\1\u0088\1\u0089",
             "\1\u008b",
             "",
             "",
@@ -3724,48 +3767,69 @@ public class EulangLexer extends Lexer {
             "",
             "",
             "",
-            "\1\u008c",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "",
-            "\1\u0090\76\uffff\1\u0091",
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\1\u008d",
+            "\1\u008e",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\1\u008f",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "",
             "\1\u0093\76\uffff\1\u0094",
             "",
-            "\1\u0097\11\uffff\1\u0096",
+            "",
+            "\1\u0096\76\uffff\1\u0097",
+            "",
+            "\1\u009a\11\uffff\1\u0099",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\1\u009a",
-            "\1\u009b",
-            "\1\u009c",
-            "\1\u009e\11\uffff\1\u009d",
+            "\1\u009d",
+            "\1\u009e",
             "\1\u009f",
+            "\1\u00a1\11\uffff\1\u00a0",
+            "\1\u00a2",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\1\u00a1",
-            "\1\u00a3\3\uffff\1\u00a2",
             "\1\u00a4",
-            "\1\u00a5",
-            "\1\u00a6",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00a6\3\uffff\1\u00a5",
+            "\1\u00a7",
             "\1\u00a8",
             "\1\u00a9",
-            "\1\u00aa",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\26\55\1\u00ab\3\55",
-            "",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00ab",
+            "\1\u00ac",
             "\1\u00ad",
             "\1\u00ae",
-            "\1\u00af",
-            "\1\u00b0",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\26\55\1\u00af\3\55",
             "",
             "\1\u00b1",
+            "\1\u00b2",
+            "\1\u00b3",
+            "\1\u00b4",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\1\u00b5",
             "",
             "",
             "",
@@ -3775,30 +3839,25 @@ public class EulangLexer extends Lexer {
             "",
             "",
             "",
-            "",
-            "\1\u00b6",
-            "",
-            "",
-            "\1\u00b8",
             "",
             "\1\u00ba",
-            "\1\u00bb",
             "",
             "",
             "\1\u00bc",
-            "\1\u00bd",
+            "",
             "\1\u00be",
             "\1\u00bf",
-            "\1\u00c0",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "",
+            "",
+            "\1\u00c0",
+            "\1\u00c1",
             "\1\u00c2",
             "\1\u00c3",
             "\1\u00c4",
-            "\1\u00c5",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "",
             "\1\u00c6",
             "\1\u00c7",
-            "",
             "\1\u00c8",
             "\1\u00c9",
             "\1\u00ca",
@@ -3808,55 +3867,63 @@ public class EulangLexer extends Lexer {
             "\1\u00cd",
             "\1\u00ce",
             "\1\u00cf",
+            "\1\u00d0",
             "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00d1",
+            "\1\u00d2",
+            "\1\u00d3",
             "\1\u00d4",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00d9",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\1\u00d8",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\1\u00db",
-            "\1\u00dc",
             "\1\u00dd",
-            "\1\u00de",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "\1\u00e0",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00e1",
             "\1\u00e2",
             "\1\u00e3",
             "\1\u00e4",
-            "",
-            "",
-            "",
-            "",
-            "\1\u00e5",
-            "",
-            "",
-            "",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "",
-            "",
+            "\1\u00e6",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00e8",
             "\1\u00e9",
-            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00ea",
+            "",
+            "",
+            "",
             "",
             "\1\u00eb",
             "",
+            "",
+            "",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "",
+            "",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00ef",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\1\u00f1",
+            "",
+            "\1\u00f2",
+            "",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
@@ -3867,6 +3934,8 @@ public class EulangLexer extends Lexer {
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
             "",
             "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "\12\55\7\uffff\32\55\4\uffff\1\55\1\uffff\32\55",
+            "",
             "",
             "",
             "",
@@ -3905,7 +3974,7 @@ public class EulangLexer extends Lexer {
             this.transition = DFA10_transition;
         }
         public String getDescription() {
-            return "1:1: Tokens : ( FORWARD | STATIC | COLON | COMMA | EQUALS | EQUALS_COLON | COLON_EQUALS | COLON_COLON_EQUALS | PLUS | PLUS_EQ | MINUS | MINUS_EQ | STAR | STAR_EQ | SLASH | SLASH_EQ | UDIV | UDIV_EQ | REM | REM_EQ | UREM | UREM_EQ | MOD | MOD_EQ | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | HASH | NOT | TILDE | ATSIGN | AMP | BAR | CARET | SEMI | QUESTION | AND | AND_EQ | OR | OR_EQ | XOR_EQ | COMPEQ | COMPNE | COMPGE | COMPUGE | COMPLE | COMPULE | GREATER | UGREATER | LESS | ULESS | LSHIFT | LSHIFT_EQ | RSHIFT | RSHIFT_EQ | URSHIFT | URSHIFT_EQ | CRSHIFT | CRSHIFT_EQ | CLSHIFT | CLSHIFT_EQ | ARROW | PERIOD | PLUSPLUS | MINUSMINUS | POINTS | BAR_BAR | SELECT | COND | IF | THEN | ELSE | ELIF | FI | DO | WHILE | AT | WHEN | UNTIL | BREAK | REPEAT | BY | CODE | DATA | MACRO | FOR | IN | GOTO | FALSE | TRUE | NIL | WITH | AS | END | SIZEOF | TYPEOF | NUMBER | COLONS | ID | CHAR_LITERAL | STRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT );";
+            return "1:1: Tokens : ( FORWARD | STATIC | COLON | COMMA | EQUALS | EQUALS_COLON | COLON_EQUALS | COLON_COLON_EQUALS | PLUS | PLUS_EQ | MINUS | MINUS_EQ | STAR | STAR_EQ | SLASH | SLASH_EQ | UDIV | UDIV_EQ | REM | REM_EQ | UREM | UREM_EQ | MOD | MOD_EQ | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | HASH | NOT | TILDE | ATSIGN | AMP | BAR | CARET | SEMI | QUESTION | AND | AND_EQ | OR | OR_EQ | XOR_EQ | COMPEQ | COMPNE | COMPGE | COMPUGE | COMPLE | COMPULE | GREATER | UGREATER | LESS | ULESS | LSHIFT | LSHIFT_EQ | RSHIFT | RSHIFT_EQ | URSHIFT | URSHIFT_EQ | CRSHIFT | CRSHIFT_EQ | CLSHIFT | CLSHIFT_EQ | ARROW | PERIOD | PLUSPLUS | MINUSMINUS | POINTS | BAR_BAR | SELECT | COND | IF | THEN | ELSE | ELIF | FI | DO | WHILE | AT | WHEN | UNTIL | BREAK | REPEAT | BY | CODE | DATA | MACRO | METHOD | FOR | IN | GOTO | FALSE | TRUE | NIL | WITH | AS | END | SIZEOF | TYPEOF | NUMBER | COLONS | ATTR | ID | CHAR_LITERAL | STRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT );";
         }
     }
  

@@ -224,7 +224,11 @@ public class BaseTest {
     		 
     	return node;
     }
- 
+
+	protected IAstNode treeize(String str, boolean expectError) throws Exception {
+		return treeize(null, str, expectError);
+	}
+
     /**
 	 * @param errors
 	 * @return

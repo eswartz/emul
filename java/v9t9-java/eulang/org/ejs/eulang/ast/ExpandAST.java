@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
@@ -553,8 +555,12 @@ public class ExpandAST {
 					stmtlist.add(new AstReturnStmt(retVal));
 				else
 					stmtlist.add(new AstExprStmt(retVal));
+				
+				Set<String> attrs = new HashSet<String>(codeExpr.getAttrs());
+				if (protoArg.isMacro())
+					attrs.add(IAttrs.MACRO);
 				IAstCodeExpr implCode = new AstCodeExpr(new AstPrototype(argCode.getRetType()), new LocalScope(nodeScope), stmtlist, 
-						protoArg.isMacro());
+						attrs);
 				
 				setSourceInTree(implCode, realArg.getSourceRef());
 				realArg = implCode;

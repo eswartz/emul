@@ -226,7 +226,7 @@ public class TestLLVMGenerator extends BaseTest {
      public void testOverloadingMacro() throws Exception {
   		 IAstModule mod = doFrontend(
   				 "    util = [] [ code(x, y, z ) { x*y-z },\n" + 
-  				 "             macro (x, y) { util(x, y, 0) }\n" + 
+  				 "             code #macro(x, y) { util(x, y, 0) }\n" + 
   				 "            ];\n" +
   				 "func = code(x:Int;y:Float => Float) { util(x,y) };\n");
   		 LLVMGenerator g = doGenerate(mod);
@@ -249,7 +249,7 @@ public class TestLLVMGenerator extends BaseTest {
     @Test
     public void testWhileLoop() throws Exception {
     	IAstModule mod = doFrontend(
-    			"wwhile = macro ( macro test:code; macro body : code) {\n"+
+    			"wwhile = code #macro ( macro test:code; macro body : code) {\n"+
     			"    @loop: if test() then { body(); goto loop } fi;\n"+
     			"};\n"+
     			"testWhileLoop = code (t; x : Int; y : Float => Void) {\n" +
@@ -261,7 +261,7 @@ public class TestLLVMGenerator extends BaseTest {
     @Test
     public void testDoWhile() throws Exception {
     	IAstModule mod = doFrontend(
-    			"doWhile = macro ( macro body : code; macro test:code) {\n"+
+    			"doWhile = code #macro ( macro body : code; macro test:code) {\n"+
     			"    @loop: body(); goto loop if (not test()) ;\n"+
     			"};\n"+
     			"testDoWhile = code (t; x : Int; y : Float) {\n" +

@@ -1060,7 +1060,7 @@ public class TestTypeInfer extends BaseTest {
     @Test
 	public void testOverloadingMacro0() throws Exception {
 		IAstModule mod = doFrontend("    util = [\n"
-				+ "             macro (x, y) { util(x, y, 0) },\n"
+				+ "             code #macro (x, y) { util(x, y, 0) },\n"
 				+ "				code(x:Int; y:Int; z:Int => Int ) { x*y-z }\n"
 				+ "            ];\n"
 				+ "func = code(x:Int;y:Int => Int) { util(x,y) };\n");
@@ -1073,7 +1073,7 @@ public class TestTypeInfer extends BaseTest {
 	@Test
 	public void testOverloadingMacro1a() throws Exception {
 		IAstModule mod = doFrontend("    util = [T, U] [ code(x:T; y:U; z:T ) { x*y-z },\n"
-				+ "             macro (x:T; y:T) { util(x, y, 0) }\n"
+				+ "             code #macro (x:T; y:T) { util(x, y, 0) }\n"
 				+ "            ];\n"
 				+ "func = code(x:Int;y:Int => Int) { util(x,y) };\n");
 		sanityTest(mod);
@@ -1084,7 +1084,7 @@ public class TestTypeInfer extends BaseTest {
 	@Test
 	public void testOverloadingMacro1b() throws Exception {
 		IAstModule mod = doFrontend("    util = [] [ code(x; y; z ) { x*y-z },\n"
-				+ "             macro (x; y) { util(x, y, 0) }\n"
+				+ "             code #macro (x; y) { util(x, y, 0) }\n"
 				+ "            ];\n"
 				+ "func = code(x:Int;y:Int => Int) { util(x,y) };\n");
 		sanityTest(mod);
@@ -1096,7 +1096,7 @@ public class TestTypeInfer extends BaseTest {
 	@Test
 	public void testOverloadingMacro2() throws Exception {
 		IAstModule mod = doFrontend("    util = [] [ code(x, y, z ) { x*y-z },\n"
-				+ "             macro (x, y) { util(x, y, 0) }\n"
+				+ "             code #macro (x, y) { util(x, y, 0) }\n"
 				+ "            ];\n"
 				+ "func = code(x:Int;y:Float => Float) { util(x,y) };\n");
 		sanityTest(mod);

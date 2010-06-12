@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.TypeEngine;
@@ -534,5 +535,14 @@ abstract public class AstNode implements IAstNode {
 		}
 		return changed;
 	}
-	
+
+	protected String spellAttrs(Set<String> attrs) {
+		StringBuilder sb = new StringBuilder();
+		for (String attr : attrs) {
+			if (sb.length() > 0)
+				sb.append(' ');
+			sb.append('#').append(attr);
+		}
+		return sb.toString();
+	}
 }

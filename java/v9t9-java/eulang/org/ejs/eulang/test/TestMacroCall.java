@@ -24,7 +24,7 @@ public class TestMacroCall extends BaseTest {
     public void testSimple1() throws Exception {
     	IAstModule mod = treeize(
     			"\n" + 
-"iff = macro ( macro test : code( => Bool ); macro mthen : code; macro melse : code = code() {} ) {\n" + 
+"iff = code #macro ( macro test : code( => Bool ); macro mthen : code; macro melse : code = code() {} ) {\n" + 
     			"    if  test() then mthen() else melse() ;\n" + 
     			"};\n"+
     			"testSimple1 = code (t, x, y) {\n" +
@@ -43,7 +43,7 @@ public class TestMacroCall extends BaseTest {
 	public void testForCount() throws Exception {
 		IAstModule mod = treeize(
 				"\n" + 
-				"  forCountUntil = macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
+				"  forCountUntil = code #macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
 				"        idx := 0;\n" + 
 				"        @loop: if \n" + 
 				"            idx < count then if \n" + 
@@ -71,7 +71,7 @@ public class TestMacroCall extends BaseTest {
 	public void testForCountDefaults() throws Exception {
 		IAstModule mod = treeize(
 				"\n" + 
-				"  forCountUntil = macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
+				"  forCountUntil = code #macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
 				"        idx := 0;\n" + 
 				"        @loop: if \n" + 
 				"            idx < count then if \n" + 
@@ -98,7 +98,7 @@ public class TestMacroCall extends BaseTest {
 	public void testForCountBad1() throws Exception {
 		IAstModule mod = treeize(
 				"\n" + 
-				"  forCountUntil = macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
+				"  forCountUntil = code #macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
 				"        idx := 0;\n" + 
 				"        @loop: if \n" + 
 				"            idx < count then if \n" + 
@@ -122,7 +122,7 @@ public class TestMacroCall extends BaseTest {
 	public void testForCountBad2() throws Exception {
 		IAstModule mod = treeize(
 				"\n" + 
-				"  forCountUntil = macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
+				"  forCountUntil = code #macro (macro idx; count : Int; macro test; macro body = code { idx }; macro fail = code { -1 }) {\n" + 
 				"        idx := 0;\n" + 
 				"        @loop: if \n" + 
 				"            idx < count then if \n" + 
@@ -149,7 +149,7 @@ public class TestMacroCall extends BaseTest {
     @Test
     public void testImplicitBlocks3() throws Exception {
     	IAstModule mod = treeize(
-    			"iff = macro ( test:Bool; macro mthen: code; macro melse: code) { " +
+    			"iff = code #macro ( test:Bool; macro mthen: code; macro melse: code) { " +
     			"	 if test then mthen() elif false then false else melse() };\n"+
     			"testImplicitBlocks3 = code (t; x : Int; y : Float) {\n" +
     			"   iff(t, { x = x + 9; x; }, { y = y + 7; y; })\n"+
@@ -182,7 +182,7 @@ public class TestMacroCall extends BaseTest {
     @Test
     public void testImplicitBlocks4() throws Exception {
     	IAstModule mod = treeize(
-    			"wwhile = macro ( macro test:code; macro body : code) {\n"+
+    			"wwhile = code #macro ( macro test:code; macro body : code) {\n"+
     			"    @loop: if test() then body() else goto loop;\n"+
     			"};\n"+
     			"testImplicitBlocks4 = code (t; x : Int; y : Float) {\n" +

@@ -26,6 +26,7 @@ import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstExprStmt;
+import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFloatLitExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstGotoStmt;
@@ -330,18 +331,18 @@ public class TestGenerator extends BaseTest {
 
     @Test
     public void testNoMacroAlloc() throws Exception {
-    	parseFail(
-    			"mycode := macro(p:Int[10]; i) {\n"+
+    	treeize(
+    			"mycode := code #macro(p:Int[10]; i) {\n"+
     			"   p[i];"+
     			"};\n"+
-    			"");
+    			"", true);
     }
 
     
     @Test
     public void testMacroArgs1() throws Exception {
     	IAstModule mod = treeize(
-    			" testMacroArgs1 = macro (macro t : code; macro mthen : code; macro melse : code) { };\n");
+    			" testMacroArgs1 = code #macro(macro t : code; macro mthen : code; macro melse : code) { };\n");
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
@@ -792,7 +793,38 @@ public class TestGenerator extends BaseTest {
     	
     }
     
+
     
+    @Test
+    public void testDataMethod1() throws Exception {
+    	IAstModule mod = treeize(
+    			"Class = data {\n"+
+    			"	val : Int;\n"+
+    			"   get = code #this () { val };\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   x.get();\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	// 'get' is a statement, not part of the data
+    	assertEquals(1, type.stmts().nodeCount());
+    	
+    	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.stmts().getFirst());
+    	assertTrue(meth.isMethod());
+    	
+    	// at initial scan, this looks like a field ref
+    	IAstCodeExpr main = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("foo").getDefinition());
+    	IAstExprStmt expr = (IAstExprStmt) main.stmts().getLast();
+    	
+    	assertTrue(expr.getExpr() instanceof IAstFuncCallExpr);
+    	assertTrue(((IAstFuncCallExpr)expr.getExpr()).getFunction() instanceof IAstFieldExpr);
+    	
+    }
 }
 
 

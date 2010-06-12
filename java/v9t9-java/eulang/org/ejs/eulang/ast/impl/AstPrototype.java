@@ -21,7 +21,7 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	private IAstType retType;
-	private final IAstArgDef[] argumentTypes;
+	private IAstArgDef[] argumentTypes;
 
 	/** Create with the types; may be null */
 	public AstPrototype(TypeEngine typeEngine, IAstType retType, IAstArgDef[] argumentTypes) {
@@ -218,5 +218,19 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		// no restrictions
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstPrototype#addArgument(int, org.ejs.eulang.ast.IAstArgDef)
+	 */
+	@Override
+	public void addArgument(int position, IAstArgDef newArgDef) {
+		IAstArgDef[] newArgTypes = new IAstArgDef[argumentTypes.length + 1];
+		System.arraycopy(argumentTypes, 0, newArgTypes, 0, position);
+		System.arraycopy(argumentTypes, position, newArgTypes, position + 1, argumentTypes.length - position);
+		newArgTypes[position] = newArgDef;
+		newArgDef.setParent(this);
+		this.argumentTypes = newArgTypes;
+		setType(null);
 	}
 }

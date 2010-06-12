@@ -287,11 +287,11 @@ public class TestParser extends BaseTest  {
     
     @Test
     public void testEmptyMacroCodeBlock() throws Exception  {
-    	parse("myICode = macro {};");
+    	parse("myICode = code #macro {};");
     }
     //@Test
     public void testDefineMacroCodeBlock() throws Exception  {
-    	parse("myICode = macro (x,y) {}; foo = code { a=*myICode(1,2); };");
+    	parse("myICode = code #macro (x,y) {}; foo = code { a=*myICode(1,2); };");
     }
     //@Test
     public void testCallAsMacroCodeBlock() throws Exception  {

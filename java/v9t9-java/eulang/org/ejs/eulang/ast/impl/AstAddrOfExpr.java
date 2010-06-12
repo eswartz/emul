@@ -131,6 +131,19 @@ public class AstAddrOfExpr extends AstTypedExpr implements IAstAddrOfExpr {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstNode#simplify(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public boolean simplify(TypeEngine engine) {
+		boolean changed = super.simplify(engine); 
+		if (expr instanceof IAstAddrOfExpr) {
+			getParent().replaceChild(this, expr);
+			return true;
+		}
+		return changed; 
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
 	 */
 	@Override
