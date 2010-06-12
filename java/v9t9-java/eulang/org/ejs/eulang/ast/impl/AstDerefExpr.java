@@ -136,10 +136,7 @@ public class AstDerefExpr extends AstTypedExpr implements IAstDerefExpr {
 			
 			child = typeEngine.getRealType(typeEngine.getBaseType(child));
 			
-			//if (child instanceof LLSymbolType) {
-			//	child = ((LLSymbolType)child).getRealType(typeEngine);
-			//}
-			
+			// XXX codeptr
 			if (child instanceof LLCodeType) {
 				expr.setParent(null);
 				getParent().replaceChild(this, expr);

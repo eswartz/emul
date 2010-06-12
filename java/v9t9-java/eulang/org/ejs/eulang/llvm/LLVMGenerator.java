@@ -184,7 +184,6 @@ public class LLVMGenerator {
 	 */
 	private void ensureTypes(IAstNode node) throws ASTException {
 		if (node instanceof IAstDefineStmt) {
-			// ensureTypes(((IAstDefineStmt) node).getExpr());
 			return;
 		} else if (node instanceof IAstSymbolExpr) {
 			// don't get stuck on definition and don't recurse up
@@ -235,13 +234,6 @@ public class LLVMGenerator {
 		ll.addModuleDirective(new LLTargetTripleDirective(target));
 
 		generateGlobalStmtList(module);
-
-		/*
-		 * for (LLType type : typeEngine.getTypes()) { if (type.getLLVMName() !=
-		 * null && type.isComplete() && !type.isGeneric()) { type =
-		 * AstTypedNode.getConcreteType(typeEngine, null, type);
-		 * ll.addExternType(type); } }
-		 */
 	}
 
 	/**
@@ -256,7 +248,6 @@ public class LLVMGenerator {
 					generateGlobalAlloc((IAstAllocStmt) stmt);
 				else if (stmt instanceof IAstDefineStmt)
 					generateGlobalDefine((IAstDefineStmt) stmt);
-				/* ignore */
 				else
 					unhandled(stmt);
 			} catch (ASTException e) {
@@ -301,15 +292,7 @@ public class LLVMGenerator {
 				IAstTypedExpr value = stmt.getExprs().list().get(
 						stmt.getExprs().nodeCount() == 1 ? 0 : i);
 				if (stmt.getType() instanceof LLCodeType) {
-					ISymbol initSymbol = symbol.getSymbol().getScope().addTemporary(symbol.getSymbol().getUniqueName());
-					Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(initSymbol, (IAstCodeExpr) value);
-					if (info == null)
-						continue;
-					// var/etc args change the effective type
-					dataType = info.first.getConvention().getActualType(typeEngine);
-					dataType = typeEngine.getPointerType(dataType);
-					ll.emitTypes(dataType);
-					dataOp = new LLSymbolOp(info.second, dataType);
+					assert false;
 				}
 				else {
 					currentTarget = new StaticDataCodeTarget(this, target, ll, ll.getModuleScope());
@@ -1093,6 +1076,7 @@ public class LLVMGenerator {
 	 * @return
 	 */
 	private ILLVariable getGlobalVariable(ISymbol moduleSymbol) {
+		// XXX codeptr
 		if (moduleSymbol.getType() instanceof LLCodeType)
 			return null;
 		ILLVariable var = varStorage.lookupVariable(moduleSymbol);
@@ -1189,16 +1173,55 @@ public class LLVMGenerator {
 		else if (expr instanceof IAstGotoStmt)
 			generateGotoStmt((IAstGotoStmt) expr);
 		else if (expr instanceof IAstCodeExpr) {
-			ISymbol codeSym = currentTarget.getScope().addTemporary("$inner");
-			codeSym.setType(expr.getType());
-			Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(codeSym, (IAstCodeExpr) expr);
-			temp = new LLSymbolOp(info.second);
+			temp = generateCodeExpr((IAstCodeExpr) expr);
+			
 		}
 		else {
 			unhandled(expr);
 			return null;
 		}
 		return temp;
+	}
+
+	/**
+	 * @param expr
+	 * @return
+	 */
+	private LLOperand generateCodeExpr(IAstCodeExpr expr) throws ASTException {
+		ISymbol codeSym = currentTarget.getScope().addTemporary("$inner");
+		
+		Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(codeSym, expr);
+		if (info == null)
+			throw new ASTException(expr, "cannot reference the address of this macro or generic code");
+		
+		// var/etc args change the effective type
+		LLType codeType = info.first.getConvention().getActualType(typeEngine);
+		
+		// must refer to the function as a pointer in LLVM
+		LLType symType = typeEngine.getPointerType(codeType);
+		ll.emitTypes(symType);
+		
+		return new LLSymbolOp(info.second, symType);
+		
+		/*
+		codeSym.setType(expr.getType());
+		Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(codeSym, (IAstCodeExpr) expr);
+		temp = new LLSymbolOp(info.second);
+		
+		ISymbol initSymbol = symbol.getSymbol().getScope().add(symbol.getSymbol().getUniqueName(), true);
+		//ISymbol initSymbol = symbol.getSymbol().getScope().addTemporary(symbol.getSymbol().getUniqueName());
+		Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(initSymbol, (IAstCodeExpr) value);
+		if (info == null)
+			continue;
+		// var/etc args change the effective type
+		dataType = info.first.getConvention().getActualType(typeEngine);
+		// XXX codeptr
+		dataType = typeEngine.getPointerType(dataType);
+		ll.emitTypes(dataType);
+		dataOp = new LLSymbolOp(info.second, dataType);
+		return null;
+		*/
+		
 	}
 
 	/**
@@ -1975,14 +1998,6 @@ public class LLVMGenerator {
 					return value;
 				}
 				cast = ECast.BITCAST;
-				/*
-				 * } else if (origType.getBasicType() == BasicType.DATA &&
-				 * type.getBasicType() == BasicType.DATA) { // may be innocuous
-				 * LLDataType origData = (LLDataType) origType; LLDataType data
-				 * = (LLDataType) type; if (origData.isCompatibleWith(data)) {
-				 * 
-				 * }
-				 */
 			} else {
 				throw new ASTException(node, "cannot cast from " + origType
 						+ " to " + type);
@@ -2015,11 +2030,10 @@ public class LLVMGenerator {
 			throws ASTException {
 		LLOperand ret = null;
 
-		// LLCodeType funcType = (LLCodeType) expr.getFunction().getType();
-
 		LLType realFuncType = expr.getFunction().getType();
 		LLCodeType funcType;
 
+		// XXX codeptr
 		if (realFuncType instanceof LLPointerType)
 			funcType = (LLCodeType) realFuncType.getSubType();
 		else
@@ -2047,7 +2061,7 @@ public class LLVMGenerator {
 		}
 
 		LLOperand func = generateTypedExpr(expr.getFunction());
-
+		
 		if (!(funcType.getRetType() instanceof LLVoidType)) {
 			ret = currentTarget.newTemp(funcType.getRetType());
 		}

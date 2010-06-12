@@ -250,6 +250,7 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		boolean changed = inferTypesFromChildren(new ITyped[] { name, typeExpr, defaultVal });
+		// XXX codeptr
 		if (type != null && type instanceof LLCodeType && !isMacro()) {
 			type = typeEngine.getPointerType(type); 
 			typeExpr.setType(type);
@@ -272,38 +273,13 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 				if (kid instanceof IAstTypedNode) {
 					LLType kidType = ((IAstTypedNode) kid).getType();
 					if (kidType != null && kidType.isComplete()) {
-						//if (kidType instanceof LLCodeType) {
-						//	kidType = typeEngine.getPointerType(kidType); 
-						//if (!typeEngine.getBaseType(thisType).equals(typeEngine.getBaseType(kidType))) {
 						if (!thisType.equals(kidType)) {
 							throw new TypeException(kid, "expression's type does not match parent");
 						}
-						//}
 					}
 				}
 			}
 		}
 			
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedNode#setType(org.ejs.eulang.types.LLType)
-	 */
-	@Override
-	public void setType(LLType type) {
-		super.setType(type);
-		//name.setType(type);
-		/*
-		name.getSymbol().setType(type);
-		if (typeExpr != null)
-			typeExpr.setType(type);
-		*/
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.impl.AstTypedNode#getType()
-	 */
-	@Override
-	public LLType getType() {
-		return super.getType();
 	}
 }

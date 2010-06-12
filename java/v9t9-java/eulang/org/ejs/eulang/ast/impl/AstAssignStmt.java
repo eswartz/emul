@@ -202,6 +202,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 			LLType left = theSym.getType();
 			LLType right = theExpr.getType();
 			
+			// XXX codeptr
 			if (left instanceof LLCodeType && right instanceof LLCodeType) {
 				left = typeEngine.getPointerType(left);
 				theSym.setType(left);
@@ -210,10 +211,6 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 				changed = true;
 			}
 			if (left != null && right != null) {
-				/*if (getType() != null && !getType().equals(left)) {
-					setType(left);
-					changed = true;
-				}*/
 				theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
 			}
 		}

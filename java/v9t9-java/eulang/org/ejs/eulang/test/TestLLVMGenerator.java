@@ -509,6 +509,7 @@ public class TestLLVMGenerator extends BaseTest {
     
     @Test
     public void testFuncPtrs1() throws Exception {
+    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"a : code ( => Int);\n" +
     			"summer = code (provider:code(=>Int) => Int) {\n"+

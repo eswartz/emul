@@ -564,11 +564,9 @@ public class ExpandAST {
 				realArg.setParent(null);	// deleting call
 				IAstSymbolExpr symCopy = protoArg.getSymbolExpr();
 				symCopy.setParent(null);
-				//symCopy.uniquifyIds();
 				IAstType typeExprCopy = protoArg.getTypeExpr();
 				if (typeExprCopy != null) {
 					typeExprCopy.setParent(null);
-					//typeExprCopy.uniquifyIds();
 				}
 				
 				IAstNodeList<IAstSymbolExpr> idList = AstNodeList.<IAstSymbolExpr>singletonList(

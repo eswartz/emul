@@ -191,7 +191,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
-
+		// XXX codeptr
 		for (IAstTypedNode node : ifields.list()) {
 			if (node instanceof IAstAllocStmt) {
 				IAstAllocStmt alloc = (IAstAllocStmt) node;

@@ -162,9 +162,9 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 		
 		ITyped realFunction = getRealFunction(function);
 		LLType referencedType = realFunction != null ? realFunction.getType() : null;
+		// XXX codeptr
 		if (referencedType instanceof LLPointerType)
 			referencedType = referencedType.getSubType();
-		
 		if (referencedType != null) {
 			if (!(referencedType instanceof LLCodeType)) {
 				throw new TypeException(function, "called function does not have code type");
@@ -181,6 +181,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 					for (int i = 0; i < argCodeTypes.length; i++) {
 						if (argCodeTypes[i] != null && refTypes[i] != null && !argCodeTypes[i].isCompatibleWith(refTypes[i])) {
 							
+							// XXX codeptr
 							// may be false alarm: if passing a code block to something expecting code (or ptr to code),
 							// fix up here
 							
@@ -196,12 +197,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 								argType = typeEngine.getPointerType(argType);
 								addrOf.setType(argType);
 								return true;
-								/*
-								if (arg instanceof IAstSymbolExpr)
-									((IAstSymbolExpr) arg).getSymbol().setType(argType.getSubType());
-								*/
 							}
-
 							
 							if (first) sb.append(": "); else sb.append("; ");
 							sb.append("argument " + (i+1) + " should be type " + refTypes[i] + " but got " + argCodeTypes[i]);
@@ -358,6 +354,7 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
     @Override
     public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
     	LLType functionType = function.getType();
+    	// XXX codeptr
     	if (functionType instanceof LLPointerType)
     		functionType = functionType.getSubType();
     	if (!(functionType instanceof LLCodeType)) {

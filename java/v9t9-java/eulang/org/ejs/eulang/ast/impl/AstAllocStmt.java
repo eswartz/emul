@@ -6,6 +6,7 @@ package org.ejs.eulang.ast.impl;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstInitListExpr;
 import org.ejs.eulang.ast.IAstLitExpr;
@@ -17,6 +18,7 @@ import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -233,6 +235,39 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		for (int i = symExpr.nodeCount(); i-- > 0; ) {
 			IAstSymbolExpr theSymbol = getSymbolExprs().list().get(i);
 			IAstTypedExpr theExpr = getDefaultFor(i);
+			
+			// XXX: codeptr
+			if (theExpr != null && theExpr.getType() instanceof LLCodeType) {
+				// replace with ADDROF...
+
+				theExpr.setParent(null);
+				IAstAddrOfExpr addrOf = new AstAddrOfExpr(theExpr);
+				addrOf.setSourceRef(theExpr.getSourceRef());
+				getExprs().replaceChild(theExpr, addrOf);
+				LLType codePtrType = theExpr.getType();
+				codePtrType = typeEngine.getPointerType(codePtrType);
+				addrOf.setType(codePtrType);
+				
+				if (typeExpr != null) {
+					updateType(typeExpr, codePtrType);
+				}
+				theSymbol.setType(codePtrType);
+				setType(codePtrType);
+				return true;
+				/*
+				LLType codePtr = typeEngine.getPointerType(theExpr.getType());
+				if (!codePtr.equals(theSymbol.getType())) {
+					theSymbol.setType(codePtr);
+					changed = true;
+				}
+				if (typeExpr != null) {
+					changed |= updateType(typeExpr, codePtr);
+				}
+				changed |= updateType(this, codePtr);
+				continue;
+				*/
+			}
+			
 			if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExprs().list().get(i), theExpr })) {
 				if (getExprs() != null && theExpr.getType() != null) {
 					if (getSymbolExprs() != null && theExpr.getType().isMoreComplete(theSymbol.getType()))
@@ -309,6 +344,9 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 			if (theExpr != null) {
 				LLType exprType = ((IAstTypedNode) theExpr).getType();
 				if (exprType != null && exprType.isComplete()) {
+					// XXX codeptr
+					if (exprType instanceof LLCodeType)
+						exprType = typeEngine.getPointerType(exprType);
 					if (!symType.equals(exprType)) {
 						throw new TypeException(theExpr, "cannot assign expression of this type to symbol");
 					}

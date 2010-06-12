@@ -85,8 +85,7 @@ public class TestTypes extends BaseTest {
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstAllocStmt stmt = (IAstAllocStmt) code.stmts().getFirst();
     	LLArrayType arrayType = (LLArrayType)stmt.getType();
@@ -180,8 +179,7 @@ xes[3][2][1]
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
     	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
@@ -198,21 +196,22 @@ xes[3][2][1]
     
     @Test
     public void testArrayAccess1() throws Exception {
+    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
-    			"mycode := code(p:Int[10]) {\n"+		// passed by reference
+    			"mycode := code(p:Int[10]) {\n"+
     			"   p[5];"+
     			"};\n"+
     			"deref = code () {\n"+
     			" array:Int[10];\n"+
-    			" mycode(array);\n"+		// passed by reference
+    			" mycode(array);\n"+
     			"};\n"+
     			"");
 
     	sanityTest(mod);
-    	
+
+    	doGenerate(mod);
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
     	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
@@ -222,7 +221,6 @@ xes[3][2][1]
     	assertNull(arrayType.getDynamicSizeExpr());
     	assertEquals(typeEngine.INT, index.getRight().getType());
     	
-    	doGenerate(mod);
     	
     	
     }
@@ -237,8 +235,7 @@ xes[3][2][1]
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
     	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
@@ -263,8 +260,7 @@ xes[3][2][1]
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
     	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
@@ -291,8 +287,7 @@ xes[3][2][1]
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
     	IAstBinExpr index = (IAstBinExpr) stmt.getExpr();
@@ -318,8 +313,7 @@ xes[3][2][1]
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
     	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
@@ -348,8 +342,7 @@ xes[3][2][1]
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().list().get(1);
     	IAstBinExpr add = (IAstBinExpr) getValue(stmt.getExpr());
@@ -1260,6 +1253,7 @@ xes[3][2][1]
     	assertTrue(dataNode.getType().isComplete());
     	LLDataType data = (LLDataType) dataNode.getType();
     	LLType drawFieldType = data.getField("draw").getType();
+    	// XXX codeptr
     	assertTrue(drawFieldType instanceof LLPointerType);
 		assertTrue(drawFieldType.getSubType() instanceof LLCodeType);
     }

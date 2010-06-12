@@ -47,7 +47,7 @@ public class TestSimplify extends BaseTest {
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testPromotedCast2");
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExprs().getFirst();
+    	IAstCodeExpr codeExpr = getCodePtrValue(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
@@ -77,8 +77,7 @@ public class TestSimplify extends BaseTest {
     	
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testPromotedCond1");
     	typeTest(mod, false);
-    	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExprs().getFirst();
+    	IAstCodeExpr codeExpr = getCodePtrValue(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
@@ -101,8 +100,7 @@ public class TestSimplify extends BaseTest {
     	
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testPromotedCond2");
     	typeTest(mod, false);
-    	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExprs().getFirst();
+    	IAstCodeExpr codeExpr = getCodePtrValue(def);
     	
     	IAstAssignStmt allocStmt = (IAstAssignStmt) codeExpr.stmts().list().get(1);
 		assertEquals(typeEngine.BYTE, allocStmt.getType());
@@ -130,8 +128,7 @@ public class TestSimplify extends BaseTest {
     	
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testUnaryNot");
     	typeTest(mod, false);
-    	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExprs().getFirst();
+    	IAstCodeExpr codeExpr = getCodePtrValue(def);
     	
     	//IAstReturnStmt allocStmt = (IAstReturnStmt) codeExpr.stmts().list().get(1);
     	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().list().get(1);
@@ -183,7 +180,7 @@ public class TestSimplify extends BaseTest {
     	IAstAllocStmt def = (IAstAllocStmt) mod.getScope().getNode("testBinaryArithOps");
     	typeTest(mod, false);
     	
-    	IAstCodeExpr codeExpr = (IAstCodeExpr)def.getExprs().getFirst();
+    	IAstCodeExpr codeExpr = getCodePtrValue(def);
     	IAstExprStmt exprStmt = (IAstExprStmt) codeExpr.stmts().getFirst();
 		assertEquals(type, exprStmt.getType());
 		

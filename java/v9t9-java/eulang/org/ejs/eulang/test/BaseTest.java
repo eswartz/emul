@@ -46,6 +46,9 @@ import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.DumpAST;
 import org.ejs.eulang.ast.ExpandAST;
 import org.ejs.eulang.ast.GenerateAST;
+import org.ejs.eulang.ast.IAstAddrOfExpr;
+import org.ejs.eulang.ast.IAstAllocStmt;
+import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstModule;
@@ -62,6 +65,8 @@ import org.ejs.eulang.parser.EulangParser;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeInference;
 
@@ -752,5 +757,14 @@ public class BaseTest {
 		
 		return gen.getModule();
 	}
+	
+	protected IAstCodeExpr getCodePtrValue(IAstAllocStmt astmt) {
+    	assertTrue(astmt.getType() instanceof LLPointerType);
+    	assertTrue(astmt.getType().getSubType() instanceof LLCodeType);
+    	IAstAddrOfExpr addrOf = (IAstAddrOfExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = (IAstCodeExpr) addrOf.getExpr();
+		return code;
+	}
+
 	
 }

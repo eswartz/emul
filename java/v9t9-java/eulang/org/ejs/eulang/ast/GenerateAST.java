@@ -929,16 +929,7 @@ public class GenerateAST {
 				}
 				IAstTypedNode item = checkConstruct(kid, IAstTypedNode.class);
 
-				/*
-				 * if (item instanceof IAstSymbolExpr) { // convert to an alloc
-				 * item.setParent(null); IAstSymbolExpr symbolExpr =
-				 * (IAstSymbolExpr) item; IAstType type = new AstType(null);
-				 * getEmptySource(kid, type); IAstAllocStmt alloc = new
-				 * AstAllocStmt(AstNodeList .<IAstSymbolExpr> singletonList(
-				 * IAstSymbolExpr.class, symbolExpr), type, null, false); item =
-				 * alloc; symbolExpr.getSymbol().setDefinition(item);
-				 * getSource(kid, alloc); } else
-				 */
+				// XXX codeptr
 				if (item instanceof IAstAllocStmt) {
 					// convert any prototypes to pointers
 					IAstAllocStmt alloc = (IAstAllocStmt) item;
@@ -1310,6 +1301,7 @@ public class GenerateAST {
 		IAstType type = tree.getChildCount() > 1 ? checkConstruct(tree
 				.getChild(1), IAstType.class) : null;
 
+		// XXX codeptr
 		// promote code allocs to pointers to function
 		if (type instanceof IAstPrototype) {
 			type.setParent(null);

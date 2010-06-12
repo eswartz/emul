@@ -80,6 +80,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 			return allowIncomplete ? "<code>" : null;
 
 		StringBuilder sb = new StringBuilder();
+		
 		if (retType != null && retType.isComplete())
 			sb.append(retType.getLLVMName());
 		else if (allowIncomplete)
@@ -105,7 +106,7 @@ public class LLCodeType extends BaseLLAggregateType  {
 				sb.append("<unknown>");
 		}
 		sb.append(')');
-		
+
 		return sb.toString();
 	}
 	

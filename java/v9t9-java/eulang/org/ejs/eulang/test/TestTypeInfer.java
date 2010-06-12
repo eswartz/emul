@@ -16,6 +16,7 @@ import java.util.Collection;
 import junit.framework.AssertionFailedError;
 
 import org.ejs.eulang.IOperation;
+import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstArrayType;
 import org.ejs.eulang.ast.IAstAssignStmt;
@@ -1137,8 +1138,7 @@ public class TestTypeInfer extends BaseTest {
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
     	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
@@ -1149,7 +1149,8 @@ public class TestTypeInfer extends BaseTest {
     	assertEquals(typeEngine.INT, index.getRight().getType());
     	
     }
-    @Test
+
+	@Test
     public void testArrayAccess1b() throws Exception {
     	IAstModule mod = doFrontend(
     			"mycode := code(p:Int[10]; i) {\n"+
@@ -1160,8 +1161,7 @@ public class TestTypeInfer extends BaseTest {
     	sanityTest(mod);
     	
     	IAstAllocStmt astmt = (IAstAllocStmt) mod.getScope().get("mycode").getDefinition();
-    	assertTrue(astmt.getType() instanceof LLCodeType);
-    	IAstCodeExpr code = (IAstCodeExpr) astmt.getExprs().getFirst();
+    	IAstCodeExpr code = getCodePtrValue(astmt);
     	
     	IAstExprStmt stmt = (IAstExprStmt) code.stmts().getFirst();
     	IAstBinExpr index = (IAstBinExpr) getValue(stmt.getExpr());
@@ -1251,8 +1251,10 @@ public class TestTypeInfer extends BaseTest {
     	LLDataType data = (LLDataType) dataNode.getType();
     	assertEquals(1, data.getInstanceFields().length);
     	LLInstanceField field = data.getInstanceFields()[0];
+    	// XXX codeptr
     	LLPointerType funcPtr = (LLPointerType) field.getType();
     	LLCodeType code = (LLCodeType) funcPtr.getSubType();
+    	
     	assertEquals(typeEngine.INT, code.getArgTypes()[1]);
     	assertEquals(new LLSymbolType(classSym), code.getArgTypes()[0]);
     }
@@ -1444,6 +1446,7 @@ public class TestTypeInfer extends BaseTest {
 
     @Test
     public void testInnerData1() throws Exception {
+    	dumpTypeInfer = true;
     	IAstModule mod = doFrontend(
     			"Complex = data {\n"+
     			"  a,b,c:Byte;\n"+
