@@ -13,7 +13,6 @@ import org.ejs.eulang.TypeEngine;
  *
  */
 public interface IAstTypedExpr extends IAstTypedNode {
-
     /** 
      * Compare equality, value-wise.  This assumes the
      * expressions are of the same structure -- call

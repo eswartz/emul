@@ -10,7 +10,6 @@ import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtScope;
-import org.ejs.eulang.ast.IAstType;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
@@ -32,8 +31,7 @@ public abstract class AstStmtScope extends AstTypedExpr implements IAstStmtScope
 	public AstStmtScope(IAstNodeList<IAstStmt> stmtList, IScope scope) {
 		this.scope = scope;
 		scope.setOwner(this);
-		this.stmtList = reparent(this.stmtList, stmtList);
-		
+		setStmtList(stmtList);
 	}
 
 	protected IAstStmtScope fixupStmtScope(IAstStmtScope copied) {
@@ -108,13 +106,21 @@ public abstract class AstStmtScope extends AstTypedExpr implements IAstStmtScope
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstStmtScope#setStmtList(org.ejs.eulang.ast.IAstNodeList)
+	 */
+	@Override
+	public void setStmtList(IAstNodeList<IAstStmt> stmts) {
+		this.stmtList = reparent(this.stmtList, stmts);
+	}
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#getChildren()
 	 */
 	@Override
 	public IAstNode[] getChildren() {
 		return new IAstNode[] { stmtList };
 	}
-
+	
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#replaceChildren(org.ejs.eulang.ast.IAstNode[])
 	 */
@@ -122,7 +128,7 @@ public abstract class AstStmtScope extends AstTypedExpr implements IAstStmtScope
 	@Override
 	public void replaceChild(IAstNode existing, IAstNode another) {
 		if (stmtList == existing) {
-			stmtList = (IAstNodeList<IAstStmt>) ((IAstType) another);
+			setStmtList((IAstNodeList<IAstStmt>) another);
 		} else {
 			throw new IllegalArgumentException();
 		}

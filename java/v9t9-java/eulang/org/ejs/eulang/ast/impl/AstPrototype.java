@@ -4,12 +4,15 @@
 package org.ejs.eulang.ast.impl;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstType;
+import org.ejs.eulang.symbols.IScope;
+import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -45,9 +48,18 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	/**
 	 * @param argCode
 	 */
-	public AstPrototype(LLType retType) {
-		this.retType = new AstType(retType);
-		this.argumentTypes = new IAstArgDef[0];
+	public AstPrototype(LLCodeType codeType, IScope argNameScope, String[] argNames) {
+		this.retType = new AstType(codeType.getRetType());
+		
+		this.argumentTypes = new IAstArgDef[codeType.getArgTypes().length];
+		for (int i = 0; i < codeType.getArgTypes().length; i++) {
+			ISymbol argName = argNameScope.add(argNames[i], false);
+			this.argumentTypes[i] = new AstArgDef(new AstSymbolExpr(true, argName), 
+					new AstType(codeType.getArgTypes()[i]),
+					null /*Default*/,
+					Collections.<String>emptySet());
+			argName.setDefinition(this.argumentTypes[i]);
+		}
 	}
 	
 	/* (non-Javadoc)

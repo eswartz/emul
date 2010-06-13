@@ -37,15 +37,18 @@ public class Test9900Locals extends BaseTest {
 
 	protected StackFrame doStackFrame(String text) throws Exception {
 		LLModule mod = getModule(text);
+		LLDefineDirective def  =null;
 		for (LLBaseDirective dir : mod.getDirectives()) {
 			if (dir instanceof LLDefineDirective) {
-				LLDefineDirective def = (LLDefineDirective) dir;
-				StackFrame stackFrame = new StackFrame(def.getTarget());
-				stackFrame.setForceLocalsToStack(forceLocalsToStack);
-				stackFrame.buildLocalTable(def);
-				return stackFrame;
+				def = (LLDefineDirective) dir;
 				
 			}
+		}
+		if (def != null) {
+			StackFrame stackFrame = new StackFrame(def.getTarget());
+			stackFrame.setForceLocalsToStack(forceLocalsToStack);
+			stackFrame.buildLocalTable(def);
+			return stackFrame;
 		}
 		fail("no code generated:\n" + mod);
 		return null;

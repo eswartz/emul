@@ -27,7 +27,7 @@ public class AstNilLitExpr extends AstLitExpr implements IAstNilLitExpr {
 	 */
 	@Override
 	public String toString() {
-		return "NIL";
+		return typedString("NIL");
 	}
 
 	

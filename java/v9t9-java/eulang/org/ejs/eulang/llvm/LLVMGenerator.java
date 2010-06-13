@@ -35,6 +35,7 @@ import org.ejs.eulang.ast.IAstAllocTupleStmt;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstAssignTupleStmt;
+import org.ejs.eulang.ast.IAstAttributes;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstBreakStmt;
@@ -59,6 +60,7 @@ import org.ejs.eulang.ast.IAstLoopStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstRepeatExpr;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
@@ -71,6 +73,12 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
+import org.ejs.eulang.ast.impl.AstArgDef;
+import org.ejs.eulang.ast.impl.AstCodeExpr;
+import org.ejs.eulang.ast.impl.AstNodeList;
+import org.ejs.eulang.ast.impl.AstPrototype;
+import org.ejs.eulang.ast.impl.AstSymbolExpr;
+import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
@@ -93,6 +101,7 @@ import org.ejs.eulang.llvm.instrs.LLUnaryInstr;
 import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
+import org.ejs.eulang.llvm.ops.LLCastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLNullOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -120,6 +129,7 @@ import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 import org.ejs.eulang.types.TypeException;
+import org.ejs.eulang.types.TypeInference;
 
 /**
  * Generate LLVM instructions
@@ -367,14 +377,13 @@ public class LLVMGenerator {
 	 */
 	private void generateGlobalData(ISymbol symbol, IAstDataType expr)
 			throws ASTException {
-		// ignore for now, even though it may have initializers
 		ensureTypes(expr);
 
+		// export static bits
+		
 		for (IAstStmt stmt : expr.stmts().list()) {
 			if (stmt instanceof IAstDefineStmt)
 				generateGlobalDefine((IAstDefineStmt) stmt);
-			else
-				generateStmt(stmt);
 		}
 		for (IAstTypedNode field : expr.getStatics().list()) {
 			if (field instanceof IAstAllocStmt) {
@@ -383,6 +392,25 @@ public class LLVMGenerator {
 				assert false;
 			}
 		}
+		
+		// construct instance initializer method
+		
+		LLPointerType thisPtrType = typeEngine.getPointerType(expr.getType());
+		LLCodeType dataInitFuncType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { thisPtrType });
+		ISymbol initName = expr.getInitName();
+		ISymbol initSym = ll.getModuleSymbol(initName, dataInitFuncType);
+		
+		LLDefineDirective initDef = (LLDefineDirective) ll.lookup(initSym);
+		if (initDef == null) {
+
+			IAstCodeExpr initCode = expr.getInitCode(typeEngine); 
+			
+			TypeInference typeInfer = new TypeInference(typeEngine);
+			typeInfer.infer(initCode, true);
+			
+			generateGlobalCode(initName, initCode);
+		}
+
 
 	}
 
@@ -2005,6 +2033,10 @@ public class LLVMGenerator {
 						+ " to " + type);
 			}
 
+			if (value.isConstant()) {
+				return new LLCastOp(cast, type, value);
+			}
+			
 			LLOperand temp = currentTarget.newTemp(type);
 			value = currentTarget.load(value.getType(), value);
 			currentTarget.emit(new LLCastInstr(temp, cast, origType, value,
@@ -2096,12 +2128,15 @@ public class LLVMGenerator {
 			return new LLConstOp(expr.getType(), (Number) object);
 		else {
 			// nil
-			if (expr.getType().getBasicType() == BasicType.INTEGRAL
-					|| expr.getType().getBasicType() == BasicType.FLOATING)
+			if (expr.getType().getBasicType() == BasicType.INTEGRAL || expr.getType().getBasicType() == BasicType.BOOL)
 				return new LLConstOp(expr.getType(), 0);
+			else if (expr.getType().getBasicType() == BasicType.FLOATING)
+				return new LLConstOp(expr.getType(), 0.0);
 			else if (expr.getType().getBasicType() == BasicType.POINTER)
-				return generateCast(expr, expr.getType(), typeEngine.INT,
+				return generateCast(expr, expr.getType(), typeEngine.PTRDIFF,
 						new LLConstOp(typeEngine.PTRDIFF, 0), false);
+			else if (expr.getType().getBasicType() == BasicType.DATA || expr.getType().getBasicType() == BasicType.ARRAY)
+				return new LLZeroInitOp(expr.getType());
 			else
 				throw new ASTException(expr, "cannot generate nil");
 		}

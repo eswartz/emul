@@ -621,7 +621,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			return false;
 		
 		ILocal origLocal = getSourceLocal(def);
-		if (!inst.getOp1().equals(def.getDestOp()) || !(def.getSrcOp().isMemory() || def.getSrcOp().isRegister()))
+		if (def.getSrcOp() == null || !inst.getOp1().equals(def.getDestOp()) || !(def.getSrcOp().isMemory() || def.getSrcOp().isRegister()))
 			return false;
 		
 		// okay, replace all uses of the source with the target

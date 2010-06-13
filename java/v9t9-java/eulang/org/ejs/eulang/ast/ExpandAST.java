@@ -559,7 +559,8 @@ public class ExpandAST {
 				Set<String> attrs = new HashSet<String>(codeExpr.getAttrs());
 				if (protoArg.hasAttr(IAstCodeExpr.MACRO))
 					attrs.add(IAttrs.MACRO);
-				IAstCodeExpr implCode = new AstCodeExpr(new AstPrototype(argCode.getRetType()), new LocalScope(nodeScope), stmtlist, 
+				IAstCodeExpr implCode = new AstCodeExpr(new AstPrototype(argCode, null, null), 
+						new LocalScope(nodeScope), stmtlist, 
 						attrs);
 				
 				setSourceInTree(implCode, realArg.getSourceRef());

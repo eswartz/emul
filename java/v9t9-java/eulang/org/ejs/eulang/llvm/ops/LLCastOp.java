@@ -3,17 +3,20 @@
  */
 package org.ejs.eulang.llvm.ops;
 
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.types.LLType;
 
 /**
- * This is an operand whose type is bitcast.
+ * This is an operand whose type is cast to another type in a size-preserving way.
  * @author ejs
  *
  */
-public class LLBitcastOp extends BaseLLOperand {
+public class LLCastOp extends BaseLLOperand {
 	private final LLOperand val;
-	public LLBitcastOp(LLType castTo, LLOperand val) {
+	private final ECast cast;
+	public LLCastOp(ECast cast, LLType castTo, LLOperand val) {
 		super(castTo);
+		this.cast = cast;
 		this.val = val;
 	}
 	
@@ -33,7 +36,7 @@ public class LLBitcastOp extends BaseLLOperand {
 	
 	@Override
 	public String toString() {
-		return "bitcast (" + val.getType().getLLVMName() + " " + val.toString() + " to " + type.getLLVMName() + ")" ;
+		return cast.getOp() + " (" + val.getType().getLLVMName() + " " + val.toString() + " to " + type.getLLVMName() + ")" ;
 	}
 	@Override
 	public int hashCode() {
@@ -50,7 +53,7 @@ public class LLBitcastOp extends BaseLLOperand {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		LLBitcastOp other = (LLBitcastOp) obj;
+		LLCastOp other = (LLCastOp) obj;
 		if (val == null) {
 			if (other.val != null)
 				return false;

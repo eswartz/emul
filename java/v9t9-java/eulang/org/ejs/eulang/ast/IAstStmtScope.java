@@ -10,6 +10,7 @@ package org.ejs.eulang.ast;
  */
 public interface IAstStmtScope extends IAstScope {
 	IAstNodeList<IAstStmt> stmts();
+	void setStmtList(IAstNodeList<IAstStmt> stmts);
 
 	/**
 	 * Merge another scope into this one.

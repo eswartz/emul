@@ -1556,7 +1556,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
     			"  draw:code(this:Class^; count:Int => nil);\n"+
     			"};\n"+
     			"forward doDraw;\n"+
-    			"testSelfRef3 = code() {\n"+
+    			"testPtrRef4 = code() {\n"+
     			"  inst : Class^;\n"+
     			"  inst.draw = doDraw;\n"+
     			"  inst.draw(inst, 5);\n"+
@@ -1770,7 +1770,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
     public void testTuples2() throws Exception {
     	doIsel(
     			"forward makeTuple;\n"+
-    			"useTuple = code(i:Int) { (x,y) := makeTuple(19, i); x+y; };\n"+
+    			"testTuples2 = code(i:Int) { (x,y) := makeTuple(19, i); x+y; };\n"+
     			"makeTuple = code(x,y:Int) { (x,y) };\n"+
     	"");
     	int idx;
@@ -2014,7 +2014,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	   	doIsel(
 	   			"Tuple = data {\n"+
 	   			"   a:Byte[5]; f:Bool; };\n"+
-	   			"testNonConstGetElementPtrAccess2 = code(x) {\n"+
+	   			"testNonConstGetElementPtrAccess1 = code(x) {\n"+
 	   			"  arr:Tuple[10];\n"+
 	   			"  arr[x].a[4];\n"+
 	   			"};\n"+
@@ -2112,7 +2112,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	public void testArrayPtrAccess2() throws Exception {
 		doIsel(
 				"vals:Int[10];\n"+
-				"testArraySum = code() {\n"+
+				"testArrayPtrAccess2 = code() {\n"+
 				"  valp : Int[]^ = &vals;\n"+
 				"};\n"+
 				"");
@@ -2134,7 +2134,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 	public void testAddrCalc1() throws Exception {
 		doIsel(
 				"arr : Int[10,10];\n"+
-				"negate = code(x:Int) { \n" +
+				"testAddrCalc1 = code(x:Int) { \n" +
 				"	rowp:=&arr[5];\n" +
 				"   colp:=&rowp[5];\n"+
 				"   colp^;\n"+
@@ -2184,7 +2184,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		dumpIsel = true;
 		doIsel(
 				"vals: Int[3,3];\n" + 
-				"doSum = code(arr: Int[3,3]) {\n" +
+				"testPointerMath1 = code(arr: Int[3,3]) {\n" +
 				"  valp : Int^ = (&vals){Int^};\n"+
 				"  s := 0;\n"+
 				"  for i in 3 do for j in 3 do (valp+i*3+j)^ = i+j;\n" + 
@@ -2210,7 +2210,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		dumpIsel = true;
 		doIsel(
 				"val: Int;\n" + 
-				"doSum = code() {\n" +
+				"testGlobalInc = code() {\n" +
 				"  val++;\n"+
 				"};");
 

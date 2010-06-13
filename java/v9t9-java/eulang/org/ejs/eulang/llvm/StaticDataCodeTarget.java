@@ -10,7 +10,8 @@ import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
-import org.ejs.eulang.llvm.ops.LLBitcastOp;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
+import org.ejs.eulang.llvm.ops.LLCastOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
@@ -147,7 +148,7 @@ public class StaticDataCodeTarget implements ILLCodeTarget {
 				if (valueType.matchesExactly(source.getType())) 
 					return source;
 				
-				LLOperand cast = new LLBitcastOp(valueType, source);
+				LLOperand cast = new LLCastOp(ECast.BITCAST, valueType, source);
 				return cast;
 			}
 			// ignore: ref/ptr casts?

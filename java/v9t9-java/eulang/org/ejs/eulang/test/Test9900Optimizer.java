@@ -710,7 +710,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 		dumpLLVMGen = true;
 		dumpIsel = true;
 		// emitting constant tuples, tuple casting, cond list common type, etc.
-		boolean changed = doOpt("swap = code (x) { (if x<10 then (1,(x+2){Byte}) else (2,1){(Byte,Byte)}){(Int,Int)}; };\n");
+		boolean changed = doOpt("testTuples5 = code (x) { (if x<10 then (1,(x+2){Byte}) else (2,1){(Byte,Byte)}){(Int,Int)}; };\n");
 		assertTrue(changed);
 		
 
@@ -732,19 +732,23 @@ public class Test9900Optimizer extends BaseInstrTest {
     	AssemblerOperand op = instrs.get(idx).getOp1();
     	
     	assertTrue(op instanceof TupleTempOperand);
-    	// the regs should have one def only (but not necc. become constants, since we'll just 
-    	// have to reconstruct regs for LI ops anyway)
-    	AssemblerOperand top = ((TupleTempOperand) op).get(0);
-		ILocal local = stackFrame.getLocal(getOperandSymbol(top));
-    	assertNotNull(local);
-    	assertEquals(1, local.getDefs().cardinality());
-    	assertEquals(1, local.getUses().cardinality());
-    	
-    	top = ((TupleTempOperand) op).get(1);
-		local = stackFrame.getLocal(getOperandSymbol(top));
-    	assertNotNull(local);
-    	assertEquals(1, local.getDefs().cardinality());
-    	assertEquals(1, local.getUses().cardinality());
+    	AssemblerOperand top;
+    	ILocal local;
+    	if (!((TupleTempOperand) op).isConst()) {
+	    	// the regs should have one def only (but not necc. become constants, since we'll just 
+	    	// have to reconstruct regs for LI ops anyway)
+			top = ((TupleTempOperand) op).get(0);
+			local = stackFrame.getLocal(getOperandSymbol(top));
+	    	assertNotNull(local);
+	    	assertEquals(1, local.getDefs().cardinality());
+	    	assertEquals(1, local.getUses().cardinality());
+	    	
+	    	top = ((TupleTempOperand) op).get(1);
+			local = stackFrame.getLocal(getOperandSymbol(top));
+	    	assertNotNull(local);
+	    	assertEquals(1, local.getDefs().cardinality());
+	    	assertEquals(1, local.getUses().cardinality());
+    	}
     	
     	/// other branch needs a cast
     	

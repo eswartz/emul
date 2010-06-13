@@ -2194,6 +2194,7 @@ xes[3][2][1]
     			"foo = code() {\n"+
     			"	x : Class;\n"+
     			"   x.x, x.y = 123, 456;\n"+
+    			"   x.plus = code (this:Class^) { this.x+this.y };\n"+	// hack until constructor works
     			"   x.plus(&x);\n"+ // explicit
     			"   x.plus();\n"+	// implicit
     			"};\n"+
@@ -2255,7 +2256,7 @@ xes[3][2][1]
 		dumpLLVMGen = true;
 		LLVMGenerator gen = doGenerate(mod);
 		
-		assertMatchText("call %Int.*\\(%Class\\$p %_.x.", gen.getUnoptimizedText());
+		assertMatchText("ret i16 579", gen.getOptimizedText());
     }
 }
 

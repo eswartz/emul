@@ -8,6 +8,7 @@ import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstTypedExpr;
@@ -203,12 +204,28 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 			LLType right = theExpr.getType();
 			
 			// XXX codeptr
-			if (left instanceof LLCodeType && right instanceof LLCodeType) {
+			boolean syncCode = false;
+			if (left instanceof LLCodeType) {
 				left = typeEngine.getPointerType(left);
 				theSym.setType(left);
-				right = typeEngine.getPointerType(right);
-				theExpr.setType(right);
+				syncCode = true;
 				changed = true;
+			}
+			if (right instanceof LLCodeType) {
+				if (theExpr instanceof IAstCodeExpr) {
+					theExpr.setParent(null);
+					AstAddrOfExpr addrOfExpr = new AstAddrOfExpr(theExpr);
+					addrOfExpr.setSourceRef(theExpr.getSourceRef());
+					expr.replaceChild(theExpr, addrOfExpr);
+					theExpr = addrOfExpr;
+					syncCode = true;
+					changed = true;
+				}
+				if (syncCode) {
+					right = typeEngine.getPointerType(right);
+					theExpr.setType(right);
+					changed = true;
+				}
 			}
 			if (left != null && right != null) {
 				theExpr.getParent().replaceChild(theExpr, createCastOn(typeEngine, theExpr, left));
@@ -227,7 +244,7 @@ public class AstAssignStmt extends AstTypedExpr implements IAstAssignStmt {
 			IAstTypedExpr theSymbol = getSymbolExprs().list().get(i);
 			IAstTypedExpr theExpr = expr.list().get(expr.nodeCount() == 1 ? 0 : i);
 			LLType symType = ((IAstTypedNode) theSymbol).getType();
-			if (i == 0 && symType != null && symType.isComplete()) {
+			if (symExpr.nodeCount() == 1 && symType != null && symType.isComplete()) {
 				if (!thisType.equals(symType)) {
 					throw new TypeException(theSymbol, "cannot reconcile assignment type with context");
 				}

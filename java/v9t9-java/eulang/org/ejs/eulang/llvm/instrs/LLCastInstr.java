@@ -31,7 +31,7 @@ public class LLCastInstr extends LLAssignInstr {
 		ECast(String op) {
 			this.op = op;
 		}
-		String getOp() { return op; }
+		public String getOp() { return op; }
 	};
 	private LLType toType;
 	private final ECast cast;

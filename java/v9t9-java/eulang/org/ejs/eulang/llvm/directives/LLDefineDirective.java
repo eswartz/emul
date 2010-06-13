@@ -29,7 +29,8 @@ import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
-import org.ejs.eulang.llvm.ops.LLBitcastOp;
+import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
+import org.ejs.eulang.llvm.ops.LLCastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLTempOp;
@@ -278,7 +279,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 			source = var.load(this);
 		} 
 		assert source != null;
-		if (valueType != null && valueType.equals(source.getType().getSubType())) {
+		if (valueType != null && valueType.isCompatibleWith(source.getType().getSubType())) {
 			// TODO: this is copied from ILLVariable impls
 			
 			if (source.getType().getBasicType() == BasicType.REF) {
@@ -303,7 +304,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 			} else {
 				throw new IllegalStateException();
 			}
-		} else if (valueType != null && !valueType.equals(source.getType())) {
+		} else if (valueType != null && !valueType.isCompatibleWith(source.getType())) {
 			if (source.getType().getBasicType() == BasicType.VOID || valueType.getBasicType() == BasicType.VOID) {
 				// ignore
 				return source;
@@ -317,7 +318,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 				if (valueType.matchesExactly(source.getType())) 
 					return source;
 				
-				LLOperand cast = new LLBitcastOp(valueType, source);
+				LLOperand cast = new LLCastOp(ECast.BITCAST, valueType, source);
 				return cast;
 			}
 			else if (source.isConstant() && valueType.getSubType().isCompatibleWith(source.getType())) {

@@ -78,14 +78,19 @@ public class BaseInstrTest extends BaseTest {
 		buildOutput = new BuildOutput();
 	}
 	protected Routine doIsel(String text) throws Exception {
+		String name = new Exception().getStackTrace()[1].getMethodName();
 		LLModule mod = getModule(text);
+		LLDefineDirective def = null;
 		for (LLBaseDirective dir : mod.getDirectives()) {
 			if (dir instanceof LLDefineDirective) {
-				LLDefineDirective def = (LLDefineDirective) dir;
-				
-				return doIsel(mod, def);
+				def = (LLDefineDirective) dir;
+				if (name != null && ((LLDefineDirective) dir).getName().getName().contains(name))
+					break;
 			}
 		}
+		if (def != null)
+			return doIsel(mod, def);
+
 		fail("no code generated:\n" + mod);
 		return null;
 	}

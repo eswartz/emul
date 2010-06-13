@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**
@@ -20,5 +21,16 @@ public interface IAstDataType extends IAstTypedExpr, IAstStmtScope, IAstType {
 	
 	void setFields(IAstNodeList<IAstTypedNode> fields);
 	void setStatics(IAstNodeList<IAstTypedNode> statics);
-	
+
+	/**
+	 * Create the per-instance init code 
+	 * @param typeEngine TODO
+	 * @return
+	 */
+	IAstCodeExpr getInitCode(TypeEngine typeEngine);
+
+	/**
+	 * @return
+	 */
+	ISymbol getInitName();
 }

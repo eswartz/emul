@@ -35,6 +35,24 @@ public class TestLLVMGenerator extends BaseTest {
 		assertFoundInUnoptimizedText("123",gen);
 		assertFoundInUnoptimizedText("456",gen);
 	}
+
+	@Test
+	public void testZeros() throws Exception {
+		dumpLLVMGen = true;
+		IAstModule mod = doFrontend(
+				"main : code (=>nil) = nil;\n"+
+				"x : Int = nil;\n"+
+				"y : Float = nil;\n"+
+				"z : Char = nil;\n"+
+				"d : data { p:Byte; z:Int^; } = nil;\n");
+		
+		LLVMGenerator gen  = doGenerate(mod);
+		assertFoundInUnoptimizedText("zeroinitializer",gen);
+		assertFoundInUnoptimizedText("inttoptr (i16 0 to ",gen);
+		assertFoundInUnoptimizedText("%Int 0",gen);
+		assertFoundInUnoptimizedText("%Char 0",gen);
+		assertFoundInUnoptimizedText("%Float 0",gen);
+	}
 	
 	@Test
 	public void testSimple() throws Exception {
