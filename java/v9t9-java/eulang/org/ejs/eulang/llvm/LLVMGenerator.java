@@ -255,6 +255,8 @@ public class LLVMGenerator {
 					generateGlobalAlloc((IAstAllocStmt) stmt);
 				else if (stmt instanceof IAstDefineStmt)
 					generateGlobalDefine((IAstDefineStmt) stmt);
+				else if (stmt instanceof IAstTypedExpr) 
+					generateGlobalInit((IAstTypedExpr) stmt);
 				else
 					unhandled(stmt);
 			} catch (ASTException e) {
@@ -262,6 +264,20 @@ public class LLVMGenerator {
 			}
 		}
 
+	}
+
+	/**
+	 * @param stmt
+	 * @throws ASTException 
+	 */
+	private void generateGlobalInit(final IAstTypedExpr stmt) throws ASTException {
+		generateStaticInit(new ICodeEmitter() {
+			
+			@Override
+			public void emit() throws ASTException {
+				generateTypedExprCore(stmt);
+			}
+		});
 	}
 
 	public void recordError(ASTException e) {
@@ -276,6 +292,10 @@ public class LLVMGenerator {
 			throw new ASTException(null, "unhandled generating node");
 	}
 
+	interface ICodeEmitter {
+		void emit() throws ASTException;
+	}
+	
 	/**
 	 * {@link http://www.llvm.org/docs/LangRef.html#globalvars}
 	 * 
@@ -320,7 +340,7 @@ public class LLVMGenerator {
 				isZero = true;
 			}
 			
-			ISymbol modSymbol = ll.getModuleSymbol(symbol.getSymbol(), dataType);
+			final ISymbol modSymbol = ll.getModuleSymbol(symbol.getSymbol(), dataType);
 			ll.add(new LLGlobalDirective(modSymbol, null, dataOp));
 			
 			// add call to constructor if needed
@@ -329,22 +349,37 @@ public class LLVMGenerator {
 				
 				if (data != null && data.needsExplicitInit()) {
 					// add static init code
-					ILLCodeTarget oldDefine = currentTarget;
-	
-					try {
-						currentTarget = ll.getStaticInitTarget(this);
-						LLOperand thisOp = new LLSymbolOp(modSymbol);
-						
-						ISymbol initName = data.getInitName(typeEngine);
-						ISymbol modInitSym = ll.getModuleSymbol(initName, initName.getType());
-						
-						currentTarget.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(modInitSym), thisOp)); 
-					} finally {
-						currentTarget = oldDefine;
-					}
+					final ISymbol initName = data.getInitName(typeEngine);
+					
+					generateStaticInit(new ICodeEmitter() {
+						public void emit() throws ASTException {
+							LLOperand thisOp = new LLSymbolOp(modSymbol);
+							
+							ISymbol modInitSym = ll.getModuleSymbol(initName, initName.getType());
+							
+							currentTarget.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(modInitSym), thisOp)); 
+						}
+					});
+					
 				}
 			}
 		}
+	}
+
+	/**
+	 * @param iCodeEmitter
+	 * @throws ASTException 
+	 */
+	private void generateStaticInit(ICodeEmitter iCodeEmitter) throws ASTException {
+		ILLCodeTarget oldDefine = currentTarget;
+		
+		try {
+			currentTarget = ll.getStaticInitTarget(this);
+		
+			iCodeEmitter.emit();
+		} finally {
+			currentTarget = oldDefine;
+		}		
 	}
 
 	/**

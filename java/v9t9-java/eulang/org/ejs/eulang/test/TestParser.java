@@ -59,7 +59,7 @@ public class TestParser extends BaseTest  {
     }
     @Test
     public void testExpr() throws Exception {
-    	parse("3+6;");
+    	parse("({ 3+6; })");
     }
     @Test
     public void testTopLevelAssign() throws Exception  {

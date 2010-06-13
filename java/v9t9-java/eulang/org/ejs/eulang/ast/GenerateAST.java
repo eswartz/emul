@@ -2057,6 +2057,7 @@ public class GenerateAST {
 	 * @param tree
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public IAstNodeList<IAstStmt> constructStmtList(Tree tree) {
 		IAstNodeList<IAstStmt> list = new AstNodeList<IAstStmt>(IAstStmt.class);
 
@@ -2064,13 +2065,23 @@ public class GenerateAST {
 
 		for (Tree kid : iter(tree)) {
 			try {
-				IAstStmt node = checkConstruct(kid, IAstStmt.class);
+				IAstNode node = construct(kid);
 				if (node instanceof TempLabelStmt) {
 					list.add(((TempLabelStmt) node).getLabel());
 					list.add(((TempLabelStmt) node).getStmt());
 				} else if (node != null) {
-					list.add(node);
-					node.setParent(list);
+					if (node instanceof IAstNodeList) {
+						for (IAstStmt stmt : ((IAstNodeList<IAstStmt>) node).list()) {
+							stmt.setParent(null);
+							list.add(stmt);
+						}
+					}
+					else if (!(node instanceof IAstStmt)) {
+						throw new GenerateException(node.getSourceRef(), "unexpected content at module scope");
+					} else {
+						list.add((IAstStmt) node);
+						node.setParent(list);
+					}
 				}
 			} catch (GenerateException e) {
 				emitExceptionError(e);

@@ -136,11 +136,13 @@ toplevelstmtsNoAlloc: toplevelstatNoAlloc*      -> ^(STMTLIST toplevelstatNoAllo
 
 toplevelstat : toplevelstatNoAlloc -> toplevelstatNoAlloc 
     | toplevelAlloc SEMI -> toplevelAlloc
+    | toplevelCode SEMI? -> toplevelCode
     ;
+    
 toplevelstatNoAlloc: defineStmt
     | scopeExtension SEMI? -> scopeExtension 
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
-    | rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
+    //| rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
     | (LBRACE) => xscope SEMI? 
     ;
 
@@ -168,6 +170,9 @@ toplevelTupleVarDecl:
     ;
     
 rhsExprOrInitList : rhsExpr | initList ;
+
+toplevelCode : LPAREN LBRACE codestmtlist RBRACE RPAREN -> codestmtlist  
+    ;
 
 scopeExtension : namespaceRef PLUS_EQ xscopeNoAlloc -> ^(EXTENDSCOPE namespaceRef xscopeNoAlloc) ;
 
