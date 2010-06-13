@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.types;
 
+import java.util.Set;
+
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
@@ -24,8 +26,8 @@ public class LLStaticField extends BaseLLField {
 	 * @param def definition of field
 	 * @param defaul the default value
 	 */
-	public LLStaticField(String name, LLType type, ISymbol symbol, IAstNode def, IAstTypedExpr defaul) {
-		super(name, type, def, defaul);
+	public LLStaticField(String name, LLType type, ISymbol symbol, IAstNode def, IAstTypedExpr defaul, Set<String> attrs) {
+		super(name, type, def, defaul, attrs);
 		this.symbol = symbol;
 		symbol.setType(type);
 	}

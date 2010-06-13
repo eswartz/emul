@@ -5,6 +5,7 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAddrOfExpr;
+import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.types.LLType;
@@ -138,6 +139,11 @@ public class AstAddrOfExpr extends AstTypedExpr implements IAstAddrOfExpr {
 		boolean changed = super.simplify(engine); 
 		if (expr instanceof IAstAddrOfExpr) {
 			getParent().replaceChild(this, expr);
+			return true;
+		}
+		if (expr instanceof IAstDerefExpr) {
+			((IAstDerefExpr) expr).getExpr().setParent(null);
+			replaceChild(expr, ((IAstDerefExpr) expr).getExpr());
 			return true;
 		}
 		return changed; 

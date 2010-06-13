@@ -659,7 +659,7 @@ public class TypeEngine {
 		if (data == null) {
 			List<LLInstanceField> ifields = new ArrayList<LLInstanceField>(fieldTypes.size());
 			for (LLType type : fieldTypes)
-				ifields.add(new LLInstanceField("", type, null, null));
+				ifields.add(new LLInstanceField("", type, null, null, Collections.<String>emptySet()));
 			//name = uniquify(name);
 			data = new LLDataType(this, symbol,
 					(LLInstanceField[]) ifields.toArray(new LLInstanceField[ifields.size()]),
@@ -782,9 +782,9 @@ public class TypeEngine {
 		LLDataType strLitType = stringLitTypeMap.get(len);
 		if (strLitType == null) {
 			List<LLInstanceField> strFields = new ArrayList<LLInstanceField>();
-			strFields.add(new LLInstanceField("length", INT, null, null));
+			strFields.add(new LLInstanceField("length", INT, null, null, Collections.<String>emptySet()));
 			LLArrayType arrayType = getArrayType(CHAR, len, null); 
-			strFields.add(new LLInstanceField("s", arrayType, null, null));
+			strFields.add(new LLInstanceField("s", arrayType, null, null, Collections.<String>emptySet()));
 			strLitType = getDataType(sym, strFields, Collections.<LLStaticField>emptyList());
 			sym.setType(strLitType);
 			stringLitTypeMap.put(len, strLitType);

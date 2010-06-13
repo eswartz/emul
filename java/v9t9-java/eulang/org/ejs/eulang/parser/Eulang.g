@@ -147,14 +147,14 @@ toplevelstatNoAlloc: defineStmt
 toplevelAlloc : toplevelSingleVarDecl | toplevelTupleVarDecl;
 
 toplevelSingleVarDecl:
-    ID (
-        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC ID TYPE rhsExprOrInitList) )
-      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC ID type rhsExprOrInitList*) )
+    ID attrs? (
+        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC attrs? TYPE ID rhsExprOrInitList) )
+      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC attrs? type ID rhsExprOrInitList*) )
       | ( COMMA ID )+ 
         (  ( COLON_EQUALS PLUS? rhsExprOrInitList (COMMA rhsExprOrInitList)* )
-              -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST rhsExprOrInitList+)) 
+              -> ^(ALLOC attrs? TYPE ^(LIST ID+) PLUS?  ^(LIST rhsExprOrInitList+)) 
         |  ( COLON type (EQUALS PLUS? rhsExprOrInitList (COMMA rhsExprOrInitList)*)? )  
-              -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST rhsExprOrInitList+)?) 
+              -> ^(ALLOC attrs? type ^(LIST ID+) PLUS? ^(LIST rhsExprOrInitList+)?) 
         )
       )
     ;
@@ -162,8 +162,8 @@ toplevelSingleVarDecl:
 toplevelTupleVarDecl:    
     idTuple 
       ( 
-        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC_TUPLE idTuple TYPE rhsExprOrInitList) )
-      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC_TUPLE idTuple type rhsExprOrInitList*) )
+        ( COLON_EQUALS rhsExprOrInitList         -> ^(ALLOC_TUPLE TYPE idTuple rhsExprOrInitList) )
+      | ( COLON type (EQUALS rhsExprOrInitList)?  -> ^(ALLOC_TUPLE type idTuple rhsExprOrInitList*) )
       )
     ;
     
@@ -321,20 +321,20 @@ varDecl: singleVarDecl | tupleVarDecl ;
 
 singleVarDecl:
     ID (
-        ( attrs? COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID attrs? TYPE assignOrInitExpr) )
-      | ( attrs? COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC ID attrs? type assignOrInitExpr*) )
+        ( attrs? COLON_EQUALS assignOrInitExpr         -> ^(ALLOC attrs? TYPE ID assignOrInitExpr) )
+      | ( attrs? COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC attrs? type ID assignOrInitExpr*) )
       | ( COMMA ID )+ attrs?  
         (  ( COLON_EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)* )
-              -> ^(ALLOC ^(LIST ID+) attrs? TYPE PLUS? ^(LIST assignOrInitExpr+)) 
+              -> ^(ALLOC attrs? TYPE ^(LIST ID+) PLUS? ^(LIST assignOrInitExpr+)) 
         |  ( COLON type (EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*)? )  
-              -> ^(ALLOC ^(LIST ID+) attrs? type PLUS? ^(LIST assignOrInitExpr+)?) 
+              -> ^(ALLOC attrs? type ^(LIST ID+) PLUS? ^(LIST assignOrInitExpr+)?) 
         )
       )
     ;
 tupleVarDecl:    
     idTuple attrs? 
-      (  ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC_TUPLE idTuple attrs? TYPE assignOrInitExpr) )
-      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC_TUPLE idTuple attrs? type assignOrInitExpr*) )
+      (  ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC_TUPLE attrs? TYPE idTuple assignOrInitExpr) )
+      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC_TUPLE attrs? type idTuple assignOrInitExpr*) )
       )
     ;
 
@@ -628,8 +628,6 @@ fieldDecl : varDecl SEMI -> varDecl
     | defineStmt
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     ;
-
-fieldIdRef : ID (COMMA ID)* -> ^(ALLOC ID)+ ;
 
 FORWARD : 'forward';
 STATIC : 'static';

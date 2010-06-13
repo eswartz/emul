@@ -536,7 +536,7 @@ abstract public class AstNode implements IAstNode {
 		return changed;
 	}
 
-	protected String toString(Set<String> attrs) {
+	public static String toString(Set<String> attrs) {
 		StringBuilder sb = new StringBuilder();
 		for (String attr : attrs) {
 			if (sb.length() > 0)

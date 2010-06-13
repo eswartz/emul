@@ -168,7 +168,7 @@ public class LLDataType extends BaseLLAggregateType {
 		for (int idx = 0; idx < newIFields.length; idx++) {
 			LLInstanceField field = ifields[idx];
 			newIFields[idx] = new LLInstanceField(field.getName(), types[idx],
-					field.getDefinition(), field.getDefault());
+					field.getDefinition(), field.getDefault(), field.getAttrs());
 		}
 		
 		LLStaticField[] newSFields = new LLStaticField[statics.length];
@@ -176,7 +176,8 @@ public class LLDataType extends BaseLLAggregateType {
 			LLStaticField field = statics[idx];
 			newSFields[idx] = new LLStaticField(field.getName(), types[idx + ifields.length],
 					field.getSymbol(),
-					field.getDefinition(), field.getDefault());
+					field.getDefinition(), field.getDefault(),
+					field.getAttrs());
 		}
 		
 		return typeEngine.getDataType(symbol, Arrays.asList(newIFields), Arrays.asList(newSFields));

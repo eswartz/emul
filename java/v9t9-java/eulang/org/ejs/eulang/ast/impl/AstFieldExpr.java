@@ -17,9 +17,11 @@ import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BaseLLField;
+import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLInstanceType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -197,6 +199,8 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 				matched = true;
 				fieldIdx = dataType.getFieldIndex(field);
 				fieldType = field.getType();
+				if (rewriteAllocMethodReference((LLInstanceField) field))
+					return true;
 			} else {
 				// try for something in the same scope
 				if (replaceWithStaticOrMethodReference(dataType, dataType.getSymbol().getDefinition()))
@@ -252,7 +256,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 					
 					if (ref == null) {
 						if (nonFieldSym.getDefinition() instanceof IAstAttributes && ((IAstAttributes) nonFieldSym.getDefinition()).hasAttr(IAstAttributes.STATIC))
-							;
+							/* fall through and remove field ref */;
 						else
 							return false;		// not static
 					}
@@ -284,6 +288,38 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 		return false;
 	}
 
+	/**
+	 * Convert a call like this.field(...) to this.field(this, ...) 
+	 * @param symbol
+	 * @return
+	 * @throws TypeException 
+	 */
+	private boolean rewriteAllocMethodReference(LLInstanceField field) throws TypeException {
+		if (field.getType() instanceof LLPointerType && field.getType().getSubType() instanceof LLCodeType 
+				&& field.hasAttr(IAstCodeExpr.THIS)) {
+			LLCodeType codeType = (LLCodeType) field.getType().getSubType();
+			
+			// put the referent into the argument list if it's a call
+			if (!(getParent() instanceof IAstFuncCallExpr)) {
+				return false;
+			}
+			
+			IAstFuncCallExpr funcCall = (IAstFuncCallExpr) getParent();
+			
+			if (funcCall.arguments().nodeCount() < codeType.getCount() - 1) {
+				IAstTypedExpr referent = (IAstTypedExpr) getExpr().copy();
+				referent.uniquifyIds();
+				
+				referent = new AstAddrOfExpr(referent);
+				referent.setSourceRef(getExpr().getSourceRef());
+				funcCall.arguments().add(0, referent);
+				
+				funcCall.getFunction().setType(field.getType());
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * @param type

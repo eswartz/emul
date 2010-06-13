@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.ejs.eulang.TypeEngine;
@@ -231,7 +232,8 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 					LLType type = symbolExpr.getType();
 					if (type == null && existing != null)
 						type = existing[idx]; 
-					LLInstanceField field = new LLInstanceField(symbolExpr.getSymbol().getName(), type, symbolExpr, defaul);
+					LLInstanceField field = new LLInstanceField(symbolExpr.getSymbol().getName(), type, 
+							symbolExpr, defaul, new HashSet<String>(alloc.getAttrs()));
 					newIFields.add(field);
 					idx++;
 				}
@@ -251,7 +253,8 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 					String name = symbolExpr.getSymbol().getName();
 					LLStaticField field = new LLStaticField(name, type, 
 							symbolExpr.getSymbol(),
-							symbolExpr, defaul);
+							symbolExpr, defaul,
+							new HashSet<String>(alloc.getAttrs()));
 					newSFields.add(field);
 					idx++;
 				}

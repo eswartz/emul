@@ -10,7 +10,10 @@ import java.util.Set;
  *
  */
 public interface IAstAttributes extends IAttrs {
+	/** get read-only attrs */
 	Set<String> getAttrs();
+	/** get modifiable variant */
+	Set<String> attrs();
 	boolean hasAttr(String attr);
 
 }

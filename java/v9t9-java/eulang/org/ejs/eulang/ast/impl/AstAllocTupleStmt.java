@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -239,15 +240,25 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 		return true;
 	}
 
+	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstCodeExpr#getAttrs()
+	 * @see org.ejs.eulang.ast.IAstAttributes#getAttrs()
 	 */
 	@Override
 	public Set<String> getAttrs() {
+		return Collections.unmodifiableSet(attrs);
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAttributes#attrs()
+	 */
+	@Override
+	public Set<String> attrs() {
+		if (attrs == Collections.<String>emptySet())
+			attrs = new HashSet<String>();
 		return attrs;
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstCodeExpr#hasAttr(java.lang.String)
+	 * @see org.ejs.eulang.ast.IAstAttributes#hasAttr(java.lang.String)
 	 */
 	@Override
 	public boolean hasAttr(String attr) {

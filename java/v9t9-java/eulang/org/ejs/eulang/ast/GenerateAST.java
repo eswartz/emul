@@ -933,6 +933,14 @@ public class GenerateAST {
 						ptr.setSourceRef(alloc.getTypeExpr().getSourceRef());
 						alloc.setTypeExpr(ptr);
 					}
+					
+					// push attrs from default into field
+					for (int i = 0; i < alloc.getSymbolExprs().nodeCount(); i++) {
+						IAstTypedExpr val = alloc.getDefaultFor(i);
+						if (val instanceof IAstAttributes) {
+							alloc.attrs().addAll(((IAstAttributes) val).getAttrs());
+						}
+					}
 				}
 				if (item != null)
 					theList.add(item);
@@ -1293,26 +1301,23 @@ public class GenerateAST {
 
 	@SuppressWarnings("unchecked")
 	public IAstNode constructAlloc(Tree tree) throws GenerateException {
-		int exprIdx = 1;
+		int idx = 0;
 		
 		Set<String> attrs = Collections.emptySet();
 		
-		if (tree.getChildCount() > 2 && tree.getChild(exprIdx).getType() == EulangParser.ATTRS) {
-			attrs = constructAttrs(tree.getChild(exprIdx++));
+		if (tree.getChildCount() > idx && tree.getChild(idx).getType() == EulangParser.ATTRS) {
+			attrs = constructAttrs(tree.getChild(idx++));
 		}
 		
 		IAstType type;
-		if (tree.getChildCount() > exprIdx) {
+		if (tree.getChildCount() > idx) {
 			type = checkConstruct(tree
-					.getChild(exprIdx++), IAstType.class);
+					.getChild(idx++), IAstType.class);
 		}
 		else
 			type = null;
 		
 		IAstNodeList<IAstTypedExpr> exprlist = null;
-
-		int idx = exprIdx;
-
 
 		// XXX codeptr
 		// promote code allocs to pointers to function
@@ -1326,8 +1331,8 @@ public class GenerateAST {
 		
 		IAstAllocStmt alloc = null;
 
-		if (tree.getChild(0).getType() == EulangParser.ID) {
-			IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(0));
+		if (tree.getChild(idx).getType() == EulangParser.ID) {
+			IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(idx++));
 
 			if (type != null) {
 				symbolExpr.getSymbol().setType(type.getType());
@@ -1337,13 +1342,12 @@ public class GenerateAST {
 					.<IAstSymbolExpr> singletonList(IAstSymbolExpr.class,
 							symbolExpr);
 
-			if (tree.getChildCount() > exprIdx) {
-				IAstNode init = construct(tree.getChild(2));
+			if (tree.getChildCount() > idx) {
+				IAstNode init = construct(tree.getChild(idx++));
 				if (init instanceof IAstNodeList)
 					exprlist = (IAstNodeList<IAstTypedExpr>) init;
 				else {
-					IAstTypedExpr expr = checkConstruct(tree.getChild(2),
-							IAstTypedExpr.class);
+					IAstTypedExpr expr = (IAstTypedExpr) init;
 					exprlist = AstNodeList.<IAstTypedExpr> singletonList(
 							IAstTypedExpr.class, expr);
 				}
@@ -1354,13 +1358,13 @@ public class GenerateAST {
 
 			symbolExpr.getSymbol().setDefinition(alloc);
 
-		} else if (tree.getChild(0).getType() == EulangParser.LIST) {
+		} else if (tree.getChild(idx).getType() == EulangParser.LIST) {
 			IAstNodeList<IAstSymbolExpr> idlist = new AstNodeList<IAstSymbolExpr>(
 					IAstSymbolExpr.class);
 
 			boolean expand = false;
 
-			for (Tree kid : iter(tree.getChild(0))) {
+			for (Tree kid : iter(tree.getChild(idx))) {
 				IAstSymbolExpr symbolExpr = createSymbol(kid);
 
 				if (type != null) {
@@ -1368,7 +1372,7 @@ public class GenerateAST {
 				}
 				idlist.add(symbolExpr);
 			}
-			getSource(tree.getChild(0), idlist);
+			getSource(tree.getChild(idx++), idlist);
 			
 			if (tree.getChildCount() > idx) {
 				if (tree.getChild(idx).getType() == EulangParser.PLUS) {
@@ -1431,11 +1435,16 @@ public class GenerateAST {
 	}
 
 	public IAstNode constructAllocTuple(Tree tree) throws GenerateException {
-		IAstType type = tree.getChildCount() > 1 ? checkConstruct(tree
-				.getChild(1), IAstType.class) : null;
+		int idx = 0;
 
 		Set<String> attrs = Collections.emptySet();
+		if (tree.getChild(idx).getType() == EulangParser.ATTRS) {
+			attrs = constructAttrs(tree.getChild(idx++));
+		}
 			
+		IAstType type = tree.getChildCount() > idx ? checkConstruct(tree
+				.getChild(idx++), IAstType.class) : null;
+
 		// XXX codeptr
 		// promote code allocs to pointers to function
 		if (type instanceof IAstPrototype) {
@@ -1446,12 +1455,13 @@ public class GenerateAST {
 			type = ptr;
 		}
 		
-		if (tree.getChild(0).getType() == EulangParser.TUPLE) {
-			IAstTupleNode syms = constructIdTuple(tree.getChild(0));
+		if (tree.getChild(idx).getType() == EulangParser.TUPLE) {
+			int symIdx = idx;
+			IAstTupleNode syms = constructIdTuple(tree.getChild(idx++));
 
 			IAstTypedExpr expr = null;
-			if (tree.getChildCount() == 3)
-				expr = checkConstruct(tree.getChild(2), IAstTypedExpr.class);
+			if (tree.getChildCount() > idx)
+				expr = checkConstruct(tree.getChild(idx++), IAstTypedExpr.class);
 
 			validateAllocExpr(expr);
 			
@@ -1462,7 +1472,7 @@ public class GenerateAST {
 			if (type != null) {
 				for (IAstTypedExpr elExpr : syms.elements().list()) {
 					if (!(elExpr instanceof IAstSymbolExpr))
-						throw new GenerateException(tree.getChild(0),
+						throw new GenerateException(tree.getChild(symIdx),
 								"can only tuple-allocate locals");
 					IAstSymbolExpr symExpr = (IAstSymbolExpr) elExpr;
 					symExpr.getSymbol().setType(type.getType());
