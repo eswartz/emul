@@ -10,7 +10,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstAllocTupleStmt extends IAstStmt, IAstTypedNode {
+public interface IAstAllocTupleStmt extends IAstStmt, IAstTypedNode, IAstAttributes {
 	IAstAllocTupleStmt copy();
 	
 	IAstTupleNode getSymbols();

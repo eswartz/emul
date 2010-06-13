@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.IAstAttributes;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstDerefExpr;
@@ -17,6 +18,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
@@ -191,7 +193,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			dataType = (LLDataType) exprType;
 			BaseLLField field = dataType.getField(this.field.getName());
 			boolean matched = false;
-			if (field != null) {
+			if (field instanceof LLInstanceField) {
 				matched = true;
 				fieldIdx = dataType.getFieldIndex(field);
 				fieldType = field.getType();
@@ -249,10 +251,13 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 					IAstNode ref = symbolExpr.getBody();
 					
 					if (ref == null) {
-						return false;		// not static
+						if (nonFieldSym.getDefinition() instanceof IAstAttributes && ((IAstAttributes) nonFieldSym.getDefinition()).hasAttr(IAstAttributes.STATIC))
+							;
+						else
+							return false;		// not static
 					}
-					
-					if (ref instanceof IAstCodeExpr && ((IAstCodeExpr) ref).isMethod()) {
+					else
+					if (ref instanceof IAstCodeExpr && ((IAstCodeExpr) ref).hasAttr(IAstCodeExpr.THIS)) {
 						// and put the referent into the argument list
 						if (!(getParent() instanceof IAstFuncCallExpr)) {
 							throw new TypeException(node, "cannot reference method outside of function call"); 	// for now

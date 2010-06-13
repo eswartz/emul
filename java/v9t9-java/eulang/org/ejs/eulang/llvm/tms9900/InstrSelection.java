@@ -964,6 +964,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		Map<Integer, AssemblerOperand> callerRets = new HashMap<Integer, AssemblerOperand>();
 		List<ISymbol> sources = new ArrayList<ISymbol>();
+		List<ISymbol> targets = new ArrayList<ISymbol>();
 
 		int argIdx = 0;
 		for (int i = 0; i < argLocs.length; i++) {
@@ -1002,6 +1003,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					asmOp = tup;
 				}
 				callerRets.put(stackLoc.number, asmOp);
+				addSymbol(sources, ptr);
 
 			}
 			else if (argLocs[i] instanceof RegisterLocation) {
@@ -1042,7 +1044,6 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		AsmInstruction blInst = AsmInstruction.create(Ibl, func instanceof IRegisterOperand ? new RegIndOperand(func) : new AddrOperand(func));
 		
-		List<ISymbol> targets = new ArrayList<ISymbol>();
 		Location[] retLocs = cconv.getReturnLocations();
 		for (int i = 0; i < retLocs.length; i++) {
 			if (retLocs[i] instanceof CallerStackLocation) {

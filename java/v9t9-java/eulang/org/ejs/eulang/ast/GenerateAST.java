@@ -64,7 +64,6 @@ import org.ejs.eulang.ast.impl.AstReturnStmt;
 import org.ejs.eulang.ast.impl.AstSizeOfExpr;
 import org.ejs.eulang.ast.impl.AstStatement;
 import org.ejs.eulang.ast.impl.AstStmtListExpr;
-import org.ejs.eulang.ast.impl.AstStmtScope;
 import org.ejs.eulang.ast.impl.AstStringLitExpr;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTupleExpr;
@@ -83,6 +82,7 @@ import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.symbols.NamespaceScope;
 import org.ejs.eulang.types.LLGenericType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
 
@@ -425,7 +425,6 @@ public class GenerateAST {
 		case EulangParser.TYPE:
 			return constructTypeExpr(tree);
 		case EulangParser.CODE:
-		case EulangParser.METHOD:
 			return constructCodeExpr(tree);
 		case EulangParser.ARGDEF:
 			return constructArgDef(tree);
@@ -473,7 +472,7 @@ public class GenerateAST {
 			return constructLogicalNot(tree);
 
 		case EulangParser.IDREF:
-			return constructIdRef(tree, true);
+			return constructIdRef(tree);
 		case EulangParser.INSTANCE:
 			return constructInstance(tree);
 
@@ -482,10 +481,6 @@ public class GenerateAST {
 		case EulangParser.EXPR:
 			return construct(tree.getChild(0));
 
-			/*
-			 * case EulangParser.DEREF: return constructDeref(tree); case
-			 * EulangParser.ADDRREF: return constructAddrRef(tree);
-			 */
 		case EulangParser.ADDROF:
 			return constructAddrOf(tree);
 		case EulangParser.SIZEOF:
@@ -915,17 +910,17 @@ public class GenerateAST {
 			for (Tree kid : iter(tree)) {
 				if (kid.getType() == EulangParser.DEFINE) {
 					IAstDefineStmt define = constructDefine(kid);
-					stmts.add(define);
+					if (define != null)
+						stmts.add(define);
 					continue;
 				}
 
-				IAstNodeList<IAstTypedNode> theList = fields;
-				if (kid.getType() == EulangParser.STATIC) {
-					theList = statics;
-					kid = kid.getChild(0);
-				}
 				IAstTypedNode item = checkConstruct(kid, IAstTypedNode.class);
 
+				IAstNodeList<IAstTypedNode> theList = fields;
+				if (item instanceof IAstAttributes && ((IAstAttributes) item).hasAttr(IAttrs.STATIC)) 
+					theList = statics;
+				
 				// XXX codeptr
 				if (item instanceof IAstAllocStmt) {
 					// convert any prototypes to pointers
@@ -939,7 +934,8 @@ public class GenerateAST {
 						alloc.setTypeExpr(ptr);
 					}
 				}
-				theList.add(item);
+				if (item != null)
+					theList.add(item);
 			}
 			getSource(tree, statics);
 			getSource(tree, fields);
@@ -1297,10 +1293,26 @@ public class GenerateAST {
 
 	@SuppressWarnings("unchecked")
 	public IAstNode constructAlloc(Tree tree) throws GenerateException {
-		IAstType type = tree.getChildCount() > 1 ? checkConstruct(tree
-				.getChild(1), IAstType.class) : null;
-
+		int exprIdx = 1;
+		
+		Set<String> attrs = Collections.emptySet();
+		
+		if (tree.getChildCount() > 2 && tree.getChild(exprIdx).getType() == EulangParser.ATTRS) {
+			attrs = constructAttrs(tree.getChild(exprIdx++));
+		}
+		
+		IAstType type;
+		if (tree.getChildCount() > exprIdx) {
+			type = checkConstruct(tree
+					.getChild(exprIdx++), IAstType.class);
+		}
+		else
+			type = null;
+		
 		IAstNodeList<IAstTypedExpr> exprlist = null;
+
+		int idx = exprIdx;
+
 
 		// XXX codeptr
 		// promote code allocs to pointers to function
@@ -1325,7 +1337,7 @@ public class GenerateAST {
 					.<IAstSymbolExpr> singletonList(IAstSymbolExpr.class,
 							symbolExpr);
 
-			if (tree.getChildCount() == 3) {
+			if (tree.getChildCount() > exprIdx) {
 				IAstNode init = construct(tree.getChild(2));
 				if (init instanceof IAstNodeList)
 					exprlist = (IAstNodeList<IAstTypedExpr>) init;
@@ -1337,7 +1349,7 @@ public class GenerateAST {
 				}
 			}
 
-			alloc = new AstAllocStmt(idlist, type, exprlist, false);
+			alloc = new AstAllocStmt(idlist, type, exprlist, false, attrs);
 			getSource(tree, alloc);
 
 			symbolExpr.getSymbol().setDefinition(alloc);
@@ -1347,9 +1359,8 @@ public class GenerateAST {
 					IAstSymbolExpr.class);
 
 			boolean expand = false;
-			int idx = 0;
 
-			for (Tree kid : iter(tree.getChild(idx))) {
+			for (Tree kid : iter(tree.getChild(0))) {
 				IAstSymbolExpr symbolExpr = createSymbol(kid);
 
 				if (type != null) {
@@ -1357,9 +1368,8 @@ public class GenerateAST {
 				}
 				idlist.add(symbolExpr);
 			}
-			getSource(tree.getChild(idx), idlist);
-			idx += 2; // skip TYPE
-
+			getSource(tree.getChild(0), idlist);
+			
 			if (tree.getChildCount() > idx) {
 				if (tree.getChild(idx).getType() == EulangParser.PLUS) {
 					expand = true;
@@ -1391,7 +1401,7 @@ public class GenerateAST {
 				throw new GenerateException(tree,
 						"expand modifier ('+') makes no sense without a singular expression");
 
-			alloc = new AstAllocStmt(idlist, type, exprlist, expand);
+			alloc = new AstAllocStmt(idlist, type, exprlist, expand, attrs);
 			getSource(tree, alloc);
 
 			for (IAstSymbolExpr symbolExpr : idlist.list())
@@ -1424,6 +1434,8 @@ public class GenerateAST {
 		IAstType type = tree.getChildCount() > 1 ? checkConstruct(tree
 				.getChild(1), IAstType.class) : null;
 
+		Set<String> attrs = Collections.emptySet();
+			
 		// XXX codeptr
 		// promote code allocs to pointers to function
 		if (type instanceof IAstPrototype) {
@@ -1444,7 +1456,7 @@ public class GenerateAST {
 			validateAllocExpr(expr);
 			
 			IAstAllocTupleStmt tupleAlloc = new AstAllocTupleStmt(syms, type,
-					expr);
+					expr, attrs);
 			getSource(tree, tupleAlloc);
 
 			if (type != null) {
@@ -1531,7 +1543,7 @@ public class GenerateAST {
 	 */
 	private boolean isMacroArg(IAstNode definition) {
 		return definition instanceof IAstArgDef
-				&& ((IAstArgDef) definition).isMacro();
+				&& ((IAstArgDef) definition).hasAttr(IAstAttributes.MACRO);
 	}
 
 	/**
@@ -1663,7 +1675,7 @@ public class GenerateAST {
 		return node;
 	}
 
-	public IAstTypedExpr constructIdRef(Tree tree, boolean allowFields) throws GenerateException {
+	public IAstTypedExpr constructIdRef(Tree tree) throws GenerateException {
 		// could have ':'s
 		IScope startScope = currentScope;
 		int idx = 0;
@@ -1715,7 +1727,7 @@ public class GenerateAST {
 				startScope = symbol.getScope();
 
 				// for 'this' refs, break now and handle below
-				if (startScope.getOwner() instanceof IAstDataType && symbol.getDefinition() instanceof IAstAllocStmt
+				if (startScope.getOwner() instanceof IAstDataType /*&& symbol.getDefinition() instanceof IAstAllocStmt*/
 						/*&& TODO: is a non-static field */) {
 					ISymbol thisSym =currentScope.search("this");
 					if (thisSym != null) {
@@ -1973,19 +1985,13 @@ public class GenerateAST {
 	public IAstNode constructArgDef(Tree tree) throws GenerateException {
 		int argIdx = 0;
 
-		boolean isVar = false;
-		boolean isMacro = false;
-		if (tree.getChild(argIdx).getType() == EulangParser.MACRO) {
-			isMacro = true;
-			argIdx++;
-		}
-
-		if (tree.getChild(argIdx).getType() == EulangParser.ATSIGN) {
-			isVar = true;
-			argIdx++;
-		}
+		Set<String> attrs = Collections.emptySet();
 
 		IAstSymbolExpr symExpr = createSymbol(tree.getChild(argIdx++));
+		
+		if (argIdx < tree.getChildCount() && tree.getChild(argIdx).getType() == EulangParser.ATTRS) {
+			attrs = constructAttrs(tree.getChild(argIdx++));
+		}
 
 		IAstType type = null;
 		IAstTypedExpr defaultVal = null;
@@ -2006,22 +2012,17 @@ public class GenerateAST {
 			}
 		}
 
+		boolean isMacro = attrs.contains(IAstAttributes.MACRO);
+		boolean isVar = attrs.contains(IAstAttributes.VAR);
+		
 		if (isMacro && isVar)
 			throw new GenerateException(tree,
 					"cannot have a macro and '@' argument");
 
-		IAstArgDef argDef = new AstArgDef(symExpr, type, defaultVal, isMacro,
-				isVar);
-		// if (type != null)
-		// argDef.setType(type.getType());
+		IAstArgDef argDef = new AstArgDef(symExpr, type, defaultVal, attrs);
 		getSource(tree, argDef);
 
 		symExpr.getSymbol().setDefinition(argDef);
-
-		/*
-		 * if (type != null && type.getType() != null) {
-		 * symExpr.getSymbol().setType(type.getType()); }
-		 */
 
 		return argDef;
 	}
@@ -2337,13 +2338,7 @@ public class GenerateAST {
 		
 		int idx = 0;
 		if (tree.getChild(idx).getType() == EulangParser.ATTRS) {
-			attrs = new HashSet<String>();
-			for (Tree kid : iter(tree.getChild(idx))) {
-				if (kid.getType() == EulangParser.ATTR)
-					attrs.add(kid.getText().substring(1));
-				else
-					attrs.add(kid.getText());
-			}
+			attrs = constructAttrs(tree.getChild(idx));
 			idx++;
 		}
 		
@@ -2360,10 +2355,6 @@ public class GenerateAST {
 		pushScope(new LocalScope(currentScope));
 		try {
 			IAstPrototype proto;
-			if (tree.getChild(idx).getType() == EulangParser.MACRO) {
-				isMacro = true;
-				idx++;
-			}
 			Tree protoTree = tree;
 			if (tree.getChild(idx).getType() == EulangParser.PROTO) {
 				protoTree = tree.getChild(idx);
@@ -2371,7 +2362,7 @@ public class GenerateAST {
 
 				boolean hitDefaults = false;
 				for (IAstArgDef argDef : proto.argumentTypes()) {
-					if (!isMacro && argDef.isMacro()) {
+					if (!isMacro && argDef.hasAttr(IAstAttributes.MACRO)) {
 						throw new GenerateException(argDef.getSourceRef(),
 								"cannot use macro arguments outside code #macro");
 					}
@@ -2396,12 +2387,22 @@ public class GenerateAST {
 			
 			// adjust for method
 			if (attrs.contains(IAttrs.THIS)) {
+				IScope data = currentScope;
+				while (data != null && !(data.getOwner() instanceof IAstDataType)) {
+					data = data.getParent();
+				}
+				if (data == null) {
+					throw new GenerateException(tree, "cannot mark #this on code outside of data");
+				}
+				
 				ISymbol thisSym = currentScope.add("this", false);
 				IAstSymbolExpr thisName = new AstSymbolExpr(true, thisSym);
-				IAstArgDef thisArgDef = new AstArgDef(thisName, new AstType(null), null, false, false);
+				IAstArgDef thisArgDef = new AstArgDef(thisName, new AstType(null), null, Collections.<String>emptySet());
 				thisArgDef.setSourceRefTree(getEmptySourceRef(protoTree));
 				proto.addArgument(0, thisArgDef);
 				thisSym.setDefinition(thisArgDef);
+				
+				thisSym.setType(typeEngine.getPointerType(new LLSymbolType(((IAstDataType) data.getOwner()).getTypeName())));
 			}
 			
 			// now parse the code
@@ -2415,6 +2416,21 @@ public class GenerateAST {
 		} finally {
 			popScope(tree);
 		}
+	}
+
+	/**
+	 * @param child
+	 * @return
+	 */
+	private Set<String> constructAttrs(Tree child) {
+		HashSet<String> attrs = new HashSet<String>();
+		for (Tree kid : iter(child)) {
+			if (kid.getType() == EulangParser.ATTR)
+				attrs.add(kid.getText().substring(1));
+			else
+				attrs.add(kid.getText());
+		}
+		return attrs;
 	}
 
 	/**

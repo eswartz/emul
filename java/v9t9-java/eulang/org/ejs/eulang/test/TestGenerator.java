@@ -16,6 +16,7 @@ import java.util.List;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
+import org.ejs.eulang.ast.IAstAttributes;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstCastNamedTypeExpr;
@@ -342,16 +343,16 @@ public class TestGenerator extends BaseTest {
     @Test
     public void testMacroArgs1() throws Exception {
     	IAstModule mod = treeize(
-    			" testMacroArgs1 = code #macro(macro t : code; macro mthen : code; macro melse : code) { };\n");
+    			" testMacroArgs1 = code #macro(t #macro : code; mthen #macro : code; melse #macro : code) { };\n");
     	sanityTest(mod);
     
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("testMacroArgs1");
     	IAstCodeExpr codeExpr = (IAstCodeExpr)getMainExpr(def);
     	
     	IAstPrototype proto = codeExpr.getPrototype();
-    	assertTrue(proto.argumentTypes()[0].isMacro());
-    	assertTrue(proto.argumentTypes()[1].isMacro());
-    	assertTrue(proto.argumentTypes()[2].isMacro());
+    	assertTrue(proto.argumentTypes()[0].hasAttr(IAstAttributes.MACRO));
+    	assertTrue(proto.argumentTypes()[1].hasAttr(IAstAttributes.MACRO));
+    	assertTrue(proto.argumentTypes()[2].hasAttr(IAstAttributes.MACRO));
     }
     @Test
     public void testMacroArgs2() throws Exception {
@@ -815,7 +816,7 @@ public class TestGenerator extends BaseTest {
     	assertEquals(1, type.stmts().nodeCount());
     	
     	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.stmts().getFirst());
-    	assertTrue(meth.isMethod());
+    	assertTrue(meth.hasAttr(IAstCodeExpr.THIS));
     	
     	// at initial scan, this looks like a field ref
     	IAstCodeExpr main = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("foo").getDefinition());

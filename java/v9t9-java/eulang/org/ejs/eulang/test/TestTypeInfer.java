@@ -16,7 +16,6 @@ import java.util.Collection;
 import junit.framework.AssertionFailedError;
 
 import org.ejs.eulang.IOperation;
-import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstArrayType;
 import org.ejs.eulang.ast.IAstAssignStmt;
@@ -1495,7 +1494,7 @@ public class TestTypeInfer extends BaseTest {
     			"    d1,d2:Float;\n"+
     			"    p : Complex^;\n"+
     			"  };\n"+
-    			"  summer = code(@this:Complex) {\n"+
+    			"  summer = code(this #var :Complex) {\n"+
     			"    this.d.d1 + this.d.p.c;\n"+
     			"  };\n"+
     			"  d : Inner^;\n"+
@@ -1543,7 +1542,7 @@ public class TestTypeInfer extends BaseTest {
     			"    d1,d2:Float;\n"+
     			"    p : Complex^;\n"+
     			"  };\n"+
-    			"  summer = code(@this:Complex) {\n"+
+    			"  summer = code(this #var :Complex) {\n"+
     			"    this.d.d1 + this.d.p.c;\n"+
     			"  };\n"+
     			"  d : Inner^;\n"+
@@ -1592,7 +1591,7 @@ public class TestTypeInfer extends BaseTest {
     			"    d1,d2:Float;\n"+
     			"    p : Complex^;\n"+
     			"  };\n"+
-    			"  summer = code(@this:Complex) {\n"+
+    			"  summer = code(this #var :Complex) {\n"+
     			"    this.d.d1 + this.d.p.c;\n"+
     			"  };\n"+
     			"  d : Inner^;\n"+

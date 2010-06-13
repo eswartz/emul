@@ -3,9 +3,13 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArgDef;
+import org.ejs.eulang.ast.IAstAttributes;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.ast.IAstType;
@@ -25,20 +29,18 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	private IAstSymbolExpr name;
 	private IAstTypedExpr defaultVal;
 	private IAstType typeExpr;
-	private boolean isMacro;
-	private boolean isVar;
+	private Set<String> attrs;
 
 	/**
 	 * @param isMacro 
 	 * 
 	 */
-	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal, boolean isMacro, boolean isVar) {
+	public AstArgDef(IAstSymbolExpr name, IAstType type, IAstTypedExpr defaultVal, Set<String> attrs) {
 		this.name = name;
 		name.setParent(this);
 		setTypeExpr(type);
 		setDefaultValue(defaultVal);
-		setMacro(isMacro);
-		setVar(isVar);
+		this.attrs = attrs;
 	}
 	
 	
@@ -49,7 +51,7 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	public IAstArgDef copy() {
 		return fixup(this, new AstArgDef(
 				doCopy(name), doCopy(typeExpr), doCopy(defaultVal), 
-				isMacro(), isVar()));
+				new HashSet<String>(attrs)));
 	}
 	
 	
@@ -59,8 +61,8 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	 */
 	@Override
 	public String toString() {
-		return (isMacro ? "macro " : "") + (isVar ? "&" : "") +
-			name + (typeExpr != null && typeExpr.getType() != null ? " : " + typeExpr.getType().toString() : "") + (defaultVal != null ? " = " + defaultVal : ""); 
+		return name + (typeExpr != null && typeExpr.getType() != null ? " : " + typeExpr.getType().toString() : "") + (defaultVal != null ? " = " + defaultVal : "")
+			+ toString(attrs); 
 	}
 	
 	
@@ -71,8 +73,7 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 		int result = super.hashCode();
 		result = prime * result
 				+ ((defaultVal == null) ? 0 : defaultVal.hashCode());
-		result = prime * result + (isMacro ? 1231 : 1237);
-		result = prime * result + (isVar ? 4231 : 4237);
+		result = prime * result + (attrs.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result
 				+ ((typeExpr == null) ? 0 : typeExpr.hashCode());
@@ -94,14 +95,15 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 				return false;
 		} else if (!defaultVal.equals(other.defaultVal))
 			return false;
-		if (isMacro != other.isMacro)
-			return false;
-		if (isVar != other.isVar)
-			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
 		} else if (!name.equals(other.name))
+			return false;
+		if (attrs == null) {
+			if (other.attrs != null)
+				return false;
+		} else if (!attrs.equals(other.attrs))
 			return false;
 		if (typeExpr == null) {
 			if (other.typeExpr != null)
@@ -113,36 +115,32 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAttributes#hasAttr(java.lang.String)
+	 */
+	@Override
+	public boolean hasAttr(String attr) {
+		return attrs.contains(attr);
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAttributes#getAttrs()
+	 */
+	@Override
+	public Set<String> getAttrs() {
+		return attrs;
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstArgDef#isMacro()
 	 */
 	@Override
 	public boolean isMacro() {
-		return isMacro;
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstArgDef#setMacro(boolean)
-	 */
-	@Override
-	public void setMacro(boolean isMacro) {
-		this.isMacro = isMacro;
+		return hasAttr(MACRO);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstArgDef#isVar()
-	 */
 	@Override
 	public boolean isVar() {
-		return isVar;
+		return hasAttr(VAR);
 	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstArgDef#setVar(boolean)
-	 */
-	@Override
-	public void setVar(boolean isVar) {
-		this.isVar = isVar;
-	}
-	
-	
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstVariableDefintion#getName()
@@ -251,7 +249,7 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		boolean changed = inferTypesFromChildren(new ITyped[] { name, typeExpr, defaultVal });
 		// XXX codeptr
-		if (type != null && type instanceof LLCodeType && !isMacro()) {
+		if (type != null && type instanceof LLCodeType && !hasAttr(IAstAttributes.MACRO)) {
 			type = typeEngine.getPointerType(type); 
 			typeExpr.setType(type);
 			name.setType(type);

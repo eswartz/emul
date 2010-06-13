@@ -39,6 +39,8 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
+import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 
 /**
@@ -305,6 +307,9 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 			if (source.getType().getBasicType() == BasicType.VOID || valueType.getBasicType() == BasicType.VOID) {
 				// ignore
 				return source;
+			} else if (valueType instanceof LLPointerType && valueType.getSubType() instanceof LLCodeType && valueType.getSubType().matchesExactly(source.getType())) {
+				// ignore
+				return source;
 			} else if ((valueType instanceof LLAggregateType || valueType instanceof LLArrayType)
 					&& (source.getType() instanceof LLAggregateType || source.getType() instanceof LLArrayType)) {
 				
@@ -315,7 +320,12 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 				LLOperand cast = new LLBitcastOp(valueType, source);
 				return cast;
 			}
+			else if (source.isConstant() && valueType.getSubType().isCompatibleWith(source.getType())) {
+				// we can reference a constant as a pointer in LLVM (which means to export the constant to memory)
+				return source;
+			}
 			// ignore: ref/ptr casts?
+			assert false;
 			return source;
 		} else {
 			return source;

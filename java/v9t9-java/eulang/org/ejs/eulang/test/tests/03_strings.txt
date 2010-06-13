@@ -35,7 +35,8 @@ call testStrings
 assert R0 == -4
 >>>
 
-<<< string access 3
+<<< string access 3 
+// hmm, the addr-of-literal doesn't make sense without exporting literals earlier (than isel time)
 // allow addressing string literals, and be sure to externalize them to data
 testStrings = code () {
    z := &"hello";

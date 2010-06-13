@@ -10,6 +10,7 @@ package org.ejs.eulang.ast;
 public interface IAttrs {
 
 	String MACRO = "macro";
+	String VAR = "var";
 	String THIS = "this";
 	String HIDE = "hide";
 	String STATIC = "static";

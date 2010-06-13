@@ -70,7 +70,7 @@ public class TestLLVMGenerator extends BaseTest {
     public void testPointers4() throws Exception {
 		dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
-    			" genericSwap_testPointers4 := code (@x, y : Int => nil) {\n" +
+    			" genericSwap_testPointers4 := code (x #var :Int; y : Int => nil) {\n" +
     			//" x = x + 1; y = y + 1; x = x + 2; y = y - 4; x = x - 4;\n" +
     			" t : Int = x;\n"+
     			" x = y;\n"+
@@ -249,7 +249,7 @@ public class TestLLVMGenerator extends BaseTest {
     @Test
     public void testWhileLoop() throws Exception {
     	IAstModule mod = doFrontend(
-    			"wwhile = code #macro ( macro test:code; macro body : code) {\n"+
+    			"wwhile = code #macro ( test #macro :code; body #macro : code) {\n"+
     			"    @loop: if test() then { body(); goto loop } fi;\n"+
     			"};\n"+
     			"testWhileLoop = code (t; x : Int; y : Float => Void) {\n" +
@@ -261,7 +261,7 @@ public class TestLLVMGenerator extends BaseTest {
     @Test
     public void testDoWhile() throws Exception {
     	IAstModule mod = doFrontend(
-    			"doWhile = code #macro ( macro body : code; macro test:code) {\n"+
+    			"doWhile = code #macro ( body #macro : code; test #macro :code) {\n"+
     			"    @loop: body(); goto loop if (not test()) ;\n"+
     			"};\n"+
     			"testDoWhile = code (t; x : Int; y : Float) {\n" +

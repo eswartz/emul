@@ -3,13 +3,15 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstAddrOfExpr;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstInitListExpr;
-import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstStringLitExpr;
@@ -35,16 +37,20 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	private IAstNodeList<IAstTypedExpr> expr;
 
 	private boolean expand;
+
+	private Set<String> attrs;
 	/**
 	 * @param expr2 
 	 * @param left
 	 * @param right
 	 */
-	public AstAllocStmt(IAstNodeList<IAstSymbolExpr> id, IAstType type, IAstNodeList<IAstTypedExpr> expr, boolean expand) {
+	public AstAllocStmt(IAstNodeList<IAstSymbolExpr> id, IAstType type, IAstNodeList<IAstTypedExpr> expr, boolean expand, 
+			Set<String> attrs) {
 		setSymbolExprs(id);
 		setExprs(expr);
 		setTypeExpr(type);
 		setExpand(expand);
+		this.attrs = attrs;
 	}
 
 	/* (non-Javadoc)
@@ -53,7 +59,8 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	@Override
 	public IAstAllocStmt copy() {
 		return fixup(this, new AstAllocStmt(doCopy(symExpr), 
-				doCopy(typeExpr), doCopy(expr), expand));
+				doCopy(typeExpr), doCopy(expr), expand,
+				new HashSet<String>(attrs)));
 	}
 	
 	@Override
@@ -63,6 +70,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
 		result = prime * result + ((symExpr == null) ? 0 : symExpr.hashCode());
 		result = prime * result + ((typeExpr == null) ? 0 : typeExpr.hashCode());
+		result = prime * result + ((attrs == null) ? 0 : attrs.hashCode());
 		result = prime * result + (expand ? 0 : 111);
 		return result;
 	}
@@ -92,6 +100,11 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 				return false;
 		} else if (!typeExpr.equals(other.typeExpr))
 			return false;
+		if (attrs == null) {
+			if (other.attrs != null)
+				return false;
+		} else if (!attrs.equals(other.attrs))
+			return false;
 		if (expand != other.expand)
 			return false;
 		return true;
@@ -105,7 +118,8 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	public String toString() {
 		boolean hasType = getType() != null;
 		boolean hasTypeExpr = typeExpr != null && typeExpr.getType() != null;
-		return typedString("ALLOC") + (hasType && hasTypeExpr && !getType().equals(typeExpr.getType()) ? " <= " + typeExpr.toString() : "");
+		String typeString = hasType && hasTypeExpr && !getType().equals(typeExpr.getType()) ? " <= " + typeExpr.toString() : "";
+		return typedString("ALLOC") + typeString + ' ' + toString(attrs);
 	}
 	
 	/* (non-Javadoc)
@@ -367,5 +381,20 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	@Override
 	public boolean getExpand() {
 		return expand;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstCodeExpr#getAttrs()
+	 */
+	@Override
+	public Set<String> getAttrs() {
+		return attrs;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstCodeExpr#hasAttr(java.lang.String)
+	 */
+	@Override
+	public boolean hasAttr(String attr) {
+		return attrs.contains(attr);
 	}
 }

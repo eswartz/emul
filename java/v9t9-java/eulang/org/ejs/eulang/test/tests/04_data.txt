@@ -41,7 +41,7 @@ _new = code(s:Int) {
     ret : Int;
     ret, brk = brk, (brk+((s+1)&~1));
 };
-new = code #macro (macro T) {
+new = code #macro (T #macro) {
     _new(sizeof(T)){T^};
 };
 
@@ -74,3 +74,19 @@ assert 0xf000 == 100
 assert 0xf002 == 4950
 >>>
 
+<<< method calls #1
+Class = data {
+   x,y:Int;
+   somethingElse:Int;
+   pt = code #this () { (x,y) };
+};
+foo = code() {
+   x : Class;
+   x.x, x.y = 123, 456;
+   (a,b) := x.pt();
+   a+b
+};
+===
+call foo
+assert R0 == 579
+>>>

@@ -11,14 +11,12 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstArgDef extends IAstTypedNode {
+public interface IAstArgDef extends IAstTypedNode, IAstAttributes {
 	IAstArgDef copy();
 	
 	boolean isMacro();
-	void setMacro(boolean isMacro);
 	
 	boolean isVar();
-	void setVar(boolean isVar);
 	
 	String getName();
 	IAstSymbolExpr getSymbolExpr();

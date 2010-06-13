@@ -3,8 +3,6 @@
  */
 package org.ejs.eulang.ast;
 
-
-
 /**
  * This node allocates one or more variables and optionally assigns initial value(s).
  * 
@@ -15,7 +13,7 @@ package org.ejs.eulang.ast;
  * @author ejs
  *
  */
-public interface IAstAllocStmt extends IAstStmt, IAstTypedNode /*, IAstSymbolDefiner*/ {
+public interface IAstAllocStmt extends IAstStmt, IAstTypedNode, IAstAttributes {
 	IAstAllocStmt copy();
 	
 	IAstNodeList<IAstSymbolExpr> getSymbolExprs();

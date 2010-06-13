@@ -104,7 +104,7 @@ public class ExpandAST {
 		return root;
 	}
 	private IAstNode doExpand(Collection<Message> messages, IAstNode node, Map<ISymbol, IAstNode> replacementMap) {
-		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
+		if (!(node instanceof IAstCodeExpr && ((IAstCodeExpr) node).hasAttr(IAstCodeExpr.MACRO))
 				&& !(node instanceof IAstInstanceExpr)
 				//&& !(node instanceof IAstDefineStmt && ((IAstDefineStmt) node).isGeneric())
 				) {
@@ -379,7 +379,7 @@ public class ExpandAST {
 			if (value != null) {
 				if (value instanceof IAstCodeExpr) {
 					IAstCodeExpr codeExpr = (IAstCodeExpr) value;
-					if (codeExpr.isMacro()) {
+					if (codeExpr.hasAttr(IAstCodeExpr.MACRO)) {
 						// "call" it
 						IAstNode copy = value.copy();
 						copy.uniquifyIds();
@@ -441,7 +441,7 @@ public class ExpandAST {
 			
 			if (value instanceof IAstCodeExpr) {
 				IAstCodeExpr codeExpr = (IAstCodeExpr) value;
-				if (codeExpr.isMacro()) {
+				if (codeExpr.hasAttr(IAstCodeExpr.MACRO)) {
 					// directly replace
 					IAstNode copy = value.copy();
 					copy.uniquifyIds();
@@ -551,13 +551,13 @@ public class ExpandAST {
 				
 				IAstTypedExpr retVal = (IAstTypedExpr) realArg.copy();
 				retVal.uniquifyIds();
-				if (!protoArg.isMacro())
+				if (!protoArg.hasAttr(IAstCodeExpr.MACRO))
 					stmtlist.add(new AstReturnStmt(retVal));
 				else
 					stmtlist.add(new AstExprStmt(retVal));
 				
 				Set<String> attrs = new HashSet<String>(codeExpr.getAttrs());
-				if (protoArg.isMacro())
+				if (protoArg.hasAttr(IAstCodeExpr.MACRO))
 					attrs.add(IAttrs.MACRO);
 				IAstCodeExpr implCode = new AstCodeExpr(new AstPrototype(argCode.getRetType()), new LocalScope(nodeScope), stmtlist, 
 						attrs);
@@ -566,7 +566,7 @@ public class ExpandAST {
 				realArg = implCode;
 			}
 			
-			if (!protoArg.isMacro()) {
+			if (!protoArg.hasAttr(IAstCodeExpr.MACRO)) {
 				realArg.setParent(null);	// deleting call
 				IAstSymbolExpr symCopy = protoArg.getSymbolExpr();
 				symCopy.setParent(null);
@@ -584,7 +584,8 @@ public class ExpandAST {
 						idList, 
 						typeExprCopy,
 						exprList, 
-						false);
+						false,
+						Collections.<String>emptySet());
 				blockList.add(realArgIdx++, argAlloc);
 			} else {
 				// For macro arguments, the actual argument is directly replaced

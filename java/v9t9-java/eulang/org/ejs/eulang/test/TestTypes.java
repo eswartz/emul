@@ -17,9 +17,11 @@ import org.ejs.eulang.ast.IAstFieldExpr;
 import org.ejs.eulang.ast.IAstFuncCallExpr;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstSymbolExpr;
+import org.ejs.eulang.ast.IAstTupleExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
@@ -375,7 +377,7 @@ xes[3][2][1]
     	IAstModule mod = doFrontend(
     			"Tuple = data {\n"+
     			"   x:Int=66; y:Float;\n" +
-    			" static f,g,h:Byte=9; \n" +
+    			"   f,g,h #static :Byte=9; \n" +
     			"  CONST=66; };\n"+
     			"");
 
@@ -399,7 +401,7 @@ xes[3][2][1]
     			"Tuple = [T] data {\n"+
     			"   x:Int=66; y:Float;\n" +
     			"z:T;\n" +
-    			" static f,g,h:Byte=9; };\n"+
+    			" f,g,h #static :Byte=9; };\n"+
     	"");
     	
     	sanityTest(mod);
@@ -1816,6 +1818,7 @@ xes[3][2][1]
     			"foo = code() {\n"+
     			"	x : Class;\n"+
     			"   x.val = 123;\n"+
+    			"   Class.get(&x);\n"+
     			"   x.get();\n"+
     			"};\n"+
     	"");
@@ -1837,7 +1840,7 @@ xes[3][2][1]
     	assertNull(field);
     	
     	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.stmts().getFirst());
-    	assertTrue(meth.isMethod());
+    	assertTrue(meth.hasAttr(IAstCodeExpr.THIS));
     	
     	assertEquals(2 * 8, data.getSizeof());	
     	
@@ -1865,6 +1868,19 @@ xes[3][2][1]
 		assertEquals(1, funccall.arguments().nodeCount());
     	
 		// and the type is pointer-to-data
+		assertIsThisCall(funccall, data);
+		
+		dumpLLVMGen = true;
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertFoundInOptimizedText("ret i16 123", gen);
+    }
+    
+    /**
+	 * @param funccall
+	 * @param data
+	 */
+	private void assertIsThisCall(IAstFuncCallExpr funccall, LLDataType data) {
 		IAstTypedExpr thisarg = funccall.arguments().getFirst();
 		assertEquals(typeEngine.getPointerType(data), thisarg.getType());
 		
@@ -1873,10 +1889,296 @@ xes[3][2][1]
 		IAstTypedExpr deref = ((IAstAddrOfExpr)thisarg).getExpr();
 		assertTrue(((IAstDerefExpr)deref).getExpr() instanceof IAstSymbolExpr);
 		
+	}
+	@Test
+    public void testDataMethod2() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int;\n"+
+    			"   somethingElse:Int;\n"+		// just to avoid weird use of 'Class' itself as return type
+    			"   pt = code #this () { (x,y) };\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   x.x, x.y = 123, 456;\n"+
+    			"   x.pt();\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	// 'get' is a statement, not part of the data
+    	assertEquals(1, type.stmts().nodeCount());
+    	
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
+    	assertFalse(data.isGeneric());
+    	assertEquals(3, data.getTypes().length);
+    	assertEquals(3, data.getInstanceFields().length);
+    	assertEquals(0, data.getStaticFields().length);
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("pt");
+    	assertNull(field);
+    	
+    	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.stmts().getFirst());
+    	assertTrue(meth.hasAttr(IAstCodeExpr.THIS));
+    	
+    	assertEquals(6 * 8, data.getSizeof());	
+    	
+    	// for #this code, all references to symbols in the scope are converted to "this.<field>"
+    	IAstExprStmt methExpr = (IAstExprStmt) meth.stmts().getLast();
+    	assertTrue(methExpr.getExpr() instanceof IAstTupleExpr);
+    	IAstTupleExpr tuple = (IAstTupleExpr) methExpr.getExpr();
+    	assertTrue(tuple.elements().getFirst() instanceof IAstFieldExpr);
+    	
+    	IAstFieldExpr fieldExpr = (IAstFieldExpr) tuple.elements().getFirst();
+    	assertTrue(fieldExpr.getExpr() instanceof IAstDerefExpr);
+    	assertEquals("x", fieldExpr.getField().getName());
+    	assertEquals(typeEngine.INT, fieldExpr.getType());
+    	fieldExpr = (IAstFieldExpr) tuple.elements().getLast();
+    	assertTrue(fieldExpr.getExpr() instanceof IAstDerefExpr);
+    	assertEquals("y", fieldExpr.getField().getName());
+    	assertEquals(typeEngine.INT, fieldExpr.getType());
+    	
+    	///////
+    	
+    	// after type inference, the method call is converted. 
+    	IAstCodeExpr main = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("foo").getDefinition());
+    	IAstExprStmt expr = (IAstExprStmt) main.stmts().getLast();
+    	
+    	assertTrue(expr.getExpr() instanceof IAstFuncCallExpr);
+    	IAstFuncCallExpr funccall = (IAstFuncCallExpr)expr.getExpr();
+		IAstTypedExpr func = funccall.getFunction();
+    	assertFalse(func instanceof IAstFieldExpr);
+		assertTrue(func instanceof IAstSymbolExpr);
+    	
+		// one arg: 'x'  
+		assertEquals(1, funccall.arguments().nodeCount());
+    	
+		// and the type is pointer-to-data
+		assertIsThisCall(funccall, data);
+		
 		dumpLLVMGen = true;
 		LLVMGenerator gen = doGenerate(mod);
 		
-		assertFoundInOptimizedText("ret i16 123", gen);
+		assertFoundInOptimizedText("getelementptr %\"Class$p\" %this, i16 0, i32 1", gen);
+    }
+    
+    @Test
+    public void testDataMethod3() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int;\n"+
+    			"   getX = code #this () { x };\n"+
+    			"   getY = code #this () { y };\n"+
+    			"   somethingElse:Int;\n"+		// just to avoid weird use of 'Class' itself as return type
+    			"   pt = code #this () { (getX(),this.getY()) };\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   x.x, x.y = 123, 456;\n"+
+    			"   x.pt();\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	// methods are statements, not part of the data
+    	assertEquals(3, type.stmts().nodeCount());
+    	
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
+    	assertFalse(data.isGeneric());
+    	assertEquals(3, data.getTypes().length);
+    	assertEquals(3, data.getInstanceFields().length);
+    	assertEquals(0, data.getStaticFields().length);
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("pt");
+    	assertNull(field);
+    	
+    	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.stmts().getLast());
+    	assertTrue(meth.hasAttr(IAstCodeExpr.THIS));
+    	
+    	assertEquals(6 * 8, data.getSizeof());	
+    	
+    	// for #this code, all references to symbols in the scope are converted to "this.<field>",
+    	// including method calls
+    	IAstExprStmt methExpr = (IAstExprStmt) meth.stmts().getLast();
+    	assertTrue(methExpr.getExpr() instanceof IAstTupleExpr);
+    	IAstTupleExpr tuple = (IAstTupleExpr) methExpr.getExpr();
+    	assertTrue(tuple.elements().getFirst() instanceof IAstFuncCallExpr);
+    	
+    	IAstFuncCallExpr funccall;
+    	funccall = (IAstFuncCallExpr) tuple.elements().getFirst();
+		assertIsThisCall(funccall, data);
+		
+		// even an explicit call works
+		funccall = (IAstFuncCallExpr) tuple.elements().getLast();
+		assertIsThisCall(funccall, data);
+    	
+    	///////
+    	
+    	// after type inference, the method call is converted. 
+    	IAstCodeExpr main = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("foo").getDefinition());
+    	IAstExprStmt expr = (IAstExprStmt) main.stmts().getLast();
+    	
+    	assertTrue(expr.getExpr() instanceof IAstFuncCallExpr);
+		funccall = (IAstFuncCallExpr)expr.getExpr();
+		IAstTypedExpr func = funccall.getFunction();
+    	assertFalse(func instanceof IAstFieldExpr);
+		assertTrue(func instanceof IAstSymbolExpr);
+    	
+		// one arg: 'x'  
+		assertEquals(1, funccall.arguments().nodeCount());
+    	
+		assertIsThisCall(funccall, data);
+		
+		dumpLLVMGen = true;
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertFoundInOptimizedText("getelementptr %\"Class$p\" %this, i16 0, i32 1", gen);
+    }
+
+    
+    /** fwd refs */
+    @Test
+    public void testDataMethod4() throws Exception {
+    	dumpTypeInfer = true;
+    	dumpTreeize = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int;\n"+
+    			"   forward getX, getY;\n"+
+    			"   pt = code #this () { (getX(),this.getY()) };\n"+
+    			"   getX = code #this () { y };\n"+
+    			"   getY = code #this () { y };\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   x.x, x.y = 123, 456;\n"+
+    			"   x.pt();\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	// methods are statements, not part of the data
+    	assertEquals(3, type.stmts().nodeCount());
+    	
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
+    	assertFalse(data.isGeneric());
+    	assertEquals(2, data.getTypes().length);
+    	assertEquals(2, data.getInstanceFields().length);
+    	assertEquals(0, data.getStaticFields().length);
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("pt");
+    	assertNull(field);
+    	
+    	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.stmts().getFirst());
+    	assertTrue(meth.hasAttr(IAstCodeExpr.THIS));
+    	
+    	assertEquals(4 * 8, data.getSizeof());	
+    	
+    	// for #this code, all references to symbols in the scope are converted to "this.<field>",
+    	// including method calls
+    	IAstExprStmt methExpr = (IAstExprStmt) meth.stmts().getLast();
+    	assertTrue(methExpr.getExpr() instanceof IAstTupleExpr);
+    	IAstTupleExpr tuple = (IAstTupleExpr) methExpr.getExpr();
+    	assertTrue(tuple.elements().getFirst() instanceof IAstFuncCallExpr);
+    	
+    	IAstFuncCallExpr funccall;
+    	funccall = (IAstFuncCallExpr) tuple.elements().getFirst();
+		assertIsThisCall(funccall, data);
+		
+		// even an explicit call works
+		funccall = (IAstFuncCallExpr) tuple.elements().getLast();
+		assertIsThisCall(funccall, data);
+    	
+    	///////
+    	
+    	// after type inference, the method call is converted. 
+    	IAstCodeExpr main = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("foo").getDefinition());
+    	IAstExprStmt expr = (IAstExprStmt) main.stmts().getLast();
+    	
+    	assertTrue(expr.getExpr() instanceof IAstFuncCallExpr);
+		funccall = (IAstFuncCallExpr)expr.getExpr();
+		IAstTypedExpr func = funccall.getFunction();
+    	assertFalse(func instanceof IAstFieldExpr);
+		assertTrue(func instanceof IAstSymbolExpr);
+    	
+		// one arg: 'x'  
+		assertEquals(1, funccall.arguments().nodeCount());
+    	
+		assertIsThisCall(funccall, data);
+		
+		dumpLLVMGen = true;
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertFoundInOptimizedText("getelementptr %\"Class$p\" %this, i16 0, i32 1", gen);
+    }
+    
+    @Test
+    public void testDataStatic1() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int;\n"+
+    			"   count #static : Int;\n"+
+    			"   pt = code #this () { count++; (x,y) };\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   x.x, x.y = 123, 456;\n"+
+    			"   x.pt();\n"+
+    			"   x.count;\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+    	
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	assertEquals(1, type.stmts().nodeCount());
+    	
+    	assertTrue(type.getType() instanceof LLDataType);
+    	LLDataType data = (LLDataType) type.getType();
+    	assertFalse(data.isGeneric());
+    	assertEquals(3, data.getTypes().length);		// dunno why
+    	assertEquals(2, data.getInstanceFields().length);
+    	assertEquals(1, data.getStaticFields().length);
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("pt");
+    	assertNull(field);
+    	
+    	IAstCodeExpr meth = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) type.getScope().get("pt").getDefinition());
+    	assertTrue(meth.hasAttr(IAstCodeExpr.THIS));
+    	
+    	assertEquals(4 * 8, data.getSizeof());	
+    	
+    	// for #this code, all references to symbols in the scope are converted to "this.<field>"
+    	
+    	IAstExprStmt methExpr;
+    	methExpr = (IAstExprStmt) meth.stmts().getFirst();
+    	
+    	// ref to static
+    	IAstUnaryExpr incExpr = (IAstUnaryExpr) methExpr.getExpr();
+    	IAstSymbolExpr symExpr = (IAstSymbolExpr) incExpr.getExpr();
+    	assertEquals("count", symExpr.getSymbol().getName());
+    	assertEquals(typeEngine.INT, symExpr.getType());
+    	
+    	
+    	///////
+		
+		dumpLLVMGen = true;
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertFoundInOptimizedText("@Class.count.Int = global i16 0", gen);
+		assertFoundInOptimizedText("load i16* @Class.count.Int", gen);
     }
 }
 

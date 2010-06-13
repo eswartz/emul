@@ -4,7 +4,6 @@
 package org.ejs.eulang.ast.impl;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,7 +20,6 @@ import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.ast.IAttrs;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLCodeType;
@@ -63,14 +61,14 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 	 */
 	@Override
 	public String toString() {
-		return typedString("code") + spellAttrs(attrs);
+		return typedString("code") + ' ' + toString(attrs);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstCodeExpr#getAttrs()
 	 */
 	@Override
-	public Collection<? extends String> getAttrs() {
+	public Set<String> getAttrs() {
 		return attrs;
 	}
 	/* (non-Javadoc)
@@ -80,21 +78,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 	public boolean hasAttr(String attr) {
 		return attrs.contains(attr);
 	}
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstCodeExpression#isMacro()
-	 */
-	@Override
-	public boolean isMacro() {
-		return attrs.contains(IAttrs.MACRO);
-	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstCodeExpr#isMethod()
-	 */
-	@Override
-	public boolean isMethod() {
-		return attrs.contains(IAttrs.THIS);
-	}
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstCodeExpression#getPrototype()
 	 */

@@ -14,8 +14,6 @@ tokens {
   
   LIST_COMPREHENSION;
   CODE;
-  METHOD;
-  MACRO;
   STMTLIST;
   PROTO;
   ARGLIST;
@@ -244,13 +242,12 @@ argdefsWithTypes: (argdefWithType ( SEMI argdefWithType)+ SEMI?)        -> argde
     ;
 
 // make use of antlr's node replication
-argdefWithType:  ATSIGN? ID (COMMA ID)* (COLON type)?   -> ^(ARGDEF ATSIGN? ID type* )+
-    | MACRO ID (COMMA ID)* (COLON type)? (EQUALS init=rhsExpr)?    -> ^(ARGDEF MACRO ID type* $init?)+
+argdefWithType:  ID (COMMA ID)* attrs? (COLON type)? (EQUALS init=rhsExpr)?  -> ^(ARGDEF ID attrs? type* $init?)+
   ;
 
 argdefsWithNames :  (argdefWithName ( COMMA argdefWithName)+ COMMA?)    -> argdefWithName* 
     ;
-argdefWithName: ATSIGN? ID   -> ^(ARGDEF ATSIGN? ID )
+argdefWithName: ID attrs?  -> ^(ARGDEF ID attrs?)
   ;
 
 // prototype, as for a type or code block (no defaults allowed)
@@ -324,20 +321,20 @@ varDecl: singleVarDecl | tupleVarDecl ;
 
 singleVarDecl:
     ID (
-        ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID TYPE assignOrInitExpr) )
-      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC ID type assignOrInitExpr*) )
-      | ( COMMA ID )+ 
+        ( attrs? COLON_EQUALS assignOrInitExpr         -> ^(ALLOC ID attrs? TYPE assignOrInitExpr) )
+      | ( attrs? COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC ID attrs? type assignOrInitExpr*) )
+      | ( COMMA ID )+ attrs?  
         (  ( COLON_EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)* )
-              -> ^(ALLOC ^(LIST ID+) TYPE PLUS? ^(LIST assignOrInitExpr+)) 
+              -> ^(ALLOC ^(LIST ID+) attrs? TYPE PLUS? ^(LIST assignOrInitExpr+)) 
         |  ( COLON type (EQUALS PLUS? assignOrInitExpr (COMMA assignOrInitExpr)*)? )  
-              -> ^(ALLOC ^(LIST ID+) type PLUS? ^(LIST assignOrInitExpr+)?) 
+              -> ^(ALLOC ^(LIST ID+) attrs? type PLUS? ^(LIST assignOrInitExpr+)?) 
         )
       )
     ;
 tupleVarDecl:    
-    idTuple 
-      (  ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC_TUPLE idTuple TYPE assignOrInitExpr) )
-      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC_TUPLE idTuple type assignOrInitExpr*) )
+    idTuple attrs? 
+      (  ( COLON_EQUALS assignOrInitExpr         -> ^(ALLOC_TUPLE idTuple attrs? TYPE assignOrInitExpr) )
+      | ( COLON type (EQUALS assignOrInitExpr)?  -> ^(ALLOC_TUPLE idTuple attrs? type assignOrInitExpr*) )
       )
     ;
 
@@ -586,7 +583,7 @@ atom :
     |   ( tuple ) => tuple                          -> tuple
     |   ( LPAREN varDecl ) => LPAREN a0=varDecl RPAREN               -> $a0
     |   LPAREN a1=assignExpr RPAREN               -> $a1
-    |  (MACRO? CODE) => code                           -> code
+    |   code                           -> code
     //|   ( STAR idOrScopeRef LPAREN) => STAR idOrScopeRef  LPAREN arglist RPAREN  -> ^(INLINE idOrScopeRef arglist)
    ) 
 
@@ -627,11 +624,9 @@ colons : (COLON | COLONS )+ ;
 
 data : DATA LBRACE fieldDecl* RBRACE  -> ^(DATA fieldDecl*) ;
 
-staticVarDecl : STATIC varDecl -> ^(STATIC varDecl) ;
-
-fieldDecl : staticVarDecl SEMI -> staticVarDecl 
-    | varDecl SEMI -> varDecl 
+fieldDecl : varDecl SEMI -> varDecl 
     | defineStmt
+    | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     ;
 
 fieldIdRef : ID (COMMA ID)* -> ^(ALLOC ID)+ ;
@@ -731,8 +726,6 @@ BY : 'by';
 //RETURN : 'return';
 CODE : 'code';
 DATA : 'data';
-MACRO : 'macro';
-METHOD  : 'method';
 //TYPE : 'type';
 
 FOR : 'for';

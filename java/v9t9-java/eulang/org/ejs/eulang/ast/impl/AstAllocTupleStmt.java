@@ -3,6 +3,9 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
@@ -26,11 +29,14 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 
 	private IAstTupleNode syms;
 	private IAstTypedExpr expr;
+
+	private Set<String> attrs;
 	
-	public AstAllocTupleStmt(IAstTupleNode ids, IAstType type, IAstTypedExpr expr) {
+	public AstAllocTupleStmt(IAstTupleNode ids, IAstType type, IAstTypedExpr expr, Set<String> attrs) {
 		setSymbols(ids);
 		setExpr(expr);
 		setTypeExpr(type);
+		this.attrs = attrs;
 	}
 
 	/* (non-Javadoc)
@@ -38,7 +44,8 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 	 */
 	@Override
 	public IAstAllocTupleStmt copy() {
-		return fixup(this, new AstAllocTupleStmt(doCopy(syms), doCopy(typeExpr), doCopy(expr)));
+		return fixup(this, new AstAllocTupleStmt(doCopy(syms), doCopy(typeExpr), doCopy(expr),
+				new HashSet<String>(attrs)));
 	}
 	
 	@Override
@@ -47,6 +54,7 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 		int result = super.hashCode();
 		result = prime * result + ((expr == null) ? 0 : expr.hashCode());
 		result = prime * result + ((syms == null) ? 0 : syms.hashCode());
+		result = prime * result + ((attrs == null) ? 0 : attrs.hashCode());
 		result = prime * result
 				+ ((typeExpr == null) ? 0 : typeExpr.hashCode());
 		return result;
@@ -77,6 +85,11 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 				return false;
 		} else if (!typeExpr.equals(other.typeExpr))
 			return false;
+		if (attrs == null) {
+			if (other.attrs != null)
+				return false;
+		} else if (!attrs.equals(other.attrs))
+			return false;
 		return true;
 	}
 
@@ -86,7 +99,8 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 	 */
 	@Override
 	public String toString() {
-		return typedString("()ALLOC") + (typeExpr != null ? " <= " + typeExpr.toString() : "");
+		String type = typeExpr != null ? " <= " + typeExpr.toString() : "";
+		return typedString("()ALLOC") + type + ' ' + toString(attrs);
 	}
 	
 	/* (non-Javadoc)
@@ -224,5 +238,19 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 		}
 		return true;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstCodeExpr#getAttrs()
+	 */
+	@Override
+	public Set<String> getAttrs() {
+		return attrs;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstCodeExpr#hasAttr(java.lang.String)
+	 */
+	@Override
+	public boolean hasAttr(String attr) {
+		return attrs.contains(attr);
+	}
 }

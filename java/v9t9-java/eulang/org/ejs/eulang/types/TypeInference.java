@@ -228,7 +228,7 @@ public class TypeInference {
 			
 		}
 		// don't infer on macros (until we know how to remove/instantiate generic args)
-		if (node instanceof IAstCodeExpr && ((IAstCodeExpr) node).isMacro())
+		if (node instanceof IAstCodeExpr && ((IAstCodeExpr) node).hasAttr(IAstCodeExpr.MACRO))
 			return changed;
 		
 		
@@ -267,7 +267,7 @@ public class TypeInference {
 			visited.add(bodyExpr.getId());
 			
 			// don't infer on macros
-			if (bodyExpr instanceof IAstCodeExpr && ((IAstCodeExpr) bodyExpr).isMacro())
+			if (bodyExpr instanceof IAstCodeExpr && ((IAstCodeExpr) bodyExpr).hasAttr(IAstCodeExpr.MACRO))
 				continue;
 			
 
@@ -609,7 +609,7 @@ public class TypeInference {
 			}
 			if (node instanceof IAstTypedNode) {
 				IAstTypedNode typed = (IAstTypedNode) node;
-				if (typed instanceof IAstCodeExpr && ((IAstCodeExpr) typed).isMacro()) {
+				if (typed instanceof IAstCodeExpr && ((IAstCodeExpr) typed).hasAttr(IAstCodeExpr.MACRO)) {
 					// okay 
 					recurse = false;
 				} else {

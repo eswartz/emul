@@ -1459,8 +1459,9 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		matchInstr(inst, "BL", AddrOperand.class, "util");
 		
 		ISymbol[] srcs = inst.getSources();
-		assertEquals(1, srcs.length);
-		assertEqualSymbolIn(inst.getOp1(), srcs[0]);
+		assertEquals(2, srcs.length);
+		assertEqualSymbolIn(inst.getOp1(), srcs[1]);
+		assertSameSymbol(srcs[0], ".callerRet$p");		// we need the address in R0
 		ISymbol[] dsts = inst.getTargets();
 		assertEquals(1, dsts.length);
 		assertEqualSymbolIn(retStack, dsts[0]);
@@ -1798,6 +1799,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
     @Test
     public void testDataFields() throws Exception {
+    	dumpIsel = true;
     	doIsel(
     			"Class = data { x,b:Byte; y:Float; };\n"+
     			"useClass = code(i:Int) { c : Class; x := c.x + c.b; y := c.y;  };\n"+

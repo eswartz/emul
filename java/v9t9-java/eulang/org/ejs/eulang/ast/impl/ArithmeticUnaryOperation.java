@@ -99,4 +99,5 @@ public class ArithmeticUnaryOperation extends Operation implements IUnaryOperati
 			return new LLConstOp(type, value);
 		return null;
 	}
+	
 }

@@ -370,15 +370,18 @@ public class LLVMGenerator {
 		// ignore for now, even though it may have initializers
 		ensureTypes(expr);
 
-		//ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
-		// ll.add(new LLConstantDirective(modSymbol, true, expr.getType(), new
-		// LLConstant(expr.getLiteral())));
-
 		for (IAstStmt stmt : expr.stmts().list()) {
 			if (stmt instanceof IAstDefineStmt)
 				generateGlobalDefine((IAstDefineStmt) stmt);
 			else
 				generateStmt(stmt);
+		}
+		for (IAstTypedNode field : expr.getStatics().list()) {
+			if (field instanceof IAstAllocStmt) {
+				generateGlobalAlloc((IAstAllocStmt) field);
+			} else {
+				assert false;
+			}
 		}
 
 	}
@@ -418,7 +421,6 @@ public class LLVMGenerator {
 	}
 
 	private LLAttrType getRetAttrType(IAstType returnType) {
-		// /*ISymbol typeSymbol =*/ ll.addExternType(returnType.getType());
 		return new LLAttrType(null, typeEngine
 				.getRealType(returnType.getType()));
 	}
@@ -430,7 +432,7 @@ public class LLVMGenerator {
 	 */
 	private Pair<LLDefineDirective, ISymbol> generateGlobalCode(ISymbol symbol, IAstCodeExpr expr)
 			throws ASTException {
-		if (expr.isMacro() || expr.getType().isGeneric())
+		if (expr.hasAttr(IAstCodeExpr.MACRO) || expr.getType().isGeneric())
 			return null;
 
 		ensureTypes(expr);
