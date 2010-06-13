@@ -614,6 +614,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		AsmInstruction def = instrMap.get(tmpLocal.getInit());
 		assert def != null;
 		
+		if (def.getInst() == Plea)
+			return false;
+		
 		if (def.isPartialWrite())
 			return false;
 		
@@ -972,6 +975,9 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		// find if the definition is a memory read
 		AsmInstruction def = instrMap.get(tmpLocal.getInit());
 		assert def != null;
+		
+		if (def.getInst() == Plea)
+			return false;
 		
 		AssemblerOperand mem = def.getSrcOp();
 		if (mem == null || !mem.isMemory())

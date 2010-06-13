@@ -90,3 +90,21 @@ foo = code() {
 call foo
 assert R0 == 579
 >>>
+
+<<< field access
+Class = data {
+   x,y:Int;
+   somethingElse:Int;
+   sePtr = code #this () { &somethingElse };    // also tests bad peephole of Plea
+};
+foo = code() {
+   y : Class;
+   x : Class^ = &y;
+   x.somethingElse = 100;
+   x.x, x.y = 123, 456;
+   x.sePtr()^
+};
+===
+call foo
+assert R0 == 100
+>>>
