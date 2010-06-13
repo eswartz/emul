@@ -4,6 +4,7 @@
 package org.ejs.eulang.llvm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,13 +15,19 @@ import org.ejs.eulang.ast.impl.AstName;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
+import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.directives.LLTypeDirective;
+import org.ejs.eulang.llvm.ops.LLArrayOp;
+import org.ejs.eulang.llvm.ops.LLStructOp;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
@@ -40,6 +47,7 @@ public class LLModule {
 	private Map<LLType, ISymbol> emittedTypes = new HashMap<LLType, ISymbol>();
 	private final TypeEngine typeEngine;
 	private final ITarget target;
+	private LLDefineDirective staticInit;
 	
 	/**
 	 * 
@@ -235,6 +243,54 @@ public class LLModule {
 	 */
 	public ITarget getTarget() {
 		return target;
+	}
+
+	/**
+	 * @return
+	 */
+	public ILLCodeTarget getStaticInitTarget(LLVMGenerator gen) {
+		if (staticInit == null) {
+			ISymbol initSym = moduleScope.add(".global_ctors", false);
+			LLCodeType codeType = typeEngine.getCodeType(typeEngine.VOID, new LLType[0]);
+			initSym.setType(typeEngine.getPointerType(codeType));
+			emitTypes(initSym.getType());
+			
+			ISymbol modInitSym = getModuleSymbol(initSym, initSym.getType());
+			
+			// %0 = type { i32, void ()* }
+			// @llvm.global_ctors = appending global [1 x %0] [%0 { i32 65535, void ()* @_GLOBAL__I__Z9factoriali }] ; <[1 x %0]*> [#uses=0]
+
+			LLDataType aggType = typeEngine.getDataType(moduleScope.add(".global_ctor_entry", false), 
+					Collections.singletonList(initSym.getType()));
+			aggType.getSymbol().setType(aggType);
+			
+			LLStructOp entry = new LLStructOp(aggType, new LLSymbolOp(modInitSym));
+			LLArrayOp array = new LLArrayOp(typeEngine.getArrayType(aggType, 1, null), entry);
+			
+			emitTypes(array.getType());
+			
+			ISymbol llvmGlobalCtors = moduleScope.add("llvm.global_ctors", false);
+			llvmGlobalCtors.setType(array.getType());
+			LLGlobalDirective ctorAdd = new LLGlobalDirective(llvmGlobalCtors, null, array);
+			ctorAdd.setAppending(true);
+			this.directives.add(ctorAdd);
+			
+			// make a new module-wide init func 
+			IScope staticLocalScope = new LocalScope(initSym.getScope());
+			staticInit = LLDefineDirective.create(gen, target, this, staticLocalScope, 
+					modInitSym, codeType, null);
+			this.directives.add(staticInit);
+			
+			staticInit.addBlock(staticLocalScope.add(".entry", false));
+		}
+		return staticInit;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean hasStaticInit() {
+		return staticInit != null;
 	}
 	
 }

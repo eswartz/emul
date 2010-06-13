@@ -13,13 +13,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import org.ejs.eulang.llvm.LLArgAttrType;
-import org.ejs.eulang.llvm.LLAttrType;
-import org.ejs.eulang.llvm.LLAttrs;
-import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
-import org.ejs.eulang.llvm.LLVisibility;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
@@ -42,9 +37,11 @@ import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
+import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.BasicType;
+import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Before;
@@ -393,25 +390,11 @@ public class BaseInstrTest extends BaseTest {
 		ISymbol modSymbol = mod.getModuleSymbol(symbol, codeType);
 		
 		LLVMGenerator gen = new LLVMGenerator(v9t9Target);
-		LLArgAttrType[] argAttrTypes = new LLArgAttrType[argTypes.length];
-		for (int i = 0; i < argAttrTypes.length; i++) {
-			LLType argType = typeEngine.getRealType(argTypes[i]);
-			LLAttrs attrs = null;
-			argAttrTypes[i] = new LLArgAttrType("arg" + i,  attrs, argType);
-		}
-		LLDefineDirective define = new LLDefineDirective(gen, 
-				v9t9Target, mod, 
-				symbol.getScope(),
-				modSymbol,
-				null /*linkage*/, 
-				LLVisibility.DEFAULT,
-				null,
-				new LLAttrType(null, ret),
-				argAttrTypes,
-				new LLFuncAttrs(),
-				null /*section*/,
-				0 /*align*/,
-				null /*gc*/);
+
+		LLDefineDirective define = LLDefineDirective.create(gen, v9t9Target, mod, symbol.getScope(), modSymbol,
+				typeEngine.getCodeType(ret, argTypes), null);
+
+
 		mod.add(define);
 		
 		return define;
@@ -462,8 +445,33 @@ public class BaseInstrTest extends BaseTest {
 		AssemblerOperand asmOp = isel.generateOperand(global.getInit());
 		assert asmOp instanceof AsmOperand;
 		
-		DataBlock block = new DataBlock(global.getSymbol(), (AsmOperand) asmOp);
-		buildOutput.register(block);
+		DataBlock block = null;
+		
+		if (global.isAppending()) {
+			// when appending, each init op adds some elements to a large array
+			assert global.getSymbol().getType() instanceof LLArrayType;
+			block = buildOutput.getDataBlock(global.getSymbol());
+			AssemblerOperand[] current;
+			if (block == null) {
+				current = new AssemblerOperand[0];
+				block = new DataBlock(global.getSymbol(), (AsmOperand) asmOp);
+				buildOutput.register(block);
+				buildOutput.registerStaticInit(global.getSymbol());
+			} else {
+				current = ((TupleTempOperand) block.getValue()).getComponents();
+			}
+			AssemblerOperand[] added = ((TupleTempOperand) asmOp).getComponents();
+			AssemblerOperand[] combined = new AssemblerOperand[current.length + added.length];
+			System.arraycopy(current, 0, combined, 0, current.length);
+			System.arraycopy(added, 0, combined, current.length, added.length);
+			
+			asmOp = new TupleTempOperand(typeEngine.getArrayType(global.getSymbol().getType().getSubType(), combined.length, null),
+					combined);
+			
+		} else {
+			block = new DataBlock(global.getSymbol(), (AsmOperand) asmOp);
+			buildOutput.register(block);
+		}
 		
 		return block;
 	}

@@ -1763,7 +1763,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 */
 	private AssemblerOperand copyIntoRegister(LLOperand llOperand, LLInstr instr, AssemblerOperand operand, int num) {
 		LLType type = llOperand.getType();
-		if (type instanceof LLCodeType)
+		if (type instanceof LLCodeType || llOperand instanceof LLSymbolOp)
 			type = typeEngine.getPointerType(type);
 
 		RegisterLocal regLocal = newTempRegister(routine, instr, 
@@ -2022,8 +2022,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					assert sym != null;
 
 					handleCallInstr(new LLCallInstr(assn.getResult(), assn.getType(), 
-							new LLSymbolOp(sym), (LLCodeType)sym.getType(), 
-							assn.getOperands()));
+							new LLSymbolOp(sym), assn.getOperands()));
 				}
 				else if (d.inst != -1) {
 					AssemblerOperand op1 = d.ops.length >= 1 ? getAsmOp(d, 0) : null;

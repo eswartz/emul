@@ -48,4 +48,12 @@ public class AstNilLitExpr extends AstLitExpr implements IAstNilLitExpr {
 		return null;
 	}
 
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstLitExpr#isZero()
+	 */
+	@Override
+	public boolean isZero() {
+		return true;
+	}
 }

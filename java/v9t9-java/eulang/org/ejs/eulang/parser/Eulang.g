@@ -292,7 +292,7 @@ type :
   
 nonArrayType :  
    ( idExpr -> ^(TYPE idExpr) )
-  | ( CODE proto? -> ^(TYPE ^(CODE proto?) ) )
+  | ( CODE attrs? proto? -> ^(TYPE ^(CODE attrs? proto?) ) )
   | data -> ^(TYPE data ) 
   | argtuple     
   ; 

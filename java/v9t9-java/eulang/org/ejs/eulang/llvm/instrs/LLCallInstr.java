@@ -5,6 +5,7 @@ package org.ejs.eulang.llvm.instrs;
 
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 
@@ -15,18 +16,15 @@ import org.ejs.eulang.types.LLVoidType;
 public class LLCallInstr extends LLAssignInstr {
 
 	private final LLOperand func;
-	private final LLCodeType funcType;
 
 	/**
-	 * @param name
 	 * @param type
-	 * @param funcType 
 	 * @param ops
+	 * @param name
 	 */
-	public LLCallInstr(LLOperand ret, LLType type, LLOperand func, LLCodeType funcType, LLOperand... ops) {
+	public LLCallInstr(LLOperand ret, LLType type, LLOperand func, LLOperand... ops) {
 		super("call", ret, type, ops);
 		this.func = func;
-		this.funcType = funcType;
 		if (type instanceof LLVoidType) {
 			if (ret != null)
 				throw new IllegalArgumentException();
@@ -59,7 +57,10 @@ public class LLCallInstr extends LLAssignInstr {
 	 */
 	@Override
 	protected void appendOperandString(StringBuilder sb, int idx, LLOperand op) {
-		sb.append(funcType.getArgTypes()[idx].getLLVMName()).append(' ');
+		LLType funcType = func.getType();
+		if (funcType instanceof LLPointerType)
+			funcType = funcType.getSubType();
+		sb.append(((LLCodeType)funcType).getArgTypes()[idx].getLLVMName()).append(' ');
 		super.appendOperandString(sb, idx, op);
 	}
 	

@@ -80,6 +80,7 @@ public class TestTypes extends BaseTest {
     }
     @Test
     public void testArrayDecls2() throws Exception {
+    	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(
     			"mycode := code(size) {\n"+
     			"	p : Int[size];\n"+	// returns whole array
@@ -2194,7 +2195,6 @@ xes[3][2][1]
     			"foo = code() {\n"+
     			"	x : Class;\n"+
     			"   x.x, x.y = 123, 456;\n"+
-    			"   x.plus = code (this:Class^) { this.x+this.y };\n"+	// hack until constructor works
     			"   x.plus(&x);\n"+ // explicit
     			"   x.plus();\n"+	// implicit
     			"};\n"+
@@ -2258,6 +2258,91 @@ xes[3][2][1]
 		
 		assertMatchText("ret i16 579", gen.getOptimizedText());
     }
+    
+    
+    @Test
+    public void testDataVirtualMethod2() throws Exception {
+    	dumpTypeInfer = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int;\n"+
+    			"   plus : code #this ( => Int);\n"+	// attrs are promoted to 'plus'
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   x.x, x.y = 123, 456;\n"+
+    			"   x.plus = code (this:Class^) { this.x+this.y };\n"+	
+    			"   x.plus();\n"+	// implicit
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+		
+    	
+    	// the 'plus' should be marked as this method and have the right type
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	LLDataType data = (LLDataType) type.getType();
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("plus");
+    	assertNotNull(field);
+    	
+    	assertTrue(field.hasAttr(IAstCodeExpr.THIS));
+    	
+    	// the field's type should have a code type modified for 'this'
+    	assertTrue(field.getType() instanceof LLPointerType);
+    	LLCodeType codeType = (LLCodeType) field.getType().getSubType();
+    	
+    	assertEquals(typeEngine.INT, codeType.getRetType());
+    	assertEquals(1, codeType.getArgTypes().length);
+    	assertEquals(typeEngine.getPointerType(data), codeType.getArgTypes()[0]);
+    	
+		dumpLLVMGen = true;
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertMatchText("ret i16 579", gen.getOptimizedText());
+    }
+    
+    @Test
+    public void testDataStaticInit1() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int = 3, 5;\n"+
+    			"   plus := code #this () { x+y };\n"+	
+    			"};\n"+
+    			"x : Class;\n"+
+    			"foo = code() {\n"+
+    			"   x.x, x.y = 123, 456;\n"+
+    			"   x.plus();\n"+
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+		
+    	
+    	// the 'plus' should be marked as this method and have the right type
+    	IAstDataType type = (IAstDataType) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("Class").getDefinition());
+    	LLDataType data = (LLDataType) type.getType();
+    	
+    	LLInstanceField field = (LLInstanceField) data.getField("plus");
+    	assertNotNull(field);
+    	
+    	assertTrue(field.hasAttr(IAstCodeExpr.THIS));
+    	
+    	// the field's type should have a code type modified for 'this'
+    	assertTrue(field.getType() instanceof LLPointerType);
+    	LLCodeType codeType = (LLCodeType) field.getType().getSubType();
+    	
+    	assertEquals(typeEngine.INT, codeType.getRetType());
+    	assertEquals(1, codeType.getArgTypes().length);
+    	assertEquals(typeEngine.getPointerType(data), codeType.getArgTypes()[0]);
+    	
+		dumpLLVMGen = true;
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertMatchText("@llvm.global_ctors", gen.getOptimizedText());
+    }
+
 }
 
 

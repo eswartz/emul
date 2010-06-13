@@ -5,6 +5,8 @@ package org.ejs.eulang.ast.impl;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstArgDef;
@@ -25,9 +27,11 @@ import org.ejs.eulang.types.TypeException;
 public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	private IAstType retType;
 	private IAstArgDef[] argumentTypes;
+	private Set<String> attrs;
 
-	/** Create with the types; may be null */
-	public AstPrototype(TypeEngine typeEngine, IAstType retType, IAstArgDef[] argumentTypes) {
+	/** Create with the types; may be null 
+	 * @param attrs */
+	public AstPrototype(TypeEngine typeEngine, IAstType retType, IAstArgDef[] argumentTypes, Set<String> attrs) {
 		this.retType = retType;
 		retType.setParent(this);
 		this.argumentTypes = argumentTypes;
@@ -35,14 +39,16 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 			arg.setParent(this);
 		
 		setType(typeEngine.getCodeType(retType, argumentTypes));
+		this.attrs = attrs;
 	}
-	protected AstPrototype(LLType type, IAstType retType, IAstArgDef[] argumentTypes) {
+	protected AstPrototype(LLType type, IAstType retType, IAstArgDef[] argumentTypes, Set<String> attrs) {
 		this.retType = retType;
 		retType.setParent(this);
 		this.argumentTypes = argumentTypes;
 		for (IAstArgDef arg : argumentTypes)
 			arg.setParent(this);
 		setType(type);
+		this.attrs = attrs;
 	}
 	
 	/**
@@ -60,6 +66,7 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 					Collections.<String>emptySet());
 			argName.setDefinition(this.argumentTypes[i]);
 		}
+		this.attrs = Collections.<String>emptySet();
 	}
 	
 	/* (non-Javadoc)
@@ -72,7 +79,7 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 			argTypesCopy[i] = argumentTypes[i].copy();
 			argTypesCopy[i] = fixup(argumentTypes[i], argTypesCopy[i]);
 		}
-		return fixup(this, new AstPrototype(getType(), doCopy(returnType()), argTypesCopy));
+		return fixup(this, new AstPrototype(getType(), doCopy(returnType()), argTypesCopy, new HashSet<String>(attrs)));
 	}
 	
 	@Override
@@ -244,5 +251,30 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 		newArgDef.setParent(this);
 		this.argumentTypes = newArgTypes;
 		setType(null);
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAttributes#getAttrs()
+	 */
+	@Override
+	public Set<String> getAttrs() {
+		return Collections.unmodifiableSet(attrs);
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAttributes#attrs()
+	 */
+	@Override
+	public Set<String> attrs() {
+		if (attrs == Collections.<String>emptySet())
+			attrs = new HashSet<String>();
+		return attrs;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstAttributes#hasAttr(java.lang.String)
+	 */
+	@Override
+	public boolean hasAttr(String attr) {
+		return attrs.contains(attr);
 	}
 }

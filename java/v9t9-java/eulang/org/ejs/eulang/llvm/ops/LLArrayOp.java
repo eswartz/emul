@@ -20,7 +20,7 @@ public class LLArrayOp extends BaseLLConstOperand {
 	/**
 	 * 
 	 */
-	public LLArrayOp(LLArrayType type, LLOperand[] elements) {
+	public LLArrayOp(LLArrayType type, LLOperand... elements) {
 		super(type);
 		this.arrayType = type;
 		this.elements = elements;

@@ -3,7 +3,9 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.ejs.eulang.llvm.tms9900.DataBlock;
@@ -19,10 +21,12 @@ public class BuildOutput {
 
 	private HashMap<ISymbol, Routine> routineMap;
 	private HashMap<ISymbol, DataBlock> dataBlockMap;
+	private List<ISymbol> staticInits;
 
 	public BuildOutput() {
 		routineMap = new HashMap<ISymbol, Routine>();
 		dataBlockMap = new HashMap<ISymbol, DataBlock>();
+		staticInits = new ArrayList<ISymbol>();
 	}
 	
 	public void register(Routine routine) {
@@ -33,6 +37,17 @@ public class BuildOutput {
 	public void register(DataBlock data) {
 		assert !dataBlockMap.containsKey(data.getName());
 		dataBlockMap.put(data.getName(), data);
+	}
+	
+	public void registerStaticInit(ISymbol sym) {
+		staticInits.add(sym);
+	}
+	
+	/**
+	 * @return the staticInits
+	 */
+	public List<ISymbol> getStaticInits() {
+		return staticInits;
 	}
 
 	protected boolean symbolMatches(ISymbol sym, String string) {

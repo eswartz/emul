@@ -134,8 +134,8 @@ public class ShiftOperation extends Operation implements IBinaryOperation {
 
 			ret = currentTarget.newTemp(expr.getType());
 			currentTarget.emit(new LLCallInstr(ret, left.getType(), 
-					new LLSymbolOp(intrinsicSym), intrinsicFuncType,
-					left, right));
+					new LLSymbolOp(intrinsicSym), left,
+					right));
 		} else {
 			generator.unhandled(expr);
 			left = new LLConstOp(0);

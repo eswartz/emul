@@ -52,4 +52,13 @@ public class AstBoolLitExpr extends AstLitExpr implements
 	public Object getObject() {
 		return value;
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstLitExpr#isZero()
+	 */
+	@Override
+	public boolean isZero() {
+		return value == false;
+	}
 }

@@ -108,3 +108,18 @@ foo = code() {
 call foo
 assert R0 == 100
 >>>
+
+<<< static init
+Class = data {
+   x,y:Int = 3, 5;
+   plus := code #this () { x+y };
+};
+x : Class;
+foo = code() {
+   x.x, x.y = 123, 456;
+   x.plus();
+};
+===
+call foo
+assert R0 == 579
+>>>

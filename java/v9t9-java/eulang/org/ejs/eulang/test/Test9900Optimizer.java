@@ -450,7 +450,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 	   			"Tuple = data {\n"+
 	   			"   x:Byte; f:Bool; y,z:Byte; };\n"+
 	   			"testDataInit1 = code() {\n"+
-	   			"  foo:Tuple;\n"+
+	   			"  foo:Tuple = nil;\n"+
 	   			"  foo.x = 3; foo.f = 1; foo.y = 0x20; foo.z = 0x10;\n"+
 	   			"  if foo.f then foo.x else foo.y<<foo.z;\n" +
 	   			"};\n"+

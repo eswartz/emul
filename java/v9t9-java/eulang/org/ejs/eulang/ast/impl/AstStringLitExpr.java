@@ -44,4 +44,12 @@ public class AstStringLitExpr extends AstLitExpr implements IAstStringLitExpr {
 		return getLiteral();
 	}
 
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstLitExpr#isZero()
+	 */
+	@Override
+	public boolean isZero() {
+		return getValue().length() == 0;
+	}
 }

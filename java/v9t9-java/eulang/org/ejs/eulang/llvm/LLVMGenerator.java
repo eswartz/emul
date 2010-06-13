@@ -236,6 +236,11 @@ public class LLVMGenerator {
 		ll.addModuleDirective(new LLTargetTripleDirective(target));
 
 		generateGlobalStmtList(module);
+		
+		if (ll.hasStaticInit()) {
+			ILLCodeTarget target = ll.getStaticInitTarget(this);
+			target.emit(new LLRetInstr(typeEngine.VOID));
+		}
 	}
 
 	/**
@@ -309,12 +314,68 @@ public class LLVMGenerator {
 				}
 			}
 			
-			if (dataOp == null)
+			boolean isZero = false;
+			if (dataOp == null) {
 				dataOp = new LLZeroInitOp(dataType);
+				isZero = true;
+			}
 			
 			ISymbol modSymbol = ll.getModuleSymbol(symbol.getSymbol(), dataType);
 			ll.add(new LLGlobalDirective(modSymbol, null, dataOp));
+			
+			// add call to constructor if needed
+			if (isZero && dataType instanceof LLDataType) {
+				IAstDataType data = ((LLDataType) dataType).getDeclaration();
+				
+				if (data != null && data.needsExplicitInit()) {
+					// add static init code
+					ILLCodeTarget oldDefine = currentTarget;
+	
+					try {
+						currentTarget = ll.getStaticInitTarget(this);
+						LLOperand thisOp = new LLSymbolOp(modSymbol);
+						
+						ISymbol initName = data.getInitName(typeEngine);
+						ISymbol modInitSym = ll.getModuleSymbol(initName, initName.getType());
+						
+						currentTarget.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(modInitSym), thisOp)); 
+					} finally {
+						currentTarget = oldDefine;
+					}
+				}
+			}
 		}
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	private LLOperand generateDefaultInit(LLOperand thisOp, LLType type) {
+		if (type instanceof LLDataType) {
+			LLDataType dataType = (LLDataType) type;
+			IAstDataType data = dataType.getDeclaration();
+			assert data != null;
+			
+			ISymbol initSym = ll.getModuleSymbol(data.getInitName(typeEngine), data.getInitName(typeEngine).getType());
+			
+			// XXX addr
+			LLOperand ptrToThis = thisOp;
+			if (!(thisOp.getType()  instanceof LLPointerType) || !type.matchesExactly(thisOp.getType().getSubType())) {
+				// make ptr
+				if (thisOp instanceof LLVariableOp)
+					ptrToThis = ((LLVariableOp) thisOp).getVariable().address(currentTarget);
+			}
+			
+			currentTarget.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(initSym), ptrToThis));
+			return null;
+		}
+		
+		// can't predictably init this
+		if (type instanceof LLArrayType && ((LLArrayType) type).getDynamicSizeExpr() != null)
+			return null;
+		
+		return new LLZeroInitOp(type);
 	}
 
 	/**
@@ -389,7 +450,7 @@ public class LLVMGenerator {
 		
 		LLPointerType thisPtrType = typeEngine.getPointerType(expr.getType());
 		LLCodeType dataInitFuncType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { thisPtrType });
-		ISymbol initName = expr.getInitName();
+		ISymbol initName = expr.getInitName(typeEngine);
 		ISymbol initSym = ll.getModuleSymbol(initName, dataInitFuncType);
 		
 		LLDefineDirective initDef = (LLDefineDirective) ll.lookup(initSym);
@@ -459,12 +520,10 @@ public class LLVMGenerator {
 
 		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
 
-		LLDefineDirective define = new LLDefineDirective(this, target, ll, expr
-				.getScope(), modSymbol, null /* linkage */,
-				LLVisibility.DEFAULT, null,
+		LLDefineDirective define = LLDefineDirective.create(this, target, ll, expr.getScope(), modSymbol, 
 				getRetAttrType(expr.getPrototype().returnType()),
 				getArgAttrTypes(expr.getPrototype().argumentTypes()),
-				getFuncAttrType(expr), null /* section */, 0 /* align */, null /* gc */);
+				getFuncAttrType(expr));
 		ll.add(define);
 
 		generateCode(define, expr);
@@ -1043,6 +1102,11 @@ public class LLVMGenerator {
 				val = value;
 			} else {
 				// invoke initializer
+				LLOperand value = generateDefaultInit(ret, symbol.getType());
+				if (value != null) {
+					currentTarget.store(symbol.getType(), value, ret);
+					val = value;
+				}
 			}
 
 			if (i == 0)
@@ -2067,7 +2131,6 @@ public class LLVMGenerator {
 		else
 			funcType = (LLCodeType) realFuncType;
 
-		LLType realRetType = funcType.getRetType();
 		LLType[] realArgTypes = new LLType[funcType.getArgTypes().length];
 
 		LLOperand[] ops = new LLOperand[funcType.getArgTypes().length];
@@ -2095,7 +2158,7 @@ public class LLVMGenerator {
 		}
 
 		currentTarget.emit(new LLCallInstr(ret, expr.getType(), func,
-				typeEngine.getCodeType(realRetType, realArgTypes), ops));
+				ops));
 		return ret;
 	}
 

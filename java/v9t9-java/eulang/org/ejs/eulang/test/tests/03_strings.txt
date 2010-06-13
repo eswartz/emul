@@ -1,3 +1,4 @@
+only
 <<< string data
 a := "SUCKA!!! \r\n\t\xff\x7f\x00\x02";
 testStrings = code () {

@@ -19,7 +19,7 @@ public class LLStructOp extends BaseLLConstOperand {
 	/**
 	 * 
 	 */
-	public LLStructOp(LLAggregateType type, LLOperand[] elements) {
+	public LLStructOp(LLAggregateType type, LLOperand... elements) {
 		super(type);
 		this.tupleType = type;
 		this.elements = elements;

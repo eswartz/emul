@@ -17,6 +17,7 @@ import org.ejs.eulang.ast.IAstAttributes;
 import org.ejs.eulang.ast.IAstCodeExpr;
 import org.ejs.eulang.ast.IAstDataType;
 import org.ejs.eulang.ast.IAstDefineStmt;
+import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
 import org.ejs.eulang.ast.IAstPrototype;
@@ -319,6 +320,37 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		setType(null);
 		super.merge(added);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDataType#needsExplicitInit()
+	 */
+	@Override
+	public boolean needsExplicitInit() {
+		for (IAstTypedNode node : ifields.list()) {
+			if (node instanceof IAstAllocStmt) {
+				IAstAllocStmt alloc = (IAstAllocStmt) node;
+				for (int i = 0; i < alloc.getSymbolExprs().nodeCount(); i++) {
+					IAstTypedExpr defaul = alloc.getDefaultFor(i);
+					if (defaul == null)
+						continue;
+					
+					if (defaul instanceof IAstLitExpr) {
+						if (((IAstLitExpr) defaul).isZero())
+							continue;
+					}
+					
+					return true;
+				}
+			}
+		}
+		
+		for (IAstStmt stmt : stmts().list()) {
+			if (!(stmt instanceof IAstDefineStmt))
+				return true;
+		}
+		
+		return false;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstDataType#getInitCode()
@@ -326,11 +358,10 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	@Override
 	public IAstCodeExpr getInitCode(TypeEngine typeEngine) {
 		if (initCode == null) {
-			LLPointerType thisPtrType = typeEngine.getPointerType(getType());
-			LLCodeType dataInitFuncType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { thisPtrType });
+			ISymbol initSym = getInitName(typeEngine);
 				
 			IScope initScope = new LocalScope(getTypeName().getScope());
-			IAstPrototype initProto = new AstPrototype(dataInitFuncType, initScope, new String[] { "this" });
+			IAstPrototype initProto = new AstPrototype((LLCodeType) initSym.getType(), initScope, new String[] { "this" });
 			Set<String> attrs = new HashSet<String>();
 			attrs.add(IAstAttributes.THIS);
 			IAstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(IAstStmt.class);
@@ -377,10 +408,14 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 * @see org.ejs.eulang.ast.IAstDataType#getInitName()
 	 */
 	@Override
-	public ISymbol getInitName() {
+	public ISymbol getInitName(TypeEngine typeEngine) {
 		if (initName == null) {
-			if (typeName != null)
+			if (typeName != null) {
 				initName = getTypeName().getScope().add(getTypeName().getUniqueName() + "$init", false);
+				LLPointerType thisPtrType = typeEngine.getPointerType(getType());
+				LLCodeType dataInitFuncType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { thisPtrType });
+				initName.setType(dataInitFuncType);
+			}
 		}
 		return initName;
 	}

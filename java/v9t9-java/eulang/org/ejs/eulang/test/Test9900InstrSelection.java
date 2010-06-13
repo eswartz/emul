@@ -1500,11 +1500,14 @@ public class Test9900InstrSelection extends BaseInstrTest {
     			"};\n"+
     			"doDraw = code(this:Class; count:Int => nil) { count*count };\n"+
     	"");
-    	int idx;
+    	int idx = -1;
 		AsmInstruction inst;
 
+		// skip init
+		idx = findInstrWithInst(instrs, "BL", idx);
+		
 		// ptr to inst
-		idx = findInstrWithInst(instrs, "LEA");
+		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "LEA", CompositePieceOperand.class, "inst", 0, RegTempOperand.class);
 		
@@ -1536,7 +1539,7 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		AsmInstruction liInst = inst;
 		
 		
-		idx = findInstrWithInst(instrs, "BL");
+		idx = findInstrWithInst(instrs, "BL", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "BL", RegIndOperand.class);
 		
@@ -1658,12 +1661,14 @@ public class Test9900InstrSelection extends BaseInstrTest {
     			"  c.d.p.d.d2;\n"+
     			"};\n"+
     	"");
-    	int idx;
+    	int idx = -1;
 		AsmInstruction inst;
 
+		// skip init
+		idx = findInstrWithInst(instrs, "BL", idx);
 
 		// get addr of c to Complex*
-		idx = findInstrWithInst(instrs, "LEA");
+		idx = findInstrWithInst(instrs, "LEA", idx);
 		inst = instrs.get(idx);
 		matchInstr(inst, "LEA", AddrOperand.class, "c", RegTempOperand.class);
 		
@@ -1806,6 +1811,9 @@ public class Test9900InstrSelection extends BaseInstrTest {
     	"");
     	int idx = -1;
 		AsmInstruction inst;
+		
+		// skip init
+		idx = findInstrWithInst(instrs, "BL", idx);
 		
 		// ptr to c.x
 		idx = findInstrWithInst(instrs, "LEA", idx);

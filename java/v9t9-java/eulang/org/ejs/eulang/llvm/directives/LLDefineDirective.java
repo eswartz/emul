@@ -19,6 +19,7 @@ import org.ejs.eulang.llvm.ILLCodeVisitor;
 import org.ejs.eulang.llvm.ILLVariable;
 import org.ejs.eulang.llvm.LLArgAttrType;
 import org.ejs.eulang.llvm.LLAttrType;
+import org.ejs.eulang.llvm.LLAttrs;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLFuncAttrs;
 import org.ejs.eulang.llvm.LLLinkage;
@@ -431,5 +432,69 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	 */
 	public Set<String> flags() {
 		return flags;
+	}
+
+
+
+	/**
+	 * @param gen
+	 * @param target
+	 * @param mod
+	 * @param scope
+	 * @param modSymbol
+	 * @param codeType
+	 * @param object
+	 * @return
+	 */
+	public static LLDefineDirective create(LLVMGenerator gen,
+			ITarget target, LLModule mod, IScope scope, ISymbol modSymbol,
+			LLCodeType codeType, String[] names) {
+		LLType[] argTypes = codeType.getArgTypes();
+		LLType retType = codeType.getRetType();
+		
+		LLArgAttrType[] argAttrTypes = new LLArgAttrType[argTypes.length];
+		for (int i = 0; i < argAttrTypes.length; i++) {
+			LLType argType = gen.getTypeEngine().getRealType(argTypes[i]);
+			LLAttrs attrs = null;
+			argAttrTypes[i] = new LLArgAttrType(names != null ? names[i] : ("arg" + i),  attrs, argType);
+		}
+		
+		return create(gen, target, mod, scope, modSymbol,
+				new LLAttrType(null, retType),
+				argAttrTypes,
+				new LLFuncAttrs());
+	}
+	
+		/**
+	 * @param gen
+	 * @param target2
+	 * @param mod
+	 * @param scope
+	 * @param modSymbol
+	 * @param retAttrType
+	 * @param argAttrTypes
+	 * @param funcAttrs
+	 * @return
+	 */
+	public static LLDefineDirective create(LLVMGenerator gen, ITarget target,
+			LLModule mod, IScope scope, ISymbol modSymbol,
+			LLAttrType retAttrType, LLArgAttrType[] argAttrTypes,
+			LLFuncAttrs funcAttrs) {
+		LLDefineDirective define = new LLDefineDirective(
+				gen, 
+				target, 
+				mod, 
+				scope,
+				modSymbol,
+				null /*linkage*/, 
+				LLVisibility.DEFAULT,
+				null, /* cconv */
+				retAttrType,
+				argAttrTypes,
+				funcAttrs,
+				null /*section*/,
+				0 /*align*/,
+				null /*gc*/);
+		return define;
 	}
 }

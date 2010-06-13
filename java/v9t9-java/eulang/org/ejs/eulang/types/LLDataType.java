@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
+import org.ejs.eulang.ast.IAstDataType;
+import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -281,6 +283,16 @@ public class LLDataType extends BaseLLAggregateType {
 		}
 					
 		return super.isMoreComplete(otherType);
+	}
+
+	/**
+	 * @return
+	 */
+	public IAstDataType getDeclaration() {
+		if (getSymbol().getDefinition() instanceof IAstDefineStmt)
+			return (IAstDataType) ((IAstDefineStmt) getSymbol().getDefinition()).getMatchingBodyExpr(this);
+		else
+			return (IAstDataType) getSymbol().getDefinition();
 	}
 	
 	/* (non-Javadoc)

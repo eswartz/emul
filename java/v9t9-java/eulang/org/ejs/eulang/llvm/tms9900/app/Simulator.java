@@ -35,6 +35,7 @@ import org.ejs.eulang.llvm.tms9900.asm.CompositePieceOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.RegTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
+import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
@@ -93,6 +94,7 @@ public class Simulator {
 	}
 	
 	Stack<Frame> stackFrames;
+	private ArrayList<Pair<Short, Integer>> staticInits;
 
 	/**
 	 * This interface receives details about an instruction's effects
@@ -348,8 +350,15 @@ public class Simulator {
         }
         
         short addr = (short) 0x8000;
+        
+        staticInits = new ArrayList<Pair<Short,Integer>>(); 
+        
         for (DataBlock data : buildOutput.getDataBlocks()) {
         	addr = alignForType(addr, data.getName().getType());
+        	if (buildOutput.getStaticInits().contains(data.getName())) {
+        		Pair<Short, Integer> entry = new Pair<Short, Integer>(addr, ((TupleTempOperand) data.getValue()).getComponents().length);
+        		staticInits.add(entry);
+        	}
         	addr = emitDataBlock(addr, data);
         }
         
@@ -474,6 +483,7 @@ public class Simulator {
 	InstructionWorkBlock iblock;
 	private int debugCount;
 	private List<InstructionListener> listeners;
+	private boolean ranStaticInits;
 
     /**
      * Execute an instruction: general entry point
@@ -1588,6 +1598,21 @@ public class Simulator {
 	 */
 	public ITarget getTarget() {
 		return target;
+	}
+
+	/**
+	 * For now, explicitly invoke these.  Later, some runtime hook will do it.
+	 */
+	public void initStatics(short wp) {
+		if (!ranStaticInits) {
+			ranStaticInits = true;
+			
+			for (Pair<Short, Integer> entry : staticInits) {
+				for (int i = 0; i < entry.second; i++) {
+					executeAt(memory.readWord(entry.first + i * 2), wp, 5000);
+				}
+			}
+		}
 	}
 
 

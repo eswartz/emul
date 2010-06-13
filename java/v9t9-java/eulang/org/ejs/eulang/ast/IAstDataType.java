@@ -24,13 +24,21 @@ public interface IAstDataType extends IAstTypedExpr, IAstStmtScope, IAstType {
 
 	/**
 	 * Create the per-instance init code 
-	 * @param typeEngine TODO
+	 * @param typeEngine
 	 * @return
 	 */
 	IAstCodeExpr getInitCode(TypeEngine typeEngine);
 
 	/**
+	 * Get the constructor (initializer) symbol
+	 * @param typeEngine
 	 * @return
 	 */
-	ISymbol getInitName();
+	ISymbol getInitName(TypeEngine typeEngine);
+
+	/**
+	 * Tell if the initializer does anything beyond default init
+	 * @return
+	 */
+	boolean needsExplicitInit();
 }

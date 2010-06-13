@@ -246,7 +246,10 @@ public class Test9900Simulation  {
 							short pc = sim.getAddress(routine.getName());
 							short wp = sim.getCPU().getWP();
 							
+							// initial stack pointer is below WP
 							sim.getMemory().writeWord(wp + sim.getTarget().getSP() * 2, (short) wp);
+							
+							sim.initStatics(wp);
 							
 							sim.executeAt(pc, wp, timeout);
 							

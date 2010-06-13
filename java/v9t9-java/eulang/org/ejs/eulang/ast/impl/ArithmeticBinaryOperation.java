@@ -253,8 +253,8 @@ public class ArithmeticBinaryOperation extends Operation implements IBinaryOpera
 				left = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[0], left.getType(), left, false);
 				right = generator.generateCast(expr, intrinsicFuncType.getArgTypes()[1], right.getType(), right, false);
 				currentTarget.emit(new LLCallInstr(ret, left.getType(), 
-						new LLSymbolOp(intrinsicSrc), intrinsicFuncType,
-						left, right));
+						new LLSymbolOp(intrinsicSrc), left,
+						right));
 			}
 		} else {
 			generator.unhandled(expr);

@@ -181,7 +181,7 @@ public class TargetV9t9 implements ITarget {
 		LLOperand temp = target.newTemp(typeEngine.REFPTR);
 		target.emit(new LLCastInstr(temp, ECast.BITCAST, valueType, value, typeEngine.REFPTR));
 		target.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(intrinsic_IncRef), 
-				(LLCodeType) intrinsic_IncRef.getType(), temp));
+				temp));
 	}
 
 	/**
@@ -204,7 +204,7 @@ public class TargetV9t9 implements ITarget {
 		LLOperand temp = target.newTemp(typeEngine.REFPTR);
 		target.emit(new LLCastInstr(temp, ECast.BITCAST, valueType, value, typeEngine.REFPTR));
 		target.emit(new LLCallInstr(null, typeEngine.VOID, new LLSymbolOp(intrinsic_DecRef), 
-				(LLCodeType) intrinsic_DecRef.getType(), temp));
+				temp));
 	}
 	
 

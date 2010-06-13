@@ -13,4 +13,8 @@ public interface IAstLitExpr extends IAstTypedExpr {
 	String getLiteral();
 	
 	Object getObject();
+	/**
+	 * @return
+	 */
+	boolean isZero();
 }
