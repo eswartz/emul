@@ -192,7 +192,8 @@ abstract public class AstNode implements IAstNode {
      */
     @Override
     public void setSourceRefTree(ISourceRef sourceRef) {
-    	setSourceRef(sourceRef);
+    	if (getSourceRef() == null)
+    		setSourceRef(sourceRef);
     	for (IAstNode node : getChildren()) {
     		node.setSourceRefTree(sourceRef);
     	}

@@ -555,5 +555,44 @@ public class TestLLVMGenerator extends BaseTest {
     	LLVMGenerator gen = doGenerate(mod);
     	
     }
-    
+
+
+    @Test
+    public void testStaticInitOrder1() throws Exception {
+    	// should not be able to reference 'x' before it's alloced, since it's cleared
+    	treeize("Class = data {\n" + 
+    			"   x,y:Int = 3, 5;\n" + 
+    			"   plus := code #this () { x+y };\n" + 
+    			"};\n" + 
+    			"\n" + 
+    			"({\n" + 
+    			"p := 456;\n" + 
+    			"x.y = p;\n" + 
+    			"}) \n" + 
+    			"x : Class;\n" + 
+    			"y : Class;\n" + 
+    			"", true);
+    }
+    @Test
+    public void testStaticInitOrder2() throws Exception {
+    	dumpLLVMGen = true;
+    	// don't complain about common locals
+    	IAstModule mod = doFrontend("Class = data {\n" + 
+    			"   x,y:Int = 3, 5;\n" + 
+    			"   plus := code #this () { x+y };\n" + 
+    			"};\n" + 
+    			"\n" + 
+    			"x : Class;\n" + 
+    			"y : Class;\n" + 
+    			"({\n" + 
+    			"p := 456;\n" + 
+    			"x.y = p;\n" + 
+    			"}) \n" + 
+    			"({\n" + 
+    			"p := 123;\n" + 
+    			"y.y = p;\n" + 
+    			"}) \n" + 
+    			"");
+    	doGenerate(mod);    	
+    }
 }

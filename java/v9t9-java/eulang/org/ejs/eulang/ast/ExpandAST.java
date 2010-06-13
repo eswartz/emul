@@ -495,16 +495,17 @@ public class ExpandAST {
 		// mark all the symbols temporary so they don't collide,
 		// and move them into the other scope
 		
+		/*
 		// TODO: rename to "@" syntax and remap symbols... or allow remapping as temporaries when copying a scope
 		ISymbol[] origSyms = codeExpr.getScope().getSymbols();
 		for (ISymbol sym : origSyms) {
 			// this refers to the copied definition
 			sym.setTemporary(true);
-			//sym.setScope(null);
 			sym.getScope().remove(sym);
 			parentScope.add(sym);
+			sym.setVisibility(ISymbol.Visibility.LOCAL);
 		}
-		
+		*/
 		// Substitute arguments
 		IAstArgDef[] protoArgs = codeExpr.getPrototype().argumentTypes();
 		if (args.nodeCount() < codeExpr.getPrototype().getDefaultArgumentIndex()) {
@@ -563,7 +564,7 @@ public class ExpandAST {
 						new LocalScope(nodeScope), stmtlist, 
 						attrs);
 				
-				setSourceInTree(implCode, realArg.getSourceRef());
+				implCode.setSourceRefTree(realArg.getSourceRef());
 				realArg = implCode;
 			}
 			
@@ -608,16 +609,8 @@ public class ExpandAST {
 		// replace invoke with reference to self
 		
 		IAstStmtListExpr stmtListExpr = new AstStmtListExpr(/*returnValSymExpr,*/ blockList);
-		setSourceInTree(stmtListExpr, codeExpr.getSourceRef());
+		stmtListExpr.setSourceRefTree(codeExpr.getSourceRef());
 		return stmtListExpr;
-	}
-
-	private void setSourceInTree(IAstNode node, ISourceRef sourceRef) {
-		if (node.getSourceRef() == null)
-			node.setSourceRef(sourceRef);
-		for (IAstNode kid : node.getChildren()) {
-			setSourceInTree(kid, sourceRef);
-		}
 	}
 
 	public void replaceInTree(IAstNode root,

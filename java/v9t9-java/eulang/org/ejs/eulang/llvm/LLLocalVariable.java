@@ -31,6 +31,7 @@ public class LLLocalVariable implements ILLVariable {
 		this.symbol = symbol;
 		addrType = typeEngine.getPointerType(symbol.getType());
 		addrSymbol = symbol.getScope().addTemporary("_." + symbol.getName());
+		addrSymbol.setVisibility(symbol.getVisibility());
 		addrSymbol.setType(addrType);
 	}
 	

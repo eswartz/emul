@@ -1312,6 +1312,7 @@ public class LLVMGenerator {
 	 */
 	private LLOperand generateCodeExpr(IAstCodeExpr expr) throws ASTException {
 		ISymbol codeSym = currentTarget.getScope().addTemporary("$inner");
+		codeSym.setVisibility(ISymbol.Visibility.MODULE);
 		
 		Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(codeSym, expr);
 		if (info == null)

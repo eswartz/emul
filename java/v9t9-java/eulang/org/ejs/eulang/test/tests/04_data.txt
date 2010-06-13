@@ -147,3 +147,33 @@ assert R0 == 571
 call foo
 assert R0 == 571
 >>>
+
+
+<<< static init #3
+Class = data {
+   x,y:Int = 3, 5;
+   plus := code #this () { x+y };
+};
+x : Class;
+y : Class;
+
+({
+p := 456;
+x.y = p;
+}) 
+
+({
+p := 123;
+x.x = p;
+}) 
+
+foo = code() {
+   x.plus() - y.plus();
+};
+===
+call foo
+assert R0 == 571
+// don't init twice
+call foo
+assert R0 == 571
+>>>

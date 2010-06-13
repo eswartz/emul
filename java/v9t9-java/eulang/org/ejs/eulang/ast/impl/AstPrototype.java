@@ -56,15 +56,18 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	 */
 	public AstPrototype(LLCodeType codeType, IScope argNameScope, String[] argNames) {
 		this.retType = new AstType(codeType.getRetType());
+		this.retType.setParent(this);
 		
 		this.argumentTypes = new IAstArgDef[codeType.getArgTypes().length];
 		for (int i = 0; i < codeType.getArgTypes().length; i++) {
 			ISymbol argName = argNameScope.add(argNames[i], false);
+			AstType argType = new AstType(codeType.getArgTypes()[i]);
 			this.argumentTypes[i] = new AstArgDef(new AstSymbolExpr(true, argName), 
-					new AstType(codeType.getArgTypes()[i]),
+					argType,
 					null /*Default*/,
 					Collections.<String>emptySet());
 			argName.setDefinition(this.argumentTypes[i]);
+			this.argumentTypes[i].setParent(this);
 		}
 		this.attrs = Collections.<String>emptySet();
 	}

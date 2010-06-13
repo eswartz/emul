@@ -19,6 +19,7 @@ import org.antlr.runtime.tree.Tree;
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.ISourceRef;
+import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAddrOfExpr;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
@@ -2065,24 +2066,48 @@ public class GenerateAST {
 
 		for (Tree kid : iter(tree)) {
 			try {
-				IAstNode node = construct(kid);
+				IAstNode node;
+				if (kid.getType() == EulangParser.STMTLIST) {
+					// top-level code
+				
+					currentScope = pushScope(new LocalScope(currentScope));
+					try {
+						IAstNodeList<IAstStmt> stmts = checkConstruct(kid, IAstNodeList.class);
+						
+						IAstPrototype proto = new AstPrototype(typeEngine.getCodeType(typeEngine.VOID, new LLType[0]), currentScope, null);
+						IAstCodeExpr codeExpr = new AstCodeExpr(proto, currentScope, stmts, Collections.<String>emptySet());
+						
+						// get any errors
+						ExpandAST expand = new ExpandAST(typeEngine, true);
+						List<Message> messages = new ArrayList<Message>();
+						expand.validate(messages, codeExpr);
+
+						for (Message msg : messages)
+							if (msg instanceof Error)
+								errors.add((Error) msg);
+						
+						IAstFuncCallExpr funcCall = new AstFuncCallExpr(codeExpr, new AstNodeList<IAstTypedExpr>(IAstTypedExpr.class));
+
+						IAstExprStmt stmt = new AstExprStmt(funcCall);
+						stmt.setSourceRefTree(stmts.getSourceRef());
+						
+						list.add(stmt);
+					} finally {
+						popScope(kid);
+					}
+					continue;
+				}
+				
+				node = construct(kid);
 				if (node instanceof TempLabelStmt) {
 					list.add(((TempLabelStmt) node).getLabel());
 					list.add(((TempLabelStmt) node).getStmt());
+				} else if (node instanceof IAstStmt) {
+					list.add((IAstStmt) node);
 				} else if (node != null) {
-					if (node instanceof IAstNodeList) {
-						for (IAstStmt stmt : ((IAstNodeList<IAstStmt>) node).list()) {
-							stmt.setParent(null);
-							list.add(stmt);
-						}
-					}
-					else if (!(node instanceof IAstStmt)) {
-						throw new GenerateException(node.getSourceRef(), "unexpected content at module scope");
-					} else {
-						list.add((IAstStmt) node);
-						node.setParent(list);
-					}
+					throw new GenerateException(node.getSourceRef(), "unexpected content at module scope");
 				}
+				 
 			} catch (GenerateException e) {
 				emitExceptionError(e);
 			}

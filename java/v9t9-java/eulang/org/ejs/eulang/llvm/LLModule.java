@@ -118,6 +118,7 @@ public class LLModule {
 		ISymbol modSymbol = moduleScope.get(symName);
 		if (modSymbol == null) {
 			modSymbol = moduleScope.add(symName, false);
+			modSymbol.setVisibility(astSymbol.getVisibility());
 			modSymbol.setType(type);
 		}
 		return modSymbol;
