@@ -132,6 +132,7 @@ Class = data {
 x : Class;
 y : Class;
 
+// global init code
 ({
 x.y = 456;
 }) 
@@ -148,7 +149,6 @@ call foo
 assert R0 == 571
 >>>
 
-
 <<< static init #3
 Class = data {
    x,y:Int = 3, 5;
@@ -157,13 +157,15 @@ Class = data {
 x : Class;
 y : Class;
 
+// global init code
 ({
 p := 456;
 x.y = p;
 }) 
 
+// distinct 'p'
 ({
-p := 123;
+p : Byte = 123;
 x.x = p;
 }) 
 
