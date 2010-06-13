@@ -61,6 +61,20 @@ public class LLCastOp extends BaseLLOperand {
 			return false;
 		return true;
 	}
+
+	/**
+	 * @return
+	 */
+	public ECast getCast() {
+		return cast;
+	}
+
+	/**
+	 * @return
+	 */
+	public LLType getFromType() {
+		return val.getType();
+	}
 	
 	
 }

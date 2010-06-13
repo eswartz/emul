@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.ejs.coffee.core.utils.Pair;
+import org.ejs.eulang.CastOperation;
 import org.ejs.eulang.ICallingConvention;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
@@ -1612,8 +1613,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		if (operand instanceof LLCastOp) {
 			LLCastOp bop = ((LLCastOp) operand);
-			AssemblerOperand op = generateOperand(bop.getValue());
-			return op;
+			return executeCast(bop);
 		}
 		if (operand instanceof LLZeroInitOp || operand instanceof LLNullOp) {
 			if (isIntOp(operand)) {
@@ -1626,6 +1626,52 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		assert false;
 		return null;
+	}
+
+	/**
+	 * @param bop
+	 * @return
+	 */
+	private AssemblerOperand executeCast(LLCastOp bop) {
+		AssemblerOperand op = generateOperand(bop.getValue());
+		boolean sizeChange = (bop.getType().getBits() != bop.getFromType().getBits());
+		switch (bop.getCast()) {
+		case BITCAST:
+		case PTRTOINT:
+		case INTTOPTR:
+			assert !sizeChange;
+			return op;
+		case TRUNC:
+		case SEXT:
+		case FPEXT:
+		case FPTOSI:
+		case SITOFP: {
+			if (!(op instanceof NumberOperand))
+				assert false;
+			Number val = ((NumberOperand) op).getValue();
+			Number conv = CastOperation.doCast(bop.getFromType(), bop.getType(), false, val);
+			if (conv instanceof Integer || conv instanceof Byte || conv instanceof Long) {
+				return new NumberOperand(conv.intValue());
+			}
+			assert false;
+			break;
+		}
+		case ZEXT:
+		case FPTOUI:
+		case UITOFP: {
+			if (!(op instanceof NumberOperand))
+				assert false;
+			Number val = ((NumberOperand) op).getValue();
+			Number conv = CastOperation.doCast(bop.getFromType(), bop.getType(), true, val);
+			if (conv instanceof Integer || conv instanceof Byte || conv instanceof Long) {
+				return new NumberOperand(conv.intValue());
+			}
+			assert false;
+			break;
+		}
+		}
+		assert false;
+		return op;
 	}
 
 	private TupleTempOperand generateTupleTempOperand(LLStructOp llOp) {

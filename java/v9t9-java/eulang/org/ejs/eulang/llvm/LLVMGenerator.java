@@ -35,7 +35,6 @@ import org.ejs.eulang.ast.IAstAllocTupleStmt;
 import org.ejs.eulang.ast.IAstArgDef;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstAssignTupleStmt;
-import org.ejs.eulang.ast.IAstAttributes;
 import org.ejs.eulang.ast.IAstBinExpr;
 import org.ejs.eulang.ast.IAstBlockStmt;
 import org.ejs.eulang.ast.IAstBreakStmt;
@@ -60,7 +59,6 @@ import org.ejs.eulang.ast.IAstLoopStmt;
 import org.ejs.eulang.ast.IAstModule;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstPrototype;
 import org.ejs.eulang.ast.IAstRepeatExpr;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtListExpr;
@@ -73,12 +71,6 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
-import org.ejs.eulang.ast.impl.AstArgDef;
-import org.ejs.eulang.ast.impl.AstCodeExpr;
-import org.ejs.eulang.ast.impl.AstNodeList;
-import org.ejs.eulang.ast.impl.AstPrototype;
-import org.ejs.eulang.ast.impl.AstSymbolExpr;
-import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
@@ -1049,6 +1041,8 @@ public class LLVMGenerator {
 						: val;
 				currentTarget.store(exprValue.getType(), value, ret);
 				val = value;
+			} else {
+				// invoke initializer
 			}
 
 			if (i == 0)

@@ -97,45 +97,53 @@ public class CastOperation extends Operation implements IUnaryOperation {
 	@Override
 	public LLConstOp evaluate(LLType type, IAstLitExpr simExpr) {
 		Number value = null;
+		Object val = simExpr.getObject();
+		LLType fromType = simExpr.getType();
+		value = doCast(fromType, type, isUnsigned, val);
+		if (value != null) {
+			return new LLConstOp(type, value);
+		}
+		return null;
+	}
+
+	public static Number doCast(LLType fromType, LLType type, boolean isUnsigned, Object val) {
+		Number value = null;
 		if (type.getBasicType() == BasicType.INTEGRAL) {
-			if (simExpr.getObject() instanceof Number) {
-				long l = ((Number)simExpr.getObject()).longValue();
+			if (val instanceof Number) {
+				long l = ((Number)val).longValue();
 				if (isUnsigned) {
-					if (simExpr.getType().getBits() <= 8)
+					if (fromType.getBits() <= 8)
 						l &= 0xff;
-					else if (simExpr.getType().getBits() == 16)
+					else if (fromType.getBits() == 16)
 						l &= 0xffff;
 					else
 						assert false;
 				}
 				value = l;
-			} else if (simExpr.getObject() instanceof Boolean) {
-				value = ((Boolean)simExpr.getObject()).booleanValue() ? 1 : 0;
+			} else if (val instanceof Boolean) {
+				value = ((Boolean)val).booleanValue() ? 1 : 0;
 			} else {
 				assert false;
 			}
 		}
 		else if (type.getBasicType() == BasicType.BOOL) {
-			if (simExpr.getObject() instanceof Number)
-				value = ((Number)simExpr.getObject()).doubleValue() != 0 ? 1 : 0;
-			else if (simExpr.getObject() instanceof Boolean)
-				value = ((Boolean)simExpr.getObject()).booleanValue() ? 1 : 0;
+			if (val instanceof Number)
+				value = ((Number)val).doubleValue() != 0 ? 1 : 0;
+			else if (val instanceof Boolean)
+				value = ((Boolean)val).booleanValue() ? 1 : 0;
 			else
 				assert false;
 			
 		}
 		else if (type.getBasicType() == BasicType.FLOATING) {
-			if (simExpr.getObject() instanceof Number)
-				value = ((Number)simExpr.getObject()).doubleValue();
-			else if (simExpr.getObject() instanceof Boolean)
-				value = ((Boolean)simExpr.getObject()).booleanValue() ? 1. : 0.;
+			if (val instanceof Number)
+				value = ((Number)val).doubleValue();
+			else if (val instanceof Boolean)
+				value = ((Boolean)val).booleanValue() ? 1. : 0.;
 			else
 				assert false;
 		}
-		if (value != null) {
-			return new LLConstOp(type, value);
-		}
-		return null;
+		return value;
 	}
 
 }
