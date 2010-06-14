@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.launch;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -19,6 +20,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.sourcelookup.ISourceContainer;
 import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
@@ -41,7 +43,8 @@ public class TCFSourcePathComputerDelegate implements ISourcePathComputerDelegat
         String program_name = configuration.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, (String)null);
         String path = TCFLaunchDelegate.getProgramPath(project_name, program_name);
         if (path != null) {
-            IFile[] files = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocation(new Path(path));
+            URI uri = URIUtil.toURI(new Path(path));
+            IFile[] files = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
             if (files != null && files.length > 0) {
                 HashSet<IProject> projects = new HashSet<IProject>();
                 for (IFile file : files) projects.add(file.getProject());

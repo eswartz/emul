@@ -25,7 +25,7 @@ public class TCFSystemViewProcessAdapterFactory implements IAdapterFactory {
     private final TCFSystemViewRemoteProcessAdapter adapter =
         new TCFSystemViewRemoteProcessAdapter();
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Object getAdapter(Object adaptableObject, Class adapterType) {
         assert adaptableObject instanceof TCFRemoteProcess;
         if (adapterType == IPropertySource.class) {
@@ -34,7 +34,7 @@ public class TCFSystemViewProcessAdapterFactory implements IAdapterFactory {
         return adapter;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Class[] getAdapterList() {
         return new Class[] {
             ISystemViewElementAdapter.class,

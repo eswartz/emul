@@ -129,7 +129,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @see IAdaptable#getAdapter(Class)
      */
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Object getAdapter(final Class adapter) {
         if (adapter.isInstance(model)) return model;
         Object o = model.getAdapter(adapter, TCFNode.this);

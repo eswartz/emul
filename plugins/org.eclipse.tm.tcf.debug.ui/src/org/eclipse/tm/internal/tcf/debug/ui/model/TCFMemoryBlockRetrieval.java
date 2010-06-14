@@ -354,8 +354,8 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
             return ITCFConstants.ID_TCF_DEBUG_MODEL;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
+        @SuppressWarnings("rawtypes")
         public Object getAdapter(Class adapter) {
             if (adapter == IMemoryBlockRetrieval.class) return TCFMemoryBlockRetrieval.this;
             if (adapter == IMemoryBlockRetrievalExtension.class) return TCFMemoryBlockRetrieval.this;

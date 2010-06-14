@@ -206,19 +206,19 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
             final ILaunch launch, final IProgressMonitor monitor) throws CoreException {
         String local_id = null;
         int task_cnt = 1;
-        if (configuration.getAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, true)) {
+        if (configuration.getAttribute(ATTR_RUN_LOCAL_AGENT, true)) {
             task_cnt++;
             if (monitor != null) monitor.beginTask("Starting TCF Agent", task_cnt); //$NON-NLS-1$
             local_id = TCFLocalAgent.runLocalAgent();
         }
-        else if (configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true)) {
+        else if (configuration.getAttribute(ATTR_USE_LOCAL_AGENT, true)) {
             task_cnt++;
             if (monitor != null) monitor.beginTask("Searching TCF Agent", task_cnt); //$NON-NLS-1$
             local_id = TCFLocalAgent.getLocalAgentID();
         }
         if (monitor != null) monitor.beginTask("Launching TCF debugger session", task_cnt); //$NON-NLS-1$
         final String id =
-            configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true) ?
+            configuration.getAttribute(ATTR_USE_LOCAL_AGENT, true) ?
                     local_id : configuration.getAttribute(ATTR_PEER_ID, "");
         Protocol.invokeLater(new Runnable() {
             public void run() {

@@ -23,8 +23,7 @@ import org.eclipse.tm.tcf.util.TCFTask;
 
 public class TCFLaunchAdapterFactory implements IAdapterFactory {
 
-    @SuppressWarnings("unchecked")
-    private static final Class[] adapter_list = {
+    private static final Class<?>[] adapter_list = {
         IElementLabelProvider.class,
         IElementContentProvider.class,
         IModelProxyFactory.class,
@@ -33,7 +32,7 @@ public class TCFLaunchAdapterFactory implements IAdapterFactory {
 
     private static final IElementLabelProvider launch_label_provider = new TCFLaunchLabelProvider();
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Object getAdapter(final Object from, final Class to) {
         if (from instanceof TCFLaunch) {
             if (to == IElementLabelProvider.class) return launch_label_provider;
@@ -52,7 +51,7 @@ public class TCFLaunchAdapterFactory implements IAdapterFactory {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Class[] getAdapterList() {
         return adapter_list;
     }

@@ -26,7 +26,7 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
 
     private final BreakpointCommand breakpoint_command = new BreakpointCommand();
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Object getAdapter(Object obj, Class cls) {
         if (obj instanceof TCFNode) {
             if (cls == IToggleBreakpointsTarget.class) return breakpoint_command;
@@ -35,7 +35,8 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
         return null;
     }
 
-    public Class<?>[] getAdapterList() {
+    @SuppressWarnings("rawtypes")
+    public Class[] getAdapterList() {
         return adapter_list;
     }
 }

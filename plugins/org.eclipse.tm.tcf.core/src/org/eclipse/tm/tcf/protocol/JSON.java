@@ -449,7 +449,7 @@ public final class JSON {
      * Clients should not call this method directly, except from ObjectWriter implementation.
      * @param o - an object to write
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void writeObject(Object o) throws IOException {
         if (o == null) {
             write("null");

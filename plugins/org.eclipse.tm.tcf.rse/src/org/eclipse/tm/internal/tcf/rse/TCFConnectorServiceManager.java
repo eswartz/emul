@@ -28,8 +28,8 @@ public class TCFConnectorServiceManager extends AbstractConnectorServiceManager 
         return new TCFConnectorService(host, TCF_PORT);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
+    @SuppressWarnings("rawtypes")
     public Class getSubSystemCommonInterface(ISubSystem subsystem) {
         return ITCFSubSystem.class;
     }

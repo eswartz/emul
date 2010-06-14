@@ -40,7 +40,7 @@ public class TCFDetailPaneFactory implements IDetailPaneFactory {
         return TCFDetailPane.DESC;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Set getDetailPaneTypes(IStructuredSelection selection) {
         HashSet<String> set = new HashSet<String>();
         set.add(TCFDetailPane.ID);

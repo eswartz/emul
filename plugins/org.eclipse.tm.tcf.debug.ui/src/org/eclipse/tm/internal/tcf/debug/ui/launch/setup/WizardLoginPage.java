@@ -14,7 +14,10 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Preferences;
+import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferencePage;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.preference.PreferenceManager;
@@ -66,10 +69,10 @@ class WizardLoginPage extends WizardPage implements Listener {
     public void handleEvent(Event event) {
         getContainer().updateButtons();
 
-        Preferences p = Activator.getDefault().getPluginPreferences();
-        p.setValue(PREF_PROTOCOL, protocol.getText());
-        p.setValue(PREF_HOST, host.getText());
-        p.setValue(PREF_USER, user.getText());
+        IEclipsePreferences n = new InstanceScope().getNode(Activator.PLUGIN_ID);
+        n.put(PREF_PROTOCOL, protocol.getText());
+        n.put(PREF_HOST, host.getText());
+        n.put(PREF_USER, user.getText());
 
         root_password.setEnabled(!user.getText().equals("root"));
         prefs.setEnabled(protocol.getText().equals(protocols[1]));
@@ -140,11 +143,14 @@ class WizardLoginPage extends WizardPage implements Listener {
         root_password.setLayoutData(gd);
         root_password.addListener(SWT.KeyUp, this);
 
-        Preferences p = Activator.getDefault().getPluginPreferences();
-        p.setDefault(PREF_PROTOCOL, protocols[0]);
-        protocol.setText(p.getString(PREF_PROTOCOL));
-        host.setText(p.getString(PREF_HOST));
-        user.setText(p.getString(PREF_USER));
+        IEclipsePreferences d = new DefaultScope().getNode(Activator.PLUGIN_ID);
+        d.put(PREF_PROTOCOL, protocols[0]);
+
+        IEclipsePreferences[] n = { new InstanceScope().getNode(Activator.PLUGIN_ID) };
+        IPreferencesService s = Platform.getPreferencesService();
+        protocol.setText(s.get(PREF_PROTOCOL, "", n));
+        host.setText(s.get(PREF_HOST, "", n));
+        user.setText(s.get(PREF_USER, "", n));
 
         root_password.setEnabled(!user.getText().equals("root"));
         prefs.setEnabled(protocol.getText().equals(protocols[1]));
@@ -152,7 +158,6 @@ class WizardLoginPage extends WizardPage implements Listener {
         setControl(composite);
     }
 
-    @SuppressWarnings("unchecked")
     private void openProtocolPreferences(Shell shell, String title) {
         try {
             PreferenceManager mgr = new PreferenceManager();
@@ -169,7 +174,7 @@ class WizardLoginPage extends WizardPage implements Listener {
                         String id = e[j].getAttribute("id"); //$NON-NLS-1$
                         if (id == null) id = cnm;
                         Bundle bundle = Platform.getBundle(extensions[i].getNamespaceIdentifier());
-                        Class c = bundle.loadClass(cnm);
+                        Class<?> c = bundle.loadClass(cnm);
                         IPreferencePage page = (IPreferencePage)c.newInstance();
                         String pnm = e[j].getAttribute("name"); //$NON-NLS-1$
                         if (pnm != null) page.setTitle(pnm);

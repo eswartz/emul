@@ -27,7 +27,7 @@ public class TCFProcessSubSystemConfiguration extends ProcessServiceSubSystemCon
     private final TCFProcessAdapter process_adapter = new TCFProcessAdapter();
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Class getServiceImplType() {
         return TCFProcessService.class;
     }

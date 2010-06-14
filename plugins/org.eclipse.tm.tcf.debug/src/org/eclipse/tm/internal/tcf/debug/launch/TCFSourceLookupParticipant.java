@@ -11,15 +11,17 @@
 package org.eclipse.tm.internal.tcf.debug.launch;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupParticipant;
-import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 
 /**
@@ -53,7 +55,8 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
         if (name != null) {
             IPath path = new Path(name);
             if (path.isAbsolute()) {
-                IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocation(path);
+                URI uri = URIUtil.toURI(path);
+                IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
                 if (arr != null && arr.length > 0) return arr;
             }
         }
@@ -69,12 +72,15 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
         }
         ArrayList<Object> list = new ArrayList<Object>();
         for (Object o : res) {
-            if (o instanceof LocalFileStorage) {
-                IPath path = ((LocalFileStorage)o).getFullPath();
-                IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocation(path);
-                if (arr != null && arr.length > 0) {
-                    for (Object x : arr) list.add(x);
-                    continue;
+            if (o instanceof IStorage) {
+                IPath path = ((IStorage)o).getFullPath();
+                if (path != null) {
+                    URI uri = URIUtil.toURI(path);
+                    IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+                    if (arr != null && arr.length > 0) {
+                        for (Object x : arr) list.add(x);
+                        continue;
+                    }
                 }
             }
             list.add(o);

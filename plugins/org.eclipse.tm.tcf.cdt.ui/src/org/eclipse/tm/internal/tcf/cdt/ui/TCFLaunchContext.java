@@ -253,10 +253,10 @@ public class TCFLaunchContext implements ITCFLaunchContext {
      * @throws CoreException
      */
     public boolean isBinary(IProject project, IPath path) throws CoreException {
-        ICExtensionReference[] parserRef = CCorePlugin.getDefault().getBinaryParserExtensions(project);
-        for (int i = 0; i < parserRef.length; i++) {
+        ICExtensionReference[] refs = CCorePlugin.getDefault().getBinaryParserExtensions(project);
+        for (int i = 0; i < refs.length; i++) {
             try {
-                IBinaryParser parser = (IBinaryParser)parserRef[i].createExtension();
+                IBinaryParser parser = (IBinaryParser)refs[i].createExtension();
                 if (parser.getBinary(path) != null) return true;
             }
             catch (Exception e) {

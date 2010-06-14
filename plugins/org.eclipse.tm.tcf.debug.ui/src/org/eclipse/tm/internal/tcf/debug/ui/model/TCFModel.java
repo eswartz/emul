@@ -134,8 +134,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
 
-    @SuppressWarnings("unchecked")
-    private final Map<Class,Object> adapters = new HashMap<Class,Object>();
+    private final Map<Class<?>,Object> adapters = new HashMap<Class<?>,Object>();
 
     private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
         new HashMap<String,IMemoryBlockRetrievalExtension>();
@@ -402,7 +401,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         adapters.put(IStepReturnHandler.class, new StepReturnCommand(this));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Object getAdapter(final Class adapter, final TCFNode node) {
         synchronized (adapters) {
             Object o = adapters.get(adapter);

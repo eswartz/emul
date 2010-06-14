@@ -82,7 +82,7 @@ public class TCFFileSubSystemConfiguration extends FileServiceSubSystemConfigura
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public Class getServiceImplType() {
         return TCFFileService.class;
     }
