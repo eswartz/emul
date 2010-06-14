@@ -58,7 +58,7 @@ public class TCFLocalAgent {
         return "agent/" + os + "/" + arch + "/" + fnm;
     }
 
-    static synchronized String runLocalAgent() throws CoreException {
+    public static synchronized String runLocalAgent() throws CoreException {
         if (destroed) return null;
         String id = getLocalAgentID();
         if (id != null) return id;

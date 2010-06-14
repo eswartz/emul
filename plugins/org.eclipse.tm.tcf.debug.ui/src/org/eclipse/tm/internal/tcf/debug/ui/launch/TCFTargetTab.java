@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.ProgressBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -62,6 +63,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.services.ILocator;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
+import org.eclipse.tm.tcf.util.TCFTask;
 
 
 /**
@@ -459,7 +461,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         button_test.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                runDiagnostics(peer_id_text.getText(), false);
+                runDiagnostics(false);
             }
         });
         final MenuItem item_test = new MenuItem(menu, SWT.PUSH);
@@ -472,7 +474,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         button_loop.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                runDiagnostics(peer_id_text.getText(), true);
+                runDiagnostics(true);
             }
         });
         final MenuItem item_loop = new MenuItem(menu, SWT.PUSH);
@@ -489,8 +491,8 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 button_new.setEnabled(!local);
                 button_edit.setEnabled(info != null && !local);
                 button_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer && !local);
-                button_test.setEnabled(info != null);
-                button_loop.setEnabled(info != null);
+                button_test.setEnabled(local || info != null);
+                button_loop.setEnabled(local || info != null);
                 item_new.setEnabled(!local);
                 item_edit.setEnabled(info != null && !local);
                 item_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer && !local);
@@ -860,9 +862,33 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         return i.getItem(info.index);
     }
 
-    private void runDiagnostics(String path, boolean loop) {
-        PeerInfo info = findPeerInfo(path);
-        if (info == null) return;
+    private void runDiagnostics(boolean loop) {
+        IPeer peer = null;
+        if (use_local_agent_button.getSelection()) {
+            try {
+                if (run_local_agent_button.getSelection()) TCFLocalAgent.runLocalAgent();
+                final String id = TCFLocalAgent.getLocalAgentID();
+                peer = new TCFTask<IPeer>() {
+                    public void run() {
+                        done(Protocol.getLocator().getPeers().get(id));
+                    }
+                }.get();
+            }
+            catch (Throwable err) {
+                String msg = err.getLocalizedMessage();
+                if (msg == null || msg.length() == 0) msg = err.getClass().getName();
+                MessageBox mb = new MessageBox(getShell(), SWT.ICON_ERROR | SWT.OK);
+                mb.setText("Error");
+                mb.setMessage("Cannot start agent:\n" + msg);
+                mb.open();
+            }
+        }
+        else {
+            PeerInfo info = findPeerInfo(peer_id_text.getText());
+            if (info == null) return;
+            peer = info.peer;
+        }
+        if (peer == null) return;
         final Shell shell = new Shell(getShell(), SWT.TITLE | SWT.PRIMARY_MODAL);
         GridLayout layout = new GridLayout();
         layout.verticalSpacing = 0;
@@ -896,10 +922,10 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         Rectangle rc1 = shell.getBounds();
         shell.setLocation(rc0.x + (rc0.width - rc1.width) / 2, rc0.y + (rc0.height - rc1.height) / 2);
         shell.setVisible(true);
-        runDiagnostics(info, loop, test, shell, label, bar);
+        runDiagnostics(peer, loop, test, shell, label, bar);
     }
 
-    private void runDiagnostics(final PeerInfo info, final boolean loop, final TCFTestSuite[] test,
+    private void runDiagnostics(final IPeer peer, final boolean loop, final TCFTestSuite[] test,
             final Shell shell, final CLabel label, final ProgressBar bar) {
         final TCFTestSuite.TestListener done = new TCFTestSuite.TestListener() {
             private String last_text = "";
@@ -934,7 +960,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                                     ImageCache.getImage(ImageCache.IMG_TCF), errors).open();
                         }
                         else if (loop && !b && display != null) {
-                            runDiagnostics(info, true, test, shell, label, bar);
+                            runDiagnostics(peer, true, test, shell, label, bar);
                         }
                         else {
                             shell.dispose();
@@ -950,7 +976,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                     for (ILaunchConfigurationTab t : getLaunchConfigurationDialog().getTabs()) {
                         if (t instanceof TCFPathMapTab) map = ((TCFPathMapTab)t).getPathMap();
                     }
-                    test[0] = new TCFTestSuite(info.peer, done, map);
+                    test[0] = new TCFTestSuite(peer, done, map);
                 }
                 catch (Throwable x) {
                     ArrayList<Throwable> errors = new ArrayList<Throwable>();
