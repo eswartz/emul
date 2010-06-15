@@ -25,6 +25,7 @@ tokens {
   ALLOC_TUPLE;
   ASSIGN;
   DEFINE;
+  REDEF;
   EXPR;
   LIST;
   TYPE;
@@ -632,6 +633,7 @@ data : DATA LBRACE fieldDecl* RBRACE  -> ^(DATA fieldDecl*) ;
 fieldDecl : varDecl SEMI -> varDecl 
     | defineStmt
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
+    | ID COLON_COLON_EQUALS toplevelvalue SEMI -> ^(REDEF ID toplevelvalue)
     ;
 
 FORWARD : 'forward';

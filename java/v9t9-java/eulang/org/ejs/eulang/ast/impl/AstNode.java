@@ -282,7 +282,7 @@ abstract public class AstNode implements IAstNode {
     	
     	Map<Integer, ISymbol> symbolMap = new HashMap<Integer, ISymbol>();
     	for (ISymbol symbol : scope) {
-    		ISymbol copySymbol = copy.copySymbol(symbol);
+    		ISymbol copySymbol = copy.copySymbol(symbol, true);
     		/*
     		ISymbol copySymbol = symbol.newInstance();
     		copy.add(copySymbol);

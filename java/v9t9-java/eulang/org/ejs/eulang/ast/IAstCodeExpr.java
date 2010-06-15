@@ -12,4 +12,9 @@ public interface IAstCodeExpr extends IAstTypedExpr, IAstStmtScope, IAstAttribut
 	IAstCodeExpr copy();
 	
 	IAstPrototype getPrototype();
+
+	/**
+	 * @param copy
+	 */
+	void setPrototype(IAstPrototype copy);
 }

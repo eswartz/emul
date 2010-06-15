@@ -650,6 +650,8 @@ public class TypeEngine {
 
 	private String getUniqueTypeName(LLType type) {
 		String name = type != null ? (type.getLLVMType() != null ? type.getLLVMType() : type.toString() + (type.isGeneric() ? "<g>" : "")) : "<u>";
+		if (type instanceof LLDataType)
+			name = ((LLDataType) type).getSymbol().getLLVMName() + "$" + name;
 		return name;
 	}
 	

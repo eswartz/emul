@@ -186,7 +186,8 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 			IAstTypedExpr baseExpr = expr;
 			if (baseExpr instanceof IAstDerefExpr)
 				baseExpr = ((IAstDerefExpr) baseExpr).getExpr();
-			if (baseExpr instanceof IAstSymbolExpr && replaceWithStaticOrMethodReference(exprType, ((IAstSymbolExpr)baseExpr).getDefinition()))
+			if (baseExpr instanceof IAstSymbolExpr && replaceWithStaticOrMethodReference(
+					typeEngine, ((IAstSymbolExpr)baseExpr).getDefinition()))
 				return true;
 			
 			if (!(exprType instanceof LLDataType)) {
@@ -199,11 +200,11 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 				matched = true;
 				fieldIdx = dataType.getFieldIndex(field);
 				fieldType = field.getType();
-				if (rewriteAllocMethodReference((LLInstanceField) field))
+				if (rewriteAllocMethodReference(typeEngine, dataType, (LLInstanceField) field))
 					return true;
 			} else {
 				// try for something in the same scope
-				if (replaceWithStaticOrMethodReference(dataType, dataType.getSymbol().getDefinition()))
+				if (replaceWithStaticOrMethodReference(typeEngine, dataType.getSymbol().getDefinition()))
 					return true;
 				if (!matched)
 					throw new TypeException(this.field, "no field '"+ this.field.getName() + "' in data '" + dataType.getName() + "'");
@@ -234,7 +235,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 * @return
 	 * @throws TypeException 
 	 */
-	private boolean replaceWithStaticOrMethodReference(LLType type, IAstNode node) throws TypeException {
+	private boolean replaceWithStaticOrMethodReference(TypeEngine typeEngine, IAstNode node) throws TypeException {
 		if (node instanceof IAstDefineStmt) {
 			IAstTypedExpr body = ((IAstDefineStmt) node).getMatchingBodyExpr(type);
 			if (body instanceof IAstScope) {
@@ -261,18 +262,30 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 							return false;		// not static
 					}
 					else
-					if (ref instanceof IAstCodeExpr && ((IAstCodeExpr) ref).hasAttr(IAstCodeExpr.THIS)) {
+					if (ref instanceof IAstCodeExpr && 
+							((IAstCodeExpr) ref).hasAttr(IAstCodeExpr.THIS)) {
+						
+						// do it later
+						//if (((IAstCodeExpr) ref).getType() == null)
+						//	return true;
+						
 						// and put the referent into the argument list
 						if (!(getParent() instanceof IAstFuncCallExpr)) {
 							throw new TypeException(node, "cannot reference method outside of function call"); 	// for now
 						}
+
+						LLCodeType codeType = (LLCodeType) ((IAstCodeExpr) ref).getType();
 						
 						IAstFuncCallExpr funcCall = (IAstFuncCallExpr) getParent();
 						IAstTypedExpr referent = getExpr();
 						referent.setParent(null);
 						
 						referent = new AstAddrOfExpr(referent);
-						referent.setSourceRef(getExpr().getSourceRef());
+						referent.setType(typeEngine.getPointerType(type));
+						if (codeType != null)
+							referent = createCastOn(typeEngine, referent, codeType.getArgTypes()[0]);
+
+						referent.setSourceRefTree(getExpr().getSourceRef());
 						funcCall.arguments().add(0, referent);
 						
 						funcCall.getFunction().setType(null);
@@ -294,7 +307,7 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 	 * @return
 	 * @throws TypeException 
 	 */
-	private boolean rewriteAllocMethodReference(LLInstanceField field) throws TypeException {
+	private boolean rewriteAllocMethodReference(TypeEngine typeEngine, LLDataType type, LLInstanceField field) throws TypeException {
 		if (field.getType() instanceof LLPointerType && field.getType().getSubType() instanceof LLCodeType 
 				&& field.hasAttr(IAstCodeExpr.THIS)) {
 			LLCodeType codeType = (LLCodeType) field.getType().getSubType();
@@ -311,7 +324,9 @@ public class AstFieldExpr extends AstTypedExpr implements IAstFieldExpr {
 				referent.uniquifyIds();
 				
 				referent = new AstAddrOfExpr(referent);
-				referent.setSourceRef(getExpr().getSourceRef());
+				referent.setType(typeEngine.getPointerType(type));
+				referent = createCastOn(typeEngine, referent, codeType.getArgTypes()[0]);
+				referent.setSourceRefTree(getExpr().getSourceRef());
 				funcCall.arguments().add(0, referent);
 				
 				funcCall.getFunction().setType(field.getType());

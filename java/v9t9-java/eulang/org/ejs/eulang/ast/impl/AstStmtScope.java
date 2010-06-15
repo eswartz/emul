@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.text.MessageFormat;
+
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
 import org.ejs.eulang.ast.IAstNode;
@@ -151,10 +153,17 @@ public abstract class AstStmtScope extends AstTypedExpr implements IAstStmtScope
 	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
 	 */
 	@Override
-	public void merge(IAstStmtScope added) throws ASTException {
+	public void merge(IAstStmtScope added, TypeEngine typeEngine) throws ASTException {
 		doMerge(stmtList, added.stmts());
 		for (ISymbol sym : added.getScope()) {
-			getScope().copySymbol(sym);
+			ISymbol exist = getScope().get(sym.getName());
+			if (exist != null) {
+				throw new ASTException(sym.getDefinition(), 
+						MessageFormat.format("symbol ''{0}'' already exists in ''{1}''",
+								sym.getName(), exist.getScope().toString()));
+			} else {
+				getScope().copySymbol(sym, true);
+			}
 		}
 	}
 

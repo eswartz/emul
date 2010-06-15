@@ -2343,6 +2343,88 @@ xes[3][2][1]
 		assertMatchText("@llvm.global_ctors", gen.getOptimizedText());
     }
 
+    
+    @Test
+    public void testDataVirtualMethod3a() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int = 3,5;\n"+
+    			"   op : code #this ( => Int) = code { x + y };\n"+			// 8 normally
+    			"   other : code #this(x:Int => Int) = code { -x + :x };\n"+	// don't conflict on 'x'
+    			"};\n"+
+    			"Derived = Class + data {\n"+
+    			"   op ::= code { x - y };\n"+		// redefining, now -2 normally
+    			"   y ::= 100;\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"	x : Class;\n"+
+    			"   y : Derived;\n"+
+    			"   x.op() * y.other(1);\n"+			// 8 * 2
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+		
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertMatchText("ret i16 16", gen.getOptimizedText());
+    }
+
+    @Test
+    public void testDataVirtualMethod3b() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int = 3,5;\n"+
+    			"   op : code #this ( => Int) = code { x + y };\n"+			// 8 normally
+    			"   other : code #this(x:Int => Int) = code { -x + :x };\n"+	// don't conflict on 'x'
+    			"};\n"+
+    			"Derived = Class + data {\n"+
+    			"   op ::= code { x - y };\n"+		// redefining, now -2 normally
+    			"   y ::= 100;\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"   y : Derived;\n"+
+    			"   y.op() * y.y;\n"+			// (3 - 100) * 100 
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+		
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertMatchText("ret i16 -9700", gen.getOptimizedText());
+    }
+    
+
+    @Test
+    public void testDataVirtualMethod3c() throws Exception {
+    	dumpLLVMGen = true;
+    	IAstModule mod = doFrontend(
+    			"Class = data {\n"+
+    			"   x,y:Int = 3,5;\n"+
+    			"   op : code #this ( => Int) = code { x + y };\n"+			// 8 normally
+    			"   other : code #this(x:Int => Int) = code { -x + :x };\n"+	// don't conflict on 'x'
+    			"};\n"+
+    			"Derived = Class + data {\n"+
+    			"   op ::= code { x - y };\n"+		// redefining, now -2 normally
+    			"   y ::= 100;\n"+
+    			"};\n"+
+    			"foo = code() {\n"+
+    			"   y : Derived;\n"+
+    			"   x : Class^ = &y;\n"+		// should not affect anything
+    			"   x.op() * x.y;\n"+			// (3 - 100) * 100 
+    			"};\n"+
+    	"");
+    	
+    	sanityTest(mod);
+		
+		LLVMGenerator gen = doGenerate(mod);
+		
+		assertMatchText("ret i16 -9700", gen.getOptimizedText());
+    }
+    
 }
 
 

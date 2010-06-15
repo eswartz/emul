@@ -197,8 +197,11 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	public boolean adaptToType(LLCodeType codeType) {
 		boolean changed = false;
 		changed = AstTypedNode.updateType(retType, codeType.getRetType());
+		LLType[] argTypes = codeType.getArgTypes();
 		for (int  i = 0; i < argumentTypes.length; i++) {
-			changed |= AstTypedNode.updateType(argumentTypes[i], codeType.getArgTypes()[i]);
+			if (i >= argTypes.length)
+				break;
+			changed |= AstTypedNode.updateType(argumentTypes[i], argTypes[i]);
 		}
 		return changed;
 	}

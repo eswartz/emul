@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast;
 
+import org.ejs.eulang.TypeEngine;
+
 /**
  * This is a scope that contains statements.
  * @author ejs
@@ -15,6 +17,7 @@ public interface IAstStmtScope extends IAstScope {
 	/**
 	 * Merge another scope into this one.
 	 * @param added
+	 * @param typeEngine TODO
 	 */
-	void merge(IAstStmtScope added) throws ASTException;
+	void merge(IAstStmtScope added, TypeEngine typeEngine) throws ASTException;
 }

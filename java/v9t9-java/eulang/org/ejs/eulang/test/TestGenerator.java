@@ -111,8 +111,8 @@ public class TestGenerator extends BaseTest {
 		assertEquals("y", prototype.argumentTypes()[1].getName());
 		assertNull(prototype.argumentTypes()[1].getType());
 		
-		assertEquals(prototype.argumentTypes()[0].getSymbolExpr().getSymbol().getScope(), codeExpr.getScope());
-		assertEquals(prototype.argumentTypes()[1].getSymbolExpr().getSymbol().getScope(), codeExpr.getScope());
+		assertNotNull(codeExpr.getScope().get(prototype.argumentTypes()[0].getName()));
+		assertNotNull(codeExpr.getScope().get(prototype.argumentTypes()[1].getName()));
 		
 		assertNotNull(codeExpr.stmts());
 		assertTrue(codeExpr.stmts().list().isEmpty());

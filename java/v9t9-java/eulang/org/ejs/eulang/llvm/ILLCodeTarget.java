@@ -22,6 +22,8 @@ import org.ejs.eulang.types.LLType;
  */
 public interface ILLCodeTarget {
 
+	ISymbol getSymbol();
+	
 	IScope getScope();
 	/**
 	 * @return the blocks

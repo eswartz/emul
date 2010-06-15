@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.ast;
 
+import java.util.List;
+
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -15,6 +17,8 @@ public interface IAstDataType extends IAstTypedExpr, IAstStmtScope, IAstType {
 	
 	ISymbol getTypeName();
 	void setTypeName(ISymbol typeName);
+	
+	List<IAstRedefinition> redefs();
 	
 	IAstNodeList<IAstTypedNode> getFields();
 	IAstNodeList<IAstTypedNode> getStatics();

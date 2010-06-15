@@ -59,6 +59,7 @@ import org.ejs.eulang.ast.impl.AstNilLitExpr;
 import org.ejs.eulang.ast.impl.AstNodeList;
 import org.ejs.eulang.ast.impl.AstPointerType;
 import org.ejs.eulang.ast.impl.AstPrototype;
+import org.ejs.eulang.ast.impl.AstRedefinition;
 import org.ejs.eulang.ast.impl.AstRefType;
 import org.ejs.eulang.ast.impl.AstRepeatExpr;
 import org.ejs.eulang.ast.impl.AstReturnStmt;
@@ -82,7 +83,10 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.symbols.NamespaceScope;
+import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLGenericType;
+import org.ejs.eulang.types.LLInstanceField;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeException;
@@ -415,6 +419,8 @@ public class GenerateAST {
 			return constructLiteral(tree);
 		case EulangParser.DEFINE:
 			return constructDefine(tree);
+		case EulangParser.REDEF:
+			return constructRedefinition(tree);
 		case EulangParser.FORWARD:
 			return constructForward(tree);
 		case EulangParser.ALLOC:
@@ -426,7 +432,7 @@ public class GenerateAST {
 		case EulangParser.TYPE:
 			return constructTypeExpr(tree);
 		case EulangParser.CODE:
-			return constructCodeExpr(tree);
+			return constructCodeExpr(tree, null);
 		case EulangParser.ARGDEF:
 			return constructArgDef(tree);
 			// case EulangParser.RETURN:
@@ -559,6 +565,54 @@ public class GenerateAST {
 	 * @return
 	 * @throws GenerateException 
 	 */
+	private IAstRedefinition constructRedefinition(Tree tree) throws GenerateException {
+		
+		String symExpr = tree.getChild(0).getText();
+		IAstTypedExpr expr = null;
+
+		ISymbol sym = currentScope.search(symExpr);
+		if (sym == null) {
+			throw new GenerateException(tree, "cannot redefine unknown symbol '" + symExpr + "'");
+		}
+		
+		// if redefining code, get the original context
+		if (sym.getDefinition() instanceof IAstAllocStmt) {
+			IAstAllocStmt existAlloc = (IAstAllocStmt) sym.getDefinition();
+			IAstType existType = existAlloc.getTypeExpr();
+			IAstPrototype proto = null;
+			if (existType instanceof IAstPointerType && ((IAstPointerType) existType).getBaseType() instanceof IAstPrototype)
+				proto = (IAstPrototype) ((IAstPointerType) existType).getBaseType();
+			else if (existType instanceof IAstPrototype)
+				proto = (IAstPrototype) existType;
+			
+			if (proto != null) {
+				try {
+					proto = proto.copy();
+					//if (proto.hasAttr(IAttrs.THIS))
+					//	adjustPrototypeForThisCall(tree, proto);
+					pushScope(new LocalScope(currentScope));
+					expr = constructCodeExpr(tree.getChild(1), proto);
+				} finally {
+					popScope(tree.getChild(1));
+				}
+			}
+		}
+		
+		if (expr == null) {
+			expr = checkConstruct(tree.getChild(1), IAstTypedExpr.class);
+		}
+		
+		IAstRedefinition redef = new AstRedefinition(symExpr, expr);
+		getSource(tree, redef);
+		
+		return redef;
+	}
+
+	/**
+	 * @param tree
+	 * @return
+	 * @throws GenerateException 
+	 */
 	private IAstNode constructCast(Tree tree) throws GenerateException {
 		boolean isUnsigned = false;
 		
@@ -637,7 +691,7 @@ public class GenerateAST {
 					IAstStmtScope.class);
 
 			try {
-				stmtScope.merge(added);
+				stmtScope.merge(added, typeEngine);
 			} catch (ASTException e) {
 				throw new GenerateException(e.getNode().getSourceRef(), e
 						.getMessage());
@@ -674,7 +728,7 @@ public class GenerateAST {
 		}
 
 		IAstStmtScope combined = (IAstStmtScope) def.copy();
-
+		
 		// make sure the new scope can see the original one...
 		pushScope(combined.getScope());
 		try {
@@ -684,7 +738,7 @@ public class GenerateAST {
 
 			// merge
 			try {
-				combined.merge(added);
+				combined.merge(added, typeEngine);
 			} catch (ASTException e) {
 				throw new GenerateException(e.getNode().getSourceRef(), e
 						.getMessage());
@@ -898,14 +952,15 @@ public class GenerateAST {
 				IAstTypedNode.class);
 		IAstNodeList<IAstTypedNode> statics = new AstNodeList<IAstTypedNode>(
 				IAstTypedNode.class);
-		AstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(
+		IAstNodeList<IAstStmt> stmts = new AstNodeList<IAstStmt>(
 				IAstStmt.class);
+		List<IAstRedefinition> redefs = new ArrayList<IAstRedefinition>();
 
 		pushScope(new NamespaceScope(currentScope));
 		
 		// make type early so we can identify it 
 		AstDataType dataType = new AstDataType(typeEngine, currentName,
-				stmts, fields, statics, currentScope);
+				stmts, fields, statics, redefs, currentScope);
 
 		try {
 			for (Tree kid : iter(tree)) {
@@ -913,6 +968,11 @@ public class GenerateAST {
 					IAstDefineStmt define = constructDefine(kid);
 					if (define != null)
 						stmts.add(define);
+					continue;
+				}
+				if (kid.getType() == EulangParser.REDEF) {
+					IAstRedefinition redef = constructRedefinition(kid);
+					redefs.add(redef);
 					continue;
 				}
 
@@ -939,8 +999,8 @@ public class GenerateAST {
 							alloc.attrs().addAll(((IAstAttributes) type).getAttrs());
 							
 							if (val == null && type instanceof IAstPrototype && alloc.hasAttr(IAstAttributes.THIS)) {
-								adjustPrototypeForThisCall(tree, kid, (IAstPrototype) type);
-								// destroy the types so we re-discover them 
+								adjustPrototypeForThisCall(tree, (IAstPrototype) type);
+								// destroy the types so we re-discover them (TODO: cleanup) 
 								type.setType(null);
 								alloc.getTypeExpr().setType(null);
 								alloc.getSymbolExprs().list().get(i).getSymbol().setType(null);
@@ -1334,12 +1394,21 @@ public class GenerateAST {
 		else
 			type = null;
 		
-		IAstNodeList<IAstTypedExpr> exprlist = null;
 
 		// XXX codeptr
 		// promote code allocs to pointers to function
+		boolean isCode = false;
 		if (type instanceof IAstPrototype) {
+			isCode = true;
 			type.setParent(null);
+			
+			/*
+			if (((IAstPrototype) type).hasAttr(IAttrs.THIS)) {
+				adjustPrototypeForThisCall(tree, (IAstPrototype) type);
+			}
+			*/
+			
+			
 			IAstPointerType ptr = new AstPointerType(typeEngine,
 					type);
 			ptr.setSourceRef(type.getSourceRef());
@@ -1348,6 +1417,8 @@ public class GenerateAST {
 		
 		IAstAllocStmt alloc = null;
 
+		IAstNodeList<IAstTypedExpr> exprlist = null;
+		
 		if (tree.getChild(idx).getType() == EulangParser.ID) {
 			IAstSymbolExpr symbolExpr = createSymbol(tree.getChild(idx++));
 
@@ -1360,7 +1431,15 @@ public class GenerateAST {
 							symbolExpr);
 
 			if (tree.getChildCount() > idx) {
-				IAstNode init = construct(tree.getChild(idx++));
+				
+				IAstNode init = null;
+
+				if (isCode) {
+					init = constructCodeForAlloc(type, tree.getChild(idx++));
+				} else {
+					init = construct(tree.getChild(idx++));
+				}
+					
 				if (init instanceof IAstNodeList)
 					exprlist = (IAstNodeList<IAstTypedExpr>) init;
 				else {
@@ -1368,6 +1447,28 @@ public class GenerateAST {
 					exprlist = AstNodeList.<IAstTypedExpr> singletonList(
 							IAstTypedExpr.class, expr);
 				}
+					
+					/*
+					if (isCode) {
+						for (IAstTypedExpr expr : exprlist.list()) {
+							if (expr instanceof IAstCodeExpr) {
+								LLType exprType = expr.getType();
+								IAstPrototype proto = exprType instanceof IAstPointerType  && ((IAstPointerType) exprType).getBaseType() instanceof IAstPrototype ?
+										(IAstPrototype)((IAstPointerType) exprType).getBaseType() : exprType instanceof IAstPrototype ? (IAstPrototype) exprType : typeProto;
+										
+								if ((attrs.contains(IAttrs.THIS) || (proto != null && !proto.hasAttr(IAttrs.THIS)))  
+										&& !((IAstCodeExpr) expr).hasAttr(IAttrs.THIS)) {
+									adjustPrototypeForThisCall(tree, ((IAstCodeExpr) expr).getPrototype());
+								}
+							}
+						}
+					}
+				} finally {
+					if (isCode) {
+						popScope(tree.getChild(idx-1));
+					}
+				}
+					 */
 			}
 
 			alloc = new AstAllocStmt(idlist, type, exprlist, false, attrs);
@@ -1449,6 +1550,54 @@ public class GenerateAST {
 
 		setLHS(alloc.getSymbolExprs());
 		return alloc;
+	}
+
+	/**
+	 * @param type
+	 * @param tree 
+	 * @throws GenerateException 
+	 */
+	private IAstNode constructCodeForAlloc(IAstType type, Tree tree) throws GenerateException {
+		IAstNode init = null;
+		try {
+			IAstPrototype typeProto = null;
+			pushScope(new LocalScope(currentScope));
+			
+			typeProto = type instanceof IAstPointerType  && ((IAstPointerType) type).getBaseType() instanceof IAstPrototype ?
+					(IAstPrototype)((IAstPointerType) type).getBaseType() : type instanceof IAstPrototype ? (IAstPrototype) type : null;
+
+			if (typeProto != null && tree.getType() == EulangParser.CODE) {
+				
+				//if (typeProto.hasAttr(IAttrs.THIS)) {
+				//	adjustPrototypeForThisCall(tree, typeProto);
+				//}
+				
+				init = constructCodeExpr(tree, typeProto);
+			} else {
+				init = construct(tree);
+			}
+
+			/*
+			if (isCode) {
+				for (IAstTypedExpr expr : exprlist.list()) {
+					if (expr instanceof IAstCodeExpr) {
+						LLType exprType = expr.getType();
+						IAstPrototype proto = exprType instanceof IAstPointerType  && ((IAstPointerType) exprType).getBaseType() instanceof IAstPrototype ?
+								(IAstPrototype)((IAstPointerType) exprType).getBaseType() : exprType instanceof IAstPrototype ? (IAstPrototype) exprType : typeProto;
+								
+						if ((attrs.contains(IAttrs.THIS) || (proto != null && !proto.hasAttr(IAttrs.THIS)))  
+								&& !((IAstCodeExpr) expr).hasAttr(IAttrs.THIS)) {
+							adjustPrototypeForThisCall(tree, ((IAstCodeExpr) expr).getPrototype());
+						}
+					}
+				}
+			}*/
+			
+		} finally {
+			popScope(tree);
+
+		}
+		return init;
 	}
 
 	public IAstNode constructAllocTuple(Tree tree) throws GenerateException {
@@ -1756,10 +1905,17 @@ public class GenerateAST {
 				// for 'this' refs, break now and handle below
 				if (startScope.getOwner() instanceof IAstDataType /*&& symbol.getDefinition() instanceof IAstAllocStmt*/
 						/*&& TODO: is a non-static field */) {
-					ISymbol thisSym =currentScope.search("this");
+					
+					LLDataType type = (LLDataType) ((IAstDataType) startScope.getOwner()).getType();
+					boolean needsThis = false;
+					needsThis = (type.getField(symbol.getName()) instanceof LLInstanceField);
+					
+					ISymbol thisSym = currentScope.search("this");
 					if (thisSym != null) {
 						symbol = thisSym;
 						idx--;
+					} else if (needsThis) {
+						throw new GenerateException(tree, "cannot reference instance field ' "+symbol.getName() + "' from this scope (try #this)");
 					}
 				}
 				symExpr = new AstSymbolExpr(false, symbol);
@@ -2218,24 +2374,30 @@ public class GenerateAST {
 					if (idx < tree.getChildCount() && tree.getChild(idx).getType() == EulangParser.ATTRS)
 						attrs = constructAttrs(tree.getChild(idx++));
 					
-					IAstPrototype proto = checkConstruct(tree.getChild(idx++),
-							IAstPrototype.class);
-					if (proto.hasDefaultArguments()) {
-						throw new GenerateException(tree.getChild(2),
-								"cannot use default arguments in code type");
+					// make scope for the arg names
+					pushScope(new LocalScope(currentScope));
+					try {
+						IAstPrototype proto = checkConstruct(tree.getChild(idx++),
+								IAstPrototype.class);
+						if (proto.hasDefaultArguments()) {
+							throw new GenerateException(tree.getChild(2),
+									"cannot use default arguments in code type");
+						}
+						
+						if (tree.getChildCount() > idx)
+							throw new GenerateException(tree.getChild(idx),
+									"did not expect code block here");
+	
+						// type = new
+						// AstType(typeEngine.getCodeType(proto.returnType(), proto
+						// .argumentTypes()));
+						if (!attrs.isEmpty())
+							proto.attrs().addAll(attrs);
+						
+						type = proto;
+					} finally {
+						popScope(tree.getChild(idx-1));
 					}
-					
-					if (tree.getChildCount() > idx)
-						throw new GenerateException(tree.getChild(idx),
-								"did not expect code block here");
-
-					// type = new
-					// AstType(typeEngine.getCodeType(proto.returnType(), proto
-					// .argumentTypes()));
-					if (!attrs.isEmpty())
-						proto.attrs().addAll(attrs);
-					
-					type = proto;
 				}
 			} else if (tree.getType() == EulangParser.DATA) {
 				IAstDataType dataType = checkConstruct(tree, IAstDataType.class);
@@ -2294,7 +2456,7 @@ public class GenerateAST {
 		ISymbol typeVar = currentScope.get(typeSym.getName());
 		if (typeVar == null) {
 			assert currentScope != typeSym.getScope();
-			typeVar = currentScope.copySymbol(typeSym);
+			typeVar = currentScope.copySymbol(typeSym, true);
 			typeVar.setDefinition(symbolExpr);
 		}
 		symbolExpr.setSymbol(typeVar);
@@ -2402,7 +2564,7 @@ public class GenerateAST {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public IAstTypedExpr constructCodeExpr(Tree tree) throws GenerateException {
+	public IAstTypedExpr constructCodeExpr(Tree tree, final IAstPrototype forProto) throws GenerateException {
 		assert tree.getChildCount() > 0;
 		Set<String> attrs = Collections.emptySet();
 		
@@ -2424,12 +2586,12 @@ public class GenerateAST {
 		*/
 
 		
-		pushScope(new LocalScope(currentScope));
+		if (forProto == null) {
+			pushScope(new LocalScope(currentScope));
+		}
 		try {
 			IAstPrototype proto;
-			Tree protoTree = tree;
 			if (tree.getChild(idx).getType() == EulangParser.PROTO) {
-				protoTree = tree.getChild(idx);
 				proto = checkConstruct(tree.getChild(idx), IAstPrototype.class);
 
 				boolean hitDefaults = false;
@@ -2449,6 +2611,16 @@ public class GenerateAST {
 					}
 				}
 				idx++;
+			} else if (forProto != null) {
+				proto = forProto.copy();
+				proto.uniquifyIds();
+				for (IAstArgDef argDef : proto.argumentTypes()) {
+					ISymbol argSym = currentScope.add(argDef.getName(), false);
+					LLType type = argDef.getSymbolExpr() != null ? argDef.getSymbolExpr().getSymbol().getType() : argDef.getType();
+					argSym.setType(type);
+					argSym.setDefinition(argDef);
+				}
+				
 			} else {
 				IAstType unspecified = new AstType(null);
 				getEmptySource(tree, unspecified);
@@ -2458,8 +2630,11 @@ public class GenerateAST {
 			}
 			
 			// adjust for method
-			if (attrs.contains(IAttrs.THIS)) {
-				adjustPrototypeForThisCall(tree, protoTree, proto);
+			if (attrs.contains(IAttrs.THIS) || proto.hasAttr(IAttrs.THIS)) {
+				adjustPrototypeForThisCall(tree, proto);
+				if (attrs.size() == 0)
+					attrs = new HashSet<String>();
+				attrs.add(IAttrs.THIS);
 			}
 			
 			// now parse the code
@@ -2471,11 +2646,13 @@ public class GenerateAST {
 			getSource(tree, codeExpr);
 			return codeExpr;
 		} finally {
-			popScope(tree);
+			if (forProto == null) {
+				popScope(tree);
+			}
 		}
 	}
 
-	private void adjustPrototypeForThisCall(Tree tree, Tree protoTree,
+	private void adjustPrototypeForThisCall(Tree tree, 
 			IAstPrototype proto) throws GenerateException {
 		IScope data = currentScope;
 		while (data != null && !(data.getOwner() instanceof IAstDataType)) {
@@ -2484,16 +2661,36 @@ public class GenerateAST {
 		if (data == null) {
 			throw new GenerateException(tree, "cannot mark #this on code outside of data");
 		}
+		IScope localScope = currentScope;
 		
-		ISymbol thisSym = currentScope.add("this", false);
+		adjustPrototypeForThisCall(typeEngine, proto, data,
+				localScope);
+		
+	}
+
+	public static IAstArgDef adjustPrototypeForThisCall(TypeEngine typeEngine,
+			IAstPrototype proto,
+			IScope data, IScope localScope) {
+		
+		if (localScope == data) {
+			localScope = new LocalScope(data);
+		}
+		if (proto.getArgCount() > 0 && proto.argumentTypes()[0].getName().equals("this"))
+			return proto.argumentTypes()[0];
+		
+		ISymbol thisSym = localScope.add("this", false);
 		IAstSymbolExpr thisName = new AstSymbolExpr(true, thisSym);
 		IAstArgDef thisArgDef = new AstArgDef(thisName, new AstType(null), null, Collections.<String>emptySet());
-		thisArgDef.setSourceRefTree(getEmptySourceRef(protoTree));
 		proto.addArgument(0, thisArgDef);
 		thisSym.setDefinition(thisArgDef);
+		proto.setType(null);
 		
 		LLSymbolType symType = new LLSymbolType(((IAstDataType) data.getOwner()).getTypeName());
 		thisSym.setType(typeEngine.getPointerType(symType));
+
+		thisArgDef.setSourceRefTree(proto.getSourceRef());
+		
+		return thisArgDef;
 	}
 
 	/**

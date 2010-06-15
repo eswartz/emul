@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.ejs.eulang.ISourceRef;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstAllocStmt;
@@ -405,8 +404,7 @@ public class ExpandAST {
 			removeGenerics(copy);
 
 			IAstStmtListExpr stmtListExpr  = doExpandFuncCallExpr(messages, funcCallExpr, funcCallExpr.arguments(),
-					(IAstCodeExpr) copy,
-					node.getOwnerScope());
+					(IAstCodeExpr) copy);
 			
 			if (stmtListExpr != null) 
 				funcCallExpr.getParent().replaceChild(funcCallExpr, stmtListExpr);
@@ -480,8 +478,7 @@ public class ExpandAST {
 	 */
 	private IAstStmtListExpr doExpandFuncCallExpr(
 			Collection<Message> messages, IAstNode node, IAstNodeList<IAstTypedExpr> args,
-			IAstCodeExpr codeExpr,
-			IScope parentScope
+			IAstCodeExpr codeExpr
 			) throws ASTException {
 		
 		// get the scope into which new temporaries go
@@ -492,20 +489,6 @@ public class ExpandAST {
 		
 		IAstNodeList<IAstStmt> blockList = new AstNodeList<IAstStmt>(IAstStmt.class);
 		
-		// mark all the symbols temporary so they don't collide,
-		// and move them into the other scope
-		
-		/*
-		// TODO: rename to "@" syntax and remap symbols... or allow remapping as temporaries when copying a scope
-		ISymbol[] origSyms = codeExpr.getScope().getSymbols();
-		for (ISymbol sym : origSyms) {
-			// this refers to the copied definition
-			sym.setTemporary(true);
-			sym.getScope().remove(sym);
-			parentScope.add(sym);
-			sym.setVisibility(ISymbol.Visibility.LOCAL);
-		}
-		*/
 		// Substitute arguments
 		IAstArgDef[] protoArgs = codeExpr.getPrototype().argumentTypes();
 		if (args.nodeCount() < codeExpr.getPrototype().getDefaultArgumentIndex()) {
@@ -523,8 +506,10 @@ public class ExpandAST {
 				realArg = realArgs[i];
 				if (realArg instanceof IAstDerefExpr)
 					realArg = ((IAstDerefExpr) realArg).getExpr();
-				protoArg.getSymbolExpr().getSymbol().setDefinition(realArg);
-				expandedArgs.put(protoArg.getSymbolExpr().getSymbol(), realArg);
+				ISymbol argSym = codeExpr.getScope().get(protoArg.getName());
+				assert argSym != null;
+				argSym.setDefinition(realArg);
+				expandedArgs.put(argSym, realArg);
 			}
 			else {
 				realArg = (IAstTypedExpr) protoArg.getDefaultValue().copy();
@@ -570,8 +555,8 @@ public class ExpandAST {
 			
 			if (!protoArg.hasAttr(IAstCodeExpr.MACRO)) {
 				realArg.setParent(null);	// deleting call
-				IAstSymbolExpr symCopy = protoArg.getSymbolExpr();
-				symCopy.setParent(null);
+				IAstSymbolExpr symCopy = new AstSymbolExpr(true, codeExpr.getScope().get(protoArg.getName()));
+				symCopy.setSourceRef(realArg.getSourceRef());
 				IAstType typeExprCopy = protoArg.getTypeExpr();
 				if (typeExprCopy != null) {
 					typeExprCopy.setParent(null);
@@ -591,12 +576,13 @@ public class ExpandAST {
 				blockList.add(realArgIdx++, argAlloc);
 			} else {
 				// For macro arguments, the actual argument is directly replaced
+				ISymbol argSym = codeExpr.getScope().get(protoArg.getName());
 				if (realArg instanceof IAstSymbolExpr) {
-					IAstNode rootDef = protoArg.getSymbolExpr().getSymbol().getDefinition();
+					IAstNode rootDef = argSym.getDefinition();
 					assert rootDef != null;
 					((IAstSymbolExpr)realArg).getSymbol().setDefinition(rootDef);
 				}
-				replaceInTree(codeExpr.stmts(), protoArg.getSymbolExpr().getSymbol(), realArg);
+				replaceInTree(codeExpr.stmts(), argSym, realArg);
 			}
 		}
 		

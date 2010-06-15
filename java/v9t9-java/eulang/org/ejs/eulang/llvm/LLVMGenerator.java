@@ -71,6 +71,7 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.IAstUnaryExpr;
 import org.ejs.eulang.ast.IAstDerefExpr;
 import org.ejs.eulang.ast.IAstWhileExpr;
+import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
@@ -322,7 +323,7 @@ public class LLVMGenerator {
 					assert false;
 				}
 				else {
-					currentTarget = new StaticDataCodeTarget(this, target, ll, ll.getModuleScope());
+					currentTarget = new StaticDataCodeTarget(this, symbol.getSymbol(), target, ll, ll.getModuleScope());
 					
 					value.simplify(typeEngine);
 					try {
@@ -617,8 +618,8 @@ public class LLVMGenerator {
 			// will be accessed only on the frame in the best case
 			for (IAstArgDef argDef : code.getPrototype().argumentTypes()) {
 
-				ISymbol argSymbol = argDef.getSymbolExpr().getSymbol();
-				LLOperand argVal = generateSymbolExpr(argDef.getSymbolExpr());
+				ISymbol argSymbol = code.getScope().get(argDef.getName());
+				LLOperand argVal = generateSymbolExpr(new AstSymbolExpr(true, argSymbol));
 				/* LLVariableOp argAddrOp = */makeLocalStorage(argSymbol,
 						argDef, argVal);
 			}
@@ -1311,7 +1312,7 @@ public class LLVMGenerator {
 	 * @return
 	 */
 	private LLOperand generateCodeExpr(IAstCodeExpr expr) throws ASTException {
-		ISymbol codeSym = currentTarget.getScope().addTemporary("$inner");
+		ISymbol codeSym = currentTarget.getScope().addTemporary(currentTarget.getSymbol().getLLVMName() + "$inner");
 		codeSym.setVisibility(ISymbol.Visibility.MODULE);
 		
 		Pair<LLDefineDirective, ISymbol> info = generateGlobalCode(codeSym, expr);

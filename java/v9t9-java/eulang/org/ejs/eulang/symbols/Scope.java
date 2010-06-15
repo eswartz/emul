@@ -245,8 +245,6 @@ public abstract class Scope implements IScope {
 	 */
 	@Override
 	public ISymbol addTemporary(String name) {
-		//if (uniquifyt)
-		//	name += "@" + counter.get();
 		ISymbol symbol = createSymbol(name, true);
 		entries.put(symbol.getUniqueName(), symbol);
 		return symbol;		
@@ -269,13 +267,13 @@ public abstract class Scope implements IScope {
 	 * @see org.ejs.eulang.symbols.IScope#copySymbol(org.ejs.eulang.symbols.ISymbol)
 	 */
 	@Override
-	public ISymbol copySymbol(ISymbol symbol) {
+	public ISymbol copySymbol(ISymbol symbol, boolean add) {
 		ISymbol copySymbol = new Symbol(symbol.getNumber(), symbol.getName(), 
 					symbol.getVisibility(), symbol.getType(), 
 					symbol.isTemporary(), 
 					null, symbol.getDefinition(), symbol.isAddressed());
-		add(copySymbol);
 		copySymbol.setType(symbol.getType());
+		if (add) add(copySymbol);
 		return copySymbol;
 	}
 	

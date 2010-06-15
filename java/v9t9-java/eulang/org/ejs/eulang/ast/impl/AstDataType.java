@@ -11,6 +11,7 @@ import java.util.Set;
 import org.ejs.eulang.IOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.GenerateAST;
 import org.ejs.eulang.ast.IAstAllocStmt;
 import org.ejs.eulang.ast.IAstAssignStmt;
 import org.ejs.eulang.ast.IAstAttributes;
@@ -20,7 +21,10 @@ import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstLitExpr;
 import org.ejs.eulang.ast.IAstNode;
 import org.ejs.eulang.ast.IAstNodeList;
+import org.ejs.eulang.ast.IAstPointerType;
 import org.ejs.eulang.ast.IAstPrototype;
+import org.ejs.eulang.ast.IAstRedefinition;
+import org.ejs.eulang.ast.IAstScope;
 import org.ejs.eulang.ast.IAstStmt;
 import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstSymbolExpr;
@@ -29,6 +33,7 @@ import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
+import org.ejs.eulang.test.BaseTest;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLInstanceField;
@@ -45,6 +50,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 
 	private IAstNodeList<IAstTypedNode> statics;
 	private IAstNodeList<IAstTypedNode> ifields;
+	private List<IAstRedefinition> redefs;
 	private ISymbol typeName;
 	private IAstCodeExpr initCode;
 	private ISymbol initName;
@@ -54,11 +60,13 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 			IAstNodeList<IAstStmt> stmts,
 			IAstNodeList<IAstTypedNode> fields,
 			IAstNodeList<IAstTypedNode> statics, 
+			List<IAstRedefinition> redefs, 
 			IScope scope) {
 		super(stmts, scope);
 		this.typeName = typeName;
 		setFields(fields);
 		setStatics(statics);
+		this.redefs = redefs;
 		
 		// TODO: some assumption about whether type will exist here from callers
 		if (typeName != null)
@@ -69,11 +77,13 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 			IAstNodeList<IAstStmt> stmts,
 			IAstNodeList<IAstTypedNode> fields,
 			IAstNodeList<IAstTypedNode> statics, 
+			List<IAstRedefinition> redefs, 
 			IScope scope) {
 		super(stmts, scope);
 		this.typeName = typeName;
 		setFields(fields);
 		setStatics(statics);
+		this.redefs = redefs;
 		setType(type);
 	}
 
@@ -86,7 +96,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 				type,
 				typeName,
 				doCopy(stmtList),
-				doCopy(ifields), doCopy(statics),
+				doCopy(ifields), doCopy(statics), redefs,
 				getScope().newInstance(getCopyScope())));
 	}
 
@@ -98,6 +108,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 		int result = super.hashCode();
 		result = prime * result + ((ifields == null) ? 0 : ifields.hashCode());
 		result = prime * result + ((statics == null) ? 0 : statics.hashCode());
+		result = prime * result + ((redefs == null) ? 0 : redefs.hashCode());
 		return result;
 	}
 
@@ -119,6 +130,11 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 			if (other.statics != null)
 				return false;
 		} else if (!statics.equals(other.statics))
+			return false;
+		if (redefs == null) {
+			if (other.redefs != null)
+				return false;
+		} else if (!redefs.equals(other.redefs))
 			return false;
 		return true;
 	}
@@ -161,6 +177,14 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	@Override
 	public void setStatics(IAstNodeList<IAstTypedNode> statics) {
 		this.statics = reparent(this.statics, statics);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstDataType#redefs()
+	 */
+	@Override
+	public List<IAstRedefinition> redefs() {
+		return redefs;
 	}
 
 	/* (non-Javadoc)
@@ -209,6 +233,13 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 */
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
+		if (!redefs.isEmpty())  {
+			StringBuilder sb = new StringBuilder();
+			for (IAstRedefinition redef : redefs)
+				sb.append(sb.length() == 0 ? ' ' : ',').append(redef);
+			throw new TypeException(redefs.get(0), "type declares redefinitions of names that don't exist in target scope:" + sb);
+		}
+		
 		// XXX codeptr
 		for (IAstTypedNode node : ifields.list()) {
 			if (node instanceof IAstAllocStmt) {
@@ -312,13 +343,115 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
 	 */
 	@Override
-	public void merge(IAstStmtScope added) throws ASTException {
+	public void merge(IAstStmtScope added, TypeEngine typeEngine) throws ASTException {
+		
 		if (added instanceof IAstDataType) {
-			doMerge(ifields, ((IAstDataType) added).getFields());
-			doMerge(statics, ((IAstDataType) added).getStatics());
+			IAstDataType addedData = (IAstDataType) added;
+
+			setTypeName(addedData.getTypeName());
+			
+			// merge any redefs
+			for (IAstRedefinition redef : addedData.redefs()) {
+				// update any pending redefs
+				boolean matched = false;
+				IAstTypedExpr body = (IAstTypedExpr) redef.getExpr().copy();
+				
+				for (IAstRedefinition exredef : redefs) {
+					if (exredef.getSymbol().equals(redef.getSymbol())) {
+						// update
+						exredef.setExpr(body);
+						matched = true;
+						break;
+					}
+				}
+				if (matched)
+					continue;
+				
+				// else update actual match
+				ISymbol sym = getScope().get(redef.getSymbol());
+				if (sym == null)
+					throw new ASTException(redef, "unknown symbol " + redef + " marked as overriding definition");
+				
+				if (sym.getDefinition() instanceof IAstDefineStmt) {
+					((IAstDefineStmt) sym.getDefinition()).bodyList().clear();
+					((IAstDefineStmt) sym.getDefinition()).bodyList().add(body);
+				}
+				else if (sym.getDefinition() instanceof IAstAllocStmt) {
+					IAstAllocStmt alloc = (IAstAllocStmt) sym.getDefinition();
+					IAstNodeList<IAstSymbolExpr> allocSyms = alloc.getSymbolExprs();
+					int pos = 0;
+					IAstSymbolExpr theSym = null;
+					while (pos < allocSyms.nodeCount()) {
+						theSym = allocSyms.list().get(pos);
+						if (theSym.getSymbol().getName().equals(redef.getSymbol())) {
+							break;
+						}
+						pos++;
+					}
+					assert pos < allocSyms.nodeCount();
+
+
+					IAstNodeList<IAstTypedExpr> allocExprs = alloc.getExprs();
+					
+					IAstTypedExpr existing = null;
+					if (allocExprs.nodeCount() > 0)
+						existing = allocExprs.list().get(pos);
+
+					if (body instanceof IAstCodeExpr) {
+						/*
+						if (alloc.getTypeExpr() instanceof IAstPointerType && ((IAstPointerType) alloc.getTypeExpr()).getBaseType() instanceof IAstPrototype) {
+							IAstPrototype newProto = (IAstPrototype) ((IAstPointerType) alloc.getTypeExpr()).getBaseType().copy();
+							newProto.uniquifyIds();
+							((IAstCodeExpr) body).setPrototype(newProto);
+						}
+						*/
+						/*
+						else
+						if (alloc.hasAttr(IAstAttributes.THIS)) {
+							GenerateAST.adjustPrototypeForThisCall(typeEngine, 
+									((IAstCodeExpr) body).getPrototype(), getScope(), ((IAstScope) body).getScope());
+							if (existing != null && existing instanceof IAstCodeExpr) {
+								GenerateAST.adjustPrototypeForThisCall(typeEngine, 
+									((IAstCodeExpr) existing).getPrototype(), getScope(), ((IAstScope) existing).getScope());
+								existing.setType(null);
+							}
+							
+							// destroy the types so we re-discover them (TODO: cleanup)
+							body.setType(null);
+							theSym.setType(null);
+							theSym.getSymbol().setType(null);
+							sym.setType(null);
+							
+							if (alloc.getSymbolExprs().nodeCount() == 1) {
+								alloc.setType(null);
+								if (alloc.getTypeExpr() != null)
+									alloc.getTypeExpr().setType(null);
+							}
+						}
+						*/
+					}
+					
+					
+					// TODO: split allocs into distinct entries to avoid this
+					if (allocExprs.nodeCount() != 0 && allocExprs.nodeCount() != allocSyms.nodeCount())
+						throw new ASTException(redef, "cannot override the value of " + redef + " currently: split the multi-alloc into pieces");
+					
+					if (allocExprs.nodeCount() == 0)
+						allocExprs.add(body);
+					else {
+						existing = allocExprs.list().get(pos);
+						allocExprs.replaceChild(existing, body);
+					}
+				}
+				else
+					assert false;
+			}
+			
+			doMerge(ifields, addedData.getFields());
+			doMerge(statics, addedData.getStatics());
 		} 
 		setType(null);
-		super.merge(added);
+		super.merge(added, typeEngine);
 	}
 	
 	/* (non-Javadoc)
@@ -400,6 +533,8 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 			}
 			
 			initCode = new AstCodeExpr(initProto, initScope, stmts, attrs);
+			initCode.setSourceRefTree(getSourceRef());
+			initCode.uniquifyIds();
 		}
 		return initCode;
 	}

@@ -35,7 +35,7 @@ import org.ejs.eulang.types.TypeException;
  */
 public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 
-	private final IAstPrototype proto;
+	private IAstPrototype proto;
 	private Set<String> attrs;
 	
 	
@@ -95,6 +95,14 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 	@Override
 	public IAstPrototype getPrototype() {
 		return proto;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.IAstCodeExpr#setPrototype(org.ejs.eulang.ast.IAstPrototype)
+	 */
+	@Override
+	public void setPrototype(IAstPrototype copy) {
+		this.proto = reparent(this.proto, copy);
 	}
 	
 	/* (non-Javadoc)
@@ -241,7 +249,7 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
 	 */
 	@Override
-	public void merge(IAstStmtScope added) throws ASTException {
+	public void merge(IAstStmtScope added, TypeEngine typeEngine) throws ASTException {
 		throw new ASTException(added, "cannot merge code blocks");
 	}
 }

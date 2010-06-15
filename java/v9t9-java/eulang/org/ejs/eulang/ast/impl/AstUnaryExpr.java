@@ -4,6 +4,7 @@
 package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.eulang.IOperation;
 import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstLitExpr;
@@ -109,6 +110,13 @@ public class AstUnaryExpr extends AstTypedExpr implements
     			lit.setSourceRef(getSourceRef());
     			getParent().replaceChild(this, lit);
 				return true;
+    		}
+    	}
+    	else if (oper == IOperation.CAST) {
+    		if (getType().matchesExactly(expr.getType())) {
+    			expr.setParent(null);
+    			getParent().replaceChild(this, expr);
+    			return true;
     		}
     	}
         return changed;

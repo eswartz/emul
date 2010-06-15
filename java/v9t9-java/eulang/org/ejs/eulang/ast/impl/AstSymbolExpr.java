@@ -125,6 +125,8 @@ public class AstSymbolExpr extends AstTypedExpr implements IAstSymbolExpr {
     public void setSymbol(ISymbol symbol) {
     	Check.checkArg(symbol);
     	
+    	if (symbol.getName().equals("this"))
+    		this.symbol = null;
     	//if (origSymbol == null)
     	//	origSymbol = this.symbol;
     	

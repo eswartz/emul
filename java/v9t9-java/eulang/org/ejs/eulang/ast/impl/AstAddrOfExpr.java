@@ -115,17 +115,10 @@ public class AstAddrOfExpr extends AstTypedExpr implements IAstAddrOfExpr {
 		
 		// the type is fixed to be the pointer-to the dereferenced child.
 		if (canInferTypeFrom(expr)) {
-			IAstTypedExpr theExpr = expr;
 			LLType child = typeEngine.getBaseType(expr.getType());
-			do {
-				child = typeEngine.getPointerType(child);
-				if (theExpr instanceof IAstAddrOfExpr)
-					theExpr = ((IAstAddrOfExpr) theExpr).getExpr();
-				else
-					break;
-			}
-			while (true);
+			child = typeEngine.getPointerType(child);
 			changed |= updateType(this, child);
+			
 		}
 		
 		return changed;

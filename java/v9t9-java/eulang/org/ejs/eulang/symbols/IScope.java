@@ -91,8 +91,9 @@ public interface IScope extends Iterable<ISymbol> {
 
 	/**
 	 * Copy a symbol, giving it the appropriate type for this scope, and add it to the scope.
+	 * @param add TODO
 	 */
-	ISymbol copySymbol(ISymbol symbol);
+	ISymbol copySymbol(ISymbol symbol, boolean add);
 	
 	/**
 	 * @return

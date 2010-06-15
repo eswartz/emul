@@ -70,11 +70,11 @@ public class AstBlockStmt extends AstStmtScope implements IAstBlockStmt {
 	 * @see org.ejs.eulang.ast.IAstStmtScope#merge(org.ejs.eulang.ast.IAstStmtScope)
 	 */
 	@Override
-	public void merge(IAstStmtScope added) throws ASTException {
+	public void merge(IAstStmtScope added, TypeEngine typeEngine) throws ASTException {
 		if (!(added instanceof IAstBlockStmt))
 			throw new ASTException(added, "cannot merge these scopes");
 		
-		super.merge(added);
+		super.merge(added, typeEngine);
 	}
 	
 }

@@ -206,6 +206,23 @@ public class TestMacroCall extends BaseTest {
 		condExpr = condList.getCondExprs().list().get(1);
     	assertEquals(typeEngine.INT, condExpr.getType());
     }
+    
+    
+	//@Test
+    public void testProtoSyms() throws Exception {
+    	IAstModule mod = doFrontend(
+    			"\n" + 
+    			"makeAdder = code #macro (name #macro;  num #macro) {\n" + 
+    			"    name = code (x:Int) { x + num };\n" + 
+    			"};\n"+
+    			"makeAdder(addOne, 1);\n"+
+    			"makeAdder(addTwo, 2);\n"+
+    			"");
+    	sanityTest(mod);
+    	dumpLLVMGen = true;
+    	doGenerate(mod);
+    }
+
 }
 
 

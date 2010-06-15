@@ -9,6 +9,7 @@ import java.util.List;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
+import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLCastOp;
@@ -37,14 +38,24 @@ public class StaticDataCodeTarget implements ILLCodeTarget {
 	private final LLVMGenerator generator;
 
 	private IScope localScope;
+
+	private final ISymbol symbol;
 	
-	public StaticDataCodeTarget(LLVMGenerator generator, ITarget target, LLModule module, IScope localScope) {
+	public StaticDataCodeTarget(LLVMGenerator generator, ISymbol symbol, ITarget target, LLModule module, IScope localScope) {
 		this.generator = generator;
+		this.symbol = symbol;
 		this.target = target;
 		this.module = module;
 		this.localScope = localScope;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeTarget#getSymbol()
+	 */
+	@Override
+	public ISymbol getSymbol() {
+		return symbol;
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.ILLCodeTarget#addBlock(org.ejs.eulang.symbols.ISymbol)
