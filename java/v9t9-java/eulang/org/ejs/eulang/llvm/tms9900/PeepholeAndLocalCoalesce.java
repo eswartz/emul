@@ -812,7 +812,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			}
 			
 			// and delete the LEA/LI
-			removeInst(def);
+			if (addrLocal.getUses().isEmpty())
+				removeInst(def);
 		}
 		
 		return changed;
@@ -850,6 +851,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		LLType theType = typeEngine.getIntType(asmInstruction.getInst() == Imovb ? 8 : 16);
 		for (int idx = 0; idx < ops.length; idx++) {
 			
+			int newInst = asmInstruction.getInst();
+			
 			AssemblerOperand op = ops[idx];
 			AssemblerOperand newOp = op;
 			
@@ -864,6 +867,12 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				op = ((RegOffsOperand) op).getReg();
 			} else if (op instanceof RegIndOperand) {
 				op = ((RegIndOperand) op).getReg();
+			} else if (op.equals(from) && toOp.isMemory()) {
+				// a direct reference:  needs to be LEA
+				if (newInst == Imov)
+					newInst = Plea;
+				else
+					assert false;
 			}
 			
 			if (op.equals(from)) {
@@ -876,14 +885,11 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			}
 			
 			if (newOp != op) {
-				//updateLocalUsage(asmInstruction, fromLocal, null, op);
-				//if (toLocal != null)
-				//	toLocal.getUses().set(asmInstruction.getNumber());
-				
 				// update op
 				updateOperandUsage(asmInstruction, op, false);
 				newOp = InstrSelection.ensurePiecewiseAccess(newOp, theType);
 				asmInstruction.setOp(idx + 1, newOp);
+				asmInstruction.setInst(newInst);
 				updateOperandUsage(asmInstruction, newOp, true);
 			}
 		}

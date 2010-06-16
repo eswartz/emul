@@ -2245,4 +2245,33 @@ public class Test9900InstrSelection extends BaseInstrTest {
 
 	}
 
+	@Test
+	public void testAddrStore() throws Exception {
+		dumpIsel = true;
+		doIsel(
+				"Class = data {};\n"+
+				"Derived = Class + data {};\n"+
+				"foo = code(p:Class^) {};\n"+
+				"test = code() {\n"+
+				"y : Class;\n" + 
+				"   x : Derived^ = &y;\n"+	// gets incorrectly changed to a store when a cast is present
+				"   foo(x);\n"+
+				"};\n"
+				);
+
+    	int idx = -1;
+    	AsmInstruction inst;
+    	
+    	idx = findInstrWithInst(instrs, "BL", idx);
+    	
+    	idx = findInstrWithInst(instrs, "LEA", idx);	// don't take value of 'y'
+    	assertTrue(idx != -1);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "LEA", AddrOperand.class, "y", RegTempOperand.class);
+    	
+    	idx = findInstrWithInst(instrs, "MOV", idx);	// don't take address of 'y'
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegTempOperand.class, "y", RegTempOperand.class, "x");
+    	
+	}
 }

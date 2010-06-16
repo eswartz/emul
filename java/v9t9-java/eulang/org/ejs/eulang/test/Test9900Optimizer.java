@@ -973,5 +973,40 @@ public class Test9900Optimizer extends BaseInstrTest {
 		
 		
 	}
+	
+
+	@Test
+	public void testAddrStore() throws Exception {
+		dumpIsel = true;
+		boolean changed = doOpt(
+				"Class = data { func:=code #this() {}; };\n"+
+				"Derived = Class + data { func::=code #this() {}; };\n"+
+				"foo = code(p:Class^) {};\n"+
+				"test = code() {\n"+
+				"y : Derived;\n" + 
+				"   x : Class^ = &y;\n"+	// gets incorrectly changed to a store when a cast is present
+				"   x.func();\n"+
+				"};\n"
+				);
+
+		assertTrue(changed);
+		
+    	int idx = -1;
+    	AsmInstruction inst;
+    	
+    	idx = findInstrWithInst(instrs, "BL", idx);	// skip init
+
+    	idx = findInstrWithInst(instrs, "LEA", idx);	// don't take value of 'y'
+		inst = instrs.get(idx);
+    	matchInstr(inst, "LEA", AddrOperand.class, "y", RegTempOperand.class, "x");
+    	
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", CompositePieceOperand.class, "x", 0, RegTempOperand.class);
+    	
+    	idx = findInstrWithInst(instrs, "MOV", idx);
+    	inst = instrs.get(idx);
+    	matchInstr(inst, "MOV", RegTempOperand.class, "x", RegTempOperand.class, 0);
+	}
 }
 

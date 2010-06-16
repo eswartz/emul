@@ -179,3 +179,23 @@ assert R0 == 571
 call foo
 assert R0 == 571
 >>>
+
+<<< virtual methods 1
+Class = data {
+   x,y:Int = 3,5;
+   op : code #this ( => Int) = code { x + y };
+   other : code #this(x:Int => Int) = code { -x + :x };
+};
+Derived = Class + data {
+   op ::= code { x - y };
+   y ::= 100;
+};
+foo = code() {
+   y : Derived;
+   x : Class^ = &y;
+   x.op() * x.y;
+};
+===
+call foo
+assert R0 == -9700
+>>> 
