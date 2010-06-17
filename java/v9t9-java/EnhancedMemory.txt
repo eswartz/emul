@@ -66,4 +66,3 @@ There are enhanced sound chips.  At >FFA2, each 6 bytes contains a chip supporti
 standard TMS9919 behavior, and two additional addresses for a command port and a data 
 port for advanced effects.  See MultiSoundTMS9919B and SoundTMS9919B for details.
 
-an effects port.  The command port 
