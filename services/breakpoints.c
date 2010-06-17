@@ -854,7 +854,9 @@ static void evaluate_condition(void * x) {
             Value v;
             int b = 0;
             if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0 || value_to_boolean(&v, &b) < 0) {
-                if (get_error_code(errno) == ERR_CACHE_MISS) continue;
+                int no = get_error_code(errno);
+                if (no == ERR_CACHE_MISS) continue;
+                if (no == ERR_CHANNEL_CLOSED) continue;
                 trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
                 req->bp_arr[i].condition_ok = 1;
             }
