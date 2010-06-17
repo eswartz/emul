@@ -105,6 +105,8 @@ char * path_map_to_local(Channel * c, char * fnm) {
         k = strlen(src);
         if (strncmp(src, fnm, k)) continue;
         if (fnm[k] != 0 && fnm[k] != '/' && fnm[k] != '\\') continue;
+        j = strlen(dst) - 1;
+        if (fnm[k] != 0 && (dst[j] == '/' || dst[j] == '\\')) k++;
         snprintf(buf, sizeof(buf), "%s%s", dst, fnm + k);
         return buf;
     }

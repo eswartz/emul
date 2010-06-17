@@ -30,15 +30,13 @@
 #include <services/dwarfcache.h>
 #include <services/dwarfexpr.h>
 
-#define OBJ_HASH_SIZE          (0x10000-1)
+#define OBJ_HASH_SIZE           (0x10000-1)
+#define OBJ_HASH(ID)            (((U4_T)(ID) + ((U4_T)(ID) >> 8)) % OBJ_HASH_SIZE)
 
 static DWARFCache * sCache;
 static ELF_Section * sDebugSection;
 static DIO_UnitDescriptor sUnitDesc;
-static ObjectInfo * sObjectList;
-static ObjectInfo * sObjectListTail;
 static CompUnit * sCompUnit;
-static unsigned sCompUnitsMax;
 static ObjectInfo * sParentObject;
 static ObjectInfo * sPrevSibling;
 
@@ -104,48 +102,50 @@ void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * in
     }
 }
 
-static CompUnit * find_comp_unit(U8_T ID) {
-    unsigned i;
-    CompUnit * Unit;
+ObjectInfo * find_object(DWARFCache * Cache, U8_T ID) {
+    if (Cache->mObjectHash != NULL) {
+        U4_T Hash = OBJ_HASH(ID);
+        ObjectInfo * Info = Cache->mObjectHash[Hash];
 
-    for (i = 0; i < sCache->mCompUnitsCnt; i++) {
-        Unit = sCache->mCompUnits[i];
-        if (Unit->mID == ID) return Unit;
+        while (Info != NULL) {
+            if (Info->mID == ID) return Info;
+            Info = Info->mHashNext;
+        }
     }
-    if (sCache->mCompUnitsCnt >= sCompUnitsMax) {
-        sCompUnitsMax = sCompUnitsMax == 0 ? 16 : sCompUnitsMax * 2;
-        sCache->mCompUnits = (CompUnit **)loc_realloc(sCache->mCompUnits, sizeof(CompUnit *) * sCompUnitsMax);
-    }
-    Unit = (CompUnit *)loc_alloc_zero(sizeof(CompUnit));
-    Unit->mID = ID;
-    sCache->mCompUnits[sCache->mCompUnitsCnt++] = Unit;
-    return Unit;
+    return NULL;
 }
 
-static ObjectInfo * find_object_info(U8_T ID) {
+static ObjectInfo * add_object_info(U8_T ID) {
     ObjectInfo * Info = find_object(sCache, ID);
     if (Info == NULL) {
-        U4_T Hash = (U4_T)ID % OBJ_HASH_SIZE;
+        U4_T Hash = OBJ_HASH(ID);
         if (ID < sDebugSection->addr + dio_gEntryPos) str_exception(ERR_INV_DWARF, "Invalid entry reference");
+        if (ID > sDebugSection->addr + sDebugSection->size) str_exception(ERR_INV_DWARF, "Invalid entry reference");
+        if (sCache->mObjectHash == NULL) sCache->mObjectHash = (ObjectInfo **)loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
         Info = (ObjectInfo *)loc_alloc_zero(sizeof(ObjectInfo));
         Info->mHashNext = sCache->mObjectHash[Hash];
         sCache->mObjectHash[Hash] = Info;
-        if (sObjectList == NULL) sObjectList = Info;
-        else sObjectListTail->mListNext = Info;
-        sObjectListTail = Info;
         Info->mID = ID;
     }
     return Info;
 }
 
-static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form);
+static CompUnit * add_comp_unit(U8_T ID) {
+    ObjectInfo * Info = add_object_info(ID);
+    if (Info->mCompUnit == NULL) {
+        CompUnit * Unit = (CompUnit *)loc_alloc_zero(sizeof(CompUnit));
+        Unit->mObject = Info;
+        Info->mCompUnit = Unit;
+    }
+    return Info->mCompUnit;
+}
 
 static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
     U1_T * Buf;
     size_t BufSize;
     size_t BufPos;
     dio_ChkBlock(Form, &Buf, &BufSize);
-    *Type = find_object_info(sDebugSection->addr + dio_GetPos() - 1);
+    *Type = add_object_info(sDebugSection->addr + dio_GetPos() - 1);
     (*Type)->mTag = TAG_fund_type;
     (*Type)->mCompUnit = sCompUnit;
     (*Type)->mFundType = Buf[BufSize - 1];
@@ -164,7 +164,7 @@ static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
             Tag = TAG_reference_type;
             break;
         }
-        Mod = find_object_info(sDebugSection->addr + dio_GetPos() - BufSize + BufPos);
+        Mod = add_object_info(sDebugSection->addr + dio_GetPos() - BufSize + BufPos);
         Mod->mTag = Tag;
         Mod->mCompUnit = sCompUnit;
         Mod->mType = *Type;
@@ -183,7 +183,7 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
         Ref |= (U4_T)Buf[BufSize - 4 +
             (sDebugSection->file->big_endian ? 3 - i : i)] << (i * 8);
     }
-    *Type = find_object_info(sDebugSection->addr + Ref);
+    *Type = add_object_info(sDebugSection->addr + Ref);
     BufPos = BufSize - 4;
     while (BufPos > 0) {
         U2_T Tag = 0;
@@ -199,7 +199,7 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
             Tag = TAG_reference_type;
             break;
         }
-        Mod = find_object_info(sDebugSection->addr + dio_GetPos() - BufSize + BufPos);
+        Mod = add_object_info(sDebugSection->addr + dio_GetPos() - BufSize + BufPos);
         Mod->mTag = Tag;
         Mod->mCompUnit = sCompUnit;
         Mod->mType = *Type;
@@ -207,72 +207,37 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
     }
 }
 
-static void read_tag_com_unit(U2_T Attr, U2_T Form) {
-    static CompUnit * Unit;
-    switch (Attr) {
-    case 0:
-        if (Form) {
-            Unit = find_comp_unit(sDebugSection->addr + dio_gEntryPos);
-            Unit->mFile = sCache->mFile;
-            Unit->mSection = sDebugSection;
-            Unit->mDebugRangesOffs = ~(U8_T)0;
-        }
-        else {
-            assert(sParentObject == NULL);
-            sCompUnit = Unit;
-            sPrevSibling = NULL;
-        }
-        break;
-    case AT_low_pc:
-        dio_ChkAddr(Form);
-        Unit->mLowPC = (ContextAddress)dio_gFormData;
-        Unit->mTextSection = dio_gFormSection;
-        break;
-    case AT_high_pc:
-        dio_ChkAddr(Form);
-        Unit->mHighPC = (ContextAddress)dio_gFormData;
-        break;
-    case AT_ranges:
-        dio_ChkData(Form);
-        Unit->mDebugRangesOffs = dio_gFormData;
-        break;
-    case AT_name:
-        dio_ChkString(Form);
-        Unit->mName = (char *)dio_gFormDataAddr;
-        break;
-    case AT_comp_dir:
-        dio_ChkString(Form);
-        Unit->mDir = (char *)dio_gFormDataAddr;
-        break;
-    case AT_stmt_list:
-        dio_ChkData(Form);
-        Unit->mLineInfoOffs = dio_gFormData;
-        break;
-    case AT_base_types:
-        Unit->mBaseTypes = find_comp_unit(dio_gFormData);
-        break;
-    }
-}
-
-static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
+static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
     static ObjectInfo * Info;
     static U8_T Sibling;
 
     switch (Attr) {
     case 0:
         if (Form) {
-            Info = find_object_info(sDebugSection->addr + dio_gEntryPos);
+            assert((sParentObject == NULL) == (Tag == TAG_compile_unit));
+            if (Tag == TAG_compile_unit) {
+                CompUnit * Unit = add_comp_unit(sDebugSection->addr + dio_gEntryPos);
+                Unit->mFile = sCache->mFile;
+                Unit->mInfoSection = sDebugSection;
+                Unit->mDebugRangesOffs = ~(U8_T)0;
+                Info = Unit->mObject;
+                sCompUnit = Unit;
+            }
+            else {
+                Info = add_object_info(sDebugSection->addr + dio_gEntryPos);
+                Info->mCompUnit = sCompUnit;
+            }
             assert(Info->mTag == 0);
             Info->mTag = Tag;
-            Info->mCompUnit = sCompUnit;
             Info->mParent = sParentObject;
             Sibling = 0;
         }
         else {
+            if (Tag == TAG_compile_unit && Sibling == 0) Sibling = sUnitDesc.mUnitOffs + sUnitDesc.mUnitSize;
             if (Tag == TAG_enumerator && Info->mType == NULL) Info->mType = sParentObject;
             if (sPrevSibling != NULL) sPrevSibling->mSibling = Info;
             else if (sParentObject != NULL) sParentObject->mChildren = Info;
-            else sCompUnit->mChildren = Info;
+            else sCache->mCompUnits = Info;
             sPrevSibling = Info;
             if (Sibling != 0) {
                 U8_T SiblingPos = Sibling;
@@ -280,7 +245,7 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
                 ObjectInfo * PrevSibling = sPrevSibling;
                 sParentObject = Info;
                 sPrevSibling = NULL;
-                while (dio_GetPos() < SiblingPos) dio_ReadEntry(entry_callback);
+                while (dio_GetPos() < SiblingPos) dio_ReadEntry(read_object_info);
                 sParentObject = Parent;
                 sPrevSibling = PrevSibling;
             }
@@ -292,18 +257,18 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         break;
     case AT_type:
         dio_ChkRef(Form);
-        Info->mType = find_object_info(dio_gFormData);
+        Info->mType = add_object_info(dio_gFormData);
         break;
     case AT_fund_type:
         dio_ChkData(Form);
-        Info->mType = find_object_info(sDebugSection->addr + dio_GetPos() - dio_gFormDataSize);
+        Info->mType = add_object_info(sDebugSection->addr + dio_GetPos() - dio_gFormDataSize);
         Info->mType->mTag = TAG_fund_type;
         Info->mCompUnit = sCompUnit;
         Info->mType->mFundType = (U2_T)dio_gFormData;
         break;
     case AT_user_def_type:
         dio_ChkRef(Form);
-        Info->mType = find_object_info(dio_gFormData);
+        Info->mType = add_object_info(dio_gFormData);
         break;
     case AT_mod_fund_type:
         read_mod_fund_type(Form, &Info->mType);
@@ -316,16 +281,34 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         Info->mName = (char *)dio_gFormDataAddr;
         break;
     }
-}
-
-static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form) {
-    switch (Tag) {
-    case TAG_compile_unit           :
-        read_tag_com_unit(Attr, Form);
-        break;
-    default:
-        read_object_attributes(Tag, Attr, Form);
-        break;
+    if (Tag == TAG_compile_unit) {
+        CompUnit * Unit = Info->mCompUnit;
+        switch (Attr) {
+        case AT_low_pc:
+            dio_ChkAddr(Form);
+            Unit->mLowPC = (ContextAddress)dio_gFormData;
+            Unit->mTextSection = dio_gFormSection;
+            break;
+        case AT_high_pc:
+            dio_ChkAddr(Form);
+            Unit->mHighPC = (ContextAddress)dio_gFormData;
+            break;
+        case AT_ranges:
+            dio_ChkData(Form);
+            Unit->mDebugRangesOffs = dio_gFormData;
+            break;
+        case AT_comp_dir:
+            dio_ChkString(Form);
+            Unit->mDir = (char *)dio_gFormDataAddr;
+            break;
+        case AT_stmt_list:
+            dio_ChkData(Form);
+            Unit->mLineInfoOffs = dio_gFormData;
+            break;
+        case AT_base_types:
+            Unit->mBaseTypes = add_comp_unit(dio_gFormData);
+            break;
+        }
     }
 }
 
@@ -341,13 +324,9 @@ static void load_symbol_tables(void) {
             unsigned i;
             ELF_Section * str_sec;
             SymbolSection * tbl = (SymbolSection *)loc_alloc_zero(sizeof(SymbolSection));
-            if (sCache->mSymSections == NULL) {
-                sCache->mSymSectionsLen = 8;
-                sCache->mSymSections = (SymbolSection **)loc_alloc(sizeof(SymbolSection *) * sCache->mSymSectionsLen);
-            }
-            else if (sCache->mSymSectionsCnt >= sCache->mSymSectionsLen) {
-                sCache->mSymSectionsLen *= 8;
-                sCache->mSymSections = (SymbolSection **)loc_realloc(sCache->mSymSections, sizeof(SymbolSection *) * sCache->mSymSectionsLen);
+            if (sCache->mSymSectionsCnt >= sCache->mSymSectionsMax) {
+                sCache->mSymSectionsMax = sCache->mSymSectionsMax == 0 ? 16 : sCache->mSymSectionsMax * 2;
+                sCache->mSymSections = (SymbolSection **)loc_realloc(sCache->mSymSections, sizeof(SymbolSection *) * sCache->mSymSectionsMax);
             }
             tbl->mIndex = sCache->mSymSectionsCnt++;
             sCache->mSymSections[tbl->mIndex] = tbl;
@@ -378,15 +357,130 @@ static void load_symbol_tables(void) {
     }
 }
 
+static int cmp_addr_ranges(const void * x, const void * y) {
+    UnitAddressRange * rx = (UnitAddressRange *)x;
+    UnitAddressRange * ry = (UnitAddressRange *)y;
+    if (rx->mAddr < ry->mAddr) return -1;
+    if (rx->mAddr > ry->mAddr) return +1;
+    return 0;
+}
+
+static void add_addr_range(ELF_Section * sec, CompUnit * unit, ContextAddress addr, ContextAddress size) {
+    UnitAddressRange * range = NULL;
+    if (sCache->mAddrRangesCnt >= sCache->mAddrRangesMax) {
+        sCache->mAddrRangesMax = sCache->mAddrRangesMax == 0 ? 64 : sCache->mAddrRangesMax * 2;
+        sCache->mAddrRanges = (UnitAddressRange *)loc_realloc(sCache->mAddrRanges, sizeof(UnitAddressRange) * sCache->mAddrRangesMax);
+    }
+    range = sCache->mAddrRanges + sCache->mAddrRangesCnt++;
+    memset(range, 0, sizeof(UnitAddressRange));
+    range->mSection = sec;
+    range->mAddr = addr;
+    range->mSize = size;
+    range->mUnit = unit;
+}
+
+static void load_addr_ranges() {
+    Trap trap;
+    unsigned idx;
+    ELF_File * File = sCache->mFile;
+    ELF_Section * debug_ranges = NULL;
+
+    memset(&trap, 0, sizeof(trap));
+    for (idx = 1; idx < File->section_cnt; idx++) {
+        ELF_Section * sec = File->sections + idx;
+        if (sec->size == 0) continue;
+        if (sec->name == NULL) continue;
+        if (strcmp(sec->name, ".debug_ranges") == 0) {
+            debug_ranges = sec;
+        }
+        else if (strcmp(sec->name, ".debug_aranges") == 0) {
+            ObjectInfo * info = sCache->mCompUnits;
+            dio_EnterSection(NULL, sec, 0);
+            if (set_trap(&trap)) {
+                while (dio_GetPos() < sec->size) {
+                    int f64bit = 0;
+                    U8_T size = dio_ReadU4();
+                    U8_T next = 0;
+                    if (size == 0xffffffffu) {
+                        f64bit = 1;
+                        size = dio_ReadU8();
+                    }
+                    next = dio_GetPos() + size;
+                    if (dio_ReadU2() != 2) {
+                        dio_Skip(next - dio_GetPos());
+                    }
+                    else {
+                        U8_T offs = f64bit ? dio_ReadU8() : (U8_T)dio_ReadU4();
+                        U1_T addr_size = dio_ReadU1();
+                        U1_T segm_size = dio_ReadU1();
+                        if (segm_size != 0) str_exception(ERR_INV_DWARF, "segment descriptors are not supported");
+                        while (info != NULL && info->mCompUnit->mDesc.mUnitOffs != offs) info = info->mSibling;
+                        if (info == NULL) {
+                            info = sCache->mCompUnits;
+                            while (info != NULL && info->mCompUnit->mDesc.mUnitOffs != offs) info = info->mSibling;
+                        }
+                        if (info == NULL) str_exception(ERR_INV_DWARF, "invalid .debug_aranges section");
+                        while (dio_GetPos() % (addr_size * 2) != 0) dio_Skip(1);
+                        for (;;) {
+                            ELF_Section * range_sec = NULL;
+                            ContextAddress addr = dio_ReadAddressX(&range_sec, addr_size);
+                            ContextAddress size = dio_ReadUX(addr_size);
+                            if (addr == 0 && size == 0) break;
+                            if (size == 0) continue;
+                            add_addr_range(range_sec, info->mCompUnit, addr, size);
+                        }
+                    }
+                }
+                clear_trap(&trap);
+            }
+            dio_ExitSection();
+            if (trap.error) break;
+        }
+    }
+    if (trap.error) exception(trap.error);
+    if (sCache->mAddrRangesCnt == 0) {
+        ObjectInfo * info = sCache->mCompUnits;
+        while (info != NULL) {
+            CompUnit * unit = info->mCompUnit;
+            ContextAddress base = unit->mLowPC;
+            ContextAddress size = unit->mHighPC - unit->mLowPC;
+            info = info->mSibling;
+            if (base == 0 || size == 0) continue;
+            if (unit->mDebugRangesOffs != ~(U8_T)0 && debug_ranges != NULL) {
+                dio_EnterSection(&unit->mDesc, debug_ranges, unit->mDebugRangesOffs);
+                for (;;) {
+                    ELF_Section * sec = NULL;
+                    U8_T x = dio_ReadAddress(&sec);
+                    U8_T y = dio_ReadAddress(&sec);
+                    if (x == 0 && y == 0) break;
+                    if (sec != unit->mTextSection) exception(ERR_INV_DWARF);
+                    if (x == ((U8_T)1 << unit->mDesc.mAddressSize * 8) - 1) {
+                        base = (ContextAddress)y;
+                    }
+                    else {
+                        x = base + x;
+                        y = base + y;
+                        add_addr_range(sec, unit, x, y - x);
+                    }
+                }
+                dio_ExitSection();
+            }
+            else {
+                add_addr_range(unit->mTextSection, unit, base, size);
+            }
+        }
+    }
+    if (sCache->mAddrRangesCnt > 1) {
+        qsort(sCache->mAddrRanges, sCache->mAddrRangesCnt, sizeof(UnitAddressRange), cmp_addr_ranges);
+    }
+}
+
 static void load_debug_sections(void) {
     Trap trap;
     unsigned idx;
     ELF_File * File = sCache->mFile;
 
     memset(&trap, 0, sizeof(trap));
-    sObjectList = NULL;
-    sObjectListTail = NULL;
-    sCompUnitsMax = 0;
 
     for (idx = 1; idx < File->section_cnt; idx++) {
         ELF_Section * sec = File->sections + idx;
@@ -399,7 +493,7 @@ static void load_debug_sections(void) {
             dio_EnterSection(NULL, sec, 0);
             if (set_trap(&trap)) {
                 while (dio_GetPos() < sec->size) {
-                    dio_ReadUnit(&sUnitDesc, entry_callback);
+                    dio_ReadUnit(&sUnitDesc, read_object_info);
                     sCompUnit->mDesc = sUnitDesc;
                 }
                 clear_trap(&trap);
@@ -410,12 +504,6 @@ static void load_debug_sections(void) {
             sCompUnit = NULL;
             sDebugSection = NULL;
             if (trap.error) break;
-        }
-        else if (strcmp(sec->name, ".debug_ranges") == 0) {
-            sCache->mDebugRanges = sec;
-        }
-        else if (strcmp(sec->name, ".debug_aranges") == 0) {
-            sCache->mDebugARanges = sec;
         }
         else if (strcmp(sec->name, ".debug_line") == 0) {
             sCache->mDebugLine = sec;
@@ -431,14 +519,6 @@ static void load_debug_sections(void) {
         }
     }
 
-    if (sObjectList == NULL) {
-        loc_free(sCache->mObjectHash);
-        sCache->mObjectHash = NULL;
-    }
-    sCache->mObjectList = sObjectList;
-    sObjectList = NULL;
-    sObjectListTail = NULL;
-    sCompUnitsMax = 0;
     if (trap.error) exception(trap.error);
 }
 
@@ -492,7 +572,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
 
     sCompUnit = Obj->mCompUnit;
     sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
-    sDebugSection = sCompUnit->mSection;
+    sDebugSection = sCompUnit->mInfoSection;
     dio_EnterSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
     gop_gAttr = (U2_T)Attr;
     gop_gForm = 0;
@@ -618,24 +698,28 @@ static void free_dwarf_cache(ELF_File * File) {
         unsigned i;
         assert(Cache->magic == DWARF_CACHE_MAGIC);
         Cache->magic = 0;
-        for (i = 0; i < Cache->mCompUnitsCnt; i++) {
-            CompUnit * Unit = Cache->mCompUnits[i];
+        while (Cache->mCompUnits != NULL) {
+            CompUnit * Unit = Cache->mCompUnits->mCompUnit;
+            Cache->mCompUnits = Cache->mCompUnits->mSibling;
             free_unit_cache(Unit);
             loc_free(Unit);
         }
-        loc_free(Cache->mCompUnits);
         for (i = 0; i < Cache->mSymSectionsCnt; i++) {
             SymbolSection * tbl = Cache->mSymSections[i];
             loc_free(tbl->mHashNext);
             loc_free(tbl);
         }
-        while (Cache->mObjectList != NULL) {
-            ObjectInfo * Info = Cache->mObjectList;
-            Cache->mObjectList = Info->mListNext;
-            loc_free(Info);
+        for (i = 0; i < OBJ_HASH_SIZE; i++) {
+            ObjectInfo ** list = Cache->mObjectHash + i;
+            while (*list != NULL) {
+                ObjectInfo * Info = *list;
+                *list = Info->mHashNext;
+                loc_free(Info);
+            }
         }
         loc_free(Cache->mObjectHash);
         loc_free(Cache->mSymSections);
+        loc_free(Cache->mAddrRanges);
         loc_free(Cache);
         File->dwarf_dt_cache = NULL;
     }
@@ -652,11 +736,11 @@ DWARFCache * get_dwarf_cache(ELF_File * File) {
         sCache = Cache = (DWARFCache *)(File->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
         sCache->magic = DWARF_CACHE_MAGIC;
         sCache->mFile = File;
-        sCache->mObjectHash = (ObjectInfo **)loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
         if (set_trap(&trap)) {
             dio_LoadAbbrevTable(File);
             load_symbol_tables();
             load_debug_sections();
+            load_addr_ranges();
             clear_trap(&trap);
         }
         else {
@@ -693,8 +777,9 @@ static void add_state(CompUnit * Unit, LineNumbersState * state) {
     Unit->mStates[Unit->mStatesCnt++] = *state;
 }
 
-void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
+void load_line_numbers(CompUnit * Unit) {
     Trap trap;
+    DWARFCache * Cache = (DWARFCache *)Unit->mFile->dwarf_dt_cache;
     if (Unit->mFiles != NULL || Unit->mDirs != NULL) return;
     if (elf_load(Cache->mDebugLine)) exception(errno);
     dio_EnterSection(&Unit->mDesc, Cache->mDebugLine, Unit->mLineInfoOffs);
@@ -862,13 +947,22 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
     }
 }
 
-ObjectInfo * find_object(DWARFCache * Cache, U8_T ID) {
-    U4_T Hash = (U4_T)ID % OBJ_HASH_SIZE;
-    ObjectInfo * Info = Cache->mObjectHash[Hash];
-
-    while (Info != NULL) {
-        if (Info->mID == ID) return Info;
-        Info = Info->mHashNext;
+UnitAddressRange * find_comp_unit_addr_range(DWARFCache * cache, ContextAddress addr_min, ContextAddress addr_max) {
+    unsigned l = 0;
+    unsigned h = cache->mAddrRangesCnt;
+    while (l < h) {
+        unsigned k = (h + l) / 2;
+        UnitAddressRange * rk = cache->mAddrRanges + k;
+        if (rk->mAddr < addr_max && rk->mAddr + rk->mSize > addr_min) {
+            int first = 1;
+            if (k > 0) {
+                UnitAddressRange * rp = rk - 1;
+                first = rp->mAddr + rp->mSize <= addr_min;
+            }
+            if (first) return rk;
+        }
+        if (rk->mAddr >= addr_min) h = k;
+        else l = k + 1;
     }
     return NULL;
 }

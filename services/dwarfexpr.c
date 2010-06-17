@@ -498,7 +498,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
 
     assert(Cache->magic == DWARF_CACHE_MAGIC);
     if (Cache->mDebugLoc == NULL) str_exception(ERR_INV_DWARF, "Missing .debug_loc section");
-    dio_EnterSection(&Unit->mDesc, Unit->mSection, Value->mAddr - (U1_T *)Unit->mSection->data);
+    dio_EnterSection(&Unit->mDesc, Unit->mInfoSection, Value->mAddr - (U1_T *)Unit->mInfoSection->data);
     Offset = dio_ReadUX(Value->mSize);
     dio_ExitSection();
     Base = Unit->mLowPC;
@@ -560,7 +560,7 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
         evaluate_location(BaseAddress, Value);
     }
     else {
-        evaluate_expression(BaseAddress, Value, Value->mObject->mCompUnit->mSection, Value->mAddr, Value->mSize);
+        evaluate_expression(BaseAddress, Value, Value->mObject->mCompUnit->mInfoSection, Value->mAddr, Value->mSize);
     }
     if (!sKeepStack && sExprStackLen != (Value->mAccessFunc == NULL ? 1u : 0u)) {
         str_exception(ERR_INV_DWARF, "invalid DWARF expression stack");

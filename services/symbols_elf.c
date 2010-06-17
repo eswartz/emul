@@ -186,18 +186,13 @@ static int find_in_object_tree(ObjectInfo * list, const char * name, Symbol ** s
     return found;
 }
 
-static int find_in_dwarf(DWARFCache * cache, const char * name, Symbol ** sym) {
-    unsigned i;
-    for (i = 0; i < cache->mCompUnitsCnt; i++) {
-        CompUnit * unit = cache->mCompUnits[i];
-        ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, unit->mFile, unit->mTextSection, unit->mLowPC);
-        ContextAddress addr1 = unit->mHighPC - unit->mLowPC + addr0;
-        if (addr0 != 0 && addr0 <= sym_ip && addr1 > sym_ip) {
-            if (find_in_object_tree(unit->mChildren, name, sym)) return 1;
-            if (unit->mBaseTypes != NULL) {
-                if (find_in_object_tree(unit->mBaseTypes->mChildren, name, sym)) return 1;
-            }
-            return 0;
+static int find_in_dwarf(const char * name, Symbol ** sym) {
+    UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1);
+    if (range != NULL) {
+        CompUnit * unit = range->mUnit;
+        if (find_in_object_tree(unit->mObject->mChildren, name, sym)) return 1;
+        if (unit->mBaseTypes != NULL) {
+            if (find_in_object_tree(unit->mBaseTypes->mObject->mChildren, name, sym)) return 1;
         }
     }
     return 0;
@@ -268,51 +263,68 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         }
     }
 #endif
-
     if (error == 0 && !found) {
-
         if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) error = errno;
         if (error == 0 && get_sym_context(ctx, frame) < 0) error = errno;
-        if (error == 0) {
-            ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip == 0 ? ~(ContextAddress)0 : sym_ip + 1);
-            if (file == NULL) error = errno;
-            while (error == 0 && file != NULL) {
-                Trap trap;
-                if (set_trap(&trap)) {
-                    DWARFCache * cache = get_dwarf_cache(file);
-                    if (sym_ip != 0) found = find_in_dwarf(cache, name, res);
-                    if (!found) found = find_in_sym_table(cache, name, res);
-                    if (!found && sym_ip != 0) {
-                        const char * s = NULL;
-                        if (strcmp(name, "signed") == 0) s = "int";
-                        else if (strcmp(name, "signed int") == 0) s = "int";
-                        else if (strcmp(name, "unsigned") == 0) s = "unsigned int";
-                        else if (strcmp(name, "short") == 0) s = "short int";
-                        else if (strcmp(name, "signed short") == 0) s = "short int";
-                        else if (strcmp(name, "signed short int") == 0) s = "short int";
-                        else if (strcmp(name, "unsigned short") == 0) s = "unsigned short int";
-                        else if (strcmp(name, "long") == 0) s = "long int";
-                        else if (strcmp(name, "signed long") == 0) s = "long int";
-                        else if (strcmp(name, "signed long int") == 0) s = "long int";
-                        else if (strcmp(name, "unsigned long") == 0) s = "unsigned long int";
-                        else if (strcmp(name, "long long") == 0) s = "long long int";
-                        else if (strcmp(name, "signed long long") == 0) s = "long long int";
-                        else if (strcmp(name, "signed long long int") == 0) s = "long long int";
-                        else if (strcmp(name, "unsigned long long") == 0) s = "unsigned long long int";
-                        else if (strcmp(name, "char") == 0) s = "signed char";
-                        if (s != NULL) found = find_in_dwarf(cache, s, res);
-                    }
-                    clear_trap(&trap);
-                }
-                else {
-                    error = trap.error;
-                    break;
-                }
-                if (found) break;
-                file = elf_list_next(sym_ctx);
-                if (file == NULL) error = errno;
+    }
+
+    if (error == 0 && !found && sym_ip != 0) {
+        Trap trap;
+        if (set_trap(&trap)) {
+            found = find_in_dwarf(name, res);
+            clear_trap(&trap);
+        }
+        else {
+            error = trap.error;
+        }
+    }
+
+    if (error == 0 && !found) {
+        ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip == 0 ? ~(ContextAddress)0 : sym_ip + 1);
+        if (file == NULL) error = errno;
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                DWARFCache * cache = get_dwarf_cache(file);
+                found = find_in_sym_table(cache, name, res);
+                clear_trap(&trap);
             }
-            elf_list_done(sym_ctx);
+            else {
+                error = trap.error;
+                break;
+            }
+            if (found) break;
+            file = elf_list_next(sym_ctx);
+            if (file == NULL) error = errno;
+        }
+        elf_list_done(sym_ctx);
+    }
+
+    if (error == 0 && !found && sym_ip != 0) {
+        Trap trap;
+        if (set_trap(&trap)) {
+            const char * s = NULL;
+            if (strcmp(name, "signed") == 0) s = "int";
+            else if (strcmp(name, "signed int") == 0) s = "int";
+            else if (strcmp(name, "unsigned") == 0) s = "unsigned int";
+            else if (strcmp(name, "short") == 0) s = "short int";
+            else if (strcmp(name, "signed short") == 0) s = "short int";
+            else if (strcmp(name, "signed short int") == 0) s = "short int";
+            else if (strcmp(name, "unsigned short") == 0) s = "unsigned short int";
+            else if (strcmp(name, "long") == 0) s = "long int";
+            else if (strcmp(name, "signed long") == 0) s = "long int";
+            else if (strcmp(name, "signed long int") == 0) s = "long int";
+            else if (strcmp(name, "unsigned long") == 0) s = "unsigned long int";
+            else if (strcmp(name, "long long") == 0) s = "long long int";
+            else if (strcmp(name, "signed long long") == 0) s = "long long int";
+            else if (strcmp(name, "signed long long int") == 0) s = "long long int";
+            else if (strcmp(name, "unsigned long long") == 0) s = "unsigned long long int";
+            else if (strcmp(name, "char") == 0) s = "signed char";
+            if (s != NULL) found = find_in_dwarf(s, res);
+            clear_trap(&trap);
+        }
+        else {
+            error = trap.error;
         }
     }
 
@@ -375,46 +387,15 @@ static void enumerate_local_vars(ObjectInfo * obj, int level,
 }
 
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
-    int error = 0;
-
-    if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) error = errno;
-    if (error == 0 && get_sym_context(ctx, frame) < 0) error = errno;
-
-    if (error == 0) {
-        ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip == 0 ? ~(ContextAddress)0 : sym_ip + 1);
-        if (file == NULL) error = errno;
-        while (error == 0 && file != NULL) {
-            Trap trap;
-            if (set_trap(&trap)) {
-                DWARFCache * cache = get_dwarf_cache(file);
-                if (sym_ip != 0) {
-                    unsigned i;
-                    for (i = 0; i < cache->mCompUnitsCnt; i++) {
-                        CompUnit * unit = cache->mCompUnits[i];
-                        ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, unit->mFile, unit->mTextSection, unit->mLowPC);
-                        ContextAddress addr1 = unit->mHighPC - unit->mLowPC + addr0;
-                        if (addr0 != 0 && addr0 <= sym_ip && addr1 > sym_ip) {
-                            enumerate_local_vars(unit->mChildren, 0, call_back, args);
-                            break;
-                        }
-                    }
-                }
-                clear_trap(&trap);
-            }
-            else {
-                error = trap.error;
-                break;
-            }
-            file = elf_list_next(sym_ctx);
-            if (file == NULL) error = errno;
-        }
-        elf_list_done(sym_ctx);
+    Trap trap;
+    if (!set_trap(&trap)) return -1;
+    if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
+    if (get_sym_context(ctx, frame) < 0) exception(errno);
+    if (sym_ip != 0) {
+        UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1);
+        if (range != NULL) enumerate_local_vars(range->mUnit->mObject->mChildren, 0, call_back, args);
     }
-
-    if (error) {
-        errno = error;
-        return -1;
-    }
+    clear_trap(&trap);
     return 0;
 }
 
@@ -541,7 +522,7 @@ int id2symbol(const char * id, Symbol ** res) {
 
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     ContextAddress res = 0;
-    ELF_File * file = elf_list_first(ctx, addr, addr);
+    ELF_File * file = elf_list_first(ctx, addr, addr + 1);
     while (file != NULL) {
         unsigned idx;
         for (idx = 1; idx < file->section_cnt; idx++) {
@@ -561,7 +542,7 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
 }
 
 int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info) {
-    ELF_File * file = elf_list_first(ctx, (ContextAddress)addr, (ContextAddress)(addr + 1));
+    ELF_File * file = elf_list_first(ctx, addr, addr + 1);
     int error = 0;
 
     *info = NULL;

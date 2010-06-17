@@ -39,6 +39,7 @@ typedef struct PropertyValue PropertyValue;
 typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
 typedef struct SymbolSection SymbolSection;
+typedef struct UnitAddressRange UnitAddressRange;
 typedef struct DWARFCache DWARFCache;
 
 struct FileInfo {
@@ -77,12 +78,11 @@ struct SymbolInfo {
 
 struct ObjectInfo {
     ObjectInfo * mHashNext;
-    ObjectInfo * mListNext;
     ObjectInfo * mSibling;
     ObjectInfo * mChildren;
     ObjectInfo * mParent;
 
-    U8_T mID;
+    U8_T mID; /* Link-time debug information entry address: address of .debug_info section + offset in the section */
     U2_T mTag;
 
     U2_T mFundType;
@@ -120,11 +120,12 @@ struct LineNumbersState {
 };
 
 struct CompUnit {
+    ObjectInfo * mObject;
+
     ELF_File * mFile;
-    ELF_Section * mSection;
+    ELF_Section * mInfoSection;
     ELF_Section * mTextSection;
 
-    U8_T mID;
     ContextAddress mLowPC;
     ContextAddress mHighPC;
 
@@ -132,7 +133,6 @@ struct CompUnit {
 
     U8_T mDebugRangesOffs;
     U8_T mLineInfoOffs;
-    char * mName;
     char * mDir;
 
     U4_T mFilesCnt;
@@ -148,7 +148,13 @@ struct CompUnit {
     LineNumbersState * mStates;
 
     CompUnit * mBaseTypes;
-    ObjectInfo * mChildren;
+};
+
+struct UnitAddressRange {
+    CompUnit * mUnit;
+    ELF_Section * mSection;
+    ContextAddress mAddr;
+    ContextAddress mSize;
 };
 
 #define DWARF_CACHE_MAGIC 0x34625490
@@ -157,32 +163,34 @@ struct DWARFCache {
     int magic;
     ELF_File * mFile;
     ErrorReport * mErrorReport;
-    CompUnit ** mCompUnits;
-    unsigned mCompUnitsCnt;
-    ELF_Section * mDebugRanges;
-    ELF_Section * mDebugARanges;
+    ObjectInfo * mCompUnits;
     ELF_Section * mDebugLine;
     ELF_Section * mDebugLoc;
     ELF_Section * mDebugFrame;
     ELF_Section * mEHFrame;
     SymbolSection ** mSymSections;
     unsigned mSymSectionsCnt;
-    unsigned mSymSectionsLen;
+    unsigned mSymSectionsMax;
     ObjectInfo ** mObjectHash;
-    ObjectInfo * mObjectList;
-    DWARFCache * mLineInfoNext;
+    UnitAddressRange * mAddrRanges;
+    unsigned mAddrRangesCnt;
+    unsigned mAddrRangesMax;
 };
 
 /* Return DWARF cache for given file, create and populate the cache if needed, throw an exception if error */
 extern DWARFCache * get_dwarf_cache(ELF_File * file);
 
+/* Return symbol name hash. The hash is used to build mSymbolHash table. */
 extern unsigned calc_symbol_name_hash(const char * s);
 
 /* Load line number information for given compilation unit, throw an exception if error */
-extern void load_line_numbers(DWARFCache * cache, CompUnit * unit);
+extern void load_line_numbers(CompUnit * unit);
 
 /* Find ObjectInfo by ID */
 extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
+
+/* Search and return first compilation unit address range in given link-time address range 'addr_min'..'addr_max'. */
+extern UnitAddressRange * find_comp_unit_addr_range(DWARFCache * cache, ContextAddress addr_min, ContextAddress addr_max);
 
 /* Get SymbolInfo */
 extern void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * info);

@@ -343,7 +343,6 @@ typedef struct ELF_PHeader ELF_PHeader;
 
 struct ELF_File {
     ELF_File * next;
-    U4_T ref_cnt;
 
     char * name;
     dev_t dev;
@@ -412,18 +411,11 @@ extern void swap_bytes(void * buf, size_t size);
 
 /*
  * Open ELF file for reading.
- * Same file can be opened mutiple times, each call to elf_open() increases reference counter.
- * File must be closed after usage by calling elf_close().
+ * Same file can be opened mutiple times.
  * Returns the file descriptior on success. If error, returns NULL and sets errno.
+ * The file descriptor is valid only during single dispatch cycle.
  */
 extern ELF_File * elf_open(char * file_name);
-
-/*
- * Close ELF file.
- * Each call of elf_close() decrements reference counter.
- * The file will be kept in a cache for some time even after all references are closed.
- */
-extern void elf_close(ELF_File * file);
 
 /*
  * Iterate context ELF files that are mapped in context memory in given address range (inclusive).
@@ -472,6 +464,11 @@ extern int elf_read_memory_word(Context * ctx, ELF_File * file, ContextAddress a
  * Return 0 if the structure could not be found.
  */
 extern ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file);
+
+/*
+ * Search and return first compilation unit address range in given run-time address range 'addr_min'..'addr_max'.
+ */
+extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max);
 
 /*
  * Initialize ELF support module.

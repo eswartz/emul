@@ -294,6 +294,10 @@
 				RelativePath="..\agent\services\tcf_elf.c"
 				>
 			</File>
+			<File
+				RelativePath="..\agent\services\tcf_elf.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="main"
