@@ -18,6 +18,10 @@ Instructions:
 
    // -- clean up TupleTempOperand so we can walk its memory allocation easier
 
+-- Str type is not sized (0 elements) so it makes no sense to assign it to a field or a variable
+
+
+
 Overall:
 
 -- register coloring

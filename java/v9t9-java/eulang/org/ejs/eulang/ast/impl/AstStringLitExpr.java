@@ -21,6 +21,15 @@ public class AstStringLitExpr extends AstLitExpr implements IAstStringLitExpr {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#toString()
+	 */
+	@Override
+	public String toString() {
+		return typedString('"' + getLiteral() + '"');
+	}
+	
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstStringLitExpr#copy()
 	 */
 	@Override
