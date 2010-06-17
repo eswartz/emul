@@ -2339,6 +2339,10 @@ public class LLVMGenerator {
 	}
 
 	/**
+	 * If performing getelementptr on a constant, force content to 
+	 * memory so getelementptr instruction works.
+	 * 
+	 * TODO: just generate getelementptr operand!
 	 * @param op
 	 * @return
 	 */
