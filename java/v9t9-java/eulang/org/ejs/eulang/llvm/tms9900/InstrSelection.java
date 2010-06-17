@@ -1637,6 +1637,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		boolean sizeChange = (bop.getType().getBits() != bop.getFromType().getBits());
 		switch (bop.getCast()) {
 		case BITCAST:
+			assert bop.getType().getBasicType() == BasicType.POINTER || !sizeChange;
+			return op;
 		case PTRTOINT:
 		case INTTOPTR:
 			assert !sizeChange;

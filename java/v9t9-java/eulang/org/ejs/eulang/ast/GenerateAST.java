@@ -83,7 +83,6 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.symbols.ModuleScope;
 import org.ejs.eulang.symbols.NamespaceScope;
-import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLGenericType;
 import org.ejs.eulang.types.LLInstanceField;
@@ -2752,8 +2751,8 @@ public class GenerateAST {
 		case EulangParser.STRING_LITERAL: {
 			assert (lit.startsWith("\"") && lit.endsWith("\""));
 			boolean interpret = true;
-			LLType type = typeEngine.STR;
 			lit = lit.substring(1, lit.length() - 1);
+			LLType type = typeEngine.getStringLiteralType(lit.length());
 			StringBuilder sb = new StringBuilder(); 
 			for (int idx = 0; idx < lit.length(); ) {
 				Pair<Integer, Integer> next = parseCharacter(tree, lit, idx, interpret);

@@ -501,14 +501,30 @@ public class ExpandAST {
 		
 		for (int i = 0; i < protoArgs.length; i++) {
 			IAstArgDef protoArg = protoArgs[i];
-			IAstTypedExpr realArg;
+			IAstNode realArg;
 			if (i < realArgs.length) {
 				realArg = realArgs[i];
-				if (realArg instanceof IAstDerefExpr)
-					realArg = ((IAstDerefExpr) realArg).getExpr();
+				
 				ISymbol argSym = codeExpr.getScope().get(protoArg.getName());
 				assert argSym != null;
+				
+				if (protoArg.hasAttr(IAttrs.LIST)) {
+					if (!protoArg.hasAttr(IAttrs.MACRO))
+						throw new ASTException(protoArg, "#list only valid on #macro arguments");
+					
+					IAstNodeList<IAstNode> argList = new AstNodeList<IAstNode>(IAstNode.class);
+					argList.add(realArg.copy());
+					while (++i < realArgs.length) {
+						realArg = realArgs[i];
+						argList.add(realArg.copy());
+					}
+					realArg = argList;
+				} else {
+					if (realArg instanceof IAstDerefExpr)
+						realArg = ((IAstDerefExpr) realArg).getExpr();
+				}
 				argSym.setDefinition(realArg);
+				
 				expandedArgs.put(argSym, realArg);
 			}
 			else {
@@ -565,7 +581,7 @@ public class ExpandAST {
 				IAstNodeList<IAstSymbolExpr> idList = AstNodeList.<IAstSymbolExpr>singletonList(
 						IAstSymbolExpr.class, symCopy);
 				IAstNodeList<IAstTypedExpr> exprList = AstNodeList.<IAstTypedExpr>singletonList(
-						IAstTypedExpr.class, realArg);
+						IAstTypedExpr.class, (IAstTypedExpr) realArg);
 				
 				IAstAllocStmt argAlloc = new AstAllocStmt(
 						idList, 
@@ -578,9 +594,12 @@ public class ExpandAST {
 				// For macro arguments, the actual argument is directly replaced
 				ISymbol argSym = codeExpr.getScope().get(protoArg.getName());
 				if (realArg instanceof IAstSymbolExpr) {
-					IAstNode rootDef = argSym.getDefinition();
-					assert rootDef != null;
-					((IAstSymbolExpr)realArg).getSymbol().setDefinition(rootDef);
+					// define from argument if not a known symbol ref
+					if (((IAstSymbolExpr) realArg).getSymbol().getDefinition() == null) {
+						IAstNode rootDef = argSym.getDefinition();
+						assert rootDef != null;
+						((IAstSymbolExpr)realArg).getSymbol().setDefinition(rootDef);
+					}
 				}
 				replaceInTree(codeExpr.stmts(), argSym, realArg);
 			}
@@ -599,35 +618,66 @@ public class ExpandAST {
 		return stmtListExpr;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void replaceInTree(IAstNode root,
 			ISymbol symbol, IAstNode replacement) throws ASTException {
 		for (IAstNode kid : root.getChildren()) {
 			replaceInTree(kid, symbol, replacement);
 		}
 		if (root instanceof IAstSymbolExpr && ((IAstSymbolExpr) root).getSymbol().equals(symbol)) {
-			//if (replacement instanceof IAstDerefExpr)
-//				replacement = ((IAstDerefExpr) replacement).getExpr();
-			
 			IAstNode copy = replacement.copy();
-			if (copy instanceof IAstTypedNode)
-				((IAstTypedNode) copy).setType(((IAstTypedNode)replacement).getType());
 			copy.uniquifyIds();
 			
-			try {
-				root.getParent().replaceChild(root, copy);
-			} catch (ClassCastException e) {
-				// if a slot refers to a type, directly replace the type
-				try {
-					if (root.getParent() instanceof IAstNamedType)
-						root.getParent().getParent().replaceChild(root.getParent(), copy);
-					else
-						throw e;
-				} catch (ClassCastException e2) {
-					throw new ASTException(replacement, "cannot macro-substitute an argument of this syntax type in place of " + symbol.getName());
+			if (copy instanceof IAstNodeList) {
+				if (!(root.getParent() instanceof IAstNodeList)) {
+					throw new ASTException(root, "cannot reference #list argument outside of a list");
 				}
-			}	
+				
+				IAstNodeList<IAstNode> parentList = (IAstNodeList) root.getParent();
+				int pos = parentList.list().indexOf(root);
+				assert pos >= 0;
+				
+				boolean first = true;
+				for (IAstNode node : ((IAstNodeList<IAstNode>) copy).list()) {
+					node.setParent(null);
+					if (first) {
+						try {
+							parentList.replaceChild(root, node);
+						} catch (ClassCastException e) {
+							throw new ASTException(node, "cannot macro-substitute an argument of this syntax type in place of " + symbol.getName());
+						}
+						first = false;
+					} else {
+						parentList.add(pos, node);
+					}
+					pos++;
+				}
+			} else {
+				replaceNode(root, symbol, replacement, copy);
+			}
 		} 
 		
+	}
+
+	private void replaceNode(IAstNode root, ISymbol symbol,
+			IAstNode replacement, IAstNode copy) throws ASTException {
+		if (copy instanceof IAstTypedNode)
+			((IAstTypedNode) copy).setType(((IAstTypedNode)replacement).getType());
+		
+		
+		try {
+			root.getParent().replaceChild(root, copy);
+		} catch (ClassCastException e) {
+			// if a slot refers to a type, directly replace the type
+			try {
+				if (root.getParent() instanceof IAstNamedType)
+					root.getParent().getParent().replaceChild(root.getParent(), copy);
+				else
+					throw e;
+			} catch (ClassCastException e2) {
+				throw new ASTException(replacement, "cannot macro-substitute an argument of this syntax type in place of " + symbol.getName());
+			}
+		}
 	}
 
 	/**

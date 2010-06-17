@@ -129,6 +129,8 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 		// point to the element
 		LLType elementType = currentTarget.getTypeEngine().getPointerType(expr.getType());
 
+		array = generator.ensureAddressable(array);
+		
 		LLTempOp elPtr = currentTarget.newTemp(elementType);
 		if (!isAlloca)
 			currentTarget.emit(new LLGetElementPtrInstr(elPtr, arrayPointerType,

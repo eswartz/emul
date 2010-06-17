@@ -14,4 +14,5 @@ public interface IAttrs {
 	String THIS = "this";
 	String HIDE = "hide";
 	String STATIC = "static";
+	String LIST = "list";
 }

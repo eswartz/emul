@@ -222,7 +222,80 @@ public class TestMacroCall extends BaseTest {
     	dumpLLVMGen = true;
     	doGenerate(mod);
     }
+    
+    @Test
+    public void testMultiArgs() throws Exception {
+    	dumpExpand = true;
 
+    	IAstModule mod = doFrontend(
+    			"__new__ = code (a, b, c : Int) { };\n"+
+    			"new = code #macro (type #macro;  args #macro #list) {\n" + 
+    			"    __new__(args);\n" + 
+    			"};\n"+
+    			"main := code() {\n"+
+    			" a:=4;\n"+
+    			"new(Unused, 1, 2, 3);\n"+
+    			"new(Unused, a, \"2\"[0], 3+4+'b');\n"+
+    			"};\n"+
+    	"");
+    	sanityTest(mod);
+    	dumpLLVMGen = true;
+    	doAssemble = true;
+    	doGenerate(mod);
+    }
+    
+
+    @Test
+    public void testTypeNameArgRef() throws Exception {
+    	dumpExpand = true;
+    	
+    	IAstModule mod = doFrontend(
+    			"new = code #macro (T #macro =>nil) { };\n" + 
+    			"Node = data {};\n" + 
+    			"main = code(=>nil) {\n" + 
+    			"    new(Node);\n" + 
+    			"};"+
+    	"");
+    	sanityTest(mod);
+    	dumpLLVMGen = true;
+    	doAssemble = true;
+    	doGenerate(mod);
+    }
+    
+
+    @Test
+    public void testMultiArgs2() throws Exception {
+    	dumpExpand = true;
+    	
+    	IAstModule mod = doFrontend(
+    			"brk := 0xa000;\n" + 
+    			"_new = code(s:Int) {\n" + 
+    			"    ret : Int;\n" + 
+    			"    ret, brk = brk, (brk+((s+1)&~1));\n" + 
+    			"};\n" + 
+    			"forward Node;\n"+
+    			"new = code #macro (T #macro; args #macro #list) {\n" + 
+    			"    ptr := _new(sizeof(Node)){Node^};\n" + 
+    			"    Node.__init__(ptr, args);\n" + 
+    			"    ptr;\n" + 
+    			"};//10\n" + 
+    			"\n" + 
+    			"Node = data {\n" + 
+    			"    x : Int;\n" + 
+    			"    __init__ = code (this:Node^; x:Int) {\n" + 
+    			"        :x = x;\n" + 
+    			"    };\n" + 
+    			"}; \n" + 
+    			"main = code() {\n" + 
+    			"    n1 := new(Node, 10);\n" + 
+    			"};"+
+    	"");
+    	sanityTest(mod);
+    	dumpLLVMGen = true;
+    	doAssemble = true;
+    	doGenerate(mod);
+    }
+    
 }
 
 

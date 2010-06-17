@@ -134,7 +134,12 @@ public class AstStmtListExpr extends AstTypedExpr implements IAstStmtListExpr  {
 		if (last instanceof ITyped)
 			return inferTypesFromChildren(new ITyped[] { (ITyped) last });
 		return false;*/
-		return inferTypesFromChildren(new ITyped[] { getValue() });
+		IAstTypedExpr value = getValue();
+		if (value != null)
+			return inferTypesFromChildren(new ITyped[] { value });
+		else {
+			return updateType(this, typeEngine.VOID);
+		}
 	}
 
 }

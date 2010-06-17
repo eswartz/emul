@@ -22,7 +22,6 @@ import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.symbols.GlobalScope;
-import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
@@ -267,7 +266,7 @@ public class TypeEngine {
 		REFPTR = register(new LLPointerType("RefPtr", getPtrBits(), 
 				getRefType(BYTE)));
 		
-		STR = register(getStringLiteralType("", globalScope.add("Str", false)));
+		STR = register(getStringLiteralType(0, globalScope.add("Str", false)));
 		
 		//INT_ANY = new LLIntType("Int*", 0);
 		
@@ -762,8 +761,7 @@ public class TypeEngine {
 	}
 
 
-	public LLDataType getStringLiteralType(String str) {
-		int len = str.length();
+	public LLDataType getStringLiteralType(int len) {
 		LLDataType strLitType = stringLitTypeMap.get(len);
 		if (strLitType == null) {
 			
@@ -775,12 +773,11 @@ public class TypeEngine {
 				sym = STR.getSymbol().getScope().add(name, false);
 			}
 			
-			return getStringLiteralType(str, sym);
+			return getStringLiteralType(len, sym);
 		}
 		return strLitType;
 	}
-	protected LLDataType getStringLiteralType(String str, ISymbol sym) {
-		int len = str.length();
+	protected LLDataType getStringLiteralType(int len, ISymbol sym) {
 		LLDataType strLitType = stringLitTypeMap.get(len);
 		if (strLitType == null) {
 			List<LLInstanceField> strFields = new ArrayList<LLInstanceField>();

@@ -779,7 +779,7 @@ public class TestGenerator extends BaseTest {
     	IAstAllocStmt stmt;
 		stmt = (IAstAllocStmt) codeExpr.stmts().getFirst();
 		IAstTypedExpr expr = stmt.getExprs().getFirst();
-		assertEquals(typeEngine.STR, expr.getType());
+		assertEquals(typeEngine.getStringLiteralType(5), expr.getType());
 		assertEquals("hello", (((IAstStringLitExpr) expr).getLiteral()));
     }
     

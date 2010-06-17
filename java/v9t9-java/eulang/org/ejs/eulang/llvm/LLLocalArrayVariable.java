@@ -85,11 +85,7 @@ public class LLLocalArrayVariable extends LLLocalVariable {
 		LLOperand symbolOp = new LLSymbolOp(addrSymbol);
 		LLTempOp arrayPtr = target.newTemp(symbol.getType());
 		TypeEngine typeEngine = target.getGenerator().getTypeEngine();
-		/*
-		target.emit(new LLCastInstr(castedAddr, ECast.BITCAST,
-				typeEngine.getPointerType(arrayType.getSubType()), 
-				symbolOp, arrayType));
-				*/
+		
 		target.emit(new LLGetElementPtrInstr(arrayPtr, 
 				typeEngine.getPointerType(arrayType.getSubType()),
 				symbolOp, new LLConstOp(0)));

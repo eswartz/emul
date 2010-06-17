@@ -9,7 +9,6 @@ import java.util.List;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.ASTException;
-import org.ejs.eulang.ast.IAstSymbolExpr;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLCastOp;

@@ -3,25 +3,22 @@
  */
 package org.ejs.eulang.llvm.directives;
 
-import org.ejs.eulang.llvm.LLConstant;
+import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLType;
 
 /**
  * @author ejs
  *
  */
 public class LLConstantDirective extends LLBaseDirective {
-	private final LLConstant constant;
-	private final LLType type;
+	private final LLOperand constant;
 	private final boolean isConst;
 	private final ISymbol symbol;
 	private int addrSpace;
 	
-	public LLConstantDirective(ISymbol symbol, boolean isConst, LLType type, LLConstant constant) {
+	public LLConstantDirective(ISymbol symbol, boolean isConst, LLOperand constant) {
 		this.symbol = symbol;
 		this.isConst = isConst;
-		this.type = type;
 		this.constant = constant;
 		
 	}
@@ -36,6 +33,7 @@ public class LLConstantDirective extends LLBaseDirective {
 	@Override
 	public String toString() {
 		return symbol.getLLVMName() + " = " + (addrSpace != 0 ? "addrspace(" + addrSpace + ") " : "") +
-		 (isConst ? "constant " : "") + type.getLLVMName() + " " + (constant != null ? constant : "zeroinitializer");  
+		 (isConst ? "constant " : "") + constant.getType().getLLVMName() + " " + constant;
+		 //type.getLLVMName() + " " + (constant != null ? constant : "zeroinitializer");  
 	}
 }

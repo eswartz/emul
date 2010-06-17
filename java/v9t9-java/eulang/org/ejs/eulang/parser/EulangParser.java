@@ -1,4 +1,4 @@
-// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-06-13 20:45:34
+// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g 2010-06-16 20:51:59
 
 package org.ejs.eulang.parser;
 
@@ -16457,7 +16457,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: lhs, type, PLUS
+            	    // elements: PLUS, lhs, type
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -16544,7 +16544,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: lhs, PLUS, type
+                    // elements: PLUS, type, lhs
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -17144,7 +17144,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: atom, ID
+            	    // elements: ID, atom
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -17244,7 +17244,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: atom, arrayAccess
+            	    // elements: arrayAccess, atom
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -17360,7 +17360,7 @@ public class EulangParser extends Parser {
 
 
             	    // AST REWRITE
-            	    // elements: PLUS, type, atom
+            	    // elements: atom, PLUS, type
             	    // token labels: 
             	    // rule labels: retval
             	    // token list labels: 
@@ -17427,7 +17427,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: type, atom
+                    // elements: atom, type
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -17752,7 +17752,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: instantiation, idExpr
+                    // elements: idExpr, instantiation
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -18562,7 +18562,7 @@ public class EulangParser extends Parser {
 
 
             // AST REWRITE
-            // elements: fieldDecl, DATA
+            // elements: DATA, fieldDecl
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -18809,7 +18809,7 @@ public class EulangParser extends Parser {
 
 
                     // AST REWRITE
-                    // elements: ID, FORWARD
+                    // elements: FORWARD, ID
                     // token labels: 
                     // rule labels: retval
                     // token list labels: 
@@ -18822,10 +18822,10 @@ public class EulangParser extends Parser {
                     root_0 = (CommonTree)adaptor.nil();
                     // 635:35: -> ( ^( FORWARD ID ) )+
                     {
-                        if ( !(stream_ID.hasNext()||stream_FORWARD.hasNext()) ) {
+                        if ( !(stream_FORWARD.hasNext()||stream_ID.hasNext()) ) {
                             throw new RewriteEarlyExitException();
                         }
-                        while ( stream_ID.hasNext()||stream_FORWARD.hasNext() ) {
+                        while ( stream_FORWARD.hasNext()||stream_ID.hasNext() ) {
                             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/parser/Eulang.g:635:38: ^( FORWARD ID )
                             {
                             CommonTree root_1 = (CommonTree)adaptor.nil();
@@ -18837,8 +18837,8 @@ public class EulangParser extends Parser {
                             }
 
                         }
-                        stream_ID.reset();
                         stream_FORWARD.reset();
+                        stream_ID.reset();
 
                     }
 

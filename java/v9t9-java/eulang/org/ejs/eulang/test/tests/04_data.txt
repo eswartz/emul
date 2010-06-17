@@ -199,3 +199,38 @@ foo = code() {
 call foo
 assert R0 == -9700
 >>> 
+
+<<< new methods
+brk := 0xa000;
+_new = code(s:Int) {
+    ret : Int;
+    ret, brk = brk, (brk+((s+1)&~1));
+};
+new = code #macro (T #macro; args #macro #list) {
+    ptr := _new(sizeof(T)){T^};
+    ptr.__init__(args);
+    ptr;
+};//10
+
+Node = data {
+    x : Int;
+    __init__ = code #this (x:Int) {
+        :x = x;
+    };
+}; 
+Node2 = data {
+    x : Int;
+    y : Str;
+    __init__ = code #this (x:Int; y:Str^) {
+        (:x, :y) = (x, y^);
+    };
+}; 
+main = code() {
+    n1 := new(Node, 10);
+    n2 := new(Node2, 40, &"foo");
+    n2.y.length + n2.x + n1.x;
+};
+===
+call main
+assert R0 == 53
+>>>

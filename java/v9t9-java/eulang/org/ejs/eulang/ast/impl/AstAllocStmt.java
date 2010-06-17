@@ -321,7 +321,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 						changed = true;
 					}
 				} else if (theExpr instanceof IAstStringLitExpr) {
-					left = typeEngine.getStringLiteralType(((IAstStringLitExpr) theExpr).getLiteral());
+					left = typeEngine.getStringLiteralType(((IAstStringLitExpr) theExpr).getLiteral().length());
 					theSymbol.setType(left);
 					if (typeExpr != null)
 						typeExpr.setType(left);

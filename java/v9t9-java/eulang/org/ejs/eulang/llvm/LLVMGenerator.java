@@ -485,6 +485,7 @@ public class LLVMGenerator {
 		// construct instance initializer method
 		
 		LLPointerType thisPtrType = typeEngine.getPointerType(expr.getType());
+		ll.emitTypes(thisPtrType);
 		LLCodeType dataInitFuncType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { thisPtrType });
 		ISymbol initName = expr.getInitName(typeEngine);
 		ISymbol initSym = ll.getModuleSymbol(initName, dataInitFuncType);
@@ -513,8 +514,18 @@ public class LLVMGenerator {
 		ensureTypes(expr);
 
 		ISymbol modSymbol = ll.getModuleSymbol(symbol, expr.getType());
-		ll.add(new LLConstantDirective(modSymbol, true, expr.getType(),
-				new LLConstant(expr.getLiteral())));
+		
+		currentTarget = new StaticDataCodeTarget(this, symbol, target, ll, ll.getModuleScope());
+		
+		LLOperand op;
+		expr.simplify(typeEngine);
+		try {
+			op = generateTypedExprCore(expr);
+		} catch (UnsupportedOperationException e) {
+			throw new ASTException(expr, "cannot initialize constant from definition");
+		}
+
+		ll.add(new LLConstantDirective(modSymbol, true, op));
 
 	}
 
@@ -528,8 +539,10 @@ public class LLVMGenerator {
 		for (int i = 0; i < attrTypes.length; i++) {
 			LLType argType = typeEngine.getRealType(argumentTypes[i].getType());
 			if (argumentTypes[i].isVar()
-					|| !isArgumentPassedByValue(argumentTypes[i].getType()))
+					|| !isArgumentPassedByValue(argumentTypes[i].getType())) {
 				argType = typeEngine.getPointerType(argType);
+				ll.emitTypes(argType);
+			}
 			LLAttrs attrs = null; // new LLAttrs("noalias");
 			attrTypes[i] = new LLArgAttrType(argumentTypes[i].getName(), attrs,
 					argType);
@@ -1390,14 +1403,14 @@ public class LLVMGenerator {
 			if (source.getType().getBasicType() == BasicType.REF) {
 				// dereference to get the data ptr
 				LLOperand addrTemp = currentTarget.newTemp(source.getType());
-				currentTarget
-						.emit(new LLGetElementPtrInstr(addrTemp, source
-								.getType(), source, new LLConstOp(0),
+				source = ensureAddressable(source);
+				currentTarget.emit(new LLGetElementPtrInstr(addrTemp, source.getType(), source, new LLConstOp(0),
 								new LLConstOp(0)));
 
 				// now read data ptr
 				LLType valPtrType = getTypeEngine().getPointerType(
 						source.getType().getSubType());
+				ll.emitTypes(valPtrType);
 				LLOperand addr = currentTarget.newTemp(valPtrType);
 				currentTarget.emit(new LLLoadInstr(addr, valPtrType, addrTemp));
 
@@ -1793,8 +1806,11 @@ public class LLVMGenerator {
 
 			LLTempOp elPtr = currentTarget.newTemp(fieldPointerType);
 
-			currentTarget.emit(new LLGetElementPtrInstr(elPtr, typeEngine
-					.getPointerType(expr.getExpr().getType()), structAddr,
+			LLPointerType pointerType = typeEngine
+					.getPointerType(expr.getExpr().getType());
+			ll.emitTypes(pointerType);
+			structAddr = ensureAddressable(structAddr);
+			currentTarget.emit(new LLGetElementPtrInstr(elPtr, pointerType, structAddr,
 					new LLConstOp(0), new LLConstOp(dataType
 							.getFieldIndex(field))));
 
@@ -2117,6 +2133,7 @@ public class LLVMGenerator {
 				// not really a cast: take the address
 				if (value instanceof LLSymbolOp) {
 					origType = typeEngine.getPointerType(origType);
+					ll.emitTypes(origType);
 				}
 				if (origType.getLLVMName().equals(type.getLLVMName())) {
 					value.setType(type);
@@ -2183,6 +2200,7 @@ public class LLVMGenerator {
 				// point to the element
 				LLType argPointerType = typeEngine.getPointerType(funcType
 						.getArgTypes()[idx]);
+				ll.emitTypes(argPointerType);
 				realArgTypes[idx] = argPointerType;
 			}
 			ops[idx++] = argAddr;
@@ -2248,8 +2266,8 @@ public class LLVMGenerator {
 		String str = expr.getLiteral();
 		els[0] = new LLConstOp(dataType.getType(0), str.length());
 		
-		LLDataType strLitType = typeEngine.getStringLiteralType(str);
-
+		LLDataType strLitType = typeEngine.getStringLiteralType(str.length());
+		
 		/*
 		LLOperand[] chars = new LLOperand[str.length()];
 		for (int i = 0; i < str.length(); i++) {
@@ -2318,5 +2336,20 @@ public class LLVMGenerator {
 	 */
 	public String getOptimizedText() {
 		return optimizedText;
+	}
+
+	/**
+	 * @param op
+	 * @return
+	 */
+	public LLOperand ensureAddressable(LLOperand op) {
+		if (op.isConstant() && !(op instanceof LLSymbolOp)) {
+			ISymbol constSymbol = ll.getModuleScope().addTemporary(".const");
+			ISymbol modSymbol = ll.getModuleSymbol(constSymbol, op.getType());
+			ll.add(new LLConstantDirective(modSymbol, true, op));
+			op = new LLSymbolOp(modSymbol);
+
+		}
+		return op;
 	}
 }

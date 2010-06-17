@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,9 +25,6 @@ import org.ejs.eulang.types.LLBoolType;
 import org.ejs.eulang.types.LLCharType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLFloatType;
-import org.ejs.eulang.types.LLIntType;
-import org.ejs.eulang.types.LLLabelType;
-import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 

@@ -3,7 +3,6 @@
  */
 package org.ejs.eulang;
 
-import java.util.Collection;
 import java.util.Map;
 
 import org.ejs.coffee.core.utils.Pair;
