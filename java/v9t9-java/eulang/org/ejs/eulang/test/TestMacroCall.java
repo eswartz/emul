@@ -295,7 +295,53 @@ public class TestMacroCall extends BaseTest {
     	doAssemble = true;
     	doGenerate(mod);
     }
+    @Test
+    public void testMultiArgs0() throws Exception {
+    	dumpExpand = true;
+    	
+    	IAstModule mod = doFrontend(
+    			"brk := 0xa000;\n" + 
+    			"_new = code(s:Int) {\n" + 
+    			"    ret : Int;\n" + 
+    			"    ret, brk = brk, (brk+((s+1)&~1));\n" + 
+    			"};\n" + 
+    			"forward Node;\n"+
+    			"new = code #macro (T #macro; args #macro #list) {\n" + 
+    			"    ptr := _new(sizeof(Node)){Node^};\n" + 
+    			"    Node.__init__(ptr, args);\n" + 
+    			"    ptr;\n" + 
+    			"};//10\n" + 
+    			"\n" + 
+    			"Node = data {\n" + 
+    			"    x : Int;\n" + 
+    			"    __init__ = code (this:Node^) {\n" + 
+    			"        :x = x;\n" + 
+    			"    };\n" + 
+    			"}; \n" + 
+    			"main = code() {\n" + 
+    			"    n1 := new(Node);\n" + 
+    			"};"+
+    	"");
+    	sanityTest(mod);
+    	dumpLLVMGen = true;
+    	doAssemble = true;
+    	doGenerate(mod);
+    }
     
+    @Test
+    public void testMultiArgsBad1() throws Exception {
+    	treeize(
+    			"new = code #macro (T #macro; args #macro #list; somethingElse) {\n" + 
+    			"};//10\n" + 
+    	"", true);
+    }
+    @Test
+    public void testMultiArgsBad2() throws Exception {
+    	treeize(
+    			"new = code #macro (T #macro; args #macro #list; somethingElse = 10) {\n" + 
+    			"};//10\n" + 
+    			"", true);
+    }
 }
 
 

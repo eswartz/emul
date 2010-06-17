@@ -491,7 +491,16 @@ public class ExpandAST {
 		
 		// Substitute arguments
 		IAstArgDef[] protoArgs = codeExpr.getPrototype().argumentTypes();
-		if (args.nodeCount() < codeExpr.getPrototype().getDefaultArgumentIndex()) {
+		
+		int defaultArgIndex = 0;
+		while (defaultArgIndex < protoArgs.length) {
+			if (protoArgs[defaultArgIndex].getDefaultValue() != null
+					|| protoArgs[defaultArgIndex].hasAttr(IAttrs.LIST))
+				break;
+			defaultArgIndex++;
+		}
+		
+		if (args.nodeCount() < defaultArgIndex) {
 			throw new ASTException(args, "argument count does not match prototype " + codeExpr.getPrototype().toString());
 		}
 		IAstTypedExpr[] realArgs = args.getNodes(IAstTypedExpr.class);
@@ -528,7 +537,10 @@ public class ExpandAST {
 				expandedArgs.put(argSym, realArg);
 			}
 			else {
-				realArg = (IAstTypedExpr) protoArg.getDefaultValue().copy();
+				if (protoArg.hasAttr(IAttrs.LIST))
+					realArg = new AstNodeList<IAstNode>(IAstNode.class);
+				else
+					realArg = protoArg.getDefaultValue().copy();
 				
 				// allow defaults to reference other arguments
 				doExpand(messages, realArg, expandedArgs);
@@ -651,6 +663,10 @@ public class ExpandAST {
 						parentList.add(pos, node);
 					}
 					pos++;
+				}
+				if (first) {
+					// no args
+					parentList.remove(root);
 				}
 			} else {
 				replaceNode(root, symbol, replacement, copy);

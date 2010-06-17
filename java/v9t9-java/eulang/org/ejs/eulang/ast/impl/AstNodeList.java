@@ -134,6 +134,16 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 		this.reparent(null, node);
 	} 
 	
+	public void remove(T node) {
+		if (node == null)
+			return;
+		int idx = list.indexOf(node);
+		if (idx < 0)
+			throw new IllegalArgumentException();
+		list.remove(idx);
+		node.setParent(null);
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.ast.expr.IAstNode#getChildren()
 	 */

@@ -226,18 +226,6 @@ public class AstPrototype extends AstTypedExpr implements IAstPrototype {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.ast.IAstPrototype#getDefaultArgumentIndex()
-	 */
-	@Override
-	public int getDefaultArgumentIndex() {
-		for (int  i = 0; i < argumentTypes.length; i++) {
-			if (argumentTypes[i].getDefaultValue() != null)
-				return i;
-		}
-		return argumentTypes.length;
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes()
 	 */
 	@Override

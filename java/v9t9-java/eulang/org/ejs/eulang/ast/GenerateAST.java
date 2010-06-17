@@ -2177,7 +2177,7 @@ public class GenerateAST {
 
 		IAstType type = null;
 		IAstTypedExpr defaultVal = null;
-
+		
 		if (tree.getChildCount() > argIdx) {
 			IAstTypedExpr expr = checkConstruct(tree.getChild(argIdx),
 					IAstTypedExpr.class);
@@ -2594,16 +2594,23 @@ public class GenerateAST {
 				proto = checkConstruct(tree.getChild(idx), IAstPrototype.class);
 
 				boolean hitDefaults = false;
+				boolean hitList = false;
 				for (IAstArgDef argDef : proto.argumentTypes()) {
 					if (!isMacro && argDef.hasAttr(IAstAttributes.MACRO)) {
 						throw new GenerateException(argDef.getSourceRef(),
 								"cannot use macro arguments outside code #macro");
 					}
-					if (argDef.getDefaultValue() != null) {
+					if (hitList) {
+						throw new GenerateException(argDef.getSourceRef(),
+							"argument follows #list argument");						
+					}
+					else if (argDef.getDefaultValue() != null) {
 						if (!isMacro)
 							throw new GenerateException(argDef.getSourceRef(),
 									"cannot use default arguments outside code #macro");
 						hitDefaults = true;
+					} else if (argDef.hasAttr(IAttrs.LIST)) {
+						hitList = true;
 					} else if (hitDefaults) {
 						throw new GenerateException(argDef.getSourceRef(),
 								"non-default argument follows default argument");

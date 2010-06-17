@@ -26,6 +26,9 @@ public interface IAstNodeList <T extends IAstNode> extends IAstNode {
 	
 	void add(int idx, T node);
 	
+	void remove(T node);
+	
 	T getFirst();
 	T getLast();
+	
 }

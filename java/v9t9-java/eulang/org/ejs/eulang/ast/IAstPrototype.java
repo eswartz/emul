@@ -22,9 +22,6 @@ public interface IAstPrototype extends IAstTypedNode, IAstType, IAstAttributes {
 	boolean adaptToType(LLCodeType newType);
 	boolean hasDefaultArguments();
 	
-	/** index of first default argument, or # of arguments if none */
-	int getDefaultArgumentIndex();
-
 	void addArgument(int position, IAstArgDef newArgDef);
 	
 }
