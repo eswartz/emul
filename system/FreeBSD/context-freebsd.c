@@ -75,7 +75,7 @@ static size_t context_extension_offset = 0;
 
 static LINK pending_list;
 
-static char * event_name(int event) {
+static const char * event_name(int event) {
     trace(LOG_ALWAYS, "event_name(): unexpected event code %d", event);
     return "unknown";
 }
@@ -279,9 +279,9 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         if (word_addr < address || word_addr + word_size > address + size) {
-            int i;
+            size_t i;
             errno = 0;
-            word = ptrace(PTRACE_PEEKDATA, EXT(ctx)->pid, (void *)word_addr, 0);
+            word = ptrace(PTRACE_PEEKDATA, EXT(ctx)->pid, (char *)word_addr, 0);
             if (errno != 0) {
                 int err = errno;
                 trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
@@ -298,7 +298,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         else {
             memcpy(&word, (char *)buf + (word_addr - address), word_size);
         }
-        if (ptrace(PTRACE_POKEDATA, EXT(ctx)->pid, (void *)word_addr, word) < 0) {
+        if (ptrace(PTRACE_POKEDATA, EXT(ctx)->pid, (char *)word_addr, word) < 0) {
             int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_POKEDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
                 ctx, ctx->id, word_addr, err, errno_to_str(err));
@@ -320,7 +320,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         errno = 0;
-        word = ptrace(PTRACE_PEEKDATA, EXT(ctx)->pid, (void *)word_addr, 0);
+        word = ptrace(PTRACE_PEEKDATA, EXT(ctx)->pid, (char *)word_addr, 0);
         if (errno != 0) {
             int err = errno;
             trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
@@ -329,7 +329,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
             return -1;
         }
         if (word_addr < address || word_addr + word_size > address + size) {
-            int i;
+            size_t i;
             for (i = 0; i < word_size; i++) {
                 if (word_addr + i >= address && word_addr + i < address + size) {
                     ((char *)buf)[word_addr + i - address] = ((char *)&word)[i];
