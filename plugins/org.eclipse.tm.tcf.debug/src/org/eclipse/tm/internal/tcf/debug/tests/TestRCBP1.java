@@ -288,11 +288,14 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 }
                 if (!test_suite.isActive(TestRCBP1.this)) return;
                 assert test_ctx_id != null;
-                if (!symbol.isAbs()) {
-                    exit(new Exception("Symbols must be absolute: " + name));
+                if (symbol == null) {
+                    exit(new Exception("Symbol must not be NULL: " + name));
+                }
+                else if (!symbol.isAbs()) {
+                    exit(new Exception("Symbol must be absolute: " + name));
                 }
                 else if (symbol.getValue() == null || symbol.getValue().longValue() == 0) {
-                    exit(new Exception("Symbols must not be NULL: " + name));
+                    exit(new Exception("Symbol value must not be NULL: " + name));
                 }
                 else {
                     sym_list.put(name, symbol);
