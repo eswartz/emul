@@ -139,11 +139,15 @@ static void write_context(OutputStream * out, Context * ctx) {
     json_write_string(out, ctx->mem->id);
 
 #if defined(__linux__)
-    if (!ctx->exiting && ctx->parent == NULL) {
-        write_stream(out, ',');
-        json_write_string(out, "File");
-        write_stream(out, ':');
-        json_write_string(out, get_executable(id2pid(ctx->id, NULL)));
+    if (ctx->parent == NULL) {
+        pid_t pid = id2pid(ctx->id, NULL);
+        Context * x = context_find_from_pid(pid, 1);
+        if (x != NULL && !x->exiting && !x->exited) {
+            write_stream(out, ',');
+            json_write_string(out, "File");
+            write_stream(out, ':');
+            json_write_string(out, get_executable(pid));
+        }
     }
 #endif
 
@@ -549,16 +553,9 @@ static void command_suspend(char * token, Channel * c) {
     send_simple_result(c, token, err);
 }
 
-typedef struct TerminateArgs {
-    Context * ctx;
-    Channel * channel;
-} TerminateArgs;
-
-static void event_terminate(void * x) {
-    TerminateArgs * args = (TerminateArgs *)x;
-    Context * ctx = args->ctx;
+static void event_terminate(void * args) {
+    Context * ctx = (Context *)args;
     ContextExtensionRC * ext = EXT(ctx);
-    Channel * c = args->channel;
     LINK * l = ctx->children.next;
     while (l != &ctx->children) {
         Context * x = cldl2ctxp(l);
@@ -574,11 +571,9 @@ static void event_terminate(void * x) {
     ctx->pending_intercept = 0;
     ctx->pending_signals |= 1 << SIGKILL;
     context_unlock(ctx);
-    channel_unlock(c);
-    loc_free(args);
 }
 
-int terminate_debug_context(Channel * c, Context * ctx) {
+int terminate_debug_context(Context * ctx) {
     int err = 0;
     if (ctx == NULL) {
         err = ERR_INV_CONTEXT;
@@ -587,12 +582,8 @@ int terminate_debug_context(Channel * c, Context * ctx) {
         err = ERR_ALREADY_EXITED;
     }
     else {
-        TerminateArgs * args = (TerminateArgs *)loc_alloc(sizeof(TerminateArgs));
-        args->ctx = ctx;
-        args->channel = c;
         context_lock(ctx);
-        channel_lock(c);
-        post_safe_event(ctx->mem, event_terminate, args);
+        post_safe_event(ctx->mem, event_terminate, ctx);
     }
     if (err) {
         errno = err;
@@ -609,7 +600,7 @@ static void command_terminate(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (terminate_debug_context(c, id2ctx(id)) != 0) err = errno;
+    if (terminate_debug_context(id2ctx(id)) != 0) err = errno;
 
     send_simple_result(c, token, err);
 }

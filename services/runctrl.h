@@ -59,7 +59,7 @@ extern int is_all_stopped(Context * mem);
  * Returns 0 if no errors, otherwise returns -1 and sets errno.
  * Note: this function is asynchronous, it returns before context is terminated.
  */
-extern int terminate_debug_context(Channel * c, Context * ctx);
+extern int terminate_debug_context(Context * ctx);
 
 /*
  * Suspend (stop and intercept) debug context - thread or process.

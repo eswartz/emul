@@ -45,6 +45,7 @@ static const char * DIAGNOSTICS = "Diagnostics";
 
 typedef struct ContextExtensionDiag {
     int test_process;
+    Channel * channel;
 } ContextExtensionDiag;
 
 static size_t context_extension_offset = 0;
@@ -57,6 +58,23 @@ int is_test_process(Context * ctx) {
 #else
     return EXT(ctx->mem)->test_process;
 #endif
+}
+
+static void channel_close_listener(Channel * c) {
+    LINK * l = context_root.next;
+    while (l != &context_root) {
+        Context * ctx = ctxl2ctxp(l);
+        if (EXT(ctx)->channel == c || ctx->creator != NULL && EXT(ctx->creator)->channel == c) {
+            terminate_debug_context(ctx);
+        }
+        l = l->next;
+    }
+    l = context_root.next;
+    while (l != &context_root) {
+        Context * ctx = ctxl2ctxp(l);
+        if (EXT(ctx)->channel == c) EXT(ctx)->channel = NULL;
+        l = l->next;
+    }
 }
 
 #endif /* ENABLE_RCBP_TEST */
@@ -122,7 +140,10 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     RunTestDoneArgs * data = (RunTestDoneArgs *)arg;
     Channel * c = data->c;
 
-    if (ctx != NULL) EXT(ctx->mem)->test_process = 1;
+    if (ctx != NULL) {
+        EXT(ctx->mem)->test_process = 1;
+        EXT(ctx)->channel = c;
+    }
     if (!is_channel_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
@@ -130,6 +151,9 @@ static void run_test_done(int error, Context * ctx, void * arg) {
         json_write_string(&c->out, ctx ? ctx->id : NULL);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
+    }
+    else if (ctx != NULL) {
+        terminate_debug_context(ctx);
     }
     channel_unlock(c);
     loc_free(data);
@@ -179,7 +203,7 @@ static void command_cancel_test(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
 #if ENABLE_RCBP_TEST
-    if (terminate_debug_context(c, id2ctx(id)) != 0) err = errno;
+    if (terminate_debug_context(id2ctx(id)) != 0) err = errno;
 #else
     err = ERR_UNSUPPORTED;
 #endif
@@ -418,6 +442,7 @@ void ini_diagnostics_service(Protocol * proto) {
     add_command_handler(proto, DIAGNOSTICS, "disposeTestStream", command_dispose_test_stream);
 #if ENABLE_RCBP_TEST
     context_extension_offset = context_extension(sizeof(ContextExtensionDiag));
+    add_channel_close_listener(channel_close_listener);
 #endif
 }
 
