@@ -14,15 +14,15 @@ Instructions:
     
 //-- calls
 
--- global data
+//-- global data
 
-    -- clean up TupleTempOperand so we can walk its memory allocation easier
+   // -- clean up TupleTempOperand so we can walk its memory allocation easier
 
 Overall:
 
 -- register coloring
 
--- instruction lowering
+//-- instruction lowering
 
 -- frame setup
 
