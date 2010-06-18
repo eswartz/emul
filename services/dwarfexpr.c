@@ -35,9 +35,15 @@ static U8_T * sExprStack = NULL;
 static unsigned sExprStackLen = 0;
 static unsigned sExprStackMax = 0;
 static int sKeepStack = 0;
-static StackFrame * sStackFrame = NULL;
 
 #define check_e_stack(n) { if (sExprStackLen < n) str_exception(ERR_INV_DWARF, "invalid DWARF expression stack"); }
+
+static StackFrame * get_stack_frame(PropertyValue * Value) {
+    StackFrame * Info = NULL;
+    if (Value->mFrame == STACK_NO_FRAME) return NULL;
+    if (get_frame_info(Value->mContext, Value->mFrame, &Info) < 0) exception(errno);
+    return Info;
+}
 
 static ObjectInfo * get_parent_function(ObjectInfo * Info) {
     while (Info != NULL) {
@@ -437,7 +443,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_breg31:
             {
                 RegisterDefinition * def = get_reg_by_id(Value->mContext, Op - OP_breg0, REGNUM_DWARF);
-                if (read_reg_value(sStackFrame, def, sExprStack + sExprStackLen) < 0) exception(errno);
+                if (read_reg_value(get_stack_frame(Value), def, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
             break;
@@ -462,7 +468,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_bregx:
             {
                 RegisterDefinition * def = get_reg_by_id(Value->mContext, dio_ReadULEB128(), REGNUM_DWARF);
-                if (read_reg_value(sStackFrame, def, sExprStack + sExprStackLen) < 0) exception(errno);
+                if (read_reg_value(get_stack_frame(Value), def, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
             break;
@@ -498,24 +504,24 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
 
     assert(Cache->magic == DWARF_CACHE_MAGIC);
     if (Cache->mDebugLoc == NULL) str_exception(ERR_INV_DWARF, "Missing .debug_loc section");
-    dio_EnterSection(&Unit->mDesc, Unit->mInfoSection, Value->mAddr - (U1_T *)Unit->mInfoSection->data);
+    dio_EnterSection(&Unit->mDesc, Unit->mDesc.mSection, Value->mAddr - (U1_T *)Unit->mDesc.mSection->data);
     Offset = dio_ReadUX(Value->mSize);
     dio_ExitSection();
     Base = Unit->mLowPC;
-    if (read_reg_value(sStackFrame, get_PC_definition(Value->mContext), &IP) < 0) exception(errno);
+    if (read_reg_value(get_stack_frame(Value), get_PC_definition(Value->mContext), &IP) < 0) exception(errno);
     dio_EnterSection(&Unit->mDesc, Cache->mDebugLoc, Offset);
     for (;;) {
         ELF_Section * S0 = NULL;
         ELF_Section * S1 = NULL;
         U8_T Addr0 = dio_ReadAddress(&S0);
         U8_T Addr1 = dio_ReadAddress(&S1);
-        if (Addr0 == 0) {
+        if (Addr0 == ((U8_T)1 << Unit->mDesc.mAddressSize * 8) - 1) {
             Base = Addr1;
         }
         else if (Addr0 == 0 && Addr1 == 0) {
             break;
         }
-        else if (S0 != S1) {
+        else if (S0 != S1 || Addr0 > Addr1) {
             str_exception(ERR_INV_DWARF, "Invalid .debug_loc section");
         }
         else {
@@ -536,13 +542,6 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
 
 void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
 
-    if (Value->mFrame != STACK_NO_FRAME) {
-        if (get_frame_info(Value->mContext, Value->mFrame, &sStackFrame) < 0) exception(errno);
-    }
-    else {
-        sStackFrame = NULL;
-    }
-
     assert(sKeepStack >= 0);
     if (!sKeepStack) sExprStackLen = 0;
 
@@ -560,7 +559,7 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
         evaluate_location(BaseAddress, Value);
     }
     else {
-        evaluate_expression(BaseAddress, Value, Value->mObject->mCompUnit->mInfoSection, Value->mAddr, Value->mSize);
+        evaluate_expression(BaseAddress, Value, Value->mObject->mCompUnit->mDesc.mSection, Value->mAddr, Value->mSize);
     }
     if (!sKeepStack && sExprStackLen != (Value->mAccessFunc == NULL ? 1u : 0u)) {
         str_exception(ERR_INV_DWARF, "invalid DWARF expression stack");
@@ -574,7 +573,6 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     Value->mSize = 0;
 
     if (!sKeepStack) sExprStackLen = 0;
-    sStackFrame = NULL;
 }
 
 #endif /* ENABLE_ELF */

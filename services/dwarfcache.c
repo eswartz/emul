@@ -218,7 +218,6 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
             if (Tag == TAG_compile_unit) {
                 CompUnit * Unit = add_comp_unit(sDebugSection->addr + dio_gEntryPos);
                 Unit->mFile = sCache->mFile;
-                Unit->mInfoSection = sDebugSection;
                 Unit->mDebugRangesOffs = ~(U8_T)0;
                 Info = Unit->mObject;
                 sCompUnit = Unit;
@@ -572,7 +571,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
 
     sCompUnit = Obj->mCompUnit;
     sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
-    sDebugSection = sCompUnit->mInfoSection;
+    sDebugSection = sCompUnit->mDesc.mSection;
     dio_EnterSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
     gop_gAttr = (U2_T)Attr;
     gop_gForm = 0;

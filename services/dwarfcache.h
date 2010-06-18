@@ -123,7 +123,6 @@ struct CompUnit {
     ObjectInfo * mObject;
 
     ELF_File * mFile;
-    ELF_Section * mInfoSection;
     ELF_Section * mTextSection;
 
     ContextAddress mLowPC;
