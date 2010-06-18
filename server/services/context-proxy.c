@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <assert.h>
+#include <sys/stat.h>
 #include <framework/context.h>
 #include <framework/myalloc.h>
 #include <framework/trace.h>
