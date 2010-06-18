@@ -709,15 +709,17 @@ static void free_dwarf_cache(ELF_File * File) {
             loc_free(tbl->mHashNext);
             loc_free(tbl);
         }
-        for (i = 0; i < OBJ_HASH_SIZE; i++) {
-            ObjectInfo ** list = Cache->mObjectHash + i;
-            while (*list != NULL) {
-                ObjectInfo * Info = *list;
-                *list = Info->mHashNext;
-                loc_free(Info);
+        if (Cache->mObjectHash != NULL) {
+            for (i = 0; i < OBJ_HASH_SIZE; i++) {
+                ObjectInfo ** list = Cache->mObjectHash + i;
+                while (*list != NULL) {
+                    ObjectInfo * Info = *list;
+                    *list = Info->mHashNext;
+                    loc_free(Info);
+                }
             }
+            loc_free(Cache->mObjectHash);
         }
-        loc_free(Cache->mObjectHash);
         loc_free(Cache->mSymSections);
         loc_free(Cache->mAddrRanges);
         loc_free(Cache);
