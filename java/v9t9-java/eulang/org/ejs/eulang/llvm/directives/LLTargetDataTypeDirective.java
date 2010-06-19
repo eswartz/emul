@@ -16,7 +16,21 @@ public class LLTargetDataTypeDirective extends LLTargetDirective {
 	public LLTargetDataTypeDirective(TypeEngine typEngine) {
 		this.typeEngine = typEngine;
 	}
-	
+
+	public LLTargetDataTypeDirective(TypeEngine typEngine, String desc) {
+		this.typeEngine = typEngine;
+		String[] pieces = desc.split("-");
+		int idx = 0;
+		String end = pieces[idx++];
+		typeEngine.setLittleEndian(end.equals("e"));
+		
+		String tok = pieces[idx++];
+		if (tok.startsWith("p:")) {
+			String[] ptr = tok.split(":");
+			
+		}
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
