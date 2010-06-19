@@ -36,4 +36,18 @@ public class LLConstantDirective extends LLBaseDirective {
 		 (isConst ? "constant " : "") + constant.getType().getLLVMName() + " " + constant;
 		 //type.getLLVMName() + " " + (constant != null ? constant : "zeroinitializer");  
 	}
+	
+	/**
+	 * @return the constant
+	 */
+	public LLOperand getConstant() {
+		return constant;
+	}
+
+	/**
+	 * @return
+	 */
+	public ISymbol getSymbol() {
+		return symbol;
+	}
 }

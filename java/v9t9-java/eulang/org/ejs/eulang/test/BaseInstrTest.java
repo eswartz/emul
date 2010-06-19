@@ -16,6 +16,7 @@ import java.util.List;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
+import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.tms9900.AsmInstruction;
@@ -419,6 +420,32 @@ public class BaseInstrTest extends BaseTest {
 	 * @param global
 	 * @return
 	 */
+	protected DataBlock doData(LLModule mod, LLConstantDirective cons) {
+		
+		InstrSelection isel = new InstrSelection(mod) {
+			
+			{
+				if (dumpIsel)
+					DUMP = true;
+				
+			}
+			@Override
+			protected void newRoutine(Routine routine) {
+			}
+			@Override
+			protected void emit(AsmInstruction instr) {
+				
+			}
+			@Override
+			protected void newBlock(Block block) {
+				
+			}
+			
+		};
+		
+		AssemblerOperand asmOp = isel.generateOperand(cons.getConstant());
+		return makeDataForOperand(cons.getSymbol(), false, asmOp);
+	}
 	protected DataBlock doData(LLModule mod, LLGlobalDirective global) {
 
 		InstrSelection isel = new InstrSelection(mod) {
@@ -443,20 +470,24 @@ public class BaseInstrTest extends BaseTest {
 		};
 		
 		AssemblerOperand asmOp = isel.generateOperand(global.getInit());
+		return makeDataForOperand(global.getSymbol(), global.isAppending(), asmOp);
+	}
+	private DataBlock makeDataForOperand(ISymbol symbol, boolean appending,
+			AssemblerOperand asmOp) {
 		assert asmOp instanceof AsmOperand;
 		
 		DataBlock block = null;
 		
-		if (global.isAppending()) {
+		if (appending) {
 			// when appending, each init op adds some elements to a large array
-			assert global.getSymbol().getType() instanceof LLArrayType;
-			block = buildOutput.getDataBlock(global.getSymbol());
+			assert symbol.getType() instanceof LLArrayType;
+			block = buildOutput.getDataBlock(symbol);
 			AssemblerOperand[] current;
 			if (block == null) {
 				current = new AssemblerOperand[0];
-				block = new DataBlock(global.getSymbol(), (AsmOperand) asmOp);
+				block = new DataBlock(symbol, (AsmOperand) asmOp);
 				buildOutput.register(block);
-				buildOutput.registerStaticInit(global.getSymbol());
+				buildOutput.registerStaticInit(symbol);
 			} else {
 				current = ((TupleTempOperand) block.getValue()).getComponents();
 			}
@@ -465,11 +496,11 @@ public class BaseInstrTest extends BaseTest {
 			System.arraycopy(current, 0, combined, 0, current.length);
 			System.arraycopy(added, 0, combined, current.length, added.length);
 			
-			asmOp = new TupleTempOperand(typeEngine.getArrayType(global.getSymbol().getType().getSubType(), combined.length, null),
+			asmOp = new TupleTempOperand(typeEngine.getArrayType(symbol.getType().getSubType(), combined.length, null),
 					combined);
 			
 		} else {
-			block = new DataBlock(global.getSymbol(), (AsmOperand) asmOp);
+			block = new DataBlock(symbol, (AsmOperand) asmOp);
 			buildOutput.register(block);
 		}
 		

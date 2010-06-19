@@ -246,7 +246,7 @@ public class Symbol implements ISymbol {
 				throw new IllegalStateException();
 			}
 			String safeName = getUniqueName().replace(" => ","$");
-			safeName = safeName.replaceAll("[^a-zA-Z0-9_$]", ".");
+			safeName = safeName.replaceAll("[^a-zA-Z0-9_$,]", ".");
 			llvmName = prefix + (scope != null && vis != Visibility.LOCAL ? scope.getUniqueName() : "") + safeName;
 		}
 		return llvmName;

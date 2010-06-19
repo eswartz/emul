@@ -68,5 +68,12 @@ public class LLSymbolOp extends BaseLLOperand {
 			return false;
 		return true;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ops.BaseLLOperand#isConstant()
+	 */
+	@Override
+	public boolean isConstant() {
+		return false;
+	}
 }

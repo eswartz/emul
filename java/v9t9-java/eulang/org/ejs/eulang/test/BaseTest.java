@@ -529,7 +529,7 @@ public class BaseTest {
 	}
 
 	protected boolean dumpLLVMGen;
-	protected boolean doAssemble;
+	protected boolean doAssemble = true;
 	protected boolean doOptimize;
 	
 	/**

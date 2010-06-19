@@ -328,6 +328,8 @@ public class LLVMGenerator {
 					value.simplify(typeEngine);
 					try {
 						dataOp = generateTypedExprCore(value);
+						if (dataOp.getType() instanceof LLCodeType)
+							dataOp.setType(typeEngine.getPointerType(dataOp.getType()));
 					} catch (UnsupportedOperationException e) {
 						throw new ASTException(value, "cannot initialize global data with code");
 					}
@@ -1369,7 +1371,9 @@ public class LLVMGenerator {
 	 */
 	private LLOperand generateAddrOfExpr(IAstAddrOfExpr expr)
 			throws ASTException {
-		return generateTypedExprAddr(expr.getExpr());
+		LLOperand op = generateTypedExprAddr(expr.getExpr());
+		op = ensureAddressable(op);
+		return op;
 	}
 
 	private LLOperand generateAddrRefExpr(IAstAddrRefExpr expr)
@@ -2347,11 +2351,13 @@ public class LLVMGenerator {
 	 * @return
 	 */
 	public LLOperand ensureAddressable(LLOperand op) {
-		if (op.isConstant() && !(op instanceof LLSymbolOp)) {
-			ISymbol constSymbol = ll.getModuleScope().addTemporary(".const");
+		if (op != null && op.isConstant() && (op instanceof LLArrayOp || op instanceof LLStructOp)) {
+			ISymbol constSymbol = ll.getModuleScope().add(".const", true);
 			ISymbol modSymbol = ll.getModuleSymbol(constSymbol, op.getType());
 			ll.add(new LLConstantDirective(modSymbol, true, op));
 			op = new LLSymbolOp(modSymbol);
+			op.setType(typeEngine.getPointerType(op.getType()));
+			ll.emitTypes(op.getType());
 
 		}
 		return op;

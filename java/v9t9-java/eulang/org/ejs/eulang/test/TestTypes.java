@@ -2180,8 +2180,8 @@ xes[3][2][1]
 		dumpLLVMGen = true;
 		LLVMGenerator gen = doGenerate(mod);
 		
-		assertFoundInOptimizedText("@Class.count.Int = global i16 0", gen);
-		assertFoundInOptimizedText("load i16* @Class.count.Int", gen);
+		assertFoundInOptimizedText("@Class.count._.Int = global i16 0", gen);
+		assertFoundInOptimizedText("load i16* @Class.count._.Int", gen);
     }
     
     @Test

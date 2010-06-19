@@ -134,7 +134,7 @@ public class LLModule {
 		sb.append(name);
 		
 		// and the exact type
-		sb.append('.').append(type.getSymbolicName());
+		sb.append("._.").append(type.getSymbolicName());
 		
 		String symName = sb.toString();
 		return symName;

@@ -18,6 +18,7 @@ import junit.framework.TestResult;
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
+import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.tms9900.Routine;
@@ -95,6 +96,11 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 				LLGlobalDirective glob = (LLGlobalDirective) dir;
 				
 				doData(mod, glob);
+			}
+			else if (dir instanceof LLConstantDirective) {
+				LLConstantDirective cons = (LLConstantDirective) dir;
+				
+				doData(mod, cons);
 			}
 			else {
 				System.err.println("ignoring " + dir);

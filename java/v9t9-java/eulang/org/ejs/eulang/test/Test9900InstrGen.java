@@ -44,7 +44,7 @@ public class Test9900InstrGen extends BaseTest {
 		List<Routine> routines = cg.getRoutines();
 		assertEquals(1, routines.size());
 		Routine rout = routines.get(0);
-		assertEquals("foo.void$_", rout.getName().getName());
+		assertEquals("foo._.void._._", rout.getName().getName());
 		List<Block> blocks = rout.getBlocks();
 		assertEquals(1, blocks.size());
 		

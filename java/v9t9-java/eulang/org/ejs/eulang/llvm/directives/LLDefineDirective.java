@@ -34,6 +34,7 @@ import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLCastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.llvm.ops.LLVariableOp;
 import org.ejs.eulang.symbols.IScope;
@@ -322,7 +323,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 				LLOperand cast = new LLCastOp(ECast.BITCAST, valueType, source);
 				return cast;
 			}
-			else if (source.isConstant() && valueType.getSubType().isCompatibleWith(source.getType())) {
+			else if ((source.isConstant() || source instanceof LLSymbolOp) && valueType.getSubType().isCompatibleWith(source.getType())) {
 				// we can reference a constant as a pointer in LLVM (which means to export the constant to memory)
 				return source;
 			}

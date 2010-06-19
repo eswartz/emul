@@ -542,7 +542,7 @@ public class AstDataType extends AstStmtScope implements IAstDataType {
 	public ISymbol getInitName(TypeEngine typeEngine) {
 		if (initName == null) {
 			if (typeName != null) {
-				initName = getTypeName().getScope().add(getTypeName().getUniqueName() + "$init", false);
+				initName = getTypeName().getScope().add(getTypeName().getUniqueName() + ".$__init__$", false);
 				LLPointerType thisPtrType = typeEngine.getPointerType(getType());
 				LLCodeType dataInitFuncType = typeEngine.getCodeType(typeEngine.VOID, new LLType[] { thisPtrType });
 				initName.setType(dataInitFuncType);

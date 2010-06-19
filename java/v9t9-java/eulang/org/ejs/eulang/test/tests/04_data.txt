@@ -210,7 +210,7 @@ new = code #macro (T #macro; args #macro #list) {
     ptr := _new(sizeof(T)){T^};
     ptr.__init__(args);
     ptr;
-};//10
+};
 
 Node = data {
     x : Int;
