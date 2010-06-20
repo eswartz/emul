@@ -69,6 +69,7 @@ import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeInference;
+import org.junit.Before;
 
 /**
  * @author ejs
@@ -165,13 +166,18 @@ public class BaseTest {
 	}
 
 	protected ITarget v9t9Target = new TargetV9t9();
-	protected TypeEngine typeEngine = v9t9Target.getTypeEngine();
+	protected TypeEngine typeEngine = v9t9Target.getTypeEngine();;
 	protected boolean dumpSimplify;
 	protected boolean dumpTreeize;
 	protected boolean dumpTypeInfer;
 	protected boolean dumpExpand;
 	protected boolean dumpFrontend;
 
+	@Before
+	public void initTypeEngine() {
+		v9t9Target = new TargetV9t9();
+		typeEngine = v9t9Target.getTypeEngine();
+	}
 	protected IAstNode treeize(String method, String str, boolean expectError) throws Exception {
     	ParserRuleReturnScope ret = null;
     	try {

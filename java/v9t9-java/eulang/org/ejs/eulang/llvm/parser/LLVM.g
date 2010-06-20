@@ -13,6 +13,7 @@ options {
 package org.ejs.eulang.llvm.parser;
 import org.ejs.eulang.symbols.*;
 import org.ejs.eulang.llvm.*;
+import org.ejs.eulang.llvm.directives.*;
 import org.ejs.eulang.llvm.ops.*;
 import org.ejs.eulang.llvm.instrs.*;
 import org.ejs.eulang.types.*;
@@ -49,15 +50,16 @@ package org.ejs.eulang.llvm.parser;
 prog:   toplevelstmts EOF!
     ;
                 
-toplevelstmts:  directive*
+toplevelstmts:  directive *
     ; 
-
-directive : targetDataLayoutDirective 
-  | targetTripleDirective
-  | typeDefinition
-  | globalDataDirective
-  //| defineDirective
-  //| constantDirective
+    
+directive  : targetDataLayoutDirective (NEWLINE | EOF) 
+  | targetTripleDirective  (NEWLINE | EOF)
+  | typeDefinition  (NEWLINE | EOF)
+  | globalDataDirective  (NEWLINE | EOF)
+  | constantDirective (NEWLINE | EOF)
+  | defineDirective (NEWLINE | EOF)
+  | NEWLINE
   ;
   
 targetDataLayoutDirective : 'target' 'datalayout' EQUALS stringLiteral 
@@ -139,9 +141,16 @@ symboltype returns [LLType theType] : identifier
 	;
 
 globalDataDirective : identifier EQUALS linkage? 'global' typedconstant
- 	{ helper.addGlobalDataDirective($identifier.text, $linkage.value, $typedconstant.op); }
+ 	{ helper.addGlobalDataDirective($identifier.theId, $linkage.value, $typedconstant.op); }
 	;
 
+constantDirective : identifier EQUALS addrspace? 'constant' typedconstant  // section, alignment...
+  { helper.addConstantDirective($identifier.theId, $addrspace.value, $typedconstant.op); }
+  ;
+
+addrspace returns [ int value ] : 'addrspace' '(' number ')' { $addrspace.value = $number.value; } 
+  ;
+   
 linkage returns [ LLLinkage value ] : ('private' | 'linker_private' | 'internal' | 'available_externally'
   | 'linkonce' | 'weak' | 'common' | 'appending' | 'extern_weak' | 'linkonce_odr' | 'weak_odr' 
   | 'externally_visible' | 'dllimport' | 'dllexport' ) 
@@ -156,9 +165,38 @@ typedconstant returns [ LLOperand op ] : type
 	| arrayconst  { $typedconstant.op = new LLArrayOp((LLArrayType)$type.theType, $arrayconst.values); }
 	| symbolconst  { $typedconstant.op = helper.getSymbolOp($symbolconst.theId, $symbolconst.theSymbol); }
 	| 'zeroinitializer'  { $typedconstant.op = new LLZeroInitOp($type.theType); }
+	| constcastexpr   { $typedconstant.op = $constcastexpr.op; }
 	)
 	;
 
+constcastexpr returns [ LLOperand op ] : casttype '(' typedconstant 'to' type ')' 
+    {
+    $constcastexpr.op = new LLCastOp($casttype.cast, $type.theType, $typedconstant.op);
+    } 
+    ;
+    
+casttype returns [ ECast cast ] :
+  {
+  ECast cast = null;
+  } 
+  ( 'trunc' { cast=ECast.TRUNC; }
+  | 'zext' { cast=ECast.ZEXT; }
+  | 'sext' { cast=ECast.SEXT; }
+  | 'fptrunc' { cast=ECast.FPTRUNC; }
+  | 'fpext' { cast=ECast.FPEXT; }
+  | 'fptoui' { cast=ECast.FPTOUI; }
+  | 'fptosi' { cast=ECast.FPTOSI; }
+  | 'uitofp' { cast=ECast.UITOFP; }
+  | 'sitofp' { cast=ECast.SITOFP; }
+  | 'ptrtoint' { cast=ECast.PTRTOINT; } 
+  | 'inttoptr' { cast=ECast.INTTOPTR; }
+  | 'bitcast' { cast=ECast.BITCAST; }
+  )
+  {
+  $casttype.cast = cast;
+  }
+  ;
+  
 symbolconst returns [ String theId, ISymbol theSymbol ] :
   identifier 
   { $symbolconst.theSymbol = helper.findSymbol($identifier.theId); $symbolconst.theId = $identifier.theId; }
@@ -236,6 +274,171 @@ cstringLiteral returns [String theText] : CSTRING_LITERAL
   $cstringLiteral.theText = LLParserHelper.unescape($CSTRING_LITERAL.text.substring(1), '"');
   }
   ;
+
+defineDirective : DEFINE linkage? visibility? cconv? attrs type identifier arglist fn_attrs NEWLINE // section align gc
+//defineDirective : 'define' 'default' type identifier arglist  NEWLINE // section align gc
+    {
+    helper.openNewDefine(
+      $identifier.theId,
+        $linkage.value, $visibility.vis, $cconv.text, 
+        new LLAttrType(new LLAttrs($attrs.attrs), $type.theType),
+        $arglist.argAttrs, new LLFuncAttrs($fn_attrs.attrs),
+        null, //section
+        0, //align
+        null //gc
+        );
+    }
+    
+    '{' NEWLINE
+    defineStmts 
+    '}'  
+    
+    {
+    helper.closeDefine();
+    }
+  ;
+
+visibility returns [LLVisibility vis] : ('default' | 'hidden' | 'protected') { $visibility.vis = LLVisibility.getForToken($visibility.text); } 
+    ;
+    
+cconv : ('ccc' | 'fastcc' | 'coldcc' | 'cc 10' | 'cc' number) 
+    ;
+
+attrs returns [String[\] attrs] 
+  @init {
+    List<String> attrs = new ArrayList<String>();
+  }
+  @after {
+    $attrs.attrs = attrs.toArray(new String[attrs.size()]);
+  }
+
+  : ( attr { attrs.add($attr.text); } ) *
+  ;
+
+attr : 'zeroext' | 'signext' | 'inreg' | 'byval' | 'sret' | 'noalias' | 'nocapture' | 'nest' ;
+
+
+fn_attrs returns [String[\] attrs] 
+  @init {
+    List<String> attrs = new ArrayList<String>();
+  }
+  @after {
+    $fn_attrs.attrs = attrs.toArray(new String[attrs.size()]);
+  }
+
+  : ( fn_attr { attrs.add($fn_attr.text); } ) *
+  ;
+
+fn_attr : ( 'alignstack' '(' number ')' ) | 'alwaysinline' | 'inlinehint' | 'noinline' | 'optsize' 
+    | 'noreturn' | 'nounwind' | 'readnone' | 'readonly' | 'ssp' | 'sspreq' | 'noredzone' | 'noimplicitfloat' | 'naked' 
+    ; 
+
+
+
+
+arglist returns [ LLArgAttrType[\] argAttrs ] 
+ @init {
+    List<LLArgAttrType> attrs = new ArrayList<LLArgAttrType>();
+  }
+  @after {
+    $arglist.argAttrs = attrs.toArray(new LLArgAttrType[attrs.size()]);
+  }
+
+  : '(' 
+      ( f0=funcarg         { attrs.add($f0.argAttr); }
+        ( ',' f1=funcarg   { attrs.add($f1.argAttr); }
+        )* 
+      ) ? 
+     ')' 
+  ;
+
+funcarg returns [ LLArgAttrType argAttr ] :
+  type attrs identifier  { $funcarg.argAttr = new LLArgAttrType($identifier.theId.substring(1), new LLAttrs($attrs.attrs), $type.theType); }
+  ;
+
+defineStmts returns [ List<LLBlock> blocks ] 
+  @init {
+    List<LLBlock> blocks = new ArrayList<LLBlock>();
+  }
+  @after {
+    $defineStmts.blocks = blocks;
+  }
+  
+  : ( block   { blocks.add($block.block); } ) +
+  ;
+  
+block returns [ LLBlock block ] 
+ @init {
+    LLBlock block;
+  }
+  @after {
+    $block.block = block;
+  }
+  : 
+  blocklabel   { block = helper.currentTarget.addBlock($blocklabel.theSym); } 
+  
+  ( instr NEWLINE { block.instrs().add($instr.inst); }  ) + 
+  
+  ;
+
+blocklabel returns [ ISymbol theSym ] : LABEL ':' NEWLINE
+    { 
+    $blocklabel.theSym = helper.addLabel($LABEL.text);
+    }
+    ;
+
+instr returns [LLInstr inst ] :  
+  ( allocaInstr          { $instr.inst = $allocaInstr.inst; }  ) 
+  | ( storeInstr         { $instr.inst = $storeInstr.inst; }  )
+  | ( branchInstr        { $instr.inst = $branchInstr.inst; }  )
+  | ( uncondBranchInstr  { $instr.inst = $uncondBranchInstr.inst; }  )
+  | ( retInstr           { $instr.inst = $retInstr.inst; }  )
+  ;
+
+
+ret returns [LLOperand op] : 
+    UNNAMED_ID    { $ret.op = new LLTempOp(Integer.parseInt($UNNAMED_ID.text.substring(1)), null); }
+    ;
+
+local returns [LLOperand op] : 
+    NAMED_ID    { $local.op = new LLSymbolOp(helper.defineSymbol($NAMED_ID.text)); }
+    ;
+
+allocaInstr returns [LLAllocaInstr inst] :
+  local EQUALS 'alloca' type typedconstant? { $allocaInstr.inst = $typedconstant.op == null 
+    ? new LLAllocaInstr($local.op, $type.theType) 
+    : new LLAllocaInstr($local.op, $type.theType, $typedconstant.op); 
+  
+  $local.op.setType($type.theType);
+  $allocaInstr.inst.setType($type.theType);
+  ((LLSymbolOp)$allocaInstr.inst.getResult()).getSymbol().setType($type.theType);
+  $allocaInstr.inst.getResult().setType($type.theType);  
+  }  
+  ;
+
+typedop returns [LLOperand op] :
+  ( typedconstant  { $typedop.op = $typedconstant.op; } )   
+  ;
+storeInstr returns [LLStoreInstr inst] :
+  'store' o1=typedop ',' o2=typedop  
+   { $storeInstr.inst = new LLStoreInstr($o2.op.getType(), $o1.op, $o2.op); }  
+  ;
+
+retInstr returns [LLRetInstr inst] :
+  'ret' ( ( 'void'          { $retInstr.inst = new LLRetInstr(helper.typeEngine.VOID); } )
+          | ( o1=typedop  { $retInstr.inst = new LLRetInstr($o1.op.getType(), $o1.op); } )
+          )
+  ;
+
+branchInstr returns [LLInstr inst] :
+  'br' typedop ',' 'label' t=identifier ',' 'label' f=identifier    
+  { $branchInstr.inst = new LLBranchInstr($typedop.op.getType(), $typedop.op, helper.getSymbolOp($t.theId, null), helper.getSymbolOp($f.theId, null)); }
+  ;
+
+uncondBranchInstr returns [LLInstr inst] :
+  'br' 'label' identifier  
+  { $uncondBranchInstr.inst = new LLUncondBranchInstr(helper.getSymbolOp($identifier.theId, null)); }
+  ;
   
 EQUALS : '=' ;
 
@@ -244,18 +447,22 @@ INT_TYPE : 'i' ('0'..'9')+ ;
 //
 //  Numbers
 //
-NUMBER : '0'..'9' (NUMSUFFIX ( '.' NUMSUFFIX)?);
+NUMBER : '-'? '0'..'9' (NUMSUFFIX ( '.' NUMSUFFIX)?);
 
 //
 //  Identifiers
 //
-
-NAMED_ID returns [String theId] : SYM_PFX NAME_SUFFIX { $NAMED_ID.theId = $SYM_PFX.text + $NAME_SUFFIX.text; } ;
 UNNAMED_ID returns [String theId] : SYM_PFX NUMBER_SUFFIX { $UNNAMED_ID.theId = $SYM_PFX.text + $NUMBER_SUFFIX.text; };
+NAMED_ID returns [String theId] : SYM_PFX NAME_SUFFIX { $NAMED_ID.theId = $SYM_PFX.text + $NAME_SUFFIX.text; } ;
 QUOTED_ID returns [String theId] : SYM_PFX STRING_LITERAL { $QUOTED_ID.theId = $SYM_PFX.text + LLParserHelper.unescape($STRING_LITERAL.text, '"'); } ;
 
 fragment
 SYM_PFX : '%' | '@';
+
+
+DEFINE : 'define' ;
+
+LABEL : NAME_SUFFIX ;
 
 fragment NAME_SUFFIX : ('a'..'z' | 'A' .. 'Z' | '$' | '.' | '_') ('a'..'z' | 'A'..'Z' | '$' | '.' | '0'..'9' | '_')* ;
 fragment NUMBER_SUFFIX : ('0'..'9')+  ;
@@ -317,20 +524,20 @@ CSTRING_LITERAL : 'c"' {
   }
 };
 
-
 //
 //  Whitespace
 //
-NEWLINE: ('\r'? '\n')+   { $channel = HIDDEN; };
+NEWLINE: ('\r'? '\n')  ;
 WS  :   (' '|'\t')+     { $channel = HIDDEN; };
 
 // Single-line comments begin with //, are followed by any characters
 // other than those in a newline, and are terminated by newline characters.
-SINGLE_COMMENT: '//' ~('\r' | '\n')* NEWLINE { skip(); };
+SINGLE_COMMENT: ';' ~('\r' | '\n')* { skip(); } ;
 
 // Multi-line comments are delimited by /* and */
 // and are optionally followed by newline characters.
 MULTI_COMMENT options { greedy = false; }
   : '/*' .* '*/' NEWLINE? { skip(); };
+
 
       

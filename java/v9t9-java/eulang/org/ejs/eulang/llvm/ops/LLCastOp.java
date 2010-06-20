@@ -3,7 +3,7 @@
  */
 package org.ejs.eulang.llvm.ops;
 
-import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
+import org.ejs.eulang.llvm.instrs.ECast;
 import org.ejs.eulang.types.LLType;
 
 /**

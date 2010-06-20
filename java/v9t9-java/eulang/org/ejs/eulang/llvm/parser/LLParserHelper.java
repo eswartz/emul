@@ -15,6 +15,7 @@ import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.LocalScope;
 import org.ejs.eulang.types.*;
 
 /**
@@ -45,6 +46,9 @@ public class LLParserHelper {
 	public LLSymbolOp getSymbolOp(String nameWithPrefix, ISymbol sym) {
 		LLSymbolOp symOp;
 		if (sym == null) {
+			sym = findSymbol(nameWithPrefix);
+		}
+		if (sym == null) {
 			symOp = fwdSymOps.get(nameWithPrefix);
 			if (symOp == null) {
 				symOp = new LLSymbolOp(null);
@@ -72,19 +76,26 @@ public class LLParserHelper {
 					: module.getModuleScope().search(name);
 		return theSym;
 	}
-	public ISymbol defineSymbol(String nameWithPrefix) {
+	public ISymbol defineSymbol(String nameWithPrefix, LLType type) {
 		boolean isLocal = nameWithPrefix.startsWith("%");
 		String name = nameWithPrefix.substring(1);
 		
 		ISymbol sym = isLocal && currentTarget != null ? currentTarget.getScope().add(name, false)
 				: module.getModuleScope().add(name, false);
+		sym.setType(type);
+		
 		LLSymbolOp fwd = fwdSymOps.get(nameWithPrefix);
 		if (fwd != null) {
+			System.out.println("Defined forward symbol " + nameWithPrefix);
+			fwdSymOps.remove(nameWithPrefix);
 			fwd.setSymbol(sym);
+			fwd.setType(sym.getType());
 		}
 		return sym;
 	}
-	
+	public ISymbol defineSymbol(String nameWithPrefix) {
+		return defineSymbol(nameWithPrefix, null);
+	}
 	public void addNewType(String name, LLType type) {
 		assert name.startsWith("%");
 		name = name.substring(1);
@@ -115,6 +126,7 @@ public class LLParserHelper {
 		}
 		
 		symbol.setDefinition(new AstType(type));
+		module.addExternType(type);
 		typeEngine.register(type);
 	}
 	
@@ -129,7 +141,7 @@ public class LLParserHelper {
 	
 	public LLIntType addIntType(String intType) {
 		int bits = Integer.parseInt(intType.substring(1));
-		return typeEngine.getIntType(intType, bits);
+		return typeEngine.getIntType(bits);
 	}
 	
 	public LLPointerType addPointerType(LLType type) {
@@ -204,10 +216,79 @@ public class LLParserHelper {
 	 * @param llOperand
 	 */
 	public void addGlobalDataDirective(String string, LLLinkage linkage, LLOperand llOperand) {
-		ISymbol sym = defineSymbol(string);
-		sym.setType(llOperand.getType());
+		ISymbol sym = defineSymbol(string, llOperand.getType());
 		module.add(new LLGlobalDirective(sym, 
 				linkage,
 				llOperand));
+	}
+	public void addConstantDirective(String string, int addrSpace, LLOperand llOperand) {
+		ISymbol sym = defineSymbol(string, llOperand.getType());
+		LLConstantDirective directive = new LLConstantDirective(sym, true, llOperand);
+		directive.setAddrSpace(addrSpace);
+		module.add(directive);
+	}
+	
+	public ISymbol addLabel(String id) {
+		
+		ISymbol label = defineSymbol("%" + id, typeEngine.LABEL);
+		label.setType(typeEngine.LABEL);
+		return label;
+	}
+
+	/**
+	 * @param string
+	 * @param llLinkage
+	 * @param llVisibility
+	 * @param string2
+	 * @param llAttrType
+	 * @param llArgAttrTypes
+	 * @param llFuncAttrs
+	 * @param object
+	 * @param i
+	 * @param object2
+	 */
+	public void openNewDefine(String theId, LLLinkage llLinkage,
+			LLVisibility llVisibility, String cconv, LLAttrType llAttrType,
+			LLArgAttrType[] llArgAttrTypes, LLFuncAttrs llFuncAttrs,
+			String section, int align, String gc) {
+		LLType[] argTypes = new LLType[llArgAttrTypes.length];
+		for (int i = 0; i <argTypes.length; i++)
+			argTypes[i] = llArgAttrTypes[i].getType();
+		LLCodeType codeType = typeEngine.getCodeType(llAttrType.getType(), argTypes);
+		ISymbol defSym = defineSymbol(theId, codeType);
+		
+	    LLDefineDirective def = new LLDefineDirective(null, module.getTarget(),
+	        module, new LocalScope(module.getModuleScope()),
+	        defSym, llLinkage, llVisibility, cconv, 
+	        llAttrType,
+	        llArgAttrTypes, llFuncAttrs,
+	        section, align, gc);
+	    currentTarget = def;
+	    
+	    for (LLArgAttrType argAttr : llArgAttrTypes) {
+	    	ISymbol arg = def.getScope().add(argAttr.getName(), false);
+	    	arg.setType(argAttr.getType());
+	    }
+	}
+
+	/**
+	 * 
+	 */
+	public void closeDefine() {
+		module.add((LLDefineDirective) currentTarget);
+		currentTarget = null;
+	}
+
+	/**
+	 * @return the fwdTypes
+	 */
+	public Map<ISymbol, LLSymbolType> getForwardTypes() {
+		return fwdTypes;
+	}
+	/**
+	 * @return the fwdSymOps
+	 */
+	public Map<String, LLSymbolOp> getForwardSymbols() {
+		return fwdSymOps;
 	}
 }

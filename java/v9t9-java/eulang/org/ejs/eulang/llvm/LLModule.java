@@ -302,5 +302,14 @@ public class LLModule {
 	public boolean hasStaticInit() {
 		return staticInit != null;
 	}
+
+	public void accept(ILLCodeVisitor visitor) {
+		if (visitor.enterModule(this)) {
+			for (LLBaseDirective dir : getDirectives()) {
+				dir.accept(visitor);
+			}
+		}
+		visitor.exitModule(this);
+	}
 	
 }

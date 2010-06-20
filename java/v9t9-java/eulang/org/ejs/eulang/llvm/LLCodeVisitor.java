@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm;
 
+import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -13,6 +14,36 @@ import org.ejs.eulang.llvm.ops.LLOperand;
  */
 public class LLCodeVisitor implements ILLCodeVisitor {
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeVisitor#enterDirective(org.ejs.eulang.llvm.directives.LLBaseDirective)
+	 */
+	@Override
+	public boolean enterDirective(LLBaseDirective dir) {
+		return true;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeVisitor#enterModule(org.ejs.eulang.llvm.LLModule)
+	 */
+	@Override
+	public boolean enterModule(LLModule module) {
+		return true;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeVisitor#exitDirective(org.ejs.eulang.llvm.directives.LLBaseDirective)
+	 */
+	@Override
+	public void exitDirective(LLBaseDirective dir) {
+		
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.ILLCodeVisitor#exitModule(org.ejs.eulang.llvm.LLModule)
+	 */
+	@Override
+	public void exitModule(LLModule module) {
+		
+	}
+	
+	
 	@Override
 	public boolean enterBlock(LLBlock block) {
 		return true;

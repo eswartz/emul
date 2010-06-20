@@ -14,11 +14,14 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
+import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.LLLinkage;
 import org.ejs.eulang.llvm.LLModule;
-import org.ejs.eulang.llvm.directives.LLBaseDirective;
+import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
+import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
+import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLStringLitOp;
 import org.ejs.eulang.llvm.ops.LLStructOp;
 import org.ejs.eulang.llvm.ops.LLZeroInitOp;
@@ -27,12 +30,10 @@ import org.ejs.eulang.llvm.parser.LLVMLexer;
 import org.ejs.eulang.llvm.parser.LLVMParser;
 import org.ejs.eulang.symbols.GlobalScope;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLSymbolType;
-import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 /**
@@ -67,6 +68,21 @@ public class TestLLVMParser extends BaseTest {
 			if (!(sym.getType() != null && sym.getType().isComplete()))
 				fail(sym+": type");	
 		}
+		
+		assertTrue(helper.getForwardTypes().isEmpty());
+		assertTrue(helper.getForwardSymbols().isEmpty());
+		
+		mod.accept(new LLCodeVisitor() {
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterOperand(org.ejs.eulang.llvm.instrs.LLInstr, int, org.ejs.eulang.llvm.ops.LLOperand)
+			 */
+			@Override
+			public boolean enterOperand(LLInstr instr, int num,
+					LLOperand operand) {
+				assertTrue(instr+":"+num+":"+operand, operand != null && operand.getType()!= null);
+				return false;
+			}
+		});
 		
 		return mod;
 	}
@@ -153,6 +169,9 @@ public class TestLLVMParser extends BaseTest {
 		
 		// making sure we're not seeing default types
 		assertNull(mod.getModuleScope().get("Bool"));
+		
+		// make sure types are sensible
+		assertEquals("%Int", typeEngine.getIntType(16).getLLVMName());
 	}
 	@Test
 	public void testTypesArray() throws Exception {
@@ -165,6 +184,9 @@ public class TestLLVMParser extends BaseTest {
 		ISymbol charx5 = mod.getTypeScope().search("Charx5");
 		assertNotNull(charx5);
 		assertEquals(typeEngine.getArrayType(typeEngine.BYTE, 5, null), charx5.getType());
+		
+
+		assertEquals("%Charx5", charx5.getLLVMName());
 	}
 	@Test
 	public void testTypesPointer() throws Exception {
@@ -268,12 +290,15 @@ public class TestLLVMParser extends BaseTest {
 			"%Charx5 = type [ 5 x i8 ]\n" + 
 			"%Str$5$p = type %Str$5*\n" + 
 			"\n" + 
-			"@a._.Str$16 = global %Str$16 { %Int 16, %Charx16 c\"SUCKA!!! \\0d\\0a\\09\\ff\\7f\\00\\02\" }\n"+
+			"@\"a._.Str$16\" = global %Str$16 { %Int 16, %Charx16 c\"SUCKA!!! \\0d\\0a\\09\\ff\\7f\\00\\02\" }\n"+
 			"";
 		
 		LLModule mod = doLLVMParse(text);
 		assertEquals(1, mod.getDirectives().size());
 		LLGlobalDirective gd = (LLGlobalDirective) mod.getDirectives().get(0);
+		
+		assertEquals("a._.Str$16", gd.getSymbol().getName());
+		
 		assertTrue(gd.getInit() instanceof LLStructOp);
 		LLStructOp sop = (LLStructOp) gd.getInit();
 		assertEquals(2, sop.getElements().length);
@@ -351,5 +376,82 @@ public class TestLLVMParser extends BaseTest {
 		
 		LLDataType klass = (LLDataType) typeEngine.getNamedType(mod.getTypeScope().search("Class"));
 		assertEquals(48, klass.getBits());
+	}
+	
+	@Test
+	public void testConstants1() throws Exception {
+		String text = "%Charx0 = type [0 x i8]\n" + 
+				"%Charx3 = type [3 x i8]\n" + 
+				"%Int._.Int_ = type i16 (i16)\n" + 
+				"%\"Int._.Node$p.Int_\" = type i16 (%\"Node$p\", i16)\n" + 
+				"%Int._._ = type i16 ()\n" + 
+				"%Node = type { i16 }\n" + 
+				"%\"Node$p\" = type %Node*\n" + 
+				"%Node2 = type { i16, %Str }\n" + 
+				"%\"Node2$p\" = type %Node2*\n" + 
+				"%Str = type { i16, %Charx0 }\n" + 
+				"%\"Str$3\" = type { i16, %Charx3 }\n" + 
+				"%\"Str$3$p\" = type %\"Str$3\"*\n" + 
+				"%\"Str$p\" = type %Str*\n" + 
+				"%\"_Int.Str_._.Node2$p.Int.Str$p_\" = type %Node2 (%\"Node2$p\", i16, %\"Str$p\")\n" + 
+				"%\"void._.Node$p_\" = type void (%\"Node$p\")\n" + 
+				"%\"void._.Node2$p_\" = type void (%\"Node2$p\")\n" + 
+				"\n" + 
+				"@brk._.Int = global i16 -24576                    ; <i16*> [#uses=6]\n" + 
+				"@\".const._.Str$3\" = constant %\"Str$3\" { i16 3, %Charx3 c\"foo\" } ; <%\"Str$3$p\"> [#uses=1]\n" + 
+				"" +
+			"";
+		
+		LLModule mod = doLLVMParse(text);
+		
+		LLGlobalDirective gd = (LLGlobalDirective) mod.getDirectives().get(0);
+		assertTrue(gd.getInit() instanceof LLConstOp);
+		assertEquals(typeEngine.INT, gd.getInit().getType());
+		assertEquals(-24576, ((LLConstOp)gd.getInit()).getValue());
+		
+		LLConstantDirective cd = (LLConstantDirective) mod.getDirectives().get(1);
+		assertNotNull(cd.getConstant().getType());
+		assertEquals(".const._.Str$3", cd.getSymbol().getName());
+		assertEquals(cd.getSymbol().getType(), cd.getConstant().getType());
+		
+		System.out.println(cd);
+
+		// make sure the output matches the input
+		LLDataType str3 = (LLDataType) cd.getConstant().getType();
+		assertEquals(typeEngine.INT, str3.getType(0));
+		LLOperand el0 = ((LLStructOp)cd.getConstant()).getElements()[0];
+		assertEquals("%Int", el0.getType().getLLVMName());
+	}
+	
+	@Test
+	public void testDefines1() throws Exception {
+		String text =
+				"%i16$p._.Int_ = type %i16$p (%Int)\n" + 
+				"%i16$p = type i16*\n" + 
+				"%Int = type i16\n" + 
+				"%i16$p._.Int_$p = type %i16$p._.Int_*\n" + 
+				"\n" + 
+				"define default %i16$p @defaultNew._.i16$p._.Int_(%Int %x)  optsize \n" + 
+				"{\n" + 
+				"entry.16:\n" + 
+				"%_.x.17 =       alloca %Int \n" + 
+				"        store %Int %x, %Int* %_.x.17\n" +
+				"		br label %next\n"+
+				
+				"next:\n"+
+				"		br i1 %x, label %entry.16, label %last\n"+
+				"last:\n"+
+				"        ret %i16$p inttoptr (i16 0 to %i16$p)\n" + 
+				//"        ret i16 100\n" + 
+				"}\n" + 
+				//"\n" + 
+				//"@new._.i16$p._.Int_$p = global %i16$p._.Int_$p @defaultNew._.i16$p._.Int_\n" + 
+				"" +
+			"";
+		
+		LLModule mod = doLLVMParse(text);
+		System.out.println(mod);
+		String[] lines = mod.toString().trim().split("\n");
+		assertEquals("br %Int %x, label %entry.16, label %last", lines[lines.length - 4].trim()); 
 	}
 }

@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm;
 
+import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -19,6 +20,12 @@ public interface ILLCodeVisitor {
 		
 	}
 	
+	boolean enterModule(LLModule module);
+	void exitModule(LLModule module);
+
+	boolean enterDirective(LLBaseDirective dir);
+	void exitDirective(LLBaseDirective dir);
+
 	boolean enterCode(LLDefineDirective directive);
 	
 	void exitCode(LLDefineDirective directive);

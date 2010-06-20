@@ -13,7 +13,7 @@ import org.ejs.eulang.types.LLType;
  */
 public abstract class LLTypedInstr extends LLBaseInstr {
 	
-	private final LLType type;
+	private LLType type;
 
 	public LLTypedInstr(String name, LLType type, LLOperand... ops) {
 		super(name, ops);
@@ -22,6 +22,13 @@ public abstract class LLTypedInstr extends LLBaseInstr {
 	}
 	public LLType getType() {
 		return type;
+	}
+	
+	/**
+	 * @param type the type to set
+	 */
+	public void setType(LLType type) {
+		this.type = type;
 	}
 
 	/* (non-Javadoc)

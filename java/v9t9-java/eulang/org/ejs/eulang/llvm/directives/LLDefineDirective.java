@@ -26,11 +26,11 @@ import org.ejs.eulang.llvm.LLLinkage;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.LLVisibility;
+import org.ejs.eulang.llvm.instrs.ECast;
 import org.ejs.eulang.llvm.instrs.LLBaseInstr;
 import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
 import org.ejs.eulang.llvm.instrs.LLLoadInstr;
 import org.ejs.eulang.llvm.instrs.LLStoreInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLCastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
@@ -199,16 +199,6 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.eulang.llvm.directives.ICodeTarget#newTemp()
-	 */
-	public ISymbol newTempSymbol() {
-		//ISymbol symbol = localScope.addTemporary(tempId + "", false);
-		ISymbol symbol = localScope.add(tempId + "", false);
-		tempId++;
-		return symbol;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.ejs.eulang.llvm.ILLCodeTarget#newTemp(org.ejs.eulang.types.LLType)
 	 */
 	@Override
@@ -372,7 +362,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	 */
 	@Override
 	public TypeEngine getTypeEngine() {
-		return generator.getTypeEngine();
+		return target.getTypeEngine();
 	}
 
 
@@ -396,15 +386,18 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	}
 	
 	public void accept(ILLCodeVisitor visitor) {
-		if (visitor.enterCode(this)) {
-
-			for (LLBlock block : blocks) {
-				block.accept(visitor);
+		if (visitor.enterDirective(this)) {
+			if (visitor.enterCode(this)) {
+	
+				for (LLBlock block : blocks) {
+					block.accept(visitor);
+				}
+				
 			}
 			
+			visitor.exitCode(this);
 		}
-		
-		visitor.exitCode(this);
+		visitor.exitDirective(this);
 	}
 
 
@@ -455,7 +448,7 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 		
 		LLArgAttrType[] argAttrTypes = new LLArgAttrType[argTypes.length];
 		for (int i = 0; i < argAttrTypes.length; i++) {
-			LLType argType = gen.getTypeEngine().getRealType(argTypes[i]);
+			LLType argType = target.getTypeEngine().getRealType(argTypes[i]);
 			LLAttrs attrs = null;
 			argAttrTypes[i] = new LLArgAttrType(names != null ? names[i] : ("arg" + i),  attrs, argType);
 		}

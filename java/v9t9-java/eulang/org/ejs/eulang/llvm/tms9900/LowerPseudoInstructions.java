@@ -7,8 +7,8 @@ import java.util.*;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Target;
+import org.ejs.eulang.llvm.instrs.ECast;
 import org.ejs.eulang.llvm.instrs.LLCastInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr.ECast;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLZeroInitOp;
 import org.ejs.eulang.llvm.tms9900.asm.AsmOperand;
