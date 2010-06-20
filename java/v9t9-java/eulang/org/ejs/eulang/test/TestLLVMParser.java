@@ -30,6 +30,7 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
+import org.ejs.eulang.types.LLDataType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
@@ -187,13 +188,11 @@ public class TestLLVMParser extends BaseTest {
 		LLModule mod = doLLVMParse(text);
 		ISymbol fooSym = mod.getTypeScope().search("foo");
 		assertNotNull(fooSym);
-		assertEquals(typeEngine.getTupleType(
-				new LLType[] {
-					typeEngine.BYTE,
-					typeEngine.getPointerType(typeEngine.getIntType(8)),
-					typeEngine.getArrayType(typeEngine.getIntType(8), 5, null)
-				}),
-				fooSym.getType());
+		LLType fooType = fooSym.getType();
+		assertTrue(fooType instanceof LLDataType);
+		assertEquals(typeEngine.BYTE, fooType.getType(0));
+		assertEquals(typeEngine.getPointerType(typeEngine.getIntType(8)), fooType.getType(1)); 
+		assertEquals(typeEngine.getArrayType(typeEngine.getIntType(8), 5, null), fooType.getType(2));
 	}
 	@Test
 	public void testTypesFwd() throws Exception {
@@ -278,7 +277,7 @@ public class TestLLVMParser extends BaseTest {
 		assertTrue(gd.getInit() instanceof LLStructOp);
 		LLStructOp sop = (LLStructOp) gd.getInit();
 		assertEquals(2, sop.getElements().length);
-		LLTupleType type = (LLTupleType) sop.getType();
+		LLDataType type = (LLDataType) sop.getType();
 		assertEquals(typeEngine.INT, type.getType(0));
 		assertEquals(typeEngine.getArrayType(typeEngine.getIntType(8), 16, null), type.getType(1));
 		
@@ -306,7 +305,7 @@ public class TestLLVMParser extends BaseTest {
 		assertEquals(1, mod.getDirectives().size());
 		LLGlobalDirective gd = (LLGlobalDirective) mod.getDirectives().get(0);
 		assertTrue(gd.getInit() instanceof LLZeroInitOp);
-		LLTupleType type = (LLTupleType) gd.getInit().getType();
+		LLDataType type = (LLDataType) gd.getInit().getType();
 		LLType i8 = typeEngine.getIntType(8);
 		LLType i16 = typeEngine.getIntType(16);
 		assertEquals(i8, type.getType(0));
@@ -349,5 +348,8 @@ public class TestLLVMParser extends BaseTest {
 		assertEquals(LLLinkage.APPENDING, globalDir.getLinkage());
 		LLArrayType type = (LLArrayType) globalDir.getInit().getType();
 		assertEquals(type, globalDir.getSymbol().getType());
+		
+		LLDataType klass = (LLDataType) typeEngine.getNamedType(mod.getTypeScope().search("Class"));
+		assertEquals(48, klass.getBits());
 	}
 }

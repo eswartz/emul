@@ -3,6 +3,7 @@
  */
 package org.ejs.eulang.llvm.parser;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,6 +100,9 @@ public class LLParserHelper {
 				assert symbol.getType() == null;
 			} else {
 				symbol = module.getTypeScope().add(name, false);
+				if (type instanceof LLTupleType) {
+					type = typeEngine.getDataType(symbol, Arrays.asList(((LLTupleType)type).getTypes()));
+				}
 			}
 			symbol.setType(type);
 		}
