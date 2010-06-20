@@ -19,6 +19,7 @@ public class LLTargetDataTypeDirective extends LLTargetDirective {
 
 	public LLTargetDataTypeDirective(TypeEngine typEngine, String desc) {
 		this.typeEngine = typEngine;
+		/*
 		String[] pieces = desc.split("-");
 		int idx = 0;
 		String end = pieces[idx++];
@@ -28,7 +29,7 @@ public class LLTargetDataTypeDirective extends LLTargetDirective {
 		if (tok.startsWith("p:")) {
 			String[] ptr = tok.split(":");
 			
-		}
+		}*/
 	}
 
 	/* (non-Javadoc)
