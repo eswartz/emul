@@ -18,6 +18,7 @@ import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.LLLinkage;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
+import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
@@ -70,7 +71,12 @@ public class TestLLVMParser extends BaseTest {
 		}
 		
 		assertTrue(helper.getForwardTypes().isEmpty());
-		assertTrue(helper.getForwardSymbols().isEmpty());
+		StringBuilder ssb = new StringBuilder();
+		for (String name : helper.getForwardSymbols().keySet()) {
+			ssb.append(name).append(' ');
+		}
+		if (ssb.length() > 0)
+			fail("Undefined symbols: " + ssb.toString());
 		
 		mod.accept(new LLCodeVisitor() {
 			/* (non-Javadoc)
@@ -451,7 +457,67 @@ public class TestLLVMParser extends BaseTest {
 		
 		LLModule mod = doLLVMParse(text);
 		System.out.println(mod);
+		
+		ISymbol sym = mod.getModuleScope().get("defaultNew._.i16$p._.Int_");
+		LLDefineDirective def = mod.getDefineDirective(sym);
+		assertNotNull(def);
+		ISymbol x;
+		x = def.getScope().get("x");
+		assertEquals(typeEngine.INT, x.getType());
+		x = def.getScope().get("_.x.17");
+		assertEquals(typeEngine.getPointerType(typeEngine.INT), x.getType());
+		
 		String[] lines = mod.toString().trim().split("\n");
-		assertEquals("br %Int %x, label %entry.16, label %last", lines[lines.length - 4].trim()); 
+		assertEquals("br i1 %x, label %entry.16, label %last", lines[lines.length - 4].trim()); 
+	}
+
+	@Test
+	public void testDefines2() throws Exception {
+		String text =
+				"%Int._.Int_ = type %Int (%Int)\n" + 
+				"%Int = type i16\n" + 
+				"%Bool = type i1\n" + 
+				"%i16$p = type i16*\n" + 
+				"%__label = type label\n" + 
+				"\n" + 
+				"define default %Int @testWhile._.Int._.Int_(%Int %x)  optsize \n" + 
+				"{\n" + 
+				"entry.16:\n" + 
+				"%_.x.17 =       alloca %Int \n" + 
+				"        store %Int %x, %Int* %_.x.17\n" + 
+				"%_.s.19 =       alloca %Int \n" + 
+				"        store %Int 0, %Int* %_.s.19\n" + 
+				"%_.b.20 =       alloca %Int \n" + 
+				"        store %Int 1, %Int* %_.b.20\n" + 
+				"%_.loopValue.22 =       alloca %Int \n" + 
+				"        store %Int 0, %Int* %_.loopValue.22\n" + 
+				"        br label %loopEnter.23\n" + 
+				"loopEnter.23:\n" + 
+				"%0 =    load %Int* %_.b.20\n" + 
+				"%1 =    load %Int* %_.x.17\n" + 
+				"%2 =    load %Int* %_.x.17\n" + 
+				//"%2 =    icmp slt %Int %0, %1\n" + 
+				"        br %Bool %2, label %loopBody.24, label %loopExit.25\n" + 
+				"loopBody.24:\n" + 
+				"%3 =    load %Int* %_.s.19\n" + 
+				"%4 =    load %Int* %_.b.20\n" + 
+				"%5 =    add nsw nuw %Int %3, %4\n" + 
+				"%6 =    load %Int* %_.b.20\n" + 
+				"%7 =    add %Int %6, 1\n" + 
+				"        store %Int %5, %Int* %_.s.19\n" + 
+				"        store %Int %7, %Int* %_.b.20\n" + 
+				"%8 =    load %Int* %_.s.19\n" + 
+				"        store %Int %8, %Int* %_.loopValue.22\n" + 
+				"        br label %loopEnter.23\n" + 
+				"loopExit.25:\n" + 
+				"%9 =    load %Int* %_.loopValue.22\n" + 
+				"        ret %Int %9\n" + 
+				"}\n" + 
+				"\n" + 
+				""+
+			"";
+		
+		LLModule mod = doLLVMParse(text);
+		System.out.println(mod);
 	}
 }

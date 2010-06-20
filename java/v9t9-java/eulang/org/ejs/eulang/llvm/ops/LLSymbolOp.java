@@ -31,12 +31,12 @@ public class LLSymbolOp extends BaseLLOperand {
 	 */
 	@Override
 	public String toString() {
-		return symbol.getLLVMName();
+		return getName();
 	}
 	
 	
 	public String getName() {
-		return symbol.getLLVMName();
+		return symbol != null ? symbol.getLLVMName() : "<<?>>";
 	}
 	/**
 	 * @return the symbol

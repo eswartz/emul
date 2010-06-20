@@ -94,6 +94,7 @@ type returns [LLType theType]
 	|  t1=structtype { $type.theType = $t1.theType; }
 	|  t2=arraytype { $type.theType = $t2.theType; }
 	|  'void'        { $type.theType = helper.typeEngine.VOID; }
+	|  'label'        { $type.theType = helper.typeEngine.LABEL; }
 	|  t3=symboltype { $type.theType = $t3.theType; }
 	)     
 	
@@ -140,12 +141,12 @@ symboltype returns [LLType theType] : identifier
 	{ $symboltype.theType = helper.findOrForwardNameType($identifier.theId); }
 	;
 
-globalDataDirective : identifier EQUALS linkage? 'global' typedconstant
- 	{ helper.addGlobalDataDirective($identifier.theId, $linkage.value, $typedconstant.op); }
+globalDataDirective : identifier EQUALS linkage? 'global' typedop
+ 	{ helper.addGlobalDataDirective($identifier.theId, $linkage.value, $typedop.op); }
 	;
 
-constantDirective : identifier EQUALS addrspace? 'constant' typedconstant  // section, alignment...
-  { helper.addConstantDirective($identifier.theId, $addrspace.value, $typedconstant.op); }
+constantDirective : identifier EQUALS addrspace? 'constant' typedop  // section, alignment...
+  { helper.addConstantDirective($identifier.theId, $addrspace.value, $typedop.op); }
   ;
 
 addrspace returns [ int value ] : 'addrspace' '(' number ')' { $addrspace.value = $number.value; } 
@@ -157,21 +158,25 @@ linkage returns [ LLLinkage value ] : ('private' | 'linker_private' | 'internal'
   { $linkage.value = LLLinkage.getForToken($linkage.text); }
   ;
   
-typedconstant returns [ LLOperand op ] : type
-	(  number { $typedconstant.op = new LLConstOp($type.theType, $number.value); }
-	| charconst { $typedconstant.op = new LLConstOp($type.theType, (int)$charconst.value); }
-	| stringconst { $typedconstant.op = new LLStringLitOp((LLArrayType)$type.theType, $stringconst.value); }
-	| structconst { $typedconstant.op = new LLStructOp((LLAggregateType)$type.theType, $structconst.values); }
-	| arrayconst  { $typedconstant.op = new LLArrayOp((LLArrayType)$type.theType, $arrayconst.values); }
-	| symbolconst  { $typedconstant.op = helper.getSymbolOp($symbolconst.theId, $symbolconst.theSymbol); }
-	| 'zeroinitializer'  { $typedconstant.op = new LLZeroInitOp($type.theType); }
-	| constcastexpr   { $typedconstant.op = $constcastexpr.op; }
-	)
+typedop returns [ LLOperand op ] : type op
+    { $typedop.op = $op.op; $typedop.op.setType($type.theType); }
 	;
 
-constcastexpr returns [ LLOperand op ] : casttype '(' typedconstant 'to' type ')' 
+op returns [ LLOperand op ] : 
+  (  number { $op.op = new LLConstOp(null, $number.value); }
+  | charconst { $op.op = new LLConstOp(null, (int)$charconst.value); }
+  | stringconst { $op.op = new LLStringLitOp((LLArrayType)null, $stringconst.value); }
+  | structconst { $op.op = new LLStructOp((LLAggregateType)null, $structconst.values); }
+  | arrayconst  { $op.op = new LLArrayOp((LLArrayType)null, $arrayconst.values); }
+  | symbolconst  { $op.op = helper.getSymbolOp($symbolconst.theId, $symbolconst.theSymbol); }
+  | 'zeroinitializer'  { $op.op = new LLZeroInitOp(null); }
+  | constcastexpr   { $op.op = $constcastexpr.op; }
+  )
+  ;
+
+constcastexpr returns [ LLOperand op ] : casttype '(' typedop 'to' type ')' 
     {
-    $constcastexpr.op = new LLCastOp($casttype.cast, $type.theType, $typedconstant.op);
+    $constcastexpr.op = new LLCastOp($casttype.cast, $type.theType, $typedop.op);
     } 
     ;
     
@@ -222,8 +227,8 @@ structconst returns [ LLOperand[\] values ]
     $structconst.values = ops.toArray(new LLOperand[ops.size()]);
   }
   :
-  '{' (t0=typedconstant { ops.add($t0.op); } 
-    (',' t1=typedconstant  { ops.add($t1.op); }
+  '{' (t0=typedop { ops.add($t0.op); } 
+    (',' t1=typedop  { ops.add($t1.op); }
     )* 
   )? 
   '}'
@@ -238,8 +243,8 @@ arrayconst returns [ LLOperand[\] values ]
     $arrayconst.values = ops.toArray(new LLOperand[ops.size()]);
   }
   :
-  '[' (t0=typedconstant { ops.add($t0.op); } 
-    (',' t1=typedconstant  { ops.add($t1.op); }
+  '[' (t0=typedop { ops.add($t0.op); } 
+    (',' t1=typedop  { ops.add($t1.op); }
     )* 
   )? 
   ']'
@@ -377,7 +382,7 @@ block returns [ LLBlock block ]
   : 
   blocklabel   { block = helper.currentTarget.addBlock($blocklabel.theSym); } 
   
-  ( instr NEWLINE { block.instrs().add($instr.inst); }  ) + 
+  ( instr NEWLINE { block.instrs().add($instr.inst); System.out.println($instr.inst); }  ) + 
   
   ;
 
@@ -393,11 +398,16 @@ instr returns [LLInstr inst ] :
   | ( branchInstr        { $instr.inst = $branchInstr.inst; }  )
   | ( uncondBranchInstr  { $instr.inst = $uncondBranchInstr.inst; }  )
   | ( retInstr           { $instr.inst = $retInstr.inst; }  )
+  | ( assignInstr        { $instr.inst = $assignInstr.inst; }  )
   ;
 
-
 ret returns [LLOperand op] : 
-    UNNAMED_ID    { $ret.op = new LLTempOp(Integer.parseInt($UNNAMED_ID.text.substring(1)), null); }
+    UNNAMED_ID    
+    {
+      ISymbol tmpSym = helper.defineSymbol($UNNAMED_ID.text);
+      String tmp = $UNNAMED_ID.text.substring(1);
+      $ret.op = new LLTempOp(Integer.parseInt(tmp), null);
+    }
     ;
 
 local returns [LLOperand op] : 
@@ -405,20 +415,22 @@ local returns [LLOperand op] :
     ;
 
 allocaInstr returns [LLAllocaInstr inst] :
-  local EQUALS 'alloca' type typedconstant? { $allocaInstr.inst = $typedconstant.op == null 
-    ? new LLAllocaInstr($local.op, $type.theType) 
-    : new LLAllocaInstr($local.op, $type.theType, $typedconstant.op); 
+  local EQUALS 'alloca' type typedop? 
+  { 
   
-  $local.op.setType($type.theType);
-  $allocaInstr.inst.setType($type.theType);
-  ((LLSymbolOp)$allocaInstr.inst.getResult()).getSymbol().setType($type.theType);
-  $allocaInstr.inst.getResult().setType($type.theType);  
+  LLType ptrType = helper.typeEngine.getPointerType($type.theType);
+  $allocaInstr.inst = $typedop.op == null 
+    ? new LLAllocaInstr($local.op, ptrType) 
+    : new LLAllocaInstr($local.op, ptrType, $typedop.op); 
+  
+  // fixup types
+  $local.op.setType(ptrType);
+  $allocaInstr.inst.setType(ptrType);
+  ((LLSymbolOp)$allocaInstr.inst.getResult()).getSymbol().setType(ptrType);
+  $allocaInstr.inst.getResult().setType(ptrType);  
   }  
   ;
 
-typedop returns [LLOperand op] :
-  ( typedconstant  { $typedop.op = $typedconstant.op; } )   
-  ;
 storeInstr returns [LLStoreInstr inst] :
   'store' o1=typedop ',' o2=typedop  
    { $storeInstr.inst = new LLStoreInstr($o2.op.getType(), $o1.op, $o2.op); }  
@@ -429,6 +441,44 @@ retInstr returns [LLRetInstr inst] :
           | ( o1=typedop  { $retInstr.inst = new LLRetInstr($o1.op.getType(), $o1.op); } )
           )
   ;
+
+assignInstr returns [LLAssignInstr inst] :
+    {
+    LLOperand ret;
+    }
+    ret  
+    { ret = $ret.op; }
+    EQUALS
+    (
+    ( 'load' loadop=typedop { $assignInstr.inst = new LLLoadInstr(ret, $loadop.op.getType(), $loadop.op); } )
+    | ( binexpr binexprsuffix? type bop1=op ',' bop2=op  
+        {
+          $bop1.op.setType($type.theType); 
+          $bop2.op.setType($type.theType); 
+          ret.setType($type.theType);
+          String op = $binexpr.text;
+          if ($binexprsuffix.text != null)
+            op += ' ' + $binexprsuffix.text;
+          $assignInstr.inst = new LLBinaryInstr(op, ret, ret.getType(), $bop1.op, $bop2.op); 
+        } 
+      )
+    ) 
+    
+    {
+    // fixup types, since we don't know 'ret''s until now
+    ((LLTempOp)ret).setType($assignInstr.inst.getType()); 
+    ISymbol local = helper.findSymbol(ret.toString());
+    local.setType(ret.getType());
+    }
+    ;
+
+binexpr : 'add' | 'fadd' 
+  | 'sub' | 'fsub'
+  | 'mul' |'fmul' 
+  | 'udiv' | 'sdiv' | 'fdiv' | 'urem' | 'srem' | 'frem' 
+  | 'shl' | 'lshr' | 'ashr' | 'and' | 'or' | 'xor';
+  
+binexprsuffix : ( 'nuw' | 'nsw' | 'exact' )+ ;
 
 branchInstr returns [LLInstr inst] :
   'br' typedop ',' 'label' t=identifier ',' 'label' f=identifier    

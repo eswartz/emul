@@ -311,5 +311,17 @@ public class LLModule {
 		}
 		visitor.exitModule(this);
 	}
+
+	/**
+	 * @param sym
+	 * @return
+	 */
+	public LLDefineDirective getDefineDirective(ISymbol sym) {
+		for (LLBaseDirective dir : getDirectives()) {
+			if (dir instanceof LLDefineDirective && ((LLDefineDirective) dir).getSymbol().equals(sym))
+				return (LLDefineDirective) dir;
+		}
+		return null;
+	}
 	
 }
