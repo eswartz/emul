@@ -13,7 +13,7 @@ import org.ejs.eulang.types.LLType;
 public class LLSymbolOp extends BaseLLOperand {
 	private ISymbol symbol;
 	public LLSymbolOp(ISymbol symbol) {
-		super(symbol.getType());
+		super(symbol != null ? symbol.getType() : null);
 		this.symbol = symbol;
 	}
 	
@@ -75,5 +75,12 @@ public class LLSymbolOp extends BaseLLOperand {
 	@Override
 	public boolean isConstant() {
 		return false;
+	}
+	/**
+	 * @param sym
+	 */
+	public void setSymbol(ISymbol sym) {
+		this.symbol = sym;
+		setType(sym != null ? sym.getType() : null);
 	}
 }

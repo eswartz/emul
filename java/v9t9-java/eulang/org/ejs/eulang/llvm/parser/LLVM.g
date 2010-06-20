@@ -11,10 +11,11 @@ options {
 
 @header {
 package org.ejs.eulang.llvm.parser;
+import org.ejs.eulang.symbols.*;
 import org.ejs.eulang.llvm.*;
 import org.ejs.eulang.llvm.ops.*;
 import org.ejs.eulang.llvm.instrs.*;
-import org.ejs.eulang.llvm.types.*;
+import org.ejs.eulang.types.*;
 } 
 @lexer::header{
 package org.ejs.eulang.llvm.parser;
@@ -59,92 +60,153 @@ directive : targetDataLayoutDirective
   //| constantDirective
   ;
   
-targetDataLayoutDirective : 'target' 'datalayout' EQUALS s=STRING_LITERAL 
-  { helper.addTargetDataLayoutDirective($s.text); }
+targetDataLayoutDirective : 'target' 'datalayout' EQUALS stringLiteral 
+  { helper.addTargetDataLayoutDirective($stringLiteral.theText); }
   ;
 
-targetTripleDirective : 'target' 'triple' EQUALS s=STRING_LITERAL
-  { helper.addTargetTripleDirective($s.text); }
+targetTripleDirective : 'target' 'triple' EQUALS stringLiteral
+  { helper.addTargetTripleDirective($stringLiteral.theText); }
   ;
 
 typeDefinition : identifier EQUALS 'type'
   type 
   { 
-  	helper.addNewType($identifier.text, $type); 
+  	helper.addNewType($identifier.theId, $type.theType); 
   }
   ;
 
-type returns [LLType theType] : 
+type returns [LLType theType]  
 	@init
     {
-	  	// ensure we recognize temp symbols like '%0' as pointing
+	  	// ensure we recognize temp symbols like percent 0 as pointing
 	  	// to types rather than variables
 		helper.inTypeContext++;
     }
-    
-	(  inttype 
-	|  structtype
-	|  arraytype
-	|  symboltype
-	)
-	( '*'  { $theType = helper.addPointerType($type.theType); } )*
+    @after
+  {
+    // done 
+      helper.inTypeContext--;
+    }
+    :
+	(  t0=inttype  { $type.theType = $t0.theType; }
+	|  t1=structtype { $type.theType = $t1.theType; }
+	|  t2=arraytype { $type.theType = $t2.theType; }
+	|  'void'        { $type.theType = helper.typeEngine.VOID; }
+	|  t3=symboltype { $type.theType = $t3.theType; }
+	)     
 	
-	(paramstype  { $theType = helper.addCodeType($type.theType, $paramstype.theArgs); } ) ?
+	( '*'  { $type.theType = helper.addPointerType($type.theType); } )*
 	
-	@after
-	{
-		// done 
-  		helper.inTypeContext--;
-  	}
+	(paramstype  { $type.theType = helper.addCodeType($type.theType, $paramstype.theArgs); } ) ?
 	;
 
 
 inttype returns [LLType theType] : INT_TYPE 
-	{ $theType = helper.addIntType($INT_TYPE.text); }
+	{ $inttype.theType = helper.addIntType($INT_TYPE.text); }
 	;
 
-structtype returns  [LLType theType] : '{' type (',' type)+ '}' 
+structtype returns  [LLType theType] : '{' typeList '}' 
 	{
-		$theType = helper.addTupleType($type+); 
+		$structtype.theType = helper.addTupleType($typeList.theTypes); 
 	} 
 	;
  
 arraytype returns [LLType theType] :  '[' number 'x' type ']' 
-	{ $arraytype = helper.addArrayType($number.value, $type); }
+	{ $arraytype.theType = helper.addArrayType($number.value, $type.theType); }
 	;
 
-paramstype returns [LLType[] theArgs] : '(' (type (',' type)*)? ')'
-	{ $paramstype.theArgs = helper.getTypeList($type+); }
+paramstype returns [LLType[\] theArgs] : '(' typeList ')'
+	{ $paramstype.theArgs = $typeList.theTypes; }
 	; 
 
+typeList returns [LLType[\] theTypes] 
+  @init
+  {
+    List<LLType> types = new ArrayList<LLType>();
+  }
+  @after
+  {
+  $typeList.theTypes = types.toArray(new LLType[types.size()]);
+  }
+  : (t=type        { types.add($t.theType); }
+      (',' u=type   { types.add($u.theType); }
+    
+      )*
+    ) ?
+    ;
 symboltype returns [LLType theType] : identifier 
 	{ $symboltype.theType = helper.findOrForwardNameType($identifier.theId); }
 	;
 
-globalDataDirective : 'global' typedconstant
- 	{ helper.addGlobalDataDirective($type.theType, $constant.op); }
+globalDataDirective : identifier EQUALS linkage? 'global' typedconstant
+ 	{ helper.addGlobalDataDirective($identifier.text, $linkage.value, $typedconstant.op); }
 	;
 
+linkage returns [ LLLinkage value ] : ('private' | 'linker_private' | 'internal' | 'available_externally'
+  | 'linkonce' | 'weak' | 'common' | 'appending' | 'extern_weak' | 'linkonce_odr' | 'weak_odr' 
+  | 'externally_visible' | 'dllimport' | 'dllexport' ) 
+  { $linkage.value = LLLinkage.getForToken($linkage.text); }
+  ;
+  
 typedconstant returns [ LLOperand op ] : type
-	  number { $typedconstant.op = new LLConstOp($type.theType, $number.value); }
-	| charconst { $typedconstant.op = new LLConstOp($type.theType, $charconst.value); }
-	| stringconst { $typedconstant.op = new LLStringLitOp($type.theType, $stringconst.value); }
+	(  number { $typedconstant.op = new LLConstOp($type.theType, $number.value); }
+	| charconst { $typedconstant.op = new LLConstOp($type.theType, (int)$charconst.value); }
+	| stringconst { $typedconstant.op = new LLStringLitOp((LLArrayType)$type.theType, $stringconst.value); }
+	| structconst { $typedconstant.op = new LLStructOp((LLAggregateType)$type.theType, $structconst.values); }
+	| arrayconst  { $typedconstant.op = new LLArrayOp((LLArrayType)$type.theType, $arrayconst.values); }
+	| symbolconst  { $typedconstant.op = helper.getSymbolOp($symbolconst.theId, $symbolconst.theSymbol); }
+	| 'zeroinitializer'  { $typedconstant.op = new LLZeroInitOp($type.theType); }
+	)
 	;
-	
+
+symbolconst returns [ String theId, ISymbol theSymbol ] :
+  identifier 
+  { $symbolconst.theSymbol = helper.findSymbol($identifier.theId); $symbolconst.theId = $identifier.theId; }
+  ;
+  
 charconst returns [ char value ] : 
-	CHAR_LITERAL { 
-		String v = helper.unescape($CHAR_LITERAL.text, '\'');
-		$charconst.value = v.charAt(0);
+	charLiteral { 
+		$charconst.value = $charLiteral.theText.charAt(0);
 	}
 	;
 
 stringconst returns [ String value  ] :
-	STRING_LITERAL {
-		String v = helper.unescape($STRING_LITERAL.text, '"');
-		$stringconst.value = v;
+	cstringLiteral {
+		$stringconst.value = $cstringLiteral.theText;
 	}
 	;	
 	
+structconst returns [ LLOperand[\] values ] 
+  @init {
+    List<LLOperand> ops = new ArrayList<LLOperand>();
+  }
+  @after {
+    $structconst.values = ops.toArray(new LLOperand[ops.size()]);
+  }
+  :
+  '{' (t0=typedconstant { ops.add($t0.op); } 
+    (',' t1=typedconstant  { ops.add($t1.op); }
+    )* 
+  )? 
+  '}'
+  ;
+   
+
+arrayconst returns [ LLOperand[\] values ] 
+  @init {
+    List<LLOperand> ops = new ArrayList<LLOperand>();
+  }
+  @after {
+    $arrayconst.values = ops.toArray(new LLOperand[ops.size()]);
+  }
+  :
+  '[' (t0=typedconstant { ops.add($t0.op); } 
+    (',' t1=typedconstant  { ops.add($t1.op); }
+    )* 
+  )? 
+  ']'
+  ;
+   
 identifier returns [String theId] : 
   (
 	NAMED_ID    { $identifier.theId = $NAMED_ID.text; }
@@ -157,6 +219,24 @@ identifier returns [String theId] :
 number returns [int value] : NUMBER { $number.value = Integer.parseInt($NUMBER.text); } 
 	;
 	
+charLiteral returns [String theText] : CHAR_LITERAL
+  { 
+  $charLiteral.theText = LLParserHelper.unescape($CHAR_LITERAL.text, '\'');
+  }
+  ;
+	
+stringLiteral returns [String theText] : STRING_LITERAL
+  {
+  $stringLiteral.theText = LLParserHelper.unescape($STRING_LITERAL.text, '"');
+  }
+  ;
+  
+cstringLiteral returns [String theText] : CSTRING_LITERAL
+  {
+  $cstringLiteral.theText = LLParserHelper.unescape($CSTRING_LITERAL.text.substring(1), '"');
+  }
+  ;
+  
 EQUALS : '=' ;
 
 INT_TYPE : 'i' ('0'..'9')+ ;
@@ -170,11 +250,14 @@ NUMBER : '0'..'9' (NUMSUFFIX ( '.' NUMSUFFIX)?);
 //  Identifiers
 //
 
-NAMED_ID : ('%' | '@') NAME_SUFFIX ;
-UNNAMED_ID : ('%' | '@') NUMBER_SUFFIX ;
-QUOTED_ID : ('%' | '@') STRING_LITERAL_SUFFIX ;
+NAMED_ID returns [String theId] : SYM_PFX NAME_SUFFIX { $NAMED_ID.theId = $SYM_PFX.text + $NAME_SUFFIX.text; } ;
+UNNAMED_ID returns [String theId] : SYM_PFX NUMBER_SUFFIX { $UNNAMED_ID.theId = $SYM_PFX.text + $NUMBER_SUFFIX.text; };
+QUOTED_ID returns [String theId] : SYM_PFX STRING_LITERAL { $QUOTED_ID.theId = $SYM_PFX.text + LLParserHelper.unescape($STRING_LITERAL.text, '"'); } ;
 
-fragment NAME_SUFFIX : ('a'..'z' | 'A' .. 'Z' | '$' | '.' | '_') ('a'..'z' | 'A'..'Z' | '$' | '.' | '0'..'9')* ;
+fragment
+SYM_PFX : '%' | '@';
+
+fragment NAME_SUFFIX : ('a'..'z' | 'A' .. 'Z' | '$' | '.' | '_') ('a'..'z' | 'A'..'Z' | '$' | '.' | '0'..'9' | '_')* ;
 fragment NUMBER_SUFFIX : ('0'..'9')+  ;
 fragment NUMSUFFIX : ('0'..'9' | 'A'..'Z' | 'a'..'z') *;
 
@@ -182,7 +265,8 @@ fragment NUMSUFFIX : ('0'..'9' | 'A'..'Z' | 'a'..'z') *;
 //  Strings
 //  
 //CHAR_LITERAL: '\'' (('\\' .) | ~('\'')) * '\'';
-CHAR_LITERAL returns String : '\'' {
+
+CHAR_LITERAL : '\'' {
   while (true) {
 		 int ch = input.LA(1);
 		 if (ch == '\\') {
@@ -197,7 +281,6 @@ CHAR_LITERAL returns String : '\'' {
 		    break;
 		 }
   }
-	$CHAR_LITERAL = helper.unescape($CHAR_LITERAL_SUFFIX.text);
 };
 
 STRING_LITERAL : '"' {
@@ -215,8 +298,26 @@ STRING_LITERAL : '"' {
 		    break;
 		 }
   }
-  $STRING_LITERAL = helper.unescape($STRING_LITERAL_SUFFIX.text);
 };
+
+CSTRING_LITERAL : 'c"' {
+  while (true) {
+     int ch = input.LA(1);
+     if (ch == '\\') {
+        input.consume();  // backslash
+        input.consume();  // escaped
+     } else if (ch == -1) {
+        match('\"');
+     } else if (ch != '\"') {
+        input.consume();
+     } else {
+        match('\"');
+        break;
+     }
+  }
+};
+
+
 //
 //  Whitespace
 //

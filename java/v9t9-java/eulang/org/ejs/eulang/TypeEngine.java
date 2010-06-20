@@ -21,7 +21,7 @@ import org.ejs.eulang.ast.impl.AstBoolLitExpr;
 import org.ejs.eulang.ast.impl.AstFloatLitExpr;
 import org.ejs.eulang.ast.impl.AstIntLitExpr;
 import org.ejs.eulang.ast.impl.AstType;
-import org.ejs.eulang.symbols.GlobalScope;
+import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLAggregateType;
@@ -60,16 +60,18 @@ public class TypeEngine {
 
 	//public LLIntType INT_ANY;
 	public LLBoolType BOOL;
-	public LLVoidType VOID;
-	public LLLabelType LABEL;
-	public LLType NIL;
 
 	public LLType INTPTR;
 	public LLType REFPTR;
 	public LLIntType PTRDIFF;
+
+	// builtin types
 	
 	/** llvm bool type */
-	public LLBoolType LLBOOL;
+	public LLBoolType LLBOOL = new LLBoolType(null, 1);
+	public LLVoidType VOID = new LLVoidType(null);
+	public LLLabelType LABEL = new LLLabelType();
+	public LLType NIL = new LLVoidType(null);
 
 	private Map<ISymbol, LLType> llvmNameToTypeMap = new HashMap<ISymbol, LLType>();
 	
@@ -258,10 +260,11 @@ public class TypeEngine {
 	 * Add names for globally accessible types
 	 * @param globalScope
 	 */
-	public void populateTypes(GlobalScope globalScope) {
-		VOID = register(new LLVoidType(null));
-		NIL = register(new LLVoidType(null));
-		LABEL = register(new LLLabelType());
+	public void populateTypes(IScope globalScope) {
+		register(LLBOOL);
+		register(VOID);
+		register(NIL);
+		register(LABEL);
 
 		REFPTR = register(new LLPointerType("RefPtr", getPtrBits(), 
 				getRefType(BYTE)));
@@ -285,7 +288,7 @@ public class TypeEngine {
 	 * @param name
 	 * @param iNT2
 	 */
-	private void populateType(GlobalScope globalScope, String name, LLType type) {
+	private void populateType(IScope globalScope, String name, LLType type) {
 		ISymbol symbol = globalScope.add(name, false);
 		symbol.setDefinition(new AstType(type));
 		

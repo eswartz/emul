@@ -8,6 +8,7 @@ import java.util.Map;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.IAstDefineStmt;
 import org.ejs.eulang.ast.IAstTypedExpr;
+import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 
@@ -144,6 +145,9 @@ public class LLSymbolType extends BaseLLType {
 				if (body != null)
 					return body.getType();
 			}
+		}
+		if (symbol.getDefinition() instanceof IAstTypedNode) {
+			return ((IAstTypedNode) symbol.getDefinition()).getType();
 		}
 		return null;
 	}

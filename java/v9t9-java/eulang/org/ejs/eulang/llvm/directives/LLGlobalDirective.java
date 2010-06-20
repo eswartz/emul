@@ -17,7 +17,6 @@ public class LLGlobalDirective extends LLBaseDirective {
 	private final ISymbol symbol;
 	private final LLLinkage linkage;
 	private final LLOperand data;
-	private boolean appending;
 
 	/**
 	 * @param symbol
@@ -83,8 +82,6 @@ public class LLGlobalDirective extends LLBaseDirective {
 		sb.append(symName).append(" = ");
 		if (linkage != null)
 			sb.append(linkage.getLinkageName()).append(' ');	
-		if (appending)
-			sb.append("appending ");
 		sb.append("global ");
 		
 		sb.append(data.getType().getLLVMName()).append(' ');
@@ -108,19 +105,11 @@ public class LLGlobalDirective extends LLBaseDirective {
 		return symbol;
 	}
 
-
 	/**
-	 * @param b
+	 * @return
 	 */
-	public void setAppending(boolean b) {
-		this.appending = b;
-	}
-	
-	/**
-	 * @return the appending
-	 */
-	public boolean isAppending() {
-		return appending;
+	public LLLinkage getLinkage() {
+		return linkage;
 	}
 
 }

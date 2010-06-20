@@ -42,6 +42,8 @@ public class LLModule {
 	List<LLBaseDirective> externDirectives;
 	private final IScope globalScope;
 	
+	private IScope typeScope;
+
 	private IScope moduleScope;
 	
 	private Map<LLType, ISymbol> emittedTypes = new HashMap<LLType, ISymbol>();
@@ -60,6 +62,7 @@ public class LLModule {
 		externDirectives = new ArrayList<LLBaseDirective>();
 		
 		moduleScope = new ModuleScope(globalScope);
+		typeScope = new LocalScope(moduleScope);
 	}
 	
 	public String toString() {
@@ -105,6 +108,13 @@ public class LLModule {
 	 */
 	public IScope getModuleScope() {
 		return moduleScope;
+	}
+	
+	/**
+	 * @return the typeScope
+	 */
+	public IScope getTypeScope() {
+		return typeScope;
 	}
 
 	/**
@@ -272,8 +282,7 @@ public class LLModule {
 			
 			ISymbol llvmGlobalCtors = moduleScope.add("llvm.global_ctors", false);
 			llvmGlobalCtors.setType(array.getType());
-			LLGlobalDirective ctorAdd = new LLGlobalDirective(llvmGlobalCtors, null, array);
-			ctorAdd.setAppending(true);
+			LLGlobalDirective ctorAdd = new LLGlobalDirective(llvmGlobalCtors, LLLinkage.APPENDING, array);
 			this.directives.add(ctorAdd);
 			
 			// make a new module-wide init func 

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
+import org.ejs.eulang.llvm.LLLinkage;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
@@ -444,7 +445,7 @@ public class BaseInstrTest extends BaseTest {
 		};
 		
 		AssemblerOperand asmOp = isel.generateOperand(cons.getConstant());
-		return makeDataForOperand(cons.getSymbol(), false, asmOp);
+		return makeDataForOperand(cons.getSymbol(), null, asmOp);
 	}
 	protected DataBlock doData(LLModule mod, LLGlobalDirective global) {
 
@@ -470,15 +471,15 @@ public class BaseInstrTest extends BaseTest {
 		};
 		
 		AssemblerOperand asmOp = isel.generateOperand(global.getInit());
-		return makeDataForOperand(global.getSymbol(), global.isAppending(), asmOp);
+		return makeDataForOperand(global.getSymbol(), global.getLinkage(), asmOp);
 	}
-	private DataBlock makeDataForOperand(ISymbol symbol, boolean appending,
+	private DataBlock makeDataForOperand(ISymbol symbol, LLLinkage linkage,
 			AssemblerOperand asmOp) {
 		assert asmOp instanceof AsmOperand;
 		
 		DataBlock block = null;
 		
-		if (appending) {
+		if (linkage == LLLinkage.APPENDING) {
 			// when appending, each init op adds some elements to a large array
 			assert symbol.getType() instanceof LLArrayType;
 			block = buildOutput.getDataBlock(symbol);

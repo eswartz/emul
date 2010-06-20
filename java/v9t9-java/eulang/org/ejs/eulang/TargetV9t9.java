@@ -124,7 +124,6 @@ public class TargetV9t9 implements ITarget {
 		typeEngine.setStructAlign(16);
 		
 		typeEngine.BOOL = typeEngine.register(new LLBoolType("Bool", 1));
-		typeEngine.LLBOOL = typeEngine.register(new LLBoolType(null, 1));
 		
 		typeEngine.BYTE = typeEngine.register(typeEngine.getIntType("Byte", 8));
 		typeEngine.INT = typeEngine.register(typeEngine.getIntType("Int", 16));
