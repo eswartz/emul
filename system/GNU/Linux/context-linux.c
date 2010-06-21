@@ -482,6 +482,7 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
             }
             assert(list_is_empty(&ctx->children));
             assert(ctx->parent == NULL);
+            ctx->exited = 1;
             ctx->ref_count = 1;
             context_unlock(ctx);
         }
