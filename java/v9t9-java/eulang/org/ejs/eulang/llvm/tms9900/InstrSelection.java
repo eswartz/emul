@@ -1334,24 +1334,28 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private void handleExtractValueInstr(LLExtractValueInstr instr) {
 		// get current base
 		AssemblerOperand aggOp = generateOperand(instr.getOperands()[0]);
+		
 		AssemblerOperand asmOp = null;
-		if (aggOp instanceof TupleTempOperand) {
-			TupleTempOperand op = (TupleTempOperand) aggOp;
-			assert op != null;
-			asmOp = op.get(instr.getIndex());
-		} else if (aggOp instanceof AddrOperand) {
-			// not straight-line code; get value from local
-			Alignment align = typeEngine.new Alignment(Target.STACK);
-			int offs = 0;
-			for (int i = 0; i <= instr.getIndex(); i++)
-				offs = align.alignAndAdd(((LLAggregateType) instr.getOperands()[0].getType()).getType(i));
-			assert offs % 8 == 0;
-			offs /= 8;
-			
-			asmOp = getEffectiveAddress(typeEngine.getPointerType(instr.getType()), aggOp, aggOp);
-			asmOp = new CompositePieceOperand(new NumberOperand(offs), asmOp, instr.getType());
-		} else {
-			assert false;
+		for (int idx = 1; idx < instr.getOperands().length; idx++) {
+			int index = ((LLConstOp) instr.getOperands()[idx]).getValue().intValue();
+			if (aggOp instanceof TupleTempOperand) {
+				TupleTempOperand op = (TupleTempOperand) aggOp;
+				assert op != null;
+				asmOp = op.get(index);
+			} else if (aggOp instanceof AddrOperand) {
+				// not straight-line code; get value from local
+				Alignment align = typeEngine.new Alignment(Target.STACK);
+				int offs = 0;
+				for (int i = 0; i <= index; i++)
+					offs = align.alignAndAdd(((LLAggregateType) instr.getOperands()[0].getType()).getType(i));
+				assert offs % 8 == 0;
+				offs /= 8;
+				
+				asmOp = getEffectiveAddress(typeEngine.getPointerType(instr.getType()), aggOp, aggOp);
+				asmOp = new CompositePieceOperand(new NumberOperand(offs), asmOp, instr.getType());
+			} else {
+				assert false;
+			}
 		}
 		AssemblerOperand val = moveToTemp(instr.getResult(), instr.getResult().getType(), asmOp);
 		ssaTempTable.put(instr.getResult(), val);

@@ -621,4 +621,187 @@ public class TestLLVMParser extends BaseTest {
 		assertMatchText("load i16\\* %0", redis);
 		
 	}
+	
+	@Test
+	public void testDefines4() throws Exception {
+		String text =
+			//1
+			"; ModuleID = '/tmp/test.opt.bc'\n" + 
+			"target datalayout = \"E-p:16:16-s0:8:16-a0:8:16\"\n" + 
+			"target triple = \"9900-unknown-v9t9\"\n" + 
+			"\n" + 
+			"%Charx0 = type [0 x i8]\n" + 
+			"%Charx3 = type [3 x i8]\n" + 
+			"%Int._.Int_ = type i16 (i16)\n" + 
+			"%\"Int._.Node$p.Int_\" = type i16 (%\"Node$p\", i16)\n" + 
+			"%Int._._ = type i16 ()\n" + 
+			"%Node = type { i16 }\n" + 
+			"%\"Node$p\" = type %Node*\n" + 
+			"%Node2 = type { i16, %Str }\n" + 
+			"%\"Node2$p\" = type %Node2*\n" + 
+			"%Str = type { i16, %Charx0 }\n" + 
+			"%\"Str$3\" = type { i16, %Charx3 }\n" + 
+			"%\"Str$3$p\" = type %\"Str$3\"*\n" + 
+			"%\"Str$p\" = type %Str*\n" + 
+			"%\"_Int.Str_._.Node2$p.Int.Str$p_\" = type %Node2 (%\"Node2$p\", i16, %\"Str$p\")\n" + 
+			"%\"void._.Node$p_\" = type void (%\"Node$p\")\n" + 
+			"%\"void._.Node2$p_\" = type void (%\"Node2$p\")\n" + 
+			"\n" + 
+			"@brk._.Int = global i16 -24576                    ; <i16*> [#uses=6]\n" + 
+			"@\".const._.Str$3\" = constant %\"Str$3\" { i16 3, %Charx3 c\"foo\" } ; <%\"Str$3$p\"> [#uses=1]\n" + 
+			"\n" + 
+			"define i16 @_new._.Int._.Int_(i16 %s) nounwind optsize {\n" + 
+			"entry.36:\n" + 
+			"  %0 = load i16* @brk._.Int                       ; <i16> [#uses=2]\n" + 
+			"  %1 = add i16 %s, 1                              ; <i16> [#uses=1]\n" + 
+			"  %2 = and i16 %1, -2                             ; <i16> [#uses=1]\n" + 
+			"  %3 = add i16 %0, %2                             ; <i16> [#uses=1]\n" + 
+			"  store i16 %3, i16* @brk._.Int\n" + 
+			"  ret i16 %0\n" + 
+			"}\n" + 
+			"\n" + 
+			"define i16 @\"Node.__init__._.Int._.Node$p.Int_\"(%\"Node$p\" nocapture %this, i16 %x) nounwind optsize {\n" + 
+			"entry.44:\n" + 
+			"  %0 = getelementptr %\"Node$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+			"  store i16 %x, i16* %0\n" + 
+			"  ret i16 %x\n" + 
+			"}\n" + 
+			"\n" + 
+			"define void @\"Node.$__init__$._.void._.Node$p_\"(%\"Node$p\" nocapture %this) nounwind optsize {\n" + 
+			"entry.52:\n" + 
+			"  %0 = getelementptr %\"Node$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+			"  store i16 0, i16* %0\n" + 
+			"  ret void\n" + 
+			"}\n" + 
+			"\n" + 
+			"define %Node2 @\"Node2.__init__._._Int.Str_._.Node2$p.Int.Str$p_\"(%\"Node2$p\" nocapture %this, i16 %x, %\"Str$p\" nocapture %y) nounwind optsize {\n" + 
+			"entry.62:\n" + 
+			"  %0 = load %\"Str$p\" %y                           ; <%Str> [#uses=2]\n" + 
+			"  %1 = insertvalue %Node2 undef, i16 %x, 0        ; <%Node2> [#uses=1]\n" + 
+			"  %2 = insertvalue %Node2 %1, %Str %0, 1          ; <%Node2> [#uses=1]\n" + 
+			"  %3 = getelementptr %\"Node2$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+			"  store i16 %x, i16* %3\n" + 
+			"  %4 = getelementptr %\"Node2$p\" %this, i16 0, i32 1 ; <%\"Str$p\"> [#uses=1]\n" + 
+			"  store %Str %0, %\"Str$p\" %4\n" + 
+			"  ret %Node2 %2\n" + 
+			"}\n" + 
+			"\n" + 
+			"define void @\"Node2.$__init__$._.void._.Node2$p_\"(%\"Node2$p\" nocapture %this) nounwind optsize {\n" + 
+			"entry.72:\n" + 
+			"  %0 = getelementptr %\"Node2$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+			"  store i16 0, i16* %0\n" + 
+			"  %1 = getelementptr %\"Node2$p\" %this, i16 0, i32 1 ; <%\"Str$p\"> [#uses=1]\n" + 
+			"  store %Str zeroinitializer, %\"Str$p\" %1\n" + 
+			"  ret void\n" + 
+			"}\n" + 
+			"\n" + 
+			"define i16 @main._.Int._._() nounwind optsize {\n" + 
+			"entry.79:\n" + 
+			"  %0 = load i16* @brk._.Int                       ; <i16> [#uses=2]\n" + 
+			"  %1 = add i16 %0, 2                              ; <i16> [#uses=1]\n" + 
+			"  store i16 %1, i16* @brk._.Int\n" + 
+			"  %2 = inttoptr i16 %0 to %\"Node$p\"               ; <%\"Node$p\"> [#uses=1]\n" + 
+			"  %3 = getelementptr %\"Node$p\" %2, i16 0, i32 0   ; <i16*> [#uses=2]\n" + 
+			"  store i16 10, i16* %3\n" + 
+			"  %4 = load i16* @brk._.Int                       ; <i16> [#uses=2]\n" + 
+			"  %5 = add i16 %4, 4                              ; <i16> [#uses=1]\n" + 
+			"  store i16 %5, i16* @brk._.Int\n" + 
+			"  %6 = inttoptr i16 %4 to %\"Node2$p\"              ; <%\"Node2$p\"> [#uses=3]\n" + 
+			"  %7 = load %\"Str$p\" bitcast (%\"Str$3$p\" @\".const._.Str$3\" to %\"Str$p\") ; <%Str> [#uses=1]\n" + 
+			"  %8 = getelementptr %\"Node2$p\" %6, i16 0, i32 0  ; <i16*> [#uses=1]\n" + 
+			"  store i16 40, i16* %8\n" + 
+			"  %9 = getelementptr %\"Node2$p\" %6, i16 0, i32 1  ; <%\"Str$p\"> [#uses=1]\n" + 
+			"  store %Str %7, %\"Str$p\" %9\n" + 
+			"  %10 = getelementptr %\"Node2$p\" %6, i16 0, i32 1, i32 0 ; <i16*> [#uses=1]\n" + 
+			"  %11 = load i16* %10                             ; <i16> [#uses=1]\n" + 
+			"  %12 = load i16* %3                              ; <i16> [#uses=1]\n" + 
+			"  %13 = add i16 %11, 40                           ; <i16> [#uses=1]\n" + 
+			"  %14 = add i16 %13, %12                          ; <i16> [#uses=1]\n" + 
+			"  ret i16 %14\n" + 
+			"}\n" + 
+			"";
+		
+		LLModule mod = doLLVMParse(text);
+		String redis = mod.toString();
+		System.out.println(mod);
+		
+		assertMatchText("insertvalue %Node2 undef, %Int %x, 0", redis);
+		assertMatchText("inttoptr %Int %0 to %Node\\$p", redis);
+		assertMatchText("inttoptr %Int %4 to %Node2\\$p", redis);
+	}	
+	@Test
+	public void testDefines5() throws Exception {
+		String text =
+			//1
+			"target datalayout = \"E-p:16:16-s0:8:16-a0:8:16\"\n" + 
+			"\n" + 
+			"target triple = \"9900-unknown-v9t9\"\n" + 
+			"\n" + 
+			"%_Int.Int.Int_._.Int.Int.Int_ = type {%Int,%Int,%Int} (%Int,%Int,%Int)\n" + 
+			"%Int = type i16\n" + 
+			"%i16$p = type i16*\n" + 
+			"%_Int.Int_._.Int.Int_ = type {%Int,%Int} (%Int,%Int)\n" + 
+			"\n" + 
+			"define default {%Int,%Int,%Int} @swap._._Int.Int.Int_._.Int.Int.Int_(%Int %x, %Int %y, %Int %z)  optsize \n" + 
+			"{\n" + 
+			"entry.21:\n" + 
+			"%_.x.22 = 	alloca %Int \n" + 
+			"	store %Int %x, %Int* %_.x.22\n" + 
+			"%_.y.24 = 	alloca %Int \n" + 
+			"	store %Int %y, %Int* %_.y.24\n" + 
+			"%_.z.25 = 	alloca %Int \n" + 
+			"	store %Int %z, %Int* %_.z.25\n" + 
+			"%0 = 	load %Int* %_.y.24\n" + 
+			"%1 = 	load %Int* %_.z.25\n" + 
+			"%2 = 	load %Int* %_.x.22\n" + 
+			"%3 = 	insertvalue {%Int,%Int,%Int} undef, %Int %0, 0\n" + 
+			"%4 = 	insertvalue {%Int,%Int,%Int} %3, %Int %1, 1\n" + 
+			"%5 = 	insertvalue {%Int,%Int,%Int} %4, %Int %2, 2\n" + 
+			"	ret {%Int,%Int,%Int} %5\n" + 
+			"}\n" + 
+			"\n" + 
+			"define default {%Int,%Int} @testTuples4b._._Int.Int_._.Int.Int_(%Int %a, %Int %b)  optsize \n" + 
+			"{\n" + 
+			"entry.28:\n" + 
+			"%_.a.29 = 	alloca %Int \n" + 
+			"	store %Int %a, %Int* %_.a.29\n" + 
+			"%_.b.30 = 	alloca %Int \n" + 
+			"	store %Int %b, %Int* %_.b.30\n" + 
+			"%0 = 	load %Int* %_.a.29\n" + 
+			"%1 = 	load %Int* %_.b.30\n" + 
+			"%2 = 	add %Int %0, %1\n" + 
+			"%3 = 	load %Int* %_.a.29\n" + 
+			"%4 = 	load %Int* %_.b.30\n" + 
+			"%5 = 	sub %Int %3, %4\n" + 
+			"%6 = 	load %Int* %_.b.30\n" + 
+			"%7 = 	call {%Int,%Int,%Int} @swap._._Int.Int.Int_._.Int.Int.Int_ (%Int %2, %Int %5, %Int %6)\n" + 
+			"%8 = 	extractvalue {%Int,%Int,%Int} %7, 0\n" + 
+			"%_.x.31 = 	alloca %Int \n" + 
+			"	store %Int %8, %Int* %_.x.31\n" + 
+			"%9 = 	extractvalue {%Int,%Int,%Int} %7, 1\n" + 
+			"%_.o.32 = 	alloca %Int \n" + 
+			"	store %Int %9, %Int* %_.o.32\n" + 
+			"%10 = 	extractvalue {%Int,%Int,%Int} %7, 2\n" + 
+			"%_.y.33 = 	alloca %Int \n" + 
+			"	store %Int %10, %Int* %_.y.33\n" + 
+			"%11 = 	load %Int* %_.a.29\n" + 
+			"%12 = 	load %Int* %_.x.31\n" + 
+			"%13 = 	mul %Int %11, %12\n" + 
+			"%14 = 	load %Int* %_.y.33\n" + 
+			"%15 = 	load %Int* %_.b.30\n" + 
+			"%16 = 	mul %Int %14, %15\n" + 
+			"%17 = 	insertvalue {%Int,%Int} undef, %Int %13, 0\n" + 
+			"%18 = 	insertvalue {%Int,%Int} %17, %Int %16, 1\n" + 
+			"	ret {%Int,%Int} %18\n" + 
+			"}\n" + 
+			"\n" + 
+			"";
+		
+		LLModule mod = doLLVMParse(text);
+		String redis = mod.toString();
+		System.out.println(mod);
+		
+		assertMatchText("call \\{%Int,%Int,%Int\\} @swap._._Int.Int.Int_._.Int.Int.Int_ \\(%Int %2, %Int %5, %Int %6\\)", redis);
+		assertMatchText("extractvalue \\{%Int,%Int,%Int\\} %7, 2", redis);
+	}
 }

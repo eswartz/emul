@@ -170,6 +170,7 @@ op returns [ LLOperand op ] :
   | arrayconst  { $op.op = new LLArrayOp((LLArrayType)null, $arrayconst.values); }
   | symbolconst  { $op.op = helper.getSymbolOp($symbolconst.theId, $symbolconst.theSymbol); }
   | 'zeroinitializer'  { $op.op = new LLZeroInitOp(null); }
+  | 'undef'  { $op.op = new LLUndefOp(null); }
   | constcastexpr   { $op.op = $constcastexpr.op; }
   )
   ;
@@ -470,15 +471,51 @@ assignInstr returns [LLAssignInstr inst] :
           $assignInstr.inst = new LLCompareInstr($cmp.text, $cmptype.text, ret, $cop1.op, $cop2.op); 
         } 
       )
-     | 'getelementptr' 
+     | ( 'getelementptr' 
         {
         List<LLOperand> ops = new ArrayList<LLOperand>();
         }
-        gep=typedop { ops.add($gep.op); } ( gepind { ops.add($gepind.op); } ) +
+        gep=typedop { ops.add($gep.op); } ( gidxs=gepind { ops.add($gidxs.op); } ) +
        {
-          ret.setType(helper.getElementPtrType(ops));
+          ret.setType(helper.typeEngine.getPointerType(helper.getElementType(ops)));
           $assignInstr.inst = new LLGetElementPtrInstr(ret, ops.get(0).getType(), ops.toArray(new LLOperand[ops.size()])); 
        } 
+     )
+     | 'insertvalue'
+      (   //  LLOperand temp, LLType type, LLOperand val, LLType eltType, LLOperand elt, int idx
+        iep=typedop ',' into=typedop ',' number 
+       {
+          ret.setType($iep.op.getType());
+          $assignInstr.inst = new LLInsertValueInstr(ret, $iep.op.getType(), $iep.op, $into.op.getType(), $into.op, $number.value); 
+       } 
+      )
+     | 'extractvalue'
+      (   //  LLOperand temp, LLType type, LLOperand value, int index
+         {
+        List<LLOperand> ops = new ArrayList<LLOperand>();
+        }
+        eep=typedop { ops.add($eep.op); } ( eidxs=gepind { ops.add($eidxs.op); } ) +
+       {
+          ret.setType(helper.getElementType(ops));
+          $assignInstr.inst = new LLExtractValueInstr(ret, $eep.op.getType(), ops.toArray(new LLOperand[ops.size()])); 
+       } 
+      )
+     | ( casttype 
+        cep=typedop 'to' cty=type
+       {
+           // LLOperand temp, ECast cast, LLType fromType, LLOperand value,  LLType toType
+          ret.setType($cty.theType);
+          $assignInstr.inst = new LLCastInstr(ret, $casttype.cast, $cep.op.getType(), $cep.op, $cty.theType); 
+       } 
+     )
+     | (  t=('tail'?) 'call'  cconv? attrs clty=type func=identifier '(' callargs ')' fn_attrs 
+     // <result> = [tail] call [cconv] [ret attrs] <ty> [<fnty>*] <fnptrval>(<function args>) [fn attrs]
+        {
+          ret.setType($clty.theType);
+          $assignInstr.inst = new LLCallInstr(ret, $clty.theType, helper.getSymbolOp($func.theId, null), 
+                $callargs.ops.toArray(new LLOperand[ $callargs.ops.size()]));
+        } 
+      )
     ) 
     
     {
@@ -491,8 +528,16 @@ assignInstr returns [LLAssignInstr inst] :
     }
     ;
 
+callargs returns [ List<LLOperand> ops ] 
+  @init 
+  { $callargs.ops = new ArrayList<LLOperand>(); }
+  : ( ca0=typedop { $callargs.ops.add($ca0.op); }  
+      ( ',' ca1=typedop  { $callargs.ops.add($ca1.op); } )*
+   )? 
+  ;
+  
 gepind returns [ LLConstOp op ] : 
-    ',' type number { $gepind.op = new LLConstOp($number.value); } 
+    ',' type? number { $gepind.op = new LLConstOp($number.value); } 
     ;
      
 binexpr : 'add' | 'fadd' 

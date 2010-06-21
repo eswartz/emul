@@ -1181,7 +1181,7 @@ public class LLVMGenerator {
 
 			LLOperand val = currentTarget.newTemp(sym.getType());
 			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(),
-					value, idx));
+					value, new LLConstOp(idx)));
 
 			// add a cast if needed
 			val = generateCast(sym, sym.getType(), val.getType(), val, false);
@@ -1895,7 +1895,7 @@ public class LLVMGenerator {
 
 			LLOperand val = currentTarget.newTemp(tupleType.getType(idx));
 			currentTarget.emit(new LLExtractValueInstr(val, stmt.getType(),
-					value, idx));
+					value, new LLConstOp(idx)));
 
 			// add a cast if needed
 			val = generateCast(sym, sym.getType(), val.getType(), val, false);
@@ -2112,7 +2112,7 @@ public class LLVMGenerator {
 						current = ((LLStructOp) value).getElements()[i];
 					} else {
 						current = currentTarget.newTemp(theType);
-						currentTarget.emit(new LLExtractValueInstr(current, origType, value, i));
+						currentTarget.emit(new LLExtractValueInstr(current, origType, value, new LLConstOp(i)));
 					}
 					pieces[i] = generateCast(node, 
 							((LLAggregateType) type).getType(i),

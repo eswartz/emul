@@ -298,10 +298,9 @@ public class LLParserHelper {
 	 * @param ops
 	 * @return
 	 */
-	public LLType getElementPtrType(List<LLOperand> ops) {
+	public LLType getElementType(List<LLOperand> ops) {
 		int idx = 0;
 		LLType type = ops.get(idx++).getType();
-		LLType retType = type;
 		while (idx < ops.size()) {
 			if (idx > 1) {
 				int val = ((LLConstOp) ops.get(idx)).getValue().intValue();
@@ -312,11 +311,9 @@ public class LLParserHelper {
 			} else {
 				type = type.getSubType();
 			}
-			
-			retType = typeEngine.getPointerType(type);
 			idx++;
 			
 		}
-		return retType;
+		return type;
 	}
 }
