@@ -141,7 +141,7 @@ public class ComparisonBinaryOperation extends Operation implements IBinaryOpera
 	public LLOperand generate(LLVMGenerator generator,
 			ILLCodeTarget currentTarget, IAstTypedExpr expr, LLOperand left,
 			LLOperand right) throws ASTException {
-		LLOperand ret = currentTarget.newTemp(expr.getType());
+		LLOperand ret = currentTarget.newTemp(currentTarget.getTypeEngine().LLBOOL);
 		
 		String instr = this.getLLVMName();
 		if (instr != null) {

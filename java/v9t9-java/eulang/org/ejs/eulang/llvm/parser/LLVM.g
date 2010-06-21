@@ -280,7 +280,7 @@ cstringLiteral returns [String theText] : CSTRING_LITERAL
   }
   ;
 
-defineDirective : DEFINE linkage? visibility? cconv? attrs type identifier arglist fn_attrs NEWLINE // section align gc
+defineDirective : DEFINE linkage? visibility? cconv? attrs type identifier arglist fn_attrs NEWLINE? // section align gc
 //defineDirective : 'define' 'default' type identifier arglist  NEWLINE // section align gc
     {
     helper.openNewDefine(
@@ -433,7 +433,7 @@ allocaInstr returns [LLAllocaInstr inst] :
 
 storeInstr returns [LLStoreInstr inst] :
   'store' o1=typedop ',' o2=typedop  
-   { $storeInstr.inst = new LLStoreInstr($o2.op.getType(), $o1.op, $o2.op); }  
+   { $storeInstr.inst = new LLStoreInstr($o2.op.getType().getSubType(), $o1.op, $o2.op); }  
   ;
 
 retInstr returns [LLRetInstr inst] :
@@ -450,35 +450,60 @@ assignInstr returns [LLAssignInstr inst] :
     { ret = $ret.op; }
     EQUALS
     (
-    ( 'load' loadop=typedop { $assignInstr.inst = new LLLoadInstr(ret, $loadop.op.getType(), $loadop.op); } )
-    | ( binexpr binexprsuffix? type bop1=op ',' bop2=op  
+    ( 'load' loadop=typedop { $assignInstr.inst = new LLLoadInstr(ret, $loadop.op.getType().getSubType(), $loadop.op); } )
+    | ( binexpr binexprsuffix? bt=type bop1=op ',' bop2=op  
         {
-          $bop1.op.setType($type.theType); 
-          $bop2.op.setType($type.theType); 
-          ret.setType($type.theType);
+          $bop1.op.setType($bt.theType); 
+          $bop2.op.setType($bt.theType); 
+          ret.setType($bt.theType);
           String op = $binexpr.text;
           if ($binexprsuffix.text != null)
             op += ' ' + $binexprsuffix.text;
           $assignInstr.inst = new LLBinaryInstr(op, ret, ret.getType(), $bop1.op, $bop2.op); 
         } 
       )
+     | ( cmp=('icmp' | 'fcmp') cmptype ct=type cop1=op ',' cop2=op  
+        {
+          $cop1.op.setType($ct.theType); 
+          $cop2.op.setType($ct.theType); 
+          ret.setType(helper.typeEngine.LLBOOL);
+          $assignInstr.inst = new LLCompareInstr($cmp.text, $cmptype.text, ret, $cop1.op, $cop2.op); 
+        } 
+      )
+     | 'getelementptr' 
+        {
+        List<LLOperand> ops = new ArrayList<LLOperand>();
+        }
+        gep=typedop { ops.add($gep.op); } ( gepind { ops.add($gepind.op); } ) +
+       {
+          ret.setType(helper.getElementPtrType(ops));
+          $assignInstr.inst = new LLGetElementPtrInstr(ret, ops.get(0).getType(), ops.toArray(new LLOperand[ops.size()])); 
+       } 
     ) 
     
     {
     // fixup types, since we don't know 'ret''s until now
-    ((LLTempOp)ret).setType($assignInstr.inst.getType()); 
+    if (ret.getType() == null) {
+      ((LLTempOp)ret).setType($assignInstr.inst.getType());
+    } 
     ISymbol local = helper.findSymbol(ret.toString());
     local.setType(ret.getType());
     }
     ;
 
+gepind returns [ LLConstOp op ] : 
+    ',' type number { $gepind.op = new LLConstOp($number.value); } 
+    ;
+     
 binexpr : 'add' | 'fadd' 
   | 'sub' | 'fsub'
   | 'mul' |'fmul' 
   | 'udiv' | 'sdiv' | 'fdiv' | 'urem' | 'srem' | 'frem' 
   | 'shl' | 'lshr' | 'ashr' | 'and' | 'or' | 'xor';
-  
+
 binexprsuffix : ( 'nuw' | 'nsw' | 'exact' )+ ;
+
+cmptype : 'eq' | 'ne' | 'ugt' | 'uge' | 'ult' | 'ule' | 'sgt' | 'sge' | 'slt' | 'sle' ;
 
 branchInstr returns [LLInstr inst] :
   'br' typedop ',' 'label' t=identifier ',' 'label' f=identifier    

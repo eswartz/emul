@@ -1,4 +1,4 @@
-// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g 2010-06-20 15:19:19
+// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g 2010-06-20 20:29:35
 
 package org.ejs.eulang.llvm.parser;
 import org.ejs.eulang.symbols.*;
@@ -19,7 +19,7 @@ import org.antlr.runtime.tree.*;
 
 public class LLVMParser extends Parser {
     public static final String[] tokenNames = new String[] {
-        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "NEWLINE", "EQUALS", "INT_TYPE", "NAMED_ID", "UNNAMED_ID", "QUOTED_ID", "NUMBER", "CHAR_LITERAL", "STRING_LITERAL", "CSTRING_LITERAL", "DEFINE", "LABEL", "NUMSUFFIX", "SYM_PFX", "NUMBER_SUFFIX", "NAME_SUFFIX", "WS", "SINGLE_COMMENT", "MULTI_COMMENT", "'target'", "'datalayout'", "'triple'", "'type'", "'void'", "'label'", "'*'", "'{'", "'}'", "'['", "'x'", "']'", "'('", "')'", "','", "'global'", "'constant'", "'addrspace'", "'private'", "'linker_private'", "'internal'", "'available_externally'", "'linkonce'", "'weak'", "'common'", "'appending'", "'extern_weak'", "'linkonce_odr'", "'weak_odr'", "'externally_visible'", "'dllimport'", "'dllexport'", "'zeroinitializer'", "'to'", "'trunc'", "'zext'", "'sext'", "'fptrunc'", "'fpext'", "'fptoui'", "'fptosi'", "'uitofp'", "'sitofp'", "'ptrtoint'", "'inttoptr'", "'bitcast'", "'default'", "'hidden'", "'protected'", "'ccc'", "'fastcc'", "'coldcc'", "'cc 10'", "'cc'", "'zeroext'", "'signext'", "'inreg'", "'byval'", "'sret'", "'noalias'", "'nocapture'", "'nest'", "'alignstack'", "'alwaysinline'", "'inlinehint'", "'noinline'", "'optsize'", "'noreturn'", "'nounwind'", "'readnone'", "'readonly'", "'ssp'", "'sspreq'", "'noredzone'", "'noimplicitfloat'", "'naked'", "':'", "'alloca'", "'store'", "'ret'", "'load'", "'add'", "'fadd'", "'sub'", "'fsub'", "'mul'", "'fmul'", "'udiv'", "'sdiv'", "'fdiv'", "'urem'", "'srem'", "'frem'", "'shl'", "'lshr'", "'ashr'", "'and'", "'or'", "'xor'", "'nuw'", "'nsw'", "'exact'", "'br'"
+        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "NEWLINE", "EQUALS", "INT_TYPE", "NAMED_ID", "UNNAMED_ID", "QUOTED_ID", "NUMBER", "CHAR_LITERAL", "STRING_LITERAL", "CSTRING_LITERAL", "DEFINE", "LABEL", "NUMSUFFIX", "SYM_PFX", "NUMBER_SUFFIX", "NAME_SUFFIX", "WS", "SINGLE_COMMENT", "MULTI_COMMENT", "'target'", "'datalayout'", "'triple'", "'type'", "'void'", "'label'", "'*'", "'{'", "'}'", "'['", "'x'", "']'", "'('", "')'", "','", "'global'", "'constant'", "'addrspace'", "'private'", "'linker_private'", "'internal'", "'available_externally'", "'linkonce'", "'weak'", "'common'", "'appending'", "'extern_weak'", "'linkonce_odr'", "'weak_odr'", "'externally_visible'", "'dllimport'", "'dllexport'", "'zeroinitializer'", "'to'", "'trunc'", "'zext'", "'sext'", "'fptrunc'", "'fpext'", "'fptoui'", "'fptosi'", "'uitofp'", "'sitofp'", "'ptrtoint'", "'inttoptr'", "'bitcast'", "'default'", "'hidden'", "'protected'", "'ccc'", "'fastcc'", "'coldcc'", "'cc 10'", "'cc'", "'zeroext'", "'signext'", "'inreg'", "'byval'", "'sret'", "'noalias'", "'nocapture'", "'nest'", "'alignstack'", "'alwaysinline'", "'inlinehint'", "'noinline'", "'optsize'", "'noreturn'", "'nounwind'", "'readnone'", "'readonly'", "'ssp'", "'sspreq'", "'noredzone'", "'noimplicitfloat'", "'naked'", "':'", "'alloca'", "'store'", "'ret'", "'load'", "'icmp'", "'fcmp'", "'getelementptr'", "'add'", "'fadd'", "'sub'", "'fsub'", "'mul'", "'fmul'", "'udiv'", "'sdiv'", "'fdiv'", "'urem'", "'srem'", "'frem'", "'shl'", "'lshr'", "'ashr'", "'and'", "'or'", "'xor'", "'nuw'", "'nsw'", "'exact'", "'eq'", "'ne'", "'ugt'", "'uge'", "'ult'", "'ule'", "'sgt'", "'sge'", "'slt'", "'sle'", "'br'"
     };
     public static final int T__29=29;
     public static final int T__28=28;
@@ -41,6 +41,9 @@ public class LLVMParser extends Parser {
     public static final int T__97=97;
     public static final int T__96=96;
     public static final int T__95=95;
+    public static final int T__138=138;
+    public static final int T__137=137;
+    public static final int T__136=136;
     public static final int T__80=80;
     public static final int T__81=81;
     public static final int T__82=82;
@@ -56,18 +59,28 @@ public class LLVMParser extends Parser {
     public static final int T__89=89;
     public static final int T__88=88;
     public static final int SYM_PFX=17;
+    public static final int T__126=126;
     public static final int T__125=125;
+    public static final int T__128=128;
+    public static final int T__127=127;
     public static final int WS=20;
     public static final int T__71=71;
+    public static final int T__129=129;
     public static final int T__72=72;
     public static final int NAME_SUFFIX=19;
     public static final int T__70=70;
     public static final int T__76=76;
     public static final int T__75=75;
+    public static final int T__130=130;
     public static final int T__74=74;
+    public static final int T__131=131;
     public static final int T__73=73;
+    public static final int T__132=132;
+    public static final int T__133=133;
     public static final int T__79=79;
+    public static final int T__134=134;
     public static final int T__78=78;
+    public static final int T__135=135;
     public static final int T__77=77;
     public static final int T__68=68;
     public static final int T__69=69;
@@ -3125,7 +3138,7 @@ public class LLVMParser extends Parser {
     };
 
     // $ANTLR start "defineDirective"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:1: defineDirective : DEFINE ( linkage )? ( visibility )? ( cconv )? attrs type identifier arglist fn_attrs NEWLINE '{' NEWLINE defineStmts '}' ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:1: defineDirective : DEFINE ( linkage )? ( visibility )? ( cconv )? attrs type identifier arglist fn_attrs ( NEWLINE )? '{' NEWLINE defineStmts '}' ;
     public final LLVMParser.defineDirective_return defineDirective() throws RecognitionException {
         LLVMParser.defineDirective_return retval = new LLVMParser.defineDirective_return();
         retval.start = input.LT(1);
@@ -3163,8 +3176,8 @@ public class LLVMParser extends Parser {
         CommonTree char_literal119_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:17: ( DEFINE ( linkage )? ( visibility )? ( cconv )? attrs type identifier arglist fn_attrs NEWLINE '{' NEWLINE defineStmts '}' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:19: DEFINE ( linkage )? ( visibility )? ( cconv )? attrs type identifier arglist fn_attrs NEWLINE '{' NEWLINE defineStmts '}'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:17: ( DEFINE ( linkage )? ( visibility )? ( cconv )? attrs type identifier arglist fn_attrs ( NEWLINE )? '{' NEWLINE defineStmts '}' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:19: DEFINE ( linkage )? ( visibility )? ( cconv )? attrs type identifier arglist fn_attrs ( NEWLINE )? '{' NEWLINE defineStmts '}'
             {
             root_0 = (CommonTree)adaptor.nil();
 
@@ -3271,9 +3284,26 @@ public class LLVMParser extends Parser {
             state._fsp--;
 
             adaptor.addChild(root_0, fn_attrs114.getTree());
-            NEWLINE115=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_defineDirective1427); 
-            NEWLINE115_tree = (CommonTree)adaptor.create(NEWLINE115);
-            adaptor.addChild(root_0, NEWLINE115_tree);
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:93: ( NEWLINE )?
+            int alt20=2;
+            int LA20_0 = input.LA(1);
+
+            if ( (LA20_0==NEWLINE) ) {
+                alt20=1;
+            }
+            switch (alt20) {
+                case 1 :
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:283:93: NEWLINE
+                    {
+                    NEWLINE115=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_defineDirective1427); 
+                    NEWLINE115_tree = (CommonTree)adaptor.create(NEWLINE115);
+                    adaptor.addChild(root_0, NEWLINE115_tree);
+
+
+                    }
+                    break;
+
+            }
 
 
                 helper.openNewDefine(
@@ -3286,21 +3316,21 @@ public class LLVMParser extends Parser {
                     null //gc
                     );
                 
-            char_literal116=(Token)match(input,30,FOLLOW_30_in_defineDirective1446); 
+            char_literal116=(Token)match(input,30,FOLLOW_30_in_defineDirective1447); 
             char_literal116_tree = (CommonTree)adaptor.create(char_literal116);
             adaptor.addChild(root_0, char_literal116_tree);
 
-            NEWLINE117=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_defineDirective1448); 
+            NEWLINE117=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_defineDirective1449); 
             NEWLINE117_tree = (CommonTree)adaptor.create(NEWLINE117);
             adaptor.addChild(root_0, NEWLINE117_tree);
 
-            pushFollow(FOLLOW_defineStmts_in_defineDirective1454);
+            pushFollow(FOLLOW_defineStmts_in_defineDirective1455);
             defineStmts118=defineStmts();
 
             state._fsp--;
 
             adaptor.addChild(root_0, defineStmts118.getTree());
-            char_literal119=(Token)match(input,31,FOLLOW_31_in_defineDirective1461); 
+            char_literal119=(Token)match(input,31,FOLLOW_31_in_defineDirective1462); 
             char_literal119_tree = (CommonTree)adaptor.create(char_literal119);
             adaptor.addChild(root_0, char_literal119_tree);
 
@@ -3419,45 +3449,45 @@ public class LLVMParser extends Parser {
             root_0 = (CommonTree)adaptor.nil();
 
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:309:9: ( 'ccc' | 'fastcc' | 'coldcc' | 'cc 10' | 'cc' number )
-            int alt20=5;
+            int alt21=5;
             switch ( input.LA(1) ) {
             case 72:
                 {
-                alt20=1;
+                alt21=1;
                 }
                 break;
             case 73:
                 {
-                alt20=2;
+                alt21=2;
                 }
                 break;
             case 74:
                 {
-                alt20=3;
+                alt21=3;
                 }
                 break;
             case 75:
                 {
-                alt20=4;
+                alt21=4;
                 }
                 break;
             case 76:
                 {
-                alt20=5;
+                alt21=5;
                 }
                 break;
             default:
                 NoViableAltException nvae =
-                    new NoViableAltException("", 20, 0, input);
+                    new NoViableAltException("", 21, 0, input);
 
                 throw nvae;
             }
 
-            switch (alt20) {
+            switch (alt21) {
                 case 1 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:309:10: 'ccc'
                     {
-                    string_literal121=(Token)match(input,72,FOLLOW_72_in_cconv1520); 
+                    string_literal121=(Token)match(input,72,FOLLOW_72_in_cconv1521); 
                     string_literal121_tree = (CommonTree)adaptor.create(string_literal121);
                     adaptor.addChild(root_0, string_literal121_tree);
 
@@ -3467,7 +3497,7 @@ public class LLVMParser extends Parser {
                 case 2 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:309:18: 'fastcc'
                     {
-                    string_literal122=(Token)match(input,73,FOLLOW_73_in_cconv1524); 
+                    string_literal122=(Token)match(input,73,FOLLOW_73_in_cconv1525); 
                     string_literal122_tree = (CommonTree)adaptor.create(string_literal122);
                     adaptor.addChild(root_0, string_literal122_tree);
 
@@ -3477,7 +3507,7 @@ public class LLVMParser extends Parser {
                 case 3 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:309:29: 'coldcc'
                     {
-                    string_literal123=(Token)match(input,74,FOLLOW_74_in_cconv1528); 
+                    string_literal123=(Token)match(input,74,FOLLOW_74_in_cconv1529); 
                     string_literal123_tree = (CommonTree)adaptor.create(string_literal123);
                     adaptor.addChild(root_0, string_literal123_tree);
 
@@ -3487,7 +3517,7 @@ public class LLVMParser extends Parser {
                 case 4 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:309:40: 'cc 10'
                     {
-                    string_literal124=(Token)match(input,75,FOLLOW_75_in_cconv1532); 
+                    string_literal124=(Token)match(input,75,FOLLOW_75_in_cconv1533); 
                     string_literal124_tree = (CommonTree)adaptor.create(string_literal124);
                     adaptor.addChild(root_0, string_literal124_tree);
 
@@ -3497,11 +3527,11 @@ public class LLVMParser extends Parser {
                 case 5 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:309:50: 'cc' number
                     {
-                    string_literal125=(Token)match(input,76,FOLLOW_76_in_cconv1536); 
+                    string_literal125=(Token)match(input,76,FOLLOW_76_in_cconv1537); 
                     string_literal125_tree = (CommonTree)adaptor.create(string_literal125);
                     adaptor.addChild(root_0, string_literal125_tree);
 
-                    pushFollow(FOLLOW_number_in_cconv1538);
+                    pushFollow(FOLLOW_number_in_cconv1539);
                     number126=number();
 
                     state._fsp--;
@@ -3562,21 +3592,21 @@ public class LLVMParser extends Parser {
             root_0 = (CommonTree)adaptor.nil();
 
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:320:5: ( attr )*
-            loop21:
+            loop22:
             do {
-                int alt21=2;
-                int LA21_0 = input.LA(1);
+                int alt22=2;
+                int LA22_0 = input.LA(1);
 
-                if ( ((LA21_0>=77 && LA21_0<=84)) ) {
-                    alt21=1;
+                if ( ((LA22_0>=77 && LA22_0<=84)) ) {
+                    alt22=1;
                 }
 
 
-                switch (alt21) {
+                switch (alt22) {
             	case 1 :
             	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:320:7: attr
             	    {
-            	    pushFollow(FOLLOW_attr_in_attrs1577);
+            	    pushFollow(FOLLOW_attr_in_attrs1578);
             	    attr127=attr();
 
             	    state._fsp--;
@@ -3588,7 +3618,7 @@ public class LLVMParser extends Parser {
             	    break;
 
             	default :
-            	    break loop21;
+            	    break loop22;
                 }
             } while (true);
 
@@ -3699,21 +3729,21 @@ public class LLVMParser extends Parser {
             root_0 = (CommonTree)adaptor.nil();
 
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:334:5: ( fn_attr )*
-            loop22:
+            loop23:
             do {
-                int alt22=2;
-                int LA22_0 = input.LA(1);
+                int alt23=2;
+                int LA23_0 = input.LA(1);
 
-                if ( ((LA22_0>=85 && LA22_0<=98)) ) {
-                    alt22=1;
+                if ( ((LA23_0>=85 && LA23_0<=98)) ) {
+                    alt23=1;
                 }
 
 
-                switch (alt22) {
+                switch (alt23) {
             	case 1 :
             	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:334:7: fn_attr
             	    {
-            	    pushFollow(FOLLOW_fn_attr_in_fn_attrs1656);
+            	    pushFollow(FOLLOW_fn_attr_in_fn_attrs1657);
             	    fn_attr129=fn_attr();
 
             	    state._fsp--;
@@ -3725,7 +3755,7 @@ public class LLVMParser extends Parser {
             	    break;
 
             	default :
-            	    break loop22;
+            	    break loop23;
                 }
             } while (true);
 
@@ -3804,86 +3834,86 @@ public class LLVMParser extends Parser {
 
         try {
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:337:9: ( ( 'alignstack' '(' number ')' ) | 'alwaysinline' | 'inlinehint' | 'noinline' | 'optsize' | 'noreturn' | 'nounwind' | 'readnone' | 'readonly' | 'ssp' | 'sspreq' | 'noredzone' | 'noimplicitfloat' | 'naked' )
-            int alt23=14;
+            int alt24=14;
             switch ( input.LA(1) ) {
             case 85:
                 {
-                alt23=1;
+                alt24=1;
                 }
                 break;
             case 86:
                 {
-                alt23=2;
+                alt24=2;
                 }
                 break;
             case 87:
                 {
-                alt23=3;
+                alt24=3;
                 }
                 break;
             case 88:
                 {
-                alt23=4;
+                alt24=4;
                 }
                 break;
             case 89:
                 {
-                alt23=5;
+                alt24=5;
                 }
                 break;
             case 90:
                 {
-                alt23=6;
+                alt24=6;
                 }
                 break;
             case 91:
                 {
-                alt23=7;
+                alt24=7;
                 }
                 break;
             case 92:
                 {
-                alt23=8;
+                alt24=8;
                 }
                 break;
             case 93:
                 {
-                alt23=9;
+                alt24=9;
                 }
                 break;
             case 94:
                 {
-                alt23=10;
+                alt24=10;
                 }
                 break;
             case 95:
                 {
-                alt23=11;
+                alt24=11;
                 }
                 break;
             case 96:
                 {
-                alt23=12;
+                alt24=12;
                 }
                 break;
             case 97:
                 {
-                alt23=13;
+                alt24=13;
                 }
                 break;
             case 98:
                 {
-                alt23=14;
+                alt24=14;
                 }
                 break;
             default:
                 NoViableAltException nvae =
-                    new NoViableAltException("", 23, 0, input);
+                    new NoViableAltException("", 24, 0, input);
 
                 throw nvae;
             }
 
-            switch (alt23) {
+            switch (alt24) {
                 case 1 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:337:11: ( 'alignstack' '(' number ')' )
                     {
@@ -3892,21 +3922,21 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:337:11: ( 'alignstack' '(' number ')' )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:337:13: 'alignstack' '(' number ')'
                     {
-                    string_literal130=(Token)match(input,85,FOLLOW_85_in_fn_attr1675); 
+                    string_literal130=(Token)match(input,85,FOLLOW_85_in_fn_attr1676); 
                     string_literal130_tree = (CommonTree)adaptor.create(string_literal130);
                     adaptor.addChild(root_0, string_literal130_tree);
 
-                    char_literal131=(Token)match(input,35,FOLLOW_35_in_fn_attr1677); 
+                    char_literal131=(Token)match(input,35,FOLLOW_35_in_fn_attr1678); 
                     char_literal131_tree = (CommonTree)adaptor.create(char_literal131);
                     adaptor.addChild(root_0, char_literal131_tree);
 
-                    pushFollow(FOLLOW_number_in_fn_attr1679);
+                    pushFollow(FOLLOW_number_in_fn_attr1680);
                     number132=number();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, number132.getTree());
-                    char_literal133=(Token)match(input,36,FOLLOW_36_in_fn_attr1681); 
+                    char_literal133=(Token)match(input,36,FOLLOW_36_in_fn_attr1682); 
                     char_literal133_tree = (CommonTree)adaptor.create(char_literal133);
                     adaptor.addChild(root_0, char_literal133_tree);
 
@@ -3921,7 +3951,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal134=(Token)match(input,86,FOLLOW_86_in_fn_attr1687); 
+                    string_literal134=(Token)match(input,86,FOLLOW_86_in_fn_attr1688); 
                     string_literal134_tree = (CommonTree)adaptor.create(string_literal134);
                     adaptor.addChild(root_0, string_literal134_tree);
 
@@ -3933,7 +3963,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal135=(Token)match(input,87,FOLLOW_87_in_fn_attr1691); 
+                    string_literal135=(Token)match(input,87,FOLLOW_87_in_fn_attr1692); 
                     string_literal135_tree = (CommonTree)adaptor.create(string_literal135);
                     adaptor.addChild(root_0, string_literal135_tree);
 
@@ -3945,7 +3975,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal136=(Token)match(input,88,FOLLOW_88_in_fn_attr1695); 
+                    string_literal136=(Token)match(input,88,FOLLOW_88_in_fn_attr1696); 
                     string_literal136_tree = (CommonTree)adaptor.create(string_literal136);
                     adaptor.addChild(root_0, string_literal136_tree);
 
@@ -3957,7 +3987,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal137=(Token)match(input,89,FOLLOW_89_in_fn_attr1699); 
+                    string_literal137=(Token)match(input,89,FOLLOW_89_in_fn_attr1700); 
                     string_literal137_tree = (CommonTree)adaptor.create(string_literal137);
                     adaptor.addChild(root_0, string_literal137_tree);
 
@@ -3969,7 +3999,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal138=(Token)match(input,90,FOLLOW_90_in_fn_attr1708); 
+                    string_literal138=(Token)match(input,90,FOLLOW_90_in_fn_attr1709); 
                     string_literal138_tree = (CommonTree)adaptor.create(string_literal138);
                     adaptor.addChild(root_0, string_literal138_tree);
 
@@ -3981,7 +4011,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal139=(Token)match(input,91,FOLLOW_91_in_fn_attr1712); 
+                    string_literal139=(Token)match(input,91,FOLLOW_91_in_fn_attr1713); 
                     string_literal139_tree = (CommonTree)adaptor.create(string_literal139);
                     adaptor.addChild(root_0, string_literal139_tree);
 
@@ -3993,7 +4023,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal140=(Token)match(input,92,FOLLOW_92_in_fn_attr1716); 
+                    string_literal140=(Token)match(input,92,FOLLOW_92_in_fn_attr1717); 
                     string_literal140_tree = (CommonTree)adaptor.create(string_literal140);
                     adaptor.addChild(root_0, string_literal140_tree);
 
@@ -4005,7 +4035,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal141=(Token)match(input,93,FOLLOW_93_in_fn_attr1720); 
+                    string_literal141=(Token)match(input,93,FOLLOW_93_in_fn_attr1721); 
                     string_literal141_tree = (CommonTree)adaptor.create(string_literal141);
                     adaptor.addChild(root_0, string_literal141_tree);
 
@@ -4017,7 +4047,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal142=(Token)match(input,94,FOLLOW_94_in_fn_attr1724); 
+                    string_literal142=(Token)match(input,94,FOLLOW_94_in_fn_attr1725); 
                     string_literal142_tree = (CommonTree)adaptor.create(string_literal142);
                     adaptor.addChild(root_0, string_literal142_tree);
 
@@ -4029,7 +4059,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal143=(Token)match(input,95,FOLLOW_95_in_fn_attr1728); 
+                    string_literal143=(Token)match(input,95,FOLLOW_95_in_fn_attr1729); 
                     string_literal143_tree = (CommonTree)adaptor.create(string_literal143);
                     adaptor.addChild(root_0, string_literal143_tree);
 
@@ -4041,7 +4071,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal144=(Token)match(input,96,FOLLOW_96_in_fn_attr1732); 
+                    string_literal144=(Token)match(input,96,FOLLOW_96_in_fn_attr1733); 
                     string_literal144_tree = (CommonTree)adaptor.create(string_literal144);
                     adaptor.addChild(root_0, string_literal144_tree);
 
@@ -4053,7 +4083,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal145=(Token)match(input,97,FOLLOW_97_in_fn_attr1736); 
+                    string_literal145=(Token)match(input,97,FOLLOW_97_in_fn_attr1737); 
                     string_literal145_tree = (CommonTree)adaptor.create(string_literal145);
                     adaptor.addChild(root_0, string_literal145_tree);
 
@@ -4065,7 +4095,7 @@ public class LLVMParser extends Parser {
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    string_literal146=(Token)match(input,98,FOLLOW_98_in_fn_attr1740); 
+                    string_literal146=(Token)match(input,98,FOLLOW_98_in_fn_attr1741); 
                     string_literal146_tree = (CommonTree)adaptor.create(string_literal146);
                     adaptor.addChild(root_0, string_literal146_tree);
 
@@ -4127,22 +4157,22 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            char_literal147=(Token)match(input,35,FOLLOW_35_in_arglist1779); 
+            char_literal147=(Token)match(input,35,FOLLOW_35_in_arglist1780); 
             char_literal147_tree = (CommonTree)adaptor.create(char_literal147);
             adaptor.addChild(root_0, char_literal147_tree);
 
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:353:7: (f0= funcarg ( ',' f1= funcarg )* )?
-            int alt25=2;
-            int LA25_0 = input.LA(1);
+            int alt26=2;
+            int LA26_0 = input.LA(1);
 
-            if ( ((LA25_0>=INT_TYPE && LA25_0<=QUOTED_ID)||(LA25_0>=27 && LA25_0<=28)||LA25_0==30||LA25_0==32) ) {
-                alt25=1;
+            if ( ((LA26_0>=INT_TYPE && LA26_0<=QUOTED_ID)||(LA26_0>=27 && LA26_0<=28)||LA26_0==30||LA26_0==32) ) {
+                alt26=1;
             }
-            switch (alt25) {
+            switch (alt26) {
                 case 1 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:353:9: f0= funcarg ( ',' f1= funcarg )*
                     {
-                    pushFollow(FOLLOW_funcarg_in_arglist1792);
+                    pushFollow(FOLLOW_funcarg_in_arglist1793);
                     f0=funcarg();
 
                     state._fsp--;
@@ -4150,25 +4180,25 @@ public class LLVMParser extends Parser {
                     adaptor.addChild(root_0, f0.getTree());
                      attrs.add((f0!=null?f0.argAttr:null)); 
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:354:9: ( ',' f1= funcarg )*
-                    loop24:
+                    loop25:
                     do {
-                        int alt24=2;
-                        int LA24_0 = input.LA(1);
+                        int alt25=2;
+                        int LA25_0 = input.LA(1);
 
-                        if ( (LA24_0==37) ) {
-                            alt24=1;
+                        if ( (LA25_0==37) ) {
+                            alt25=1;
                         }
 
 
-                        switch (alt24) {
+                        switch (alt25) {
                     	case 1 :
                     	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:354:11: ',' f1= funcarg
                     	    {
-                    	    char_literal148=(Token)match(input,37,FOLLOW_37_in_arglist1814); 
+                    	    char_literal148=(Token)match(input,37,FOLLOW_37_in_arglist1815); 
                     	    char_literal148_tree = (CommonTree)adaptor.create(char_literal148);
                     	    adaptor.addChild(root_0, char_literal148_tree);
 
-                    	    pushFollow(FOLLOW_funcarg_in_arglist1818);
+                    	    pushFollow(FOLLOW_funcarg_in_arglist1819);
                     	    f1=funcarg();
 
                     	    state._fsp--;
@@ -4180,7 +4210,7 @@ public class LLVMParser extends Parser {
                     	    break;
 
                     	default :
-                    	    break loop24;
+                    	    break loop25;
                         }
                     } while (true);
 
@@ -4190,7 +4220,7 @@ public class LLVMParser extends Parser {
 
             }
 
-            char_literal149=(Token)match(input,36,FOLLOW_36_in_arglist1852); 
+            char_literal149=(Token)match(input,36,FOLLOW_36_in_arglist1853); 
             char_literal149_tree = (CommonTree)adaptor.create(char_literal149);
             adaptor.addChild(root_0, char_literal149_tree);
 
@@ -4246,19 +4276,19 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_type_in_funcarg1870);
+            pushFollow(FOLLOW_type_in_funcarg1871);
             type150=type();
 
             state._fsp--;
 
             adaptor.addChild(root_0, type150.getTree());
-            pushFollow(FOLLOW_attrs_in_funcarg1872);
+            pushFollow(FOLLOW_attrs_in_funcarg1873);
             attrs151=attrs();
 
             state._fsp--;
 
             adaptor.addChild(root_0, attrs151.getTree());
-            pushFollow(FOLLOW_identifier_in_funcarg1874);
+            pushFollow(FOLLOW_identifier_in_funcarg1875);
             identifier152=identifier();
 
             state._fsp--;
@@ -4314,22 +4344,22 @@ public class LLVMParser extends Parser {
             root_0 = (CommonTree)adaptor.nil();
 
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:372:5: ( block )+
-            int cnt26=0;
-            loop26:
+            int cnt27=0;
+            loop27:
             do {
-                int alt26=2;
-                int LA26_0 = input.LA(1);
+                int alt27=2;
+                int LA27_0 = input.LA(1);
 
-                if ( (LA26_0==LABEL) ) {
-                    alt26=1;
+                if ( (LA27_0==LABEL) ) {
+                    alt27=1;
                 }
 
 
-                switch (alt26) {
+                switch (alt27) {
             	case 1 :
             	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:372:7: block
             	    {
-            	    pushFollow(FOLLOW_block_in_defineStmts1914);
+            	    pushFollow(FOLLOW_block_in_defineStmts1915);
             	    block153=block();
 
             	    state._fsp--;
@@ -4341,12 +4371,12 @@ public class LLVMParser extends Parser {
             	    break;
 
             	default :
-            	    if ( cnt26 >= 1 ) break loop26;
+            	    if ( cnt27 >= 1 ) break loop27;
                         EarlyExitException eee =
-                            new EarlyExitException(26, input);
+                            new EarlyExitException(27, input);
                         throw eee;
                 }
-                cnt26++;
+                cnt27++;
             } while (true);
 
 
@@ -4404,7 +4434,7 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_blocklabel_in_block1958);
+            pushFollow(FOLLOW_blocklabel_in_block1959);
             blocklabel154=blocklabel();
 
             state._fsp--;
@@ -4412,28 +4442,28 @@ public class LLVMParser extends Parser {
             adaptor.addChild(root_0, blocklabel154.getTree());
              block = helper.currentTarget.addBlock((blocklabel154!=null?blocklabel154.theSym:null)); 
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:385:3: ( instr NEWLINE )+
-            int cnt27=0;
-            loop27:
+            int cnt28=0;
+            loop28:
             do {
-                int alt27=2;
-                int LA27_0 = input.LA(1);
+                int alt28=2;
+                int LA28_0 = input.LA(1);
 
-                if ( ((LA27_0>=NAMED_ID && LA27_0<=UNNAMED_ID)||(LA27_0>=101 && LA27_0<=102)||LA27_0==125) ) {
-                    alt27=1;
+                if ( ((LA28_0>=NAMED_ID && LA28_0<=UNNAMED_ID)||(LA28_0>=101 && LA28_0<=102)||LA28_0==138) ) {
+                    alt28=1;
                 }
 
 
-                switch (alt27) {
+                switch (alt28) {
             	case 1 :
             	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:385:5: instr NEWLINE
             	    {
-            	    pushFollow(FOLLOW_instr_in_block1972);
+            	    pushFollow(FOLLOW_instr_in_block1973);
             	    instr155=instr();
 
             	    state._fsp--;
 
             	    adaptor.addChild(root_0, instr155.getTree());
-            	    NEWLINE156=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_block1974); 
+            	    NEWLINE156=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_block1975); 
             	    NEWLINE156_tree = (CommonTree)adaptor.create(NEWLINE156);
             	    adaptor.addChild(root_0, NEWLINE156_tree);
 
@@ -4443,12 +4473,12 @@ public class LLVMParser extends Parser {
             	    break;
 
             	default :
-            	    if ( cnt27 >= 1 ) break loop27;
+            	    if ( cnt28 >= 1 ) break loop28;
                         EarlyExitException eee =
-                            new EarlyExitException(27, input);
+                            new EarlyExitException(28, input);
                         throw eee;
                 }
-                cnt27++;
+                cnt28++;
             } while (true);
 
 
@@ -4503,15 +4533,15 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            LABEL157=(Token)match(input,LABEL,FOLLOW_LABEL_in_blocklabel2000); 
+            LABEL157=(Token)match(input,LABEL,FOLLOW_LABEL_in_blocklabel2001); 
             LABEL157_tree = (CommonTree)adaptor.create(LABEL157);
             adaptor.addChild(root_0, LABEL157_tree);
 
-            char_literal158=(Token)match(input,99,FOLLOW_99_in_blocklabel2002); 
+            char_literal158=(Token)match(input,99,FOLLOW_99_in_blocklabel2003); 
             char_literal158_tree = (CommonTree)adaptor.create(char_literal158);
             adaptor.addChild(root_0, char_literal158_tree);
 
-            NEWLINE159=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_blocklabel2004); 
+            NEWLINE159=(Token)match(input,NEWLINE,FOLLOW_NEWLINE_in_blocklabel2005); 
             NEWLINE159_tree = (CommonTree)adaptor.create(NEWLINE159);
             adaptor.addChild(root_0, NEWLINE159_tree);
 
@@ -4569,9 +4599,9 @@ public class LLVMParser extends Parser {
 
         try {
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:395:31: ( ( allocaInstr ) | ( storeInstr ) | ( branchInstr ) | ( uncondBranchInstr ) | ( retInstr ) | ( assignInstr ) )
-            int alt28=6;
-            alt28 = dfa28.predict(input);
-            switch (alt28) {
+            int alt29=6;
+            alt29 = dfa29.predict(input);
+            switch (alt29) {
                 case 1 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:396:3: ( allocaInstr )
                     {
@@ -4580,7 +4610,7 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:396:3: ( allocaInstr )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:396:5: allocaInstr
                     {
-                    pushFollow(FOLLOW_allocaInstr_in_instr2033);
+                    pushFollow(FOLLOW_allocaInstr_in_instr2034);
                     allocaInstr160=allocaInstr();
 
                     state._fsp--;
@@ -4601,7 +4631,7 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:397:5: ( storeInstr )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:397:7: storeInstr
                     {
-                    pushFollow(FOLLOW_storeInstr_in_instr2056);
+                    pushFollow(FOLLOW_storeInstr_in_instr2057);
                     storeInstr161=storeInstr();
 
                     state._fsp--;
@@ -4622,7 +4652,7 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:398:5: ( branchInstr )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:398:7: branchInstr
                     {
-                    pushFollow(FOLLOW_branchInstr_in_instr2077);
+                    pushFollow(FOLLOW_branchInstr_in_instr2078);
                     branchInstr162=branchInstr();
 
                     state._fsp--;
@@ -4643,7 +4673,7 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:399:5: ( uncondBranchInstr )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:399:7: uncondBranchInstr
                     {
-                    pushFollow(FOLLOW_uncondBranchInstr_in_instr2097);
+                    pushFollow(FOLLOW_uncondBranchInstr_in_instr2098);
                     uncondBranchInstr163=uncondBranchInstr();
 
                     state._fsp--;
@@ -4664,7 +4694,7 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:400:5: ( retInstr )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:400:7: retInstr
                     {
-                    pushFollow(FOLLOW_retInstr_in_instr2111);
+                    pushFollow(FOLLOW_retInstr_in_instr2112);
                     retInstr164=retInstr();
 
                     state._fsp--;
@@ -4685,7 +4715,7 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:401:5: ( assignInstr )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:401:7: assignInstr
                     {
-                    pushFollow(FOLLOW_assignInstr_in_instr2134);
+                    pushFollow(FOLLOW_assignInstr_in_instr2135);
                     assignInstr165=assignInstr();
 
                     state._fsp--;
@@ -4742,7 +4772,7 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            UNNAMED_ID166=(Token)match(input,UNNAMED_ID,FOLLOW_UNNAMED_ID_in_ret2166); 
+            UNNAMED_ID166=(Token)match(input,UNNAMED_ID,FOLLOW_UNNAMED_ID_in_ret2167); 
             UNNAMED_ID166_tree = (CommonTree)adaptor.create(UNNAMED_ID166);
             adaptor.addChild(root_0, UNNAMED_ID166_tree);
 
@@ -4796,7 +4826,7 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            NAMED_ID167=(Token)match(input,NAMED_ID,FOLLOW_NAMED_ID_in_local2198); 
+            NAMED_ID167=(Token)match(input,NAMED_ID,FOLLOW_NAMED_ID_in_local2199); 
             NAMED_ID167_tree = (CommonTree)adaptor.create(NAMED_ID167);
             adaptor.addChild(root_0, NAMED_ID167_tree);
 
@@ -4854,38 +4884,38 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_local_in_allocaInstr2222);
+            pushFollow(FOLLOW_local_in_allocaInstr2223);
             local168=local();
 
             state._fsp--;
 
             adaptor.addChild(root_0, local168.getTree());
-            EQUALS169=(Token)match(input,EQUALS,FOLLOW_EQUALS_in_allocaInstr2224); 
+            EQUALS169=(Token)match(input,EQUALS,FOLLOW_EQUALS_in_allocaInstr2225); 
             EQUALS169_tree = (CommonTree)adaptor.create(EQUALS169);
             adaptor.addChild(root_0, EQUALS169_tree);
 
-            string_literal170=(Token)match(input,100,FOLLOW_100_in_allocaInstr2226); 
+            string_literal170=(Token)match(input,100,FOLLOW_100_in_allocaInstr2227); 
             string_literal170_tree = (CommonTree)adaptor.create(string_literal170);
             adaptor.addChild(root_0, string_literal170_tree);
 
-            pushFollow(FOLLOW_type_in_allocaInstr2228);
+            pushFollow(FOLLOW_type_in_allocaInstr2229);
             type171=type();
 
             state._fsp--;
 
             adaptor.addChild(root_0, type171.getTree());
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:418:30: ( typedop )?
-            int alt29=2;
-            int LA29_0 = input.LA(1);
+            int alt30=2;
+            int LA30_0 = input.LA(1);
 
-            if ( ((LA29_0>=INT_TYPE && LA29_0<=QUOTED_ID)||(LA29_0>=27 && LA29_0<=28)||LA29_0==30||LA29_0==32) ) {
-                alt29=1;
+            if ( ((LA30_0>=INT_TYPE && LA30_0<=QUOTED_ID)||(LA30_0>=27 && LA30_0<=28)||LA30_0==30||LA30_0==32) ) {
+                alt30=1;
             }
-            switch (alt29) {
+            switch (alt30) {
                 case 1 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:418:30: typedop
                     {
-                    pushFollow(FOLLOW_typedop_in_allocaInstr2230);
+                    pushFollow(FOLLOW_typedop_in_allocaInstr2231);
                     typedop172=typedop();
 
                     state._fsp--;
@@ -4961,27 +4991,27 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            string_literal173=(Token)match(input,101,FOLLOW_101_in_storeInstr2255); 
+            string_literal173=(Token)match(input,101,FOLLOW_101_in_storeInstr2256); 
             string_literal173_tree = (CommonTree)adaptor.create(string_literal173);
             adaptor.addChild(root_0, string_literal173_tree);
 
-            pushFollow(FOLLOW_typedop_in_storeInstr2259);
+            pushFollow(FOLLOW_typedop_in_storeInstr2260);
             o1=typedop();
 
             state._fsp--;
 
             adaptor.addChild(root_0, o1.getTree());
-            char_literal174=(Token)match(input,37,FOLLOW_37_in_storeInstr2261); 
+            char_literal174=(Token)match(input,37,FOLLOW_37_in_storeInstr2262); 
             char_literal174_tree = (CommonTree)adaptor.create(char_literal174);
             adaptor.addChild(root_0, char_literal174_tree);
 
-            pushFollow(FOLLOW_typedop_in_storeInstr2265);
+            pushFollow(FOLLOW_typedop_in_storeInstr2266);
             o2=typedop();
 
             state._fsp--;
 
             adaptor.addChild(root_0, o2.getTree());
-             retval.inst = new LLStoreInstr((o2!=null?o2.op:null).getType(), (o1!=null?o1.op:null), (o2!=null?o2.op:null)); 
+             retval.inst = new LLStoreInstr((o2!=null?o2.op:null).getType().getSubType(), (o1!=null?o1.op:null), (o2!=null?o2.op:null)); 
 
             }
 
@@ -5031,47 +5061,47 @@ public class LLVMParser extends Parser {
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            string_literal175=(Token)match(input,102,FOLLOW_102_in_retInstr2291); 
+            string_literal175=(Token)match(input,102,FOLLOW_102_in_retInstr2292); 
             string_literal175_tree = (CommonTree)adaptor.create(string_literal175);
             adaptor.addChild(root_0, string_literal175_tree);
 
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:440:9: ( ( 'void' ) | (o1= typedop ) )
-            int alt30=2;
-            int LA30_0 = input.LA(1);
+            int alt31=2;
+            int LA31_0 = input.LA(1);
 
-            if ( (LA30_0==27) ) {
-                int LA30_1 = input.LA(2);
+            if ( (LA31_0==27) ) {
+                int LA31_1 = input.LA(2);
 
-                if ( ((LA30_1>=NAMED_ID && LA30_1<=CHAR_LITERAL)||LA30_1==CSTRING_LITERAL||(LA30_1>=29 && LA30_1<=30)||LA30_1==32||LA30_1==35||LA30_1==55||(LA30_1>=57 && LA30_1<=68)) ) {
-                    alt30=2;
+                if ( (LA31_1==NEWLINE) ) {
+                    alt31=1;
                 }
-                else if ( (LA30_1==NEWLINE) ) {
-                    alt30=1;
+                else if ( ((LA31_1>=NAMED_ID && LA31_1<=CHAR_LITERAL)||LA31_1==CSTRING_LITERAL||(LA31_1>=29 && LA31_1<=30)||LA31_1==32||LA31_1==35||LA31_1==55||(LA31_1>=57 && LA31_1<=68)) ) {
+                    alt31=2;
                 }
                 else {
                     NoViableAltException nvae =
-                        new NoViableAltException("", 30, 1, input);
+                        new NoViableAltException("", 31, 1, input);
 
                     throw nvae;
                 }
             }
-            else if ( ((LA30_0>=INT_TYPE && LA30_0<=QUOTED_ID)||LA30_0==28||LA30_0==30||LA30_0==32) ) {
-                alt30=2;
+            else if ( ((LA31_0>=INT_TYPE && LA31_0<=QUOTED_ID)||LA31_0==28||LA31_0==30||LA31_0==32) ) {
+                alt31=2;
             }
             else {
                 NoViableAltException nvae =
-                    new NoViableAltException("", 30, 0, input);
+                    new NoViableAltException("", 31, 0, input);
 
                 throw nvae;
             }
-            switch (alt30) {
+            switch (alt31) {
                 case 1 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:440:11: ( 'void' )
                     {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:440:11: ( 'void' )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:440:13: 'void'
                     {
-                    string_literal176=(Token)match(input,27,FOLLOW_27_in_retInstr2297); 
+                    string_literal176=(Token)match(input,27,FOLLOW_27_in_retInstr2298); 
                     string_literal176_tree = (CommonTree)adaptor.create(string_literal176);
                     adaptor.addChild(root_0, string_literal176_tree);
 
@@ -5088,7 +5118,7 @@ public class LLVMParser extends Parser {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:441:13: (o1= typedop )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:441:15: o1= typedop
                     {
-                    pushFollow(FOLLOW_typedop_in_retInstr2328);
+                    pushFollow(FOLLOW_typedop_in_retInstr2329);
                     o1=typedop();
 
                     state._fsp--;
@@ -5132,21 +5162,34 @@ public class LLVMParser extends Parser {
     };
 
     // $ANTLR start "assignInstr"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:445:1: assignInstr returns [LLAssignInstr inst] : ret EQUALS ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? type bop1= op ',' bop2= op ) ) ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:445:1: assignInstr returns [LLAssignInstr inst] : ret EQUALS ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? bt= type bop1= op ',' bop2= op ) | (cmp= ( 'icmp' | 'fcmp' ) cmptype ct= type cop1= op ',' cop2= op ) | 'getelementptr' gep= typedop ( gepind )+ ) ;
     public final LLVMParser.assignInstr_return assignInstr() throws RecognitionException {
         LLVMParser.assignInstr_return retval = new LLVMParser.assignInstr_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
+        Token cmp=null;
         Token EQUALS178=null;
         Token string_literal179=null;
-        Token char_literal183=null;
+        Token char_literal182=null;
+        Token char_literal184=null;
+        Token string_literal185=null;
         LLVMParser.typedop_return loadop = null;
+
+        LLVMParser.type_return bt = null;
 
         LLVMParser.op_return bop1 = null;
 
         LLVMParser.op_return bop2 = null;
+
+        LLVMParser.type_return ct = null;
+
+        LLVMParser.op_return cop1 = null;
+
+        LLVMParser.op_return cop2 = null;
+
+        LLVMParser.typedop_return gep = null;
 
         LLVMParser.ret_return ret177 = null;
 
@@ -5154,67 +5197,104 @@ public class LLVMParser extends Parser {
 
         LLVMParser.binexprsuffix_return binexprsuffix181 = null;
 
-        LLVMParser.type_return type182 = null;
+        LLVMParser.cmptype_return cmptype183 = null;
+
+        LLVMParser.gepind_return gepind186 = null;
 
 
+        CommonTree cmp_tree=null;
         CommonTree EQUALS178_tree=null;
         CommonTree string_literal179_tree=null;
-        CommonTree char_literal183_tree=null;
+        CommonTree char_literal182_tree=null;
+        CommonTree char_literal184_tree=null;
+        CommonTree string_literal185_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:445:42: ( ret EQUALS ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? type bop1= op ',' bop2= op ) ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:446:5: ret EQUALS ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? type bop1= op ',' bop2= op ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:445:42: ( ret EQUALS ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? bt= type bop1= op ',' bop2= op ) | (cmp= ( 'icmp' | 'fcmp' ) cmptype ct= type cop1= op ',' cop2= op ) | 'getelementptr' gep= typedop ( gepind )+ ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:446:5: ret EQUALS ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? bt= type bop1= op ',' bop2= op ) | (cmp= ( 'icmp' | 'fcmp' ) cmptype ct= type cop1= op ',' cop2= op ) | 'getelementptr' gep= typedop ( gepind )+ )
             {
             root_0 = (CommonTree)adaptor.nil();
 
 
                 LLOperand ret;
                 
-            pushFollow(FOLLOW_ret_in_assignInstr2370);
+            pushFollow(FOLLOW_ret_in_assignInstr2371);
             ret177=ret();
 
             state._fsp--;
 
             adaptor.addChild(root_0, ret177.getTree());
              ret = (ret177!=null?ret177.op:null); 
-            EQUALS178=(Token)match(input,EQUALS,FOLLOW_EQUALS_in_assignInstr2384); 
+            EQUALS178=(Token)match(input,EQUALS,FOLLOW_EQUALS_in_assignInstr2385); 
             EQUALS178_tree = (CommonTree)adaptor.create(EQUALS178);
             adaptor.addChild(root_0, EQUALS178_tree);
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:452:5: ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? type bop1= op ',' bop2= op ) )
-            int alt32=2;
-            int LA32_0 = input.LA(1);
-
-            if ( (LA32_0==103) ) {
-                alt32=1;
-            }
-            else if ( ((LA32_0>=104 && LA32_0<=121)) ) {
-                alt32=2;
-            }
-            else {
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:452:5: ( ( 'load' loadop= typedop ) | ( binexpr ( binexprsuffix )? bt= type bop1= op ',' bop2= op ) | (cmp= ( 'icmp' | 'fcmp' ) cmptype ct= type cop1= op ',' cop2= op ) | 'getelementptr' gep= typedop ( gepind )+ )
+            int alt34=4;
+            switch ( input.LA(1) ) {
+            case 103:
+                {
+                alt34=1;
+                }
+                break;
+            case 107:
+            case 108:
+            case 109:
+            case 110:
+            case 111:
+            case 112:
+            case 113:
+            case 114:
+            case 115:
+            case 116:
+            case 117:
+            case 118:
+            case 119:
+            case 120:
+            case 121:
+            case 122:
+            case 123:
+            case 124:
+                {
+                alt34=2;
+                }
+                break;
+            case 104:
+            case 105:
+                {
+                alt34=3;
+                }
+                break;
+            case 106:
+                {
+                alt34=4;
+                }
+                break;
+            default:
                 NoViableAltException nvae =
-                    new NoViableAltException("", 32, 0, input);
+                    new NoViableAltException("", 34, 0, input);
 
                 throw nvae;
             }
-            switch (alt32) {
+
+            switch (alt34) {
                 case 1 :
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:453:5: ( 'load' loadop= typedop )
                     {
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:453:5: ( 'load' loadop= typedop )
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:453:7: 'load' loadop= typedop
                     {
-                    string_literal179=(Token)match(input,103,FOLLOW_103_in_assignInstr2398); 
+                    string_literal179=(Token)match(input,103,FOLLOW_103_in_assignInstr2399); 
                     string_literal179_tree = (CommonTree)adaptor.create(string_literal179);
                     adaptor.addChild(root_0, string_literal179_tree);
 
-                    pushFollow(FOLLOW_typedop_in_assignInstr2402);
+                    pushFollow(FOLLOW_typedop_in_assignInstr2403);
                     loadop=typedop();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, loadop.getTree());
-                     retval.inst = new LLLoadInstr(ret, (loadop!=null?loadop.op:null).getType(), (loadop!=null?loadop.op:null)); 
+                     retval.inst = new LLLoadInstr(ret, (loadop!=null?loadop.op:null).getType().getSubType(), (loadop!=null?loadop.op:null)); 
 
                     }
 
@@ -5222,29 +5302,29 @@ public class LLVMParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:7: ( binexpr ( binexprsuffix )? type bop1= op ',' bop2= op )
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:7: ( binexpr ( binexprsuffix )? bt= type bop1= op ',' bop2= op )
                     {
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:7: ( binexpr ( binexprsuffix )? type bop1= op ',' bop2= op )
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:9: binexpr ( binexprsuffix )? type bop1= op ',' bop2= op
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:7: ( binexpr ( binexprsuffix )? bt= type bop1= op ',' bop2= op )
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:9: binexpr ( binexprsuffix )? bt= type bop1= op ',' bop2= op
                     {
-                    pushFollow(FOLLOW_binexpr_in_assignInstr2416);
+                    pushFollow(FOLLOW_binexpr_in_assignInstr2417);
                     binexpr180=binexpr();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, binexpr180.getTree());
                     // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:17: ( binexprsuffix )?
-                    int alt31=2;
-                    int LA31_0 = input.LA(1);
+                    int alt32=2;
+                    int LA32_0 = input.LA(1);
 
-                    if ( ((LA31_0>=122 && LA31_0<=124)) ) {
-                        alt31=1;
+                    if ( ((LA32_0>=125 && LA32_0<=127)) ) {
+                        alt32=1;
                     }
-                    switch (alt31) {
+                    switch (alt32) {
                         case 1 :
                             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:454:17: binexprsuffix
                             {
-                            pushFollow(FOLLOW_binexprsuffix_in_assignInstr2418);
+                            pushFollow(FOLLOW_binexprsuffix_in_assignInstr2419);
                             binexprsuffix181=binexprsuffix();
 
                             state._fsp--;
@@ -5256,32 +5336,32 @@ public class LLVMParser extends Parser {
 
                     }
 
-                    pushFollow(FOLLOW_type_in_assignInstr2421);
-                    type182=type();
+                    pushFollow(FOLLOW_type_in_assignInstr2424);
+                    bt=type();
 
                     state._fsp--;
 
-                    adaptor.addChild(root_0, type182.getTree());
-                    pushFollow(FOLLOW_op_in_assignInstr2425);
+                    adaptor.addChild(root_0, bt.getTree());
+                    pushFollow(FOLLOW_op_in_assignInstr2428);
                     bop1=op();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, bop1.getTree());
-                    char_literal183=(Token)match(input,37,FOLLOW_37_in_assignInstr2427); 
-                    char_literal183_tree = (CommonTree)adaptor.create(char_literal183);
-                    adaptor.addChild(root_0, char_literal183_tree);
+                    char_literal182=(Token)match(input,37,FOLLOW_37_in_assignInstr2430); 
+                    char_literal182_tree = (CommonTree)adaptor.create(char_literal182);
+                    adaptor.addChild(root_0, char_literal182_tree);
 
-                    pushFollow(FOLLOW_op_in_assignInstr2431);
+                    pushFollow(FOLLOW_op_in_assignInstr2434);
                     bop2=op();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, bop2.getTree());
 
-                              (bop1!=null?bop1.op:null).setType((type182!=null?type182.theType:null)); 
-                              (bop2!=null?bop2.op:null).setType((type182!=null?type182.theType:null)); 
-                              ret.setType((type182!=null?type182.theType:null));
+                              (bop1!=null?bop1.op:null).setType((bt!=null?bt.theType:null)); 
+                              (bop2!=null?bop2.op:null).setType((bt!=null?bt.theType:null)); 
+                              ret.setType((bt!=null?bt.theType:null));
                               String op = (binexpr180!=null?input.toString(binexpr180.start,binexpr180.stop):null);
                               if ((binexprsuffix181!=null?input.toString(binexprsuffix181.start,binexprsuffix181.stop):null) != null)
                                 op += ' ' + (binexprsuffix181!=null?input.toString(binexprsuffix181.start,binexprsuffix181.stop):null);
@@ -5293,12 +5373,131 @@ public class LLVMParser extends Parser {
 
                     }
                     break;
+                case 3 :
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:465:8: (cmp= ( 'icmp' | 'fcmp' ) cmptype ct= type cop1= op ',' cop2= op )
+                    {
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:465:8: (cmp= ( 'icmp' | 'fcmp' ) cmptype ct= type cop1= op ',' cop2= op )
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:465:10: cmp= ( 'icmp' | 'fcmp' ) cmptype ct= type cop1= op ',' cop2= op
+                    {
+                    cmp=(Token)input.LT(1);
+                    if ( (input.LA(1)>=104 && input.LA(1)<=105) ) {
+                        input.consume();
+                        adaptor.addChild(root_0, (CommonTree)adaptor.create(cmp));
+                        state.errorRecovery=false;
+                    }
+                    else {
+                        MismatchedSetException mse = new MismatchedSetException(null,input);
+                        throw mse;
+                    }
+
+                    pushFollow(FOLLOW_cmptype_in_assignInstr2476);
+                    cmptype183=cmptype();
+
+                    state._fsp--;
+
+                    adaptor.addChild(root_0, cmptype183.getTree());
+                    pushFollow(FOLLOW_type_in_assignInstr2480);
+                    ct=type();
+
+                    state._fsp--;
+
+                    adaptor.addChild(root_0, ct.getTree());
+                    pushFollow(FOLLOW_op_in_assignInstr2484);
+                    cop1=op();
+
+                    state._fsp--;
+
+                    adaptor.addChild(root_0, cop1.getTree());
+                    char_literal184=(Token)match(input,37,FOLLOW_37_in_assignInstr2486); 
+                    char_literal184_tree = (CommonTree)adaptor.create(char_literal184);
+                    adaptor.addChild(root_0, char_literal184_tree);
+
+                    pushFollow(FOLLOW_op_in_assignInstr2490);
+                    cop2=op();
+
+                    state._fsp--;
+
+                    adaptor.addChild(root_0, cop2.getTree());
+
+                              (cop1!=null?cop1.op:null).setType((ct!=null?ct.theType:null)); 
+                              (cop2!=null?cop2.op:null).setType((ct!=null?ct.theType:null)); 
+                              ret.setType(helper.typeEngine.LLBOOL);
+                              retval.inst = new LLCompareInstr((cmp!=null?cmp.getText():null), (cmptype183!=null?input.toString(cmptype183.start,cmptype183.stop):null), ret, (cop1!=null?cop1.op:null), (cop2!=null?cop2.op:null)); 
+                            
+
+                    }
+
+
+                    }
+                    break;
+                case 4 :
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:473:8: 'getelementptr' gep= typedop ( gepind )+
+                    {
+                    string_literal185=(Token)match(input,106,FOLLOW_106_in_assignInstr2520); 
+                    string_literal185_tree = (CommonTree)adaptor.create(string_literal185);
+                    adaptor.addChild(root_0, string_literal185_tree);
+
+
+                            List<LLOperand> ops = new ArrayList<LLOperand>();
+                            
+                    pushFollow(FOLLOW_typedop_in_assignInstr2543);
+                    gep=typedop();
+
+                    state._fsp--;
+
+                    adaptor.addChild(root_0, gep.getTree());
+                     ops.add((gep!=null?gep.op:null)); 
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:477:43: ( gepind )+
+                    int cnt33=0;
+                    loop33:
+                    do {
+                        int alt33=2;
+                        int LA33_0 = input.LA(1);
+
+                        if ( (LA33_0==37) ) {
+                            alt33=1;
+                        }
+
+
+                        switch (alt33) {
+                    	case 1 :
+                    	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:477:45: gepind
+                    	    {
+                    	    pushFollow(FOLLOW_gepind_in_assignInstr2549);
+                    	    gepind186=gepind();
+
+                    	    state._fsp--;
+
+                    	    adaptor.addChild(root_0, gepind186.getTree());
+                    	     ops.add((gepind186!=null?gepind186.op:null)); 
+
+                    	    }
+                    	    break;
+
+                    	default :
+                    	    if ( cnt33 >= 1 ) break loop33;
+                                EarlyExitException eee =
+                                    new EarlyExitException(33, input);
+                                throw eee;
+                        }
+                        cnt33++;
+                    } while (true);
+
+
+                              ret.setType(helper.getElementPtrType(ops));
+                              retval.inst = new LLGetElementPtrInstr(ret, ops.get(0).getType(), ops.toArray(new LLOperand[ops.size()])); 
+                           
+
+                    }
+                    break;
 
             }
 
 
                 // fixup types, since we don't know 'ret''s until now
-                ((LLTempOp)ret).setType(retval.inst.getType()); 
+                if (ret.getType() == null) {
+                  ((LLTempOp)ret).setType(retval.inst.getType());
+                } 
                 ISymbol local = helper.findSymbol(ret.toString());
                 local.setType(ret.getType());
                 
@@ -5323,33 +5522,99 @@ public class LLVMParser extends Parser {
     }
     // $ANTLR end "assignInstr"
 
+    public static class gepind_return extends ParserRuleReturnScope {
+        public LLConstOp op;
+        CommonTree tree;
+        public Object getTree() { return tree; }
+    };
+
+    // $ANTLR start "gepind"
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:494:1: gepind returns [ LLConstOp op ] : ',' type number ;
+    public final LLVMParser.gepind_return gepind() throws RecognitionException {
+        LLVMParser.gepind_return retval = new LLVMParser.gepind_return();
+        retval.start = input.LT(1);
+
+        CommonTree root_0 = null;
+
+        Token char_literal187=null;
+        LLVMParser.type_return type188 = null;
+
+        LLVMParser.number_return number189 = null;
+
+
+        CommonTree char_literal187_tree=null;
+
+        try {
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:494:33: ( ',' type number )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:495:5: ',' type number
+            {
+            root_0 = (CommonTree)adaptor.nil();
+
+            char_literal187=(Token)match(input,37,FOLLOW_37_in_gepind2605); 
+            char_literal187_tree = (CommonTree)adaptor.create(char_literal187);
+            adaptor.addChild(root_0, char_literal187_tree);
+
+            pushFollow(FOLLOW_type_in_gepind2607);
+            type188=type();
+
+            state._fsp--;
+
+            adaptor.addChild(root_0, type188.getTree());
+            pushFollow(FOLLOW_number_in_gepind2609);
+            number189=number();
+
+            state._fsp--;
+
+            adaptor.addChild(root_0, number189.getTree());
+             retval.op = new LLConstOp((number189!=null?number189.value:0)); 
+
+            }
+
+            retval.stop = input.LT(-1);
+
+            retval.tree = (CommonTree)adaptor.rulePostProcessing(root_0);
+            adaptor.setTokenBoundaries(retval.tree, retval.start, retval.stop);
+
+        }
+        catch (RecognitionException re) {
+            reportError(re);
+            recover(input,re);
+    	retval.tree = (CommonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+
+        }
+        finally {
+        }
+        return retval;
+    }
+    // $ANTLR end "gepind"
+
     public static class binexpr_return extends ParserRuleReturnScope {
         CommonTree tree;
         public Object getTree() { return tree; }
     };
 
     // $ANTLR start "binexpr"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:475:1: binexpr : ( 'add' | 'fadd' | 'sub' | 'fsub' | 'mul' | 'fmul' | 'udiv' | 'sdiv' | 'fdiv' | 'urem' | 'srem' | 'frem' | 'shl' | 'lshr' | 'ashr' | 'and' | 'or' | 'xor' );
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:498:1: binexpr : ( 'add' | 'fadd' | 'sub' | 'fsub' | 'mul' | 'fmul' | 'udiv' | 'sdiv' | 'fdiv' | 'urem' | 'srem' | 'frem' | 'shl' | 'lshr' | 'ashr' | 'and' | 'or' | 'xor' );
     public final LLVMParser.binexpr_return binexpr() throws RecognitionException {
         LLVMParser.binexpr_return retval = new LLVMParser.binexpr_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token set184=null;
+        Token set190=null;
 
-        CommonTree set184_tree=null;
+        CommonTree set190_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:475:9: ( 'add' | 'fadd' | 'sub' | 'fsub' | 'mul' | 'fmul' | 'udiv' | 'sdiv' | 'fdiv' | 'urem' | 'srem' | 'frem' | 'shl' | 'lshr' | 'ashr' | 'and' | 'or' | 'xor' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:498:9: ( 'add' | 'fadd' | 'sub' | 'fsub' | 'mul' | 'fmul' | 'udiv' | 'sdiv' | 'fdiv' | 'urem' | 'srem' | 'frem' | 'shl' | 'lshr' | 'ashr' | 'and' | 'or' | 'xor' )
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            set184=(Token)input.LT(1);
-            if ( (input.LA(1)>=104 && input.LA(1)<=121) ) {
+            set190=(Token)input.LT(1);
+            if ( (input.LA(1)>=107 && input.LA(1)<=124) ) {
                 input.consume();
-                adaptor.addChild(root_0, (CommonTree)adaptor.create(set184));
+                adaptor.addChild(root_0, (CommonTree)adaptor.create(set190));
                 state.errorRecovery=false;
             }
             else {
@@ -5384,43 +5649,43 @@ public class LLVMParser extends Parser {
     };
 
     // $ANTLR start "binexprsuffix"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:481:1: binexprsuffix : ( 'nuw' | 'nsw' | 'exact' )+ ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:504:1: binexprsuffix : ( 'nuw' | 'nsw' | 'exact' )+ ;
     public final LLVMParser.binexprsuffix_return binexprsuffix() throws RecognitionException {
         LLVMParser.binexprsuffix_return retval = new LLVMParser.binexprsuffix_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token set185=null;
+        Token set191=null;
 
-        CommonTree set185_tree=null;
+        CommonTree set191_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:481:15: ( ( 'nuw' | 'nsw' | 'exact' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:481:17: ( 'nuw' | 'nsw' | 'exact' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:504:15: ( ( 'nuw' | 'nsw' | 'exact' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:504:17: ( 'nuw' | 'nsw' | 'exact' )+
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:481:17: ( 'nuw' | 'nsw' | 'exact' )+
-            int cnt33=0;
-            loop33:
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:504:17: ( 'nuw' | 'nsw' | 'exact' )+
+            int cnt35=0;
+            loop35:
             do {
-                int alt33=2;
-                int LA33_0 = input.LA(1);
+                int alt35=2;
+                int LA35_0 = input.LA(1);
 
-                if ( ((LA33_0>=122 && LA33_0<=124)) ) {
-                    alt33=1;
+                if ( ((LA35_0>=125 && LA35_0<=127)) ) {
+                    alt35=1;
                 }
 
 
-                switch (alt33) {
+                switch (alt35) {
             	case 1 :
             	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:
             	    {
-            	    set185=(Token)input.LT(1);
-            	    if ( (input.LA(1)>=122 && input.LA(1)<=124) ) {
+            	    set191=(Token)input.LT(1);
+            	    if ( (input.LA(1)>=125 && input.LA(1)<=127) ) {
             	        input.consume();
-            	        adaptor.addChild(root_0, (CommonTree)adaptor.create(set185));
+            	        adaptor.addChild(root_0, (CommonTree)adaptor.create(set191));
             	        state.errorRecovery=false;
             	    }
             	    else {
@@ -5433,12 +5698,12 @@ public class LLVMParser extends Parser {
             	    break;
 
             	default :
-            	    if ( cnt33 >= 1 ) break loop33;
+            	    if ( cnt35 >= 1 ) break loop35;
                         EarlyExitException eee =
-                            new EarlyExitException(33, input);
+                            new EarlyExitException(35, input);
                         throw eee;
                 }
-                cnt33++;
+                cnt35++;
             } while (true);
 
 
@@ -5462,6 +5727,61 @@ public class LLVMParser extends Parser {
     }
     // $ANTLR end "binexprsuffix"
 
+    public static class cmptype_return extends ParserRuleReturnScope {
+        CommonTree tree;
+        public Object getTree() { return tree; }
+    };
+
+    // $ANTLR start "cmptype"
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:506:1: cmptype : ( 'eq' | 'ne' | 'ugt' | 'uge' | 'ult' | 'ule' | 'sgt' | 'sge' | 'slt' | 'sle' );
+    public final LLVMParser.cmptype_return cmptype() throws RecognitionException {
+        LLVMParser.cmptype_return retval = new LLVMParser.cmptype_return();
+        retval.start = input.LT(1);
+
+        CommonTree root_0 = null;
+
+        Token set192=null;
+
+        CommonTree set192_tree=null;
+
+        try {
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:506:9: ( 'eq' | 'ne' | 'ugt' | 'uge' | 'ult' | 'ule' | 'sgt' | 'sge' | 'slt' | 'sle' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:
+            {
+            root_0 = (CommonTree)adaptor.nil();
+
+            set192=(Token)input.LT(1);
+            if ( (input.LA(1)>=128 && input.LA(1)<=137) ) {
+                input.consume();
+                adaptor.addChild(root_0, (CommonTree)adaptor.create(set192));
+                state.errorRecovery=false;
+            }
+            else {
+                MismatchedSetException mse = new MismatchedSetException(null,input);
+                throw mse;
+            }
+
+
+            }
+
+            retval.stop = input.LT(-1);
+
+            retval.tree = (CommonTree)adaptor.rulePostProcessing(root_0);
+            adaptor.setTokenBoundaries(retval.tree, retval.start, retval.stop);
+
+        }
+        catch (RecognitionException re) {
+            reportError(re);
+            recover(input,re);
+    	retval.tree = (CommonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+
+        }
+        finally {
+        }
+        return retval;
+    }
+    // $ANTLR end "cmptype"
+
     public static class branchInstr_return extends ParserRuleReturnScope {
         public LLInstr inst;
         CommonTree tree;
@@ -5469,76 +5789,76 @@ public class LLVMParser extends Parser {
     };
 
     // $ANTLR start "branchInstr"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:483:1: branchInstr returns [LLInstr inst] : 'br' typedop ',' 'label' t= identifier ',' 'label' f= identifier ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:508:1: branchInstr returns [LLInstr inst] : 'br' typedop ',' 'label' t= identifier ',' 'label' f= identifier ;
     public final LLVMParser.branchInstr_return branchInstr() throws RecognitionException {
         LLVMParser.branchInstr_return retval = new LLVMParser.branchInstr_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token string_literal186=null;
-        Token char_literal188=null;
-        Token string_literal189=null;
-        Token char_literal190=null;
-        Token string_literal191=null;
+        Token string_literal193=null;
+        Token char_literal195=null;
+        Token string_literal196=null;
+        Token char_literal197=null;
+        Token string_literal198=null;
         LLVMParser.identifier_return t = null;
 
         LLVMParser.identifier_return f = null;
 
-        LLVMParser.typedop_return typedop187 = null;
+        LLVMParser.typedop_return typedop194 = null;
 
 
-        CommonTree string_literal186_tree=null;
-        CommonTree char_literal188_tree=null;
-        CommonTree string_literal189_tree=null;
-        CommonTree char_literal190_tree=null;
-        CommonTree string_literal191_tree=null;
+        CommonTree string_literal193_tree=null;
+        CommonTree char_literal195_tree=null;
+        CommonTree string_literal196_tree=null;
+        CommonTree char_literal197_tree=null;
+        CommonTree string_literal198_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:483:36: ( 'br' typedop ',' 'label' t= identifier ',' 'label' f= identifier )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:484:3: 'br' typedop ',' 'label' t= identifier ',' 'label' f= identifier
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:508:36: ( 'br' typedop ',' 'label' t= identifier ',' 'label' f= identifier )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:509:3: 'br' typedop ',' 'label' t= identifier ',' 'label' f= identifier
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            string_literal186=(Token)match(input,125,FOLLOW_125_in_branchInstr2599); 
-            string_literal186_tree = (CommonTree)adaptor.create(string_literal186);
-            adaptor.addChild(root_0, string_literal186_tree);
+            string_literal193=(Token)match(input,138,FOLLOW_138_in_branchInstr2789); 
+            string_literal193_tree = (CommonTree)adaptor.create(string_literal193);
+            adaptor.addChild(root_0, string_literal193_tree);
 
-            pushFollow(FOLLOW_typedop_in_branchInstr2601);
-            typedop187=typedop();
+            pushFollow(FOLLOW_typedop_in_branchInstr2791);
+            typedop194=typedop();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, typedop187.getTree());
-            char_literal188=(Token)match(input,37,FOLLOW_37_in_branchInstr2603); 
-            char_literal188_tree = (CommonTree)adaptor.create(char_literal188);
-            adaptor.addChild(root_0, char_literal188_tree);
+            adaptor.addChild(root_0, typedop194.getTree());
+            char_literal195=(Token)match(input,37,FOLLOW_37_in_branchInstr2793); 
+            char_literal195_tree = (CommonTree)adaptor.create(char_literal195);
+            adaptor.addChild(root_0, char_literal195_tree);
 
-            string_literal189=(Token)match(input,28,FOLLOW_28_in_branchInstr2605); 
-            string_literal189_tree = (CommonTree)adaptor.create(string_literal189);
-            adaptor.addChild(root_0, string_literal189_tree);
+            string_literal196=(Token)match(input,28,FOLLOW_28_in_branchInstr2795); 
+            string_literal196_tree = (CommonTree)adaptor.create(string_literal196);
+            adaptor.addChild(root_0, string_literal196_tree);
 
-            pushFollow(FOLLOW_identifier_in_branchInstr2609);
+            pushFollow(FOLLOW_identifier_in_branchInstr2799);
             t=identifier();
 
             state._fsp--;
 
             adaptor.addChild(root_0, t.getTree());
-            char_literal190=(Token)match(input,37,FOLLOW_37_in_branchInstr2611); 
-            char_literal190_tree = (CommonTree)adaptor.create(char_literal190);
-            adaptor.addChild(root_0, char_literal190_tree);
+            char_literal197=(Token)match(input,37,FOLLOW_37_in_branchInstr2801); 
+            char_literal197_tree = (CommonTree)adaptor.create(char_literal197);
+            adaptor.addChild(root_0, char_literal197_tree);
 
-            string_literal191=(Token)match(input,28,FOLLOW_28_in_branchInstr2613); 
-            string_literal191_tree = (CommonTree)adaptor.create(string_literal191);
-            adaptor.addChild(root_0, string_literal191_tree);
+            string_literal198=(Token)match(input,28,FOLLOW_28_in_branchInstr2803); 
+            string_literal198_tree = (CommonTree)adaptor.create(string_literal198);
+            adaptor.addChild(root_0, string_literal198_tree);
 
-            pushFollow(FOLLOW_identifier_in_branchInstr2617);
+            pushFollow(FOLLOW_identifier_in_branchInstr2807);
             f=identifier();
 
             state._fsp--;
 
             adaptor.addChild(root_0, f.getTree());
-             retval.inst = new LLBranchInstr((typedop187!=null?typedop187.op:null).getType(), (typedop187!=null?typedop187.op:null), helper.getSymbolOp((t!=null?t.theId:null), null), helper.getSymbolOp((f!=null?f.theId:null), null)); 
+             retval.inst = new LLBranchInstr((typedop194!=null?typedop194.op:null).getType(), (typedop194!=null?typedop194.op:null), helper.getSymbolOp((t!=null?t.theId:null), null), helper.getSymbolOp((f!=null?f.theId:null), null)); 
 
             }
 
@@ -5567,42 +5887,42 @@ public class LLVMParser extends Parser {
     };
 
     // $ANTLR start "uncondBranchInstr"
-    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:488:1: uncondBranchInstr returns [LLInstr inst] : 'br' 'label' identifier ;
+    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:513:1: uncondBranchInstr returns [LLInstr inst] : 'br' 'label' identifier ;
     public final LLVMParser.uncondBranchInstr_return uncondBranchInstr() throws RecognitionException {
         LLVMParser.uncondBranchInstr_return retval = new LLVMParser.uncondBranchInstr_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token string_literal192=null;
-        Token string_literal193=null;
-        LLVMParser.identifier_return identifier194 = null;
+        Token string_literal199=null;
+        Token string_literal200=null;
+        LLVMParser.identifier_return identifier201 = null;
 
 
-        CommonTree string_literal192_tree=null;
-        CommonTree string_literal193_tree=null;
+        CommonTree string_literal199_tree=null;
+        CommonTree string_literal200_tree=null;
 
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:488:42: ( 'br' 'label' identifier )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:489:3: 'br' 'label' identifier
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:513:42: ( 'br' 'label' identifier )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:514:3: 'br' 'label' identifier
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            string_literal192=(Token)match(input,125,FOLLOW_125_in_uncondBranchInstr2642); 
-            string_literal192_tree = (CommonTree)adaptor.create(string_literal192);
-            adaptor.addChild(root_0, string_literal192_tree);
+            string_literal199=(Token)match(input,138,FOLLOW_138_in_uncondBranchInstr2832); 
+            string_literal199_tree = (CommonTree)adaptor.create(string_literal199);
+            adaptor.addChild(root_0, string_literal199_tree);
 
-            string_literal193=(Token)match(input,28,FOLLOW_28_in_uncondBranchInstr2644); 
-            string_literal193_tree = (CommonTree)adaptor.create(string_literal193);
-            adaptor.addChild(root_0, string_literal193_tree);
+            string_literal200=(Token)match(input,28,FOLLOW_28_in_uncondBranchInstr2834); 
+            string_literal200_tree = (CommonTree)adaptor.create(string_literal200);
+            adaptor.addChild(root_0, string_literal200_tree);
 
-            pushFollow(FOLLOW_identifier_in_uncondBranchInstr2646);
-            identifier194=identifier();
+            pushFollow(FOLLOW_identifier_in_uncondBranchInstr2836);
+            identifier201=identifier();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, identifier194.getTree());
-             retval.inst = new LLUncondBranchInstr(helper.getSymbolOp((identifier194!=null?identifier194.theId:null), null)); 
+            adaptor.addChild(root_0, identifier201.getTree());
+             retval.inst = new LLUncondBranchInstr(helper.getSymbolOp((identifier201!=null?identifier201.theId:null), null)); 
 
             }
 
@@ -5628,7 +5948,7 @@ public class LLVMParser extends Parser {
 
 
     protected DFA2 dfa2 = new DFA2(this);
-    protected DFA28 dfa28 = new DFA28(this);
+    protected DFA29 dfa29 = new DFA29(this);
     static final String DFA2_eotS =
         "\15\uffff";
     static final String DFA2_eofS =
@@ -5638,7 +5958,7 @@ public class LLVMParser extends Parser {
     static final String DFA2_maxS =
         "\1\27\1\31\3\5\4\uffff\1\66\3\uffff";
     static final String DFA2_acceptS =
-        "\5\uffff\1\6\1\7\1\1\1\2\1\uffff\1\3\1\5\1\4";
+        "\5\uffff\1\6\1\7\1\1\1\2\1\uffff\1\3\1\4\1\5";
     static final String DFA2_specialS =
         "\15\uffff}>";
     static final String[] DFA2_transitionS = {
@@ -5651,7 +5971,7 @@ public class LLVMParser extends Parser {
             "",
             "",
             "",
-            "\1\12\13\uffff\1\14\2\13\16\14",
+            "\1\12\13\uffff\1\13\2\14\16\13",
             "",
             "",
             ""
@@ -5690,20 +6010,20 @@ public class LLVMParser extends Parser {
             return "56:1: directive : ( targetDataLayoutDirective ( NEWLINE | EOF ) | targetTripleDirective ( NEWLINE | EOF ) | typeDefinition ( NEWLINE | EOF ) | globalDataDirective ( NEWLINE | EOF ) | constantDirective ( NEWLINE | EOF ) | defineDirective ( NEWLINE | EOF ) | NEWLINE );";
         }
     }
-    static final String DFA28_eotS =
+    static final String DFA29_eotS =
         "\14\uffff";
-    static final String DFA28_eofS =
+    static final String DFA29_eofS =
         "\14\uffff";
-    static final String DFA28_minS =
+    static final String DFA29_minS =
         "\1\7\2\uffff\1\6\2\uffff\1\7\1\uffff\3\4\1\uffff";
-    static final String DFA28_maxS =
-        "\1\175\2\uffff\1\40\2\uffff\1\104\1\uffff\3\45\1\uffff";
-    static final String DFA28_acceptS =
+    static final String DFA29_maxS =
+        "\1\u008a\2\uffff\1\40\2\uffff\1\104\1\uffff\3\45\1\uffff";
+    static final String DFA29_acceptS =
         "\1\uffff\1\1\1\2\1\uffff\1\5\1\6\1\uffff\1\3\3\uffff\1\4";
-    static final String DFA28_specialS =
+    static final String DFA29_specialS =
         "\14\uffff}>";
-    static final String[] DFA28_transitionS = {
-            "\1\1\1\5\134\uffff\1\2\1\4\26\uffff\1\3",
+    static final String[] DFA29_transitionS = {
+            "\1\1\1\5\134\uffff\1\2\1\4\43\uffff\1\3",
             "",
             "",
             "\4\7\21\uffff\1\7\1\6\1\uffff\1\7\1\uffff\1\7",
@@ -5718,34 +6038,34 @@ public class LLVMParser extends Parser {
             ""
     };
 
-    static final short[] DFA28_eot = DFA.unpackEncodedString(DFA28_eotS);
-    static final short[] DFA28_eof = DFA.unpackEncodedString(DFA28_eofS);
-    static final char[] DFA28_min = DFA.unpackEncodedStringToUnsignedChars(DFA28_minS);
-    static final char[] DFA28_max = DFA.unpackEncodedStringToUnsignedChars(DFA28_maxS);
-    static final short[] DFA28_accept = DFA.unpackEncodedString(DFA28_acceptS);
-    static final short[] DFA28_special = DFA.unpackEncodedString(DFA28_specialS);
-    static final short[][] DFA28_transition;
+    static final short[] DFA29_eot = DFA.unpackEncodedString(DFA29_eotS);
+    static final short[] DFA29_eof = DFA.unpackEncodedString(DFA29_eofS);
+    static final char[] DFA29_min = DFA.unpackEncodedStringToUnsignedChars(DFA29_minS);
+    static final char[] DFA29_max = DFA.unpackEncodedStringToUnsignedChars(DFA29_maxS);
+    static final short[] DFA29_accept = DFA.unpackEncodedString(DFA29_acceptS);
+    static final short[] DFA29_special = DFA.unpackEncodedString(DFA29_specialS);
+    static final short[][] DFA29_transition;
 
     static {
-        int numStates = DFA28_transitionS.length;
-        DFA28_transition = new short[numStates][];
+        int numStates = DFA29_transitionS.length;
+        DFA29_transition = new short[numStates][];
         for (int i=0; i<numStates; i++) {
-            DFA28_transition[i] = DFA.unpackEncodedString(DFA28_transitionS[i]);
+            DFA29_transition[i] = DFA.unpackEncodedString(DFA29_transitionS[i]);
         }
     }
 
-    class DFA28 extends DFA {
+    class DFA29 extends DFA {
 
-        public DFA28(BaseRecognizer recognizer) {
+        public DFA29(BaseRecognizer recognizer) {
             this.recognizer = recognizer;
-            this.decisionNumber = 28;
-            this.eot = DFA28_eot;
-            this.eof = DFA28_eof;
-            this.min = DFA28_min;
-            this.max = DFA28_max;
-            this.accept = DFA28_accept;
-            this.special = DFA28_special;
-            this.transition = DFA28_transition;
+            this.decisionNumber = 29;
+            this.eot = DFA29_eot;
+            this.eof = DFA29_eof;
+            this.min = DFA29_min;
+            this.max = DFA29_max;
+            this.accept = DFA29_accept;
+            this.special = DFA29_special;
+            this.transition = DFA29_transition;
         }
         public String getDescription() {
             return "395:1: instr returns [LLInstr inst ] : ( ( allocaInstr ) | ( storeInstr ) | ( branchInstr ) | ( uncondBranchInstr ) | ( retInstr ) | ( assignInstr ) );";
@@ -5875,97 +6195,110 @@ public class LLVMParser extends Parser {
     public static final BitSet FOLLOW_attrs_in_defineDirective1417 = new BitSet(new long[]{0x00000001580003C0L});
     public static final BitSet FOLLOW_type_in_defineDirective1419 = new BitSet(new long[]{0x0000000000000380L});
     public static final BitSet FOLLOW_identifier_in_defineDirective1421 = new BitSet(new long[]{0x0000000800000000L});
-    public static final BitSet FOLLOW_arglist_in_defineDirective1423 = new BitSet(new long[]{0x0000000000000010L,0x00000007FFE00000L});
-    public static final BitSet FOLLOW_fn_attrs_in_defineDirective1425 = new BitSet(new long[]{0x0000000000000010L});
+    public static final BitSet FOLLOW_arglist_in_defineDirective1423 = new BitSet(new long[]{0x0000000040000010L,0x00000007FFE00000L});
+    public static final BitSet FOLLOW_fn_attrs_in_defineDirective1425 = new BitSet(new long[]{0x0000000040000010L});
     public static final BitSet FOLLOW_NEWLINE_in_defineDirective1427 = new BitSet(new long[]{0x0000000040000000L});
-    public static final BitSet FOLLOW_30_in_defineDirective1446 = new BitSet(new long[]{0x0000000000000010L});
-    public static final BitSet FOLLOW_NEWLINE_in_defineDirective1448 = new BitSet(new long[]{0x0000000000008000L});
-    public static final BitSet FOLLOW_defineStmts_in_defineDirective1454 = new BitSet(new long[]{0x0000000080000000L});
-    public static final BitSet FOLLOW_31_in_defineDirective1461 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_set_in_visibility1489 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_72_in_cconv1520 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_73_in_cconv1524 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_74_in_cconv1528 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_75_in_cconv1532 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_76_in_cconv1536 = new BitSet(new long[]{0x0000000000000400L});
-    public static final BitSet FOLLOW_number_in_cconv1538 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_attr_in_attrs1577 = new BitSet(new long[]{0x0000000000000002L,0x00000000001FE000L});
+    public static final BitSet FOLLOW_30_in_defineDirective1447 = new BitSet(new long[]{0x0000000000000010L});
+    public static final BitSet FOLLOW_NEWLINE_in_defineDirective1449 = new BitSet(new long[]{0x0000000000008000L});
+    public static final BitSet FOLLOW_defineStmts_in_defineDirective1455 = new BitSet(new long[]{0x0000000080000000L});
+    public static final BitSet FOLLOW_31_in_defineDirective1462 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_set_in_visibility1490 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_72_in_cconv1521 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_73_in_cconv1525 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_74_in_cconv1529 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_75_in_cconv1533 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_76_in_cconv1537 = new BitSet(new long[]{0x0000000000000400L});
+    public static final BitSet FOLLOW_number_in_cconv1539 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_attr_in_attrs1578 = new BitSet(new long[]{0x0000000000000002L,0x00000000001FE000L});
     public static final BitSet FOLLOW_set_in_attr0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_fn_attr_in_fn_attrs1656 = new BitSet(new long[]{0x0000000000000002L,0x00000007FFE00000L});
-    public static final BitSet FOLLOW_85_in_fn_attr1675 = new BitSet(new long[]{0x0000000800000000L});
-    public static final BitSet FOLLOW_35_in_fn_attr1677 = new BitSet(new long[]{0x0000000000000400L});
-    public static final BitSet FOLLOW_number_in_fn_attr1679 = new BitSet(new long[]{0x0000001000000000L});
-    public static final BitSet FOLLOW_36_in_fn_attr1681 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_86_in_fn_attr1687 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_87_in_fn_attr1691 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_88_in_fn_attr1695 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_89_in_fn_attr1699 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_90_in_fn_attr1708 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_91_in_fn_attr1712 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_92_in_fn_attr1716 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_93_in_fn_attr1720 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_94_in_fn_attr1724 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_95_in_fn_attr1728 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_96_in_fn_attr1732 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_97_in_fn_attr1736 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_98_in_fn_attr1740 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_35_in_arglist1779 = new BitSet(new long[]{0x00000011580003C0L});
-    public static final BitSet FOLLOW_funcarg_in_arglist1792 = new BitSet(new long[]{0x0000003000000000L});
-    public static final BitSet FOLLOW_37_in_arglist1814 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_funcarg_in_arglist1818 = new BitSet(new long[]{0x0000003000000000L});
-    public static final BitSet FOLLOW_36_in_arglist1852 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_type_in_funcarg1870 = new BitSet(new long[]{0x0000000000000380L,0x00000000001FE000L});
-    public static final BitSet FOLLOW_attrs_in_funcarg1872 = new BitSet(new long[]{0x0000000000000380L});
-    public static final BitSet FOLLOW_identifier_in_funcarg1874 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_block_in_defineStmts1914 = new BitSet(new long[]{0x0000000000008002L});
-    public static final BitSet FOLLOW_blocklabel_in_block1958 = new BitSet(new long[]{0x0000000000000180L,0x2000006000000000L});
-    public static final BitSet FOLLOW_instr_in_block1972 = new BitSet(new long[]{0x0000000000000010L});
-    public static final BitSet FOLLOW_NEWLINE_in_block1974 = new BitSet(new long[]{0x0000000000000182L,0x2000006000000000L});
-    public static final BitSet FOLLOW_LABEL_in_blocklabel2000 = new BitSet(new long[]{0x0000000000000000L,0x0000000800000000L});
-    public static final BitSet FOLLOW_99_in_blocklabel2002 = new BitSet(new long[]{0x0000000000000010L});
-    public static final BitSet FOLLOW_NEWLINE_in_blocklabel2004 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_allocaInstr_in_instr2033 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_storeInstr_in_instr2056 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_branchInstr_in_instr2077 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_uncondBranchInstr_in_instr2097 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_retInstr_in_instr2111 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_assignInstr_in_instr2134 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_UNNAMED_ID_in_ret2166 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_NAMED_ID_in_local2198 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_local_in_allocaInstr2222 = new BitSet(new long[]{0x0000000000000020L});
-    public static final BitSet FOLLOW_EQUALS_in_allocaInstr2224 = new BitSet(new long[]{0x0000000000000000L,0x0000001000000000L});
-    public static final BitSet FOLLOW_100_in_allocaInstr2226 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_type_in_allocaInstr2228 = new BitSet(new long[]{0x00000001580003C2L});
-    public static final BitSet FOLLOW_typedop_in_allocaInstr2230 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_101_in_storeInstr2255 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_typedop_in_storeInstr2259 = new BitSet(new long[]{0x0000002000000000L});
-    public static final BitSet FOLLOW_37_in_storeInstr2261 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_typedop_in_storeInstr2265 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_102_in_retInstr2291 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_27_in_retInstr2297 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_typedop_in_retInstr2328 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_ret_in_assignInstr2370 = new BitSet(new long[]{0x0000000000000020L});
-    public static final BitSet FOLLOW_EQUALS_in_assignInstr2384 = new BitSet(new long[]{0x0000000000000000L,0x03FFFF8000000000L});
-    public static final BitSet FOLLOW_103_in_assignInstr2398 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_typedop_in_assignInstr2402 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_binexpr_in_assignInstr2416 = new BitSet(new long[]{0x00000001580003C0L,0x1C00000000000000L});
-    public static final BitSet FOLLOW_binexprsuffix_in_assignInstr2418 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_type_in_assignInstr2421 = new BitSet(new long[]{0xFE80000140002F80L,0x000000000000001FL});
-    public static final BitSet FOLLOW_op_in_assignInstr2425 = new BitSet(new long[]{0x0000002000000000L});
-    public static final BitSet FOLLOW_37_in_assignInstr2427 = new BitSet(new long[]{0xFE80000140002F80L,0x000000000000001FL});
-    public static final BitSet FOLLOW_op_in_assignInstr2431 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_fn_attr_in_fn_attrs1657 = new BitSet(new long[]{0x0000000000000002L,0x00000007FFE00000L});
+    public static final BitSet FOLLOW_85_in_fn_attr1676 = new BitSet(new long[]{0x0000000800000000L});
+    public static final BitSet FOLLOW_35_in_fn_attr1678 = new BitSet(new long[]{0x0000000000000400L});
+    public static final BitSet FOLLOW_number_in_fn_attr1680 = new BitSet(new long[]{0x0000001000000000L});
+    public static final BitSet FOLLOW_36_in_fn_attr1682 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_86_in_fn_attr1688 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_87_in_fn_attr1692 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_88_in_fn_attr1696 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_89_in_fn_attr1700 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_90_in_fn_attr1709 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_91_in_fn_attr1713 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_92_in_fn_attr1717 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_93_in_fn_attr1721 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_94_in_fn_attr1725 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_95_in_fn_attr1729 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_96_in_fn_attr1733 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_97_in_fn_attr1737 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_98_in_fn_attr1741 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_35_in_arglist1780 = new BitSet(new long[]{0x00000011580003C0L});
+    public static final BitSet FOLLOW_funcarg_in_arglist1793 = new BitSet(new long[]{0x0000003000000000L});
+    public static final BitSet FOLLOW_37_in_arglist1815 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_funcarg_in_arglist1819 = new BitSet(new long[]{0x0000003000000000L});
+    public static final BitSet FOLLOW_36_in_arglist1853 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_type_in_funcarg1871 = new BitSet(new long[]{0x0000000000000380L,0x00000000001FE000L});
+    public static final BitSet FOLLOW_attrs_in_funcarg1873 = new BitSet(new long[]{0x0000000000000380L});
+    public static final BitSet FOLLOW_identifier_in_funcarg1875 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_block_in_defineStmts1915 = new BitSet(new long[]{0x0000000000008002L});
+    public static final BitSet FOLLOW_blocklabel_in_block1959 = new BitSet(new long[]{0x0000000000000180L,0x0000006000000000L,0x0000000000000400L});
+    public static final BitSet FOLLOW_instr_in_block1973 = new BitSet(new long[]{0x0000000000000010L});
+    public static final BitSet FOLLOW_NEWLINE_in_block1975 = new BitSet(new long[]{0x0000000000000182L,0x0000006000000000L,0x0000000000000400L});
+    public static final BitSet FOLLOW_LABEL_in_blocklabel2001 = new BitSet(new long[]{0x0000000000000000L,0x0000000800000000L});
+    public static final BitSet FOLLOW_99_in_blocklabel2003 = new BitSet(new long[]{0x0000000000000010L});
+    public static final BitSet FOLLOW_NEWLINE_in_blocklabel2005 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_allocaInstr_in_instr2034 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_storeInstr_in_instr2057 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_branchInstr_in_instr2078 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_uncondBranchInstr_in_instr2098 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_retInstr_in_instr2112 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_assignInstr_in_instr2135 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_UNNAMED_ID_in_ret2167 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_NAMED_ID_in_local2199 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_local_in_allocaInstr2223 = new BitSet(new long[]{0x0000000000000020L});
+    public static final BitSet FOLLOW_EQUALS_in_allocaInstr2225 = new BitSet(new long[]{0x0000000000000000L,0x0000001000000000L});
+    public static final BitSet FOLLOW_100_in_allocaInstr2227 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_type_in_allocaInstr2229 = new BitSet(new long[]{0x00000001580003C2L});
+    public static final BitSet FOLLOW_typedop_in_allocaInstr2231 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_101_in_storeInstr2256 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_typedop_in_storeInstr2260 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_37_in_storeInstr2262 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_typedop_in_storeInstr2266 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_102_in_retInstr2292 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_27_in_retInstr2298 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_typedop_in_retInstr2329 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_ret_in_assignInstr2371 = new BitSet(new long[]{0x0000000000000020L});
+    public static final BitSet FOLLOW_EQUALS_in_assignInstr2385 = new BitSet(new long[]{0x0000000000000000L,0x1FFFFF8000000000L});
+    public static final BitSet FOLLOW_103_in_assignInstr2399 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_typedop_in_assignInstr2403 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_binexpr_in_assignInstr2417 = new BitSet(new long[]{0x00000001580003C0L,0xE000000000000000L});
+    public static final BitSet FOLLOW_binexprsuffix_in_assignInstr2419 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_type_in_assignInstr2424 = new BitSet(new long[]{0xFE80000140002F80L,0x000000000000001FL});
+    public static final BitSet FOLLOW_op_in_assignInstr2428 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_37_in_assignInstr2430 = new BitSet(new long[]{0xFE80000140002F80L,0x000000000000001FL});
+    public static final BitSet FOLLOW_op_in_assignInstr2434 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_set_in_assignInstr2468 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000000L,0x00000000000003FFL});
+    public static final BitSet FOLLOW_cmptype_in_assignInstr2476 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_type_in_assignInstr2480 = new BitSet(new long[]{0xFE80000140002F80L,0x000000000000001FL});
+    public static final BitSet FOLLOW_op_in_assignInstr2484 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_37_in_assignInstr2486 = new BitSet(new long[]{0xFE80000140002F80L,0x000000000000001FL});
+    public static final BitSet FOLLOW_op_in_assignInstr2490 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_106_in_assignInstr2520 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_typedop_in_assignInstr2543 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_gepind_in_assignInstr2549 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_37_in_gepind2605 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_type_in_gepind2607 = new BitSet(new long[]{0x0000000000000400L});
+    public static final BitSet FOLLOW_number_in_gepind2609 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_binexpr0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_set_in_binexprsuffix2571 = new BitSet(new long[]{0x0000000000000002L,0x1C00000000000000L});
-    public static final BitSet FOLLOW_125_in_branchInstr2599 = new BitSet(new long[]{0x00000001580003C0L});
-    public static final BitSet FOLLOW_typedop_in_branchInstr2601 = new BitSet(new long[]{0x0000002000000000L});
-    public static final BitSet FOLLOW_37_in_branchInstr2603 = new BitSet(new long[]{0x0000000010000000L});
-    public static final BitSet FOLLOW_28_in_branchInstr2605 = new BitSet(new long[]{0x0000000000000380L});
-    public static final BitSet FOLLOW_identifier_in_branchInstr2609 = new BitSet(new long[]{0x0000002000000000L});
-    public static final BitSet FOLLOW_37_in_branchInstr2611 = new BitSet(new long[]{0x0000000010000000L});
-    public static final BitSet FOLLOW_28_in_branchInstr2613 = new BitSet(new long[]{0x0000000000000380L});
-    public static final BitSet FOLLOW_identifier_in_branchInstr2617 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_125_in_uncondBranchInstr2642 = new BitSet(new long[]{0x0000000010000000L});
-    public static final BitSet FOLLOW_28_in_uncondBranchInstr2644 = new BitSet(new long[]{0x0000000000000380L});
-    public static final BitSet FOLLOW_identifier_in_uncondBranchInstr2646 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_set_in_binexprsuffix2716 = new BitSet(new long[]{0x0000000000000002L,0xE000000000000000L});
+    public static final BitSet FOLLOW_set_in_cmptype0 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_138_in_branchInstr2789 = new BitSet(new long[]{0x00000001580003C0L});
+    public static final BitSet FOLLOW_typedop_in_branchInstr2791 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_37_in_branchInstr2793 = new BitSet(new long[]{0x0000000010000000L});
+    public static final BitSet FOLLOW_28_in_branchInstr2795 = new BitSet(new long[]{0x0000000000000380L});
+    public static final BitSet FOLLOW_identifier_in_branchInstr2799 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_37_in_branchInstr2801 = new BitSet(new long[]{0x0000000010000000L});
+    public static final BitSet FOLLOW_28_in_branchInstr2803 = new BitSet(new long[]{0x0000000000000380L});
+    public static final BitSet FOLLOW_identifier_in_branchInstr2807 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_138_in_uncondBranchInstr2832 = new BitSet(new long[]{0x0000000010000000L});
+    public static final BitSet FOLLOW_28_in_uncondBranchInstr2834 = new BitSet(new long[]{0x0000000000000380L});
+    public static final BitSet FOLLOW_identifier_in_uncondBranchInstr2836 = new BitSet(new long[]{0x0000000000000002L});
 
 }

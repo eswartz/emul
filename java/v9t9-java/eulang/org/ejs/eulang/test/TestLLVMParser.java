@@ -495,8 +495,7 @@ public class TestLLVMParser extends BaseTest {
 				"loopEnter.23:\n" + 
 				"%0 =    load %Int* %_.b.20\n" + 
 				"%1 =    load %Int* %_.x.17\n" + 
-				"%2 =    load %Int* %_.x.17\n" + 
-				//"%2 =    icmp slt %Int %0, %1\n" + 
+				"%2 =    icmp slt %Int %0, %1\n" + 
 				"        br %Bool %2, label %loopBody.24, label %loopExit.25\n" + 
 				"loopBody.24:\n" + 
 				"%3 =    load %Int* %_.s.19\n" + 
@@ -519,5 +518,107 @@ public class TestLLVMParser extends BaseTest {
 		
 		LLModule mod = doLLVMParse(text);
 		System.out.println(mod);
+	}
+	
+
+	@Test
+	public void testDefines3() throws Exception {
+		String text =
+			//1
+				"; ModuleID = '/tmp/testDataVirtualMethod3b.opt.bc'\n" + 
+				"target datalayout = \"E-p:16:16-s0:8:16-a0:8:16\"\n" + 
+				"target triple = \"9900-unknown-v9t9\"\n" + 
+				"\n" + 
+				"%Class = type { i16, i16, %\"Int._.Class$p_$p\", %\"Int._.Class$p.Int_$p\" }\n" + 
+				"%\"Class$p\" = type %Class*\n" + 
+				"%\"Int._.Class$p.Int_\" = type i16 (%\"Class$p\", i16)\n" + 
+				"%\"Int._.Class$p.Int_$p\" = type %\"Int._.Class$p.Int_\"*\n" + 
+				"%\"Int._.Class$p.Int_$p$p\" = type %\"Int._.Class$p.Int_$p\"*\n" +
+				//10
+				"%\"Int._.Class$p_\" = type i16 (%\"Class$p\")\n" + 
+				"%\"Int._.Class$p_$p\" = type %\"Int._.Class$p_\"*\n" + 
+				"%\"Int._.Class$p_$p$p\" = type %\"Int._.Class$p_$p\"*\n" + 
+				"%Int._._ = type i16 ()\n" + 
+				"%\"Int._._$p\" = type %Int._._*\n" + 
+				"%\"void._.Class$p_\" = type void (%\"Class$p\")\n" + 
+				"\n" +
+				//17
+				"define void @\"Class.$__init__$._.void._.Class$p_\"(%\"Class$p\" nocapture %this) nounwind optsize {\n" + 
+				"entry.36:\n" + 
+				//19
+				"  %0 = getelementptr %\"Class$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+				"  store i16 3, i16* %0\n" + 
+				"  %1 = getelementptr %\"Class$p\" %this, i16 0, i32 1 ; <i16*> [#uses=1]\n" + 
+				"  store i16 5, i16* %1\n" + 
+				"  %2 = getelementptr %\"Class$p\" %this, i16 0, i32 2 ; <%\"Int._.Class$p_$p$p\"> [#uses=1]\n" + 
+				"  store %\"Int._.Class$p_$p\" @\".Class.$__init__$._.void._.Class$p_$inner._.Int._.Class$p_\", %\"Int._.Class$p_$p$p\" %2\n" + 
+				"  %3 = getelementptr %\"Class$p\" %this, i16 0, i32 3 ; <%\"Int._.Class$p.Int_$p$p\"> [#uses=1]\n" + 
+				"  store %\"Int._.Class$p.Int_$p\" @\".Class.$__init__$._.void._.Class$p_$inner._.Int._.Class$p.Int_\", %\"Int._.Class$p.Int_$p$p\" %3\n" + 
+				"  ret void\n" + 
+				"}\n" + 
+				"\n" + 
+				"define i16 @\".Class.$__init__$._.void._.Class$p_$inner._.Int._.Class$p_\"(%\"Class$p\" nocapture %this) nounwind readonly optsize {\n" + 
+				"entry.41:\n" + 
+				"  %0 = getelementptr %\"Class$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+				"  %1 = load i16* %0                               ; <i16> [#uses=1]\n" + 
+				"  %2 = getelementptr %\"Class$p\" %this, i16 0, i32 1 ; <i16*> [#uses=1]\n" + 
+				"  %3 = load i16* %2                               ; <i16> [#uses=1]\n" + 
+				"  %4 = add i16 %3, %1                             ; <i16> [#uses=1]\n" + 
+				"  ret i16 %4\n" + 
+				"}\n" + 
+				"\n" + 
+				"define i16 @\".Class.$__init__$._.void._.Class$p_$inner._.Int._.Class$p.Int_\"(%\"Class$p\" nocapture %this, i16 %x) nounwind readonly optsize {\n" + 
+				"entry.46:\n" + 
+				"  %0 = getelementptr %\"Class$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+				"  %1 = load i16* %0                               ; <i16> [#uses=1]\n" + 
+				"  %2 = sub i16 %1, %x                             ; <i16> [#uses=1]\n" + 
+				"  ret i16 %2\n" + 
+				"}\n" + 
+				"\n" + 
+				"define void @\"Derived.$__init__$._.void._.Derived$p_\"(%\"Class$p\" nocapture %this) nounwind optsize {\n" + 
+				"entry.59:\n" + 
+				"  %0 = getelementptr %\"Class$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+				"  store i16 3, i16* %0\n" + 
+				"  %1 = getelementptr %\"Class$p\" %this, i16 0, i32 1 ; <i16*> [#uses=1]\n" + 
+				"  store i16 100, i16* %1\n" + 
+				"  %2 = getelementptr %\"Class$p\" %this, i16 0, i32 2 ; <%\"Int._.Class$p_$p$p\"> [#uses=1]\n" + 
+				"  store %\"Int._.Class$p_$p\" @\".Derived.$__init__$._.void._.Derived$p_$inner._.Int._.Derived$p_\", %\"Int._.Class$p_$p$p\" %2\n" + 
+				"  %3 = getelementptr %\"Class$p\" %this, i16 0, i32 3 ; <%\"Int._.Class$p.Int_$p$p\"> [#uses=1]\n" + 
+				"  store %\"Int._.Class$p.Int_$p\" @\".Derived.$__init__$._.void._.Derived$p_$inner._.Int._.Class$p.Int_\", %\"Int._.Class$p.Int_$p$p\" %3\n" + 
+				"  ret void\n" + 
+				"}\n" + 
+				"\n" + 
+				"define i16 @\".Derived.$__init__$._.void._.Derived$p_$inner._.Int._.Derived$p_\"(%\"Class$p\" nocapture %this) nounwind readonly optsize {\n" + 
+				"entry.64:\n" + 
+				"  %0 = getelementptr %\"Class$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+				"  %1 = load i16* %0                               ; <i16> [#uses=1]\n" + 
+				"  %2 = getelementptr %\"Class$p\" %this, i16 0, i32 1 ; <i16*> [#uses=1]\n" + 
+				"  %3 = load i16* %2                               ; <i16> [#uses=1]\n" + 
+				"  %4 = sub i16 %1, %3                             ; <i16> [#uses=1]\n" + 
+				"  ret i16 %4\n" + 
+				"}\n" + 
+				"\n" + 
+				"define i16 @\".Derived.$__init__$._.void._.Derived$p_$inner._.Int._.Class$p.Int_\"(%\"Class$p\" nocapture %this, i16 %x) nounwind readonly optsize {\n" + 
+				"entry.68:\n" + 
+				"  %0 = getelementptr %\"Class$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+				"  %1 = load i16* %0                               ; <i16> [#uses=1]\n" + 
+				"  %2 = sub i16 %1, %x                             ; <i16> [#uses=1]\n" + 
+				"  ret i16 %2\n" + 
+				"}\n" + 
+				"\n" + 
+				"define i16 @foo._.Int._._() nounwind readnone optsize {\n" + 
+				"entry.73:\n" + 
+				"  ret i16 -9700\n" + 
+				"}\n" + 
+			"";
+		
+		LLModule mod = doLLVMParse(text);
+		String redis = mod.toString();
+		System.out.println(mod);
+		
+		assertMatchText("store %Int._.Class\\$p.Int_\\$p @.Derived.\\$__init__\\$._.void._.Derived\\$p_\\$inner._.Int._.Class\\$p.Int_, %Int._.Class\\$p.Int_\\$p\\* %3", redis);
+		assertMatchText("getelementptr %Class\\$p %this, i32 0, i32 0", redis);
+		assertMatchText("load i16\\* %0", redis);
+		
 	}
 }

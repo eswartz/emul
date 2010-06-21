@@ -1,4 +1,4 @@
-// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g 2010-06-20 15:19:20
+// $ANTLR 3.2 Sep 23, 2009 12:02:23 /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g 2010-06-20 20:29:35
 
 package org.ejs.eulang.llvm.parser;
 
@@ -29,6 +29,9 @@ public class LLVMLexer extends Lexer {
     public static final int T__97=97;
     public static final int T__96=96;
     public static final int T__95=95;
+    public static final int T__138=138;
+    public static final int T__137=137;
+    public static final int T__136=136;
     public static final int T__80=80;
     public static final int T__81=81;
     public static final int T__82=82;
@@ -44,18 +47,28 @@ public class LLVMLexer extends Lexer {
     public static final int T__89=89;
     public static final int T__88=88;
     public static final int SYM_PFX=17;
+    public static final int T__126=126;
     public static final int T__125=125;
-    public static final int T__71=71;
+    public static final int T__128=128;
+    public static final int T__127=127;
     public static final int WS=20;
+    public static final int T__71=71;
+    public static final int T__129=129;
     public static final int T__72=72;
     public static final int NAME_SUFFIX=19;
     public static final int T__70=70;
     public static final int T__76=76;
     public static final int T__75=75;
+    public static final int T__130=130;
     public static final int T__74=74;
+    public static final int T__131=131;
     public static final int T__73=73;
+    public static final int T__132=132;
+    public static final int T__133=133;
     public static final int T__79=79;
+    public static final int T__134=134;
     public static final int T__78=78;
+    public static final int T__135=135;
     public static final int T__77=77;
     public static final int T__68=68;
     public static final int T__69=69;
@@ -93,8 +106,8 @@ public class LLVMLexer extends Lexer {
     public static final int T__107=107;
     public static final int T__108=108;
     public static final int T__109=109;
-    public static final int T__59=59;
     public static final int T__103=103;
+    public static final int T__59=59;
     public static final int T__104=104;
     public static final int T__105=105;
     public static final int T__106=106;
@@ -1853,10 +1866,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__104;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:103:8: ( 'add' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:103:10: 'add'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:103:8: ( 'icmp' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:103:10: 'icmp'
             {
-            match("add"); 
+            match("icmp"); 
 
 
             }
@@ -1874,10 +1887,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__105;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:104:8: ( 'fadd' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:104:10: 'fadd'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:104:8: ( 'fcmp' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:104:10: 'fcmp'
             {
-            match("fadd"); 
+            match("fcmp"); 
 
 
             }
@@ -1895,10 +1908,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__106;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:105:8: ( 'sub' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:105:10: 'sub'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:105:8: ( 'getelementptr' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:105:10: 'getelementptr'
             {
-            match("sub"); 
+            match("getelementptr"); 
 
 
             }
@@ -1916,10 +1929,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__107;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:106:8: ( 'fsub' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:106:10: 'fsub'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:106:8: ( 'add' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:106:10: 'add'
             {
-            match("fsub"); 
+            match("add"); 
 
 
             }
@@ -1937,10 +1950,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__108;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:107:8: ( 'mul' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:107:10: 'mul'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:107:8: ( 'fadd' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:107:10: 'fadd'
             {
-            match("mul"); 
+            match("fadd"); 
 
 
             }
@@ -1958,10 +1971,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__109;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:108:8: ( 'fmul' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:108:10: 'fmul'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:108:8: ( 'sub' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:108:10: 'sub'
             {
-            match("fmul"); 
+            match("sub"); 
 
 
             }
@@ -1979,10 +1992,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__110;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:109:8: ( 'udiv' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:109:10: 'udiv'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:109:8: ( 'fsub' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:109:10: 'fsub'
             {
-            match("udiv"); 
+            match("fsub"); 
 
 
             }
@@ -2000,10 +2013,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__111;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:110:8: ( 'sdiv' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:110:10: 'sdiv'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:110:8: ( 'mul' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:110:10: 'mul'
             {
-            match("sdiv"); 
+            match("mul"); 
 
 
             }
@@ -2021,10 +2034,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__112;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:111:8: ( 'fdiv' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:111:10: 'fdiv'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:111:8: ( 'fmul' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:111:10: 'fmul'
             {
-            match("fdiv"); 
+            match("fmul"); 
 
 
             }
@@ -2042,10 +2055,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__113;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:112:8: ( 'urem' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:112:10: 'urem'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:112:8: ( 'udiv' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:112:10: 'udiv'
             {
-            match("urem"); 
+            match("udiv"); 
 
 
             }
@@ -2063,10 +2076,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__114;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:113:8: ( 'srem' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:113:10: 'srem'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:113:8: ( 'sdiv' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:113:10: 'sdiv'
             {
-            match("srem"); 
+            match("sdiv"); 
 
 
             }
@@ -2084,10 +2097,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__115;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:114:8: ( 'frem' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:114:10: 'frem'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:114:8: ( 'fdiv' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:114:10: 'fdiv'
             {
-            match("frem"); 
+            match("fdiv"); 
 
 
             }
@@ -2105,10 +2118,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__116;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:115:8: ( 'shl' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:115:10: 'shl'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:115:8: ( 'urem' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:115:10: 'urem'
             {
-            match("shl"); 
+            match("urem"); 
 
 
             }
@@ -2126,10 +2139,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__117;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:116:8: ( 'lshr' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:116:10: 'lshr'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:116:8: ( 'srem' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:116:10: 'srem'
             {
-            match("lshr"); 
+            match("srem"); 
 
 
             }
@@ -2147,10 +2160,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__118;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:117:8: ( 'ashr' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:117:10: 'ashr'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:117:8: ( 'frem' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:117:10: 'frem'
             {
-            match("ashr"); 
+            match("frem"); 
 
 
             }
@@ -2168,10 +2181,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__119;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:118:8: ( 'and' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:118:10: 'and'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:118:8: ( 'shl' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:118:10: 'shl'
             {
-            match("and"); 
+            match("shl"); 
 
 
             }
@@ -2189,10 +2202,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__120;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:119:8: ( 'or' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:119:10: 'or'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:119:8: ( 'lshr' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:119:10: 'lshr'
             {
-            match("or"); 
+            match("lshr"); 
 
 
             }
@@ -2210,10 +2223,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__121;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:120:8: ( 'xor' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:120:10: 'xor'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:120:8: ( 'ashr' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:120:10: 'ashr'
             {
-            match("xor"); 
+            match("ashr"); 
 
 
             }
@@ -2231,10 +2244,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__122;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:121:8: ( 'nuw' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:121:10: 'nuw'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:121:8: ( 'and' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:121:10: 'and'
             {
-            match("nuw"); 
+            match("and"); 
 
 
             }
@@ -2252,10 +2265,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__123;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:122:8: ( 'nsw' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:122:10: 'nsw'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:122:8: ( 'or' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:122:10: 'or'
             {
-            match("nsw"); 
+            match("or"); 
 
 
             }
@@ -2273,10 +2286,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__124;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:123:8: ( 'exact' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:123:10: 'exact'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:123:8: ( 'xor' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:123:10: 'xor'
             {
-            match("exact"); 
+            match("xor"); 
 
 
             }
@@ -2294,10 +2307,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = T__125;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:124:8: ( 'br' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:124:10: 'br'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:124:8: ( 'nuw' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:124:10: 'nuw'
             {
-            match("br"); 
+            match("nuw"); 
 
 
             }
@@ -2310,13 +2323,286 @@ public class LLVMLexer extends Lexer {
     }
     // $ANTLR end "T__125"
 
+    // $ANTLR start "T__126"
+    public final void mT__126() throws RecognitionException {
+        try {
+            int _type = T__126;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:125:8: ( 'nsw' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:125:10: 'nsw'
+            {
+            match("nsw"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__126"
+
+    // $ANTLR start "T__127"
+    public final void mT__127() throws RecognitionException {
+        try {
+            int _type = T__127;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:126:8: ( 'exact' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:126:10: 'exact'
+            {
+            match("exact"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__127"
+
+    // $ANTLR start "T__128"
+    public final void mT__128() throws RecognitionException {
+        try {
+            int _type = T__128;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:127:8: ( 'eq' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:127:10: 'eq'
+            {
+            match("eq"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__128"
+
+    // $ANTLR start "T__129"
+    public final void mT__129() throws RecognitionException {
+        try {
+            int _type = T__129;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:128:8: ( 'ne' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:128:10: 'ne'
+            {
+            match("ne"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__129"
+
+    // $ANTLR start "T__130"
+    public final void mT__130() throws RecognitionException {
+        try {
+            int _type = T__130;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:129:8: ( 'ugt' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:129:10: 'ugt'
+            {
+            match("ugt"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__130"
+
+    // $ANTLR start "T__131"
+    public final void mT__131() throws RecognitionException {
+        try {
+            int _type = T__131;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:130:8: ( 'uge' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:130:10: 'uge'
+            {
+            match("uge"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__131"
+
+    // $ANTLR start "T__132"
+    public final void mT__132() throws RecognitionException {
+        try {
+            int _type = T__132;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:131:8: ( 'ult' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:131:10: 'ult'
+            {
+            match("ult"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__132"
+
+    // $ANTLR start "T__133"
+    public final void mT__133() throws RecognitionException {
+        try {
+            int _type = T__133;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:132:8: ( 'ule' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:132:10: 'ule'
+            {
+            match("ule"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__133"
+
+    // $ANTLR start "T__134"
+    public final void mT__134() throws RecognitionException {
+        try {
+            int _type = T__134;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:133:8: ( 'sgt' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:133:10: 'sgt'
+            {
+            match("sgt"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__134"
+
+    // $ANTLR start "T__135"
+    public final void mT__135() throws RecognitionException {
+        try {
+            int _type = T__135;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:134:8: ( 'sge' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:134:10: 'sge'
+            {
+            match("sge"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__135"
+
+    // $ANTLR start "T__136"
+    public final void mT__136() throws RecognitionException {
+        try {
+            int _type = T__136;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:135:8: ( 'slt' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:135:10: 'slt'
+            {
+            match("slt"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__136"
+
+    // $ANTLR start "T__137"
+    public final void mT__137() throws RecognitionException {
+        try {
+            int _type = T__137;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:136:8: ( 'sle' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:136:10: 'sle'
+            {
+            match("sle"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__137"
+
+    // $ANTLR start "T__138"
+    public final void mT__138() throws RecognitionException {
+        try {
+            int _type = T__138;
+            int _channel = DEFAULT_TOKEN_CHANNEL;
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:137:8: ( 'br' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:137:10: 'br'
+            {
+            match("br"); 
+
+
+            }
+
+            state.type = _type;
+            state.channel = _channel;
+        }
+        finally {
+        }
+    }
+    // $ANTLR end "T__138"
+
     // $ANTLR start "EQUALS"
     public final void mEQUALS() throws RecognitionException {
         try {
             int _type = EQUALS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:493:8: ( '=' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:493:10: '='
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:518:8: ( '=' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:518:10: '='
             {
             match('='); 
 
@@ -2335,11 +2621,11 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = INT_TYPE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:495:10: ( 'i' ( '0' .. '9' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:495:12: 'i' ( '0' .. '9' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:520:10: ( 'i' ( '0' .. '9' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:520:12: 'i' ( '0' .. '9' )+
             {
             match('i'); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:495:16: ( '0' .. '9' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:520:16: ( '0' .. '9' )+
             int cnt1=0;
             loop1:
             do {
@@ -2353,7 +2639,7 @@ public class LLVMLexer extends Lexer {
 
                 switch (alt1) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:495:17: '0' .. '9'
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:520:17: '0' .. '9'
             	    {
             	    matchRange('0','9'); 
 
@@ -2385,10 +2671,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = NUMBER;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:8: ( ( '-' )? '0' .. '9' ( NUMSUFFIX ( '.' NUMSUFFIX )? ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:10: ( '-' )? '0' .. '9' ( NUMSUFFIX ( '.' NUMSUFFIX )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:8: ( ( '-' )? '0' .. '9' ( NUMSUFFIX ( '.' NUMSUFFIX )? ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:10: ( '-' )? '0' .. '9' ( NUMSUFFIX ( '.' NUMSUFFIX )? )
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:10: ( '-' )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:10: ( '-' )?
             int alt2=2;
             int LA2_0 = input.LA(1);
 
@@ -2397,7 +2683,7 @@ public class LLVMLexer extends Lexer {
             }
             switch (alt2) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:10: '-'
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:10: '-'
                     {
                     match('-'); 
 
@@ -2407,11 +2693,11 @@ public class LLVMLexer extends Lexer {
             }
 
             matchRange('0','9'); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:24: ( NUMSUFFIX ( '.' NUMSUFFIX )? )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:25: NUMSUFFIX ( '.' NUMSUFFIX )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:24: ( NUMSUFFIX ( '.' NUMSUFFIX )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:25: NUMSUFFIX ( '.' NUMSUFFIX )?
             {
             mNUMSUFFIX(); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:35: ( '.' NUMSUFFIX )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:35: ( '.' NUMSUFFIX )?
             int alt3=2;
             int LA3_0 = input.LA(1);
 
@@ -2420,7 +2706,7 @@ public class LLVMLexer extends Lexer {
             }
             switch (alt3) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:500:37: '.' NUMSUFFIX
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:525:37: '.' NUMSUFFIX
                     {
                     match('.'); 
                     mNUMSUFFIX(); 
@@ -2454,15 +2740,15 @@ public class LLVMLexer extends Lexer {
             CommonToken SYM_PFX1=null;
             CommonToken NUMBER_SUFFIX2=null;
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:505:35: ( SYM_PFX NUMBER_SUFFIX )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:505:37: SYM_PFX NUMBER_SUFFIX
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:530:35: ( SYM_PFX NUMBER_SUFFIX )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:530:37: SYM_PFX NUMBER_SUFFIX
             {
-            int SYM_PFX1Start924 = getCharIndex();
+            int SYM_PFX1Start1028 = getCharIndex();
             mSYM_PFX(); 
-            SYM_PFX1 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, SYM_PFX1Start924, getCharIndex()-1);
-            int NUMBER_SUFFIX2Start926 = getCharIndex();
+            SYM_PFX1 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, SYM_PFX1Start1028, getCharIndex()-1);
+            int NUMBER_SUFFIX2Start1030 = getCharIndex();
             mNUMBER_SUFFIX(); 
-            NUMBER_SUFFIX2 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, NUMBER_SUFFIX2Start926, getCharIndex()-1);
+            NUMBER_SUFFIX2 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, NUMBER_SUFFIX2Start1030, getCharIndex()-1);
              theId = (SYM_PFX1!=null?SYM_PFX1.getText():null) + (NUMBER_SUFFIX2!=null?NUMBER_SUFFIX2.getText():null); 
 
             }
@@ -2485,15 +2771,15 @@ public class LLVMLexer extends Lexer {
             CommonToken SYM_PFX3=null;
             CommonToken NAME_SUFFIX4=null;
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:506:33: ( SYM_PFX NAME_SUFFIX )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:506:35: SYM_PFX NAME_SUFFIX
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:531:33: ( SYM_PFX NAME_SUFFIX )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:531:35: SYM_PFX NAME_SUFFIX
             {
-            int SYM_PFX3Start940 = getCharIndex();
+            int SYM_PFX3Start1044 = getCharIndex();
             mSYM_PFX(); 
-            SYM_PFX3 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, SYM_PFX3Start940, getCharIndex()-1);
-            int NAME_SUFFIX4Start942 = getCharIndex();
+            SYM_PFX3 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, SYM_PFX3Start1044, getCharIndex()-1);
+            int NAME_SUFFIX4Start1046 = getCharIndex();
             mNAME_SUFFIX(); 
-            NAME_SUFFIX4 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, NAME_SUFFIX4Start942, getCharIndex()-1);
+            NAME_SUFFIX4 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, NAME_SUFFIX4Start1046, getCharIndex()-1);
              theId = (SYM_PFX3!=null?SYM_PFX3.getText():null) + (NAME_SUFFIX4!=null?NAME_SUFFIX4.getText():null); 
 
             }
@@ -2516,15 +2802,15 @@ public class LLVMLexer extends Lexer {
             CommonToken SYM_PFX5=null;
             CommonToken STRING_LITERAL6=null;
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:507:34: ( SYM_PFX STRING_LITERAL )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:507:36: SYM_PFX STRING_LITERAL
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:532:34: ( SYM_PFX STRING_LITERAL )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:532:36: SYM_PFX STRING_LITERAL
             {
-            int SYM_PFX5Start957 = getCharIndex();
+            int SYM_PFX5Start1061 = getCharIndex();
             mSYM_PFX(); 
-            SYM_PFX5 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, SYM_PFX5Start957, getCharIndex()-1);
-            int STRING_LITERAL6Start959 = getCharIndex();
+            SYM_PFX5 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, SYM_PFX5Start1061, getCharIndex()-1);
+            int STRING_LITERAL6Start1063 = getCharIndex();
             mSTRING_LITERAL(); 
-            STRING_LITERAL6 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, STRING_LITERAL6Start959, getCharIndex()-1);
+            STRING_LITERAL6 = new CommonToken(input, Token.INVALID_TOKEN_TYPE, Token.DEFAULT_CHANNEL, STRING_LITERAL6Start1063, getCharIndex()-1);
              theId = (SYM_PFX5!=null?SYM_PFX5.getText():null) + LLParserHelper.unescape((STRING_LITERAL6!=null?STRING_LITERAL6.getText():null), '"'); 
 
             }
@@ -2540,7 +2826,7 @@ public class LLVMLexer extends Lexer {
     // $ANTLR start "SYM_PFX"
     public final void mSYM_PFX() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:510:9: ( '%' | '@' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:535:9: ( '%' | '@' )
             // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:
             {
             if ( input.LA(1)=='%'||input.LA(1)=='@' ) {
@@ -2566,8 +2852,8 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = DEFINE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:513:8: ( 'define' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:513:10: 'define'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:538:8: ( 'define' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:538:10: 'define'
             {
             match("define"); 
 
@@ -2587,8 +2873,8 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = LABEL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:515:7: ( NAME_SUFFIX )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:515:9: NAME_SUFFIX
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:540:7: ( NAME_SUFFIX )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:540:9: NAME_SUFFIX
             {
             mNAME_SUFFIX(); 
 
@@ -2605,8 +2891,8 @@ public class LLVMLexer extends Lexer {
     // $ANTLR start "NAME_SUFFIX"
     public final void mNAME_SUFFIX() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:517:22: ( ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '_' ) ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '0' .. '9' | '_' )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:517:24: ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '_' ) ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '0' .. '9' | '_' )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:542:22: ( ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '_' ) ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '0' .. '9' | '_' )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:542:24: ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '_' ) ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '0' .. '9' | '_' )*
             {
             if ( input.LA(1)=='$'||input.LA(1)=='.'||(input.LA(1)>='A' && input.LA(1)<='Z')||input.LA(1)=='_'||(input.LA(1)>='a' && input.LA(1)<='z') ) {
                 input.consume();
@@ -2617,7 +2903,7 @@ public class LLVMLexer extends Lexer {
                 recover(mse);
                 throw mse;}
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:517:66: ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '0' .. '9' | '_' )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:542:66: ( 'a' .. 'z' | 'A' .. 'Z' | '$' | '.' | '0' .. '9' | '_' )*
             loop4:
             do {
                 int alt4=2;
@@ -2662,10 +2948,10 @@ public class LLVMLexer extends Lexer {
     // $ANTLR start "NUMBER_SUFFIX"
     public final void mNUMBER_SUFFIX() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:518:24: ( ( '0' .. '9' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:518:26: ( '0' .. '9' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:543:24: ( ( '0' .. '9' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:543:26: ( '0' .. '9' )+
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:518:26: ( '0' .. '9' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:543:26: ( '0' .. '9' )+
             int cnt5=0;
             loop5:
             do {
@@ -2679,7 +2965,7 @@ public class LLVMLexer extends Lexer {
 
                 switch (alt5) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:518:27: '0' .. '9'
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:543:27: '0' .. '9'
             	    {
             	    matchRange('0','9'); 
 
@@ -2707,10 +2993,10 @@ public class LLVMLexer extends Lexer {
     // $ANTLR start "NUMSUFFIX"
     public final void mNUMSUFFIX() throws RecognitionException {
         try {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:519:20: ( ( '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:519:22: ( '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:544:20: ( ( '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:544:22: ( '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' )*
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:519:22: ( '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:544:22: ( '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' )*
             loop6:
             do {
                 int alt6=2;
@@ -2757,8 +3043,8 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = CHAR_LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:526:14: ( '\\'' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:526:16: '\\''
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:551:14: ( '\\'' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:551:16: '\\''
             {
             match('\''); 
 
@@ -2793,8 +3079,8 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = STRING_LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:543:16: ( '\"' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:543:18: '\"'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:568:16: ( '\"' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:568:18: '\"'
             {
             match('\"'); 
 
@@ -2829,8 +3115,8 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = CSTRING_LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:560:17: ( 'c\"' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:560:19: 'c\"'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:585:17: ( 'c\"' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:585:19: 'c\"'
             {
             match("c\""); 
 
@@ -2866,13 +3152,13 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = NEWLINE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:580:8: ( ( ( '\\r' )? '\\n' ) )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:580:10: ( ( '\\r' )? '\\n' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:605:8: ( ( ( '\\r' )? '\\n' ) )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:605:10: ( ( '\\r' )? '\\n' )
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:580:10: ( ( '\\r' )? '\\n' )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:580:11: ( '\\r' )? '\\n'
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:605:10: ( ( '\\r' )? '\\n' )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:605:11: ( '\\r' )? '\\n'
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:580:11: ( '\\r' )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:605:11: ( '\\r' )?
             int alt7=2;
             int LA7_0 = input.LA(1);
 
@@ -2881,7 +3167,7 @@ public class LLVMLexer extends Lexer {
             }
             switch (alt7) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:580:11: '\\r'
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:605:11: '\\r'
                     {
                     match('\r'); 
 
@@ -2910,10 +3196,10 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = WS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:581:5: ( ( ' ' | '\\t' )+ )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:581:9: ( ' ' | '\\t' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:606:5: ( ( ' ' | '\\t' )+ )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:606:9: ( ' ' | '\\t' )+
             {
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:581:9: ( ' ' | '\\t' )+
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:606:9: ( ' ' | '\\t' )+
             int cnt8=0;
             loop8:
             do {
@@ -2968,11 +3254,11 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = SINGLE_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:585:15: ( ';' (~ ( '\\r' | '\\n' ) )* )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:585:17: ';' (~ ( '\\r' | '\\n' ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:610:15: ( ';' (~ ( '\\r' | '\\n' ) )* )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:610:17: ';' (~ ( '\\r' | '\\n' ) )*
             {
             match(';'); 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:585:21: (~ ( '\\r' | '\\n' ) )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:610:21: (~ ( '\\r' | '\\n' ) )*
             loop9:
             do {
                 int alt9=2;
@@ -2985,7 +3271,7 @@ public class LLVMLexer extends Lexer {
 
                 switch (alt9) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:585:21: ~ ( '\\r' | '\\n' )
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:610:21: ~ ( '\\r' | '\\n' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -3022,12 +3308,12 @@ public class LLVMLexer extends Lexer {
         try {
             int _type = MULTI_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:590:3: ( '/*' ( . )* '*/' ( NEWLINE )? )
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:590:5: '/*' ( . )* '*/' ( NEWLINE )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:615:3: ( '/*' ( . )* '*/' ( NEWLINE )? )
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:615:5: '/*' ( . )* '*/' ( NEWLINE )?
             {
             match("/*"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:590:10: ( . )*
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:615:10: ( . )*
             loop10:
             do {
                 int alt10=2;
@@ -3052,7 +3338,7 @@ public class LLVMLexer extends Lexer {
 
                 switch (alt10) {
             	case 1 :
-            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:590:10: .
+            	    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:615:10: .
             	    {
             	    matchAny(); 
 
@@ -3066,7 +3352,7 @@ public class LLVMLexer extends Lexer {
 
             match("*/"); 
 
-            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:590:18: ( NEWLINE )?
+            // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:615:18: ( NEWLINE )?
             int alt11=2;
             int LA11_0 = input.LA(1);
 
@@ -3075,7 +3361,7 @@ public class LLVMLexer extends Lexer {
             }
             switch (alt11) {
                 case 1 :
-                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:590:18: NEWLINE
+                    // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:615:18: NEWLINE
                     {
                     mNEWLINE(); 
 
@@ -3097,8 +3383,8 @@ public class LLVMLexer extends Lexer {
     // $ANTLR end "MULTI_COMMENT"
 
     public void mTokens() throws RecognitionException {
-        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:8: ( T__23 | T__24 | T__25 | T__26 | T__27 | T__28 | T__29 | T__30 | T__31 | T__32 | T__33 | T__34 | T__35 | T__36 | T__37 | T__38 | T__39 | T__40 | T__41 | T__42 | T__43 | T__44 | T__45 | T__46 | T__47 | T__48 | T__49 | T__50 | T__51 | T__52 | T__53 | T__54 | T__55 | T__56 | T__57 | T__58 | T__59 | T__60 | T__61 | T__62 | T__63 | T__64 | T__65 | T__66 | T__67 | T__68 | T__69 | T__70 | T__71 | T__72 | T__73 | T__74 | T__75 | T__76 | T__77 | T__78 | T__79 | T__80 | T__81 | T__82 | T__83 | T__84 | T__85 | T__86 | T__87 | T__88 | T__89 | T__90 | T__91 | T__92 | T__93 | T__94 | T__95 | T__96 | T__97 | T__98 | T__99 | T__100 | T__101 | T__102 | T__103 | T__104 | T__105 | T__106 | T__107 | T__108 | T__109 | T__110 | T__111 | T__112 | T__113 | T__114 | T__115 | T__116 | T__117 | T__118 | T__119 | T__120 | T__121 | T__122 | T__123 | T__124 | T__125 | EQUALS | INT_TYPE | NUMBER | UNNAMED_ID | NAMED_ID | QUOTED_ID | DEFINE | LABEL | CHAR_LITERAL | STRING_LITERAL | CSTRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT )
-        int alt12=118;
+        // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:8: ( T__23 | T__24 | T__25 | T__26 | T__27 | T__28 | T__29 | T__30 | T__31 | T__32 | T__33 | T__34 | T__35 | T__36 | T__37 | T__38 | T__39 | T__40 | T__41 | T__42 | T__43 | T__44 | T__45 | T__46 | T__47 | T__48 | T__49 | T__50 | T__51 | T__52 | T__53 | T__54 | T__55 | T__56 | T__57 | T__58 | T__59 | T__60 | T__61 | T__62 | T__63 | T__64 | T__65 | T__66 | T__67 | T__68 | T__69 | T__70 | T__71 | T__72 | T__73 | T__74 | T__75 | T__76 | T__77 | T__78 | T__79 | T__80 | T__81 | T__82 | T__83 | T__84 | T__85 | T__86 | T__87 | T__88 | T__89 | T__90 | T__91 | T__92 | T__93 | T__94 | T__95 | T__96 | T__97 | T__98 | T__99 | T__100 | T__101 | T__102 | T__103 | T__104 | T__105 | T__106 | T__107 | T__108 | T__109 | T__110 | T__111 | T__112 | T__113 | T__114 | T__115 | T__116 | T__117 | T__118 | T__119 | T__120 | T__121 | T__122 | T__123 | T__124 | T__125 | T__126 | T__127 | T__128 | T__129 | T__130 | T__131 | T__132 | T__133 | T__134 | T__135 | T__136 | T__137 | T__138 | EQUALS | INT_TYPE | NUMBER | UNNAMED_ID | NAMED_ID | QUOTED_ID | DEFINE | LABEL | CHAR_LITERAL | STRING_LITERAL | CSTRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT )
+        int alt12=131;
         alt12 = dfa12.predict(input);
         switch (alt12) {
             case 1 :
@@ -3823,105 +4109,196 @@ public class LLVMLexer extends Lexer {
                 }
                 break;
             case 104 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:654: EQUALS
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:654: T__126
+                {
+                mT__126(); 
+
+                }
+                break;
+            case 105 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:661: T__127
+                {
+                mT__127(); 
+
+                }
+                break;
+            case 106 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:668: T__128
+                {
+                mT__128(); 
+
+                }
+                break;
+            case 107 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:675: T__129
+                {
+                mT__129(); 
+
+                }
+                break;
+            case 108 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:682: T__130
+                {
+                mT__130(); 
+
+                }
+                break;
+            case 109 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:689: T__131
+                {
+                mT__131(); 
+
+                }
+                break;
+            case 110 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:696: T__132
+                {
+                mT__132(); 
+
+                }
+                break;
+            case 111 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:703: T__133
+                {
+                mT__133(); 
+
+                }
+                break;
+            case 112 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:710: T__134
+                {
+                mT__134(); 
+
+                }
+                break;
+            case 113 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:717: T__135
+                {
+                mT__135(); 
+
+                }
+                break;
+            case 114 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:724: T__136
+                {
+                mT__136(); 
+
+                }
+                break;
+            case 115 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:731: T__137
+                {
+                mT__137(); 
+
+                }
+                break;
+            case 116 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:738: T__138
+                {
+                mT__138(); 
+
+                }
+                break;
+            case 117 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:745: EQUALS
                 {
                 mEQUALS(); 
 
                 }
                 break;
-            case 105 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:661: INT_TYPE
+            case 118 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:752: INT_TYPE
                 {
                 mINT_TYPE(); 
 
                 }
                 break;
-            case 106 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:670: NUMBER
+            case 119 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:761: NUMBER
                 {
                 mNUMBER(); 
 
                 }
                 break;
-            case 107 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:677: UNNAMED_ID
+            case 120 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:768: UNNAMED_ID
                 {
                 mUNNAMED_ID(); 
 
                 }
                 break;
-            case 108 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:688: NAMED_ID
+            case 121 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:779: NAMED_ID
                 {
                 mNAMED_ID(); 
 
                 }
                 break;
-            case 109 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:697: QUOTED_ID
+            case 122 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:788: QUOTED_ID
                 {
                 mQUOTED_ID(); 
 
                 }
                 break;
-            case 110 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:707: DEFINE
+            case 123 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:798: DEFINE
                 {
                 mDEFINE(); 
 
                 }
                 break;
-            case 111 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:714: LABEL
+            case 124 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:805: LABEL
                 {
                 mLABEL(); 
 
                 }
                 break;
-            case 112 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:720: CHAR_LITERAL
+            case 125 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:811: CHAR_LITERAL
                 {
                 mCHAR_LITERAL(); 
 
                 }
                 break;
-            case 113 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:733: STRING_LITERAL
+            case 126 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:824: STRING_LITERAL
                 {
                 mSTRING_LITERAL(); 
 
                 }
                 break;
-            case 114 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:748: CSTRING_LITERAL
+            case 127 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:839: CSTRING_LITERAL
                 {
                 mCSTRING_LITERAL(); 
 
                 }
                 break;
-            case 115 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:764: NEWLINE
+            case 128 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:855: NEWLINE
                 {
                 mNEWLINE(); 
 
                 }
                 break;
-            case 116 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:772: WS
+            case 129 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:863: WS
                 {
                 mWS(); 
 
                 }
                 break;
-            case 117 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:775: SINGLE_COMMENT
+            case 130 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:866: SINGLE_COMMENT
                 {
                 mSINGLE_COMMENT(); 
 
                 }
                 break;
-            case 118 :
-                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:790: MULTI_COMMENT
+            case 131 :
+                // /home/ejs/devel/emul/java/v9t9-java/eulang/org/ejs/eulang/llvm/parser/LLVM.g:1:881: MULTI_COMMENT
                 {
                 mMULTI_COMMENT(); 
 
@@ -3936,159 +4313,169 @@ public class LLVMLexer extends Lexer {
     protected DFA12 dfa12 = new DFA12(this);
     static final String DFA12_eotS =
         "\1\uffff\4\43\4\uffff\1\67\4\uffff\20\43\1\uffff\1\43\12\uffff\3"+
-        "\43\1\156\11\43\1\uffff\2\43\1\176\1\uffff\11\43\1\u008d\26\43\1"+
-        "\u00a9\7\43\1\u00b5\2\43\3\uffff\4\43\1\uffff\10\43\1\u00c7\4\43"+
-        "\1\u00cc\2\uffff\1\u00ce\6\43\1\u00d5\6\43\1\uffff\11\43\1\u00e8"+
-        "\1\43\1\u00ea\1\43\1\u00ec\15\43\1\uffff\10\43\1\u0104\1\u0105\1"+
-        "\43\1\uffff\1\43\1\u0108\1\u0109\3\43\1\u010d\5\43\1\u0113\2\43"+
-        "\1\u0117\1\u0118\1\uffff\4\43\1\uffff\1\43\1\uffff\5\43\1\u0123"+
-        "\1\uffff\7\43\1\u012c\3\43\1\u0131\1\u0132\2\43\1\u0135\1\u0136"+
-        "\1\43\1\uffff\1\43\1\uffff\1\u0139\1\uffff\4\43\1\u013f\1\u0140"+
-        "\1\u0141\1\u0142\1\u0143\1\43\1\u0145\1\u0146\11\43\1\u0151\1\43"+
-        "\2\uffff\2\43\2\uffff\2\43\1\u0158\1\uffff\5\43\1\uffff\1\u015e"+
-        "\2\43\2\uffff\12\43\1\uffff\5\43\1\u0170\2\43\1\uffff\1\43\1\u0174"+
-        "\2\43\2\uffff\2\43\2\uffff\1\43\1\u017a\1\uffff\3\43\1\u017e\1\43"+
-        "\5\uffff\1\43\2\uffff\1\43\1\u0182\10\43\1\uffff\1\u018b\3\43\1"+
-        "\u018f\1\u0190\1\uffff\4\43\1\u0195\1\uffff\2\43\1\u0198\1\43\1"+
-        "\u019a\1\u019b\5\43\1\u01a1\5\43\1\uffff\3\43\1\uffff\2\43\1\u01ad"+
-        "\1\43\1\u01af\1\uffff\1\43\1\u01b1\1\u01b2\1\uffff\1\u01b3\1\u01b4"+
-        "\1\43\1\uffff\1\u01b6\7\43\1\uffff\3\43\2\uffff\3\43\1\u01c4\1\uffff"+
-        "\2\43\1\uffff\1\43\2\uffff\5\43\1\uffff\1\u01cd\11\43\1\u01d7\1"+
-        "\uffff\1\u01d8\1\uffff\1\u01d9\4\uffff\1\u01da\1\uffff\1\u01db\6"+
-        "\43\1\u01e2\5\43\1\uffff\1\43\1\u01ea\1\u01eb\5\43\1\uffff\1\43"+
-        "\1\u01f2\1\u01f3\1\u01f4\1\43\1\u01f6\3\43\5\uffff\1\43\1\u01fb"+
-        "\1\43\1\u01fd\1\43\1\u01ff\1\uffff\1\u0200\1\u0201\1\43\1\u0203"+
-        "\1\u0204\2\43\2\uffff\1\u0207\1\43\1\u0209\2\43\1\u020c\3\uffff"+
-        "\1\43\1\uffff\3\43\1\u0211\1\uffff\1\43\1\uffff\1\u0213\3\uffff"+
-        "\1\u0214\2\uffff\2\43\1\uffff\1\43\1\uffff\1\u0218\1\43\1\uffff"+
-        "\1\u021a\3\43\1\uffff\1\43\2\uffff\3\43\1\uffff\1\43\1\uffff\1\u0223"+
-        "\4\43\1\u0228\1\43\1\u022a\1\uffff\4\43\1\uffff\1\43\1\uffff\3\43"+
-        "\1\u0233\4\43\1\uffff\2\43\1\u023a\1\u023b\2\43\2\uffff\3\43\1\u0241"+
-        "\1\43\1\uffff\1\u0243\1\uffff";
+        "\43\1\166\11\43\1\uffff\3\43\1\u0087\1\uffff\12\43\1\u0097\2\43"+
+        "\1\u009b\31\43\1\u00bd\2\43\1\u00c5\4\43\1\u00ca\2\43\3\uffff\4"+
+        "\43\1\uffff\10\43\1\u00dc\5\43\1\u00e2\2\uffff\1\u00e4\6\43\1\u00eb"+
+        "\7\43\1\uffff\3\43\1\uffff\6\43\1\u00ff\1\43\1\u0101\1\43\1\u0103"+
+        "\1\u0104\1\u0105\1\u0106\1\u0107\14\43\1\u0115\1\u0116\1\u0117\1"+
+        "\u0118\2\43\1\uffff\7\43\1\uffff\1\43\1\u0124\1\u0125\1\43\1\uffff"+
+        "\1\43\1\u0128\1\u0129\3\43\1\u012d\5\43\1\u0133\2\43\1\u0137\1\u0138"+
+        "\1\uffff\5\43\1\uffff\1\43\1\uffff\5\43\1\u0144\1\uffff\7\43\1\u014c"+
+        "\1\u014e\3\43\1\u0153\1\u0154\2\43\1\u0157\1\u0158\1\43\1\uffff"+
+        "\1\43\1\uffff\1\u015b\5\uffff\4\43\1\u0161\1\u0162\1\u0163\1\u0164"+
+        "\1\u0165\1\u0166\1\43\1\u0168\1\u0169\4\uffff\11\43\1\u0174\1\43"+
+        "\2\uffff\2\43\2\uffff\2\43\1\u017b\1\uffff\5\43\1\uffff\1\u0181"+
+        "\2\43\2\uffff\13\43\1\uffff\5\43\1\u0194\1\43\1\uffff\1\43\1\uffff"+
+        "\1\43\1\u0198\2\43\2\uffff\2\43\2\uffff\1\43\1\u019e\1\uffff\3\43"+
+        "\1\u01a2\1\43\6\uffff\1\43\2\uffff\1\43\1\u01a6\10\43\1\uffff\1"+
+        "\u01af\3\43\1\u01b3\1\u01b4\1\uffff\4\43\1\u01b9\1\uffff\2\43\1"+
+        "\u01bc\2\43\1\u01bf\1\u01c0\5\43\1\u01c6\5\43\1\uffff\3\43\1\uffff"+
+        "\2\43\1\u01d2\1\43\1\u01d4\1\uffff\1\43\1\u01d6\1\u01d7\1\uffff"+
+        "\1\u01d8\1\u01d9\1\43\1\uffff\1\u01db\7\43\1\uffff\3\43\2\uffff"+
+        "\3\43\1\u01e9\1\uffff\2\43\1\uffff\2\43\2\uffff\5\43\1\uffff\1\u01f3"+
+        "\11\43\1\u01fd\1\uffff\1\u01fe\1\uffff\1\u01ff\4\uffff\1\u0200\1"+
+        "\uffff\1\u0201\6\43\1\u0208\5\43\1\uffff\1\43\1\u0210\1\43\1\u0212"+
+        "\5\43\1\uffff\1\43\1\u0219\1\u021a\1\u021b\1\43\1\u021d\3\43\5\uffff"+
+        "\1\43\1\u0222\1\43\1\u0224\1\43\1\u0226\1\uffff\1\u0227\1\u0228"+
+        "\1\43\1\u022a\1\u022b\2\43\1\uffff\1\43\1\uffff\1\u022f\1\43\1\u0231"+
+        "\2\43\1\u0234\3\uffff\1\43\1\uffff\3\43\1\u0239\1\uffff\1\43\1\uffff"+
+        "\1\u023b\3\uffff\1\u023c\2\uffff\3\43\1\uffff\1\43\1\uffff\1\u0241"+
+        "\1\43\1\uffff\1\u0243\3\43\1\uffff\1\43\2\uffff\4\43\1\uffff\1\43"+
+        "\1\uffff\1\u024d\4\43\1\u0252\2\43\1\u0255\1\uffff\4\43\1\uffff"+
+        "\1\u025a\1\43\1\uffff\3\43\1\u025f\1\uffff\4\43\1\uffff\2\43\1\u0266"+
+        "\1\u0267\2\43\2\uffff\3\43\1\u026d\1\43\1\uffff\1\u026f\1\uffff";
     static final String DFA12_eofS =
-        "\u0244\uffff";
+        "\u0270\uffff";
     static final String DFA12_minS =
-        "\1\11\2\141\1\157\1\141\4\uffff\1\44\4\uffff\1\154\1\42\1\144\1"+
-        "\162\1\60\1\145\1\170\1\145\1\144\1\141\1\144\2\151\1\141\1\160"+
+        "\1\11\2\141\1\157\1\141\4\uffff\1\44\4\uffff\1\145\1\42\1\144\1"+
+        "\162\1\60\1\145\1\161\1\145\1\144\1\141\1\144\2\151\1\141\1\160"+
         "\1\145\1\uffff\1\165\2\uffff\1\42\7\uffff\1\162\1\151\1\160\1\44"+
         "\1\164\1\154\1\146\1\151\1\142\1\156\1\141\1\150\1\162\1\uffff\1"+
-        "\157\1\154\1\40\1\uffff\1\144\1\141\1\160\1\151\1\150\1\144\1\151"+
-        "\1\162\1\154\1\44\2\141\1\162\1\170\1\147\1\145\1\160\1\157\1\142"+
-        "\1\151\1\154\1\145\1\144\2\165\1\151\1\145\1\164\1\151\1\145\1\164"+
-        "\1\166\1\44\1\144\1\141\1\163\1\153\2\167\1\164\1\44\1\141\1\154"+
-        "\3\uffff\1\147\1\160\1\156\1\145\1\uffff\1\141\1\145\1\141\1\144"+
-        "\1\145\1\153\1\144\1\162\1\44\1\142\1\163\1\155\1\144\1\44\2\uffff"+
-        "\1\44\1\151\1\145\1\147\1\141\1\157\1\162\1\44\1\166\2\164\2\145"+
-        "\1\151\1\uffff\1\153\1\145\1\143\1\157\2\164\1\157\1\156\1\155\1"+
-        "\44\1\162\1\44\1\166\1\44\1\157\1\170\1\164\1\144\1\142\1\154\1"+
-        "\166\1\155\1\157\1\166\1\155\1\143\1\141\1\uffff\1\144\1\154\1\141"+
-        "\1\155\1\145\1\156\1\164\1\145\2\44\1\163\1\uffff\1\144\2\44\1\145"+
+        "\157\1\164\1\154\1\40\1\uffff\1\144\1\141\1\160\1\151\1\150\1\144"+
+        "\1\151\1\162\1\154\1\155\1\44\2\141\1\44\1\162\1\170\1\147\1\145"+
+        "\1\160\1\157\1\142\1\151\1\154\3\145\1\144\1\155\2\165\1\151\1\145"+
+        "\1\164\1\151\3\145\1\164\1\166\1\44\1\144\1\141\1\44\1\153\2\167"+
+        "\1\164\1\44\1\141\1\154\3\uffff\1\147\1\160\1\156\1\145\1\uffff"+
+        "\1\141\1\145\1\141\1\144\1\145\1\153\1\144\1\162\1\44\1\142\1\145"+
+        "\1\163\1\155\1\144\1\44\2\uffff\1\44\1\151\1\145\1\147\1\141\1\157"+
+        "\1\162\1\44\1\166\2\164\2\145\1\151\1\160\1\uffff\1\153\1\145\1"+
+        "\143\1\uffff\1\157\2\164\1\157\1\156\1\155\1\44\1\162\1\44\1\166"+
+        "\5\44\1\157\1\170\1\164\1\144\1\160\1\142\1\154\1\166\1\155\1\157"+
+        "\1\166\1\155\4\44\1\143\1\141\1\uffff\1\144\1\154\1\141\1\155\1"+
+        "\145\1\156\1\164\1\uffff\1\145\2\44\1\163\1\uffff\1\144\2\44\1\145"+
         "\1\154\1\143\1\44\1\154\1\155\1\170\1\165\1\156\1\44\1\154\1\145"+
-        "\2\44\1\uffff\1\141\1\164\1\157\1\143\1\uffff\1\163\1\uffff\1\154"+
-        "\2\156\1\171\1\143\1\44\1\uffff\1\141\1\145\1\157\1\162\1\157\1"+
-        "\147\1\156\1\44\1\162\1\164\1\145\2\44\1\146\1\145\2\44\1\145\1"+
-        "\uffff\1\145\1\uffff\1\44\1\uffff\1\165\1\163\1\164\1\143\5\44\1"+
-        "\146\2\44\1\141\1\154\1\145\1\151\1\160\1\154\1\160\1\144\1\167"+
-        "\1\44\1\144\2\uffff\1\151\1\156\2\uffff\1\164\1\145\1\44\1\uffff"+
-        "\1\141\2\160\1\154\1\145\1\uffff\1\44\1\162\1\156\2\uffff\1\154"+
-        "\1\141\1\156\1\143\1\160\1\141\1\144\2\163\1\141\1\uffff\1\164\1"+
-        "\143\1\151\1\156\1\160\1\44\1\145\1\157\1\uffff\1\156\1\44\1\156"+
-        "\1\170\2\uffff\1\160\1\170\2\uffff\1\161\1\44\1\uffff\1\156\2\151"+
-        "\1\44\1\143\5\uffff\1\160\2\uffff\1\163\1\44\1\156\1\141\1\164\1"+
-        "\151\1\154\1\165\1\172\1\151\1\uffff\1\44\1\172\1\157\1\156\2\44"+
-        "\1\uffff\1\171\2\157\1\164\1\44\1\uffff\1\137\1\143\1\44\1\156\2"+
-        "\44\1\141\1\142\1\151\1\164\1\151\1\44\1\145\1\164\1\156\1\141\1"+
-        "\164\1\uffff\1\150\1\144\1\137\1\uffff\1\151\1\164\1\44\1\164\1"+
-        "\44\1\uffff\1\143\2\44\1\uffff\2\44\1\164\1\uffff\1\44\1\163\1\165"+
-        "\1\156\1\151\1\162\1\157\1\156\1\uffff\1\145\1\156\1\154\2\uffff"+
-        "\1\157\2\162\1\44\1\uffff\1\160\1\145\1\uffff\1\164\2\uffff\1\143"+
-        "\1\154\1\156\1\141\1\156\1\uffff\1\44\1\145\1\164\1\154\1\162\1"+
-        "\151\1\162\1\167\1\154\1\164\1\44\1\uffff\1\44\1\uffff\1\44\4\uffff"+
-        "\1\44\1\uffff\1\44\1\162\1\145\1\143\2\156\1\144\1\44\1\145\1\171"+
-        "\1\165\2\164\1\uffff\1\162\2\44\2\145\1\147\1\143\1\154\1\uffff"+
-        "\1\144\3\44\1\156\1\44\1\145\1\154\1\151\5\uffff\1\145\1\44\1\151"+
-        "\1\44\1\145\1\44\1\uffff\2\44\1\164\2\44\1\151\1\157\2\uffff\1\44"+
-        "\1\137\1\44\1\153\1\151\1\44\3\uffff\1\164\1\uffff\1\141\1\171\1"+
-        "\141\1\44\1\uffff\1\164\1\uffff\1\44\3\uffff\1\44\2\uffff\1\166"+
-        "\1\144\1\uffff\1\145\1\uffff\1\44\1\156\1\uffff\1\44\1\153\1\137"+
-        "\1\154\1\uffff\1\146\2\uffff\1\141\1\162\1\170\1\uffff\1\145\1\uffff"+
-        "\1\44\1\166\1\151\1\154\1\164\1\44\1\164\1\44\1\uffff\1\151\1\172"+
-        "\1\157\1\145\1\uffff\1\145\1\uffff\1\163\1\145\1\141\1\44\1\162"+
-        "\1\151\1\162\1\164\1\uffff\1\156\1\142\2\44\1\141\1\154\2\uffff"+
-        "\1\154\1\145\1\154\1\44\1\171\1\uffff\1\44\1\uffff";
+        "\2\44\1\uffff\1\141\1\154\1\164\1\157\1\143\1\uffff\1\163\1\uffff"+
+        "\1\154\2\156\1\171\1\143\1\44\1\uffff\1\141\1\145\1\157\1\162\1"+
+        "\157\1\147\1\156\2\44\1\162\1\164\1\145\2\44\1\146\1\145\2\44\1"+
+        "\145\1\uffff\1\145\1\uffff\1\44\5\uffff\1\165\1\163\1\164\1\143"+
+        "\6\44\1\146\2\44\4\uffff\1\141\1\154\1\145\1\151\1\160\1\154\1\160"+
+        "\1\144\1\167\1\44\1\144\2\uffff\1\151\1\156\2\uffff\1\164\1\145"+
+        "\1\44\1\uffff\1\141\2\160\1\154\1\145\1\uffff\1\44\1\162\1\156\2"+
+        "\uffff\1\154\1\145\1\141\1\156\1\143\1\160\1\141\1\144\2\163\1\141"+
+        "\1\uffff\1\164\1\143\1\151\1\156\1\160\1\44\1\145\1\uffff\1\157"+
+        "\1\uffff\1\156\1\44\1\156\1\170\2\uffff\1\160\1\170\2\uffff\1\161"+
+        "\1\44\1\uffff\1\156\2\151\1\44\1\143\6\uffff\1\160\2\uffff\1\163"+
+        "\1\44\1\156\1\141\1\164\1\151\1\154\1\165\1\172\1\151\1\uffff\1"+
+        "\44\1\172\1\157\1\156\2\44\1\uffff\1\171\2\157\1\164\1\44\1\uffff"+
+        "\1\137\1\143\1\44\1\155\1\156\2\44\1\141\1\142\1\151\1\164\1\151"+
+        "\1\44\1\145\1\164\1\156\1\141\1\164\1\uffff\1\150\1\144\1\137\1"+
+        "\uffff\1\151\1\164\1\44\1\164\1\44\1\uffff\1\143\2\44\1\uffff\2"+
+        "\44\1\164\1\uffff\1\44\1\163\1\165\1\156\1\151\1\162\1\157\1\156"+
+        "\1\uffff\1\145\1\156\1\154\2\uffff\1\157\2\162\1\44\1\uffff\1\160"+
+        "\1\145\1\uffff\1\145\1\164\2\uffff\1\143\1\154\1\156\1\141\1\156"+
+        "\1\uffff\1\44\1\145\1\164\1\154\1\162\1\151\1\162\1\167\1\154\1"+
+        "\164\1\44\1\uffff\1\44\1\uffff\1\44\4\uffff\1\44\1\uffff\1\44\1"+
+        "\162\1\145\1\143\2\156\1\144\1\44\1\145\1\171\1\165\2\164\1\uffff"+
+        "\1\162\1\44\1\156\1\44\2\145\1\147\1\143\1\154\1\uffff\1\144\3\44"+
+        "\1\156\1\44\1\145\1\154\1\151\5\uffff\1\145\1\44\1\151\1\44\1\145"+
+        "\1\44\1\uffff\2\44\1\164\2\44\1\151\1\157\1\uffff\1\164\1\uffff"+
+        "\1\44\1\137\1\44\1\153\1\151\1\44\3\uffff\1\164\1\uffff\1\141\1"+
+        "\171\1\141\1\44\1\uffff\1\164\1\uffff\1\44\3\uffff\1\44\2\uffff"+
+        "\1\166\1\144\1\160\1\uffff\1\145\1\uffff\1\44\1\156\1\uffff\1\44"+
+        "\1\153\1\137\1\154\1\uffff\1\146\2\uffff\1\141\1\162\1\164\1\170"+
+        "\1\uffff\1\145\1\uffff\1\44\1\166\1\151\1\154\1\164\1\44\1\162\1"+
+        "\164\1\44\1\uffff\1\151\1\172\1\157\1\145\1\uffff\1\44\1\145\1\uffff"+
+        "\1\163\1\145\1\141\1\44\1\uffff\1\162\1\151\1\162\1\164\1\uffff"+
+        "\1\156\1\142\2\44\1\141\1\154\2\uffff\1\154\1\145\1\154\1\44\1\171"+
+        "\1\uffff\1\44\1\uffff";
     static final String DFA12_maxS =
         "\1\175\1\171\1\154\1\157\1\163\4\uffff\1\172\4\uffff\1\154\1\157"+
         "\1\166\1\164\1\156\1\145\1\170\1\145\1\165\1\163\1\162\1\171\1\151"+
         "\1\165\1\162\1\145\1\uffff\1\165\2\uffff\1\172\7\uffff\1\162\1\165"+
         "\1\160\1\172\1\164\1\154\1\146\1\151\1\142\1\156\1\141\1\150\1\162"+
-        "\1\uffff\1\157\1\156\1\172\1\uffff\1\144\1\141\1\160\1\167\1\150"+
-        "\1\144\1\157\1\162\1\164\1\172\1\141\1\164\2\170\1\164\1\145\1\160"+
-        "\1\157\1\142\1\151\1\154\1\164\1\163\2\165\1\151\1\145\1\164\1\151"+
-        "\1\145\1\164\1\166\1\172\1\144\1\165\1\163\1\153\2\167\1\164\1\172"+
-        "\1\164\1\154\3\uffff\1\147\1\160\1\156\1\145\1\uffff\1\141\2\151"+
-        "\1\144\1\145\1\153\1\144\1\162\1\172\1\142\1\163\1\155\1\144\1\172"+
-        "\2\uffff\1\172\1\151\1\145\1\147\1\141\1\157\1\162\1\172\1\166\3"+
-        "\164\1\145\1\151\1\uffff\1\153\1\145\1\143\1\157\2\164\1\157\1\156"+
-        "\1\164\1\172\1\162\1\172\1\166\1\172\1\162\1\170\1\164\1\144\1\142"+
-        "\1\154\1\166\1\155\1\157\1\166\1\155\1\143\1\141\1\uffff\1\144\1"+
-        "\154\1\141\1\156\1\145\1\156\1\164\1\145\2\172\1\163\1\uffff\1\144"+
-        "\2\172\1\145\1\154\1\143\1\172\1\154\1\155\1\170\1\165\1\156\1\172"+
-        "\1\154\1\157\2\172\1\uffff\1\141\1\164\1\157\1\143\1\uffff\1\163"+
-        "\1\uffff\1\154\2\156\1\171\1\143\1\172\1\uffff\1\141\1\145\1\157"+
-        "\1\162\1\157\1\147\1\156\1\172\1\162\1\164\1\151\2\172\1\146\1\145"+
-        "\2\172\1\145\1\uffff\1\145\1\uffff\1\172\1\uffff\2\165\1\164\1\143"+
-        "\5\172\1\146\2\172\1\141\1\154\1\145\1\151\1\160\1\154\1\160\1\164"+
-        "\1\167\1\172\1\144\2\uffff\1\151\1\157\2\uffff\1\164\1\145\1\172"+
-        "\1\uffff\1\141\2\160\1\154\1\145\1\uffff\1\172\1\162\1\156\2\uffff"+
-        "\1\154\1\141\1\156\1\143\1\160\1\141\1\144\2\163\1\141\1\uffff\1"+
-        "\164\1\143\1\151\1\156\1\160\1\172\1\145\1\157\1\uffff\1\156\1\172"+
-        "\1\156\1\170\2\uffff\1\160\1\170\2\uffff\1\161\1\172\1\uffff\1\156"+
-        "\2\151\1\172\1\143\5\uffff\1\160\2\uffff\1\163\1\172\1\156\1\141"+
-        "\1\164\1\151\1\154\1\165\1\172\1\151\1\uffff\2\172\1\157\1\156\2"+
-        "\172\1\uffff\1\171\2\157\1\164\1\172\1\uffff\1\137\1\143\1\172\1"+
-        "\156\2\172\1\141\1\142\1\151\1\164\1\151\1\172\1\145\1\164\1\156"+
-        "\1\141\1\164\1\uffff\1\150\1\144\1\141\1\uffff\1\151\1\164\1\172"+
-        "\1\164\1\172\1\uffff\1\143\2\172\1\uffff\2\172\1\164\1\uffff\1\172"+
-        "\1\163\1\165\1\156\1\151\1\162\1\157\1\156\1\uffff\1\145\1\156\1"+
-        "\154\2\uffff\1\157\2\162\1\172\1\uffff\1\160\1\145\1\uffff\1\164"+
-        "\2\uffff\1\143\1\154\1\156\1\141\1\156\1\uffff\1\172\1\145\1\164"+
-        "\1\154\1\162\1\151\1\162\1\167\1\154\1\164\1\172\1\uffff\1\172\1"+
-        "\uffff\1\172\4\uffff\1\172\1\uffff\1\172\1\162\1\145\1\143\2\156"+
-        "\1\144\1\172\1\145\1\171\1\165\2\164\1\uffff\1\162\2\172\2\145\1"+
-        "\147\1\143\1\154\1\uffff\1\144\3\172\1\156\1\172\1\145\1\154\1\151"+
-        "\5\uffff\1\145\1\172\1\151\1\172\1\145\1\172\1\uffff\2\172\1\164"+
-        "\2\172\1\151\1\157\2\uffff\1\172\1\137\1\172\1\153\1\151\1\172\3"+
-        "\uffff\1\164\1\uffff\1\141\1\171\1\141\1\172\1\uffff\1\164\1\uffff"+
-        "\1\172\3\uffff\1\172\2\uffff\1\166\1\144\1\uffff\1\145\1\uffff\1"+
-        "\172\1\156\1\uffff\1\172\1\153\1\137\1\154\1\uffff\1\146\2\uffff"+
-        "\1\141\1\162\1\170\1\uffff\1\145\1\uffff\1\172\1\166\1\151\1\154"+
-        "\1\164\1\172\1\164\1\172\1\uffff\1\151\1\172\1\157\1\145\1\uffff"+
-        "\1\145\1\uffff\1\163\1\145\1\141\1\172\1\162\1\151\1\162\1\164\1"+
-        "\uffff\1\156\1\142\2\172\1\141\1\154\2\uffff\1\154\1\145\1\154\1"+
-        "\172\1\171\1\uffff\1\172\1\uffff";
+        "\1\uffff\1\157\1\164\1\156\1\172\1\uffff\1\144\1\141\1\160\1\167"+
+        "\1\150\1\144\1\157\1\162\1\164\1\155\1\172\1\141\1\164\1\172\2\170"+
+        "\1\164\1\145\1\160\1\157\1\142\1\151\1\154\3\164\1\163\1\155\2\165"+
+        "\1\151\1\145\1\164\1\151\1\145\3\164\1\166\1\172\1\144\1\165\1\172"+
+        "\1\153\2\167\1\164\1\172\1\164\1\154\3\uffff\1\147\1\160\1\156\1"+
+        "\145\1\uffff\1\141\2\151\1\144\1\145\1\153\1\144\1\162\1\172\1\142"+
+        "\1\145\1\163\1\155\1\144\1\172\2\uffff\1\172\1\151\1\145\1\147\1"+
+        "\141\1\157\1\162\1\172\1\166\3\164\1\145\1\151\1\160\1\uffff\1\153"+
+        "\1\145\1\143\1\uffff\1\157\2\164\1\157\1\156\1\164\1\172\1\162\1"+
+        "\172\1\166\5\172\1\162\1\170\1\164\1\144\1\160\1\142\1\154\1\166"+
+        "\1\155\1\157\1\166\1\155\4\172\1\143\1\141\1\uffff\1\144\1\154\1"+
+        "\141\1\156\1\145\1\156\1\164\1\uffff\1\145\2\172\1\163\1\uffff\1"+
+        "\144\2\172\1\145\1\154\1\143\1\172\1\154\1\155\1\170\1\165\1\156"+
+        "\1\172\1\154\1\157\2\172\1\uffff\1\141\1\154\1\164\1\157\1\143\1"+
+        "\uffff\1\163\1\uffff\1\154\2\156\1\171\1\143\1\172\1\uffff\1\141"+
+        "\1\145\1\157\1\162\1\157\1\147\1\156\2\172\1\162\1\164\1\151\2\172"+
+        "\1\146\1\145\2\172\1\145\1\uffff\1\145\1\uffff\1\172\5\uffff\2\165"+
+        "\1\164\1\143\6\172\1\146\2\172\4\uffff\1\141\1\154\1\145\1\151\1"+
+        "\160\1\154\1\160\1\164\1\167\1\172\1\144\2\uffff\1\151\1\157\2\uffff"+
+        "\1\164\1\145\1\172\1\uffff\1\141\2\160\1\154\1\145\1\uffff\1\172"+
+        "\1\162\1\156\2\uffff\1\154\1\145\1\141\1\156\1\143\1\160\1\141\1"+
+        "\144\2\163\1\141\1\uffff\1\164\1\143\1\151\1\156\1\160\1\172\1\145"+
+        "\1\uffff\1\157\1\uffff\1\156\1\172\1\156\1\170\2\uffff\1\160\1\170"+
+        "\2\uffff\1\161\1\172\1\uffff\1\156\2\151\1\172\1\143\6\uffff\1\160"+
+        "\2\uffff\1\163\1\172\1\156\1\141\1\164\1\151\1\154\1\165\1\172\1"+
+        "\151\1\uffff\2\172\1\157\1\156\2\172\1\uffff\1\171\2\157\1\164\1"+
+        "\172\1\uffff\1\137\1\143\1\172\1\155\1\156\2\172\1\141\1\142\1\151"+
+        "\1\164\1\151\1\172\1\145\1\164\1\156\1\141\1\164\1\uffff\1\150\1"+
+        "\144\1\141\1\uffff\1\151\1\164\1\172\1\164\1\172\1\uffff\1\143\2"+
+        "\172\1\uffff\2\172\1\164\1\uffff\1\172\1\163\1\165\1\156\1\151\1"+
+        "\162\1\157\1\156\1\uffff\1\145\1\156\1\154\2\uffff\1\157\2\162\1"+
+        "\172\1\uffff\1\160\1\145\1\uffff\1\145\1\164\2\uffff\1\143\1\154"+
+        "\1\156\1\141\1\156\1\uffff\1\172\1\145\1\164\1\154\1\162\1\151\1"+
+        "\162\1\167\1\154\1\164\1\172\1\uffff\1\172\1\uffff\1\172\4\uffff"+
+        "\1\172\1\uffff\1\172\1\162\1\145\1\143\2\156\1\144\1\172\1\145\1"+
+        "\171\1\165\2\164\1\uffff\1\162\1\172\1\156\1\172\2\145\1\147\1\143"+
+        "\1\154\1\uffff\1\144\3\172\1\156\1\172\1\145\1\154\1\151\5\uffff"+
+        "\1\145\1\172\1\151\1\172\1\145\1\172\1\uffff\2\172\1\164\2\172\1"+
+        "\151\1\157\1\uffff\1\164\1\uffff\1\172\1\137\1\172\1\153\1\151\1"+
+        "\172\3\uffff\1\164\1\uffff\1\141\1\171\1\141\1\172\1\uffff\1\164"+
+        "\1\uffff\1\172\3\uffff\1\172\2\uffff\1\166\1\144\1\160\1\uffff\1"+
+        "\145\1\uffff\1\172\1\156\1\uffff\1\172\1\153\1\137\1\154\1\uffff"+
+        "\1\146\2\uffff\1\141\1\162\1\164\1\170\1\uffff\1\145\1\uffff\1\172"+
+        "\1\166\1\151\1\154\1\164\1\172\1\162\1\164\1\172\1\uffff\1\151\1"+
+        "\172\1\157\1\145\1\uffff\1\172\1\145\1\uffff\1\163\1\145\1\141\1"+
+        "\172\1\uffff\1\162\1\151\1\162\1\164\1\uffff\1\156\1\142\2\172\1"+
+        "\141\1\154\2\uffff\1\154\1\145\1\154\1\172\1\171\1\uffff\1\172\1"+
+        "\uffff";
     static final String DFA12_acceptS =
         "\5\uffff\1\7\1\10\1\11\1\12\1\uffff\1\14\1\15\1\16\1\17\20\uffff"+
-        "\1\115\1\uffff\1\150\1\152\1\uffff\1\157\1\160\1\161\1\163\1\164"+
-        "\1\165\1\166\15\uffff\1\13\3\uffff\1\162\53\uffff\1\153\1\154\1"+
-        "\155\4\uffff\1\42\16\uffff\1\65\1\66\16\uffff\1\151\33\uffff\1\147"+
-        "\13\uffff\1\142\21\uffff\1\143\4\uffff\1\62\1\uffff\1\122\6\uffff"+
-        "\1\141\22\uffff\1\110\1\uffff\1\124\1\uffff\1\136\27\uffff\1\144"+
-        "\1\145\2\uffff\1\120\1\126\3\uffff\1\4\5\uffff\1\5\3\uffff\1\121"+
-        "\1\137\12\uffff\1\140\10\uffff\1\30\4\uffff\1\44\1\45\2\uffff\1"+
-        "\73\1\134\2\uffff\1\131\5\uffff\1\123\1\125\1\127\1\132\1\135\1"+
-        "\uffff\1\130\1\133\12\uffff\1\76\6\uffff\1\43\5\uffff\1\6\21\uffff"+
-        "\1\71\3\uffff\1\146\5\uffff\1\117\3\uffff\1\47\3\uffff\1\72\10\uffff"+
-        "\1\114\3\uffff\1\1\1\3\4\uffff\1\156\2\uffff\1\20\1\uffff\1\31\1"+
-        "\64\5\uffff\1\116\13\uffff\1\53\1\uffff\1\111\1\uffff\1\50\1\51"+
-        "\1\63\1\52\1\uffff\1\60\15\uffff\1\57\10\uffff\1\23\11\uffff\1\67"+
-        "\1\70\1\46\1\56\1\74\6\uffff\1\103\7\uffff\1\27\1\21\6\uffff\1\54"+
-        "\1\25\1\55\1\uffff\1\35\4\uffff\1\102\1\uffff\1\104\1\uffff\1\105"+
-        "\1\106\1\107\1\uffff\1\37\1\40\2\uffff\1\22\1\uffff\1\32\2\uffff"+
-        "\1\61\4\uffff\1\75\1\uffff\1\112\1\2\3\uffff\1\77\1\uffff\1\101"+
-        "\10\uffff\1\33\4\uffff\1\34\1\uffff\1\100\10\uffff\1\24\6\uffff"+
+        "\1\115\1\uffff\1\165\1\167\1\uffff\1\174\1\175\1\176\1\u0080\1\u0081"+
+        "\1\u0082\1\u0083\15\uffff\1\13\4\uffff\1\177\62\uffff\1\172\1\171"+
+        "\1\170\4\uffff\1\42\17\uffff\1\65\1\66\17\uffff\1\166\3\uffff\1"+
+        "\152\41\uffff\1\164\7\uffff\1\153\4\uffff\1\145\21\uffff\1\146\5"+
+        "\uffff\1\62\1\uffff\1\125\6\uffff\1\144\23\uffff\1\110\1\uffff\1"+
+        "\127\1\uffff\1\141\1\160\1\161\1\162\1\163\15\uffff\1\154\1\155"+
+        "\1\156\1\157\13\uffff\1\147\1\150\2\uffff\1\120\1\131\3\uffff\1"+
+        "\4\5\uffff\1\5\3\uffff\1\121\1\142\13\uffff\1\143\7\uffff\1\122"+
+        "\1\uffff\1\30\4\uffff\1\44\1\45\2\uffff\1\73\1\137\2\uffff\1\134"+
+        "\5\uffff\1\126\1\123\1\130\1\132\1\135\1\140\1\uffff\1\133\1\136"+
+        "\12\uffff\1\76\6\uffff\1\43\5\uffff\1\6\22\uffff\1\71\3\uffff\1"+
+        "\151\5\uffff\1\117\3\uffff\1\47\3\uffff\1\72\10\uffff\1\114\3\uffff"+
+        "\1\1\1\3\4\uffff\1\173\2\uffff\1\20\2\uffff\1\31\1\64\5\uffff\1"+
+        "\116\13\uffff\1\53\1\uffff\1\111\1\uffff\1\50\1\51\1\63\1\52\1\uffff"+
+        "\1\60\15\uffff\1\57\11\uffff\1\23\11\uffff\1\67\1\70\1\46\1\56\1"+
+        "\74\6\uffff\1\103\7\uffff\1\27\1\uffff\1\21\6\uffff\1\54\1\25\1"+
+        "\55\1\uffff\1\35\4\uffff\1\102\1\uffff\1\104\1\uffff\1\105\1\106"+
+        "\1\107\1\uffff\1\37\1\40\3\uffff\1\22\1\uffff\1\32\2\uffff\1\61"+
+        "\4\uffff\1\75\1\uffff\1\112\1\2\4\uffff\1\77\1\uffff\1\101\11\uffff"+
+        "\1\33\4\uffff\1\34\2\uffff\1\100\4\uffff\1\124\4\uffff\1\24\6\uffff"+
         "\1\41\1\113\5\uffff\1\36\1\uffff\1\26";
     static final String DFA12_specialS =
-        "\u0244\uffff}>";
+        "\u0270\uffff}>";
     static final String[] DFA12_transitionS = {
             "\1\47\1\46\2\uffff\1\46\22\uffff\1\47\1\uffff\1\45\1\uffff\1"+
             "\43\1\42\1\uffff\1\44\1\13\1\14\1\5\1\uffff\1\15\1\41\1\43\1"+
@@ -4110,370 +4497,361 @@ public class LLVMLexer extends Lexer {
             "",
             "",
             "",
-            "\1\70",
-            "\1\73\100\uffff\1\72\13\uffff\1\71",
-            "\1\74\7\uffff\1\77\1\uffff\1\101\1\uffff\1\76\2\uffff\1\100"+
-            "\2\uffff\1\75",
-            "\1\102\1\uffff\1\103",
-            "\12\105\64\uffff\1\104",
-            "\1\106",
-            "\1\107",
+            "\1\71\6\uffff\1\70",
+            "\1\74\100\uffff\1\73\13\uffff\1\72",
+            "\1\75\7\uffff\1\100\1\uffff\1\102\1\uffff\1\77\2\uffff\1\101"+
+            "\2\uffff\1\76",
+            "\1\103\1\uffff\1\104",
+            "\12\107\51\uffff\1\106\12\uffff\1\105",
             "\1\110",
-            "\1\117\1\111\2\uffff\1\120\1\112\10\uffff\1\113\1\114\1\115"+
-            "\1\116",
-            "\1\122\2\uffff\1\125\10\uffff\1\124\2\uffff\1\121\1\uffff\1"+
-            "\126\1\123",
-            "\1\130\4\uffff\1\127\10\uffff\1\131",
-            "\1\132\10\uffff\1\134\6\uffff\1\133",
-            "\1\135",
-            "\1\140\3\uffff\1\137\11\uffff\1\136\3\uffff\1\142\1\uffff\1"+
-            "\141",
-            "\1\143\1\uffff\1\144",
+            "\1\112\6\uffff\1\111",
+            "\1\113",
+            "\1\122\1\114\1\uffff\1\124\1\123\1\115\2\uffff\1\125\5\uffff"+
+            "\1\116\1\117\1\120\1\121",
+            "\1\127\1\uffff\1\130\1\133\10\uffff\1\132\2\uffff\1\126\1\uffff"+
+            "\1\134\1\131",
+            "\1\136\2\uffff\1\140\1\uffff\1\135\2\uffff\1\141\5\uffff\1"+
+            "\137",
+            "\1\142\10\uffff\1\144\6\uffff\1\143",
             "\1\145",
-            "",
-            "\1\146",
-            "",
-            "",
-            "\1\151\1\uffff\1\150\11\uffff\1\150\1\uffff\12\147\7\uffff"+
-            "\32\150\4\uffff\1\150\1\uffff\32\150",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "\1\152",
-            "\1\153\13\uffff\1\154",
+            "\1\150\3\uffff\1\147\11\uffff\1\146\3\uffff\1\152\1\uffff\1"+
+            "\151",
+            "\1\153\1\uffff\1\154",
             "\1\155",
+            "",
+            "\1\156",
+            "",
+            "",
+            "\1\157\1\uffff\1\160\11\uffff\1\160\1\uffff\12\161\7\uffff"+
+            "\32\160\4\uffff\1\160\1\uffff\32\160",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\1\162",
+            "\1\163\13\uffff\1\164",
+            "\1\165",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\157",
-            "\1\160",
-            "\1\161",
-            "\1\162",
-            "\1\163",
-            "\1\164",
-            "\1\165",
-            "\1\166",
             "\1\167",
-            "",
             "\1\170",
-            "\1\173\1\172\1\171",
-            "\1\175\3\uffff\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32"+
-            "\43\4\uffff\1\43\1\uffff\2\43\1\174\27\43",
-            "",
+            "\1\171",
+            "\1\172",
+            "\1\173",
+            "\1\174",
+            "\1\175",
+            "\1\176",
             "\1\177",
+            "",
             "\1\u0080",
             "\1\u0081",
-            "\1\u0082\2\uffff\1\u0084\12\uffff\1\u0083",
-            "\1\u0085",
-            "\1\u0086",
-            "\1\u0087\5\uffff\1\u0088",
+            "\1\u0084\1\u0083\1\u0082",
+            "\1\u0086\3\uffff\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32"+
+            "\43\4\uffff\1\43\1\uffff\2\43\1\u0085\27\43",
+            "",
+            "\1\u0088",
             "\1\u0089",
-            "\1\u008c\5\uffff\1\u008b\1\uffff\1\u008a",
-            "\1\43\11\uffff\1\43\1\uffff\12\105\7\uffff\32\43\4\uffff\1"+
-            "\43\1\uffff\32\43",
+            "\1\u008a",
+            "\1\u008b\2\uffff\1\u008d\12\uffff\1\u008c",
             "\1\u008e",
-            "\1\u0090\22\uffff\1\u008f",
-            "\1\u0091\5\uffff\1\u0092",
-            "\1\u0093",
-            "\1\u0095\14\uffff\1\u0094",
+            "\1\u008f",
+            "\1\u0090\5\uffff\1\u0091",
+            "\1\u0092",
+            "\1\u0095\5\uffff\1\u0094\1\uffff\1\u0093",
             "\1\u0096",
-            "\1\u0097",
+            "\1\43\11\uffff\1\43\1\uffff\12\107\7\uffff\32\43\4\uffff\1"+
+            "\43\1\uffff\32\43",
             "\1\u0098",
-            "\1\u0099",
-            "\1\u009a",
-            "\1\u009b",
-            "\1\u009d\16\uffff\1\u009c",
-            "\1\u009f\16\uffff\1\u009e",
-            "\1\u00a0",
+            "\1\u009a\22\uffff\1\u0099",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u009c\5\uffff\1\u009d",
+            "\1\u009e",
+            "\1\u00a0\14\uffff\1\u009f",
             "\1\u00a1",
             "\1\u00a2",
             "\1\u00a3",
             "\1\u00a4",
             "\1\u00a5",
             "\1\u00a6",
-            "\1\u00a7",
-            "\1\u00a8",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u00aa",
-            "\1\u00ab\1\uffff\1\u00ac\5\uffff\1\u00ad\10\uffff\1\u00ae\2"+
-            "\uffff\1\u00af",
+            "\1\u00a8\16\uffff\1\u00a7",
+            "\1\u00aa\16\uffff\1\u00a9",
+            "\1\u00ac\16\uffff\1\u00ab",
+            "\1\u00ae\16\uffff\1\u00ad",
+            "\1\u00af",
             "\1\u00b0",
             "\1\u00b1",
             "\1\u00b2",
             "\1\u00b3",
             "\1\u00b4",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u00b6\22\uffff\1\u00b7",
-            "\1\u00b8",
-            "",
-            "",
-            "",
-            "\1\u00b9",
-            "\1\u00ba",
+            "\1\u00b5",
+            "\1\u00b6",
+            "\1\u00b8\16\uffff\1\u00b7",
+            "\1\u00ba\16\uffff\1\u00b9",
             "\1\u00bb",
             "\1\u00bc",
-            "",
-            "\1\u00bd",
-            "\1\u00bf\3\uffff\1\u00be",
-            "\1\u00c0\7\uffff\1\u00c1",
-            "\1\u00c2",
-            "\1\u00c3",
-            "\1\u00c4",
-            "\1\u00c5",
-            "\1\u00c6",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "\1\u00be",
+            "\1\u00bf\1\uffff\1\u00c0\5\uffff\1\u00c1\10\uffff\1\u00c2\2"+
+            "\uffff\1\u00c3",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\22\43\1\u00c4\7\43",
+            "\1\u00c6",
+            "\1\u00c7",
             "\1\u00c8",
             "\1\u00c9",
-            "\1\u00ca",
-            "\1\u00cb",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "\1\u00cb\22\uffff\1\u00cc",
+            "\1\u00cd",
             "",
             "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\21\43\1\u00cd\10\43",
+            "",
+            "\1\u00ce",
             "\1\u00cf",
             "\1\u00d0",
             "\1\u00d1",
+            "",
             "\1\u00d2",
-            "\1\u00d3",
-            "\1\u00d4",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u00d6",
+            "\1\u00d4\3\uffff\1\u00d3",
+            "\1\u00d5\7\uffff\1\u00d6",
             "\1\u00d7",
             "\1\u00d8",
-            "\1\u00d9\16\uffff\1\u00da",
+            "\1\u00d9",
+            "\1\u00da",
             "\1\u00db",
-            "\1\u00dc",
-            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u00dd",
             "\1\u00de",
             "\1\u00df",
             "\1\u00e0",
             "\1\u00e1",
-            "\1\u00e2",
-            "\1\u00e3",
-            "\1\u00e4",
-            "\1\u00e6\6\uffff\1\u00e5",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\21\43\1\u00e7\10\43",
+            "\1\uffff\32\43",
+            "",
+            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\21\43\1\u00e3\10\43",
+            "\1\u00e5",
+            "\1\u00e6",
+            "\1\u00e7",
+            "\1\u00e8",
             "\1\u00e9",
+            "\1\u00ea",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u00eb",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u00ee\2\uffff\1\u00ed",
-            "\1\u00ef",
-            "\1\u00f0",
+            "\1\u00ec",
+            "\1\u00ed",
+            "\1\u00ee",
+            "\1\u00ef\16\uffff\1\u00f0",
             "\1\u00f1",
             "\1\u00f2",
             "\1\u00f3",
+            "",
             "\1\u00f4",
             "\1\u00f5",
             "\1\u00f6",
+            "",
             "\1\u00f7",
             "\1\u00f8",
             "\1\u00f9",
             "\1\u00fa",
-            "",
             "\1\u00fb",
-            "\1\u00fc",
-            "\1\u00fd",
-            "\1\u00ff\1\u00fe",
+            "\1\u00fd\6\uffff\1\u00fc",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\21\43\1\u00fe\10\43",
             "\1\u0100",
-            "\1\u0101",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u0102",
-            "\1\u0103",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u0106",
-            "",
-            "\1\u0107",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0109\2\uffff\1\u0108",
             "\1\u010a",
             "\1\u010b",
             "\1\u010c",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u010d",
             "\1\u010e",
             "\1\u010f",
             "\1\u0110",
             "\1\u0111",
             "\1\u0112",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u0113",
             "\1\u0114",
-            "\1\u0115\11\uffff\1\u0116",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u0119",
             "\1\u011a",
+            "",
             "\1\u011b",
             "\1\u011c",
-            "",
             "\1\u011d",
-            "",
-            "\1\u011e",
-            "\1\u011f",
+            "\1\u011f\1\u011e",
             "\1\u0120",
             "\1\u0121",
             "\1\u0122",
+            "",
+            "\1\u0123",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
-            "\1\u0124",
-            "\1\u0125",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u0126",
+            "",
             "\1\u0127",
-            "\1\u0128",
-            "\1\u0129",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u012a",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\u012b"+
+            "\1\u012b",
+            "\1\u012c",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u012d",
             "\1\u012e",
-            "\1\u0130\3\uffff\1\u012f",
+            "\1\u012f",
+            "\1\u0130",
+            "\1\u0131",
+            "\1\u0132",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u0133",
             "\1\u0134",
+            "\1\u0135\11\uffff\1\u0136",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u0137",
             "",
-            "\1\u0138",
-            "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "",
+            "\1\u0139",
             "\1\u013a",
-            "\1\u013c\1\uffff\1\u013b",
+            "\1\u013b",
+            "\1\u013c",
             "\1\u013d",
+            "",
             "\1\u013e",
+            "",
+            "\1\u013f",
+            "\1\u0140",
+            "\1\u0141",
+            "\1\u0142",
+            "\1\u0143",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u0144",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "",
+            "\1\u0145",
+            "\1\u0146",
             "\1\u0147",
             "\1\u0148",
             "\1\u0149",
             "\1\u014a",
             "\1\u014b",
-            "\1\u014c",
-            "\1\u014d",
-            "\1\u014f\17\uffff\1\u014e",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\u014d"+
+            "\1\uffff\32\43",
+            "\1\u014f",
             "\1\u0150",
+            "\1\u0152\3\uffff\1\u0151",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u0152",
-            "",
-            "",
-            "\1\u0153",
-            "\1\u0154\1\u0155",
-            "",
-            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0155",
             "\1\u0156",
-            "\1\u0157",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u0159",
+            "",
             "\1\u015a",
-            "\1\u015b",
-            "\1\u015c",
-            "\1\u015d",
             "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\1\u015c",
+            "\1\u015e\1\uffff\1\u015d",
             "\1\u015f",
             "\1\u0160",
-            "",
-            "",
-            "\1\u0161",
-            "\1\u0162",
-            "\1\u0163",
-            "\1\u0164",
-            "\1\u0165",
-            "\1\u0166",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u0167",
-            "\1\u0168",
-            "\1\u0169",
-            "\1\u016a",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "",
+            "",
+            "",
+            "",
+            "\1\u016a",
             "\1\u016b",
             "\1\u016c",
             "\1\u016d",
             "\1\u016e",
             "\1\u016f",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u0171",
-            "\1\u0172",
-            "",
+            "\1\u0170",
+            "\1\u0172\17\uffff\1\u0171",
             "\1\u0173",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\u0175",
+            "",
+            "",
             "\1\u0176",
-            "",
-            "",
-            "\1\u0177",
-            "\1\u0178",
+            "\1\u0177\1\u0178",
             "",
             "",
             "\1\u0179",
+            "\1\u017a",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "",
-            "\1\u017b",
             "\1\u017c",
             "\1\u017d",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u017e",
             "\1\u017f",
-            "",
-            "",
-            "",
-            "",
-            "",
             "\1\u0180",
             "",
-            "",
-            "\1\u0181",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "\1\u0182",
             "\1\u0183",
+            "",
+            "",
             "\1\u0184",
             "\1\u0185",
             "\1\u0186",
@@ -4481,128 +4859,127 @@ public class LLVMLexer extends Lexer {
             "\1\u0188",
             "\1\u0189",
             "\1\u018a",
-            "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u018b",
             "\1\u018c",
             "\1\u018d",
             "\1\u018e",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
             "",
+            "\1\u018f",
+            "\1\u0190",
             "\1\u0191",
             "\1\u0192",
             "\1\u0193",
-            "\1\u0194",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "\1\u0195",
             "",
             "\1\u0196",
+            "",
             "\1\u0197",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\u0199",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u019a",
+            "",
+            "",
+            "\1\u019b",
             "\1\u019c",
+            "",
+            "",
             "\1\u019d",
-            "\1\u019e",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
             "\1\u019f",
             "\1\u01a0",
+            "\1\u01a1",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u01a2",
             "\1\u01a3",
-            "\1\u01a4",
-            "\1\u01a5",
-            "\1\u01a6",
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "\1\u01a4",
+            "",
+            "",
+            "\1\u01a5",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u01a7",
             "\1\u01a8",
-            "\1\u01a9\1\uffff\1\u01aa",
-            "",
+            "\1\u01a9",
+            "\1\u01aa",
             "\1\u01ab",
             "\1\u01ac",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u01ad",
             "\1\u01ae",
+            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
             "\1\u01b0",
+            "\1\u01b1",
+            "\1\u01b2",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
             "\1\u01b5",
-            "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u01b6",
             "\1\u01b7",
             "\1\u01b8",
-            "\1\u01b9",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
             "\1\u01ba",
             "\1\u01bb",
-            "\1\u01bc",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u01bd",
-            "",
             "\1\u01be",
-            "\1\u01bf",
-            "\1\u01c0",
-            "",
-            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u01c1",
             "\1\u01c2",
             "\1\u01c3",
+            "\1\u01c4",
+            "\1\u01c5",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
-            "\1\u01c5",
-            "\1\u01c6",
-            "",
             "\1\u01c7",
-            "",
-            "",
             "\1\u01c8",
             "\1\u01c9",
             "\1\u01ca",
             "\1\u01cb",
-            "\1\u01cc",
             "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\u01ce",
-            "\1\u01cf",
+            "\1\u01cc",
+            "\1\u01cd",
+            "\1\u01ce\1\uffff\1\u01cf",
+            "",
             "\1\u01d0",
             "\1\u01d1",
-            "\1\u01d2",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u01d3",
-            "\1\u01d4",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
             "\1\u01d5",
-            "\1\u01d6",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
-            "",
-            "",
-            "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u01da",
             "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
@@ -4612,166 +4989,234 @@ public class LLVMLexer extends Lexer {
             "\1\u01df",
             "\1\u01e0",
             "\1\u01e1",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u01e2",
+            "",
             "\1\u01e3",
             "\1\u01e4",
             "\1\u01e5",
+            "",
+            "",
             "\1\u01e6",
             "\1\u01e7",
-            "",
             "\1\u01e8",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\u01e9"+
-            "\1\uffff\32\43",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "",
+            "\1\u01ea",
+            "\1\u01eb",
+            "",
             "\1\u01ec",
             "\1\u01ed",
+            "",
+            "",
             "\1\u01ee",
             "\1\u01ef",
             "\1\u01f0",
-            "",
             "\1\u01f1",
+            "\1\u01f2",
+            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u01f4",
             "\1\u01f5",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u01f6",
             "\1\u01f7",
             "\1\u01f8",
             "\1\u01f9",
-            "",
-            "",
-            "",
-            "",
-            "",
             "\1\u01fa",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u01fb",
             "\1\u01fc",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u01fe",
+            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "",
+            "",
+            "",
+            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\u0202",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u0203",
+            "\1\u0204",
             "\1\u0205",
             "\1\u0206",
-            "",
-            "",
+            "\1\u0207",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u0208",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
+            "\1\u0209",
             "\1\u020a",
             "\1\u020b",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "",
-            "",
-            "",
+            "\1\u020c",
             "\1\u020d",
             "",
             "\1\u020e",
-            "\1\u020f",
-            "\1\u0210",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\u020f"+
+            "\1\uffff\32\43",
+            "\1\u0211",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
-            "\1\u0212",
-            "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "",
-            "",
-            "",
-            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
-            "\1\uffff\32\43",
-            "",
-            "",
+            "\1\u0213",
+            "\1\u0214",
             "\1\u0215",
             "\1\u0216",
-            "",
             "\1\u0217",
             "",
+            "\1\u0218",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u0219",
-            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u021b",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u021c",
-            "\1\u021d",
-            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u021e",
-            "",
-            "",
             "\1\u021f",
             "\1\u0220",
-            "\1\u0221",
             "",
-            "\1\u0222",
+            "",
+            "",
+            "",
+            "",
+            "\1\u0221",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0223",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0225",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u0224",
-            "\1\u0225",
-            "\1\u0226",
-            "\1\u0227",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\u0229",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "",
-            "\1\u022b",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
             "\1\u022c",
             "\1\u022d",
+            "",
             "\1\u022e",
             "",
-            "\1\u022f",
-            "",
-            "\1\u0230",
-            "\1\u0231",
-            "\1\u0232",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u0234",
+            "\1\u0230",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0232",
+            "\1\u0233",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
+            "",
+            "",
             "\1\u0235",
+            "",
             "\1\u0236",
             "\1\u0237",
-            "",
             "\1\u0238",
-            "\1\u0239",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
+            "",
+            "\1\u023a",
+            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
-            "\1\u023c",
+            "",
+            "",
+            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
+            "",
             "\1\u023d",
-            "",
-            "",
             "\1\u023e",
             "\1\u023f",
+            "",
             "\1\u0240",
+            "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
             "\1\u0242",
+            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0244",
+            "\1\u0245",
+            "\1\u0246",
+            "",
+            "\1\u0247",
+            "",
+            "",
+            "\1\u0248",
+            "\1\u0249",
+            "\1\u024a",
+            "\1\u024b",
+            "",
+            "\1\u024c",
+            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u024e",
+            "\1\u024f",
+            "\1\u0250",
+            "\1\u0251",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0253",
+            "\1\u0254",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
+            "\1\u0256",
+            "\1\u0257",
+            "\1\u0258",
+            "\1\u0259",
+            "",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u025b",
+            "",
+            "\1\u025c",
+            "\1\u025d",
+            "\1\u025e",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "",
+            "\1\u0260",
+            "\1\u0261",
+            "\1\u0262",
+            "\1\u0263",
+            "",
+            "\1\u0264",
+            "\1\u0265",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u0268",
+            "\1\u0269",
+            "",
+            "",
+            "\1\u026a",
+            "\1\u026b",
+            "\1\u026c",
+            "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
+            "\1\uffff\32\43",
+            "\1\u026e",
             "",
             "\1\43\11\uffff\1\43\1\uffff\12\43\7\uffff\32\43\4\uffff\1\43"+
             "\1\uffff\32\43",
@@ -4808,7 +5253,7 @@ public class LLVMLexer extends Lexer {
             this.transition = DFA12_transition;
         }
         public String getDescription() {
-            return "1:1: Tokens : ( T__23 | T__24 | T__25 | T__26 | T__27 | T__28 | T__29 | T__30 | T__31 | T__32 | T__33 | T__34 | T__35 | T__36 | T__37 | T__38 | T__39 | T__40 | T__41 | T__42 | T__43 | T__44 | T__45 | T__46 | T__47 | T__48 | T__49 | T__50 | T__51 | T__52 | T__53 | T__54 | T__55 | T__56 | T__57 | T__58 | T__59 | T__60 | T__61 | T__62 | T__63 | T__64 | T__65 | T__66 | T__67 | T__68 | T__69 | T__70 | T__71 | T__72 | T__73 | T__74 | T__75 | T__76 | T__77 | T__78 | T__79 | T__80 | T__81 | T__82 | T__83 | T__84 | T__85 | T__86 | T__87 | T__88 | T__89 | T__90 | T__91 | T__92 | T__93 | T__94 | T__95 | T__96 | T__97 | T__98 | T__99 | T__100 | T__101 | T__102 | T__103 | T__104 | T__105 | T__106 | T__107 | T__108 | T__109 | T__110 | T__111 | T__112 | T__113 | T__114 | T__115 | T__116 | T__117 | T__118 | T__119 | T__120 | T__121 | T__122 | T__123 | T__124 | T__125 | EQUALS | INT_TYPE | NUMBER | UNNAMED_ID | NAMED_ID | QUOTED_ID | DEFINE | LABEL | CHAR_LITERAL | STRING_LITERAL | CSTRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT );";
+            return "1:1: Tokens : ( T__23 | T__24 | T__25 | T__26 | T__27 | T__28 | T__29 | T__30 | T__31 | T__32 | T__33 | T__34 | T__35 | T__36 | T__37 | T__38 | T__39 | T__40 | T__41 | T__42 | T__43 | T__44 | T__45 | T__46 | T__47 | T__48 | T__49 | T__50 | T__51 | T__52 | T__53 | T__54 | T__55 | T__56 | T__57 | T__58 | T__59 | T__60 | T__61 | T__62 | T__63 | T__64 | T__65 | T__66 | T__67 | T__68 | T__69 | T__70 | T__71 | T__72 | T__73 | T__74 | T__75 | T__76 | T__77 | T__78 | T__79 | T__80 | T__81 | T__82 | T__83 | T__84 | T__85 | T__86 | T__87 | T__88 | T__89 | T__90 | T__91 | T__92 | T__93 | T__94 | T__95 | T__96 | T__97 | T__98 | T__99 | T__100 | T__101 | T__102 | T__103 | T__104 | T__105 | T__106 | T__107 | T__108 | T__109 | T__110 | T__111 | T__112 | T__113 | T__114 | T__115 | T__116 | T__117 | T__118 | T__119 | T__120 | T__121 | T__122 | T__123 | T__124 | T__125 | T__126 | T__127 | T__128 | T__129 | T__130 | T__131 | T__132 | T__133 | T__134 | T__135 | T__136 | T__137 | T__138 | EQUALS | INT_TYPE | NUMBER | UNNAMED_ID | NAMED_ID | QUOTED_ID | DEFINE | LABEL | CHAR_LITERAL | STRING_LITERAL | CSTRING_LITERAL | NEWLINE | WS | SINGLE_COMMENT | MULTI_COMMENT );";
         }
     }
  

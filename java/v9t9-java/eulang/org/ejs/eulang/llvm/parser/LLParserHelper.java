@@ -5,12 +5,14 @@ package org.ejs.eulang.llvm.parser;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.ast.impl.AstType;
 import org.ejs.eulang.llvm.*;
 import org.ejs.eulang.llvm.directives.*;
+import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
 import org.ejs.eulang.symbols.IScope;
@@ -290,5 +292,31 @@ public class LLParserHelper {
 	 */
 	public Map<String, LLSymbolOp> getForwardSymbols() {
 		return fwdSymOps;
+	}
+
+	/**
+	 * @param ops
+	 * @return
+	 */
+	public LLType getElementPtrType(List<LLOperand> ops) {
+		int idx = 0;
+		LLType type = ops.get(idx++).getType();
+		LLType retType = type;
+		while (idx < ops.size()) {
+			if (idx > 1) {
+				int val = ((LLConstOp) ops.get(idx)).getValue().intValue();
+				if (type instanceof LLAggregateType)
+					type = ((LLAggregateType) type).getType(val);
+				else
+					type = type.getSubType();
+			} else {
+				type = type.getSubType();
+			}
+			
+			retType = typeEngine.getPointerType(type);
+			idx++;
+			
+		}
+		return retType;
 	}
 }
