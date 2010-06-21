@@ -189,6 +189,9 @@ class TestExpressions implements ITCFTest,
                     if (error != null) {
                         exit(error);
                     }
+                    else if (id == null) {
+                        exit(new Exception("Test context ID must not be null"));
+                    }
                     else {
                         test_ctx_id = id;
                         runTest();
@@ -279,6 +282,9 @@ class TestExpressions implements ITCFTest,
                 public void doneGetSymbol(IToken token, Throwable error, IDiagnostics.ISymbol symbol) {
                     if (error != null) {
                         exit(error);
+                    }
+                    else if (symbol == null) {
+                        exit(new Exception("Symbol must not be null: tcf_test_func3"));
                     }
                     else {
                         sym_func3 = symbol;
