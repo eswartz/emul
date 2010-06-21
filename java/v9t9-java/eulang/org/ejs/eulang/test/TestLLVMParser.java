@@ -14,6 +14,7 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
+import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.LLLinkage;
 import org.ejs.eulang.llvm.LLModule;
@@ -21,6 +22,7 @@ import org.ejs.eulang.llvm.directives.LLConstantDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.instrs.LLInstr;
+import org.ejs.eulang.llvm.instrs.LLTypedInstr;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLStringLitOp;
@@ -80,12 +82,23 @@ public class TestLLVMParser extends BaseTest {
 		
 		mod.accept(new LLCodeVisitor() {
 			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterInstr(org.ejs.eulang.llvm.LLBlock, org.ejs.eulang.llvm.instrs.LLInstr)
+			 */
+			@Override
+			public boolean enterInstr(LLBlock block, LLInstr instr) {
+				if (instr instanceof LLTypedInstr) {
+					LLType typ = ((LLTypedInstr) instr).getType();
+					assertTrue(instr+":"+typ, typ != null && typ.isComplete());
+				}
+				return true;
+			}
+			/* (non-Javadoc)
 			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterOperand(org.ejs.eulang.llvm.instrs.LLInstr, int, org.ejs.eulang.llvm.ops.LLOperand)
 			 */
 			@Override
 			public boolean enterOperand(LLInstr instr, int num,
 					LLOperand operand) {
-				assertTrue(instr+":"+num+":"+operand, operand != null && operand.getType()!= null);
+				assertTrue(instr+":"+num+":"+operand, operand != null && operand.getType()!= null && operand.getType().isComplete());
 				return false;
 			}
 		});
