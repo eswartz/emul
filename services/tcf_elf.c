@@ -633,12 +633,15 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
         if (error) exception(error);
         if (r->sect_name == NULL) {
             for (j = 0; range == NULL && j < file->pheader_cnt; j++) {
+                U8_T offs_min = 0;
+                U8_T offs_max = 0;
                 ELF_PHeader * p = file->pheaders + j;
                 if (p->type != PT_LOAD) continue;
-                if (!(p->flags & PF_W) != !(r->flags & MM_FLAG_W)) continue;
-                if (p->offset < r->file_offs || p->offset + p->mem_size > r->file_offs + r->size) continue;
-                link_addr_min = addr_min - r->addr + r->file_offs - p->offset + p->address;
-                link_addr_max = addr_max - r->addr + r->file_offs - p->offset + p->address;
+                offs_min = addr_min - r->addr + r->file_offs;
+                offs_max = addr_max - r->addr + r->file_offs;
+                if (p->offset >= offs_max || p->offset + p->mem_size <= offs_min) continue;
+                link_addr_min = offs_min - p->offset + p->address;
+                link_addr_max = offs_max - p->offset + p->address;
                 if (link_addr_min < p->address) link_addr_min = p->address;
                 if (link_addr_max >= p->address + p->mem_size) link_addr_max = p->address + p->mem_size;
                 range = find_comp_unit_addr_range(get_dwarf_cache(file), link_addr_min, link_addr_max);
@@ -693,12 +696,13 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_S
             if (r->sect_name == NULL) {
                 if (file->pheader_cnt == 0 && file->type == ET_EXEC) return addr;
                 for (j = 0; j < file->pheader_cnt; j++) {
+                    U8_T offs;
                     ELF_PHeader * p = file->pheaders + j;
                     if (p->type != PT_LOAD) continue;
-                    if (!(p->flags & PF_W) != !(r->flags & MM_FLAG_W)) continue;
                     if (addr < p->address || addr >= p->address + p->mem_size) continue;
-                    if (p->offset < r->file_offs || p->offset + p->file_size > r->file_offs + r->size) continue;
-                    return (ContextAddress)(addr - p->address + p->offset - r->file_offs + r->addr);
+                    offs = addr - p->address + p->offset;
+                    if (offs < r->file_offs || offs >= r->file_offs + r->size) continue;
+                    return (ContextAddress)(offs - r->file_offs + r->addr);
                 }
             }
             else if (sec != NULL && strcmp(sec->name, r->sect_name) == 0) {

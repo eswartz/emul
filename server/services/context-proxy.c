@@ -1396,6 +1396,11 @@ int get_top_frame(Context * ctx) {
     return STACK_TOP_FRAME;
 }
 
+unsigned context_word_size(Context * ctx) {
+    RegisterDefinition * pc = get_PC_definition(ctx);
+    return pc->size;
+}
+
 static void channel_close_listener(Channel * c) {
     LINK * l = NULL;
 
