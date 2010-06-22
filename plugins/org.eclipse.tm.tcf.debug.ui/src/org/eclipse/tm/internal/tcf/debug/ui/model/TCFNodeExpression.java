@@ -28,6 +28,7 @@ import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -227,6 +228,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         value = new TCFDataCache<IExpressions.Value>(channel) {
             @Override
             protected boolean startDataRetrieval() {
+                Boolean b = usePrevValue(this);
+                if (b == null) return false;
+                if (b) {
+                    set(null, null, prev_value);
+                    return true;
+                }
                 if (!expression.validate(this)) return false;
                 final Expression exp = expression.getData();
                 if (exp == null) {
@@ -235,8 +242,20 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
                 IExpressions exps = model.getLaunch().getService(IExpressions.class);
                 command = exps.evaluate(exp.expression.getID(), new IExpressions.DoneEvaluate() {
-                    public void doneEvaluate(IToken token, Exception error, IExpressions.Value value) {
-                        set(token, error, value);
+                    public void doneEvaluate(final IToken token, final Exception error, final IExpressions.Value value) {
+                        Protocol.invokeLater(new Runnable() {
+                            public void run() {
+                                if (error != null) {
+                                    Boolean b = usePrevValue(this);
+                                    if (b == null) return;
+                                    if (b) {
+                                        set(token, null, prev_value);
+                                        return;
+                                    }
+                                }
+                                set(token, error, value);
+                            }
+                        });
                     }
                 });
                 return false;
@@ -396,78 +415,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         type_name = new TCFDataCache<String>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                String name = null;
-                TCFDataCache<ISymbols.Symbol> type_cache = type;
-                for (;;) {
-                    String s = null;
-                    boolean get_base_type = false;
-                    if (!type_cache.validate(this)) return false;
-                    ISymbols.Symbol type_symbol = type_cache.getData();
-                    if (type_symbol != null) {
-                        s = type_symbol.getName();
-                        if (s != null && type_symbol.getTypeClass() == ISymbols.TypeClass.composite) s = "struct " + s;
-                        if (s == null && type_symbol.getSize() == 0) s = "void";
-                        if (s == null) {
-                            switch (type_symbol.getTypeClass()) {
-                            case integer:
-                                switch (type_symbol.getSize()) {
-                                case 1: s = "char"; break;
-                                case 2: s = "short"; break;
-                                case 4: s = "int"; break;
-                                case 8: s = "long long"; break;
-                                default: s = "<Integer>"; break;
-                                }
-                                break;
-                            case cardinal:
-                                switch (type_symbol.getSize()) {
-                                case 1: s = "unsigned char"; break;
-                                case 2: s = "unsigned short"; break;
-                                case 4: s = "unsigned"; break;
-                                case 8: s = "unsigned long long"; break;
-                                default: s = "<Unsigned>"; break;
-                                }
-                                break;
-                            case real:
-                                switch (type_symbol.getSize()) {
-                                case 4: s = "float"; break;
-                                case 8: s = "double"; break;
-                                default: s = "<Float>"; break;
-                                }
-                                break;
-                            case pointer:
-                                s = "*";
-                                get_base_type = true;
-                                break;
-                            case array:
-                                s = "[" + type_symbol.getLength() + "]";
-                                get_base_type = true;
-                                break;
-                            case composite:
-                                s = "<Structure>";
-                                break;
-                            case function:
-                                s = "<Function>";
-                                break;
-                            }
-                        }
-                    }
-                    if (s == null) {
-                        name = "N/A";
-                        break;
-                    }
-                    if (name == null) name = s;
-                    else if (!get_base_type) name = s + " " + name;
-                    else name = s + name;
-
-                    if (!get_base_type) break;
-
-                    type_cache = model.getSymbolInfoCache(type_symbol.getBaseTypeID());
-                    if (type_cache == null) {
-                        name = "N/A";
-                        break;
-                    }
-                }
-                set(null, null, name);
+                StringBuffer bf = new StringBuffer();
+                if (!getTypeName(bf, type, this)) return false;
+                set(null, null, bf.toString());
                 return true;
             }
         };
@@ -541,6 +491,117 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
     public TCFDataCache<ISymbols.Symbol> getType() {
         return type;
+    }
+
+    private Boolean usePrevValue(Runnable done) {
+        // Check if view should show old value.
+        // Old value is shown if context is running or
+        // stack trace does not contain expression parent frame.
+        // Return null if waiting for cache update.
+        if (prev_value == null) return false;
+        TCFNodeExecContext exe = (TCFNodeExecContext)parent.parent;
+        TCFDataCache<TCFContextState> state_cache = exe.getState();
+        if (!state_cache.validate(done)) return null;
+        TCFContextState state = state_cache.getData();
+        if (state == null || !state.is_suspended) return true;
+        TCFChildrenStackTrace stack_trace_cache = exe.getStackTrace();
+        if (!stack_trace_cache.validate(done)) return null;
+        if (stack_trace_cache.getData().get(parent.id) == null) return true;
+        return false;
+    }
+
+    private boolean getTypeName(StringBuffer bf, TCFDataCache<ISymbols.Symbol> type_cache, Runnable done) {
+        String name = null;
+        for (;;) {
+            String s = null;
+            boolean get_base_type = false;
+            if (!type_cache.validate(done)) return false;
+            ISymbols.Symbol type_symbol = type_cache.getData();
+            if (type_symbol != null) {
+                s = type_symbol.getName();
+                if (s != null && type_symbol.getTypeClass() == ISymbols.TypeClass.composite) s = "struct " + s;
+                if (s == null && type_symbol.getSize() == 0) s = "void";
+                if (s == null) {
+                    switch (type_symbol.getTypeClass()) {
+                    case integer:
+                        switch (type_symbol.getSize()) {
+                        case 1: s = "char"; break;
+                        case 2: s = "short"; break;
+                        case 4: s = "int"; break;
+                        case 8: s = "long long"; break;
+                        default: s = "<Integer>"; break;
+                        }
+                        break;
+                    case cardinal:
+                        switch (type_symbol.getSize()) {
+                        case 1: s = "unsigned char"; break;
+                        case 2: s = "unsigned short"; break;
+                        case 4: s = "unsigned"; break;
+                        case 8: s = "unsigned long long"; break;
+                        default: s = "<Unsigned>"; break;
+                        }
+                        break;
+                    case real:
+                        switch (type_symbol.getSize()) {
+                        case 4: s = "float"; break;
+                        case 8: s = "double"; break;
+                        default: s = "<Float>"; break;
+                        }
+                        break;
+                    case pointer:
+                        s = "*";
+                        get_base_type = true;
+                        break;
+                    case array:
+                        s = "[" + type_symbol.getLength() + "]";
+                        get_base_type = true;
+                        break;
+                    case composite:
+                        s = "<Structure>";
+                        break;
+                    case function:
+                        {
+                            TCFDataCache<String[]> children_cache = model.getSymbolChildrenCache(type_symbol.getID());
+                            if (!children_cache.validate(done)) return false;
+                            if (children_cache.getError() == null) {
+                                String[] children = children_cache.getData();
+                                if (children != null) {
+                                    StringBuffer args = new StringBuffer();
+                                    args.append('(');
+                                    for (String id : children) {
+                                        if (id != children[0]) args.append(',');
+                                        if (!getTypeName(args, model.getSymbolInfoCache(id), done)) return false;
+                                    }
+                                    args.append(')');
+                                    s = args.toString();
+                                    get_base_type = true;
+                                    break;
+                                }
+                            }
+                        }
+                        s = "<Function>";
+                        break;
+                    }
+                }
+            }
+            if (s == null) {
+                name = "N/A";
+                break;
+            }
+            if (name == null) name = s;
+            else if (!get_base_type) name = s + " " + name;
+            else name = s + name;
+
+            if (!get_base_type) break;
+
+            type_cache = model.getSymbolInfoCache(type_symbol.getBaseTypeID());
+            if (type_cache == null) {
+                name = "N/A";
+                break;
+            }
+        }
+        bf.append(name);
+        return true;
     }
 
     private String toASCIIString(byte[] data, int offs, int size) {
@@ -640,7 +701,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         IExpressions.Value val = value.getData();
         if (val != null) {
             byte[] data = val.getValue();
-            s = toNumberString(radix, type.getData(), data, 0, data.length, val.isBigEndian());
+            if (data != null) s = toNumberString(radix, type.getData(), data, 0, data.length, val.isBigEndian());
         }
         if (s == null) s = "N/A";
         return s;
@@ -654,12 +715,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         else {
             result.setLabel(name + " = " + s, col);
         }
-    }
-
-    private boolean setTypeLabel(ILabelUpdate result, int col, Runnable done) {
-        if (!type_name.validate(done)) return false;
-        result.setLabel(type_name.getData(), col);
-        return true;
     }
 
     private boolean isValueChanged(IExpressions.Value x, IExpressions.Value y) {
@@ -681,7 +736,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         if (!text.validate()) pending = text;
         if (!value.validate()) pending = value;
         if (!type.validate()) pending = type;
-        if (!type_name.validate()) pending = type_name;
         if (pending != null) {
             pending.wait(done);
             return false;
@@ -705,6 +759,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         if (error == null) error = value.getError();
         String[] cols = result.getColumnIds();
         if (error != null) {
+            error.printStackTrace();
             if (cols == null || cols.length <= 1) {
                 result.setForeground(new RGB(255, 0, 0), 0);
                 result.setLabel(name + ": N/A", 0);
@@ -716,7 +771,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         result.setLabel(name, i);
                     }
                     else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
-                        if (!setTypeLabel(result, i, done)) return false;
+                        if (!type_name.validate(done)) return false;
+                        result.setLabel(type_name.getData(), i);
                     }
                     else {
                         result.setForeground(new RGB(255, 0, 0), i);
@@ -736,7 +792,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         result.setLabel(name, i);
                     }
                     else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
-                        if (!setTypeLabel(result, i, done)) return false;
+                        if (!type_name.validate(done)) return false;
+                        result.setLabel(type_name.getData(), i);
                     }
                     else if (c.equals(TCFColumnPresentationExpression.COL_HEX_VALUE)) {
                         setLabel(result, null, i, 16);
