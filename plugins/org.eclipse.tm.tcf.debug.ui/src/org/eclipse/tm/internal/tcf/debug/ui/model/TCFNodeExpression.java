@@ -242,20 +242,15 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
                 IExpressions exps = model.getLaunch().getService(IExpressions.class);
                 command = exps.evaluate(exp.expression.getID(), new IExpressions.DoneEvaluate() {
-                    public void doneEvaluate(final IToken token, final Exception error, final IExpressions.Value value) {
-                        Protocol.invokeLater(new Runnable() {
-                            public void run() {
-                                if (error != null) {
-                                    Boolean b = usePrevValue(this);
-                                    if (b == null) return;
-                                    if (b) {
-                                        set(token, null, prev_value);
-                                        return;
-                                    }
-                                }
-                                set(token, error, value);
+                    public void doneEvaluate(IToken token, Exception error, IExpressions.Value value) {
+                        if (error != null) {
+                            Boolean b = usePrevValue(null);
+                            if (b != null && b) {
+                                set(token, null, prev_value);
+                                return;
                             }
-                        });
+                        }
+                        set(token, error, value);
                     }
                 });
                 return false;
