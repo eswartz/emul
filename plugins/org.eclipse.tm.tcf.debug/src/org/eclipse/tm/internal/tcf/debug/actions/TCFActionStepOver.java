@@ -115,10 +115,6 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             }
         }
         int fno = getStackFrameIndex();
-        if (fno < 0) {
-            exit(null);
-            return;
-        }
         if (fno > 0) {
             if (ctx.canResume(IRunControl.RM_STEP_OUT)) {
                 ctx.resume(IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
@@ -179,6 +175,10 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
                 if (ref == null || ref.area == null) {
+                    if (fno < 0) {
+                        exit(null);
+                        return;
+                    }
                     // No line info for current PC, continue stepping
                 }
                 else if (isSameLine(source_ref.area, ref.area)) {
