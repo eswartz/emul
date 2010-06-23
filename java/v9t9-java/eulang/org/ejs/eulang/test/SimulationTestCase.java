@@ -46,6 +46,8 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 	private boolean skipping;
 	private boolean only;
 
+	private boolean llvmOptimize;
+
 	public interface SimulationRunnable {
 		void run(Simulator sim) throws Exception;
 	}
@@ -225,6 +227,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 	
 	@Before
 	public void setup() {
+		doLLVMOptimize = llvmOptimize;
 		super.setup();
 		doOptimize = true;
 	}
@@ -357,5 +360,11 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		result.endTest(this);
 		
 		System.out.println();
+	}
+	/**
+	 * @param b
+	 */
+	public void setLLVMOptimize(boolean b) {
+		this.llvmOptimize = b;
 	}
 }

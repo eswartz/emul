@@ -3,6 +3,8 @@
  */
 package org.ejs.eulang.llvm.instrs;
 
+import org.ejs.eulang.llvm.ILLCodeVisitor;
+import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.LLType;
 
@@ -63,5 +65,15 @@ public abstract class LLAssignInstr extends LLTypedInstr {
 	}
 	public void setUses(int count) {
 		this.uses = count;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLBaseInstr#accept(org.ejs.eulang.llvm.LLBlock, org.ejs.eulang.llvm.ILLCodeVisitor)
+	 */
+	@Override
+	public void accept(LLBlock block, ILLCodeVisitor visitor) {
+		super.accept(block, visitor);
+		if (result != null)
+			result.accept(this, -1, visitor);
 	}
 }

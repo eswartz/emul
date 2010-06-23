@@ -15,6 +15,7 @@ import org.ejs.eulang.llvm.directives.*;
 import org.ejs.eulang.llvm.ops.LLConstOp;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.ops.LLTempOp;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
@@ -45,17 +46,25 @@ public class LLParserHelper {
 		this.typeScope = module.getTypeScope();
 	}
 	
-	public LLSymbolOp getSymbolOp(String nameWithPrefix, ISymbol sym) {
-		LLSymbolOp symOp;
+	public LLOperand getSymbolOp(String nameWithPrefix, ISymbol sym) {
+		LLOperand symOp;
 		if (sym == null) {
 			sym = findSymbol(nameWithPrefix);
+		}
+		if (sym != null) {
+			try {
+				int temp = Integer.parseInt(nameWithPrefix.substring(1));
+				return new LLTempOp(temp, sym.getType());
+			} catch (NumberFormatException e) {
+				
+			}
 		}
 		if (sym == null) {
 			symOp = fwdSymOps.get(nameWithPrefix);
 			if (symOp == null) {
 				symOp = new LLSymbolOp(null);
 				System.out.println("Forward symbol op for: " + nameWithPrefix);
-				fwdSymOps.put(nameWithPrefix, symOp);
+				fwdSymOps.put(nameWithPrefix, (LLSymbolOp) symOp);
 			}
 		} else {
 			symOp = new LLSymbolOp(sym);
@@ -312,7 +321,7 @@ public class LLParserHelper {
 				type = type.getSubType();
 			}
 			idx++;
-			
+			type = typeEngine.getRealType(type);
 		}
 		return type;
 	}

@@ -3,9 +3,12 @@
  */
 package org.ejs.eulang.llvm.instrs;
 
+import org.ejs.eulang.llvm.ILLCodeVisitor;
+import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.ops.LLOperand;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.LLVoidType;
 
@@ -60,7 +63,11 @@ public class LLCallInstr extends LLAssignInstr {
 		LLType funcType = func.getType();
 		if (funcType instanceof LLPointerType)
 			funcType = funcType.getSubType();
-		sb.append(((LLCodeType)funcType).getArgTypes()[idx].getLLVMName()).append(' ');
+		if (funcType instanceof LLSymbolType)
+			sb.append("<sym> ");
+		else {
+			sb.append(((LLCodeType)funcType).getArgTypes()[idx].getLLVMName()).append(' ');
+		}
 		super.appendOperandString(sb, idx, op);
 	}
 	
@@ -69,5 +76,14 @@ public class LLCallInstr extends LLAssignInstr {
 	 */
 	public LLOperand getFunction() {
 		return func;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.llvm.instrs.LLBaseInstr#accept(org.ejs.eulang.llvm.LLBlock, org.ejs.eulang.llvm.ILLCodeVisitor)
+	 */
+	@Override
+	public void accept(LLBlock block, ILLCodeVisitor visitor) {
+		super.accept(block, visitor);
+		func.accept(this, -2, visitor);
 	}
 }

@@ -100,6 +100,19 @@ public class LLPointerType extends BaseLLType {
 	 */
 	@Override
 	public LLType updateTypes(TypeEngine typeEngine, LLType[] type) {
+		typeEngine.remove(this);
 		return typeEngine.getPointerType(type[0]);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#isMoreComplete(org.ejs.eulang.types.LLType)
+	 */
+	/*
+	@Override
+	public boolean isMoreComplete(LLType type) {
+		if (subType != null && subType.isComplete() && !(subType instanceof LLSymbolType) 
+				&& type != null && type.getSubType() instanceof  LLSymbolType)
+			return true;
+		return super.isMoreComplete(type);
+	}*/
 }

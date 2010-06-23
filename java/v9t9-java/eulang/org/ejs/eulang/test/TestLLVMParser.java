@@ -36,6 +36,7 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
+import org.ejs.eulang.types.LLPointerType;
 import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
@@ -44,120 +45,6 @@ import org.junit.Test;
  *
  */
 public class TestLLVMParser extends BaseTest {
-	protected LLModule doLLVMParse(String text) throws Exception {
-		return doLLVMParse(text, false);
-	}
-
-	protected LLModule doLLVMParse(String text, boolean expectError) throws Exception {
-		GlobalScope globalScope = new GlobalScope();
-		LLModule mod = new LLModule(typeEngine, v9t9Target, globalScope);
-		LLParserHelper helper = new LLParserHelper(mod);
-		doLLVMParse(helper, text, expectError);
-		
-		// finalize types
-		boolean changed = false;
-		do {
-			for (LLType type : typeEngine.getTypes()) {
-				if (type instanceof LLSymbolType) {
-					LLType real = typeEngine.getRealType(type);
-					if (real != null && real != type) {
-						changed = true;
-					}
-				}
-			}
-		} while (changed);
-		
-		for (ISymbol sym : mod.getTypeScope()) {
-			if (!(sym.getType() != null && sym.getType().isComplete()))
-				fail(sym+": type");	
-		}
-		
-		assertTrue(helper.getForwardTypes().isEmpty());
-		StringBuilder ssb = new StringBuilder();
-		for (String name : helper.getForwardSymbols().keySet()) {
-			ssb.append(name).append(' ');
-		}
-		if (ssb.length() > 0)
-			fail("Undefined symbols: " + ssb.toString());
-		
-		mod.accept(new LLCodeVisitor() {
-			/* (non-Javadoc)
-			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterInstr(org.ejs.eulang.llvm.LLBlock, org.ejs.eulang.llvm.instrs.LLInstr)
-			 */
-			@Override
-			public boolean enterInstr(LLBlock block, LLInstr instr) {
-				if (instr instanceof LLTypedInstr) {
-					LLType typ = ((LLTypedInstr) instr).getType();
-					assertTrue(instr+":"+typ, typ != null && typ.isComplete());
-				}
-				return true;
-			}
-			/* (non-Javadoc)
-			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterOperand(org.ejs.eulang.llvm.instrs.LLInstr, int, org.ejs.eulang.llvm.ops.LLOperand)
-			 */
-			@Override
-			public boolean enterOperand(LLInstr instr, int num,
-					LLOperand operand) {
-				assertTrue(instr+":"+num+":"+operand, operand != null && operand.getType()!= null && operand.getType().isComplete());
-				return false;
-			}
-		});
-		
-		return mod;
-	}
-	
-	/**
-	 * @param text
-	 * @return
-	 */
-	protected ParserRuleReturnScope doLLVMParse(LLParserHelper helper, String str, boolean expectError) throws RecognitionException {
-		System.err.flush();
-		System.out.flush();
-		final StringBuilder errors = new StringBuilder();
-		try {
-	    	// create a CharStream that reads from standard input
-	        LLVMLexer lexer = new LLVMLexer(new ANTLRStringStream(str)) {
-	        	/* (non-Javadoc)
-	        	 * @see org.antlr.runtime.BaseRecognizer#emitErrorMessage(java.lang.String)
-	        	 */
-	        	@Override
-	        	public void emitErrorMessage(String msg) {
-	        		errors.append( msg +"\n");
-	        	}
-	        };
-	        
-	        // create a buffer of tokens pulled from the lexer
-	        CommonTokenStream tokens = new CommonTokenStream(lexer);
-	        // create a parser that feeds off the tokens buffer
-	        LLVMParser parser = new LLVMParser(tokens, helper);
-	        // begin parsing at rule
-	        ParserRuleReturnScope prog = null;
-	        prog = parser.prog();
-	        if (dumpTreeize)
-	        	System.out.println("\n"+str);
-	        
-	        if (!expectError) {
-				if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
-					System.err.println(errors);
-					fail(errors.toString());
-				}
-			} else {
-				assertTrue(parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0);
-			}
-	        
-	        if (dumpTreeize && prog != null && prog.getTree() != null)
-	        	System.out.println(((Tree) prog.getTree()).toStringTree());
-	
-	        if (!expectError)
-	        	assertTrue("did not consume all input", tokens.index() >= tokens.size());
-	
-	        return prog;
-		} finally {
-			System.err.flush();
-			System.out.flush();
-			
-		}
-	}
 	
 	@Test
 	public void testTargetDirectives() throws Exception {
@@ -816,5 +703,59 @@ public class TestLLVMParser extends BaseTest {
 		
 		assertMatchText("call \\{%Int,%Int,%Int\\} @swap._._Int.Int.Int_._.Int.Int.Int_ \\(%Int %2, %Int %5, %Int %6\\)", redis);
 		assertMatchText("extractvalue \\{%Int,%Int,%Int\\} %7, 2", redis);
+	}
+	
+	@Test
+	public void testGlobalData5() throws Exception {
+		String text= "\n" + 
+				"%Class = type { }\n" + 
+				"%\"Class$p\" = type %Class*\n" + 
+				"%\"Int._.Class$p_\" = type i16 (%\"Class$p\")\n" + 
+				"%\"Int._.Class$p_$p\" = type %\"Int._.Class$p_\"*\n" + 
+				"%Int._._ = type i16 ()\n" + 
+				"%\"void._.Class$p_\" = type void (%\"Class$p\")\n" + 
+				"" +
+				"@\"foo._.Int._.Class$p_$p\" = global %\"Int._.Class$p_$p\" null ; <%\"Int._.Class$p_$p\"*> [#uses=1]\n" + 
+				"";
+		LLModule mod = doLLVMParse(text);
+		String redis = mod.toString();
+		System.out.println(mod);
+		
+	}
+	@Test
+	public void testCallFuncPtr1() throws Exception {
+		String text= "\n" + 
+				"%Int._.i16$p_$p = type %Int._.i16$p_*\n" + 
+				"%Int._.i16$p_ = type %Int (%i16$p)\n" + 
+				"%Int = type i16\n" + 
+				"%i16$p = type i16*\n" + 
+				"%Int._._ = type %Int ()\n" + 
+				"" +
+				"@util._.Int._.i16$p_$p = global %Int._.i16$p_$p zeroinitializer\n" + 
+				"define default %Int @testCalls1._.Int._._()  optsize \n" + 
+				"{\n" + 
+				"entry.18:\n" + 
+				"%0 = 	load %Int._.i16$p_$p* @util._.Int._.i16$p_$p\n" + 
+				//"%1 = 	call %Int %0 (%i16$p inttoptr (%Int 0 to %i16$p))\n" + 
+				"%1 = 	call %Int %0 (%i16$p null)\n" + 
+				"	ret %Int %1\n" + 
+				"}\n" + 
+				"" + 
+		"";
+		LLModule mod = doLLVMParse(text);
+		String redis = mod.toString();
+		System.out.println(mod);
+		assertMatchText("call %Int %0 \\(%i16\\$p null\\)", redis);
+		
+		ISymbol sym = mod.getModuleScope().get("testCalls1._.Int._._");
+		LLDefineDirective def = mod.getDefineDirective(sym);
+		assertNotNull(def);
+		ISymbol zero;
+		zero = def.getScope().get("0");
+		assertTrue(zero.getType() +"", zero.getType() instanceof LLPointerType);
+		LLType sub = zero.getType().getSubType();
+		assertTrue(sub +"", sub instanceof LLCodeType);	// not LLSymbolType still!
+		
+		
 	}
 }

@@ -1384,6 +1384,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 	@Override
 	public boolean enterOperand(LLInstr instr, int num, LLOperand operand) {
+		if (num < 0)
+			return false;
+		
 		assert thePattern != null;
 		
 		handleAs(num, operand);

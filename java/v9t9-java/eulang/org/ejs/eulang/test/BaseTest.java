@@ -40,6 +40,7 @@ import org.antlr.runtime.tree.Tree;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.ejs.eulang.ITarget;
+import org.ejs.eulang.ITyped;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TargetV9t9;
 import org.ejs.eulang.TypeEngine;
@@ -58,8 +59,20 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.ext.CommandLauncher;
+import org.ejs.eulang.llvm.LLBlock;
+import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.LLVMGenerator;
+import org.ejs.eulang.llvm.directives.LLBaseDirective;
+import org.ejs.eulang.llvm.directives.LLDefineDirective;
+import org.ejs.eulang.llvm.instrs.LLAssignInstr;
+import org.ejs.eulang.llvm.instrs.LLInstr;
+import org.ejs.eulang.llvm.instrs.LLTypedInstr;
+import org.ejs.eulang.llvm.ops.LLOperand;
+import org.ejs.eulang.llvm.ops.LLTempOp;
+import org.ejs.eulang.llvm.parser.LLParserHelper;
+import org.ejs.eulang.llvm.parser.LLVMLexer;
+import org.ejs.eulang.llvm.parser.LLVMParser;
 import org.ejs.eulang.parser.EulangLexer;
 import org.ejs.eulang.parser.EulangParser;
 import org.ejs.eulang.symbols.GlobalScope;
@@ -67,6 +80,7 @@ import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLPointerType;
+import org.ejs.eulang.types.LLSymbolType;
 import org.ejs.eulang.types.LLType;
 import org.ejs.eulang.types.TypeInference;
 import org.junit.Before;
@@ -128,7 +142,7 @@ public class BaseTest {
 	        		
 	        }
 	        if (dumpTreeize)
-	        	System.out.println("\n"+str);
+	        	System.out.println("\n"+lineize(str));
 	        
 	        if (!expectError) {
 				if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
@@ -537,6 +551,7 @@ public class BaseTest {
 	protected boolean dumpLLVMGen;
 	protected boolean doAssemble = true;
 	protected boolean doOptimize;
+	protected boolean doLLVMOptimize;
 	
 	/**
 	 * Generate the module, expecting no errors.
@@ -580,11 +595,19 @@ public class BaseTest {
 		return generator;
 	}
 
-	protected void doAssemble(LLVMGenerator generator, File file, boolean expectErrors)
+	protected void doAssemble(LLVMGenerator generator, File file, boolean expectErrors) throws Exception
+	{
+		String text = generator.getUnoptimizedText();
+		doAssemble(text, file, expectErrors);
+		if (doLLVMOptimize) {
+			String optText = doOptimize(file, new File(file.getAbsolutePath() + ".ll"), new File(file.getAbsolutePath() + ".bc"));
+			generator.setOptimizedText(optText);
+		}
+	}
+	
+	protected void doAssemble(String text, File file, boolean expectErrors)
 			throws IOException, FileNotFoundException, CoreException,
 			AssertionFailedError {
-		String text = generator.getUnoptimizedText();
-		
 		File llfile = new File(file.getAbsolutePath() + ".ll");
 		FileOutputStream os = new FileOutputStream(llfile);
 		os.write(text.getBytes());
@@ -593,9 +616,8 @@ public class BaseTest {
 		File bcFile = new File(file.getAbsolutePath() + ".bc");
 		bcFile.delete();
 
-		generator.setIntermediateFile(llfile);
 		if (dumpLLVMGen)
-			System.out.println(text);
+			System.out.println(lineize(text));
 
 		try {
 			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
@@ -605,16 +627,18 @@ public class BaseTest {
 			else
 				throw e;
 		}
-
-		if (doOptimize) {
-			doOptimize(generator, file, llfile, bcFile, expectErrors);
-		} else {
-			generator.setOptimizedText(text);
-		}
 	}
 
-	protected void doOptimize(LLVMGenerator generator, File file, File llfile,
-			File bcFile, boolean expectErrors) throws CoreException,
+	protected String doOptimize(String lltext, File file) throws Exception {
+		doAssemble(lltext, file, false);
+		
+		String optText = doOptimize(file, new File(file.getAbsolutePath() + ".ll"), new File(file.getAbsolutePath() + ".bc"));
+		return optText;
+
+	}
+	
+	protected String doOptimize(File file, File llfile,
+			File bcFile) throws CoreException,
 			IOException, AssertionFailedError {
 		File bcOptFile = new File(file.getAbsolutePath() + ".opt.bc");
 		bcOptFile.delete();
@@ -622,7 +646,6 @@ public class BaseTest {
 		File llOptFile = new File(file.getAbsolutePath() + ".opt.ll");
 		llOptFile.delete();
 
-		generator.setOptimizedFile(llOptFile);
 		String opts = "-preverify -domtree -verify //-lowersetjmp"
 				//+ "-raiseallocs "
 				+ "-simplifycfg -domtree -domfrontier -mem2reg -globalopt "
@@ -640,30 +663,23 @@ public class BaseTest {
 				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
 				+ "-std-link-opts -verify";
 		
-		try {
-			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
-			List<String> optList = new ArrayList<String>();
-			if (opts.length() > 0)
-				optList.addAll(Arrays.asList(opts.split(" ")));
-			for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
-				String val = iter.next();
-				if (val.startsWith("//")) {
-					iter.remove();
-				}
+		run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+		List<String> optList = new ArrayList<String>();
+		if (opts.length() > 0)
+			optList.addAll(Arrays.asList(opts.split(" ")));
+		for (Iterator<String> iter = optList.iterator(); iter.hasNext(); ) {
+			String val = iter.next();
+			if (val.startsWith("//")) {
+				iter.remove();
 			}
-			optList.add(0, bcFile.getAbsolutePath());
-			optList.add("-f");
-			optList.add("-o");
-			optList.add(bcOptFile.getAbsolutePath());
-			run("opt", (String[]) optList.toArray(new String[optList.size()]));
-			runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
-			generator.setOptimizedText(readFile(llOptFile.getAbsoluteFile()));
-		} catch (AssertionFailedError e) {
-			if (expectErrors)
-				return;
-			else
-				throw e;
 		}
+		optList.add(0, bcFile.getAbsolutePath());
+		optList.add("-f");
+		optList.add("-o");
+		optList.add(bcOptFile.getAbsolutePath());
+		run("opt", (String[]) optList.toArray(new String[optList.size()]));
+		runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+		return readFile(llOptFile.getAbsoluteFile());
 	}
 	/**
 	 * @param absoluteFile
@@ -716,7 +732,7 @@ public class BaseTest {
 	 * @return
 	 * @throws IOException 
 	 */
-	private File getTempFile(String ext) throws IOException {
+	protected File getTempFile(String ext) throws IOException {
 		String name = "test";
 		StackTraceElement[] stackTrace = new Exception().getStackTrace();
 		for (StackTraceElement e : stackTrace) {
@@ -763,9 +779,11 @@ public class BaseTest {
 		IAstModule mod = doFrontend(text);
 		LLVMGenerator gen = doGenerate(mod);
 		
-		// note: not re-parsing
-		
-		return gen.getModule();
+		if (doLLVMOptimize) {
+			return doLLVMParse(gen.getOptimizedText());
+		} else {
+			return gen.getModule();
+		}
 	}
 	
 	protected IAstCodeExpr getCodePtrValue(IAstAllocStmt astmt) {
@@ -776,5 +794,244 @@ public class BaseTest {
 		return code;
 	}
 
+	protected LLModule doLLVMParse(String text) throws Exception {
+		return doLLVMParse(text, false);
+	}
+
+	protected LLModule doLLVMParse(String text, boolean expectError) throws Exception {
+		GlobalScope globalScope = new GlobalScope();
+		LLModule mod = new LLModule(typeEngine, v9t9Target, globalScope);
+		LLParserHelper helper = new LLParserHelper(mod);
+		
+		doLLVMParse(helper, text, expectError);
+		
+		// finalize types
+		boolean changed;
+		do {
+			changed = replaceTypes(mod);
+		} while (changed);
+		
+		for (ISymbol sym : mod.getTypeScope()) {
+			if (!(sym.getType() != null && sym.getType().isComplete()))
+				fail(sym+": type");	
+		}
+		
+		assertTrue(helper.getForwardTypes().isEmpty());
+		StringBuilder ssb = new StringBuilder();
+		for (String name : helper.getForwardSymbols().keySet()) {
+			ssb.append(name).append(' ');
+		}
+		if (ssb.length() > 0)
+			fail("Undefined symbols: " + ssb.toString());
+		
+		mod.accept(new LLCodeVisitor() {
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterInstr(org.ejs.eulang.llvm.LLBlock, org.ejs.eulang.llvm.instrs.LLInstr)
+			 */
+			@Override
+			public boolean enterInstr(LLBlock block, LLInstr instr) {
+				if (instr instanceof LLTypedInstr) {
+					LLType typ = ((LLTypedInstr) instr).getType();
+					assertTrue(instr+":"+typ, typ != null && typ.isComplete());
+				}
+				return true;
+			}
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterOperand(org.ejs.eulang.llvm.instrs.LLInstr, int, org.ejs.eulang.llvm.ops.LLOperand)
+			 */
+			@Override
+			public boolean enterOperand(LLInstr instr, int num,
+					LLOperand operand) {
+				assertTrue(instr+":"+num+":"+operand, operand != null && operand.getType()!= null && operand.getType().isComplete());
+				return false;
+			}
+		});
+		
+		return mod;
+	}
+	
+	
+
+	/**
+	 * @param mod
+	 * @param type
+	 * @param real
+	 * @return
+	 */
+	protected boolean replaceTypes(LLModule mod) {
+		final boolean[] changed = { false };
+		mod.accept(new LLCodeVisitor() {
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterModule(org.ejs.eulang.llvm.LLModule)
+			 */
+			@Override
+			public boolean enterModule(LLModule module) {
+				changed[0] |= replaceTypes(module.getGlobalScope());
+				changed[0] |= replaceTypes(module.getModuleScope());
+
+				return true;
+			}
+			
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterDirective(org.ejs.eulang.llvm.directives.LLBaseDirective)
+			 */
+			@Override
+			public boolean enterDirective(LLBaseDirective dir) {
+				if (dir instanceof LLDefineDirective) {
+					changed[0] |= replaceTypes(((LLDefineDirective) dir).getScope());
+					
+				}
+				return true;
+			}
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterInstr(org.ejs.eulang.llvm.LLBlock, org.ejs.eulang.llvm.instrs.LLInstr)
+			 */
+			@Override
+			public boolean enterInstr(LLBlock block, LLInstr instr) {
+				if (instr instanceof LLTypedInstr) {
+					//System.out.println(instr);
+					LLType newType = realizeType(((LLTypedInstr) instr).getType());
+					if (newType != ((LLTypedInstr) instr).getType()) {
+						((LLTypedInstr) instr).setType(newType);
+						changed[0] = true;
+					}
+				}
+				return true;
+			}
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterOperand(org.ejs.eulang.llvm.instrs.LLInstr, int, org.ejs.eulang.llvm.ops.LLOperand)
+			 */
+			@Override
+			public boolean enterOperand(LLInstr instr, int num,
+					LLOperand operand) {
+				//System.out.println(instr + " : " + operand);
+				LLType newType = realizeType(operand.getType());
+				if (newType != operand.getType()) {
+					operand.setType(newType);
+					changed[0] = true;
+				}
+				return true;
+			}
+		});
+		
+		
+		return changed[0];
+	}
+
+	/**
+	 * @param globalScope
+	 * @return
+	 */
+	protected boolean replaceTypes(IScope scope) {
+		boolean changed = false;
+		for (ISymbol sym : scope) {
+			LLType newType = realizeType(sym.getType());
+			if (newType != null && newType != sym.getType()) {
+				sym.setType(newType);
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	protected LLType realizeType(LLType type) {
+		if(type == null)
+			return null;
+		if (type instanceof LLSymbolType) {
+			LLType realType = typeEngine.getRealType(type);
+			if (realType != null && realType != type) {
+				return realType;
+			}
+		}
+		LLType[] subs = type.getTypes();
+		LLType[] origSubs = Arrays.copyOf(subs, subs.length);
+		LLType[] newSubs = null;
+		int idx = 0;
+		for (LLType sub : origSubs) {
+			LLType newSub = realizeType(sub);
+			if (newSub != sub && newSub != null) {
+				if (newSubs == null)
+					newSubs = Arrays.copyOf(origSubs, origSubs.length);
+				newSubs[idx] = newSub;
+			}
+			idx++;
+		}
+		if (newSubs != null) {
+			type = type.updateTypes(typeEngine, newSubs);
+		}
+		return type;
+	}
+
+	/**
+	 * @param text
+	 * @return
+	 */
+	protected ParserRuleReturnScope doLLVMParse(LLParserHelper helper, String str, boolean expectError) throws RecognitionException {
+		System.err.flush();
+		System.out.flush();
+		final StringBuilder errors = new StringBuilder();
+		try {
+	    	// create a CharStream that reads from standard input
+	        LLVMLexer lexer = new LLVMLexer(new ANTLRStringStream(str)) {
+	        	/* (non-Javadoc)
+	        	 * @see org.antlr.runtime.BaseRecognizer#emitErrorMessage(java.lang.String)
+	        	 */
+	        	@Override
+	        	public void emitErrorMessage(String msg) {
+	        		errors.append( msg +"\n");
+	        	}
+	        };
+	        
+	        // create a buffer of tokens pulled from the lexer
+	        CommonTokenStream tokens = new CommonTokenStream(lexer);
+	        // create a parser that feeds off the tokens buffer
+	        LLVMParser parser = new LLVMParser(tokens, helper);
+	        // begin parsing at rule
+	        ParserRuleReturnScope prog = null;
+	        prog = parser.prog();
+	        if (dumpLLVMGen) {
+	        	System.out.println("\n"+lineize(str));
+	        }
+	        
+	        if (!expectError) {
+				if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
+					System.err.println(errors);
+					fail(errors.toString());
+				}
+			} else {
+				assertTrue(parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0);
+			}
+	        
+	        if (dumpTreeize && prog != null && prog.getTree() != null)
+	        	System.out.println(((Tree) prog.getTree()).toStringTree());
+	
+	        if (!expectError)
+	        	assertTrue("did not consume all input", tokens.index() >= tokens.size());
+	
+	        return prog;
+		} finally {
+			System.err.flush();
+			System.out.flush();
+			
+		}
+	}
+
+	/**
+	 * @param str
+	 * @return
+	 */
+	protected String lineize(String str) {
+		StringBuilder sb = new StringBuilder();
+		String[] lines = str.split("\n");
+		for (int l = 0; l < lines.length; l++) {
+			sb.append(l+1).append(":\t").append(lines[l]).append('\n');
+		}
+		return sb.toString();
+	}
+	
 	
 }

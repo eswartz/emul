@@ -285,8 +285,15 @@ public class Test9900Simulation  {
 
 	private static void addTestCase(TestSuite suite, boolean skipping, boolean only, String fname, int line,
 			String comment, StringBuilder source, SimulationRunnable[] actions) {
-		suite.addTest(new SimulationTestCase(fname + ":" + line, comment, source.toString(), skipping && !only, only, 
-				actions));
+		SimulationTestCase case1 = new SimulationTestCase(fname + ":" + line, comment, 
+				source.toString(), skipping && !only, only, 
+						actions);
+		suite.addTest(case1);
+		SimulationTestCase case2 = new SimulationTestCase(fname + ":" + line, comment + " (optimized)", 
+				source.toString(), skipping && !only, only, 
+				actions);
+		case2.setLLVMOptimize(true);
+		suite.addTest(case2);
 	}
 	
 	

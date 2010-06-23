@@ -751,8 +751,6 @@ public class LLVMGenerator {
 	}
 
 	private Stack<LoopContext> loopStack = new Stack<LoopContext>();
-	private File optimizedFile;
-	private File intermediateFile;
 	private String optimizedText;
 
 	private ISymbol addLabel(IScope scope, String name) {
@@ -2298,34 +2296,6 @@ public class LLVMGenerator {
 	 */
 	public TypeEngine getTypeEngine() {
 		return typeEngine;
-	}
-
-	/**
-	 * @param llfile
-	 */
-	public void setIntermediateFile(File llfile) {
-		this.intermediateFile = llfile;
-	}
-
-	/**
-	 * @return the intermediateFile
-	 */
-	public File getIntermediateFile() {
-		return intermediateFile;
-	}
-
-	/**
-	 * @param llOptFile
-	 */
-	public void setOptimizedFile(File llOptFile) {
-		this.optimizedFile = llOptFile;
-	}
-
-	/**
-	 * @return the optimizedFile
-	 */
-	public File getOptimizedFile() {
-		return optimizedFile;
 	}
 
 	/**

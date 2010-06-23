@@ -170,6 +170,7 @@ op returns [ LLOperand op ] :
   | arrayconst  { $op.op = new LLArrayOp((LLArrayType)null, $arrayconst.values); }
   | symbolconst  { $op.op = helper.getSymbolOp($symbolconst.theId, $symbolconst.theSymbol); }
   | 'zeroinitializer'  { $op.op = new LLZeroInitOp(null); }
+  | 'null'     { $op.op = new LLNullOp(null); }
   | 'undef'  { $op.op = new LLUndefOp(null); }
   | constcastexpr   { $op.op = $constcastexpr.op; }
   )
@@ -383,7 +384,8 @@ block returns [ LLBlock block ]
   : 
   blocklabel   { block = helper.currentTarget.addBlock($blocklabel.theSym); } 
   
-  ( instr NEWLINE { block.instrs().add($instr.inst); System.out.println($instr.inst); }  ) + 
+  ( instr NEWLINE { block.instrs().add($instr.inst); System.out.println($instr.inst); } 
+   | NEWLINE ) + 
   
   ;
 

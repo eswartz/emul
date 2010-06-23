@@ -549,9 +549,12 @@ public class TypeEngine {
 	public LLPointerType getPointerType(LLType type) {
 		String key = getUniqueTypeName(type);
 		LLPointerType ptrType = ptrTypeMap.get(key);
-		//if (type instanceof LLUpType) {
-		//	ptrType = ptrType;
-		//}
+		if (ptrType != null) {
+			if (ptrType.getSubType() != null && type != null && type.isMoreComplete(ptrType.getSubType())) {
+				ptrType = null;
+			}
+		}
+
 		if (ptrType == null) {
 			ptrType = new LLPointerType(ptrBits, type);
 			ptrTypeMap.put(key, ptrType);
@@ -800,6 +803,22 @@ public class TypeEngine {
 	 */
 	public boolean isStringType(LLType type) {
 		return stringLitTypeMap.values().contains(type);
+	}
+
+	/**
+	 * @param type
+	 */
+	public void remove(LLType type) {
+		String key = getUniqueTypeName(type);
+		if (type instanceof LLPointerType) {
+			if (ptrTypeMap.get(key) != type)
+				ptrTypeMap.remove(key);
+		}
+		else if (type instanceof LLRefType) {
+			if (ptrTypeMap.get(key) != type)
+				refTypeMap.remove(key);
+		}
+		
 	}
 
 }

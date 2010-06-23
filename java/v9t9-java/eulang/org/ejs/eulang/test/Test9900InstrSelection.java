@@ -1413,6 +1413,49 @@ public class Test9900InstrSelection extends BaseInstrTest {
 		assertEquals(0, dsts.length);
 
 	}
+
+	@Test
+	public void testCalls2() throws Exception {
+		dumpIsel = true;
+		dumpLLVMGen = true;
+		/*
+
+@util._.Int._.i16$p_$p = global %Int._.i16$p_$p zeroinitializer
+define default %Int @testCalls1._.Int._._()  optsize 
+{
+entry.18:
+%0 = 	load %Int._.i16$p_$p* @util._.Int._.i16$p_$p
+%1 = 	call %Int %0 (%i16$p inttoptr (%Int 0 to %i16$p))
+	ret %Int %1
+}
+
+
+		 */
+    	doIsel("util : code (y:Int^=>Int);\n"+
+    			"testCalls1 = code () {\n" +
+    			"   util(0{Int^});\n" +
+    			"};\n");
+
+		int idx;
+		AsmInstruction inst;
+
+		idx = findInstrWithInst(instrs, "MOV", -1);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", AddrOperand.class, "util", RegTempOperand.class);
+		
+		idx = findInstrWithInst(instrs, "BL", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "BL", RegIndOperand.class);
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		inst = instrs.get(idx);
+		matchInstr(inst, "MOV", RegisterOperand.class, 0, RegTempOperand.class);	// phys reg
+		
+		idx = findInstrWithInst(instrs, "MOV", idx);
+		AsmInstruction inst2 = instrs.get(idx);
+		matchInstr(inst2, "MOV", inst.getOp2(), RegTempOperand.class, 0);
+		
+	}
 	
 
 	@Test

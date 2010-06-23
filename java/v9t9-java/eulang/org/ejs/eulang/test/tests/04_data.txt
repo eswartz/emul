@@ -1,3 +1,4 @@
+only
 <<< dynamic linked list #1
 brk := 0xa000;
 _new = code(s:Int) {

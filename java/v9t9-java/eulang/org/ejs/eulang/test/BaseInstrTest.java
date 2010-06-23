@@ -9,6 +9,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -79,6 +80,17 @@ public class BaseInstrTest extends BaseTest {
 	protected Routine doIsel(String text) throws Exception {
 		String name = new Exception().getStackTrace()[1].getMethodName();
 		LLModule mod = getModule(text);
+		
+		if (doOptimize) {
+			File file = getTempFile("");
+			String llvmText = mod.toString();
+			String optText = doOptimize(llvmText, file);
+			if (dumpLLVMGen)  {
+				System.out.println(optText);
+			}
+			mod = doLLVMParse(optText);
+		}
+		
 		LLDefineDirective def = null;
 		for (LLBaseDirective dir : mod.getDirectives()) {
 			if (dir instanceof LLDefineDirective) {
@@ -114,6 +126,7 @@ public class BaseInstrTest extends BaseTest {
 			 */
 			@Override
 			protected void newRoutine(Routine routine) {
+				System.out.println("\n#### Generating " + routine.getName()+"\n");
 				buildOutput.register(routine);
 				
 				instrs.clear();
