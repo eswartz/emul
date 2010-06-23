@@ -204,7 +204,7 @@
 #  elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 /* On BSD AIO sends signal SIGSYS - bad system call */
 #    define ENABLE_AIO          0
-#  elif defined(__linux__) ||  || !TARGET_SYMBIAN
+#  elif defined(__linux__)
 /* Linux implementation of POSIX AIO found to be inefficient */
 #    define ENABLE_AIO          0
 #  elif TARGET_SYMBIAN
