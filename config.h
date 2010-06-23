@@ -190,16 +190,28 @@
 #endif
 
 #if !defined(ENABLE_RCBP_TEST)
-#  define ENABLE_RCBP_TEST      (!ENABLE_ContextProxy && (SERVICE_RunControl && SERVICE_Breakpoints))
+#  if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+/* TODO: debug services are not fully implemented on BSD */
+#    define ENABLE_RCBP_TEST    0
+#  else
+#    define ENABLE_RCBP_TEST    (!ENABLE_ContextProxy && (SERVICE_RunControl && SERVICE_Breakpoints))
+#  endif
 #endif
 
 #if !defined(ENABLE_AIO)
-/* Linux implementation of POSIX AIO found to be inefficient */
-/* Symbian impl (OpenC) not desired either */
-#  if !defined(__linux__) && defined(_POSIX_ASYNCHRONOUS_IO) && !TARGET_SYMBIAN
-#    define ENABLE_AIO          1
-#  else
+#  if !defined(_POSIX_ASYNCHRONOUS_IO)
 #    define ENABLE_AIO          0
+#  elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+/* On BSD AIO sends signal SIGSYS - bad system call */
+#    define ENABLE_AIO          0
+#  elif defined(__linux__) ||  || !TARGET_SYMBIAN
+/* Linux implementation of POSIX AIO found to be inefficient */
+#    define ENABLE_AIO          0
+#  elif TARGET_SYMBIAN
+/* Symbian impl (OpenC) not desired either */
+#    define ENABLE_AIO          0
+#  else
+#    define ENABLE_AIO          1
 #  endif
 #endif
 

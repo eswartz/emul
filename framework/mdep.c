@@ -1090,6 +1090,15 @@ char * canonicalize_file_name(const char * path) {
     return strdup(buf);
 }
 
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+
+char * canonicalize_file_name(const char * path) {
+    char buf[PATH_MAX];
+    char * res = realpath(path, buf);
+    if (res == NULL) return NULL;
+    return strdup(res);
+}
+
 #endif
 
 

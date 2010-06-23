@@ -436,9 +436,9 @@ extern struct ip_ifc_info * get_ip_ifc(void);
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 
 #  define O_LARGEFILE 0
-#  define canonicalize_file_name(path) realpath(path, NULL)
 #  define SA_LEN(addr) ((addr)->sa_len)
 extern char ** environ;
+extern char * canonicalize_file_name(const char * path);
 
 #else /* not BSD */
 
