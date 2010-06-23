@@ -15,6 +15,13 @@ import java.util.Map;
 
 import org.eclipse.tm.tcf.core.AbstractPeer;
 
+/**
+ * LocalPeer object represents local end-point of TCF communication channel.
+ * There should be exactly one such object in a TCF agent.
+ * The object can be used to open a loop-back communication channel that allows
+ * the agent to access its own services same way as remote services.
+ * Note that "local" here is relative to the agent, and not same as in "local host".
+ */
 public class LocalPeer extends AbstractPeer {
 
     private static Map<String,String> createAttributes() {
