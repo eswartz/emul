@@ -108,8 +108,11 @@ typedef struct SymbolCacheEntry {
     HANDLE process;
     ULONG64 pc;
     char name[MAX_SYM_NAME];
-    Symbol sym;
     ErrorReport * error;
+    int sym_class;
+    int frame_relative;
+    ULONG64 module;
+    ULONG index;
 } SymbolCacheEntry;
 
 #define SYMBOL_CACHE_SIZE 153
@@ -198,9 +201,11 @@ static void syminfo2symbol(Context * ctx, int frame, SYMBOL_INFO * info, Symbol 
     sym->index = info->Index;
     if (is_frame_relative(info)) {
         assert(frame >= 0);
+        assert(ctx != ctx->mem);
         sym->frame = frame - STACK_NO_FRAME;
     }
     else {
+        assert(sym->frame == 0);
         ctx = ctx->mem;
     }
     sym->ctx = ctx;
@@ -759,13 +764,25 @@ static unsigned symbol_hash(HANDLE process, ULONG64 pc, PCSTR name) {
     return h % SYMBOL_CACHE_SIZE;
 }
 
-static int find_cache_symbol(HANDLE process, ULONG64 pc, PCSTR name, Symbol * sym) {
+static int find_cache_symbol(Context * ctx, int frame, HANDLE process, ULONG64 pc, PCSTR name, Symbol * sym) {
     SymbolCacheEntry * entry = symbol_cache + symbol_hash(process, pc, name);
     assert(process != NULL);
     if (entry->process != process) return 0;
     if (entry->pc != pc) return 0;
     if (strcmp(entry->name, name)) return 0;
-    if (entry->error == NULL) *sym = entry->sym;
+    if (entry->error == NULL) {
+        if (entry->frame_relative) {
+            assert(frame >= 0);
+            sym->frame = frame - STACK_NO_FRAME;
+        }
+        else {
+            ctx = ctx->mem;
+        }
+        sym->ctx = ctx;
+        sym->sym_class = entry->sym_class;
+        sym->module = entry->module;
+        sym->index = entry->index;
+    }
     set_error_report_errno(entry->error);
     return 1;
 }
@@ -778,8 +795,12 @@ static void add_cache_symbol(HANDLE process, ULONG64 pc, PCSTR name, Symbol * sy
     strcpy(entry->name, name);
     release_error_report(entry->error);
     entry->error = get_error_report(error);
-    if (!error) entry->sym = *sym;
-    else memset(&entry->sym, 0, sizeof(Symbol));
+    if (!error) {
+        entry->frame_relative = sym->frame > 0;
+        entry->sym_class = sym->sym_class;
+        entry->module = sym->module;
+        entry->index = sym->index;
+    }
 }
 
 static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
@@ -792,7 +813,7 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     if (frame == STACK_TOP_FRAME) frame = get_top_frame(ctx);
     if (frame == STACK_TOP_FRAME) return -1;
     if (get_stack_frame(ctx, frame, &stack_frame) < 0) return -1;
-    if (find_cache_symbol(process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
+    if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
     memset(info, 0, sizeof(SYMBOL_INFO));
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -856,18 +877,30 @@ static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
 }
 
 int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
+    int found = 0;
     *sym = alloc_symbol();
     (*sym)->ctx = ctx;
-    if (find_pe_symbol(ctx, frame, name, *sym) >= 0) return 0;
-    if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
+    if (find_pe_symbol(ctx, frame, name, *sym) >= 0) found = 1;
+    else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
 #if ENABLE_RCBP_TEST
-    if (find_test_symbol(ctx, name, &(*sym)->address, &(*sym)->sym_class) >= 0) {
-        (*sym)->ctx = ctx->mem;
-        return 0;
+    if (!found) {
+        if (find_test_symbol(ctx, name, &(*sym)->address, &(*sym)->sym_class) >= 0) found = 1;
+        else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
+        if (found) (*sym)->ctx = ctx->mem;
     }
 #endif
-    if (find_basic_type_symbol(ctx, name, *sym) >= 0) return 0;
-    return -1;
+    if (!found) {
+        if (find_basic_type_symbol(ctx, name, *sym) >= 0) found = 1;
+        else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
+    }
+    if (!found) {
+        errno = ERR_SYM_NOT_FOUND;
+        return -1;
+    }
+    assert(frame >= 0 || (*sym)->ctx == ctx->mem);
+    assert((*sym)->ctx == ((*sym)->frame ? ctx : ctx->mem));
+    assert((*sym)->frame == ((*sym)->ctx == (*sym)->ctx->mem ? 0u : frame - STACK_NO_FRAME));
+    return 0;
 }
 
 typedef struct EnumerateSymbolsContext {
@@ -955,14 +988,14 @@ static void event_context_created(Context * ctx, void * client_data) {
 static void event_context_exited(Context * ctx, void * client_data) {
     unsigned i;
     HANDLE handle = get_context_handle(ctx);
+    if (ctx->parent != NULL) return;
+    assert(handle != NULL);
     for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-        if (symbol_cache[i].sym.ctx == ctx) {
+        if (symbol_cache[i].process == handle) {
             release_error_report(symbol_cache[i].error);
             memset(symbol_cache + i, 0, sizeof(SymbolCacheEntry));
         }
     }
-    if (ctx->parent != NULL) return;
-    assert(handle != NULL);
     if (!SymUnloadModule64(handle, get_context_base_address(ctx))) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
