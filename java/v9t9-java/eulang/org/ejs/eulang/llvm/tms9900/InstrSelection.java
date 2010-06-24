@@ -31,23 +31,7 @@ import org.ejs.eulang.llvm.LLModule;
 import org.ejs.eulang.llvm.directives.LLBaseDirective;
 import org.ejs.eulang.llvm.directives.LLDeclareDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
-import org.ejs.eulang.llvm.instrs.LLAllocaInstr;
-import org.ejs.eulang.llvm.instrs.LLAssignInstr;
-import org.ejs.eulang.llvm.instrs.LLBaseInstr;
-import org.ejs.eulang.llvm.instrs.LLBinaryInstr;
-import org.ejs.eulang.llvm.instrs.LLBranchInstr;
-import org.ejs.eulang.llvm.instrs.LLCallInstr;
-import org.ejs.eulang.llvm.instrs.LLCastInstr;
-import org.ejs.eulang.llvm.instrs.LLCompareInstr;
-import org.ejs.eulang.llvm.instrs.LLExtractValueInstr;
-import org.ejs.eulang.llvm.instrs.LLGetElementPtrInstr;
-import org.ejs.eulang.llvm.instrs.LLInsertValueInstr;
-import org.ejs.eulang.llvm.instrs.LLInstr;
-import org.ejs.eulang.llvm.instrs.LLLoadInstr;
-import org.ejs.eulang.llvm.instrs.LLRetInstr;
-import org.ejs.eulang.llvm.instrs.LLStoreInstr;
-import org.ejs.eulang.llvm.instrs.LLTypedInstr;
-import org.ejs.eulang.llvm.instrs.LLUncondBranchInstr;
+import org.ejs.eulang.llvm.instrs.*;
 import org.ejs.eulang.llvm.ops.LLArrayOp;
 import org.ejs.eulang.llvm.ops.LLCastOp;
 import org.ejs.eulang.llvm.ops.LLConstOp;
@@ -506,7 +490,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			return false;
 		}
 		else if (instr.getName().equals("phi")) {
-			handlePhiInstr((LLAssignInstr) instr);
+			handlePhiInstr((LLPhiInstr) instr);
 			return false;
 		}
 		
@@ -832,7 +816,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	/**
 	 * @param llinst  
 	 */
-	private void handlePhiInstr(LLAssignInstr llinst) {
+	private void handlePhiInstr(LLPhiInstr llinst) {
 		assert false;
 	}
 

@@ -9,9 +9,18 @@ import org.ejs.eulang.llvm.ops.LLOperand;
  * @author ejs
  *
  */
-public class LLPhiInstr extends LLAssignInstr {
-	public LLPhiInstr(LLOperand temp, LLOperand... phiOps) {
-		super("phi", temp, temp.getType(), phiOps);
+public class LLPhiInstr extends LLTypedInstr {
+	private LLOperand result;
+
+	public LLPhiInstr(LLOperand result, LLOperand... phiOps) {
+		super("phi", result.getType(), phiOps);
+		this.result = result;
 	}
 
+	/**
+	 * @return the result
+	 */
+	public LLOperand getResult() {
+		return result;
+	}
 }

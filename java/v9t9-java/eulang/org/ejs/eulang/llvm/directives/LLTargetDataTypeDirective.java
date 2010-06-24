@@ -17,6 +17,9 @@ public class LLTargetDataTypeDirective extends LLTargetDirective {
 		this.typeEngine = typEngine;
 	}
 
+	/**
+	 * @param desc  
+	 */
 	public LLTargetDataTypeDirective(TypeEngine typEngine, String desc) {
 		this.typeEngine = typEngine;
 		/*
