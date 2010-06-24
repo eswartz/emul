@@ -397,6 +397,7 @@ blocklabel returns [ ISymbol theSym ] : LABEL ':' NEWLINE
 
 instr returns [LLInstr inst ] :  
   ( allocaInstr          { $instr.inst = $allocaInstr.inst; }  ) 
+  | ( phiInstr          { $instr.inst = $phiInstr.inst; }  ) 
   | ( storeInstr         { $instr.inst = $storeInstr.inst; }  )
   | ( branchInstr        { $instr.inst = $branchInstr.inst; }  )
   | ( uncondBranchInstr  { $instr.inst = $uncondBranchInstr.inst; }  )
@@ -417,8 +418,11 @@ local returns [LLOperand op] :
     NAMED_ID    { $local.op = new LLSymbolOp(helper.defineSymbol($NAMED_ID.text)); }
     ;
 
+alignop :  ( ',' 'align' number ) // TODO 
+  ;
+  
 allocaInstr returns [LLAllocaInstr inst] :
-  local EQUALS 'alloca' type typedop? 
+  local EQUALS 'alloca' type typedop? alignop? 
   { 
   
   LLType ptrType = helper.typeEngine.getPointerType($type.theType);
@@ -434,8 +438,27 @@ allocaInstr returns [LLAllocaInstr inst] :
   }  
   ;
 
+phiInstr returns [LLPhiInstr inst] :
+  local EQUALS 'phi' type 
+  {
+     List<LLOperand> ops = new ArrayList<LLOperand>();
+  }
+  ( p0=phiop  { $p0.op.setType($type.theType); ops.add($p0.op); } 
+      ( ',' p1=phiop  {  $p1.op.setType($type.theType); ops.add($p1.op); } )+ 
+  )
+ {
+    $local.op.setType($type.theType);
+    $phiInstr.inst = new LLPhiInstr($local.op, ops.toArray(new LLPhiOp[ops.size()])); 
+  
+  // fixup types
+  $phiInstr.inst.setType($type.theType);
+  ((LLSymbolOp)$phiInstr.inst.getResult()).getSymbol().setType($type.theType);
+  $phiInstr.inst.getResult().setType($type.theType);  
+  }  
+  ;
+
 storeInstr returns [LLStoreInstr inst] :
-  'store' o1=typedop ',' o2=typedop  
+  'store' o1=typedop ',' o2=typedop alignop?  
    { $storeInstr.inst = new LLStoreInstr($o2.op.getType().getSubType(), $o1.op, $o2.op); }  
   ;
 
@@ -453,7 +476,8 @@ assignInstr returns [LLAssignInstr inst] :
     { ret = $ret.op; }
     EQUALS
     (
-    ( 'load' loadop=typedop { $assignInstr.inst = new LLLoadInstr(ret, $loadop.op.getType().getSubType(), $loadop.op); } )
+    ( 'load' loadop=typedop alignop? 
+        { $assignInstr.inst = new LLLoadInstr(ret, $loadop.op.getType().getSubType(), $loadop.op); } )
     | ( binexpr binexprsuffix? bt=type bop1=op ',' bop2=op  
         {
           $bop1.op.setType($bt.theType); 
@@ -518,6 +542,7 @@ assignInstr returns [LLAssignInstr inst] :
                 $callargs.ops.toArray(new LLOperand[ $callargs.ops.size()]));
         } 
       )
+ 
     ) 
     
     {
@@ -529,6 +554,10 @@ assignInstr returns [LLAssignInstr inst] :
     local.setType(ret.getType());
     }
     ;
+
+phiop returns [ LLPhiOp op ] : '[' op ','  identifier ']' 
+  { $phiop.op = new LLPhiOp($op.op, (LLSymbolOp) helper.getSymbolOp($identifier.theId, null)); }
+  ;
 
 callargs returns [ List<LLOperand> ops ] 
   @init 

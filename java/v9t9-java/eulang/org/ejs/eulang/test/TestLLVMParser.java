@@ -4,41 +4,13 @@
 package org.ejs.eulang.test;
 
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
-import org.antlr.runtime.ANTLRStringStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.ParserRuleReturnScope;
-import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.tree.Tree;
-import org.ejs.eulang.llvm.LLBlock;
-import org.ejs.eulang.llvm.LLCodeVisitor;
-import org.ejs.eulang.llvm.LLLinkage;
-import org.ejs.eulang.llvm.LLModule;
-import org.ejs.eulang.llvm.directives.LLConstantDirective;
-import org.ejs.eulang.llvm.directives.LLDefineDirective;
-import org.ejs.eulang.llvm.directives.LLGlobalDirective;
-import org.ejs.eulang.llvm.instrs.LLInstr;
-import org.ejs.eulang.llvm.instrs.LLTypedInstr;
-import org.ejs.eulang.llvm.ops.LLConstOp;
-import org.ejs.eulang.llvm.ops.LLOperand;
-import org.ejs.eulang.llvm.ops.LLStringLitOp;
-import org.ejs.eulang.llvm.ops.LLStructOp;
-import org.ejs.eulang.llvm.ops.LLZeroInitOp;
-import org.ejs.eulang.llvm.parser.LLParserHelper;
-import org.ejs.eulang.llvm.parser.LLVMLexer;
-import org.ejs.eulang.llvm.parser.LLVMParser;
-import org.ejs.eulang.symbols.GlobalScope;
+import org.ejs.eulang.llvm.*;
+import org.ejs.eulang.llvm.directives.*;
+import org.ejs.eulang.llvm.ops.*;
 import org.ejs.eulang.symbols.ISymbol;
-import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLDataType;
-import org.ejs.eulang.types.LLPointerType;
-import org.ejs.eulang.types.LLSymbolType;
-import org.ejs.eulang.types.LLType;
+import org.ejs.eulang.types.*;
 import org.junit.Test;
 /**
  * @author ejs
@@ -720,6 +692,7 @@ public class TestLLVMParser extends BaseTest {
 		LLModule mod = doLLVMParse(text);
 		String redis = mod.toString();
 		System.out.println(mod);
+		assertMatchText("@foo._.Int._.Class\\$p_\\$p = global %Int._.Class\\$p_\\$p null", redis);
 		
 	}
 	@Test
@@ -757,5 +730,134 @@ public class TestLLVMParser extends BaseTest {
 		assertTrue(sub +"", sub instanceof LLCodeType);	// not LLSymbolType still!
 		
 		
+	}
+	
+	@Test
+	public void testPhiInstr1() throws Exception {
+		String text= 
+		"define i16 @\"makeList._.List.27$p._._\"(i16 %x) nounwind optsize {\n" + 
+		" entry:\n"+
+		"     br label %loopBody.57\n"+
+		"	loopBody.57:                                      ; preds = %cs.66, %entry.51\n" + 
+		"	  %_.head.52.13 = phi i16 [ 0, %entry.51 ], [ %0, %cs.66 ] ; <%\"List.27$p\"> [#uses=1]\n" +
+		" entry.51:\n"+
+		"     %0 = add i16 %x, 1\n"+
+		"     br label %loopBody.57\n"+
+		" cs.66:\n"+
+		"     ret i16 %_.head.52.13\n"+
+		"}\n"+
+		"";
+		LLModule mod = doLLVMParse(text);
+		String redis = mod.toString();
+		System.out.println(mod);
+		assertMatchText("phi %Int \\[ 0, %entry.51\\], \\[ %0, %cs.66\\]", redis);
+
+	}
+	@Test
+	public void testPhiInstr2() throws Exception {
+		String text= 
+		"; ModuleID = '/tmp/test.opt.bc'\n" + 
+		"target datalayout = \"E-p:16:16-s0:8:16-a0:8:16\"\n" + 
+		"target triple = \"9900-unknown-v9t9\"\n" + 
+		"\n" + 
+		"%Int._.Int_ = type i16 (i16)\n" + 
+		"%List.27 = type { i16, %\"List.27$p\" }\n" + 
+		"%\"List.27$p\" = type %List.27*\n" + 
+		"%\"List.27$p$p\" = type %\"List.27$p\"*\n" + 
+		"%\"List.27$p._._\" = type %\"List.27$p\" ()\n" + 
+		"%i16._._ = type i16 ()\n" + 
+		"%\"void._.List.27$p_\" = type void (%\"List.27$p\")\n" + 
+		"\n" + 
+		"@brk._.Int = global i16 -24576                    ; <i16*> [#uses=6]\n" + 
+		"\n" + 
+		"define i16 @_new._.Int._.Int_(i16 %s) nounwind optsize {\n" + 
+		"entry.33:\n" + 
+		"  %0 = load i16* @brk._.Int                       ; <i16> [#uses=2]\n" + 
+		"  %1 = add i16 %s, 1                              ; <i16> [#uses=1]\n" + 
+		"  %2 = and i16 %1, -2                             ; <i16> [#uses=1]\n" + 
+		"  %3 = add i16 %0, %2                             ; <i16> [#uses=1]\n" + 
+		"  store i16 %3, i16* @brk._.Int\n" + 
+		"  ret i16 %0\n" + 
+		"}\n" + 
+		"\n" + 
+		"define %\"List.27$p\" @\"new._.List.27$p._._\"() nounwind optsize {\n" + 
+		"entry.41:\n" + 
+		"  %0 = load i16* @brk._.Int                       ; <i16> [#uses=2]\n" + 
+		"  %1 = add i16 %0, 4                              ; <i16> [#uses=1]\n" + 
+		"  store i16 %1, i16* @brk._.Int\n" + 
+		"  %2 = inttoptr i16 %0 to %\"List.27$p\"            ; <%\"List.27$p\"> [#uses=1]\n" + 
+		"  ret %\"List.27$p\" %2\n" + 
+		"}\n" + 
+		"\n" + 
+		"define void @\"List.27.$__init__$._.void._.List.27$p_\"(%\"List.27$p\" nocapture %this) nounwind optsize {\n" + 
+		"entry.46:\n" + 
+		"  %0 = getelementptr %\"List.27$p\" %this, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+		"  store i16 0, i16* %0\n" + 
+		"  %1 = getelementptr %\"List.27$p\" %this, i16 0, i32 1 ; <%\"List.27$p$p\"> [#uses=1]\n" + 
+		"  store %\"List.27$p\" null, %\"List.27$p$p\" %1\n" + 
+		"  ret void\n" + 
+		"}\n" + 
+		"\n" + 
+		"define %\"List.27$p\" @\"makeList._.List.27$p._._\"() nounwind optsize {\n" + 
+		"entry.51:\n" + 
+		"  br label %loopBody.57\n" + 
+		"\n" + 
+		"loopBody.57:                                      ; preds = %cs.66, %entry.51\n" + 
+		"  %_.head.52.13 = phi %\"List.27$p\" [ null, %entry.51 ], [ %_.head.52.0, %cs.66 ] ; <%\"List.27$p\"> [#uses=1]\n" + 
+		"  %_.prev.53.02 = phi %\"List.27$p\" [ null, %entry.51 ], [ %5, %cs.66 ] ; <%\"List.27$p\"> [#uses=2]\n" + 
+		"  %_.x.60.01 = phi i16 [ 0, %entry.51 ], [ %7, %cs.66 ] ; <i16> [#uses=2]\n" + 
+		"  %_.node.62 = alloca %\"List.27$p\", align 2       ; <%\"List.27$p$p\"> [#uses=2]\n" + 
+		"  %0 = load i16* @brk._.Int                       ; <i16> [#uses=2]\n" + 
+		"  %1 = add i16 %0, 4                              ; <i16> [#uses=1]\n" + 
+		"  store i16 %1, i16* @brk._.Int\n" + 
+		"  %2 = inttoptr i16 %0 to %\"List.27$p\"            ; <%\"List.27$p\"> [#uses=2]\n" + 
+		"  store %\"List.27$p\" %2, %\"List.27$p$p\" %_.node.62\n" + 
+		"  %3 = getelementptr %\"List.27$p\" %2, i16 0, i32 0 ; <i16*> [#uses=1]\n" + 
+		"  store i16 %_.x.60.01, i16* %3\n" + 
+		"  %4 = icmp eq %\"List.27$p\" %_.prev.53.02, null   ; <i1> [#uses=1]\n" + 
+		"  %5 = load %\"List.27$p$p\" %_.node.62             ; <%\"List.27$p\"> [#uses=3]\n" + 
+		"  br i1 %4, label %cs.66, label %cb.64\n" + 
+		"\n" + 
+		"cb.64:                                            ; preds = %loopBody.57\n" + 
+		"  %6 = getelementptr %\"List.27$p\" %_.prev.53.02, i16 0, i32 1 ; <%\"List.27$p$p\"> [#uses=1]\n" + 
+		"  store %\"List.27$p\" %5, %\"List.27$p$p\" %6\n" + 
+		"  br label %cs.66\n" + 
+		"\n" + 
+		"cs.66:                                            ; preds = %cb.64, %loopBody.57\n" + 
+		"  %_.head.52.0 = phi %\"List.27$p\" [ %_.head.52.13, %cb.64 ], [ %5, %loopBody.57 ] ; <%\"List.27$p\"> [#uses=2]\n" + 
+		"  %7 = add i16 %_.x.60.01, 1                      ; <i16> [#uses=2]\n" + 
+		"  %8 = icmp ugt i16 %7, 99                        ; <i1> [#uses=1]\n" + 
+		"  br i1 %8, label %loopExit.58, label %loopBody.57\n" + 
+		"\n" + 
+		"loopExit.58:                                      ; preds = %cs.66\n" + 
+		"  ret %\"List.27$p\" %_.head.52.0\n" + 
+		"}\n" + 
+		"\n" + 
+		"define i16 @main._.i16._._() nounwind optsize {\n" + 
+		"entry.69:\n" + 
+		"  %0 = tail call %\"List.27$p\" @\"makeList._.List.27$p._._\"() ; <%\"List.27$p\"> [#uses=2]\n" + 
+		"  %1 = icmp eq %\"List.27$p\" %0, null              ; <i1> [#uses=1]\n" + 
+		"  br i1 %1, label %loopExit.77, label %loopBody.76\n" + 
+		"\n" + 
+		"loopBody.76:                                      ; preds = %loopBody.76, %entry.69\n" + 
+		"  %_.c.71.02 = phi i16 [ %2, %loopBody.76 ], [ 0, %entry.69 ] ; <i16> [#uses=1]\n" + 
+		"  %_.n.72.01 = phi %\"List.27$p\" [ %4, %loopBody.76 ], [ %0, %entry.69 ] ; <%\"List.27$p\"> [#uses=1]\n" + 
+		"  %2 = add i16 %_.c.71.02, 1                      ; <i16> [#uses=2]\n" + 
+		"  %3 = getelementptr %\"List.27$p\" %_.n.72.01, i16 0, i32 1 ; <%\"List.27$p$p\"> [#uses=1]\n" + 
+		"  %4 = load %\"List.27$p$p\" %3                     ; <%\"List.27$p\"> [#uses=2]\n" + 
+		"  %5 = icmp eq %\"List.27$p\" %4, null              ; <i1> [#uses=1]\n" + 
+		"  br i1 %5, label %loopExit.77, label %loopBody.76\n" + 
+		"\n" + 
+		"loopExit.77:                                      ; preds = %loopBody.76, %entry.69\n" + 
+		"  %_.c.71.0.lcssa = phi i16 [ 0, %entry.69 ], [ %2, %loopBody.76 ] ; <i16> [#uses=2]\n" + 
+		"  store i16 %_.c.71.0.lcssa, i16* inttoptr (i16 -4096 to i16*), align 4096\n" + 
+		"  ret i16 %_.c.71.0.lcssa\n" + 
+		"}\n";
+		LLModule mod = doLLVMParse(text);
+		String redis = mod.toString();
+		System.out.println(mod);
+		assertMatchText("phi %List.27\\$p \\[ %_.head.52.13, %cb.64\\], \\[ %5, %loopBody.57\\]", redis);
+		assertMatchText("store i16 %_.c.71.0.lcssa, i16\\* inttoptr \\(%Int -4096 to %i16\\$p\\)", redis);
+
 	}
 }
