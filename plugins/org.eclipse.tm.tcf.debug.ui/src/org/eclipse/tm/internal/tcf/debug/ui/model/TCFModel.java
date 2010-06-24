@@ -47,6 +47,8 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactor
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputProvider;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.IDebugView;
@@ -116,7 +118,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
  * keeping the cache in a coherent state,
  * and feeding UI with up-to-date data.
  */
-public class TCFModel implements IElementContentProvider, IElementLabelProvider,
+public class TCFModel implements IElementContentProvider, IElementLabelProvider, IViewerInputProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay, ISuspendTrigger {
 
     private final TCFLaunch launch;
@@ -601,25 +603,22 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         });
     }
 
-    /**
-     * Create and post ModelDelta for changes in this node.
-     * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
-     */
-    final void addDelta(TCFNode node, int flags) {
-        for (TCFModelProxy p : model_proxies) {
-            int f = flags & node.getRelevantModelDeltaFlags(p.getPresentationContext());
-            if (f != 0) p.addDelta(node, f);
-        }
-    }
-
-
     void launchChanged() {
         if (launch_node != null) {
-            launch_node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+            for (TCFModelProxy p : model_proxies) {
+                String id = p.getPresentationContext().getId();
+                if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) {
+                    p.addDelta(launch_node, IModelDelta.STATE | IModelDelta.CONTENT);
+                }
+            }
         }
         else {
             refreshLaunchView();
         }
+    }
+
+    Set<TCFModelProxy> getModelProxies() {
+        return model_proxies;
     }
 
     void dispose() {
@@ -759,6 +758,17 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             // Launch label is provided by TCFLaunchLabelProvider class.
             assert !(o instanceof TCFLaunch);
             ((TCFNode)o).update(updates[i]);
+        }
+    }
+
+    public void update(IViewerInputUpdate update) {
+        Object o = update.getElement();
+        if (o instanceof TCFLaunch) {
+            update.setInputElement(o);
+            update.done();
+        }
+        else {
+            ((TCFNode)o).update(update);
         }
     }
 

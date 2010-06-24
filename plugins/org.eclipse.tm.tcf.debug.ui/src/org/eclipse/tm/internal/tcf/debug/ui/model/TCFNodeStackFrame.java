@@ -19,6 +19,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdat
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
@@ -339,6 +340,18 @@ public class TCFNodeStackFrame extends TCFNode {
         return true;
     }
 
+    @Override
+    protected boolean getData(IViewerInputUpdate result, Runnable done) {
+        result.setInputElement(result.getElement());
+        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+            TCFNodeExecContext exe = (TCFNodeExecContext)parent;
+            TCFChildrenStackTrace stack_trace_cache = exe.getStackTrace();
+            if (!stack_trace_cache.validate(done)) return false;
+            if (stack_trace_cache.getTopFrame() == this) result.setInputElement(exe);
+        }
+        return true;
+    }
+
     private String getModuleName(BigInteger pc, Runnable done) {
         TCFDataCache<IRunControl.RunControlContext> parent_dc = ((TCFNodeExecContext)parent).getRunContext();
         if (!parent_dc.validate(done)) return null;
@@ -372,9 +385,37 @@ public class TCFNodeStackFrame extends TCFNode {
         return "0x0000000000000000".substring(0, 2 + l) + s;
     }
 
+    private void postAllChangedDelta() {
+        for (TCFModelProxy p : model.getModelProxies()) {
+            int flags = 0;
+            String id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) flags |= IModelDelta.STATE;
+            if (getChildren(p.getPresentationContext()) != null && p.getInput() == this) flags |= IModelDelta.CONTENT;
+            if (flags != 0) p.addDelta(this, flags);
+        }
+    }
+
+    private void postStateChangedDelta() {
+        for (TCFModelProxy p : model.getModelProxies()) {
+            String id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) {
+                p.addDelta(this, IModelDelta.STATE);
+            }
+        }
+    }
+
+    void postExpressionAddedOrRemovedDelta() {
+        for (TCFModelProxy p : model.getModelProxies()) {
+            String id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id) && p.getInput() == this) {
+                p.addDelta(this, IModelDelta.CONTENT);
+            }
+        }
+    }
+
     void onSourceMappingChange() {
         line_info.reset();
-        addModelDelta(IModelDelta.STATE);
+        postStateChangedDelta();
     }
 
     void onSuspended() {
@@ -384,23 +425,24 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.onSuspended();
         children_vars.onSuspended();
         children_exps.onSuspended();
-        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        postAllChangedDelta();
     }
 
     void onMemoryMapChanged() {
-        addModelDelta(IModelDelta.STATE);
+        line_info.reset();
+        postStateChangedDelta();
     }
 
     void onRegistersChanged() {
         children_regs.onRegistersChanged();
-        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        postAllChangedDelta();
     }
 
     void onRegisterValueChanged() {
         stack_trace_context.cancel();
         line_info.cancel();
         address.cancel();
-        addModelDelta(IModelDelta.STATE);
+        postStateChangedDelta();
     }
 
     @Override

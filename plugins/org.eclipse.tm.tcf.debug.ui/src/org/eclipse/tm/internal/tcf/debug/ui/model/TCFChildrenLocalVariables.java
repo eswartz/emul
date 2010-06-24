@@ -37,6 +37,12 @@ public class TCFChildrenLocalVariables extends TCFChildren {
             set(null, null, new HashMap<String,TCFNode>());
             return true;
         }
+        TCFChildrenStackTrace stack_trace_cache = ((TCFNodeExecContext)node.parent).getStackTrace();
+        if (!stack_trace_cache.validate(this)) return false; // node.getFrameNo() is not valid
+        if (node.getFrameNo() < 0) {
+            set(null, null, new HashMap<String,TCFNode>());
+            return true;
+        }
         assert command == null;
         command = exps.getChildren(node.id, new IExpressions.DoneGetChildren() {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {

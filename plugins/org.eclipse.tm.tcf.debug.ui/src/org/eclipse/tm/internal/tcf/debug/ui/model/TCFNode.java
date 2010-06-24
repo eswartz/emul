@@ -17,8 +17,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpd
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -148,20 +147,20 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /**
      * Retrieve children count for a presentation context.
-     * @param result - children count update request.
+     * @param update - children count update request.
      */
-    final void update(final IChildrenCountUpdate result) {
-        new TCFRunnable(result) {
+    final void update(final IChildrenCountUpdate update) {
+        new TCFRunnable(update) {
             public void run() {
                 if (!done) {
-                    if (!result.isCanceled()) {
+                    if (!update.isCanceled()) {
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                            if (!getData(result, this)) return;
+                            if (!getData(update, this)) return;
                         }
                         else {
-                            result.setChildCount(0);
+                            update.setChildCount(0);
                         }
-                        result.setStatus(Status.OK_STATUS);
+                        update.setStatus(Status.OK_STATUS);
                     }
                     done();
                 }
@@ -171,17 +170,17 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /**
      * Retrieve children for a presentation context.
-     * @param result - children update request.
+     * @param update - children update request.
      */
-    final void update(final IChildrenUpdate result) {
-        new TCFRunnable(result) {
+    final void update(final IChildrenUpdate update) {
+        new TCFRunnable(update) {
             public void run() {
                 if (!done) {
-                    if (!result.isCanceled()) {
+                    if (!update.isCanceled()) {
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                            if (!getData(result, this)) return;
+                            if (!getData(update, this)) return;
                         }
-                        result.setStatus(Status.OK_STATUS);
+                        update.setStatus(Status.OK_STATUS);
                     }
                     done();
                 }
@@ -191,21 +190,21 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /**
      * Check if node has children in a presentation context.
-     * @param result - "has children" update request.
+     * @param update - "has children" update request.
      */
-    final void update(final IHasChildrenUpdate result) {
-        new TCFRunnable(result) {
+    final void update(final IHasChildrenUpdate update) {
+        new TCFRunnable(update) {
             public void run() {
                 if (!done) {
-                    if (!result.isCanceled()) {
+                    if (!update.isCanceled()) {
                         IChannel channel = model.getLaunch().getChannel();
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                            if (!getData(result, this)) return;
+                            if (!getData(update, this)) return;
                         }
                         else {
-                            result.setHasChilren(false);
+                            update.setHasChilren(false);
                         }
-                        result.setStatus(Status.OK_STATUS);
+                        update.setStatus(Status.OK_STATUS);
                     }
                     done();
                 }
@@ -215,20 +214,43 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /**
      * Retrieve node label for a presentation context.
-     * @param result - label update request.
+     * @param update - label update request.
      */
-    final void update(final ILabelUpdate result) {
-        new TCFRunnable(result) {
+    final void update(final ILabelUpdate update) {
+        new TCFRunnable(update) {
             public void run() {
                 if (!done) {
-                    if (!result.isCanceled()) {
+                    if (!update.isCanceled()) {
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                            if (!getData(result, this)) return;
+                            if (!getData(update, this)) return;
                         }
                         else {
-                            result.setLabel("...", 0);
+                            update.setLabel("...", 0);
                         }
-                        result.setStatus(Status.OK_STATUS);
+                        update.setStatus(Status.OK_STATUS);
+                    }
+                    done();
+                }
+            }
+        };
+    }
+
+    /**
+     * Retrieve viewer input object for a presentation context.
+     * @param update - input update request.
+     */
+    final void update(final IViewerInputUpdate update) {
+        new TCFRunnable(update) {
+            public void run() {
+                if (!done) {
+                    if (!update.isCanceled()) {
+                        if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                            if (!getData(update, this)) return;
+                        }
+                        else {
+                            update.setInputElement(update.getElement());
+                        }
+                        update.setStatus(Status.OK_STATUS);
                     }
                     done();
                 }
@@ -239,70 +261,65 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     /**
      * Retrieve children count for a presentation context.
      * The method is always called on TCF dispatch thread.
-     * @param result - children count update request.
+     * @param update - children count update request.
      * @param done - client call back interface, during data waiting it is
      * called every time new portion of data becomes available.
      * @return false if waiting data retrieval, true if all done.
      */
-    protected boolean getData(IChildrenCountUpdate result, Runnable done) {
-        result.setChildCount(0);
+    protected boolean getData(IChildrenCountUpdate update, Runnable done) {
+        update.setChildCount(0);
         return true;
     }
 
     /**
      * Retrieve children for a presentation context.
      * The method is always called on TCF dispatch thread.
-     * @param result - children update request.
+     * @param update - children update request.
      * @param done - client call back interface, during data waiting it is
      * called every time new portion of data becomes available.
      * @return false if waiting data retrieval, true if all done.
      */
-    protected boolean getData(IChildrenUpdate result, Runnable done) {
+    protected boolean getData(IChildrenUpdate update, Runnable done) {
         return true;
     }
 
     /**
      * Check if the node has children in a presentation context.
      * The method is always called on TCF dispatch thread.
-     * @param result - "has children" update request.
+     * @param update - "has children" update request.
      * @param done - client call back interface, during data waiting it is
      * called every time new portion of data becomes available.
      * @return false if waiting data retrieval, true if all done.
      */
-    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
-        result.setHasChilren(false);
+    protected boolean getData(IHasChildrenUpdate update, Runnable done) {
+        update.setHasChilren(false);
         return true;
     }
 
     /**
      * Retrieve node label for a presentation context.
      * The method is always called on TCF dispatch thread.
-     * @param result - label update request.
+     * @param update - label update request.
      * @param done - client call back interface, during data waiting it is
      * called every time new portion of data becomes available.
      * @return false if waiting data retrieval, true if all done.
      */
-    protected boolean getData(ILabelUpdate result, Runnable done) {
-        result.setLabel(id, 0);
+    protected boolean getData(ILabelUpdate update, Runnable done) {
+        update.setLabel(id, 0);
         return true;
     }
 
     /**
-     * Create and post ModelDelta for changes in this node.
-     * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
+     * Retrieve viewer input object for a presentation context.
+     * The method is always called on TCF dispatch thread.
+     * @param update - view input update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
      */
-    final void addModelDelta(int flags) {
-        model.addDelta(this, flags);
-    }
-
-    /**
-     * Return bit set of model delta flags relevant for this node in given presentation context.
-     * Sub-classes are supposed to override this method.
-     * @param p - presentation context
-     * @return bit set of model delta flags
-     */
-    int getRelevantModelDeltaFlags(IPresentationContext p) {
-        return IModelDelta.CONTENT | IModelDelta.STATE | IModelDelta.ADDED | IModelDelta.REMOVED;
+    protected boolean getData(IViewerInputUpdate update, Runnable done) {
+        update.setInputElement(update.getElement());
+        return true;
     }
 
     /*--------------------------------------------------------------------------------------*/

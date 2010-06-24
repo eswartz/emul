@@ -36,6 +36,15 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         reset();
         for (TCFNode n : getNodes()) {
             if (n instanceof TCFNodeExpression) ((TCFNodeExpression)n).onSuspended();
+            if (n instanceof TCFNodeArrayPartition) ((TCFNodeArrayPartition)n).onSuspended();
+        }
+    }
+
+    void onValueChanged() {
+        reset();
+        for (TCFNode n : getNodes()) {
+            if (n instanceof TCFNodeExpression) ((TCFNodeExpression)n).onValueChanged();
+            if (n instanceof TCFNodeArrayPartition) ((TCFNodeArrayPartition)n).onValueChanged();
         }
     }
 

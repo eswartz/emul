@@ -13,7 +13,6 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -127,11 +126,11 @@ public class TCFChildrenExecContext extends TCFChildren {
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
         if (n == null) {
             n = new TCFNodeExecContext(node, id);
-            n.addModelDelta(IModelDelta.ADDED);
+            n.postContextAddedDelta();
             add(n);
         }
         else {
-            n.addModelDelta(IModelDelta.STATE);
+            n.postAllChangedDelta();
         }
         run_children.add(n);
         n.setRunContext(context);
@@ -143,11 +142,11 @@ public class TCFChildrenExecContext extends TCFChildren {
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
         if (n == null) {
             n = new TCFNodeExecContext(node, id);
-            n.addModelDelta(IModelDelta.ADDED);
+            n.postContextAddedDelta();
             add(n);
         }
         else {
-            n.addModelDelta(IModelDelta.STATE);
+            n.postAllChangedDelta();
         }
         mem_children.add(n);
         n.setMemoryContext(context);

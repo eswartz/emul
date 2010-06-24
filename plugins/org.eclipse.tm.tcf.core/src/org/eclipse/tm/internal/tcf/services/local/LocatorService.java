@@ -233,25 +233,31 @@ public class LocatorService implements ILocator {
 
     private final Thread input_thread = new Thread() {
         public void run() {
-            for (;;) {
-                DatagramSocket socket = LocatorService.this.socket;
-                try {
-                    final DatagramPacket p = new DatagramPacket(inp_buf, inp_buf.length);
-                    socket.receive(p);
-                    Protocol.invokeAndWait(new Runnable() {
-                        public void run() {
-                            handleDatagramPacket(p);
-                        }
-                    });
+            try {
+                for (;;) {
+                    DatagramSocket socket = LocatorService.this.socket;
+                    try {
+                        final DatagramPacket p = new DatagramPacket(inp_buf, inp_buf.length);
+                        socket.receive(p);
+                        Protocol.invokeAndWait(new Runnable() {
+                            public void run() {
+                                handleDatagramPacket(p);
+                            }
+                        });
+                    }
+                    catch (IllegalStateException x) {
+                        // TCF event dispatch is shutdown
+                        return;
+                    }
+                    catch (Exception x) {
+                        if (socket != LocatorService.this.socket) continue;
+                        log("Cannot read from datagram socket at port " + socket.getLocalPort(), x);
+                        sleep(2000);
+                    }
                 }
-                catch (IllegalStateException x) {
-                    // TCF event dispatch is shutdown
-                    return;
-                }
-                catch (Exception x) {
-                    if (socket != LocatorService.this.socket) continue;
-                    log("Cannot read from datagram socket at port " + socket.getLocalPort(), x);
-                }
+            }
+            catch (Throwable x) {
+                log("Unhandled exception in socket reading thread", x);
             }
         }
     };

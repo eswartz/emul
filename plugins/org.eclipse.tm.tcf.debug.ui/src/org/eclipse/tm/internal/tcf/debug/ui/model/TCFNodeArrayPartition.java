@@ -14,8 +14,6 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpd
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 
 public class TCFNodeArrayPartition extends TCFNode {
@@ -101,13 +99,12 @@ public class TCFNodeArrayPartition extends TCFNode {
         return true;
     }
 
-    @Override
-    int getRelevantModelDeltaFlags(IPresentationContext p) {
-        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId()) ||
-                IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
-            return super.getRelevantModelDeltaFlags(p);
-        }
-        return 0;
+    void onSuspended() {
+        children.onSuspended();
+    }
+
+    void onValueChanged() {
+        children.onValueChanged();
     }
 
     @Override

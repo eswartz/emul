@@ -18,6 +18,7 @@ import java.util.Map;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
+import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -80,31 +81,43 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
-        if (!children.validate(done)) return false;
-        result.setChildCount(children.size());
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children.validate(done)) return false;
+            result.setChildCount(children.size());
+        }
+        else {
+            result.setChildCount(0);
+        }
         return true;
     }
 
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
-        if (!children.validate(done)) return false;
-        TCFNode[] arr = children.toArray();
-        int offset = 0;
-        int r_offset = result.getOffset();
-        int r_length = result.getLength();
-        for (TCFNode n : arr) {
-            if (offset >= r_offset && offset < r_offset + r_length) {
-                result.setChild(n, offset);
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children.validate(done)) return false;
+            TCFNode[] arr = children.toArray();
+            int offset = 0;
+            int r_offset = result.getOffset();
+            int r_length = result.getLength();
+            for (TCFNode n : arr) {
+                if (offset >= r_offset && offset < r_offset + r_length) {
+                    result.setChild(n, offset);
+                }
+                offset++;
             }
-            offset++;
         }
         return true;
     }
 
     @Override
     protected boolean getData(IHasChildrenUpdate result, Runnable done) {
-        if (!children.validate(done)) return false;
-        result.setHasChilren(children.size() > 0);
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children.validate(done)) return false;
+            result.setHasChilren(children.size() > 0);
+        }
+        else {
+            result.setHasChilren(false);
+        }
         return true;
     }
 

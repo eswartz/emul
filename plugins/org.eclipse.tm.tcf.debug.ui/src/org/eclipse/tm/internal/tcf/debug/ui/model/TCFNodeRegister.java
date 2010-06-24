@@ -23,6 +23,7 @@ import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRegisters;
@@ -62,6 +63,12 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         value = new TCFDataCache<byte[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
+                Boolean b = usePrevValue(this);
+                if (b == null) return false;
+                if (b) {
+                    set(null, null, prev_value);
+                    return true;
+                }
                 if (!context.validate(this)) return false;
                 IRegisters.RegistersContext ctx = context.getData();
                 if (ctx == null) {
@@ -70,6 +77,13 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                 }
                 command = ctx.get(new IRegisters.DoneGet() {
                     public void doneGet(IToken token, Exception error, byte[] value) {
+                        if (error != null) {
+                            Boolean b = usePrevValue(null);
+                            if (b != null && b) {
+                                set(token, null, prev_value);
+                                return;
+                            }
+                        }
                         set(token, error, value);
                     }
                 });
@@ -87,6 +101,32 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     void setIndex(int index) {
         this.index = index;
+    }
+
+    private Boolean usePrevValue(Runnable done) {
+        // Check if view should show old value.
+        // Old value is shown if context is running or
+        // stack trace does not contain expression parent frame.
+        // Return null if waiting for cache update.
+        if (prev_value == null) return false;
+        if (parent instanceof TCFNodeStackFrame) {
+            TCFNodeExecContext exe = (TCFNodeExecContext)parent.parent;
+            TCFDataCache<TCFContextState> state_cache = exe.getState();
+            if (!state_cache.validate(done)) return null;
+            TCFContextState state = state_cache.getData();
+            if (state == null || !state.is_suspended) return true;
+            TCFChildrenStackTrace stack_trace_cache = exe.getStackTrace();
+            if (!stack_trace_cache.validate(done)) return null;
+            if (stack_trace_cache.getData().get(parent.id) == null) return true;
+        }
+        else {
+            TCFNodeExecContext exe = (TCFNodeExecContext)parent;
+            TCFDataCache<TCFContextState> state_cache = exe.getState();
+            if (!state_cache.validate(done)) return null;
+            TCFContextState state = state_cache.getData();
+            if (state == null || !state.is_suspended) return true;
+        }
+        return false;
     }
 
     private void appendErrorText(StringBuffer bf, Throwable error) {
@@ -296,12 +336,11 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         return "";
     }
 
-    @Override
-    int getRelevantModelDeltaFlags(IPresentationContext p) {
-        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
-            return super.getRelevantModelDeltaFlags(p);
+    private void postStateChangedDelta() {
+        for (TCFModelProxy p : model.getModelProxies()) {
+            if (!IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getPresentationContext().getId())) continue;
+            p.addDelta(this, IModelDelta.STATE);
         }
-        return 0;
     }
 
     void onValueChanged() {
@@ -311,22 +350,23 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         while (n != null) {
             if (n instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)n).onRegisterValueChanged();
+                break;
             }
             n = n.parent;
         }
-        addModelDelta(IModelDelta.STATE);
+        postStateChangedDelta();
     }
 
     void onSuspended() {
         prev_value = next_value;
         value.reset();
-        addModelDelta(IModelDelta.STATE);
+        postStateChangedDelta();
     }
 
     void onRegistersChanged() {
         context.reset();
         value.reset();
-        addModelDelta(IModelDelta.STATE);
+        postStateChangedDelta();
     }
 
     public CellEditor getCellEditor(IPresentationContext context, String column_id, Object element, Composite parent) {
@@ -415,7 +455,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                                         }
                                         else {
                                             node.value.reset();
-                                            node.addModelDelta(IModelDelta.STATE);
+                                            node.postStateChangedDelta();
                                             done(Boolean.TRUE);
                                         }
                                     }

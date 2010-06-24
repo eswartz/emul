@@ -16,9 +16,7 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IExpressionManager;
 import org.eclipse.debug.core.IExpressionsListener;
 import org.eclipse.debug.core.model.IExpression;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.services.IExpressions;
 
 public class TCFChildrenExpressions extends TCFChildren {
 
@@ -43,7 +41,7 @@ public class TCFChildrenExpressions extends TCFChildren {
                 public void run() {
                     reset();
                     if (g != generation) return;
-                    node.addModelDelta(IModelDelta.CONTENT);
+                    node.postExpressionAddedOrRemovedDelta();
                 }
             });
         }
@@ -76,11 +74,6 @@ public class TCFChildrenExpressions extends TCFChildren {
 
     @Override
     protected boolean startDataRetrieval() {
-        IExpressions exps = node.model.getLaunch().getService(IExpressions.class);
-        if (exps == null) {
-            set(null, null, new HashMap<String,TCFNode>());
-            return true;
-        }
         HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         int cnt = 0;
         for (final IExpression e : exp_manager.getExpressions()) {

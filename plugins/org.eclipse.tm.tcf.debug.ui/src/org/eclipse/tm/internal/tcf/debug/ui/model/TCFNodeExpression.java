@@ -198,8 +198,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     return true;
                 }
                 if (cast != null) e = "(" + cast + ")(" + e + ")";
-                TCFNode n = parent;
-                while (n instanceof TCFNodeExpression || n instanceof TCFNodeArrayPartition) n = n.parent;
+                TCFNode n = getRootExpression().parent;
                 if (n instanceof TCFNodeStackFrame && ((TCFNodeStackFrame)n).isEmulated()) n = n.parent;
                 command = exps.create(n.id, null, e, new IExpressions.DoneCreate() {
                     public void doneCreate(IToken token, Exception error, IExpressions.Expression context) {
@@ -436,14 +435,41 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         children.dispose(id);
     }
 
+    private TCFNodeExpression getRootExpression() {
+        TCFNode n = this;
+        while (n.parent instanceof TCFNodeExpression || n.parent instanceof TCFNodeArrayPartition) n = n.parent;
+        return (TCFNodeExpression)n;
+    }
+
+    private void postAllChangedDelta() {
+        TCFNodeExpression n = getRootExpression();
+        for (TCFModelProxy p : model.getModelProxies()) {
+            String id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id) && n.script != null ||
+                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(id) && n.script == null) {
+                p.addDelta(this, IModelDelta.STATE | IModelDelta.CONTENT);
+            }
+        }
+    }
+
     void onSuspended() {
         prev_value = next_value;
+        if (expression.isValid() && expression.getError() != null) expression.reset();
         value.reset();
         type.reset();
         type_name.reset();
         string.reset();
         children.onSuspended();
-        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        postAllChangedDelta();
+    }
+
+    void onValueChanged() {
+        value.reset();
+        type.reset();
+        type_name.reset();
+        string.reset();
+        children.onValueChanged();
+        postAllChangedDelta();
     }
 
     public void onCastToTypeChanged() {
@@ -453,7 +479,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         type_name.cancel();
         string.cancel();
         children.onCastToTypeChanged();
-        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        postAllChangedDelta();
     }
 
     String getScript() {
@@ -754,7 +780,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         if (error == null) error = value.getError();
         String[] cols = result.getColumnIds();
         if (error != null) {
-            error.printStackTrace();
             if (cols == null || cols.length <= 1) {
                 result.setForeground(new RGB(255, 0, 0), 0);
                 result.setLabel(name + ": N/A", 0);
@@ -1023,15 +1048,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     }
 
     @Override
-    int getRelevantModelDeltaFlags(IPresentationContext p) {
-        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId()) ||
-                IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
-            return super.getRelevantModelDeltaFlags(p);
-        }
-        return 0;
-    }
-
-    @Override
     public int compareTo(TCFNode n) {
         TCFNodeExpression e = (TCFNodeExpression)n;
         if (sort_pos < e.sort_pos) return -1;
@@ -1158,16 +1174,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                     IExpressions exps = node.model.getLaunch().getService(IExpressions.class);
                                     exps.assign(exp.getID(), bf, new IExpressions.DoneAssign() {
                                         public void doneAssign(IToken token, Exception error) {
-                                            TCFNodeExpression n = node;
-                                            while (n.parent instanceof TCFNodeExpression) n = (TCFNodeExpression)n.parent;
-                                            n.onSuspended();
+                                            node.getRootExpression().onValueChanged();
                                             if (error != null) {
                                                 node.model.showMessageBox("Cannot modify element value", error);
                                                 done(Boolean.FALSE);
                                             }
                                             else {
-                                                node.value.reset();
-                                                node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
                                                 done(Boolean.TRUE);
                                             }
                                         }
