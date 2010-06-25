@@ -80,7 +80,12 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
                     if (el_existing instanceof TCFNodeStackFrame && el_candidate instanceof TCFNodeStackFrame) {
                         TCFNodeStackFrame curr = (TCFNodeStackFrame)el_existing;
                         TCFNodeStackFrame next = (TCFNodeStackFrame)el_candidate;
-                        return curr.parent == next.parent || !isSuspended(curr);
+                        if (curr.parent == next.parent) return true;
+                    }
+                    if (el_existing instanceof TCFNodeStackFrame && el_candidate instanceof TCFNodeExecContext) {
+                        TCFNodeStackFrame curr = (TCFNodeStackFrame)el_existing;
+                        TCFNodeExecContext next = (TCFNodeExecContext)el_candidate;
+                        if (curr.parent == next) return true;
                     }
                     return !isSuspended((TCFNode)el_existing);
                 }

@@ -1026,18 +1026,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
-        if (!children.validate(done)) return false;
-        TCFNode[] arr = children.toArray();
-        int offset = 0;
-        int r_offset = result.getOffset();
-        int r_length = result.getLength();
-        for (TCFNode n : arr) {
-            if (offset >= r_offset && offset < r_offset + r_length) {
-                result.setChild(n, offset);
-            }
-            offset++;
-        }
-        return true;
+        return children.getData(result, done);
     }
 
     @Override

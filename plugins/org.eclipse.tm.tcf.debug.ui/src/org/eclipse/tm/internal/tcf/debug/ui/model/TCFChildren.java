@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -183,16 +184,37 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     }
 
     /**
-     * Return current children nodes as an array.
+     * Return current children nodes as a sorted array.
      * @return array of nodes.
      */
     TCFNode[] toArray() {
         assert isValid();
         if (array != null) return array;
         Map<String,TCFNode> data = getData();
-        if (data == null) return array = EMPTY_NODE_ARRAY;
+        if (data == null || data.size() == 0) return array = EMPTY_NODE_ARRAY;
         array = data.values().toArray(new TCFNode[data.size()]);
         Arrays.sort(array);
         return array;
+    }
+
+    /**
+     * Return current children nodes in IChildrenUpdate object.
+     * @param update - children update request object.
+     * @param done - a call-back object, it is called when cache state changes.
+     * @return true if all done, false if data request is pending.
+     */
+    boolean getData(IChildrenUpdate update, Runnable done) {
+        if (!validate(done)) return false;
+        TCFNode[] arr = toArray();
+        int offset = 0;
+        int r_offset = update.getOffset();
+        int r_length = update.getLength();
+        for (TCFNode n : arr) {
+            if (offset >= r_offset && offset < r_offset + r_length) {
+                update.setChild(n, offset);
+            }
+            offset++;
+        }
+        return true;
     }
 }

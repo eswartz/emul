@@ -417,28 +417,20 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
+        TCFChildren children = null;
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx != null && ctx.hasState()) {
-                if (!children_stack.validate(done)) return false;
-                result.setChildCount(children_stack.size());
-            }
-            else {
-                if (!children_exec.validate(done)) return false;
-                result.setChildCount(children_exec.size());
-            }
+            children = ctx != null && ctx.hasState() ? children_stack : children_exec;
         }
         else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx != null && ctx.hasState()) {
-                if (!children_regs.validate(done)) return false;
-                result.setChildCount(children_regs.size());
-            }
-            else {
-                result.setChildCount(0);
-            }
+            if (ctx != null && ctx.hasState()) children = children_regs;
+        }
+        if (children != null) {
+            if (!children.validate(done)) return false;
+            result.setChildCount(children.size());
         }
         else {
             result.setChildCount(0);
@@ -448,65 +440,37 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
-        TCFNode[] arr = null;
+        TCFChildren children = null;
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx != null && ctx.hasState()) {
-                if (!children_stack.validate(done)) return false;
-                arr = children_stack.toArray();
-            }
-            else {
-                if (!children_exec.validate(done)) return false;
-                arr = children_exec.toArray();
-            }
+            children = ctx != null && ctx.hasState() ? children_stack : children_exec;
         }
         else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx != null && ctx.hasState()) {
-                if (!children_regs.validate(done)) return false;
-                arr = children_regs.toArray();
-            }
+            if (ctx != null && ctx.hasState()) children = children_regs;
         }
-        if (arr != null) {
-            int offset = 0;
-            int r_offset = result.getOffset();
-            int r_length = result.getLength();
-            for (TCFNode n : arr) {
-                if (offset >= r_offset && offset < r_offset + r_length) {
-                    result.setChild(n, offset);
-                }
-                offset++;
-            }
-        }
-        return true;
+        if (children == null) return true;
+        return children.getData(result, done);
     }
 
     @Override
     protected boolean getData(IHasChildrenUpdate result, Runnable done) {
+        TCFChildren children = null;
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx != null && ctx.hasState()) {
-                if (!children_stack.validate(done)) return false;
-                result.setHasChilren(children_stack.size() > 0);
-            }
-            else {
-                if (!children_exec.validate(done)) return false;
-                result.setHasChilren(children_exec.size() > 0);
-            }
+            children = ctx != null && ctx.hasState() ? children_stack : children_exec;
         }
         else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx != null && ctx.hasState()) {
-                if (!children_regs.validate(done)) return false;
-                result.setHasChilren(children_regs.size() > 0);
-            }
-            else {
-                result.setHasChilren(false);
-            }
+            if (ctx != null && ctx.hasState()) children = children_regs;
+        }
+        if (children != null) {
+            if (!children.validate(done)) return false;
+            result.setHasChilren(children.size() > 0);
         }
         else {
             result.setHasChilren(false);

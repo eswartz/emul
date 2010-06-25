@@ -189,7 +189,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     }
 
     /**
-     * Check if node has children in a presentation context.
+     * Check if the node has children in a presentation context.
      * @param update - "has children" update request.
      */
     final void update(final IHasChildrenUpdate update) {
@@ -237,6 +237,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /**
      * Retrieve viewer input object for a presentation context.
+     * Allows a view to translate the active debug context into an appropriate viewer input element.
      * @param update - input update request.
      */
     final void update(final IViewerInputUpdate update) {
@@ -311,6 +312,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /**
      * Retrieve viewer input object for a presentation context.
+     * Allows a view to translate the active debug context into an appropriate viewer input element.
      * The method is always called on TCF dispatch thread.
      * @param update - view input update request.
      * @param done - client call back interface, during data waiting it is

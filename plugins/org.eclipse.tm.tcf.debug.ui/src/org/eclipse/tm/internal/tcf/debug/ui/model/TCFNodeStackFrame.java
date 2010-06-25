@@ -263,25 +263,9 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
-        TCFNode[] arr = null;
-        TCFChildren c = getChildren(result.getPresentationContext());
-        if (c != null) {
-            if (!c.validate(done)) return false;
-            arr = c.toArray();
-        }
-        else {
-            return true;
-        }
-        int offset = 0;
-        int r_offset = result.getOffset();
-        int r_length = result.getLength();
-        for (TCFNode n : arr) {
-            if (offset >= r_offset && offset < r_offset + r_length) {
-                result.setChild(n, offset);
-            }
-            offset++;
-        }
-        return true;
+        TCFChildren children = getChildren(result.getPresentationContext());
+        if (children == null) return true;
+        return children.getData(result, done);
     }
 
     @Override

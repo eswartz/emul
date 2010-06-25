@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,9 +48,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     private boolean searchSuspendedThreads(TCFChildrenExecContext c, ArrayList<TCFNode> nodes, Runnable r) {
         if (!c.validate(r)) return false;
-        TCFNode[] arr = c.toArray();
-        Arrays.sort(arr);
-        for (TCFNode n : arr) {
+        for (TCFNode n : c.toArray()) {
             if (!searchSuspendedThreads((TCFNodeExecContext)n, nodes, r)) return false;
         }
         return true;
@@ -94,17 +91,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children.validate(done)) return false;
-            TCFNode[] arr = children.toArray();
-            int offset = 0;
-            int r_offset = result.getOffset();
-            int r_length = result.getLength();
-            for (TCFNode n : arr) {
-                if (offset >= r_offset && offset < r_offset + r_length) {
-                    result.setChild(n, offset);
-                }
-                offset++;
-            }
+            return children.getData(result, done);
         }
         return true;
     }
