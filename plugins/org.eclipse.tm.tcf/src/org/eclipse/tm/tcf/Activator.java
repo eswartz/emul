@@ -49,6 +49,9 @@ public class Activator extends Plugin {
         }
     };
 
+    /** Eclipse tracing option, plug-in wide */
+    private static boolean TRACE;
+
     /**
      * Constructor.
      */
@@ -73,17 +76,34 @@ public class Activator extends Plugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         debug = Platform.inDebugMode();
+
+        TRACE = "true".equals(Platform.getDebugOption("org.eclipse.tm.tcf/debug")); //$NON-NLS-1$
+        if (TRACE && "true".equals(Platform.getDebugOption("org.eclipse.tm.tcf/debug/discovery"))) {
+            System.setProperty("org.eclipse.tm.tcf.core.tracing.discovery", "true");
+        }
+
         ChannelTCP.setSSLContext(TCFSecurityManager.createSSLContext());
         Protocol.setLogger(new ILogger() {
 
             public void log(String msg, Throwable x) {
-                if (debug) {
-                    System.err.println(msg);
+                // Normally, we hook the TCF logging service (ILogger) to the
+                // Plug-in logger. Trace hooks in the code use the TCF logger.
+                // The Plug-in logger isn't really designed for large amounts of
+                // trace data, though, so redirect to stdout when tracing is
+                // enabled.
+                if (TRACE) {
+                    System.out.println(msg);
                     if (x != null) x.printStackTrace();
                 }
-                if (plugin != null && getLog() != null) {
-                    getLog().log(new Status(IStatus.ERROR,
-                            getBundle().getSymbolicName(), IStatus.OK, msg, x));
+                else {
+                    if (debug) {
+                        System.err.println(msg);
+                        if (x != null) x.printStackTrace();
+                    }
+                    if (plugin != null && getLog() != null) {
+                        getLog().log(new Status(IStatus.ERROR,
+                                getBundle().getSymbolicName(), IStatus.OK, msg, x));
+                    }
                 }
             }
         });

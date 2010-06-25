@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.services.local;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -25,8 +26,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
+import org.eclipse.tm.internal.tcf.core.LoggingUtil;
 import org.eclipse.tm.internal.tcf.core.RemotePeer;
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
 import org.eclipse.tm.internal.tcf.core.TransportManager;
@@ -66,6 +69,12 @@ public class LocatorService implements ILocator {
     private final byte[] out_buf = new byte[MAX_PACKET_SIZE];
 
     private InetAddress loopback_addr;
+
+    /**
+     * Flag indicating whether tracing of the the discovery activity is enabled
+     * or not.
+     */
+    static boolean TRACE_DISCOVERY = System.getProperty("org.eclipse.tm.tcf.core.tracing.discovery") != null;
 
     private static class SubNet {
         final int prefix_length;
@@ -294,9 +303,15 @@ public class LocatorService implements ILocator {
             out_buf[7] = 0;
             try {
                 socket = new DatagramSocket(DISCOVEY_PORT);
+                if (TRACE_DISCOVERY) {
+                    LoggingUtil.trace("Became the master agent (bound to port " + socket.getLocalPort() + ")");
+                }
             }
             catch (SocketException x) {
                 socket = new DatagramSocket();
+                if (TRACE_DISCOVERY) {
+                    LoggingUtil.trace("Became a slave agent (bound to port " + socket.getLocalPort() + ")");
+                }
             }
             socket.setBroadcast(true);
             input_thread.setName("TCF Locator Receiver");
@@ -607,6 +622,13 @@ public class LocatorService implements ILocator {
             if (subnets.contains(s)) continue;
             subnets.add(s);
         }
+        if (TRACE_DISCOVERY) {
+            StringBuilder str = new StringBuilder("Refreshed subnet list:");
+            for (SubNet subnet : subnets) {
+                str.append("\n\t* address=" + subnet.address + ", broadcast=" + subnet.broadcast);
+            }
+            LoggingUtil.trace(str.toString());
+        }
     }
 
     private byte[] getUTF8Bytes(String s) {
@@ -618,6 +640,15 @@ public class LocatorService implements ILocator {
             return s.getBytes();
         }
     }
+
+    /** Used for tracing */
+    private static String packetTypes[] = new String[] {
+            null,
+            "CONF_REQ_INFO",
+            "CONF_PEER_INFO",
+            "CONF_REQ_SLAVES",
+            "CONF_SLAVES_INFO"
+    };
 
     private boolean sendDatagramPacket(SubNet subnet, int size, InetAddress addr, int port) {
         try {
@@ -631,12 +662,51 @@ public class LocatorService implements ILocator {
             if (!subnet.contains(addr)) return false;
             if (port == socket.getLocalPort() && addr.equals(subnet.address)) return false;
             socket.send(new DatagramPacket(out_buf, size, addr, port));
+
+            if (TRACE_DISCOVERY) {
+                Map<String,String> map = null;
+                if (out_buf[4] == CONF_PEER_INFO) {
+                    parsePeerAtrributes(out_buf, 8);
+                }
+                traceDiscoveryPacket(false, packetTypes[out_buf[4]], map, addr, port);
+            }
         }
         catch (Exception x) {
             log("Cannot send datagram packet to " + addr, x);
             return false;
         }
         return true;
+    }
+
+    /**
+     * Parse peer attributes in CONF_INFO_PEER packet data
+     *
+     * @param data
+     *            the packet section that contain the peer attributes
+     * @param size
+     *            the number of bytes in [data] that contain peer attributes
+     * @return a map containing the attributes
+     * @throws UnsupportedEncodingException
+     */
+    private static Map<String,String> parsePeerAtrributes(byte[] data, int size) throws UnsupportedEncodingException {
+        Map<String,String> map = new HashMap<String,String>();
+        String s = new String(data, 8, size - 8, "UTF-8");
+        int l = s.length();
+        int i = 0;
+        while (i < l) {
+            int i0 = i;
+            while (i < l && s.charAt(i) != '=' && s.charAt(i) != 0) i++;
+            int i1 = i;
+            if (i < l && s.charAt(i) == '=') i++;
+            int i2 = i;
+            while (i < l && s.charAt(i) != 0) i++;
+            int i3 = i;
+            if (i < l && s.charAt(i) == 0) i++;
+            String key = s.substring(i0, i1);
+            String val = s.substring(i2, i3);
+            map.put(key, val);
+        }
+        return map;
     }
 
     private void sendPeersRequest(InetAddress addr, int port) {
@@ -806,27 +876,14 @@ public class LocatorService implements ILocator {
 
     private void handlePeerInfoPacket(DatagramPacket p) {
         try {
-            Map<String,String> map = new HashMap<String,String>();
-            String s = new String(p.getData(), 8, p.getLength() - 8, "UTF-8");
-            int l = s.length();
-            int i = 0;
-            while (i < l) {
-                int i0 = i;
-                while (i < l && s.charAt(i) != '=' && s.charAt(i) != 0) i++;
-                int i1 = i;
-                if (i < l && s.charAt(i) == '=') i++;
-                int i2 = i;
-                while (i < l && s.charAt(i) != 0) i++;
-                int i3 = i;
-                if (i < l && s.charAt(i) == 0) i++;
-                String key = s.substring(i0, i1);
-                String val = s.substring(i2, i3);
-                map.put(key, val);
-            }
+            Map<String,String> map = parsePeerAtrributes(p.getData(), p.getLength());
             String id = map.get(IPeer.ATTR_ID);
             if (id == null) throw new Exception("Invalid peer info: no ID");
             InetAddress peer_addr = getInetAddress(map.get(IPeer.ATTR_IP_HOST));
             if (peer_addr == null) return;
+            if (TRACE_DISCOVERY) {
+                traceDiscoveryPacket(true, "CONF_PEER_INFO", map, p);
+            }
             for (SubNet subnet : subnets) {
                 if (!subnet.contains(peer_addr)) continue;
                 IPeer peer = peers.get(id);
@@ -845,6 +902,9 @@ public class LocatorService implements ILocator {
     }
 
     private void handleReqInfoPacket(DatagramPacket p, Slave sl, long time) {
+        if (TRACE_DISCOVERY) {
+            traceDiscoveryPacket(true, "CONF_REQ_INFO", null, p);
+        }
         sendAll(p.getAddress(), p.getPort(), sl, time);
     }
 
@@ -868,6 +928,9 @@ public class LocatorService implements ILocator {
                 if (i < l && s.charAt(i) == 0) i++;
                 int port = Integer.parseInt(s.substring(port0, port1));
                 if (port != DISCOVEY_PORT) {
+                    if (TRACE_DISCOVERY) {
+                        traceDiscoveryPacket(true, "CONF_SLAVES_INFOS", null, p);
+                    }
                     String host = s.substring(host0, host1);
                     InetAddress addr = getInetAddress(host);
                     if (addr != null) {
@@ -890,6 +953,9 @@ public class LocatorService implements ILocator {
     }
 
     private void handleReqSlavesPacket(DatagramPacket p, Slave sl, long time) {
+        if (TRACE_DISCOVERY) {
+            traceDiscoveryPacket(true, "CONF_REQ_SLAVES", null, p);
+        }
         if (sl != null) sl.last_req_slaves_time = time;
         sendSlavesInfo(p.getAddress(), p.getPort(),  time);
     }
@@ -926,5 +992,43 @@ public class LocatorService implements ILocator {
     public void removeListener(LocatorListener listener) {
         assert Protocol.isDispatchThread();
         listeners.remove(listener);
+    }
+
+    /**
+     * Log that a TCF Discovery packet has be sent or received. The trace is
+     * sent to stdout. This should be called only if the tracing has been turned
+     * on via java property definitions.
+     *
+     * @param received
+     *            true if the packet was sent, otherwise it was received
+     * @param type
+     *            a string specifying the type of packet, e.g., "CONF_PEER_INFO"
+     * @param attrs
+     *            a set of attributes relevant to the type of packet (typically
+     *            a peer's attributes)
+     * @param addr
+     *            the network address the packet is being sent to
+     * @param port
+     *            the port the packet is being sent to
+     */
+    private static void traceDiscoveryPacket(boolean received, String type, Map<String,String> attrs, InetAddress addr, int port) {
+        assert TRACE_DISCOVERY;
+        StringBuilder str = new StringBuilder(type + (received ? " received from " : " sent to ") +  addr + "/" + port);
+        if (attrs != null) {
+            Iterator<Entry<String, String>> iter = attrs.entrySet().iterator();
+            while (iter.hasNext()) {
+                Entry<String, String> entry = iter.next();
+                str.append("\n\t" + entry.getKey() + '=' + entry.getValue());
+            }
+        }
+        LoggingUtil.trace(str.toString());
+    }
+
+    /**
+     * Convenience variant that takes a DatagramPacket for specifying the target address and
+     * port
+     */
+    private static void traceDiscoveryPacket(boolean received, String type, Map<String,String> attrs, DatagramPacket packet) {
+        traceDiscoveryPacket(received, type, attrs, packet.getAddress(), packet.getPort());
     }
 }

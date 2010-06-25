@@ -1,0 +1,2 @@
+org.eclipse.tm.tcf/debug = false
+org.eclipse.tm.tcf/debug/discovery = false
