@@ -74,8 +74,10 @@ public class IndexBinaryOperation extends Operation implements IBinaryOperation 
 			IAstFieldExpr fieldExpr = new AstFieldExpr(expr.getLeft(), new AstName(field.getName()));
 			fieldExpr.setType(field.getType());
 			
-			IAstBinExpr indexExpr = new AstBinExpr(IOperation.INDEX, new AstDerefExpr(fieldExpr, false), expr.getRight());
-			indexExpr.setType(types.result);
+			IAstTypedExpr indexExpr = new AstBinExpr(IOperation.INDEX, new AstDerefExpr(fieldExpr, false), expr.getRight());
+			
+			indexExpr.setType(fieldExpr.getType().getSubType());
+			indexExpr = AstTypedNode.createCastOn(typeEngine, indexExpr, types.result); 
 			
 			indexExpr.setSourceRefTree(expr.getSourceRef());
 			expr.getParent().replaceChild(expr, indexExpr);

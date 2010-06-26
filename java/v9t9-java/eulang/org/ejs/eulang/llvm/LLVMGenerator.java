@@ -2258,10 +2258,28 @@ public class LLVMGenerator {
 	}
 
 	/**
+	 * Generate string literal initializer.  These are always pointers because
+	 * strings have varying sizes and we don't want to introduce confusion
+	 * when copying them around.
 	 * @param expr
 	 * @return
 	 */
 	private LLOperand createStringInitializer(IAstLitExpr expr) {
+		LLPointerType ptrType = (LLPointerType) expr.getType();
+		LLDataType dataType = (LLDataType) ptrType.getSubType();
+		
+		LLOperand[] els = new LLOperand[2];
+		String str = expr.getLiteral();
+		els[0] = new LLConstOp(dataType.getType(0), str.length());
+		
+		LLPointerType strLitType = typeEngine.getStringLiteralType(str.length());
+		
+		els[1] = new LLStringLitOp((LLArrayType) strLitType.getSubType().getType(1), str);
+		LLStructOp structOp = new LLStructOp((LLAggregateType) strLitType.getSubType(), els);
+		
+		return ensureAddressable(structOp);
+		
+		/*
 		LLDataType dataType = (LLDataType) expr.getType();
 		
 		LLOperand[] els = new LLOperand[2];
@@ -2270,18 +2288,11 @@ public class LLVMGenerator {
 		
 		LLDataType strLitType = typeEngine.getStringLiteralType(str.length());
 		
-		/*
-		LLOperand[] chars = new LLOperand[str.length()];
-		for (int i = 0; i < str.length(); i++) {
-			chars[i] = new LLConstOp(typeEngine.CHAR, (int) str.charAt(i)); 
-		}
-		
-		els[1] = new LLArrayOp((LLArrayType) strLitType.getType(1), chars);
-		*/
 		els[1] = new LLStringLitOp((LLArrayType) strLitType.getType(1), str);
 		LLStructOp structOp = new LLStructOp(strLitType, els);
 		
 		return structOp;
+		*/
 	}
 
 	/**

@@ -105,4 +105,10 @@ public interface LLType {
 	 */
 	LLType substitute(TypeEngine typeEngine, IScope origScope,
 			Map<Integer, ISymbol> symbolMap);
+	
+	/**
+	 * Tell if we can allocate the type with a known size.
+	 * @return
+	 */
+	boolean canAllocate();
 }

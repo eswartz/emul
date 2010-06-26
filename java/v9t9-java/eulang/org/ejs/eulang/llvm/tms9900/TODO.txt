@@ -18,8 +18,8 @@ Instructions:
 
    // -- clean up TupleTempOperand so we can walk its memory allocation easier
 
--- Str type is not sized (0 elements) so it makes no sense to assign it to a field or a variable.  
-    Need a concept like "open arrays" (or transitively detect this) for error checking.
+//-- Str type is not sized (0 elements) so it makes no sense to assign it to a field or a variable.  
+//    Need a concept like "open arrays" (or transitively detect this) for error checking.
 
 -- Trailing 'if'?   e.g.  foo /= x if x != 0 ;
 

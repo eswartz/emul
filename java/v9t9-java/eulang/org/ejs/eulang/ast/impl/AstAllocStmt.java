@@ -339,6 +339,18 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#validateType(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateType(TypeEngine typeEngine) throws TypeException {
+		super.validateType(typeEngine);
+		
+		if (!type.canAllocate() && expr == null)
+			throw new TypeException(this, "cannot allocate '" + getSymbolExprs().getFirst().getSymbol() + "' with type " + this);
+
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.impl.AstNode#validateChildTypes(org.ejs.eulang.TypeEngine)
 	 */
 	@Override

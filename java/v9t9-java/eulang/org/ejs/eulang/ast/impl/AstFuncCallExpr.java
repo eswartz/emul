@@ -172,21 +172,12 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 				throw new TypeException(function, "called function does not have code type");
 			}
 			if (!argCodeType.isCompatibleWith(referencedType)) {
+				
 				LLType[] argCodeTypes = argCodeType.getArgTypes();
 				LLType[] refTypes = ((LLCodeType)referencedType).getArgTypes();
-				StringBuilder sb = new StringBuilder();
-				sb.append("call does not match prototype");
-				if (argCodeTypes.length != refTypes.length)
-					sb.append(": expected " + refTypes.length + " arguments but got " + argCodeTypes.length);
-				else {
-					boolean first = true;
-					if (argCodeType.getRetType() != null  
-						&&	((LLCodeType) referencedType).getRetType() != null
-						&&	!argCodeType.getRetType().equals(((LLCodeType) referencedType).getRetType())) 
-					{
-						sb.append(": return type is " + ((LLCodeType) referencedType).getRetType() + " but inferred " + argCodeType.getRetType());
-						first = false;
-					}
+				
+				// fix up any code ptr args
+				if (argCodeTypes.length == refTypes.length) {
 					for (int i = 0; i < argCodeTypes.length; i++) {
 						if (argCodeTypes[i] != null && refTypes[i] != null && !argCodeTypes[i].isCompatibleWith(refTypes[i])) {
 							
@@ -207,7 +198,29 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 								addrOf.setType(argType);
 								return true;
 							}
-							
+						}
+					}
+				}
+					
+				// don't throw unless all types are known 
+				if (!(argCodeType.isComplete() && referencedType.isComplete()))
+					return false;
+				
+				StringBuilder sb = new StringBuilder();
+				sb.append("call does not match prototype");
+				if (argCodeTypes.length != refTypes.length)
+					sb.append(": expected " + refTypes.length + " arguments but got " + argCodeTypes.length);
+				else {
+					boolean first = true;
+					if (argCodeType.getRetType() != null  
+						&&	((LLCodeType) referencedType).getRetType() != null
+						&&	!argCodeType.getRetType().equals(((LLCodeType) referencedType).getRetType())) 
+					{
+						sb.append(": return type is " + ((LLCodeType) referencedType).getRetType() + " but inferred " + argCodeType.getRetType());
+						first = false;
+					}
+					for (int i = 0; i < argCodeTypes.length; i++) {
+						if (argCodeTypes[i] != null && refTypes[i] != null && !argCodeTypes[i].isCompatibleWith(refTypes[i])) {
 							if (first) sb.append(": "); else sb.append("; ");
 							sb.append("argument " + (i+1) + " should be type " + refTypes[i] + " but got " + argCodeTypes[i]);
 						}

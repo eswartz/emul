@@ -240,6 +240,16 @@ public class AstAllocTupleStmt extends AstTypedExpr implements IAstAllocTupleStm
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#validateType(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateType(TypeEngine typeEngine) throws TypeException {
+		super.validateType(typeEngine);
+		
+		if (!type.canAllocate())
+			throw new TypeException(this, "cannot allocate an object of type " + type);
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstAttributes#getAttrs()

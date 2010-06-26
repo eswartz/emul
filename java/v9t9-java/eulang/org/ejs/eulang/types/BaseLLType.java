@@ -122,6 +122,14 @@ public abstract class BaseLLType implements LLType {
 		return bits;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.LLType#canAllocate()
+	 */
+	@Override
+	public boolean canAllocate() {
+		return bits > 0;
+	}
+	
 	public String getName() {
 		return name;
 	}

@@ -200,6 +200,7 @@ call foo
 assert R0 == -9700
 >>> 
 
+only
 <<< new methods
 brk := 0xa000;
 _new = code(s:Int) {
@@ -220,17 +221,17 @@ Node = data {
 }; 
 Node2 = data {
     x : Int;
-    y : Str;
+    y : Str^;
     __init__ = code #this (x:Int; y:Str^) {
-        (:x, :y) = (x, y^);
+        (:x, :y) = (x, y);
     };
 }; 
 main = code() {
     n1 := new(Node, 10);
-    n2 := new(Node2, 40, &"foo");
-    n2.y.length + n2.x + n1.x;
+    n2 := new(Node2, 40, "foo");
+    n2.y.length + n2.x + n1.x + (n2.y[1] << 8); // last bit tests implicit index of Str and fixup of types
 };
 ===
 call main
-assert R0 == 53
+assert R0 == 0x6f35
 >>>

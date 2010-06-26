@@ -767,7 +767,7 @@ public class TypeEngine {
 	}
 
 
-	public LLDataType getStringLiteralType(int len) {
+	public LLPointerType getStringLiteralType(int len) {
 		LLDataType strLitType = stringLitTypeMap.get(len);
 		if (strLitType == null) {
 			
@@ -779,10 +779,11 @@ public class TypeEngine {
 				sym = STR.getSymbol().getScope().add(name, false);
 			}
 			
-			return getStringLiteralType(len, sym);
+			return getPointerType(getStringLiteralType(len, sym));
 		}
-		return strLitType;
+		return getPointerType(strLitType);
 	}
+	
 	protected LLDataType getStringLiteralType(int len, ISymbol sym) {
 		LLDataType strLitType = stringLitTypeMap.get(len);
 		if (strLitType == null) {

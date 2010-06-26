@@ -267,6 +267,20 @@ public class AstArgDef extends AstTypedNode implements IAstArgDef {
 		}
 		return changed;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.ast.impl.AstTypedNode#validateType(org.ejs.eulang.TypeEngine)
+	 */
+	@Override
+	public void validateType(TypeEngine typeEngine) throws TypeException {
+		super.validateType(typeEngine);
+		
+		if (!type.canAllocate())
+			throw new TypeException(this, "cannot allocate argument '" + name.getSymbol() + "' of type " + type);
+
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.eulang.ast.IAstNode#validateTypes()
 	 */

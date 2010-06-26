@@ -115,4 +115,12 @@ public class LLPointerType extends BaseLLType {
 			return true;
 		return super.isMoreComplete(type);
 	}*/
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#canAllocate()
+	 */
+	@Override
+	public boolean canAllocate() {
+		return true;
+	}
 }

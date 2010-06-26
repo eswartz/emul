@@ -2424,7 +2424,14 @@ xes[3][2][1]
 		
 		assertMatchText("ret i16 -9700", gen.getOptimizedText());
     }
-    
+
+
+    @Test
+    public void testInvalidAllocs() throws Exception {
+    	IAstModule mod = treeize("x : Str;\n" + 
+    			"");
+    	doTypeInfer(mod, true);
+    }
 }
 
 

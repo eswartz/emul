@@ -300,4 +300,16 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 		else
 			return this;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#canAllocate()
+	 */
+	@Override
+	public boolean canAllocate() {
+		for (LLType type : getTypes()) {
+			if (type == null || !type.canAllocate())
+				return false;
+		}
+		return true;
+	}
 }

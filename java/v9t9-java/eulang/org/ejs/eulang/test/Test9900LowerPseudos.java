@@ -294,6 +294,9 @@ public class Test9900LowerPseudos extends BaseInstrTest {
 
 	}
 
+	/** Strings are varying size and are pointers.  We can directly copy by 
+	 * dereferencing the literal (!)
+	 */
 	
 	@Test
 	public void testStringCopy1() throws Exception {
@@ -301,7 +304,7 @@ public class Test9900LowerPseudos extends BaseInstrTest {
 		dumpIsel = true;
     	boolean changed = doOpt(
     			"testTupleCopy = code() {\n"+
-    			"  y := \"Hello\";\n"+
+    			"  y := \"Hello there\"^;\n"+
     			"};\n"+
     	"");
     	
@@ -313,7 +316,7 @@ public class Test9900LowerPseudos extends BaseInstrTest {
     	// string is const so use loop to copy
     	idx = findInstrWithInst(instrs, "LI", idx);
     	inst = instrs.get(idx);
-    	matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 0x0007);
+    	matchInstr(inst, "LI", RegTempOperand.class, NumberOperand.class, 13);
     	
     	idx = findInstrWithInst(instrs, "JMP", idx);
     	inst = instrs.get(idx);

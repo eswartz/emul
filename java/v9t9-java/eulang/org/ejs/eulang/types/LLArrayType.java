@@ -121,6 +121,14 @@ public class LLArrayType extends BaseLLType {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.eulang.types.BaseLLType#canAllocate()
+	 */
+	@Override
+	public boolean canAllocate() {
+		return (subType != null && subType.canAllocate()) && (arrayCount > 0 || dynamicSizeExpr != null);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.eulang.types.BaseLLType#substitute(org.ejs.eulang.TypeEngine, java.lang.String, org.ejs.eulang.types.LLType)
 	 */
 	@Override

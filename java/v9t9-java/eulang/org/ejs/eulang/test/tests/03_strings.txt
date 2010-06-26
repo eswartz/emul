@@ -35,16 +35,3 @@ call testStrings
 assert R0 == -4
 >>>
 
-<<< string access 3 
-// hmm, the addr-of-literal doesn't make sense without exporting literals earlier (than isel time)
-// allow addressing string literals, and be sure to externalize them to data
-testStrings = code () {
-   z := &"hello";
-  y := &"there";
-  s := 0;
-  for x in z.length do s += z[x] - y[x];
-};
-===
-call testStrings
-assert R0 == -4
->>>
