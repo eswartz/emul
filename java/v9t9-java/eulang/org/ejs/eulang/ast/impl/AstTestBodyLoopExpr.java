@@ -3,7 +3,7 @@
  */
 package org.ejs.eulang.ast.impl;
 
-import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.*;
 import org.ejs.eulang.ast.IAstTestBodyLoopExpr;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
@@ -33,7 +33,19 @@ public abstract class AstTestBodyLoopExpr extends AstBodyLoopExpr implements IAs
 	@Override
 	public boolean inferTypeFromChildren(TypeEngine typeEngine)
 			throws TypeException {
-		return super.inferTypeFromChildren(typeEngine) | updateType(expr, getExpressionType(typeEngine));
+		boolean changed = false;
+		changed |= super.inferTypeFromChildren(typeEngine);
+		LLType expExprType = getExpressionType(typeEngine);
+		if (expExprType == typeEngine.BOOL) {
+			if (expr.getType() == null || !expr.getType().isComplete() || !expr.getType().equals(expExprType)) {
+				replaceChild(expr, promoteValueToNotEqualZero(expr, typeEngine));
+				changed = true;
+			}
+		}
+		else {
+			changed |= updateType(expr, expExprType);
+		}
+		return changed;
 	}
 	
 	/* (non-Javadoc)

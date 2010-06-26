@@ -316,5 +316,15 @@ public abstract class AstTypedNode extends AstNode implements IAstTypedNode {
 		}
 		return null;
 	}
+	
+	protected IAstTypedExpr promoteValueToNotEqualZero(IAstTypedExpr node, TypeEngine typeEngine) {
+		// promote to BOOL
+		IAstTypedExpr origNode = node;
+		origNode.setParent(null);
+		node = new AstBinExpr(IOperation.COMPNE, origNode, new AstNilLitExpr("0", origNode.getType()));
+		node.setType(typeEngine.BOOL);
+		node.setSourceRefTree(origNode.getSourceRef());
+		return node;
+	}
 
 }

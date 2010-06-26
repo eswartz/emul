@@ -44,7 +44,7 @@ public class TestTypes extends BaseTest {
 	@Before
 	public void setupOptimization() {
 		doAssemble = true;
-		doOptimize = true;
+		doLLVMOptimize = true;
 	}
     @Test
     public void testArrayDecls() throws Exception {

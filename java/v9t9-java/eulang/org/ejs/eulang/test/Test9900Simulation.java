@@ -289,11 +289,13 @@ public class Test9900Simulation  {
 				source.toString(), skipping && !only, only, 
 						actions);
 		suite.addTest(case1);
+		/*
 		SimulationTestCase case2 = new SimulationTestCase(fname + ":" + line, comment + " (optimized)", 
 				source.toString(), skipping && !only, only, 
 				actions);
 		case2.setLLVMOptimize(true);
 		suite.addTest(case2);
+		*/
 	}
 	
 	

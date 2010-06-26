@@ -148,7 +148,13 @@ public class AstCondExpr extends AstTypedExpr implements IAstCondExpr {
 	public boolean inferTypeFromChildren(TypeEngine typeEngine) throws TypeException {
 		boolean changed = inferTypesFromChildren(new ITyped[] { expr });
 		
-		changed |= updateType(test, typeEngine.BOOL);
+		
+		if (test.getType() != null && (!test.getType().isComplete() || !test.getType().equals(typeEngine.BOOL))) {
+			replaceChild(test, promoteValueToNotEqualZero(test, typeEngine));
+			changed = true;
+		}
+		else if (test.getType() == null && expr.getType() != null)
+			changed |= updateType(test, typeEngine.BOOL);
 		
 		return changed;
 	}

@@ -531,7 +531,7 @@ public class TestLLVMGenerator extends BaseTest {
     	IAstModule mod = doFrontend(
     			"a : code ( => Int);\n" +
     			"summer = code (provider:code(=>Int) => Int) {\n"+
-    			"  s := 0; while (t := provider()) != 0 do s += t;\n"+
+    			"  s := 0; while (t := provider()) do s += t;\n"+
     			"};\n"+
     			"v : Int;\n"+
     			"inner = code(=>Int) { if v <= 5 then v++ else 0; };\n"+

@@ -175,11 +175,18 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 				LLType[] argCodeTypes = argCodeType.getArgTypes();
 				LLType[] refTypes = ((LLCodeType)referencedType).getArgTypes();
 				StringBuilder sb = new StringBuilder();
-				sb.append("arguments do not match prototype");
+				sb.append("call does not match prototype");
 				if (argCodeTypes.length != refTypes.length)
 					sb.append(": expected " + refTypes.length + " arguments but got " + argCodeTypes.length);
 				else {
 					boolean first = true;
+					if (argCodeType.getRetType() != null  
+						&&	((LLCodeType) referencedType).getRetType() != null
+						&&	!argCodeType.getRetType().equals(((LLCodeType) referencedType).getRetType())) 
+					{
+						sb.append(": return type is " + ((LLCodeType) referencedType).getRetType() + " but inferred " + argCodeType.getRetType());
+						first = false;
+					}
 					for (int i = 0; i < argCodeTypes.length; i++) {
 						if (argCodeTypes[i] != null && refTypes[i] != null && !argCodeTypes[i].isCompatibleWith(refTypes[i])) {
 							
