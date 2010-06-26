@@ -242,6 +242,8 @@ public class LLVMGenerator {
 			ILLCodeTarget target = ll.getStaticInitTarget(this);
 			target.emit(new LLRetInstr(typeEngine.VOID));
 		}
+		
+		ll.finalizeTypes();
 	}
 
 	/**
@@ -1600,10 +1602,12 @@ public class LLVMGenerator {
 				if (op.isConstant()) {
 					constOps.add(op);
 				} else {
+					/*
 					if (opType instanceof LLAggregateType
 							|| opType instanceof LLArrayType)
 						throw new ASTException(initNode,
 								"cannot initialize with variable aggregates");
+					*/
 					int idx = constOps.size();
 					constOps.add(new LLZeroInitOp(opType));
 					nonConstOps.put(idx, op);

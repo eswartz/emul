@@ -3,18 +3,13 @@
  */
 package org.ejs.eulang.ast.impl;
 
+import java.util.*;
+
 import org.ejs.coffee.core.utils.Pair;
-import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstFieldExpr;
-import org.ejs.eulang.ast.IAstInitListExpr;
-import org.ejs.eulang.ast.IAstInitNodeExpr;
-import org.ejs.eulang.ast.IAstIntLitExpr;
-import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TypeException;
+import org.ejs.eulang.*;
+import org.ejs.eulang.ast.*;
+import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.types.*;
 
 /**
  * @author ejs
@@ -124,6 +119,11 @@ public class AstInitListExpr extends AstInitNodeExpr implements IAstInitListExpr
 		if (canInferTypeFrom(this) && getType().isComplete()) {
 			for (int i = 0; i < initExprs.nodeCount(); i++) {
 				IAstInitNodeExpr expr = initExprs.list().get(i);
+				LLType exprType = typeEngine.getRealType(getType());
+				if (exprType != getType()) {
+					changed = true;
+					setType(exprType);
+				}
 				Pair<Integer, LLType> info = expr.getInitFieldInfo(getType());
 				LLType fieldType = info.second;
 				assert fieldType != null;
@@ -143,16 +143,21 @@ public class AstInitListExpr extends AstInitNodeExpr implements IAstInitListExpr
 				}
 			}
 		}
-		else if (getType() == null) {
+		else if (getType() == null || getType() instanceof LLUnknownAggregateType || getType().isGeneric()) {
 			// no idea -- make one
 			LLType commonType = null;
 			boolean hasStructOps = false;
+			boolean hasIndexOps = false;
 			
 			for (int i = 0; i < initExprs.nodeCount(); i++) {
 				IAstInitNodeExpr expr = initExprs.list().get(i);
 				if (expr.getContext() instanceof IAstFieldExpr) {
 					hasStructOps = true;
 					break;
+				}
+				if (expr.getContext() instanceof IAstInitIndexExpr) {
+					hasIndexOps = true;
+					// no break
 				}
 				LLType fieldType = expr.getType();
 				if (fieldType != null) {
@@ -162,6 +167,56 @@ public class AstInitListExpr extends AstInitNodeExpr implements IAstInitListExpr
 						commonType = typeEngine.getPromotionType(commonType, fieldType);
 					}
 				}
+			}
+			
+			if (!hasIndexOps && !hasStructOps) {
+
+				boolean madeInstance = false; 
+				if (getType() instanceof LLDataType && getType().isGeneric()) {
+					// TODO: smarter behavior
+					int genericArgCount = getType().getCount();
+					
+					IAstNode genNode = null;
+					ISymbol genSym = null;
+					LLType genType = getType();
+					if (genType instanceof LLGenericType) {
+						genSym = ((LLGenericType) genType).getSymbol(); 
+					}
+					if (genType instanceof LLDataType) {
+						genSym = ((LLDataType)genType).getSymbol();
+					}
+					if (genSym != null) {
+						genNode = genSym.getDefinition();
+						if (genNode instanceof IAstDefineStmt) {
+							genericArgCount = ((IAstDefineStmt) genNode).getGenericVariables().length;
+						}
+					}
+					
+					IAstNodeList<IAstTypedExpr> typeVars = new AstNodeList<IAstTypedExpr>(IAstTypedExpr.class);
+					for (IAstTypedExpr initExpr : initExprs.list()) {
+						typeVars.add(new AstType(initExpr.getType()));
+					}
+					while (typeVars.nodeCount() < genericArgCount) {
+						typeVars.add(new AstNilLitExpr("0", getType().getType(typeVars.nodeCount())));
+					}
+					IAstInstanceExpr instance = new AstInstanceExpr(new AstSymbolExpr(false, ((LLDataType)getType()).getSymbol()), 
+							typeVars, getType());
+					instance.setSourceRefTree(this.getSourceRef());
+					ExpandAST expand = new ExpandAST(typeEngine, true);
+					List<Message> messages = new ArrayList<Message>();
+					IAstNode exp = expand.expand(messages, instance);
+					if (exp != instance) {
+						changed |= updateType(this, ((IAstTypedNode) exp).getType());
+					}
+					madeInstance = true;
+				} 
+				if (!madeInstance) {
+					// unknown for now
+					LLUnknownAggregateType unknown = new LLUnknownAggregateType();
+					changed |= updateType(this, unknown);
+				}
+				if (changed)
+					return changed;
 			}
 			if (commonType != null && !hasStructOps) {
 				int maxIndex = 0;
@@ -182,6 +237,7 @@ public class AstInitListExpr extends AstInitNodeExpr implements IAstInitListExpr
 					if (curIndex > maxIndex)
 						maxIndex = curIndex;
 				}
+				
 				LLArrayType arrayType = typeEngine.getArrayType(commonType, maxIndex, null);
 				changed |= updateType(this, arrayType);
 			}

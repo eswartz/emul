@@ -63,6 +63,10 @@ public class Instruction extends RawInstruction implements IInstruction {
     public static final int st_BYTE_LAEP_1 = 21;
 
     public static final int st_ADD_LAECO_REV = 22;
+    public static final int st_ADD_LAECO_REV_1 = 23;
+    public static final int st_ADD_LAECO_REV_2 = 24;
+    public static final int st_ADD_LAECO_REV_N1 = 25;
+    public static final int st_ADD_LAECO_REV_N2 = 26;
 
     /** Get the status bits that 'st' (st_XXX) modifies */
     public static int getStatusBits(int st) {
@@ -87,7 +91,12 @@ public class Instruction extends RawInstruction implements IInstruction {
         case st_DIV_O: return Status.ST_O;
         case st_LAE_1: return Status.ST_L + Status.ST_A + Status.ST_E;
         case st_BYTE_LAEP_1: return Status.ST_L + Status.ST_A + Status.ST_E + Status.ST_P;
-        case st_ADD_LAECO_REV: return Status.ST_L + Status.ST_A + Status.ST_E + Status.ST_C + Status.ST_O;
+        case st_ADD_LAECO_REV: 
+        case st_ADD_LAECO_REV_1: 
+        case st_ADD_LAECO_REV_2: 
+        case st_ADD_LAECO_REV_N1: 
+        case st_ADD_LAECO_REV_N2: 
+        	return Status.ST_L + Status.ST_A + Status.ST_E + Status.ST_C + Status.ST_O;
         default: throw new AssertionError("bad st_XXX value");
         }
     }
@@ -340,28 +349,25 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iinc:
-	        	// these instructions use the 2nd operand in the status calculation
-	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV_1;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = 1;
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iinct:
-	        	// these instructions use the 2nd operand in the status calculation
-	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV_2;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = 2;
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Idec:
-	        	// these instructions use the 2nd operand in the status calculation
-	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV_N1;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = -1;
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Idect:
-	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV_N2;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = -2;
 	            this.cycles += 10;
@@ -785,19 +791,16 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            fx.stsetAfter = Instruction.st_LAE_1;
 	            break;
 	        case InstructionTable.Iinc:
-	        	// these instructions use the 2nd operand in the status calculation
-	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV_1;
 	            break;
 	        case InstructionTable.Iinct:
-	        	// these instructions use the 2nd operand in the status calculation
-	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV_2;
 	            break;
 	        case InstructionTable.Idec:
-	        	// these instructions use the 2nd operand in the status calculation
-	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV_N1;
 	            break;
 	        case InstructionTable.Idect:
-	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            fx.stsetBefore = Instruction.st_ADD_LAECO_REV_N2;
 	            break;
 	        case InstructionTable.Ibl:
 	            fx.mop1_dest = Operand.OP_DEST_FALSE;

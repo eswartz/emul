@@ -933,6 +933,18 @@ public class Simulator {
         case Instruction.st_ADD_LAECO_REV:
             iblock.status.set_ADD_LAECO(iblock.val1, iblock.val2);
             break;
+        case Instruction.st_ADD_LAECO_REV_1:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) 1);
+        	break;
+        case Instruction.st_ADD_LAECO_REV_2:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) 2);
+        	break;
+        case Instruction.st_ADD_LAECO_REV_N1:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) -1);
+        	break;
+        case Instruction.st_ADD_LAECO_REV_N2:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) -2);
+        	break;
         case Instruction.st_SUB_BYTE_LAECOP:
             iblock.status.set_SUB_BYTE_LAECOP((byte) iblock.val2,
                     (byte) iblock.val1);
@@ -1066,6 +1078,9 @@ public class Simulator {
     				if (((RegisterLocal) local).isRegPair())
     					size = 4;
     				addr = alignForType(this.vrAddr, local.getType());
+        			// and always aligned by 2 because they're accessed as registers
+        			if (addr % 2 != 0)
+        				addr++;
     				this.vrAddr = (short) (addr + size);
         		}
         		else if (local instanceof StackLocal) {

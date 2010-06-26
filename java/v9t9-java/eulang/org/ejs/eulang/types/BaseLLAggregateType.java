@@ -200,6 +200,9 @@ public abstract class BaseLLAggregateType extends BaseLLType implements LLAggreg
 			LLSymbolType symbolType = ((LLSymbolType) target);
 			if (symbolType.getName().equals(getName()))
 				return true;
+			// TODO: sometimes we have two instances of a generic type, one with a symbol type and one with a real type
+			if (symbolType.getSymbol().getType() != null && symbolType.getSymbol().getType().matchesExactly(target))
+				return true;
 		}
 		if (!(target instanceof LLAggregateType)) 
 			return false;

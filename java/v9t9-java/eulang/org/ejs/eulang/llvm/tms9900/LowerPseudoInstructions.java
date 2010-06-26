@@ -503,6 +503,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 				copy = AsmInstruction.create(ins, tmp, to);
 			} else {
 				copy = AsmInstruction.create(ins, from, to);
+				copy.setType(type);
 			}
 			System.out.println(here() + " adding " + copy);
 			block.addInstAfter(last, copy);

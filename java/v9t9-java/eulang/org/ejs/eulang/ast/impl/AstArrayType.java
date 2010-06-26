@@ -206,7 +206,7 @@ public class AstArrayType extends AstTypedExpr implements IAstArrayType {
 	@Override
 	public void validateChildTypes(TypeEngine typeEngine) throws TypeException {
 		if (baseType.getType() != null && baseType.getType().isComplete()) {
-			if (!baseType.getType().equals(getType().getSubType()))
+			if (!baseType.getType().matchesExactly(getType().getSubType()))
 				throw new TypeException(countExpr, "array element type does not match in parent");
 		}
 		if (countExpr != null) {

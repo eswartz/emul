@@ -31,6 +31,12 @@ tokens {
   TYPE;
   STMTEXPR;
   
+  RSHIFT;
+  RSHIFT_EQ;
+  
+  CRSHIFT;
+  CRSHIFT_EQ;
+  
   CONDLIST;
   CONDTEST;
   
@@ -361,7 +367,7 @@ assignExpr : (lhs assignEqOp) => lhs assignEqOp assignExpr        -> ^(ASSIGN as
     ;
 
 assignOp : PLUS_EQ | MINUS_EQ | STAR_EQ | SLASH_EQ | REM_EQ | UDIV_EQ | UREM_EQ | MOD_EQ
-  | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | RSHIFT_EQ | URSHIFT_EQ | CLSHIFT_EQ | CRSHIFT_EQ ;
+  | AND_EQ | OR_EQ | XOR_EQ | LSHIFT_EQ | (GREATER COMPGE -> ^(RSHIFT_EQ)) | URSHIFT_EQ | CLSHIFT_EQ | (GREATER GREATER OR_EQ -> ^(CRSHIFT_EQ)) ;
 assignEqOp : EQUALS | assignOp ;
 
 initList : LBRACKET (initExpr (COMMA initExpr)*)? RBRACKET     -> ^(INITLIST initExpr* ) ;
@@ -519,9 +525,9 @@ bitand: ( shift      -> shift )
 
 shift:  ( factor        -> factor )         
       ( ( LSHIFT r=factor   -> ^(LSHIFT $shift $r) ) 
-      | ( RSHIFT r=factor   -> ^(RSHIFT $shift $r) )
+      | ( GREATER GREATER r=factor   -> ^(RSHIFT $shift $r) )
       | ( URSHIFT r=factor   -> ^(URSHIFT $shift $r) )
-      | ( CRSHIFT r=factor   -> ^(CRSHIFT $shift $r) )
+      | ( GREATER GREATER '|' r=factor   -> ^(CRSHIFT $shift $r) )
       | ( CLSHIFT r=factor   -> ^(CLSHIFT $shift $r) )
       )*
   ;
@@ -695,12 +701,12 @@ LESS : '<';
 ULESS : '+<';
 LSHIFT : '<<';
 LSHIFT_EQ : '<<=';
-RSHIFT : '>>';
-RSHIFT_EQ : '>>=';
+//RSHIFT : '>>';
+//RSHIFT_EQ : '>>=';
 URSHIFT : '+>>';
 URSHIFT_EQ : '+>>=';
-CRSHIFT : '>>|';
-CRSHIFT_EQ : '>>|=';
+//CRSHIFT : '>>|';
+//CRSHIFT_EQ : '>>|=';
 CLSHIFT : '<<|';
 CLSHIFT_EQ : '<<|=';
 ARROW : '=>' ;

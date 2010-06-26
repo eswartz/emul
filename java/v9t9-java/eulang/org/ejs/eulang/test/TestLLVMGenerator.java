@@ -541,7 +541,7 @@ public class TestLLVMGenerator extends BaseTest {
     			"};");
     	doGenerate(mod);
     }
-    @Test
+   // @Test
     public void testClosures1() throws Exception {
     	dumpLLVMGen = true;
     	IAstModule mod = doFrontend(

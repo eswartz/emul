@@ -37,6 +37,8 @@ public abstract class BaseLLType implements LLType {
 	}
 
 	static String fixLLVMName(String name) {
+		if(name == null)
+			return null;
 		name = name.replaceAll("%|@", "");
 		name = name.replaceAll("\\s+", "");
 		name = name.replaceAll("\\(", "._.");

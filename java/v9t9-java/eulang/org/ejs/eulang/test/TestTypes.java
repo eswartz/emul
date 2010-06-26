@@ -842,9 +842,7 @@ xes[3][2][1]
     			"  foo:Tuple[5] = [ [3] = [ baz, .z=55], [1] = [.f=baz] ];\n"+
     			"};\n"+
     	"");
-    	// hmm, doing this requires fancy bitcasts and loads/stores to temps,
-    	// and I don't really feel like doing that yet
-    	doGenerate(mod, true);
+    	doGenerate(mod);
     }
     
 
@@ -1652,8 +1650,6 @@ xes[3][2][1]
 				"        next:List<U,T>^;\n" +		// note: not the same type as parent!
 				"};\n" + 
 				"\n" +
-				// TODO: if this says list.next.next, we fail to detect the type mismatch 
-				// between the proto and the return
 				"listNextNext = [T,U] code (list:List<T,U>) { list.next.next.node };\n"+
 				"intList = code (x:Int;y:Float=>Float) {\n"+
 				"  a:List<Int,Float>;\n"+
@@ -1699,7 +1695,36 @@ xes[3][2][1]
 		LLVMGenerator gen = doGenerate(mod);
 		assertFoundInOptimizedText("ret double %y", gen);
 	}
+	@Test 
+	public void testGenericTypes4() throws Exception {
+		dumpLLVMGen = true;
+		dumpTypeInfer = true;
+		IAstModule mod = doFrontend(
+				"Pair = [T, U] data { first : T; second : U; };\n"+
+				"List = [T] data {\n" +
+				"        node:T;\n"+
+				"        next:List<T>^;\n" +
+				"};\n" + 
+				"\n" +
+				"squareList = code (x:Int) {\n"+
+				"  entries:List<Pair<Int,Float>>[10];\n"+
+				"  a:List<Pair<Int,Float>>^;\n"+		// allow '>>'
+				"  for i in x do {\n"+
+				/*10*/"       p:Pair =[x, Float(x*x)];\n"+		// init list fills generics
+				//"  		b:List<Pair<Int,Float> > = [p];\n"+
+				"  		b:List = [p];\n"+
+				"       entries[i]=b;\n"+
+				"  		b.next=&entries[i];\n"+
+				"       a = &b;\n"+
+				"  };\n"+
+				"  a;\n"+
+				"};\n"+
 	
+				"");
+		sanityTest(mod);
+		
+		doGenerate(mod);
+	}
 	@Test
     public void testDataAccess1() throws Exception {
     	IAstModule mod = doFrontend(

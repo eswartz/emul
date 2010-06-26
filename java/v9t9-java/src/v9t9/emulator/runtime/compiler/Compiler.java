@@ -144,6 +144,38 @@ public class Compiler {
 					"set_ADD_LAECO", Type.VOID, new Type[] { Type.SHORT,
 							Type.SHORT }, Constants.INVOKEVIRTUAL));
 			break;
+		case Instruction.st_ADD_LAECO_REV_1:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ICONST(1));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_ADD_LAECO", Type.VOID, new Type[] { Type.SHORT,
+				Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_ADD_LAECO_REV_2:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ICONST(2));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_ADD_LAECO", Type.VOID, new Type[] { Type.SHORT,
+				Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_ADD_LAECO_REV_N1:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ICONST(-1));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_ADD_LAECO", Type.VOID, new Type[] { Type.SHORT,
+				Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_ADD_LAECO_REV_N2:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ICONST(-2));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_ADD_LAECO", Type.VOID, new Type[] { Type.SHORT,
+				Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
 		case Instruction.st_SUB_BYTE_LAECOP:
 			ilist.append(new ALOAD(info.localStatus));
 			ilist.append(new ILOAD(info.localVal2));

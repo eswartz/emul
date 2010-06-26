@@ -1120,7 +1120,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	private void handleGetElementPtrInstr(LLGetElementPtrInstr instr) {
 		LLOperand[] ops = instr.getOperands();
 		
-		LLType type = ops[0].getType();
+		LLType type = typeEngine.getRealType(ops[0].getType());
 		AssemblerOperand asmOp = generateOperand(ops[0]);
 		
 		boolean flushOffs = false;
@@ -1142,13 +1142,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					if (type instanceof LLDataType) {
 						LLDataType dataType = (LLDataType) type;
 						LLInstanceField field = dataType.getInstanceFields()[item];
-						type = field.getType();
+						type = typeEngine.getRealType(field.getType());
 						assert field.getOffset() % 8 == 0;
 						offs += field.getOffset() / 8;
 						flushOffs = true;
 					} else if (type instanceof LLArrayType) {
 						LLArrayType arrayType = (LLArrayType) type;
-						type = arrayType.getSubType();
+						type = typeEngine.getRealType(arrayType.getSubType());
 						offs += type.getBits() * item / 8;
 						flushOffs = true;
 					} else {
@@ -1187,13 +1187,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					assert item instanceof NumberOperand;
 					LLDataType dataType = (LLDataType) type;
 					LLInstanceField field = dataType.getInstanceFields()[((NumberOperand) item).getValue()];
-					type = field.getType();
+					type = typeEngine.getRealType(field.getType());
 					assert field.getOffset() % 8 == 0;
 					offs += field.getOffset() / 8;
 					flushOffs = true;
 				} else if (type instanceof LLArrayType) {
 					LLArrayType arrayType = (LLArrayType) type;
-					type = arrayType.getSubType();
+					type = typeEngine.getRealType(arrayType.getSubType());
 					
 					if (flushOffs) {
 						asmOp = applyOffset(asmOp, idx, type, offs, true);
@@ -1221,6 +1221,10 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 * @return
 	 */
 	AssemblerOperand generateMultiply(AssemblerOperand item, LLType type, int by) {
+		if (by == 0) {
+			emitInstr(AsmInstruction.create(Iclr, item));
+			return item;
+		}
 		if (by == 1)
 			return item;
 		

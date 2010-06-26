@@ -3,10 +3,7 @@
  */
 package org.ejs.eulang.llvm.tms9900;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.Routine;
@@ -24,8 +21,8 @@ public class BuildOutput {
 	private List<ISymbol> staticInits;
 
 	public BuildOutput() {
-		routineMap = new HashMap<ISymbol, Routine>();
-		dataBlockMap = new HashMap<ISymbol, DataBlock>();
+		routineMap = new LinkedHashMap<ISymbol, Routine>();
+		dataBlockMap = new LinkedHashMap<ISymbol, DataBlock>();
 		staticInits = new ArrayList<ISymbol>();
 	}
 	

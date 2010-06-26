@@ -3,11 +3,7 @@
  */
 package org.ejs.eulang.llvm;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.TypeEngine;
@@ -17,9 +13,8 @@ import org.ejs.eulang.llvm.directives.LLDeclareDirective;
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.directives.LLTypeDirective;
-import org.ejs.eulang.llvm.ops.LLArrayOp;
-import org.ejs.eulang.llvm.ops.LLStructOp;
-import org.ejs.eulang.llvm.ops.LLSymbolOp;
+import org.ejs.eulang.llvm.instrs.*;
+import org.ejs.eulang.llvm.ops.*;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.symbols.LocalScope;
@@ -323,5 +318,133 @@ public class LLModule {
 		}
 		return null;
 	}
+
+	/**
+	 * 
+	 */
+	public void finalizeTypes() {
+		boolean changed;
+		do {
+			changed = replaceTypes(this);
+		} while (changed);
+		
+	}
 	
+
+	
+
+	/**
+	 * @param mod
+	 * @param type
+	 * @param real
+	 * @return
+	 */
+	protected boolean replaceTypes(LLModule mod) {
+		final boolean[] changed = { false };
+		mod.accept(new LLCodeVisitor() {
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterModule(org.ejs.eulang.llvm.LLModule)
+			 */
+			@Override
+			public boolean enterModule(LLModule module) {
+				changed[0] |= replaceTypes(module.getGlobalScope());
+				changed[0] |= replaceTypes(module.getModuleScope());
+
+				return true;
+			}
+			
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterDirective(org.ejs.eulang.llvm.directives.LLBaseDirective)
+			 */
+			@Override
+			public boolean enterDirective(LLBaseDirective dir) {
+				if (dir instanceof LLDefineDirective) {
+					changed[0] |= replaceTypes(((LLDefineDirective) dir).getScope());
+					
+				}
+				return true;
+			}
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterInstr(org.ejs.eulang.llvm.LLBlock, org.ejs.eulang.llvm.instrs.LLInstr)
+			 */
+			@Override
+			public boolean enterInstr(LLBlock block, LLInstr instr) {
+				if (instr instanceof LLTypedInstr) {
+					//System.out.println(instr);
+					LLType newType = realizeType(((LLTypedInstr) instr).getType());
+					if (newType != ((LLTypedInstr) instr).getType()) {
+						((LLTypedInstr) instr).setType(newType);
+						changed[0] = true;
+					}
+				}
+				return true;
+			}
+			/* (non-Javadoc)
+			 * @see org.ejs.eulang.llvm.LLCodeVisitor#enterOperand(org.ejs.eulang.llvm.instrs.LLInstr, int, org.ejs.eulang.llvm.ops.LLOperand)
+			 */
+			@Override
+			public boolean enterOperand(LLInstr instr, int num,
+					LLOperand operand) {
+				//System.out.println(instr + " : " + operand);
+				LLType newType = realizeType(operand.getType());
+				if (newType != operand.getType()) {
+					operand.setType(newType);
+					changed[0] = true;
+				}
+				return true;
+			}
+		});
+		
+		
+		return changed[0];
+	}
+
+	/**
+	 * @param globalScope
+	 * @return
+	 */
+	protected boolean replaceTypes(IScope scope) {
+		boolean changed = false;
+		for (ISymbol sym : scope) {
+			LLType newType = realizeType(sym.getType());
+			if (newType != null && newType != sym.getType()) {
+				sym.setType(newType);
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	protected LLType realizeType(LLType type) {
+		if(type == null)
+			return null;
+		if (type instanceof LLSymbolType) {
+			LLType realType = typeEngine.getRealType(type);
+			if (realType != null && realType != type) {
+				return realType;
+			}
+		}
+		LLType[] subs = type.getTypes();
+		LLType[] origSubs = Arrays.copyOf(subs, subs.length);
+		LLType[] newSubs = null;
+		int idx = 0;
+		for (LLType sub : origSubs) {
+			LLType newSub = realizeType(sub);
+			if (newSub != sub && newSub != null) {
+				if (newSubs == null)
+					newSubs = Arrays.copyOf(origSubs, origSubs.length);
+				newSubs[idx] = newSub;
+			}
+			idx++;
+		}
+		if (newSubs != null) {
+			type = type.updateTypes(typeEngine, newSubs);
+		}
+		return type;
+	}
+
 }

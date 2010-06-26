@@ -16,7 +16,7 @@ List = [T] data {   // 10
 makeList = code () {
     head, prev : List<Int>^;
     for x in 100 do {
-        node := new<List<Int> >();
+        node := new<List<Int>>();
         node.node = x;
         if prev then prev.next = node else head = node; // 20
         prev = node;
@@ -200,7 +200,6 @@ call foo
 assert R0 == -9700
 >>> 
 
-only
 <<< new methods
 brk := 0xa000;
 _new = code(s:Int) {
@@ -234,4 +233,34 @@ main = code() {
 ===
 call main
 assert R0 == 0x6f35
+>>>
+
+<<< list of pairs
+Pair = [T, U] data { first : T; second : U; };
+List = [T] data {
+        node:T;
+        next:List<T>^;
+};
+
+squareList = code (x:Int) {
+  entries:List<Pair<Char,Int>>[10];
+  a:List<Pair<Char, Int>>^;
+  for i in x do {
+       p:Pair =[Char(i), Int((i+1)*(i+1))];
+        b:List = [p];
+        b.next=a;
+       entries[i]=b;
+        a = &entries[i];
+  };
+};
+main = code() {
+    a := squareList(5);
+    s := 0;
+    while a do s, a = s + a.node.second, a.next; 
+    s;
+};
+===
+call main
+// 1+4+9+16+25
+assert R0 == 55
 >>>

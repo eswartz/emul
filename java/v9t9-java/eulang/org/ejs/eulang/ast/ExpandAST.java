@@ -216,13 +216,15 @@ public class ExpandAST {
 		IAstTypedExpr ret = null;
 		try {
 			// try plain AST node
-			instanceExpr.getParent().replaceChild(instanceExpr, symbolExpr);
+			if (instanceExpr.getParent() != null)
+				instanceExpr.getParent().replaceChild(instanceExpr, symbolExpr);
 			ret = symbolExpr;
 		} catch (ClassCastException e) {
 			// it's probably a type
 			IAstType typeExpr = new AstNamedType(symbolExpr.getType(), symbolExpr);
 			typeExpr.setSourceRef(instanceExpr.getSourceRef());
-			instanceExpr.getParent().replaceChild(instanceExpr, typeExpr);
+			if (instanceExpr.getParent() != null)
+				instanceExpr.getParent().replaceChild(instanceExpr, typeExpr);
 			ret = typeExpr;
 		}
 		

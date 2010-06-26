@@ -306,6 +306,18 @@ public class Interpreter {
         case Instruction.st_ADD_LAECO_REV:
             iblock.status.set_ADD_LAECO(iblock.val1, iblock.val2);
             break;
+        case Instruction.st_ADD_LAECO_REV_1:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) 1);
+        	break;
+        case Instruction.st_ADD_LAECO_REV_2:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) 2);
+        	break;
+        case Instruction.st_ADD_LAECO_REV_N1:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) -1);
+        	break;
+        case Instruction.st_ADD_LAECO_REV_N2:
+        	iblock.status.set_ADD_LAECO(iblock.val1, (short) -2);
+        	break;
         case Instruction.st_SUB_BYTE_LAECOP:
             iblock.status.set_SUB_BYTE_LAECOP((byte) iblock.val2,
                     (byte) iblock.val1);

@@ -4,6 +4,7 @@
 package org.ejs.eulang.types;
 
 import org.ejs.eulang.TypeEngine;
+import org.ejs.eulang.ast.*;
 import org.ejs.eulang.symbols.ISymbol;
 
 /**

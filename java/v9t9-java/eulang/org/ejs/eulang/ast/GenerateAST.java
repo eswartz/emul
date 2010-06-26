@@ -867,11 +867,13 @@ public class GenerateAST {
 			initExprs.add(initNode);
 
 			if (initNode.getContext() == null) {
+				// implicit index
 				IAstIntLitExpr context = new AstIntLitExpr("" + index,
 						typeEngine.INT, index);
 				getEmptySource(tree, context);
 				initNode.setContext(context);
 			} else if (initNode.getContext() instanceof IAstInitIndexExpr) {
+				// explicit index
 				index = (int) ((IAstIntLitExpr) ((IAstInitIndexExpr) initNode
 						.getContext()).getIndex()).getValue();
 			} else if (initNode.getContext() instanceof IAstIntLitExpr) {

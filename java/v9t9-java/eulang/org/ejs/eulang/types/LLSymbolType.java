@@ -11,6 +11,7 @@ import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
 import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.ISymbol.Visibility;
 
 /**
  * This is a reference to a type behind a symbol.
@@ -29,8 +30,18 @@ public class LLSymbolType extends BaseLLType {
 	 * @param subType
 	 */
 	public LLSymbolType(ISymbol symbol) {
-		super(symbol.getScope().getUniqueName() + symbol.getUniqueName(), 1, symbol.getLLVMName(), BasicType.DATA, null);
+		super(symbol.getScope().getUniqueName() + symbol.getUniqueName(), 1, getLLVMTypeNameFor(symbol), BasicType.DATA, null);
 		this.symbol = symbol;
+	}
+	/**
+	 * @param symbol2
+	 * @return
+	 */
+	private static String getLLVMTypeNameFor(ISymbol sym) {
+		String llvmType = sym.getLLVMName();
+		if (sym.getVisibility() == Visibility.MODULE)
+			llvmType = "%" + llvmType.substring(1);
+		return llvmType;
 	}
 	@Override
 	public int hashCode() {
