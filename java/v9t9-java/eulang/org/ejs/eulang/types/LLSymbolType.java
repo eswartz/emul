@@ -79,7 +79,7 @@ public class LLSymbolType extends BaseLLType {
 	@Override
 	public boolean isCompatibleWith(LLType target) {
 		if (target != null) {
-			return getSymbol().getUniqueName().equals(target.getName());
+			return getLLVMName().equals(target.getLLVMName());
 		}
 		return super.isCompatibleWith(target);
 	}

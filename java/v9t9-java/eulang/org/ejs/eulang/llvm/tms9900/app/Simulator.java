@@ -72,6 +72,7 @@ public class Simulator {
 	private Map<Short, Pair<ITarget.Intrinsic, LLType>> intrinsicAddrMap;
 	private BuildOutput buildOutput;
 	private Cpu cpu;
+	private HashMap<ISymbol, List<Short>> fwdSymbolMap;
 	private HashMap<ISymbol, Short> symbolToAddrMap;
 	private TreeMap<Short, ISymbol> addrToSymbolMap;
 	private short vrAddr;
@@ -320,6 +321,8 @@ public class Simulator {
         symbolToAddrMap = new HashMap<ISymbol, Short>();
         addrToSymbolMap = new TreeMap<Short, ISymbol>();
         
+        fwdSymbolMap = new HashMap<ISymbol, List<Short>>();
+        
         stackFrames = new Stack<Frame>();
 	}
 	
@@ -332,6 +335,7 @@ public class Simulator {
         pcToInstrMap.clear();
         symbolToAddrMap.clear();
         addrToSymbolMap.clear();
+        fwdSymbolMap.clear();
         
         short pc = 0x100;
         for (Routine routine : buildOutput.getRoutines()) {
@@ -363,6 +367,15 @@ public class Simulator {
         }
         
         vrAddr = addr; 
+        
+        // fix up forwards
+        for (Map.Entry<ISymbol, List<Short>> fwdEntry : fwdSymbolMap.entrySet()) {
+        	short symAddr = getAddress(fwdEntry.getKey());
+        	for (Short refAddr : fwdEntry.getValue()) {
+        		memory.writeWord(refAddr, symAddr);
+        	}
+        }
+        fwdSymbolMap.clear();
         
         System.out.println("\n\n### Ready to execute\n");
 	}
@@ -413,7 +426,7 @@ public class Simulator {
 				}
 			} else if (op instanceof SymbolOperand) {
 				assert type.getBits() == 16;
-				memory.writeWord(addr, getAddress(((SymbolOperand) op).getSymbol()));
+				memory.writeWord(addr, getAddress(addr, ((SymbolOperand) op).getSymbol()));
 			} else if (op instanceof ZeroInitOperand) {
 				int bytes = type.getBits() / 8;
 				if (bytes > 0 && addr % 2 != 0) {
@@ -1562,8 +1575,23 @@ public class Simulator {
 		return buildOutput;
 	}
 
+	public short getAddress(short refAddr, ISymbol name) {
+		Short addr = symbolToAddrMap.get(name);
+		if (addr == null) {
+			List<Short> fwdSymbolList = fwdSymbolMap.get(name);
+			if (fwdSymbolList == null) {
+				fwdSymbolList = new ArrayList<Short>();
+				fwdSymbolMap.put(name, fwdSymbolList);
+			}
+			fwdSymbolList.add(refAddr);
+			return (short) -1;
+		}
+		return addr;
+	}
+	
 	public short getAddress(ISymbol name) {
-		return symbolToAddrMap.get(name);
+		Short addr = symbolToAddrMap.get(name);
+		return addr;
 	}
 	public ISymbol getSymbol(short addr) {
 		return addrToSymbolMap.get(addr);

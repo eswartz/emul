@@ -1398,12 +1398,11 @@ xes[3][2][1]
 	@Test 
 	public void testGenericTypes1b() throws Exception {
 		IAstModule mod = doFrontend(
-				"List = [T] data {\n" +
+				"intList = code(x:Int;y:Int=>Int) {\n"+
+				"	define List = [T] data {\n" +
 				"        node:T;\n"+
 				"        next:List<T>^;\n" + 		// note: indicating type here, tho not necessary
-				"};\n" + 
-				"\n" +
-				"intList = code(x:Int;y:Int=>Int) {\n"+
+				"	};\n" + 
 				"   list1, list2 : List<Int>;\n" +
 				"   list1.node = x;\n"+
 				"   list2.node = y;\n"+
@@ -1413,14 +1412,14 @@ xes[3][2][1]
 				"");
 		sanityTest(mod);
 		IAstCodeExpr code = (IAstCodeExpr) getMainBodyExpr((IAstDefineStmt) mod.getScope().get("intList").getDefinition());
-		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().getFirst();
+		IAstAllocStmt alloc = (IAstAllocStmt) code.stmts().list().get(1);
 		LLDataType data = (LLDataType) getRealType(alloc);
 		assertTrue(data.isComplete() && !data.isGeneric());
 		assertEquals(2, data.getInstanceFields().length);
 		assertEquals(typeEngine.INT, data.getInstanceFields()[0].getType());
 		LLPointerType dataPtr = typeEngine.getPointerType(data);
 		LLInstanceField nextField = data.getInstanceFields()[1];
-		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLUpType
+		assertTrue(dataPtr.isCompatibleWith(nextField.getType()));	// one is an LLSymbolType
 		
 		doGenerate(mod);
 	}

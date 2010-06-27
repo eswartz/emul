@@ -146,7 +146,7 @@ toplevelstat : toplevelstatNoAlloc -> toplevelstatNoAlloc
     | toplevelCode SEMI? -> toplevelCode
     ;
     
-toplevelstatNoAlloc: defineStmt
+toplevelstatNoAlloc: DEF? defineStmt SEMI -> defineStmt
     | scopeExtension SEMI? -> scopeExtension 
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     //| rhsExpr                  SEMI  -> ^(EXPR rhsExpr)
@@ -183,9 +183,9 @@ toplevelCode : LPAREN LBRACE codestmtlist RBRACE RPAREN -> codestmtlist
 
 scopeExtension : namespaceRef PLUS_EQ xscopeNoAlloc -> ^(EXTENDSCOPE namespaceRef xscopeNoAlloc) ;
 
-defineStmt : (ID EQUALS LBRACKET) => ID EQUALS LBRACKET idlistOrEmpty RBRACKET  toplevelvalue     SEMI  -> ^(DEFINE ID idlistOrEmpty toplevelvalue) 
-    | (ID EQUALS_COLON) => ID EQUALS_COLON type     SEMI  -> ^(DEFINE ID type)
-    | (ID EQUALS) => ID EQUALS toplevelvalue     SEMI  -> ^(DEFINE ID toplevelvalue)
+defineStmt : (ID EQUALS LBRACKET) => ID EQUALS LBRACKET idlistOrEmpty RBRACKET  toplevelvalue    -> ^(DEFINE ID idlistOrEmpty toplevelvalue) 
+    | (ID EQUALS_COLON) => ID EQUALS_COLON type     -> ^(DEFINE ID type)
+    | (ID EQUALS) => ID EQUALS toplevelvalue     -> ^(DEFINE ID toplevelvalue)
   ;
 
 toplevelvalue : (LBRACE) => xscope
@@ -317,6 +317,7 @@ codestmtlist:  codeStmt (SEMI codeStmt?)*  ->  ^(STMTLIST codeStmt*)
     
 codeStmt : labelStmt codeStmtExpr  -> ^(LABELSTMT labelStmt codeStmtExpr)
       | codeStmtExpr -> codeStmtExpr
+      | DEF defineStmt -> defineStmt
       ;
 
 codeStmtExpr :
@@ -637,13 +638,14 @@ colons : (COLON | COLONS )+ ;
 data : DATA LBRACE fieldDecl* RBRACE  -> ^(DATA fieldDecl*) ;
 
 fieldDecl : varDecl SEMI -> varDecl 
-    | defineStmt
+    | DEF? defineStmt SEMI -> defineStmt
     | FORWARD ID (COMMA ID)* SEMI -> ^(FORWARD ID)+
     | ID COLON_COLON_EQUALS toplevelvalue SEMI -> ^(REDEF ID toplevelvalue)
     ;
 
 FORWARD : 'forward';
 STATIC : 'static';
+DEF  : 'define';
 
 COLON : ':';
 COMMA : ',';

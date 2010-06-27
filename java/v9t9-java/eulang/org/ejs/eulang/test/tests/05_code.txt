@@ -15,3 +15,29 @@ testOne = code () {
 call testOne
 assert R0 == 10
 >>>
+
+<<< explicit closures 1
+   Closure = data { vars : Byte^; func : code(=>nil); };
+    
+    repeatx = code (x : Int; block : Closure^ => nil) {
+        for i in x do block.func{code(vars:Byte^;x:Int=>nil)^} (block.vars, i);
+    };
+
+    foo = code() {
+        p, s := 10, 0;
+        
+        define MyLocals = data { p : Int; s: Int; };
+        myLocals : MyLocals = [ p ];
+        closure : data { vars : MyLocals^; func : code(vars : MyLocals^ => nil); } = [ 
+                &myLocals, code(vars : MyLocals^ => nil) { vars.s += vars.p;  vars.p--; } 
+        ];
+        repeatx(10, (&closure){Closure^});
+        
+        // maybe
+        p, s = myLocals.p, myLocals.s;
+         s;
+    };    
+===
+call foo
+assert R0 == 55
+>>>

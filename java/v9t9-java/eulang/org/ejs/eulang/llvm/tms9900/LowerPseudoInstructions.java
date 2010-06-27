@@ -20,7 +20,7 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.SymbolOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.ejs.eulang.llvm.tms9900.asm.ZeroInitOperand;
-import org.ejs.eulang.symbols.ISymbol;
+import org.ejs.eulang.symbols.*;
 import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
@@ -281,11 +281,12 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 
 		boolean isTuple = from instanceof TupleTempOperand;
 		boolean isConstTuple = isTuple && ((TupleTempOperand) from).isConst();
+		boolean isLocal = isTuple && refsLocal((TupleTempOperand) from);
 		if (isConstTuple) {
 			work = calculateConstTupleWork((TupleTempOperand) from, type);
 		}
 		
-		if (work >= THRESHOLD && (!isTuple || isConstTuple)) {
+		if (work >= THRESHOLD && (!isTuple || isConstTuple) && !isLocal) {
 			if (isConstTuple && !isZero) {
 				from = new AddrOperand(makeInternalData(from, type));
 			}
@@ -305,6 +306,20 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		return true;
 	}
 	
+	/**
+	 * @param from
+	 * @return
+	 */
+	private boolean refsLocal(TupleTempOperand t) {
+		for (AssemblerOperand o : t.getComponents()) {
+			if (o instanceof ISymbolOperand && ((ISymbolOperand)o).getSymbol().getScope() instanceof LocalScope)
+				return true;
+			if (o instanceof TupleTempOperand && refsLocal((TupleTempOperand) o))
+				return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Figure out how much work is needed to copy the tuple (which
 	 * consists of constant values).  We need to copy each piece
@@ -491,7 +506,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 				ins = Imovb;
 			
 			AsmInstruction copy;
-			if (from instanceof NumberOperand && ins != Pcopy) {
+			if ((from instanceof NumberOperand || from instanceof SymbolOperand) && ins != Pcopy) {
 				// oops, const copy
 				RegTempOperand tmp = new RegTempOperand((RegisterLocal) stackFrame.allocateTemp(type));
 				if (type.getBits() <= 8)

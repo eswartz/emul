@@ -251,7 +251,7 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 			IAstSymbolExpr theSymbol = getSymbolExprs().list().get(i);
 			IAstTypedExpr theExpr = getDefaultFor(i);
 			
-			// XXX: codeptr
+			// XXX codeptr
 			if (theExpr != null && theExpr.getType() instanceof LLCodeType) {
 				// replace with ADDROF...
 
@@ -269,18 +269,6 @@ public class AstAllocStmt extends AstTypedExpr implements IAstAllocStmt {
 				theSymbol.setType(codePtrType);
 				setType(codePtrType);
 				return true;
-				/*
-				LLType codePtr = typeEngine.getPointerType(theExpr.getType());
-				if (!codePtr.equals(theSymbol.getType())) {
-					theSymbol.setType(codePtr);
-					changed = true;
-				}
-				if (typeExpr != null) {
-					changed |= updateType(typeExpr, codePtr);
-				}
-				changed |= updateType(this, codePtr);
-				continue;
-				*/
 			}
 			
 			if (!inferTypesFromChildren(new ITyped[] { typeExpr, getSymbolExprs().list().get(i), theExpr })) {

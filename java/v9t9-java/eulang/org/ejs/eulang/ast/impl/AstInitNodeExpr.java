@@ -5,18 +5,8 @@ package org.ejs.eulang.ast.impl;
 
 import org.ejs.coffee.core.utils.Pair;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstFieldExpr;
-import org.ejs.eulang.ast.IAstInitIndexExpr;
-import org.ejs.eulang.ast.IAstInitNodeExpr;
-import org.ejs.eulang.ast.IAstIntLitExpr;
-import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.types.BaseLLField;
-import org.ejs.eulang.types.LLAggregateType;
-import org.ejs.eulang.types.LLArrayType;
-import org.ejs.eulang.types.LLDataType;
-import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TypeException;
+import org.ejs.eulang.ast.*;
+import org.ejs.eulang.types.*;
 
 /**
  * @author ejs
@@ -112,6 +102,16 @@ public class AstInitNodeExpr extends AstTypedExpr implements IAstInitNodeExpr {
 			throws TypeException {
 		boolean changed = false;
 		
+		// XXX codeptr
+		if (expr.getType() instanceof LLCodeType) {
+			changed = true;
+			IAstTypedExpr oldExpr = expr;
+			oldExpr.setParent(null);
+			replaceChild(expr, new AstAddrOfExpr(oldExpr));
+			expr.setSourceRef(oldExpr.getSourceRef());
+			expr.setType(typeEngine.getPointerType(oldExpr.getType()));
+			changed = true;
+		}
 		// list may look like an array while the context is a field; mungle
 		if (canReplaceType(context))
 			changed |= updateType(context, expr.getType());

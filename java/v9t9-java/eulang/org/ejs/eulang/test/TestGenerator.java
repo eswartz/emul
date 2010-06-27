@@ -150,7 +150,7 @@ public class TestGenerator extends BaseTest {
     }
     @Test
     public void testVarDecls2() throws Exception {
-    	IAstModule mod = treeize("foo = code (x,y) { p : Float = 3.9; p = 44; x+y*p; };");
+    	IAstModule mod = treeize("define foo = code (x,y) { p : Float = 3.9; p = 44; x+y*p; };");
     	sanityTest(mod);
     	
     }
@@ -313,7 +313,7 @@ public class TestGenerator extends BaseTest {
     @Test
     public void testImplicitBlocks3() throws Exception {
     	IAstModule mod = treeize(
-    			" iff = code { };\n"+
+    			"define iff = code { };\n"+
     			"testImplicitBlocks3 = code (t, x, y) {\n" +
     			"   iff(t, code ( => Int) { x = x + 9; x; }, code ( => Int) { y = y + 7;  y; });\n"+
     			"};");
@@ -384,7 +384,7 @@ public class TestGenerator extends BaseTest {
     @Test
     public void testCondStar2() throws Exception {
     	IAstModule mod = treeize(
-    		" testCondStar2 = code (t) { if 1>t then 1\n" +
+    		"define testCondStar2 = code (t) { if 1>t then 1\n" +
     		"		elif t!=2 and t!=1 then { x:= 9+t; -x; }\n" +
     		"		else  0.4;" +
     		"11 \n" +

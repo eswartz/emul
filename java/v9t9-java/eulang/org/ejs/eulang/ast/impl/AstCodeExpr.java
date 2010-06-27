@@ -22,11 +22,7 @@ import org.ejs.eulang.ast.IAstStmtScope;
 import org.ejs.eulang.ast.IAstTypedExpr;
 import org.ejs.eulang.ast.IAstTypedNode;
 import org.ejs.eulang.symbols.IScope;
-import org.ejs.eulang.types.BasicType;
-import org.ejs.eulang.types.LLCodeType;
-import org.ejs.eulang.types.LLTupleType;
-import org.ejs.eulang.types.LLType;
-import org.ejs.eulang.types.TypeException;
+import org.ejs.eulang.types.*;
 
 
 /**
@@ -138,7 +134,10 @@ public class AstCodeExpr extends AstStmtScope implements IAstCodeExpr {
 		LLCodeType protoType = getProtoType(typeEngine, hasRetType ? (ITyped)returns : null);
 		
 		if (canInferTypeFrom(this)) {
-			newType = (LLCodeType) getType();
+			if (getType() instanceof LLPointerType)
+				newType = (LLCodeType) getType().getSubType();
+			else
+				newType = (LLCodeType) getType();
 			if (retType != null
 					&& retType.isMoreComplete(newType.getRetType())) {
 				LLType[] types = Arrays.copyOf(newType.getTypes(), newType.getCount());

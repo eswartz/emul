@@ -8,16 +8,7 @@ import java.util.Arrays;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.eulang.ITyped;
 import org.ejs.eulang.TypeEngine;
-import org.ejs.eulang.ast.IAstAddrOfExpr;
-import org.ejs.eulang.ast.IAstAllocStmt;
-import org.ejs.eulang.ast.IAstFieldExpr;
-import org.ejs.eulang.ast.IAstFuncCallExpr;
-import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstPointerType;
-import org.ejs.eulang.ast.IAstSymbolExpr;
-import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.IAstTypedNode;
+import org.ejs.eulang.ast.*;
 import org.ejs.eulang.types.BaseLLField;
 import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLDataType;
@@ -330,6 +321,9 @@ public class AstFuncCallExpr extends AstTypedExpr implements IAstFuncCallExpr {
 				}
 				return field;
 			}
+		}
+		else if (getCastedChild(node) != null) {
+			return node;
 		}
 		return null;
 	}

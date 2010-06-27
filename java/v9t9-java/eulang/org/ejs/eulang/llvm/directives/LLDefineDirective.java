@@ -56,13 +56,13 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 	public static final String MULTI_RET = "multiRet";
 	
 	private final ISymbol symbol;
-	private final LLLinkage linkage;
-	private final LLVisibility visibility;
-	private final String cconv;
+	private LLLinkage linkage;
+	private LLVisibility visibility;
+	private String cconv;
 	private final LLAttrType retType;
 	private final LLArgAttrType[] argTypes;
 	private final LLFuncAttrs funcAttrs;
-	private final String section;
+	private String section;
 	private final int align;
 	private final String gc;
 	private List<LLBlock> blocks;
@@ -490,5 +490,30 @@ public class LLDefineDirective extends LLBaseDirective implements ILLCodeTarget 
 				0 /*align*/,
 				null /*gc*/);
 		return define;
+	}
+	
+	/**
+	 * @param linkage the linkage to set
+	 */
+	public void setLinkage(LLLinkage linkage) {
+		this.linkage = linkage;
+	}
+	/**
+	 * @param cconv the cconv to set
+	 */
+	public void setCallingConvention(String cconv) {
+		this.cconv = cconv;
+	}
+	/**
+	 * @param section the section to set
+	 */
+	public void setSection(String section) {
+		this.section = section;
+	}
+	/**
+	 * @param visibility the visibility to set
+	 */
+	public void setVisibility(LLVisibility visibility) {
+		this.visibility = visibility;
 	}
 }

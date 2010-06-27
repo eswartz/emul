@@ -27,50 +27,8 @@ import org.ejs.eulang.IUnaryOperation;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TypeEngine;
 import org.ejs.eulang.TypeEngine.Alignment;
-import org.ejs.eulang.ast.ASTException;
-import org.ejs.eulang.ast.IAstAddrOfExpr;
-import org.ejs.eulang.ast.IAstAddrRefExpr;
-import org.ejs.eulang.ast.IAstAllocStmt;
-import org.ejs.eulang.ast.IAstAllocTupleStmt;
-import org.ejs.eulang.ast.IAstArgDef;
-import org.ejs.eulang.ast.IAstAssignStmt;
-import org.ejs.eulang.ast.IAstAssignTupleStmt;
-import org.ejs.eulang.ast.IAstBinExpr;
-import org.ejs.eulang.ast.IAstBlockStmt;
-import org.ejs.eulang.ast.IAstBreakStmt;
-import org.ejs.eulang.ast.IAstCodeExpr;
-import org.ejs.eulang.ast.IAstCondExpr;
-import org.ejs.eulang.ast.IAstCondList;
-import org.ejs.eulang.ast.IAstDataType;
-import org.ejs.eulang.ast.IAstDefineStmt;
-import org.ejs.eulang.ast.IAstDoWhileExpr;
-import org.ejs.eulang.ast.IAstExprStmt;
-import org.ejs.eulang.ast.IAstFieldExpr;
-import org.ejs.eulang.ast.IAstFloatLitExpr;
-import org.ejs.eulang.ast.IAstForExpr;
-import org.ejs.eulang.ast.IAstFuncCallExpr;
-import org.ejs.eulang.ast.IAstGotoStmt;
-import org.ejs.eulang.ast.IAstInitListExpr;
-import org.ejs.eulang.ast.IAstInitNodeExpr;
-import org.ejs.eulang.ast.IAstIntLitExpr;
-import org.ejs.eulang.ast.IAstLabelStmt;
-import org.ejs.eulang.ast.IAstLitExpr;
-import org.ejs.eulang.ast.IAstLoopStmt;
-import org.ejs.eulang.ast.IAstModule;
-import org.ejs.eulang.ast.IAstNode;
-import org.ejs.eulang.ast.IAstNodeList;
-import org.ejs.eulang.ast.IAstRepeatExpr;
-import org.ejs.eulang.ast.IAstStmt;
-import org.ejs.eulang.ast.IAstStmtListExpr;
-import org.ejs.eulang.ast.IAstStmtScope;
-import org.ejs.eulang.ast.IAstSymbolExpr;
-import org.ejs.eulang.ast.IAstTupleExpr;
-import org.ejs.eulang.ast.IAstType;
-import org.ejs.eulang.ast.IAstTypedExpr;
-import org.ejs.eulang.ast.IAstTypedNode;
-import org.ejs.eulang.ast.IAstUnaryExpr;
-import org.ejs.eulang.ast.IAstDerefExpr;
-import org.ejs.eulang.ast.IAstWhileExpr;
+import org.ejs.eulang.ast.*;
+import org.ejs.eulang.ast.IAttrs;
 import org.ejs.eulang.ast.impl.AstSymbolExpr;
 import org.ejs.eulang.ast.impl.AstTypedNode;
 import org.ejs.eulang.llvm.directives.LLConstantDirective;
@@ -502,7 +460,9 @@ public class LLVMGenerator {
 			TypeInference typeInfer = new TypeInference(typeEngine);
 			typeInfer.infer(initCode, true);
 			
-			generateGlobalCode(initName, initCode);
+			Pair<LLDefineDirective, ISymbol> code = generateGlobalCode(initName, initCode);
+			if (code != null)
+				code.first.setVisibility(LLVisibility.PROTECTED);
 		}
 
 
@@ -533,9 +493,12 @@ public class LLVMGenerator {
 
 	}
 
-	private LLFuncAttrs getFuncAttrType(
-			@SuppressWarnings("unused") IAstCodeExpr expr) {
-		return new LLFuncAttrs("optsize");
+	private LLFuncAttrs getFuncAttrType(IAstCodeExpr expr) {
+		List<String> attrs = new ArrayList<String>();
+		attrs.add("optsize");
+		if (expr.hasAttr(IAttrs.INLINE))
+			attrs.add("inlinehint");
+		return new LLFuncAttrs(attrs.toArray(new String[attrs.size()]));
 	}
 
 	private LLArgAttrType[] getArgAttrTypes(IAstArgDef[] argumentTypes) {
@@ -577,6 +540,9 @@ public class LLVMGenerator {
 				getRetAttrType(expr.getPrototype().returnType()),
 				getArgAttrTypes(expr.getPrototype().argumentTypes()),
 				getFuncAttrType(expr));
+		if (symbol.isTemporary())
+			define.setVisibility(LLVisibility.HIDDEN);
+		
 		ll.add(define);
 
 		generateCode(define, expr);
@@ -719,6 +685,9 @@ public class LLVMGenerator {
 			throw new ASTException(stmt, "'break' is not inside a loop");
 		LoopContext context = loopStack.peek();
 
+		if (context.value == null)
+			throw new ASTException(stmt, "'break' in a loop that yields void");
+			
 		LLOperand expr = generateTypedExpr(stmt.getExpr());
 		currentTarget.store(context.value.getVariable().getSymbol().getType(),
 				expr, context.value);
@@ -776,8 +745,9 @@ public class LLVMGenerator {
 		ISymbol loopValSym = scope.addTemporary("loopValue");
 		loopValSym.setType(stmt.getType());
 
-		LLVariableOp loopVal = makeLocalStorage(loopValSym, null,
-				generateNil(stmt));
+		LLVariableOp loopVal = null;
+		if (stmt.getType().getBasicType() != BasicType.VOID)
+			loopVal = makeLocalStorage(loopValSym, null, generateNil(stmt));
 
 		ISymbol loopEnter = addLabel(currentTarget.getScope(), "loopEnter");
 		ISymbol loopBody = addLabel(currentTarget.getScope(), "loopBody");
@@ -793,7 +763,8 @@ public class LLVMGenerator {
 
 		LLOperand loopTemp = generateTypedExpr(stmt.getBody());
 
-		currentTarget.store(stmt.getType(), loopTemp, context.value);
+		if (context.value != null)
+			currentTarget.store(stmt.getType(), loopTemp, context.value);
 
 		generateLoopFooter(context, stmt);
 
@@ -1673,7 +1644,6 @@ public class LLVMGenerator {
 			ISymbol dataSym = ((LLDataType) expr.getType()).getSymbol();
 			ISymbol initSym = dataSym.getScope().add(
 					dataSym.getUniqueName() + "$init", true);
-
 			initType = typeEngine.getDataType(initSym, initFieldTypes);
 		}
 
