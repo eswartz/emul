@@ -198,21 +198,6 @@
       </detailFactories>
    </extension>
     
-   <extension point="org.eclipse.ui.viewActions">
-      <!-- Debug View menu contributions -->
-      <viewContribution
-            id="org.eclipse.tm.tcf.debug.ui.DebugView"
-            targetID="org.eclipse.debug.ui.DebugView">
-         <action
-            id="org.eclipse.tm.tcf.debug.ui.actions.Signals"
-            class="org.eclipse.tm.internal.tcf.debug.ui.commands.SignalsCommand"
-            icon="icons/signals.gif"
-            label="%SignalsCommand.label"
-            toolbarPath="additions">
-         </action>
-      </viewContribution>
-   </extension>
-   
    <extension point="org.eclipse.ui.popupMenus">
       <!-- TCFLaunch popup menu contributions -->
       <objectContribution
@@ -240,6 +225,7 @@
          </action>
       </objectContribution>
       
+      <!-- ICastToType popup menu contributions -->
       <objectContribution
             id="org.eclipse.tm.tcf.debug.ui.CastToType"
             objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType">
