@@ -810,8 +810,6 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
     DWORD64 module;
 
-    if (frame == STACK_TOP_FRAME) frame = get_top_frame(ctx);
-    if (frame == STACK_TOP_FRAME) return -1;
     if (get_stack_frame(ctx, frame, &stack_frame) < 0) return -1;
     if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
@@ -880,6 +878,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     int found = 0;
     *sym = alloc_symbol();
     (*sym)->ctx = ctx;
+    if (frame == STACK_TOP_FRAME) frame = get_top_frame(ctx);
+    if (frame == STACK_TOP_FRAME) return -1;
     if (find_pe_symbol(ctx, frame, name, *sym) >= 0) found = 1;
     else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
 #if ENABLE_RCBP_TEST
@@ -928,9 +928,9 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     symbol->MaxNameLen = MAX_SYM_NAME;
 
-    if (get_stack_frame(ctx, frame, &stack_frame) < 0) {
-        return -1;
-    }
+    if (frame == STACK_TOP_FRAME) frame = get_top_frame(ctx);
+    if (frame == STACK_TOP_FRAME) return -1;
+    if (get_stack_frame(ctx, frame, &stack_frame) < 0) return -1;
 
     if (!SymSetContext(process, &stack_frame, NULL)) {
         DWORD err = GetLastError();
