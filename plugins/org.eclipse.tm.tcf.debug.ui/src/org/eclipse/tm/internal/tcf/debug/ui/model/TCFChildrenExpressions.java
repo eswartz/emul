@@ -12,52 +12,15 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.HashMap;
 
-import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.IExpressionManager;
-import org.eclipse.debug.core.IExpressionsListener;
 import org.eclipse.debug.core.model.IExpression;
-import org.eclipse.tm.tcf.protocol.Protocol;
 
 public class TCFChildrenExpressions extends TCFChildren {
 
-    private final TCFNodeStackFrame node;
-    private final IExpressionManager exp_manager;
+    private final TCFNode node;
 
-    private final IExpressionsListener listener = new IExpressionsListener() {
-
-        int generation;
-
-        public void expressionsAdded(IExpression[] expressions) {
-            expressionsRemoved(expressions);
-        }
-
-        public void expressionsChanged(IExpression[] expressions) {
-            expressionsRemoved(expressions);
-        }
-
-        public void expressionsRemoved(IExpression[] expressions) {
-            final int g = ++generation;
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    reset();
-                    if (g != generation) return;
-                    node.postExpressionAddedOrRemovedDelta();
-                }
-            });
-        }
-    };
-
-    TCFChildrenExpressions(TCFNodeStackFrame node) {
+    TCFChildrenExpressions(TCFNode node) {
         super(node.channel, 128);
         this.node = node;
-        exp_manager = DebugPlugin.getDefault().getExpressionManager();
-        exp_manager.addExpressionListener(listener);
-    }
-
-    @Override
-    public void dispose() {
-        exp_manager.removeExpressionListener(listener);
-        super.dispose();
     }
 
     void onSuspended() {
@@ -74,9 +37,9 @@ public class TCFChildrenExpressions extends TCFChildren {
 
     @Override
     protected boolean startDataRetrieval() {
-        HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         int cnt = 0;
-        for (final IExpression e : exp_manager.getExpressions()) {
+        HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
+        for (final IExpression e : node.model.getExpressionManager().getExpressions()) {
             String text = e.getExpressionText();
             TCFNodeExpression n = findScript(text);
             if (n == null) add(n = new TCFNodeExpression(node, text, null, null, -1, false));

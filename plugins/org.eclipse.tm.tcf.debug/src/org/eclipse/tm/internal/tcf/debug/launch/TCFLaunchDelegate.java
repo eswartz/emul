@@ -20,10 +20,13 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
+import org.eclipse.tm.internal.tcf.debug.Activator;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -215,6 +218,10 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
             task_cnt++;
             if (monitor != null) monitor.beginTask("Searching TCF Agent", task_cnt); //$NON-NLS-1$
             local_id = TCFLocalAgent.getLocalAgentID();
+            if (local_id == null) throw new CoreException(new Status(IStatus.ERROR,
+                    Activator.PLUGIN_ID, 0,
+                    "Cannot find TCF agent on the local host",
+                    null));
         }
         if (monitor != null) monitor.beginTask("Launching TCF debugger session", task_cnt); //$NON-NLS-1$
         final String id =

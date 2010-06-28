@@ -42,6 +42,10 @@ public class TCFChildrenStackTrace extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onSourceMappingChange();
     }
 
+    void onExpressionAddedOrRemoved() {
+        for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onExpressionAddedOrRemoved();
+    }
+
     void onSuspended() {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onSuspended();
         reset();

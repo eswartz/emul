@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.IExpressionManager;
+import org.eclipse.debug.core.IExpressionsListener;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
@@ -29,6 +32,7 @@ import org.eclipse.debug.core.commands.IStepReturnHandler;
 import org.eclipse.debug.core.commands.ISuspendHandler;
 import org.eclipse.debug.core.commands.ITerminateHandler;
 import org.eclipse.debug.core.model.IDebugModelProvider;
+import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.core.model.IMemoryBlockRetrieval;
 import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
 import org.eclipse.debug.core.model.ISourceLocator;
@@ -123,6 +127,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final TCFLaunch launch;
     private final Display display;
+    private final IExpressionManager expr_manager;
 
     private final List<ISuspendTriggerListener> suspend_trigger_listeners =
         new LinkedList<ISuspendTriggerListener>();
@@ -380,6 +385,43 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     };
 
+    private final IExpressionsListener expressions_listener = new IExpressionsListener() {
+
+        int generation;
+
+        public void expressionsAdded(IExpression[] expressions) {
+            expressionsRemoved(expressions);
+        }
+
+        public void expressionsChanged(IExpression[] expressions) {
+            expressionsRemoved(expressions);
+        }
+
+        public void expressionsRemoved(IExpression[] expressions) {
+            final int g = ++generation;
+            Protocol.invokeLater(new Runnable() {
+                public void run() {
+                    if (g != generation) return;
+                    for (TCFNode n : id2node.values()) {
+                        if (n instanceof TCFNodeExecContext) {
+                            ((TCFNodeExecContext)n).onExpressionAddedOrRemoved();
+                        }
+                    }
+                    for (TCFModelProxy p : model_proxies) {
+                        String id = p.getPresentationContext().getId();
+                        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
+                            Object o = p.getInput();
+                            if (o instanceof TCFNode) {
+                                TCFNode n = (TCFNode)o;
+                                if (n.model == TCFModel.this) p.addDelta(n, IModelDelta.CONTENT);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    };
+
     private final IDebugModelProvider debug_model_provider = new IDebugModelProvider() {
         public String[] getModelIdentifiers() {
             return new String[] { ITCFConstants.ID_TCF_DEBUG_MODEL };
@@ -401,6 +443,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         adapters.put(IStepIntoHandler.class, new StepIntoCommand(this));
         adapters.put(IStepOverHandler.class, new StepOverCommand(this));
         adapters.put(IStepReturnHandler.class, new StepReturnCommand(this));
+        expr_manager = DebugPlugin.getDefault().getExpressionManager();
+        expr_manager.addExpressionListener(expressions_listener);
     }
 
     @SuppressWarnings("rawtypes")
@@ -622,6 +666,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void dispose() {
+        expr_manager.removeExpressionListener(expressions_listener);
         if (console != null) {
             display.asyncExec(new Runnable() {
                 public void run() {
@@ -646,6 +691,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         assert Protocol.isDispatchThread();
         id2node.remove(id);
         mem_retrieval.remove(id);
+    }
+
+    IExpressionManager getExpressionManager() {
+        return expr_manager;
     }
 
     public Display getDisplay() {

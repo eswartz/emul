@@ -327,7 +327,8 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     protected boolean getData(IViewerInputUpdate result, Runnable done) {
         result.setInputElement(result.getElement());
-        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+        String id = result.getPresentationContext().getId();
+        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id) || IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
             TCFNodeExecContext exe = (TCFNodeExecContext)parent;
             TCFChildrenStackTrace stack_trace_cache = exe.getStackTrace();
             if (!stack_trace_cache.validate(done)) return false;
@@ -388,13 +389,8 @@ public class TCFNodeStackFrame extends TCFNode {
         }
     }
 
-    void postExpressionAddedOrRemovedDelta() {
-        for (TCFModelProxy p : model.getModelProxies()) {
-            String id = p.getPresentationContext().getId();
-            if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id) && p.getInput() == this) {
-                p.addDelta(this, IModelDelta.CONTENT);
-            }
-        }
+    void onExpressionAddedOrRemoved() {
+        children_exps.reset();
     }
 
     void onSourceMappingChange() {

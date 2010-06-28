@@ -119,7 +119,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             if (!stack_trace_cache.validate(done)) return null;
             if (stack_trace_cache.getData().get(parent.id) == null) return true;
         }
-        else {
+        else if (parent instanceof TCFNodeExecContext) {
             TCFNodeExecContext exe = (TCFNodeExecContext)parent;
             TCFDataCache<TCFContextState> state_cache = exe.getState();
             if (!state_cache.validate(done)) return null;
