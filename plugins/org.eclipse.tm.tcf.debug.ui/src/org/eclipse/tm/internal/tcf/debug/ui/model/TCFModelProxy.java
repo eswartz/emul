@@ -249,8 +249,10 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         return -1;
     }
 
-    private ModelDelta makeDelta(ModelDelta root, TCFNode node, int flags, boolean selection_delta) {
+    private ModelDelta makeDelta(ModelDelta root, TCFNode node, boolean selection_delta) {
+        Integer flags_obj = node2flags.get(node);
         ModelDelta delta = node2delta.get(node);
+        int flags = flags_obj != null ? flags_obj.intValue() : 0;
         if (delta == null) {
             TCFNode parent = node.parent;
             if (parent == null) {
@@ -265,11 +267,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 delta = root;
             }
             else {
-                int parent_flags = 0;
-                Integer parent_flags_obj = node2flags.get(parent);
-                if (parent_flags_obj != null) parent_flags = parent_flags_obj;
-                if ((parent_flags & IModelDelta.REMOVED) != 0) return null;
-                ModelDelta up = makeDelta(root, parent, parent_flags, selection_delta);
+                ModelDelta up = makeDelta(root, parent, selection_delta);
                 if (up == null) return null;
                 int index = -1;
                 int children = -1;
@@ -284,7 +282,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             }
             node2delta.put(node, delta);
         }
-        assert delta.getFlags() == flags;
+        if ((flags & IModelDelta.REMOVED) != 0) return null;
+        if ((flags & IModelDelta.CONTENT) != 0) return null;
         return delta;
     }
 
@@ -324,7 +323,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         node2children.clear();
         node2delta.clear();
         ModelDelta root = new ModelDelta(input, flags);
-        for (TCFNode node : node2flags.keySet()) makeDelta(root, node, node2flags.get(node), false);
+        for (TCFNode node : node2flags.keySet()) makeDelta(root, node, false);
         if (pending_node == null) {
             node2flags.clear();
             if ((root.getFlags() != 0 || node2delta.size() > 0) && (root.getFlags() & IModelDelta.REMOVED) == 0) {
@@ -333,9 +332,11 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             node2delta.clear();
             last_update_time = System.currentTimeMillis();
             if (selection != null) {
+                node2flags.put(selection, IModelDelta.SELECT | IModelDelta.EXPAND);
                 root = new ModelDelta(input, IModelDelta.NO_CHANGE);
-                makeDelta(root, selection, IModelDelta.SELECT | IModelDelta.EXPAND, true);
+                makeDelta(root, selection, true);
                 node2delta.clear();
+                node2flags.clear();
                 if (pending_node == null) {
                     postDelta(root);
                     selection = null;
