@@ -90,6 +90,8 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
     DWORD offset = 0;
     IMAGEHLP_LINE line;
     IMAGEHLP_LINE next;
+    ContextAddress org_addr0 = addr0;
+    ContextAddress org_addr1 = addr1;
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
@@ -117,6 +119,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
                     signed char disp08;
                     if (context_read_mem(ctx, addr0 + 1, &disp08, 1) == 0) {
                         dest = addr0 + 2 + disp08;
+                        org_addr1 = addr0 + 2;
                     }
                 }
                 else if (instr == JMPD32) {
@@ -124,6 +127,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
                     assert(sizeof(disp32) == 4);
                     if (context_read_mem(ctx, addr0 + 1, &disp32, 4) == 0) {
                         dest = addr0 + 5 + disp32;
+                        org_addr1 = addr0 + 5;
                     }
                 }
                 else if (instr == GRP5) {
@@ -131,6 +135,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
                         ContextAddress ptr = 0;
                         if (context_read_mem(ctx, addr0 + 2, &ptr, 4) == 0) {
                             context_read_mem(ctx, ptr, &dest, 4);
+                            org_addr1 = addr0 + 6;
                         }
                     }
                 }
@@ -153,16 +158,20 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
     }
 
     if (err == 0 && !not_found) {
-        for (;;) {
+        while (line.Address < next.Address && line.Address < addr1 && next.Address > addr0) {
             CodeArea area;
+
             memset(&area, 0, sizeof(area));
             area.file = line.FileName;
             area.start_address = line.Address;
             area.start_line = line.LineNumber;
             area.end_address = next.Address;
             area.end_line = next.LineNumber;
+            if (org_addr0 != addr0) {
+                area.start_address = org_addr0;
+                area.end_address = org_addr1;
+            }
             callback(&area, user_args);
-            if (next.Address >= addr1) break;
             memcpy(&line, &next, sizeof(line));
             if (!SymGetLineNext(get_context_handle(ctx), &next)) break;
         }
