@@ -757,7 +757,8 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
 
 static unsigned symbol_hash(HANDLE process, ULONG64 pc, PCSTR name) {
     int i;
-    unsigned h = (unsigned)(uintptr_t)process >> 4;
+    unsigned h = (unsigned)(uintptr_t)process;
+    h += h >> 8;
     h += (unsigned)(uintptr_t)pc;
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / SYMBOL_CACHE_SIZE;
@@ -808,27 +809,24 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
     HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
-    DWORD64 module;
+    DWORD err;
 
     if (get_stack_frame(ctx, frame, &stack_frame) < 0) return -1;
-    if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
     memset(info, 0, sizeof(SYMBOL_INFO));
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
     info->MaxNameLen = MAX_SYM_NAME;
 
     if (!SymSetContext(process, &stack_frame, NULL)) {
-        DWORD err = GetLastError();
+        err = GetLastError();
         if (err == ERROR_SUCCESS) {
             /* Don't know why Windows do that */
         }
         else if (err == ERROR_MOD_NOT_FOUND && frame != STACK_NO_FRAME) {
             /* No local symbols data, search global scope */
-            if (get_stack_frame(ctx, STACK_NO_FRAME, &stack_frame) < 0) {
-                return -1;
-            }
+            if (get_stack_frame(ctx, STACK_NO_FRAME, &stack_frame) < 0) return -1;
             if (!SymSetContext(process, &stack_frame, NULL)) {
-                DWORD err = GetLastError();
+                err = GetLastError();
                 if (err != ERROR_SUCCESS) {
                     set_win32_errno(err);
                     return -1;
@@ -841,20 +839,25 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
         }
     }
 
+    if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
+
     if (SymFromName(process, name, info)) {
         syminfo2symbol(ctx, frame, info, sym);
         add_cache_symbol(process, stack_frame.InstructionOffset, name, sym, 0);
         return 0;
     }
-    module = SymGetModuleBase64(process, stack_frame.InstructionOffset);
-    if (module != 0 && SymGetTypeFromName(process, module, name, info)) {
-        syminfo2symbol(ctx, frame, info, sym);
-        add_cache_symbol(process, stack_frame.InstructionOffset, name, sym, 0);
-        return 0;
+    if (stack_frame.InstructionOffset != 0) {
+        DWORD64 module = SymGetModuleBase64(process, stack_frame.InstructionOffset);
+        if (module != 0 && SymGetTypeFromName(process, module, name, info)) {
+            syminfo2symbol(ctx, frame, info, sym);
+            add_cache_symbol(process, stack_frame.InstructionOffset, name, sym, 0);
+            return 0;
+        }
     }
-    if (set_win32_errno(GetLastError()) == 0) {
+    set_win32_errno(err = GetLastError());
+    if (err == 0 || err == ERROR_MOD_NOT_FOUND) {
+        add_cache_symbol(process, stack_frame.InstructionOffset, name, NULL, ERR_SYM_NOT_FOUND);
         errno = ERR_SYM_NOT_FOUND;
-        add_cache_symbol(process, stack_frame.InstructionOffset, name, NULL, errno);
     }
     return -1;
 }
