@@ -49,6 +49,12 @@ public class ServiceManager {
         });
     }
 
+    public static String getID() {
+        // In current implementation ServiceManager is a singleton,
+        // so its ID is same as agent ID.
+        return Protocol.getAgentID();
+    }
+
     public static synchronized void addServiceProvider(IServiceProvider provider) {
         providers.add(provider);
     }

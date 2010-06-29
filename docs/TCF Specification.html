@@ -1389,18 +1389,55 @@ E &bull; Locator &bull; peerHeartBeat &bull; <i>&lt;string: peer ID&gt;</i> &bul
  * implementing IPeer interface. A peer can act as host or
  * target depending on services it implements.
  * List of currently known peers can be retrieved by
- * calling ILocator.getPeers
+ * calling ILocator.getPeers()
+ *
+ * A TCF agent houses one or more service managers. A service manager has a one or more
+ * services to expose to the world. The service manager creates one or more peers
+ * to represent itself, one for every access path the agent is
+ * reachable by. For example, in agents accessible via TCP/IP, the
+ * service manger would create a peer for every subnet it wants to participate in.
+ * All peers of particular service manager represent identical sets of services.
+ *
+ * @noimplement This interface is not intended to be implemented by clients.
+ * Client can extends the abstract IPeer implementation: AbstractPeer.
  */</font>
 <font color=#7F0055>public interface</font> IPeer {
 
+    <font color=#3F5FBF>/**
+     * Peer property names. Implementation can define additional properties.
+     */</font>
     <font color=#7F0055>static final</font> String
+        <font color=#3F5FBF>/** Peer unique ID */</font>
         <i><font color=#0000C0>ATTR_ID</font></i> = <font color=#2A00FF>"ID"</font>,
+
+        <font color=#3F5FBF>/** Unique ID of service manager that is represented by this peer */</font>
+        <i><font color=#0000C0>ATTR_SERVICE_MANGER_ID</font></i> = <font color=#2A00FF>"ServiceManagerID"</font>,
+
+        <font color=#3F5FBF>/** Agent unique ID */</font>
+        <i><font color=#0000C0>ATTR_AGENT_ID</font></i> = <font color=#2A00FF>"AgentID"</font>,
+
+        <font color=#3F5FBF>/** Peer name */</font>
         <i><font color=#0000C0>ATTR_NAME</font></i> = <font color=#2A00FF>"Name"</font>,
+
+        <font color=#3F5FBF>/** Name of the peer operating system */</font>
         <i><font color=#0000C0>ATTR_OS_NAME</font></i> = <font color=#2A00FF>"OSName"</font>,
+
+        <font color=#3F5FBF>/** Transport name, for example TCP, SSL */</font>
         <i><font color=#0000C0>ATTR_TRANSPORT_NAME</font></i> = <font color=#2A00FF>"TransportName"</font>,
+
+        <font color=#3F5FBF>/** If present, indicates that the peer can forward traffic to other peers */</font>
+        <i><font color=#0000C0>ATTR_PROXY</font></i> = <font color=#2A00FF>"Proxy"</font>,
+
+        <font color=#3F5FBF>/** Host DNS name or IP address */</font>
         <i><font color=#0000C0>ATTR_IP_HOST</font></i> = <font color=#2A00FF>"Host"</font>,
+
+        <font color=#3F5FBF>/** Optional list of host aliases */</font>
         <i><font color=#0000C0>ATTR_IP_ALIASES</font></i> = <font color=#2A00FF>"Aliases"</font>,
+
+        <font color=#3F5FBF>/** Optional list of host addresses */</font>
         <i><font color=#0000C0>ATTR_IP_ADDRESSES</font></i> = <font color=#2A00FF>"Addresses"</font>,
+
+        <font color=#3F5FBF>/** IP port number, must be decimal number */</font>
         <i><font color=#0000C0>ATTR_IP_PORT</font></i> = <font color=#2A00FF>"Port"</font>;
 
 
@@ -1415,17 +1452,27 @@ E &bull; Locator &bull; peerHeartBeat &bull; <i>&lt;string: peer ID&gt;</i> &bul
     String getID();
 
     <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> service manager unique ID, same as getAttributes().get(ATTR_SERVICE_MANAGER_ID)
+     */</font>
+    String getServiceManagerID();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> agent unique ID, same as getAttributes().get(ATTR_AGENT_ID)
+     */</font>
+    String getAgentID();
+
+    <font color=#3F5FBF>/**
      * <font color=#7F9FBF>@return</font> peer name, same as getAttributes().get(ATTR_NAME)
      */</font>
     String getName();
 
     <font color=#3F5FBF>/**
-     * Same as getAttributes().get(ATTR_OS_NAME)
+     * <font color=#7F9FBF>@return</font> agent OS name, same as getAttributes().get(ATTR_OS_NAME)
      */</font>
     String getOSName();
 
     <font color=#3F5FBF>/**
-     * Same as getAttributes().get(ATTR_TRANSPORT_NAME)
+     * <font color=#7F9FBF>@return</font> transport name, same as getAttributes().get(ATTR_TRANSPORT_NAME)
      */</font>
     String getTransportName();
 

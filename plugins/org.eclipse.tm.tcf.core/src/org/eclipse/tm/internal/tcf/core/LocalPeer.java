@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.AbstractPeer;
+import org.eclipse.tm.tcf.protocol.IPeer;
+import org.eclipse.tm.tcf.protocol.Protocol;
 
 /**
  * LocalPeer object represents local end-point of TCF communication channel.
@@ -27,6 +29,8 @@ public class LocalPeer extends AbstractPeer {
     private static Map<String,String> createAttributes() {
         Map<String, String> attrs = new HashMap<String, String>();
         attrs.put(ATTR_ID, "TCFLocal");
+        attrs.put(IPeer.ATTR_SERVICE_MANGER_ID, ServiceManager.getID());
+        attrs.put(IPeer.ATTR_AGENT_ID, Protocol.getAgentID());
         attrs.put(ATTR_NAME, "Local Peer");
         attrs.put(ATTR_OS_NAME, System.getProperty("os.name"));
         attrs.put(ATTR_TRANSPORT_NAME, "Loop");

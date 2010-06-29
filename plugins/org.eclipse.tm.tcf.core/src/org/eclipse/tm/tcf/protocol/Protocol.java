@@ -12,6 +12,7 @@ package org.eclipse.tm.tcf.protocol;
 
 import java.util.ArrayList;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
@@ -40,6 +41,7 @@ public final class Protocol {
     private static IEventQueue event_queue;
     private static ILogger logger;
     private static final TreeSet<Timer> timer_queue = new TreeSet<Timer>();
+    private static final String agent_id = UUID.randomUUID().toString();
     private static int timer_cnt;
 
     private static class Timer implements Comparable<Timer>{
@@ -252,6 +254,15 @@ public final class Protocol {
         else {
             logger.log(msg, x);
         }
+    }
+
+    /**
+     * Get TCF agent unique ID.
+     * The intent of the ID is to enable distributed systems to uniquely identify instances of TCF agents.
+     * @return the agent ID.
+     */
+    public static String getAgentID() {
+        return agent_id;
     }
 
     /**

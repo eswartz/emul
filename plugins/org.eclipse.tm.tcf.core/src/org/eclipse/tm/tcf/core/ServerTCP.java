@@ -17,11 +17,13 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.tm.internal.tcf.core.ServiceManager;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -45,7 +47,7 @@ public class ServerTCP extends ServerSocket {
         private final Map<String,String> attrs;
 
         TransientPeer(Map<String,String> attrs) {
-            this.attrs = attrs;
+            this.attrs = Collections.unmodifiableMap(attrs);
         }
 
         public Map<String, String> getAttributes() {
@@ -54,6 +56,16 @@ public class ServerTCP extends ServerSocket {
 
         public String getID() {
             return attrs.get(ATTR_ID);
+        }
+
+        public String getServiceManagerID() {
+            assert Protocol.isDispatchThread();
+            return attrs.get(ATTR_SERVICE_MANGER_ID);
+        }
+
+        public String getAgentID() {
+            assert Protocol.isDispatchThread();
+            return attrs.get(ATTR_AGENT_ID);
         }
 
         public String getName() {
@@ -134,6 +146,8 @@ public class ServerTCP extends ServerSocket {
         String port = Integer.toString(getLocalPort());
         Map<String,String> attrs = new HashMap<String,String>();
         attrs.put(IPeer.ATTR_ID, "TCP:" + host + ":" + port);
+        attrs.put(IPeer.ATTR_SERVICE_MANGER_ID, ServiceManager.getID());
+        attrs.put(IPeer.ATTR_AGENT_ID, Protocol.getAgentID());
         attrs.put(IPeer.ATTR_NAME, name);
         attrs.put(IPeer.ATTR_OS_NAME, System.getProperty("os.name"));
         attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP");

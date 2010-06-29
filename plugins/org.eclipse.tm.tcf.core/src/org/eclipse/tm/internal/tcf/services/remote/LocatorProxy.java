@@ -54,6 +54,16 @@ public class LocatorProxy implements ILocator {
             return attrs.get(ATTR_ID);
         }
 
+        public String getServiceManagerID() {
+            assert Protocol.isDispatchThread();
+            return attrs.get(ATTR_SERVICE_MANGER_ID);
+        }
+
+        public String getAgentID() {
+            assert Protocol.isDispatchThread();
+            return attrs.get(ATTR_AGENT_ID);
+        }
+
         public String getName() {
             assert Protocol.isDispatchThread();
             return attrs.get(ATTR_NAME);

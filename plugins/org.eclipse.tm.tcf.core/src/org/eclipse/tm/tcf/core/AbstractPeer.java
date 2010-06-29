@@ -38,10 +38,10 @@ public class AbstractPeer implements IPeer {
     public AbstractPeer(Map<String,String> attrs) {
         assert Protocol.isDispatchThread();
         if (attrs != null) {
-            rw_attrs = new HashMap<String, String>(attrs);
+            rw_attrs = new HashMap<String,String>(attrs);
         }
         else {
-            rw_attrs = new HashMap<String, String>();
+            rw_attrs = new HashMap<String,String>();
         }
         ro_attrs = Collections.unmodifiableMap(rw_attrs);
         assert getID() != null;
@@ -163,6 +163,16 @@ public class AbstractPeer implements IPeer {
     public String getID() {
         assert Protocol.isDispatchThread();
         return ro_attrs.get(ATTR_ID);
+    }
+
+    public String getServiceManagerID() {
+        assert Protocol.isDispatchThread();
+        return ro_attrs.get(ATTR_SERVICE_MANGER_ID);
+    }
+
+    public String getAgentID() {
+        assert Protocol.isDispatchThread();
+        return ro_attrs.get(ATTR_AGENT_ID);
     }
 
     public String getName() {

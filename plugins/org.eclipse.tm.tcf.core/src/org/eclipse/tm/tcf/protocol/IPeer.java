@@ -19,6 +19,13 @@ import java.util.Map;
  * List of currently known peers can be retrieved by
  * calling ILocator.getPeers()
  *
+ * A TCF agent houses one or more service managers. A service manager has a one or more
+ * services to expose to the world. The service manager creates one or more peers
+ * to represent itself, one for every access path the agent is
+ * reachable by. For example, in agents accessible via TCP/IP, the
+ * service manger would create a peer for every subnet it wants to participate in.
+ * All peers of particular service manager represent identical sets of services.
+ *
  * @noimplement This interface is not intended to be implemented by clients.
  * Client can extends the abstract IPeer implementation: AbstractPeer.
  */
@@ -30,6 +37,12 @@ public interface IPeer {
     static final String
         /** Peer unique ID */
         ATTR_ID = "ID",
+
+        /** Unique ID of service manager that is represented by this peer */
+        ATTR_SERVICE_MANGER_ID = "ServiceManagerID",
+
+        /** Agent unique ID */
+        ATTR_AGENT_ID = "AgentID",
 
         /** Peer name */
         ATTR_NAME = "Name",
@@ -67,24 +80,34 @@ public interface IPeer {
     String getID();
 
     /**
+     * @return service manager unique ID, same as getAttributes().get(ATTR_SERVICE_MANAGER_ID)
+     */
+    String getServiceManagerID();
+
+    /**
+     * @return agent unique ID, same as getAttributes().get(ATTR_AGENT_ID)
+     */
+    String getAgentID();
+
+    /**
      * @return peer name, same as getAttributes().get(ATTR_NAME)
      */
     String getName();
 
     /**
-     * Same as getAttributes().get(ATTR_OS_NAME)
+     * @return agent OS name, same as getAttributes().get(ATTR_OS_NAME)
      */
     String getOSName();
 
     /**
-     * Same as getAttributes().get(ATTR_TRANSPORT_NAME)
+     * @return transport name, same as getAttributes().get(ATTR_TRANSPORT_NAME)
      */
     String getTransportName();
 
     /**
      * Open channel to communicate with this peer.
      * Note: the channel is not fully open yet when this method returns.
-     * It’s state is IChannel.STATE_OPENNING.
+     * Its state is IChannel.STATE_OPENNING.
      * Protocol.Listener will be called when the channel will be opened or closed.
      */
     IChannel openChannel();
