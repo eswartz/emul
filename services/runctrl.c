@@ -64,6 +64,9 @@ typedef struct ContextExtensionRC {
     int pending_safe_event; /* safe events are waiting for this context to be stopped */
     int intercepted;        /* context is reported to a host as suspended */
     int intercepted_by_bp;
+    ContextAddress step_range_start;
+    ContextAddress step_range_end;
+    int stepping;
 } ContextExtensionRC;
 
 static size_t context_extension_offset = 0;
@@ -92,6 +95,8 @@ static int stop_all_timer_posted = 0;
 static int run_safe_events_posted = 0;
 
 static TCFBroadcastGroup * broadcast_group = NULL;
+
+static void run_safe_events(void * arg);
 
 #if defined(__linux__)
 static char * get_executable(pid_t pid) {
@@ -160,7 +165,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     json_write_string(out, "CanResume");
     write_stream(out, ':');
     if (context_has_state(ctx)) {
-        json_write_long(out, (1 << RM_RESUME) | (1 << RM_STEP_INTO));
+        json_write_long(out, (1 << RM_RESUME) | (1 << RM_STEP_INTO) | (1 << RM_STEP_INTO_RANGE));
     }
     else {
         json_write_long(out, 1 << RM_RESUME);
@@ -405,11 +410,20 @@ static void send_simple_result(Channel * c, char * token, int err) {
 
 static void send_event_context_resumed(Context * ctx);
 
-static void resume_params_callback(InputStream * inp, const char * name, void * args) {
-    int * err = (int *)args;
-    /* Current agent implementation does not support resume parameters */
-    json_skip_object(inp);
-    *err = ERR_UNSUPPORTED;
+typedef struct ResumeParams {
+    ContextAddress range_start;
+    ContextAddress range_end;
+    int error;
+} ResumeParams;
+
+static void resume_params_callback(InputStream * inp, const char * name, void * x) {
+    ResumeParams * args = (ResumeParams *)x;
+    if (strcmp(name, "RangeStart") == 0) args->range_start = (ContextAddress)json_read_uint64(inp);
+    else if (strcmp(name, "RangeEnd") == 0) args->range_end = (ContextAddress)json_read_uint64(inp);
+    else {
+        json_skip_object(inp);
+        args->error = ERR_UNSUPPORTED;
+    }
 }
 
 static int context_continue_recursive(Context * ctx) {
@@ -438,7 +452,9 @@ static void command_resume(char * token, Channel * c) {
     long mode;
     long count;
     int err = 0;
+    ResumeParams args;
 
+    memset(&args, 0, sizeof(args));
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     mode = json_read_long(&c->inp);
@@ -446,8 +462,9 @@ static void command_resume(char * token, Channel * c) {
     count = json_read_long(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (peek_stream(&c->inp) != MARKER_EOM) {
-        json_read_struct(&c->inp, resume_params_callback, &err);
+        json_read_struct(&c->inp, resume_params_callback, &args);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        err = args.error;
     }
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     if (err == 0) {
@@ -466,20 +483,27 @@ static void command_resume(char * token, Channel * c) {
         else if (count != 1) {
             err = EINVAL;
         }
-        else if (context_has_state(ctx) && mode == RM_STEP_INTO) {
-            send_event_context_resumed(ctx);
-            if (run_ctrl_lock_cnt > 0) {
-                ctx->pending_step = 1;
-            }
-            else if (context_single_step(ctx) < 0) {
-                err = errno;
+        else if (context_has_state(ctx) && (mode == RM_STEP_INTO || mode == RM_STEP_INTO_RANGE)) {
+            if (mode == RM_STEP_INTO_RANGE) {
+                ext->step_range_start = args.range_start;
+                ext->step_range_end = args.range_end;
             }
             else {
-                assert(!ext->intercepted);
-                ctx->pending_intercept = 1;
+                ext->step_range_start = get_regs_PC(ctx);
+                ext->step_range_end = ext->step_range_start + 1;
+            }
+            ext->stepping = 1;
+            send_event_context_resumed(ctx);
+            assert(!ext->intercepted);
+            if (run_ctrl_lock_cnt == 0 && run_safe_events_posted < 4) {
+                run_safe_events_posted++;
+                post_event(run_safe_events, NULL);
             }
         }
         else if (mode == RM_RESUME) {
+            ext->step_range_start = 0;
+            ext->step_range_end = 0;
+            ext->stepping = 0;
             if (context_continue_recursive(ctx) < 0) err = errno;
         }
         else {
@@ -510,7 +534,6 @@ int suspend_debug_context(Context * ctx) {
                 ctx->pending_intercept = 1;
             }
             else {
-                ctx->pending_step = 0;
                 send_event_context_suspended(ctx);
             }
         }
@@ -662,6 +685,9 @@ static void send_event_context_suspended(Context * ctx) {
     assert(!ext->intercepted);
     assert(!ctx->pending_step);
     ext->intercepted = 1;
+    ext->step_range_start = 0;
+    ext->step_range_end = 0;
+    ext->stepping = 0;
     ctx->pending_intercept = 0;
     if (get_context_breakpoint_ids(ctx) != NULL) ext->intercepted_by_bp++;
 
@@ -730,8 +756,6 @@ int is_all_stopped(Context * mem) {
     return 1;
 }
 
-static void run_safe_events(void * arg);
-
 static void stop_all_timer(void * args) {
     stop_all_timer_posted = 0;
     stop_all_timer_cnt++;
@@ -761,16 +785,20 @@ static void run_safe_events(void * arg) {
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
             if (ext->intercepted) continue;
+            if (ext->stepping && !ctx->pending_intercept) {
+                ContextAddress pc = get_regs_PC(ctx);
+                if (pc < ext->step_range_start || pc >= ext->step_range_end) {
+                    ext->stepping = 0;
+                    ctx->pending_intercept = 1;
+                }
+            }
             if (ctx->pending_intercept) {
-                ctx->pending_step = 0;
                 send_event_context_suspended(ctx);
                 continue;
             }
             assert(!ctx->pending_intercept);
-            if (ctx->pending_step) {
-                ctx->pending_step = 0;
+            if (ext->stepping) {
                 n = context_single_step(ctx);
-                if (n >= 0) ctx->pending_intercept = 1;
             }
             else {
                 n = context_continue(ctx);
@@ -779,6 +807,7 @@ static void run_safe_events(void * arg) {
                 int error = errno;
                 trace(LOG_ALWAYS, "error: can't resume %s; error %d: %s",
                     ctx->id, error, errno_to_str(error));
+                send_event_context_suspended(ctx);
             }
             if (run_ctrl_lock_cnt > 0) break;
         }
