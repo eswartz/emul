@@ -129,4 +129,14 @@ extern void protocol_reference(Protocol *);
  */
 extern void protocol_release(Protocol *);
 
+/*
+ * Return unique agent ID.
+ */
+extern const char * get_agent_id(void);
+
+/*
+ * Return unique service manager ID assigned to given Protocol object.
+ */
+extern const char * get_service_manager_id(Protocol * p);
+
 #endif /* D_protocol */

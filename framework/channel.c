@@ -27,6 +27,7 @@
 #include <framework/tcf.h>
 #include <framework/channel.h>
 #include <framework/channel_tcp.h>
+#include <framework/protocol.h>
 #include <framework/myalloc.h>
 #include <framework/events.h>
 #include <framework/exceptions.h>
@@ -175,6 +176,7 @@ PeerServer * channel_peer_from_url(const char * url) {
 
     peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Agent"));
     peer_server_addprop(ps, loc_strdup("OSName"), loc_strdup(get_os_name()));
+    peer_server_addprop(ps, loc_strdup("AgentID"), loc_strdup(get_agent_id()));
 
     s = url;
     i = 0;

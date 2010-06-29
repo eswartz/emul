@@ -80,8 +80,11 @@ static EventHandlerInfo * event_handlers[EVENT_HASH_SIZE];
 static ReplyHandlerInfo * reply_handlers[REPLY_HASH_SIZE];
 static ServiceInfo * services;
 static int ini_done = 0;
+static int proto_cnt = 0;
+static char * agent_id = NULL;
 
 struct Protocol {
+    int id;
     int lock_cnt;           /* Lock count, cannot delete when > 0 */
     unsigned long tokenid;
     ProtocolMessageHandler2 default_handler;
@@ -647,14 +650,19 @@ static void channel_closed(Channel * c) {
     }
 }
 
+static void ini_protocol(void) {
+    assert(!ini_done);
+    agent_id = loc_strdup(create_uuid());
+    add_channel_close_listener(channel_closed);
+    ini_done = 1;
+}
+
 Protocol * protocol_alloc(void) {
     Protocol * p = (Protocol *)loc_alloc_zero(sizeof *p);
 
     assert(is_dispatch_thread());
-    if (!ini_done) {
-        add_channel_close_listener(channel_closed);
-        ini_done = 1;
-    }
+    if (!ini_done) ini_protocol();
+    p->id = proto_cnt++;
     p->lock_cnt = 1;
     p->tokenid = 1;
     return p;
@@ -687,4 +695,15 @@ void protocol_release(Protocol * p) {
         }
     }
     free_services(p);
+}
+
+const char * get_agent_id(void) {
+    if (!ini_done) ini_protocol();
+    return agent_id;
+}
+
+const char * get_service_manager_id(Protocol * p) {
+    static char buf[256];
+    snprintf(buf, sizeof(buf), "%s-%d", get_agent_id(), p->id);
+    return buf;
 }

@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <framework/errors.h>
+#include <framework/myalloc.h>
 #include <main/server.h>
 
 static Protocol * proto;
@@ -40,6 +41,9 @@ void ini_server(const char * url, Protocol * p, TCFBroadcastGroup * b) {
         fprintf(stderr, "Invalid server URL (-s option value): %s\n", url);
         exit(1);
     }
+
+    peer_server_addprop(ps, loc_strdup("ServerManagerID"), loc_strdup(get_service_manager_id(p)));
+
     proto = p;
     bcg = b;
     serv = channel_server(ps);

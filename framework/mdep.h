@@ -483,6 +483,9 @@ extern char * get_os_name(void);
 /* Get user home directory path */
 extern char * get_user_home(void);
 
+/* Create new UUID - Universally Unique IDentifier */
+extern const char * create_uuid(void);
+
 /* Switch to running in the background, rather than under the direct control of a user */
 extern void become_daemon(void);
 

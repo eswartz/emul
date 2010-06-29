@@ -39,6 +39,10 @@ ifeq ($(OPSYS),Darwin)
   RANLIB = ranlib $@
 endif
 
+ifeq ($(OPSYS),GNU/Linux)
+  LIBS = -lpthread -luuid -lssl -lrt
+endif
+
 ifneq ($(OPSYS),Windows)
   OPTS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
   OPTS += -Wall

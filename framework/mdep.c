@@ -1369,3 +1369,28 @@ size_t strlcat(char * dst, const char * src, size_t size) {
 }
 
 #endif
+
+#if defined(__linux__)
+
+#include <uuid/uuid.h>
+
+const char * create_uuid(void) {
+    uuid_t id;
+    static char buf[64];
+    uuid_generate(id);
+    uuid_unparse(id, buf);
+    return buf;
+}
+
+#else
+
+/* TODO: better UUID generator */
+const char * create_uuid(void) {
+    static char buf[32];
+    struct timespec time_now;
+    clock_gettime(CLOCK_REALTIME, &time_now);
+    snprintf(buf, sizeof(buf), "%08lX-%08lX-%08X", (long)time_now.tv_sec, time_now.tv_nsec, rand());
+    return buf;
+}
+
+#endif
