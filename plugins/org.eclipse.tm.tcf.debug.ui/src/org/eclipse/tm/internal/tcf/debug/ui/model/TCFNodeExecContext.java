@@ -610,6 +610,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void onContextChanged(IMemory.MemoryContext context) {
         assert !disposed;
+        line_info_cache.clear();
         mem_context.reset(context);
         for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
         postAllChangedDelta();
@@ -704,6 +705,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onMemoryMapChanged() {
+        line_info_cache.clear();
         memory_map.reset();
         children_exec.onMemoryMapChanged();
         children_stack.onMemoryMapChanged();

@@ -85,7 +85,6 @@ public class TCFNodeStackFrame extends TCFNode {
                 return false;
             }
         };
-        final Map<BigInteger,TCFSourceRef> line_info_cache = parent.getLineInfoCache();
         line_info = new TCFDataCache<TCFSourceRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -107,6 +106,11 @@ public class TCFNodeStackFrame extends TCFNode {
                     }
                     p = p.parent;
                 }
+                if (p == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                final Map<BigInteger,TCFSourceRef> line_info_cache = ((TCFNodeExecContext)p).getLineInfoCache();
                 TCFSourceRef l = line_info_cache.get(n);
                 if (l != null) {
                     l.context = mem_ctx;
@@ -124,15 +128,27 @@ public class TCFNodeStackFrame extends TCFNode {
                 final BigInteger n0 = n;
                 final BigInteger n1 = n0.add(BigInteger.valueOf(1));
                 final IMemory.MemoryContext ctx = mem_ctx;
-                command = ln.mapToSource(parent.id, n0, n1, new ILineNumbers.DoneMapToSource() {
+                command = ln.mapToSource(p.id, n0, n1, new ILineNumbers.DoneMapToSource() {
                     public void doneMapToSource(IToken token, Exception error, ILineNumbers.CodeArea[] areas) {
                         TCFSourceRef l = new TCFSourceRef();
                         l.context = ctx;
                         l.address = n0;
                         if (error == null && areas != null && areas.length > 0) {
                             for (ILineNumbers.CodeArea area : areas) {
-                                if (l.area == null || area.start_line < l.area.start_line) {
-                                    l.area = area;
+                                BigInteger a0 = toBigInteger(area.start_address);
+                                BigInteger a1 = toBigInteger(area.end_address);
+                                if (n0.compareTo(a0) >= 0 && n0.compareTo(a1) < 0) {
+                                    if (l.area == null || area.start_line < l.area.start_line) {
+                                        if (area.start_address != a0 || area.end_address != a1) {
+                                            area = new ILineNumbers.CodeArea(area.directory, area.file,
+                                                    area.start_line, area.start_column,
+                                                    area.end_line, area.end_column,
+                                                    a0, a1, area.isa,
+                                                    area.is_statement, area.basic_block,
+                                                    area.prologue_end, area.epilogue_begin);
+                                        }
+                                        l.area = area;
+                                    }
                                 }
                             }
                         }
@@ -156,7 +172,7 @@ public class TCFNodeStackFrame extends TCFNode {
                         return true;
                     }
                     if (n != null) {
-                        set(null, null, new BigInteger(n.toString()));
+                        set(null, null, toBigInteger(n));
                         return true;
                     }
                 }
@@ -215,11 +231,7 @@ public class TCFNodeStackFrame extends TCFNode {
         assert Protocol.isDispatchThread();
         if (!stack_trace_context.isValid()) return null;
         IStackTrace.StackTraceContext ctx = stack_trace_context.getData();
-        if (ctx != null) {
-            Number n = ctx.getReturnAddress();
-            if (n instanceof BigInteger) return (BigInteger)n;
-            if (n != null) return new BigInteger(n.toString());
-        }
+        if (ctx != null) return toBigInteger(ctx.getReturnAddress());
         return null;
     }
 
@@ -335,6 +347,12 @@ public class TCFNodeStackFrame extends TCFNode {
             if (stack_trace_cache.getTopFrame() == this) result.setInputElement(exe);
         }
         return true;
+    }
+
+    private BigInteger toBigInteger(Number n) {
+        if (n == null) return null;
+        if (n instanceof BigInteger) return (BigInteger)n;
+        return new BigInteger(n.toString());
     }
 
     private String getModuleName(BigInteger pc, Runnable done) {

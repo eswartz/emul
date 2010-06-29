@@ -164,13 +164,13 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             });
             bp = null;
         }
+        BigInteger pc = new BigInteger(state.getData().suspend_pc);
         if (step_cnt > 0) {
             if (pc0 == null && pc1 == null || state.getData().suspend_pc == null) {
                 exit(null);
                 return;
             }
             assert src_step;
-            BigInteger pc = new BigInteger(state.getData().suspend_pc);
             if (pc.compareTo(pc0) < 0 || pc.compareTo(pc1) >= 0) {
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
@@ -198,6 +198,18 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         step_cnt++;
         if (ctx.canResume(IRunControl.RM_STEP_OVER)) {
             ctx.resume(IRunControl.RM_STEP_OVER, 1, new IRunControl.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    if (error != null) exit(error);
+                }
+            });
+        }
+        else if (ctx.canResume(IRunControl.RM_STEP_INTO_RANGE) &&
+                pc != null && pc0 != null && pc1 != null &&
+                pc.compareTo(pc0) >= 0 && pc.compareTo(pc1) < 0) {
+            HashMap<String,Object> args = new HashMap<String,Object>();
+            args.put(IRunControl.RP_RANGE_START, pc0);
+            args.put(IRunControl.RP_RANGE_END, pc1);
+            ctx.resume(IRunControl.RM_STEP_INTO_RANGE, 1, args, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }

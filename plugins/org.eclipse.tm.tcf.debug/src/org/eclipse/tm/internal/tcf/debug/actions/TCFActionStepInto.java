@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.actions;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
@@ -20,7 +21,6 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
@@ -48,7 +48,6 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     protected abstract TCFDataCache<TCFContextState> getContextState();
     protected abstract TCFDataCache<TCFSourceRef> getLineInfo();
     protected abstract TCFDataCache<?> getStackTrace();
-    protected abstract TCFDataCache<IStackTrace.StackTraceContext> getStackFrame();
     protected abstract int getStackFrameIndex();
 
     public void run() {
@@ -123,11 +122,8 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
             exit(null);
             return;
         }
+        BigInteger pc = new BigInteger(state.getData().suspend_pc);
         if (step_cnt > 0) {
-            TCFDataCache<IStackTrace.StackTraceContext> frame = getStackFrame();
-            if (!frame.validate(this)) return;
-            Number addr = frame.getData().getInstructionAddress();
-            BigInteger pc = addr instanceof BigInteger ? (BigInteger)addr : new BigInteger(addr.toString());
             if (pc == null || pc0 == null || pc1 == null) {
                 exit(null);
                 return;
@@ -135,24 +131,37 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
             if (pc.compareTo(pc0) < 0 || pc.compareTo(pc1) >= 0) {
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
-                if (ref != null && ref.area != null) {
-                    if (isSameLine(source_ref.area, ref.area)) {
-                        source_ref = ref;
-                        ILineNumbers.CodeArea area = source_ref.area;
-                        if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
-                        else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
-                        if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
-                        else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
-                    }
-                    else {
-                        exit(null);
-                        return;
-                    }
+                if (ref == null || ref.area == null) {
+                    // No line info for current PC, continue stepping
+                }
+                else if (isSameLine(source_ref.area, ref.area)) {
+                    source_ref = ref;
+                    ILineNumbers.CodeArea area = source_ref.area;
+                    if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
+                    else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
+                    if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
+                    else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
+                }
+                else {
+                    exit(null);
+                    return;
                 }
             }
         }
         step_cnt++;
-        if (ctx.canResume(IRunControl.RM_STEP_INTO)) {
+        if (ctx.canResume(IRunControl.RM_STEP_INTO_RANGE) &&
+                pc != null && pc0 != null && pc1 != null &&
+                pc.compareTo(pc0) >= 0 && pc.compareTo(pc1) < 0) {
+            HashMap<String,Object> args = new HashMap<String,Object>();
+            args.put(IRunControl.RP_RANGE_START, pc0);
+            args.put(IRunControl.RP_RANGE_END, pc1);
+            ctx.resume(IRunControl.RM_STEP_INTO_RANGE, 1, args, new IRunControl.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    if (error != null) exit(error);
+                }
+            });
+        }
+        else if (ctx.canResume(IRunControl.RM_STEP_INTO)) {
             ctx.resume(IRunControl.RM_STEP_INTO, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);

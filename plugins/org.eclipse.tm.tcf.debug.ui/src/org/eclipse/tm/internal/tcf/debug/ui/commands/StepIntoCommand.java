@@ -23,7 +23,6 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.services.IStackTrace.StackTraceContext;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
@@ -55,13 +54,6 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
             if (frame == null) frame = node.getStackTrace().getTopFrame();
             if (frame == null) return null;
             return frame.getLineInfo();
-        }
-
-        @Override
-        protected TCFDataCache<StackTraceContext> getStackFrame() {
-            if (frame == null) frame = node.getStackTrace().getTopFrame();
-            if (frame == null) return null;
-            return frame.getStackTraceContext();
         }
 
         @Override

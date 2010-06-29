@@ -134,7 +134,7 @@ public interface IRunControl extends IService {
 
         /**
          * Step over instructions until PC is outside the specified range.
-         * If any function call within the range is considered to be in range.
+         * Any function call within the range is considered to be in range.
          */
         RM_STEP_OVER_RANGE = 12,
 
@@ -176,6 +176,17 @@ public interface IRunControl extends IService {
         STATE_SIGNAL = "Signal",
         STATE_SIGNAL_NAME = "SignalName",
         STATE_BREAKPOINT_IDS = "BPs";
+
+    /**
+     * Optional parameters of resume command.
+     */
+    static final String
+        /** Integer - starting address of step range, inclusive */
+        RP_RANGE_START = "RangeStart",
+
+        /** Integer - ending address of step range, exclusive */
+        RP_RANGE_END = "RangeEnd";
+
 
     /**
      * Retrieve context properties for given context ID.
@@ -347,7 +358,7 @@ public interface IRunControl extends IService {
          * Also resumes children if context is a container.
          * @param mode - defines how to resume the context, see RM_*.
          * @param count - if mode implies stepping, defines how many steps to perform.
-         * @param params - resume parameters, for example, step range definition.
+         * @param params - resume parameters, for example, step range definition, see RP_*.
          * @param done - command result call back object.
          * @return pending command handle, can be used to cancel the command.
          */
