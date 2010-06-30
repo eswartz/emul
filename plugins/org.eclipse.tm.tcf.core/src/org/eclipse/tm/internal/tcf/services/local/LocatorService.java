@@ -979,6 +979,12 @@ public class LocatorService implements ILocator {
 
     private void handleSlavesInfoPacket(DatagramPacket p) {
         try {
+            Map<String,String> trace_map = null; // used for tracing only
+            int slave_index = 0;        // used for tracing only
+            if (TRACE_DISCOVERY) {
+                trace_map = new HashMap<String,String>(3);
+            }
+
             String s = new String(p.getData(), 8, p.getLength() - 8, "UTF-8");
             int l = s.length();
             int i = 0;
@@ -996,15 +1002,16 @@ public class LocatorService implements ILocator {
                 int host1 = i;
                 if (i < l && s.charAt(i) == 0) i++;
                 int port = Integer.parseInt(s.substring(port0, port1));
+                String timestamp = s.substring(time0, time1);
+                String host = s.substring(host0, host1);
+                if (TRACE_DISCOVERY) {
+                    trace_map.put("slave[" + slave_index++ + ']', timestamp + ':' + port + ':' + host);
+                }
                 if (port != DISCOVEY_PORT) {
-                    if (TRACE_DISCOVERY) {
-                        traceDiscoveryPacket(true, "CONF_SLAVES_INFOS", null, p);
-                    }
-                    String host = s.substring(host0, host1);
                     InetAddress addr = getInetAddress(host);
                     if (addr != null) {
                         long time_now = System.currentTimeMillis();
-                        long time = time0 != time1 ? Long.parseLong(s.substring(time0, time1)) : time_now;
+                        long time = timestamp.length() > 0 ? Long.parseLong(timestamp) : time_now;
                         if (time < time_now - 600000 || time > time_now + 600000) {
                             log("Invalid datagram packet received from " + p.getAddress(),
                                     new Exception("Invalid slave info timestamp: " + time));
@@ -1014,6 +1021,9 @@ public class LocatorService implements ILocator {
                         }
                     }
                 }
+            }
+            if (TRACE_DISCOVERY) {
+                traceDiscoveryPacket(true, "CONF_SLAVES_INFO", trace_map, p);
             }
         }
         catch (Exception x) {
