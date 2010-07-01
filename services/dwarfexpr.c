@@ -501,6 +501,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
     U8_T Base = 0;
     CompUnit * Unit = Value->mObject->mCompUnit;
     DWARFCache * Cache = (DWARFCache *)Unit->mFile->dwarf_dt_cache;
+    U8_T AddrMax = ~(U8_T)0;
 
     assert(Cache->magic == DWARF_CACHE_MAGIC);
     if (Cache->mDebugLoc == NULL) str_exception(ERR_INV_DWARF, "Missing .debug_loc section");
@@ -508,6 +509,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
     Offset = dio_ReadUX(Value->mSize);
     dio_ExitSection();
     Base = Unit->mLowPC;
+    if (Unit->mDesc.mAddressSize < 8) AddrMax = ((U8_T)1 << Unit->mDesc.mAddressSize * 8) - 1;
     if (read_reg_value(get_stack_frame(Value), get_PC_definition(Value->mContext), &IP) < 0) exception(errno);
     dio_EnterSection(&Unit->mDesc, Cache->mDebugLoc, Offset);
     for (;;) {
@@ -515,7 +517,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
         ELF_Section * S1 = NULL;
         U8_T Addr0 = dio_ReadAddress(&S0);
         U8_T Addr1 = dio_ReadAddress(&S1);
-        if (Addr0 == ((U8_T)1 << Unit->mDesc.mAddressSize * 8) - 1) {
+        if (Addr0 == AddrMax) {
             Base = Addr1;
         }
         else if (Addr0 == 0 && Addr1 == 0) {
@@ -537,7 +539,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
         }
     }
     dio_ExitSection();
-    exception(ERR_INV_ADDRESS);
+    str_exception(ERR_INV_ADDRESS, "No matching entry in .debug_loc for given IP");
 }
 
 void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
