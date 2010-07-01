@@ -342,8 +342,8 @@ int crawl_stack_frame(StackFrame * frame, StackFrame * down) {
         }
     }
     else {
-        dwn_sp = reg_bp + sizeof(ContextAddress) * 2;
         if (read_stack(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
+        else dwn_sp = reg_bp + sizeof(ContextAddress) * 2;
     }
 
     if (read_stack(ctx, dwn_sp - sizeof(ContextAddress), &dwn_pc, sizeof(ContextAddress)) < 0) dwn_pc = 0;

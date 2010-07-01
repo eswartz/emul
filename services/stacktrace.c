@@ -76,6 +76,7 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
     int i;
     int error = 0;
     StackFrame frame;
+    ContextAddress prev_fp = 0;
 
     stack->frame_cnt = 0;
     memset(&frame, 0, sizeof(frame));
@@ -97,11 +98,12 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
             loc_free(down.regs);
             break;
         }
-        if (stack->frame_cnt > 0 && frame.fp == 0) {
+        if (stack->frame_cnt > 0 && (frame.fp == 0 || frame.fp == prev_fp)) {
             loc_free(down.regs);
             break;
         }
         add_frame(stack, &frame);
+        prev_fp = frame.fp;
         frame = down;
     }
 
