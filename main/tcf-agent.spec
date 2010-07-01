@@ -12,6 +12,7 @@ URL: http://wiki.eclipse.org/DSDP/TM/TCF_FAQ
 Group: Development/Tools/Other
 BuildRoot: %{_tmppath}/%{name}-buildroot
 License: EPL
+Requires: openssl, e2fsprogs
 
 %description
 Target Communication Framework is universal, extensible, simple,
