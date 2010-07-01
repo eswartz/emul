@@ -465,6 +465,13 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
                 sExprStack[sExprStackLen - 1] += dio_ReadS8LEB128();
             }
             break;
+        case OP_call_frame_cfa:
+            {
+                StackFrame * frame = get_stack_frame(Value);
+                if (frame == NULL) str_exception(ERR_INV_ADDRESS, "Stack frame address not available");
+                sExprStack[sExprStackLen++] = frame->fp;
+            }
+            break;
         case OP_bregx:
             {
                 RegisterDefinition * def = get_reg_by_id(Value->mContext, dio_ReadULEB128(), REGNUM_DWARF);
