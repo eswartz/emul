@@ -1186,13 +1186,9 @@ int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
             i--;
         }
         if (idx != NULL) {
-            Trap trap;
-            U8_T x;
-            int y;
-            if (!set_trap(&trap)) return -1;
-            y = get_num_prop(obj, AT_lower_bound, &x);
-            clear_trap(&trap);
-            *value = y ? (int64_t)x : 0;
+            if (get_num_prop(obj, AT_lower_bound, value)) return 0;
+            if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
+            *value = 0;
             return 0;
         }
     }
@@ -1342,10 +1338,12 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
             *address = (ContextAddress)v;
             return 0;
         }
+        if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
         if (get_num_prop(obj, AT_low_pc, &v)) {
             *address = (ContextAddress)v;
             return 0;
         }
+        if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
     }
     if (sym_info != NULL) {
         if (syminfo2address(sym_ctx, sym_info, address) == 0) return 0;
