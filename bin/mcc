@@ -48,12 +48,12 @@ do
         cmdpos=`expr $cmdpos + 1`
         cflag=1
         ;;
-	g)
-		gflag=1
-		;;
-	O)
-		Oflag=1
-		;;
+    g)
+        gflag=1
+        ;;
+    O)
+        Oflag=1
+        ;;
     o)
         oval="$OPTARG"
         ;;
@@ -65,10 +65,10 @@ do
         cmd[cmdpos]="/I`cygpath -w "$OPTARG"`"
         cmdpos=`expr $cmdpos + 1`
         ;;
-	p)
+    p)
         cmd[cmdpos]="/Fd`cygpath -w "$OPTARG"`"
         cmdpos=`expr $cmdpos + 1`
-		;;
+        ;;
     *)
         echo Invalid option $name
         exit 2
@@ -97,11 +97,11 @@ else
 fi
 if [ $Oflag = 0 ]
 then
-    CFLAGS2="/Od /Oy-"
+    CFLAGS2="/Od"
 else
     CFLAGS2="/O2 /Ob1"
 fi
-CFLAGS3="/DWIN32 /D_CONSOLE /D_VC80_UPGRADE=0x0600 /D_MBCS /W4"
+CFLAGS3="/Oy- /DWIN32 /D_CONSOLE /D_VC80_UPGRADE=0x0600 /D_MBCS /W4"
 
 export VS80COMNTOOLS=$(cygpath -aw "$VSHOME/Common7/Tools")
 export VSINSTALLDIR=$(cygpath -aw "$VSHOME")

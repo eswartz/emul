@@ -1,6 +1,15 @@
 TCF_AGENT_DIR=.
 
 include $(TCF_AGENT_DIR)/Makefile.inc
+
+# frame pointers are needed for agent diagnostics to work properly
+ifeq ($(CC),gcc)
+  OPTS += -fno-omit-frame-pointer
+endif
+ifeq ($(CC),g++)
+  OPTS += -fno-omit-frame-pointer
+endif
+
 override CFLAGS += $(OPTS)
 
 all:	$(EXECS)
