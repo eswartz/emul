@@ -40,7 +40,7 @@ ifeq ($(OPSYS),Darwin)
 endif
 
 ifeq ($(OPSYS),GNU/Linux)
-  LIBS = -lpthread -luuid -lssl -lrt
+  LIBS = -lpthread -luuid -lssl -lcrypto -lrt
 endif
 
 ifneq ($(OPSYS),Windows)
