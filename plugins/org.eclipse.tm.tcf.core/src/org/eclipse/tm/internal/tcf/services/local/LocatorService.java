@@ -1010,15 +1010,19 @@ public class LocatorService implements ILocator {
                 if (port != DISCOVEY_PORT) {
                     InetAddress addr = getInetAddress(host);
                     if (addr != null) {
+                        long delta = 1000 * 60 * 30; // 30 minutes
                         long time_now = System.currentTimeMillis();
-                        long time = timestamp.length() > 0 ? Long.parseLong(timestamp) : time_now;
-                        if (time < time_now - 600000 || time > time_now + 600000) {
-                            log("Invalid datagram packet received from " + p.getAddress(),
-                                    new Exception("Invalid slave info timestamp: " + time));
+                        long time_val = timestamp.length() > 0 ? Long.parseLong(timestamp) : time_now;
+                        if (time_val < time_now - delta || time_val > time_now + delta) {
+                            // Some older TCF agents transmit time in seconds instead of milliseconds
+                            time_val *= 1000;
+                            if (time_val < time_now - delta || time_val > time_now + delta) {
+                                log("Invalid datagram packet received from " + p.getAddress(),
+                                        new Exception("Invalid slave info timestamp: " + timestamp));
+                                time_val = time_now;
+                            }
                         }
-                        else {
-                            addSlave(addr, port, time);
-                        }
+                        addSlave(addr, port, time_val);
                     }
                 }
             }
