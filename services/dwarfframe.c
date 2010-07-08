@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <framework/exceptions.h>
 #include <framework/myalloc.h>
+#include <framework/trace.h>
+#include <services/dwarf.h>
 #include <services/dwarfio.h>
 #include <services/dwarfframe.h>
 
@@ -59,7 +61,7 @@
 typedef struct RegisterRules {
     int rule;
     I4_T offset;
-    U1_T * expression;
+    U8_T expression;
 } RegisterRules;
 
 typedef struct StackFrameRegisters {
@@ -89,7 +91,7 @@ typedef struct StackFrameRules {
     int cfa_rule;
     I4_T cfa_offset;
     U4_T cfa_register;
-    U1_T * cfa_expression;
+    U8_T cfa_expression;
 } StackFrameRules;
 
 static StackFrameRegisters frame_regs;
@@ -297,14 +299,14 @@ static void exec_stack_frame_instruction(void) {
     case 0x0f: /* DW_CFA_def_cfa_expression */
         rules.cfa_rule = RULE_EXPRESSION;
         rules.cfa_offset = dio_ReadULEB128();
-        rules.cfa_expression = dio_GetDataPtr();
+        rules.cfa_expression = dio_GetPos();
         dio_Skip(rules.cfa_offset);
         break;
     case 0x10: /* DW_CFA_expression */
         reg = get_reg(&frame_regs, dio_ReadULEB128());
         reg->rule = RULE_EXPRESSION;
         reg->offset = dio_ReadULEB128();
-        reg->expression = dio_GetDataPtr();
+        reg->expression = dio_GetPos();
         dio_Skip(reg->offset);
         break;
     case 0x11: /* DW_CFA_offset_extended_sf */
@@ -335,7 +337,7 @@ static void exec_stack_frame_instruction(void) {
         reg = get_reg(&frame_regs, dio_ReadULEB128());
         reg->rule = RULE_VAL_EXPRESSION;
         reg->offset = dio_ReadULEB128();
-        reg->expression = dio_GetDataPtr();
+        reg->expression = dio_GetPos();
         dio_Skip(reg->offset);
         break;
     default:
@@ -383,6 +385,168 @@ static void add_command_sequence(StackTracingCommandSequence ** ptr, RegisterDef
     memcpy(seq->cmds, trace_cmds, trace_cmds_cnt * sizeof(StackTracingCommand));
 }
 
+static void add_dwarf_expression_commands(U8_T cmds_offs, U4_T cmds_size) {
+    dio_EnterSection(NULL, rules.section, cmds_offs);
+    while (dio_GetPos() < cmds_offs + cmds_size) {
+        U1_T op = dio_ReadU1();
+
+        switch (op) {
+        case OP_addr:
+            {
+                ELF_Section * section = NULL;
+                U8_T lt_addr = dio_ReadAddress(&section);
+                ContextAddress rt_addr = elf_map_to_run_time_address(
+                    rules.ctx, rules.section->file, section, (ContextAddress)lt_addr);
+                if (rt_addr == 0) str_exception(ERR_INV_DWARF, "object has no RT address");
+                add_command(SFT_CMD_NUMBER)->num = rt_addr;
+            }
+            break;
+        case OP_deref:
+            {
+                StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
+                cmd->size = rules.section->file->elf64 ? 8 : 4;
+                cmd->big_endian = rules.section->file->big_endian;
+            }
+            break;
+        case OP_deref_size:
+            {
+                StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
+                cmd->size = dio_ReadU1();
+                cmd->big_endian = rules.section->file->big_endian;
+            }
+            break;
+        case OP_const1u:
+            add_command(SFT_CMD_NUMBER)->num = dio_ReadU1();
+            break;
+        case OP_const1s:
+            add_command(SFT_CMD_NUMBER)->num = (I1_T)dio_ReadU1();
+            break;
+        case OP_const2u:
+            add_command(SFT_CMD_NUMBER)->num = dio_ReadU2();
+            break;
+        case OP_const2s:
+            add_command(SFT_CMD_NUMBER)->num = (I2_T)dio_ReadU2();
+            break;
+        case OP_const4u:
+            add_command(SFT_CMD_NUMBER)->num = dio_ReadU4();
+            break;
+        case OP_const4s:
+            add_command(SFT_CMD_NUMBER)->num = (I4_T)dio_ReadU4();
+            break;
+        case OP_const8u:
+            add_command(SFT_CMD_NUMBER)->num = dio_ReadU8();
+            break;
+        case OP_const8s:
+            add_command(SFT_CMD_NUMBER)->num = (I8_T)dio_ReadU8();
+            break;
+        case OP_constu:
+            add_command(SFT_CMD_NUMBER)->num = dio_ReadU8LEB128();
+            break;
+        case OP_consts:
+            add_command(SFT_CMD_NUMBER)->num = dio_ReadS8LEB128();
+            break;
+        case OP_and:
+            add_command(SFT_CMD_AND);
+            break;
+        case OP_minus:
+            add_command(SFT_CMD_SUB);
+            break;
+        case OP_or:
+            add_command(SFT_CMD_OR);
+            break;
+        case OP_plus:
+            add_command(SFT_CMD_ADD);
+            break;
+        case OP_plus_uconst:
+            add_command(SFT_CMD_NUMBER)->num = dio_ReadU8LEB128();
+            add_command(SFT_CMD_ADD);
+            break;
+        case OP_lit0:
+        case OP_lit1:
+        case OP_lit2:
+        case OP_lit3:
+        case OP_lit4:
+        case OP_lit5:
+        case OP_lit6:
+        case OP_lit7:
+        case OP_lit8:
+        case OP_lit9:
+        case OP_lit10:
+        case OP_lit11:
+        case OP_lit12:
+        case OP_lit13:
+        case OP_lit14:
+        case OP_lit15:
+        case OP_lit16:
+        case OP_lit17:
+        case OP_lit18:
+        case OP_lit19:
+        case OP_lit20:
+        case OP_lit21:
+        case OP_lit22:
+        case OP_lit23:
+        case OP_lit24:
+        case OP_lit25:
+        case OP_lit26:
+        case OP_lit27:
+        case OP_lit28:
+        case OP_lit29:
+        case OP_lit30:
+        case OP_lit31:
+            add_command(SFT_CMD_NUMBER)->num = op - OP_lit0;
+            break;
+        case OP_breg0:
+        case OP_breg1:
+        case OP_breg2:
+        case OP_breg3:
+        case OP_breg4:
+        case OP_breg5:
+        case OP_breg6:
+        case OP_breg7:
+        case OP_breg8:
+        case OP_breg9:
+        case OP_breg10:
+        case OP_breg11:
+        case OP_breg12:
+        case OP_breg13:
+        case OP_breg14:
+        case OP_breg15:
+        case OP_breg16:
+        case OP_breg17:
+        case OP_breg18:
+        case OP_breg19:
+        case OP_breg20:
+        case OP_breg21:
+        case OP_breg22:
+        case OP_breg23:
+        case OP_breg24:
+        case OP_breg25:
+        case OP_breg26:
+        case OP_breg27:
+        case OP_breg28:
+        case OP_breg29:
+        case OP_breg30:
+        case OP_breg31:
+            {
+                I8_T offs = dio_ReadS8LEB128();
+                RegisterDefinition * def = get_reg_by_id(rules.ctx, op - OP_breg0, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+                if (def == NULL) str_exception(ERR_INV_DWARF, "Invalid register index");
+                add_command(SFT_CMD_REGISTER)->reg = def;
+                if (offs != 0) {
+                    add_command(SFT_CMD_NUMBER)->num = offs;
+                    add_command(SFT_CMD_ADD);
+                }
+            }
+            break;
+        case OP_nop:
+            break;
+        default:
+            trace(LOG_ALWAYS, "Unsupported DWARF expression op 0x%02x", op);
+            str_exception(ERR_UNSUPPORTED, "Unsupported DWARF expression op");
+        }
+    }
+}
+
 static void generate_register_commands(RegisterRules * reg, RegisterDefinition * reg_def) {
     if (reg_def == NULL) return;
     trace_cmds_cnt = 0;
@@ -409,9 +573,18 @@ static void generate_register_commands(RegisterRules * reg, RegisterDefinition *
             if (src_sef != NULL) add_command(SFT_CMD_REGISTER)->reg = src_sef;
         }
         break;
+    case RULE_EXPRESSION:
+    case RULE_VAL_EXPRESSION:
+        add_command(SFT_CMD_FP);
+        add_dwarf_expression_commands(reg->expression, reg->offset);
+        if (reg->rule == RULE_EXPRESSION) {
+            StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
+            cmd->size = reg_def->size;
+            cmd->big_endian = rules.section->file->big_endian;
+        }
+        break;
     default:
-        /* TODO: RULE_EXPRESSION, RULE_VAL_EXPRESSION */
-        str_exception(ERR_UNSUPPORTED, "Not implemented yet: expression in .debug_frame");
+        str_exception(ERR_INV_DWARF, "Invalid .debug_frame");
         break;
     }
     if (dwarf_stack_trace_regs_cnt >= trace_regs_max) {
@@ -451,9 +624,12 @@ static void generate_commands(void) {
             }
         }
         break;
+    case RULE_EXPRESSION:
+        add_dwarf_expression_commands(rules.cfa_expression, rules.cfa_offset);
+        break;
     default:
-        /* TODO: RULE_EXPRESSION */
-        str_exception(ERR_UNSUPPORTED, "Not implemented yet: expression in .debug_frame");
+        str_exception(ERR_INV_DWARF, "Invalid .debug_frame");
+        break;
     }
     add_command_sequence(&dwarf_stack_trace_fp, NULL);
 }

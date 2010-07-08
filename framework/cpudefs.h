@@ -55,6 +55,9 @@ struct RegisterDefinition {
 #define SFT_CMD_FP              3
 #define SFT_CMD_DEREF           4
 #define SFT_CMD_ADD             5
+#define SFT_CMD_SUB             6
+#define SFT_CMD_AND             7
+#define SFT_CMD_OR              8
 
 /* Stack tracing command */
 typedef struct StackTracingCommand {

@@ -211,6 +211,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\dwarf.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\dwarfcache.c"
 				>
 			</File>

@@ -249,13 +249,28 @@ uint64_t evaluate_stack_trace_commands(Context * ctx, StackFrame * frame, StackT
             stk[stk_pos - 2] = stk[stk_pos - 2] + stk[stk_pos - 1];
             stk_pos--;
             break;
+        case SFT_CMD_SUB:
+            if (stk_pos < 2) stack_trace_error();
+            stk[stk_pos - 2] = stk[stk_pos - 2] - stk[stk_pos - 1];
+            stk_pos--;
+            break;
+        case SFT_CMD_AND:
+            if (stk_pos < 2) stack_trace_error();
+            stk[stk_pos - 2] = stk[stk_pos - 2] & stk[stk_pos - 1];
+            stk_pos--;
+            break;
+        case SFT_CMD_OR:
+            if (stk_pos < 2) stack_trace_error();
+            stk[stk_pos - 2] = stk[stk_pos - 2] | stk[stk_pos - 1];
+            stk_pos--;
+            break;
         default:
             stack_trace_error();
             break;
         }
     }
-    if (stk_pos != 1) stack_trace_error();
-    return stk[0];
+    if (stk_pos == 0) stack_trace_error();
+    return stk[stk_pos - 1];
 }
 
 #endif /* ENABLE_DebugContext */
