@@ -103,7 +103,7 @@ static void app_strz(const char * str) {
     app_char(0);
 }
 
-static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, time_t * timestamp) {
+static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, uint64_t * timestamp) {
     char * port = buf + *pos;
     char * stmp = buf + *pos;
     char * host = buf + *pos;
@@ -129,7 +129,7 @@ static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, time
     while (*stmp >= '0' && *stmp <= '9') {
         ts = (ts * 10) + (*stmp++ - '0');
     }
-    *timestamp = (time_t)(ts / 1000);
+    *timestamp = ts;
     return 1;
 }
 
@@ -653,18 +653,25 @@ static void udp_receive_ack_slaves(time_t timenow) {
     int len = recvreq.u.sio.rval;
     while (pos < len) {
         struct sockaddr_in addr;
-        time_t timestamp;
+        uint64_t timestamp;
         if (get_slave_addr(recv_buf, &pos, &addr, &timestamp)) {
-            trace(LOG_DISCOVERY, "ACK_SLAVES %"PRId64":%u:%s from %s:%d",
-                (int64_t)timestamp * 1000, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr),
-                inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-            if (timestamp < timenow - 600 || timestamp > timenow + 600) {
-                trace(LOG_ALWAYS, "Discovery: invalid slave info timestamp %"PRId64" from %s:%d",
-                    (int64_t)timestamp * 1000, inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
+            time_t delta = 60 * 30; /* 30 minutes */
+            time_t timeval = (time_t)(timestamp / 1000);
+            if (log_mode & LOG_DISCOVERY) {
+                char buf[64];
+                snprintf(buf, sizeof(buf), "%s:%d", inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
+                trace(LOG_DISCOVERY, "ACK_SLAVES %"PRId64":%u:%s from %s",
+                    timestamp, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr), buf);
             }
-            else {
-                add_slave(&addr, timestamp);
+            if (timeval < timenow - delta || timeval > timenow + delta) {
+                timeval = (time_t)timestamp;
+                if (timeval < timenow - delta || timeval > timenow + delta) {
+                    trace(LOG_ALWAYS, "Discovery: invalid slave info timestamp %"PRId64" from %s:%d",
+                        timestamp, inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
+                    timeval = timenow;
+                }
             }
+            add_slave(&addr, timeval);
         }
     }
 }
