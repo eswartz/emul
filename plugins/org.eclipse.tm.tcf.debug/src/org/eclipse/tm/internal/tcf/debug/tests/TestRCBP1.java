@@ -61,6 +61,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private String test_ctx_id; // Test context ID
     private IRunControl.RunControlContext test_context;
     private String main_thread_id;
+    private Map<String,Object> bp_capabilities;
     private Runnable pending_cancel;
     private int bp_cnt = 0;
     private boolean done_get_state;
@@ -194,6 +195,29 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         return;
                     }
                     bp_reset_done = true;
+                    runTest();
+                }
+            });
+            return;
+        }
+        if (bp_capabilities == null) {
+            bp.getCapabilities(test_ctx_id, new IBreakpoints.DoneGetCapabilities() {
+                public void doneGetCapabilities(IToken token, Exception error, Map<String, Object> capabilities) {
+                    if (error != null) {
+                        exit(error);
+                        return;
+                    }
+                    Boolean l = (Boolean)capabilities.get(IBreakpoints.CAPABILITY_LOCATION);
+                    Boolean c = (Boolean)capabilities.get(IBreakpoints.CAPABILITY_CONDITION);
+                    if (l == null || !l) {
+                        exit(new Exception("Breakpoints service does not support \"Location\" attribute"));
+                        return;
+                    }
+                    if (c == null || !c) {
+                        exit(new Exception("Breakpoints service does not support \"Condition\" attribute"));
+                        return;
+                    }
+                    bp_capabilities = capabilities;
                     runTest();
                 }
             });
@@ -457,8 +481,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         final Map<String,Object> m = bp_list.get(bp_id);
         ArrayList<String> l = new ArrayList<String>();
         l.add(test_context.getProcessID());
-        m.put(IBreakpoints.PROP_CONTEXTIDS, l);
-        m.put(IBreakpoints.PROP_STOP_GROUP, l);
+        Boolean ci = (Boolean)bp_capabilities.get(IBreakpoints.CAPABILITY_CONTEXTIDS);
+        if (ci != null && ci) m.put(IBreakpoints.PROP_CONTEXTIDS, l);
+        Boolean sg = (Boolean)bp_capabilities.get(IBreakpoints.CAPABILITY_STOP_GROUP);
+        if (sg != null && sg) m.put(IBreakpoints.PROP_STOP_GROUP, l);
         StringBuffer bf = new StringBuffer();
         for (String id : threads.keySet()) {
             if (bf.length() > 0) bf.append(" || ");
