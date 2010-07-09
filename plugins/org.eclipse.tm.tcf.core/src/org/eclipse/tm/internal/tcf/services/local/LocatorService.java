@@ -653,7 +653,15 @@ public class LocatorService implements ILocator {
             if (s == null) break;
             int n = s.indexOf(" : ");
             if (n < 0) continue;
-            InetAddress addr = map.get(s.substring(n + 3));
+            n += 3;
+            int m = n;
+            while (m < s.length()) {
+                char ch = s.charAt(m);
+                if ((ch < '0' || ch > '9') && ch != '.') break;
+                m++;
+            }
+            if (m == n) continue;
+            InetAddress addr = map.get(s.substring(n, m));
             if (addr == null) continue;
             do s = inp.readLine();
             while (s != null && s.length() == 0);
