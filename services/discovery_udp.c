@@ -291,7 +291,8 @@ static int send_packet(ip_ifc_info * ifc, struct sockaddr_in * addr) {
         addr = &buf;
         addr->sin_family = AF_INET;
         addr->sin_port = htons(DISCOVERY_TCF_PORT);
-        addr->sin_addr.s_addr = ifc->addr | ~ifc->mask;
+        addr->sin_addr.s_addr = ifc->addr;
+        if (*(uint8_t *)&ifc->addr != 127) addr->sin_addr.s_addr |= ~ifc->mask;
     }
 
     /* Don't send if address does not belong to subnet of the interface */
