@@ -600,6 +600,7 @@ static int identifier(char * name, Value * v) {
                 break;
             case SYM_CLASS_TYPE:
                 assert(v->size == 0);
+                v->type = sym;
                 break;
             default:
                 error(ERR_UNSUPPORTED, "Invalid symbol class");
@@ -1019,6 +1020,9 @@ static void op_index(int mode, Value * v) {
     if (v->type_class != TYPE_CLASS_ARRAY && v->type_class != TYPE_CLASS_POINTER) {
         error(ERR_INV_EXPRESSION, "Array or pointer expected");
     }
+    if (v->type == NULL) {
+        error(ERR_INV_EXPRESSION, "Value type is unknown");
+    }
     if (v->type_class == TYPE_CLASS_POINTER) {
         v->address = (ContextAddress)to_uns(mode, v);
         v->remote = 1;
@@ -1061,6 +1065,9 @@ static void op_addr(int mode, Value * v) {
     set_ctx_word_value(v, v->address);
     v->type_class = TYPE_CLASS_POINTER;
 #if ENABLE_Symbols
+    if (v->type == NULL) {
+        error(ERR_INV_EXPRESSION, "Value type is unknown");
+    }
     if (get_array_symbol(v->type, 0, &v->type)) {
         error(errno, "Cannot get pointer type");
     }

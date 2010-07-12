@@ -786,7 +786,7 @@ int get_symbol_class(const Symbol * sym, int * sym_class) {
 
 int get_symbol_type(const Symbol * sym, Symbol ** type) {
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->sym_class == SYM_CLASS_TYPE) {
+    if (sym->base || sym->size) {
         *type = (Symbol *)sym;
         return 0;
     }
@@ -798,7 +798,8 @@ int get_symbol_type(const Symbol * sym, Symbol ** type) {
         return 0;
     }
     if (unpack(sym) < 0) return -1;
-    obj = get_object_type(obj);
+    obj = sym->sym_class == SYM_CLASS_TYPE ?
+        get_original_type(obj) : get_object_type(obj);
     if (obj == NULL) {
         *type = NULL;
     }
