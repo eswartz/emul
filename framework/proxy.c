@@ -130,6 +130,7 @@ static void logstr(char ** pp, const char * s) {
 }
 
 static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
+    /* TODO: if proxy is connected to itself, it can deadlock when retransmitting a long message */
     Proxy * proxy = (Proxy *)c->client_data;
     Channel * otherc = proxy[proxy->other].c;
     InputStream * inp = &c->inp;

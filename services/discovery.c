@@ -95,16 +95,28 @@ static void connect_done(void * args, int error, Channel * c2) {
     loc_free(info);
 }
 
+static void read_peer_attr(InputStream * inp, const char * name, void * x) {
+    peer_server_addprop((PeerServer *)x, loc_strdup(name), json_read_alloc_string(inp));
+}
+
 static void command_redirect(char * token, Channel * c) {
-    char id[256];
     PeerServer * ps = NULL;
+    int free_ps = 0;
 
     assert(c->state == ChannelStateConnected);
-    json_read_string(&c->inp, id, sizeof(id));
+    if (peek_stream(&c->inp) == '{') {
+        ps = peer_server_alloc();
+        json_read_struct(&c->inp, read_peer_attr, ps);
+        free_ps = 1;
+    }
+    else {
+        char id[256];
+        json_read_string(&c->inp, id, sizeof(id));
+        ps = peer_server_find(id);
+    }
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    ps = peer_server_find(id);
     if (ps != NULL) {
         RedirectInfo * info = (RedirectInfo *)loc_alloc_zero(sizeof(RedirectInfo));
         channel_lock(c);
@@ -119,6 +131,7 @@ static void command_redirect(char * token, Channel * c) {
         write_errno(&c->out, ERR_UNKNOWN_PEER);
         write_stream(&c->out, MARKER_EOM);
     }
+    if (free_ps) peer_server_free(ps);
 }
 
 static void command_get_peers(char * token, Channel * c) {
