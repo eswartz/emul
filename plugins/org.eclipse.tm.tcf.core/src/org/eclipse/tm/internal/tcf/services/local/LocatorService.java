@@ -1070,6 +1070,10 @@ public class LocatorService implements ILocator {
         throw new Error("Channel redirect cannot be done on local peer");
     }
 
+    public IToken redirect(Map<String,String> peer, DoneRedirect done) {
+        throw new Error("Channel redirect cannot be done on local peer");
+    }
+
     public IToken sync(DoneSync done) {
         throw new Error("Channel sync cannot be done on local peer");
     }

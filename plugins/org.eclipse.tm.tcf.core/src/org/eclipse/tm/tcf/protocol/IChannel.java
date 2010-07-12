@@ -11,6 +11,7 @@
 package org.eclipse.tm.tcf.protocol;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * IChannel represents communication link connecting two end points (peers).
@@ -296,4 +297,10 @@ public interface IChannel {
      * @param peer_id - peer that will become new remote communication endpoint of this channel
      */
     void redirect(String peer_id);
+
+    /**
+     * Redirect this channel to given peer using this channel remote peer locator service as a proxy.
+     * @param peer_attrs - peer that will become new remote communication endpoint of this channel
+     */
+    void redirect(Map<String,String> peer_attrs);
 }

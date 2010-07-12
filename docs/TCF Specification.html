@@ -1263,7 +1263,7 @@ targets require no further configuration. Additional targets can be configured m
 <p>All TCF peers must implement Locator service. The implementation is part of the framework itself.
 It is the only required service, all other services are optional and, formally, not part of the framework.</p>
 
-<h2><a name='LocatorPeer'>Peer Atributes</a></h2>
+<h2><a name='LocatorPeer'>Peer Attributes</a></h2>
 
 <p><i>&lt;object: peer data&gt;</i> is collection of peer attributes. It should, at least, contain member
 <b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b>.
@@ -1272,7 +1272,13 @@ Predefined attributes are:</p>
 
 <ul>
     <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b></code>
-    - ID of the peer.
+    - unique ID of the peer.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ServiceManagerID" : <i>&lt;string&gt;</i></font></b></code>
+    - unique ID of service manager that is represented by this peer.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"AgentID" : <i>&lt;string&gt;</i></font></b></code>
+    - agent unique ID.
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"Name" : <i>&lt;string&gt;</i></font></b></code>
     - human readable peer name.
@@ -1306,7 +1312,11 @@ at services it implements (use IChannel.getRemoteServices() method to get a map 
 <h3><a name='LocatorCommandRedirect'>redirect</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C &bull; <i>&lt;token&gt;</i> &bull; Locator &bull; redirect &bull; <i>&lt;string: peer ID&gt;</i> &bull;
+C &bull; <i>&lt;token&gt;</i> &bull; Locator &bull; redirect &bull; <i>&lt;peer&gt;</i> &bull;
+
+<i>&lt;peer&gt;</i>
+    &rArr; <i>&lt;string: peer ID&gt;</i>
+    &rArr; <i>&lt;object: peer data&gt;</i>
 </font></b></pre>
 
 <p>The command redirects the channel to become connected to given peer.

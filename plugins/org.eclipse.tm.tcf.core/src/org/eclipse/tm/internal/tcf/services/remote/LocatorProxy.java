@@ -190,6 +190,19 @@ public class LocatorProxy implements ILocator {
         }.token;
     }
 
+    public IToken redirect(Map<String,String> peer, final DoneRedirect done) {
+        return new Command(channel, this, "redirect", new Object[]{ peer }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+                done.doneRedirect(token, error);
+            }
+        }.token;
+    }
+
     public IToken sync(final DoneSync done) {
         return new Command(channel, this, "sync", null) {
             @Override

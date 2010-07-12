@@ -10,12 +10,14 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.tests;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.AbstractPeer;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IEventQueue;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -75,38 +77,47 @@ public class Main {
 
     private static class RemotePeer extends AbstractPeer {
 
-        public RemotePeer(Map<String,String> attrs) {
-            super(attrs);
+        private final ArrayList<Map<String,String>> attrs;
+
+        public RemotePeer(ArrayList<Map<String,String>> attrs) {
+            super(attrs.get(0));
+            this.attrs = attrs;
+        }
+
+        public IChannel openChannel() {
+            assert Protocol.isDispatchThread();
+            IChannel c = super.openChannel();
+            for (int i = 1; i < attrs.size(); i++) c.redirect(attrs.get(i));
+            return c;
         }
     }
 
-    private static IPeer getPeer(String s) {
-        Map<String,String> map = new HashMap<String,String>();
-        int len = s.length();
-        int i = 0;
-        while (i < len) {
-            int i0 = i;
-            while (i < len && s.charAt(i) != '=' && s.charAt(i) != 0) i++;
-            int i1 = i;
-            if (i < len && s.charAt(i) == '=') i++;
-            int i2 = i;
-            while (i < len && s.charAt(i) != ':') i++;
-            int i3 = i;
-            if (i < len && s.charAt(i) == ':') i++;
-            String key = s.substring(i0, i1);
-            String val = s.substring(i2, i3);
-            map.put(key, val);
+    private static IPeer getPeer(String[] arr) {
+        ArrayList<Map<String,String>> l = new ArrayList<Map<String,String>>();
+        for (String s : arr) {
+            Map<String,String> map = new HashMap<String,String>();
+            int len = s.length();
+            int i = 0;
+            while (i < len) {
+                int i0 = i;
+                while (i < len && s.charAt(i) != '=' && s.charAt(i) != 0) i++;
+                int i1 = i;
+                if (i < len && s.charAt(i) == '=') i++;
+                int i2 = i;
+                while (i < len && s.charAt(i) != ':') i++;
+                int i3 = i;
+                if (i < len && s.charAt(i) == ':') i++;
+                String key = s.substring(i0, i1);
+                String val = s.substring(i2, i3);
+                map.put(key, val);
+            }
+            l.add(map);
         }
-        String id = map.get(IPeer.ATTR_ID);
+        String id = l.get(0).get(IPeer.ATTR_ID);
         if (id == null) throw new Error("Invalid peer info: no ID");
         IPeer peer = Protocol.getLocator().getPeers().get(id);
-        if (peer instanceof RemotePeer) {
-            ((RemotePeer)peer).updateAttributes(map);
-        }
-        else {
-            peer = new RemotePeer(map);
-        }
-        return peer;
+        if (peer != null) throw new Error("Invalid peer info: ID is not unique");
+        return new RemotePeer(l);
     }
 
     private static void runTestSuite(IPeer peer) {
@@ -143,14 +154,14 @@ public class Main {
      * "ID=Test:TransportName=TCP:Host=127.0.0.1:Port=1534"
      */
     public static void main(final String[] args) {
-        if (args.length != 1) {
+        if (args.length < 1) {
             System.err.println("Missing command line argument - peer identification string");
             System.exit(4);
         }
         Protocol.setEventQueue(new EventQueue());
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                runTestSuite(getPeer(args[0]));
+                runTestSuite(getPeer(args));
             }
         });
     }

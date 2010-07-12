@@ -69,6 +69,12 @@ public interface ILocator extends IService {
      */
     IToken redirect(String peer_id, DoneRedirect done);
 
+    /**
+     * Redirect this service channel to given peer using this service as a proxy.
+     * @param peer - Peer attributes.
+     */
+    IToken redirect(Map<String,String> peer, DoneRedirect done);
+
     interface DoneRedirect {
         void doneRedirect(IToken token, Exception error);
     }
