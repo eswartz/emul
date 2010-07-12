@@ -95,6 +95,7 @@ public class CastToArrayCommand extends AbstractActionDelegate {
                         ISymbols.Symbol base_type_data = base_type_cache.getData();
                         if (base_type_data == null) {
                             done(null);
+                            return;
                         }
                         else {
                             if (base_type_data.getName() != null) {
@@ -104,8 +105,21 @@ public class CastToArrayCommand extends AbstractActionDelegate {
                             else if (base_type_data.getTypeClass() == ISymbols.TypeClass.pointer) {
                                 type_data = base_type_data;
                             }
+                            else if (!base_type_data.getID().equals(base_type_data.getTypeID())) {
+                                // modified type without name, like "volatile int"
+                                base_type_cache = node.getModel().getSymbolInfoCache(base_type_data.getTypeID());
+                                if (!base_type_cache.validate(this)) return;
+                                base_type_data = base_type_cache.getData();
+                                if (base_type_data != null && base_type_data.getName() != null) {
+                                    done(base_type_data.getName() + ptrs.substring(0, i));
+                                }
+                                else {
+                                    done(null);
+                                }
+                                return;
+                            }
                             else {
-                                done("\"" + base_type_data.getID() + "\"" + ptrs.substring(0, i));
+                                done(null);
                                 return;
                             }
                         }
