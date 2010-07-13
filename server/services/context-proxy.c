@@ -131,7 +131,6 @@ struct StackFrameCache {
 
 struct PeerCache {
     LINK link_all;
-    LINK context_list;
     LINK context_id_hash[CTX_ID_HASH_SIZE];
     Channel * host;
     Channel * target;
@@ -229,7 +228,7 @@ static void add_context_cache(PeerCache * p, ContextCache * c) {
     list_init(&c->mem_cache_list);
     list_init(&c->stk_cache_list);
     list_add_first(&c->id_hash_link, h);
-    list_add_first(&c->ctx->ctxl, &p->context_list);
+    list_add_first(&c->ctx->ctxl, &context_root);
     if (p->rc_done) set_context_links(c);
     send_context_created_event(c->ctx);
 }
@@ -595,7 +594,6 @@ void create_context_proxy(Channel * host, Channel * target) {
     p->host = host;
     p->target = target;
     p->fwd_inp = create_forwarding_input_stream(&p->fwd, &target->inp, &host->out);
-    list_init(&p->context_list);
     for (i = 0; i < CTX_ID_HASH_SIZE; i++) list_init(p->context_id_hash + i);
     list_add_first(&p->link_all, &peers);
     channel_lock(host);
@@ -632,10 +630,14 @@ static void read_rc_children_item(InputStream * inp, void * args) {
 
 static void set_rc_done(PeerCache * p) {
     if (p->rc_pending_cnt == 0) {
+        int i;
         LINK * l;
         p->rc_done = 1;
-        for (l = p->context_list.next; l != &p->context_list; l = l->next) {
-            set_context_links(*EXT(ctxl2ctxp(l)));
+        for (i = 0; i < CTX_ID_HASH_SIZE; i++) {
+            LINK * h = p->context_id_hash + i;
+            for (l = h->next; l != h; l = l->next) {
+                set_context_links(idhashl2ctx(l));
+            }
         }
         cache_notify(&p->rc_cache);
     }
@@ -938,7 +940,7 @@ static void read_memory_map_item(InputStream * inp, void * args) {
             mem_buf_pos++;
         }
         else if (m->file_name != NULL) {
-            trace(LOG_ALWAYS, "Object file not found: %s", m->file_name);
+            trace(LOG_ELF, "Object file not found: %s", m->file_name);
             loc_free(m->file_name);
         }
     }
