@@ -76,5 +76,3 @@ void exception(int error) {
 void str_exception(int error, const char * msg) {
     exception(set_errno(error, msg));
 }
-
-

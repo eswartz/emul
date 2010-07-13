@@ -412,4 +412,3 @@ void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
 }
 
 #endif
-

@@ -28,4 +28,3 @@ $(BINDIR)/%$(EXTOBJ): $(TCF_AGENT_DIR)/%.c $(HFILES) Makefile
 
 clean:
 	rm -rf $(BINDIR)
-

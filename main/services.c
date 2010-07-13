@@ -104,4 +104,3 @@ void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
     ini_diagnostics_service(proto);
     ini_ext_services(proto, bcg);
 }
-

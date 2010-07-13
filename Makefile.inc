@@ -87,4 +87,3 @@ ifdef SERVICES
 endif
 
 OPTS += $(foreach dir,$(INCDIRS),-I$(TCF_AGENT_DIR)/$(dir))
-

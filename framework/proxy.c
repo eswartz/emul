@@ -267,4 +267,3 @@ void add_channel_redirection_listener(ChannelRedirectionListener listener) {
     assert(redirection_listeners_cnt < (int)(sizeof(redirection_listeners) / sizeof(ChannelRedirectionListener)));
     redirection_listeners[redirection_listeners_cnt++] = listener;
 }
-

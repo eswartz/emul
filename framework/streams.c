@@ -117,4 +117,3 @@ InputStream * create_forwarding_input_stream(ForwardingInputStream * buf, InputS
     buf->out = out;
     return &buf->fwd;
 }
-

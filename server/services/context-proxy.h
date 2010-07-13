@@ -30,4 +30,3 @@ struct RegisterData {
 extern void create_context_proxy(Channel * host, Channel * target);
 
 #endif /* D_context_proxy */
-

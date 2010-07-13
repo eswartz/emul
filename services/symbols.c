@@ -541,5 +541,3 @@ void ini_symbols_service(Protocol * proto) {
 }
 
 #endif /* SERVICE_Symbols */
-
-

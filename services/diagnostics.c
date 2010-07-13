@@ -445,6 +445,3 @@ void ini_diagnostics_service(Protocol * proto) {
     add_channel_close_listener(channel_close_listener);
 #endif
 }
-
-
-

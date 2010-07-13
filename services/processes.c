@@ -1299,6 +1299,3 @@ void ini_processes_service(Protocol * proto) {
 }
 
 #endif
-
-
-

@@ -552,5 +552,3 @@ void ini_registers_service(Protocol * proto, TCFBroadcastGroup * bcg) {
 }
 
 #endif /* SERVICE_Registers */
-
-

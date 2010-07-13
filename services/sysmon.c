@@ -1628,5 +1628,3 @@ extern void ini_sys_mon_service(Protocol * proto) {
 }
 
 #endif /* SERVICE_SysMonitor */
-
-

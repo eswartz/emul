@@ -1056,4 +1056,3 @@ void ini_symbols_lib(void) {
 
 
 #endif /* SERVICE_Symbols && defined(_MSC_VER) */
-

@@ -1289,5 +1289,3 @@ void ini_file_system_service(Protocol * proto) {
 }
 
 #endif /* SERVICE_FileSystem */
-
-

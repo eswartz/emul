@@ -34,5 +34,3 @@ extern void add_channel_redirection_listener(ChannelRedirectionListener listener
 extern void proxy_create(Channel * c1, Channel * c2);
 
 #endif /* D_proxy */
-
-

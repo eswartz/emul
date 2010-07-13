@@ -563,5 +563,3 @@
 #define ADDR_huge16                 3
 #define ADDR_near32                 4
 #define ADDR_far32                  5
-
-

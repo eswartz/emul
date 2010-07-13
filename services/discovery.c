@@ -192,4 +192,3 @@ void discovery_start(void) {
     discovery_start_udp();
 #endif
 }
-

@@ -585,5 +585,3 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
 }
 
 #endif /* ENABLE_ELF */
-
-

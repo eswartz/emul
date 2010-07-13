@@ -72,4 +72,3 @@ rpm: all tar
 	mv RPM/SRPMS/*.rpm .
 	rm -rf RPM ~/.rpmmacros
 endif
-

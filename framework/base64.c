@@ -125,4 +125,3 @@ int read_base64(InputStream * inp, char * buf, int buf_size) {
     }
     return pos;
 }
-

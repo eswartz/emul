@@ -105,5 +105,3 @@ void ini_trace(void) {
     }
 #endif /* ENABLE_Trace */
 }
-
-

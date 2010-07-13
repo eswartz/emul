@@ -294,5 +294,3 @@ void run_event_loop(void) {
         }
     }
 }
-
-

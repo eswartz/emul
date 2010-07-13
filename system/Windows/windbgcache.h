@@ -243,4 +243,3 @@ extern BOOL LocEnumerateLoadedModulesW64(HANDLE hProcess, PENUMLOADED_MODULES_CA
 #ifdef __cplusplus
 }
 #endif
-

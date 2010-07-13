@@ -312,4 +312,3 @@ void ini_line_numbers_lib(void) {
 }
 
 #endif /* ENABLE_LineNumbersProxy */
-

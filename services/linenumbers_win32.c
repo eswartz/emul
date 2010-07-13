@@ -185,4 +185,3 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
 }
 
 #endif /* SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && defined(_MSC_VER) && !ENABLE_ELF */
-

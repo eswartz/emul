@@ -81,4 +81,3 @@ extern void ini_expressions_service(Protocol * proto);
 #endif /* SERVICE_Expressions */
 
 #endif /* D_expression */
-

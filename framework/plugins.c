@@ -190,4 +190,3 @@ int plugins_destroy(void) {
 }
 
 #endif  /* if ENABLE_Plugins */
-

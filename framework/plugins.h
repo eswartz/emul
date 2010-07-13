@@ -52,4 +52,3 @@ void * plugin_get_function(const char *);
 int plugins_destroy(void);
 
 #endif /* D_plugins */
-

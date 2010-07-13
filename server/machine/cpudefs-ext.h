@@ -72,4 +72,3 @@ int write_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned o
     }
     return 0;
 }
-

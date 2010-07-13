@@ -478,5 +478,3 @@ extern void ini_elf(void);
 #endif /* ENABLE_ELF */
 
 #endif /* D_elf */
-
-

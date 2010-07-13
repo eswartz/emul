@@ -259,4 +259,3 @@ void ini_line_numbers_service(Protocol * proto) {
 }
 
 #endif /* SERVICE_LineNumbers */
-
