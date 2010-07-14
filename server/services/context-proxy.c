@@ -279,9 +279,7 @@ static void free_context_cache(ContextCache * c) {
         }
         loc_free(c->reg_props);
     }
-    if (!list_is_empty(&c->id_hash_link)) {
-        list_remove(&c->id_hash_link);
-    }
+    assert(list_is_empty(&c->id_hash_link));
     if (!list_is_empty(&c->mem_cache_list)) {
         LINK * l = c->mem_cache_list.next;
         while (l != &c->mem_cache_list) {
@@ -1409,7 +1407,16 @@ static void channel_close_listener(Channel * c) {
     for (l = peers.next; l != &peers; l = l->next) {
         PeerCache * p = peers2peer(l);
         if (p->target == c) {
+            int i;
             assert(p->rc_pending_cnt == 0);
+            for (i = 0; i < CTX_ID_HASH_SIZE; i++) {
+                LINK * h = p->context_id_hash + i;
+                while (!list_is_empty(h)) {
+                    ContextCache * c = idhashl2ctx(h->next);
+                    assert(*EXT(c->ctx) == c);
+                    send_context_exited_event(c->ctx);
+                }
+            }
             channel_unlock(p->host);
             channel_unlock(p->target);
             cache_dispose(&p->rc_cache);
@@ -1421,8 +1428,15 @@ static void channel_close_listener(Channel * c) {
     }
 }
 
+static void event_context_exited(Context * ctx, void * args) {
+    ContextCache * c = *EXT(ctx);
+    assert(!list_is_empty(&c->id_hash_link));
+    list_remove(&c->id_hash_link);
+}
+
 static void event_context_disposed(Context * ctx, void * args) {
     ContextCache * c = *EXT(ctx);
+    assert(c->ctx == ctx);
     c->ctx = NULL;
     free_context_cache(c);
 }
@@ -1430,7 +1444,7 @@ static void event_context_disposed(Context * ctx, void * args) {
 void init_contexts_sys_dep(void) {
     static ContextEventListener listener = {
         NULL,
-        NULL,
+        event_context_exited,
         NULL,
         NULL,
         NULL,

@@ -205,6 +205,7 @@ void send_context_started_event(Context * ctx) {
 void send_context_exited_event(Context * ctx) {
     unsigned i;
     assert(!ctx->event_notification);
+    assert(!ctx->exited);
     ctx->exiting = 0;
     ctx->pending_intercept = 0;
     ctx->exited = 1;
