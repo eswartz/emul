@@ -656,8 +656,20 @@ static void udp_receive_ack_slaves(time_t timenow) {
         struct sockaddr_in addr;
         uint64_t timestamp;
         if (get_slave_addr(recv_buf, &pos, &addr, &timestamp)) {
-            time_t delta = 60 * 30; /* 30 minutes */
-            time_t timeval = (time_t)(timestamp / 1000);
+            time_t delta = 60 * 10; /* 10 minutes */
+            time_t timeval = 0;
+            if (timestamp < 3600000) {
+                /* Timestamp is "time to live" in milliseconds */
+                timeval = timenow + (time_t)(timestamp / 1000) - PEER_DATA_RETENTION_PERIOD;
+            }
+            else if (timestamp < (uint64_t)timenow + 50000000) {
+                /* Timestamp is in seconds */
+                timeval = (time_t)timestamp;
+            }
+            else {
+                /* Timestamp is in milliseconds */
+                timeval = (time_t)(timestamp / 1000);
+            }
             if (log_mode & LOG_DISCOVERY) {
                 char buf[64];
                 snprintf(buf, sizeof(buf), "%s:%d", inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
@@ -665,12 +677,9 @@ static void udp_receive_ack_slaves(time_t timenow) {
                     timestamp, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr), buf);
             }
             if (timeval < timenow - delta || timeval > timenow + delta) {
-                timeval = (time_t)timestamp;
-                if (timeval < timenow - delta || timeval > timenow + delta) {
-                    trace(LOG_ALWAYS, "Discovery: invalid slave info timestamp %"PRId64" from %s:%d",
-                        timestamp, inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-                    timeval = timenow;
-                }
+                trace(LOG_DISCOVERY, "Discovery: invalid slave info timestamp %"PRId64" from %s:%d",
+                    timestamp, inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
+                timeval = timenow - PEER_DATA_RETENTION_PERIOD / 2;
             }
             add_slave(&addr, timeval);
         }
