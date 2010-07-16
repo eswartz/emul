@@ -602,6 +602,15 @@ public class LocatorService implements ILocator {
                     }
                     */
 
+                    if (network_prefix_len == 0 && address instanceof Inet4Address) {
+                        // Java 1.6.0 on Linux returns network prefix == 0 for loop-back interface
+                        byte[] buf = address.getAddress();
+                        if (buf[0] == 127) {
+                            network_prefix_len = 8;
+                            if (broadcast == null) broadcast = address;
+                        }
+                    }
+
                     if (network_prefix_len > 0 && address != null && broadcast != null) {
                         set.add(new SubNet(network_prefix_len, address, broadcast));
                     }
