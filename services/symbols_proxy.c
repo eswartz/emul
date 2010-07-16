@@ -1098,11 +1098,18 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
         exception(set_error_report_errno(f->error));
     }
     else if (f->fp != NULL) {
-        int i;
-        frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, f->fp);
-        for (i = 0; i < f->regs_cnt; i++) {
-            uint64_t v = evaluate_stack_trace_commands(ctx, frame, f->regs[i]);
-            if (write_reg_value(down, f->regs[i]->reg, v) < 0) exception(errno);
+        Trap trap;
+        if (set_trap(&trap)) {
+            int i;
+            frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, f->fp);
+            for (i = 0; i < f->regs_cnt; i++) {
+                uint64_t v = evaluate_stack_trace_commands(ctx, frame, f->regs[i]);
+                if (write_reg_value(down, f->regs[i]->reg, v) < 0) exception(errno);
+            }
+            clear_trap(&trap);
+        }
+        else {
+            frame->fp = 0;
         }
     }
 
