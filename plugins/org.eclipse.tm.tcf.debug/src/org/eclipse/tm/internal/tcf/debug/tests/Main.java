@@ -44,13 +44,7 @@ public class Main {
                         while (queue.isEmpty()) wait();
                         r = queue.removeFirst();
                     }
-                    try {
-                        r.run();
-                    }
-                    catch (Throwable x) {
-                        System.err.println("Error dispatching TCF event:");
-                        x.printStackTrace();
-                    }
+                    r.run();
                 }
             }
             catch (Throwable x) {
