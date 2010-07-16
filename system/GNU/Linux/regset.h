@@ -17,15 +17,7 @@
  * hold values of target CPU registers.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if defined(__linux__)
 #  include <sys/user.h>
    typedef struct user_regs_struct REG_SET;
-#endif
-
-#ifdef __cplusplus
-}
 #endif

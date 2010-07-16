@@ -16,10 +16,6 @@
  * This module provides access to Windows Portable Executable debug information.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef D_windbgcache
 #define D_windbgcache
 
@@ -32,6 +28,10 @@ extern "C" {
 #else
 #  define _NO_CVCONST_H
 #  include <dbghelp.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #if defined(__GNUC__)
@@ -237,9 +237,9 @@ extern BOOL SymCleanup(HANDLE hProcess);
 
 extern BOOL LocEnumerateLoadedModulesW64(HANDLE hProcess, PENUMLOADED_MODULES_CALLBACKW64 Callback, PVOID UserContext);
 
-#endif /* defined(WIN32) */
-#endif /* D_windbgcache */
-
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* defined(WIN32) */
+#endif /* D_windbgcache */

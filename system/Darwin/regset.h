@@ -17,10 +17,6 @@
  * hold values of target CPU registers.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if defined(__APPLE__)
 #  include <mach/thread_status.h>
 #  if defined(__i386__)
@@ -28,8 +24,4 @@ extern "C" {
 #  else
      typedef x86_thread_state64_t REG_SET;
 #  endif
-#endif
-
-#ifdef __cplusplus
-}
 #endif

@@ -34,6 +34,10 @@
 #  include <system/Windows/context-win32.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum test_enum {
     enum_val1 = 1,
     enum_val2 = 2,
@@ -90,6 +94,10 @@ void tcf_test_func0(test_enum e) {
 
 static char array[0x1000];
 char * tcf_test_array = array;
+
+#ifdef __cplusplus
+}
+#endif
 
 static void * test_sub(void * x) {
     volatile int * test_done = (int *)x;
