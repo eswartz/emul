@@ -41,6 +41,7 @@ struct MemoryRegion {
 
 /*
  * Get array of memory regions for given context.
+ * Set errno to error code or 0 if no error.
  */
 extern void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt);
 

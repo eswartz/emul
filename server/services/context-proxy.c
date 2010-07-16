@@ -998,6 +998,7 @@ void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * c
     }
     *regions = cache->mmap_regions;
     *cnt = cache->mmap_size;
+    set_error_report_errno(cache->mmap_error);
 }
 
 static void read_ids_item(InputStream * inp, void * args) {
