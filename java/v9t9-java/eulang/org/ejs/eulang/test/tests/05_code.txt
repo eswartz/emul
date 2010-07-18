@@ -17,6 +17,21 @@ assert R0 == 10
 >>>
 
 <<< explicit closures 1
+
+/*
+    repeatx = code (x : Int; block : code #block (x:Int=>nil) => nil) {
+        for i in x do block(i);
+    };
+
+    foo = code() {
+        p, s := 10, 0;
+        repeatx(10, code #block (p:Int => nil) { s += p;  p--; }; 
+         s;
+    };    
+   //  ★(¸.·'´(¸.·'´:•.•:*¨*☆•☆*¨¨*:•.•:`'·.¸)`'·.¸)★
+
+*/
+
    Closure = data { vars : Byte^; func : code(=>nil); };
     
     repeatx = code (x : Int; block : Closure^ => nil) {
