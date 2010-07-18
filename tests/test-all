@@ -6,7 +6,7 @@ then
   exit 1
 fi
 
-if [ -z "$VBOXUSER" }
+if [ -z "$VBOXUSER" ]
 then
   echo "VBOXUSER is not defined"
   exit 1
