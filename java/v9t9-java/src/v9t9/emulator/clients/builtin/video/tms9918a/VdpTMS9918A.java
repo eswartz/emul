@@ -15,7 +15,6 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
@@ -23,10 +22,12 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Logging;
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;
@@ -109,8 +110,12 @@ public class VdpTMS9918A implements VdpHandler {
 	/** The number of CPU cycles corresponding to 1/60 second */
 	private int vdpInterruptLimit;
 	private int throttleCount;
+	private Cpu9900 cpu;
+	private Machine machine;
 
-	public VdpTMS9918A(MemoryDomain videoMemory) {
+	public VdpTMS9918A(Machine machine) {
+		this.machine = machine;
+		
 		settingVdpInterruptRate.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
@@ -149,7 +154,7 @@ public class VdpTMS9918A implements VdpHandler {
 			}
 		});
 		
-		this.vdpMemory = videoMemory;
+		this.vdpMemory = machine.getMemory().getDomain("VIDEO");
 		this.vdpCanvas = new MemoryCanvas();
 		this.vdpregs = allocVdpRegs();
 		vdpCanvas.setSize(256, 192);
@@ -657,7 +662,46 @@ public class VdpTMS9918A implements VdpHandler {
 		return vdpCanvas;
 	}
 
+	private int vdpInterruptDelta;
+	final int vdpInterruptsPerSec = 60;
 	public void tick() {
+
+		// In Win32, the timer is not nearly as accurate as 1/100 second,
+		// so we get a lot of interrupts at the same time.
+		
+		// Synchronize VDP interrupts along with the CPU in the same task
+		// so we don't succumb to misscheduling between different timers
+		// OR timer tasks.
+		if (machine.isExecuting() && !VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean()) {
+			vdpInterruptDelta += vdpInterruptsPerSec * 65536 / machine.getCpuTicksPerSec();
+			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
+			if (vdpInterruptDelta >= 65536) {
+		
+				vdpInterruptDelta -= 65536;
+				doTick();
+        		if (Machine.settingThrottleInterrupts.getBoolean()) {
+        			if (throttleCount-- < 0) {
+        				throttleCount = 6;
+        			} else {
+        				return;
+        			}
+        		}
+        		
+        		// a real interrupt only occurs if wanted
+        		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
+            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+            		machine.getExecutor().nVdpInterrupts++;
+        		}
+        		//System.out.print('!');
+			}
+		}
+		
+		
+		
+		doTick();
+	}
+
+	protected void doTick() {
 		vdpStatus |= 0x80;
 	}
 	

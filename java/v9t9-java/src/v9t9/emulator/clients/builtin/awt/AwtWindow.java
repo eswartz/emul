@@ -42,14 +42,14 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 
-import v9t9.emulator.BaseEventNotifier;
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
-import v9t9.emulator.NotifyEvent;
-import v9t9.emulator.IEventNotifier.Level;
+import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
-import v9t9.emulator.hardware.V9t9;
-import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.common.BaseEventNotifier;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.NotifyEvent;
+import v9t9.emulator.common.IEventNotifier.Level;
+import v9t9.emulator.runtime.cpu.Executor9900;
 
 /**
  * Provide the emulator in an SWT window
@@ -90,7 +90,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		frame.setFocusCycleRoot(true);
 		frame.setFocusTraversalKeysEnabled(false);
 
-		File iconsFile = V9t9.getDataFile("icons/icons.png");
+		File iconsFile = Emulator.getDataFile("icons/icons.png");
 		try {
 			icons = ImageIO.read(iconsFile);
 		} catch (IOException e1) {
@@ -191,7 +191,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 					}
 				});
 
-		createStateButton(Executor.settingDumpFullInstructions, new Rectangle(
+		createStateButton(Executor9900.settingDumpFullInstructions, new Rectangle(
 				0, 128, 64, 64), new Rectangle(0, 0, 64, 64),
 				"Toggle CPU logging");
 

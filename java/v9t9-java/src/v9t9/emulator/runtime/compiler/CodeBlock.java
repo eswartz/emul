@@ -5,8 +5,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.runtime.AbortedException;
-import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.runtime.cpu.AbortedException;
+import v9t9.emulator.runtime.cpu.Executor9900;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
@@ -30,7 +30,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
     CompiledCode code;
     String baseName;
     private boolean running;
-	private Executor exec;
+	private Executor9900 exec;
 	private DirectLoader loader;
 	int addr;
 	int size;
@@ -40,7 +40,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
     
     static int uniqueClassSuffix;
 
-    public CodeBlock(Executor exec, DirectLoader loader, MemoryEntry ent, int addr, int size) {
+    public CodeBlock(Executor9900 exec, DirectLoader loader, MemoryEntry ent, int addr, int size) {
         this.exec = exec;
         this.loader = loader;
         this.highLevel = exec.getHighLevelCode(ent);
@@ -232,7 +232,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         // load and construct an instance of the class
         Class clas = loader.load(uniqueClassName, bytecode);
         try {
-            Constructor cons = clas.getConstructor(new Class[] { Executor.class });
+            Constructor cons = clas.getConstructor(new Class[] { Executor9900.class });
             code = (CompiledCode)cons.newInstance(new Object[] { exec });
             return true;
         } catch (InvocationTargetException ex) {

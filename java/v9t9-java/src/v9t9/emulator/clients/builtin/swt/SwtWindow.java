@@ -52,19 +52,20 @@ import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.PrefUtils;
 
-import v9t9.emulator.BaseEventNotifier;
-import v9t9.emulator.EmulatorSettings;
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
-import v9t9.emulator.NotifyEvent;
-import v9t9.emulator.IEventNotifier.Level;
+import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.ImageButton.ImageProvider;
 import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
-import v9t9.emulator.hardware.V9t9;
-import v9t9.emulator.runtime.Cpu;
-import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.common.BaseEventNotifier;
+import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.NotifyEvent;
+import v9t9.emulator.common.IEventNotifier.Level;
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
+import v9t9.emulator.runtime.cpu.Executor9900;
 
 /**
  * Provide the emulator in an SWT window
@@ -99,7 +100,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
 		shell.setText("V9t9");
 		
-		File iconFile = V9t9.getDataFile("icons/v9t9.png");
+		File iconFile = Emulator.getDataFile("icons/v9t9.png");
 		Image icon = new Image(shell.getDisplay(), iconFile.getAbsolutePath());
 		
 		shell.setImage(icon);
@@ -348,7 +349,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private void createButtons(Composite parent) {
 		mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
-			File iconsFile = V9t9.getDataFile("icons/icons_" + size + ".png");
+			File iconsFile = Emulator.getDataFile("icons/icons_" + size + ".png");
 			mainIcons.put(size, new Image(getShell().getDisplay(), iconsFile.getAbsolutePath()));
 		}
 		
@@ -357,7 +358,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(buttonBar);
 
 		//imageProvider = new MultiImageSizeProvider(mainIcons);
-		SVGLoader svgIconLoader = new SVGLoader(V9t9.getDataFile("icons/icons.svg"));
+		SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataFile("icons/icons.svg"));
 		imageProvider = new SVGImageProvider(mainIcons, buttonBar, svgIconLoader);
 		
 		buttonBar.addControlListener(new ControlAdapter() {
@@ -401,7 +402,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				});
 
 		createStateButton(buttonBar,
-				Executor.settingDumpFullInstructions, 
+				Executor9900.settingDumpFullInstructions, 
 				2, 0, "Toggle CPU logging");
 
 		createButton(buttonBar,
@@ -949,7 +950,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		boolean isRealTime = Cpu.settingRealTime.getBoolean();
 		int curCycles = Cpu.settingCyclesPerSecond.getInt();
 		MenuItem item = new MenuItem(menu, SWT.RADIO);
-		final int cycles = (int) (Cpu.TMS_9900_BASE_CYCLES_PER_SEC * factor);
+		final int cycles = (int) (Cpu9900.TMS_9900_BASE_CYCLES_PER_SEC * factor);
 		item.setText(label + " (" + cycles + ")");
 		if (isRealTime && cycles == curCycles) {
 			item.setSelection(true);

@@ -31,9 +31,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.NotifyException;
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.modules.IModule;
 
 /**
@@ -143,7 +143,7 @@ public class ModuleSelector extends Composite {
 	protected void switchModule() {
 		try {
 			machine.getModuleManager().switchModule(selectedModule);
-			machine.getCpu().setPin(Cpu.PIN_RESET);
+			machine.getCpu().setPin(Cpu9900.PIN_RESET);
 
 			getShell().dispose();
 		} catch (NotifyException e) {

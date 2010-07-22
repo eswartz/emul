@@ -6,8 +6,8 @@ package v9t9.engine.memory;
 import java.util.Collections;
 import java.util.List;
 
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;

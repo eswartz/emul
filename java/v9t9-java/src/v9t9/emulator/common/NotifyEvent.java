@@ -1,11 +1,11 @@
 /**
  * 
  */
-package v9t9.emulator;
+package v9t9.emulator.common;
 
 import java.io.PrintStream;
 
-import v9t9.emulator.IEventNotifier.Level;
+import v9t9.emulator.common.IEventNotifier.Level;
 
 public class NotifyEvent implements Comparable<NotifyEvent> {
 	static int ORDER;

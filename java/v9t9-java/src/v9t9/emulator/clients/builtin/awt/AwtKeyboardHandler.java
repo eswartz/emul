@@ -8,11 +8,11 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
-import v9t9.emulator.IEventNotifier.Level;
 import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.IEventNotifier.Level;
+import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.keyboard.KeyboardState;
 
 /**

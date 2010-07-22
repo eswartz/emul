@@ -8,7 +8,9 @@ import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.Pair;
 
-import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
+import v9t9.emulator.runtime.cpu.Executor9900;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
 
@@ -26,20 +28,20 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
     Map<Pair<MemoryArea, Integer>, CodeBlock> codeblocks;
     DirectLoader loader;
 
-	private Executor executor;
+	private Executor9900 executor;
 
 	private Compiler compiler;
 
-	public CodeBlockCompilerStrategy(Executor executor) {
+	public CodeBlockCompilerStrategy(Executor9900 executor) {
 		this.executor = executor;
-		this.compiler = new Compiler(executor.cpu);
+		this.compiler = new Compiler((Cpu9900)executor.cpu);
         codeblocks = new TreeMap<Pair<MemoryArea, Integer>, CodeBlock>();
         loader = new DirectLoader();
 
 	}
 	
-	public ICompiledCode getCompiledCode(int pc, short wp) {
-        CodeBlock cb = getCodeBlock(pc, wp);
+	public ICompiledCode getCompiledCode(Cpu cpu) {
+        CodeBlock cb = getCodeBlock(((Cpu9900) cpu).getPC(), ((Cpu9900)cpu).getWP());
 		return cb;
 	}
 	

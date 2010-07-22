@@ -24,9 +24,6 @@ public interface DsrHandler extends IPersistable {
 
 	void dispose();
 	
-	/** Get the CRU base */
-	short getCruBase();
-
 	/** Handle the DSR call (DSR opcode in mapped ROM)
 	 * @param xfer method of moving memory around
 	 * @param code the operand of the Idsr instruction

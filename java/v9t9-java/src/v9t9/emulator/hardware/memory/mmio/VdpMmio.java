@@ -1,7 +1,7 @@
 package v9t9.emulator.hardware.memory.mmio;
 
-import v9t9.emulator.Machine.ConsoleMmioReader;
-import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.common.Machine.ConsoleMmioReader;
+import v9t9.emulator.common.Machine.ConsoleMmioWriter;
 import v9t9.emulator.hardware.memory.VdpRamArea;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;

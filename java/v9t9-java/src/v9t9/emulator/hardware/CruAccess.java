@@ -5,7 +5,7 @@ package v9t9.emulator.hardware;
 
 import org.ejs.coffee.core.properties.IPersistable;
 
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 
 /**
  * This is the interface for CRU access from the CPU.
@@ -18,7 +18,7 @@ public interface CruAccess extends IPersistable {
 	 * and set any pins on the CPU.
 	 * @param cpu
 	 */
-	void pollForPins(Cpu cpu);
+	void pollForPins(Cpu9900 cpu);
 	
 	/**
 	 * Get the active interrupt level

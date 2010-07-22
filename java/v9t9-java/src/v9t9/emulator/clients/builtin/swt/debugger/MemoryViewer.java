@@ -51,7 +51,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.ejs.coffee.core.utils.CompatUtils;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.hardware.V9t9;
+import v9t9.emulator.Emulator;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -214,7 +214,7 @@ public class MemoryViewer extends Composite {
 		buttonBar.setLayout(new RowLayout(SWT.HORIZONTAL));
 		
 		filterButton = new Button(buttonBar, SWT.TOGGLE);
-		filterButton.setImage(new Image(getDisplay(), V9t9.getDataFile("icons/filter.png").getAbsolutePath()));
+		filterButton.setImage(new Image(getDisplay(), Emulator.getDataFile("icons/filter.png").getAbsolutePath()));
 		filterButton.setSize(24, 24);
 		filterMemory = true;
 		filterButton.setSelection(true);
@@ -229,7 +229,7 @@ public class MemoryViewer extends Composite {
 
 		
 		refreshButton = new Button(buttonBar, SWT.TOGGLE);
-		refreshButton.setImage(new Image(getDisplay(), V9t9.getDataFile("icons/refresh.png").getAbsolutePath()));
+		refreshButton.setImage(new Image(getDisplay(), Emulator.getDataFile("icons/refresh.png").getAbsolutePath()));
 		refreshButton.setSize(24, 24);
 		autoRefresh = true;
 		refreshButton.setSelection(true);
@@ -242,7 +242,7 @@ public class MemoryViewer extends Composite {
 		});
 		
 		pinButton = new Button(buttonBar, SWT.TOGGLE);
-		pinButton.setImage(new Image(getDisplay(), V9t9.getDataFile("icons/pin.png").getAbsolutePath()));
+		pinButton.setImage(new Image(getDisplay(), Emulator.getDataFile("icons/pin.png").getAbsolutePath()));
 		pinButton.setSize(24, 24);
 		pinMemory = false;
 		pinButton.setSelection(false);

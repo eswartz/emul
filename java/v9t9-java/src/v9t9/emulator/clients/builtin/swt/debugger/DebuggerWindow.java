@@ -11,7 +11,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.emulator.Machine;
+import v9t9.emulator.common.Machine;
 
 /**
  * @author Ed

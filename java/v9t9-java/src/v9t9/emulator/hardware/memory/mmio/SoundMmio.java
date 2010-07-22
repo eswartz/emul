@@ -6,8 +6,8 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
-import v9t9.emulator.Machine.ConsoleMmioWriter;
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.common.Machine.ConsoleMmioWriter;
 
 /** Sound chip entry
  * @author ejs

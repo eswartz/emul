@@ -6,14 +6,9 @@
  */
 package v9t9.emulator.hardware;
 
-import v9t9.emulator.Machine;
-import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
-import v9t9.emulator.hardware.memory.mmio.GplMmio;
-import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
-import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.engine.memory.MemoryDomain;
+import v9t9.emulator.common.Machine;
 
-public class TI994A extends Machine {
+public class TI994A extends TI99Machine {
 
 	public TI994A() {
 		this(new StandardMachineModel());
@@ -22,29 +17,5 @@ public class TI994A extends Machine {
     public TI994A(MachineModel machineModel) {
         super(machineModel);
     }
-    
-    public v9t9.emulator.hardware.memory.mmio.SoundMmio getSoundMmio() {
-        return ((StandardConsoleMemoryModel) memoryModel).soundMmio;
-    }
-    public VdpMmio getVdpMmio() {
-        return getVdp().getVdpMmio();
-    }
-    public GplMmio getGplMmio() {
-        return ((StandardConsoleMemoryModel) memoryModel).gplMmio;
-    }
-    public SpeechMmio getSpeechMmio() {
-    	return ((StandardConsoleMemoryModel) memoryModel).speechMmio;
-    }
-    
- 	public MemoryDomain getGplMemoryDomain() {
-		return memory.getDomain("GRAPHICS");
-	}
-	public MemoryDomain getSpeechMemoryDomain() {
-		return memory.getDomain("SPEECH");
-	}
-	public MemoryDomain getVdpMemoryDomain() {
-		return memory.getDomain("VIDEO");
-	}
-
 }
 

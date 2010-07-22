@@ -3,8 +3,8 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import v9t9.emulator.Machine.ConsoleMmioReader;
-import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.common.Machine.ConsoleMmioReader;
+import v9t9.emulator.common.Machine.ConsoleMmioWriter;
 
 public class DummyConsoleMmioHandler implements ConsoleMmioReader,
         ConsoleMmioWriter {

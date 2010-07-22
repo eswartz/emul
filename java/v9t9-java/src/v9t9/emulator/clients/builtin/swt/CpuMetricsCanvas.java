@@ -17,9 +17,9 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.emulator.runtime.CpuMetrics;
-import v9t9.emulator.runtime.CpuMetrics.IMetricsListener;
-import v9t9.emulator.runtime.CpuMetrics.MetricEntry;
+import v9t9.emulator.runtime.cpu.CpuMetrics;
+import v9t9.emulator.runtime.cpu.CpuMetrics.IMetricsListener;
+import v9t9.emulator.runtime.cpu.CpuMetrics.MetricEntry;
 
 /**
  * @author Ed

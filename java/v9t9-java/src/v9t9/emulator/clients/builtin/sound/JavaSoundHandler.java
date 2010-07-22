@@ -15,9 +15,9 @@ import org.ejs.coffee.core.sound.ISoundVoice;
 import org.ejs.coffee.core.sound.SoundFactory;
 import org.ejs.coffee.core.sound.ui.SoundRecordingHelper;
 
-import v9t9.emulator.EmulatorSettings;
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.SoundHandler;
 

@@ -6,10 +6,10 @@ package v9t9.emulator.hardware.sound;
 
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.engine.SoundHandler;
 
 /**

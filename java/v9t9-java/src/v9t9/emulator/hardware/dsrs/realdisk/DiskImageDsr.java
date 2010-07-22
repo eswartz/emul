@@ -26,18 +26,20 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.EmulatorSettings;
-import v9t9.emulator.Machine;
+import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.IconSetting;
+import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.CruReader;
 import v9t9.emulator.hardware.CruWriter;
-import v9t9.emulator.hardware.V9t9;
+import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
+import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
-import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.runtime.cpu.Executor9900;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -48,11 +50,11 @@ import v9t9.engine.memory.MemoryEntry;
  * @author ejs
  *
  */
-public class DiskImageDsr implements DsrHandler {
+public class DiskImageDsr implements DsrHandler9900 {
 	/**
 	 * 
 	 */
-	private static final String diskImageIconPath = V9t9.getDataFile("icons/disk_image.png").getAbsolutePath();
+	private static final String diskImageIconPath = Emulator.getDataFile("icons/disk_image.png").getAbsolutePath();
 
 	public static final SettingProperty diskImageDsrEnabled = new IconSetting("DiskImageDSREnabled",
 			"Disk Image Support",
@@ -952,23 +954,27 @@ public class DiskImageDsr implements DsrHandler {
 			registerDiskImagePath(name, getDefaultDiskImage(name)); 
     	}
     	
-    	CruManager cruManager = machine.getCruManager();
+    	if (machine instanceof TI99Machine) {
+	    	CruManager cruManager = ((TI99Machine) machine).getCruManager();
+	    	
+			cruManager.add(0x1102, 1, cruwRealDiskMotor);
+			cruManager.add(0x1104, 1, cruwRealDiskHold);
+			cruManager.add(0x1106, 1, cruwRealDiskHeads);
+			cruManager.add(0x1108, 1, cruwRealDiskSel);
+			cruManager.add(0x110A, 1, cruwRealDiskSel);
+			cruManager.add(0x110C, 1, cruwRealDiskSel);
+			cruManager.add(0x110E, 1, cruwRealDiskSide);
+			cruManager.add(0x1102, 1, crurRealDiskPoll);
+			cruManager.add(0x1104, 1, crurRealDiskPoll);
+			cruManager.add(0x1106, 1, crurRealDiskPoll);
+			cruManager.add(0x1108, 1, crurRealDiskMotor);
+			cruManager.add(0x110A, 1, crurRealDiskZero);
+			cruManager.add(0x110C, 1, crurRealDiskOne);
+			cruManager.add(0x110E, 1, crurRealDiskSide);
+    	} else {
+    		assert false;
+    	}
     	
-		cruManager.add(0x1102, 1, cruwRealDiskMotor);
-		cruManager.add(0x1104, 1, cruwRealDiskHold);
-		cruManager.add(0x1106, 1, cruwRealDiskHeads);
-		cruManager.add(0x1108, 1, cruwRealDiskSel);
-		cruManager.add(0x110A, 1, cruwRealDiskSel);
-		cruManager.add(0x110C, 1, cruwRealDiskSel);
-		cruManager.add(0x110E, 1, cruwRealDiskSide);
-		cruManager.add(0x1102, 1, crurRealDiskPoll);
-		cruManager.add(0x1104, 1, crurRealDiskPoll);
-		cruManager.add(0x1106, 1, crurRealDiskPoll);
-		cruManager.add(0x1108, 1, crurRealDiskMotor);
-		cruManager.add(0x110A, 1, crurRealDiskZero);
-		cruManager.add(0x110C, 1, crurRealDiskOne);
-		cruManager.add(0x110E, 1, crurRealDiskSide);
-		
 		// add motor timer
 		motorTickTask = new TimerTask() {
 			
@@ -1368,8 +1374,8 @@ public class DiskImageDsr implements DsrHandler {
 	 * @param string
 	 */
 	private static void info(String string) {
-		if (Executor.settingDumpFullInstructions.getBoolean())
-			Executor.getDumpfull().println(string);
+		if (Executor9900.settingDumpFullInstructions.getBoolean())
+			Executor9900.getDumpfull().println(string);
 		System.out.println(string);
 		
 	}
@@ -1378,8 +1384,8 @@ public class DiskImageDsr implements DsrHandler {
 		
 	}
 	static void error(String string) {
-		if (Executor.settingDumpFullInstructions.getBoolean())
-			Executor.getDumpfull().println(string);
+		if (Executor9900.settingDumpFullInstructions.getBoolean())
+			Executor9900.getDumpfull().println(string);
 		System.err.println(string);
 		
 	}

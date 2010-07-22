@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator;
+package v9t9.emulator.common;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -3,8 +3,8 @@
  */
 package v9t9.emulator.clients.builtin;
 
-import v9t9.emulator.NotifyEvent;
-import v9t9.emulator.IEventNotifier.Level;
+import v9t9.emulator.common.NotifyEvent;
+import v9t9.emulator.common.IEventNotifier.Level;
 
 /**
  * An exception which can be reported as a notify event

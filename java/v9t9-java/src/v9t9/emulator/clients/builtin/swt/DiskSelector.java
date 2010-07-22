@@ -37,10 +37,10 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 
-import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.ISettingDecorator;
+import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
-import v9t9.emulator.hardware.dsrs.DsrManager;
+import v9t9.emulator.hardware.dsrs.IDsrManager;
 
 /**
  * Select and set up disks
@@ -254,7 +254,7 @@ public class DiskSelector extends Composite {
 	/**
 	 * 
 	 */
-	public DiskSelector(Shell shell, DsrManager dsrManager) {
+	public DiskSelector(Shell shell, IDsrManager dsrManager) {
 		
 		super(shell, SWT.NONE);
 		

@@ -1,12 +1,13 @@
 /**
  * 
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.cpu;
 
 import java.io.PrintWriter;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.runtime.InstructionListener;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
@@ -17,21 +18,21 @@ import v9t9.engine.memory.MemoryEntry;
  * @author ejs
  *
  */
-public class DumpFullReporter implements InstructionListener {
+public class DumpFullReporter9900 implements InstructionListener {
 
-	private final Cpu cpu;
+	private final Cpu9900 cpu;
 
 	/**
 	 * 
 	 */
-	public DumpFullReporter(Cpu cpu) {
+	public DumpFullReporter9900(Cpu9900 cpu) {
 		this.cpu = cpu;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */
 	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
-		PrintWriter dumpfull = Executor.getDumpfull();
+		PrintWriter dumpfull = Executor9900.getDumpfull();
 		if (dumpfull == null) return;
 		dumpFullStart(before, before.inst, dumpfull);
 		dumpFullMid(before, (MachineOperand)before.inst.op1, (MachineOperand)before.inst.op2, dumpfull);

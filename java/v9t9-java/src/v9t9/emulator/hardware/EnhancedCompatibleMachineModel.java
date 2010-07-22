@@ -3,9 +3,9 @@
  */
 package v9t9.emulator.hardware;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
@@ -44,7 +44,7 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public VdpHandler createVdp(Machine machine) {
-		vdp = new VdpV9938(machine.getMemory().getDomain("VIDEO"));
+		vdp = new VdpV9938(machine);
 		vdpMmio = new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;
 	}
@@ -53,16 +53,19 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 		return new SoundTMS9919(machine, null);
 	}
 
-	public void defineDevices(final Machine machine) {
-		machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
-		
-		EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
-		machine.getDsrManager().registerDsr(dsr);
-		
-		defineCpuVdpBanks(machine);
+	public void defineDevices(final Machine machine_) {
+		if (machine_ instanceof TI99Machine) {
+			TI99Machine machine = (TI99Machine) machine_;
+			machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
+			
+			EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
+			machine.getDsrManager().registerDsr(dsr);
+			
+			defineCpuVdpBanks(machine);
+		}
 	}
 	
-	private void defineCpuVdpBanks(final Machine machine) {
+	private void defineCpuVdpBanks(final TI99Machine machine) {
 		
 		cpuBankedVideo = new WindowBankedMemoryEntry(machine.getMemory(),
 				"CPU VDP Bank", 

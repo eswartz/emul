@@ -8,8 +8,8 @@ package v9t9.engine;
 
 import org.ejs.coffee.core.properties.IPersistable;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;

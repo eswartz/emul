@@ -8,8 +8,8 @@ package v9t9.emulator.hardware;
 
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.Machine;
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.keyboard.KeyboardState;
 
 /**
@@ -153,7 +153,7 @@ public class InternalCru9901 implements CruAccess {
 	 */
 	protected int int9901;
 	/** Currently active interrupts.  These are fed to the TMS9900
-	 * via {@link Cpu#setInterruptRequest(byte)} in priority order. */
+	 * via {@link Cpu9900#setInterruptRequest(byte)} in priority order. */
 	protected int currentints;
 
 	/** intlevel for peripheral interrupt */ 
@@ -249,10 +249,11 @@ public class InternalCru9901 implements CruAccess {
 	private long clockTargetCycleCount;
 	private boolean intreq;
 	
-    public InternalCru9901(Machine machine, KeyboardState keyboardState) {
+    public InternalCru9901(TI99Machine machine, KeyboardState keyboardState) {
         this.machine = machine;
 		this.keyboardState = keyboardState;
         this.manager = machine.getCruManager();
+        assert manager != null;
         
         reset();
 
@@ -354,7 +355,7 @@ public class InternalCru9901 implements CruAccess {
     /** When PIN_INTREQ set, the interrupt level (IC* bits on the TMS9900). */
     private byte ic;
     
-	public void pollForPins(Cpu cpu) {
+	public void pollForPins(Cpu9900 cpu) {
 		// interrupts not generated in clock mode
 		if (clockmode) {
 			return;
@@ -402,7 +403,7 @@ public class InternalCru9901 implements CruAccess {
 
 				this.intreq = true;
 				this.ic = ((byte) intlevel);
-				cpu.setPin(Cpu.PIN_INTREQ);
+				cpu.setPin(Cpu9900.PIN_INTREQ);
 			}
 		}
 	}

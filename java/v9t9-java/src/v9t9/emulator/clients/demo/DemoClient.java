@@ -10,11 +10,11 @@ import java.io.IOException;
 
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.BaseEventNotifier;
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
-import v9t9.emulator.NotifyEvent;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.common.BaseEventNotifier;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.NotifyEvent;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.Client;

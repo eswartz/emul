@@ -9,12 +9,11 @@ package v9t9.emulator.clients.builtin.awt;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
-import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;
 import v9t9.engine.VdpHandler;
 
@@ -24,7 +23,6 @@ import v9t9.engine.VdpHandler;
  */
 public class AwtJavaClient implements Client {
     VdpHandler video;
-    CruHandler cruHandler;
     private Machine machine;
 	private AwtKeyboardHandler keyboardHandler;
 	private AwtVideoRenderer videoRenderer;
@@ -52,7 +50,6 @@ public class AwtJavaClient implements Client {
         
         video.setCanvas(videoRenderer.getCanvas());
 
-        cruHandler = machine.getCru(); 
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
         keyboardHandler = new AwtKeyboardHandler(

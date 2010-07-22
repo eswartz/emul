@@ -4,7 +4,7 @@
  * Created on Dec 17, 2004
  *
  */
-package v9t9.emulator;
+package v9t9.emulator.common;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -20,18 +20,18 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
-import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.CruManager;
-import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DsrManager;
-import v9t9.emulator.runtime.AbortedException;
-import v9t9.emulator.runtime.Cpu;
-import v9t9.emulator.runtime.CpuMetrics;
-import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.hardware.dsrs.DsrManager9900;
+import v9t9.emulator.hardware.dsrs.IDsrManager;
 import v9t9.emulator.runtime.TerminatedException;
+import v9t9.emulator.runtime.cpu.AbortedException;
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
+import v9t9.emulator.runtime.cpu.CpuMetrics;
+import v9t9.emulator.runtime.cpu.Executor9900;
 import v9t9.engine.Client;
-import v9t9.engine.CruHandler;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.Memory;
@@ -49,54 +49,51 @@ import v9t9.keyboard.KeyboardState;
 abstract public class Machine {
     protected Memory memory;
     protected MemoryDomain console;
-    Cpu cpu;
-    Executor executor;
-    Client client;
-    volatile boolean bAlive;
-    Timer timer;
-    FastTimer cpuTimer;
+    protected  Cpu9900 cpu;
+    protected  Executor9900 executor;
+    protected Client client;
+    protected  volatile boolean bAlive;
+    protected Timer timer;
+    protected FastTimer cpuTimer;
     //Timer cpuTimer;
-    Timer videoTimer;
- 
-    long lastInterrupt = System.currentTimeMillis();
-    long lastInfo = lastInterrupt;
-    long upTime = 0;
-    
-    boolean allowInterrupts;
-    final int clientTick = 1000 / 100;
-    final int videoUpdateTick = 1000 / 30;
-    final int cpuTicksPerSec = 100;
-    final int vdpInterruptsPerSec = 60;
-    private long now;
-    //private TimerTask vdpInterruptTask;
-    private TimerTask clientTask;
-    private FastTimerTask cpuTimingTask;
-	protected MemoryModel memoryModel;
+    protected Timer videoTimer;
 	private VdpHandler vdp;
-	private CruManager cruManager;
-	private DsrManager dsrManager;
-	private TimerTask videoUpdateTask;
-	private Thread machineRunner;
-	private Thread videoRunner;
+	protected DsrManager dsrManager;
+
+    protected long lastInterrupt = System.currentTimeMillis();
+    protected long lastInfo = lastInterrupt;
+    protected long upTime = 0;
+    
+    protected boolean allowInterrupts;
+    protected final int clientTick = 1000 / 100;
+    protected final int videoUpdateTick = 1000 / 30;
+    protected final int cpuTicksPerSec = 100;
+    protected long now;
+    //private TimerTask vdpInterruptTask;
+    protected  TimerTask clientTask;
+    protected  FastTimerTask cpuTimingTask;
+	protected MemoryModel memoryModel;
+	protected  TimerTask videoUpdateTask;
+	protected  Thread machineRunner;
+	protected  Thread videoRunner;
 	protected int throttleCount;
-	private KeyboardState keyboardState;
+	protected  KeyboardState keyboardState;
 	private Object executionLock = new Object();
 	volatile protected boolean bExecuting;
-	private SoundProvider sound;
+	protected  SoundProvider sound;
 	private List<Runnable> runnableList;
 	private CpuMetrics cpuMetrics;
 	
-	static public final SettingProperty settingExpRam = new SettingProperty("MemoryExpansion32K", new Boolean(false));
 	static public final SettingProperty settingPauseMachine = new SettingProperty("PauseMachine", new Boolean(false));
 	static public final SettingProperty settingThrottleInterrupts = new SettingProperty("ThrottleVDPInterrupts", new Boolean(false));
 	
 	static public final SettingProperty settingModuleList = new SettingProperty("ModuleListFile", new String("modules.xml"));
 	
-	private TimerTask memorySaverTask;
-	private ModuleManager moduleManager;
-	private List<IModule> modules;
+	protected  TimerTask memorySaverTask;
+	protected  ModuleManager moduleManager;
+	protected  List<IModule> modules;
 	
-	private RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
+	protected  RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
 
 	
     public Machine(MachineModel machineModel) {
@@ -106,21 +103,13 @@ abstract public class Machine {
     	this.memoryModel = machineModel.getMemoryModel();
     	this.memory = memoryModel.createMemory();
     	this.console = memoryModel.getConsole();
-    	cruManager = new CruManager();
-    	dsrManager = new DsrManager(this);
     	
-    	sound = machineModel.createSoundProvider(this);
-    	this.vdp = machineModel.createVdp(this);
-    	memoryModel.initMemory(this);
-    	
-    	moduleManager = new ModuleManager(this, getModules());
-    	
-    	cpu = new Cpu(this, 1000 / cpuTicksPerSec, vdp);
-    	keyboardState = new KeyboardState(cpu);
+    	init(machineModel);
+
     	machineModel.defineDevices(this);
     	
     	cpuMetrics = new CpuMetrics();
-    	executor = new Executor(cpu, cpuMetrics);
+    	executor = new Executor9900(cpu, cpuMetrics);
     	
     	settingPauseMachine.addListener(new IPropertyListener() {
 
@@ -137,6 +126,18 @@ abstract public class Machine {
         });
     	
 
+	}
+
+
+	protected void init(MachineModel machineModel) {
+		sound = machineModel.createSoundProvider(this);
+    	this.vdp = machineModel.createVdp(this);
+    	memoryModel.initMemory(this);
+    	
+    	moduleManager = new ModuleManager(this, getModules());
+    	
+    	cpu = new Cpu9900(this, 1000 / cpuTicksPerSec, vdp);
+    	keyboardState = new KeyboardState(cpu);
 	}
     
     
@@ -216,8 +217,6 @@ abstract public class Machine {
         // the CPU emulation task (a fast timer because 100 Hz is a little too much for Windows) 
         cpuTimingTask = new FastTimerTask() {
 
-			private int vdpInterruptDelta;
-
 			@Override
         	public void run() {
 				synchronized (executionLock) {
@@ -241,35 +240,7 @@ abstract public class Machine {
 	    			sound.tick();
 	    			cpu.tick();
 	
-	    			// In Win32, the timer is not nearly as accurate as 1/100 second,
-	    			// so we get a lot of interrupts at the same time.
-	    			
-	    			// Synchronize VDP interrupts along with the CPU in the same task
-	    			// so we don't succumb to misscheduling between different timers
-	    			// OR timer tasks.
-	    			if (bExecuting && !VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean()) {
-		    			vdpInterruptDelta += vdpInterruptsPerSec * 65536 / cpuTicksPerSec;
-		    			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
-		    			if (vdpInterruptDelta >= 65536) {
-					
-							vdpInterruptDelta -= 65536;
-		    				vdp.tick();
-		            		if (settingThrottleInterrupts.getBoolean()) {
-		            			if (throttleCount-- < 0) {
-		            				throttleCount = 6;
-		            			} else {
-		            				return;
-		            			}
-		            		}
-		            		
-		            		// a real interrupt only occurs if wanted
-		            		if ((vdp.readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
-			            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
-			            		executor.nVdpInterrupts++;
-		            		}
-		            		//System.out.print('!');
-		    			}
-	    			}
+	    			vdp.tick();
 				}    			
         	}
         };
@@ -415,13 +386,12 @@ abstract public class Machine {
 		
 		memory.save();        
         getSound().getSoundHandler().dispose();
-        dsrManager.dispose();
 	}
     
-	public Cpu getCpu() {
+	public Cpu9900 getCpu() {
         return cpu;
     }
-    public void setCpu(Cpu cpu) {
+    public void setCpu(Cpu9900 cpu) {
         this.cpu = cpu;
     }
     public Client getClient() {
@@ -441,10 +411,10 @@ abstract public class Machine {
         	recordingNotifier = new RecordingEventNotifier();
         }
     }
-    public Executor getExecutor() {
+    public Executor9900 getExecutor() {
         return executor;
     }
-    public void setExecutor(Executor executor) {
+    public void setExecutor(Executor9900 executor) {
         this.executor = executor;
     }
     
@@ -457,23 +427,7 @@ abstract public class Machine {
         return memoryModel;
     }
 
-    public VdpHandler getVdp() {
-		return vdp;
-	}
-
-	public CruManager getCruManager() {
-		return cruManager;
-	}
-
-	public DsrManager getDsrManager() {
-		return dsrManager;
-	}
-
-	public CruHandler getCru() {
-		return cruManager;
-	}
-
-	public KeyboardState getKeyboardState() {
+    public KeyboardState getKeyboardState() {
 		return keyboardState;
 	}
 
@@ -484,13 +438,7 @@ abstract public class Machine {
 		}
 		
 		
-		cpu.saveState(settings.addSection("CPU"));
-		getMemoryModel().getGplMmio().saveState(settings.addSection("GPL"));
-		memory.saveState(settings.addSection("Memory"));
-		vdp.saveState(settings.addSection("VDP"));
-		sound.saveState(settings.addSection("Sound"));
-		dsrManager.saveState(settings.addSection("DSRs"));
-		moduleManager.saveState(settings.addSection("Modules"));
+		doSaveState(settings);
 		
 		DataFiles.saveState(settings);
 		
@@ -498,6 +446,16 @@ abstract public class Machine {
 			bExecuting = true;
 			executionLock.notifyAll();
 		}
+	}
+
+
+	protected void doSaveState(ISettingSection settings) {
+		cpu.saveState(settings.addSection("CPU"));
+		getMemoryModel().getGplMmio().saveState(settings.addSection("GPL"));
+		memory.saveState(settings.addSection("Memory"));
+		vdp.saveState(settings.addSection("VDP"));
+		sound.saveState(settings.addSection("Sound"));
+		moduleManager.saveState(settings.addSection("Modules"));
 	}
 
 	public synchronized void loadState(ISettingSection section) throws IOException {
@@ -515,16 +473,7 @@ abstract public class Machine {
 		
 		DataFiles.loadState(section);
 		
-		memory.getModel().resetMemory();
-		moduleManager.loadState(section.getSection("Modules"));
-		memory.loadState(section.getSection("Memory"));
-		getMemoryModel().getGplMmio().loadState(section.getSection("GPL"));
-		cpu.loadState(section.getSection("CPU"));
-		vdp.loadState(section.getSection("VDP"));
-		sound.loadState(section.getSection("Sound"));
-		dsrManager.loadState(section.getSection("DSRs"));
-		keyboardState.resetKeyboard();
-		keyboardState.resetJoystick();
+		doLoadState(section);
 		
 		//Executor.settingDumpFullInstructions.setBoolean(true);
 		
@@ -534,6 +483,19 @@ abstract public class Machine {
 			bExecuting = true;
 			executionLock.notifyAll();
 		}
+	}
+
+
+	protected void doLoadState(ISettingSection section) {
+		memory.getModel().resetMemory();
+		moduleManager.loadState(section.getSection("Modules"));
+		memory.loadState(section.getSection("Memory"));
+		getMemoryModel().getGplMmio().loadState(section.getSection("GPL"));
+		cpu.loadState(section.getSection("CPU"));
+		vdp.loadState(section.getSection("VDP"));
+		sound.loadState(section.getSection("Sound"));
+		keyboardState.resetKeyboard();
+		keyboardState.resetJoystick();
 	}
 
 	public SoundProvider getSound() {
@@ -577,6 +539,13 @@ abstract public class Machine {
 		return moduleManager;
 	}
 
+	public VdpHandler getVdp() {
+		return vdp;
+	}
+
+	public IDsrManager getDsrManager() {
+		return dsrManager;
+	}
 }
 
 

@@ -4,7 +4,7 @@
  * Created on Jan 20, 2005
  *
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.cpu;
 
 
 public class AbortedException extends RuntimeException {

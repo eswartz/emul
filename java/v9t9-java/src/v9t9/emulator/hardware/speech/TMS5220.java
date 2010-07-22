@@ -10,7 +10,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.BinaryUtils;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.Machine;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;
 import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
 import v9t9.emulator.runtime.Logging;

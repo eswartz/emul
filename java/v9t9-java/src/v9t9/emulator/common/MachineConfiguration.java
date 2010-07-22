@@ -1,4 +1,4 @@
-package v9t9.emulator;
+package v9t9.emulator.common;
 
 
 /**
