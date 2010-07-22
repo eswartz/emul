@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
-import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.common.Machine.ConsoleMmioWriter;
 import v9t9.engine.memory.MemoryEntry;
 
 public class ConsoleMmioWriteArea extends ConsoleMmioArea {

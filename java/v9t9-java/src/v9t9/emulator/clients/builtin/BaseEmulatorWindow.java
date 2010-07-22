@@ -10,10 +10,10 @@ import org.ejs.coffee.core.settings.ISettingStorage;
 import org.ejs.coffee.core.settings.SettingsSection;
 import org.ejs.coffee.core.settings.XMLSettingStorage;
 
-import v9t9.emulator.EmulatorSettings;
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 
 public abstract class BaseEmulatorWindow {
 
@@ -111,11 +111,11 @@ public abstract class BaseEmulatorWindow {
 	abstract protected String openDirectorySelectionDialog(String title, String directory);
 
 	protected void sendNMI() {
-		machine.getCpu().setPin(Cpu.PIN_LOAD);
+		machine.getCpu().setPin(Cpu9900.PIN_LOAD);
 	}
 	
 	protected void sendReset() {
-		machine.getCpu().setPin(Cpu.PIN_RESET);
+		machine.getCpu().setPin(Cpu9900.PIN_RESET);
 	}
 	protected void loadMachineState() {
 		String filename = selectFile(

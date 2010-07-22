@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator;
+package v9t9.emulator.common;
 
 import java.io.File;
 import java.io.IOException;

@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import v9t9.emulator.Machine;
+import v9t9.emulator.common.Machine;
 
 /**
  * Controller for the TMS9919(B) sound chip.

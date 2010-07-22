@@ -8,9 +8,12 @@ package v9t9.emulator.hardware.memory;
 
 import java.io.IOException;
 
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
+import org.ejs.coffee.core.properties.SettingProperty;
+
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.TI994A;
+import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleSoundArea;
@@ -53,6 +56,8 @@ public class StandardConsoleMemoryModel implements MemoryModel {
 
 	private VdpMmio vdpMmio;
 
+	static public final SettingProperty settingExpRam = new SettingProperty("MemoryExpansion32K", new Boolean(false));
+
     public StandardConsoleMemoryModel() {
     	initSettings();
     }
@@ -80,8 +85,8 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         gplMmio = new GplMmio(GRAPHICS);
         speechMmio = new SpeechMmio(machine);
         
-        if (machine instanceof TI994A) {
-        	vdpMmio = ((TI994A) machine).getVdpMmio();
+        if (machine instanceof TI99Machine) {
+        	vdpMmio = ((TI99Machine) machine).getVdpMmio();
         	defineMmioMemory((TI994A) machine);
         }
     }
@@ -164,7 +169,7 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     }
     
 	protected void initSettings() {
-		Machine.settingExpRam.setBoolean(true);
+		StandardConsoleMemoryModel.settingExpRam.setBoolean(true);
 		ConsoleRamArea.settingEnhRam.setBoolean(false);
 	}
  

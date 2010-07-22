@@ -32,10 +32,10 @@ import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.CompatUtils;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.Machine;
-import v9t9.emulator.hardware.V9t9;
-import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.Emulator;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
+import v9t9.emulator.runtime.cpu.Executor9900;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionWorkBlock;
 
@@ -78,7 +78,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		GridDataFactory.swtDefaults().grab(true, false).align(SWT.RIGHT, SWT.CENTER).applyTo(buttonBar);
 		GridLayoutFactory.swtDefaults().numColumns(10).applyTo(buttonBar);
 
-		Image icons = new Image(getDisplay(), V9t9.getDataFile("icons/cpu.png").getAbsolutePath()); 
+		Image icons = new Image(getDisplay(), Emulator.getDataFile("icons/cpu.png").getAbsolutePath()); 
 
 		/////
 		
@@ -148,7 +148,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 					public void run() {
 						//if (!Machine.settingPauseMachine.getBoolean())
 						//	resizeTable();
-						Executor.settingSingleStep.setBoolean(true);
+						Executor9900.settingSingleStep.setBoolean(true);
 						showNextInstruction = true;
 						Machine.settingPauseMachine.setBoolean(false);
 					}
@@ -360,8 +360,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 			showNextInstruction = false;
 			//refreshTable();
 		}
-		if (Executor.settingSingleStep.getBoolean()) {
-			Executor.settingSingleStep.setBoolean(false);
+		if (Executor9900.settingSingleStep.getBoolean()) {
+			Executor9900.settingSingleStep.setBoolean(false);
 			Machine.settingPauseMachine.setBoolean(true);
 			machine.getExecutor().interruptExecution = Boolean.TRUE;
 		}

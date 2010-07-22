@@ -17,8 +17,8 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
+import v9t9.emulator.common.Machine;
 import v9t9.keyboard.KeyboardState;
 
 /**

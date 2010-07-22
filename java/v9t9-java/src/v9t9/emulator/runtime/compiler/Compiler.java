@@ -42,11 +42,11 @@ import org.apache.bcel.generic.Type;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.EmulatorSettings;
-import v9t9.emulator.Machine;
+import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
@@ -66,7 +66,7 @@ public class Compiler {
 				HighLevelCodeInfo highLevel,  
 				InstructionList ilist, CompileInfo info);
 	}
-    Cpu cpu;
+    Cpu9900 cpu;
 
     Machine machine;
 
@@ -93,7 +93,7 @@ public class Compiler {
     static public final SettingProperty settingCompileFunctions = new SettingProperty(
     		"CompilerCompileFunctions", new Boolean(false));
 
-    public Compiler(Cpu cpu) {
+    public Compiler(Cpu9900 cpu) {
         this.cpu = cpu;
         
         this.machine = cpu.getMachine();
@@ -611,7 +611,7 @@ public class Compiler {
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.cpuIndex));
             ilist.append(new ALOAD(info.localStatus));
-            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
                     "setStatus", Type.VOID, new Type[] { new ObjectType(
                             Status.class.getName()) },
                     Constants.INVOKEVIRTUAL));
@@ -620,7 +620,7 @@ public class Compiler {
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.cpuIndex));
             ilist.append(new PUSH(info.pgen, ins.pc + ins.size)); // old value
-            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
                     "setPC", Type.VOID, new Type[] { Type.SHORT },
                     Constants.INVOKEVIRTUAL));
 
@@ -628,7 +628,7 @@ public class Compiler {
             ilist.append(new GETFIELD(info.cpuIndex));
             ilist.append(new ILOAD(info.localWp));
             ilist.append(new ILOAD(info.localPc));
-            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
                     "contextSwitch", Type.VOID, new Type[] { Type.SHORT,
                             Type.SHORT }, Constants.INVOKEVIRTUAL));
 
@@ -715,13 +715,13 @@ public class Compiler {
         ilist.append(InstructionConstants.ALOAD_1);
         ilist.append(ifact.createInvoke(CompiledCode.class.getName(),
                 "<init>", Type.VOID, new Type[] { new ObjectType(
-                        v9t9.emulator.runtime.Executor.class.getName()) },
+                        v9t9.emulator.runtime.cpu.Executor9900.class.getName()) },
                 Constants.INVOKESPECIAL));
         ilist.append(InstructionFactory.createReturn(Type.VOID));
 
         // add constructor method to class
         mgen = new MethodGen(Constants.ACC_PUBLIC, Type.VOID,
-                new Type[] { new ObjectType(v9t9.emulator.runtime.Executor.class
+                new Type[] { new ObjectType(v9t9.emulator.runtime.cpu.Executor9900.class
                         .getName()) }, new String[] { "exec" }, "<init>",
                 className, ilist, pgen);
         addMethod(mgen, cgen);
@@ -769,7 +769,7 @@ public class Compiler {
         ilist.append(InstructionConstants.THIS);
         ilist.append(new GETFIELD(info.cpuIndex));
         ilist.append(new ILOAD(info.localCycles));
-        ilist.append(info.ifact.createInvoke(Cpu.class.getName(),
+        ilist.append(info.ifact.createInvoke(Cpu9900.class.getName(),
         		"addCycles", Type.VOID, new Type[] { Type.INT },
                 Constants.INVOKEVIRTUAL));
         ilist.append(InstructionConstants.ICONST_0);
@@ -836,7 +836,7 @@ public class Compiler {
         info.memory = cpu.getConsole();
 
         info.cpuIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
-                "cpu", Utility.getSignature(v9t9.emulator.runtime.Cpu.class.getName()));
+                "cpu", Utility.getSignature(v9t9.emulator.runtime.cpu.Cpu9900.class.getName()));
         info.memoryIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "memory", Utility.getSignature(v9t9.engine.memory.MemoryDomain.class.getName()));
         info.cruIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
@@ -897,7 +897,7 @@ public class Compiler {
         // interrupts, etc.
         info.breakList.append(InstructionConstants.THIS);
         info.breakList.append(new GETFIELD(info.cpuIndex));
-        info.breakList.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+        info.breakList.append(info.ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
                 "checkInterrupts", Type.VOID, Type.NO_ARGS,
                 Constants.INVOKEVIRTUAL));
 
@@ -911,19 +911,19 @@ public class Compiler {
 	    ilist.append(new GETFIELD(info.cpuIndex));
 	
 	    ilist.append(InstructionConstants.DUP);
-	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
 	                    "getPC", Type.SHORT, Type.NO_ARGS,
 	                    Constants.INVOKEVIRTUAL));
 	    ilist.append(new ISTORE(info.localPc));
 	
 	    ilist.append(InstructionConstants.DUP);
-	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
 	                    "getWP", Type.SHORT, Type.NO_ARGS,
 	                    Constants.INVOKEVIRTUAL));
 	    ilist.append(new ISTORE(info.localWp));
 	
 	    ilist.append(InstructionConstants.DUP);
-	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
 	            "getStatus",
 	            new ObjectType(Status.class.getName()),
 	            Type.NO_ARGS, Constants.INVOKEVIRTUAL));
@@ -973,17 +973,17 @@ public class Compiler {
 	
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(new ILOAD(info.localPc));
-	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(), "setPC",
+	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(), "setPC",
 	            Type.VOID, new Type[] { Type.SHORT }, Constants.INVOKEVIRTUAL));
 	
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(new ILOAD(info.localWp));
-	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(), "setWP",
+	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(), "setWP",
 	            Type.VOID, new Type[] { Type.SHORT }, Constants.INVOKEVIRTUAL));
 	
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(new ALOAD(info.localStatus));
-	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
 	            "setStatus", Type.VOID, new Type[] { new ObjectType(
 	                    Status.class.getName()) },
 	            Constants.INVOKEVIRTUAL));

@@ -6,6 +6,8 @@
  */
 package v9t9.emulator.runtime;
 
+import v9t9.emulator.runtime.cpu.AbortedException;
+
 
 public class TerminatedException extends AbortedException {
     /**

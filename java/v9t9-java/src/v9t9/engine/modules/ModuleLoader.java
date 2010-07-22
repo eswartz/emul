@@ -13,8 +13,8 @@ import org.ejs.coffee.core.utils.FileXMLStorage;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Element;
 
-import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.NotifyException;
+import v9t9.emulator.common.EmulatorSettings;
 import v9t9.engine.files.DataFiles;
 
 /**

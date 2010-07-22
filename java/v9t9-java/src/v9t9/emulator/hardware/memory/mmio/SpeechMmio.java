@@ -6,8 +6,8 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
-import v9t9.emulator.Machine;
-import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.Machine.ConsoleMmioWriter;
 import v9t9.emulator.hardware.speech.TMS5220;
 import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
 import v9t9.engine.SoundHandler;
@@ -16,7 +16,7 @@ import v9t9.engine.SoundHandler;
  * Speech chip
  * @author ejs
  */
-public class SpeechMmio implements ConsoleMmioWriter, v9t9.emulator.Machine.ConsoleMmioReader {
+public class SpeechMmio implements ConsoleMmioWriter, v9t9.emulator.common.Machine.ConsoleMmioReader {
 
 	private TMS5220 sp;
 

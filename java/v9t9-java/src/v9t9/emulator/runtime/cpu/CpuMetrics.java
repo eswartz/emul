@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.cpu;
 
 import java.util.ArrayList;
 import java.util.List;

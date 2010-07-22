@@ -6,7 +6,7 @@
  */
 package v9t9.engine;
 
-import v9t9.emulator.IEventNotifier;
+import v9t9.emulator.common.IEventNotifier;
 
 
 /** The client the emulated machine interacts with.  This could

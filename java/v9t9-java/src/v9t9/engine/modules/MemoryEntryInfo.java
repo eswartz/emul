@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.clients.builtin.NotifyException;
+import v9t9.emulator.common.EmulatorSettings;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;

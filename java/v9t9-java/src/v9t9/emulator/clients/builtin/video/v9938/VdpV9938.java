@@ -7,6 +7,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
@@ -124,8 +125,8 @@ public class VdpV9938 extends VdpTMS9918A {
 			{ 49, 65, 49, 62 },
 	};
 
-	public VdpV9938(MemoryDomain videoMemory) {
-		super(videoMemory);
+	public VdpV9938(Machine machine) {
+		super(machine);
 		reset();
 	}
 

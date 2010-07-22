@@ -8,8 +8,8 @@ package v9t9.keyboard;
 
 import java.util.Arrays;
 
-import v9t9.emulator.Machine;
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.Cpu;
 
 public class KeyboardState {
     /* Masks, corresponding to column 0 */

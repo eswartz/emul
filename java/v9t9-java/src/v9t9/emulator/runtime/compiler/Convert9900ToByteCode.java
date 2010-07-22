@@ -21,7 +21,7 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
-import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
@@ -97,8 +97,8 @@ public class Convert9900ToByteCode {
 	                Type.VOID, new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(info.ifact.createGetField(CompiledCode.class.getName(), "cpu",
-	                new ObjectType(Cpu.class.getName())));
-	        ilist.append(info.ifact.createInvoke(Cpu.class.getName(), "checkInterrupts",
+	                new ObjectType(Cpu9900.class.getName())));
+	        ilist.append(info.ifact.createInvoke(Cpu9900.class.getName(), "checkInterrupts",
 	                Type.VOID, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
 	        break;
 	        //return null;
@@ -639,7 +639,7 @@ public class Convert9900ToByteCode {
         ilist.append(InstructionConstants.THIS);
         ilist.append(new GETFIELD(info.cpuIndex));
         ilist.append(new ILOAD(info.localWp));
-        ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+        ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
                 "setWP", Type.VOID, new Type[] { Type.SHORT },
                 Constants.INVOKEVIRTUAL));
 

@@ -4,7 +4,7 @@
  * Created on Dec 17, 2004
  *
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.cpu;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -18,13 +18,17 @@ import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.Machine;
-import v9t9.emulator.runtime.CpuMetrics.MetricEntry;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.TI99Machine;
+import v9t9.emulator.runtime.InstructionListener;
+import v9t9.emulator.runtime.Logging;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.compiler.ICompiledCode;
 import v9t9.emulator.runtime.compiler.ICompilerStrategy;
+import v9t9.emulator.runtime.cpu.CpuMetrics.MetricEntry;
 import v9t9.emulator.runtime.interpreter.Interpreter;
+import v9t9.emulator.runtime.interpreter.Interpreter9900;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
@@ -35,7 +39,7 @@ import v9t9.engine.memory.MemoryEntry;
  * 
  * @author ejs
  */
-public class Executor {
+public class Executor9900 {
 
     public Cpu cpu;
 
@@ -71,35 +75,35 @@ public class Executor {
 
 	private final CpuMetrics cpuMetrics;
 	
-    public Executor(Cpu cpu, CpuMetrics cpuMetrics) {
+    public Executor9900(final Cpu9900 cpu, CpuMetrics cpuMetrics) {
         this.cpu = cpu;
 		this.cpuMetrics = cpuMetrics;
-        this.interp = new Interpreter(cpu.getMachine());
+        this.interp = new Interpreter9900((TI99Machine) cpu.getMachine());
         this.compilerStrategy = new CodeBlockCompilerStrategy(this);
         this.highLevelCodeInfoMap = new HashMap<MemoryArea, HighLevelCodeInfo>();
         
         settingDumpFullInstructions.addListener(new IPropertyListener() {
 
-        	DumpFullReporter reporter = new DumpFullReporter(Executor.this.cpu);
+        	DumpFullReporter9900 reporter = new DumpFullReporter9900(cpu);
 			public void propertyChanged(IProperty setting) {
 				Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
 				
 				if (setting.getBoolean()) {
-					Executor.this.addInstructionListener(reporter);
+					Executor9900.this.addInstructionListener(reporter);
 				} else {
-					Executor.this.removeInstructionListener(reporter);
+					Executor9900.this.removeInstructionListener(reporter);
 				}
 				interruptExecution = Boolean.TRUE;
 			}
         	
         });
         settingDumpInstructions.addListener(new IPropertyListener() {
-        	DumpReporter reporter = new DumpReporter(Executor.this.cpu);
+        	DumpReporter9900 reporter = new DumpReporter9900(cpu);
 			public void propertyChanged(IProperty setting) {
 				if (setting.getBoolean()) {
-					Executor.this.addInstructionListener(reporter);
+					Executor9900.this.addInstructionListener(reporter);
 				} else {
-					Executor.this.removeInstructionListener(reporter);
+					Executor9900.this.removeInstructionListener(reporter);
 				}
 				interruptExecution = Boolean.TRUE;
 			}
@@ -119,7 +123,7 @@ public class Executor {
         	}
         	
         });
-        Cpu.settingRealTime.addListener(new IPropertyListener() {
+        v9t9.emulator.runtime.cpu.Cpu.settingRealTime.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
@@ -132,7 +136,7 @@ public class Executor {
         Machine.settingPauseMachine.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				Executor.this.cpuMetrics.resetLastCycleCount();				
+				Executor9900.this.cpuMetrics.resetLastCycleCount();				
 			}
         	
         });
@@ -140,7 +144,7 @@ public class Executor {
     }
 
     public synchronized void interpretOneInstruction() {
-        interp.execute(cpu, null);
+        interp.execute(null);
         nInstructions++;
     }
 
@@ -158,7 +162,7 @@ public class Executor {
 			cpu.checkAndHandleInterrupts();
 		} else {
 			interruptExecution = Boolean.FALSE;
-			if (Cpu.settingRealTime.getBoolean()) {
+			if (v9t9.emulator.runtime.cpu.Cpu.settingRealTime.getBoolean()) {
 				while (!cpu.isThrottled() && !interruptExecution) {
 					interpretOneInstruction();
 					cpu.checkAndHandleInterrupts();
@@ -167,13 +171,13 @@ public class Executor {
 				// pretend the realtime and instructionListeners settings don't change often
 				if (instructionListeners == null) {
 					for (int i = 0; i < 1000 && !interruptExecution; i++) {
-						interp.executeFast(cpu, null);
+						interp.executeFast(null);
 				        nInstructions++;
 						cpu.checkAndHandleInterrupts();
 					}
 				} else {
 					for (int i = 0; i < 1000 && !interruptExecution; i++) {
-						interp.execute(cpu, null);
+						interp.execute(null);
 				        nInstructions++;
 						cpu.checkAndHandleInterrupts();
 					}
@@ -195,7 +199,7 @@ public class Executor {
 			        settingDumpFullInstructions.setBoolean(true);
 			    }
 	
-				ICompiledCode code = compilerStrategy.getCompiledCode(cpu.getPC() & 0xffff, cpu.getWP());
+				ICompiledCode code = compilerStrategy.getCompiledCode(cpu);
 			    if (code == null || !code.run()) {
 			    	// Returns false if an instruction couldn't be executed
 			    	// because it did not look like real code (or was not expected to be directly invoked).
@@ -239,7 +243,7 @@ public class Executor {
 
 	public void recordMetrics() {
 		MetricEntry entry = cpuMetrics.log(nInstructions,
-				cpu.getTotalCycleCount(), Cpu.settingCyclesPerSecond.getInt(),
+				cpu.getTotalCycleCount(), v9t9.emulator.runtime.cpu.Cpu.settingCyclesPerSecond.getInt(),
 				nVdpInterrupts, cpu.getAndResetInterruptCount(), 
 				nCompiledInstructions, nSwitches, nCompiles);
 		

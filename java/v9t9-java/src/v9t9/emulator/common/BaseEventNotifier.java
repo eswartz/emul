@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator;
+package v9t9.emulator.common;
 
 import java.util.Collection;
 import java.util.concurrent.PriorityBlockingQueue;

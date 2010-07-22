@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.coffee.core.utils.PrefUtils;
 
-import v9t9.emulator.EmulatorSettings;
+import v9t9.emulator.common.EmulatorSettings;
 
 public class ToolShell {
 	private boolean keepCentered;
@@ -39,7 +39,7 @@ public class ToolShell {
 		this.centerOverControl = centerOverControl_;
 		this.dismissOnClickOutside = dismissOnClickOutside;
 		this.keepCentered = centerOverControl_ != null;
-		this.clickOutsideCheckTime = System.currentTimeMillis() + 500;	// let it show up first, so click on the button that created it doesn't kill it
+		this.clickOutsideCheckTime = System.currentTimeMillis() + 1500;	// let it show up first, so click on the button that created it doesn't kill it
 	}
 	
 	public void init(final Control tool) {

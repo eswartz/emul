@@ -10,10 +10,15 @@ import org.junit.Test;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
+import v9t9.emulator.hardware.MachineModel;
+import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.Memory;
+import v9t9.engine.memory.MemoryModel;
 
 
 /**
@@ -27,9 +32,11 @@ public class TestV9938 {
 
 	@Before
 	public void setUp() throws Exception {
-		EnhancedConsoleMemoryModel model = new EnhancedConsoleMemoryModel();
+		MachineModel machineModel = new EnhancedCompatibleMachineModel();
+		MemoryModel model = machineModel.getMemoryModel();
 		Memory memory = model.createMemory();
-		v9938 = new VdpV9938(memory.getDomain("VIDEO"));
+		Machine machine = new TI994A(machineModel);
+		v9938 = new VdpV9938(machine);
 		this.mmio = new Vdp9938Mmio(memory, v9938, 0x20000);
 		
 		// ensure 64k mode, color

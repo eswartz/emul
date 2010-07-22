@@ -10,8 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.engine.files.DataFiles;

@@ -12,13 +12,12 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.emulator.IEventNotifier;
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
-import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;
 import v9t9.engine.VdpHandler;
 
@@ -28,7 +27,6 @@ import v9t9.engine.VdpHandler;
  */
 public class SwtJavaClient implements Client {
     VdpHandler video;
-    CruHandler cruHandler;
     private Machine machine;
 	private KeyboardHandler keyboardHandler;
 	private ISwtVideoRenderer videoRenderer;
@@ -84,7 +82,6 @@ public class SwtJavaClient implements Client {
 			}
 		});
 		
-        cruHandler = machine.getCru(); 
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
         if (keyboardHandler instanceof SwtKeyboardHandler)
