@@ -42,6 +42,7 @@ popd >/dev/null
 
 if ps ax | grep -q VirtualBox
 then
+  true
 else
   VirtualBox &
 fi
@@ -118,14 +119,201 @@ echo "Build<br>RPM" >>$HTML
 echo "<th>" >>$HTML
 echo "Stop" >>$HTML
 
-for vm in $VMS_ALL
+function start_vm()
+{
+  local LOGFILE=$HOST-Start.txt
+  echo "<td>" >>$HTML
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  echo Starting $VM >logs/$LOGFILE
+  if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM >>logs/$LOGFILE 2>&1
+  then
+    echo $VM is already running >>logs/$LOGFILE
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  elif VBoxManage --nologo startvm $VM >>logs/$LOGFILE 2>&1
+  then
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Error\"/>" >>$HTML
+    SKIP=1
+  fi
+  echo "</a>" >>$HTML
+}
+
+function ping_vm()
+{
+  local LOGFILE=$HOST-Ping.txt
+  echo "<td>" >>$HTML
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  echo Ping $VM >logs/$LOGFILE
+  sleep 4
+  if ping -c 30 $HOST >>logs/$LOGFILE 2>&1 || \
+     ping -c 30 $HOST >>logs/$LOGFILE 2>&1
+  then
+    echo >>logs/$LOGFILE
+    if $SSH "ping $PING_FLAG 30 192.168.155.1" >>logs/$LOGFILE 2>&1 || \
+       $SSH "ping $PING_FLAG 30 192.168.155.1" >>logs/$LOGFILE 2>&1
+    then
+      if $SSH "cd $TRUNK" >>logs/$LOGFILE 2>&1
+      then
+        echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+      else
+        echo "<img src=\"../icons/cross.png\" title=\"SSH cd failed\"/>" >>$HTML
+        SKIP=1
+      fi
+    else
+      echo "<img src=\"../icons/cross.png\" title=\"SSH ping failed\"/>" >>$HTML
+      SKIP=1
+    fi
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Ping failed\"/>" >>$HTML
+    SKIP=1
+  fi
+  echo "</a>" >>$HTML
+}
+
+function stop_vm()
+{
+  echo "<td>" >>$HTML
+  echo "<a href=\"$HOST-Stop.txt\">" >>$HTML
+  echo "Stop $VM" >logs/$HOST-Stop.txt
+  if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM ; then
+    if VBoxManage --nologo controlvm $VM savestate >>logs/$HOST-Stop.txt 2>&1 ; then
+      echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+    else
+      echo "<img src=\"../icons/cross.png\" title=\"Failed\"/>" >>$HTML
+    fi
+  else
+    echo $VM is already stopped >>logs/$HOST-Stop.txt 2>&1
+    echo "<img src=\"../icons/error.png\" title=\"Already stopped\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+}
+
+function get_make_options()
+{
+  case $CC in
+  gcc)
+    echo "OPSYS=$OPSYS CONF=$CONF CFLAGS=-Werror"
+    ;;
+  g++)
+    echo "OPSYS=$OPSYS CONF=$CONF CC=g++ CFLAGS=-Werror"
+    ;;
+  *)
+    echo "OPSYS=$OPSYS CONF=$CONF"
+    ;;
+  esac
+}
+
+function build_and_start_server()
+{
+  echo "<td>" >>$HTML
+  local LOGFILE=$HOST-$CONF-$CC-Server.txt
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  date >logs/$LOGFILE
+  echo "$CONF build on $HOST $VM $VMNAME" >>logs/$LOGFILE
+  echo "Compiler: $CC" >>logs/$LOGFILE
+  if $SSH "cd $TRUNK/server; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
+  then
+    echo "<img src=\"../icons/accept.png\" title=\"Server OK\"/>" >>$HTML
+    $SSH "$TRUNK/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$BUILD/logs/server-$HOST.txt -l0x800" >>logs/$LOGFILE 2>&1 &
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Server build failed\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+}
+
+function stop_server()
+{
+  local LOGFILE=$HOST-$CONF-$CC-Server.txt
+  $SSH "killall server" >>logs/$LOGFILE 2>&1
+  if [ -r logs/server-$HOST.txt ] ; then
+    echo >>logs/$LOGFILE
+    echo "Server log:" >>logs/$LOGFILE
+    cat logs/server-$HOST.txt >>logs/$LOGFILE
+    rm logs/server-$HOST.txt
+    echo "End of server log" >>logs/$LOGFILE
+  fi
+}
+
+function build_and_test_agent()
+{
+  local LOGFILE=$HOST-$CONF-$CC-Agent-$SEQ.txt
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  date >logs/$LOGFILE
+  echo "$CONF build on $HOST $VM $VMNAME" >>logs/$LOGFILE
+  echo "Compiler: $CC" >>logs/$LOGFILE
+  if $SSH "cd $TRUNK/agent; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
+  then
+    $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 -L$BUILD/logs/agent-$HOST.txt -l0" >>logs/$LOGFILE 2>&1 &
+    sleep 15
+    TESTURL1=ID=Test-Agent-$HOST:TransportName=TCP:Host=$HOST:Port=1534
+    echo >>logs/$LOGFILE
+    echo "Starting tests, target: $TESTURL1" >>logs/$LOGFILE
+    if time -p java \
+      -classpath java-bin \
+      org.eclipse.tm.internal.tcf.debug.tests.Main \
+      $TESTURL1 \
+      >>logs/$LOGFILE 2>&1
+    then
+      TESTURL2=ID=Test-Server-$HOST:TransportName=TCP:Host=$HOST:Port=1535
+      echo >>logs/$LOGFILE
+      echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGFILE
+      if time -p java \
+        -classpath java-bin \
+        org.eclipse.tm.internal.tcf.debug.tests.Main \
+        $TESTURL2 $TESTURL1 \
+        >>logs/$LOGFILE 2>&1
+      then
+        if [ -s logs/agent-$HOST.txt ]
+        then
+          echo "<img src=\"../icons/error.png\" title=\"Agent log is not empty\"/>" >>$HTML
+        else
+          echo "<img src=\"../icons/accept.png\" title=\"Agent OK\"/>" >>$HTML
+        fi
+      else
+        echo "<img src=\"../icons/cancel.png\" title=\"Agent/Server test failed\"/>" >>$HTML
+      fi
+    else
+      echo "<img src=\"../icons/cancel.png\" title=\"Agent test failed\"/>" >>$HTML
+    fi
+    $SSH "killall agent" >>logs/$LOGFILE 2>&1
+    if [ -r logs/agent-$HOST.txt ] ; then
+      echo >>logs/$LOGFILE
+      echo "Agent log:" >>logs/$LOGFILE
+      cat logs/agent-$HOST.txt >>logs/$LOGFILE
+      rm logs/agent-$HOST.txt
+      echo "End of agent log" >>logs/$LOGFILE
+    fi
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Agent build failed\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+  sleep 5
+  $SSH "cd $TRUNK/agent; rm -rf obj" >>logs/$LOGFILE 2>&1
+}
+
+function build_rpm()
+{
+  echo "<td>" >>$HTML
+  echo "<a href=\"$HOST-RPM.txt\">" >>$HTML
+  echo RPM build on $VM >logs/$HOST-RPM.txt
+  if [ -z "$BUILD_RPM" ] ; then
+    echo "<img src=\"../icons/error.png\" title=\"Not supported\"/>" >>$HTML
+  elif $SSH "cd $TRUNK/agent; $MAKE clean rpm" >>logs/$HOST-RPM.txt 2>&1 ; then
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Failed\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+}
+
+for VM in $VMS_ALL
 do
-  STOP_VM=1
   echo "<tr>" >>$HTML
-  if grep -q $vm vms.lst ; then
+  if grep -q $VM vms.lst ; then
     SKIP=
-    HOST=`grep $vm vms.lst | sed -e "s/.*:\\(.*\\)/\\1/"`
-    VMNAME=`VBoxManage --nologo showvminfo $vm --machinereadable | grep name= | sed -e "s/name=\"\(.*\)\"/\1/"`
+    HOST=`grep $VM vms.lst | sed -e "s/.*:\\(.*\\)/\\1/"`
+    VMNAME=`VBoxManage --nologo showvminfo $VM --machinereadable | grep name= | sed -e "s/name=\"\(.*\)\"/\1/"`
     SSH="ssh $VBOXUSER@$HOST"
 
     echo "<th>" >>$HTML
@@ -133,58 +321,7 @@ do
     echo "<td>" >>$HTML
     echo "$VMNAME" >>$HTML
 
-    echo "<td>" >>$HTML
-    echo "<a href=\"$HOST-Start.txt\">" >>$HTML
-    echo Starting $vm >logs/$HOST-Start.txt
-    if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $vm >>logs/$HOST-Start.txt 2>&1
-    then
-      echo $vm is already running >>logs/$HOST-Start.txt
-      echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
-    elif VBoxManage --nologo startvm $vm >>logs/$HOST-Start.txt 2>&1
-    then
-      echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
-    else
-      echo "<img src=\"../icons/cross.png\" title=\"Error\"/>" >>$HTML
-      SKIP=1
-    fi
-    echo "</a>" >>$HTML
-    if [ ! -z "$SKIP" ] ; then
-      echo "<td>" >>$HTML
-      echo "<td>" >>$HTML
-      echo "<td>" >>$HTML
-      echo "<td>" >>$HTML
-      echo "<td>" >>$HTML
-      echo "<td>" >>$HTML
-      echo "<td>" >>$HTML
-      echo "<td>" >>$HTML
-      continue
-    fi
-
-    echo "<td>" >>$HTML
-    echo "<a href=\"$HOST-Ping.txt\">" >>$HTML
-    echo Ping $vm >logs/$HOST-Ping.txt
-    sleep 4
-    if ping -c 30 $HOST >>logs/$HOST-Ping.txt 2>&1 || ping -c 30 $HOST >>logs/$HOST-Ping.txt 2>&1
-    then
-      echo >>logs/$HOST-Ping.txt
-      if $SSH "ping -c 30 192.168.155.1" >>logs/$HOST-Ping.txt 2>&1 || $SSH "ping -c 30 192.168.155.1" >>logs/$HOST-Ping.txt 2>&1
-      then
-        if $SSH "cd $TRUNK" >>logs/$HOST-Ping.txt 2>&1
-        then
-          echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
-        else
-          echo "<img src=\"../icons/cross.png\" title=\"SSH cd failed\"/>" >>$HTML
-          SKIP=1
-        fi
-      else
-        echo "<img src=\"../icons/cross.png\" title=\"SSH ping failed\"/>" >>$HTML
-        SKIP=1
-      fi
-    else
-      echo "<img src=\"../icons/cross.png\" title=\"Ping failed\"/>" >>$HTML
-      SKIP=1
-    fi
-    echo "</a>" >>$HTML
+    start_vm
     if [ ! -z "$SKIP" ] ; then
       continue
     fi
@@ -192,6 +329,7 @@ do
     BUILD=/net/192.168.155.1/home/virtualbox/build
     TRUNK=$BUILD/trunk
     MAKE=make
+    PING_FLAG=-c
     OPSYS_FLAG=-o
     BUILD_RPM=
 
@@ -202,12 +340,57 @@ do
       OPSYS_FLAG=-s
       BUILD_RPM=
       ;;
+    192.168.155.10)
+      # Windows 7 32
+      PING_FLAG=-n
+      ;;
+    192.168.155.11)
+      # Windows 7 64
+      PING_FLAG=-n
+      ;;
     esac
+
+    ping_vm
+    if [ ! -z "$SKIP" ] ; then
+      continue
+    fi
 
     OPSYS=`$SSH "uname $OPSYS_FLAG"` || exit 1
     MACHINE=`$SSH "uname -m"` || exit 1
     $SSH "killall server" >/dev/null 2>&1
     $SSH "killall agent" >/dev/null 2>&1
+
+    if [ "$OPSYS" = Cygwin ] ; then
+      OPSYS=Windows
+      echo "<td>" >>$HTML
+      echo "$OPSYS" >>$HTML
+      echo "<td>" >>$HTML
+      echo "$MACHINE" >>$HTML
+
+      for CONF in Debug Release
+      do
+        for CC in msvc msvc++
+        do
+
+          build_and_start_server
+
+          SEQ=1
+          for SUBSET in "" "$SUBSET1" "$SUBSET2" "$SUBSET3"
+          do
+            build_and_test_agent
+            SEQ=`expr $SEQ + 1`
+          done
+
+          stop_server
+
+          sleep 5
+        done
+      done
+
+      OPSYS=Cygwin
+      echo "<tr>" >>$HTML
+      echo "<td colspan=\"4\">" >>$HTML
+    fi
 
     echo "<td>" >>$HTML
     echo "$OPSYS" >>$HTML
@@ -219,141 +402,32 @@ do
       for CC in gcc g++
       do
 
-        echo "<td>" >>$HTML
-        LOGNAME=$HOST-$CONF-$CC-Server.txt
-        echo "<a href=\"$LOGNAME\">" >>$HTML
-        date >logs/$LOGNAME
-        echo "$CONF build on $HOST $vm $VMNAME" >>logs/$LOGNAME
-        echo CC=$CC >>logs/$LOGNAME
-        if $SSH "cd $TRUNK/server; $MAKE CC=$CC \"CFLAGS=-Werror\" CONF=$CONF clean all" >>logs/$LOGNAME 2>&1
-        then
-          echo "<img src=\"../icons/accept.png\" title=\"Server OK\"/>" >>$HTML
-          $SSH "$TRUNK/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$BUILD/logs/server-$HOST.txt -l0x800" >>logs/$LOGNAME 2>&1 &
-        else
-          echo "<img src=\"../icons/cross.png\" title=\"Server build failed\"/>" >>$HTML
-        fi
-        echo "</a>" >>$HTML
+        build_and_start_server
 
         SEQ=1
         for SUBSET in "" "$SUBSET1" "$SUBSET2" "$SUBSET3"
         do
-          LOGNAME=$HOST-$CONF-$CC-Agent-$SEQ.txt
-          echo "<a href=\"$LOGNAME\">" >>$HTML
-          date >logs/$LOGNAME
-          echo "$CONF build on $HOST $vm $VMNAME" >>logs/$LOGNAME
-          echo "CC=$CC" >>logs/$LOGNAME
-          if $SSH "cd $TRUNK/agent; $MAKE CC=$CC \"CFLAGS=-Werror $SUBSET\" CONF=$CONF clean all" >>logs/$LOGNAME 2>&1
-          then
-            $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 -L$BUILD/logs/agent-$HOST.txt -l0" >>logs/$LOGNAME 2>&1 &
-            sleep 5
-            TESTURL1=ID=Test-Agent-$HOST:TransportName=TCP:Host=$HOST:Port=1534
-            echo >>logs/$LOGNAME
-            echo "Starting tests, target: $TESTURL1" >>logs/$LOGNAME
-            if time -p java \
-              -classpath java-bin \
-              org.eclipse.tm.internal.tcf.debug.tests.Main \
-              $TESTURL1 \
-              >>logs/$LOGNAME 2>&1
-            then
-              TESTURL2=ID=Test-Server-$HOST:TransportName=TCP:Host=$HOST:Port=1535
-              echo >>logs/$LOGNAME
-              echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGNAME
-              if time -p java \
-                -classpath java-bin \
-                org.eclipse.tm.internal.tcf.debug.tests.Main \
-                $TESTURL2 $TESTURL1 \
-                >>logs/$LOGNAME 2>&1
-              then
-                if [ -s $BUILD/logs/agent-$HOST.txt ]
-                then
-                  echo "<img src=\"../icons/error.png\" title=\"Agent log is not empty\"/>" >>$HTML
-                else
-                  echo "<img src=\"../icons/accept.png\" title=\"Agent OK\"/>" >>$HTML
-                fi
-              else
-                echo "<img src=\"../icons/cancel.png\" title=\"Agent/Server test failed\"/>" >>$HTML
-              fi
-            else
-              echo "<img src=\"../icons/cancel.png\" title=\"Agent test failed\"/>" >>$HTML
-            fi
-            $SSH "killall agent" >>logs/$LOGNAME 2>&1
-            if [ -r $BUILD/logs/agent-$HOST.txt ] ; then
-              echo >>logs/$LOGNAME
-              echo "Agent log:" >>logs/$LOGNAME
-              cat $BUILD/logs/agent-$HOST.txt >>logs/$LOGNAME
-              rm $BUILD/logs/agent-$HOST.txt
-              echo "End of agent log" >>logs/$LOGNAME
-            fi
-          else
-            echo "<img src=\"../icons/cross.png\" title=\"Agent build failed\"/>" >>$HTML
-          fi
-          echo "</a>" >>$HTML
-          sleep 5
-          $SSH "cd $TRUNK/agent; rm -rf obj" >>logs/$LOGNAME 2>&1
+          build_and_test_agent
           SEQ=`expr $SEQ + 1`
         done
 
-        LOGNAME=$HOST-$CONF-$CC-Server.txt
-        $SSH "killall server" >>logs/$LOGNAME 2>&1
-        if [ -r $BUILD/logs/server-$HOST.txt ] ; then
-          echo >>logs/$LOGNAME
-          echo "Server log:" >>logs/$LOGNAME
-          cat $BUILD/logs/server-$HOST.txt >>logs/$LOGNAME
-          rm $BUILD/logs/server-$HOST.txt
-          echo "End of server log" >>logs/$LOGNAME
-        fi
+        stop_server
+
         sleep 5
       done
     done
 
-    echo "<td>" >>$HTML
-    echo "<a href=\"$HOST-RPM.txt\">" >>$HTML
-    echo RPM build on $vm >logs/$HOST-RPM.txt
-    if [ -z "$BUILD_RPM" ] ; then
-      echo "<img src=\"../icons/error.png\" title=\"Not supported\"/>" >>$HTML
-    elif $SSH "cd $TRUNK/agent; $MAKE clean rpm" >>logs/$HOST-RPM.txt 2>&1 ; then
-      echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
-    else
-      echo "<img src=\"../icons/cross.png\" title=\"Failed\"/>" >>$HTML
-    fi
-    echo "</a>" >>$HTML
+    build_rpm
 
     $SSH "sync" || exit 1
+    sleep 5
+    stop_vm
   else
     echo "<th>" >>$HTML
     echo "Not in vms.lst" >>$HTML
     echo "<td>" >>$HTML
-    echo "$vm"  >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
-    echo "<td>" >>$HTML
+    echo "$VM"  >>$HTML
   fi
-
-  sleep 5
-
-  echo "<td>" >>$HTML
-  echo "<a href=\"$HOST-Stop.txt\">" >>$HTML
-  echo "Stop $vm" >logs/$HOST-Stop.txt
-  if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $vm ; then
-    if [ -z "$STOP_VM" ] ; then
-      echo "Stopping VM is not supported" >>logs/$HOST-Stop.txt
-      echo "<img src=\"../icons/error.png\" title=\"Not supported\"/>" >>$HTML
-    elif VBoxManage --nologo controlvm $vm savestate >>logs/$HOST-Stop.txt 2>&1 ; then
-      echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
-    else
-      echo "<img src=\"../icons/cross.png\" title=\"Failed\"/>" >>$HTML
-    fi
-  else
-    echo $vm is already stopped >>logs/$HOST-Stop.txt 2>&1
-    echo "<img src=\"../icons/error.png\" title=\"Already stopped\"/>" >>$HTML
-  fi
-  echo "</a>" >>$HTML
 
 done
 
