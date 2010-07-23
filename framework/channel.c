@@ -180,7 +180,7 @@ PeerServer * channel_peer_from_url(const char * url) {
 
     s = url;
     i = 0;
-    while (*s && isalpha(*s) && i < (int)sizeof transport) transport[i++] = (char)toupper(*s++);
+    while (*s && isalpha((int)*s) && i < (int)sizeof transport) transport[i++] = (char)toupper((int)*s++);
     if (*s == ':' && i < (int)sizeof transport) {
         s++;
         peer_server_addprop(ps, loc_strdup("TransportName"), loc_strndup(transport, i));

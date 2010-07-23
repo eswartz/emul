@@ -25,8 +25,8 @@
 
 typedef struct ExceptionName {
     DWORD code;
-    char * name;
-    char * desc;
+    const char * name;
+    const char * desc;
 } ExceptionName;
 
 static ExceptionName exception_names[] = {

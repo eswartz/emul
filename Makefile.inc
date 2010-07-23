@@ -19,9 +19,6 @@ ifeq ($(OPSYS),Windows)
   EXTLIB = .lib
   EXTEXE = .exe
   LIBS = shell32.lib advapi32.lib Iphlpapi.lib WS2_32.lib
-  ifeq ($(MACHINE),i686)
-    MACHINE = i386
-  endif
 endif
 
 ifeq ($(OPSYS),Cygwin)
@@ -29,7 +26,6 @@ ifeq ($(OPSYS),Cygwin)
 endif
 
 ifeq ($(OPSYS),Msys)
-  CC = gcc
   OPTS += -mwin32
   LIBS = -lws2_32 -liphlpapi
 endif

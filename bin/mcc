@@ -11,23 +11,88 @@
 #  -I<dir>   include directory
 #  -p<file>  PDB file name
 
-VSHOME="/cygdrive/c/Program Files/Microsoft Visual Studio 9.0"
-WINSDK="/cygdrive/c/Program Files/Microsoft SDKs/Windows/v6.1"
+if [ -z "$VSHOME" ] ; then
+    for KEY in \
+        "Microsoft/VisualStudio/10.0/Setup/VS/ProductDir" \
+        "Wow6432Node/Microsoft/VisualStudio/10.0/Setup/VS/ProductDir" \
+        "Microsoft/VisualStudio/9.0/Setup/VS/ProductDir" \
+        "Wow6432Node/Microsoft/VisualStudio/9.0/Setup/VS/ProductDir"
+    do
+        KEY="/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/$KEY"
+        if [ -e "$KEY" ] ; then
+            KEY="`cat "$KEY"`"
+            KEY="`cygpath -u "$KEY"`"
+            if [ -d "$KEY" ] ; then
+                VSHOME="$KEY"
+                break
+            fi
+        fi
+    done
+    if [ -z "$VSHOME" ] ; then
+        for VAR in VS100COMNTOOLS VS90COMNTOOLS
+        do
+            DIR="`cygpath -u "${!VAR}"`"
+            if [ -d "$DIR" ] ; then
+                VSHOME="$DIR/../.."
+                break
+            fi
+        done
+        if [ -z "$VSHOME" ] ; then
+            for DIR in \
+                "/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 10.0" \
+                "/cygdrive/c/Program Files/Microsoft Visual Studio 10.0" \
+                "/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 9.0" \
+                "/cygdrive/c/Program Files/Microsoft Visual Studio 9.0"
+            do
+                if [ -d "$DIR" ] ; then
+                    VSHOME="$DIR"
+                    break
+                fi
+            done
+        fi
+    fi
+fi
 
-if [ ! -d "$VSHOME" ]
-then
+if [ ! -d "$VSHOME" ] ; then
     echo Invalid VSHOME - Microsoft Visual Studio directory name
     exit 1
 fi
 
-if [ ! -d "$WINSDK" ]
-then
-    WINSDK="/cygdrive/c/Program Files/Microsoft SDKs/Windows/v6.0A"
-    if [ ! -d "$WINSDK" ]
-    then
-        echo Invalid WINSDK - Microsoft SDK directory name
-        exit 1
+if [ -z "$WINSDK" ] ; then
+    for KEY in \
+        "Microsoft/Microsoft SDKs/Windows/CurrentInstallFolder" \
+        "Wow6432Node/Microsoft/Microsoft SDKs/Windows/CurrentInstallFolder"
+    do
+        KEY="/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/$KEY"
+        if [ -e "$KEY" ] ; then
+            KEY="`cat "$KEY"`"
+            KEY="`cygpath -u "$KEY"`"
+            if [ -d "$KEY" ] ; then
+                WINSDK="$KEY"
+                break
+            fi
+        fi
+    done
+    if [ -z "$WINSDK" ] ; then
+        for DIR in \
+            "/cygdrive/c/Program Files (x86)/Microsoft SDKs/Windows/v7.1" \
+            "/cygdrive/c/Program Files/Microsoft SDKs/Windows/v7.1" \
+            "/cygdrive/c/Program Files (x86)/Microsoft SDKs/Windows/v7.0A" \
+            "/cygdrive/c/Program Files/Microsoft SDKs/Windows/v7.0A" \
+            "/cygdrive/c/Program Files/Microsoft SDKs/Windows/v6.1" \
+            "/cygdrive/c/Program Files/Microsoft SDKs/Windows/v6.0A"
+        do
+            if [ -d "$DIR" ] ; then
+                WINSDK="$DIR"
+                break
+            fi
+        done
     fi
+fi
+
+if [ ! -d "$WINSDK" ] ; then
+    echo Invalid WINSDK - Microsoft SDK directory name
+    exit 1
 fi
 
 declare -a cmd
@@ -103,7 +168,6 @@ else
 fi
 CFLAGS3="/Oy- /DWIN32 /D_CONSOLE /D_VC80_UPGRADE=0x0600 /D_MBCS /W4"
 
-export VS80COMNTOOLS=$(cygpath -aw "$VSHOME/Common7/Tools")
 export VSINSTALLDIR=$(cygpath -aw "$VSHOME")
 export VCINSTALLDIR=$(cygpath -aw "$VSHOME/VC")
 export LIB=$(cygpath -aw "$VSHOME/VC/lib")\;$(cygpath -aw "$WINSDK/Lib")

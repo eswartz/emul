@@ -574,7 +574,7 @@ static int get_process_info(HANDLE prs) {
     return 0;
 }
 
-static int write_unicode_string(OutputStream * out, HANDLE prs, UNICODE_STRING str, char * name) {
+static int write_unicode_string(OutputStream * out, HANDLE prs, UNICODE_STRING str, const char * name) {
     if (str.Buffer != NULL) {
         wchar_t w_fnm[FILE_PATH_SIZE];
         SIZE_T buff_size = str.Length;
@@ -596,7 +596,7 @@ static int write_unicode_string(OutputStream * out, HANDLE prs, UNICODE_STRING s
     return 0;
 }
 
-static void write_time(OutputStream * out, FILETIME tm, int64_t base, char * name) {
+static void write_time(OutputStream * out, FILETIME tm, int64_t base, const char * name) {
     int64_t n = (((int64_t)tm.dwLowDateTime | ((int64_t)tm.dwHighDateTime << 32)) - base) / 10000;
 
     write_stream(out, ',');

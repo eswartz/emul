@@ -109,7 +109,7 @@ static int get_signal_index(Context * ctx) {
     return get_signal_from_code(exception_code);
 }
 
-static char * win32_debug_event_name(int event) {
+static const char * win32_debug_event_name(int event) {
     switch (event) {
     case CREATE_PROCESS_DEBUG_EVENT:
         return "CREATE_PROCESS_DEBUG_EVENT";
@@ -131,7 +131,7 @@ static char * win32_debug_event_name(int event) {
     return "Unknown";
 }
 
-static int log_error(char * fn, int ok) {
+static int log_error(const char * fn, int ok) {
     int err;
     if (ok) return 0;
     err = set_win32_errno(GetLastError());

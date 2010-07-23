@@ -751,7 +751,7 @@ ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
 
 #include <shlobj.h>
 
-char * get_os_name(void) {
+const char * get_os_name(void) {
     static char str[256];
     OSVERSIONINFOEX info;
     memset(&info, 0, sizeof(info));
@@ -774,7 +774,7 @@ char * get_os_name(void) {
     return str;
 }
 
-char * get_user_home(void) {
+const char * get_user_home(void) {
     WCHAR w_buf[MAX_PATH];
     static char a_buf[MAX_PATH];
     if (a_buf[0] != 0) return a_buf;
@@ -853,7 +853,7 @@ int getegid(void) {
     return 0;
 }
 
-char * get_os_name(void) {
+const char * get_os_name(void) {
     static char str[256];
 #if _WRS_VXWORKS_MAJOR > 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 7
     snprintf(str, sizeof(str), "VxWorks %s", vxWorksVersion);
@@ -863,7 +863,7 @@ char * get_os_name(void) {
     return str;
 }
 
-char * get_user_home(void) {
+const char * get_user_home(void) {
     return "/";
 }
 
@@ -884,12 +884,12 @@ int truncate(const char * path, int64_t size) {
     return res;
 }
 
-char * get_os_name(void) {
+const char * get_os_name(void) {
    static char str[] = "SYMBIAN";
    return str;
 }
 
-char * get_user_home(void) {
+const char * get_user_home(void) {
     static char buf[] = "C:";
     return buf;
 }
@@ -959,7 +959,7 @@ int clock_gettime(clockid_t clock_id, struct timespec * tp) {
 }
 #endif
 
-char * get_os_name(void) {
+const char * get_os_name(void) {
     static char str[256];
     struct utsname info;
     memset(&info, 0, sizeof(info));
@@ -969,7 +969,7 @@ char * get_os_name(void) {
     return str;
 }
 
-char * get_user_home(void) {
+const char * get_user_home(void) {
     static char buf[PATH_MAX];
     if (buf[0] == 0) {
         struct passwd * pwd = getpwuid(getuid());

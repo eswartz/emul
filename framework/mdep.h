@@ -103,6 +103,7 @@ extern int __stdcall getaddrinfo(const char *, const char *,
 #else /* not __CYGWIN__ */
 
 #include <direct.h>
+#include <errno.h>
 
 struct timespec {
     time_t  tv_sec;         /* seconds */
@@ -111,7 +112,9 @@ struct timespec {
 
 #define SIGKILL 1
 
+#ifndef ETIMEDOUT
 #define ETIMEDOUT 100
+#endif
 
 #if defined(__MINGW32__)
 typedef unsigned int useconds_t;
@@ -477,10 +480,10 @@ extern size_t strlcat(char * dst, const char * src, size_t size);
 extern pthread_attr_t pthread_create_attr;
 
 /* Return Operating System name */
-extern char * get_os_name(void);
+extern const char * get_os_name(void);
 
 /* Get user home directory path */
-extern char * get_user_home(void);
+extern const char * get_user_home(void);
 
 /* Create new UUID - Universally Unique IDentifier */
 extern const char * create_uuid(void);

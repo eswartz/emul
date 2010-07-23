@@ -248,13 +248,13 @@ static void event_cmd_line(void * arg) {
         return;
     }
 
-    while (*s && isspace(*s)) s++;
+    while (*s && isspace((int)*s)) s++;
     if (*s) {
         for (cp = 0; cp < cmd_count; ++cp) {
             len = strlen(cmds[cp].cmd);
-            if (strncmp(s, cmds[cp].cmd, len) == 0 && (s[len] == 0 || isspace(s[len]))) {
+            if (strncmp(s, cmds[cp].cmd, len) == 0 && (s[len] == 0 || isspace((int)s[len]))) {
                 s += len;
-                while (*s && isspace(*s)) s++;
+                while (*s && isspace((int)*s)) s++;
                 delayed = cmds[cp].hnd(s);
                 break;
             }
