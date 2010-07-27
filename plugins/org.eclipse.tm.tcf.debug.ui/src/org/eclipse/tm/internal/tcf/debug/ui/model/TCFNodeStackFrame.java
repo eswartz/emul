@@ -95,6 +95,7 @@ public class TCFNodeStackFrame extends TCFNode {
                     set(null, address.getError(), null);
                     return true;
                 }
+                if (frame_no > 0) n = n.subtract(BigInteger.valueOf(1));
                 IMemory.MemoryContext mem_ctx = null;
                 TCFNode p = parent;
                 while (p != null) {
