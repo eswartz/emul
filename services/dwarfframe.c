@@ -75,6 +75,8 @@ typedef struct StackFrameRules {
     ELF_Section * section;
     int eh_frame;
     U1_T version;
+    U1_T address_size;
+    U1_T segment_size;
     U4_T code_alignment;
     I4_T data_alignment;
     U8_T cie_pos;
@@ -209,7 +211,7 @@ static U8_T read_frame_data_pointer(U1_T encoding, ELF_Section ** sec) {
             if (encoding & EH_PE_indirect) {
                 unsigned idx;
                 ELF_File * file = rules.section->file;
-                size_t size = file->elf64 ? 8 : 4;
+                size_t size = rules.address_size;
                 U8_T res = 0;
                 for (idx = 1; idx < file->section_cnt; idx++) {
                     ELF_Section * sec = file->sections + idx;
@@ -404,7 +406,7 @@ static void add_dwarf_expression_commands(U8_T cmds_offs, U4_T cmds_size) {
         case OP_deref:
             {
                 StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
-                cmd->size = rules.section->file->elf64 ? 8 : 4;
+                cmd->size = rules.address_size;
                 cmd->big_endian = rules.section->file->big_endian;
             }
             break;
@@ -643,19 +645,30 @@ static void read_frame_cie(U8_T pos) {
     rules.cie_pos = pos;
     dio_Skip(pos - dio_GetPos());
     cie_length = dio_ReadU4();
-    if (cie_length == 0xffffffffu) {
+    if (cie_length == ~(U4_T)0) {
         cie_length = dio_ReadU8();
         cie_dwarf64 = 1;
     }
     cie_end = dio_GetPos() + cie_length;
     dio_Skip(cie_dwarf64 ? 8 : 4);
     rules.version = dio_ReadU1();
-    if (rules.version != 1 && rules.version != 3) {
+    if (rules.version != 1 && rules.version != 3 && rules.version != 4) {
         str_exception(ERR_INV_DWARF, "Unsupported version of Call Frame Information");
     }
     rules.cie_aug = dio_ReadString();
     if (rules.cie_aug != NULL && strcmp(rules.cie_aug, "eh") == 0) {
         rules.cie_eh_data = dio_ReadAddress(&rules.cie_eh_data_section);
+    }
+    if (rules.version >= 4) {
+        rules.address_size = dio_ReadU1();
+        rules.segment_size = dio_ReadU1();
+    }
+    else {
+        rules.address_size = rules.section->file->elf64 ? 8 : 4;
+        rules.segment_size = 0;
+    }
+    if (rules.segment_size != 0) {
+        str_exception(ERR_INV_DWARF, "Unsupported Call Frame Information: segment size != 0");
     }
     rules.code_alignment = dio_ReadULEB128();
     rules.data_alignment = dio_ReadSLEB128();
@@ -725,11 +738,11 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
         int fde_flag = 0;
 
         fde_length = dio_ReadU4();
-        if (fde_length == 0xffffffffu) {
+        if (fde_length == 0) continue;
+        if (fde_length == ~(U4_T)0) {
             fde_length = dio_ReadU8();
             fde_dwarf64 = 1;
         }
-        if (fde_length == 0) break;
         fde_pos = dio_GetPos();
         fde_end = fde_pos + fde_length;
         cie_ref = fde_dwarf64 ? dio_ReadU8() : dio_ReadU4();

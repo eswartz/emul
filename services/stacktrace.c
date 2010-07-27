@@ -82,23 +82,45 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
     memset(&frame, 0, sizeof(frame));
     frame.is_top_frame = 1;
     frame.ctx = ctx;
+    trace(LOG_STACK, "Stack trace, ctx %s", ctx->id);
     while (stack->frame_cnt < MAX_FRAMES) {
         StackFrame down;
         memset(&down, 0, sizeof(down));
         down.ctx = ctx;
+        trace(LOG_STACK, "Frame %d", stack->frame_cnt);
+#if ENABLE_Trace
+        if (LOG_STACK & log_mode) {
+            uint64_t v;
+            RegisterDefinition * r;
+            for (r = get_reg_definitions(ctx); r->name != NULL; r++) {
+                if (read_reg_value(&frame, r, &v) == 0) {
+                    trace(LOG_STACK, "  %-8s %16"PRIX64, r->name, v);
+                }
+            }
+        }
+#endif
 #if ENABLE_Symbols
         if (get_next_stack_frame(&frame, &down) < 0) {
             error = errno;
+            trace(LOG_STACK, "  trace error: %s", errno_to_str(errno));
             loc_free(down.regs);
             break;
         }
 #endif
-        if (frame.fp == 0 && crawl_stack_frame(&frame, &down) < 0) {
-            error = errno;
+        if (frame.fp == 0) {
+            trace(LOG_STACK, "  *** frame info not available ***");
             loc_free(down.regs);
-            break;
+            memset(&down, 0, sizeof(down));
+            down.ctx = ctx;
+            if (crawl_stack_frame(&frame, &down) < 0) {
+                error = errno;
+                trace(LOG_STACK, "  crawl error: %s", errno_to_str(errno));
+                loc_free(down.regs);
+                break;
+            }
         }
-        if (stack->frame_cnt > 0 && (frame.fp == 0 || frame.fp == prev_fp)) {
+        trace(LOG_STACK, "  cfa      %16"PRIX64, (uint64_t)frame.fp);
+        if (stack->frame_cnt > 0 && frame.fp == prev_fp) {
             loc_free(down.regs);
             break;
         }

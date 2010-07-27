@@ -369,6 +369,8 @@ struct ELF_File {
 
     int age;
     int listed;
+    int debug_info_file;
+    char * debug_info_file_name;
 };
 
 struct ELF_Section {

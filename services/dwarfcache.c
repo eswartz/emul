@@ -313,11 +313,11 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
 
 static void load_symbol_tables(void) {
     unsigned idx;
-    ELF_File * File = sCache->mFile;
-    unsigned sym_size = File->elf64 ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
+    ELF_File * file = sCache->mFile;
+    unsigned sym_size = file->elf64 ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
 
-    for (idx = 1; idx < File->section_cnt; idx++) {
-        ELF_Section * sym_sec = File->sections + idx;
+    for (idx = 1; idx < file->section_cnt; idx++) {
+        ELF_Section * sym_sec = file->sections + idx;
         if (sym_sec->size == 0) continue;
         if (sym_sec->type == SHT_SYMTAB) {
             unsigned i;
@@ -329,11 +329,11 @@ static void load_symbol_tables(void) {
             }
             tbl->mIndex = sCache->mSymSectionsCnt++;
             sCache->mSymSections[tbl->mIndex] = tbl;
-            if (sym_sec->link == 0 || sym_sec->link >= File->section_cnt) exception(EINVAL);
-            str_sec = File->sections + sym_sec->link;
+            if (sym_sec->link == 0 || sym_sec->link >= file->section_cnt) exception(EINVAL);
+            str_sec = file->sections + sym_sec->link;
             if (elf_load(sym_sec) < 0) exception(errno);
             if (elf_load(str_sec) < 0) exception(errno);
-            tbl->mFile = File;
+            tbl->mFile = file;
             tbl->mStrPool = (char *)str_sec->data;
             tbl->mStrPoolSize = (size_t)str_sec->size;
             tbl->mSymPool = (ElfX_Sym *)sym_sec->data;
@@ -381,12 +381,12 @@ static void add_addr_range(ELF_Section * sec, CompUnit * unit, ContextAddress ad
 static void load_addr_ranges() {
     Trap trap;
     unsigned idx;
-    ELF_File * File = sCache->mFile;
+    ELF_File * file = sCache->mFile;
     ELF_Section * debug_ranges = NULL;
 
     memset(&trap, 0, sizeof(trap));
-    for (idx = 1; idx < File->section_cnt; idx++) {
-        ELF_Section * sec = File->sections + idx;
+    for (idx = 1; idx < file->section_cnt; idx++) {
+        ELF_Section * sec = file->sections + idx;
         if (sec->size == 0) continue;
         if (sec->name == NULL) continue;
         if (strcmp(sec->name, ".debug_ranges") == 0) {
@@ -477,12 +477,12 @@ static void load_addr_ranges() {
 static void load_debug_sections(void) {
     Trap trap;
     unsigned idx;
-    ELF_File * File = sCache->mFile;
+    ELF_File * file = sCache->mFile;
 
     memset(&trap, 0, sizeof(trap));
 
-    for (idx = 1; idx < File->section_cnt; idx++) {
-        ELF_Section * sec = File->sections + idx;
+    for (idx = 1; idx < file->section_cnt; idx++) {
+        ELF_Section * sec = file->sections + idx;
         if (sec->size == 0) continue;
         if (sec->name == NULL) continue;
         if (strcmp(sec->name, ".debug") == 0 || strcmp(sec->name, ".debug_info") == 0) {
@@ -691,8 +691,8 @@ static void free_unit_cache(CompUnit * Unit) {
     Unit->mStates = NULL;
 }
 
-static void free_dwarf_cache(ELF_File * File) {
-    DWARFCache * Cache = (DWARFCache *)File->dwarf_dt_cache;
+static void free_dwarf_cache(ELF_File * file) {
+    DWARFCache * Cache = (DWARFCache *)file->dwarf_dt_cache;
     if (Cache != NULL) {
         unsigned i;
         assert(Cache->magic == DWARF_CACHE_MAGIC);
@@ -722,23 +722,23 @@ static void free_dwarf_cache(ELF_File * File) {
         loc_free(Cache->mSymSections);
         loc_free(Cache->mAddrRanges);
         loc_free(Cache);
-        File->dwarf_dt_cache = NULL;
+        file->dwarf_dt_cache = NULL;
     }
 }
 
-DWARFCache * get_dwarf_cache(ELF_File * File) {
-    DWARFCache * Cache = (DWARFCache *)File->dwarf_dt_cache;
+DWARFCache * get_dwarf_cache(ELF_File * file) {
+    DWARFCache * Cache = (DWARFCache *)file->dwarf_dt_cache;
     if (Cache == NULL) {
         Trap trap;
         if (!sCloseListenerOK) {
             elf_add_close_listener(free_dwarf_cache);
             sCloseListenerOK = 1;
         }
-        sCache = Cache = (DWARFCache *)(File->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
+        sCache = Cache = (DWARFCache *)(file->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
         sCache->magic = DWARF_CACHE_MAGIC;
-        sCache->mFile = File;
+        sCache->mFile = file;
         if (set_trap(&trap)) {
-            dio_LoadAbbrevTable(File);
+            dio_LoadAbbrevTable(file);
             load_symbol_tables();
             load_debug_sections();
             load_addr_ranges();
@@ -761,13 +761,13 @@ static void add_dir(CompUnit * Unit, char * Name) {
     Unit->mDirs[Unit->mDirsCnt++] = Name;
 }
 
-static void add_file(CompUnit * Unit, FileInfo * File) {
+static void add_file(CompUnit * Unit, FileInfo * file) {
     if (Unit->mFilesCnt >= Unit->mFilesMax) {
         Unit->mFilesMax = Unit->mFilesMax == 0 ? 16 : Unit->mFilesMax * 2;
         Unit->mFiles = (FileInfo *)loc_realloc(Unit->mFiles, sizeof(FileInfo) * Unit->mFilesMax);
     }
-    if (File->mDir == NULL) File->mDir = Unit->mDir;
-    Unit->mFiles[Unit->mFilesCnt++] = *File;
+    if (file->mDir == NULL) file->mDir = Unit->mDir;
+    Unit->mFiles[Unit->mFilesCnt++] = *file;
 }
 
 static void add_state(CompUnit * Unit, LineNumbersState * state) {
@@ -828,15 +828,15 @@ void load_line_numbers(CompUnit * Unit) {
         /* Read source files info */
         for (;;) {
             U4_T dir = 0;
-            FileInfo File;
-            memset(&File, 0, sizeof(File));
-            File.mName = dio_ReadString();
-            if (File.mName == NULL) break;
+            FileInfo file;
+            memset(&file, 0, sizeof(file));
+            file.mName = dio_ReadString();
+            if (file.mName == NULL) break;
             dir = dio_ReadULEB128();
-            if (dir > 0 && dir <= Unit->mDirsCnt) File.mDir = Unit->mDirs[dir - 1];
-            File.mModTime = dio_ReadULEB128();
-            File.mSize = dio_ReadULEB128();
-            add_file(Unit, &File);
+            if (dir > 0 && dir <= Unit->mDirsCnt) file.mDir = Unit->mDirs[dir - 1];
+            file.mModTime = dio_ReadULEB128();
+            file.mSize = dio_ReadULEB128();
+            add_file(Unit, &file);
         }
 
         /* Run the program */
@@ -860,14 +860,14 @@ void load_line_numbers(CompUnit * Unit) {
                 switch (dio_ReadU1()) {
                 case DW_LNE_define_file: {
                     U4_T dir = 0;
-                    FileInfo File;
-                    memset(&File, 0, sizeof(File));
-                    File.mName = dio_ReadString();
+                    FileInfo file;
+                    memset(&file, 0, sizeof(file));
+                    file.mName = dio_ReadString();
                     dir = dio_ReadULEB128();
-                    if (dir > 0 && dir <= Unit->mDirsCnt) File.mDir = Unit->mDirs[dir - 1];
-                    File.mModTime = dio_ReadULEB128();
-                    File.mSize = dio_ReadULEB128();
-                    add_file(Unit, &File);
+                    if (dir > 0 && dir <= Unit->mDirsCnt) file.mDir = Unit->mDirs[dir - 1];
+                    file.mModTime = dio_ReadULEB128();
+                    file.mSize = dio_ReadULEB128();
+                    add_file(Unit, &file);
                     break;
                 }
                 case DW_LNE_end_sequence:

@@ -603,6 +603,7 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
 }
 
 int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info) {
+    /* TODO: no debug info exists for linux-gate.so, need to read stack tracing information from the kernel  */
     ELF_File * file = elf_list_first(ctx, addr, addr + 1);
     int error = 0;
 

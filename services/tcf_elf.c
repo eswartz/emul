@@ -88,6 +88,7 @@ static void elf_dispose(ELF_File * file) {
     }
     loc_free(file->pheaders);
     loc_free(file->str_pool);
+    loc_free(file->debug_info_file_name);
     loc_free(file->name);
     loc_free(file);
 }
@@ -541,6 +542,79 @@ int elf_load(ELF_Section * s) {
     return 0;
 }
 
+static char * get_debug_info_file_name(ELF_File * file, int * error) {
+    unsigned idx;
+
+    for (idx = 1; idx < file->section_cnt; idx++) {
+        ELF_Section * sec = file->sections + idx;
+        if (sec->size == 0) continue;
+        if (sec->type == SHT_NOTE && sec->flags == SHF_ALLOC) {
+            unsigned offs = 0;
+            if (elf_load(sec) < 0) {
+                *error = errno;
+                return NULL;
+            }
+            while (offs < sec->size) {
+                U4_T name_sz = *(U4_T *)((U1_T *)sec->data + offs);
+                U4_T desc_sz = *(U4_T *)((U1_T *)sec->data + offs + 4);
+                U4_T type = *(U4_T *)((U1_T *)sec->data + offs + 8);
+                char * name = NULL;
+                offs += 12;
+                if (file->byte_swap) {
+                    SWAP(name_sz);
+                    SWAP(desc_sz);
+                    SWAP(type);
+                }
+                name = (char *)((U1_T *)sec->data + offs);
+                offs += name_sz;
+                while (offs % 4 != 0) offs++;
+                if (type == 3 && strcmp(name, "GNU") == 0) {
+                    char fnm[FILE_PATH_SIZE];
+                    struct stat buf;
+                    char id[64];
+                    size_t id_size = 0;
+                    U1_T * desc = (U1_T *)sec->data + offs;
+                    U4_T i = 0;
+                    while (i < desc_sz) {
+                        U1_T j = (desc[i] >> 4) & 0xf;
+                        U4_T k = desc[i++] & 0xf;
+                        id[id_size++] = j < 10 ? '0' + j : 'a' + j - 10;
+                        id[id_size++] = k < 10 ? '0' + k : 'a' + k - 10;
+                    }
+                    id[id_size++] = 0;
+                    snprintf(fnm, sizeof(fnm), "/usr/lib/debug/.build-id/%.2s/%s.debug", id, id + 2);
+                    if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                    return NULL;
+                }
+                offs += desc_sz;
+                while (offs % 4 != 0) offs++;
+            }
+        }
+        else if (sec->name != NULL && strcmp(sec->name, ".gnu_debuglink") == 0) {
+            if (elf_load(sec) < 0) {
+                *error = errno;
+                return NULL;
+            }
+            else {
+                /* TODO: check debug info CRC */
+                char fnm[FILE_PATH_SIZE];
+                struct stat buf;
+                char * name = (char *)sec->data;
+                int l = strlen(file->name);
+                while (l > 0 && file->name[l - 1] != '/' && file->name[l - 1] != '\\') l--;
+                snprintf(fnm, sizeof(fnm), "%.*s%s", l, file->name, name);
+                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                snprintf(fnm, sizeof(fnm), "%.*s.debug/%s", l, file->name, name);
+                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                snprintf(fnm, sizeof(fnm), "/usr/lib/debug%.*s%s", l, file->name, name);
+                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                return NULL;
+            }
+        }
+    }
+    return NULL;
+}
+
 static ELF_File * open_memory_region_file(MemoryRegion * r, int * error) {
     ELF_File * file = NULL;
 
@@ -552,6 +626,7 @@ static ELF_File * open_memory_region_file(MemoryRegion * r, int * error) {
         if (file == NULL) return NULL;
         if (r->dev != 0 && file->dev != r->dev) return NULL;
         if (r->ino != 0 && file->ino != r->ino) return NULL;
+        file->debug_info_file_name = get_debug_info_file_name(file, error);
     }
     return file;
 }
@@ -579,6 +654,9 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
                 elf_list_pos = i + 1;
                 return file;
             }
+            else if (error) {
+                break;
+            }
         }
     }
     errno = error;
@@ -600,6 +678,9 @@ ELF_File * elf_list_next(Context * ctx) {
                 file->listed = 1;
                 elf_list_pos = i + 1;
                 return file;
+            }
+            else if (error) {
+                break;
             }
         }
     }
@@ -645,6 +726,19 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
                 if (link_addr_min < p->address) link_addr_min = p->address;
                 if (link_addr_max >= p->address + p->mem_size) link_addr_max = p->address + p->mem_size;
                 range = find_comp_unit_addr_range(get_dwarf_cache(file), link_addr_min, link_addr_max);
+                if (range == NULL && file->debug_info_file_name != NULL && !file->debug_info_file) {
+                    ELF_File * debug = elf_open(file->debug_info_file_name);
+                    if (debug == NULL) exception(errno);
+                    debug->debug_info_file = 1;
+                    if (j < debug->pheader_cnt) {
+                        p = debug->pheaders + j;
+                        link_addr_min = offs_min - p->offset + p->address;
+                        link_addr_max = offs_max - p->offset + p->address;
+                        if (link_addr_min < p->address) link_addr_min = p->address;
+                        if (link_addr_max >= p->address + p->mem_size) link_addr_max = p->address + p->mem_size;
+                        range = find_comp_unit_addr_range(get_dwarf_cache(debug), link_addr_min, link_addr_max);
+                    }
+                }
             }
         }
         else {
@@ -692,22 +786,29 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_S
         ino_t ino = r->ino;
         if (r->file_name == NULL) continue;
         if (ino == 0 && (ino = elf_ino(r->file_name)) == 0) continue;
-        if (file->dev == r->dev && file->ino == ino) {
-            if (r->sect_name == NULL) {
-                if (file->pheader_cnt == 0 && file->type == ET_EXEC) return addr;
-                for (j = 0; j < file->pheader_cnt; j++) {
-                    U8_T offs;
-                    ELF_PHeader * p = file->pheaders + j;
-                    if (p->type != PT_LOAD) continue;
-                    if (addr < p->address || addr >= p->address + p->mem_size) continue;
-                    offs = addr - p->address + p->offset;
-                    if (offs < r->file_offs || offs >= r->file_offs + r->size) continue;
-                    return (ContextAddress)(offs - r->file_offs + r->addr);
-                }
+        if (file->dev != r->dev || file->ino != ino) {
+            int error = 0;
+            ELF_File * exec = NULL;
+            if (!file->debug_info_file) continue;
+            exec = open_memory_region_file(r, &error);
+            if (exec == NULL) continue;
+            if (exec->debug_info_file_name == NULL) continue;
+            if (strcmp(exec->debug_info_file_name, file->name)) continue;
+        }
+        if (r->sect_name == NULL) {
+            if (file->pheader_cnt == 0 && file->type == ET_EXEC) return addr;
+            for (j = 0; j < file->pheader_cnt; j++) {
+                U8_T offs;
+                ELF_PHeader * p = file->pheaders + j;
+                if (p->type != PT_LOAD) continue;
+                if (addr < p->address || addr >= p->address + p->mem_size) continue;
+                offs = addr - p->address + p->offset;
+                if (offs < r->file_offs || offs >= r->file_offs + r->size) continue;
+                return (ContextAddress)(offs - r->file_offs + r->addr);
             }
-            else if (sec != NULL && strcmp(sec->name, r->sect_name) == 0) {
-                return (ContextAddress)(addr - sec->addr + r->addr);
-            }
+        }
+        else if (sec != NULL && strcmp(sec->name, r->sect_name) == 0) {
+            return (ContextAddress)(addr - sec->addr + r->addr);
         }
     }
     return 0;
