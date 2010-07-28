@@ -62,6 +62,8 @@ static size_t connect_hnd_count = 0;
 static PluginCallBack * disconnect_hnds = NULL;
 static size_t disconnect_hnd_count = 0;
 
+static void cmd_done(void);
+
 static void destroy_cmdline_handler() {
     size_t i;
     for (i = 0; i < cmd_count; ++i) {
@@ -73,20 +75,21 @@ static void destroy_cmdline_handler() {
     loc_free(disconnect_hnds);
 }
 
+static void channel_connected(Channel * c) {
+    if (c == chan) cmd_done();
+}
+
 static void channel_disconnected(Channel * c) {
     size_t i = 0;
     if (chan == c) chan = NULL;
     protocol_release(c->protocol);
-    for (; i < disconnect_hnd_count; ++i)
-        disconnect_hnds[i](c);
+    for (i = 0; i < disconnect_hnd_count; ++i) disconnect_hnds[i](c);
 }
 
 static int cmd_exit(char * s) {
     destroy_cmdline_handler();
     exit(0);
 }
-
-static void cmd_done(void);
 
 static void display_tcf_reply(Channel * c, void * client_data, int error) {
     int i;
@@ -204,24 +207,24 @@ static int cmd_peerinfo(char * s) {
     return 0;
 }
 
-static void connect_done(void * args, int error, Channel * c) {
+static void connect_callback(void * args, int error, Channel * c) {
     PeerServer * ps = (PeerServer *)args;
 
     if (error) {
         fprintf(stderr, "Error: Cannot connect: %s\n", errno_to_str(error));
+        cmd_done();
     }
     else {
         size_t i = 0;
+        c->connected = channel_connected;
         c->disconnected = channel_disconnected;
         c->protocol = proto;
         protocol_reference(proto);
         channel_start(c);
         chan = c;
-        for (; i < connect_hnd_count; ++i)
-            connect_hnds[i](c);
+        for (i = 0; i < connect_hnd_count; ++i) connect_hnds[i](c);
     }
     peer_server_free(ps);
-    cmd_done();
 }
 
 static int cmd_connect(char * s) {
@@ -233,7 +236,7 @@ static int cmd_connect(char * s) {
         return 0;
     }
 
-    channel_connect(ps, connect_done, ps);
+    channel_connect(ps, connect_callback, ps);
     return 1;
 }
 
