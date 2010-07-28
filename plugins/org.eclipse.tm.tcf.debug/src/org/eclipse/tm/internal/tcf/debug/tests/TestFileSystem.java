@@ -96,7 +96,9 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
             if (entries != null && tmp_path == null) {
                 for (DirEntry e : entries) {
                     if (e.filename.equals("tmp") || e.filename.equalsIgnoreCase("temp")) {
-                        tmp_path = root + "/" + e.filename;
+                        tmp_path = root;
+                        if (!tmp_path.endsWith("/")) tmp_path += "/";
+                        tmp_path += e.filename;
                         break;
                     }
                 }
