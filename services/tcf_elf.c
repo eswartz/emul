@@ -577,7 +577,7 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                     U4_T i = 0;
                     while (i < desc_sz) {
                         U1_T j = (desc[i] >> 4) & 0xf;
-                        U4_T k = desc[i++] & 0xf;
+                        U1_T k = desc[i++] & 0xf;
                         id[id_size++] = j < 10 ? '0' + j : 'a' + j - 10;
                         id[id_size++] = k < 10 ? '0' + k : 'a' + k - 10;
                     }
