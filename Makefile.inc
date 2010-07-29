@@ -1,7 +1,7 @@
 CONF = Debug
 
-OPSYS = $(shell uname -o 2>/dev/null || uname -s)
-MACHINE = $(shell uname -m)
+OPSYS   := $(shell uname -o 2>/dev/null || uname -s)
+MACHINE := $(shell uname -m)
 
 INCDIRS = . system/$(OPSYS) machine/$(MACHINE)
 SRCDIRS = $(INCDIRS) system framework services main
@@ -63,15 +63,15 @@ ifdef PATH_Plugins
   LIBS += -ldl
 endif
 
-VERSION = $(shell grep "%define version " $(TCF_AGENT_DIR)/main/tcf-agent.spec | sed -e "s/%define version //")
+VERSION := $(shell grep "%define version " $(TCF_AGENT_DIR)/main/tcf-agent.spec | sed -e "s/%define version //")
 INSTALLROOT ?= /tmp
 SBIN = /usr/sbin
 INIT = /etc/init.d
 
-HFILES = $(foreach dir,$(SRCDIRS),$(wildcard $(TCF_AGENT_DIR)/$(dir)/*.h))
-CFILES = $(foreach fnm,$(foreach dir,$(SRCDIRS),$(wildcard $(TCF_AGENT_DIR)/$(dir)/*.c)),$(subst ^$(TCF_AGENT_DIR)/,,^$(fnm)))
-OFILES = $(addprefix $(BINDIR)/,$(addsuffix $(EXTOBJ),$(basename $(filter-out main/main%,$(CFILES)))))
-EXECS  = $(addprefix $(BINDIR)/,agent$(EXTEXE) client$(EXTEXE) tcfreg$(EXTEXE) valueadd$(EXTEXE) tcflog$(EXTEXE))
+HFILES := $(foreach dir,$(SRCDIRS),$(wildcard $(TCF_AGENT_DIR)/$(dir)/*.h))
+CFILES := $(foreach fnm,$(foreach dir,$(SRCDIRS),$(wildcard $(TCF_AGENT_DIR)/$(dir)/*.c)),$(subst ^$(TCF_AGENT_DIR)/,,^$(fnm)))
+OFILES := $(addprefix $(BINDIR)/,$(addsuffix $(EXTOBJ),$(basename $(filter-out main/main%,$(CFILES)))))
+EXECS  := $(addprefix $(BINDIR)/,agent$(EXTEXE) client$(EXTEXE) tcfreg$(EXTEXE) valueadd$(EXTEXE) tcflog$(EXTEXE))
 
 ifdef LUADIR
   EXECS += $(BINDIR)/tcflua
