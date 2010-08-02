@@ -7,8 +7,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.MemoryRanges;
 import v9t9.tools.asm.decomp.Block;
@@ -31,7 +31,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
     //int addr;
     //int size;
     /** instruction list */
-    Map<Integer, Instruction> instructions;
+    Map<Integer, Instruction9900> instructions;
     /** LL instruction list */
     Map<Integer, HighLevelInstruction> llInstructions;
     //List<Instruction> instructions;
@@ -47,7 +47,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		//this.ent = entry;
 		//this.addr = addr;
 		//this.size = size;
-		this.instructions = new TreeMap<Integer, Instruction>();
+		this.instructions = new TreeMap<Integer, Instruction9900>();
 		this.blockMap = new TreeMap<Integer, Block>();
         this.memoryRanges = new MemoryRanges();
 		this.llInstructions = new TreeMap<Integer, HighLevelInstruction>();
@@ -60,12 +60,12 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	}
 	
 	/** Get the instruction for the given PC */
-	public Instruction getInstruction(int pc) {
+	public Instruction9900 getInstruction(int pc) {
 		pc &= 0xfffe;
-		Instruction ins = instructions.get(pc);
+		Instruction9900 ins = instructions.get(pc);
 		if (ins == null) {
 			short op = domain.readWord(pc);
-			ins = new Instruction(InstructionTable.decodeInstruction(op, pc, domain));
+			ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, domain));
 			instructions.put(pc, ins);
 		}
 		return ins;
@@ -182,7 +182,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		HighLevelInstruction prev = null;
 		for (int addr = startAddr; addr < startAddr + size; addr += 2) {
 			short op = domain.readWord(addr);
-			HighLevelInstruction inst = new HighLevelInstruction(0, new Instruction(InstructionTable.decodeInstruction(op, addr, domain)));
+			HighLevelInstruction inst = new HighLevelInstruction(0, new Instruction9900(InstTable9900.decodeInstruction(op, addr, domain)));
 			getLLInstructions().put(new Integer(inst.pc), inst);
 			if (prev != null) {
 				prev.setNext(inst);

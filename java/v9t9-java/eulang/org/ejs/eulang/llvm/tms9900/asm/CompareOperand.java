@@ -3,19 +3,11 @@
  */
 package org.ejs.eulang.llvm.tms9900.asm;
 
-import static v9t9.engine.cpu.InstructionTable.Ijeq;
-import static v9t9.engine.cpu.InstructionTable.Ijgt;
-import static v9t9.engine.cpu.InstructionTable.Ijh;
-import static v9t9.engine.cpu.InstructionTable.Ijhe;
-import static v9t9.engine.cpu.InstructionTable.Ijl;
-import static v9t9.engine.cpu.InstructionTable.Ijle;
-import static v9t9.engine.cpu.InstructionTable.Ijlt;
-import static v9t9.engine.cpu.InstructionTable.Ijne;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.engine.cpu.IInstruction;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -43,16 +35,16 @@ public class CompareOperand extends NumberOperand {
 		compareToInt.put("uge", CMP_UGE);
 		compareToInt.put("ule", CMP_ULE);
 		
-		compareToJump.put(CMP_EQ, Ijeq);
-		compareToJump.put(CMP_NE, Ijne);
-		compareToJump.put(CMP_SGT, Ijgt);
-		compareToJump.put(CMP_SLT, Ijlt);
+		compareToJump.put(CMP_EQ, Inst9900.Ijeq);
+		compareToJump.put(CMP_NE, Inst9900.Ijne);
+		compareToJump.put(CMP_SGT, Inst9900.Ijgt);
+		compareToJump.put(CMP_SLT, Inst9900.Ijlt);
 		compareToJump.put(CMP_SGE, 0);
 		compareToJump.put(CMP_SLE, 0);
-		compareToJump.put(CMP_UGT, Ijh);
-		compareToJump.put(CMP_ULT, Ijl);
-		compareToJump.put(CMP_UGE, Ijhe);
-		compareToJump.put(CMP_ULE, Ijle);
+		compareToJump.put(CMP_UGT, Inst9900.Ijh);
+		compareToJump.put(CMP_ULT, Inst9900.Ijl);
+		compareToJump.put(CMP_UGE, Inst9900.Ijhe);
+		compareToJump.put(CMP_ULE, Inst9900.Ijle);
 	}
 
 	private String cmp;

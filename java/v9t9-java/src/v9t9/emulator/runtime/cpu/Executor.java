@@ -19,16 +19,13 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.Logging;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
-import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.compiler.ICompiledCode;
 import v9t9.emulator.runtime.compiler.ICompilerStrategy;
 import v9t9.emulator.runtime.cpu.CpuMetrics.MetricEntry;
 import v9t9.emulator.runtime.interpreter.Interpreter;
-import v9t9.emulator.runtime.interpreter.Interpreter9900;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
@@ -39,15 +36,13 @@ import v9t9.engine.memory.MemoryEntry;
  * 
  * @author ejs
  */
-public class Executor9900 {
+public class Executor {
 
     public Cpu cpu;
 
     public Map<MemoryArea, HighLevelCodeInfo> highLevelCodeInfoMap;
     public Interpreter interp;
     ICompilerStrategy compilerStrategy;
-    
-
 
     public long nInstructions;
     public long nCompiledInstructions;
@@ -75,35 +70,38 @@ public class Executor9900 {
 
 	private final CpuMetrics cpuMetrics;
 	
-    public Executor9900(final Cpu9900 cpu, CpuMetrics cpuMetrics) {
+    public Executor(Cpu cpu, CpuMetrics cpuMetrics, 
+    		Interpreter interpreter,
+    		ICompilerStrategy compilerStrategy,
+    		final InstructionListener dumpFullReporter,
+    		final InstructionListener dumpReporter) {
         this.cpu = cpu;
 		this.cpuMetrics = cpuMetrics;
-        this.interp = new Interpreter9900((TI99Machine) cpu.getMachine());
-        this.compilerStrategy = new CodeBlockCompilerStrategy(this);
+        this.interp = interpreter;
+        this.compilerStrategy = compilerStrategy;
+        compilerStrategy.setExecutor(this);
         this.highLevelCodeInfoMap = new HashMap<MemoryArea, HighLevelCodeInfo>();
         
         settingDumpFullInstructions.addListener(new IPropertyListener() {
 
-        	DumpFullReporter9900 reporter = new DumpFullReporter9900(cpu);
 			public void propertyChanged(IProperty setting) {
 				Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
 				
 				if (setting.getBoolean()) {
-					Executor9900.this.addInstructionListener(reporter);
+					Executor.this.addInstructionListener(dumpFullReporter);
 				} else {
-					Executor9900.this.removeInstructionListener(reporter);
+					Executor.this.removeInstructionListener(dumpFullReporter);
 				}
 				interruptExecution = Boolean.TRUE;
 			}
         	
         });
         settingDumpInstructions.addListener(new IPropertyListener() {
-        	DumpReporter9900 reporter = new DumpReporter9900(cpu);
 			public void propertyChanged(IProperty setting) {
 				if (setting.getBoolean()) {
-					Executor9900.this.addInstructionListener(reporter);
+					Executor.this.addInstructionListener(dumpReporter);
 				} else {
-					Executor9900.this.removeInstructionListener(reporter);
+					Executor.this.removeInstructionListener(dumpReporter);
 				}
 				interruptExecution = Boolean.TRUE;
 			}
@@ -123,7 +121,7 @@ public class Executor9900 {
         	}
         	
         });
-        v9t9.emulator.runtime.cpu.Cpu.settingRealTime.addListener(new IPropertyListener() {
+        Cpu.settingRealTime.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
@@ -136,7 +134,7 @@ public class Executor9900 {
         Machine.settingPauseMachine.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				Executor9900.this.cpuMetrics.resetLastCycleCount();				
+				Executor.this.cpuMetrics.resetLastCycleCount();				
 			}
         	
         });
@@ -162,7 +160,7 @@ public class Executor9900 {
 			cpu.checkAndHandleInterrupts();
 		} else {
 			interruptExecution = Boolean.FALSE;
-			if (v9t9.emulator.runtime.cpu.Cpu.settingRealTime.getBoolean()) {
+			if (Cpu.settingRealTime.getBoolean()) {
 				while (!cpu.isThrottled() && !interruptExecution) {
 					interpretOneInstruction();
 					cpu.checkAndHandleInterrupts();
@@ -192,13 +190,6 @@ public class Executor9900 {
 	    	boolean interpreting = false;
 			if (settingCompile.getBoolean()) {
 				/* try to make or run native code, which may fail */
-				short pc = cpu.getPC();
-				if ((pc >= 0x6000 && pc < 0x8000) 
-						&& Compiler.settingDumpModuleRomInstructions.getBoolean()) {
-			    	settingDumpInstructions.setBoolean(true);
-			        settingDumpFullInstructions.setBoolean(true);
-			    }
-	
 				ICompiledCode code = compilerStrategy.getCompiledCode(cpu);
 			    if (code == null || !code.run()) {
 			    	// Returns false if an instruction couldn't be executed
@@ -243,7 +234,7 @@ public class Executor9900 {
 
 	public void recordMetrics() {
 		MetricEntry entry = cpuMetrics.log(nInstructions,
-				cpu.getTotalCycleCount(), v9t9.emulator.runtime.cpu.Cpu.settingCyclesPerSecond.getInt(),
+				cpu.getTotalCycleCount(), Cpu.settingCyclesPerSecond.getInt(),
 				nVdpInterrupts, cpu.getAndResetInterruptCount(), 
 				nCompiledInstructions, nSwitches, nCompiles);
 		
@@ -285,6 +276,13 @@ public class Executor9900 {
 		else
 			instructionListeners = (InstructionListener[]) newListeners
 				.toArray(new InstructionListener[newListeners.size()]);
+	}
+
+	/**
+	 * @return
+	 */
+	public ICompilerStrategy getCompilerStrategy() {
+		return compilerStrategy;
 	}
 
 }

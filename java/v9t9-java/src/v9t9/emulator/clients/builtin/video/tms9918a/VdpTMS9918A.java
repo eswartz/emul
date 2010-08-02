@@ -27,7 +27,6 @@ import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.Logging;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;
@@ -110,8 +109,7 @@ public class VdpTMS9918A implements VdpHandler {
 	/** The number of CPU cycles corresponding to 1/60 second */
 	private int vdpInterruptLimit;
 	private int throttleCount;
-	private Cpu9900 cpu;
-	private Machine machine;
+	private final Machine machine;
 
 	public VdpTMS9918A(Machine machine) {
 		this.machine = machine;
@@ -689,7 +687,7 @@ public class VdpTMS9918A implements VdpHandler {
         		
         		// a real interrupt only occurs if wanted
         		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
-            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+            		machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
             		machine.getExecutor().nVdpInterrupts++;
         		}
         		//System.out.print('!');

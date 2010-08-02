@@ -70,8 +70,8 @@ public class LLRegisterOperand extends LLNonImmediateOperand {
 
 
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		return MachineOperand.createGeneralOperand(MachineOperand.OP_REG, (short) register);
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
+		return opFactory.createRegisterOperand(this);
 	}
 
 }

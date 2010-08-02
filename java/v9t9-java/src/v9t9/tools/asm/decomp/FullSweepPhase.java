@@ -10,8 +10,10 @@ import java.util.Iterator;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.BaseMachineOperand;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.LabelOperand;
@@ -49,15 +51,15 @@ public class FullSweepPhase extends Phase {
             for (HighLevelInstruction inst = (HighLevelInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
                 Label label;
 
-                if (inst.inst == InstructionTable.Ibl || inst.inst == InstructionTable.Ib || inst.inst == InstructionTable.Iblwp
-                    || inst.inst == InstructionTable.Ijmp || inst.jump == Instruction.INST_JUMP_COND) 
+                if (inst.inst == Inst9900.Ibl || inst.inst == Inst9900.Ib || inst.inst == Inst9900.Iblwp
+                    || inst.inst == Inst9900.Ijmp || inst.info.jump == Instruction9900.INST_JUMP_COND) 
                 {
                     label = null;
-                    if (operandIsLabel(inst, (MachineOperand) inst.op1)) {
-                        if (inst.inst == InstructionTable.Iblwp) {
+                    if (operandIsLabel(inst, (MachineOperand) inst.getOp1())) {
+                        if (inst.inst == Inst9900.Iblwp) {
                             // need to read vector
-                            if (((MachineOperand)inst.op1).type == MachineOperand.OP_ADDR) {
-                                int vecaddr = operandEffectiveAddress(inst, (MachineOperand) inst.op1);
+                            if (((BaseMachineOperand)inst.getOp1()).type == InstTable9900.OP_ADDR) {
+                                int vecaddr = operandEffectiveAddress(inst, (MachineOperand) inst.getOp1());
                                 
                                 Routine routine = addPossibleContextSwitch(vecaddr, null);
                                 if (routine != null) {
@@ -75,22 +77,22 @@ public class FullSweepPhase extends Phase {
                                               new ContextSwitchRoutine(wp));
                                               */
                                 if (label != null) {
-									inst.op1 = new LabelOperand(label);
+									inst.setOp1(new LabelOperand(label));
 								}
                                 
                             }
                         } else {
                             // normal label
-                            int addr = operandEffectiveAddress(inst, (MachineOperand) inst.op1);
+                            int addr = operandEffectiveAddress(inst, (MachineOperand) inst.getOp1());
 
-                            if (inst.inst == InstructionTable.Ibl) {
+                            if (inst.inst == Inst9900.Ibl) {
                                 Routine routine = addRoutine(addr, null, new LinkedRoutine());
                                 label = routine.getMainLabel();
                             } else {
                             	label = decompileInfo.findOrCreateLabel(addr);
                             }
                             
-                            inst.op1 = new LabelOperand(label);
+                            inst.setOp1(new LabelOperand(label));
                         }
                     }
 
@@ -221,18 +223,18 @@ public class FullSweepPhase extends Phase {
             if ((inst.flags & HighLevelInstruction.fIsBranch+HighLevelInstruction.fIsCondBranch) != 0) {
                 if ((inst.flags & HighLevelInstruction.fIsCall) == 0) {
                     // jump?
-                    if (inst.op1 instanceof LabelOperand)
+                    if (inst.getOp1() instanceof LabelOperand)
                     {
-                        Label label = ((LabelOperand) inst.op1).label;
+                        Label label = ((LabelOperand) inst.getOp1()).label;
                         if (label.getBlock() != null) {
 							block.addSucc(label.getBlock());
 						} else {
 							System.out.printf( "??? Ignoring branch to label %s from >%04X\n", label.getName(), inst.pc);
 						}
                     }
-                    if (inst.op2 instanceof LabelOperand)
+                    if (inst.getOp2() instanceof LabelOperand)
                     {
-                        Label label = ((LabelOperand) inst.op2).label;
+                        Label label = ((LabelOperand) inst.getOp2()).label;
                         if (label.getBlock() != null) {
 							block.addSucc(label.getBlock());
 						} else {
@@ -302,8 +304,8 @@ public class FullSweepPhase extends Phase {
 
         for (HighLevelInstruction inst = block.getFirst(); inst != null; inst = inst.getNext()) {
             // TODO: watch for self-modifying memory!
-            if (inst.inst == InstructionTable.Ilwpi) {
-				wp = ((MachineOperand)inst.op1).immed;
+            if (inst.inst == Inst9900.Ilwpi) {
+				wp = ((BaseMachineOperand)inst.getOp1()).immed;
 			}
             
             inst.setWp(wp);

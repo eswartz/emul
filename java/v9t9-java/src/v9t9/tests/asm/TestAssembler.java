@@ -9,13 +9,14 @@ import java.util.Random;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.tests.BaseTest;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.AssemblerInstruction;
 import v9t9.tools.asm.assembler.AssemblerOperandParserStage;
+import v9t9.tools.asm.assembler.AssemblerOperandParserStage9900;
 import v9t9.tools.asm.assembler.AssemblerTokenizer;
 import v9t9.tools.asm.assembler.BaseAssemblerInstruction;
 import v9t9.tools.asm.assembler.ContentEntry;
@@ -23,11 +24,12 @@ import v9t9.tools.asm.assembler.Equate;
 import v9t9.tools.asm.assembler.IInstructionParserStage;
 import v9t9.tools.asm.assembler.IOperandParserStage;
 import v9t9.tools.asm.assembler.LLInstruction;
-import v9t9.tools.asm.assembler.MachineOperandParserStage;
+import v9t9.tools.asm.assembler.MachineOperandFactory9900;
+import v9t9.tools.asm.assembler.MachineOperandParserStage9900;
 import v9t9.tools.asm.assembler.OperandParser;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.ResolveException;
-import v9t9.tools.asm.assembler.StandardInstructionParserStage;
+import v9t9.tools.asm.assembler.StandardInstructionParserStage9900;
 import v9t9.tools.asm.assembler.Symbol;
 import v9t9.tools.asm.assembler.directive.DefineByteDirective;
 import v9t9.tools.asm.assembler.directive.DefineWordDirective;
@@ -46,54 +48,55 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 public class TestAssembler extends BaseTest {
 
-	MachineOperandParserStage opStage = new MachineOperandParserStage();
+	MachineOperandParserStage9900 opStage = new MachineOperandParserStage9900();
 	
 	Assembler assembler = new Assembler();
 	OperandParser opParser = new OperandParser();
 	{
-		opParser.appendStage(new AssemblerOperandParserStage(assembler));
+		opParser.appendStage(new AssemblerOperandParserStage9900(assembler));
 	}
-	StandardInstructionParserStage asmInstStage = new StandardInstructionParserStage(opParser);
+	StandardInstructionParserStage9900 asmInstStage = new StandardInstructionParserStage9900(opParser);
 	
 	protected LLOperand operand(String string) throws Exception {
 		return (LLOperand) parseOperand(opStage, string);
 	}
 
 	public void testOperands() throws Exception {
-		assertEquals(2, operand("R2").createMachineOperand().getBits());
+		MachineOperandFactory9900 factory = new MachineOperandFactory9900();
+		assertEquals(2, operand("R2").createMachineOperand(factory).getBits());
 		try {
-			operand("R16").createMachineOperand().getBits();
+			operand("R16").createMachineOperand(factory).getBits();
 			fail();
 		} catch (IllegalArgumentException e) {
 		}
-		assertEquals(0x12, operand("*R2").createMachineOperand().getBits());
+		assertEquals(0x12, operand("*R2").createMachineOperand(factory).getBits());
 		try {
-			operand("*R16").createMachineOperand().getBits();
+			operand("*R16").createMachineOperand(factory).getBits();
 			fail();
 		} catch (IllegalArgumentException e) {
 		}
-		assertEquals(0x38, operand("*R8+").createMachineOperand().getBits());
+		assertEquals(0x38, operand("*R8+").createMachineOperand(factory).getBits());
 		try {
-			operand("*R16+").createMachineOperand().getBits();
+			operand("*R16+").createMachineOperand(factory).getBits();
 			fail();
 		} catch (IllegalArgumentException e) {
 		}
-		assertEquals(0x2f, operand("@>2(R15)").createMachineOperand().getBits());
+		assertEquals(0x2f, operand("@>2(R15)").createMachineOperand(factory).getBits());
 		try {
-			operand("@2(R16)").createMachineOperand().getBits();
+			operand("@2(R16)").createMachineOperand(factory).getBits();
 			fail();
 		} catch (IllegalArgumentException e) {
 		}
 		// immeds
-		assertEquals(0x0, operand(">b").createMachineOperand().getBits());
+		assertEquals(0x0, operand(">b").createMachineOperand(factory).getBits());
 		// immeds
 		LLOperand op = new LLCountOperand(0xb);
-		assertEquals(0xb, op.createMachineOperand().getBits());
+		assertEquals(0xb, op.createMachineOperand(factory).getBits());
 	}
 
 	public void testParse() throws Exception {
 		CPU.writeWord(0, (short) 0x100);
-		RawInstruction minst = InstructionTable.decodeInstruction(CPU.readWord(0), 0, CPU);
+		RawInstruction minst = InstTable9900.decodeInstruction(CPU.readWord(0), 0, CPU);
 		System.out.println(minst);
 		assertEquals(0x100, minst.opcode);
 		assertEquals(2, minst.size);
@@ -180,19 +183,19 @@ public class TestAssembler extends BaseTest {
 			CPU.flatWriteWord(i*2, iwords[i]);
 		}
 		
-		RawInstruction minst = InstructionTable.decodeInstruction(CPU.readWord(0), 0, CPU);
-		InstructionTable.coerceOperandTypes(minst);
+		RawInstruction minst = InstTable9900.decodeInstruction(CPU.readWord(0), 0, CPU);
+		InstTable9900.coerceOperandTypes(minst);
 		System.out.println(minst + " = " + HexUtils.toHex4(minst.opcode));
 		
 		RawInstruction stdinst = createInstruction(0, minst.toString());
 		
-		short[] words = InstructionTable.encode(stdinst);
+		short[] words = InstTable9900.encode(stdinst);
 		assertEquals(minst.toString(), minst.size, words.length*2);
 		
 		for (int i = 0; i < minst.size; i += 2) {
 			short exp = CPU.readWord(i);
 			if (i == 0)
-				exp = (short) InstructionTable.coerceInstructionOpcode(minst.inst, exp);
+				exp = (short) InstTable9900.coerceInstructionOpcode(minst.inst, exp);
 			assertEquals(minst.toString() + "@" + minst.size, Integer.toHexString(exp), Integer.toHexString(words[i/2]));
 		}
 	}
@@ -220,17 +223,18 @@ public class TestAssembler extends BaseTest {
 		assertEquals(1, irealInsts.length);
 		assertTrue(irealInsts[0] instanceof LLInstruction);
 		
-		RawInstruction realInst = ((LLInstruction) irealInsts[0]).createRawInstruction();
-		short[] words = InstructionTable.encode(realInst);
+		RawInstruction realInst = assembler.getInstructionFactory().createRawInstruction(
+				((LLInstruction) irealInsts[0]));
+		short[] words = InstTable9900.encode(realInst);
 		assertEquals(realInst.size, words.length * 2);
 		
 		realInst.pc = 0;
 		for (int i = 0; i < words.length; i++)
 			CPU.flatWriteWord(i*2, words[i]);
 		
-		RawInstruction minst = InstructionTable.decodeInstruction(words[0], 0, CPU);
-		InstructionTable.coerceOperandTypes(minst);
-		InstructionTable.coerceOperandTypes(realInst);
+		RawInstruction minst = InstTable9900.decodeInstruction(words[0], 0, CPU);
+		InstTable9900.coerceOperandTypes(minst);
+		InstTable9900.coerceOperandTypes(realInst);
 		
 		assertEquals(realInst.toString(), minst.toString());
 		System.out.println(insts[0]);
@@ -317,7 +321,7 @@ public class TestAssembler extends BaseTest {
 	}
 	
 	public void testAsmSymbols() throws Exception {
-		AssemblerOperandParserStage opStage = new AssemblerOperandParserStage(assembler);
+		AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
 
 		Operand op = parseOperand(opStage, "@BUFFER(R5)");
 		Symbol sym = assembler.getSymbolTable().findSymbol("BUFFER");
@@ -330,7 +334,7 @@ public class TestAssembler extends BaseTest {
 
 	private void testBadAsmOp(String string) {
 		try {
-			AssemblerOperandParserStage opStage = new AssemblerOperandParserStage(assembler);
+			AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
 			Operand op = parseOperand(opStage, string);
 			fail("Expected error, got " + op);
 		} catch (ParseException e) {
@@ -339,7 +343,7 @@ public class TestAssembler extends BaseTest {
 	}
 
 	private void testAsmOp(String string, Operand expOp) throws ParseException, IOException {
-		AssemblerOperandParserStage opStage = new AssemblerOperandParserStage(assembler);
+		AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
 		System.out.println("AsmOp: " + string);
 		Operand op = parseOperand(opStage, string);
 		assertEquals(expOp, op);
@@ -391,11 +395,12 @@ public class TestAssembler extends BaseTest {
 		IInstruction[] irealInsts = ((AssemblerInstruction) insts[0]).resolve(assembler, null, true);
 		assertEquals(1, irealInsts.length);
 		assertTrue(irealInsts[0] instanceof LLInstruction);
-		RawInstruction realinst = ((LLInstruction) irealInsts[0]).createRawInstruction();
-		InstructionTable.coerceOperandTypes(realinst);
+		RawInstruction realinst = assembler.getInstructionFactory().createRawInstruction(
+				((LLInstruction) irealInsts[0]));
+		InstTable9900.coerceOperandTypes(realinst);
 		
 		RawInstruction stdinst = createInstruction(pc, stdInst);
-		InstructionTable.coerceOperandTypes(stdinst);
+		InstTable9900.coerceOperandTypes(stdinst);
 		if (!stdinst.equals(realinst))
 			assertEquals(stdinst, realinst);
 	}
@@ -579,7 +584,7 @@ public class TestAssembler extends BaseTest {
 		List<AssemblerOperand> ops = (List) Collections.singletonList(new StringOperand("hello!"));
 		BaseAssemblerInstruction dbInst = new DefineByteDirective(ops);
 		IInstruction[] resolve = dbInst.resolve(assembler, null, true);
-		byte[] bytes = ((Directive) resolve[0]).getBytes();
+		byte[] bytes = ((Directive) resolve[0]).getBytes(assembler.getInstructionFactory());
 		assertEquals(6, bytes.length);
 		assertEquals('h', bytes[0]);
 		assertEquals('e', bytes[1]);
@@ -643,12 +648,12 @@ public class TestAssembler extends BaseTest {
 		insts = assembler.resolve(insts);
 		insts = assembler.resolve(insts);
 		IInstruction resolve = insts.get(0);
-		byte[] bytes = ((Directive) resolve).getBytes();
+		byte[] bytes = ((Directive) resolve).getBytes(assembler.getInstructionFactory());
 		assertEquals(1, bytes.length);
 		assertEquals((byte)0xe0, bytes[0]);
 		
 		resolve = insts.get(1);
-		bytes = ((Directive) resolve).getBytes();
+		bytes = ((Directive) resolve).getBytes(assembler.getInstructionFactory());
 		assertEquals(2, bytes.length);
 		assertEquals((byte)0xff, bytes[0]);
 		assertEquals((byte)0xe0, bytes[1]);

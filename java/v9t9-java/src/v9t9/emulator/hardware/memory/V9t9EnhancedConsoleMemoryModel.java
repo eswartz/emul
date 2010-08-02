@@ -26,9 +26,9 @@ import v9t9.engine.memory.MemoryEntry;
  * This has:
  * @author ejs
  */
-public class EnhancedConsoleMemoryModel extends StandardConsoleMemoryModel {
+public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryModel {
 
-	public EnhancedConsoleMemoryModel() {
+	public V9t9EnhancedConsoleMemoryModel() {
 		super();
 	}
 
@@ -94,6 +94,6 @@ public class EnhancedConsoleMemoryModel extends StandardConsoleMemoryModel {
 	
 	protected void defineMmioMemory(TI994A machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
-                new EnhancedConsoleMmioArea(machine)));
+                new V9t9EnhancedConsoleMmioArea(machine)));
 	}
 }

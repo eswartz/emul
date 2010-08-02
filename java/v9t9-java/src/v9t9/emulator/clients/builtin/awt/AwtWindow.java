@@ -49,7 +49,7 @@ import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.NotifyEvent;
 import v9t9.emulator.common.IEventNotifier.Level;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 
 /**
  * Provide the emulator in an SWT window
@@ -191,7 +191,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 					}
 				});
 
-		createStateButton(Executor9900.settingDumpFullInstructions, new Rectangle(
+		createStateButton(Executor.settingDumpFullInstructions, new Rectangle(
 				0, 128, 64, 64), new Rectangle(0, 0, 64, 64),
 				"Toggle CPU logging");
 

@@ -61,5 +61,12 @@ public abstract class LLNonImmediateOperand extends LLOperand {
 	public final boolean hasImmediate() {
 		return false;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
 
 }

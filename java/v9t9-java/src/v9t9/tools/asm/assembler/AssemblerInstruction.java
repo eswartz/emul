@@ -3,14 +3,10 @@
  */
 package v9t9.tools.asm.assembler;
 
-import static v9t9.engine.cpu.InstructionTable.Iab;
-import static v9t9.engine.cpu.InstructionTable.Icb;
-import static v9t9.engine.cpu.InstructionTable.Imovb;
-import static v9t9.engine.cpu.InstructionTable.Isb;
-import static v9t9.engine.cpu.InstructionTable.Isocb;
-import static v9t9.engine.cpu.InstructionTable.Iszcb;
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTable9900;
+import v9t9.engine.cpu.InstTableCommon;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
@@ -33,7 +29,7 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 	throws ResolveException {
 		int pc = assembler.getPc();
 		// instructions and associated labels are bumped when following uneven data
-		if ((pc & 1) != 0 && getInst() != InstructionTable.Ibyte) {
+		if ((pc & 1) != 0 && getInst() != InstTableCommon.Ibyte) {
 			pc = (pc + 1) & 0xfffe;
 			assembler.setPc(pc);
 		
@@ -66,7 +62,7 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(InstructionTable.getInstName(inst));
+		builder.append(InstTable9900.getInstName(inst));
 		if (op1 != null && !(op1 instanceof LLEmptyOperand)) {
 			builder.append(' ');
 			builder.append(op1);
@@ -115,12 +111,12 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
 	}
 	
 	public boolean isJumpInst() {
-		return getInst() >= InstructionTable.Ijmp && getInst() <= InstructionTable.Ijop;
+		return getInst() >= Inst9900.Ijmp && getInst() <= Inst9900.Ijop;
 	}
 
 	public boolean isByteOp() {
-		return inst == Isocb || inst == Icb || inst == Iab 
-		|| inst == Isb || inst == Iszcb || inst == Imovb;
+		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
+		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
 	}
 
 	/** Get an operand by traditional number (1,2,3) */

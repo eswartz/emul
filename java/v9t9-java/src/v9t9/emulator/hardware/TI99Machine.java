@@ -5,7 +5,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrManager9900;
 import v9t9.emulator.hardware.dsrs.IDsrManager;
-import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
@@ -29,29 +29,11 @@ public class TI99Machine extends Machine {
 		dsrManager = new DsrManager9900(this);
 	}
 	
-	@Override
-	public void setNotRunning() {
-		super.setNotRunning();
-		dsrManager.dispose();
-	}
-	
-	@Override
-	protected void doSaveState(ISettingSection settings) {
-		super.doSaveState(settings);
-		dsrManager.saveState(settings.addSection("DSRs"));
-	}
-
-	@Override
-	protected void doLoadState(ISettingSection section) {
-		super.doLoadState(section);
-		dsrManager.loadState(section.getSection("DSRs"));
-	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getSoundMmio()
 	 */
 	public v9t9.emulator.hardware.memory.mmio.SoundMmio getSoundMmio() {
-	    return ((StandardConsoleMemoryModel) memoryModel).soundMmio;
+	    return ((TI994AStandardConsoleMemoryModel) memoryModel).soundMmio;
 	}
 
 	/* (non-Javadoc)
@@ -65,14 +47,14 @@ public class TI99Machine extends Machine {
 	 * @see v9t9.emulator.hardware.TI99Machine#getGplMmio()
 	 */
 	public GplMmio getGplMmio() {
-	    return ((StandardConsoleMemoryModel) memoryModel).gplMmio;
+	    return ((TI994AStandardConsoleMemoryModel) memoryModel).gplMmio;
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getSpeechMmio()
 	 */
 	public SpeechMmio getSpeechMmio() {
-		return ((StandardConsoleMemoryModel) memoryModel).speechMmio;
+		return ((TI994AStandardConsoleMemoryModel) memoryModel).speechMmio;
 	}
 
 	/* (non-Javadoc)

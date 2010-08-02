@@ -35,7 +35,7 @@ public class LLForwardOperand extends LLOperand {
 	 * @see v9t9.tools.asm.operand.ll.LLOperand#createMachineOperand()
 	 */
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
 		throw new ResolveException(this, "Unresolved forward reference: " + getOriginal());
 	}
 	
@@ -51,6 +51,13 @@ public class LLForwardOperand extends LLOperand {
 	}
 	@Override
 	public boolean isRegister() {
+		return false;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
 		return false;
 	}
 

@@ -9,6 +9,7 @@ package v9t9.emulator.hardware;
 import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.keyboard.KeyboardState;
 
@@ -355,7 +356,7 @@ public class InternalCru9901 implements CruAccess {
     /** When PIN_INTREQ set, the interrupt level (IC* bits on the TMS9900). */
     private byte ic;
     
-	public void pollForPins(Cpu9900 cpu) {
+	public void pollForPins(Cpu cpu) {
 		// interrupts not generated in clock mode
 		if (clockmode) {
 			return;

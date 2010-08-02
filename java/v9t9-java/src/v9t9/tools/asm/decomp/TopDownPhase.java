@@ -16,9 +16,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.BaseMachineOperand;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.DataWordListOperand;
@@ -43,7 +47,7 @@ public class TopDownPhase extends Phase {
 	public void run() {
 		// add blocks for every branch instruction
 		for (HighLevelInstruction inst : decompileInfo.getLLInstructions().values()) {
-			if (inst.inst == InstructionTable.Idata) {
+			if (inst.inst == InstTableCommon.Idata) {
 				continue;
 			}
 			if ((inst.flags & HighLevelInstruction.fStartsBlock) != 0
@@ -141,7 +145,7 @@ public class TopDownPhase extends Phase {
 			if (inst == block.getFirst()) {
 				 inst.flags |= HighLevelInstruction.fStartsBlock;
 			}
-			if (inst.inst == InstructionTable.Idata) {
+			if (inst.inst == InstTableCommon.Idata) {
 				System.out.println("stopping at data: " + inst);
 				if (block.getLast() == null)
 					block.setLast(block.getFirst());
@@ -233,29 +237,29 @@ public class TopDownPhase extends Phase {
 	 * @return either single Label, a single Routine, or a List&lt;LabelOperand&gt;
 	 */
 	private Object getLabels(HighLevelInstruction inst) {
-		if (inst.op1 instanceof LabelOperand) {
-			return inst.op1;
+		if (inst.getOp1() instanceof LabelOperand) {
+			return inst.getOp1();
 		}
 
-		if (!(inst.op1 instanceof MachineOperand)) {
+		if (!(inst.getOp1() instanceof MachineOperand)) {
 			return null;
 		}
 
-		MachineOperand mop1 = (MachineOperand) inst.op1;
+		MachineOperand9900 mop1 = (MachineOperand9900) inst.getOp1();
 		
 		// try to convert a reg reference to a multi-label or a known address 
 		if (mop1.isRegisterReference()) {
-			if (mop1.type != MachineOperand.OP_REG && mop1.val != 0) {
+			if (mop1.type != InstTable9900.OP_REG && mop1.val != 0) {
 				LabelListOperand llo = handleJumpTable(inst, mop1);
 				if (llo != null) {
-					inst.op1 = llo;
+					inst.setOp1(llo);
 				}
 				return llo;
 			} else {
 				// branch into workspace (whatever!)
 				if (inst.getWp() != 0) {
 					int addr = (inst.getWp() + mop1.val * 2) & 0xfffe;
-					mop1.type = MachineOperand.OP_ADDR;
+					mop1.type = InstTable9900.OP_ADDR;
 					mop1.immed = (short) addr;
 					mop1.val = 0;
 					// fall through
@@ -267,7 +271,7 @@ public class TopDownPhase extends Phase {
 		if (operandIsLabel(inst, mop1)) {
 			Operand op = handleLabel(inst, mop1);
 			if (op != null) {
-				inst.op1 = op;
+				inst.setOp1(op);
 			}
 			return op;
 		}
@@ -297,7 +301,7 @@ public class TopDownPhase extends Phase {
 		if (label == null)
 			return null;
 
-		if (inst.inst == InstructionTable.Iblwp) {
+		if (inst.inst == Inst9900.Iblwp) {
 			// context switch
 			routine = getRoutine(addr + 2);
 			if (routine == null) {
@@ -307,7 +311,7 @@ public class TopDownPhase extends Phase {
 					return new RoutineOperand(routine);
 				}
 			}
-		} else if (inst.inst == InstructionTable.Ibl) {
+		} else if (inst.inst == Inst9900.Ibl) {
 			routine = getRoutine(addr);
 			if (routine == null) {
 				if (validCodeAddress(addr)) {
@@ -363,7 +367,7 @@ public class TopDownPhase extends Phase {
 		if (target.getBlock() == null) {
 			// be wary of jumps inside already-recognized code
 			if (!force) {
-				Instruction prevTarget = decompileInfo.getInstruction((addr - 2) & 0xfffe);
+				Instruction9900 prevTarget = decompileInfo.getInstruction((addr - 2) & 0xfffe);
 				if (prevTarget != null && prevTarget.size >= 4) {
 					System.out.println("!!! ignoring jump inside code: " + prevTarget + " (was " + target + ") from "  
 							+ caller);
@@ -402,8 +406,8 @@ public class TopDownPhase extends Phase {
 	 * @param mop1 operand indirecting register
 	 * @return list of LabelOperands
 	 */
-	private LabelListOperand handleJumpTable(HighLevelInstruction inst, MachineOperand mop1) {
-		if (mop1.type == MachineOperand.OP_ADDR) {
+	private LabelListOperand handleJumpTable(HighLevelInstruction inst, MachineOperand9900 mop1) {
+		if (mop1.type == InstTable9900.OP_ADDR) {
 			// register plus address:  address is code and register holds word-aligned offset:
 			//
 			//	LI R2, 2
@@ -435,7 +439,7 @@ public class TopDownPhase extends Phase {
 				} else {
 					break;
 				}
-				if (inst.inst == InstructionTable.Iblwp) {
+				if (inst.inst == Inst9900.Iblwp) {
 					addr += 4;
 				} else {
 					addr += 2;
@@ -448,8 +452,8 @@ public class TopDownPhase extends Phase {
 						+ inst);
 				return null;
 			}
-		} else if (mop1.type == MachineOperand.OP_INC
-				|| mop1.type == MachineOperand.OP_IND) {
+		} else if (mop1.type == InstTable9900.OP_INC
+				|| mop1.type == InstTable9900.OP_IND) {
 			//if (routine.isReturn(inst)) {
 			//	return null;
 			//}
@@ -504,7 +508,7 @@ public class TopDownPhase extends Phase {
 	 * @return array of Labels or <code>null</code> if we can't determine anything
 	 */
 	Label[] findJumpTable(HighLevelInstruction caller,
-			MachineOperand mop1) {
+			MachineOperand9900 mop1) {
 		if (!mop1.isRegisterReference())
 			return null;
 		
@@ -525,15 +529,15 @@ public class TopDownPhase extends Phase {
 			//	break;
 
 			// see if instruction modifies register
-			if (inst.op2 instanceof MachineOperand &&
-					((MachineOperand) inst.op2).isRegisterReference(reg)) {
-				MachineOperand mop2 = ((MachineOperand) inst.op2);
+			if (inst.getOp2() instanceof MachineOperand &&
+					((MachineOperand) inst.getOp2()).isRegisterReference(reg)) {
+				MachineOperand mop2 = ((MachineOperand) inst.getOp2());
 				if (mop2.isRegister()) {
 					// directly set
-					if (inst.op1 instanceof MachineOperand) {
+					if (inst.getOp1() instanceof MachineOperand) {
 						// just look for address
-						MachineOperand fromOp1 = (MachineOperand) inst.op1;
-						if (fromOp1.type == MachineOperand.OP_ADDR) {
+						MachineOperand9900 fromOp1 = (MachineOperand9900) inst.getOp1();
+						if (fromOp1.type == InstTable9900.OP_ADDR) {
 							int size;
 							if (fromOp1.val == 0) {
 								short target = CPU.readWord(fromOp1.immed);
@@ -585,7 +589,7 @@ public class TopDownPhase extends Phase {
 	 * @param fromOp1
 	 * @return
 	 */
-	private int guessJumpTableSize(HighLevelInstruction inst, MachineOperand fromOp1) {
+	private int guessJumpTableSize(HighLevelInstruction inst, MachineOperand9900 fromOp1) {
 		Block startBlock = inst.getBlock();
 		int range = 0xffff;
 		
@@ -603,13 +607,13 @@ public class TopDownPhase extends Phase {
 			if (inst.getBlock() != startBlock)
 				break;
 
-			if (inst.op1 instanceof MachineOperand
-					&& ((MachineOperand) inst.op1).isRegister(reg)) {
-				if (inst.op2 instanceof MachineOperand == false) {
+			if (inst.getOp1() instanceof MachineOperand
+					&& ((MachineOperand) inst.getOp1()).isRegister(reg)) {
+				if (inst.getOp2() instanceof MachineOperand == false) {
 					System.out.println("Can't interpret HL operand in " + inst);
 					break;
 				}
-				MachineOperand mop = (MachineOperand) inst.op2;
+				BaseMachineOperand mop = (BaseMachineOperand) inst.getOp2();
 
 				// adjust the range by the instruction
 				
@@ -617,37 +621,37 @@ public class TopDownPhase extends Phase {
 				// it may overflow (since it's max to begin with).
 				boolean calced = true;
 				switch (inst.inst) {
-				case InstructionTable.Isrl:
+				case Inst9900.Isrl:
 					range >>= mop.val;
 					break;
-				case InstructionTable.Isla:
+				case Inst9900.Isla:
 					range = (range << mop.val) & 0xffff;
 					break;
-				case InstructionTable.Isrc:
+				case Inst9900.Isrc:
 					range = (short) (( (range & 0xffff) >> mop.val) | (range << (16 - mop.val)));
 					break;
-				case InstructionTable.Iandi:
+				case Inst9900.Iandi:
 					range &= mop.immed;
 					break;
-				case InstructionTable.Iai:
+				case Inst9900.Iai:
 					range += mop.val;
 					break;
-				case InstructionTable.Ili:
+				case Inst9900.Ili:
 					range = mop.immed;
 					break;
-				case InstructionTable.Iori:
+				case Inst9900.Iori:
 					range |= mop.immed;
 					break;
-				case InstructionTable.Iinc:
+				case Inst9900.Iinc:
 					range++;
 					break;
-				case InstructionTable.Iinct:
+				case Inst9900.Iinct:
 					range += 2;
 					break;
-				case InstructionTable.Idec:
+				case Inst9900.Idec:
 					range--;
 					break;
-				case InstructionTable.Idect:
+				case Inst9900.Idect:
 					range -= 2;
 					break;
 				default:
@@ -770,17 +774,17 @@ public class TopDownPhase extends Phase {
 				if ((inst.flags & HighLevelInstruction.fIsBranch) != 0
 					&& (inst.flags & HighLevelInstruction.fIsCall) == 0) {
 					// jump?
-					if (inst.op1 instanceof LabelOperand) {
-						addLabelOperandSucc(inst, block, (LabelOperand) inst.op1);
+					if (inst.getOp1() instanceof LabelOperand) {
+						addLabelOperandSucc(inst, block, (LabelOperand) inst.getOp1());
 					}
-					if (inst.op1 instanceof LabelListOperand) {
-						LabelListOperand ll = (LabelListOperand) inst.op1;
+					if (inst.getOp1() instanceof LabelListOperand) {
+						LabelListOperand ll = (LabelListOperand) inst.getOp1();
 						for (LabelOperand lo : ll.operands) {
 							addLabelOperandSucc(inst, block, lo);
 						}
 					}
-					if (inst.op2 instanceof LabelOperand) {
-						addLabelOperandSucc(inst, block, (LabelOperand) inst.op2);
+					if (inst.getOp2() instanceof LabelOperand) {
+						addLabelOperandSucc(inst, block, (LabelOperand) inst.getOp2());
 					}
 				}
 
@@ -902,9 +906,9 @@ public class TopDownPhase extends Phase {
 		if (routine.getDataWords() > 0) {
 			// examine all call sites and fix up
 			for (HighLevelInstruction callSite : new ArrayList<HighLevelInstruction>(routineCalls)) {
-				if (callSite.op1 instanceof RoutineOperand
-						&& ((RoutineOperand) callSite.op1).routine == routine) {
-					if (!(callSite.op2 instanceof DataWordListOperand)) {
+				if (callSite.getOp1() instanceof RoutineOperand
+						&& ((RoutineOperand) callSite.getOp1()).routine == routine) {
+					if (!(callSite.getOp2() instanceof DataWordListOperand)) {
 						int[] args = new int[routine.getDataWords()];
 						int pc = (callSite.pc + callSite.size) & 0xfffe;
 						int last = pc + routine.getDataWords() * 2;
@@ -914,7 +918,7 @@ public class TopDownPhase extends Phase {
 							inst = decompileInfo.getLLInstructions().get(pc);
 							
 							noopInstruction(inst);
-							args[idx++] = ((MachineOperand)inst.op1).immed & 0xffff;
+							args[idx++] = ((BaseMachineOperand)inst.getOp1()).immed & 0xffff;
 							pc += 2;
 							if (callSite.getBlock() != null && callSite.getBlock().getLast() == inst) {
 								//inst = decompileInfo.getLLInstructions().get(pc);
@@ -925,7 +929,7 @@ public class TopDownPhase extends Phase {
 						inst = decompileInfo.getLLInstructions().get(pc);
 						callSite.setNext(inst);
 						
-						callSite.op2 = new DataWordListOperand(args);
+						callSite.setOp2(new DataWordListOperand(args));
 						//callSite.setNext(decompileInfo.getLLInstructions().get(last));
 						unresolvedRoutines.add(routine);
 					}
@@ -936,7 +940,7 @@ public class TopDownPhase extends Phase {
 
 	private void noopInstruction(HighLevelInstruction inst) {
 		if (inst != null) {
-			if (inst.inst != InstructionTable.Idata) {
+			if (inst.inst != InstTableCommon.Idata) {
 				System.out.println("NOOP'ing " + inst);
 				if (inst.isCall())
 					routineCalls.remove(inst);

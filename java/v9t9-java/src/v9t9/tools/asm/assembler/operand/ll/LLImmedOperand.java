@@ -63,6 +63,13 @@ public class LLImmedOperand extends LLOperand {
 	public boolean isRegister() {
 		return false;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return true;
+	}
 
 	
 	public int getValue() {
@@ -95,8 +102,8 @@ public class LLImmedOperand extends LLOperand {
 	}
 
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		return MachineOperand.createImmediate(value);
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
+		return opFactory.createImmedOperand(this);
 	}
 	
 	@Override

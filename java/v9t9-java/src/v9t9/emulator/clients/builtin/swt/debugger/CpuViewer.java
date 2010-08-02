@@ -35,9 +35,10 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.Emulator;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
-import v9t9.emulator.runtime.cpu.Executor9900;
-import v9t9.engine.cpu.Instruction;
+import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.RawInstruction;
 
 /**
  * @author ejs
@@ -148,7 +149,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 					public void run() {
 						//if (!Machine.settingPauseMachine.getBoolean())
 						//	resizeTable();
-						Executor9900.settingSingleStep.setBoolean(true);
+						Executor.settingSingleStep.setBoolean(true);
 						showNextInstruction = true;
 						Machine.settingPauseMachine.setBoolean(false);
 					}
@@ -353,15 +354,15 @@ public class CpuViewer extends Composite implements InstructionListener {
 	 */
 	public void executed(final InstructionWorkBlock before, InstructionWorkBlock after_) {
 		if (isWatching || showNextInstruction) {
-			InstructionWorkBlock after= new InstructionWorkBlock();
+			InstructionWorkBlock after= new InstructionWorkBlock(machine.getCpu().createStatus());
 	        after_.copyTo(after);
 			InstRow row = new InstRow(before, after);
 			instContentProvider.addInstRow(row);
 			showNextInstruction = false;
 			//refreshTable();
 		}
-		if (Executor9900.settingSingleStep.getBoolean()) {
-			Executor9900.settingSingleStep.setBoolean(false);
+		if (Executor.settingSingleStep.getBoolean()) {
+			Executor.settingSingleStep.setBoolean(false);
 			Machine.settingPauseMachine.setBoolean(true);
 			machine.getExecutor().interruptExecution = Boolean.TRUE;
 		}
@@ -394,16 +395,15 @@ public class CpuViewer extends Composite implements InstructionListener {
 					//}
 					
 					if (isWatching || Machine.settingPauseMachine.getBoolean()) {
-						Instruction inst = machine.getExecutor().interp.getInstruction(machine.getCpu());
+						RawInstruction inst = machine.getExecutor().interp.getInstruction();
 						String instString = inst.toString();
 						if (instString.length() < 24)
 							instString += "                        ".substring(0, 24 - instString.length());
 						nextInstructionText.setText(
 								">" + HexUtils.toHex4(inst.pc) + "\t\t" 
 								+ instString
-								+"\tWP=>" 
-								+ HexUtils.toHex4(machine.getCpu().getWP())
-								+ "\t\tST=" + machine.getCpu().getStatus());
+								+ "\t" + machine.getCpu().getCurrentStateString()
+								);
 					} else {
 						nextInstructionText.setText("");
 					}

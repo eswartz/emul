@@ -13,9 +13,9 @@ package v9t9.emulator.hardware.memory;
  * This has:
  * @author ejs
  */
-public class EnhancedCompatibleConsoleMemoryModel extends StandardConsoleMemoryModel {
+public class EnhancedTI994ACompatibleConsoleMemoryModel extends TI994AStandardConsoleMemoryModel {
 
-	public EnhancedCompatibleConsoleMemoryModel() {
+	public EnhancedTI994ACompatibleConsoleMemoryModel() {
 		super();
 	}
 

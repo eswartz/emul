@@ -6,10 +6,10 @@ import java.lang.reflect.InvocationTargetException;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.cpu.AbortedException;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.HighLevelCodeInfo;
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.tools.asm.decomp.HighLevelInstruction;
 
@@ -30,17 +30,17 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
     CompiledCode code;
     String baseName;
     private boolean running;
-	private Executor9900 exec;
+	private Executor exec;
 	private DirectLoader loader;
 	int addr;
 	int size;
 	MemoryEntry ent;
-	private Compiler compiler;
+	private Compiler9900 compiler;
 	private AbortedException gAbortedException = new AbortedException();
     
     static int uniqueClassSuffix;
 
-    public CodeBlock(Executor9900 exec, DirectLoader loader, MemoryEntry ent, int addr, int size) {
+    public CodeBlock(Executor exec, DirectLoader loader, MemoryEntry ent, int addr, int size) {
         this.exec = exec;
         this.loader = loader;
         this.highLevel = exec.getHighLevelCode(ent);
@@ -90,7 +90,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         }
     }
     
-	public void compile(Compiler compiler) {
+	public void compile(Compiler9900 compiler) {
 		this.compiler = compiler;
 		build();
 	}
@@ -119,7 +119,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
                 highLevel.analyze();
                 
                 int numinsts = size / 2;
-                Instruction insts[] = new Instruction[numinsts];
+                Instruction9900 insts[] = new Instruction9900[numinsts];
         	    
         	    for (int i = 0; i < numinsts; i++) {
         	    	insts[i] = highLevel.getInstruction(addr + i * 2);
@@ -196,7 +196,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         		// target the PC later
         		int pc = exec.cpu.getPC() & 0xffff;
         		HighLevelInstruction inst = highLevel.getLLInstructions().get(pc);
-        		if (inst != null && inst.inst != InstructionTable.Idata) {
+        		if (inst != null && inst.inst != InstTableCommon.Idata) {
         			if ((inst.flags & HighLevelInstruction.fStartsBlock) == 0) {
         				inst.flags |= HighLevelInstruction.fStartsBlock;
         				/*
@@ -232,7 +232,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         // load and construct an instance of the class
         Class clas = loader.load(uniqueClassName, bytecode);
         try {
-            Constructor cons = clas.getConstructor(new Class[] { Executor9900.class });
+            Constructor cons = clas.getConstructor(new Class[] { Executor.class });
             code = (CompiledCode)cons.newInstance(new Object[] { exec });
             return true;
         } catch (InvocationTargetException ex) {

@@ -21,12 +21,13 @@ import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.ModuleManager;
 import v9t9.emulator.hardware.EnhancedMachineModel;
+import v9t9.emulator.hardware.MFP201Machine;
 import v9t9.emulator.hardware.StandardMachineModel;
 import v9t9.emulator.hardware.TI994A;
-import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.Client;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.Memory;
@@ -71,7 +72,7 @@ public class Emulator {
 	protected void setupDefaults() {
 		EmulatorSettings.INSTANCE.register(Cpu.settingCyclesPerSecond);
 		EmulatorSettings.INSTANCE.register(Cpu.settingRealTime);
-		EmulatorSettings.INSTANCE.register(StandardConsoleMemoryModel.settingExpRam);
+		EmulatorSettings.INSTANCE.register(TI994AStandardConsoleMemoryModel.settingExpRam);
 
 		
     	Cpu.settingRealTime.setBoolean(true);
@@ -79,7 +80,7 @@ public class Emulator {
     	// compile?  and waste a lot of effort to get nothing done?
     	if (false) {
     		Cpu.settingRealTime.setBoolean(false);
-	    	Executor9900.settingCompile.setBoolean(true);
+	    	Executor.settingCompile.setBoolean(true);
 	    	//Compiler.settingDebugInstructions.setBoolean(true);
 	    	//Compiler.settingOptimize.setBoolean(true);
 	        Compiler.settingOptimizeRegAccess.setBoolean(true);
@@ -92,14 +93,14 @@ public class Emulator {
         
         if (false) {
         	//Executor.settingDumpInstructions.setBoolean(true);
-        	Executor9900.settingDumpFullInstructions.setBoolean(true);
+        	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
         }
         if (false) {
         	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
         }
         
-    	StandardConsoleMemoryModel.settingExpRam.setBoolean(true);
+    	TI994AStandardConsoleMemoryModel.settingExpRam.setBoolean(true);
     }
     
 	protected void loadState() {
@@ -131,11 +132,15 @@ public class Emulator {
     	
         Machine machine;
         
-        if (findArgument(args, "--enhanced")) {
-        	machine = new TI994A(new EnhancedMachineModel());
-        }
-        else {
-        	machine = new TI994A(new StandardMachineModel());
+        if (findArgument(args, "--mfp201")) {
+        	machine = new MFP201Machine();
+        } else {
+	        if (findArgument(args, "--enhanced")) {
+	        	machine = new TI994A(new EnhancedMachineModel());
+	        }
+	        else {
+	        	machine = new TI994A(new StandardMachineModel());
+	        }
         }
         
         Client client = createClient(args, machine);
@@ -189,7 +194,7 @@ public class Emulator {
 
 	private void run() {
 		
-		machine.getCpu().contextSwitch(0);
+		machine.getCpu().reset();
         machine.start();
         
         while (client.isAlive()) {

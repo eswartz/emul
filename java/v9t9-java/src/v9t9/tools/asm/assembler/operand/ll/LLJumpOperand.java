@@ -60,6 +60,13 @@ public class LLJumpOperand extends LLNonImmediateOperand implements Operand {
 	public boolean isRegister() {
 		return false;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return true;
+	}
 
 
 	public int getOffset() {
@@ -71,9 +78,7 @@ public class LLJumpOperand extends LLNonImmediateOperand implements Operand {
 	}
 
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		MachineOperand mop = new MachineOperand(MachineOperand.OP_JUMP);
-		mop.val = offset;
-		return mop;
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
+		return opFactory.createJumpOperand(this);
 	}
 }

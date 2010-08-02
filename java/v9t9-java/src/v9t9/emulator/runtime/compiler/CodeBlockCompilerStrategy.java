@@ -10,7 +10,7 @@ import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Cpu9900;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
 
@@ -28,19 +28,26 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
     Map<Pair<MemoryArea, Integer>, CodeBlock> codeblocks;
     DirectLoader loader;
 
-	private Executor9900 executor;
+	private Executor executor;
 
-	private Compiler compiler;
+	private Compiler9900 compiler;
 
-	public CodeBlockCompilerStrategy(Executor9900 executor) {
-		this.executor = executor;
-		this.compiler = new Compiler((Cpu9900)executor.cpu);
+	public CodeBlockCompilerStrategy() {
+		
         codeblocks = new TreeMap<Pair<MemoryArea, Integer>, CodeBlock>();
         loader = new DirectLoader();
 
 	}
-	
+
+	public void setExecutor(Executor executor) {
+		this.executor = executor;
+		this.compiler = new Compiler9900((Cpu9900)executor.cpu);
+	}
 	public ICompiledCode getCompiledCode(Cpu cpu) {
+		if (cpu.shouldDebugCompiledCode(cpu.getPC())) {
+			Executor.settingDumpInstructions.setBoolean(true);
+			Executor.settingDumpFullInstructions.setBoolean(true);
+		}
         CodeBlock cb = getCodeBlock(((Cpu9900) cpu).getPC(), ((Cpu9900)cpu).getWP());
 		return cb;
 	}

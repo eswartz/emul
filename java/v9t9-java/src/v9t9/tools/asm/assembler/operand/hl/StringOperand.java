@@ -45,6 +45,15 @@ public class StringOperand extends BaseOperand {
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return true;
+	}
+	
+	
+	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Operand#resolve(v9t9.tools.asm.Assembler, v9t9.engine.cpu.RawInstruction)
 	 */
 	public LLOperand resolve(Assembler assembler, IInstruction inst)

@@ -33,6 +33,8 @@ public interface AssemblerOperand extends Operand {
 	 */
 	boolean isMemory();
 	
+	boolean isConst();
+	
 	/**
 	 * Replace the src with dst and return this or a new operand.
 	 * @param src

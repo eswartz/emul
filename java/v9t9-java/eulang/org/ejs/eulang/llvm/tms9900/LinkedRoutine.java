@@ -8,7 +8,7 @@ package org.ejs.eulang.llvm.tms9900;
 
 import org.ejs.eulang.llvm.directives.LLDefineDirective;
 
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
@@ -25,7 +25,7 @@ public class LinkedRoutine extends Routine {
     
     @Override
     public boolean isReturn(AsmInstruction inst) {
-        if (inst.getInst() != InstructionTable.Ib)
+        if (inst.getInst() != Inst9900.Ib)
         	return false;
         Operand op1 = inst.getOp1();
         if (op1 instanceof RegIndOperand) {
@@ -39,7 +39,7 @@ public class LinkedRoutine extends Routine {
     
     public AsmInstruction[] generateReturn() {
     	return new AsmInstruction[] { 
-    			AsmInstruction.create(InstructionTable.Ib, 
+    			AsmInstruction.create(Inst9900.Ib, 
     					new RegIndOperand(new NumberOperand(returnReg)))
     	};
     }

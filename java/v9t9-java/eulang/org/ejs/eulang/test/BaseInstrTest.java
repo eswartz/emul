@@ -49,7 +49,7 @@ import org.ejs.eulang.types.LLCodeType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Before;
 
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
@@ -222,7 +222,7 @@ public class BaseInstrTest extends BaseTest {
 
 	@SuppressWarnings("unchecked")
 	protected void matchInstr(AsmInstruction instr, String name, Object... stuff) {
-		assertEquals(instr+"", name.toLowerCase(), InstructionTable.getInstName(instr.getInst()).toLowerCase());
+		assertEquals(instr+"", name.toLowerCase(), InstTable9900.getInstName(instr.getInst()).toLowerCase());
 		int opidx = 1;
 		for( int i = 0; i < stuff.length; ) {
 			AssemblerOperand op = instr.getOp(opidx++);
@@ -379,7 +379,7 @@ public class BaseInstrTest extends BaseTest {
 	protected int findInstrWithInst(List<AsmInstruction> instrs, String string, int from) {
 		for (int i = from + 1; i < instrs.size(); i++) {
 			AsmInstruction instr = instrs.get(i);
-			if (InstructionTable.getInstName(instr.getInst()).equalsIgnoreCase(string))
+			if (InstTable9900.getInstName(instr.getInst()).equalsIgnoreCase(string))
 				return i;
 		}
 		return -1;

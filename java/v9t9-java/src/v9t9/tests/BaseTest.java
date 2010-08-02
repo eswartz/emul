@@ -9,8 +9,8 @@ import java.util.TreeSet;
 
 import junit.framework.TestCase;
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
@@ -24,7 +24,7 @@ import v9t9.tools.asm.assembler.DirectiveInstructionParserStage;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.ResolveException;
-import v9t9.tools.asm.assembler.StandardInstructionParserStage;
+import v9t9.tools.asm.assembler.StandardInstructionParserStage9900;
 import v9t9.tools.asm.assembler.Symbol;
 import v9t9.tools.asm.assembler.directive.Directive;
 import v9t9.tools.asm.decomp.Block;
@@ -36,6 +36,11 @@ public abstract class BaseTest extends TestCase {
 	protected MemoryDomain CPU;
 	protected Memory memory;
 	private MemoryModel memoryModel;
+
+
+	protected StandardInstructionParserStage9900 stdInstStage = new StandardInstructionParserStage9900();
+	protected DirectiveInstructionParserStage dtveStage = new DirectiveInstructionParserStage(stdInstStage.getOperandParser());
+	protected Assembler stdAssembler = new Assembler();
 
 	public BaseTest() {
 		super();
@@ -142,10 +147,6 @@ public abstract class BaseTest extends TestCase {
 		return pcSet;
 	}
 
-	protected StandardInstructionParserStage stdInstStage = new StandardInstructionParserStage();
-	protected DirectiveInstructionParserStage dtveStage = new DirectiveInstructionParserStage(stdInstStage.getOperandParser());
-	protected Assembler stdAssembler = new Assembler();
-
 	protected RawInstruction createInstruction(int pc, String element) throws ParseException {
 	    IInstruction[] asminsts = stdInstStage.parse("foo", element);
 		if (asminsts ==  null || asminsts.length != 1) {
@@ -155,22 +156,24 @@ public abstract class BaseTest extends TestCase {
 		stdAssembler.setPc((short) pc);
 		RawInstruction rawInst;
 		try {
-			rawInst = ((LLInstruction)((AssemblerInstruction) asminsts[0]).resolve(stdAssembler, null, true)[0]).createRawInstruction();
+			rawInst = stdAssembler.getInstructionFactory().createRawInstruction( 
+				((LLInstruction)((AssemblerInstruction) asminsts[0]).resolve(
+					stdAssembler, null, true)[0]));
 		} catch (ResolveException e) {
 			throw new IllegalArgumentException(e);
 		}
 		
-		InstructionTable.coerceOperandTypes(rawInst);
-		InstructionTable.calculateInstructionSize(rawInst);
+		InstTable9900.coerceOperandTypes(rawInst);
+		InstTable9900.calculateInstructionSize(rawInst);
 		
 	    return rawInst;
 	}
 	protected HighLevelInstruction createHLInstruction(int pc, int wp, String element) throws ParseException {
 		RawInstruction inst = createInstruction(pc, element);
-		return new HighLevelInstruction(wp, new Instruction(inst));
+		return new HighLevelInstruction(wp, new Instruction9900(inst));
 	}
 
-	static class InstFollowInfo {
+	class InstFollowInfo {
 		public List<IInstruction> realinsts;
 		public int idx;
 		
@@ -183,7 +186,8 @@ public abstract class BaseTest extends TestCase {
 			do {
 				llInst = realinsts.get(idx++);
 			} while (!(llInst instanceof LLInstruction));
-			RawInstruction realInst = ((LLInstruction) llInst).createRawInstruction();
+			RawInstruction realInst = stdAssembler.getInstructionFactory().
+				createRawInstruction((LLInstruction) llInst);
 			return realInst;
 		}
 		
@@ -229,10 +233,14 @@ public abstract class BaseTest extends TestCase {
 
 				Directive dirInst = (Directive) dirInsts[0];
 				Directive realDirInst = info.nextDirective(dirInst.getClass());
-				assertTrue(dirInst.toInfoString() + " != " + realDirInst.toInfoString(),
-						Arrays.equals(dirInst.getBytes(), realDirInst.getBytes()));
 				
-				targPc += dirInst.getBytes().length;
+				byte[] dirBytes = dirInst.getBytes(stdAssembler.getInstructionFactory());
+				byte[] realDirBytes = realDirInst.getBytes(stdAssembler.getInstructionFactory());
+				assertTrue(dirInst.toInfoString() + " != " + realDirInst.toInfoString(),
+						Arrays.equals(dirBytes, 
+								realDirBytes));
+				
+				targPc += dirBytes.length;
 			} catch (ParseException e1) {
 				fail(e1.toString());
 			}

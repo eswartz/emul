@@ -4,16 +4,14 @@
 package v9t9.emulator.hardware.dsrs;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.hardware.TI99Machine;
+import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.MachineOperand;
 
 /**
  * @author ejs
@@ -77,7 +75,7 @@ public class DsrManager9900 extends DsrManager implements IPersistable, IDsrMana
 				
 				int retreg = instructionWorkBlock.wp + 11 * 2;
 				short ret = instructionWorkBlock.domain.readWord(retreg);
-				if (activeDsr.handleDSR(xfer, (short) ((MachineOperand)instructionWorkBlock.inst.op1).val)) {
+				if (activeDsr.handleDSR(xfer, (short) ((BaseMachineOperand)instructionWorkBlock.inst.getOp1()).val)) {
 					// success: skip next word (handling error)
 					ret += 2;
 				}

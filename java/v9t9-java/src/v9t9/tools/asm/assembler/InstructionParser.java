@@ -18,7 +18,7 @@ public class InstructionParser {
 	public static final InstructionParser STANDARD = new InstructionParser();
 	
 	static {
-		STANDARD.appendStage(new StandardInstructionParserStage());
+		STANDARD.appendStage(new StandardInstructionParserStage9900());
 	}
 
 	private List<IInstructionParserStage> stages = new ArrayList<IInstructionParserStage>(1);

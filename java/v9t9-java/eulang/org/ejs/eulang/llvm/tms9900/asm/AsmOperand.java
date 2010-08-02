@@ -10,5 +10,5 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
  *
  */
 public interface AsmOperand extends AssemblerOperand {
-	boolean isConst();
+	
 }

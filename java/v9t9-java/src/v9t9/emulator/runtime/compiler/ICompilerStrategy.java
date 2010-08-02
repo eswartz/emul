@@ -4,6 +4,7 @@
 package v9t9.emulator.runtime.compiler;
 
 import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Executor;
 
 /**
  * Strategy for compiling code
@@ -17,4 +18,6 @@ public interface ICompilerStrategy {
 	 * @return CodeBlock which can be executed, or <code>null</code>
 	 */
 	ICompiledCode getCompiledCode(Cpu cpu);
+	
+	void setExecutor(Executor exec);
 }

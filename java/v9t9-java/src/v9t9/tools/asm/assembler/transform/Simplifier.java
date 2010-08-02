@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.ListIterator;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTableCommon;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
@@ -36,7 +37,7 @@ public class Simplifier {
 			
 			changed |= convertInstruction(llInst);
 			
-			if (llInst.getInst() == InstructionTable.Idelete) {
+			if (llInst.getInst() == InstTableCommon.Idelete) {
 				System.err.println("Changed " + inst.toInfoString());
 				iterator.remove();
 				changed = true;
@@ -46,39 +47,39 @@ public class Simplifier {
 	}
 
 	private boolean convertInstruction(LLInstruction llInst) {
-		if (llInst.getInst() == InstructionTable.Ili) {
+		if (llInst.getInst() == Inst9900.Ili) {
 			LLOperand op2 = llInst.getOp2();
 			int immed = op2.getImmediate();
 			if (immed == 0) {
-				llInst.setInst(InstructionTable.Iclr);
+				llInst.setInst(Inst9900.Iclr);
 				llInst.setOp2(null);
 				return true;
 			} else if (immed == -1) {
-				llInst.setInst(InstructionTable.Iseto);
+				llInst.setInst(Inst9900.Iseto);
 				llInst.setOp2(null);
 				return true;
 			}
 		}
-		else if (llInst.getInst() == InstructionTable.Iai) {
+		else if (llInst.getInst() == Inst9900.Iai) {
 			LLOperand op2 = llInst.getOp2();
 			int immed = op2.getImmediate();
 			if (immed == 0) {
-				llInst.setInst(InstructionTable.Idelete);
+				llInst.setInst(InstTableCommon.Idelete);
 				return true;
 			} else if (immed == 1) {
-				llInst.setInst(InstructionTable.Iinc);
+				llInst.setInst(Inst9900.Iinc);
 				llInst.setOp2(null);
 				return true;
 			} else if (immed == -1) {
-				llInst.setInst(InstructionTable.Idec);
+				llInst.setInst(Inst9900.Idec);
 				llInst.setOp2(null);
 				return true;
 			} else if (immed == 2) {
-				llInst.setInst(InstructionTable.Iinct);
+				llInst.setInst(Inst9900.Iinct);
 				llInst.setOp2(null);
 				return true;
 			} else if (immed == -2) {
-				llInst.setInst(InstructionTable.Idect);
+				llInst.setInst(Inst9900.Idect);
 				llInst.setOp2(null);
 				return true;
 			}

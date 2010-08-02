@@ -10,6 +10,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
+
 /**
  * @author ejs
  * 
@@ -31,14 +32,6 @@ public class RegisterOperand extends BaseOperand implements IRegisterOperand {
 			return "R(" + getReg().toString() + ")";
 	}
 	
-	protected static LLOperand resolveRegister(Assembler assembler, IInstruction inst, AssemblerOperand reg) throws ResolveException {
-		LLOperand op = reg.resolve(assembler, inst);
-		if (op instanceof LLImmedOperand) {
-			return new LLRegisterOperand(op.getImmediate());
-		}
-		throw new ResolveException(op);
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isMemory()
 	 */
@@ -53,6 +46,15 @@ public class RegisterOperand extends BaseOperand implements IRegisterOperand {
 	public boolean isRegister() {
 		return true;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -60,7 +62,11 @@ public class RegisterOperand extends BaseOperand implements IRegisterOperand {
 	 * v9t9.engine.cpu.Instruction)
 	 */
 	public LLOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
-		return resolveRegister(assembler, inst, reg);
+		LLOperand op = reg.resolve(assembler, inst);
+		if (op instanceof LLImmedOperand) {
+			return new LLRegisterOperand(op.getImmediate());
+		}
+		throw new ResolveException(op);
 	}
 
 	/* (non-Javadoc)

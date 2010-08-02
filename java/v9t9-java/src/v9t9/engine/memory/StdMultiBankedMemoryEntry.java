@@ -3,7 +3,7 @@ package v9t9.engine.memory;
 import java.io.PrintWriter;
 
 import v9t9.emulator.runtime.Logging;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 
 /**
  * This is a standard TI-99/4A style banked memory entry.
@@ -32,7 +32,7 @@ public class StdMultiBankedMemoryEntry extends
 		int bank = (addr & 2) >> 1;
 		if (selectBank(bank)) {
 			
-			PrintWriter log = Logging.getLog(Executor9900.settingDumpFullInstructions);
+			PrintWriter log = Logging.getLog(Executor.settingDumpFullInstructions);
 			if (log != null) {
 				log.println("=== Switched to bank " + bank);
 			}
@@ -44,7 +44,7 @@ public class StdMultiBankedMemoryEntry extends
 	public void writeWord(int addr, short val) {
 		int bank = (addr & 2) >> 1;
 		if (selectBank(bank)) {
-			PrintWriter log = Logging.getLog(Executor9900.settingDumpFullInstructions);
+			PrintWriter log = Logging.getLog(Executor.settingDumpFullInstructions);
 			if (log != null) {
 				log.println("=== Switched to bank " + bank);
 			}

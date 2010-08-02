@@ -21,11 +21,14 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
+import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Cpu9900;
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.BaseMachineOperand;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Status;
+import v9t9.engine.cpu.Status9900;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -40,65 +43,65 @@ public class Convert9900ToByteCode {
 	/**
 	 * Get compile-time behavior
 	 */
-	public static InstructionList getCompileAction(Instruction ins, CompileInfo info) {
+	public static InstructionList getCompileAction(Instruction9900 ins, CompileInfo info) {
 	    InstructionList ilist = new InstructionList();
 	    InstructionList skiplist;
 	
-	    MachineOperand mop1 = (MachineOperand) ins.op1;
-	    MachineOperand mop2 = (MachineOperand) ins.op2;
+	    MachineOperand mop1 = (MachineOperand) ins.getOp1();
+	    BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
 	    switch (ins.inst) {
-	    case InstructionTable.Idata:
+	    case InstTableCommon.Idata:
 	        return null;
-	    case InstructionTable.Ili:
+	    case Inst9900.Ili:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Iai:
+	    case Inst9900.Iai:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.IADD);
 	        ilist.append(InstructionConstants.I2S);
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Iandi:
+	    case Inst9900.Iandi:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.IAND);
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Iori:
+	    case Inst9900.Iori:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.IOR);
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Ici:
+	    case Inst9900.Ici:
 	        break;
-	    case InstructionTable.Istwp:
+	    case Inst9900.Istwp:
 	        ilist.append(new ILOAD(info.localWp));
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Istst:
+	    case Inst9900.Istst:
 	        ilist.append(new ALOAD(info.localStatus));
-	        ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
+	        ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status9900.class
 	                .getName(), "flatten", Type.SHORT, Type.NO_ARGS,
 	                Constants.INVOKEVIRTUAL));
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Ilwpi:
+	    case Inst9900.Ilwpi:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ISTORE(info.localWp));
 	        updateWorkspaceVariables(info.ifact, ilist, info);
 	        break;
-	    case InstructionTable.Ilimi:
+	    case Inst9900.Ilimi:
 	        ilist.append(new ALOAD(info.localStatus));
 	        ilist.append(new ILOAD(info.localVal1));
-	        ilist.append(info.ifact.createInvoke(Status.class.getName(), "setIntMask",
+	        ilist.append(info.ifact.createInvoke(Status9900.class.getName(), "setIntMask",
 	                Type.VOID, new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(info.ifact.createGetField(CompiledCode.class.getName(), "cpu",
-	                new ObjectType(Cpu9900.class.getName())));
-	        ilist.append(info.ifact.createInvoke(Cpu9900.class.getName(), "checkInterrupts",
+	                new ObjectType(Cpu.class.getName())));
+	        ilist.append(info.ifact.createInvoke(Cpu.class.getName(), "checkInterrupts",
 	                Type.VOID, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
 	        break;
 	        //return null;
@@ -130,11 +133,11 @@ public class Convert9900ToByteCode {
 	     * ilist.append(InstructionConstants.POP); // cpu break;
 	     */
 	
-	    case InstructionTable.Iidle:
+	    case Inst9900.Iidle:
 	    	return null;
-	    case InstructionTable.Irset:
+	    case Inst9900.Irset:
 	    	return null;
-	    case InstructionTable.Irtwp:
+	    case Inst9900.Irtwp:
 	        ilist.append(new ILOAD(info.localWp)); // WP
 	        ilist.append(new PUSH(info.pgen, 30)); // WP, 30
 	        ilist.append(InstructionConstants.IADD); // WP+30
@@ -142,9 +145,9 @@ public class Convert9900ToByteCode {
 	        ilist.append(InstructionConstants.DUP); // WP+30, WP+30
 	        ilist.append(new ALOAD(info.localStatus)); // WP+30, WP+30, status
 	        ilist.append(InstructionConstants.SWAP); // WP+30, status, WP+30
-	        OperandCompiler.compileReadWord(info, ilist); // WP+30, status,
+	        OperandCompiler9900.compileReadWord(info, ilist); // WP+30, status,
 	                                                // <oldStatus>
-	        ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
+	        ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status9900.class
 	                .getName(), "expand", Type.VOID, new Type[] { Type.SHORT },
 	                Constants.INVOKEVIRTUAL));
 	
@@ -152,28 +155,28 @@ public class Convert9900ToByteCode {
 	        ilist.append(InstructionConstants.IADD); // WP+28
 	        ilist.append(InstructionConstants.I2S); // WP+28
 	        ilist.append(InstructionConstants.DUP); // WP+28, WP+28
-	        OperandCompiler.compileReadWord(info, ilist); // WP+28, <oldPC>
+	        OperandCompiler9900.compileReadWord(info, ilist); // WP+28, <oldPC>
 	        ilist.append(new ISTORE(info.localPc)); // WP+28
 	
 	        ilist.append(new PUSH(info.pgen, -2)); // WP+28, -2
 	        ilist.append(InstructionConstants.IADD); // WP+26
 	        ilist.append(InstructionConstants.I2S); // WP+26
-	        OperandCompiler.compileReadWord(info, ilist); // <oldWP>
+	        OperandCompiler9900.compileReadWord(info, ilist); // <oldWP>
 	        ilist.append(new ISTORE(info.localWp)); //
 	
 	        updateWorkspaceVariables(info.ifact, ilist, info);
 	
 	        break;
-	    case InstructionTable.Ickon:
+	    case Inst9900.Ickon:
 	        // TODO
 	    	return null;
-	    case InstructionTable.Ickof:
+	    case Inst9900.Ickof:
 	        // TODO
 	    	return null;
-	    case InstructionTable.Ilrex:
+	    case Inst9900.Ilrex:
 	        // TODO
 	    	return null;
-	    case InstructionTable.Iblwp:
+	    case Inst9900.Iblwp:
 	        if (false && mop1.isConstant()) {
 	            /*
 	             * short targWp, targPc; targWp = mop1.getEA(memory, (short)
@@ -189,21 +192,21 @@ public class Convert9900ToByteCode {
 	            // contextSwitch
 	            ilist.append(new ILOAD(info.localVal1));
 	            ilist.append(InstructionConstants.DUP);
-	            OperandCompiler.compileReadWord(info, ilist);
+	            OperandCompiler9900.compileReadWord(info, ilist);
 	            ilist.append(new ISTORE(info.localWp));
 	            ilist.append(new PUSH(info.pgen, 2));
 	            ilist.append(InstructionConstants.IADD);
 	            ilist.append(InstructionConstants.I2S);
-	            OperandCompiler.compileReadWord(info, ilist);
+	            OperandCompiler9900.compileReadWord(info, ilist);
 	            ilist.append(new ISTORE(info.localPc));
 	        }
 	        break;
 	
-	    case InstructionTable.Ib:
+	    case Inst9900.Ib:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ISTORE(info.localPc));
 	        break;
-	    case InstructionTable.Ix:
+	    case Inst9900.Ix:
 	        return null;
 	    /*
 	     * ilist.append(InstructionConstants.THIS); int execIndex =
@@ -220,45 +223,45 @@ public class Convert9900ToByteCode {
 	     * 
 	     * break;
 	     */
-	    case InstructionTable.Iclr:
+	    case Inst9900.Iclr:
 	        ilist.append(new PUSH(info.pgen, 0));
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Ineg:
+	    case Inst9900.Ineg:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.INEG);
 	        ilist.append(InstructionConstants.I2S);
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Iinv:
+	    case Inst9900.Iinv:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, -1));
 	        ilist.append(InstructionConstants.IXOR);
 	        ilist.append(InstructionConstants.I2S);
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Iinc:
+	    case Inst9900.Iinc:
 	        ilist.append(new IINC(info.localVal1, 1));
 	        break;
-	    case InstructionTable.Iinct:
+	    case Inst9900.Iinct:
 	        ilist.append(new IINC(info.localVal1, 2));
 	        break;
-	    case InstructionTable.Idec:
+	    case Inst9900.Idec:
 	        ilist.append(new IINC(info.localVal1, -1));
 	        break;
-	    case InstructionTable.Idect:
+	    case Inst9900.Idect:
 	        ilist.append(new IINC(info.localVal1, -2));
 	        break;
-	    case InstructionTable.Ibl:
+	    case Inst9900.Ibl:
 	        ilist.append(new ILOAD(info.localWp));
 	        ilist.append(new PUSH(info.pgen, 11 * 2));
 	        ilist.append(InstructionConstants.IADD);
 	        ilist.append(new ILOAD(info.localPc));
-	        OperandCompiler.compileWriteWord(info, ilist);
+	        OperandCompiler9900.compileWriteWord(info, ilist);
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ISTORE(info.localPc));
 	        break;
-	    case InstructionTable.Iswpb:
+	    case Inst9900.Iswpb:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.DUP);
 	        ilist.append(new PUSH(info.pgen, 8));
@@ -274,11 +277,11 @@ public class Convert9900ToByteCode {
 	        ilist.append(InstructionConstants.I2S);
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Iseto:
+	    case Inst9900.Iseto:
 	        ilist.append(new PUSH(info.pgen, -1));
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Iabs:
+	    case Inst9900.Iabs:
 	        skiplist = new InstructionList();
 	        skiplist.append(InstructionConstants.NOP);
 	        ilist.append(new ILOAD(info.localVal1));
@@ -291,14 +294,14 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal1));
 	        ilist.append(skiplist);
 	        break;
-	    case InstructionTable.Isra:
+	    case Inst9900.Isra:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(InstructionConstants.ISHR);
 	        ilist.append(InstructionConstants.I2S);
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
-	    case InstructionTable.Isrl:
+	    case Inst9900.Isrl:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, 0xffff));
 	        ilist.append(InstructionConstants.IAND);
@@ -310,7 +313,7 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
 	
-	    case InstructionTable.Isla:
+	    case Inst9900.Isla:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(InstructionConstants.ISHL);
@@ -318,7 +321,7 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
 	
-	    case InstructionTable.Isrc:
+	    case Inst9900.Isrc:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, 0xffff));
 	        ilist.append(InstructionConstants.IAND);
@@ -337,50 +340,50 @@ public class Convert9900ToByteCode {
 	
 	        break;
 	
-	    case InstructionTable.Ijmp:
+	    case Inst9900.Ijmp:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ISTORE(info.localPc));
 	        break;
-	    case InstructionTable.Ijlt:
+	    case Inst9900.Ijlt:
 	        compileJump(info, ilist, "isLT");
 	        break;
-	    case InstructionTable.Ijle:
+	    case Inst9900.Ijle:
 	        compileJump(info, ilist, "isLE");
 	        break;
 	
-	    case InstructionTable.Ijeq:
+	    case Inst9900.Ijeq:
 	        compileJump(info, ilist, "isEQ");
 	        break;
-	    case InstructionTable.Ijhe:
+	    case Inst9900.Ijhe:
 	        compileJump(info, ilist, "isHE");
 	        break;
-	    case InstructionTable.Ijgt:
+	    case Inst9900.Ijgt:
 	        compileJump(info, ilist, "isGT");
 	        break;
-	    case InstructionTable.Ijne:
+	    case Inst9900.Ijne:
 	        compileJump(info, ilist, "isNE");
 	        break;
-	    case InstructionTable.Ijnc:
+	    case Inst9900.Ijnc:
 	        compileJump(info, ilist, "isC", true);
 	        break;
-	    case InstructionTable.Ijoc:
+	    case Inst9900.Ijoc:
 	        compileJump(info, ilist, "isC");
 	        break;
-	    case InstructionTable.Ijno:
+	    case Inst9900.Ijno:
 	        compileJump(info, ilist, "isO", true);
 	        break;
-	    case InstructionTable.Ijl:
+	    case Inst9900.Ijl:
 	        compileJump(info, ilist, "isL");
 	        break;
-	    case InstructionTable.Ijh:
+	    case Inst9900.Ijh:
 	        compileJump(info, ilist, "isH");
 	        break;
 	
-	    case InstructionTable.Ijop:
+	    case Inst9900.Ijop:
 	        compileJump(info, ilist, "isP");
 	        break;
 	
-	    case InstructionTable.Isbo:
+	    case Inst9900.Isbo:
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(new GETFIELD(info.cruIndex));
 	        ilist.append(new ILOAD(info.localVal1));
@@ -391,7 +394,7 @@ public class Convert9900ToByteCode {
 	                Type.INT, Type.INT }, Constants.INVOKEINTERFACE));
 	        break;
 	
-	    case InstructionTable.Isbz:
+	    case Inst9900.Isbz:
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(new GETFIELD(info.cruIndex));
 	        ilist.append(new ILOAD(info.localVal1));
@@ -402,7 +405,7 @@ public class Convert9900ToByteCode {
 	                Type.INT, Type.INT }, Constants.INVOKEINTERFACE));
 	        break;
 	
-	    case InstructionTable.Itb:
+	    case Inst9900.Itb:
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(new GETFIELD(info.cruIndex));
 	        ilist.append(new ILOAD(info.localVal1));
@@ -416,14 +419,14 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Icoc:
+	    case Inst9900.Icoc:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(InstructionConstants.IAND);
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Iczc:
+	    case Inst9900.Iczc:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new PUSH(info.pgen, -1));
@@ -432,20 +435,20 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Ixor:
+	    case Inst9900.Ixor:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(InstructionConstants.IXOR);
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Ixop:
-	    	OperandCompiler.compileReadAbsWord(info, ilist,
+	    case Inst9900.Ixop:
+	    	OperandCompiler9900.compileReadAbsWord(info, ilist,
 	    			(short) (mop2.val * 4 + 0x40));
 	    	ilist.append(InstructionConstants.DUP);
 	    	ilist.append(new ISTORE(info.localWp));
 	    	
-	    	OperandCompiler.compileReadAbsWord(info, ilist,
+	    	OperandCompiler9900.compileReadAbsWord(info, ilist,
 	    			(short) (mop2.val * 4 + 0x42));
 	    	ilist.append(new ISTORE(info.localPc));
 	    	
@@ -455,10 +458,10 @@ public class Convert9900ToByteCode {
             ilist.append(InstructionConstants.I2S);
             ilist.append(new ILOAD(info.localEa1));
             //ilist.append(InstructionConstants.SWAP);
-            OperandCompiler.compileWriteWord(info, ilist);
+            OperandCompiler9900.compileWriteWord(info, ilist);
 	        break;
 	
-	    case InstructionTable.Impy:
+	    case Inst9900.Impy:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, 0xffff));
 	        ilist.append(InstructionConstants.IAND);
@@ -475,14 +478,14 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Idiv:
+	    case Inst9900.Idiv:
 	        skiplist = new InstructionList();
 	        skiplist.append(InstructionConstants.NOP);
 	
 	        ilist.append(new ILOAD(info.localEa2));
 	        ilist.append(new PUSH(info.pgen, 2));
 	        ilist.append(InstructionConstants.IADD);
-	        OperandCompiler.compileReadWord(info, ilist);
+	        OperandCompiler9900.compileReadWord(info, ilist);
 	        ilist.append(new ISTORE(info.localVal3));
 	
 	        ilist.append(new ILOAD(info.localVal1));
@@ -523,13 +526,13 @@ public class Convert9900ToByteCode {
 	        ilist.append(skiplist);
 	        break;
 	
-	    case InstructionTable.Ildcr:
+	    case Inst9900.Ildcr:
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(new GETFIELD(info.cruIndex));
 	        ilist.append(new ILOAD(info.localWp));
 	        ilist.append(new PUSH(info.pgen, 12 * 2));
 	        ilist.append(InstructionConstants.IADD);
-	        OperandCompiler.compileReadWord(info, ilist);
+	        OperandCompiler9900.compileReadWord(info, ilist);
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(info.ifact.createInvoke(v9t9.engine.CruHandler.class
@@ -537,13 +540,13 @@ public class Convert9900ToByteCode {
 	                Type.INT, Type.INT }, Constants.INVOKEINTERFACE));
 	        break;
 	
-	    case InstructionTable.Istcr:
+	    case Inst9900.Istcr:
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(new GETFIELD(info.cruIndex));
 	        ilist.append(new ILOAD(info.localWp));
 	        ilist.append(new PUSH(info.pgen, 12 * 2));
 	        ilist.append(InstructionConstants.IADD);
-	        OperandCompiler.compileReadWord(info, ilist);
+	        OperandCompiler9900.compileReadWord(info, ilist);
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(info.ifact.createInvoke(v9t9.engine.CruHandler.class
 	                .getName(), "readBits", Type.INT, new Type[] { Type.INT,
@@ -552,8 +555,8 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal1));
 	        break;
 	
-	    case InstructionTable.Iszc:
-	    case InstructionTable.Iszcb:
+	    case Inst9900.Iszc:
+	    case Inst9900.Iszcb:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, -1));
@@ -562,34 +565,34 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Is:
-	    case InstructionTable.Isb:
+	    case Inst9900.Is:
+	    case Inst9900.Isb:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.ISUB);
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Ic:
-	    case InstructionTable.Icb:
+	    case Inst9900.Ic:
+	    case Inst9900.Icb:
 	        break;
 	
-	    case InstructionTable.Ia:
-	    case InstructionTable.Iab:
+	    case Inst9900.Ia:
+	    case Inst9900.Iab:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.IADD);
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Imov:
-	    case InstructionTable.Imovb:
+	    case Inst9900.Imov:
+	    case Inst9900.Imovb:
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ISTORE(info.localVal2));
 	        break;
 	
-	    case InstructionTable.Isoc:
-	    case InstructionTable.Isocb:
+	    case Inst9900.Isoc:
+	    case Inst9900.Isocb:
 	        ilist.append(new ILOAD(info.localVal2));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(InstructionConstants.IOR);
@@ -616,7 +619,7 @@ public class Convert9900ToByteCode {
 	    skiplist = new InstructionList();
 	    skiplist.append(InstructionConstants.NOP);
 	    ilist.append(new ALOAD(info.localStatus));
-	    ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class.getName(),
+	    ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status9900.class.getName(),
 	            test, Type.BOOLEAN, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
 	    if (invert) {
 			ilist.append(new IFNE(skiplist.getStart()));

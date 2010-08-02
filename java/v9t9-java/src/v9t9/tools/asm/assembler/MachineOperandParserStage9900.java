@@ -20,7 +20,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
  * @author ejs
  *
  */
-public class MachineOperandParserStage implements IOperandParserStage {
+public class MachineOperandParserStage9900 implements IOperandParserStage {
 
     public final static String OPT_R = "(?:R|r)?";
     //public final static String REG_NUM = "([0-9]|(?:1[0-5]))";

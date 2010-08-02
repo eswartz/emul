@@ -1,12 +1,5 @@
 package v9t9.engine.cpu;
 
-import static v9t9.engine.cpu.InstructionTable.Iab;
-import static v9t9.engine.cpu.InstructionTable.Icb;
-import static v9t9.engine.cpu.InstructionTable.Imovb;
-import static v9t9.engine.cpu.InstructionTable.Isb;
-import static v9t9.engine.cpu.InstructionTable.Isocb;
-import static v9t9.engine.cpu.InstructionTable.Iszcb;
-
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.assembler.BaseInstruction;
@@ -19,8 +12,9 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public short opcode;
 	/** InstTable.I... */
 	public int inst;
-	public Operand op1;
-	public Operand op2;
+	private Operand op1;
+	private Operand op2;
+	private Operand op3;
 
 	public RawInstruction() {
 	}
@@ -37,7 +31,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	
 	public String getName() {
 		if (name == null)
-			name = InstructionTable.getInstName(inst);
+			name = InstTable9900.getInstName(inst);
 		return name;
 	}
 	
@@ -113,7 +107,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	}
 
 	public boolean isJumpInst() {
-		return inst >= InstructionTable.Ijmp && inst <= InstructionTable.Ijop;
+		return inst >= Inst9900.Ijmp && inst <= Inst9900.Ijop;
 	}
 
 	
@@ -167,8 +161,31 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	}
 	
 	public boolean isByteOp() {
-		return inst == Isocb || inst == Icb || inst == Iab 
-		|| inst == Isb || inst == Iszcb || inst == Imovb;
+		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
+		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
+	}
+
+	public void setOp1(Operand op1) {
+		this.op1 = op1;
+	}
+
+	public Operand getOp1() {
+		return op1;
+	}
+
+	public void setOp2(Operand op2) {
+		this.op2 = op2;
+	}
+
+	public Operand getOp2() {
+		return op2;
+	}
+	public void setOp3(Operand op3) {
+		this.op3 = op3;
+	}
+
+	public Operand getOp3() {
+		return op3;
 	}
 	
 }

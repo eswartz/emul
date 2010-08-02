@@ -14,7 +14,7 @@ import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.CruHandler;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
@@ -25,7 +25,7 @@ import v9t9.engine.memory.MemoryDomain;
 abstract public class CompiledCode {
     protected Cpu cpu;
     protected MemoryDomain memory;
-    protected Executor9900 exec;
+    protected Executor exec;
     protected CruHandler cru;
     protected int nInstructions, nCycles;
     
@@ -37,7 +37,7 @@ abstract public class CompiledCode {
         
     }
     
-    public CompiledCode(Executor9900 exec) {
+    public CompiledCode(Executor exec) {
         this.exec = exec;
         this.cpu = exec.cpu;
         this.memory = exec.cpu.getConsole();
@@ -53,7 +53,7 @@ abstract public class CompiledCode {
     abstract public boolean run();
     
     public void dump(short pc, short wp, Status status, int vdpaddr, int gromaddr) {
-        PrintWriter dump = Executor9900.getDump();
+        PrintWriter dump = Executor.getDump();
         if (dump != null) {
             dump.println(HexUtils.toHex4(pc)
                     + " "
@@ -72,7 +72,7 @@ abstract public class CompiledCode {
             short ea1, short val1, 
             short ea2, short val2,
             int op1type, int op1dest, int op2type, int op2dest) {
-        PrintWriter dumpfull = Executor9900.getDumpfull();
+        PrintWriter dumpfull = Executor.getDumpfull();
         
         if (dumpfull != null) {
             dumpfull.print("*" + HexUtils.toHex4(pc) + ": "
@@ -96,7 +96,7 @@ abstract public class CompiledCode {
             short ea1, short val1, 
             short ea2, short val2,
             int op1type, int op1dest, int op2type, int op2dest) {
-        PrintWriter dumpfull = Executor9900.getDumpfull();
+        PrintWriter dumpfull = Executor.getDumpfull();
         if (dumpfull != null) {
             if (op1type != MachineOperand.OP_NONE
                     && op1dest != Operand.OP_DEST_FALSE) {

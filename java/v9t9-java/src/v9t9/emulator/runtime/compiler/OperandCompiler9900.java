@@ -26,15 +26,17 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 import org.ejs.coffee.core.properties.SettingProperty;
 
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.BaseMachineOperand;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 
-public class OperandCompiler {
+public class OperandCompiler9900 {
 
-    static boolean hasConstAddr(MachineOperand op, CompileInfo info) {
-        return op.type == MachineOperand.OP_ADDR && op.val == 0 
+    static boolean hasConstAddr(BaseMachineOperand op, CompileInfo info) {
+        return op.type == InstTable9900.OP_ADDR && op.val == 0 
                 && !op.bIsCodeDest 
                 && info.memory.hasRomAccess(op.immed)
                 && !info.memory.hasRamAccess(op.immed);
@@ -43,15 +45,15 @@ public class OperandCompiler {
     /**
      * @return true: has an EA 
      */
-    public static boolean compileGetEA(MachineOperand op, int eaIndex, CompileInfo info, Instruction ins, int pc) {
+    public static boolean compileGetEA(BaseMachineOperand op, int eaIndex, CompileInfo info, Instruction9900 ins, int pc) {
         InstructionList ilist = info.ilist;
         switch (op.type)
         {
-        case MachineOperand.OP_REG:    // Rx
+        case InstTable9900.OP_REG:    // Rx
             op.cycles += 0 * 4;
             // (short) ((val<<1) + wp);
-            if (!(ins.inst == InstructionTable.Impy /*&& ins.op2 == this*/)
-                    && !(ins.inst == InstructionTable.Idiv /*&& ins.op2 == this*/)
+            if (!(ins.inst == Inst9900.Impy /*&& ins.op2 == this*/)
+                    && !(ins.inst == Inst9900.Idiv /*&& ins.op2 == this*/)
                     && Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()
                     && !new SettingProperty(
@@ -59,24 +61,24 @@ public class OperandCompiler {
 				return false;
 			}
             // slow mode: treat this as normal memory access
-            OperandCompiler.compileGetRegEA(info, op.val);
+            OperandCompiler9900.compileGetRegEA(info, op.val);
             break;
-        case MachineOperand.OP_IND: {  // *Rx
+        case InstTable9900.OP_IND: {  // *Rx
             //short ad = (short)((val<<1) + wp);
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
-                OperandCompiler.compileReadRegWord(info, ilist, op.val);
+                OperandCompiler9900.compileReadRegWord(info, ilist, op.val);
             } else {
-                OperandCompiler.compileGetRegEA(info, op.val);
-                OperandCompiler.compileReadWord(info, ilist); // regval
+                OperandCompiler9900.compileGetRegEA(info, op.val);
+                OperandCompiler9900.compileReadWord(info, ilist); // regval
             }
             break;
         }
-        case MachineOperand.OP_INC: {   // *Rx+
+        case InstTable9900.OP_INC: {   // *Rx+
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
 
-            	OperandCompiler.compileReadRegWordAndInc(info, ilist, op.val, op.byteop ? 1 : 2, false);
+            	OperandCompiler9900.compileReadRegWordAndInc(info, ilist, op.val, op.byteop ? 1 : 2, false);
                 
                 // &Rxx
                 /* postincrement register */
@@ -84,23 +86,23 @@ public class OperandCompiler {
 
             } else {
                 //short ad = (short)((val<<1) + wp);
-                OperandCompiler.compileGetRegEA(info, op.val);
+                OperandCompiler9900.compileGetRegEA(info, op.val);
                 
                 // &Rxx
                 /* postincrement register */
                 op.cycles += op.byteop ? 2 : 4;
                 
                 ilist.append(new DUP());    // &Rxx, &Rxx
-                OperandCompiler.compileReadWord(info, ilist); // &Rxx, regval 
+                OperandCompiler9900.compileReadWord(info, ilist); // &Rxx, regval 
                 ilist.append(new DUP_X1()); // regval, &Rxx, regval
                 ilist.append(new PUSH(info.pgen, op.byteop ? 1 : 2));
                 ilist.append(new IADD());
                 ilist.append(new I2S());    // regval, &Rxx, regval+K
-                OperandCompiler.compileWriteWord(info, ilist); // regval
+                OperandCompiler9900.compileWriteWord(info, ilist); // regval
             }
             break;
         }
-        case MachineOperand.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
+        case InstTable9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
             if (hasConstAddr(op, info)) {
 				return false;
 			}
@@ -111,10 +113,10 @@ public class OperandCompiler {
   //            Compiler.compileReadWord(info, ilist);  // &Rxx, immed, regval
                 if (Compiler.settingOptimize.getBoolean()
                         && Compiler.settingOptimizeRegAccess.getBoolean()) {
-                	OperandCompiler.compileReadRegWord(info, ilist, op.val);
+                	OperandCompiler9900.compileReadRegWord(info, ilist, op.val);
                 } else {
-                    OperandCompiler.compileGetRegEA(info, op.val);
-                    OperandCompiler.compileReadWord(info, ilist); // regval
+                    OperandCompiler9900.compileGetRegEA(info, op.val);
+                    OperandCompiler9900.compileReadWord(info, ilist); // regval
                 }
                 
                 ilist.append(new IADD());
@@ -123,29 +125,29 @@ public class OperandCompiler {
             }
             break;
         }
-        case MachineOperand.OP_OFFS_R12:   // offset from R12
+        case InstTable9900.OP_OFFS_R12:   // offset from R12
             if (Compiler.settingOptimize.getBoolean()
                     &&Compiler.settingOptimizeRegAccess.getBoolean()) {
                 return false;
             }
-            OperandCompiler.compileGetRegEA(info, 12);
+            OperandCompiler9900.compileGetRegEA(info, 12);
             break;
-        case MachineOperand.OP_REG0_SHIFT_COUNT: // shift count from R0
+        case InstTable9900.OP_REG0_SHIFT_COUNT: // shift count from R0
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
                 return false;
             }
-            OperandCompiler.compileGetRegEA(info, 0);
+            OperandCompiler9900.compileGetRegEA(info, 0);
             break;
         
-        case MachineOperand.OP_JUMP:   // jump target
+        case InstTable9900.OP_JUMP:   // jump target
             ilist.append(new PUSH(info.pgen, (short)(op.val + pc)));
             break;
         case MachineOperand.OP_NONE:
-        case MachineOperand.OP_IMMED:  // immediate
-        case MachineOperand.OP_CNT:    // shift count
-        case MachineOperand.OP_STATUS: // status word
-        case MachineOperand.OP_INST:
+        case InstTable9900.OP_IMMED:  // immediate
+        case InstTable9900.OP_CNT:    // shift count
+        case InstTable9900.OP_STATUS: // status word
+        case InstTable9900.OP_INST:
         default:
             return false;
             //ilist.append(new PUSH(info.pgen, 0));
@@ -158,57 +160,57 @@ public class OperandCompiler {
      * @param memory
      * @return true: has value
      */
-    public static boolean compileGetValue(MachineOperand op, int valIndex, int eaIndex, CompileInfo info) {
+    public static boolean compileGetValue(BaseMachineOperand op, int valIndex, int eaIndex, CompileInfo info) {
         InstructionList ilist = info.ilist;
         switch (op.type)
         {
-        case MachineOperand.OP_REG:    // Rx
+        case InstTable9900.OP_REG:    // Rx
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean() 
                     ) {
                 // when optimizing, read directly from WP memory
                 if (op.byteop) {
-					OperandCompiler.compileReadRegByte(info, ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
+					OperandCompiler9900.compileReadRegByte(info, ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
 				} else {
-					OperandCompiler.compileReadRegWord(info, ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
+					OperandCompiler9900.compileReadRegWord(info, ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
 				}
                 break;
             }
             // fall through
             
-        case MachineOperand.OP_INC:    // *Rx+
-        case MachineOperand.OP_IND:    // *Rx
-        case MachineOperand.OP_ADDR:   // @>xxxx or @>xxxx(Rx)
+        case InstTable9900.OP_INC:    // *Rx+
+        case InstTable9900.OP_IND:    // *Rx
+        case InstTable9900.OP_ADDR:   // @>xxxx or @>xxxx(Rx)
             if (hasConstAddr(op, info)) {
                 if (op.byteop) {
-                	OperandCompiler.compileReadAbsByte(info, ilist, op.immed);
+                	OperandCompiler9900.compileReadAbsByte(info, ilist, op.immed);
 				} else {
-					OperandCompiler.compileReadAbsWord(info, ilist, op.immed);
+					OperandCompiler9900.compileReadAbsWord(info, ilist, op.immed);
 				}
             } else {
                 ilist.append(new ILOAD(eaIndex));
                 if (!op.bIsCodeDest) {
                     if (op.byteop) {
-                    	OperandCompiler.compileReadByte(info, ilist);
+                    	OperandCompiler9900.compileReadByte(info, ilist);
 					} else {
-						OperandCompiler.compileReadWord(info, ilist);
+						OperandCompiler9900.compileReadWord(info, ilist);
 					}
                 }
             }
             break;
-        case MachineOperand.OP_IMMED:  // immediate
+        case InstTable9900.OP_IMMED:  // immediate
             ilist.append(new PUSH(info.pgen, op.immed));
             break;
-        case MachineOperand.OP_CNT:    // shift count
+        case InstTable9900.OP_CNT:    // shift count
             ilist.append(new PUSH(info.pgen, op.val));
             break;
-        case MachineOperand.OP_OFFS_R12:   // offset from R12
+        case InstTable9900.OP_OFFS_R12:   // offset from R12
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
-                OperandCompiler.compileReadRegWord(info, ilist, 12);
+                OperandCompiler9900.compileReadRegWord(info, ilist, 12);
             } else {
                 ilist.append(new ILOAD(eaIndex));
-                OperandCompiler.compileReadWord(info, ilist);
+                OperandCompiler9900.compileReadWord(info, ilist);
             }
             if (op.val != 0) {
                 ilist.append(new PUSH(info.pgen, op.val));
@@ -216,13 +218,13 @@ public class OperandCompiler {
                 ilist.append(new I2S());
             }
             break;
-        case MachineOperand.OP_REG0_SHIFT_COUNT: // shift count from R0
+        case InstTable9900.OP_REG0_SHIFT_COUNT: // shift count from R0
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
-                OperandCompiler.compileReadRegWord(info, ilist, 0);
+                OperandCompiler9900.compileReadRegWord(info, ilist, 0);
             } else {
                 ilist.append(new ILOAD(eaIndex));
-                OperandCompiler.compileReadWord(info, ilist);
+                OperandCompiler9900.compileReadWord(info, ilist);
             }
             ilist.append(new PUSH(info.pgen, 0xf));
             ilist.append(new IAND());
@@ -239,15 +241,15 @@ public class OperandCompiler {
             ilist.append(skip);
             break;
         
-        case MachineOperand.OP_JUMP:   // jump target
+        case InstTable9900.OP_JUMP:   // jump target
             ilist.append(new ILOAD(eaIndex));
             break;
-        case MachineOperand.OP_INST:
+        case InstTable9900.OP_INST:
             ilist.append(new ILOAD(eaIndex));
-            OperandCompiler.compileReadWord(info, ilist);
+            OperandCompiler9900.compileReadWord(info, ilist);
             break;      
         case MachineOperand.OP_NONE:
-        case MachineOperand.OP_STATUS: // status word
+        case InstTable9900.OP_STATUS: // status word
             //TODO: NOTHING -- make sure we don't depend on this
         default:
             //ilist.append(new PUSH(info.pgen, 0));
@@ -257,18 +259,18 @@ public class OperandCompiler {
         return true;
     }
 
-    public static void compilePutValue(MachineOperand op, int valIndex, int eaIndex, CompileInfo info) {
+    public static void compilePutValue(BaseMachineOperand op, int valIndex, int eaIndex, CompileInfo info) {
         switch (op.type) {
-        case MachineOperand.OP_REG:
+        case InstTable9900.OP_REG:
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean() 
                     ) {
                 // write directly to WP memory 
                 info.ilist.append(new ILOAD(valIndex));
                 if (op.byteop) {
-					OperandCompiler.compileWriteRegByte(info, info.ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
+					OperandCompiler9900.compileWriteRegByte(info, info.ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
 				} else {
-					OperandCompiler.compileWriteRegWord(info, info.ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
+					OperandCompiler9900.compileWriteRegWord(info, info.ilist, op.val, op.dest == Operand.OP_DEST_TRUE);
 				}
                 break;
             }
@@ -279,9 +281,9 @@ public class OperandCompiler {
             info.ilist.append(new ILOAD(valIndex));
             if (op.byteop) {
                 info.ilist.append(InstructionConstants.I2B);
-                OperandCompiler.compileWriteByte(info, info.ilist);
+                OperandCompiler9900.compileWriteByte(info, info.ilist);
             } else {
-                OperandCompiler.compileWriteWord(info, info.ilist);
+                OperandCompiler9900.compileWriteWord(info, info.ilist);
             }
             break;
         }

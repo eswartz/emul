@@ -60,6 +60,14 @@ public class PcRelativeOperand extends BaseOperand {
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.AssemblerOperand#resolve(v9t9.tools.asm.Assembler, v9t9.engine.cpu.Instruction)
 	 */
 	public LLOperand resolve(Assembler assembler, IInstruction inst)

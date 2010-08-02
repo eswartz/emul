@@ -87,6 +87,14 @@ public class BinaryOperand extends BaseOperand {
 	public boolean isRegister() {
 		return false;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return left.isConst() && right.isConst();
+	}
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		LLOperand leftRes = left.resolve(assembler, inst);

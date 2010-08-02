@@ -60,6 +60,13 @@ public class LLCountOperand extends LLNonImmediateOperand {
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return true;
+	}
 
 	public int getCount() {
 		return count;
@@ -68,9 +75,14 @@ public class LLCountOperand extends LLNonImmediateOperand {
 	public void setCount(int count) {
 		this.count = count;
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.ll.LLOperand#createMachineOperand(v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory)
+	 */
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		return MachineOperand.createGeneralOperand(MachineOperand.OP_CNT, (short) count);
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory)
+			throws ResolveException {
+		return opFactory.createCountOperand(this);
 	}
+
 }

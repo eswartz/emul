@@ -47,6 +47,16 @@ public class JumpOperand extends BaseOperand {
 	public boolean isRegister() {
 		return false;
 	}
+	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return op.isConst();
+	}
+	
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		int pc = assembler.getPc();

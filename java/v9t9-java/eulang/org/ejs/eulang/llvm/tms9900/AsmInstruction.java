@@ -13,11 +13,12 @@ import org.ejs.eulang.llvm.tms9900.asm.ISymbolOperand;
 import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
+import v9t9.engine.cpu.Effects;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstEncodePattern;
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.Operand;
-import v9t9.engine.cpu.Instruction.Effects;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -75,9 +76,9 @@ public class AsmInstruction extends HLInstruction {
 	 */
 	public Effects getEffects() {
 		if (fx == null) {
-			fx = Instruction.getInstructionEffects(getInst());
+			fx = Instruction9900.getInstructionEffects(getInst());
 			if (fx == null) {
-				fx = new Instruction.Effects();
+				fx = new Effects();
 				switch (getInst()) {
 				case InstrSelection.Pcopy:
 				case InstrSelection.Piset:
@@ -95,7 +96,7 @@ public class AsmInstruction extends HLInstruction {
 					fx.mop2_dest = Operand.OP_DEST_FALSE;
 					break;
 				case InstrSelection.Pjcc:
-					fx.jump = Instruction.INST_JUMP_COND;
+					fx.jump = Instruction9900.INST_JUMP_COND;
 					fx.mop1_dest = Operand.OP_DEST_FALSE;
 					fx.mop2_dest = Operand.OP_DEST_FALSE;
 					fx.mop3_dest = Operand.OP_DEST_FALSE;
@@ -107,7 +108,7 @@ public class AsmInstruction extends HLInstruction {
 					break;
 				}
 			}
-			if (getInst() == InstructionTable.Impy || getInst() == InstructionTable.Idiv) {
+			if (getInst() == Inst9900.Impy || getInst() == Inst9900.Idiv) {
 				fx.mop3_dest = Operand.OP_DEST_KILLED;
 			}
 		}
@@ -240,7 +241,7 @@ public class AsmInstruction extends HLInstruction {
 			return;
 		}
 		
-		if (op instanceof AsmOperand && ((AsmOperand) op).isConst())
+		if (op.isConst())
 			return;
 		
 		// else, look for the address 
@@ -506,7 +507,7 @@ public class AsmInstruction extends HLInstruction {
 	 * @return
 	 */
 	public boolean supportsOp(int i, AssemblerOperand op) {
-		InstEncodePattern pattern = InstructionTable.lookupEncodePattern(getInst());
+		InstEncodePattern pattern = InstTable9900.lookupEncodePattern(getInst());
 		if (pattern == null)
 			return true;
 
@@ -522,7 +523,7 @@ public class AsmInstruction extends HLInstruction {
 			// fall through
 		case InstEncodePattern.IMM:
 		case InstEncodePattern.OFF:
-			return op instanceof NumberOperand || ((op instanceof AsmOperand) && ((AsmOperand) op).isConst());
+			return op instanceof NumberOperand || op.isConst();
 		case InstEncodePattern.REG:
 			return op.isRegister();
 		case InstEncodePattern.GEN:

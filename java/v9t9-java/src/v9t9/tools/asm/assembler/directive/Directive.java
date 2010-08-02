@@ -3,8 +3,9 @@
  */
 package v9t9.tools.asm.assembler.directive;
 
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.tools.asm.assembler.BaseAssemblerInstruction;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 import v9t9.tools.asm.assembler.ResolveException;
 
 /**
@@ -12,12 +13,12 @@ import v9t9.tools.asm.assembler.ResolveException;
  *
  */
 public abstract class Directive extends BaseAssemblerInstruction {
-	protected static Instruction[] NO_INSTRUCTIONS = new Instruction[0];
+	protected static Instruction9900[] NO_INSTRUCTIONS = new Instruction9900[0];
 	public Directive() {
 	}
 	
 	@Override
-	public byte[] getBytes() throws ResolveException {
+	public byte[] getBytes(IInstructionFactory factory) throws ResolveException {
 		return NO_BYTES;
 	}
 	

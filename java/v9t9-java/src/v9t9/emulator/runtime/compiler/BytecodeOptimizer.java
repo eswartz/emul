@@ -23,7 +23,7 @@ import org.apache.bcel.util.InstructionFinder;
 public class BytecodeOptimizer {
 
 
-	public static void peephole(CompileInfo info, Compiler.InstInfo ii) {
+	public static void peephole(CompileInfo info, Compiler9900.InstInfo ii) {
 	    boolean changed;
 	
 	    //int origCount = info.ilist.size();

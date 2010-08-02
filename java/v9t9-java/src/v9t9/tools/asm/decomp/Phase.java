@@ -15,9 +15,12 @@ import java.util.TreeSet;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.MemoryRange;
 
@@ -324,15 +327,15 @@ public abstract class Phase {
 	//  operand is relocatable if it's in our memory
 	//  and is a direct address, a jump target, or
 	//  a nontrivial register indirect (a likely lookup table)
-	public boolean operandIsRelocatable(HighLevelInstruction inst, MachineOperand mop) {
-		if (inst.inst == InstructionTable.Ilwpi) {
+	public boolean operandIsRelocatable(HighLevelInstruction inst, MachineOperand9900 mop) {
+		if (inst.inst == Inst9900.Ilwpi) {
 			return true;
 		}
 		if (!(mop instanceof MachineOperand)) {
 			return false;
 		}
-		return (mop.type == MachineOperand.OP_ADDR
-				&& (mop.val == 0 || mop.immed >= 0x20) || mop.type == MachineOperand.OP_JUMP)
+		return (mop.type == InstTable9900.OP_ADDR
+				&& (mop.val == 0 || mop.immed >= 0x20) || mop.type == InstTable9900.OP_JUMP)
 				&& decompileInfo.getMemoryRanges().getRangeContaining(operandEffectiveAddress(
 						inst, mop)) != null;
 
@@ -346,11 +349,11 @@ public abstract class Phase {
 		if (!range.isCode()) {
 			return false;
 		}
-		Instruction inst = decompileInfo.getInstruction(new Integer(addr));
+		Instruction9900 inst = decompileInfo.getInstruction(new Integer(addr));
 		if (inst == null) {
 			return false;
 		}
-		if (inst.inst == InstructionTable.Idata) {
+		if (inst.inst == InstTableCommon.Idata) {
 			return false;
 		}
 		return true;

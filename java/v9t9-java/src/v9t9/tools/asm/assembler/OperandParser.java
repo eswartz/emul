@@ -17,7 +17,7 @@ public class OperandParser {
 
 	public final static OperandParser STANDARD = new OperandParser();
 	static {
-		STANDARD.appendStage(new MachineOperandParserStage());
+		STANDARD.appendStage(new MachineOperandParserStage9900());
 	}
 
 	private List<IOperandParserStage> stages = new ArrayList<IOperandParserStage>(1);

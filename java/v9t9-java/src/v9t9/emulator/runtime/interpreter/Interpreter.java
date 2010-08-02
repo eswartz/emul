@@ -1,7 +1,7 @@
 package v9t9.emulator.runtime.interpreter;
 
-import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.RawInstruction;
 
 public interface Interpreter {
 
@@ -19,6 +19,6 @@ public interface Interpreter {
 	 */
 	void executeFast(Short op_x);
 
-	Instruction getInstruction(Cpu cpu);
+	RawInstruction getInstruction();
 
 }

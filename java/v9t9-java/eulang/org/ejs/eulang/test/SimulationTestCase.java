@@ -23,7 +23,7 @@ import org.ejs.eulang.llvm.directives.LLDefineDirective;
 import org.ejs.eulang.llvm.directives.LLGlobalDirective;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
-import org.ejs.eulang.llvm.tms9900.app.Simulator;
+import org.ejs.eulang.llvm.tms9900.app.Simulator9900;
 import org.junit.Before;
 
 import v9t9.engine.memory.MemoryEntry;
@@ -34,7 +34,7 @@ import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
  *
  */
 public class SimulationTestCase extends BaseInstrTest implements Test, DebuggableTest {
-	protected Simulator simulator;
+	protected Simulator9900 simulator;
 	
 	private final String TMP = File.separatorChar == '\\' ? "c:/temp/" : "/tmp/";
 	
@@ -49,7 +49,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 	private boolean llvmOptimize;
 
 	public interface SimulationRunnable {
-		void run(Simulator sim) throws Exception;
+		void run(Simulator9900 sim) throws Exception;
 	}
 	
 	public boolean isSkipping() {
@@ -81,7 +81,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		this.actions = actions;
 	}
 	
-	protected Simulator makeSimulator(String string) throws Exception {
+	protected Simulator9900 makeSimulator(String string) throws Exception {
 		LLModule mod = getModule(string);
 		for (LLBaseDirective dir : mod.getDirectives()) {
 			if (dir instanceof LLDefineDirective) {
@@ -109,7 +109,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 			}
 		}
 		
-		final Simulator sim = new Simulator(v9t9Target, buildOutput);
+		final Simulator9900 sim = new Simulator9900(v9t9Target, buildOutput);
 		
 		final BitSet globalChanges = new BitSet();
 		MemoryWriteListener globalMemoryListener = new MemoryWriteListener() {
@@ -167,10 +167,10 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 		
 		sim.addInstructionListener(sim.new DumpFullReporter());
 		final BitSet changes = new BitSet();
-		sim.addInstructionListener(new Simulator.InstructionListener() {
+		sim.addInstructionListener(new Simulator9900.InstructionListener() {
 			
 			@Override
-			public void executed(Simulator.InstructionWorkBlock before, Simulator.InstructionWorkBlock after) {
+			public void executed(Simulator9900.InstructionWorkBlock before, Simulator9900.InstructionWorkBlock after) {
 				int wp = sim.getCPU().getWP() & 0xffff;
 				for (int addr = changes.nextSetBit(0); addr != -1; addr = changes.nextSetBit(addr+1)) {
 					String loc = ((addr >= wp && addr <= wp + 32) ?
@@ -325,7 +325,7 @@ public class SimulationTestCase extends BaseInstrTest implements Test, Debuggabl
 				
 				short wp = (short) 0xff80;
 
-				Simulator sim = makeSimulator(program);
+				Simulator9900 sim = makeSimulator(program);
 				sim.getCPU().setWP(wp);
 				
 				for (SimulationRunnable r : actions) {

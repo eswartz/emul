@@ -25,9 +25,10 @@ import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 
-import static v9t9.engine.cpu.InstructionTable.*;
+import static v9t9.engine.cpu.InstTable9900.*;
 import static org.ejs.eulang.llvm.tms9900.InstrSelection.*;
 
+import v9t9.engine.cpu.Inst9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -152,7 +153,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		ISymbol statusSym = getStatusSymbol();
 		
 		// add CB x,x to test 
-		AsmInstruction ccinst = AsmInstruction.create(Icb, bool, bool);
+		AsmInstruction ccinst = AsmInstruction.create(Inst9900.Icb, bool, bool);
 		ccinst.setImplicitTargets(new ISymbol[] { statusSym });
 		
 		instrBlockMap.get(inst.getNumber()).addInstBefore(ccinst, inst);
@@ -421,7 +422,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		ILocal t3Local = stackFrame.allocateTemp(typeEngine.INT);
 		AssemblerOperand t3 = new RegTempOperand((RegisterLocal) t3Local);
 		int bytes = type.getBits() / 8;
-		lp = AsmInstruction.create(Ili, t3, new NumberOperand(bytes));
+		lp = AsmInstruction.create(Inst9900.Ili, t3, new NumberOperand(bytes));
 		block.addInstBefore(lp, inst);
 		System.out.println(here() +" " + lp);
 		
@@ -440,20 +441,20 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		instrBlockMap.put(inst.getNumber(), after);
 		
-		lp = AsmInstruction.create(Ijmp, new SymbolLabelOperand(labelSym));
+		lp = AsmInstruction.create(Inst9900.Ijmp, new SymbolLabelOperand(labelSym));
 		block.addInst(lp);
 		System.out.println(here() +" " + lp);
 		
 		// add new stuff to 'loop'
 		
 		if (!isClear) {
-			lp = AsmInstruction.create(Imov, new RegIncOperand(t1), new RegIncOperand(t2));
+			lp = AsmInstruction.create(Inst9900.Imov, new RegIncOperand(t1), new RegIncOperand(t2));
 		} else {
-			lp = AsmInstruction.create(Iclr, new RegIncOperand(t2));
+			lp = AsmInstruction.create(Inst9900.Iclr, new RegIncOperand(t2));
 		}
 		loop.addInst(lp);
 		System.out.println(here() +" " + lp);
-		lp = AsmInstruction.create(Idect, t3);
+		lp = AsmInstruction.create(Inst9900.Idect, t3);
 		lp.setImplicitTargets(new ISymbol[] { getStatusSymbol() });
 		loop.addInst(lp);
 		System.out.println(here() +" " + lp);
@@ -467,9 +468,9 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		if (bytes % 2 != 0) {
 			if (!isClear) {
-				lp = AsmInstruction.create(Imovb, new RegIndOperand(t1), new RegIndOperand(t2));
+				lp = AsmInstruction.create(Inst9900.Imovb, new RegIndOperand(t1), new RegIndOperand(t2));
 			} else {
-				lp = AsmInstruction.create(Isb, new RegIndOperand(t2), new RegIndOperand(t2));
+				lp = AsmInstruction.create(Inst9900.Isb, new RegIndOperand(t2), new RegIndOperand(t2));
 			}
 			after.addInstBefore(lp, after.getFirst());
 			System.out.println(here() +" " + lp);
@@ -499,11 +500,11 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			if (to instanceof CompositePieceOperand)
 				((CompositePieceOperand) to).setType(type);
 				
-			int ins = Imov;
+			int ins = Inst9900.Imov;
 			if (type.getBits() > 16)
 				ins = Pcopy;
 			else if (type.getBits() <= 8)
-				ins = Imovb;
+				ins = Inst9900.Imovb;
 			
 			AsmInstruction copy;
 			if ((from instanceof NumberOperand || from instanceof SymbolOperand) && ins != Pcopy) {
@@ -511,7 +512,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 				RegTempOperand tmp = new RegTempOperand((RegisterLocal) stackFrame.allocateTemp(type));
 				if (type.getBits() <= 8)
 					from = new NumberOperand((((NumberOperand) from).getValue() << 8) & 0xff00);
-				copy = AsmInstruction.create(Ili, tmp, from);
+				copy = AsmInstruction.create(Inst9900.Ili, tmp, from);
 				System.out.println(here() + " adding " + copy);
 				block.addInstAfter(last, copy);
 				last = copy;
@@ -553,9 +554,9 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			int left = type.getBits() - i;
 			int use = Math.min(typeEngine.INT.getBits(), left);
 			LLType theType = typeEngine.getIntType(use);
-			int ins = Imov;
+			int ins = Inst9900.Imov;
 			if (use <= 8) {
-				ins = Imovb;
+				ins = Inst9900.Imovb;
 			}
 			
 			if (to instanceof CompositePieceOperand)
@@ -591,9 +592,9 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 			
 			AsmInstruction clr; 
 			if (type.getBits() - i <= 8)
-				clr = AsmInstruction.create(Isb, to, to);
+				clr = AsmInstruction.create(Inst9900.Isb, to, to);
 			else
-				clr = AsmInstruction.create(Iclr, to);
+				clr = AsmInstruction.create(Inst9900.Iclr, to);
 			block.addInstAfter(last, clr);
 			last = clr;
 			
@@ -653,7 +654,7 @@ public class LowerPseudoInstructions extends AbstractCodeModificationVisitor {
 		
 		AssemblerOperand answer = isel.generateMultiply(srcDest, type, by);
 		
-		AsmInstruction movBack = AsmInstruction.create(type.getBits() <= 8 ? Imovb : Imov, answer, srcDest);
+		AsmInstruction movBack = AsmInstruction.create(type.getBits() <= 8 ? Inst9900.Imovb : Inst9900.Imov, answer, srcDest);
 		System.out.println(here() +" " + movBack);
 		block.addInstBefore(movBack, last);
 		

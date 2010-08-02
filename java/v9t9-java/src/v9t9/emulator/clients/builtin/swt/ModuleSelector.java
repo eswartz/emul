@@ -86,7 +86,11 @@ public class ModuleSelector extends Composite {
 			
 			public void selectionChanged(SelectionChangedEvent event) {
 				Object obj = ((IStructuredSelection) event.getSelection()).getFirstElement();
-				if (obj instanceof IModule) {
+				if (obj instanceof String) {
+					selectedModule = null;
+					switchButton.setEnabled(true);
+				}
+				else if (obj instanceof IModule) {
 					selectedModule = (IModule) obj;
 					switchButton.setEnabled(true);
 				} else {
@@ -98,7 +102,11 @@ public class ModuleSelector extends Composite {
 			
 			public void open(OpenEvent event) {
 				Object obj = ((IStructuredSelection) event.getSelection()).getFirstElement();
-				if (obj instanceof IModule) {
+				if (obj instanceof String) {
+					selectedModule = null;
+					switchButton.setEnabled(true);
+				}
+				else if (obj instanceof IModule) {
 					selectedModule = (IModule) obj;
 					switchButton.setEnabled(true);
 					switchModule();
@@ -117,13 +125,16 @@ public class ModuleSelector extends Composite {
 		switchButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				if (selectedModule != null)
-					switchModule();
+				switchModule();
 			}
 		});
 		switchButton.setEnabled(false);
 		
-		viewer.setInput(machine.getModuleManager().getModules());
+		IModule[] realModules = machine.getModuleManager().getModules();
+		Object[] modulesPlusEmpty = new Object[realModules.length + 1];
+		modulesPlusEmpty[0] = "<No module>";
+		System.arraycopy(realModules, 0, modulesPlusEmpty, 1, realModules.length);
+		viewer.setInput(modulesPlusEmpty);
 		final IModule[] loadedModules = machine.getModuleManager().getLoadedModules();
 		viewer.setSelection(new StructuredSelection(loadedModules));
 		if (loadedModules.length > 0) {
@@ -183,6 +194,8 @@ public class ModuleSelector extends Composite {
 		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
 		 */
 		public String getColumnText(Object element, int columnIndex) {
+			if (element instanceof String)
+				return element.toString();
 			if (!(element instanceof IModule)) {
 				return null;
 			}

@@ -10,7 +10,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.TI99Machine;
 import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 
 public abstract class DsrManager implements IDsrManager {
 
@@ -51,7 +51,4 @@ public abstract class DsrManager implements IDsrManager {
 	public void registerDsr(DsrHandler dsr) {
 		this.dsrs.add(dsr);
 	}
-
-	abstract public void handleDSR(InstructionWorkBlock instructionWorkBlock);
-
 }

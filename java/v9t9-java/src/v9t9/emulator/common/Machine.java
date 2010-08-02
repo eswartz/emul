@@ -20,17 +20,15 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
-import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DsrManager;
-import v9t9.emulator.hardware.dsrs.DsrManager9900;
 import v9t9.emulator.hardware.dsrs.IDsrManager;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.emulator.runtime.cpu.AbortedException;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.CpuMetrics;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.Client;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.files.DataFiles;
@@ -49,8 +47,8 @@ import v9t9.keyboard.KeyboardState;
 abstract public class Machine {
     protected Memory memory;
     protected MemoryDomain console;
-    protected  Cpu9900 cpu;
-    protected  Executor9900 executor;
+    protected  Cpu cpu;
+    protected  Executor executor;
     protected Client client;
     protected  volatile boolean bAlive;
     protected Timer timer;
@@ -109,7 +107,7 @@ abstract public class Machine {
     	machineModel.defineDevices(this);
     	
     	cpuMetrics = new CpuMetrics();
-    	executor = new Executor9900(cpu, cpuMetrics);
+    	executor = machineModel.createExecutor(cpu, cpuMetrics);
     	
     	settingPauseMachine.addListener(new IPropertyListener() {
 
@@ -302,7 +300,7 @@ abstract public class Machine {
         
         bAlive = true;
         
-      	// the machine (well, actually, 9900) runner
+      	// the machine (well, actually, CPU) runner
 		machineRunner = new Thread("Machine Runner") {
         	@Override
         	public void run() {
@@ -386,12 +384,14 @@ abstract public class Machine {
 		
 		memory.save();        
         getSound().getSoundHandler().dispose();
+        if (dsrManager != null)
+			dsrManager.dispose();
 	}
     
-	public Cpu9900 getCpu() {
+	public Cpu getCpu() {
         return cpu;
     }
-    public void setCpu(Cpu9900 cpu) {
+    public void setCpu(Cpu cpu) {
         this.cpu = cpu;
     }
     public Client getClient() {
@@ -411,10 +411,10 @@ abstract public class Machine {
         	recordingNotifier = new RecordingEventNotifier();
         }
     }
-    public Executor9900 getExecutor() {
+    public Executor getExecutor() {
         return executor;
     }
-    public void setExecutor(Executor9900 executor) {
+    public void setExecutor(Executor executor) {
         this.executor = executor;
     }
     
@@ -456,6 +456,8 @@ abstract public class Machine {
 		vdp.saveState(settings.addSection("VDP"));
 		sound.saveState(settings.addSection("Sound"));
 		moduleManager.saveState(settings.addSection("Modules"));
+		if (dsrManager != null)
+			dsrManager.saveState(settings.addSection("DSRs"));
 	}
 
 	public synchronized void loadState(ISettingSection section) throws IOException {
@@ -496,6 +498,8 @@ abstract public class Machine {
 		sound.loadState(section.getSection("Sound"));
 		keyboardState.resetKeyboard();
 		keyboardState.resetJoystick();
+		if (dsrManager != null)
+			dsrManager.loadState(section.getSection("DSRs"));
 	}
 
 	public SoundProvider getSound() {

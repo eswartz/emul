@@ -8,7 +8,6 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertNotNull;
-import static v9t9.engine.cpu.InstructionTable.Ia;
 
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLModule;
@@ -35,7 +34,7 @@ import org.ejs.eulang.types.LLTupleType;
 import org.ejs.eulang.types.LLType;
 import org.junit.Test;
 
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
@@ -2043,7 +2042,7 @@ entry.18:
 	   	"");
 	   	
 	   	for (AsmInstruction inst : instrs) {
-    		if (inst.getInst() == InstructionTable.Ili) {
+    		if (inst.getInst() == Inst9900.Ili) {
     			if (((NumberOperand)inst.getOp2()).getValue() == 3)
     				fail(inst+": expected >0300");
     			if (((NumberOperand)inst.getOp2()).getValue() == 1)
@@ -2122,7 +2121,7 @@ entry.18:
 	   	do {
 			idx = findInstrWithSymbol(instrs, "x", idx);
 			inst = instrs.get(idx);
-	   	} while (inst.getInst() != InstructionTable.Imov);
+	   	} while (inst.getInst() != Inst9900.Imov);
 	   	
 		
 		// holder
@@ -2253,7 +2252,7 @@ entry.18:
     	// don't destroy valp here
     	idx = findInstrWithSymbol(instrs, "valp", idx + 2);		// skip any copy
     	inst = instrs.get(idx);
-    	assertFalse(inst+"", inst.getInst() == Ia);
+    	assertFalse(inst+"", inst.getInst() == Inst9900.Ia);
 	}
 
 	@Test

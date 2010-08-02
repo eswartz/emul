@@ -28,6 +28,7 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
 import v9t9.tools.asm.assembler.directive.DescrDirective;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
+import v9t9.tools.asm.assembler.operand.hl.ILLOperandFactory;
 import v9t9.tools.asm.assembler.transform.ConstPool;
 import v9t9.tools.asm.assembler.transform.JumpFixer;
 import v9t9.tools.asm.assembler.transform.Simplifier;
@@ -75,6 +76,8 @@ public class Assembler {
 	private ArrayList<AssemblerError> errorList;
 
 	private ConstPool constPool = new ConstPool(this);
+
+	private IInstructionFactory instructionFactory;
     
 	private static final Pattern INCL_LINE = Pattern.compile(
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
@@ -85,9 +88,10 @@ public class Assembler {
     	StdCPU.mapEntry(StdCPUExpHiRAM);
     	StdCPU.mapEntry(StdCPUExpLoRAM);
     	
+    	instructionFactory = new InstructionFactory9900();
     	OperandParser operandParser = new OperandParser();
-    	operandParser.appendStage(new AssemblerOperandParserStage(this));
-    	StandardInstructionParserStage instStage = new StandardInstructionParserStage(operandParser);
+    	operandParser.appendStage(new AssemblerOperandParserStage9900(this));
+    	StandardInstructionParserStage9900 instStage = new StandardInstructionParserStage9900(operandParser);
 
     	// handle directives first to trap DATA and BYTE
     	instructionParser.appendStage(new ConditionalInstructionParserStage(this, operandParser));
@@ -507,7 +511,7 @@ public class Assembler {
 			byte[] mem = new byte[0];
 			if (inst instanceof BaseAssemblerInstruction) {
 				try {
-					mem = ((BaseAssemblerInstruction) inst).getBytes();
+					mem = ((BaseAssemblerInstruction) inst).getBytes(instructionFactory);
 					if (mem != null && mem.length > 0) {
 						/*
 						MemoryRange range = memoryRanges.getRangeContaining(inst.getPc());
@@ -661,4 +665,10 @@ public class Assembler {
     	getSymbolTable().addSymbol(equate);
 	}
 
+	/**
+	 * @return
+	 */
+	public IInstructionFactory getInstructionFactory() {
+		return instructionFactory;
+	}
 }

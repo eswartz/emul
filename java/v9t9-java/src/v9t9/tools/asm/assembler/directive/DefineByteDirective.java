@@ -9,6 +9,7 @@ import java.util.ListIterator;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -86,7 +87,7 @@ public class DefineByteDirective extends Directive {
 		return new IInstruction[] { this };
 	}
 	
-	public byte[] getBytes() throws ResolveException {
+	public byte[] getBytes(IInstructionFactory factory) throws ResolveException {
 		byte[] bytes = new byte[ops.size()];
 		int idx = 0;
 		for (AssemblerOperand op : ops) {

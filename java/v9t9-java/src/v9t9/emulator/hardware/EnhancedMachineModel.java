@@ -8,9 +8,18 @@ import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
-import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.V9t9EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.MultiSoundTMS9919B;
+import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
+import v9t9.emulator.runtime.cpu.CpuMetrics;
+import v9t9.emulator.runtime.cpu.DumpFullReporter9900;
+import v9t9.emulator.runtime.cpu.DumpReporter9900;
+import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.emulator.runtime.interpreter.Interpreter9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;
@@ -23,7 +32,7 @@ import v9t9.engine.memory.WindowBankedMemoryEntry;
  */
 public class EnhancedMachineModel implements MachineModel {
 
-	private EnhancedConsoleMemoryModel memoryModel;
+	private V9t9EnhancedConsoleMemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
 	private BankedMemoryEntry cpuBankedVideo;
 	private VdpV9938 vdp;
@@ -31,7 +40,7 @@ public class EnhancedMachineModel implements MachineModel {
 	//protected MemoryEntry currentMemory;
 	
 	public EnhancedMachineModel() {
-		memoryModel = new EnhancedConsoleMemoryModel();
+		memoryModel = new V9t9EnhancedConsoleMemoryModel();
 	}
 	
 	/* (non-Javadoc)
@@ -122,4 +131,12 @@ public class EnhancedMachineModel implements MachineModel {
 		machine.getCruManager().add(0x1408, 1, bankSelector);
 	}
 
+	@Override
+	public Executor createExecutor(Cpu cpu, CpuMetrics metrics) {
+		return new Executor(cpu, metrics, 
+				new Interpreter9900((TI99Machine) cpu.getMachine()),
+				new CodeBlockCompilerStrategy(),
+				new DumpFullReporter9900((Cpu9900) cpu),
+				new DumpReporter9900((Cpu9900) cpu));
+	}
 }

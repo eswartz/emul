@@ -6,7 +6,7 @@ package v9t9.tools.asm.assembler.transform;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.LLInstruction;
@@ -184,7 +184,7 @@ public class ConstPool {
 	/** Add the opcode from the instruction to the const pool */
 	public void injectInstruction(LLInstruction inst) {
 		try {
-			RawInstruction rawInst = inst.createRawInstruction();
+			RawInstruction rawInst = assembler.getInstructionFactory().createRawInstruction(inst);
 			int pc = rawInst.getPc();
 			
 			// Obviously, RAM can change.  Also, jump instructions may be moved
@@ -192,7 +192,7 @@ public class ConstPool {
 			if (assembler.getConsole().hasRamAccess(pc) || rawInst.isJumpInst())
 				return;
 			
-			short[] words = InstructionTable.encode(rawInst);
+			short[] words = InstTable9900.encode(rawInst);
 			
 			for (int i = 0; i < words.length; i++) {
 				short word = words[i];

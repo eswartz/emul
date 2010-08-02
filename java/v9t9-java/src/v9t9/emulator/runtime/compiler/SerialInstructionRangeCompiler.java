@@ -8,10 +8,10 @@ import org.apache.bcel.generic.InstructionConstants;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 
-import v9t9.emulator.runtime.compiler.Compiler.InstInfo;
-import v9t9.emulator.runtime.compiler.Compiler.InstructionRangeCompiler;
+import v9t9.emulator.runtime.compiler.Compiler9900.InstInfo;
+import v9t9.emulator.runtime.compiler.Compiler9900.InstructionRangeCompiler;
 import v9t9.engine.HighLevelCodeInfo;
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.Instruction9900;
 
 /**
  * Compile each instruction, assuming every one is an entry point.
@@ -23,7 +23,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Compiler.InstructionRangeCompiler#compileInstructionRange(v9t9.emulator.runtime.Compiler, int, int, v9t9.emulator.runtime.HighLevelCodeInfo, org.apache.bcel.generic.InstructionList, v9t9.emulator.runtime.CompileInfo)
 	 */
-	public void compileInstructionRange(Compiler compiler, Instruction[] insts,
+	public void compileInstructionRange(Compiler9900 compiler, Instruction9900[] insts,
 			HighLevelCodeInfo highLevel, InstructionList ilist, CompileInfo info) {
 	    // discover the instructions for the block
 		int numinsts = insts.length;
@@ -83,7 +83,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	    for (int i = 0; i < numinsts; i ++) {
 	        InstInfo ii = chunks[i];
 	        if (ii != null) {
-	            if (ii.ins.jump == Instruction.INST_JUMP_FALSE) {
+	            if (ii.ins.info.jump == Instruction9900.INST_JUMP_FALSE) {
 	            	// not a jump, goto the next code block 
 	            	//
 	            	// note: we insert a GOTO in case the instruction is greater than 2 bytes,

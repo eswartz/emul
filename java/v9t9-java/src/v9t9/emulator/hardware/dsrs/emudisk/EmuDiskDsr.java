@@ -24,7 +24,7 @@ import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.V9t9FDR;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -222,7 +222,7 @@ public class EmuDiskDsr implements DsrHandler {
 			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
 			if (handler.dev <= 2 && DiskImageDsr.diskImageDsrEnabled.getBoolean()) {
-				Executor9900.settingDumpFullInstructions.setBoolean(true);
+				Executor.settingDumpFullInstructions.setBoolean(true);
 				return false;
 			}
 			
@@ -249,8 +249,8 @@ public class EmuDiskDsr implements DsrHandler {
 	 * @param string
 	 */
 	static void info(String string) {
-		if (Executor9900.settingDumpFullInstructions.getBoolean())
-			Executor9900.getDumpfull().println(string);
+		if (Executor.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println(string);
 		System.out.println(string);
 		
 	}

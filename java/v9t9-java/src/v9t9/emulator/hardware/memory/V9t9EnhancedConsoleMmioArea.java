@@ -40,7 +40,7 @@ import v9t9.engine.memory.MultiBankedMemoryEntry;
  * @author ejs
  *
  */
-public class EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryListener {
+public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryListener {
 
 	private static final int MMIO_BASE = 0xFF80;
 	public static final int VDPRD = 0xFF80;
@@ -64,7 +64,7 @@ public class EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryLi
 	private MemoryEntry underlyingMemory;
 	private MultiBankedMemoryEntry romMemory;
 		
-	EnhancedConsoleMmioArea(Machine machine) {
+	V9t9EnhancedConsoleMmioArea(Machine machine) {
 		super(0);
 		this.machine = machine;
 		machine.getMemory().addListener(this);

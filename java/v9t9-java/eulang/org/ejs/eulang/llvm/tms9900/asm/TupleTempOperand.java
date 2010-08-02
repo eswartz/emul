@@ -170,12 +170,7 @@ public class TupleTempOperand extends BaseHLOperand {
 	@Override
 	public boolean isConst() {
 		for (AssemblerOperand op : components) {
-			if (op instanceof AsmOperand) {
-				if (!((AsmOperand) op).isConst())
-					return false;
-			} else if (op instanceof NumberOperand) {
-				return true;
-			} else {
+			if (!op.isConst()) {
 				return false;
 			}
 		}

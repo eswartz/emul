@@ -80,9 +80,10 @@ public abstract class LLOperand implements AssemblerOperand {
     
     /** 
      * Resolve yourself to a lower-level operand. 
+     * @param opFactory TODO
      * @throws ResolveException if the operand cannot be resolved.
      */
-	public abstract MachineOperand createMachineOperand() throws ResolveException;
+	public abstract MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException;
 	
 	public LLOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
 		if (original != null)

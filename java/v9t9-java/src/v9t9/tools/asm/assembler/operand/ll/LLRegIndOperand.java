@@ -70,6 +70,13 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 	public boolean isRegister() {
 		return false;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
 
 	
 	public int getRegister() {
@@ -108,10 +115,7 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 	}
 	
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		if (offset == 0)
-			return MachineOperand.createGeneralOperand(MachineOperand.OP_IND, (short) register);
-		else
-			return MachineOperand.createGeneralOperand(MachineOperand.OP_ADDR, (short) register, (short) offset);
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
+		return opFactory.createRegIndOperand(this);
 	}
 }

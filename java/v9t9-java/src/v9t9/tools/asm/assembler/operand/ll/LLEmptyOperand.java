@@ -47,9 +47,16 @@ public class LLEmptyOperand extends LLNonImmediateOperand implements Operand {
 	public boolean isRegister() {
 		return false;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
 
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		return MachineOperand.createEmptyOperand();
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
+		return opFactory.createEmptyOperand();
 	}
 }

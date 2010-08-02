@@ -8,99 +8,38 @@ package v9t9.emulator.runtime.cpu;
 
 import java.io.PrintWriter;
 
-import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IProperty;
-import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.settings.ISettingSection;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.CruAccess;
+import v9t9.emulator.runtime.compiler.Compiler9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.cpu.Status;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
+import v9t9.engine.cpu.Status9900;
 
 /**
  * The 9900 engine.
  * 
  * @author ejs
  */
-public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
+public class Cpu9900 extends CpuBase {
     public static final int TMS_9900_BASE_CYCLES_PER_SEC = 3000000;
-	Machine machine;
-	public Memory memory;
-	private MemoryDomain console;
 	/** program counter */
 	private short PC;
 	/** workspace pointer */
 	private short WP;
-	long lastInterrupt;
 	/* interrupt pins */
-	//public static final int INTPIN_RESET = 1;
-	//public static final int INTPIN_LOAD = 2;
-	//public static final int INTPIN_INTREQ = 4;
 	public static final int INTLEVEL_RESET = 0;
 	public static final int INTLEVEL_LOAD = 1;
 	public static final int INTLEVEL_INTREQ = 2;
 	
-	/*	Variables for controlling a "real time" emulation of the 9900
-	processor.  Each call to execute() sets an estimated cycle count
-	for the instruction and parameters in "instcycles".  We waste
-	time in 1/BASE_EMULATOR_HZ second quanta to maintain the appearance of a
-	3.0 MHz clock. */
 	
-	int         baseclockhz;
-	
-	int         instcycles;	// cycles for each instruction
-	
-	/** target # cycles to be executed per tick */
-	int         targetcycles;	
-	/** target # cycles to be executed for this tick */
-	int         currenttargetcycles;	//
-	/**  total # target cycles expected throughout execution */
-	long         totaltargetcycles;	//
-	/** current cycles per tick */
-	int         currentcycles = 0;	// 
-	/** total # current cycles executed */
-	long         totalcurrentcycles;	// 
-	private int interruptTick;	// # ms between CPU syncs
-	private final VdpHandler vdp;
-
     public Cpu9900(Machine machine, int interruptTick, VdpHandler vdp) {
-        this.machine = machine;
-		this.vdp = vdp;
-        this.memory = machine.getMemory();
-        this.console = machine.getConsole();
-        this.console.setAccessListener(this);
-        this.status = new Status();
-        this.interruptTick = interruptTick;
-        
-        settingCyclesPerSecond.addListener(new IPropertyListener() {
+    	super(machine, interruptTick, vdp);
 
-			public void propertyChanged(IProperty setting) {
-				baseclockhz = setting.getInt();
-				targetcycles = (int)((long) baseclockhz * Cpu9900.this.interruptTick / 1000);
-		        currenttargetcycles = targetcycles;
-		        System.out.println("target: " + targetcycles);
-			}
-        	
-        });
-        
         settingCyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
-        settingRealTime.addListener(new IPropertyListener() {
-
-			public void propertyChanged(IProperty setting) {
-				tick();
-				if (setting.getBoolean()) {
-					totalcurrentcycles = totaltargetcycles;
-					currenttargetcycles = settingCyclesPerSecond.getInt() * Cpu9900.this.interruptTick / 1000;
-				}
-			}
-        	
-        });
     }
 
     /* (non-Javadoc)
@@ -117,27 +56,11 @@ public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
         PC = pc;
     }
 
-    Status status;
-
-    /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getST()
-	 */
-    public short getST() {
-        return status.flatten();
+    public Status9900 getStatus() {
+        return (Status9900) status;
     }
 
-    /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#setST(short)
-	 */
-    public void setST(short st) {
-        status.expand(st);
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
+    public void setStatus(Status9900 status) {
         this.status = status;
     }
 
@@ -165,13 +88,6 @@ public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
     	ic = forceIcTo1 ? 1 : level;
     }
     
-    /**
-     * Called when hardware triggers another pin.
-     */
-    public void setPin(int mask) {
-    	pins |= mask;
-    }
-
     /** 
      * When set, implement TI-99/4A behavior where all interrupts
      * are perceived as level 1.
@@ -182,22 +98,9 @@ public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
     public static final int PIN_LOAD = 1 << 3;
     public static final int PIN_RESET = 1 << 5;
     
-    /** State of the pins above  */
-    private int pins;
     /** When intreq, the interrupt level (IC* bits on the TMS9900). */
     private byte ic;
-    
-	private int ticks;
-	private boolean allowInts;
-	private CruAccess cruAccess;
-	private int interrupts;
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getMachine()
-	 */
-    public Machine getMachine() {
-        return machine;
-    }
+  
 
     /**
      * 
@@ -277,11 +180,11 @@ public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
 	 * @see v9t9.emulator.runtime.Cpu#handleInterrupts()
 	 */
     public final void handleInterrupts() {
-    	PrintWriter dumpfull = Executor9900.getDumpfull();
+    	PrintWriter dumpfull = Executor.getDumpfull();
 		if (dumpfull != null) {
     		dumpfull.println("*** Aborted");
 		}
-        PrintWriter dump = Executor9900.getDump();
+        PrintWriter dump = Executor.getDump();
 		if (dump != null) {
         	dump.println("*** Aborted");
 		}
@@ -337,114 +240,6 @@ public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
         return console.readWord(WP + reg*2);
     }
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#setConsole(v9t9.engine.memory.MemoryDomain)
-	 */
-	public void setConsole(MemoryDomain console) {
-		this.console = console;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getConsole()
-	 */
-	public final MemoryDomain getConsole() {
-		return console;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#addCycles(int)
-	 */
-	public synchronized void addCycles(int cycles) {
-		if (cycles != 0) {
-			this.currentcycles += cycles; 
-			
-			vdp.addCpuCycles(cycles);
-		}
-		//vdpInterruptFrac += cycles;
-		//if (currentcycles > targetcycles)
-		//	System.out.print('!');
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#tick()
-	 */
-	public synchronized void tick() {
-		//totaltargetcycles += targetcycles;
-		totalcurrentcycles += currentcycles;
-		
-		// if we went over, aim for fewer this time
-		currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
-		if (currenttargetcycles > settingCyclesPerSecond.getInt() * 2) {
-			// something really threw us off -- just start over
-			totalcurrentcycles = totaltargetcycles;
-		}
-		currentcycles = 0;
-		
-		totaltargetcycles += targetcycles;
-
-		ticks++;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#isThrottled()
-	 */
-	public synchronized boolean isThrottled() {
-		return (currentcycles >= currenttargetcycles);
-	}
-
-	public void access(MemoryEntry entry) {
-		addCycles(entry.getLatency());
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getCurrentCycleCount()
-	 */
-	public synchronized int getCurrentCycleCount() {
-		return currentcycles;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getCurrentTargetCycleCount()
-	 */
-	public synchronized int getCurrentTargetCycleCount() {
-		return currenttargetcycles;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getTotalCycleCount()
-	 */
-	public synchronized long getTotalCycleCount() {
-		return totalcurrentcycles;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getTotalCurrentCycleCount()
-	 */
-	public synchronized long getTotalCurrentCycleCount() {
-		return totalcurrentcycles + currentcycles;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getTickCount()
-	 */
-	public synchronized int getTickCount() {
-		return ticks;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#isAllowInts()
-	 */
-	public boolean isAllowInts() {
-		return allowInts;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#setAllowInts(boolean)
-	 */
-	public void setAllowInts(boolean allowInts) {
-		this.allowInts = allowInts;
-	}
-
 	public void setCruAccess(CruAccess access) {
 		this.cruAccess = access;
 	}
@@ -454,13 +249,11 @@ public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
 	}
 
 	public void saveState(ISettingSection section) {
+		super.saveState(section);
 		section.put("PC", PC);
 		section.put("WP", WP);
 		section.put("status", status.flatten());
 		section.put("ForceAllIntsLevel1", forceIcTo1);
-		settingRealTime.saveState(section);
-		settingCyclesPerSecond.saveState(section);
-		cruAccess.saveState(section.addSection("CRU"));
 	}
 
 	public void loadState(ISettingSection section) {
@@ -473,40 +266,30 @@ public class Cpu9900 implements MemoryAccessListener, IPersistable, Cpu {
 		WP = (short) section.getInt("WP");
 		status.expand((short) section.getInt("status"));
 		forceIcTo1 = section.getBoolean("ForceAllIntsLevel1");
-		settingRealTime.loadState(section);
-		settingCyclesPerSecond.loadState(section);
-		cruAccess.loadState(section.getSection("CRU"));
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getTargetCycleCount()
-	 */
-	public int getTargetCycleCount() {
-		return targetcycles;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getAndResetInterruptCount()
-	 */
-	public int getAndResetInterruptCount() {
-		int n = interrupts;
-		interrupts = 0;
-		return n;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#addAllowedCycles(int)
-	 */
-	public void addAllowedCycles(int i) {
-		currenttargetcycles += i;
+		super.loadState(section);
 		
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#resetCycleCounts()
-	 */
-	public void resetCycleCounts() {
-		currenttargetcycles = currentcycles = 0;
-		totalcurrentcycles = totaltargetcycles = 0;
+	@Override
+	public Status createStatus() {
+		return new Status9900();
+	}
+
+	@Override
+	public String getCurrentStateString() {
+		return "WP=>" 
+		+ HexUtils.toHex4(getWP())
+		+ "\t\tST=" +getStatus();
+	}
+
+	@Override
+	public void reset() {
+		contextSwitch(0);		
+	}
+	
+	@Override
+	public boolean shouldDebugCompiledCode(short pc) {
+		return ((pc >= 0x6000 && pc < 0x8000) 
+				&& Compiler9900.settingDumpModuleRomInstructions.getBoolean());
 	}
 }

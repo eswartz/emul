@@ -20,8 +20,8 @@ import org.ejs.eulang.llvm.tms9900.asm.SymbolLabelOperand;
 import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.junit.Test;
 
-import v9t9.engine.cpu.InstructionTable;
-import static v9t9.engine.cpu.InstructionTable.*;
+import v9t9.engine.cpu.Inst9900;
+import static v9t9.engine.cpu.InstTable9900.*;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -458,7 +458,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 	   	assertTrue(changed);
 	   	
 	   	for (AsmInstruction inst : instrs) {
-    		if (inst.getInst() == InstructionTable.Ili) {
+    		if (inst.getInst() == Inst9900.Ili) {
     			if ((((NumberOperand)inst.getOp2()).getValue() & 0xffff) == 0)
     				fail(inst+": lost value");
     		}
@@ -497,7 +497,7 @@ public class Test9900Optimizer extends BaseInstrTest {
 	   	assertTrue(changed);
 	   	
 	   	for (AsmInstruction inst : instrs) {
-    		if (inst.getInst() == InstructionTable.Ili) {
+    		if (inst.getInst() == Inst9900.Ili) {
     			if ((((NumberOperand)inst.getOp2()).getValue() & 0xffff) == 0)
     				fail(inst+": lost value");
     		}
@@ -554,7 +554,7 @@ public class Test9900Optimizer extends BaseInstrTest {
     	// ensure we use proper byte-shifted version of constants
     	int matches = 0;
 	   	for (AsmInstruction ins : instrs) {
-    		if (ins.getInst() == InstructionTable.Ili) {
+    		if (ins.getInst() == Inst9900.Ili) {
     			int v = ((NumberOperand)ins.getOp2()).getValue();
 				if ((v & 0xffff) == 0)
     				fail(inst+": lost value");
@@ -823,7 +823,7 @@ public class Test9900Optimizer extends BaseInstrTest {
     	
     	idx = findInstrWithSymbol(instrs, "glob", idx);
     	inst = instrs.get(idx);
-    	assertTrue(inst+"", inst.getInst() != Ili);
+    	assertTrue(inst+"", inst.getInst() != Inst9900.Ili);
 
     	// don't lose the ADD
     	idx = findInstrWithInst(instrs, "AI", -1);

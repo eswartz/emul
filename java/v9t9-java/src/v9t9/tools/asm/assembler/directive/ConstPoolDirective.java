@@ -7,6 +7,7 @@ import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.Symbol;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -54,7 +55,7 @@ public class ConstPoolDirective extends Directive {
 		return new IInstruction[] { this };
 	}
 	
-	public byte[] getBytes() {
+	public byte[] getBytes(IInstructionFactory factory) {
 		return constPool.getBytes();
 	}
 	

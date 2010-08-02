@@ -5,11 +5,11 @@ package v9t9.engine.cpu;
 
 import v9t9.engine.memory.MemoryDomain;
 
-public final class InstructionWorkBlock {
+public final class InstructionWorkBlock  {
     /** our CPU memory */
     public MemoryDomain domain;
     /** the instruction (in) */
-    public Instruction inst;	
+    public Instruction9900 inst;	
     /** EAs for operands 1 and 2 */
     public short ea1, ea2;
     /** values for operands 1 and 2 (in: EAs or values, out: value)
@@ -18,9 +18,13 @@ public final class InstructionWorkBlock {
     /** values (in: original, out: changed, if needed) */
     public short pc, wp;
     /** status word (in/out) */
-    public Status status = new Status();
+    public Status status;
     /** cycle count */
     public int cycles;
+    
+    public InstructionWorkBlock(Status status) {
+    	this.status = status;
+	}
     
     public void copyTo(InstructionWorkBlock copy) {
     	copy.domain = domain;

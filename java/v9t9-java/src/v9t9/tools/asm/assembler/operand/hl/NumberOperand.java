@@ -71,6 +71,15 @@ public class NumberOperand extends BaseOperand {
 	public boolean isRegister() {
 		return false;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return true;
+	}
+	
 
 	public LLOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
 		LLImmedOperand op = new LLImmedOperand(i);

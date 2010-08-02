@@ -72,6 +72,14 @@ public class ImmediateOperand extends BaseOperand {
 		return false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return immed.isConst();
+	}
+	
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		LLOperand op = immed.resolve(assembler, inst);

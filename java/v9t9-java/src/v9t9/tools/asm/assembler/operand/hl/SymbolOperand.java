@@ -73,6 +73,15 @@ public class SymbolOperand extends BaseOperand {
 		return false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return true;
+	}
+	
+	
 	public LLOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
 		if (symbol.isDefined()) {
 			LLImmedOperand op = new LLImmedOperand(this, symbol.getAddr());

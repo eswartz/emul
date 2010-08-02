@@ -1,11 +1,14 @@
 package v9t9.emulator.runtime.cpu;
 
+import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.CruAccess;
+import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryDomain;
 
-public interface Cpu {
+public interface Cpu extends IPersistable {
 
 	short getPC();
 
@@ -17,8 +20,11 @@ public interface Cpu {
 
 	void resetInterruptRequest();
 
+	void setCruAccess(CruAccess access);
+	CruAccess getCruAccess();
+	
 	/**
-	 * Called by the TMS9901 to indicate an interrupt is available.
+	 * Called by the interrupt controller to indicate an interrupt is available.
 	 * @param level
 	 */
 	void setInterruptRequest(byte level);
@@ -36,14 +42,13 @@ public interface Cpu {
 	Machine getMachine();
 
 	/**
-	 * Poll the TMS9901 to see if any interrupts are pending.
+	 * Poll the interrupt controller to see if any interrupts are pending.
 	 * @throws AbortedException if interrupt waiting
 	 */
 	void checkInterrupts();
 
 	/**
 	 * Called by toplevel in response to the AbortedException from above
-	 * (TODO: see if these still need to be distinct steps)
 	 */
 	void handleInterrupts();
 
@@ -85,4 +90,20 @@ public interface Cpu {
 
 	void resetCycleCounts();
 
+	 /**
+     * Called when hardware triggers a CPU-specific pin.
+     */
+    void setPin(int mask);
+
+	Status createStatus();
+
+	Status getStatus();
+
+	String getCurrentStateString();
+
+	void reset();
+
+	/** Tell whether the code compiled at this address is 
+	 * likely to need compiler debugging */
+	boolean shouldDebugCompiledCode(short pc);
 }

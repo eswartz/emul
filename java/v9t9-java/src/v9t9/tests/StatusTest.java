@@ -7,7 +7,7 @@
 package v9t9.tests;
 
 import junit.framework.TestCase;
-import v9t9.engine.cpu.Status;
+import v9t9.engine.cpu.Status9900;
 
 /**
  * @author ejs
@@ -18,20 +18,20 @@ public class StatusTest extends TestCase {
         junit.textui.TestRunner.run(StatusTest.class);
     }
     public void testIt() {
-        Status status = new Status();
+        Status9900 status = new Status9900();
 
-        status.expand(Status.ST_L);	/* L> */
+        status.expand(Status9900.ST_L);	/* L> */
         assertTrue(status.isH());
         assertTrue(status.isHE());
         assertFalse(status.isL());
         assertFalse(status.isEQ());
         
-        status.expand(Status.ST_A); /* A> */
+        status.expand(Status9900.ST_A); /* A> */
         assertTrue(status.isGT());
         assertFalse(status.isEQ());
         assertFalse(status.isLT());
         
-        status.expand(Status.ST_E);
+        status.expand(Status9900.ST_E);
         assertTrue(status.isEQ());
         assertTrue(status.isHE());
         assertTrue(status.isLE());

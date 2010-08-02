@@ -12,9 +12,13 @@ import java.util.TreeSet;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.BaseMachineOperand;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.tools.asm.common.DataWordListOperand;
 import v9t9.tools.asm.common.LabelOperand;
 
@@ -22,7 +26,7 @@ import v9t9.tools.asm.common.LabelOperand;
  * Instruction augmented with decompiler info
  * @author ejs
  */
-public class HighLevelInstruction extends Instruction {
+public class HighLevelInstruction extends Instruction9900 {
     /* instruction flags */
 	/** changes PC */
     final public static int fIsBranch = 1; /* changes PC */
@@ -67,20 +71,20 @@ public class HighLevelInstruction extends Instruction {
 
 	private short wp;
     
-    public HighLevelInstruction(int wp, Instruction inst) {
+    public HighLevelInstruction(int wp, Instruction9900 inst) {
     	super(inst);
         this.setWp((short) wp);
     	setFlags();
 	}
 
 	private void setFlags() {
-        if (jump != 0) {
+        if (info.jump != 0) {
         	flags |= fEndsBlock;
-            if (inst == InstructionTable.Ibl || inst == InstructionTable.Iblwp) {
+            if (inst == Inst9900.Ibl || inst == Inst9900.Iblwp) {
 				flags |= fIsCall+fIsBranch;
-			} else if (inst == InstructionTable.Irtwp) {
+			} else if (inst == Inst9900.Irtwp) {
 				flags |= fIsReturn+fIsBranch+fNotFallThrough; /* B *R11 detected later */
-			} else if (jump == INST_JUMP_COND) {
+			} else if (info.jump == INST_JUMP_COND) {
 				flags |= fIsCondBranch+fIsBranch;
 			} else {
 				//if (inst == Ib && op1 instanceof MachineOperand 
@@ -89,15 +93,15 @@ public class HighLevelInstruction extends Instruction {
 				flags |= fIsBranch+fNotFallThrough;
 			}
         }
-        if (inst == InstructionTable.Imovb || inst == InstructionTable.Isocb || inst == InstructionTable.Iab || inst == InstructionTable.Isb
-        		|| inst == InstructionTable.Icb || inst == InstructionTable.Iszcb) {
+        if (inst == Inst9900.Imovb || inst == Inst9900.Isocb || inst == Inst9900.Iab || inst == Inst9900.Isb
+        		|| inst == Inst9900.Icb || inst == Inst9900.Iszcb) {
         	flags |= fByteOp;
-        } else if ((inst == InstructionTable.Istcr || inst == InstructionTable.Ildcr)
-        		&& op2 instanceof MachineOperand
-        		&& ((MachineOperand) op2).val <= 8) {
+        } else if ((inst == Inst9900.Istcr || inst == Inst9900.Ildcr)
+        		&& getOp2() instanceof MachineOperand
+        		&& ((BaseMachineOperand) getOp2()).val <= 8) {
         	flags |= fByteOp;
-        } else if (inst == InstructionTable.Ilimi) {
-        	if (((MachineOperand) op1).immed != 0) {
+        } else if (inst == Inst9900.Ilimi) {
+        	if (((BaseMachineOperand) getOp1()).immed != 0) {
         		// likely block end
         		flags |= fEndsBlock;
         	}
@@ -189,23 +193,23 @@ public class HighLevelInstruction extends Instruction {
 
 	public void convertToData() {
 		flags = 0;
-		inst = InstructionTable.Idata;
+		inst = InstTableCommon.Idata;
 		size = 2;
 		setName("DATA");
-		op1 = new MachineOperand(MachineOperand.OP_IMMED);
-		((MachineOperand)op1).immed = opcode;
-		op2 = new MachineOperand(MachineOperand.OP_NONE);
+		setOp1(new MachineOperand9900(InstTable9900.OP_IMMED));
+		((BaseMachineOperand)getOp1()).immed = opcode;
+		setOp2(new MachineOperand9900(MachineOperand.OP_NONE));
 	}
 
 	public Collection<Block> getReferencedBlocks() {
 		Set<Block> blocks = new TreeSet<Block>();
-		if (op1 instanceof LabelOperand) {
-			blocks.add(((LabelOperand)op1).label.getBlock());
-		} else if (op1 instanceof RoutineOperand) {
-			blocks.add(((RoutineOperand)op1).routine.getMainLabel().getBlock());
-		} else if (op1 instanceof MachineOperand) {
+		if (getOp1() instanceof LabelOperand) {
+			blocks.add(((LabelOperand)getOp1()).label.getBlock());
+		} else if (getOp1() instanceof RoutineOperand) {
+			blocks.add(((RoutineOperand)getOp1()).routine.getMainLabel().getBlock());
+		} else if (getOp1() instanceof MachineOperand) {
 			
-		} else if (op1 instanceof DataWordListOperand) {
+		} else if (getOp1() instanceof DataWordListOperand) {
 			
 		} else {
 			org.ejs.coffee.core.utils.Check.checkState(false);

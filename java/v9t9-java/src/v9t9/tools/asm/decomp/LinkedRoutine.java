@@ -6,8 +6,11 @@
  */
 package v9t9.tools.asm.decomp;
 
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.BaseMachineOperand;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 
 public class LinkedRoutine extends Routine {
 
@@ -20,10 +23,10 @@ public class LinkedRoutine extends Routine {
     
     @Override
     public boolean isReturn(HighLevelInstruction inst) {
-        return inst.inst == InstructionTable.Ib
-        	&& inst.op1 instanceof MachineOperand
-            && ((MachineOperand)inst.op1).type == MachineOperand.OP_IND
-            && ((MachineOperand)inst.op1).val == returnReg;
+        return inst.inst == Inst9900.Ib
+        	&& inst.getOp1() instanceof MachineOperand
+            && ((BaseMachineOperand)inst.getOp1()).type == InstTable9900.OP_IND
+            && ((BaseMachineOperand)inst.getOp1()).val == returnReg;
     }
     
     @Override
@@ -38,11 +41,11 @@ public class LinkedRoutine extends Routine {
     		entryDataBytes = 0;
 	        while (inst != null && !inst.isCall()) {
 	        	if (returnReg == 11) {
-		            if (inst.inst == InstructionTable.Imov
-		            		&& inst.op1 instanceof MachineOperand
-		                    && ((MachineOperand)inst.op1).isRegister(11)
-		                    && ((MachineOperand)inst.op2).isRegister()) {
-		            	int reg = ((MachineOperand)inst.op2).val;
+		            if (inst.inst == Inst9900.Imov
+		            		&& inst.getOp1() instanceof MachineOperand
+		                    && ((MachineOperand)inst.getOp1()).isRegister(11)
+		                    && ((MachineOperand)inst.getOp2()).isRegister()) {
+		            	int reg = ((BaseMachineOperand)inst.getOp2()).val;
 		            	if (returnReg != reg && returnReg != 11)
 		            		System.out.println("??? inconsistent register saving from " + returnReg + " to " + reg);
 		                returnReg = reg;
@@ -50,9 +53,9 @@ public class LinkedRoutine extends Routine {
 	        	}
 	        	
 	        	// look for uses of parameter words; ignore any branching
-	        	if (inst.op1 instanceof MachineOperand) {
-	                MachineOperand mop1 = (MachineOperand) inst.op1;
-	                if (mop1.isMemory() && mop1.type == MachineOperand.OP_INC 
+	        	if (inst.getOp1() instanceof MachineOperand) {
+	                MachineOperand9900 mop1 = (MachineOperand9900) inst.getOp1();
+	                if (mop1.isMemory() && mop1.type == InstTable9900.OP_INC 
 	                        && mop1.val == returnReg) {
 	                	if ((inst.flags & HighLevelInstruction.fByteOp) != 0) {
 	                		entryDataBytes++;

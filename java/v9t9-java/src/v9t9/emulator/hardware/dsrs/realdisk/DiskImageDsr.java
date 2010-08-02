@@ -39,7 +39,7 @@ import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -1374,8 +1374,8 @@ public class DiskImageDsr implements DsrHandler9900 {
 	 * @param string
 	 */
 	private static void info(String string) {
-		if (Executor9900.settingDumpFullInstructions.getBoolean())
-			Executor9900.getDumpfull().println(string);
+		if (Executor.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println(string);
 		System.out.println(string);
 		
 	}
@@ -1384,8 +1384,8 @@ public class DiskImageDsr implements DsrHandler9900 {
 		
 	}
 	static void error(String string) {
-		if (Executor9900.settingDumpFullInstructions.getBoolean())
-			Executor9900.getDumpfull().println(string);
+		if (Executor.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println(string);
 		System.err.println(string);
 		
 	}

@@ -42,11 +42,12 @@ import org.ejs.eulang.types.LLType;
 
 import v9t9.emulator.hardware.memory.EnhancedRamArea;
 import v9t9.emulator.runtime.TerminatedException;
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Effects;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.Operand;
-import v9t9.engine.cpu.Status;
-import v9t9.engine.cpu.Instruction.Effects;
+import v9t9.engine.cpu.Status9900;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -65,7 +66,7 @@ import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
  * @author ejs
  *
  */
-public class Simulator {
+public class Simulator9900 {
 
 	private MemoryDomain memory;
 	private TreeMap<Short, AsmInstruction> pcToInstrMap;
@@ -121,7 +122,7 @@ public class Simulator {
 	    /** values (in: original, out: changed, if needed) */
 	    public short pc, wp;
 	    /** status word (in/out) */
-	    public Status status = new Status();
+	    public Status9900 status = new Status9900();
 	    /** cycle count */
 	    public int cycles;
 	    
@@ -151,7 +152,7 @@ public class Simulator {
 	        PC = pc;
 	    }
 
-	    Status status = new Status();
+	    Status9900 status = new Status9900();
 		private int cycles;
 
 	    public short getST() {
@@ -162,11 +163,11 @@ public class Simulator {
 	        status.expand(st);
 	    }
 
-	    public Status getStatus() {
+	    public Status9900 getStatus() {
 	        return status;
 	    }
 
-	    public void setStatus(Status status) {
+	    public void setStatus(Status9900 status) {
 	        this.status = status;
 	    }
 
@@ -301,7 +302,7 @@ public class Simulator {
 
 	}
 
-	public Simulator(ITarget target, BuildOutput output) {
+	public Simulator9900(ITarget target, BuildOutput output) {
 		
 		this.target = target;
 		this.buildOutput = output;
@@ -345,7 +346,7 @@ public class Simulator {
         // write stubs for intrinsics
         for (Map.Entry<Pair<ITarget.Intrinsic, LLType>, ISymbol> entry : target.getIntrinsicSymbols().entrySet()) {
         	if (!addrToSymbolMap.values().contains(entry.getValue())) {
-	        	pcToInstrMap.put(pc, AsmInstruction.create(InstructionTable.Idata));
+	        	pcToInstrMap.put(pc, AsmInstruction.create(InstTableCommon.Idata));
 	        	addrToSymbolMap.put(pc, entry.getValue());
 	        	symbolToAddrMap.put(entry.getValue(), pc);
 	        	intrinsicAddrMap.put(pc, entry.getKey());
@@ -509,7 +510,7 @@ public class Simulator {
 		
         AsmInstruction ins = getInstruction(cpu);
         
-        if (ins.getInst() == InstructionTable.Idata) {
+        if (ins.getInst() == InstTableCommon.Idata) {
         	Pair<Intrinsic, LLType> info = intrinsicAddrMap.get(cpu.getPC());
         	if (info != null) {
         		emulateIntrinsic(info.first, info.second);
@@ -543,7 +544,7 @@ public class Simulator {
         }*/
 
         /* do pre-instruction status word updates */
-        if (fx.stsetBefore != Instruction.st_NONE) {
+        if (fx.stsetBefore != Instruction9900.st_NONE) {
             updateStatus(fx.stsetBefore);
         }
 
@@ -551,7 +552,7 @@ public class Simulator {
         interpret(cpu, ins);
         
         /* do post-instruction status word updates */
-        if (fx.stsetAfter != Instruction.st_NONE) {
+        if (fx.stsetAfter != Instruction9900.st_NONE) {
             updateStatus(fx.stsetAfter);
         }
 
@@ -716,7 +717,7 @@ public class Simulator {
      * @param memory2
      */
     private void fetchOperands(Cpu cpu, AsmInstruction ins) {
-    	Status st = cpu.getStatus();
+    	Status9900 st = cpu.getStatus();
     	short pc = cpu.getPC();
         iblock.inst = ins;
         iblock.instPC = pc;
@@ -730,10 +731,10 @@ public class Simulator {
 
         if (mop1 != null) {
 			iblock.ea1 = getEA(mop1);
-			if (ins.getInst() == InstructionTable.Ibl 
-					|| ins.getInst() == InstructionTable.Ib 
-					|| ins.getInst() == InstructionTable.Iblwp
-					|| ins.getEffects().jump != Instruction.INST_JUMP_FALSE) {
+			if (ins.getInst() == Inst9900.Ibl 
+					|| ins.getInst() == Inst9900.Ib 
+					|| ins.getInst() == Inst9900.Iblwp
+					|| ins.getEffects().jump != Instruction9900.INST_JUMP_FALSE) {
 				if (!(ins.getInst() == InstrSelection.Pjcc && !(mop1 instanceof CompareOperand))) {
 					iblock.val1 = iblock.ea1;
 					mop1 = null;
@@ -742,7 +743,7 @@ public class Simulator {
 		}
         if (mop2 != null) {
 			iblock.ea2 = getEA(mop2);
-			if (ins.getInst() >= InstructionTable.Isra && ins.getInst() <= InstructionTable.Isrc) {
+			if (ins.getInst() >= Inst9900.Isra && ins.getInst() <= Inst9900.Isrc) {
 				if (!(mop2 instanceof NumberOperand)) {
 					iblock.ea2 = (short) (memory.readWord(iblock.ea2) & 0xf);
 					if (iblock.ea2 == 0)
@@ -764,7 +765,7 @@ public class Simulator {
         if (mop3 != null) {
         	iblock.val3 = getValue(iblock.ea3, mop3);
         }
-        if (iblock.inst.getInst() == InstructionTable.Idiv) {
+        if (iblock.inst.getInst() == Inst9900.Idiv) {
             iblock.val3 = memory.readWord(iblock.ea2 + 2);
         }
     }
@@ -886,39 +887,39 @@ public class Simulator {
 				memory.writeByte(iblock.ea1, (byte) iblock.val1);
 			} else {
 				memory.writeWord(iblock.ea1, iblock.val1);
-				if (ins.getInst() == InstructionTable.Iticks) {
+				if (ins.getInst() == InstTableCommon.Iticks) {
 					memory.writeWord(iblock.ea1 + 2, iblock.val2);
 				}
 			}
 				
         }
         if (fx.mop2_dest != Operand.OP_DEST_FALSE) {
-        	if (ins.getInst() == InstructionTable.Icb)
+        	if (ins.getInst() == Inst9900.Icb)
         		fx.mop2_dest = 1;	// TODO
             if (fx.byteop) {
 				memory.writeByte(iblock.ea2, (byte) iblock.val2);
 			} else {
                 memory.writeWord(iblock.ea2, iblock.val2);
-                if (ins.getInst() == InstructionTable.Impy 
-                		|| ins.getInst() == InstructionTable.Idiv) {
+                if (ins.getInst() == Inst9900.Impy 
+                		|| ins.getInst() == Inst9900.Idiv) {
                     memory.writeWord(iblock.ea2 + 2, iblock.val3);
                 }
             }
         }
 
-        if ((fx.writes & Instruction.INST_RSRC_ST) != 0) {
+        if ((fx.writes & Instruction9900.INST_RSRC_ST) != 0) {
 			cpu.setStatus(iblock.status);
 		}
 
         /* do this after flushing status */
-        if ((fx.writes & Instruction.INST_RSRC_CTX) != 0) {
+        if ((fx.writes & Instruction9900.INST_RSRC_CTX) != 0) {
             /* update PC first */
             cpu.setPC(iblock.pc);
             cpu.contextSwitch(iblock.wp, iblock.pc);
         } else {
             /* flush register changes */
             cpu.setPC(iblock.pc);
-            if ((fx.writes & Instruction.INST_RSRC_WP) != 0) {
+            if ((fx.writes & Instruction9900.INST_RSRC_WP) != 0) {
 				cpu.setWP(iblock.wp);
 			}
         }
@@ -928,88 +929,88 @@ public class Simulator {
      */
     private void updateStatus(int handler) {
         switch (handler) {
-        case Instruction.st_NONE:
+        case Instruction9900.st_NONE:
             return;
-        case Instruction.st_ALL:
+        case Instruction9900.st_ALL:
             // just a note that Status should be up to date, for future work
             return;
-        case Instruction.st_INT:
+        case Instruction9900.st_INT:
             iblock.status.setIntMask(iblock.val1);
             break;
-        case Instruction.st_ADD_BYTE_LAECOP:
+        case Instruction9900.st_ADD_BYTE_LAECOP:
             iblock.status.set_ADD_BYTE_LAECOP((byte) iblock.val2,
                     (byte) iblock.val1);
             break;
-        case Instruction.st_ADD_LAECO:
+        case Instruction9900.st_ADD_LAECO:
             iblock.status.set_ADD_LAECO(iblock.val2, iblock.val1);
             break;
-        case Instruction.st_ADD_LAECO_REV:
+        case Instruction9900.st_ADD_LAECO_REV:
             iblock.status.set_ADD_LAECO(iblock.val1, iblock.val2);
             break;
-        case Instruction.st_ADD_LAECO_REV_1:
+        case Instruction9900.st_ADD_LAECO_REV_1:
         	iblock.status.set_ADD_LAECO(iblock.val1, (short) 1);
         	break;
-        case Instruction.st_ADD_LAECO_REV_2:
+        case Instruction9900.st_ADD_LAECO_REV_2:
         	iblock.status.set_ADD_LAECO(iblock.val1, (short) 2);
         	break;
-        case Instruction.st_ADD_LAECO_REV_N1:
+        case Instruction9900.st_ADD_LAECO_REV_N1:
         	iblock.status.set_ADD_LAECO(iblock.val1, (short) -1);
         	break;
-        case Instruction.st_ADD_LAECO_REV_N2:
+        case Instruction9900.st_ADD_LAECO_REV_N2:
         	iblock.status.set_ADD_LAECO(iblock.val1, (short) -2);
         	break;
-        case Instruction.st_SUB_BYTE_LAECOP:
+        case Instruction9900.st_SUB_BYTE_LAECOP:
             iblock.status.set_SUB_BYTE_LAECOP((byte) iblock.val2,
                     (byte) iblock.val1);
             break;
-        case Instruction.st_SUB_LAECO:
+        case Instruction9900.st_SUB_LAECO:
             iblock.status.set_SUB_LAECO(iblock.val2, iblock.val1);
             break;
 
-        case Instruction.st_BYTE_CMP:
+        case Instruction9900.st_BYTE_CMP:
             iblock.status.set_BYTE_CMP((byte) iblock.val1,
                     (byte) iblock.val2);
             break;
 
-        case Instruction.st_CMP:
+        case Instruction9900.st_CMP:
             iblock.status.set_CMP(iblock.val1, iblock.val2);
             break;
-        case Instruction.st_DIV_O:
+        case Instruction9900.st_DIV_O:
             iblock.status
                     .set_O((iblock.val1 & 0xffff) <= (iblock.val2 & 0xffff));
             break;
-        case Instruction.st_E:
+        case Instruction9900.st_E:
             iblock.status.set_E(iblock.val1 == iblock.val2);
             break;
-        case Instruction.st_LAE:
+        case Instruction9900.st_LAE:
             iblock.status.set_LAE(iblock.val2);
             break;
-        case Instruction.st_LAE_1:
+        case Instruction9900.st_LAE_1:
             iblock.status.set_LAE(iblock.val1);
             break;
 
-        case Instruction.st_BYTE_LAEP:
+        case Instruction9900.st_BYTE_LAEP:
             iblock.status.set_BYTE_LAEP((byte) iblock.val2);
             break;
-        case Instruction.st_BYTE_LAEP_1:
+        case Instruction9900.st_BYTE_LAEP_1:
             iblock.status.set_BYTE_LAEP((byte) iblock.val1);
             break;
 
-        case Instruction.st_LAEO:
+        case Instruction9900.st_LAEO:
             iblock.status.set_LAEO(iblock.val1);
 
-        case Instruction.st_O:
+        case Instruction9900.st_O:
             iblock.status.set_O(iblock.val1 == (short) 0x8000);
             break;
 
-        case Instruction.st_SHIFT_LEFT_CO:
+        case Instruction9900.st_SHIFT_LEFT_CO:
             iblock.status.set_SHIFT_LEFT_CO(iblock.val1, iblock.val2);
             break;
-        case Instruction.st_SHIFT_RIGHT_C:
+        case Instruction9900.st_SHIFT_RIGHT_C:
             iblock.status.set_SHIFT_RIGHT_C(iblock.val1, iblock.val2);
             break;
 
-        case Instruction.st_XOP:
+        case Instruction9900.st_XOP:
             iblock.status.set_X();
             break;
 
@@ -1228,64 +1229,64 @@ public class Simulator {
         	break;
         }
         
-        case InstructionTable.Idata:
+        case InstTableCommon.Idata:
             break;
-        case InstructionTable.Ili:
+        case Inst9900.Ili:
         	iblock.val1 = iblock.val2;
             break;
-        case InstructionTable.Iai:
+        case Inst9900.Iai:
         	iblock.val1 += iblock.val2;
             break;
-        case InstructionTable.Iandi:
+        case Inst9900.Iandi:
         	iblock.val1 &= iblock.val2;
             break;
-        case InstructionTable.Iori:
+        case Inst9900.Iori:
         	iblock.val1 |= iblock.val2;
             break;
-        case InstructionTable.Ici:
+        case Inst9900.Ici:
             break;
-        case InstructionTable.Istwp:
+        case Inst9900.Istwp:
         	iblock.val1 = iblock.wp;
             break;
-        case InstructionTable.Istst:
+        case Inst9900.Istst:
         	iblock.val1 = iblock.status.flatten();
             break;
-        case InstructionTable.Ilwpi:
+        case Inst9900.Ilwpi:
         	iblock.wp = iblock.val1;
             break;
-        case InstructionTable.Ilimi:
+        case Inst9900.Ilimi:
             // all done in status (Status#setIntMask() performed as post-instruction
         	// action due to ST_INT effect)
             break;
-        case InstructionTable.Iidle:
+        case Inst9900.Iidle:
             //cpu.idle(); // TODO
             break;
-        case InstructionTable.Irset:
+        case Inst9900.Irset:
             //cpu.rset(); // TODO
             break;
-        case InstructionTable.Irtwp:
+        case Inst9900.Irtwp:
         	iblock.status.expand(memory.readWord(iblock.wp + 15 * 2));
         	iblock.pc = memory.readWord(iblock.wp + 14 * 2);
         	iblock.wp = memory.readWord(iblock.wp + 13 * 2);
             break;
-        case InstructionTable.Ickon:
+        case Inst9900.Ickon:
             // TODO
             break;
-        case InstructionTable.Ickof:
+        case Inst9900.Ickof:
             // TODO
             break;
-        case InstructionTable.Ilrex:
+        case Inst9900.Ilrex:
             // TODO
             break;
-        case InstructionTable.Iblwp:
+        case Inst9900.Iblwp:
         	iblock.wp = memory.readWord(iblock.val1);
         	iblock.pc = memory.readWord(iblock.val1 + 2);
             break;
 
-        case InstructionTable.Ib:
+        case Inst9900.Ib:
         	iblock.pc = iblock.val1;
             break;
-        case InstructionTable.Ix: {
+        case Inst9900.Ix: {
         	assert false;
         	/*
         	short newPc = iblock.pc;
@@ -1294,28 +1295,28 @@ public class Simulator {
         	*/
             break;
         }
-        case InstructionTable.Iclr:
+        case Inst9900.Iclr:
         	iblock.val1 = 0;
             break;
-        case InstructionTable.Ineg:
+        case Inst9900.Ineg:
         	iblock.val1 = (short) -iblock.val1;
             break;
-        case InstructionTable.Iinv:
+        case Inst9900.Iinv:
         	iblock.val1 = (short) ~iblock.val1;
             break;
-        case InstructionTable.Iinc:
+        case Inst9900.Iinc:
         	iblock.val1 += 1;
             break;
-        case InstructionTable.Iinct:
+        case Inst9900.Iinct:
         	iblock.val1 += 2;
             break;
-        case InstructionTable.Idec:
+        case Inst9900.Idec:
         	iblock.val1 -= 1;
             break;
-        case InstructionTable.Idect:
+        case Inst9900.Idect:
         	iblock.val1 -= 2;
             break;
-        case InstructionTable.Ibl: {
+        case Inst9900.Ibl: {
         	// flush reg args to real registers
         	StackFrame stackFrame = stackFrames.peek().routine.getStackFrame();
         	for (ISymbol sym : iblock.inst.getSources()) {
@@ -1332,110 +1333,110 @@ public class Simulator {
         	iblock.pc = iblock.val1;
             break;
         }
-        case InstructionTable.Iswpb:
+        case Inst9900.Iswpb:
         	iblock.val1 = (short) (iblock.val1 >> 8 & 0xff | iblock.val1 << 8 & 0xff00);
             break;
-        case InstructionTable.Iseto:
+        case Inst9900.Iseto:
         	iblock.val1 = -1;
             break;
-        case InstructionTable.Iabs:
+        case Inst9900.Iabs:
         	if ((iblock.val1 & 0x8000) != 0) {
         		iblock.val1 = (short) -iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Isra:
+        case Inst9900.Isra:
         	iblock.val1 = (short) (iblock.val1 >> iblock.val2);
         	cpu.addCycles(iblock.val2 * 2);
             break;
-        case InstructionTable.Isrl:
+        case Inst9900.Isrl:
         	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2);
         	cpu.addCycles(iblock.val2 * 2);
             break;
 
-        case InstructionTable.Isla:
+        case Inst9900.Isla:
         	iblock.val1 = (short) (iblock.val1 << iblock.val2);
         	cpu.addCycles(iblock.val2 * 2);
             break;
 
-        case InstructionTable.Isrc:
+        case Inst9900.Isrc:
         	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2 | (iblock.val1 & 0xffff) << 16 - iblock.val2);
         	cpu.addCycles(iblock.val2 * 2);
             break;
 
-        case InstructionTable.Ijmp:
+        case Inst9900.Ijmp:
         	iblock.pc = iblock.val1;
         	cpu.addCycles(2);
             break;
-        case InstructionTable.Ijlt:
+        case Inst9900.Ijlt:
         	if (iblock.status.isLT()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijle:
+        case Inst9900.Ijle:
         	if (iblock.status.isLE()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
 
-        case InstructionTable.Ijeq:
+        case Inst9900.Ijeq:
         	if (iblock.status.isEQ()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijhe:
+        case Inst9900.Ijhe:
         	if (iblock.status.isHE()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijgt:
+        case Inst9900.Ijgt:
         	if (iblock.status.isGT()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijne:
+        case Inst9900.Ijne:
         	if (iblock.status.isNE()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijnc:
+        case Inst9900.Ijnc:
         	if (!iblock.status.isC()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijoc:
+        case Inst9900.Ijoc:
         	if (iblock.status.isC()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijno:
+        case Inst9900.Ijno:
         	if (!iblock.status.isO()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijl:
+        case Inst9900.Ijl:
         	if (iblock.status.isL()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
-        case InstructionTable.Ijh:
+        case Inst9900.Ijh:
         	if (iblock.status.isH()) {
         		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
             }
             break;
 
-        case InstructionTable.Ijop:
+        case Inst9900.Ijop:
             // jump on ODD parity
             if (iblock.status.isP()) {
 				iblock.pc = iblock.val1;
@@ -1443,39 +1444,39 @@ public class Simulator {
             }
             break;
 
-        case InstructionTable.Isbo:
+        case Inst9900.Isbo:
         	//machine.getCruManager().writeBits(iblock.val1, 1, 1);
             break;
 
-        case InstructionTable.Isbz:
+        case Inst9900.Isbz:
         	//machine.getCruManager().writeBits(iblock.val1, 0, 1);
             break;
 
-        case InstructionTable.Itb:
+        case Inst9900.Itb:
         	//iblock.val1 = (short) machine.getCruManager().readBits(iblock.val1, 1);
         	iblock.val1 = 0;
         	iblock.val2 = 0;
             break;
 
-        case InstructionTable.Icoc:
+        case Inst9900.Icoc:
         	iblock.val2 = (short) (iblock.val1 & iblock.val2);
             break;
 
-        case InstructionTable.Iczc:
+        case Inst9900.Iczc:
         	iblock.val2 = (short) (iblock.val1 & ~iblock.val2);
             break;
 
-        case InstructionTable.Ixor:
+        case Inst9900.Ixor:
         	iblock.val2 ^= iblock.val1;
             break;
 
-        case InstructionTable.Ixop:
+        case Inst9900.Ixop:
         	iblock.wp = memory.readWord(iblock.val2 * 4 + 0x40);
             iblock.pc = memory.readWord(iblock.val2 * 4 + 0x42);
             memory.writeWord(iblock.wp + 11 * 2, iblock.ea1);
             break;
 
-        case InstructionTable.Impy:
+        case Inst9900.Impy:
             int val = (iblock.val1 & 0xffff)
                     * (iblock.val2 & 0xffff);
             // manually write second reg
@@ -1484,7 +1485,7 @@ public class Simulator {
             iblock.val2 = (short) (val >> 16);
             break;
 
-        case InstructionTable.Idiv:
+        case Inst9900.Idiv:
             // manually read second reg
             if (iblock.val1 > iblock.val2) {
                 short low = iblock.val3;
@@ -1505,56 +1506,56 @@ public class Simulator {
             }
             break;
 
-        case InstructionTable.Ildcr:
+        case Inst9900.Ildcr:
         	//machine.getCruManager().writeBits(
             //       memory.readWord(iblock.wp + 12 * 2), iblock.val1,
            //         iblock.val2);
             break;
 
-        case InstructionTable.Istcr:
+        case Inst9900.Istcr:
         	//iblock.val1 = (short) machine.getCruManager().readBits(
         	//		memory.readWord(iblock.wp + 12 * 2), iblock.val2);
             break;
-        case InstructionTable.Iszc:
-        case InstructionTable.Iszcb:
+        case Inst9900.Iszc:
+        case Inst9900.Iszcb:
         	iblock.val2 &= ~iblock.val1;
             break;
 
-        case InstructionTable.Is:
-        case InstructionTable.Isb:
+        case Inst9900.Is:
+        case Inst9900.Isb:
         	iblock.val2 -= iblock.val1;
             break;
 
-        case InstructionTable.Ic:
-        case InstructionTable.Icb:
+        case Inst9900.Ic:
+        case Inst9900.Icb:
             break;
 
-        case InstructionTable.Ia:
-        case InstructionTable.Iab:
+        case Inst9900.Ia:
+        case Inst9900.Iab:
         	iblock.val2 += iblock.val1;
             break;
 
-        case InstructionTable.Imov:
-        case InstructionTable.Imovb:
+        case Inst9900.Imov:
+        case Inst9900.Imovb:
         	iblock.val2 = iblock.val1;
             break;
 
-        case InstructionTable.Isoc:
-        case InstructionTable.Isocb:
+        case Inst9900.Isoc:
+        case Inst9900.Isocb:
         	iblock.val2 |= iblock.val1;
             break;
 
-        case InstructionTable.Idsr:
+        case InstTableCommon.Idsr:
         	//machine.getDsrManager().handleDSR(iblock);
         	break;
         	
-        case InstructionTable.Iticks: {
+        case InstTableCommon.Iticks: {
         	int count = 0; //machine.getCpu().getTickCount();
         	iblock.val1 = (short) (count >> 16);
         	iblock.val2 = (short) (count & 0xffff);
         	break;
         }
-        case InstructionTable.Idbg:
+        case InstTableCommon.Idbg:
         	//int oldCount = debugCount; 
         	if (iblock.val1 == 0)
         		debugCount++;

@@ -13,7 +13,7 @@ import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.BackEnd;
 import org.junit.Test;
 
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.tools.asm.assembler.HLInstruction;
 
 /**
@@ -56,6 +56,6 @@ public class Test9900InstrGen extends BaseTest {
 		assertEquals(1, block.getInstrs().size());
 		HLInstruction inst = block.getFirst();
 		assertNotNull(inst);
-		assertEquals(InstructionTable.Ib, inst.getInst());
+		assertEquals(Inst9900.Ib, inst.getInst());
 	}
 }

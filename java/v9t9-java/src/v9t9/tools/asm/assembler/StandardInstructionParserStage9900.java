@@ -10,8 +10,9 @@ import static v9t9.engine.cpu.InstEncodePattern.NONE;
 import static v9t9.engine.cpu.InstEncodePattern.OFF;
 import static v9t9.engine.cpu.InstEncodePattern.REG;
 import v9t9.engine.cpu.IInstruction;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstEncodePattern;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.InstTable9900;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.JumpOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -31,14 +32,14 @@ import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
  * @author ejs
  *
  */
-public class StandardInstructionParserStage implements IInstructionParserStage {
+public class StandardInstructionParserStage9900 implements IInstructionParserStage {
 
 	private OperandParser operandParser;
     
-	public StandardInstructionParserStage() {
+	public StandardInstructionParserStage9900() {
 		this.operandParser = OperandParser.STANDARD;
 	}
-	public StandardInstructionParserStage(OperandParser operandParser) {
+	public StandardInstructionParserStage9900(OperandParser operandParser) {
 		this.operandParser = operandParser;
 	}
 	 
@@ -58,18 +59,18 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
     	String name = tokenizer.currentToken().toUpperCase();
     	AssemblerOperand op1 = null, op2 = null;
         if (name.equals("RT")) {
-        	inst.setInst(InstructionTable.Ib);
+        	inst.setInst(Inst9900.Ib);
             op1 = new LLRegIndOperand(11);
         } else if (name.equals("NOP")) {
-        	inst.setInst(InstructionTable.Ijmp);
+        	inst.setInst(Inst9900.Ijmp);
             op1 = new LLJumpOperand(null, 2);
         } else {
-        	inst.setInst(InstructionTable.lookupInst(name));
-            if (inst.getInst() < 0) {
-            	return null;
-            }
+        	Integer instNum = InstTable9900.lookupInst(name);
+        	if (instNum == null)
+        		return null;
+        	inst.setInst(instNum);
             
-            InstEncodePattern pattern = InstructionTable.lookupEncodePattern(inst.getInst());
+            InstEncodePattern pattern = InstTable9900.lookupEncodePattern(inst.getInst());
             if (pattern == null)
             	throw new IllegalStateException("Missing instruction pattern: " + inst.getInst());
             

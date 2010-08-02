@@ -10,9 +10,18 @@ import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
 import v9t9.emulator.hardware.memory.ExpRamArea;
-import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9918AMmio;
 import v9t9.emulator.hardware.sound.SoundTMS9919;
+import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
+import v9t9.emulator.runtime.cpu.CpuMetrics;
+import v9t9.emulator.runtime.cpu.DumpFullReporter9900;
+import v9t9.emulator.runtime.cpu.DumpReporter9900;
+import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.emulator.runtime.interpreter.Interpreter9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
 
@@ -22,10 +31,10 @@ import v9t9.engine.memory.MemoryModel;
  */
 public class StandardMachineModel implements MachineModel {
 
-	private StandardConsoleMemoryModel memoryModel;
+	private TI994AStandardConsoleMemoryModel memoryModel;
 
 	public StandardMachineModel() {
-		memoryModel = new StandardConsoleMemoryModel();
+		memoryModel = new TI994AStandardConsoleMemoryModel();
 		ExpRamArea.settingExpRam.setBoolean(true);
 	}
 	
@@ -59,5 +68,14 @@ public class StandardMachineModel implements MachineModel {
 
 	public SoundProvider createSoundProvider(Machine machine) {
 		return new SoundTMS9919(machine, null);
+	}
+	
+	@Override
+	public Executor createExecutor(Cpu cpu, CpuMetrics metrics) {
+		return new Executor(cpu, metrics, 
+				new Interpreter9900((TI99Machine) cpu.getMachine()),
+				new CodeBlockCompilerStrategy(),
+				new DumpFullReporter9900((Cpu9900) cpu),
+				new DumpReporter9900((Cpu9900) cpu));
 	}
 }

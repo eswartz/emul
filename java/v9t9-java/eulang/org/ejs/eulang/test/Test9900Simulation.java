@@ -21,7 +21,7 @@ import junit.framework.TestSuite;
 
 import org.ejs.eulang.llvm.tms9900.DataBlock;
 import org.ejs.eulang.llvm.tms9900.Routine;
-import org.ejs.eulang.llvm.tms9900.app.Simulator;
+import org.ejs.eulang.llvm.tms9900.app.Simulator9900;
 import org.ejs.eulang.test.SimulationTestCase.SimulationRunnable;
 
 /**
@@ -165,7 +165,7 @@ public class Test9900Simulation  {
 						final int val = parseInt(tokens[idx++]);
 						SimulationRunnable run = new SimulationRunnable() {
 							@Override
-							public void run(Simulator sim)
+							public void run(Simulator9900 sim)
 									throws Exception {
 								short addr;
 								if (isAddr) {
@@ -201,7 +201,7 @@ public class Test9900Simulation  {
 						
 						SimulationRunnable run = new SimulationRunnable() {
 							@Override
-							public void run(Simulator sim) throws Exception {
+							public void run(Simulator9900 sim) throws Exception {
 								short addr;
 								if (isAddr) {
 									addr = (short) offs;
@@ -239,7 +239,7 @@ public class Test9900Simulation  {
 				else if ("call".equals(tokens[0])) {
 					final String callRoutineName = tokens[1];
 					SimulationRunnable run = new SimulationRunnable() {
-						protected short doSimulate(Simulator sim, String routineName, int timeout) {
+						protected short doSimulate(Simulator9900 sim, String routineName, int timeout) {
 							Routine routine = sim.getBuildOutput().lookupRoutine(routineName);
 							assertNotNull(routine);
 							
@@ -258,7 +258,7 @@ public class Test9900Simulation  {
 						}
 						
 						@Override
-						public void run(Simulator sim) throws Exception {
+						public void run(Simulator9900 sim) throws Exception {
 							doSimulate(sim, callRoutineName, 5000);
 						}
 					};

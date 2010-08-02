@@ -10,7 +10,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import v9t9.engine.HighLevelCodeInfo;
-import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.BaseMachineOperand;
+import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
@@ -55,15 +56,15 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
 	        highLevel.getLLInstructions().put(new Integer(inst.pc), inst);
 	        highLevel.addInstruction(inst);
 	        cpu.flatWriteWord(pc, inst.opcode);
-	        if (inst.inst != InstructionTable.Idata) {
+	        if (inst.inst != InstTableCommon.Idata) {
 				pc += 2;
 			}
-	        if (((MachineOperand) inst.op1).hasImmediate()) {
-	            cpu.flatWriteWord(pc, ((MachineOperand) inst.op1).immed);
+	        if (((MachineOperand) inst.getOp1()).hasImmediate()) {
+	            cpu.flatWriteWord(pc, ((BaseMachineOperand) inst.getOp1()).immed);
 	            pc += 2;
 	        }
-	        if (((MachineOperand) inst.op2).hasImmediate()) {
-	            cpu.flatWriteWord(pc, ((MachineOperand) inst.op2).immed);
+	        if (((MachineOperand) inst.getOp2()).hasImmediate()) {
+	            cpu.flatWriteWord(pc, ((BaseMachineOperand) inst.getOp2()).immed);
 	            pc += 2;
 	        }
 	        if (prev != null) {

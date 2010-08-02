@@ -3,25 +3,13 @@
  */
 package v9t9.tools.asm.assembler.transform;
 
-import static v9t9.engine.cpu.InstructionTable.Ib;
-import static v9t9.engine.cpu.InstructionTable.Ijeq;
-import static v9t9.engine.cpu.InstructionTable.Ijgt;
-import static v9t9.engine.cpu.InstructionTable.Ijh;
-import static v9t9.engine.cpu.InstructionTable.Ijhe;
-import static v9t9.engine.cpu.InstructionTable.Ijl;
-import static v9t9.engine.cpu.InstructionTable.Ijle;
-import static v9t9.engine.cpu.InstructionTable.Ijlt;
-import static v9t9.engine.cpu.InstructionTable.Ijmp;
-import static v9t9.engine.cpu.InstructionTable.Ijnc;
-import static v9t9.engine.cpu.InstructionTable.Ijne;
-import static v9t9.engine.cpu.InstructionTable.Ijoc;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
 import v9t9.engine.cpu.IInstruction;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.LLInstruction;
@@ -92,17 +80,17 @@ public class JumpFixer {
 		jumpInvertMap.put(b, a);
 	}
 	static {
-		invert(Ijeq, Ijne);
-		invert(Ijh, Ijle);
-		invert(Ijl, Ijhe);
-		invert(Ijoc, Ijnc);
+		invert(Inst9900.Ijeq, Inst9900.Ijne);
+		invert(Inst9900.Ijh, Inst9900.Ijle);
+		invert(Inst9900.Ijl, Inst9900.Ijhe);
+		invert(Inst9900.Ijoc, Inst9900.Ijnc);
 	}
 	private boolean convertJump(LLInstruction jump, AssemblerOperand assemblerOperand, @SuppressWarnings("unused") int targetAddr,
 			ListIterator<IInstruction> iterator) {
 		
 		// easy
-		if (jump.getInst() == Ijmp) {
-			jump.setInst(Ib);
+		if (jump.getInst() == Inst9900.Ijmp) {
+			jump.setInst(Inst9900.Ib);
 			jump.setOp1(new LLForwardOperand(new AddrOperand(assemblerOperand), 2));
 			return true;
 		}
@@ -116,7 +104,7 @@ public class JumpFixer {
 		LabelDirective pastBranchInstLabel = new LabelDirective(nextInstSymbol);
 		
 		HLInstruction branchInst = new HLInstruction();
-		branchInst.setInst(Ib);
+		branchInst.setInst(Inst9900.Ib);
 		//int offset = (short)(targetAddr - assemblerOperand.getAddr());
 		//branchInst.op1 = new AddrOperand(new BinaryOperand('+', new SymbolOperand(target), new NumberOperand(offset)));
 		branchInst.setOp1(new AddrOperand(assemblerOperand));
@@ -133,13 +121,13 @@ public class JumpFixer {
 		}
 
 		HLInstruction equInst = new HLInstruction();
-		equInst.setInst(Ijeq);
+		equInst.setInst(Inst9900.Ijeq);
 		equInst.setOp1(new JumpOperand(nextInstTarget));
 		equInst.setOp2(null);
 		
-		if (jump.getInst() == Ijlt || jump.getInst() == Ijgt) {
+		if (jump.getInst() == Inst9900.Ijlt || jump.getInst() == Inst9900.Ijgt) {
 			// jgt, jeq
-			jump.setInst(jump.getInst() == Ijlt ? Ijgt : Ijlt);
+			jump.setInst(jump.getInst() == Inst9900.Ijlt ? Inst9900.Ijgt : Inst9900.Ijlt);
 			iterator.add(equInst);
 			iterator.add(branchInst);
 			iterator.add(pastBranchInstLabel);

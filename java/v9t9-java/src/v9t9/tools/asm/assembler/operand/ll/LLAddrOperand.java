@@ -60,7 +60,14 @@ public class LLAddrOperand extends LLOperand implements Operand {
 	public boolean isRegister() {
 		return false;
 	}
-
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
+	 */
+	@Override
+	public boolean isConst() {
+		return false;
+	}
+	
 	public int getAddress() {
 		return address;
 	}
@@ -97,8 +104,8 @@ public class LLAddrOperand extends LLOperand implements Operand {
 	}
 
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		return MachineOperand.createGeneralOperand(MachineOperand.OP_ADDR, (short) 0, (short) address);
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
+		return opFactory.createAddressOperand(this);
 	}
 
 }

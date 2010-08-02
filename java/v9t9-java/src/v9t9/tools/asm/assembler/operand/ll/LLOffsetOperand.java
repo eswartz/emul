@@ -73,7 +73,7 @@ public class LLOffsetOperand extends LLNonImmediateOperand {
 	}
 
 	@Override
-	public MachineOperand createMachineOperand() throws ResolveException {
-		return MachineOperand.createGeneralOperand(MachineOperand.OP_OFFS_R12, (short) offset);
+	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
+		return opFactory.createOffsetOperand(this);
 	}
 }

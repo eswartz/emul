@@ -3,17 +3,11 @@
  */
 package v9t9.tools.asm.assembler;
 
-import static v9t9.engine.cpu.InstructionTable.Iab;
-import static v9t9.engine.cpu.InstructionTable.Icb;
-import static v9t9.engine.cpu.InstructionTable.Imovb;
-import static v9t9.engine.cpu.InstructionTable.Isb;
-import static v9t9.engine.cpu.InstructionTable.Isocb;
-import static v9t9.engine.cpu.InstructionTable.Iszcb;
 import v9t9.engine.cpu.IInstruction;
+import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstEncodePattern;
-import v9t9.engine.cpu.InstructionTable;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.RawInstruction;
+import v9t9.engine.cpu.InstTable9900;
+import v9t9.engine.cpu.InstTableCommon;
 import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
@@ -47,7 +41,7 @@ public class LLInstruction extends BaseAssemblerInstruction {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("LLInst ");
-		builder.append(InstructionTable.getInstName(inst));
+		builder.append(InstTable9900.getInstName(inst));
 		if (op1 != null && !(op1 instanceof LLEmptyOperand)) {
 			builder.append(' ');
 			builder.append(op1);
@@ -71,15 +65,15 @@ public class LLInstruction extends BaseAssemblerInstruction {
 	
 	private int calculateInstructionSize() {
 		int size = 0;
-    	if (getInst() == InstructionTable.Idata) {
+    	if (getInst() == InstTableCommon.Idata) {
     		size = 2;
     		return size;
-    	} else if (getInst() == InstructionTable.Ibyte) {
+    	} else if (getInst() == InstTableCommon.Ibyte) {
     		size = 1;
     		return size;
     	}
     	size = 2;
-    	InstEncodePattern pattern = InstructionTable.lookupEncodePattern(getInst());
+    	InstEncodePattern pattern = InstTable9900.lookupEncodePattern(getInst());
 		if (pattern == null)
 			return size;
 		
@@ -104,8 +98,8 @@ public class LLInstruction extends BaseAssemblerInstruction {
 		return size;
 	}
 
-	public byte[] getBytes() throws ResolveException {
-		short[] words = InstructionTable.encode(createRawInstruction());
+	public byte[] getBytes(IInstructionFactory instFactory) throws ResolveException {
+		short[] words = InstTable9900.encode(instFactory.createRawInstruction(this));
 		byte[] bytes = new byte[words.length * 2];
 		for (int idx = 0; idx < words.length; idx++) {
 			bytes[idx*2] = (byte) (words[idx] >> 8);
@@ -114,19 +108,21 @@ public class LLInstruction extends BaseAssemblerInstruction {
 		return bytes;
 	}
 
+	/*
 	public RawInstruction createRawInstruction() throws ResolveException {
 		RawInstruction rawInst = new RawInstruction();
 		rawInst.pc = pc;
 		rawInst.inst = getInst();
-		rawInst.op1 = getOp1() != null ? getOp1().createMachineOperand() : MachineOperand.createEmptyOperand();
-		rawInst.op2 = getOp2() != null ? getOp2().createMachineOperand() : MachineOperand.createEmptyOperand();
-		InstructionTable.calculateInstructionSize(rawInst);
-		InstructionTable.coerceOperandTypes(rawInst);
+		rawInst.setOp1(getOp1() != null ? getOp1().createMachineOperand() : MachineOperand9900.createEmptyOperand());
+		rawInst.setOp2(getOp2() != null ? getOp2().createMachineOperand() : MachineOperand9900.createEmptyOperand());
+		InstTable9900.calculateInstructionSize(rawInst);
+		InstTable9900.coerceOperandTypes(rawInst);
 		return rawInst;
 	}
-
+*/
+	
 	public boolean isJumpInst() {
-		return getInst() >= InstructionTable.Ijmp && getInst() <= InstructionTable.Ijop;
+		return getInst() >= Inst9900.Ijmp && getInst() <= Inst9900.Ijop;
 	}
 
 	public void setOp1(LLOperand op1) {
@@ -157,7 +153,7 @@ public class LLInstruction extends BaseAssemblerInstruction {
 	}
 	
 	public boolean isByteOp() {
-		return inst == Isocb || inst == Icb || inst == Iab 
-		|| inst == Isb || inst == Iszcb || inst == Imovb;
+		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
+		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
 	}
 }

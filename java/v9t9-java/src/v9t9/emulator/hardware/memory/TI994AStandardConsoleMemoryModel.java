@@ -35,7 +35,7 @@ import v9t9.engine.memory.MemoryModel;
  * The standard TI-99/4[A] console memory map.
  * @author ejs
  */
-public class StandardConsoleMemoryModel implements MemoryModel {
+public class TI994AStandardConsoleMemoryModel implements MemoryModel {
     /* CPU ROM/RAM */
     protected MemoryDomain CPU;
 
@@ -58,7 +58,7 @@ public class StandardConsoleMemoryModel implements MemoryModel {
 
 	static public final SettingProperty settingExpRam = new SettingProperty("MemoryExpansion32K", new Boolean(false));
 
-    public StandardConsoleMemoryModel() {
+    public TI994AStandardConsoleMemoryModel() {
     	initSettings();
     }
     
@@ -169,7 +169,7 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     }
     
 	protected void initSettings() {
-		StandardConsoleMemoryModel.settingExpRam.setBoolean(true);
+		TI994AStandardConsoleMemoryModel.settingExpRam.setBoolean(true);
 		ConsoleRamArea.settingEnhRam.setBoolean(false);
 	}
  

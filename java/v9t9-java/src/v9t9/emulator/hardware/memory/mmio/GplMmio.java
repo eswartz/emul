@@ -12,7 +12,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine.ConsoleMmioReader;
 import v9t9.emulator.common.Machine.ConsoleMmioWriter;
-import v9t9.emulator.runtime.cpu.Executor9900;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.memory.MemoryDomain;
 
 /** GPL chip entry
@@ -75,8 +75,8 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
     	    /* >9800, memory read */
     	    gromaddrflag = false;
     	    ret = memory.readByte(gromaddr);
-    	    if (Executor9900.settingDumpFullInstructions.getBoolean())
-    			Executor9900.getDumpfull().println("Read GPL >" + HexUtils.toHex4(gromaddr) + " = >" + HexUtils.toHex2(ret));
+    	    if (Executor.settingDumpFullInstructions.getBoolean())
+    			Executor.getDumpfull().println("Read GPL >" + HexUtils.toHex4(gromaddr) + " = >" + HexUtils.toHex2(ret));
     	    gromaddr = getNextAddr(gromaddr);
     	}
     	return ret;

@@ -18,11 +18,11 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.BasicType;
 import org.ejs.eulang.types.LLType;
 
-import static v9t9.engine.cpu.InstructionTable.*;
 import static org.ejs.eulang.llvm.tms9900.InstrSelection.*;
 
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.Instruction.Effects;
+import v9t9.engine.cpu.Effects;
+import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.BinaryOperand;
@@ -129,8 +129,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			
 			// apply instruction-specific peepholes
 			switch (inst.getInst()) {
-			case Imov:
-			case Imovb:
+			case Inst9900.Imov:
+			case Inst9900.Imovb:
 				if (coalesceLoadOpStore(inst)) {
 					applied = true;
 				} 
@@ -145,8 +145,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				}
 				break;
 				
-			case Is:
-			case Isb:
+			case Inst9900.Is:
+			case Inst9900.Isb:
 				if (replaceZeroSubWithNegate(inst)) {
 					applied = true;
 				}
@@ -167,10 +167,10 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				}
 				break;
 				
-			case Isla:
-			case Isrl:
-			case Isra:
-			case Isrc:
+			case Inst9900.Isla:
+			case Inst9900.Isrl:
+			case Inst9900.Isra:
+			case Inst9900.Isrc:
 				if (removeDeadShift(inst)) {
 					applied = true;
 				}
@@ -267,11 +267,11 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		// look for well-known instructions
 		switch (inst.getInst()) {
-		case Ili:
+		case Inst9900.Ili:
 			if (inst.getOp2() instanceof NumberOperand)
 				src = inst.getOp2();
 			break;
-		case Iai:
+		case Inst9900.Iai:
 			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
 				int l = ((NumberOperand) src).getValue() ;
 				int r = ((NumberOperand) inst.getOp2()).getValue() ;
@@ -280,7 +280,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				src = null;
 			}
 			break;
-		case Iandi:
+		case Inst9900.Iandi:
 			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
 				int l = ((NumberOperand) src).getValue() ;
 				int r = ((NumberOperand) inst.getOp2()).getValue() ;
@@ -289,7 +289,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				src = null;
 			}
 			break;
-		case Iori:
+		case Inst9900.Iori:
 			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
 				int l = ((NumberOperand) src).getValue() ;
 				int r = ((NumberOperand) inst.getOp2()).getValue() ;
@@ -299,15 +299,15 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			}
 			break;
 			
-		case Isla:
-		case Isra:
-		case Isrl:
+		case Inst9900.Isla:
+		case Inst9900.Isra:
+		case Inst9900.Isrl:
 			if (src instanceof NumberOperand && inst.getOp2() instanceof NumberOperand) {
 				int l = ((NumberOperand) src).getValue() ;
 				int r = ((NumberOperand) inst.getOp2()).getValue() ;
-				if (inst.getInst() == Isla)
+				if (inst.getInst() == Inst9900.Isla)
 					src = new NumberOperand( ( l << r ) & 0xffff );
-				else if (inst.getInst() == Isra)
+				else if (inst.getInst() == Inst9900.Isra)
 					src = new NumberOperand( ( l >> r ) & 0xffff );
 				else /*if (inst.getInst() == Isrl)*/
 					src = new NumberOperand( ( l >>> r ) & 0xffff );
@@ -319,8 +319,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 			}
 			break;
 		
-		case Imov:
-		case Imovb:
+		case Inst9900.Imov:
+		case Inst9900.Imovb:
 		case Pcopy:
 			if (getSourceLocal(inst) instanceof StackLocal) {
 				src = inst.getOp1();
@@ -333,8 +333,8 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				gotStackValue = storeMemoryValue(inst.getOp2(), inst.getOp1());
 			}
 			break;
-		case Ibl:
-		case Iblwp:
+		case Inst9900.Ibl:
+		case Inst9900.Iblwp:
 			memNumberValues.clear();
 			memRegisterValues.clear();
 			src = null;
@@ -784,7 +784,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				fromOp = def.getOp2();
 				offset = getOperandOffset(def.getOp1());
 			}
-			else if (def.getInst() == Ili) {
+			else if (def.getInst() == Inst9900.Ili) {
 				// and just be sure we're talking about a stack local...
 				// else we want to replace LEA with STWP/AI
 				if (!(def.getOp2() instanceof SymbolOperand))
@@ -848,7 +848,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		AssemblerOperand[] ops = asmInstruction.getOps();
 		emitChangePrefix(asmInstruction);
 		
-		LLType theType = typeEngine.getIntType(asmInstruction.getInst() == Imovb ? 8 : 16);
+		LLType theType = typeEngine.getIntType(asmInstruction.getInst() == Inst9900.Imovb ? 8 : 16);
 		for (int idx = 0; idx < ops.length; idx++) {
 			
 			int newInst = asmInstruction.getInst();
@@ -869,7 +869,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 				op = ((RegIndOperand) op).getReg();
 			} else if (op.equals(from) && toOp.isMemory()) {
 				// a direct reference:  needs to be LEA
-				if (newInst == Imov)
+				if (newInst == Inst9900.Imov)
 					newInst = Plea;
 				else
 					assert false;
@@ -1103,28 +1103,28 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		// make sure the inst allows the replaced operand 
 		int newInst;
 		switch (inst.getInst()) {
-		case Imov:
-		case Imovb:
+		case Inst9900.Imov:
+		case Inst9900.Imovb:
 		case Pcopy:
-			newInst = Ili;
+			newInst = Inst9900.Ili;
 			break;
-		case Ia:
-		case Iab:
+		case Inst9900.Ia:
+		case Inst9900.Iab:
 			if (!inst.getOp2().isRegister())
 				return false;
-			newInst = Iai;
+			newInst = Inst9900.Iai;
 			break;
-		case Isoc:
-		case Isocb:
+		case Inst9900.Isoc:
+		case Inst9900.Isocb:
 			if (!inst.getOp2().isRegister())
 				return false;
-			newInst = Iori;
+			newInst = Inst9900.Iori;
 			break;
-		case Iszc:
-		case Iszcb:
+		case Inst9900.Iszc:
+		case Inst9900.Iszcb:
 			if (!inst.getOp2().isRegister())
 				return false;
-			newInst = Iandi;
+			newInst = Inst9900.Iandi;
 			break;
 		default:
 			return false;
@@ -1179,7 +1179,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		
 		// remove the tmp if it's not used elsewhere
 		boolean singleUse = tmpLocal.getUses().cardinality() == 1;
-		if (inst.getInst() == Imov || inst.getInst() == Imovb) {
+		if (inst.getInst() == Inst9900.Imov || inst.getInst() == Inst9900.Imovb) {
 			if (!singleUse)
 				return false;
 		} else {
@@ -1223,7 +1223,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 
 		updateOperandUsage(inst, inst.getOp1(), false);
 		updateOperandUsage(inst, inst.getOp2(), false);
-		inst.setInst(Ili);
+		inst.setInst(Inst9900.Ili);
 		inst.setOp1(destOp);
 		inst.setOp2(valOp);
 		updateOperandUsage(inst, destOp, true);
@@ -1243,7 +1243,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 	private boolean removeDeadInst(AsmInstruction inst) {
 		
 		Effects fx = inst.getEffects();
-		if (((fx.reads | fx.writes) & ~(Instruction.INST_RSRC_ST | Instruction.INST_RSRC_WP | Instruction.INST_RSRC_PC)) != 0)
+		if (((fx.reads | fx.writes) & ~(Instruction9900.INST_RSRC_ST | Instruction9900.INST_RSRC_WP | Instruction9900.INST_RSRC_PC)) != 0)
 			return false;
 		if (dependsOnStatus(inst))
 			return false;
@@ -1368,7 +1368,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		// find def, which should be previous
 		AsmInstruction clr = instrMap.get(tmpLocal.getInit());
 		assert clr != null;
-		if (clr.getInst() != Iclr)
+		if (clr.getInst() != Inst9900.Iclr)
 			return false;
 		
 		int nextDef = tmpLocal.getDefs().nextSetBit(tmpLocal.getInit() + 1); 
@@ -1383,7 +1383,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		updateOperandUsage(clr, clr.getOp1(), false);
 		updateOperandUsage(clr, sub.getOp1(), false);
 		
-		clr.setInst(sub.getInst() == Isb ? Imovb : Imov);
+		clr.setInst(sub.getInst() == Inst9900.Isb ? Inst9900.Imovb : Inst9900.Imov);
 		clr.setOp2(clr.getOp1());
 		clr.setOp1(sub.getOp1());
 		
@@ -1398,7 +1398,7 @@ public class PeepholeAndLocalCoalesce extends AbstractCodeModificationVisitor {
 		updateOperandUsage(sub, sub.getOp1(), false);
 		updateOperandUsage(sub, sub.getOp2(), false);
 		
-		sub.setInst(Ineg);
+		sub.setInst(Inst9900.Ineg);
 		sub.setOp1(sub.getOp2());
 		sub.setOp2(null);
 		

@@ -3,15 +3,10 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.BinaryOperand;
-import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.PcRelativeOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 import v9t9.tools.asm.assembler.operand.hl.StringOperand;
 import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.hl.UnaryOperand;
@@ -22,10 +17,10 @@ import v9t9.tools.asm.assembler.operand.hl.UnaryOperand;
  * @author ejs
  *
  */
-public class AssemblerOperandParserStage implements IOperandParserStage {
+public abstract class AssemblerOperandParserStage implements IOperandParserStage {
 
-	private final Assembler assembler;
-	private AssemblerTokenizer tokenizer;
+	protected final Assembler assembler;
+	protected AssemblerTokenizer tokenizer;
 
 	public AssemblerOperandParserStage(Assembler assembler) {
 		this.assembler = assembler;
@@ -46,7 +41,7 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 	 * | '+' term ExprRest
 	 * | '-' term ExprRest
 	 */
-	private AssemblerOperand parseExpr() throws ParseException {
+	protected AssemblerOperand parseExpr() throws ParseException {
 		AssemblerOperand op = parseExprRest(parseTerm());
 		return op;
 	}
@@ -76,34 +71,28 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 		return factor;
 	}
 
-	private AssemblerOperand parseFactor() throws ParseException {
+	protected abstract AssemblerOperand parseTargetSpecificOperand(int token) throws ParseException;
+	
+	protected AssemblerOperand parseFactor() throws ParseException {
 		int t = tokenizer.nextToken();
+		AssemblerOperand top = parseTargetSpecificOperand(t);
+		if (top != null)
+			return top;
+		
 		switch (t) {
 		case '+': {
 			AssemblerOperand op = parseFactor();
 			if (op instanceof NumberOperand)
 				return op;
-			if (op instanceof RegIndOperand) {
-				return new RegIncOperand(((RegIndOperand) op).getReg());
-			}
 			throw new ParseException("Suspicious use of + for " + op);
 		}
 		case '-': { 
 			AssemblerOperand op = parseFactor();
 			return new UnaryOperand('-', op);
 		}
-		case '*':
-			return parseRegIndInc();
-		case '@':
-			return parseAddr();
 		case '$':
 			// either expr like "$ + foo" or "$ 2 +"
 			return parseJumpTarget();
-		case '#': {
-			// const table
-			AssemblerOperand op = parseFactor();
-			return new ConstPoolRefOperand(op);
-		}
 		case '(': {
 			AssemblerOperand op = parseExpr();
 			t = tokenizer.nextToken();
@@ -134,7 +123,9 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 		case AssemblerTokenizer.EOF:
 			throw new ParseException("Unexpected end of line");
 		}
+
 		throw new ParseException("Unknown token: " + tokenizer.currentToken());
+
 	}
 
 	private AssemblerOperand parseJumpTarget() throws ParseException {
@@ -160,37 +151,7 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 		}
 	}
 
-	private AssemblerOperand parseRegIndInc() throws ParseException {
-		AssemblerOperand reg = parseFactor();
-		int t = tokenizer.nextToken();
-		if (t == '+') {
-			reg = new RegIncOperand(reg); 
-		} else {
-			reg = new RegIndOperand(reg); 
-			tokenizer.pushBack();
-		}
-		return reg;
-	}
-
-	private AssemblerOperand parseAddr() throws ParseException {
-		AssemblerOperand addr = parseExpr();
-		
-		int t = tokenizer.nextToken();
-		if (t == '(') {
-			AssemblerOperand reg = parseFactor();
-			t = tokenizer.nextToken();
-			if (t != ')') {
-				throw new ParseException("Expected ')': " + tokenizer.currentToken());
-			}
-			
-			return new RegOffsOperand(addr, reg);
-		} else {
-			tokenizer.pushBack();
-			return new AddrOperand(addr);
-		}
-	}
-
-	private AssemblerOperand makeNumber(int i) {
+	protected AssemblerOperand makeNumber(int i) {
 		return new NumberOperand(i);
 	}
 
