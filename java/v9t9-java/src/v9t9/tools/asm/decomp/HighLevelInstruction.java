@@ -14,6 +14,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstTable9900;
@@ -84,7 +85,7 @@ public class HighLevelInstruction extends Instruction9900 {
 				flags |= fIsCall+fIsBranch;
 			} else if (inst == Inst9900.Irtwp) {
 				flags |= fIsReturn+fIsBranch+fNotFallThrough; /* B *R11 detected later */
-			} else if (info.jump == INST_JUMP_COND) {
+			} else if (info.jump == InstInfo.INST_JUMP_COND) {
 				flags |= fIsCondBranch+fIsBranch;
 			} else {
 				//if (inst == Ib && op1 instanceof MachineOperand 

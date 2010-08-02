@@ -8,6 +8,7 @@ import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
@@ -99,12 +100,8 @@ public class LLInstruction extends BaseAssemblerInstruction {
 	}
 
 	public byte[] getBytes(IInstructionFactory instFactory) throws ResolveException {
-		short[] words = InstTable9900.encode(instFactory.createRawInstruction(this));
-		byte[] bytes = new byte[words.length * 2];
-		for (int idx = 0; idx < words.length; idx++) {
-			bytes[idx*2] = (byte) (words[idx] >> 8);
-			bytes[idx*2+1] = (byte) (words[idx] & 0xff);
-		}
+		RawInstruction instruction = instFactory.createRawInstruction(this);
+		byte[] bytes = instFactory.encodeInstruction(instruction);
 		return bytes;
 	}
 

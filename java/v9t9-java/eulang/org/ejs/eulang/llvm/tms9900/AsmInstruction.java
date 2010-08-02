@@ -13,8 +13,8 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.engine.cpu.Effects;
-import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstEncodePattern;
+import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.Operand;
@@ -95,7 +95,7 @@ public class AsmInstruction extends HLInstruction {
 					fx.mop2_dest = Operand.OP_DEST_FALSE;
 					break;
 				case InstrSelection.Pjcc:
-					fx.jump = Instruction9900.INST_JUMP_COND;
+					fx.jump = InstInfo.INST_JUMP_COND;
 					fx.mop1_dest = Operand.OP_DEST_FALSE;
 					fx.mop2_dest = Operand.OP_DEST_FALSE;
 					fx.mop3_dest = Operand.OP_DEST_FALSE;
@@ -106,9 +106,6 @@ public class AsmInstruction extends HLInstruction {
 					fx.mop2_dest = Operand.OP_DEST_KILLED;
 					break;
 				}
-			}
-			if (getInst() == Inst9900.Impy || getInst() == Inst9900.Idiv) {
-				fx.mop3_dest = Operand.OP_DEST_KILLED;
 			}
 		}
 		return fx;
@@ -498,44 +495,6 @@ public class AsmInstruction extends HLInstruction {
 			}
 		}
 		assert false;
-	}
-
-	/**
-	 * @param i 
-	 * @param op
-	 * @return
-	 */
-	public boolean supportsOp(int i, AssemblerOperand op) {
-		InstEncodePattern pattern = InstTable9900.lookupEncodePattern(getInst());
-		if (pattern == null)
-			return true;
-
-		int opType = i == 1 ? pattern.op1 : pattern.op2;
-		
-		switch (opType) {
-		case InstEncodePattern.CNT:
-			if (op.isRegister()) {
-				if ((op instanceof IRegisterOperand)) {
-					return ((IRegisterOperand) op).isReg(0);
-				}
-			}
-			// fall through
-		case InstEncodePattern.IMM:
-		case InstEncodePattern.OFF:
-			return op instanceof NumberOperand || op.isConst();
-		case InstEncodePattern.REG:
-			return op.isRegister();
-		case InstEncodePattern.GEN:
-			if (!(op.isRegister() || op.isMemory()))
-				return false;
-			
-			if (op instanceof IRegisterOperand) {
-				AssemblerOperand reg = ((IRegisterOperand) op).getReg();
-				return reg.isRegister() || reg instanceof NumberOperand;
-			}
-			return true;
-		}
-		return false;
 	}
 
 

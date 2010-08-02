@@ -15,7 +15,4 @@ public interface IInstruction {
 	String toInfoString();
 
 	boolean isByteOp();
-	
-	/** Get the bytes of a resolved instruction */
-	//byte[] getBytes();
 }

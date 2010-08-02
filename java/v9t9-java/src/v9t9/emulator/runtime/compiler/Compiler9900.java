@@ -591,7 +591,7 @@ public class Compiler9900 {
             }
         }
 
-        if ((ins.info.writes & Instruction9900.INST_RSRC_CTX) != 0) {
+        if ((ins.info.writes & v9t9.engine.cpu.InstInfo.INST_RSRC_CTX) != 0) {
             /* commit changes to cpu before callback */
 
             /* save status */

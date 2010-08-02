@@ -30,9 +30,10 @@ import org.ejs.eulang.llvm.tms9900.ILocal;
 import org.ejs.eulang.llvm.tms9900.InductionVariables;
 import org.ejs.eulang.llvm.tms9900.InstrSelection;
 import org.ejs.eulang.llvm.tms9900.LLRenumberAndStatisticsVisitor;
+import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
 import org.ejs.eulang.llvm.tms9900.StackFrame;
 import org.ejs.eulang.llvm.tms9900.LowerPseudoInstructions;
-import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce;
+import org.ejs.eulang.llvm.tms9900.PeepholeAndLocalCoalesce9900;
 import org.ejs.eulang.llvm.tms9900.RegisterLocal;
 import org.ejs.eulang.llvm.tms9900.Routine;
 import org.ejs.eulang.llvm.tms9900.RoutineDumper;
@@ -50,6 +51,8 @@ import org.ejs.eulang.types.LLType;
 import org.junit.Before;
 
 import v9t9.engine.cpu.InstTable9900;
+import v9t9.tools.asm.assembler.IInstructionFactory;
+import v9t9.tools.asm.assembler.InstructionFactory9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
@@ -71,6 +74,8 @@ public class BaseInstrTest extends BaseTest {
 	protected Block currentBlock;
 	protected Routine routine;
 
+	protected IInstructionFactory instrFactory = new InstructionFactory9900();
+	
 	protected BuildOutput buildOutput;
 
 	@Before
@@ -217,7 +222,7 @@ public class BaseInstrTest extends BaseTest {
 		if (op == null)
 			return;
 		String prefix = instr+":"+op;
-		assertTrue(prefix, instr.supportsOp(i, op));
+		assertTrue(prefix, instrFactory.supportsOp(instr.getInst(), i, op));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -574,7 +579,7 @@ public class BaseInstrTest extends BaseTest {
 		System.out.println("\n*** Before peepholing:\n");
 		routine.accept(new RoutineDumper());
 		
-		PeepholeAndLocalCoalesce peepholeAndLocalCoalesce = new PeepholeAndLocalCoalesce();
+		PeepholeAndLocalCoalesce peepholeAndLocalCoalesce = new PeepholeAndLocalCoalesce9900(instrFactory);
 		boolean anyChanges = false;
 		do {
 			routine.accept(peepholeAndLocalCoalesce);

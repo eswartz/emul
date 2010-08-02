@@ -44,6 +44,7 @@ import v9t9.emulator.hardware.memory.EnhancedRamArea;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.cpu.Effects;
 import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.Operand;
@@ -734,7 +735,7 @@ public class Simulator9900 {
 			if (ins.getInst() == Inst9900.Ibl 
 					|| ins.getInst() == Inst9900.Ib 
 					|| ins.getInst() == Inst9900.Iblwp
-					|| ins.getEffects().jump != Instruction9900.INST_JUMP_FALSE) {
+					|| ins.getEffects().jump != InstInfo.INST_JUMP_FALSE) {
 				if (!(ins.getInst() == InstrSelection.Pjcc && !(mop1 instanceof CompareOperand))) {
 					iblock.val1 = iblock.ea1;
 					mop1 = null;
@@ -907,19 +908,19 @@ public class Simulator9900 {
             }
         }
 
-        if ((fx.writes & Instruction9900.INST_RSRC_ST) != 0) {
+        if ((fx.writes & InstInfo.INST_RSRC_ST) != 0) {
 			cpu.setStatus(iblock.status);
 		}
 
         /* do this after flushing status */
-        if ((fx.writes & Instruction9900.INST_RSRC_CTX) != 0) {
+        if ((fx.writes & InstInfo.INST_RSRC_CTX) != 0) {
             /* update PC first */
             cpu.setPC(iblock.pc);
             cpu.contextSwitch(iblock.wp, iblock.pc);
         } else {
             /* flush register changes */
             cpu.setPC(iblock.pc);
-            if ((fx.writes & Instruction9900.INST_RSRC_WP) != 0) {
+            if ((fx.writes & InstInfo.INST_RSRC_WP) != 0) {
 				cpu.setWP(iblock.wp);
 			}
         }

@@ -17,6 +17,7 @@ import v9t9.emulator.runtime.cpu.CpuMFP201;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
+import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstTable9900;
@@ -276,19 +277,19 @@ public class InterpreterMFP201 implements Interpreter {
             }
         }
 
-        if ((ins.info.writes & Instruction9900.INST_RSRC_ST) != 0) {
+        if ((ins.info.writes & InstInfo.INST_RSRC_ST) != 0) {
 			cpu.setStatus(iblock.status);
 		}
 
         /* do this after flushing status */
-        if ((ins.info.writes & Instruction9900.INST_RSRC_CTX) != 0) {
+        if ((ins.info.writes & InstInfo.INST_RSRC_CTX) != 0) {
             /* update PC first */
             cpu.setPC((short) (iblock.inst.pc + iblock.inst.size));
             cpu.contextSwitch(iblock.wp, iblock.pc);
         } else {
             /* flush register changes */
             cpu.setPC(iblock.pc);
-            if ((ins.info.writes & Instruction9900.INST_RSRC_WP) != 0) {
+            if ((ins.info.writes & InstInfo.INST_RSRC_WP) != 0) {
 				cpu.setWP(iblock.wp);
 			}
         }

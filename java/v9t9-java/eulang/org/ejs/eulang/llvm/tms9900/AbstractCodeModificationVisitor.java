@@ -156,6 +156,9 @@ public abstract class AbstractCodeModificationVisitor extends CodeVisitor {
 
 
 	protected void updateOperandUsage(AsmInstruction asmInstruction, AssemblerOperand op, boolean adding) {
+		if (op == null)
+			return;
+		
 		Set<ISymbol> syms = new HashSet<ISymbol>(); 
 		AsmInstruction.getSymbolRefs(syms, op);
 		

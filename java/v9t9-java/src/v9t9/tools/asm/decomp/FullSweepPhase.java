@@ -12,7 +12,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
@@ -52,7 +52,7 @@ public class FullSweepPhase extends Phase {
                 Label label;
 
                 if (inst.inst == Inst9900.Ibl || inst.inst == Inst9900.Ib || inst.inst == Inst9900.Iblwp
-                    || inst.inst == Inst9900.Ijmp || inst.info.jump == Instruction9900.INST_JUMP_COND) 
+                    || inst.inst == Inst9900.Ijmp || inst.info.jump == InstInfo.INST_JUMP_COND) 
                 {
                     label = null;
                     if (operandIsLabel(inst, (MachineOperand) inst.getOp1())) {
