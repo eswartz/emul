@@ -27,6 +27,9 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#if defined(__CYGWIN__)
+#  include <ctype.h>
+#endif
 #if !defined(WIN32) || defined(__CYGWIN__)
 #  include <utime.h>
 #  include <dirent.h>
@@ -347,11 +350,26 @@ static void read_path(InputStream * inp, char * path, int size) {
     int i = 0;
     char buf[FILE_PATH_SIZE];
     json_read_string(inp, path, size);
+    if (path[0] == 0) strlcpy(path, get_user_home(), size);
     while (path[i] != 0) {
         if (path[i] == '\\') path[i] = '/';
         i++;
     }
-#ifdef WIN32
+#if defined(__CYGWIN__)
+    if (path[0] != '/' && !(path[0] != 0 && path[1] == ':' && path[2] == '/')) {
+        snprintf(buf, sizeof(buf), "%s/%s", get_user_home(), path);
+        strlcpy(path, buf, size);
+    }
+    if (path[0] != 0 && path[1] == ':' && path[2] == '/') {
+        if (path[3] == 0) {
+            snprintf(buf, sizeof(buf), "/cygdrive/%c", tolower((int)path[0]));
+        }
+        else {
+            snprintf(buf, sizeof(buf), "/cygdrive/%c/%s", tolower((int)path[0]), path + 3);
+        }
+        strlcpy(path, buf, size);
+    }
+#elif defined(WIN32)
     if (path[0] != 0 && path[1] == ':' && path[2] == '/') return;
 #elif defined(_WRS_KERNEL)
     {
@@ -362,10 +380,7 @@ static void read_path(InputStream * inp, char * path, int size) {
         }
     }
 #endif
-    if (path[0] == 0) {
-        strlcpy(path, get_user_home(), size);
-    }
-    else if (path[0] != '/') {
+    if (path[0] != '/') {
         snprintf(buf, sizeof(buf), "%s/%s", get_user_home(), path);
         strlcpy(path, buf, size);
     }
@@ -982,6 +997,14 @@ static void command_realpath(char * token, Channel * c) {
     read_path(&c->inp, path, sizeof(path));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+#if defined(__CYGWIN__)
+    if (strncmp(path, "/cygdrive/", 10) == 0) {
+        char buf[FILE_PATH_SIZE];
+        snprintf(buf, sizeof(buf), "%c:/%s", path[10], path + 12);
+        strlcpy(path, buf, sizeof(path));
+    }
+#endif
 
     real = canonicalize_file_name(path);
     if (real == NULL) err = errno;
