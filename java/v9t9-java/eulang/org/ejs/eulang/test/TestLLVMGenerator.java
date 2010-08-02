@@ -552,7 +552,7 @@ public class TestLLVMGenerator extends BaseTest {
     			"   a := 1;\n"+
     			"   summer(code(=>Int) { if a <= 5 then a++ else 0; });\n"+
     			"};");
-    	LLVMGenerator gen = doGenerate(mod);
+    	/*LLVMGenerator gen =*/ doGenerate(mod);
     	
     }
 

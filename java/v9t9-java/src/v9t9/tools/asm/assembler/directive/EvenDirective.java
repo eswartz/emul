@@ -16,6 +16,9 @@ import v9t9.tools.asm.assembler.ResolveException;
  */
 public class EvenDirective extends Directive {
 
+	/**
+	 * @param ops  
+	 */
 	public EvenDirective(List<Operand> ops) {
 	}
 	

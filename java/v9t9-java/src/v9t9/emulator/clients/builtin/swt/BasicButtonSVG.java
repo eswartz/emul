@@ -39,7 +39,7 @@ class BasicButtonSVG extends Canvas {
 	private Image overlayImage;
 	private Image image;
 	
-	public BasicButtonSVG(ButtonBar buttonBar, int style, SVGLoader icon_, Rectangle bounds_, String tooltip) {
+	public BasicButtonSVG(ButtonBar buttonBar, SVGLoader icon_, Rectangle bounds_, String tooltip) {
 		super(buttonBar.getComposite(), SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
 		
 		this.buttonBar = buttonBar;

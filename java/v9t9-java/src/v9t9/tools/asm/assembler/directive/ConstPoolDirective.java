@@ -22,6 +22,9 @@ public class ConstPoolDirective extends Directive {
 
 	private ConstPool constPool;
 
+	/**
+	 * @param ops  
+	 */
 	public ConstPoolDirective(List<AssemblerOperand> ops) {
 		
 	}

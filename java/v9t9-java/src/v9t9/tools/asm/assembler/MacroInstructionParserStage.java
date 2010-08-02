@@ -308,12 +308,20 @@ public class MacroInstructionParserStage implements IInstructionParserStage {
 		return new IInstruction[0];
 	}
 	
+	/**
+	 * @param tokenizer  
+	 * @param descr 
+	 */
 	private IInstruction[] parsePushScope(AssemblerTokenizer tokenizer, String descr) throws ParseException {
 
 		assembler.pushSymbolTable();
 		
 		return new IInstruction[0];
 	}	
+	/**
+	 * @param tokenizer  
+	 * @param descr 
+	 */
 	private IInstruction[] parsePopScope(AssemblerTokenizer tokenizer, String descr) throws ParseException {
 		
 		assembler.popSymbolTable();

@@ -42,7 +42,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
 	
-	public SwtAwtVideoRenderer(Display display) {
+	public SwtAwtVideoRenderer() {
 		super();
 	}
 

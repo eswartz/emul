@@ -28,7 +28,6 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
 import v9t9.tools.asm.assembler.directive.DescrDirective;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
-import v9t9.tools.asm.assembler.operand.hl.ILLOperandFactory;
 import v9t9.tools.asm.assembler.transform.ConstPool;
 import v9t9.tools.asm.assembler.transform.JumpFixer;
 import v9t9.tools.asm.assembler.transform.Simplifier;

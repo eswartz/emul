@@ -1,8 +1,6 @@
 package v9t9.tools.asm.assembler;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ILLOperandFactory;

@@ -93,8 +93,13 @@ public class ModuleManager implements IPersistable {
 	
 	public IModule findModuleByName(String string, boolean exact) {
 		for (IModule module : modules) {
-			if (module.getName().toLowerCase().contains(string.toLowerCase()))
-				return module;
+			if (exact) {
+				if (module.getName().equals(string))
+					return module;
+			} else {
+				if (module.getName().toLowerCase().contains(string.toLowerCase()))
+					return module;
+			}
 		}
 		return null;
 	}

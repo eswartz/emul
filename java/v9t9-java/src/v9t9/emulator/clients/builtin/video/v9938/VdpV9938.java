@@ -10,7 +10,6 @@ import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.memory.BankedMemoryEntry;
-import v9t9.engine.memory.MemoryDomain;
 
 /**
  * V9938 video chip support.  This functions as a superset of the TMS9918A.
@@ -603,7 +602,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpMmio.setMemoryAccessCycles(2);
 	}
 
-	private Sprite2RedrawHandler createSprite2RedrawHandler(boolean wide) {
+	private Sprite2RedrawHandler createSprite2RedrawHandler(@SuppressWarnings("unused") boolean wide) {
 		return new Sprite2RedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
 	}

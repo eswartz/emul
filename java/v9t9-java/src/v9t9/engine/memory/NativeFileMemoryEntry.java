@@ -29,8 +29,8 @@ public class NativeFileMemoryEntry extends MemoryEntry {
         this.filesize = filesize;
     }
 
-    public static MemoryEntry newWordMemoryFromFile(int addr, int size, String name, 
-            MemoryDomain domain, NativeFile file, int fileoffs) throws IOException {
+    public static MemoryEntry newWordMemoryFromFile(int addr, String name, MemoryDomain domain, 
+            NativeFile file, int fileoffs) throws IOException {
         int filesize = file.getFileSize();
         NativeFileMemoryEntry entry = new NativeFileMemoryEntry(
                 new WordMemoryArea(domain.getLatency(addr)), 

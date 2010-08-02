@@ -68,6 +68,10 @@ abstract public class CompiledCode {
         }
     }
     
+    /**
+	 * @param wp  
+     * @param status 
+	 */
     public void dumpBefore(String ins, short pc, short wp, Status status, 
             short ea1, short val1, 
             short ea2, short val2,
@@ -92,6 +96,9 @@ abstract public class CompiledCode {
         
     }
 
+    /**
+	 * @param pc  
+	 */
     public void dumpAfter(short pc, short wp, Status status, 
             short ea1, short val1, 
             short ea2, short val2,

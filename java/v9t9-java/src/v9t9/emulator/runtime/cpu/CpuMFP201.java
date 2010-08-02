@@ -8,9 +8,6 @@ package v9t9.emulator.runtime.cpu;
 
 import java.io.PrintWriter;
 
-import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.IProperty;
-import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
@@ -19,7 +16,6 @@ import v9t9.emulator.hardware.CruAccess;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.cpu.StatusMFP201;
-import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
 
 /**
  * The MFP201 engine.

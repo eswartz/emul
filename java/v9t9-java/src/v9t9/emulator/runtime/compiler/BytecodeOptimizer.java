@@ -23,6 +23,9 @@ import org.apache.bcel.util.InstructionFinder;
 public class BytecodeOptimizer {
 
 
+	/**
+	 * @param ii  
+	 */
 	public static void peephole(CompileInfo info, Compiler9900.InstInfo ii) {
 	    boolean changed;
 	

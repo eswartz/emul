@@ -416,6 +416,9 @@ public class DiskMemoryEntry extends MemoryEntry {
 		bStorable = section.getBoolean("Storable");
 	}
 	
+	/**
+	 * @param section  
+	 */
 	protected void loadMemoryContents(IDialogSettings section) {
 		if (bWordAccess)
 			area = createWordMemoryArea(domain, addr, size, bStorable);

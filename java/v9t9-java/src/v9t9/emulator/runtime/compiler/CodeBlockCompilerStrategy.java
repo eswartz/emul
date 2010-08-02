@@ -67,6 +67,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	 * Get a code block to represent the eventual compiled code
 	 * for this block.
 	 * @param pc entry point PC
+	 * @param wp 
 	 * @return code block or null if not compilable
 	 */
 	private CodeBlock getCodeBlock(int pc, short wp) {

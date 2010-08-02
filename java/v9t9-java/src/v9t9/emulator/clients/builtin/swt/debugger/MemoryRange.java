@@ -111,6 +111,9 @@ public class MemoryRange {
 	public int getSize() {
 		return len;
 	}
+	/**
+	 * @param i  
+	 */
 	public boolean canModify(int i) {
 		return entry.hasWriteAccess();
 	}

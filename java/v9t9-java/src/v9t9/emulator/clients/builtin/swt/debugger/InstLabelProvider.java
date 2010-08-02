@@ -11,7 +11,7 @@ import org.eclipse.swt.graphics.Image;
 
 class InstLabelProvider extends BaseLabelProvider implements ITableLabelProvider, ITableColorProvider {
 
-	public InstLabelProvider(Color color) {
+	public InstLabelProvider() {
 	}
 	public Image getColumnImage(Object element, int columnIndex) {
 		return null;

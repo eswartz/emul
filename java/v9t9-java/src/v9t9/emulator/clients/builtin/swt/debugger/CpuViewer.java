@@ -36,7 +36,6 @@ import v9t9.emulator.Emulator;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.RawInstruction;
 
@@ -198,7 +197,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		instContentProvider = new InstContentProvider();
 		instTableViewer.setContentProvider(instContentProvider);
 		instTableViewer.setLabelProvider(new InstLabelProvider(
-				getDisplay().getSystemColor(SWT.COLOR_RED)
+				//getDisplay().getSystemColor(SWT.COLOR_RED)
 				));
 		final Table table = instTableViewer.getTable();
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(table);

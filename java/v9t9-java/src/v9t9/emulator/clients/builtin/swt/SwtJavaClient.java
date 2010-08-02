@@ -44,14 +44,14 @@ public class SwtJavaClient implements Client {
     	this.video = vdp;
     	
     	if (awtRenderer) {
-    		videoRenderer = new SwtAwtVideoRenderer(display);
+    		videoRenderer = new SwtAwtVideoRenderer();
     	
     		keyboardHandler = new AwtKeyboardHandler(
         		((SwtAwtVideoRenderer)videoRenderer).getAwtCanvas(),
         		machine.getKeyboardState(), machine);
     	} else {
     		videoRenderer = createSwtVideoRenderer(display);
-    		keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getShell(),
+    		keyboardHandler = new SwtKeyboardHandler(
     				machine.getKeyboardState(), machine);
     	}
 

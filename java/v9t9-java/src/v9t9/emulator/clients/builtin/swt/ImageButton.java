@@ -281,6 +281,9 @@ public class ImageButton extends Canvas {
 		
 	}
 
+	/**
+	 * @param e  
+	 */
 	protected void doMouseExit(MouseEvent e) {
 		setCursor(null);
 		isHighlighted = false;

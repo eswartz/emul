@@ -18,7 +18,6 @@ import v9t9.emulator.runtime.cpu.CpuMetrics;
 import v9t9.emulator.runtime.cpu.DumpFullReporter9900;
 import v9t9.emulator.runtime.cpu.DumpReporter9900;
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.emulator.runtime.interpreter.Interpreter9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;

@@ -21,7 +21,6 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.Logging;
-import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.compiler.ICompiledCode;
 import v9t9.emulator.runtime.compiler.ICompilerStrategy;
 import v9t9.emulator.runtime.cpu.CpuMetrics.MetricEntry;

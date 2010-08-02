@@ -30,8 +30,8 @@ public class FixedAspectLayout extends Layout {
 		this.h = h;
 		this.quantum = quantum;
 		this.maxforquantum = max;
-		this.zoomx = 1.0;
-		this.zoomy = 1.0;
+		this.zoomx = zoomx;
+		this.zoomy = zoomy;
 		this.aspect = (double) w / h;
 	}
 	
@@ -94,7 +94,7 @@ public class FixedAspectLayout extends Layout {
 		return desired;
 	}
 
-	private int fixup(int hint, int max, int base) {
+	private int fixup(@SuppressWarnings("unused") int hint, int max, int base) {
 		// get the hint close to a multiple of base
 		int q = base;
 		if (max / base <= maxforquantum)

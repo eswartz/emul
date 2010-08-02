@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstructionWorkBlock;

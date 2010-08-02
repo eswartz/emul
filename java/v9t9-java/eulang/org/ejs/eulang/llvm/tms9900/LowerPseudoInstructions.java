@@ -25,7 +25,6 @@ import org.ejs.eulang.types.LLAggregateType;
 import org.ejs.eulang.types.LLArrayType;
 import org.ejs.eulang.types.LLType;
 
-import static v9t9.engine.cpu.InstTable9900.*;
 import static org.ejs.eulang.llvm.tms9900.InstrSelection.*;
 
 import v9t9.engine.cpu.Inst9900;

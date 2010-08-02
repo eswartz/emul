@@ -63,7 +63,7 @@ public class CruManager implements CruHandler {
         ensureWriterArray();
     }
 
-    public void remove(int base, int range, CruReader access) {
+    public void removeReader(int base, int range) {
         if (base >= 0x2000) {
             throw new AssertionError("invalid CRU address "+Integer.toHexString(base));
         }
@@ -74,7 +74,7 @@ public class CruManager implements CruHandler {
         ensureReaderArray();
     }
 
-    public void remove(int base, int range, CruWriter access) {
+    public void removeWriter(int base, int range) {
         if (base >= 0x2000) {
             throw new AssertionError("invalid CRU address "+Integer.toHexString(base));
         }

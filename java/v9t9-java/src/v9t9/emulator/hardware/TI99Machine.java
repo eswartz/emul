@@ -1,16 +1,12 @@
 package v9t9.emulator.hardware;
 
-import org.ejs.coffee.core.settings.ISettingSection;
-
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrManager9900;
-import v9t9.emulator.hardware.dsrs.IDsrManager;
 import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.CruHandler;
-import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryDomain;
 
 public class TI99Machine extends Machine {

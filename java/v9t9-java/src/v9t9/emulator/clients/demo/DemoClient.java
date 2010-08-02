@@ -462,6 +462,10 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     	
     }
 
+	/**
+	 * @param vn  
+	 * @param v 
+	 */
 	public void updateVoice(int vn, SoundVoice v) {
 		// TODO Auto-generated method stub
 		
@@ -480,6 +484,11 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 		
 	}
 
+	/**
+	 * @param bit  
+	 * @param pos 
+	 * @param total 
+	 */
 	public void audioGate(int bit, int pos, int total) {
 		// TODO Auto-generated method stub
 		

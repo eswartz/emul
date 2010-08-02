@@ -21,7 +21,6 @@ import org.ejs.eulang.llvm.tms9900.asm.TupleTempOperand;
 import org.junit.Test;
 
 import v9t9.engine.cpu.Inst9900;
-import static v9t9.engine.cpu.InstTable9900.*;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;

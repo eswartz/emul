@@ -58,7 +58,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 	
 	private Timer pasteTimer;
 
-	public SwtKeyboardHandler(Control control, KeyboardState keyboardState, Machine machine) {
+	public SwtKeyboardHandler(KeyboardState keyboardState, Machine machine) {
 		super(keyboardState, machine);
 		
 	}

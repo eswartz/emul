@@ -45,6 +45,9 @@ public class StockMemoryModel implements MemoryModel {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryModel#getLatency(int)
 	 */
+	/**
+	 * @param addr  
+	 */
 	public int getLatency(int addr) {
 		return 0;
 	}
