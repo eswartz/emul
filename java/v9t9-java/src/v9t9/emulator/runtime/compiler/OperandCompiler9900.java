@@ -52,8 +52,8 @@ public class OperandCompiler9900 {
         case InstTable9900.OP_REG:    // Rx
             op.cycles += 0 * 4;
             // (short) ((val<<1) + wp);
-            if (!(ins.inst == Inst9900.Impy /*&& ins.op2 == this*/)
-                    && !(ins.inst == Inst9900.Idiv /*&& ins.op2 == this*/)
+            if (!(ins.getInst() == Inst9900.Impy /*&& ins.op2 == this*/)
+                    && !(ins.getInst() == Inst9900.Idiv /*&& ins.op2 == this*/)
                     && Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()
                     && !new SettingProperty(

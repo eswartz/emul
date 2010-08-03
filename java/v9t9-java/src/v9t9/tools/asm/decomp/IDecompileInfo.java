@@ -9,7 +9,7 @@ package v9t9.tools.asm.decomp;
 import java.util.Collection;
 import java.util.Map;
 
-import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.common.MemoryRanges;
 
 public interface IDecompileInfo {
@@ -48,7 +48,7 @@ public interface IDecompileInfo {
      */
 	public Map<Integer, HighLevelInstruction> getLLInstructions();
 
-	public Instruction9900 getInstruction(int addr);
+	public RawInstruction getInstruction(int addr);
 
 	public HighLevelInstruction disassemble(int addr, int size);
 

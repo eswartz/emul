@@ -66,7 +66,7 @@ import v9t9.engine.memory.MemoryEntry;
  */
 public class Compiler9900 {
 	public interface InstructionRangeCompiler {
-		void compileInstructionRange(Compiler9900 compiler, Instruction9900[] insts,
+		void compileInstructionRange(Compiler9900 compiler, RawInstruction[] insts,
 				HighLevelCodeInfo highLevel,  
 				InstructionList ilist, CompileInfo info);
 	}
@@ -352,9 +352,11 @@ public class Compiler9900 {
         if (instSet == null) {
 			instSet = new java.util.HashSet<Integer>();
 		}
-        Integer instInt = new Integer(ins.inst);
+        Integer instInt = new Integer(ins.getInst());
         if (!instSet.contains(instInt)) {
-            System.out.println("first use of " + ins.getName() + " at "
+            System.out.println("first use of " + 
+            		InstTable9900.getInstName(ins.getInst()) +
+            		" at "
                     + HexUtils.toHex4(ins.pc));
             instSet.add(instInt);
         }
@@ -557,7 +559,7 @@ public class Compiler9900 {
                 && mop2.dest != MachineOperand9900.OP_DEST_KILLED) {
             OperandCompiler9900.compileGetValue(mop2, info.localVal2, info.localEa2, info);
         }
-        if (ins.inst == Inst9900.Idiv) {
+        if (ins.getInst() == Inst9900.Idiv) {
             // TODO: read this value in instruction code
             /*
              * compileLoadAddress(info, info.localEa2, 2);
@@ -582,7 +584,7 @@ public class Compiler9900 {
         if (mop2.dest != MachineOperand9900.OP_DEST_FALSE) {
             OperandCompiler9900.compilePutValue(mop2, info.localVal2, info.localEa2, info);
 
-            if (ins.inst == Inst9900.Impy || ins.inst == Inst9900.Idiv) {
+            if (ins.getInst() == Inst9900.Impy || ins.getInst() == Inst9900.Idiv) {
                 ilist.append(new ILOAD(info.localEa2));
                 ilist.append(new PUSH(info.pgen, 2));
                 ilist.append(InstructionConstants.IADD);
@@ -645,7 +647,7 @@ public class Compiler9900 {
      * @param block
      * @param entries 
      */
-    public byte[] compile(String className, String baseName, HighLevelCodeInfo highLevel, Instruction9900[] insts, short[] entries) {
+    public byte[] compile(String className, String baseName, HighLevelCodeInfo highLevel, RawInstruction[] insts, short[] entries) {
 
         // build generators for the new class
         ClassGen cgen = new ClassGen(className /* class */,
@@ -714,7 +716,7 @@ public class Compiler9900 {
         addMethod(mgen, cgen);
 	}
 
-    private void createRunMethod(String className, Instruction9900[] insts,
+    private void createRunMethod(String className, RawInstruction[] insts,
 				HighLevelCodeInfo highLevel, 
 				ClassGen cgen,
 				InstructionFactory ifact) {

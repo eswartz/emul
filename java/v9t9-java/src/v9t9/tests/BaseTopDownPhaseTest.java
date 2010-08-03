@@ -52,11 +52,12 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
 	    HighLevelInstruction first = null;
 	    HighLevelInstruction prev = null;
 	    for (String element : insts) {
-	    	HighLevelInstruction inst = createHLInstruction(pc, wp, element);
-	        highLevel.getLLInstructions().put(new Integer(inst.pc), inst);
-	        highLevel.addInstruction(inst);
+	    	HighLevelInstruction hinst = createHLInstruction(pc, wp, element);
+	    	RawInstruction inst = hinst.getInst();
+	        highLevel.getLLInstructions().put(new Integer(inst.pc), hinst);
+	        highLevel.addInstruction(hinst);
 	        cpu.flatWriteWord(pc, inst.opcode);
-	        if (inst.inst != InstTableCommon.Idata) {
+	        if (inst.getInst() != InstTableCommon.Idata) {
 				pc += 2;
 			}
 	        if (((MachineOperand) inst.getOp1()).hasImmediate()) {
@@ -68,11 +69,11 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
 	            pc += 2;
 	        }
 	        if (prev != null) {
-				prev.setNext(inst);
+				prev.setNext(hinst);
 			}
-	        prev = inst;
+	        prev = hinst;
 	        if (first == null) {
-				first = inst;
+				first = hinst;
 			}
 	    }
 	    while (first != null) {

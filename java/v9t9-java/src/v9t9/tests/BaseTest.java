@@ -112,15 +112,15 @@ public abstract class BaseTest extends TestCase {
 		for (Block block : routine.getSpannedBlocks()) {
 			validateBlock(block);
 			assertTrue(block.isComplete());
-			if (block.getFirst().pc <= prevLastPc) {
+			if (block.getFirst().getInst().pc <= prevLastPc) {
 				// might have jump inside instr!
-				if (block.getFirst().pc < prevFirstPc)
+				if (block.getFirst().getInst().pc < prevFirstPc)
 					fail("blocks out of order at " + block);
 				else
 					System.out.println("*** block inside another block at " + block);
 			}
-			prevFirstPc = block.getFirst().pc;
-			prevLastPc = block.getLast().pc;
+			prevFirstPc = block.getFirst().getInst().pc;
+			prevLastPc = block.getLast().getInst().pc;
 		}
 	}
 
@@ -139,7 +139,7 @@ public abstract class BaseTest extends TestCase {
 		Set<Integer> pcSet = new TreeSet<Integer>();
 		HighLevelInstruction inst = block.getFirst();
 		while (inst != null) {
-			pcSet.add(inst.pc & 0xffff);
+			pcSet.add(inst.getInst().pc & 0xffff);
 			if (inst == block.getLast())
 				break;
 			inst = inst.getNext();

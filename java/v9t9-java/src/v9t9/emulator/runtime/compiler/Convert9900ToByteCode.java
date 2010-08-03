@@ -48,7 +48,7 @@ public class Convert9900ToByteCode {
 	
 	    MachineOperand mop1 = (MachineOperand) ins.getOp1();
 	    BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
-	    switch (ins.inst) {
+	    switch (ins.getInst()) {
 	    case InstTableCommon.Idata:
 	        return null;
 	    case Inst9900.Ili:

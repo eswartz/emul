@@ -27,12 +27,12 @@ public class Label implements Comparable<Label> {
     }
 
     static private String uniqueName(Block block) {
-        return "L" + HexUtils.toHex4(block.getFirst().pc);
+        return "L" + HexUtils.toHex4(block.getFirst().getInst().pc);
     }
     
     @Override
     public String toString() {
-        return getName() + (!named ? " @>" + HexUtils.toHex4(block.getFirst().pc) : "");
+        return getName() + (!named ? " @>" + HexUtils.toHex4(block.getFirst().getInst().pc) : "");
     }
 
 	public int compareTo(Label o) {
@@ -66,7 +66,7 @@ public class Label implements Comparable<Label> {
 	}
 	
 	public int getAddr() {
-		return block.getFirst().pc;
+		return block.getFirst().getInst().pc;
 	}
 
 	public String getName() {

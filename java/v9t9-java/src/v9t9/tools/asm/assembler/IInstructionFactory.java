@@ -16,4 +16,8 @@ public interface IInstructionFactory {
 	byte[] encodeInstruction(RawInstruction instruction);
 
 	boolean supportsOp(int inst, int num, AssemblerOperand op);
+
+	boolean isByteOp(int inst);
+
+	boolean isJumpInst(int inst);
 }

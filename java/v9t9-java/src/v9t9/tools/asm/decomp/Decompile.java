@@ -70,6 +70,7 @@ public class Decompile {
             case 's': {
                 int addr = HexUtils.parseInt(getopt.getOptarg());
                 refDefTables.add(new Integer(addr));
+                break;
             }
             default:
                 throw new AssertionError();

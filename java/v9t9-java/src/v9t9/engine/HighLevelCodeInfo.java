@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
-import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.MemoryRanges;
@@ -31,7 +31,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
     //int addr;
     //int size;
     /** instruction list */
-    Map<Integer, Instruction9900> instructions;
+    Map<Integer, RawInstruction> instructions;
     /** LL instruction list */
     Map<Integer, HighLevelInstruction> llInstructions;
     //List<Instruction> instructions;
@@ -47,7 +47,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		//this.ent = entry;
 		//this.addr = addr;
 		//this.size = size;
-		this.instructions = new TreeMap<Integer, Instruction9900>();
+		this.instructions = new TreeMap<Integer, RawInstruction>();
 		this.blockMap = new TreeMap<Integer, Block>();
         this.memoryRanges = new MemoryRanges();
 		this.llInstructions = new TreeMap<Integer, HighLevelInstruction>();
@@ -60,12 +60,12 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	}
 	
 	/** Get the instruction for the given PC */
-	public Instruction9900 getInstruction(int pc) {
+	public RawInstruction getInstruction(int pc) {
 		pc &= 0xfffe;
-		Instruction9900 ins = instructions.get(pc);
+		RawInstruction ins = instructions.get(pc);
 		if (ins == null) {
 			short op = domain.readWord(pc);
-			ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, domain));
+			ins = new RawInstruction(InstTable9900.decodeInstruction(op, pc, domain));
 			instructions.put(pc, ins);
 		}
 		return ins;
@@ -73,7 +73,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 
 	/** Test method */
 	public void addInstruction(HighLevelInstruction inst) {
-		instructions.put(inst.pc & 0xfffe, inst);
+		instructions.put(inst.getInst().pc & 0xfffe, inst.getInst());
 	}
 
 	/**
@@ -182,8 +182,9 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		HighLevelInstruction prev = null;
 		for (int addr = startAddr; addr < startAddr + size; addr += 2) {
 			short op = domain.readWord(addr);
-			HighLevelInstruction inst = new HighLevelInstruction(0, new Instruction9900(InstTable9900.decodeInstruction(op, addr, domain)));
-			getLLInstructions().put(new Integer(inst.pc), inst);
+			HighLevelInstruction inst = new HighLevelInstruction(0, 
+					new RawInstruction(InstTable9900.decodeInstruction(op, addr, domain)));
+			getLLInstructions().put(new Integer(inst.getInst().pc), inst);
 			if (prev != null) {
 				prev.setNext(inst);
 			} else {
@@ -194,8 +195,8 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 
 		// wire up instructions to their next real instructions
 		for (HighLevelInstruction inst = first; inst != null; inst = inst.getNext()) {
-			if (inst.size > 2) {
-				inst.setNext(getLLInstructions().get(new Integer(inst.pc + inst.size)));
+			if (inst.getInst().size > 2) {
+				inst.setNext(getLLInstructions().get(new Integer(inst.getInst().pc + inst.getInst().size)));
 			}
 		}
 		
@@ -268,6 +269,6 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	}
 	
 	public void replaceInstruction(HighLevelInstruction inst) {
-		instructions.put(inst.pc, inst);
+		instructions.put(inst.getInst().pc, inst.getInst());
 	}
 }

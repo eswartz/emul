@@ -3,7 +3,7 @@ package v9t9.engine.cpu;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.assembler.BaseInstruction;
-public class RawInstruction extends BaseInstruction implements Comparable<RawInstruction> {
+public class RawInstruction extends BaseInstruction implements Comparable<RawInstruction>, ICPUInstruction {
 
 	private String name;
 	public int pc;
@@ -11,11 +11,13 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public int size;
 	public short opcode;
 	/** InstTable.I... */
-	public int inst;
+	private int inst;
 	private Operand op1;
 	private Operand op2;
 	private Operand op3;
 
+    public InstInfo info = new InstInfo();
+    
 	public RawInstruction() {
 	}
 	
@@ -24,14 +26,13 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		this.pc = other.pc;
 		this.size = other.size;
 		this.opcode = other.opcode;
-		this.inst = other.inst;
+		this.inst = other.getInst();
 		this.op1 = other.op1;
 		this.op2 = other.op2;
+		this.op3 = other.op3;
 	}
 	
 	public String getName() {
-		if (name == null)
-			name = InstTable9900.getInstName(inst);
 		return name;
 	}
 	
@@ -60,9 +61,10 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + inst;
+		result = prime * result + getInst();
 		result = prime * result + ((op1 == null) ? 0 : op1.hashCode());
 		result = prime * result + ((op2 == null) ? 0 : op2.hashCode());
+		result = prime * result + ((op3 == null) ? 0 : op3.hashCode());
 		result = prime * result + pc;
 		result = prime * result + size;
 		return result;
@@ -80,7 +82,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 			return false;
 		}
 		RawInstruction other = (RawInstruction) obj;
-		if (inst != other.inst) {
+		if (getInst() != other.getInst()) {
 			return false;
 		}
 		if (op1 == null) {
@@ -97,6 +99,13 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		} else if (!op2.equals(other.op2)) {
 			return false;
 		}
+		if (op3 == null) {
+			if (other.op3 != null) {
+				return false;
+			}
+		} else if (!op3.equals(other.op3)) {
+			return false;
+		}
 		if (pc != other.pc) {
 			return false;
 		}
@@ -106,50 +115,8 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		return true;
 	}
 
-	public boolean isJumpInst() {
-		return inst >= Inst9900.Ijmp && inst <= Inst9900.Ijop;
-	}
-
-	
-	//public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass)
-		//throws ResolveException {
-		/*
-		int pc = assembler.getPc();
-		
-		// instructions and associated labels are bumped when following uneven data
-		if ((pc & 1) != 0 && inst != InstructionTable.Ibyte) {
-			pc = (pc + 1) & 0xfffe;
-			assembler.setPc(pc);
-		
-			if (previous instanceof LabelDirective) {
-				((LabelDirective) previous).setPc(assembler.getPc());
-				
-			}
-		}
-		
-		this.pc = pc;
-		
-		MachineOperand mop1 = op1.resolve(assembler, this);
-		MachineOperand mop2 = op2.resolve(assembler, this);
-		
-		RawInstruction target = this;
-		if (!finalPass) {
-			target = new RawInstruction(this);
-		}
-		target.op1 = mop1;
-		target.op2 = mop2;
-		//target.completeInstruction(pc);
-
-		InstructionTable.calculateInstructionSize(target);
-		
-		assembler.setPc((short) (target.pc + target.size));
-		return new RawInstruction[] { target };
-		*/
-	//	return new RawInstruction[] { this };
-	//}
-	
 	public int compareTo(RawInstruction o) {
-	    	return pc - o.pc;
+	    return pc - o.pc;
 	}
 	
 	public int getPc() {
@@ -160,11 +127,6 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		return ">" + HexUtils.toHex4(pc) + " " + toString() + " @" + size;
 	}
 	
-	public boolean isByteOp() {
-		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
-		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
-	}
-
 	public void setOp1(Operand op1) {
 		this.op1 = op1;
 	}
@@ -187,5 +149,17 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public Operand getOp3() {
 		return op3;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.ICPUInstruction#getInst()
+	 */
+	@Override
+	public int getInst() {
+		return inst;
+	}
+
+	public void setInst(int inst) {
+		this.inst = inst;
+		this.name = null;
+	}
 }

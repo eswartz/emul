@@ -17,10 +17,10 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.MemoryRange;
 
@@ -63,7 +63,7 @@ public abstract class Phase {
 			range = iter.next();
 			if (prev != null && prev.isCode()) {
 				HighLevelInstruction first = decompileInfo.disassemble(prev.from, range.from - prev.from);
-				prev.setCode(first);
+				prev.setCode(first.getInst());
 			}
 			prev = range;
 		}
@@ -105,7 +105,7 @@ public abstract class Phase {
 		if (inst.getBlock() != null && inst.getBlock().getFirst() == inst) {
 			System.out.println(inst.getBlock().format());
 		}
-		Label label = getLabel(inst.pc);
+		Label label = getLabel(inst.getInst().pc);
 		if (label != null) {
 			System.out.println(label);
 		}
@@ -120,7 +120,7 @@ public abstract class Phase {
 			return null;
 		if (inst.getBlock() == null)
 			return null;
-		if (inst.getBlock().getFirst().pc == addr)
+		if (inst.getBlock().getFirst().getInst().pc == addr)
 			return inst.getBlock();
 		return null;
 	}
@@ -315,7 +315,7 @@ public abstract class Phase {
 
 	public short operandEffectiveAddress(HighLevelInstruction inst, MachineOperand mop) {
 		// PC and WP are not used
-		return mop.getEA(CPU, inst.pc, inst.getWp());
+		return mop.getEA(CPU, inst.getInst().pc, inst.getWp());
 	}
 
 	public boolean operandIsLabel(HighLevelInstruction inst, MachineOperand mop) {
@@ -328,7 +328,7 @@ public abstract class Phase {
 	//  and is a direct address, a jump target, or
 	//  a nontrivial register indirect (a likely lookup table)
 	public boolean operandIsRelocatable(HighLevelInstruction inst, MachineOperand9900 mop) {
-		if (inst.inst == Inst9900.Ilwpi) {
+		if (inst.getInst().getInst() == Inst9900.Ilwpi) {
 			return true;
 		}
 		if (!(mop instanceof MachineOperand)) {
@@ -349,11 +349,11 @@ public abstract class Phase {
 		if (!range.isCode()) {
 			return false;
 		}
-		Instruction9900 inst = decompileInfo.getInstruction(new Integer(addr));
+		RawInstruction inst = decompileInfo.getInstruction(new Integer(addr));
 		if (inst == null) {
 			return false;
 		}
-		if (inst.inst == InstTableCommon.Idata) {
+		if (inst.getInst() == InstTableCommon.Idata) {
 			return false;
 		}
 		return true;
@@ -406,7 +406,7 @@ public abstract class Phase {
 	}
 
 	public void addBlock(Block block) {
-		blocks.put(block.getFirst().pc, block);
+		blocks.put(block.getFirst().getInst().pc, block);
 	}
 	public Set<Block> getBlocks() {
 		return new TreeSet<Block>(blocks.values());

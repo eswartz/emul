@@ -3,6 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
+import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand9900;
@@ -27,7 +28,8 @@ public class InstructionFactory9900 implements IInstructionFactory {
 			throws ResolveException {
 		RawInstruction rawInst = new RawInstruction();
 		rawInst.pc = inst.pc;
-		rawInst.inst = inst.getInst();
+		rawInst.setInst(inst.getInst());
+		rawInst.setName(InstTable9900.getInstName(inst.getInst()));
 		rawInst.setOp1(inst.getOp1() != null ? 
 				inst.getOp1().createMachineOperand(opFactory) :
 					MachineOperand9900.createEmptyOperand());
@@ -86,4 +88,16 @@ public class InstructionFactory9900 implements IInstructionFactory {
 		return false;
 	}
 
+	public boolean isByteOp(int inst) {
+		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
+		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.IInstructionFactory#isJumpInst(int)
+	 */
+	@Override
+	public boolean isJumpInst(int inst) {
+		return inst >= Inst9900.Ijmp && inst <= Inst9900.Ijop;
+	}
 }

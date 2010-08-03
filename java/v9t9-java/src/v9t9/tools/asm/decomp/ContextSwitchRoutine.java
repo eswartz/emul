@@ -20,7 +20,7 @@ public class ContextSwitchRoutine extends Routine {
 
     @Override
     public boolean isReturn(HighLevelInstruction inst) {
-        return inst.inst == Inst9900.Irtwp;
+        return inst.getInst().getInst() == Inst9900.Irtwp;
     }
 
     @Override
@@ -36,8 +36,8 @@ public class ContextSwitchRoutine extends Routine {
     		entryDataBytes = 0;
 	        while (inst != null && !inst.isCall()) {
 	        	// look for uses of parameter words; ignore any branching
-	        	if (inst.getOp1() instanceof MachineOperand) {
-	                MachineOperand9900 mop1 = (MachineOperand9900) inst.getOp1();
+	        	if (inst.getInst().getOp1() instanceof MachineOperand) {
+	                MachineOperand9900 mop1 = (MachineOperand9900) inst.getInst().getOp1();
 	                if (mop1.isMemory() && mop1.type == InstTable9900.OP_INC 
 	                        && mop1.val == 14) {
 	                	if ((inst.flags & HighLevelInstruction.fByteOp) != 0) {

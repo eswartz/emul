@@ -195,7 +195,7 @@ public class TestAssembler extends BaseTest {
 		for (int i = 0; i < minst.size; i += 2) {
 			short exp = CPU.readWord(i);
 			if (i == 0)
-				exp = (short) InstTable9900.coerceInstructionOpcode(minst.inst, exp);
+				exp = (short) InstTable9900.coerceInstructionOpcode(minst.getInst(), exp);
 			assertEquals(minst.toString() + "@" + minst.size, Integer.toHexString(exp), Integer.toHexString(words[i/2]));
 		}
 	}

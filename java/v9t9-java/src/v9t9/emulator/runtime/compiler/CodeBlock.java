@@ -10,6 +10,7 @@ import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.tools.asm.decomp.HighLevelInstruction;
 
@@ -119,7 +120,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
                 highLevel.analyze();
                 
                 int numinsts = size / 2;
-                Instruction9900 insts[] = new Instruction9900[numinsts];
+                RawInstruction insts[] = new RawInstruction[numinsts];
         	    
         	    for (int i = 0; i < numinsts; i++) {
         	    	insts[i] = highLevel.getInstruction(addr + i * 2);
@@ -196,7 +197,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         		// target the PC later
         		int pc = exec.cpu.getPC() & 0xffff;
         		HighLevelInstruction inst = highLevel.getLLInstructions().get(pc);
-        		if (inst != null && inst.inst != InstTableCommon.Idata) {
+        		if (inst != null && inst.getInst().getInst() != InstTableCommon.Idata) {
         			if ((inst.flags & HighLevelInstruction.fStartsBlock) == 0) {
         				inst.flags |= HighLevelInstruction.fStartsBlock;
         				/*

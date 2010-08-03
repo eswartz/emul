@@ -104,8 +104,6 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
     
     // instruction jump flags
 
-    public InstInfo info = new InstInfo();
-
 	public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(getName());
@@ -135,10 +133,6 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         byte readByte(int addr);
     }
 
-    public Instruction9900(int pc) {
-        this.pc = (short) pc;
-    }
- 
     public Instruction9900(RawInstruction inst) {
     	super(inst);
     	completeInstruction(inst.pc);
@@ -175,16 +169,16 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	    // after decoding the instruction, we complete
 	    // the operand, making this.op?.val and this.op?.ea valid.
 	
-	    if (inst == InstTableCommon.Idata) {
+	    if (getInst() == InstTableCommon.Idata) {
 	        Check.checkArg((mop1.type == InstTable9900.OP_IMMED));
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        Pc -= 2;
 	        this.info.cycles += 6;
-	    } else if (inst >= Inst9900.Ili && inst <= Inst9900.Ici) {
+	    } else if (getInst() >= Inst9900.Ili && getInst() <= Inst9900.Ici) {
 	        Check.checkArg((mop1.type == InstTable9900.OP_REG));
 	        mop2.convertToImmedate();
 	        mop1.dest = Operand.OP_DEST_TRUE;
-	        switch (inst) {
+	        switch (getInst()) {
 	        case Inst9900.Ili:
 	            this.info.stsetAfter = Instruction9900.st_LAE_1;
 	            mop1.dest = Operand.OP_DEST_KILLED;
@@ -209,13 +203,13 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            break;
 	        }
 	
-	    } else if (inst == Inst9900.Istwp) {
+	    } else if (getInst() == Inst9900.Istwp) {
 	        Check.checkArg((mop1.type == InstTable9900.OP_REG));
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        mop1.dest = Operand.OP_DEST_KILLED;
 	        this.info.reads |= InstInfo.INST_RSRC_WP;
 	        this.info.cycles += 8;
-	    } else if (inst == Inst9900.Istst) {
+	    } else if (getInst() == Inst9900.Istst) {
 	        Check.checkArg((mop1.type == InstTable9900.OP_REG));
 	        this.info.reads |= InstInfo.INST_RSRC_ST;
 	        this.info.stReads = 0xffff;
@@ -224,20 +218,20 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        mop2.type = InstTable9900.OP_STATUS;
 	        this.info.cycles += 8;
-	    } else if (inst == Inst9900.Ilwpi) {
+	    } else if (getInst() == Inst9900.Ilwpi) {
 	        Check.checkArg((mop1.type == InstTable9900.OP_IMMED));
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        this.info.writes |= InstInfo.INST_RSRC_WP;
 	        this.info.cycles += 10;
-	    } else if (inst == Inst9900.Ilimi) {
+	    } else if (getInst() == Inst9900.Ilimi) {
 	        Check.checkArg((mop1.type == InstTable9900.OP_IMMED));
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        this.info.stsetAfter = Instruction9900.st_INT;
 	        this.info.cycles += 16;
-	    } else if (inst >= Inst9900.Iidle && inst <= Inst9900.Ilrex) {
+	    } else if (getInst() >= Inst9900.Iidle && getInst() <= Inst9900.Ilrex) {
 	        Check.checkArg((mop1.type == MachineOperand.OP_NONE));
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
-	        switch (inst) {
+	        switch (getInst()) {
 	        case Inst9900.Iidle:
 	            this.info.writes |= InstInfo.INST_RSRC_IO;
 	            this.info.cycles += 12;
@@ -269,13 +263,13 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            break;
 	        }
 	
-	    } else if (inst >= Inst9900.Iblwp && inst <= Inst9900.Iabs) {
+	    } else if (getInst() >= Inst9900.Iblwp && getInst() <= Inst9900.Iabs) {
 	        Check.checkArg((mop1.type != MachineOperand.OP_NONE
 			&& mop1.type != InstTable9900.OP_IMMED));
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        mop1.dest = Operand.OP_DEST_TRUE;
 	
-	        switch (inst) {
+	        switch (getInst()) {
 	        case Inst9900.Iblwp:
 	            //this.stsetBefore = Instruction.st_ALL;
 	            this.info.stReads = 0xffff;
@@ -350,7 +344,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            break;
 	        }
 	
-	    } else if (inst >= Inst9900.Isra && inst <= Inst9900.Isrc) {
+	    } else if (getInst() >= Inst9900.Isra && getInst() <= Inst9900.Isrc) {
 	        Check.checkArg((mop1.type == InstTable9900.OP_REG));
 	        Check.checkArg((mop2.type == InstTable9900.OP_IMMED || mop2.type == InstTable9900.OP_CNT));
 	        mop1.dest = Operand.OP_DEST_TRUE;
@@ -364,7 +358,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            this.info.cycles += 12;
 	        }
 	
-	        switch (inst) {
+	        switch (getInst()) {
 	        case Inst9900.Isra:
 	            this.info.stsetBefore = Instruction9900.st_SHIFT_RIGHT_C;
 	            this.info.stsetAfter = Instruction9900.st_LAE_1;
@@ -385,8 +379,8 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	
 	    } else if (false) {
 	        // TODO: extended instructions
-	    } else if (inst >= Inst9900.Ijmp && inst <= Inst9900.Itb) {
-	        if (inst < Inst9900.Isbo) {
+	    } else if (getInst() >= Inst9900.Ijmp && getInst() <= Inst9900.Itb) {
+	        if (getInst() < Inst9900.Isbo) {
 	        	Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        	if (mop1.type == InstTable9900.OP_IMMED) {
 	                mop1.type = InstTable9900.OP_JUMP;
@@ -399,7 +393,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            this.info.reads |= InstInfo.INST_RSRC_ST;
 	            mop2.type = InstTable9900.OP_STATUS;
 	            //((MachineOperand) this.op2).val = st.flatten();
-	            this.info.jump = inst == Inst9900.Ijmp ? InstInfo.INST_JUMP_TRUE
+	            this.info.jump = getInst() == Inst9900.Ijmp ? InstInfo.INST_JUMP_TRUE
 	                    : InstInfo.INST_JUMP_COND;
 	            this.info.cycles += 8;
 	        } else {
@@ -408,7 +402,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            this.info.cycles += 12;
 	        }
 	
-	        switch (inst) {
+	        switch (getInst()) {
 	        case Inst9900.Ijmp:
 	            this.info.reads &= ~InstInfo.INST_RSRC_ST;
 	            break;
@@ -446,7 +440,6 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            this.info.stReads = Status9900.ST_L + Status9900.ST_E;
 	            break;
 	        case Inst9900.Ijop:
-	            this.inst = Inst9900.Ijop;
 	            this.info.stReads = Status9900.ST_P;
 	            break;
 	        case Inst9900.Isbo:
@@ -461,14 +454,14 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            break;
 	        }
 	
-	    } else if (inst > 0 && inst < Inst9900.Iszc && inst != Inst9900.Ildcr && inst != Inst9900.Istcr) {
+	    } else if (getInst() > 0 && getInst() < Inst9900.Iszc && getInst() != Inst9900.Ildcr && getInst() != Inst9900.Istcr) {
 	        Check.checkArg((mop1.type != MachineOperand.OP_NONE
 			&& mop1.type != InstTable9900.OP_IMMED));
 	        Check.checkArg((mop2.type == InstTable9900.OP_REG));
 	        mop1.dest = Operand.OP_DEST_FALSE;
 	        mop2.dest = Operand.OP_DEST_TRUE;
 	
-	        switch (inst) {
+	        switch (getInst()) {
 	        case Inst9900.Icoc:
 	            this.info.stsetAfter = Instruction9900.st_CMP;
 	            mop2.dest = Operand.OP_DEST_FALSE;
@@ -505,7 +498,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            break;
 	        }
 	
-	    } else if (inst == Inst9900.Ildcr || inst == Inst9900.Istcr) {
+	    } else if (getInst() == Inst9900.Ildcr || getInst() == Inst9900.Istcr) {
 	        Check.checkArg((mop1.type != MachineOperand.OP_NONE
 			&& mop1.type != InstTable9900.OP_IMMED));
 	        Check.checkArg((mop2.type == InstTable9900.OP_IMMED || mop2.type == InstTable9900.OP_CNT));
@@ -515,7 +508,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 			}
 	        mop1.byteop = mop2.val <= 8;
 	
-	        if (inst == Inst9900.Ildcr) {
+	        if (getInst() == Inst9900.Ildcr) {
 	            this.info.stsetBefore = mop1.byteop ? Instruction9900.st_BYTE_LAEP_1
 	                    : Instruction9900.st_LAE_1;
 	            mop1.dest = Operand.OP_DEST_FALSE;
@@ -530,9 +523,9 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            this.info.reads |= InstInfo.INST_RSRC_IO;
 	        }
 	
-	    } else if (inst == InstTableCommon.Idsr) {
+	    } else if (getInst() == InstTableCommon.Idsr) {
 	    	
-	    } else if (inst == InstTableCommon.Iticks) {
+	    } else if (getInst() == InstTableCommon.Iticks) {
 	    	mop1.dest = Operand.OP_DEST_TRUE;
 	    	this.info.reads |= InstInfo.INST_RSRC_IO;
 	    	this.info.cycles += 6;
@@ -542,9 +535,9 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        Check.checkArg((mop1.type != MachineOperand.OP_NONE
 			&& mop1.type != InstTable9900.OP_IMMED));
 	        mop2.dest = Operand.OP_DEST_TRUE;
-	        mop1.byteop = mop2.byteop = (inst - Inst9900.Iszc & 1) != 0;
+	        mop1.byteop = mop2.byteop = (getInst() - Inst9900.Iszc & 1) != 0;
 	
-	        switch (inst) {
+	        switch (getInst()) {
 	        case Inst9900.Iszc:
 	            this.info.stsetAfter = Instruction9900.st_LAE;
 	            this.info.cycles += 14;
@@ -612,7 +605,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        this.info.reads |= InstInfo.INST_RSRC_WP;
 	    }
 	
-	    if (inst != InstTableCommon.Idata && inst != InstTableCommon.Ibyte) {
+	    if (getInst() != InstTableCommon.Idata && getInst() != InstTableCommon.Ibyte) {
 			 // Finish reading operand immediates
 		    Pc += 2; // instruction itself
 		    Pc = ((MachineOperand) getOp1()).advancePc((short)Pc);
@@ -986,7 +979,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         	// check for modified immediates (the other kind of self-modifying code)
         	int pcStep = (thePc + 2) & 0xfffe;
         	MachineOperand9900 mop1 = (MachineOperand9900)getOp1();
-        	if (inst != InstTableCommon.Idata && mop1.type != MachineOperand.OP_NONE) {
+        	if (getInst() != InstTableCommon.Idata && mop1.type != MachineOperand.OP_NONE) {
         		mop1.cycles = 0;
 				if (mop1.hasImmediate()) {
 					if (domain.readWord(pcStep) != mop1.immed)
@@ -1021,7 +1014,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + inst;
+		result = prime * result + getInst();
 		result = prime * result + ((getOp1() == null) ? 0 : getOp1().hashCode());
 		result = prime * result + ((getOp2() == null) ? 0 : getOp2().hashCode());
 		result = prime * result + pc;
@@ -1041,7 +1034,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 			return false;
 		}
 		Instruction9900 other = (Instruction9900) obj;
-		if (inst != other.inst) {
+		if (getInst() != other.getInst()) {
 			return false;
 		}
 		if (getOp1() == null) {

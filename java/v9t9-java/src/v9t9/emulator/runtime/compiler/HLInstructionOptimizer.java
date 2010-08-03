@@ -4,6 +4,7 @@
 package v9t9.emulator.runtime.compiler;
 
 import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.RawInstruction;
 
 /**
  * Optimizer for instruction arrays
@@ -18,12 +19,12 @@ public class HLInstructionOptimizer {
 	 * This algorithm ignores flow control, but that's okay, because
 	 * jumps do not destroy status.
      */
-    public static void peephole_status(Instruction9900[] insts, int numinsts) {
-        Instruction9900 prev = null;
+    public static void peephole_status(RawInstruction[] insts, int numinsts) {
+    	RawInstruction prev = null;
         int i;
         i = 0;
         while (i < numinsts) {
-            Instruction9900 ins = insts[i];
+        	RawInstruction ins = insts[i];
             if (ins == null) {
                 i++;
                 continue;

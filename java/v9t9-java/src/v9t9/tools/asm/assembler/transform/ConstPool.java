@@ -189,7 +189,8 @@ public class ConstPool {
 			
 			// Obviously, RAM can change.  Also, jump instructions may be moved
 			// (there is a bug here too)
-			if (assembler.getConsole().hasRamAccess(pc) || rawInst.isJumpInst())
+			if (assembler.getConsole().hasRamAccess(pc) || 
+					assembler.getInstructionFactory().isJumpInst(rawInst.getInst()))
 				return;
 			
 			short[] words = InstTable9900.encode(rawInst);

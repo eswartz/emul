@@ -241,7 +241,7 @@ public class InterpreterMFP201 implements Interpreter {
         if (mop2.type != MachineOperand.OP_NONE) {
 			iblock.val2 = mop2.getValue(memory, iblock.ea2);
 		}
-        if (iblock.inst.inst == Inst9900.Idiv) {
+        if (iblock.inst.getInst() == Inst9900.Idiv) {
             iblock.val3 = memory.readWord(iblock.ea2 + 2);
         }
     }
@@ -257,21 +257,21 @@ public class InterpreterMFP201 implements Interpreter {
 				memory.writeByte(iblock.ea1, (byte) iblock.val1);
 			} else {
 				memory.writeWord(iblock.ea1, iblock.val1);
-				if (ins.inst == InstTableCommon.Iticks) {
+				if (ins.getInst() == InstTableCommon.Iticks) {
 					memory.writeWord(iblock.ea1 + 2, iblock.val2);
 				}
 			}
 				
         }
         if (mop2.dest != Operand.OP_DEST_FALSE) {
-        	if (ins.inst == Inst9900.Icb)
+        	if (ins.getInst() == Inst9900.Icb)
         		mop2.dest = 1;
             if (mop2.byteop) {
 				memory.writeByte(iblock.ea2, (byte) iblock.val2);
 			} else {
                 memory.writeWord(iblock.ea2, iblock.val2);
-                if (ins.inst == Inst9900.Impy 
-                		|| ins.inst == Inst9900.Idiv) {
+                if (ins.getInst() == Inst9900.Impy 
+                		|| ins.getInst() == Inst9900.Idiv) {
                     memory.writeWord(iblock.ea2 + 2, iblock.val3);
                 }
             }
@@ -313,7 +313,7 @@ public class InterpreterMFP201 implements Interpreter {
      */
     private void interpret(Instruction9900 ins) {
     	StatusMFP201 status = (StatusMFP201) iblock.status;
-        switch (ins.inst) {
+        switch (ins.getInst()) {
        
         case InstTableCommon.Idbg:
         	int oldCount = machine.getExecutor().debugCount; 

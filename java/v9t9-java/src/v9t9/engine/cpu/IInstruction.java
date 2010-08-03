@@ -13,6 +13,4 @@ public interface IInstruction {
 	int getPc();
 
 	String toInfoString();
-
-	boolean isByteOp();
 }

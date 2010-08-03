@@ -47,7 +47,7 @@ public class Decompiler implements ICodeProvider {
     }
     
     public void addRangeFromArgv(String string, boolean isCode) throws IOException {
-        String hex = "((?=0x)?(?=\\d|[a-fA-F])+)";
+        String hex = "((?:0x)?(?:\\d|[a-fA-F])+)";
         Pattern pattern = Pattern.compile(hex + "(:" + hex + ")?");
         Matcher matcher = pattern.matcher(string);
         if (!matcher.matches()) {
@@ -71,7 +71,7 @@ public class Decompiler implements ICodeProvider {
     }
 
     public void decompile() {
-        //FullSweepPhase llp = new FullSweepPhase(this);
+        //FullSweepPhase llp = new FullSweepPhase(CPU, highLevel);
         TopDownPhase llp = new TopDownPhase(CPU, highLevel);
         llp.addRefDefTables(getOptions().refDefTables);
         llp.disassemble();

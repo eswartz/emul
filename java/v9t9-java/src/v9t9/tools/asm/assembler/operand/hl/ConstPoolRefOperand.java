@@ -3,6 +3,7 @@
  */
 package v9t9.tools.asm.assembler.operand.hl;
 
+import v9t9.engine.cpu.ICPUInstruction;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
@@ -53,7 +54,9 @@ public class ConstPoolRefOperand extends ImmediateOperand {
 		
 		int value = op.getImmediate();
 		AssemblerOperand addr;
-		if (inst.isByteOp()) {
+		boolean isByte = inst instanceof ICPUInstruction &&
+			assembler.getInstructionFactory().isByteOp(((ICPUInstruction) inst).getInst());
+		if (isByte) {
 			addr = assembler.getConstPool().allocateByte(value);
 		} else {
 			addr = assembler.getConstPool().allocateWord(value);

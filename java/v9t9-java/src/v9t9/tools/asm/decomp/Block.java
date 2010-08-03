@@ -44,7 +44,7 @@ public class Block implements Comparable<Block> {
         succ = new ArrayList<Block>(2);
         pred = new ArrayList<Block>(2);
         this.first = inst;
-        this.last = null;
+        this.last = inst;
         this.first.setBlock(this);
     }
 
@@ -78,7 +78,7 @@ public class Block implements Comparable<Block> {
     }
 
     public int compareTo(Block o) {
-        return first.pc - o.first.pc;
+        return first.getInst().pc - o.first.getInst().pc;
     }
     
     @Override
@@ -88,7 +88,7 @@ public class Block implements Comparable<Block> {
 		}
         if (obj instanceof Block) {
             Block b = (Block) obj;
-            return b.first.pc == first.pc;
+            return b.first.getInst().pc == first.getInst().pc;
         }
         return false;
     }
@@ -301,8 +301,8 @@ public class Block implements Comparable<Block> {
 		Set<Integer> pcSet = new TreeSet<Integer>();
 		for (Iterator<HighLevelInstruction> iter = iterator(); iter.hasNext(); ) {
 			HighLevelInstruction inst = iter.next();
-			for (int size = inst.size - 2; size >= 0; size -= 2)
-				pcSet.add((inst.pc + size) & 0xffff);
+			for (int size = inst.getInst().size - 2; size >= 0; size -= 2)
+				pcSet.add((inst.getInst().pc + size) & 0xffff);
 		}
 		return pcSet;
 	}

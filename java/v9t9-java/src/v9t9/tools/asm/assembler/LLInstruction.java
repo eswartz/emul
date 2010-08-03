@@ -3,6 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
+import v9t9.engine.cpu.ICPUInstruction;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstEncodePattern;
@@ -16,7 +17,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author Ed
  *
  */
-public class LLInstruction extends BaseAssemblerInstruction {
+public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstruction {
 	public LLInstruction() {
 		super();
 	}

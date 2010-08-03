@@ -12,6 +12,7 @@ import v9t9.emulator.runtime.compiler.Compiler9900.InstInfo;
 import v9t9.emulator.runtime.compiler.Compiler9900.InstructionRangeCompiler;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction9900;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.decomp.Block;
 import v9t9.tools.asm.decomp.HighLevelInstruction;
 import v9t9.tools.asm.decomp.IDecompileInfo;
@@ -29,7 +30,7 @@ public class FunctionInstructionRangeCompiler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Compiler.InstructionRangeCompiler#compileInstructionRange(v9t9.emulator.runtime.Compiler, int, int, v9t9.emulator.runtime.HighLevelCodeInfo, org.apache.bcel.generic.InstructionList, v9t9.emulator.runtime.CompileInfo)
 	 */
-	public void compileInstructionRange(final Compiler9900 compiler, Instruction9900[] insts,
+	public void compileInstructionRange(final Compiler9900 compiler, RawInstruction[] insts,
 			final HighLevelCodeInfo highLevel, InstructionList ilist, CompileInfo info) {
 
 		int numinsts = insts.length;
@@ -42,7 +43,7 @@ public class FunctionInstructionRangeCompiler implements
 	    InstInfo[] chunks = new InstInfo[numinsts];
 	    for (Block block : decompileInfo.getBlocks()) {
 	    	HighLevelInstruction inst = block.getFirst();
-	    	int i = (inst.pc - addr) / 2;
+	    	int i = (inst.getInst().pc - addr) / 2;
 	    	if (i >= 0 && i < numinsts) {
 		    	chunks[i] = new InstInfo();
 		    	info.ilist = new InstructionList();
@@ -50,7 +51,7 @@ public class FunctionInstructionRangeCompiler implements
 		    	int j = i;
 		    	while (inst != null) {
 		    		// note: need low-level instr here (insts[j])
-		    		compiler.generateInstruction(inst.pc, insts[j], info, chunks[i]);
+		    		compiler.generateInstruction(inst.getInst().pc, insts[j], info, chunks[i]);
 		            
 		    		// not compiled?
 		            if (chunks[i].chunk == null) {
@@ -62,7 +63,7 @@ public class FunctionInstructionRangeCompiler implements
 		            if (inst == block.getLast())
 		            	break;
 		            
-		            j += inst.size / 2;
+		            j += inst.getInst().size / 2;
 		            if (j >= numinsts)
 		            	break;		// if out of the code range but not the block
 		            

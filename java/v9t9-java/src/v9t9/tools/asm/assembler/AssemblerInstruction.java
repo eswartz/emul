@@ -3,6 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
+import v9t9.engine.cpu.ICPUInstruction;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTable9900;
@@ -16,7 +17,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author Ed
  *
  */
-public abstract class AssemblerInstruction extends BaseAssemblerInstruction {
+public abstract class AssemblerInstruction extends BaseAssemblerInstruction implements ICPUInstruction {
 
 	private static final AssemblerOperand[] NO_OPS = new AssemblerOperand[0];
 	private int inst;

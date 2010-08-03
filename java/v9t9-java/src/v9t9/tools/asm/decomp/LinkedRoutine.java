@@ -23,10 +23,10 @@ public class LinkedRoutine extends Routine {
     
     @Override
     public boolean isReturn(HighLevelInstruction inst) {
-        return inst.inst == Inst9900.Ib
-        	&& inst.getOp1() instanceof MachineOperand
-            && ((BaseMachineOperand)inst.getOp1()).type == InstTable9900.OP_IND
-            && ((BaseMachineOperand)inst.getOp1()).val == returnReg;
+        return inst.getInst().getInst() == Inst9900.Ib
+        	&& inst.getInst().getOp1() instanceof MachineOperand
+            && ((BaseMachineOperand)inst.getInst().getOp1()).type == InstTable9900.OP_IND
+            && ((BaseMachineOperand)inst.getInst().getOp1()).val == returnReg;
     }
     
     @Override
@@ -41,11 +41,11 @@ public class LinkedRoutine extends Routine {
     		entryDataBytes = 0;
 	        while (inst != null && !inst.isCall()) {
 	        	if (returnReg == 11) {
-		            if (inst.inst == Inst9900.Imov
-		            		&& inst.getOp1() instanceof MachineOperand
-		                    && ((MachineOperand)inst.getOp1()).isRegister(11)
-		                    && ((MachineOperand)inst.getOp2()).isRegister()) {
-		            	int reg = ((BaseMachineOperand)inst.getOp2()).val;
+		            if (inst.getInst().getInst() == Inst9900.Imov
+		            		&& inst.getInst().getOp1() instanceof MachineOperand
+		                    && ((MachineOperand)inst.getInst().getOp1()).isRegister(11)
+		                    && ((MachineOperand)inst.getInst().getOp2()).isRegister()) {
+		            	int reg = ((BaseMachineOperand)inst.getInst().getOp2()).val;
 		            	if (returnReg != reg && returnReg != 11)
 		            		System.out.println("??? inconsistent register saving from " + returnReg + " to " + reg);
 		                returnReg = reg;
@@ -53,8 +53,8 @@ public class LinkedRoutine extends Routine {
 	        	}
 	        	
 	        	// look for uses of parameter words; ignore any branching
-	        	if (inst.getOp1() instanceof MachineOperand) {
-	                MachineOperand9900 mop1 = (MachineOperand9900) inst.getOp1();
+	        	if (inst.getInst().getOp1() instanceof MachineOperand) {
+	                MachineOperand9900 mop1 = (MachineOperand9900) inst.getInst().getOp1();
 	                if (mop1.isMemory() && mop1.type == InstTable9900.OP_INC 
 	                        && mop1.val == returnReg) {
 	                	if ((inst.flags & HighLevelInstruction.fByteOp) != 0) {

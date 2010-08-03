@@ -143,12 +143,12 @@ public class InstTable9900 {
 	};
 
 	public static short[] encode(RawInstruction rawInstruction) throws IllegalArgumentException {
-		Integer opcodeI = instOpcodes.get(rawInstruction.inst);
+		Integer opcodeI = instOpcodes.get(rawInstruction.getInst());
 		if (opcodeI == null)
 			throw new IllegalArgumentException("Non-machine instruction");
 		int opcode = opcodeI;
 		
-		InstEncodePattern pattern = instEntries.get(rawInstruction.inst);
+		InstEncodePattern pattern = instEntries.get(rawInstruction.getInst());
 		if (pattern == null)
 			throw new IllegalArgumentException("Non-encoded instruction");
 		
@@ -169,7 +169,7 @@ public class InstTable9900 {
 		opcode |= (mop2.getBits() << pattern.off1) | mop1.getBits();
 		
 		short[] words = { (short)opcode, 0, 0 };
-		int wordCount = rawInstruction.inst != InstTableCommon.Idata ? 1 : 0;
+		int wordCount = rawInstruction.getInst() != InstTableCommon.Idata ? 1 : 0;
 		if (mop1.hasImmediate()) {
 			words[wordCount++] = mop1.immed;
 		}
@@ -231,7 +231,7 @@ public class InstTable9900 {
 	 * machine code; otherwise, just overcomes 
 	 */
 	public static void coerceOperandTypes(RawInstruction instruction) {
-		InstEncodePattern pattern = instEntries.get(instruction.inst);
+		InstEncodePattern pattern = instEntries.get(instruction.getInst());
 		if (pattern == null)
 			throw new IllegalArgumentException("Non-encoded instruction");
 		
@@ -248,7 +248,7 @@ public class InstTable9900 {
 		case NONE:
 			if (mop.type == InstTable9900.OP_STATUS
 					|| mop.type == InstTable9900.OP_INST
-					|| (instruction.inst >= Inst9900.Iinc && instruction.inst <= Inst9900.Idect))
+					|| (instruction.getInst() >= Inst9900.Iinc && instruction.getInst() <= Inst9900.Idect))
 				mop.type = MachineOperand.OP_NONE;
 			break;
 		case IMM:
@@ -264,7 +264,7 @@ public class InstTable9900 {
 				mop.val = 0;
 			break;
 		case OFF:
-			if (instruction.isJumpInst()) {
+			if (instruction.getInst() >= Inst9900.Ijmp && instruction.getInst() <= Inst9900.Ijop) {
 				if (mop.type == InstTable9900.OP_IMMED) {
 					// convert address to offset from this inst
 					mop.type = InstTable9900.OP_JUMP;
@@ -425,7 +425,8 @@ public class InstTable9900 {
         op &= 0xffff;
     
         inst.opcode = (short) op;
-        inst.inst = InstTableCommon.Idata;
+        inst.setInst(InstTableCommon.Idata);
+        inst.setName("DATA");
         inst.size = 0;
         MachineOperand9900 mop1 = new MachineOperand9900(MachineOperand.OP_NONE);
         MachineOperand9900 mop2 = new MachineOperand9900(MachineOperand.OP_NONE);
@@ -451,23 +452,23 @@ public class InstTable9900 {
             switch ((op & 0x1e0) >> 5) {
             case 0:
                 //inst.name = "LI";
-                inst.inst = Inst9900.Ili;
+                inst.setInst(Inst9900.Ili);
                 break;
             case 1:
                 //inst.name = "AI";
-                inst.inst = Inst9900.Iai;
+                inst.setInst(Inst9900.Iai);
                 break;
             case 2:
                 //inst.name = "ANDI";
-                inst.inst = Inst9900.Iandi;
+                inst.setInst(Inst9900.Iandi);
                 break;
             case 3:
                 //inst.name = "ORI";
-                inst.inst = Inst9900.Iori;
+                inst.setInst(Inst9900.Iori);
                 break;
             case 4:
                 //inst.name = "CI";
-                inst.inst = Inst9900.Ici;
+                inst.setInst(Inst9900.Ici);
                 break;
             }
     
@@ -477,11 +478,11 @@ public class InstTable9900 {
             switch ((op & 0x1e0) >> 5) {
             case 5:
                 //inst.name = "STWP";
-                inst.inst = Inst9900.Istwp;
+                inst.setInst(Inst9900.Istwp);
                 break;
             case 6:
                 //inst.name = "STST";
-                inst.inst = Inst9900.Istst;
+                inst.setInst(Inst9900.Istst);
                 break;
             }
     
@@ -491,11 +492,11 @@ public class InstTable9900 {
             switch ((op & 0x1e0) >> 5) {
             case 7:
                 //inst.name = "LWPI";
-                inst.inst = Inst9900.Ilwpi;
+                inst.setInst(Inst9900.Ilwpi);
                 break;
             case 8:
                 //inst.name = "LIMI";
-                inst.inst = Inst9900.Ilimi;
+                inst.setInst(Inst9900.Ilimi);
                 break;
             }
     
@@ -503,27 +504,27 @@ public class InstTable9900 {
             switch ((op & 0x1e0) >> 5) {
             case 10:
                 //inst.name = "IDLE";
-                inst.inst = Inst9900.Iidle;
+                inst.setInst(Inst9900.Iidle);
                 break;
             case 11:
                 //inst.name = "RSET";
-                inst.inst = Inst9900.Irset;
+                inst.setInst(Inst9900.Irset);
                 break;
             case 12:
                 //inst.name = "RTWP";
-                inst.inst = Inst9900.Irtwp;
+                inst.setInst(Inst9900.Irtwp);
                 break;
             case 13:
                 //inst.name = "CKON";
-                inst.inst = Inst9900.Ickon;
+                inst.setInst(Inst9900.Ickon);
                 break;
             case 14:
                 //inst.name = "CKOF";
-                inst.inst = Inst9900.Ickof;
+                inst.setInst(Inst9900.Ickof);
                 break;
             case 15:
                 //inst.name = "LREX";
-                inst.inst = Inst9900.Ilrex;
+                inst.setInst(Inst9900.Ilrex);
                 break;
             }
     
@@ -534,59 +535,59 @@ public class InstTable9900 {
             switch ((op & 0x3c0) >> 6) {
             case 0:
                 //inst.name = "BLWP";
-                inst.inst = Inst9900.Iblwp;
+                inst.setInst(Inst9900.Iblwp);
                 break;
             case 1:
                 //inst.name = "B";
-                inst.inst = Inst9900.Ib;
+                inst.setInst(Inst9900.Ib);
                 break;
             case 2:
                 //inst.name = "X";
-                inst.inst = Inst9900.Ix;
+                inst.setInst(Inst9900.Ix);
                 break;
             case 3:
                 //inst.name = "CLR";
-                inst.inst = Inst9900.Iclr;
+                inst.setInst(Inst9900.Iclr);
                 break;
             case 4:
                 //inst.name = "NEG";
-                inst.inst = Inst9900.Ineg;
+                inst.setInst(Inst9900.Ineg);
                 break;
             case 5:
                 //inst.name = "INV";
-                inst.inst = Inst9900.Iinv;
+                inst.setInst(Inst9900.Iinv);
                 break;
             case 6:
                 //inst.name = "INC";
-                inst.inst = Inst9900.Iinc;
+                inst.setInst(Inst9900.Iinc);
                 break;
             case 7:
                 //inst.name = "INCT";
-                inst.inst = Inst9900.Iinct;
+                inst.setInst(Inst9900.Iinct);
                 break;
             case 8:
                 //inst.name = "DEC";
-                inst.inst = Inst9900.Idec;
+                inst.setInst(Inst9900.Idec);
                 break;
             case 9:
                 //inst.name = "DECT";
-                inst.inst = Inst9900.Idect;
+                inst.setInst(Inst9900.Idect);
                 break;
             case 10:
                 //inst.name = "BL";
-                inst.inst = Inst9900.Ibl;
+                inst.setInst(Inst9900.Ibl);
                 break;
             case 11:
                 //inst.name = "SWPB";
-                inst.inst = Inst9900.Iswpb;
+                inst.setInst(Inst9900.Iswpb);
                 break;
             case 12:
                 //inst.name = "SETO";
-                inst.inst = Inst9900.Iseto;
+                inst.setInst(Inst9900.Iseto);
                 break;
             case 13:
                 //inst.name = "ABS";
-                inst.inst = Inst9900.Iabs;
+                inst.setInst(Inst9900.Iabs);
                 break;
             }
     
@@ -599,19 +600,19 @@ public class InstTable9900 {
             switch ((op & 0x700) >> 8) {
             case 0:
                 //inst.name = "SRA";
-                inst.inst = Inst9900.Isra;
+                inst.setInst(Inst9900.Isra);
                 break;
             case 1:
                 //inst.name = "SRL";
-                inst.inst = Inst9900.Isrl;
+                inst.setInst(Inst9900.Isrl);
                 break;
             case 2:
                 //inst.name = "SLA";
-                inst.inst = Inst9900.Isla;
+                inst.setInst(Inst9900.Isla);
                 break;
             case 3:
                 //inst.name = "SRC";
-                inst.inst = Inst9900.Isrc;
+                inst.setInst(Inst9900.Isrc);
                 break;
             }
     
@@ -619,19 +620,19 @@ public class InstTable9900 {
             switch ((op & 0x1e0) >> 5) {
         	// 0xc00
     		case 0:				/* DSR, OP_DSR */
-    			inst.inst = InstTableCommon.Idsr;
+    			inst.setInst(InstTableCommon.Idsr);
     			mop1.type = InstTable9900.OP_OFFS_R12;
     			mop1.val = (byte) (op & 0xff);
     			break;
   			// 0xd60
     		case 11:			/* TICKS */
-    			inst.inst = InstTableCommon.Iticks;
+    			inst.setInst(InstTableCommon.Iticks);
     			mop1.type = InstTable9900.OP_REG;
                 mop1.val = (byte) (op & 0xf);
     			break;
     		// 0xde0
     		case 15:			/* DBG, -DBG */
-    			inst.inst = InstTableCommon.Idbg;
+    			inst.setInst(InstTableCommon.Idbg);
     			mop1.type = InstTable9900.OP_CNT;
     			mop1.val = (byte) (op & 0xf);
     			break;
@@ -652,67 +653,67 @@ public class InstTable9900 {
             switch ((op & 0xf00) >> 8) {
             case 0:
                 //inst.name = "JMP";
-                inst.inst = Inst9900.Ijmp;
+                inst.setInst(Inst9900.Ijmp);
                 break;
             case 1:
                 //inst.name = "JLT";
-                inst.inst = Inst9900.Ijlt;
+                inst.setInst(Inst9900.Ijlt);
                 break;
             case 2:
                 //inst.name = "JLE";
-                inst.inst = Inst9900.Ijle;
+                inst.setInst(Inst9900.Ijle);
                 break;
             case 3:
                 //inst.name = "JEQ";
-                inst.inst = Inst9900.Ijeq;
+                inst.setInst(Inst9900.Ijeq);
                 break;
             case 4:
                 //inst.name = "JHE";
-                inst.inst = Inst9900.Ijhe;
+                inst.setInst(Inst9900.Ijhe);
                 break;
             case 5:
                 //inst.name = "JGT";
-                inst.inst = Inst9900.Ijgt;
+                inst.setInst(Inst9900.Ijgt);
                 break;
             case 6:
                 //inst.name = "JNE";
-                inst.inst = Inst9900.Ijne;
+                inst.setInst(Inst9900.Ijne);
                 break;
             case 7:
                 //inst.name = "JNC";
-                inst.inst = Inst9900.Ijnc;
+                inst.setInst(Inst9900.Ijnc);
                 break;
             case 8:
                 //inst.name = "JOC";
-                inst.inst = Inst9900.Ijoc;
+                inst.setInst(Inst9900.Ijoc);
                 break;
             case 9:
                 //inst.name = "JNO";
-                inst.inst = Inst9900.Ijno;
+                inst.setInst(Inst9900.Ijno);
                 break;
             case 10:
                 //inst.name = "JL";
-                inst.inst = Inst9900.Ijl;
+                inst.setInst(Inst9900.Ijl);
                 break;
             case 11:
                 //inst.name = "JH";
-                inst.inst = Inst9900.Ijh;
+                inst.setInst(Inst9900.Ijh);
                 break;
             case 12:
                 //inst.name = "JOP";
-                inst.inst = Inst9900.Ijop;
+                inst.setInst(Inst9900.Ijop);
                 break;
             case 13:
                 //inst.name = "SBO";
-                inst.inst = Inst9900.Isbo;
+                inst.setInst(Inst9900.Isbo);
                 break;
             case 14:
                 //inst.name = "SBZ";
-                inst.inst = Inst9900.Isbz;
+                inst.setInst(Inst9900.Isbz);
                 break;
             case 15:
                 //inst.name = "TB";
-                inst.inst = Inst9900.Itb;
+                inst.setInst(Inst9900.Itb);
                 break;
             }
     
@@ -725,27 +726,27 @@ public class InstTable9900 {
             switch ((op & 0x1c00) >> 10) {
             case 0:
                 //inst.name = "COC";
-                inst.inst = Inst9900.Icoc;
+                inst.setInst(Inst9900.Icoc);
                 break;
             case 1:
                 //inst.name = "CZC";
-                inst.inst = Inst9900.Iczc;
+                inst.setInst(Inst9900.Iczc);
                 break;
             case 2:
                 //inst.name = "XOR";
-                inst.inst = Inst9900.Ixor;
+                inst.setInst(Inst9900.Ixor);
                 break;
             case 3:
                 //inst.name = "XOP";
-                inst.inst = Inst9900.Ixop;
+                inst.setInst(Inst9900.Ixop);
                 break;
             case 6:
                 //inst.name = "MPY";
-                inst.inst = Inst9900.Impy;
+                inst.setInst(Inst9900.Impy);
                 break;
             case 7:
                 //inst.name = "DIV";
-                inst.inst = Inst9900.Idiv;
+                inst.setInst(Inst9900.Idiv);
                 break;
             }
     
@@ -757,10 +758,10 @@ public class InstTable9900 {
     
             if (op < 0x3400) {
                 //inst.name = "LDCR";
-                inst.inst = Inst9900.Ildcr;
+                inst.setInst(Inst9900.Ildcr);
             } else {
                 //inst.name = "STCR";
-                inst.inst = Inst9900.Istcr;
+                inst.setInst(Inst9900.Istcr);
             }
     
         } else {
@@ -772,56 +773,56 @@ public class InstTable9900 {
             switch ((op & 0xf000) >> 12) {
             case 4:
                 //inst.name = "SZC";
-                inst.inst = Inst9900.Iszc;
+                inst.setInst(Inst9900.Iszc);
                 break;
             case 5:
                 //inst.name = "SZCB";
-                inst.inst = Inst9900.Iszcb;
+                inst.setInst(Inst9900.Iszcb);
                 break;
             case 6:
                 //inst.name = "S";
-                inst.inst = Inst9900.Is;
+                inst.setInst(Inst9900.Is);
                 break;
             case 7:
                 //inst.name = "SB";
-                inst.inst = Inst9900.Isb;
+                inst.setInst(Inst9900.Isb);
                 break;
             case 8:
                 //inst.name = "C";
-                inst.inst = Inst9900.Ic;
+                inst.setInst(Inst9900.Ic);
                 break;
             case 9:
                 //inst.name = "CB";
-                inst.inst = Inst9900.Icb;
+                inst.setInst(Inst9900.Icb);
                 break;
             case 10:
                 //inst.name = "A";
-                inst.inst = Inst9900.Ia;
+                inst.setInst(Inst9900.Ia);
                 break;
             case 11:
                 //inst.name = "AB";
-                inst.inst = Inst9900.Iab;
+                inst.setInst(Inst9900.Iab);
                 break;
             case 12:
                 //inst.name = "MOV";
-                inst.inst = Inst9900.Imov;
+                inst.setInst(Inst9900.Imov);
                 break;
             case 13:
                 //inst.name = "MOVB";
-                inst.inst = Inst9900.Imovb;
+                inst.setInst(Inst9900.Imovb);
                 break;
             case 14:
                 //inst.name = "SOC";
-                inst.inst = Inst9900.Isoc;
+                inst.setInst(Inst9900.Isoc);
                 break;
             case 15:
                 //inst.name = "SOCB";
-                inst.inst = Inst9900.Isocb;
+                inst.setInst(Inst9900.Isocb);
                 break;
             }
         }
     
-        if (inst.inst == 0) // data
+        if (inst.getInst() == 0) // data
         {
             mop1.type = InstTable9900.OP_IMMED;
             mop1.val = mop1.immed = (short) op;
@@ -834,21 +835,22 @@ public class InstTable9900 {
             pc = mop1.fetchOperandImmediates(domain, (short)pc);
             pc = mop2.fetchOperandImmediates(domain, (short)pc);
             inst.size = pc - inst.pc;
+            inst.setName(InstTable9900.getInstName(inst.getInst()));
         }
 
         return inst;
     }
     
     public static void calculateInstructionSize(RawInstruction target) {
-    	if (target.inst == InstTableCommon.Idata) {
+    	if (target.getInst() == InstTableCommon.Idata) {
     		target.size = 2;
     		return;
-    	} else if (target.inst == InstTableCommon.Ibyte) {
+    	} else if (target.getInst() == InstTableCommon.Ibyte) {
     		target.size = 1;
     		return;
     	}
     	target.size = 2;
-    	InstEncodePattern pattern = lookupEncodePattern(target.inst);
+    	InstEncodePattern pattern = lookupEncodePattern(target.getInst());
 		if (pattern == null)
 			return;
 		

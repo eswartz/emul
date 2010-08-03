@@ -55,8 +55,8 @@ public class InstructionTest extends TestCase {
         mop2 = (MachineOperand9900) inst.getOp2();
 
         assertTrue(inst != null);
-        assertEquals(Inst9900.Iclr, inst.inst);
-        assertEquals("CLR", InstTable9900.getInstName(inst.inst));
+        assertEquals(Inst9900.Iclr, inst.getInst());
+        assertEquals("CLR", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
         assertEquals(InstTable9900.OP_REG, mop1.type);
         assertEquals(3, mop1.val);
@@ -72,8 +72,8 @@ public class InstructionTest extends TestCase {
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(Inst9900.Ijmp, inst.inst);
-        assertEquals("JMP", InstTable9900.getInstName(inst.inst));
+        assertEquals(Inst9900.Ijmp, inst.getInst());
+        assertEquals("JMP", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
         assertEquals(InstTable9900.OP_JUMP, mop1.type);
         assertEquals(0, mop1.val);
@@ -89,8 +89,8 @@ public class InstructionTest extends TestCase {
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(Inst9900.Ijnc, inst.inst);
-        assertEquals("JNC", InstTable9900.getInstName(inst.inst));
+        assertEquals(Inst9900.Ijnc, inst.getInst());
+        assertEquals("JNC", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
         assertEquals(InstTable9900.OP_JUMP, mop1.type);
         assertEquals(-254, mop1.val);
@@ -110,8 +110,8 @@ public class InstructionTest extends TestCase {
 
         // ensure register indirects work.
         assertTrue(inst != null);
-        assertEquals(Inst9900.Imov, inst.inst);
-        assertEquals("MOV", InstTable9900.getInstName(inst.inst));
+        assertEquals(Inst9900.Imov, inst.getInst());
+        assertEquals("MOV", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
         assertEquals(InstTable9900.OP_ADDR, mop1.type);
         assertEquals(9, mop1.val);
@@ -151,8 +151,8 @@ public class InstructionTest extends TestCase {
         ea2 = mop2.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(Inst9900.Icb, inst.inst);
-        assertEquals("CB", InstTable9900.getInstName(inst.inst));
+        assertEquals(Inst9900.Icb, inst.getInst());
+        assertEquals("CB", InstTable9900.getInstName(inst.getInst()));
         //assertEquals(true, mop1.byteop); //TODO
         assertEquals(InstTable9900.OP_INC, mop1.type);
         assertEquals(2, mop1.val);

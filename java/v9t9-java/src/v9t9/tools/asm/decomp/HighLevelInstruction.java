@@ -16,10 +16,10 @@ import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.common.DataWordListOperand;
 import v9t9.tools.asm.common.LabelOperand;
 
@@ -27,7 +27,7 @@ import v9t9.tools.asm.common.LabelOperand;
  * Instruction augmented with decompiler info
  * @author ejs
  */
-public class HighLevelInstruction extends Instruction9900 {
+public class HighLevelInstruction  implements Comparable<HighLevelInstruction>{
     /* instruction flags */
 	/** changes PC */
     final public static int fIsBranch = 1; /* changes PC */
@@ -71,21 +71,23 @@ public class HighLevelInstruction extends Instruction9900 {
     private Block block;
 
 	private short wp;
+
+	private RawInstruction inst;
     
-    public HighLevelInstruction(int wp, Instruction9900 inst) {
-    	super(inst);
+    public HighLevelInstruction(int wp, RawInstruction inst) {
+    	this.inst = inst;
         this.setWp((short) wp);
     	setFlags();
 	}
 
 	private void setFlags() {
-        if (info.jump != 0) {
+        if (inst.info.jump != 0) {
         	flags |= fEndsBlock;
-            if (inst == Inst9900.Ibl || inst == Inst9900.Iblwp) {
+            if (inst.getInst() == Inst9900.Ibl || inst.getInst() == Inst9900.Iblwp) {
 				flags |= fIsCall+fIsBranch;
-			} else if (inst == Inst9900.Irtwp) {
+			} else if (inst.getInst() == Inst9900.Irtwp) {
 				flags |= fIsReturn+fIsBranch+fNotFallThrough; /* B *R11 detected later */
-			} else if (info.jump == InstInfo.INST_JUMP_COND) {
+			} else if (inst.info.jump == InstInfo.INST_JUMP_COND) {
 				flags |= fIsCondBranch+fIsBranch;
 			} else {
 				//if (inst == Ib && op1 instanceof MachineOperand 
@@ -94,15 +96,15 @@ public class HighLevelInstruction extends Instruction9900 {
 				flags |= fIsBranch+fNotFallThrough;
 			}
         }
-        if (inst == Inst9900.Imovb || inst == Inst9900.Isocb || inst == Inst9900.Iab || inst == Inst9900.Isb
-        		|| inst == Inst9900.Icb || inst == Inst9900.Iszcb) {
+        if (inst.getInst() == Inst9900.Imovb || inst.getInst() == Inst9900.Isocb || inst.getInst() == Inst9900.Iab || inst.getInst() == Inst9900.Isb
+        		|| inst.getInst() == Inst9900.Icb || inst.getInst() == Inst9900.Iszcb) {
         	flags |= fByteOp;
-        } else if ((inst == Inst9900.Istcr || inst == Inst9900.Ildcr)
-        		&& getOp2() instanceof MachineOperand
-        		&& ((BaseMachineOperand) getOp2()).val <= 8) {
+        } else if ((inst.getInst() == Inst9900.Istcr || inst.getInst() == Inst9900.Ildcr)
+        		&& inst.getOp2() instanceof MachineOperand
+        		&& ((BaseMachineOperand) inst.getOp2()).val <= 8) {
         	flags |= fByteOp;
-        } else if (inst == Inst9900.Ilimi) {
-        	if (((BaseMachineOperand) getOp1()).immed != 0) {
+        } else if (inst.getInst() == Inst9900.Ilimi) {
+        	if (((BaseMachineOperand) inst.getOp1()).immed != 0) {
         		// likely block end
         		flags |= fEndsBlock;
         	}
@@ -111,13 +113,13 @@ public class HighLevelInstruction extends Instruction9900 {
     
      @Override
     public String toString() {
-        return HexUtils.toHex4(pc) + " " + super.toString();
+        return HexUtils.toHex4(inst.pc) + " " + inst.toString();
     }
     
     public String format(boolean showOpcodeAddr, boolean showComments) {
         String str = super.toString();
         if (showOpcodeAddr) {
-			str = ">" + HexUtils.toHex4(pc) + " " + str;
+			str = ">" + HexUtils.toHex4(inst.pc) + " " + str;
 		}
         if (showComments) {
             String flagStr = getFlagString();
@@ -194,23 +196,23 @@ public class HighLevelInstruction extends Instruction9900 {
 
 	public void convertToData() {
 		flags = 0;
-		inst = InstTableCommon.Idata;
-		size = 2;
-		setName("DATA");
-		setOp1(new MachineOperand9900(InstTable9900.OP_IMMED));
-		((BaseMachineOperand)getOp1()).immed = opcode;
-		setOp2(new MachineOperand9900(MachineOperand.OP_NONE));
+		inst.setInst(InstTableCommon.Idata);
+		inst.size = 2;
+		inst.setName("DATA");
+		inst.setOp1(new MachineOperand9900(InstTable9900.OP_IMMED));
+		((BaseMachineOperand)inst.getOp1()).immed = inst.opcode;
+		inst.setOp2(new MachineOperand9900(MachineOperand.OP_NONE));
 	}
 
 	public Collection<Block> getReferencedBlocks() {
 		Set<Block> blocks = new TreeSet<Block>();
-		if (getOp1() instanceof LabelOperand) {
-			blocks.add(((LabelOperand)getOp1()).label.getBlock());
-		} else if (getOp1() instanceof RoutineOperand) {
-			blocks.add(((RoutineOperand)getOp1()).routine.getMainLabel().getBlock());
-		} else if (getOp1() instanceof MachineOperand) {
+		if (inst.getOp1() instanceof LabelOperand) {
+			blocks.add(((LabelOperand)inst.getOp1()).label.getBlock());
+		} else if (inst.getOp1() instanceof RoutineOperand) {
+			blocks.add(((RoutineOperand)inst.getOp1()).routine.getMainLabel().getBlock());
+		} else if (inst.getOp1() instanceof MachineOperand) {
 			
-		} else if (getOp1() instanceof DataWordListOperand) {
+		} else if (inst.getOp1() instanceof DataWordListOperand) {
 			
 		} else {
 			org.ejs.coffee.core.utils.Check.checkState(false);
@@ -224,6 +226,21 @@ public class HighLevelInstruction extends Instruction9900 {
 
 	public short getWp() {
 		return wp;
+	}
+
+	/**
+	 * @return
+	 */
+	public RawInstruction getInst() {
+		return inst;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo(HighLevelInstruction o) {
+		return inst.compareTo(o.inst);
 	}
 
 }
