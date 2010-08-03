@@ -65,6 +65,7 @@ endif
 
 VERSION := $(shell grep "%define version " $(TCF_AGENT_DIR)/main/tcf-agent.spec | sed -e "s/%define version //")
 INSTALLROOT ?= /tmp
+INCLUDE = /usr/include
 SBIN = /usr/sbin
 INIT = /etc/init.d
 

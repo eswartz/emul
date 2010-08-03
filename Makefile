@@ -36,7 +36,7 @@ $(BINDIR)/valueadd$(EXTEXE): $(BINDIR)/main/main_va$(EXTOBJ) $(BINDIR)/libtcf$(E
 $(BINDIR)/tcflog$(EXTEXE): $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
-$(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile
+$(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile Makefile.inc
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -46,13 +46,20 @@ clean:
 install: all
 	install -d -m 755 $(INSTALLROOT)$(SBIN)
 	install -d -m 755 $(INSTALLROOT)$(INIT)
+	install -d -m 755 $(INSTALLROOT)$(INCLUDE)
+	install -d -m 755 $(INSTALLROOT)$(INCLUDE)/tcf
+	install -d -m 755 $(INSTALLROOT)$(INCLUDE)/tcf/framework
+	install -d -m 755 $(INSTALLROOT)$(INCLUDE)/tcf/services
 	install -c $(BINDIR)/agent -m 755 $(INSTALLROOT)$(SBIN)/tcf-agent
 	install -c main/tcf-agent.init -m 755 $(INSTALLROOT)$(INIT)/tcf-agent
+	install -c config.h -m 755 $(INSTALLROOT)$(INCLUDE)/tcf/config.h
+	install -c -t $(INSTALLROOT)$(INCLUDE)/tcf/framework -m 644 framework/*.h
+	install -c -t $(INSTALLROOT)$(INCLUDE)/tcf/services -m 644 services/*.h
 
 ALLFILES = Makefile* *.html *.sln *.vcproj *.h \
   bin framework machine main services system
 
-tcf-agent-$(VERSION).tar.bz2: $(HFILES) $(CFILES) Makefile main/tcf-agent.spec main/tcf-agent.init
+tcf-agent-$(VERSION).tar.bz2: $(HFILES) $(CFILES) Makefile Makefile.inc main/tcf-agent.spec main/tcf-agent.init
 	rm -rf tcf-agent-$(VERSION) tcf-agent-$(VERSION).tar.bz2
 	mkdir tcf-agent-$(VERSION)
 	tar c --exclude "*.svn" $(ALLFILES) | tar x -C tcf-agent-$(VERSION)

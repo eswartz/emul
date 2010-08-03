@@ -29,7 +29,7 @@ rm -rf $RPM_BUILD_ROOT
 make all CONF=Release
 
 %install
-make install CONF=Release INSTALLROOT=$RPM_BUILD_ROOT SBIN=%{_sbindir}
+make install CONF=Release INSTALLROOT=$RPM_BUILD_ROOT SBIN=%{_sbindir} INCLUDE=%{_includedir}
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
@@ -54,6 +54,7 @@ fi
 %defattr(-,root,root,0755)
 %config /etc/init.d/%{name}
 %{_sbindir}/%{name}
+%{_includedir}/tcf
 
 %changelog
 * Thu Jun 03 2010 Eugene Tarassov <eugene.tarassov@windriver.com> 0.3.0
