@@ -350,11 +350,12 @@ int crawl_stack_frame(StackFrame * frame, StackFrame * down) {
 
     if (dwn_bp < reg_bp) dwn_bp = 0;
 
-    if (dwn_pc != 0 && write_reg_value(down, pc_def, dwn_pc) < 0) return -1;
-    if (dwn_sp != 0 && write_reg_value(down, sp_def, dwn_sp) < 0) return -1;
-    if (dwn_bp != 0 && write_reg_value(down, bp_def, dwn_bp) < 0) return -1;
-
-    frame->fp = dwn_sp;
+    if (dwn_pc != 0) {
+        if (write_reg_value(down, pc_def, dwn_pc) < 0) return -1;
+        if (dwn_sp != 0 && write_reg_value(down, sp_def, dwn_sp) < 0) return -1;
+        if (dwn_bp != 0 && write_reg_value(down, bp_def, dwn_bp) < 0) return -1;
+        frame->fp = dwn_sp;
+    }
 
     return 0;
 }

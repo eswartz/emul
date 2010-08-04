@@ -1715,7 +1715,7 @@ static void safe_restore_breakpoint(void * arg) {
 
     assert(bi->stepping_over_bp > 0);
     assert(find_instruction(ctx, bi->address) == bi);
-    if (!ctx->exiting && ctx->stopped && get_regs_PC(ctx) == bi->address) {
+    if (!ctx->exiting && ctx->stopped && !ctx->stopped_by_exception && get_regs_PC(ctx) == bi->address) {
         trace(LOG_ALWAYS, "Skip breakpoint error: wrong PC %#lx", get_regs_PC(ctx));
     }
     EXT(ctx)->stepping_over_bp = NULL;
@@ -1747,7 +1747,17 @@ static void safe_skip_breakpoint(void * arg) {
     if (bi->planted) remove_instruction(bi);
     if (bi->error) error = set_error_report_errno(bi->error);
     if (error == 0 && context_single_step(ctx) < 0) error = errno;
-    if (error) trace(LOG_ALWAYS, "Skip breakpoint error: %d %s", error, errno_to_str(error));
+    if (error) {
+        error = set_errno(error, "Cannot step over breakpoint");
+        send_context_started_event(ctx);
+        ctx->signal = 0;
+        ctx->stopped = 1;
+        ctx->stopped_by_bp = 0;
+        ctx->stopped_by_exception = 1;
+        ctx->exception_description = loc_strdup(errno_to_str(error));
+        ctx->pending_step = 0;
+        send_context_stopped_event(ctx);
+    }
 }
 
 #endif /* ifndef _WRS_KERNEL */

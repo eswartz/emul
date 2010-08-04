@@ -66,18 +66,20 @@ typedef struct DebugThreadArgs {
     DWORD debug_thread_id;
     HANDLE debug_thread;
     HANDLE debug_thread_semaphore;
+    HANDLE debug_event_semaphore;
     ContextAttachCallBack * attach_callback;
     void * attach_data;
 } DebugThreadArgs;
 
 typedef struct DebugEvent {
     DebugThreadArgs * debug_thread_args;
-    HANDLE event_semaphore;
     DEBUG_EVENT event;
     DWORD continue_status;
     int early_event;  /* Event received before debugger is fully attached */
     struct DebugEvent * next;
 } DebugEvent;
+
+static OSVERSIONINFOEX os_version;
 
 #include <system/pid-hash.h>
 
@@ -268,7 +270,8 @@ static void event_win32_context_exited(Context * ctx) {
     ext->regs = NULL;
     send_context_exited_event(ctx);
     if (ext->handle != NULL) {
-        if (ctx->mem == ctx) {
+        if (ctx->mem == ctx && os_version.dwMajorVersion <= 5) {
+            /* Bug in Windows XP: ContinueDebugEvent() does not close exited process handle */
             log_error("CloseHandle", CloseHandle(ext->handle));
         }
         ext->handle = NULL;
@@ -323,7 +326,7 @@ static int win32_resume(Context * ctx) {
 
 static void debug_event_handler(void * x) {
     DebugEvent * args = (DebugEvent *)x;
-    HANDLE event_semaphore = args->event_semaphore;
+    HANDLE debug_event_semaphore = args->debug_thread_args->debug_event_semaphore;
 
     while (args != NULL) {
 
@@ -360,6 +363,8 @@ static void debug_event_handler(void * x) {
             list_add_first(&ctx->cldl, &prs->children);
             link_context(ctx);
             send_context_created_event(ctx);
+            ctx->pending_intercept = 1;
+            event_win32_context_stopped(ctx);
             break;
         case CREATE_THREAD_DEBUG_EVENT:
             assert(prs != NULL);
@@ -449,19 +454,18 @@ static void debug_event_handler(void * x) {
         args = args->next;
     }
 
-    log_error("ReleaseSemaphore", ReleaseSemaphore(event_semaphore, 1, 0));
+    log_error("ReleaseSemaphore", ReleaseSemaphore(debug_event_semaphore, 1, 0));
 }
 
 static void debugger_exit_handler(void * x) {
     DebugThreadArgs * args = (DebugThreadArgs *)x;
     Context * prs = context_find_from_pid(args->context_id, 0);
 
-    trace(LOG_WAITPID, "debugger thread %d exited, debuggee pid %d",
-        args->debug_thread_id, args->context_id);
+    trace(LOG_WAITPID, "debugger thread %d exited, debuggee pid %d", args->debug_thread_id, args->context_id);
 
     log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread, INFINITE) != WAIT_FAILED);
     log_error("CloseHandle", CloseHandle(args->debug_thread));
-    log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
+    log_error("CloseHandle", CloseHandle(args->debug_event_semaphore));
 
     if (prs != NULL && !prs->exited) event_win32_context_exited(prs);
 
@@ -470,39 +474,27 @@ static void debugger_exit_handler(void * x) {
 
 static DWORD WINAPI debugger_thread_func(LPVOID x) {
     DebugThreadArgs * args = (DebugThreadArgs *)x;
-    HANDLE event_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
     DebugEvent event_buffer;
     DebugEvent create_process;
-    DebugEvent fantom_process;
+    DWORD ini_thread_id = 0;
+    HANDLE ini_thread_handle = NULL;
     int state = 0;
-
-    if (event_semaphore == NULL) {
-        args->error = GetLastError();
-        trace(LOG_ALWAYS, "Can't create semaphore: error %d", args->error);
-        ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
-        return 0;
-    }
 
     if (DebugActiveProcess(args->context_id) == 0) {
         args->error = GetLastError();
         trace(LOG_ALWAYS, "Can't attach to a process: error %d", args->error);
         ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
-        CloseHandle(event_semaphore);
         return 0;
     }
 
     trace(LOG_WAITPID, "debugger thread %d started", GetCurrentThreadId());
+    ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
 
     memset(&event_buffer, 0, sizeof(event_buffer));
     memset(&create_process, 0, sizeof(create_process));
-    memset(&fantom_process, 0, sizeof(fantom_process));
 
     event_buffer.debug_thread_args = args;
-    event_buffer.event_semaphore = event_semaphore;
     create_process.debug_thread_args = args;
-    create_process.event_semaphore = event_semaphore;
-    fantom_process.debug_thread_args = args;
-    fantom_process.event_semaphore = event_semaphore;
 
     for (;;) {
         DEBUG_EVENT * debug_event = &event_buffer.event;
@@ -526,72 +518,64 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
         assert(args->context_id == debug_event->dwProcessId);
         event_buffer.continue_status = DBG_CONTINUE;
 
-        switch (debug_event->dwDebugEventCode) {
-        case CREATE_PROCESS_DEBUG_EVENT:
-            if (state == 0) {
+        if (state == 0) {
+            if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
+                event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            }
+            else if (debug_event->dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT) {
                 memcpy(&create_process, &event_buffer, sizeof(event_buffer));
-                state++;
+                state = 1;
             }
-            else {
-                /* This looks like a bug in Windows: */
-                /* 1. according to the documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT. */
-                /* 2. if we don't suspend second process, debugee crashes. */
-                assert(fantom_process.event.u.CreateProcessInfo.hThread == NULL);
-                memcpy(&fantom_process, &event_buffer, sizeof(event_buffer));
-                SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
-                CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
-                fantom_process.event.u.CreateProcessInfo.hFile = NULL;
-                ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
+        }
+        else if (state == 1 && debug_event->dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT) {
+            /* This looks like a bug in Windows XP: */
+            /* 1. according to the documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT. */
+            /* 2. if we don't suspend second process, debugee crashes. */
+            assert(ini_thread_handle == NULL);
+            ini_thread_id = debug_event->dwThreadId;
+            ini_thread_handle = debug_event->u.CreateProcessInfo.hThread;
+            SuspendThread(ini_thread_handle);
+            CloseHandle(debug_event->u.CreateProcessInfo.hFile);
+            ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
+        }
+        else if (state == 1 && debug_event->dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT) {
+            assert(ini_thread_handle == NULL);
+            ini_thread_id = debug_event->dwThreadId;
+            ini_thread_handle = debug_event->u.CreateThread.hThread;
+        }
+        else if (state == 1 && debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT &&
+                debug_event->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT) {
+            post_event(debug_event_handler, &create_process);
+            WaitForSingleObject(args->debug_event_semaphore, INFINITE);
+            while (create_process.next != NULL) {
+                DebugEvent * e = create_process.next;
+                create_process.next = e->next;
+                loc_free(e);
             }
-            break;
-        default:
-            if (fantom_process.event.dwThreadId == debug_event->dwThreadId) {
-                if (debug_event->dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT) {
-                    memset(&fantom_process, 0, sizeof(fantom_process));
-                }
-                else if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
-                    event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
-                }
-                else if (debug_event->dwDebugEventCode == LOAD_DLL_DEBUG_EVENT) {
-                    if (debug_event->u.LoadDll.hFile != NULL) CloseHandle(debug_event->u.LoadDll.hFile);
-                }
-                break;
+            if (ini_thread_handle != NULL) ResumeThread(ini_thread_handle);
+            state = 2;
+        }
+        else if (ini_thread_id == debug_event->dwThreadId && debug_event->dwDebugEventCode != LOAD_DLL_DEBUG_EVENT) {
+            if (debug_event->dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT) {
+                ini_thread_id = 0;
+                ini_thread_handle = NULL;
             }
-            if (state == 0) {
-                if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
-                    event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
-                }
-                break;
+            else if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
+                event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
-            if (state == 1 && debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT &&
-                    debug_event->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT) {
-                post_event(debug_event_handler, &create_process);
-                ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
-                WaitForSingleObject(event_semaphore, INFINITE);
-                while (create_process.next != NULL) {
-                    DebugEvent * e = create_process.next;
-                    create_process.next = e->next;
-                    loc_free(e);
-                }
-                state++;
-                if (fantom_process.event.u.CreateProcessInfo.hThread != NULL) {
-                    ResumeThread(fantom_process.event.u.CreateProcessInfo.hThread);
-                }
-            }
-            if (state == 2) {
-                post_event(debug_event_handler, &event_buffer);
-                WaitForSingleObject(event_semaphore, INFINITE);
-            }
-            else {
-                /* Delay posting event to foreground thread until debugger is fully attached */
-                DebugEvent * e = (DebugEvent *)loc_alloc(sizeof(DebugEvent));
-                DebugEvent ** p = &create_process.next;
-                while (*p != NULL) p = &(*p)->next;
-                memcpy(e, &event_buffer, sizeof(DebugEvent));
-                e->early_event = 1;
-                *p = e;
-            }
-            break;
+        }
+        else if (state == 2) {
+            post_event(debug_event_handler, &event_buffer);
+            WaitForSingleObject(args->debug_event_semaphore, INFINITE);
+        }
+        else {
+            /* Delay posting event to foreground thread until debugger is fully attached */
+            DebugEvent * e = (DebugEvent *)loc_alloc(sizeof(DebugEvent));
+            DebugEvent ** p = &create_process.next;
+            while (*p != NULL) p = &(*p)->next;
+            memcpy(e, &event_buffer, sizeof(DebugEvent));
+            e->early_event = 1;
+            *p = e;
         }
 
         if (ContinueDebugEvent(debug_event->dwProcessId, debug_event->dwThreadId, event_buffer.continue_status) == 0) {
@@ -604,14 +588,12 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
         if (debug_event->dwDebugEventCode == RIP_EVENT) break;
     }
 
-    if (state < 2) ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
-
-    CloseHandle(event_semaphore);
     post_event(debugger_exit_handler, args);
     return 0;
 }
 
 int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+    int error = 0;
     DebugThreadArgs * args = (DebugThreadArgs *)loc_alloc_zero(sizeof(DebugThreadArgs));
 
     assert(done != NULL);
@@ -620,32 +602,39 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     args->attach_callback = done;
     args->attach_data = data;
 
-    args->debug_thread_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
-    if (args->debug_thread_semaphore == NULL) {
-        int err = log_error("CreateSemaphore", 0);
-        loc_free(args);
-        errno = err;
-        return -1;
+    args->debug_event_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+    if (args->debug_event_semaphore == NULL) error = log_error("CreateSemaphore", 0);
+
+    if (!error) {
+        args->debug_thread_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+        if (args->debug_thread_semaphore == NULL) error = log_error("CreateSemaphore", 0);
     }
 
-    args->debug_thread = CreateThread(NULL, 0, debugger_thread_func, args, 0, &args->debug_thread_id);
-    if (args->debug_thread == NULL) {
-        int err = log_error("CreateThread", 0);
-        log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
-        loc_free(args);
-        errno = err;
-        return -1;
+    if (!error) {
+        args->debug_thread = CreateThread(NULL, 0, debugger_thread_func, args, 0, &args->debug_thread_id);
+        if (args->debug_thread == NULL) error = log_error("CreateThread", 0);
     }
 
+    if (!error) {
+        error = log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread_semaphore, INFINITE) != WAIT_FAILED);
+    }
 
-    log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread_semaphore, INFINITE) != WAIT_FAILED);
+    if (!error) {
+        error = log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
+        args->debug_thread_semaphore = NULL;
+    }
 
-    if (args->error) {
-        log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread, INFINITE) != WAIT_FAILED);
-        log_error("CloseHandle", CloseHandle(args->debug_thread));
-        log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
+    if (!error) {
+        error = set_win32_errno(args->error);
+    }
+
+    if (error) {
+        if (args->debug_thread) log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread, INFINITE) != WAIT_FAILED);
+        if (args->debug_thread) log_error("CloseHandle", CloseHandle(args->debug_thread));
+        if (args->debug_event_semaphore) log_error("CloseHandle", CloseHandle(args->debug_event_semaphore));
+        if (args->debug_thread_semaphore) log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
         loc_free(args);
-        set_win32_errno(args->error);
+        errno = error;
         return -1;
     }
 
@@ -830,6 +819,9 @@ int is_context_module_unloaded(Context * ctx) {
 void init_contexts_sys_dep(void) {
     context_extension_offset = context_extension(sizeof(ContextExtensionWin32));
     ini_context_pid_hash();
+    memset(&os_version, 0, sizeof(os_version));
+    os_version.dwOSVersionInfoSize = sizeof(os_version);
+    GetVersionEx((OSVERSIONINFO *)&os_version);
 }
 
 #endif  /* if ENABLE_DebugContext */

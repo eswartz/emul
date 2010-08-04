@@ -977,14 +977,12 @@ static void event_context_created(Context * ctx, void * client_data) {
     assert(ctx->mem == ctx);
     if (!SymInitialize(get_context_handle(ctx), SYM_SEARCH_PATH, FALSE)) {
         set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymInitialize() error: %d: %s",
-            errno, errno_to_str(errno));
+        trace(LOG_ALWAYS, "SymInitialize() error: %s", errno_to_str(errno));
     }
     if (!SymLoadModule64(get_context_handle(ctx), get_context_file_handle(ctx),
             NULL, NULL, get_context_base_address(ctx), 0)) {
         set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
-            errno, errno_to_str(errno));
+        trace(LOG_ALWAYS, "SymLoadModule() error: %s", errno_to_str(errno));
     }
 }
 
@@ -1001,13 +999,11 @@ static void event_context_exited(Context * ctx, void * client_data) {
     }
     if (!SymUnloadModule64(handle, get_context_base_address(ctx))) {
         set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
-            errno, errno_to_str(errno));
+        trace(LOG_ALWAYS, "SymUnloadModule() error: %s", errno_to_str(errno));
     }
     if (!SymCleanup(handle)) {
         set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymCleanup() error: %d: %s",
-            errno, errno_to_str(errno));
+        trace(LOG_ALWAYS, "SymCleanup() error: %s", errno_to_str(errno));
     }
 }
 
@@ -1020,8 +1016,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
         if (!SymLoadModule64(handle, get_context_module_handle(ctx),
                 NULL, NULL, get_context_module_address(ctx), 0)) {
             set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
-                errno, errno_to_str(errno));
+            trace(LOG_ALWAYS, "SymLoadModule() error: %s", errno_to_str(errno));
         }
         for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
             if (symbol_cache[i].process == handle && symbol_cache[i].error) symbol_cache[i].process = NULL;
@@ -1036,8 +1031,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
         }
         if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
             set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
-                errno, errno_to_str(errno));
+            trace(LOG_ALWAYS, "SymUnloadModule() error: %s", errno_to_str(errno));
         }
     }
 }

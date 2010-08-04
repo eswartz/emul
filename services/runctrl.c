@@ -724,7 +724,6 @@ static void send_event_context_resumed(Context * ctx) {
 }
 
 static void send_event_context_exception(Context * ctx) {
-    char buf[128];
     OutputStream * out = &broadcast_group->out;
 
     write_stringz(out, "E");
@@ -736,8 +735,14 @@ static void send_event_context_exception(Context * ctx) {
     write_stream(out, 0);
 
     /* String: Human readable description of the exception */
-    snprintf(buf, sizeof(buf), "Signal %d", ctx->signal);
-    json_write_string(out, buf);
+    if (ctx->exception_description) {
+        json_write_string(out, ctx->exception_description);
+    }
+    else {
+        char buf[128];
+        snprintf(buf, sizeof(buf), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
+        json_write_string(out, buf);
+    }
     write_stream(out, 0);
 
     write_stream(out, MARKER_EOM);
@@ -848,9 +853,11 @@ static void run_safe_events(void * arg) {
         Trap trap;
         SafeEvent * i = safe_event_list;
         if (i->mem != mem) {
-            assert(run_safe_events_posted == 0);
-            run_safe_events_posted++;
-            post_event(run_safe_events, NULL);
+            assert(run_ctrl_lock_cnt > 0);
+            if (run_safe_events_posted == 0) {
+                run_safe_events_posted++;
+                post_event(run_safe_events, NULL);
+            }
             break;
         }
         if (safe_event_pid_count > 0) {

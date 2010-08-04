@@ -193,6 +193,10 @@ void send_context_started_event(Context * ctx) {
     ctx->stopped = 0;
     ctx->stopped_by_bp = 0;
     ctx->stopped_by_exception = 0;
+    if (ctx->exception_description) {
+        loc_free(ctx->exception_description);
+        ctx->exception_description = NULL;
+    }
     ctx->event_notification++;
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;

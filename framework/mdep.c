@@ -768,7 +768,14 @@ const char * get_os_name(void) {
         }
         break;
     case 6:
-        return "Windows Vista";
+        switch (info.dwMinorVersion) {
+        case 0:
+            if (info.wProductType == VER_NT_WORKSTATION) return "Windows Vista";
+            return "Windows Server 2008";
+        case 1:
+            if (info.wProductType == VER_NT_WORKSTATION) return "Windows 7";
+            return "Windows Server 2008 R2";
+        }
     }
     snprintf(str, sizeof(str), "Windows %d.%d", (int)info.dwMajorVersion, (int)info.dwMinorVersion);
     return str;
