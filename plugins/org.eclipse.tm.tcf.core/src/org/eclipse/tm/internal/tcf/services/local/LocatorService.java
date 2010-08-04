@@ -22,7 +22,9 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -151,7 +153,7 @@ public class LocatorService implements ILocator {
 
         @Override
         public String toString() {
-            return address.getHostAddress() + ":" + port;
+            return address.getHostAddress() + "/" + port;
         }
     }
 
@@ -501,26 +503,25 @@ public class LocatorService implements ILocator {
         refreshSubNetList();
         if (socket.getLocalPort() != DISCOVEY_PORT) {
             for (SubNet subnet : subnets) {
-                addSlave(subnet.address, socket.getLocalPort(), time);
+                addSlave(subnet.address, socket.getLocalPort(), time, time);
             }
         }
         sendAll(null, 0, null, time);
     }
 
-    private Slave addSlave(InetAddress addr, int port, long timestamp) {
+    private Slave addSlave(InetAddress addr, int port, long timestamp, long time_now) {
         for (Slave s : slaves) {
             if (s.port == port && s.address.equals(addr)) {
                 if (s.last_packet_time < timestamp) s.last_packet_time = timestamp;
                 return s;
             }
         }
-        long time = System.currentTimeMillis();
         Slave s = new Slave(addr, port);
         s.last_packet_time = timestamp;
         slaves.add(s);
         sendPeersRequest(addr, port);
-        sendAll(addr, port, s, time);
-        sendSlaveInfo(s, time);
+        sendAll(addr, port, s, time_now);
+        sendSlaveInfo(s, time_now);
         return s;
     }
 
@@ -924,7 +925,7 @@ public class LocatorService implements ILocator {
             if (isRemote(remote_address, remote_port)) {
                 Slave sl = null;
                 if (remote_port != DISCOVEY_PORT) {
-                    sl = addSlave(remote_address, remote_port, time);
+                    sl = addSlave(remote_address, remote_port, time, time);
                 }
                 switch (buf[4]) {
                 case CONF_PEER_INFO:
@@ -934,7 +935,7 @@ public class LocatorService implements ILocator {
                     handleReqInfoPacket(p, sl, time);
                     break;
                 case CONF_SLAVES_INFO:
-                    handleSlavesInfoPacket(p);
+                    handleSlavesInfoPacket(p, time);
                     break;
                 case CONF_REQ_SLAVES:
                     handleReqSlavesPacket(p, sl, time);
@@ -956,7 +957,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Throwable x) {
-            log("Invalid datagram packet received from " + p.getAddress(), x);
+            log("Invalid datagram packet received from " + p.getAddress() + "/" + p.getPort(), x);
         }
     }
 
@@ -983,7 +984,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Exception x) {
-            log("Invalid datagram packet received from " + p.getAddress(), x);
+            log("Invalid datagram packet received from " + p.getAddress() + "/" + p.getPort(), x);
         }
     }
 
@@ -994,7 +995,7 @@ public class LocatorService implements ILocator {
         sendAll(p.getAddress(), p.getPort(), sl, time);
     }
 
-    private void handleSlavesInfoPacket(DatagramPacket p) {
+    private void handleSlavesInfoPacket(DatagramPacket p, long time_now) {
         try {
             Map<String,String> trace_map = null; // used for tracing only
             int slave_index = 0;        // used for tracing only
@@ -1028,18 +1029,29 @@ public class LocatorService implements ILocator {
                     InetAddress addr = getInetAddress(host);
                     if (addr != null) {
                         long delta = 1000 * 60 * 30; // 30 minutes
-                        long time_now = System.currentTimeMillis();
                         long time_val = timestamp.length() > 0 ? Long.parseLong(timestamp) : time_now;
-                        if (time_val < time_now - delta || time_val > time_now + delta) {
-                            // Some older TCF agents transmit time in seconds instead of milliseconds
-                            time_val *= 1000;
-                            if (time_val < time_now - delta || time_val > time_now + delta) {
-                                log("Invalid datagram packet received from " + p.getAddress(),
-                                        new Exception("Invalid slave info timestamp: " + timestamp));
-                                time_val = time_now;
-                            }
+                        if (time_val < 3600000) {
+                            /* Time stamp is "time to live" in milliseconds */
+                            time_val = time_now + time_val / 1000 - DATA_RETENTION_PERIOD;
                         }
-                        addSlave(addr, port, time_val);
+                        else if (time_val < time_now / 1000 + 50000000) {
+                            /* Time stamp is in seconds */
+                            time_val *= 1000;
+                        }
+                        else {
+                            /* Time stamp is in milliseconds */
+                        }
+                        if (time_val < time_now - delta || time_val > time_now + delta) {
+                            SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                            String msg =
+                                "Invalid slave info timestamp: " + timestamp +
+                                " -> " + fmt.format(new Date(time_val));
+                            log("Invalid datagram packet received from " +
+                                    p.getAddress() + "/" + p.getPort(),
+                                    new Exception(msg));
+                            time_val = time_now - DATA_RETENTION_PERIOD / 2;
+                        }
+                        addSlave(addr, port, time_val, time_now);
                     }
                 }
             }
@@ -1048,7 +1060,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Exception x) {
-            log("Invalid datagram packet received from " + p.getAddress(), x);
+            log("Invalid datagram packet received from " + p.getAddress() + "/" + p.getPort(), x);
         }
     }
 
