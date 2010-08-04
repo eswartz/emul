@@ -29,14 +29,14 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.Instruction9900;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.Operand;
 
 public class OperandCompiler9900 {
 
     static boolean hasConstAddr(BaseMachineOperand op, CompileInfo info) {
-        return op.type == InstTable9900.OP_ADDR && op.val == 0 
+        return op.type == MachineOperand9900.OP_ADDR && op.val == 0 
                 && !op.bIsCodeDest 
                 && info.memory.hasRomAccess(op.immed)
                 && !info.memory.hasRamAccess(op.immed);
@@ -49,7 +49,7 @@ public class OperandCompiler9900 {
         InstructionList ilist = info.ilist;
         switch (op.type)
         {
-        case InstTable9900.OP_REG:    // Rx
+        case MachineOperand9900.OP_REG:    // Rx
             op.cycles += 0 * 4;
             // (short) ((val<<1) + wp);
             if (!(ins.getInst() == Inst9900.Impy /*&& ins.op2 == this*/)
@@ -63,7 +63,7 @@ public class OperandCompiler9900 {
             // slow mode: treat this as normal memory access
             OperandCompiler9900.compileGetRegEA(info, op.val);
             break;
-        case InstTable9900.OP_IND: {  // *Rx
+        case MachineOperand9900.OP_IND: {  // *Rx
             //short ad = (short)((val<<1) + wp);
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
@@ -74,7 +74,7 @@ public class OperandCompiler9900 {
             }
             break;
         }
-        case InstTable9900.OP_INC: {   // *Rx+
+        case MachineOperand9900.OP_INC: {   // *Rx+
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
 
@@ -102,7 +102,7 @@ public class OperandCompiler9900 {
             }
             break;
         }
-        case InstTable9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
+        case MachineOperand9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
             if (hasConstAddr(op, info)) {
 				return false;
 			}
@@ -125,14 +125,14 @@ public class OperandCompiler9900 {
             }
             break;
         }
-        case InstTable9900.OP_OFFS_R12:   // offset from R12
+        case MachineOperand9900.OP_OFFS_R12:   // offset from R12
             if (Compiler.settingOptimize.getBoolean()
                     &&Compiler.settingOptimizeRegAccess.getBoolean()) {
                 return false;
             }
             OperandCompiler9900.compileGetRegEA(info, 12);
             break;
-        case InstTable9900.OP_REG0_SHIFT_COUNT: // shift count from R0
+        case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
                 return false;
@@ -140,14 +140,14 @@ public class OperandCompiler9900 {
             OperandCompiler9900.compileGetRegEA(info, 0);
             break;
         
-        case InstTable9900.OP_JUMP:   // jump target
+        case MachineOperand9900.OP_JUMP:   // jump target
             ilist.append(new PUSH(info.pgen, (short)(op.val + pc)));
             break;
         case MachineOperand.OP_NONE:
-        case InstTable9900.OP_IMMED:  // immediate
-        case InstTable9900.OP_CNT:    // shift count
-        case InstTable9900.OP_STATUS: // status word
-        case InstTable9900.OP_INST:
+        case MachineOperand9900.OP_IMMED:  // immediate
+        case MachineOperand9900.OP_CNT:    // shift count
+        case MachineOperand9900.OP_STATUS: // status word
+        case MachineOperand9900.OP_INST:
         default:
             return false;
             //ilist.append(new PUSH(info.pgen, 0));
@@ -164,7 +164,7 @@ public class OperandCompiler9900 {
         InstructionList ilist = info.ilist;
         switch (op.type)
         {
-        case InstTable9900.OP_REG:    // Rx
+        case MachineOperand9900.OP_REG:    // Rx
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean() 
                     ) {
@@ -178,9 +178,9 @@ public class OperandCompiler9900 {
             }
             // fall through
             
-        case InstTable9900.OP_INC:    // *Rx+
-        case InstTable9900.OP_IND:    // *Rx
-        case InstTable9900.OP_ADDR:   // @>xxxx or @>xxxx(Rx)
+        case MachineOperand9900.OP_INC:    // *Rx+
+        case MachineOperand9900.OP_IND:    // *Rx
+        case MachineOperand9900.OP_ADDR:   // @>xxxx or @>xxxx(Rx)
             if (hasConstAddr(op, info)) {
                 if (op.byteop) {
                 	OperandCompiler9900.compileReadAbsByte(info, ilist, op.immed);
@@ -198,13 +198,13 @@ public class OperandCompiler9900 {
                 }
             }
             break;
-        case InstTable9900.OP_IMMED:  // immediate
+        case MachineOperand9900.OP_IMMED:  // immediate
             ilist.append(new PUSH(info.pgen, op.immed));
             break;
-        case InstTable9900.OP_CNT:    // shift count
+        case MachineOperand9900.OP_CNT:    // shift count
             ilist.append(new PUSH(info.pgen, op.val));
             break;
-        case InstTable9900.OP_OFFS_R12:   // offset from R12
+        case MachineOperand9900.OP_OFFS_R12:   // offset from R12
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
                 OperandCompiler9900.compileReadRegWord(info, ilist, 12);
@@ -218,7 +218,7 @@ public class OperandCompiler9900 {
                 ilist.append(new I2S());
             }
             break;
-        case InstTable9900.OP_REG0_SHIFT_COUNT: // shift count from R0
+        case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()) {
                 OperandCompiler9900.compileReadRegWord(info, ilist, 0);
@@ -241,15 +241,15 @@ public class OperandCompiler9900 {
             ilist.append(skip);
             break;
         
-        case InstTable9900.OP_JUMP:   // jump target
+        case MachineOperand9900.OP_JUMP:   // jump target
             ilist.append(new ILOAD(eaIndex));
             break;
-        case InstTable9900.OP_INST:
+        case MachineOperand9900.OP_INST:
             ilist.append(new ILOAD(eaIndex));
             OperandCompiler9900.compileReadWord(info, ilist);
             break;      
         case MachineOperand.OP_NONE:
-        case InstTable9900.OP_STATUS: // status word
+        case MachineOperand9900.OP_STATUS: // status word
             //TODO: NOTHING -- make sure we don't depend on this
         default:
             //ilist.append(new PUSH(info.pgen, 0));
@@ -261,7 +261,7 @@ public class OperandCompiler9900 {
 
     public static void compilePutValue(BaseMachineOperand op, int valIndex, int eaIndex, CompileInfo info) {
         switch (op.type) {
-        case InstTable9900.OP_REG:
+        case MachineOperand9900.OP_REG:
             if (Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean() 
                     ) {

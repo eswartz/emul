@@ -10,9 +10,9 @@ import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
@@ -68,7 +68,7 @@ public class MachineOperandParserStage9900 implements IOperandParserStage {
                     	return new LLRegIncOperand(val);
                     } else {
                         // *R0
-                    	return new LLRegIndOperand(null, val, 0);
+                    	return new LLRegOffsOperand(null, val, 0);
                     }
                 } else {
                     // R9
@@ -86,7 +86,7 @@ public class MachineOperandParserStage9900 implements IOperandParserStage {
                     if (val == 0) {
                     	throw new ParseException("Illegal index register (0): " + string);
                     }
-                    return new LLRegIndOperand(null, val, immed);
+                    return new LLRegOffsOperand(null, val, immed);
                 } else {
                     // @>5
                     return new LLAddrOperand(null, immed);
@@ -108,7 +108,7 @@ public class MachineOperandParserStage9900 implements IOperandParserStage {
         		}
         		//type = LLOperand.OP_JUMP;
         		val = op;
-        		return new LLJumpOperand(null, val);
+        		return new LLPCRelativeOperand(null, val);
         	} else {
         		return null;
         	}

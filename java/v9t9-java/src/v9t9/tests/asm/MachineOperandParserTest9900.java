@@ -8,7 +8,6 @@ package v9t9.tests.asm;
 
 import junit.framework.TestCase;
 import v9t9.engine.cpu.BaseMachineOperand;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.AssemblerTokenizer;
@@ -21,10 +20,10 @@ import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
-public class MachineOperandParserTest extends TestCase {
+public class MachineOperandParserTest9900 extends TestCase {
 
 	MachineOperandParserStage9900 stage = new MachineOperandParserStage9900();
 	
@@ -47,43 +46,43 @@ public class MachineOperandParserTest extends TestCase {
         assertTrue(op instanceof LLRegisterOperand);
         assertEquals(4, ((LLRegisterOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_REG && mop.val == 4 && mop.immed == 0);
+        assertTrue(mop.type == MachineOperand9900.OP_REG && mop.val == 4 && mop.immed == 0);
         
         op = parse("R15");
         assertTrue(op instanceof LLRegisterOperand);
         assertEquals(15, ((LLRegisterOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_REG && mop.val == 15 && mop.immed == 0);
+        assertTrue(mop.type == MachineOperand9900.OP_REG && mop.val == 15 && mop.immed == 0);
         
         op = parse("r15");
         assertTrue(op instanceof LLRegisterOperand);
         assertEquals(15, ((LLRegisterOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_REG && mop.val == 15 && mop.immed == 0);
+        assertTrue(mop.type == MachineOperand9900.OP_REG && mop.val == 15 && mop.immed == 0);
         
         op = parse("*r11");
-        assertTrue(op instanceof LLRegIndOperand);
-        assertEquals(11, ((LLRegIndOperand) op).getRegister());
+        assertTrue(op instanceof LLRegOffsOperand);
+        assertEquals(11, ((LLRegOffsOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_IND && mop.val == 11 && mop.immed == 0);
+        assertTrue(mop.type == MachineOperand9900.OP_IND && mop.val == 11 && mop.immed == 0);
         
         op = parse("*10");
-        assertTrue(op instanceof LLRegIndOperand);
-        assertEquals(10, ((LLRegIndOperand) op).getRegister());
+        assertTrue(op instanceof LLRegOffsOperand);
+        assertEquals(10, ((LLRegOffsOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_IND && mop.val == 10 && mop.immed == 0);
+        assertTrue(mop.type == MachineOperand9900.OP_IND && mop.val == 10 && mop.immed == 0);
         
         op = parse("*r11+");
         assertTrue(op instanceof LLRegIncOperand);
         assertEquals(11, ((LLRegIncOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_INC && mop.val == 11 && mop.immed == 0);
+        assertTrue(mop.type == MachineOperand9900.OP_INC && mop.val == 11 && mop.immed == 0);
         
         op = parse("*10+");
         assertTrue(op instanceof LLRegIncOperand);
         assertEquals(10, ((LLRegIncOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_INC && mop.val == 10 && mop.immed == 0);
+        assertTrue(mop.type == MachineOperand9900.OP_INC && mop.val == 10 && mop.immed == 0);
         
     }
 
@@ -102,47 +101,47 @@ public class MachineOperandParserTest extends TestCase {
         assertTrue(op instanceof LLAddrOperand);
         assertEquals(4, ((LLAddrOperand) op).getAddress());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_ADDR && mop.val == 0 && mop.immed == 4);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 0 && mop.immed == 4);
         
         op = parse("@>4944");
         assertTrue(op instanceof LLAddrOperand);
         assertEquals(0x4944, ((LLAddrOperand) op).getAddress());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_ADDR && mop.val == 0 && mop.immed == 0x4944);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 0 && mop.immed == 0x4944);
         
         op = parse("@>FFFE");
         assertTrue(op instanceof LLAddrOperand);
         assertEquals(-2, ((LLAddrOperand) op).getAddress());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_ADDR && mop.val == 0 && mop.immed == -2);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 0 && mop.immed == -2);
         
         op = parse("@>2(R4)");
-        assertTrue(op instanceof LLRegIndOperand);
-        assertEquals(0x2, ((LLRegIndOperand) op).getOffset());
-        assertEquals(4, ((LLRegIndOperand) op).getRegister());
+        assertTrue(op instanceof LLRegOffsOperand);
+        assertEquals(0x2, ((LLRegOffsOperand) op).getOffset());
+        assertEquals(4, ((LLRegOffsOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_ADDR && mop.val == 4 && mop.immed == 0x2);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 4 && mop.immed == 0x2);
         
         op = parse("@2(R4)");
-        assertTrue(op instanceof LLRegIndOperand);
-        assertEquals(0x2, ((LLRegIndOperand) op).getOffset());
-        assertEquals(4, ((LLRegIndOperand) op).getRegister());
+        assertTrue(op instanceof LLRegOffsOperand);
+        assertEquals(0x2, ((LLRegOffsOperand) op).getOffset());
+        assertEquals(4, ((LLRegOffsOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_ADDR && mop.val == 4 && mop.immed == 0x2);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 4 && mop.immed == 0x2);
         
         op = parse("@>-2(4)");
-        assertTrue(op instanceof LLRegIndOperand);
-        assertEquals(-2, ((LLRegIndOperand) op).getOffset());
-        assertEquals(4, ((LLRegIndOperand) op).getRegister());
+        assertTrue(op instanceof LLRegOffsOperand);
+        assertEquals(-2, ((LLRegOffsOperand) op).getOffset());
+        assertEquals(4, ((LLRegOffsOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_ADDR && mop.val == 4 && mop.immed == -2);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 4 && mop.immed == -2);
         
         op = parse("@>FFFE(R14)");
-        assertTrue(op instanceof LLRegIndOperand);
-        assertEquals(-2, ((LLRegIndOperand) op).getOffset());
-        assertEquals(14, ((LLRegIndOperand) op).getRegister());
+        assertTrue(op instanceof LLRegOffsOperand);
+        assertEquals(-2, ((LLRegOffsOperand) op).getOffset());
+        assertEquals(14, ((LLRegOffsOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_ADDR && mop.val == 14 && mop.immed == -2);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 14 && mop.immed == -2);
         
         
     }
@@ -155,31 +154,31 @@ public class MachineOperandParserTest extends TestCase {
         assertTrue(op instanceof LLImmedOperand);
         assertEquals(4, ((LLImmedOperand) op).getValue());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_IMMED && mop.val == 4 && mop.immed == 4);
+        assertTrue(mop.type == MachineOperand9900.OP_IMMED && mop.val == 4 && mop.immed == 4);
         
         op = parse(">5555");
         assertTrue(op instanceof LLImmedOperand);
         assertEquals(0x5555, ((LLImmedOperand) op).getValue());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_IMMED && mop.val == 0x5555 && mop.immed == 0x5555);
+        assertTrue(mop.type == MachineOperand9900.OP_IMMED && mop.val == 0x5555 && mop.immed == 0x5555);
         
         op = parse("5555");
         assertTrue(op instanceof LLRegisterOperand);
         assertEquals(5555, ((LLRegisterOperand) op).getRegister());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_REG && mop.val == 5555);
+        assertTrue(mop.type == MachineOperand9900.OP_REG && mop.val == 5555);
         
         op = parse(">-44");
         assertTrue(op instanceof LLImmedOperand);
         assertEquals(-0x44, ((LLImmedOperand) op).getValue());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_IMMED && mop.val == -0x44 && mop.immed == -0x44);
+        assertTrue(mop.type == MachineOperand9900.OP_IMMED && mop.val == -0x44 && mop.immed == -0x44);
         
         op = parse("-44");
         assertTrue(op instanceof LLImmedOperand);
         assertEquals(-44, ((LLImmedOperand) op).getValue());
         mop = createMachineOperand9900(op);
-        assertTrue(mop.type == InstTable9900.OP_IMMED && mop.val == -44 && mop.immed == -44);
+        assertTrue(mop.type == MachineOperand9900.OP_IMMED && mop.val == -44 && mop.immed == -44);
         
     }
     private LLOperand parse(String str) throws ParseException {
@@ -204,7 +203,7 @@ public class MachineOperandParserTest extends TestCase {
             try {
             	LLOperand op = parse(element);
             	if (op != null) {
-            		MachineOperand mop = createMachineOperand9900(op);
+            		MachineOperand9900 mop = createMachineOperand9900(op);
             		mop.getBits();
             		fail(element);
             	}

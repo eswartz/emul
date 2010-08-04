@@ -17,8 +17,6 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 
 	protected Machine machine;
 
-	public abstract Status createStatus();
-
 	public void loadState(ISettingSection section) {
 		settingRealTime.loadState(section);
 		settingCyclesPerSecond.loadState(section);
@@ -31,21 +29,8 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		cruAccess.saveState(section.addSection("CRU"));
 	}
 
-	public abstract int getRegister(int reg);
-
-	public abstract void checkAndHandleInterrupts();
-
-	public abstract void handleInterrupts();
-
-	public abstract void checkInterrupts();
-
 	public abstract boolean doCheckInterrupts();
 
-	public abstract void setPC(short pc);
-
-	public abstract short getPC();
-
-	protected MemoryDomain console;
 	long lastInterrupt;
 	
 	/*	Variables for controlling a "real time" emulation of the 9900
@@ -71,17 +56,6 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	/** State of the pins above  */
 	protected int pins;
 	
-	protected Status status;
-
-	public short getST() {
-	    return getStatus().flatten();
-	}
-
-	public void setST(short st) {
-		getStatus().expand(st);
-	}
-
-	  
 	protected CruAccess cruAccess;
 	/**
 	 * Called when hardware triggers another pin.
@@ -94,12 +68,13 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	protected boolean allowInts;
 	protected int interrupts;
 
-	public CpuBase(Machine machine, int interruptTick, VdpHandler vdp) {
+	protected CpuState state;
+
+	public CpuBase(Machine machine, CpuState state, int interruptTick, VdpHandler vdp) {
 		 this.machine = machine;
 		this.vdp = vdp;
-        this.console = machine.getConsole();
-        this.console.setAccessListener(this);
-        this.status = createStatus();
+		this.state = state;
+        this.state.getConsole().setAccessListener(this);
         this.interruptTick = interruptTick;
         
         settingCyclesPerSecond.addListener(new IPropertyListener() {
@@ -131,20 +106,20 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	}
 
 	public void setConsole(MemoryDomain console) {
-		this.console = console;
+		state.setConsole(console);
 	}
 
 	public final MemoryDomain getConsole() {
-		return console;
+		return state.getConsole();
 	}
 
 
     public Status getStatus() {
-        return status;
+        return state.getStatus();
     }
 
     public void setStatus(Status status) {
-        this.status = status;
+        state.setStatus(status);
     }
 
     

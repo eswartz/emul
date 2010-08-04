@@ -54,17 +54,20 @@ public abstract class LLOperand implements AssemblerOperand {
 		if (getClass() != obj.getClass())
 			return false;
 		LLOperand other = (LLOperand) obj;
+		/*
 		if (original == null) {
 			if (other.original != null)
 				return false;
 		} else if (!original.equals(other.original))
 			return false;
+		*/
 		return true;
 	}
 
 	/**
 	 * Get the size of the operand in terms of immediates.
 	 * @return size in bytes
+	 * @deprecated
 	 */
 	public abstract int getSize();
 

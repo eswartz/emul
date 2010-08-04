@@ -4,13 +4,10 @@ import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tests.BaseTest;
-import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ContentEntry;
 
 public class TestAssemblerJumpRanges extends BaseTest {
 
-	Assembler assembler = new Assembler();
-	
 	public void testAssemblerJumpRanges0() throws Exception {
 		String text =
 			" aorg >100\n"+
@@ -120,13 +117,13 @@ public class TestAssemblerJumpRanges extends BaseTest {
 	
 	private void testFileContent(String text, Object... pcOrInst) throws Exception {
 		String caller = new Exception().fillInStackTrace().getStackTrace()[1].getMethodName();
-		assembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
-		List<IInstruction> asminsts = assembler.parse();
-		List<IInstruction> realinsts = assembler.resolve(asminsts);
-		realinsts = assembler.optimize(realinsts);
-		realinsts = assembler.fixupJumps(realinsts);
+		stdAssembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
+		List<IInstruction> asminsts = stdAssembler.parse();
+		List<IInstruction> realinsts = stdAssembler.resolve(asminsts);
+		realinsts = stdAssembler.optimize(realinsts);
+		realinsts = stdAssembler.fixupJumps(realinsts);
 
-		testGeneratedContent(assembler, realinsts, pcOrInst);
+		testGeneratedContent(stdAssembler, realinsts, pcOrInst);
 	}
 
 

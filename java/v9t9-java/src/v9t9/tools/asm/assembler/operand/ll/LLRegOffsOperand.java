@@ -14,17 +14,17 @@ import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
  * @author Ed
  *
  */
-public class LLRegIndOperand extends LLOperand implements Operand {
+public class LLRegOffsOperand extends LLOperand implements Operand {
 
 	int register;
 	int offset;
 	
-	public LLRegIndOperand(int reg) {
+	public LLRegOffsOperand(int reg) {
 		super(null);
 		setRegister(reg);
 		setOffset(0);
 	}
-	public LLRegIndOperand(RegOffsOperand original, int reg, int offset) {
+	public LLRegOffsOperand(RegOffsOperand original, int reg, int offset) {
 		super(original);
 		setRegister(reg);
 		setOffset(offset);
@@ -54,7 +54,7 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		LLRegIndOperand other = (LLRegIndOperand) obj;
+		LLRegOffsOperand other = (LLRegOffsOperand) obj;
 		if (offset != other.offset)
 			return false;
 		if (register != other.register)

@@ -5,18 +5,8 @@ import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.CruAccess;
-import v9t9.engine.cpu.Status;
-import v9t9.engine.memory.MemoryDomain;
 
-public interface Cpu extends IPersistable {
-
-	short getPC();
-
-	void setPC(short pc);
-
-	short getST();
-
-	void setST(short st);
+public interface Cpu extends IPersistable, CpuState {
 
 	void resetInterruptRequest();
 
@@ -54,12 +44,6 @@ public interface Cpu extends IPersistable {
 
 	void checkAndHandleInterrupts();
 
-	int getRegister(int reg);
-
-	void setConsole(MemoryDomain console);
-
-	MemoryDomain getConsole();
-
 	void addCycles(int cycles);
 
 	void tick();
@@ -94,10 +78,6 @@ public interface Cpu extends IPersistable {
      * Called when hardware triggers a CPU-specific pin.
      */
     void setPin(int mask);
-
-	Status createStatus();
-
-	Status getStatus();
 
 	String getCurrentStateString();
 

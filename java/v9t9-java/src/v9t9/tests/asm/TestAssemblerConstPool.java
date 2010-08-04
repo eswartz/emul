@@ -4,15 +4,11 @@ import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tests.BaseTest;
-import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ContentEntry;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.transform.ConstPool;
 
 public class TestAssemblerConstPool extends BaseTest {
-
-	Assembler assembler = new Assembler();
-	
 	protected int getTableByte(ConstPool pool, int val) {
 		AssemblerOperand op = pool.allocateByte(val);
 		return pool.getTableOffset(op);
@@ -23,7 +19,7 @@ public class TestAssemblerConstPool extends BaseTest {
 	}
 	
 	public void testConstTable1() throws Exception {
-		ConstPool pool = assembler.getConstPool();
+		ConstPool pool = stdAssembler.getConstPool();
 		pool.clear();
 		
 		int op1 = getTableByte(pool, 0);
@@ -185,17 +181,17 @@ public class TestAssemblerConstPool extends BaseTest {
 	
 	private void testFileContent(String text, byte[] consts, Object... pcOrInst) throws Exception {
 		String caller = new Exception().fillInStackTrace().getStackTrace()[1].getMethodName();
-		assembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
-		List<IInstruction> asminsts = assembler.parse();
-		List<IInstruction> realinsts = assembler.resolve(asminsts);
-		realinsts = assembler.optimize(realinsts);
-		realinsts = assembler.fixupJumps(realinsts);
+		stdAssembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
+		List<IInstruction> asminsts = stdAssembler.parse();
+		List<IInstruction> realinsts = stdAssembler.resolve(asminsts);
+		realinsts = stdAssembler.optimize(realinsts);
+		realinsts = stdAssembler.fixupJumps(realinsts);
 
-		byte[] constBytes = assembler.getConstPool().getBytes();
+		byte[] constBytes = stdAssembler.getConstPool().getBytes();
 		assertEquals("table size", consts.length, constBytes.length);
 		for (int x = 0; x < constBytes.length; x++)
 			assertEquals("#"+x, consts[x], constBytes[x]);
-		testGeneratedContent(assembler, realinsts, pcOrInst);
+		testGeneratedContent(stdAssembler, realinsts, pcOrInst);
 	}
 
 

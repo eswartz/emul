@@ -10,6 +10,7 @@ import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Cpu9900;
+import v9t9.emulator.runtime.cpu.CpuState9900;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
@@ -48,7 +49,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 			Executor.settingDumpInstructions.setBoolean(true);
 			Executor.settingDumpFullInstructions.setBoolean(true);
 		}
-        CodeBlock cb = getCodeBlock(((Cpu9900) cpu).getPC(), ((Cpu9900)cpu).getWP());
+        CodeBlock cb = getCodeBlock(((CpuState9900) cpu).getPC(), ((CpuState9900)cpu).getWP());
 		return cb;
 	}
 	

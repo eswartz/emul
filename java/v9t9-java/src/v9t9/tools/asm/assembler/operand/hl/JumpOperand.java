@@ -8,7 +8,7 @@ import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.ll.LLForwardOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
@@ -63,7 +63,7 @@ public class JumpOperand extends BaseOperand {
 		LLOperand opRes = op.resolve(assembler, inst);
 		if (opRes instanceof LLImmedOperand) {
 			// resolved
-			return new LLJumpOperand(this, opRes.getImmediate() - pc);
+			return new LLPCRelativeOperand(this, opRes.getImmediate() - pc);
 		}
 		else if (opRes instanceof LLForwardOperand) {
 			return new LLForwardOperand(this, 0);

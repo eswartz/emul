@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.ejs.coffee.core.utils.Check;
+
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.memory.MemoryDomain;
@@ -233,7 +235,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
-		org.ejs.coffee.core.utils.Check.checkState((inst != null));
+		Check.checkState((inst != null));
 		Block block = inst.getBlock();
 		if (block != null) {
 			Label label = labelMap.get(block);
@@ -250,7 +252,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
-		org.ejs.coffee.core.utils.Check.checkState((inst != null));
+		Check.checkState((inst != null));
 		inst.flags |= HighLevelInstruction.fStartsBlock;
 		
 		Block block = inst.getBlock();

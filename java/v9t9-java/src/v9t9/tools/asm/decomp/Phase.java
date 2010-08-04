@@ -13,11 +13,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.ejs.coffee.core.utils.Check;
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.runtime.cpu.CpuState;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.InstTable9900;
+import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.RawInstruction;
@@ -26,14 +28,16 @@ import v9t9.tools.asm.common.MemoryRange;
 
 public abstract class Phase {
 	protected Map<Integer, Block> blocks;
-	protected MemoryDomain CPU;
+	protected MemoryDomain mainMemory;
 	public IDecompileInfo decompileInfo;
 	protected Map<Block, Label> labels;
 	protected Map<Label, Routine> routines;
+	private CpuState state;
 	
-	public Phase(MemoryDomain cpu, IDecompileInfo info) {
+	public Phase(CpuState state, IDecompileInfo info) {
 		this.decompileInfo = info;
-		this.CPU = cpu;
+		this.state = state;
+		this.mainMemory = state.getConsole();
 		//this.setBlocks(new TreeSet<Block>());
 		blocks = info.getBlockMap();
 		labels = info.getLabelMap();
@@ -167,14 +171,14 @@ public abstract class Phase {
 		int len;
 		System.out.printf("Scanning program list at >%04X\n", list);
 		while (list != 0) {
-			link = CPU.readWord(list);
-			addr = CPU.readWord(list + 2);
+			link = mainMemory.readWord(list);
+			addr = mainMemory.readWord(list + 2);
 			if (validCodeAddress(addr)) {
-				len = CPU.readByte(list + 4);
+				len = mainMemory.readByte(list + 4);
 				String name = null;
 				if (len > 0) {
 					for (int i = 0; i < len; i++) {
-						nameChars[i] = (char) CPU.readByte(list + 5 + i);
+						nameChars[i] = (char) mainMemory.readByte(list + 5 + i);
 					}
 					name = new String(nameChars, 0, len);
 				}
@@ -204,7 +208,7 @@ public abstract class Phase {
 	 * @return same incoming routine, updated with a label and added to the routines
 	 */
 	public Routine addRoutine(int addr, String name, Routine routine) {
-		org.ejs.coffee.core.utils.Check.checkState(validCodeAddress(addr));
+		Check.checkState(validCodeAddress(addr));
 		
 		Label label = decompileInfo.findOrCreateLabel(addr);
 		if (name != null && label.getName() == null) {
@@ -235,14 +239,14 @@ public abstract class Phase {
 			char[] nameChars = new char[6];
 			while (true) {
 				ptr -= 2;
-				addr = CPU.readWord(ptr);
+				addr = mainMemory.readWord(ptr);
 				if (addr == 0) {
 					break;
 				}
 				int length = 6;
 				for (int i = 0; i < 6; i++) {
 					int pos = 5 - i;
-					nameChars[pos] = (char) CPU.readByte(--ptr);
+					nameChars[pos] = (char) mainMemory.readByte(--ptr);
 					if (nameChars[pos] == ' ') {
 						length = pos;
 					}
@@ -250,8 +254,8 @@ public abstract class Phase {
 
 				// now, these are almost always vectors, so take the PC
 				String name = new String(nameChars, 0, length);
-				short wp = CPU.readWord(addr);
-				addr = CPU.readWord(addr + 2);
+				short wp = mainMemory.readWord(addr);
+				addr = mainMemory.readWord(addr + 2);
 				if (validCodeAddress(addr)) {
 					System.out.println("Adding label " + name + " at >"
 							+ HexUtils.toHex4(addr));
@@ -264,16 +268,16 @@ public abstract class Phase {
 	public void addStandardROMRoutines() {
 		// Get standard entries
 		for (int addr = 0; addr < 0x10000; addr += 0x2000) {
-			if (CPU.readByte(addr) == (byte) 0xaa) {
+			if (mainMemory.readByte(addr) == (byte) 0xaa) {
 				System.out.println("Scanning standard header at >"
 						+ HexUtils.toHex4(addr));
-				int paddr = CPU.readWord(addr + 4);
+				int paddr = mainMemory.readWord(addr + 4);
 				addProgramList(paddr);
-				paddr = CPU.readWord(addr + 6);
+				paddr = mainMemory.readWord(addr + 6);
 				addProgramList(paddr);
-				paddr = CPU.readWord(addr + 8);
+				paddr = mainMemory.readWord(addr + 8);
 				addProgramList(paddr);
-				paddr = CPU.readWord(addr + 10);
+				paddr = mainMemory.readWord(addr + 10);
 				addProgramList(paddr);
 			}
 
@@ -296,12 +300,12 @@ public abstract class Phase {
 	}
 
 	protected Routine addPossibleContextSwitch(int ctx, String name) {
-		short wp = CPU.readWord(ctx);
-		int addr = CPU.readWord(ctx + 2);
+		short wp = mainMemory.readWord(ctx);
+		int addr = mainMemory.readWord(ctx + 2);
 		if (wp == (short) addr || wp == ctx) {
 			return null;
 		}
-		if (CPU.hasRamAccess(wp) && CPU.hasRamAccess(wp + 31)
+		if (mainMemory.hasRamAccess(wp) && mainMemory.hasRamAccess(wp + 31)
 				&& (addr & 1) == 0
 				&& validCodeAddress(addr)) {
 			System.out.println("Adding " + name + " vector at >"
@@ -314,8 +318,9 @@ public abstract class Phase {
 	}
 
 	public short operandEffectiveAddress(HighLevelInstruction inst, MachineOperand mop) {
-		// PC and WP are not used
-		return mop.getEA(CPU, inst.getInst().pc, inst.getWp());
+		InstructionWorkBlock block = new InstructionWorkBlock(state);
+		block.inst = inst.getInst();
+		return mop.getEA(block);
 	}
 
 	public boolean operandIsLabel(HighLevelInstruction inst, MachineOperand mop) {
@@ -334,8 +339,8 @@ public abstract class Phase {
 		if (!(mop instanceof MachineOperand)) {
 			return false;
 		}
-		return (mop.type == InstTable9900.OP_ADDR
-				&& (mop.val == 0 || mop.immed >= 0x20) || mop.type == InstTable9900.OP_JUMP)
+		return (mop.type == MachineOperand9900.OP_ADDR
+				&& (mop.val == 0 || mop.immed >= 0x20) || mop.type == MachineOperand9900.OP_JUMP)
 				&& decompileInfo.getMemoryRanges().getRangeContaining(operandEffectiveAddress(
 						inst, mop)) != null;
 

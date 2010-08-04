@@ -21,19 +21,19 @@ import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.JumpOperand;
 import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLForwardOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
  * @author Ed
  *
  */
-public class JumpFixer {
+public class JumpFixer9900 {
 
 	private final Assembler assembler;
 	private List<IInstruction> insts;
 
-	public JumpFixer(Assembler assembler, List<IInstruction> insts) {
+	public JumpFixer9900(Assembler assembler, List<IInstruction> insts) {
 		this.assembler = assembler;
 		this.insts = insts;
 	}
@@ -55,8 +55,8 @@ public class JumpFixer {
 			LLInstruction llInstruction = (LLInstruction) inst;
 			if (llInstruction.isJumpInst()) {
 				LLOperand op1 = llInstruction.getOp1();
-				if (op1 instanceof LLJumpOperand) {
-					LLJumpOperand jump = (LLJumpOperand) op1;
+				if (op1 instanceof LLPCRelativeOperand) {
+					LLPCRelativeOperand jump = (LLPCRelativeOperand) op1;
 					int offset = jump.getOffset();
 					if (offset < -256 || offset >= 256) {
 						if (convertJump(llInstruction, 

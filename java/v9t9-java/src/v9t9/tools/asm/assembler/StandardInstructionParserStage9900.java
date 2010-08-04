@@ -21,10 +21,10 @@ import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLCountOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
@@ -37,7 +37,8 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
 	private OperandParser operandParser;
     
 	public StandardInstructionParserStage9900() {
-		this.operandParser = OperandParser.STANDARD;
+		this.operandParser = new OperandParser();
+		operandParser.appendStage(new MachineOperandParserStage9900());
 	}
 	public StandardInstructionParserStage9900(OperandParser operandParser) {
 		this.operandParser = operandParser;
@@ -60,10 +61,10 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
     	AssemblerOperand op1 = null, op2 = null;
         if (name.equals("RT")) {
         	inst.setInst(Inst9900.Ib);
-            op1 = new LLRegIndOperand(11);
+            op1 = new LLRegOffsOperand(11);
         } else if (name.equals("NOP")) {
         	inst.setInst(Inst9900.Ijmp);
-            op1 = new LLJumpOperand(null, 2);
+            op1 = new LLPCRelativeOperand(null, 2);
         } else {
         	Integer instNum = InstTable9900.lookupInst(name);
         	if (instNum == null)

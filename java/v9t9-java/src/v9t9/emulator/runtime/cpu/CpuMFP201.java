@@ -14,6 +14,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.CruAccess;
 import v9t9.engine.VdpHandler;
+import v9t9.engine.cpu.MachineOperandMFP201;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.cpu.StatusMFP201;
 
@@ -24,14 +25,9 @@ import v9t9.engine.cpu.StatusMFP201;
  */
 public class CpuMFP201 extends CpuBase {
     public static final int BASE_CYCLES_PER_SEC = 5000000;
-	private final int SP = 13;
-	private final int PC = 14;
-	private final int SR = 15;
-
-	private short[] regs = new short[16];
 	
 	public CpuMFP201(Machine machine, int interruptTick, VdpHandler vdp) {
-		super(machine, interruptTick, vdp);
+		super(machine, new CpuStateMFP201(machine.getConsole()), interruptTick, vdp);
         settingCyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
     }
 
@@ -40,7 +36,7 @@ public class CpuMFP201 extends CpuBase {
 	 */
     @Override
 	public short getPC() {
-        return regs[PC];
+        return state.getPC();
     }
 
     /* (non-Javadoc)
@@ -48,23 +44,14 @@ public class CpuMFP201 extends CpuBase {
 	 */
     @Override
 	public void setPC(short pc) {
-        regs[PC] = pc;
-    }
-
-
-    public StatusMFP201 getStatus() {
-        return (StatusMFP201) status;
-    }
-
-    public void setStatus(StatusMFP201 status) {
-        this.status = status;
+       	state.setPC(pc);
     }
 
     public static final int PIN_INTREQ = 1 << 31;
     public static final int PIN_LOAD = 1 << 3;
     public static final int PIN_RESET = 1 << 5;
     
-    /** When intreq, the interrupt level (IC* bits on the TMS9900). */
+    /** When intreq, the interrupt level */
     byte ic;
     
 	 /* (non-Javadoc)
@@ -100,7 +87,7 @@ public class CpuMFP201 extends CpuBase {
 	    	cruAccess.pollForPins(this);
 	    	if (cruAccess.isInterruptWaiting()) {
 	    		ic = cruAccess.getInterruptLevel(); 
-	    		if (status.getIntMask() >= ic) {
+	    		if (getStatus().getIntMask() >= ic) {
 	    			pins |= PIN_INTREQ;
 	    			return true;    		
 	    		}
@@ -161,12 +148,13 @@ public class CpuMFP201 extends CpuBase {
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
-            status.expand((short) 0);
+            getStatus().expand((short) 0);
+            setPC(getConsole().readWord(0xfffe));
             
             // TODO
             
             machine.getExecutor().interpretOneInstruction();
-        } else if ((pins & PIN_INTREQ) != 0 && status.getIntMask() >= ic) {	// already checked int mask in status
+        } else if ((pins & PIN_INTREQ) != 0 && getStatus().getIntMask() >= ic) {	// already checked int mask in status
             // maskable
         	pins &= ~PIN_INTREQ;
         	
@@ -190,7 +178,7 @@ public class CpuMFP201 extends CpuBase {
 	 */
 	@Override
 	public int getRegister(int reg) {
-        return regs[reg];
+        return state.getRegister(reg);
     }
 
 	public void setCruAccess(CruAccess access) {
@@ -204,7 +192,7 @@ public class CpuMFP201 extends CpuBase {
 	@Override
 	public void saveState(ISettingSection section) {
 		for (int r = 0; r < 16; r++)
-			section.put("R" + r, regs[r]);
+			section.put("R" + r, state.getRegister(r));
 		
 		super.saveState(section);
 	}
@@ -217,8 +205,7 @@ public class CpuMFP201 extends CpuBase {
 		}
 		
 		for (int r = 0; r < 16; r++)
-			regs[r] = (short) section.getInt("R" + r);
-		status.expand((short) regs[SR]);
+			state.setRegister(r, section.getInt("R" + r));
 		settingRealTime.loadState(section);
 		settingCyclesPerSecond.loadState(section);
 		
@@ -232,7 +219,8 @@ public class CpuMFP201 extends CpuBase {
 	
 	@Override
 	public String getCurrentStateString() {
-		return "ST=" + HexUtils.toHex4(regs[PC]) + "\t\tSR=" + status.toString();
+		return "SP=" + HexUtils.toHex4(state.getRegister(MachineOperandMFP201.SP)) 
+		+ "\t\tSR=" + getStatus().toString();
 	}
 	
 	@Override
@@ -241,12 +229,36 @@ public class CpuMFP201 extends CpuBase {
 	}
 
 	public short getStack() {
-		return regs[SP];
+		return (short) state.getRegister(MachineOperandMFP201.SP);
 	}
 	
 	@Override
 	public boolean shouldDebugCompiledCode(short pc) {
 		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getST()
+	 */
+	@Override
+	public short getST() {
+		return state.getST();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#setRegister(int, int)
+	 */
+	@Override
+	public void setRegister(int reg, int val) {
+		state.setRegister(reg, val);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#setST(short)
+	 */
+	@Override
+	public void setST(short st) {
+		state.setST(st);
 	}
 	
 }

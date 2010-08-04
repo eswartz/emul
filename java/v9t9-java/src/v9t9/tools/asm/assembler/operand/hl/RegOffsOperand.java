@@ -9,7 +9,7 @@ import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.ll.LLForwardOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
@@ -92,7 +92,7 @@ public class RegOffsOperand extends RegisterOperand  {
 			return new LLForwardOperand(this, 2);
 		if (!(addrRes instanceof LLImmedOperand))
 			throw new ResolveException(addrRes, "Expected an immediate");
-		return new LLRegIndOperand(this, regRes.getRegister(), addrRes.getImmediate());
+		return new LLRegOffsOperand(this, regRes.getRegister(), addrRes.getImmediate());
 	}
 
 	/**

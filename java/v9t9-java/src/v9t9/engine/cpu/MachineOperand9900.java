@@ -6,6 +6,8 @@
  */
 package v9t9.engine.cpu;
 
+import org.ejs.coffee.core.utils.Check;
+
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
@@ -18,7 +20,25 @@ import v9t9.tools.asm.assembler.Symbol;
 public class MachineOperand9900 extends BaseMachineOperand {
     // Operand Type
     
-    /** 
+    //  from ts/td field of opcode, don't change order
+	/** register Rx */
+	public static final int OP_REG = 0;
+	/** indirect *Rx */
+	public static final int OP_IND = 1;
+	/** address @>xxxx or @>xxxx(Rx) */ 
+	public static final int OP_ADDR = 2;
+	/**  register increment *Rx+ */
+	public static final int OP_INC = 3;
+	// these depend on the actual instruction
+	public static final int OP_IMMED = 4; // immediate >xxxx (for jump, the target addr)
+	public static final int OP_CNT = 5; // shift count x (4 bits)
+	public static final int OP_JUMP = 6; // jump target >xxxx (offset in bytes from PC)
+	public static final int OP_OFFS_R12 = 7; // offset >xxxx or .xxxx
+	public static final int OP_STATUS = 8; // status word >xxxx
+	public static final int OP_INST = 9; // instruction for X
+	public static final int OP_REG0_SHIFT_COUNT = 10;	// shift count from R0
+
+	/** 
      * Create an empty operand (to be filled in piecewise)
      * @param type
      */
@@ -30,15 +50,15 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#isMemory()
 	 */
     public boolean isMemory() {
-        return type == InstTable9900.OP_IND || type == InstTable9900.OP_ADDR || type == InstTable9900.OP_INC || !bIsCodeDest;
+        return type == MachineOperand9900.OP_IND || type == MachineOperand9900.OP_ADDR || type == MachineOperand9900.OP_INC || !bIsCodeDest;
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#isRegisterReference()
 	 */
     public boolean isRegisterReference() {
-        return type == InstTable9900.OP_REG || type == InstTable9900.OP_IND || type == InstTable9900.OP_INC 
-        	|| type == InstTable9900.OP_ADDR && val != 0 || type == InstTable9900.OP_REG0_SHIFT_COUNT;        
+        return type == MachineOperand9900.OP_REG || type == MachineOperand9900.OP_IND || type == MachineOperand9900.OP_INC 
+        	|| type == MachineOperand9900.OP_ADDR && val != 0 || type == MachineOperand9900.OP_REG0_SHIFT_COUNT;        
     }
     
     /* (non-Javadoc)
@@ -52,28 +72,28 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#isRegister()
 	 */
     public boolean isRegister() {
-        return type == InstTable9900.OP_REG;
+        return type == MachineOperand9900.OP_REG;
     }
 
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#isRegister(int)
 	 */
     public boolean isRegister(int reg) {
-        return type == InstTable9900.OP_REG && val == reg;
+        return type == MachineOperand9900.OP_REG && val == reg;
     }
 
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#isConstant()
 	 */
     public boolean isConstant() {
-        return type == InstTable9900.OP_IMMED || type == InstTable9900.OP_CNT || type == InstTable9900.OP_ADDR && val == 0; 
+        return type == MachineOperand9900.OP_IMMED || type == MachineOperand9900.OP_CNT || type == MachineOperand9900.OP_ADDR && val == 0; 
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#isLabel()
 	 */
     public boolean isLabel() {
-        return type == InstTable9900.OP_IMMED || type == InstTable9900.OP_ADDR && val == 0 || type == InstTable9900.OP_JUMP;
+        return type == MachineOperand9900.OP_IMMED || type == MachineOperand9900.OP_ADDR && val == 0 || type == MachineOperand9900.OP_JUMP;
     }
     
     /*
@@ -102,43 +122,43 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	private String basicString() {
 		switch (type) 
     	{
-    	case InstTable9900.OP_REG:
+    	case MachineOperand9900.OP_REG:
     		return "R"+val;
 
-    	case InstTable9900.OP_IND:
+    	case MachineOperand9900.OP_IND:
     		return "*R"+val;
 
-    	case InstTable9900.OP_ADDR:
+    	case MachineOperand9900.OP_ADDR:
     		if (val == 0) {
     			return "@>" + Integer.toHexString(immed & 0xffff).toUpperCase();
     		} else {
     			return "@>" + Integer.toHexString(immed & 0xffff).toUpperCase() + "(R" + val + ")";
     		}
 
-    	case InstTable9900.OP_INC:
+    	case MachineOperand9900.OP_INC:
     		return "*R" + val + "+";
 
-    	case InstTable9900.OP_IMMED:
+    	case MachineOperand9900.OP_IMMED:
     	    return ">" + Integer.toHexString(immed & 0xffff).toUpperCase();
 
-    	case InstTable9900.OP_CNT:
+    	case MachineOperand9900.OP_CNT:
     	    return Integer.toString(val);
 
-    	case InstTable9900.OP_OFFS_R12: {
+    	case MachineOperand9900.OP_OFFS_R12: {
     		//byte offs = (byte) ((val >> 1) & 0xff);
     		byte offs = (byte) (val & 0xff);
     	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs);
     	}
 
-    	case InstTable9900.OP_REG0_SHIFT_COUNT:
+    	case MachineOperand9900.OP_REG0_SHIFT_COUNT:
     	    return ">" + Integer.toHexString(val & 0xffff).toUpperCase();
     	    
-    	case InstTable9900.OP_JUMP:
+    	case MachineOperand9900.OP_JUMP:
     	    return "$+>" + Integer.toHexString(val & 0xffff).toUpperCase();
 
     	case OP_NONE:
-    	case InstTable9900.OP_STATUS:		// not real operands
-    	case InstTable9900.OP_INST:		
+    	case MachineOperand9900.OP_STATUS:		// not real operands
+    	case MachineOperand9900.OP_INST:		
     	default:
     		return null;
     	}
@@ -150,10 +170,10 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	public short advancePc(short addr) {
 	    switch (type)
 	    {
-	    case InstTable9900.OP_ADDR:    // @>xxxx or @>xxxx(Rx)
+	    case MachineOperand9900.OP_ADDR:    // @>xxxx or @>xxxx(Rx)
 	        addr += 2;
 	        break;
-	    case InstTable9900.OP_IMMED:   // immediate
+	    case MachineOperand9900.OP_IMMED:   // immediate
 	        addr += 2;
 	        break;
 	    }
@@ -161,16 +181,26 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	    return addr;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.engine.cpu.MachineOperand#fetchOperandImmediates(v9t9.engine.memory.MemoryDomain, short)
+	/**
+	 * Read any extra immediates for an operand from the instruction stream.
+	 * Fills in Operand.size and Operand.immed.
+	 * 
+	 * @param w
+	 * @param addr
+	 *            is current address
+	 * @param pc
+	 *            address of instruction
+	 * @param wp
+	 *            workspace pointer
+	 * @return new address
 	 */
     public short fetchOperandImmediates(MemoryDomain domain, short addr) {
     	switch (type) {
-    	case InstTable9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
+    	case MachineOperand9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
     		immed = domain.readWord(addr); 
     		addr += 2;
     		break;
-    	case InstTable9900.OP_IMMED:	// immediate
+    	case MachineOperand9900.OP_IMMED:	// immediate
     		immed = domain.readWord(addr);
     		addr += 2;
     		break;
@@ -183,7 +213,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#hasImmediate()
 	 */
     public boolean hasImmediate() {
-        return type == InstTable9900.OP_ADDR || type == InstTable9900.OP_IMMED; 
+        return type == MachineOperand9900.OP_ADDR || type == MachineOperand9900.OP_IMMED; 
     }
 
 
@@ -204,59 +234,60 @@ public class MachineOperand9900 extends BaseMachineOperand {
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#getEA(v9t9.engine.memory.MemoryDomain, int, short)
 	 */
-    public short getEA(MemoryDomain domain, int pc, short wp) {
+    public short getEA(InstructionWorkBlock block) {
+    	short wp = block.wp;
         short ea = 0;
     	switch (type) {
     	case MachineOperand.OP_NONE:
     		break;
-    	case InstTable9900.OP_REG:	// Rx
+    	case MachineOperand9900.OP_REG:	// Rx
     		ea = (short) ((val<<1) + wp);
     		this.cycles += 0;
     		break;
-    	case InstTable9900.OP_INC:	// *Rx+
-    	case InstTable9900.OP_IND: {	// *Rx
+    	case MachineOperand9900.OP_INC:	// *Rx+
+    	case MachineOperand9900.OP_IND: {	// *Rx
     		short ad = (short)((val<<1) + wp);
-    		ea = domain.readWord(ad);
+    		ea = block.domain.readWord(ad);
 
     		/* update register if necessary */
     		this.cycles += 4;
-    		if (type == InstTable9900.OP_INC) {
+    		if (type == MachineOperand9900.OP_INC) {
     		    this.cycles += byteop ? 2 : 4;
-    		    domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
+    		    block.domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
     		}
     		break;
     	}
-    	case InstTable9900.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
+    	case MachineOperand9900.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
     	    short ad;
     		ea = immed; 
     		this.cycles += 8; //Instruction.getMemoryCycles(ad);
     		if (val != 0) {
     			ad = (short)((val<<1) + wp);
-    			ea += domain.readWord(ad);
+    			ea += block.domain.readWord(ad);
     		}
     		break;
     	}
-    	case InstTable9900.OP_IMMED:	// immediate
+    	case MachineOperand9900.OP_IMMED:	// immediate
     		this.cycles += 0;
     		break;
-    	case InstTable9900.OP_CNT:	// shift count
+    	case MachineOperand9900.OP_CNT:	// shift count
     		this.cycles += 0;
     		break;
-    	case InstTable9900.OP_OFFS_R12:	// offset from R12
+    	case MachineOperand9900.OP_OFFS_R12:	// offset from R12
     		this.cycles += 0;
     		ea = (short) ((12<<1) + wp);
     		break;
-    	case InstTable9900.OP_REG0_SHIFT_COUNT: // shift count from R0
+    	case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
     	    ea = wp;
     	    this.cycles += 8;
 		    break;
     	
-    	case InstTable9900.OP_JUMP:	// jump target
-    		ea = (short)(val + pc);
+    	case MachineOperand9900.OP_JUMP:	// jump target
+    		ea = (short)(val + block.inst.pc);
     		break;
-    	case InstTable9900.OP_STATUS:	// status word
+    	case MachineOperand9900.OP_STATUS:	// status word
     		break;
-    	case InstTable9900.OP_INST:
+    	case MachineOperand9900.OP_INST:
     		break;		
     	}
     	return ea;
@@ -265,69 +296,69 @@ public class MachineOperand9900 extends BaseMachineOperand {
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#getValue(v9t9.engine.memory.MemoryDomain, short)
 	 */
-    public short getValue(MemoryDomain domain, short ea) {
+    public short getValue(InstructionWorkBlock block, short ea) {
         short value = 0;
 
         switch (type) {
         case MachineOperand.OP_NONE:
             break;
-        case InstTable9900.OP_REG:    // Rx
+        case MachineOperand9900.OP_REG:    // Rx
             if (bIsCodeDest) {
 				value = ea;
 			} else
                 if (byteop) {
-					value = domain.readByte(ea);
+					value = block.domain.readByte(ea);
 				} else {
-					value = domain.readWord(ea);
+					value = block.domain.readWord(ea);
 				}
             break;
-        case InstTable9900.OP_INC:    // *Rx+
-        case InstTable9900.OP_IND: {  // *Rx
+        case MachineOperand9900.OP_INC:    // *Rx+
+        case MachineOperand9900.OP_IND: {  // *Rx
             if (bIsCodeDest) {
 				value = ea;
 			} else
                 if (byteop) {
-					value = domain.readByte(ea);
+					value = block.domain.readByte(ea);
 				} else {
-					value = domain.readWord(ea);
-				}
-            break;
-        }
-        case InstTable9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
-            if (bIsCodeDest) {
-				value = ea;
-			} else
-                if (byteop) {
-					value = domain.readByte(ea);
-				} else {
-					value = domain.readWord(ea);
+					value = block.domain.readWord(ea);
 				}
             break;
         }
-        case InstTable9900.OP_IMMED:  // immediate
+        case MachineOperand9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
+            if (bIsCodeDest) {
+				value = ea;
+			} else
+                if (byteop) {
+					value = block.domain.readByte(ea);
+				} else {
+					value = block.domain.readWord(ea);
+				}
+            break;
+        }
+        case MachineOperand9900.OP_IMMED:  // immediate
             value = immed;
             break;
-        case InstTable9900.OP_CNT:    // shift count
+        case MachineOperand9900.OP_CNT:    // shift count
             value = (short) val;
             break;
-        case InstTable9900.OP_OFFS_R12:   // offset from R12
-            value = (short) (domain.readWord(ea) + val);
+        case MachineOperand9900.OP_OFFS_R12:   // offset from R12
+            value = (short) (block.domain.readWord(ea) + val);
             break;
-        case InstTable9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-            value = (short) (domain.readWord(ea) & 0xf);
+        case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
+            value = (short) (block.domain.readWord(ea) & 0xf);
             if (value == 0) {
 				value = 16;
 			}
             break;
         
-        case InstTable9900.OP_JUMP:   // jump target
+        case MachineOperand9900.OP_JUMP:   // jump target
             value = ea;
             break;
-        case InstTable9900.OP_STATUS: // status word
+        case MachineOperand9900.OP_STATUS: // status word
             //TODO: NOTHING -- make sure we don't depend on this   
             break;
-        case InstTable9900.OP_INST:
-            value = domain.readWord(ea);
+        case MachineOperand9900.OP_INST:
+            value = block.domain.readWord(ea);
             break;      
         }
 
@@ -338,46 +369,45 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#convertToImmedate()
 	 */
 	public void convertToImmedate() {
-		if (type == InstTable9900.OP_IMMED || type == InstTable9900.OP_ADDR)	// hack
+		if (type == MachineOperand9900.OP_IMMED || type == MachineOperand9900.OP_ADDR)	// hack
 			return;
-		org.ejs.coffee.core.utils.Check.checkState((type == InstTable9900.OP_REG));
-		type = InstTable9900.OP_IMMED;
+		Check.checkState((type == MachineOperand9900.OP_REG));
+		type = MachineOperand9900.OP_IMMED;
 		immed = (short) val;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.engine.cpu.MachineOperand#getBits()
-	 */
+	/** Generate the bits for the operand, or throw IllegalArgumentException
+	 * for a non-machine operand */
 	public int getBits() {
 		switch (type)
         {
         case MachineOperand.OP_NONE:
         	return 0;
-        case InstTable9900.OP_REG:    	// Rx
-        case InstTable9900.OP_INC:    	// *Rx+
-        case InstTable9900.OP_IND:   	// *Rx
-        case InstTable9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
-        case InstTable9900.OP_REG0_SHIFT_COUNT: // shift count from R0
+        case MachineOperand9900.OP_REG:    	// Rx
+        case MachineOperand9900.OP_INC:    	// *Rx+
+        case MachineOperand9900.OP_IND:   	// *Rx
+        case MachineOperand9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
+        case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
         	if (val < 0 || val > 15)
         		throw new IllegalArgumentException("Illegal register number: " + val);
         	return val | (type << 4);
-        case InstTable9900.OP_IMMED:  // immediate
+        case MachineOperand9900.OP_IMMED:  // immediate
             return 0;
-        case InstTable9900.OP_CNT:    // shift count
+        case MachineOperand9900.OP_CNT:    // shift count
         	if (val < 0 || val > 15)
         		throw new IllegalArgumentException("Illegal shift count: " + val);
             return val;
-        case InstTable9900.OP_OFFS_R12:   // offset from R12 or jump offset
+        case MachineOperand9900.OP_OFFS_R12:   // offset from R12 or jump offset
         	if (val < -255 || val > 255)
         		throw new IllegalArgumentException("Illegal offset: " + val);
         	return val & 0xff;
-        case InstTable9900.OP_JUMP:   // jump target offset from PC
+        case MachineOperand9900.OP_JUMP:   // jump target offset from PC
         	int byt = (val - 2) / 2;
         	if (byt < -0x80 || byt >= 0x80)
         		throw new IllegalArgumentException("Illegal jump offset: " + val);
         	return byt & 0xff;
-        case InstTable9900.OP_STATUS: // status word
-        case InstTable9900.OP_INST:
+        case MachineOperand9900.OP_STATUS: // status word
+        case MachineOperand9900.OP_INST:
         	// not real operand
         	return 0;
         }
@@ -424,10 +454,10 @@ public class MachineOperand9900 extends BaseMachineOperand {
 		if (rtype != rotype) {
 			return false;
 		}
-		if ((type == InstTable9900.OP_ADDR || type == InstTable9900.OP_IMMED) && immed != other.immed) {
+		if ((type == MachineOperand9900.OP_ADDR || type == MachineOperand9900.OP_IMMED) && immed != other.immed) {
 			return false;
 		}
-		if (type != InstTable9900.OP_IMMED && val != other.val) {
+		if (type != MachineOperand9900.OP_IMMED && val != other.val) {
 			return false;
 		}
 
@@ -435,7 +465,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	}
 
 	private int reduceType(int type) {
-		if (type == InstTable9900.OP_STATUS || type == InstTable9900.OP_INST)
+		if (type == MachineOperand9900.OP_STATUS || type == MachineOperand9900.OP_INST)
 			return OP_NONE;
 		return type;
 	}
@@ -450,7 +480,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 				throw new ResolveException(this, "Undefined symbol " + symbol);
 			
 			short theVal;
-			if (type == InstTable9900.OP_JUMP || type == InstTable9900.OP_OFFS_R12) {
+			if (type == MachineOperand9900.OP_JUMP || type == MachineOperand9900.OP_OFFS_R12) {
 				theVal = (short) (symbol.getAddr() - inst.getPc());
 				/*
 				 * check this later
@@ -469,7 +499,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	}
 
 	public static MachineOperand9900 createImmediate(int i) {
-		MachineOperand9900 op = new MachineOperand9900(InstTable9900.OP_IMMED);
+		MachineOperand9900 op = new MachineOperand9900(MachineOperand9900.OP_IMMED);
 		op.immed = (short) (op.val = i);
 		return op;
 	}
@@ -488,7 +518,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	}
 
 	public static MachineOperand createSymbolImmediate(Symbol symbol) {
-		MachineOperand9900 op = new MachineOperand9900(InstTable9900.OP_IMMED);
+		MachineOperand9900 op = new MachineOperand9900(MachineOperand9900.OP_IMMED);
 		if (symbol.isDefined()) {
 			op.immed = (short) (op.val = symbol.getAddr());
 			op.symbolResolved = true;
@@ -501,11 +531,4 @@ public class MachineOperand9900 extends BaseMachineOperand {
 		return new MachineOperand9900(OP_NONE);
 	}
 
-	public static MachineOperand createJumpNextOperand() {
-		MachineOperand9900 op = new MachineOperand9900(InstTable9900.OP_JUMP);
-		op.val = 2;
-		return op;
-	}
-
-	
 }

@@ -22,6 +22,40 @@ public class RegisterOperand extends BaseOperand implements IRegisterOperand {
 		this.reg = reg;
 	}
 	
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((reg == null) ? 0 : reg.hashCode());
+		return result;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		RegisterOperand other = (RegisterOperand) obj;
+		if (reg == null) {
+			if (other.reg != null)
+				return false;
+		} else if (!reg.equals(other.reg))
+			return false;
+		return true;
+	}
+
+
 	@Override
 	public String toString() {
 		if (getReg() instanceof NumberOperand)
@@ -63,6 +97,9 @@ public class RegisterOperand extends BaseOperand implements IRegisterOperand {
 	 */
 	public LLOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
 		LLOperand op = reg.resolve(assembler, inst);
+		if (op instanceof LLRegisterOperand) {
+			return op;
+		}
 		if (op instanceof LLImmedOperand) {
 			return new LLRegisterOperand(op.getImmediate());
 		}

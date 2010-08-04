@@ -47,10 +47,16 @@ public abstract class AssemblerOperandParserStage implements IOperandParserStage
 	}
 
 	private AssemblerOperand parseExprRest(AssemblerOperand term) throws ParseException {
+		TokenizerState state = tokenizer.getState();
 		int t = tokenizer.nextToken();
 		if (t == '+' || t == '-') {
-			AssemblerOperand op = parseExprRest(new BinaryOperand(t, term, parseTerm()));
-			return op;
+			// HACK: the reg inc/dec format has a trailing + or -
+			try {
+				AssemblerOperand op = parseExprRest(new BinaryOperand(t, term, parseTerm()));
+				return op;
+			} catch (ParseException e) {
+				tokenizer.setState(state);
+			}
 		}
 		tokenizer.pushBack();
 		return term;
@@ -100,21 +106,11 @@ public abstract class AssemblerOperandParserStage implements IOperandParserStage
 				throw new ParseException("Expected close paren");
 			return op;
 		}
-		case AssemblerTokenizer.NUMBER:
-			return makeNumber(tokenizer.getNumber());
-		case AssemblerTokenizer.CHAR: {
-			String ch = tokenizer.getString();
-			if (ch.length() == 1)
-				return makeNumber((char)ch.charAt(0));
-			else if (ch.length() == 2)
-				return makeNumber((ch.charAt(0) << 8) | (ch.charAt(1) & 0xff));
-			else
-				throw new ParseException("Char literal is wrong length: " + ch);
-			}
+		
 		case AssemblerTokenizer.ID:
 			Symbol symbol = assembler.referenceSymbol(tokenizer.getString());
 			if (symbol instanceof Equate) {
-				return makeNumber(((Equate) symbol).getValue());
+				return ((Equate) symbol).getValue();
 			}
 			return new SymbolOperand(symbol);
 		case AssemblerTokenizer.STRING:
@@ -128,6 +124,27 @@ public abstract class AssemblerOperandParserStage implements IOperandParserStage
 
 	}
 
+	protected AssemblerOperand parseNumber() throws ParseException { 
+		int t = tokenizer.nextToken();
+		
+		switch (t) {
+		case AssemblerTokenizer.NUMBER:
+			return makeNumber(tokenizer.getNumber());
+	
+		case AssemblerTokenizer.CHAR: {
+			String ch = tokenizer.getString();
+			if (ch.length() == 1)
+				return makeNumber((char)ch.charAt(0));
+			else if (ch.length() == 2)
+				return makeNumber((ch.charAt(0) << 8) | (ch.charAt(1) & 0xff));
+			else
+				throw new ParseException("Char literal is wrong length: " + ch);
+			}
+		
+		default:
+			throw new ParseException("Unknown number: " + tokenizer.currentToken());
+		}
+	}
 	private AssemblerOperand parseJumpTarget() throws ParseException {
 		int t = tokenizer.nextToken();
 		if (t == AssemblerTokenizer.NUMBER) {

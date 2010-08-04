@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.ejs.coffee.core.utils.Check;
+
 /**
  * Management of ranges of memory partitioned into types
  * @author ejs
@@ -43,7 +45,7 @@ public class MemoryRanges {
     }
 
     public void addRange(int baseAddr, int size, boolean isCode) {
-        org.ejs.coffee.core.utils.Check.checkArg((size > 0));
+        Check.checkArg((size > 0));
         /*
         MemoryRange startRange = getRangeContaining(baseAddr);
         MemoryRange endRange = getRangeContaining(baseAddr + size);

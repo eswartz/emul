@@ -10,8 +10,8 @@ import java.util.Set;
 
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.decomp.Block;
@@ -282,7 +282,7 @@ public class TestTopDown1 extends BaseTopDownTest
         
         Block block = getSingleEntry(routine);
         BaseMachineOperand op = (BaseMachineOperand) block.getLast().getInst().getOp1();
-        assertTrue(op.type == InstTable9900.OP_ADDR);
+        assertTrue(op.type == MachineOperand9900.OP_ADDR);
         assertEquals(op.val, 0);
         assertEquals(op.immed, (short) 0x83E2);
         validateBlocks(routine.getSpannedBlocks());
@@ -303,7 +303,7 @@ public class TestTopDown1 extends BaseTopDownTest
         
         Block block = getSingleEntry(routine);
         BaseMachineOperand op = (BaseMachineOperand) block.getLast().getInst().getOp1();
-        assertTrue(op.type == InstTable9900.OP_REG);
+        assertTrue(op.type == MachineOperand9900.OP_REG);
         assertEquals(op.val, 1);
         assertEquals(op.immed, 0);
         validateBlocks(routine.getSpannedBlocks());

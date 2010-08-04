@@ -4,14 +4,10 @@ import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tests.BaseTest;
-import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ContentEntry;
 import v9t9.tools.asm.assembler.Symbol;
 
 public class TestAssemblerOptimizer extends BaseTest {
-
-	Assembler assembler = new Assembler();
-	
 
 	public void testAssemblerOptimizerSimplifier() throws Exception {
 		String text =
@@ -92,18 +88,18 @@ public class TestAssemblerOptimizer extends BaseTest {
 				"inc r1",
 				"inc r2",
 				},
-				new Symbol[] { new Symbol(assembler.getSymbolTable(), "end", 0x108) });
+				new Symbol[] { new Symbol(stdAssembler.getSymbolTable(), "end", 0x108) });
 		
 	}
 	
 	private void testFileContent(String text, int pc, String[] stdInsts, Symbol[] symbols) throws Exception {
 		String caller = new Exception().fillInStackTrace().getStackTrace()[1].getMethodName();
-		assembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
-		List<IInstruction> asminsts = assembler.parse();
-		List<IInstruction> realinsts = assembler.resolve(asminsts);
-		realinsts = assembler.optimize(realinsts);
+		stdAssembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
+		List<IInstruction> asminsts = stdAssembler.parse();
+		List<IInstruction> realinsts = stdAssembler.resolve(asminsts);
+		realinsts = stdAssembler.optimize(realinsts);
 
-		testGeneratedContent(assembler, pc, stdInsts, symbols, realinsts);
+		testGeneratedContent(stdAssembler, pc, stdInsts, symbols, realinsts);
 	}
 
 	

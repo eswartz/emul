@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import org.ejs.coffee.core.utils.Check;
 import org.ejs.coffee.core.utils.CompatUtils;
 
 public class NativeTextFile implements NativeFile {
@@ -18,7 +19,7 @@ public class NativeTextFile implements NativeFile {
     private File file;
 
     public NativeTextFile(File file) {
-        org.ejs.coffee.core.utils.Check.checkArg(file);
+        Check.checkArg(file);
         this.file = file;
     }
 
@@ -43,7 +44,7 @@ public class NativeTextFile implements NativeFile {
         int size = (int) file.length() - offset;
         size = Math.min(size, length);
         
-        org.ejs.coffee.core.utils.Check.checkArg((size < (long)Integer.MAX_VALUE));
+        Check.checkArg((size < (long)Integer.MAX_VALUE));
         CompatUtils.skipFully(fis, offset);
         int ret = fis.read(contents, contentOffset, size);
         fis.close();

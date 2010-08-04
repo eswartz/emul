@@ -191,33 +191,33 @@ public class InstTable9900 {
 		switch (op) {
 		case NONE:
 			if (mop.type != MachineOperand.OP_NONE
-					&& mop.type != InstTable9900.OP_STATUS
-					&& mop.type != InstTable9900.OP_INST)
+					&& mop.type != MachineOperand9900.OP_STATUS
+					&& mop.type != MachineOperand9900.OP_INST)
 				throw new IllegalArgumentException("Unexpected operand: " + mop);
 			break;
 		case IMM:
-			if (mop.type != InstTable9900.OP_IMMED)
+			if (mop.type != MachineOperand9900.OP_IMMED)
 				throw new IllegalArgumentException("Expected immediate: " + mop);
 			break;
 		case CNT:
-			if (mop.type != InstTable9900.OP_CNT && mop.type != InstTable9900.OP_IMMED)
+			if (mop.type != MachineOperand9900.OP_CNT && mop.type != MachineOperand9900.OP_IMMED)
 				throw new IllegalArgumentException("Expected count: " + mop);
 			break;
 		case OFF:
-			if (mop.type != InstTable9900.OP_CNT && mop.type != InstTable9900.OP_IMMED
-					&& mop.type != InstTable9900.OP_OFFS_R12
-					&& mop.type != InstTable9900.OP_JUMP)
+			if (mop.type != MachineOperand9900.OP_CNT && mop.type != MachineOperand9900.OP_IMMED
+					&& mop.type != MachineOperand9900.OP_OFFS_R12
+					&& mop.type != MachineOperand9900.OP_JUMP)
 				throw new IllegalArgumentException("Expected offset: " + mop);
 			break;
 		case REG:
-			if (mop.type != InstTable9900.OP_REG && mop.type != InstTable9900.OP_REG0_SHIFT_COUNT)
+			if (mop.type != MachineOperand9900.OP_REG && mop.type != MachineOperand9900.OP_REG0_SHIFT_COUNT)
 				throw new IllegalArgumentException("Expected immediate: " + mop);
 			break;
 		case GEN:
-			if (mop.type != InstTable9900.OP_REG 
-					&& mop.type != InstTable9900.OP_INC
-					&& mop.type != InstTable9900.OP_IND
-					&& mop.type != InstTable9900.OP_ADDR)
+			if (mop.type != MachineOperand9900.OP_REG 
+					&& mop.type != MachineOperand9900.OP_INC
+					&& mop.type != MachineOperand9900.OP_IND
+					&& mop.type != MachineOperand9900.OP_ADDR)
 				throw new IllegalArgumentException("Expected general operand: " + mop);
 			break;
 		}
@@ -246,44 +246,44 @@ public class InstTable9900 {
 	private static void coerceOperandType(RawInstruction instruction, BaseMachineOperand mop, int op) {
 		switch (op) {
 		case NONE:
-			if (mop.type == InstTable9900.OP_STATUS
-					|| mop.type == InstTable9900.OP_INST
+			if (mop.type == MachineOperand9900.OP_STATUS
+					|| mop.type == MachineOperand9900.OP_INST
 					|| (instruction.getInst() >= Inst9900.Iinc && instruction.getInst() <= Inst9900.Idect))
 				mop.type = MachineOperand.OP_NONE;
 			break;
 		case IMM:
-			if (mop.type == InstTable9900.OP_REG)
-				mop.type = InstTable9900.OP_IMMED;
+			if (mop.type == MachineOperand9900.OP_REG)
+				mop.type = MachineOperand9900.OP_IMMED;
 			break;
 		case CNT:
-			if (mop.type == InstTable9900.OP_REG
-					|| mop.type == InstTable9900.OP_IMMED
-					|| mop.type == InstTable9900.OP_REG0_SHIFT_COUNT)
-				mop.type = InstTable9900.OP_CNT;
+			if (mop.type == MachineOperand9900.OP_REG
+					|| mop.type == MachineOperand9900.OP_IMMED
+					|| mop.type == MachineOperand9900.OP_REG0_SHIFT_COUNT)
+				mop.type = MachineOperand9900.OP_CNT;
 			if (mop.val == 16)
 				mop.val = 0;
 			break;
 		case OFF:
 			if (instruction.getInst() >= Inst9900.Ijmp && instruction.getInst() <= Inst9900.Ijop) {
-				if (mop.type == InstTable9900.OP_IMMED) {
+				if (mop.type == MachineOperand9900.OP_IMMED) {
 					// convert address to offset from this inst
-					mop.type = InstTable9900.OP_JUMP;
+					mop.type = MachineOperand9900.OP_JUMP;
 					mop.val = (mop.val - instruction.pc);
 				}
 			} else {
-				if (mop.type == InstTable9900.OP_IMMED) {
-					mop.type = InstTable9900.OP_OFFS_R12;
+				if (mop.type == MachineOperand9900.OP_IMMED) {
+					mop.type = MachineOperand9900.OP_OFFS_R12;
 					mop.val = mop.immed;
 				}
 			}
 			break;
 		case REG:
-			if (mop.type == InstTable9900.OP_IMMED)
-				mop.type = InstTable9900.OP_REG;
+			if (mop.type == MachineOperand9900.OP_IMMED)
+				mop.type = MachineOperand9900.OP_REG;
 			break;
 		case GEN:
-			if (mop.type == InstTable9900.OP_IMMED)
-				mop.type = InstTable9900.OP_REG;
+			if (mop.type == MachineOperand9900.OP_IMMED)
+				mop.type = MachineOperand9900.OP_REG;
 			break;
 		}
 	}
@@ -446,9 +446,9 @@ public class InstTable9900 {
     
         if (op < 0x200) {
         } else if (op < 0x2a0) {
-            mop1.type = InstTable9900.OP_REG;
+            mop1.type = MachineOperand9900.OP_REG;
             mop1.val = op & 15;
-            mop2.type = InstTable9900.OP_IMMED;
+            mop2.type = MachineOperand9900.OP_IMMED;
             switch ((op & 0x1e0) >> 5) {
             case 0:
                 //inst.name = "LI";
@@ -473,7 +473,7 @@ public class InstTable9900 {
             }
     
         } else if (op < 0x2e0) {
-            mop1.type = InstTable9900.OP_REG;
+            mop1.type = MachineOperand9900.OP_REG;
             mop1.val = op & 15;
             switch ((op & 0x1e0) >> 5) {
             case 5:
@@ -487,7 +487,7 @@ public class InstTable9900 {
             }
     
         } else if (op < 0x320) {
-            mop1.type = InstTable9900.OP_IMMED;
+            mop1.type = MachineOperand9900.OP_IMMED;
     
             switch ((op & 0x1e0) >> 5) {
             case 7:
@@ -592,9 +592,9 @@ public class InstTable9900 {
             }
     
         } else if (op < 0xc00) {
-            mop1.type = InstTable9900.OP_REG;
+            mop1.type = MachineOperand9900.OP_REG;
             mop1.val = op & 15;
-            mop2.type = InstTable9900.OP_CNT;
+            mop2.type = MachineOperand9900.OP_CNT;
             mop2.val = (op & 0xf0) >> 4;
     
             switch ((op & 0x700) >> 8) {
@@ -621,19 +621,19 @@ public class InstTable9900 {
         	// 0xc00
     		case 0:				/* DSR, OP_DSR */
     			inst.setInst(InstTableCommon.Idsr);
-    			mop1.type = InstTable9900.OP_OFFS_R12;
+    			mop1.type = MachineOperand9900.OP_OFFS_R12;
     			mop1.val = (byte) (op & 0xff);
     			break;
   			// 0xd60
     		case 11:			/* TICKS */
     			inst.setInst(InstTableCommon.Iticks);
-    			mop1.type = InstTable9900.OP_REG;
+    			mop1.type = MachineOperand9900.OP_REG;
                 mop1.val = (byte) (op & 0xf);
     			break;
     		// 0xde0
     		case 15:			/* DBG, -DBG */
     			inst.setInst(InstTableCommon.Idbg);
-    			mop1.type = InstTable9900.OP_CNT;
+    			mop1.type = MachineOperand9900.OP_CNT;
     			mop1.val = (byte) (op & 0xf);
     			break;
     			
@@ -641,13 +641,13 @@ public class InstTable9900 {
             }
     
         } else if (op < 0x2000) {
-            mop1.type = InstTable9900.OP_IMMED;
+            mop1.type = MachineOperand9900.OP_IMMED;
             mop1.val = (byte) (op & 0xff);
             if (op < 0x1D00) {
                 mop1.val = (mop1.val << 1) + 2;
-                mop1.type = InstTable9900.OP_JUMP;
+                mop1.type = MachineOperand9900.OP_JUMP;
             } else {
-            	mop1.type = InstTable9900.OP_OFFS_R12;
+            	mop1.type = MachineOperand9900.OP_OFFS_R12;
             }
     
             switch ((op & 0xf00) >> 8) {
@@ -720,7 +720,7 @@ public class InstTable9900 {
         } else if (op < 0x4000 && !(op >= 0x3000 && op < 0x3800)) {
             mop1.type = (op & 0x30) >> 4;
             mop1.val = op & 15;
-            mop2.type = InstTable9900.OP_REG;
+            mop2.type = MachineOperand9900.OP_REG;
             mop2.val = (op & 0x3c0) >> 6;
     
             switch ((op & 0x1c00) >> 10) {
@@ -753,7 +753,7 @@ public class InstTable9900 {
         } else if (op >= 0x3000 && op < 0x3800) {
             mop1.type = (op & 0x30) >> 4;
             mop1.val = op & 15;
-            mop2.type = InstTable9900.OP_CNT;
+            mop2.type = MachineOperand9900.OP_CNT;
             mop2.val = (op & 0x3c0) >> 6;
     
             if (op < 0x3400) {
@@ -824,7 +824,7 @@ public class InstTable9900 {
     
         if (inst.getInst() == 0) // data
         {
-            mop1.type = InstTable9900.OP_IMMED;
+            mop1.type = MachineOperand9900.OP_IMMED;
             mop1.val = mop1.immed = (short) op;
             //inst.name = "DATA";
             inst.size = 2;
@@ -854,30 +854,12 @@ public class InstTable9900 {
 		if (pattern == null)
 			return;
 		
-		if ((pattern.op1 == GEN && ((BaseMachineOperand)target.getOp1()).type == InstTable9900.OP_ADDR)
+		if ((pattern.op1 == GEN && ((BaseMachineOperand)target.getOp1()).type == MachineOperand9900.OP_ADDR)
 				|| (pattern.op1 == IMM)) 
 			target.size += 2;
-		if ((pattern.op2 == GEN && ((BaseMachineOperand)target.getOp2()).type == InstTable9900.OP_ADDR)
+		if ((pattern.op2 == GEN && ((BaseMachineOperand)target.getOp2()).type == MachineOperand9900.OP_ADDR)
 				|| (pattern.op2 == IMM)) 
 			target.size += 2;
 	
     }
-	
-	//  from ts/td field of opcode, don't change order
-	/** register Rx */
-	public static final int OP_REG = 0;
-	/** indirect *Rx */
-	public static final int OP_IND = 1;
-	/** address @>xxxx or @>xxxx(Rx) */ 
-	public static final int OP_ADDR = 2;
-	/**  register increment *Rx+ */
-	public static final int OP_INC = 3;
-	// these depend on the actual instruction
-	public static final int OP_IMMED = 4; // immediate >xxxx (for jump, the target addr)
-	public static final int OP_CNT = 5; // shift count x (4 bits)
-	public static final int OP_JUMP = 6; // jump target >xxxx (offset in bytes from PC)
-	public static final int OP_OFFS_R12 = 7; // offset >xxxx or .xxxx
-	public static final int OP_STATUS = 8; // status word >xxxx
-	public static final int OP_INST = 9; // instruction for X
-	public static final int OP_REG0_SHIFT_COUNT = 10;	// shift count from R0
 }

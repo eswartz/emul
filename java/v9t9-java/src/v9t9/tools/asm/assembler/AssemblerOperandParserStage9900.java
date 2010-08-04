@@ -45,19 +45,15 @@ public class AssemblerOperandParserStage9900 extends
 			AssemblerOperand op = parseFactor();
 			return new ConstPoolRefOperand(op);
 		}
-		case AssemblerTokenizer.CHAR: {
-			String ch = tokenizer.getString();
-			if (ch.length() == 1)
-				return makeNumber((char)ch.charAt(0));
-			else if (ch.length() == 2)
-				return makeNumber((ch.charAt(0) << 8) | (ch.charAt(1) & 0xff));
-			else
-				throw new ParseException("Char literal is wrong length: " + ch);
-			}
+		case AssemblerTokenizer.NUMBER:
+		case AssemblerTokenizer.CHAR:
+			tokenizer.pushBack();
+			return parseNumber();
+
 		case AssemblerTokenizer.ID:
 			Symbol symbol = assembler.referenceSymbol(tokenizer.getString());
 			if (symbol instanceof Equate) {
-				return makeNumber(((Equate) symbol).getValue());
+				return ((Equate) symbol).getValue();
 			}
 			return new SymbolOperand(symbol);
 		case AssemblerTokenizer.STRING:

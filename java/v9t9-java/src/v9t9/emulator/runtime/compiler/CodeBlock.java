@@ -9,7 +9,6 @@ import v9t9.emulator.runtime.cpu.AbortedException;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.tools.asm.decomp.HighLevelInstruction;
@@ -36,7 +35,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
 	int addr;
 	int size;
 	MemoryEntry ent;
-	private Compiler9900 compiler;
+	private Compiler compiler;
 	private AbortedException gAbortedException = new AbortedException();
     
     static int uniqueClassSuffix;
@@ -91,7 +90,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         }
     }
     
-	public void compile(Compiler9900 compiler) {
+	public void compile(Compiler compiler) {
 		this.compiler = compiler;
 		build();
 	}

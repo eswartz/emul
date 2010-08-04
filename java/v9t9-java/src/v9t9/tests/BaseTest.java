@@ -49,10 +49,15 @@ public abstract class BaseTest extends TestCase {
 	public BaseTest(String name) {
 		super(name);
 	}
+	
+	protected void setupAssembler() {
+		stdAssembler.setProcessor(Assembler.PROC_9900);
+	}
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		setupAssembler();
 		memoryModel = new StockMemoryModel();
 		memory = memoryModel.createMemory();
         CPU = memoryModel.getConsole();

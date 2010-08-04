@@ -15,11 +15,6 @@ import v9t9.engine.cpu.Operand;
  */
 public class OperandParser {
 
-	public final static OperandParser STANDARD = new OperandParser();
-	static {
-		STANDARD.appendStage(new MachineOperandParserStage9900());
-	}
-
 	private List<IOperandParserStage> stages = new ArrayList<IOperandParserStage>(1);
 	
 	/** Create a standard operand parser that understands
@@ -36,12 +31,12 @@ public class OperandParser {
 	}
 
 	public Operand parse(AssemblerTokenizer tokenizer) throws ParseException {
+		TokenizerState state = tokenizer.getState();
 		for (IOperandParserStage stage : stages) {
-			int pos = tokenizer.getPos();
 			Operand op = stage.parse(tokenizer);
 			if (op != null)
 				return op;
-			tokenizer.setPos(pos);
+			tokenizer.setState(state);
 		}
 		throw new ParseException("Unknown operand");
     }

@@ -16,10 +16,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.ejs.coffee.core.utils.Check;
+
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.Operand;
@@ -40,8 +41,8 @@ public class TopDownPhase extends Phase {
 	private List<Routine> unresolvedRoutines;
 	private TreeSet<HighLevelInstruction> routineCalls;
 
-	public TopDownPhase(MemoryDomain cpu, IDecompileInfo info) {
-		super(cpu, info);
+	public TopDownPhase(MemoryDomain mainMemory, IDecompileInfo info) {
+		super(mainMemory, info);
 	}
 
 	public void run() {
@@ -199,7 +200,7 @@ public class TopDownPhase extends Phase {
 								unresolvedBlocks.add(label.getBlock());
 							}
 						} else {
-							org.ejs.coffee.core.utils.Check.checkState(false);
+							Check.checkState(false);
 						}
 					}
 				} else {
@@ -249,7 +250,7 @@ public class TopDownPhase extends Phase {
 		
 		// try to convert a reg reference to a multi-label or a known address 
 		if (mop1.isRegisterReference()) {
-			if (mop1.type != InstTable9900.OP_REG && mop1.val != 0) {
+			if (mop1.type != MachineOperand9900.OP_REG && mop1.val != 0) {
 				LabelListOperand llo = handleJumpTable(inst, mop1);
 				if (llo != null) {
 					inst.getInst().setOp1(llo);
@@ -259,7 +260,7 @@ public class TopDownPhase extends Phase {
 				// branch into workspace (whatever!)
 				if (inst.getWp() != 0) {
 					int addr = (inst.getWp() + mop1.val * 2) & 0xfffe;
-					mop1.type = InstTable9900.OP_ADDR;
+					mop1.type = MachineOperand9900.OP_ADDR;
 					mop1.immed = (short) addr;
 					mop1.val = 0;
 					// fall through
@@ -407,7 +408,7 @@ public class TopDownPhase extends Phase {
 	 * @return list of LabelOperands
 	 */
 	private LabelListOperand handleJumpTable(HighLevelInstruction inst, MachineOperand9900 mop1) {
-		if (mop1.type == InstTable9900.OP_ADDR) {
+		if (mop1.type == MachineOperand9900.OP_ADDR) {
 			// register plus address:  address is code and register holds word-aligned offset:
 			//
 			//	LI R2, 2
@@ -428,7 +429,7 @@ public class TopDownPhase extends Phase {
 			int addr = mop1.immed;
 			//Range srcRange = codeProvider.getRangeContaining(inst.getInst().pc);
 			while (true) {
-				int entry = CPU.readWord(addr);
+				int entry = mainMemory.readWord(addr);
 				if (validCodeAddress(entry)) {
 					Operand op = handleLabel(inst, entry);
 					if (op instanceof LabelOperand) {
@@ -452,8 +453,8 @@ public class TopDownPhase extends Phase {
 						+ inst);
 				return null;
 			}
-		} else if (mop1.type == InstTable9900.OP_INC
-				|| mop1.type == InstTable9900.OP_IND) {
+		} else if (mop1.type == MachineOperand9900.OP_INC
+				|| mop1.type == MachineOperand9900.OP_IND) {
 			//if (routine.isReturn(inst)) {
 			//	return null;
 			//}
@@ -537,10 +538,10 @@ public class TopDownPhase extends Phase {
 					if (inst.getInst().getOp1() instanceof MachineOperand) {
 						// just look for address
 						MachineOperand9900 fromOp1 = (MachineOperand9900) inst.getInst().getOp1();
-						if (fromOp1.type == InstTable9900.OP_ADDR) {
+						if (fromOp1.type == MachineOperand9900.OP_ADDR) {
 							int size;
 							if (fromOp1.val == 0) {
-								short target = CPU.readWord(fromOp1.immed);
+								short target = mainMemory.readWord(fromOp1.immed);
 								if (target == 0) {
 									// probably a saved return address or vector
 									System.out.println("Ignoring possible stored address at " + inst);
@@ -669,7 +670,7 @@ public class TopDownPhase extends Phase {
 	private Label[] scanJumpTable(HighLevelInstruction caller, short addr, int size) {
 		List<Label> entries = new ArrayList<Label>();
 		while (size > 0) {
-			short pc = CPU.readWord(addr);
+			short pc = mainMemory.readWord(addr);
 			Label label = findOrCreateLabel(caller, pc & 0xfffe, false);
 			if (label != null) {
 				entries.add(label);
@@ -747,7 +748,7 @@ public class TopDownPhase extends Phase {
 					new AstRegisterExpression(inst.getWp(), mop1.val));
 
 		default:
-			org.ejs.coffee.core.utils.Check.checkState(false);
+			Check.checkState(false);
 		}
 		return null;
 	}

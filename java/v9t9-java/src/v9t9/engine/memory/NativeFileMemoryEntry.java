@@ -8,6 +8,8 @@ package v9t9.engine.memory;
 
 import java.io.IOException;
 
+import org.ejs.coffee.core.utils.Check;
+
 import v9t9.engine.files.NativeFile;
 
 public class NativeFileMemoryEntry extends MemoryEntry {
@@ -23,7 +25,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
             MemoryDomain domain, 
             NativeFile file, int fileoffs, int filesize) {
         super(name, domain, addr, size, area);
-        org.ejs.coffee.core.utils.Check.checkArg(file);
+        Check.checkArg(file);
         this.file = file;
         this.fileoffs = fileoffs;
         this.filesize = filesize;

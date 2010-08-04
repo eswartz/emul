@@ -6,6 +6,8 @@
  */
 package v9t9.tools.asm.common;
 
+import org.ejs.coffee.core.utils.Check;
+
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
@@ -18,7 +20,7 @@ public class LabelOperand implements Operand {
     public Label label;
 
     public LabelOperand(Label label) {
-    	org.ejs.coffee.core.utils.Check.checkArg(label);
+    	Check.checkArg(label);
         this.label = label;
     }
     

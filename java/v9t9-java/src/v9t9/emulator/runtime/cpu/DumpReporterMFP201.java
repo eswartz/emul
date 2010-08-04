@@ -8,8 +8,8 @@ import java.io.PrintWriter;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.InstructionListener;
-import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.RawInstruction;
 
 /**
  * @author ejs
@@ -31,7 +31,7 @@ public class DumpReporterMFP201 implements InstructionListener {
 		PrintWriter dump = Executor.getDump();
 		if (dump == null)
 			return;
-		Instruction9900 ins = before.inst;
+		RawInstruction ins = before.inst;
 	    dump.println(HexUtils.toHex4(ins.pc) 
 	            + " "
 	            + HexUtils.toHex4(cpu.getStatus().flatten())

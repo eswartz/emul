@@ -12,7 +12,7 @@ import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 
 public class LinkedRoutine extends Routine {
 
@@ -31,8 +31,8 @@ public class LinkedRoutine extends Routine {
         if (op1 instanceof RegIndOperand) {
         	return ((RegIndOperand) op1).isReg(returnReg);
         }
-        if (op1 instanceof LLRegIndOperand) {
-        	return ((LLRegIndOperand) op1).getRegister() == returnReg;
+        if (op1 instanceof LLRegOffsOperand) {
+        	return ((LLRegOffsOperand) op1).getRegister() == returnReg;
         }
         return false;
     }

@@ -16,7 +16,6 @@ import v9t9.emulator.hardware.CruAccess;
 import v9t9.emulator.runtime.compiler.Compiler9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.cpu.Status;
-import v9t9.engine.cpu.Status9900;
 
 /**
  * The 9900 engine.
@@ -25,52 +24,16 @@ import v9t9.engine.cpu.Status9900;
  */
 public class Cpu9900 extends CpuBase {
     public static final int TMS_9900_BASE_CYCLES_PER_SEC = 3000000;
-	/** program counter */
-	private short PC;
-	/** workspace pointer */
-	private short WP;
 	/* interrupt pins */
 	public static final int INTLEVEL_RESET = 0;
 	public static final int INTLEVEL_LOAD = 1;
 	public static final int INTLEVEL_INTREQ = 2;
 	
-	
     public Cpu9900(Machine machine, int interruptTick, VdpHandler vdp) {
-    	super(machine, interruptTick, vdp);
-
+    	super(machine, new CpuState9900(machine.getConsole()), interruptTick, vdp);
+    	
         settingCyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
-    }
-
-    /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getPC()
-	 */
-    public short getPC() {
-        return PC;
-    }
-
-    /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#setPC(short)
-	 */
-    public void setPC(short pc) {
-        PC = pc;
-    }
-
-    public Status9900 getStatus() {
-        return (Status9900) status;
-    }
-
-    public void setStatus(Status9900 status) {
-        this.status = status;
-    }
-
-    public short getWP() {
-        return WP;
-    }
-
-    public void setWP(short wp) {
-        // TODO: verify
-        WP = wp;
     }
 
     /* (non-Javadoc)
@@ -109,18 +72,18 @@ public class Cpu9900 extends CpuBase {
     	//System.out.println("contextSwitch from " + 
     	//Utils.toHex4(WP)+"/"+Utils.toHex4(PC) +
     	//" to " + Utils.toHex4(newwp)+"/"+Utils.toHex4(newpc));
-        short oldwp = WP;
-        short oldpc = PC;
-        setWP(newwp);
-        setPC(newpc);
-        console.writeWord(newwp + 13 * 2, oldwp);
-        console.writeWord(newwp + 14 * 2, oldpc);
-        console.writeWord(newwp + 15 * 2, getST());
+        short oldwp = ((CpuState9900) state).getWP();
+        short oldpc = state.getPC();
+        ((CpuState9900) state).setWP(newwp);
+        state.setPC(newpc);
+        state.getConsole().writeWord(newwp + 13 * 2, oldwp);
+        state.getConsole().writeWord(newwp + 14 * 2, oldpc);
+        state.getConsole().writeWord(newwp + 15 * 2, getST());
         allowInts = false;
    }
 
     public void contextSwitch(int addr) {
-        contextSwitch(console.readWord(addr), console.readWord(addr+2));
+        contextSwitch(state.getConsole().readWord(addr), state.getConsole().readWord(addr+2));
         if (addr == 0) {
             /*
              * this mimics the behavior where holding down fctn-quit keeps the
@@ -150,7 +113,7 @@ public class Cpu9900 extends CpuBase {
 	    	cruAccess.pollForPins(this);
 	    	if (cruAccess.isInterruptWaiting()) {
 	    		ic = forceIcTo1 ? 1 : cruAccess.getInterruptLevel(); 
-	    		if (status.getIntMask() >= ic) {
+	    		if (state.getStatus().getIntMask() >= ic) {
 	    			//System.out.println("Triggering interrupt... "+ic);
 	    			pins |= PIN_INTREQ;
 	    			return true;    		
@@ -204,12 +167,12 @@ public class Cpu9900 extends CpuBase {
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
-            status.expand((short) 0);
+            state.getStatus().expand((short) 0);
             contextSwitch(0);
             addCycles(26);
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();
-        } else if ((pins & PIN_INTREQ) != 0 && status.getIntMask() >= ic) {	// already checked int mask in status
+        } else if ((pins & PIN_INTREQ) != 0 && state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
             // maskable
         	pins &= ~PIN_INTREQ;
         	
@@ -233,13 +196,6 @@ public class Cpu9900 extends CpuBase {
     	if (doCheckInterrupts())
     		handleInterrupts();
     }
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getRegister(int)
-	 */
-	public int getRegister(int reg) {
-        return console.readWord(WP + reg*2);
-    }
-
 	public void setCruAccess(CruAccess access) {
 		this.cruAccess = access;
 	}
@@ -250,9 +206,9 @@ public class Cpu9900 extends CpuBase {
 
 	public void saveState(ISettingSection section) {
 		super.saveState(section);
-		section.put("PC", PC);
-		section.put("WP", WP);
-		section.put("status", status.flatten());
+		section.put("PC", state.getPC());
+		section.put("WP", ((CpuState9900) state).getWP());
+		section.put("status", state.getStatus().flatten());
 		section.put("ForceAllIntsLevel1", forceIcTo1);
 	}
 
@@ -262,17 +218,12 @@ public class Cpu9900 extends CpuBase {
 			return;
 		}
 		
-		PC = (short) section.getInt("PC");
-		WP = (short) section.getInt("WP");
-		status.expand((short) section.getInt("status"));
+		state.setPC((short) section.getInt("PC"));
+		((CpuState9900) state).setWP((short) section.getInt("WP"));
+		state.getStatus().expand((short) section.getInt("status"));
 		forceIcTo1 = section.getBoolean("ForceAllIntsLevel1");
 		super.loadState(section);
 		
-	}
-
-	@Override
-	public Status createStatus() {
-		return new Status9900();
 	}
 
 	@Override
@@ -291,5 +242,75 @@ public class Cpu9900 extends CpuBase {
 	public boolean shouldDebugCompiledCode(short pc) {
 		return ((pc >= 0x6000 && pc < 0x8000) 
 				&& Compiler9900.settingDumpModuleRomInstructions.getBoolean());
+	}
+
+	/**
+	 * @return
+	 */
+	public int getWP() {
+		return ((CpuState9900) state).getWP();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#createStatus()
+	 */
+	@Override
+	public Status createStatus() {
+		return state.createStatus();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getPC()
+	 */
+	@Override
+	public short getPC() {
+		return state.getPC();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegister(int)
+	 */
+	@Override
+	public int getRegister(int reg) {
+		return state.getRegister(reg);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getST()
+	 */
+	@Override
+	public short getST() {
+		return state.getST();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#setPC(short)
+	 */
+	@Override
+	public void setPC(short pc) {
+		state.setPC(pc);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#setRegister(int, int)
+	 */
+	@Override
+	public void setRegister(int reg, int val) {
+		state.setRegister(reg, val);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#setST(short)
+	 */
+	@Override
+	public void setST(short st) {
+		state.setST(st);
+	}
+
+	/**
+	 * @param wp
+	 */
+	public void setWP(short wp) {
+		((CpuState9900) state).setWP(wp);
 	}
 }

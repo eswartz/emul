@@ -26,17 +26,13 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		this.setInst(instruction.getInst());
 		this.setOp1(instruction.getOp1());
 		this.setOp2(instruction.getOp2());
+		this.setOp3(instruction.getOp3());
 	}
-
-	public LLInstruction(int inst, LLOperand lop1, LLOperand lop2) {
-		setInst(inst);
-		setOp1(lop1);
-		setOp2(lop2);
-	}
-
+	
 	private int inst;
 	private LLOperand op1;
 	private LLOperand op2;
+	private LLOperand op3;
 	private int size;
 
 	@Override
@@ -50,6 +46,10 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 			if (op2 != null && !(op2 instanceof LLEmptyOperand)) {
 				builder.append(',');
 				builder.append(op2);
+				if (op3 != null && !(op3 instanceof LLEmptyOperand)) {
+					builder.append(',');
+					builder.append(op3);
+				}
 			}
 		}
 		return builder.toString();
@@ -61,6 +61,7 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		setPc(assembler.getPc());
 		setOp1(op1 != null ? op1.resolve(assembler, this) : null);
 		setOp2(op2 != null ? op2.resolve(assembler, this) : null);
+		setOp3(op3 != null ? op3.resolve(assembler, this) : null);
 		assembler.setPc(getPc() + getSize());
 		return new IInstruction[] { this };
 	}
@@ -83,6 +84,8 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 			size += coerceSize(pattern.op1, getOp1().getSize());
 		if (op2 != null)
 			size += coerceSize(pattern.op2, getOp2().getSize());
+		//if (op3 != null)
+		//	size += coerceSize(pattern.op3, getOp3().getSize());
 		return size;
 	}
 
@@ -105,19 +108,6 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		byte[] bytes = instFactory.encodeInstruction(instruction);
 		return bytes;
 	}
-
-	/*
-	public RawInstruction createRawInstruction() throws ResolveException {
-		RawInstruction rawInst = new RawInstruction();
-		rawInst.pc = pc;
-		rawInst.inst = getInst();
-		rawInst.setOp1(getOp1() != null ? getOp1().createMachineOperand() : MachineOperand9900.createEmptyOperand());
-		rawInst.setOp2(getOp2() != null ? getOp2().createMachineOperand() : MachineOperand9900.createEmptyOperand());
-		InstTable9900.calculateInstructionSize(rawInst);
-		InstTable9900.coerceOperandTypes(rawInst);
-		return rawInst;
-	}
-*/
 	
 	public boolean isJumpInst() {
 		return getInst() >= Inst9900.Ijmp && getInst() <= Inst9900.Ijop;
@@ -141,6 +131,15 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		return op2;
 	}
 
+	public void setOp3(LLOperand op3) {
+		this.op3 = op3;
+		size = 0;
+	}
+
+	public LLOperand getOp3() {
+		return op3;
+	}
+	
 	public void setInst(int inst) {
 		this.inst = inst;
 		size = 0;
@@ -150,8 +149,4 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		return inst;
 	}
 	
-	public boolean isByteOp() {
-		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
-		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
-	}
 }

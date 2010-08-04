@@ -64,7 +64,7 @@ import v9t9.engine.memory.MemoryEntry;
  * 
  * @author ejs
  */
-public class Compiler9900 {
+public class Compiler9900 extends Compiler {
 	public interface InstructionRangeCompiler {
 		void compileInstructionRange(Compiler9900 compiler, RawInstruction[] insts,
 				HighLevelCodeInfo highLevel,  
@@ -365,13 +365,13 @@ public class Compiler9900 {
         // if (ins.inst == Instruction.Ilimi)
         // return null;
 
-        if (mop1.type == InstTable9900.OP_STATUS
-                || mop1.type == InstTable9900.OP_INST) {
+        if (mop1.type == MachineOperand9900.OP_STATUS
+                || mop1.type == MachineOperand9900.OP_INST) {
             mop1.type = MachineOperand.OP_NONE;
             mop1.dest = MachineOperand9900.OP_DEST_FALSE;
         }
-        if (mop2.type == InstTable9900.OP_STATUS
-                || mop2.type == InstTable9900.OP_INST) {
+        if (mop2.type == MachineOperand9900.OP_STATUS
+                || mop2.type == MachineOperand9900.OP_INST) {
             mop2.type = MachineOperand.OP_NONE;
             mop2.dest = MachineOperand9900.OP_DEST_FALSE;
         }

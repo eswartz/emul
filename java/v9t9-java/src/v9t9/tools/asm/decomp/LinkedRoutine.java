@@ -8,7 +8,6 @@ package v9t9.tools.asm.decomp;
 
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 
@@ -25,7 +24,7 @@ public class LinkedRoutine extends Routine {
     public boolean isReturn(HighLevelInstruction inst) {
         return inst.getInst().getInst() == Inst9900.Ib
         	&& inst.getInst().getOp1() instanceof MachineOperand
-            && ((BaseMachineOperand)inst.getInst().getOp1()).type == InstTable9900.OP_IND
+            && ((BaseMachineOperand)inst.getInst().getOp1()).type == MachineOperand9900.OP_IND
             && ((BaseMachineOperand)inst.getInst().getOp1()).val == returnReg;
     }
     
@@ -55,7 +54,7 @@ public class LinkedRoutine extends Routine {
 	        	// look for uses of parameter words; ignore any branching
 	        	if (inst.getInst().getOp1() instanceof MachineOperand) {
 	                MachineOperand9900 mop1 = (MachineOperand9900) inst.getInst().getOp1();
-	                if (mop1.isMemory() && mop1.type == InstTable9900.OP_INC 
+	                if (mop1.isMemory() && mop1.type == MachineOperand9900.OP_INC 
 	                        && mop1.val == returnReg) {
 	                	if ((inst.flags & HighLevelInstruction.fByteOp) != 0) {
 	                		entryDataBytes++;

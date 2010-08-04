@@ -16,7 +16,7 @@ import v9t9.engine.memory.DiskMemoryEntry;
 
 public class Assemble {
 
-    private static final String PROGNAME = Assembler.class.getName();
+    private static final String PROGNAME = Assemble.class.getName();
     
     /**
      * @param args
@@ -26,7 +26,9 @@ public class Assemble {
         
         assembler.setList(null);
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:v");
+        boolean selectedProcessor = false;
+        
+        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:v92");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -95,10 +97,22 @@ public class Assemble {
             	assembler.defineEquate(equ);
             	break;    
             }
+            case '9':
+            	assembler.setProcessor(Assembler.PROC_9900);
+            	selectedProcessor = true;
+            	break;
+            case '2':
+            	assembler.setProcessor(Assembler.PROC_MFP201);
+            	selectedProcessor = true;
+            	break;
             default:
             	//throw new AssertionError();
     
             }
+        }
+        
+        if (!selectedProcessor) {
+        	assembler.setProcessor(Assembler.PROC_9900);
         }
         
         if (getopt.getOptind() < args.length) {
@@ -128,7 +142,7 @@ public class Assemble {
                         + "tiasm 9900 Assembler v2.0\n"
                         + "\n" 
                         +
-                        "TIASM <input file> [-r|e <console ROM output>] [-m <module ROM output>]\n" +
+                        PROGNAME + " <input file> [-r|e <console ROM output>] [-m <module ROM output>]\n" +
            			 "[-d <DSR ROM output>] [-g <console GROM output>] [-Dequ=val] [-l<list file>]\n" +
            			 "\n"+
            			 "-r saves the 8k memory block at >0000.\n" +

@@ -4,7 +4,7 @@ import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
@@ -71,7 +71,7 @@ public class RegIndOperand extends RegisterOperand {
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		LLRegisterOperand regRes = (LLRegisterOperand) super.resolve(assembler, inst);
-		return new LLRegIndOperand(regRes.getRegister());
+		return new LLRegOffsOperand(regRes.getRegister());
 	}
 	
 

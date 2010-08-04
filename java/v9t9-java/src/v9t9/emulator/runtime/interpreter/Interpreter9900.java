@@ -23,6 +23,7 @@ import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.Operand;
+import v9t9.engine.cpu.Status;
 import v9t9.engine.cpu.Status9900;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
@@ -52,7 +53,7 @@ public class Interpreter9900 implements Interpreter {
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedInstructions = new HashMap<MemoryArea, Instruction9900[]>();
-        iblock = new InstructionWorkBlock(cpu.createStatus());
+        iblock = new InstructionWorkBlock(cpu);
         iblock.domain = memory;
      }
 
@@ -87,7 +88,7 @@ public class Interpreter9900 implements Interpreter {
         BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
 
         /* get current operand values and instruction timings */
-        fetchOperands(ins, cpu.getWP(), cpu.getStatus());
+        fetchOperands(ins, (Status9900) cpu.getStatus());
 
         /* do pre-instruction status word updates */
         if (ins.info.stsetBefore != Instruction9900.st_NONE) {
@@ -117,9 +118,9 @@ public class Interpreter9900 implements Interpreter {
         iblock.cycles = cpu.getCurrentCycleCount();
         
         /* get current operand values and instruction timings */
-        fetchOperands(ins, cpu.getWP(), cpu.getStatus());
+        fetchOperands(ins, cpu.getStatus());
 
-        InstructionWorkBlock block = new InstructionWorkBlock(cpu.createStatus());
+        InstructionWorkBlock block = new InstructionWorkBlock(cpu);
         this.iblock.copyTo(block);
 
         /* do pre-instruction status word updates */
@@ -190,29 +191,29 @@ public class Interpreter9900 implements Interpreter {
      * @param ins
      * @param memory2
      */
-    private void fetchOperands(Instruction9900 ins, short wp, Status9900 st) {
+    private void fetchOperands(Instruction9900 ins, Status st_) {
         iblock.inst = ins;
         iblock.pc = (short) (iblock.inst.pc + iblock.inst.size);
-        iblock.wp = cpu.getWP();
-        iblock.status = st;
+        iblock.wp = (short) cpu.getWP();
+        iblock.status = st_;
         
         MachineOperand9900 mop1 = (MachineOperand9900) iblock.inst.getOp1();
         MachineOperand9900 mop2 = (MachineOperand9900) iblock.inst.getOp2();
 
         if (mop1.type != MachineOperand.OP_NONE) {
         	mop1.cycles = 0;
-			iblock.ea1 = mop1.getEA(memory, iblock.inst.pc, wp);
+			iblock.ea1 = mop1.getEA(iblock);
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
         	mop2.cycles = 0;
-			iblock.ea2 = mop2.getEA(memory, iblock.inst.pc, wp);
+			iblock.ea2 = mop2.getEA(iblock);
 		}
         if (mop1.type != MachineOperand.OP_NONE) {
         	//if (ins.inst != InstructionTable.Ili)		// even LI will read in the real hardware
-        	iblock.val1 = mop1.getValue(memory, iblock.ea1);
+        	iblock.val1 = mop1.getValue(iblock, iblock.ea1);
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
-			iblock.val2 = mop2.getValue(memory, iblock.ea2);
+			iblock.val2 = mop2.getValue(iblock, iblock.ea2);
 		}
         if (iblock.inst.getInst() == Inst9900.Idiv) {
             iblock.val3 = memory.readWord(iblock.ea2 + 2);
@@ -263,7 +264,7 @@ public class Interpreter9900 implements Interpreter {
             /* flush register changes */
             cpu.setPC(iblock.pc);
             if ((ins.info.writes & InstInfo.INST_RSRC_WP) != 0) {
-				cpu.setWP(iblock.wp);
+				((Cpu9900) cpu).setWP(iblock.wp);
 			}
         }
     }

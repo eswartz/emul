@@ -4,16 +4,12 @@ import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tests.BaseTest;
-import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ContentEntry;
 import v9t9.tools.asm.assembler.Equate;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.Symbol;
 
 public class TestAssemblerMacros extends BaseTest {
-
-	Assembler assembler = new Assembler();
-	
 
 	public void testAssemblerMacroSimple() throws Exception {
 		String text =
@@ -25,7 +21,7 @@ public class TestAssemblerMacros extends BaseTest {
 		testFileContent(text,
 				0x100,
 				new String[] { "ai r10,-10"},
-				new Symbol[] { new Equate(assembler.getSymbolTable(), "SP", 10) });
+				new Symbol[] { new Equate(stdAssembler.getSymbolTable(), "SP", 10) });
 		
 	}
 	public void testAssemblerMacroDefine() throws Exception {
@@ -47,7 +43,7 @@ public class TestAssemblerMacros extends BaseTest {
 				"inv *5+",
 				"a 10,*5+"
 				},
-				new Symbol[] { new Equate(assembler.getSymbolTable(), "SP", 10) });
+				new Symbol[] { new Equate(stdAssembler.getSymbolTable(), "SP", 10) });
 		
 	}
 	
@@ -75,7 +71,7 @@ public class TestAssemblerMacros extends BaseTest {
 				"inv *5+",
 				"a 10,*5+"
 				},
-				new Symbol[] { new Equate(assembler.getSymbolTable(),  "SP", 10) });
+				new Symbol[] { new Equate(stdAssembler.getSymbolTable(),  "SP", 10) });
 		
 	}
 	
@@ -93,8 +89,8 @@ public class TestAssemblerMacros extends BaseTest {
 					0x100,
 					new String[] { 
 					},
-					new Symbol[] { new Equate(assembler.getSymbolTable(),  "SP", 10) });
-			assertEquals(1, assembler.getErrorList().size());
+					new Symbol[] { new Equate(stdAssembler.getSymbolTable(),  "SP", 10) });
+			assertEquals(1, stdAssembler.getErrorList().size());
 		} catch (ParseException e) {
 			
 		}
@@ -123,7 +119,7 @@ public class TestAssemblerMacros extends BaseTest {
 				"mov @-2(10), R5\n",
 				"mov *10, R1\n",
 				},
-				new Symbol[] { new Equate(assembler.getSymbolTable(),  "SP", 10) });
+				new Symbol[] { new Equate(stdAssembler.getSymbolTable(),  "SP", 10) });
 		
 	}
 	public void testAssemblerMacroLoop() throws Exception {
@@ -156,7 +152,7 @@ public class TestAssemblerMacros extends BaseTest {
 				"mov *10+, R5\n",
 				"mov *10+, R1\n",
 				},
-				new Symbol[] { new Equate(assembler.getSymbolTable(),  "SP", 10) });
+				new Symbol[] { new Equate(stdAssembler.getSymbolTable(),  "SP", 10) });
 		
 	}
 
@@ -177,18 +173,18 @@ public class TestAssemblerMacros extends BaseTest {
 				"li R2,>2222\n",
 				"ai R10,10\n",
 				},
-				new Symbol[] { new Equate(assembler.getSymbolTable(),  "SP", 10) });
+				new Symbol[] { new Equate(stdAssembler.getSymbolTable(),  "SP", 10) });
 		
 	}
 
 	
 	private void testFileContent(String text, int pc, String[] stdInsts, Symbol[] symbols) throws Exception {
 		String caller = new Exception().fillInStackTrace().getStackTrace()[1].getMethodName();
-		assembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
-		List<IInstruction> asminsts = assembler.parse();
-		List<IInstruction> realinsts = assembler.resolve(asminsts);
-		realinsts = assembler.optimize(realinsts);
+		stdAssembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
+		List<IInstruction> asminsts = stdAssembler.parse();
+		List<IInstruction> realinsts = stdAssembler.resolve(asminsts);
+		realinsts = stdAssembler.optimize(realinsts);
 
-		testGeneratedContent(assembler, pc, stdInsts, symbols, realinsts);
+		testGeneratedContent(stdAssembler, pc, stdInsts, symbols, realinsts);
 	}
 }

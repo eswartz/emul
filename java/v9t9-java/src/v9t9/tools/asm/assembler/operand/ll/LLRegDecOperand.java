@@ -3,29 +3,26 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import org.ejs.coffee.core.utils.HexUtils;
-
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.ResolveException;
-import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
  * @author Ed
  *
  */
-public class LLJumpOperand extends LLNonImmediateOperand implements Operand {
+public class LLRegDecOperand extends LLNonImmediateOperand implements Operand {
 
-	int offset;
+	int register;
 	
-	public LLJumpOperand(AssemblerOperand original, int offset) {
-		super(original);
-		setOffset(offset);
+	public LLRegDecOperand(int reg) {
+		super(null);
+		setRegister(reg);
 	}
-	
+
 	@Override
 	public String toString() {
-		return "$+>" + HexUtils.toHex4(offset);
+		return "*R" + register + "-";
 	}
 
 	
@@ -33,9 +30,10 @@ public class LLJumpOperand extends LLNonImmediateOperand implements Operand {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + offset;
+		result = prime * result + register;
 		return result;
 	}
+
 
 
 	@Override
@@ -46,39 +44,33 @@ public class LLJumpOperand extends LLNonImmediateOperand implements Operand {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		LLJumpOperand other = (LLJumpOperand) obj;
-		if (offset != other.offset)
+		LLRegDecOperand other = (LLRegDecOperand) obj;
+		if (register != other.register)
 			return false;
 		return true;
 	}
 
+
 	@Override
 	public boolean isMemory() {
-		return false;
+		return true;
 	}
 	@Override
 	public boolean isRegister() {
 		return false;
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.tools.asm.assembler.operand.hl.AssemblerOperand#isConst()
-	 */
-	@Override
-	public boolean isConst() {
-		return true;
+
+	public int getRegister() {
+		return register;
 	}
 
 
-	public int getOffset() {
-		return offset;
-	}
-
-	public void setOffset(int offset) {
-		this.offset = offset;
+	public void setRegister(int number) {
+		this.register = number;
 	}
 
 	@Override
 	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
-		return opFactory.createJumpOperand(this);
+		return opFactory.createRegDecOperand(this);
 	}
 }

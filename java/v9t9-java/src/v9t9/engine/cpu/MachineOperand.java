@@ -1,6 +1,5 @@
 package v9t9.engine.cpu;
 
-import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 
@@ -42,24 +41,12 @@ public interface MachineOperand extends Operand {
 	 */
 	short advancePc(short addr);
 
-	/**
-	 * Read any extra immediates for an operand from the instruction stream.
-	 * Fills in Operand.size and Operand.immed.
-	 * 
-	 * @param w
-	 * @param addr
-	 *            is current address
-	 * @param pc
-	 *            address of instruction
-	 * @param wp
-	 *            workspace pointer
-	 * @return new address
-	 */
-	short fetchOperandImmediates(MemoryDomain domain, short addr);
 
 	boolean hasImmediate();
 
 	/**
+	 * Get the value of an operand with the given effective address
+	 * and current fetched value, for display in a dump or the debugger.
 	 * @return
 	 */
 	String valueString(short ea, short theValue);
@@ -69,19 +56,16 @@ public interface MachineOperand extends Operand {
 	 * (Memory cycles are accounted through the memory handler.)
 	 * @return
 	 */
-	short getEA(MemoryDomain domain, int pc, short wp);
+	short getEA(InstructionWorkBlock block);
 
 	/**
+	 * Get the value of the operand with the given effective address
 	 * @param memory
 	 * @return
 	 */
-	short getValue(MemoryDomain domain, short ea);
+	short getValue(InstructionWorkBlock block, short ea);
 
 	void convertToImmedate();
-
-	/** Generate the bits for the operand, or throw IllegalArgumentException
-	 * for a non-machine operand */
-	int getBits();
 
 	/**
 	 * @param inst  

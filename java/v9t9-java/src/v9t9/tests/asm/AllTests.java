@@ -38,11 +38,13 @@ public class AllTests {
 		TestSuite suite = new TestSuite("Test for assembler");
 		//$JUnit-BEGIN$
 		suite.addTestSuite(TestAssembler.class);
+		suite.addTestSuite(TestAssembler9900.class);
+		suite.addTestSuite(TestAssemblerMFP201Operands.class);
 		suite.addTestSuite(TestAssemblerMacros.class);
 		suite.addTestSuite(TestAssemblerOptimizer.class);
 		suite.addTestSuite(TestAssemblerJumpRanges.class);
-		suite.addTestSuite(MachineOperandParserTest.class);
-		suite.addTestSuite(InstructionTest.class);
+		suite.addTestSuite(MachineOperandParserTest9900.class);
+		suite.addTestSuite(InstructionTest9900.class);
 		suite.addTestSuite(TestAssemblerConstPool.class);
 		//$JUnit-END$
 		return suite;

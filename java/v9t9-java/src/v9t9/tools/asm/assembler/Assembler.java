@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.IInstruction;
+import v9t9.engine.cpu.MachineOperandMFP201;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
@@ -28,9 +29,11 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
 import v9t9.tools.asm.assembler.directive.DescrDirective;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
+import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 import v9t9.tools.asm.assembler.transform.ConstPool;
-import v9t9.tools.asm.assembler.transform.JumpFixer;
-import v9t9.tools.asm.assembler.transform.Simplifier;
+import v9t9.tools.asm.assembler.transform.JumpFixer9900;
+import v9t9.tools.asm.assembler.transform.Simplifier9900;
 import v9t9.tools.asm.common.MemoryRanges;
 
 /**
@@ -42,12 +45,6 @@ public class Assembler {
 	
 	/** memory domain for area-sensitive view of the world */
     private MemoryDomain StdCPU = new MemoryDomain("CPU Std");
-    private MemoryEntry StdCPURAM = new MemoryEntry("Std CPU RAM",
-    		StdCPU, 0x8000, 0x400, new StockRamArea(0x400));
-    private MemoryEntry StdCPUExpLoRAM = new MemoryEntry("Std CPU Low Exp RAM",
-    		StdCPU, 0x2000, 0x2000, new StockRamArea(0x2000));
-    private MemoryEntry StdCPUExpHiRAM = new MemoryEntry("Std CPU Hi Exp RAM",
-    		StdCPU, 0xA000, 0x6000, new StockRamArea(0x6000));
     
     /** memory domain for the assembler's view of the world */
     private MemoryDomain CPUFullRAM = new MemoryDomain("CPU Write");
@@ -81,16 +78,80 @@ public class Assembler {
 	private static final Pattern INCL_LINE = Pattern.compile(
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
 	
-    public Assembler() {
-    	CPUFullRAM.mapEntry(CPUFullRAMEntry);
-    	StdCPU.mapEntry(StdCPURAM);
-    	StdCPU.mapEntry(StdCPUExpHiRAM);
-    	StdCPU.mapEntry(StdCPUExpLoRAM);
-    	
-    	instructionFactory = new InstructionFactory9900();
-    	OperandParser operandParser = new OperandParser();
-    	operandParser.appendStage(new AssemblerOperandParserStage9900(this));
-    	StandardInstructionParserStage9900 instStage = new StandardInstructionParserStage9900(operandParser);
+	/**
+	 * @param proc
+	 */
+	public void setProcessor(String proc) {
+		if (instructionFactory != null) {
+			throw new IllegalStateException("already set the processor");
+		}
+		if (PROC_9900.equals(proc)) {
+		    MemoryEntry StdCPURAM = new MemoryEntry("Std CPU RAM",
+		    		StdCPU, 0x8000, 0x400, new StockRamArea(0x400));
+		    MemoryEntry StdCPUExpLoRAM = new MemoryEntry("Std CPU Low Exp RAM",
+		    		StdCPU, 0x2000, 0x2000, new StockRamArea(0x2000));
+		    MemoryEntry StdCPUExpHiRAM = new MemoryEntry("Std CPU Hi Exp RAM",
+		    		StdCPU, 0xA000, 0x6000, new StockRamArea(0x6000));
+		    
+			StdCPU.mapEntry(StdCPURAM);
+			StdCPU.mapEntry(StdCPUExpHiRAM);
+			StdCPU.mapEntry(StdCPUExpLoRAM);
+			
+			instructionFactory = new InstructionFactory9900();
+			
+	    	OperandParser operandParser = new OperandParser();
+			operandParser.appendStage(new AssemblerOperandParserStage9900(this));
+			
+			configureParser(
+					operandParser,
+					new StandardInstructionParserStage9900(operandParser));
+
+			for (int i = 0; i < 16; i++) {
+				symbolTable.addSymbol(new Equate(symbolTable, "R" + i, i));
+			}
+		}
+		else if (PROC_MFP201.equals(proc)) {
+			// in actual runtime, 0-0x200 is I/O
+		    MemoryEntry StdCPURAM = new MemoryEntry("Std CPU RAM",
+		    		StdCPU, 0x0, 0x10000, new StockRamArea(0x10000));
+		    
+			StdCPU.mapEntry(StdCPURAM);
+			
+			instructionFactory = new InstructionFactoryMFP201();
+			
+	    	OperandParser operandParser = new OperandParser();
+			operandParser.appendStage(new AssemblerOperandParserStageMFP201(this));
+			
+			configureParser(
+					operandParser,
+					new StandardInstructionParserStageMFP201(operandParser));
+			
+			for (int i = 0; i < 16; i++) {
+				symbolTable.addSymbol(new Equate(symbolTable, "R" + i,
+						new RegisterOperand(new NumberOperand(i)),
+						i));
+			}
+			symbolTable.addSymbol(new Equate(symbolTable, "SP",
+					new RegisterOperand(new NumberOperand(MachineOperandMFP201.SP)),
+					MachineOperandMFP201.SP));
+			symbolTable.addSymbol(new Equate(symbolTable, "PC",
+					new RegisterOperand(new NumberOperand(MachineOperandMFP201.PC)),
+					MachineOperandMFP201.PC));
+			symbolTable.addSymbol(new Equate(symbolTable, "SR",
+					new RegisterOperand(new NumberOperand(MachineOperandMFP201.SR)),
+					MachineOperandMFP201.SR));
+ 		}
+		else {
+			throw new IllegalArgumentException("unknown processor: "+ proc);
+		}
+	}
+    /**
+     * @param operandParserStage 
+     * @param instStage 
+	 * 
+	 */
+	private void configureParser(OperandParser operandParser, IInstructionParserStage instStage) {
+
 
     	// handle directives first to trap DATA and BYTE
     	instructionParser.appendStage(new ConditionalInstructionParserStage(this, operandParser));
@@ -117,20 +178,17 @@ public class Assembler {
 			}
     		
     	});
-    	
+    			
+	}
+	public Assembler() {
+		CPUFullRAM.mapEntry(CPUFullRAMEntry);
+
     	//instDescrMap = new HashMap<IInstruction, String>();
     	
     	symbolTable = new SymbolTable();
-    	registerPredefinedSymbols();
     	
     	labelTable = new IdentityHashMap<Symbol, LabelDirective>();
     	errorList = new ArrayList<AssemblerError>();
-	}
-
-	private void registerPredefinedSymbols() {
-		for (int i = 0; i < 16; i++) {
-			symbolTable.addSymbol(new Equate(symbolTable, "R" + i, i));
-		}
 	}
 
 	public void setList(PrintStream stream) {
@@ -239,6 +297,9 @@ public class Assembler {
 	
 	private static final Pattern ASM_LINE = 
 		Pattern.compile("(?:((?:[A-Za-z_][A-Za-z0-9_]*)|(?:\\$[0-9])):?(?:\\s*)(.*))|(?:\\s+(.*))");
+
+	public static final String PROC_9900 = "9900";
+	public static final String PROC_MFP201 = "MFP201";
 	
 	private void assembleInst(List<IInstruction> asmInsts, String line_, String filename, int lineno) throws ParseException {
 		//if (DEBUG>0) log.println(descr+" " +line);
@@ -467,7 +528,7 @@ public class Assembler {
 	 * @param insts
 	 */
 	public List<IInstruction> optimize(List<IInstruction> insts) {
-		new Simplifier(insts).run();
+		new Simplifier9900(insts).run();
 		return resolve(insts);
 	}
 	
@@ -478,7 +539,7 @@ public class Assembler {
 	 */
 	public List<IInstruction> fixupJumps(List<IInstruction> insts) {
 		try {
-			return new JumpFixer(this, insts).run();
+			return new JumpFixer9900(this, insts).run();
 		} catch (ResolveException e) {
 			reportError(e);
 			return insts;
@@ -658,8 +719,7 @@ public class Assembler {
     		val = Integer.parseInt(equ.substring(idx+1));
     		equ = equ.substring(0, idx);
     	}
-    	Equate equate = new Equate(getSymbolTable(),
-    			equ, val);
+    	Equate equate = new Equate(getSymbolTable(), equ, val);
     	equate.setDefined(true);
     	getSymbolTable().addSymbol(equate);
 	}
@@ -670,4 +730,6 @@ public class Assembler {
 	public IInstructionFactory getInstructionFactory() {
 		return instructionFactory;
 	}
+
+	
 }

@@ -10,13 +10,13 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.ejs.coffee.core.utils.Check;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.RawInstruction;
@@ -199,7 +199,7 @@ public class HighLevelInstruction  implements Comparable<HighLevelInstruction>{
 		inst.setInst(InstTableCommon.Idata);
 		inst.size = 2;
 		inst.setName("DATA");
-		inst.setOp1(new MachineOperand9900(InstTable9900.OP_IMMED));
+		inst.setOp1(new MachineOperand9900(MachineOperand9900.OP_IMMED));
 		((BaseMachineOperand)inst.getOp1()).immed = inst.opcode;
 		inst.setOp2(new MachineOperand9900(MachineOperand.OP_NONE));
 	}
@@ -215,7 +215,7 @@ public class HighLevelInstruction  implements Comparable<HighLevelInstruction>{
 		} else if (inst.getOp1() instanceof DataWordListOperand) {
 			
 		} else {
-			org.ejs.coffee.core.utils.Check.checkState(false);
+			Check.checkState(false);
 		}
 		return blocks;
 	}

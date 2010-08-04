@@ -3,18 +3,19 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory;
 import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLCountOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegDecOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLScaledRegOffsOperand;
 
 /**
  * @author Ed
@@ -29,7 +30,7 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	public MachineOperand createAddressOperand(LLAddrOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(
-				InstTable9900.OP_ADDR, (short) 0, 
+				MachineOperand9900.OP_ADDR, (short) 0, 
 				(short) ((LLAddrOperand)op).getAddress());
 	}
 	
@@ -39,7 +40,7 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	@Override
 	public MachineOperand createCountOperand(LLCountOperand op)
 			throws ResolveException {
-		return MachineOperand9900.createGeneralOperand(InstTable9900.OP_CNT, 
+		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_CNT, 
 				(short) op.getCount());
 	}
 	
@@ -57,7 +58,7 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	@Override
 	public MachineOperand createRegisterOperand(LLRegisterOperand op)
 			throws ResolveException {
-		return MachineOperand9900.createGeneralOperand(InstTable9900.OP_REG, 
+		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_REG, 
 				(short) op.getRegister());
 	}
 
@@ -65,13 +66,13 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIndOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand)
 	 */
 	@Override
-	public MachineOperand createRegIndOperand(LLRegIndOperand op)
+	public MachineOperand createRegIndOperand(LLRegOffsOperand op)
 			throws ResolveException {
 		if (op.getOffset() == 0)
-			return MachineOperand9900.createGeneralOperand(InstTable9900.OP_IND, 
+			return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_IND, 
 					(short) op.getRegister());
 		else
-			return MachineOperand9900.createGeneralOperand(InstTable9900.OP_ADDR, 
+			return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_ADDR, 
 					(short) op.getRegister(), (short) op.getOffset());
 
 	}
@@ -82,8 +83,14 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	@Override
 	public MachineOperand createRegIncOperand(LLRegIncOperand op)
 			throws ResolveException {
-		return MachineOperand9900.createGeneralOperand(InstTable9900.OP_INC, 
+		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_INC, 
 				(short) op.getRegister());
+	}
+	
+	@Override
+	public MachineOperand createRegDecOperand(LLRegDecOperand op)
+			throws ResolveException {
+		throw new ResolveException(op, "register decrement not supported");
 	}
 	
 	/* (non-Javadoc)
@@ -92,7 +99,7 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	@Override
 	public MachineOperand createOffsetOperand(LLOffsetOperand op)
 			throws ResolveException {
-		return MachineOperand9900.createGeneralOperand(InstTable9900.OP_OFFS_R12, 
+		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_OFFS_R12, 
 				(short) op.getOffset());
 	}
 	
@@ -100,9 +107,9 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createJumpOperand(v9t9.tools.asm.assembler.operand.ll.LLJumpOperand)
 	 */
 	@Override
-	public MachineOperand createJumpOperand(LLJumpOperand op)
+	public MachineOperand createPCRelativeOperand(LLPCRelativeOperand op)
 			throws ResolveException {
-		MachineOperand9900 mop = new MachineOperand9900(InstTable9900.OP_JUMP);
+		MachineOperand9900 mop = new MachineOperand9900(MachineOperand9900.OP_JUMP);
 		mop.val = op.getOffset();
 		return mop;
 	}
@@ -114,5 +121,14 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	public MachineOperand createImmedOperand(LLImmedOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createImmediate(op.getValue());
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createScaledRegOffsOperand(v9t9.tools.asm.assembler.operand.ll.LLScaledRegOffsOperand)
+	 */
+	@Override
+	public MachineOperand createScaledRegOffsOperand(LLScaledRegOffsOperand op)
+			throws ResolveException {
+		throw new ResolveException(op, "scaled register offset not supported");
 	}
 }

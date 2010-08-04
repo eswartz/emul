@@ -9,7 +9,7 @@ import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLForwardOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
@@ -83,8 +83,8 @@ public class AddrOperand extends BaseOperand {
 		if (lop instanceof LLForwardOperand)
 			return new LLForwardOperand(this, 2);
 		
-		if (lop instanceof LLJumpOperand) {
-			lop = new LLAddrOperand(this, inst.getPc() + ((LLJumpOperand)lop).getOffset());
+		if (lop instanceof LLPCRelativeOperand) {
+			lop = new LLAddrOperand(this, inst.getPc() + ((LLPCRelativeOperand)lop).getOffset());
 		} else if (lop instanceof LLImmedOperand) {
 			lop = new LLAddrOperand(this, lop.getImmediate());
 		} else

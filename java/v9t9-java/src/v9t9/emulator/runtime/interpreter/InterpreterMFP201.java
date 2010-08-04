@@ -56,7 +56,7 @@ public class InterpreterMFP201 implements Interpreter {
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedInstructions = new HashMap<MemoryArea, Instruction9900[]>();
-        iblock = new InstructionWorkBlock(cpu.createStatus());
+        iblock = new InstructionWorkBlock(cpu);
         iblock.domain = memory;
      }
 
@@ -134,7 +134,7 @@ public class InterpreterMFP201 implements Interpreter {
         /* get current operand values and instruction timings */
         fetchOperands(cpu, ins, cpu.getWP(), cpu.getStatus());
 
-        InstructionWorkBlock block = new InstructionWorkBlock(cpu.createStatus());
+        InstructionWorkBlock block = new InstructionWorkBlock(cpu);
         this.iblock.copyTo(block);
         
         /* dump values before execution */

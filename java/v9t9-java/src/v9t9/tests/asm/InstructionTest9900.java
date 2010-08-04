@@ -7,8 +7,10 @@
 package v9t9.tests.asm;
 
 import junit.framework.TestCase;
+import v9t9.emulator.runtime.cpu.CpuState9900;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTable9900;
+import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
@@ -16,10 +18,10 @@ import v9t9.engine.memory.MemoryDomain;
 /**
  * @author ejs
  */
-public class InstructionTest extends TestCase {
+public class InstructionTest9900 extends TestCase {
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(InstructionTest.class);
+        junit.textui.TestRunner.run(InstructionTest9900.class);
     }
 
     /*
@@ -43,6 +45,12 @@ public class InstructionTest extends TestCase {
             data[i] = code[i];
         }
         MemoryDomain domain = MemoryDomain.newFromArray(data, true);
+        
+        CpuState9900 state = new CpuState9900(domain);
+        state.setWP((short) 0x83e0);
+        
+        InstructionWorkBlock block = new InstructionWorkBlock(state);
+        
       	RawInstruction inst;
       	MachineOperand9900 mop1;
       	MachineOperand9900 mop2;
@@ -51,6 +59,7 @@ public class InstructionTest extends TestCase {
       	// simple decoding
       	short pc = 0;
       	inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
+      	block.inst = inst;
       	mop1 = (MachineOperand9900) inst.getOp1();
         mop2 = (MachineOperand9900) inst.getOp2();
 
@@ -58,7 +67,7 @@ public class InstructionTest extends TestCase {
         assertEquals(Inst9900.Iclr, inst.getInst());
         assertEquals("CLR", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
-        assertEquals(InstTable9900.OP_REG, mop1.type);
+        assertEquals(MachineOperand9900.OP_REG, mop1.type);
         assertEquals(3, mop1.val);
         assertEquals("R3", mop1.toString());
         assertEquals(2, inst.size);
@@ -67,15 +76,16 @@ public class InstructionTest extends TestCase {
         // some pc-relative tests
         pc += inst.size;
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
+        block.inst = inst;
         mop1 = (MachineOperand9900) inst.getOp1();
         mop2 = (MachineOperand9900) inst.getOp2();
-        ea1 = mop1.getEA(domain, pc, (short)0x83e0);
+        ea1 = mop1.getEA(block);
 
         assertTrue(inst != null);
         assertEquals(Inst9900.Ijmp, inst.getInst());
         assertEquals("JMP", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
-        assertEquals(InstTable9900.OP_JUMP, mop1.type);
+        assertEquals(MachineOperand9900.OP_JUMP, mop1.type);
         assertEquals(0, mop1.val);
         assertEquals(ea1, inst.pc);
         assertEquals("$+>0", mop1.toString());
@@ -84,15 +94,16 @@ public class InstructionTest extends TestCase {
 
         pc += inst.size;
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
+        block.inst = inst;
         mop1 = (MachineOperand9900) inst.getOp1();
         mop2 = (MachineOperand9900) inst.getOp2();
-        ea1 = mop1.getEA(domain, pc, (short)0x83e0);
+        ea1 = mop1.getEA(block);
 
         assertTrue(inst != null);
         assertEquals(Inst9900.Ijnc, inst.getInst());
         assertEquals("JNC", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
-        assertEquals(InstTable9900.OP_JUMP, mop1.type);
+        assertEquals(MachineOperand9900.OP_JUMP, mop1.type);
         assertEquals(-254, mop1.val);
         assertEquals((short)(inst.pc-254), ea1);
         assertEquals("$+>FF02", mop1.toString());
@@ -103,22 +114,23 @@ public class InstructionTest extends TestCase {
 
         domain.writeWord(0x83E0 + 9*2, (short)0x4000);
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
+        block.inst = inst;
         mop1 = (MachineOperand9900) inst.getOp1();
         mop2 = (MachineOperand9900) inst.getOp2();
-        ea1 = mop1.getEA(domain, pc, (short)0x83e0);
-        ea2 = mop2.getEA(domain, pc, (short)0x83e0);
+        ea1 = mop1.getEA(block);
+        ea2 = mop2.getEA(block);
 
         // ensure register indirects work.
         assertTrue(inst != null);
         assertEquals(Inst9900.Imov, inst.getInst());
         assertEquals("MOV", InstTable9900.getInstName(inst.getInst()));
         assertEquals(false, mop1.byteop);
-        assertEquals(InstTable9900.OP_ADDR, mop1.type);
+        assertEquals(MachineOperand9900.OP_ADDR, mop1.type);
         assertEquals(9, mop1.val);
         assertEquals(0x4a, mop1.immed);
         assertEquals(0x404a, ea1);
         assertEquals("@>4A(R9)", mop1.toString());
-        assertEquals(InstTable9900.OP_ADDR, mop2.type);
+        assertEquals(MachineOperand9900.OP_ADDR, mop2.type);
         assertEquals(9, mop2.val);
         assertEquals(0x7fff, mop2.immed);
         assertEquals((short)(0x4000+0x7fff), ea2);
@@ -127,10 +139,11 @@ public class InstructionTest extends TestCase {
 
         domain.writeWord(0x83E0 + 9*2, (short)0x4001);
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
+        block.inst = inst;
         mop1 = (MachineOperand9900) inst.getOp1();
         mop2 = (MachineOperand9900) inst.getOp2();
-        ea1 = mop1.getEA(domain, pc, (short)0x83e0);
-        ea2 = mop2.getEA(domain, pc, (short)0x83e0);
+        ea1 = mop1.getEA(block);
+        ea2 = mop2.getEA(block);
 
         // make sure odd register plus odd offset works
         assertTrue(inst != null);
@@ -141,26 +154,27 @@ public class InstructionTest extends TestCase {
         pc += inst.size;
         domain.writeWord(0x83E0 + 2*2, (short)0x4000);
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
+        block.inst = inst;
         mop1 = (MachineOperand9900) inst.getOp1();
         mop2 = (MachineOperand9900) inst.getOp2();
         // TODO[
         mop1.byteop = true;
         mop2.byteop = true;
         //]
-        ea1 = mop1.getEA(domain, pc, (short)0x83e0);
-        ea2 = mop2.getEA(domain, pc, (short)0x83e0);
+        ea1 = mop1.getEA(block);
+        ea2 = mop2.getEA(block);
 
         assertTrue(inst != null);
         assertEquals(Inst9900.Icb, inst.getInst());
         assertEquals("CB", InstTable9900.getInstName(inst.getInst()));
         //assertEquals(true, mop1.byteop); //TODO
-        assertEquals(InstTable9900.OP_INC, mop1.type);
+        assertEquals(MachineOperand9900.OP_INC, mop1.type);
         assertEquals(2, mop1.val);
         assertEquals(0, mop1.immed);
         assertEquals(0x4000, ea1);
         assertEquals("*R2+", mop1.toString());
 
-        assertEquals(InstTable9900.OP_INC, mop2.type);
+        assertEquals(MachineOperand9900.OP_INC, mop2.type);
         //assertEquals(true, mop2.byteop); //TODO
         assertEquals(2, mop2.val);
         assertEquals(0, mop2.immed);

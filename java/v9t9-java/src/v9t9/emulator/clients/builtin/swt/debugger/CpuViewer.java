@@ -353,7 +353,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 	 */
 	public void executed(final InstructionWorkBlock before, InstructionWorkBlock after_) {
 		if (isWatching || showNextInstruction) {
-			InstructionWorkBlock after= new InstructionWorkBlock(machine.getCpu().createStatus());
+			InstructionWorkBlock after= new InstructionWorkBlock(machine.getCpu());
 	        after_.copyTo(after);
 			InstRow row = new InstRow(before, after);
 			instContentProvider.addInstRow(row);

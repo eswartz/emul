@@ -13,8 +13,8 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstInfo;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.LabelOperand;
 import v9t9.tools.asm.common.MemoryRange;
@@ -32,8 +32,8 @@ import v9t9.tools.asm.common.MemoryRange;
  */
 public class FullSweepPhase extends Phase {
 
-    FullSweepPhase(MemoryDomain cpu, IDecompileInfo info) {
-        super(cpu, info);
+    FullSweepPhase(MemoryDomain mainMemory, IDecompileInfo info) {
+        super(mainMemory, info);
     }
     
 
@@ -58,7 +58,7 @@ public class FullSweepPhase extends Phase {
                     if (operandIsLabel(inst, (MachineOperand) inst.getInst().getOp1())) {
                         if (inst.getInst().getInst() == Inst9900.Iblwp) {
                             // need to read vector
-                            if (((BaseMachineOperand)inst.getInst().getOp1()).type == InstTable9900.OP_ADDR) {
+                            if (((BaseMachineOperand)inst.getInst().getOp1()).type == MachineOperand9900.OP_ADDR) {
                                 int vecaddr = operandEffectiveAddress(inst, (MachineOperand) inst.getInst().getOp1());
                                 
                                 Routine routine = addPossibleContextSwitch(vecaddr, null);

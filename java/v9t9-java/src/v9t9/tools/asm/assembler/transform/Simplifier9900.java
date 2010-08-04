@@ -16,11 +16,11 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author Ed
  *
  */
-public class Simplifier {
+public class Simplifier9900 {
 
 	private final List<IInstruction> insts;
 
-	public Simplifier(List<IInstruction> insts) {
+	public Simplifier9900(List<IInstruction> insts) {
 		this.insts = insts;
 	}
 

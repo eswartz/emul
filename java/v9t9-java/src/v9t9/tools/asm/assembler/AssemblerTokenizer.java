@@ -208,4 +208,19 @@ public class AssemblerTokenizer {
 			}
 		}
 	}
+	/**
+	 * @return
+	 */
+	public TokenizerState getState() {
+		return new TokenizerState(curtoken, image, number, pushedBack);
+	}
+	/**
+	 * @param state
+	 */
+	public void setState(TokenizerState state) {
+		this.curtoken = state.curtoken;
+		this.image = state.image;
+		this.number = state.number;
+		this.pushedBack = state.pushedBack;
+	}
 }
