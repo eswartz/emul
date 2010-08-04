@@ -125,12 +125,10 @@ function start_vm()
   echo "<td>" >>$HTML
   echo "<a href=\"$LOGFILE\">" >>$HTML
   echo Starting $VM >logs/$LOGFILE
-  if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM >>logs/$LOGFILE 2>&1
-  then
+  if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM >>logs/$LOGFILE 2>&1 ; then
     echo $VM is already running >>logs/$LOGFILE
     echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
-  elif VBoxManage --nologo startvm $VM >>logs/$LOGFILE 2>&1
-  then
+  elif VBoxManage --nologo startvm $VM >>logs/$LOGFILE 2>&1 ; then
     echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
   else
     echo "<img src=\"../icons/cross.png\" title=\"Error\"/>" >>$HTML
@@ -153,8 +151,14 @@ function ping_vm()
     if $SSH "ping $PING_FLAG 30 192.168.155.1" >>logs/$LOGFILE 2>&1 || \
        $SSH "ping $PING_FLAG 30 192.168.155.1" >>logs/$LOGFILE 2>&1
     then
-      if $SSH "cd $TRUNK" >>logs/$LOGFILE 2>&1
-      then
+      if [ "$SET_CLOCK" = 2 ] ; then
+        DATE=`date +%m%d%H%M.%S`
+        $SSH "/bin/date $DATE" >>logs/$LOGFILE 2>&1
+      elif [ ! -z "$SET_CLOCK" ] ; then
+        DATE=`date +%m%d%H%M.%S`
+        $SSH -tt "sudo /bin/date $DATE" >>logs/$LOGFILE 2>&1
+      fi
+      if $SSH "cd $TRUNK" >>logs/$LOGFILE 2>&1 ; then
         echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
       else
         echo "<img src=\"../icons/cross.png\" title=\"SSH cd failed\"/>" >>$HTML
@@ -176,7 +180,10 @@ function stop_vm()
   echo "<td>" >>$HTML
   echo "<a href=\"$HOST-Stop.txt\">" >>$HTML
   echo "Stop $VM" >logs/$HOST-Stop.txt
-  if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM ; then
+  if [ -z "$STOP_VM" ] ; then
+    echo "VM does not need to be stopped" >>logs/$HOST-Stop.txt
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  elif VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM ; then
     if VBoxManage --nologo controlvm $VM savestate >>logs/$HOST-Stop.txt 2>&1 ; then
       echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
     else
@@ -215,7 +222,11 @@ function build_and_start_server()
   if $SSH "cd $TRUNK/server; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
     echo "<img src=\"../icons/accept.png\" title=\"Server OK\"/>" >>$HTML
-    $SSH "$TRUNK/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$BUILD/logs/server-$HOST.txt -l0x800" >>logs/$LOGFILE 2>&1 &
+    local SERVER_LFILE=$BUILD/logs/server-$HOST.txt
+    if [ $OPSYS = Windows ] ; then
+      local SERVER_LFILE=`$SSH "cygpath -m %SERVER_LFILE"`
+    fi
+    $SSH "$TRUNK/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$SERVER_LFILE -l0x800" >>logs/$LOGFILE 2>&1 &
   else
     echo "<img src=\"../icons/cross.png\" title=\"Server build failed\"/>" >>$HTML
   fi
@@ -244,13 +255,17 @@ function build_and_test_agent()
   echo "Compiler: $CC" >>logs/$LOGFILE
   if $SSH "cd $TRUNK/agent; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
-    $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 -L$BUILD/logs/agent-$HOST.txt -l0" >>logs/$LOGFILE 2>&1 &
+    local AGENT_LFILE=$BUILD/logs/agent-$HOST.txt
+    if [ $OPSYS = Windows ] ; then
+      local AGENT_LFILE=`$SSH "cygpath -m %AGENT_LFILE"`
+    fi
+    $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 -L$AGENT_LFILE -l0" >>logs/$LOGFILE 2>&1 &
     sleep 15
     TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1534
     TESTURL2=ID=Test-Proxy-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1535
     echo >>logs/$LOGFILE
     echo "Starting tests, target: $TESTURL1" >>logs/$LOGFILE
-    if time -p java \
+    if time -p java -ea \
       -classpath java-bin \
       org.eclipse.tm.internal.tcf.debug.tests.Main \
       $TESTURL1 \
@@ -258,7 +273,7 @@ function build_and_test_agent()
     then
       echo >>logs/$LOGFILE
       echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGFILE
-      if time -p java \
+      if time -p java -ea \
         -classpath java-bin \
         org.eclipse.tm.internal.tcf.debug.tests.Main \
         $TESTURL2 $TESTURL1 \
@@ -314,7 +329,7 @@ do
     SKIP=
     HOST=`grep $VM vms.lst | sed -e "s/.*:\\(.*\\)/\\1/"`
     VMNAME=`VBoxManage --nologo showvminfo $VM --machinereadable | grep name= | sed -e "s/name=\"\(.*\)\"/\1/"`
-    SSH="ssh $VBOXUSER@$HOST"
+    SSH="ssh -o TCPKeepAlive=yes $VBOXUSER@$HOST"
 
     echo "<th>" >>$HTML
     echo "$HOST" >>$HTML
@@ -332,21 +347,36 @@ do
     PING_FLAG=-c
     OPSYS_FLAG=-o
     BUILD_RPM=
+    STOP_VM=
+    SET_CLOCK=
 
     case $HOST in
+    192.168.155.4)
+      # Ubuntu
+      STOP_VM=1
+      SET_CLOCK=
+      ;;
     192.168.155.5)
       # Free BSD
       MAKE=gmake
       OPSYS_FLAG=-s
       BUILD_RPM=
+      STOP_VM=1
       ;;
     192.168.155.10)
       # Windows 7 32
       PING_FLAG=-n
+      SET_CLOCK=2
       ;;
     192.168.155.11)
       # Windows 7 64
       PING_FLAG=-n
+      SET_CLOCK=2
+      ;;
+    *)
+      # Linux
+      STOP_VM=1
+      SET_CLOCK=1
       ;;
     esac
 
