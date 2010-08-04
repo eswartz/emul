@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.Command;
+import org.eclipse.tm.tcf.core.TransientPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -33,50 +34,13 @@ public class LocatorProxy implements ILocator {
 
     private boolean get_peers_done = false;
 
-    private class Peer implements IPeer {
+    private class Peer extends TransientPeer {
 
         private final IPeer parent;
 
-        private final Map<String, String> attrs;
-
         Peer(IPeer parent, Map<String,String> attrs) {
+            super(attrs);
             this.parent = parent;
-            this.attrs = attrs;
-        }
-
-        public Map<String, String> getAttributes() {
-            assert Protocol.isDispatchThread();
-            return attrs;
-        }
-
-        public String getID() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_ID);
-        }
-
-        public String getServiceManagerID() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_SERVICE_MANGER_ID);
-        }
-
-        public String getAgentID() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_AGENT_ID);
-        }
-
-        public String getName() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_NAME);
-        }
-
-        public String getOSName() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_OS_NAME);
-        }
-
-        public String getTransportName() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_TRANSPORT_NAME);
         }
 
         public IChannel openChannel() {

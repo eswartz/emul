@@ -27,6 +27,9 @@ import org.eclipse.tm.tcf.services.ILocator.LocatorListener;
 
 /**
  * Abstract implementation of IPeer interface.
+ * Objects of this class are stored in Locator service peer table.
+ * The class implements sending notification events to Locator listeners.
+ * See TransientPeer for IPeer objects that are not stored in the Locator table.
  */
 public class AbstractPeer implements IPeer {
 

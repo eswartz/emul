@@ -17,14 +17,12 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
-import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -39,49 +37,6 @@ public class ServerTCP extends ServerSocket {
     private static class ServerPeer extends AbstractPeer {
         ServerPeer(Map<String,String> attrs) {
             super(attrs);
-        }
-    }
-
-    private static class TransientPeer implements IPeer {
-
-        private final Map<String,String> attrs;
-
-        TransientPeer(Map<String,String> attrs) {
-            this.attrs = Collections.unmodifiableMap(attrs);
-        }
-
-        public Map<String, String> getAttributes() {
-            return attrs;
-        }
-
-        public String getID() {
-            return attrs.get(ATTR_ID);
-        }
-
-        public String getServiceManagerID() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_SERVICE_MANGER_ID);
-        }
-
-        public String getAgentID() {
-            assert Protocol.isDispatchThread();
-            return attrs.get(ATTR_AGENT_ID);
-        }
-
-        public String getName() {
-            return attrs.get(ATTR_NAME);
-        }
-
-        public String getOSName() {
-            return attrs.get(ATTR_OS_NAME);
-        }
-
-        public String getTransportName() {
-            return attrs.get(ATTR_TRANSPORT_NAME);
-        }
-
-        public IChannel openChannel() {
-            throw new Error("Cannot open channel for transient peer");
         }
     }
 

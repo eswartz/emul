@@ -474,7 +474,7 @@ public abstract class AbstractChannel implements IChannel {
                             if (state != STATE_OPENNING) return;
                             if (x != null) terminate(x);
                             final IPeer parent = remote_peer;
-                            remote_peer = new AbstractPeer(peer_attrs) {
+                            remote_peer = new TransientPeer(peer_attrs) {
                                 public IChannel openChannel() {
                                     IChannel c = parent.openChannel();
                                     c.redirect(peer_attrs);
