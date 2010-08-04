@@ -82,7 +82,7 @@ class EventQueue implements IEventQueue, Runnable {
     }
 
     private void error(Throwable x) {
-        Protocol.log("Unhandled excetion in TCF event dispatch", x); //$NON-NLS-1$
+        Protocol.log("Unhandled exception in TCF event dispatch", x); //$NON-NLS-1$
     }
 
     public void run() {
