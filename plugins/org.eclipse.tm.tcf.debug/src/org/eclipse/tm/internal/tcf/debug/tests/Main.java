@@ -158,5 +158,11 @@ public class Main {
                 runTestSuite(getPeer(args));
             }
         });
+        Protocol.invokeLater(10 * 60 * 1000, new Runnable() {
+            public void run() {
+                System.err.println("Error: timeout - test's not finished in 10 min");
+                System.exit(5);
+            }
+        });
     }
 }
