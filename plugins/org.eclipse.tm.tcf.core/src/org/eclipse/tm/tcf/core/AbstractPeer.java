@@ -11,11 +11,10 @@
 package org.eclipse.tm.tcf.core;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.eclipse.tm.internal.tcf.core.RemotePeer;
 import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -31,24 +30,32 @@ import org.eclipse.tm.tcf.services.ILocator.LocatorListener;
  * The class implements sending notification events to Locator listeners.
  * See TransientPeer for IPeer objects that are not stored in the Locator table.
  */
-public class AbstractPeer implements IPeer {
-
-    private final Map<String, String> ro_attrs;
-    private final Map<String, String> rw_attrs;
+public class AbstractPeer extends TransientPeer {
 
     private long last_heart_beat_time;
 
     public AbstractPeer(Map<String,String> attrs) {
+        super(attrs);
         assert Protocol.isDispatchThread();
-        if (attrs != null) {
-            rw_attrs = new HashMap<String,String>(attrs);
+        String id = getID();
+        assert id != null;
+        Map<String,IPeer> peers = LocatorService.getLocator().getPeers();
+        if (peers.get(id) instanceof RemotePeer) {
+            ((RemotePeer)peers.get(id)).dispose();
         }
-        else {
-            rw_attrs = new HashMap<String,String>();
-        }
-        ro_attrs = Collections.unmodifiableMap(rw_attrs);
-        assert getID() != null;
-        LocatorService.addPeer(this);
+        assert peers.get(id) == null;
+        peers.put(id, this);
+        sendPeerAddedEvent();
+    }
+
+    public void dispose() {
+        assert Protocol.isDispatchThread();
+        String id = getID();
+        assert id != null;
+        Map<String,IPeer> peers = LocatorService.getLocator().getPeers();
+        assert peers.get(id) == this;
+        peers.remove(id);
+        sendPeerRemovedEvent();
     }
 
     void onChannelTerminated() {
@@ -115,7 +122,7 @@ public class AbstractPeer implements IPeer {
         }
     }
 
-    public void sendPeerAddedEvent() {
+    private void sendPeerAddedEvent() {
         for (LocatorListener l : LocatorService.getListeners()) {
             try {
                 l.peerAdded(this);
@@ -134,7 +141,7 @@ public class AbstractPeer implements IPeer {
         last_heart_beat_time = System.currentTimeMillis();
     }
 
-    public void sendPeerRemovedEvent() {
+    private void sendPeerRemovedEvent() {
         for (LocatorListener l : LocatorService.getListeners()) {
             try {
                 l.peerRemoved(rw_attrs.get(ATTR_ID));
@@ -150,47 +157,6 @@ public class AbstractPeer implements IPeer {
         catch (IOException x) {
             Protocol.log("Locator: failed to send 'peerRemoved' event", x);
         }
-    }
-
-    public void dispose() {
-        assert Protocol.isDispatchThread();
-        TransportManager.peerDisposed(this);
-        LocatorService.removePeer(this);
-    }
-
-    public Map<String,String> getAttributes() {
-        assert Protocol.isDispatchThread();
-        return ro_attrs;
-    }
-
-    public String getID() {
-        assert Protocol.isDispatchThread();
-        return ro_attrs.get(ATTR_ID);
-    }
-
-    public String getServiceManagerID() {
-        assert Protocol.isDispatchThread();
-        return ro_attrs.get(ATTR_SERVICE_MANGER_ID);
-    }
-
-    public String getAgentID() {
-        assert Protocol.isDispatchThread();
-        return ro_attrs.get(ATTR_AGENT_ID);
-    }
-
-    public String getName() {
-        assert Protocol.isDispatchThread();
-        return ro_attrs.get(ATTR_NAME);
-    }
-
-    public String getOSName() {
-        assert Protocol.isDispatchThread();
-        return ro_attrs.get(ATTR_OS_NAME);
-    }
-
-    public String getTransportName() {
-        assert Protocol.isDispatchThread();
-        return ro_attrs.get(ATTR_TRANSPORT_NAME);
     }
 
     public IChannel openChannel() {

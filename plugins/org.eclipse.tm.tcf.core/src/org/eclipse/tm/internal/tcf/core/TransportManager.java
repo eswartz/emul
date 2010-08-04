@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.core;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.tm.tcf.core.AbstractChannel;
-import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.core.ChannelTCP;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -156,16 +154,6 @@ public class TransportManager {
 
     public static void removeChanelOpenListener(Protocol.ChannelOpenListener listener) {
         listeners.remove(listener);
-    }
-
-    public static void peerDisposed(AbstractPeer peer) {
-        Exception error = null;
-        Collection<AbstractChannel> bf = new ArrayList<AbstractChannel>(channels);
-        for (AbstractChannel c : bf) {
-            if (c.getRemotePeer() != peer) continue;
-            if (error == null) error = new Exception("Peer is disposed");
-            c.terminate(error);
-        }
     }
 
     /**

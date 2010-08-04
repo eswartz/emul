@@ -37,9 +37,7 @@ import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.LoggingUtil;
 import org.eclipse.tm.internal.tcf.core.RemotePeer;
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
-import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.tcf.core.AbstractChannel;
-import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -295,6 +293,7 @@ public class LocatorService implements ILocator {
 
     public LocatorService() {
         locator = this;
+        local_peer = new LocalPeer();
         try {
             loopback_addr = InetAddress.getByName(null);
             out_buf[0] = 'T';
@@ -358,20 +357,6 @@ public class LocatorService implements ILocator {
 
     public static LocatorListener[] getListeners() {
         return listeners.toArray(new LocatorListener[listeners.size()]);
-    }
-
-    public static void addPeer(AbstractPeer peer) {
-        assert peers.get(peer.getID()) == null;
-        if (peer instanceof LocalPeer) local_peer = (LocalPeer)peer;
-        peers.put(peer.getID(), peer);
-        peer.sendPeerAddedEvent();
-    }
-
-    public static void removePeer(AbstractPeer peer) {
-        String id = peer.getID();
-        assert peers.get(id) == peer;
-        peers.remove(id);
-        peer.sendPeerRemovedEvent();
     }
 
     private Map<String,Object> makeErrorReport(int code, String msg) {
@@ -480,12 +465,7 @@ public class LocatorService implements ILocator {
             }
         }
         if (stale_peers != null) {
-            IChannel[] open_channels = TransportManager.getOpenChannels();
-            HashSet<IPeer> connected_peers = new HashSet<IPeer>();
-            for (IChannel c : open_channels) connected_peers.add(c.getRemotePeer());
-            for (RemotePeer p : stale_peers) {
-                if (!connected_peers.contains(p)) p.dispose();
-            }
+            for (RemotePeer p : stale_peers) p.dispose();
         }
         /* Try to become a master */
         if (socket.getLocalPort() != DISCOVEY_PORT && last_master_packet_time + DATA_RETENTION_PERIOD / 2 <= time) {
@@ -1141,8 +1121,8 @@ public class LocatorService implements ILocator {
     }
 
     /**
-     * Convenience variant that takes a DatagramPacket for specifying the target address and
-     * port
+     * Convenience variant that takes a DatagramPacket for specifying
+     * the target address and port.
      */
     private static void traceDiscoveryPacket(boolean received, String type, Map<String,String> attrs, DatagramPacket packet) {
         traceDiscoveryPacket(received, type, attrs, packet.getAddress(), packet.getPort());

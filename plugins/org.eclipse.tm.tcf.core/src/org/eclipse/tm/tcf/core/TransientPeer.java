@@ -11,6 +11,7 @@
 package org.eclipse.tm.tcf.core;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -24,40 +25,42 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  */
 public class TransientPeer implements IPeer {
 
-    private final Map<String,String> attrs;
+    protected final Map<String, String> ro_attrs;
+    protected final Map<String, String> rw_attrs;
 
     public TransientPeer(Map<String,String> attrs) {
-        this.attrs = Collections.unmodifiableMap(attrs);
+        rw_attrs = new HashMap<String,String>(attrs);
+        ro_attrs = Collections.unmodifiableMap(rw_attrs);
     }
 
     public Map<String, String> getAttributes() {
-        return attrs;
+        return ro_attrs;
     }
 
     public String getID() {
-        return attrs.get(ATTR_ID);
+        return ro_attrs.get(ATTR_ID);
     }
 
     public String getServiceManagerID() {
         assert Protocol.isDispatchThread();
-        return attrs.get(ATTR_SERVICE_MANGER_ID);
+        return ro_attrs.get(ATTR_SERVICE_MANGER_ID);
     }
 
     public String getAgentID() {
         assert Protocol.isDispatchThread();
-        return attrs.get(ATTR_AGENT_ID);
+        return ro_attrs.get(ATTR_AGENT_ID);
     }
 
     public String getName() {
-        return attrs.get(ATTR_NAME);
+        return ro_attrs.get(ATTR_NAME);
     }
 
     public String getOSName() {
-        return attrs.get(ATTR_OS_NAME);
+        return ro_attrs.get(ATTR_OS_NAME);
     }
 
     public String getTransportName() {
-        return attrs.get(ATTR_TRANSPORT_NAME);
+        return ro_attrs.get(ATTR_TRANSPORT_NAME);
     }
 
     public IChannel openChannel() {

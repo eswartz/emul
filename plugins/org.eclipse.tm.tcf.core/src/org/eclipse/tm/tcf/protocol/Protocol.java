@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 import java.util.UUID;
 
-import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
 import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
@@ -120,7 +119,6 @@ public final class Protocol {
 
             public void run() {
                 new LocatorService();
-                new LocalPeer();
             }
         });
         timer_dispatcher.setName("TCF Timer Dispatcher");
