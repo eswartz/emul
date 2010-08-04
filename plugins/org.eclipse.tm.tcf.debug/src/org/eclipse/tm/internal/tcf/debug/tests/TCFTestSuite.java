@@ -197,7 +197,7 @@ public class TCFTestSuite {
                     for (int i = 0; i < channels.length; i++) {
                         if (channels[i] == channel) {
                             channels[i] = null;
-                            if (error != null) errors.add(error);
+                            if (error != null && errors.isEmpty()) errors.add(error);
                             for (Iterator<ITCFTest> n = active_tests.keySet().iterator(); n.hasNext();) {
                                 if (active_tests.get(n.next()) == channel) n.remove();
                             }

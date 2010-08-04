@@ -519,6 +519,7 @@ class TestExpressions implements ITCFTest,
     }
 
     public void contextException(String context, String msg) {
+        exit(new Exception("Context exception: " + msg));
     }
 
     public void contextRemoved(String[] context_ids) {
