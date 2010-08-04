@@ -6,7 +6,6 @@ package v9t9.tools.asm.assembler;
 import v9t9.engine.cpu.ICPUInstruction;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
@@ -24,7 +23,15 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 	private AssemblerOperand op1;
 	private AssemblerOperand op2;
 	private AssemblerOperand op3;
+	private final IInstructionFactory factory;
 	
+	
+	/**
+	 * 
+	 */
+	public AssemblerInstruction(IInstructionFactory factory) {
+		this.factory = factory;
+	}
 	
 	public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass)
 	throws ResolveException {
@@ -48,14 +55,15 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 		if (lop3 != null)
 			throw new ResolveException(lop3, "cannot resolve third operand");
 		
-		LLInstruction target = new LLInstruction();
+		LLInstruction target = new LLInstruction(assembler.getInstructionFactory());
 		target.setPc(pc);
 		target.setInst(getInst());
 		target.setOp1(lop1);
 		target.setOp2(lop2);
 		//target.completeInstruction(pc);
 	
-		assembler.setPc((short) (target.getPc() + target.getSize()));
+		int size = assembler.getInstructionFactory().getInstSize(target);
+		assembler.setPc((short) (target.getPc() + size));
 		return new LLInstruction[] { target };
 	}
 	
@@ -63,7 +71,7 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(InstTable9900.getInstName(inst));
+		builder.append(factory.getInstName(inst));
 		if (op1 != null && !(op1 instanceof LLEmptyOperand)) {
 			builder.append(' ');
 			builder.append(op1);

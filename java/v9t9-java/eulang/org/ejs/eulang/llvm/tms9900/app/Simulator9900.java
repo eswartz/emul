@@ -52,6 +52,8 @@ import v9t9.engine.cpu.Status9900;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.tools.asm.assembler.IInstructionFactory;
+import v9t9.tools.asm.assembler.InstructionFactory9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
@@ -80,6 +82,7 @@ public class Simulator9900 {
 	private short vrAddr;
 	private final ITarget target;
 
+	private IInstructionFactory instFactory = InstructionFactory9900.INSTANCE;
 	static class Frame {
 		public Frame(Routine routine, HashMap<ISymbol, Short> symbolToAddrMap,
 				TreeMap<Short, ISymbol> addrToSymbolMap, short vrAddr) {
@@ -347,7 +350,7 @@ public class Simulator9900 {
         // write stubs for intrinsics
         for (Map.Entry<Pair<ITarget.Intrinsic, LLType>, ISymbol> entry : target.getIntrinsicSymbols().entrySet()) {
         	if (!addrToSymbolMap.values().contains(entry.getValue())) {
-	        	pcToInstrMap.put(pc, AsmInstruction.create(InstTableCommon.Idata));
+	        	pcToInstrMap.put(pc, AsmInstruction.create(instFactory, InstTableCommon.Idata));
 	        	addrToSymbolMap.put(pc, entry.getValue());
 	        	symbolToAddrMap.put(entry.getValue(), pc);
 	        	intrinsicAddrMap.put(pc, entry.getKey());

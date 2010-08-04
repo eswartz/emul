@@ -198,7 +198,7 @@ public class ConstPool {
 			for (int i = 0; i < words.length; i++) {
 				short word = words[i];
 				if (i == 0 || (i == 1 && inst.getOp1().isConstant())
-						|| (((i == 1 && inst.getOp1().getSize() == 0) || i == 2) && inst.getOp2().isConstant())) {
+						|| (((i == 1 && inst.getOp1().getSize() == 0) || i == 2) && inst.getOp2()!=null && inst.getOp2().isConstant())) {
 					Integer ipc = instWordMap.get(word & 0xffff);
 					if (ipc == null) {
 						instWordMap.put(word & 0xffff, pc + i * 2);

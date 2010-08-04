@@ -3,8 +3,6 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import org.ejs.coffee.core.utils.HexUtils;
-
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.ResolveException;
@@ -14,20 +12,22 @@ import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
  * @author Ed
  *
  */
-public class LLRegOffsOperand extends LLOperand implements Operand {
+public class LLRegIndOperand extends LLOperand implements Operand {
 
 	int register;
-	int offset;
 	
-	public LLRegOffsOperand(RegOffsOperand original, int reg, int offset) {
+	public LLRegIndOperand(int reg) {
+		super(null);
+		setRegister(reg);
+	}
+	public LLRegIndOperand(RegOffsOperand original, int reg) {
 		super(original);
 		setRegister(reg);
-		setOffset(offset);
 	}
 
 	@Override
 	public String toString() {
-		return "@>" + HexUtils.toHex4(offset) + "(R" + register + ")";
+		return "*R" + register;
 	}
 
 	
@@ -35,7 +35,6 @@ public class LLRegOffsOperand extends LLOperand implements Operand {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + offset;
 		result = prime * result + register;
 		return result;
 	}
@@ -47,9 +46,7 @@ public class LLRegOffsOperand extends LLOperand implements Operand {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		LLRegOffsOperand other = (LLRegOffsOperand) obj;
-		if (offset != other.offset)
-			return false;
+		LLRegIndOperand other = (LLRegIndOperand) obj;
 		if (register != other.register)
 			return false;
 		return true;
@@ -81,34 +78,23 @@ public class LLRegOffsOperand extends LLOperand implements Operand {
 		this.register = number;
 	}
 
-
-	public int getOffset() {
-		return offset;
-	}
-
-
-	public void setOffset(int offset) {
-		this.offset = offset;
-	}
-
-
 	@Override
 	public boolean hasImmediate() {
-		return true;
+		return false;
 	}
 	
 	@Override
 	public int getSize() {
-		return offset != 0 ? 2 : 0;
+		return 0;
 	}
 	
 	@Override
 	public int getImmediate() {
-		return offset;
+		return 0;
 	}
 	
 	@Override
 	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory) throws ResolveException {
-		return opFactory.createRegOffsOperand(this);
+		return opFactory.createRegIndOperand(this);
 	}
 }

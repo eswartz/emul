@@ -20,6 +20,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
@@ -61,14 +62,14 @@ public class MachineOperandParserTest9900 extends TestCase {
         assertTrue(mop.type == MachineOperand9900.OP_REG && mop.val == 15 && mop.immed == 0);
         
         op = parse("*r11");
-        assertTrue(op instanceof LLRegOffsOperand);
-        assertEquals(11, ((LLRegOffsOperand) op).getRegister());
+        assertTrue(op instanceof LLRegIndOperand);
+        assertEquals(11, ((LLRegIndOperand) op).getRegister());
         mop = createMachineOperand9900(op);
         assertTrue(mop.type == MachineOperand9900.OP_IND && mop.val == 11 && mop.immed == 0);
         
         op = parse("*10");
-        assertTrue(op instanceof LLRegOffsOperand);
-        assertEquals(10, ((LLRegOffsOperand) op).getRegister());
+        assertTrue(op instanceof LLRegIndOperand);
+        assertEquals(10, ((LLRegIndOperand) op).getRegister());
         mop = createMachineOperand9900(op);
         assertTrue(mop.type == MachineOperand9900.OP_IND && mop.val == 10 && mop.immed == 0);
         
@@ -142,6 +143,13 @@ public class MachineOperandParserTest9900 extends TestCase {
         assertEquals(14, ((LLRegOffsOperand) op).getRegister());
         mop = createMachineOperand9900(op);
         assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 14 && mop.immed == -2);
+        
+        op = parse("@>0(R14)");
+        assertTrue(op instanceof LLRegOffsOperand);
+        assertEquals(0, ((LLRegOffsOperand) op).getOffset());
+        assertEquals(14, ((LLRegOffsOperand) op).getRegister());
+        mop = createMachineOperand9900(op);
+        assertTrue(mop.type == MachineOperand9900.OP_ADDR && mop.val == 14 && mop.immed == 0);
         
         
     }

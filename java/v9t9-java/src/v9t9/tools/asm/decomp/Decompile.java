@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.tools.asm.assembler.Assembler;
+
 public class Decompile {
 
     private static final String PROGNAME = Decompile.class.getName();
@@ -22,15 +24,29 @@ public class Decompile {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-        Decompiler dc = new Decompiler();
+    	String proc = null;
+        Getopt getopt = new Getopt(PROGNAME, args, "92");
+        int opt;
+        while ((opt = getopt.getopt()) != -1) {
+			switch (opt) {
+            case '9':
+            	proc = Assembler.PROC_9900;
+            	break;
+            case '2':
+            	proc = Assembler.PROC_MFP201;
+            	break;
+            }
+        }
+        
+        
+        Decompiler dc = new Decompiler(proc);
         
         int baseAddr = 0;
         List<Integer> refDefTables = new ArrayList<Integer>();
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?e:o:nb:a:r:d:hcvs:");
-        int opt;
+        getopt = new Getopt(PROGNAME, args, "?e:o:nb:a:r:d:hcvs:92");
         while ((opt = getopt.getopt()) != -1) {
-            switch (opt) {
+			switch (opt) {
             case '?':
                 help();
                 break;
@@ -72,6 +88,10 @@ public class Decompile {
                 refDefTables.add(new Integer(addr));
                 break;
             }
+            case '9':
+            case '2':
+            	// handled above
+            	break;
             default:
                 throw new AssertionError();
     

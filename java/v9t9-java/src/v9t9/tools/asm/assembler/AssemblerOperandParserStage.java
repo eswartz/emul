@@ -12,8 +12,8 @@ import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.hl.UnaryOperand;
 
 /**
- * Parse operands for an assembler.  This handles expressions, symbols,
- * and forward references.
+ * Parse operands for an assembler and generate a high level {@link AssemblerOperand}.
+ * This handles expressions, symbols, and forward references.
  * @author ejs
  *
  */

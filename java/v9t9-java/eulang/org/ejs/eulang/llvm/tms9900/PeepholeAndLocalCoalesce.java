@@ -569,7 +569,6 @@ public abstract class PeepholeAndLocalCoalesce extends
 		for (int idx = 0; idx < ops.length; idx++) {
 			
 			int newInst = asmInstruction.getInst();
-			
 			AssemblerOperand op = ops[idx];
 			AssemblerOperand newOp = op;
 			
@@ -586,10 +585,11 @@ public abstract class PeepholeAndLocalCoalesce extends
 				op = ((RegIndOperand) op).getReg();
 			} else if (op.equals(from) && toOp.isMemory()) {
 				// a direct reference:  needs to be LEA
-				if (isTargetMoveInstruction(asmInstruction))
+				if (isTargetMoveInstruction(asmInstruction)) {
 					newInst = Plea;
-				else
+				} else {
 					assert false;
+				}
 			}
 			
 			if (op.equals(from)) {

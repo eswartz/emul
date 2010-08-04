@@ -9,6 +9,7 @@ package v9t9.tests;
 import java.util.Collection;
 import java.util.Map;
 
+import v9t9.emulator.runtime.cpu.CpuState9900;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.InstTableCommon;
@@ -28,6 +29,7 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
 {
 	protected HighLevelCodeInfo highLevel;
 	protected IDecompileInfo decompileInfo;
+	protected CpuState9900 state;
     
     @Override
     protected void setUp() throws Exception {
@@ -41,7 +43,8 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
         memory.addAndMap(new MemoryEntry("CPU RAM", CPU, 0x8000, 0x400,
                 new StockRamArea(0x400)
                 ));
-        highLevel = new HighLevelCodeInfo(CPU);
+        state = new CpuState9900(CPU);
+        highLevel = new HighLevelCodeInfo(state);
         highLevel.getMemoryRanges().addRange(0, 0x2000, true);
         highLevel.getMemoryRanges().addRange(0x8300, 0x100, true);
         

@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.Check;
 
+import v9t9.emulator.runtime.cpu.CpuState;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.memory.MemoryDomain;
@@ -43,9 +44,11 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	protected Map<Label, Routine> routineMap;
 	private TopDownPhase phase;
 	private boolean scanned;
+	private CpuState state;
 
-	public HighLevelCodeInfo(MemoryDomain domain) {
-		this.domain = domain;
+	public HighLevelCodeInfo(CpuState state) {
+		this.state = state;
+		this.domain = state.getConsole();
 		//this.ent = entry;
 		//this.addr = addr;
 		//this.size = size;
@@ -211,7 +214,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		if (!scanned) {
 			scanned = true;
 			
-			phase = new TopDownPhase(domain, this);
+			phase = new TopDownPhase(state, this);
 				
 			phase.addStandardROMRoutines();
 				

@@ -10,6 +10,7 @@ import java.util.Iterator;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.runtime.cpu.CpuState;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstInfo;
@@ -32,8 +33,8 @@ import v9t9.tools.asm.common.MemoryRange;
  */
 public class FullSweepPhase extends Phase {
 
-    FullSweepPhase(MemoryDomain mainMemory, IDecompileInfo info) {
-        super(mainMemory, info);
+    FullSweepPhase(CpuState state, IDecompileInfo info) {
+        super(state, info);
     }
     
 

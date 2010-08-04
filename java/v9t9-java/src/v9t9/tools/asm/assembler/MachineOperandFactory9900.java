@@ -13,6 +13,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegDecOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLScaledRegOffsOperand;
@@ -66,17 +67,22 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIndOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand)
 	 */
 	@Override
-	public MachineOperand createRegIndOperand(LLRegOffsOperand op)
+	public MachineOperand createRegIndOperand(LLRegIndOperand op)
 			throws ResolveException {
-		if (op.getOffset() == 0)
-			return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_IND, 
+		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_IND, 
 					(short) op.getRegister());
-		else
-			return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_ADDR, 
-					(short) op.getRegister(), (short) op.getOffset());
 
 	}
-	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIndOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand)
+	 */
+	@Override
+	public MachineOperand createRegOffsOperand(LLRegOffsOperand op)
+			throws ResolveException {
+		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_ADDR, 
+				(short) op.getRegister(), (short) op.getOffset());
+
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIncOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand)
 	 */
@@ -109,8 +115,10 @@ public class MachineOperandFactory9900 implements IMachineOperandFactory {
 	@Override
 	public MachineOperand createPCRelativeOperand(LLPCRelativeOperand op)
 			throws ResolveException {
+		//MachineOperand9900 mop = MachineOperand9900.createGeneralOperand(
+		//		MachineOperand9900.OP_ADDR, MachineOperand9900.PCREL, (short)op.getOffset());
 		MachineOperand9900 mop = new MachineOperand9900(MachineOperand9900.OP_JUMP);
-		mop.val = op.getOffset();
+		mop.val = (short) op.getOffset();
 		return mop;
 	}
 	

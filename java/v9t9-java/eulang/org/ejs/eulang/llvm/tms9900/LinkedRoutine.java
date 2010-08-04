@@ -10,9 +10,10 @@ import org.ejs.eulang.llvm.directives.LLDefineDirective;
 
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.Operand;
+import v9t9.tools.asm.assembler.InstructionFactory9900;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
 
 public class LinkedRoutine extends Routine {
 
@@ -31,16 +32,16 @@ public class LinkedRoutine extends Routine {
         if (op1 instanceof RegIndOperand) {
         	return ((RegIndOperand) op1).isReg(returnReg);
         }
-        if (op1 instanceof LLRegOffsOperand) {
-        	return ((LLRegOffsOperand) op1).getRegister() == returnReg;
+        if (op1 instanceof LLRegIndOperand) {
+        	return ((LLRegIndOperand) op1).getRegister() == returnReg;
         }
         return false;
     }
     
     public AsmInstruction[] generateReturn() {
     	return new AsmInstruction[] { 
-    			AsmInstruction.create(Inst9900.Ib, 
-    					new RegIndOperand(new NumberOperand(returnReg)))
+    			AsmInstruction.create(InstructionFactory9900.INSTANCE, 
+    					Inst9900.Ib, new RegIndOperand(new NumberOperand(returnReg)))
     	};
     }
 }

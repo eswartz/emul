@@ -24,6 +24,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
@@ -56,12 +57,12 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
     		return null;
     	}
     	
-    	HLInstruction inst = new HLInstruction();
+    	HLInstruction inst = new HLInstruction(InstructionFactoryMFP201.INSTANCE);
     	String name = tokenizer.currentToken().toUpperCase();
     	AssemblerOperand op1 = null, op2 = null;
         if (name.equals("RT")) {
         	inst.setInst(Inst9900.Ib);
-            op1 = new LLRegOffsOperand(11);
+            op1 = new LLRegIndOperand(11);
         } else if (name.equals("NOP")) {
         	inst.setInst(Inst9900.Ijmp);
             op1 = new LLPCRelativeOperand(null, 2);

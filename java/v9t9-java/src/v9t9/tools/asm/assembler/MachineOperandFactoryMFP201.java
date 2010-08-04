@@ -13,6 +13,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegDecOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLScaledRegOffsOperand;
@@ -56,23 +57,29 @@ public class MachineOperandFactoryMFP201 implements IMachineOperandFactory {
 	@Override
 	public MachineOperand createAddressOperand(LLAddrOperand op)
 			throws ResolveException {
-		return MachineOperandMFP201.createGeneralOperand(
-				MachineOperandMFP201.OP_OFFS, (short) 0, 
-				(short) ((LLAddrOperand)op).getAddress());
+		throw new ResolveException(op, "bare address not supported");
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIndOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand)
 	 */
 	@Override
-	public MachineOperand createRegIndOperand(LLRegOffsOperand op)
+	public MachineOperand createRegIndOperand(LLRegIndOperand op)
 			throws ResolveException {
-		if (op.getOffset() == 0)
-			return MachineOperandMFP201.createGeneralOperand(MachineOperandMFP201.OP_IND, 
-					(short) op.getRegister());
-		else
-			return MachineOperandMFP201.createGeneralOperand(MachineOperandMFP201.OP_OFFS, 
-					(short) op.getRegister(), (short) op.getOffset());
+		return MachineOperandMFP201.createGeneralOperand(
+				MachineOperandMFP201.OP_IND, 
+				(short) op.getRegister());
+
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIndOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand)
+	 */
+	@Override
+	public MachineOperand createRegOffsOperand(LLRegOffsOperand op)
+			throws ResolveException {
+		return MachineOperandMFP201.createGeneralOperand(
+				MachineOperandMFP201.OP_OFFS, 
+				(short) op.getRegister(), (short) op.getOffset());
 
 	}
 	

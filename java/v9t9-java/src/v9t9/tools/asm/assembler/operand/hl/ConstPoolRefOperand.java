@@ -55,7 +55,7 @@ public class ConstPoolRefOperand extends ImmediateOperand {
 		int value = op.getImmediate();
 		AssemblerOperand addr;
 		boolean isByte = inst instanceof ICPUInstruction &&
-			assembler.getInstructionFactory().isByteOp(((ICPUInstruction) inst).getInst());
+			assembler.getInstructionFactory().isByteInst(((ICPUInstruction) inst).getInst());
 		if (isByte) {
 			addr = assembler.getConstPool().allocateByte(value);
 		} else {

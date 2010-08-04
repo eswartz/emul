@@ -11,6 +11,8 @@ import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 
 /**
  * @author Ed
@@ -35,6 +37,7 @@ public class Simplifier9900 {
 			
 			LLInstruction llInst = (LLInstruction) inst;
 			
+			changed |= simplifyInstructionOperands(llInst);
 			changed |= convertInstruction(llInst);
 			
 			if (llInst.getInst() == InstTableCommon.Idelete) {
@@ -44,6 +47,31 @@ public class Simplifier9900 {
 			}
 		}
 		return changed;
+	}
+
+	private boolean simplifyInstructionOperands(LLInstruction llInst) {
+		boolean changed = false;
+		LLOperand op;
+		op = reduceOperand(llInst.getOp1());
+		if (op != llInst.getOp1()) {
+			llInst.setOp1(op);
+			changed = true;
+		}
+		op = reduceOperand(llInst.getOp2());
+		if (op != llInst.getOp2()) {
+			llInst.setOp2(op);
+			changed = true;
+		}
+		
+		return changed;
+	}
+	private LLOperand reduceOperand(LLOperand op) {
+		if (!(op instanceof LLRegOffsOperand))
+			return op;
+		LLRegOffsOperand offs = (LLRegOffsOperand) op;
+		if (offs.getOffset() == 0)
+			return new LLRegIndOperand(offs.getRegister());
+		return op;
 	}
 
 	private boolean convertInstruction(LLInstruction llInst) {

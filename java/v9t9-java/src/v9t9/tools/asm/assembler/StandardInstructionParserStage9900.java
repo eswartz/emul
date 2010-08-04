@@ -24,6 +24,8 @@ import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
@@ -56,12 +58,12 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
     		return null;
     	}
     	
-    	HLInstruction inst = new HLInstruction();
+    	HLInstruction inst = new HLInstruction(InstructionFactory9900.INSTANCE);
     	String name = tokenizer.currentToken().toUpperCase();
     	AssemblerOperand op1 = null, op2 = null;
         if (name.equals("RT")) {
         	inst.setInst(Inst9900.Ib);
-            op1 = new LLRegOffsOperand(11);
+            op1 = new LLRegIndOperand(11);
         } else if (name.equals("NOP")) {
         	inst.setInst(Inst9900.Ijmp);
             op1 = new LLPCRelativeOperand(null, 2);
@@ -165,7 +167,7 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
     			return new RegisterOperand((AssemblerOperand) op);
     	}
 		else if (optype == InstEncodePattern.OFF) {
-			if (inst.isJumpInst()) {
+			if (InstTable9900.isJumpInst(inst.getInst())) {
 				if (op instanceof AssemblerOperand) {
 					return new JumpOperand((AssemblerOperand) op);
 				}

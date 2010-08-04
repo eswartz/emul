@@ -65,6 +65,8 @@ import org.ejs.eulang.types.LLType;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.InstTableCommon;
+import v9t9.tools.asm.assembler.IInstructionFactory;
+import v9t9.tools.asm.assembler.InstructionFactory9900;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
@@ -294,6 +296,8 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	/** Called when a new block has been created */
 	abstract protected void newBlock(Block block);
 	
+	protected IInstructionFactory instFactory = new InstructionFactory9900();
+	
 	private LLDefineDirective def;
 	private ICallingConvention cc;
 
@@ -379,7 +383,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			routine.setExit(epilogBlock);
 		}
 		
-		AsmInstruction epilog = AsmInstruction.create(Pepilog);
+		AsmInstruction epilog = AsmInstruction.create(instFactory,Pepilog);
 		List<ISymbol> retSyms = new ArrayList<ISymbol>();
 		for (ILocal local : stackFrame.getAllLocals()) {
 			if (local.isOutgoing())
@@ -418,7 +422,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		routine.addBlock(block);
 		
 		if (blockMap.isEmpty()) {
-			AsmInstruction inst = AsmInstruction.create(Pprolog);
+			AsmInstruction inst = AsmInstruction.create(instFactory,Pprolog);
 			emitInstr(inst);
 			routine.setEntry(block);
 		}
@@ -548,7 +552,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 
 	private void emitInstr(AsmInstruction inst) {
 		if (inst.getInst() == Inst9900.Ili && isZero(inst.getOp2()))
-			emit(AsmInstruction.create(Inst9900.Iclr, inst.getOp1()));
+			emit(AsmInstruction.create(instFactory,Inst9900.Iclr, inst.getOp1()));
 		else if (!isNoOp(inst))
 			emit(inst);
 	}
@@ -829,7 +833,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		AssemblerOperand trueOp = new SymbolLabelOperand(trueTarget.getSymbol());
 		AssemblerOperand falseOp = new SymbolLabelOperand(falseTarget.getSymbol());
 		
-		AsmInstruction inst = AsmInstruction.create(Pjcc, test, trueOp, falseOp);
+		AsmInstruction inst = AsmInstruction.create(instFactory, Pjcc, test, trueOp, falseOp);
 		inst.setImplicitTargets(new ISymbol[0]);
 		emitInstr(inst);
 	}
@@ -839,7 +843,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		LLSymbolOp target = (LLSymbolOp) llops[0];
 		AssemblerOperand asmOp = new SymbolLabelOperand(target.getSymbol());
 		
-		AsmInstruction inst = AsmInstruction.create(Inst9900.Ijmp, asmOp);
+		AsmInstruction inst = AsmInstruction.create(instFactory,Inst9900.Ijmp, asmOp);
 		emitInstr(inst);
 	}
 	private void handleRetInstr(LLRetInstr instr) {
@@ -882,7 +886,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		if (def.flags().contains(LLDefineDirective.MULTI_RET)) {
 			// we generate only one return, but the optimizer may add more
-			AsmInstruction inst = AsmInstruction.create(Inst9900.Ijmp, new SymbolLabelOperand(epilogLabel));
+			AsmInstruction inst = AsmInstruction.create(instFactory,Inst9900.Ijmp, new SymbolLabelOperand(epilogLabel));
 			emitInstr(inst);
 		}
 		
@@ -942,9 +946,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		// adjust stack
 		if (stackSpace == 1 || stackSpace == 2) {
-			emitInstr(AsmInstruction.create(Inst9900.Idect, new RegisterOperand(sp)));
+			emitInstr(AsmInstruction.create(instFactory,Inst9900.Idect, new RegisterOperand(sp)));
 		} else if (stackSpace > 2) {
-			emitInstr(AsmInstruction.create(Inst9900.Iai, new RegisterOperand(sp), new NumberOperand(-stackSpace)));
+			emitInstr(AsmInstruction.create(instFactory,Inst9900.Iai, new RegisterOperand(sp), new NumberOperand(-stackSpace)));
 		}
 		
 		Map<Integer, AssemblerOperand> callerRets = new HashMap<Integer, AssemblerOperand>();
@@ -973,7 +977,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					assert false;
 				RegTempOperand ptr = new RegTempOperand(retAddr);
 				AddrOperand asmAddrOp = new AddrOperand(asmOp);
-				emitInstr(AsmInstruction.create(Plea, asmAddrOp, ptr));
+				emitInstr(AsmInstruction.create(instFactory,Plea, asmAddrOp, ptr));
 				
 				if (objType instanceof LLAggregateType) {
 					// return is a tuple
@@ -1027,7 +1031,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		addSymbol(sources, func);
 		
-		AsmInstruction blInst = AsmInstruction.create(Inst9900.Ibl, func instanceof IRegisterOperand ? new RegIndOperand(func) : new AddrOperand(func));
+		AsmInstruction blInst = AsmInstruction.create(instFactory,Inst9900.Ibl, func instanceof IRegisterOperand ? new RegIndOperand(func) : new AddrOperand(func));
 		
 		Location[] retLocs = cconv.getReturnLocations();
 		for (int i = 0; i < retLocs.length; i++) {
@@ -1056,9 +1060,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		
 		// clean up the stack
 		if (stackSpace == 1 || stackSpace == 2) {
-			emitInstr(AsmInstruction.create(Inst9900.Iinct, new RegisterOperand(sp)));
+			emitInstr(AsmInstruction.create(instFactory,Inst9900.Iinct, new RegisterOperand(sp)));
 		} else if (stackSpace > 2) {
-			emitInstr(AsmInstruction.create(Inst9900.Iai, new RegisterOperand(sp), new NumberOperand(stackSpace)));
+			emitInstr(AsmInstruction.create(instFactory,Inst9900.Iai, new RegisterOperand(sp), new NumberOperand(stackSpace)));
 		}
 		
 		
@@ -1178,7 +1182,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				if (operandNeedsTemp(ops[0], asmOp)) {
 					asmOp = moveToTemp(ops[0], ops[0].getType(), asmOp);
 				}
-				emitInstr(AsmInstruction.create(Inst9900.Ia, item, asmOp));
+				emitInstr(AsmInstruction.create(instFactory,Inst9900.Ia, item, asmOp));
 				
 				
 				flushOffs = false;
@@ -1201,7 +1205,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					
 					item = generateMultiply(item, typeEngine.INT, type.getBits() / 8);
 					
-					emitInstr(AsmInstruction.create(Inst9900.Ia, item, asmOp));
+					emitInstr(AsmInstruction.create(instFactory,Inst9900.Ia, item, asmOp));
 					
 					flushOffs = false;
 				} else {
@@ -1222,7 +1226,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 	 */
 	AssemblerOperand generateMultiply(AssemblerOperand item, LLType type, int by) {
 		if (by == 0) {
-			emitInstr(AsmInstruction.create(Inst9900.Iclr, item));
+			emitInstr(AsmInstruction.create(instFactory,Inst9900.Iclr, item));
 			return item;
 		}
 		if (by == 1)
@@ -1251,7 +1255,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				
 				AssemblerOperand val = moveToTemp(llOp, type, new NumberOperand(by));
 				
-				emitInstr(AsmInstruction.create(Inst9900.Impy, val, item));
+				emitInstr(AsmInstruction.create(instFactory,Inst9900.Impy, val, item));
 				
 				RegisterLocal regLocal = getRegisterPair(llOp);
 				result = new RegTempOperand(regLocal, false);  
@@ -1267,11 +1271,11 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					if ((by & 1) != 0) {
 						AssemblerOperand shifted = moveToTemp(llOp, type, val);
 						if (shift != 0)
-							emitInstr(AsmInstruction.create(Inst9900.Isla, shifted, new NumberOperand(shift)));
+							emitInstr(AsmInstruction.create(instFactory,Inst9900.Isla, shifted, new NumberOperand(shift)));
 						if (result == null) {
 							result = shifted;
 						} else {
-							emitInstr(AsmInstruction.create(type.getBits() <= 8 ? Inst9900.Iab : Inst9900.Ia, shifted, result));
+							emitInstr(AsmInstruction.create(instFactory,type.getBits() <= 8 ? Inst9900.Iab : Inst9900.Ia, shifted, result));
 						}
 					}
 					by >>>= 1;
@@ -1280,7 +1284,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			}
 			
 			if (isNeg) {
-				emitInstr(AsmInstruction.create(Inst9900.Ineg, result));
+				emitInstr(AsmInstruction.create(instFactory,Inst9900.Ineg, result));
 			}
 			
 			return result;
@@ -1289,7 +1293,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			int log2 = getLog2(by);
 			
 			AssemblerOperand val = moveToTemp(llOp, type, item);
-			emitInstr(AsmInstruction.create(Inst9900.Isla, val, new NumberOperand(log2)));
+			emitInstr(AsmInstruction.create(instFactory,Inst9900.Isla, val, new NumberOperand(log2)));
 			return val;
 		}
 	}
@@ -1435,9 +1439,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 			if (as == As.REG_RW_DUP) {
 				AssemblerOperand copy = moveToTemp(operand, operand.getType(), asmOp);
 				AsmInstruction byteOp;
-				byteOp = AsmInstruction.create(Inst9900.Iswpb, asmOp);
+				byteOp = AsmInstruction.create(instFactory,Inst9900.Iswpb, asmOp);
 				emit(byteOp);
-				byteOp = AsmInstruction.create(Inst9900.Imovb, copy, asmOp);
+				byteOp = AsmInstruction.create(instFactory,Inst9900.Imovb, copy, asmOp);
 				byteOp.setPartialWrite(true);
 				emit(byteOp);
 			}
@@ -1455,7 +1459,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		case REG_0_CNT_W:
 			asmOp = copyIntoRegister(operand, instr, asmOp, 0);
 			if (operand.getType().getBits() <= 8) {
-				emitInstr(AsmInstruction.create(Inst9900.Iswpb, asmOp));
+				emitInstr(AsmInstruction.create(instFactory,Inst9900.Iswpb, asmOp));
 			}
 			break;
 
@@ -1824,7 +1828,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					if (llOp.getType().getBits() <= 8)
 						operand = new NumOperand((((NumOperand) operand).getValue() << 8) & 0xff00);
 
-					emitInstr(AsmInstruction.create(Inst9900.Ili, ret, operand));
+					emitInstr(AsmInstruction.create(instFactory,Inst9900.Ili, ret, operand));
 				} else
 					assert false;
 				return ret;
@@ -1832,9 +1836,9 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				RegisterLocal regLocal = newTempRegister(routine, instr, getTempSymbol(llOp), llOp.getType());
 				AssemblerOperand ret = new RegTempOperand(regLocal);
 				if (((NumOperand) operand).getValue() == 0)
-					emitInstr(AsmInstruction.create(Inst9900.Iclr, ret));
+					emitInstr(AsmInstruction.create(instFactory,Inst9900.Iclr, ret));
 				else
-					emitInstr(AsmInstruction.create(Inst9900.Iseto, ret));
+					emitInstr(AsmInstruction.create(instFactory,Inst9900.Iseto, ret));
 				return ret;
 			}
 			assert false;
@@ -1895,13 +1899,13 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		if (isIntType(type) || isBoolType(type)) {
 			if (from.isRegister() || from.isMemory()) {
 				int op = (type.getBits() <= 8) ? Inst9900.Imovb : Inst9900.Imov;
-				AsmInstruction inst = AsmInstruction.create(op, from, dest);
+				AsmInstruction inst = AsmInstruction.create(instFactory,op, from, dest);
 				emitInstr(inst);
 			} else if (from instanceof NumberOperand) {
 				if (llOp.getType().getBits() <= 8)
 					from = new NumberOperand((((NumberOperand) from).getValue() << 8) & 0xff00);
 
-				AsmInstruction inst = AsmInstruction.create(Inst9900.Ili, dest, from);
+				AsmInstruction inst = AsmInstruction.create(instFactory,Inst9900.Ili, dest, from);
 				emitInstr(inst);
 			} else if (from instanceof AsmOperand) {
 				// when loading the address of a local, just construct an operand if possible
@@ -1917,16 +1921,16 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					if (dstLocal != null && dstLocal instanceof RegisterLocal) {
 						// cheat and avoid new temp
 						RegTempOperand ptr = new RegTempOperand((RegisterLocal) dstLocal);
-						emitInstr(AsmInstruction.create(Plea, from, ptr));
+						emitInstr(AsmInstruction.create(instFactory,Plea, from, ptr));
 						from = ptr;
 					} else {
 						RegisterLocal addr = (RegisterLocal) stackFrame.allocateTemp(type);
 						RegTempOperand ptr = new RegTempOperand(addr);
-						emitInstr(AsmInstruction.create(Plea, from, ptr));
+						emitInstr(AsmInstruction.create(instFactory,Plea, from, ptr));
 						from = ptr;
 					}
 				} else {
-					AsmInstruction inst = AsmInstruction.create(Inst9900.Ili, dest, from);
+					AsmInstruction inst = AsmInstruction.create(instFactory,Inst9900.Ili, dest, from);
 					emitInstr(inst);
 				}
 			} else {
@@ -1936,7 +1940,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 		}
 		else {
 			// it's a complex op: use a pseudo
-			AsmInstruction inst = AsmInstruction.create(Pcopy, from, dest);
+			AsmInstruction inst = AsmInstruction.create(instFactory,Pcopy, from, dest);
 			inst.setType(type);
 			emitInstr(inst);
 			return dest;
@@ -1975,12 +1979,12 @@ public abstract class InstrSelection extends LLCodeVisitor {
 				if (dstLocal != null && dstLocal instanceof RegisterLocal && !dstLocal.equals(fromLocal)) {
 					// cheat and avoid new temp
 					RegTempOperand ptr = new RegTempOperand((RegisterLocal) dstLocal);
-					emitInstr(AsmInstruction.create(Plea, from, ptr));
+					emitInstr(AsmInstruction.create(instFactory,Plea, from, ptr));
 					dest = ptr;
 				} else {
 					RegisterLocal addr = (RegisterLocal) stackFrame.allocateTemp(type);
 					RegTempOperand ptr = new RegTempOperand(addr);
-					emitInstr(AsmInstruction.create(Plea, from, ptr));
+					emitInstr(AsmInstruction.create(instFactory,Plea, from, ptr));
 					dest = ptr;
 				}
 			} else {
@@ -1989,7 +1993,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					RegisterLocal addr = (RegisterLocal) stackFrame.allocateTemp(type);
 					dest = new RegTempOperand(addr);
 				}
-				AsmInstruction inst = AsmInstruction.create(Inst9900.Ili, dest, from);
+				AsmInstruction inst = AsmInstruction.create(instFactory,Inst9900.Ili, dest, from);
 				emitInstr(inst);
 			}
 		}
@@ -2025,7 +2029,7 @@ public abstract class InstrSelection extends LLCodeVisitor {
 					AssemblerOperand op1 = d.ops.length >= 1 ? getAsmOp(d, 0) : null;
 					AssemblerOperand op2 = d.ops.length >= 2 ? getAsmOp(d, 1) : null;
 					AssemblerOperand op3 = d.ops.length >= 3 ? getAsmOp(d, 2) : null;
-					AsmInstruction inst = AsmInstruction.create(d.inst, op1, op2, op3);
+					AsmInstruction inst = AsmInstruction.create(instFactory, d.inst, op1, op2, op3);
 					
 					// HACK
 					if (inst.getInst() == Inst9900.Impy || inst.getInst() == Inst9900.Idiv) {

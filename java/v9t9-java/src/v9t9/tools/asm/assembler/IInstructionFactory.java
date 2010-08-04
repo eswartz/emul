@@ -17,7 +17,16 @@ public interface IInstructionFactory {
 
 	boolean supportsOp(int inst, int num, AssemblerOperand op);
 
-	boolean isByteOp(int inst);
+	boolean isByteInst(int inst);
 
 	boolean isJumpInst(int inst);
+
+	String getInstName(int inst);
+
+	/** Get the expected size of the instruction.  If operands are unresolved,
+	 * aim high.
+	 * @param target
+	 * @return
+	 */
+	int getInstSize(LLInstruction ins);
 }

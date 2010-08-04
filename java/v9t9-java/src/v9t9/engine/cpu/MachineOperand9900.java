@@ -37,6 +37,9 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	public static final int OP_STATUS = 8; // status word >xxxx
 	public static final int OP_INST = 9; // instruction for X
 	public static final int OP_REG0_SHIFT_COUNT = 10;	// shift count from R0
+	
+	// special val/reg base for unresolved PC-relative operand
+	public static final short PCREL = 16;
 
 	/** 
      * Create an empty operand (to be filled in piecewise)

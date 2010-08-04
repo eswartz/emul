@@ -18,6 +18,7 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
  */
 public class InstructionFactoryMFP201 implements IInstructionFactory {
 
+	public static final IInstructionFactory INSTANCE = new InstructionFactoryMFP201();
 	MachineOperandFactoryMFP201 opFactory = new MachineOperandFactoryMFP201();
 	
 	/* (non-Javadoc)
@@ -36,8 +37,8 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		rawInst.setOp2(inst.getOp2() != null ? 
 				inst.getOp2().createMachineOperand(opFactory) :
 					MachineOperand9900.createEmptyOperand());
-		InstTable9900.calculateInstructionSize(rawInst);
 		InstTable9900.coerceOperandTypes(rawInst);
+		InstTable9900.calculateInstructionSize(rawInst);
 		return rawInst;
 	}
 
@@ -88,7 +89,7 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		return false;
 	}
 
-	public boolean isByteOp(int inst) {
+	public boolean isByteInst(int inst) {
 		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
 		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
 	}

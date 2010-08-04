@@ -18,6 +18,7 @@ import java.util.TreeSet;
 
 import org.ejs.coffee.core.utils.Check;
 
+import v9t9.emulator.runtime.cpu.CpuState;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
@@ -41,8 +42,8 @@ public class TopDownPhase extends Phase {
 	private List<Routine> unresolvedRoutines;
 	private TreeSet<HighLevelInstruction> routineCalls;
 
-	public TopDownPhase(MemoryDomain mainMemory, IDecompileInfo info) {
-		super(mainMemory, info);
+	public TopDownPhase(CpuState state, IDecompileInfo info) {
+		super(state, info);
 	}
 
 	public void run() {

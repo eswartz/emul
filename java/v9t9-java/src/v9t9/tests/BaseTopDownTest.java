@@ -18,7 +18,7 @@ public class BaseTopDownTest extends BaseTopDownPhaseTest {
 	@Override
 	protected void setUp() throws Exception {
 	    super.setUp();
-	    phase = new TopDownPhase(CPU, decompileInfo);
+	    phase = new TopDownPhase(state, decompileInfo);
 	    System.out.println("==============");
 	}
 

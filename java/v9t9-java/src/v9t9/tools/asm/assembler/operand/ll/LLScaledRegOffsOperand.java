@@ -46,9 +46,15 @@ public class LLScaledRegOffsOperand extends LLOperand {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + addReg;
 		result = prime * result + offset;
+		result = prime * result + register;
+		result = prime * result + scale;
 		return result;
 	}
+
+
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
@@ -61,11 +67,19 @@ public class LLScaledRegOffsOperand extends LLOperand {
 		if (getClass() != obj.getClass())
 			return false;
 		LLScaledRegOffsOperand other = (LLScaledRegOffsOperand) obj;
+		if (addReg != other.addReg)
+			return false;
 		if (offset != other.offset)
+			return false;
+		if (register != other.register)
+			return false;
+		if (scale != other.scale)
 			return false;
 		return true;
 	}
-	
+
+
+
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.ll.LLScaledOperand#toString()
 	 */

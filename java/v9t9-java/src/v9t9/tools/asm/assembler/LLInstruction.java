@@ -5,10 +5,6 @@ package v9t9.tools.asm.assembler;
 
 import v9t9.engine.cpu.ICPUInstruction;
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstEncodePattern;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
@@ -18,28 +14,23 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  *
  */
 public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstruction {
-	public LLInstruction() {
+	private final IInstructionFactory factory;
+
+	public LLInstruction(IInstructionFactory factory) {
 		super();
+		this.factory = factory;
 	}
 
-	public LLInstruction(LLInstruction instruction) {
-		this.setInst(instruction.getInst());
-		this.setOp1(instruction.getOp1());
-		this.setOp2(instruction.getOp2());
-		this.setOp3(instruction.getOp3());
-	}
-	
 	private int inst;
 	private LLOperand op1;
 	private LLOperand op2;
 	private LLOperand op3;
-	private int size;
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("LLInst ");
-		builder.append(InstTable9900.getInstName(inst));
+		builder.append(factory.getInstName(inst));
 		if (op1 != null && !(op1 instanceof LLEmptyOperand)) {
 			builder.append(' ');
 			builder.append(op1);
@@ -62,10 +53,12 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		setOp1(op1 != null ? op1.resolve(assembler, this) : null);
 		setOp2(op2 != null ? op2.resolve(assembler, this) : null);
 		setOp3(op3 != null ? op3.resolve(assembler, this) : null);
-		assembler.setPc(getPc() + getSize());
+		int size = assembler.getInstructionFactory().getInstSize(this);
+		assembler.setPc(getPc() + size);
 		return new IInstruction[] { this };
 	}
 	
+	/*
 	private int calculateInstructionSize() {
 		int size = 0;
     	if (getInst() == InstTableCommon.Idata) {
@@ -96,26 +89,15 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		}
 		return size;
 	}
-
-	public int getSize() {
-		if (size == 0)
-			size = calculateInstructionSize();
-		return size;
-	}
-
+*/
 	public byte[] getBytes(IInstructionFactory instFactory) throws ResolveException {
 		RawInstruction instruction = instFactory.createRawInstruction(this);
 		byte[] bytes = instFactory.encodeInstruction(instruction);
 		return bytes;
 	}
 	
-	public boolean isJumpInst() {
-		return getInst() >= Inst9900.Ijmp && getInst() <= Inst9900.Ijop;
-	}
-
 	public void setOp1(LLOperand op1) {
 		this.op1 = op1;
-		size = 0;
 	}
 
 	public LLOperand getOp1() {
@@ -124,7 +106,6 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 
 	public void setOp2(LLOperand op2) {
 		this.op2 = op2;
-		size = 0;
 	}
 
 	public LLOperand getOp2() {
@@ -133,7 +114,6 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 
 	public void setOp3(LLOperand op3) {
 		this.op3 = op3;
-		size = 0;
 	}
 
 	public LLOperand getOp3() {
@@ -142,11 +122,9 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 	
 	public void setInst(int inst) {
 		this.inst = inst;
-		size = 0;
 	}
-
+	
 	public int getInst() {
 		return inst;
 	}
-	
 }

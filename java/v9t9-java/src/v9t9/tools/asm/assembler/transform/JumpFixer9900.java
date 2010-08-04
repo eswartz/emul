@@ -53,7 +53,7 @@ public class JumpFixer9900 {
 				continue;
 			}
 			LLInstruction llInstruction = (LLInstruction) inst;
-			if (llInstruction.isJumpInst()) {
+			if (assembler.getInstructionFactory().isJumpInst(llInstruction.getInst())) {
 				LLOperand op1 = llInstruction.getOp1();
 				if (op1 instanceof LLPCRelativeOperand) {
 					LLPCRelativeOperand jump = (LLPCRelativeOperand) op1;
@@ -103,10 +103,8 @@ public class JumpFixer9900 {
 		
 		LabelDirective pastBranchInstLabel = new LabelDirective(nextInstSymbol);
 		
-		HLInstruction branchInst = new HLInstruction();
+		HLInstruction branchInst = new HLInstruction(assembler.getInstructionFactory());
 		branchInst.setInst(Inst9900.Ib);
-		//int offset = (short)(targetAddr - assemblerOperand.getAddr());
-		//branchInst.op1 = new AddrOperand(new BinaryOperand('+', new SymbolOperand(target), new NumberOperand(offset)));
 		branchInst.setOp1(new AddrOperand(assemblerOperand));
 		branchInst.setOp2(null);
 		
@@ -120,7 +118,7 @@ public class JumpFixer9900 {
 			return true;
 		}
 
-		HLInstruction equInst = new HLInstruction();
+		HLInstruction equInst = new HLInstruction(assembler.getInstructionFactory());
 		equInst.setInst(Inst9900.Ijeq);
 		equInst.setOp1(new JumpOperand(nextInstTarget));
 		equInst.setOp2(null);

@@ -4,6 +4,7 @@
 package v9t9.engine.cpu;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
@@ -176,11 +177,11 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		return "@"+regName(val);
 
     	case OP_OFFS: {
-    		String addr = "@>" + Integer.toHexString(immed & 0xffff).toUpperCase();
+    		String addr = HexUtils.toHex4(immed);
     		if (val == SR) {
-    			return addr;
+    			return "&>" + addr;
     		} else {
-    			return addr + "(" + regName(val) + ")";
+    			return "@>" + addr + "(" + regName(val) + ")";
     		}
     	}
     	case OP_SRO: {
@@ -491,16 +492,16 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		return op;
 	}
 
-	public static MachineOperandMFP201 createGeneralOperand(int type, short val) {
+	public static MachineOperandMFP201 createGeneralOperand(int type, int val) {
 		MachineOperandMFP201 op = new MachineOperandMFP201(type);
 		op.val = val;
 		return op;
 	}
 
-	public static MachineOperandMFP201 createGeneralOperand(int type, short val, short immed) {
+	public static MachineOperandMFP201 createGeneralOperand(int type, int val, int immed) {
 		MachineOperandMFP201 op = new MachineOperandMFP201(type);
 		op.val = val;
-		op.immed = immed;
+		op.immed = (short) immed;
 		return op;
 	}
 

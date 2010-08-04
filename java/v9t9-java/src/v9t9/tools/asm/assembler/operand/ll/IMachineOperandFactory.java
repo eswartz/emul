@@ -12,7 +12,8 @@ public interface IMachineOperandFactory {
 	MachineOperand createPCRelativeOperand(LLPCRelativeOperand op) throws ResolveException;
 	MachineOperand createOffsetOperand(LLOffsetOperand op) throws ResolveException;
 	MachineOperand createRegIncOperand(LLRegIncOperand op) throws ResolveException;
-	MachineOperand createRegIndOperand(LLRegOffsOperand op) throws ResolveException;
+	MachineOperand createRegIndOperand(LLRegIndOperand op) throws ResolveException;
+	MachineOperand createRegOffsOperand(LLRegOffsOperand op) throws ResolveException;
 	MachineOperand createEmptyOperand();
 	MachineOperand createRegDecOperand(LLRegDecOperand op) throws ResolveException;
 	MachineOperand createScaledRegOffsOperand(LLScaledRegOffsOperand op) throws ResolveException;

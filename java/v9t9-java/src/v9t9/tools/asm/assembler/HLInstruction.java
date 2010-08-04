@@ -11,7 +11,11 @@ package v9t9.tools.asm.assembler;
  */
 public class HLInstruction extends AssemblerInstruction {
 
-	public HLInstruction() {
+	/**
+	 * @param factory
+	 */
+	public HLInstruction(IInstructionFactory factory) {
+		super(factory);
 	}
 
 	@Override

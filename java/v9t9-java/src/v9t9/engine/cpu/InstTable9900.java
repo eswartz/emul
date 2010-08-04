@@ -284,6 +284,16 @@ public class InstTable9900 {
 		case GEN:
 			if (mop.type == MachineOperand9900.OP_IMMED)
 				mop.type = MachineOperand9900.OP_REG;
+			
+			if (mop.type == MachineOperand9900.OP_ADDR && mop.val == MachineOperand9900.PCREL) {
+				mop.immed = (short) (instruction.getPc() + mop.immed);
+				mop.val = 0;
+			}
+			if (mop.type == MachineOperand9900.OP_JUMP) {
+				mop.type = MachineOperand9900.OP_ADDR;
+				mop.immed = (short) (instruction.getPc() + mop.val);
+				mop.val = 0;
+			}
 			break;
 		}
 	}
@@ -862,4 +872,19 @@ public class InstTable9900 {
 			target.size += 2;
 	
     }
+	/**
+	 * @param inst
+	 * @return
+	 */
+	public static boolean isJumpInst(int inst) {
+		return inst >= Inst9900.Ijmp && inst <= Inst9900.Ijop;
+	}
+	/**
+	 * @param inst
+	 * @return
+	 */
+	public static boolean isByteInst(int inst) {
+		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
+		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
+	}
 }

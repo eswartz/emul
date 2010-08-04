@@ -84,7 +84,9 @@ public class AddrOperand extends BaseOperand {
 			return new LLForwardOperand(this, 2);
 		
 		if (lop instanceof LLPCRelativeOperand) {
-			lop = new LLAddrOperand(this, inst.getPc() + ((LLPCRelativeOperand)lop).getOffset());
+			// XXX
+			//lop = new LLAddrOperand(this, inst.getPc() + ((LLPCRelativeOperand)lop).getOffset());
+			return lop;
 		} else if (lop instanceof LLImmedOperand) {
 			lop = new LLAddrOperand(this, lop.getImmediate());
 		} else

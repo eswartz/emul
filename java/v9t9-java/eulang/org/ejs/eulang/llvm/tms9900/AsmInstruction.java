@@ -13,16 +13,14 @@ import org.ejs.eulang.symbols.ISymbol;
 import org.ejs.eulang.types.LLType;
 
 import v9t9.engine.cpu.Effects;
-import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.Instruction9900;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.HLInstruction;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
-import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 
 
@@ -46,7 +44,8 @@ public class AsmInstruction extends HLInstruction {
 	private LLType type;
 	private boolean partialWrite;
 	
-	public AsmInstruction() {
+	public AsmInstruction(IInstructionFactory factory) {
+		super(factory);
 		targets = implTargets = null;
 		sources = implSources = null;
 	}
@@ -402,28 +401,28 @@ public class AsmInstruction extends HLInstruction {
 	}
 
 
-	public static AsmInstruction create(int inst) {
-		AsmInstruction instr = new AsmInstruction();
+	public static AsmInstruction create(IInstructionFactory factory, int inst) {
+		AsmInstruction instr = new AsmInstruction(factory);
 		instr.setInst(inst);
 		return instr;
 	}
-	public static AsmInstruction create(int inst, AssemblerOperand op1) {
-		AsmInstruction instr = new AsmInstruction();
+	public static AsmInstruction create(IInstructionFactory factory, int inst, AssemblerOperand op1) {
+		AsmInstruction instr = new AsmInstruction(factory);
 		instr.setInst(inst);
 		instr.setOp1(op1);
 		return instr;
 	}
-	public static AsmInstruction create(int inst, AssemblerOperand op1, AssemblerOperand op2) {
-		AsmInstruction instr = new AsmInstruction();
+	public static AsmInstruction create(IInstructionFactory factory, int inst, AssemblerOperand op1, AssemblerOperand op2) {
+		AsmInstruction instr = new AsmInstruction(factory);
 		instr.setInst(inst);
 		instr.setOp1(op1);
 		instr.setOp2(op2);
 		return instr;
 	}
 
-	public static AsmInstruction create(int inst, AssemblerOperand op1,
-			AssemblerOperand op2, AssemblerOperand op3) {
-		AsmInstruction instr = new AsmInstruction();
+	public static AsmInstruction create(IInstructionFactory factory, int inst,
+			AssemblerOperand op1, AssemblerOperand op2, AssemblerOperand op3) {
+		AsmInstruction instr = new AsmInstruction(factory);
 		instr.setInst(inst);
 		instr.setOp1(op1);
 		instr.setOp2(op2);

@@ -224,7 +224,7 @@ public class Executor {
     	HighLevelCodeInfo highLevel = highLevelCodeInfoMap.get(area);
     	if (highLevel == null) {
     		System.out.println("Initializing high level info for " + entry + " / " + area);
-    		highLevel = new HighLevelCodeInfo(cpu.getConsole());
+    		highLevel = new HighLevelCodeInfo(cpu);
     		highLevel.disassemble(entry.addr, entry.size);
     		highLevelCodeInfoMap.put(area, highLevel);
     	}
