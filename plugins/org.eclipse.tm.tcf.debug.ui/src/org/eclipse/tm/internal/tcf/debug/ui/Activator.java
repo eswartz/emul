@@ -49,19 +49,19 @@ public class Activator extends AbstractUIPlugin {
     }
 
     public void stop(BundleContext context) throws Exception {
-        synchronized (lock) {
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    if (model_manager != null) {
-                        model_manager.dispose();
-                        model_manager = null;
-                    }
-                    if (annotation_manager != null) {
-                        annotation_manager.dispose();
-                        annotation_manager = null;
-                    }
+        Protocol.invokeAndWait(new Runnable() {
+            public void run() {
+                if (model_manager != null) {
+                    model_manager.dispose();
+                    model_manager = null;
                 }
-            });
+                if (annotation_manager != null) {
+                    annotation_manager.dispose();
+                    annotation_manager = null;
+                }
+            }
+        });
+        synchronized (lock) {
             plugin = null;
             super.stop(context);
         }

@@ -46,6 +46,8 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
     private final HashSet<IChannel> channels = new HashSet<IChannel>();
 
+    private boolean disposed;
+
     public static TCFBreakpointsModel getBreakpointsModel() {
         return Activator.getBreakpointsModel();
     }
@@ -53,6 +55,8 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     public void dispose() {
         bp_manager.removeBreakpointListener(this);
         bp_manager.removeBreakpointManagerListener(this);
+        channels.clear();
+        disposed = true;
     }
 
     public boolean isSupported(IChannel channel, IBreakpoint bp) {
@@ -72,6 +76,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     @SuppressWarnings("unchecked")
     public void downloadBreakpoints(final IChannel channel, final Runnable done) throws IOException, CoreException {
         assert Protocol.isDispatchThread();
+        assert !disposed;
         IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
         if (service != null) {
             if (channels.isEmpty()) {
@@ -83,6 +88,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 public void congestionLevel(int level) {
                 }
                 public void onChannelClosed(Throwable error) {
+                    if (disposed) return;
                     channels.remove(channel);
                     if (channels.isEmpty()) {
                         bp_manager.removeBreakpointListener(TCFBreakpointsModel.this);
@@ -131,6 +137,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             if (map.isEmpty()) return;
             Runnable r = new Runnable() {
                 public void run() {
+                    if (disposed) return;
                     for (final IChannel channel : channels) {
                         IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
                         Set<String> ids = new HashSet<String>();
@@ -198,6 +205,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
 
         public void run() {
+            if (disposed) return;
             tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_attrs);
             for (final IChannel channel : channels) {
                 service = channel.getRemoteService(IBreakpoints.class);
@@ -308,6 +316,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     }
 
     public Map<String,Object> toMarkerAttributes(Map<String,Object> p) {
+        assert !disposed;
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();
         for (Iterator<Map.Entry<String,Object>> i = p.entrySet().iterator(); i.hasNext();) {
@@ -342,6 +351,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     }
 
     public Map<String,Object> toBreakpointAttributes(String id, String file, Map<String,Object> p) {
+        assert !disposed;
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();
         m.put(IBreakpoints.PROP_ID, id);
