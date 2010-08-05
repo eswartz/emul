@@ -3,15 +3,15 @@
  */
 package v9t9.tools.asm.assembler;
 
-import static v9t9.engine.cpu.InstEncodePattern.CNT;
-import static v9t9.engine.cpu.InstEncodePattern.GEN;
-import static v9t9.engine.cpu.InstEncodePattern.IMM;
-import static v9t9.engine.cpu.InstEncodePattern.NONE;
-import static v9t9.engine.cpu.InstEncodePattern.OFF;
-import static v9t9.engine.cpu.InstEncodePattern.REG;
+import static v9t9.engine.cpu.InstPattern9900.CNT;
+import static v9t9.engine.cpu.InstPattern9900.GEN;
+import static v9t9.engine.cpu.InstPattern9900.IMM;
+import static v9t9.engine.cpu.InstPattern9900.NONE;
+import static v9t9.engine.cpu.InstPattern9900.OFF;
+import static v9t9.engine.cpu.InstPattern9900.REG;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstEncodePattern;
+import v9t9.engine.cpu.InstPattern9900;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.JumpOperand;
@@ -73,14 +73,14 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
         		return null;
         	inst.setInst(instNum);
             
-            InstEncodePattern pattern = InstTable9900.lookupEncodePattern(inst.getInst());
+            InstPattern9900 pattern = InstTable9900.lookupEncodePattern(inst.getInst());
             if (pattern == null)
             	throw new IllegalStateException("Missing instruction pattern: " + inst.getInst());
             
-            if (pattern.op1 != InstEncodePattern.NONE) {
+            if (pattern.op1 != InstPattern9900.NONE) {
             	op1 = (AssemblerOperand) operandParser.parse(tokenizer);
             	op1 = coerceType(inst, op1, pattern.op1);
-            	if (pattern.op2 != InstEncodePattern.NONE) {
+            	if (pattern.op2 != InstPattern9900.NONE) {
             		t = tokenizer.nextToken();
             		if (t != ',') {
             			throw new ParseException("Missing second operand: " + tokenizer.currentToken());
@@ -97,8 +97,8 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
         	throw new ParseException("Trailing text on line: " + tokenizer.currentToken());
         }
         
-        inst.setOp1(op1 != null ? op1 : new LLEmptyOperand());
-        inst.setOp2(op2 != null ? op2 : new LLEmptyOperand());
+        inst.setOp1(op1 != null ? op1 : LLEmptyOperand.INSTANCE);
+        inst.setOp2(op2 != null ? op2 : LLEmptyOperand.INSTANCE);
         
         return new IInstruction[] { inst };
     }
@@ -160,13 +160,13 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
 	}
 	
 	private AssemblerOperand coerceAssemblerOperandType(AssemblerInstruction inst, AssemblerOperand op, int optype) {
-		if (optype == InstEncodePattern.REG
-    			|| optype == InstEncodePattern.GEN) {
+		if (optype == InstPattern9900.REG
+    			|| optype == InstPattern9900.GEN) {
     		if (op instanceof NumberOperand
     				|| op instanceof SymbolOperand)
     			return new RegisterOperand((AssemblerOperand) op);
     	}
-		else if (optype == InstEncodePattern.OFF) {
+		else if (optype == InstPattern9900.OFF) {
 			if (InstTable9900.isJumpInst(inst.getInst())) {
 				if (op instanceof AssemblerOperand) {
 					return new JumpOperand((AssemblerOperand) op);

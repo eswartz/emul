@@ -1,54 +1,23 @@
 package v9t9.tests.asm;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.Arrays;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.MachineOperand9900;
-import v9t9.engine.cpu.MachineOperandMFP201;
-import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.tests.BaseTest;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.AssemblerInstruction;
-import v9t9.tools.asm.assembler.AssemblerOperandParserStage;
-import v9t9.tools.asm.assembler.AssemblerOperandParserStage9900;
 import v9t9.tools.asm.assembler.AssemblerOperandParserStageMFP201;
-import v9t9.tools.asm.assembler.AssemblerTokenizer;
-import v9t9.tools.asm.assembler.BaseAssemblerInstruction;
-import v9t9.tools.asm.assembler.ContentEntry;
-import v9t9.tools.asm.assembler.Equate;
 import v9t9.tools.asm.assembler.IInstructionParserStage;
-import v9t9.tools.asm.assembler.IOperandParserStage;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.MachineOperandFactoryMFP201;
 import v9t9.tools.asm.assembler.MachineOperandParserStageMFP201;
 import v9t9.tools.asm.assembler.OperandParser;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.ResolveException;
-import v9t9.tools.asm.assembler.StandardInstructionParserStage9900;
 import v9t9.tools.asm.assembler.StandardInstructionParserStageMFP201;
-import v9t9.tools.asm.assembler.Symbol;
-import v9t9.tools.asm.assembler.directive.DefineByteDirective;
-import v9t9.tools.asm.assembler.directive.DefineWordDirective;
-import v9t9.tools.asm.assembler.directive.Directive;
-import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
-import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
-import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
-import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
-import v9t9.tools.asm.assembler.operand.hl.StringOperand;
-import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
-import v9t9.tools.asm.assembler.operand.hl.UnaryOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLCountOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 public class TestAssemblerMFP201Insts extends BaseTest {
 
@@ -66,79 +35,140 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 	}
 	StandardInstructionParserStageMFP201 asmInstStage = new StandardInstructionParserStageMFP201(aaopParser);
 	
+	/*
 	protected LLOperand operand(String string) throws Exception {
 		return (LLOperand) parseOperand(aopStage, string);
 	}
 
-	protected MachineOperandMFP201 getMachineOperandBits(String string) throws Exception {
+	protected MachineOperandMFP201 getMachineOperand(String string) throws Exception {
 		return ((MachineOperandMFP201) operand(string).createMachineOperand(mopFactory));
 	}
+	*/
 
-	public void testParse() throws Exception {
-		CPU.writeWord(0, (short) 0x100);
-		RawInstruction minst = InstTable9900.decodeInstruction(CPU.readWord(0), 0, CPU);
-		System.out.println(minst);
-		assertEquals(0x100, minst.opcode);
-		assertEquals(2, minst.size);
-		
+	public void testEncodeData() throws Exception {
+		_testEncode("DATA 11", new byte[] { 0x00, 11 });
+		_testEncode("DATA >1234", new byte[] { 0x12, 0x34 });
+		_testEncode("BYTE >ff", new byte[] { (byte) 0xff });
+		_testEncode("BYTE >1234", new byte[] { 0x34 });
 	}
-	public void testEncode1() throws Exception {
-		_testEncode(stdInstStage);
+	public void testEncodeSimple1() throws Exception {
+		_testEncode("BKPT", new byte[] { 0x00 });
+		_testEncode("RET", new byte[] { 0x01 });
+		_testEncode("RETI", new byte[] { 0x02 });
+	}
+	public void testEncodeSimple2() throws Exception {
+		_testEncode("BRA >1234", new byte[] { 0x05, 0x12, 0x34 });
+		_testEncode("BR >1234", new byte[] { 0x04, 0x02, 0x33 });
+		_testEncode("CALLA >0234", new byte[] { 0x07, 0x02, 0x34 });
+		_testEncode("CALL >0234", new byte[] { 0x06, (byte) 0xF2, (byte) 0x33 });
+		
+		assertBadInst("BR");
+		assertBadInst("BR R15");
+		assertBadInst("CALLA *R1+");
+	}
+	public void testEncodeImm1() throws Exception {
+		_testEncode("ORC R5, >100", new byte[] { 0x08, 0x05, 0x01, 0x00 });
+		_testEncode("ORC R5, >7f", new byte[] { 0x09, 0x05, 0x7f });
+		_testEncode("ORC R5, -1", new byte[] { 0x09, 0x05, (byte) 0xff });
+		
+		_testEncode("ANDC R5, >ff", new byte[] { 0x08, 0x25, 0x00, (byte) 0xff });
+		_testEncode("TSTC R5, >1", new byte[] { 0x09, 0x35, 0x01 });
+
+		_testEncode("CMPC PC, >1234", new byte[] { 0x08, (byte) 0xbe, 0x12, 0x34 });
+		
+		_testEncode("ADDC? R0, >1", new byte[] { 0x09, (byte) 0x90, 0x01 });
+		
+		_testEncode("ORC R0, 0", new byte[] { 0x09, (byte) 0x00, 0x00 });
+		_testEncode("ORC? R0, 0", new byte[] { 0x09, (byte) 0x10, 0x00 });
+		_testEncode("ANDC R0, 0", new byte[] { 0x09, (byte) 0x20, 0x00 });
+		_testEncode("TSTC R0, 0", new byte[] { 0x09, (byte) 0x30, 0x00 });
+		_testEncode("NANDC R0, 0", new byte[] { 0x09, (byte) 0x40, 0x00 });
+		_testEncode("TSTNC R0, 0", new byte[] { 0x09, (byte) 0x50, 0x00 });
+		_testEncode("XORC R0, 0", new byte[] { 0x09, (byte) 0x60, 0x00 });
+		_testEncode("XORC? R0, 0", new byte[] { 0x09, (byte) 0x70, 0x00 });
+		_testEncode("ADDC R0, 0", new byte[] { 0x09, (byte) 0x80, 0x00 });
+		_testEncode("ADDC? R0, 0", new byte[] { 0x09, (byte) 0x90, 0x00 });
+		_testEncode("SUBC R0, 0", new byte[] { 0x09, (byte) 0xa0, 0x00 });
+		_testEncode("CMPC R0, 0", new byte[] { 0x09, (byte) 0xb0, 0x00 });
+		_testEncode("ADCC R0, 0", new byte[] { 0x09, (byte) 0xc0, 0x00 });
+		_testEncode("ADCC? R0, 0", new byte[] { 0x09, (byte) 0xd0, 0x00 });
+		_testEncode("LDC R0, 0", new byte[] { 0x09, (byte) 0xe0, 0x00 });
+		_testEncode("LDC? R0, 0", new byte[] { 0x09, (byte) 0xf0, 0x00 });
+		
+		assertBadInst("ORC >10");
+		assertBadInst("ORC R5");
+		assertBadInst("ORC");
+		assertBadInst("LDC?");
+	}
+	private void _testEncode(String str, byte[] bytes) throws ParseException, ResolveException {
+		assertInst(asmInstStage, str, bytes);
+		assertInst(asmInstStage, str.toLowerCase(), bytes);
 
 	}
 
-	private void _testEncode(IInstructionParserStage instStage) throws ParseException, ResolveException {
-		assertInst(instStage, "MOV R1,R2");
-		assertInst(instStage, "MOV R1,*R2");
-		assertInst(instStage, "MOV @4(R1),R15");
-		assertInst(instStage, "MOV @4(R1),*R15+");
-		assertInst(instStage, "LI 6,>777");
-		assertInst(instStage, "CI R15,0");
-		assertInst(instStage, "STWP R8");
-		assertInst(instStage, "LWPI >84e0");
-		assertInst(instStage, "LIMI 2");
-		assertInst(instStage, "IDLE");
-		assertInst(instStage, "LREX");
-		assertInst(instStage, "BLWP @>0");
-		assertInst(instStage, "BLWP @>0420");
-		assertInst(instStage, "BLWP @>0420(R6)");
-		assertInst(instStage, "BLWP *R5");
-		assertInst(instStage, "BLWP 5");
-		assertInst(instStage, "X R6");
-		assertInst(instStage, "SRA R5,8");
-		assertInst(instStage, "SRA R5,R0");
-		assertInst(instStage, "JMP 4");
-		assertInst(instStage, "JMP $");
-		assertInst(instStage, "JNC $+4");
-		assertInst(instStage, "JHE $->54");
-		assertInst(instStage, "SBO >1");
-		assertInst(instStage, "SBZ >2");
-		assertInst(instStage, "COC *R5+,9");
-		assertInst(instStage, "XOR @>6,R15");
-		
-		assertInst(instStage, "LDCR @>6,14");
-		assertInst(instStage, "STCR R5,0");
-		assertInst(instStage, "MPY @>44ff,R11");
-		assertInst(instStage, "SZC @>6,R15");
-		assertInst(instStage, "MOVB *R6+,*R1+");
-		assertInst(instStage, "A 3,3");
-
-		assertInst(instStage, "DATA >123");
-		assertInst(instStage, "SBO >99");
-		
-		assertBadInst(instStage, "ABS >4ff");
-		assertBadInst(instStage, "ABS >4,4");
-		assertBadInst(instStage, "BLWP");
-		assertBadInst(instStage, "MOV");
-		assertBadInst(instStage, "SRL 6,88");
-		assertBadInst(instStage, "SRL @7,3");
-		assertBadInst(instStage, "JMP *R12");
-		assertBadInst(instStage, "STCR R5,*R3");
-		assertBadInst(instStage, "MPY @>44ff,@>3");
-		assertBadInst(instStage, "A 0");
-		
+	private void assertBadInst(String string) {
+		assertBadInst(asmInstStage, string);
+	}
+	private void assertBadInst(IInstructionParserStage instStage, String string) {
+		try {
+			assertInst(instStage, string, new byte[0]);
+			fail();
+		} catch (IllegalArgumentException e) {
+			
+		} catch (ParseException e) {
+			
+		} catch (ResolveException e) {
+		} catch (Error e) {
+			throw e;
+		}
 	}
 	
+	private void assertInst(IInstructionParserStage instStage, String string, byte[] bytes) throws ParseException, ResolveException {
+		IInstruction[] insts = instStage.parse("foo", string);
+		assertNotNull("did not parse", insts);
+		assertEquals(1, insts.length);
+		
+		IInstruction[] irealInsts = ((AssemblerInstruction) insts[0]).resolve(assembler, null, true);
+		assertEquals(1, irealInsts.length);
+		assertTrue(irealInsts[0] instanceof LLInstruction);
+		
+		((LLInstruction) irealInsts[0]).setPc(0x1000);
+		
+		RawInstruction realInst = assembler.getInstructionFactory().createRawInstruction(
+				((LLInstruction) irealInsts[0]));
+		byte[] ebytes = assembler.getInstructionFactory().encodeInstruction(realInst);
+		assertEquals(realInst.size, ebytes.length);
+
+		if (!Arrays.equals(bytes, ebytes)) {
+			assertEquals("mismatched encoding for " + string,
+					toString(bytes), toString(ebytes));
+		}
+		/*
+		realInst.pc = 0;
+		for (int i = 0; i < ebytes.length; i++)
+			CPU.flatWriteByte(i, ebytes[i]);
+		
+		RawInstruction minst = InstTable9900.decodeInstruction(ebytes[0], 0, CPU);
+		InstTable9900.coerceOperandTypes(minst);
+		InstTable9900.coerceOperandTypes(realInst);
+		
+		assertEquals(realInst.toString(), minst.toString());
+		System.out.println(insts[0]);
+		*/
+	}
+
+	/**
+	 * @param ebytes
+	 * @return
+	 */
+	private String toString(byte[] b) {
+		StringBuilder sb = new StringBuilder();
+		for (byte p : b)
+			sb.append(HexUtils.toHex2(p)).append(' ');
+		return sb.toString();
+	}
+	
+	/*
 	public void testEncodedInsts() throws Exception {
 		assertInstWords(new short[] { 0x135B });
 		assertInstWords(new short[] { 0x111 });
@@ -362,7 +392,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 	}
 	
 	
-	/** Test resolving an instruction's operands */
+	// Test resolving an instruction's operands 
 	private void testResolve(String string, String stdInst, Symbol[] symbols, int pc) throws ParseException, ResolveException {
 		for (Symbol symbol : symbols)
 			assembler.getSymbolTable().addSymbol(symbol);
@@ -412,17 +442,6 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		System.out.println("AsmInst: " + string);
 		IInstruction[] insts = asmInstStage.parse("foo", string);
 		assertEquals(1, insts.length);
-		/*
-		try {
-			Instruction[] stdInsts = stdInstStage.parse(string);
-			assertEquals(stdInsts.length, insts.length);
-			for (int i = 0; i < stdInsts.length; i++)
-				assertEquals(stdInsts[i], insts[i]);
-		} catch (ParseException e) {
-			// ignore, not standard
-		}
-		*/
-		
 	}
 	
 	public void testAssemblerProgResolve0() throws Exception {
@@ -736,4 +755,5 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 				},
 				new Symbol[] {  });		
 	}
+	*/
 }

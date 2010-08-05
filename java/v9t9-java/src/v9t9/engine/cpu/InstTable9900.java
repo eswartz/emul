@@ -3,12 +3,12 @@
  */
 package v9t9.engine.cpu;
 
-import static v9t9.engine.cpu.InstEncodePattern.CNT;
-import static v9t9.engine.cpu.InstEncodePattern.GEN;
-import static v9t9.engine.cpu.InstEncodePattern.IMM;
-import static v9t9.engine.cpu.InstEncodePattern.NONE;
-import static v9t9.engine.cpu.InstEncodePattern.OFF;
-import static v9t9.engine.cpu.InstEncodePattern.REG;
+import static v9t9.engine.cpu.InstPattern9900.CNT;
+import static v9t9.engine.cpu.InstPattern9900.GEN;
+import static v9t9.engine.cpu.InstPattern9900.IMM;
+import static v9t9.engine.cpu.InstPattern9900.NONE;
+import static v9t9.engine.cpu.InstPattern9900.OFF;
+import static v9t9.engine.cpu.InstPattern9900.REG;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,30 +22,30 @@ import v9t9.engine.memory.MemoryDomain;
  * 
  */
 public class InstTable9900 {
-	final static InstEncodePattern NONE_NONE = new InstEncodePattern(NONE, NONE);
-	final static InstEncodePattern IMM_NONE = new InstEncodePattern(IMM, NONE);
-	final static InstEncodePattern REG_IMM = new InstEncodePattern(REG, IMM);
-	final static InstEncodePattern GEN_NONE = new InstEncodePattern(GEN, NONE);
-	final static InstEncodePattern REG_CNT = new InstEncodePattern(REG, CNT, 4);
-	final static InstEncodePattern JMP_NONE = new InstEncodePattern(OFF, NONE);
-	final static InstEncodePattern GEN_REG = new InstEncodePattern(GEN, REG, 6);
-	final static InstEncodePattern GEN6_REG = new InstEncodePattern(GEN, REG, 6);
-	final static InstEncodePattern GEN_CNT = new InstEncodePattern(GEN, CNT, 6);
-	final static InstEncodePattern GEN_GEN = new InstEncodePattern(GEN, GEN, 6);
-	final static InstEncodePattern REG_NONE = new InstEncodePattern(REG, NONE);
-	final static InstEncodePattern CNT_NONE = new InstEncodePattern(CNT, NONE);
-	final static InstEncodePattern OFF_NONE = new InstEncodePattern(OFF, NONE);
+	final static InstPattern9900 NONE_NONE = new InstPattern9900(NONE, NONE);
+	final static InstPattern9900 IMM_NONE = new InstPattern9900(IMM, NONE);
+	final static InstPattern9900 REG_IMM = new InstPattern9900(REG, IMM);
+	final static InstPattern9900 GEN_NONE = new InstPattern9900(GEN, NONE);
+	final static InstPattern9900 REG_CNT = new InstPattern9900(REG, CNT, 4);
+	final static InstPattern9900 JMP_NONE = new InstPattern9900(OFF, NONE);
+	final static InstPattern9900 GEN_REG = new InstPattern9900(GEN, REG, 6);
+	final static InstPattern9900 GEN6_REG = new InstPattern9900(GEN, REG, 6);
+	final static InstPattern9900 GEN_CNT = new InstPattern9900(GEN, CNT, 6);
+	final static InstPattern9900 GEN_GEN = new InstPattern9900(GEN, GEN, 6);
+	final static InstPattern9900 REG_NONE = new InstPattern9900(REG, NONE);
+	final static InstPattern9900 CNT_NONE = new InstPattern9900(CNT, NONE);
+	final static InstPattern9900 OFF_NONE = new InstPattern9900(OFF, NONE);
 
-	static Map<Integer, InstEncodePattern> instEntries = new HashMap<Integer, InstEncodePattern>();
+	static Map<Integer, InstPattern9900> instEntries = new HashMap<Integer, InstPattern9900>();
 	static Map<Integer, Integer> instOpcodes = new HashMap<Integer, Integer>();
 	static Map<Integer, Integer> instMasks = new HashMap<Integer, Integer>();
 
-	private static void register(int inst, int opcode, InstEncodePattern entry) {
+	private static void register(int inst, int opcode, InstPattern9900 entry) {
 		instEntries.put(inst, entry);
 		instOpcodes.put(inst, opcode);
 		instMasks.put(inst, entry == NONE_NONE || entry == IMM_NONE ? opcode : 0xffff);
 	}
-	private static void register(int inst, int opcode, InstEncodePattern entry, int mask) {
+	private static void register(int inst, int opcode, InstPattern9900 entry, int mask) {
 		instEntries.put(inst, entry);
 		instOpcodes.put(inst, opcode);
 		instMasks.put(inst, mask);
@@ -148,7 +148,7 @@ public class InstTable9900 {
 			throw new IllegalArgumentException("Non-machine instruction");
 		int opcode = opcodeI;
 		
-		InstEncodePattern pattern = instEntries.get(rawInstruction.getInst());
+		InstPattern9900 pattern = instEntries.get(rawInstruction.getInst());
 		if (pattern == null)
 			throw new IllegalArgumentException("Non-encoded instruction");
 		
@@ -231,7 +231,7 @@ public class InstTable9900 {
 	 * machine code; otherwise, just overcomes 
 	 */
 	public static void coerceOperandTypes(RawInstruction instruction) {
-		InstEncodePattern pattern = instEntries.get(instruction.getInst());
+		InstPattern9900 pattern = instEntries.get(instruction.getInst());
 		if (pattern == null)
 			throw new IllegalArgumentException("Non-encoded instruction");
 		
@@ -264,7 +264,7 @@ public class InstTable9900 {
 				mop.val = 0;
 			break;
 		case OFF:
-			if (instruction.getInst() >= Inst9900.Ijmp && instruction.getInst() <= Inst9900.Ijop) {
+			if (isJumpInst(instruction.getInst())) {
 				if (mop.type == MachineOperand9900.OP_IMMED) {
 					// convert address to offset from this inst
 					mop.type = MachineOperand9900.OP_JUMP;
@@ -304,7 +304,7 @@ public class InstTable9900 {
 			return opcode;
 		return opcode & mask;
 	}
-	public static InstEncodePattern lookupEncodePattern(int inst) {
+	public static InstPattern9900 lookupEncodePattern(int inst) {
 		return instEntries.get(inst);
 	}
 	
@@ -860,7 +860,7 @@ public class InstTable9900 {
     		return;
     	}
     	target.size = 2;
-    	InstEncodePattern pattern = lookupEncodePattern(target.getInst());
+    	InstPattern9900 pattern = lookupEncodePattern(target.getInst());
 		if (pattern == null)
 			return;
 		

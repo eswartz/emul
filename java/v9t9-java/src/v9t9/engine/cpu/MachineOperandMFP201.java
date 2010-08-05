@@ -65,11 +65,6 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	/** 4-bit register decrement @Rx-, when under control of LOOP */
 	public static final int OP_DEC = 13;
 
-	/** push/pop count */
-	public static final int OP_PUSH_POP_COUNT = 14;
-	/** scale factor for LEA (power of 2, 0-7) */
-	public static final int OP_SCALE = 15;
-
 	// Operand Encoding Types
 	
 	/** Unknown or unspecified encoding */
@@ -174,7 +169,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		return regName(val);
 
     	case OP_IND:
-    		return "@"+regName(val);
+    		return "@" + regName(val);
 
     	case OP_OFFS: {
     		String addr = HexUtils.toHex4(immed);
@@ -195,20 +190,19 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     	case OP_DEC:
     		return "@" + regName(val) + "-";
     	
-    	case OP_IMM:
+    	case OP_IMM: {
+    		int imm;
     		if (encoding == OP_ENC_IMM8)
-    			return "#>" + Integer.toHexString(immed & 0xff).toUpperCase();
+    			imm = immed & 0xff;
     		else if (encoding == OP_ENC_PCREL12)
-    			return "#>" + Integer.toHexString(immed & 0xfff).toUpperCase();
+    			imm = immed & 0xfff;
     		else
-    			return "#>" + Integer.toHexString(immed & 0xffff).toUpperCase();
-
-    	case OP_PUSH_POP_COUNT:
+    			imm = immed & 0xffff; 
+    		return ">" + Integer.toHexString(imm).toUpperCase();
+    	}
     	case OP_CNT:
     	case OP_REG0_SHIFT_COUNT:
-    	    return "#" + Integer.toString(val);
-    	case OP_SCALE:
-    		return Integer.toString(1 << val);
+    	    return Integer.toString(val);
     	    
     	case OP_PCREL:
     	    return "$+>" + Integer.toHexString(val & 0xffff).toUpperCase();

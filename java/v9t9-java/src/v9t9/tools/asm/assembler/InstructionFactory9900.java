@@ -3,7 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.cpu.InstEncodePattern;
+import v9t9.engine.cpu.InstPattern9900;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.MachineOperand9900;
@@ -60,26 +60,26 @@ public class InstructionFactory9900 implements IInstructionFactory {
 	}
 	
 	public boolean supportsOp(int inst, int i, AssemblerOperand op) {
-		InstEncodePattern pattern = InstTable9900.lookupEncodePattern(inst);
+		InstPattern9900 pattern = InstTable9900.lookupEncodePattern(inst);
 		if (pattern == null)
 			return true;
 
 		int opType = i == 1 ? pattern.op1 : pattern.op2;
 		
 		switch (opType) {
-		case InstEncodePattern.CNT:
+		case InstPattern9900.CNT:
 			if (op.isRegister()) {
 				if ((op instanceof IRegisterOperand)) {
 					return ((IRegisterOperand) op).isReg(0);
 				}
 			}
 			// fall through
-		case InstEncodePattern.IMM:
-		case InstEncodePattern.OFF:
+		case InstPattern9900.IMM:
+		case InstPattern9900.OFF:
 			return op instanceof NumberOperand || op.isConst();
-		case InstEncodePattern.REG:
+		case InstPattern9900.REG:
 			return op.isRegister();
-		case InstEncodePattern.GEN:
+		case InstPattern9900.GEN:
 			if (!(op.isRegister() || op.isMemory()))
 				return false;
 			
@@ -130,7 +130,7 @@ public class InstructionFactory9900 implements IInstructionFactory {
     		return size;
     	}
     	size = 2;
-    	InstEncodePattern pattern = InstTable9900.lookupEncodePattern(inst);
+    	InstPattern9900 pattern = InstTable9900.lookupEncodePattern(inst);
 		if (pattern == null)
 			return size;
 		
@@ -144,10 +144,10 @@ public class InstructionFactory9900 implements IInstructionFactory {
 	private int coerceSize(int type, LLOperand op) {
 		int size = op.getSize();
 		if (size > 0) {
-			if (type == InstEncodePattern.CNT || type == InstEncodePattern.OFF)
+			if (type == InstPattern9900.CNT || type == InstPattern9900.OFF)
 				size = 0;
 		}
-		if (type == InstEncodePattern.GEN && op instanceof LLPCRelativeOperand) {
+		if (type == InstPattern9900.GEN && op instanceof LLPCRelativeOperand) {
 			size = 2;
 		}
 		return size;

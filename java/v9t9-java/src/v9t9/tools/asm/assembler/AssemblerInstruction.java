@@ -52,9 +52,6 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 		LLOperand lop2 = getOp2() != null ? getOp2().resolve(assembler, this) : null;
 		LLOperand lop3 = getOp3() != null ? getOp3().resolve(assembler, this) : null;
 		
-		if (lop3 != null)
-			throw new ResolveException(lop3, "cannot resolve third operand");
-		
 		LLInstruction target = new LLInstruction(assembler.getInstructionFactory());
 		target.setPc(pc);
 		target.setInst(getInst());

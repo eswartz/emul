@@ -224,11 +224,16 @@ public class TestAssemblerMFP201Operands extends BaseTest {
 		System.out.println("MachineOp: " + string);
 		Operand op = parseOperand(mopStage, string);
 		assertEquals("machine", expMop, op);
+		op = parseOperand(mopStage, string.toLowerCase());
+		assertEquals("machine lwc", expMop, op);
 	}
 	private void testAsmOp(String string, Operand expOp) throws ParseException, IOException {
 		System.out.println("AsmOp: " + string);
 		Operand op = parseOperand(aopStage, string);
 		assertEquals("asm", expOp, op);
+		op = parseOperand(aopStage, string.toLowerCase());
+		assertEquals("asm lwc", expOp, op);
+		
 	}
 	private Operand parseOperand(IOperandParserStage opStage, String string) throws ParseException {
 		AssemblerTokenizer tokenizer = new AssemblerTokenizer(string);

@@ -25,9 +25,9 @@ import v9t9.tools.asm.assembler.operand.ll.LLScaledRegOffsOperand;
  */
 public class MachineOperandParserStageMFP201 implements IOperandParserStage {
 
-    public final static String REG_NAME = "(R(?:\\d+)|SP|PC|SR)";
-    public final static String OPT_R_REG_NAME = "(R?(?:\\d+)|SP|PC|SR)";
-    public final static String IMMED = "((?:>?)(?:(?:[+|-])?)[0-9A-Fa-f]+)";
+    public final static String REG_NAME = "((?i)R(?:\\d+)|SP|PC|SR)";
+    public final static String OPT_R_REG_NAME = "((?i)R?(?:\\d+)|SP|PC|SR)";
+    public final static String IMMED = "((?i)(?:>?)(?:(?:[+|-])?)[0-9A-F]+)";
     
     final static Pattern REGISTER_PATTERN = Pattern.compile(REG_NAME);
     final static Pattern REG_INDINCDEC_PATTERN = Pattern.compile(
@@ -63,7 +63,7 @@ public class MachineOperandParserStageMFP201 implements IOperandParserStage {
 		short immed = 0;
 		
         if (string == null || string.length() == 0) {
-            return new LLEmptyOperand();
+            return LLEmptyOperand.INSTANCE;
         }
         Matcher matcher;
         

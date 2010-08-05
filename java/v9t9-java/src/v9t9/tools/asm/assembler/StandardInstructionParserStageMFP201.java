@@ -3,16 +3,15 @@
  */
 package v9t9.tools.asm.assembler;
 
-import static v9t9.engine.cpu.InstEncodePattern.CNT;
-import static v9t9.engine.cpu.InstEncodePattern.GEN;
-import static v9t9.engine.cpu.InstEncodePattern.IMM;
-import static v9t9.engine.cpu.InstEncodePattern.NONE;
-import static v9t9.engine.cpu.InstEncodePattern.OFF;
-import static v9t9.engine.cpu.InstEncodePattern.REG;
+import static v9t9.engine.cpu.InstPatternMFP201.CNT;
+import static v9t9.engine.cpu.InstPatternMFP201.GEN;
+import static v9t9.engine.cpu.InstPatternMFP201.IMM;
+import static v9t9.engine.cpu.InstPatternMFP201.NONE;
+import static v9t9.engine.cpu.InstPatternMFP201.OFF;
+import static v9t9.engine.cpu.InstPatternMFP201.REG;
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstEncodePattern;
-import v9t9.engine.cpu.InstTable9900;
+import v9t9.engine.cpu.InstPatternMFP201;
+import v9t9.engine.cpu.InstTableMFP201;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.JumpOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -21,11 +20,8 @@ import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLCountOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
@@ -39,7 +35,7 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
     
 	public StandardInstructionParserStageMFP201() {
 		this.operandParser = new OperandParser();
-		operandParser.appendStage(new MachineOperandParserStage9900());
+		operandParser.appendStage(new MachineOperandParserStageMFP201());
 	}
 	public StandardInstructionParserStageMFP201(OperandParser operandParser) {
 		this.operandParser = operandParser;
@@ -57,37 +53,47 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
     		return null;
     	}
     	
-    	HLInstruction inst = new HLInstruction(InstructionFactoryMFP201.INSTANCE);
     	String name = tokenizer.currentToken().toUpperCase();
-    	AssemblerOperand op1 = null, op2 = null;
-        if (name.equals("RT")) {
-        	inst.setInst(Inst9900.Ib);
-            op1 = new LLRegIndOperand(11);
-        } else if (name.equals("NOP")) {
-        	inst.setInst(Inst9900.Ijmp);
-            op1 = new LLPCRelativeOperand(null, 2);
-        } else {
-        	Integer instNum = InstTable9900.lookupInst(name);
-        	if (instNum == null)
-        		return null;
-        	inst.setInst(instNum);
-            
-            InstEncodePattern pattern = InstTable9900.lookupEncodePattern(inst.getInst());
-            if (pattern == null)
-            	throw new IllegalStateException("Missing instruction pattern: " + inst.getInst());
-            
-            if (pattern.op1 != InstEncodePattern.NONE) {
-            	op1 = (AssemblerOperand) operandParser.parse(tokenizer);
-            	op1 = coerceType(inst, op1, pattern.op1);
-            	if (pattern.op2 != InstEncodePattern.NONE) {
+    	
+    	// handle '?'
+    	t = tokenizer.nextToken();
+    	if (t == '?') {
+    		name += '?';
+    	} else {
+    		tokenizer.pushBack();
+    	}
+    	
+    	HLInstruction inst = new HLInstruction(InstructionFactoryMFP201.INSTANCE);
+    	AssemblerOperand op1 = null, op2 = null, op3 = null;
+    	Integer instNum = InstTableMFP201.lookupInst(name);
+    	if (instNum == null)
+    		return null;
+    	inst.setInst(instNum);
+        
+        InstPatternMFP201 pattern = InstTableMFP201.lookupEncodePattern(inst.getInst());
+        if (pattern == null)
+        	throw new IllegalStateException("Missing instruction pattern: " + inst.getInst());
+        
+        if (pattern.op1 != InstPatternMFP201.NONE) {
+        	op1 = (AssemblerOperand) operandParser.parse(tokenizer);
+        	op1 = coerceType(inst, op1, pattern.op1);
+        	if (pattern.op2 != InstPatternMFP201.NONE) {
+        		t = tokenizer.nextToken();
+        		if (t != ',') {
+        			throw new ParseException("Missing second operand: " + tokenizer.currentToken());
+        		}
+        		op2 = (AssemblerOperand) operandParser.parse(tokenizer);
+        		op2 = coerceType(inst, op2, pattern.op2);
+        		
+        		if (pattern.op3 != InstPatternMFP201.NONE) {
             		t = tokenizer.nextToken();
             		if (t != ',') {
-            			throw new ParseException("Missing second operand: " + tokenizer.currentToken());
+            			throw new ParseException("Missing third operand: " + tokenizer.currentToken());
             		}
-            		op2 =  (AssemblerOperand) operandParser.parse(tokenizer);
-            		op2 = coerceType(inst, op2, pattern.op2);
+            		op3 = (AssemblerOperand) operandParser.parse(tokenizer);
+            		op3 = coerceType(inst, op3, pattern.op3);
             	}
-            }
+        	}
         }
         
         // ensure EOL
@@ -96,8 +102,9 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
         	throw new ParseException("Trailing text on line: " + tokenizer.currentToken());
         }
         
-        inst.setOp1(op1 != null ? op1 : new LLEmptyOperand());
-        inst.setOp2(op2 != null ? op2 : new LLEmptyOperand());
+        inst.setOp1(op1 != null ? op1 : LLEmptyOperand.INSTANCE);
+        inst.setOp2(op2 != null ? op2 : LLEmptyOperand.INSTANCE);
+        inst.setOp3(op3 != null ? op3 : LLEmptyOperand.INSTANCE);
         
         return new IInstruction[] { inst };
     }
@@ -159,13 +166,13 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
 	}
 	
 	private AssemblerOperand coerceAssemblerOperandType(AssemblerInstruction inst, AssemblerOperand op, int optype) {
-		if (optype == InstEncodePattern.REG
-    			|| optype == InstEncodePattern.GEN) {
+		if (optype == InstPatternMFP201.REG
+    			|| optype == InstPatternMFP201.GEN) {
     		if (op instanceof NumberOperand
     				|| op instanceof SymbolOperand)
     			return new RegisterOperand((AssemblerOperand) op);
     	}
-		else if (optype == InstEncodePattern.OFF) {
+		else if (optype == InstPatternMFP201.OFF) {
 			if (inst.isJumpInst()) {
 				if (op instanceof AssemblerOperand) {
 					return new JumpOperand((AssemblerOperand) op);

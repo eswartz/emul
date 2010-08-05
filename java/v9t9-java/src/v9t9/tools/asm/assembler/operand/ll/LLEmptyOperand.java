@@ -12,7 +12,8 @@ import v9t9.tools.asm.assembler.ResolveException;
  *
  */
 public class LLEmptyOperand extends LLNonImmediateOperand implements Operand {
-	public LLEmptyOperand() {
+	public static final LLEmptyOperand INSTANCE = new LLEmptyOperand();
+	protected LLEmptyOperand() {
 		super(null);
 	}
 	

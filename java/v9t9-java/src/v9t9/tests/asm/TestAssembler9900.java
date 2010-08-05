@@ -232,14 +232,15 @@ public class TestAssembler9900 extends BaseTest {
 		
 		RawInstruction realInst = assembler.getInstructionFactory().createRawInstruction(
 				((LLInstruction) irealInsts[0]));
-		short[] words = InstTable9900.encode(realInst);
-		assertEquals(realInst.size, words.length * 2);
+		byte[] bytes = assembler.getInstructionFactory().encodeInstruction(realInst);
+		assertEquals(realInst.size, bytes.length);
 		
 		realInst.pc = 0;
-		for (int i = 0; i < words.length; i++)
-			CPU.flatWriteWord(i*2, words[i]);
+		for (int i = 0; i < bytes.length; i++)
+			CPU.flatWriteByte(i, bytes[i]);
 		
-		RawInstruction minst = InstTable9900.decodeInstruction(words[0], 0, CPU);
+		RawInstruction minst = InstTable9900.decodeInstruction(
+				(bytes[0]<<8)|(bytes[1] & 0xff), 0, CPU);
 		InstTable9900.coerceOperandTypes(minst);
 		InstTable9900.coerceOperandTypes(realInst);
 		

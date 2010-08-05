@@ -57,7 +57,7 @@ public class MachineOperandParserStage9900 implements IOperandParserStage {
 		short immed = 0;
 		
         if (string == null || string.length() == 0) {
-            return new LLEmptyOperand();
+            return LLEmptyOperand.INSTANCE;
         }
         Matcher matcher = OPERAND_PATTERN.matcher(string);
         if (matcher.matches()) {
