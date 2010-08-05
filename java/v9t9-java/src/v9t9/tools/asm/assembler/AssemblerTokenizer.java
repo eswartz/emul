@@ -212,7 +212,7 @@ public class AssemblerTokenizer {
 	 * @return
 	 */
 	public TokenizerState getState() {
-		return new TokenizerState(curtoken, image, number, pushedBack);
+		return new TokenizerState(curtoken, image, number, pushedBack, reader.getPos());
 	}
 	/**
 	 * @param state
@@ -222,5 +222,6 @@ public class AssemblerTokenizer {
 		this.image = state.image;
 		this.number = state.number;
 		this.pushedBack = state.pushedBack;
+		this.reader.setPos(state.streamPos);
 	}
 }

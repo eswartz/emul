@@ -610,7 +610,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 		    Pc += 2; // instruction itself
 		    Pc = ((MachineOperand) getOp1()).advancePc((short)Pc);
 		    Pc = ((MachineOperand) getOp2()).advancePc((short)Pc);
-		    this.size = (Pc & 0xffff) - (this.pc & 0xffff);		
+		    this.setSize((Pc & 0xffff) - (this.pc & 0xffff));		
 	    }
 	    //super.completeInstruction(Pc);
 	   
@@ -1018,7 +1018,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 		result = prime * result + ((getOp1() == null) ? 0 : getOp1().hashCode());
 		result = prime * result + ((getOp2() == null) ? 0 : getOp2().hashCode());
 		result = prime * result + pc;
-		result = prime * result + size;
+		result = prime * result + getSize();
 		return result;
 	}
 
@@ -1054,7 +1054,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 		if (pc != other.pc) {
 			return false;
 		}
-		if (size != other.size) {
+		if (getSize() != other.getSize()) {
 			return false;
 		}
 		return true;

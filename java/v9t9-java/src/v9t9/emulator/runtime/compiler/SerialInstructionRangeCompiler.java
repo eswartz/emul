@@ -88,8 +88,8 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	            	//
 	            	// note: we insert a GOTO in case the instruction is greater than 2 bytes,
 	            	// since the (garbage) words in the instruction are also compiled
-	            	if (ii.ins.size > 2 || (i + 1 < numinsts && chunks[i+1] == null)) {
-	                    short target = (short) (ii.ins.pc + ii.ins.size);
+	            	if (ii.ins.getSize() > 2 || (i + 1 < numinsts && chunks[i+1] == null)) {
+	                    short target = (short) (ii.ins.pc + ii.ins.getSize());
 	                    int index = (target - addr) / 2;
 	                    //if (target < addr + size && index >= 0
 	                    //        && index < size && chunks[index / 2] != null) {

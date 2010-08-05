@@ -17,7 +17,9 @@ import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.Symbol;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.BinaryOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
+import v9t9.tools.asm.assembler.operand.hl.PcRelativeOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegDecOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIncOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegIndOperand;
@@ -28,6 +30,7 @@ import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.hl.UnaryOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegDecOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
@@ -57,10 +60,11 @@ public class TestAssemblerMFP201Operands extends BaseTest {
 
 	public void testAsmOpParserNumbers() throws Exception {
 		testAsmOp("5", new NumberOperand(5), new LLImmedOperand(5));
+		testAsmOp("#5", new NumberOperand(5), new LLImmedOperand(5));
 		testAsmOp(">12F", new NumberOperand(0x12f) , new LLImmedOperand(0x12f));
+		testAsmOp("#>12F", new NumberOperand(0x12f) , new LLImmedOperand(0x12f));
 		testAsmOp("123", new NumberOperand(123), new LLImmedOperand(123));
 		
-		testBadAsmOp("#11");
 		testBadAsmOp("=");
 		testBadAsmOp("0]");
 		testBadAsmOp("123;");
@@ -149,6 +153,11 @@ public class TestAssemblerMFP201Operands extends BaseTest {
 		testBadAsmOp("@(0)");
 		testBadAsmOp("@>FfFf");
 		testBadAsmOp("@-4");
+		
+		// no # inside operands
+		testBadAsmOp("&#-4");
+		testBadAsmOp("@#66(R0)");
+
 	}
 	public void testAsmOpSfoAddrs() throws Exception {
 		testAsmOp("@10(SP+R0)", new ScaledRegOffsOperand(
@@ -183,6 +192,8 @@ public class TestAssemblerMFP201Operands extends BaseTest {
 			),
 			new LLScaledRegOffsOperand(null, 123, 13, 4, 128)
 		);
+		
+		testBadAsmOp("@123(R4*#128+SP)");
 	}
 	
 	
@@ -197,6 +208,14 @@ public class TestAssemblerMFP201Operands extends BaseTest {
 		
 	}
 
+	public void testAsmOpJumps() throws Exception {
+		testAsmOp("$", new PcRelativeOperand(),
+				new LLPCRelativeOperand(null, 0));
+		
+		testAsmOp("$+10", new BinaryOperand('+', new PcRelativeOperand(), new NumberOperand(10)),
+				new LLPCRelativeOperand(null, 10));
+	}
+	
 
 	private void testBadAsmOp(String string) {
 		try {

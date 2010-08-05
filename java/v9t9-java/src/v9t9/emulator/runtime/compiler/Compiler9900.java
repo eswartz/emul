@@ -542,7 +542,7 @@ public class Compiler9900 extends Compiler {
         BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
 
         /* update PC to current position */
-        ilist.append(new PUSH(info.pgen, ins.pc + ins.size));
+        ilist.append(new PUSH(info.pgen, ins.pc + ins.getSize()));
         ilist.append(new ISTORE(info.localPc));
 
         if (mop1.type != MachineOperand.OP_NONE) {
@@ -608,7 +608,7 @@ public class Compiler9900 extends Compiler {
             /* update PC first */
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.cpuIndex));
-            ilist.append(new PUSH(info.pgen, ins.pc + ins.size)); // old value
+            ilist.append(new PUSH(info.pgen, ins.pc + ins.getSize())); // old value
             ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu.class.getName(),
                     "setPC", Type.VOID, new Type[] { Type.SHORT },
                     Constants.INVOKEVIRTUAL));

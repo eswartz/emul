@@ -55,10 +55,9 @@ public abstract class AssemblerOperandParserStage implements IOperandParserStage
 				AssemblerOperand op = parseExprRest(new BinaryOperand(t, term, parseTerm()));
 				return op;
 			} catch (ParseException e) {
-				tokenizer.setState(state);
 			}
 		}
-		tokenizer.pushBack();
+		tokenizer.setState(state);
 		return term;
 	}
 

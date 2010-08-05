@@ -13,6 +13,7 @@ public class TokenizerState {
 	public final String image;
 	public final int number;
 	public final boolean pushedBack;
+	public final int streamPos;
 
 	/**
 	 * @param curtoken
@@ -21,11 +22,12 @@ public class TokenizerState {
 	 * @param pushedBack
 	 */
 	public TokenizerState(int curtoken, String image, int number,
-			boolean pushedBack) {
+			boolean pushedBack, int streamPos) {
 		this.curtoken = curtoken;
 		this.image = image;
 		this.number = number;
 		this.pushedBack = pushedBack;
+		this.streamPos = streamPos;
 	}
 
 }

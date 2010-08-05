@@ -57,49 +57,171 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("RETI", new byte[] { 0x02 });
 	}
 	public void testEncodeSimple2() throws Exception {
-		_testEncode("BRA >1234", new byte[] { 0x05, 0x12, 0x34 });
 		_testEncode("BR >1234", new byte[] { 0x04, 0x02, 0x33 });
-		_testEncode("CALLA >0234", new byte[] { 0x07, 0x02, 0x34 });
+		_testEncode("BRA >1234", new byte[] { 0x05, 0x12, 0x34 });
 		_testEncode("CALL >0234", new byte[] { 0x06, (byte) 0xF2, (byte) 0x33 });
+		_testEncode("CALLA >0234", new byte[] { 0x07, 0x02, 0x34 });
 		
 		assertBadInst("BR");
 		assertBadInst("BR R15");
 		assertBadInst("CALLA *R1+");
 	}
+	/** The immediate encodings of these should be selected */
 	public void testEncodeImm1() throws Exception {
-		_testEncode("ORC R5, >100", new byte[] { 0x08, 0x05, 0x01, 0x00 });
-		_testEncode("ORC R5, >7f", new byte[] { 0x09, 0x05, 0x7f });
-		_testEncode("ORC R5, -1", new byte[] { 0x09, 0x05, (byte) 0xff });
 		
-		_testEncode("ANDC R5, >ff", new byte[] { 0x08, 0x25, 0x00, (byte) 0xff });
-		_testEncode("TSTC R5, >1", new byte[] { 0x09, 0x35, 0x01 });
+		// the non-.B variant tries to select the best size (word/byte)
+		_testEncode("OR >100, R5", new byte[] { 0x08, 0x05, 0x01, 0x00 });
+		_testEncode("OR >7f, R5", new byte[] { 0x09, 0x05, 0x7f });
+		_testEncode("OR -12, R5", new byte[] { 0x09, 0x05, (byte) 0xf4 });
+		
+		_testEncode("AND >ff, R5", new byte[] { 0x08, 0x25, 0x00, (byte) 0xff });
+		_testEncode("TST >11, R5", new byte[] { 0x09, 0x35, 0x11 });
 
-		_testEncode("CMPC PC, >1234", new byte[] { 0x08, (byte) 0xbe, 0x12, 0x34 });
+		_testEncode("CMP >1234, PC", new byte[] { 0x08, (byte) 0xbe, 0x12, 0x34 });
 		
-		_testEncode("ADDC? R0, >1", new byte[] { 0x09, (byte) 0x90, 0x01 });
+		_testEncode("ADD? >11, R0", new byte[] { 0x09, (byte) 0x90, 0x11 });
 		
-		_testEncode("ORC R0, 0", new byte[] { 0x09, (byte) 0x00, 0x00 });
-		_testEncode("ORC? R0, 0", new byte[] { 0x09, (byte) 0x10, 0x00 });
-		_testEncode("ANDC R0, 0", new byte[] { 0x09, (byte) 0x20, 0x00 });
-		_testEncode("TSTC R0, 0", new byte[] { 0x09, (byte) 0x30, 0x00 });
-		_testEncode("NANDC R0, 0", new byte[] { 0x09, (byte) 0x40, 0x00 });
-		_testEncode("TSTNC R0, 0", new byte[] { 0x09, (byte) 0x50, 0x00 });
-		_testEncode("XORC R0, 0", new byte[] { 0x09, (byte) 0x60, 0x00 });
-		_testEncode("XORC? R0, 0", new byte[] { 0x09, (byte) 0x70, 0x00 });
-		_testEncode("ADDC R0, 0", new byte[] { 0x09, (byte) 0x80, 0x00 });
-		_testEncode("ADDC? R0, 0", new byte[] { 0x09, (byte) 0x90, 0x00 });
-		_testEncode("SUBC R0, 0", new byte[] { 0x09, (byte) 0xa0, 0x00 });
-		_testEncode("CMPC R0, 0", new byte[] { 0x09, (byte) 0xb0, 0x00 });
-		_testEncode("ADCC R0, 0", new byte[] { 0x09, (byte) 0xc0, 0x00 });
-		_testEncode("ADCC? R0, 0", new byte[] { 0x09, (byte) 0xd0, 0x00 });
-		_testEncode("LDC R0, 0", new byte[] { 0x09, (byte) 0xe0, 0x00 });
-		_testEncode("LDC? R0, 0", new byte[] { 0x09, (byte) 0xf0, 0x00 });
+		// the byte variant obeys
+		_testEncode("ADD.B? #>11, R0", new byte[] { 0x09, (byte) 0x90, 0x11 });
+		_testEncode("OR.B >1234, R12", new byte[] { 0x09, (byte) 0x0C, 0x34 });
 		
-		assertBadInst("ORC >10");
-		assertBadInst("ORC R5");
-		assertBadInst("ORC");
+		
+		_testEncode("OR >100, R0", new byte[] { 0x08, (byte) 0x00, 0x01, 0x00 });
+		_testEncode("OR.B #3, R0", new byte[] { 0x09, (byte) 0x00, 0x03 });
+		_testEncode("OR? >100, R0", new byte[] { 0x08, (byte) 0x10, 0x01, 0x00 });
+		_testEncode("OR.B? #3, R0", new byte[] { 0x09, (byte) 0x10, 0x03 });
+		
+		_testEncode("AND >100, R0", new byte[] { 0x08, (byte) 0x20, 0x01, 0x00 });
+		_testEncode("AND.B #3, R0", new byte[] { 0x09, (byte) 0x20, 0x03 });
+		_testEncode("TST >100, R0", new byte[] { 0x08, (byte) 0x30, 0x01, 0x00 });
+		_testEncode("TST.B #3, R0", new byte[] { 0x09, (byte) 0x30, 0x03 });
+		
+		_testEncode("NAND >100, R0", new byte[] { 0x08, (byte) 0x40, 0x01, 0x00 });
+		_testEncode("NAND.B #3, R0", new byte[] { 0x09, (byte) 0x40, 0x03 });
+		_testEncode("TSTN >100, R0", new byte[] { 0x08, (byte) 0x50, 0x01, 0x00 });
+		_testEncode("TSTN.B #3, R0", new byte[] { 0x09, (byte) 0x50, 0x03 });
+		
+		_testEncode("XOR >100, R0", new byte[] { 0x08, (byte) 0x60, 0x01, 0x00 });
+		_testEncode("XOR.B #3, R0", new byte[] { 0x09, (byte) 0x60, 0x03 });
+		_testEncode("XOR? >100, R0", new byte[] { 0x08, (byte) 0x70, 0x01, 0x00 });
+		_testEncode("XOR.B? #3, R0", new byte[] { 0x09, (byte) 0x70, 0x03 });
+		
+		_testEncode("ADD >100, R0", new byte[] { 0x08, (byte) 0x80, 0x01, 0x00 });
+		_testEncode("ADD.B #3, R0", new byte[] { 0x09, (byte) 0x80, 0x03 });
+		_testEncode("ADD? >100, R0", new byte[] { 0x08, (byte) 0x90, 0x01, 0x00 });
+		_testEncode("ADD.B? #3, R0", new byte[] { 0x09, (byte) 0x90, 0x03 });
+		
+		_testEncode("SUB >100, R0", new byte[] { 0x08, (byte) 0xa0, 0x01, 0x00 });
+		_testEncode("SUB.B #3, R0", new byte[] { 0x09, (byte) 0xa0, 0x03 });
+		_testEncode("CMP >100, R0", new byte[] { 0x08, (byte) 0xb0, 0x01, 0x00 });
+		_testEncode("CMP.B #3, R0", new byte[] { 0x09, (byte) 0xb0, 0x03 });
+		
+		_testEncode("ADC >100, R0", new byte[] { 0x08, (byte) 0xc0, 0x01, 0x00 });
+		_testEncode("ADC.B #0, R0", new byte[] { 0x09, (byte) 0xc0, 0x00 });
+		_testEncode("ADC? >100, R0", new byte[] { 0x08, (byte) 0xd0, 0x01, 0x00 });
+		_testEncode("ADC.B? #0, R0", new byte[] { 0x09, (byte) 0xd0, 0x00 });
+		
+		_testEncode("LDC >100, R0", new byte[] { 0x08, (byte) 0xe0, 0x01, 0x00 });
+		_testEncode("LDC.B #0, R0", new byte[] { 0x09, (byte) 0xe0, 0x00 });
+		_testEncode("LDC? >100, R0", new byte[] { 0x08, (byte) 0xf0, 0x01, 0x00 });
+		_testEncode("LDC.B? #0, R0", new byte[] { 0x09, (byte) 0xf0, 0x00 });
+		
+		_testEncode("LDC >ff01, R1", new byte[] { 0x08, (byte) 0xe1, (byte) 0xff, 0x01 });
+		_testEncode("LDC >7f, R14", new byte[] { 0x09, (byte) 0xee, 0x7f });
+		
+		assertBadInst("OR >10");
+		assertBadInst("OR R5");
+		assertBadInst("OR");
 		assertBadInst("LDC?");
 	}
+	
+	
+	public void testEncode3OpWith3() throws Exception {
+		
+		_testEncode("OR R5, R12, R1", new byte[] { (byte) 0x85, (byte) 0xC1 });
+		
+		// implicit constant
+		_testEncode("OR #1, R12, R1", new byte[] { (byte) 0x8D, (byte) 0xC1 });
+		_testEncode("OR >8000, R12, R1", new byte[] { (byte) 0x8E, (byte) 0xC1 });
+		_testEncode("OR.B >80, R12, R1", new byte[] { 0x50, (byte) 0x8E, (byte) 0xC1 });
+		_testEncode("OR >FFFF, R12, R1", new byte[] { (byte) 0x8F, (byte) 0xC1 });
+		_testEncode("OR.B >FF, R12, R1", new byte[] { 0x50, (byte) 0x8F, (byte) 0xC1 });
+		
+		// explicit constant
+		_testEncode("OR.B >1F, R12, R1", new byte[] { 0x5C, (byte) 0x8E, (byte) 0xC1, 0x1f });
+		// ... autoselect byte form
+		_testEncode("OR >1F, R12, R1", new byte[] { 0x5C, (byte) 0x8E, (byte) 0xC1, 0x1f });
+		_testEncode("OR >1F80, R12, R1", new byte[] { 0x4C, (byte) 0x8E, (byte) 0xC1, 0x1f, (byte)0x80 });
+
+		// ... but don't select byte form here, since it's accessing memory
+		_testEncode("OR >1F, R12, *R1", new byte[] { 0x4E, (byte) 0x8E, (byte) 0xC1, 0x00, 0x1f });
+
+		
+		_testEncode("ADD #2, SP, SP", new byte[] { (byte) 0xCE, (byte) 0xDD });
+		_testEncode("ADD.B #2, SP, SP", new byte[] { 0x50, (byte) 0xCE, (byte) 0xDD });
+
+		// this is converted to ADD ->1000, R7, R1.
+		_testEncode("SUB R7, >1000, R4", new byte[] { 0x4C, (byte) 0xCE, (byte) 0x74, (byte) 0xf0, 0x00 });
+		// this is also converted.  Note that the byte form is used, because it does
+		// not affect the calculation (all reg ops, except for shifts, use the full reg anyway).
+		_testEncode("SUB R7, 100, R4", new byte[] { 0x5C, (byte) 0xCE, (byte) 0x74, (byte) 0x9C });
+		
+		// no byte form here; accessing memory
+		_testEncode("SUB R7, 100, *R4", new byte[] { 0x4E, (byte) 0xCE, (byte) 0x74, (byte) 0xff, (byte) 0x9C });
+
+		// cannot convert, since this places the memory operand in the register-only position
+		assertBadInst("SUB *R7, 100, R4");
+		
+		// swizzle operands if memory is in second position and
+		// instruction is reverseable or commutative
+		_testEncode("OR *R5, R12, R1", new byte[] { 0x48, (byte) 0x85, (byte) 0xC1 });
+		_testEncode("OR R12, *R5, R1", new byte[] { 0x48, (byte) 0x85, (byte) 0xC1 });
+
+		// cannot reverse subtract
+		assertBadInst("SUB R12, *R5, R1");
+		// cannot have mem in second position
+		assertBadInst("OR *R7, *R8, R4");
+
+	}
+	public void testEncode3OpWith2() throws Exception {
+		// the first source operand becomes the dest operand
+			// OR R1, R5, R1
+		_testEncode("OR R5, R1", new byte[] { (byte) 0x81, (byte) 0x51 });
+		_testEncode("SBB.B R5, R1", new byte[] { 0x50, (byte) 0xf1, (byte) 0x51 });
+		_testEncode("AND *R5, R1", new byte[] { 0x48, (byte) 0x95, (byte) 0x11 });
+		_testEncode("ADD *R5+, R1", new byte[] { 0x4C, (byte) 0xC5, (byte) 0x11 });
+		_testEncode("SUB *R5, R1", new byte[] { 0x48, (byte) 0xE5, (byte) 0x11 });
+		
+		// status setters: no operand movement; SR is the destination
+			// ADD? R5, R1, SR
+		_testEncode("ADD? R5, R1", new byte[] { (byte) 0xC5, (byte) 0x1F });
+			// ADD? *R5, R1, SR
+		_testEncode("ADD? *R5, R1", new byte[] { 0x48, (byte) 0xC5, (byte) 0x1F });
+
+		_testEncode("CMP R5, R1", new byte[] { (byte) 0xe5, (byte) 0x1F });
+		_testEncode("CMP *R5+, R1", new byte[] { 0x4C, (byte) 0xe5, (byte) 0x1F });
+		
+		// If insts have destination as memory, make the middle operand the register,
+		// if possible.
+		
+		// swap CMP/CMPR or ADD/log when operands force it
+			// -> ADD *R5, R1, *R5 
+		_testEncode("ADD R1, *R5", new byte[] { 0x4A, (byte) 0xC5, (byte) 0x15 });
+			// -> XOR.B *R5, R1, *R5
+		_testEncode("XOR.B R1, *R5", new byte[] { 0x5A, (byte) 0xB5, (byte) 0x15 });
+			// SUB *SP, R0, *SP
+		_testEncode("SUB R0, *SP", new byte[] { 0x4a, (byte) 0xed, (byte) 0x0d });
+			// -> CMPR.B *R5+, R1
+		_testEncode("CMP.B R1, *R5+", new byte[] { 0x5C, (byte) 0xf5, (byte) 0x1F });
+
+		// In these, though, don't double-increment when copying the dest to source
+			// -> ADD *R5, R1, *R5+
+		_testEncode("ADD R1, *R5+", new byte[] { 0x4B, (byte) 0xC5, (byte) 0x15 });
+			// -> XOR.B *R5, R1, *R5+
+		_testEncode("XOR.B R1, *R5+", new byte[] { 0x5B, (byte) 0xB5, (byte) 0x15 });
+		
+	}
+
 	private void _testEncode(String str, byte[] bytes) throws ParseException, ResolveException {
 		assertInst(asmInstStage, str, bytes);
 		assertInst(asmInstStage, str.toLowerCase(), bytes);
@@ -137,7 +259,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		RawInstruction realInst = assembler.getInstructionFactory().createRawInstruction(
 				((LLInstruction) irealInsts[0]));
 		byte[] ebytes = assembler.getInstructionFactory().encodeInstruction(realInst);
-		assertEquals(realInst.size, ebytes.length);
+		assertEquals(realInst.getSize(), ebytes.length);
 
 		if (!Arrays.equals(bytes, ebytes)) {
 			assertEquals("mismatched encoding for " + string,

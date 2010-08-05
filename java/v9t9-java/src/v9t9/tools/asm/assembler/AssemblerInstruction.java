@@ -9,7 +9,6 @@ import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
@@ -57,6 +56,7 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 		target.setInst(getInst());
 		target.setOp1(lop1);
 		target.setOp2(lop2);
+		target.setOp3(lop3);
 		//target.completeInstruction(pc);
 	
 		int size = assembler.getInstructionFactory().getInstSize(target);
@@ -69,13 +69,13 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append(factory.getInstName(inst));
-		if (op1 != null && !(op1 instanceof LLEmptyOperand)) {
+		if (op1 != null) {
 			builder.append(' ');
 			builder.append(op1);
-			if (op2 != null && !(op2 instanceof LLEmptyOperand)) {
+			if (op2 != null) {
 				builder.append(',');
 				builder.append(op2);
-				if(op3 != null && !(op3 instanceof LLEmptyOperand)) {
+				if(op3 != null) {
 					builder.append(',');
 					builder.append(op3);
 				}
@@ -146,11 +146,11 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 			throw new IllegalArgumentException();
 	}
 	public AssemblerOperand[] getOps() {
-		if (op3 != null && !(op3 instanceof LLEmptyOperand))
+		if (op3 != null)
 			return new AssemblerOperand[] { op1, op2, op3 };
-		if (op2 != null && !(op2 instanceof LLEmptyOperand))
+		if (op2 != null)
 			return new AssemblerOperand[] { op1, op2  };
-		if (op1 != null && !(op1 instanceof LLEmptyOperand))
+		if (op1 != null)
 			return new AssemblerOperand[] { op1 };
 		return NO_OPS;
 	}

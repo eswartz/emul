@@ -227,7 +227,7 @@ public abstract class BaseTest extends TestCase {
 			IInstruction realInst = info.nextRealInst();
 			if (!stdInst.equals(realInst))
 				assertEquals(stdInst.toInfoString(), realInst.toInfoString());
-			targPc += stdInst.size;
+			targPc += stdInst.getSize();
 		} catch (ParseException e) {
 			// try for a directive
 			IInstruction[] dirInsts;

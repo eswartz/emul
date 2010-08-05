@@ -106,7 +106,7 @@ public class TestAssembler9900 extends BaseTest {
 		RawInstruction minst = InstTable9900.decodeInstruction(CPU.readWord(0), 0, CPU);
 		System.out.println(minst);
 		assertEquals(0x100, minst.opcode);
-		assertEquals(2, minst.size);
+		assertEquals(2, minst.getSize());
 		
 	}
 	public void testEncode1() throws Exception {
@@ -197,13 +197,13 @@ public class TestAssembler9900 extends BaseTest {
 		RawInstruction stdinst = createInstruction(0, minst.toString());
 		
 		short[] words = InstTable9900.encode(stdinst);
-		assertEquals(minst.toString(), minst.size, words.length*2);
+		assertEquals(minst.toString(), minst.getSize(), words.length*2);
 		
-		for (int i = 0; i < minst.size; i += 2) {
+		for (int i = 0; i < minst.getSize(); i += 2) {
 			short exp = CPU.readWord(i);
 			if (i == 0)
 				exp = (short) InstTable9900.coerceInstructionOpcode(minst.getInst(), exp);
-			assertEquals(minst.toString() + "@" + minst.size, Integer.toHexString(exp), Integer.toHexString(words[i/2]));
+			assertEquals(minst.toString() + "@" + minst.getSize(), Integer.toHexString(exp), Integer.toHexString(words[i/2]));
 		}
 	}
 
@@ -233,7 +233,7 @@ public class TestAssembler9900 extends BaseTest {
 		RawInstruction realInst = assembler.getInstructionFactory().createRawInstruction(
 				((LLInstruction) irealInsts[0]));
 		byte[] bytes = assembler.getInstructionFactory().encodeInstruction(realInst);
-		assertEquals(realInst.size, bytes.length);
+		assertEquals(realInst.getSize(), bytes.length);
 		
 		realInst.pc = 0;
 		for (int i = 0; i < bytes.length; i++)

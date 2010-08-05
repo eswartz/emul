@@ -19,7 +19,6 @@ import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLCountOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
@@ -30,7 +29,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
- * Parse low-level instructions (no symbols or anything).
+ * Parse instructions.
  * @author ejs
  *
  */
@@ -97,8 +96,8 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
         	throw new ParseException("Trailing text on line: " + tokenizer.currentToken());
         }
         
-        inst.setOp1(op1 != null ? op1 : LLEmptyOperand.INSTANCE);
-        inst.setOp2(op2 != null ? op2 : LLEmptyOperand.INSTANCE);
+        inst.setOp1(op1 != null ? op1 : null);
+        inst.setOp2(op2 != null ? op2 : null);
         
         return new IInstruction[] { inst };
     }

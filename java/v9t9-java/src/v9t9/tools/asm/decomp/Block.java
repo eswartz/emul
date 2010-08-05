@@ -301,7 +301,7 @@ public class Block implements Comparable<Block> {
 		Set<Integer> pcSet = new TreeSet<Integer>();
 		for (Iterator<HighLevelInstruction> iter = iterator(); iter.hasNext(); ) {
 			HighLevelInstruction inst = iter.next();
-			for (int size = inst.getInst().size - 2; size >= 0; size -= 2)
+			for (int size = inst.getInst().getSize() - 2; size >= 0; size -= 2)
 				pcSet.add((inst.getInst().pc + size) & 0xffff);
 		}
 		return pcSet;

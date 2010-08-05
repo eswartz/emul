@@ -16,7 +16,6 @@ import v9t9.tools.asm.assembler.MachineOperandParserStage9900;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
@@ -39,9 +38,9 @@ public class MachineOperandParserTest9900 extends TestCase {
         BaseMachineOperand mop;
         
         op = parse("");
-        assertTrue(op instanceof LLEmptyOperand);
-        mop = createMachineOperand9900(op);
-        assertTrue(mop.type == MachineOperand.OP_NONE && mop.val == 0 && mop.immed == 0);
+        assertNull(op);
+        //mop = createMachineOperand9900(op);
+        //assertTrue(mop.type == MachineOperand.OP_NONE && mop.val == 0 && mop.immed == 0);
         
         op = parse("4");
         assertTrue(op instanceof LLRegisterOperand);

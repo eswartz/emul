@@ -6,6 +6,7 @@ package v9t9.tools.asm.assembler.operand.ll;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.ResolveException;
+import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 
 /**
@@ -20,7 +21,7 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 		super(null);
 		setRegister(reg);
 	}
-	public LLRegIndOperand(RegOffsOperand original, int reg) {
+	public LLRegIndOperand(AssemblerOperand original, int reg) {
 		super(original);
 		setRegister(reg);
 	}

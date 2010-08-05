@@ -44,10 +44,10 @@ public class HLInstructionOptimizer {
                 }
             }
             prev = ins;
-            if (ins.size <= 0) {
+            if (ins.getSize() <= 0) {
 				throw new AssertionError("WTF? " + ins);
 			}
-            i += ins.size / 2;
+            i += ins.getSize() / 2;
         }
 
     }

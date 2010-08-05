@@ -219,7 +219,7 @@ public class InterpreterMFP201 implements Interpreter {
      */
     private void fetchOperands(Instruction9900 ins, short wp, Status9900 st) {
         iblock.inst = ins;
-        iblock.pc = (short) (iblock.inst.pc + iblock.inst.size);
+        iblock.pc = (short) (iblock.inst.pc + iblock.inst.getSize());
         iblock.wp = cpu.getWP();
         iblock.status = st;
         
@@ -284,7 +284,7 @@ public class InterpreterMFP201 implements Interpreter {
         /* do this after flushing status */
         if ((ins.info.writes & InstInfo.INST_RSRC_CTX) != 0) {
             /* update PC first */
-            cpu.setPC((short) (iblock.inst.pc + iblock.inst.size));
+            cpu.setPC((short) (iblock.inst.pc + iblock.inst.getSize()));
             cpu.contextSwitch(iblock.wp, iblock.pc);
         } else {
             /* flush register changes */

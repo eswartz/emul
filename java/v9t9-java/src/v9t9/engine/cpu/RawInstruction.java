@@ -8,7 +8,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	private String name;
 	public int pc;
 	/** size in bytes */
-	public int size;
+	private int size;
 	public short opcode;
 	/** InstTable.I... */
 	private int inst;
@@ -44,14 +44,16 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	    StringBuilder buffer = new StringBuilder();
 	    buffer.append(getName());
 	    String opstring;
-	    opstring = op1.toString();
+	    opstring = op1 != null ? op1.toString() : null;
 	    if (opstring != null) {
-	        buffer.append(' ');
-	        buffer.append(opstring);
-	        opstring = op2.toString();
+	        buffer.append(' ').append(opstring);
+	        opstring = op2 != null ? op2.toString() : null;
 	        if (opstring != null) {
-	            buffer.append(',');
-	            buffer.append(opstring);
+	            buffer.append(',').append(opstring);
+	            opstring = op3 != null ? op3.toString() : null;
+		        if (opstring != null) {
+		            buffer.append(',').append(opstring);
+		        }
 	        }
 	    }
 	    return buffer.toString();
@@ -66,7 +68,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		result = prime * result + ((op2 == null) ? 0 : op2.hashCode());
 		result = prime * result + ((op3 == null) ? 0 : op3.hashCode());
 		result = prime * result + pc;
-		result = prime * result + size;
+		//result = prime * result + size;
 		return result;
 	}
 
@@ -109,9 +111,9 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		if (pc != other.pc) {
 			return false;
 		}
-		if (size != other.size) {
-			return false;
-		}
+		//if (size != other.size) {
+		//	return false;
+		//}
 		return true;
 	}
 
@@ -161,5 +163,13 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public void setInst(int inst) {
 		this.inst = inst;
 		this.name = null;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
+	}
+
+	public int getSize() {
+		return size;
 	}
 }

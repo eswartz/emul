@@ -62,7 +62,7 @@ public class FunctionInstructionRangeCompiler implements
 		            if (inst == block.getLast())
 		            	break;
 		            
-		            j += inst.getInst().size / 2;
+		            j += inst.getInst().getSize() / 2;
 		            if (j >= numinsts)
 		            	break;		// if out of the code range but not the block
 		            

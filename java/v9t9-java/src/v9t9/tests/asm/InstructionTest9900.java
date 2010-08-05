@@ -70,11 +70,11 @@ public class InstructionTest9900 extends TestCase {
         assertEquals(MachineOperand9900.OP_REG, mop1.type);
         assertEquals(3, mop1.val);
         assertEquals("R3", mop1.toString());
-        assertEquals(2, inst.size);
+        assertEquals(2, inst.getSize());
         assertEquals("CLR R3", inst.toString());
 
         // some pc-relative tests
-        pc += inst.size;
+        pc += inst.getSize();
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
         block.inst = inst;
         mop1 = (MachineOperand9900) inst.getOp1();
@@ -89,10 +89,10 @@ public class InstructionTest9900 extends TestCase {
         assertEquals(0, mop1.val);
         assertEquals(ea1, inst.pc);
         assertEquals("$+>0", mop1.toString());
-        assertEquals(2, inst.size);
+        assertEquals(2, inst.getSize());
         assertEquals("JMP $+>0", inst.toString());
 
-        pc += inst.size;
+        pc += inst.getSize();
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
         block.inst = inst;
         mop1 = (MachineOperand9900) inst.getOp1();
@@ -107,10 +107,10 @@ public class InstructionTest9900 extends TestCase {
         assertEquals(-254, mop1.val);
         assertEquals((short)(inst.pc-254), ea1);
         assertEquals("$+>FF02", mop1.toString());
-        assertEquals(2, inst.size);
+        assertEquals(2, inst.getSize());
         assertEquals("JNC $+>FF02", inst.toString());
 
-        pc += inst.size;
+        pc += inst.getSize();
 
         domain.writeWord(0x83E0 + 9*2, (short)0x4000);
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
@@ -135,7 +135,7 @@ public class InstructionTest9900 extends TestCase {
         assertEquals(0x7fff, mop2.immed);
         assertEquals((short)(0x4000+0x7fff), ea2);
         assertEquals("@>7FFF(R9)", mop2.toString());
-        assertEquals(6, inst.size);
+        assertEquals(6, inst.getSize());
 
         domain.writeWord(0x83E0 + 9*2, (short)0x4001);
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
@@ -151,7 +151,7 @@ public class InstructionTest9900 extends TestCase {
         assertEquals((short)(0x4001+0x7fff), ea2);
 
         // ensure register increment holds and works in correct order.
-        pc += inst.size;
+        pc += inst.getSize();
         domain.writeWord(0x83E0 + 2*2, (short)0x4000);
         inst = InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
         block.inst = inst;
@@ -180,7 +180,7 @@ public class InstructionTest9900 extends TestCase {
         assertEquals(0, mop2.immed);
         assertEquals(0x4001, ea2);
         assertEquals("*R2+", mop2.toString());
-        assertEquals(2, inst.size);
+        assertEquals(2, inst.getSize());
 
         assertEquals(0x4002, domain.readWord(0x83e0+2*2));
 

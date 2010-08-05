@@ -200,8 +200,8 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 
 		// wire up instructions to their next real instructions
 		for (HighLevelInstruction inst = first; inst != null; inst = inst.getNext()) {
-			if (inst.getInst().size > 2) {
-				inst.setNext(getLLInstructions().get(new Integer(inst.getInst().pc + inst.getInst().size)));
+			if (inst.getInst().getSize() > 2) {
+				inst.setNext(getLLInstructions().get(new Integer(inst.getInst().pc + inst.getInst().getSize())));
 			}
 		}
 		

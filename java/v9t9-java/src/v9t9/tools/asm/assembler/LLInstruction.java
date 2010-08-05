@@ -6,7 +6,6 @@ package v9t9.tools.asm.assembler;
 import v9t9.engine.cpu.ICPUInstruction;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.RawInstruction;
-import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
@@ -31,13 +30,13 @@ public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstr
 		StringBuilder builder = new StringBuilder();
 		builder.append("LLInst ");
 		builder.append(factory.getInstName(inst));
-		if (op1 != null && !(op1 instanceof LLEmptyOperand)) {
+		if (op1 != null) {
 			builder.append(' ');
 			builder.append(op1);
-			if (op2 != null && !(op2 instanceof LLEmptyOperand)) {
+			if (op2 != null) {
 				builder.append(',');
 				builder.append(op2);
-				if (op3 != null && !(op3 instanceof LLEmptyOperand)) {
+				if (op3 != null) {
 					builder.append(',');
 					builder.append(op3);
 				}

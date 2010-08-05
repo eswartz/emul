@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 import v9t9.engine.cpu.MachineOperandMFP201;
 import v9t9.engine.cpu.Operand;
-import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegDecOperand;
@@ -40,7 +39,7 @@ public class MachineOperandParserStageMFP201 implements IOperandParserStage {
             //        3
             "(?:&" + IMMED + ")|" +
             //        4
-            "(?:" + IMMED + ")"
+            "(?:#?" + IMMED + ")"
             );
     
     final static Pattern JUMP_PATTERN = Pattern.compile(
@@ -63,7 +62,7 @@ public class MachineOperandParserStageMFP201 implements IOperandParserStage {
 		short immed = 0;
 		
         if (string == null || string.length() == 0) {
-            return LLEmptyOperand.INSTANCE;
+            return null;
         }
         Matcher matcher;
         

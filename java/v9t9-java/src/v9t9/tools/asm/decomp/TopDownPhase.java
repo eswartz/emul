@@ -158,9 +158,9 @@ public class TopDownPhase extends Phase {
 
 			if ((inst.flags & HighLevelInstruction.fEndsBlock) != 0) {
 				// handle block break
-				Block nextBlock = getLabelKey(inst.getInst().pc + inst.getInst().size);
+				Block nextBlock = getLabelKey(inst.getInst().pc + inst.getInst().getSize());
 				if (nextBlock != null) {
-					Label nextBlockLabel = decompileInfo.findOrCreateLabel(inst.getInst().pc + inst.getInst().size);
+					Label nextBlockLabel = decompileInfo.findOrCreateLabel(inst.getInst().pc + inst.getInst().getSize());
 					if (!unresolvedBlocks.contains(nextBlockLabel.getBlock())) {
 						unresolvedBlocks.add(nextBlockLabel.getBlock());
 					}
@@ -370,13 +370,13 @@ public class TopDownPhase extends Phase {
 			// be wary of jumps inside already-recognized code
 			if (!force) {
 				RawInstruction prevTarget = decompileInfo.getInstruction((addr - 2) & 0xfffe);
-				if (prevTarget != null && prevTarget.size >= 4) {
+				if (prevTarget != null && prevTarget.getSize() >= 4) {
 					System.out.println("!!! ignoring jump inside code: " + prevTarget + " (was " + target + ") from "  
 							+ caller);
 					return null;
 				}
 				prevTarget = decompileInfo.getInstruction((addr - 4) & 0xfffe);
-				if (prevTarget != null && prevTarget.size >= 6) {
+				if (prevTarget != null && prevTarget.getSize() >= 6) {
 					System.out.println("!!! ignoring jump inside code: " + prevTarget + " (was " + target + ") from "  
 							+ caller);
 					return null;
@@ -912,7 +912,7 @@ public class TopDownPhase extends Phase {
 						&& ((RoutineOperand) callSite.getInst().getOp1()).routine == routine) {
 					if (!(callSite.getInst().getOp2() instanceof DataWordListOperand)) {
 						int[] args = new int[routine.getDataWords()];
-						int pc = (callSite.getInst().pc + callSite.getInst().size) & 0xfffe;
+						int pc = (callSite.getInst().pc + callSite.getInst().getSize()) & 0xfffe;
 						int last = pc + routine.getDataWords() * 2;
 						int idx = 0;
 						HighLevelInstruction inst = null;

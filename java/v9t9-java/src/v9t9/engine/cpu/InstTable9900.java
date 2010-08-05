@@ -157,7 +157,7 @@ public class InstTable9900 {
 		if (!(rawInstruction.getOp2() instanceof MachineOperand))
 			throw new IllegalArgumentException("Non-machine operand 2: " + rawInstruction.getOp1());
 		
-		rawInstruction.size = 2;	// at least (for jumps)
+		rawInstruction.setSize(2);	// at least (for jumps)
 		coerceOperandTypes(rawInstruction);
 		
 		MachineOperand9900 mop1 = (MachineOperand9900) rawInstruction.getOp1();
@@ -177,7 +177,7 @@ public class InstTable9900 {
 			words[wordCount++] = mop2.immed;
 		}
 		
-		rawInstruction.size = wordCount * 2;
+		rawInstruction.setSize(wordCount * 2);
 		
 		if (wordCount == 1)
 			return new short[] { words[0] };
@@ -437,7 +437,7 @@ public class InstTable9900 {
         inst.opcode = (short) op;
         inst.setInst(InstTableCommon.Idata);
         inst.setName("DATA");
-        inst.size = 0;
+        inst.setSize(0);
         MachineOperand9900 mop1 = new MachineOperand9900(MachineOperand.OP_NONE);
         MachineOperand9900 mop2 = new MachineOperand9900(MachineOperand.OP_NONE);
         inst.setOp1(mop1);
@@ -837,14 +837,14 @@ public class InstTable9900 {
             mop1.type = MachineOperand9900.OP_IMMED;
             mop1.val = mop1.immed = (short) op;
             //inst.name = "DATA";
-            inst.size = 2;
+            inst.setSize(2);
         } else {
         	// inst.completeInstruction(pc);
             // Finish reading operand immediates
             pc += 2;
             pc = mop1.fetchOperandImmediates(domain, (short)pc);
             pc = mop2.fetchOperandImmediates(domain, (short)pc);
-            inst.size = pc - inst.pc;
+            inst.setSize(pc - inst.pc);
             inst.setName(InstTable9900.getInstName(inst.getInst()));
         }
 
@@ -853,23 +853,23 @@ public class InstTable9900 {
     
     public static void calculateInstructionSize(RawInstruction target) {
     	if (target.getInst() == InstTableCommon.Idata) {
-    		target.size = 2;
+    		target.setSize(2);
     		return;
     	} else if (target.getInst() == InstTableCommon.Ibyte) {
-    		target.size = 1;
+    		target.setSize(1);
     		return;
     	}
-    	target.size = 2;
+    	target.setSize(2);
     	InstPattern9900 pattern = lookupEncodePattern(target.getInst());
 		if (pattern == null)
 			return;
 		
 		if ((pattern.op1 == GEN && ((BaseMachineOperand)target.getOp1()).type == MachineOperand9900.OP_ADDR)
 				|| (pattern.op1 == IMM)) 
-			target.size += 2;
+			target.setSize(target.getSize() + 2);
 		if ((pattern.op2 == GEN && ((BaseMachineOperand)target.getOp2()).type == MachineOperand9900.OP_ADDR)
 				|| (pattern.op2 == IMM)) 
-			target.size += 2;
+			target.setSize(target.getSize() + 2);
 	
     }
 	/**

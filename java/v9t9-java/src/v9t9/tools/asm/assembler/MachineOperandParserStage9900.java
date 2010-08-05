@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLEmptyOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
@@ -57,7 +56,7 @@ public class MachineOperandParserStage9900 implements IOperandParserStage {
 		short immed = 0;
 		
         if (string == null || string.length() == 0) {
-            return LLEmptyOperand.INSTANCE;
+            return null;
         }
         Matcher matcher = OPERAND_PATTERN.matcher(string);
         if (matcher.matches()) {

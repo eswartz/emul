@@ -44,7 +44,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	public static final int OP_OFFS = 1;
 	/** 4-bit indirect @Rx */
 	public static final int OP_IND = 2;
-	/** 4-bit register increment @Rx+ */
+	/** 4-bit register increment *Rx+ */
 	public static final int OP_INC = 3;
 	
 	// These are semantic operand types, whose meanings are 
@@ -62,8 +62,8 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	/** shift count from R0 */
 	public static final int OP_REG0_SHIFT_COUNT = 11;	
 
-	/** 4-bit register decrement @Rx-, when under control of LOOP */
-	public static final int OP_DEC = 13;
+	/** 4-bit register decrement *Rx-, when under control of LOOP */
+	public static final int OP_DEC = 0xf;	// intentionally same low bits as OP_INC 
 
 	// Operand Encoding Types
 	
@@ -71,16 +71,21 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	public static final int OP_ENC_UNSET = 0;
 	/** Implicit immediate, e.g. 2 as Rx=SR and As=2 (for {@link #OP_IMM}) */
 	public static final int OP_ENC_IMM_IMPLICIT = 1;
+	/** The operand (e.g. reg=SR) just converts the instruction to a 
+	 * "?"/CMP/TST? variant and is not visible to the user */
+	public static final int OP_ENC_NON_WRITING = 2;
+	/** Explicit 8-bit signed immediate (for {@link #OP_IMM} or {@link #OP_PCREL})
+	 * or {@link #OP_OFFS} when val=PC */
+	public static final int OP_ENC_IMM8 = 3;
 	/** Explicit 8-bit signed immediate (for {@link #OP_IMM} or {@link #OP_PCREL}) */
-	public static final int OP_ENC_IMM8 = 2;
-	/** Explicit 8-bit signed immediate (for {@link #OP_IMM} or {@link #OP_PCREL}) */
-	public static final int OP_ENC_PCREL8 = 2;
-	/** Explicit 16-bit signed immediate  (for {@link #OP_IMM}) */
-	public static final int OP_ENC_IMM16 = 3;
+	public static final int OP_ENC_PCREL8 = 3;  /* same as OP_ENC_IMM8 */
+	/** Explicit 16-bit signed immediate  (for {@link #OP_IMM})
+	 * or {@link #OP_OFFS} when val=PC */
+	public static final int OP_ENC_IMM16 = 4;
 	/** Explicit 12-bit signed immediate (for {@link #OP_PCREL} with mem/size)*/
-	public static final int OP_ENC_PCREL12 = 4;
+	public static final int OP_ENC_PCREL12 = 5;
 	/** Explicit 16-bit signed immediate (for {@link #OP_PCREL} with mem/size)*/
-	public static final int OP_ENC_PCREL16 = 5;
+	public static final int OP_ENC_PCREL16 = 6;
 	
 	public int encoding;
 	
@@ -100,7 +105,8 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#isMemory()
 	 */
     public boolean isMemory() {
-        return type == OP_IND || type == OP_OFFS || type == OP_INC || !bIsCodeDest;
+        return type == OP_IND || type == OP_OFFS || type == OP_INC ||
+        type == OP_DEC || !bIsCodeDest;
     }
     
     /* (non-Javadoc)
@@ -136,10 +142,22 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#isConstant()
 	 */
     public boolean isConstant() {
-        return type == OP_IMM || type == OP_CNT; 
+        return type == OP_IMM || type == OP_CNT
+        || (type == OP_REG && encoding == OP_ENC_IMM_IMPLICIT)
+        || (type == OP_INC && (encoding == OP_ENC_IMM16 || encoding == OP_ENC_IMM8) );
     }
     
     /* (non-Javadoc)
+	 * @see v9t9.engine.cpu.MachineOperand#hasImmediate()
+	 */
+	public boolean hasImmediate() {
+	    return type == OP_OFFS || type == OP_PCREL 
+	    || (type == OP_IMM && encoding != OP_ENC_IMM_IMPLICIT)
+	    || (type == OP_INC && (encoding == OP_ENC_IMM16 || encoding == OP_ENC_IMM8) )
+	    	|| type == OP_SRO;
+	}
+
+	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#isLabel()
 	 */
     public boolean isLabel() {
@@ -147,12 +165,15 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
         	|| type == OP_PCREL;
     }
     
-    /*
+    /**
      * Print out an operand into a disassembler operand, returns NULL if no
      * printable information
      */
     @Override
 	public String toString() {
+    	if (encoding == OP_ENC_NON_WRITING)
+    		return null;
+    	
     	String basic = basicString();
     	if (symbol != null && !symbolResolved) {
     		if (basic == null)
@@ -166,10 +187,12 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		switch (type) 
     	{
     	case OP_REG:
+    		if (encoding == OP_ENC_IMM_IMPLICIT)
+    			return "#" + (immed > 2  ? ">" + Integer.toHexString(immed) : "" + immed);
     		return regName(val);
 
     	case OP_IND:
-    		return "@" + regName(val);
+    		return "*" + regName(val);
 
     	case OP_OFFS: {
     		String addr = HexUtils.toHex4(immed);
@@ -186,9 +209,9 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		return addr + "(" + scaled + ")";
     	}
     	case OP_INC:
-    		return "@" + regName(val) + "+";
+    		return "*" + regName(val) + "+";
     	case OP_DEC:
-    		return "@" + regName(val) + "-";
+    		return "*" + regName(val) + "-";
     	
     	case OP_IMM: {
     		int imm;
@@ -198,7 +221,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     			imm = immed & 0xfff;
     		else
     			imm = immed & 0xffff; 
-    		return ">" + Integer.toHexString(imm).toUpperCase();
+    		return "#>" + Integer.toHexString(imm).toUpperCase();
     	}
     	case OP_CNT:
     	case OP_REG0_SHIFT_COUNT:
@@ -246,16 +269,6 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	}
 	
     /* (non-Javadoc)
-	 * @see v9t9.engine.cpu.MachineOperand#hasImmediate()
-	 */
-    public boolean hasImmediate() {
-        return type == OP_OFFS || type == OP_PCREL ||
-        	(type == OP_IMM && encoding != OP_ENC_IMM_IMPLICIT)
-        	|| type == OP_SRO;
-    }
-
-
-    /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#valueString(short, short)
 	 */
     public String valueString(short ea, short theValue) {
@@ -278,9 +291,9 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		// no address!
     		ea = (short) val;
     		break;
-    	case OP_INC:	// @Rx+
-    	case OP_DEC:	// @Rx-
-    	case OP_IND: {	// @Rx
+    	case OP_INC:	// *Rx+
+    	case OP_DEC:	// *Rx-
+    	case OP_IND: {	// *Rx
     		ea = (short) block.cpu.getRegister(val);
 
     		/* update register if necessary */
@@ -347,9 +360,9 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 				value = (short) block.cpu.getRegister(ea);
 			}
             break;
-        case OP_INC:    // @Rx+
-        case OP_DEC:	// @Rx-
-        case OP_IND: {  // @Rx
+        case OP_INC:    // *Rx+
+        case OP_DEC:	// *Rx-
+        case OP_IND: {  // *Rx
             if (bIsCodeDest) {
 				value = ea;
 			} else
@@ -525,6 +538,18 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		if (scaleBits == 8)
 			throw new IllegalArgumentException();
 		op.scaleBits = scale;
+		return op;
+	}
+
+	public static Operand createNonWritingSROperand() {
+		MachineOperandMFP201 op = createGeneralOperand(OP_REG, SR);
+		op.encoding = OP_ENC_NON_WRITING;
+		return op;
+	}
+
+	public static Operand createImplicitConstantReg(int reg, int immed) {
+		MachineOperandMFP201 op = createGeneralOperand(OP_REG, reg, immed);
+		op.encoding = OP_ENC_IMM_IMPLICIT;
 		return op;
 	}
 

@@ -20,6 +20,24 @@ public class AssemblerOperandParserStageMFP201 extends
 		super(assembler);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.AssemblerOperandParserStage#parse(v9t9.tools.asm.assembler.AssemblerTokenizer)
+	 */
+	@Override
+	public AssemblerOperand parse(AssemblerTokenizer tokenizer)
+			throws ParseException {
+		int t = tokenizer.nextToken();
+		if (t == '#') {
+			// lone number operand
+			this.tokenizer = tokenizer;
+			return parseNumber();
+		} else {
+			tokenizer.pushBack();
+		}
+		
+		return super.parse(tokenizer);
+	}
+	
 	@Override
 	protected AssemblerOperand parseTargetSpecificOperand(int t)
 			throws ParseException {
