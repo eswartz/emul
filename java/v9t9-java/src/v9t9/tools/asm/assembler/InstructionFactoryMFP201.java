@@ -44,16 +44,31 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		LLOperand op1 = ins.getOp1();
 		LLOperand op2 = ins.getOp2();
 		LLOperand op3 = ins.getOp3();
-		
+
+		int[] consts;
+		if (InstTableMFP201.isLogicalOpInst(inst)) {
+			consts = InstTableMFP201.LOGICAL_INST_CONSTANTS[inst & 1];
+		} else {
+			consts = InstTableMFP201.ARITHMETIC_INST_CONSTANTS;
+		}
+
 		// convert 2-op to 3-op
 		if (InstTableMFP201.canBeThreeOpInst(inst)) {
 			if (op3 == null) {
 				// if a writing inst with two normal registers, change A,B to B,A,B
 				if (op1 instanceof LLRegisterOperand && op2 instanceof LLRegisterOperand) {
 					if (! InstTableMFP201.isNonWritingInst(inst)) {
-						op3 = op2;
-						op2 = op1;
-						op1 = op3;
+						// do not put special registers in op1 position
+						int sr = ((LLRegisterOperand) op1).getRegister();
+						if (sr != 13 && sr != 14 && sr != 15) {
+							op3 = op2;
+							op2 = op1;
+							op1 = op3;
+						} else {
+							if (InstTableMFP201.isCommutativeInst(inst)) {
+								op3 = op2;
+							}
+						}
 					} else {
 						// third operand is SR -- go ahead and set it here
 						rawInst.setOp3(
@@ -107,6 +122,19 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 								.createNonWritingSROperand());
 					}
 				}
+				
+				// else, if op1 is an immediate, and it can be converted
+				// to an implicit register, keep this
+				else if (op1 != null && op1 instanceof LLImmedOperand) {
+					int reg = getImplicitConstantReg(op1.getImmediate(), consts);
+					if (reg >= 0) {
+						rawInst.setOp2(MachineOperandMFP201.createImplicitConstantReg(
+								reg, op1.getImmediate()));
+						op1 = op2;
+						op2 = null;
+						op3 = op1;
+					}
+				}
 			}
 			
 			// full 3-op instructions
@@ -136,22 +164,35 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 					}
 				}
 			}
-			// see if src1 is a constant and replace with implicit constant
-			if (op1 != null && op1.isConst()) {
-				int immed = op1.getImmediate();
-				int[] consts;
-				if (InstTableMFP201.isLogicalOpInst(inst)) {
-					consts = InstTableMFP201.LOGICAL_INST_CONSTANTS[inst & 1];
-				} else {
-					consts = InstTableMFP201.ARITHMETIC_INST_CONSTANTS;
+
+			// try to use implicit constants
+
+			// see if src1 is zero for an arith op and replace with SR
+			if (op1 != null && op1 instanceof LLImmedOperand) {
+				if (op1.getImmediate() == 0 && InstTableMFP201.isArithOpInst(inst)) {
+					op1 = null;
+					rawInst.setOp1(MachineOperandMFP201.createImplicitConstantReg(
+							15, 0));
 				}
-				for (int r = 0; r < 3; r++) {
-					if (consts[r] == immed) {
-						op1 = null;
-						rawInst.setOp1(MachineOperandMFP201.createImplicitConstantReg(
-								r + 13, consts[r]));
-						break;
+				// otherwise, see if we can swap into op2 and use an implicit constant
+				else if (op2 != null && InstTableMFP201.isCommutativeInst(inst)) {
+					int reg = getImplicitConstantReg(op1.getImmediate(), consts);
+					if (reg >= 0) {
+						rawInst.setOp2(MachineOperandMFP201.createImplicitConstantReg(
+								reg, op1.getImmediate()));
+						op1 = op2;
+						op2 = null;
 					}
+				}
+			}
+			
+			// see if src2 is a constant and replace with implicit constant
+			if (op2 != null && op2 instanceof LLImmedOperand) {
+				int reg = getImplicitConstantReg(op2.getImmediate(), consts);
+				if (reg >= 0) {
+					rawInst.setOp2(MachineOperandMFP201.createImplicitConstantReg(
+							reg, op2.getImmediate()));
+					op2 = null;
 				}
 			}
 		}
@@ -167,6 +208,20 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		InstTableMFP201.coerceOperandTypes(rawInst);
 		//InstTableMFP201.calculateInstructionSize(rawInst);
 		return rawInst;
+	}
+
+	/**
+	 * @param immediate
+	 * @param consts 
+	 * @return
+	 */
+	private int getImplicitConstantReg(int immed, int[] consts) {
+		for (int r = 0; r < 3; r++) {
+			if (consts[r] == immed) {
+				return r + 13;
+			}
+		}
+		return -1;
 	}
 
 	/* (non-Javadoc)

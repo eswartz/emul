@@ -104,8 +104,20 @@ public class InstTableMFP201 {
 	private static void register4(int inst, int opcode, int mask) {
 		register(inst, opcode, GEN_REG_GEN, mask);
 		register(inst + 1, opcode, GEN_REG_GEN_B, mask);
-		register(inst + 2, opcode, GEN_REG_GEN, mask);
-		register(inst + 3, opcode, GEN_REG_GEN_B, mask);
+		
+		// in 3-op form, non-writing ADD->TST, ADC->TSTN
+		if (inst == InstMFP201.Iadd) 
+			inst = InstMFP201.Itst;
+		else if (inst == InstMFP201.Iadc) 
+			inst = InstMFP201.Itstn;
+		else if (inst == InstMFP201.Iand || inst == InstMFP201.Inand)
+			// these do not have no-write forms, since we write SR
+			return;
+		else 
+			inst += 2;
+		
+		register(inst, opcode, GEN_REG_GEN, mask);
+		register(inst + 1, opcode, GEN_REG_GEN_B, mask);
 	}
 		
 	static {
@@ -299,9 +311,9 @@ public class InstTableMFP201 {
 		IllegalArgumentException lastException = null;
 		for (InstPatternMFP201 pattern : patterns) {
 			try {
-				assertOperandMatches(mop1, pattern.op1);
-				assertOperandMatches(mop2, pattern.op2);
-				assertOperandMatches(mop3, pattern.op3);
+				assertOperandMatches(rawInst, mop1, pattern.op1);
+				assertOperandMatches(rawInst, mop2, pattern.op2);
+				assertOperandMatches(rawInst, mop3, pattern.op3);
 				lastException = null;
 			} catch (IllegalArgumentException e) {
 				lastException = e;
@@ -476,33 +488,33 @@ public class InstTableMFP201 {
 		return (byte) (immed & 0xff) == immed;
 	}
 
-	private static void assertOperandMatches(BaseMachineOperand mop, int op) {
+	private static void assertOperandMatches(RawInstruction inst, BaseMachineOperand mop, int op) {
 		if (mop == null && op != NONE)
-			throw new IllegalArgumentException("Operand missing");
+			throw new IllegalArgumentException("Operand missing in " + inst);
 		else if (mop != null && mop.type != MachineOperand.OP_NONE && op == NONE)
-			throw new IllegalArgumentException("Unexpected operand: " + mop);
+			throw new IllegalArgumentException("Unexpected operand: " + mop + " in " + inst);
 		
 		switch (op) {
 		case IMM:
 			if (!mop.isConstant())
-				throw new IllegalArgumentException("Expected immediate: " + mop);
+				throw new IllegalArgumentException("Expected immediate: " + mop + " in " + inst);
 			break;
 		case CNT:
 			if (mop.type != MachineOperandMFP201.OP_CNT && mop.type != MachineOperandMFP201.OP_IMM)
-				throw new IllegalArgumentException("Expected count: " + mop);
+				throw new IllegalArgumentException("Expected count: " + mop + " in " + inst);
 			break;
 		case OFF:
 			if (mop.type != MachineOperandMFP201.OP_CNT && mop.type != MachineOperandMFP201.OP_IMM
 					&& mop.type != MachineOperandMFP201.OP_PCREL)
-				throw new IllegalArgumentException("Expected offset: " + mop);
+				throw new IllegalArgumentException("Expected offset: " + mop + " in " + inst);
 			break;
 		case REG:
 			if (mop.type != MachineOperandMFP201.OP_REG && mop.type != MachineOperandMFP201.OP_REG0_SHIFT_COUNT)
-				throw new IllegalArgumentException("Expected register: " + mop);
+				throw new IllegalArgumentException("Expected register: " + mop + " in " + inst);
 			break;
 		case GEN:
 			if (mop.type == MachineOperandMFP201.OP_NONE)
-				throw new IllegalArgumentException("Expected general operand: " + mop);
+				throw new IllegalArgumentException("Expected general operand: " + mop + " in " + inst);
 			break;
 		}
 	}
@@ -540,9 +552,9 @@ public class InstTableMFP201 {
 			mop3 = coerceOperandType(instruction, mop3, pattern.op3);
 			
 			try {
-				assertOperandMatches(mop1, pattern.op1);
-				assertOperandMatches(mop2, pattern.op2);
-				assertOperandMatches(mop3, pattern.op3);
+				assertOperandMatches(instruction, mop1, pattern.op1);
+				assertOperandMatches(instruction, mop2, pattern.op2);
+				assertOperandMatches(instruction, mop3, pattern.op3);
 				
 				instruction.setOp1(mop1);
 				instruction.setOp2(mop2);
@@ -972,5 +984,14 @@ public class InstTableMFP201 {
 		if (isCommutativeInst(inst))
 			return inst;
 		return 0;
+	}
+
+	/**
+	 * @param inst
+	 * @return
+	 */
+	public static boolean isArithOpInst(int inst) {
+		return inst >= InstMFP201._IfirstArithOp 
+		&& inst <= InstMFP201._IlastArithOp;
 	}
 }

@@ -42,6 +42,8 @@ public class InstMFP201 {
 	
 	public static final int _IlastLogicalOp = 31;
 	
+	public static final int _IfirstArithOp = 32;
+
 	public static final int Iadd = 32;
 	public static final int Iaddb = 33;
 	public static final int Iaddq = 34;
@@ -61,7 +63,9 @@ public class InstMFP201 {
 	public static final int Isbbb = 45;
 	public static final int Icmpr = 46;
 	public static final int Icmprb = 47;
-	
+
+	public static final int _IlastArithOp = 47;
+
 	public static final int _IlastPossibleThreeOp = 47;
 
 	public static final int Ildc = 48;

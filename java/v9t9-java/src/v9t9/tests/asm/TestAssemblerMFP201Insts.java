@@ -117,9 +117,9 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("CMP.B #3, R0", new byte[] { 0x09, (byte) 0xb0, 0x03 });
 		
 		_testEncode("ADC >100, R0", new byte[] { 0x08, (byte) 0xc0, 0x01, 0x00 });
-		_testEncode("ADC.B #0, R0", new byte[] { 0x09, (byte) 0xc0, 0x00 });
+		_testEncode("ADC.B #4, R0", new byte[] { 0x09, (byte) 0xc0, 0x04 });
 		_testEncode("ADC? >100, R0", new byte[] { 0x08, (byte) 0xd0, 0x01, 0x00 });
-		_testEncode("ADC.B? #0, R0", new byte[] { 0x09, (byte) 0xd0, 0x00 });
+		_testEncode("ADC.B? #4, R0", new byte[] { 0x09, (byte) 0xd0, 0x04 });
 		
 		_testEncode("LDC >100, R0", new byte[] { 0x08, (byte) 0xe0, 0x01, 0x00 });
 		_testEncode("LDC.B #0, R0", new byte[] { 0x09, (byte) 0xe0, 0x00 });
@@ -140,14 +140,20 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		
 		_testEncode("OR R5, R12, R1", new byte[] { (byte) 0x85, (byte) 0xC1 });
 		
-		// implicit constant
-		_testEncode("OR #1, R12, R1", new byte[] { (byte) 0x8D, (byte) 0xC1 });
-		_testEncode("OR >8000, R12, R1", new byte[] { (byte) 0x8E, (byte) 0xC1 });
-		_testEncode("OR.B >80, R12, R1", new byte[] { 0x50, (byte) 0x8E, (byte) 0xC1 });
-		_testEncode("OR >FFFF, R12, R1", new byte[] { (byte) 0x8F, (byte) 0xC1 });
-		_testEncode("OR.B >FF, R12, R1", new byte[] { 0x50, (byte) 0x8F, (byte) 0xC1 });
+		// use register for implicit constant in 2nd position
+		// or select the implicit constant form if the operation is commutative
+		_testEncode("OR R12, #1, R1", new byte[] { (byte) 0x8C, (byte) 0xD1 });
+		_testEncode("OR #1, R12, R1", new byte[] { (byte) 0x8C, (byte) 0xD1 });
+		_testEncode("AND R12, >8000, R1", new byte[] { (byte) 0x9C, (byte) 0xE1 });
+		_testEncode("AND >8000, R12, R1", new byte[] { (byte) 0x9C, (byte) 0xE1 });
+		_testEncode("NAND.B R12, >80, R1", new byte[] { 0x50, (byte) 0xAC, (byte) 0xE1 });
+		_testEncode("NAND.B >80, R12, R1", new byte[] { 0x50, (byte) 0xAC, (byte) 0xE1 });
+		_testEncode("XOR R12, >FFFF, R1", new byte[] { (byte) 0xBC, (byte) 0xF1 });
+		_testEncode("XOR >FFFF, R12, R1", new byte[] { (byte) 0xBC, (byte) 0xF1 });
+		_testEncode("OR.B R12, >FF, R1", new byte[] { 0x50, (byte) 0x8C, (byte) 0xF1 });
+		_testEncode("OR.B >FF, R12, R1", new byte[] { 0x50, (byte) 0x8C, (byte) 0xF1 });
 		
-		// explicit constant
+		// explicit constant in mem op position
 		_testEncode("OR.B >1F, R12, R1", new byte[] { 0x5C, (byte) 0x8E, (byte) 0xC1, 0x1f });
 		// ... autoselect byte form
 		_testEncode("OR >1F, R12, R1", new byte[] { 0x5C, (byte) 0x8E, (byte) 0xC1, 0x1f });
@@ -156,11 +162,13 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		// ... but don't select byte form here, since it's accessing memory
 		_testEncode("OR >1F, R12, *R1", new byte[] { 0x4E, (byte) 0x8E, (byte) 0xC1, 0x00, 0x1f });
 
-		
-		_testEncode("ADD #2, SP, SP", new byte[] { (byte) 0xCE, (byte) 0xDD });
-		_testEncode("ADD.B #2, SP, SP", new byte[] { 0x50, (byte) 0xCE, (byte) 0xDD });
+		_testEncode("ADD SP, #2, SP", new byte[] { (byte) 0xCD, (byte) 0xED });
+		_testEncode("ADD.B SP, #2, SP", new byte[] { 0x50, (byte) 0xCD, (byte) 0xED });
+		_testEncode("ADD #2, SP, SP", new byte[] { (byte) 0xCD, (byte) 0xED });
+		_testEncode("ADD.B #2, SP, SP", new byte[] { 0x50, (byte) 0xCD, (byte) 0xED });
 
-		// this is converted to ADD ->1000, R7, R1.
+		// A non-implicit immediate is not allowed in 2nd position, 
+		// so this is converted to ADD ->1000, R7, R1.
 		_testEncode("SUB R7, >1000, R4", new byte[] { 0x4C, (byte) 0xCE, (byte) 0x74, (byte) 0xf0, 0x00 });
 		// this is also converted.  Note that the byte form is used, because it does
 		// not affect the calculation (all reg ops, except for shifts, use the full reg anyway).
@@ -182,6 +190,9 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		// cannot have mem in second position
 		assertBadInst("OR *R7, *R8, R4");
 
+			// SETO -> SUB 0/*SP*/, 1/*R13*/, R
+		_testEncode("SUB 0, 1, R1", new byte[] { (byte) 0xEF, (byte) 0xD1 });
+
 	}
 	public void testEncode3OpWith2() throws Exception {
 		// the first source operand becomes the dest operand
@@ -191,20 +202,42 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("AND *R5, R1", new byte[] { 0x48, (byte) 0x95, (byte) 0x11 });
 		_testEncode("ADD *R5+, R1", new byte[] { 0x4C, (byte) 0xC5, (byte) 0x11 });
 		_testEncode("SUB *R5, R1", new byte[] { 0x48, (byte) 0xE5, (byte) 0x11 });
+
+		// immediates with implicit constants
+		_testEncode("ADD #1, R4", new byte[] { (byte) 0xC4, (byte) 0xD4 });
+		_testEncode("ADD #2, SP", new byte[] { (byte) 0xCD, (byte) 0xED });
+		_testEncode("NAND #1, SR", new byte[] { (byte) 0xAF, (byte) 0xDF });
+		
+		// SP cannot appear in src2R as SP, so ops must be swapped
+			// -> ADD SP, R4, R4
+		_testEncode("ADD SP, R4", new byte[] { (byte) 0xCD, (byte) 0x44 });
 		
 		// status setters: no operand movement; SR is the destination
-			// ADD? R5, R1, SR
-		_testEncode("ADD? R5, R1", new byte[] { (byte) 0xC5, (byte) 0x1F });
-			// ADD? *R5, R1, SR
-		_testEncode("ADD? *R5, R1", new byte[] { 0x48, (byte) 0xC5, (byte) 0x1F });
+			// XOR? R5, R1, SR
+		_testEncode("XOR? R5, R1", new byte[] { (byte) 0xB5, (byte) 0x1F });
+			// XOR? *R5, R1, SR
+		_testEncode("XOR? *R5, R1", new byte[] { 0x48, (byte) 0xB5, (byte) 0x1F });
 
+		// note: no non-writing version of ADD/ADC since these are TST/TSTN
+		assertBadInst("ADD? R5, R1");
+		assertBadInst("ADC? R5, R1");
+		
 		_testEncode("CMP R5, R1", new byte[] { (byte) 0xe5, (byte) 0x1F });
 		_testEncode("CMP *R5+, R1", new byte[] { 0x4C, (byte) 0xe5, (byte) 0x1F });
+
+		// the opcode is for ADD/ADC here, not AND/NAND
+		_testEncode("TST R5, R1", new byte[] { (byte) 0xC5, (byte) 0x1F });
+		_testEncode("TSTN R5, R1", new byte[] { (byte) 0xD5, (byte) 0x1F });
 		
+		// pseudo
+			// CLR -> XOR r,r,r
+		_testEncode("XOR R1, R1", new byte[] { (byte) 0xB1, (byte) 0x11 });
+			// INV -> XOR >FFFF,r,r
+		_testEncode("XOR >FFFF, R1", new byte[] { (byte) 0xB1, (byte) 0xF1 });
+
 		// If insts have destination as memory, make the middle operand the register,
 		// if possible.
 		
-		// swap CMP/CMPR or ADD/log when operands force it
 			// -> ADD *R5, R1, *R5 
 		_testEncode("ADD R1, *R5", new byte[] { 0x4A, (byte) 0xC5, (byte) 0x15 });
 			// -> XOR.B *R5, R1, *R5
@@ -220,6 +253,9 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 			// -> XOR.B *R5, R1, *R5+
 		_testEncode("XOR.B R1, *R5+", new byte[] { 0x5B, (byte) 0xB5, (byte) 0x15 });
 		
+			// can't reconcile
+		assertBadInst("SUB *R0, *R1");
+
 	}
 
 	private void _testEncode(String str, byte[] bytes) throws ParseException, ResolveException {
