@@ -24,6 +24,8 @@ public class InstPatternMFP201 {
 	public final static int IMM = 5;
 	/** LEA's scaled offset */
 	public final static int SRO = 6;
+	/** instruction */
+	public final static int INST = 7;
 	
 	/** array of metainstructions -- see InstTableMFP201 */
 	public final byte[] enc;

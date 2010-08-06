@@ -381,6 +381,42 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		assertBadInst("LEA R0, R3");
 		assertBadInst("LEA @R0, @R3");
 	}
+	
+	public void testEncodeLoopStep() throws Exception {
+		_testEncode("LOOP R1: ADD #1, R2", 
+				new byte[] { 0x67, 0x01, 
+				(byte) 0xc2, (byte) 0xd2});
+		
+		// verify syntax
+		assertEquals("LOOP R1: ADD R2,#1,R2", getInst("LOOP R1: ADD #1, R2").toString());
+		
+		_testEncode("STEP: ADD #1, R2", 
+				new byte[] { 0x67, 0x0f, 
+				(byte) 0xc2, (byte) 0xd2});
+		
+		// verify syntax
+		assertEquals("STEP: ADD R2,#1,R2", getInst("STEP: ADD #1, R2").toString());
+
+		_testEncode("LOOP R1: MOV *R1-,*R2-", 
+				new byte[] { 0x67, 0x31, 
+				0x4F, 0x7f, 0x12});
+		_testEncode("LOOPNE R1: MOV *R1+,*R2-", 
+				new byte[] { 0x60, 0x11, 
+				0x4F, 0x7f, 0x12});
+		_testEncode("LOOPL R1: MOV *R1-,*R2+", 
+				new byte[] { 0x66, 0x21, 
+				0x4F, 0x7f, 0x12});
+		_testEncode("STEPL: MOV *R1-,*R2+", 
+				new byte[] { 0x66, 0x2f, 
+				0x4F, 0x7f, 0x12});
+		
+		assertBadInst("LOOP R1: R2, R3");
+		assertBadInst("LOOP RET");
+		assertBadInst("LOOP");
+		assertBadInst("STEP");
+		
+	}
+	
 	private void _testEncode(String str, byte[] bytes) throws ParseException, ResolveException {
 		assertInst(asmInstStage, str, bytes);
 		assertInst(asmInstStage, str.toLowerCase(), bytes);
@@ -404,6 +440,19 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		}
 	}
 	
+	private RawInstruction getInst(String string) throws ResolveException, ParseException {
+		IInstruction[] insts = asmInstStage.parse("foo", string);
+		assertNotNull("did not parse", insts);
+		assertEquals(1, insts.length);
+		
+		assembler.setPc(0x1000);
+		IInstruction[] irealInsts = ((AssemblerInstruction) insts[0]).resolve(assembler, null, true);
+		assertEquals(1, irealInsts.length);
+		
+		RawInstruction realInst = assembler.getInstructionFactory().createRawInstruction(
+				((LLInstruction) irealInsts[0]));
+		return realInst;
+	}
 	private void assertInst(IInstructionParserStage instStage, String string, byte[] bytes) throws ParseException, ResolveException {
 		IInstruction[] insts = instStage.parse("foo", string);
 		assertNotNull("did not parse", insts);

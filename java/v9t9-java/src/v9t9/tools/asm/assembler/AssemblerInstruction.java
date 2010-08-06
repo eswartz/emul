@@ -32,6 +32,12 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 		this.factory = factory;
 	}
 	
+	/**
+	 * @return
+	 */
+	public IInstructionFactory getInstructionFactory() {
+		return factory;
+	}
 	public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass)
 	throws ResolveException {
 		int pc = assembler.getPc();

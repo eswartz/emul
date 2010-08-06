@@ -145,6 +145,31 @@ public class InstMFP201 {
 
 	public static final int Ilea = 120;
 
-	public static final int Iloop = 100;
+	public static final int _IfirstLoopStepInst = 122;
+	public static final int _IfirstLoopInst = 122;
 	
+	public static final int Iloopne = 122;
+	public static final int Iloopeq = 124;
+	public static final int Iloopnc = 126;
+	public static final int Iloopc = 128;
+	public static final int Iloops = 130;
+	public static final int Iloopge = 132;
+	public static final int Iloopl = 134;
+	public static final int Iloop = 136;
+	
+	public static final int _IlastLoopInst = 136;
+	
+	public static final int _IfirstStepInst = 138;
+	
+	public static final int Istepne = 138;
+	public static final int Istepeq = 140;
+	public static final int Istepnc = 142;
+	public static final int Istepc = 144;
+	public static final int Isteps = 146;
+	public static final int Istepge = 148;
+	public static final int Istepl = 150;
+	public static final int Istep = 152;
+	
+	public static final int _IlastStepInst = 152;
+	public static final int _IlastLoopStepInst = 152;
 }

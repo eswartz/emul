@@ -39,6 +39,21 @@ public class InstructionMFP201 extends RawInstruction {
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.RawInstruction#toString()
+	 */
+	@Override
+	public String toString() {
+		if (InstTableMFP201.isLoopInst(getInst()) && getOp1() != null && getOp2() != null) {
+			return getName() + ' ' + getOp1().toString() + ": " + getOp2().toString();
+		}
+		else if (InstTableMFP201.isStepInst(getInst()) && getOp1() != null) {
+			return getName() + ": " + getOp1().toString();
+		}
+		return super.toString();
+	}
+	
+	
+	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.RawInstruction#setInst(int)
 	 */
 	@Override

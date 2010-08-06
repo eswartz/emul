@@ -61,6 +61,9 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	
 	/** shift count from R0 */
 	public static final int OP_REG0_SHIFT_COUNT = 11;	
+	
+	/** an instruction, for LOOP/STEP */
+	public static final int OP_INST = 12;	
 
 	/** 4-bit register decrement *Rx-, when under control of LOOP */
 	public static final int OP_DEC = 0xf;	// intentionally same low bits as OP_INC 

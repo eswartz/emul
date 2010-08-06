@@ -22,4 +22,6 @@ public class HLInstruction extends AssemblerInstruction {
 	public byte[] getBytes(IInstructionFactory factory) throws ResolveException {
 		throw new ResolveException(this, null, "Cannot resolve high-level instruction");
 	}
+
+	
 }

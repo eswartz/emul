@@ -10,11 +10,11 @@ import static v9t9.engine.cpu.InstPatternMFP201.NONE;
 import static v9t9.engine.cpu.InstPatternMFP201.OFF;
 import static v9t9.engine.cpu.InstPatternMFP201.REG;
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstMFP201;
 import v9t9.engine.cpu.InstPatternMFP201;
 import v9t9.engine.cpu.InstTableMFP201;
 import v9t9.engine.cpu.MachineOperandMFP201;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.hl.InstOperand;
 import v9t9.tools.asm.assembler.operand.hl.JumpOperand;
 import v9t9.tools.asm.assembler.operand.hl.PcRelativeOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
@@ -50,6 +50,13 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
         //this(pc);
     	AssemblerTokenizer tokenizer = new AssemblerTokenizer(string);
     	
+    	IInstruction inst = doParse(tokenizer);
+    	if (inst == null)
+    		return null;
+    	return new IInstruction[] { inst };
+    }
+    
+    protected IInstruction doParse(AssemblerTokenizer tokenizer) throws ParseException {
     	int t = tokenizer.nextToken();
     	if (t != AssemblerTokenizer.ID) {
     		return null;
@@ -85,26 +92,47 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
     		return null;
     	inst.setInst(instNum);
         
+    	boolean isStep = InstTableMFP201.isStepInst(instNum);
+    	boolean isLoop = InstTableMFP201.isLoopInst(instNum);
     	int count = 0;
     	t = tokenizer.nextToken();
     	if (t != AssemblerTokenizer.EOF && t != ';') {
-    		tokenizer.pushBack();
-    		op1 = (AssemblerOperand) operandParser.parse(tokenizer);
-    		count++;
+    		if (isStep) {
+    			if (t != ':')
+    				tokenizer.pushBack();
+    			HLInstruction subinst = (HLInstruction) doParse(tokenizer);
+    			if (subinst == null)
+    				throw new ParseException("expected instruction after STEP");
+				op1 = new InstOperand(subinst);
+    		}
+    		else {
+    			tokenizer.pushBack();
     		
-    		t = tokenizer.nextToken();
-    		if (t == ',' || (instNum == InstMFP201.Iloop && t == ':')) {
-    			op2 = (AssemblerOperand) operandParser.parse(tokenizer);
-    			count++;
-    			
-    			t = tokenizer.nextToken();
-        		if (t == ',') {
-        			op3 = (AssemblerOperand) operandParser.parse(tokenizer);
-        			count++;
-        			
-        			t = tokenizer.nextToken();
-        		}
-    		} 
+	    		op1 = (AssemblerOperand) operandParser.parse(tokenizer);
+	    		count++;
+	    		
+	    		t = tokenizer.nextToken();
+	    		if (isLoop) {
+	    			if (t != ':')
+	    				tokenizer.pushBack();
+	    			HLInstruction subinst = (HLInstruction) doParse(tokenizer);
+	    			if (subinst == null)
+	    				throw new ParseException("expected instruction after LOOP Rx");
+    				op2 = new InstOperand(subinst);
+	    		}
+	    		else if (t == ',') {
+    				op2 = (AssemblerOperand) operandParser.parse(tokenizer);
+	    			count++;
+	    			
+	    			t = tokenizer.nextToken();
+	        		if (t == ',') {
+	        			op3 = (AssemblerOperand) operandParser.parse(tokenizer);
+	        			count++;
+	        			
+	        			t = tokenizer.nextToken();
+	    			}
+	    		} 
+    		}
     	}
     	  
         // ensure EOL
@@ -141,7 +169,7 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
         inst.setOp2(op2);
         inst.setOp3(op3);
         
-        return new IInstruction[] { inst };
+        return inst;
     }
 
 	private boolean operandMatches(AssemblerOperand op, int type) {

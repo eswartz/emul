@@ -3,13 +3,7 @@
  */
 package v9t9.engine.cpu;
 
-import static v9t9.engine.cpu.InstPatternMFP201.CNT;
-import static v9t9.engine.cpu.InstPatternMFP201.GEN;
-import static v9t9.engine.cpu.InstPatternMFP201.NONE;
-import static v9t9.engine.cpu.InstPatternMFP201.OFF;
-import static v9t9.engine.cpu.InstPatternMFP201.IMM;
-import static v9t9.engine.cpu.InstPatternMFP201.REG;
-import static v9t9.engine.cpu.InstPatternMFP201.SRO;
+import static v9t9.engine.cpu.InstPatternMFP201.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,35 +13,52 @@ import java.util.Map;
  * 
  */
 public class InstTableMFP201 {
-	public final static byte _IMM8 = 0x10;
-	public final static byte _IMM16 = 0x11;
-	public final static byte _IMM8_16 = 0x12;
-	public final static byte _OFF16 = 0x13;
-	public final static byte _JMP = 0x14;
+
+	public static final String[] condSuffixes = {
+		"ne",
+		"eq",
+		"nc",
+		"c",
+		"s",
+		"ge",
+		"l",
+		null
+		
+	};
+	private final static byte _IMM8 = 0x10;
+	private final static byte _IMM16 = 0x11;
+	private final static byte _IMM8_16 = 0x12;
+	private final static byte _OFF16 = 0x13;
+	private final static byte _JMP = 0x14;
+	private final static byte _INST = 0x15;
 	/** if the immediate size is a byte, at the bit specified in lower nybble */
-	public final static byte _IMM_SZ = 0x30;
+	private final static byte _IMM_SZ = 0x30;
 	/** if the immediate size is a byte, at the bit specified in lower nybble, of byte 0 */
-	public final static byte _IMM_SZ_0 = 0x40;
+	private final static byte _IMM_SZ_0 = 0x40;
 	/** constant encoded into As bits, low nybble */
-	public final static byte _AS_CONST = 0x50;
+	private final static byte _AS_CONST = 0x50;
+	/** constant encoded into opcode, value in low nybble, bit in 2nd nybble */
+	private final static byte _CONST = (byte) 0x80;
 	/** skip to the next byte */
-	public final static byte _NEXTB = -2;
+	private final static byte _NEXTB = -2;
 	/** skip to the next operand */
-	public final static byte _NEXTO = -3;
+	private final static byte _NEXTO = -3;
 	/** skip to the next byte and operand */
-	public final static byte _NEXT = -4;
+	private final static byte _NEXT = -4;
 	/** emit the opcode */
-	public final static byte _OPC = -1;
+	private final static byte _OPC = -1;
 	/** emit the opcode (high byte) */
-	public final static byte _OPC_HI = -5;
+	private final static byte _OPC_HI = -5;
 	/** emit the opcode (low byte) */
-	public final static byte _OPC_LO = -6;
+	private final static byte _OPC_LO = -6;
 	/** immediate encoded into As bits */
-	public final static byte _IMM_AS = -8;
+	//private final static byte _IMM_AS = -8;
 	/** immediate minus one encoded into As bits */
-	public final static byte _IMM_AS_M1 = -9;
+	private final static byte _CNT_AS_M1 = -9;
 	/** LEA's complicated mode */
-	public final static byte _LEA = -10;
+	private final static byte _LEA = -10;
+	/** Flag any *R- bits for LOOP */
+	private final static byte _DECS = -11;
 	
 	final static InstPatternMFP201 DATA_IMM8 = new InstPatternMFP201(
 			IMM, new byte[] { _IMM8 });
@@ -80,9 +91,9 @@ public class InstTableMFP201 {
 	final static InstPatternMFP201 AS3_GEN_ = new InstPatternMFP201(
 			GEN,  
 			new byte[] { _AS_CONST | 3, _OPC, 0 });
-	final static InstPatternMFP201 IMM4M1_GEN = new InstPatternMFP201(
-			IMM, GEN,  
-			new byte[] { _IMM_AS_M1, _OPC, _NEXTO, 0 });
+	final static InstPatternMFP201 CNT4M1_GEN = new InstPatternMFP201(
+			CNT, GEN,  
+			new byte[] { _CNT_AS_M1, _OPC, _NEXTO, 0 });
 	
 	final static InstPatternMFP201 GEN_REG_GEN = new InstPatternMFP201(
 			GEN, REG, GEN, 
@@ -98,6 +109,13 @@ public class InstTableMFP201 {
 			SRO, REG,  
 			new byte[] { _OPC_HI, _IMM_SZ | 3, _OPC_LO, _LEA, _IMM8_16 });
 	
+	final static InstPatternMFP201 REG_INST = new InstPatternMFP201(
+			REG, INST,  
+			new byte[] { _OPC, _NEXTB, 0, _NEXTO, _DECS, _NEXTB, _INST });
+	final static InstPatternMFP201 INST_ = new InstPatternMFP201(
+			INST,  
+			new byte[] { _OPC, _NEXTB, _CONST | 0xf, _DECS, _NEXTB, _INST });
+
 	/** mappings for R13, R14, R15 in src1R position of 3-op logical instruction */
 	public static final int[][] LOGICAL_INST_CONSTANTS = {
 		{ 1, 0x8000, 0xffff },
@@ -218,9 +236,9 @@ public class InstTableMFP201 {
 		register(InstMFP201.Iswpb, 0x10, AS3_GEN_, 0x1f);
 		
 		register2(InstMFP201.Ipush, 0x20, GEN_, 0x2f);
-		register2(InstMFP201.Ipush, 0x20, IMM4M1_GEN, 0x2f);
+		register2(InstMFP201.Ipush, 0x20, CNT4M1_GEN, 0x2f);
 		register2(InstMFP201.Ipop, 0x30, GEN_, 0x3f);
-		register2(InstMFP201.Ipop, 0x30, IMM4M1_GEN, 0x3f);
+		register2(InstMFP201.Ipop, 0x30, CNT4M1_GEN, 0x3f);
 
 		/* shifts, mul/div */
 		register2(InstMFP201.Ilsh, 0x68, CNT_GEN, 0x68);
@@ -254,6 +272,23 @@ public class InstTableMFP201 {
 		
 		/* lea! */
 		register(InstMFP201.Ilea, 0x5010, SFO_REG, 0x5f1f);
+		
+		register(InstMFP201.Iloopne, 0x60, REG_INST, 0x60);
+		register(InstMFP201.Iloopeq, 0x61, REG_INST, 0x61);
+		register(InstMFP201.Iloopnc, 0x62, REG_INST, 0x62);
+		register(InstMFP201.Iloopc, 0x63, REG_INST, 0x63);
+		register(InstMFP201.Iloops, 0x64, REG_INST, 0x64);
+		register(InstMFP201.Iloopge, 0x65, REG_INST, 0x65);
+		register(InstMFP201.Iloopl, 0x66, REG_INST, 0x66);
+		register(InstMFP201.Iloop, 0x67, REG_INST, 0x67);
+		register(InstMFP201.Istepne, 0x60, INST_, 0x60);
+		register(InstMFP201.Istepeq, 0x61, INST_, 0x61);
+		register(InstMFP201.Istepnc, 0x62, INST_, 0x62);
+		register(InstMFP201.Istepc, 0x63, INST_, 0x63);
+		register(InstMFP201.Isteps, 0x64, INST_, 0x64);
+		register(InstMFP201.Istepge, 0x65, INST_, 0x65);
+		register(InstMFP201.Istepl, 0x66, INST_, 0x66);
+		register(InstMFP201.Istep, 0x67, INST_, 0x67);
 		
 		/* three-op instructions */
 		register4(InstMFP201.Ior, 0x80, 0x8f);
@@ -300,31 +335,9 @@ public class InstTableMFP201 {
 	registerInstruction(InstMFP201.Ipop, "pop");
 	registerInstruction(InstMFP201.Ipopb, "pop.b");
 	
-	registerInstruction(InstMFP201.Ijne, "jne");
-	registerInstruction(InstMFP201.Ijeq, "jeq");
-	registerInstruction(InstMFP201.Ijnc, "jnc");
-	registerInstruction(InstMFP201.Ijc, "jc");
-	registerInstruction(InstMFP201.Ijs, "js");
-	registerInstruction(InstMFP201.Ijge, "jge");
-	registerInstruction(InstMFP201.Ijl, "jl");
-	registerInstruction(InstMFP201.Ijmp, "jmp");
+	registerInstructionCond(InstMFP201.Ijmp, "jmp", "j");
 	
-	registerInstruction(InstMFP201.Imovne, "movne");
-	registerInstruction(InstMFP201.Imovneb, "movne.b");
-	registerInstruction(InstMFP201.Imoveq, "moveq");
-	registerInstruction(InstMFP201.Imoveqb, "moveq.b");
-	registerInstruction(InstMFP201.Imovnc, "movnc");
-	registerInstruction(InstMFP201.Imovncb, "movnc.b");
-	registerInstruction(InstMFP201.Imovc, "movc");
-	registerInstruction(InstMFP201.Imovcb, "movc.b");
-	registerInstruction(InstMFP201.Imovs, "movs");
-	registerInstruction(InstMFP201.Imovsb, "movs.b");
-	registerInstruction(InstMFP201.Imovge, "movge");
-	registerInstruction(InstMFP201.Imovgeb, "movge.b");
-	registerInstruction(InstMFP201.Imovl, "movl");
-	registerInstruction(InstMFP201.Imovlb, "movl.b");
-	registerInstruction(InstMFP201.Imov, "mov");
-	registerInstruction(InstMFP201.Imovb, "mov.b");
+	registerInstructionCondByte(InstMFP201.Imov, "mov", "mov");
 	
 	registerInstruction(InstMFP201.Ilsh, "lsh");
 	registerInstruction(InstMFP201.Ilshb, "lsh.b");
@@ -344,6 +357,9 @@ public class InstTableMFP201 {
 	registerInstruction(InstMFP201.Idivdb, "divd.b");
 	
 	registerInstruction(InstMFP201.Ilea, "lea");
+	
+	registerInstructionCond(InstMFP201.Iloop, "loop", "loop");
+	registerInstructionCond(InstMFP201.Istep, "step", "step");
 	
 	registerInstruction(InstMFP201.Ior, "or");
 	registerInstruction(InstMFP201.Iorb, "or.b");
@@ -404,7 +420,7 @@ public class InstTableMFP201 {
 
 	}
 
-	public static byte[] encode(RawInstruction rawInst) throws IllegalArgumentException {
+	public static InstPatternMFP201 getInstPattern(RawInstruction rawInst) throws IllegalArgumentException {
 		int inst = rawInst.getInst();
 		//int variant = rawInst instanceof InstructionMFP201 ? 
 		//		((InstructionMFP201) rawInst).variant : InstructionMFP201.VARIANT_NONE;
@@ -413,6 +429,32 @@ public class InstTableMFP201 {
 		if (patterns == null)
 			throw new IllegalArgumentException("Non-encoded instruction " + rawInst);
 		
+		MachineOperandMFP201 mop1 = (MachineOperandMFP201) rawInst.getOp1();
+		MachineOperandMFP201 mop2 = (MachineOperandMFP201) rawInst.getOp2();
+		MachineOperandMFP201 mop3 = (MachineOperandMFP201) rawInst.getOp3();
+		
+		IllegalArgumentException lastException = null;
+		for (InstPatternMFP201 pattern : patterns) {
+			try {
+				assertOperandMatches(rawInst, mop1, pattern.op1);
+				assertOperandMatches(rawInst, mop2, pattern.op2);
+				assertOperandMatches(rawInst, mop3, pattern.op3);
+				return pattern;
+			} catch (IllegalArgumentException e) {
+				lastException = e;
+				continue;
+			}
+		}
+		if (lastException != null)
+			throw lastException;
+		return null;
+	}
+	
+	public static byte[] encode(RawInstruction rawInst) throws IllegalArgumentException {
+		int inst = rawInst.getInst();
+		//int variant = rawInst instanceof InstructionMFP201 ? 
+		//		((InstructionMFP201) rawInst).variant : InstructionMFP201.VARIANT_NONE;
+				
 		if (rawInst.getOp1() != null && !(rawInst.getOp1() instanceof MachineOperand))
 			throw new IllegalArgumentException("Non-machine operand 1: " + rawInst.getOp1());
 		if (rawInst.getOp2() != null && !(rawInst.getOp2() instanceof MachineOperand))
@@ -426,221 +468,238 @@ public class InstTableMFP201 {
 		MachineOperandMFP201 mop2 = (MachineOperandMFP201) rawInst.getOp2();
 		MachineOperandMFP201 mop3 = (MachineOperandMFP201) rawInst.getOp3();
 		
-		IllegalArgumentException lastException = null;
-		for (InstPatternMFP201 pattern : patterns) {
-			try {
-				assertOperandMatches(rawInst, mop1, pattern.op1);
-				assertOperandMatches(rawInst, mop2, pattern.op2);
-				assertOperandMatches(rawInst, mop3, pattern.op3);
-				lastException = null;
-			} catch (IllegalArgumentException e) {
-				lastException = e;
-				continue;
-			}
-			
-			// hi 2 bytes: loop prefix, lo byte: mem/size byte 
-			int loopAndMemSize = 0;
-	
-			MachineOperandMFP201[] mops = { mop1, mop2, mop3 };
-			
-			byte[] immeds = { 0, 0, 0, 0 };
-			int immIdx = 0;
-			
-			byte[] work = { 0, 0, 0, 0, 0, 0 };
-			
-			int mopIdx = 0;
-			int workIdx = -1;
-			
-			MachineOperandMFP201 mop = null;
-	
-			int opcode = pattern.opcode;
-			
-			if (InstTableMFP201.isByteInst(inst)
-					&& !(opcode >= 0x800 && opcode <= 0x9ff)) {
-				loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE 
-					| InstructionMFP201.MEM_SIZE_SZ;
-			}
-			
-			for (int idx = 0; idx < pattern.enc.length; idx++) {
-				byte enc = pattern.enc[idx];
-				if (enc == _OPC) {
-					workIdx++;
-					if (opcode >= 0x100) {
-						work[workIdx++] = (byte) (opcode >> 8);
-					}
-					work[workIdx] = (byte) (opcode & 0xff);
-				}
-				else if (enc == _OPC_HI) {
-					workIdx++;
-					work[workIdx] = (byte) (opcode >> 8);
-				}
-				else if (enc == _OPC_LO) {
-					workIdx++;
-					work[workIdx] = (byte) (opcode & 0xff);
-				}
-				else {
-					if (enc == _NEXT) {
-						workIdx++;
-						mop = null;
-						continue;
-					}
-					if (enc == _NEXTB) {
-						workIdx++;
-					}
-					if (enc == _NEXTO) {
-						mop = null;
-						continue;
-					}
-					if (mop == null) {
-						mop = mops[mopIdx++];
-						
-						if (mop != null && inst != InstMFP201.Ilea) {
-							if ((mop.type >= MachineOperandMFP201.OP_REG
-									&& mop.type <= MachineOperandMFP201.OP_INC) 
-									|| mop.type == MachineOperandMFP201.OP_DEC) {
-								int bit = mopIdx == 1 && (pattern.op2 == InstPatternMFP201.GEN || pattern.op3 == InstPatternMFP201.GEN)
-									? 2 : 0;
-								int Am = mop.type & 0x3;
-								if (Am != 0)
-									loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE
-										| (Am << bit);
-								
-							}
-							
-							int opm = pattern.op(mopIdx);
-							if (mop.hasImmediate() && opm == InstPatternMFP201.GEN) 
-							{
-								if (mop.encoding == MachineOperandMFP201.OP_ENC_IMM8) {
-									immeds[immIdx++] = (byte) (mop.immed & 0xff);
-								}
-								else {
-									immeds[immIdx++] = (byte) (mop.immed >> 8);
-									immeds[immIdx++] = (byte) (mop.immed & 0xff);
-								}
-							}
-						}
-					}
-	
-					if (enc >= 0 && enc < 8) {
-						work[workIdx] |= (byte) ((mop.val & 0xf) << enc); 
-					}
-					else if (enc == _IMM8) {
-						immeds[immIdx++] = (byte) (mop.immed & 0xff); 
-					}
-					else if (enc == _IMM16) {
-						immeds[immIdx++] = (byte) ((mop.immed & 0xff00) >> 8); 
-						immeds[immIdx++] = (byte) (mop.immed & 0xff); 
-					}
-					else if (enc == _IMM8_16) {
-						if (!isImm8(mop.immed))
-							immeds[immIdx++] = (byte) ((mop.immed & 0xff00) >> 8);
-						immeds[immIdx++] = (byte) (mop.immed & 0xff);
-					}
-					else if (enc == _OFF16) {
-						int val;
-						if (mop.type == MachineOperandMFP201.OP_PCREL) {
-							val = mop.val - workIdx - immIdx - 1;
-						} else {
-							val = mop.immed - workIdx - immIdx - 1 - rawInst.pc;
-						}
-						immeds[immIdx++] = (byte) ((val & 0xff00) >> 8); 
-						immeds[immIdx++] = (byte) (val & 0xff); 
-					}
-					else if (enc == _JMP) {
-						int val;
-						if (mop.type == MachineOperandMFP201.OP_PCREL) {
-							val = mop.val - workIdx - immIdx - 1;
-						} else {
-							val = mop.immed - workIdx - immIdx - 1 - rawInst.pc;
-						}
-						
-						if (mop.encoding == MachineOperandMFP201.OP_ENC_PCREL8
-								|| isImm8((short) val)) {
-							immeds[immIdx++] = (byte) (val & 0xff);
-						}
-						else if (mop.encoding == MachineOperandMFP201.OP_ENC_PCREL12
-								|| isJumpImm12(val)) {
-							immeds[immIdx++] = (byte) (val & 0xff);
-							loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE 
-								| (val >> 8) & 0xf;
-						}
-						else {
-							immeds[immIdx++] = (byte) (val & 0xff);
-							loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE 
-								| InstructionMFP201.MEM_SIZE_SZ
-								| (val >> 8) & 0xf;
-							immeds[immIdx++] = (byte) (val >> 12);
-						}
-					}
-					else if (enc == _IMM_AS_M1) {	
-						if (mop.immed >= 1 && mop.immed <= 4) 
-							loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE |
-								((mop.immed - 1) << 2);
-						else
-							throw new IllegalArgumentException("immediate must be in the range 1 to 4 in " + rawInst);
-					}
-					else if (enc == _LEA) {
-						// this is a special case: we do not emit a traditional mem/size byte
-						// but a cooked one which looks like "sext.b" as part of the opcode
-						MachineOperandMFP201 sro = (MachineOperandMFP201) rawInst.getOp1();
-						
-						// first byte has scale
-						work[0] |= sro.scaleBits;
-						
-						// second byte has opcode and destR
-						work[1] |= ((MachineOperandMFP201) rawInst.getOp2()).val;
-						
-						// third byte (new) has addR | srcR
-						if (sro.type == MachineOperandMFP201.OP_SRO)
-							work[++workIdx] = (byte) ((sro.val << 4) | (sro.scaleReg));
-						else
-							work[++workIdx] = (byte) ((sro.val << 4) | MachineOperandMFP201.SR);
-						
-						// immediate and 
-					}
-					else if ((enc & 0xf0) == _IMM_SZ) {	
-						if (isImm8(mop.immed))
-							work[workIdx] |= (byte) (1 << (enc & 0xf));
-					}
-					else if ((enc & 0xf0) == _IMM_SZ_0) {	
-						if (isImm8(mop.immed))
-							work[0] |= (byte) (1 << (enc & 0xf));
-					}
-					else if ((enc & 0xf0) == _AS_CONST) {	
-						loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE | (enc & 0xf) << 2;
-					}
-				}
-			}
-			workIdx++;
-			
-			int offs = 0;
-			if ((loopAndMemSize & 0xff) != 0)
-				offs++;
-			if (loopAndMemSize >= 0x10000) {
-				offs += 2;
-			}
-			byte[] bytes = new byte[workIdx + immIdx + offs];
-			System.arraycopy(work, 0, bytes, offs, workIdx);
-			System.arraycopy(immeds, 0, bytes, workIdx + offs, immIdx);
-			
-			offs = 0;
-			if (loopAndMemSize >= 0x10000) {
-				bytes[offs++] = (byte) ((loopAndMemSize & 0xff000000) >> 24);
-				bytes[offs++] = (byte) ((loopAndMemSize & 0xff0000) >> 16);
-				offs += 2;
-			}
-			if ((loopAndMemSize & 0xff) != 0) {
-				bytes[offs++] = (byte) (loopAndMemSize & 0xff);	
-			}
-			return bytes;
+		InstPatternMFP201 pattern = getInstPattern(rawInst);
+		
+		// hi 2 bytes: loop prefix, lo byte: mem/size byte 
+		int loopAndMemSize = 0;
+
+		MachineOperandMFP201[] mops = { mop1, mop2, mop3 };
+		
+		byte[] immeds = { 0, 0, 0, 0 };
+		int immIdx = 0;
+		
+		byte[] work = new byte[16];
+		
+		int mopIdx = 0;
+		int workIdx = -1;
+		
+		MachineOperandMFP201 mop = null;
+
+		int opcode = pattern.opcode;
+		
+		if (InstTableMFP201.isByteInst(inst)
+				&& !(opcode >= 0x800 && opcode <= 0x9ff)) {
+			loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE 
+				| InstructionMFP201.MEM_SIZE_SZ;
 		}
-		throw lastException;
+		
+		for (int idx = 0; idx < pattern.enc.length; idx++) {
+			byte enc = pattern.enc[idx];
+			if (enc == _OPC) {
+				workIdx++;
+				if (opcode >= 0x100) {
+					work[workIdx++] = (byte) (opcode >> 8);
+				}
+				work[workIdx] = (byte) (opcode & 0xff);
+			}
+			else if (enc == _OPC_HI) {
+				workIdx++;
+				work[workIdx] = (byte) (opcode >> 8);
+			}
+			else if (enc == _OPC_LO) {
+				workIdx++;
+				work[workIdx] = (byte) (opcode & 0xff);
+			}
+			else {
+				if (enc == _NEXT) {
+					workIdx++;
+					mop = null;
+					continue;
+				}
+				if (enc == _NEXTB) {
+					workIdx++;
+				}
+				if (enc == _NEXTO) {
+					mop = null;
+					continue;
+				}
+				if (mop == null) {
+					mop = mops[mopIdx++];
+					
+					if (mop != null && inst != InstMFP201.Ilea) {
+						if ((mop.type >= MachineOperandMFP201.OP_REG
+								&& mop.type <= MachineOperandMFP201.OP_INC) 
+								|| mop.type == MachineOperandMFP201.OP_DEC) {
+							int bit = mopIdx == 1 && (pattern.op2 == InstPatternMFP201.GEN || pattern.op3 == InstPatternMFP201.GEN)
+								? 2 : 0;
+							int Am = mop.type & 0x3;
+							if (Am != 0)
+								loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE
+									| (Am << bit);
+							
+						}
+						
+						int opm = pattern.op(mopIdx);
+						if (mop.hasImmediate() && opm == InstPatternMFP201.GEN) 
+						{
+							if (mop.encoding == MachineOperandMFP201.OP_ENC_IMM8) {
+								immeds[immIdx++] = (byte) (mop.immed & 0xff);
+							}
+							else {
+								immeds[immIdx++] = (byte) (mop.immed >> 8);
+								immeds[immIdx++] = (byte) (mop.immed & 0xff);
+							}
+						}
+					}
+				}
+
+				if (enc >= 0 && enc < 8) {
+					work[workIdx] |= (byte) ((mop.val & 0xf) << enc); 
+				}
+				else if (enc == _IMM8) {
+					immeds[immIdx++] = (byte) (mop.immed & 0xff); 
+				}
+				else if (enc == _IMM16) {
+					immeds[immIdx++] = (byte) ((mop.immed & 0xff00) >> 8); 
+					immeds[immIdx++] = (byte) (mop.immed & 0xff); 
+				}
+				else if (enc == _IMM8_16) {
+					if (!isImm8(mop.immed))
+						immeds[immIdx++] = (byte) ((mop.immed & 0xff00) >> 8);
+					immeds[immIdx++] = (byte) (mop.immed & 0xff);
+				}
+				else if (enc == _OFF16) {
+					int val;
+					if (mop.type == MachineOperandMFP201.OP_PCREL) {
+						val = mop.val - workIdx - immIdx - 1;
+					} else {
+						val = mop.immed - workIdx - immIdx - 1 - rawInst.pc;
+					}
+					immeds[immIdx++] = (byte) ((val & 0xff00) >> 8); 
+					immeds[immIdx++] = (byte) (val & 0xff); 
+				}
+				else if (enc == _JMP) {
+					int val;
+					if (mop.type == MachineOperandMFP201.OP_PCREL) {
+						val = mop.val - workIdx - immIdx - 1;
+					} else {
+						val = mop.immed - workIdx - immIdx - 1 - rawInst.pc;
+					}
+					
+					if (mop.encoding == MachineOperandMFP201.OP_ENC_PCREL8
+							|| isImm8((short) val)) {
+						immeds[immIdx++] = (byte) (val & 0xff);
+					}
+					else if (mop.encoding == MachineOperandMFP201.OP_ENC_PCREL12
+							|| isJumpImm12(val)) {
+						immeds[immIdx++] = (byte) (val & 0xff);
+						loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE 
+							| (val >> 8) & 0xf;
+					}
+					else {
+						immeds[immIdx++] = (byte) (val & 0xff);
+						loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE 
+							| InstructionMFP201.MEM_SIZE_SZ
+							| (val >> 8) & 0xf;
+						immeds[immIdx++] = (byte) (val >> 12);
+					}
+				}
+				else if (enc == _CNT_AS_M1) {	
+					if (mop.val >= 1 && mop.val <= 4) 
+						loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE |
+							((mop.val - 1) << 2);
+					else
+						throw new IllegalArgumentException("count must be in the range 1 to 4 in " + rawInst);
+				}
+				else if (enc == _LEA) {
+					// this is a special case: we do not emit a traditional mem/size byte
+					// but a cooked one which looks like "sext.b" as part of the opcode
+					MachineOperandMFP201 sro = (MachineOperandMFP201) rawInst.getOp1();
+					
+					// first byte has scale
+					work[0] |= sro.scaleBits;
+					
+					// second byte has opcode and destR
+					work[1] |= ((MachineOperandMFP201) rawInst.getOp2()).val;
+					
+					// third byte (new) has addR | srcR
+					if (sro.type == MachineOperandMFP201.OP_SRO)
+						work[++workIdx] = (byte) ((sro.val << 4) | (sro.scaleReg));
+					else
+						work[++workIdx] = (byte) ((sro.val << 4) | MachineOperandMFP201.SR);
+					
+					// immediate and 
+				}
+				else if (enc == _DECS) {
+					RawInstruction subInst = ((MachineOperandMFP201Inst) mop).inst;
+					InstPatternMFP201 subpattern = getInstPattern(subInst);
+					MachineOperandMFP201 subop;
+					int bit = 5;
+					if (subpattern.op1 == GEN) {
+						subop = (MachineOperandMFP201) subInst.getOp1();
+						if (subop != null && subop.type == MachineOperandMFP201.OP_DEC)
+							work[1] |= 1 << bit;
+						bit--;
+					}
+					if (subpattern.op2 == GEN) {
+						subop = (MachineOperandMFP201) subInst.getOp2();
+						if (subop != null && subop.type == MachineOperandMFP201.OP_DEC)
+							work[1] |= 1 << bit;
+						bit--;
+					}
+					if (subpattern.op3 == GEN) {
+						subop = (MachineOperandMFP201) subInst.getOp3();
+						if (subop != null && subop.type == MachineOperandMFP201.OP_DEC)
+							work[1] |= 1 << bit;
+						bit--;
+					}
+				}
+				else if (enc == _INST) {
+					RawInstruction subInst = ((MachineOperandMFP201Inst) mop).inst;
+					byte[] bytes = encode(subInst);
+					System.arraycopy(bytes, 0, work, workIdx, bytes.length);
+					workIdx += bytes.length - 1;
+				}
+				else if ((enc & 0xf0) == _IMM_SZ) {	
+					if (isImm8(mop.immed))
+						work[workIdx] |= (byte) (1 << (enc & 0xf));
+				}
+				else if ((enc & 0xf0) == _IMM_SZ_0) {	
+					if (isImm8(mop.immed))
+						work[0] |= (byte) (1 << (enc & 0xf));
+				}
+				else if ((enc & 0xf0) == _AS_CONST) {	
+					loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE | (enc & 0xf) << 2;
+				}
+				else if ((byte)(enc & 0xf0) == _CONST) {	
+					work[workIdx] |= (enc & 0xf) << ((enc & 0x70) >> 4);
+				}
+			}
+		}
+		workIdx++;
+		
+		int offs = 0;
+		if ((loopAndMemSize & 0xff) != 0)
+			offs++;
+		if (loopAndMemSize >= 0x10000) {
+			offs += 2;
+		}
+		byte[] bytes = new byte[workIdx + immIdx + offs];
+		System.arraycopy(work, 0, bytes, offs, workIdx);
+		System.arraycopy(immeds, 0, bytes, workIdx + offs, immIdx);
+		
+		offs = 0;
+		if (loopAndMemSize >= 0x10000) {
+			bytes[offs++] = (byte) ((loopAndMemSize & 0xff000000) >> 24);
+			bytes[offs++] = (byte) ((loopAndMemSize & 0xff0000) >> 16);
+			offs += 2;
+		}
+		if ((loopAndMemSize & 0xff) != 0) {
+			bytes[offs++] = (byte) (loopAndMemSize & 0xff);	
+		}
+		return bytes;
 	}
 
-	/**
-	 * @param inst
-	 * @return
-	 */
 	public static boolean canHaveMemSizeByte(int inst) {
 		return inst >= InstMFP201._IlastSimpleImmediate;
 	}
@@ -694,6 +753,10 @@ public class InstTableMFP201 {
 				throw new IllegalArgumentException("Expected general or scaled operand: " + mop + " in " + inst);
 			}
 			break;
+		case INST:
+			if (mop.type != MachineOperandMFP201.OP_INST)
+				throw new IllegalArgumentException("Expected instruction: " + mop + " in " + inst);
+			break;
 		}
 	}
 
@@ -718,11 +781,11 @@ public class InstTableMFP201 {
 				mop2 = (MachineOperandMFP201) instruction.getOp2(), 
 				mop3 = (MachineOperandMFP201) instruction.getOp3();
 			
-			if (mop3 == null && pattern.length >= 3)
+			if ((mop3 == null && pattern.length >= 3) || (mop3 != null && pattern.length < 3))
 				continue;
-			if (mop2 == null && pattern.length >= 2)
+			if ((mop2 == null && pattern.length >= 2) || (mop2 != null && pattern.length < 2))
 				continue;
-			if (mop1 == null && pattern.length >= 1)
+			if ((mop1 == null && pattern.length >= 1) || (mop1 != null && pattern.length < 1))
 				continue;
 			
 			mop1 = coerceOperandType(instruction, mop1, pattern.op1);
@@ -864,6 +927,23 @@ public class InstTableMFP201 {
 	    Integer i = new Integer(inst);
 	    nameToInst.put(str.toUpperCase(), i);
 	    instToName.put(i, str.toUpperCase());
+	}
+	
+	public static void registerInstructionCond(int inst, String nocond, String prefix) {
+		registerInstruction(inst, nocond);
+	    
+	    for( int cond = 0; cond < 7; cond++) {
+	    	registerInstruction(inst - 7 * 2 + cond * 2, prefix + condSuffixes[cond]);
+	    }
+	}
+	public static void registerInstructionCondByte(int inst, String nocond, String prefix) {
+		registerInstruction(inst, nocond);
+		registerInstruction(inst + 1, nocond + ".b");
+	    
+	    for( int cond = 0; cond < 7; cond++) {
+	    	registerInstruction(inst - 7 * 2 + cond * 2, prefix + condSuffixes[cond]);
+	    	registerInstruction(inst - 7 * 2 + cond * 2 + 1, prefix + condSuffixes[cond] + ".b");
+	    }
 	}
 	public static void registerAlias(int inst, String str) {
 	    Integer i = new Integer(inst);
@@ -1208,12 +1288,21 @@ public class InstTableMFP201 {
 		return 0;
 	}
 
-	/**
-	 * @param inst
-	 * @return
-	 */
 	public static boolean isArithOpInst(int inst) {
 		return inst >= InstMFP201._IfirstArithOp 
 		&& inst <= InstMFP201._IlastArithOp;
+	}
+
+	public static boolean isLoopOrStepInst(int inst) {
+		return inst >= InstMFP201._IfirstLoopStepInst
+		&& inst <= InstMFP201._IlastLoopStepInst;
+	}
+	public static boolean isLoopInst(int inst) {
+		return inst >= InstMFP201._IfirstLoopInst
+		&& inst <= InstMFP201._IlastLoopInst;
+	}
+	public static boolean isStepInst(int inst) {
+		return inst >= InstMFP201._IfirstStepInst
+		&& inst <= InstMFP201._IlastStepInst;
 	}
 }
