@@ -13,6 +13,7 @@ endif
 override CFLAGS += $(OPTS)
 
 all:	$(EXECS)
+libtcf: $(BINDIR)/libtcf$(EXTLIB)
 
 $(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
 	$(AR) -rc $@ $^
