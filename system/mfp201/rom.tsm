@@ -76,7 +76,7 @@ $0:
 	call fillscr
 	
 	seto r12
-	loopne r12: nop
+	loop r12: nop		; note: loop must ignore changes to PC!
 	
 	inc r0
 	jmp $0-

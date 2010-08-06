@@ -130,6 +130,9 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("LDC >ff01, R1", new byte[] { 0x08, (byte) 0xe1, (byte) 0xff, 0x01 });
 		_testEncode("LDC >7f, R14", new byte[] { 0x09, (byte) 0xee, 0x7f });
 		
+		// just making sure this doesn't code as an imm instruction
+		assertBadInst("SBB -12, R5");
+		
 		assertBadInst("OR >10");
 		assertBadInst("OR R5");
 		assertBadInst("OR");
@@ -428,9 +431,28 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		assertEquals("XOR R1,R1,R1", ins.toString());
 		assertEquals(2, ins.getSize());
 		
+		ins = getInst("CLR.B R1");
+		assertEquals("XOR.B R1,R1,R1", ins.toString());
+		assertEquals(3, ins.getSize());
+		
+		ins = getInst("CLRX R1");
+		assertEquals("LDC #>0,R1", ins.toString());
+		assertEquals(3, ins.getSize());
+		
+		ins = getInst("CLRX.B R1");
+		assertEquals("LDC.B #>0,R1", ins.toString());
+		assertEquals(3, ins.getSize());
+		
 		ins = getInst("SETO R1");
 		assertEquals("SUB #0,#1,R1", ins.toString());
 		assertEquals(2, ins.getSize());
+		
+		ins = getInst("SETOX R1");
+		assertEquals("LDC #>FFFF,R1", ins.toString());
+		assertEquals(3, ins.getSize());
+		ins = getInst("SETOX.B R1");
+		assertEquals("LDC.B #>FF,R1", ins.toString());
+		assertEquals(3, ins.getSize());
 		
 		ins = getInst("INV R1");
 		assertEquals("XOR R1,#-1,R1", ins.toString());

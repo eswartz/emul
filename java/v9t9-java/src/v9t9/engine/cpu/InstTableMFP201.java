@@ -476,8 +476,15 @@ public class InstTableMFP201 {
 		
 		registerPseudoByte(Pclr, "clr", 1, 
 				Ixor, P_OP1, P_OP1, P_OP1);
+		registerPseudoByte(Pclrq, "clrx", 1, 
+				Ildc, new LLImmedOperand(0), P_OP1, null);
 		registerPseudoByte(Pseto, "seto", 1, 
 				Isub, new LLImmedOperand(0), new LLImmedOperand(1), P_OP1);
+		registerPseudo(Psetoq, "setox", 1, 
+				Ildc, new LLImmedOperand(0xffff), P_OP1, null);
+		registerPseudo(Psetobq, "setox.b", 1, 
+				Ildcb, new LLImmedOperand(0xff), P_OP1, null);
+		
 		registerPseudo(Pinv, "inv", 1, 
 				Ixor, P_OP1, new LLImmedOperand(0xffff), P_OP1);
 		registerPseudo(Pinvb, "inv.b", 1, 

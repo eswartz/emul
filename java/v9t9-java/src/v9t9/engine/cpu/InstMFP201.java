@@ -180,23 +180,28 @@ public class InstMFP201 {
 	
 	public static final int Pclr = 200;
 	public static final int Pclrb = 201;
-	public static final int Pseto = 202;
-	public static final int Psetob = 203;
-	public static final int Pinv = 204;
-	public static final int Pinvb = 205;
+	public static final int Pclrq = 202;
+	public static final int Pclrbq = 203;
+	public static final int Pseto = 204;
+	public static final int Psetob = 205;
+	public static final int Psetoq = 206;
+	public static final int Psetobq = 207;
+	public static final int Pinv = 208;
+	public static final int Pinvb = 209;
 
-	public static final int Pinc = 210;
-	public static final int Pincb = 211;
-	public static final int Pinct = 212;
-	public static final int Pinctb = 213;
-	public static final int Pdec = 214;
-	public static final int Pdecb = 215;
-	public static final int Pdect = 216;
-	public static final int Pdectb = 217;
 	
-	public static final int Pnop = 220;
-	public static final int Pret = 222;
-	public static final int Preti = 224;
+	public static final int Pinc = 220;
+	public static final int Pincb = 221;
+	public static final int Pinct = 222;
+	public static final int Pinctb = 223;
+	public static final int Pdec = 224;
+	public static final int Pdecb = 225;
+	public static final int Pdect = 226;
+	public static final int Pdectb = 227;
+	
+	public static final int Pnop = 230;
+	public static final int Pret = 232;
+	public static final int Preti = 234;
 	
 	public static final int _IlastPseudoInst = 300;
 	
