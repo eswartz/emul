@@ -376,6 +376,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("LEA @0(SP+SP), R3", new byte[] { 0x58, 0x13, (byte) 0xDD, 0x00 });
 		// pointless
 		_testEncode("LEA *R0, R3", new byte[] { 0x58, 0x13, (byte) 0x0F, 0x00 });
+		assertBadInst("LEA 123, R3");
 		assertBadInst("LEA @0(SP+SP), *R3");
 		assertBadInst("LEA R0, R3");
 		assertBadInst("LEA @R0, @R3");
