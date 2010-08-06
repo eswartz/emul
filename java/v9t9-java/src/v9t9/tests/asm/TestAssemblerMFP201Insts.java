@@ -175,6 +175,11 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		// not affect the calculation (all reg ops, except for shifts, use the full reg anyway).
 		_testEncode("SUB R7, 100, R4", new byte[] { 0x5C, (byte) 0xCE, (byte) 0x74, (byte) 0x9C });
 		
+		// but this uses a normal implicit constant register 
+		_testEncode("SUB R1, #0, R1", new byte[] { (byte) 0xE1, (byte) 0xF1 });
+		_testEncode("SUB R1, #1, R1", new byte[] { (byte) 0xE1, (byte) 0xD1 });
+		_testEncode("SUB R1, #2, R1", new byte[] { (byte) 0xE1, (byte) 0xE1 });
+		
 		// no byte form here; accessing memory
 		_testEncode("SUB R7, 100, *R4", new byte[] { 0x4E, (byte) 0xCE, (byte) 0x74, (byte) 0xff, (byte) 0x9C });
 
@@ -415,6 +420,41 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		assertBadInst("LOOP");
 		assertBadInst("STEP");
 		
+	}
+	
+	public void testPseudos() throws Exception {
+		RawInstruction ins;
+		ins = getInst("CLR R1");
+		assertEquals("XOR R1,R1,R1", ins.toString());
+		assertEquals(2, ins.getSize());
+		
+		ins = getInst("SETO R1");
+		assertEquals("SUB #0,#1,R1", ins.toString());
+		assertEquals(2, ins.getSize());
+		
+		ins = getInst("INV R1");
+		assertEquals("XOR R1,#-1,R1", ins.toString());
+		assertEquals(2, ins.getSize());
+		
+		ins = getInst("INV.B R1");
+		assertEquals("XOR.B R1,#>ff,R1", ins.toString());
+		assertEquals(3, ins.getSize());	// byte
+		
+		ins = getInst("INC R1");
+		assertEquals("ADD R1,#1,R1", ins.toString());
+		assertEquals(2, ins.getSize());
+		
+		ins = getInst("INCT R1");
+		assertEquals("ADD R1,#2,R1", ins.toString());
+		assertEquals(2, ins.getSize());
+		
+		ins = getInst("DEC R1");
+		assertEquals("SUB R1,#1,R1", ins.toString());
+		assertEquals(2, ins.getSize());
+		
+		ins = getInst("DECT R1");
+		assertEquals("SUB R1,#2,R1", ins.toString());
+		assertEquals(2, ins.getSize());
 	}
 	
 	private void _testEncode(String str, byte[] bytes) throws ParseException, ResolveException {

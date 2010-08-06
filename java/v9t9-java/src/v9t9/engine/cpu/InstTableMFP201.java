@@ -4,9 +4,16 @@
 package v9t9.engine.cpu;
 
 import static v9t9.engine.cpu.InstPatternMFP201.*;
+import static v9t9.engine.cpu.InstMFP201.*;
+import static v9t9.engine.cpu.MachineOperandMFP201.*;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
  * @author ejs
@@ -133,6 +140,11 @@ public class InstTableMFP201 {
 		
 		entry = entry.opcode(opcode);
 		
+		registerInstPattern(inst, entry);
+		instMasks.put(inst, mask);
+	}
+
+	private static void registerInstPattern(int inst, InstPatternMFP201 entry) {
 		InstPatternMFP201[] entries = instEntries.get(inst);
 		InstPatternMFP201[] newEntries;
 		if (entries == null) {
@@ -144,7 +156,6 @@ public class InstTableMFP201 {
 		}
 			
 		instEntries.put(inst, newEntries);
-		instMasks.put(inst, mask);
 	}
 	
 	private static void register2(int inst, int opcode,InstPatternMFP201 entry,  int mask) {
@@ -157,11 +168,11 @@ public class InstTableMFP201 {
 		register(inst + 1, opcode, GEN_REG_GEN, mask);
 		
 		// in 3-op form, non-writing ADD->TST, ADC->TSTN
-		if (inst == InstMFP201.Iadd) 
-			inst = InstMFP201.Itst;
-		else if (inst == InstMFP201.Iadc) 
-			inst = InstMFP201.Itstn;
-		else if (inst == InstMFP201.Iand || inst == InstMFP201.Inand)
+		if (inst == Iadd) 
+			inst = Itst;
+		else if (inst == Iadc) 
+			inst = Itstn;
+		else if (inst == Iand || inst == Inand)
 			// these do not have no-write forms, since we write SR
 			return;
 		else 
@@ -179,126 +190,126 @@ public class InstTableMFP201 {
 		register(InstTableCommon.Idata, 0x0000, DATA_IMM16, 0xffff);
 		register(InstTableCommon.Ibyte, 0x0000, DATA_IMM8, 0xffff);
 
-		register(InstMFP201.Ibkpt, 0x0, NONE_, 0x0);
-		register(InstMFP201.Iret, 0x3e, NONE_, 0x3e);
-		register(InstMFP201.Ireti, 0x443e, NONE_, 0x443e);
-		register(InstMFP201.Ibr, 0xc, OFF_, 0xc);
-		register(InstMFP201.Ibra, 0xd, IMM_, 0xd);
-		register(InstMFP201.Icall, 0xe, OFF_, 0xe);
-		register(InstMFP201.Icalla, 0xf, IMM_, 0xf);
+		register(Ibkpt, 0x0, NONE_, 0x0);
+		//register(Iret, 0x3e, NONE_, 0x3e);
+		//register(Ireti, 0x443e, NONE_, 0x443e);
+		register(Ibr, 0xc, OFF_, 0xc);
+		register(Ibra, 0xd, IMM_, 0xd);
+		register(Icall, 0xe, OFF_, 0xe);
+		register(Icalla, 0xf, IMM_, 0xf);
 		
 		/* Register + immediate versions */
-		register(InstMFP201.Ior, 0x800, IMMx_REG, 0x90f);
-		register(InstMFP201.Iorb, 0x900, IMM8_REG, 0x90f);
-		register(InstMFP201.Iorq, 0x810, IMMx_REG, 0x91f);
-		register(InstMFP201.Iorbq, 0x910, IMM8_REG, 0x91f);
+		register(Ior, 0x800, IMMx_REG, 0x90f);
+		register(Iorb, 0x900, IMM8_REG, 0x90f);
+		register(Iorq, 0x810, IMMx_REG, 0x91f);
+		register(Iorbq, 0x910, IMM8_REG, 0x91f);
 		
-		register(InstMFP201.Iand, 0x820, IMMx_REG, 0x92f);
-		register(InstMFP201.Iandb, 0x920, IMM8_REG, 0x92f);
-		register(InstMFP201.Itst, 0x830, IMMx_REG, 0x93f);
-		register(InstMFP201.Itstb, 0x930, IMM8_REG, 0x93f);
+		register(Iand, 0x820, IMMx_REG, 0x92f);
+		register(Iandb, 0x920, IMM8_REG, 0x92f);
+		register(Itst, 0x830, IMMx_REG, 0x93f);
+		register(Itstb, 0x930, IMM8_REG, 0x93f);
 		
-		register(InstMFP201.Inand, 0x840, IMMx_REG, 0x94f);
-		register(InstMFP201.Inandb, 0x940, IMM8_REG, 0x94f);
-		register(InstMFP201.Itstn, 0x850, IMMx_REG, 0x95f);
-		register(InstMFP201.Itstnb, 0x950, IMM8_REG, 0x95f);
+		register(Inand, 0x840, IMMx_REG, 0x94f);
+		register(Inandb, 0x940, IMM8_REG, 0x94f);
+		register(Itstn, 0x850, IMMx_REG, 0x95f);
+		register(Itstnb, 0x950, IMM8_REG, 0x95f);
 
-		register(InstMFP201.Ixor, 0x860, IMMx_REG, 0x96f);
-		register(InstMFP201.Ixorb, 0x960, IMM8_REG, 0x96f);
-		register(InstMFP201.Ixorq, 0x870, IMMx_REG, 0x97f);
-		register(InstMFP201.Ixorbq, 0x970, IMM8_REG, 0x97f);
+		register(Ixor, 0x860, IMMx_REG, 0x96f);
+		register(Ixorb, 0x960, IMM8_REG, 0x96f);
+		register(Ixorq, 0x870, IMMx_REG, 0x97f);
+		register(Ixorbq, 0x970, IMM8_REG, 0x97f);
 		
-		register(InstMFP201.Iadd, 0x880, IMMx_REG, 0x98f);
-		register(InstMFP201.Iaddb, 0x980, IMM8_REG, 0x98f);
-		register(InstMFP201.Iaddq, 0x890, IMMx_REG, 0x99f);
-		register(InstMFP201.Iaddbq, 0x990, IMM8_REG, 0x99f);
+		register(Iadd, 0x880, IMMx_REG, 0x98f);
+		register(Iaddb, 0x980, IMM8_REG, 0x98f);
+		register(Iaddq, 0x890, IMMx_REG, 0x99f);
+		register(Iaddbq, 0x990, IMM8_REG, 0x99f);
 
-		register(InstMFP201.Isub, 0x8a0, IMMx_REG, 0x9af);
-		register(InstMFP201.Isubb, 0x9a0, IMM8_REG, 0x9af);
-		register(InstMFP201.Icmp, 0x8b0, IMMx_REG, 0x9bf);
-		register(InstMFP201.Icmpb, 0x9b0, IMM8_REG, 0x9bf);
+		register(Isub, 0x8a0, IMMx_REG, 0x9af);
+		register(Isubb, 0x9a0, IMM8_REG, 0x9af);
+		register(Icmp, 0x8b0, IMMx_REG, 0x9bf);
+		register(Icmpb, 0x9b0, IMM8_REG, 0x9bf);
 
-		register(InstMFP201.Iadc, 0x8c0, IMMx_REG, 0x9cf);
-		register(InstMFP201.Iadcb, 0x9c0, IMM8_REG, 0x9cf);
-		register(InstMFP201.Iadcq, 0x8d0, IMMx_REG, 0x9df);
-		register(InstMFP201.Iadcbq, 0x9d0, IMM8_REG, 0x9df);
+		register(Iadc, 0x8c0, IMMx_REG, 0x9cf);
+		register(Iadcb, 0x9c0, IMM8_REG, 0x9cf);
+		register(Iadcq, 0x8d0, IMMx_REG, 0x9df);
+		register(Iadcbq, 0x9d0, IMM8_REG, 0x9df);
 		
 		/* Only immediate version available */
-		register(InstMFP201.Ildc, 0x8e0, IMMx_REG, 0x9ef);
-		register(InstMFP201.Ildcb, 0x9e0, IMM8_REG, 0x9ef);
-		register(InstMFP201.Ildcq, 0x8f0, IMMx_REG, 0x9ff);
-		register(InstMFP201.Ildcbq, 0x9f0, IMM8_REG, 0x9ff);
+		register(Ildc, 0x8e0, IMMx_REG, 0x9ef);
+		register(Ildcb, 0x9e0, IMM8_REG, 0x9ef);
+		register(Ildcq, 0x8f0, IMMx_REG, 0x9ff);
+		register(Ildcbq, 0x9f0, IMM8_REG, 0x9ff);
 		
 		/* simple one-ops */
-		register(InstMFP201.Isext, 0x10, GEN_, 0x1f);
-		register(InstMFP201.Iextl, 0x10, AS1_GEN_, 0x1f);
-		register(InstMFP201.Iexth, 0x10, AS2_GEN_, 0x1f);
-		register(InstMFP201.Iswpb, 0x10, AS3_GEN_, 0x1f);
+		register(Isext, 0x10, GEN_, 0x1f);
+		register(Iextl, 0x10, AS1_GEN_, 0x1f);
+		register(Iexth, 0x10, AS2_GEN_, 0x1f);
+		register(Iswpb, 0x10, AS3_GEN_, 0x1f);
 		
-		register2(InstMFP201.Ipush, 0x20, GEN_, 0x2f);
-		register2(InstMFP201.Ipush, 0x20, CNT4M1_GEN, 0x2f);
-		register2(InstMFP201.Ipop, 0x30, GEN_, 0x3f);
-		register2(InstMFP201.Ipop, 0x30, CNT4M1_GEN, 0x3f);
+		register2(Ipush, 0x20, GEN_, 0x2f);
+		register2(Ipush, 0x20, CNT4M1_GEN, 0x2f);
+		register2(Ipop, 0x30, GEN_, 0x3f);
+		register2(Ipop, 0x30, CNT4M1_GEN, 0x3f);
 
 		/* shifts, mul/div */
-		register2(InstMFP201.Ilsh, 0x68, CNT_GEN, 0x68);
-		register2(InstMFP201.Irsh, 0x69, CNT_GEN, 0x69);
-		register2(InstMFP201.Iash, 0x6a, CNT_GEN, 0x6a);
-		register2(InstMFP201.Irol, 0x6b, CNT_GEN, 0x6b);
-		register2(InstMFP201.Imul, 0x6c, GEN_GEN, 0x6c);
-		register2(InstMFP201.Idiv, 0x6d, GEN_GEN, 0x6d);
-		register2(InstMFP201.Imuld, 0x6e, GEN_GEN, 0x6e);
-		register2(InstMFP201.Idivd, 0x6f, GEN_GEN, 0x6f);
+		register2(Ilsh, 0x68, CNT_GEN, 0x68);
+		register2(Irsh, 0x69, CNT_GEN, 0x69);
+		register2(Iash, 0x6a, CNT_GEN, 0x6a);
+		register2(Irol, 0x6b, CNT_GEN, 0x6b);
+		register2(Imul, 0x6c, GEN_GEN, 0x6c);
+		register2(Idiv, 0x6d, GEN_GEN, 0x6d);
+		register2(Imuld, 0x6e, GEN_GEN, 0x6e);
+		register2(Idivd, 0x6f, GEN_GEN, 0x6f);
 
 		/* jumps */
-		register(InstMFP201.Ijne, 0x70, JMP_, 0x70);
-		register(InstMFP201.Ijeq, 0x71, JMP_, 0x71);
-		register(InstMFP201.Ijnc, 0x72, JMP_, 0x72);
-		register(InstMFP201.Ijc, 0x73, JMP_, 0x73);
-		register(InstMFP201.Ijs, 0x74, JMP_, 0x74);
-		register(InstMFP201.Ijge, 0x75, JMP_, 0x75);
-		register(InstMFP201.Ijl, 0x76, JMP_, 0x76);
-		register(InstMFP201.Ijmp, 0x77, JMP_, 0x77);
+		register(Ijne, 0x70, JMP_, 0x70);
+		register(Ijeq, 0x71, JMP_, 0x71);
+		register(Ijnc, 0x72, JMP_, 0x72);
+		register(Ijc, 0x73, JMP_, 0x73);
+		register(Ijs, 0x74, JMP_, 0x74);
+		register(Ijge, 0x75, JMP_, 0x75);
+		register(Ijl, 0x76, JMP_, 0x76);
+		register(Ijmp, 0x77, JMP_, 0x77);
 		
 		/* moves */
-		register2(InstMFP201.Imovne, 0x78, GEN_GEN, 0x78);
-		register2(InstMFP201.Imoveq, 0x79, GEN_GEN, 0x79);
-		register2(InstMFP201.Imovnc, 0x7a, GEN_GEN, 0x7a);
-		register2(InstMFP201.Imovc, 0x7b, GEN_GEN, 0x7b);
-		register2(InstMFP201.Imovs, 0x7c, GEN_GEN, 0x7c);
-		register2(InstMFP201.Imovge, 0x7d, GEN_GEN, 0x7d);
-		register2(InstMFP201.Imovl, 0x7e, GEN_GEN, 0x7e);
-		register2(InstMFP201.Imov, 0x7f, GEN_GEN, 0x7f);
+		register2(Imovne, 0x78, GEN_GEN, 0x78);
+		register2(Imoveq, 0x79, GEN_GEN, 0x79);
+		register2(Imovnc, 0x7a, GEN_GEN, 0x7a);
+		register2(Imovc, 0x7b, GEN_GEN, 0x7b);
+		register2(Imovs, 0x7c, GEN_GEN, 0x7c);
+		register2(Imovge, 0x7d, GEN_GEN, 0x7d);
+		register2(Imovl, 0x7e, GEN_GEN, 0x7e);
+		register2(Imov, 0x7f, GEN_GEN, 0x7f);
 		
 		/* lea! */
-		register(InstMFP201.Ilea, 0x5010, SFO_REG, 0x5f1f);
+		register(Ilea, 0x5010, SFO_REG, 0x5f1f);
 		
-		register(InstMFP201.Iloopne, 0x60, REG_INST, 0x60);
-		register(InstMFP201.Iloopeq, 0x61, REG_INST, 0x61);
-		register(InstMFP201.Iloopnc, 0x62, REG_INST, 0x62);
-		register(InstMFP201.Iloopc, 0x63, REG_INST, 0x63);
-		register(InstMFP201.Iloops, 0x64, REG_INST, 0x64);
-		register(InstMFP201.Iloopge, 0x65, REG_INST, 0x65);
-		register(InstMFP201.Iloopl, 0x66, REG_INST, 0x66);
-		register(InstMFP201.Iloop, 0x67, REG_INST, 0x67);
-		register(InstMFP201.Istepne, 0x60, INST_, 0x60);
-		register(InstMFP201.Istepeq, 0x61, INST_, 0x61);
-		register(InstMFP201.Istepnc, 0x62, INST_, 0x62);
-		register(InstMFP201.Istepc, 0x63, INST_, 0x63);
-		register(InstMFP201.Isteps, 0x64, INST_, 0x64);
-		register(InstMFP201.Istepge, 0x65, INST_, 0x65);
-		register(InstMFP201.Istepl, 0x66, INST_, 0x66);
-		register(InstMFP201.Istep, 0x67, INST_, 0x67);
+		register(Iloopne, 0x60, REG_INST, 0x60);
+		register(Iloopeq, 0x61, REG_INST, 0x61);
+		register(Iloopnc, 0x62, REG_INST, 0x62);
+		register(Iloopc, 0x63, REG_INST, 0x63);
+		register(Iloops, 0x64, REG_INST, 0x64);
+		register(Iloopge, 0x65, REG_INST, 0x65);
+		register(Iloopl, 0x66, REG_INST, 0x66);
+		register(Iloop, 0x67, REG_INST, 0x67);
+		register(Istepne, 0x60, INST_, 0x60);
+		register(Istepeq, 0x61, INST_, 0x61);
+		register(Istepnc, 0x62, INST_, 0x62);
+		register(Istepc, 0x63, INST_, 0x63);
+		register(Isteps, 0x64, INST_, 0x64);
+		register(Istepge, 0x65, INST_, 0x65);
+		register(Istepl, 0x66, INST_, 0x66);
+		register(Istep, 0x67, INST_, 0x67);
 		
 		/* three-op instructions */
-		register4(InstMFP201.Ior, 0x80, 0x8f);
-		register4(InstMFP201.Iand, 0x90, 0x9f);
-		register4(InstMFP201.Inand, 0xa0, 0xaf);
-		register4(InstMFP201.Ixor, 0xb0, 0xbf);
-		register4(InstMFP201.Iadd, 0xc0, 0xcf);
-		register4(InstMFP201.Iadc, 0xd0, 0xdf);
-		register4(InstMFP201.Isub, 0xe0, 0xef);
-		register4(InstMFP201.Isbb, 0xf0, 0xff);
+		register4(Ior, 0x80, 0x8f);
+		register4(Iand, 0x90, 0x9f);
+		register4(Inand, 0xa0, 0xaf);
+		register4(Ixor, 0xb0, 0xbf);
+		register4(Iadd, 0xc0, 0xcf);
+		register4(Iadc, 0xd0, 0xdf);
+		register4(Isub, 0xe0, 0xef);
+		register4(Isbb, 0xf0, 0xff);
 		
 		/*
 		register(InstTableCommon.Idsr, 0x0c00, OFF_NONE, 0xcff);
@@ -318,94 +329,94 @@ public class InstTableMFP201 {
 	static {
 	registerInstruction(InstTableCommon.Idata, "data");
 	registerInstruction(InstTableCommon.Ibyte, "byte");
-	registerInstruction(InstMFP201.Ibkpt, "bkpt");
-	registerInstruction(InstMFP201.Iret, "ret");
-	registerInstruction(InstMFP201.Ireti, "reti");
-	registerInstruction(InstMFP201.Ibr, "br");
-	registerInstruction(InstMFP201.Ibra, "bra");
-	registerInstruction(InstMFP201.Icall, "call");
-	registerInstruction(InstMFP201.Icalla, "calla");
+	registerInstruction(Ibkpt, "bkpt");
+	//registerInstruction(Iret, "ret");
+	//registerInstruction(Ireti, "reti");
+	registerInstruction(Ibr, "br");
+	registerInstruction(Ibra, "bra");
+	registerInstruction(Icall, "call");
+	registerInstruction(Icalla, "calla");
 	
-	registerInstruction(InstMFP201.Isext, "sext");
-	registerInstruction(InstMFP201.Iexth, "exth");
-	registerInstruction(InstMFP201.Iextl, "extl");
-	registerInstruction(InstMFP201.Iswpb, "swpb");
-	registerInstruction(InstMFP201.Ipush, "push");
-	registerInstruction(InstMFP201.Ipushb, "push.b");
-	registerInstruction(InstMFP201.Ipop, "pop");
-	registerInstruction(InstMFP201.Ipopb, "pop.b");
+	registerInstruction(Isext, "sext");
+	registerInstruction(Iexth, "exth");
+	registerInstruction(Iextl, "extl");
+	registerInstruction(Iswpb, "swpb");
+	registerInstruction(Ipush, "push");
+	registerInstruction(Ipushb, "push.b");
+	registerInstruction(Ipop, "pop");
+	registerInstruction(Ipopb, "pop.b");
 	
-	registerInstructionCond(InstMFP201.Ijmp, "jmp", "j");
+	registerInstructionCond(Ijmp, "jmp", "j");
 	
-	registerInstructionCondByte(InstMFP201.Imov, "mov", "mov");
+	registerInstructionCondByte(Imov, "mov", "mov");
 	
-	registerInstruction(InstMFP201.Ilsh, "lsh");
-	registerInstruction(InstMFP201.Ilshb, "lsh.b");
-	registerInstruction(InstMFP201.Irsh, "rsh");
-	registerInstruction(InstMFP201.Irshb, "rsh.b");
-	registerInstruction(InstMFP201.Iash, "ash");
-	registerInstruction(InstMFP201.Iashb, "ash.b");
-	registerInstruction(InstMFP201.Irol, "rol");
-	registerInstruction(InstMFP201.Irolb, "rol.b");
-	registerInstruction(InstMFP201.Imul, "mul");
-	registerInstruction(InstMFP201.Imulb, "mul.b");
-	registerInstruction(InstMFP201.Idiv, "div");
-	registerInstruction(InstMFP201.Idivb, "div.b");
-	registerInstruction(InstMFP201.Imuld, "muld");
-	registerInstruction(InstMFP201.Imuldb, "muld.b");
-	registerInstruction(InstMFP201.Idivd, "divd");
-	registerInstruction(InstMFP201.Idivdb, "divd.b");
+	registerInstruction(Ilsh, "lsh");
+	registerInstruction(Ilshb, "lsh.b");
+	registerInstruction(Irsh, "rsh");
+	registerInstruction(Irshb, "rsh.b");
+	registerInstruction(Iash, "ash");
+	registerInstruction(Iashb, "ash.b");
+	registerInstruction(Irol, "rol");
+	registerInstruction(Irolb, "rol.b");
+	registerInstruction(Imul, "mul");
+	registerInstruction(Imulb, "mul.b");
+	registerInstruction(Idiv, "div");
+	registerInstruction(Idivb, "div.b");
+	registerInstruction(Imuld, "muld");
+	registerInstruction(Imuldb, "muld.b");
+	registerInstruction(Idivd, "divd");
+	registerInstruction(Idivdb, "divd.b");
 	
-	registerInstruction(InstMFP201.Ilea, "lea");
+	registerInstruction(Ilea, "lea");
 	
-	registerInstructionCond(InstMFP201.Iloop, "loop", "loop");
-	registerInstructionCond(InstMFP201.Istep, "step", "step");
+	registerInstructionCond(Iloop, "loop", "loop");
+	registerInstructionCond(Istep, "step", "step");
 	
-	registerInstruction(InstMFP201.Ior, "or");
-	registerInstruction(InstMFP201.Iorb, "or.b");
-	registerInstruction(InstMFP201.Iorq, "or?");
-	registerInstruction(InstMFP201.Iorbq, "or.b?");
+	registerInstruction(Ior, "or");
+	registerInstruction(Iorb, "or.b");
+	registerInstruction(Iorq, "or?");
+	registerInstruction(Iorbq, "or.b?");
 	
-	registerInstruction(InstMFP201.Iand, "and");
-	registerInstruction(InstMFP201.Iandb, "and.b");
-	registerInstruction(InstMFP201.Itst, "tst");
-	registerInstruction(InstMFP201.Itstb, "tst.b");
+	registerInstruction(Iand, "and");
+	registerInstruction(Iandb, "and.b");
+	registerInstruction(Itst, "tst");
+	registerInstruction(Itstb, "tst.b");
 	
-	registerInstruction(InstMFP201.Inand, "nand");
-	registerInstruction(InstMFP201.Inandb, "nand.b");
-	registerInstruction(InstMFP201.Itstn, "tstn");
-	registerInstruction(InstMFP201.Itstnb, "tstn.b");
+	registerInstruction(Inand, "nand");
+	registerInstruction(Inandb, "nand.b");
+	registerInstruction(Itstn, "tstn");
+	registerInstruction(Itstnb, "tstn.b");
 	
-	registerInstruction(InstMFP201.Ixor, "xor");
-	registerInstruction(InstMFP201.Ixorb, "xor.b");
-	registerInstruction(InstMFP201.Ixorq, "xor?");
-	registerInstruction(InstMFP201.Ixorbq, "xor.b?");
+	registerInstruction(Ixor, "xor");
+	registerInstruction(Ixorb, "xor.b");
+	registerInstruction(Ixorq, "xor?");
+	registerInstruction(Ixorbq, "xor.b?");
 	
-	registerInstruction(InstMFP201.Iadd, "add");
-	registerInstruction(InstMFP201.Iaddb, "add.b");
-	registerInstruction(InstMFP201.Iaddq, "add?");
-	registerInstruction(InstMFP201.Iaddbq, "add.b?");
+	registerInstruction(Iadd, "add");
+	registerInstruction(Iaddb, "add.b");
+	registerInstruction(Iaddq, "add?");
+	registerInstruction(Iaddbq, "add.b?");
 	
-	registerInstruction(InstMFP201.Isub, "sub");
-	registerInstruction(InstMFP201.Isubb, "sub.b");
-	registerInstruction(InstMFP201.Icmp, "cmp");
-	registerInstruction(InstMFP201.Icmpb, "cmp.b");
+	registerInstruction(Isub, "sub");
+	registerInstruction(Isubb, "sub.b");
+	registerInstruction(Icmp, "cmp");
+	registerInstruction(Icmpb, "cmp.b");
 	
-	registerInstruction(InstMFP201.Iadc, "adc");
-	registerInstruction(InstMFP201.Iadcb, "adc.b");
-	registerInstruction(InstMFP201.Iadcq, "adc?");
-	registerInstruction(InstMFP201.Iadcbq, "adc.b?");
+	registerInstruction(Iadc, "adc");
+	registerInstruction(Iadcb, "adc.b");
+	registerInstruction(Iadcq, "adc?");
+	registerInstruction(Iadcbq, "adc.b?");
 	
-	registerInstruction(InstMFP201.Isbb, "sbb");
-	registerInstruction(InstMFP201.Isbbb, "sbb.b");
-	registerInstruction(InstMFP201.Icmpr, "cmpr");
-	registerInstruction(InstMFP201.Icmprb, "cmpr.b");
+	registerInstruction(Isbb, "sbb");
+	registerInstruction(Isbbb, "sbb.b");
+	registerInstruction(Icmpr, "cmpr");
+	registerInstruction(Icmprb, "cmpr.b");
 	
 
-	registerInstruction(InstMFP201.Ildc, "ldc");
-	registerInstruction(InstMFP201.Ildcb, "ldc.b");
-	registerInstruction(InstMFP201.Ildcq, "ldc?");
-	registerInstruction(InstMFP201.Ildcbq, "ldc.b?");
+	registerInstruction(Ildc, "ldc");
+	registerInstruction(Ildcb, "ldc.b");
+	registerInstruction(Ildcq, "ldc?");
+	registerInstruction(Ildcbq, "ldc.b?");
 	
 	registerInstruction(InstTableCommon.Idsr, "dsr");
 	registerInstruction(InstTableCommon.Ikysl, "kysl");
@@ -415,11 +426,73 @@ public class InstTableMFP201 {
 	registerInstruction(InstTableCommon.Idbgf, "dbgf");
 	registerInstruction(InstTableCommon.Ibyte, "byte");
 
-	//registerAlias(InstMFP201.Ijeq, "je");
-	//registerAlias(InstMFP201.Ijoc, "jc");
+	//registerAlias(Ijeq, "je");
+	//registerAlias(Ijoc, "jc");
 
 	}
 
+	private static final Map<Integer, PseudoPattern> pseudoPatterns = new HashMap<Integer, PseudoPattern>();
+	
+	private static final void registerPseudo(int pop, String pname, int numops, int realop,
+			LLOperand op1patt, LLOperand op2patt, LLOperand op3patt) {
+		nameToInst.put(pname.toUpperCase(), pop);
+		instToName.put(pop, pname.toUpperCase());
+		PseudoPattern pattern = new PseudoPattern(numops, realop, op1patt, op2patt, op3patt);
+		pseudoPatterns.put(pop, pattern);
+		
+		final byte[] NO_BYTES = new byte[0];
+		InstPatternMFP201 instPattern;
+		if (numops == 0)
+			instPattern = new InstPatternMFP201(NO_BYTES);
+		else if (numops == 1)
+			instPattern = new InstPatternMFP201(GEN, NO_BYTES);
+		else if (numops == 2)
+			instPattern = new InstPatternMFP201(GEN, GEN, NO_BYTES);
+		else 
+			instPattern = new InstPatternMFP201(GEN, GEN, GEN, NO_BYTES);
+		registerInstPattern(pop, instPattern);
+		
+	}
+	private static final void registerPseudoByte(int pop, String pname, int numops, int realop,
+			LLOperand op1patt, LLOperand op2patt, LLOperand op3patt) {
+		registerPseudo(pop, pname, numops, realop, op1patt, op2patt, op3patt);
+		registerPseudo(pop + 1, pname + ".b", numops, realop + 1, op1patt, op2patt, op3patt);
+	}
+	
+	public static PseudoPattern lookupPseudoPattern(int inst) {
+		return pseudoPatterns.get(inst);
+	}
+	
+	public static final LLPositionalOperand P_OP1 = new LLPositionalOperand(0);
+	public static final LLPositionalOperand P_OP2 = new LLPositionalOperand(1);
+	public static final LLPositionalOperand P_OP3 = new LLPositionalOperand(2);
+	static {
+		registerPseudo(Pnop, "nop", 0,
+				Ijmp, new LLPCRelativeOperand(null, 0), null, null);
+		registerPseudo(Pret, "ret", 0,
+				Ipop, new LLRegisterOperand(PC), null, null);
+		registerPseudo(Preti, "reti", 0,
+				Ipop, new LLImmedOperand(2), new LLRegisterOperand(PC), null);
+		
+		registerPseudoByte(Pclr, "clr", 1, 
+				Ixor, P_OP1, P_OP1, P_OP1);
+		registerPseudoByte(Pseto, "seto", 1, 
+				Isub, new LLImmedOperand(0), new LLImmedOperand(1), P_OP1);
+		registerPseudo(Pinv, "inv", 1, 
+				Ixor, P_OP1, new LLImmedOperand(0xffff), P_OP1);
+		registerPseudo(Pinvb, "inv.b", 1, 
+				Ixorb, P_OP1, new LLImmedOperand(0xff), P_OP1);
+		
+		registerPseudoByte(Pinc, "inc", 1, 
+				Iadd, P_OP1, new LLImmedOperand(1), P_OP1);
+		registerPseudoByte(Pinct, "inct", 1, 
+				Iadd, P_OP1, new LLImmedOperand(2), P_OP1);
+		registerPseudoByte(Pdec, "dec", 1, 
+				Isub, P_OP1, new LLImmedOperand(1), P_OP1);
+		registerPseudoByte(Pdect, "dect", 1, 
+				Isub, P_OP1, new LLImmedOperand(2), P_OP1);
+		
+	}
 	public static InstPatternMFP201 getInstPattern(RawInstruction rawInst) throws IllegalArgumentException {
 		int inst = rawInst.getInst();
 		//int variant = rawInst instanceof InstructionMFP201 ? 
@@ -526,10 +599,10 @@ public class InstTableMFP201 {
 				if (mop == null) {
 					mop = mops[mopIdx++];
 					
-					if (mop != null && inst != InstMFP201.Ilea) {
-						if ((mop.type >= MachineOperandMFP201.OP_REG
-								&& mop.type <= MachineOperandMFP201.OP_INC) 
-								|| mop.type == MachineOperandMFP201.OP_DEC) {
+					if (mop != null && inst != Ilea) {
+						if ((mop.type >= OP_REG
+								&& mop.type <= OP_INC) 
+								|| mop.type == OP_DEC) {
 							int bit = mopIdx == 1 && (pattern.op2 == InstPatternMFP201.GEN || pattern.op3 == InstPatternMFP201.GEN)
 								? 2 : 0;
 							int Am = mop.type & 0x3;
@@ -542,7 +615,7 @@ public class InstTableMFP201 {
 						int opm = pattern.op(mopIdx);
 						if (mop.hasImmediate() && opm == InstPatternMFP201.GEN) 
 						{
-							if (mop.encoding == MachineOperandMFP201.OP_ENC_IMM8) {
+							if (mop.encoding == OP_ENC_IMM8) {
 								immeds[immIdx++] = (byte) (mop.immed & 0xff);
 							}
 							else {
@@ -570,7 +643,7 @@ public class InstTableMFP201 {
 				}
 				else if (enc == _OFF16) {
 					int val;
-					if (mop.type == MachineOperandMFP201.OP_PCREL) {
+					if (mop.type == OP_PCREL) {
 						val = mop.val - workIdx - immIdx - 1;
 					} else {
 						val = mop.immed - workIdx - immIdx - 1 - rawInst.pc;
@@ -580,17 +653,17 @@ public class InstTableMFP201 {
 				}
 				else if (enc == _JMP) {
 					int val;
-					if (mop.type == MachineOperandMFP201.OP_PCREL) {
+					if (mop.type == OP_PCREL) {
 						val = mop.val - workIdx - immIdx - 1;
 					} else {
 						val = mop.immed - workIdx - immIdx - 1 - rawInst.pc;
 					}
 					
-					if (mop.encoding == MachineOperandMFP201.OP_ENC_PCREL8
+					if (mop.encoding == OP_ENC_PCREL8
 							|| isImm8((short) val)) {
 						immeds[immIdx++] = (byte) (val & 0xff);
 					}
-					else if (mop.encoding == MachineOperandMFP201.OP_ENC_PCREL12
+					else if (mop.encoding == OP_ENC_PCREL12
 							|| isJumpImm12(val)) {
 						immeds[immIdx++] = (byte) (val & 0xff);
 						loopAndMemSize |= InstructionMFP201.MEM_SIZE_OPCODE 
@@ -623,10 +696,10 @@ public class InstTableMFP201 {
 					work[1] |= ((MachineOperandMFP201) rawInst.getOp2()).val;
 					
 					// third byte (new) has addR | srcR
-					if (sro.type == MachineOperandMFP201.OP_SRO)
+					if (sro.type == OP_SRO)
 						work[++workIdx] = (byte) ((sro.val << 4) | (sro.scaleReg));
 					else
-						work[++workIdx] = (byte) ((sro.val << 4) | MachineOperandMFP201.SR);
+						work[++workIdx] = (byte) ((sro.val << 4) | SR);
 					
 					// immediate and 
 				}
@@ -637,19 +710,19 @@ public class InstTableMFP201 {
 					int bit = 5;
 					if (subpattern.op1 == GEN) {
 						subop = (MachineOperandMFP201) subInst.getOp1();
-						if (subop != null && subop.type == MachineOperandMFP201.OP_DEC)
+						if (subop != null && subop.type == OP_DEC)
 							work[1] |= 1 << bit;
 						bit--;
 					}
 					if (subpattern.op2 == GEN) {
 						subop = (MachineOperandMFP201) subInst.getOp2();
-						if (subop != null && subop.type == MachineOperandMFP201.OP_DEC)
+						if (subop != null && subop.type == OP_DEC)
 							work[1] |= 1 << bit;
 						bit--;
 					}
 					if (subpattern.op3 == GEN) {
 						subop = (MachineOperandMFP201) subInst.getOp3();
-						if (subop != null && subop.type == MachineOperandMFP201.OP_DEC)
+						if (subop != null && subop.type == OP_DEC)
 							work[1] |= 1 << bit;
 						bit--;
 					}
@@ -701,11 +774,11 @@ public class InstTableMFP201 {
 	}
 
 	public static boolean canHaveMemSizeByte(int inst) {
-		return inst >= InstMFP201._IlastSimpleImmediate;
+		return inst >= _IlastSimpleImmediate;
 	}
 
 	public static boolean canBeSimpleImmediateInst(int inst) {
-		return (inst >= InstMFP201.Ior && inst <= InstMFP201.Ildcbq);
+		return (inst >= Ior && inst <= Ildcbq);
 	}
 
 	public static boolean isImm8(short immed) {
@@ -727,34 +800,34 @@ public class InstTableMFP201 {
 				throw new IllegalArgumentException("Expected immediate: " + mop + " in " + inst);
 			break;
 		case CNT:
-			if (mop.type != MachineOperandMFP201.OP_CNT && mop.type != MachineOperandMFP201.OP_IMM)
+			if (mop.type != OP_CNT && mop.type != OP_IMM)
 				throw new IllegalArgumentException("Expected count: " + mop + " in " + inst);
 			break;
 		case OFF:
-			if (mop.type != MachineOperandMFP201.OP_CNT && mop.type != MachineOperandMFP201.OP_IMM
-					&& mop.type != MachineOperandMFP201.OP_PCREL)
+			if (mop.type != OP_CNT && mop.type != OP_IMM
+					&& mop.type != OP_PCREL)
 				throw new IllegalArgumentException("Expected offset: " + mop + " in " + inst);
 			break;
 		case REG:
-			if (mop.type != MachineOperandMFP201.OP_REG && mop.type != MachineOperandMFP201.OP_REG0_SHIFT_COUNT)
+			if (mop.type != OP_REG && mop.type != OP_REG0_SHIFT_COUNT)
 				throw new IllegalArgumentException("Expected register: " + mop + " in " + inst);
 			break;
 		case GEN:
-			if (mop.type == MachineOperandMFP201.OP_NONE
-					|| mop.type == MachineOperandMFP201.OP_IMM)
+			if (mop.type == OP_NONE
+					|| mop.type == OP_IMM)
 				throw new IllegalArgumentException("Expected general operand: " + mop + " in " + inst);
 			break;
 		case SRO:
-			if (mop.type != MachineOperandMFP201.OP_DEC
-					&& mop.type != MachineOperandMFP201.OP_INC
-					&& mop.type != MachineOperandMFP201.OP_IND
-					&& mop.type != MachineOperandMFP201.OP_OFFS
-					&& mop.type != MachineOperandMFP201.OP_SRO) {
+			if (mop.type != OP_DEC
+					&& mop.type != OP_INC
+					&& mop.type != OP_IND
+					&& mop.type != OP_OFFS
+					&& mop.type != OP_SRO) {
 				throw new IllegalArgumentException("Expected general or scaled operand: " + mop + " in " + inst);
 			}
 			break;
 		case INST:
-			if (mop.type != MachineOperandMFP201.OP_INST)
+			if (mop.type != OP_INST)
 				throw new IllegalArgumentException("Expected instruction: " + mop + " in " + inst);
 			break;
 		}
@@ -822,32 +895,32 @@ public class InstTableMFP201 {
 		case IMM:
 			break;
 		case CNT:
-			if (mop.type == MachineOperandMFP201.OP_REG0_SHIFT_COUNT
-					|| (mop.type == MachineOperandMFP201.OP_REG && mop.val == 0)) {
-				return MachineOperandMFP201.createGeneralOperand(MachineOperandMFP201.OP_CNT, 
+			if (mop.type == OP_REG0_SHIFT_COUNT
+					|| (mop.type == OP_REG && mop.val == 0)) {
+				return createGeneralOperand(OP_CNT, 
 						mop.val);
 			}
-			if (mop.type == MachineOperandMFP201.OP_IMM) {
-				return MachineOperandMFP201.createGeneralOperand(MachineOperandMFP201.OP_CNT,
+			if (mop.type == OP_IMM) {
+				return createGeneralOperand(OP_CNT,
 						mop.immed);
 			}
 			break;
 		case OFF:
-			if (mop.type == MachineOperandMFP201.OP_IMM) {
+			if (mop.type == OP_IMM) {
 				// convert address to offset from this inst
-				return MachineOperandMFP201.createGeneralOperand(MachineOperandMFP201.OP_PCREL,
+				return createGeneralOperand(OP_PCREL,
 						mop.val - instruction.pc);
 			}
 			break;
 		case REG:
 			break;
 		case GEN:
-			if (mop.type == MachineOperandMFP201.OP_IMM
+			if (mop.type == OP_IMM
 					&& !isDestOp(instruction, mop)) {
 				// immediate is *PC+
-				MachineOperandMFP201 immed = MachineOperandMFP201.createGeneralOperand(
-						MachineOperandMFP201.OP_INC,
-						MachineOperandMFP201.PC,
+				MachineOperandMFP201 immed = createGeneralOperand(
+						OP_INC,
+						PC,
 						mop.immed);
 				if (canConvertToByteInst(instruction, mop)) {
 					// if all imm or reg ops, we can convert this to a byte
@@ -857,14 +930,14 @@ public class InstTableMFP201 {
 
 				}
 				immed.encoding = isByteInst(instruction.getInst()) ? 
-						MachineOperandMFP201.OP_ENC_IMM8 : MachineOperandMFP201.OP_ENC_IMM16;
+						OP_ENC_IMM8 : OP_ENC_IMM16;
 				return immed;
 			}
-			else if (mop.type == MachineOperandMFP201.OP_PCREL) {
+			else if (mop.type == OP_PCREL) {
 				// PC-rel is @x(PC)
-				MachineOperandMFP201 pcrel = MachineOperandMFP201.createGeneralOperand(
-						MachineOperandMFP201.OP_OFFS,
-						MachineOperandMFP201.PC,
+				MachineOperandMFP201 pcrel = createGeneralOperand(
+						OP_OFFS,
+						PC,
 						mop.immed);
 				return pcrel;
 			}
@@ -885,8 +958,8 @@ public class InstTableMFP201 {
 		if (ins.getOp2() != null)
 			return mop == ins.getOp2();
 		return mop == ins.getOp1() 
-			&& ins.getInst() != InstMFP201.Ipush
-			&& ins.getInst() != InstMFP201.Ipushb;
+			&& ins.getInst() != Ipush
+			&& ins.getInst() != Ipushb;
 	}
 
 	private static boolean hasNoOtherMemoryOperands(RawInstruction instruction,
@@ -907,10 +980,10 @@ public class InstTableMFP201 {
 			MachineOperandMFP201 mop) {
 		return !isByteInst(instruction.getInst()) && isImm8(mop.immed)
 				&& canBeByteInst(instruction.getInst())
-				&& ((instruction.getInst() != InstMFP201.Ipush
-					&& instruction.getInst() != InstMFP201.Ipop)
+				&& ((instruction.getInst() != Ipush
+					&& instruction.getInst() != Ipop)
 					|| instruction.getOp2() == null
-					|| ((MachineOperandMFP201)instruction.getOp2()).type  == MachineOperandMFP201.OP_NONE);
+					|| ((MachineOperandMFP201)instruction.getOp2()).type  == OP_NONE);
 	}
 	
 	public static int coerceInstructionOpcode(int inst, int opcode) {
@@ -1005,57 +1078,57 @@ public class InstTableMFP201 {
     
         if (op < 0x200) {
         } else if (op < 0x2a0) {
-            mop1.type = MachineOperandMFP201.OP_REG;
+            mop1.type = OP_REG;
             mop1.val = op & 15;
-            mop2.type = MachineOperandMFP201.OP_IMM;
+            mop2.type = OP_IMM;
             switch ((op & 0x1e0) >> 5) {
             case 0:
                 //inst.name = "LI";
-                inst.setInst(InstMFP201.Ili);
+                inst.setInst(Ili);
                 break;
             case 1:
                 //inst.name = "AI";
-                inst.setInst(InstMFP201.Iai);
+                inst.setInst(Iai);
                 break;
             case 2:
                 //inst.name = "ANDI";
-                inst.setInst(InstMFP201.Iandi);
+                inst.setInst(Iandi);
                 break;
             case 3:
                 //inst.name = "ORI";
-                inst.setInst(InstMFP201.Iori);
+                inst.setInst(Iori);
                 break;
             case 4:
                 //inst.name = "CI";
-                inst.setInst(InstMFP201.Ici);
+                inst.setInst(Ici);
                 break;
             }
     
         } else if (op < 0x2e0) {
-            mop1.type = MachineOperandMFP201.OP_REG;
+            mop1.type = OP_REG;
             mop1.val = op & 15;
             switch ((op & 0x1e0) >> 5) {
             case 5:
                 //inst.name = "STWP";
-                inst.setInst(InstMFP201.Istwp);
+                inst.setInst(Istwp);
                 break;
             case 6:
                 //inst.name = "STST";
-                inst.setInst(InstMFP201.Istst);
+                inst.setInst(Istst);
                 break;
             }
     
         } else if (op < 0x320) {
-            mop1.type = MachineOperandMFP201.OP_IMM;
+            mop1.type = OP_IMM;
     
             switch ((op & 0x1e0) >> 5) {
             case 7:
                 //inst.name = "LWPI";
-                inst.setInst(InstMFP201.Ilwpi);
+                inst.setInst(Ilwpi);
                 break;
             case 8:
                 //inst.name = "LIMI";
-                inst.setInst(InstMFP201.Ilimi);
+                inst.setInst(Ilimi);
                 break;
             }
     
@@ -1063,27 +1136,27 @@ public class InstTableMFP201 {
             switch ((op & 0x1e0) >> 5) {
             case 10:
                 //inst.name = "IDLE";
-                inst.setInst(InstMFP201.Iidle);
+                inst.setInst(Iidle);
                 break;
             case 11:
                 //inst.name = "RSET";
-                inst.setInst(InstMFP201.Irset);
+                inst.setInst(Irset);
                 break;
             case 12:
                 //inst.name = "RTWP";
-                inst.setInst(InstMFP201.Irtwp);
+                inst.setInst(Irtwp);
                 break;
             case 13:
                 //inst.name = "CKON";
-                inst.setInst(InstMFP201.Ickon);
+                inst.setInst(Ickon);
                 break;
             case 14:
                 //inst.name = "CKOF";
-                inst.setInst(InstMFP201.Ickof);
+                inst.setInst(Ickof);
                 break;
             case 15:
                 //inst.name = "LREX";
-                inst.setInst(InstMFP201.Ilrex);
+                inst.setInst(Ilrex);
                 break;
             }
     
@@ -1094,84 +1167,84 @@ public class InstTableMFP201 {
             switch ((op & 0x3c0) >> 6) {
             case 0:
                 //inst.name = "BLWP";
-                inst.setInst(InstMFP201.Iblwp);
+                inst.setInst(Iblwp);
                 break;
             case 1:
                 //inst.name = "B";
-                inst.setInst(InstMFP201.Ib);
+                inst.setInst(Ib);
                 break;
             case 2:
                 //inst.name = "X";
-                inst.setInst(InstMFP201.Ix);
+                inst.setInst(Ix);
                 break;
             case 3:
                 //inst.name = "CLR";
-                inst.setInst(InstMFP201.Iclr);
+                inst.setInst(Iclr);
                 break;
             case 4:
                 //inst.name = "NEG";
-                inst.setInst(InstMFP201.Ineg);
+                inst.setInst(Ineg);
                 break;
             case 5:
                 //inst.name = "INV";
-                inst.setInst(InstMFP201.Iinv);
+                inst.setInst(Iinv);
                 break;
             case 6:
                 //inst.name = "INC";
-                inst.setInst(InstMFP201.Iinc);
+                inst.setInst(Iinc);
                 break;
             case 7:
                 //inst.name = "INCT";
-                inst.setInst(InstMFP201.Iinct);
+                inst.setInst(Iinct);
                 break;
             case 8:
                 //inst.name = "DEC";
-                inst.setInst(InstMFP201.Idec);
+                inst.setInst(Idec);
                 break;
             case 9:
                 //inst.name = "DECT";
-                inst.setInst(InstMFP201.Idect);
+                inst.setInst(Idect);
                 break;
             case 10:
                 //inst.name = "BL";
-                inst.setInst(InstMFP201.Ibl);
+                inst.setInst(Ibl);
                 break;
             case 11:
                 //inst.name = "SWPB";
-                inst.setInst(InstMFP201.Iswpb);
+                inst.setInst(Iswpb);
                 break;
             case 12:
                 //inst.name = "SETO";
-                inst.setInst(InstMFP201.Iseto);
+                inst.setInst(Iseto);
                 break;
             case 13:
                 //inst.name = "ABS";
-                inst.setInst(InstMFP201.Iabs);
+                inst.setInst(Iabs);
                 break;
             }
     
         } else if (op < 0xc00) {
-            mop1.type = MachineOperandMFP201.OP_REG;
+            mop1.type = OP_REG;
             mop1.val = op & 15;
-            mop2.type = MachineOperandMFP201.OP_CNT;
+            mop2.type = OP_CNT;
             mop2.val = (op & 0xf0) >> 4;
     
             switch ((op & 0x700) >> 8) {
             case 0:
                 //inst.name = "SRA";
-                inst.setInst(InstMFP201.Isra);
+                inst.setInst(Isra);
                 break;
             case 1:
                 //inst.name = "SRL";
-                inst.setInst(InstMFP201.Isrl);
+                inst.setInst(Isrl);
                 break;
             case 2:
                 //inst.name = "SLA";
-                inst.setInst(InstMFP201.Isla);
+                inst.setInst(Isla);
                 break;
             case 3:
                 //inst.name = "SRC";
-                inst.setInst(InstMFP201.Isrc);
+                inst.setInst(Isrc);
                 break;
             }
     
@@ -1179,7 +1252,7 @@ public class InstTableMFP201 {
 }    
         if (inst.getInst() == 0) // data
         {
-            mop1.type = MachineOperandMFP201.OP_IMM;
+            mop1.type = OP_IMM;
             mop1.val = mop1.immed = (short) op;
             //inst.name = "DATA";
             inst.size = 2;
@@ -1217,11 +1290,11 @@ public class InstTableMFP201 {
     */
 	
 	public static boolean isJumpInst(int inst) {
-		return inst >= InstMFP201._IfirstJumpOp && inst <= InstMFP201._IlastJumpOp;
+		return inst >= _IfirstJumpOp && inst <= _IlastJumpOp;
 	}
 	
 	public static boolean isMoveInst(int inst) {
-		return inst >= InstMFP201._IfirstMovOp && inst <= InstMFP201._IlastMovOp;
+		return inst >= _IfirstMovOp && inst <= _IlastMovOp;
 	}
 	
 	public static boolean isByteInst(int inst) {
@@ -1230,21 +1303,21 @@ public class InstTableMFP201 {
 
 	
 	public static boolean canBeByteInst(int inst) {
-		return (inst >= InstMFP201._IfirstPossibleByteOp && inst <= InstMFP201._IlastPossibleByteOp)
-		|| (inst >= InstMFP201._IfirstPossibleByteOp2 && inst <= InstMFP201._IlastPossibleByteOp2)
-		|| (inst >= InstMFP201._IfirstPossibleByteOp3 && inst <= InstMFP201._IlastPossibleByteOp3);
+		return (inst >= _IfirstPossibleByteOp && inst <= _IlastPossibleByteOp)
+		|| (inst >= _IfirstPossibleByteOp2 && inst <= _IlastPossibleByteOp2)
+		|| (inst >= _IfirstPossibleByteOp3 && inst <= _IlastPossibleByteOp3);
 	}
 
 	public static boolean canBeThreeOpInst(int inst) {
-		return inst >= InstMFP201._IfirstPossibleThreeOp 
-			&& inst <= InstMFP201._IlastPossibleThreeOp;
+		return inst >= _IfirstPossibleThreeOp 
+			&& inst <= _IlastPossibleThreeOp;
 	}
 	public static boolean isLogicalOpInst(int inst) {
-		return inst >= InstMFP201._IfirstLogicalOp 
-			&& inst <= InstMFP201._IlastLogicalOp;
+		return inst >= _IfirstLogicalOp 
+			&& inst <= _IlastLogicalOp;
 	}
 	public static boolean isLoadConstInst(int inst) {
-		return inst >= InstMFP201.Ildc && inst <= InstMFP201.Ildcbq;
+		return inst >= Ildc && inst <= Ildcbq;
 	}
 	
 	public static boolean isNonWritingInst(int inst) {
@@ -1263,11 +1336,11 @@ public class InstTableMFP201 {
 	public static boolean isCommutativeInst(int inst) {
 		if (canBeThreeOpInst(inst)) {
 			inst &= ~3;
-			if (inst == InstMFP201.Iadd 
-					|| inst == InstMFP201.Iand
-					|| inst == InstMFP201.Ior
-					|| inst == InstMFP201.Ixor
-					|| inst == InstMFP201.Inand) {
+			if (inst == Iadd 
+					|| inst == Iand
+					|| inst == Ior
+					|| inst == Ixor
+					|| inst == Inand) {
 				return true;
 			}
 		}
@@ -1279,30 +1352,30 @@ public class InstTableMFP201 {
 	 * @return
 	 */
 	public static int getReversedInst(int inst) {
-		if (inst >= InstMFP201.Icmp && inst <= InstMFP201.Icmpb)
-			return inst - InstMFP201.Icmp + InstMFP201.Icmpr;
-		if (inst >= InstMFP201.Icmpr && inst <= InstMFP201.Icmprb)
-			return inst - InstMFP201.Icmpr + InstMFP201.Icmp;
+		if (inst >= Icmp && inst <= Icmpb)
+			return inst - Icmp + Icmpr;
+		if (inst >= Icmpr && inst <= Icmprb)
+			return inst - Icmpr + Icmp;
 		if (isCommutativeInst(inst))
 			return inst;
 		return 0;
 	}
 
 	public static boolean isArithOpInst(int inst) {
-		return inst >= InstMFP201._IfirstArithOp 
-		&& inst <= InstMFP201._IlastArithOp;
+		return inst >= _IfirstArithOp 
+		&& inst <= _IlastArithOp;
 	}
 
 	public static boolean isLoopOrStepInst(int inst) {
-		return inst >= InstMFP201._IfirstLoopStepInst
-		&& inst <= InstMFP201._IlastLoopStepInst;
+		return inst >= _IfirstLoopStepInst
+		&& inst <= _IlastLoopStepInst;
 	}
 	public static boolean isLoopInst(int inst) {
-		return inst >= InstMFP201._IfirstLoopInst
-		&& inst <= InstMFP201._IlastLoopInst;
+		return inst >= _IfirstLoopInst
+		&& inst <= _IlastLoopInst;
 	}
 	public static boolean isStepInst(int inst) {
-		return inst >= InstMFP201._IfirstStepInst
-		&& inst <= InstMFP201._IlastStepInst;
+		return inst >= _IfirstStepInst
+		&& inst <= _IlastStepInst;
 	}
 }

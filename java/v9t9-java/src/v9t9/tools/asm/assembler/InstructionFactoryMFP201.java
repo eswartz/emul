@@ -8,6 +8,7 @@ import v9t9.engine.cpu.InstPatternMFP201;
 import v9t9.engine.cpu.InstTableMFP201;
 import v9t9.engine.cpu.InstructionMFP201;
 import v9t9.engine.cpu.MachineOperandMFP201;
+import v9t9.engine.cpu.PseudoPattern;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
@@ -38,13 +39,30 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		InstructionMFP201 rawInst = new InstructionMFP201();
 		rawInst.pc = ins.pc;
 		int inst = ins.getInst();
+		
+		LLOperand op1;
+		LLOperand op2;
+		LLOperand op3;
+
+		PseudoPattern pseudoPattern = InstTableMFP201.lookupPseudoPattern(inst);
+		if (pseudoPattern != null) {
+			op1 = getPseudoOperand(pseudoPattern.getOp1(), ins);
+			op2 = getPseudoOperand(pseudoPattern.getOp2(), ins);
+			op3 = getPseudoOperand(pseudoPattern.getOp3(), ins);
+			
+			inst = pseudoPattern.getInst();
+			rawInst.setInst(inst);
+		} else {
+			op1 = ins.getOp1();
+			op2 = ins.getOp2();
+			op3 = ins.getOp3();
+
+		}
+		
 		rawInst.setInst(inst);
 		rawInst.setName(InstTableMFP201.getInstName(inst));
 		
-		LLOperand op1 = ins.getOp1();
-		LLOperand op2 = ins.getOp2();
-		LLOperand op3 = ins.getOp3();
-
+		
 		int[] consts;
 		if (InstTableMFP201.isLogicalOpInst(inst)) {
 			consts = InstTableMFP201.LOGICAL_INST_CONSTANTS[inst & 1];
@@ -142,7 +160,8 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 				// SUB Rx, const, Ry --> ADD -const, Rx, Ry
 				if ((inst == InstMFP201.Isub || inst == InstMFP201.Isubb)
 						&& op1 instanceof LLRegisterOperand 
-						&& op2 != null && op2 instanceof LLImmedOperand) {
+						&& op2 != null && op2 instanceof LLImmedOperand
+						&& getImplicitConstantReg(op2.getImmediate(), consts) < 0) {
 					rawInst.setInst(inst - InstMFP201.Isub + InstMFP201.Iadd);
 					LLOperand tmp = op1;
 					op1 = op2;
@@ -208,6 +227,16 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		InstTableMFP201.coerceOperandTypes(rawInst);
 		//InstTableMFP201.calculateInstructionSize(rawInst);
 		return rawInst;
+	}
+
+	private LLOperand getPseudoOperand(LLOperand op, LLInstruction ins) {
+		if (op == InstTableMFP201.P_OP1)
+			return ins.getOp1();
+		if (op == InstTableMFP201.P_OP2)
+			return ins.getOp2();
+		if (op == InstTableMFP201.P_OP3)
+			return ins.getOp3();
+		return op;
 	}
 
 	/**

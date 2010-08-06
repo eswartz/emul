@@ -74,6 +74,8 @@ public class Assembler {
 	private ConstPool constPool = new ConstPool(this);
 
 	private IInstructionFactory instructionFactory;
+
+	private int basicSize;
     
 	private static final Pattern INCL_LINE = Pattern.compile(
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
@@ -109,6 +111,8 @@ public class Assembler {
 			for (int i = 0; i < 16; i++) {
 				symbolTable.addSymbol(new Equate(symbolTable, "R" + i, i));
 			}
+			
+			basicSize = 2;
 		}
 		else if (PROC_MFP201.equals(proc)) {
 			// in actual runtime, 0-0x200 is I/O
@@ -140,6 +144,8 @@ public class Assembler {
 			symbolTable.addSymbol(new Equate(symbolTable, "SR",
 					new RegisterOperand(new NumberOperand(MachineOperandMFP201.SR)),
 					MachineOperandMFP201.SR));
+			
+			basicSize = 1;
  		}
 		else {
 			throw new IllegalArgumentException("unknown processor: "+ proc);
@@ -624,25 +630,37 @@ public class Assembler {
 			int cnt = 6;
 			while (cnt-- >= 0) {
 				if (offs < mem.length) {
-					// eat a word if we're aligned on a word
-					if (((pc + offs) & 1) == 0 && offs + 1 < mem.length) {
-						curLines.append('>');
-						curLines.append(HexUtils.toHex4((((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff))));
-						offs += 2;
-						cnt -= 2;
+					if (basicSize == 2) {
+						// eat a word if we're aligned on a word
+						if (((pc + offs) & 1) == 0 && offs + 1 < mem.length) {
+							curLines.append('>');
+							curLines.append(HexUtils.toHex4((((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff))));
+							offs += 2;
+							cnt -= 2;
+						} else {
+							if (offs + 1 < mem.length)
+								curLines.append("  ");
+							curLines.append('>');
+							curLines.append(HexUtils.toHex2((mem[offs] & 0xff)));
+								
+							offs++;
+							cnt--;
+						}
 					} else {
-						if (offs + 1 < mem.length)
-							curLines.append("  ");
 						curLines.append('>');
-						curLines.append(HexUtils.toHex2((mem[offs] & 0xff)));
-							
+						curLines.append(HexUtils.toHex2(mem[offs]));
 						offs++;
 						cnt--;
 					}
 					curLines.append(' ');
 				} else {
-					curLines.append("      ");
-					cnt -= 2;
+					if (basicSize == 2) {
+						curLines.append("      ");
+						cnt -= 2;
+					} else {
+						curLines.append("    ");
+						cnt --;
+					}
 				}
 			}
 			

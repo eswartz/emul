@@ -515,7 +515,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		return op;
 	}
 
-	public static MachineOperand createSymbolImmediate(Symbol symbol) {
+	public static MachineOperandMFP201 createSymbolImmediate(Symbol symbol) {
 		MachineOperandMFP201 op = new MachineOperandMFP201(OP_IMM);
 		if (symbol.isDefined()) {
 			op.immed = (short) (op.val = symbol.getAddr());
@@ -529,7 +529,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		return new MachineOperandMFP201(OP_NONE);
 	}
 
-	public static MachineOperand createScaledRegOffsOperand(int offset,
+	public static MachineOperandMFP201 createScaledRegOffsOperand(int offset,
 			int addReg, int register, int scale) {
 		MachineOperandMFP201 op = new MachineOperandMFP201(OP_SRO);
 		op.val = addReg;
@@ -545,13 +545,13 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		return op;
 	}
 
-	public static Operand createNonWritingSROperand() {
+	public static MachineOperandMFP201 createNonWritingSROperand() {
 		MachineOperandMFP201 op = createGeneralOperand(OP_REG, SR);
 		op.encoding = OP_ENC_NON_WRITING;
 		return op;
 	}
 
-	public static Operand createImplicitConstantReg(int reg, int immed) {
+	public static MachineOperandMFP201 createImplicitConstantReg(int reg, int immed) {
 		MachineOperandMFP201 op = createGeneralOperand(OP_REG, reg, immed);
 		op.encoding = OP_ENC_IMM_IMPLICIT;
 		return op;

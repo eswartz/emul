@@ -10,8 +10,8 @@ package v9t9.engine.cpu;
 public class InstMFP201 {
 	public static final int _IfirstSimpleImmediate = 2;
 	public static final int Ibkpt = 2;
-	public static final int Iret = 4;
-	public static final int Ireti = 6;
+	//public static final int Iret = 4;
+	//public static final int Ireti = 6;
 	public static final int Ibr = 8;
 	public static final int Ibra = 10;
 	public static final int Icall = 12;
@@ -172,4 +172,32 @@ public class InstMFP201 {
 	
 	public static final int _IlastStepInst = 152;
 	public static final int _IlastLoopStepInst = 152;
+	
+	/* all the instructions below may only appear in HL or LL instructions;
+	 * they are converted to primitive forms in RawInstruction
+	 */
+	public static final int _IfirstPseudoInst = 200;
+	
+	public static final int Pclr = 200;
+	public static final int Pclrb = 201;
+	public static final int Pseto = 202;
+	public static final int Psetob = 203;
+	public static final int Pinv = 204;
+	public static final int Pinvb = 205;
+
+	public static final int Pinc = 210;
+	public static final int Pincb = 211;
+	public static final int Pinct = 212;
+	public static final int Pinctb = 213;
+	public static final int Pdec = 214;
+	public static final int Pdecb = 215;
+	public static final int Pdect = 216;
+	public static final int Pdectb = 217;
+	
+	public static final int Pnop = 220;
+	public static final int Pret = 222;
+	public static final int Preti = 224;
+	
+	public static final int _IlastPseudoInst = 300;
+	
 }
