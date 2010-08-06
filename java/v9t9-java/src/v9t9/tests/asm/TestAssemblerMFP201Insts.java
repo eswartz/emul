@@ -171,6 +171,11 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("ADD #2, SP, SP", new byte[] { (byte) 0xCD, (byte) 0xED });
 		_testEncode("ADD.B #2, SP, SP", new byte[] { 0x50, (byte) 0xCD, (byte) 0xED });
 
+		// make sure we can use immediates with the long SBB form
+		_testEncode("SBB 123, R0, R0", new byte[] { 0x5c, (byte) 0xfe, (byte) 0x00, 123 });
+		// implicit SR
+		_testEncode("SBB 0, R0, R0", new byte[] { (byte) 0xff, 0x00 });
+		
 		// A non-implicit immediate is not allowed in 2nd position, 
 		// so this is converted to ADD ->1000, R7, R1.
 		_testEncode("SUB R7, >1000, R4", new byte[] { 0x4C, (byte) 0xCE, (byte) 0x74, (byte) 0xf0, 0x00 });
