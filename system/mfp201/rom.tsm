@@ -29,7 +29,7 @@ reset:
 	; turn on interrupts
 	or INTS, SR
 
-	br clrscr
+	call clrscr
 	
 	br idle
 	
