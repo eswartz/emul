@@ -53,15 +53,16 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 	}
 	public void testEncodeSimple1() throws Exception {
 		_testEncode("BKPT", new byte[] { 0x00 });
-		_testEncode("RET", new byte[] { 0x01 });
-		_testEncode("RETI", new byte[] { 0x02 });
+		_testEncode("RET", new byte[] { 0x3E });	// POP PC
+		_testEncode("RETI", new byte[] { 0x44, 0x3e }); // POP #2, PC
 	}
 	public void testEncodeSimple2() throws Exception {
-		_testEncode("BR >1234", new byte[] { 0x04, 0x02, 0x33 });
-		_testEncode("BRA >1234", new byte[] { 0x05, 0x12, 0x34 });
-		_testEncode("CALL >0234", new byte[] { 0x06, (byte) 0xF2, (byte) 0x33 });
-		_testEncode("CALLA >0234", new byte[] { 0x07, 0x02, 0x34 });
+		_testEncode("BR >1234", new byte[] { 0x0c, 0x02, 0x33 });
+		_testEncode("BRA >1234", new byte[] { 0x0d, 0x12, 0x34 });
+		_testEncode("CALL >0234", new byte[] { 0x0e, (byte) 0xF2, (byte) 0x33 });
+		_testEncode("CALLA >0234", new byte[] { 0x0f, 0x02, 0x34 });
 		
+		_testEncode("BR $", new byte[] { 0x0c, (byte) 0xff, (byte) 0xff });
 		assertBadInst("BR");
 		assertBadInst("BR R15");
 		assertBadInst("CALLA *R1+");
@@ -185,15 +186,18 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("OR *R5, R12, R1", new byte[] { 0x48, (byte) 0x85, (byte) 0xC1 });
 		_testEncode("OR R12, *R5, R1", new byte[] { 0x48, (byte) 0x85, (byte) 0xC1 });
 
+		// SETO -> SUB 0/*SP*/, 1/*R13*/, R
+		_testEncode("SUB 0, 1, R1", new byte[] { (byte) 0xEF, (byte) 0xD1 });
+	
 		// cannot reverse subtract
 		assertBadInst("SUB R12, *R5, R1");
 		// cannot have mem in second position
 		assertBadInst("OR *R7, *R8, R4");
 
-			// SETO -> SUB 0/*SP*/, 1/*R13*/, R
-		_testEncode("SUB 0, 1, R1", new byte[] { (byte) 0xEF, (byte) 0xD1 });
-
+		// cannot have immed in dest
+		assertBadInst("OR R7, R8, #10");
 	}
+	
 	public void testEncode3OpWith2() throws Exception {
 		// the first source operand becomes the dest operand
 			// OR R1, R5, R1
@@ -255,9 +259,107 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		
 			// can't reconcile
 		assertBadInst("SUB *R0, *R1");
+			// no immed in dest
+		assertBadInst("SUB R0, #12");
 
 	}
+	
+	public void testEncode1Ops() throws Exception {
+		_testEncode("SEXT R1", new byte[] { (byte) 0x11 });
+		_testEncode("EXTL R1", new byte[] { 0x44, (byte) 0x11 });
+		_testEncode("EXTH R1", new byte[] { 0x48, (byte) 0x11 });
+		_testEncode("SWPB R1", new byte[] { 0x4C, (byte) 0x11 });
+		
+		_testEncode("SEXT *R11", new byte[] { 0x42, (byte) 0x1B });
+		_testEncode("SWPB *SP+", new byte[] { 0x4F, (byte) 0x1D });
+		
+		_testEncode("PUSH R1", new byte[] { (byte) 0x21 });
+		_testEncode("PUSH #>1234", new byte[] { 0x43, (byte) 0x2E, 0x12, 0x34 });
+		_testEncode("PUSH #>ff", new byte[] { 0x43, (byte) 0x2E, 0x00, (byte) 0xff });
+			// auto byte selection
+		_testEncode("PUSH #>12", new byte[] { 0x53, (byte) 0x2E, 0x12 });
+		_testEncode("PUSH -1", new byte[] { 0x53, (byte) 0x2E, (byte) 0xff });
+		_testEncode("PUSH.B R1", new byte[] { 0x50, (byte) 0x21 });
+		_testEncode("PUSH.B #12", new byte[] { 0x53, (byte) 0x2E, 0x0C });
+		
+		_testEncode("PUSH #4, R1", new byte[] { 0x4C, (byte) 0x21 });
+		_testEncode("PUSH.B #4, R1", new byte[] { 0x5C, (byte) 0x21 });
+		_testEncode("POP PC", new byte[] { (byte) 0x3E });
+		_testEncode("POP.B R0", new byte[] { 0x50, (byte) 0x30 });
+		_testEncode("POP #2, PC", new byte[] { 0x44, (byte) 0x3E });
+		_testEncode("POP #3, *R12+", new byte[] { 0x4B, (byte) 0x3C });
+		_testEncode("POP.B #3, *R12+", new byte[] { 0x5B, (byte) 0x3C });
+	}
 
+	public void testEncodeJumps() throws Exception {
+		_testEncode("JMP $", new byte[] { 0x77, (byte) 0xff });
+		_testEncode("JMP >1000", new byte[] { 0x77, (byte) 0xff });
+		_testEncode("JMP $+1", new byte[] { 0x77, (byte) 0x00 });
+		_testEncode("JMP $+128+1", new byte[] { 0x40, 0x77, (byte) 0x80 });
+		_testEncode("JMP $-128+1", new byte[] {0x77, (byte) 0x80 });
+		_testEncode("JMP $-129+1", new byte[] { 0x4f, 0x77, (byte) 0x7f });
+		_testEncode("JMP $+2047+1", new byte[] { 0x47, 0x77, (byte) 0xff });
+		_testEncode("JMP $-2048+1", new byte[] { 0x48, 0x77, (byte) 0x00 });
+		_testEncode("JMP $+2048+1", new byte[] { 0x58, 0x77, (byte) 0x00, 0x00 });
+		_testEncode("JMP $-2049+1", new byte[] { 0x57, 0x77, (byte) 0xff, (byte) 0xff });
+		_testEncode("JMP $+32767+1", new byte[] { 0x5f, 0x77, (byte) 0xff, 0x07 });
+		_testEncode("JMP $-32768+1", new byte[] { 0x50, 0x77, (byte) 0x00, (byte) 0xf8 });
+		
+		_testEncode("JNE $+1", new byte[] { 0x70, (byte) 0x00 });
+		_testEncode("JEQ $+1", new byte[] { 0x71, (byte) 0x00 });
+		_testEncode("JNC $+1", new byte[] { 0x72, (byte) 0x00 });
+		_testEncode("JC $+1", new byte[] { 0x73, (byte) 0x00 });
+		_testEncode("JS $+1", new byte[] { 0x74, (byte) 0x00 });
+		_testEncode("JGE $+1", new byte[] { 0x75, (byte) 0x00 });
+		_testEncode("JL $+1", new byte[] { 0x76, (byte) 0x00 });
+		_testEncode("JMP $+1", new byte[] { 0x77, (byte) 0x00 });
+		
+		// aliases...
+
+	}
+	
+	public void testEncodeMoves() throws Exception {
+		_testEncode("MOV R1, R2", new byte[] { 0x7f, 0x12 });
+		_testEncode("MOV R3, PC", new byte[] { 0x7f, 0x3E });
+		
+		_testEncode("MOVNE R1, R2", new byte[] { 0x78, 0x12 });
+		_testEncode("MOVEQ R1, R2", new byte[] { 0x79, 0x12 });
+		_testEncode("MOVNC R1, R2", new byte[] { 0x7a, 0x12 });
+		_testEncode("MOVC R1, R2", new byte[] { 0x7b, 0x12 });
+		_testEncode("MOVS R1, R2", new byte[] { 0x7c, 0x12 });
+		_testEncode("MOVGE R1, R2", new byte[] { 0x7d, 0x12 });
+		_testEncode("MOVL R1, R2", new byte[] { 0x7e, 0x12 });
+		
+		_testEncode("MOV *R1+, *R2+", new byte[] { 0x4F, 0x7f, 0x12 });
+		_testEncode("MOV.B #>ff, *R2+", new byte[] { 0x5F, 0x7f, (byte) 0xE2, (byte) 0xff });
+		
+		_testEncode("MOVEQ @8(R4), R2", new byte[] { 0x44, 0x79, 0x42, 0x00, 0x08 });
+			// .B does not affect @xxx() size
+		_testEncode("MOVEQ.B @8(R4), R2", new byte[] { 0x54, 0x79, 0x42, 0x00, 0x08 });
+		
+		assertBadInst("MOV R1, #11");
+	}
+	
+	public void testEncodeShifts() throws Exception {
+		_testEncode("LSH #1, R2", new byte[] { 0x68, 0x12 });
+		_testEncode("LSH #0, R2", new byte[] { 0x68, 0x02 });
+		_testEncode("LSH R0, R2", new byte[] { 0x68, 0x02 });
+		_testEncode("RSH #8, R2", new byte[] { 0x69, (byte) 0x82 });
+		_testEncode("ASH 15, R0", new byte[] { 0x6a, (byte) 0xF0 });
+		_testEncode("ROL 8, R9", new byte[] { 0x6b, (byte) 0x89 });
+		_testEncode("ROL 8, *R9+", new byte[] { 0x43, 0x6b, (byte) 0x89 });
+		_testEncode("LSH R0, @100(R2)", new byte[] { 0x41, 0x68, 0x02, 0x00, 0x64 });
+	}
+	public void testEncodeMulDiv() throws Exception {
+		_testEncode("MUL R1, R2", new byte[] { 0x6c, 0x12 });
+		_testEncode("DIV R1, R2", new byte[] { 0x6d, 0x12 });
+		_testEncode("MULD R1, R2", new byte[] { 0x6e, 0x12 });
+		_testEncode("DIVD R1, R2", new byte[] { 0x6f, 0x12 });
+		_testEncode("MUL R1, R2", new byte[] { 0x6c, 0x12 });
+		_testEncode("MUL.B R1, R2", new byte[] { 0x50, 0x6c, 0x12 });
+		_testEncode("MULD.B *R1+, *R2+", new byte[] { 0x5f, 0x6e, 0x12 });
+	}
+		
 	private void _testEncode(String str, byte[] bytes) throws ParseException, ResolveException {
 		assertInst(asmInstStage, str, bytes);
 		assertInst(asmInstStage, str.toLowerCase(), bytes);
@@ -286,11 +388,11 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		assertNotNull("did not parse", insts);
 		assertEquals(1, insts.length);
 		
+		assembler.setPc(0x1000);
+		
 		IInstruction[] irealInsts = ((AssemblerInstruction) insts[0]).resolve(assembler, null, true);
 		assertEquals(1, irealInsts.length);
 		assertTrue(irealInsts[0] instanceof LLInstruction);
-		
-		((LLInstruction) irealInsts[0]).setPc(0x1000);
 		
 		RawInstruction realInst = assembler.getInstructionFactory().createRawInstruction(
 				((LLInstruction) irealInsts[0]));

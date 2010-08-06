@@ -552,5 +552,4 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		op.encoding = OP_ENC_IMM_IMPLICIT;
 		return op;
 	}
-
 }

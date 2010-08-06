@@ -16,7 +16,6 @@ import v9t9.engine.cpu.InstTableMFP201;
 import v9t9.engine.cpu.MachineOperandMFP201;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.JumpOperand;
-import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.PcRelativeOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegOffsOperand;
 import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
@@ -138,9 +137,9 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
         
         // if no match, just accept anything
         
-        inst.setOp1(op1 != null ? op1 : null);
-        inst.setOp2(op2 != null ? op2 : null);
-        inst.setOp3(op3 != null ? op3 : null);
+        inst.setOp1(op1);
+        inst.setOp2(op2);
+        inst.setOp3(op3);
         
         return new IInstruction[] { inst };
     }
