@@ -29,7 +29,9 @@
 #if defined(WIN32) || defined(__CYGWIN__)
 /* MS Windows NT/XP */
 
-#define _WIN32_WINNT 0x0501
+#ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0501
+#endif
 
 #if defined(__CYGWIN__)
 #  define _WIN32_IE 0x0501
@@ -105,10 +107,13 @@ extern int __stdcall getaddrinfo(const char *, const char *,
 #include <direct.h>
 #include <errno.h>
 
+#ifndef HAVE_STRUCT_TIMESPEC
 struct timespec {
     time_t  tv_sec;         /* seconds */
     long    tv_nsec;        /* nanoseconds */
 };
+#define HAVE_STRUCT_TIMESPEC
+#endif
 
 #define SIGKILL 1
 
