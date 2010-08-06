@@ -37,6 +37,7 @@
 #define LOG_ELF         0x800
 #define LOG_LUA         0x1000
 #define LOG_STACK       0x2000
+#define LOG_PLUGIN      0x4000
 
 extern int log_mode;
 

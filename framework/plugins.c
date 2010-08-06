@@ -83,7 +83,7 @@ int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg) {
 
     file_count = scandir(QUOTE(PATH_Plugins), &files, plugins_filter, plugins_ralphasort);
     if (file_count < 0) {
-        trace(LOG_ALWAYS, "plugins error: failed opening plugins directory \"" QUOTE(PATH_Plugins) "\"");
+        trace(LOG_PLUGIN, "plugins error: failed opening plugins directory \"" QUOTE(PATH_Plugins) "\"");
         return -1;
     }
 
@@ -91,12 +91,12 @@ int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg) {
         char * cur_plugin_path = NULL;
 
         if (asprintf(&cur_plugin_path, QUOTE(PATH_Plugins) "/%s", files[file_count]->d_name) == -1) {
-            trace(LOG_ALWAYS, "plugins error: `asprintf' failed for plugin \"%s\"", files[file_count]->d_name);
+            trace(LOG_PLUGIN, "plugins error: `asprintf' failed for plugin \"%s\"", files[file_count]->d_name);
             ret = -1;
             goto delete_cur_entry;
         }
         if (plugin_init(cur_plugin_path, proto, bcg)) {
-            trace(LOG_ALWAYS, "plugins error: unable to start plugin \"%s\"", cur_plugin_path);
+            trace(LOG_PLUGIN, "plugins error: unable to start plugin \"%s\"", cur_plugin_path);
             ret = -1;
             /* Continue to load the rest of plugins */
         }
@@ -118,20 +118,20 @@ int plugin_init(const char * name, Protocol * proto, TCFBroadcastGroup * bcg) {
     InitFunc init;
 
     /* Plugin loading: */
-    trace(LOG_ALWAYS, "loading plugin \"%s\"", name);
+    trace(LOG_PLUGIN, "loading plugin \"%s\"", name);
     handle = dlopen(name, RTLD_LAZY);
     if (!handle) {
-        trace(LOG_ALWAYS, "plugins error: \"%s\"", dlerror());
+        trace(LOG_PLUGIN, "plugins error: \"%s\"", dlerror());
         return -1;
     }
 
     /* Plugin initialization: */
     init = (InitFunc)dlsym(handle, "tcf_init_plugin");
     if ((error = dlerror()) != NULL) {
-        trace(LOG_ALWAYS, "plugins error: \"%s\"", error);
+        trace(LOG_PLUGIN, "plugins error: \"%s\"", error);
         return -1;
     }
-    trace(LOG_ALWAYS, "initializing plugin \"%s\"", name);
+    trace(LOG_PLUGIN, "initializing plugin \"%s\"", name);
     init(proto, bcg, NULL);
 
     /* Handles table update: */
@@ -177,7 +177,7 @@ int plugins_destroy(void) {
 
     for (i = 0; i < plugins_count; ++i) {
         if (dlclose(plugins_handles[i])) {
-            trace(LOG_ALWAYS, "plugins error: \"%s\"", dlerror());
+            trace(LOG_PLUGIN, "plugins error: \"%s\"", dlerror());
         }
     }
     loc_free(plugins_handles);
