@@ -1,6 +1,7 @@
 %define name tcf-agent
 %define version 0.3.0
 %define release 1.%(bin/get-os-tag)
+%define make_options CONF=Release PATH_Plugins=/etc/tcf/plugins
 
 Name: %{name}
 Summary: Target Communication Framework agent
@@ -26,10 +27,10 @@ rm -rf $RPM_BUILD_ROOT
 %setup
 
 %build
-make all CONF=Release
+make %{make_options} all
 
 %install
-make install CONF=Release INSTALLROOT=$RPM_BUILD_ROOT SBIN=%{_sbindir} INCLUDE=%{_includedir}
+make %{make_options} install INSTALLROOT=$RPM_BUILD_ROOT SBIN=%{_sbindir} INCLUDE=%{_includedir}
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
@@ -53,7 +54,8 @@ fi
 %files
 %defattr(-,root,root,0755)
 %config /etc/init.d/%{name}
-%{_sbindir}/%{name}
+%{_sbindir}/tcf-agent
+%{_sbindir}/tcf-client
 %{_includedir}/tcf
 
 %changelog

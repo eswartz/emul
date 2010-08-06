@@ -51,6 +51,7 @@ install: all
 	install -d -m 755 $(INSTALLROOT)$(INCLUDE)/tcf/framework
 	install -d -m 755 $(INSTALLROOT)$(INCLUDE)/tcf/services
 	install -c $(BINDIR)/agent -m 755 $(INSTALLROOT)$(SBIN)/tcf-agent
+	install -c $(BINDIR)/client -m 755 $(INSTALLROOT)$(SBIN)/tcf-client
 	install -c main/tcf-agent.init -m 755 $(INSTALLROOT)$(INIT)/tcf-agent
 	install -c config.h -m 755 $(INSTALLROOT)$(INCLUDE)/tcf/config.h
 	install -c -t $(INSTALLROOT)$(INCLUDE)/tcf/framework -m 644 framework/*.h
