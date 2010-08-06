@@ -9,6 +9,7 @@ import static v9t9.engine.cpu.InstPatternMFP201.NONE;
 import static v9t9.engine.cpu.InstPatternMFP201.OFF;
 import static v9t9.engine.cpu.InstPatternMFP201.IMM;
 import static v9t9.engine.cpu.InstPatternMFP201.REG;
+import static v9t9.engine.cpu.InstPatternMFP201.SRO;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +46,8 @@ public class InstTableMFP201 {
 	public final static byte _IMM_AS = -8;
 	/** immediate minus one encoded into As bits */
 	public final static byte _IMM_AS_M1 = -9;
+	/** LEA's complicated mode */
+	public final static byte _LEA = -10;
 	
 	final static InstPatternMFP201 DATA_IMM8 = new InstPatternMFP201(
 			IMM, new byte[] { _IMM8 });
@@ -81,9 +84,6 @@ public class InstTableMFP201 {
 			IMM, GEN,  
 			new byte[] { _IMM_AS_M1, _OPC, _NEXTO, 0 });
 	
-	final static InstPatternMFP201 GEN_SR_GEN = new InstPatternMFP201(
-			GEN, GEN, 
-			new byte[] { _OPC_HI, 0, _NEXT, _OPC_LO, 0 });
 	final static InstPatternMFP201 GEN_REG_GEN = new InstPatternMFP201(
 			GEN, REG, GEN, 
 			new byte[] { _OPC, 0, _NEXT, 4, _NEXTO, 0 });
@@ -94,7 +94,9 @@ public class InstTableMFP201 {
 	final static InstPatternMFP201 CNT_GEN = new InstPatternMFP201(
 			CNT, GEN,  
 			new byte[] { _OPC, _NEXTB, 4, _NEXTO, 0 });
-	
+	final static InstPatternMFP201 SFO_REG = new InstPatternMFP201(
+			SRO, REG,  
+			new byte[] { _OPC_HI, _IMM_SZ | 3, _OPC_LO, _LEA, _IMM8_16 });
 	
 	/** mappings for R13, R14, R15 in src1R position of 3-op logical instruction */
 	public static final int[][] LOGICAL_INST_CONSTANTS = {
@@ -250,6 +252,9 @@ public class InstTableMFP201 {
 		register2(InstMFP201.Imovl, 0x7e, GEN_GEN, 0x7e);
 		register2(InstMFP201.Imov, 0x7f, GEN_GEN, 0x7f);
 		
+		/* lea! */
+		register(InstMFP201.Ilea, 0x5010, SFO_REG, 0x5f1f);
+		
 		/* three-op instructions */
 		register4(InstMFP201.Ior, 0x80, 0x8f);
 		register4(InstMFP201.Iand, 0x90, 0x9f);
@@ -337,6 +342,8 @@ public class InstTableMFP201 {
 	registerInstruction(InstMFP201.Imuldb, "muld.b");
 	registerInstruction(InstMFP201.Idivd, "divd");
 	registerInstruction(InstMFP201.Idivdb, "divd.b");
+	
+	registerInstruction(InstMFP201.Ilea, "lea");
 	
 	registerInstruction(InstMFP201.Ior, "or");
 	registerInstruction(InstMFP201.Iorb, "or.b");
@@ -464,9 +471,11 @@ public class InstTableMFP201 {
 					work[workIdx] = (byte) (opcode & 0xff);
 				}
 				else if (enc == _OPC_HI) {
+					workIdx++;
 					work[workIdx] = (byte) (opcode >> 8);
 				}
 				else if (enc == _OPC_LO) {
+					workIdx++;
 					work[workIdx] = (byte) (opcode & 0xff);
 				}
 				else {
@@ -485,7 +494,7 @@ public class InstTableMFP201 {
 					if (mop == null) {
 						mop = mops[mopIdx++];
 						
-						if (mop != null) {
+						if (mop != null && inst != InstMFP201.Ilea) {
 							if ((mop.type >= MachineOperandMFP201.OP_REG
 									&& mop.type <= MachineOperandMFP201.OP_INC) 
 									|| mop.type == MachineOperandMFP201.OP_DEC) {
@@ -569,6 +578,25 @@ public class InstTableMFP201 {
 								((mop.immed - 1) << 2);
 						else
 							throw new IllegalArgumentException("immediate must be in the range 1 to 4 in " + rawInst);
+					}
+					else if (enc == _LEA) {
+						// this is a special case: we do not emit a traditional mem/size byte
+						// but a cooked one which looks like "sext.b" as part of the opcode
+						MachineOperandMFP201 sro = (MachineOperandMFP201) rawInst.getOp1();
+						
+						// first byte has scale
+						work[0] |= sro.scaleBits;
+						
+						// second byte has opcode and destR
+						work[1] |= ((MachineOperandMFP201) rawInst.getOp2()).val;
+						
+						// third byte (new) has addR | srcR
+						if (sro.type == MachineOperandMFP201.OP_SRO)
+							work[++workIdx] = (byte) ((sro.val << 4) | (sro.scaleReg));
+						else
+							work[++workIdx] = (byte) ((sro.val << 4) | MachineOperandMFP201.SR);
+						
+						// immediate and 
 					}
 					else if ((enc & 0xf0) == _IMM_SZ) {	
 						if (isImm8(mop.immed))
@@ -656,6 +684,15 @@ public class InstTableMFP201 {
 			if (mop.type == MachineOperandMFP201.OP_NONE
 					|| mop.type == MachineOperandMFP201.OP_IMM)
 				throw new IllegalArgumentException("Expected general operand: " + mop + " in " + inst);
+			break;
+		case SRO:
+			if (mop.type != MachineOperandMFP201.OP_DEC
+					&& mop.type != MachineOperandMFP201.OP_INC
+					&& mop.type != MachineOperandMFP201.OP_IND
+					&& mop.type != MachineOperandMFP201.OP_OFFS
+					&& mop.type != MachineOperandMFP201.OP_SRO) {
+				throw new IllegalArgumentException("Expected general or scaled operand: " + mop + " in " + inst);
+			}
 			break;
 		}
 	}

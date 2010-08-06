@@ -143,6 +143,7 @@ public class InstMFP201 {
 	
 	public static final int _IlastPossibleByteOp3 = 119;
 
+	public static final int Ilea = 120;
 
 	public static final int Iloop = 100;
 	

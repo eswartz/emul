@@ -205,7 +205,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     	case OP_SRO: {
     		String addr = "@>" + Integer.toHexString(immed & 0xffff).toUpperCase();
     		String scaled = regName(val) + "+" + regName(scaleReg)
-    			+ (scaleBits > 1 ? "*" + scaleBits : "");
+    			+ (scaleBits > 0 ? "*" + (1 << scaleBits) : "");
     		return addr + "(" + scaled + ")";
     	}
     	case OP_INC:
@@ -322,7 +322,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		if (val != SR) {
     			ea += (short) block.cpu.getRegister(val);
     		}
-    		ea += (short) block.cpu.getRegister(scaleReg) * scaleBits;
+    		ea += (short) block.cpu.getRegister(scaleReg) << scaleBits;
     		break;
     	}
     	case OP_IMM:	// immediate
@@ -537,7 +537,8 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 			scaleBits++;
 		if (scaleBits == 8)
 			throw new IllegalArgumentException();
-		op.scaleBits = scale;
+		int scalePow2 = 31 - Integer.numberOfLeadingZeros(scale);
+		op.scaleBits = scalePow2;
 		return op;
 	}
 

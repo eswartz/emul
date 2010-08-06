@@ -352,14 +352,34 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 	}
 	public void testEncodeMulDiv() throws Exception {
 		_testEncode("MUL R1, R2", new byte[] { 0x6c, 0x12 });
+		_testEncode("MUL.b R1, R2", new byte[] { 0x50, 0x6c, 0x12 });
 		_testEncode("DIV R1, R2", new byte[] { 0x6d, 0x12 });
+		_testEncode("DIV.b R1, R2", new byte[] { 0x50, 0x6d, 0x12 });
 		_testEncode("MULD R1, R2", new byte[] { 0x6e, 0x12 });
+		_testEncode("MULD.b R1, R2", new byte[] { 0x50, 0x6e, 0x12 });
 		_testEncode("DIVD R1, R2", new byte[] { 0x6f, 0x12 });
+		_testEncode("DIVD.b R1, R2", new byte[] { 0x50, 0x6f, 0x12 });
 		_testEncode("MUL R1, R2", new byte[] { 0x6c, 0x12 });
 		_testEncode("MUL.B R1, R2", new byte[] { 0x50, 0x6c, 0x12 });
 		_testEncode("MULD.B *R1+, *R2+", new byte[] { 0x5f, 0x6e, 0x12 });
 	}
 		
+	public void testEncodeLea() throws Exception {
+		// offset encoded as a byte
+		_testEncode("LEA @1(R1), R2", new byte[] { 0x58, 0x12, (byte) 0x1F, 0x01 });
+		_testEncode("LEA @>1000(R1), R2", new byte[] { 0x50, 0x12, (byte) 0x1F, 0x10, 0x00 });
+		_testEncode("LEA @>123(R1+R2), R3", new byte[] { 0x50, 0x13, (byte) 0x12, 0x01, 0x23 });
+		_testEncode("LEA @>12(R1+R2*4), R3", new byte[] { 0x5A, 0x13, (byte) 0x12, 0x12 });
+		_testEncode("LEA @>12(R1*4+R2), R3", new byte[] { 0x5A, 0x13, (byte) 0x21, 0x12 });
+		_testEncode("LEA @>12(R1*128+R2), R3", new byte[] { 0x5F, 0x13, (byte) 0x21, 0x12 });
+		_testEncode("LEA @-10(R1*128), R3", new byte[] { 0x5F, 0x13, (byte) 0xF1, (byte) 0xf6 });
+		_testEncode("LEA @0(SP+SP), R3", new byte[] { 0x58, 0x13, (byte) 0xDD, 0x00 });
+		// pointless
+		_testEncode("LEA *R0, R3", new byte[] { 0x58, 0x13, (byte) 0x0F, 0x00 });
+		assertBadInst("LEA @0(SP+SP), *R3");
+		assertBadInst("LEA R0, R3");
+		assertBadInst("LEA @R0, @R3");
+	}
 	private void _testEncode(String str, byte[] bytes) throws ParseException, ResolveException {
 		assertInst(asmInstStage, str, bytes);
 		assertInst(asmInstStage, str.toLowerCase(), bytes);
