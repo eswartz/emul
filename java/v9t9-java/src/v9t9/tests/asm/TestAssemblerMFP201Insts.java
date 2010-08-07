@@ -2,6 +2,8 @@ package v9t9.tests.asm;
 
 import java.util.Arrays;
 
+import junit.framework.AssertionFailedError;
+
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.IInstruction;
@@ -34,6 +36,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		aaopParser.appendStage(aopStage);
 	}
 	StandardInstructionParserStageMFP201 asmInstStage = new StandardInstructionParserStageMFP201(aaopParser);
+	protected int theInstPc = 0x1000;
 	
 	/*
 	protected LLOperand operand(String string) throws Exception {
@@ -57,12 +60,12 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("RETI", new byte[] { 0x44, 0x3e }); // POP #2, PC
 	}
 	public void testEncodeSimple2() throws Exception {
-		_testEncode("BR >1234", new byte[] { 0x0c, 0x02, 0x33 });
-		_testEncode("BRA >1234", new byte[] { 0x0d, 0x12, 0x34 });
-		_testEncode("CALL >0234", new byte[] { 0x0e, (byte) 0xF2, (byte) 0x33 });
-		_testEncode("CALLA >0234", new byte[] { 0x0f, 0x02, 0x34 });
+		_testEncode("BR >1234", new byte[] { 0x04, 0x02, 0x33 });
+		_testEncode("BRA >1234", new byte[] { 0x05, 0x12, 0x34 });
+		_testEncode("CALL >0234", new byte[] { 0x06, (byte) 0xF2, (byte) 0x33 });
+		_testEncode("CALLA >0234", new byte[] { 0x07, 0x02, 0x34 });
 		
-		_testEncode("BR $", new byte[] { 0x0c, (byte) 0xff, (byte) 0xff });
+		_testEncode("BR $", new byte[] { 0x04, (byte) 0xff, (byte) 0xff });
 		assertBadInst("BR");
 		assertBadInst("BR R15");
 		assertBadInst("CALLA *R1+");
@@ -71,67 +74,33 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 	public void testEncodeImm1() throws Exception {
 		
 		// the non-.B variant tries to select the best size (word/byte)
-		_testEncode("OR >100, R5", new byte[] { 0x08, 0x05, 0x01, 0x00 });
-		_testEncode("OR >7f, R5", new byte[] { 0x09, 0x05, 0x7f });
-		_testEncode("OR -12, R5", new byte[] { 0x09, 0x05, (byte) 0xf4 });
+		_testEncode("OR >100, R5", new byte[] { 0x08, (byte) 0x85, 0x20 });
+		_testEncode("OR >3, R5", new byte[] { 0x08, 0x35 });
+		_testEncode("OR >-4, R5", new byte[] { 0x08, 0x45 });
+		_testEncode("OR >7f, R5", new byte[] { 0x08, (byte) 0xf5, 0x0f });
+		_testEncode("OR >1ff, R5", new byte[] { 0x08, (byte) 0xf5, (byte) 0x3f });
+		_testEncode("OR >3ff, R5", new byte[] { 0x08, (byte) 0xf5, (byte) 0xff, 0x00 });
+		_testEncode("OR >7ff, R5", new byte[] { 0x08, (byte) 0xf5, (byte) 0xff, 0x01 });
+		_testEncode("OR -12, R5", new byte[] { 0x08, (byte) 0xc5, (byte) 0x7e });
+		_testEncode("OR >3f4, R5", new byte[] { 0x08, (byte) 0xc5, (byte) 0xfe, 0x00 });
 		
-		_testEncode("AND >ff, R5", new byte[] { 0x08, 0x25, 0x00, (byte) 0xff });
-		_testEncode("TST >11, R5", new byte[] { 0x09, 0x35, 0x11 });
+		_testEncode("AND >ff, R5", new byte[] { 0x09, (byte) 0xf5, (byte) 0x1f });
+		
+		_testEncode("NAND >100, R0", new byte[] { 0x0a, (byte) 0x80, 0x20 });
+		_testEncode("XOR >100, R0", new byte[] { 0x0b, (byte) 0x80, 0x20 });
+		_testEncode("ADD >100, R0", new byte[] { 0x0c, (byte) 0x80, 0x20 });
+		_testEncode("SUB >100, R0", new byte[] { 0x0e, (byte) 0x80, 0x20 });
+		_testEncode("ADC >100, R0", new byte[] { 0x0d, (byte) 0x80, 0x20 });
+		_testEncode("LDC >100, R0", new byte[] { 0x0f, (byte) 0x80, 0x20 });
+		
+		_testEncode("LDC >ff01, R1", new byte[] { 0x0f, (byte) 0x91, (byte) 0x60 });
+		_testEncode("LDC >7f, R14", new byte[] { 0x0f, (byte) 0xfe, 0x0f });
 
-		_testEncode("CMP >1234, PC", new byte[] { 0x08, (byte) 0xbe, 0x12, 0x34 });
-		
-		_testEncode("ADD? >11, R0", new byte[] { 0x09, (byte) 0x90, 0x11 });
-		
-		// the byte variant obeys
-		_testEncode("ADD.B? #>11, R0", new byte[] { 0x09, (byte) 0x90, 0x11 });
-		_testEncode("OR.B >1234, R12", new byte[] { 0x09, (byte) 0x0C, 0x34 });
-		
-		
-		_testEncode("OR >100, R0", new byte[] { 0x08, (byte) 0x00, 0x01, 0x00 });
-		_testEncode("OR.B #3, R0", new byte[] { 0x09, (byte) 0x00, 0x03 });
-		_testEncode("OR? >100, R0", new byte[] { 0x08, (byte) 0x10, 0x01, 0x00 });
-		_testEncode("OR.B? #3, R0", new byte[] { 0x09, (byte) 0x10, 0x03 });
-		
-		_testEncode("AND >100, R0", new byte[] { 0x08, (byte) 0x20, 0x01, 0x00 });
-		_testEncode("AND.B #3, R0", new byte[] { 0x09, (byte) 0x20, 0x03 });
-		_testEncode("TST >100, R0", new byte[] { 0x08, (byte) 0x30, 0x01, 0x00 });
-		_testEncode("TST.B #3, R0", new byte[] { 0x09, (byte) 0x30, 0x03 });
-		
-		_testEncode("NAND >100, R0", new byte[] { 0x08, (byte) 0x40, 0x01, 0x00 });
-		_testEncode("NAND.B #3, R0", new byte[] { 0x09, (byte) 0x40, 0x03 });
-		_testEncode("TSTN >100, R0", new byte[] { 0x08, (byte) 0x50, 0x01, 0x00 });
-		_testEncode("TSTN.B #3, R0", new byte[] { 0x09, (byte) 0x50, 0x03 });
-		
-		_testEncode("XOR >100, R0", new byte[] { 0x08, (byte) 0x60, 0x01, 0x00 });
-		_testEncode("XOR.B #3, R0", new byte[] { 0x09, (byte) 0x60, 0x03 });
-		_testEncode("XOR? >100, R0", new byte[] { 0x08, (byte) 0x70, 0x01, 0x00 });
-		_testEncode("XOR.B? #3, R0", new byte[] { 0x09, (byte) 0x70, 0x03 });
-		
-		_testEncode("ADD >100, R0", new byte[] { 0x08, (byte) 0x80, 0x01, 0x00 });
-		_testEncode("ADD.B #3, R0", new byte[] { 0x09, (byte) 0x80, 0x03 });
-		_testEncode("ADD? >100, R0", new byte[] { 0x08, (byte) 0x90, 0x01, 0x00 });
-		_testEncode("ADD.B? #3, R0", new byte[] { 0x09, (byte) 0x90, 0x03 });
-		
-		_testEncode("SUB >100, R0", new byte[] { 0x08, (byte) 0xa0, 0x01, 0x00 });
-		_testEncode("SUB.B #3, R0", new byte[] { 0x09, (byte) 0xa0, 0x03 });
-		_testEncode("CMP >100, R0", new byte[] { 0x08, (byte) 0xb0, 0x01, 0x00 });
-		_testEncode("CMP.B #3, R0", new byte[] { 0x09, (byte) 0xb0, 0x03 });
-		
-		_testEncode("ADC >100, R0", new byte[] { 0x08, (byte) 0xc0, 0x01, 0x00 });
-		_testEncode("ADC.B #4, R0", new byte[] { 0x09, (byte) 0xc0, 0x04 });
-		_testEncode("ADC? >100, R0", new byte[] { 0x08, (byte) 0xd0, 0x01, 0x00 });
-		_testEncode("ADC.B? #4, R0", new byte[] { 0x09, (byte) 0xd0, 0x04 });
-		
-		_testEncode("LDC >100, R0", new byte[] { 0x08, (byte) 0xe0, 0x01, 0x00 });
-		_testEncode("LDC.B #0, R0", new byte[] { 0x09, (byte) 0xe0, 0x00 });
-		_testEncode("LDC? >100, R0", new byte[] { 0x08, (byte) 0xf0, 0x01, 0x00 });
-		_testEncode("LDC.B? #0, R0", new byte[] { 0x09, (byte) 0xf0, 0x00 });
-		
-		_testEncode("LDC >ff01, R1", new byte[] { 0x08, (byte) 0xe1, (byte) 0xff, 0x01 });
-		_testEncode("LDC >7f, R14", new byte[] { 0x09, (byte) 0xee, 0x7f });
-		
-		// just making sure this doesn't code as an imm instruction
-		assertBadInst("SBB -12, R5");
+		// larger format immediate
+		//_testEncode("LDC >e000, R5", new byte[] { 0x4c, 0x7f, (byte) 0xe5, (byte) 0xe0, 0x00 });
+		_testEncode("LDC >e000, R5", new byte[] { 0x0f, (byte) 0x85, (byte) 0x80, 0x38 });
+		_testEncode("OR >1234, R5", new byte[] { 0x08, (byte) 0xc5, (byte) 0xc6, 0x04 });
+		_testEncode("OR >edcb, R5", new byte[] { 0x08, (byte) 0xb5, (byte) 0xb9, (byte) 0x3b });
 		
 		assertBadInst("OR >10");
 		assertBadInst("OR R5");
@@ -305,27 +274,28 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 	}
 
 	public void testEncodeJumps() throws Exception {
-		_testEncode("JMP $", new byte[] { 0x77, (byte) 0xff });
-		_testEncode("JMP >1000", new byte[] { 0x77, (byte) 0xff });
-		_testEncode("JMP $+1", new byte[] { 0x77, (byte) 0x00 });
-		_testEncode("JMP $+128+1", new byte[] { 0x40, 0x77, (byte) 0x80 });
-		_testEncode("JMP $-128+1", new byte[] {0x77, (byte) 0x80 });
-		_testEncode("JMP $-129+1", new byte[] { 0x4f, 0x77, (byte) 0x7f });
-		_testEncode("JMP $+2047+1", new byte[] { 0x47, 0x77, (byte) 0xff });
-		_testEncode("JMP $-2048+1", new byte[] { 0x48, 0x77, (byte) 0x00 });
-		_testEncode("JMP $+2048+1", new byte[] { 0x58, 0x77, (byte) 0x00, 0x00 });
-		_testEncode("JMP $-2049+1", new byte[] { 0x57, 0x77, (byte) 0xff, (byte) 0xff });
-		_testEncode("JMP $+32767+1", new byte[] { 0x5f, 0x77, (byte) 0xff, 0x07 });
-		_testEncode("JMP $-32768+1", new byte[] { 0x50, 0x77, (byte) 0x00, (byte) 0xf8 });
+		_testEncode("JMP $", new byte[] { 0x77, (byte) 0xfe });
+		_testEncode("JMP >1000", new byte[] { 0x77, (byte) 0xfe });
+		_testEncode("JMP >1002", new byte[] { 0x77, (byte) 0x00 });
+		_testEncode("JMP >1082", new byte[] { 0x40, 0x77, (byte) 0x7f });
+		_testEncode("JMP >0F82", new byte[] { 0x77, (byte) 0x80 });
+		_testEncode("JMP >0F81", new byte[] { 0x4f, 0x77, (byte) 0x7e });
+		_testEncode("JMP >1800", new byte[] { 0x47, 0x77, (byte) 0xfd });
+		_testEncode("JMP >0803", new byte[] { 0x48, 0x77, (byte) 0x00 });
+		_testEncode("JMP >1804", new byte[] { 0x58, 0x77, (byte) 0x00, 0x00 });
+		_testEncode("JMP >0802", new byte[] { 0x57, 0x77, (byte) 0xfe, (byte) 0xff });
 		
-		_testEncode("JNE $+1", new byte[] { 0x70, (byte) 0x00 });
-		_testEncode("JEQ $+1", new byte[] { 0x71, (byte) 0x00 });
-		_testEncode("JNC $+1", new byte[] { 0x72, (byte) 0x00 });
-		_testEncode("JC $+1", new byte[] { 0x73, (byte) 0x00 });
-		_testEncode("JS $+1", new byte[] { 0x74, (byte) 0x00 });
-		_testEncode("JGE $+1", new byte[] { 0x75, (byte) 0x00 });
-		_testEncode("JL $+1", new byte[] { 0x76, (byte) 0x00 });
-		_testEncode("JMP $+1", new byte[] { 0x77, (byte) 0x00 });
+		theInstPc = 0x7FFC;
+		_testEncode("JMP >0", new byte[] { 0x50, 0x77, (byte) 0x00, (byte) 0xf8 });
+		
+		_testEncode("JNE $+2", new byte[] { 0x70, (byte) 0x00 });
+		_testEncode("JEQ $+2", new byte[] { 0x71, (byte) 0x00 });
+		_testEncode("JNC $+2", new byte[] { 0x72, (byte) 0x00 });
+		_testEncode("JC $+2", new byte[] { 0x73, (byte) 0x00 });
+		_testEncode("JS $+2", new byte[] { 0x74, (byte) 0x00 });
+		_testEncode("JGE $+2", new byte[] { 0x75, (byte) 0x00 });
+		_testEncode("JL $+2", new byte[] { 0x76, (byte) 0x00 });
+		_testEncode("JMP $+2", new byte[] { 0x77, (byte) 0x00 });
 		
 		// aliases...
 
@@ -345,6 +315,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		
 		_testEncode("MOV *R1+, *R2+", new byte[] { 0x4F, 0x7f, 0x12 });
 		_testEncode("MOV.B #>ff, *R2+", new byte[] { 0x5F, 0x7f, (byte) 0xE2, (byte) 0xff });
+		_testEncode("MOV #>1234, R2", new byte[] { 0x4c, 0x7f, (byte) 0xE2, (byte) 0x12, 0x34 });
 		
 		_testEncode("MOVEQ @8(R4), R2", new byte[] { 0x44, 0x79, 0x42, 0x00, 0x08 });
 			// .B does not affect @xxx() size
@@ -433,38 +404,19 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 	public void testPseudos() throws Exception {
 		RawInstruction ins;
 		ins = getInst("CLR R1");
-		assertEquals("XOR R1,R1,R1", ins.toString());
-		assertEquals(2, ins.getSize());
-		
-		ins = getInst("CLR.B R1");
-		assertEquals("XOR.B R1,R1,R1", ins.toString());
-		assertEquals(3, ins.getSize());
-		
-		ins = getInst("CLRX R1");
 		assertEquals("LDC #>0,R1", ins.toString());
-		assertEquals(3, ins.getSize());
-		
-		ins = getInst("CLRX.B R1");
-		assertEquals("LDC.B #>0,R1", ins.toString());
-		assertEquals(3, ins.getSize());
+		assertEquals(2, ins.getSize());
 		
 		ins = getInst("SETO R1");
-		assertEquals("SUB #0,#1,R1", ins.toString());
+		assertEquals("LDC #>FFFF,R1", ins.toString());
 		assertEquals(2, ins.getSize());
 		
-		ins = getInst("SETOX R1");
-		assertEquals("LDC #>FFFF,R1", ins.toString());
-		assertEquals(3, ins.getSize());
-		ins = getInst("SETOX.B R1");
-		assertEquals("LDC.B #>FF,R1", ins.toString());
-		assertEquals(3, ins.getSize());
-		
 		ins = getInst("INV R1");
-		assertEquals("XOR R1,#-1,R1", ins.toString());
+		assertEquals("XOR R1,#>FFFF,R1", ins.toString());
 		assertEquals(2, ins.getSize());
 		
 		ins = getInst("INV.B R1");
-		assertEquals("XOR.B R1,#>ff,R1", ins.toString());
+		assertEquals("XOR.B R1,#>FF,R1", ins.toString());
 		assertEquals(3, ins.getSize());	// byte
 		
 		ins = getInst("INC R1");
@@ -497,6 +449,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		try {
 			assertInst(instStage, string, new byte[0]);
 			fail();
+		} catch (AssertionFailedError e) {
 		} catch (IllegalArgumentException e) {
 			
 		} catch (ParseException e) {
@@ -525,7 +478,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		assertNotNull("did not parse", insts);
 		assertEquals(1, insts.length);
 		
-		assembler.setPc(0x1000);
+		assembler.setPc(theInstPc);
 		
 		IInstruction[] irealInsts = ((AssemblerInstruction) insts[0]).resolve(assembler, null, true);
 		assertEquals(1, irealInsts.length);

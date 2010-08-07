@@ -3,12 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
-import static v9t9.engine.cpu.InstPatternMFP201.CNT;
-import static v9t9.engine.cpu.InstPatternMFP201.GEN;
-import static v9t9.engine.cpu.InstPatternMFP201.IMM;
-import static v9t9.engine.cpu.InstPatternMFP201.NONE;
-import static v9t9.engine.cpu.InstPatternMFP201.OFF;
-import static v9t9.engine.cpu.InstPatternMFP201.REG;
+import static v9t9.engine.cpu.InstPatternMFP201.*;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.InstPatternMFP201;
 import v9t9.engine.cpu.InstTableMFP201;
@@ -209,9 +204,11 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
 		case NONE:
 			break;
 		case IMM:
+			/*   
 			if (lop instanceof LLRegisterOperand) {
 				lop = new LLImmedOperand(((LLRegisterOperand) lop).getRegister());
 			}
+			*/
 			break;
 		case CNT:
 			if (lop instanceof LLRegisterOperand)

@@ -1,5 +1,5 @@
 /**
- * 
+ * Aug 7 2010
  */
 package v9t9.engine.cpu;
 
@@ -59,6 +59,7 @@ public class InstructionMFP201 extends RawInstruction {
 	@Override
 	public void setInst(int inst) {
 		super.setInst(inst);
+		setName(InstTableMFP201.getInstName(inst));
 		setSize(0);
 	}
 	

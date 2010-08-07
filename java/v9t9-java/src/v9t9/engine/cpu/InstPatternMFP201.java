@@ -1,5 +1,5 @@
 /**
- * 
+ * Aug 7 2010
  */
 package v9t9.engine.cpu;
 
@@ -26,6 +26,8 @@ public class InstPatternMFP201 {
 	public final static int SRO = 6;
 	/** instruction */
 	public final static int INST = 7;
+	/** 11-bit immediate */
+	public final static int IMM11 = 8;
 	
 	/** array of metainstructions -- see InstTableMFP201 */
 	public final byte[] enc;

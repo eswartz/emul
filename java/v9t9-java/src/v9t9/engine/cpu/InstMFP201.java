@@ -1,5 +1,5 @@
 /**
- * 
+ * Aug 7 2010
  */
 package v9t9.engine.cpu;
 
@@ -48,18 +48,14 @@ public class InstMFP201 {
 
 	public static final int Iadd = 32;
 	public static final int Iaddb = 33;
-	public static final int Iaddq = 34;
-	public static final int Iaddbq = 35;
 	
-	public static final int Isub = 36;
-	public static final int Isubb = 37;
-	public static final int Icmp = 38;
-	public static final int Icmpb = 39;
+	public static final int Iadc = 36;
+	public static final int Iadcb = 37;
 	
-	public static final int Iadc = 40;
-	public static final int Iadcb = 41;
-	public static final int Iadcq = 42;
-	public static final int Iadcbq = 43;
+	public static final int Isub = 40;
+	public static final int Isubb = 41;
+	public static final int Icmp = 42;
+	public static final int Icmpb = 43;
 	
 	public static final int Isbb = 44;
 	public static final int Isbbb = 45;
@@ -70,12 +66,9 @@ public class InstMFP201 {
 
 	public static final int _IlastPossibleThreeOp = 47;
 
-	public static final int Ildc = 48;
-	public static final int Ildcb = 49;
-	public static final int Ildcq = 50;
-	public static final int Ildcbq = 51;
-	
 	public static final int _IlastPossibleByteOp = 51;
+	
+	public static final int Ildc = 48;
 	
 	public static final int Isext = 60;
 	public static final int Iextl = 62;

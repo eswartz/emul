@@ -200,7 +200,7 @@ public class HighLevelInstruction  implements Comparable<HighLevelInstruction>{
 		inst.setSize(2);
 		inst.setName("DATA");
 		inst.setOp1(new MachineOperand9900(MachineOperand9900.OP_IMMED));
-		((BaseMachineOperand)inst.getOp1()).immed = inst.opcode;
+		((BaseMachineOperand)inst.getOp1()).immed = (short) inst.opcode;
 		inst.setOp2(new MachineOperand9900(MachineOperand.OP_NONE));
 	}
 

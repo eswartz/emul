@@ -59,7 +59,7 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
 	    	RawInstruction inst = hinst.getInst();
 	        highLevel.getLLInstructions().put(new Integer(inst.pc), hinst);
 	        highLevel.addInstruction(hinst);
-	        cpu.flatWriteWord(pc, inst.opcode);
+	        cpu.flatWriteWord(pc, (short) inst.opcode);
 	        if (inst.getInst() != InstTableCommon.Idata) {
 				pc += 2;
 			}

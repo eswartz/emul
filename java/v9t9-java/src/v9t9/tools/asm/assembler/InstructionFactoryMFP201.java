@@ -143,7 +143,7 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 				
 				// else, if op1 is an immediate, and it can be converted
 				// to an implicit register, keep this
-				else if (op1 != null && op1 instanceof LLImmedOperand) {
+				else if (op1 instanceof LLImmedOperand) {
 					int reg = getImplicitConstantReg(op1.getImmediate(), consts);
 					if (reg >= 0) {
 						rawInst.setOp2(MachineOperandMFP201.createImplicitConstantReg(

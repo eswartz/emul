@@ -108,7 +108,19 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
         domain.mapEntry(entry);
         return domain;
     }    
-    
+
+    public static MemoryDomain newFromArray(byte[] data) {
+        MemoryDomain domain = new MemoryDomain("CPU");
+        ByteMemoryArea area = new ByteMemoryArea();
+        area.memory = data;
+        area.read = data;
+        area.write = data;
+        MemoryEntry entry = new MemoryEntry("Test Entry",
+        		domain, 0, data.length,
+        		area);
+        domain.mapEntry(entry);
+        return domain;
+    }  
     public final MemoryEntry getEntryAt(int addr) {
         return entries[(addr & PHYSMEMORYSIZE - 1) >> AREASHIFT];
     }

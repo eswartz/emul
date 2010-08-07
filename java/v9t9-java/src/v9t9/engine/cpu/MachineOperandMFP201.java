@@ -189,9 +189,10 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	private String basicString() {
 		switch (type) 
     	{
+    	case OP_REG0_SHIFT_COUNT:
     	case OP_REG:
     		if (encoding == OP_ENC_IMM_IMPLICIT)
-    			return "#" + (immed > 2  ? ">" + Integer.toHexString(immed) : "" + immed);
+    			return "#" + (immed > 2  || immed < 0 ? ">" + Integer.toHexString(immed & 0xffff).toUpperCase() : "" + immed);
     		return regName(val);
 
     	case OP_IND:
@@ -207,8 +208,16 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     	}
     	case OP_SRO: {
     		String addr = "@>" + Integer.toHexString(immed & 0xffff).toUpperCase();
-    		String scaled = regName(val) + "+" + regName(scaleReg)
-    			+ (scaleBits > 0 ? "*" + (1 << scaleBits) : "");
+    		String scaled;
+    		if (val != SR && scaleReg != SR)
+	    		scaled = regName(val) + "+" + 
+	    			regName(scaleReg) + (scaleBits > 0 ? "*" + (1 << scaleBits) : "");
+    		else if (val == SR && scaleReg != SR)
+	    		scaled = regName(scaleReg) + (scaleBits > 0 ? "*" + (1 << scaleBits) : "");
+    		else if (scaleReg == SR)
+    			scaled = regName(val);
+    		else
+    			return addr;
     		return addr + "(" + scaled + ")";
     	}
     	case OP_INC:
@@ -227,7 +236,6 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		return "#>" + Integer.toHexString(imm).toUpperCase();
     	}
     	case OP_CNT:
-    	case OP_REG0_SHIFT_COUNT:
     	    return Integer.toString(val);
     	    
     	case OP_PCREL:
@@ -414,9 +422,9 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#convertToImmedate()
 	 */
 	public void convertToImmedate() {
-		if (type == OP_IMM || type == OP_OFFS || type == OP_PCREL)	// hack
+		if (type == OP_IMM)	// hack
 			return;
-		Check.checkState((type == OP_REG));
+		Check.checkState((type == OP_REG || type == OP_PCREL));
 		type = OP_IMM;
 		encoding = OP_ENC_UNSET;
 		immed = (short) val;
@@ -502,6 +510,11 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		return op;
 	}
 
+	public static MachineOperandMFP201 createRegisterOperand(int reg) {
+		MachineOperandMFP201 op = new MachineOperandMFP201(OP_REG);
+		op.val = reg;
+		return op;
+	}
 	public static MachineOperandMFP201 createGeneralOperand(int type, int val) {
 		MachineOperandMFP201 op = new MachineOperandMFP201(type);
 		op.val = val;
@@ -546,7 +559,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	}
 
 	public static MachineOperandMFP201 createNonWritingSROperand() {
-		MachineOperandMFP201 op = createGeneralOperand(OP_REG, SR);
+		MachineOperandMFP201 op = createRegisterOperand(SR);
 		op.encoding = OP_ENC_NON_WRITING;
 		return op;
 	}
@@ -555,5 +568,9 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 		MachineOperandMFP201 op = createGeneralOperand(OP_REG, reg, immed);
 		op.encoding = OP_ENC_IMM_IMPLICIT;
 		return op;
+	}
+
+	public static MachineOperandMFP201 createPCRelativeOperand(int immed) {
+		return createGeneralOperand(OP_PCREL, immed);
 	}
 }

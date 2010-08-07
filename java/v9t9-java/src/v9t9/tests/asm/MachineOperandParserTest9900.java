@@ -8,7 +8,6 @@ package v9t9.tests.asm;
 
 import junit.framework.TestCase;
 import v9t9.engine.cpu.BaseMachineOperand;
-import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.AssemblerTokenizer;
 import v9t9.tools.asm.assembler.MachineOperandFactory9900;

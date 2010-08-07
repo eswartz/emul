@@ -345,8 +345,7 @@ public class TestAssemblerMFP201Operands extends BaseTest {
 	public void testMachineOpRegs() throws Exception {
 		MachineOperandMFP201 mop;
 		mop = getMachineOperand("R5");
-		assertEquals(MachineOperandMFP201.createGeneralOperand(
-				MachineOperandMFP201.OP_REG, 5), mop);
+		assertEquals(MachineOperandMFP201.createRegisterOperand(5), mop);
 		mop = getMachineOperand("*PC");
 		assertEquals(MachineOperandMFP201.createGeneralOperand(
 				MachineOperandMFP201.OP_IND, 14), mop);

@@ -9,7 +9,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public int pc;
 	/** size in bytes */
 	private int size;
-	public short opcode;
+	public int opcode;
 	/** InstTable.I... */
 	private int inst;
 	private Operand op1;
@@ -172,4 +172,20 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public int getSize() {
 		return size;
 	}
+
+	/**
+	 * @param op
+	 * @return
+	 */
+	public MachineOperandMFP201 getOp(int op) {
+		return (MachineOperandMFP201) (op == 1 ? op1 : op == 2 ? op2 : op == 3 ? op3 : null);
+	}
+	
+	public void setOp(int op, Operand oper) {
+		if (op == 1) op1 = oper;
+		else if (op == 2) op2 = oper;
+		else if (op == 3) op3 = oper;
+		else throw new IllegalArgumentException();
+	}
+	
 }
