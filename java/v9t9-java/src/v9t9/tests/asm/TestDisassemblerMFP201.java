@@ -3,6 +3,8 @@
  */
 package v9t9.tests.asm;
 
+import java.util.Random;
+
 import v9t9.engine.cpu.*;
 import v9t9.engine.memory.MemoryDomain;
 import junit.framework.TestCase;
@@ -215,13 +217,13 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x50, (byte) 0x21 }, "PUSH.B R1");
 		_testDecode(new byte[] { 0x53, (byte) 0x2E, 0x0C }, "PUSH.B #>C");
 		
-		_testDecode(new byte[] { 0x4C, (byte) 0x21 }, "PUSH #>4, R1");
-		_testDecode(new byte[] { 0x5C, (byte) 0x21 }, "PUSH.B #>4, R1");
+		_testDecode(new byte[] { 0x4C, (byte) 0x21 }, "PUSH #4, R1");
+		_testDecode(new byte[] { 0x5C, (byte) 0x21 }, "PUSH.B #4, R1");
 		_testDecode(new byte[] { (byte) 0x3E }, "POP PC");
 		_testDecode(new byte[] { 0x50, (byte) 0x30 }, "POP.B R0");
-		_testDecode(new byte[] { 0x44, (byte) 0x3E }, "POP #>2, PC");
-		_testDecode(new byte[] { 0x4B, (byte) 0x3C }, "POP #>3, *R12+");
-		_testDecode(new byte[] { 0x5B, (byte) 0x3C }, "POP.B #>3, *R12+");
+		_testDecode(new byte[] { 0x44, (byte) 0x3E }, "POP #2, PC");
+		_testDecode(new byte[] { 0x4B, (byte) 0x3C }, "POP #3, *R12+");
+		_testDecode(new byte[] { 0x5B, (byte) 0x3C }, "POP.B #3, *R12+");
 	}
 
 	public void testEncodeJumps() throws Exception {
@@ -377,4 +379,32 @@ public class TestDisassemblerMFP201 extends TestCase {
 		assertEquals(2, ins.getSize());
 	}
 */	
+	
+	public void testTwoWay() throws Exception {
+		Random random = new Random(0x123456);
+		
+		byte[] bytes = new byte[16];
+		for (int c = 0; c < 100000; c++) {
+			random.nextBytes(bytes);
+			
+			_testOneTwoWay(bytes);
+		}
+	}
+
+	private void _testOneTwoWay(byte[] bytes) {
+		RawInstruction inst = decode(bytes);
+		assertNotNull(inst);
+		String instStr = inst.toString();
+		
+		System.out.println(instStr);
+		try {
+			// may not match bytes, due to garbage
+			byte[] outBytes = InstTableMFP201.encode(inst);
+			
+			RawInstruction outInst = decode(outBytes);
+			assertEquals(instStr, inst, outInst);
+		} catch (IllegalArgumentException e) {
+			throw e;
+		}
+	}
 }

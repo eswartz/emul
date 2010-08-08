@@ -490,6 +490,7 @@ public class InstTableMFP201 {
 	
 	public static byte[] encode(RawInstruction rawInst) throws IllegalArgumentException {
 		int inst = rawInst.getInst();
+		
 		//int variant = rawInst instanceof InstructionMFP201 ? 
 		//		((InstructionMFP201) rawInst).variant : InstructionMFP201.VARIANT_NONE;
 				
@@ -499,7 +500,9 @@ public class InstTableMFP201 {
 			throw new IllegalArgumentException("Non-machine operand 2: " + rawInst.getOp2());
 		if (rawInst.getOp3() != null && !(rawInst.getOp3() instanceof MachineOperand))
 			throw new IllegalArgumentException("Non-machine operand 3: " + rawInst.getOp3());
-		
+
+		// copy away since we change it
+		rawInst = new RawInstruction(rawInst);
 		coerceOperandTypes(rawInst);
 		
 		MachineOperandMFP201 mop1 = (MachineOperandMFP201) rawInst.getOp1();
@@ -690,27 +693,15 @@ public class InstTableMFP201 {
 				}
 				else if (enc == _DECS) {
 					RawInstruction subInst = ((MachineOperandMFP201Inst) mop).inst;
-					InstPatternMFP201 subpattern = getInstPattern(subInst);
+					subInst = new RawInstruction(subInst);
+					coerceOperandTypes(subInst);
 					MachineOperandMFP201 subop;
-					int bit = 5;
-					if (subpattern.op1 == GEN) {
-						subop = (MachineOperandMFP201) subInst.getOp1();
-						if (subop != null && subop.type == OP_DEC)
-							work[1] |= 1 << bit;
-						bit--;
-					}
-					if (subpattern.op2 == GEN) {
-						subop = (MachineOperandMFP201) subInst.getOp2();
-						if (subop != null && subop.type == OP_DEC)
-							work[1] |= 1 << bit;
-						bit--;
-					}
-					if (subpattern.op3 == GEN) {
-						subop = (MachineOperandMFP201) subInst.getOp3();
-						if (subop != null && subop.type == OP_DEC)
-							work[1] |= 1 << bit;
-						bit--;
-					}
+					subop = getFirstSrcOp(subInst);
+					if (subop != null && subop.type == OP_DEC)
+						work[1] |= 0x20;
+					subop = getDestOp(subInst);
+					if (subop != null && subop.type == OP_DEC)
+						work[1] |= 0x10;
 				}
 				else if (enc == _INST) {
 					RawInstruction subInst = ((MachineOperandMFP201Inst) mop).inst;
@@ -940,13 +931,13 @@ public class InstTableMFP201 {
 	 */
 	private static boolean isDestOp(RawInstruction ins,
 			MachineOperandMFP201 mop) {
+		if (ins.getInst() == Ipush || ins.getInst() == Ipushb)
+			return false;
 		if (ins.getOp3() != null)
 			return mop == ins.getOp3();
 		if (ins.getOp2() != null)
 			return mop == ins.getOp2();
-		return mop == ins.getOp1() 
-			&& ins.getInst() != Ipush
-			&& ins.getInst() != Ipushb;
+		return mop == ins.getOp1();
 	}
 
 	private static boolean hasNoOtherMemoryOperands(RawInstruction instruction,
@@ -1063,26 +1054,16 @@ public class InstTableMFP201 {
 	    		inst.setOp2(new MachineOperandMFP201Inst(subInst));
     		}
 			
-			int nop = 3;
-			MachineOperandMFP201 mop = null;
-			while (nop > 0 && (mop = subInst.getOp(nop)) == null)
-				nop--;
-			if (mop != null) {
-				if ((descr & 0x10) != 0 && mop.type == OP_INC)
+			MachineOperandMFP201 mop;
+			if ((descr & 0x20) != 0) { 
+				mop = getFirstSrcOp(subInst);
+				if (mop != null && mop.type == OP_INC)
 					mop.type = OP_DEC;
-				nop--;
 			}
-			if ((descr & 0x20) != 0) {
-				if (isPossibleThreeOpInst(subInst.getInst()) && subInst.getOp3() != null)
-					mop = (MachineOperandMFP201) subInst.getOp3();
-				else {
-					while (nop > 0 && (mop = subInst.getOp(nop)) == null)
-						nop--;
-				}
-				if (mop != null) {
-					if (mop.type == OP_INC)
-						mop.type = OP_DEC;
-				}
+			if ((descr & 0x10) != 0) {
+				mop = (MachineOperandMFP201) getDestOp(subInst);
+				if (mop != null && mop.type == OP_INC)
+					mop.type = OP_DEC;
 			}
     		return inst;
     	}
@@ -1182,7 +1163,7 @@ public class InstTableMFP201 {
     			AdOp = 1;
     			if (As != 0) {
     				inst.setOp2(inst.getOp1());
-    				inst.setOp1(MachineOperandMFP201.createImmediate(As + 1));
+    				inst.setOp1(MachineOperandMFP201.createGeneralOperand(OP_CNT, As + 1));
     				AdOp = 2;
     			}
     			break;
@@ -1285,27 +1266,68 @@ public class InstTableMFP201 {
     		
     	}
     	
-    	if (AsOp != 0) {
-    		pc = updateOperand(inst, AsOp, As, pc, domain);
+    	if (inst.getInst() == 0) {
+			if (memSize != 0) {
+				inst.setInst(InstTableCommon.Idata);
+				int immed = (memSize << 8) | (op & 0xff);
+				inst.setOp1(MachineOperandMFP201.createImmediate(immed));
+			} else {
+				inst.setInst(InstTableCommon.Ibyte);
+				inst.setOp1(MachineOperandMFP201.createImmediate(op));
+				
+			}
+    	} else {
+	    	if (AsOp != 0) {
+	    		pc = updateOperand(inst, true, AsOp, As, pc, domain);
+	    	}
+	    	if (AdOp != 0) {
+	    		pc = updateOperand(inst, inst.getInst() == Ipush || inst.getInst() == Ipushb, AdOp, Ad, pc, domain);
+	    	}
     	}
-    	if (AdOp != 0) {
-    		pc = updateOperand(inst, AdOp, Ad, pc, domain);
-    	}
-    	
         return inst;
     }
     
+	/**
+	 * @param ins
+	 * @return
+	 */
+	private static MachineOperandMFP201 getDestOp(RawInstruction ins) {
+		int inst = ins.getInst();
+		if (isPossibleThreeOpInst(inst)) {
+			if (ins.getOp3() != null)
+				return (MachineOperandMFP201) ins.getOp3();
+			else
+				return (MachineOperandMFP201) ins.getOp2();
+		}
+		else if (inst == Ipush || inst == Ipushb || isJumpInst(inst))
+			return null;
+		else if (ins.getOp2() != null)
+			return (MachineOperandMFP201) ins.getOp2();
+		return (MachineOperandMFP201) ins.getOp1();	// may be null
+	}
+	
+	/**
+	 * @param ins
+	 * @return
+	 */
+	private static MachineOperandMFP201 getFirstSrcOp(RawInstruction ins) {
+		int inst = ins.getInst();
+		if ((inst == Ipush || inst == Ipushb) && ins.getOp2() != null)
+			return (MachineOperandMFP201) ins.getOp2();
+		return (MachineOperandMFP201) ins.getOp1();
+	}
+
 	/**
  * 	@param inst
 	 * @param asOp
 	 * @param as
 	 */
-	private static int updateOperand(RawInstruction inst, int asOp, int as, int pc, MemoryDomain domain) {
+	private static int updateOperand(RawInstruction inst, boolean isSrc, int asOp, int as, int pc, MemoryDomain domain) {
 		MachineOperandMFP201 src = inst.getOp(asOp);
 		src.type += as;
 		switch (src.type) {
 		case OP_INC:
-			if (src.val == PC) {
+			if (isSrc && src.val == PC) {
 				if (!isByteInst(inst.getInst())) {
 					src.immed = read16(pc, domain);
 					pc += 2;
