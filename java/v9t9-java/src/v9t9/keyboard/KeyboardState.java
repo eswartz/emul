@@ -9,7 +9,6 @@ package v9t9.keyboard;
 import java.util.Arrays;
 
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.runtime.cpu.Cpu;
 
 public class KeyboardState {
     /* Masks, corresponding to column 0 */
@@ -42,7 +41,7 @@ public class KeyboardState {
 	/** actual state of alpha */
 	private boolean alphaLock;
 	private int probedColumns;
-	private Cpu cpu;
+	private Machine machine;
 
 	
 	//protected Timer pasteTimer;
@@ -93,8 +92,8 @@ public class KeyboardState {
     	return (latinto9901[x] != -1 && (x) != '/');
     }
 
-    public KeyboardState(Cpu cpu) {
-		this.cpu = cpu;
+    public KeyboardState(Machine machine) {
+		this.machine = machine;
         
     }
     
@@ -115,6 +114,7 @@ public class KeyboardState {
     /**
      * Post an ASCII character, applying any conversions to make it
      * a legal keystroke on the 99/4A keyboard.
+     * @param machine TODO
      * @param pressed
      * @param synthetic if true, the character came from, e.g., pasted text,
      * and there are not distinct shift key events; otherwise, apply logic
@@ -123,7 +123,7 @@ public class KeyboardState {
      * @param ch
      * @return true if we could represent it as ASCII
      */
-    public synchronized boolean postCharacter(boolean pressed, boolean synthetic, byte shift, char ch) {
+    public synchronized boolean postCharacter(Machine machine, boolean pressed, boolean synthetic, byte shift, char ch) {
     	//System.out.println("post: ch=" + ch + "; shift="+ Utils.toHex2(shift)+"; pressed="+pressed);
     	if (isAsciiDirectKey(ch)) {
     		setKey(pressed, synthetic, shift, ch);
@@ -264,8 +264,8 @@ public class KeyboardState {
     	}
 		
 		// force the CPU to notice
-		if (cpu.isThrottled()) {
-			cpu.addAllowedCycles(3000);
+		if (machine.getCpu().isThrottled()) {
+			machine.getCpu().addAllowedCycles(3000);
 			//cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
 		}
     	return true;
@@ -569,7 +569,7 @@ public class KeyboardState {
 			char prevCh = 0;
 			int runDelay;
 			public void run() {
-				if (!cpu.getMachine().isAlive())
+				if (!machine.isAlive())
 					cancelPaste();
 				
 				if (Machine.settingPauseMachine.getBoolean())
@@ -587,7 +587,7 @@ public class KeyboardState {
 					//	return;
 					
 					if (prevCh != 0)
-						postCharacter(false, true, prevShift, prevCh);
+						postCharacter(machine, false, true, prevShift, prevCh);
 					
 					if (index < chs.length) {
 						char ch = chs[index];
@@ -602,7 +602,7 @@ public class KeyboardState {
 				    	
 						//System.out.println("ch="+ch+"; prevCh="+prevCh+"; sCT="+successiveCharTimeout);
 						if (ch == prevCh) {
-							postCharacter(false, true, shift, ch);
+							postCharacter(machine, false, true, shift, ch);
 							prevCh = 0;
 							return;
 							/*
@@ -621,7 +621,7 @@ public class KeyboardState {
 						
 						index++;
 						
-						postCharacter(true, true, shift, ch);
+						postCharacter(machine, true, true, shift, ch);
 						
 						
 						prevCh = ch;

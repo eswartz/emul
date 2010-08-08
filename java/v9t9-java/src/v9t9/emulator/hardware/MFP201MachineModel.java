@@ -6,9 +6,7 @@ package v9t9.emulator.hardware;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
-import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
-import v9t9.emulator.hardware.memory.V9t9EnhancedConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.*;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.MultiSoundTMS9919B;
 import v9t9.emulator.runtime.compiler.NullCompilerStrategy;
@@ -26,13 +24,13 @@ import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.tools.asm.assembler.*;
 
 /**
- * This is an enhanced machine model that has a more regular memory model as well.
+ * This is the MFP201 machine model.
  * @author ejs
  *
  */
 public class MFP201MachineModel implements MachineModel {
 
-	private V9t9EnhancedConsoleMemoryModel memoryModel;
+	private MFP201MemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
 	private BankedMemoryEntry cpuBankedVideo;
 	private VdpV9938 vdp;
@@ -40,7 +38,15 @@ public class MFP201MachineModel implements MachineModel {
 	//protected MemoryEntry currentMemory;
 	
 	public MFP201MachineModel() {
-		memoryModel = new V9t9EnhancedConsoleMemoryModel();
+		memoryModel = new MFP201MemoryModel();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#createCPU(v9t9.emulator.common.Machine)
+	 */
+	@Override
+	public Cpu createCPU(Machine machine) {
+		return new CpuMFP201(machine, 1000 / machine.getCpuTicksPerSec(), machine.getVdp());
 	}
 	
 	/* (non-Javadoc)
@@ -63,19 +69,16 @@ public class MFP201MachineModel implements MachineModel {
 		return new MultiSoundTMS9919B(machine);
 	}
 	
-	public void defineDevices(final Machine machine_) {
-		if (machine_ instanceof TI99Machine) {
-			TI99Machine machine = (TI99Machine) machine_;
-			machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
-			
-			EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
-			machine.getDsrManager().registerDsr(dsr);
-			
-			defineCpuVdpBanks(machine);
-		}
+	public void defineDevices(final Machine machine) {
+		//machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
+		
+		//EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
+		//machine.getDsrManager().registerDsr(dsr);
+		
+		defineCpuVdpBanks(machine);
 	}
 	
-	private void defineCpuVdpBanks(final TI99Machine machine) {
+	private void defineCpuVdpBanks(final Machine machine) {
 		
 		cpuBankedVideo = new WindowBankedMemoryEntry(machine.getMemory(),
 				"CPU VDP Bank", 
@@ -95,6 +98,10 @@ public class MFP201MachineModel implements MachineModel {
 			}
 		};
 
+		vdpCpuBanked = true;
+		cpuBankedVideo.domain.mapEntry(cpuBankedVideo);
+		
+		/*
 		machine.getCruManager().add(0x1402, 1, new CruWriter() {
 
 			public int write(int addr, int data, int num) {
@@ -112,6 +119,7 @@ public class MFP201MachineModel implements MachineModel {
 			}
 			
 		});
+		
 		CruWriter bankSelector = new CruWriter() {
 
 			public int write(int addr, int data, int num) {
@@ -129,6 +137,7 @@ public class MFP201MachineModel implements MachineModel {
 		machine.getCruManager().add(0x1404, 1, bankSelector);
 		machine.getCruManager().add(0x1406, 1, bankSelector);
 		machine.getCruManager().add(0x1408, 1, bankSelector);
+		*/
 	}
 
 	@Override

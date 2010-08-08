@@ -427,7 +427,8 @@ public class Compiler9900 extends Compiler {
         /* compose operand values and instruction timings */
         fetchOperands(ins, pc, info);
 
-        ilist.append(new IINC(info.localCycles, ins.getInfo().cycles + ((BaseMachineOperand) ins.getOp1()).cycles + ((BaseMachineOperand) ins.getOp2()).cycles));
+        ilist.append(new IINC(info.localCycles, ins.getInfo().cycles
+        		+ ((MachineOperand9900) ins.getOp1()).cycles + ((MachineOperand9900) ins.getOp2()).cycles));
 
         if (Compiler.settingDebugInstructions.getBoolean()) {
             dumpFull(info, ilist, ins, "dumpBefore", ins.toString());
@@ -538,8 +539,8 @@ public class Compiler9900 extends Compiler {
     private void fetchOperands(Instruction9900 ins, int pc, CompileInfo info) {
         InstructionList ilist = info.ilist;
 
-        BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
-        BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
+        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
+        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
         /* update PC to current position */
         ilist.append(new PUSH(info.pgen, ins.pc + ins.getSize()));
@@ -575,8 +576,8 @@ public class Compiler9900 extends Compiler {
     private void flushOperands(Instruction9900 ins, CompileInfo info) {
         InstructionList ilist = info.ilist;
 
-        BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
-        BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
+        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
+        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
         if (mop1.dest != MachineOperand9900.OP_DEST_FALSE) {
             OperandCompiler9900.compilePutValue(mop1, info.localVal1, info.localEa1, info);

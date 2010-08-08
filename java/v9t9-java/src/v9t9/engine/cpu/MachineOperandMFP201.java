@@ -58,7 +58,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	
 	/** @>offs(Rx+Ry*scale) -- uses scaleReg, scale */
 	public static final int OP_SRO = 8;
-	
+
 	/** shift count from R0 */
 	public static final int OP_REG0_SHIFT_COUNT = 11;	
 	
@@ -109,7 +109,7 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	 */
     public boolean isMemory() {
         return type == OP_IND || type == OP_OFFS || type == OP_INC ||
-        type == OP_DEC || !bIsCodeDest;
+        type == OP_DEC || !bIsReference;
     }
     
     /* (non-Javadoc)
@@ -286,9 +286,9 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
        if (type == OP_NONE) {
 			return null;
 		}
-		if (byteop) {
-			theValue &= 0xff;
-		}
+		//if (byteop) {
+		//	theValue &= 0xff;
+		//}
 		return Integer.toHexString(theValue & 0xffff).toUpperCase() + "(@"
 				+ Integer.toHexString(ea & 0xffff).toUpperCase() + ")";
 	}
@@ -308,20 +308,16 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		ea = (short) block.cpu.getRegister(val);
 
     		/* update register if necessary */
-    		this.cycles += 4;
     		if (type == OP_INC) {
-    		    this.cycles += byteop ? 2 : 4;
-    		    block.cpu.setRegister(val, (ea + (byteop ? 1 : 2)));
+    		    block.cpu.setRegister(val, (ea + (block.inst.byteop ? 1 : 2)));
     		}
     		else if (type == OP_DEC) {
-    		    this.cycles += byteop ? 2 : 4;
-    		    block.cpu.setRegister(val, (ea - (byteop ? 1 : 2)));
+    		    block.cpu.setRegister(val, (ea - (block.inst.byteop ? 1 : 2)));
     		}
     		break;
     	}
     	case OP_OFFS: {	// @>xxxx or @>xxxx(Rx)
     		ea = immed; 
-    		this.cycles += 8;
     		if (val != SR) {
     			ea += (short) block.cpu.getRegister(val);
     		}
@@ -329,7 +325,6 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     	}
     	case OP_SRO: {
     		ea = immed; 
-    		this.cycles += 12;
     		if (val != SR) {
     			ea += (short) block.cpu.getRegister(val);
     		}
@@ -337,14 +332,11 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
     		break;
     	}
     	case OP_IMM:	// immediate
-    		this.cycles += 0;
     		break;
     	case OP_CNT:	// shift count
-    		this.cycles += 0;
     		break;
     	case OP_REG0_SHIFT_COUNT: // shift count from R0
     	    ea = 0;
-    	    this.cycles += 8;
 		    break;
     	
     	case OP_PCREL:
@@ -359,25 +351,28 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 	 */
     public short getValue(InstructionWorkBlock block, short ea) {
         short value = 0;
-
+        
         switch (type) {
         case MachineOperand.OP_NONE:
             break;
         case OP_REG:    // Rx
-            if (bIsCodeDest) {
+    		if (encoding == OP_ENC_IMM_IMPLICIT)
+    			value = immed;
+    		else if (bIsReference) {
 				value = ea;
 			} else {
-				// byteop only applies to memory
 				value = (short) block.cpu.getRegister(ea);
+				if (block.inst.byteop)
+					val &= 0xff;
 			}
             break;
         case OP_INC:    // *Rx+
         case OP_DEC:	// *Rx-
         case OP_IND: {  // *Rx
-            if (bIsCodeDest) {
+            if (bIsReference) {
 				value = ea;
 			} else
-                if (byteop) {
+                if (block.inst.byteop) {
 					value = block.domain.readByte(ea);
 				} else {
 					value = block.domain.readWord(ea);
@@ -385,10 +380,10 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
             break;
         }
         case OP_OFFS: { // @>xxxx or @>xxxx(Rx)
-            if (bIsCodeDest) {
+            if (bIsReference) {
 				value = ea;
 			} else
-                if (byteop) {
+                if (block.inst.byteop) {
 					value = block.domain.readByte(ea);
 				} else {
 					value = block.domain.readWord(ea);
@@ -572,5 +567,24 @@ public class MachineOperandMFP201 extends BaseMachineOperand {
 
 	public static MachineOperandMFP201 createPCRelativeOperand(int immed) {
 		return createGeneralOperand(OP_PCREL, immed);
+	}
+
+	/**
+	 * @param iblock
+	 * @param val1
+	 */
+	public void putValue(InstructionWorkBlock iblock, short ea, short value) {
+		if (type == OP_REG) {
+			if (ea == PC)
+				iblock.pc = value;
+			else
+				iblock.cpu.setRegister(ea, value);
+		} else {
+			if (iblock.inst.byteop) {
+				iblock.domain.writeByte(ea, (byte) value);
+			} else {
+				iblock.domain.writeWord(ea, value);
+			}
+		}
 	}
 }

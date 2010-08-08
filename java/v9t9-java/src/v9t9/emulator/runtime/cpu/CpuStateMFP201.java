@@ -3,9 +3,9 @@
  */
 package v9t9.emulator.runtime.cpu;
 
-import v9t9.engine.cpu.MachineOperandMFP201;
-import v9t9.engine.cpu.Status;
-import v9t9.engine.cpu.Status9900;
+import org.ejs.coffee.core.utils.HexUtils;
+
+import v9t9.engine.cpu.*;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -24,6 +24,15 @@ public class CpuStateMFP201 implements CpuState {
 		this.status = createStatus();
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "PC=" + HexUtils.toHex4(getPC()) + "; SP=" + HexUtils.toHex4(getSP()) + "; SR=" + getStatus();
+	}
+	
+	
 	public short getPC() {
 	    return (short) getRegister(MachineOperandMFP201.PC);
 	}
@@ -39,7 +48,7 @@ public class CpuStateMFP201 implements CpuState {
 	@Override
 	public void setRegister(int reg, int val) {
 		// always aligned
-		if (reg == MachineOperandMFP201.PC || reg == MachineOperandMFP201.SR)
+		if (reg == MachineOperandMFP201.SR)
 			val &= ~1;
 		regs[reg] = (short) val;
 		if (reg == MachineOperandMFP201.SR) {
@@ -50,9 +59,17 @@ public class CpuStateMFP201 implements CpuState {
 
 	@Override
 	public Status createStatus() {
-		return new Status9900();
+		return new StatusMFP201();
 	}
 
+	public short getSP() {
+		return (short) getRegister(MachineOperandMFP201.SP);
+	}
+	
+	public void setSP(short sp) {
+		setRegister(MachineOperandMFP201.SP, sp);
+		
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getConsole()
 	 */
@@ -85,7 +102,7 @@ public class CpuStateMFP201 implements CpuState {
 	}
 
 	public short getST() {
-	    return getStatus().flatten();
+	    return (short) getRegister(MachineOperandMFP201.SR);
 	}
 
 	public void setST(short st) {

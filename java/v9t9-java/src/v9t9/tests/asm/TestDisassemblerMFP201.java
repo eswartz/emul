@@ -46,13 +46,14 @@ public class TestDisassemblerMFP201 extends TestCase {
 	protected void _testDecode(byte[] bytes, String str) {
 		RawInstruction inst = decode(bytes);
 		assertEquals(str, str.replaceAll("#|(?<=,)\\s+", "").toLowerCase(), (inst+"").replaceAll("#|(?<=,)\\s+", "").toLowerCase());
+		assertEquals(bytes.length, inst.getSize());
 	}
 	protected void _testDecodeJump(byte[] bytes, int destPc, String str) {
 		RawInstruction inst = decode(bytes);
 		MachineOperandMFP201 mop = (MachineOperandMFP201) inst.getOp1();
 		int thePc = mop.val + theInstPc;
-		assertEquals(destPc, thePc);
 		assertEquals(str, str.replaceAll("#|(?<=,)\\s+", "").toLowerCase(), (inst+"").replaceAll("#|(?<=,)\\s+", "").toLowerCase());
+		assertEquals(destPc, thePc);
 	}
 	public void testEncodeSimple1() throws Exception {
 		_testDecode(new byte[] { 0x00 }, Ibkpt);
@@ -77,6 +78,7 @@ public class TestDisassemblerMFP201 extends TestCase {
 		
 		// the non-.B variant tries to select the best size (word/byte)
 		_testDecode(new byte[] { 0x08, (byte) 0x85, 0x20 }, "OR #>100, R5");
+		_testDecode(new byte[] { 0x08, (byte) 0x8f, 0x01 }, "OR #>8, SR");
 		_testDecode(new byte[] { 0x08, 0x35 }, "OR >3, R5");
 		_testDecode(new byte[] { 0x08, 0x45 }, "OR >FFFC, R5");
 		_testDecode(new byte[] { 0x08, (byte) 0xf5, 0x0f }, "OR >7f, R5");
@@ -226,13 +228,13 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x50, (byte) 0x21 }, "PUSH.B R1");
 		_testDecode(new byte[] { 0x53, (byte) 0x2E, 0x0C }, "PUSH.B #>C");
 		
-		_testDecode(new byte[] { 0x4C, (byte) 0x21 }, "PUSH #4, R1");
-		_testDecode(new byte[] { 0x5C, (byte) 0x21 }, "PUSH.B #4, R1");
+		_testDecode(new byte[] { 0x4C, (byte) 0x21 }, "PUSHN #4, R1");
+		_testDecode(new byte[] { 0x5C, (byte) 0x21 }, "PUSHN.B #4, R1");
 		_testDecode(new byte[] { (byte) 0x3E }, "POP PC");
 		_testDecode(new byte[] { 0x50, (byte) 0x30 }, "POP.B R0");
-		_testDecode(new byte[] { 0x44, (byte) 0x3E }, "POP #2, PC");
-		_testDecode(new byte[] { 0x4B, (byte) 0x3C }, "POP #3, *R12+");
-		_testDecode(new byte[] { 0x5B, (byte) 0x3C }, "POP.B #3, *R12+");
+		_testDecode(new byte[] { 0x44, (byte) 0x3E }, "POPN #2, PC");
+		_testDecode(new byte[] { 0x4B, (byte) 0x3C }, "POPN #3, *R12+");
+		_testDecode(new byte[] { 0x5B, (byte) 0x3C }, "POPN.B #3, *R12+");
 	}
 
 	public void testEncodeJumps() throws Exception {
@@ -405,7 +407,7 @@ public class TestDisassemblerMFP201 extends TestCase {
 		assertNotNull(inst);
 		String instStr = inst.toString();
 		
-		System.out.println(instStr);
+		System.out.println(instStr + ":" + Long.toHexString(inst.opcode) + ":" + inst.getInfo().cycles);
 		try {
 			// may not match bytes, due to garbage
 			byte[] outBytes = InstTableMFP201.encode(inst);

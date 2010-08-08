@@ -30,4 +30,6 @@ public interface MachineModel {
 	Executor createExecutor(Cpu cpu, CpuMetrics metrics);
 
 	IInstructionFactory getInstructionFactory();
+
+	Cpu createCPU(Machine machine);
 }

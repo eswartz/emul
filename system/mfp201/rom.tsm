@@ -5,11 +5,11 @@
 
 ; status bits
 
-INTS	equ >20
+INTS	equ >8
 
 ; memory locations
 
-VRAM	equ >e000
+VRAM	equ >a000
 
 MODE0SCREEN equ VRAM
 
@@ -34,29 +34,40 @@ reset:
 	br idle
 	
 int1handler:
-	push #4, R0
-	push #4, R4
-	push #4, R8
+	pushn #4, R0
+	pushn #4, R4
+	pushn #4, R8
 	push R12
 	
 	; reset int acknowledge bit
 	
 	pop R12
-	pop #4, R8
-	pop #4, R4
-	pop #4, R0
+	popn #4, R8
+	popn #4, R4
+	popn #4, R0
 	
 	reti
 	
+nmihandler:
+    push R0
+
+	; reset int acknowledge bit
+	
+	pop R0
+    reti
+    
+bkpthandler:
+    reti
+    
 ; =============
 
 ;	R0 = character
 fillscr:
-	push #2, r1
+	pushn #2, r1
 	ldc mode0screen, r1
 	ldc 768, r2
 	loop r2: mov.b r0, *r1+
-	pop #2, r1
+	popn #2, r1
 	ret
 	
 clrscr:
@@ -84,9 +95,13 @@ $0:
 	
 ; =============
 	
+	aorg >ffe0
+	
+	dw bkpthandler
+	
 	aorg >fffc
 	
-	dw int1handler
+	dw nmihandler
 
 	aorg >fffe
 	

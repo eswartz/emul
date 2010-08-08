@@ -34,9 +34,9 @@ public class DumpReporterMFP201 implements InstructionListener {
 		RawInstruction ins = before.inst;
 	    dump.println(HexUtils.toHex4(ins.pc) 
 	            + " "
-	            + HexUtils.toHex4(cpu.getStatus().flatten())
+	            + HexUtils.toHex4(cpu.getST())
 	            + " "
-	            + HexUtils.toHex4(cpu.getStack())
+	            + HexUtils.toHex4(cpu.getSP())
 	    );
 		dump.flush();
 

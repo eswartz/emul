@@ -9,12 +9,12 @@ package v9t9.engine.cpu;
  */
 public class MachineOperandMFP201Inst extends MachineOperandMFP201 {
 
-	public RawInstruction inst;
+	public InstructionMFP201 inst;
 
 	/**
 	 * @param type
 	 */
-	public MachineOperandMFP201Inst(RawInstruction inst) {
+	public MachineOperandMFP201Inst(InstructionMFP201 inst) {
 		super(OP_INST);
 		this.inst = inst;
 	}

@@ -195,7 +195,6 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
 			return coerceLLOperandType(inst, (LLOperand) op, optype);
 		if (op instanceof AssemblerOperand)
 			return coerceAssemblerOperandType(inst, (AssemblerOperand) op, optype);
-		
 		return op;
 	}
 	

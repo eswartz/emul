@@ -17,16 +17,6 @@ public class InstructionMFP201 extends RawInstruction {
 	public static final byte MEM_SIZE_AD_POS = 0;
 	public static final byte MEM_SIZE_OPCODE = 0x40;
 	
-	//public static final int VARIANT_NONE = 0;
-	//public static final int VARIANT_BYTE = 1;
-	//public static final int VARIANT_NO_WRITE = 2;
-	//public static final int VARIANT_BYTE_NO_WRITE = 3;
-	
-	/** the variant of an instruction which affords
-	 * byte or no-write versions
-	 */
-	//public int variant;
-	
 	public InstructionMFP201() {
 		super();
 	}

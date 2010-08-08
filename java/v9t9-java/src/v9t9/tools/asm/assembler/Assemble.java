@@ -27,6 +27,7 @@ public class Assemble {
         assembler.setList(null);
         
         boolean selectedProcessor = false;
+        int romStart = 0, romSize = 0x2000;
         
         Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:v92");
         int opt;
@@ -38,7 +39,7 @@ public class Assemble {
             case 'r':
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
-            					0x0, 0x2000, "CPU ROM",
+            					romStart, romSize, "CPU ROM",
             					assembler.getWritableConsole(),
             					getopt.getOptarg(),
             					0x0,
@@ -47,7 +48,7 @@ public class Assemble {
             case 'e':
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
-            					0x0, 0x4000, "CPU ROM",
+            					romStart, romSize * 2, "CPU ROM",
             					assembler.getWritableConsole(),
             					getopt.getOptarg(),
             					0x0,
@@ -99,10 +100,14 @@ public class Assemble {
             }
             case '9':
             	assembler.setProcessor(Assembler.PROC_9900);
+            	romStart = 0;
+            	romSize = 0x2000;
             	selectedProcessor = true;
             	break;
             case '2':
             	assembler.setProcessor(Assembler.PROC_MFP201);
+            	romStart = 0xf000;
+            	romSize = 0x1000;
             	selectedProcessor = true;
             	break;
             default:

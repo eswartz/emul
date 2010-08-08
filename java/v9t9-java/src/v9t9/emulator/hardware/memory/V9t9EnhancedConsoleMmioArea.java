@@ -5,10 +5,7 @@ package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.MemoryListener;
-import v9t9.engine.memory.MultiBankedMemoryEntry;
+import v9t9.engine.memory.*;
 
 /**
  * Enhanced memory-mapped I/O area, which is much compacted (and yes, sheds any 
@@ -157,13 +154,13 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
     	case VDPWA:
     	case VDPCL:
     	case VDPWI:
-    		machine.getMemoryModel().getVdpMmio().write(addr, val);
+    		getTIMemoryModel().getVdpMmio().write(addr, val);
     		break;
     	case GPLWA:
-    		machine.getMemoryModel().getGplMmio().write(addr, val);
+    		getTIMemoryModel().getGplMmio().write(addr, val);
     		break;
     	case SPCHWT:
-    		machine.getMemoryModel().getSpeechMmio().write(addr, val);
+    		getTIMemoryModel().getSpeechMmio().write(addr, val);
     		break;
     	case BANKA:
     		if (romMemory != null) {
@@ -178,20 +175,24 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
     	}
 
     	if (addr >= SOUND && addr < SOUND + 0x20) {
-    		machine.getMemoryModel().getSoundMmio().write(addr, val);
+    		getTIMemoryModel().getSoundMmio().write(addr, val);
     	}
+	}
+
+	private TIMemoryModel getTIMemoryModel() {
+		return (TIMemoryModel) machine.getMemoryModel();
 	}
 
 	private byte readMmio(int addr) {
 		switch (addr) {
     	case VDPRD:
     	case VDPST:
-    		return machine.getMemoryModel().getVdpMmio().read(addr);
+    		return getTIMemoryModel().getVdpMmio().read(addr);
     	case GPLRD:
     	case GPLRA:
-    		return machine.getMemoryModel().getGplMmio().read(addr);
+    		return getTIMemoryModel().getGplMmio().read(addr);
     	case SPCHRD:
-    		return machine.getMemoryModel().getSpeechMmio().read(addr);
+    		return getTIMemoryModel().getSpeechMmio().read(addr);
     	}
 		return 0;
 	}

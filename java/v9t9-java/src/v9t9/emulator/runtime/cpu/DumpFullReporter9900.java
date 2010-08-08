@@ -92,7 +92,7 @@ public class DumpFullReporter9900 implements InstructionListener {
 			}
 		}
 		dumpfull.print("st="
-		        + Integer.toHexString(cpu.getStatus().flatten() & 0xffff)
+		        + Integer.toHexString(cpu.getST() & 0xffff)
 		                .toUpperCase() + " wp="
 		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
 		

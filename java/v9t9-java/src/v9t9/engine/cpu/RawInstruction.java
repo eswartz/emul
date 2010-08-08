@@ -16,6 +16,9 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	private Operand op2;
 	private Operand op3;
 
+    /** is the instruction a byte operation */
+    public boolean byteop;
+    
     private InstInfo info;
     
 	public RawInstruction() {
@@ -27,6 +30,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		this.size = other.size;
 		this.opcode = other.opcode;
 		this.inst = other.getInst();
+		this.byteop = other.byteop;
 		this.op1 = other.op1;
 		this.op2 = other.op2;
 		this.op3 = other.op3;

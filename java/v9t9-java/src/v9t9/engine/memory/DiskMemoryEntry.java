@@ -116,6 +116,8 @@ public class DiskMemoryEntry extends MemoryEntry {
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
     	
+    	if (domain == null)
+    		throw new IOException("no memory domain to load: " + name);
     	
     	ByteMemoryArea area = new ByteMemoryArea();
     	

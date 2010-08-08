@@ -60,12 +60,14 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("RETI", new byte[] { 0x44, 0x3e }); // POP #2, PC
 	}
 	public void testEncodeSimple2() throws Exception {
-		_testEncode("BR >1234", new byte[] { 0x04, 0x02, 0x33 });
+		_testEncode("BR >1234", new byte[] { 0x04, 0x02, 0x31 });
 		_testEncode("BRA >1234", new byte[] { 0x05, 0x12, 0x34 });
-		_testEncode("CALL >0234", new byte[] { 0x06, (byte) 0xF2, (byte) 0x33 });
+		_testEncode("CALL >0234", new byte[] { 0x06, (byte) 0xF2, (byte) 0x31 });
 		_testEncode("CALLA >0234", new byte[] { 0x07, 0x02, 0x34 });
-		
-		_testEncode("BR $", new byte[] { 0x04, (byte) 0xff, (byte) 0xff });
+
+		_testEncode("CALL $+6", new byte[] { 0x06, (byte) 0x00, (byte) 0x03 });
+
+		_testEncode("BR $", new byte[] { 0x04, (byte) 0xff, (byte) 0xfd });
 		assertBadInst("BR");
 		assertBadInst("BR R15");
 		assertBadInst("CALLA *R1+");
@@ -264,13 +266,13 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("PUSH.B R1", new byte[] { 0x50, (byte) 0x21 });
 		_testEncode("PUSH.B #12", new byte[] { 0x53, (byte) 0x2E, 0x0C });
 		
-		_testEncode("PUSH #4, R1", new byte[] { 0x4C, (byte) 0x21 });
-		_testEncode("PUSH.B #4, R1", new byte[] { 0x5C, (byte) 0x21 });
+		_testEncode("PUSHN #4, R1", new byte[] { 0x4C, (byte) 0x21 });
+		_testEncode("PUSHN.B #4, R1", new byte[] { 0x5C, (byte) 0x21 });
 		_testEncode("POP PC", new byte[] { (byte) 0x3E });
 		_testEncode("POP.B R0", new byte[] { 0x50, (byte) 0x30 });
-		_testEncode("POP #2, PC", new byte[] { 0x44, (byte) 0x3E });
-		_testEncode("POP #3, *R12+", new byte[] { 0x4B, (byte) 0x3C });
-		_testEncode("POP.B #3, *R12+", new byte[] { 0x5B, (byte) 0x3C });
+		_testEncode("POPN #2, PC", new byte[] { 0x44, (byte) 0x3E });
+		_testEncode("POPN #3, *R12+", new byte[] { 0x4B, (byte) 0x3C });
+		_testEncode("POPN.B #3, *R12+", new byte[] { 0x5B, (byte) 0x3C });
 	}
 
 	public void testEncodeJumps() throws Exception {

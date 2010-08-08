@@ -18,6 +18,9 @@ import v9t9.tools.asm.assembler.Symbol;
  * @author ejs
  */
 public class MachineOperand9900 extends BaseMachineOperand {
+	public int cycles = 0;
+	public boolean byteop = false;
+
     // Operand Type
     
     //  from ts/td field of opcode, don't change order
@@ -53,7 +56,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#isMemory()
 	 */
     public boolean isMemory() {
-        return type == MachineOperand9900.OP_IND || type == MachineOperand9900.OP_ADDR || type == MachineOperand9900.OP_INC || !bIsCodeDest;
+        return type == MachineOperand9900.OP_IND || type == MachineOperand9900.OP_ADDR || type == MachineOperand9900.OP_INC || !bIsReference;
     }
     
     /* (non-Javadoc)
@@ -306,7 +309,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
         case MachineOperand.OP_NONE:
             break;
         case MachineOperand9900.OP_REG:    // Rx
-            if (bIsCodeDest) {
+            if (bIsReference) {
 				value = ea;
 			} else
                 if (byteop) {
@@ -317,7 +320,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
             break;
         case MachineOperand9900.OP_INC:    // *Rx+
         case MachineOperand9900.OP_IND: {  // *Rx
-            if (bIsCodeDest) {
+            if (bIsReference) {
 				value = ea;
 			} else
                 if (byteop) {
@@ -328,7 +331,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
             break;
         }
         case MachineOperand9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
-            if (bIsCodeDest) {
+            if (bIsReference) {
 				value = ea;
 			} else
                 if (byteop) {

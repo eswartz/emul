@@ -16,11 +16,8 @@ public abstract class BaseMachineOperand implements MachineOperand {
 	public int val = 0;
 	/** immediate word */
 	public short immed = 0;
-	public boolean byteop = false;
 	public int dest = OP_DEST_FALSE;
-	public boolean bIsCodeDest = false;
-	public int cycles = 0;
+	public boolean bIsReference = false;
 	public Symbol symbol;
 	public boolean symbolResolved;
-
 }

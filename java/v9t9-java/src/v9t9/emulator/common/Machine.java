@@ -26,7 +26,6 @@ import v9t9.emulator.hardware.dsrs.IDsrManager;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.emulator.runtime.cpu.AbortedException;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.CpuMetrics;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.Client;
@@ -135,9 +134,9 @@ abstract public class Machine {
     	
     	moduleManager = new ModuleManager(this, getModules());
     	
-    	cpu = new Cpu9900(this, 1000 / cpuTicksPerSec, vdp);
-    	keyboardState = new KeyboardState(cpu);
-    	
+    	cpu = machineModel.createCPU(this); 
+		keyboardState = new KeyboardState(this);
+
     	this.instructionFactory = machineModel.getInstructionFactory();
 	}
     
@@ -454,7 +453,6 @@ abstract public class Machine {
 
 	protected void doSaveState(ISettingSection settings) {
 		cpu.saveState(settings.addSection("CPU"));
-		getMemoryModel().getGplMmio().saveState(settings.addSection("GPL"));
 		memory.saveState(settings.addSection("Memory"));
 		vdp.saveState(settings.addSection("VDP"));
 		sound.saveState(settings.addSection("Sound"));
@@ -495,7 +493,6 @@ abstract public class Machine {
 		memory.getModel().resetMemory();
 		moduleManager.loadState(section.getSection("Modules"));
 		memory.loadState(section.getSection("Memory"));
-		getMemoryModel().getGplMmio().loadState(section.getSection("GPL"));
 		cpu.loadState(section.getSection("CPU"));
 		vdp.loadState(section.getSection("VDP"));
 		sound.loadState(section.getSection("Sound"));

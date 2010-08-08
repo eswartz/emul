@@ -143,7 +143,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		int joy = (shift & KeyboardState.SHIFT) != 0 ? 2 : 1;
 		
-		if (keyCode > 128 || !keyboardState.postCharacter(pressed, false, shift, (char) keyCode)) {
+		if (keyCode > 128 || !keyboardState.postCharacter(machine, pressed, false, shift, (char) keyCode)) {
 			if (keyCode == 0)
 				keyCode = shift;
 			

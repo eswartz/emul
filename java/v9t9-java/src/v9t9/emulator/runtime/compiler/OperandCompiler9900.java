@@ -37,7 +37,7 @@ public class OperandCompiler9900 {
 
     static boolean hasConstAddr(BaseMachineOperand op, CompileInfo info) {
         return op.type == MachineOperand9900.OP_ADDR && op.val == 0 
-                && !op.bIsCodeDest 
+                && !op.bIsReference 
                 && info.memory.hasRomAccess(op.immed)
                 && !info.memory.hasRamAccess(op.immed);
     }
@@ -45,7 +45,7 @@ public class OperandCompiler9900 {
     /**
      * @return true: has an EA 
      */
-    public static boolean compileGetEA(BaseMachineOperand op, int eaIndex, CompileInfo info, Instruction9900 ins, int pc) {
+    public static boolean compileGetEA(MachineOperand9900 op, int eaIndex, CompileInfo info, Instruction9900 ins, int pc) {
         InstructionList ilist = info.ilist;
         switch (op.type)
         {
@@ -160,7 +160,7 @@ public class OperandCompiler9900 {
      * @param memory
      * @return true: has value
      */
-    public static boolean compileGetValue(BaseMachineOperand op, int valIndex, int eaIndex, CompileInfo info) {
+    public static boolean compileGetValue(MachineOperand9900 op, int valIndex, int eaIndex, CompileInfo info) {
         InstructionList ilist = info.ilist;
         switch (op.type)
         {
@@ -189,7 +189,7 @@ public class OperandCompiler9900 {
 				}
             } else {
                 ilist.append(new ILOAD(eaIndex));
-                if (!op.bIsCodeDest) {
+                if (!op.bIsReference) {
                     if (op.byteop) {
                     	OperandCompiler9900.compileReadByte(info, ilist);
 					} else {
@@ -259,7 +259,7 @@ public class OperandCompiler9900 {
         return true;
     }
 
-    public static void compilePutValue(BaseMachineOperand op, int valIndex, int eaIndex, CompileInfo info) {
+    public static void compilePutValue(MachineOperand9900 op, int valIndex, int eaIndex, CompileInfo info) {
         switch (op.type) {
         case MachineOperand9900.OP_REG:
             if (Compiler.settingOptimize.getBoolean()

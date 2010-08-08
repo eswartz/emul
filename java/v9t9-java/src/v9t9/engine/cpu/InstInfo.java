@@ -12,18 +12,21 @@ public class InstInfo {
 	 */
 	public short cycles;
 	/**
-	 * st_xxx bit mask from Instruction*
+	 * bit mask from StatusMFP201.ST_xxx
 	 */
 	public int stsetBefore;
 	/**
-	 * st_xxx bit mask from Instruction*
+	 * bit mask from StatusMFP201.ST_xxx
 	 */
 	public int stsetAfter;
 	/**
-	 * st_xxx bit mask from Instruction*
-	 * 
+	 * bit mask from StatusMFP201.ST_xxx
 	 */
 	public int stReads;
+	/**
+	 * bit mask from StatusMFP201.ST_xxx
+	 */
+	public int stWrites;
 	/** operand is a jump (INST_JUMP_COND = conditional) */
 	public int jump;
 	/**

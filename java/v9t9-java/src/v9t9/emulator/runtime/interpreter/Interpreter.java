@@ -1,7 +1,6 @@
 package v9t9.emulator.runtime.interpreter;
 
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.engine.cpu.RawInstruction;
 
 public interface Interpreter {
 	/**

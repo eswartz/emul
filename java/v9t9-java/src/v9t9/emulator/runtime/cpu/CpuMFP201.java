@@ -31,6 +31,15 @@ public class CpuMFP201 extends CpuBase {
         settingCyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
     }
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return state.toString();
+	}
+	
+	
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#getPC()
 	 */
@@ -50,6 +59,10 @@ public class CpuMFP201 extends CpuBase {
     public static final int PIN_INTREQ = 1 << 31;
     public static final int PIN_LOAD = 1 << 3;
     public static final int PIN_RESET = 1 << 5;
+    
+	public static final int INT_RESET = 15;
+	public static final int INT_NMI = 14;
+	public static final int INT_BKPT = 0;
     
     /** When intreq, the interrupt level */
     byte ic;
@@ -225,11 +238,14 @@ public class CpuMFP201 extends CpuBase {
 	
 	@Override
 	public void reset() {
-		// TODO
+		setPC(readIntVec(INT_RESET));
 	}
 
-	public short getStack() {
-		return (short) state.getRegister(MachineOperandMFP201.SP);
+	public short getSP() {
+		return ((CpuStateMFP201) state).getSP();
+	}
+	public void setSP(short sp) {
+		((CpuStateMFP201) state).setSP(sp);
 	}
 	
 	@Override
@@ -260,5 +276,37 @@ public class CpuMFP201 extends CpuBase {
 	public void setST(short st) {
 		state.setST(st);
 	}
+
+	/**
+	 * @param pc
+	 */
+	public void push(short val) {
+		short newSp = (short) ((getSP() - 2) & 0xfffe);
+		state.getConsole().writeWord(newSp, val);
+		setSP(newSp);
+		
+		if (newSp == 0) {
+			reset();
+		}
+	}
+
+	/**
+	 * @return
+	 */
+	public short pop() {
+		short val = state.getConsole().readWord(getSP());
+		short newSp = (short) ((getSP() + 2) & 0xfffe);
+		setSP(newSp);
+		return val;
+	}
+
+	/**
+	 * @param intNmi
+	 * @return
+	 */
+	public short readIntVec(int intNum) {
+		return state.getConsole().readWord(0xffe0 + intNum * 2);
+	}
+
 	
 }

@@ -13,7 +13,6 @@ import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTableCommon;
@@ -86,8 +85,8 @@ public class Interpreter9900 implements Interpreter {
     public void executeFast(Short op_x) {
         Instruction9900 ins = getInstruction(op_x);
 
-        BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
-        BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
+        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
+        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
         /* get current operand values and instruction timings */
         fetchOperands(ins);
@@ -139,8 +138,8 @@ public class Interpreter9900 implements Interpreter {
 	private void executeAndListen(Short op_x, InstructionListener[] instructionListeners) { 
         Instruction9900 ins = getInstruction(op_x);
         
-        BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
-        BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
+        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
+        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
         iblock.cycles = cpu.getCurrentCycleCount();
         
@@ -245,8 +244,8 @@ public class Interpreter9900 implements Interpreter {
      * 
      */
     private void flushOperands(Instruction9900 ins) {
-        BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
-        BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
+    	MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
+    	MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
         if (mop1.dest != Operand.OP_DEST_FALSE) {
             if (mop1.byteop) {
 				memory.writeByte(iblock.ea1, (byte) iblock.val1);

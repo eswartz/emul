@@ -3,9 +3,11 @@
  */
 package v9t9.emulator.hardware;
 
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.cpu.*;
 import v9t9.emulator.runtime.interpreter.Interpreter9900;
+import v9t9.keyboard.KeyboardState;
 import v9t9.tools.asm.assembler.*;
 
 /**
@@ -14,6 +16,15 @@ import v9t9.tools.asm.assembler.*;
  */
 public abstract class BaseTI99MachineModel implements MachineModel {
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getCPU()
+	 */
+	@Override
+	public Cpu createCPU(Machine machine) {
+		return new Cpu9900(machine, 1000 / machine.getCpuTicksPerSec(), machine.getVdp());
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getInstructionFactory()
 	 */

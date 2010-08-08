@@ -70,16 +70,24 @@ public class InstMFP201 {
 	
 	public static final int Ildc = 48;
 	
-	public static final int Isext = 60;
-	public static final int Iextl = 62;
-	public static final int Iexth = 64;
-	public static final int Iswpb = 66;
+	public static final int Isext = 56;
+	public static final int Iextl = 58;
+	public static final int Iexth = 60;
+	public static final int Iswpb = 62;
 
-	public static final int _IfirstPossibleByteOp2 = 68;
-	public static final int Ipush = 68;
-	public static final int Ipushb = 69;
-	public static final int Ipop = 70;
-	public static final int Ipopb = 71;
+	public static final int _IfirstPossibleByteOp2 = 64;
+	public static final int _IfirstPushPopOp = 64;
+	public static final int Ipush = 64;
+	public static final int Ipushb = 65;
+	public static final int Ipop = 66;
+	public static final int Ipopb = 67;
+	public static final int _IfirstPushPopNOp = 68;
+	public static final int Ipushn = 68;
+	public static final int Ipushnb = 69;
+	public static final int Ipopn = 70;
+	public static final int Ipopnb = 71;
+	public static final int _IlastPushPopNOp = 71;
+	public static final int _IlastPushPopOp = 71;
 	public static final int _IlastPossibleByteOp2 = 71;
 	
 	public static final int _IfirstJumpOp = 72;
@@ -88,7 +96,7 @@ public class InstMFP201 {
 	public static final int Ijeq = 74;
 	public static final int Ijnc = 76;
 	public static final int Ijc = 78;
-	public static final int Ijs = 80;
+	public static final int Ijn = 80;
 	public static final int Ijge = 82;
 	public static final int Ijl = 84;
 	public static final int Ijmp = 86;
@@ -106,8 +114,8 @@ public class InstMFP201 {
 	public static final int Imovncb = 93;
 	public static final int Imovc = 94;
 	public static final int Imovcb = 95;
-	public static final int Imovs = 96;
-	public static final int Imovsb = 97;
+	public static final int Imovn = 96;
+	public static final int Imovnb = 97;
 	public static final int Imovge = 98;
 	public static final int Imovgeb = 99;
 	public static final int Imovl = 100;
@@ -145,7 +153,7 @@ public class InstMFP201 {
 	public static final int Iloopeq = 124;
 	public static final int Iloopnc = 126;
 	public static final int Iloopc = 128;
-	public static final int Iloops = 130;
+	public static final int Iloopn = 130;
 	public static final int Iloopge = 132;
 	public static final int Iloopl = 134;
 	public static final int Iloop = 136;

@@ -70,6 +70,7 @@ public class Emulator {
     }
     
 	protected void setupDefaults() {
+		
 		EmulatorSettings.INSTANCE.register(Cpu.settingCyclesPerSecond);
 		EmulatorSettings.INSTANCE.register(Cpu.settingRealTime);
 		EmulatorSettings.INSTANCE.register(TI994AStandardConsoleMemoryModel.settingExpRam);
@@ -91,7 +92,7 @@ public class Emulator {
 	        //Executor.settingDumpFullInstructions.setBoolean(true);
     	}
         
-        if (false) {
+        if (true) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);

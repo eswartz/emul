@@ -39,7 +39,7 @@ public class DumpReporter9900 implements InstructionListener {
 		            + " "
 		            //+ Utils.toHex4(cpu.getWP())
 		            //+ " "
-		            + HexUtils.toHex4(cpu.getStatus().flatten())
+		            + HexUtils.toHex4(cpu.getST())
 		            + " "
 		            + HexUtils.toHex4(ti.getVdpMmio().getAddr())
 		            + " "
@@ -47,7 +47,7 @@ public class DumpReporter9900 implements InstructionListener {
 		} else {
 		    dump.println(HexUtils.toHex4(ins.pc) 
 		            + " "
-		            + HexUtils.toHex4(cpu.getStatus().flatten())
+		            + HexUtils.toHex4(cpu.getST())
 		    );
 		    
 		}

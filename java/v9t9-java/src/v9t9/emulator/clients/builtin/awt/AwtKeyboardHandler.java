@@ -86,7 +86,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		int joy = (shift & KeyboardState.SHIFT) != 0 ? 2 : 1;
 		
-		if ((ascii == 0 || ascii == 0xffff) || !keyboardState.postCharacter(pressed, synthetic, shift, ascii)) {
+		if ((ascii == 0 || ascii == 0xffff) || !keyboardState.postCharacter(machine, pressed, synthetic, shift, ascii)) {
 			byte fctn = (byte) (KeyboardState.FCTN | shift);
 			
 			switch (keyCode) {

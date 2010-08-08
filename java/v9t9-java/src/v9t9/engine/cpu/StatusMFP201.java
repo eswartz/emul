@@ -16,34 +16,34 @@ import org.ejs.coffee.core.utils.HexUtils;
  * @author ejs
  */
 public class StatusMFP201 implements Status {
-    short lastval; /* last value of calculation */
-
-    short lastcmp; /* last compared-to value, usually 0 */
-
-    short bits; /* other bits: ST_V|ST_C|ST_INTLEVEL */
+    short bits; 
 
     /* status bits */
-    public static final short ST_L = (short)0x8000;
-
+    
+    /** negative bit: set when an operation is negative (high bit of result) */
     public static final short ST_N = (short)4;
 
-    public static final short ST_E = (short)2;
+    /** zero bit: set when an operation is zero */
+    public static final short ST_Z = (short)2;
 
+    /** carry bit: set when a carry produced out of high bit */
     public static final short ST_C = (short)1;
 
+    /** overflow bit: set when an operation overflows signed range
+     * 
+     *  add:  when pos+pos = neg, or neg+neg = pos
+     *  sub:  when pos-neg = neg, or neg-pos = pos
+     */
     public static final short ST_V = (short)8;
 
-    public static final short ST_INTLEVEL = (short)0xf;
+    /** general interrupt enable bit */
+    public static final short ST_GIE = (short)8;
+    
+    public static final short ST_RSV = (short)0xfef0;
 
     public StatusMFP201() {
     }
 
-    StatusMFP201(short lastval, short lastcmp, short bits) {
-        this.lastval = lastval;
-        this.lastcmp = lastcmp;
-        this.bits = bits;
-    }
-    
     public StatusMFP201(short val) {
         expand(val);
     }
@@ -53,21 +53,18 @@ public class StatusMFP201 implements Status {
 	 */
     @Override
     public String toString() {
-    	flatten();
-    	return ((bits & StatusMFP201.ST_L) != 0 ? "L" : " ")
-    		+ ((bits & StatusMFP201.ST_N) != 0 ? "N" : " ")
-    		+ ((bits & StatusMFP201.ST_E) != 0 ? "E" : " ")
+    	return ((bits & StatusMFP201.ST_N) != 0 ? "N" : " ")
+    		+ ((bits & StatusMFP201.ST_Z) != 0 ? "Z" : " ")
     		+ ((bits & StatusMFP201.ST_C) != 0 ? "C" : " ")
     		+ ((bits & StatusMFP201.ST_V) != 0 ? "V" : " ")
-    		+ (HexUtils.toHex2((bits & 0xf)));
+    		+ ((bits & StatusMFP201.ST_GIE) != 0 ? "I" : " ")
+    		+ (HexUtils.toHex2((bits & ST_RSV)));
     }
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#copyTo(v9t9.engine.cpu.Status9900)
 	 */
     public void copyTo(Status copy_) {
     	StatusMFP201 copy = (StatusMFP201) copy_;
-        copy.lastval = lastval;
-        copy.lastcmp = lastcmp;
         copy.bits = bits;
     }
 
@@ -75,18 +72,13 @@ public class StatusMFP201 implements Status {
 
     @Override
 	protected Object clone()  {
-        return new StatusMFP201(lastval, lastcmp, bits);
+        return new StatusMFP201(bits);
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#flatten()
 	 */
     public short flatten() {
-        bits = (short) (bits & ~(StatusMFP201.ST_L + StatusMFP201.ST_E + StatusMFP201.ST_N)
-                | ((lastval & 0xffff) > (lastcmp & 0xffff) ? StatusMFP201.ST_L : 0)
-                | (lastval > lastcmp ? StatusMFP201.ST_N : 0)
-                | (lastval == lastcmp ? StatusMFP201.ST_E : 0) 
-            	);
         return bits;
     }
 
@@ -94,60 +86,34 @@ public class StatusMFP201 implements Status {
 	 * @see v9t9.engine.cpu.Status#expand(short)
 	 */
     public void expand(short stat) {
-        lastval = lastcmp = 0;
-        if ((stat & StatusMFP201.ST_E) == 0) {
-            if ((stat & StatusMFP201.ST_L + StatusMFP201.ST_N) == 0) {
-				lastcmp = 2; /* less than arith+logical: 0, 2 */
-			} else {
-                lastval++;
-                if ((stat & StatusMFP201.ST_L) == 0) {
-                    /* less than logical only: 0, 0xfffe (-2) */
-                    lastcmp = (short) -2;
-                } else if ((stat & StatusMFP201.ST_N) == 0) {
-                    /* less than arithmetic only: 0xfffe (-2), 0 */
-                    lastval = (short) 0xfffe;
-                }
-            }
-        }
-        bits = (short) (bits & ~ST_INTLEVEL | stat & ST_INTLEVEL);
+    	this.bits = stat;
     }
 
-    /*
-     * Set lae, preserve C and O
+    /**
+     * Set bits comparing arithmetically against zero
      */
-    public void set_LAE(short val) {
-        lastcmp = 0;
-        lastval = val;
+    public void set_NZ(short val) {
+    	bits &= ~(ST_Z + ST_N);
+    	if (val == 0)
+    		bits |= ST_Z;
+    	if (val < 0)
+    		bits |= ST_N;
     }
 
-    /*
-     * Set lae, and O if val == 0x8000
+    /**
+     * Set bits comparing logically against zero
      */
-    public void set_LAEV(short val) {
-        set_LAE(val);
-        if (val == (short)0x8000) {
-			bits |= StatusMFP201.ST_V;
-		} else {
-			bits &= ~StatusMFP201.ST_V;
-		}
-    }
-
-    /*
-     * For COC, CZC, and TB
-     */
-    public void set_E(boolean equal) {
-        // TODO: hmm, this actually clears L> and A>, while TB doesn't strictly do that.
-        if (equal) {
-            lastval = lastcmp;
-        } else {
-            lastcmp = (short) (lastval+1);
-        }
+    public void set_NZV(short val) {
+    	set_NZ(val);
+    	bits &= ~ST_C;
+    	if ((bits & ST_Z) == 0)
+    		bits |= ST_C;
     }
     
-    /*
-	Set laeco for add, preserve none
+    /**
+     * Set bits for add
 	*/
-    public void set_ADD_LNECV(short dst,short src) {
+    public void set_ADD_LNZCV(short dst,short src) {
         short res = (short) (dst + src);
         bits &= ~(StatusMFP201.ST_C|StatusMFP201.ST_V);
         if ((dst & src & 0x8000) != 0
@@ -157,22 +123,22 @@ public class StatusMFP201 implements Status {
         if ( ((~dst & ~src & res | dst & src & ~res) & 0x8000) != 0) {
 			bits |= StatusMFP201.ST_V;
 		}
-        lastval = res; lastcmp = 0; 
+        set_NZ(res);
     }
 
-    /*
-	Set laeco for subtract, preserve none
+    /**
+     * Set bits for subtract
 	*/
-    public void set_SUB_LNECV(short dst, short src) {
-        set_ADD_LNECV(dst, (short) (1+~src));
+    public void set_SUB_LNZCV(short dst, short src) {
+        set_ADD_LNZCV(dst, (short) (1+~src));
         if (src==0 || src==(short)0x8000) {
 			bits |= StatusMFP201.ST_C;
 		}
     }
 
-    /*
-	For ABS and DIV
-	*/
+    /**
+     * Set overflow bit
+     */
     public void set_V(boolean b) {
         if (b) {
 			bits |= StatusMFP201.ST_V;
@@ -181,26 +147,14 @@ public class StatusMFP201 implements Status {
 		}
     }
     
-    /*	
-	For CMP
+    /**
+     * Set carry for right shift
 	*/
-    public void set_CMP(short a, short b) {
-        lastval = a;
-        lastcmp = b;
-    }
+    public void set_SHIFT_RIGHT_NZC(short a, short c) {
+    	set_NZ((short) (a << c));
+    	
+    	bits &= ~StatusMFP201.ST_V;
 
-    /*	
-	For CMP
-	*/
-    public void set_BYTE_CMP(byte a, byte b) {
-        lastval = a;
-        lastcmp = b;
-    }
-
-    /*
-	Right shift carries
-	*/
-    public void set_SHIFT_RIGHT_C(short a, short c) {
         short mask= (short) (c != 0 ? 1 << c-1 : 0);
         if ((a & mask) != 0) {
 			bits |= StatusMFP201.ST_C;
@@ -209,10 +163,13 @@ public class StatusMFP201 implements Status {
 		}
     }
 
-    /*
-     Left shift overflow & status
+    /**
+     * Set C and V for left shift 
      */
-    public void set_SHIFT_LEFT_CO(short a, short c) {
+    public void set_SHIFT_LEFT_NZCV(short a, short c) {
+    	short res = (short) (a << c);
+		set_NZ(res);
+    	
         short mask = (short)(0x10000 >> c);
         
         if ((a & mask) != 0) {
@@ -221,7 +178,7 @@ public class StatusMFP201 implements Status {
 			bits &= ~StatusMFP201.ST_C;
 		}
         
-        if (((a ^ a<<c) & 0x8000) != 0) {
+        if (((a ^ res) & 0x8000) != 0) {
 			bits |= StatusMFP201.ST_V;
 		} else {
 			bits &= ~StatusMFP201.ST_V;
@@ -239,56 +196,56 @@ public class StatusMFP201 implements Status {
 	 * @see v9t9.engine.cpu.Status#isLT()
 	 */
     public boolean isLT() {
-        return lastval < lastcmp;
+        return ((bits & ST_V) != 0) != ((bits & ST_N) != 0);
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isLE()
 	 */
     public boolean isLE() {
-        return (lastval & 0xffff) <= (lastcmp & 0xffff);
+        return (bits & ST_V + ST_C + ST_Z) != 0;
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isL()
 	 */
     public boolean isL() {
-        return (lastval & 0xffff) < (lastcmp & 0xffff);
+        return (bits & ST_C) != 0;
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isEQ()
 	 */
     public boolean isEQ() {
-        return lastval == lastcmp;        
+        return (bits & ST_Z) != 0;        
 	}
 
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isNE()
 	 */
     public boolean isNE() {
-        return lastval != lastcmp;
+        return (bits & ST_Z) == 0;
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isHE()
 	 */
     public boolean isHE() {
-        return (lastval & 0xffff) >= (lastcmp & 0xffff);
+        return (bits & ST_C) == 0 || (bits & ST_Z) != 0;
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isGT()
 	 */
     public boolean isGT() {
-        return lastval > lastcmp;
+        return isGE() && isNE();
     }
     
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isH()
 	 */
     public boolean isH() {
-        return (lastval & 0xffff) > (lastcmp & 0xffff);
+        return  (bits & ST_V + ST_C + ST_Z) == 0;
     }
     
     /* (non-Javadoc)
@@ -306,8 +263,22 @@ public class StatusMFP201 implements Status {
      * @return
      */
     public int getIntMask() {
-        return bits & ST_INTLEVEL;
+        return (bits & ST_GIE) >> 3;
     }
+
+	/**
+	 * @return
+	 */
+	public boolean isN() {
+		return (bits & ST_N) != 0;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isGE() {
+		return ((bits & ST_N) != 0) != ((bits & ST_V) != 0);
+	}
 
     
 }

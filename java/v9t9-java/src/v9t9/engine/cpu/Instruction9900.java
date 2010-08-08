@@ -7,6 +7,7 @@
 package v9t9.engine.cpu;
 
 
+import org.eclipse.jface.text.IBlockTextSelection;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.coffee.core.utils.HexUtils;
 
@@ -156,6 +157,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	    info.stsetBefore = Instruction9900.st_NONE;
 	    info.stsetAfter = Instruction9900.st_NONE;
 	    info.stReads = 0;
+	    info.stWrites = 0;
 	    info.jump = InstInfo.INST_JUMP_FALSE;
 	    info.reads = 0;
 	    info.writes = 0;
@@ -278,13 +280,13 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            info.reads |= InstInfo.INST_RSRC_ST;
 	            info.writes |= InstInfo.INST_RSRC_WP + InstInfo.INST_RSRC_PC + InstInfo.INST_RSRC_CTX;
 	            mop1.dest = Operand.OP_DEST_FALSE;
-	            mop1.bIsCodeDest = true;
+	            mop1.bIsReference = true;
 	            info.jump = InstInfo.INST_JUMP_TRUE;
 	            info.cycles += 26;
 	            break;
 	        case Inst9900.Ib:
 	            mop1.dest = Operand.OP_DEST_FALSE;
-	            mop1.bIsCodeDest = true;
+	            mop1.bIsReference = true;
 	            info.jump = InstInfo.INST_JUMP_TRUE;
 	            info.cycles += 8;
 	            break;
@@ -326,7 +328,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            break;
 	        case Inst9900.Ibl:
 	            mop1.dest = Operand.OP_DEST_FALSE;
-	            mop1.bIsCodeDest = true;
+	            mop1.bIsReference = true;
 	            info.jump = InstInfo.INST_JUMP_TRUE;
 	            info.cycles += 12;
 	            break;
@@ -390,7 +392,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        	} else if (mop1.type != MachineOperand9900.OP_JUMP){
 	        		Check.checkArg(false);
 	        	}
-	            mop1.bIsCodeDest = true;
+	            mop1.bIsReference = true;
 	            //this.stsetBefore = Instruction.st_ALL;
 	            info.reads |= InstInfo.INST_RSRC_ST;
 	            mop2.type = MachineOperand9900.OP_STATUS;
@@ -482,7 +484,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        	info.stReads = 0xffff;
 	            info.reads |= InstInfo.INST_RSRC_ST;
 	            info.writes |= InstInfo.INST_RSRC_WP + InstInfo.INST_RSRC_PC + InstInfo.INST_RSRC_CTX;
-	            mop2.bIsCodeDest = true;
+	            mop2.bIsReference = true;
 	            mop2.type = MachineOperand9900.OP_CNT;
 	            mop2.dest = Operand.OP_DEST_FALSE;
 	            info.stsetAfter = Instruction9900.st_XOP;
@@ -595,6 +597,9 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        }
 	    }
 	
+	    info.stWrites = Instruction9900.getStatusBits(info.stsetBefore)
+        	| Instruction9900.getStatusBits(info.stsetAfter);
+    
 	    // synthesize bits from other info
 	    if (info.jump != InstInfo.INST_JUMP_FALSE) {
 	        info.writes |= InstInfo.INST_RSRC_PC;
@@ -614,6 +619,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 		    Pc = ((MachineOperand) getOp2()).advancePc((short)Pc);
 		    this.setSize((Pc & 0xffff) - (this.pc & 0xffff));		
 	    }
+	    
 	    //super.completeInstruction(Pc);
 	   
 	}

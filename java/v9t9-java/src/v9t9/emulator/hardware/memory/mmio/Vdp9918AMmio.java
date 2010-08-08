@@ -40,7 +40,7 @@ public class Vdp9918AMmio extends VdpMmio {
     
     protected void initMemory(Memory memory, int memorySize) {
     	MemoryEntry memoryEntry = new MemoryEntry(
-    			"VDP RAM", videoMemory, 0x0000, 0x4000, 
+    			"VDP RAM", videoMemory, 0x0000, memorySize, 
 				fullRamArea);
     	this.memoryEntry = memoryEntry;
 		memory.addAndMap(memoryEntry);
