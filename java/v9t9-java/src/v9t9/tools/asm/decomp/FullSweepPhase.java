@@ -53,7 +53,7 @@ public class FullSweepPhase extends Phase {
                 Label label;
 
                 if (inst.getInst().getInst() == Inst9900.Ibl || inst.getInst().getInst() == Inst9900.Ib || inst.getInst().getInst() == Inst9900.Iblwp
-                    || inst.getInst().getInst() == Inst9900.Ijmp || inst.getInst().info.jump == InstInfo.INST_JUMP_COND) 
+                    || inst.getInst().getInst() == Inst9900.Ijmp || inst.getInst().getInfo().jump == InstInfo.INST_JUMP_COND) 
                 {
                     label = null;
                     if (operandIsLabel(inst, (MachineOperand) inst.getInst().getOp1())) {

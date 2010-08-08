@@ -394,7 +394,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 					//}
 					
 					if (isWatching || Machine.settingPauseMachine.getBoolean()) {
-						RawInstruction inst = machine.getExecutor().interp.getInstruction();
+						RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
+								machine.getCpu().getPC(), machine.getConsole());
 						String instString = inst.toString();
 						if (instString.length() < 24)
 							instString += "                        ".substring(0, 24 - instString.length());

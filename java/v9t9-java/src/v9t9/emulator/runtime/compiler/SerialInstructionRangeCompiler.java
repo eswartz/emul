@@ -83,7 +83,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	    for (int i = 0; i < numinsts; i ++) {
 	        InstInfo ii = chunks[i];
 	        if (ii != null) {
-	            if (ii.ins.info.jump == v9t9.engine.cpu.InstInfo.INST_JUMP_FALSE) {
+	            if (ii.ins.getInfo().jump == v9t9.engine.cpu.InstInfo.INST_JUMP_FALSE) {
 	            	// not a jump, goto the next code block 
 	            	//
 	            	// note: we insert a GOTO in case the instruction is greater than 2 bytes,

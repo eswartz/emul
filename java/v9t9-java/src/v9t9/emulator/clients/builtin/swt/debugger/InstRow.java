@@ -7,7 +7,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.MachineOperand9900;
+import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.MemoryEntry;
 
@@ -75,7 +75,7 @@ public class InstRow {
 	 * @return
 	 */
 	public String getOp1() {
-		MachineOperand9900 mop1 = (MachineOperand9900) before.inst.getOp1();
+		BaseMachineOperand mop1 = (BaseMachineOperand) before.inst.getOp1();
 		if (mop1.type == MachineOperand.OP_NONE) {
 			return "";
 		}
@@ -92,7 +92,7 @@ public class InstRow {
 	}
 
 	public String getOp2() {
-		MachineOperand9900 mop2 = (MachineOperand9900) before.inst.getOp2();
+		BaseMachineOperand mop2 = (BaseMachineOperand) before.inst.getOp2();
 		if (mop2.type == MachineOperand.OP_NONE) {
 			return "";
 		}

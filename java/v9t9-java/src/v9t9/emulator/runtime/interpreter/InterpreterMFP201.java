@@ -10,30 +10,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.runtime.InstructionListener;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.CpuMFP201;
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.engine.cpu.BaseMachineOperand;
-import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstInfo;
-import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.Instruction9900;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.MachineOperand9900;
-import v9t9.engine.cpu.Operand;
-import v9t9.engine.cpu.RawInstruction;
-import v9t9.engine.cpu.Status9900;
-import v9t9.engine.cpu.StatusMFP201;
+import v9t9.engine.cpu.*;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 
 /**
- * This class interprets 9900 instructions one by one.
+ * This class interprets MFP201 instructions one by one.
  * 
  * @author ejs
  */
@@ -43,49 +29,51 @@ public class InterpreterMFP201 implements Interpreter {
     MemoryDomain memory;
 
     // per-PC prebuilt instructions
-    Map<MemoryArea, Instruction9900[]> parsedInstructions; 
+    Map<MemoryArea, InstructionMFP201[]> parsedInstructions; 
     //Instruction[] instructions; 
     
     InstructionWorkBlock iblock;
 
 	private CpuMFP201 cpu;
 
+	private StatusMFP201 status;
+
     public InterpreterMFP201(Machine machine) {
         this.machine = machine;
         this.cpu = (CpuMFP201) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
-        parsedInstructions = new HashMap<MemoryArea, Instruction9900[]>();
+        parsedInstructions = new HashMap<MemoryArea, InstructionMFP201[]>();
         iblock = new InstructionWorkBlock(cpu);
         iblock.domain = memory;
+        this.status = (StatusMFP201) cpu.getStatus();
      }
 
     /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
-	 */
-    public void execute(Short op_x) {
+     * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
+     */
+    @Override
+    public void executeChunk(int numinsts, Executor executor) {
     	InstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
     	if (instructionListeners != null) {
-    		executeAndListen(op_x, instructionListeners);
+    		while (numinsts-- > 0) {
+    			executeAndListen(instructionListeners);
+    			executor.nInstructions++;
+    			if (executor.interruptExecution)
+    				break;
+    		}
     	} else {
-    		executeFast(op_x);
+    		while (numinsts-- > 0) {
+    			executeFast();
+    			executor.nInstructions++;
+    			if (executor.interruptExecution)
+    				break;
+    		}
     	}
-    	
-        /* dump instruction */
-        //PrintWriter dumpfull = machine.getExecutor().getDumpfull(); 
-        //PrintWriter dump = machine.getExecutor().getDump();
-        
-        //if (dumpfull != null || dump != null || Machine.settingDebugTracing.getBoolean()) {
-        //} else {
-        //}
-
     }
 
-    /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.interpreter.Interpreter#executeFast(java.lang.Short)
-	 */
-    public void executeFast(Short op_x) {
-        Instruction9900 ins = getInstruction(cpu, op_x);
+    public void executeFast() {
+        InstructionMFP201 ins = getInstruction();
 
         BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
         BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
@@ -94,29 +82,29 @@ public class InterpreterMFP201 implements Interpreter {
         fetchOperands(cpu, ins, cpu.getWP(), cpu.getStatus());
 
         /* do pre-instruction status word updates */
-        if (ins.info.stsetBefore != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetBefore);
+        if (ins.getInfo().stsetBefore != InstructionMFP201.st_NONE) {
+            updateStatus(ins.getInfo().stsetBefore);
         }
 
         /* execute */
         interpret(ins);
         
         /* do post-instruction status word updates */
-        if (ins.info.stsetAfter != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetAfter);
+        if (ins.getInfo().stsetAfter != InstructionMFP201.st_NONE) {
+            updateStatus(ins.getInfo().stsetAfter);
         }
 
         /* save any operands */
         flushOperands(cpu, ins);
         
-        cpu.addCycles(ins.info.cycles + mop1.cycles + mop2.cycles);
+        cpu.addCycles(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
 	}
 
-	private void executeAndListen(Short op_x, InstructionListener[] instructionListeners) { 
+	private void executeAndListen(InstructionListener[] instructionListeners) { 
 		//PrintWriter dump = machine.getExecutor().getDump();
 		//PrintWriter dumpfull = machine.getExecutor().getDumpfull();
 		
-        Instruction9900 ins = getInstruction(cpu, op_x);
+        InstructionMFP201 ins = getInstruction(cpu, op_x);
         
         BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
         BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
@@ -132,7 +120,7 @@ public class InterpreterMFP201 implements Interpreter {
         iblock.cycles = cpu.getCurrentCycleCount();
         
         /* get current operand values and instruction timings */
-        fetchOperands(cpu, ins, cpu.getWP(), cpu.getStatus());
+        fetchOperands(cpu, ins, cpu.getStatus());
 
         InstructionWorkBlock block = new InstructionWorkBlock(cpu);
         this.iblock.copyTo(block);
@@ -144,22 +132,22 @@ public class InterpreterMFP201 implements Interpreter {
         }*/
 
         /* do pre-instruction status word updates */
-        if (ins.info.stsetBefore != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetBefore);
+        if (ins.getInfo().stsetBefore != InstructionMFP201.st_NONE) {
+            updateStatus(ins.getInfo().stsetBefore);
         }
 
         /* execute */
         interpret(ins);
         
         /* do post-instruction status word updates */
-        if (ins.info.stsetAfter != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetAfter);
+        if (ins.getInfo().stsetAfter != InstructionMFP201.st_NONE) {
+            updateStatus(ins.getInfo().stsetAfter);
         }
 
         /* save any operands */
         flushOperands(cpu, ins);
         
-        cpu.addCycles(ins.info.cycles + mop1.cycles + mop2.cycles);
+        cpu.addCycles(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
 
         block.cycles = cpu.getCurrentCycleCount();
         
@@ -177,71 +165,75 @@ public class InterpreterMFP201 implements Interpreter {
         }
 	}
 
-	private RawInstruction getInstruction(Short op_x) {
-		Instruction9900 ins;
-	    int pc = cpu.getPC() & 0xfffe;
+	private InstructionMFP201 getInstruction() {
+		InstructionMFP201 ins;
+	    int pc = cpu.getPC();
 	    
 	    short op;
 	    MemoryDomain console = cpu.getConsole();
-		if (op_x != null) {
-	    	op = op_x;
-	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
-	    } else {
-	    	MemoryEntry entry = console.getEntryAt(pc);
-	    	op = entry.readWord(pc);
-	    	MemoryArea area = entry.getArea();
-	    	Instruction9900[] instructions = parsedInstructions.get(area);
-	    	if (instructions == null) {
-	    		instructions = new Instruction9900[65536/2];
-	    		parsedInstructions.put(area, instructions);
-	    	}
-	    	if ((ins = instructions[pc/2]) != null) {
-	    		// expensive (10%)
-	    		ins = ins.update(op, pc, console);
-	    	} else {
-	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
-	    	}
-	    	instructions[pc/2] = ins;
-	    }
+    	MemoryEntry entry = console.getEntryAt(pc);
+    	op = entry.readWord(pc);
+    	MemoryArea area = entry.getArea();
+    	InstructionMFP201[] instructions = parsedInstructions.get(area);
+    	if (instructions == null) {
+    		instructions = new InstructionMFP201[65536];
+    		parsedInstructions.put(area, instructions);
+    	}
+    	if ((ins = instructions[pc]) != null) {
+    		if (area.hasWriteAccess()) {
+    			// see if memory changed
+    			long opcode = 0;
+    			int sz = ins.getSize();
+    			for (int i = 0; i < sz; i++) {
+    				opcode = (opcode << 8) | (console.flatReadByte(pc + i) & 0xff);
+    			}
+    			if (opcode != ins.opcode) {
+    				ins = null;
+    			}
+    		}
+    	}
+    	if (ins == null) {
+    		ins = new InstructionMFP201(InstTableMFP201.decodeInstruction(pc, console));
+    	}
+    	instructions[pc] = ins;
 		return ins;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.interpreter.Interpreter#getInstruction(v9t9.emulator.runtime.Cpu9900)
-	 */
-	public RawInstruction getInstruction() {
-		return getInstruction(null);
 	}
 
     /** Fetch operands for instruction (runtime)
      * @param ins
      * @param memory2
      */
-    private void fetchOperands(Instruction9900 ins, short wp, Status9900 st) {
+    private void fetchOperands(InstructionMFP201 ins) {
         iblock.inst = ins;
         iblock.pc = (short) (iblock.inst.pc + iblock.inst.getSize());
-        iblock.wp = cpu.getWP();
-        iblock.status = st;
+        iblock.st = cpu.getST();
         
-        MachineOperand9900 mop1 = (MachineOperand9900) iblock.inst.getOp1();
-        MachineOperand9900 mop2 = (MachineOperand9900) iblock.inst.getOp2();
+        MachineOperandMFP201 mop1 = (MachineOperandMFP201) iblock.inst.getOp1();
+        MachineOperandMFP201 mop2 = (MachineOperandMFP201) iblock.inst.getOp2();
+        MachineOperandMFP201 mop3 = (MachineOperandMFP201) iblock.inst.getOp3();
 
         if (mop1.type != MachineOperand.OP_NONE) {
         	mop1.cycles = 0;
-			iblock.ea1 = mop1.getEA(memory, iblock.inst.pc, wp);
+			iblock.ea1 = mop1.getEA(iblock);
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
         	mop2.cycles = 0;
-			iblock.ea2 = mop2.getEA(memory, iblock.inst.pc, wp);
+			iblock.ea2 = mop2.getEA(iblock);
 		}
+        if (mop3.type != MachineOperand.OP_NONE) {
+        	mop3.cycles = 0;
+        	iblock.ea3 = mop3.getEA(iblock);
+        }
         if (mop1.type != MachineOperand.OP_NONE) {
-        	//if (ins.inst != InstructionTable.Ili)		// even LI will read in the real hardware
-        	iblock.val1 = mop1.getValue(memory, iblock.ea1);
+        	iblock.val1 = mop1.getValue(iblock, iblock.ea1);
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
-			iblock.val2 = mop2.getValue(memory, iblock.ea2);
+			iblock.val2 = mop2.getValue(iblock, iblock.ea2);
 		}
-        if (iblock.inst.getInst() == Inst9900.Idiv) {
+        if (mop3.type != MachineOperand.OP_NONE) {
+        	iblock.val3 = mop3.getValue(iblock, iblock.ea3);
+        }
+        if (iblock.inst.getInst() == InstMFP201.Idiv) {
             iblock.val3 = memory.readWord(iblock.ea2 + 2);
         }
     }
@@ -249,56 +241,42 @@ public class InterpreterMFP201 implements Interpreter {
     /**
      * 
      */
-    private void flushOperands(Instruction9900 ins) {
+    private void flushOperands(InstructionMFP201 ins) {
         BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
         BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
+        BaseMachineOperand mop3 = (BaseMachineOperand) ins.getOp3();
+        
         if (mop1.dest != Operand.OP_DEST_FALSE) {
             if (mop1.byteop) {
 				memory.writeByte(iblock.ea1, (byte) iblock.val1);
 			} else {
 				memory.writeWord(iblock.ea1, iblock.val1);
-				if (ins.getInst() == InstTableCommon.Iticks) {
-					memory.writeWord(iblock.ea1 + 2, iblock.val2);
-				}
 			}
 				
         }
         if (mop2.dest != Operand.OP_DEST_FALSE) {
-        	if (ins.getInst() == Inst9900.Icb)
-        		mop2.dest = 1;
             if (mop2.byteop) {
 				memory.writeByte(iblock.ea2, (byte) iblock.val2);
 			} else {
                 memory.writeWord(iblock.ea2, iblock.val2);
-                if (ins.getInst() == Inst9900.Impy 
-                		|| ins.getInst() == Inst9900.Idiv) {
+                if (ins.getInst() == InstMFP201.Imuld 
+                		|| ins.getInst() == InstMFP201.Idivd) {
                     memory.writeWord(iblock.ea2 + 2, iblock.val3);
                 }
             }
         }
 
-        if ((ins.info.writes & InstInfo.INST_RSRC_ST) != 0) {
-			cpu.setStatus(iblock.status);
+        if ((ins.getInfo().writes & InstInfo.INST_RSRC_ST) != 0) {
+			cpu.setST(iblock.st);
 		}
 
         /* do this after flushing status */
-        if ((ins.info.writes & InstInfo.INST_RSRC_CTX) != 0) {
-            /* update PC first */
-            cpu.setPC((short) (iblock.inst.pc + iblock.inst.getSize()));
-            cpu.contextSwitch(iblock.wp, iblock.pc);
-        } else {
-            /* flush register changes */
-            cpu.setPC(iblock.pc);
-            if ((ins.info.writes & InstInfo.INST_RSRC_WP) != 0) {
-				cpu.setWP(iblock.wp);
-			}
-        }
+        cpu.setPC(iblock.pc);
     }
 
     /**
      */
     private void updateStatus(int handler) {
-    	StatusMFP201 status = (StatusMFP201) iblock.status;
         switch (handler) {
        
         default:
@@ -311,7 +289,7 @@ public class InterpreterMFP201 implements Interpreter {
      * Execute an instruction
      * @param ins
      */
-    private void interpret(Instruction9900 ins) {
+    private void interpret(InstructionMFP201 ins) {
     	StatusMFP201 status = (StatusMFP201) iblock.status;
         switch (ins.getInst()) {
        

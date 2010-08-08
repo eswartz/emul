@@ -23,6 +23,7 @@ import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
+import v9t9.tools.asm.assembler.*;
 
 /**
  * This is an enhanced machine model that has a more regular memory model as well.
@@ -137,5 +138,13 @@ public class MFP201MachineModel implements MachineModel {
 				new NullCompilerStrategy(),
 				new DumpFullReporterMFP201((CpuMFP201) cpu),
 				new DumpReporterMFP201((CpuMFP201) cpu));
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getInstructionFactory()
+	 */
+	@Override
+	public IInstructionFactory getInstructionFactory() {
+		return InstructionFactoryMFP201.INSTANCE;
 	}
 }

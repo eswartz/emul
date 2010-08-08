@@ -4,6 +4,7 @@
 package v9t9.tools.asm.assembler;
 
 import v9t9.engine.cpu.RawInstruction;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
@@ -29,4 +30,6 @@ public interface IInstructionFactory {
 	 * @return
 	 */
 	int getInstSize(LLInstruction ins);
+	
+	RawInstruction decodeInstruction(int pc, MemoryDomain domain);
 }

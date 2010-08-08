@@ -192,7 +192,7 @@ public class TestAssembler9900 extends BaseTest {
 		
 		RawInstruction minst = InstTable9900.decodeInstruction(CPU.readWord(0), 0, CPU);
 		InstTable9900.coerceOperandTypes(minst);
-		System.out.println(minst + " = " + HexUtils.toHex4(minst.opcode));
+		System.out.println(minst + " = " + HexUtils.toHex4((int) minst.opcode));
 		
 		RawInstruction stdinst = createInstruction(0, minst.toString());
 		

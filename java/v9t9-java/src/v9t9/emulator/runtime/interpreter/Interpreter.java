@@ -1,23 +1,13 @@
 package v9t9.emulator.runtime.interpreter;
 
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.cpu.RawInstruction;
 
 public interface Interpreter {
-
 	/**
-	 * Execute an instruction: general entry point
-	 * @param cpu
-	 * @param op_x if not-null, execute the instruction from an X instruction
+	 * Execute a chunk of instructions as quickly as possible, watching for
+	 * {@link Executor#interruptExecution} and updating {@link Executor#nInstructions}
 	 */
-	void execute(Short op_x);
-
-	/**
-	 * This version is called when you know nothing needs to monitor instructions
-	 * @param cpu
-	 * @param op_x
-	 */
-	void executeFast(Short op_x);
-
-	RawInstruction getInstruction();
+	void executeChunk(int numinsts, Executor executor);
 
 }

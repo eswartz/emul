@@ -427,15 +427,15 @@ public class Compiler9900 extends Compiler {
         /* compose operand values and instruction timings */
         fetchOperands(ins, pc, info);
 
-        ilist.append(new IINC(info.localCycles, ins.info.cycles + ((BaseMachineOperand) ins.getOp1()).cycles + ((BaseMachineOperand) ins.getOp2()).cycles));
+        ilist.append(new IINC(info.localCycles, ins.getInfo().cycles + ((BaseMachineOperand) ins.getOp1()).cycles + ((BaseMachineOperand) ins.getOp2()).cycles));
 
         if (Compiler.settingDebugInstructions.getBoolean()) {
             dumpFull(info, ilist, ins, "dumpBefore", ins.toString());
         }
 
         /* do pre-instruction status word updates */
-        if (ins.info.stsetBefore != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetBefore, info);
+        if (ins.getInfo().stsetBefore != Instruction9900.st_NONE) {
+            updateStatus(ins.getInfo().stsetBefore, info);
         }
 
         /* execute */
@@ -445,8 +445,8 @@ public class Compiler9900 extends Compiler {
         	ilist.append(InstructionConstants.NOP);
 
         /* do post-instruction status word updates */
-        if (ins.info.stsetAfter != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetAfter, info);
+        if (ins.getInfo().stsetAfter != Instruction9900.st_NONE) {
+            updateStatus(ins.getInfo().stsetAfter, info);
         }
 
         /* save any operands */
@@ -593,7 +593,7 @@ public class Compiler9900 extends Compiler {
             }
         }
 
-        if ((ins.info.writes & v9t9.engine.cpu.InstInfo.INST_RSRC_CTX) != 0) {
+        if ((ins.getInfo().writes & v9t9.engine.cpu.InstInfo.INST_RSRC_CTX) != 0) {
             /* commit changes to cpu before callback */
 
             /* save status */

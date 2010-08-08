@@ -23,7 +23,6 @@ import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.Operand;
-import v9t9.engine.cpu.Status;
 import v9t9.engine.cpu.Status9900;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
@@ -47,6 +46,8 @@ public class Interpreter9900 implements Interpreter {
 
 	private Cpu9900 cpu;
 
+	private Status9900 status;
+
     public Interpreter9900(TI99Machine machine) {
         this.machine = machine;
         this.cpu = (Cpu9900) machine.getCpu();
@@ -55,6 +56,7 @@ public class Interpreter9900 implements Interpreter {
         parsedInstructions = new HashMap<MemoryArea, Instruction9900[]>();
         iblock = new InstructionWorkBlock(cpu);
         iblock.domain = memory;
+        status = (Status9900) cpu.createStatus();
      }
 
     /* (non-Javadoc)
@@ -88,26 +90,51 @@ public class Interpreter9900 implements Interpreter {
         BaseMachineOperand mop2 = (BaseMachineOperand) ins.getOp2();
 
         /* get current operand values and instruction timings */
-        fetchOperands(ins, (Status9900) cpu.getStatus());
+        fetchOperands(ins);
 
         /* do pre-instruction status word updates */
-        if (ins.info.stsetBefore != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetBefore);
+        if (ins.getInfo().stsetBefore != Instruction9900.st_NONE) {
+            updateStatus(ins.getInfo().stsetBefore);
         }
 
         /* execute */
         interpret(ins);
         
         /* do post-instruction status word updates */
-        if (ins.info.stsetAfter != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetAfter);
+        if (ins.getInfo().stsetAfter != Instruction9900.st_NONE) {
+            updateStatus(ins.getInfo().stsetAfter);
         }
 
         /* save any operands */
         flushOperands(ins);
         
-        cpu.addCycles(ins.info.cycles + mop1.cycles + mop2.cycles);
+        cpu.addCycles(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
 	}
+    
+    /* (non-Javadoc)
+     * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
+     */
+    @Override
+    public void executeChunk(int numinsts, Executor executor) {
+    	// pretend the realtime and instructionListeners settings don't change often
+		if (executor.getInstructionListeners() == null) {
+			for (int i = 0; i < numinsts; i++) {
+				executeFast(null);
+				executor.nInstructions++;
+				cpu.checkAndHandleInterrupts();
+				if (executor.interruptExecution)
+					break;
+			}
+		} else {
+			for (int i = 0; i < numinsts; i++) {
+				execute(null);
+				executor.nInstructions++;
+				cpu.checkAndHandleInterrupts();
+				if (executor.interruptExecution)
+					break;
+			}
+		}    	
+    }
 
 	private void executeAndListen(Short op_x, InstructionListener[] instructionListeners) { 
         Instruction9900 ins = getInstruction(op_x);
@@ -118,28 +145,28 @@ public class Interpreter9900 implements Interpreter {
         iblock.cycles = cpu.getCurrentCycleCount();
         
         /* get current operand values and instruction timings */
-        fetchOperands(ins, cpu.getStatus());
+        fetchOperands(ins);
 
         InstructionWorkBlock block = new InstructionWorkBlock(cpu);
         this.iblock.copyTo(block);
 
         /* do pre-instruction status word updates */
-        if (ins.info.stsetBefore != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetBefore);
+        if (ins.getInfo().stsetBefore != Instruction9900.st_NONE) {
+            updateStatus(ins.getInfo().stsetBefore);
         }
 
         /* execute */
         interpret(ins);
         
         /* do post-instruction status word updates */
-        if (ins.info.stsetAfter != Instruction9900.st_NONE) {
-            updateStatus(ins.info.stsetAfter);
+        if (ins.getInfo().stsetAfter != Instruction9900.st_NONE) {
+            updateStatus(ins.getInfo().stsetAfter);
         }
 
         /* save any operands */
         flushOperands(ins);
         
-        cpu.addCycles(ins.info.cycles + mop1.cycles + mop2.cycles);
+        cpu.addCycles(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
 
         block.cycles = cpu.getCurrentCycleCount();
         
@@ -180,22 +207,16 @@ public class Interpreter9900 implements Interpreter {
 		return ins;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.interpreter.Interpreter#getInstruction(v9t9.emulator.runtime.Cpu9900)
-	 */
-	public Instruction9900 getInstruction() {
-		return getInstruction(null);
-	}
-
     /** Fetch operands for instruction (runtime)
      * @param ins
      * @param memory2
      */
-    private void fetchOperands(Instruction9900 ins, Status st_) {
+    private void fetchOperands(Instruction9900 ins) {
         iblock.inst = ins;
         iblock.pc = (short) (iblock.inst.pc + iblock.inst.getSize());
         iblock.wp = (short) cpu.getWP();
-        iblock.status = st_;
+        iblock.st = cpu.getST();
+        status.expand(iblock.st);
         
         MachineOperand9900 mop1 = (MachineOperand9900) iblock.inst.getOp1();
         MachineOperand9900 mop2 = (MachineOperand9900) iblock.inst.getOp2();
@@ -251,19 +272,19 @@ public class Interpreter9900 implements Interpreter {
             }
         }
 
-        if ((ins.info.writes & InstInfo.INST_RSRC_ST) != 0) {
-			cpu.setStatus(iblock.status);
+        if ((ins.getInfo().writes & InstInfo.INST_RSRC_ST) != 0) {
+			cpu.setStatus(status);
 		}
 
         /* do this after flushing status */
-        if ((ins.info.writes & InstInfo.INST_RSRC_CTX) != 0) {
+        if ((ins.getInfo().writes & InstInfo.INST_RSRC_CTX) != 0) {
             /* update PC first */
             cpu.setPC((short) (iblock.inst.pc + iblock.inst.getSize()));
             cpu.contextSwitch(iblock.wp, iblock.pc);
         } else {
             /* flush register changes */
             cpu.setPC(iblock.pc);
-            if ((ins.info.writes & InstInfo.INST_RSRC_WP) != 0) {
+            if ((ins.getInfo().writes & InstInfo.INST_RSRC_WP) != 0) {
 				((Cpu9900) cpu).setWP(iblock.wp);
 			}
         }
@@ -272,7 +293,6 @@ public class Interpreter9900 implements Interpreter {
     /**
      */
     private void updateStatus(int handler) {
-    	Status9900 status = (Status9900) iblock.status;
         switch (handler) {
         case Instruction9900.st_NONE:
             return;
@@ -370,7 +390,6 @@ public class Interpreter9900 implements Interpreter {
      * @param ins
      */
     private void interpret(Instruction9900 ins) {
-    	Status9900 status = (Status9900) iblock.status;
         switch (ins.getInst()) {
         case InstTableCommon.Idata:
             break;

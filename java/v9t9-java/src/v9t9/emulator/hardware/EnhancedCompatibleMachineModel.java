@@ -11,14 +11,6 @@ import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.V9t9EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.SoundTMS9919;
-import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
-import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.CpuMetrics;
-import v9t9.emulator.runtime.cpu.Cpu9900;
-import v9t9.emulator.runtime.cpu.DumpFullReporter9900;
-import v9t9.emulator.runtime.cpu.DumpReporter9900;
-import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.emulator.runtime.interpreter.Interpreter9900;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;
@@ -28,7 +20,7 @@ import v9t9.engine.memory.WindowBankedMemoryEntry;
  * @author ejs
  *
  */
-public class EnhancedCompatibleMachineModel implements MachineModel {
+public class EnhancedCompatibleMachineModel extends BaseTI99MachineModel {
 
 	private V9t9EnhancedConsoleMemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
@@ -127,14 +119,5 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 		machine.getCruManager().add(0x1404, 1, bankSelector);
 		machine.getCruManager().add(0x1406, 1, bankSelector);
 		machine.getCruManager().add(0x1408, 1, bankSelector);
-	}
-
-	@Override
-	public Executor createExecutor(Cpu cpu, CpuMetrics metrics) {
-		return new Executor(cpu, metrics, 
-				new Interpreter9900((TI99Machine) cpu.getMachine()),
-				new CodeBlockCompilerStrategy(),
-				new DumpFullReporter9900((Cpu9900) cpu),
-				new DumpReporter9900((Cpu9900) cpu));
 	}
 }

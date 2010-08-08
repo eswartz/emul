@@ -8,28 +8,30 @@ package v9t9.engine.cpu;
  */
 public class InstInfo {
 	/**
-	 * 
+	 * machine cycles 
 	 */
 	public short cycles;
 	/**
-	 * 
+	 * st_xxx bit mask from Instruction*
 	 */
 	public int stsetBefore;
 	/**
-	 * 
+	 * st_xxx bit mask from Instruction*
 	 */
 	public int stsetAfter;
 	/**
+	 * st_xxx bit mask from Instruction*
 	 * 
 	 */
 	public int stReads;
 	/** operand is a jump (INST_JUMP_COND = conditional) */
 	public int jump;
 	/**
-	 * 
+	 * INST_RSRC_xxx mask
 	 */
 	public int reads;
 	/**
+	 * INST_RSRC_xxx mask
 	 * 
 	 */
 	public int writes;

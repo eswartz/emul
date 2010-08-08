@@ -40,6 +40,7 @@ import v9t9.engine.modules.ModuleLoader;
 import v9t9.engine.timer.FastTimer;
 import v9t9.engine.timer.FastTimerTask;
 import v9t9.keyboard.KeyboardState;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -92,6 +93,7 @@ abstract public class Machine {
 	protected  List<IModule> modules;
 	
 	protected  RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
+	private IInstructionFactory instructionFactory;
 
 	
     public Machine(MachineModel machineModel) {
@@ -112,7 +114,6 @@ abstract public class Machine {
     	settingPauseMachine.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				executor.interruptExecution = Boolean.TRUE;
 				synchronized (executionLock) {
 					executor.interruptExecution = Boolean.TRUE;
 					cpu.resetCycleCounts();
@@ -136,6 +137,8 @@ abstract public class Machine {
     	
     	cpu = new Cpu9900(this, 1000 / cpuTicksPerSec, vdp);
     	keyboardState = new KeyboardState(cpu);
+    	
+    	this.instructionFactory = machineModel.getInstructionFactory();
 	}
     
     
@@ -549,6 +552,14 @@ abstract public class Machine {
 
 	public IDsrManager getDsrManager() {
 		return dsrManager;
+	}
+
+
+	/**
+	 * @return
+	 */
+	public IInstructionFactory getInstructionFactory() {
+		return instructionFactory;
 	}
 }
 

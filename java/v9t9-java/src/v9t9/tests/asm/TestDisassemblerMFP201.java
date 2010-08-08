@@ -25,7 +25,16 @@ public class TestDisassemblerMFP201 extends TestCase {
 			data[theInstPc + i] = bytes[i];
 		}
 	    MemoryDomain domain = MemoryDomain.newFromArray(data);
-	    return InstTableMFP201.decodeInstruction(theInstPc, domain);
+	    RawInstruction inst = InstTableMFP201.decodeInstruction(theInstPc, domain);
+	    
+	    int sz = inst.getSize();
+	    assertTrue(inst+":"+sz, sz > 0);
+	    
+	    long opcode = 0;
+	    for (int i = 0; i < sz; i++)
+	    	opcode = (opcode << 8) | (domain.flatReadByte(theInstPc + i) & 0xff);
+	    assertEquals(inst+":"+sz, opcode, inst.opcode);
+	    return inst;
 	}
 	
 	protected void _testDecode(byte[] bytes, int op, MachineOperandMFP201... ops) {

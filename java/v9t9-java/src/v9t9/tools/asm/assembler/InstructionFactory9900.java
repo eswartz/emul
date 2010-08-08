@@ -8,6 +8,7 @@ import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.RawInstruction;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -57,6 +58,13 @@ public class InstructionFactory9900 implements IInstructionFactory {
 			bytes[idx*2+1] = (byte) (words[idx] & 0xff);
 		}
 		return bytes;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.IInstructionFactory#decodeInstruction(int, v9t9.engine.memory.MemoryDomain)
+	 */
+	@Override
+	public RawInstruction decodeInstruction(int pc, MemoryDomain domain) {
+		return InstTable9900.decodeInstruction(domain.flatReadWord(pc), pc, domain);
 	}
 	
 	public boolean supportsOp(int inst, int i, AssemblerOperand op) {

@@ -141,8 +141,7 @@ public class Executor {
     }
 
     public synchronized void interpretOneInstruction() {
-        interp.execute(null);
-        nInstructions++;
+        interp.executeChunk(1, this);
     }
 
     /** 
@@ -165,20 +164,7 @@ public class Executor {
 					cpu.checkAndHandleInterrupts();
 				}
 			} else {
-				// pretend the realtime and instructionListeners settings don't change often
-				if (instructionListeners == null) {
-					for (int i = 0; i < 1000 && !interruptExecution; i++) {
-						interp.executeFast(null);
-				        nInstructions++;
-						cpu.checkAndHandleInterrupts();
-					}
-				} else {
-					for (int i = 0; i < 1000 && !interruptExecution; i++) {
-						interp.execute(null);
-				        nInstructions++;
-						cpu.checkAndHandleInterrupts();
-					}
-				}
+				interp.executeChunk(1000, this);
 			}
 		}
     }

@@ -10,6 +10,7 @@ import v9t9.engine.cpu.InstructionMFP201;
 import v9t9.engine.cpu.MachineOperandMFP201;
 import v9t9.engine.cpu.PseudoPattern;
 import v9t9.engine.cpu.RawInstruction;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
@@ -260,6 +261,15 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 	public byte[] encodeInstruction(RawInstruction instruction) {
 		return InstTableMFP201.encode(instruction);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.IInstructionFactory#decodeInstruction(int, v9t9.engine.memory.MemoryDomain)
+	 */
+	@Override
+	public RawInstruction decodeInstruction(int pc, MemoryDomain domain) {
+		return InstTableMFP201.decodeInstruction(pc, domain);
+	}
+	
 	
 	public boolean supportsOp(int inst, int i, AssemblerOperand op) {
 		InstPatternMFP201[] patterns = InstTableMFP201.lookupEncodePatterns(inst);

@@ -81,13 +81,13 @@ public class HighLevelInstruction  implements Comparable<HighLevelInstruction>{
 	}
 
 	private void setFlags() {
-        if (inst.info.jump != 0) {
+        if (inst.getInfo().jump != 0) {
         	flags |= fEndsBlock;
             if (inst.getInst() == Inst9900.Ibl || inst.getInst() == Inst9900.Iblwp) {
 				flags |= fIsCall+fIsBranch;
 			} else if (inst.getInst() == Inst9900.Irtwp) {
 				flags |= fIsReturn+fIsBranch+fNotFallThrough; /* B *R11 detected later */
-			} else if (inst.info.jump == InstInfo.INST_JUMP_COND) {
+			} else if (inst.getInfo().jump == InstInfo.INST_JUMP_COND) {
 				flags |= fIsCondBranch+fIsBranch;
 			} else {
 				//if (inst == Ib && op1 instanceof MachineOperand 

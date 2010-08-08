@@ -82,7 +82,7 @@ public class FunctionInstructionRangeCompiler implements
 	        InstInfo ii = chunks[i];
 	        if (ii != null) {
 	        	// this will be the last entry for the block
-	        	if (false && ii.ins.info.jump == v9t9.engine.cpu.InstInfo.INST_JUMP_FALSE) {
+	        	if (false && ii.ins.getInfo().jump == v9t9.engine.cpu.InstInfo.INST_JUMP_FALSE) {
 	            	// not a jump, goto the next code block 
 	        		ii.chunk.append(new GOTO(info.doneInst));
 	            } else {

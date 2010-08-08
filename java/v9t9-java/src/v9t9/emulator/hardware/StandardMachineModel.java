@@ -28,7 +28,7 @@ import v9t9.engine.memory.MemoryModel;
  * @author ejs
  *
  */
-public class StandardMachineModel implements MachineModel {
+public class StandardMachineModel extends BaseTI99MachineModel {
 
 	private TI994AStandardConsoleMemoryModel memoryModel;
 
@@ -67,14 +67,5 @@ public class StandardMachineModel implements MachineModel {
 
 	public SoundProvider createSoundProvider(Machine machine) {
 		return new SoundTMS9919(machine, null);
-	}
-	
-	@Override
-	public Executor createExecutor(Cpu cpu, CpuMetrics metrics) {
-		return new Executor(cpu, metrics, 
-				new Interpreter9900((TI99Machine) cpu.getMachine()),
-				new CodeBlockCompilerStrategy(),
-				new DumpFullReporter9900((Cpu9900) cpu),
-				new DumpReporter9900((Cpu9900) cpu));
 	}
 }

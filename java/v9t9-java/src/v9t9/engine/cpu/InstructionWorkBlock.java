@@ -22,13 +22,12 @@ public final class InstructionWorkBlock  {
     /** values (in: original, out: changed, if needed) */
     public short pc, wp;
     /** status word (in/out) */
-    public Status status;
+    public short st;
     /** cycle count */
     public int cycles;
     
     public InstructionWorkBlock(CpuState cpu) {
     	this.cpu = cpu;
-    	this.status = cpu.createStatus();
     	this.domain = cpu.getConsole();
     	if (cpu instanceof CpuState9900)
     		this.wp = ((CpuState9900) cpu).getWP();
@@ -46,6 +45,6 @@ public final class InstructionWorkBlock  {
     	copy.val3 = val2;
     	copy.pc = pc;
     	copy.wp = wp;
-    	status.copyTo(copy.status);
+    	copy.st = st;
     }
 }

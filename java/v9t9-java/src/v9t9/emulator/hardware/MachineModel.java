@@ -10,6 +10,7 @@ import v9t9.emulator.runtime.cpu.CpuMetrics;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 
 /**
  * The model for a machine, which controls how its hardware is fit together.
@@ -27,4 +28,6 @@ public interface MachineModel {
 	SoundProvider createSoundProvider(Machine machine);
 	
 	Executor createExecutor(Cpu cpu, CpuMetrics metrics);
+
+	IInstructionFactory getInstructionFactory();
 }

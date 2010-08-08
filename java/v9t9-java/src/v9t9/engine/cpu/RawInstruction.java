@@ -9,14 +9,14 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	public int pc;
 	/** size in bytes */
 	private int size;
-	public int opcode;
+	public long opcode;
 	/** InstTable.I... */
 	private int inst;
 	private Operand op1;
 	private Operand op2;
 	private Operand op3;
 
-    public InstInfo info = new InstInfo();
+    private InstInfo info;
     
 	public RawInstruction() {
 	}
@@ -186,6 +186,17 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		else if (op == 2) op2 = oper;
 		else if (op == 3) op3 = oper;
 		else throw new IllegalArgumentException();
+	}
+
+	public void setInfo(InstInfo info) {
+		this.info = info;
+	}
+
+	public InstInfo getInfo() {
+		if (info == null) {
+			info = new InstInfo();
+		}
+		return info;
 	}
 	
 }
