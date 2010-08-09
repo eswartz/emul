@@ -94,6 +94,7 @@ public class AssemblerOperandParserStageMFP201 extends
 		AssemblerOperand reg = null;
 		int t = tokenizer.nextToken();
 		if (t != '(') {
+			tokenizer.pushBack();
 			AssemblerOperand res = expr;
 			try {
 				res = expr.resolve(assembler, null); 

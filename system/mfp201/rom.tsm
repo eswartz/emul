@@ -3,15 +3,9 @@
 ;
 ;
 
-; status bits
-
-INTS	equ >8
-
-; memory locations
-
-VRAM	equ >a000
-
-MODE0SCREEN equ VRAM
+    incl general.i
+    incl ram.i
+    incl video.i
 
 ; ============
 ; variables
@@ -20,16 +14,19 @@ MODE0SCREEN equ VRAM
 	aorg >f000
 	
 reset:
-	ldc #>e000, SP
+	ldc sysstack, SP
 	
 	; initialize watchdog
-	
-	; initialize peripherals
-	
-	; turn on interrupts
-	or INTS, SR
 
-	call clrscr
+	; initialize peripherals
+
+	; turn on interrupts
+	or ST_GIE, SR
+	
+	call vinit
+	
+	call vreset
+	
 	
 	br idle
 	

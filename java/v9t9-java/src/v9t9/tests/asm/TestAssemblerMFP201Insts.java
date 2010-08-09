@@ -64,6 +64,8 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("BRA >1234", new byte[] { 0x05, 0x12, 0x34 });
 		_testEncode("CALL >0234", new byte[] { 0x06, (byte) 0xF2, (byte) 0x31 });
 		_testEncode("CALLA >0234", new byte[] { 0x07, 0x02, 0x34 });
+		
+		_testEncode("CALL *R1+", new byte[] { 0x4C, 0x07, 0x01 });
 
 		_testEncode("CALL $+6", new byte[] { 0x06, (byte) 0x00, (byte) 0x03 });
 
@@ -103,6 +105,8 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("LDC >e000, R5", new byte[] { 0x0f, (byte) 0x85, (byte) 0x80, 0x38 });
 		_testEncode("OR >1234, R5", new byte[] { 0x08, (byte) 0xc5, (byte) 0xc6, 0x04 });
 		_testEncode("OR >edcb, R5", new byte[] { 0x08, (byte) 0xb5, (byte) 0xb9, (byte) 0x3b });
+		
+		_testEncode("NAND >40, @>1234(PC)", new byte[] { 0x41, 0xa, (byte) 0x8e, 0x08, 0x12, (byte) 0x34 });
 		
 		assertBadInst("OR >10");
 		assertBadInst("OR R5");
@@ -241,6 +245,9 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 			// -> XOR.B *R5, R1, *R5+
 		_testEncode("XOR.B R1, *R5+", new byte[] { 0x5B, (byte) 0xB5, (byte) 0x15 });
 		
+		_testEncode("CMP >ff, R5", new byte[] { 0x4c, (byte) 0xee, (byte) 0x5f, 0x00, (byte) 0xff });
+		_testEncode("CMP.B >ff, @>1234(PC)", new byte[] { 0x5d, (byte) 0xee, (byte) 0xef, (byte) 0xff, 0x12, (byte) 0x34 });
+
 			// can't reconcile
 		assertBadInst("SUB *R0, *R1");
 			// no immed in dest
@@ -252,7 +259,10 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("SEXT R1", new byte[] { (byte) 0x11 });
 		_testEncode("EXTL R1", new byte[] { 0x44, (byte) 0x11 });
 		_testEncode("EXTH R1", new byte[] { 0x48, (byte) 0x11 });
-		_testEncode("SWPB R1", new byte[] { 0x4C, (byte) 0x11 });
+		_testEncode("SWPB R1", new byte[] { 0x4c, (byte) 0x11 });
+		
+		_testEncode("SEXT *R5", new byte[] { 0x42, (byte) 0x15 });
+		_testEncode("EXTH *R5", new byte[] { 0x4A, (byte) 0x15 });
 		
 		_testEncode("SEXT *R11", new byte[] { 0x42, (byte) 0x1B });
 		_testEncode("SWPB *SP+", new byte[] { 0x4F, (byte) 0x1D });
@@ -294,7 +304,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("JEQ $+2", new byte[] { 0x71, (byte) 0x00 });
 		_testEncode("JNC $+2", new byte[] { 0x72, (byte) 0x00 });
 		_testEncode("JC $+2", new byte[] { 0x73, (byte) 0x00 });
-		_testEncode("JS $+2", new byte[] { 0x74, (byte) 0x00 });
+		_testEncode("JN $+2", new byte[] { 0x74, (byte) 0x00 });
 		_testEncode("JGE $+2", new byte[] { 0x75, (byte) 0x00 });
 		_testEncode("JL $+2", new byte[] { 0x76, (byte) 0x00 });
 		_testEncode("JMP $+2", new byte[] { 0x77, (byte) 0x00 });
@@ -311,7 +321,7 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("MOVEQ R1, R2", new byte[] { 0x79, 0x12 });
 		_testEncode("MOVNC R1, R2", new byte[] { 0x7a, 0x12 });
 		_testEncode("MOVC R1, R2", new byte[] { 0x7b, 0x12 });
-		_testEncode("MOVS R1, R2", new byte[] { 0x7c, 0x12 });
+		_testEncode("MOVN R1, R2", new byte[] { 0x7c, 0x12 });
 		_testEncode("MOVGE R1, R2", new byte[] { 0x7d, 0x12 });
 		_testEncode("MOVL R1, R2", new byte[] { 0x7e, 0x12 });
 		
@@ -408,6 +418,10 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		ins = getInst("CLR R1");
 		assertEquals("LDC #>0,R1", ins.toString());
 		assertEquals(2, ins.getSize());
+		
+		ins = getInst("CLR.B &>1234");
+		assertEquals("LDC #>0,&>1234", ins.toString());
+		assertEquals(5, ins.getSize());
 		
 		ins = getInst("SETO R1");
 		assertEquals("LDC #>FFFF,R1", ins.toString());

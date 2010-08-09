@@ -76,7 +76,7 @@ public class InstRow {
 	 */
 	public String getOp1() {
 		BaseMachineOperand mop1 = (BaseMachineOperand) before.inst.getOp1();
-		if (mop1.type == MachineOperand.OP_NONE) {
+		if (mop1 == null || mop1.type == MachineOperand.OP_NONE) {
 			return "";
 		}
 		StringBuilder builder = new StringBuilder();
@@ -93,7 +93,7 @@ public class InstRow {
 
 	public String getOp2() {
 		BaseMachineOperand mop2 = (BaseMachineOperand) before.inst.getOp2();
-		if (mop2.type == MachineOperand.OP_NONE) {
+		if (mop2 == null || mop2.type == MachineOperand.OP_NONE) {
 			return "";
 		}
 		StringBuilder builder = new StringBuilder();
@@ -107,5 +107,21 @@ public class InstRow {
 		}
 		return builder.toString();
 	}
-	
+
+	public String getOp3() {
+		BaseMachineOperand mop3 = (BaseMachineOperand) before.inst.getOp3();
+		if (mop3 == null || mop3.type == MachineOperand.OP_NONE) {
+			return "";
+		}
+		StringBuilder builder = new StringBuilder();
+		if (mop3.dest != Operand.OP_DEST_KILLED) {
+			builder.append(mop3.valueString(before.ea3, before.val3));
+		}
+		if (mop3.dest != Operand.OP_DEST_FALSE) {
+			if (builder.length() > 0)
+				builder.append(" => ");
+			builder.append(mop3.valueString(after.ea3, after.val3));
+		}
+		return builder.toString();
+	}
 }

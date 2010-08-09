@@ -58,22 +58,20 @@ public class InterpreterMFP201 implements Interpreter {
     	InstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
     	if (instructionListeners != null) {
     		while (numinsts-- > 0) {
-    			executeAndListen(instructionListeners);
-    			executor.nInstructions++;
+    			executeAndListen(instructionListeners, executor);
     			if (executor.interruptExecution)
     				break;
     		}
     	} else {
     		while (numinsts-- > 0) {
-    			executeFast();
-    			executor.nInstructions++;
+    			executeFast(executor);
     			if (executor.interruptExecution)
     				break;
     		}
     	}
     }
 
-    public void executeFast() {
+    public void executeFast(Executor executor) {
         InstructionMFP201 ins = getInstruction();
         InstInfo info = ins.getInfo();
 
@@ -81,7 +79,7 @@ public class InterpreterMFP201 implements Interpreter {
         fetchOperands(ins);
 
         /* execute */
-        interpret(ins);
+        interpret(ins, executor);
 
         /* save any operands */
         flushOperands(ins, iblock);
@@ -89,7 +87,7 @@ public class InterpreterMFP201 implements Interpreter {
         cpu.addCycles(info.cycles);
 	}
 
-	private void executeAndListen(InstructionListener[] instructionListeners) { 
+	private void executeAndListen(InstructionListener[] instructionListeners, Executor executor) { 
         InstructionMFP201 ins = getInstruction();
         
         iblock.cycles = cpu.getCurrentCycleCount();
@@ -101,7 +99,7 @@ public class InterpreterMFP201 implements Interpreter {
         this.iblock.copyTo(block);
 
         /* execute */
-        interpret(ins);
+        interpret(ins, executor);
 
         /* save any operands */
         flushOperands(ins, iblock);
@@ -216,11 +214,7 @@ public class InterpreterMFP201 implements Interpreter {
      * Execute an instruction
      * @param ins
      */
-    private void interpret(InstructionMFP201 ins) {
-    	MachineOperandMFP201 mop1 = (MachineOperandMFP201) ins.getOp1();
-        MachineOperandMFP201 mop2 = (MachineOperandMFP201) ins.getOp2();
-        MachineOperandMFP201 mop3 = (MachineOperandMFP201) ins.getOp3();
-        
+    private void interpret(InstructionMFP201 ins, Executor executor) {
         InstInfo info = ins.getInfo();
         
     	System.out.println(HexUtils.toHex4(ins.pc) + "(" + ins.getSize() + "): " + ins);
@@ -283,7 +277,8 @@ public class InterpreterMFP201 implements Interpreter {
         	break;
         	
         case Ipushn:
-        case Ipushnb:
+        case Ipushnb: {
+            MachineOperandMFP201 mop2 = (MachineOperandMFP201) ins.getOp2();
     		while (iblock.val1-- > 0) {
     			short val;
     			if (mop2.type == OP_REG) {
@@ -298,9 +293,11 @@ public class InterpreterMFP201 implements Interpreter {
     			cpu.push(val);
     		}
         	break;
+        }
         
         case Ipopn:
-        case Ipopnb:
+        case Ipopnb: {
+        	MachineOperandMFP201 mop2 = (MachineOperandMFP201) ins.getOp2();
     		while (iblock.val1-- > 0) {
     			short val = cpu.pop();
     			if (iblock.inst.byteop)
@@ -313,6 +310,7 @@ public class InterpreterMFP201 implements Interpreter {
     			}
     		}
         	break;
+        }
         	
         case Ijmp:
         	iblock.pc = iblock.val1;
@@ -440,7 +438,7 @@ public class InterpreterMFP201 implements Interpreter {
         	
         	while (lblock.val1 > 0) {
                 fetchOperands(subinst);
-                interpret(subinst);
+                interpret(subinst, executor);
                 flushOperands(subinst, iblock);		// note: changes to PC ignored
                 
                 cpu.addCycles(loopCycles);
@@ -468,6 +466,11 @@ public class InterpreterMFP201 implements Interpreter {
                 
         		lblock.val1--;
         		flushOperands(subinst, lblock);	// record change to loop
+        		
+        		if (executor.interruptExecution) {
+        			lblock.pc = (short) lblock.inst.pc;	// not really finished
+        			break;
+        		}
         	}
         	
         	lblock.copyTo(iblock);
@@ -488,5 +491,8 @@ public class InterpreterMFP201 implements Interpreter {
         	System.err.println("unhandled:" + ins);
         	break;
         }
+        
+		executor.nInstructions++;
+
     }
 }

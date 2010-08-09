@@ -748,6 +748,12 @@ public class Assembler {
 	public IInstructionFactory getInstructionFactory() {
 		return instructionFactory;
 	}
+	/**
+	 * @return
+	 */
+	public int getBasicAlignment() {
+		return basicSize;
+	}
 
 	
 }

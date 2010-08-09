@@ -3,8 +3,7 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.MachineOperandMFP201Inst;
+import v9t9.engine.cpu.*;
 import v9t9.tools.asm.assembler.InstructionFactoryMFP201;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.ResolveException;
@@ -25,6 +24,15 @@ public class LLInstOperand extends LLOperand {
 		super(original);
 		this.inst = inst;
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return inst.toString();
+	}
+	
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.ll.LLOperand#createMachineOperand(v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory)
@@ -33,7 +41,7 @@ public class LLInstOperand extends LLOperand {
 	public MachineOperand createMachineOperand(IMachineOperandFactory opFactory)
 			throws ResolveException {
 		return new MachineOperandMFP201Inst(
-				InstructionFactoryMFP201.INSTANCE.createRawInstruction(inst));
+				(InstructionMFP201) InstructionFactoryMFP201.INSTANCE.createRawInstruction(inst));
 	}
 
 	/* (non-Javadoc)

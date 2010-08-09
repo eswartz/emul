@@ -25,17 +25,13 @@ import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.MemoryModel;
+import v9t9.engine.memory.*;
 
 /**
  * The standard TI-99/4[A] console memory map.
  * @author ejs
  */
-public class TI994AStandardConsoleMemoryModel implements MemoryModel {
+public class TI994AStandardConsoleMemoryModel implements TIMemoryModel {
     /* CPU ROM/RAM */
     protected MemoryDomain CPU;
 

@@ -3,8 +3,9 @@ package v9t9.emulator.hardware.memory;
 import java.io.*;
 
 import v9t9.emulator.common.*;
-import v9t9.emulator.hardware.TI994A;
+import v9t9.emulator.hardware.*;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
+import v9t9.emulator.hardware.memory.mmio.*;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.*;
 
@@ -21,6 +22,8 @@ public class MFP201MemoryModel implements MemoryModel {
     /** video memory */
     protected MemoryDomain video;
 	protected Memory memory;
+	private VdpMmio vdpMmio;
+	private SoundMmio soundMmio;
     
 	public MFP201MemoryModel() {
 		super();
@@ -109,7 +112,24 @@ public class MFP201MemoryModel implements MemoryModel {
 	}
 	
 	protected void defineMmioMemory(TI994A machine) {
+		vdpMmio = machine.getVdpMmio();
+		soundMmio = machine.getSoundMmio();
+		
 		this.memory.addAndMap(new MemoryEntry("MMIO", console, 0xFC00, 0x0400,
-                new V9t9EnhancedConsoleMmioArea(machine)));
+                new MFP201ConsoleMmioArea(machine)));
+	}
+
+	/**
+	 * @return
+	 */
+	public VdpMmio getVdpMmio() {
+		return vdpMmio;
+	}
+
+	/**
+	 * @return
+	 */
+	public SoundMmio getSoundMmio() {
+		return soundMmio;
 	}
 }

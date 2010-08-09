@@ -62,13 +62,14 @@ public class InstMFP201 {
 	public static final int Icmpr = 46;
 	public static final int Icmprb = 47;
 
+	public static final int Ildc = 48;
+	public static final int Ildcb = 49;
+
 	public static final int _IlastArithOp = 47;
 
 	public static final int _IlastPossibleThreeOp = 47;
 
 	public static final int _IlastPossibleByteOp = 51;
-	
-	public static final int Ildc = 48;
 	
 	public static final int Isext = 56;
 	public static final int Iextl = 58;
@@ -181,12 +182,8 @@ public class InstMFP201 {
 	
 	public static final int Pclr = 200;
 	public static final int Pclrb = 201;
-	public static final int Pclrq = 202;
-	public static final int Pclrbq = 203;
 	public static final int Pseto = 204;
 	public static final int Psetob = 205;
-	public static final int Psetoq = 206;
-	public static final int Psetobq = 207;
 	public static final int Pinv = 208;
 	public static final int Pinvb = 209;
 

@@ -29,6 +29,8 @@ class InstLabelProvider extends BaseLabelProvider implements ITableLabelProvider
 			return row.getOp1();
 		case 3:
 			return row.getOp2();
+		case 4:
+			return row.getOp3();
 		}
 		return null;
 	}

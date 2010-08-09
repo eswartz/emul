@@ -244,7 +244,7 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
 	
 	private AssemblerOperand coerceAssemblerOperandType(AssemblerInstruction inst, AssemblerOperand op, int optype) {
 		if (optype == InstPatternMFP201.REG
-    			|| optype == InstPatternMFP201.GEN) {
+				/*|| optype == InstPatternMFP201.GEN*/) {
     		if (op instanceof SymbolOperand)
     			return new RegisterOperand((AssemblerOperand) op);
     	}

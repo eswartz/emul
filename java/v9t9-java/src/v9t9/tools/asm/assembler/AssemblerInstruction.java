@@ -42,7 +42,7 @@ public abstract class AssemblerInstruction extends BaseAssemblerInstruction impl
 	throws ResolveException {
 		int pc = assembler.getPc();
 		// instructions and associated labels are bumped when following uneven data
-		if ((pc & 1) != 0 && getInst() != InstTableCommon.Ibyte) {
+		if (assembler.getBasicAlignment() > 1 && (pc & 1) != 0 && getInst() != InstTableCommon.Ibyte) {
 			pc = (pc + 1) & 0xfffe;
 			assembler.setPc(pc);
 		

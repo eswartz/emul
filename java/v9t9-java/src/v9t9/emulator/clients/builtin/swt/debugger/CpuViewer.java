@@ -217,7 +217,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		gc.dispose();
 
 		TableColumn column;
-		String[] props = new String[5];
+		String[] props = new String[6];
 		
 		props[0] = "Addr";
 		column = new TableColumn(table, SWT.LEFT);
@@ -240,6 +240,12 @@ public class CpuViewer extends Composite implements InstructionListener {
 		props[3] = "Op2";
 		column = new TableColumn(table, SWT.LEFT);
 		column.setText(props[3]);
+		column.setMoveable(true);
+		column.setWidth(charWidth * 20);
+
+		props[4] = "Op3";
+		column = new TableColumn(table, SWT.LEFT);
+		column.setText(props[4]);
 		column.setMoveable(true);
 		column.setWidth(charWidth * 20);
 

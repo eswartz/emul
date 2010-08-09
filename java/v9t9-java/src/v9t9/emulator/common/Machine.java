@@ -370,6 +370,7 @@ abstract public class Machine {
 
 	public void setNotRunning() {
 		bAlive = false;
+		executor.interruptExecution = Boolean.TRUE;
 		synchronized (executionLock) {
 			bExecuting = false;
 			executionLock.notifyAll();

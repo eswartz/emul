@@ -154,6 +154,12 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 						op3 = op1;
 					}
 				}
+				
+				if (op3 == null && rawInst.getOp3() == null && op1 != null && op1.isConst() && op2 != null && !op2.isRegister()) {
+					// third operand is SR -- go ahead and set it here
+					rawInst.setOp3(MachineOperandMFP201
+							.createNonWritingSROperand());
+				}
 			}
 			
 			// full 3-op instructions
@@ -225,7 +231,11 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		if (op3 != null)
 			rawInst.setOp3(op3.createMachineOperand(opFactory));
 		
-		InstTableMFP201.coerceOperandTypes(rawInst);
+		try {
+			InstTableMFP201.coerceOperandTypes(rawInst);
+		} catch (IllegalArgumentException e) {
+			throw new ResolveException(rawInst, op1, e.getMessage());
+		}
 		//InstTableMFP201.calculateInstructionSize(rawInst);
 		return rawInst;
 	}
@@ -348,6 +358,8 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		try {
 			byte[] bytes = ins.getBytes(INSTANCE);
 			return bytes.length;
+		} catch (IllegalArgumentException e) {
+			return 1;
 		} catch (ResolveException e) {
 			return 1;
 		}

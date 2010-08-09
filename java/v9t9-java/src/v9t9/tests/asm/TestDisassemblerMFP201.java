@@ -71,6 +71,11 @@ public class TestDisassemblerMFP201 extends TestCase {
 				Icalla, createImmediate(0x234));
 		_testDecode(new byte[] { 0x04, (byte) 0xff, (byte) 0xff }, 
 				Ibr, createPCRelativeOperand(0));
+		
+
+		_testDecode(new byte[] { 0x4C, 0x07, 0x01 },
+				"CALL *R1+");
+
 				
 	}
 	/** The immediate encodings of these should be selected */
@@ -98,7 +103,11 @@ public class TestDisassemblerMFP201 extends TestCase {
 		
 		_testDecode(new byte[] { 0x0f, (byte) 0x91, (byte) 0x60 }, "LDC >ff01, R1");
 		_testDecode(new byte[] { 0x0f, (byte) 0xfe, 0x0f }, "LDC >7f, PC");
+		//_testDecode(new byte[] { 0x4c, (byte) 0xee, (byte) 0x5f, 0x00, (byte) 0xff }, "CMP >FF, R5"); 
 
+		_testDecode(new byte[] { 0x41, 0xa, (byte) 0x8e, 0x08, 0x12, (byte) 0x34 }, "NAND >40, @>1234(PC)");
+
+		
 		// larger format immediate
 		//_testEncode("LDC >e000, R5", new byte[] { 0x4c, 0x7f, (byte) 0xe5, (byte) 0xe0, 0x00 });
 		_testDecode(new byte[] { 0x0f, (byte) 0x85, (byte) 0x80, 0x38 }, "LDC >e000, R5");
@@ -181,6 +190,11 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { (byte) 0xe5, (byte) 0x1F }, "CMP R5, R1");
 		_testDecode(new byte[] { 0x4C, (byte) 0xe5, (byte) 0x1F }, "CMP *R5+, R1");
 
+		_testDecode(new byte[] { 0x4c, (byte) 0xee, (byte) 0x5f, 0x00, (byte) 0xff }, "CMP >ff, R5");
+		_testDecode(new byte[] { 0x5d, (byte) 0xee, (byte) 0xef, (byte) 0xff, 0x12, (byte) 0x34 }, "CMP.B >ff, @>1234(PC)");
+		
+
+		
 		// the opcode is for ADD/ADC here, not AND/NAND
 		_testDecode(new byte[] { (byte) 0xC5, (byte) 0x1F }, "TST R5, R1");
 		_testDecode(new byte[] { (byte) 0xD5, (byte) 0x1F }, "TSTN R5, R1");
@@ -216,6 +230,9 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x44, (byte) 0x11 }, "EXTL R1");
 		_testDecode(new byte[] { 0x48, (byte) 0x11 }, "EXTH R1");
 		_testDecode(new byte[] { 0x4C, (byte) 0x11 }, "SWPB R1");
+		
+		_testDecode(new byte[] { 0x42, (byte) 0x15 }, "SEXT *R5");
+		_testDecode(new byte[] { 0x4A, (byte) 0x15 }, "EXTH *R5");
 		
 		_testDecode(new byte[] { 0x42, (byte) 0x1B }, "SEXT *R11");
 		_testDecode(new byte[] { 0x4F, (byte) 0x1D }, "SWPB *SP+");
@@ -255,7 +272,7 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x71, (byte) 0x00 }, "JEQ $+>2");
 		_testDecode(new byte[] { 0x72, (byte) 0x00 }, "JNC $+>2");
 		_testDecode(new byte[] { 0x73, (byte) 0x00 }, "JC $+>2");
-		_testDecode(new byte[] { 0x74, (byte) 0x00 }, "JS $+>2");
+		_testDecode(new byte[] { 0x74, (byte) 0x00 }, "JN $+>2");
 		_testDecode(new byte[] { 0x75, (byte) 0x00 }, "JGE $+>2");
 		_testDecode(new byte[] { 0x76, (byte) 0x00 }, "JL $+>2");
 		_testDecode(new byte[] { 0x77, (byte) 0x00 }, "JMP $+>2");
@@ -272,7 +289,7 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x79, 0x12 }, "MOVEQ R1, R2");
 		_testDecode(new byte[] { 0x7a, 0x12 }, "MOVNC R1, R2");
 		_testDecode(new byte[] { 0x7b, 0x12 }, "MOVC R1, R2");
-		_testDecode(new byte[] { 0x7c, 0x12 }, "MOVS R1, R2");
+		_testDecode(new byte[] { 0x7c, 0x12 }, "MOVN R1, R2");
 		_testDecode(new byte[] { 0x7d, 0x12 }, "MOVGE R1, R2");
 		_testDecode(new byte[] { 0x7e, 0x12 }, "MOVL R1, R2");
 		
