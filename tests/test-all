@@ -50,7 +50,7 @@ fi
 rm -rf logs || exit 1
 mkdir logs || exit 1
 
-SUBSET1="\
+CFLAGS1="\
  -DSERVICE_RunControl=0 \
  -DSERVICE_Breakpoints=0 \
  -DSERVICE_Memory=0 \
@@ -61,11 +61,11 @@ SUBSET1="\
  -DSERVICE_LineNumbers=0 \
  -DSERVICE_Expressions=0"
 
-SUBSET2="\
+CFLAGS2="\
  -DENABLE_SymbolsProxy=1 \
  -DENABLE_LineNumbersProxy=1"
 
-SUBSET3="\
+CFLAGS3="\
   -DENABLE_DebugContext=0\
   -DENABLE_ELF=0\
   -DSERVICE_StackTrace=0\
@@ -200,13 +200,25 @@ function get_make_options()
 {
   case $CC in
   gcc)
-    echo "OPSYS=$OPSYS CONF=$CONF CFLAGS=-Werror"
+    if [ -z "$CFLAGS" ] ; then
+      echo "OPSYS=$OPSYS CONF=$CONF CFLAGS=-Werror"
+    else
+      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=-Werror $CFLAGS'"
+    fi
     ;;
   g++)
-    echo "OPSYS=$OPSYS CONF=$CONF CC=g++ CFLAGS=-Werror"
+    if [ -z "$CFLAGS" ] ; then
+      echo "OPSYS=$OPSYS CONF=$CONF CC=g++ CFLAGS=-Werror"
+    else
+      echo "OPSYS=$OPSYS CONF=$CONF CC=g++ 'CFLAGS=-Werror $CFLAGS'"
+    fi
     ;;
   *)
-    echo "OPSYS=$OPSYS CONF=$CONF"
+    if [ -z "$CFLAGS" ] ; then
+      echo "OPSYS=$OPSYS CONF=$CONF"
+    else
+      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=$CFLAGS'"
+    fi
     ;;
   esac
 }
@@ -219,6 +231,8 @@ function build_and_start_server()
   date >logs/$LOGFILE
   echo "$CONF build on $HOST $VM $VMNAME" >>logs/$LOGFILE
   echo "Compiler: $CC" >>logs/$LOGFILE
+  echo "Options: `get_make_options`" >>logs/$LOGFILE
+  echo >>logs/$LOGFILE
   if $SSH "cd $TRUNK/server; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
     echo "<img src=\"../icons/accept.png\" title=\"Server OK\"/>" >>$HTML
@@ -253,6 +267,8 @@ function build_and_test_agent()
   date >logs/$LOGFILE
   echo "$CONF build on $HOST $VM $VMNAME" >>logs/$LOGFILE
   echo "Compiler: $CC" >>logs/$LOGFILE
+  echo "Options: `get_make_options`" >>logs/$LOGFILE
+  echo >>logs/$LOGFILE
   if $SSH "cd $TRUNK/agent; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
     local AGENT_LFILE=$BUILD/logs/agent-$HOST.txt
@@ -402,10 +418,11 @@ do
         for CC in msvc msvc++
         do
 
+          CFLAGS=
           build_and_start_server
 
           SEQ=1
-          for SUBSET in "" "$SUBSET1" "$SUBSET2" "$SUBSET3"
+          for CFLAGS in "" "$CFLAGS1" "$CFLAGS2" "$CFLAGS3"
           do
             build_and_test_agent
             SEQ=`expr $SEQ + 1`
@@ -432,10 +449,11 @@ do
       for CC in gcc g++
       do
 
+        CFLAGS=
         build_and_start_server
 
         SEQ=1
-        for SUBSET in "" "$SUBSET1" "$SUBSET2" "$SUBSET3"
+        for CFLAGS in "" "$CFLAGS1" "$CFLAGS2" "$CFLAGS3"
         do
           build_and_test_agent
           SEQ=`expr $SEQ + 1`
