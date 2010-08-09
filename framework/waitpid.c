@@ -112,12 +112,12 @@ void add_waitpid_process(int pid) {
         thread = (WaitPIDThread *)loc_alloc_zero(sizeof(WaitPIDThread));
         thread->next = threads;
         threads = thread;
-        check_error_win32((thread->handles[thread->handle_cnt++] = CreateSemaphore(NULL, 0, 1, NULL)) != NULL);
+        check_error_win32((thread->handles[thread->handle_cnt++] = CreateEvent(NULL, 0, 0, NULL)) != NULL);
         check_error_win32(CreateThread(NULL, 0, waitpid_thread_func, thread, 0, &thread->thread) != NULL);
     }
     check_error_win32((prs = OpenProcess(PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, pid)) != NULL);
     thread->handles[thread->handle_cnt++] = prs;
-    check_error_win32(ReleaseSemaphore(thread->handles[0], 1, 0));
+    check_error_win32(SetEvent(thread->handles[0]));
     check_error_win32(ReleaseSemaphore(semaphore, 1, 0));
 }
 
