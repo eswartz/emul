@@ -106,8 +106,6 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		_testEncode("OR >1234, R5", new byte[] { 0x08, (byte) 0xc5, (byte) 0xc6, 0x04 });
 		_testEncode("OR >edcb, R5", new byte[] { 0x08, (byte) 0xb5, (byte) 0xb9, (byte) 0x3b });
 		
-		_testEncode("NAND >40, @>1234(PC)", new byte[] { 0x41, 0xa, (byte) 0x8e, 0x08, 0x12, (byte) 0x34 });
-		
 		assertBadInst("OR >10");
 		assertBadInst("OR R5");
 		assertBadInst("OR");
@@ -247,6 +245,11 @@ public class TestAssemblerMFP201Insts extends BaseTest {
 		
 		_testEncode("CMP >ff, R5", new byte[] { 0x4c, (byte) 0xee, (byte) 0x5f, 0x00, (byte) 0xff });
 		_testEncode("CMP.B >ff, @>1234(PC)", new byte[] { 0x5d, (byte) 0xee, (byte) 0xef, (byte) 0xff, 0x12, (byte) 0x34 });
+		
+		_testEncode("NAND >40, @>1234(PC)", new byte[] { 0x41, 0xa, (byte) 0x8e, 0x08, 0x12, (byte) 0x34 });
+		
+		_testEncode("TST *R1+, *R3+", new byte[] { 0x4f, (byte) 0xc1, 0x3f });
+		_testEncode("AND *R1+, *R3+", new byte[] { 0x4f, (byte) 0x91, 0x3f });
 
 			// can't reconcile
 		assertBadInst("SUB *R0, *R1");

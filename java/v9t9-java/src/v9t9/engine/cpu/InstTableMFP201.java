@@ -1376,7 +1376,10 @@ public class InstTableMFP201 {
 					AdOp = 2;
 				} else {
 					// make non-writing inst
-					inst.setInst(inst.getInst() + 2);
+					if (Ad == 0)
+						inst.setInst(inst.getInst() + 2);
+					else
+						AdOp = 2;
 				}
 				inst.setOp3(MachineOperandMFP201.createNonWritingSROperand());
 			}

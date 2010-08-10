@@ -193,12 +193,15 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x4c, (byte) 0xee, (byte) 0x5f, 0x00, (byte) 0xff }, "CMP >ff, R5");
 		_testDecode(new byte[] { 0x5d, (byte) 0xee, (byte) 0xef, (byte) 0xff, 0x12, (byte) 0x34 }, "CMP.B >ff, @>1234(PC)");
 		
-
-		
 		// the opcode is for ADD/ADC here, not AND/NAND
 		_testDecode(new byte[] { (byte) 0xC5, (byte) 0x1F }, "TST R5, R1");
 		_testDecode(new byte[] { (byte) 0xD5, (byte) 0x1F }, "TSTN R5, R1");
-		
+
+		// SR=15 but mem/byte uses dest, so it's still AND
+		_testDecode(new byte[] { 0x4f, (byte) 0x91, 0x3f }, "AND *R1+, *R3+");
+		_testDecode(new byte[] { 0x4f, (byte) 0xc1, 0x3f }, "TST *R1+, *R3+");
+
+
 		// pseudo
 			// CLR -> XOR r,r,r
 		_testDecode(new byte[] { (byte) 0xB1, (byte) 0x11 }, "XOR R1, R1, R1");
