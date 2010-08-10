@@ -475,7 +475,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            children = ctx != null && ctx.hasState() ? children_stack : children_exec;
+            if (ctx != null && ctx.hasState()) {
+                if (!state.validate(done)) return false;
+                Throwable state_error = state.getError();
+                TCFContextState state_data = state.getData();
+                result.setHasChilren(state_error == null && state_data != null && state_data.is_suspended);
+                return true;
+            }
+            else {
+                children = children_exec;
+            }
         }
         else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
