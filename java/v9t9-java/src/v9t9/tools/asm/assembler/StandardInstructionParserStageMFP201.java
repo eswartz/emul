@@ -87,17 +87,19 @@ public class StandardInstructionParserStageMFP201 implements IInstructionParserS
     		return null;
     	inst.setInst(instNum);
         
+    	boolean isCond = InstTableMFP201.isCondInst(instNum);
+    	
     	boolean isStep = InstTableMFP201.isStepInst(instNum);
     	boolean isLoop = InstTableMFP201.isLoopInst(instNum);
     	int count = 0;
     	t = tokenizer.nextToken();
     	if (t != AssemblerTokenizer.EOF && t != ';') {
-    		if (isStep) {
+    		if (isStep || isCond) {
     			if (t != ':')
     				tokenizer.pushBack();
     			HLInstruction subinst = (HLInstruction) doParse(tokenizer);
     			if (subinst == null)
-    				throw new ParseException("expected instruction after STEP");
+    				throw new ParseException("expected instruction after " + name);
 				op1 = new InstOperand(subinst);
     		}
     		else {

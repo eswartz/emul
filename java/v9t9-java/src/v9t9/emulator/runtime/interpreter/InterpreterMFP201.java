@@ -240,8 +240,6 @@ public class InterpreterMFP201 implements Interpreter {
         	
         case Ior:
         case Iorb:
-        case Iorq:
-        case Iorbq:
         	iblock.val2 |= iblock.val1;
         	break;
         	
@@ -261,8 +259,6 @@ public class InterpreterMFP201 implements Interpreter {
         	
         case Ixor:
         case Ixorb:
-        case Ixorq:
-        case Ixorbq:
         	iblock.val2 ^= iblock.val1;
         	break;
         	
@@ -316,6 +312,7 @@ public class InterpreterMFP201 implements Interpreter {
         	iblock.pc = iblock.val1;
         	info.cycles++;
         	break;
+        	/*
         case Ijc:
         	if (status.isC()) {
 	        	iblock.pc = iblock.val1;
@@ -358,38 +355,10 @@ public class InterpreterMFP201 implements Interpreter {
         		info.cycles++;
         	}
         	break;
-
+*/
         case Imov:
         case Imovb:
         	iblock.val2 = iblock.val1;
-        	break;
-        case Imovc:
-        case Imovcb:
-        	iblock.val2 = status.isC() ? iblock.val1 : iblock.val2;
-        	break;
-        case Imovnc:
-        case Imovncb:
-        	iblock.val2 = !status.isC() ? iblock.val1 : iblock.val2;
-        	break;
-        case Imoveq:
-        case Imoveqb:
-        	iblock.val2 = status.isEQ() ? iblock.val1 : iblock.val2;
-        	break;
-        case Imovne:
-        case Imovneb:
-        	iblock.val2 = status.isNE() ? iblock.val1 : iblock.val2;
-        	break;
-        case Imovn:
-        case Imovnb:
-        	iblock.val2 = status.isN() ? iblock.val1 : iblock.val2;
-        	break;
-        case Imovge:
-        case Imovgeb:
-        	iblock.val2 = status.isGE() ? iblock.val1 : iblock.val2;
-        	break;
-        case Imovl:
-        case Imovlb:
-        	iblock.val2 = status.isLT() ? iblock.val1 : iblock.val2;
         	break;
 
         case Iadd:
@@ -422,13 +391,9 @@ public class InterpreterMFP201 implements Interpreter {
         	break;
 
         case Iloop: 
-        case Iloopc: 
         case Iloopnc: 
         case Iloopeq: 
         case Iloopne: 
-        case Iloopn: 
-        case Iloopge: 
-        case Iloopl: 
         {
         	InstructionWorkBlock lblock = new InstructionWorkBlock(cpu);
         	iblock.copyTo(lblock);
@@ -445,20 +410,12 @@ public class InterpreterMFP201 implements Interpreter {
                 
                 boolean term = false;
                 switch (ins.getInst()) {
-                case Iloopc: 
-                	term = status.isC(); break;
                 case Iloopnc: 
                 	term = !status.isC(); break;
                 case Iloopeq: 
                 	term = status.isEQ(); break;
                 case Iloopne: 
                 	term = status.isNE(); break;
-                case Iloopn: 
-                	term = status.isN(); break;
-                case Iloopge: 
-                	term = status.isGE(); break;
-                case Iloopl: 
-                	term = status.isLT(); break;
                 }
                 
                 if (term)

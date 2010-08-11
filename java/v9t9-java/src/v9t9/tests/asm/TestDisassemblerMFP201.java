@@ -43,9 +43,13 @@ public class TestDisassemblerMFP201 extends TestCase {
 		for (int o = 0; o < ops.length; o++)
 			assertEquals(inst+"", ops[o], inst.getOp(o+1));
 	}
+	
+	protected void assertSameInst(String str, RawInstruction inst) {
+		assertEquals(str, str.replaceAll(">|#|(?<=,)\\s+", "").toLowerCase(), (inst+"").replaceAll(">|#|(?<=,)\\s+", "").toLowerCase());
+	}
 	protected void _testDecode(byte[] bytes, String str) {
 		RawInstruction inst = decode(bytes);
-		assertEquals(str, str.replaceAll("#|(?<=,)\\s+", "").toLowerCase(), (inst+"").replaceAll("#|(?<=,)\\s+", "").toLowerCase());
+		assertSameInst(str, inst);
 		assertEquals(bytes.length, inst.getSize());
 	}
 	protected void _testDecodeJump(byte[] bytes, int destPc, String str) {
@@ -95,21 +99,26 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x09, (byte) 0xf5, (byte) 0x1f }, "AND >ff, R5");
 		
 		_testDecode(new byte[] { 0x0a, (byte) 0x80, 0x20 }, "NAND >100, R0");
-		_testDecode(new byte[] { 0x0b, (byte) 0x80, 0x20 }, "XOR >100, R0");
-		_testDecode(new byte[] { 0x0c, (byte) 0x80, 0x20 }, "ADD >100, R0");
-		_testDecode(new byte[] { 0x0d, (byte) 0x80, 0x20 }, "ADC >100, R0");
-		_testDecode(new byte[] { 0x0e, (byte) 0x80, 0x20 }, "SUB >100, R0");
+		_testDecode(new byte[] { 0x0b, (byte) 0x80, 0x20 }, "ADD >100, R0");
+		_testDecode(new byte[] { 0x0c, (byte) 0x80, 0x20 }, "SUB >100, R0");
+		_testDecode(new byte[] { 0x0d, (byte) 0x80, 0x20 }, "CMP >100, R0");
+		_testDecode(new byte[] { 0x0e, (byte) 0x80, 0x20 }, "TST >100, R0");
 		_testDecode(new byte[] { 0x0f, (byte) 0x80, 0x20 }, "LDC >100, R0");
 		
 		_testDecode(new byte[] { 0x0f, (byte) 0x91, (byte) 0x60 }, "LDC >ff01, R1");
 		_testDecode(new byte[] { 0x0f, (byte) 0xfe, 0x0f }, "LDC >7f, PC");
-		//_testDecode(new byte[] { 0x4c, (byte) 0xee, (byte) 0x5f, 0x00, (byte) 0xff }, "CMP >FF, R5"); 
-
+		_testDecode(new byte[] { 0x0d, (byte) 0xf5, 0x1f }, "CMP >FF, R5"); 
+		_testDecode(new byte[] { 0x08, (byte) 0xff, 0x1f }, "OR >ff, SR");
+		
 		_testDecode(new byte[] { 0x41, 0xa, (byte) 0x8e, 0x08, 0x12, (byte) 0x34 }, "NAND >40, @>1234(PC)");
+		
+		_testDecode(new byte[] { 0x5a, 0xe, (byte) 0xe9, 0x4a }, "TST.B #>FE56, *R9");
+
+		_testDecode(new byte[] { 0x51, 0x0d, (byte) 0xfe, (byte) 0x1f, 0x12, 0x34 }, "CMP.B >ff, @>1234(PC)");
 
 		
 		// larger format immediate
-		//_testEncode("LDC >e000, R5", new byte[] { 0x4c, 0x7f, (byte) 0xe5, (byte) 0xe0, 0x00 });
+		//_testDecode("LDC >e000, R5", new byte[] { 0x4c, 0x7f, (byte) 0xe5, (byte) 0xe0, 0x00 });
 		_testDecode(new byte[] { 0x0f, (byte) 0x85, (byte) 0x80, 0x38 }, "LDC >e000, R5");
 		_testDecode(new byte[] { 0x08, (byte) 0xc5, (byte) 0xc6, 0x04 }, "OR >1234, R5");
 		_testDecode(new byte[] { 0x08, (byte) 0xb5, (byte) 0xb9, (byte) 0x3b }, "OR >edcb, R5");
@@ -139,6 +148,16 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { (byte) 0xCD, (byte) 0xED }, "ADD SP, #2, SP");
 		_testDecode(new byte[] { 0x50, (byte) 0xCD, (byte) 0xED }, "ADD.B SP, #2, SP");
 
+		// immediates with implicit constants need to swap ops to avoid using special value
+		_testDecode(new byte[] { (byte) 0xC4, (byte) 0xD4 }, "ADD R4, #1, R4");
+		_testDecode(new byte[] { (byte) 0xCD, (byte) 0xED }, "ADD SP, #2, SP");
+		
+		// TODO
+		_testDecode(new byte[] { (byte) 0xAF, (byte) 0xDF }, "NAND SR, #1");
+		
+		_testDecode(new byte[] { (byte) 0xCD, (byte) 0x4f }, "ADD SP, R4");
+
+		
 		// make sure we can use immediates with the long SBB form
 		_testDecode(new byte[] { 0x5c, (byte) 0xfe, (byte) 0x00, 123 }, "SBB.B >7B, R0, R0");
 		// implicit SR
@@ -146,11 +165,15 @@ public class TestDisassemblerMFP201 extends TestCase {
 		
 		_testDecode(new byte[] { 0x4C, (byte) 0xCE, (byte) 0x74, (byte) 0xf0, 0x00 }, "ADD >F000, R7, R4");
 		_testDecode(new byte[] { 0x5C, (byte) 0xCE, (byte) 0x74, (byte) 0x9C }, "ADD.B >9C, R7, R4");
-		
+
+		// immediates with implicit constants
+		_testDecode(new byte[] { (byte) 0xC4, (byte) 0xD4 }, "ADD R4, #1, R4");
+		_testDecode(new byte[] { (byte) 0xCD, (byte) 0xED }, "ADD SP, #2, SP");
+
 		// but this uses a normal implicit constant register 
-		_testDecode(new byte[] { (byte) 0xE1, (byte) 0xF1 }, "SUB R1, #0, R1");
+		_testDecode(new byte[] { (byte) 0xD1, (byte) 0xF1 }, "ADC R1, #0, R1");
 		_testDecode(new byte[] { (byte) 0xE1, (byte) 0xD1 }, "SUB R1, #1, R1");
-		_testDecode(new byte[] { (byte) 0xE1, (byte) 0xE1 }, "SUB R1, #2, R1");
+		_testDecode(new byte[] { (byte) 0xC1, (byte) 0xE1 }, "ADD R1, #2, R1");
 		
 		// no byte form here; accessing memory
 		_testDecode(new byte[] { 0x4E, (byte) 0xCE, (byte) 0x74, (byte) 0xff, (byte) 0x9C }, "ADD >FF9C, R7, *R4");
@@ -165,41 +188,14 @@ public class TestDisassemblerMFP201 extends TestCase {
 	public void testEncode3OpWith2() throws Exception {
 		// the first source operand becomes the dest operand
 			// OR R1, R5, R1
-		_testDecode(new byte[] { (byte) 0x81, (byte) 0x51 }, "OR R1, R5, R1");
-		_testDecode(new byte[] { 0x50, (byte) 0xf1, (byte) 0x51 }, "SBB.B R1, R5, R1");
-		_testDecode(new byte[] { 0x48, (byte) 0x95, (byte) 0x11 }, "AND *R5, R1, R1");
-		_testDecode(new byte[] { 0x4C, (byte) 0xC5, (byte) 0x11 }, "ADD *R5+, R1, R1");
-		_testDecode(new byte[] { 0x48, (byte) 0xE5, (byte) 0x11 }, "SUB *R5, R1, R1");
+		_testDecode(new byte[] { (byte) 0x85, (byte) 0x1f }, "OR R5, R1");
+		_testDecode(new byte[] { 0x50, (byte) 0xf5, (byte) 0x1f }, "SBB.B R5, R1");
+		_testDecode(new byte[] { 0x48, (byte) 0x95, (byte) 0x1f }, "AND *R5, R1");
+		_testDecode(new byte[] { 0x4C, (byte) 0xC5, (byte) 0x1f }, "ADD *R5+, R1");
+		_testDecode(new byte[] { 0x48, (byte) 0xE5, (byte) 0x1f }, "SUB *R5, R1");
 
-		// immediates with implicit constants
-		_testDecode(new byte[] { (byte) 0xC4, (byte) 0xD4 }, "ADD R4, #1, R4");
-		_testDecode(new byte[] { (byte) 0xCD, (byte) 0xED }, "ADD SP, #2, SP");
-		_testDecode(new byte[] { (byte) 0xAF, (byte) 0xDF }, "TSTN SR, #1");
-		
-		// SP cannot appear in src2R as SP, so ops must be swapped
-			// -> ADD SP, R4, R4
-		_testDecode(new byte[] { (byte) 0xCD, (byte) 0x44 }, "ADD SP, R4, R4");
-		
-		// status setters: no operand movement; SR is the destination
-			// XOR? R5, R1, SR
-		_testDecode(new byte[] { (byte) 0xB5, (byte) 0x1F }, "XOR? R5, R1");
-			// XOR? *R5, R1, SR
-		_testDecode(new byte[] { 0x48, (byte) 0xB5, (byte) 0x1F }, "XOR? *R5, R1");
-
-		// note: no non-writing version of ADD/ADC since these are TST/TSTN
-		_testDecode(new byte[] { (byte) 0xe5, (byte) 0x1F }, "CMP R5, R1");
-		_testDecode(new byte[] { 0x4C, (byte) 0xe5, (byte) 0x1F }, "CMP *R5+, R1");
-
-		_testDecode(new byte[] { 0x4c, (byte) 0xee, (byte) 0x5f, 0x00, (byte) 0xff }, "CMP >ff, R5");
-		_testDecode(new byte[] { 0x5d, (byte) 0xee, (byte) 0xef, (byte) 0xff, 0x12, (byte) 0x34 }, "CMP.B >ff, @>1234(PC)");
-		
-		// the opcode is for ADD/ADC here, not AND/NAND
-		_testDecode(new byte[] { (byte) 0xC5, (byte) 0x1F }, "TST R5, R1");
-		_testDecode(new byte[] { (byte) 0xD5, (byte) 0x1F }, "TSTN R5, R1");
-
-		// SR=15 but mem/byte uses dest, so it's still AND
 		_testDecode(new byte[] { 0x4f, (byte) 0x91, 0x3f }, "AND *R1+, *R3+");
-		_testDecode(new byte[] { 0x4f, (byte) 0xc1, 0x3f }, "TST *R1+, *R3+");
+		_testDecode(new byte[] { 0x4f, (byte) 0xc1, 0x3f }, "ADD *R1+, *R3+");
 
 
 		// pseudo
@@ -211,14 +207,10 @@ public class TestDisassemblerMFP201 extends TestCase {
 		// If insts have destination as memory, make the middle operand the register,
 		// if possible.
 		
-			// -> ADD *R5, R1, *R5 
 		_testDecode(new byte[] { 0x4A, (byte) 0xC5, (byte) 0x15 }, "ADD *R5, R1, *R5");
-			// -> XOR.B *R5, R1, *R5
 		_testDecode(new byte[] { 0x5A, (byte) 0xB5, (byte) 0x15 }, "XOR.B *R5, R1, *R5");
-			// SUB *SP, R0, *SP
 		_testDecode(new byte[] { 0x4a, (byte) 0xed, (byte) 0x0d }, "SUB *SP, R0, *SP");
-			// -> CMPR.B *R5+, R1
-		_testDecode(new byte[] { 0x5C, (byte) 0xf5, (byte) 0x1F }, "CMPR.B *R5+, R1");
+		_testDecode(new byte[] { 0x5C, (byte) 0xf5, (byte) 0x1F }, "SBB.B *R5+, R1");
 
 		// In these, though, don't double-increment when copying the dest to source
 			// -> ADD *R5, R1, *R5+
@@ -258,19 +250,20 @@ public class TestDisassemblerMFP201 extends TestCase {
 	}
 
 	public void testEncodeJumps() throws Exception {
-		_testDecodeJump(new byte[] { 0x77, (byte) 0xfe }, 0x1000, "JMP $+>0");
-		_testDecodeJump(new byte[] { 0x77, (byte) 0x00 }, 0x1002, "JMP $+>2");
-		_testDecodeJump(new byte[] { 0x40, 0x77, (byte) 0x7f }, 0x1082, "JMP $+>82");
-		_testDecodeJump(new byte[] { 0x77, (byte) 0x80 }, 0xF82, "JMP $+>FF82");
-		_testDecodeJump(new byte[] { 0x4f, 0x77, (byte) 0x7e }, 0xF81, "JMP $+>FF81");
-		_testDecodeJump(new byte[] { 0x47, 0x77, (byte) 0xfd }, 0x1800, "JMP $+>800");
-		_testDecodeJump(new byte[] { 0x48, 0x77, (byte) 0x00 }, 0x803, "JMP $+>F803");
-		_testDecodeJump(new byte[] { 0x58, 0x77, (byte) 0x00, 0x00 }, 0x1804, "JMP $+>804");
-		_testDecodeJump(new byte[] { 0x57, 0x77, (byte) 0xfe, (byte) 0xff }, 0x802, "JMP $+>F802");
+		_testDecodeJump(new byte[] { 0x60, (byte) 0xfe }, 0x1000, "JMP $+>0");
+		_testDecodeJump(new byte[] { 0x60, (byte) 0x00 }, 0x1002, "JMP $+>2");
+		_testDecodeJump(new byte[] { 0x40, 0x60, (byte) 0x7f }, 0x1082, "JMP $+>82");
+		_testDecodeJump(new byte[] { 0x60, (byte) 0x80 }, 0xF82, "JMP $+>FF82");
+		_testDecodeJump(new byte[] { 0x4f, 0x60, (byte) 0x7e }, 0xF81, "JMP $+>FF81");
+		_testDecodeJump(new byte[] { 0x47, 0x60, (byte) 0xfd }, 0x1800, "JMP $+>800");
+		_testDecodeJump(new byte[] { 0x48, 0x60, (byte) 0x00 }, 0x803, "JMP $+>F803");
+		_testDecodeJump(new byte[] { 0x58, 0x60, (byte) 0x00, 0x00 }, 0x1804, "JMP $+>804");
+		_testDecodeJump(new byte[] { 0x57, 0x60, (byte) 0xfe, (byte) 0xff }, 0x802, "JMP $+>F802");
 		
 		theInstPc = 0x7FFC;
-		_testDecodeJump(new byte[] { 0x50, 0x77, (byte) 0x00, (byte) 0xf8 }, 0x0, "JMP $+>8004");
-		
+		_testDecodeJump(new byte[] { 0x50, 0x60, (byte) 0x00, (byte) 0xf8 }, 0x0, "JMP $+>8004");
+
+		/*
 		_testDecode(new byte[] { 0x70, (byte) 0x00 }, "JNE $+>2");
 		_testDecode(new byte[] { 0x71, (byte) 0x00 }, "JEQ $+>2");
 		_testDecode(new byte[] { 0x72, (byte) 0x00 }, "JNC $+>2");
@@ -279,53 +272,52 @@ public class TestDisassemblerMFP201 extends TestCase {
 		_testDecode(new byte[] { 0x75, (byte) 0x00 }, "JGE $+>2");
 		_testDecode(new byte[] { 0x76, (byte) 0x00 }, "JL $+>2");
 		_testDecode(new byte[] { 0x77, (byte) 0x00 }, "JMP $+>2");
-		
+		*/
 		// aliases...
 
 	}
 	
 	public void testEncodeMoves() throws Exception {
-		_testDecode(new byte[] { 0x7f, 0x12 }, "MOV R1, R2");
-		_testDecode(new byte[] { 0x7f, 0x3E }, "MOV R3, PC");
+		_testDecode(new byte[] { 0x6a, 0x12 }, "MOV R1, R2");
+		_testDecode(new byte[] { 0x6a, 0x3E }, "MOV R3, PC");
 		
-		_testDecode(new byte[] { 0x78, 0x12 }, "MOVNE R1, R2");
-		_testDecode(new byte[] { 0x79, 0x12 }, "MOVEQ R1, R2");
-		_testDecode(new byte[] { 0x7a, 0x12 }, "MOVNC R1, R2");
-		_testDecode(new byte[] { 0x7b, 0x12 }, "MOVC R1, R2");
-		_testDecode(new byte[] { 0x7c, 0x12 }, "MOVN R1, R2");
-		_testDecode(new byte[] { 0x7d, 0x12 }, "MOVGE R1, R2");
-		_testDecode(new byte[] { 0x7e, 0x12 }, "MOVL R1, R2");
+		_testDecode(new byte[] { 0x4F, 0x6a, 0x12 }, "MOV *R1+, *R2+");
+		_testDecode(new byte[] { 0x5F, 0x6a, (byte) 0xE2, (byte) 0xff }, "MOV.B #>ff, *R2+");
+		_testDecode(new byte[] { 0x4c, 0x6a, (byte) 0xE2, (byte) 0x12, 0x34 }, "MOV #>1234, R2");
 		
-		_testDecode(new byte[] { 0x4F, 0x7f, 0x12 }, "MOV *R1+, *R2+");
-		_testDecode(new byte[] { 0x5F, 0x7f, (byte) 0xE2, (byte) 0xff }, "MOV.B #>ff, *R2+");
-		_testDecode(new byte[] { 0x4c, 0x7f, (byte) 0xE2, (byte) 0x12, 0x34 }, "MOV #>1234, R2");
-		
-		_testDecode(new byte[] { 0x44, 0x79, 0x42, 0x00, 0x08 }, "MOVEQ @>0008(R4), R2");
+		_testDecode(new byte[] { 0x44, 0x6a, 0x42, 0x00, 0x08 }, "MOV @>0008(R4), R2");
 			// .B does not affect @xxx() size
-		_testDecode(new byte[] { 0x54, 0x79, 0x42, 0x00, 0x08 }, "MOVEQ.B @>0008(R4), R2");
+		_testDecode(new byte[] { 0x54, 0x6a, 0x42, 0x00, 0x08 }, "MOV.B @>0008(R4), R2");
 	}
 	
 	public void testEncodeShifts() throws Exception {
 		_testDecode(new byte[] { 0x68, 0x12 }, "LSH #1, R2");
 		_testDecode(new byte[] { 0x68, 0x02 }, "LSH R0, R2");
 		_testDecode(new byte[] { 0x69, (byte) 0x82 }, "RSH #8, R2");
-		_testDecode(new byte[] { 0x6a, (byte) 0xF0 }, "ASH 15, R0");
-		_testDecode(new byte[] { 0x6b, (byte) 0x89 }, "ROL 8, R9");
-		_testDecode(new byte[] { 0x43, 0x6b, (byte) 0x89 }, "ROL 8, *R9+");
 		_testDecode(new byte[] { 0x41, 0x68, 0x02, 0x00, 0x64 }, "LSH R0, @>0064(R2)");
+
+		_testDecode(new byte[] { 0x44, 0x69, (byte) 0xF0 }, "ASH 15, R0");
+		_testDecode(new byte[] { 0x47, 0x69, (byte) 0xF0 }, "ASH 15, *R0+");
+		_testDecode(new byte[] { 0x48, 0x69, (byte) 0xF0 }, "RSHC 15, R0");
+		_testDecode(new byte[] { 0x4C, 0x69, (byte) 0xF0 }, "RSHZ 15, R0");
+		
+		_testDecode(new byte[] { 0x44, 0x68, (byte) 0x89 }, "ROL 8, R9");
+		_testDecode(new byte[] { 0x47, 0x68, (byte) 0x89 }, "ROL 8, *R9+");
+		_testDecode(new byte[] { 0x4b, 0x68, (byte) 0x89 }, "LSHC 8, *R9+");
+		_testDecode(new byte[] { 0x4f, 0x68, (byte) 0x89 }, "LSHZ 8, *R9+");
 	}
 	public void testEncodeMulDiv() throws Exception {
-		_testDecode(new byte[] { 0x6c, 0x12 }, "MUL R1, R2");
-		_testDecode(new byte[] { 0x50, 0x6c, 0x12 }, "MUL.b R1, R2");
-		_testDecode(new byte[] { 0x6d, 0x12 }, "DIV R1, R2");
-		_testDecode(new byte[] { 0x50, 0x6d, 0x12 }, "DIV.b R1, R2");
-		_testDecode(new byte[] { 0x6e, 0x12 }, "MULD R1, R2");
-		_testDecode(new byte[] { 0x50, 0x6e, 0x12 }, "MULD.b R1, R2");
-		_testDecode(new byte[] { 0x6f, 0x12 }, "DIVD R1, R2");
-		_testDecode(new byte[] { 0x50, 0x6f, 0x12 }, "DIVD.b R1, R2");
-		_testDecode(new byte[] { 0x6c, 0x12 }, "MUL R1, R2");
-		_testDecode(new byte[] { 0x50, 0x6c, 0x12 }, "MUL.B R1, R2");
-		_testDecode(new byte[] { 0x5f, 0x6e, 0x12 }, "MULD.B *R1+, *R2+");
+		_testDecode(new byte[] { 0x6e, 0x12 }, "MUL R1, R2");
+		_testDecode(new byte[] { 0x50, 0x6e, 0x12 }, "MUL.b R1, R2");
+		_testDecode(new byte[] { 0x6f, 0x12 }, "DIV R1, R2");
+		_testDecode(new byte[] { 0x50, 0x6f, 0x12 }, "DIV.b R1, R2");
+		_testDecode(new byte[] { 0x43, 0x6e, 0x12 }, "MUL R1, *R2+");
+		_testDecode(new byte[] { 0x5c, 0x6e, 0x12 }, "MUL.b *R1+, R2");
+		_testDecode(new byte[] { 0x42, 0x6f, 0x12 }, "DIV R1, *R2");
+		_testDecode(new byte[] { 0x54, 0x6f, 0x12, 0x00, 0x02 }, "DIV.b @>0002(R1), R2");
+		_testDecode(new byte[] { 0x6e, 0x12 }, "MUL R1, R2");
+		_testDecode(new byte[] { 0x50, 0x6e, 0x12 }, "MUL.B R1, R2");
+		_testDecode(new byte[] { 0x5f, 0x6e, 0x12 }, "MUL.B *R1+, *R2+");
 	}
 		
 	public void testEncodeLea() throws Exception {
@@ -342,35 +334,49 @@ public class TestDisassemblerMFP201 extends TestCase {
 	}
 	
 	public void testEncodeLoopStep() throws Exception {
-		_testDecode(new byte[] { 0x67, 0x01, 
+		_testDecode(new byte[] { 0x03, (byte) 0xc1, 
 		(byte) 0xc2, (byte) 0xd2}, 
 				"LOOP R1: ADD R2, #1, R2");
 		
 		// verify syntax
 		//assertEquals("LOOP R1: ADD R2,#1,R2", getInst("LOOP R1: ADD #1, R2").toString());
 		
-		_testDecode(new byte[] { 0x67, 0x0f, 
+		_testDecode(new byte[] { 0x03, (byte) 0xcf, 
 		(byte) 0xc2, (byte) 0xd2}, 
 				"STEP: ADD R2, #1, R2");
 		
 		// verify syntax
 		//assertEquals("STEP: ADD R2,#1,R2", getInst("STEP: ADD #1, R2").toString());
 
-		_testDecode(new byte[] { 0x67, 0x31, 
-				0x4F, 0x7f, 0x12}, 
+		_testDecode(new byte[] { 0x03, (byte) 0xf1, 
+				0x4F, 0x6a, 0x12}, 
 				"LOOP R1: MOV *R1-,*R2-");
 		
-		_testDecode(new byte[] { 0x60, 0x11, 
-				0x4F, 0x7f, 0x12}, 
+		_testDecode(new byte[] { 0x03, (byte) 0x11, 
+				0x4F, 0x6a, 0x12}, 
 				"LOOPNE R1: MOV *R1+,*R2-");
 		
-		_testDecode(new byte[] { 0x66, 0x21, 
-				0x4F, 0x7f, 0x12}, 
-				"LOOPL R1: MOV *R1-,*R2+");
+		_testDecode(new byte[] { 0x03, 0x61, 
+				0x4F, 0x6a, 0x12}, 
+				"LOOPEQ R1: MOV *R1-,*R2+");
 		
-		_testDecode(new byte[] { 0x66, 0x2f, 
-				0x4F, 0x7f, 0x12}, 
-				"STEPL: MOV *R1-,*R2+");
+		_testDecode(new byte[] { 0x03, (byte) 0xaf, 
+				0x4F, 0x6a, 0x12}, 
+				"STEPNC: MOV *R1-,*R2+");
+		
+	}
+	
+
+	public void testCondIf() throws Exception {
+		_testDecode(new byte[] { 0x71,
+				(byte) 0xc2, (byte) 0xd2},
+				"IFEQ ADD R2, #1, R2" 
+				);
+		
+		_testDecode(new byte[] { 0x73, 
+				(byte) 0xc2, (byte) 0xd2}, 
+				"IFC ADD R2, #1, R2" 
+				);
 		
 	}
 	
@@ -433,7 +439,11 @@ public class TestDisassemblerMFP201 extends TestCase {
 			byte[] outBytes = InstTableMFP201.encode(inst);
 			
 			RawInstruction outInst = decode(outBytes);
-			assertEquals(instStr, inst, outInst);
+			if (!inst.equals(outInst)) {
+				assertSameInst(inst.toString(), outInst);
+			} else {
+				assertEquals(instStr, inst, outInst);
+			}
 		} catch (IllegalArgumentException e) {
 			throw e;
 		}

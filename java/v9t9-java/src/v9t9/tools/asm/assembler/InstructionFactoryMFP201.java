@@ -3,24 +3,13 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.cpu.InstMFP201;
-import v9t9.engine.cpu.InstPatternMFP201;
-import v9t9.engine.cpu.InstTableMFP201;
-import v9t9.engine.cpu.InstructionMFP201;
-import v9t9.engine.cpu.MachineOperandMFP201;
-import v9t9.engine.cpu.PseudoPattern;
-import v9t9.engine.cpu.RawInstruction;
+import v9t9.engine.cpu.*;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.PcRelativeOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegDecOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
+import v9t9.tools.asm.assembler.operand.ll.*;
 
 /**
  * @author Ed
@@ -50,9 +39,27 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 			op1 = getPseudoOperand(pseudoPattern.getOp1(), ins);
 			op2 = getPseudoOperand(pseudoPattern.getOp2(), ins);
 			op3 = getPseudoOperand(pseudoPattern.getOp3(), ins);
-			
+
+			boolean isCond = (inst >= InstMFP201._IfirstPseudoCondInst);
+				
 			inst = pseudoPattern.getInst();
 			rawInst.setInst(inst);
+
+			if (isCond) {
+				LLInstruction subInst = new LLInstruction(this);
+				subInst.setPc(ins.getPc());
+				subInst.setInst(inst);
+				subInst.setOp1(ins.getOp1());
+				subInst.setOp2(ins.getOp2());
+				subInst.setOp3(ins.getOp3());
+				
+				op1 = new LLInstOperand(null, subInst);
+				op2 = null;
+				op3 = null;
+				inst = InstMFP201._IfirstIfOp + (inst % 16);
+			}
+			
+			
 		} else {
 			op1 = ins.getOp1();
 			op2 = ins.getOp2();
@@ -74,77 +81,21 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 		// convert 2-op to 3-op
 		if (InstTableMFP201.canBeThreeOpInst(inst)) {
 			if (op3 == null) {
-				// if a writing inst with two normal registers, change A,B to B,A,B
-				if (op1 instanceof LLRegisterOperand && op2 instanceof LLRegisterOperand) {
-					if (! InstTableMFP201.isNonWritingInst(inst)) {
-						// do not put special registers in op1 position
-						int sr = ((LLRegisterOperand) op1).getRegister();
-						if (sr != 13 && sr != 14 && sr != 15) {
+				// if op2 is a register but aliases a constant, swap
+				if (op2 != null && op2.isRegister() && !op1.isConst()) {
+					if (((LLRegisterOperand) op2).getRegister() >= 13) {
+						if (InstTableMFP201.isCommutativeInst(inst)) {
 							op3 = op2;
 							op2 = op1;
 							op1 = op3;
 						} else {
-							if (InstTableMFP201.isCommutativeInst(inst)) {
-								op3 = op2;
-							}
+							throw new ResolveException(ins, op2, "register in this position codes for an immediate");
 						}
-					} else {
-						// third operand is SR -- go ahead and set it here
-						rawInst.setOp3(
-								MachineOperandMFP201.createNonWritingSROperand());
 					}
 				}
-				
-				// If the inst has memory in the first operand,
-				// we can convert A,B to A,B,B.
-				else if (op1 != null && op1.isMemory() && op2 instanceof LLRegisterOperand) {
-					if (!InstTableMFP201.isNonWritingInst(inst)) {
-						op3 = op2;
-					} else {
-						// third operand is SR -- go ahead and set it here
-						rawInst.setOp3(MachineOperandMFP201
-								.createNonWritingSROperand());
-					}
-				}
-		        
-				// If the inst has memory in the second operand and is commutative
-				// or reversable, we can convert reg,mem to mem,reg.
-				else if (op2 != null && op2.isMemory() && op1 instanceof LLRegisterOperand) {
-					
-					if (!InstTableMFP201.isNonWritingInst(inst)) {
-						// interpret, e.g. SUB R0,*SP  as SUB *SP, R0, *SP
-						LLOperand t = op1;
-						op1 = op2;
-						op2 = t;
-						
-						op3 = op1;
-						
-						// don't double inc/decrement
-						if (op1 instanceof LLRegIncOperand)
-							op1 = new LLRegIndOperand(op1.getOriginal(), ((LLRegIncOperand) op1).getRegister());
-						else if (op1 instanceof LLRegDecOperand)
-							op1 = new LLRegIndOperand(op1.getOriginal(), ((LLRegDecOperand) op1).getRegister());
-					} else {
-						// reverse the comparison
-						int revinst = InstTableMFP201.getReversedInst(inst);
-						if (revinst > 0) {
-							rawInst.setInst(revinst);
-							LLOperand t = op1;
-							op1 = op2;
-							op2 = t;
-						} else {
-							// just throw error later
-						}
-						
-						// third operand is SR -- go ahead and set it here
-						rawInst.setOp3(MachineOperandMFP201
-								.createNonWritingSROperand());
-					}
-				}
-				
-				// else, if op1 is an immediate, and it can be converted
+				// if op1 is an immediate, and it can be converted
 				// to an implicit register, keep this
-				else if (op1 instanceof LLImmedOperand) {
+				if (op1 instanceof LLImmedOperand && InstTableMFP201.isCommutativeInst(inst)) {
 					int reg = getImplicitConstantReg(op1.getImmediate(), consts);
 					if (reg >= 0) {
 						rawInst.setOp2(MachineOperandMFP201.createImplicitConstantReg(
@@ -153,12 +104,6 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 						op2 = null;
 						op3 = op1;
 					}
-				}
-				
-				if (op3 == null && rawInst.getOp3() == null && op1 != null && op1.isConst() && op2 != null && !op2.isRegister()) {
-					// third operand is SR -- go ahead and set it here
-					rawInst.setOp3(MachineOperandMFP201
-							.createNonWritingSROperand());
 				}
 			}
 			
@@ -179,9 +124,7 @@ public class InstructionFactoryMFP201 implements IInstructionFactory {
 				// If the inst has memory in the second operand and is commutative
 				// or reversable, we can convert reg,mem to mem,reg.
 				else if (op2 != null && op2.isMemory() && op1 instanceof LLRegisterOperand) {
-					int revinst = InstTableMFP201.getReversedInst(inst);
-					if (revinst > 0) {
-						rawInst.setInst(revinst);
+					if (InstTableMFP201.isCommutativeInst(inst)) {
 						LLOperand t = op1;
 						op1 = op2;
 						op2 = t;
