@@ -254,6 +254,7 @@ static void command_map_to_memory(char * token, Channel * c) {
 }
 
 void ini_line_numbers_service(Protocol * proto) {
+    ini_line_numbers_lib();
     add_command_handler(proto, LINENUMBERS, "mapToSource", command_map_to_source);
     add_command_handler(proto, LINENUMBERS, "mapToMemory", command_map_to_memory);
 }

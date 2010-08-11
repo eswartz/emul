@@ -19,14 +19,22 @@
 
 #include <config.h>
 
-#if defined(WIN32) && !ENABLE_ELF
+#if defined(WIN32) && !ENABLE_ELF && (SERVICE_LineNumbers || SERVICE_Symbols || SERVICE_MemoryMap)
 
 #include <assert.h>
 #include <stdio.h>
 #include <wchar.h>
 #include <system/Windows/windbgcache.h>
+#include <system/Windows/context-win32.h>
+#include <framework/trace.h>
 
 static HINSTANCE dbghelp_dll = NULL;
+
+#define SYM_SEARCH_PATH ""
+/* Path could contain "http://msdl.microsoft.com/download/symbols",
+   but access to Microsoft debug info server is too slow,
+   and dbghelp.dll caching is inadequate
+*/
 
 static wchar_t * pathes[] = {
     L"%\\Debugging Tools for Windows (x86)\\dbghelp.dll",
@@ -35,6 +43,66 @@ static wchar_t * pathes[] = {
     L"dbghelp.dll",
     NULL
 };
+
+static void event_context_created(Context * ctx, void * client_data) {
+    if (ctx->parent != NULL) return;
+    assert(ctx->mem == ctx);
+    if (!SymInitialize(get_context_handle(ctx), SYM_SEARCH_PATH, FALSE)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymInitialize() error: %s", errno_to_str(errno));
+    }
+    if (!SymLoadModule64(get_context_handle(ctx), get_context_file_handle(ctx),
+            NULL, NULL, get_context_base_address(ctx), 0)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymLoadModule64() error: %s", errno_to_str(errno));
+    }
+}
+
+static void event_context_exited(Context * ctx, void * client_data) {
+    HANDLE handle = get_context_handle(ctx);
+    if (ctx->parent != NULL) return;
+    assert(handle != NULL);
+    if (!SymUnloadModule64(handle, get_context_base_address(ctx))) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymUnloadModule64() error: %s", errno_to_str(errno));
+    }
+    if (!SymCleanup(handle)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymCleanup() error: %s", errno_to_str(errno));
+    }
+}
+
+static void event_context_changed(Context * ctx, void * client_data) {
+    HANDLE handle = get_context_handle(ctx);
+    if (is_context_module_loaded(ctx)) {
+        assert(ctx->mem == ctx);
+        assert(handle != NULL);
+        if (!SymLoadModule64(handle, get_context_module_handle(ctx),
+                NULL, NULL, get_context_module_address(ctx), 0)) {
+            set_win32_errno(GetLastError());
+            trace(LOG_ALWAYS, "SymLoadModule64() error: %s", errno_to_str(errno));
+        }
+    }
+    if (is_context_module_unloaded(ctx)) {
+        assert(ctx->mem == ctx);
+        assert(handle != NULL);
+        if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
+            set_win32_errno(GetLastError());
+            trace(LOG_ALWAYS, "SymUnloadModule64() error: %s", errno_to_str(errno));
+        }
+    }
+}
+
+static void ini_listeners(void) {
+    static ContextEventListener listener = {
+        event_context_created,
+        event_context_exited,
+        NULL,
+        NULL,
+        event_context_changed
+    };
+    add_context_event_listener(&listener, NULL);
+}
 
 static FARPROC GetProc(char * name) {
     if (dbghelp_dll == NULL) {
@@ -66,6 +134,7 @@ static FARPROC GetProc(char * name) {
             assert(GetLastError() != 0);
             return NULL;
         }
+        ini_listeners();
     }
     return GetProcAddress(dbghelp_dll, name);
 }
@@ -78,6 +147,16 @@ BOOL SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess) {
         if (proc == NULL) return 0;
     }
     return proc(hProcess, UserSearchPath, fInvadeProcess);
+}
+
+DWORD SymGetOptions(void) {
+    typedef DWORD (FAR WINAPI * ProcType)(void);
+    static ProcType proc = NULL;
+    if (proc == NULL) {
+        proc = (ProcType)GetProc("SymGetOptions");
+        if (proc == NULL) return 0;
+    }
+    return proc();
 }
 
 BOOL SymSetOptions(DWORD Options) {

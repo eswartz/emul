@@ -184,4 +184,8 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
     return 0;
 }
 
+void ini_line_numbers_lib(void) {
+    SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS);
+}
+
 #endif /* SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && defined(_MSC_VER) && !ENABLE_ELF */

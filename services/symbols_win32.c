@@ -37,12 +37,6 @@
 #  include <main/test.h>
 #endif
 
-#define SYM_SEARCH_PATH ""
-/* Path could contain "http://msdl.microsoft.com/download/symbols",
-   but access to Microsoft debug info server is too slow,
-   and dbghelp.dll caching is inadequate
-*/
-
 #ifndef MAX_SYM_NAME
 #  define MAX_SYM_NAME 2000
 #endif
@@ -972,20 +966,6 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
     return 0;
 }
 
-static void event_context_created(Context * ctx, void * client_data) {
-    if (ctx->parent != NULL) return;
-    assert(ctx->mem == ctx);
-    if (!SymInitialize(get_context_handle(ctx), SYM_SEARCH_PATH, FALSE)) {
-        set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymInitialize() error: %s", errno_to_str(errno));
-    }
-    if (!SymLoadModule64(get_context_handle(ctx), get_context_file_handle(ctx),
-            NULL, NULL, get_context_base_address(ctx), 0)) {
-        set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymLoadModule() error: %s", errno_to_str(errno));
-    }
-}
-
 static void event_context_exited(Context * ctx, void * client_data) {
     unsigned i;
     HANDLE handle = get_context_handle(ctx);
@@ -997,14 +977,6 @@ static void event_context_exited(Context * ctx, void * client_data) {
             memset(symbol_cache + i, 0, sizeof(SymbolCacheEntry));
         }
     }
-    if (!SymUnloadModule64(handle, get_context_base_address(ctx))) {
-        set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymUnloadModule() error: %s", errno_to_str(errno));
-    }
-    if (!SymCleanup(handle)) {
-        set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymCleanup() error: %s", errno_to_str(errno));
-    }
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
@@ -1013,11 +985,6 @@ static void event_context_changed(Context * ctx, void * client_data) {
         unsigned i;
         assert(ctx->mem == ctx);
         assert(handle != NULL);
-        if (!SymLoadModule64(handle, get_context_module_handle(ctx),
-                NULL, NULL, get_context_module_address(ctx), 0)) {
-            set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "SymLoadModule() error: %s", errno_to_str(errno));
-        }
         for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
             if (symbol_cache[i].process == handle && symbol_cache[i].error) symbol_cache[i].process = NULL;
         }
@@ -1029,23 +996,19 @@ static void event_context_changed(Context * ctx, void * client_data) {
         for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
             if (symbol_cache[i].process == handle) symbol_cache[i].process = NULL;
         }
-        if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
-            set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "SymUnloadModule() error: %s", errno_to_str(errno));
-        }
     }
 }
 
 void ini_symbols_lib(void) {
     static ContextEventListener listener = {
-        event_context_created,
+        NULL,
         event_context_exited,
         NULL,
         NULL,
         event_context_changed
     };
     add_context_event_listener(&listener, NULL);
-    SymSetOptions(SYMOPT_UNDNAME | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS);
+    SymSetOptions(SymGetOptions() | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
 }
 
 

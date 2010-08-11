@@ -193,4 +193,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
     return 0;
 }
 
+void ini_line_numbers_lib(void) {
+}
+
 #endif /* SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && ENABLE_ELF */

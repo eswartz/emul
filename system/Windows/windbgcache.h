@@ -202,6 +202,7 @@ enum DataKind {
 };
 
 #define SymInitialize LocSymInitialize
+#define SymGetOptions LocSymGetOptions
 #define SymSetOptions LocSymSetOptions
 #define SymGetLineFromName LocSymGetLineFromName
 #define SymGetLineFromAddr LocSymGetLineFromAddr
@@ -220,6 +221,7 @@ enum DataKind {
 #define EnumerateLoadedModulesW64 LocEnumerateLoadedModulesW64
 
 extern BOOL SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess);
+extern DWORD SymGetOptions(void);
 extern BOOL SymSetOptions(DWORD Options);
 extern BOOL SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName, DWORD dwLineNumber, PLONG plDisplacement, PIMAGEHLP_LINE Line);
 extern BOOL SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, PDWORD pdwDisplacement, PIMAGEHLP_LINE Line);

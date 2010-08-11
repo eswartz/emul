@@ -460,16 +460,24 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     }
 
 #if ENABLE_RCBP_TEST
-    if (f == NULL && !syms->service_available) {
+    if (f == NULL && !syms->service_available || f != NULL && f->pending == NULL && f->error != NULL) {
         void * address = NULL;
         int sym_class = 0;
         if (find_test_symbol(ctx, name, &address, &sym_class) >= 0) {
             char bf[256];
-            f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
-            list_add_first(&f->link_syms, syms->link_find + h);
-            context_lock(f->ctx = ctx);
-            f->name = loc_strdup(name);
-            f->ip = ip;
+            if (f == NULL) {
+                f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
+                list_add_first(&f->link_syms, syms->link_find + h);
+                context_lock(f->ctx = ctx);
+                f->name = loc_strdup(name);
+                f->ip = ip;
+            }
+            else {
+                release_error_report(f->error);
+                loc_free(f->id);
+                f->error = NULL;
+                f->id = NULL;
+            }
             f->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
             snprintf(bf, sizeof(bf), "TEST.%X.%"PRIX64".%s", sym_class,
                     (uint64_t)(uintptr_t)address, ctx->mem->id);
