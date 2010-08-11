@@ -147,7 +147,7 @@ struct EvaluationRequest {
 
 struct ContextExtensionBP {
     int                 bp_eval_started;
-    BreakInstruction *  stepping_over_bp;   /* if not NULL context is stepping over a breakpoint instruction */
+    BreakInstruction *  stepping_over_bp;   /* if not NULL, the context is stepping over a breakpoint instruction */
     char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     EvaluationRequest * req;
 };
@@ -367,12 +367,11 @@ static void clear_instruction_refs(Context * mem) {
 }
 
 static void flush_instructions(void) {
-    int i;
     LINK * l = instructions.next;
     while (l != &instructions) {
+        int i = 0;
         BreakInstruction * bi = link_all2bi(l);
         l = l->next;
-        i = 0;
         while (i < bi->ref_cnt) {
             if (bi->refs[i].cnt == 0) {
                 bi->refs[i].bp->instruction_cnt--;
@@ -384,18 +383,20 @@ static void flush_instructions(void) {
                 i++;
             }
         }
-        if (bi->ref_cnt == 0) {
-            if (bi->planted) remove_instruction(bi);
-            list_remove(&bi->link_all);
-            list_remove(&bi->link_adr);
-            context_unlock(bi->ctx);
-            release_error_report(bi->address_error);
-            release_error_report(bi->planting_error);
-            loc_free(bi->refs);
-            loc_free(bi);
-        }
-        else if (!bi->planted && !bi->stepping_over_bp) {
-            plant_instruction(bi);
+        if (!bi->stepping_over_bp) {
+            if (bi->ref_cnt == 0) {
+                if (bi->planted) remove_instruction(bi);
+                list_remove(&bi->link_all);
+                list_remove(&bi->link_adr);
+                context_unlock(bi->ctx);
+                release_error_report(bi->address_error);
+                release_error_report(bi->planting_error);
+                loc_free(bi->refs);
+                loc_free(bi);
+            }
+            else if (!bi->planted) {
+                plant_instruction(bi);
+            }
         }
     }
 }
