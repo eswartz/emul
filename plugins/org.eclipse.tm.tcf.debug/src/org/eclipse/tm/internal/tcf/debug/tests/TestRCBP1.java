@@ -91,7 +91,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
         @SuppressWarnings("unchecked")
         public void breakpointStatusChanged(String id, Map<String,Object> status) {
-            if (bp_list.get(id) != null && test_context != null) {
+            if (bp_list.get(id) != null && test_context != null && bp_cnt < 40) {
                 String s = (String)status.get(IBreakpoints.STATUS_ERROR);
                 if (s != null) exit(new Exception("Invalid BP status: " + s));
                 Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
@@ -287,7 +287,6 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private void getTestContext() {
         rc.getContext(test_ctx_id, new IRunControl.DoneGetContext() {
             public void doneGetContext(IToken token, Exception error, RunControlContext context) {
-                get_state_cmds.remove(token);
                 if (test_suite.cancel) return;
                 if (error != null) {
                     exit(error);
