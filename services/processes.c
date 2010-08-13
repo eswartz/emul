@@ -20,6 +20,8 @@
  * require a process to be attached before they can access it.
  */
 
+/* TODO: It should be possible to filter processes on a criteria (user, name, etc) */
+
 #include <config.h>
 
 #if SERVICE_Processes
