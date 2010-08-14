@@ -187,7 +187,7 @@ public class TCFConnectorService extends BasicConnectorService {
                 }
 
             });
-            assert channel.getState() == IChannel.STATE_OPENNING;
+            assert channel.getState() == IChannel.STATE_OPENING;
         }
         return false;
     }

@@ -164,7 +164,7 @@ public class TransportManager {
      */
     public static void sendEvent(String service_name, String event_name, byte[] data) {
         for (AbstractChannel c : channels) {
-            // Skip channels that are executing "redirect" command - STATE_OPENNING
+            // Skip channels that are executing "redirect" command - STATE_OPENING
             if (c.getState() == IChannel.STATE_OPEN) {
                 IService s = c.getLocalService(service_name);
                 if (s != null) c.sendEvent(s, event_name, data);

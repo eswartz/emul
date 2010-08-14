@@ -107,8 +107,14 @@ public interface IPeer {
     /**
      * Open channel to communicate with this peer.
      * Note: the channel is not fully open yet when this method returns.
-     * Its state is IChannel.STATE_OPENNING.
-     * Protocol.Listener will be called when the channel will be opened or closed.
+     * Its state is IChannel.STATE_OPENING.
+     * Protocol.ChannelOpenListener and IChannel.IChannelListener listeners will be called when
+     * the channel will change state to open or closed.
+     * Clients are supposed to register IChannel.IChannelListener right after calling openChannel(), or,
+     * at least, in same dispatch cycle. For example:
+     *          channel = peer.openChannel();
+     *          channel.addChannelListener(new IChannel.IChannelListener() {
+     *          ...
      */
     IChannel openChannel();
 }

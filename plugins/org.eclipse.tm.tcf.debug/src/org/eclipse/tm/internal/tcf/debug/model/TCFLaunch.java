@@ -742,7 +742,7 @@ public class TCFLaunch extends Launch {
                 }
 
             });
-            assert channel.getState() == IChannel.STATE_OPENNING;
+            assert channel.getState() == IChannel.STATE_OPENING;
             connecting = true;
         }
         catch (Throwable e) {

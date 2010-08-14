@@ -29,6 +29,8 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  */
 public class ChannelTCP extends StreamChannel {
 
+    /* TODO: need to give clients access to socket properties, like connect timeout */
+
     private Socket socket;
     private InputStream inp;
     private OutputStream out;

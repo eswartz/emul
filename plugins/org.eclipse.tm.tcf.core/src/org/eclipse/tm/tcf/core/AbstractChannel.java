@@ -133,7 +133,7 @@ public abstract class AbstractChannel implements IChannel {
     private boolean notifying_channel_opened;
     private boolean registered_with_trasport;
     private boolean shutdown;
-    private int state = STATE_OPENNING;
+    private int state = STATE_OPENING;
     private IToken redirect_command;
     private final IPeer local_peer;
     private IPeer remote_peer;
@@ -410,7 +410,7 @@ public abstract class AbstractChannel implements IChannel {
      */
     public void redirect(final Map<String,String> peer_attrs) {
         assert Protocol.isDispatchThread();
-        if (state == STATE_OPENNING) {
+        if (state == STATE_OPENING) {
             redirect_queue.add(peer_attrs);
         }
         else {
@@ -456,7 +456,7 @@ public abstract class AbstractChannel implements IChannel {
                             public void doneRedirect(IToken token, Exception x) {
                                 assert redirect_command == token;
                                 redirect_command = null;
-                                if (state != STATE_OPENNING) return;
+                                if (state != STATE_OPENING) return;
                                 if (x != null) terminate(x);
                                 remote_peer = peer;
                                 remote_service_by_class.clear();
@@ -471,7 +471,7 @@ public abstract class AbstractChannel implements IChannel {
                         public void doneRedirect(IToken token, Exception x) {
                             assert redirect_command == token;
                             redirect_command = null;
-                            if (state != STATE_OPENNING) return;
+                            if (state != STATE_OPENING) return;
                             if (x != null) terminate(x);
                             final IPeer parent = remote_peer;
                             remote_peer = new TransientPeer(peer_attrs) {
@@ -487,7 +487,7 @@ public abstract class AbstractChannel implements IChannel {
                         }
                     });
                 }
-                state = STATE_OPENNING;
+                state = STATE_OPENING;
             }
             catch (Throwable x) {
                 terminate(x);
@@ -692,27 +692,27 @@ public abstract class AbstractChannel implements IChannel {
 
     public Collection<String> getLocalServices() {
         assert Protocol.isDispatchThread();
-        assert state != STATE_OPENNING;
+        assert state != STATE_OPENING;
         return local_service_by_name.keySet();
     }
 
     public Collection<String> getRemoteServices() {
         assert Protocol.isDispatchThread();
-        assert state != STATE_OPENNING;
+        assert state != STATE_OPENING;
         return remote_service_by_name.keySet();
     }
 
     @SuppressWarnings("unchecked")
     public <V extends IService> V getLocalService(Class<V> cls) {
         assert Protocol.isDispatchThread();
-        assert state != STATE_OPENNING;
+        assert state != STATE_OPENING;
         return (V)local_service_by_class.get(cls);
     }
 
     @SuppressWarnings("unchecked")
     public <V extends IService> V getRemoteService(Class<V> cls) {
         assert Protocol.isDispatchThread();
-        assert state != STATE_OPENNING;
+        assert state != STATE_OPENING;
         return (V)remote_service_by_class.get(cls);
     }
 
@@ -726,13 +726,13 @@ public abstract class AbstractChannel implements IChannel {
 
     public IService getLocalService(String service_name) {
         assert Protocol.isDispatchThread();
-        assert state != STATE_OPENNING;
+        assert state != STATE_OPENING;
         return local_service_by_name.get(service_name);
     }
 
     public IService getRemoteService(String service_name) {
         assert Protocol.isDispatchThread();
-        assert state != STATE_OPENNING;
+        assert state != STATE_OPENING;
         return remote_service_by_name.get(service_name);
     }
 
@@ -753,7 +753,7 @@ public abstract class AbstractChannel implements IChannel {
 
     public IToken sendCommand(IService service, String name, byte[] args, ICommandListener listener) {
         assert Protocol.isDispatchThread();
-        if (state == STATE_OPENNING) throw new Error("Channel is waiting for Hello message");
+        if (state == STATE_OPENING) throw new Error("Channel is waiting for Hello message");
         if (state == STATE_CLOSED) throw new Error("Channel is closed");
         final Message msg = new Message('C');
         msg.service = service.getName();
@@ -806,7 +806,7 @@ public abstract class AbstractChannel implements IChannel {
 
     public void sendEvent(IService service, String name, byte[] args) {
         assert Protocol.isDispatchThread();
-        if (!(state == STATE_OPEN || state == STATE_OPENNING && service instanceof ILocator)) {
+        if (!(state == STATE_OPEN || state == STATE_OPENING && service instanceof ILocator)) {
             throw new Error("Channel is closed");
         }
         Message msg = new Message('E');
@@ -850,7 +850,7 @@ public abstract class AbstractChannel implements IChannel {
             }
             switch (msg.type) {
             case 'C':
-                if (state == STATE_OPENNING) {
+                if (state == STATE_OPENING) {
                     throw new IOException("Received command " + msg.service + "." + msg.name + " before Hello message");
                 }
                 if (proxy != null) {
@@ -892,7 +892,7 @@ public abstract class AbstractChannel implements IChannel {
                     proxy.onEvent(msg.service, msg.name, msg.data);
                 }
                 else if (hello) {
-                    assert state == STATE_OPENNING;
+                    assert state == STATE_OPENING;
                     state = STATE_OPEN;
                     assert redirect_command == null;
                     if (redirect_queue.size() > 0) {

@@ -28,7 +28,7 @@ public interface ITransportProvider {
     /**
      * Open channel to communicate with this peer using this transport.
      * Note: the channel can be not fully open yet when this method returns.
-     * It’s state can be IChannel.STATE_OPENNING.
+     * It’s state can be IChannel.STATE_OPENING.
      * Protocol.Listener will be called when the channel will be opened or closed.
      * @param peer - a IPeer object that describes remote end-point of the channel.
      * @return TCF communication channel.

@@ -119,7 +119,7 @@ class ChannelProxy {
         ch_x = (AbstractChannel)x;
         ch_y = (AbstractChannel)y;
         assert ch_x.getState() == IChannel.STATE_OPEN;
-        assert ch_y.getState() == IChannel.STATE_OPENNING;
+        assert ch_y.getState() == IChannel.STATE_OPENING;
         try {
             ch_y.setProxy(proxy_y, ch_x.getRemoteServices());
             ch_y.addChannelListener(new IChannel.IChannelListener() {

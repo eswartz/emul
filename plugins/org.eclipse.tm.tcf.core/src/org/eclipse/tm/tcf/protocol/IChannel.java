@@ -30,9 +30,15 @@ public interface IChannel {
      * Channel state IDs
      */
     static final int
-        STATE_OPENNING = 0,
+        STATE_OPENING = 0,
         STATE_OPEN = 1,
         STATE_CLOSED = 2;
+
+    /**
+     * @deprecated - misspelled, use STATE_OPENING.
+     */
+    static final int
+        STATE_OPENNING = 0;
 
     /**
      * @return channel state, see STATE_*
