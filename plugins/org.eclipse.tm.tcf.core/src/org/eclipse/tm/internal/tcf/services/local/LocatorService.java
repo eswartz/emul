@@ -242,14 +242,46 @@ public class LocatorService implements ILocator {
         }
     };
 
+    /**
+     * Wrapper for final class DatagramPacket so its toString() can present
+     * the value in the debugger in a readable fashion.
+     */
+    private class InputPacket {
+        private DatagramPacket p;
+        protected InputPacket(DatagramPacket dgPacket) {
+            p = dgPacket;
+        }
+        protected DatagramPacket getPacket() {
+            return p;
+        }
+        protected int getLength() {
+            return p.getLength();
+        }
+        protected byte[] getData() {
+            return p.getData();
+        }
+        public int getPort() {
+            return p.getPort();
+        }
+        public InetAddress getAddress() {
+            return p.getAddress();
+        }
+        public String toString() {
+            return "[address=" + p.getAddress().toString()
+                 + ",port=" + p.getPort()
+                 + ",data=\"" + new String(p.getData(), 0, p.getLength()) + "\"]";
+        }
+    }
+
     private final Thread input_thread = new Thread() {
         public void run() {
             try {
                 for (;;) {
                     DatagramSocket socket = LocatorService.this.socket;
                     try {
-                        final DatagramPacket p = new DatagramPacket(inp_buf, inp_buf.length);
-                        socket.receive(p);
+                        final InputPacket p
+                          = new InputPacket(new DatagramPacket(inp_buf, inp_buf.length));
+                        socket.receive(p.getPacket());
                         Protocol.invokeAndWait(new Runnable() {
                             public void run() {
                                 handleDatagramPacket(p);
@@ -890,7 +922,7 @@ public class LocatorService implements ILocator {
         return true;
     }
 
-    private void handleDatagramPacket(DatagramPacket p) {
+    private void handleDatagramPacket(InputPacket p) {
         try {
             long time = System.currentTimeMillis();
             byte[] buf = p.getData();
@@ -941,7 +973,7 @@ public class LocatorService implements ILocator {
         }
     }
 
-    private void handlePeerInfoPacket(DatagramPacket p) {
+    private void handlePeerInfoPacket(InputPacket p) {
         try {
             Map<String,String> map = parsePeerAtrributes(p.getData(), p.getLength());
             String id = map.get(IPeer.ATTR_ID);
@@ -968,14 +1000,14 @@ public class LocatorService implements ILocator {
         }
     }
 
-    private void handleReqInfoPacket(DatagramPacket p, Slave sl, long time) {
+    private void handleReqInfoPacket(InputPacket p, Slave sl, long time) {
         if (TRACE_DISCOVERY) {
             traceDiscoveryPacket(true, "CONF_REQ_INFO", null, p);
         }
         sendAll(p.getAddress(), p.getPort(), sl, time);
     }
 
-    private void handleSlavesInfoPacket(DatagramPacket p, long time_now) {
+    private void handleSlavesInfoPacket(InputPacket p, long time_now) {
         try {
             Map<String,String> trace_map = null; // used for tracing only
             int slave_index = 0;        // used for tracing only
@@ -1044,7 +1076,7 @@ public class LocatorService implements ILocator {
         }
     }
 
-    private void handleReqSlavesPacket(DatagramPacket p, Slave sl, long time) {
+    private void handleReqSlavesPacket(InputPacket p, Slave sl, long time) {
         if (TRACE_DISCOVERY) {
             traceDiscoveryPacket(true, "CONF_REQ_SLAVES", null, p);
         }
@@ -1124,7 +1156,7 @@ public class LocatorService implements ILocator {
      * Convenience variant that takes a DatagramPacket for specifying
      * the target address and port.
      */
-    private static void traceDiscoveryPacket(boolean received, String type, Map<String,String> attrs, DatagramPacket packet) {
+    private static void traceDiscoveryPacket(boolean received, String type, Map<String,String> attrs, InputPacket packet) {
         traceDiscoveryPacket(received, type, attrs, packet.getAddress(), packet.getPort());
     }
 }
