@@ -386,8 +386,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
 
 #if ENABLE_RCBP_TEST
     if (!found) {
-        void * address = NULL;
         int sym_class = 0;
+        void * address = NULL;
         found = find_test_symbol(ctx, name, &address, &sym_class) >= 0;
         if (found) {
             Symbol * sym = alloc_symbol();

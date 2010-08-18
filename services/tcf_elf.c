@@ -583,6 +583,7 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                         id[id_size++] = k < 10 ? '0' + k : 'a' + k - 10;
                     }
                     id[id_size++] = 0;
+                    trace(LOG_ELF, "Found GNU build ID %s", id);
                     snprintf(fnm, sizeof(fnm), "/usr/lib/debug/.build-id/%.2s/%s.debug", id, id + 2);
                     if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
                     return NULL;
@@ -603,8 +604,10 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                 char * name = (char *)sec->data;
                 int l = strlen(file->name);
                 while (l > 0 && file->name[l - 1] != '/' && file->name[l - 1] != '\\') l--;
-                snprintf(fnm, sizeof(fnm), "%.*s%s", l, file->name, name);
-                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                if (strcmp(file->name + l, name) != 0) {
+                    snprintf(fnm, sizeof(fnm), "%.*s%s", l, file->name, name);
+                    if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                }
                 snprintf(fnm, sizeof(fnm), "%.*s.debug/%s", l, file->name, name);
                 if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
                 snprintf(fnm, sizeof(fnm), "/usr/lib/debug%.*s%s", l, file->name, name);

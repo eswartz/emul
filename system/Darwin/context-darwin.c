@@ -57,6 +57,7 @@ typedef struct ContextExtensionDarwin {
     REG_SET *               regs;               /* copy of context registers, updated when context stops */
     ErrorReport *           regs_error;         /* if not NULL, 'regs' is invalid */
     int                     regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
+    int                     pending_step;
 } ContextExtensionDarwin;
 
 static size_t context_extension_offset = 0;
@@ -157,9 +158,9 @@ int context_continue(Context * ctx) {
 
     assert(is_dispatch_thread());
     assert(ctx->stopped);
-    assert(!ctx->pending_intercept);
-    assert(!ctx->pending_step);
     assert(!ctx->exited);
+    assert(!ctx->pending_intercept);
+    assert(!EXT(ctx)->pending_step);
 
     if (skip_breakpoint(ctx, 0)) return 0;
 
@@ -229,12 +230,7 @@ int context_single_step(Context * ctx) {
     assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(!ctx->exited);
-    assert(!ctx->pending_step);
-
-    if (ctx->pending_step) {
-        ctx->pending_intercept = 1;
-        ctx->pending_step = 0;
-    }
+    assert(!EXT(ctx)->pending_step);
 
     if (skip_breakpoint(ctx, 1)) return 0;
 
@@ -255,7 +251,7 @@ int context_single_step(Context * ctx) {
         int err = errno;
 #if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
-            ctx->pending_step = 1;
+            EXT(ctx)->pending_step = 1;
             send_context_started_event(ctx);
             return 0;
         }
@@ -265,7 +261,7 @@ int context_single_step(Context * ctx) {
         errno = err;
         return -1;
     }
-    ctx->pending_step = 1;
+    EXT(ctx)->pending_step = 1;
     send_context_started_event(ctx);
     return 0;
 }
@@ -275,7 +271,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     ContextAddress word_addr;
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %zd",
+    trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %zu",
         ctx, ctx->id, address, size);
     assert(WORD_SIZE == sizeof(unsigned));
     check_breakpoints_on_memory_write(ctx, address, buf, size);
@@ -318,7 +314,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     ContextAddress word_addr;
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    trace(LOG_CONTEXT, "context: read memory ctx %#lx, id %s, address %#lx, size %zd",
+    trace(LOG_CONTEXT, "context: read memory ctx %#lx, id %s, address %#lx, size %zu",
         ctx, ctx->id, address, size);
     assert(WORD_SIZE == sizeof(unsigned));
     for (word_addr = address & ~(WORD_SIZE - 1); word_addr < address + size; word_addr += WORD_SIZE) {
@@ -424,33 +420,42 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
         }
     }
     else {
+        /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
+         * between PTRACE_CONT (or PTRACE_SYSCALL) and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
+         */
         if (EXT(ctx->parent)->pid == pid) ctx = ctx->parent;
         assert(EXT(ctx)->attach_callback == NULL);
-        if (ctx->stopped || ctx->exited) {
+        if (ctx->exited) {
             trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, exited %d",
                 ctx, pid, status, ctx->stopped, ctx->exited);
-            if (ctx->stopped) send_context_started_event(ctx);
         }
         else {
             trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d, term signal %d", ctx, pid, status, signal);
-        }
-        if (!list_is_empty(&ctx->children)) {
-            LINK * l = ctx->children.next;
-            while (l != &ctx->children) {
-                Context * c = cldl2ctxp(l);
-                l = l->next;
-                assert(c->parent == ctx);
-                if (!c->exited) {
-                    if (c->stopped) send_context_started_event(c);
-                    release_error_report(EXT(c)->regs_error);
-                    loc_free(EXT(c)->regs);
-                    EXT(c)->regs_error = NULL;
-                    EXT(c)->regs = NULL;
-                    send_context_exited_event(c);
+            ctx->exiting = 1;
+            if (ctx->stopped) send_context_started_event(ctx);
+            if (!list_is_empty(&ctx->children)) {
+                LINK * l = ctx->children.next;
+                while (l != &ctx->children) {
+                    Context * c = cldl2ctxp(l);
+                    l = l->next;
+                    assert(c->parent == ctx);
+                    if (!c->exited) {
+                        c->exiting = 1;
+                        if (c->stopped) send_context_started_event(c);
+                        release_error_report(EXT(c)->regs_error);
+                        loc_free(EXT(c)->regs);
+                        EXT(c)->regs_error = NULL;
+                        EXT(c)->regs = NULL;
+                        send_context_exited_event(c);
+                    }
                 }
             }
+            release_error_report(EXT(ctx)->regs_error);
+            loc_free(EXT(ctx)->regs);
+            EXT(ctx)->regs_error = NULL;
+            EXT(ctx)->regs = NULL;
+            send_context_exited_event(ctx);
         }
-        send_context_exited_event(ctx);
     }
 }
 
@@ -547,24 +552,14 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
         trace(LOG_EVENTS, "event: pid %d stopped at PC = %#lx", pid, pc1);
 
-        if (signal == SIGSTOP && ctx->pending_step && !EXT(ctx)->regs_error && pc0 == pc1) {
-            trace(LOG_EVENTS, "event: pid %d, single step failed because of pending SIGSTOP, retrying", EXT(ctx)->pid);
-            ptrace(PT_STEP, EXT(ctx)->pid, 0, 0);
-            ctx->stopped = 0;
-            return;
-        }
-
         if (signal == SIGTRAP && event == 0 && !syscall) {
             size_t break_size = 0;
             get_break_instruction(ctx, &break_size);
             ctx->stopped_by_bp = !EXT(ctx)->regs_error && is_breakpoint_address(ctx, pc1 - break_size);
-            EXT(ctx)->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
-            if (ctx->stopped_by_bp) {
-                set_regs_PC(ctx, pc1 - break_size);
-                EXT(ctx)->regs_dirty = 1;
-            }
+            EXT(ctx)->end_of_step = !ctx->stopped_by_bp && EXT(ctx)->pending_step;
+            if (ctx->stopped_by_bp) set_regs_PC(ctx, pc1 - break_size);
         }
-        ctx->pending_step = 0;
+        EXT(ctx)->pending_step = 0;
         send_context_stopped_event(ctx);
     }
 }

@@ -66,7 +66,8 @@ typedef struct ContextExtensionRC {
     int intercepted_by_bp;
     ContextAddress step_range_start;
     ContextAddress step_range_end;
-    int stepping;
+    int stepping_in_range;
+    int safe_single_step;   /* not zero if the context is performing a "safe" single instruction step */
 } ContextExtensionRC;
 
 static size_t context_extension_offset = 0;
@@ -492,7 +493,7 @@ static void command_resume(char * token, Channel * c) {
                 ext->step_range_start = get_regs_PC(ctx);
                 ext->step_range_end = ext->step_range_start + 1;
             }
-            ext->stepping = 1;
+            ext->stepping_in_range = 1;
             send_event_context_resumed(ctx);
             assert(!ext->intercepted);
             if (run_ctrl_lock_cnt == 0 && run_safe_events_posted < 4) {
@@ -503,7 +504,7 @@ static void command_resume(char * token, Channel * c) {
         else if (mode == RM_RESUME) {
             ext->step_range_start = 0;
             ext->step_range_end = 0;
-            ext->stepping = 0;
+            ext->stepping_in_range = 0;
             if (context_continue_recursive(ctx) < 0) err = errno;
         }
         else {
@@ -526,7 +527,7 @@ int suspend_debug_context(Context * ctx) {
             assert(!ext->intercepted);
             if (!ctx->exiting) {
                 ctx->pending_intercept = 1;
-                if (!ctx->pending_step && context_stop(ctx) < 0) return -1;
+                if (!ext->safe_single_step && context_stop(ctx) < 0) return -1;
             }
         }
         else if (!ext->intercepted) {
@@ -683,11 +684,11 @@ static void send_event_context_suspended(Context * ctx) {
     assert(ctx->stopped);
     assert(!ctx->exited);
     assert(!ext->intercepted);
-    assert(!ctx->pending_step);
+    assert(!ext->safe_single_step);
     ext->intercepted = 1;
     ext->step_range_start = 0;
     ext->step_range_end = 0;
-    ext->stepping = 0;
+    ext->stepping_in_range = 0;
     ctx->pending_intercept = 0;
     if (get_context_breakpoint_ids(ctx) != NULL) ext->intercepted_by_bp++;
 
@@ -709,7 +710,7 @@ static void send_event_context_resumed(Context * ctx) {
 
     assert(ext->intercepted);
     assert(!ctx->pending_intercept);
-    assert(!ctx->pending_step);
+    assert(!ext->safe_single_step);
     ext->intercepted = 0;
 
     write_stringz(out, "E");
@@ -790,10 +791,10 @@ static void run_safe_events(void * arg) {
             if (ctx->exited) continue;
             if (!ctx->stopped) continue;
             if (ext->intercepted) continue;
-            if (ext->stepping && !ctx->pending_intercept) {
+            if (ext->stepping_in_range && !ctx->pending_intercept) {
                 ContextAddress pc = get_regs_PC(ctx);
                 if (pc < ext->step_range_start || pc >= ext->step_range_end) {
-                    ext->stepping = 0;
+                    ext->stepping_in_range = 0;
                     ctx->pending_intercept = 1;
                 }
             }
@@ -802,7 +803,7 @@ static void run_safe_events(void * arg) {
                 continue;
             }
             assert(!ctx->pending_intercept);
-            if (ext->stepping) {
+            if (ext->stepping_in_range) {
                 n = context_single_step(ctx);
             }
             else {
@@ -837,7 +838,11 @@ static void run_safe_events(void * arg) {
             ctx->exiting = 1;
         }
         else {
-            if (!ctx->pending_step || stop_all_timer_cnt >= STOP_ALL_MAX_CNT / 2) {
+            if (stop_all_timer_cnt == STOP_ALL_MAX_CNT / 2) {
+                const char * msg = ext->safe_single_step ? "finish single step" : "stop";
+                trace(LOG_ALWAYS, "warning: waiting too long for context %s to %s", ctx->id, msg);
+            }
+            if (!ext->safe_single_step || stop_all_timer_cnt >= STOP_ALL_MAX_CNT / 2) {
                 if (context_stop(ctx) < 0) {
                     trace(LOG_ALWAYS, "error: can't temporary stop %s; error %d: %s",
                         ctx->id, errno, errno_to_str(errno));
@@ -914,6 +919,17 @@ void post_safe_event(Context * mem, EventCallBack * done, void * arg) {
     safe_event_last = i;
 }
 
+int safe_context_single_step(Context * ctx) {
+    int res = 0;
+    ContextExtensionRC * ext = EXT(ctx);
+    assert(run_ctrl_lock_cnt != 0);
+    assert(ext->safe_single_step == 0);
+    ext->safe_single_step = 1;
+    res = context_single_step(ctx);
+    if (res < 0) ext->safe_single_step = 0;
+    return res;
+}
+
 void run_ctrl_lock(void) {
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
@@ -949,6 +965,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     assert(ctx->stopped);
     assert(!ctx->exited);
     assert(!ext->intercepted);
+    ext->safe_single_step = 0;
     if (ctx->stopped_by_bp) evaluate_breakpoint(ctx);
     if (ext->pending_safe_event) check_safe_events(ctx);
     if (ctx->stopped_by_exception) send_event_context_exception(ctx);
@@ -965,7 +982,7 @@ static void event_context_started(Context * ctx, void * client_data) {
     if (ext->intercepted) send_event_context_resumed(ctx);
     ext->intercepted_by_bp = 0;
     if (safe_event_list) {
-        if (!ctx->pending_step) {
+        if (!ext->safe_single_step && !ctx->exiting) {
             context_stop(ctx);
         }
         if (!ext->pending_safe_event) {
@@ -979,6 +996,7 @@ static void event_context_exited(Context * ctx, void * client_data) {
     ContextExtensionRC * ext = EXT(ctx);
     assert(!ctx->stopped);
     assert(!ext->intercepted);
+    ext->safe_single_step = 0;
     if (ext->pending_safe_event) check_safe_events(ctx);
     send_event_context_removed(ctx);
 }

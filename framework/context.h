@@ -47,7 +47,6 @@ struct Context {
     int                 exiting;            /* context is about to exit */
     int                 exited;             /* context exited */
     int                 event_notification; /* set to 1 when calling one of ContextEventListener call-backs for this context */
-    int                 pending_step;       /* context is executing single instruction step */
     int                 pending_intercept;  /* host is waiting for this context to be suspended */
     unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
     unsigned long       sig_dont_stop;      /* bitset of signals that should not be intercepted by the debugger */

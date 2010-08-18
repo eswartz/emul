@@ -253,7 +253,6 @@ int context_continue(Context * ctx) {
     assert(ctx->stopped);
     assert(!ctx->pending_intercept);
     assert(!ctx->exited);
-    assert(!ctx->pending_step);
     assert(taskIsStopped(EXT(ctx)->pid));
 
     if (skip_breakpoint(ctx, 0)) return 0;
@@ -298,7 +297,6 @@ int context_single_step(Context * ctx) {
     assert(ctx->parent != NULL);
     assert(ctx->stopped);
     assert(!ctx->exited);
-    assert(!ctx->pending_step);
     assert(taskIsStopped(EXT(ctx)->pid));
 
     if (skip_breakpoint(ctx, 1)) return 0;
@@ -329,7 +327,6 @@ int context_single_step(Context * ctx) {
                 ctx, EXT(ctx)->pid, errno_to_str(error));
         return -1;
     }
-    ctx->pending_step = 1;
     taskUnlock();
     send_context_started_event(ctx);
     return 0;
@@ -422,7 +419,6 @@ static void event_handler(void * arg) {
         memcpy(EXT(stopped_ctx)->regs, &info->regs, sizeof(REG_SET));
         EXT(stopped_ctx)->event = 0;
         stopped_ctx->signal = SIGTRAP;
-        stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = info->bp_info_ok;
         stopped_ctx->stopped_by_exception = 0;
@@ -450,7 +446,6 @@ static void event_handler(void * arg) {
         memcpy(EXT(current_ctx)->regs, &info->regs, sizeof(REG_SET));
         EXT(current_ctx)->event = TRACE_EVENT_STEP;
         current_ctx->signal = SIGTRAP;
-        current_ctx->pending_step = 0;
         current_ctx->stopped = 1;
         current_ctx->stopped_by_bp = 0;
         current_ctx->stopped_by_exception = 0;
@@ -473,7 +468,6 @@ static void event_handler(void * arg) {
         }
         EXT(stopped_ctx)->event = 0;
         stopped_ctx->signal = SIGSTOP;
-        stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = 0;
         stopped_ctx->stopped_by_exception = 0;
@@ -573,7 +567,6 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
              */
             assert(!stopped_ctx->stopped);
             assert(!stopped_ctx->exited);
-            stopped_ctx->pending_step = 0;
             trace(LOG_CONTEXT, "context: exited ctx %#lx, id %#x", stopped_ctx, EXT(stopped_ctx)->pid);
             release_error_report(EXT(stopped_ctx)->regs_error);
             loc_free(EXT(stopped_ctx)->regs);

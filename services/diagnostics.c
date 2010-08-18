@@ -64,10 +64,10 @@ static void channel_close_listener(Channel * c) {
     LINK * l = context_root.next;
     while (l != &context_root) {
         Context * ctx = ctxl2ctxp(l);
+        l = l->next;
         if (EXT(ctx)->channel == c || ctx->creator != NULL && EXT(ctx->creator)->channel == c) {
             terminate_debug_context(ctx);
         }
-        l = l->next;
     }
     l = context_root.next;
     while (l != &context_root) {

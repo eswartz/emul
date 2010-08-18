@@ -18,7 +18,7 @@
 
 #include <config.h>
 
-#if SERVICE_Symbols && !ENABLE_SymbolsProxy && defined(_MSC_VER) && !ENABLE_ELF
+#if SERVICE_Symbols && !ENABLE_SymbolsProxy && defined(WIN32) && !ENABLE_ELF
 
 #include <errno.h>
 #include <assert.h>
@@ -93,7 +93,7 @@ struct Symbol {
     const TypeInfo * info;
     const Symbol * base;
     size_t length;
-    void * address;
+    ContextAddress address;
 };
 
 #include <services/symbols_alloc.h>
@@ -718,8 +718,8 @@ int get_symbol_address(const Symbol * sym, ContextAddress * addr) {
     SYMBOL_INFO * info = NULL;
 
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->address != NULL) {
-        *addr = (ContextAddress)sym->address;
+    if (sym->address != 0) {
+        *addr = sym->address;
         return 0;
     }
     if (sym->base || sym->info) {
@@ -881,9 +881,15 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
 #if ENABLE_RCBP_TEST
     if (!found) {
-        if (find_test_symbol(ctx, name, &(*sym)->address, &(*sym)->sym_class) >= 0) found = 1;
+        int sym_class = 0;
+        void * address = NULL;
+        if (find_test_symbol(ctx, name, &address, &sym_class) >= 0) found = 1;
         else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
-        if (found) (*sym)->ctx = ctx->mem;
+        if (found) {
+            (*sym)->ctx = ctx->mem;
+            (*sym)->sym_class = sym_class;
+            (*sym)->address = (ContextAddress)address;
+        }
     }
 #endif
     if (!found) {

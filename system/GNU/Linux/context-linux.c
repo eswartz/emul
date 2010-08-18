@@ -95,6 +95,7 @@ typedef struct ContextExtensionLinux {
     REG_SET *               regs;               /* copy of context registers, updated when context stops */
     ErrorReport *           regs_error;         /* if not NULL, 'regs' is invalid */
     int                     regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
+    int                     pending_step;
 } ContextExtensionLinux;
 
 static size_t context_extension_offset = 0;
@@ -104,6 +105,16 @@ static size_t context_extension_offset = 0;
 #include <system/pid-hash.h>
 
 static LINK pending_list;
+
+static void ctx_started_debug(Context * ctx) {
+    send_context_started_event(ctx);
+}
+
+#define send_context_started_event(ctx) { \
+    ContextExtensionLinux * ext = EXT(ctx); \
+    assert(!ext->regs_dirty || (ctx)->exiting); \
+    ctx_started_debug(ctx); \
+}
 
 static const char * event_name(int event) {
     switch (event) {
@@ -155,6 +166,7 @@ int context_attach_self(void) {
 
 int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
     Context * ctx = NULL;
+    ContextExtensionLinux * ext = NULL;
 
     assert(done != NULL);
     trace(LOG_CONTEXT, "context: attaching pid %d", pid);
@@ -168,9 +180,10 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     add_waitpid_process(pid);
     ctx = create_context(pid2id(pid, 0));
     ctx->mem = ctx;
-    EXT(ctx)->pid = pid;
-    EXT(ctx)->attach_callback = done;
-    EXT(ctx)->attach_data = data;
+    ext = EXT(ctx);
+    ext->pid = pid;
+    ext->attach_callback = done;
+    ext->attach_data = data;
     list_add_first(&ctx->ctxl, &pending_list);
     /* TODO: context_attach works only for main task in a process */
     return 0;
@@ -181,13 +194,15 @@ int context_has_state(Context * ctx) {
 }
 
 int context_stop(Context * ctx) {
+    ContextExtensionLinux * ext = EXT(ctx);
     trace(LOG_CONTEXT, "context:%s suspending ctx %#lx id %s",
         ctx->pending_intercept ? "" : " temporary", ctx, ctx->id);
     assert(is_dispatch_thread());
     assert(!ctx->exited);
+    assert(!ctx->exiting);
     assert(!ctx->stopped);
-    assert(!EXT(ctx)->regs_dirty);
-    if (tkill(EXT(ctx)->pid, SIGSTOP) < 0) {
+    assert(!ext->regs_dirty);
+    if (tkill(ext->pid, SIGSTOP) < 0) {
         int err = errno;
         if (err != ESRCH) {
             trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#lx, id %s, error %d %s",
@@ -213,16 +228,17 @@ static int syscall_never_returns(Context * ctx) {
 
 int context_continue(Context * ctx) {
     int signal = 0;
+    ContextExtensionLinux * ext = EXT(ctx);
 
     assert(is_dispatch_thread());
     assert(ctx->stopped);
     assert(!ctx->pending_intercept);
-    assert(!ctx->pending_step);
+    assert(!ext->pending_step);
     assert(!ctx->exited);
 
     if (skip_breakpoint(ctx, 0)) return 0;
 
-    if (!EXT(ctx)->syscall_enter && !EXT(ctx)->ptrace_event) {
+    if (!ext->syscall_enter && !ext->ptrace_event) {
         while (ctx->pending_signals != 0) {
             while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
             if (ctx->sig_dont_pass & (1 << signal)) {
@@ -239,17 +255,17 @@ int context_continue(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, id %s, with signal %d", ctx, ctx->id, signal);
 #if defined(__i386__) || defined(__x86_64__)
-    if (EXT(ctx)->regs->eflags & 0x100) {
-        EXT(ctx)->regs->eflags &= ~0x100;
-        EXT(ctx)->regs_dirty = 1;
+    if (ext->regs->eflags & 0x100) {
+        ext->regs->eflags &= ~0x100;
+        ext->regs_dirty = 1;
     }
 #endif
-    if (EXT(ctx)->regs_dirty) {
-        if (ptrace(PTRACE_SETREGS, EXT(ctx)->pid, 0, EXT(ctx)->regs) < 0) {
+    if (ext->regs_dirty) {
+        if (ptrace(PTRACE_SETREGS, ext->pid, 0, ext->regs) < 0) {
             int err = errno;
 #if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
-                EXT(ctx)->regs_dirty = 0;
+                ext->regs_dirty = 0;
                 send_context_started_event(ctx);
                 return 0;
             }
@@ -259,12 +275,12 @@ int context_continue(Context * ctx) {
             errno = err;
             return -1;
         }
-        EXT(ctx)->regs_dirty = 0;
+        ext->regs_dirty = 0;
     }
 #if USE_PTRACE_SYSCALL
-    if (ptrace(PTRACE_SYSCALL, EXT(ctx)->pid, 0, signal) < 0) {
+    if (ptrace(PTRACE_SYSCALL, ext->pid, 0, signal) < 0) {
 #else
-    if (ptrace(PTRACE_CONT, EXT(ctx)->pid, 0, signal) < 0) {
+    if (ptrace(PTRACE_CONT, ext->pid, 0, signal) < 0) {
 #endif
         int err = errno;
 #if USE_ESRCH_WORKAROUND
@@ -280,32 +296,34 @@ int context_continue(Context * ctx) {
     }
     ctx->pending_signals &= ~(1 << signal);
     if (syscall_never_returns(ctx)) {
-        EXT(ctx)->syscall_enter = 0;
-        EXT(ctx)->syscall_exit = 0;
-        EXT(ctx)->syscall_id = 0;
+        ext->syscall_enter = 0;
+        ext->syscall_exit = 0;
+        ext->syscall_id = 0;
     }
     send_context_started_event(ctx);
     return 0;
 }
 
 int context_single_step(Context * ctx) {
+    ContextExtensionLinux * ext = EXT(ctx);
+
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(!ctx->exited);
-    assert(!ctx->pending_step);
+    assert(!ext->pending_step);
 
     if (skip_breakpoint(ctx, 1)) return 0;
 
     if (syscall_never_returns(ctx)) return context_continue(ctx);
     trace(LOG_CONTEXT, "context: single step ctx %#lx, id %s", ctx, ctx->id);
-    if (EXT(ctx)->regs_dirty) {
-        if (ptrace(PTRACE_SETREGS, EXT(ctx)->pid, 0, EXT(ctx)->regs) < 0) {
+    if (ext->regs_dirty) {
+        if (ptrace(PTRACE_SETREGS, ext->pid, 0, ext->regs) < 0) {
             int err = errno;
 #if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
-                EXT(ctx)->regs_dirty = 0;
-                ctx->pending_step = 1;
+                ext->regs_dirty = 0;
+                ext->pending_step = 1;
                 send_context_started_event(ctx);
                 return 0;
             }
@@ -315,13 +333,13 @@ int context_single_step(Context * ctx) {
             errno = err;
             return -1;
         }
-        EXT(ctx)->regs_dirty = 0;
+        ext->regs_dirty = 0;
     }
-    if (ptrace(PTRACE_SINGLESTEP, EXT(ctx)->pid, 0, 0) < 0) {
+    if (ptrace(PTRACE_SINGLESTEP, ext->pid, 0, 0) < 0) {
         int err = errno;
 #if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
-            ctx->pending_step = 1;
+            ext->pending_step = 1;
             send_context_started_event(ctx);
             return 0;
         }
@@ -331,7 +349,7 @@ int context_single_step(Context * ctx) {
         errno = err;
         return -1;
     }
-    ctx->pending_step = 1;
+    ext->pending_step = 1;
     send_context_started_event(ctx);
     return 0;
 }
@@ -339,9 +357,11 @@ int context_single_step(Context * ctx) {
 int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
     ContextAddress word_addr;
     unsigned word_size = context_word_size(ctx);
+    ContextExtensionLinux * ext = EXT(ctx);
+
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %zd",
+    trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %zu",
         ctx, ctx->id, address, size);
     assert(word_size <= sizeof(unsigned long));
     check_breakpoints_on_memory_write(ctx, address, buf, size);
@@ -350,7 +370,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         if (word_addr < address || word_addr + word_size > address + size) {
             unsigned i = 0;
             errno = 0;
-            word = ptrace(PTRACE_PEEKDATA, EXT(ctx)->pid, (void *)word_addr, 0);
+            word = ptrace(PTRACE_PEEKDATA, ext->pid, (void *)word_addr, 0);
             if (errno != 0) {
                 int err = errno;
                 trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
@@ -367,7 +387,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         else {
             memcpy(&word, (char *)buf + (word_addr - address), word_size);
         }
-        if (ptrace(PTRACE_POKEDATA, EXT(ctx)->pid, (void *)word_addr, word) < 0) {
+        if (ptrace(PTRACE_POKEDATA, ext->pid, (void *)word_addr, word) < 0) {
             int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_POKEDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
                 ctx, ctx->id, word_addr, err, errno_to_str(err));
@@ -381,15 +401,17 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
     ContextAddress word_addr;
     unsigned word_size = context_word_size(ctx);
+    ContextExtensionLinux * ext = EXT(ctx);
+
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    trace(LOG_CONTEXT, "context: read memory ctx %#lx, id %s, address %#lx, size %zd",
+    trace(LOG_CONTEXT, "context: read memory ctx %#lx, id %s, address %#lx, size %zu",
         ctx, ctx->id, address, size);
     assert(word_size <= sizeof(unsigned long));
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         errno = 0;
-        word = ptrace(PTRACE_PEEKDATA, EXT(ctx)->pid, (void *)word_addr, 0);
+        word = ptrace(PTRACE_PEEKDATA, ext->pid, (void *)word_addr, 0);
         if (errno != 0) {
             int err = errno;
             trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
@@ -488,36 +510,42 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
         }
     }
     else {
-        if (EXT(ctx->parent)->pid == pid) ctx = ctx->parent;
-        assert(EXT(ctx)->attach_callback == NULL);
-        if (ctx->stopped || ctx->exited) {
-            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, exited %d",
-                ctx, pid, status, ctx->stopped, ctx->exited);
-            if (ctx->stopped) send_context_started_event(ctx);
-        }
-        else {
-            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d, term signal %d", ctx, pid, status, signal);
-        }
-        if (!list_is_empty(&ctx->children)) {
-            LINK * l = ctx->children.next;
-            while (l != &ctx->children) {
-                Context * c = cldl2ctxp(l);
-                l = l->next;
-                assert(c->parent == ctx);
-                if (!c->exited) {
-                    if (c->stopped) send_context_started_event(c);
-                    release_error_report(EXT(c)->regs_error);
-                    loc_free(EXT(c)->regs);
-                    EXT(c)->regs_error = NULL;
-                    EXT(c)->regs = NULL;
-                    send_context_exited_event(c);
-                }
-            }
-        }
         /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
          * between PTRACE_CONT (or PTRACE_SYSCALL) and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
          */
-        send_context_exited_event(ctx);
+        if (EXT(ctx->parent)->pid == pid) ctx = ctx->parent;
+        assert(EXT(ctx)->attach_callback == NULL);
+        if (ctx->exited) {
+            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, exited %d",
+                ctx, pid, status, ctx->stopped, ctx->exited);
+        }
+        else {
+            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d, term signal %d", ctx, pid, status, signal);
+            ctx->exiting = 1;
+            if (ctx->stopped) send_context_started_event(ctx);
+            if (!list_is_empty(&ctx->children)) {
+                LINK * l = ctx->children.next;
+                while (l != &ctx->children) {
+                    Context * c = cldl2ctxp(l);
+                    l = l->next;
+                    assert(c->parent == ctx);
+                    if (!c->exited) {
+                        c->exiting = 1;
+                        if (c->stopped) send_context_started_event(c);
+                        release_error_report(EXT(c)->regs_error);
+                        loc_free(EXT(c)->regs);
+                        EXT(c)->regs_error = NULL;
+                        EXT(c)->regs = NULL;
+                        send_context_exited_event(c);
+                    }
+                }
+            }
+            release_error_report(EXT(ctx)->regs_error);
+            loc_free(EXT(ctx)->regs);
+            EXT(ctx)->regs_error = NULL;
+            EXT(ctx)->regs = NULL;
+            send_context_exited_event(ctx);
+        }
     }
 }
 
@@ -535,6 +563,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     int stopped_by_exception = 0;
     unsigned long msg = 0;
     Context * ctx = NULL;
+    ContextExtensionLinux * ext = NULL;
 
     trace(LOG_EVENTS, "event: pid %d stopped, signal %d, event %s", pid, signal, event_name(event));
 
@@ -566,16 +595,17 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
 
     if (ctx == NULL) return;
 
+    ext = EXT(ctx);
     assert(!ctx->exited);
-    assert(!EXT(ctx)->attach_callback);
-    if (EXT(ctx)->ptrace_flags != PTRACE_FLAGS) {
-        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, EXT(ctx)->pid, 0, PTRACE_FLAGS) < 0) {
+    assert(!ext->attach_callback);
+    if (ext->ptrace_flags != PTRACE_FLAGS) {
+        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, PTRACE_FLAGS) < 0) {
                 int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETOPTIONS) failed: pid %d, error %d %s",
-                EXT(ctx)->pid, err, errno_to_str(err));
+                ext->pid, err, errno_to_str(err));
         }
         else {
-            EXT(ctx)->ptrace_flags = PTRACE_FLAGS;
+            ext->ptrace_flags = PTRACE_FLAGS;
         }
     }
 
@@ -628,7 +658,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         break;
     case PTRACE_EVENT_EXIT:
         ctx->exiting = 1;
-        EXT(ctx)->regs_dirty = 0;
+        ext->regs_dirty = 0;
         break;
     }
 
@@ -648,24 +678,24 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         ContextAddress pc0 = 0;
         ContextAddress pc1 = 0;
 
-        assert(!EXT(ctx)->regs_dirty);
+        assert(!ext->regs_dirty);
 
-        EXT(ctx)->end_of_step = 0;
-        EXT(ctx)->ptrace_event = event;
+        ext->end_of_step = 0;
+        ext->ptrace_event = event;
         ctx->signal = signal;
         ctx->stopped_by_bp = 0;
         ctx->stopped_by_exception = stopped_by_exception;
         ctx->stopped = 1;
 
-        if (EXT(ctx)->regs_error) {
-            release_error_report(EXT(ctx)->regs_error);
-            EXT(ctx)->regs_error = NULL;
+        if (ext->regs_error) {
+            release_error_report(ext->regs_error);
+            ext->regs_error = NULL;
         }
         else {
             pc0 = get_regs_PC(ctx);
         }
 
-        if (ptrace(PTRACE_GETREGS, EXT(ctx)->pid, 0, EXT(ctx)->regs) < 0) {
+        if (ptrace(PTRACE_GETREGS, ext->pid, 0, ext->regs) < 0) {
             assert(errno != 0);
 #if USE_ESRCH_WORKAROUND
             if (errno == ESRCH) {
@@ -681,31 +711,31 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 return;
             }
 #endif
-            EXT(ctx)->regs_error = get_error_report(errno);
+            ext->regs_error = get_error_report(errno);
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETREGS) failed; pid %d, error %d %s",
-                EXT(ctx)->pid, errno, errno_to_str(errno));
+                ext->pid, errno, errno_to_str(errno));
         }
         else {
             pc1 = get_regs_PC(ctx);
         }
 
-        if (syscall && !EXT(ctx)->regs_error) {
-            if (!EXT(ctx)->syscall_enter) {
-                EXT(ctx)->syscall_id = get_syscall_id(ctx);
-                EXT(ctx)->syscall_pc = pc1;
-                EXT(ctx)->syscall_enter = 1;
-                EXT(ctx)->syscall_exit = 0;
+        if (syscall && !ext->regs_error) {
+            if (!ext->syscall_enter) {
+                ext->syscall_id = get_syscall_id(ctx);
+                ext->syscall_pc = pc1;
+                ext->syscall_enter = 1;
+                ext->syscall_exit = 0;
                 trace(LOG_EVENTS, "event: pid %d enter sys call %d, PC = %#lx",
-                    pid, EXT(ctx)->syscall_id, EXT(ctx)->syscall_pc);
+                    pid, ext->syscall_id, ext->syscall_pc);
             }
             else {
-                if (EXT(ctx)->syscall_pc != pc1) {
+                if (ext->syscall_pc != pc1) {
                     trace(LOG_ALWAYS, "Invalid PC at sys call exit: pid %d, sys call %d, PC %#lx, expected PC %#lx",
-                        EXT(ctx)->pid, EXT(ctx)->syscall_id, pc1, EXT(ctx)->syscall_pc);
+                        ext->pid, ext->syscall_id, pc1, ext->syscall_pc);
                 }
                 trace(LOG_EVENTS, "event: pid %d exit sys call %d, PC = %#lx",
-                    pid, EXT(ctx)->syscall_id, pc1);
-                switch (EXT(ctx)->syscall_id) {
+                    pid, ext->syscall_id, pc1);
+                switch (ext->syscall_id) {
                 case __NR_mmap:
                 case __NR_munmap:
 #ifdef __NR_mmap2
@@ -716,38 +746,28 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                     send_context_changed_event(ctx);
                     break;
                 }
-                EXT(ctx)->syscall_enter = 0;
-                EXT(ctx)->syscall_exit = 1;
+                ext->syscall_enter = 0;
+                ext->syscall_exit = 1;
             }
         }
         else {
-            if (!EXT(ctx)->syscall_enter || EXT(ctx)->regs_error || pc0 != pc1) {
-                EXT(ctx)->syscall_enter = 0;
-                EXT(ctx)->syscall_exit = 0;
-                EXT(ctx)->syscall_id = 0;
-                EXT(ctx)->syscall_pc = 0;
+            if (!ext->syscall_enter || ext->regs_error || pc0 != pc1) {
+                ext->syscall_enter = 0;
+                ext->syscall_exit = 0;
+                ext->syscall_id = 0;
+                ext->syscall_pc = 0;
             }
             trace(LOG_EVENTS, "event: pid %d stopped at PC = %#lx", pid, pc1);
-        }
-
-        if (signal == SIGSTOP && ctx->pending_step && !EXT(ctx)->regs_error && pc0 == pc1) {
-            trace(LOG_EVENTS, "event: pid %d, single step failed because of pending SIGSTOP, retrying", EXT(ctx)->pid);
-            ptrace(PTRACE_SINGLESTEP, EXT(ctx)->pid, 0, 0);
-            ctx->stopped = 0;
-            return;
         }
 
         if (signal == SIGTRAP && event == 0 && !syscall) {
             size_t break_size = 0;
             get_break_instruction(ctx, &break_size);
-            ctx->stopped_by_bp = !EXT(ctx)->regs_error && is_breakpoint_address(ctx, pc1 - break_size);
-            EXT(ctx)->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
-            if (ctx->stopped_by_bp) {
-                set_regs_PC(ctx, pc1 - break_size);
-                EXT(ctx)->regs_dirty = 1;
-            }
+            ctx->stopped_by_bp = !ext->regs_error && is_breakpoint_address(ctx, pc1 - break_size);
+            ext->end_of_step = !ctx->stopped_by_bp && ext->pending_step;
+            if (ctx->stopped_by_bp) set_regs_PC(ctx, pc1 - break_size);
         }
-        ctx->pending_step = 0;
+        ext->pending_step = 0;
         send_context_stopped_event(ctx);
     }
 }
@@ -805,8 +825,11 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
     ContextAddress addr = elf_get_debug_structure_address(ctx, &file);
     unsigned size = context_word_size(ctx);
     ContextAddress state = 0;
+    ContextExtensionLinux * ext = NULL;
+
 
     if (ctx->parent != NULL) ctx = ctx->parent;
+    ext = EXT(ctx);
 
     if (addr != 0) {
         switch (size) {
@@ -818,17 +841,17 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
             int error = errno;
             trace(LOG_ALWAYS, "Can't read loader state flag: %d %s", error, errno_to_str(error));
             ctx->pending_intercept = 1;
-            EXT(ctx)->loader_state = 0;
+            ext->loader_state = 0;
             return;
         }
     }
 
     switch (state) {
     case RT_CONSISTENT:
-        if (EXT(ctx)->loader_state == RT_ADD) {
+        if (ext->loader_state == RT_ADD) {
             memory_map_event_module_loaded(ctx);
         }
-        else if (EXT(ctx)->loader_state == RT_DELETE) {
+        else if (ext->loader_state == RT_DELETE) {
             memory_map_event_module_unloaded(ctx);
         }
         break;
@@ -838,7 +861,7 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
         /* TODO: need to call memory_map_event_code_section_ummapped() */
         break;
     }
-    EXT(ctx)->loader_state = state;
+    ext->loader_state = state;
 }
 
 #endif /* SERVICE_Expressions && ENABLE_ELF */

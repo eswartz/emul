@@ -47,6 +47,14 @@ extern void run_ctrl_unlock(void);
 extern void post_safe_event(Context * mem, EventCallBack * done, void * arg);
 
 /*
+ * Single step a context during handling of safe event.
+ * "Safe" step is executed with all other contexts stopped,
+ * and it is expected to take only a short time to execute.
+ * It is intended to be used in breakpoints implementation.
+ */
+extern int safe_context_single_step(Context * ctx);
+
+/*
  * Return 1 if all threads in debuggee are stopped and handling of incoming messages
  * is suspended and it is safe to access debuggee memory, plant breakpoints, etc.
  * 'mem' is memory context, only threads that belong to that memory are checked.

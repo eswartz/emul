@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#if SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && defined(_MSC_VER) && !ENABLE_ELF
+#if SERVICE_LineNumbers && !ENABLE_LineNumbersProxy && defined(WIN32) && !ENABLE_ELF
 
 #include <errno.h>
 #include <assert.h>

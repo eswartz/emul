@@ -45,7 +45,10 @@ static wchar_t * pathes[] = {
 };
 
 static void event_context_created(Context * ctx, void * client_data) {
+    HANDLE handle = NULL;
     if (ctx->parent != NULL) return;
+    handle = get_context_handle(ctx);
+    assert(handle != NULL);
     assert(ctx->mem == ctx);
     if (!SymInitialize(get_context_handle(ctx), SYM_SEARCH_PATH, FALSE)) {
         set_win32_errno(GetLastError());
@@ -59,9 +62,11 @@ static void event_context_created(Context * ctx, void * client_data) {
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
-    HANDLE handle = get_context_handle(ctx);
+    HANDLE handle = NULL;
     if (ctx->parent != NULL) return;
+    handle = get_context_handle(ctx);
     assert(handle != NULL);
+    assert(ctx->mem == ctx);
     if (!SymUnloadModule64(handle, get_context_base_address(ctx))) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymUnloadModule64() error: %s", errno_to_str(errno));
@@ -73,36 +78,29 @@ static void event_context_exited(Context * ctx, void * client_data) {
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
-    HANDLE handle = get_context_handle(ctx);
-    if (is_context_module_loaded(ctx)) {
-        assert(ctx->mem == ctx);
-        assert(handle != NULL);
-        if (!SymLoadModule64(handle, get_context_module_handle(ctx),
-                NULL, NULL, get_context_module_address(ctx), 0)) {
-            set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "SymLoadModule64() error: %s", errno_to_str(errno));
-        }
+    HANDLE handle = NULL;
+    if (ctx->parent != NULL) return;
+    handle = get_context_handle(ctx);
+    assert(handle != NULL);
+    assert(ctx->mem == ctx);
+    if (is_context_module_loaded(ctx) && !SymLoadModule64(handle, get_context_module_handle(ctx),
+            NULL, NULL, get_context_module_address(ctx), 0)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymLoadModule64() error: %s", errno_to_str(errno));
     }
-    if (is_context_module_unloaded(ctx)) {
-        assert(ctx->mem == ctx);
-        assert(handle != NULL);
-        if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
-            set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "SymUnloadModule64() error: %s", errno_to_str(errno));
-        }
+    if (is_context_module_unloaded(ctx) && !SymUnloadModule64(handle, get_context_module_address(ctx))) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymUnloadModule64() error: %s", errno_to_str(errno));
     }
 }
 
-static void ini_listeners(void) {
-    static ContextEventListener listener = {
-        event_context_created,
-        event_context_exited,
-        NULL,
-        NULL,
-        event_context_changed
-    };
-    add_context_event_listener(&listener, NULL);
-}
+static ContextEventListener listener = {
+    event_context_created,
+    event_context_exited,
+    NULL,
+    NULL,
+    event_context_changed
+};
 
 static FARPROC GetProc(char * name) {
     if (dbghelp_dll == NULL) {
@@ -134,7 +132,7 @@ static FARPROC GetProc(char * name) {
             assert(GetLastError() != 0);
             return NULL;
         }
-        ini_listeners();
+        add_context_event_listener(&listener, NULL);
     }
     return GetProcAddress(dbghelp_dll, name);
 }

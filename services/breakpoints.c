@@ -147,6 +147,7 @@ struct EvaluationRequest {
 
 struct ContextExtensionBP {
     int                 bp_eval_started;
+    int                 step_over_bp_cnt;
     BreakInstruction *  stepping_over_bp;   /* if not NULL, the context is stepping over a breakpoint instruction */
     char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     EvaluationRequest * req;
@@ -1786,16 +1787,26 @@ char ** get_context_breakpoint_ids(Context * ctx) {
 
 #ifndef _WRS_KERNEL
 
+static void safe_skip_breakpoint(void * arg);
+
 static void safe_restore_breakpoint(void * arg) {
     Context * ctx = (Context *)arg;
-    BreakInstruction * bi = EXT(ctx)->stepping_over_bp;
+    ContextExtensionBP * ext = EXT(ctx);
+    BreakInstruction * bi = ext->stepping_over_bp;
 
     assert(bi->stepping_over_bp > 0);
     assert(find_instruction(ctx, bi->address) == bi);
     if (!ctx->exiting && ctx->stopped && !ctx->stopped_by_exception && get_regs_PC(ctx) == bi->address) {
+        if (ext->step_over_bp_cnt < 100) {
+            ctx->stopped_by_bp = 1;
+            ext->step_over_bp_cnt++;
+            safe_skip_breakpoint(arg);
+            return;
+        }
         trace(LOG_ALWAYS, "Skip breakpoint error: wrong PC %#lx", get_regs_PC(ctx));
     }
-    EXT(ctx)->stepping_over_bp = NULL;
+    ext->stepping_over_bp = NULL;
+    ext->step_over_bp_cnt = 0;
     bi->stepping_over_bp--;
     if (!ctx->exited && generation_done == generation_posted &&
             bi->stepping_over_bp == 0 && bi->ref_cnt > 0 && !bi->planted) {
@@ -1806,7 +1817,8 @@ static void safe_restore_breakpoint(void * arg) {
 
 static void safe_skip_breakpoint(void * arg) {
     Context * ctx = (Context *)arg;
-    BreakInstruction * bi = EXT(ctx)->stepping_over_bp;
+    ContextExtensionBP * ext = EXT(ctx);
+    BreakInstruction * bi = ext->stepping_over_bp;
     int error = 0;
 
     assert(bi != NULL);
@@ -1824,7 +1836,7 @@ static void safe_skip_breakpoint(void * arg) {
 
     if (bi->planted) remove_instruction(bi);
     if (bi->planting_error) error = set_error_report_errno(bi->planting_error);
-    if (error == 0 && context_single_step(ctx) < 0) error = errno;
+    if (error == 0 && safe_context_single_step(ctx) < 0) error = errno;
     if (error) {
         error = set_errno(error, "Cannot step over breakpoint");
         send_context_started_event(ctx);
@@ -1833,7 +1845,6 @@ static void safe_skip_breakpoint(void * arg) {
         ctx->stopped_by_bp = 0;
         ctx->stopped_by_exception = 1;
         ctx->exception_description = loc_strdup(errno_to_str(error));
-        ctx->pending_step = 0;
         send_context_stopped_event(ctx);
     }
 }
@@ -1849,14 +1860,14 @@ static void safe_skip_breakpoint(void * arg) {
  * return 1 if context needs to step over a breakpoint.
  */
 int skip_breakpoint(Context * ctx, int single_step) {
+    ContextExtensionBP * ext = EXT(ctx);
     BreakInstruction * bi;
 
     assert(ctx->stopped);
     assert(!ctx->exited);
-    assert(!ctx->pending_step);
-    assert(single_step || EXT(ctx)->stepping_over_bp == NULL);
+    assert(single_step || ext->stepping_over_bp == NULL);
 
-    if (EXT(ctx)->stepping_over_bp != NULL) return 0;
+    if (ext->stepping_over_bp != NULL) return 0;
     if (ctx->exited || ctx->exiting || !ctx->stopped_by_bp) return 0;
 
 #ifdef _WRS_KERNEL
@@ -1866,7 +1877,8 @@ int skip_breakpoint(Context * ctx, int single_step) {
     bi = find_instruction(ctx, get_regs_PC(ctx));
     if (bi == NULL || bi->planting_error) return 0;
     bi->stepping_over_bp++;
-    EXT(ctx)->stepping_over_bp = bi;
+    ext->stepping_over_bp = bi;
+    ext->step_over_bp_cnt = 1;
     assert(bi->stepping_over_bp > 0);
     context_lock(ctx);
     post_safe_event(ctx->mem, safe_skip_breakpoint, ctx);

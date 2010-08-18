@@ -351,14 +351,16 @@ static void read_path(InputStream * inp, char * path, int size) {
     char buf[FILE_PATH_SIZE];
     json_read_string(inp, path, size);
     if (path[0] == 0) strlcpy(path, get_user_home(), size);
-    while (path[i] != 0) {
+    for (i = 0; path[i] != 0; i++) {
         if (path[i] == '\\') path[i] = '/';
-        i++;
     }
 #if defined(__CYGWIN__)
     if (path[0] != '/' && !(path[0] != 0 && path[1] == ':' && path[2] == '/')) {
         snprintf(buf, sizeof(buf), "%s/%s", get_user_home(), path);
         strlcpy(path, buf, size);
+        for (i = 0; path[i] != 0; i++) {
+            if (path[i] == '\\') path[i] = '/';
+        }
     }
     if (path[0] != 0 && path[1] == ':' && path[2] == '/') {
         if (path[3] == 0) {
@@ -383,7 +385,11 @@ static void read_path(InputStream * inp, char * path, int size) {
     if (path[0] != '/') {
         snprintf(buf, sizeof(buf), "%s/%s", get_user_home(), path);
         strlcpy(path, buf, size);
+        for (i = 0; path[i] != 0; i++) {
+            if (path[i] == '\\') path[i] = '/';
+        }
     }
+    assert(path[0] == '/');
 }
 
 static void command_open(char * token, Channel * c) {
@@ -1185,7 +1191,7 @@ static void command_roots(char * token, Channel * c) {
         for (disk = 0; disk <= 30; disk++) {
             if (disks & (1 << disk)) {
                 char path[32];
-                snprintf(path, sizeof(path), "%c:/", 'A' + disk);
+                snprintf(path, sizeof(path), "%c:\\", 'A' + disk);
                 if (cnt > 0) write_stream(&c->out, ',');
                 write_stream(&c->out, '{');
                 json_write_string(&c->out, "FileName");
@@ -1195,6 +1201,9 @@ static void command_roots(char * token, Channel * c) {
                     ULARGE_INTEGER total_number_of_bytes;
                     BOOL has_size = GetDiskFreeSpaceExA(path, NULL, &total_number_of_bytes, NULL);
                     memset(&st, 0, sizeof(st));
+#if defined(__CYGWIN__)
+                    snprintf(path, sizeof(path), "/cygdrive/%c", 'a' + disk);
+#endif
                     if (has_size && stat(path, &st) == 0) {
                         FileAttrs attrs;
                         fill_attrs(&attrs, &st);
