@@ -578,7 +578,7 @@ class TestExpressions implements ITCFTest,
 
     @SuppressWarnings("unchecked")
     public void breakpointStatusChanged(String id, Map<String,Object> status) {
-        if (id.equals(bp_id) && process_id != null) {
+        if (id.equals(bp_id) && process_id != null && !test_done) {
             String s = (String)status.get(IBreakpoints.STATUS_ERROR);
             if (s != null) exit(new Exception("Invalid BP status: " + s));
             Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);

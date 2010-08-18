@@ -340,6 +340,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     @SuppressWarnings("unchecked")
     private void iniBreakpoints() {
         assert !bp_set_done;
+        assert bp_list.isEmpty();
         Map<String,Object> m[] = new Map[7];
         for (int i = 0; i < m.length; i++) {
             m[i] = new HashMap<String,Object>();
@@ -384,6 +385,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
         bp.set(m, new IBreakpoints.DoneCommand() {
             public void doneCommand(IToken token, Exception error) {
+                assert !bp_set_done;
                 bp_set_done = true;
                 if (error != null) {
                     exit(error);
@@ -586,12 +588,16 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         for (RunControlContext ctx : contexts) {
             String id = ctx.getID();
             if (threads.get(id) != null) {
-                exit(new Exception("Invalid contextAdded event"));
+                exit(new Exception("Invalid contextAdded event:\nContext: " + ctx));
                 return;
             }
             String p = ctx.getParentID();
             String c = ctx.getCreatorID();
             if (test_ctx_id.equals(c) || test_ctx_id.equals(p)) {
+                if (!bp_change_done) {
+                    exit(new Exception("Unexpected contextAdded event\nContext: " + ctx));
+                    return;
+                }
                 if (ctx.hasState()) {
                     threads.put(id, ctx);
                     if (!done_get_state) {
