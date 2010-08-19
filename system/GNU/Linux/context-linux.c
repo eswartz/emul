@@ -106,16 +106,6 @@ static size_t context_extension_offset = 0;
 
 static LINK pending_list;
 
-static void ctx_started_debug(Context * ctx) {
-    send_context_started_event(ctx);
-}
-
-#define send_context_started_event(ctx) { \
-    ContextExtensionLinux * ext = EXT(ctx); \
-    assert(!ext->regs_dirty || (ctx)->exiting); \
-    ctx_started_debug(ctx); \
-}
-
 static const char * event_name(int event) {
     switch (event) {
     case 0: return "none";
