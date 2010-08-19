@@ -125,7 +125,7 @@ static char * system_strerror(DWORD errno_win32) {
     }
     if (msg_len == 0) {
         realloc_msg_buf();
-        msg_len = snprintf(msg_buf, msg_max, "System Error Code %lu", (unsigned long)errno_win32);
+        msg_len = snprintf(msg_buf, msg_max, "System error code 0x%lx", (unsigned long)errno_win32);
     }
     if (buf != NULL) LocalFree(buf);
     while (msg_len > 0 && msg_buf[msg_len - 1] <= ' ') msg_len--;
