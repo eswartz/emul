@@ -18,7 +18,7 @@ ifeq ($(OPSYS),Windows)
   EXTOBJ = .obj
   EXTLIB = .lib
   EXTEXE = .exe
-  LIBS = shell32.lib advapi32.lib Iphlpapi.lib WS2_32.lib
+  LIBS = shell32.lib advapi32.lib Iphlpapi.lib WS2_32.lib version.lib
 endif
 
 ifeq ($(OPSYS),Cygwin)
@@ -73,6 +73,16 @@ HFILES = $(foreach dir,$(SRCDIRS),$(wildcard $(TCF_AGENT_DIR)/$(dir)/*.h))
 CFILES = $(foreach fnm,$(foreach dir,$(SRCDIRS),$(wildcard $(TCF_AGENT_DIR)/$(dir)/*.c)),$(subst ^$(TCF_AGENT_DIR)/,,^$(fnm)))
 OFILES = $(addprefix $(BINDIR)/,$(addsuffix $(EXTOBJ),$(basename $(filter-out main/main%,$(CFILES)))))
 EXECS  = $(addprefix $(BINDIR)/,agent$(EXTEXE) client$(EXTEXE) tcfreg$(EXTEXE) valueadd$(EXTEXE) tcflog$(EXTEXE))
+
+ifeq ($(OPSYS),Cygwin)
+  CFILES += system/Windows/pthreads-win32.c
+  CFILES += system/Windows/context-win32.c
+endif
+
+ifeq ($(OPSYS),Msys)
+  CFILES += system/Windows/pthreads-win32.c
+  CFILES += system/Windows/context-win32.c
+endif
 
 ifdef LUADIR
   EXECS += $(BINDIR)/tcflua

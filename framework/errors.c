@@ -313,7 +313,6 @@ static const char * format_error_report_message(const char * fmt, char ** params
 }
 
 const char * errno_to_str(int err) {
-    assert(is_dispatch_thread());
     switch (err) {
     case ERR_ALREADY_STOPPED:   return "Already stopped";
     case ERR_ALREADY_EXITED:    return "Already exited";
@@ -343,21 +342,26 @@ const char * errno_to_str(int err) {
     case ERR_CACHE_MISS:        return "Invalid data cache state";
     default:
         if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
-            ErrorMessage * m = msgs + (err - ERR_MESSAGE_MIN);
-            if (m->report != NULL && m->report->pub.format != NULL) {
-                return format_error_report_message(m->report->pub.format, m->report->pub.params, m->report->pub.param_cnt);
+            if (is_dispatch_thread()) {
+                ErrorMessage * m = msgs + (err - ERR_MESSAGE_MIN);
+                if (m->report != NULL && m->report->pub.format != NULL) {
+                    return format_error_report_message(m->report->pub.format, m->report->pub.params, m->report->pub.param_cnt);
+                }
+                switch (m->source) {
+    #ifdef WIN32
+                case SRC_SYSTEM:
+                    return system_strerror(m->error);
+    #endif
+                case SRC_GAI:
+                    return loc_gai_strerror(m->error);
+                case SRC_MESSAGE:
+                    return m->text;
+                case SRC_REPORT:
+                    return errno_to_str(m->error);
+                }
             }
-            switch (m->source) {
-#ifdef WIN32
-            case SRC_SYSTEM:
-                return system_strerror(m->error);
-#endif
-            case SRC_GAI:
-                return loc_gai_strerror(m->error);
-            case SRC_MESSAGE:
-                return m->text;
-            case SRC_REPORT:
-                return errno_to_str(m->error);
+            else {
+                return "cannot get error message text: errno_to_str() must be called from the main thread";
             }
         }
 #ifdef __SYMBIAN32__
@@ -408,6 +412,7 @@ int set_error_report_errno(ErrorReport * r) {
 int get_error_code(int no) {
     while (no >= ERR_MESSAGE_MIN && no <= ERR_MESSAGE_MAX) {
         ErrorMessage * m = msgs + (no - ERR_MESSAGE_MIN);
+        assert(is_dispatch_thread());
         switch (m->source) {
         case SRC_REPORT:
         case SRC_MESSAGE:
@@ -446,6 +451,7 @@ static void add_report_prop_str(ReportBuffer * report, const char * name, const 
 ErrorReport * get_error_report(int err) {
     ErrorMessage * m = NULL;
     if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
+        assert(is_dispatch_thread());
         m = msgs + (err - ERR_MESSAGE_MIN);
         if (m->report != NULL) {
             m->report->refs++;

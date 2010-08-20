@@ -91,6 +91,7 @@ extern int set_gai_errno(int gai_error_code);
 #ifdef WIN32
 /*
  * Set errno to indicate WIN32 error code.
+ * This function is thread-safe - can be called from background threads.
  * Return new value of errno.
  */
 extern int set_win32_errno(DWORD win32_error_code);

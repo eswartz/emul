@@ -515,6 +515,18 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="system"
+			>
+			<Filter
+				Name="Windows"
+				>
+				<File
+					RelativePath="..\agent\system\Windows\pthreads-win32.c"
+					>
+				</File>
+			</Filter>
+		</Filter>
 		<File
 			RelativePath=".\config.h"
 			>
