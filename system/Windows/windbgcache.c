@@ -27,6 +27,7 @@
 #include <system/Windows/windbgcache.h>
 #include <system/Windows/context-win32.h>
 #include <framework/trace.h>
+#include <framework/myalloc.h>
 
 static HINSTANCE dbghelp_dll = NULL;
 
@@ -102,6 +103,36 @@ static ContextEventListener listener = {
     event_context_changed
 };
 
+static void CheckDLLVersion(void) {
+    DWORD handle = 0;
+    WCHAR fnm[_MAX_PATH];
+    BYTE * version_info = NULL;
+    DWORD size = GetModuleFileNameW(dbghelp_dll, fnm, _MAX_PATH);
+    fnm[size] = 0;
+    size = GetFileVersionInfoSizeW(fnm, &handle);
+    version_info = (BYTE *)loc_alloc_zero(size);
+    if (!GetFileVersionInfoW(fnm, handle, size, version_info)) {
+        trace(LOG_ALWAYS, "Cannot get DBGHELP.DLL version info: %s",
+            errno_to_str(set_win32_errno(GetLastError())));
+    }
+    else {
+        UINT vsfi_len = 0;
+        VS_FIXEDFILEINFO * vsfi = NULL;
+        VerQueryValueW(version_info, L"\\", (void**)&vsfi, &vsfi_len);
+        if (HIWORD(vsfi->dwFileVersionMS) < 6 || HIWORD(vsfi->dwFileVersionMS) == 6 && LOWORD(vsfi->dwFileVersionMS) < 9) {
+            char path[_MAX_PATH * 2];
+            trace(LOG_ALWAYS, "DBGHELP.DLL version is less then 6.9 - debug services might not work properly");
+            if (WideCharToMultiByte(CP_UTF8, 0, fnm, -1, path, sizeof(path), NULL, NULL)) {
+                trace(LOG_ALWAYS, "%s", path);
+            }
+            trace(LOG_ALWAYS, "DBGHELP.DLL version %d.%d.%d.%d",
+                HIWORD(vsfi->dwFileVersionMS), LOWORD(vsfi->dwFileVersionMS),
+                HIWORD(vsfi->dwFileVersionLS), LOWORD(vsfi->dwFileVersionLS));
+        }
+    }
+    loc_free(version_info);
+}
+
 static FARPROC GetProc(char * name) {
     if (dbghelp_dll == NULL) {
         wchar_t ** p = pathes;
@@ -132,6 +163,7 @@ static FARPROC GetProc(char * name) {
             assert(GetLastError() != 0);
             return NULL;
         }
+        CheckDLLVersion();
         add_context_event_listener(&listener, NULL);
     }
     return GetProcAddress(dbghelp_dll, name);
