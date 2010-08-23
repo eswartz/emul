@@ -18,26 +18,26 @@ import com.vladium.utils.timing.TimerFactory;
  */
 public class FastTimer {
 	private ITimer timer;
-	private ArrayList<FastTimerTaskInfo> taskinfos;
+	private ArrayList<RunnableInfo> taskinfos;
 	private Object controlLock;
 	private Thread timerThread;
 	private static int gCnt;
 	
-	class FastTimerTaskInfo {
-		public FastTimerTaskInfo(FastTimerTask task, long delay) {
+	class RunnableInfo {
+		public RunnableInfo(Runnable task, long delay) {
 			super();
 			this.task = task;
 			this.delay = delay;
 			this.deadline = timer.getTimeNs() + this.delay;
 		}
-		FastTimerTask task;
+		Runnable task;
 		/** ns */
 		long deadline;
 		/** ns */
 		long delay;
 	}
 	public FastTimer() {
-		taskinfos = new ArrayList<FastTimerTaskInfo>();
+		taskinfos = new ArrayList<RunnableInfo>();
 		timer = TimerFactory.newTimer();
 		controlLock = new Object();
 	}
@@ -47,9 +47,9 @@ public class FastTimer {
 	 * @param task
 	 * @param perSecond
 	 */
-	public void scheduleTask(FastTimerTask task, long perSecond) {
+	public void scheduleTask(Runnable task, long perSecond) {
 		synchronized (controlLock) {
-			FastTimerTaskInfo info = new FastTimerTaskInfo(task, 1000000000L / perSecond);
+			RunnableInfo info = new RunnableInfo(task, 1000000000L / perSecond);
 			taskinfos.add(info);
 			
 			System.out.println("Adding task @ " + info.delay + " ns");
@@ -84,13 +84,13 @@ public class FastTimer {
 							//long elapsed = now - prev;
 							//System.out.print(elapsed + ",");
 							
-							FastTimerTaskInfo[] infoArray;
+							RunnableInfo[] infoArray;
 							synchronized (taskinfos) {
-								infoArray = (FastTimerTaskInfo[]) taskinfos.toArray(new FastTimerTaskInfo[taskinfos
+								infoArray = (RunnableInfo[]) taskinfos.toArray(new RunnableInfo[taskinfos
 										.size()]);
 							}
 	
-							for (FastTimerTaskInfo info : infoArray) {
+							for (RunnableInfo info : infoArray) {
 								try {
 									if (now >= info.deadline) {
 										//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
