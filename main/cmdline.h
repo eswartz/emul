@@ -25,7 +25,14 @@
 
 extern void cmdline_suspend(void);
 extern void cmdline_resume(void);
-extern void ini_cmdline_handler(int interactive, Protocol * proto);
+/*
+ * Mode can be either :
+ *  0 = Non interactive script mode
+ *  1 = Interactive mode
+ *  2 = Single command mode
+ */
+extern void ini_cmdline_handler(int mode, Protocol * proto);
+extern void set_single_command(int keep_alive, const char * host, const char * command);
 extern void open_script_file(const char * script_name);
 
 #else /* ENABLE_Cmdline */

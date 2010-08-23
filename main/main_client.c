@@ -53,7 +53,10 @@ int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
-    int interactive = 1;
+    int keep_alive = 0;
+    int mode = 1; /* interactive */
+    const char * host_name = "localhost";
+    const char * command = NULL;
     const char * log_name = "-";
     const char * script_name = NULL;
 
@@ -82,9 +85,15 @@ int main(int argc, char ** argv) {
         s++;
         while ((c = *s++) != '\0') {
             switch (c) {
+            case 'd':
+                keep_alive = 1;
+                break;
+
             case 'l':
             case 'L':
             case 'S':
+            case 'h':
+            case 'c':
                 if (*s == '\0') {
                     if (++ind >= argc) {
                         fprintf(stderr, "%s: error: no argument given to option '%c'\n", progname, c);
@@ -103,7 +112,17 @@ int main(int argc, char ** argv) {
 
                 case 'S':
                     script_name = s;
-                    interactive = 0;
+                    mode = 0;
+                    break;
+
+                case 'h':
+                    host_name = s;
+                    break;
+
+                case 'c':
+                    /* TODO: allow multiple -c options */
+                    command = s;
+                    mode = 2;
                     break;
 
                 default:
@@ -120,6 +139,11 @@ int main(int argc, char ** argv) {
         }
     }
 
+    if (script_name != NULL && command != NULL) {
+        fprintf(stderr, "%s: error: illegal option -S and -c are mutually exclusive\n", progname);
+        exit(1);
+    }
+
     open_log_file(log_name);
 
 #endif
@@ -130,7 +154,8 @@ int main(int argc, char ** argv) {
 
 #if ENABLE_Cmdline
     if (script_name != NULL) open_script_file(script_name);
-    ini_cmdline_handler(interactive, proto);
+    if (command != NULL) set_single_command(keep_alive, host_name, command);
+    ini_cmdline_handler(mode, proto);
 #else
     if (script_name != NULL) fprintf(stderr, "Warning: This version does not support script file as input.\n");
 #endif
