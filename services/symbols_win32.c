@@ -827,6 +827,11 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
                 }
             }
         }
+        else if (err == ERROR_NOT_SUPPORTED) {
+            /* Compiled without debug info */
+            errno = ERR_SYM_NOT_FOUND;
+            return -1;
+        }
         else {
             set_win32_errno(err);
             return -1;
