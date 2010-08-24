@@ -27,6 +27,7 @@
 #include <framework/tcf.h>
 #include <framework/channel.h>
 #include <framework/channel_tcp.h>
+#include <framework/channel_pipe.h>
 #include <framework/protocol.h>
 #include <framework/myalloc.h>
 #include <framework/events.h>
@@ -231,6 +232,9 @@ ChannelServer * channel_server(PeerServer * ps) {
     if (transportname == NULL || strcmp(transportname, "TCP") == 0 || strcmp(transportname, "SSL") == 0) {
         return channel_tcp_server(ps);
     }
+    else if (strcmp(transportname, "PIPE") == 0) {
+        return channel_pipe_server(ps);
+    }
     else {
         errno = ERR_INV_TRANSPORT;
         return NULL;
@@ -245,6 +249,9 @@ void channel_connect(PeerServer * ps, ChannelConnectCallBack callback, void * ca
 
     if (transportname == NULL || strcmp(transportname, "TCP") == 0 || strcmp(transportname, "SSL") == 0) {
         channel_tcp_connect(ps, callback, callback_args);
+    }
+    else if (strcmp(transportname, "PIPE") == 0) {
+        channel_pipe_connect(ps, callback, callback_args);
     }
     else {
         callback(callback_args, ERR_INV_TRANSPORT, NULL);

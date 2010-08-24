@@ -42,6 +42,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/Oy-"
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories=".;system/Windows;machine/x86_64"
@@ -232,6 +233,14 @@
 			</File>
 			<File
 				RelativePath=".\framework\channel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\framework\channel_pipe.c"
+				>
+			</File>
+			<File
+				RelativePath=".\framework\channel_pipe.h"
 				>
 			</File>
 			<File

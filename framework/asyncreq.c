@@ -136,6 +136,13 @@ static void * worker_thread_handler(void * x) {
 
 /* Platform dependant IO methods */
 #if defined(WIN32)
+        case AsyncReqConnectPipe:
+            req->u.cnp.rval = ConnectNamedPipe(req->u.cnp.pipe, NULL);
+            if (!req->u.cnp.rval) {
+                req->error = set_win32_errno(GetLastError());
+                assert(req->error);
+            }
+            break;
 #elif defined(_WRS_KERNEL)
 #else
         case AsyncReqWaitpid:           /* Wait for process change */

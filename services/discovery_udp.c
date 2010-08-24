@@ -365,9 +365,9 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
     if ((ps->flags & PS_FLAG_PRIVATE) != 0) return 0;
     if ((ps->flags & PS_FLAG_DISCOVERABLE) == 0) return 0;
 
+    memset(&peer_addr, 0, sizeof(peer_addr));
     host = peer_server_getprop(ps, "Host", NULL);
-    if (host == NULL || inet_pton(AF_INET, host, &peer_addr) <= 0) return 0;
-    if (peer_server_getprop(ps, "Port", NULL) == NULL) return 0;
+    if (host != NULL && inet_pton(AF_INET, host, &peer_addr) <= 0) return 0;
 
     send_size = 8;
 
@@ -377,11 +377,13 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
         if ((ps->flags & PS_FLAG_LOCAL) == 0) {
             /* Info about non-local peers is sent only by master */
             if (udp_server_port != DISCOVERY_TCF_PORT) return 0;
+            if (host == NULL) return 0;
             if (ifc->addr != htonl(INADDR_LOOPBACK) && ifc->addr != peer_addr.s_addr) continue;
         }
 
-        assert(peer_addr.s_addr != INADDR_ANY);
         if (ifc->addr != htonl(INADDR_LOOPBACK)) {
+            if (host == NULL) continue;
+            assert(peer_addr.s_addr != INADDR_ANY);
             if ((ifc->addr & ifc->mask) != (peer_addr.s_addr & ifc->mask)) {
                 /* Peer address does not belong to subnet of this interface */
                 continue;

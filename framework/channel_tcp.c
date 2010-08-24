@@ -296,9 +296,9 @@ static void tcp_write_stream(OutputStream * out, int byte) {
     if (c->chan.state == ChannelStateDisconnected) return;
     if (c->out_errno) return;
     if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
-    *c->chan.out.cur++ = (char)(byte < 0 ? ESC : byte);
     if (byte < 0 || byte == ESC) {
         char esc = 0;
+        *c->chan.out.cur++ = ESC;
         if (byte == ESC) esc = 0;
         else if (byte == MARKER_EOM) esc = 1;
         else if (byte == MARKER_EOS) esc = 2;
@@ -307,12 +307,14 @@ static void tcp_write_stream(OutputStream * out, int byte) {
         if (c->out_errno) return;
         if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
         *c->chan.out.cur++ = esc;
+        if (byte == MARKER_EOM) {
+            int congestion_level = out2channel(out)->congestion_level;
+            tcp_flush_stream(out);
+            if (congestion_level > 0) usleep(congestion_level * 2500);
+        }
+        return;
     }
-    if (byte == MARKER_EOM) {
-        int congestion_level = out2channel(out)->congestion_level;
-        tcp_flush_stream(out);
-        if (congestion_level > 0) usleep(congestion_level * 2500);
-    }
+    *c->chan.out.cur++ = (char)byte;
 }
 
 static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_t size) {
@@ -798,7 +800,7 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
         peer_server_addprop(ps2, loc_strdup("ID"), loc_strdup(str_id));
         peer_server_addprop(ps2, loc_strdup("Host"), loc_strdup(str_host));
         peer_server_addprop(ps2, loc_strdup("Port"), loc_strdup(str_port));
-        peer_server_add(ps2, PEER_DATA_RETENTION_PERIOD);
+        peer_server_add(ps2, PEER_DATA_RETENTION_PERIOD * 2);
     }
 }
 

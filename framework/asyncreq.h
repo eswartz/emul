@@ -39,6 +39,7 @@ enum {
     AsyncReqSendTo,                     /* Socket sendto */
     AsyncReqAccept,                     /* Accept socket connections */
     AsyncReqConnect,                    /* Connect to socket */
+    AsyncReqConnectPipe,                /* Connect named pipe (Windows) */
     AsyncReqWaitpid,                    /* Wait for process change */
     AsyncReqSelect,                     /* Do select() on file handles */
     AsyncReqClose                       /* File close */
@@ -103,6 +104,15 @@ struct AsyncReqInfo {
             /* Out */
             int rval;
         } con;
+#ifdef WIN32
+        struct {
+            /* In */
+            HANDLE pipe;
+
+            /* Out */
+            BOOL rval;
+        } cnp;
+#endif
         struct {
             /* In */
             pid_t pid;
