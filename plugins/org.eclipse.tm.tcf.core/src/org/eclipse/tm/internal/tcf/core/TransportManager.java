@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.tm.tcf.core.AbstractChannel;
+import org.eclipse.tm.tcf.core.ChannelPIPE;
 import org.eclipse.tm.tcf.core.ChannelTCP;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -67,6 +68,20 @@ public class TransportManager {
                 String port = attrs.get(IPeer.ATTR_IP_PORT);
                 if (host == null) throw new IllegalArgumentException("No host name");
                 return new ChannelTCP(peer, host, parsePort(port), true);
+            }
+        });
+
+        addTransportProvider(new ITransportProvider() {
+
+            public String getName() {
+                return "PIPE";
+            }
+
+            public IChannel openChannel(IPeer peer) {
+                assert getName().equals(peer.getTransportName());
+                String name = peer.getAttributes().get("PipeName");
+                if (name == null) name = "//./pipe/TCF-Agent";
+                return new ChannelPIPE(peer, name);
             }
         });
 

@@ -976,15 +976,21 @@ public class LocatorService implements ILocator {
     private void handlePeerInfoPacket(InputPacket p) {
         try {
             Map<String,String> map = parsePeerAtrributes(p.getData(), p.getLength());
+            if (TRACE_DISCOVERY) traceDiscoveryPacket(true, "CONF_PEER_INFO", map, p);
             String id = map.get(IPeer.ATTR_ID);
             if (id == null) throw new Exception("Invalid peer info: no ID");
+            boolean ok = true;
             InetAddress peer_addr = getInetAddress(map.get(IPeer.ATTR_IP_HOST));
-            if (peer_addr == null) return;
-            if (TRACE_DISCOVERY) {
-                traceDiscoveryPacket(true, "CONF_PEER_INFO", map, p);
+            if (peer_addr != null) {
+                ok = false;
+                for (SubNet subnet : subnets) {
+                    if (subnet.contains(peer_addr)) {
+                        ok = true;
+                        break;
+                    }
+                }
             }
-            for (SubNet subnet : subnets) {
-                if (!subnet.contains(peer_addr)) continue;
+            if (ok) {
                 IPeer peer = peers.get(id);
                 if (peer instanceof RemotePeer) {
                     ((RemotePeer)peer).updateAttributes(map);
@@ -992,7 +998,6 @@ public class LocatorService implements ILocator {
                 else if (peer == null) {
                     new RemotePeer(map);
                 }
-                break;
             }
         }
         catch (Exception x) {
