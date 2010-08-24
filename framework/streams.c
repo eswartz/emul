@@ -21,6 +21,31 @@
 #include <framework/myalloc.h>
 #include <framework/streams.h>
 
+int (read_stream)(InputStream * inp) {
+    return (inp->cur < inp->end) ? *inp->cur++ : inp->read(inp);
+}
+
+int (peek_stream)(InputStream * inp) {
+    return (inp->cur < inp->end) ? *inp->cur : inp->peek(inp);
+}
+
+void (write_stream)(OutputStream * out, int b) {
+    if (b > ESC && out->cur < out->end) *out->cur++ = (unsigned char)b;
+    else out->write(out, b);
+}
+
+void (write_block_stream)(OutputStream * out, const char * bytes, size_t size) {
+    out->write_block(out, bytes, size);
+}
+
+void (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offset) {
+    out->splice_block(out, fd, size, offset);
+}
+
+void (flush_stream)(OutputStream * out) {
+    out->flush(out);
+}
+
 void write_string(OutputStream * out, const char * str) {
     while (*str) write_stream(out, (*str++) & 0xff);
 }

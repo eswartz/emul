@@ -51,6 +51,8 @@ struct InputStream {
     int (*peek)(InputStream * stream);
 };
 
+#if ENABLE_STREAM_MACROS
+
 #define read_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur++ : (inp)->read((inp)))
 #define peek_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur : (inp)->peek((inp)))
 
@@ -60,8 +62,15 @@ struct InputStream {
 #define splice_block_stream(out, fd, size, offset) (out)->splice_block((out), (fd), (size), (offset))
 #define flush_stream(out) (out)->flush((out))
 
+#endif
+
 extern int (read_stream)(InputStream * inp);
 extern int (peek_stream)(InputStream * inp);
+extern void (write_stream)(OutputStream * out, int b);
+extern void (write_block_stream)(OutputStream * out, const char * bytes, size_t size);
+extern void (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offset);
+extern void (flush_stream)(OutputStream * out);
+
 extern void write_string(OutputStream * out, const char * str);
 extern void write_stringz(OutputStream * out, const char * str);
 

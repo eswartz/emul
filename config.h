@@ -215,6 +215,11 @@
 #  endif
 #endif
 
+#if !defined(ENABLE_STREAM_MACROS)
+/* Enabling stream macros increases code size about 5%, and increases speed about 7% */
+#  define ENABLE_STREAM_MACROS  0
+#endif
+
 #if !defined(ENABLE_LUA)
 #  if defined(PATH_LUA)
 #    define ENABLE_LUA          1
