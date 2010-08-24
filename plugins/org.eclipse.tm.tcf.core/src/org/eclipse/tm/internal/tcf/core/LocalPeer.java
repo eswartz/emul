@@ -13,7 +13,7 @@ package org.eclipse.tm.internal.tcf.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.AbstractPeer;
+import org.eclipse.tm.tcf.core.TransientPeer;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -24,7 +24,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * the agent to access its own services same way as remote services.
  * Note that "local" here is relative to the agent, and not same as in "local host".
  */
-public class LocalPeer extends AbstractPeer {
+public class LocalPeer extends TransientPeer {
 
     private static Map<String,String> createAttributes() {
         Map<String, String> attrs = new HashMap<String, String>();
