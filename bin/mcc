@@ -31,10 +31,13 @@ if [ -z "$VSHOME" ] ; then
     if [ -z "$VSHOME" ] ; then
         for VAR in VS100COMNTOOLS VS90COMNTOOLS
         do
-            DIR="`cygpath -u "${!VAR}"`"
-            if [ -d "$DIR" ] ; then
-                VSHOME="$DIR/../.."
-                break
+            DIR="${!VAR}"
+            if [ ! -z "$DIR" ] ; then
+                DIR="`cygpath -u "$DIR"`"
+                if [ -d "$DIR" ] ; then
+                    VSHOME="$DIR/../.."
+                    break
+                fi
             fi
         done
         if [ -z "$VSHOME" ] ; then
@@ -156,9 +159,9 @@ fi
 
 if [ $gflag = 1 ]
 then
-    CFLAGS1="/D_DEBUG /Zi /EHsc /MTd"
+    CFLAGS1="/D_DEBUG /Zi /MTd"
 else
-    CFLAGS1="/DNDEBUG /GF /Gy /FD /EHsc /MT"
+    CFLAGS1="/DNDEBUG /GF /Gy /FD /MT"
 fi
 if [ $Oflag = 0 ]
 then
