@@ -510,22 +510,48 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     protected boolean getData(ILabelUpdate result, Runnable done) {
         if (!run_context.validate(done)) return false;
         String image_name = null;
-        String label = id;
+        StringBuffer label = new StringBuffer();
+        label.append(id);
         Throwable error = run_context.getError();
         if (error != null) {
             result.setForeground(new RGB(255, 0, 0), 0);
-            label += ": " + TCFModel.getErrorMessage(error, false);
+            label.append(": ");
+            label.append(TCFModel.getErrorMessage(error, false));
         }
         else {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null) {
-                if (!state.validate(done)) return false;
-                TCFContextState state_data = state.getData();
                 if (ctx.hasState()) {
                     // Thread
+                    if (!state.validate(done)) return false;
+                    TCFContextState state_data = state.getData();
                     if (state_data != null && state_data.is_terminated) image_name = ImageCache.IMG_THREAD_TERMINATED;
                     else if (state_data != null && state_data.is_suspended) image_name = ImageCache.IMG_THREAD_SUSPENDED;
                     else image_name = ImageCache.IMG_THREAD_RUNNNIG;
+                    if (state_data != null) {
+                        if (!state_data.is_suspended) {
+                            label.append(" (Running)");
+                        }
+                        else {
+                            String r = state_data.suspend_reason;
+                            if (model.isContextActionResultAvailable(id)) {
+                                r = model.getContextActionResult(id);
+                            }
+                            else if (state_data.suspend_params != null) {
+                                String s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
+                                if (s == null) s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_NAME);
+                                if (s != null) r += ": " + s;
+                            }
+                            if (r != null) {
+                                label.append(" (");
+                                label.append(r);
+                                label.append(")");
+                            }
+                            else {
+                                label.append(" (Suspended)");
+                            }
+                        }
+                    }
                 }
                 else {
                     // Thread container (process)
@@ -534,25 +560,15 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     if (b.booleanValue()) image_name = ImageCache.IMG_PROCESS_SUSPENDED;
                     else image_name = ImageCache.IMG_PROCESS_RUNNING;
                 }
-                if (state_data != null && !state_data.is_suspended) {
-                    label += " (Running)";
-                }
-                else if (state_data != null && state_data.is_suspended) {
-                    String r = state_data.suspend_reason;
-                    if (model.isContextActionResultAvailable(id)) r = model.getContextActionResult(id);
-                    if (r != null) {
-                        label += " (" + r + ")";
-                    }
-                    else {
-                        label += " (Suspended)";
-                    }
-                }
                 String file = (String)ctx.getProperties().get("File");
-                if (file != null) label += " " + file;
+                if (file != null) {
+                    label.append(" ");
+                    label.append(file);
+                }
             }
         }
         result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
-        result.setLabel(label, 0);
+        result.setLabel(label.toString(), 0);
         return true;
     }
 

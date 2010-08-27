@@ -175,6 +175,7 @@ public interface IRunControl extends IService {
     static final String
         STATE_SIGNAL = "Signal",
         STATE_SIGNAL_NAME = "SignalName",
+        STATE_SIGNAL_DESCRIPTION = "SignalDescription",
         STATE_BREAKPOINT_IDS = "BPs";
 
     /**
