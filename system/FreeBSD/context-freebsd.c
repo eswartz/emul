@@ -90,14 +90,7 @@ const char * context_suspend_reason(Context * ctx) {
         snprintf(reason, sizeof(reason), "Event: %s", event_name(EXT(ctx)->ptrace_event));
         return reason;
     }
-    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
-        return "Suspended";
-    }
-    if (signal_name(ctx->signal)) {
-        snprintf(reason, sizeof(reason), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
-        return reason;
-    }
-
+    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) return "Suspended";
     snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
     return reason;
 }

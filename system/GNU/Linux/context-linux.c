@@ -131,14 +131,7 @@ const char * context_suspend_reason(Context * ctx) {
     }
     if (EXT(ctx)->syscall_enter) return "System Call";
     if (EXT(ctx)->syscall_exit) return "System Return";
-    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
-        return "Suspended";
-    }
-    if (signal_name(ctx->signal)) {
-        snprintf(reason, sizeof(reason), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
-        return reason;
-    }
-
+    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) return "Suspended";
     snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
     return reason;
 }

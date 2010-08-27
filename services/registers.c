@@ -41,6 +41,15 @@ static uint8_t * bbf = NULL;
 static unsigned bbf_pos = 0;
 static unsigned bbf_len = 0;
 
+static void write_boolean_member(OutputStream * out, const char * name, int val) {
+    /* For this service FALSE is same as absence of the member */
+    if (!val) return;
+    write_stream(out, ',');
+    json_write_string(out, name);
+    write_stream(out, ':');
+    json_write_boolean(out, 1);
+}
+
 static void write_context(OutputStream * out, char * id, Context * ctx, int frame, RegisterDefinition * reg_def) {
     assert(!ctx->exited);
 
@@ -61,6 +70,11 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     }
 
     write_stream(out, ',');
+    json_write_string(out, "ProcessID");
+    write_stream(out, ':');
+    json_write_string(out, ctx->mem->id);
+
+    write_stream(out, ',');
     json_write_string(out, "Name");
     write_stream(out, ':');
     json_write_string(out, reg_def->name);
@@ -69,23 +83,6 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     json_write_string(out, "Size");
     write_stream(out, ':');
     json_write_long(out, reg_def->size);
-
-    write_stream(out, ',');
-    json_write_string(out, "Readable");
-    write_stream(out, ':');
-    json_write_boolean(out, 1);
-
-    write_stream(out, ',');
-    json_write_string(out, "Writeable");
-    write_stream(out, ':');
-    json_write_boolean(out, 1);
-
-    if (reg_def == get_PC_definition(ctx)) {
-        write_stream(out, ',');
-        json_write_string(out, "Role");
-        write_stream(out, ':');
-        json_write_string(out, "PC");
-    }
 
     if (reg_def->dwarf_id >= 0) {
         write_stream(out, ',');
@@ -101,22 +98,93 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
         json_write_long(out, reg_def->eh_frame_id);
     }
 
-    if (reg_def->traceable) {
+    write_boolean_member(out, "Traceable", reg_def->traceable);
+    write_boolean_member(out, "BigEndian", reg_def->big_endian);
+    write_boolean_member(out, "Float", reg_def->fp_value);
+    write_boolean_member(out, "Readable", !reg_def->no_read);
+    write_boolean_member(out, "Writeable", !reg_def->no_write);
+    write_boolean_member(out, "ReadOnce", reg_def->read_once);
+    write_boolean_member(out, "WriteOnce", reg_def->write_once);
+    write_boolean_member(out, "Volatile", reg_def->volatile_value);
+    write_boolean_member(out, "SideEffects", reg_def->side_effects);
+    write_boolean_member(out, "LeftToRight", reg_def->left_to_right);
+
+    if (reg_def->first_bit > 0) {
         write_stream(out, ',');
-        json_write_string(out, "Traceable");
+        json_write_string(out, "FirstBit");
         write_stream(out, ':');
-        json_write_boolean(out, reg_def->traceable);
+        json_write_long(out, reg_def->first_bit);
     }
 
-    write_stream(out, ',');
-    json_write_string(out, "ProcessID");
-    write_stream(out, ':');
-    json_write_string(out, ctx->mem->id);
+    if (reg_def->bits != NULL) {
+        int i = 0;
+        write_stream(out, ',');
+        json_write_string(out, "Bits");
+        write_stream(out, ':');
+        write_stream(out, '[');
+        while (reg_def->bits[i] >= 0) {
+            if (i > 0) write_stream(out, ',');
+            json_write_long(out, reg_def->bits[i++]);
+        }
+        write_stream(out, ']');
+    }
 
-    write_stream(out, ',');
-    json_write_string(out, "BigEndian");
-    write_stream(out, ':');
-    json_write_boolean(out, reg_def->big_endian);
+    if (reg_def->values != NULL) {
+        int i = 0;
+        write_stream(out, ',');
+        json_write_string(out, "Values");
+        write_stream(out, ':');
+        write_stream(out, '[');
+        while (reg_def->values[i] != NULL) {
+            NamedRegisterValue * v = reg_def->values[i++];
+            if (i > 0) write_stream(out, ',');
+            write_stream(out, '(');
+            json_write_string(out, "Value");
+            write_stream(out, ':');
+            json_write_binary(out, v->value, reg_def->size);
+            if (v->name != NULL) {
+                write_stream(out, ',');
+                json_write_string(out, "Name");
+                write_stream(out, ':');
+                json_write_string(out, v->name);
+            }
+            if (v->description != NULL) {
+                write_stream(out, ',');
+                json_write_string(out, "Description");
+                write_stream(out, ':');
+                json_write_string(out, v->description);
+            }
+            write_stream(out, '}');
+        }
+        write_stream(out, ']');
+    }
+
+    if (reg_def->memory_address > 0) {
+        write_stream(out, ',');
+        json_write_string(out, "MemoryAddress");
+        write_stream(out, ':');
+        json_write_uint64(out, reg_def->memory_address);
+    }
+
+    if (reg_def->memory_context != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "MemoryContext");
+        write_stream(out, ':');
+        json_write_string(out, reg_def->memory_context);
+    }
+
+    if (reg_def->role != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "Role");
+        write_stream(out, ':');
+        json_write_string(out, reg_def->role);
+    }
+    else if (reg_def == get_PC_definition(ctx)) {
+        write_stream(out, ',');
+        json_write_string(out, "Role");
+        write_stream(out, ':');
+        json_write_string(out, "PC");
+    }
 
     write_stream(out, '}');
     write_stream(out, 0);

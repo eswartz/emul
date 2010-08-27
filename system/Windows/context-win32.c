@@ -104,17 +104,17 @@ static OSVERSIONINFOEX os_version;
 const char * context_suspend_reason(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
     DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
-    const char * desc = NULL;
     static char buf[64];
 
     if (exception_code == 0) return "Suspended";
     if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
     if (exception_code == EXCEPTION_BREAKPOINT) return "Eventpoint";
-
-    desc = signal_description(get_signal_from_code(exception_code));
-    if (desc != NULL) return desc;
-
-    snprintf(buf, sizeof(buf), "Exception %#lx", exception_code);
+    if (ext->suspend_reason.dwFirstChance) {
+        snprintf(buf, sizeof(buf), "Exception %#lx", exception_code);
+    }
+    else {
+        snprintf(buf, sizeof(buf), "Unhandled exception %#lx", exception_code);
+    }
     return buf;
 }
 

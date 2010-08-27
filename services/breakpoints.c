@@ -319,7 +319,7 @@ static BreakInstruction * add_instruction(Context * ctx, ContextAddress address)
 static BreakInstruction * find_instruction(Context * ctx, ContextAddress address) {
     int hash = addr2instr_hash(ctx, address);
     LINK * l = addr2instr[hash].next;
-    assert(address != 0);
+    if (address == 0) return NULL;
     while (l != addr2instr + hash) {
         BreakInstruction * bi = link_adr2bi(l);
         if (bi->ctx->mem == ctx->mem && bi->address == address) return bi;

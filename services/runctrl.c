@@ -227,14 +227,22 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     /* Object: Additional context state info */
     write_stream(out, '{');
     if (ctx->signal) {
+        const char * name = signal_name(ctx->signal);
+        const char * desc = signal_description(ctx->signal);
         json_write_string(out, "Signal");
         write_stream(out, ':');
         json_write_long(out, ctx->signal);
-        if (signal_name(ctx->signal)) {
+        if (name != NULL) {
             write_stream(out, ',');
             json_write_string(out, "SignalName");
             write_stream(out, ':');
-            json_write_string(out, signal_name(ctx->signal));
+            json_write_string(out, name);
+        }
+        if (desc != NULL) {
+            write_stream(out, ',');
+            json_write_string(out, "SignalDescription");
+            write_stream(out, ':');
+            json_write_string(out, desc);
         }
         fst = 0;
     }
@@ -741,7 +749,9 @@ static void send_event_context_exception(Context * ctx) {
     }
     else {
         char buf[128];
-        snprintf(buf, sizeof(buf), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
+        const char * desc = signal_description(ctx->signal);
+        if (desc == NULL) desc = signal_name(ctx->signal);
+        snprintf(buf, sizeof(buf), desc == NULL ? "Signal %d" : "Signal %d: %s", ctx->signal, desc);
         json_write_string(out, buf);
     }
     write_stream(out, 0);
