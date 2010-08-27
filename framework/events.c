@@ -55,7 +55,7 @@ static event_node * free_queue = NULL;
 static int free_queue_size = 0;
 static EventCallBack * cancel_handler = NULL;
 static void * cancel_arg = NULL;
-static int process_events = 1;
+static int process_events = 0;
 
 static int time_cmp(const struct timespec * tv1, const struct timespec * tv2) {
     if (tv1->tv_sec < tv2->tv_sec) return -1;
@@ -251,6 +251,7 @@ void run_event_loop(void) {
     assert(is_dispatch_thread());
     check_error(pthread_mutex_lock(&event_lock));
 
+    process_events = 1;
     while (process_events) {
 
         event_node * ev = NULL;
