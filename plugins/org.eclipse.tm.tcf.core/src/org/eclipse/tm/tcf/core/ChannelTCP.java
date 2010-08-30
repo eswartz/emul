@@ -15,6 +15,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -29,9 +30,8 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  */
 public class ChannelTCP extends StreamChannel {
 
-    /* TODO: need to give clients access to socket properties, like connect timeout */
-
     private Socket socket;
+    private int timeout;
     private InputStream inp;
     private OutputStream out;
     private boolean started;
@@ -45,30 +45,33 @@ public class ChannelTCP extends StreamChannel {
 
     public ChannelTCP(IPeer remote_peer, final String host, final int port, final boolean ssl) {
         super(remote_peer);
-        Thread thread = new Thread() {
+        socket = new Socket();
+        Protocol.invokeLater(new Runnable() {
             public void run() {
-                try {
-                    if (ssl) {
-                        if (ssl_context == null) throw new Exception("SSL context is not set");
-                        socket = ssl_context.getSocketFactory().createSocket(host, port);
+                Thread thread = new Thread() {
+                    public void run() {
+                        try {
+                            socket.connect(new InetSocketAddress(host, port), timeout);
+                            socket.setTcpNoDelay(true);
+                            socket.setKeepAlive(true);
+                            if (ssl) {
+                                if (ssl_context == null) throw new Exception("SSL context is not set");
+                                socket = ssl_context.getSocketFactory().createSocket(socket, host, port, true);
+                                ((SSLSocket)socket).startHandshake();
+                            }
+                            inp = new BufferedInputStream(socket.getInputStream());
+                            out = new BufferedOutputStream(socket.getOutputStream());
+                            onSocketConnected(null);
+                        }
+                        catch (Exception x) {
+                            onSocketConnected(x);
+                        }
                     }
-                    else {
-                        socket = new Socket(host, port);
-                    }
-                    socket.setTcpNoDelay(true);
-                    socket.setKeepAlive(true);
-                    if (ssl) ((SSLSocket)socket).startHandshake();
-                    inp = new BufferedInputStream(socket.getInputStream());
-                    out = new BufferedOutputStream(socket.getOutputStream());
-                    onSocketConnected(null);
-                }
-                catch (Exception x) {
-                    onSocketConnected(x);
-                }
+                };
+                thread.setName("TCF Socket Connect");
+                thread.start();
             }
-        };
-        thread.setName("TCF Socket Connect");
-        thread.start();
+        });
     }
 
     public ChannelTCP(IPeer remote_peer, String host, int port) {
@@ -79,9 +82,38 @@ public class ChannelTCP extends StreamChannel {
         super(local_peer, remote_peer);
         this.socket = socket;
         socket.setTcpNoDelay(true);
+        socket.setKeepAlive(true);
         inp = new BufferedInputStream(socket.getInputStream());
         out = new BufferedOutputStream(socket.getOutputStream());
         onSocketConnected(null);
+    }
+
+    public void setConnectTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public void setReuseAddress(boolean on) throws SocketException {
+        socket.setReuseAddress(on);
+    }
+
+    public void setReceiveBufferSize(int size) throws SocketException{
+        socket.setReceiveBufferSize(size);
+    }
+
+    public void setSendBufferSize(int size) throws SocketException{
+        socket.setSendBufferSize(size);
+    }
+
+    public void setSoLinger(boolean on, int linger) throws SocketException {
+        socket.setSoLinger(on, linger);
+    }
+
+    public void setTrafficClass(int tc) throws SocketException {
+        socket.setTrafficClass(tc);
+    }
+
+    public void setPerformancePreferences(int connection_time, int latency, int bandwidth) {
+        socket.setPerformancePreferences(connection_time, latency, bandwidth);
     }
 
     private void onSocketConnected(final Throwable x) {
