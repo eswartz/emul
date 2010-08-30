@@ -14,6 +14,32 @@
 
 /*
  * Target service implementation: run control (TCF name RunControl)
+ *
+ * All run control contexts are grouped by corresponding memory address spaces.
+ * Other service implementations can ask run control to execute arbitrary code while all contexts in
+ * a particular group - address space - are stopped.
+ * Run control service manages a queue of such requests ("safe events queue") and
+ * makes a fair effort to optimize such requests. It can, for example, coalesce
+ * multiple requests for same address space, which often significantly improves performance.
+ * "Safe event" code is guarantied to run while relevant contexts are stopped and will not be resumed
+ * during the event execution, with a single exception of single instruction step support
+ * that would resume only the specified context.
+ *
+ * Run control service distinguishes between context being stopped and being intercepted.
+ * A context is stopped when it is suspended for any reason - breakpoint, safe event, a suspend request, etc..
+ * A context is intercepted when it is reported up (to UI or value-add) as suspended.
+ *
+ * For example, a breakpoint hit handling sequence looks like this:
+ *   1. context stopped by breakpoint, call post_safe_event()
+ *   2. run control suspends all contexts in the group.
+ *   3. run control calls safe event callback that evaluates breakpoint condition:
+ *          if condition false, do step over the breakpoint - call safe_context_single_step()
+ *          else intercept the context and report breakpoint hit up to UI - call suspend_debug_context()
+ *   4. if no more safe events, run control resumes all contexts that are not intercepted.
+ * Despite the fact that many contexts can be stopped as result of breakpoint hit,
+ * normaly, only one of them will be intercepted, and only one "suspended" message will be sent up to UI.
+ * If a breakpoint needs to intercept more then one context,
+ * it can be be done using breakpoint attribute "StopGroup".
  */
 
 #ifndef D_runctrl
@@ -51,6 +77,8 @@ extern void post_safe_event(Context * mem, EventCallBack * done, void * arg);
  * "Safe" step is executed with all other contexts stopped,
  * and it is expected to take only a short time to execute.
  * It is intended to be used in breakpoints implementation.
+ * Returns 0 if no errors, otherwise returns -1 and sets errno.
+ * Note: this function is asynchronous, it returns before context finishes the step.
  */
 extern int safe_context_single_step(Context * ctx);
 
@@ -58,7 +86,7 @@ extern int safe_context_single_step(Context * ctx);
  * Return 1 if all threads in debuggee are stopped and handling of incoming messages
  * is suspended and it is safe to access debuggee memory, plant breakpoints, etc.
  * 'mem' is memory context, only threads that belong to that memory are checked.
- * if 'mem' = 0, check all threads.
+ * if 'mem' = NULL, check all threads.
  */
 extern int is_all_stopped(Context * mem);
 
