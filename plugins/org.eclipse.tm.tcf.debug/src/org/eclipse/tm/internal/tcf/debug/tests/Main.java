@@ -32,7 +32,7 @@ public class Main {
         private final LinkedList<Runnable> queue = new LinkedList<Runnable>();
 
         EventQueue() {
-            setName("TCF Event Dispatch");
+            setName("TCF Event Dispatcher");
             start();
         }
 

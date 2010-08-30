@@ -34,7 +34,7 @@ class EventQueue implements IEventQueue, Runnable {
     EventQueue() {
         thread = new Thread(this);
         thread.setDaemon(true);
-        thread.setName("TCF Event Dispatch"); //$NON-NLS-1$
+        thread.setName("TCF Event Dispatcher"); //$NON-NLS-1$
         // Need to monitor jobs to detect congestion
         Job.getJobManager().addJobChangeListener(new IJobChangeListener() {
 

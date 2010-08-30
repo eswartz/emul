@@ -58,6 +58,6 @@ public class LoggingUtil {
      *            the trace message
      */
     public static void trace(String msg) {
-        Protocol.log(LoggingUtil.getDebugTime() + ' ' + msg, null);
+        Protocol.log(getDebugTime() + ' ' + msg, null);
     }
 }

@@ -132,7 +132,6 @@ public abstract class AbstractChannel implements IChannel {
     private final Thread out_thread;
     private boolean notifying_channel_opened;
     private boolean registered_with_trasport;
-    private boolean shutdown;
     private int state = STATE_OPENING;
     private IToken redirect_command;
     private final IPeer local_peer;
@@ -578,35 +577,59 @@ public abstract class AbstractChannel implements IChannel {
         }
     }
 
-    private void sendEndOfStream() {
-        if (shutdown) return;
-        shutdown = true;
-        synchronized (out_queue) {
-            out_queue.clear();
-            out_queue.add(0, null);
-            out_queue.notify();
-        }
-    }
-
     public void close() {
         assert Protocol.isDispatchThread();
+        if (state == STATE_CLOSED) return;
         try {
-            sendEndOfStream();
-            out_thread.join(10000);
-            stop();
-            inp_thread.join(10000);
-            terminate(null);
+            sendEndOfStream(10000);
+            close(null);
         }
         catch (Exception x) {
-            terminate(x);
+            close(x);
         }
     }
 
-    public void terminate(final Throwable error) {
+    public void terminate(Throwable error) {
         assert Protocol.isDispatchThread();
-        sendEndOfStream();
         if (state == STATE_CLOSED) return;
+        try {
+            sendEndOfStream(500);
+            close(error);
+        }
+        catch (Exception x) {
+            if (error == null) error = x;
+            close(error);
+        }
+    }
+
+    private void sendEndOfStream(long timeout) throws Exception {
+        synchronized (out_queue) {
+            out_queue.clear();
+            out_queue.add(null);
+            out_queue.notify();
+        }
+        out_thread.join(timeout);
+    }
+
+    private void close(final Throwable error) {
+        assert state != STATE_CLOSED;
         state = STATE_CLOSED;
+        // Closing channel underlying streams can block for a long time,
+        // so it needs to be done by a background thread.
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    AbstractChannel.this.stop();
+                }
+                catch (Exception x) {
+                    Protocol.log("Cannot close channel streams", x);
+                }
+            }
+        };
+        thread.setName("TCF Channel Cleanup");
+        thread.setDaemon(true);
+        thread.start();
         if (error != null && remote_peer instanceof AbstractPeer) {
             ((AbstractPeer)remote_peer).onChannelTerminated();
         }
@@ -643,10 +666,7 @@ public abstract class AbstractChannel implements IChannel {
                     }
                     out_tokens.clear();
                 }
-                if (channel_listeners.isEmpty()) {
-                    Protocol.log("TCF channel terminated", error);
-                }
-                else {
+                if (!channel_listeners.isEmpty()) {
                     listeners_array = channel_listeners.toArray(listeners_array);
                     for (IChannelListener l : listeners_array) {
                         if (l == null) break;
@@ -657,6 +677,9 @@ public abstract class AbstractChannel implements IChannel {
                             Protocol.log("Exception in channel listener", x);
                         }
                     }
+                }
+                else if (error != null) {
+                    Protocol.log("TCF channel terminated", error);
                 }
                 if (trace_listeners != null) {
                     for (TraceListener l : trace_listeners) {
