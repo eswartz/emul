@@ -363,6 +363,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\channel_pipe.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\channel_pipe.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\channel_tcp.c"
 				>
 			</File>
