@@ -33,10 +33,6 @@
 #include <framework/asyncreq.h>
 #include <framework/inputbuf.h>
 
-#ifndef MSG_MORE
-#define MSG_MORE 0
-#endif
-
 #define BUF_SIZE 0x800
 #define CHANNEL_MAGIC 0x52376532
 #define SERVER_INSTANCE_CNT 16
