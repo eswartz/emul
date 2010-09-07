@@ -17,6 +17,9 @@
  */
 
 #include <config.h>
+
+#if defined(WIN32)
+
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
@@ -739,3 +742,19 @@ ChannelServer * channel_pipe_server(PeerServer * ps) {
     return NULL;
 #endif
 }
+
+#else
+/* Pipes are not supported */
+#include <framework/errors.h>
+#include <framework/channel_pipe.h>
+
+void channel_pipe_connect(PeerServer * server, ChannelConnectCallBack callback, void * callback_args) {
+    callback(callback_args, ERR_UNSUPPORTED, NULL);
+}
+
+ChannelServer * channel_pipe_server(PeerServer * server) {
+    errno = ERR_UNSUPPORTED;
+    return NULL;
+}
+
+#endif

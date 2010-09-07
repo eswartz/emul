@@ -30,7 +30,11 @@
 #include <framework/trace.h>
 
 #define ERR_MESSAGE_MIN         (STD_ERR_BASE + 100)
+#if MEM_USAGE_FACTOR <= 2
+#define ERR_MESSAGE_MAX         (STD_ERR_BASE + 129)
+#else
 #define ERR_MESSAGE_MAX         (STD_ERR_BASE + 199)
+#endif
 
 #define MESSAGE_CNT             (ERR_MESSAGE_MAX - ERR_MESSAGE_MIN + 1)
 

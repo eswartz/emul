@@ -147,13 +147,13 @@ extern ContextAddress get_regs_PC(Context * ctx);
 extern void set_regs_PC(Context * ctx, ContextAddress y);
 
 /* Get TCF ID of a stack frame */
-extern char * frame2id(Context * ctx, int frame);
+extern const char * frame2id(Context * ctx, int frame);
 
 /* Get stack frame for TCF ID */
 extern int id2frame(const char * id, Context ** ctx, int * frame);
 
 /* Get TCF ID of a register */
-extern char * register2id(Context * ctx, int frame, RegisterDefinition * reg);
+extern const char * register2id(Context * ctx, int frame, RegisterDefinition * reg);
 
 /* Get register for TCF ID */
 extern int id2register(const char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def);

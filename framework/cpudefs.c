@@ -130,7 +130,7 @@ int id2frame(const char * id, Context ** ctx, int * frame) {
     return 0;
 }
 
-char * frame2id(Context * ctx, int frame) {
+const char * frame2id(Context * ctx, int frame) {
     static char id[256];
 
     assert(frame >= 0);
@@ -142,7 +142,7 @@ char * frame2id(Context * ctx, int frame) {
     return id;
 }
 
-char * register2id(Context * ctx, int frame, RegisterDefinition * reg) {
+const char * register2id(Context * ctx, int frame, RegisterDefinition * reg) {
     static char id[256];
     RegisterDefinition * defs = get_reg_definitions(ctx);
     if (frame < 0) {

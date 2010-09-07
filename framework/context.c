@@ -57,6 +57,7 @@ char * pid2id(pid_t pid, pid_t parent) {
 }
 
 pid_t id2pid(const char * id, pid_t * parent) {
+    /* TODO: (pid_t)0 is valid value in Windows, should use (pid_t)-1 to indicate an error */
     pid_t pid = 0;
     if (parent != NULL) *parent = 0;
     if (id == NULL) return 0;
