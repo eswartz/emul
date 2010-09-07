@@ -178,6 +178,7 @@ void send_context_stopped_event(Context * ctx) {
     assert(ctx->ref_count > 0);
     assert(ctx->stopped != 0);
     assert(!ctx->event_notification);
+    assert(context_has_state(ctx));
     ctx->event_notification = 1;
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
@@ -191,6 +192,7 @@ void send_context_stopped_event(Context * ctx) {
 void send_context_started_event(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
+    assert(context_has_state(ctx));
     ctx->stopped = 0;
     ctx->stopped_by_bp = 0;
     ctx->stopped_by_exception = 0;
