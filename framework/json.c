@@ -21,9 +21,12 @@
  * JSON is TCF preffered marshaling format.
  */
 
+#include <config.h>
+#ifdef ENABLE_STREAM_MACROS
+#undef ENABLE_STREAM_MACROS
+#endif
 #define ENABLE_STREAM_MACROS 1
 
-#include <config.h>
 #include <stdio.h>
 #include <assert.h>
 #include <framework/json.h>

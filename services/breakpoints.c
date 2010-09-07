@@ -162,18 +162,18 @@ static size_t context_extension_offset = 0;
 #define is_readable(ctx) (!(ctx)->exited && !(ctx)->exiting && ((ctx)->stopped || !context_has_state(ctx)))
 #define is_disabled(bp) (bp->enabled == 0 || bp->client_cnt == 0 || bp->unsupported != NULL)
 
-#define ADDR2INSTR_HASH_SIZE 1023
+#define ADDR2INSTR_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 #define addr2instr_hash(ctx, addr) ((unsigned)((uintptr_t)(ctx)->mem + (uintptr_t)(addr) + ((uintptr_t)(addr) >> 8)) % ADDR2INSTR_HASH_SIZE)
 
 #define link_all2bi(A)  ((BreakInstruction *)((char *)(A) - offsetof(BreakInstruction, link_all)))
 #define link_adr2bi(A)  ((BreakInstruction *)((char *)(A) - offsetof(BreakInstruction, link_adr)))
 
-#define ID2BP_HASH_SIZE 1023
+#define ID2BP_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 
 #define link_all2bp(A)  ((BreakpointInfo *)((char *)(A) - offsetof(BreakpointInfo, link_all)))
 #define link_id2bp(A)   ((BreakpointInfo *)((char *)(A) - offsetof(BreakpointInfo, link_id)))
 
-#define INP2BR_HASH_SIZE 127
+#define INP2BR_HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
 
 #define link_inp2br(A)  ((BreakpointClient *)((char *)(A) - offsetof(BreakpointClient, link_inp)))
 #define link_bp2br(A)   ((BreakpointClient *)((char *)(A) - offsetof(BreakpointClient, link_bp)))

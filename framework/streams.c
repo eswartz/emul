@@ -38,8 +38,8 @@ void (write_block_stream)(OutputStream * out, const char * bytes, size_t size) {
     out->write_block(out, bytes, size);
 }
 
-void (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offset) {
-    out->splice_block(out, fd, size, offset);
+int (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offset) {
+    return out->splice_block(out, fd, size, offset);
 }
 
 void (flush_stream)(OutputStream * out) {

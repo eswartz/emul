@@ -30,7 +30,7 @@
 #include <services/dwarfreloc.h>
 #include <services/dwarf.h>
 
-#define ABBREV_TABLE_SIZE       127
+#define ABBREV_TABLE_SIZE  (4 * MEM_USAGE_FACTOR - 1)
 
 struct DIO_Abbreviation {
     U2_T mTag;

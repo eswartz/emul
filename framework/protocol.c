@@ -71,9 +71,9 @@ struct ReplyHandlerInfo {
     struct ReplyHandlerInfo * next;
 };
 
-#define MESSAGE_HASH_SIZE 127
-#define EVENT_HASH_SIZE 127
-#define REPLY_HASH_SIZE 127
+#define MESSAGE_HASH_SIZE (5 * MEM_USAGE_FACTOR - 1)
+#define EVENT_HASH_SIZE   (4 * MEM_USAGE_FACTOR - 1)
+#define REPLY_HASH_SIZE   (4 * MEM_USAGE_FACTOR - 1)
 
 static MessageHandlerInfo * message_handlers[MESSAGE_HASH_SIZE];
 static EventHandlerInfo * event_handlers[EVENT_HASH_SIZE];

@@ -20,7 +20,7 @@
 /* TODO: consider splitting the code into two files: some clients might want to reuse PID hash table for context_find_from_pid(),
  * but use some other means to implement id2ctx() */
 
-#define CONTEXT_PID_HASH_SIZE 1024
+#define CONTEXT_PID_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 #define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_HASH_SIZE)
 
 static LINK context_pid_hash[CONTEXT_PID_HASH_SIZE];

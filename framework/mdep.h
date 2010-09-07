@@ -152,7 +152,7 @@ extern int geteuid(void);
 extern int getgid(void);
 extern int getegid(void);
 
-extern ssize_t pread(int fd, const void * buf, size_t size, off_t offset);
+extern ssize_t pread(int fd, void * buf, size_t size, off_t offset);
 extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
 
 /* UTF-8 support */
@@ -333,6 +333,7 @@ typedef unsigned long uintptr_t;
 typedef unsigned long useconds_t;
 
 #define FILE_PATH_SIZE PATH_MAX
+#define MEM_USAGE_FACTOR 2
 #define O_BINARY 0
 #define O_LARGEFILE 0
 #define lstat stat
@@ -342,7 +343,7 @@ typedef unsigned long useconds_t;
 
 extern int truncate(char * path, int64_t size);
 extern char * canonicalize_file_name(const char * path);
-extern ssize_t pread(int fd, const void * buf, size_t size, off_t offset);
+extern ssize_t pread(int fd, void * buf, size_t size, off_t offset);
 extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
 
 extern void usleep(useconds_t useconds);
@@ -389,6 +390,7 @@ extern const char * loc_gai_strerror(int ecode);
 
 #define MAX_PATH _POSIX_PATH_MAX
 #define FILE_PATH_SIZE _POSIX_PATH_MAX
+#define MEM_USAGE_FACTOR 2
 
 #define closesocket close
 #define SIGKILL 1
@@ -398,7 +400,7 @@ extern const char * loc_gai_strerror(int ecode);
 extern const char * loc_gai_strerror(int ecode);
 extern int truncate(const char * path, int64_t size);
 
-extern ssize_t pread(int fd, const void * buf, size_t size, off_t offset);
+extern ssize_t pread(int fd, void * buf, size_t size, off_t offset);
 extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
 
 #define loc_freeaddrinfo freeaddrinfo
@@ -478,6 +480,10 @@ extern int tkill(pid_t pid, int signal);
 #endif
 #ifndef SCNx64
 #  define SCNx64 "llx"
+#endif
+
+#ifndef MEM_USAGE_FACTOR
+#define MEM_USAGE_FACTOR 32
 #endif
 
 #if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__) && !defined(__VXWORKS__)

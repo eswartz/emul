@@ -1346,7 +1346,7 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
     Channel * c = cache->peer->target;
     StackFrameCache * s = NULL;
     LINK * l = NULL;
-    char * id = NULL;
+    const char * id = NULL;
 
     if (!cache->has_state) {
         errno = ERR_INV_CONTEXT;

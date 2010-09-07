@@ -30,7 +30,7 @@
 #include <services/dwarfcache.h>
 #include <services/dwarfexpr.h>
 
-#define OBJ_HASH_SIZE           (0x10000-1)
+#define OBJ_HASH_SIZE           (256 * MEM_USAGE_FACTOR - 1)
 #define OBJ_HASH(ID)            (((U4_T)(ID) + ((U4_T)(ID) >> 8)) % OBJ_HASH_SIZE)
 
 static DWARFCache * sCache;

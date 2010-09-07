@@ -449,7 +449,7 @@ int utf8_closedir(DIR * d) {
 
 #if defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL) || defined(__SYMBIAN32__)
 
-ssize_t pread(int fd, const void * buf, size_t size, off_t offset) {
+ssize_t pread(int fd, void * buf, size_t size, off_t offset) {
     off_t offs0;
     ssize_t rd;
     if ((offs0 = lseek(fd, 0, SEEK_CUR)) == (off_t)-1) return -1;

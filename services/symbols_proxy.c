@@ -36,7 +36,7 @@
 #  include <main/test.h>
 #endif
 
-#define HASH_SIZE 101
+#define HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
 
 /* Symbols cahce, one per channel */
 typedef struct SymbolsCache {

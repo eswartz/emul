@@ -33,7 +33,7 @@
 #include <framework/exceptions.h>
 #include <services/linenumbers.h>
 
-#define HASH_SIZE 511
+#define HASH_SIZE (16 * MEM_USAGE_FACTOR - 1)
 
 /* Line numbers cahce, one per channel */
 typedef struct LineNumbersCache {

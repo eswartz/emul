@@ -23,7 +23,7 @@
 #include <config.h>
 #include <framework/streams.h>
 
-#define INPUT_BUF_SIZE 0x1000
+#define INPUT_BUF_SIZE (64 * MEM_USAGE_FACTOR - 1)
 
 typedef struct InputBuf InputBuf;
 

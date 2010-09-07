@@ -45,7 +45,7 @@
 #include <framework/protocol.h>
 #include <services/filesystem.h>
 
-#define BUF_SIZE 0x1000
+#define BUF_SIZE (128 * MEM_USAGE_FACTOR)
 
 static const char * FILE_SYSTEM = "FileSystem";
 
@@ -116,7 +116,7 @@ struct IORequest {
 
 static unsigned long handle_cnt = 0;
 
-#define HANDLE_HASH_SIZE 0x100
+#define HANDLE_HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
 static LINK handle_hash[HANDLE_HASH_SIZE];
 static LINK file_info_ring = { NULL, NULL };
 

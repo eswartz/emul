@@ -50,7 +50,8 @@ static void write_boolean_member(OutputStream * out, const char * name, int val)
     json_write_boolean(out, 1);
 }
 
-static void write_context(OutputStream * out, char * id, Context * ctx, int frame, RegisterDefinition * reg_def) {
+static void write_context(OutputStream * out, char * id,
+        Context * ctx, int frame, RegisterDefinition * reg_def) {
     assert(!ctx->exited);
 
     write_stream(out, '{');

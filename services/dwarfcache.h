@@ -49,7 +49,7 @@ struct FileInfo {
     U4_T mSize;
 };
 
-#define SYM_HASH_SIZE 1023
+#define SYM_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 
 struct SymbolSection {
     ELF_File * mFile;

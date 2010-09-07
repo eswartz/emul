@@ -109,7 +109,7 @@ typedef struct SymbolCacheEntry {
     ULONG index;
 } SymbolCacheEntry;
 
-#define SYMBOL_CACHE_SIZE 153
+#define SYMBOL_CACHE_SIZE (4 * MEM_USAGE_FACTOR - 1)
 static SymbolCacheEntry symbol_cache[SYMBOL_CACHE_SIZE];
 
 static char * tmp_buf = NULL;

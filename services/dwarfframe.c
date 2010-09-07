@@ -118,12 +118,12 @@ static int trace_cmds_cnt = 0;
 static StackTracingCommand * trace_cmds = NULL;
 
 static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
-    RegisterDefinition * reg_def;
     while (reg >= regs->regs_max) {
         regs->regs_max = regs->regs_max == 0 ? 32 : regs->regs_max * 2;
         regs->regs = (RegisterRules *)loc_realloc(regs->regs, sizeof(RegisterRules) * regs->regs_max);
     }
     while (regs->regs_cnt <= reg) {
+        RegisterDefinition * reg_def;
         int n = regs->regs_cnt++;
         memset(regs->regs + n, 0, sizeof(RegisterRules));
         reg_def = get_reg_by_id(rules.ctx, n, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);

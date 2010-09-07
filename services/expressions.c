@@ -35,7 +35,7 @@
 #include <services/expressions.h>
 #include <main/test.h>
 
-#define STR_POOL_SIZE 1024
+#define STR_POOL_SIZE (64 * MEM_USAGE_FACTOR)
 
 struct StringValue {
     struct StringValue * next;
@@ -1865,13 +1865,12 @@ typedef struct Expression {
 #define link_all2exp(A)  ((Expression *)((char *)(A) - offsetof(Expression, link_all)))
 #define link_id2exp(A)   ((Expression *)((char *)(A) - offsetof(Expression, link_id)))
 
-#define ID2EXP_HASH_SIZE 1023
+#define ID2EXP_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 
 static LINK expressions;
 static LINK id2exp[ID2EXP_HASH_SIZE];
 
 #define MAX_SYM_NAME 1024
-#define BUF_SIZE 256
 
 static const char * EXPRESSIONS = "Expressions";
 static unsigned expr_id_cnt = 0;

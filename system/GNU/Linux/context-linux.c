@@ -497,39 +497,36 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
          * between PTRACE_CONT (or PTRACE_SYSCALL) and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
          */
         if (EXT(ctx->parent)->pid == pid) ctx = ctx->parent;
+        trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d, term signal %d", ctx, pid, status, signal);
         assert(EXT(ctx)->attach_callback == NULL);
-        if (ctx->exited) {
-            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, exited %d",
-                ctx, pid, status, ctx->stopped, ctx->exited);
-        }
-        else {
-            trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d, term signal %d", ctx, pid, status, signal);
-            ctx->exiting = 1;
-            if (ctx->stopped) send_context_started_event(ctx);
-            if (!list_is_empty(&ctx->children)) {
-                LINK * l = ctx->children.next;
-                while (l != &ctx->children) {
-                    Context * c = cldl2ctxp(l);
-                    l = l->next;
-                    assert(c->parent == ctx);
-                    if (!c->exited) {
-                        c->exiting = 1;
-                        if (c->stopped) send_context_started_event(c);
-                        release_error_report(EXT(c)->regs_error);
-                        loc_free(EXT(c)->regs);
-                        EXT(c)->regs_error = NULL;
-                        EXT(c)->regs = NULL;
-                        send_context_exited_event(c);
-                    }
+        assert(!ctx->exited);
+        ctx->exiting = 1;
+        if (ctx->stopped) send_context_started_event(ctx);
+        if (!list_is_empty(&ctx->children)) {
+            LINK * l = ctx->children.next;
+            while (l != &ctx->children) {
+                Context * c = cldl2ctxp(l);
+                l = l->next;
+                assert(c->parent == ctx);
+                if (!c->exited) {
+                    c->exiting = 1;
+                    if (c->stopped) send_context_started_event(c);
+                    release_error_report(EXT(c)->regs_error);
+                    loc_free(EXT(c)->regs);
+                    EXT(c)->regs_error = NULL;
+                    EXT(c)->regs = NULL;
+                    send_context_exited_event(c);
                 }
             }
-            release_error_report(EXT(ctx)->regs_error);
-            loc_free(EXT(ctx)->regs);
-            EXT(ctx)->regs_error = NULL;
-            EXT(ctx)->regs = NULL;
-            send_context_exited_event(ctx);
         }
+        release_error_report(EXT(ctx)->regs_error);
+        loc_free(EXT(ctx)->regs);
+        EXT(ctx)->regs_error = NULL;
+        EXT(ctx)->regs = NULL;
+        send_context_exited_event(ctx);
     }
+    assert(context_find_from_pid(pid, 1) == NULL);
+    assert(context_find_from_pid(pid, 0) == NULL);
 }
 
 #if !USE_PTRACE_SYSCALL

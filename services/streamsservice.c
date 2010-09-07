@@ -103,7 +103,7 @@ struct Subscription {
 #define client2read_request(A)  ((ReadRequest *)((char *)(A) - offsetof(ReadRequest, link_client)))
 #define client2write_request(A) ((WriteRequest *)((char *)(A) - offsetof(WriteRequest, link_client)))
 
-#define HANDLE_HASH_SIZE 0x100
+#define HANDLE_HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
 static LINK handle_hash[HANDLE_HASH_SIZE];
 static LINK clients;
 static LINK streams;

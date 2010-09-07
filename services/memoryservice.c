@@ -43,7 +43,7 @@ static const char * MEMORY = "Memory";
 #define CMD_SET     2
 #define CMD_FILL    3
 
-#define BUF_SIZE    0x1000
+#define BUF_SIZE    (128 * MEM_USAGE_FACTOR)
 
 typedef struct MemoryCommandArgs {
     Channel * c;

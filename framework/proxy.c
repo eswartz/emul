@@ -110,24 +110,74 @@ static void proxy_disconnected(Channel * c) {
     }
 }
 
-static char logbuf[1024];
+#if ENABLE_Trace
 
-static void logchr(char ** pp, int c) {
-    char * p = *pp;
+static char log_buf[1024];
+static size_t log_pos = 0;
 
-    if (p + 2 < logbuf + sizeof logbuf) *p++ = (char)c;
-    *pp = p;
+static void log_chr(int c) {
+    if (log_pos + 2 < sizeof log_buf) log_buf[log_pos++] = (char)c;
 }
 
-static void logstr(char ** pp, const char * s) {
-    char * p = *pp;
+static void log_str(const char * s) {
     char c;
-
     while ((c = *s++) != '\0') {
-        if (p + 2 < logbuf + sizeof logbuf) *p++ = c;
+        if (log_pos + 2 < sizeof log_buf) log_buf[log_pos++] = c;
     }
-    *pp = p;
 }
+
+static void log_byte(int i) {
+    if (log_mode & LOG_TCFLOG) {
+        if (i > ' ' && i < 127) {
+            /* Printable ASCII  */
+            log_chr(i);
+        }
+        else if (i == 0) {
+            log_chr(' ');
+        }
+        else if (i > 0) {
+            char buf[16];
+            snprintf(buf, sizeof buf, "\\x%02x", i);
+            log_str(buf);
+        }
+        else if (i == MARKER_EOM) {
+            log_str("<eom>");
+        }
+        else if (i == MARKER_EOS) {
+            log_str("<eom>");
+        }
+        else {
+            log_str("<?>");
+        }
+    }
+}
+
+static void log_start(Proxy * proxy, char ** argv, int argc) {
+    int i;
+    log_pos = 0;
+    if (log_mode & LOG_TCFLOG) {
+        log_str(proxy->other > 0 ? "---> " : "<--- ");
+        for (i = 0; i < argc; i++) {
+            log_str(argv[i]);
+            log_chr(' ');
+        }
+    }
+}
+
+static void log_flush(Proxy * proxy) {
+    if (log_mode & LOG_TCFLOG) {
+        log_chr(0);
+        trace(LOG_TCFLOG, "%d: %s", proxy->instance, log_buf);
+    }
+}
+
+#else
+
+#define log_start(a, b, c) 0
+#define log_byte(a) 0
+#define log_flush(a) 0
+
+#endif
 
 static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
     /* TODO: if proxy is connected to itself, it can deadlock when retransmitting a long message */
@@ -135,7 +185,6 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
     Channel * otherc = proxy[proxy->other].c;
     InputStream * inp = &c->inp;
     OutputStream * out = &otherc->out;
-    char * p = logbuf;
     int i = 0;
 
     assert(c == proxy->c);
@@ -158,53 +207,26 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
 
     while (i < argc) write_stringz(out, argv[i++]);
 
-    if (log_mode & LOG_TCFLOG) {
-        logstr(&p, (char *)(proxy->other > 0 ? "---> " : "<--- "));
-        for (i = 0; i < argc; i++) {
-            logstr(&p, argv[i]);
-            logchr(&p, ' ');
-        }
-    }
+    log_start(proxy, argv, argc);
 
     /* Copy body of message */
     do {
-        if (out->supports_zero_copy && (log_mode & LOG_TCFLOG) == 0 && inp->end - inp->cur >= 0x100) {
+        if (out->supports_zero_copy &&
+#if ENABLE_Trace
+               (log_mode & LOG_TCFLOG) == 0 &&
+#endif
+                inp->end - inp->cur >= 0x100) {
             write_block_stream(out, (char *)inp->cur, inp->end - inp->cur);
             inp->cur = inp->end;
         }
         else {
             i = read_stream(inp);
-            if (log_mode & LOG_TCFLOG) {
-                if (i > ' ' && i < 127) {
-                    /* Printable ASCII  */
-                    logchr(&p, i);
-                }
-                else if (i == 0) {
-                    logstr(&p, " ");
-                }
-                else if (i > 0) {
-                    char buf[40];
-                    snprintf(buf, sizeof buf, "\\x%02x", i);
-                    logstr(&p, buf);
-                }
-                else if (i == MARKER_EOM) {
-                    logstr(&p, "<eom>");
-                }
-                else if (i == MARKER_EOS) {
-                    logstr(&p, "<eom>");
-                }
-                else {
-                    logstr(&p, "<?>");
-                }
-            }
+            log_byte(i);
             write_stream(out, i);
         }
     }
     while (i != MARKER_EOM && i != MARKER_EOS);
-    if (log_mode & LOG_TCFLOG) {
-        *p = '\0';
-        trace(LOG_TCFLOG, "%d: %s", proxy->instance, logbuf);
-    }
+    log_flush(proxy);
 }
 
 void proxy_create(Channel * c1, Channel * c2) {

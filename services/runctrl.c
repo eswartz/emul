@@ -58,6 +58,8 @@
 #define STOP_ALL_TIMEOUT 1000000
 #define STOP_ALL_MAX_CNT 20
 
+/* TODO: add support for containerSuspended, containerResumed events */
+
 static const char RUN_CONTROL[] = "RunControl";
 
 typedef struct ContextExtensionRC {

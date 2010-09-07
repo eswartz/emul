@@ -138,7 +138,7 @@ void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long de
     check_error(pthread_mutex_unlock(&event_lock));
 }
 
-void post_event(EventCallBack * handler, void *arg) {
+void post_event(EventCallBack * handler, void * arg) {
     event_node * ev;
 
     check_error(pthread_mutex_lock(&event_lock));
@@ -163,7 +163,7 @@ void post_event(EventCallBack * handler, void *arg) {
     check_error(pthread_mutex_unlock(&event_lock));
 }
 
-int cancel_event(EventCallBack * handler, void *arg, int wait) {
+int cancel_event(EventCallBack * handler, void * arg, int wait) {
     event_node * ev;
     event_node * prev;
 
