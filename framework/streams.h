@@ -21,6 +21,8 @@
 #ifndef D_streams
 #define D_streams
 
+#include "config.h"
+
 /*
  * MARKER_EOM - end of message
  * MARKER_EOS - end of stream
