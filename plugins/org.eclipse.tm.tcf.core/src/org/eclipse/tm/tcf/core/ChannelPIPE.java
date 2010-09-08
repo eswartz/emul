@@ -17,7 +17,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.SocketException;
 
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -77,7 +76,7 @@ public class ChannelPIPE extends StreamChannel {
             if (closed) return -1;
             return inp.read();
         }
-        catch (SocketException x) {
+        catch (IOException x) {
             if (closed) return -1;
             throw x;
         }

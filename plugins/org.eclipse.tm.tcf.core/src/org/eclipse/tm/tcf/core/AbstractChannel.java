@@ -163,7 +163,7 @@ public abstract class AbstractChannel implements IChannel {
 
             final byte[] empty_byte_array = new byte[0];
             byte[] buf = new byte[1024];
-            byte[] eos;
+            byte[] eos_err_report;
 
             private void error() throws IOException {
                 throw new IOException("Protocol syntax error");
@@ -217,7 +217,12 @@ public abstract class AbstractChannel implements IChannel {
                         int n = read();
                         if (n == EOM) continue;
                         if (n == EOS) {
-                            eos = readBytes(EOM);
+                            try {
+                                eos_err_report = readBytes(EOM);
+                                if (eos_err_report.length == 0 || eos_err_report.length == 1 && eos_err_report[0] == 0) eos_err_report = null;
+                            }
+                            catch (Exception x) {
+                            }
                             break;
                         }
                         final Message msg = new Message((char)n);
@@ -256,19 +261,20 @@ public abstract class AbstractChannel implements IChannel {
                     }
                     Protocol.invokeLater(new Runnable() {
                         public void run() {
-                            if (out_tokens.isEmpty()) {
+                            if (out_tokens.isEmpty() && eos_err_report == null) {
                                 close();
                             }
                             else {
-                                IOException x = new IOException("Connection reset by peer");
-                                try {
-                                    Object[] args = JSON.parseSequence(eos);
-                                    if (args.length > 0 && args[0] != null) {
-                                        x = new IOException(Command.toErrorString(args[0]));
+                                IOException x = new IOException("Communication channel is closed by remote peer");
+                                if (eos_err_report != null) {
+                                    try {
+                                        Object[] args = JSON.parseSequence(eos_err_report);
+                                        if (args.length > 0 && args[0] != null) {
+                                            x.initCause(new Exception(Command.toErrorString(args[0])));
+                                        }
                                     }
-                                }
-                                catch (IOException e) {
-                                    x = e;
+                                    catch (IOException e) {
+                                    }
                                 }
                                 terminate(x);
                             }

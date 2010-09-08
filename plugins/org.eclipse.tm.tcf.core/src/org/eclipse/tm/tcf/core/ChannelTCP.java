@@ -149,7 +149,7 @@ public class ChannelTCP extends StreamChannel {
             if (closed) return -1;
             return inp.read();
         }
-        catch (SocketException x) {
+        catch (IOException x) {
             if (closed) return -1;
             throw x;
         }
