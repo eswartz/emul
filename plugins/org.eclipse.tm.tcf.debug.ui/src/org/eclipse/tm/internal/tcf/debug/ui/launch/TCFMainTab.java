@@ -86,7 +86,6 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         gd = new GridData(GridData.FILL_HORIZONTAL);
         project_text.setLayoutData(gd);
         project_text.addModifyListener(new ModifyListener() {
-
             public void modifyText(ModifyEvent evt) {
                 updateLaunchConfigurationDialog();
             }
@@ -190,6 +189,11 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
 
         working_dir_text = new Text(group, SWT.SINGLE | SWT.BORDER);
         working_dir_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        working_dir_text.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent evt) {
+                updateLaunchConfigurationDialog();
+            }
+        });
 
         default_dir_button = new Button(group, SWT.CHECK);
         default_dir_button.setText("Use default");
