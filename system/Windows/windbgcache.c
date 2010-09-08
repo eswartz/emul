@@ -146,10 +146,20 @@ static FARPROC GetProc(char * name) {
                     DWORD size = sizeof(buf);
                     memset(buf, 0, sizeof(buf));
                     if (RegQueryValueExW(key,
-                            L"ProgramFilesDir",
+                            L"ProgramFilesDir (x86)",
                             NULL, NULL, (LPBYTE)buf, &size) == ERROR_SUCCESS) {
                         wcsncat(buf, *p + 1, FILE_PATH_SIZE - size / sizeof(wchar_t));
                         dbghelp_dll = LoadLibraryW(buf);
+                    }
+                    if (dbghelp_dll == NULL) {
+                        size = sizeof(buf);
+                        memset(buf, 0, sizeof(buf));
+                        if (RegQueryValueExW(key,
+                                L"ProgramFilesDir",
+                                NULL, NULL, (LPBYTE)buf, &size) == ERROR_SUCCESS) {
+                            wcsncat(buf, *p + 1, FILE_PATH_SIZE - size / sizeof(wchar_t));
+                            dbghelp_dll = LoadLibraryW(buf);
+                        }
                     }
                     RegCloseKey(key);
                 }
