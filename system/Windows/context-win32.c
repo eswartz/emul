@@ -107,9 +107,9 @@ const char * context_suspend_reason(Context * ctx) {
     static char buf[64];
 
     if (exception_code == 0) return "Suspended";
-    if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
-    if (exception_code == EXCEPTION_BREAKPOINT) return "Eventpoint";
     if (ext->suspend_reason.dwFirstChance) {
+        if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
+        if (exception_code == EXCEPTION_BREAKPOINT) return "Eventpoint";
         snprintf(buf, sizeof(buf), "Exception %#lx", exception_code);
     }
     else {
@@ -217,63 +217,75 @@ static DWORD event_win32_context_stopped(Context * ctx) {
     ctx->pending_signals = 0;
     ctx->stopped = 1;
     ctx->stopped_by_bp = 0;
-    ctx->stopped_by_exception = 0;
-    switch (exception_code) {
-    case 0:
-        break;
-    case EXCEPTION_SINGLE_STEP:
-        if (ext->step_opcodes_len == 0) {
-            continue_status = DBG_EXCEPTION_NOT_HANDLED;
-        }
-        else if (ext->step_opcodes[0] == 0x9c) {
-            /* PUSHF instruction: need to clear trace flag from top of the stack */
-            SIZE_T bcnt = 0;
-            ContextAddress buf = 0;
-            get_registers(ctx);
-            if (!ext->regs_error) {
-                assert(ext->regs->EFlags & 0x100);
-                assert(ext->step_opcodes_addr == ext->regs->Eip - 1);
-                if (!ReadProcessMemory(EXT(ctx->mem)->handle, (LPCVOID)ext->regs->Esp, &buf, sizeof(ContextAddress), &bcnt) || bcnt != sizeof(ContextAddress)) {
-                    log_error("ReadProcessMemory", 0);
-                }
-                else {
-                    assert(buf & 0x100);
-                    buf &= ~0x100;
-                    if (!WriteProcessMemory(EXT(ctx->mem)->handle, (LPVOID)ext->regs->Esp, &buf, sizeof(ContextAddress), &bcnt) || bcnt != sizeof(ContextAddress)) {
-                        log_error("WriteProcessMemory", 0);
+    if (exception_code == 0) {
+        ctx->stopped_by_exception = 0;
+    }
+    else if (ext->suspend_reason.dwFirstChance) {
+        ctx->stopped_by_exception = 0;
+        switch (exception_code) {
+        case EXCEPTION_SINGLE_STEP:
+            if (ext->step_opcodes_len == 0) {
+                continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            }
+            else if (ext->step_opcodes[0] == 0x9c) {
+                /* PUSHF instruction: need to clear trace flag from top of the stack */
+                SIZE_T bcnt = 0;
+                ContextAddress buf = 0;
+                get_registers(ctx);
+                if (!ext->regs_error) {
+                    assert(ext->regs->EFlags & 0x100);
+                    assert(ext->step_opcodes_addr == ext->regs->Eip - 1);
+                    if (!ReadProcessMemory(EXT(ctx->mem)->handle, (LPCVOID)ext->regs->Esp, &buf, sizeof(ContextAddress), &bcnt) || bcnt != sizeof(ContextAddress)) {
+                        log_error("ReadProcessMemory", 0);
+                    }
+                    else {
+                        assert(buf & 0x100);
+                        buf &= ~0x100;
+                        if (!WriteProcessMemory(EXT(ctx->mem)->handle, (LPVOID)ext->regs->Esp, &buf, sizeof(ContextAddress), &bcnt) || bcnt != sizeof(ContextAddress)) {
+                            log_error("WriteProcessMemory", 0);
+                        }
                     }
                 }
             }
+            ext->step_opcodes_len = 0;
+            ext->step_opcodes_addr = 0;
+            break;
+        case EXCEPTION_BREAKPOINT:
+            get_break_instruction(ctx, &break_size);
+            get_registers(ctx);
+            if (!ext->regs_error && is_breakpoint_address(ctx, ext->regs->Eip - break_size)) {
+                ext->regs->Eip -= break_size;
+                ext->regs_dirty = 1;
+                ctx->stopped_by_bp = 1;
+            }
+            else {
+                continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            }
+            break;
+        case EXCEPTION_DEBUGGER_IO:
+            trace(LOG_ALWAYS, "Debugger IO request %#lx",
+                ext->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
+            break;
         }
-        ext->step_opcodes_len = 0;
-        ext->step_opcodes_addr = 0;
-        break;
-    case EXCEPTION_BREAKPOINT:
-        get_break_instruction(ctx, &break_size);
-        get_registers(ctx);
-        if (!ext->regs_error && is_breakpoint_address(ctx, ext->regs->Eip - break_size)) {
-            ext->regs->Eip -= break_size;
-            ext->regs_dirty = 1;
-            ctx->stopped_by_bp = 1;
+        if (continue_status == DBG_EXCEPTION_NOT_HANDLED) {
+            int intercept = 1;
+            ctx->stopped_by_exception = 1;
+            if (ctx->signal) {
+                ctx->pending_signals |= 1 << ctx->signal;
+                if (ctx->sig_dont_pass & (1 << ctx->signal)) {
+                    continue_status = DBG_CONTINUE;
+                }
+                if (ctx->sig_dont_stop & (1 << ctx->signal)) {
+                    intercept = 0;
+                }
+            }
+            if (intercept) ctx->pending_intercept = 1;
         }
-        else {
-            continue_status = DBG_EXCEPTION_NOT_HANDLED;
-        }
-        break;
-    case EXCEPTION_DEBUGGER_IO:
-        trace(LOG_ALWAYS, "Debugger IO request %#lx",
-            ext->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
-        break;
-    default:
+    }
+    else {
         ctx->stopped_by_exception = 1;
-        if (ctx->signal == 0 || (ctx->sig_dont_pass & (1 << ctx->signal)) == 0) {
-            continue_status = DBG_EXCEPTION_NOT_HANDLED;
-        }
-        if (ctx->signal == 0 || (ctx->sig_dont_stop & (1 << ctx->signal)) == 0) {
-            ctx->pending_intercept = 1;
-        }
-        if (ctx->signal != 0) ctx->pending_signals |= 1 << ctx->signal;
-        break;
+        if (!ctx->mem->exiting) ctx->pending_intercept = 1;
+        continue_status = DBG_EXCEPTION_NOT_HANDLED;
     }
     send_context_stopped_event(ctx);
     return continue_status;
