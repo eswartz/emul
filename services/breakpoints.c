@@ -23,6 +23,8 @@
 
 #if SERVICE_Breakpoints
 
+/* TODO: breakpoints service should be aware that planting breakpoint in a memory space can affect other memory spaces */
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
