@@ -265,8 +265,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         if (error != null) {
                             exit(error);
                         }
-                        else {
-                            assert test_suite.isActive(TestRCBP1.this);
+                        else if (test_suite.isActive(TestRCBP1.this)) {
                             assert test_ctx_id == null;
                             test_ctx_id = context_id;
                             if (pending_cancel != null) {
