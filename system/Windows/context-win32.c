@@ -97,6 +97,10 @@ typedef struct DebugEvent {
 
 static OSVERSIONINFOEX os_version;
 
+#define MAX_EXCEPTION_HANDLERS 8
+static ContextExceptionHandler * exception_handlers[MAX_EXCEPTION_HANDLERS];
+static unsigned exception_handler_cnt = 0;
+
 #include <system/pid-hash.h>
 
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
@@ -266,6 +270,17 @@ static DWORD event_win32_context_stopped(Context * ctx) {
             trace(LOG_ALWAYS, "Debugger IO request %#lx",
                 ext->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
             break;
+        default:
+            continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            break;
+        }
+        if (continue_status == DBG_EXCEPTION_NOT_HANDLED) {
+            unsigned i;
+            for (i = 0; i < exception_handler_cnt; i++) {
+                if (exception_handlers[i](ctx, &ext->suspend_reason)) {
+                    continue_status = DBG_CONTINUE;
+                }
+            }
         }
         if (continue_status == DBG_EXCEPTION_NOT_HANDLED) {
             int intercept = 1;
@@ -347,7 +362,7 @@ static void suspend_threads(DWORD prs_id) {
     for (l = prs->children.next; l != &prs->children; l = l->next) {
         Context * ctx = cldl2ctxp(l);
         ContextExtensionWin32 * ext = EXT(ctx);
-        if (ext->stop_pending) {
+        if (!ctx->stopped) {
             memset(&ext->suspend_reason, 0, sizeof(ext->suspend_reason));
             event_win32_context_stopped(ctx);
         }
@@ -638,7 +653,6 @@ static void early_debug_event_handler(void * x) {
 
     debug_state->process_suspended = 1;
     debug_event_handler(debug_event);
-    suspend_threads(debug_state->process_id);
     post_event(continue_debug_event, debug_state);
 }
 
@@ -925,6 +939,11 @@ int is_context_module_loaded(Context * ctx) {
 int is_context_module_unloaded(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
     return ext->debug_state->module_unloaded;
+}
+
+void add_context_exception_handler(ContextExceptionHandler * h) {
+    assert(exception_handler_cnt < MAX_EXCEPTION_HANDLERS);
+    exception_handlers[exception_handler_cnt++] = h;
 }
 
 void init_contexts_sys_dep(void) {
