@@ -57,7 +57,7 @@ typedef struct MemoryCommandArgs {
 
 static void write_context(OutputStream * out, Context * ctx) {
     assert(!ctx->exited);
-    assert(ctx->parent == NULL);
+    assert(ctx->mem == ctx);
 
     write_stream(out, '{');
 
@@ -170,7 +170,7 @@ static void command_get_context(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    if (err == 0 && ctx->parent == NULL) {
+    if (err == 0) {
         write_context(&c->out, ctx);
     }
     else {
@@ -198,11 +198,28 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             Context * ctx = ctxl2ctxp(qp);
+            if (ctx->parent != NULL) continue;
             if (ctx->exited) continue;
             if (ctx->mem != ctx) continue;
             if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, ctx->id);
             cnt++;
+        }
+    }
+    else {
+        Context * parent = id2ctx(id);
+        if (parent != NULL) {
+            LINK * l;
+            int cnt = 0;
+            for (l = parent->children.next; l != &parent->children; l = l->next) {
+                Context * ctx = cldl2ctxp(l);
+                assert(ctx->parent == parent);
+                if (ctx->exited) continue;
+                if (ctx->mem != ctx) continue;
+                if (cnt > 0) write_stream(&c->out, ',');
+                json_write_string(&c->out, ctx->id);
+                cnt++;
+            }
         }
     }
     write_stream(&c->out, ']');
@@ -231,7 +248,7 @@ static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd)
 
     buf.ctx = id2ctx(id);
     if (buf.ctx == NULL) err = ERR_INV_CONTEXT;
-    else if (buf.ctx->parent != NULL) err = ERR_INV_CONTEXT;
+    else if (buf.ctx->mem != buf.ctx) err = ERR_INV_CONTEXT;
     else if (buf.ctx->exited) err = ERR_ALREADY_EXITED;
 
     if (err != 0) {
@@ -263,7 +280,7 @@ static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd)
 }
 
 static void send_event_memory_changed(OutputStream * out, Context * ctx, ContextAddress addr, unsigned long size) {
-    assert(ctx->parent == NULL);
+    assert(ctx->mem == ctx);
 
     write_stringz(out, "E");
     write_stringz(out, MEMORY);
@@ -563,21 +580,21 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
 static void event_context_created(Context * ctx, void * client_data) {
     TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
-    if (ctx->parent != NULL) return;
+    if (ctx->mem != ctx) return;
     send_event_context_added(&bcg->out, ctx);
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
     TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
-    if (ctx->parent != NULL) return;
+    if (ctx->mem != ctx) return;
     send_event_context_changed(&bcg->out, ctx);
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
     TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
-    if (ctx->parent != NULL) return;
+    if (ctx->mem != ctx) return;
     send_event_context_removed(&bcg->out, ctx);
 }
 

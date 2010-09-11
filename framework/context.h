@@ -33,6 +33,7 @@ typedef void ContextAttachCallBack(int, Context *, void *);
 
 struct Context {
     char                id[256];            /* context ID */
+    char *              name;               /* human readable context name */
     LINK                cldl;               /* link that used to form a list of context chidren */
     LINK                ctxl;               /* link that used to form a list of all contexts */
     LINK                children;           /* context children double linked list */

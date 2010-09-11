@@ -141,10 +141,19 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_string(out, ctx->creator->id);
     }
 
-    write_stream(out, ',');
-    json_write_string(out, "ProcessID");
-    write_stream(out, ':');
-    json_write_string(out, ctx->mem->id);
+    if (ctx->mem != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "ProcessID");
+        write_stream(out, ':');
+        json_write_string(out, ctx->mem->id);
+    }
+
+    if (ctx->name != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "Name");
+        write_stream(out, ':');
+        json_write_string(out, ctx->name);
+    }
 
 #if defined(__linux__)
     if (ctx->parent == NULL) {
@@ -347,14 +356,14 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         for (l = context_root.next; l != &context_root; l = l->next) {
             Context * ctx = ctxl2ctxp(l);
-            if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
+            if (ctx->exited) continue;
             if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, ctx->id);
             cnt++;
         }
     }
-    else if (id[0] == 'P') {
+    else {
         Context * parent = id2ctx(id);
         if (parent != NULL) {
             LINK * l;
@@ -362,11 +371,10 @@ static void command_get_children(char * token, Channel * c) {
             for (l = parent->children.next; l != &parent->children; l = l->next) {
                 Context * ctx = cldl2ctxp(l);
                 assert(ctx->parent == parent);
-                if (!ctx->exited) {
-                    if (cnt > 0) write_stream(&c->out, ',');
-                    json_write_string(&c->out, ctx->id);
-                    cnt++;
-                }
+                if (ctx->exited) continue;
+                if (cnt > 0) write_stream(&c->out, ',');
+                json_write_string(&c->out, ctx->id);
+                cnt++;
             }
         }
     }

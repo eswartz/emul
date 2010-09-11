@@ -137,6 +137,7 @@ void context_unlock(Context * ctx) {
         }
         ctx->event_notification = 0;
         list_remove(&ctx->ctxl);
+        loc_free(ctx->name);
         loc_free(ctx);
     }
 }
