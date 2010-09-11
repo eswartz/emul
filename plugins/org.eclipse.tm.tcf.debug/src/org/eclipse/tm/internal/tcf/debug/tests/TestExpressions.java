@@ -13,7 +13,9 @@ package org.eclipse.tm.internal.tcf.debug.tests;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
@@ -56,6 +58,7 @@ class TestExpressions implements ITCFTest,
     private final Map<String,IExpressions.Value> expr_val = new HashMap<String,IExpressions.Value>();
     private final Map<String,ISymbols.Symbol> expr_sym = new HashMap<String,ISymbols.Symbol>();
     private final Map<String,String[]> expr_chld = new HashMap<String,String[]>();
+    private final Set<String> expr_to_dispose = new HashSet<String>();
 
     private static String[] test_expressions = {
         "func2_local1",
@@ -386,6 +389,7 @@ class TestExpressions implements ITCFTest,
                             exit(error);
                         }
                         else {
+                            expr_to_dispose.add(ctx.getID());
                             expr_ctx.put(txt, ctx);
                             runTest();
                         }
@@ -474,6 +478,20 @@ class TestExpressions implements ITCFTest,
                     return;
                 }
             }
+        }
+        for (final String id : expr_to_dispose) {
+            expr.dispose(id, new IExpressions.DoneDispose() {
+                public void doneDispose(IToken token, Exception error) {
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else {
+                        expr_to_dispose.remove(id);
+                        runTest();
+                    }
+                }
+            });
+            return;
         }
         test_done = true;
         diag.cancelTest(test_ctx_id, new IDiagnostics.DoneCancelTest() {
