@@ -162,12 +162,15 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         IOConsoleInputStream inp = console.getInputStream();
                         final byte[] buf = new byte[0x100];
                         for (;;) {
-                            final int len = inp.read(buf);
+                            int len = inp.read(buf);
                             if (len < 0) break;
+                            // TODO: Eclipse Console view has a bad habit of replacing CR with CR/LF
+                            if (len == 2 && buf[0] == '\r' && buf[1] == '\n') len = 1;
+                            final int n = len;
                             Protocol.invokeAndWait(new Runnable() {
                                 public void run() {
                                     try {
-                                        launch.writeProcessInputStream(buf, 0, len);
+                                        launch.writeProcessInputStream(buf, 0, n);
                                     }
                                     catch (Exception x) {
                                         onProcessStreamError(null, 0, x, 0);

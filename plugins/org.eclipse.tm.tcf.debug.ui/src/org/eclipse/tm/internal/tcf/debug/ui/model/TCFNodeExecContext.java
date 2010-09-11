@@ -511,16 +511,21 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (!run_context.validate(done)) return false;
         String image_name = null;
         StringBuffer label = new StringBuffer();
-        label.append(id);
         Throwable error = run_context.getError();
         if (error != null) {
             result.setForeground(new RGB(255, 0, 0), 0);
+            label.append(id);
             label.append(": ");
             label.append(TCFModel.getErrorMessage(error, false));
         }
         else {
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx != null) {
+            if (ctx == null) {
+                label.append(id);
+            }
+            else {
+                String nm = ctx.getName();
+                label.append(nm != null ? nm : id);
                 if (ctx.hasState()) {
                     // Thread
                     if (!state.validate(done)) return false;

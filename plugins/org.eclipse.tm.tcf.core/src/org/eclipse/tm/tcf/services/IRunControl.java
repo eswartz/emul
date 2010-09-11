@@ -36,6 +36,9 @@ public interface IRunControl extends IService {
         /** ID of a context that created this context */
         PROP_CREATOR_ID = "CreatorID",
 
+        /** Human readable context name */
+        PROP_NAME = "Name",
+
         /** true if the context is a container. Container can propagate run control commands to his children */
         PROP_IS_CONTAINER = "IsContainer",
 
@@ -272,6 +275,12 @@ public interface IRunControl extends IService {
          * Same as getProperties().get(“CreatorID”)
          */
         String getCreatorID();
+
+        /**
+         * Retrieve human readable context name.
+         * Same as getProperties().get(“Name”)
+         */
+        String getName();
 
         /**
          * Utility method to read context property PROP_IS_CONTAINER.

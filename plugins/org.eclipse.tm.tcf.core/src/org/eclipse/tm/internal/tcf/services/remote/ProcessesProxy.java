@@ -206,7 +206,7 @@ public class ProcessesProxy implements IProcesses {
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    if (args[1] != null) ctx = new ProcessContext((Map<String, Object>)args[1]);
+                    if (args[1] != null) ctx = new ProcessContext((Map<String,Object>)args[1]);
                 }
                 done.doneStart(token, error, ctx);
             }
