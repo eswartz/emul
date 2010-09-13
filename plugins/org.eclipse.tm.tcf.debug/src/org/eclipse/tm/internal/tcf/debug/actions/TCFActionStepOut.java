@@ -92,7 +92,8 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             if (bp == null) {
                 TCFDataCache<IStackTrace.StackTraceContext> frame = getStackFrame();
                 if (!frame.validate(this)) return;
-                Number addr = frame.getData().getReturnAddress();
+                Number addr = null;
+                if (frame.getData() != null) addr = frame.getData().getReturnAddress();
                 if (addr == null) {
                     exit(new Exception("Unknown stack frame return address"));
                     return;
