@@ -36,7 +36,7 @@
 #include <framework/plugins.h>
 #include <main/cmdline.h>
 
-struct cmd {
+struct CmdDesc {
     char * cmd;
     char * help;
     int (*hnd)(char *);
@@ -56,7 +56,7 @@ static char * cmdline_string;
 static pthread_mutex_t cmdline_mutex;
 static pthread_cond_t cmdline_signal;
 static pthread_t command_thread;
-static struct cmd * cmds = NULL;
+static struct CmdDesc * cmds = NULL;
 static size_t cmd_count = 0;
 
 typedef void (*PluginCallBack)(Channel *);
@@ -403,7 +403,7 @@ static int add_cmdline_cmd(const char * cmd_name, const char * cmd_desc,
         if (!strcmp(cmd_name, cmds[i].cmd))
             return -EEXIST;
 
-    cmds = (struct cmd *)loc_realloc(cmds, ++cmd_count * sizeof(struct cmd));
+    cmds = (struct CmdDesc *)loc_realloc(cmds, ++cmd_count * sizeof(struct CmdDesc));
 
     cmds[cmd_count-1].cmd = loc_strdup(cmd_name);
     cmds[cmd_count-1].help = loc_strdup(cmd_desc);

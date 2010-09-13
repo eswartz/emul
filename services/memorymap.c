@@ -200,7 +200,7 @@ static BOOL CALLBACK modules_callback(PCWSTR ModuleName, DWORD64 ModuleBase, ULO
 
     if (fnm_buf == NULL) {
         fnm_max = 256;
-        fnm_buf = loc_alloc(fnm_max);
+        fnm_buf = (char *)loc_alloc(fnm_max);
     }
     for (;;) {
         fnm_len = WideCharToMultiByte(CP_UTF8, 0, ModuleName, -1, fnm_buf, fnm_max - 1, NULL, NULL);
@@ -212,7 +212,7 @@ static BOOL CALLBACK modules_callback(PCWSTR ModuleName, DWORD64 ModuleBase, ULO
             return TRUE;
         }
         fnm_max *= 2;
-        fnm_buf = loc_realloc(fnm_buf, fnm_max);
+        fnm_buf = (char *)loc_realloc(fnm_buf, fnm_max);
     }
     fnm_buf[fnm_len] = 0;
 

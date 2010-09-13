@@ -142,7 +142,7 @@ static int get_sym_info(const Symbol * sym, DWORD index, SYMBOL_INFO ** res) {
     return 0;
 }
 
-static int get_type_info(const Symbol * sym, int info_tag, void * info) {
+static int get_type_info(const Symbol * sym, IMAGEHLP_SYMBOL_TYPE_INFO info_tag, void * info) {
     HANDLE process = get_context_handle(sym->ctx->parent == NULL ? sym->ctx : sym->ctx->parent);
     if (!SymGetTypeInfo(process, sym->module, sym->index, info_tag, info)) {
         set_win32_errno(GetLastError());
@@ -425,7 +425,7 @@ int get_symbol_name(const Symbol * sym, char ** name) {
         int err = 0;
         if (tmp_buf == NULL) {
             tmp_buf_size = 256;
-            tmp_buf = loc_alloc(tmp_buf_size);
+            tmp_buf = (char *)loc_alloc(tmp_buf_size);
         }
         for (;;) {
             len = WideCharToMultiByte(CP_UTF8, 0, ptr, -1, tmp_buf, tmp_buf_size - 1, NULL, NULL);
@@ -436,7 +436,7 @@ int get_symbol_name(const Symbol * sym, char ** name) {
                 return -1;
             }
             tmp_buf_size *= 2;
-            tmp_buf = loc_realloc(tmp_buf, tmp_buf_size);
+            tmp_buf = (char *)loc_realloc(tmp_buf, tmp_buf_size);
         }
         HeapFree(GetProcessHeap(), 0, ptr);
         tmp_buf[len] = 0;
@@ -622,10 +622,11 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
     }
     if (get_type_tag(&type, &tag)) return -1;
     if (get_type_info(&type, TI_GET_CHILDRENCOUNT, &cnt) < 0) return -1;
-    if (params == NULL) params = loc_alloc(sizeof(TI_FINDCHILDREN_PARAMS) + (FINDCHILDREN_BUF_SIZE - 1) * sizeof(ULONG));
+    if (params == NULL) params = (TI_FINDCHILDREN_PARAMS *)loc_alloc(
+        sizeof(TI_FINDCHILDREN_PARAMS) + (FINDCHILDREN_BUF_SIZE - 1) * sizeof(ULONG));
 
     if (buf_len < cnt) {
-        buf = loc_realloc(buf, sizeof(Symbol *) * cnt);
+        buf = (Symbol **)loc_realloc(buf, sizeof(Symbol *) * cnt);
         buf_len = cnt;
     }
     params->Start = 0;
