@@ -213,6 +213,13 @@ function get_make_options()
       echo "OPSYS=$OPSYS CONF=$CONF CC=g++ 'CFLAGS=-Werror $CFLAGS'"
     fi
     ;;
+  msvc++)
+    if [ -z "$CFLAGS" ] ; then
+      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=-x c++'"
+    else
+      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=-x c++ $CFLAGS'"
+    fi
+    ;;
   *)
     if [ -z "$CFLAGS" ] ; then
       echo "OPSYS=$OPSYS CONF=$CONF"
