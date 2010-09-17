@@ -57,7 +57,6 @@ typedef struct MemoryCommandArgs {
 
 static void write_context(OutputStream * out, Context * ctx) {
     assert(!ctx->exited);
-    assert(ctx->mem == ctx);
 
     write_stream(out, '{');
 
@@ -280,8 +279,8 @@ static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd)
 
     buf.ctx = id2ctx(id);
     if (buf.ctx == NULL) err = ERR_INV_CONTEXT;
-    else if (buf.ctx->mem != buf.ctx) err = ERR_INV_CONTEXT;
     else if (buf.ctx->exited) err = ERR_ALREADY_EXITED;
+    else if (buf.ctx->mem_access == 0) err = ERR_INV_CONTEXT;
 
     if (err != 0) {
         if (cmd != CMD_GET) {
