@@ -68,6 +68,12 @@ static size_t context_extension_offset = 0;
 
 static LINK pending_list;
 
+static int is_big_endian(void) {
+    short n = 0x0201;
+    char * p = (char *)&n;
+    return *p == 0x02;
+}
+
 const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
@@ -105,6 +111,10 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     add_waitpid_process(pid);
     ctx = create_context(pid2id(pid, 0));
     ctx->mem = ctx;
+    ctx->mem_access |= MEM_ACCESS_INSTRUCTION;
+    ctx->mem_access |= MEM_ACCESS_DATA;
+    ctx->mem_access |= MEM_ACCESS_USER;
+    ctx->big_endian = is_big_endian();
     EXT(ctx)->pid = pid;
     EXT(ctx)->attach_callback = done;
     EXT(ctx)->attach_data = data;
@@ -473,6 +483,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             ctx->pending_intercept = 1;
             ctx->mem = prs;
             ctx->parent = prs;
+            ctx->big_endian = prs->big_endian;
             prs->ref_count++;
             list_add_first(&ctx->cldl, &prs->children);
             link_context(prs);

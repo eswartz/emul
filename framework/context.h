@@ -31,6 +31,12 @@ extern LINK context_root;
 
 typedef void ContextAttachCallBack(int, Context *, void *);
 
+/*
+ * A context corresponds to an execution thread, process, address space, etc.
+ * A context can belong to a parent context. Contexts hierarchy can be simple
+ * plain list or it can form a tree. It is up to target agent developers to choose
+ * layout that is most descriptive for a given target.
+ */
 struct Context {
     char                id[256];            /* context ID */
     char *              name;               /* human readable context name */
@@ -39,7 +45,9 @@ struct Context {
     LINK                children;           /* context children double linked list */
     Context *           parent;             /* context parent */
     Context *           creator;            /* context creator */
-    Context *           mem;                /* context memory space owner */
+    Context *           mem;                /* context memory space */
+    int                 big_endian;         /* 0 - little endian, 1 -  big endian */
+    unsigned int        mem_access;         /* bit set of memory access types represented by this context */
     unsigned int        ref_count;          /* reference count, see context_lock() and context_unlock() */
     int                 stopped;            /* OS kernel has stopped this context */
     int                 stopped_by_bp;      /* stopped by breakpoint */
@@ -54,6 +62,26 @@ struct Context {
     unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
     int                 signal;             /* signal that stopped this context */
 };
+
+/*
+ * Values of "mem_access".
+ * Target system can support multiple different memory access types, like instruction and data access.
+ * Different access types can use different logic for address translation and memory mapping, so they can
+ * end up accessing different data bits, even if address is the same.
+ * Each distinct access type should be represented by separate memory context.
+ * A memory context can represent multiple access types if they are equivalent - all access same memory bits.
+ * Same data bits can be exposed through multiple memory contexts.
+ */
+#define MEM_ACCESS_INSTRUCTION  0x0001      /* Context represent instructions fetch access */
+#define MEM_ACCESS_DATA         0x0002      /* Context represents data access */
+#define MEM_ACCESS_IO           0x0004      /* Context represents IO peripherals */
+#define MEM_ACCESS_USER         0x0008      /* Context represents a user (e.g. application running in Linux) view to memory */
+#define MEM_ACCESS_SUPERVISOR   0x0010      /* Context represents a supervisor (e.g. Linux kernel) view to memory */
+#define MEM_ACCESS_HYPERVISOR   0x0020      /* Context represents a hypervisor view to memory */
+#define MEM_ACCESS_VIRTUAL      0x0040      /* Context uses virtual addresses */
+#define MEM_ACCESS_PHYSICAL     0x0080      /* Context uses physical addresses */
+#define MEM_ACCESS_CACHE        0x0100      /* Context is a cache */
+#define MEM_ACCESS_TLB          0x0200      /* Context is a TLB memory */
 
 /*
  * Convert PID to TCF Context ID

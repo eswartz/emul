@@ -119,6 +119,12 @@ static void event_info_post(struct event_info * info) {
     SPIN_LOCK_ISR_GIVE(&events_lock);
 }
 
+static int is_big_endian(void) {
+    short n = 0x0201;
+    char * p = (char *)&n;
+    return *p == 0x02;
+}
+
 typedef struct AttachDoneArgs {
     pid_t pid;
     ContextAttachCallBack * done;
@@ -137,6 +143,9 @@ static void event_attach_done(void * x) {
             parent_ctx = create_context(pid2id(pid, 0));
             EXT(parent_ctx)->pid = pid;
             parent_ctx->mem = parent_ctx;
+            parent_ctx->mem_access |= MEM_ACCESS_INSTRUCTION;
+            parent_ctx->mem_access |= MEM_ACCESS_DATA;
+            parent_ctx->big_endian = is_big_endian();
             link_context(parent_ctx);
             send_context_created_event(parent_ctx);
         }
@@ -145,6 +154,7 @@ static void event_attach_done(void * x) {
         EXT(ctx)->pid = args->pid;
         EXT(ctx)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
         ctx->mem = parent_ctx;
+        ctx->big_endian = parent_ctx->big_endian;
         (ctx->parent = parent_ctx)->ref_count++;
         list_add_first(&ctx->cldl, &parent_ctx->children);
         link_context(ctx);
@@ -483,6 +493,7 @@ static void event_handler(void * arg) {
         EXT(stopped_ctx)->pid = (pid_t)info->stopped_ctx.ctxId;
         EXT(stopped_ctx)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
         stopped_ctx->mem = current_ctx->mem;
+        stopped_ctx->big_endian = current_ctx->mem->big_endian;
         (stopped_ctx->creator = current_ctx)->ref_count++;
         (stopped_ctx->parent = current_ctx->parent)->ref_count++;
         assert(stopped_ctx->mem == stopped_ctx->parent->mem);

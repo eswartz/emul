@@ -105,6 +105,12 @@ static unsigned exception_handler_cnt = 0;
 
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
 
+static int is_big_endian(void) {
+    short n = 0x0201;
+    char * p = (char *)&n;
+    return *p == 0x02;
+}
+
 const char * context_suspend_reason(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
     DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
@@ -497,6 +503,10 @@ static void debug_event_handler(void * x) {
             assert(ctx == NULL);
             ext = EXT(prs = create_context(pid2id(win32_event->dwProcessId, 0)));
             prs->mem = prs;
+            prs->mem_access |= MEM_ACCESS_INSTRUCTION;
+            prs->mem_access |= MEM_ACCESS_DATA;
+            prs->mem_access |= MEM_ACCESS_USER;
+            prs->big_endian = is_big_endian();
             ext->pid = win32_event->dwProcessId;
             ext->handle = win32_event->u.CreateProcessInfo.hProcess;
             ext->file_handle = win32_event->u.CreateProcessInfo.hFile;
@@ -529,6 +539,7 @@ static void debug_event_handler(void * x) {
         ext->handle = OpenThread(THREAD_ALL_ACCESS, FALSE, win32_event->dwThreadId);
         ext->debug_state = debug_state;
         ctx->mem = prs;
+        ctx->big_endian = prs->big_endian;
         (ctx->parent = prs)->ref_count++;
         list_add_first(&ctx->cldl, &prs->children);
         link_context(ctx);
@@ -548,6 +559,7 @@ static void debug_event_handler(void * x) {
             ext->handle = OpenThread(THREAD_ALL_ACCESS, FALSE, debug_state->main_thread_id);
             ext->debug_state = debug_state;
             ctx->mem = prs;
+            ctx->big_endian = prs->big_endian;
             (ctx->parent = prs)->ref_count++;
             list_add_first(&ctx->cldl, &prs->children);
             link_context(ctx);

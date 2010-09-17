@@ -106,6 +106,12 @@ static size_t context_extension_offset = 0;
 
 static LINK pending_list;
 
+static int is_big_endian(void) {
+    short n = 0x0201;
+    char * p = (char *)&n;
+    return *p == 0x02;
+}
+
 static const char * event_name(int event) {
     switch (event) {
     case 0: return "none";
@@ -163,6 +169,10 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     add_waitpid_process(pid);
     ctx = create_context(pid2id(pid, 0));
     ctx->mem = ctx;
+    ctx->mem_access |= MEM_ACCESS_INSTRUCTION;
+    ctx->mem_access |= MEM_ACCESS_DATA;
+    ctx->mem_access |= MEM_ACCESS_USER;
+    ctx->big_endian = is_big_endian();
     ext = EXT(ctx);
     ext->pid = pid;
     ext->attach_callback = done;
@@ -559,6 +569,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             EXT(ctx)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
             ctx->pending_intercept = 1;
             ctx->mem = prs;
+            ctx->big_endian = prs->big_endian;
             (ctx->parent = prs)->ref_count++;
             list_add_first(&ctx->cldl, &prs->children);
             link_context(prs);
@@ -612,6 +623,10 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 prs2 = create_context(pid2id(msg, 0));
                 EXT(prs2)->pid = msg;
                 prs2->mem = prs2;
+                prs2->mem_access |= MEM_ACCESS_INSTRUCTION;
+                prs2->mem_access |= MEM_ACCESS_DATA;
+                prs2->mem_access |= MEM_ACCESS_USER;
+                prs2->big_endian = is_big_endian();
                 (prs2->creator = ctx)->ref_count++;
                 prs2->sig_dont_stop = ctx->sig_dont_stop;
                 prs2->sig_dont_pass = ctx->sig_dont_pass;
@@ -623,6 +638,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             EXT(ctx2)->pid = msg;
             EXT(ctx2)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
             ctx2->mem = prs2;
+            ctx2->big_endian = prs2->big_endian;
             ctx2->sig_dont_stop = ctx->sig_dont_stop;
             ctx2->sig_dont_pass = ctx->sig_dont_pass;
             (ctx2->creator = ctx)->ref_count++;

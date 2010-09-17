@@ -70,33 +70,65 @@ static void write_context(OutputStream * out, Context * ctx) {
     write_stream(out, ':');
     json_write_string(out, ctx->mem->id);
 
-    /* Check endianness */
-    {
-        short n = 0x0201;
-        char * p = (char *)&n;
+    write_stream(out, ',');
+    json_write_string(out, "BigEndian");
+    write_stream(out, ':');
+    json_write_boolean(out, ctx->big_endian);
+
+    if (ctx->mem_access) {
+        int cnt = 0;
+
         write_stream(out, ',');
-        json_write_string(out, "BigEndian");
+        json_write_string(out, "AddressSize");
         write_stream(out, ':');
-        json_write_boolean(out, *p == 0x02);
+        json_write_ulong(out, context_word_size(ctx));
+
+        write_stream(out, ',');
+        json_write_string(out, "AccessTypes");
+        write_stream(out, ':');
+        write_stream(out, '[');
+        if (ctx->mem_access & MEM_ACCESS_INSTRUCTION) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "instruction");
+        }
+        if (ctx->mem_access & MEM_ACCESS_DATA) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "data");
+        }
+        if (ctx->mem_access & MEM_ACCESS_IO) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "io");
+        }
+        if (ctx->mem_access & MEM_ACCESS_USER) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "user");
+        }
+        if (ctx->mem_access & MEM_ACCESS_SUPERVISOR) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "supervisor");
+        }
+        if (ctx->mem_access & MEM_ACCESS_HYPERVISOR) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "hypervisor");
+        }
+        if (ctx->mem_access & MEM_ACCESS_VIRTUAL) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "virtual");
+        }
+        if (ctx->mem_access & MEM_ACCESS_PHYSICAL) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "physical");
+        }
+        if (ctx->mem_access & MEM_ACCESS_CACHE) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "cache");
+        }
+        if (ctx->mem_access & MEM_ACCESS_TLB) {
+            if (cnt++) write_stream(out, ',');
+            json_write_string(out, "tlb");
+        }
+        write_stream(out, ']');
     }
-
-    write_stream(out, ',');
-    json_write_string(out, "AddressSize");
-    write_stream(out, ':');
-    json_write_ulong(out, sizeof(char *));
-
-    write_stream(out, ',');
-    json_write_string(out, "AccessTypes");
-    write_stream(out, ':');
-    write_stream(out, '[');
-    json_write_string(out, "instruction");
-    write_stream(out, ',');
-    json_write_string(out, "data");
-#if !defined(_WRS_KERNEL)
-    write_stream(out, ',');
-    json_write_string(out, "user");
-#endif
-    write_stream(out, ']');
 
     write_stream(out, '}');
 }
@@ -164,7 +196,7 @@ static void command_get_context(char * token, Channel * c) {
 
     ctx = id2ctx(id);
 
-    if (ctx == NULL || ctx->mem != ctx) err = ERR_INV_CONTEXT;
+    if (ctx == NULL || ctx->mem != ctx && ctx->mem_access == 0) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
     write_stringz(&c->out, "R");
@@ -215,7 +247,7 @@ static void command_get_children(char * token, Channel * c) {
                 Context * ctx = cldl2ctxp(l);
                 assert(ctx->parent == parent);
                 if (ctx->exited) continue;
-                if (ctx->mem != ctx) continue;
+                if (ctx->mem != ctx && ctx->mem_access == 0) continue;
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, ctx->id);
                 cnt++;
