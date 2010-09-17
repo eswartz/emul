@@ -380,14 +380,23 @@ const char * errno_to_str(int err) {
 int set_errno(int no, const char * msg) {
     errno = no;
     if (no != 0 && msg != NULL) {
-        const char * text0 = errno_to_str(no);
-        int len = strlen(msg) + strlen(text0) + 4;
-        char * text1 = (char *)loc_alloc(len);
-        ErrorMessage * m = NULL;
-        snprintf(text1, len, "%s. %s", msg, text0);
-        m = alloc_msg(SRC_MESSAGE);
+        ErrorMessage * m = alloc_msg(SRC_MESSAGE);
+        /* alloc_msg() assigns new value to 'errno',
+         * need to be sure it does not change until this function exits.
+         */
+        int err = errno;
         m->error = get_error_code(no);
-        m->text = text1;
+        if (m->error == ERR_OTHER) {
+            m->text = loc_strdup(msg);
+        }
+        else {
+            const char * text0 = errno_to_str(no);
+            int len = strlen(msg) + strlen(text0) + 4;
+            char * text1 = (char *)loc_alloc(len);
+            snprintf(text1, len, "%s. %s", msg, text0);
+            m->text = text1;
+        }
+        errno = err;
     }
     return errno;
 }
