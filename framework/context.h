@@ -40,7 +40,7 @@ typedef void ContextAttachCallBack(int, Context *, void *);
 struct Context {
     char                id[256];            /* context ID */
     char *              name;               /* human readable context name */
-    LINK                cldl;               /* link that used to form a list of context chidren */
+    LINK                cldl;               /* link that used to form a list of context children */
     LINK                ctxl;               /* link that used to form a list of all contexts */
     LINK                children;           /* context children double linked list */
     Context *           parent;             /* context parent */
@@ -57,9 +57,9 @@ struct Context {
     int                 exited;             /* context exited */
     int                 event_notification; /* set to 1 when calling one of ContextEventListener call-backs for this context */
     int                 pending_intercept;  /* host is waiting for this context to be suspended */
-    unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
-    unsigned long       sig_dont_stop;      /* bitset of signals that should not be intercepted by the debugger */
-    unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
+    unsigned long       pending_signals;    /* bit set of signals that were received, but not handled yet */
+    unsigned long       sig_dont_stop;      /* bit set of signals that should not be intercepted by the debugger */
+    unsigned long       sig_dont_pass;      /* bit set of signals that should not be delivered to the context */
     int                 signal;             /* signal that stopped this context */
 };
 
