@@ -368,7 +368,7 @@ static void suspend_threads(DWORD prs_id) {
     for (l = prs->children.next; l != &prs->children; l = l->next) {
         Context * ctx = cldl2ctxp(l);
         ContextExtensionWin32 * ext = EXT(ctx);
-        if (!ctx->stopped) {
+        if (!ctx->stopped && !ctx->exiting && !ctx->exited) {
             memset(&ext->suspend_reason, 0, sizeof(ext->suspend_reason));
             event_win32_context_stopped(ctx);
         }
