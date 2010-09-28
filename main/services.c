@@ -37,6 +37,7 @@
 #include <services/streamsservice.h>
 #include <services/pathmap.h>
 #include <services/tcf_elf.h>
+#include <services/terminals.h>
 #include <main/services.h>
 
 #include <main/services-ext.h>
@@ -90,6 +91,9 @@ void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
 #endif
 #if SERVICE_PathMap
     ini_path_map_service(proto);
+#endif
+#if SERVICE_Terminals
+    ini_terminals_service(proto);
 #endif
 #if ENABLE_DebugContext
     ini_contexts();

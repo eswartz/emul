@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -10,25 +10,19 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Intel - implemented terminals service
  *******************************************************************************/
 
 /*
- * This module provides notifications of process/thread exited or stopped.
+ * TCF Terminals service header file.
  */
 
-#ifndef D_waitpid
-#define D_waitpid
+#ifndef TERMINALS_H_
+#define TERMINALS_H_
 
 #include <config.h>
+#include <framework/protocol.h>
 
-#if (ENABLE_DebugContext && !ENABLE_ContextProxy) || SERVICE_Processes || SERVICE_Terminals
+extern void ini_terminals_service(Protocol * proto);
 
-typedef void WaitPIDListener(int pid, int exited, int exit_code, int signal, int event_code, int syscall, void * args);
-
-extern void add_waitpid_listener(WaitPIDListener * listener, void * args);
-
-extern void add_waitpid_process(int pid);
-
-#endif
-
-#endif /* D_waitpid */
+#endif /*TERMINALS_H_*/

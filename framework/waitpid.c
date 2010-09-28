@@ -18,7 +18,7 @@
 
 #include <config.h>
 
-#if (ENABLE_DebugContext && !ENABLE_ContextProxy) || SERVICE_Processes
+#if (ENABLE_DebugContext && !ENABLE_ContextProxy) || SERVICE_Processes || SERVICE_Terminals
 
 #include <assert.h>
 #include <errno.h>
