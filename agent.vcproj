@@ -623,6 +623,14 @@
 				RelativePath=".\services\tcf_elf.h"
 				>
 			</File>
+			<File
+				RelativePath=".\services\terminals.c"
+				>
+			</File>
+			<File
+				RelativePath=".\services\terminals.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="main"
