@@ -573,7 +573,7 @@ static void debug_event_handler(void * x) {
         else {
             assert(prs != NULL);
             assert(!ctx->exited);
-            assert(!ctx->stopped);
+            if (ctx->stopped) send_context_started_event(ctx);
             ext = EXT(ctx);
             memcpy(&ext->suspend_reason, &win32_event->u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
             debug_event->continue_status = event_win32_context_stopped(ctx);
