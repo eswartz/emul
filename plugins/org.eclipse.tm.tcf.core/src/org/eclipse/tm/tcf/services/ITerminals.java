@@ -169,6 +169,14 @@ public interface ITerminals extends IService {
     IToken setWinSize(String context_id, int newWidth, int newHeight, DoneCommand done);
 
     /**
+     * Exit a terminal.
+     * @param context_id - context ID.
+     * @param done - call back interface called when operation is completed.
+     * @return pending command handle, can be used to cancel the command.
+     */
+    IToken exit(String context_id, DoneCommand done);
+
+    /**
      * Add terminals service event listener.
      * @param listener - event listener implementation.
      */

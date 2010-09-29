@@ -129,8 +129,20 @@ public class TerminalsProxy implements ITerminals {
     }
 
     public IToken setWinSize(String context_id, int newWidth, int newHeight, final DoneCommand done) {
-        return new Command(channel, this, "setWinSize", new Object[] {
-                context_id, newWidth, newHeight }) {
+        return new Command(channel, this, "setWinSize", new Object[] { context_id, newWidth, newHeight }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+                done.doneCommand(token, error);
+            }
+        }.token;
+    }
+
+    public IToken exit(String context_id, final DoneCommand done) {
+        return new Command(channel, this, "exit", new Object[] { context_id }) {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {

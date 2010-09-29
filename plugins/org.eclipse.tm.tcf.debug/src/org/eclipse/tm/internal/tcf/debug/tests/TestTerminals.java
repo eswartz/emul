@@ -139,26 +139,41 @@ class TestTerminals implements ITCFTest {
                 }
             });
         }
-        if (signal_list != null && !signal_sent) {
-            int code = 15;
-            for (Map<String,Object> m : signal_list) {
-                String nm = (String)m.get(IProcesses.SIG_NAME);
-                if (nm != null && nm.equals("SIGTERM")) {
-                    Number n = (Number)m.get(IProcesses.SIG_CODE);
-                    if (n != null) code = n.intValue();
+        if (!signal_sent) {
+            if (signal_list != null && rnd.nextBoolean()) {
+                int code = 15;
+                for (Map<String,Object> m : signal_list) {
+                    String nm = (String)m.get(IProcesses.SIG_NAME);
+                    if (nm != null && nm.equals("SIGTERM")) {
+                        Number n = (Number)m.get(IProcesses.SIG_CODE);
+                        if (n != null) code = n.intValue();
+                    }
                 }
+                processes.signal(terminal.getProcessID(), code, new IProcesses.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        if (error != null) {
+                            exit(error);
+                        }
+                        else {
+                            signal_sent = true;
+                            run();
+                        }
+                    }
+                });
             }
-            processes.signal(terminal.getProcessID(), code, new IProcesses.DoneCommand() {
-                public void doneCommand(IToken token, Exception error) {
-                    if (error != null) {
-                        exit(error);
+            else {
+                terminals.exit(terminal.getID(), new ITerminals.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        if (error != null) {
+                            exit(error);
+                        }
+                        else {
+                            signal_sent = true;
+                            run();
+                        }
                     }
-                    else {
-                        signal_sent = true;
-                        run();
-                    }
-                }
-            });
+                });
+            }
             return;
         }
         exit(null);
