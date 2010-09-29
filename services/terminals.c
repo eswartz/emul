@@ -539,15 +539,15 @@ static char **envp_add(char **old_envp, int old_envp_len, char *env)
     return new_envp;
 }
 
-static int start_terminal(Channel * c, char *pty_type, char *encoding,
-        char ** envp, int envp_len, char * exe, char ** args, int *pid,
+static int start_terminal(Channel * c, const char * pty_type, const char * encoding,
+        char ** envp, int envp_len, const char * exe, const char ** args, int * pid,
         Terminal ** prs)
 {
     int err = 0;
     int fd_tty_master = -1;
     char * tty_slave_name = NULL;
     struct winsize size;
-    char **newenvp = envp;
+    char ** newenvp = envp;
 
     memset(&size, 0, sizeof(struct winsize));
     fd_tty_master = posix_openpt(O_RDWR | O_NOCTTY);
@@ -621,7 +621,7 @@ static int start_terminal(Channel * c, char *pty_type, char *encoding,
             while (!err && fd > 3)
                 close(--fd);
             if (!err) {
-                execve(exe, args, newenvp);
+                execve(exe, (char **)args, newenvp);
                 err = errno;
             }
             if (newenvp)
@@ -697,7 +697,7 @@ static void command_launch(char * token, Channel * c)
     int err = 0;
     char encoding[TERM_PROP_DEF_SIZE];
     char pty_type[TERM_PROP_DEF_SIZE];
-    char *args[] = TERM_LAUNCH_ARGS;
+    const char * args[] = TERM_LAUNCH_ARGS;
 
     char ** envp = NULL;
     int envp_len = 0;
