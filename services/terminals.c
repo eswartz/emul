@@ -82,7 +82,7 @@ static const char * TERMINALS = "Terminals";
 typedef struct Terminal
 {
     LINK link;
-    int pid; /*pid of the login process of the terminal*/
+    int pid; /* pid of the login process of the terminal */
     TCFBroadcastGroup * bcg;
     int inp;
     int out;
@@ -181,6 +181,11 @@ static void write_context(OutputStream * out, int tid)
     write_stream(out, '{');
 
     if (prs != NULL) {
+        json_write_string(out, "ProcessID");
+        write_stream(out, ':');
+        json_write_string(out, pid2id(prs->pid, 0));
+        write_stream(out, ',');
+
         if (*prs->pty_type) {
             json_write_string(out, "PtyType");
             write_stream(out, ':');
@@ -506,36 +511,37 @@ static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id,
     return out;
 }
 
-static char **envp_add(char **old_envp, int old_envp_len, char *env)
+static char ** envp_add(char ** old_envp, int old_envp_len, char * env)
 {
-    char **new_envp = NULL;
     int i;
     int env_size;
-    int old_envp_size;
+    int old_envp_size = 0;
+    char ** new_envp = NULL;
+    char * p = NULL;
 
-    assert(old_envp || (old_envp==NULL && old_envp_len==0));
+    assert(old_envp || old_envp_len == 0);
     assert(env);
     assert(*env);
 
-    for (i = 0, old_envp_size = 0; i < old_envp_len; i++) {
+    for (i = 0; i < old_envp_len; i++) {
         old_envp_size += sizeof(char *); //size of env pointer
         old_envp_size += strlen(old_envp[i]) + 1; //size of env string, including trailing '\0'
     }
-    assert((old_envp && old_envp[i]==NULL) || (old_envp==NULL));
+    assert(old_envp == NULL || old_envp[i] == NULL);
     old_envp_size += sizeof(char *); //last null pointer
 
     env_size = strlen(env); //new env string size
 
     new_envp = (char **)loc_alloc(old_envp_size + sizeof(char *) + env_size + 1);
-    if (new_envp != NULL) {
-        new_envp[0] = (char *) new_envp + old_envp_size + sizeof(char *); //setting new env ptr
-        strcpy(new_envp[0], env); //copy new env string
-        if (old_envp) {
-            memcpy(&new_envp[1], old_envp, old_envp_size); //copy old envp
-        } else {
-            new_envp[1] = NULL;
-        }
+    p = (char *)new_envp + (old_envp_len + 2) * sizeof(char *); //setting new env ptr
+    new_envp[0] = strcpy(p, env); //copy new env string
+    p += env_size + 1;
+    for (i = 0; i < old_envp_len; i++) {
+        new_envp[i + 1] = strcpy(p, old_envp[i]);
+        p += strlen(old_envp[i]) + 1;
     }
+    new_envp[i + 1] = NULL;
+    loc_free(old_envp);
     return new_envp;
 }
 
@@ -547,7 +553,6 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
     int fd_tty_master = -1;
     char * tty_slave_name = NULL;
     struct winsize size;
-    char ** newenvp = envp;
 
     memset(&size, 0, sizeof(struct winsize));
     fd_tty_master = posix_openpt(O_RDWR | O_NOCTTY);
@@ -580,26 +585,12 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
 
             if (*pty_type) {
                 snprintf(env_term, sizeof(env_term), "TERM=%s", pty_type);
-                newenvp = envp_add(envp, envp_len, env_term);
-                if (newenvp == NULL) {
-                    err = ENOMEM;
-                } else if (envp) {
-                    loc_free(envp);
-                    envp = NULL;
-                }
+                envp = envp_add(envp, envp_len++, env_term);
             }
 
             if (!err && *encoding) {
-                envp = newenvp;
-                envp_len += 1;
                 snprintf(env_term, sizeof(env_term), "LANG=%s", encoding);
-                newenvp = envp_add(envp, envp_len, env_term);
-                if (newenvp == NULL) {
-                    err = ENOMEM;
-                } else if (envp) {
-                    loc_free(envp);
-                    envp = NULL;
-                }
+                envp = envp_add(envp, envp_len++, env_term);
             }
 
             setsid();
@@ -621,11 +612,12 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
             while (!err && fd > 3)
                 close(--fd);
             if (!err) {
-                execve(exe, (char **)args, newenvp);
+                assert(envp == NULL || envp[envp_len] == NULL);
+                execve(exe, (char **)args, envp);
                 err = errno;
             }
-            if (newenvp)
-                loc_free(newenvp);
+            if (envp)
+                loc_free(envp);
             err = 1;
             if (err < 1)
                 err = EINVAL;
@@ -663,7 +655,7 @@ static void command_get_context(char * token, Channel * c)
     int err = 0;
     char id[256];
     int tid;
-    Terminal *term;
+    Terminal * term = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0)
@@ -677,17 +669,22 @@ static void command_get_context(char * token, Channel * c)
 
     if (tid == 0) {
         err = ERR_INV_CONTEXT;
-    } else {
+    }
+    else {
         term = find_terminal(tid);
         if (term == NULL) {
             err = ERR_INV_CONTEXT;
-        } else {
-            write_context(&c->out, tid);
-            write_stream(&c->out, 0);
         }
     }
 
     write_errno(&c->out, err);
+    if (term != NULL) {
+        write_context(&c->out, tid);
+        write_stream(&c->out, 0);
+    }
+    else {
+        write_stringz(&c->out, "null");
+    }
     write_stream(&c->out, MARKER_EOM);
 }
 
