@@ -57,29 +57,32 @@ public interface ITerminals extends IService {
      * Context property names.
      */
     static final String
-    /** The TCF context ID */
-    PROP_ID = "ID",
+        /** The TCF context ID */
+        PROP_ID = "ID",
 
-    /** The pty type */
-    PROP_PTY_TYPE = "PtyType",
+        /** The process ID of the login process of the terminal */
+        PROP_PROCESS_ID = "ProcessID",
 
-    /** terminal encoding */
-    PROP_ENCODING = "Encoding",
+        /** The PTY type */
+        PROP_PTY_TYPE = "PtyType",
 
-    /** window width size */
-    PROP_WIDTH = "Width",
+        /** terminal encoding */
+        PROP_ENCODING = "Encoding",
 
-    /** window height size */
-    PROP_HEIGHT = "Height",
+        /** window width size */
+        PROP_WIDTH = "Width",
 
-    /** Process standard input stream ID */
-    PROP_STDIN_ID = "StdInID",
+        /** window height size */
+        PROP_HEIGHT = "Height",
 
-    /** Process standard output stream ID */
-    PROP_STDOUT_ID = "StdOutID",
+        /** Process standard input stream ID */
+        PROP_STDIN_ID = "StdInID",
 
-    /** Process standard error stream ID */
-    PROP_STDERR_ID = "StdErrID";
+        /** Process standard output stream ID */
+        PROP_STDOUT_ID = "StdOutID",
+
+        /** Process standard error stream ID */
+        PROP_STDERR_ID = "StdErrID";
 
     interface TerminalContext {
 
@@ -88,6 +91,12 @@ public interface ITerminals extends IService {
          * Same as getProperties().get(“ID”)
          */
         String getID();
+
+        /**
+         * Get process ID of the login process of the terminal.
+         * Same as getProperties().get(“ProcessID”)
+         */
+        String getProcessID();
 
         /**
          * Get terminal type.
@@ -132,7 +141,7 @@ public interface ITerminals extends IService {
     }
 
     /**
-     * Launch a new terminal toremote machine.
+     * Launch a new terminal to remote machine.
      * @param type - requested terminal type for the new terminal.
      * @param encoding - requested encoding for the new terminal.
      * @param environment - Array of environment variable strings.
@@ -140,8 +149,7 @@ public interface ITerminals extends IService {
      * @param done - call back interface called when operation is completed.
      * @return pending command handle, can be used to cancel the command.
      */
-    IToken launch(String type, String encoding, String[] environment,
-            DoneLaunch done);
+    IToken launch(String type, String encoding, String[] environment, DoneLaunch done);
 
     /**
      * Call-back interface to be called when "start" command is complete.

@@ -40,6 +40,10 @@ public class TerminalsProxy implements ITerminals {
             return (String) props.get(PROP_ID);
         }
 
+        public String getProcessID() {
+            return (String) props.get(PROP_PROCESS_ID);
+        }
+
         public String getPtyType() {
             return (String) props.get(PROP_PTY_TYPE);
         }
