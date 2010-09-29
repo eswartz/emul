@@ -36,7 +36,7 @@
 #include <framework/asyncreq.h>
 #include <framework/inputbuf.h>
 
-#define BUF_SIZE 0x800
+#define BUF_SIZE (128 * MEM_USAGE_FACTOR)
 #define CHANNEL_MAGIC 0x52376532
 #define SERVER_INSTANCE_CNT 16
 #define DEFAULT_PIPE_NAME "TCF-Agent"
@@ -57,9 +57,6 @@ struct ChannelPIPE {
     int fd_out;
     ServerInstance * server;
     int read_pending;       /* Read request is pending */
-    unsigned char * read_buf;
-    int read_buf_size;
-    int read_done;
 
     /* Input stream buffer */
     InputBuf ibuf;
@@ -111,6 +108,7 @@ static void delete_channel(ChannelPIPE * c) {
     assert(c->ibuf.handling_msg != HandleMsgTriggered);
     channel_clear_broadcast_group(&c->chan);
     c->magic = 0;
+    loc_free(c->ibuf.buf);
     loc_free(c->chan.peer_name);
     loc_free(c);
 }
@@ -278,9 +276,6 @@ static void pipe_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
 
     if (c->read_pending) return;
     c->read_pending = 1;
-    c->read_buf = buf;
-    c->read_buf_size = size;
-    c->read_done = 0;
     c->rdreq.u.fio.bufp = buf;
     c->rdreq.u.fio.bufsz = size;
     async_req_post(&c->rdreq);
@@ -302,7 +297,7 @@ static int pipe_read_stream(InputStream * inp) {
 
     assert(c->lock_cnt > 0);
     if (inp->cur < inp->end) return *inp->cur++;
-    return ibuf_get_more(&c->ibuf, inp, 0);
+    return ibuf_get_more(&c->ibuf, 0);
 }
 
 static int pipe_peek_stream(InputStream * inp) {
@@ -311,7 +306,7 @@ static int pipe_peek_stream(InputStream * inp) {
 
     assert(c->lock_cnt > 0);
     if (inp->cur < inp->end) return *inp->cur;
-    return ibuf_get_more(&c->ibuf, inp, 1);
+    return ibuf_get_more(&c->ibuf, 1);
 }
 
 static void send_eof_and_close(Channel * channel, int err) {
@@ -319,7 +314,7 @@ static void send_eof_and_close(Channel * channel, int err) {
 
     assert(c->magic == CHANNEL_MAGIC);
     if (channel->state == ChannelStateDisconnected) return;
-    ibuf_flush(&c->ibuf, &c->chan.inp);
+    ibuf_flush(&c->ibuf);
     if (c->ibuf.handling_msg == HandleMsgTriggered) {
         /* Cancel pending message handling */
         cancel_event(handle_channel_msg, c, 0);
@@ -330,7 +325,7 @@ static void send_eof_and_close(Channel * channel, int err) {
     write_stream(&c->chan.out, MARKER_EOM);
     pipe_flush(c);
     c->chan.state = ChannelStateDisconnected;
-    pipe_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
+    pipe_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
     notify_channel_closed(channel);
     if (channel->disconnected) {
         channel->disconnected(channel);
@@ -415,8 +410,6 @@ static void pipe_read_done(void * x) {
     assert(c->read_pending != 0);
     assert(c->lock_cnt > 0);
     c->read_pending = 0;
-    assert(c->read_buf == c->rdreq.u.fio.bufp);
-    assert((size_t)c->read_buf_size == c->rdreq.u.fio.bufsz);
     len = c->rdreq.u.fio.rval;
     if (req->error) {
         if (c->chan.state != ChannelStateDisconnected) {
@@ -428,7 +421,7 @@ static void pipe_read_done(void * x) {
         ibuf_read_done(&c->ibuf, len);
     }
     else if (len > 0) {
-        pipe_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
+        pipe_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
     }
     else {
         pipe_closed(c);

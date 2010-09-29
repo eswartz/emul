@@ -23,15 +23,13 @@
 #include <config.h>
 #include <framework/streams.h>
 
-#define INPUT_BUF_SIZE (64 * MEM_USAGE_FACTOR - 1)
-
 typedef struct InputBuf InputBuf;
 
 struct InputBuf {
-    unsigned char buf[INPUT_BUF_SIZE];
+    size_t buf_size;
+    unsigned char * buf;
     unsigned char * inp;
-    unsigned char * out;
-    int full;
+    InputStream * stream;
     int inp_esc;
     int out_esc;
     int eof;
@@ -57,8 +55,8 @@ enum {
 
 extern void ibuf_init(InputBuf * ibuf, InputStream * inp);
 extern void ibuf_trigger_read(InputBuf * ibuf);
-extern int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking);
-extern void ibuf_flush(InputBuf * ibuf, InputStream * inp);
+extern int ibuf_get_more(InputBuf * ibuf, int peeking);
+extern void ibuf_flush(InputBuf * ibuf);
 extern void ibuf_read_done(InputBuf * ibuf, int len);
 extern int ibuf_start_message(InputBuf * ibuf);
 

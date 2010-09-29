@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <framework/exceptions.h>
 #include <framework/trace.h>
+#include <framework/myalloc.h>
 #include <framework/inputbuf.h>
 
 static void ibuf_new_message(InputBuf * ibuf) {
@@ -38,42 +39,46 @@ static void ibuf_eof(InputBuf * ibuf) {
     }
 }
 
-void ibuf_trigger_read(InputBuf * ibuf) {
-    int size;
-
-    if (ibuf->full || ibuf->eof) return;
-    if (ibuf->out <= ibuf->inp) size = ibuf->buf + INPUT_BUF_SIZE - ibuf->inp;
-    else size = ibuf->out - ibuf->inp;
-    ibuf->post_read(ibuf, ibuf->inp, size);
+static int ibuf_free_size(InputBuf * ibuf) {
+    if (ibuf->eof) return 0;
+    if (ibuf->stream->cur == ibuf->buf + ibuf->buf_size) {
+        ibuf->stream->cur = ibuf->stream->end = ibuf->buf;
+    }
+    assert(ibuf->inp >= ibuf->buf && ibuf->inp < ibuf->buf + ibuf->buf_size);
+    if (ibuf->stream->cur <= ibuf->inp) {
+        int size = ibuf->buf + ibuf->buf_size - ibuf->inp;
+        if (ibuf->stream->cur == ibuf->buf) size--;
+        return size;
+    }
+    return ibuf->stream->cur - ibuf->inp - 1;
 }
 
-int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
+void ibuf_trigger_read(InputBuf * ibuf) {
+    int size = ibuf_free_size(ibuf);
+    if (size > 0) ibuf->post_read(ibuf, ibuf->inp, size);
+}
+
+int ibuf_get_more(InputBuf * ibuf, int peeking) {
+    InputStream * inp = ibuf->stream;
     unsigned char * out = inp->cur;
     unsigned char * max;
     int ch;
 
     assert(ibuf->message_count > 0);
     assert(ibuf->handling_msg == HandleMsgActive);
-    assert(out >= ibuf->buf && out <= ibuf->buf + INPUT_BUF_SIZE);
+    assert(out >= ibuf->buf && out <= ibuf->buf + ibuf->buf_size);
     assert(out == inp->end);
-    if (out == ibuf->buf + INPUT_BUF_SIZE) {
-        inp->end = inp->cur = out = ibuf->buf;
-    }
-    if (out != ibuf->out) {
-        /* Data read - update buf */
-        ibuf->out = out;
-        ibuf->full = 0;
-        ibuf_trigger_read(ibuf);
-    }
     for (;;) {
-        if (out == ibuf->buf + INPUT_BUF_SIZE) out = ibuf->buf;
-        if (out == ibuf->inp && !ibuf->full) {
+        if (out == ibuf->buf + ibuf->buf_size) out = ibuf->buf;
+        if (out == ibuf->inp) {
             /* No data available */
             assert(ibuf->long_msg || ibuf->eof);
+            inp->cur = out;
             if (ibuf->eof) return MARKER_EOS;
             assert(ibuf->message_count == 1);
             ibuf_trigger_read(ibuf);
             ibuf->wait_read(ibuf);
+            out = inp->cur;
             continue;
         }
 
@@ -93,7 +98,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
             /* Reading the bin data */
             assert(!ibuf->out_esc);
             inp->cur = out;
-            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + INPUT_BUF_SIZE;
+            max = out + 1 <= ibuf->inp ? ibuf->inp : ibuf->buf + ibuf->buf_size;
             if (max - out < ibuf->out_data_size) {
                 ibuf->out_data_size -= max - out;
                 out = max;
@@ -104,6 +109,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
             }
             inp->end = out;
             if (!peeking) inp->cur++;
+            ibuf_trigger_read(ibuf);
             return ch;
         }
 #endif
@@ -140,15 +146,18 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
                 out++;
             }
             inp->cur = inp->end = out;
+            ibuf_trigger_read(ibuf);
             return ch;
         }
         if (ch != ESC) {
             /* Plain data - fast path */
-            inp->cur = out;
-            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + INPUT_BUF_SIZE;
+            inp->cur = out++;
+            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + ibuf->buf_size;
             while (out != max && *out != ESC) out++;
             inp->end = out;
             if (!peeking) inp->cur++;
+            assert(inp->cur <= inp->end);
+            ibuf_trigger_read(ibuf);
             return ch;
         }
         ibuf->out_esc = 1;
@@ -157,16 +166,19 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
 }
 
 void ibuf_init(InputBuf * ibuf, InputStream * inp) {
-    inp->cur = inp->end = ibuf->out = ibuf->inp = ibuf->buf;
+    ibuf->stream = inp;
+    ibuf->buf_size = 128 * MEM_USAGE_FACTOR;
+    ibuf->buf = (unsigned char *)loc_alloc(ibuf->buf_size);
+    inp->cur = inp->end = ibuf->inp = ibuf->buf;
 #if ENABLE_ZeroCopy
     ibuf->out_data_size = ibuf->out_size_mode = 0;
     ibuf->inp_data_size = ibuf->inp_size_mode = 0;
 #endif
 }
 
-void ibuf_flush(InputBuf * ibuf, InputStream * inp) {
-    inp->cur = inp->end = ibuf->out = ibuf->inp;
-    ibuf->full = 0;
+void ibuf_flush(InputBuf * ibuf) {
+    InputStream * inp = ibuf->stream;
+    inp->cur = inp->end = ibuf->inp;
     ibuf->message_count = 0;
 #if ENABLE_ZeroCopy
     ibuf->out_data_size = ibuf->out_size_mode = 0;
@@ -195,7 +207,7 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
             assert(!ibuf->inp_esc);
             len--;
             ch = *inp++;
-            if (inp == ibuf->buf + INPUT_BUF_SIZE) inp = ibuf->buf;
+            if (inp == ibuf->buf + ibuf->buf_size) inp = ibuf->buf;
             ibuf->inp_data_size |= (ch & 0x7f) << (ibuf->inp_size_mode++ - 1) * 7;
             if ((ch & 0x80) == 0) ibuf->inp_size_mode = 0;
             continue;
@@ -212,14 +224,14 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
                 inp += len;
                 len = 0;
             }
-            if (inp >= ibuf->buf + INPUT_BUF_SIZE) inp -= INPUT_BUF_SIZE;
+            if (inp >= ibuf->buf + ibuf->buf_size) inp -= ibuf->buf_size;
             continue;
         }
 #endif
 
         len--;
         ch = *inp++;
-        if (inp == ibuf->buf + INPUT_BUF_SIZE) inp = ibuf->buf;
+        if (inp == ibuf->buf + ibuf->buf_size) inp = ibuf->buf;
 
         if (ibuf->inp_esc) {
             ibuf->inp_esc = 0;
@@ -259,18 +271,33 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
             ibuf->inp_esc = 1;
         }
     }
+
     ibuf->inp = inp;
 
-    if (inp == ibuf->out) {
-        ibuf->full = 1;
-        if (ibuf->message_count == 0) {
-            /* Buffer full with incomplete message - start processing anyway */
-            ibuf->long_msg = 1;
-            ibuf_new_message(ibuf);
-        }
+#if ENABLE_ContextProxy
+    if (!ibuf->eof && ibuf_free_size(ibuf) == 0 && ibuf->buf_size < 0x1000000) {
+        /* Not running on a target - increase size of input buffer
+           to accommodate very larges messages, up to 16MB */
+        unsigned char * tmp = (unsigned char *)loc_alloc(ibuf->buf_size * 2);
+        size_t size = ibuf->buf + ibuf->buf_size - ibuf->stream->cur;
+        memcpy(tmp, ibuf->stream->cur, size);
+        memcpy(tmp + size, ibuf->buf, ibuf->buf_size - size);
+        loc_free(ibuf->buf);
+        ibuf->buf = tmp;
+        ibuf->inp = tmp + ibuf->buf_size - 1;
+        ibuf->buf_size *= 2;
+        ibuf->stream->cur = ibuf->stream->end = tmp;
     }
-    else {
+#endif
+
+    if (ibuf_free_size(ibuf) > 0) {
         ibuf_trigger_read(ibuf);
+    }
+    else if (ibuf->message_count == 0) {
+        /* Buffer full with incomplete message - start processing anyway.
+           This will cause dispatch thread to block waiting for the rest of the message. */
+        ibuf->long_msg = 1;
+        ibuf_new_message(ibuf);
     }
 }
 

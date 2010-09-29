@@ -58,7 +58,7 @@
 /* Bug in VxWorks: send() crashes if buffer is too large */
 #  define BUF_SIZE 0x100
 #else
-#  define BUF_SIZE 0x1000
+#  define BUF_SIZE (128 * MEM_USAGE_FACTOR)
 #endif
 #define CHANNEL_MAGIC 0x27208956
 #define MAX_IFC 10
@@ -182,6 +182,7 @@ static void delete_channel(ChannelTCP * c) {
     close(c->pipefd[0]);
     close(c->pipefd[1]);
 #endif /* ENABLE_Splice */
+    loc_free(c->ibuf.buf);
     loc_free(c->chan.peer_name);
     loc_free(c);
 }
@@ -468,7 +469,7 @@ static int tcp_read_stream(InputStream * inp) {
 
     assert(c->lock_cnt > 0);
     if (inp->cur < inp->end) return *inp->cur++;
-    return ibuf_get_more(&c->ibuf, inp, 0);
+    return ibuf_get_more(&c->ibuf, 0);
 }
 
 static int tcp_peek_stream(InputStream * inp) {
@@ -477,7 +478,7 @@ static int tcp_peek_stream(InputStream * inp) {
 
     assert(c->lock_cnt > 0);
     if (inp->cur < inp->end) return *inp->cur;
-    return ibuf_get_more(&c->ibuf, inp, 1);
+    return ibuf_get_more(&c->ibuf, 1);
 }
 
 static void send_eof_and_close(Channel * channel, int err) {
@@ -485,7 +486,7 @@ static void send_eof_and_close(Channel * channel, int err) {
 
     assert(c->magic == CHANNEL_MAGIC);
     if (channel->state == ChannelStateDisconnected) return;
-    ibuf_flush(&c->ibuf, &c->chan.inp);
+    ibuf_flush(&c->ibuf);
     if (c->ibuf.handling_msg == HandleMsgTriggered) {
         /* Cancel pending message handling */
         cancel_event(handle_channel_msg, c, 0);
@@ -497,7 +498,7 @@ static void send_eof_and_close(Channel * channel, int err) {
     tcp_flush_with_flags(c, 0);
     shutdown(c->socket, SHUT_WR);
     c->chan.state = ChannelStateDisconnected;
-    tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
+    tcp_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
     notify_channel_closed(channel);
     if (channel->disconnected) {
         channel->disconnected(channel);
@@ -617,7 +618,7 @@ static void tcp_channel_read_done(void * x) {
         ibuf_read_done(&c->ibuf, len);
     }
     else if (len > 0) {
-        tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
+        tcp_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
     }
     else {
         closesocket(c->socket);
