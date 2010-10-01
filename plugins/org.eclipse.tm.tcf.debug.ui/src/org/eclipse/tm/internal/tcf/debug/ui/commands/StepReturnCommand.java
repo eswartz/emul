@@ -75,7 +75,7 @@ public class StepReturnCommand extends StepCommand implements IStepReturnHandler
             super.exit(error);
             if (error != null && node.getChannel().getState() == IChannel.STATE_OPEN) {
                 monitor.setStatus(new Status(IStatus.ERROR,
-                        Activator.PLUGIN_ID, IStatus.OK, "Cannot step", error));
+                        Activator.PLUGIN_ID, 0, "Cannot step: " + error.getLocalizedMessage(), error));
             }
             done.run();
         }
