@@ -9,6 +9,8 @@ package v9t9.emulator.runtime.interpreter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ejs.coffee.core.utils.HexUtils;
+
 import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.Cpu9900;
@@ -89,7 +91,7 @@ public class Interpreter9900 implements Interpreter {
         MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
         /* get current operand values and instruction timings */
-        fetchOperands(ins);
+        fetchOperands(ins, op_x != null);
 
         /* do pre-instruction status word updates */
         if (ins.getInfo().stsetBefore != Instruction9900.st_NONE) {
@@ -144,7 +146,7 @@ public class Interpreter9900 implements Interpreter {
         iblock.cycles = cpu.getCurrentCycleCount();
         
         /* get current operand values and instruction timings */
-        fetchOperands(ins);
+        fetchOperands(ins, op_x != null);
 
         InstructionWorkBlock block = new InstructionWorkBlock(cpu);
         this.iblock.copyTo(block);
@@ -208,11 +210,14 @@ public class Interpreter9900 implements Interpreter {
 
     /** Fetch operands for instruction (runtime)
      * @param ins
-     * @param memory2
+     * @param is_X 
      */
-    private void fetchOperands(Instruction9900 ins) {
-        iblock.inst = ins;
-        iblock.pc = (short) (iblock.inst.pc + iblock.inst.getSize());
+    private void fetchOperands(Instruction9900 ins, boolean is_X) {
+    	if (is_X) {
+    		ins.pc = iblock.inst.pc + iblock.inst.getSize() - 2;
+    	}
+    	iblock.inst = ins;
+    	iblock.pc = (short) (iblock.inst.pc + iblock.inst.getSize());
         iblock.wp = (short) cpu.getWP();
         iblock.st = cpu.getST();
         status.expand(iblock.st);
@@ -448,9 +453,7 @@ public class Interpreter9900 implements Interpreter {
         	iblock.pc = iblock.val1;
             break;
         case Inst9900.Ix: {
-        	short newPc = iblock.pc;
         	execute(iblock.val1);
-        	iblock.pc = newPc;
             break;
         }
         case Inst9900.Iclr:
