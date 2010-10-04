@@ -425,6 +425,7 @@ public class InternalCru9901 implements CruAccess {
 	public void acknowledgeInterrupt(int level) {
 		if ((currentints & (1 << level)) != 0) {
 			currentints &= ~(1 << level);
+			machine.getCpu().acknowledgeInterrupt();
 			//System.out.println(
 			//		"Acknowledged interrupt... "+level+"/"+currentints+"/"+int9901);
 		} else {

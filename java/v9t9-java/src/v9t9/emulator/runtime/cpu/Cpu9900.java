@@ -177,7 +177,7 @@ public class Cpu9900 extends CpuBase {
         	pins &= ~PIN_INTREQ;
         	
         	//System.out.print('=');
-        	interrupts++;
+        	//interrupts++;
             contextSwitch(0x4 * ic);
             addCycles(22);
             

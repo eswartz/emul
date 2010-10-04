@@ -6,6 +6,8 @@
  */
 package v9t9.tools.asm.decomp;
 
+import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -59,7 +61,8 @@ public abstract class Phase {
 	 * Disassemble all the code.  Required after adding ranges.
 	 *
 	 */
-	public void disassemble() {
+	public Collection<MemoryRange> disassemble() {
+		List<MemoryRange> ranges = new ArrayList<MemoryRange>();
 		MemoryRange prev = null;
 		MemoryRange range = null;
 		for (Iterator<MemoryRange> iter = decompileInfo.getMemoryRanges().rangeIterator(); iter
@@ -67,10 +70,12 @@ public abstract class Phase {
 			range = iter.next();
 			if (prev != null && prev.isCode()) {
 				HighLevelInstruction first = decompileInfo.disassemble(prev.from, range.from - prev.from);
-				prev.setCode(first.getInst());
+				prev.setCode(first);
+				ranges.add(prev);
 			}
 			prev = range;
 		}
+		return ranges;
 	}
 /*
  public MemoryDomain getCPUMemory() {
@@ -95,27 +100,35 @@ public abstract class Phase {
  */
 	
 
-	public void dumpInstructions() {
+	public void dumpInstructions(PrintStream os) {
 		for (Iterator<MemoryRange> iter = decompileInfo.getMemoryRanges().rangeIterator(); iter
 				.hasNext();) {
 			MemoryRange range = iter.next();
 			for (HighLevelInstruction inst = (HighLevelInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
-				dumpInstruction(inst);
+				dumpInstruction(os, inst);
 			}
 		}
 	}
 
-	public void dumpInstruction(HighLevelInstruction inst) {
+	public void dumpInstructions(PrintStream os, Collection<MemoryRange> ranges) {
+		for (MemoryRange range : ranges) {
+			for (HighLevelInstruction inst = range.getCode(); inst != null; inst = inst.getNext()) {
+				dumpInstruction(os, inst);
+			}
+		}
+	}
+
+	public void dumpInstruction(PrintStream os, HighLevelInstruction inst) {
 		if (inst.getBlock() != null && inst.getBlock().getFirst() == inst) {
-			System.out.println(inst.getBlock().format());
+			os.println(inst.getBlock().format());
 		}
 		Label label = getLabel(inst.getInst().pc);
 		if (label != null) {
-			System.out.println(label);
+			os.println(label);
 		}
-		System.out.print('\t');
-		//        System.out.println("WP="+ Utils.toHex4(inst.wp) +" " + inst.format(true, true));
-		System.out.println(inst.format(true, true));
+		os.print('\t');
+		//        os.println("WP="+ Utils.toHex4(inst.wp) +" " + inst.format(true, true));
+		os.println(inst.format(true, true));
 	}
 
 	protected Block getLabelKey(int addr) {
@@ -305,8 +318,8 @@ public abstract class Phase {
 		if (wp == (short) addr || wp == ctx) {
 			return null;
 		}
-		if (mainMemory.hasRamAccess(wp) && mainMemory.hasRamAccess(wp + 31)
-				&& (addr & 1) == 0
+		if (/*mainMemory.hasRamAccess(wp) && mainMemory.hasRamAccess(wp + 31)
+				&&*/ (addr & 1) == 0
 				&& validCodeAddress(addr)) {
 			System.out.println("Adding " + name + " vector at >"
 					+ HexUtils.toHex4(addr));
@@ -364,48 +377,48 @@ public abstract class Phase {
 		return true;
 	}
 
-	public void dumpLabels() {
+	public void dumpLabels(PrintStream os) {
 		for (Object element : labels.values()) {
 			Label label = (Label) element;
-			System.out.println(label);
+			os.println(label);
 		}
 	}
 
-	public void dumpBlocks() {
+	public void dumpBlocks(PrintStream os) {
 		for (Object element : getBlocks()) {
 			Block block = (Block) element;
-			dumpBlock(block);
+			dumpBlock(os, block);
 		}
 	}
 
-	public void dumpRoutines() {
+	public void dumpRoutines(PrintStream os) {
 		for (Object element : getRoutines()) {
 			Routine routine = (Routine) element;
-			System.out.print("routine: " + routine);
+			os.print("routine: " + routine);
 			if ((routine.flags & Routine.fSubroutine) != 0)
-				System.out.print(" [subroutine]");
+				os.print(" [subroutine]");
 			if ((routine.flags & Routine.fUnknownExit) != 0)
-				System.out.print(" [unknownExit]");
-			System.out.println();
+				os.print(" [unknownExit]");
+			os.println();
 
 			Collection<Block> blocks = routine.getSpannedBlocks();
-			System.out.print("blocks = [");
+			os.print("blocks = [");
 			for (Block block : blocks) {
-				System.out.print(block.getId() + " ");
+				os.print(block.getId() + " ");
 			}
-			System.out.println("]");
+			os.println("]");
 			for (Block block : blocks) {
-				dumpBlock(block);
+				dumpBlock(os, block);
 			}
-			System.out.println("-------------------");
+			os.println("-------------------");
 
 		}
 	}
 
-	public void dumpBlock(Block block) {
+	public void dumpBlock(PrintStream os, Block block) {
 		for (Iterator<HighLevelInstruction> iter = block.iterator(); iter.hasNext();) {
 			HighLevelInstruction inst = iter.next();
-			dumpInstruction(inst);
+			dumpInstruction(os, inst);
 		}
 		System.out.println();
 	}

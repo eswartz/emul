@@ -117,7 +117,7 @@ public class HighLevelInstruction  implements Comparable<HighLevelInstruction>{
     }
     
     public String format(boolean showOpcodeAddr, boolean showComments) {
-        String str = super.toString();
+        String str = inst.toString();
         if (showOpcodeAddr) {
 			str = ">" + HexUtils.toHex4(inst.pc) + " " + str;
 		}

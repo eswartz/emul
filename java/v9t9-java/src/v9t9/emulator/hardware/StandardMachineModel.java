@@ -7,6 +7,7 @@ import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.emudisk.*;
+import v9t9.emulator.hardware.dsrs.pcode.PCodeDsr;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
 import v9t9.emulator.hardware.memory.*;
 import v9t9.emulator.hardware.memory.mmio.Vdp9918AMmio;
@@ -25,6 +26,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	public StandardMachineModel() {
 		memoryModel = new TI994AStandardConsoleMemoryModel();
 		ExpRamArea.settingExpRam.setBoolean(true);
+		PCodeDsr.settingPCodeCardEnabled.setBoolean(true);
 	}
 	
 	/* (non-Javadoc)
@@ -52,6 +54,9 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 			machine.getDsrManager().registerDsr(emudsr);
 			DiskImageDsr diskdsr = new DiskImageDsr(machine);
 			machine.getDsrManager().registerDsr(diskdsr);
+			
+			PCodeDsr pcodedsr = new PCodeDsr(machine);
+			machine.getDsrManager().registerDsr(pcodedsr);
 		}
 	}
 

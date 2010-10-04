@@ -61,9 +61,15 @@ public class Memory implements IPersistable {
 	public MemoryDomain getDomain(String key) {
 		return domains.get(key);
 	}
+	
     public void addAndMap(MemoryEntry entry) {
         entry.domain.mapEntry(entry);
         notifyListenersOfPhysicalChange(entry);
+    }
+    
+    public void removeAndUnmap(MemoryEntry entry) {
+    	entry.domain.unmapEntry(entry);
+    	notifyListenersOfPhysicalChange(entry);
     }
     
     public Memory(MemoryModel model) {

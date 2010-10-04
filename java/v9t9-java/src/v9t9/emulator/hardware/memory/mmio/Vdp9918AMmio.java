@@ -113,7 +113,11 @@ public class Vdp9918AMmio extends VdpMmio {
 	}
 
 	protected void autoIncrementAddr() {
+		if ((vdpaddr & 0xf) == 0 && VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
+			Logging.writeLogLine(VdpTMS9918A.settingDumpVdpAccess, "VDP address: " + HexUtils.toHex4(vdpaddr));
+		}
 		vdpaddr = vdpaddr+1 & 0x3fff;
+		
 	}
 
 	protected void writeAddress(byte val) {

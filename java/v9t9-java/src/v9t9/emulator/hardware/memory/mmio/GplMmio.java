@@ -20,19 +20,20 @@ import v9t9.engine.memory.MemoryDomain;
  */
 public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistable {
 
-    private MemoryDomain memory;
+    private MemoryDomain domain;
     
     short gromaddr;
-    boolean gromaddrflag;
+    boolean gromwaddrflag, gromraddrflag;
+    byte buf;
 
     /**
      * @param machine
      */
-    public GplMmio(MemoryDomain memory) {
-        if (memory == null) {
+    public GplMmio(MemoryDomain domain) {
+        if (domain == null) {
 			throw new IllegalArgumentException();
 		}
-        this.memory = memory;
+        this.domain = domain;
      }
 
     /*	GROM has a strange banking scheme where the upper portion
@@ -55,7 +56,7 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
     }
 
     public boolean addrIsComplete() {
-        return !gromaddrflag;
+        return !gromwaddrflag;
     }
     
     /**
@@ -67,35 +68,56 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
     	
     	if ((addr & 2) != 0) {
     	    /* >9802, address read */
-    	    temp = getNextAddr(gromaddr);
-    	    ret = getAddrByte();
-    	    gromaddr = (short) (temp << 8);
-    	    gromaddrflag = !gromaddrflag;
+    	    //temp = getNextAddr(gromaddr);
+    	    //ret = getAddrByte();
+    	    //gromaddr = (short) (temp << 8);
+    		gromwaddrflag = false;
+    		if (gromraddrflag)
+    			ret = (byte) (gromaddr & 0xff);
+    		else
+    			ret = (byte) (gromaddr >> 8);
+    	    gromraddrflag = !gromraddrflag;
     	} else {
     	    /* >9800, memory read */
-    	    gromaddrflag = false;
-    	    ret = memory.readByte(gromaddr);
+    	    //gromaddrflag = false;
     	    if (Executor.settingDumpFullInstructions.getBoolean())
-    			Executor.getDumpfull().println("Read GPL >" + HexUtils.toHex4(gromaddr) + " = >" + HexUtils.toHex2(ret));
-    	    gromaddr = getNextAddr(gromaddr);
+    			Executor.getDumpfull().println("Read GPL >" + HexUtils.toHex4(gromaddr - 1) + " = >" + HexUtils.toHex2(buf));
+
+    	    ret = readGrom();
     	}
     	return ret;
     }
 
     /**
+	 * @return
+	 */
+	private byte readGrom() {
+		byte ret = buf;
+	    buf = domain.readByte(gromaddr);
+	    gromaddr = getNextAddr(gromaddr);
+		return ret;
+	}
+
+	/**
      * @see v9t9.engine.memory.Memory.ConsoleMmioWriter#write 
      */
     public void write(int addr, byte val) {
     	if ((addr & 2) != 0) {				
     	    /* >9C02, address write */
     	    
-    		gromaddr = (short) (gromaddr << 8 | val & 0xff);
-    		gromaddrflag = !gromaddrflag;
+    		gromraddrflag = false;
+    		if (gromwaddrflag) {
+    			gromaddr = (short) (gromaddr & 0xff00 | val & 0xff);
+    			readGrom();
+    		}
+    		else
+    			gromaddr = (short) (((val & 0xff) << 8) | gromaddr & 0xff);
+    		gromwaddrflag = !gromwaddrflag;
     	} else {					
     	    /* >9C00, data write */
-    		gromaddrflag = false;
+    		gromraddrflag = gromwaddrflag = false;
 
-    		memory.writeByte(gromaddr, val);
+    		domain.writeByte(gromaddr, val);
     		gromaddr = getNextAddr(gromaddr);
     	}    
     }
@@ -104,11 +126,13 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
 		if (section == null)
 			return;
 		gromaddr = (short) section.getInt("Addr");
-		gromaddrflag = section.getBoolean("AddrFlag");
+		gromraddrflag = section.getBoolean("ReadAddrFlag");
+		gromwaddrflag = section.getBoolean("WriteAddrFlag");
 	}
 
 	public void saveState(ISettingSection section) {
 		section.put("Addr", gromaddr);
-		section.put("AddrFlag", gromaddrflag);
+		section.put("ReadAddrFlag", gromraddrflag);
+		section.put("WriteAddrFlag", gromwaddrflag);
 	}
 }

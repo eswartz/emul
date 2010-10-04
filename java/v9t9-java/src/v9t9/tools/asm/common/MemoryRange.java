@@ -7,6 +7,7 @@
 package v9t9.tools.asm.common;
 
 import v9t9.engine.cpu.IInstruction;
+import v9t9.tools.asm.decomp.HighLevelInstruction;
 
 
 public class MemoryRange {
@@ -19,7 +20,7 @@ public class MemoryRange {
     /** type (EMPTY, CODE, DATA) */
     int type;
     /** First instruction, if code */
-    private IInstruction code;
+    private HighLevelInstruction code;
     
     public MemoryRange(int baseAddr, int type) {
         this.from = baseAddr;
@@ -27,11 +28,11 @@ public class MemoryRange {
         this.code = null;
     }
 
-    public IInstruction getCode() {
+    public HighLevelInstruction getCode() {
     	return code;
     }
-    public void setCode(IInstruction code) {
-    	this.code = code;
+    public void setCode(HighLevelInstruction first) {
+    	this.code = first;
     }
     
     public int getType() {

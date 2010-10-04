@@ -171,6 +171,8 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				// also check whether the pattern content changed
 				if (vdpChanges.sprpat[ch] != 0)
 					sprite.setBitmapDirty(true);
+				
+				//vdpStatus |= VdpTMS9918A.VDP_COINC;
 			}
 		}
 

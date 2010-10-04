@@ -88,7 +88,8 @@ public class EmuDiskDsr implements DsrHandler {
 	}
 
 	public EmuDiskDsr(IFileMapper mapper) {
-		emuDiskDsrEnabled.setBoolean(true);
+		//emuDiskDsrEnabled.setBoolean(true);
+		EmulatorSettings.INSTANCE.register(emuDiskDsrEnabled);
 		
 		this.mapper = mapper;
 		

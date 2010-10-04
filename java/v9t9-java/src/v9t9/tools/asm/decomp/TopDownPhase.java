@@ -57,7 +57,7 @@ public class TopDownPhase extends Phase {
 					addBlock(new Block(inst));
 				} else if (inst.getBlock().getFirst() != inst) {
 					System.out.println("Splitting block: " + inst.getBlock() + " at " + inst);
-					dumpBlock(inst.getBlock());
+					dumpBlock(System.out, inst.getBlock());
 					inst.getBlock().setLast(null);
 					addBlock(new Block(inst));
 				}

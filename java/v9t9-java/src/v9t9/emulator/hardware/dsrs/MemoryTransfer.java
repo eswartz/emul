@@ -6,6 +6,8 @@ package v9t9.emulator.hardware.dsrs;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
+ * This interface encapsulates the kinds of memory access a DSR may perform.
+ * It is abstracted out for purposes of unit testing.
  * @author ejs
  *
  */
@@ -13,21 +15,13 @@ public interface MemoryTransfer {
 
 	/**
 	 * Read a parameter word
-	 * @param i
-	 * @return
 	 */
 	short readParamWord(int offset);
 	/**
 	 * Read a parameter byte
-	 * @param i
-	 * @return
 	 */
 	byte readParamByte(int offset);
 	
-	/**
-	 * @param i
-	 * @param err
-	 */
 	void writeParamByte(int offset, byte val);
 	void writeParamWord(int offset, short val);
 	/**

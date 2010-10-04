@@ -1,7 +1,5 @@
 /*
- * (c) Ed Swartz, 2005
- * 
- * Created on Feb 21, 2006
+ * (c) Ed Swartz, 2010
  *
  */
 package v9t9.tools.asm.decomp;
@@ -12,15 +10,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.HLInstruction;
+import v9t9.tools.asm.common.MemoryRange;
 
-public class Decompile {
+public class Disassemble {
 
-    private static final String PROGNAME = Decompile.class.getName();
+    private static final String PROGNAME = Disassemble.class.getName();
     
     /**
      * @param args
@@ -46,22 +48,15 @@ public class Decompile {
         Decompiler dc = new Decompiler(proc);
         
         int baseAddr = 0;
-        List<Integer> refDefTables = new ArrayList<Integer>();
         
-        getopt = new Getopt(PROGNAME, args, "?e:o:nb:a:r:d:hcvs:92");
+        getopt = new Getopt(PROGNAME, args, "?o:nb:a:r:d:hcv92");
         while ((opt = getopt.getopt()) != -1) {
 			switch (opt) {
             case '?':
                 help();
                 break;
-            case 'e':
-                dc.ext = getopt.getOptarg();
-                break;
             case 'o':
                 dc.outfilename = getopt.getOptarg();
-                break;
-            case 'f':
-                dc.forceNonBinary = true;
                 break;
             case 'b':
                 baseAddr = HexUtils.parseInt(getopt.getOptarg()) & 0xfffe;
@@ -87,11 +82,6 @@ public class Decompile {
             case 'n':
                 dc.nativeFile = true;
                 break;
-            case 's': {
-                int addr = HexUtils.parseInt(getopt.getOptarg());
-                refDefTables.add(new Integer(addr));
-                break;
-            }
             case '9':
             case '2':
             	// handled above
@@ -112,13 +102,12 @@ public class Decompile {
             System.exit(1);
         }
 
-        dc.getOptions().refDefTables = refDefTables;
-
-        Phase phase = dc.decompile();
+        TopDownPhase llp = new TopDownPhase(dc.state, dc.highLevel);
+        Collection<MemoryRange> ranges = llp.disassemble();
         
         
         PrintStream os = dc.outfilename != null ? new PrintStream(new File(dc.outfilename)) : System.out;
-        phase.dumpRoutines(os);
+        llp.dumpInstructions(os, ranges);
         if (dc.outfilename != null)
         	os.close();
     }
@@ -126,7 +115,7 @@ public class Decompile {
     private static void help() {
         System.out
                 .println("\n"
-                        + "tidecomp 9900 Disassembler v1.0\n"
+                        + "tidisasm 9900 Disassembler v1.0\n"
                         + "\n"
                         + "Usage:   " + PROGNAME + " [options] { -b <addr> -a <file> } { -r from:to -d from:to }\n"
                         + "\n"
@@ -134,10 +123,7 @@ public class Decompile {
                         + "\n"
                         + "Options:\n"
                         + "\t\t-?        -- this help\n"
-                        + "\t\t-e <ext>  -- specify extension (default: " + Decompiler.DEFAULT_EXT + ")\n"
                         + "\t\t-o <file> -- send output to <file> (else stdout)\n"
-                        + "\t\t-n        -- treat file as native binary (raw dump)\n"
-                        + "\t\t-f        -- force disassembly of non-PROGRAM v9t9 files\n"
                         + "\t\t-b <addr> -- specify logical base address of next -a binary\n"
                         + "\t\t-a <file> -- specify file to incorporate\n"
                         + "\t\t-r <addr>:<addr> -- specify range to disassemble\n"
@@ -145,7 +131,6 @@ public class Decompile {
                         + "\t\t-h        -- show opcode and address\n"
                         + "\t\t-c        -- show comments\n"
                         + "\t\t-v        -- verbose output\n"
-                        + "\t\t-s <addr> -- add new REF/DEF symbol table address (end of table)\n"
                         + "\n");
 
     }

@@ -33,7 +33,7 @@ public class TestTopDown1 extends BaseTopDownTest
         });
         
         phase.run();
-        phase.dumpBlocks();
+        phase.dumpBlocks(System.out);
         
         
         assertTrue(routine.getSpannedBlocks().size() == 1);
@@ -116,7 +116,7 @@ public class TestTopDown1 extends BaseTopDownTest
         });
         
         phase.run();
-        phase.dumpBlocks();
+        phase.dumpBlocks(System.out);
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         assertTrue(routine.getSpannedBlocks().size() == 2);
         Block block1 = getSingleEntry(routine);
@@ -149,7 +149,7 @@ public class TestTopDown1 extends BaseTopDownTest
         });
         
         phase.run();
-        phase.dumpBlocks();
+        phase.dumpBlocks(System.out);
         
         assertTrue(routine.getSpannedBlocks().size() == 2);
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
@@ -548,7 +548,7 @@ public class TestTopDown1 extends BaseTopDownTest
     		"data >130",
     	});
         phase.run();
-        phase.dumpBlocks();
+        phase.dumpBlocks(System.out);
         assertEquals(16, routine.getSpannedBlocks().size());
         
         validateBlocks(routine.getSpannedBlocks());
@@ -679,7 +679,7 @@ public class TestTopDown1 extends BaseTopDownTest
     	});
         
         phase.run();
-        phase.dumpRoutines();
+        phase.dumpRoutines(System.out);
         
         validateRoutines(getRoutines());
         assertEquals(0, routine1.flags & Routine.fSubroutine);
@@ -708,7 +708,7 @@ public class TestTopDown1 extends BaseTopDownTest
 		});
 	    
 	    phase.run();
-	    phase.dumpRoutines();
+	    phase.dumpRoutines(System.out);
 	    
 	    validateRoutines(getRoutines());
 	    
@@ -721,7 +721,7 @@ public class TestTopDown1 extends BaseTopDownTest
     	phase.disassemble();
     	phase.addStandardROMRoutines();
     	phase.run();
-    	phase.dumpBlocks();
+    	phase.dumpBlocks(System.out);
     	validateBlocks(phase.getBlocks());
     	validateRoutines(phase.getRoutines());
     	Set<Integer> spannedPcs = phase.getBlockSpannedPcs();
@@ -741,7 +741,7 @@ public class TestTopDown1 extends BaseTopDownTest
     			phase.addBlock(new Block(inst));
     	}
     	phase.run();
-    	phase.dumpBlocks();
+    	phase.dumpBlocks(System.out);
     	
     	System.out.println(phase.getBlocks().size());
     	assertTrue(phase.getBlocks().size() < 4222);
@@ -766,7 +766,7 @@ public class TestTopDown1 extends BaseTopDownTest
     		inst = inst.getNext();
     	}
     	phase.run();
-    	phase.dumpBlocks();
+    	phase.dumpBlocks(System.out);
     	System.out.println(phase.getBlocks().size());
     	
     	assertTrue(phase.getBlocks().size() > 240);

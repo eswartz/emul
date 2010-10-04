@@ -589,6 +589,11 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpModeInfo.color.size = 2160 / 8;
 		return vdpModeInfo;
 	}
+	
+	protected int getPatternTableBase() {
+		return ((vdpregs[4] & 0xff) * 0x800) & getModeAddressMask();
+	}
+
 
 	@Override
 	protected void setBitmapMode() {

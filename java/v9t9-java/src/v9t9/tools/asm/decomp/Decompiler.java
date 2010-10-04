@@ -45,7 +45,7 @@ public class Decompiler implements ICodeProvider {
     private DecompileOptions options;
     HighLevelCodeInfo highLevel;
 
-	private CpuState state;
+	CpuState state;
 
     public Decompiler(String proc) {
     	if (proc == null || proc.equals(Assembler.PROC_9900)) {
@@ -93,13 +93,14 @@ public class Decompiler implements ICodeProvider {
         highLevel.getMemoryRanges().addRange(baseAddr, entry.size, true);
     }
 
-    public void decompile() {
-        //FullSweepPhase llp = new FullSweepPhase(CPU, highLevel);
+    public Phase decompile() {
+    	//FullSweepPhase llp = new FullSweepPhase(state, highLevel);
         TopDownPhase llp = new TopDownPhase(state, highLevel);
         llp.addRefDefTables(getOptions().refDefTables);
         llp.disassemble();
         llp.addStandardROMRoutines();
         llp.run();
+        return llp;
         
     }
 

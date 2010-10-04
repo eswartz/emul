@@ -67,18 +67,19 @@ public class DiskImageDsr implements DsrHandler9900 {
 	private Map<String, SettingProperty> diskSettingsMap = new LinkedHashMap<String, SettingProperty>();
 	private DiskMemoryEntry romMemoryEntry;
 	
-	static final int DSKtracksize_SD = (3210);
-	//private static final int DSKtracksize_DD = (6420);
-
 	static final int DSKbuffersize = (16384);		/* maximum track size */
 
 	static class DSKheader
 	{
-		byte			tracks;		/* tracks per side */
-		byte			sides;		/* 1 or 2 */
+		/** tracks per side */
+		byte			tracks;		
+		/** 1 or 2 */
+		byte			sides;		
 		byte			unused;
-		short			tracksize;	/* bytes per track */
-		int			track0offs;	/* offset for track 0 data */
+		/** bytes per track */
+		short			tracksize;	
+		/** offset for track 0 data */
+		int				track0offs;	
 		public long getImageSize() {
 			return (tracksize & 0xffff) * (tracks & 0xff) * sides;
 		}
@@ -763,11 +764,14 @@ public class DiskImageDsr implements DsrHandler9900 {
 	 */
 	protected BaseDiskImage createDiskImage(String name, File file) {
 		if (file.exists()) {
-			if (TrackDiskImage.isTrackImage(file))
-				return new TrackDiskImage(name, file);
+			if (V9t9TrackDiskImage.isTrackImage(file))
+				return new V9t9TrackDiskImage(name, file);
+			
+			if (RawTrackDiskImage.isTrackImage(file))
+				return new RawTrackDiskImage(name, file);
 		}
 		if (file.getName().toLowerCase().endsWith(".trk"))
-			return new TrackDiskImage(name, file);
+			return new V9t9TrackDiskImage(name, file);
 		else
 			return new SectorDiskImage(name, file);
 	}
@@ -943,7 +947,8 @@ public class DiskImageDsr implements DsrHandler9900 {
 	
 	
 	public DiskImageDsr(Machine machine) {
-		diskImageDsrEnabled.setBoolean(true);
+		//diskImageDsrEnabled.setBoolean(true);
+		EmulatorSettings.INSTANCE.register(diskImageDsrEnabled);
 		
     	String diskImageRootPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + "disks";
     	defaultDiskRootDir = new File(diskImageRootPath);

@@ -14,7 +14,7 @@ import java.util.TreeSet;
 
 import org.ejs.coffee.core.utils.Check;
 
-public class Block implements Comparable<Block> {
+public class Block implements Comparable<Block>, Iterable<HighLevelInstruction> {
 
 	static int nextId;
 	
