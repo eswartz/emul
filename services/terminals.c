@@ -79,8 +79,7 @@ static const char * TERMINALS = "Terminals";
 #define PIPE_SIZE 0x1000
 #define TERM_PROP_DEF_SIZE 256
 
-typedef struct Terminal
-{
+typedef struct Terminal {
     LINK link;
     int pid; /* pid of the login process of the terminal */
     TCFBroadcastGroup * bcg;
@@ -103,8 +102,7 @@ typedef struct Terminal
     Channel *channel;
 } Terminal;
 
-typedef struct TerminalOutput
-{
+typedef struct TerminalOutput {
     Terminal * prs;
     AsyncReqInfo req;
     int req_posted;
@@ -114,8 +112,7 @@ typedef struct TerminalOutput
     VirtualStream * vstream;
 } TerminalOutput;
 
-typedef struct TerminalInput
-{
+typedef struct TerminalInput {
     Terminal * prs;
     AsyncReqInfo req;
     int req_posted;
@@ -130,22 +127,19 @@ typedef struct TerminalInput
 
 static LINK terms_list;
 
-static Terminal * find_terminal(int pid)
-{
+static Terminal * find_terminal(int pid) {
     LINK * qhp = &terms_list;
     LINK * qp = qhp->next;
 
     while (qp != qhp) {
         Terminal * prs = link2term(qp);
-        if (prs->pid == pid)
-            return prs;
+        if (prs->pid == pid) return prs;
         qp = qp->next;
     }
     return NULL;
 }
 
-static char * tid2id(int tid)
-{
+static char * tid2id(int tid) {
     static char s[64];
     char * p = s + sizeof(s);
     unsigned long n = (long) tid;
@@ -153,29 +147,24 @@ static char * tid2id(int tid)
     do {
         *(--p) = (char) (n % 10 + '0');
         n = n / 10;
-    } while (n != 0);
+    }
+    while (n != 0);
 
     *(--p) = 'T';
     return p;
 }
 
-static int id2tid(const char * id)
-{
+static int id2tid(const char * id) {
     int tid = 0;
-    if (id == NULL)
-        return 0;
-    if (id[0] != 'T')
-        return 0;
-    if (id[1] == 0)
-        return 0;
+    if (id == NULL) return 0;
+    if (id[0] != 'T') return 0;
+    if (id[1] == 0) return 0;
     tid = (unsigned) strtol(id + 1, (char **) &id, 10);
-    if (id[0] != 0)
-        return 0;
+    if (id[0] != 0) return 0;
     return tid;
 }
 
-static void write_context(OutputStream * out, int tid)
-{
+static void write_context(OutputStream * out, int tid) {
     Terminal * prs = find_terminal(tid);
 
     write_stream(out, '{');
@@ -237,8 +226,7 @@ static void write_context(OutputStream * out, int tid)
     write_stream(out, '}');
 }
 
-static void send_event_terminal_exited(OutputStream * out, Terminal * prs)
-{
+static void send_event_terminal_exited(OutputStream * out, Terminal * prs) {
     write_stringz(out, "E");
     write_stringz(out, TERMINALS);
     write_stringz(out, "exited");
@@ -252,9 +240,7 @@ static void send_event_terminal_exited(OutputStream * out, Terminal * prs)
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_terminal_win_size_changed(OutputStream * out,
-        Terminal * prs)
-{
+static void send_event_terminal_win_size_changed(OutputStream * out, Terminal * prs) {
     write_stringz(out, "E");
     write_stringz(out, TERMINALS);
     write_stringz(out, "winSizeChanged");
@@ -271,40 +257,33 @@ static void send_event_terminal_win_size_changed(OutputStream * out,
     write_stream(out, MARKER_EOM);
 }
 
-static int kill_term(Terminal *term)
-{
+static int kill_term(Terminal *term) {
     int err = 0;
 
 #if defined(WIN32)
     HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, term->pid);
-    if (h == NULL)
-    {
+    if (h == NULL) {
         err = set_win32_errno(GetLastError());
     }
-    else
-    {
+    else {
         if (!TerminateProcess(h, 1)) err = set_win32_errno(GetLastError());
         if (!CloseHandle(h) && !err) err = set_win32_errno(GetLastError());
     }
 #else
-    if (kill(term->pid, SIGTERM) < 0)
-        err = errno;
+    if (kill(term->pid, SIGTERM) < 0) err = errno;
 #endif
     return err;
 }
 
-static void command_exit(char * token, Channel * c)
-{
+static void command_exit(char * token, Channel * c) {
     int err = 0;
     char id[256];
     unsigned tid;
     Terminal *term = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0)
-        exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM)
-        exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     tid = id2tid(id);
     write_stringz(&c->out, "R");
@@ -312,11 +291,13 @@ static void command_exit(char * token, Channel * c)
 
     if (tid == 0) {
         err = ERR_INV_CONTEXT;
-    } else {
+    }
+    else {
         term = find_terminal(tid);
         if (term == NULL) {
             err = ERR_INV_CONTEXT;
-        } else {
+        }
+        else {
             err = kill_term(term);
         }
     }
@@ -325,50 +306,45 @@ static void command_exit(char * token, Channel * c)
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void terminal_exited(Terminal * prs)
-{
+static void terminal_exited(Terminal * prs) {
     Trap trap;
 
     if (set_trap(&trap)) {
         send_event_terminal_exited(&prs->bcg->out, prs);
         clear_trap(&trap);
-    } else  {
-        trace(LOG_ALWAYS, "Exception sending terminal exited event: %d %s",
-                      trap.error, errno_to_str(trap.error));
+    }
+    else {
+        trace(LOG_ALWAYS, "Exception sending terminal exited event: %d %s", trap.error,
+                errno_to_str(trap.error));
     }
 
     list_remove(&prs->link);
     close(prs->inp);
     close(prs->out);
-    if (prs->out != prs->err)
-        close(prs->err);
+    if (prs->out != prs->err) close(prs->err);
     if (prs->inp_struct) {
         TerminalInput * inp = prs->inp_struct;
         if (!inp->req_posted) {
             virtual_stream_delete(inp->vstream);
             loc_free(inp);
-        } else {
+        }
+        else {
             inp->prs = NULL;
         }
     }
-    if (prs->out_struct)
-        prs->out_struct->prs = NULL;
-    if (prs->err_struct)
-        prs->err_struct->prs = NULL;
+    if (prs->out_struct) prs->out_struct->prs = NULL;
+    if (prs->err_struct) prs->err_struct->prs = NULL;
     loc_free(prs);
 }
 
-static void terminal_input_streams_callback(VirtualStream * stream,
-        int event_code, void * args)
-{
+static void terminal_input_streams_callback(VirtualStream * stream, int event_code, void * args) {
     TerminalInput * inp = (TerminalInput *) args;
 
     assert(inp->vstream == stream);
     if (!inp->req_posted) {
         if (inp->buf_pos >= inp->buf_len && !inp->eos) {
             inp->buf_pos = inp->buf_len = 0;
-            virtual_stream_get_data(stream, inp->buf, sizeof(inp->buf),
-                    &inp->buf_len, &inp->eos);
+            virtual_stream_get_data(stream, inp->buf, sizeof(inp->buf), &inp->buf_len, &inp->eos);
         }
         if (inp->buf_pos < inp->buf_len) {
             inp->req.u.fio.bufp = inp->buf + inp->buf_pos;
@@ -379,8 +355,7 @@ static void terminal_input_streams_callback(VirtualStream * stream,
     }
 }
 
-static void write_terminal_input_done(void * x)
-{
+static void write_terminal_input_done(void * x) {
     AsyncReqInfo * req = (AsyncReqInfo *) x;
     TerminalInput * inp = (TerminalInput *) req->client_data;
 
@@ -389,15 +364,16 @@ static void write_terminal_input_done(void * x)
         /* Process has exited */
         virtual_stream_delete(inp->vstream);
         loc_free(inp);
-    } else {
+    }
+    else {
         int wr = inp->req.u.fio.rval;
 
         if (wr < 0) {
             int err = inp->req.error;
-            trace(LOG_ALWAYS, "Can't write terminal input stream: %d %s", err,
-                        errno_to_str(err));
+            trace(LOG_ALWAYS, "Can't write terminal input stream: %d %s", err, errno_to_str(err));
             inp->buf_pos = inp->buf_len = 0;
-        } else {
+        }
+        else {
             inp->buf_pos += wr;
         }
 
@@ -405,24 +381,19 @@ static void write_terminal_input_done(void * x)
     }
 }
 
-static void write_terminal_input(Terminal * prs)
-{
-    TerminalInput * inp = prs->inp_struct = (TerminalInput *) loc_alloc_zero(
-            sizeof(TerminalInput));
+static void write_terminal_input(Terminal * prs) {
+    TerminalInput * inp = prs->inp_struct = (TerminalInput *) loc_alloc_zero(sizeof(TerminalInput));
     inp->prs = prs;
     inp->req.client_data = inp;
     inp->req.done = write_terminal_input_done;
     inp->req.type = AsyncReqWrite;
     inp->req.u.fio.fd = prs->inp;
-    virtual_stream_create(TERMINALS, tid2id(prs->pid), PIPE_SIZE,
-            VS_ENABLE_REMOTE_WRITE, terminal_input_streams_callback, inp,
-            &inp->vstream);
+    virtual_stream_create(TERMINALS, tid2id(prs->pid), PIPE_SIZE, VS_ENABLE_REMOTE_WRITE,
+            terminal_input_streams_callback, inp, &inp->vstream);
     virtual_stream_get_id(inp->vstream, prs->inp_id, sizeof(prs->inp_id));
 }
 
-static void terminal_output_streams_callback(VirtualStream * stream,
-        int event_code, void * args)
-{
+static void terminal_output_streams_callback(VirtualStream * stream, int event_code, void * args) {
     TerminalOutput * out = (TerminalOutput *) args;
 
     assert(out->vstream == stream);
@@ -435,43 +406,39 @@ static void terminal_output_streams_callback(VirtualStream * stream,
             buf_len = 0;
             err = out->req.error;
         }
-        if (buf_len == 0)
-            eos = 1;
+        if (buf_len == 0) eos = 1;
         if (out->prs == NULL) {
             eos = 1;
             err = 0;
         }
 
-        assert(buf_len <= (int)sizeof(out->buf));
-        assert(out->buf_pos <= (size_t)buf_len);
+        assert(buf_len <= (int) sizeof(out->buf));
+        assert(out->buf_pos <= (size_t) buf_len);
         assert(out->req.u.fio.bufp == out->buf);
 #ifdef __linux__
         if (err == EIO)
-            err = 0;
+        err = 0;
 #endif
-        if (err)
-            trace(LOG_ALWAYS, "Can't read terminal output stream: %d %s", err,
-                        errno_to_str(err));
+        if (err) trace(LOG_ALWAYS, "Can't read terminal output stream: %d %s", err, errno_to_str(
+                err));
 
         if (out->buf_pos < (size_t) buf_len || out->eos != eos) {
             size_t done = 0;
-            virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len
-                    - out->buf_pos, &done, eos);
+            virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done,
+                    eos);
             out->buf_pos += done;
-            if (eos)
-                out->eos = 1;
+            if (eos) out->eos = 1;
         }
 
         if (out->buf_pos >= (size_t) buf_len) {
             if (!eos) {
                 out->req_posted = 1;
                 async_req_post(&out->req);
-            } else if (virtual_stream_is_empty(stream)) {
+            }
+            else if (virtual_stream_is_empty(stream)) {
                 if (out->prs != NULL) {
-                    if (out == out->prs->out_struct)
-                        out->prs->out_struct = NULL;
-                    if (out == out->prs->err_struct)
-                        out->prs->err_struct = NULL;
+                    if (out == out->prs->out_struct) out->prs->out_struct = NULL;
+                    if (out == out->prs->err_struct) out->prs->err_struct = NULL;
                 }
                 virtual_stream_delete(stream);
                 loc_free(out);
@@ -480,8 +447,7 @@ static void terminal_output_streams_callback(VirtualStream * stream,
     } // end if(!out->req_posted)
 }
 
-static void read_terminal_output_done(void * x)
-{
+static void read_terminal_output_done(void * x) {
     AsyncReqInfo * req = (AsyncReqInfo *) x;
     TerminalOutput * out = (TerminalOutput *) req->client_data;
 
@@ -490,11 +456,8 @@ static void read_terminal_output_done(void * x)
     terminal_output_streams_callback(out->vstream, 0, out);
 }
 
-static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id,
-        size_t id_size)
-{
-    TerminalOutput * out = (TerminalOutput *) loc_alloc_zero(
-            sizeof(TerminalOutput));
+static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id, size_t id_size) {
+    TerminalOutput * out = (TerminalOutput *) loc_alloc_zero(sizeof(TerminalOutput));
     out->prs = prs;
     out->req.client_data = out;
     out->req.done = read_terminal_output_done;
@@ -502,17 +465,15 @@ static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id,
     out->req.u.fio.bufp = out->buf;
     out->req.u.fio.bufsz = sizeof(out->buf);
     out->req.u.fio.fd = fd;
-    virtual_stream_create(TERMINALS, tid2id(prs->pid), PIPE_SIZE,
-            VS_ENABLE_REMOTE_READ, terminal_output_streams_callback, out,
-            &out->vstream);
+    virtual_stream_create(TERMINALS, tid2id(prs->pid), PIPE_SIZE, VS_ENABLE_REMOTE_READ,
+            terminal_output_streams_callback, out, &out->vstream);
     virtual_stream_get_id(out->vstream, id, id_size);
     out->req_posted = 1;
     async_req_post(&out->req);
     return out;
 }
 
-static char ** envp_add(char ** old_envp, int old_envp_len, char * env)
-{
+static char ** envp_add(char ** old_envp, int old_envp_len, char * env) {
     int i;
     int env_size;
     int old_envp_size = 0;
@@ -532,8 +493,8 @@ static char ** envp_add(char ** old_envp, int old_envp_len, char * env)
 
     env_size = strlen(env); //new env string size
 
-    new_envp = (char **)loc_alloc(old_envp_size + sizeof(char *) + env_size + 1);
-    p = (char *)new_envp + (old_envp_len + 2) * sizeof(char *); //setting new env ptr
+    new_envp = (char **) loc_alloc(old_envp_size + sizeof(char *) + env_size + 1);
+    p = (char *) new_envp + (old_envp_len + 2) * sizeof(char *); //setting new env ptr
     new_envp[0] = strcpy(p, env); //copy new env string
     p += env_size + 1;
     for (i = 0; i < old_envp_len; i++) {
@@ -545,10 +506,8 @@ static char ** envp_add(char ** old_envp, int old_envp_len, char * env)
     return new_envp;
 }
 
-static int start_terminal(Channel * c, const char * pty_type, const char * encoding,
-        char ** envp, int envp_len, const char * exe, const char ** args, int * pid,
-        Terminal ** prs)
-{
+static int start_terminal(Channel * c, const char * pty_type, const char * encoding, char ** envp,
+        int envp_len, const char * exe, const char ** args, int * pid, Terminal ** prs) {
     int err = 0;
     int fd_tty_master = -1;
     char * tty_slave_name = NULL;
@@ -556,28 +515,22 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
 
     memset(&size, 0, sizeof(struct winsize));
     fd_tty_master = posix_openpt(O_RDWR | O_NOCTTY);
-    if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 || unlockpt(
-            fd_tty_master) < 0)
-        err = errno;
+    if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 || unlockpt(fd_tty_master) < 0) err = errno;
     if (!err) {
         tty_slave_name = ptsname(fd_tty_master);
-        if (tty_slave_name == NULL)
-            err = EINVAL;
+        if (tty_slave_name == NULL) err = EINVAL;
     }
 
-    if (ioctl(fd_tty_master, TIOCGWINSZ, (char *) &size) < 0)
-        err = errno;
+    if (ioctl(fd_tty_master, TIOCGWINSZ, (char *) &size) < 0) err = errno;
 
     if (!err && fd_tty_master < 3) {
         int fd0 = fd_tty_master;
-        if ((fd_tty_master = dup(fd_tty_master)) < 0 || close(fd0))
-            err = errno;
+        if ((fd_tty_master = dup(fd_tty_master)) < 0 || close(fd0)) err = errno;
     }
 
     if (!err) {
         *pid = fork();
-        if (*pid < 0)
-            err = errno;
+        if (*pid < 0) err = errno;
         if (*pid == 0) {
             int fd = -1;
             int fd_tty_slave = -1;
@@ -595,34 +548,25 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
 
             setsid();
 
-            if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0)
-                err = errno;
-            if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR)) < 0)
-                err = errno;
+            if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
+            if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR)) < 0) err = errno;
 #if defined(TIOCSCTTY)
-            if (!err && (ioctl(fd_tty_slave, TIOCSCTTY, (char *) 0)) < 0)
-                err = errno;
+            if (!err && (ioctl(fd_tty_slave, TIOCSCTTY, (char *) 0)) < 0) err = errno;
 #endif
-            if (!err && dup2(fd_tty_slave, 0) < 0)
-                err = errno;
-            if (!err && dup2(fd_tty_slave, 1) < 0)
-                err = errno;
-            if (!err && dup2(fd_tty_slave, 2) < 0)
-                err = errno;
+            if (!err && dup2(fd_tty_slave, 0) < 0) err = errno;
+            if (!err && dup2(fd_tty_slave, 1) < 0) err = errno;
+            if (!err && dup2(fd_tty_slave, 2) < 0) err = errno;
             while (!err && fd > 3)
                 close(--fd);
             if (!err) {
                 assert(envp == NULL || envp[envp_len] == NULL);
-                execve(exe, (char **)args, envp);
+                execve(exe, (char **) args, envp);
                 err = errno;
             }
-            if (envp)
-                loc_free(envp);
+            if (envp) loc_free(envp);
             err = 1;
-            if (err < 1)
-                err = EINVAL;
-            else if (err > 0xff)
-                err = EINVAL;
+            if (err < 1) err = EINVAL;
+            else if (err > 0xff) err = EINVAL;
             exit(err);
         }
     }
@@ -635,33 +579,27 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         (*prs)->pid = *pid;
         (*prs)->bcg = c->bcg;
         (*prs)->channel = c;
-        if (*pty_type)
-            snprintf((*prs)->pty_type, sizeof((*prs)->pty_type), "%s", pty_type);
-        if (*encoding)
-            snprintf((*prs)->encoding, sizeof((*prs)->encoding), "%s", encoding);
+        if (*pty_type) snprintf((*prs)->pty_type, sizeof((*prs)->pty_type), "%s", pty_type);
+        if (*encoding) snprintf((*prs)->encoding, sizeof((*prs)->encoding), "%s", encoding);
         (*prs)->width = size.ws_row;
         (*prs)->height = size.ws_col;
         list_add_first(&(*prs)->link, &terms_list);
     }
 
-    if (!err)
-        return 0;
+    if (!err) return 0;
     errno = err;
     return -1;
 }
 
-static void command_get_context(char * token, Channel * c)
-{
+static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
     int tid;
     Terminal * term = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0)
-        exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM)
-        exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     tid = id2tid(id);
     write_stringz(&c->out, "R");
@@ -688,8 +626,7 @@ static void command_get_context(char * token, Channel * c)
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void command_launch(char * token, Channel * c)
-{
+static void command_launch(char * token, Channel * c) {
     int pid = 0;
     int err = 0;
     char encoding[TERM_PROP_DEF_SIZE];
@@ -704,27 +641,20 @@ static void command_launch(char * token, Channel * c)
 
     if (set_trap(&trap)) {
         json_read_string(&c->inp, pty_type, sizeof(pty_type));
-        if (read_stream(&c->inp) != 0)
-            exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         json_read_string(&c->inp, encoding, sizeof(encoding));
-        if (read_stream(&c->inp) != 0)
-            exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         envp = json_read_alloc_string_array(&c->inp, &envp_len);
-        if (read_stream(&c->inp) != 0)
-            exception(ERR_JSON_SYNTAX);
-        if (read_stream(&c->inp) != MARKER_EOM)
-            exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-        if (err == 0 && start_terminal(c, pty_type, encoding, envp, envp_len,
-                TERM_LAUNCH_EXEC, args, &pid, &prs) < 0)
-            err = errno;
+        if (err == 0 && start_terminal(c, pty_type, encoding, envp, envp_len, TERM_LAUNCH_EXEC,
+                args, &pid, &prs) < 0) err = errno;
         if (prs != NULL) {
             write_terminal_input(prs);
-            prs->out_struct = read_terminal_output(prs, prs->out, prs->out_id,
-                    sizeof(prs->out_id));
-            if (prs->out != prs->err)
-                prs->err_struct = read_terminal_output(prs, prs->err,
-                        prs->err_id, sizeof(prs->err_id));
+            prs->out_struct = read_terminal_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
+            if (prs->out != prs->err) prs->err_struct = read_terminal_output(prs, prs->err,
+                    prs->err_id, sizeof(prs->err_id));
         }
         if (!err) {
             add_waitpid_process(pid);
@@ -736,7 +666,8 @@ static void command_launch(char * token, Channel * c)
             write_errno(&c->out, err);
             if (err || pid == 0) {
                 write_stringz(&c->out, "null");
-            } else {
+            }
+            else {
                 write_context(&c->out, pid);
                 write_stream(&c->out, 0);
             }
@@ -747,12 +678,10 @@ static void command_launch(char * token, Channel * c)
 
     loc_free(envp);
 
-    if (trap.error)
-        exception(trap.error);
+    if (trap.error) exception(trap.error);
 }
 
-static void command_set_win_size(char * token, Channel * c)
-{
+static void command_set_win_size(char * token, Channel * c) {
     int err = 0;
     struct winsize size;
     char id[256];
@@ -760,29 +689,26 @@ static void command_set_win_size(char * token, Channel * c)
     Terminal *term = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0)
-        exception(ERR_JSON_SYNTAX);
-    size.ws_col=json_read_ulong(&c->inp);
-    if (read_stream(&c->inp) != 0)
-        exception(ERR_JSON_SYNTAX);
-    size.ws_row=json_read_ulong(&c->inp);
-    if (read_stream(&c->inp) != 0)
-        exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM)
-        exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    size.ws_col = json_read_ulong(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    size.ws_row = json_read_ulong(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     tid = id2tid(id);
 
-    if(tid==0 || (term=find_terminal(tid))==NULL) {
-        err=ERR_INV_CONTEXT;
-    }else if (term->width != size.ws_col || term->height != size.ws_row) {
-        if(ioctl(term->inp,TIOCSWINSZ,&size)<0) {
-            err=errno;
+    if (tid == 0 || (term = find_terminal(tid)) == NULL) {
+        err = ERR_INV_CONTEXT;
+    }
+    else if (term->width != size.ws_col || term->height != size.ws_row) {
+        if (ioctl(term->inp, TIOCSWINSZ, &size) < 0) {
+            err = errno;
         }
-        if(!err) {
-            term->width=size.ws_col;
-            term->height=size.ws_row;
-            send_event_terminal_win_size_changed(&term->channel->out,term);
+        if (!err) {
+            term->width = size.ws_col;
+            term->height = size.ws_row;
+            send_event_terminal_win_size_changed(&term->channel->out, term);
         }
     }
 
@@ -793,23 +719,19 @@ static void command_set_win_size(char * token, Channel * c)
 
 }
 
-static void waitpid_listener(int pid, int exited, int exit_code, int signal,
-        int event_code, int syscall, void * args)
-{
+static void waitpid_listener(int pid, int exited, int exit_code, int signal, int event_code,
+        int syscall, void * args) {
     if (exited) {
         Terminal * prs = find_terminal(pid);
         if (prs) {
-            if (signal != 0)
-                prs->exit_code = -signal;
-            else
-                prs->exit_code = exit_code;
+            if (signal != 0) prs->exit_code = -signal;
+            else prs->exit_code = exit_code;
             terminal_exited(prs);
         }
     }
 }
 
-static void channel_close_listener(Channel * c)
-{
+static void channel_close_listener(Channel * c) {
     LINK * l = NULL;
 
     for (l = terms_list.next; l != &terms_list;) {
@@ -822,8 +744,7 @@ static void channel_close_listener(Channel * c)
     }
 }
 
-void ini_terminals_service(Protocol * proto)
-{
+void ini_terminals_service(Protocol * proto) {
     list_init(&terms_list);
 
     add_waitpid_listener(waitpid_listener, NULL);
