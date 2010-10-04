@@ -38,7 +38,11 @@ $(BINDIR)/tcflog$(EXTEXE): $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EX
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
 $(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile Makefile.inc
-	@mkdir -p $(dir $@)
+ifeq ($(OPSYS),MinGW)
+	if not exist $(subst /,\,$(dir $@)) mkdir $(subst /,\,$(dir $@))
+else
+	mkdir -p $(dir $@)
+endif
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:

@@ -1,7 +1,11 @@
 CONF = Debug
 
-OPSYS   := $(shell uname -o 2>/dev/null || uname -s)
-MACHINE := $(shell uname -m)
+ifndef OPSYS
+  OPSYS   := $(shell uname -o 2>/dev/null || uname -s)
+endif
+ifndef MACHINE
+  MACHINE := $(shell uname -m)
+endif
 
 INCDIRS = . system/$(OPSYS) machine/$(MACHINE)
 SRCDIRS = $(INCDIRS) system framework services main
@@ -27,6 +31,13 @@ endif
 
 ifeq ($(OPSYS),Msys)
   OPTS += -mwin32
+  LIBS = -lws2_32 -liphlpapi
+endif
+
+ifeq ($(OPSYS),MinGW)
+  OPTS += -mwin32
+  EXTOBJ = .obj
+  EXTEXE = .exe
   LIBS = -lws2_32 -liphlpapi
 endif
 
@@ -63,7 +74,12 @@ ifdef PATH_Plugins
   LIBS += -ldl
 endif
 
-VERSION := $(shell grep "%define version " $(TCF_AGENT_DIR)/main/tcf-agent.spec | sed -e "s/%define version //")
+ifeq ($(OPSYS),MinGW)
+  VERSION := 0.3.0
+else
+  VERSION := $(shell grep "%define version " $(TCF_AGENT_DIR)/main/tcf-agent.spec | sed -e "s/%define version //")
+endif
+
 INSTALLROOT ?= /tmp
 INCLUDE = /usr/include
 SBIN = /usr/sbin
@@ -80,6 +96,11 @@ ifeq ($(OPSYS),Cygwin)
 endif
 
 ifeq ($(OPSYS),Msys)
+  CFILES += system/Windows/pthreads-win32.c
+  CFILES += system/Windows/context-win32.c
+endif
+
+ifeq ($(OPSYS),MinGW)
   CFILES += system/Windows/pthreads-win32.c
   CFILES += system/Windows/context-win32.c
 endif
