@@ -953,7 +953,9 @@ int safe_context_single_step(Context * ctx) {
 void run_ctrl_lock(void) {
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
+#if ENABLE_Cmdline
         cmdline_suspend();
+#endif
     }
     run_ctrl_lock_cnt++;
 }
@@ -963,7 +965,9 @@ void run_ctrl_unlock(void) {
     run_ctrl_lock_cnt--;
     if (run_ctrl_lock_cnt == 0) {
         assert(safe_event_list == NULL);
+#if ENABLE_Cmdline
         cmdline_resume();
+#endif
         /* Lazily continue execution of temporary stopped contexts */
         run_safe_events_posted++;
         post_event(run_safe_events, NULL);
