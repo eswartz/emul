@@ -58,6 +58,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final Random rnd = new Random();
 
     private String[] test_list;
+    private boolean rcbp1_found;
     private String test_ctx_id; // Test context ID
     private IRunControl.RunControlContext test_context;
     private String main_thread_id;
@@ -157,75 +158,46 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     public void start() {
-        if (diag == null || rc == null) {
+        if (rc == null) {
             test_suite.done(this, null);
         }
-        else if (bp == null) {
-            exit(new Exception("Remote Breakpoints service not found"));
-        }
         else {
+            if (bp != null) bp.addListener(bp_listener);
             runTest();
         }
-        if (bp != null) bp.addListener(bp_listener);
     }
 
     private void runTest() {
+        if (!test_suite.isActive(TestRCBP1.this)) return;
         if (test_list == null) {
             getTestList();
             return;
         }
-        if (test_ctx_id == null) {
-            startTestContext();
-            return;
-        }
-        if (test_context == null) {
-            getTestContext();
-            return;
-        }
-        if (sym_list.isEmpty()) {
-            getSymbols();
-            return;
-        }
         if (!bp_reset_done) {
-            // Reset breakpoint list (previous tests might left breakpoints)
-            bp.set(null, new IBreakpoints.DoneCommand() {
-                public void doneCommand(IToken token, Exception error) {
-                    if (error != null) {
-                        exit(error);
-                        return;
-                    }
-                    bp_reset_done = true;
-                    runTest();
-                }
-            });
+            resetBreakpoints();
             return;
         }
-        if (bp_capabilities == null) {
-            bp.getCapabilities(test_ctx_id, new IBreakpoints.DoneGetCapabilities() {
-                public void doneGetCapabilities(IToken token, Exception error, Map<String, Object> capabilities) {
-                    if (error != null) {
-                        exit(error);
-                        return;
-                    }
-                    Boolean l = (Boolean)capabilities.get(IBreakpoints.CAPABILITY_LOCATION);
-                    Boolean c = (Boolean)capabilities.get(IBreakpoints.CAPABILITY_CONDITION);
-                    if (l == null || !l) {
-                        exit(new Exception("Breakpoints service does not support \"Location\" attribute"));
-                        return;
-                    }
-                    if (c == null || !c) {
-                        exit(new Exception("Breakpoints service does not support \"Condition\" attribute"));
-                        return;
-                    }
-                    bp_capabilities = capabilities;
-                    runTest();
-                }
-            });
-            return;
-        }
-        if (!bp_set_done) {
-            iniBreakpoints();
-            return;
+        if (rcbp1_found) {
+            if (test_ctx_id == null) {
+                startTestContext();
+                return;
+            }
+            if (test_context == null) {
+                getTestContext();
+                return;
+            }
+            if (sym_list.isEmpty()) {
+                getSymbols();
+                return;
+            }
+            if (bp_capabilities == null) {
+                getBreakpointCapabilities();
+                return;
+            }
+            if (!bp_set_done) {
+                iniBreakpoints();
+                return;
+            }
         }
         if (!done_get_state) {
             assert get_state_cmds.isEmpty();
@@ -235,52 +207,117 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             getContextState(test_ctx_id);
             return;
         }
-        if (!bp_change_done) {
-            changeBreakpoints();
+        if (rcbp1_found) {
+            if (!bp_change_done) {
+                changeBreakpoints();
+                return;
+            }
+            for (SuspendedContext s : suspended.values()) resume(s.id);
             return;
         }
-        for (SuspendedContext s : suspended.values()) resume(s.id);
+        else if (suspended.size() > 0) {
+            final int test_cnt = suspended.size();
+            Runnable done = new Runnable() {
+                int done_cnt;
+                public void run() {
+                    done_cnt++;
+                    if (done_cnt == test_cnt) {
+                        exit(null);
+                    }
+                }
+            };
+            for (SuspendedContext sc : suspended.values()) runRegistersTest(sc, done);
+        }
+        exit(null);
     }
 
     private void getTestList() {
+        if (diag == null) {
+            test_list = new String[0];
+            runTest();
+            return;
+        }
         diag.getTestList(new IDiagnostics.DoneGetTestList() {
             public void doneGetTestList(IToken token, Throwable error, String[] list) {
-                if (!test_suite.isActive(TestRCBP1.this)) return;
                 if (error != null) {
                     exit(error);
                 }
                 else {
                     test_list = list;
+                    for (String s : test_list) {
+                        if (s.equals("RCBP1")) rcbp1_found = true;
+                    }
                     runTest();
                 }
             }
         });
     }
 
-    private void startTestContext() {
-        for (int i = 0; i < test_list.length; i++) {
-            if (test_list[i].equals("RCBP1")) {
-                diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
-                    public void doneRunTest(IToken token, Throwable error, String context_id) {
-                        if (error != null) {
-                            exit(error);
-                        }
-                        else if (test_suite.isActive(TestRCBP1.this)) {
-                            assert test_ctx_id == null;
-                            test_ctx_id = context_id;
-                            if (pending_cancel != null) {
-                                exit(null);
-                            }
-                            else {
-                                runTest();
-                            }
-                        }
-                    }
-                });
-                return;
-            }
+    private void resetBreakpoints() {
+        if (bp == null) {
+            bp_reset_done = true;
+            runTest();
+            return;
         }
-        exit(null);
+        // Reset breakpoint list (previous tests might left breakpoints)
+        bp.set(null, new IBreakpoints.DoneCommand() {
+            public void doneCommand(IToken token, Exception error) {
+                if (error != null) {
+                    exit(error);
+                    return;
+                }
+                bp_reset_done = true;
+                runTest();
+            }
+        });
+    }
+
+    private void getBreakpointCapabilities() {
+        if (bp == null) {
+            bp_capabilities = new HashMap<String,Object>();
+            runTest();
+            return;
+        }
+        bp.getCapabilities(test_ctx_id, new IBreakpoints.DoneGetCapabilities() {
+            public void doneGetCapabilities(IToken token, Exception error, Map<String,Object> capabilities) {
+                if (error != null) {
+                    exit(error);
+                    return;
+                }
+                Boolean l = (Boolean)capabilities.get(IBreakpoints.CAPABILITY_LOCATION);
+                Boolean c = (Boolean)capabilities.get(IBreakpoints.CAPABILITY_CONDITION);
+                if (l == null || !l) {
+                    exit(new Exception("Breakpoints service does not support \"Location\" attribute"));
+                    return;
+                }
+                if (c == null || !c) {
+                    exit(new Exception("Breakpoints service does not support \"Condition\" attribute"));
+                    return;
+                }
+                bp_capabilities = capabilities;
+                runTest();
+            }
+        });
+    }
+
+    private void startTestContext() {
+        diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
+            public void doneRunTest(IToken token, Throwable error, String context_id) {
+                if (error != null) {
+                    exit(error);
+                }
+                else if (test_suite.isActive(TestRCBP1.this)) {
+                    assert test_ctx_id == null;
+                    test_ctx_id = context_id;
+                    if (pending_cancel != null) {
+                        exit(null);
+                    }
+                    else {
+                        runTest();
+                    }
+                }
+            }
+        });
     }
 
     private void getTestContext() {
@@ -408,6 +445,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 if (get_state_cmds.isEmpty()) doneContextState();
             }
         }));
+        if (id == null) return;
         get_state_cmds.add(rc.getContext(id, new IRunControl.DoneGetContext() {
             public void doneGetContext(IToken token, Exception error, RunControlContext context) {
                 get_state_cmds.remove(token);
@@ -448,7 +486,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                         return;
                                     }
                                 }
-                                if ("Breakpoint".equals(reason)) {
+                                if (rcbp1_found && "Breakpoint".equals(reason)) {
                                     exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
                                     return;
                                 }
@@ -468,10 +506,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         assert get_state_cmds.isEmpty();
         assert resume_cnt == 0;
         assert threads.size() == suspended.size() + running.size();
-        assert bp_set_done;
-        assert !bp_change_done;
         done_get_state = true;
-        if (threads.size() == 0) return;
         runTest();
     }
 
