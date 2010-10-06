@@ -26,7 +26,7 @@ class TestTerminals implements ITCFTest {
     private final ITerminals.TerminalsListener listener = new ITerminals.TerminalsListener() {
 
         public void exited(String id, int exit_code) {
-            if (terminal != null && id.equals(terminal.getID()) && signal_sent) {
+            if (terminal != null && id.equals(terminal.getID()) && !signal_sent) {
                 exit(new Exception("Terminal exited with code " + exit_code));
             }
         }
