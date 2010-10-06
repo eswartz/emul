@@ -40,7 +40,9 @@
 #include <services/streamsservice.h>
 #include <services/terminals.h>
 
+#ifndef TERMINALS_NO_LOGIN
 #define TERMINALS_NO_LOGIN 0
+#endif
 
 static const char * TERMINALS = "Terminals";
 
@@ -70,9 +72,11 @@ static const char * TERMINALS = "Terminals";
 # if TERMINALS_NO_LOGIN
 #  define TERM_LAUNCH_EXEC "/bin/bash"
 #  define TERM_LAUNCH_ARGS {TERM_LAUNCH_EXEC, NULL}
+#  define TERM_EXIT_SIGNAL SIGHUP
 # else
 #  define TERM_LAUNCH_EXEC "/bin/login"
 #  define TERM_LAUNCH_ARGS {TERM_LAUNCH_EXEC, "-p", NULL}
+#  define TERM_EXIT_SIGNAL SIGTERM
 # endif
 #endif
 
@@ -270,7 +274,7 @@ static int kill_term(Terminal *term) {
         if (!CloseHandle(h) && !err) err = set_win32_errno(GetLastError());
     }
 #else
-    if (kill(term->pid, SIGTERM) < 0) err = errno;
+    if (kill(term->pid, TERM_EXIT_SIGNAL) < 0) err = errno;
 #endif
     return err;
 }
@@ -556,18 +560,15 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
             if (!err && dup2(fd_tty_slave, 0) < 0) err = errno;
             if (!err && dup2(fd_tty_slave, 1) < 0) err = errno;
             if (!err && dup2(fd_tty_slave, 2) < 0) err = errno;
-            while (!err && fd > 3)
-                close(--fd);
+            while (!err && fd > 3) close(--fd);
             if (!err) {
                 assert(envp == NULL || envp[envp_len] == NULL);
-                execve(exe, (char **) args, envp);
+                execve(exe, (char **)args, envp);
                 err = errno;
             }
             if (envp) loc_free(envp);
-            err = 1;
-            if (err < 1) err = EINVAL;
-            else if (err > 0xff) err = EINVAL;
-            exit(err);
+            fprintf(stderr, "Cannot start %s: %s\n", exe, errno_to_str(err));
+            exit(1);
         }
     }
 
@@ -656,23 +657,20 @@ static void command_launch(char * token, Channel * c) {
             if (prs->out != prs->err) prs->err_struct = read_terminal_output(prs, prs->err,
                     prs->err_id, sizeof(prs->err_id));
         }
-        if (!err) {
-            add_waitpid_process(pid);
-        }
+        if (!err) add_waitpid_process(pid);
+
         //write result back
-        {
-            write_stringz(&c->out, "R");
-            write_stringz(&c->out, token);
-            write_errno(&c->out, err);
-            if (err || pid == 0) {
-                write_stringz(&c->out, "null");
-            }
-            else {
-                write_context(&c->out, pid);
-                write_stream(&c->out, 0);
-            }
-            write_stream(&c->out, MARKER_EOM);
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, token);
+        write_errno(&c->out, err);
+        if (err || pid == 0) {
+            write_stringz(&c->out, "null");
         }
+        else {
+            write_context(&c->out, pid);
+            write_stream(&c->out, 0);
+        }
+        write_stream(&c->out, MARKER_EOM);
         clear_trap(&trap);
     }
 
