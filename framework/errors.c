@@ -508,6 +508,8 @@ ErrorReport * get_error_report(int err) {
             add_report_prop_str(report, "AltOrg", "CygWin");
 #elif defined(__linux__)
             add_report_prop_str(report, "AltOrg", "Linux");
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+            add_report_prop_str(report, "AltOrg", "BSD");
 #elif defined(__SYMBIAN32__)
             add_report_prop_str(report, "AltOrg", "Symbian");
 #else
