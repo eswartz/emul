@@ -18,6 +18,8 @@ then
   exit 1
 fi
 
+VBOXHOST=192.168.155.1
+
 rm -rf java-bin || exit 1
 mkdir java-bin || exit 1
 SRCPATH=`pwd`/trunk/plugins/org.eclipse.tm.tcf
@@ -148,8 +150,8 @@ function ping_vm()
      ping -c 30 $HOST >>logs/$LOGFILE 2>&1
   then
     echo >>logs/$LOGFILE
-    if $SSH "ping $PING_FLAG 30 192.168.155.1" >>logs/$LOGFILE 2>&1 || \
-       $SSH "ping $PING_FLAG 30 192.168.155.1" >>logs/$LOGFILE 2>&1
+    if $SSH "ping $PING_FLAG 30 $VBOXHOST" >>logs/$LOGFILE 2>&1 || \
+       $SSH "ping $PING_FLAG 30 $VBOXHOST" >>logs/$LOGFILE 2>&1
     then
       if [ "$SET_CLOCK" = 2 ] ; then
         DATE=`date +%m%d%H%M.%S`
@@ -269,6 +271,13 @@ function stop_server()
 
 function build_and_test_agent()
 {
+  # Currently we cannot test login feature of Terminals service
+  if [ -z "$CFLAGS" ] ; then
+    CFLAGS=-DTERMINALS_NO_LOGIN=1
+  else
+    CFLAGS="-DTERMINALS_NO_LOGIN=1 $CFLAGS"
+  fi
+
   local LOGFILE=$HOST-$CONF-$CC-Agent-$SEQ.txt
   echo "<a href=\"$LOGFILE\">" >>$HTML
   date >logs/$LOGFILE
@@ -374,7 +383,7 @@ do
       continue
     fi
 
-    BUILD=/net/192.168.155.1/home/virtualbox/build
+    BUILD=/net/$VBOXHOST/home/virtualbox/build
     TRUNK=$BUILD/trunk
     MAKE=make
     PING_FLAG=-c
@@ -393,7 +402,6 @@ do
       # Free BSD
       MAKE=gmake
       OPSYS_FLAG=-s
-      BUILD_RPM=
       STOP_VM=1
       ;;
     192.168.155.10)
