@@ -25,6 +25,13 @@ public class SettingsSection implements ISettingSection {
 	}
 	
 	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "SettingsSection: " + data.toString();
+	}
+	/* (non-Javadoc)
 	 * @see org.ejs.coffee.core.properties.IPropertyStorage#addNewSection(java.lang.String)
 	 */
 	public ISettingSection addSection(String name) {
