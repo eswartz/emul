@@ -18,6 +18,8 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 
 	private GplMmio pcodeGromMmio;
 
+	public PCodeDsrRomBankedMemoryEntry() {
+	}
 	public PCodeDsrRomBankedMemoryEntry(Memory memory, String name,
 			MemoryEntry[] banks) {
 		super(memory, name, banks);
@@ -29,6 +31,8 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 		this.pcodeGromMmio = pcodeGromMmio;
 		
 		// bit 0 (0x1f00) handled as DSR
+		machine.getCruManager().removeWriter(0x1f80, 1);
+		machine.getCruManager().removeWriter(0x1f86, 1);
 		
 		machine.getCruManager().add(0x1f80, 1, 
 				new CruWriter() {

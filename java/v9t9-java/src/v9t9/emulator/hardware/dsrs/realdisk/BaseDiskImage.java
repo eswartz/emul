@@ -334,7 +334,11 @@ public abstract class BaseDiskImage implements IPersistable {
 	public void readSectorData(IdMarker currentMarker, byte[] rwBuffer,
 			int start, int buflen) {
 		if (currentMarker != null) {
-			System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
+			try {
+				System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				System.err.println("Possible bogus sector size: " + buflen);
+			}
 			DiskImageDsr.dumpBuffer(rwBuffer, 0, 256);
 		}
 	}

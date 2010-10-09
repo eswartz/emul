@@ -61,7 +61,7 @@ public class ToolShell {
 		});
 
 		
-		String boundsStr = EmulatorSettings.INSTANCE.getApplicationSettings().get(boundsPref);
+		String boundsStr = EmulatorSettings.INSTANCE.getSettings().get(boundsPref);
 		if (boundsStr != null) {
 			Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
 			if (savedBounds != null) {
@@ -125,7 +125,7 @@ public class ToolShell {
 			public void widgetDisposed(DisposeEvent e) {
 				Rectangle bounds = shell.getBounds();
 				String boundsStr = PrefUtils.writeBoundsString(bounds);
-				EmulatorSettings.INSTANCE.getApplicationSettings().put(boundsPref, boundsStr);
+				EmulatorSettings.INSTANCE.getSettings().put(boundsPref, boundsStr);
 			}
 		});
 	}

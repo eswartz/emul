@@ -7,6 +7,7 @@
 package v9t9.emulator.common;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DsrManager;
 import v9t9.emulator.hardware.dsrs.IDsrManager;
@@ -96,7 +98,7 @@ abstract public class Machine {
 
 	
     public Machine(MachineModel machineModel) {
-    	EmulatorSettings.INSTANCE.register(settingModuleList);
+    	WorkspaceSettings.CURRENT.register(settingModuleList);
     	
     	runnableList = new LinkedList<Runnable>();
     	this.memoryModel = machineModel.getMemoryModel();
@@ -150,7 +152,7 @@ abstract public class Machine {
     			notifyEvent(e.getEvent());
     			notifyEvent(IEventNotifier.Level.ERROR,
     					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
-						+ EmulatorSettings.INSTANCE.getSettingsConfigurationPath());
+						+ WorkspaceSettings.CURRENT.getConfigFilePath());
     			modules = Collections.emptyList();
 			}
     	}
@@ -445,6 +447,10 @@ abstract public class Machine {
 		
 		DataFiles.saveState(settings);
 		
+		ISettingSection workspace = settings.addSection("Workspace");
+		WorkspaceSettings.CURRENT.save(workspace);
+		//WorkspaceSettings.CURRENT.saveState(settings);
+		
 		synchronized (executionLock) {
 			bExecuting = true;
 			executionLock.notifyAll();
@@ -473,6 +479,23 @@ abstract public class Machine {
 		bExecuting = false;
 		synchronized (executionLock) {
 			executionLock.notifyAll();
+		}
+
+		String origWorkspace = section.get(WorkspaceSettings.currentWorkspace.getName());
+		if (origWorkspace != null) {
+			try {
+				WorkspaceSettings.loadFrom(origWorkspace);
+			} catch (IOException e) {
+				notifyEvent(Level.WARNING, 
+						MessageFormat.format(
+								"Could not find the workspace ''{0}'' referenced in the saved state",
+								origWorkspace));
+			}
+		}
+		
+		ISettingSection workspace = section.getSection("Workspace");
+		if (workspace != null) {
+			WorkspaceSettings.CURRENT.load(workspace);
 		}
 		
 		DataFiles.loadState(section);

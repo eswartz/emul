@@ -20,6 +20,7 @@ import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.ModuleManager;
+import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.EnhancedMachineModel;
 import v9t9.emulator.hardware.MFP201Machine;
 import v9t9.emulator.hardware.StandardMachineModel;
@@ -71,10 +72,9 @@ public class Emulator {
     
 	protected void setupDefaults() {
 		
-		EmulatorSettings.INSTANCE.register(Cpu.settingCyclesPerSecond);
-		EmulatorSettings.INSTANCE.register(Cpu.settingRealTime);
-		EmulatorSettings.INSTANCE.register(TI994AStandardConsoleMemoryModel.settingExpRam);
-
+		WorkspaceSettings.CURRENT.register(Cpu.settingCyclesPerSecond);
+		WorkspaceSettings.CURRENT.register(Cpu.settingRealTime);
+		WorkspaceSettings.CURRENT.register(TI994AStandardConsoleMemoryModel.settingExpRam);
 		
     	Cpu.settingRealTime.setBoolean(true);
     	
@@ -108,7 +108,7 @@ public class Emulator {
 		int barrier = client.getEventNotifier().getNotificationCount();
 		memoryModel.loadMemory(client.getEventNotifier());
 		
-		EmulatorSettings.INSTANCE.register(ModuleManager.settingLastLoadedModule);
+		WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
 		try {
         	if (ModuleManager.settingLastLoadedModule.getString().length() > 0)
         		machine.getModuleManager().switchModule(ModuleManager.settingLastLoadedModule.getString());
@@ -120,7 +120,7 @@ public class Emulator {
         if (client.getEventNotifier().getNotificationCount() > barrier) {
         	machine.notifyEvent(IEventNotifier.Level.ERROR,
         			"Failed to load startup ROMs; please edit your " + DataFiles.settingBootRomsPath.getName() + " in the file "
-        		+ EmulatorSettings.INSTANCE.getSettingsConfigurationPath());
+        		+ WorkspaceSettings.CURRENT.getConfigFilePath());
         	//EmulatorSettings.INSTANCE.save();
         }
 	}
@@ -128,6 +128,12 @@ public class Emulator {
     public static void main(String args[]) throws IOException {
     	
     	EmulatorSettings.INSTANCE.load();
+    	try {
+    		WorkspaceSettings.loadFrom(WorkspaceSettings.currentWorkspace.getString());
+    	} catch (IOException e) {
+    		System.err.println("Setting up new configuration");
+    	}
+    	
 		EmulatorSettings.INSTANCE.register(DataFiles.settingBootRomsPath);
 		EmulatorSettings.INSTANCE.register(DataFiles.settingStoredRamPath);
     	
@@ -153,6 +159,7 @@ public class Emulator {
         try {
         	app.run();
         } finally {
+        	WorkspaceSettings.CURRENT.save();        	
         	EmulatorSettings.INSTANCE.save();        	
         }
     }

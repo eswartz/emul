@@ -39,6 +39,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.IDsrManager;
 

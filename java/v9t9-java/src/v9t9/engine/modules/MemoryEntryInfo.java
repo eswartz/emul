@@ -124,7 +124,7 @@ public class MemoryEntryInfo {
 			if (existing != null && existing.exists())
 				return existing.getAbsolutePath();
 			
-			String base = EmulatorSettings.INSTANCE.getBaseConfigurationPath();
+			String base = EmulatorSettings.INSTANCE.getConfigDirectory();
 			File storedMemory = new File(new File(base), "module_ram");
 			storedMemory.mkdirs();
 		

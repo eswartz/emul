@@ -109,7 +109,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 			public void widgetDisposed(DisposeEvent e) {
 				String boundsPref = PrefUtils.writeBoundsString(shell.getBounds());
-				EmulatorSettings.INSTANCE.getApplicationSettings().put(EMULATOR_WINDOW_BOUNDS, boundsPref);
+				EmulatorSettings.INSTANCE.getSettings().put(EMULATOR_WINDOW_BOUNDS, boundsPref);
 				dispose();
 			}
 			
@@ -261,7 +261,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 
-		String boundsPref = EmulatorSettings.INSTANCE.getApplicationSettings().get(EMULATOR_WINDOW_BOUNDS);
+		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
 		Rectangle rect = PrefUtils.readBoundsString(boundsPref);
 		if (rect != null) {
 			adjustRectVisibility(shell, rect);

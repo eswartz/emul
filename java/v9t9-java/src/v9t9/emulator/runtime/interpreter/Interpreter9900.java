@@ -9,8 +9,6 @@ package v9t9.emulator.runtime.interpreter;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.ejs.coffee.core.utils.HexUtils;
-
 import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.Cpu9900;

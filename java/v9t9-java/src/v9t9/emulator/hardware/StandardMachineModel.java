@@ -26,7 +26,6 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	public StandardMachineModel() {
 		memoryModel = new TI994AStandardConsoleMemoryModel();
 		ExpRamArea.settingExpRam.setBoolean(true);
-		PCodeDsr.settingPCodeCardEnabled.setBoolean(true);
 	}
 	
 	/* (non-Javadoc)

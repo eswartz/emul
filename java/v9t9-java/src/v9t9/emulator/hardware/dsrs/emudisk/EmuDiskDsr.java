@@ -16,7 +16,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.IconSetting;
-import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
@@ -89,11 +89,11 @@ public class EmuDiskDsr implements DsrHandler {
 
 	public EmuDiskDsr(IFileMapper mapper) {
 		//emuDiskDsrEnabled.setBoolean(true);
-		EmulatorSettings.INSTANCE.register(emuDiskDsrEnabled);
+		WorkspaceSettings.CURRENT.register(emuDiskDsrEnabled);
 		
 		this.mapper = mapper;
 		
-    	String diskRootPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + "disks";
+    	String diskRootPath = WorkspaceSettings.CURRENT.getConfigDirectory() + "disks";
     	File diskRootDir = new File(diskRootPath);
     	File dskdefault = new File(diskRootDir, "default");
     	dskdefault.mkdirs();
@@ -103,7 +103,7 @@ public class EmuDiskDsr implements DsrHandler {
     		
     		EmuDiskSetting diskSetting = new EmuDiskSetting(devname, dskdefault.getAbsolutePath(),
     				diskDirectoryIconPath);
-    		EmulatorSettings.INSTANCE.register(diskSetting);
+    		WorkspaceSettings.CURRENT.register(diskSetting);
 			
 			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting); 
     	}

@@ -667,7 +667,7 @@ public class Compiler9900 extends Compiler {
         byte[] bytecode = cgen.getJavaClass().getBytes();
 
         if (true) {
-            File dir = new File(new File(EmulatorSettings.INSTANCE.getBaseConfigurationPath()), "compilertmp"); 
+            File dir = new File(new File(EmulatorSettings.INSTANCE.getConfigDirectory()), "compilertmp"); 
             dir.mkdirs();
             File test = new File(dir, baseName + ".class");
             try {

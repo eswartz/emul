@@ -12,6 +12,8 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.WorkspaceSettings;
+import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
@@ -46,7 +48,7 @@ public class PCodeDsr implements DsrHandler9900 {
 	 * @param machine
 	 */
 	public PCodeDsr(TI99Machine machine) {
-		EmulatorSettings.INSTANCE.register(settingPCodeCardEnabled);
+		WorkspaceSettings.CURRENT.register(settingPCodeCardEnabled);
 		this.machine = machine;
 	}
 
@@ -69,29 +71,7 @@ public class PCodeDsr implements DsrHandler9900 {
 		
 		Memory memory = console.memory;
 
-		if (dsrMemoryEntry == null) {
-			this.dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) DiskMemoryEntry.newBankedWordMemoryFromFile(
-					PCodeDsrRomBankedMemoryEntry.class,
-					0x4000, 0x2000, memory, 
-					"P-Code DSR ROM", console,
-					"pCodeRomA.bin", 0, "pCodeRomB.bin", 0);
-			
-			// P-Code GROMs are completely private to the card
-			pcodeDomain = new MemoryDomain(PCODE);
-			memory.addDomain(PCODE, pcodeDomain);
-			
-			gromMemoryEntry = DiskMemoryEntry.newByteMemoryFromFile(0, 0x10000, "PCode GROM",
-					pcodeDomain, "pCodeGroms.bin", 0, false);
-			
-			pcodeGromMmio = new GplMmio(pcodeDomain);
-			
-			dsrMemoryEntry.setup(machine, pcodeGromMmio);
-			
-			readMmioEntry = new MemoryEntry("PCode Read MMIO", pcodeDomain, 0x5800, 0x0400,
-					new ConsoleGromReadArea(pcodeGromMmio));
-	        writeMmioEntry = new MemoryEntry("PCode Write MMIO", pcodeDomain, 0x5C00, 0x0400,
-	                new ConsoleGramWriteArea(pcodeGromMmio));
-		}
+		ensureSetup();
 		
 		// pCode GROMs are accessed specially
 		memory.addAndMap(dsrMemoryEntry);
@@ -99,6 +79,53 @@ public class PCodeDsr implements DsrHandler9900 {
 		memory.addAndMap(writeMmioEntry);
 		
 		memory.addAndMap(gromMemoryEntry);
+	}
+
+	/**
+	 * @throws IOException 
+	 * 
+	 */
+	private void ensureSetup() throws IOException {
+		Memory memory = machine.getMemory();
+		MemoryDomain console = machine.getConsole();
+
+		if (console.getEntryAt(0x4000) instanceof PCodeDsrRomBankedMemoryEntry)
+			dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) console.getEntryAt(0x4000);
+		
+		if (dsrMemoryEntry == null) {
+			this.dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) DiskMemoryEntry.newBankedWordMemoryFromFile(
+					PCodeDsrRomBankedMemoryEntry.class,
+					0x4000, 0x2000, memory, 
+					"P-Code DSR ROM", console,
+					"pCodeRomA.bin", 0, "pCodeRomB.bin", 0);
+		}
+		pcodeDomain = memory.getDomain(PCODE);
+		if (pcodeDomain == null) {
+			// P-Code GROMs are completely private to the card
+			pcodeDomain = new MemoryDomain(PCODE);
+			
+			memory.addDomain(PCODE, pcodeDomain);
+		}
+		if (gromMemoryEntry == null) {
+			gromMemoryEntry = DiskMemoryEntry.newByteMemoryFromFile(0, 0x10000, "PCode GROM",
+					pcodeDomain, "pCodeGroms.bin", 0, false);
+		}
+		
+		if (pcodeGromMmio == null) {
+			pcodeGromMmio = new GplMmio(pcodeDomain);
+			readMmioEntry = null;
+			writeMmioEntry = null;
+		}
+		
+		dsrMemoryEntry.setup(machine, pcodeGromMmio);
+		
+		if (readMmioEntry == null) {
+			readMmioEntry = new MemoryEntry("PCode Read MMIO", pcodeDomain, 0x5800, 0x0400,
+					new ConsoleGromReadArea(pcodeGromMmio));
+	        writeMmioEntry = new MemoryEntry("PCode Write MMIO", pcodeDomain, 0x5C00, 0x0400,
+	                new ConsoleGramWriteArea(pcodeGromMmio));
+		}
+		
 	}
 
 	/* (non-Javadoc)
@@ -162,6 +189,12 @@ public class PCodeDsr implements DsrHandler9900 {
 			return;
 		
 		settingPCodeCardEnabled.loadState(sub);
+		
+		try {
+			ensureSetup();
+		} catch (IOException e) {
+			machine.notifyEvent(Level.ERROR, e.getMessage());
+		}
 	}
 
 	/* (non-Javadoc)

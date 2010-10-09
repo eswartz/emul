@@ -7,7 +7,6 @@
 package v9t9.engine.cpu;
 
 
-import org.eclipse.jface.text.IBlockTextSelection;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.coffee.core.utils.HexUtils;
 

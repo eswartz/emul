@@ -9,15 +9,11 @@ import gnu.getopt.Getopt;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.assembler.Assembler;
-import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.common.MemoryRange;
 
 public class Disassemble {

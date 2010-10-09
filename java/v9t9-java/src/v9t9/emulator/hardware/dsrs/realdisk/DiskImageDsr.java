@@ -28,8 +28,8 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.IconSetting;
-import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.CruReader;
 import v9t9.emulator.hardware.CruWriter;
@@ -736,7 +736,7 @@ public class DiskImageDsr implements DsrHandler9900 {
 	public void registerDiskImagePath(String device, File dskfile) {
 		DiskImageSetting diskSetting = new DiskImageSetting(device, dskfile.getAbsolutePath(),
 				diskImageIconPath);
-		EmulatorSettings.INSTANCE.register(diskSetting);
+		WorkspaceSettings.CURRENT.register(diskSetting);
 	
 		diskSettingsMap.put(device, diskSetting); 
 		diskSetting.addListener(new IPropertyListener() {
@@ -948,9 +948,9 @@ public class DiskImageDsr implements DsrHandler9900 {
 	
 	public DiskImageDsr(Machine machine) {
 		//diskImageDsrEnabled.setBoolean(true);
-		EmulatorSettings.INSTANCE.register(diskImageDsrEnabled);
+		WorkspaceSettings.CURRENT.register(diskImageDsrEnabled);
 		
-    	String diskImageRootPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + "disks";
+    	String diskImageRootPath = WorkspaceSettings.CURRENT.getConfigDirectory() + "disks";
     	defaultDiskRootDir = new File(diskImageRootPath);
     	defaultDiskRootDir.mkdirs();
     	

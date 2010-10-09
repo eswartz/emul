@@ -31,7 +31,7 @@ public class ModuleLoader {
 		
 		File file;
 		
-		file = DataFiles.resolveFileAtPath(EmulatorSettings.INSTANCE.getSettingsConfigurationPath(), name);
+		file = DataFiles.resolveFileAtPath(EmulatorSettings.INSTANCE.getConfigFilePath(), name);
 		if (file == null) {
 			file = DataFiles.resolveFile(name);
 			if (file == null)

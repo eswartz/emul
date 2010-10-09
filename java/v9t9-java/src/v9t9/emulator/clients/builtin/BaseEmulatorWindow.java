@@ -13,6 +13,7 @@ import org.ejs.coffee.core.settings.XMLSettingStorage;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 
 public abstract class BaseEmulatorWindow {
@@ -51,11 +52,11 @@ public abstract class BaseEmulatorWindow {
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
 		
 		boolean isUndefined = false;
-		ISettingSection settings = EmulatorSettings.INSTANCE.getApplicationSettings();
+		ISettingSection settings = WorkspaceSettings.CURRENT.getSettings();
 		configVar.loadState(settings);
 		String configPath = configVar.getString();
 		if (configPath == null || configPath.length() == 0) {
-			configPath = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + defaultSubdir + File.separatorChar + fileName;
+			configPath = WorkspaceSettings.CURRENT.getConfigDirectory() + defaultSubdir + File.separatorChar + fileName;
 			isUndefined = true;
 			File saveDir = new File(configPath);
 			saveDir.getParentFile().mkdirs();
@@ -78,11 +79,11 @@ public abstract class BaseEmulatorWindow {
 	protected String selectDirectory(String title, IProperty configVar, String defaultSubdir,
 			boolean ifUndefined) {
 		boolean isUndefined = false;
-		ISettingSection settings = EmulatorSettings.INSTANCE.getApplicationSettings();
+		ISettingSection settings = WorkspaceSettings.CURRENT.getSettings();
 		configVar.loadState(settings);
 		String configDir = configVar.getString();
 		if (configDir == null || configDir.length() == 0) {
-			configDir = EmulatorSettings.INSTANCE.getBaseConfigurationPath() + File.separatorChar + defaultSubdir + File.separatorChar;
+			configDir = WorkspaceSettings.CURRENT.getConfigDirectory() + File.separatorChar + defaultSubdir + File.separatorChar;
 			File saveDir = new File(configDir);
 			saveDir.mkdirs();
 			isUndefined = true;

@@ -62,6 +62,10 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 		hdr.sides = sector[0x12];
 		hdr.tracks = sector[0x11];
 		hdr.tracksize = (short) (handle.length() / hdr.tracks / hdr.sides);
+		if (hdr.sides == 1 && hdr.tracksize > 5000) {
+			hdr.tracksize /= 2;
+			hdr.sides++;
+		}
 		hdr.track0offs = 0;
 
 		if (hdr.tracksize <= 0) {

@@ -7,9 +7,11 @@
 package v9t9.engine.memory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.settings.ISettingSection;
@@ -91,10 +93,26 @@ public class Memory implements IPersistable {
 		if (section == null)
 			return;
 		
-		// XXX: we assume the domains are the same
-		for (Map.Entry<String, MemoryDomain> entry : domains.entrySet()) {
-			entry.getValue().loadState(section.getSection(entry.getKey()));
+		Set<String> notSaved = new HashSet<String>(domains.keySet()); 
+		
+		for (String domainName : section.getSectionNames()) {
+			MemoryDomain domain = getDomain(domainName);
+			if (domain != null) {
+				notSaved.remove(domainName);
+			} else {
+				domain = new MemoryDomain(domainName);
+				addDomain(domainName, domain);
+			}
+			ISettingSection dSection = section.getSection(domainName);
+			domain.loadState(dSection);
 		}
+		
+		for (MemoryDomain domain : domains.values()) {
+			if (notSaved.contains(domain.getName())) {
+				domain.unmapAll();
+			}
+		}
+		domains.keySet().removeAll(notSaved);
 	}
 
 	public MemoryDomain[] getDomains() {
