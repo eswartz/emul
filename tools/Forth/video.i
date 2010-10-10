@@ -383,7 +383,7 @@ vbit4  db  0,>6,1,>A0,2,>0,5,>F4,>B,0,6,>E,-1
     dw >80, 1, >FFFE
     dw vbit4terms, >201B, hff
 
-;       5=graphics 5 mode (256x212x4)
+;       5=graphics 5 mode (512x212x4)
 ;           >0000 = patts
 ;           >7000 = sprite patts
 ;           >7800 = sprite colors
@@ -429,10 +429,10 @@ vbit7  db  0,>E,1,>A0,2,>0,5,>AC,>B,>1,6,>1B,-1
 ;           >0000 = screen (to >870 for 212-line mode)
 ;           >0A00 = colors (blinks)
 ;           >1000 = patts
-;           >1110+= free
+;           >1800+= free
 ;
 vtxt2  db  0,>4,1,>B0,2,>0,3,>2f,>A,0,4,>2,>D,>22,-1
-    dw  >0,2160,>A00,2160/8,>1000,>800,0,0,0,0,>1110
+    dw  >0,2160,>A00,2160/8,>1000,>800,0,0,0,0,>1800
     dw  512, 212
     dw vtextterms, >501B, hunder
     
@@ -445,7 +445,7 @@ vtxt2  db  0,>4,1,>B0,2,>0,3,>2f,>A,0,4,>2,>D,>22,-1
 ;           >2000 = colors
 ;           >2040+= free (seems like 2800)
 ;
-vmonobit db 0,>2,1,>A0,2,>6,3,>9f,4,>03,5,>36,6,>3,-1
+vmonobit db 0,>2,1,>B0,2,>6,3,>80,4,>03,5,>36,6,>3,-1
     dw  >1800,>300,>2000,>800,>0000,>1800,>1800,>1B00,>1B80,0,>2800
     dw 256,192
     dw vbitterms, >2018, hff
