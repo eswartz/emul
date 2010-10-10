@@ -295,7 +295,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (zoom < 0.5f)
 			zoom = 0.5f;
 		
-		System.out.println("Height = " + height + "; Zoom = " + zoom);
+		//System.out.println("Height = " + height + "; Zoom = " + zoom);
 		
 		if (vdpCanvas.isInterlacedEvenOdd())
 			zoomy = zoom / 2.0f;
@@ -305,6 +305,8 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			zoomx = zoom / 2.0f;
 		else
 			zoomx = zoom;
+		
+		//System.out.println("zoomx = " + zoomx + "; zoomy = " + zoomy);
 		
 		if (zoomx != oldzoomx && zoomy != oldzoomy) {
 			resizeWidgets();
@@ -372,6 +374,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	public void canvasResized(VdpCanvas canvas) {
 		//needResize = true;
 		isDirty = true;
+		updateWidgetOnResize((int)(canvas.getVisibleWidth() * zoomx), (int)(canvas.getVisibleHeight() * zoomy));
 	}
 	
 	public void canvasDirtied(VdpCanvas canvas) {
