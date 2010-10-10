@@ -19,6 +19,7 @@ import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
+import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
@@ -37,7 +38,7 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  *
  */
-public class EmuDiskDsr implements DsrHandler {
+public class EmuDiskDsr implements DsrHandler9900 {
 	private static String diskDirectoryIconPath = Emulator.getDataFile("icons/disk_directory.png").getAbsolutePath();
 	
 	public static final SettingProperty emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
