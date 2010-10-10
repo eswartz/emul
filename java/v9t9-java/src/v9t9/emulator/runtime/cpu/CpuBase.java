@@ -65,7 +65,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	}
 
 	private int ticks;
-	protected boolean allowInts;
+	protected int noIntCount;
 	protected int interrupts;
 
 	protected CpuState state;
@@ -172,14 +172,6 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 
 	public synchronized int getTickCount() {
 		return ticks;
-	}
-
-	public boolean isAllowInts() {
-		return allowInts;
-	}
-
-	public void setAllowInts(boolean allowInts) {
-		this.allowInts = allowInts;
 	}
 
 	public int getTargetCycleCount() {

@@ -31,6 +31,7 @@ import v9t9.tools.asm.assembler.InstructionFactoryMFP201;
  */
 public class MFP201MachineModel implements MachineModel {
 
+	public static final String ID = "MFP201";
 	private MFP201MemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
 	private BankedMemoryEntry cpuBankedVideo;
@@ -41,7 +42,21 @@ public class MFP201MachineModel implements MachineModel {
 	public MFP201MachineModel() {
 		memoryModel = new MFP201MemoryModel();
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return ID;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
+	 */
+	@Override
+	public Machine createMachine() {
+		return new MFP201Machine(this);
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#createCPU(v9t9.emulator.common.Machine)
 	 */

@@ -95,10 +95,28 @@ abstract public class Machine {
 	
 	protected  RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
 	private IInstructionFactory instructionFactory;
+	private final MachineModel machineModel;
+	private IPropertyListener pauseListener;
 
 	
     public Machine(MachineModel machineModel) {
     	WorkspaceSettings.CURRENT.register(settingModuleList);
+    	
+    	pauseListener = new IPropertyListener() {
+    		
+    		public void propertyChanged(IProperty setting) {
+    			synchronized (executionLock) {
+    				executor.interruptExecution = Boolean.TRUE;
+    				cpu.resetCycleCounts();
+    				bExecuting = !setting.getBoolean();
+    				executionLock.notifyAll();
+    			}
+    		}
+    		
+    	};
+		settingPauseMachine.addListener(pauseListener);
+    	
+    	this.machineModel = machineModel;
     	
     	runnableList = new LinkedList<Runnable>();
     	this.memoryModel = machineModel.getMemoryModel();
@@ -112,19 +130,7 @@ abstract public class Machine {
     	cpuMetrics = new CpuMetrics();
     	executor = machineModel.createExecutor(cpu, cpuMetrics);
     	
-    	settingPauseMachine.addListener(new IPropertyListener() {
-
-			public void propertyChanged(IProperty setting) {
-				synchronized (executionLock) {
-					executor.interruptExecution = Boolean.TRUE;
-					cpu.resetCycleCounts();
-					bExecuting = !setting.getBoolean();
-					executionLock.notifyAll();
-				}
-			}
-        	
-        });
-    	
+    	//executor.addInstructionListener(new DebugConditionListener(cpu));
 
 	}
 
@@ -189,6 +195,8 @@ abstract public class Machine {
      */
     @Override
 	protected void finalize() throws Throwable {
+    	settingPauseMachine.removeListener(pauseListener);
+    	
     	if (recordingNotifier != null) {
     		NotifyEvent event;
     		while ((event = recordingNotifier.getNextEvent()) != null) {
@@ -442,6 +450,7 @@ abstract public class Machine {
 			executionLock.notifyAll();
 		}
 		
+		settings.put("Class", getClass());
 		
 		doSaveState(settings);
 		
@@ -459,6 +468,8 @@ abstract public class Machine {
 
 
 	protected void doSaveState(ISettingSection settings) {
+		settings.put("MachineModel", machineModel.getIdentifier());
+		
 		cpu.saveState(settings.addSection("CPU"));
 		memory.saveState(settings.addSection("Memory"));
 		vdp.saveState(settings.addSection("VDP"));
@@ -515,6 +526,7 @@ abstract public class Machine {
 
 	protected void doLoadState(ISettingSection section) {
 		memory.getModel().resetMemory();
+		//machineModel.getMemoryModel().initMemory(this);
 		moduleManager.loadState(section.getSection("Modules"));
 		memory.loadState(section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
@@ -581,6 +593,14 @@ abstract public class Machine {
 	 */
 	public IInstructionFactory getInstructionFactory() {
 		return instructionFactory;
+	}
+
+
+	/**
+	 * @return
+	 */
+	public MachineModel getModel() {
+		return machineModel;
 	}
 }
 

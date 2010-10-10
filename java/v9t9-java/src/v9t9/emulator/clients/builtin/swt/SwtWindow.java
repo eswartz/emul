@@ -206,7 +206,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 	}
-
+	
 	public void setSwtVideoRenderer(final ISwtVideoRenderer renderer) {
 		setVideoRenderer(renderer);
 		
@@ -792,6 +792,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 	@Override
 	public void dispose() {
+		
 		cpuMetricsCanvas.dispose();
 		
 		toolUiTimer.cancel();

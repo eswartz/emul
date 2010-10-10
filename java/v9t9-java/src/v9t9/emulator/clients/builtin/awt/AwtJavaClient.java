@@ -22,19 +22,28 @@ import v9t9.engine.VdpHandler;
  * @author ejs
  */
 public class AwtJavaClient implements Client {
+	public static String ID = "AWT";
+	
     VdpHandler video;
     private Machine machine;
 	private AwtKeyboardHandler keyboardHandler;
 	private AwtVideoRenderer videoRenderer;
 	private AwtWindow window;
 
-    public AwtJavaClient(final Machine machine, VdpHandler vdp) {
+    public AwtJavaClient(final Machine machine) {
     	this.machine = machine;
-        video = vdp;
+        video = machine.getVdp();
         
         init();
     }
     
+    /* (non-Javadoc)
+     * @see v9t9.engine.Client#getIdentifier()
+     */
+    @Override
+    public String getIdentifier() {
+    	return ID;
+    }
     protected void init() {
     	window = new AwtWindow( machine);
 		

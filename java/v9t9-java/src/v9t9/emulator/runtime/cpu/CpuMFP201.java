@@ -88,8 +88,8 @@ public class CpuMFP201 extends CpuBase {
     @Override
 	public final boolean doCheckInterrupts() {
     	// do not allow interrupts after some instructions
-	    if (!allowInts) {
-	    	allowInts = true;
+	    if (noIntCount > 0) {
+	    	noIntCount--;
 	    	return false;
 	    }
 	    

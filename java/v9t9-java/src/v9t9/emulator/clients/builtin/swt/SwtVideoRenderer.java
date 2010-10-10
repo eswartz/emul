@@ -57,6 +57,13 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	public SwtVideoRenderer() {
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#dispose()
+	 */
+	@Override
+	public void dispose() {
+		
+	}
 	/**
 	 * Create the control, and set it up with GridData.
 	 * @param parent

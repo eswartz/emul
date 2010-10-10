@@ -67,6 +67,8 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 
 	private AnalogTV analog;
+
+	private IPropertyListener monitorSettingListener;
 	
 	public AwtVideoRenderer() {
 		// init outside locks
@@ -114,7 +116,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		doResizeToFit();
 		
 
-		BaseEmulatorWindow.settingMonitorDrawing.addListener(new IPropertyListener() {
+		monitorSettingListener = new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				synchronized (AwtVideoRenderer.this) {
@@ -125,9 +127,17 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				}
 			}
 			
-		});
+		};
+		BaseEmulatorWindow.settingMonitorDrawing.addListener(monitorSettingListener);
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#dispose()
+	 */
+	@Override
+	public void dispose() {
+		BaseEmulatorWindow.settingMonitorDrawing.removeListener(monitorSettingListener);
+	}
 	private void doResizeToFit()  {
 		
 		if (desiredWidth == 0 || desiredHeight == 0) {

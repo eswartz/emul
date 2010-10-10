@@ -13,6 +13,7 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
+import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
@@ -25,7 +26,6 @@ import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.emulator.runtime.Logging;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -749,7 +749,9 @@ public class VdpTMS9918A implements VdpHandler {
 		String[] regState = section.getArray("Registers");
 		if (regState != null) {
 			for (int i = 0; i < regState.length; i++) {
-				writeVdpReg(i, (byte) Integer.parseInt(regState[i], 16));
+				byte val = (byte) Integer.parseInt(regState[i], 16);
+				//vdpregs[i] = val;
+				loadVdpReg(i, val);
 			}
 		}
 		
@@ -759,6 +761,14 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 	
 	
+	/**
+	 * @param i
+	 * @param val
+	 */
+	protected void loadVdpReg(int num, byte val) {
+		writeVdpReg(num, val);
+	}
+
 	public void syncVdpInterrupt(Machine machine) {
 		if (!settingCpuSynchedVdpInterrupt.getBoolean())
 			return;

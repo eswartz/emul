@@ -29,6 +29,8 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  */
 public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler {
+	String ID = "Demo";
+	
     VdpHandler video;
     SoundHandler sound;
     CruHandler cru;
@@ -160,6 +162,13 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         vdpPacketSize = 0;
     }
     
+    /* (non-Javadoc)
+     * @see v9t9.engine.Client#getIdentifier()
+     */
+    @Override
+    public String getIdentifier() {
+    	return ID;
+    }
     /* (non-Javadoc)
      * @see v9t9.engine.Client#getEventNotifier()
      */

@@ -48,6 +48,7 @@ public class ModuleManager implements IPersistable {
 			unloadModule(loaded);
 		}
 		loadedModules.clear();
+		settingLastLoadedModule.setString(null);
 	}
 	
 	public void loadModule(IModule module) throws NotifyException {
@@ -68,6 +69,8 @@ public class ModuleManager implements IPersistable {
 			loadedModules.add(module);
 			
 			settingLastLoadedModule.setString(module.getName());
+		} else {
+			settingLastLoadedModule.setString(null);
 		}
 		
 	}
@@ -84,7 +87,7 @@ public class ModuleManager implements IPersistable {
 					domain.unmapEntry(entry);
 		
 		loadedModules.remove(loaded);
-		
+		settingLastLoadedModule.setString(null);
 	}
 	
 	public void switchModule(String name) throws NotifyException {

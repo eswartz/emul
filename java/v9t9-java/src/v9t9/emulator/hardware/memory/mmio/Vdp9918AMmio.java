@@ -6,11 +6,11 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
+import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.VdpRamArea;
-import v9t9.emulator.runtime.Logging;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;

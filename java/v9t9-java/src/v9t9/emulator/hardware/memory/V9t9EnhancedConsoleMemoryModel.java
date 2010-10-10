@@ -1,9 +1,3 @@
-/*
- * (c) Ed Swartz, 2005
- * 
- * Created on Feb 21, 2006
- *
- */
 package v9t9.emulator.hardware.memory;
 
 import java.io.File;
@@ -95,5 +89,13 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 	protected void defineMmioMemory(TI994A machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
                 new V9t9EnhancedConsoleMmioArea(machine)));
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel#resetMemory()
+	 */
+	@Override
+	public void resetMemory() {
+		
 	}
 }

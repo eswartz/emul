@@ -43,4 +43,9 @@ public interface VideoRenderer {
 
 	void saveScreenShot(File file) throws IOException;
 
+	/**
+	 * 
+	 */
+	void dispose();
+
 }

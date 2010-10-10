@@ -16,6 +16,9 @@ import v9t9.emulator.common.IEventNotifier;
  * @author ejs
  */
 public interface Client {
+	
+	String getIdentifier();
+	
     void close();
     
     /**

@@ -11,9 +11,12 @@ import java.io.IOException;
 
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
+import org.ejs.coffee.core.utils.Check;
 
+import v9t9.emulator.clients.builtin.ClientFactory;
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
+import v9t9.emulator.clients.builtin.swt.SwtAwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.EmulatorSettings;
@@ -21,10 +24,12 @@ import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.ModuleManager;
 import v9t9.emulator.common.WorkspaceSettings;
+import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
 import v9t9.emulator.hardware.EnhancedMachineModel;
-import v9t9.emulator.hardware.MFP201Machine;
+import v9t9.emulator.hardware.MFP201MachineModel;
+import v9t9.emulator.hardware.MachineModel;
+import v9t9.emulator.hardware.MachineModelFactory;
 import v9t9.emulator.hardware.StandardMachineModel;
-import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.cpu.Cpu;
@@ -56,12 +61,25 @@ public class Emulator {
 	}
 
 
+	static {
+		MachineModelFactory.register(StandardMachineModel.ID, StandardMachineModel.class);
+		MachineModelFactory.register(EnhancedCompatibleMachineModel.ID, EnhancedCompatibleMachineModel.class);
+		MachineModelFactory.register(EnhancedMachineModel.ID, EnhancedMachineModel.class);
+		MachineModelFactory.register(MFP201MachineModel.ID, MFP201MachineModel.class);
+		
+		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
+		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
+		ClientFactory.register(AwtJavaClient.ID, AwtJavaClient.class);
+	}
+	
 	private Memory memory;
 	private Machine machine;
 	private MemoryModel memoryModel;
 	private Client client;
 
     public Emulator(Machine machine, Client client) throws IOException {
+    	Check.checkArg(machine);
+    	Check.checkArg(client);
     	this.machine = machine;
     	this.memory = machine.getMemory();
     	this.memoryModel = memory.getModel();
@@ -124,7 +142,7 @@ public class Emulator {
         	//EmulatorSettings.INSTANCE.save();
         }
 	}
-
+	
     public static void main(String args[]) throws IOException {
     	
     	EmulatorSettings.INSTANCE.load();
@@ -139,19 +157,34 @@ public class Emulator {
     	
         Machine machine;
         
+        String modelId = StandardMachineModel.ID;
         if (findArgument(args, "--mfp201")) {
-        	machine = new MFP201Machine();
+        	modelId = MFP201MachineModel.ID;
         } else {
 	        if (findArgument(args, "--enhanced")) {
-	        	machine = new TI994A(new EnhancedMachineModel());
+	        	modelId = EnhancedMachineModel.ID;
 	        }
 	        else {
-	        	machine = new TI994A(new StandardMachineModel());
+	        	modelId = StandardMachineModel.ID;
 	        }
         }
         
+        MachineModel model = MachineModelFactory.createModel(modelId);
+        assert (model != null);
+        	
+        machine = model.createMachine();
+        
         Client client = createClient(args, machine);
         
+        Emulator.createAndRun(machine, client);
+    }
+
+	/**
+	 * @param machine2
+	 * @param client2
+	 * @throws IOException 
+	 */
+	public static void createAndRun(Machine machine, Client client) throws IOException {
         final Emulator app = new Emulator(machine, client);
         
         app.setupDefaults();
@@ -162,42 +195,19 @@ public class Emulator {
         	WorkspaceSettings.CURRENT.save();        	
         	EmulatorSettings.INSTANCE.save();        	
         }
-    }
+		
+	}
 
 	private static Client createClient(String[] args, Machine machine) {
-		Client client;
-		
-		/*
-        else if (findArgument(args, "--sdl")) {
-			client = new SdlJavaClient(machine, machine.getVdp()); 
-        }
-        */
+		String clientID;
         if (findArgument(args, "--awt")) {
-			client = new AwtJavaClient(machine, machine.getVdp());
+        	clientID = AwtJavaClient.ID;
 		} 
         else /*if (findArgument(args, "--swtawt"))*/ {
         	boolean awtRenderer = !findArgument(args, "--swt");
-        	client = new SwtJavaClient(machine, machine.getVdp(), awtRenderer);
+        	clientID = awtRenderer? SwtAwtJavaClient.ID : SwtJavaClient.ID;
 		} 
-		/*
-        else if (findArgument(args, "--swtsdl")) {
-        	SwtSdlVideoRenderer videoRenderer;
-			try {
-				videoRenderer = new SwtSdlVideoRenderer();
-			} catch (SDLException e) {
-				throw (IOException) new IOException().initCause(e);
-			}
-			client = new SwtJavaClient(machine, machine.getVdp(), 
-					videoRenderer, 
-					new SdlKeyboardHandler(
-			        		machine.getKeyboardState(), machine),
-					display);
-		} 
-        else {
-			client = new HybridDemoClient(machine, machine.getVdp(), display);
-		}
-		 */
-		return client;
+		return ClientFactory.createClient(clientID, machine);
 	}
 
 	private void run() {

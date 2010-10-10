@@ -61,10 +61,6 @@ public interface Cpu extends IPersistable, CpuState {
 	/** Get the tick count, in ms */
 	int getTickCount();
 
-	boolean isAllowInts();
-
-	void setAllowInts(boolean allowInts);
-
 	/** Get target # cycles to be executed per tick */
 	int getTargetCycleCount();
 

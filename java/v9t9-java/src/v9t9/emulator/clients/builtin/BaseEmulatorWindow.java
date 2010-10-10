@@ -10,11 +10,17 @@ import org.ejs.coffee.core.settings.ISettingStorage;
 import org.ejs.coffee.core.settings.SettingsSection;
 import org.ejs.coffee.core.settings.XMLSettingStorage;
 
+import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.WorkspaceSettings;
+import v9t9.emulator.common.IEventNotifier.Level;
+import v9t9.emulator.hardware.MachineModel;
+import v9t9.emulator.hardware.MachineModelFactory;
+import v9t9.emulator.runtime.TerminatedException;
 import v9t9.emulator.runtime.cpu.Cpu9900;
+import v9t9.engine.Client;
 
 public abstract class BaseEmulatorWindow {
 
@@ -27,7 +33,7 @@ public abstract class BaseEmulatorWindow {
 	 */
 	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { ".sav|V9t9 machine save file" };
 	protected VideoRenderer videoRenderer;
-	protected final Machine machine;
+	protected final  Machine machine;
 	static public final SettingProperty settingMonitorDrawing = new SettingProperty("MonitorDrawing", new Boolean(true));
 	static public final SettingProperty settingZoomLevel = new SettingProperty("ZoomLevel", new Integer(3));
 
@@ -41,6 +47,7 @@ public abstract class BaseEmulatorWindow {
 	}
 	
 	public void dispose() {
+		videoRenderer.dispose();
 		//EmulatorSettings.INSTANCE.save();
 	}
 	
@@ -128,6 +135,40 @@ public abstract class BaseEmulatorWindow {
 				ISettingStorage storage = new XMLSettingStorage(STATE);
 				ISettingSection settings = storage.load(new File(filename));
 				
+				String modelId = settings.get("MachineModel");
+
+				Machine theMachine = machine;
+				
+				if (modelId != null) {
+			        if (!machine.getModel().getIdentifier().equals(modelId)) {
+			        	String clientId = machine.getClient().getIdentifier();
+			        	try {
+			        		machine.getClient().close();
+			        	} catch (TerminatedException e) {
+			        	}
+			        	try {
+			        		dispose();
+			        	} catch (Throwable t) {
+			        		t.printStackTrace();
+			        	}
+			        	
+			        	 MachineModel model = MachineModelFactory.createModel(modelId);
+				        if (model == null)
+				        	machine.getClient().getEventNotifier().notifyEvent(null ,Level.ERROR,
+				        			"This emulator does not support machine model: " + modelId +"; saved state will probably crash");
+					        
+			        	theMachine = model.createMachine();
+			        	
+			        	Client newClient = ClientFactory.createClient(
+			        			clientId, theMachine);
+			        	
+			        	theMachine.loadState(settings);
+			        	Emulator.createAndRun(theMachine, newClient);
+			        	
+			        	return;
+			        }
+				}
+		        
 				machine.loadState(settings);
 			} catch (Throwable e1) {
 				showErrorMessage("Load error", 

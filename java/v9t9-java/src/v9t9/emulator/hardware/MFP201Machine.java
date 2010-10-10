@@ -4,8 +4,8 @@ import v9t9.emulator.common.Machine;
 
 public class MFP201Machine extends Machine {
 
-	public MFP201Machine() {
-		super(new MFP201MachineModel());
+	public MFP201Machine(MFP201MachineModel model) {
+		super(model);
 	}
 
 	@Override

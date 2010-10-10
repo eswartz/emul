@@ -79,7 +79,7 @@ public class Cpu9900 extends CpuBase {
         state.getConsole().writeWord(newwp + 13 * 2, oldwp);
         state.getConsole().writeWord(newwp + 14 * 2, oldpc);
         state.getConsole().writeWord(newwp + 15 * 2, getST());
-        allowInts = false;
+        noIntCount = 2;
    }
 
     public void contextSwitch(int addr) {
@@ -101,8 +101,8 @@ public class Cpu9900 extends CpuBase {
      */
     public final boolean doCheckInterrupts() {
     	// do not allow interrupts after some instructions
-	    if (!allowInts) {
-	    	allowInts = true;
+	    if (noIntCount > 0) {
+	    	noIntCount--;
 	    	return false;
 	    }
 	    

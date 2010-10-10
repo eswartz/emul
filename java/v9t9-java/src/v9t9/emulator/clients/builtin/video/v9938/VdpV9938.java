@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
+import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
@@ -425,6 +426,15 @@ public class VdpV9938 extends VdpTMS9918A {
 			break;
 		}
 		return redraw;
+	}
+
+	protected void loadVdpReg(int num, byte val) {
+		if (num != 44 && num != 46) {
+			writeVdpReg(num, val);
+		}
+		else {
+			vdpregs[num] = val;
+		}
 	}
 
 	private void updateInterlaced() {
@@ -1159,4 +1169,46 @@ public class VdpV9938 extends VdpTMS9918A {
 		return isInterlacedEvenOdd;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#saveState(org.ejs.coffee.core.settings.ISettingSection)
+	 */
+	@Override
+	public void saveState(ISettingSection section) {
+		super.saveState(section);
+
+		ISettingSection statuses = section.addSection("Statuses");
+		for (int i = 0; i < statusvec.length; i++)
+			statuses.put(HexUtils.toHex2(i), HexUtils.toHex2(statusvec[i]));
+		
+		section.put("AccelActive", accelActive());
+		
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#loadState(org.ejs.coffee.core.settings.ISettingSection)
+	 */
+	@Override
+	public void loadState(ISettingSection section) {
+		super.loadState(section);
+		
+		if (section == null)
+			return;
+
+		setAccelActive(section.getBoolean("AccelActive"));
+		if (accelActive()) {
+			setupCommand();
+		}
+
+		ISettingSection statuses = section.getSection("Statuses");
+		if (statuses != null) {
+			for (String name : statuses.getSettingNames()) {
+				try {
+					statusvec[Integer.parseInt(name, 16)] = 
+						(byte) Integer.parseInt(statuses.get(name), 16);
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 }

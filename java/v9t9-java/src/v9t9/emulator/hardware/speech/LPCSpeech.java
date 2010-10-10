@@ -5,7 +5,8 @@ package v9t9.emulator.hardware.speech;
 
 import java.util.Arrays;
 
-import v9t9.emulator.runtime.Logging;
+import org.ejs.coffee.core.settings.Logging;
+
 
 /**
  * decoder engine

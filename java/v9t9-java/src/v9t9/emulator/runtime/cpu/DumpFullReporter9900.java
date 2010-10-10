@@ -40,7 +40,7 @@ public class DumpFullReporter9900 implements InstructionListener {
 		dumpFullEnd(after, before.cycles, (MachineOperand9900)after.inst.getOp1(), (MachineOperand9900)after.inst.getOp2(), dumpfull);
 	}
 
-	private void dumpFullStart(InstructionWorkBlock iinstructionWorkBlock,
+	public void dumpFullStart(InstructionWorkBlock iinstructionWorkBlock,
 			RawInstruction ins, PrintWriter dumpfull) {
 		MemoryEntry entry = iinstructionWorkBlock.domain.getEntryAt(ins.pc);
 		String name = null;
@@ -71,7 +71,7 @@ public class DumpFullReporter9900 implements InstructionListener {
 		}
 		dumpfull.print(" || ");
 	}
-	private void dumpFullEnd(InstructionWorkBlock iinstructionWorkBlock, 
+	public void dumpFullEnd(InstructionWorkBlock iinstructionWorkBlock, 
 			int origCycleCount, MachineOperand9900 mop1,
 			MachineOperand9900 mop2, PrintWriter dumpfull) {
 		String str;

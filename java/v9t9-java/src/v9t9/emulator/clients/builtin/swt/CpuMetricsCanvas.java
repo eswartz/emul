@@ -140,7 +140,8 @@ public class CpuMetricsCanvas extends Canvas {
 		super.dispose();
 	}
 	protected void doPaint(PaintEvent e) {
-		
+		if (isDisposed())
+			return;
 		Rectangle rect = getClientArea();
 		Point size = new Point(rect.width, rect.height);
 		e.gc.setBackground(bgcolor);

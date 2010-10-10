@@ -7,13 +7,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.ejs.coffee.core.properties.SettingProperty;
+import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.BinaryUtils;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;
 import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
-import v9t9.emulator.runtime.Logging;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.timer.FastTimer;

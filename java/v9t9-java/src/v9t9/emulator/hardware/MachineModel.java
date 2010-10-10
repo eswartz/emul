@@ -18,6 +18,9 @@ import v9t9.tools.asm.assembler.IInstructionFactory;
  *
  */
 public interface MachineModel {
+	String getIdentifier();
+	
+	Machine createMachine();
 
 	MemoryModel getMemoryModel();
 	
@@ -32,4 +35,5 @@ public interface MachineModel {
 	IInstructionFactory getInstructionFactory();
 
 	Cpu createCPU(Machine machine);
+
 }

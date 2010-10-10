@@ -21,6 +21,8 @@ import v9t9.engine.memory.MemoryModel;
  */
 public class StandardMachineModel extends BaseTI99MachineModel {
 
+	public static final String ID = "StandardTI994A";
+	
 	private TI994AStandardConsoleMemoryModel memoryModel;
 
 	public StandardMachineModel() {
@@ -28,6 +30,20 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 		ExpRamArea.settingExpRam.setBoolean(true);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return ID;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
+	 */
+	@Override
+	public Machine createMachine() {
+		return new TI994A(this);
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */

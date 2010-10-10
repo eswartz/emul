@@ -23,6 +23,8 @@ import v9t9.engine.memory.WindowBankedMemoryEntry;
  */
 public class EnhancedMachineModel extends BaseTI99MachineModel {
 
+	public static final String ID = "Enhanced48KForthTI994A";
+	
 	private V9t9EnhancedConsoleMemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
 	private BankedMemoryEntry cpuBankedVideo;
@@ -34,6 +36,20 @@ public class EnhancedMachineModel extends BaseTI99MachineModel {
 		memoryModel = new V9t9EnhancedConsoleMemoryModel();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return ID;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
+	 */
+	@Override
+	public Machine createMachine() {
+		return new TI994A(this);
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */

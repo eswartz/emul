@@ -87,8 +87,8 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		ISettingSection saveSection = section;
 		
 		// toss unrecognized keys
-		if (true)
-			saveSection = new SettingsSection();
+		//if (true)
+		//	saveSection = new SettingsSection();
 		
 		save(saveSection);
 		

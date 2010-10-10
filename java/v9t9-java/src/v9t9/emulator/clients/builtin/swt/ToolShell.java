@@ -60,7 +60,6 @@ public class ToolShell {
 			}
 		});
 
-		
 		String boundsStr = EmulatorSettings.INSTANCE.getSettings().get(boundsPref);
 		if (boundsStr != null) {
 			Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);

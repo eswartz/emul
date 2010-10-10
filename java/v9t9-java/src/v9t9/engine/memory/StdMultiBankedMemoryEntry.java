@@ -2,7 +2,8 @@ package v9t9.engine.memory;
 
 import java.io.PrintWriter;
 
-import v9t9.emulator.runtime.Logging;
+import org.ejs.coffee.core.settings.Logging;
+
 import v9t9.emulator.runtime.cpu.Executor;
 
 /**
