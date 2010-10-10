@@ -84,6 +84,12 @@ public class SettingsSection implements ISettingSection {
 		return (ISettingSection[]) sections.toArray(new ISettingSection[sections.size()]);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.coffee.core.settings.ISettingSection#getSettingNames()
+	 */
+	public String[] getSettingNames() {
+		return data.keySet().toArray(new String[data.size()]);
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.coffee.core.properties.IPropertyStorage#get(java.lang.String)

@@ -45,6 +45,8 @@ public interface ISettingSection extends Iterable<ISettingSection.SettingEntry>{
     ISettingSection findOrAddSection(String sectionName);
     String[] getSectionNames();
     ISettingSection[] getSections();
+    
+    String[] getSettingNames();
 
 	String get(String name);
 	int getInt(String name);
