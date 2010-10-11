@@ -10,6 +10,7 @@
  *     Martin Oberhuber (Wind River) - [269682] Get port from RSE Property
  *     Uwe Stieber      (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *     Anna Dushistova  (MontaVista) - [285373] TCFConnectorService should send CommunicationsEvent.BEFORE_CONNECT and CommunicationsEvent.BEFORE_DISCONNECT
+ *     Intel Corp.                   - [326490] Add authentication to the TCF Connector Service
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -20,8 +21,10 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rse.core.model.IHost;
-import org.eclipse.rse.core.subsystems.BasicConnectorService;
+import org.eclipse.rse.core.model.IPropertySet;
+import org.eclipse.rse.core.model.PropertyType;
 import org.eclipse.rse.core.subsystems.CommunicationsEvent;
+import org.eclipse.rse.ui.subsystems.StandardConnectorService;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -32,7 +35,14 @@ import org.eclipse.tm.tcf.services.ILocator;
 import org.eclipse.tm.tcf.services.ISysMonitor;
 
 
-public class TCFConnectorService extends BasicConnectorService {
+public class TCFConnectorService extends StandardConnectorService {
+
+    public static final String PROPERTY_SET_NAME = "TCF Connection Settings"; //$NON-NLS-1$
+    public static final String PROPERTY_LOGIN_REQUIRED = "Login.Required"; //$NON-NLS-1$
+    public static final String PROPERTY_PWD_REQUIRED="Pwd.Required"; //$NON-NLS-1$
+    public static final String PROPERTY_LOGIN_PROMPT = "Login.Prompt"; //$NON-NLS-1$
+    public static final String PROPERTY_PASSWORD_PROMPT = "Password.Prompt"; //$NON-NLS-1$
+    public static final String PROPERTY_COMMAND_PROMPT = "Command.Prompt"; //$NON-NLS-1$    
 
     private IChannel channel;
     private Throwable channel_error;
@@ -41,9 +51,34 @@ public class TCFConnectorService extends BasicConnectorService {
     private boolean poll_timer_started;
 
     public TCFConnectorService(IHost host, int port) {
-        super("TCF", "Target Communication Framework", host, port); //$NON-NLS-1$ //$NON-NLS-2$
+        super(Messages.TCFConnectorService_Name,
+                Messages.TCFConnectorService_Description, host,
+                port);
+        getTCFPropertySet();
     }
 
+    public IPropertySet getTCFPropertySet() {
+        IPropertySet tcfSet = getPropertySet(PROPERTY_SET_NAME);
+        if (tcfSet == null) {
+            tcfSet = createPropertySet(PROPERTY_SET_NAME, Messages.PropertySet_Description);
+            //add default values if not set
+            tcfSet.addProperty(PROPERTY_LOGIN_REQUIRED, "true", PropertyType.getEnumPropertyType(new String[] {"true", "false"}));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+            tcfSet.addProperty(PROPERTY_PWD_REQUIRED, "false", PropertyType.getEnumPropertyType(new String[] {"true", "false"}));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+            tcfSet.addProperty(PROPERTY_LOGIN_PROMPT, "ogin: ", PropertyType.getStringPropertyType()); //$NON-NLS-1$
+            tcfSet.addProperty(PROPERTY_PASSWORD_PROMPT, "assword: ", PropertyType.getStringPropertyType()); //$NON-NLS-1$
+            tcfSet.addProperty(PROPERTY_COMMAND_PROMPT, "#", PropertyType.getStringPropertyType()); //$NON-NLS-1$
+        }
+        return tcfSet;
+    }
+
+    /**
+     * @return true if the associated connector service requires a password.
+     */
+
+    public final boolean requiresPassword() {
+        return false;
+    }
+    
     @Override
     protected void internalConnect(final IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();
