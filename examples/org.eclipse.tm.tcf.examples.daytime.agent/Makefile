@@ -19,13 +19,13 @@ $(BINDIR)/agent$(EXTEXE): $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
 $(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile
-	@mkdir -p $(dir $@)
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BINDIR)/%$(EXTOBJ): $(TCF_AGENT_DIR)/%.c $(HFILES) Makefile
-	@mkdir -p $(dir $@)
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(BINDIR)
+	$(call RMDIR,$(BINDIR))
 
