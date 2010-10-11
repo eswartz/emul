@@ -38,15 +38,13 @@ $(BINDIR)/tcflog$(EXTEXE): $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EX
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
 $(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile Makefile.inc
-ifeq ($(OPSYS),MinGW)
-	if not exist $(subst /,\,$(dir $@)) mkdir $(subst /,\,$(dir $@))
-else
-	mkdir -p $(dir $@)
-endif
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-clean:
-	rm -rf $(BINDIR) RPM *.tar *.tar.bz2 *.rpm
+clean::
+	$(call RMDIR,$(BINDIR))
+
+ifeq ($(OPSYS),GNU/Linux)
 
 install: all
 	install -d -m 755 $(INSTALLROOT)$(SBIN)
@@ -74,7 +72,6 @@ tcf-agent-$(VERSION).tar.bz2: $(HFILES) $(CFILES) Makefile Makefile.inc main/tcf
 
 tar: tcf-agent-$(VERSION).tar.bz2
 
-ifeq ($(OPSYS),GNU/Linux)
 rpm: all tar
 	rm -rf RPM
 	mkdir RPM RPM/BUILD RPM/RPMS RPM/RPMS/`uname -i` RPM/RPMS/noarch RPM/SOURCES RPM/SPECS RPM/SRPMS RPM/tmp
@@ -84,4 +81,8 @@ rpm: all tar
 	mv RPM/RPMS/`uname -i`/*.rpm .
 	mv RPM/SRPMS/*.rpm .
 	rm -rf RPM ~/.rpmmacros
+
+clean::
+	rm -rf RPM *.tar *.tar.bz2 *.rpm
+
 endif

@@ -11,6 +11,9 @@ INCDIRS = . system/$(OPSYS) machine/$(MACHINE)
 SRCDIRS = $(INCDIRS) system framework services main
 BINDIR  = obj/$(OPSYS)/$(MACHINE)/$(CONF)
 
+MKDIR   = mkdir -p $(1)
+RMDIR   = rm -rf $(1)
+
 ifeq ($(CONF),Debug)
   OPTS += -g
 else
@@ -39,6 +42,8 @@ ifeq ($(OPSYS),MinGW)
   EXTOBJ = .obj
   EXTEXE = .exe
   LIBS = -lws2_32 -liphlpapi
+  MKDIR = if not exist $(subst /,\,$(1)) mkdir $(subst /,\,$(1))
+  RMDIR = if exist $(subst /,\,$(1)) rmdir /s /q $(subst /,\,$(1))
 endif
 
 ifeq ($(OPSYS),Darwin)
