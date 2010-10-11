@@ -1023,7 +1023,7 @@ static void next_ch(void) {
         buf_ch = BUF_EOF;
     }
     else {
-        buf_ch = buf[buf_pos++];
+        buf_ch = (unsigned char)buf[buf_pos++];
     }
 }
 
