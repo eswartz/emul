@@ -255,6 +255,7 @@ vtcout:
 
 
 vnopchar:
-vnopclearline:
 vnopcursor:
     data vidws, vtcout
+vnopclearline:
+    rt    
