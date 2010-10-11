@@ -81,6 +81,16 @@ Code line  ( x1 y1 x2 y2 op|c -- )
     NEXT
 end-code
 
+Code circle  ( x y r op|c -- )
+    PUSH
+    xop *SP , SYS^ #
+    #circle data
+    ai SP , &8 #
+    POP
+    NEXT
+end-code
+
+
 Code rect  ( x1 y1 dx dy op|c -- )
     PUSH
     xop *SP , SYS^ #

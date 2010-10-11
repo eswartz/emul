@@ -584,7 +584,7 @@ vbitgetdrawfuncandcolor
 ;	R1=X, R2=Y
 ;	R12=op|color byte
 ;
-vbl_drawpixel PUSH SP, 11
+vbl_drawpixel PUSH SP, 5, 8, 11, 12
     bl     @vbitgetdrawfuncandcolor
 
     bl     @vbl_getaddr
@@ -597,7 +597,7 @@ vbl_drawpixel PUSH SP, 11
  
     bl     @vbitwritepixel_ 
     
-    POP    SP, 11
+    POP    SP, 5, 8, 11, 12
     rt
 
 ;

@@ -20,6 +20,7 @@ s" dsk1.asm99" included
 16	constant	#vbfnt
 17	constant	#rect
 18	constant	#random
+32  constant    #circle
 
 \ clear window
 Code: cls	( -- )
@@ -78,6 +79,16 @@ Code: line	( x1 y1 x2 y2 -- )
 	NEXT
 end-code
 
+
+Code: circle ( x y r c -- )
+	rTOS rT1 mov
+	rSP *R+ rT2 mov
+	rSP *R+ rT3 mov
+	rSP *R+ rT4 mov
+	rT1	SYS^ xop	#circle data
+	rSP *R+ rTOS mov
+	NEXT
+end-code
 
 Code: pixel	( x1 y1 -- )
 	rTOS rT1 mov

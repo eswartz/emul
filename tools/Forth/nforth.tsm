@@ -207,14 +207,14 @@ bankrtwp:
 ;   29: type (interpreted) ( caddr u -- )
 ;   30: read/write disk block ( block# addr r/w -- err )
 ;   31: queue sound track ( ptr -- )
-
+;   32: draw circle ( x y r c -- )
 xop1list dw	xop1_restore_mode,xop1_key_avail,xop1_read_key,xop1_emit,xop1_emit_raw
 	dw		xop1_gotoxy,xop1_clear_window,xop1_set_window,xop1_get_window,xop1_set_mode
 	dw		xop1_set_fgbg,xop1_get_fgbg,xop1_draw_line,xop1_draw_pixel,xop1_reset_screen
 	dw		xop1_set_vintflags,xop1_set_font,xop1_fill_rect,xop1_random,xop1_dsrlnk
 	dw      xop1_get_vtab,xop1_set_vdpreg,xop1_get_vdpreg,xop1_set_vrwpage,xop1_set_vpage
 	dw      xop1_reset_palette,xop1_video_state,xop1_get_text_addr,xop1_get_xy,xop1_type
-	dw      xop1_rw_block,xop1_qtrack
+	dw      xop1_rw_block,xop1_qtrack,xop1_draw_circle
 xop1last equ $
 
 ;	xop <arg> , #
@@ -441,7 +441,13 @@ xop1_rw_block:
 xop1_qtrack:
     mov     *12, 2
     bl      @xsnd_queue_track
-    ;jmp     xop1_out2
+    jmp     xop1_out2
+
+	;	32 = draw circle
+xop1_draw_circle:
+	blwp @circle
+	jmp xop1_out2
+
     
 xop1_out2:
     b   @xop1_out

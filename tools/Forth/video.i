@@ -902,22 +902,30 @@ vcursisoff	rt
 
     mov     @24(13), 12
     
+    bl      @vpixel
+    
+    rtwp
+    
+;   R12 -> args:    op|color y x
+vpixel:
+    PUSH    SP,4,9,11
+    
     cb      #M_bit4,@vidmode
     jeq     vbpcont4
     
     cb      #M_bit,@vidmode
-    jeq     vbpcont
-
-    rtwp
+    jne     vbpout
 
 vbpcont:
+    PUSH    SP, 12
     mov     @2(12), 2
     mov     @4(12), 1
     mov     *12, 12
     
     bl      @vbl_drawpixel
 
-    rtwp
+    POP     SP, 12
+    jmp     vbpout
 
 vbpcont4:
     bl      @vcmdsetup
@@ -938,8 +946,10 @@ vbpcont4:
     szcb    #>f0, *12
     socb    *12, 9           ; OP
     bl      @vbit4xsetupMMMcommand
-    
-    rtwp
+
+vbpout:    
+    POP     SP,4,9,11
+    rt
     
 ; =============================================================
 ;   Fill a rectangle (XOP)
@@ -1044,6 +1054,142 @@ ln4x:
     
 lnout:    
     rtwp
+
+; =============================================================
+;   Draw a circle (XOP)
+;   http://www.cs.unc.edu/~mcmillan/comp136/Lecture7/circle.html
+;   caller R12 -> op|color r y x
+ Vector circle, vidws
+    limi    0
+    li      SP,vstack + vstacksize
+
+    mov     @24(13), 12
+    
+    mov     12, 1
+    
+    mov     *12+, 8     ; color
+    mov     *12+, 7     ; R / p / y
+    mov     *12+, 5     ; cy
+    mov     *12+, 4     ; cx
+    
+    li      9, 5
+    sla     7, 2
+    s       7, 9
+    sra     9, 2        ; P = (5/4) R
+    sra     7, 2
+    
+    clr     6           ; x
+
+    bl      @circlePoints
+    
+ccloop:
+    c       6, 7
+    jhe     ccout
+
+    inc     6
+    mov     9, 9
+    jlt     ccneg
+    
+    dec     7
+    
+    mov     6, 0
+    s       7, 0
+    a       0, 0
+    a       0, 9
+    
+    jmp     ccnext
+
+ccneg:
+    a       6, 9
+    a       6, 9
+
+ccnext:
+    inc     9
+    
+    bl      @circlePoints
+    jmp     ccloop
+    
+ccout:
+    rtwp    
+
+;   R4: cx
+;   R5: cy
+;   R6: x
+;   R7: y
+;   R8: color
+;
+circlePoints 
+    PUSH    SP,11,12,13,14,15
+    
+    STWP    12 
+    ai      12, 13*2
+
+    mov     8, 13       ; R13=color, R14=Y, R15=X    
+
+; +x = 0
+; +y = 0
+; -x = 1
+; -y = 1
+
+    mov     4, 15
+    a       6, 15
+    mov     5, 14
+    a       7, 14
+    bl      @vpixel     ; cx+x, cy+y        ; 0 0
+
+    mov     4, 15
+    s       6, 15
+    mov     5, 14
+    s       7, 14
+    bl      @vpixel     ; cx-x, cy-y        ; 1 1
+
+    c       6, 7
+    jeq     cptseq     ; x == y    
+    
+    mov     4, 15
+    a       7, 15
+    mov     5, 14
+    a       6, 14
+    bl      @vpixel     ; cx+y, cy+x        ; 0 0
+    
+    mov     4, 15
+    s       7, 15
+    mov     5, 14
+    s       6, 14
+    bl      @vpixel     ; cx-y, cy-x        ; 1 1
+    
+    mov     6, 6
+    jeq     cptsout     ; x == 0
+    
+    mov     4, 15
+    a       7, 15
+    mov     5, 14
+    s       6, 14
+    bl      @vpixel     ; cx+y, cy-x        ; 0 1
+    
+    mov     4, 15
+    s       7, 15
+    mov     5, 14
+    a       6, 14
+    bl      @vpixel     ; cx-y, cy+x        ; 1 0
+
+cptseq:
+    
+    mov     4, 15
+    a       6, 15
+    mov     5, 14
+    s       7, 14
+    bl      @vpixel     ; cx+x, cy-y        ; 0 1
+
+    mov     4, 15
+    s       6, 15
+    mov     5, 14
+    a       7, 14
+    bl      @vpixel     ; cx-x, cy+y        ; 1 0
+    
+cptsout:    
+    POP     SP,11,12,13,14,15
+    rt
 
 ;   Handle sprite motion.
 ;
