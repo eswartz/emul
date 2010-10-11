@@ -57,6 +57,7 @@ typedef struct WaitPIDThread {
     DWORD thread;
     HANDLE handles[MAX_HANDLES];
     DWORD handle_cnt;
+    int shutdown;
     struct WaitPIDThread * next;
 } WaitPIDThread;
 
@@ -80,7 +81,7 @@ static void waitpid_event(void * args) {
 static DWORD WINAPI waitpid_thread_func(LPVOID x) {
     WaitPIDThread * thread = (WaitPIDThread *)x;
     check_error_win32(WaitForSingleObject(semaphore, INFINITE) != WAIT_FAILED);
-    for (;;) {
+    while (!thread->shutdown) {
         DWORD n = 0;
         HANDLE arr[MAX_HANDLES];
         DWORD cnt = thread->handle_cnt;
@@ -96,6 +97,7 @@ static DWORD WINAPI waitpid_thread_func(LPVOID x) {
             thread->handle_cnt--;
         }
     }
+    return 0;
 }
 
 static void init(void) {
