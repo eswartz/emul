@@ -29,6 +29,7 @@
 #include <framework/errors.h>
 
 pthread_attr_t pthread_create_attr;
+int utf8_locale = 0;
 
 #if defined(WIN32)
 
@@ -667,6 +668,8 @@ ip_ifc_info* get_ip_ifc(void) {
 #else
 
 #include <pwd.h>
+#include <locale.h>
+#include <langinfo.h>
 #include <sys/utsname.h>
 #if defined(__linux__)
 #  include <asm/unistd.h>
@@ -719,6 +722,8 @@ int tkill(pid_t pid, int signal) {
 }
 
 void ini_mdep(void) {
+    setlocale(LC_ALL, "");
+    utf8_locale = (strcmp(nl_langinfo(CODESET), "UTF-8") == 0);
     signal(SIGPIPE, SIG_IGN);
     pthread_attr_init(&pthread_create_attr);
     pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
