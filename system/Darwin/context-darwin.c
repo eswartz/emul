@@ -387,6 +387,23 @@ unsigned context_word_size(Context * ctx) {
     return sizeof(void *);
 }
 
+int context_get_canonical_addr(Context * ctx, ContextAddress addr,
+        Context ** canonical_ctx, ContextAddress * canonical_addr,
+        ContextAddress * block_addr, ContextAddress * block_size) {
+    /* Direct mapping, page size is irrelevant */
+    ContextAddress page_size = 0x100000;
+    assert(is_dispatch_thread());
+    *canonical_ctx = ctx->mem;
+    if (canonical_addr != NULL) *canonical_addr = addr;
+    if (block_addr != NULL) *block_addr = addr & ~(page_size - 1);
+    if (block_size != NULL) *block_size = page_size;
+    return 0;
+}
+
+Context * context_get_group(Context * ctx, int group) {
+    return ctx->mem;
+}
+
 static Context * find_pending(pid_t pid) {
     LINK * l = pending_list.next;
     while (l != &pending_list) {

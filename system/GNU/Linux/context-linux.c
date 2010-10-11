@@ -357,7 +357,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %zu",
         ctx, ctx->id, address, size);
     assert(word_size <= sizeof(unsigned long));
-    check_breakpoints_on_memory_write(ctx, address, buf, size);
+    if (check_breakpoints_on_memory_write(ctx, address, buf, size) < 0) return -1;
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         if (word_addr < address || word_addr + word_size > address + size) {
@@ -424,8 +424,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
             memcpy((char *)buf + (word_addr - address), &word, word_size);
         }
     }
-    check_breakpoints_on_memory_read(ctx, address, buf, size);
-    return 0;
+    return check_breakpoints_on_memory_read(ctx, address, buf, size);
 }
 
 int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
@@ -465,6 +464,23 @@ int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned offs, uns
 
 unsigned context_word_size(Context * ctx) {
     return sizeof(void *);
+}
+
+int context_get_canonical_addr(Context * ctx, ContextAddress addr,
+        Context ** canonical_ctx, ContextAddress * canonical_addr,
+        ContextAddress * block_addr, ContextAddress * block_size) {
+    /* Direct mapping, page size is irrelevant */
+    ContextAddress page_size = 0x100000;
+    assert(is_dispatch_thread());
+    *canonical_ctx = ctx->mem;
+    if (canonical_addr != NULL) *canonical_addr = addr;
+    if (block_addr != NULL) *block_addr = addr & ~(page_size - 1);
+    if (block_size != NULL) *block_size = page_size;
+    return 0;
+}
+
+Context * context_get_group(Context * ctx, int group) {
+    return ctx->mem;
 }
 
 static Context * find_pending(pid_t pid) {

@@ -77,7 +77,7 @@ static size_t context_extension_offset = 0;
 #define EXT(ctx) (ctx ? ((ContextExtensionRC *)((char *)(ctx) + context_extension_offset)) : NULL)
 
 typedef struct SafeEvent {
-    Context * mem;
+    Context * grp;
     EventCallBack * done;
     void * arg;
     struct SafeEvent * next;
@@ -334,7 +334,7 @@ static void command_get_context(char * token, Channel * c) {
         strcpy(s->token, token);
         s->ctx = ctx;
         context_lock(ctx);
-        post_safe_event(ctx->mem, event_get_context, s);
+        post_safe_event(ctx, event_get_context, s);
     }
 }
 
@@ -625,7 +625,7 @@ int terminate_debug_context(Context * ctx) {
     }
     else {
         context_lock(ctx);
-        post_safe_event(ctx->mem, event_terminate, ctx);
+        post_safe_event(ctx, event_terminate, ctx);
     }
     if (err) {
         errno = err;
@@ -769,14 +769,14 @@ static void send_event_context_exception(Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-int is_all_stopped(Context * mem) {
+int is_all_stopped(Context * ctx) {
     LINK * l;
-    assert(mem->mem == mem);
+    Context * grp = context_get_group(ctx, CONTEXT_GROUP_STOP);
     for (l = context_root.next; l != &context_root; l = l->next) {
         Context * ctx = ctxl2ctxp(l);
         if (ctx->exited || ctx->exiting) continue;
         if (!context_has_state(ctx)) continue;
-        if (ctx->mem != mem) continue;
+        if (context_get_group(ctx, CONTEXT_GROUP_STOP) != grp) continue;
         if (!ctx->stopped) return 0;
     }
     return 1;
@@ -791,7 +791,7 @@ static void stop_all_timer(void * args) {
 
 static void run_safe_events(void * arg) {
     LINK * l;
-    Context * mem;
+    Context * grp;
 
     run_safe_events_posted--;
     if (run_safe_events_posted > 0) return;
@@ -841,8 +841,8 @@ static void run_safe_events(void * arg) {
     }
 
     if (safe_event_list == NULL) return;
-    mem = safe_event_list->mem;
-    context_lock(mem);
+    grp = safe_event_list->grp;
+    context_lock(grp);
 
     l = context_root.next;
     while (l != &context_root) {
@@ -850,7 +850,7 @@ static void run_safe_events(void * arg) {
         ContextExtensionRC * ext = EXT(ctx);
         l = l->next;
         ext->pending_safe_event = 0;
-        if (ctx->mem != mem) continue;
+        if (context_get_group(ctx, CONTEXT_GROUP_STOP) != grp) continue;
         if (ctx->exited || ctx->exiting) continue;
         if (ctx->stopped || !context_has_state(ctx)) continue;
         if (stop_all_timer_cnt >= STOP_ALL_MAX_CNT) {
@@ -877,7 +877,7 @@ static void run_safe_events(void * arg) {
     while (safe_event_list) {
         Trap trap;
         SafeEvent * i = safe_event_list;
-        if (i->mem != mem) {
+        if (i->grp != grp) {
             assert(run_ctrl_lock_cnt > 0);
             if (run_safe_events_posted == 0) {
                 run_safe_events_posted++;
@@ -892,7 +892,7 @@ static void run_safe_events(void * arg) {
             }
             break;
         }
-        assert(is_all_stopped(i->mem));
+        assert(is_all_stopped(i->grp));
         safe_event_list = i->next;
         if (set_trap(&trap)) {
             i->done(i->arg);
@@ -903,10 +903,10 @@ static void run_safe_events(void * arg) {
                   trap.error, errno_to_str(trap.error));
         }
         run_ctrl_unlock();
-        context_unlock(i->mem);
+        context_unlock(i->grp);
         loc_free(i);
     }
-    context_unlock(mem);
+    context_unlock(grp);
 }
 
 static void check_safe_events(Context * ctx) {
@@ -922,16 +922,16 @@ static void check_safe_events(Context * ctx) {
     }
 }
 
-void post_safe_event(Context * mem, EventCallBack * done, void * arg) {
+void post_safe_event(Context * ctx, EventCallBack * done, void * arg) {
     SafeEvent * i = (SafeEvent *)loc_alloc_zero(sizeof(SafeEvent));
-    assert(mem->mem == mem);
+    Context * grp = context_get_group(ctx, CONTEXT_GROUP_STOP);
     run_ctrl_lock();
-    context_lock(mem);
+    context_lock(grp);
     if (safe_event_list == NULL) {
         run_safe_events_posted++;
         post_event(run_safe_events, NULL);
     }
-    i->mem = mem;
+    i->grp = grp;
     i->done = done;
     i->arg = arg;
     if (safe_event_list == NULL) safe_event_list = i;
@@ -1049,8 +1049,7 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
 #include <services/runctrl.h>
 #include <assert.h>
 
-void post_safe_event(Context * mem, EventCallBack * done, void * arg) {
-    assert(mem->mem == mem);
+void post_safe_event(Context * ctx, EventCallBack * done, void * arg) {
     post_event(done, arg);
 }
 

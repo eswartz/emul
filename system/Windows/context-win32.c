@@ -857,8 +857,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         errno = log_error("ReadProcessMemory", 0);
         return -1;
     }
-    check_breakpoints_on_memory_read(ctx, address, buf, size);
-    return 0;
+    return check_breakpoints_on_memory_read(ctx, address, buf, size);
 }
 
 int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
@@ -869,7 +868,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         ctx, ctx->id, address, (int)size);
     assert(is_dispatch_thread());
     ctx = ctx->mem;
-    check_breakpoints_on_memory_write(ctx, address, buf, size);
+    if (check_breakpoints_on_memory_write(ctx, address, buf, size) < 0) return -1;
     if (WriteProcessMemory(ext->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED) errno = set_win32_errno(err);
@@ -916,6 +915,23 @@ int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned offs, uns
 
 unsigned context_word_size(Context * ctx) {
     return sizeof(void *);
+}
+
+int context_get_canonical_addr(Context * ctx, ContextAddress addr,
+        Context ** canonical_ctx, ContextAddress * canonical_addr,
+        ContextAddress * block_addr, ContextAddress * block_size) {
+    /* Direct mapping, page size is irrelevant */
+    ContextAddress page_size = 0x100000;
+    assert(is_dispatch_thread());
+    *canonical_ctx = ctx->mem;
+    if (canonical_addr != NULL) *canonical_addr = addr;
+    if (block_addr != NULL) *block_addr = addr & ~(page_size - 1);
+    if (block_size != NULL) *block_size = page_size;
+    return 0;
+}
+
+Context * context_get_group(Context * ctx, int group) {
+    return ctx->mem;
 }
 
 HANDLE get_context_handle(Context * ctx) {

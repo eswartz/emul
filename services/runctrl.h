@@ -31,7 +31,7 @@
  *
  * For example, a breakpoint hit handling sequence looks like this:
  *   1. context stopped by breakpoint, call post_safe_event()
- *   2. run control suspends all contexts in the group.
+ *   2. run control suspends all contexts in the "stop" context group.
  *   3. run control calls safe event callback that evaluates breakpoint condition:
  *          if condition false, do step over the breakpoint - call safe_context_single_step()
  *          else intercept the context and report breakpoint hit up to UI - call suspend_debug_context()
@@ -67,10 +67,10 @@ extern void run_ctrl_unlock(void);
  * Stops debuggee threads.
  * Callback function 'done' will be called when threads are stopped and
  * it is safe to access debuggee memory, plant breakpoints, etc.
- * 'mem' is memory context, only threads that belong to that memory are stopped.
+ * Only threads that belong to same "stop" context group as 'ctx' are stopped.
  * post_safe_event() uses run_ctrl_lock()/run_ctrl_unlock() to suspend/resume debuggee.
  */
-extern void post_safe_event(Context * mem, EventCallBack * done, void * arg);
+extern void post_safe_event(Context * ctx, EventCallBack * done, void * arg);
 
 /*
  * Single step a context during handling of safe event.

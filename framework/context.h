@@ -209,6 +209,43 @@ extern int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned of
 extern unsigned context_word_size(Context * ctx);
 
 /*
+ * Map an address in given address space to a unique canonical memory location.
+ * A target system can have same block (page) of memory mapped to different address spaces at different addresses.
+ * This function should return memory space and address that uniquely identify memory block.
+ * 'block_addr' and 'block_size' are optional arguments that clients can use to retrieve
+ * the memory block start address and size. Clients can use this information to map a range of addresses
+ * with a single function call.
+ * Return -1 and set errno if canonical address cannot be resolved.
+ */
+extern int context_get_canonical_addr(Context * ctx, ContextAddress addr,
+        Context ** canonical_ctx, ContextAddress * canonical_addr,
+        ContextAddress * block_addr, ContextAddress * block_size);
+
+/*
+ * Get a context that represents a group of related contexts.
+ * Implementation can choose a member of a group to represent the group,
+ * or it can create a separate context object for that.
+ * Clients can use this function to check if two or more contexts belong to same group,
+ * for example:
+ *     if (context_get_group(ctx1, group) == context_get_group(ctx2, group) ...
+ *
+ * See CONTEXT_GROUP_* for possible values of 'group' argument.
+ */
+extern Context * context_get_group(Context * ctx, int group);
+
+/*
+ * "stop" context group - all contexts that need to be stopped to make sure
+ * memory contents in a particular address space is stable.
+ */
+#define CONTEXT_GROUP_STOP          1
+
+/*
+ * "breakpoint" context group - all contexts for which evaluation of breakpoint
+ * location should produce same list of addresses.
+ */
+#define CONTEXT_GROUP_BREAKPOINT    2
+
+/*
  * Functions that notify listeners of various context event.
  * They are not supposed to be called by clients.
  */
