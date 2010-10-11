@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.tests;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedList;
 import java.util.Random;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -37,14 +38,17 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
 
     private static final int
         STATE_PRE = 0,
-        STATE_WRITE = 1,
-        STATE_READ = 2,
-        STATE_OUT = 3,
-        STATE_INP = 4,
-        STATE_EXIT = 5;
+        STATE_RD_DIR = 1,
+        STATE_WRITE = 2,
+        STATE_READ = 3,
+        STATE_OUT = 4,
+        STATE_INP = 5,
+        STATE_EXIT = 6;
 
     private final IFileSystem files;
+    private final Random rnd = new Random();
     private final byte[] data = new byte[0x1000];
+    private final LinkedList<String> tmp_files = new LinkedList<String>();
     private String root;
     private String tmp_path;
     private String file_name;
@@ -88,11 +92,10 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
 
     public void doneReadDir(IToken token, FileSystemException error,
             DirEntry[] entries, boolean eof) {
-        assert state == STATE_PRE;
         if (error != null) {
             exit(error);
         }
-        else {
+        else if (state == STATE_PRE) {
             if (entries != null && tmp_path == null) {
                 for (DirEntry e : entries) {
                     if (e.filename.equals("tmp") || e.filename.equalsIgnoreCase("temp")) {
@@ -114,6 +117,24 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 files.readdir(handle, this);
             }
         }
+        else if (state == STATE_RD_DIR) {
+            if (entries != null) {
+                for (DirEntry e : entries) {
+                    if (e.filename.startsWith("tcf-test-" + channel_id + "-")) {
+                        tmp_files.add(e.filename);
+                    }
+                }
+            }
+            if (eof) {
+                files.close(handle, this);
+            }
+            else {
+                files.readdir(handle, this);
+            }
+        }
+        else {
+            assert false;
+        }
     }
 
     public void doneStat(IToken token, FileSystemException error, FileAttrs attrs) {
@@ -128,9 +149,31 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 files.close(handle, this);
             }
         }
-        else {
-            file_name = tmp_path + "/tcf-test-" + channel_id + ".tmp";
+        else if (state == STATE_WRITE) {
+            char[] bf = new char[64];
+            for (int i = 0; i < bf.length; i++) {
+                char ch = (char)(rnd.nextInt(0x4000) + 0x20);
+                switch (ch) {
+                case '<':
+                case '>':
+                case ':':
+                case '"':
+                case '/':
+                case '\\':
+                case '|':
+                case '?':
+                case '*':
+                case '~':
+                    ch = '-';
+                    break;
+                }
+                bf[i] = ch;
+            }
+            file_name = tmp_path + "/tcf-test-" + channel_id + "-" + new String(bf) + ".tmp";
             files.open(file_name, IFileSystem.TCF_O_CREAT | IFileSystem.TCF_O_TRUNC | IFileSystem.TCF_O_WRITE, null, this);
+        }
+        else {
+            assert false;
         }
     }
 
@@ -144,7 +187,7 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 files.read(handle, 0, data.length + 1, this);
             }
             else if (state == STATE_WRITE) {
-                new Random().nextBytes(data);
+                rnd.nextBytes(data);
                 files.write(handle, 0, data, 0, data.length, this);
             }
             else if (state == STATE_INP) {
@@ -156,7 +199,6 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                             byte[] buf = new byte[333];
                             int buf_pos = 0;
                             int buf_len = 0;
-                            Random rnd = new Random();
                             boolean mark = true;
                             boolean reset = true;
                             int mark_pos = rnd.nextInt(len - 1);
@@ -221,13 +263,12 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 thread.start();
             }
             else if (state == STATE_OUT) {
-                new Random().nextBytes(data);
+                rnd.nextBytes(data);
                 Thread thread = new Thread() {
                     public void run() {
                         try {
                             int pos = 0;
                             int len = data.length * 16;
-                            Random rnd = new Random();
                             OutputStream out = new TCFFileOutputStream(handle, 121);
                             while (pos < len) {
                                 int m = pos % data.length;
@@ -263,7 +304,7 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 thread.start();
             }
             else {
-                assert state == STATE_PRE;
+                assert state == STATE_PRE || state == STATE_RD_DIR;
                 files.readdir(handle, this);
             }
         }
@@ -307,6 +348,11 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
         else {
             handle = null;
             if (state == STATE_PRE) {
+                state = STATE_RD_DIR;
+                files.opendir(tmp_path, this);
+            }
+            else if (state == STATE_RD_DIR) {
+                state = STATE_WRITE;
                 files.realpath(tmp_path, this);
             }
             else if (state == STATE_WRITE) {
@@ -337,10 +383,14 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
         if (error != null) {
             exit(error);
         }
-        else if (state == STATE_PRE) {
-            state = STATE_WRITE;
+        else if (state == STATE_WRITE) {
             tmp_path = path;
-            files.stat(tmp_path, this);
+            if (tmp_files.size() > 0) {
+                files.remove(tmp_path + "/" + tmp_files.removeFirst(), this);
+            }
+            else {
+                files.stat(tmp_path, this);
+            }
         }
         else if (!path.equals(file_name + ".rnm")) {
             exit(new Exception("Invalid FileSysrem.realpath responce: " + path));
@@ -351,8 +401,23 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
     }
 
     public void doneRemove(IToken token, FileSystemException error) {
-        assert state == STATE_EXIT;
-        exit(error);
+        if (error != null) {
+            exit(error);
+        }
+        else if (state == STATE_WRITE) {
+            if (tmp_files.size() > 0) {
+                files.remove(tmp_path + "/" + tmp_files.removeFirst(), this);
+            }
+            else {
+                files.stat(tmp_path, this);
+            }
+        }
+        else if (state == STATE_EXIT) {
+            exit(null);
+        }
+        else {
+            assert false;
+        }
     }
 
     private void exit(Throwable x) {
