@@ -48,6 +48,18 @@ public class DisassemblyProxy implements IDisassembly {
         public Map<String,Object>[] getInstruction() {
             return instruction;
         }
+
+        public String toString() {
+            StringBuffer bf = new StringBuffer();
+            bf.append('[');
+            bf.append(addr.toString());
+            bf.append(' ');
+            bf.append(size);
+            bf.append(' ');
+            for (Map<String,Object> m : instruction) bf.append(m.toString());
+            bf.append(']');
+            return bf.toString();
+        }
     }
 
     public DisassemblyProxy(IChannel channel) {

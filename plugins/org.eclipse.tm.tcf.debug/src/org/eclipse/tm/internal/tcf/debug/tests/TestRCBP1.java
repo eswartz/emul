@@ -25,11 +25,13 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IDiagnostics;
+import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IDiagnostics.ISymbol;
+import org.eclipse.tm.tcf.services.IDisassembly.IDisassemblyLine;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
 import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
@@ -46,9 +48,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final IRegisters rg;
     private final IBreakpoints bp;
     private final ILineNumbers ln;
+    private final IDisassembly ds;
     private final Map<String,IRunControl.RunControlContext> threads = new HashMap<String,IRunControl.RunControlContext>();
     private final Map<String,SuspendedContext> suspended = new HashMap<String,SuspendedContext>();
     private final Map<String,SuspendedContext> suspended_prev = new HashMap<String,SuspendedContext>();
+    private final Map<String,IDisassemblyLine[]> disassembly_lines = new HashMap<String,IDisassemblyLine[]>();
+    private final Map<String,Map<String,Object>[]> disassembly_capabilities = new HashMap<String,Map<String,Object>[]>();
     private final Set<String> running = new HashSet<String>();
     private final Set<IToken> get_state_cmds = new HashSet<IToken>();
     private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
@@ -66,6 +71,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private Runnable pending_cancel;
     private int bp_cnt = 0;
     private boolean done_get_state;
+    private boolean done_disassembly;
     private int resume_cnt = 0;
     private IToken cancel_test_cmd;
     private boolean bp_reset_done;
@@ -155,6 +161,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         rg = channel.getRemoteService(IRegisters.class);
         bp = channel.getRemoteService(IBreakpoints.class);
         ln = channel.getRemoteService(ILineNumbers.class);
+        ds = channel.getRemoteService(IDisassembly.class);
     }
 
     public void start() {
@@ -205,6 +212,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             assert running.isEmpty();
             assert suspended.isEmpty();
             getContextState(test_ctx_id);
+            return;
+        }
+        if (ds != null && !done_disassembly) {
+            assert get_state_cmds.isEmpty();
+            assert disassembly_lines.isEmpty();
+            getDisassemlyLines();
             return;
         }
         if (rcbp1_found) {
@@ -507,6 +520,47 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         assert resume_cnt == 0;
         assert threads.size() == suspended.size() + running.size();
         done_get_state = true;
+        runTest();
+    }
+
+    private void getDisassemlyLines() {
+        for (final String id : suspended.keySet()) {
+            SuspendedContext sc = suspended.get(id);
+            get_state_cmds.add(ds.getCapabilities(id, new IDisassembly.DoneGetCapabilities() {
+                public void doneGetCapabilities(IToken token, Throwable error, Map<String,Object>[] arr) {
+                    get_state_cmds.remove(token);
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else {
+                        disassembly_capabilities.put(id, arr);
+                        if (get_state_cmds.isEmpty()) doneDisassembly();
+                    }
+                }
+            }));
+            if (sc.pc == null) continue;
+            BigInteger pc = new BigInteger(sc.pc);
+            get_state_cmds.add(ds.disassemble(id, pc, 1, null, new IDisassembly.DoneDisassemble() {
+                public void doneDisassemble(IToken token, Throwable error, IDisassemblyLine[] arr) {
+                    get_state_cmds.remove(token);
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else {
+                        disassembly_lines.put(id, arr);
+                        if (get_state_cmds.isEmpty()) doneDisassembly();
+                    }
+                }
+            }));
+        }
+        if (get_state_cmds.isEmpty()) doneDisassembly();
+    }
+
+    private void doneDisassembly() {
+        assert !done_disassembly;
+        assert get_state_cmds.isEmpty();
+        assert suspended.size() == disassembly_lines.size();
+        done_disassembly = true;
         runTest();
     }
 
