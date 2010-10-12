@@ -245,6 +245,12 @@ public interface IMemory extends IService {
             BYTE_CANNOT_READ  = 0x04,
             BYTE_CANNOT_WRITE = 0x08;
 
+        final static String
+            RANGE_KEY_ADDR  = "addr",
+            RANGE_KEY_SIZE  = "size",
+            RANGE_KEY_STAT  = "stat",
+            RANGE_KEY_MSG   = "msg";
+
         int getStatus(int offset);
 
         /**

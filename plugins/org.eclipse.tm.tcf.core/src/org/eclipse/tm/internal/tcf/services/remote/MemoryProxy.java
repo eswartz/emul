@@ -63,13 +63,13 @@ public class MemoryProxy implements IMemory {
                         (BigInteger)addr : new BigInteger(addr.toString());
                 for (Map<String,Object> m : c) {
                     Range r = new Range();
-                    Number x = (Number)m.get("addr");
+                    Number x = (Number)m.get(RANGE_KEY_ADDR);
                     BigInteger y = x instanceof BigInteger ?
                             (BigInteger)x : new BigInteger(x.toString());
                     r.offs = addr_bi.subtract(y).intValue();
-                    r.size = ((Number)m.get("size")).intValue();
-                    r.stat = ((Number)m.get("stat")).intValue();
-                    r.msg = Command.toErrorString(m.get("msg"));
+                    r.size = ((Number)m.get(RANGE_KEY_SIZE)).intValue();
+                    r.stat = ((Number)m.get(RANGE_KEY_STAT)).intValue();
+                    r.msg = Command.toErrorString(m.get(RANGE_KEY_MSG));
                     assert r.offs >= 0;
                     assert r.size >= 0;
                     this.ranges[n++] = r;
