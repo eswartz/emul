@@ -66,7 +66,7 @@ public class MemoryProxy implements IMemory {
                     Number x = (Number)m.get(RANGE_KEY_ADDR);
                     BigInteger y = x instanceof BigInteger ?
                             (BigInteger)x : new BigInteger(x.toString());
-                    r.offs = addr_bi.subtract(y).intValue();
+                    r.offs = y.subtract(addr_bi).intValue();
                     r.size = ((Number)m.get(RANGE_KEY_SIZE)).intValue();
                     r.stat = ((Number)m.get(RANGE_KEY_STAT)).intValue();
                     r.msg = Command.toErrorString(m.get(RANGE_KEY_MSG));
