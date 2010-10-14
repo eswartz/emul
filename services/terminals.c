@@ -633,6 +633,9 @@ static void command_launch(char * token, Channel * c) {
     char encoding[TERM_PROP_DEF_SIZE];
     char pty_type[TERM_PROP_DEF_SIZE];
     const char * args[] = TERM_LAUNCH_ARGS;
+    const char * exec = TERM_LAUNCH_EXEC;
+    char fnm[FILE_PATH_SIZE];
+    struct stat st;
 
     char ** envp = NULL;
     int envp_len = 0;
@@ -649,7 +652,20 @@ static void command_launch(char * token, Channel * c) {
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-        if (err == 0 && start_terminal(c, pty_type, encoding, envp, envp_len, TERM_LAUNCH_EXEC,
+        if (err == 0 && stat(exec, &st) != 0) {
+            int n = errno;
+            /* On some systems (e.g. Free DSB) bash is installed under /usr/local */
+            assert(exec[0] == '/');
+            snprintf(fnm, sizeof(fnm), "/usr/local%s", exec);
+            if (stat(fnm, &st) == 0) {
+                args[0] = exec = fnm;
+            }
+            else {
+                err = n;
+            }
+        }
+
+        if (err == 0 && start_terminal(c, pty_type, encoding, envp, envp_len, exec,
                 args, &pid, &prs) < 0) err = errno;
         if (prs != NULL) {
             write_terminal_input(prs);
@@ -659,7 +675,7 @@ static void command_launch(char * token, Channel * c) {
         }
         if (!err) add_waitpid_process(pid);
 
-        //write result back
+        /* write result back */
         write_stringz(&c->out, "R");
         write_stringz(&c->out, token);
         write_errno(&c->out, err);
