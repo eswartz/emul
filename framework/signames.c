@@ -93,58 +93,86 @@ int get_signal_from_code(unsigned code) {
 #else
 
 /*
- * POSIX signal names
+ * POSIX signals info
  */
 
-#define CASE(var) case var: return ""#var;
-const char * signal_name(int signal) {
-    switch (signal) {
-    CASE(SIGHUP)
-    CASE(SIGINT)
-    CASE(SIGQUIT)
-    CASE(SIGILL)
-    CASE(SIGTRAP)
-    CASE(SIGABRT)
-    CASE(SIGBUS)
-    CASE(SIGFPE)
-    CASE(SIGKILL)
-    CASE(SIGUSR1)
-    CASE(SIGSEGV)
-    CASE(SIGUSR2)
-    CASE(SIGPIPE)
-    CASE(SIGALRM)
-    CASE(SIGTERM)
+typedef struct SignalInfo {
+    int signal;
+    const char * name;
+    const char * desc;
+} SignalInfo;
+
+#define SIGINFO(sig, desc) { sig, ""#sig, desc },
+static SignalInfo info[] = {
+    SIGINFO(SIGHUP,    "Hangup")
+    SIGINFO(SIGINT,    "Interrupt")
+    SIGINFO(SIGQUIT,   "Quit and dump core")
+    SIGINFO(SIGILL,    "Illegal instruction")
+    SIGINFO(SIGTRAP,   "Trace/breakpoint trap")
+    SIGINFO(SIGABRT,   "Process aborted")
+    SIGINFO(SIGBUS,    "Bus error")
+    SIGINFO(SIGFPE,    "Floating point exception")
+    SIGINFO(SIGKILL,   "Request to kill")
+    SIGINFO(SIGUSR1,   "User-defined signal 1")
+    SIGINFO(SIGSEGV,   "Segmentation violation")
+    SIGINFO(SIGUSR2,   "User-defined signal 2")
+    SIGINFO(SIGPIPE,   "Write to pipe with no one reading")
+    SIGINFO(SIGALRM,   "Signal raised by alarm")
+    SIGINFO(SIGTERM,   "Request to terminate")
 #ifdef SIGSTKFLT
-    CASE(SIGSTKFLT)
+    SIGINFO(SIGSTKFLT, "Stack fault")
 #endif
-    CASE(SIGCHLD)
-    CASE(SIGCONT)
-    CASE(SIGSTOP)
-    CASE(SIGTSTP)
-    CASE(SIGTTIN)
-    CASE(SIGTTOU)
-    CASE(SIGURG)
-    CASE(SIGXCPU)
-    CASE(SIGXFSZ)
-    CASE(SIGVTALRM)
-    CASE(SIGPROF)
+    SIGINFO(SIGCHLD,   "Child process terminated or stopped")
+    SIGINFO(SIGCONT,   "Continue if stopped")
+    SIGINFO(SIGSTOP,   "Stop executing temporarily")
+    SIGINFO(SIGTSTP,   "Terminal stop signal")
+    SIGINFO(SIGTTIN,   "Background process attempting to read from tty")
+    SIGINFO(SIGTTOU,   "Background process attempting to write to tty")
+    SIGINFO(SIGURG,    "Urgent data available on socket")
+    SIGINFO(SIGXCPU,   "CPU time limit exceeded")
+    SIGINFO(SIGXFSZ,   "File size limit exceeded")
+    SIGINFO(SIGVTALRM, "Virtual time timer expired")
+    SIGINFO(SIGPROF,   "Profiling timer expired")
 #ifdef SIGWINCH
-    CASE(SIGWINCH)
+    SIGINFO(SIGWINCH,  "Window resize signal")
 #endif
 #ifdef SIGIO
-    CASE(SIGIO)
+    SIGINFO(SIGIO,     "Asynchronous I/O event")
+#elif defined(SIGPOLL)
+    SIGINFO(SIGPOLL,   "Asynchronous I/O event")
 #endif
 #ifdef SIGPWR
-    CASE(SIGPWR)
+    SIGINFO(SIGPWR,    "Power failure")
 #endif
-    CASE(SIGSYS)
+    SIGINFO(SIGSYS,    "Bad syscall")
+};
+#undef SIGINFO
+
+#define INFO_CNT ((int)(sizeof(info) / sizeof(SignalInfo)))
+
+static SignalInfo * get_info(int signal) {
+    static SignalInfo * index[32];
+    static int index_ok = 0;
+    if (signal < 0 || signal > 31) return NULL;
+    if (!index_ok) {
+        int i;
+        for (i = 0; i < INFO_CNT; i++) {
+            index[info[i].signal] = &info[i];
+        }
+        index_ok = 1;
     }
+    return index[signal];
+}
+
+const char * signal_name(int signal) {
+    SignalInfo * i = get_info(signal);
+    if (i != NULL) return i->name;
     return NULL;
 }
-#undef CASE
 
 const char * signal_description(int signal) {
-    /* TODO: signal description */
+    SignalInfo * i = get_info(signal);
+    if (i != NULL) return i->desc;
     return NULL;
 }
 
