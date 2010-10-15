@@ -11,6 +11,7 @@
  *     Uwe Stieber (Wind River) - [271224] NPE in TCFFileService#download
  *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *     Uwe Stieber (Wind River) - [274277] The TCF file service subsystem implementation is not updating the progress monitor
+ *     Intel Corporation        - [326489] Make recursive copy/delete available (delete/copy a folder contains files)
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -18,6 +19,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +45,7 @@ import org.eclipse.rse.services.files.AbstractFileService;
 import org.eclipse.rse.services.files.IHostFile;
 import org.eclipse.tm.internal.tcf.rse.Activator;
 import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
+import org.eclipse.tm.internal.tcf.rse.Messages;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 import org.eclipse.tm.internal.tcf.rse.TCFRSETask;
@@ -131,22 +134,120 @@ public class TCFFileService extends AbstractFileService {
         return s;
     }
 
+    /* Delete from UI action will call deleteBatch interface, yet
+     * for copy from UI action, it will call copy! It's totally
+     * inconsistency! For solving the problem, we have to modify
+     * the copy itself and made it recursive. We can't modify it
+     * in the same way as delete does!
+     *  
+     */
+
+    public void internalCopy(String srcParent,
+            String srcName, String tgtParent, String tgtName, IProgressMonitor monitor)
+            throws SystemMessageException, InterruptedException {
+        //Note the dest directory or file exist surely since UI operations have
+        //done something, rename it to copy of XXX
+        if (monitor != null)
+        {
+            if (monitor.isCanceled())
+            {
+                throw new InterruptedException(Messages.TCFFileService_UserCancellation);
+            }
+        }       
+
+        try
+        {
+            //firstly create the target directory!
+            this.createFolder(tgtParent, tgtName, monitor);
+            //then copy the next level directory!
+            final String new_srcpath = toRemotePath(srcParent, srcName);
+            final String new_tgtpath = toRemotePath(tgtParent, tgtName);
+            IHostFile[] arrFiles = internalFetch(new_srcpath, null,
+                    FILE_TYPE_FILES_AND_FOLDERS, monitor);
+            if (arrFiles == null || arrFiles.length <=0 )
+                return;
+            else
+            {
+                for (int i = 0; i < arrFiles.length; i++)
+                {
+                    String srcFile = toRemotePath(new_srcpath, arrFiles[i].getName());
+                    String tgtFile = toRemotePath(new_tgtpath, arrFiles[i].getName());
+                    if (arrFiles[i].isFile())
+                    {
+                        copy(srcFile, tgtFile, monitor);
+                    }
+                    else
+                    {
+                        //do recursive directory copy!
+                        internalCopy(new_srcpath, arrFiles[i].getName(), new_tgtpath,
+                                arrFiles[i].getName(), monitor);
+                    }
+                }
+            }
+        }
+        catch (SystemMessageException e)
+        {
+            e.printStackTrace();
+            throw new SystemMessageException(e.getSystemMessage());
+        }
+        catch (InterruptedException e)
+        {
+            throw new InterruptedException(Messages.TCFFileService_UserCancellation1);
+        }        
+    }
+    
     public void copy(String srcParent,
             String srcName, String tgtParent, String tgtName, IProgressMonitor monitor)
             throws SystemMessageException {
-        final String src = toRemotePath(srcParent, srcName);
-        final String tgt = toRemotePath(tgtParent, tgtName);
+        
+        if (monitor != null)
+            monitor.beginTask(Messages.TCFFileService_CopyingFiles, 1);
+        
+        try {
+
+            IHostFile curFile = getFile(srcParent, srcName, monitor);
+            final String srcFile = toRemotePath(srcParent, srcName);
+            final String tgtFile = toRemotePath(tgtParent, tgtName);
+
+            if (curFile.isFile())
+                copy(srcFile, tgtFile, monitor);
+            else if (curFile.isDirectory())
+            {
+                internalCopy(srcParent, srcName, tgtParent, tgtName, monitor);
+            }
+            else
+            {
+                FileNotFoundException e =
+                    new FileNotFoundException(Messages.TCFFileService_FileNotFoundMessage); 
+                throw new SystemMessageException(getMessage(e));
+            }
+        }
+        catch (Exception e) {
+            // TODO Auto-generated catch block
+            if (e instanceof SystemMessageException)
+                throw (SystemMessageException)e;
+            throw new SystemOperationFailedException(Activator.PLUGIN_ID, e);
+            
+        }
+        finally {
+            if (monitor != null)
+                monitor.done();
+        }
+    }
+
+    public void copy(final String srcFile, final String tgtFile, IProgressMonitor monitor)
+            throws SystemMessageException {
         new TCFRSETask<Boolean>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
-                fs.copy(src, tgt, false, false, new IFileSystem.DoneCopy() {
+                fs.copy(srcFile, tgtFile, false, false, new IFileSystem.DoneCopy() {
                     public void doneCopy(IToken token, FileSystemException error) {
                         if (error != null) error(error);
                         else done(Boolean.TRUE);
                     }
                 });
             }
-        }.getS(monitor, "Copy: " + srcName); //$NON-NLS-1$
+        }.getS(monitor, "Copy: " + srcFile); //$NON-NLS-1$
     }
 
     public void copyBatch(String[] srcParents,
@@ -226,12 +327,77 @@ public class TCFFileService extends AbstractFileService {
         }.getS(monitor, "Delete"); //$NON-NLS-1$
     }
 
+    private void internalDelete(String parent, String name,
+            IProgressMonitor monitor) 
+    throws SystemMessageException, InterruptedException
+    {
+        if (monitor != null)
+        {
+            if (monitor.isCanceled())
+            {
+                throw new InterruptedException(Messages.TCFFileService_UserDeleteCancellation);
+            }
+        }
+
+        try 
+        {
+            final String new_path = toRemotePath(parent, name);
+            IHostFile[] arrFiles = internalFetch(new_path, null,
+                    FILE_TYPE_FILES_AND_FOLDERS, monitor);
+            if (arrFiles == null || arrFiles.length <= 0)
+            {
+                //This is an empty directory, directly delete!
+                delete(parent, name, monitor);
+            }
+            else
+            {
+                for (int i = 0; i < arrFiles.length; i++)
+                {
+
+                    if (arrFiles[i].isFile())
+                    {
+                        delete(new_path, arrFiles[i].getName(), monitor);
+                    }
+                    else
+                        internalDelete(new_path, arrFiles[i].getName(), monitor);
+                }
+                //now the folder becomes empty, let us delete it!
+                delete(parent, name, monitor);
+            }
+        }
+        catch (SystemMessageException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new SystemMessageException(e.getSystemMessage());
+        }
+        catch (InterruptedException e) {
+            throw new InterruptedException(Messages.TCFFileService_UserDeleteCancellation1);
+        }
+    }
+
     @Override
     public void deleteBatch(String[] remoteParents, String[] fileNames,
             IProgressMonitor monitor)
-            throws SystemMessageException {
-        for (int i = 0; i < remoteParents.length; i++) {
-            delete(remoteParents[i], fileNames[i], monitor);
+    throws SystemMessageException {
+        if (monitor != null)
+            monitor.beginTask(Messages.TCFFileService_DeletingFiles, remoteParents.length);  
+        try
+        {
+            for (int i = 0; i < remoteParents.length; i++) {
+                IHostFile curFile = getFile(remoteParents[i], fileNames[i], monitor);
+                if (curFile.isFile())
+                    delete(remoteParents[i], fileNames[i], monitor);
+                else if (curFile.isDirectory())
+                    internalDelete(remoteParents[i], fileNames[i], monitor);                    
+            }
+        }
+        catch (Exception x) {
+            if (x instanceof SystemMessageException) throw (SystemMessageException)x;
+            throw new SystemOperationFailedException(Activator.PLUGIN_ID, x);
+        }
+        finally {
+            if (monitor != null)
+                monitor.done();
         }
     }
 

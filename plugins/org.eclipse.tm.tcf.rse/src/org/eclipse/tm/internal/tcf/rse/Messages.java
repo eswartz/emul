@@ -122,6 +122,13 @@ public class Messages extends NLS {
 
     public static String TCFConnectorService_Name;
     public static String TCFConnectorService_Description;
+    public static String TCFFileService_CopyingFiles;
+    public static String TCFFileService_DeletingFiles;
+    public static String TCFFileService_FileNotFoundMessage;
+    public static String TCFFileService_UserCancellation;
+    public static String TCFFileService_UserCancellation1;
+    public static String TCFFileService_UserDeleteCancellation;
+    public static String TCFFileService_UserDeleteCancellation1;
     public static String PropertySet_Description;    
 
     static {
