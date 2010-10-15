@@ -33,8 +33,12 @@
 
 int read_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t * value) {
     uint8_t buf[8];
-    if (reg_def == NULL || frame == NULL) {
-        errno = ERR_INV_CONTEXT;
+    if (reg_def == NULL) {
+        set_errno(ERR_INV_CONTEXT, "Invalid register");
+        return -1;
+    }
+    if (frame == NULL) {
+        set_errno(ERR_INV_CONTEXT, "Invalid stack frame");
         return -1;
     }
     if (reg_def->size > sizeof(buf)) {
@@ -57,8 +61,12 @@ int read_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t * 
 int write_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t value) {
     size_t i;
     uint8_t buf[8];
-    if (reg_def == NULL || frame == NULL) {
-        errno = ERR_INV_CONTEXT;
+    if (reg_def == NULL) {
+        set_errno(ERR_INV_CONTEXT, "Invalid register");
+        return -1;
+    }
+    if (frame == NULL) {
+        set_errno(ERR_INV_CONTEXT, "Invalid stack frame");
         return -1;
     }
     if (reg_def->size > sizeof(buf)) {
