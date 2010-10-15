@@ -134,7 +134,7 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
     if (get_error_code(error) == ERR_CACHE_MISS) {
         invalidate_stack_trace(stack);
     }
-    else if (error) {
+    else if (error && stack->frame_cnt == 0) {
         stack->error = get_error_report(error);
     }
     for (i = 0; i < stack->frame_cnt / 2; i++) {
