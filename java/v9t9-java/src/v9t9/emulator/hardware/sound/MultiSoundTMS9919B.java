@@ -86,7 +86,8 @@ public class MultiSoundTMS9919B implements SoundProvider {
 			if (chip < chips.length) {
 				chips[chip].writeSound(offs, val);
 			
-				soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
+				if (soundHandler != null)
+					soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
 			}
 		}
 	}

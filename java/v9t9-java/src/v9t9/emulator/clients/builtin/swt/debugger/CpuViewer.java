@@ -36,6 +36,7 @@ import v9t9.emulator.Emulator;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.engine.cpu.BaseInstructionWorkBlock;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.RawInstruction;
 
@@ -357,11 +358,11 @@ public class CpuViewer extends Composite implements InstructionListener {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionWorkBlock, v9t9.engine.cpu.InstructionWorkBlock)
 	 */
-	public void executed(final InstructionWorkBlock before, InstructionWorkBlock after_) {
+	public void executed(final BaseInstructionWorkBlock before, BaseInstructionWorkBlock after_) {
 		if (isWatching || showNextInstruction) {
 			InstructionWorkBlock after= new InstructionWorkBlock(machine.getCpu());
 	        after_.copyTo(after);
-			InstRow row = new InstRow(before, after);
+			InstRow row = new InstRow((InstructionWorkBlock) before, after);
 			instContentProvider.addInstRow(row);
 			showNextInstruction = false;
 			//refreshTable();

@@ -111,9 +111,9 @@ public class MFP201MemoryModel implements MemoryModel {
 		memory.addAndMap(entry);
 	}
 	
-	protected void defineMmioMemory(TI994A machine) {
-		vdpMmio = machine.getVdpMmio();
-		soundMmio = machine.getSoundMmio();
+	protected void defineMmioMemory(Machine machine) {
+		vdpMmio = machine.getVdp().getVdpMmio();
+		//soundMmio = machine.getSound(). getSoundMmio();
 		
 		this.memory.addAndMap(new MemoryEntry("MMIO", console, 0xFC00, 0x0400,
                 new MFP201ConsoleMmioArea(machine)));

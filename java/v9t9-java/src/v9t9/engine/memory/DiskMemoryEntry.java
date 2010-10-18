@@ -418,6 +418,16 @@ public class DiskMemoryEntry extends MemoryEntry {
 		bStorable = section.getBoolean("Storable");
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryEntry#loadState(org.ejs.coffee.core.settings.ISettingSection)
+	 */
+	@Override
+	public void loadState(ISettingSection section) {
+		super.loadState(section);
+		bLoaded = false;
+		load();
+	}
+	
 	/**
 	 * @param section  
 	 */

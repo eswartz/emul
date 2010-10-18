@@ -66,11 +66,13 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	public void propagateTouches() {
 		/*  Set pattern or color changes in chars */
 		
+		int bpm = bitpattmask >> 3;
+		int bcm = bitcolormask >> 3;
 		for (int i = 0; i < 768; i++) {
 			int sector =  (i & 0x300);
 			int currchar = vdp.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
-			if (vdpChanges.patt[(currchar + sector) & (bitpattmask >> 3)] != 0
-					|| vdpChanges.color[(currchar + sector) & (bitcolormask >> 3)] != 0) { /* if color or pattern changed */
+			if (vdpChanges.patt[(currchar + sector) & bpm] != 0
+					|| vdpChanges.color[(currchar + sector) & bcm] != 0) { /* if color or pattern changed */
 				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
 			}
 		}

@@ -219,8 +219,6 @@ public class CpuMFP201 extends CpuBase {
 		
 		for (int r = 0; r < 16; r++)
 			state.setRegister(r, section.getInt("R" + r));
-		settingRealTime.loadState(section);
-		settingCyclesPerSecond.loadState(section);
 		
 		super.loadState(section);
 	}

@@ -81,10 +81,8 @@ public class TI994AStandardConsoleMemoryModel implements TIMemoryModel {
         gplMmio = new GplMmio(GRAPHICS);
         speechMmio = new SpeechMmio(machine);
         
-        if (machine instanceof TI99Machine) {
-        	vdpMmio = ((TI99Machine) machine).getVdpMmio();
-        	defineMmioMemory((TI994A) machine);
-        }
+        vdpMmio = machine.getVdp().getVdpMmio();
+        defineMmioMemory(machine);
     }
     
     protected void reportLoadError(IEventNotifier eventNotifier, String file, IOException e) {
@@ -179,14 +177,14 @@ public class TI994AStandardConsoleMemoryModel implements TIMemoryModel {
 		
 	}
 
-   protected void defineMmioMemory(TI994A machine) {
+   protected void defineMmioMemory(Machine machine) {
         
         this.memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
                 new ConsoleSoundArea(soundMmio)));
         this.memory.addAndMap(new MemoryEntry("VDP Read MMIO", CPU, 0x8800, 0x0400,
-                new ConsoleVdpReadArea(machine.getVdpMmio())));
+                new ConsoleVdpReadArea(machine.getVdp().getVdpMmio())));
         this.memory.addAndMap(new MemoryEntry("VDP Write MMIO", CPU, 0x8C00, 0x0400,
-                new ConsoleVdpWriteArea(machine.getVdpMmio())));
+                new ConsoleVdpWriteArea(machine.getVdp().getVdpMmio())));
         this.memory.addAndMap(new MemoryEntry("Speech Read MMIO", CPU, 0x9000, 0x0400,
                 new ConsoleSpeechReadArea(speechMmio)));
         this.memory.addAndMap(new MemoryEntry("Speech Write MMIO", CPU, 0x9400, 0x0400,

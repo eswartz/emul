@@ -28,7 +28,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 
 	@Override
 	protected void initSettings() {
-		ConsoleRamArea.settingEnhRam.setBoolean(true);
+		//ConsoleRamArea.settingEnhRam.setBoolean(true);
 	}
 
 	/* (non-Javadoc)
@@ -55,7 +55,9 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 			}
 		}
 		
-		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("../../tools/Forth"));
+		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("../../tools/Forth/disk1"));
+		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK2", new File("../../tools/Forth/disk2"));
+		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK3", new File("../../tools/Forth/disk3"));
 		
 	}
 	
@@ -86,7 +88,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		memory.addAndMap(entry);
 	}
 	
-	protected void defineMmioMemory(TI994A machine) {
+	protected void defineMmioMemory(Machine machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
                 new V9t9EnhancedConsoleMmioArea(machine)));
 	}

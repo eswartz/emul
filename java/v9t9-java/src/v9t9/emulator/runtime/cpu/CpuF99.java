@@ -1,0 +1,369 @@
+package v9t9.emulator.runtime.cpu;
+
+import java.io.PrintWriter;
+
+import org.ejs.coffee.core.settings.ISettingSection;
+import org.ejs.coffee.core.utils.HexUtils;
+
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.CruAccess;
+import v9t9.engine.VdpHandler;
+import v9t9.engine.cpu.Status;
+import v9t9.engine.cpu.StatusF99;
+
+/**
+ * The F99 engine.
+ * 
+ * @author ejs
+ */
+public class CpuF99 extends CpuBase {
+    /**
+	 * 
+	 */
+	private static final int INT_BASE = 0xffc0;
+	public static final int BASE_CYCLES_PER_SEC = 5000000;
+	
+	public CpuF99(Machine machine, int interruptTick, VdpHandler vdp) {
+		super(machine, new CpuStateF99(machine.getConsole()), interruptTick, vdp);
+        settingCyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
+    }
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(state.toString());
+		sb.append(" [");
+		int sp = getSP();
+		sb.append(HexUtils.toHex4(state.getConsole().readWord(sp)));
+		sb.append(' ');
+		sb.append(HexUtils.toHex4(state.getConsole().readWord(sp + 2)));
+		sb.append(' ');
+		sb.append(HexUtils.toHex4(state.getConsole().readWord(sp + 4))); 
+		sb.append(']');
+		return  sb.toString();
+	}
+	
+	
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#getPC()
+	 */
+    @Override
+	public short getPC() {
+        return state.getPC();
+    }
+
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#setPC(short)
+	 */
+    @Override
+	public void setPC(short pc) {
+       	state.setPC(pc);
+    }
+
+    public static final int PIN_INTREQ = 1 << 31;
+    public static final int PIN_LOAD = 1 << 3;
+    public static final int PIN_RESET = 1 << 5;
+    
+	public static final int INT_RESET = 15;
+	public static final int INT_NMI = 14;
+	public static final int INT_BKPT = 0;
+    
+    /** When intreq, the interrupt level */
+    byte ic;
+    
+	public static final int SP = 0;
+	public static final int RSP = 1;
+	public static final int PC = 2;
+	public static final int UP = 3;
+	public static final int SR = 4;
+    
+	 /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#resetInterruptRequest()
+	 */
+    public void resetInterruptRequest() {
+    	pins &= ~PIN_INTREQ;
+    }
+    
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#setInterruptRequest(byte)
+	 */
+    public void setInterruptRequest(byte level) {
+    	pins |= PIN_INTREQ;
+    }
+    
+	/**
+     * Poll the TMS9901 to see if any interrupts are pending.
+     * @return true if any pending
+     */
+    @Override
+	public final boolean doCheckInterrupts() {
+    	// do not allow interrupts after some instructions
+	    if (noIntCount > 0) {
+	    	noIntCount--;
+	    	return false;
+	    }
+	    
+	    vdp.syncVdpInterrupt(machine);
+	    
+	    if (cruAccess != null) {
+	    	//pins &= ~PIN_INTREQ;
+	    	cruAccess.pollForPins(this);
+	    	if (cruAccess.isInterruptWaiting()) {
+	    		ic = cruAccess.getInterruptLevel(); 
+	    		if (getStatus().getIntMask() >= ic) {
+	    			pins |= PIN_INTREQ;
+	    			return true;    		
+	    		}
+	    	} 
+	    }
+	    
+    	if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
+    		System.out.println("Pins set... "+pins);
+    		return true;
+    	}   
+    	
+    	return false;
+    }
+    
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#checkInterrupts()
+	 */
+    @Override
+	public final void checkInterrupts() {
+    	if (doCheckInterrupts())
+    		throw new AbortedException();
+    }
+    
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#checkAndHandleInterrupts()
+	 */
+    @Override
+	public final void checkAndHandleInterrupts() {
+    	if (doCheckInterrupts())
+    		handleInterrupts();
+    }
+    
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#handleInterrupts()
+	 */
+    @Override
+	public final void handleInterrupts() {
+    	PrintWriter dumpfull = Executor.getDumpfull();
+		if (dumpfull != null) {
+    		dumpfull.println("*** Aborted");
+		}
+        PrintWriter dump = Executor.getDump();
+		if (dump != null) {
+        	dump.println("*** Aborted");
+		}
+        
+    	// non-maskable
+    	if ((pins & PIN_LOAD) != 0) {
+            // non-maskable
+            
+        	// this is ordinarily reset by external hardware, but
+        	// we don't yet have a way to scan instruction execution
+        	pins &= ~PIN_LOAD;
+        	
+            System.out.println("**** NMI ****");
+            
+            // TODO
+        } else if ((pins & PIN_RESET) != 0) {
+        	pins &= ~PIN_RESET;
+            System.out.println("**** RESET ****");
+            getStatus().expand((short) 0);
+            setPC(getConsole().readWord(0xfffe));
+            
+            // TODO
+            
+            machine.getExecutor().interpretOneInstruction();
+        } else if ((pins & PIN_INTREQ) != 0 && getStatus().getIntMask() >= ic) {	// already checked int mask in status
+            // maskable
+        	pins &= ~PIN_INTREQ;
+        	
+        	//System.out.print('=');
+        	interrupts++;
+            //contextSwitch(0x4 * ic);
+            
+        	// TODO
+            
+            // no more interrupt until 9901 gives us another
+            ic = 0;
+                
+            // for now, we need to do this, otherwise the compiled code may check intlevel and immediately ... oh, I dunno
+            machine.getExecutor().interpretOneInstruction();
+        }
+    }
+
+   
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#getRegister(int)
+	 */
+	@Override
+	public int getRegister(int reg) {
+        return state.getRegister(reg);
+    }
+
+	public void setCruAccess(CruAccess access) {
+		this.cruAccess = access;
+	}
+
+	public CruAccess getCruAccess() {
+		return cruAccess;
+	}
+
+	@Override
+	public void saveState(ISettingSection section) {
+		section.put("SP", ((CpuStateF99)state).getSP());
+		section.put("RP", ((CpuStateF99)state).getRSP());
+		section.put("UP", ((CpuStateF99)state).getUP());
+		section.put("ST", ((CpuStateF99)state).getST());
+		
+		super.saveState(section);
+	}
+
+	@Override
+	public void loadState(ISettingSection section) {
+		if (section == null) {
+			//setPin(INTLEVEL_RESET);
+			return;
+		}
+		
+		((CpuF99) state).setSP((short) section.getInt("SP"));
+		((CpuF99) state).setRSP((short) section.getInt("RP"));
+		((CpuF99) state).setUP((short) section.getInt("UP"));
+		state.setST((short) section.getInt("ST"));
+		
+		super.loadState(section);
+	}
+
+	@Override
+	public Status createStatus() {
+		return new StatusF99();
+	}
+	
+	@Override
+	public String getCurrentStateString() {
+		return "SP=" + HexUtils.toHex4(state.getRegister(CpuF99.SP)) 
+		+ "\t\tSR=" + getStatus().toString();
+	}
+	
+	@Override
+	public void reset() {
+		triggerInterrupt(INT_RESET);
+	}
+
+	public short getSP() {
+		return ((CpuStateF99) state).getSP();
+	}
+	public void setSP(short sp) {
+		((CpuStateF99) state).setSP(sp);
+	}
+	public short getRSP() {
+		return ((CpuStateF99) state).getRSP();
+	}
+	public void setRSP(short sp) {
+		((CpuStateF99) state).setRSP(sp);
+	}
+	public short getUP() {
+		return ((CpuStateF99) state).getUP();
+	}
+	public void setUP(short sp) {
+		((CpuStateF99) state).setUP(sp);
+	}
+	@Override
+	public boolean shouldDebugCompiledCode(short pc) {
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getST()
+	 */
+	@Override
+	public short getST() {
+		return state.getST();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#setRegister(int, int)
+	 */
+	@Override
+	public void setRegister(int reg, int val) {
+		state.setRegister(reg, val);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#setST(short)
+	 */
+	@Override
+	public void setST(short st) {
+		state.setST(st);
+	}
+
+	public void push(short val) {
+		short newSp = (short) ((getSP() - 2) & 0xfffe);
+		state.getConsole().writeWord(newSp, val);
+		setSP(newSp);
+		
+		if (newSp == 0) {
+			reset();
+		}
+	}
+	
+	public short peek() {
+		return state.getConsole().readWord(getSP());
+	}
+
+	public short pop() {
+		short val = state.getConsole().readWord(getSP());
+		short newSp = (short) ((getSP() + 2) & 0xfffe);
+		setSP(newSp);
+		return val;
+	}
+
+	public void rpush(short val) {
+		short newRp = (short) ((getRSP() - 2) & 0xfffe);
+		state.getConsole().writeWord(newRp, val);
+		setRSP(newRp);
+		
+		if (newRp == 0) {
+			reset();
+		}
+	}
+
+	public short rpop() {
+		short val = state.getConsole().readWord(getRSP());
+		short newRp = (short) ((getRSP() + 2) & 0xfffe);
+		setRSP(newRp);
+		return val;
+	}
+
+	/**
+	 * @param intNmi
+	 * @return
+	 */
+	public short readIntVec(int intNum) {
+		return state.getConsole().readWord(INT_BASE + intNum * 2);
+	}
+
+	/**
+	 * @param pc2
+	 */
+	public void contextSwitch(short pc) {
+		rpush(pc);
+		setPC(pc);
+	}
+
+	/**
+	 * @param intr
+	 */
+	public void triggerInterrupt(int intr) {
+		rpush(getPC());
+		contextSwitch(readIntVec(intr));
+	}
+
+	
+}

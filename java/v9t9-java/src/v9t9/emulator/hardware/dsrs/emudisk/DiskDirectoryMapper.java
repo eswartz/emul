@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware.dsrs.emudisk;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,8 +69,13 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	public void setDiskPath(String device, File dir) {
 		diskMap.put(device, dir);
 		SettingProperty diskSetting = diskSettingsMap.get(device);
-		if (diskSetting != null)
-			diskSetting.setString(dir.getAbsolutePath());
+		if (diskSetting != null) {
+			try {
+				diskSetting.setString(dir.getCanonicalPath());
+			} catch (IOException e) {
+				diskSetting.setString(dir.getAbsolutePath());
+			}
+		}
 	}
 
 	/* (non-Javadoc)

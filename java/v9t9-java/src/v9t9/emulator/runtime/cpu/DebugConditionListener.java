@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.InstructionListener;
+import v9t9.engine.cpu.BaseInstructionWorkBlock;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand9900;
 
@@ -28,7 +29,9 @@ public class DebugConditionListener implements InstructionListener {
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionWorkBlock, v9t9.engine.cpu.InstructionWorkBlock)
 	 */
 	@Override
-	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
+	public void executed(BaseInstructionWorkBlock before_, BaseInstructionWorkBlock after_) {
+		InstructionWorkBlock before = (InstructionWorkBlock) before_;
+		InstructionWorkBlock after = (InstructionWorkBlock) after_;
 		if (blocks.size() > 1024)
 			blocks.remove(0);
 		blocks.add(before);

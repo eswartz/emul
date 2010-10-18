@@ -91,7 +91,7 @@ public class TMS5220 implements Fetcher, Sender {
 					speech, "spchrom.bin", 0, false);
 			speechRom.load();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("Failed to load: " + e.getMessage());
 		}
 		fifo = new byte[16];
 		lpc = new LPCSpeech();

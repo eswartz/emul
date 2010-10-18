@@ -1,0 +1,161 @@
+/**
+ * Oct 14 2010
+ */
+package v9t9.engine.cpu;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+/**
+ * FORTH-99 processor opcodes
+ * @author Ed
+ */
+public class InstF99 {
+	
+	public static final int I3bit_start = 0;
+	
+	public static final int Inop = I3bit_start + 0;
+	public static final int Idup = I3bit_start + 1;
+	public static final int Ifetch = I3bit_start + 2;
+	public static final int Istore = I3bit_start + 3;
+	public static final int Izero = I3bit_start + 4;
+	public static final int Ione = I3bit_start + 5;
+	/** next signed field is pushed */
+	public static final int IfieldLiteral = I3bit_start + 6;
+	public static final int I0branch = I3bit_start +7;
+	
+	public static final int Irstack_start = 8;
+	
+	public static final int Itwo = Irstack_start + 0;
+	public static final int InegOne = Irstack_start + 1;
+	
+	public static final int Ido = Irstack_start + 2;
+	public static final int Iloop = Irstack_start + 3;
+	public static final int Iover = Irstack_start + 4;
+	public static final int Irot = Irstack_start + 5;
+	public static final int ItoR = Irstack_start + 6;
+	public static final int IRfrom = Irstack_start + 7;
+	public static final int IatR = Irstack_start + 8;
+	public static final int Iexit = Irstack_start + 9;
+	public static final int Irdrop = Irstack_start + 10;
+	public static final int Iiprime = Irstack_start + 11;
+	public static final int Ij = Irstack_start + 12;
+	
+	public static final int Ispecial_start = 21;
+	
+	public static final int Ipc = Ispecial_start + 0;
+	public static final int Isp = Ispecial_start + 1;
+	
+	public static final int Ibranches_start = 23;
+	
+	/** next field is offset in words */
+	public static final int I0fieldBranch = Ibranches_start + 0;
+	/** next field is offset in words */
+	public static final int IfieldBranch = Ibranches_start + 1;
+	/** next full word is offset in words */
+	public static final int Ibranch = Ibranches_start + 3;		
+	
+	public static final int Istack_start = 27;
+	
+	public static final int Iswap = Istack_start + 0;
+	public static final int Idrop = Istack_start + 1;
+	
+	public static final int Imemory_start = 29;
+	
+	public static final int Iplusadd = Imemory_start + 0;
+	public static final int Icload = Imemory_start + 1;
+	public static final int Icstore = Imemory_start + 2;
+	
+	public static final int Iarith_start = 32;
+	public static final int I1plus = Iarith_start + 0;
+	public static final int I1minus = Iarith_start + 1;
+	public static final int I2plus = Iarith_start + 2;
+	public static final int I2minus = Iarith_start + 3;
+	public static final int I2times = Iarith_start + 4;
+	public static final int I2div = Iarith_start + 5;
+	public static final int Iadd = Iarith_start + 6;
+	public static final int Iadc = Iarith_start + 7;
+	public static final int Isub = Iarith_start + 8;
+	public static final int Iumul = Iarith_start + 9;
+	public static final int Iudivmod = Iarith_start + 10;
+	public static final int Ineg = Iarith_start + 11;
+	public static final int Iand = Iarith_start + 12;
+	public static final int Ior = Iarith_start + 13;
+	public static final int Ixor = Iarith_start + 14;
+	public static final int Inot = Iarith_start + 15;
+	public static final int Ilsh = Iarith_start + 16;
+	public static final int Iash = Iarith_start + 17;  // signed
+	public static final int Irsh = Iarith_start + 18;  // unsigned
+	public static final int Idadd = Iarith_start + 19;
+	public static final int Idneg = Iarith_start + 20;
+	
+	public static final int Icond_start = 54;
+	
+	public static final int I0equ = Icond_start + 0;
+	public static final int Iequ = Icond_start + 1;
+	public static final int I0lt = Icond_start + 2;
+	public static final int Ilt = Icond_start + 3;
+	public static final int Iult = Icond_start + 4;
+	
+	public static final int Icontrol_start = 59;
+
+	public static final int Isyscall = Icontrol_start + 0;
+	public static final int Icli = Icontrol_start + 1;
+	public static final int Isti = Icontrol_start + 2;
+	public static final int Iexecute = Icontrol_start + 3;
+	/** next full word is pushed */
+	public static final int Iliteral = Icontrol_start + 4;
+	
+	static final Map<Integer, String> instNames = new HashMap<Integer, String>(64);
+	
+	static {
+		Field[] fields = InstF99.class.getDeclaredFields();
+		Set<Integer> vals = new TreeSet<Integer>();
+		
+		for (Field field : fields) {
+			if (field.getName().endsWith("_start") || !field.getName().startsWith("I"))
+				continue;
+			Integer val;
+			try {
+				val = (Integer) field.get(InstF99.class);
+			} catch (Exception e) {
+				throw new IllegalArgumentException();
+			}
+			if (val >= 64)
+				throw new IllegalStateException("field " + field + " out of range: " + val);
+			if (vals.contains(val))
+				throw new IllegalStateException("field " + field + " duplicates value " + val);
+			instNames.put(val, field.getName().substring(1).toUpperCase());
+			vals.add(val);
+				
+		}
+	}
+
+	/**
+	 * @param inst
+	 * @return
+	 */
+	public static String getInstName(int inst) {
+		return instNames.get(inst);
+	}
+
+	/**
+	 * Tell if the instruction references PC
+	 * @param inst
+	 * @return
+	 */
+	public static boolean isAligningPCReference(int inst) {
+		switch (inst) {
+		case InstF99.Iexecute:
+		case InstF99.Isyscall:
+		case InstF99.Ipc:
+		case InstF99.Ibranch:
+		case InstF99.IfieldBranch:
+			return true;
+		}
+		return false;
+	}
+}

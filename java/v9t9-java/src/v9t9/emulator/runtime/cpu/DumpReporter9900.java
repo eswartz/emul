@@ -9,7 +9,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.runtime.InstructionListener;
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.BaseInstructionWorkBlock;
 import v9t9.engine.cpu.RawInstruction;
 
 /**
@@ -28,7 +28,7 @@ public class DumpReporter9900 implements InstructionListener {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */
-	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
+	public void executed(BaseInstructionWorkBlock before, BaseInstructionWorkBlock after) {
 		PrintWriter dump = Executor.getDump();
 		if (dump == null)
 			return;

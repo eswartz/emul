@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.InstructionListener;
+import v9t9.engine.cpu.BaseInstructionWorkBlock;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
@@ -32,9 +33,12 @@ public class DumpFullReporter9900 implements InstructionListener {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */
-	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
+	public void executed(BaseInstructionWorkBlock before_, BaseInstructionWorkBlock after_) {
 		PrintWriter dumpfull = Executor.getDumpfull();
 		if (dumpfull == null) return;
+		
+		InstructionWorkBlock before = (InstructionWorkBlock) before_;
+		InstructionWorkBlock after = (InstructionWorkBlock) after_;
 		dumpFullStart(before, before.inst, dumpfull);
 		dumpFullMid(before, (MachineOperand9900)before.inst.getOp1(), (MachineOperand9900)before.inst.getOp2(), dumpfull);
 		dumpFullEnd(after, before.cycles, (MachineOperand9900)after.inst.getOp1(), (MachineOperand9900)after.inst.getOp2(), dumpfull);
