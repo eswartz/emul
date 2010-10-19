@@ -4,6 +4,7 @@
 package v9t9.engine.cpu;
 
 import org.ejs.coffee.core.utils.Check;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
@@ -126,11 +127,11 @@ public class MachineOperandF99 extends BaseMachineOperand {
 		switch (type) 
     	{
     	case OP_IMM: {
-    		return "#>" + Integer.toHexString(val).toUpperCase() + " (" + val + ")";
+    		return "#>" + HexUtils.toHex4(val) + " (" + val + ")";
     	}
     	case OP_ADDR:
     	case OP_PCREL:
-    	    return "$+>" + Integer.toHexString(val & 0xffff).toUpperCase();
+    	    return "$+>" + HexUtils.toHex4(val);
 
     	case OP_NONE:
     	default:

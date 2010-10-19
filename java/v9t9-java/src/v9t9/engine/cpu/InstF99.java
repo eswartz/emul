@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.ejs.coffee.core.utils.Pair;
+
 /**
  * FORTH-99 processor opcodes
  * @author Ed
@@ -24,7 +26,7 @@ public class InstF99 {
 	public static final int Izero = I3bit_start + 4;
 	public static final int Ione = I3bit_start + 5;
 	/** next signed field is pushed */
-	public static final int IfieldLiteral = I3bit_start + 6;
+	public static final int IfieldLit = I3bit_start + 6;
 	public static final int I0branch = I3bit_start +7;
 	
 	public static final int Irstack_start = 8;
@@ -79,7 +81,9 @@ public class InstF99 {
 	public static final int Iadd = Iarith_start + 6;
 	public static final int Iadc = Iarith_start + 7;
 	public static final int Isub = Iarith_start + 8;
+	/** um*: s * s -> d */
 	public static final int Iumul = Iarith_start + 9;
+	/** um/mod: ud u1 -- div mod */
 	public static final int Iudivmod = Iarith_start + 10;
 	public static final int Ineg = Iarith_start + 11;
 	public static final int Iand = Iarith_start + 12;
@@ -107,8 +111,11 @@ public class InstF99 {
 	public static final int Isti = Icontrol_start + 2;
 	public static final int Iexecute = Icontrol_start + 3;
 	/** next full word is pushed */
-	public static final int Iliteral = Icontrol_start + 4;
-	
+	public static final int Ilit = Icontrol_start + 4;
+
+	public static final int Icall = 64;
+	public static final int _Ilast = 64;
+
 	static final Map<Integer, String> instNames = new HashMap<Integer, String>(64);
 	
 	static {
@@ -124,7 +131,7 @@ public class InstF99 {
 			} catch (Exception e) {
 				throw new IllegalArgumentException();
 			}
-			if (val >= 64)
+			if (val > _Ilast)
 				throw new IllegalStateException("field " + field + " out of range: " + val);
 			if (vals.contains(val))
 				throw new IllegalStateException("field " + field + " duplicates value " + val);
@@ -132,6 +139,7 @@ public class InstF99 {
 			vals.add(val);
 				
 		}
+		
 	}
 
 	/**
@@ -157,5 +165,92 @@ public class InstF99 {
 			return true;
 		}
 		return false;
+	}
+	
+	/** for each inst:  SP read, SP left
+	 *	RP read, RP left;
+	 *  neg means unsure
+	 */
+	static final int[] instArgs = {
+		Inop, 0, 0, 0, 0,
+		Idup, 1, 2, 0, 0,
+		Ifetch, 1, 1, 0, 0,
+		Istore, 2, 0, 0, 0,
+		Izero, 0, 1, 0, 0,
+		Ione, 0, 1, 0, 0,
+		IfieldLit, 0, 1, 0, 0,
+		I0branch, 1, 0, 0, 0,
+		Itwo, 0, 1, 0, 0,
+		InegOne, 0, 1, 0, 0,
+		Ido, 2, 0, 0, 0,
+		Iloop, 0, 0, 2, 0,
+		Iover, 2, 3, 0, 0,
+		Irot, 3, 3, 0, 0,
+		ItoR, 1, 0, 0, 1,
+		IRfrom, 0, 1, 1, 0,
+		IatR, 0, 1, 1, 0,
+		Iexit, 0, 0, 1, 0,
+		Irdrop, 0, 0, 1, 0,
+		Iiprime, 0, 1, 2, 2,
+		Ij, 0, 1, 3, 3,
+		Ipc, 0, 1, 0, 0,
+		Isp, 0, 1, 0, 0,
+		I0fieldBranch, 1, 0, 0, 0, 
+		IfieldBranch, 0, 0, 0, 0,
+		Ibranch, 0, 0, 0, 0,
+		Iswap, 2, 0, 0, 0,
+		Idrop, 1, 0, 0, 0,
+		Iplusadd, 2, 0, 0, 0,
+		Icload, 1, 1, 0, 0,
+		Icstore, 2, 0, 0, 0,
+		I1plus, 1, 1, 0, 0,
+		I1minus, 1, 1, 0, 0,
+		I2plus, 1, 1, 0, 0,
+		I2minus, 1, 1, 0, 0,
+		I2times, 1, 1, 0, 0,
+		I2div, 1, 1, 0, 0,
+		Iadd, 2, 1, 0, 0,
+		Iadc, 2, 2, 0, 0,
+		Isub, 2, 1, 0, 0,
+		Iumul, 2, 2, 0, 0,
+		Iudivmod, 3, 2, 0, 0,
+		Ineg, 1, 1, 0, 0,
+		Iand, 2, 1, 0, 0,
+		Ior, 2, 1, 0, 0,
+		Ixor, 2, 1, 0, 0,
+		Inot, 1, 1, 0, 0,
+		Ilsh, 2, 2, 0, 0,
+		Iash, 2, 2, 0, 0,
+		Irsh, 2, 2, 0, 0,
+		Idadd, 4, 2, 0, 0,
+		Idneg, 2, 2, 0, 0,
+		I0equ, 1, 1, 0, 0,
+		Iequ, 2, 1, 0, 0,
+		I0lt, 1, 1, 0, 0,
+		Iult, 2, 1, 0, 0,
+		Isyscall, -1, -1, -1, -1,
+		Icli, 0, 0, 0, 0,
+		Isti, 0, 0, 0, 0,
+		Iexecute, 1, -1, -1, -1,
+		Ilit, 0, 1, 0, 0,
+	};
+
+	/** Get pair for items read and items left */
+	public static Pair<Integer, Integer> getStackEffects(int inst) {
+		for (int i = 0; i < instArgs.length; i += 5) {
+			if (instArgs[i] == inst) {
+				return new Pair<Integer, Integer>(instArgs[i+1], instArgs[i+2]);
+			}
+		}
+		return null;
+	}
+	/** Get pair for items read and items left */
+	public static Pair<Integer, Integer> getReturnStackEffects(int inst) {
+		for (int i = 0; i < instArgs.length; i += 5) {
+			if (instArgs[i] == inst) {
+				return new Pair<Integer, Integer>(instArgs[i+3], instArgs[i+4]);
+			}
+		}
+		return null;
 	}
 }

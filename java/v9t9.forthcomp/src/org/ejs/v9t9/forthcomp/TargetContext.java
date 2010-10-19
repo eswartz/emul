@@ -4,6 +4,7 @@
 package org.ejs.v9t9.forthcomp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -72,8 +73,8 @@ public abstract class TargetContext extends Context {
 			throw new UnsupportedOperationException();
 		}
 	}
-	public int addRelocation(int addr, RelocType type, int target) {
-		RelocEntry reloc = new RelocEntry(addr, type, target);
+	public int addRelocation(int addr, RelocType type, int target, String name) {
+		RelocEntry reloc = new RelocEntry(addr, type, target, name);
 		assert !relocEntries.containsKey(addr);
 		relocEntries.put(addr, reloc);
 		relocs.add(reloc);
@@ -105,18 +106,23 @@ public abstract class TargetContext extends Context {
 	}
 
 	/**
-	 * @param addr
+	 * @param relocIndex
 	 * @return
 	 */
-	public int resolveAddr(int addr) {
+	public int resolveAddr(int relocIndex) {
 		// read actual contents
-		RelocEntry reloc = relocs.get(-addr - 1);
+		RelocEntry reloc = relocs.get(-relocIndex - 1);
 		if (reloc == null)
 			throw new IllegalArgumentException();
-		addr = reloc.addr;
-		return addr;
+		relocIndex = reloc.addr;
+		return relocIndex;
 	}
-
+	public int findReloc(int addr) {
+		RelocEntry reloc = relocEntries.get(addr);
+		if (reloc == null)
+			return 0;
+		return reloc.target;
+	}
 	/**
 	 * @param name
 	 * @return
@@ -210,7 +216,8 @@ public abstract class TargetContext extends Context {
 		DictEntry entry = defineEntry(name);
 		int here = allocCell();
 		return (TargetVariable) define(name, new TargetVariable(entry, 
-				addRelocation(here, RelocType.RELOC_ABS_ADDR_16, here)));
+				addRelocation(here, RelocType.RELOC_ABS_ADDR_16, 
+						here, name)));
 		
 	}
 
@@ -241,8 +248,14 @@ public abstract class TargetContext extends Context {
 			if (val < 0) {
 				RelocEntry reloc = relocs.get(-val - 1);
 				val = reloc.target;	// TODO
+				if (reloc.type == RelocType.RELOC_CALL_15S1)
+					val = ((val >> 1) & 0x7fff) | 0x8000;
 			}
 			console.writeWord(i, (short) val);
+		}
+		
+		for (RelocEntry reloc : relocs) {
+			console.getEntryAt(reloc.target).defineSymbol(reloc.target, reloc.name);
 		}
 	}
 	/**
@@ -273,4 +286,13 @@ public abstract class TargetContext extends Context {
 	 * here over - swap !
 	 */
 	abstract public void resolveFixup(HostContext hostContext);
+	
+	public void clearDict() {
+		super.clearDict();
+		dp = 0;
+		relocs.clear();
+		relocEntries.clear();
+		lastEntry = null;
+		Arrays.fill(memory, (byte) 0);
+	}
 }

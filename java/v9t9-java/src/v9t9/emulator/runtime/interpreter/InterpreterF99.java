@@ -1,5 +1,7 @@
 package v9t9.emulator.runtime.interpreter;
 
+import org.ejs.coffee.core.utils.Pair;
+
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.CpuF99;
@@ -93,6 +95,24 @@ public class InterpreterF99 implements Interpreter {
         iblock.rp = cpu.getRSP();
         iblock.inst = ins;
         
+
+        Pair<Integer, Integer> fx = InstF99.getStackEffects(ins.getInst());
+		if (fx != null) {
+			int spused = fx.first;
+			if (spused < 0)
+				spused = 4;
+			for (int i = 0; i < spused; i++)
+				iblock.inStack[i] = iblock.getStackEntry(spused - i - 1);
+		}
+        fx = InstF99.getReturnStackEffects(ins.getInst());
+		if (fx != null) {
+			int rpused = fx.first;
+			if (rpused < 0)
+				rpused = 4;
+			for (int i = 0; i < rpused; i++)
+				iblock.inReturnStack[i] = iblock.getReturnStackEntry(rpused - i - 1);
+		}
+		
         InstructionWorkBlockF99 block = new InstructionWorkBlockF99(cpu);
         this.iblock.copyTo(block);
         
@@ -172,12 +192,12 @@ public class InterpreterF99 implements Interpreter {
 			return null;
 		
 		InstructionF99 inst = new InstructionF99();
-		inst.pc = pc;
+		inst.pc = pc + (index != 0 ? 1 : 0);
 		inst.opcode = opcode;
 		inst.setInst(opcode);
 		
 		switch (opcode) {
-		case InstF99.IfieldLiteral:
+		case InstF99.IfieldLit:
 		case InstF99.I0fieldBranch:
 		case InstF99.IfieldBranch:
 			if (index == 2) {
@@ -188,7 +208,7 @@ public class InterpreterF99 implements Interpreter {
 				inst.setOp1(readSignedField(index + 1, iblock.op));
 			}
 			break;
-		case InstF99.Iliteral:
+		case InstF99.Ilit:
 		case InstF99.I0branch:
 		case InstF99.Ibranch:
 			inst.setOp1(MachineOperandF99.createImmediateOperand(memory.readWord(iblock.pc & ~1), MachineOperandF99.OP_ENC_IMM16));
@@ -206,6 +226,7 @@ public class InterpreterF99 implements Interpreter {
 		inst.pc = cpu.getPC() - 2;
 		inst.opcode = op;
 		inst.setOp1(MachineOperandF99.createImmediateOperand((short) (op << 1), MachineOperandF99.OP_ENC_IMM15S1));
+		inst.setInst(InstF99.Icall);
 		return inst;
 	}
 
@@ -224,8 +245,8 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.Istore:
         	memory.writeWord(cpu.pop(), cpu.pop());
         	break;
-        case InstF99.IfieldLiteral:
-        case InstF99.Iliteral:
+        case InstF99.IfieldLit:
+        case InstF99.Ilit:
         	cpu.push(mop1.immed);
         	break;
         case InstF99.Iexit:
@@ -287,7 +308,61 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push(y);
         	break;
         }
-    	default:
+        case InstF99.Iadd:
+        	cpu.push((short) (cpu.pop() + cpu.pop()));
+        	break;
+        case InstF99.Isub:
+        	cpu.push((short) (-cpu.pop() + cpu.pop()));
+        	break;
+        case InstF99.Iumul: {
+        	int mul = (cpu.pop() & 0xffff) * (cpu.pop() & 0xffff);
+        	cpu.push((short) (mul & 0xffff));
+        	cpu.push((short) (mul >> 16));
+        	break;
+        }
+        case InstF99.Iudivmod: {
+        	int div = cpu.pop() & 0xffff;
+        	int num = ((cpu.pop() & 0xffff) << 16);
+        	num |= (cpu.pop() & 0xffff);
+        	if (div == 0) {
+            	cpu.push((short) -1);
+            	cpu.push((short) 0);
+        	} else {
+        		int quot = num / div;
+        		int rem = num % div;
+        		if (quot >= 65536) {
+        			cpu.push((short) -1);
+                	cpu.push((short) 0);
+        		} else {
+        			cpu.push((short) rem);
+                	cpu.push((short) quot);
+        		}
+        	}
+        	break;
+        }
+        
+        case InstF99.Ineg:
+        	cpu.push((short) -cpu.pop());
+        	break;
+        case InstF99.Inot:
+        	cpu.push((short) ~cpu.pop());
+        	break;
+        	
+        case InstF99.Icall:
+        	cpu.rpush(iblock.pc);
+        	cpu.setPC(mop1.immed);
+        	break;
+        	
+        case InstF99.ItoR:
+        	cpu.rpush(cpu.pop());
+        	break;
+        case InstF99.IRfrom:
+        	cpu.push(cpu.rpop());
+        	break;
+        case InstF99.IatR:
+        	cpu.push(cpu.rpeek());
+        	break;
+        default:
     		throw new UnsupportedOperationException("" + ins);
         }
 

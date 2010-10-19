@@ -54,7 +54,6 @@ public class ForthComp {
 	private TokenStream tokenStream;
 	private HostVariable baseVar;
 	private HostVariable stateVar;
-	private HostVariable cspVar;
 
 	public ForthComp(TargetContext targetContext) {
 		hostContext = new HostContext();
@@ -63,8 +62,7 @@ public class ForthComp {
 		
 		baseVar = (HostVariable) hostContext.define("base", new HostVariable(10));
 		stateVar = (HostVariable) hostContext.define("state", new HostVariable(0));
-		cspVar = (HostVariable) hostContext.define("csp", new HostVariable(0));
-		
+		hostContext.define("csp", new HostVariable(0));
 		
 		hostContext.define("variable", new VariableParser());
 		hostContext.define("!", new HostStore());
@@ -74,7 +72,8 @@ public class ForthComp {
 		
 		hostContext.define("if", new IfParser());
 		hostContext.define("else", new ElseParser());
-		hostContext.define("then", new ThenParser());
+	 	hostContext.define("then", new ThenParser());
+	 	hostContext.define("(", new ParenParser());
 	}
 
 	/**
@@ -105,7 +104,9 @@ public class ForthComp {
 	}
 
 	private void parse(String token) throws AbortException {
-		IWord word = targetContext.find(token);
+		IWord word;
+		
+		word = targetContext.find(token);
 		if (word instanceof ITargetWord && ((ITargetWord) word).getEntry().isHidden())
 			word = null;
 		
@@ -113,6 +114,7 @@ public class ForthComp {
 			word = hostContext.find(token);
 			
 		}
+		
 		if (word == null) {
 			word = parseLiteral(token);
 		}

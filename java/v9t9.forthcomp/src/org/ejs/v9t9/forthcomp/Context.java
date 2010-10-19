@@ -4,7 +4,6 @@
 package org.ejs.v9t9.forthcomp;
 
 import java.util.LinkedHashMap;
-import java.util.Stack;
 
 /**
  * @author ejs
@@ -42,6 +41,13 @@ public class Context implements IContext {
 	 */
 	public IWord find(String token) {
 		return dictionary.get(token.toLowerCase());
+	}
+	/**
+	 * 
+	 */
+	public void clearDict() {
+		dictionary.clear();
+		latest = null;
 	}
 	
 }

@@ -47,11 +47,20 @@ public class F99TargetContext extends TargetContext {
 		definePrim("2", InstF99.Itwo);
 		definePrim("dup", InstF99.Idup);
 		definePrim("drop", InstF99.Idrop);
+		definePrim("swap", InstF99.Iswap);
 		definePrim("=", InstF99.Iequ);
 		definePrim("0<", InstF99.I0lt);
 		definePrim("0=", InstF99.I0equ);
 		definePrim("0branch", InstF99.I0branch);
 		definePrim("branch", InstF99.Ibranch);
+		definePrim("negate", InstF99.Ineg);
+		definePrim("+", InstF99.Iadd);
+		definePrim("-", InstF99.Isub);
+		definePrim("um*", InstF99.Iumul);
+		definePrim("um/mod", InstF99.Iudivmod);
+		definePrim(">r", InstF99.ItoR);
+		definePrim("r>", InstF99.IRfrom);
+		definePrim("r@", InstF99.IatR);
 		
 	}
 	
@@ -100,7 +109,10 @@ public class F99TargetContext extends TargetContext {
 			// must call
 			alignOpcodeWord();
 			
-			int reloc = addRelocation(opcodeAddr, RelocType.RELOC_CALL_15S1, word.getEntry().getContentAddr());
+			int reloc = addRelocation(opcodeAddr, 
+					RelocType.RELOC_CALL_15S1, 
+					word.getEntry().getContentAddr(),
+					word.getEntry().getName());
 			writeCell(opcodeAddr, reloc);
 			
 			opcodeIndex = 3;
@@ -123,10 +135,10 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoubleLiteral(int value) {
-		compileField(InstF99.Iliteral);
+		compileField(InstF99.Ilit);
 		int ptr = alloc(2);
 		writeCell(ptr, value >> 16);
-		compileField(InstF99.Iliteral);
+		compileField(InstF99.Ilit);
 		ptr = alloc(2);
 		writeCell(ptr, value & 0xffff);
 	}
@@ -138,22 +150,22 @@ public class F99TargetContext extends TargetContext {
 	public void compileLiteral(int value) {
 		if (opcodeIndex + 1 == 1) {
 			if (value >= -4 && value < 4) {
-				compileField(InstF99.IfieldLiteral);
+				compileField(InstF99.IfieldLit);
 				compileField(value & 0x7);
 			} else if (value >= -32 && value < 32) {
 				compileField(InstF99.Inop);
-				compileField(InstF99.IfieldLiteral);
+				compileField(InstF99.IfieldLit);
 				compileField(value & 0x3f);
 			} else {
-				compileField(InstF99.Iliteral);
+				compileField(InstF99.Ilit);
 				int ptr = alloc(2);
 				writeCell(ptr, value & 0xffff);
 			}
 		} else if (value >= -32 && value < 32) {
-			compileField(InstF99.IfieldLiteral);
+			compileField(InstF99.IfieldLit);
 			compileField(value & 0x3f);
 		} else {
-			compileField(InstF99.Iliteral);
+			compileField(InstF99.Ilit);
 			int ptr = alloc(2);
 			writeCell(ptr, value & 0xffff);
 		}

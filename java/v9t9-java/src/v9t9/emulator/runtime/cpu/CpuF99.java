@@ -334,6 +334,9 @@ public class CpuF99 extends CpuBase {
 		}
 	}
 
+	public short rpeek() {
+		return state.getConsole().readWord(getRSP());
+	}
 	public short rpop() {
 		short val = state.getConsole().readWord(getRSP());
 		short newRp = (short) ((getRSP() + 2) & 0xfffe);
