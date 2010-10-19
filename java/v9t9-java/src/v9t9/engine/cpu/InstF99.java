@@ -198,7 +198,7 @@ public class InstF99 {
 		I0fieldBranch, 1, 0, 0, 0, 
 		IfieldBranch, 0, 0, 0, 0,
 		Ibranch, 0, 0, 0, 0,
-		Iswap, 2, 0, 0, 0,
+		Iswap, 2, 2, 0, 0,
 		Idrop, 1, 0, 0, 0,
 		Iplusadd, 2, 0, 0, 0,
 		Icload, 1, 1, 0, 0,
