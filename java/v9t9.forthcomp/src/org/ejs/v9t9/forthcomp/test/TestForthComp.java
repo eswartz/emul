@@ -323,6 +323,7 @@ public class TestForthComp {
 		
 		int pc = word.getEntry().getContentAddr();
 		
+		cpu.rpush((short) 0);
 		cpu.setPC((short) pc);
 		while (cpu.getPC() != 0)
 			interp.execute();

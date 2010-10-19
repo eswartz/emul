@@ -140,6 +140,10 @@ public class InstF99 {
 				
 		}
 		
+		instNames.put(ItoR, ">R");
+		instNames.put(IRfrom, "R>");
+		instNames.put(IatR, "R@");
+		
 	}
 
 	/**
