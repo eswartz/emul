@@ -139,7 +139,7 @@ public class TCFFileService extends AbstractFileService {
      * inconsistency! For solving the problem, we have to modify
      * the copy itself and made it recursive. We can't modify it
      * in the same way as delete does!
-     *  
+     *
      */
 
     public void internalCopy(String srcParent,
@@ -153,7 +153,7 @@ public class TCFFileService extends AbstractFileService {
             {
                 throw new InterruptedException(Messages.TCFFileService_UserCancellation);
             }
-        }       
+        }
 
         try
         {
@@ -193,16 +193,16 @@ public class TCFFileService extends AbstractFileService {
         catch (InterruptedException e)
         {
             throw new InterruptedException(Messages.TCFFileService_UserCancellation1);
-        }        
+        }
     }
-    
+
     public void copy(String srcParent,
             String srcName, String tgtParent, String tgtName, IProgressMonitor monitor)
             throws SystemMessageException {
-        
+
         if (monitor != null)
             monitor.beginTask(Messages.TCFFileService_CopyingFiles, 1);
-        
+
         try {
 
             IHostFile curFile = getFile(srcParent, srcName, monitor);
@@ -218,7 +218,7 @@ public class TCFFileService extends AbstractFileService {
             else
             {
                 FileNotFoundException e =
-                    new FileNotFoundException(Messages.TCFFileService_FileNotFoundMessage); 
+                    new FileNotFoundException(Messages.TCFFileService_FileNotFoundMessage);
                 throw new SystemMessageException(getMessage(e));
             }
         }
@@ -227,7 +227,7 @@ public class TCFFileService extends AbstractFileService {
             if (e instanceof SystemMessageException)
                 throw (SystemMessageException)e;
             throw new SystemOperationFailedException(Activator.PLUGIN_ID, e);
-            
+
         }
         finally {
             if (monitor != null)
@@ -328,7 +328,7 @@ public class TCFFileService extends AbstractFileService {
     }
 
     private void internalDelete(String parent, String name,
-            IProgressMonitor monitor) 
+            IProgressMonitor monitor)
     throws SystemMessageException, InterruptedException
     {
         if (monitor != null)
@@ -339,7 +339,7 @@ public class TCFFileService extends AbstractFileService {
             }
         }
 
-        try 
+        try
         {
             final String new_path = toRemotePath(parent, name);
             IHostFile[] arrFiles = internalFetch(new_path, null,
@@ -380,7 +380,7 @@ public class TCFFileService extends AbstractFileService {
             IProgressMonitor monitor)
     throws SystemMessageException {
         if (monitor != null)
-            monitor.beginTask(Messages.TCFFileService_DeletingFiles, remoteParents.length);  
+            monitor.beginTask(Messages.TCFFileService_DeletingFiles, remoteParents.length);
         try
         {
             for (int i = 0; i < remoteParents.length; i++) {
@@ -388,7 +388,7 @@ public class TCFFileService extends AbstractFileService {
                 if (curFile.isFile())
                     delete(remoteParents[i], fileNames[i], monitor);
                 else if (curFile.isDirectory())
-                    internalDelete(remoteParents[i], fileNames[i], monitor);                    
+                    internalDelete(remoteParents[i], fileNames[i], monitor);
             }
         }
         catch (Exception x) {

@@ -42,7 +42,7 @@ public class TCFConnectorService extends StandardConnectorService {
     public static final String PROPERTY_PWD_REQUIRED="Pwd.Required"; //$NON-NLS-1$
     public static final String PROPERTY_LOGIN_PROMPT = "Login.Prompt"; //$NON-NLS-1$
     public static final String PROPERTY_PASSWORD_PROMPT = "Password.Prompt"; //$NON-NLS-1$
-    public static final String PROPERTY_COMMAND_PROMPT = "Command.Prompt"; //$NON-NLS-1$    
+    public static final String PROPERTY_COMMAND_PROMPT = "Command.Prompt"; //$NON-NLS-1$
 
     private IChannel channel;
     private Throwable channel_error;
@@ -78,7 +78,7 @@ public class TCFConnectorService extends StandardConnectorService {
     public final boolean requiresPassword() {
         return false;
     }
-    
+
     @Override
     protected void internalConnect(final IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();

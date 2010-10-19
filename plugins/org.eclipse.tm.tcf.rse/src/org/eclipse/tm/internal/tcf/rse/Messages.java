@@ -129,7 +129,7 @@ public class Messages extends NLS {
     public static String TCFFileService_UserCancellation1;
     public static String TCFFileService_UserDeleteCancellation;
     public static String TCFFileService_UserDeleteCancellation1;
-    public static String PropertySet_Description;    
+    public static String PropertySet_Description;
 
     static {
         // initialize resource bundle
