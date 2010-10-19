@@ -245,6 +245,45 @@ extern Context * context_get_group(Context * ctx, int group);
  */
 #define CONTEXT_GROUP_BREAKPOINT    2
 
+
+/*
+ * Debug context implementation can support low-level breakpoints.
+ * The support is optional, if not implemented, the agent will use generic code
+ * to plant software breakpoints. Hardware breakpoints is an example of breakpoints
+ * that can be implemented by debug context.
+ *
+ * ContextBreakpoint struct is used by the agent to communicate breakpoint properties to
+ * debug context implementation. The implementation needs to handle only small subset of
+ * breakpoint properties, the rest is handles by generic code in Breakpoints service.
+ */
+typedef struct ContextBreakpoint {
+    Context * ctx;              /* breakpoint context, one of returned by
+                                 * context_get_group(..., CONTEXT_GROUP_BREAKPOINT) */
+    ContextAddress address;     /* breakpoint address */
+    ContextAddress length;      /* length of the breakpoint address range */
+    unsigned access_types;      /* memory access type, one of CTX_BP_ACCESS_* */
+    unsigned id;                /* to be used by debug context inmplementation */
+} ContextBreakpoint;
+
+#define CTX_BP_ACCESS_INSTRUCTION    0x01
+#define CTX_BP_ACCESS_DATA_READ      0x02
+#define CTX_BP_ACCESS_DATA_WRITE     0x04
+
+/*
+ * Plant a breakpoint.
+ * Return 0 on success, or return -1 and set errno on error.
+ * If error code is ERR_UNSUPPORTED, Breakpoints service will
+ * try to plant the breakpoint as a generic software breakpoint.
+ */
+extern int context_plant_breakpoint(ContextBreakpoint * bp);
+
+/*
+ * Un-plant (remove) a breakpoint.
+ * Return 0 on success, or return -1 and set errno on error.
+ * 'bp' must be a breakpoint that was planted by context_plant_breakpoint().
+ */
+extern int context_unplant_breakpoint(ContextBreakpoint * bp);
+
 /*
  * Functions that notify listeners of various context event.
  * They are not supposed to be called by clients.

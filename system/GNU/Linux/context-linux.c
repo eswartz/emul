@@ -483,6 +483,16 @@ Context * context_get_group(Context * ctx, int group) {
     return ctx->mem;
 }
 
+int context_plant_breakpoint(ContextBreakpoint * bp) {
+    errno = ERR_UNSUPPORTED;
+    return -1;
+}
+
+int context_unplant_breakpoint(ContextBreakpoint * bp) {
+    errno = ERR_UNSUPPORTED;
+    return -1;
+}
+
 static Context * find_pending(pid_t pid) {
     LINK * l = pending_list.next;
     while (l != &pending_list) {

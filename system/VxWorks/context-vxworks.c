@@ -73,7 +73,7 @@ struct event_info {
     VXDBG_BP_INFO       bp_info;        /* breakpoint information */
 };
 
-VXDBG_CLNT_ID vxdbg_clnt_id = 0;
+static VXDBG_CLNT_ID vxdbg_clnt_id = 0;
 
 #define MAX_EVENTS 64
 static struct event_info events[MAX_EVENTS];
@@ -265,8 +265,6 @@ int context_continue(Context * ctx) {
     assert(!ctx->exited);
     assert(taskIsStopped(EXT(ctx)->pid));
 
-    if (skip_breakpoint(ctx, 0)) return 0;
-
     trace(LOG_CONTEXT, "context: continue ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
 
     if (EXT(ctx)->regs_dirty) {
@@ -308,8 +306,6 @@ int context_single_step(Context * ctx) {
     assert(ctx->stopped);
     assert(!ctx->exited);
     assert(taskIsStopped(EXT(ctx)->pid));
-
-    if (skip_breakpoint(ctx, 1)) return 0;
 
     trace(LOG_CONTEXT, "context: single step ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
 
@@ -353,6 +349,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
 #else
     bcopy((void *)address, buf, size);
 #endif
+    if (check_breakpoints_on_memory_read(ctx, address, buf, size) < 0) return -1;
     return 0;
 }
 
@@ -361,6 +358,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         errno = ERR_INV_ADDRESS;
         return -1;
     }
+    if (check_breakpoints_on_memory_write(ctx, address, buf, size) < 0) return -1;
 #ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemWrite((void *)address, buf, size);
 #else
@@ -419,6 +417,36 @@ int context_get_canonical_addr(Context * ctx, ContextAddress addr,
 
 Context * context_get_group(Context * ctx, int group) {
     return parent_ctx;
+}
+
+int context_plant_breakpoint(ContextBreakpoint * bp) {
+    VXDBG_CTX vxdbg_ctx;
+    VXDBG_BP_ID bp_id = 0;
+    if (bp->access_types != CTX_BP_ACCESS_INSTRUCTION) {
+        errno = ERR_INV_FORMAT;
+        return -1;
+    }
+    if (bp->length != 1) {
+        errno = ERR_INV_FORMAT;
+        return -1;
+    }
+    memset(&vxdbg_ctx, 0, sizeof(vxdbg_ctx));
+    vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
+    if (vxdbgBpAdd(vxdbg_clnt_id,
+            &vxdbg_ctx, 0, BP_ACTION_STOP | BP_ACTION_NOTIFY,
+            0, 0, (INSTR *)bp->address, 0, 0, &bp_id) != OK) return -1;
+    bp->id = bp_id;
+    return 0;
+}
+
+int context_unplant_breakpoint(ContextBreakpoint * bp) {
+    VXDBG_BP_DEL_INFO info;
+    memset(&info, 0, sizeof(info));
+    info.pClnt = vxdbg_clnt_id;
+    info.type = BP_BY_ID_DELETE;
+    info.info.id.bpId = bp->id;
+    if (vxdbgBpDelete(info) != OK) return -1;
+    return 0;
 }
 
 unsigned context_word_size(Context * ctx) {

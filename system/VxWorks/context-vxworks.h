@@ -22,8 +22,6 @@
 #include <config.h>
 #include <framework/context.h>
 
-extern VXDBG_CLNT_ID vxdbg_clnt_id;
-
 extern int get_context_task_id(Context * ctx);
 
 #endif /* D_context_vxworks */

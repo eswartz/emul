@@ -37,6 +37,8 @@
 #include <system/Windows/context-win32.h>
 #include <system/Windows/regset.h>
 
+#define MAX_HW_BPS 4
+
 typedef struct ContextExtensionWin32 {
     pid_t               pid;
     HANDLE              handle;
@@ -52,6 +54,10 @@ typedef struct ContextExtensionWin32 {
     SIZE_T              step_opcodes_len;
     ContextAddress      step_opcodes_addr;
     struct DebugState * debug_state;
+    int                 ok_to_use_hw_bp;    /* NtContinue() changes Dr6 and Dr7, so HW breakpoints should be disabled until NtContinue() is done */
+    ContextBreakpoint * hw_bps[MAX_HW_BPS];
+    unsigned            hw_bps_generation;
+    DWORD               skip_hw_bp_addr;
 } ContextExtensionWin32;
 
 static size_t context_extension_offset = 0;
@@ -178,7 +184,7 @@ static void get_registers(Context * ctx) {
     assert(context_has_state(ctx));
     assert(ctx->stopped);
 
-    ext->regs->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    ext->regs->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_DEBUG_REGISTERS;
     if (GetThreadContext(ext->handle, ext->regs) == 0) {
         ext->regs_error = get_error_report(log_error("GetThreadContext", 0));
     }
@@ -234,15 +240,29 @@ static DWORD event_win32_context_stopped(Context * ctx) {
         ctx->stopped_by_exception = 0;
         switch (exception_code) {
         case EXCEPTION_SINGLE_STEP:
-            if (ext->step_opcodes_len == 0) {
-                continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            get_registers(ctx);
+            if (!ext->regs_error) {
+                if (ext->regs->Eip != ext->skip_hw_bp_addr) ext->skip_hw_bp_addr = 0;
+                if (ext->skip_hw_bp_addr == 0) {
+                    int i;
+                    for (i = 0; i < MAX_HW_BPS; i++) {
+                        ContextBreakpoint * bp = EXT(ctx->mem)->hw_bps[i];
+                        if (bp != NULL && bp->address == ext->regs->Eip && bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
+                            ctx->stopped_by_bp = 1;
+                            ext->skip_hw_bp_addr = ext->regs->Eip;
+                            break;
+                        }
+                    }
+                }
             }
-            else if (ext->step_opcodes[0] == 0x9c) {
-                /* PUSHF instruction: need to clear trace flag from top of the stack */
-                SIZE_T bcnt = 0;
-                ContextAddress buf = 0;
-                get_registers(ctx);
-                if (!ext->regs_error) {
+            if (!ctx->stopped_by_bp) {
+                if (ext->step_opcodes_len == 0 || ext->regs_error) {
+                    continue_status = DBG_EXCEPTION_NOT_HANDLED;
+                }
+                else if (ext->step_opcodes[0] == 0x9c) {
+                    /* PUSHF instruction: need to clear trace flag from top of the stack */
+                    SIZE_T bcnt = 0;
+                    ContextAddress buf = 0;
                     assert(ext->regs->EFlags & 0x100);
                     assert(ext->step_opcodes_addr == ext->regs->Eip - 1);
                     if (!ReadProcessMemory(EXT(ctx->mem)->handle, (LPCVOID)ext->regs->Esp, &buf, sizeof(ContextAddress), &bcnt) || bcnt != sizeof(ContextAddress)) {
@@ -267,6 +287,7 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                 ext->regs->Eip -= break_size;
                 ext->regs_dirty = 1;
                 ctx->stopped_by_bp = 1;
+                EXT(ctx->mem)->ok_to_use_hw_bp = 1;
             }
             else {
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
@@ -423,11 +444,127 @@ static void break_process_event(void * args) {
     context_unlock(ctx);
 }
 
-static int win32_resume(Context * ctx) {
+static int win32_resume(Context * ctx, int step) {
     ContextExtensionWin32 * ext = EXT(ctx);
+
     assert(ctx->stopped);
     assert(!ctx->exited);
+
+    if (ext->skip_hw_bp_addr == 0 && skip_breakpoint(ctx, step)) return 0;
+
+    /* Update debug registers */
+    if (ext->skip_hw_bp_addr != 0 || ext->hw_bps_generation != EXT(ctx->mem)->hw_bps_generation) {
+        int i;
+        DWORD Dr7 = 0;
+        int step_over_hw_bp = 0;
+
+        get_registers(ctx);
+        if (ext->regs_error) {
+            errno = set_error_report_errno(ext->regs_error);
+            return -1;
+        }
+        Dr7 = ext->regs->Dr7;
+        for (i = 0; i < MAX_HW_BPS; i++) {
+            ContextBreakpoint * bp = EXT(ctx->mem)->hw_bps[i];
+            if (bp != NULL &&
+                    ext->skip_hw_bp_addr == bp->address &&
+                    bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
+                /* Skipping the breakpoint */
+                step_over_hw_bp = 1;
+                bp = NULL;
+            }
+            Dr7 &= ~(3u << (i * 2));
+            if (bp != NULL) {
+                switch (i) {
+                case 0:
+                    if (ext->regs->Dr0 != bp->address) {
+                        ext->regs->Dr0 = bp->address;
+                        ext->regs_dirty = 1;
+                    }
+                    break;
+                case 1:
+                    if (ext->regs->Dr1 != bp->address) {
+                        ext->regs->Dr1 = bp->address;
+                        ext->regs_dirty = 1;
+                    }
+                    break;
+                case 2:
+                    if (ext->regs->Dr2 != bp->address) {
+                        ext->regs->Dr2 = bp->address;
+                        ext->regs_dirty = 1;
+                    }
+                    break;
+                case 3:
+                    if (ext->regs->Dr3 != bp->address) {
+                        ext->regs->Dr3 = bp->address;
+                        ext->regs_dirty = 1;
+                    }
+                    break;
+                }
+                Dr7 |= 1u << (i * 2);
+                if (bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
+                    Dr7 &= ~(3u << (i * 2 + 16));
+                }
+                else if (bp->access_types == CTX_BP_ACCESS_DATA_WRITE) {
+                    Dr7 &= ~(3u << (i * 2 + 16));
+                    Dr7 |= 1u << (i * 2 + 16);
+                }
+                else if (bp->access_types == (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
+                    Dr7 |= 3u << (i * 2 + 16);
+                }
+                else {
+                    errno = set_errno(ERR_UNSUPPORTED, "Invalid hardware breakpoint: unsupported access mode");
+                    return -1;
+                }
+                if (bp->length == 1) {
+                    Dr7 &= ~(3u << (i * 2 + 24));
+                }
+                else if (bp->length == 2) {
+                    Dr7 &= ~(3u << (i * 2 + 24));
+                    Dr7 |= 1u << (i * 2 + 24);
+                }
+                else if (bp->length == 4) {
+                    Dr7 &= ~(3u << (i * 2 + 24));
+                    Dr7 |= 2u << (i * 2 + 24);
+                }
+                else if (bp->length == 8) {
+                    Dr7 |= 3u << (i * 2 + 24);
+                }
+                else {
+                    errno = set_errno(ERR_UNSUPPORTED, "Invalid hardware breakpoint: unsupported length");
+                    return -1;
+                }
+            }
+        }
+        if (ext->regs->Dr7 != Dr7) {
+            ext->regs->Dr7 = Dr7;
+            ext->regs_dirty = 1;
+        }
+        ext->hw_bps_generation = EXT(ctx->mem)->hw_bps_generation;
+        if (step_over_hw_bp) {
+            step = 1;
+            ext->hw_bps_generation--;
+        }
+        else {
+            ext->skip_hw_bp_addr = 0;
+        }
+    }
+
+    /* Update CPU trace flag */
+    if (!step && ext->trace_flag) {
+        get_registers(ctx);
+        ext->regs->EFlags &= ~0x100;
+        ext->regs_dirty = 1;
+    }
+    else if (step && !ext->trace_flag) {
+        get_registers(ctx);
+        ext->regs->EFlags |= 0x100;
+        ext->regs_dirty = 1;
+    }
+
+    /* Flash registers if dirty */
     if (ext->regs_dirty) {
+        assert(ext->regs->ContextFlags);
         if (ext->regs_error) {
             trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, id %s", ctx, ctx->id);
             errno = set_error_report_errno(ext->regs_error);
@@ -440,6 +577,7 @@ static int win32_resume(Context * ctx) {
         ext->trace_flag = (ext->regs->EFlags & 0x100) != 0;
         ext->regs_dirty = 0;
     }
+
     if (ctx->parent->pending_signals & (1 << SIGKILL)) {
         LINK * l;
         Context * prs = ctx->parent;
@@ -809,41 +947,23 @@ int context_stop(Context * ctx) {
 }
 
 int context_continue(Context * ctx) {
-    ContextExtensionWin32 * ext = EXT(ctx);
-
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(!ctx->exited);
 
-    if (skip_breakpoint(ctx, 0)) return 0;
-
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, id %s", ctx, ctx->id);
-    if (ext->trace_flag) {
-        get_registers(ctx);
-        ext->regs->EFlags &= ~0x100;
-        ext->regs_dirty = 1;
-    }
-    return win32_resume(ctx);
+    return win32_resume(ctx, 0);
 }
 
 int context_single_step(Context * ctx) {
-    ContextExtensionWin32 * ext = EXT(ctx);
-
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(!ctx->exited);
 
-    if (skip_breakpoint(ctx, 1)) return 0;
-
     trace(LOG_CONTEXT, "context: single step ctx %#lx, id %s", ctx, ctx->id);
-    if (!ext->trace_flag) {
-        get_registers(ctx);
-        ext->regs->EFlags |= 0x100;
-        ext->regs_dirty = 1;
-    }
-    return win32_resume(ctx);
+    return win32_resume(ctx, 1);
 }
 
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
@@ -932,6 +1052,40 @@ int context_get_canonical_addr(Context * ctx, ContextAddress addr,
 
 Context * context_get_group(Context * ctx, int group) {
     return ctx->mem;
+}
+
+int context_plant_breakpoint(ContextBreakpoint * bp) {
+    int i;
+    Context * ctx = bp->ctx;
+    if (ctx->mem == ctx) {
+        ContextExtensionWin32 * ext = EXT(ctx);
+        if (ext->ok_to_use_hw_bp) {
+            for (i = 0; i < MAX_HW_BPS; i++) {
+                if (ext->hw_bps[i] == NULL || ext->hw_bps[i] == bp) {
+                    ext->hw_bps[i] = bp;
+                    ext->hw_bps_generation++;
+                    return 0;
+                }
+            }
+        }
+    }
+    errno = ERR_UNSUPPORTED;
+    return -1;
+}
+
+int context_unplant_breakpoint(ContextBreakpoint * bp) {
+    int i;
+    Context * ctx = bp->ctx;
+    if (ctx->mem == ctx) {
+        ContextExtensionWin32 * ext = EXT(ctx);
+        for (i = 0; i < MAX_HW_BPS; i++) {
+            if (ext->hw_bps[i] == bp) {
+                ext->hw_bps[i] = NULL;
+                ext->hw_bps_generation++;
+            }
+        }
+    }
+    return 0;
 }
 
 HANDLE get_context_handle(Context * ctx) {
