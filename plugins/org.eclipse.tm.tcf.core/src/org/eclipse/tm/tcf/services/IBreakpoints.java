@@ -66,8 +66,8 @@ public interface IBreakpoints extends IService {
      * BreakpointType values
      */
     static final String
-        TYPE_RELATIVE = "Software",
-        TYPE_ABSOLUTE = "Hardware",
+        TYPE_SOFTWARE = "Software",
+        TYPE_HARDWARE = "Hardware",
         TYPE_AUTO = "Auto";
 
     /**

@@ -768,7 +768,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private boolean isMyBreakpoint(SuspendedContext sc) {
-        // Check if context suspended by a one of our breakpoint
+        // Check if the context is suspended by one of our breakpoints
         if (!"Breakpoint".equals(sc.reason)) return false;
         long pc =  Long.parseLong(sc.pc);
         for (IDiagnostics.ISymbol sym : sym_list.values()) {
