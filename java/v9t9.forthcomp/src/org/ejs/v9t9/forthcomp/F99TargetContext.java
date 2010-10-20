@@ -61,6 +61,10 @@ public class F99TargetContext extends TargetContext {
 		definePrim(">r", InstF99.ItoR);
 		definePrim("r>", InstF99.IRfrom);
 		definePrim("r@", InstF99.IatR);
+		definePrim("i", InstF99.IatR);
+		definePrim("(do)", InstF99.Ido);
+		definePrim("(loop)", InstF99.Iloop);
+		definePrim("unloop", InstF99.Iunloop);
 		
 	}
 	
@@ -171,6 +175,15 @@ public class F99TargetContext extends TargetContext {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileAddr(int)
+	 */
+	@Override
+	public void compileAddr(int loc) {
+		int ptr = alloc(2);
+		writeCell(ptr, loc);
+	}
+	
 	/**
 	 * Export the state to a real machine
 	 * @param hostContext
@@ -208,7 +221,7 @@ public class F99TargetContext extends TargetContext {
 		stack.clear();
 		
 		int curSP = cpu.getSP() & 0xffff;
-		while (baseSP > curSP) {
+		while (baseSP > 0 && baseSP > curSP) {
 			baseSP -= 2;
 			stack.push((int) machine.getConsole().readWord(baseSP));
 		}
@@ -217,7 +230,7 @@ public class F99TargetContext extends TargetContext {
 		stack.clear();
 		
 		int curRP = cpu.getRSP() & 0xffff;
-		while (baseRP > curRP) {
+		while (curRP > 0 && baseRP > curRP) {
 			curRP -= 2;
 			stack.push((int) machine.getConsole().readWord(baseRP));
 		}
@@ -228,12 +241,25 @@ public class F99TargetContext extends TargetContext {
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#pushFixup()
 	 */
 	@Override
-	public void pushFixup(HostContext hostContext) {
-		// TODO: optimize this
+	public int pushFixup(HostContext hostContext) {
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
 		writeCell(nextDp, 0);
 		setDP(nextDp + cellSize);
+
+		return nextDp;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#pushHere(org.ejs.v9t9.forthcomp.HostContext)
+	 */
+	@Override
+	public int pushHere(HostContext hostContext) {
+		// TODO: optimize this
+		int nextDp = getDP();
+		hostContext.pushData(nextDp);
+		opcodeIndex = 3;
+		return nextDp;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#swapFixup()
@@ -263,7 +289,7 @@ public class F99TargetContext extends TargetContext {
 	 * @param from 
 	 */
 	public void dumpDict(PrintStream out, int from, int to) {
-		int perLine = 6;
+		int perLine = 8;
 		int lines = ((to - from) / cellSize + perLine - 1) / perLine;
 		int addr = from;
 		for (int i = 0; i < lines; i++) {
@@ -274,5 +300,29 @@ public class F99TargetContext extends TargetContext {
 			}
 			out.println();
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#loopCompile(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.ITargetWord)
+	 */
+	@Override
+	public void loopCompile(HostContext hostCtx, ITargetWord loopCaller)
+			throws AbortException {
+		compile(loopCaller);
+		int diff = hostCtx.popData() - getDP() - cellSize;
+		compileAddr(diff);
+		
+		for (int ptr : hostCtx.leaves()) {
+			hostCtx.pushData(ptr);
+			resolveFixup(hostCtx);
+		}
+		hostCtx.leaves().clear();
+		
+		ITargetWord unloop = (ITargetWord) find("unloop");
+		if (unloop == null)
+			throw new AbortException("no unloop word found");
+		
+		compile(unloop);
+		
 	}
 }

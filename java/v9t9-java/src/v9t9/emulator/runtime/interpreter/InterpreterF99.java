@@ -211,6 +211,7 @@ public class InterpreterF99 implements Interpreter {
 		case InstF99.Ilit:
 		case InstF99.I0branch:
 		case InstF99.Ibranch:
+		case InstF99.Iloop:
 			inst.setOp1(MachineOperandF99.createImmediateOperand(memory.readWord(iblock.pc & ~1), MachineOperandF99.OP_ENC_IMM16));
 			iblock.pc = (short) ((iblock.pc & ~1) + 2);
 			break;
@@ -362,6 +363,34 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.IatR:
         	cpu.push(cpu.rpeek());
         	break;
+        	
+        case InstF99.Ido: {
+        	short lim = cpu.pop();
+        	short init = cpu.pop();
+        	cpu.rpush(init);
+        	cpu.rpush(lim);
+        	break;
+        }
+        
+        case InstF99.Iloop: {
+        	short cur = iblock.getReturnStackEntry(0);
+        	short lim = iblock.getReturnStackEntry(1);
+        	if ((short)(cur + 1) != lim) {
+        		cpu.rpop();
+        		cpu.rpush((short) (cur + 1));
+        		short targ = (short) (iblock.pc + mop1.immed);
+            	cpu.setPC(targ);
+        	} else {
+        		cpu.rpop();
+        		cpu.rpop();
+        	}
+        	break;
+        }
+        case InstF99.Iunloop:
+        	cpu.rpop();
+        	cpu.rpop();
+        	break;
+        	
         default:
     		throw new UnsupportedOperationException("" + ins);
         }

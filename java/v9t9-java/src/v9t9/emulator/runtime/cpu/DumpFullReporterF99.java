@@ -125,7 +125,7 @@ public class DumpFullReporterF99 implements InstructionListener {
 				rpadded = Math.min(4, Math.max(fx.second, rpadded));
 
 			for (int i = 0; i < rpadded; i++)
-				sb.append(toStr(block.getReturnStackEntry(i))).append(' ');
+				sb.append(toStr(block.getReturnStackEntry(rpadded - i - 1))).append(' ');
 		}
 		sb.append(")");
 

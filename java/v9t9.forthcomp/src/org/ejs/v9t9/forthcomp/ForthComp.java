@@ -73,6 +73,10 @@ public class ForthComp {
 		hostContext.define("if", new IfParser());
 		hostContext.define("else", new ElseParser());
 	 	hostContext.define("then", new ThenParser());
+	 	hostContext.define("do", new DoParser());
+	 	hostContext.define("?do", new QuestionDoParser());
+	 	hostContext.define("loop", new LoopParser());
+	 	hostContext.define("+loop", new PlusLoopParser());
 	 	hostContext.define("(", new ParenParser());
 	}
 

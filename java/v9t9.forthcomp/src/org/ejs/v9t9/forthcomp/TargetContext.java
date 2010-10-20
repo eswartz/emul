@@ -275,7 +275,11 @@ public abstract class TargetContext extends Context {
 	/**
 	 * here 0 ,
 	 */
-	abstract public void pushFixup(HostContext hostContext);
+	abstract public int pushFixup(HostContext hostContext);
+	/**
+	 * here 
+	 */
+	abstract public int pushHere(HostContext hostContext);
 
 	/**
 	 * swap
@@ -295,4 +299,10 @@ public abstract class TargetContext extends Context {
 		lastEntry = null;
 		Arrays.fill(memory, (byte) 0);
 	}
+
+	/** compile address or offset */
+	abstract public void compileAddr(int loc);
+	
+
+	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
 }

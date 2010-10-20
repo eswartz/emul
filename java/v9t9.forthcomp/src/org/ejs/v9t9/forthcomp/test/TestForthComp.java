@@ -222,7 +222,7 @@ public class TestForthComp {
 	
 	private void dumpMemory(PrintStream out, int from, int to, MemoryDomain domain) {
 		System.out.println("raw memory:");
-		int perLine = 6;
+		int perLine = 8;
 		int lines = ((to - from) / 2 + perLine - 1) / perLine;
 		int addr = from;
 		for (int i = 0; i < lines; i++) {
@@ -509,11 +509,51 @@ public class TestForthComp {
 	@Test
 	public void testMultiplyDivide() throws Exception {
 		comp.parseString(": * um* drop ;\n" +
-				": */ ( n1 n2 n3 -- n4 ) >r um* r> um/mod swap drop ;\n" +
+				//": */ ( n1 n2 n3 -- n4 ) >r um* r> um/mod  swap drop ;\n" +
+				": */mod ( n1 n2 n3 -- rem quot ) >r um* r> um/mod ;\n" +
+				": */ ( n1 n2 n3 -- n4 ) */mod swap drop ;\n" +
 				": percent ( val p -- prod ) 100 */ ;\n" +
 				": outer 500 25 percent ;");
 		
 		interpret("outer");
 		assertEquals(125, hostCtx.popData());
 	}
+	
+
+	@Test
+	public void testDoLoop() throws Exception {
+		comp.parseString(": stack 0 do i loop ;");
+
+		dumpDict();
+		
+		TargetColonWord foo = (TargetColonWord) targCtx.find("stack");
+		assertNotNull(foo);
+		
+		int dp = foo.getEntry().getContentAddr();
+		int word = targCtx.readAddr(dp);
+
+		assertOpword(word, InstF99.Izero, 0, InstF99.Ido);
+		word = targCtx.readAddr(dp + 2);
+		assertOpword(word, InstF99.IatR, 0, InstF99.Iloop);
+		word = targCtx.readAddr(dp + 4);
+		assertEquals(-4 & 0xffff, word);
+		word = targCtx.readAddr(dp + 6);
+		assertOpword(word, InstF99.Iunloop, 0, InstF99.Iexit);
+
+	}
+
+	@Test
+	public void testDoLoopEx() throws Exception {
+		comp.parseString(": stack 0 do i loop ;");
+
+		hostCtx.pushData(5);
+		interpret("stack");
+		assertEquals(4, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
+		assertEquals(1, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+
+	}
+	
 }
