@@ -96,7 +96,7 @@ public class InstF99 {
 	public static final int Idadd = Iarith_start + 19;
 	public static final int Idneg = Iarith_start + 20;
 	
-	public static final int Iunloop = Iarith_start + 21;
+	public static final int I2rdrop = Iarith_start + 21;
 	
 	public static final int Icond_start = 54;
 	

@@ -538,7 +538,7 @@ public class TestForthComp {
 		word = targCtx.readAddr(dp + 4);
 		assertEquals(-4 & 0xffff, word);
 		word = targCtx.readAddr(dp + 6);
-		assertOpword(word, InstF99.Iunloop, 0, InstF99.Iexit);
+		assertOpword(word, InstF99.I2rdrop, 0, InstF99.Iexit);
 
 	}
 

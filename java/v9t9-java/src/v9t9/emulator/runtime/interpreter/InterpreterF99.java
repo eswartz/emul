@@ -373,11 +373,11 @@ public class InterpreterF99 implements Interpreter {
         }
         
         case InstF99.Iloop: {
-        	short cur = iblock.getReturnStackEntry(0);
+        	short next = (short) (iblock.getReturnStackEntry(0) + 1);
         	short lim = iblock.getReturnStackEntry(1);
-        	if ((short)(cur + 1) != lim) {
-        		cpu.rpop();
-        		cpu.rpush((short) (cur + 1));
+    		cpu.rpop();
+    		cpu.rpush(next);
+    		if (next != lim) {
         		short targ = (short) (iblock.pc + mop1.immed);
             	cpu.setPC(targ);
         	} else {
@@ -386,7 +386,7 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
-        case InstF99.Iunloop:
+        case InstF99.I2rdrop:
         	cpu.rpop();
         	cpu.rpop();
         	break;

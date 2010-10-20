@@ -64,7 +64,8 @@ public class F99TargetContext extends TargetContext {
 		definePrim("i", InstF99.IatR);
 		definePrim("(do)", InstF99.Ido);
 		definePrim("(loop)", InstF99.Iloop);
-		definePrim("unloop", InstF99.Iunloop);
+		definePrim("unloop", InstF99.I2rdrop);
+		definePrim("2rdrop", InstF99.I2rdrop);
 		
 	}
 	
