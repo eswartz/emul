@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tcf.internal.target.core.TargetServiceTester"
+            id="org.eclipse.tcf.target.targetService"
+            namespace="org.eclipse.tcf.target"
+            properties="targetService,targetServiceRunning"
+            type="org.eclipse.tcf.target.core.ITarget">
+      </propertyTester>
+   </extension>
+</plugin>

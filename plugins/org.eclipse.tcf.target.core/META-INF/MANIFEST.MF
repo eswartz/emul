@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: TCF Target Management Core
+Bundle-SymbolicName: org.eclipse.tcf.target.core;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.eclipse.tcf.internal.target.core.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.core.expressions;bundle-version="3.4.200",
+ org.eclipse.tm.tcf.core;bundle-version="0.3.0"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: org.eclipse.tcf.target.core
