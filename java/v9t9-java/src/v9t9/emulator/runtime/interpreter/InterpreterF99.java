@@ -5,6 +5,7 @@ import org.ejs.coffee.core.utils.Pair;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.CpuF99;
+import v9t9.emulator.runtime.cpu.CpuStateF99;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.cpu.InstF99;
 import v9t9.engine.cpu.InstructionF99;
@@ -91,8 +92,8 @@ public class InterpreterF99 implements Interpreter {
 
         iblock.pc = cpu.getPC();
         iblock.st = cpu.getST();
-        iblock.sp = cpu.getSP();
-        iblock.rp = cpu.getRSP();
+        iblock.sp = ((CpuStateF99)cpu.getState()).getSP();
+        iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
         iblock.inst = ins;
         
 
@@ -124,8 +125,8 @@ public class InterpreterF99 implements Interpreter {
 
         iblock.pc = cpu.getPC();
         iblock.st = cpu.getST();
-        iblock.sp = cpu.getSP();
-        iblock.rp = cpu.getRSP();
+        iblock.sp = ((CpuStateF99)cpu.getState()).getSP();
+        iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
         
         /* notify listeners */
         if (instructionListeners != null) {
@@ -198,8 +199,8 @@ public class InterpreterF99 implements Interpreter {
 		
 		switch (opcode) {
 		case InstF99.IfieldLit:
-		case InstF99.I0fieldBranch:
-		case InstF99.IfieldBranch:
+		//case InstF99.I0fieldBranch:
+		//case InstF99.IfieldBranch:
 			if (index == 2) {
 				short next = memory.readWord(iblock.pc);
 				iblock.pc++;			
@@ -309,6 +310,13 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push(y);
         	break;
         }
+        case InstF99.I2dup: {
+        	short x = iblock.getStackEntry(0);
+        	short y = iblock.getStackEntry(1);
+        	cpu.push(y);
+        	cpu.push(x);
+        	break;
+        }
         case InstF99.Iadd:
         	cpu.push((short) (cpu.pop() + cpu.pop()));
         	break;
@@ -342,6 +350,24 @@ public class InterpreterF99 implements Interpreter {
         	break;
         }
         
+        case InstF99.I1plus:
+	        cpu.push((short) (cpu.pop() + 1));
+	    	break;
+        case InstF99.I1minus:
+	        cpu.push((short) (cpu.pop() - 1));
+	    	break;
+        case InstF99.I2plus:
+	        cpu.push((short) (cpu.pop() + 2));
+	    	break;
+        case InstF99.I2minus:
+	        cpu.push((short) (cpu.pop() - 2));
+	    	break;
+        case InstF99.I2times:
+	        cpu.push((short) (cpu.pop() * 2));
+	    	break;
+        case InstF99.I2div:
+        	cpu.push((short) (cpu.pop() / 2));
+        	break;
         case InstF99.Ineg:
         	cpu.push((short) -cpu.pop());
         	break;
@@ -362,6 +388,9 @@ public class InterpreterF99 implements Interpreter {
         	break;
         case InstF99.IatR:
         	cpu.push(cpu.rpeek());
+        	break;
+        case InstF99.Irdrop:
+        	cpu.rpop();
         	break;
         	
         case InstF99.Ido: {
@@ -389,6 +418,64 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.I2rdrop:
         	cpu.rpop();
         	cpu.rpop();
+        	break;
+        	
+        case InstF99.IcontextFrom:
+        	switch (cpu.pop()) {
+        	case 0:
+        		cpu.push(((CpuStateF99)cpu.getState()).getSP());
+        		break;
+        	case 1:
+        		cpu.push(((CpuStateF99)cpu.getState()).getBaseSP());
+        		break;
+        	case 2:
+        		cpu.push(((CpuStateF99)cpu.getState()).getRP());
+        		break;
+        	case 3:
+        		cpu.push(((CpuStateF99)cpu.getState()).getBaseRP());
+        		break;
+        	case 4:
+        		cpu.push(((CpuStateF99)cpu.getState()).getUP());
+        		break;
+        	case 5:
+        		cpu.push(((CpuStateF99)cpu.getState()).getBaseUP());
+        		break;
+        	case 6:
+        		cpu.push(cpu.getPC());
+        		break;
+    		default:
+    			cpu.push((short) -1);
+    			break;
+        	}
+        	break;
+        	
+        case InstF99.ItoContext:
+        	switch (cpu.pop()) {
+        	case 0:
+        		((CpuStateF99)cpu.getState()).setSP(cpu.pop());
+        		break;
+        	case 1:
+        		((CpuStateF99)cpu.getState()).setBaseSP(cpu.pop());
+        		break;
+        	case 2:
+        		((CpuStateF99)cpu.getState()).setRP(cpu.pop());
+        		break;
+        	case 3:
+        		((CpuStateF99)cpu.getState()).setBaseRP(cpu.pop());
+        		break;
+        	case 4:
+        		((CpuStateF99)cpu.getState()).setUP(cpu.pop());
+        		break;
+        	case 5:
+        		((CpuStateF99)cpu.getState()).setBaseUP(cpu.pop());
+        		break;
+        	case 6:
+        		((CpuStateF99)cpu.getState()).setPC(cpu.pop());
+        		break;
+        	default:
+        		cpu.pop();
+        		break;
+        	}
         	break;
         	
         default:

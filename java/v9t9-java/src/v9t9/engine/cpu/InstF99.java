@@ -27,6 +27,7 @@ public class InstF99 {
 	public static final int Ione = I3bit_start + 5;
 	/** next signed field is pushed */
 	public static final int IfieldLit = I3bit_start + 6;
+	/** next full word is jump offset */
 	public static final int I0branch = I3bit_start +7;
 	
 	public static final int Irstack_start = 8;
@@ -35,6 +36,7 @@ public class InstF99 {
 	public static final int InegOne = Irstack_start + 1;
 	
 	public static final int Ido = Irstack_start + 2;
+	/** next full word is jump offset */
 	public static final int Iloop = Irstack_start + 3;
 	public static final int Iover = Irstack_start + 4;
 	public static final int Irot = Irstack_start + 5;
@@ -43,22 +45,26 @@ public class InstF99 {
 	public static final int IatR = Irstack_start + 8;
 	public static final int Iexit = Irstack_start + 9;
 	public static final int Irdrop = Irstack_start + 10;
-	public static final int Iiprime = Irstack_start + 11;
-	public static final int Ij = Irstack_start + 12;
+	public static final int Ij = Irstack_start + 11;
+	public static final int I2dup = Irstack_start + 12;
+	public static final int IplusLoop = Irstack_start + 13;
+	//public static final int Iiprime = Irstack_start + 11;
 	
-	public static final int Ispecial_start = 21;
+	public static final int Ispecial_start = 22;
 	
-	public static final int Ipc = Ispecial_start + 0;
-	public static final int Isp = Ispecial_start + 1;
+	/** 0=SP, 1=SP0, 2=RP, 3=RP0, 4=UP, 5=UP0, 6=PC */
+	public static final int IcontextFrom = Ispecial_start + 0;
+	/** 0=SP, 1=SP0, 2=RP, 3=RP0, 4=UP, 5=UP0, 6=PC */
+	public static final int ItoContext = Ispecial_start + 1;
 	
-	public static final int Ibranches_start = 23;
+	public static final int Ibranches_start = 24;
 	
 	/** next field is offset in words */
-	public static final int I0fieldBranch = Ibranches_start + 0;
+	//public static final int I0fieldBranch = Ibranches_start + 0;
 	/** next field is offset in words */
-	public static final int IfieldBranch = Ibranches_start + 1;
+	//public static final int IfieldBranch = Ibranches_start + 1;
 	/** next full word is offset in words */
-	public static final int Ibranch = Ibranches_start + 3;		
+	public static final int Ibranch = Ibranches_start + 0;		
 	
 	public static final int Istack_start = 27;
 	
@@ -165,9 +171,9 @@ public class InstF99 {
 		switch (inst) {
 		case InstF99.Iexecute:
 		case InstF99.Isyscall:
-		case InstF99.Ipc:
+		case InstF99.IcontextFrom:
 		case InstF99.Ibranch:
-		case InstF99.IfieldBranch:
+		//case InstF99.IfieldBranch:
 			return true;
 		}
 		return false;
@@ -189,7 +195,7 @@ public class InstF99 {
 		Itwo, 0, 1, 0, 0,
 		InegOne, 0, 1, 0, 0,
 		Ido, 2, 0, 0, 0,
-		Iloop, 0, 0, 2, 0,
+		IplusLoop, 0, 0, 2, 0,
 		Iover, 2, 3, 0, 0,
 		Irot, 3, 3, 0, 0,
 		ItoR, 1, 0, 0, 1,
@@ -197,12 +203,13 @@ public class InstF99 {
 		IatR, 0, 1, 1, 0,
 		Iexit, 0, 0, 1, 0,
 		Irdrop, 0, 0, 1, 0,
-		Iiprime, 0, 1, 2, 2,
+		I2dup, 2, 4, 0, 0,
+		//Iiprime, 0, 1, 2, 2,
 		Ij, 0, 1, 3, 3,
-		Ipc, 0, 1, 0, 0,
-		Isp, 0, 1, 0, 0,
-		I0fieldBranch, 1, 0, 0, 0, 
-		IfieldBranch, 0, 0, 0, 0,
+		IcontextFrom, 1, 1, 0, 0,
+		ItoContext, 2, 0, 0, 0,
+		//I0fieldBranch, 1, 0, 0, 0, 
+		//IfieldBranch, 0, 0, 0, 0,
 		Ibranch, 0, 0, 0, 0,
 		Iswap, 2, 2, 0, 0,
 		Idrop, 1, 0, 0, 0,

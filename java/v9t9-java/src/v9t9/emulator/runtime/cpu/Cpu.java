@@ -83,4 +83,9 @@ public interface Cpu extends IPersistable, CpuState {
 	/** Tell whether the code compiled at this address is 
 	 * likely to need compiler debugging */
 	boolean shouldDebugCompiledCode(short pc);
+
+	/**
+	 * @return
+	 */
+	CpuState getState();
 }

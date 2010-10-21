@@ -11,6 +11,7 @@ import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 
 import v9t9.emulator.hardware.F99Machine;
 import v9t9.emulator.runtime.cpu.CpuF99;
+import v9t9.emulator.runtime.cpu.CpuStateF99;
 import v9t9.engine.cpu.InstF99;
 
 /**
@@ -45,6 +46,12 @@ public class F99TargetContext extends TargetContext {
 		definePrim("-1", InstF99.InegOne);
 		definePrim("1", InstF99.Ione);
 		definePrim("2", InstF99.Itwo);
+		definePrim("1+", InstF99.I1plus);
+		definePrim("2+", InstF99.I2plus);
+		definePrim("1-", InstF99.I1minus);
+		definePrim("2-", InstF99.I2minus);
+		definePrim("2/", InstF99.I2div);
+		definePrim("2*", InstF99.I2times);
 		definePrim("dup", InstF99.Idup);
 		definePrim("drop", InstF99.Idrop);
 		definePrim("swap", InstF99.Iswap);
@@ -62,10 +69,14 @@ public class F99TargetContext extends TargetContext {
 		definePrim("r>", InstF99.IRfrom);
 		definePrim("r@", InstF99.IatR);
 		definePrim("i", InstF99.IatR);
+		definePrim("rdrop", InstF99.Irdrop);
 		definePrim("(do)", InstF99.Ido);
 		definePrim("(loop)", InstF99.Iloop);
 		definePrim("unloop", InstF99.I2rdrop);
 		definePrim("2rdrop", InstF99.I2rdrop);
+		definePrim("2dup", InstF99.I2dup);
+		definePrim("(context>)", InstF99.IcontextFrom);
+		definePrim("(>context)", InstF99.ItoContext);
 		
 	}
 	
@@ -194,17 +205,21 @@ public class F99TargetContext extends TargetContext {
 	 */
 	public void exportState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP) {
 		exportMemory(machine.getConsole());
-		CpuF99 cpu = (CpuF99) machine.getCpu();
+		CpuStateF99 cpu = (CpuStateF99) machine.getCpu().getState();
+		
+		cpu.setBaseSP((short) baseSP);
 		
 		Stack<Integer> stack = hostContext.getDataStack();
 		cpu.setSP((short) (baseSP - stack.size() * cellSize));
 		for (int i = 0; i < stack.size(); i++)
-			machine.getConsole().writeWord(cpu.getSP() + i * 2, (short) (int) stack.get(i));
+			machine.getConsole().writeWord(cpu.getSP() + i * 2, (short) (int) stack.get(stack.size() - i - 1));
+		
+		cpu.setBaseRP((short) baseRP);
 		
 		stack = hostContext.getReturnStack();
-		cpu.setRSP((short) (baseRP - stack.size() * cellSize));
+		cpu.setRP((short) (baseRP - stack.size() * cellSize));
 		for (int i = 0; i < stack.size(); i++)
-			machine.getConsole().writeWord(cpu.getRSP() + i * 2, (short) (int) stack.get(i));
+			machine.getConsole().writeWord(cpu.getRP() + i * 2, (short) (int) stack.get(stack.size() - i - 1));
 	}
 
 	/**
@@ -221,7 +236,7 @@ public class F99TargetContext extends TargetContext {
 		Stack<Integer> stack = hostContext.getDataStack();
 		stack.clear();
 		
-		int curSP = cpu.getSP() & 0xffff;
+		int curSP = ((CpuStateF99)cpu.getState()).getSP() & 0xffff;
 		while (baseSP > 0 && baseSP > curSP) {
 			baseSP -= 2;
 			stack.push((int) machine.getConsole().readWord(baseSP));
@@ -230,7 +245,7 @@ public class F99TargetContext extends TargetContext {
 		stack = hostContext.getReturnStack();
 		stack.clear();
 		
-		int curRP = cpu.getRSP() & 0xffff;
+		int curRP = ((CpuStateF99)cpu.getState()).getRP() & 0xffff;
 		while (curRP > 0 && baseRP > curRP) {
 			curRP -= 2;
 			stack.push((int) machine.getConsole().readWord(baseRP));

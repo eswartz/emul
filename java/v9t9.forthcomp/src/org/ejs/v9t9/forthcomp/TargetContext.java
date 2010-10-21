@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 
+import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -253,6 +254,9 @@ public abstract class TargetContext extends Context {
 			}
 			console.writeWord(i, (short) val);
 		}
+		
+		for (int i = 0; i < dp; i += MemoryDomain.AREASIZE)
+			console.getEntryAt(i).clearSymbols();
 		
 		for (RelocEntry reloc : relocs) {
 			console.getEntryAt(reloc.target).defineSymbol(reloc.target, reloc.name);

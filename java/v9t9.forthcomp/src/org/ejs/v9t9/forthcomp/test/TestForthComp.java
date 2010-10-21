@@ -280,7 +280,7 @@ public class TestForthComp {
 
 	@Test
 	public void testLiterals3() throws Exception {
-		comp.parseString(": eq -3 5 3 ;");
+		comp.parseString(": eq -3 5 4 ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.find("eq");
 		assertNotNull(foo);
@@ -289,7 +289,7 @@ public class TestForthComp {
 		int word = targCtx.readAddr(dp);
 		assertOpword(word, InstF99.IfieldLit, -3, InstF99.IfieldLit);
 		word = targCtx.readAddr(dp + 2);
-		assertOpword(word, 5, InstF99.IfieldLit, 3);
+		assertOpword(word, 5, InstF99.IfieldLit, 4);
 		word = targCtx.readAddr(dp + 4);
 		assertOpword(word, InstF99.Iexit, 0, 0);
 		
@@ -556,4 +556,44 @@ public class TestForthComp {
 
 	}
 	
+
+	@Test
+	public void testDoQLoopEx() throws Exception {
+		comp.parseString(": stack 3 ?do i loop ;");
+
+		hostCtx.pushData(5);
+		interpret("stack");
+		assertEquals(4, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+
+		hostCtx.pushData(-10);	// sentinel
+		hostCtx.pushData(3);
+		interpret("stack");
+		assertEquals(-10, hostCtx.popData());
+
+	}
+
+	@Test
+	public void testDoLoopLeaveEx() throws Exception {
+		comp.parseString(": stack 10 3 do i 5 = if leave then i loop ;");
+
+		interpret("stack");
+		assertEquals(4, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+
+	}
+	
+
+	@Test
+	public void testStackAccessorsEx() throws Exception {
+		comp.parseString(
+			": depth 1 (context>)  0 (context>) - 2/ 1- ;\n"+
+			": rdepth 3 (context>) 2 (context>) - 2/ 1- ; \n" +	
+			": stack 1 2 4 5 >r depth rdepth rdrop ;");
+
+		interpret("stack");
+		assertEquals(2, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+
+	}
 }

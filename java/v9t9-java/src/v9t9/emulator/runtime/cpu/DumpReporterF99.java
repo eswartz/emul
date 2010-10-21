@@ -34,9 +34,9 @@ public class DumpReporterF99 implements InstructionListener {
 		RawInstruction ins = before.inst;
 	    dump.println(HexUtils.toHex4(ins.pc) 
 	            + " "
-	            + HexUtils.toHex4(cpu.getSP())
+	            + HexUtils.toHex4(((CpuStateF99)cpu.getState()).getSP())
 	            + " "
-	            + HexUtils.toHex4(cpu.getRSP())
+	            + HexUtils.toHex4(((CpuStateF99)cpu.getState()).getRP())
 	    );
 		dump.flush();
 

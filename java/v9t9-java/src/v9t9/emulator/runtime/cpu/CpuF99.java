@@ -22,9 +22,11 @@ public class CpuF99 extends CpuBase {
 	 */
 	private static final int INT_BASE = 0xffc0;
 	public static final int BASE_CYCLES_PER_SEC = 5000000;
+	private CpuStateF99 statef99;
 	
 	public CpuF99(Machine machine, int interruptTick, VdpHandler vdp) {
 		super(machine, new CpuStateF99(machine.getConsole()), interruptTick, vdp);
+		statef99 = (CpuStateF99) state;
         settingCyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
     }
 
@@ -36,7 +38,7 @@ public class CpuF99 extends CpuBase {
 		StringBuilder sb = new StringBuilder();
 		sb.append(state.toString());
 		sb.append(" [");
-		int sp = getSP();
+		int sp = statef99.getSP();
 		sb.append(HexUtils.toHex4(state.getConsole().readWord(sp)));
 		sb.append(' ');
 		sb.append(HexUtils.toHex4(state.getConsole().readWord(sp + 2)));
@@ -218,8 +220,11 @@ public class CpuF99 extends CpuBase {
 	@Override
 	public void saveState(ISettingSection section) {
 		section.put("SP", ((CpuStateF99)state).getSP());
-		section.put("RP", ((CpuStateF99)state).getRSP());
+		section.put("SP0", ((CpuStateF99)state).getBaseSP());
+		section.put("RP", ((CpuStateF99)state).getRP());
+		section.put("RP0", ((CpuStateF99)state).getBaseRP());
 		section.put("UP", ((CpuStateF99)state).getUP());
+		section.put("UP0", ((CpuStateF99)state).getBaseUP());
 		section.put("ST", ((CpuStateF99)state).getST());
 		
 		super.saveState(section);
@@ -232,9 +237,12 @@ public class CpuF99 extends CpuBase {
 			return;
 		}
 		
-		((CpuF99) state).setSP((short) section.getInt("SP"));
-		((CpuF99) state).setRSP((short) section.getInt("RP"));
-		((CpuF99) state).setUP((short) section.getInt("UP"));
+		statef99.setSP((short) section.getInt("SP"));
+		statef99.setBaseSP((short) section.getInt("SP0"));
+		statef99.setRP((short) section.getInt("RP"));
+		statef99.setBaseRP((short) section.getInt("RP0"));
+		statef99.setUP((short) section.getInt("UP"));
+		statef99.setBaseUP((short) section.getInt("UP0"));
 		state.setST((short) section.getInt("ST"));
 		
 		super.loadState(section);
@@ -256,23 +264,8 @@ public class CpuF99 extends CpuBase {
 		triggerInterrupt(INT_RESET);
 	}
 
-	public short getSP() {
-		return ((CpuStateF99) state).getSP();
-	}
-	public void setSP(short sp) {
-		((CpuStateF99) state).setSP(sp);
-	}
-	public short getRSP() {
-		return ((CpuStateF99) state).getRSP();
-	}
-	public void setRSP(short sp) {
-		((CpuStateF99) state).setRSP(sp);
-	}
-	public short getUP() {
-		return ((CpuStateF99) state).getUP();
-	}
-	public void setUP(short sp) {
-		((CpuStateF99) state).setUP(sp);
+	public CpuStateF99 getState() {
+		return (CpuStateF99) state;
 	}
 	@Override
 	public boolean shouldDebugCompiledCode(short pc) {
@@ -304,9 +297,9 @@ public class CpuF99 extends CpuBase {
 	}
 
 	public void push(short val) {
-		short newSp = (short) ((getSP() - 2) & 0xfffe);
+		short newSp = (short) ((statef99.getSP() - 2) & 0xfffe);
 		state.getConsole().writeWord(newSp, val);
-		setSP(newSp);
+		statef99.setSP(newSp);
 		
 		if (newSp == 0) {
 			reset();
@@ -314,20 +307,20 @@ public class CpuF99 extends CpuBase {
 	}
 	
 	public short peek() {
-		return state.getConsole().readWord(getSP());
+		return state.getConsole().readWord(statef99.getSP());
 	}
 
 	public short pop() {
-		short val = state.getConsole().readWord(getSP());
-		short newSp = (short) ((getSP() + 2) & 0xfffe);
-		setSP(newSp);
+		short val = statef99.getConsole().readWord(statef99.getSP());
+		short newSp = (short) ((statef99.getSP() + 2) & 0xfffe);
+		statef99.setSP(newSp);
 		return val;
 	}
 
 	public void rpush(short val) {
-		short newRp = (short) ((getRSP() - 2) & 0xfffe);
-		state.getConsole().writeWord(newRp, val);
-		setRSP(newRp);
+		short newRp = (short) ((statef99.getRP() - 2) & 0xfffe);
+		statef99.getConsole().writeWord(newRp, val);
+		statef99.setRP(newRp);
 		
 		if (newRp == 0) {
 			reset();
@@ -335,12 +328,12 @@ public class CpuF99 extends CpuBase {
 	}
 
 	public short rpeek() {
-		return state.getConsole().readWord(getRSP());
+		return statef99.getConsole().readWord(statef99.getRP());
 	}
 	public short rpop() {
-		short val = state.getConsole().readWord(getRSP());
-		short newRp = (short) ((getRSP() + 2) & 0xfffe);
-		setRSP(newRp);
+		short val = statef99.getConsole().readWord(statef99.getRP());
+		short newRp = (short) ((statef99.getRP() + 2) & 0xfffe);
+		statef99.setRP(newRp);
 		return val;
 	}
 

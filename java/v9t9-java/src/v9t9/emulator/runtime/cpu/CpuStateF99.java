@@ -18,6 +18,9 @@ public class CpuStateF99 implements CpuState {
 	private Status status;
 
 	private short regs[] = new short[6];
+	private short baseUP;
+	private short baseRSP;
+	private short baseSP;
 	
 	public CpuStateF99(MemoryDomain console) {
 		this.console = console;
@@ -29,7 +32,7 @@ public class CpuStateF99 implements CpuState {
 	 */
 	@Override
 	public String toString() {
-		return "PC=" + HexUtils.toHex4(getPC()) + "; SP=" + HexUtils.toHex4(getSP()) + "; RP=" + HexUtils.toHex4(getRSP());
+		return "PC=" + HexUtils.toHex4(getPC()) + "; SP=" + HexUtils.toHex4(getSP()) + "; RP=" + HexUtils.toHex4(getRP());
 	}
 	
 	
@@ -72,11 +75,11 @@ public class CpuStateF99 implements CpuState {
 	}
 	
 
-	public short getRSP() {
+	public short getRP() {
 		return (short) getRegister(CpuF99.RSP);
 	}
 	
-	public void setRSP(short sp) {
+	public void setRP(short sp) {
 		setRegister(CpuF99.RSP, sp);
 	}
 	
@@ -126,6 +129,49 @@ public class CpuStateF99 implements CpuState {
 
 	public void setST(short st) {
 		getStatus().expand(st);
+	}
+
+	/**
+	 * @param int1
+	 */
+	public void setBaseSP(short v) {
+		this.baseSP = v;
+	}
+
+	/**
+	 * @param int1
+	 */
+	public void setBaseRP(short v) {
+		this.baseRSP = v;
+		
+	}
+
+	/**
+	 * @param int1
+	 */
+	public void setBaseUP(short v) {
+		this.baseUP = v;
+	}
+
+	/**
+	 * @return
+	 */
+	public short getBaseSP() {
+		return baseSP;
+	}
+
+	/**
+	 * @return
+	 */
+	public short getBaseRP() {
+		return baseRSP;
+	}
+
+	/**
+	 * @return
+	 */
+	public short getBaseUP() {
+		return baseUP;
 	}
 
 }

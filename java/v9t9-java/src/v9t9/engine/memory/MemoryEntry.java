@@ -393,4 +393,12 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 		}
 		return entry;
 	}
+
+
+	/**
+	 * 
+	 */
+	public void clearSymbols() {
+		symbols = null;
+	}
 }

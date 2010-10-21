@@ -197,5 +197,11 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		totalcurrentcycles = totaltargetcycles = 0;
 	}
 
+	/**
+	 * @return the state
+	 */
+	public CpuState getState() {
+		return state;
+	}
 	
 }

@@ -4,6 +4,7 @@
 package v9t9.engine.cpu;
 
 import v9t9.emulator.runtime.cpu.CpuF99;
+import v9t9.emulator.runtime.cpu.CpuStateF99;
 
 public final class InstructionWorkBlockF99 extends BaseInstructionWorkBlock {
     
@@ -15,7 +16,7 @@ public final class InstructionWorkBlockF99 extends BaseInstructionWorkBlock {
 	public short[] inReturnStack = new short[4];
 
 	public InstructionWorkBlockF99(CpuF99 cpu) {
-    	super(cpu);
+    	super(cpu.getState());
 	}
     
     public void copyTo(InstructionWorkBlockF99 copy) {
@@ -28,9 +29,9 @@ public final class InstructionWorkBlockF99 extends BaseInstructionWorkBlock {
     }
 
 	public short getStackEntry(int i) {
-		return domain.readWord(((CpuF99)cpu).getSP() + i * 2);
+		return domain.readWord(((CpuStateF99)cpu).getSP() + i * 2);
 	}
 	public short getReturnStackEntry(int i) {
-		return domain.readWord(((CpuF99)cpu).getRSP() + i * 2);
+		return domain.readWord(((CpuStateF99)cpu).getRP() + i * 2);
 	}
 }

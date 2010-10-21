@@ -140,8 +140,8 @@ public class DumpFullReporterF99 implements InstructionListener {
 		dumpfull.print(sb.toString());
 
 		dumpfull.print(   
-		        " sp=" + Integer.toHexString(cpu.getSP() & 0xffff).toUpperCase()
-		        + " rp=" + Integer.toHexString(cpu.getRSP() & 0xffff).toUpperCase()
+		        " sp=" + Integer.toHexString(((CpuStateF99)cpu.getState()).getSP() & 0xffff).toUpperCase()
+		        + " rp=" + Integer.toHexString(((CpuStateF99)cpu.getState()).getRP() & 0xffff).toUpperCase()
 		        + " sr="
 		        + Integer.toHexString(cpu.getST() & 0xffff).toUpperCase()        
 		);
