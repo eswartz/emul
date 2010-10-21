@@ -63,7 +63,10 @@ static void write_context(OutputStream * out, char * id,
     write_stream(out, ',');
     json_write_string(out, "ParentID");
     write_stream(out, ':');
-    if (frame < 0 || is_top_frame(ctx, frame)) {
+    if (reg_def->parent != NULL) {
+        json_write_string(out, register2id(ctx, frame, reg_def->parent));
+    }
+    else if (frame < 0 || is_top_frame(ctx, frame)) {
         json_write_string(out, ctx->id);
     }
     else {

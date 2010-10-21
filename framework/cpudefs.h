@@ -63,7 +63,8 @@ struct RegisterDefinition {
     uint8_t         volatile_value;/* true if the register value can change even when target is stopped */
     uint8_t         left_to_right; /* true if the lowest numbered bit should be shown to user as the left-most bit */
     int             first_bit;     /* bit numbering base (0 or 1) to use when showing bits to user */
-    int *           bits;          /* if context is a bit field, contains the field bit numbers in the parent context */
+    int *           bits;          /* if context is a bit field, contains the field bit numbers in the parent register definition, -1 marks end of the list */
+    RegisterDefinition * parent;   /* parent register definition, NULL for top level definitions */
     NamedRegisterValue ** values;  /* predefined names (mnemonics) for some of register values */
     ContextAddress  memory_address;/* the address of a memory mapped register */
     const char *    memory_context;/* the context ID of a memory context in which a memory mapped register is located */
