@@ -416,6 +416,10 @@ int context_get_canonical_addr(Context * ctx, ContextAddress addr,
 }
 
 Context * context_get_group(Context * ctx, int group) {
+    switch (group) {
+    case CONTEXT_GROUP_INTERCEPT:
+        return ctx;
+    }
     return parent_ctx;
 }
 

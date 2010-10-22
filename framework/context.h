@@ -245,6 +245,12 @@ extern Context * context_get_group(Context * ctx, int group);
  */
 #define CONTEXT_GROUP_BREAKPOINT    2
 
+/*
+ * "intercept" context group - all contexts which should be intercepted
+ * when any member of the group is intercepted for any reason.
+ */
+#define CONTEXT_GROUP_INTERCEPT     3
+
 
 /*
  * Debug context implementation can support low-level breakpoints.
