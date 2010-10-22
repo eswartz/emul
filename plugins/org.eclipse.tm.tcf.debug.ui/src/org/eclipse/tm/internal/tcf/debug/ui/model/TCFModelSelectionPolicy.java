@@ -16,6 +16,7 @@ import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -43,13 +44,13 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
         if (selection instanceof IStructuredSelection) {
             IStructuredSelection ss = (IStructuredSelection)selection;
             Object e = ss.getFirstElement();
-            if (e instanceof TCFNode) return isSuspended((TCFNode)e);
+            if (e instanceof TCFNode) return getSuspendReason((TCFNode)e) != null;
         }
         return false;
     }
 
-    private boolean isSuspended(final TCFNode node) {
-        return new TCFTask<Boolean>() {
+    private String getSuspendReason(final TCFNode node) {
+        return new TCFTask<String>() {
             public void run() {
                 TCFNode n = node;
                 while (n != null && !n.isDisposed()) {
@@ -58,13 +59,18 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
                         if (!cache.validate(this)) return;
                         TCFContextState state = cache.getData();
                         if (state != null && state.is_suspended) {
-                            done(true);
+                            if (state.suspend_reason == null) {
+                                done(IRunControl.REASON_USER_REQUEST);
+                            }
+                            else {
+                                done(state.suspend_reason);
+                            }
                             return;
                         }
                     }
                     n = n.parent;
                 }
-                done(false);
+                done(null);
             }
         }.getE();
     }
@@ -87,7 +93,16 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
                         TCFNodeExecContext next = (TCFNodeExecContext)el_candidate;
                         if (curr.parent == next) return true;
                     }
-                    return !isSuspended((TCFNode)el_existing);
+                    //System.out.println(el_candidate.toString());
+                    String s1 = getSuspendReason((TCFNode)el_existing);
+                    if (s1 == null) return true;
+                    String s2 = getSuspendReason((TCFNode)el_candidate);
+                    if (s2 == null) return false;
+                    if (s2.equals(IRunControl.REASON_USER_REQUEST)) return false;
+                    if (s2.equals(IRunControl.REASON_CONTAINER)) return false;
+                    if (s1.equals(IRunControl.REASON_USER_REQUEST)) return true;
+                    if (s1.equals(IRunControl.REASON_CONTAINER)) return true;
+                    return false;
                 }
             }
         }

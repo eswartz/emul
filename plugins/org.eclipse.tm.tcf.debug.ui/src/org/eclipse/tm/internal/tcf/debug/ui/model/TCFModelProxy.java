@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IStatus;
@@ -24,7 +25,10 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 /**
  * A model proxy represents a model for a specific presentation context and
@@ -41,8 +45,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     private final Map<TCFNode,Integer> node2flags = new HashMap<TCFNode,Integer>();
     private final Map<TCFNode,TCFNode[]> node2children = new HashMap<TCFNode,TCFNode[]>();
     private final Map<TCFNode,ModelDelta> node2delta = new HashMap<TCFNode,ModelDelta>();
+    private final LinkedList<TCFNode> selection = new LinkedList<TCFNode>();
 
-    private TCFNode selection;
     private boolean posted;
     private boolean installed;
     private boolean disposed;
@@ -158,9 +162,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     public void dispose() {
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
-                assert installed;
                 assert !disposed;
-                model.onProxyDisposed(TCFModelProxy.this);
+                if (installed) model.onProxyDisposed(TCFModelProxy.this);
                 disposed = true;
             }
         });
@@ -190,7 +193,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
      * @param node - a model node that will become new selection.
      */
     void setSelection(TCFNode node) {
-        selection = node;
+        selection.add(node);
         while (node.parent != null) {
             node = node.parent;
             addDelta(node, IModelDelta.EXPAND);
@@ -298,7 +301,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     public void run() {
         assert Protocol.isDispatchThread();
         if (disposed) return;
-        if (node2flags.isEmpty() && selection == null) return;
+        if (node2flags.isEmpty() && selection.isEmpty()) return;
         Object input = getInput();
         int flags = 0;
         if (input instanceof TCFNode) {
@@ -311,7 +314,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                     flags &= ~IModelDelta.STATE;
                     if (flags == 0) {
                         node2flags.remove(node);
-                        if (node2flags.isEmpty() && selection == null) return;
+                        if (node2flags.isEmpty() && selection.isEmpty()) return;
                     }
                     else {
                         node2flags.put(node, flags);
@@ -331,16 +334,29 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             }
             node2delta.clear();
             last_update_time = System.currentTimeMillis();
-            if (selection != null) {
-                node2flags.put(selection, IModelDelta.SELECT | IModelDelta.EXPAND);
+            while (!selection.isEmpty()) {
+                TCFNode node = selection.getFirst();
+                String s = null;
+                if (node instanceof TCFNodeExecContext) {
+                    TCFNodeExecContext exe = (TCFNodeExecContext)node;
+                    TCFDataCache<TCFContextState> cache = exe.getState();
+                    if (!cache.validate(this)) return;
+                    TCFContextState state = cache.getData();
+                    if (state != null) s = state.suspend_reason;
+                }
+                if (s != null && !s.equals(IRunControl.REASON_USER_REQUEST) && !s.equals(IRunControl.REASON_CONTAINER)) {
+                    node2flags.put(node, IModelDelta.SELECT | IModelDelta.EXPAND);
+                }
+                else {
+                    node2flags.put(node, IModelDelta.SELECT);
+                }
                 root = new ModelDelta(input, IModelDelta.NO_CHANGE);
-                makeDelta(root, selection, true);
+                makeDelta(root, node, true);
                 node2delta.clear();
                 node2flags.clear();
-                if (pending_node == null) {
-                    postDelta(root);
-                    selection = null;
-                }
+                if (pending_node != null) break;
+                postDelta(root);
+                selection.remove(node);
             }
         }
 
