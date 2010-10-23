@@ -329,7 +329,7 @@ public class TestForthComp {
 	private void interpret(String name) throws AbortException {
 		targCtx.exportState(hostCtx, f99Machine, BASE_SP, BASE_RP);
 
-		dumpMemory(System.out, startDP, targCtx.getDP(), f99Machine.getConsole());
+		dumpCompiledMemory();
 		
 		ITargetWord word = (ITargetWord) targCtx.require(name);
 		
@@ -345,6 +345,9 @@ public class TestForthComp {
 		assertTrue(cpu.getState().getRP() <= cpu.getState().getBaseRP());
 		targCtx.importState(hostCtx, f99Machine, BASE_SP, BASE_RP);
 		
+	}
+	private void dumpCompiledMemory() {
+		dumpMemory(System.out, startDP, targCtx.getDP(), f99Machine.getConsole());
 	}
 	
 	@Test
@@ -853,9 +856,36 @@ public class TestForthComp {
 		hostCtx.pushData(-10);
 		interpret("tst");
 		
-		dumpDict();
+		dumpCompiledMemory();
 		
 		assertEquals(90, targCtx.readCell(xaddr));
 		assertEquals(145, targCtx.readCell(yaddr));
+	}
+	
+
+	@Test
+	public void testMemOps2Ex() throws Exception {
+		comp.parseString(
+				"Create str\n" +
+				"3 c, 65 c, 72 c, 90 c,\n" +
+				": [] ( addr idx -- val addr ) over + c@ swap ; \n"+
+				": tst str 0 [] 1 [] 2 [] 3 [] drop ;"
+				
+		);
+
+		//IWord str = targCtx.require("str"); 
+		
+		dumpDict();
+		
+		//int strAddr = ((ITargetWord)str).getEntry().getParamAddr();
+		
+		interpret("tst");
+		
+		dumpCompiledMemory();
+		
+		assertEquals(90, hostCtx.popData());
+		assertEquals(72, hostCtx.popData());
+		assertEquals(65, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
 	}
 }

@@ -211,12 +211,7 @@ public abstract class TargetContext extends Context {
 		return memory[addr];
 	}
 
-	/**
-	 * @param name
-	 * @return 
-	 * @throws AbortException 
-	 */
-	public TargetVariable defineVariable(String name) throws AbortException {
+	public TargetVariable create(String name, int cells) {
 		DictEntry entry = defineEntry(name);
 		int dp = entry.getContentAddr();
 		try {
@@ -226,12 +221,9 @@ public abstract class TargetContext extends Context {
 		} catch (AbortException e) {
 			// for unit tests
 		}
-		int loc = allocCell();
-		writeCell(loc, 0);
+		int loc = alloc(cells * cellSize);
 		entry.setCodeSize(loc - dp);
 		TargetVariable var = (TargetVariable) define(name, new TargetVariable(entry, loc));
-				//addRelocation(loc, RelocType.RELOC_ABS_ADDR_16, 
-						//loc, name)));
 		return var;
 	}
 
@@ -319,11 +311,14 @@ public abstract class TargetContext extends Context {
 
 	/** compile address or offset */
 	abstract public void compileAddr(int loc);
+	abstract public void compileChar(int val);
 	
 	abstract public void pushLeave(HostContext hostContext);
 	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
 
 	abstract public void defineCompilerWords(HostContext hostContext);
+
+
 
 
 }

@@ -7,8 +7,8 @@ package org.ejs.v9t9.forthcomp;
  * @author ejs
  *
  */
-public class VariableParser implements IWord {
-	public VariableParser() {
+public class CreateParser implements IWord {
+	public CreateParser() {
 	}
 
 	/* (non-Javadoc)
@@ -17,7 +17,7 @@ public class VariableParser implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		String name = hostContext.readToken();
 
-		targetContext.create(name, 1);
+		targetContext.create(name, 0);
 	}
 	
 	/* (non-Javadoc)

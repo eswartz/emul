@@ -59,6 +59,7 @@ public class F99TargetContext extends TargetContext {
 		definePrim("dup", Idup);
 		definePrim("drop", Idrop);
 		definePrim("swap", Iswap);
+		definePrim("over", Iover);
 		definePrim("0=", I0equ);
 		definePrim("d0=", I0equ_d);
 		definePrim("=", Iequ);
@@ -308,6 +309,15 @@ public class F99TargetContext extends TargetContext {
 	public void compileAddr(int loc) {
 		int ptr = alloc(2);
 		writeCell(ptr, loc);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileChar(int)
+	 */
+	@Override
+	public void compileChar(int val) {
+		int ptr = alloc(1);
+		writeChar(ptr, val);
 	}
 	
 	/**

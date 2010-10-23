@@ -398,6 +398,9 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push(y);
         	break;
         }
+        case Iover:
+        	cpu.push(iblock.getStackEntry(1));
+        	break;
         case Idup_d: {
         	int v = cpu.popd();
         	cpu.pushd(v);

@@ -64,6 +64,7 @@ public class ForthComp {
 		stateVar = (HostVariable) hostContext.define("state", new HostVariable(0));
 		hostContext.define("csp", new HostVariable(0));
 		
+		hostContext.define("create", new CreateParser());
 		hostContext.define("variable", new VariableParser());
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
@@ -84,6 +85,9 @@ public class ForthComp {
 	 	
 	 	hostContext.define("[", new LbracketParser());
 	 	hostContext.define("]", new RbracketParser());
+	 	
+	 	hostContext.define(",", new CommaParser());
+	 	hostContext.define("c,", new CharCommaParser());
 	 	
 	 	targetContext.defineCompilerWords(hostContext);
 	}
