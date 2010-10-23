@@ -245,7 +245,7 @@ public class InterpreterF99 implements Interpreter {
 		case InstF99.Ibranch:
 		case InstF99.Iloop:
 			inst.setOp1(MachineOperandF99.createImmediateOperand(memory.readWord(nextPC), MachineOperandF99.OP_ENC_IMM16));
-			iblock.pc = (short) ((iblock.pc & ~1) + 2);
+			iblock.pc = (short) (nextPC + 2);
 			break;
 		case InstF99.Ilit_d: {
 			inst.setOp1(MachineOperandF99.createImmediateOperand(

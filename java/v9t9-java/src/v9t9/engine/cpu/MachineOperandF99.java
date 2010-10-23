@@ -129,6 +129,8 @@ public class MachineOperandF99 extends BaseMachineOperand {
     	case OP_IMM: {
     		if (encoding == OP_ENC_IMM32)
     			return "#>" + Integer.toHexString(val) + " (" + val + ")";
+    		else if (encoding == OP_ENC_IMM15S1)
+    			return "#>" + HexUtils.toHex4(val);
     		else
     			return "#>" + HexUtils.toHex4(val) + " (" + val + ")";
     	}

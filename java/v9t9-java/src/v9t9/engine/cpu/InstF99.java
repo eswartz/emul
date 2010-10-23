@@ -220,6 +220,13 @@ public class InstF99 {
 		instNames.put(ItoR_d, "2>R");
 		instNames.put(IRfrom, "R>");
 		instNames.put(IRfrom_d, "2R>");
+		instNames.put(Idup_d, "2DUP");
+		instNames.put(Iadd_d, "D+");
+		instNames.put(IfieldLit_d, "DLIT.F");
+		instNames.put(IfieldLit, "LIT.F");
+		instNames.put(Ilit_d, "DLIT");
+		instNames.put(Ilit, "LIT");
+		instNames.put(Ilsh_d, "DLSH");
 		instNames.put(IcontextFrom, "CONTEXT>");
 		instNames.put(ItoContext, ">CONTEXT");
 		
