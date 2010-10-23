@@ -61,6 +61,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
     private int resumed_cnt;
+    private boolean resume_pending;
 
     private static int seq_cnt;
 
@@ -476,11 +477,18 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
+                if (resume_pending) {
+                    result.setHasChilren(true);
+                    return true;
+                }
                 if (!state.validate(done)) return false;
                 Throwable state_error = state.getError();
                 TCFContextState state_data = state.getData();
-                result.setHasChilren(state_error == null && state_data != null && state_data.is_suspended);
-                return true;
+                if (state_error == null && state_data != null) {
+                    result.setHasChilren(state_data.is_suspended);
+                    return true;
+                }
+                children = children_stack;
             }
             else {
                 children = children_exec;
@@ -649,6 +657,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     void onContextRemoved() {
         assert !disposed;
         resumed_cnt++;
+        resume_pending = false;
         dispose();
         postContextRemovedDelta();
     }
@@ -700,6 +709,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         address.reset();
         signal_mask.reset();
         resumed_cnt++;
+        resume_pending = false;
         children_stack.onSuspended();
         children_regs.onSuspended();
         children_exps.onSuspended();
@@ -712,10 +722,12 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         state.reset(new TCFContextState());
         postStateChangedDelta();
         final int cnt = ++resumed_cnt;
+        resume_pending = true;
         Protocol.invokeLater(250, new Runnable() {
             public void run() {
                 if (cnt != resumed_cnt) return;
                 if (disposed) return;
+                resume_pending = false;
                 children_stack.onResumed();
                 postContentChangedDelta();
                 TCFNode n = parent;
