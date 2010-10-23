@@ -22,7 +22,7 @@ public class F99TargetContext extends TargetContext {
 
 	private int opcodeIndex;
 	private int opcodeAddr;
-	private static final int opcodeShifts[] = { 9, 6, 0 };
+	private static final int opcodeShifts[] = { 10, 5, 0 };
 	
 	/**
 	 * @param littleEndian
@@ -40,44 +40,57 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void defineBuiltins() {
 		definePrim(";S", InstF99.Iexit);
-		definePrim("@", InstF99.Ifetch);
+		definePrim("@", InstF99.Iload);
+		definePrim("@", InstF99.Iload);
 		definePrim("!", InstF99.Istore);
-		definePrim("0", InstF99.Izero);
-		definePrim("-1", InstF99.InegOne);
-		definePrim("1", InstF99.Ione);
-		definePrim("2", InstF99.Itwo);
+		definePrim("!", InstF99.Istore);
 		definePrim("1+", InstF99.I1plus);
 		definePrim("2+", InstF99.I2plus);
-		definePrim("1-", InstF99.I1minus);
-		definePrim("2-", InstF99.I2minus);
-		definePrim("2/", InstF99.I2div);
-		definePrim("2*", InstF99.I2times);
 		definePrim("dup", InstF99.Idup);
 		definePrim("drop", InstF99.Idrop);
 		definePrim("swap", InstF99.Iswap);
-		definePrim("=", InstF99.Iequ);
 		definePrim("0<", InstF99.I0lt);
 		definePrim("0=", InstF99.I0equ);
 		definePrim("0branch", InstF99.I0branch);
 		definePrim("branch", InstF99.Ibranch);
 		definePrim("negate", InstF99.Ineg);
+		definePrim("dnegate", InstF99.Ineg_d);
 		definePrim("+", InstF99.Iadd);
+		definePrim("d+", InstF99.Iadd_d);
 		definePrim("-", InstF99.Isub);
+		defineInlinePrim("d-", InstF99.Ineg_d, InstF99.Iadd_d);
 		definePrim("um*", InstF99.Iumul);
 		definePrim("um/mod", InstF99.Iudivmod);
+		definePrim("or", InstF99.Ior);
+		definePrim("and", InstF99.Iand);
+		definePrim("xor", InstF99.Ixor);
 		definePrim(">r", InstF99.ItoR);
+		definePrim("2>r", InstF99.ItoR_d);
 		definePrim("r>", InstF99.IRfrom);
-		definePrim("r@", InstF99.IatR);
-		definePrim("i", InstF99.IatR);
+		definePrim("2r>", InstF99.IRfrom_d);
+		//definePrim("r@", InstF99.IatR);
+		//definePrim("i", InstF99.IatR);
 		definePrim("rdrop", InstF99.Irdrop);
-		definePrim("(do)", InstF99.Ido);
+		definePrim("i", InstF99.Ii);
+		definePrim("(do)", InstF99.ItoR_d);
 		definePrim("(loop)", InstF99.Iloop);
-		definePrim("unloop", InstF99.I2rdrop);
-		definePrim("2rdrop", InstF99.I2rdrop);
-		definePrim("2dup", InstF99.I2dup);
+		defineInlinePrim("(?do)", InstF99.Idup_d, InstF99.ItoR_d, InstF99.Isub, InstF99.I0equ);
+
+		definePrim("2dup", InstF99.Idup_d);
 		definePrim("(context>)", InstF99.IcontextFrom);
 		definePrim("(>context)", InstF99.ItoContext);
 		
+		defineInlinePrim("unloop", InstF99.Irdrop, InstF99.Irdrop);
+		defineInlinePrim("2rdrop", InstF99.Irdrop, InstF99.Irdrop);
+		defineInlinePrim("2/", InstF99.Iash, 1);
+		defineInlinePrim("=", InstF99.Isub, InstF99.I0equ);
+		defineInlinePrim("1-", InstF99.IfieldLit, 1, InstF99.Isub);
+		defineInlinePrim("2-", InstF99.IfieldLit, 2, InstF99.Isub);
+		defineInlinePrim("*", InstF99.Iumul, InstF99.Idrop);
+		defineInlinePrim("s>d", InstF99.Idup, InstF99.I0lt);
+		//defineInlinePrim("d=", InstF99.Ineg_d, InstF99.Iadd_d, InstF99.Ior, InstF99.I0equ);
+		
+
 	}
 	
 	private void definePrim(String string, int opcode) {
@@ -86,6 +99,12 @@ public class F99TargetContext extends TargetContext {
 		compileField(InstF99.Iexit);
 	}
 
+	private void defineInlinePrim(String string, int... opcodes) {
+		define(string, new F99InlineWord(defineEntry(string), opcodes));
+		for (int i : opcodes)
+			compileField(i);
+		compileField(InstF99.Iexit);
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#defineColonWord(java.lang.String)
 	 */
@@ -117,10 +136,12 @@ public class F99TargetContext extends TargetContext {
 	public void compile(ITargetWord word) {
 		if (word instanceof F99PrimitiveWord) {
 			int opcode = ((F99PrimitiveWord) word).getOpcode();
-			compileField(opcode);
+			compileOpcode(opcode);
 			
-			if (InstF99.isAligningPCReference(opcode))
-				opcodeIndex = 3;
+		} else if (word instanceof F99InlineWord) {
+			int[] opcodes = ((F99InlineWord) word).getOpcodes();
+			for (int opcode : opcodes)
+				compileOpcode(opcode);
 		} else {
 			// must call
 			alignOpcodeWord();
@@ -135,13 +156,27 @@ public class F99TargetContext extends TargetContext {
 		}
 	}
 
+	/**
+	 * @param opcode
+	 */
+	private void compileOpcode(int opcode) {
+		if (opcode >= InstF99._Iext) {
+			compileField(InstF99.Iext);
+			compileField(opcode - InstF99._Iext);
+			
+		} else {
+			compileField(opcode);
+		}
+		
+		if (InstF99.isAligningPCReference(opcode))
+			opcodeIndex = 3;		
+	}
+
 	private void compileField(int opcode) {
 		if (opcodeIndex >= 3) {
 			opcodeIndex = 0;
 			opcodeAddr = alloc(cellSize);
 		}
-		if (opcodeIndex == 1 && opcode >= 8)
-			opcodeIndex++;
 		writeCell(opcodeAddr, readCell(opcodeAddr) | (opcode << opcodeShifts[opcodeIndex]));
 		opcodeIndex++;
 	}
@@ -151,12 +186,15 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoubleLiteral(int value) {
-		compileField(InstF99.Ilit);
-		int ptr = alloc(2);
-		writeCell(ptr, value >> 16);
-		compileField(InstF99.Ilit);
-		ptr = alloc(2);
-		writeCell(ptr, value & 0xffff);
+		if (value >= -32 && value < 16) {
+			compileOpcode(InstF99.IfieldLit_d);
+			compileField(value);
+		} else {
+			compileOpcode(InstF99.Ilit_d);
+			int ptr = alloc(4);
+			writeCell(ptr, value & 0xffff);
+			writeCell(ptr + 2, value >> 16);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -165,21 +203,21 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void compileLiteral(int value) {
 		if (opcodeIndex + 1 == 1) {
-			if (value >= -4 && value < 4) {
+			if (value >= -32 && value < 16) {
 				compileField(InstF99.IfieldLit);
-				compileField(value & 0x7);
-			} else if (value >= -32 && value < 32) {
+				compileField(value & 0x1f);
+			} else if (value >= -32 && value < 16) {
 				compileField(InstF99.Inop);
 				compileField(InstF99.IfieldLit);
-				compileField(value & 0x3f);
+				compileField(value & 0x1f);
 			} else {
 				compileField(InstF99.Ilit);
 				int ptr = alloc(2);
 				writeCell(ptr, value & 0xffff);
 			}
-		} else if (value >= -32 && value < 32) {
+		} else if (value >= -32 && value < 16) {
 			compileField(InstF99.IfieldLit);
-			compileField(value & 0x3f);
+			compileField(value & 0x1f);
 		} else {
 			compileField(InstF99.Ilit);
 			int ptr = alloc(2);

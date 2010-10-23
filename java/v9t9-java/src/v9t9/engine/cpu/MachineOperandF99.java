@@ -31,11 +31,11 @@ public class MachineOperandF99 extends BaseMachineOperand {
 	public int cycles;
 	
 	public static final int OP_ENC_UNSET = 0;
-	public static final int OP_ENC_IMM6 = 1;
-	public static final int OP_ENC_IMM3 = 2;
+	public static final int OP_ENC_IMM5 = 1;
 	
 	public static final int OP_ENC_IMM15S1 = 3;
 	public static final int OP_ENC_IMM16 = 4;
+	public static final int OP_ENC_IMM32 = 5;
 	
 
 	/** 
@@ -127,7 +127,10 @@ public class MachineOperandF99 extends BaseMachineOperand {
 		switch (type) 
     	{
     	case OP_IMM: {
-    		return "#>" + HexUtils.toHex4(val) + " (" + val + ")";
+    		if (encoding == OP_ENC_IMM32)
+    			return "#>" + Integer.toHexString(val) + " (" + val + ")";
+    		else
+    			return "#>" + HexUtils.toHex4(val) + " (" + val + ")";
     	}
     	case OP_ADDR:
     	case OP_PCREL:

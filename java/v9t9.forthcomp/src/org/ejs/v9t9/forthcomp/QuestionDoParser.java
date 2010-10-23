@@ -17,6 +17,13 @@ public class QuestionDoParser implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		
+		ITargetWord qdoWord = (ITargetWord) targetContext.find("(?do)");
+		if (qdoWord == null)
+			throw hostContext.abort("no (?do)");
+
+		
+		targetContext.compile(qdoWord);
+		/*
 		ITargetWord doWord = (ITargetWord) targetContext.find("(do)");
 		if (doWord == null)
 			throw hostContext.abort("no (do)");
@@ -37,6 +44,7 @@ public class QuestionDoParser implements IWord {
 		
 		targetContext.compile(sub);
 		targetContext.compile(zeroEqu);
+		*/
 		
 		new IfParser().execute(hostContext, targetContext);
 		new LeaveParser().execute(hostContext, targetContext);

@@ -149,8 +149,13 @@ public class ForthComp {
 	}
 
 	private IWord parseLiteral(String token) {
+		int radix = baseVar.getValue();
 		boolean isNeg = token.startsWith("-");
 		if (isNeg) {
+			token = token.substring(1);
+		}
+		if (token.startsWith("$")) {
+			radix = 16;
 			token = token.substring(1);
 		}
 		boolean isDouble = false;
@@ -159,7 +164,7 @@ public class ForthComp {
 		}
 		token = token.replaceAll("\\.", "");
 		try {
-			long val = Long.parseLong(token, baseVar.getValue());
+			long val = Long.parseLong(token, radix);
 			if (isNeg)
 				val = -val;
 			if (isDouble)

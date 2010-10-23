@@ -19,8 +19,8 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  */
 public class InterpreterF99 implements Interpreter {
-	private final static int fieldIndices[] = { 9, 6, 0 };
-	private final static int fieldMasks[] = { 0x3f, 0x7, 0x3f };
+	private final static int fieldIndices[] = { 10, 5, 0 };
+	private final static int fieldMasks[] = { 0x1f, 0x1f, 0x1f };
 	
 	Machine machine;
 
@@ -164,11 +164,15 @@ public class InterpreterF99 implements Interpreter {
 				instBuffer[0] = getInstruction(thisPc, 0, opword);
 			else
 				instBuffer[0] = null;
-			if (instBuffer[0] == null || instBuffer[0].getOp1() == null || ((MachineOperandF99) instBuffer[0].getOp1()).encoding == MachineOperandF99.OP_ENC_IMM16)
+			if (instBuffer[0] == null || ((instBuffer[0].getOp1() == null
+					|| ((MachineOperandF99) instBuffer[0].getOp1()).encoding == MachineOperandF99.OP_ENC_IMM16)
+			&& instBuffer[0].getInst() < InstF99._Iext))
 				instBuffer[1] = getInstruction(thisPc, 1, opword);
 			else
 				instBuffer[1] = null;
-			if (instBuffer[1] == null || instBuffer[1].getOp1() == null || ((MachineOperandF99) instBuffer[1].getOp1()).encoding == MachineOperandF99.OP_ENC_IMM16)
+			if (instBuffer[1] == null || ((instBuffer[1].getOp1() == null
+					|| ((MachineOperandF99) instBuffer[1].getOp1()).encoding == MachineOperandF99.OP_ENC_IMM16)
+					&& instBuffer[1].getInst() < InstF99._Iext))
 				instBuffer[2] = getInstruction(thisPc, 2, opword);
 			else
 				instBuffer[2] = null;
@@ -182,8 +186,14 @@ public class InterpreterF99 implements Interpreter {
 		if ((opcode & ~(mask >> 1)) != 0) {
 			opcode |= ~mask;
 		}
-		return MachineOperandF99.createImmediateOperand(opcode, 
-				mask == 0x7 ? MachineOperandF99.OP_ENC_IMM3 : MachineOperandF99.OP_ENC_IMM6);
+		return MachineOperandF99.createImmediateOperand(opcode, MachineOperandF99.OP_ENC_IMM5);
+
+	}
+
+	private int readUnsignedField(int index, int opword) {
+		int mask = fieldMasks[index];
+		int opcode = (opword >> fieldIndices[index]) & mask;
+		return opcode;
 
 	}
 	
@@ -194,11 +204,32 @@ public class InterpreterF99 implements Interpreter {
 		
 		InstructionF99 inst = new InstructionF99();
 		inst.pc = pc + (index != 0 ? 1 : 0);
+		
+		if (opcode == InstF99.Iext) {
+			if (index == 2) {
+				short next = memory.readWord(iblock.pc);
+				iblock.pc++;			
+				opcode = readUnsignedField(0, next);
+				index = 0;
+			} else {
+				opcode = readUnsignedField(index + 1, iblock.op);
+				index++;
+			}
+			opcode += InstF99._Iext;
+		}
+		
 		inst.opcode = opcode;
 		inst.setInst(opcode);
-		
+
+		int nextPC = (short) ((iblock.pc + 1) & ~1);
 		switch (opcode) {
 		case InstF99.IfieldLit:
+		case InstF99.IfieldLit_d:
+		case InstF99.Ispidx:
+		case InstF99.Irpidx:
+		case InstF99.Irsh:
+		case InstF99.Ilsh:
+		case InstF99.Iash:
 		//case InstF99.I0fieldBranch:
 		//case InstF99.IfieldBranch:
 			if (index == 2) {
@@ -213,9 +244,16 @@ public class InterpreterF99 implements Interpreter {
 		case InstF99.I0branch:
 		case InstF99.Ibranch:
 		case InstF99.Iloop:
-			inst.setOp1(MachineOperandF99.createImmediateOperand(memory.readWord(iblock.pc & ~1), MachineOperandF99.OP_ENC_IMM16));
+			inst.setOp1(MachineOperandF99.createImmediateOperand(memory.readWord(nextPC), MachineOperandF99.OP_ENC_IMM16));
 			iblock.pc = (short) ((iblock.pc & ~1) + 2);
 			break;
+		case InstF99.Ilit_d: {
+			inst.setOp1(MachineOperandF99.createImmediateOperand(
+					(memory.readWord(nextPC) & 0xffff) | (memory.readWord(nextPC + 2) << 16),
+					MachineOperandF99.OP_ENC_IMM32));
+			iblock.pc = (short) ((iblock.pc & ~1) + 4);
+			break;
+		}
 		default:
 			// no immediate	
 		}
@@ -241,7 +279,7 @@ public class InterpreterF99 implements Interpreter {
 		cpu.addCycles(ins.getInfo().cycles + (mop1 != null ? mop1.cycles : 0));
 		
         switch (ins.getInst()) {
-        case InstF99.Ifetch:
+        case InstF99.Iload:
         	cpu.push(memory.readWord(cpu.pop()));
         	break;
         case InstF99.Istore:
@@ -251,6 +289,12 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.Ilit:
         	cpu.push(mop1.immed);
         	break;
+        case InstF99.IfieldLit_d:
+        case InstF99.Ilit_d:
+        	cpu.push((short) (mop1.val & 0xffff));
+        	cpu.push((short) (mop1.val >> 16));
+        	break;
+        	
         case InstF99.Iexit:
         	cpu.setPC(cpu.rpop());
         	break;
@@ -258,36 +302,26 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push(cpu.peek());
         	break;
         case InstF99.I0branch: {
-        	short targ = (short) (iblock.pc + mop1.immed);
+        	short targ = (short) ((iblock.pc & ~1) + mop1.immed);
         	if (cpu.pop() == 0)
         		cpu.setPC(targ);
         	break;
         }
         case InstF99.Ibranch: {
-        	short targ = (short) (iblock.pc + mop1.immed);
+        	short targ = (short) ((iblock.pc & ~1) + mop1.immed);
         	cpu.setPC(targ);
         	break;
         }
-        case InstF99.InegOne:
-        	cpu.push((short) -1);
-        	break;
-        case InstF99.Izero:
-        	cpu.push((short) 0);
-        	break;
-        case InstF99.Ione:
-        	cpu.push((short) 1);
-        	break;
-        case InstF99.Itwo:
-        	cpu.push((short) 2);
-        	break;
         case InstF99.I0lt:
         	cpu.push((short) (cpu.pop() < 0 ? -1 : 0));
         	break;
+        	/*
         case InstF99.Ilt: {
         	int right = cpu.pop();
         	cpu.push((short) (cpu.pop() < right ? -1 : 0));
         	break;
         }
+        */
         case InstF99.Iult: {
         	int right = cpu.pop() & 0xffff;
         	cpu.push((short) ((cpu.pop() & 0xffff) < right ? -1 : 0));
@@ -296,10 +330,11 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.I0equ:
         	cpu.push((short) (cpu.pop() == 0 ? -1 : 0));
         	break;
+        	/*
         case InstF99.Iequ:
         	cpu.push((short) (cpu.pop() == cpu.pop() ? -1 : 0));
         	break;
-        	
+        	*/
         case InstF99.Idrop:
         	cpu.pop();
         	break;
@@ -310,7 +345,7 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push(y);
         	break;
         }
-        case InstF99.I2dup: {
+        case InstF99.Idup_d: {
         	short x = iblock.getStackEntry(0);
         	short y = iblock.getStackEntry(1);
         	cpu.push(y);
@@ -320,9 +355,21 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.Iadd:
         	cpu.push((short) (cpu.pop() + cpu.pop()));
         	break;
-        case InstF99.Isub:
-        	cpu.push((short) (-cpu.pop() + cpu.pop()));
+        case InstF99.Iadd_d: {
+        	int hi = cpu.pop();
+        	int val = (hi << 16) | (cpu.pop() & 0xffff);
+        	hi = cpu.pop();
+        	int val2 = (hi << 16) | (cpu.pop() & 0xffff);
+        	val += val2;
+        	cpu.push((short) (val & 0xffff));
+        	cpu.push((short) (val >> 16));
         	break;
+        }
+        case InstF99.Isub: {
+        	int sub = cpu.pop();
+        	cpu.push((short) (cpu.pop() - sub));
+        	break;
+        }
         case InstF99.Iumul: {
         	int mul = (cpu.pop() & 0xffff) * (cpu.pop() & 0xffff);
         	cpu.push((short) (mul & 0xffff));
@@ -349,31 +396,47 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
-        
+        case InstF99.Iash: {
+        	int by = mop1.immed & 0x1f;
+        	int val = cpu.pop() >> by;
+			cpu.push((short) val);
+        	break;
+        }
+        case InstF99.Irsh: {
+        	int by = mop1.immed & 0x1f;
+        	int val = (cpu.pop() & 0xffff) >>> by;
+        	cpu.push((short) val);
+        	break;
+        }
         case InstF99.I1plus:
 	        cpu.push((short) (cpu.pop() + 1));
-	    	break;
-        case InstF99.I1minus:
-	        cpu.push((short) (cpu.pop() - 1));
 	    	break;
         case InstF99.I2plus:
 	        cpu.push((short) (cpu.pop() + 2));
 	    	break;
-        case InstF99.I2minus:
-	        cpu.push((short) (cpu.pop() - 2));
-	    	break;
-        case InstF99.I2times:
-	        cpu.push((short) (cpu.pop() * 2));
-	    	break;
-        case InstF99.I2div:
-        	cpu.push((short) (cpu.pop() / 2));
-        	break;
         case InstF99.Ineg:
         	cpu.push((short) -cpu.pop());
         	break;
+        case InstF99.Ineg_d: {
+        	int hi = cpu.pop();
+        	int val = (hi << 16) | (cpu.pop() & 0xffff);
+        	val = -val;
+        	cpu.push((short) (val & 0xffff));
+        	cpu.push((short) (val >> 16));
+        	break;
+        }
         case InstF99.Inot:
         	cpu.push((short) ~cpu.pop());
         	break;
+        case InstF99.Ior:
+        	cpu.push((short) (cpu.pop() | cpu.pop()));
+        	break;
+    	case InstF99.Iand:
+    		cpu.push((short) (cpu.pop() & cpu.pop()));
+    		break;
+		case InstF99.Ixor:
+			cpu.push((short) (cpu.pop() ^ cpu.pop()));
+			break;
         	
         case InstF99.Icall:
         	cpu.rpush(iblock.pc);
@@ -383,31 +446,39 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.ItoR:
         	cpu.rpush(cpu.pop());
         	break;
+        case InstF99.ItoR_d:
+        	cpu.rpush(iblock.getStackEntry(1));
+        	cpu.rpush(iblock.getStackEntry(0));
+        	cpu.pop();
+        	cpu.pop();
+        	break;
         case InstF99.IRfrom:
         	cpu.push(cpu.rpop());
         	break;
-        case InstF99.IatR:
-        	cpu.push(cpu.rpeek());
+        case InstF99.IRfrom_d:
+        	cpu.push(iblock.getReturnStackEntry(1));
+        	cpu.push(iblock.getReturnStackEntry(0));
         	break;
         case InstF99.Irdrop:
         	cpu.rpop();
         	break;
-        	
-        case InstF99.Ido: {
-        	short lim = cpu.pop();
-        	short init = cpu.pop();
-        	cpu.rpush(init);
-        	cpu.rpush(lim);
+        case InstF99.Ii:
+        	cpu.push(cpu.rpeek());
         	break;
-        }
-        
+        case InstF99.Ispidx:
+        	cpu.push(iblock.getStackEntry(mop1.immed & 0x1f));
+        	break;
+        case InstF99.Irpidx:
+        	cpu.push(iblock.getReturnStackEntry(mop1.immed & 0x1f));
+        	break;
+        	
         case InstF99.Iloop: {
         	short next = (short) (iblock.getReturnStackEntry(0) + 1);
         	short lim = iblock.getReturnStackEntry(1);
     		cpu.rpop();
     		cpu.rpush(next);
     		if (next != lim) {
-        		short targ = (short) (iblock.pc + mop1.immed);
+        		short targ = (short) ((iblock.pc & ~1) + mop1.immed);
             	cpu.setPC(targ);
         	} else {
         		cpu.rpop();
@@ -415,11 +486,6 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
-        case InstF99.I2rdrop:
-        	cpu.rpop();
-        	cpu.rpop();
-        	break;
-        	
         case InstF99.IcontextFrom:
         	switch (cpu.pop()) {
         	case 0:
