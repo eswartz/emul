@@ -24,11 +24,13 @@ public class InstF99 {
 	public static final int Iadd = Iarith_start + 0;
 	public static final int Iadd_d = Iadd + _Iext;
 	public static final int Isub = Iarith_start + 1;
-	public static final int Ineg = Isub + _Iext;
+	public static final int Isub_d = Isub + _Iext;
 	public static final int Ilsh = Iarith_start + 2;
 	public static final int Ilsh_d = Ilsh + _Iext;
 	public static final int Iash = Iarith_start + 3;  // signed
 	public static final int Irsh = Iash + _Iext;  // unsigned
+	public static final int Ineg = Iarith_start + 4;
+	public static final int Ineg_d = Ineg + _Iext;
 	/** um*: s * s -> d */
 	public static final int Iumul = Iarith_start + 5;
 	/** um/mod: ud u1 -- div mod */
@@ -38,19 +40,20 @@ public class InstF99 {
 	public static final int Ilog_start = Iarith_start + 6;
 	
 	public static final int Iand = Ilog_start + 0;
-	public static final int Ineg_d = Iand + _Iext;
+	public static final int I1plus = Iand + _Iext;
 	public static final int Ior = Ilog_start + 1;
 	public static final int Ixor = Ior + _Iext;
-	public static final int Inot = Ilog_start + 2;
-	public static final int I2plus = Inot + _Iext;
+	public static final int Iinvert = Ilog_start + 2;
+	public static final int I2plus = Iinvert + _Iext;
 	
 
 	public static final int I0lt = Ilog_start + 3;
 	public static final int Iult = I0lt + _Iext;
 	public static final int I0equ = Ilog_start + 4;
-	public static final int I1plus = I0equ + _Iext;
+	public static final int I0equ_d = I0equ + _Iext;
 	
 	public static final int Imem_start = Ilog_start + 5;
+	
 	public static final int Iload = Imem_start + 0;
 	public static final int Icload = Iload + _Iext;
 	
@@ -160,22 +163,23 @@ public class InstF99 {
 		I1plus, 1, 1, 0, 0,
 		I2plus, 1, 1, 0, 0,
 		Iadd, 2, 1, 0, 0,
+		Iadd_d, 4, 2, 0, 0,
 		Isub, 2, 1, 0, 0,
+		Isub_d, 4, 2, 0, 0,
 		Iumul, 2, 2, 0, 0,
 		Iudivmod, 3, 2, 0, 0,
 		Ineg, 1, 1, 0, 0,
+		Ineg_d, 2, 2, 0, 0,
 		Iand, 2, 1, 0, 0,
 		Ior, 2, 1, 0, 0,
 		Ixor, 2, 1, 0, 0,
-		Inot, 1, 1, 0, 0,
+		Iinvert, 1, 1, 0, 0,
 		Ilsh, 1, 1, 0, 0,
 		Ilsh_d, 2, 2, 0, 0,
 		Iash, 1, 1, 0, 0,
 		Irsh, 1, 1, 0, 0,
-		Iadd_d, 4, 2, 0, 0,
-		Ineg, 1, 1, 0, 0,
-		Ineg_d, 2, 2, 0, 0,
 		I0equ, 1, 1, 0, 0,
+		I0equ_d, 2, 1, 0, 0,
 		I0lt, 1, 1, 0, 0,
 		Iult, 2, 1, 0, 0,
 		Isyscall, -1, -1, -1, -1,
@@ -227,6 +231,8 @@ public class InstF99 {
 		instNames.put(Ilit_d, "DLIT");
 		instNames.put(Ilit, "LIT");
 		instNames.put(Ilsh_d, "DLSH");
+		instNames.put(I0equ, "0=");
+		instNames.put(I0equ_d, "D0=");
 		instNames.put(IcontextFrom, "CONTEXT>");
 		instNames.put(ItoContext, ">CONTEXT");
 		

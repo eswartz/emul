@@ -51,10 +51,12 @@ public class F99TargetContext extends TargetContext {
 		definePrim("swap", InstF99.Iswap);
 		definePrim("0<", InstF99.I0lt);
 		definePrim("0=", InstF99.I0equ);
+		definePrim("d0=", InstF99.I0equ_d);
 		definePrim("0branch", InstF99.I0branch);
 		definePrim("branch", InstF99.Ibranch);
 		definePrim("negate", InstF99.Ineg);
 		definePrim("dnegate", InstF99.Ineg_d);
+		definePrim("invert", InstF99.Iinvert);
 		definePrim("+", InstF99.Iadd);
 		definePrim("d+", InstF99.Iadd_d);
 		definePrim("-", InstF99.Isub);
@@ -84,6 +86,7 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("2rdrop", InstF99.Irdrop, InstF99.Irdrop);
 		defineInlinePrim("2/", InstF99.Iash, 1);
 		defineInlinePrim("=", InstF99.Isub, InstF99.I0equ);
+		defineInlinePrim("d=", InstF99.Isub_d, InstF99.I0equ_d);
 		defineInlinePrim("1-", InstF99.IfieldLit, 1, InstF99.Isub);
 		defineInlinePrim("2-", InstF99.IfieldLit, 2, InstF99.Isub);
 		defineInlinePrim("*", InstF99.Iumul, InstF99.Idrop);

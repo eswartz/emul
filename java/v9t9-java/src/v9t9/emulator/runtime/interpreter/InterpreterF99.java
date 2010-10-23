@@ -198,7 +198,7 @@ public class InterpreterF99 implements Interpreter {
 	}
 	
 	private InstructionF99 getInstruction(short pc, int index, int opword) {
-		int opcode = (opword >> fieldIndices[index]) & fieldMasks[index];
+		int opcode = readUnsignedField(index, opword);
 		if (opcode == 0)
 			return null;
 		
@@ -330,6 +330,12 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.I0equ:
         	cpu.push((short) (cpu.pop() == 0 ? -1 : 0));
         	break;
+        case InstF99.I0equ_d: {
+        	int hi = cpu.pop();
+        	int lo = cpu.pop();
+        	cpu.push((short) (((hi | lo) == 0) ? -1 : 0));
+        	break;
+        }
         	/*
         case InstF99.Iequ:
         	cpu.push((short) (cpu.pop() == cpu.pop() ? -1 : 0));
@@ -368,6 +374,16 @@ public class InterpreterF99 implements Interpreter {
         case InstF99.Isub: {
         	int sub = cpu.pop();
         	cpu.push((short) (cpu.pop() - sub));
+        	break;
+        }
+        case InstF99.Isub_d: {
+        	int hi = cpu.pop();
+        	int val = (hi << 16) | (cpu.pop() & 0xffff);
+        	hi = cpu.pop();
+        	int val2 = (hi << 16) | (cpu.pop() & 0xffff);
+        	val -= val2;
+        	cpu.push((short) (val & 0xffff));
+        	cpu.push((short) (val >> 16));
         	break;
         }
         case InstF99.Iumul: {
@@ -425,7 +441,7 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push((short) (val >> 16));
         	break;
         }
-        case InstF99.Inot:
+        case InstF99.Iinvert:
         	cpu.push((short) ~cpu.pop());
         	break;
         case InstF99.Ior:

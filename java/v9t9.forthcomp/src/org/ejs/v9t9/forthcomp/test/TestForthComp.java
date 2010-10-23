@@ -549,7 +549,6 @@ public class TestForthComp {
 	@Test
 	public void testDoubleMath1Ex() throws Exception {
 		comp.parseString(
-				": d= dnegate d+ or 0= ; \n"+
 				": outer $8888 $ffff um* $8887.7778 d= ;");
 		
 		interpret("outer");
