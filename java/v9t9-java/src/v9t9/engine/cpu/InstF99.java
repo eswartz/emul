@@ -21,36 +21,46 @@ public class InstF99 {
 	public static final int _Iext = 32;
 	
 	public static final int Iarith_start = 1;
-	public static final int Iadd = Iarith_start + 0;
-	public static final int Iadd_d = Iadd + _Iext;
-	public static final int Isub = Iarith_start + 1;
-	public static final int Isub_d = Isub + _Iext;
-	public static final int Ilsh = Iarith_start + 2;
-	public static final int Ilsh_d = Ilsh + _Iext;
-	public static final int Iash = Iarith_start + 3;  // signed
-	public static final int Irsh = Iash + _Iext;  // unsigned
-	public static final int Ineg = Iarith_start + 4;
+	
+	public static final int Ibinop = Iarith_start + 0;
+	public static final int Ibinop_d = Ibinop + _Iext;
+	
+	public static final int Iadd = Iarith_start + 1;
+	//public static final int Iadd_d = Iadd + _Iext;
+	//public static final int Isub = Iarith_start + 2;
+	//public static final int Isub_d = Isub + _Iext;
+	public static final int I2times = Iarith_start + 2;
+	public static final int I2div = I2times + _Iext;
+	//public static final int Ilsh_d = Ilsh + _Iext;
+	//public static final int Iash = Iarith_start + 3;  // signed
+	//public static final int Irsh = Iash + _Iext;  // unsigned
+	public static final int Ineg = Iarith_start + 3;
 	public static final int Ineg_d = Ineg + _Iext;
 	/** um*: s * s -> d */
-	public static final int Iumul = Iarith_start + 5;
+	public static final int Iumul = Iarith_start + 4;
 	/** um/mod: ud u1 -- div mod */
 	public static final int Iudivmod = Iumul + _Iext;
+
+	public static final int I1plus = Iarith_start + 5;
+	public static final int I2plus = I1plus + _Iext;
 	
 	//////
 	public static final int Ilog_start = Iarith_start + 6;
 	
-	public static final int Iand = Ilog_start + 0;
-	public static final int I1plus = Iand + _Iext;
-	public static final int Ior = Ilog_start + 1;
-	public static final int Ixor = Ior + _Iext;
-	public static final int Iinvert = Ilog_start + 2;
-	public static final int I2plus = Iinvert + _Iext;
-	
+	//public static final int Iand = Ilog_start + 0;
 
-	public static final int I0lt = Ilog_start + 3;
-	public static final int Iult = I0lt + _Iext;
-	public static final int I0equ = Ilog_start + 4;
+	//public static final int Ior = Ilog_start + 1;
+	//public static final int Ixor = Ior + _Iext;
+	public static final int Iinvert = Ilog_start + 0;
+	
+	public static final int I0cmp = Ilog_start + 1;
+	public static final int I0cmp_d = I0cmp + _Iext;
+	public static final int Icmp = Ilog_start + 2;
+	public static final int Icmp_d = Icmp + _Iext;
+	public static final int I0equ = Ilog_start + 3;
 	public static final int I0equ_d = I0equ + _Iext;
+	public static final int Iequ = Ilog_start + 4;
+	public static final int Iequ_d = Iequ + _Iext;
 	
 	public static final int Imem_start = Ilog_start + 5;
 	
@@ -65,43 +75,43 @@ public class InstF99 {
 	public static final int Istack_start = Imem_start + 2;
 	
 	public static final int Ispidx = Istack_start + 0;
-	public static final int Irpidx = Ispidx + _Iext;
-	public static final int Idrop = Istack_start + 1;
-	
-	public static final int Idup = Istack_start + 2;
+	public static final int Irpidx = Istack_start + 1;
+	public static final int Idrop = Istack_start + 2;
+	public static final int Iuser = Idrop + _Iext;
+	public static final int Idup = Istack_start + 3;
 	public static final int Idup_d = Idup + _Iext;
-	public static final int Iswap = Istack_start + 3;
+	public static final int Iswap = Istack_start + 4;
 	public static final int Iswap_d = Iswap + _Iext;
 
-	public static final int Iover = Istack_start + 4;
+	public static final int Iover = Istack_start + 5;
 	public static final int Irot = Iover + _Iext;
-	public static final int ItoR = Istack_start + 5;
+	public static final int ItoR = Istack_start + 6;
 	public static final int ItoR_d = ItoR + _Iext;
-	public static final int IRfrom = Istack_start + 6;
+	public static final int IRfrom = Istack_start + 7;
 	public static final int IRfrom_d = IRfrom + _Iext;
 	
-	public static final int Iexit = Istack_start + 7;
+	public static final int Iexit = Istack_start + 8;
 	public static final int IuplusLoop = Iexit + _Iext;
 	
 	/** next full word is jump offset */
-	public static final int I0branch = Istack_start + 8;
+	public static final int I0branch = Istack_start + 9;
 	/** next full word is offset in words */
 	public static final int Ibranch = I0branch + _Iext;		
 
 	/** next full word is jump offset */
-	public static final int I0branch_f = Istack_start + 9;
+	public static final int I0branch_f = Istack_start + 10;
 	/** next full word is offset in words */
 	public static final int Ibranch_f = I0branch_f + _Iext;		
 
 	/** next full word is jump offset */
-	public static final int Iloop = Istack_start + 10;
+	public static final int Iloop = Istack_start + 11;
 	public static final int IplusLoop = Iloop + _Iext;
 
-	public static final int Irdrop = Istack_start + 11;
+	public static final int Irdrop = Istack_start + 12;
 	public static final int Ii = Irdrop + _Iext;
 	
 	//////
-	public static final int Ispecial_start = Istack_start + 12;
+	public static final int Ispecial_start = Istack_start + 13;
 
 	public static final int Iexecute = Ispecial_start + 0;
 	public static final int Isyscall = Iexecute + _Iext;
@@ -121,9 +131,27 @@ public class InstF99 {
 	public static final int _Ilast = IfieldLit + 1;
 	
 	public static final int Iext = 31;
-
+	public static final int IplusStore = Iext + _Iext;
+	
 	public static final int Icall = 32;
 
+	public static final int OP_ADD = 0;
+	public static final int OP_SUB = 1;
+	public static final int OP_LSH = 2;
+	public static final int OP_RSH = 3;
+	public static final int OP_ASH = 4;
+	public static final int OP_AND = 5;
+	public static final int OP_OR = 6;
+	public static final int OP_XOR = 7;
+	
+	public static final int CMP_LT = 0;
+	public static final int CMP_LE = 1;
+	public static final int CMP_GT = 2;
+	public static final int CMP_GE = 3;
+	public static final int CMP_ULT = 4;
+	public static final int CMP_ULE = 5;
+	public static final int CMP_UGT = 6;
+	public static final int CMP_UGE = 7;
 	
 
 	/** for each inst:  SP read, SP left
@@ -164,26 +192,34 @@ public class InstF99 {
 		Icstore, 2, 0, 0, 0,
 		I1plus, 1, 1, 0, 0,
 		I2plus, 1, 1, 0, 0,
+		Ibinop, 2, 1, 0, 0,
+		Ibinop_d, 4, 2, 0, 0,
 		Iadd, 2, 1, 0, 0,
-		Iadd_d, 4, 2, 0, 0,
-		Isub, 2, 1, 0, 0,
-		Isub_d, 4, 2, 0, 0,
+		I2times, 1, 1, 0, 0,
+		I2div, 1, 1, 0, 0,
+		//Iadd_d, 4, 2, 0, 0,
+		//Isub, 2, 1, 0, 0,
+		//Isub_d, 4, 2, 0, 0,
 		Iumul, 2, 2, 0, 0,
 		Iudivmod, 3, 2, 0, 0,
 		Ineg, 1, 1, 0, 0,
 		Ineg_d, 2, 2, 0, 0,
-		Iand, 2, 1, 0, 0,
-		Ior, 2, 1, 0, 0,
-		Ixor, 2, 1, 0, 0,
+		//Iand, 2, 1, 0, 0,
+		//Ior, 2, 1, 0, 0,
+		//Ixor, 2, 1, 0, 0,
 		Iinvert, 1, 1, 0, 0,
-		Ilsh, 1, 1, 0, 0,
-		Ilsh_d, 2, 2, 0, 0,
-		Iash, 1, 1, 0, 0,
-		Irsh, 1, 1, 0, 0,
+		//Ilsh, 1, 1, 0, 0,
+		//Ilsh_d, 2, 2, 0, 0,
+		//Iash, 1, 1, 0, 0,
+		//Irsh, 1, 1, 0, 0,
 		I0equ, 1, 1, 0, 0,
 		I0equ_d, 2, 1, 0, 0,
-		I0lt, 1, 1, 0, 0,
-		Iult, 2, 1, 0, 0,
+		I0cmp, 1, 1, 0, 0,
+		I0cmp_d, 2, 1, 0, 0,
+		Icmp, 2, 1, 0, 0,
+		Icmp_d, 4, 1, 0, 0,
+		Iequ, 2, 1, 0, 0,
+		Iequ_d, 4, 1, 0, 0,
 		Isyscall, -1, -1, -1, -1,
 		Iexecute, 1, -1, -1, -1,
 		Icall, 1, -1, -1, -1,
@@ -192,6 +228,8 @@ public class InstF99 {
 		Ilit_d, 0, 2, 0, 0,
 		IfieldLit_d, 0, 2, 0, 0,
 		Iext, 0, 0, 0, 0,
+		Iuser, 1, 1, 0, 0,
+		IplusStore, 2, 0, 0, 0,
 	};
 
 	static final Map<Integer, String> instNames = new HashMap<Integer, String>(64);
@@ -227,12 +265,12 @@ public class InstF99 {
 		instNames.put(IRfrom, "R>");
 		instNames.put(IRfrom_d, "2R>");
 		instNames.put(Idup_d, "2DUP");
-		instNames.put(Iadd_d, "D+");
+		//instNames.put(Iadd_d, "D+");
 		instNames.put(IfieldLit_d, "DLIT.F");
 		instNames.put(IfieldLit, "LIT.F");
 		instNames.put(Ilit_d, "DLIT");
 		instNames.put(Ilit, "LIT");
-		instNames.put(Ilsh_d, "DLSH");
+		//instNames.put(Ilsh_d, "DLSH");
 		instNames.put(I0equ, "0=");
 		instNames.put(I0equ_d, "D0=");
 		instNames.put(IplusLoop, "+LOOP");
@@ -288,5 +326,28 @@ public class InstF99 {
 			}
 		}
 		return null;
+	}
+	/**
+	 * @param opcode
+	 * @return
+	 */
+	public static boolean opcodeHasFieldArgument(int opcode) {
+		switch (opcode) {
+		case Ibranch_f:
+		case I0branch_f:
+		case IfieldLit:
+		case IfieldLit_d:
+		case Ispidx:
+		case Irpidx:
+		case I0cmp:
+		case I0cmp_d:
+		case Icmp:
+		case Icmp_d:
+		case Ibinop:
+		case Ibinop_d:
+			return true;
+			
+		}
+		return false;
 	}
 }

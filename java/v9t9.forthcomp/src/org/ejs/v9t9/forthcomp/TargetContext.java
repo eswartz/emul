@@ -221,11 +221,9 @@ public abstract class TargetContext extends Context {
 		
 	}
 
-	/**
-	 * @param name
-	 */
 	public TargetColonWord defineColonWord(String name) {
 		DictEntry entry = defineEntry(name);
+		System.out.println(name);
 		return (TargetColonWord) define(name, new TargetColonWord(entry));		
 	}
 
@@ -235,8 +233,8 @@ public abstract class TargetContext extends Context {
 	 */
 	abstract public void compile(ITargetWord word);
 
-	abstract public void compileLiteral(int value);
-	abstract public void compileDoubleLiteral(int value);
+	abstract public void compileLiteral(int value, boolean isUnsigned);
+	abstract public void compileDoubleLiteral(int value, boolean isUnsigned);
 
 	/**
 	 * Flatten memory and resolve addresses
@@ -278,7 +276,7 @@ public abstract class TargetContext extends Context {
 	/**
 	 * here 0 ,
 	 */
-	abstract public int pushFixup(HostContext hostContext);
+	abstract public void pushFixup(HostContext hostContext);
 	/**
 	 * here 
 	 */
@@ -306,6 +304,8 @@ public abstract class TargetContext extends Context {
 	/** compile address or offset */
 	abstract public void compileAddr(int loc);
 	
-
+	abstract public void pushLeave(HostContext hostContext);
 	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
+
+
 }

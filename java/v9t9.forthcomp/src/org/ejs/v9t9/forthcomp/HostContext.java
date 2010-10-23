@@ -4,9 +4,6 @@
 package org.ejs.v9t9.forthcomp;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Stack;
 
 /**
@@ -17,7 +14,6 @@ public class HostContext extends Context {
 	private Stack<Integer> dataStack;
 	private TokenStream tokenStream;
 	private Stack<Integer> returnStack;
-	private List<Integer> leaves;
 
 	/**
 	 * 
@@ -148,16 +144,10 @@ public class HostContext extends Context {
 	public void setCSP() throws AbortException {
 		HostVariable csp = (HostVariable)find("csp");
 		csp.setValue(dataStack.size());
-		leaves = new LinkedList<Integer>();
 	}
 	public void assertCSP() throws AbortException {
 		HostVariable csp = (HostVariable)find("csp");
 		if (csp.getValue() != dataStack.size())
 			throw abort("mismatched conditionals");
 	}
-	
-	public List<Integer> leaves() {
-		return leaves;
-	}
-	
 }

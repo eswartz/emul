@@ -361,5 +361,22 @@ public class CpuF99 extends CpuBase {
 		contextSwitch(readIntVec(intr));
 	}
 
+	/**
+	 * @return
+	 */
+	public int popd() {
+		int hi = pop();
+    	int val = (hi << 16) | (pop() & 0xffff);
+		return val;
+	}
+
+	/**
+	 * @param v
+	 */
+	public void pushd(int v) {
+		push((short) (v & 0xffff));
+		push((short) (v >> 16));
+	}
+
 	
 }

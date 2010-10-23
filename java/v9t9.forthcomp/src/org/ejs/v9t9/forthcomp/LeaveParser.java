@@ -17,19 +17,19 @@ public class LeaveParser implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 
-		ITargetWord unloop = (ITargetWord) targetContext.find("unloop");
-		if (unloop == null)
-			throw hostContext.abort("no unloop");
+		//ITargetWord unloop = (ITargetWord) targetContext.find("unloop");
+		//if (unloop == null)
+		//	throw hostContext.abort("no unloop");
 		
 		ITargetWord branch = (ITargetWord) targetContext.find("branch");
 		if (branch == null)
 			throw hostContext.abort("no branch");
 		
-		targetContext.compile(unloop);
+		//targetContext.compile(unloop);
 		targetContext.compile(branch);
 		
-		hostContext.leaves().add(targetContext.pushFixup(hostContext));
-		hostContext.popData();
+		targetContext.pushLeave(hostContext);
+		
 	}
 	
 	/* (non-Javadoc)

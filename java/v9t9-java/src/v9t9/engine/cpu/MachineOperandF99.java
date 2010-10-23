@@ -32,10 +32,12 @@ public class MachineOperandF99 extends BaseMachineOperand {
 	
 	public static final int OP_ENC_UNSET = 0;
 	public static final int OP_ENC_IMM5 = 1;
+	public static final int OP_ENC_CMP = 2;
+	public static final int OP_ENC_OP = 3;
 	
-	public static final int OP_ENC_IMM15S1 = 3;
-	public static final int OP_ENC_IMM16 = 4;
-	public static final int OP_ENC_IMM32 = 5;
+	public static final int OP_ENC_IMM15S1 = 4;
+	public static final int OP_ENC_IMM16 = 5;
+	public static final int OP_ENC_IMM32 = 6;
 	
 
 	/** 
@@ -123,11 +125,35 @@ public class MachineOperandF99 extends BaseMachineOperand {
     	return basic;
     }
 
+    final static private String[] cmpStrings = {
+    	"<",
+    	"<=",
+    	">",
+    	">=",
+    	"U<",
+    	"U<=",
+    	"U>",
+    	"U>=",
+    };
+    final static private String[] opStrings = {
+    	"+",
+    	"-",
+    	"LSH",
+    	"RSH",
+    	"ASH",
+    	"AND",
+    	"OR",
+    	"XOR",
+    };
 	private String basicString() {
 		switch (type) 
     	{
     	case OP_IMM: {
-    		if (encoding == OP_ENC_IMM32)
+    		if (encoding == OP_ENC_CMP)
+    			return (val >= 0 && val < cmpStrings.length ? cmpStrings[val] : "") + " (" + val + ")";
+    		else if (encoding == OP_ENC_OP)
+    			return (val >= 0 && val < cmpStrings.length ? opStrings[val] : "") + " (" + val + ")";
+    		else if (encoding == OP_ENC_IMM32)
     			return "#>" + Integer.toHexString(val) + " (" + val + ")";
     		else if (encoding == OP_ENC_IMM15S1)
     			return "#>" + HexUtils.toHex4(val);

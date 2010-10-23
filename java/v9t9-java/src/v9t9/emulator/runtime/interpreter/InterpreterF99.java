@@ -1,5 +1,7 @@
 package v9t9.emulator.runtime.interpreter;
 
+import java.util.Arrays;
+
 import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.common.Machine;
@@ -8,6 +10,7 @@ import v9t9.emulator.runtime.cpu.CpuF99;
 import v9t9.emulator.runtime.cpu.CpuStateF99;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.cpu.InstF99;
+import static v9t9.engine.cpu.InstF99.*;
 import v9t9.engine.cpu.InstructionF99;
 import v9t9.engine.cpu.InstructionWorkBlockF99;
 import v9t9.engine.cpu.MachineOperandF99;
@@ -19,8 +22,8 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  */
 public class InterpreterF99 implements Interpreter {
-	private final static int fieldIndices[] = { 10, 5, 0 };
-	private final static int fieldMasks[] = { 0x1f, 0x1f, 0x1f };
+	public final static int fieldIndices[] = { 10, 5, 0 };
+	public final static int fieldMasks[] = { 0x1f, 0x1f, 0x1f };
 	
 	Machine machine;
 
@@ -31,6 +34,7 @@ public class InterpreterF99 implements Interpreter {
 	private CpuF99 cpu;
 
 	private InstructionF99[] instBuffer;
+	
 	
     public InterpreterF99(Machine machine) {
         this.machine = machine;
@@ -136,6 +140,8 @@ public class InterpreterF99 implements Interpreter {
         }
 		
 	}
+	
+	
 
 	/**
 	 * @return
@@ -148,119 +154,86 @@ public class InterpreterF99 implements Interpreter {
 		
 		short opword = memory.readWord(thisPc);
 		
-		iblock.op = opword;
+		iblock.instNum = 0;
+		iblock.opword = opword;
 		iblock.pc = (short) (thisPc + 2);
+		iblock.index = skipFirst ? 1 : 0;
+		
+		Arrays.fill(instBuffer, null);
 		
 		if (opword < 0) {
 			// call
 			if (skipFirst) {
 				cpu.triggerInterrupt(CpuF99.INT_BKPT);
-				return null;
+				return instBuffer;
 			}
 			
 			instBuffer[0] = getCallInstruction(opword);
 		} else {
-			if (!skipFirst)
-				instBuffer[0] = getInstruction(thisPc, 0, opword);
-			else
-				instBuffer[0] = null;
-			if (instBuffer[0] == null || ((instBuffer[0].getOp1() == null
-					|| ((MachineOperandF99) instBuffer[0].getOp1()).encoding == MachineOperandF99.OP_ENC_IMM16)
-			&& instBuffer[0].getInst() < InstF99._Iext))
-				instBuffer[1] = getInstruction(thisPc, 1, opword);
-			else
-				instBuffer[1] = null;
-			if (instBuffer[1] == null || ((instBuffer[1].getOp1() == null
-					|| ((MachineOperandF99) instBuffer[1].getOp1()).encoding == MachineOperandF99.OP_ENC_IMM16)
-					&& instBuffer[1].getInst() < InstF99._Iext))
-				instBuffer[2] = getInstruction(thisPc, 2, opword);
-			else
-				instBuffer[2] = null;
+			while (iblock.index < 3 && iblock.instNum < 3)
+				getInstruction(thisPc);
 		}
+		iblock.pc += (iblock.index == 4 ? 1 : 0);
+		
 		return instBuffer;
 	}
 
-	private MachineOperandF99 readSignedField(int index, int opword) {
-		int mask = fieldMasks[index];
-		int opcode = (opword >> fieldIndices[index]) & mask;
-		if ((opcode & ~(mask >> 1)) != 0) {
-			opcode |= ~mask;
-		}
-		return MachineOperandF99.createImmediateOperand(opcode, MachineOperandF99.OP_ENC_IMM5);
-
-	}
-
-	private int readUnsignedField(int index, int opword) {
-		int mask = fieldMasks[index];
-		int opcode = (opword >> fieldIndices[index]) & mask;
-		return opcode;
-
-	}
-	
-	private InstructionF99 getInstruction(short pc, int index, int opword) {
-		int opcode = readUnsignedField(index, opword);
+	private void getInstruction(short origPC) {
+		int thePC = origPC + (iblock.index != 0 ? 1 : 0);
+		int opcode = iblock.nextField();
 		if (opcode == 0)
-			return null;
+			return;
 		
 		InstructionF99 inst = new InstructionF99();
-		inst.pc = pc + (index != 0 ? 1 : 0);
+		inst.pc = thePC;
 		
-		if (opcode == InstF99.Iext) {
-			if (index == 2) {
-				short next = memory.readWord(iblock.pc);
-				iblock.pc++;			
-				opcode = readUnsignedField(0, next);
-				index = 0;
-			} else {
-				opcode = readUnsignedField(index + 1, iblock.op);
-				index++;
-			}
-			opcode += InstF99._Iext;
+		if (opcode == Iext) {
+			opcode = iblock.nextField() + InstF99._Iext;
 		}
 		
 		inst.opcode = opcode;
 		inst.setInst(opcode);
 
-		int nextPC = (short) ((iblock.pc + 1) & ~1);
 		switch (opcode) {
-		case InstF99.IfieldLit:
-		case InstF99.IfieldLit_d:
-		case InstF99.Ispidx:
-		case InstF99.Irpidx:
-		case InstF99.Irsh:
-		case InstF99.Ilsh:
-		case InstF99.Iash:
-		//case InstF99.I0fieldBranch:
-		//case InstF99.IfieldBranch:
-			if (index == 2) {
-				short next = memory.readWord(iblock.pc);
-				iblock.pc++;			
-				inst.setOp1(readSignedField(0, next));
-			} else {
-				inst.setOp1(readSignedField(index + 1, iblock.op));
-			}
+		case Ibranch_f:
+		case I0branch_f:
+		case IfieldLit:
+		case IfieldLit_d:
+		case Ispidx:
+		case Irpidx:
+		case I0cmp:
+		case I0cmp_d:
+		case Icmp:
+		case Icmp_d:
+		case Ibinop:
+		case Ibinop_d:
+			inst.setOp1(MachineOperandF99.createImmediateOperand(iblock.nextSignedField(), MachineOperandF99.OP_ENC_IMM5));
+			if (opcode == I0cmp || opcode == Icmp || opcode == I0cmp_d || opcode == Icmp_d)
+				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_CMP;
+			else if (opcode == Ibinop || opcode == Ibinop_d)
+				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_OP;
 			break;
-		case InstF99.Ilit:
-		case InstF99.I0branch:
-		case InstF99.Ibranch:
-		case InstF99.Iloop:
-		case InstF99.IplusLoop:
-		case InstF99.IuplusLoop:
-			inst.setOp1(MachineOperandF99.createImmediateOperand(memory.readWord(nextPC), MachineOperandF99.OP_ENC_IMM16));
-			iblock.pc = (short) (nextPC + 2);
+		case Ilit:
+		case I0branch:
+		case Ibranch:
+		case Iloop:
+		case IplusLoop:
+		case IuplusLoop:
+			inst.setOp1(MachineOperandF99.createImmediateOperand(iblock.nextWord(), MachineOperandF99.OP_ENC_IMM16));
 			break;
-		case InstF99.Ilit_d: {
+		case Ilit_d: {
+			int lo = iblock.nextWord() & 0xffff;
+			int hi = iblock.nextWord() & 0xffff;
 			inst.setOp1(MachineOperandF99.createImmediateOperand(
-					(memory.readWord(nextPC) & 0xffff) | (memory.readWord(nextPC + 2) << 16),
+					lo | (hi << 16),
 					MachineOperandF99.OP_ENC_IMM32));
-			iblock.pc = (short) ((iblock.pc & ~1) + 4);
 			break;
 		}
 		default:
 			// no immediate	
 		}
 		
-		return inst;
+		instBuffer[iblock.instNum++] = inst;
 	}
 
 	private InstructionF99 getCallInstruction(short op) {
@@ -268,7 +241,7 @@ public class InterpreterF99 implements Interpreter {
 		inst.pc = cpu.getPC() - 2;
 		inst.opcode = op;
 		inst.setOp1(MachineOperandF99.createImmediateOperand((short) (op << 1), MachineOperandF99.OP_ENC_IMM15S1));
-		inst.setInst(InstF99.Icall);
+		inst.setInst(Icall);
 		return inst;
 	}
 
@@ -280,125 +253,181 @@ public class InterpreterF99 implements Interpreter {
     	MachineOperandF99 mop1 = (MachineOperandF99)ins.getOp1();
 		cpu.addCycles(ins.getInfo().cycles + (mop1 != null ? mop1.cycles : 0));
 		
-        int alignPC = iblock.pc & ~1;
+		int alignPC = ins.pc & ~1;
+        
 		switch (ins.getInst()) {
-        case InstF99.Iload:
+        case Iload:
         	cpu.push(memory.readWord(cpu.pop()));
         	break;
-        case InstF99.Istore:
+        case Icload:
+        	cpu.push(memory.readByte(cpu.pop()));
+        	break;
+        case Istore:
         	memory.writeWord(cpu.pop(), cpu.pop());
         	break;
-        case InstF99.IfieldLit:
-        case InstF99.Ilit:
-        	cpu.push(mop1.immed);
-        	break;
-        case InstF99.IfieldLit_d:
-        case InstF99.Ilit_d:
-        	cpu.push((short) (mop1.val & 0xffff));
-        	cpu.push((short) (mop1.val >> 16));
+        case Icstore:
+        	memory.writeByte(cpu.pop(), (byte) cpu.pop());
         	break;
         	
-        case InstF99.Iexit:
+        case IplusStore: {
+        	short addr = cpu.pop();
+        	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(cpu.pop()) + addr));
+        	break;
+        }
+        	
+        case IfieldLit:
+        case Ilit:
+        	cpu.push(mop1.immed);
+        	break;
+        case IfieldLit_d:
+        case Ilit_d:
+        	cpu.pushd(mop1.val);
+        	break;
+        	
+        case Iexit:
         	cpu.setPC(cpu.rpop());
         	break;
-        case InstF99.Idup:
+        case Idup:
         	cpu.push(cpu.peek());
         	break;
-        case InstF99.I0branch: {
+        case I0branch: {
         	short targ = (short) (alignPC + mop1.immed);
         	if (cpu.pop() == 0)
         		cpu.setPC(targ);
         	break;
         }
-        case InstF99.Ibranch: {
+        case Ibranch: {
         	short targ = (short) (alignPC + mop1.immed);
         	cpu.setPC(targ);
         	break;
         }
-        case InstF99.I0lt:
-        	cpu.push((short) (cpu.pop() < 0 ? -1 : 0));
-        	break;
-        	/*
-        case InstF99.Ilt: {
-        	int right = cpu.pop();
-        	cpu.push((short) (cpu.pop() < right ? -1 : 0));
+        case I0cmp: {
+        	short val = cpu.pop();
+        	boolean c = false;
+        	switch (mop1.immed) {
+        	case InstF99.CMP_GE: c = val >= 0; break;
+        	case InstF99.CMP_GT: c = val > 0; break;
+        	case InstF99.CMP_LE: c = val <= 0; break;
+        	case InstF99.CMP_LT: c = val < 0; break;
+        	case InstF99.CMP_UGE: c = true; break;
+        	case InstF99.CMP_UGT: c = val != 0; break;
+        	case InstF99.CMP_ULE: c = val == 0; break;
+        	case InstF99.CMP_ULT: c = false; break;
+        	}
+        	cpu.push((short) (c ? -1 : 0));
         	break;
         }
-        */
-        case InstF99.Iult: {
-        	int right = cpu.pop() & 0xffff;
-        	cpu.push((short) ((cpu.pop() & 0xffff) < right ? -1 : 0));
+        case I0cmp_d: {
+        	int val = cpu.pop();
+        	boolean c = false;
+        	switch (mop1.immed) {
+        	case InstF99.CMP_GE: c = val >= 0; break;
+        	case InstF99.CMP_GT: c = val > 0; break;
+        	case InstF99.CMP_LE: c = val <= 0; break;
+        	case InstF99.CMP_LT: c = val < 0; break;
+        	case InstF99.CMP_UGE: c = true; break;
+        	case InstF99.CMP_UGT: c = val != 0; break;
+        	case InstF99.CMP_ULE: c = val == 0; break;
+        	case InstF99.CMP_ULT: c = false; break;
+        	}
+        	cpu.push((short) (c ? -1 : 0));
         	break;
         }
-        case InstF99.I0equ:
+        case Icmp: {
+        	short r = cpu.pop();
+        	short l = cpu.pop();
+        	boolean c = false;
+        	switch (mop1.immed) {
+        	case InstF99.CMP_GE: c = l >= r; break;
+        	case InstF99.CMP_GT: c = l > r; break;
+        	case InstF99.CMP_LE: c = l <= r; break;
+        	case InstF99.CMP_LT: c = l < r; break;
+        	case InstF99.CMP_UGE: c = (l & 0xffff) >= (r & 0xffff); break;
+        	case InstF99.CMP_UGT: c = (l & 0xffff) >  (r & 0xffff); break;
+        	case InstF99.CMP_ULE: c = (l & 0xffff) <= (r & 0xffff); break;
+        	case InstF99.CMP_ULT: c = (l & 0xffff) <  (r & 0xffff); break;
+        	}
+        	cpu.push((short) (c ? -1 : 0));
+        	break;
+        }
+        case Icmp_d: {
+        	int r = cpu.popd();
+        	int l = cpu.popd();
+        	boolean c = false;
+        	switch (mop1.immed) {
+        	case InstF99.CMP_GE: c = l >= r; break;
+        	case InstF99.CMP_GT: c = l > r; break;
+        	case InstF99.CMP_LE: c = l <= r; break;
+        	case InstF99.CMP_LT: c = l < r; break;
+        	case InstF99.CMP_UGE: c = (((long)l) & 0xffffffffL) >= (((long)r) & 0xffffffffL); break;
+        	case InstF99.CMP_UGT: c = (((long)l) & 0xffffffffL) >  (((long)r) & 0xffffffffL); break;
+        	case InstF99.CMP_ULE: c = (((long)l) & 0xffffffffL) <= (((long)r) & 0xffffffffL); break;
+        	case InstF99.CMP_ULT: c = (((long)l) & 0xffffffffL) <  (((long)r) & 0xffffffffL); break;
+        	}
+        	cpu.push((short) (c ? -1 : 0));
+        	break;
+        }
+        case I0equ:
         	cpu.push((short) (cpu.pop() == 0 ? -1 : 0));
         	break;
-        case InstF99.I0equ_d: {
-        	int hi = cpu.pop();
-        	int lo = cpu.pop();
-        	cpu.push((short) (((hi | lo) == 0) ? -1 : 0));
+        case I0equ_d:
+        	cpu.push((short) (cpu.popd() == 0 ? -1 : 0));
         	break;
-        }
-        	/*
-        case InstF99.Iequ:
+        case Iequ:
         	cpu.push((short) (cpu.pop() == cpu.pop() ? -1 : 0));
         	break;
-        	*/
-        case InstF99.Idrop:
+        case Iequ_d:
+        	cpu.push((short) (cpu.popd() == cpu.popd() ? -1 : 0));
+        	break;
+        case Idrop:
         	cpu.pop();
         	break;
-        case InstF99.Iswap: {
+        case Iswap: {
         	short x = cpu.pop();
         	short y = cpu.pop();
         	cpu.push(x);
         	cpu.push(y);
         	break;
         }
-        case InstF99.Idup_d: {
-        	short x = iblock.getStackEntry(0);
-        	short y = iblock.getStackEntry(1);
-        	cpu.push(y);
-        	cpu.push(x);
+        case Idup_d: {
+        	int v = cpu.popd();
+        	cpu.pushd(v);
+        	cpu.pushd(v);
         	break;
         }
-        case InstF99.Iadd:
+        case Iadd:
         	cpu.push((short) (cpu.pop() + cpu.pop()));
         	break;
-        case InstF99.Iadd_d: {
-        	int hi = cpu.pop();
-        	int val = (hi << 16) | (cpu.pop() & 0xffff);
-        	hi = cpu.pop();
-        	int val2 = (hi << 16) | (cpu.pop() & 0xffff);
-        	val += val2;
-        	cpu.push((short) (val & 0xffff));
-        	cpu.push((short) (val >> 16));
+        	
+        case Ibinop: {
+        	short r = cpu.pop();
+        	short l = cpu.pop();
+        	cpu.push((short) binOp(l, r, mop1.immed));
         	break;
         }
-        case InstF99.Isub: {
-        	int sub = cpu.pop();
-        	cpu.push((short) (cpu.pop() - sub));
+        case Ibinop_d: {
+        	int r = cpu.popd();
+        	int l = cpu.popd();
+        	cpu.pushd(binOp_d(l, r, mop1.immed));
         	break;
         }
-        case InstF99.Isub_d: {
-        	int hi = cpu.pop();
-        	int val = (hi << 16) | (cpu.pop() & 0xffff);
-        	hi = cpu.pop();
-        	int val2 = (hi << 16) | (cpu.pop() & 0xffff);
-        	val -= val2;
-        	cpu.push((short) (val & 0xffff));
-        	cpu.push((short) (val >> 16));
+        	
+        case I2times:
+        	cpu.push((short) (cpu.pop() * 2));
         	break;
-        }
-        case InstF99.Iumul: {
+        case I2div:
+        	cpu.push((short) (cpu.pop() / 2));
+        	break;
+        	
+        case Iumul: {
         	int mul = (cpu.pop() & 0xffff) * (cpu.pop() & 0xffff);
         	cpu.push((short) (mul & 0xffff));
         	cpu.push((short) (mul >> 16));
         	break;
         }
-        case InstF99.Iudivmod: {
+        case Iudivmod: {
         	int div = cpu.pop() & 0xffff;
-        	int num = ((cpu.pop() & 0xffff) << 16);
-        	num |= (cpu.pop() & 0xffff);
+        	int num = cpu.popd();
         	if (div == 0) {
             	cpu.push((short) -1);
             	cpu.push((short) 0);
@@ -415,83 +444,57 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
-        case InstF99.Iash: {
-        	int by = mop1.immed & 0x1f;
-        	int val = cpu.pop() >> by;
-			cpu.push((short) val);
-        	break;
-        }
-        case InstF99.Irsh: {
-        	int by = mop1.immed & 0x1f;
-        	int val = (cpu.pop() & 0xffff) >>> by;
-        	cpu.push((short) val);
-        	break;
-        }
-        case InstF99.I1plus:
+        case I1plus:
 	        cpu.push((short) (cpu.pop() + 1));
 	    	break;
-        case InstF99.I2plus:
+        case I2plus:
 	        cpu.push((short) (cpu.pop() + 2));
 	    	break;
-        case InstF99.Ineg:
+        case Ineg:
         	cpu.push((short) -cpu.pop());
         	break;
-        case InstF99.Ineg_d: {
-        	int hi = cpu.pop();
-        	int val = (hi << 16) | (cpu.pop() & 0xffff);
-        	val = -val;
-        	cpu.push((short) (val & 0xffff));
-        	cpu.push((short) (val >> 16));
+        case Ineg_d:
+        	cpu.pushd(-cpu.popd());
         	break;
-        }
-        case InstF99.Iinvert:
+        case Iinvert:
         	cpu.push((short) ~cpu.pop());
         	break;
-        case InstF99.Ior:
-        	cpu.push((short) (cpu.pop() | cpu.pop()));
-        	break;
-    	case InstF99.Iand:
-    		cpu.push((short) (cpu.pop() & cpu.pop()));
-    		break;
-		case InstF99.Ixor:
-			cpu.push((short) (cpu.pop() ^ cpu.pop()));
-			break;
         	
-        case InstF99.Icall:
+        case Icall:
         	cpu.rpush(iblock.pc);
         	cpu.setPC(mop1.immed);
         	break;
         	
-        case InstF99.ItoR:
+        case ItoR:
         	cpu.rpush(cpu.pop());
         	break;
-        case InstF99.ItoR_d:
+        case ItoR_d:
         	cpu.rpush(iblock.getStackEntry(1));
         	cpu.rpush(iblock.getStackEntry(0));
         	cpu.pop();
         	cpu.pop();
         	break;
-        case InstF99.IRfrom:
+        case IRfrom:
         	cpu.push(cpu.rpop());
         	break;
-        case InstF99.IRfrom_d:
+        case IRfrom_d:
         	cpu.push(iblock.getReturnStackEntry(1));
         	cpu.push(iblock.getReturnStackEntry(0));
         	break;
-        case InstF99.Irdrop:
+        case Irdrop:
         	cpu.rpop();
         	break;
-        case InstF99.Ii:
+        case Ii:
         	cpu.push(cpu.rpeek());
         	break;
-        case InstF99.Ispidx:
+        case Ispidx:
         	cpu.push(iblock.getStackEntry(mop1.immed & 0x1f));
         	break;
-        case InstF99.Irpidx:
+        case Irpidx:
         	cpu.push(iblock.getReturnStackEntry(mop1.immed & 0x1f));
         	break;
         	
-        case InstF99.Iloop: {
+        case Iloop: {
         	short next = (short) (iblock.getReturnStackEntry(0) + 1);
         	short lim = iblock.getReturnStackEntry(1);
     		cpu.rpop();
@@ -502,7 +505,7 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
-        case InstF99.IplusLoop: {
+        case IplusLoop: {
         	short change = cpu.pop();
         	short cur = iblock.getReturnStackEntry(0);
         	short next = (short) (cur + change);
@@ -515,7 +518,7 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
-        case InstF99.IuplusLoop: {
+        case IuplusLoop: {
         	short change = cpu.pop();
         	short cur = iblock.getReturnStackEntry(0);
         	short next = (short) (cur + change);
@@ -528,7 +531,7 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
-        case InstF99.IcontextFrom:
+        case IcontextFrom:
         	switch (cpu.pop()) {
         	case 0:
         		cpu.push(((CpuStateF99)cpu.getState()).getSP());
@@ -557,7 +560,7 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         	
-        case InstF99.ItoContext:
+        case ItoContext:
         	switch (cpu.pop()) {
         	case 0:
         		((CpuStateF99)cpu.getState()).setSP(cpu.pop());
@@ -591,4 +594,53 @@ public class InterpreterF99 implements Interpreter {
         }
 
     }
+
+	/**
+	 * @param l
+	 * @param r
+	 * @param immed
+	 * @return
+	 */
+	private int binOp(short l, short r, short immed) {
+		switch (immed) {
+		case OP_ADD:
+			return l + r;
+		case OP_SUB:
+			return l - r;
+		case OP_AND:
+			return l & r;
+		case OP_OR:
+			return l | r;
+		case OP_XOR:
+			return l ^ r;
+		case OP_LSH:
+			return l << (r & 0x1f);
+		case OP_RSH:
+			return (l & 0xffff) >>> (r & 0x1f);
+		case OP_ASH:
+			return l >> (r & 0x1f);
+		}
+		return 0;
+	}
+	private int binOp_d(int l, int r, short immed) {
+		switch (immed) {
+		case OP_ADD:
+			return l + r;
+		case OP_SUB:
+			return l - r;
+		case OP_AND:
+			return l & r;
+		case OP_OR:
+			return l | r;
+		case OP_XOR:
+			return l ^ r;
+		case OP_LSH:
+			return l << (r & 0x1f);
+		case OP_RSH:
+			return (int) ((((long)l) & 0xffffffffL) >>> (r & 0x1f));
+		case OP_ASH:
+			return l >> (r & 0x1f);
+		}
+		return 0;
+	}
 }

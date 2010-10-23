@@ -24,6 +24,7 @@ public class DoParser implements IWord {
 		targetContext.compile(word);
 		
 		targetContext.pushHere(hostContext);
+		hostContext.pushData(0);		// not ?do
 		hostContext.pushPairs(3);
 	}
 	

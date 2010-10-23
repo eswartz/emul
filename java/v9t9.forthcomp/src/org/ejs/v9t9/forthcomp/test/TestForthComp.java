@@ -29,6 +29,7 @@ import v9t9.emulator.runtime.cpu.CpuF99;
 import v9t9.emulator.runtime.cpu.DumpFullReporterF99;
 import v9t9.emulator.runtime.interpreter.InterpreterF99;
 import v9t9.engine.cpu.InstF99;
+import static v9t9.engine.cpu.InstF99.*;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -154,7 +155,7 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertTrue(word+"", word == (InstF99.Iexit << 10));
+		assertTrue(word+"", word == (Iexit << 10));
 		
 		assertEquals(dp + targCtx.getCellSize(), targCtx.getDP());
 		
@@ -172,7 +173,7 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertTrue(word+"", word == (InstF99.Iexit << 10));
+		assertTrue(word+"", word == (Iexit << 10));
 		
 		// b should be aligned after foo
 		
@@ -181,7 +182,7 @@ public class TestForthComp {
 		
 		dp = bword.getEntry().getContentAddr();
 		word = targCtx.readAddr(dp);
-		assertTrue(word+"", word == (InstF99.Iexit << 10));
+		assertTrue(word+"", word == (Iexit << 10));
 		
 		assertEquals(dp + targCtx.getCellSize(), targCtx.getDP());
 		
@@ -197,9 +198,9 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.Iload, InstF99.Istore, InstF99.IfieldLit);
+		assertOpword(word, Iload, Istore, IfieldLit);
 		word = targCtx.readAddr(dp + 2);
-		assertOpword(word, 0, InstF99.Idup, InstF99.Iexit);
+		assertOpword(word, 0, Idup, Iexit);
 		
 		assertEquals(dp + 4, targCtx.getDP());
 	}
@@ -249,29 +250,29 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.IfieldLit, 15, InstF99.IfieldLit);
+		assertOpword(word, IfieldLit, 15, IfieldLit);
 		word = targCtx.readAddr(dp + 2);
-		assertOpword(word, 3, InstF99.Isub, InstF99.I0equ);
+		assertOpword(word, 3, Ibinop, OP_SUB);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word, InstF99.Iexit,  0, 0);
+		assertOpword(word, I0equ, Iexit, 0);
 		
 		assertEquals(dp + 6, targCtx.getDP());
 	}
 
 	@Test
 	public void testLiterals2() throws Exception {
-		comp.parseString(": eq 15 456 - 0= ;");
+		comp.parseString(": eq 15 456 = ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.find("eq");
 		assertNotNull(foo);
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.IfieldLit, 15, InstF99.Ilit);
+		assertOpword(word, IfieldLit, 15, Ilit);
 		word = targCtx.readAddr(dp + 2);
 		assertEquals(456, word);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word, InstF99.Isub, InstF99.I0equ, InstF99.Iexit);
+		assertOpword(word, Iequ, Iexit, 0);
 		
 		assertEquals(dp + 6, targCtx.getDP());
 	}
@@ -285,11 +286,11 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.IfieldLit, -3, InstF99.IfieldLit);
+		assertOpword(word, IfieldLit, -3, IfieldLit);
 		word = targCtx.readAddr(dp + 2);
-		assertOpword(word, 5, InstF99.IfieldLit, 4);
+		assertOpword(word, 5, IfieldLit, 4);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word, InstF99.Iexit, 0, 0);
+		assertOpword(word, Iexit, 0, 0);
 		
 		assertEquals(dp + 6, targCtx.getDP());
 	}
@@ -316,9 +317,9 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.Iext, InstF99.IfieldLit_d - InstF99._Iext, 11); 
+		assertOpword(word, Iext, IfieldLit_d - _Iext, 11); 
 		word = targCtx.readAddr(dp + 2);
-		assertOpword(word, InstF99.Iext, InstF99.Ilit_d - InstF99._Iext, InstF99.Iexit);
+		assertOpword(word, Iext, Ilit_d - _Iext, Iexit);
 		word = targCtx.readAddr(dp + 4);
 		assertEquals(0xaaaa, word);
 		word = targCtx.readAddr(dp + 6);
@@ -344,8 +345,11 @@ public class TestForthComp {
 		cpu.setPC((short) pc);
 		while (cpu.getPC() != 0)
 			interp.execute();
-		
+
+		assertTrue(cpu.getState().getSP() <= cpu.getState().getBaseSP());
+		assertTrue(cpu.getState().getRP() <= cpu.getState().getBaseRP());
 		targCtx.importState(hostCtx, f99Machine, BASE_SP, BASE_RP);
+		
 	}
 	
 	@Test
@@ -357,17 +361,17 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.Ilit, InstF99.Iload, InstF99.Ilit);
+		assertOpword(word, Ilit, Iload, Ilit);
 		word = targCtx.readAddr(dp + 2);
 		assertEquals(122, word);
 		word = targCtx.readAddr(dp + 4);
 		assertEquals(456, word);
 		word = targCtx.readAddr(dp + 6);
-		assertOpword(word, InstF99.Istore, InstF99.Ilit, InstF99.Idup);
+		assertOpword(word, Istore, Ilit, Idup);
 		word = targCtx.readAddr(dp + 8);
 		assertEquals(789, word);
 		word = targCtx.readAddr(dp + 10);
-		assertOpword(word, InstF99.Iexit, 0, 0);
+		assertOpword(word, Iexit, 0, 0);
 		
 		assertEquals(dp + 12, targCtx.getDP());
 	}
@@ -405,17 +409,17 @@ public class TestForthComp {
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.I0branch, InstF99.IfieldLit, -1);
+		assertOpword(word, I0branch, IfieldLit, -1);
 		word = targCtx.readAddr(dp + 2);
-		assertEquals(4, word);
+		assertEquals(8, word);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word, InstF99.Iext, InstF99.Ibranch - InstF99._Iext, 0);	// must break (FOR NOW)
+		assertOpword(word, Iext, Ibranch - _Iext, 0);	// must break (FOR NOW)
 		word = targCtx.readAddr(dp + 6);
-		assertEquals(2, word);
+		assertEquals(6, word);
 		word = targCtx.readAddr(dp + 8);
-		assertOpword(word, InstF99.IfieldLit, 0, 0);
+		assertOpword(word, IfieldLit, 0, 0);
 		word = targCtx.readAddr(dp + 10);
-		assertOpword(word, InstF99.Iexit, 0, 0);	// must break (FOR NOW)
+		assertOpword(word, Iexit, 0, 0);	// must break (FOR NOW)
 	}
 
 	@Test
@@ -443,42 +447,42 @@ public class TestForthComp {
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
 
-		assertOpword(word, InstF99.Idup, InstF99.I0lt, InstF99.I0branch);
+		assertOpword(word, Idup, I0cmp, InstF99.CMP_LT);
 		word = targCtx.readAddr(dp + 2);
-		assertEquals(6, word);
+		assertOpword(word, I0branch, Idrop, IfieldLit);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word, InstF99.Idrop, InstF99.IfieldLit, -1);
+		assertEquals(8, word);
 		word = targCtx.readAddr(dp + 6);
-		assertOpword(word, InstF99.Iext, InstF99.Ibranch - InstF99._Iext, 0);
+		assertOpword(word, -1, Iext, Ibranch - _Iext);
 		word = targCtx.readAddr(dp + 8);
-		assertEquals(10, word);
+		assertEquals(14, word);
 		word = targCtx.readAddr(dp + 10);
-		assertOpword(word, InstF99.I0equ, InstF99.I0branch, InstF99.IfieldLit);
+		assertOpword(word, I0equ, I0branch, IfieldLit);
 		word = targCtx.readAddr(dp + 12);
-		assertEquals(4, word);
+		assertEquals(8, word);
 		word = targCtx.readAddr(dp + 14);
-		assertOpword(word, 0, InstF99.Iext, InstF99.Ibranch - InstF99._Iext);
+		assertOpword(word, 0, Iext, Ibranch - _Iext);
 		word = targCtx.readAddr(dp + 16);
-		assertEquals(2, word);
+		assertEquals(6, word);
 		word = targCtx.readAddr(dp + 18);
-		assertOpword(word, InstF99.IfieldLit, 1, 0);
+		assertOpword(word, IfieldLit, 1, 0);
 		word = targCtx.readAddr(dp + 20);
-		assertOpword(word, InstF99.Iexit, 0, 0);
+		assertOpword(word, Iexit, 0, 0);
 
 		/*
-		assertOpword(word, InstF99.Idup, InstF99.I0lt, InstF99.I0fieldBranch);
+		assertOpword(word, Idup, I0lt, I0fieldBranch);
 		word = targCtx.readAddr(dp + 2);
-		assertOpword(word, 8, 0, InstF99.IfieldBranch);
+		assertOpword(word, 8, 0, IfieldBranch);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word, 12, InstF99.Idrop, InstF99.InegOne);
+		assertOpword(word, 12, Idrop, InegOne);
 		word = targCtx.readAddr(dp + 6);
-		assertOpword(word, InstF99.IfieldBranch, 4, InstF99.I0equ);
+		assertOpword(word, IfieldBranch, 4, I0equ);
 		word = targCtx.readAddr(dp + 8);
-		assertOpword(word, InstF99.I0fieldBranch, 4, InstF99.Izero);
+		assertOpword(word, I0fieldBranch, 4, Izero);
 		word = targCtx.readAddr(dp + 10);
-		assertOpword(word, InstF99.IfieldBranch, 1, InstF99.Ione);
+		assertOpword(word, IfieldBranch, 1, Ione);
 		word = targCtx.readAddr(dp + 12);
-		assertOpword(word, InstF99.Iexit, 0, 0);
+		assertOpword(word, Iexit, 0, 0);
 		*/
 
 	}
@@ -515,7 +519,7 @@ public class TestForthComp {
 		
 		int dp = outer.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
-		assertOpword(word, InstF99.Ilit, 0, 0);
+		assertOpword(word, Ilit, 0, 0);
 		word = targCtx.readAddr(dp + 2);
 		assertEquals(100, word);
 		word = targCtx.readAddr(dp + 4);
@@ -565,6 +569,48 @@ public class TestForthComp {
 		assertEquals(-2, hostCtx.popData());
 	}
 	@Test
+	public void testShifts1Ex() throws Exception {
+		comp.parseString(
+				": outer $8887 12 urshift  $8887 8 rshift $ffff 15 lshift ;");
+		
+		interpret("outer");
+		assertEquals((short)0x8000, hostCtx.popData());
+		assertEquals((short)0xff88, hostCtx.popData());
+		assertEquals((short)0x0008, hostCtx.popData());
+	}
+	@Test
+	public void testShifts2Ex() throws Exception {
+		comp.parseString(
+				": outer $8887 12U urshift  $8887 8U rshift $ffff 15U lshift ;");
+		
+		interpret("outer");
+		assertEquals((short)0x8000, hostCtx.popData());
+		assertEquals((short)0xff88, hostCtx.popData());
+		assertEquals((short)0x0008, hostCtx.popData());
+	}
+	@Test
+	public void testDoublShifts1Ex() throws Exception {
+		comp.parseString(
+				": outer $8887.7778 16. durshift  $8887.7778 8. drshift ;");
+		
+		interpret("outer");
+		assertEquals((short)0xff88, hostCtx.popData());
+		assertEquals((short)0x8777, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals((short)0x8887, hostCtx.popData());
+	}
+	@Test
+	public void testDoublShifts2Ex() throws Exception {
+		comp.parseString(
+				": outer $8887.7778 16.U durshift  $8887.7778 8.U drshift ;");
+		
+		interpret("outer");
+		assertEquals((short)0xff88, hostCtx.popData());
+		assertEquals((short)0x8777, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals((short)0x8887, hostCtx.popData());
+	}
+	@Test
 	public void testDoLoop() throws Exception {
 		comp.parseString(": stack 0 do i loop ;");
 
@@ -576,15 +622,15 @@ public class TestForthComp {
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
 
-		assertOpword(word, InstF99.IfieldLit, 0, InstF99.Iext);
+		assertOpword(word, IfieldLit, 0, Iext);
 		word = targCtx.readAddr(dp + 2);
-		assertOpword(word, InstF99.ItoR_d - InstF99._Iext, 0, 0);
+		assertOpword(word, ItoR_d - _Iext, 0, 0);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word,  InstF99.Iext, InstF99.Ii - InstF99._Iext , InstF99.Iloop);
+		assertOpword(word,  Iext, Ii - _Iext , Iloop);
 		word = targCtx.readAddr(dp + 6);
-		assertEquals(-4 & 0xffff, word);
+		assertEquals(0 & 0xffff, word);
 		word = targCtx.readAddr(dp + 8);
-		assertOpword(word,  InstF99.Irdrop, InstF99.Irdrop, InstF99.Iexit);
+		assertOpword(word,  Irdrop, Irdrop, Iexit);
 
 	}
 
@@ -602,6 +648,47 @@ public class TestForthComp {
 
 	}
 	
+	@Test
+	public void testQDoLoop() throws Exception {
+		comp.parseString(": stack 0 ?do i loop ;");
+
+		dumpDict();
+		
+		TargetColonWord foo = (TargetColonWord) targCtx.find("stack");
+		assertNotNull(foo);
+		
+		//	2dup	copy vals
+		//	2>r		place init/lim on rstack
+		//	=		compare init/lim
+		//	0branch	if not equal, go into loop
+		//	xx
+		//	branch	go to leave
+		//	yy
+		//	i
+		//	loop
+		//	-zz
+		//	<< leave point >>
+		//	rdrop
+		//	rdrop
+		
+		int dp = foo.getEntry().getContentAddr();
+		int word = targCtx.readAddr(dp);
+
+		assertOpword(word, IfieldLit, 0, Iext);
+		word = targCtx.readAddr(dp + 2);
+		assertOpword(word, Idup_d - _Iext, Iext, ItoR_d - _Iext);
+		word = targCtx.readAddr(dp + 4);
+		assertOpword(word, Ibinop, OP_SUB, I0branch);	// [if] 0branch to skip loop
+		word = targCtx.readAddr(dp + 6);
+		assertEquals(8 & 0xffff, word);	// past loop
+		word = targCtx.readAddr(dp + 8);		// body
+		assertOpword(word, Iext, Ii - _Iext , Iloop);
+		word = targCtx.readAddr(dp + 10);
+		assertEquals(0 & 0xffff, word);
+		word = targCtx.readAddr(dp + 12);
+		assertOpword(word,  Irdrop, Irdrop, Iexit);
+
+	}
 
 	@Test
 	public void testDoQLoopEx() throws Exception {
@@ -683,5 +770,78 @@ public class TestForthComp {
 		assertEquals(3, hostCtx.popData());
 
 	}
+	@Test
+	public void testLogOpsEx1() throws Exception {
+		comp.parseString(
+				": tst 1 2 < 1 2 >  1 -2 < 1 -2 >  6 6 >= -8 6 <= ;\n" +
+				": utst 1 2 u< 1 2 u>  1 -2 u< 1 -2 u>  6 6 u>= -8 6 u<= ;"
+				
+		);
+		
+		interpret("tst");
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		
+		interpret("utst");
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		
+	}
+	@Test
+	public void testLogOpsEx2() throws Exception {
+		comp.parseString(
+				": tst 1. 2. d< 1. 2. d>  1. -2. d< 1. -2. d>  6. 6. d>= -8. 6. d<= ;\n" +
+				": utst 1. 2. du< 1. 2. du>  1. -2. du< 1. -2. du>  6. 6. du>= -8. 6. du<= ;"
+				
+		);
+		
+		TargetColonWord foo = (TargetColonWord) targCtx.find("tst");
+		int dp = foo.getEntry().getContentAddr();
+		int word = targCtx.readAddr(dp);
+
+		assertOpword(word, Iext, IfieldLit_d - _Iext, 1);
+		word = targCtx.readAddr(dp + 2);
+		assertOpword(word, Iext, IfieldLit_d - _Iext, 2);
+		word = targCtx.readAddr(dp + 4);
+		assertOpword(word, Iext, Icmp_d - _Iext, CMP_LT);
+		word = targCtx.readAddr(dp + 6);
+		assertOpword(word, Iext, IfieldLit_d - _Iext, 1);
+		word = targCtx.readAddr(dp + 8);
+		assertOpword(word, Iext, IfieldLit_d - _Iext, 2);
+		word = targCtx.readAddr(dp + 10);
+		assertOpword(word, Iext, Icmp_d - _Iext, CMP_GT);
+		word = targCtx.readAddr(dp + 12);
+		assertOpword(word, Iext, IfieldLit_d - _Iext, 1);
+		word = targCtx.readAddr(dp + 14);
+		assertOpword(word, Iext, IfieldLit_d - _Iext, -2);
+		word = targCtx.readAddr(dp + 16);
+		assertOpword(word, Iext, Icmp_d - _Iext, CMP_LT);
+		
+		interpret("tst");
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		
+		interpret("utst");
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(-1, hostCtx.popData());
+		
+	}
+
 	
 }

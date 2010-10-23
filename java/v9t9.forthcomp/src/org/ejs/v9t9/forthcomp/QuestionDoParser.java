@@ -21,38 +21,16 @@ public class QuestionDoParser implements IWord {
 		if (qdoWord == null)
 			throw hostContext.abort("no (?do)");
 
+		targetContext.compile(qdoWord);	// ends in 0branch
+		targetContext.pushFixup(hostContext);
 		
-		targetContext.compile(qdoWord);
-		/*
-		ITargetWord doWord = (ITargetWord) targetContext.find("(do)");
-		if (doWord == null)
-			throw hostContext.abort("no (do)");
+		//new IfParser().execute(hostContext, targetContext);
+		//new LeaveParser().execute(hostContext, targetContext);
+		//new ThenParser().execute(hostContext, targetContext);
 		
-		ITargetWord twoDup = (ITargetWord) targetContext.find("2dup");
-		if (twoDup== null)
-			throw hostContext.abort("no 2dup");
-
-		ITargetWord sub = (ITargetWord) targetContext.find("-");
-		if (sub == null)
-			throw hostContext.abort("no -");
-		ITargetWord zeroEqu = (ITargetWord) targetContext.find("0=");
-		if (zeroEqu == null)
-			throw hostContext.abort("no 0=");
-
-		targetContext.compile(twoDup);
-		targetContext.compile(doWord);
-		
-		targetContext.compile(sub);
-		targetContext.compile(zeroEqu);
-		*/
-		
-		new IfParser().execute(hostContext, targetContext);
-		new LeaveParser().execute(hostContext, targetContext);
-		new ThenParser().execute(hostContext, targetContext);
-		
-		//hostContext.leaves().add(targetContext.pushFixup(hostContext));
-		
-		hostContext.pushData(targetContext.getDP());
+		//hostContext.pushData(targetContext.getDP());
+		targetContext.pushHere(hostContext);
+		hostContext.pushData(-1);		// ?do
 		hostContext.pushPairs(3);
 	}
 	

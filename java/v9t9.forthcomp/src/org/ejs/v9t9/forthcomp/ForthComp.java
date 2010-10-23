@@ -135,9 +135,9 @@ public class ForthComp {
 			if (word instanceof ITargetWord) {
 				targetContext.compile((ITargetWord) word);
 			} else if (word instanceof Literal) {
-				targetContext.compileLiteral(((Literal) word).getValue());
+				targetContext.compileLiteral(((Literal) word).getValue(), ((Literal) word).isUnsigned());
 			} else if (word instanceof DoubleLiteral) {
-				targetContext.compileDoubleLiteral(((DoubleLiteral) word).getValue());
+				targetContext.compileDoubleLiteral(((DoubleLiteral) word).getValue(), ((DoubleLiteral) word).isUnsigned());
 				
 			} else {
 				throw abort("unknown compile-time semantics for " + token);
@@ -164,14 +164,19 @@ public class ForthComp {
 			isDouble = true;
 		}
 		token = token.replaceAll("\\.", "");
+		boolean isUnsigned = false;
+		if (token.toUpperCase().endsWith("U")) {
+			isUnsigned = true;
+			token = token.substring(0, token.length() - 1);
+		}
 		try {
 			long val = Long.parseLong(token, radix);
 			if (isNeg)
 				val = -val;
 			if (isDouble)
-				return new DoubleLiteral(val);
+				return new DoubleLiteral(val, isUnsigned);
 			else
-				return new Literal((int) val);
+				return new Literal((int) val, isUnsigned);
 		} catch (NumberFormatException e) {
 			return null;
 		}
