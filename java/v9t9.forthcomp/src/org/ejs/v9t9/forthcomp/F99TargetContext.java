@@ -41,9 +41,9 @@ public class F99TargetContext extends TargetContext {
 	public void defineBuiltins() {
 		definePrim(";S", InstF99.Iexit);
 		definePrim("@", InstF99.Iload);
-		definePrim("@", InstF99.Iload);
+		definePrim("c@", InstF99.Icload);
 		definePrim("!", InstF99.Istore);
-		definePrim("!", InstF99.Istore);
+		definePrim("c!", InstF99.Icstore);
 		definePrim("1+", InstF99.I1plus);
 		definePrim("2+", InstF99.I2plus);
 		definePrim("dup", InstF99.Idup);
@@ -76,6 +76,8 @@ public class F99TargetContext extends TargetContext {
 		definePrim("i", InstF99.Ii);
 		definePrim("(do)", InstF99.ItoR_d);
 		definePrim("(loop)", InstF99.Iloop);
+		definePrim("(+loop)", InstF99.IplusLoop);
+		definePrim("(u+loop)", InstF99.IuplusLoop);
 		defineInlinePrim("(?do)", InstF99.Idup_d, InstF99.ItoR_d, InstF99.Isub, InstF99.I0equ);
 
 		definePrim("2dup", InstF99.Idup_d);

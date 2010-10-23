@@ -78,6 +78,7 @@ public class ForthComp {
 	 	hostContext.define("leave", new LeaveParser());
 	 	hostContext.define("loop", new LoopParser());
 	 	hostContext.define("+loop", new PlusLoopParser());
+	 	hostContext.define("u+loop", new UPlusLoopParser());
 	 	hostContext.define("(", new ParenParser());
 	}
 

@@ -244,6 +244,8 @@ public class InterpreterF99 implements Interpreter {
 		case InstF99.I0branch:
 		case InstF99.Ibranch:
 		case InstF99.Iloop:
+		case InstF99.IplusLoop:
+		case InstF99.IuplusLoop:
 			inst.setOp1(MachineOperandF99.createImmediateOperand(memory.readWord(nextPC), MachineOperandF99.OP_ENC_IMM16));
 			iblock.pc = (short) (nextPC + 2);
 			break;
@@ -278,7 +280,8 @@ public class InterpreterF99 implements Interpreter {
     	MachineOperandF99 mop1 = (MachineOperandF99)ins.getOp1();
 		cpu.addCycles(ins.getInfo().cycles + (mop1 != null ? mop1.cycles : 0));
 		
-        switch (ins.getInst()) {
+        int alignPC = iblock.pc & ~1;
+		switch (ins.getInst()) {
         case InstF99.Iload:
         	cpu.push(memory.readWord(cpu.pop()));
         	break;
@@ -302,13 +305,13 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push(cpu.peek());
         	break;
         case InstF99.I0branch: {
-        	short targ = (short) ((iblock.pc & ~1) + mop1.immed);
+        	short targ = (short) (alignPC + mop1.immed);
         	if (cpu.pop() == 0)
         		cpu.setPC(targ);
         	break;
         }
         case InstF99.Ibranch: {
-        	short targ = (short) ((iblock.pc & ~1) + mop1.immed);
+        	short targ = (short) (alignPC + mop1.immed);
         	cpu.setPC(targ);
         	break;
         }
@@ -494,11 +497,34 @@ public class InterpreterF99 implements Interpreter {
     		cpu.rpop();
     		cpu.rpush(next);
     		if (next != lim) {
-        		short targ = (short) ((iblock.pc & ~1) + mop1.immed);
+        		short targ = (short) (alignPC + mop1.immed);
             	cpu.setPC(targ);
-        	} else {
-        		cpu.rpop();
-        		cpu.rpop();
+        	}
+        	break;
+        }
+        case InstF99.IplusLoop: {
+        	short change = cpu.pop();
+        	short cur = iblock.getReturnStackEntry(0);
+        	short next = (short) (cur + change);
+        	short lim = iblock.getReturnStackEntry(1);
+    		cpu.rpop();
+    		cpu.rpush(next);
+    		if (lim != 0 ? next < lim : next >= change) {
+        		short targ = (short) (alignPC + mop1.immed);
+            	cpu.setPC(targ);
+        	}
+        	break;
+        }
+        case InstF99.IuplusLoop: {
+        	short change = cpu.pop();
+        	short cur = iblock.getReturnStackEntry(0);
+        	short next = (short) (cur + change);
+        	short lim = iblock.getReturnStackEntry(1);
+        	cpu.rpop();
+        	cpu.rpush(next);
+        	if (lim != 0 ? (next & 0xffff) < (lim & 0xffff) : (next & 0xffff) >= (change & 0xffff)) {
+        		short targ = (short) (alignPC + mop1.immed);
+        		cpu.setPC(targ);
         	}
         	break;
         }

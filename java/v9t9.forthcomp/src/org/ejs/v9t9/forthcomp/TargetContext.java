@@ -11,7 +11,6 @@ import java.util.TreeMap;
 
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 
-import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 
 /**

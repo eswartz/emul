@@ -81,7 +81,8 @@ public class InstF99 {
 	public static final int IRfrom_d = IRfrom + _Iext;
 	
 	public static final int Iexit = Istack_start + 7;
-
+	public static final int IuplusLoop = Iexit + _Iext;
+	
 	/** next full word is jump offset */
 	public static final int I0branch = Istack_start + 8;
 	/** next full word is offset in words */
@@ -141,6 +142,7 @@ public class InstF99 {
 		Ibranch_f, 0, 0, 0, 0,
 		Iloop, 0, 0, 2, 2,
 		IplusLoop, 1, 0, 2, 2,
+		IuplusLoop, 1, 0, 2, 2,
 		Iover, 2, 3, 0, 0,
 		Irot, 3, 3, 0, 0,
 		ItoR, 1, 0, 0, 1,
@@ -233,6 +235,8 @@ public class InstF99 {
 		instNames.put(Ilsh_d, "DLSH");
 		instNames.put(I0equ, "0=");
 		instNames.put(I0equ_d, "D0=");
+		instNames.put(IplusLoop, "+LOOP");
+		instNames.put(IuplusLoop, "U+LOOP");
 		instNames.put(IcontextFrom, "CONTEXT>");
 		instNames.put(ItoContext, ">CONTEXT");
 		

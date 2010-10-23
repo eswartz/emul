@@ -628,7 +628,48 @@ public class TestForthComp {
 		assertEquals(3, hostCtx.popData());
 
 	}
-	
+
+	@Test
+	public void testDoPlusLoopEx() throws Exception {
+		comp.parseString(": stack 0 do i 3 +loop ;");
+
+		hostCtx.pushData(10);
+		interpret("stack");
+		assertEquals(9, hostCtx.popData());
+		assertEquals(6, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+
+		hostCtx.pushData(9);
+		interpret("stack");
+		assertEquals(6, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+	}
+
+	@Test
+	public void testDoPlusLoopEx2() throws Exception {
+		comp.parseString(": stack 0 do i 16384 u+loop ;");
+
+		hostCtx.pushData(0);
+		interpret("stack");
+		assertEquals((short)49152, hostCtx.popData());
+		assertEquals((short)32768, hostCtx.popData());
+		assertEquals(16384, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+	}
+
+	@Test
+	public void testDoPlusLoopEx3() throws Exception {
+		comp.parseString(": stack 10 -10 do i 4 +loop ;");
+
+		interpret("stack");
+		assertEquals(6, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
+		assertEquals(-2, hostCtx.popData());
+		assertEquals(-6, hostCtx.popData());
+		assertEquals(-10, hostCtx.popData());
+	}
 
 	@Test
 	public void testStackAccessorsEx() throws Exception {
