@@ -16,4 +16,6 @@ c/libanalogtv/swig
 c/libv9t9render/swig
 build
 java/v9t9-java/tmp
+music.raw
 *~
+jar-in-jar-loader.zip
