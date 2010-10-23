@@ -861,7 +861,6 @@ public class TestForthComp {
 		assertEquals(90, targCtx.readCell(xaddr));
 		assertEquals(145, targCtx.readCell(yaddr));
 	}
-	
 
 	@Test
 	public void testMemOps2Ex() throws Exception {
@@ -872,16 +871,10 @@ public class TestForthComp {
 				": tst str 0 [] 1 [] 2 [] 3 [] drop ;"
 				
 		);
-
-		//IWord str = targCtx.require("str"); 
 		
 		dumpDict();
 		
-		//int strAddr = ((ITargetWord)str).getEntry().getParamAddr();
-		
 		interpret("tst");
-		
-		dumpCompiledMemory();
 		
 		assertEquals(90, hostCtx.popData());
 		assertEquals(72, hostCtx.popData());

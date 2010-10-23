@@ -1,14 +1,20 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
+
+import org.ejs.v9t9.forthcomp.AbortException;
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ITargetWord;
+import org.ejs.v9t9.forthcomp.IWord;
+import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
  * @author ejs
  *
  */
-public class LoopParser implements IWord {
-	public LoopParser() {
+public class PlusLoop implements IWord {
+	public PlusLoop() {
 	}
 
 	/* (non-Javadoc)
@@ -18,7 +24,7 @@ public class LoopParser implements IWord {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(3);
 		
-		ITargetWord word = (ITargetWord) targetContext.require("(loop)");
+		ITargetWord word = (ITargetWord) targetContext.require("(+loop)");
 		
 		targetContext.loopCompile(hostContext, word);
 	}

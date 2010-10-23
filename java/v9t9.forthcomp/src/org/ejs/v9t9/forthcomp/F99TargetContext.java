@@ -10,6 +10,7 @@ import java.util.Stack;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
+import org.ejs.v9t9.forthcomp.words.FieldComma;
 
 import v9t9.emulator.hardware.F99Machine;
 import v9t9.emulator.runtime.cpu.CpuF99;
@@ -497,6 +498,6 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void defineCompilerWords(HostContext hostContext) {
-		hostContext.define("FIELD,", new FieldCommaParser());		
+		hostContext.define("FIELD,", new FieldComma());		
 	}
 }

@@ -1,32 +1,34 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
+
+import org.ejs.v9t9.forthcomp.AbortException;
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.IWord;
+import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
  * @author ejs
  *
  */
-public class PlusLoopParser implements IWord {
-	public PlusLoopParser() {
+public class Create implements IWord {
+	public Create() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		hostContext.assertPairs(3);
-		
-		ITargetWord word = (ITargetWord) targetContext.require("(+loop)");
-		
-		targetContext.loopCompile(hostContext, word);
+		String name = hostContext.readToken();
+
+		targetContext.create(name, 0);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

@@ -1,14 +1,20 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
+
+import org.ejs.v9t9.forthcomp.AbortException;
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ITargetWord;
+import org.ejs.v9t9.forthcomp.IWord;
+import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
  * @author ejs
  *
  */
-public class UPlusLoopParser implements IWord {
-	public UPlusLoopParser() {
+public class UPlusLoop implements IWord {
+	public UPlusLoop() {
 	}
 
 	/* (non-Javadoc)

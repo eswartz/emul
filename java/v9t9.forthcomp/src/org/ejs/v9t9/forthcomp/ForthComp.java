@@ -8,6 +8,23 @@ import gnu.getopt.Getopt;
 import java.io.File;
 import java.io.IOException;
 
+import org.ejs.v9t9.forthcomp.words.CharComma;
+import org.ejs.v9t9.forthcomp.words.Colon;
+import org.ejs.v9t9.forthcomp.words.Comma;
+import org.ejs.v9t9.forthcomp.words.Create;
+import org.ejs.v9t9.forthcomp.words.Else;
+import org.ejs.v9t9.forthcomp.words.Lbracket;
+import org.ejs.v9t9.forthcomp.words.Leave;
+import org.ejs.v9t9.forthcomp.words.Loop;
+import org.ejs.v9t9.forthcomp.words.Paren;
+import org.ejs.v9t9.forthcomp.words.PlusLoop;
+import org.ejs.v9t9.forthcomp.words.QuestionDo;
+import org.ejs.v9t9.forthcomp.words.Rbracket;
+import org.ejs.v9t9.forthcomp.words.SemiColon;
+import org.ejs.v9t9.forthcomp.words.Then;
+import org.ejs.v9t9.forthcomp.words.UPlusLoop;
+import org.ejs.v9t9.forthcomp.words.Variable;
+
 /**
  * This class compiles FORTH programs into ROM images for V9t9
  * @author ejs
@@ -64,30 +81,30 @@ public class ForthComp {
 		stateVar = (HostVariable) hostContext.define("state", new HostVariable(0));
 		hostContext.define("csp", new HostVariable(0));
 		
-		hostContext.define("create", new CreateParser());
-		hostContext.define("variable", new VariableParser());
+		hostContext.define("create", new Create());
+		hostContext.define("variable", new Variable());
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
-		hostContext.define(":", new ColonParser());
+		hostContext.define(":", new Colon());
 		hostContext.define(";", new SemiColon());
 		
 		hostContext.define("if", new IfParser());
-		hostContext.define("else", new ElseParser());
-	 	hostContext.define("then", new ThenParser());
+		hostContext.define("else", new Else());
+	 	hostContext.define("then", new Then());
 	 	hostContext.define("do", new DoParser());
-	 	hostContext.define("?do", new QuestionDoParser());
-	 	hostContext.define("leave", new LeaveParser());
-	 	hostContext.define("loop", new LoopParser());
-	 	hostContext.define("+loop", new PlusLoopParser());
-	 	hostContext.define("u+loop", new UPlusLoopParser());
+	 	hostContext.define("?do", new QuestionDo());
+	 	hostContext.define("leave", new Leave());
+	 	hostContext.define("loop", new Loop());
+	 	hostContext.define("+loop", new PlusLoop());
+	 	hostContext.define("u+loop", new UPlusLoop());
 
-	 	hostContext.define("(", new ParenParser());
+	 	hostContext.define("(", new Paren());
 	 	
-	 	hostContext.define("[", new LbracketParser());
-	 	hostContext.define("]", new RbracketParser());
+	 	hostContext.define("[", new Lbracket());
+	 	hostContext.define("]", new Rbracket());
 	 	
-	 	hostContext.define(",", new CommaParser());
-	 	hostContext.define("c,", new CharCommaParser());
+	 	hostContext.define(",", new Comma());
+	 	hostContext.define("c,", new CharComma());
 	 	
 	 	targetContext.defineCompilerWords(hostContext);
 	}
