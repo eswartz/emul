@@ -116,9 +116,9 @@ public class InstF99 {
 	public static final int Iexecute = Ispecial_start + 0;
 	public static final int Isyscall = Iexecute + _Iext;
 
-	/** 0=SP, 1=SP0, 2=RP, 3=RP0, 4=UP, 5=UP0, 6=PC */
+	/** @see CTX_... */
 	public static final int IcontextFrom = Ispecial_start + 1;
-	/** 0=SP, 1=SP0, 2=RP, 3=RP0, 4=UP, 5=UP0, 6=PC */
+	/** @see CTX_... */
 	public static final int ItoContext = IcontextFrom + _Iext;
 
 	/** next full word is pushed */
@@ -135,6 +135,26 @@ public class InstF99 {
 	
 	public static final int Icall = 32;
 
+   
+   
+
+	public static final int CTX_SP = 0;
+	public static final int CTX_SP0 = 1;
+	public static final int CTX_RP = 2;
+	public static final int CTX_RP0 = 3;
+	public static final int CTX_UP = 4;
+	public static final int CTX_UP0 = 5;
+	public static final int CTX_PC = 6;
+	
+	public static final String[] ctxStrings = {
+		"SP",
+		"SP0",
+		"RP",
+		"RP0",
+		"UP",
+		"UP0",
+		"PC",
+	};
 	public static final int OP_ADD = 0;
 	public static final int OP_SUB = 1;
 	public static final int OP_LSH = 2;
@@ -144,6 +164,17 @@ public class InstF99 {
 	public static final int OP_OR = 6;
 	public static final int OP_XOR = 7;
 	
+	public static final String[] opStrings = {
+	    	"+",
+	    	"-",
+	    	"LSH",
+	    	"RSH",
+	    	"ASH",
+	    	"AND",
+	    	"OR",
+	    	"XOR",
+	    };
+	 
 	public static final int CMP_LT = 0;
 	public static final int CMP_LE = 1;
 	public static final int CMP_GT = 2;
@@ -153,6 +184,16 @@ public class InstF99 {
 	public static final int CMP_UGT = 6;
 	public static final int CMP_UGE = 7;
 	
+	public static final String[] cmpStrings = {
+	    	"<",
+	    	"<=",
+	    	">",
+	    	">=",
+	    	"U<",
+	    	"U<=",
+	    	"U>",
+	    	"U>=",
+	    };
 
 	/** for each inst:  SP read, SP left
 	 *	RP read, RP left;
@@ -181,8 +222,8 @@ public class InstF99 {
 		Iexit, 0, 0, 1, 0,
 		Irdrop, 0, 0, 1, 0,
 		Idup_d, 2, 4, 0, 0,
-		IcontextFrom, 1, 1, 0, 0,
-		ItoContext, 2, 0, 0, 0,
+		IcontextFrom, 0, 1, 0, 0,
+		ItoContext, 1, 0, 0, 0,
 		Ispidx, 0, 1, 0, 0,
 		Irpidx, 0, 1, 0, 0,
 		Iswap, 2, 2, 0, 0,
@@ -275,9 +316,12 @@ public class InstF99 {
 		instNames.put(I0equ_d, "D0=");
 		instNames.put(IplusLoop, "+LOOP");
 		instNames.put(IuplusLoop, "U+LOOP");
-		instNames.put(IcontextFrom, "CONTEXT>");
-		instNames.put(ItoContext, ">CONTEXT");
+		instNames.put(IcontextFrom, "(CONTEXT>)");
+		instNames.put(ItoContext, "(>CONTEXT)");
 		
+		instNames.put(I2div, "2/");
+		instNames.put(I2times, "2*");
+		instNames.put(IplusStore, "+!");
 	}
 
 	public static void main(String[] args) {
@@ -301,7 +345,6 @@ public class InstF99 {
 		switch (inst) {
 		case InstF99.Iexecute:
 		case InstF99.Isyscall:
-		case InstF99.IcontextFrom:
 		case InstF99.Ibranch:
 		//case InstF99.IfieldBranch:
 			return true;
@@ -345,6 +388,8 @@ public class InstF99 {
 		case Icmp_d:
 		case Ibinop:
 		case Ibinop_d:
+		case IcontextFrom:
+		case ItoContext:
 			return true;
 			
 		}

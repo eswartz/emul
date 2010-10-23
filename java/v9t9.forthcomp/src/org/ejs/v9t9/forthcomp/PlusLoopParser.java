@@ -18,9 +18,7 @@ public class PlusLoopParser implements IWord {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(3);
 		
-		ITargetWord word = (ITargetWord) targetContext.find("(+loop)");
-		if (word == null)
-			throw hostContext.abort("no (+loop) word");
+		ITargetWord word = (ITargetWord) targetContext.require("(+loop)");
 		
 		targetContext.loopCompile(hostContext, word);
 	}

@@ -95,18 +95,19 @@ public class HostContext extends Context {
 	 * 
 	 */
 	public HostVariable assertCompiling() throws AbortException {
-		HostVariable state = (HostVariable)find("state");
+		HostVariable state = (HostVariable)require("state");
 		if (state.getValue() == 0)
 			throw abort("not defining");
 		return state;
 
 	}
 
-	public void setCompiling() throws AbortException {
-		HostVariable state = (HostVariable)find("state");
-		if (state.getValue() != 0)
+	public void setCompiling(boolean b) throws AbortException {
+		HostVariable state = (HostVariable)require("state");
+		int val = b ? 1 : 0;
+		if (state.getValue() == val)
 			throw abort("already defining");
-		state.setValue(1);
+		state.setValue(val);
 		
 	}
 
@@ -142,11 +143,11 @@ public class HostContext extends Context {
 	}
 
 	public void setCSP() throws AbortException {
-		HostVariable csp = (HostVariable)find("csp");
+		HostVariable csp = (HostVariable)require("csp");
 		csp.setValue(dataStack.size());
 	}
 	public void assertCSP() throws AbortException {
-		HostVariable csp = (HostVariable)find("csp");
+		HostVariable csp = (HostVariable)require("csp");
 		if (csp.getValue() != dataStack.size())
 			throw abort("mismatched conditionals");
 	}

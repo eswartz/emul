@@ -42,6 +42,14 @@ public class Context implements IContext {
 	public IWord find(String token) {
 		return dictionary.get(token.toLowerCase());
 	}
+	
+	public IWord require(String token) throws AbortException {
+		IWord word = find(token);
+		if (word == null)
+			throw new AbortException("no word " + token);
+		return word;
+	}
+
 	/**
 	 * 
 	 */

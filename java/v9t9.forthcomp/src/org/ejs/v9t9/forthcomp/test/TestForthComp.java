@@ -97,35 +97,40 @@ public class TestForthComp {
 	
 	@Test
 	public void testVariable1() throws Exception {
+		targCtx.clearDict();
+		
+		startDP = targCtx.getDP();
 		
 		comp.parseString("Variable t");
-		IWord var = targCtx.find("T");
-		assertNotNull(var);
+		IWord var = targCtx.require("T");
 
 		var.execute(hostCtx, targCtx);
-		assertEquals(-1, hostCtx.popData());
+		assertEquals(startDP + 4, hostCtx.popData());
+		//assertEquals(-1, hostCtx.popData());
+		//assertEquals(((ITargetWord)var).getEntry().getContentAddr(), targCtx.resolveAddr(-1));
 		
-		assertEquals(((ITargetWord)var).getEntry().getContentAddr(), targCtx.resolveAddr(-1));
-		
-		assertTrue(startDP > targCtx.readCell(startDP));
+		assertTrue(startDP == 0 || startDP > targCtx.readCell(startDP));
 		assertEquals((byte)0x81, targCtx.readChar(startDP + 2));
 		assertEquals('t', targCtx.readChar(startDP + 3));
 		
 	}
 	@Test
 	public void testVariable2() throws Exception {
+		targCtx.clearDict();
+		
+		startDP = targCtx.getDP();
+		
 		comp.parseString("Variable t Variable ud");
 		
-		ITargetWord tvar = (ITargetWord) targCtx.find("T");
+		ITargetWord tvar = (ITargetWord) targCtx.require("T");
 		tvar.execute(hostCtx, targCtx);
-		ITargetWord uvar = (ITargetWord) targCtx.find("Ud");
+		ITargetWord uvar = (ITargetWord) targCtx.require("Ud");
 		uvar.execute(hostCtx, targCtx);
 		
-		assertEquals(-2, hostCtx.popData());
-		assertEquals(-1, hostCtx.popData());
-		
-		assertEquals(tvar.getEntry().getContentAddr(), targCtx.resolveAddr(-1));
-		assertEquals(uvar.getEntry().getContentAddr(), targCtx.resolveAddr(-2));
+		//assertEquals(-2, hostCtx.popData());
+		//assertEquals(-1, hostCtx.popData());
+		//assertEquals(tvar.getEntry().getContentAddr(), targCtx.resolveAddr(-1));
+		//assertEquals(uvar.getEntry().getContentAddr(), targCtx.resolveAddr(-2));
 		
 		assertEquals(0, tvar.getEntry().getAddr() & 1);
 		assertEquals(0, tvar.getEntry().getContentAddr() & 1);
@@ -134,23 +139,23 @@ public class TestForthComp {
 	}
 	
 	@Test
-	public void testVariableLoadStore() throws Exception {
+	public void testCompileTimeVariableLoadStore() throws Exception {
 		targCtx.clearDict();
 		comp.parseString("Variable t Variable u 123 t ! t @ u !  u @");
 		
-		IWord uvar = targCtx.find("U");
-		assertEquals(123, targCtx.readCell(((ITargetWord)uvar).getEntry().getContentAddr()));
+		IWord uvar = targCtx.require("U");
+		assertEquals(123, targCtx.readCell(((ITargetWord)uvar).getEntry().getParamAddr()));
 		
 		assertEquals(123, hostCtx.popData());
 	}
 	@Test
 	public void testColon1() throws Exception {
 
-		ITargetWord semiS = (ITargetWord) targCtx.find(";S");
+		ITargetWord semiS = (ITargetWord) targCtx.require(";S");
 		assertNotNull(semiS);
 
 		comp.parseString(": foo ;");
-		TargetColonWord foo = (TargetColonWord) targCtx.find("foo");
+		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
 		assertNotNull(foo);
 		
 		int dp = foo.getEntry().getContentAddr();
@@ -163,13 +168,9 @@ public class TestForthComp {
 	}
 	@Test
 	public void testColon2() throws Exception {
-		ITargetWord semiS = (ITargetWord) targCtx.find(";S");
-		assertNotNull(semiS);
-
 		comp.parseString(": foo ; : b ;");
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("foo");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -177,7 +178,7 @@ public class TestForthComp {
 		
 		// b should be aligned after foo
 		
-		TargetColonWord bword = (TargetColonWord) targCtx.find("b");
+		TargetColonWord bword = (TargetColonWord) targCtx.require("b");
 		assertEquals(dp + targCtx.getCellSize(), bword.getEntry().getAddr());
 		
 		dp = bword.getEntry().getContentAddr();
@@ -193,8 +194,7 @@ public class TestForthComp {
 	public void testPrimPacking1() throws Exception {
 		comp.parseString(": foo @ ! 0 dup ;");
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("foo");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -245,8 +245,7 @@ public class TestForthComp {
 	public void testLiterals1() throws Exception {
 		comp.parseString(": eq 15 3 - 0= ;");
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("eq");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -263,8 +262,7 @@ public class TestForthComp {
 	public void testLiterals2() throws Exception {
 		comp.parseString(": eq 15 456 = ;");
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("eq");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -281,8 +279,7 @@ public class TestForthComp {
 	public void testLiterals3() throws Exception {
 		comp.parseString(": eq -3 5 4 ;");
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("eq");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -312,8 +309,7 @@ public class TestForthComp {
 	public void testLiterals6() throws Exception {
 		comp.parseString(": eq 11. $ffff.aaaa ;");
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("eq");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -335,14 +331,13 @@ public class TestForthComp {
 
 		dumpMemory(System.out, startDP, targCtx.getDP(), f99Machine.getConsole());
 		
-		ITargetWord word = (ITargetWord) targCtx.find(name);
-		if (word == null)
-			throw new AbortException("no such word: " + name);
+		ITargetWord word = (ITargetWord) targCtx.require(name);
 		
 		int pc = word.getEntry().getContentAddr();
 		
 		cpu.rpush((short) 0);
 		cpu.setPC((short) pc);
+		interp.setShowSymbol();
 		while (cpu.getPC() != 0)
 			interp.execute();
 
@@ -356,8 +351,7 @@ public class TestForthComp {
 	public void testLiterals4() throws Exception {
 		comp.parseString(": eq 122 @ 456 ! 789 dup ;");
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("eq");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -402,8 +396,7 @@ public class TestForthComp {
 	public void testIfBranch0() throws Exception {
 		comp.parseString(": true if -1 else 0 then ;");
 
-		TargetColonWord foo = (TargetColonWord) targCtx.find("true");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("true");
 		
 		dumpDict();
 		
@@ -441,8 +434,7 @@ public class TestForthComp {
 
 		dumpDict();
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("sgn");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("sgn");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -511,11 +503,9 @@ public class TestForthComp {
 
 		dumpDict();
 		
-		TargetColonWord sub = (TargetColonWord) targCtx.find("sub");
-		assertNotNull(sub);
+		TargetColonWord sub = (TargetColonWord) targCtx.require("sub");
 		
-		TargetColonWord outer = (TargetColonWord) targCtx.find("outer");
-		assertNotNull(outer);
+		TargetColonWord outer = (TargetColonWord) targCtx.require("outer");
 		
 		int dp = outer.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -616,8 +606,7 @@ public class TestForthComp {
 
 		dumpDict();
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("stack");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("stack");
 		
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
@@ -654,8 +643,7 @@ public class TestForthComp {
 
 		dumpDict();
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("stack");
-		assertNotNull(foo);
+		TargetColonWord foo = (TargetColonWord) targCtx.require("stack");
 		
 		//	2dup	copy vals
 		//	2>r		place init/lim on rstack
@@ -761,8 +749,8 @@ public class TestForthComp {
 	@Test
 	public void testStackAccessorsEx() throws Exception {
 		comp.parseString(
-			": depth 1 (context>)  0 (context>) - 2/ 1- ;\n"+
-			": rdepth 3 (context>) 2 (context>) - 2/ 1- ; \n" +	
+			": depth (context>) [ 1 field, ] (context>) [ 0 field, ] - 2/ 1- ;\n"+
+			": rdepth (context>) [ 3 field, ] (context>) [ 2 field, ] - 2/ 1- ; \n" +	
 			": stack 1 2 4 5 >r depth rdepth rdrop ;");
 
 		interpret("stack");
@@ -803,7 +791,7 @@ public class TestForthComp {
 				
 		);
 		
-		TargetColonWord foo = (TargetColonWord) targCtx.find("tst");
+		TargetColonWord foo = (TargetColonWord) targCtx.require("tst");
 		int dp = foo.getEntry().getContentAddr();
 		int word = targCtx.readAddr(dp);
 
@@ -843,5 +831,31 @@ public class TestForthComp {
 		
 	}
 
-	
+	@Test
+	public void testMemOps1Ex() throws Exception {
+		comp.parseString(
+				"Variable x\n" +
+				"Variable y\n" +
+				": tst 55 y !  x +!  x @ y +! ;"
+				
+		);
+
+		IWord x = targCtx.require("X"); 
+		IWord y = targCtx.require("Y");
+		
+		dumpDict();
+		
+		int xaddr = ((ITargetWord)x).getEntry().getParamAddr();
+		targCtx.writeCell(xaddr, 100);
+		int yaddr = ((ITargetWord)y).getEntry().getParamAddr();
+		targCtx.writeCell(yaddr, 200);
+		
+		hostCtx.pushData(-10);
+		interpret("tst");
+		
+		dumpDict();
+		
+		assertEquals(90, targCtx.readCell(xaddr));
+		assertEquals(145, targCtx.readCell(yaddr));
+	}
 }

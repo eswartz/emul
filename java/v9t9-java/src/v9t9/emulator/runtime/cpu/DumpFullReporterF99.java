@@ -51,14 +51,19 @@ public class DumpFullReporterF99 implements InstructionListener {
 				sb, dumpfull);
 	}
 
-	private void dumpFullStart(InstructionWorkBlockF99 iinstructionWorkBlock,
+	private void dumpFullStart(InstructionWorkBlockF99 iblock,
 			RawInstruction ins, PrintWriter dumpfull) {
-		MemoryEntry entry = iinstructionWorkBlock.domain.getEntryAt(ins.pc);
+		MemoryEntry entry = iblock.domain.getEntryAt(ins.pc);
 		String name = null;
-		if (entry != null) 
+		if (entry != null) { 
 			name = entry.lookupSymbol((short) ins.pc);
+			if (name == null && iblock.showSymbol) {
+				name = entry.lookupSymbolNear((short) ins.pc);
+			}
+		}
 		if (name != null)
 			dumpfull.println('"' + name + "\" ");
+		iblock.showSymbol = false;
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(HexUtils.toHex4(ins.pc & ~1)).append(": ").append(' ').append(ins);

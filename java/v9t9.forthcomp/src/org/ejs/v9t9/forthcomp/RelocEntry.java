@@ -10,11 +10,10 @@ class RelocEntry {
 		RELOC_ABS_ADDR_16,
 		RELOC_CALL_15S1,
 	}
-	public RelocEntry(int addr, RelocType type, int target, String name) {
+	public RelocEntry(int addr, RelocType type, int target) {
 		this.addr = addr;
 		this.type = type;
 		this.target = target;
-		this.name = name;
 	}
 	
 	public String toString() {
@@ -24,6 +23,5 @@ class RelocEntry {
 	RelocType type;
 	int addr;
 	int target;
-	String name;
 }
 

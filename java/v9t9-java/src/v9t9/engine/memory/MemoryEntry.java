@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.ejs.coffee.core.properties.IPersistable;
@@ -240,6 +241,18 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 		return symbols.get(addr);
 	}
 
+	public void clearSymbols() {
+		symbols = null;
+	}
+
+	public String lookupSymbolNear(short addr) {
+		if (symbols == null) return null;
+		SortedMap<Short, String> headMap = symbols.headMap(addr, true);
+		if (headMap.isEmpty())
+			return null;
+		return symbols.get(headMap.lastKey());
+	}
+	
 	public MemoryDomain getDomain() {
 		return domain;
 	}
@@ -395,10 +408,4 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 	}
 
 
-	/**
-	 * 
-	 */
-	public void clearSymbols() {
-		symbols = null;
-	}
 }

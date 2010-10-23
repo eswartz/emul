@@ -14,6 +14,7 @@ public class DictEntry {
 	private int addr;
 	private String name;
 	private int headerSize;
+	private int codeSize;
 	private boolean hidden;
 	private boolean immediate;
 
@@ -101,5 +102,23 @@ public class DictEntry {
 	public boolean isImmediate() {
 		return immediate;
 	}
+	
+	/**
+	 * @param codeSize the codeSize to set
+	 */
+	public void setCodeSize(int codeSize) {
+		this.codeSize = codeSize;
+	}
+	/**
+	 * @return the codeSize
+	 */
+	public int getCodeSize() {
+		return codeSize;
+	}
+	
+	public int getParamAddr() {
+		return getContentAddr() + getCodeSize();
+	}
+	
 
 }

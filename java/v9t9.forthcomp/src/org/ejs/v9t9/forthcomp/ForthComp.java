@@ -79,7 +79,13 @@ public class ForthComp {
 	 	hostContext.define("loop", new LoopParser());
 	 	hostContext.define("+loop", new PlusLoopParser());
 	 	hostContext.define("u+loop", new UPlusLoopParser());
+
 	 	hostContext.define("(", new ParenParser());
+	 	
+	 	hostContext.define("[", new LbracketParser());
+	 	hostContext.define("]", new RbracketParser());
+	 	
+	 	targetContext.defineCompilerWords(hostContext);
 	}
 
 	/**

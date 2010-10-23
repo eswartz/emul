@@ -16,7 +16,7 @@ public class ColonParser implements IWord {
 			throws AbortException {
 		String name = hostContext.readToken();
 		
-		hostContext.setCompiling();
+		hostContext.setCompiling(true);
 		
 		hostContext.setCSP();
 		

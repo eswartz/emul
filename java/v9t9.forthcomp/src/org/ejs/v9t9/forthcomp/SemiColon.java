@@ -19,10 +19,7 @@ public class SemiColon implements IWord {
 		
 		hostContext.stopCompiling();
 		
-		
-		ITargetWord semiS = (ITargetWord) targetContext.find(";S");
-		if (semiS == null)
-			throw hostContext.abort("no ;S");
+		ITargetWord semiS = (ITargetWord) targetContext.require(";S");
 		
 		targetContext.compile(semiS);
 		

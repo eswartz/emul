@@ -13,6 +13,7 @@ public final class InstructionWorkBlockF99 extends BaseInstructionWorkBlock {
 	public short rp;
 	public short opword;
 	public int index;
+	public boolean showSymbol;
 	
 	public short[] inStack = new short[4];
 	public short[] inReturnStack = new short[4];
@@ -29,6 +30,7 @@ public final class InstructionWorkBlockF99 extends BaseInstructionWorkBlock {
     	copy.opword = opword;
     	copy.index = index;
     	copy.instNum = instNum;
+    	copy.showSymbol = showSymbol;
     	System.arraycopy(inStack, 0, copy.inStack, 0, copy.inStack.length);
     	System.arraycopy(inReturnStack, 0, copy.inReturnStack, 0, copy.inReturnStack.length);
     }

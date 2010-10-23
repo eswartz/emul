@@ -17,9 +17,7 @@ public class IfParser implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		
-		ITargetWord word = (ITargetWord) targetContext.find("0branch");
-		if (word == null)
-			throw hostContext.abort("no 0branch");
+		ITargetWord word = (ITargetWord) targetContext.require("0branch");
 		
 		targetContext.compile(word);
 		

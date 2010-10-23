@@ -10,6 +10,8 @@ import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.Symbol;
 
+import static v9t9.engine.cpu.InstF99.*;
+
 /**
  * A machine operand, as parsed from an instruction or converted from an
  * assembler.
@@ -32,13 +34,13 @@ public class MachineOperandF99 extends BaseMachineOperand {
 	
 	public static final int OP_ENC_UNSET = 0;
 	public static final int OP_ENC_IMM5 = 1;
-	public static final int OP_ENC_CMP = 2;
-	public static final int OP_ENC_OP = 3;
-	
-	public static final int OP_ENC_IMM15S1 = 4;
-	public static final int OP_ENC_IMM16 = 5;
-	public static final int OP_ENC_IMM32 = 6;
-	
+	public static final int OP_ENC_IMM15S1 = 2;
+	public static final int OP_ENC_IMM16 = 3;
+	public static final int OP_ENC_IMM32 = 4;
+	public static final int OP_ENC_CMP = 5;
+	public static final int OP_ENC_OP = 6;
+	public static final int OP_ENC_CTX = 7;
+
 
 	/** 
      * Create an empty operand
@@ -125,26 +127,6 @@ public class MachineOperandF99 extends BaseMachineOperand {
     	return basic;
     }
 
-    final static private String[] cmpStrings = {
-    	"<",
-    	"<=",
-    	">",
-    	">=",
-    	"U<",
-    	"U<=",
-    	"U>",
-    	"U>=",
-    };
-    final static private String[] opStrings = {
-    	"+",
-    	"-",
-    	"LSH",
-    	"RSH",
-    	"ASH",
-    	"AND",
-    	"OR",
-    	"XOR",
-    };
 	private String basicString() {
 		switch (type) 
     	{
@@ -152,7 +134,9 @@ public class MachineOperandF99 extends BaseMachineOperand {
     		if (encoding == OP_ENC_CMP)
     			return (val >= 0 && val < cmpStrings.length ? cmpStrings[val] : "") + " (" + val + ")";
     		else if (encoding == OP_ENC_OP)
-    			return (val >= 0 && val < cmpStrings.length ? opStrings[val] : "") + " (" + val + ")";
+    			return (val >= 0 && val < opStrings.length ? opStrings[val] : "") + " (" + val + ")";
+    		else if (encoding == OP_ENC_CTX)
+    			return (val >= 0 && val < ctxStrings.length ? ctxStrings[val] : "") + " (" + val + ")";
     		else if (encoding == OP_ENC_IMM32)
     			return "#>" + Integer.toHexString(val) + " (" + val + ")";
     		else if (encoding == OP_ENC_IMM15S1)

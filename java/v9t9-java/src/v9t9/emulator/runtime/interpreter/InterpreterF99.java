@@ -42,7 +42,7 @@ public class InterpreterF99 implements Interpreter {
         this.memory = machine.getCpu().getConsole();
         iblock = new InstructionWorkBlockF99(cpu);
         iblock.domain = memory;
-        
+        iblock.showSymbol = true;
         instBuffer = new InstructionF99[3];
      }
 
@@ -138,6 +138,8 @@ public class InterpreterF99 implements Interpreter {
         		listener.executed(block, iblock);
         	}
         }
+        
+        iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Icall);
 		
 	}
 	
@@ -199,6 +201,8 @@ public class InterpreterF99 implements Interpreter {
 		case I0branch_f:
 		case IfieldLit:
 		case IfieldLit_d:
+			inst.setOp1(MachineOperandF99.createImmediateOperand(iblock.nextSignedField(), MachineOperandF99.OP_ENC_IMM5));
+			break;
 		case Ispidx:
 		case Irpidx:
 		case I0cmp:
@@ -207,11 +211,15 @@ public class InterpreterF99 implements Interpreter {
 		case Icmp_d:
 		case Ibinop:
 		case Ibinop_d:
-			inst.setOp1(MachineOperandF99.createImmediateOperand(iblock.nextSignedField(), MachineOperandF99.OP_ENC_IMM5));
+		case ItoContext:
+		case IcontextFrom:
+			inst.setOp1(MachineOperandF99.createImmediateOperand(iblock.nextField(), MachineOperandF99.OP_ENC_IMM5));
 			if (opcode == I0cmp || opcode == Icmp || opcode == I0cmp_d || opcode == Icmp_d)
 				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_CMP;
 			else if (opcode == Ibinop || opcode == Ibinop_d)
 				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_OP;
+			else if (opcode == ItoContext || opcode == IcontextFrom)
+				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_CTX;
 			break;
 		case Ilit:
 		case I0branch:
@@ -271,7 +279,7 @@ public class InterpreterF99 implements Interpreter {
         	
         case IplusStore: {
         	short addr = cpu.pop();
-        	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(cpu.pop()) + addr));
+        	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(addr) + cpu.pop()));
         	break;
         }
         	
@@ -286,6 +294,7 @@ public class InterpreterF99 implements Interpreter {
         	
         case Iexit:
         	cpu.setPC(cpu.rpop());
+        	iblock.showSymbol = true;
         	break;
         case Idup:
         	cpu.push(cpu.peek());
@@ -532,26 +541,26 @@ public class InterpreterF99 implements Interpreter {
         	break;
         }
         case IcontextFrom:
-        	switch (cpu.pop()) {
-        	case 0:
+        	switch (mop1.immed) {
+        	case CTX_SP:
         		cpu.push(((CpuStateF99)cpu.getState()).getSP());
         		break;
-        	case 1:
+        	case CTX_SP0:
         		cpu.push(((CpuStateF99)cpu.getState()).getBaseSP());
         		break;
-        	case 2:
+        	case CTX_RP:
         		cpu.push(((CpuStateF99)cpu.getState()).getRP());
         		break;
-        	case 3:
+        	case CTX_RP0:
         		cpu.push(((CpuStateF99)cpu.getState()).getBaseRP());
         		break;
-        	case 4:
+        	case CTX_UP:
         		cpu.push(((CpuStateF99)cpu.getState()).getUP());
         		break;
-        	case 5:
+        	case CTX_UP0:
         		cpu.push(((CpuStateF99)cpu.getState()).getBaseUP());
         		break;
-        	case 6:
+        	case CTX_PC:
         		cpu.push(cpu.getPC());
         		break;
     		default:
@@ -561,26 +570,26 @@ public class InterpreterF99 implements Interpreter {
         	break;
         	
         case ItoContext:
-        	switch (cpu.pop()) {
-        	case 0:
+        	switch (mop1.immed) {
+        	case CTX_SP:
         		((CpuStateF99)cpu.getState()).setSP(cpu.pop());
         		break;
-        	case 1:
+        	case CTX_SP0:
         		((CpuStateF99)cpu.getState()).setBaseSP(cpu.pop());
         		break;
-        	case 2:
+        	case CTX_RP:
         		((CpuStateF99)cpu.getState()).setRP(cpu.pop());
         		break;
-        	case 3:
+        	case CTX_RP0:
         		((CpuStateF99)cpu.getState()).setBaseRP(cpu.pop());
         		break;
-        	case 4:
+        	case CTX_UP:
         		((CpuStateF99)cpu.getState()).setUP(cpu.pop());
         		break;
-        	case 5:
+        	case CTX_UP0:
         		((CpuStateF99)cpu.getState()).setBaseUP(cpu.pop());
         		break;
-        	case 6:
+        	case CTX_PC:
         		((CpuStateF99)cpu.getState()).setPC(cpu.pop());
         		break;
         	default:
@@ -642,5 +651,12 @@ public class InterpreterF99 implements Interpreter {
 			return l >> (r & 0x1f);
 		}
 		return 0;
+	}
+
+	/**
+	 * 
+	 */
+	public void setShowSymbol() {
+		iblock.showSymbol = true;
 	}
 }

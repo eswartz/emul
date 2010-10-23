@@ -17,9 +17,7 @@ public class DoParser implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		
-		ITargetWord word = (ITargetWord) targetContext.find("(do)");
-		if (word == null)
-			throw hostContext.abort("no (do)");
+		ITargetWord word = (ITargetWord) targetContext.require("(do)");
 		
 		targetContext.compile(word);
 		

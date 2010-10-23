@@ -26,6 +26,7 @@ public abstract class TargetContext extends Context {
 
 	private Map<Integer, RelocEntry> relocEntries = new TreeMap<Integer, RelocEntry>();
 	private List<RelocEntry> relocs = new ArrayList<RelocEntry>();
+	private Map<Integer, String> symbols = new TreeMap<Integer, String>();
 	protected int dp;
 	
 	private DictEntry lastEntry;
@@ -74,7 +75,7 @@ public abstract class TargetContext extends Context {
 		}
 	}
 	public int addRelocation(int addr, RelocType type, int target, String name) {
-		RelocEntry reloc = new RelocEntry(addr, type, target, name);
+		RelocEntry reloc = new RelocEntry(addr, type, target);
 		assert !relocEntries.containsKey(addr);
 		relocEntries.put(addr, reloc);
 		relocs.add(reloc);
@@ -134,11 +135,13 @@ public abstract class TargetContext extends Context {
 		alignDP();
 		int entryAddr = alloc(size);
 
+		symbols.put(entryAddr, name);
+		
 		DictEntry entry = new DictEntry(size, entryAddr, name);
 		if (lastEntry != null)
 			entry.setLink(lastEntry.getAddr());
 		lastEntry = entry;
-
+		
 		entry.writeEntry(this);
 		
 		return entry;
@@ -211,22 +214,35 @@ public abstract class TargetContext extends Context {
 	/**
 	 * @param name
 	 * @return 
+	 * @throws AbortException 
 	 */
-	public TargetVariable defineVariable(String name) {
+	public TargetVariable defineVariable(String name) throws AbortException {
 		DictEntry entry = defineEntry(name);
-		int here = allocCell();
-		return (TargetVariable) define(name, new TargetVariable(entry, 
-				addRelocation(here, RelocType.RELOC_ABS_ADDR_16, 
-						here, name)));
-		
+		int dp = entry.getContentAddr();
+		try {
+			ITargetWord doVar = (ITargetWord) require("DOVAR");
+			alignCode();
+			compile(doVar);
+		} catch (AbortException e) {
+			// for unit tests
+		}
+		int loc = allocCell();
+		writeCell(loc, 0);
+		entry.setCodeSize(loc - dp);
+		TargetVariable var = (TargetVariable) define(name, new TargetVariable(entry, loc));
+				//addRelocation(loc, RelocType.RELOC_ABS_ADDR_16, 
+						//loc, name)));
+		return var;
 	}
 
 	public TargetColonWord defineColonWord(String name) {
 		DictEntry entry = defineEntry(name);
 		System.out.println(name);
+		alignCode();
 		return (TargetColonWord) define(name, new TargetColonWord(entry));		
 	}
 
+	abstract public void alignCode();
 	/**
 	 * Compile a word onto the current dictionary entry
 	 * @param semiS
@@ -255,8 +271,8 @@ public abstract class TargetContext extends Context {
 		for (int i = 0; i < dp; i += MemoryDomain.AREASIZE)
 			console.getEntryAt(i).clearSymbols();
 		
-		for (RelocEntry reloc : relocs) {
-			console.getEntryAt(reloc.target).defineSymbol(reloc.target, reloc.name);
+		for (Map.Entry<Integer, String> symEntry : symbols.entrySet()) {
+			console.getEntryAt(symEntry.getKey()).defineSymbol(symEntry.getKey(), symEntry.getValue());
 		}
 	}
 	/**
@@ -306,6 +322,8 @@ public abstract class TargetContext extends Context {
 	
 	abstract public void pushLeave(HostContext hostContext);
 	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
+
+	abstract public void defineCompilerWords(HostContext hostContext);
 
 
 }

@@ -148,6 +148,8 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("s>d", Idup, I0cmp, CMP_LT);
 		
 		//defineInlinePrim("d=", Ineg_d, Iadd_d, Ior, I0equ);
+		//defineInlinePrim("DOVAR", Ilit, Iexit);
+		defineInlinePrim("DOVAR", IcontextFrom, 6, Iexit);
 		
 
 	}
@@ -164,6 +166,16 @@ public class F99TargetContext extends TargetContext {
 			compileField(i);
 		compileField(Iexit);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#defineEntry(java.lang.String)
+	 */
+	@Override
+	public DictEntry defineEntry(String name) {
+		DictEntry entry = super.defineEntry(name);
+		opcodeAddr = lastOpcodeAddr = getDP();
+		return entry;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#defineColonWord(java.lang.String)
 	 */
@@ -171,10 +183,6 @@ public class F99TargetContext extends TargetContext {
 	public TargetColonWord defineColonWord(String name) {
 		TargetColonWord word = super.defineColonWord(name);
 		
-		// pre-allocate one word so we don't have to track every other
-		// allocator of dictionary space
-		alignOpcodeWord();
-
 		leaves.clear();
 		
 		return word;
@@ -183,11 +191,11 @@ public class F99TargetContext extends TargetContext {
 	/**
 	 * 
 	 */
-	private void alignOpcodeWord() {
+	public void alignCode() {
 		alignDP();
 		opcodeIndex = 0;
 		opcodeAddr = alloc(cellSize);
-		
+		lastOpcodeAddr = opcodeAddr;
 	}
 
 	/* (non-Javadoc)
@@ -205,7 +213,7 @@ public class F99TargetContext extends TargetContext {
 				compileOpcode(opcode);
 		} else {
 			// must call
-			alignOpcodeWord();
+			alignCode();
 			
 			int reloc = addRelocation(opcodeAddr, 
 					RelocType.RELOC_CALL_15S1, 
@@ -238,7 +246,7 @@ public class F99TargetContext extends TargetContext {
 			opcodeIndex = 3;		
 	}
 
-	private void compileField(int opcode) {
+	public void compileField(int opcode) {
 		opcode &= 0x1f;
 		if (opcodeIndex >= 3) {
 			opcodeIndex = 0;
@@ -468,11 +476,17 @@ public class F99TargetContext extends TargetContext {
 		}
 		leaves.clear();
 		
-		ITargetWord unloop = (ITargetWord) find("unloop");
-		if (unloop == null)
-			throw new AbortException("no unloop word found");
+		ITargetWord unloop = (ITargetWord) require("unloop");
 		
 		compile(unloop);
 		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#defineCompilerWords(org.ejs.v9t9.forthcomp.HostContext)
+	 */
+	@Override
+	public void defineCompilerWords(HostContext hostContext) {
+		hostContext.define("FIELD,", new FieldCommaParser());		
 	}
 }
