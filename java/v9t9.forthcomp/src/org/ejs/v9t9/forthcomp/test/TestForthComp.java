@@ -328,6 +328,9 @@ public class TestForthComp {
 	 * @throws IOException 
 	 */
 	private void interpret(String name) throws AbortException {
+		String caller = new Exception().getStackTrace()[1].getMethodName();
+		System.out.println("*** interpreting in " + caller);
+		
 		targCtx.exportState(hostCtx, f99Machine, BASE_SP, BASE_RP);
 
 		dumpCompiledMemory();
@@ -892,6 +895,27 @@ public class TestForthComp {
 				"  1 idx +! "+
 				"  idx @ 23 = if exit then\n"+
 				"again ;");
+
+		dumpDict();
+		
+		interpret("loopit");
+		
+		IWord idx = targCtx.require("Idx"); 
+		
+		int idxAddr = ((ITargetWord)idx).getEntry().getParamAddr();
+		assertEquals((short)23, targCtx.readCell(idxAddr));
+	}
+	
+
+	@Test
+	public void testBeginUntil() throws Exception {
+		comp.parseString(
+				"variable idx\n"+
+				": loopit\n"+
+				"begin \n" +
+				"  1 idx +! "+
+				"  idx @ 23 = \n"+
+				"until ;");
 
 		dumpDict();
 		

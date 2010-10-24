@@ -132,24 +132,25 @@ public class InterpreterF99 implements Interpreter {
         
         
         /* execute */
-        interpret(ins);
-        
-        block.cycles = cpu.getCurrentCycleCount();
-
-        iblock.pc = cpu.getPC();
-        iblock.st = cpu.getST();
-        iblock.sp = ((CpuStateF99)cpu.getState()).getSP();
-        iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
-        
-        /* notify listeners */
-        if (instructionListeners != null) {
-        	for (InstructionListener listener : instructionListeners) {
-        		listener.executed(block, iblock);
-        	}
-        }
-        
-        iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Icall);
-		
+        try {
+        	interpret(ins);
+        } finally {
+	        block.cycles = cpu.getCurrentCycleCount();
+	
+	        iblock.pc = cpu.getPC();
+	        iblock.st = cpu.getST();
+	        iblock.sp = ((CpuStateF99)cpu.getState()).getSP();
+	        iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
+	        
+	        /* notify listeners */
+	        if (instructionListeners != null) {
+	        	for (InstructionListener listener : instructionListeners) {
+	        		listener.executed(block, iblock);
+	        	}
+	        }
+	        
+	        iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Icall);
+        }		
 	}
 	
 	
