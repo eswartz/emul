@@ -29,13 +29,13 @@ public class F99MemoryModel extends TI994AStandardConsoleMemoryModel {
 	
 	protected void defineConsoleMemory(Machine machine) {
 	    MemoryEntry entry = new MemoryEntry("64K RAM", CPU, 
-	    		0x0000, 0x10000, new EnhancedRamArea(0, 0x10000));
+	    		0x0400, 0xFC00, new EnhancedRamArea(0, 0xFC00));
 	    entry.getArea().setLatency(0);
 		memory.addAndMap(entry);
 	}
 	
 	protected void defineMmioMemory(Machine machine) {
-		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
+		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0x0000, 0x0400,
                 new F99ConsoleMmioArea(machine)));
 	}
 	

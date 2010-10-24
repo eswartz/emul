@@ -4,8 +4,6 @@
  */
 package v9t9.engine.cpu;
 
-import org.ejs.coffee.core.utils.HexUtils;
-
 
 /**
  * The CPU status word is a flattened array of bits, many of which are hard to

@@ -86,6 +86,28 @@ public class TokenStream {
 		}
 		return sb.toString();
 	}
+	
+	public boolean isAtEol() {
+		if (streams.isEmpty())
+			return true;
+		LineNumberReader fr = streams.peek();
+		try {
+			fr.mark(64);
+			try {
+				int ch;
+				while (Character.isWhitespace(ch = fr.read()))  {
+					if (ch == '\n')
+						return true;
+				}
+			} finally {
+				fr.reset();
+			}
+		} catch (IOException e) {
+			return true;
+		}
+		return false;
+	}
+	
 
 	/**
 	 * @return

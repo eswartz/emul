@@ -8,11 +8,17 @@ import gnu.getopt.Getopt;
 import java.io.File;
 import java.io.IOException;
 
+import org.ejs.v9t9.forthcomp.words.Again;
+import org.ejs.v9t9.forthcomp.words.Allot;
+import org.ejs.v9t9.forthcomp.words.BackSlash;
+import org.ejs.v9t9.forthcomp.words.Begin;
 import org.ejs.v9t9.forthcomp.words.CharComma;
 import org.ejs.v9t9.forthcomp.words.Colon;
 import org.ejs.v9t9.forthcomp.words.Comma;
 import org.ejs.v9t9.forthcomp.words.Create;
+import org.ejs.v9t9.forthcomp.words.Do;
 import org.ejs.v9t9.forthcomp.words.Else;
+import org.ejs.v9t9.forthcomp.words.If;
 import org.ejs.v9t9.forthcomp.words.Lbracket;
 import org.ejs.v9t9.forthcomp.words.Leave;
 import org.ejs.v9t9.forthcomp.words.Loop;
@@ -20,10 +26,13 @@ import org.ejs.v9t9.forthcomp.words.Paren;
 import org.ejs.v9t9.forthcomp.words.PlusLoop;
 import org.ejs.v9t9.forthcomp.words.QuestionDo;
 import org.ejs.v9t9.forthcomp.words.Rbracket;
+import org.ejs.v9t9.forthcomp.words.Repeat;
 import org.ejs.v9t9.forthcomp.words.SemiColon;
 import org.ejs.v9t9.forthcomp.words.Then;
 import org.ejs.v9t9.forthcomp.words.UPlusLoop;
+import org.ejs.v9t9.forthcomp.words.Until;
 import org.ejs.v9t9.forthcomp.words.Variable;
+import org.ejs.v9t9.forthcomp.words.While;
 
 /**
  * This class compiles FORTH programs into ROM images for V9t9
@@ -83,15 +92,22 @@ public class ForthComp {
 		
 		hostContext.define("create", new Create());
 		hostContext.define("variable", new Variable());
+		hostContext.define("allot", new Allot());
+		
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
 		hostContext.define(":", new Colon());
 		hostContext.define(";", new SemiColon());
 		
-		hostContext.define("if", new IfParser());
+		hostContext.define("if", new If());
 		hostContext.define("else", new Else());
 	 	hostContext.define("then", new Then());
-	 	hostContext.define("do", new DoParser());
+	 	hostContext.define("begin", new Begin());
+	 	hostContext.define("again", new Again());
+	 	hostContext.define("until", new Until());
+	 	hostContext.define("while", new While());
+	 	hostContext.define("repeat", new Repeat());
+	 	hostContext.define("do", new Do());
 	 	hostContext.define("?do", new QuestionDo());
 	 	hostContext.define("leave", new Leave());
 	 	hostContext.define("loop", new Loop());
@@ -99,6 +115,7 @@ public class ForthComp {
 	 	hostContext.define("u+loop", new UPlusLoop());
 
 	 	hostContext.define("(", new Paren());
+	 	hostContext.define("\\", new BackSlash());
 	 	
 	 	hostContext.define("[", new Lbracket());
 	 	hostContext.define("]", new Rbracket());

@@ -1,14 +1,19 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
+
+import org.ejs.v9t9.forthcomp.AbortException;
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.IWord;
+import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
  * @author ejs
  *
  */
-public class IfParser implements IWord {
-	public IfParser() {
+public class Begin implements IWord {
+	public Begin() {
 	}
 
 	/* (non-Javadoc)
@@ -16,13 +21,9 @@ public class IfParser implements IWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
+		targetContext.pushHere(hostContext);
+		hostContext.pushPairs(1);
 		
-		ITargetWord word = (ITargetWord) targetContext.require("0branch");
-		
-		targetContext.compile(word);
-		
-		targetContext.pushFixup(hostContext);
-		hostContext.pushPairs(2);
 	}
 	
 	/* (non-Javadoc)

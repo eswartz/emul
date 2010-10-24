@@ -49,7 +49,7 @@ public abstract class TargetContext extends Context {
 		}
 		
 		if (!littleEndian && cellBits == 16) {
-			return ((memory[addr] & 0xff) << 8) | (memory[addr + 1] & 0xff); 
+			return (short) ((memory[addr] & 0xff) << 8) | (memory[addr + 1] & 0xff); 
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -300,6 +300,8 @@ public abstract class TargetContext extends Context {
 	 */
 	abstract public void resolveFixup(HostContext hostContext);
 	
+	abstract public void compileBack(HostContext hostContext);
+	
 	public void clearDict() {
 		super.clearDict();
 		dp = 0;
@@ -317,6 +319,7 @@ public abstract class TargetContext extends Context {
 	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
 
 	abstract public void defineCompilerWords(HostContext hostContext);
+
 
 
 

@@ -73,7 +73,8 @@ public class TestForthComp {
 	}
 	@Before
 	public void setup() {
-		targCtx = new F99TargetContext(1024);
+		targCtx = new F99TargetContext(4096);
+		targCtx.setDP(0x400);
 		comp = new ForthComp(targCtx);
 		hostCtx = comp.getHostContext();
 		
@@ -375,13 +376,13 @@ public class TestForthComp {
 	
 	@Test
 	public void testLiterals4Ex() throws Exception {
-		comp.parseString(": eq 1020 456 ! 789 dup ;");
+		comp.parseString(": eq 1020 1456 ! 789 dup ;");
 		
 		targCtx.writeCell(1020, 1000);
 		
 		interpret("eq");
 		
-		assertEquals(1020, targCtx.readCell(456));
+		assertEquals(1020, targCtx.readCell(1456));
 		assertEquals(789, hostCtx.popData());
 	}
 
@@ -880,5 +881,41 @@ public class TestForthComp {
 		assertEquals(72, hostCtx.popData());
 		assertEquals(65, hostCtx.popData());
 		assertEquals(3, hostCtx.popData());
+	}
+	
+	@Test
+	public void testBeginWhileRepeat() throws Exception {
+		comp.parseString(
+				"create  TextModeRegs\n" + 
+				"    $8000 , $81B0 , $8200 , $8400 , 0 , \n"+
+				"create Copy 50 allot\n"+
+				"variable copyidx\n"+
+				": >copy Copy copyidx @ + ! 2 copyidx +! ;\n"+
+				": readList\n"+
+				" TextModeRegs\n"+
+				"begin \n" + 
+				"        dup @ dup\n" + 
+				"    while\n" + 
+				"        >copy \n" + 
+				"        2+\n" + 
+				"    repeat   \n" + 
+				"    drop ;");
+
+		dumpDict();
+		
+		interpret("readList");
+		
+		IWord copy = targCtx.require("Copy"); 
+		IWord copyIdx = targCtx.require("CopyIdx"); 
+		
+		int copyIdxAddr = ((ITargetWord)copyIdx).getEntry().getParamAddr();
+		assertEquals((short)8, targCtx.readCell(copyIdxAddr));
+		
+		int copyAddr = ((ITargetWord)copy).getEntry().getParamAddr();
+		
+		assertEquals((short)0x8400, targCtx.readCell(copyAddr + 6));
+		assertEquals((short)0x8200, targCtx.readCell(copyAddr + 4));
+		assertEquals((short)0x81b0, targCtx.readCell(copyAddr + 2));
+		assertEquals((short)0x8000, targCtx.readCell(copyAddr));
 	}
 }

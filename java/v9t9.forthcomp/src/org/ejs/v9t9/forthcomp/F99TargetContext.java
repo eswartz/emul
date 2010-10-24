@@ -223,7 +223,7 @@ public class F99TargetContext extends TargetContext {
 					word.getEntry().getName());
 			writeCell(opcodeAddr, reloc);
 			
-			opcodeIndex = 3;
+			opcodeAddr = alloc(cellSize);
 		}
 	}
 
@@ -232,9 +232,15 @@ public class F99TargetContext extends TargetContext {
 	 */
 	private void compileOpcode(int opcode) {
 		if (opcode >= InstF99._Iext) {
-			// cannot read more than one field from the next word, and the EXT + opcode takes 1
-			if (opcodeIndex == 2 && InstF99.opcodeHasFieldArgument(opcode))
-				opcodeIndex = 3;
+			
+			if (opcodeIndex == 2 && 
+					// cannot read more than one field from the next word, and the EXT + opcode takes 1
+					(InstF99.opcodeHasFieldArgument(opcode) 
+					// also, for BRANCH, compiler words expect to write to HERE, but this will
+					// mismatch the interpreter's idea of the "next data word" 
+					|| InstF99.isAligningPCReference(opcode))
+					)
+				alignCode();
 			compileField(Iext);
 			lastOpcodeAddr = opcodeAddr;
 			compileField(opcode - InstF99._Iext);
@@ -419,7 +425,6 @@ public class F99TargetContext extends TargetContext {
 		// TODO: optimize this
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
-		//hostContext.pushData(lastOpcodeAddr);
 		opcodeIndex = 3;
 		return nextDp;
 	}
@@ -449,6 +454,18 @@ public class F99TargetContext extends TargetContext {
 		
 		opcodeIndex = 3;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#resolveFixup()
+	 */
+	public void compileBack(HostContext hostContext) {
+		int nextDp = getDP();
+		int opAddr = hostContext.popData();
+		int diff = opAddr - nextDp;
+		compileAddr(diff);
+		opcodeIndex = 3;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#pushLeave(org.ejs.v9t9.forthcomp.HostContext)
