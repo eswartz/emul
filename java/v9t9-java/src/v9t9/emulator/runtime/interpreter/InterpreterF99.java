@@ -2,6 +2,7 @@ package v9t9.emulator.runtime.interpreter;
 
 import java.util.Arrays;
 
+import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.common.Machine;
@@ -68,22 +69,30 @@ public class InterpreterF99 implements Interpreter {
 		}
 	}
 
+	static class JumpedException extends Exception { private static final long serialVersionUID = 1L; }
+	final static JumpedException JUMPED = new JumpedException(); 
+	
 	private void executeAndListen(InstructionListener[] instructionListeners) {
 		iblock.pc = cpu.getPC();
 		iblock.cycles = 0;
 		iblock.st = cpu.getST();
 		
+		
 	    InstructionF99[] ins = getInstructions();
 	    
-	    short origPc = iblock.pc; 
+	    short origPc = iblock.pc;
 	    cpu.setPC(origPc);
 	    
-	    if (ins[0] != null)
-	    	executeAndListen(instructionListeners, ins[0]);
-	    if (ins[1] != null && cpu.getPC() == origPc)
-	    	executeAndListen(instructionListeners, ins[1]);
-	    if (ins[2] != null && cpu.getPC() == origPc)
-	    	executeAndListen(instructionListeners, ins[2]);
+	    try {
+		    if (ins[0] != null)
+		    	executeAndListen(instructionListeners, ins[0]);
+		    if (ins[1] != null)
+		    	executeAndListen(instructionListeners, ins[1]);
+		    if (ins[2] != null)
+		    	executeAndListen(instructionListeners, ins[2]);
+	    } catch (JumpedException e) {
+	    	
+	    }
 	}
 
 	/**
@@ -91,7 +100,7 @@ public class InterpreterF99 implements Interpreter {
 	 * @param ins
 	 */
 	private void executeAndListen(InstructionListener[] instructionListeners,
-			InstructionF99 ins) {
+			InstructionF99 ins) throws JumpedException {
         iblock.cycles = cpu.getCurrentCycleCount();
 
         iblock.pc = cpu.getPC();
@@ -155,6 +164,9 @@ public class InterpreterF99 implements Interpreter {
 		short thisPc = (short) (pc & ~1);
 		
 		short opword = memory.readWord(thisPc);
+		
+		if (opword == 0)
+			System.out.println(HexUtils.toHex4(thisPc) + ": NOP word");
 		
 		iblock.instNum = 0;
 		iblock.opword = opword;
@@ -257,7 +269,7 @@ public class InterpreterF99 implements Interpreter {
      * Execute an instruction
      * @param ins
      */
-    private void interpret(InstructionF99 ins) {
+    private void interpret(InstructionF99 ins) throws JumpedException {
     	MachineOperandF99 mop1 = (MachineOperandF99)ins.getOp1();
 		cpu.addCycles(ins.getInfo().cycles + (mop1 != null ? mop1.cycles : 0));
 		
@@ -295,20 +307,22 @@ public class InterpreterF99 implements Interpreter {
         case Iexit:
         	cpu.setPC(cpu.rpop());
         	iblock.showSymbol = true;
-        	break;
+        	throw JUMPED;
         case Idup:
         	cpu.push(cpu.peek());
         	break;
         case I0branch: {
         	short targ = (short) (alignPC + mop1.immed);
-        	if (cpu.pop() == 0)
+        	if (cpu.pop() == 0) {
         		cpu.setPC(targ);
+        		throw JUMPED;
+        	}
         	break;
         }
         case Ibranch: {
         	short targ = (short) (alignPC + mop1.immed);
         	cpu.setPC(targ);
-        	break;
+        	throw JUMPED;
         }
         case I0cmp: {
         	short val = cpu.pop();
@@ -475,7 +489,7 @@ public class InterpreterF99 implements Interpreter {
         case Icall:
         	cpu.rpush(iblock.pc);
         	cpu.setPC(mop1.immed);
-        	break;
+        	throw JUMPED;
         	
         case ItoR:
         	cpu.rpush(cpu.pop());
@@ -514,6 +528,7 @@ public class InterpreterF99 implements Interpreter {
     		if (next != lim) {
         		short targ = (short) (alignPC + mop1.immed);
             	cpu.setPC(targ);
+            	throw JUMPED;
         	}
         	break;
         }
@@ -527,6 +542,7 @@ public class InterpreterF99 implements Interpreter {
     		if (lim != 0 ? next < lim : next >= change) {
         		short targ = (short) (alignPC + mop1.immed);
             	cpu.setPC(targ);
+            	throw JUMPED;
         	}
         	break;
         }
@@ -540,6 +556,7 @@ public class InterpreterF99 implements Interpreter {
         	if (lim != 0 ? (next & 0xffff) < (lim & 0xffff) : (next & 0xffff) >= (change & 0xffff)) {
         		short targ = (short) (alignPC + mop1.immed);
         		cpu.setPC(targ);
+        		throw JUMPED;
         	}
         	break;
         }
@@ -594,7 +611,7 @@ public class InterpreterF99 implements Interpreter {
         		break;
         	case CTX_PC:
         		((CpuStateF99)cpu.getState()).setPC(cpu.pop());
-        		break;
+        		throw JUMPED;
         	default:
         		cpu.pop();
         		break;

@@ -92,6 +92,8 @@ public class F99TargetContext extends TargetContext {
 		definePrim("(+loop)", IplusLoop);
 		definePrim("(u+loop)", IuplusLoop);
 		defineInlinePrim("(?do)", Idup_d, ItoR_d, Ibinop, OP_SUB, I0branch);
+		
+		definePrim("exit", Iexit);
 
 		definePrim("2dup", Idup_d);
 		definePrim("(context>)", IcontextFrom);
@@ -195,9 +197,11 @@ public class F99TargetContext extends TargetContext {
 	 */
 	public void alignCode() {
 		alignDP();
-		opcodeIndex = 0;
-		opcodeAddr = alloc(cellSize);
-		lastOpcodeAddr = opcodeAddr;
+		if (opcodeIndex != 0) {
+			opcodeIndex = 0;
+			opcodeAddr = alloc(cellSize);
+			lastOpcodeAddr = opcodeAddr;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -425,7 +429,7 @@ public class F99TargetContext extends TargetContext {
 		// TODO: optimize this
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
-		opcodeIndex = 3;
+		alignCode();
 		return nextDp;
 	}
 	/* (non-Javadoc)

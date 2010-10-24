@@ -884,6 +884,25 @@ public class TestForthComp {
 	}
 	
 	@Test
+	public void testBeginAgain() throws Exception {
+		comp.parseString(
+				"variable idx\n"+
+				": loopit\n"+
+				"begin \n" +
+				"  1 idx +! "+
+				"  idx @ 23 = if exit then\n"+
+				"again ;");
+
+		dumpDict();
+		
+		interpret("loopit");
+		
+		IWord idx = targCtx.require("Idx"); 
+		
+		int idxAddr = ((ITargetWord)idx).getEntry().getParamAddr();
+		assertEquals((short)23, targCtx.readCell(idxAddr));
+	}
+	@Test
 	public void testBeginWhileRepeat() throws Exception {
 		comp.parseString(
 				"create  TextModeRegs\n" + 
