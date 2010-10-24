@@ -24,13 +24,20 @@ import v9t9.engine.cpu.StatusMFP201;
  * @author ejs
  */
 public class CpuMFP201 extends CpuBase {
-    public static final int BASE_CYCLES_PER_SEC = 5000000;
+    public static final int BASE_CYCLES_PER_SEC = 500000;
 	
 	public CpuMFP201(Machine machine, int interruptTick, VdpHandler vdp) {
 		super(machine, new CpuStateMFP201(machine.getConsole()), interruptTick, vdp);
         settingCyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
     }
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#getBaseCyclesPerSec()
+	 */
+	@Override
+	public int getBaseCyclesPerSec() {
+		return BASE_CYCLES_PER_SEC;
+	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
