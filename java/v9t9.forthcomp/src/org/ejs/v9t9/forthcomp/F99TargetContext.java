@@ -231,6 +231,14 @@ public class F99TargetContext extends TargetContext {
 			int[] opcodes = ((F99InlineWord) word).getOpcodes();
 			for (int opcode : opcodes)
 				compileOpcode(opcode);
+		} else if (word instanceof TargetConstant) {
+			TargetConstant cons = (TargetConstant) word;
+			if (cons.getWidth() == 1)
+				compileLiteral(cons.getValue(), false);
+			else if (cons.getWidth() == 2)
+				compileDoubleLiteral(cons.getValue(), false);
+			else
+				assert false;
 		} else {
 			// must call
 			alignCode();

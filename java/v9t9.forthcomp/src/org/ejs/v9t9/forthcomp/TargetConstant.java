@@ -30,4 +30,18 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 		if (width == 2)
 			hostContext.pushData(value >> 16);
 	}
+
+	/**
+	 * @return
+	 */
+	public int getValue() {
+		return value;
+	}
+	
+	/**
+	 * @return the width
+	 */
+	public int getWidth() {
+		return width;
+	}
 }
