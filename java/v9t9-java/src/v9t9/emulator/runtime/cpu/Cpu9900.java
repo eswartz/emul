@@ -35,6 +35,14 @@ public class Cpu9900 extends CpuBase {
         settingCyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.emulator.runtime.cpu.Cpu#getBaseCyclesPerSec()
+     */
+    @Override
+    public int getBaseCyclesPerSec() {
+    	return TMS_9900_BASE_CYCLES_PER_SEC;
+    }
 
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#resetInterruptRequest()

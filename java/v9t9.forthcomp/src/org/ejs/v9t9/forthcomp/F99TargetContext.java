@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
 
@@ -117,10 +116,10 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("U>", Icmp, CMP_UGT);
 		defineInlinePrim("U>=", Icmp, CMP_UGE);
 
-		defineInlinePrim("0d<", I0cmp_d, CMP_LT);
-		defineInlinePrim("0d<=", I0cmp_d, CMP_LE);
-		defineInlinePrim("0d>", I0cmp_d, CMP_GT);
-		defineInlinePrim("0d>=", I0cmp_d, CMP_GE);
+		defineInlinePrim("0D<", I0cmp_d, CMP_LT);
+		defineInlinePrim("0D<=", I0cmp_d, CMP_LE);
+		defineInlinePrim("0D>", I0cmp_d, CMP_GT);
+		defineInlinePrim("0D>=", I0cmp_d, CMP_GE);
 		defineInlinePrim("0DU<", I0cmp_d, CMP_ULT);
 		defineInlinePrim("0DU<=", I0cmp_d, CMP_ULE);
 		defineInlinePrim("0DU>", I0cmp_d, CMP_UGT);
@@ -139,28 +138,28 @@ public class F99TargetContext extends TargetContext {
 		definePrim("2/", I2div);
 		definePrim("2*", I2times);
 		
-		defineInlinePrim("LSHIFT", Ibinop, OP_LSH);
-		defineInlinePrim("RSHIFT", Ibinop, OP_ASH);
-		defineInlinePrim("URSHIFT", Ibinop, OP_RSH);
-		defineInlinePrim("CSHIFT", Ibinop, OP_CSH);
+		defineInlinePrim("LSH", Ibinop, OP_LSH);
+		defineInlinePrim("RSH", Ibinop, OP_ASH);
+		defineInlinePrim("URSH", Ibinop, OP_RSH);
+		defineInlinePrim("CSH", Ibinop, OP_CSH);
 		
 		defineInlinePrim("SWPB", IfieldLit, 8, Ibinop, OP_CSH);
 		
-		defineInlinePrim("DLSHIFT", Ibinop_d, OP_LSH);
-		defineInlinePrim("DRSHIFT", Ibinop_d, OP_ASH);
-		defineInlinePrim("DURSHIFT", Ibinop_d, OP_RSH);
-		defineInlinePrim("DCSHIFT", Ibinop_d, OP_CSH);
+		defineInlinePrim("DLSH", Ibinop_d, OP_LSH);
+		defineInlinePrim("DRSH", Ibinop_d, OP_ASH);
+		defineInlinePrim("DURSH", Ibinop_d, OP_RSH);
+		defineInlinePrim("DCSH", Ibinop_d, OP_CSH);
 		
 		defineInlinePrim("1-", IfieldLit, 1, Ibinop, OP_SUB);
 		defineInlinePrim("2-", IfieldLit, 2, Ibinop, OP_SUB);
 		defineInlinePrim("*", Iumul, Idrop);
 		defineInlinePrim("s>d", Idup, I0cmp, CMP_LT);
 		
-		//defineInlinePrim("d=", Ineg_d, Iadd_d, Ior, I0equ);
-		//defineInlinePrim("DOVAR", Ilit, Iexit);
-		defineInlinePrim("DOVAR", IcontextFrom, 6, Iexit);
+		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
 		defineInlinePrim("DOCON", Ilit, Iexit);
 		
+		defineInlinePrim("true", IfieldLit, -1);
+		defineInlinePrim("false", IfieldLit, 0);
 
 	}
 	
@@ -517,4 +516,5 @@ public class F99TargetContext extends TargetContext {
 	public void defineCompilerWords(HostContext hostContext) {
 		hostContext.define("FIELD,", new FieldComma());
 	}
+
 }

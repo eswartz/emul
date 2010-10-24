@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Forthcomp
+Bundle-SymbolicName: v9t9.forthcomp
+Bundle-Version: 1.0.0.qualifier
+Bundle-ClassPath: forthcomp.jar,
+ ejs/devel/emul/java/org.ejs.coffee.core/libs/jna.jar,
+ ejs/devel/emul/java/v9t9-java/libs/gnu-getopt-1.0.11.jar
+Export-Package: org.ejs.v9t9.forthcomp,
+ org.ejs.v9t9.forthcomp.test,
+ org.ejs.v9t9.forthcomp.words
+Require-Bundle: v9t9-java;bundle-version="7.0.0"

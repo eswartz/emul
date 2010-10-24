@@ -24,7 +24,8 @@ import org.ejs.v9t9.forthcomp.words.Constant;
 import org.ejs.v9t9.forthcomp.words.Create;
 import org.ejs.v9t9.forthcomp.words.Do;
 import org.ejs.v9t9.forthcomp.words.Else;
-import org.ejs.v9t9.forthcomp.words.BareEntryState;
+import org.ejs.v9t9.forthcomp.words.PopExportState;
+import org.ejs.v9t9.forthcomp.words.PushExportState;
 import org.ejs.v9t9.forthcomp.words.Here;
 import org.ejs.v9t9.forthcomp.words.If;
 import org.ejs.v9t9.forthcomp.words.Include;
@@ -110,6 +111,8 @@ public class ForthComp {
     		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
     	}
 
+    	comp.finish();
+    	
     	if (comp.getErrors() > 0) {
     		System.err.println("Errors: " + comp.getErrors());
     		System.exit(1);
@@ -117,6 +120,16 @@ public class ForthComp {
         
     	comp.getTargetContext().alignDP();
     	comp.saveMemory(consoleOutFile, gromOutFile);
+	}
+
+	/**
+	 * 
+	 */
+	private void finish() {
+		for (ForwardRef ref : targetContext.getForwardRefs()) {
+			logfile.println("*** Unresolved symbol: " + ref.getEntry().getName() + " ( " + ref.getLocation() + ")");
+			errors++;
+		}
 	}
 
 	private PrintStream logfile;
@@ -152,7 +165,10 @@ public class ForthComp {
     	});
 		
 		if (consoleOutFile != null) {
-			DataFiles.writeMemoryImage(consoleOutFile, 0, targetContext.getDP(), 
+			System.out.println("Writing " + consoleOutFile);
+			
+			DataFiles.writeMemoryImage(new File(consoleOutFile).getAbsolutePath(), 
+					0, targetContext.getDP(), 
 					console);
 			
 			File symfile;
@@ -221,8 +237,8 @@ public class ForthComp {
 		});
 		hostContext.define("include", new Include());
 		
-		hostContext.define("<BARE", new BareEntryState(true));
-		hostContext.define("BARE>", new BareEntryState(false));
+		hostContext.define("<EXPORT", new PushExportState());
+		hostContext.define("EXPORT>", new PopExportState());
 		
 		hostContext.define("create", new Create());
 		hostContext.define("variable", new Variable());
@@ -309,8 +325,7 @@ public class ForthComp {
 			word = parseLiteral(token);
 		}
 		if (word == null) {
-			errors++;
-			throw abort("unknown: " + token);
+			word = targetContext.defineForward(token, hostContext.getStream().getLocation());
 		}
 		
 		if (stateVar.getValue() == 0 || word.isImmediate()) {

@@ -6,6 +6,8 @@ package org.ejs.v9t9.forthcomp;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -31,11 +33,14 @@ public abstract class TargetContext extends Context {
 	private Map<Integer, String> symbols = new TreeMap<Integer, String>();
 	protected int dp;
 	
+	private Map<String, DictEntry> dictionary = new LinkedHashMap<String, DictEntry>();
+	
 	private DictEntry lastEntry;
 	protected int cellSize;
 	private boolean export;
 	private int baseDP;
 	private PrintStream logfile = System.out;
+	private Map<String, ForwardRef> forwards;
 	
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
 		this.littleEndian = littleEndian;
@@ -43,6 +48,7 @@ public abstract class TargetContext extends Context {
 		this.cellBits = cellBits;
 		this.cellSize = cellBits / 8;
 		this.memory = new byte[memorySize];
+		this.forwards = new LinkedHashMap<String,ForwardRef>();
 		this.export = true;
 	}
 
@@ -130,6 +136,10 @@ public abstract class TargetContext extends Context {
 			return 0;
 		return reloc.target;
 	}
+
+	public RelocEntry getRelocEntry(int id) {
+		return relocs.get(-id - 1);
+	}
 	/**
 	 * @param name
 	 * @return
@@ -151,6 +161,11 @@ public abstract class TargetContext extends Context {
 		DictEntry entry = new DictEntry(size, entryAddr, name);
 		entry.setExport(export);
 		
+		DictEntry existing = dictionary.get(name.toUpperCase());
+		if (existing != null)
+			logfile.println("*** Redefining " + name);
+		dictionary.put(name.toUpperCase(), entry);
+		
 		if (export) {
 			if (lastEntry != null)
 				entry.setLink(lastEntry.getAddr());
@@ -159,9 +174,43 @@ public abstract class TargetContext extends Context {
 			entry.writeEntry(this);
 		}
 		
+		ForwardRef ref = forwards.get(name.toUpperCase());
+		if (ref != null) {
+			resolveForward(ref, entry);
+			forwards.remove(name.toUpperCase());
+		}
+		
 		return entry;
 	}
 
+
+	/**
+	 * @param token
+	 * @return
+	 */
+	public IWord defineForward(String token, String location) {
+		token = token.toUpperCase();
+		ForwardRef ref = forwards.get(token);
+		if (ref == null) {
+			ref = new ForwardRef(token, location, -relocs.size() - 1);
+			relocs.add(new RelocEntry(0, RelocType.RELOC_FORWARD, ref.getId()));
+		}
+		forwards.put(token, ref);
+		return ref;
+	}
+
+	/**
+	 * @param ref
+	 */
+	private void resolveForward(ForwardRef ref, DictEntry entry) {
+		for (RelocEntry rel : relocs.toArray(new RelocEntry[relocs.size()])) {
+			if (rel.target == ref.getId()) {
+				rel.target = entry.getContentAddr();
+				writeCell(rel.addr, entry.getContentAddr());
+				//relocs.remove(rel);
+			}
+		}
+	}
 
 	/**
 	 * 
@@ -256,12 +305,14 @@ public abstract class TargetContext extends Context {
 	 */
 	public void exportMemory(MemoryDomain console) {
 		for (int i = 0; i < dp; i += cellSize) {
-			int val = readAddr(i);
-			if (val < 0) {
-				RelocEntry reloc = relocs.get(-val - 1);
+			RelocEntry reloc = relocEntries.get(i);
+			int val;
+			if (reloc != null) {
 				val = reloc.target;	// TODO
 				if (reloc.type == RelocType.RELOC_CALL_15S1)
 					val = ((val >> 1) & 0x7fff) | 0x8000;
+			} else {
+				val = readCell(i);
 			}
 			console.writeWord(i, (short) val);
 		}
@@ -331,6 +382,12 @@ public abstract class TargetContext extends Context {
 	 */
 	public void setExport(boolean export) {
 		this.export = export;
+	}
+	/**
+	 * @return the export
+	 */
+	public boolean isExport() {
+		return export;
 	}
 
 	public interface IMemoryReader {
@@ -413,6 +470,13 @@ public abstract class TargetContext extends Context {
 	 */
 	public void setLog(PrintStream logfile) {
 		this.logfile = logfile != null ? logfile : System.out;
+	}
+
+	/**
+	 * @return
+	 */
+	public Collection<ForwardRef> getForwardRefs() {
+		return forwards.values();
 	}
 
 }

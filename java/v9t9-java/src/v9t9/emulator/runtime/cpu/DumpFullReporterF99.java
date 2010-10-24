@@ -90,14 +90,14 @@ public class DumpFullReporterF99 implements InstructionListener {
 		for (int i = 0; i < spused; i++)
 			sb.append(toStr(block.inStack[i])).append(' ');
 		
+		fx = InstF99.getReturnStackEffects(block.inst.getInst());
+		if (fx != null)
+			rpused = Math.min(block.inReturnStack.length, Math.max(fx.first, rpused));
+		
 		if (rpused != 0) {
-			sb.append("R ");
 			
-			fx = InstF99.getReturnStackEffects(block.inst.getInst());
-			if (fx != null)
-				rpused = Math.min(block.inReturnStack.length, Math.max(fx.first, rpused));
-
-			for (int i = 0; i < Math.min(block.inReturnStack.length, rpused); i++)
+			sb.append("R ");
+			for (int i = 0; i < rpused; i++)
 				sb.append(toStr(block.inReturnStack[i])).append(' ');
 		}
 		
@@ -122,13 +122,13 @@ public class DumpFullReporterF99 implements InstructionListener {
 		for (int i = 0; i < spadded; i++)
 			sb.append(toStr(block.getStackEntry(spadded - i - 1))).append(' ');
 		
+		fx = InstF99.getReturnStackEffects(block.inst.getInst());
+		if (fx != null)
+			rpadded = Math.min(4, Math.max(fx.second, rpadded));
+		
 		if (rpadded != 0) {
-			sb.append("R ");
-			
-			fx = InstF99.getReturnStackEffects(block.inst.getInst());
-			if (fx != null)
-				rpadded = Math.min(4, Math.max(fx.second, rpadded));
 
+			sb.append("R ");
 			for (int i = 0; i < rpadded; i++)
 				sb.append(toStr(block.getReturnStackEntry(rpadded - i - 1))).append(' ');
 		}

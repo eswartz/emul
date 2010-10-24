@@ -159,7 +159,8 @@ public class Executor {
 		} else {
 			interruptExecution = Boolean.FALSE;
 			if (Cpu.settingRealTime.getBoolean()) {
-				while (!cpu.isThrottled() && !interruptExecution) {
+				int count = 1000;
+				while (count-- > 0 && !cpu.isThrottled() && !interruptExecution) {
 					interpretOneInstruction();
 					cpu.checkAndHandleInterrupts();
 				}

@@ -21,7 +21,7 @@ public class CpuF99 extends CpuBase {
 	 * 
 	 */
 	public static final int INT_BASE = 0xffe0;
-	public static final int BASE_CYCLES_PER_SEC = 5000000;
+	public static final int BASE_CYCLES_PER_SEC = 500000;
 	private CpuStateF99 statef99;
 	
 	public CpuF99(Machine machine, int interruptTick, VdpHandler vdp) {
@@ -29,6 +29,14 @@ public class CpuF99 extends CpuBase {
 		statef99 = (CpuStateF99) state;
         settingCyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
     }
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#getBaseCyclesPerSec()
+	 */
+	@Override
+	public int getBaseCyclesPerSec() {
+		return BASE_CYCLES_PER_SEC;
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -176,8 +184,7 @@ public class CpuF99 extends CpuBase {
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
-            getStatus().expand((short) 0);
-            setPC(getConsole().readWord(0xfffe));
+            reset();
             
             // TODO
             
@@ -261,6 +268,7 @@ public class CpuF99 extends CpuBase {
 	
 	@Override
 	public void reset() {
+        getStatus().expand((short) 0);
 		getState().setSP((short) 0xff80);
 		getState().setRP((short) 0xffc0);
 		triggerInterrupt(INT_RESET);

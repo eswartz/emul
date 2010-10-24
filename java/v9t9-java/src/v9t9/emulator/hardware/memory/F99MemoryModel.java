@@ -45,6 +45,8 @@ public class F99MemoryModel extends TI994AStandardConsoleMemoryModel {
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, filename, e);
     	}
+    	
+		loadConsoleGrom(eventNotifier, "nforth.grm");
 	}
 	
 	protected void defineConsoleMemory(Machine machine) {

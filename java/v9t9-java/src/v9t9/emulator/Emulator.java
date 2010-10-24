@@ -241,7 +241,18 @@ public class Emulator {
 	}
 
 	public static File getDataFile(String string) {
+		File file = new File(string);
+		if (file.exists())
+			return file;
+		// HACK
+		return new File("../v9t9-java/" + string);
+		/*
+		Bundle bundle = Platform.getBundle("v9t9-java");
+		URL url = FileLocator.find(bundle, new Path(string), Collections.emptyMap());
+		if (url != null)
+			return new File(url.toExternalForm());
 		return new File(string);
+		*/
 	}
 
 }

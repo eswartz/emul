@@ -77,6 +77,7 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
     		getTIMemoryModel().getVdpMmio().write(addr, val);
     		break;
     	case GPLWA:
+    	case GPLWD:
     		getTIMemoryModel().getGplMmio().write(addr, val);
     		break;
     	case SPCHWT:

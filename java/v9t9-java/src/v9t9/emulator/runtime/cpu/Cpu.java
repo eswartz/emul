@@ -88,4 +88,6 @@ public interface Cpu extends IPersistable, CpuState {
 	 * @return
 	 */
 	CpuState getState();
+
+	int getBaseCyclesPerSec();
 }

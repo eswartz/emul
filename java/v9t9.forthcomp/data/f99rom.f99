@@ -14,15 +14,15 @@ $400    dp!
 
 (define-prims)
 
-<BARE
+0 <EXPORT
 
 include sysdefs.i
 
-BARE>
+EXPORT>
 
 include sysutils.i
 
-<BARE
+0 <EXPORT
 
 include video.i
 
@@ -36,19 +36,19 @@ include video.i
 :   cycle
     begin
         256 0 do
-            i screen-fill
+            i v-clear
         loop
     again
 ;
 
 
 :   bootup
-    text-mode
+    vinit
     
     cycle
 ;
 
-BARE>
+EXPORT>
 
 \ -------------------------------------------------
 

@@ -64,7 +64,6 @@ import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.NotifyEvent;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.Executor;
 
 /**
@@ -951,7 +950,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		boolean isRealTime = Cpu.settingRealTime.getBoolean();
 		int curCycles = Cpu.settingCyclesPerSecond.getInt();
 		MenuItem item = new MenuItem(menu, SWT.RADIO);
-		final int cycles = (int) (Cpu9900.TMS_9900_BASE_CYCLES_PER_SEC * factor);
+		final int cycles = (int) (machine.getCpu().getBaseCyclesPerSec() * factor);
 		item.setText(label + " (" + cycles + ")");
 		if (isRealTime && cycles == curCycles) {
 			item.setSelection(true);

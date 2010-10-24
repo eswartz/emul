@@ -1,6 +1,6 @@
 package v9t9.emulator.runtime.interpreter;
 
-import java.util.Arrays;
+import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Pair;
@@ -17,6 +17,8 @@ import v9t9.engine.cpu.InstructionWorkBlockF99;
 import v9t9.engine.cpu.MachineOperandF99;
 import v9t9.engine.cpu.StatusF99;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
 
 /**
  * This class interprets F99 instructions one by one.
@@ -35,8 +37,7 @@ public class InterpreterF99 implements Interpreter {
 
 	private CpuF99 cpu;
 
-	private InstructionF99[] instBuffer;
-	
+	private TreeMap<Integer, Pair<Integer, InstructionF99[]>> cachedInstrs = new TreeMap<Integer, Pair<Integer, InstructionF99[]>>();
 	
     public InterpreterF99(Machine machine) {
         this.machine = machine;
@@ -45,7 +46,14 @@ public class InterpreterF99 implements Interpreter {
         iblock = new InstructionWorkBlockF99(cpu);
         iblock.domain = memory;
         iblock.showSymbol = true;
-        instBuffer = new InstructionF99[3];
+        
+        memory.addWriteListener(new MemoryWriteListener() {
+			
+			@Override
+			public void changed(MemoryEntry entry, int addr, boolean isByte) {
+				invalidateInstructionCache(addr);
+			}
+		});
      }
 
     /* (non-Javadoc)
@@ -70,9 +78,6 @@ public class InterpreterF99 implements Interpreter {
 		}
 	}
 
-	static class JumpedException extends Exception { private static final long serialVersionUID = 1L; }
-	final static JumpedException JUMPED = new JumpedException(); 
-	
 	private void executeAndListen(InstructionListener[] instructionListeners) {
 		iblock.pc = cpu.getPC();
 		iblock.cycles = 0;
@@ -83,25 +88,22 @@ public class InterpreterF99 implements Interpreter {
 	    
 	    short origPc = iblock.pc;
 	    cpu.setPC(origPc);
-	    
-	    try {
-		    if (ins[0] != null)
-		    	executeAndListen(instructionListeners, ins[0]);
-		    if (ins[1] != null)
-		    	executeAndListen(instructionListeners, ins[1]);
-		    if (ins[2] != null)
-		    	executeAndListen(instructionListeners, ins[2]);
-	    } catch (JumpedException e) {
-	    	
-	    }
+
+	    boolean jumped = false;
+	    if (ins[0] != null)
+	    	jumped |= executeAndListen(instructionListeners, ins[0]);
+	    if (!jumped && ins[1] != null)
+	    	jumped |= executeAndListen(instructionListeners, ins[1]);
+	    if (!jumped && ins[2] != null)
+	    	executeAndListen(instructionListeners, ins[2]);
 	}
 
 	/**
 	 * @param instructionListeners
 	 * @param ins
 	 */
-	private void executeAndListen(InstructionListener[] instructionListeners,
-			InstructionF99 ins) throws JumpedException {
+	private boolean executeAndListen(InstructionListener[] instructionListeners,
+			InstructionF99 ins) {
         iblock.cycles = cpu.getCurrentCycleCount();
 
         iblock.pc = cpu.getPC();
@@ -110,58 +112,73 @@ public class InterpreterF99 implements Interpreter {
         iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
         iblock.inst = ins;
         
-
-        Pair<Integer, Integer> fx = InstF99.getStackEffects(ins.getInst());
-		if (fx != null) {
-			int spused = fx.first;
-			if (spused < 0)
-				spused = 4;
-			for (int i = 0; i < spused; i++)
-				iblock.inStack[i] = iblock.getStackEntry(spused - i - 1);
-		}
-        fx = InstF99.getReturnStackEffects(ins.getInst());
-		if (fx != null) {
-			int rpused = fx.first;
-			if (rpused < 0)
-				rpused = 4;
-			for (int i = 0; i < rpused; i++)
-				iblock.inReturnStack[i] = iblock.getReturnStackEntry(rpused - i - 1);
-		}
-		
-        InstructionWorkBlockF99 block = new InstructionWorkBlockF99(cpu);
-        this.iblock.copyTo(block);
+        InstructionWorkBlockF99 block = null;
         
+        if (instructionListeners != null) {
+	        Pair<Integer, Integer> fx = InstF99.getStackEffects(ins.getInst());
+			if (fx != null) {
+				int spused = fx.first;
+				if (spused < 0)
+					spused = 4;
+				for (int i = 0; i < spused; i++)
+					iblock.inStack[i] = iblock.getStackEntry(spused - i - 1);
+			}
+	        fx = InstF99.getReturnStackEffects(ins.getInst());
+			if (fx != null) {
+				int rpused = fx.first;
+				if (rpused < 0)
+					rpused = 4;
+				for (int i = 0; i < rpused; i++)
+					iblock.inReturnStack[i] = iblock.getReturnStackEntry(rpused - i - 1);
+			}
+			
+			block = new InstructionWorkBlockF99(cpu);
+	        this.iblock.copyTo(block);
+        }
         
         /* execute */
-        try {
-        	interpret(ins);
-        } finally {
-	        block.cycles = cpu.getCurrentCycleCount();
-	
+        boolean jumped = interpret(ins);
+
+    	/* notify listeners */
+    	if (instructionListeners != null) {
 	        iblock.pc = cpu.getPC();
 	        iblock.st = cpu.getST();
 	        iblock.sp = ((CpuStateF99)cpu.getState()).getSP();
 	        iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
+        
+        	block.cycles = cpu.getCurrentCycleCount();
+        	for (InstructionListener listener : instructionListeners) {
+        		listener.executed(block, iblock);
+        	}
+        	
+        	iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Icall);
+        }
 	        
-	        /* notify listeners */
-	        if (instructionListeners != null) {
-	        	for (InstructionListener listener : instructionListeners) {
-	        		listener.executed(block, iblock);
-	        	}
-	        }
-	        
-	        iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Icall);
-        }		
+        return jumped;		
 	}
 	
-	
+	private void invalidateInstructionCache(int addr) {
+		cachedInstrs.remove(addr);
+	}
+
+	private InstructionF99[] getInstructions() {
+		short pc = cpu.getPC();
+
+		Pair<Integer, InstructionF99[]> cache = cachedInstrs.get((int)pc);
+		if (cache == null) {
+			cache = parseInstructions(pc);
+			cachedInstrs.put(pc & 0xffff, cache);
+		} else {
+			iblock.pc = (short) (pc + cache.first);
+		}
+		return cache.second;
+	}
 
 	/**
 	 * @return
 	 */
-	private InstructionF99[] getInstructions() {
+	private Pair<Integer, InstructionF99[]> parseInstructions(short pc) {
 		
-		short pc = cpu.getPC();
 		boolean skipFirst = (pc & 1) != 0;
 		short thisPc = (short) (pc & ~1);
 		
@@ -175,30 +192,33 @@ public class InterpreterF99 implements Interpreter {
 		iblock.pc = (short) (thisPc + 2);
 		iblock.index = skipFirst ? 1 : 0;
 		
-		Arrays.fill(instBuffer, null);
-		
+		InstructionF99[] instBuffer = new InstructionF99[3];
+
 		if (opword < 0) {
 			// call
 			if (skipFirst) {
 				cpu.triggerInterrupt(CpuF99.INT_BKPT);
-				return instBuffer;
+				return new Pair<Integer, InstructionF99[]>(iblock.pc - pc, instBuffer);
 			}
 			
 			instBuffer[0] = getCallInstruction(opword);
 		} else {
-			while (iblock.index < 3 && iblock.instNum < 3)
-				getInstruction(thisPc);
+			while (iblock.index < 3 && iblock.instNum < 3) {
+				InstructionF99 inst = getInstruction(thisPc);
+				if (inst != null)
+					instBuffer[iblock.instNum++] = inst; 
+			}
 		}
 		iblock.pc += (iblock.index == 4 ? 1 : 0);
 		
-		return instBuffer;
+		return new Pair<Integer, InstructionF99[]>(iblock.pc - pc, instBuffer);
 	}
 
-	private void getInstruction(short origPC) {
+	private InstructionF99 getInstruction(short origPC) {
 		int thePC = origPC + (iblock.index != 0 ? 1 : 0);
 		int opcode = iblock.nextField();
 		if (opcode == 0)
-			return;
+			return null;
 		
 		InstructionF99 inst = new InstructionF99();
 		inst.pc = thePC;
@@ -255,7 +275,7 @@ public class InterpreterF99 implements Interpreter {
 			// no immediate	
 		}
 		
-		instBuffer[iblock.instNum++] = inst;
+		return inst;
 	}
 
 	private InstructionF99 getCallInstruction(short op) {
@@ -271,9 +291,9 @@ public class InterpreterF99 implements Interpreter {
      * Execute an instruction
      * @param ins
      */
-    private void interpret(InstructionF99 ins) throws JumpedException {
+    private boolean interpret(InstructionF99 ins) {
     	MachineOperandF99 mop1 = (MachineOperandF99)ins.getOp1();
-		cpu.addCycles(ins.getInfo().cycles + (mop1 != null ? mop1.cycles : 0));
+		cpu.addCycles(1 + (mop1 != null ? 1 : 0));
 		
 		int alignPC = ins.pc & ~1;
         
@@ -282,7 +302,7 @@ public class InterpreterF99 implements Interpreter {
         	cpu.push(memory.readWord(cpu.pop()));
         	break;
         case Icload:
-        	cpu.push(memory.readByte(cpu.pop()));
+        	cpu.push((short) (memory.readByte(cpu.pop()) & 0xff));
         	break;
         case Istore:
         	memory.writeWord(cpu.pop(), cpu.pop());
@@ -309,7 +329,8 @@ public class InterpreterF99 implements Interpreter {
         case Iexit:
         	cpu.setPC(cpu.rpop());
         	iblock.showSymbol = true;
-        	throw JUMPED;
+        	return true;
+        	
         case Idup:
         	cpu.push(cpu.peek());
         	break;
@@ -317,14 +338,14 @@ public class InterpreterF99 implements Interpreter {
         	short targ = (short) (alignPC + mop1.immed);
         	if (cpu.pop() == 0) {
         		cpu.setPC(targ);
-        		throw JUMPED;
+        		return true;
         	}
         	break;
         }
         case Ibranch: {
         	short targ = (short) (alignPC + mop1.immed);
         	cpu.setPC(targ);
-        	throw JUMPED;
+        	return true;
         }
         case I0cmp: {
         	short val = cpu.pop();
@@ -500,7 +521,7 @@ public class InterpreterF99 implements Interpreter {
         case Icall:
         	cpu.rpush(iblock.pc);
         	cpu.setPC(mop1.immed);
-        	throw JUMPED;
+        	return true;
         	
         case ItoR:
         	cpu.rpush(cpu.pop());
@@ -539,7 +560,7 @@ public class InterpreterF99 implements Interpreter {
     		if (next != lim) {
         		short targ = (short) (alignPC + mop1.immed);
             	cpu.setPC(targ);
-            	throw JUMPED;
+            	return true;
         	}
         	break;
         }
@@ -553,7 +574,7 @@ public class InterpreterF99 implements Interpreter {
     		if (lim != 0 ? next < lim : next >= change) {
         		short targ = (short) (alignPC + mop1.immed);
             	cpu.setPC(targ);
-            	throw JUMPED;
+            	return true;
         	}
         	break;
         }
@@ -567,7 +588,7 @@ public class InterpreterF99 implements Interpreter {
         	if (lim != 0 ? (next & 0xffff) < (lim & 0xffff) : (next & 0xffff) >= (change & 0xffff)) {
         		short targ = (short) (alignPC + mop1.immed);
         		cpu.setPC(targ);
-        		throw JUMPED;
+        		return true;
         	}
         	break;
         }
@@ -625,7 +646,7 @@ public class InterpreterF99 implements Interpreter {
         		break;
         	case CTX_PC:
         		((CpuStateF99)cpu.getState()).setPC(cpu.pop());
-        		throw JUMPED;
+        		return true;
         	case CTX_INT:
         		((StatusF99) ((CpuStateF99)cpu.getState()).getStatus()).setIntMask(cpu.pop());
         		break;
@@ -639,6 +660,7 @@ public class InterpreterF99 implements Interpreter {
     		throw new UnsupportedOperationException("" + ins);
         }
 
+		return false;
     }
 
 	/**

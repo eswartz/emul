@@ -6,31 +6,20 @@ package v9t9.emulator.hardware;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
-import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.F99MemoryModel;
-import v9t9.emulator.hardware.memory.V9t9EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.MultiSoundTMS9919B;
-import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.compiler.NullCompilerStrategy;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.CpuF99;
 import v9t9.emulator.runtime.cpu.CpuMetrics;
-import v9t9.emulator.runtime.cpu.DumpFullReporter9900;
 import v9t9.emulator.runtime.cpu.DumpFullReporterF99;
-import v9t9.emulator.runtime.cpu.DumpReporter9900;
 import v9t9.emulator.runtime.cpu.DumpReporterF99;
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.emulator.runtime.interpreter.Interpreter9900;
 import v9t9.emulator.runtime.interpreter.InterpreterF99;
 import v9t9.engine.VdpHandler;
-import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;
-import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.tools.asm.assembler.IInstructionFactory;
-import v9t9.tools.asm.assembler.InstructionFactory9900;
 
 /**
  * This is a machine model for F99
@@ -43,9 +32,7 @@ public class F99MachineModel implements MachineModel {
 	
 	private F99MemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
-	private BankedMemoryEntry cpuBankedVideo;
 	private VdpV9938 vdp;
-	private boolean vdpCpuBanked;
 	
 	public F99MachineModel() {
 		memoryModel = new F99MemoryModel();

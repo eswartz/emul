@@ -19,7 +19,9 @@ import org.ejs.v9t9.forthcomp.ForthComp;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
 import org.ejs.v9t9.forthcomp.IWord;
+import org.ejs.v9t9.forthcomp.RelocEntry;
 import org.ejs.v9t9.forthcomp.TargetColonWord;
+import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -569,7 +571,7 @@ public class TestForthComp {
 	@Test
 	public void testShifts1Ex() throws Exception {
 		comp.parseString(
-				": outer $8887 12 urshift  $8887 8 rshift $ffff 15 lshift ;");
+				": outer $8887 12 ursh  $8887 8 rsh $ffff 15 lsh ;");
 		
 		interpret("outer");
 		assertEquals((short)0x8000, hostCtx.popData());
@@ -579,7 +581,7 @@ public class TestForthComp {
 	@Test
 	public void testShifts2Ex() throws Exception {
 		comp.parseString(
-				": outer $8887 12U urshift  $8887 8U rshift $ffff 15U lshift ;");
+				": outer $8887 12U ursh  $8887 8U rsh $ffff 15U lsh ;");
 		
 		interpret("outer");
 		assertEquals((short)0x8000, hostCtx.popData());
@@ -589,7 +591,7 @@ public class TestForthComp {
 	@Test
 	public void testDoublShifts1Ex() throws Exception {
 		comp.parseString(
-				": outer $8887.7778 16. durshift  $8887.7778 8. drshift ;");
+				": outer $8887.7778 16. dursh  $8887.7778 8. drsh ;");
 		
 		interpret("outer");
 		assertEquals((short)0xff88, hostCtx.popData());
@@ -600,7 +602,7 @@ public class TestForthComp {
 	@Test
 	public void testDoublShifts2Ex() throws Exception {
 		comp.parseString(
-				": outer $8887.7778 16.U durshift  $8887.7778 8.U drshift ;");
+				": outer $8887.7778 16.U dursh  $8887.7778 8.U drsh ;");
 		
 		interpret("outer");
 		assertEquals((short)0xff88, hostCtx.popData());
@@ -871,7 +873,7 @@ public class TestForthComp {
 	public void testMemOps2Ex() throws Exception {
 		comp.parseString(
 				"Create str\n" +
-				"3 c, 65 c, 72 c, 90 c,\n" +
+				"3 c, 65 c, 172 c, 90 c,\n" +
 				": [] ( addr idx -- val addr ) over + c@ swap ; \n"+
 				": tst str 0 [] 1 [] 2 [] 3 [] drop ;"
 				
@@ -882,7 +884,7 @@ public class TestForthComp {
 		interpret("tst");
 		
 		assertEquals(90, hostCtx.popData());
-		assertEquals(72, hostCtx.popData());
+		assertEquals(172, hostCtx.popData());
 		assertEquals(65, hostCtx.popData());
 		assertEquals(3, hostCtx.popData());
 	}
@@ -984,12 +986,84 @@ public class TestForthComp {
 		
 		dumpDict();
 		
-		hostCtx.pushData(1);
-		hostCtx.pushData(2);
-		hostCtx.pushData(3);
+		hostCtx.pushData(1); hostCtx.pushData(2); hostCtx.pushData(3);
 		interpret("foo");
-		assertEquals(1, hostCtx.popData());
-		assertEquals(3, hostCtx.popData());
-		assertEquals(2, hostCtx.popData());
+		assertEquals(1, hostCtx.popData()); assertEquals(3, hostCtx.popData());	assertEquals(2, hostCtx.popData());
+	}
+	
+	@Test
+	public void testForwards() throws Exception {
+		comp.parseString(
+				": vfill 1 2 3 ; \n"+
+				": foo cls cls cls ;\n" +
+				": cls vfill drop drop drop ;\n");
+
+		dumpDict();
+
+		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
+		
+		int dp = foo.getEntry().getContentAddr();
+		int word;
+		word = targCtx.readAddr(dp);
+		assertCall("cls", word);
+		word = targCtx.readAddr(dp + 2);
+		assertCall("cls", word);
+		word = targCtx.readAddr(dp + 4);
+		assertCall("cls", word);
+		word = targCtx.readAddr(dp + 6);
+		assertOpword(word, Iexit, 0, 0);
+	}
+	private void assertCall(ITargetWord word, int cell) throws AbortException {
+		RelocEntry rel = targCtx.getRelocEntry(cell);
+		assertNotNull(rel);
+		assertEquals(RelocType.RELOC_CALL_15S1, rel.type);
+		assertEquals(word.getEntry().getContentAddr(), rel.target);
+	}
+	private void assertCall(String string, int cell) throws AbortException {
+		ITargetWord word = (ITargetWord) targCtx.require(string);
+		assertCall(word, cell);
+	}
+	
+	
+
+	@Test
+	public void testRedef() throws Exception {
+		comp.parseString(
+				": vfill ; \n"+
+				": foo cls ;\n" +
+				": cls vfill ;\n");
+		
+		ITargetWord origCls = (ITargetWord) targCtx.require("cls");
+		ITargetWord origVfill = (ITargetWord) targCtx.require("vfill");
+		
+		comp.parseString(
+				": vfill ; \n"+
+				": foo2 vfill ;\n"+
+				": cls drop ;\n"+
+				": lala cls ;\n"+
+				"");
+
+		dumpDict();
+
+		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
+		
+		int dp = foo.getEntry().getContentAddr();
+		int word;
+		word = targCtx.readAddr(dp);
+		assertCall(origCls, word);
+		
+		dp = origCls.getEntry().getContentAddr();
+		word = targCtx.readAddr(dp);
+		assertCall(origVfill, word);
+		
+		dp = ((ITargetWord) targCtx.require("foo2")).getEntry().getContentAddr();
+		
+		word = targCtx.readAddr(dp );
+		assertCall("vfill", word);
+		
+		dp = ((ITargetWord) targCtx.require("lala")).getEntry().getContentAddr();
+		
+		word = targCtx.readAddr(dp);
+		assertCall("cls", word);
 	}
 }

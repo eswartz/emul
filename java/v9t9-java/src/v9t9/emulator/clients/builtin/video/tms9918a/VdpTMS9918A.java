@@ -695,7 +695,8 @@ public class VdpTMS9918A implements VdpHandler {
         		
         		// a real interrupt only occurs if wanted
         		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
-            		machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+        			if (machine.getCpu().getCruAccess() != null)
+        				machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
             		machine.getExecutor().nVdpInterrupts++;
         		}
         		//System.out.print('!');
@@ -797,7 +798,8 @@ public class VdpTMS9918A implements VdpHandler {
 	    		
 	    		// a real VDP interrupt only occurs if desired
 	    		if ((vdpregs[1] & R1_INT) != 0) {
-		    		machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+	    			if (machine.getCpu().getCruAccess() != null)
+	    				machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
 		    		machine.getExecutor().nVdpInterrupts++;
 	    		}
 	    		//System.out.print('!');

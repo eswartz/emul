@@ -12,18 +12,18 @@ import org.ejs.v9t9.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class BareEntryState implements IWord {
-	private final boolean state;
+public class PushExportState implements IWord {
 
-	public BareEntryState(boolean state) {
-		this.state = state;
+	public PushExportState() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		targetContext.setExport(!state);
+		int val = hostContext.popData();
+		hostContext.pushData(targetContext.isExport() ? -1 : 0);
+		targetContext.setExport(val != 0);
 	}
 	
 	/* (non-Javadoc)

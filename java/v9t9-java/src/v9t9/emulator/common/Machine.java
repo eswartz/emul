@@ -105,8 +105,8 @@ abstract public class Machine {
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
+    			executor.interruptExecution = Boolean.TRUE;
     			synchronized (executionLock) {
-    				executor.interruptExecution = Boolean.TRUE;
     				cpu.resetCycleCounts();
     				bExecuting = !setting.getBoolean();
     				executionLock.notifyAll();
@@ -331,7 +331,7 @@ abstract public class Machine {
     					if (cpu.isThrottled() && cpu.getMachine().bAlive) {
     						// Just sleep.  Another timer thread will reset the throttle.
     						try {
-    							Thread.sleep(10);
+    							Thread.sleep(100);
     							continue;
     						} catch (InterruptedException e) {
     							return;

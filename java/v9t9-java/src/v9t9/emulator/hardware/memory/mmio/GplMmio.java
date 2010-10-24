@@ -64,7 +64,6 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
      */
     public byte read(int addr) {
     	byte ret;
-    	short temp;
     	
     	if ((addr & 2) != 0) {
     	    /* >9802, address read */

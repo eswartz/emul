@@ -5,10 +5,10 @@ $0000       constant    I/O
 
 $0000       constant    VDPRD
 $0002       constant    VDPST
-$0004       constant    VDPWD
-$0006       constant    VDPWA
-$0008       constant    VDPCL
-$000a       constant    VDPWI
+$0008       constant    VDPWD
+$000a       constant    VDPWA
+$000c       constant    VDPCL
+$000e       constant    VDPWI
 
 $0010       constant    GPLRD
 $0012       constant    GPLRA
@@ -30,6 +30,12 @@ $ffc0       constant    SysCalls    \ ... 0x20
 
 $ffe0       constant    IntVecs     \ ... 0x20
 
+
+\ -----------   GROM addresses
+
+$0          constant    grom_kbdlist
+$130        constant    grom_font8x8
+$930        constant    grom_font5x6
 
 \ -----------   constants
 
