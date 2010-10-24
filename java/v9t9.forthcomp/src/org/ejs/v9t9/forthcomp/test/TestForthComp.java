@@ -22,6 +22,7 @@ import org.ejs.v9t9.forthcomp.IWord;
 import org.ejs.v9t9.forthcomp.RelocEntry;
 import org.ejs.v9t9.forthcomp.TargetColonWord;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -86,6 +87,10 @@ public class TestForthComp {
 		
 		targCtx.defineBuiltins();
 		startDP = targCtx.getDP();
+	}
+	@After
+	public void shutDown() {
+		interp.dispose();
 	}
 	@Test
 	public void testLiteral() throws Exception {
@@ -384,7 +389,7 @@ public class TestForthComp {
 	public void testLiterals4Ex() throws Exception {
 		comp.parseString(": eq 1020 1456 ! 789 dup ;");
 		
-		targCtx.writeCell(1020, 1000);
+		targCtx.writeCell(1456, 1000);
 		
 		interpret("eq");
 		
@@ -1066,4 +1071,20 @@ public class TestForthComp {
 		word = targCtx.readAddr(dp);
 		assertCall("cls", word);
 	}
+
+
+	@Test
+	public void testWriteProgram() throws Exception {
+		comp.parseString(
+				": num 123 ;\n" +
+				": foo num  456 ['] num 2+ ! num ;\n");
+		
+		dumpDict();
+		
+		interpret("foo");
+		
+		assertEquals(456, hostCtx.popData());
+		assertEquals(123, hostCtx.popData());
+	}
+
 }

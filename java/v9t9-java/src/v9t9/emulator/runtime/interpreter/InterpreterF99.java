@@ -38,6 +38,7 @@ public class InterpreterF99 implements Interpreter {
 	private CpuF99 cpu;
 
 	private TreeMap<Integer, Pair<Integer, InstructionF99[]>> cachedInstrs = new TreeMap<Integer, Pair<Integer, InstructionF99[]>>();
+	private MemoryWriteListener memoryListener;
 	
     public InterpreterF99(Machine machine) {
         this.machine = machine;
@@ -47,15 +48,20 @@ public class InterpreterF99 implements Interpreter {
         iblock.domain = memory;
         iblock.showSymbol = true;
         
-        memory.addWriteListener(new MemoryWriteListener() {
+        memoryListener = new MemoryWriteListener() {
 			
 			@Override
 			public void changed(MemoryEntry entry, int addr, boolean isByte) {
 				invalidateInstructionCache(addr);
 			}
-		});
+		};
+		memory.addWriteListener(memoryListener);
      }
 
+    public void dispose() {
+    	cachedInstrs.clear();
+    	memory.removeWriteListener(memoryListener);
+    }
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
 	 */
