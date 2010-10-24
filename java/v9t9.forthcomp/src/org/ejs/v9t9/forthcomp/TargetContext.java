@@ -3,12 +3,14 @@
  */
 package org.ejs.v9t9.forthcomp;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 
 import v9t9.engine.memory.MemoryDomain;
@@ -31,6 +33,9 @@ public abstract class TargetContext extends Context {
 	
 	private DictEntry lastEntry;
 	protected int cellSize;
+	private boolean export;
+	private int baseDP;
+	private PrintStream logfile = System.out;
 	
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
 		this.littleEndian = littleEndian;
@@ -38,6 +43,7 @@ public abstract class TargetContext extends Context {
 		this.cellBits = cellBits;
 		this.cellSize = cellBits / 8;
 		this.memory = new byte[memorySize];
+		this.export = true;
 	}
 
 	abstract public void defineBuiltins();
@@ -129,20 +135,29 @@ public abstract class TargetContext extends Context {
 	 * @return
 	 */
 	public DictEntry defineEntry(String name) {
-		// link, name
-		int size = cellSize + align(1 + name.length());
-		
 		alignDP();
-		int entryAddr = alloc(size);
-
+		int entryAddr = getDP();
+		int size = 0;
+		if (export) {
+			// link, name
+			size = cellSize + align(1 + name.length());
+			
+			alignDP();
+			entryAddr = alloc(size);
+	
+		}
 		symbols.put(entryAddr, name);
 		
 		DictEntry entry = new DictEntry(size, entryAddr, name);
-		if (lastEntry != null)
-			entry.setLink(lastEntry.getAddr());
-		lastEntry = entry;
+		entry.setExport(export);
 		
-		entry.writeEntry(this);
+		if (export) {
+			if (lastEntry != null)
+				entry.setLink(lastEntry.getAddr());
+			lastEntry = entry;
+			
+			entry.writeEntry(this);
+		}
 		
 		return entry;
 	}
@@ -159,25 +174,17 @@ public abstract class TargetContext extends Context {
 		return (dp + cellSize - 1) & ~(cellSize - 1);
 	}
 
-	/**
-	 * @param i
-	 * @return
-	 */
 	public int align(int bytes) {
 		return (bytes + cellSize - 1) & ~(cellSize - 1);
 	}
 
-	/**
-	 * @param ad
-	 * @param link
-	 */
 	public void writeCell(int addr, int cell) {
 		if (addr < 0)
 			addr = relocs.get(-addr - 1).target;
 		
-		RelocEntry entry = relocEntries.get(cell);
+		RelocEntry entry = relocEntries.get(addr);
 		if (entry != null)
-			cell = relocs.indexOf(entry);		// flag
+			cell = -relocs.indexOf(entry) - 1;		// flag
 		if (!littleEndian && cellBits == 16) {
 			memory[addr] = (byte) (cell >> 8);
 			memory[addr + 1] = (byte) (cell & 0xff);
@@ -186,26 +193,15 @@ public abstract class TargetContext extends Context {
 		}
 	}
 
-	/**
-	 * @param ad
-	 * @param i
-	 */
 	public void writeChar(int addr, int ch) {
 		if (charBits != 8) throw new UnsupportedOperationException();
 		memory[addr] = (byte) ch;
 	}
 
-	/**
-	 * @return
-	 */
 	public int getCellSize() {
 		return cellSize;
 	}
 
-	/**
-	 * @param i
-	 * @return
-	 */
 	public int readChar(int addr) {
 		if (charBits != 8) throw new UnsupportedOperationException();
 		return memory[addr];
@@ -216,7 +212,7 @@ public abstract class TargetContext extends Context {
 		int dp = entry.getContentAddr();
 		try {
 			ITargetWord doVar = (ITargetWord) require("DOVAR");
-			alignCode();
+			initCode();
 			compile(doVar);
 		} catch (AbortException e) {
 			// for unit tests
@@ -229,11 +225,21 @@ public abstract class TargetContext extends Context {
 
 	public TargetColonWord defineColonWord(String name) {
 		DictEntry entry = defineEntry(name);
-		System.out.println(name);
-		alignCode();
+		logfile.println(name);
+		initCode();
 		return (TargetColonWord) define(name, new TargetColonWord(entry));		
 	}
 
+	public TargetConstant defineConstant(String name, int value, int cells) throws AbortException {
+		DictEntry entry = defineEntry(name);
+		logfile.println(name);
+		initCode();
+		compile((ITargetWord) require("DOCON"));
+		compileAddr(value);
+		return (TargetConstant) define(name, new TargetConstant(entry, value, 1));		
+	}
+
+	abstract public void initCode();
 	abstract public void alignCode();
 	/**
 	 * Compile a word onto the current dictionary entry
@@ -320,8 +326,93 @@ public abstract class TargetContext extends Context {
 
 	abstract public void defineCompilerWords(HostContext hostContext);
 
+	/**
+	 * 
+	 */
+	public void setExport(boolean export) {
+		this.export = export;
+	}
 
+	public interface IMemoryReader {
+		int readWord(int addr);
+	}
 
+	public void dumpDict(PrintStream out, int from, int to) {
+		dumpMemory(out, from, to, new IMemoryReader() {
 
+			public int readWord(int addr) {
+				return readCell(addr);
+			}
+			
+		});
+	}
+	public static void dumpMemory(PrintStream out, int from, int to, IMemoryReader reader) {
+		int perLine = 8;
+		int lines = ((to - from) / 2 + perLine - 1) / perLine;
+		int addr = from;
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < lines; i++) {
+			boolean allZero = true;
+			for (int j = 0; j < perLine && addr < to; j++) {
+				if (reader.readWord(addr + j) != 0) {
+					allZero = false;
+					break;
+				}
+			}
+			if (allZero) {
+				addr += perLine * 2;
+				continue;
+			}
+			out.print(HexUtils.toHex4(addr) + ": ");
+			sb.setLength(0);
+			int j;
+			for (j = 0; j < perLine && addr < to; j++) {
+				int word = reader.readWord(addr);
+				out.print(HexUtils.toHex4(word) + " ");
+				addr += 2;
+				
+				int ch = ((word >> 8) & 0xff);
+				if (ch >= 0x20 && ch < 0x7f)
+					sb.append((char) ch);
+				else
+					sb.append('.');
+				ch = (word & 0xff);
+				if (ch >= 0x20 && ch < 0x7f)
+					sb.append((char) ch);
+				else
+					sb.append('.');
+			}
+			for (; j < perLine ; j++) {
+				out.print("     ");
+			}
+			
+			out.print(' ');
+			out.print(sb);
+			out.println();
+		}
+	}
+
+	/**
+	 * @return
+	 */
+	public int getBaseDP() {
+		return baseDP;
+	}
+	
+	/**
+	 * @param baseDP the baseDP to set
+	 */
+	public void setBaseDP(int baseDP) {
+		this.baseDP = baseDP;
+		if (dp == 0)
+			dp = baseDP;
+	}
+
+	/**
+	 * @param logfile
+	 */
+	public void setLog(PrintStream logfile) {
+		this.logfile = logfile != null ? logfile : System.out;
+	}
 
 }

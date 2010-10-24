@@ -6,8 +6,13 @@ package org.ejs.v9t9.forthcomp;
 import gnu.getopt.Getopt;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 
+import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.v9t9.forthcomp.TargetContext.IMemoryReader;
 import org.ejs.v9t9.forthcomp.words.Again;
 import org.ejs.v9t9.forthcomp.words.Allot;
 import org.ejs.v9t9.forthcomp.words.BackSlash;
@@ -15,10 +20,14 @@ import org.ejs.v9t9.forthcomp.words.Begin;
 import org.ejs.v9t9.forthcomp.words.CharComma;
 import org.ejs.v9t9.forthcomp.words.Colon;
 import org.ejs.v9t9.forthcomp.words.Comma;
+import org.ejs.v9t9.forthcomp.words.Constant;
 import org.ejs.v9t9.forthcomp.words.Create;
 import org.ejs.v9t9.forthcomp.words.Do;
 import org.ejs.v9t9.forthcomp.words.Else;
+import org.ejs.v9t9.forthcomp.words.BareEntryState;
+import org.ejs.v9t9.forthcomp.words.Here;
 import org.ejs.v9t9.forthcomp.words.If;
+import org.ejs.v9t9.forthcomp.words.Include;
 import org.ejs.v9t9.forthcomp.words.Lbracket;
 import org.ejs.v9t9.forthcomp.words.Leave;
 import org.ejs.v9t9.forthcomp.words.Loop;
@@ -28,11 +37,18 @@ import org.ejs.v9t9.forthcomp.words.QuestionDo;
 import org.ejs.v9t9.forthcomp.words.Rbracket;
 import org.ejs.v9t9.forthcomp.words.Repeat;
 import org.ejs.v9t9.forthcomp.words.SemiColon;
+import org.ejs.v9t9.forthcomp.words.SetDP;
 import org.ejs.v9t9.forthcomp.words.Then;
+import org.ejs.v9t9.forthcomp.words.Tick;
 import org.ejs.v9t9.forthcomp.words.UPlusLoop;
 import org.ejs.v9t9.forthcomp.words.Until;
 import org.ejs.v9t9.forthcomp.words.Variable;
 import org.ejs.v9t9.forthcomp.words.While;
+
+import v9t9.emulator.hardware.memory.EnhancedRamArea;
+import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
 
 /**
  * This class compiles FORTH programs into ROM images for V9t9
@@ -48,13 +64,26 @@ public class ForthComp {
 		
 		TargetContext targetContext = null;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?");
+		String consoleOutFile = null;
+		String gromOutFile = null;
+		PrintStream logfile = System.out;
+		
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:g:l:");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
             case '?':
                 help();
                 break;
+            case 'c':
+            	consoleOutFile = getopt.getOptarg();
+            	break;
+            case 'g':
+            	gromOutFile = getopt.getOptarg();
+            	break;
+            case 'l':
+				logfile = new PrintStream(new File(getopt.getOptarg()));
+            	break;
             }
         }
         
@@ -62,13 +91,94 @@ public class ForthComp {
         	targetContext = new F99TargetContext(65536);
         ForthComp comp = new ForthComp(targetContext);
         
-        if (getopt.getOptind() < args.length) {
-        	String name = args[getopt.getOptind()];
-        	comp.parseFile(name);
-        } else {
-        	System.err.println(PROGNAME + ": no files specified");
-        }
+        comp.setLog(logfile);
         
+        if (getopt.getOptind() >= args.length) {
+        	System.err.println(PROGNAME + ": no files specified");
+        	System.exit(1);
+        } 
+        
+    	int idx = getopt.getOptind();
+    	try {
+        	while (idx < args.length) {
+	        	String name = args[idx];
+	        	comp.parseFile(name);
+	        	idx++;
+        	}
+        	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
+    	} catch (AbortException e) {
+    		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
+    	}
+
+    	if (comp.getErrors() > 0) {
+    		System.err.println("Errors: " + comp.getErrors());
+    		System.exit(1);
+    	}
+        
+    	comp.getTargetContext().alignDP();
+    	comp.saveMemory(consoleOutFile, gromOutFile);
+	}
+
+	private PrintStream logfile;
+
+	/**
+	 * @param logfile
+	 */
+	public void setLog(PrintStream logfile) {
+		this.logfile = logfile;
+		targetContext.setLog(logfile);
+	}
+
+	/**
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 * 
+	 */
+	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException {
+
+    	final MemoryDomain console = new MemoryDomain("CONSOLE");
+    	EnhancedRamArea bigRamArea = new EnhancedRamArea(0, 0x10000); 
+		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
+				bigRamArea);
+		console.mapEntry(bigRamEntry);
+    	targetContext.exportMemory(console);
+    	
+		TargetContext.dumpMemory(logfile, 0, targetContext.getDP(),
+			new IMemoryReader() {
+
+				public int readWord(int addr) {
+					return console.readWord(addr);
+				}
+    	});
+		
+		if (consoleOutFile != null) {
+			DataFiles.writeMemoryImage(consoleOutFile, 0, targetContext.getDP(), 
+					console);
+			
+			File symfile;
+			int didx = consoleOutFile.lastIndexOf('.');
+	        if (didx >= 0) {
+	        	symfile = new File(consoleOutFile.substring(0, didx) + ".sym");
+	        } else {
+	        	symfile = new File(consoleOutFile + ".sym");
+	        }
+			FileOutputStream fos = new FileOutputStream(symfile);
+			bigRamEntry.writeSymbols(new PrintStream(fos));
+			fos.close();
+		}
+    			
+	}
+
+	/**
+	 * 
+	 */
+	public void dumpDict() {
+		targetContext.dumpDict(logfile, targetContext.getBaseDP(), targetContext.getDP());
+		
+	}
+
+	public TargetContext getTargetContext() {
+		return targetContext;
 	}
 
 	private static void help() {
@@ -80,19 +190,45 @@ public class ForthComp {
 	private TokenStream tokenStream;
 	private HostVariable baseVar;
 	private HostVariable stateVar;
+	private int errors;
 
 	public ForthComp(TargetContext targetContext) {
 		hostContext = new HostContext();
 		tokenStream = hostContext.getStream();
 		this.targetContext = targetContext;
 		
+		defineHostCompilerWords();
+	 	
+	 	targetContext.defineCompilerWords(hostContext);
+	}
+
+	private void defineHostCompilerWords() {
 		baseVar = (HostVariable) hostContext.define("base", new HostVariable(10));
 		stateVar = (HostVariable) hostContext.define("state", new HostVariable(0));
 		hostContext.define("csp", new HostVariable(0));
 		
+		hostContext.define("(define-prims)", new IWord() {
+
+			public void execute(HostContext hostContext,
+					TargetContext targetContext) throws AbortException {
+				targetContext.defineBuiltins();
+			}
+
+			public boolean isImmediate() {
+				return false;
+			}
+			
+		});
+		hostContext.define("include", new Include());
+		
+		hostContext.define("<BARE", new BareEntryState(true));
+		hostContext.define("BARE>", new BareEntryState(false));
+		
 		hostContext.define("create", new Create());
 		hostContext.define("variable", new Variable());
+		hostContext.define("constant", new Constant());
 		hostContext.define("allot", new Allot());
+		hostContext.define("'", new Tick());
 		
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
@@ -123,7 +259,8 @@ public class ForthComp {
 	 	hostContext.define(",", new Comma());
 	 	hostContext.define("c,", new CharComma());
 	 	
-	 	targetContext.defineCompilerWords(hostContext);
+		hostContext.define("DP!", new SetDP());
+		hostContext.define("HERE", new Here());
 	}
 
 	/**
@@ -135,13 +272,11 @@ public class ForthComp {
 	public void parseFile(String file) throws IOException, AbortException {
 		tokenStream.push(new File(file));
 		parse();
-		tokenStream.pop();
 	}
 
 	public void parseString(String text) throws AbortException {
 		tokenStream.push(text);
 		parse();
-		tokenStream.pop();
 	}
 	public void parse() throws AbortException {
 		String token;
@@ -154,11 +289,16 @@ public class ForthComp {
 	}
 
 	private void parse(String token) throws AbortException {
-		IWord word;
+		IWord word = null;
 		
-		word = targetContext.find(token);
-		if (word instanceof ITargetWord && ((ITargetWord) word).getEntry().isHidden())
-			word = null;
+		if (stateVar.getValue() == 0)
+			word = hostContext.find(token);
+		
+		if (word == null) {
+			word = targetContext.find(token);
+			if (word instanceof ITargetWord && ((ITargetWord) word).getEntry().isHidden())
+				word = null;
+		}
 		
 		if (word == null) {
 			word = hostContext.find(token);
@@ -169,11 +309,18 @@ public class ForthComp {
 			word = parseLiteral(token);
 		}
 		if (word == null) {
+			errors++;
 			throw abort("unknown: " + token);
 		}
 		
 		if (stateVar.getValue() == 0 || word.isImmediate()) {
-			word.execute(hostContext, targetContext);
+			try {
+				word.execute(hostContext, targetContext);
+			} catch (AbortException e) {
+				throw e;
+			} catch (Throwable t) {
+				throw abort("unexpected error at " + tokenStream.getLocation()+"\n"+t);
+			}
 		} else {
 			// compiling
 			if (word instanceof ITargetWord) {
@@ -224,5 +371,12 @@ public class ForthComp {
 		} catch (NumberFormatException e) {
 			return null;
 		}
+	}
+	
+	/**
+	 * @return the errors
+	 */
+	public int getErrors() {
+		return errors;
 	}
 }

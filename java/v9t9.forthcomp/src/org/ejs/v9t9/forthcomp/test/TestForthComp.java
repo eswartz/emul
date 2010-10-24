@@ -74,7 +74,8 @@ public class TestForthComp {
 	@Before
 	public void setup() {
 		targCtx = new F99TargetContext(4096);
-		targCtx.setDP(0x400);
+		targCtx.setBaseDP(0x400);
+		
 		comp = new ForthComp(targCtx);
 		hostCtx = comp.getHostContext();
 		
@@ -622,7 +623,7 @@ public class TestForthComp {
 		word = targCtx.readAddr(dp + 2);
 		assertOpword(word, ItoR_d - _Iext, 0, 0);
 		word = targCtx.readAddr(dp + 4);
-		assertOpword(word,  Iext, Ii - _Iext , Iloop);
+		assertOpword(word,  Iext, IatR - _Iext , Iloop);
 		word = targCtx.readAddr(dp + 6);
 		assertEquals(0 & 0xffff, word);
 		word = targCtx.readAddr(dp + 8);
@@ -677,7 +678,7 @@ public class TestForthComp {
 		word = targCtx.readAddr(dp + 6);
 		assertEquals(8 & 0xffff, word);	// past loop
 		word = targCtx.readAddr(dp + 8);		// body
-		assertOpword(word, Iext, Ii - _Iext , Iloop);
+		assertOpword(word, Iext, IatR - _Iext , Iloop);
 		word = targCtx.readAddr(dp + 10);
 		assertEquals(0 & 0xffff, word);
 		word = targCtx.readAddr(dp + 12);
@@ -960,5 +961,35 @@ public class TestForthComp {
 		assertEquals((short)0x8200, targCtx.readCell(copyAddr + 4));
 		assertEquals((short)0x81b0, targCtx.readCell(copyAddr + 2));
 		assertEquals((short)0x8000, targCtx.readCell(copyAddr));
+	}
+	
+	@Test
+	public void testConstants() throws Exception {
+		comp.parseString(
+				"12 constant Speed\n" +
+				"50 constant Distance\n"+
+				": foo Speed Distance * ;\n");
+		
+		dumpDict();
+		
+		interpret("foo");
+		
+		assertEquals(50*12, hostCtx.popData());
+	}
+
+	@Test
+	public void testStacks() throws Exception {
+		comp.parseString(
+				": foo rot ;\n");
+		
+		dumpDict();
+		
+		hostCtx.pushData(1);
+		hostCtx.pushData(2);
+		hostCtx.pushData(3);
+		interpret("foo");
+		assertEquals(1, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
 	}
 }

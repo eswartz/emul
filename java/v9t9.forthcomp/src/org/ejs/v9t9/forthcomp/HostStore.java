@@ -15,7 +15,8 @@ public class HostStore implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		int addr = hostContext.popData();
-		targetContext.writeCell(addr, hostContext.popData()); 
+		int data = hostContext.popData();
+		targetContext.writeCell(addr, data); 
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()

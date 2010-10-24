@@ -1,4 +1,6 @@
 
+\   ---------   memory map
+
 $0000       constant    I/O
 
 $0000       constant    VDPRD
@@ -28,5 +30,8 @@ $ffc0       constant    SysCalls    \ ... 0x20
 
 $ffe0       constant    IntVecs     \ ... 0x20
 
-        
+
+\ -----------   constants
+
+7           constant    CTX_INT        
 

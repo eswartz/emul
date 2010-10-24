@@ -1,7 +1,12 @@
 package v9t9.emulator.hardware.memory;
 
+import java.io.IOException;
+
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.CpuF99;
+import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
 
 
@@ -17,6 +22,7 @@ public class F99MemoryModel extends TI994AStandardConsoleMemoryModel {
 
 	@Override
 	protected void initSettings() {
+		DataFiles.addSearchPath("../v9t9.forthcomp/data");
 	}
 
 	/* (non-Javadoc)
@@ -24,7 +30,21 @@ public class F99MemoryModel extends TI994AStandardConsoleMemoryModel {
 	 */
 	@Override
 	public void loadMemory(IEventNotifier eventNotifier) {
-		
+		DiskMemoryEntry cpuRomEntry;
+		String filename = "f99rom.bin";
+    	try {
+			cpuRomEntry = DiskMemoryEntry.newWordMemoryFromFile(
+	    			0x0, 0x2000, "CPU ROM",
+	        		CPU,
+	                filename, 0x0, false);
+			cpuRomEntry.load();
+			for (int i = 0; i < cpuRomEntry.size; i += 2)
+				CPU.writeWord(i, cpuRomEntry.readWord(i));
+			cpuRomEntry.copySymbols(CPU);
+			
+    	} catch (IOException e) {
+    		reportLoadError(eventNotifier, filename, e);
+    	}
 	}
 	
 	protected void defineConsoleMemory(Machine machine) {
@@ -32,6 +52,8 @@ public class F99MemoryModel extends TI994AStandardConsoleMemoryModel {
 	    		0x0400, 0xFC00, new EnhancedRamArea(0, 0xFC00));
 	    entry.getArea().setLatency(0);
 		memory.addAndMap(entry);
+		
+		CPU.writeWord(CpuF99.INT_BASE + CpuF99.INT_RESET * 2, (short) 0x400);
 	}
 	
 	protected void defineMmioMemory(Machine machine) {

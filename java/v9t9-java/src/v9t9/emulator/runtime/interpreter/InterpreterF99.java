@@ -15,6 +15,7 @@ import static v9t9.engine.cpu.InstF99.*;
 import v9t9.engine.cpu.InstructionF99;
 import v9t9.engine.cpu.InstructionWorkBlockF99;
 import v9t9.engine.cpu.MachineOperandF99;
+import v9t9.engine.cpu.StatusF99;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -416,6 +417,15 @@ public class InterpreterF99 implements Interpreter {
         case Iover:
         	cpu.push(iblock.getStackEntry(1));
         	break;
+        case Irot: {
+        	short x = cpu.pop();
+        	short y = cpu.pop();
+        	short z = cpu.pop();
+        	cpu.push(y);
+        	cpu.push(x);
+        	cpu.push(z);
+        	break;
+        }
         case Idup_d: {
         	int v = cpu.popd();
         	cpu.pushd(v);
@@ -511,7 +521,7 @@ public class InterpreterF99 implements Interpreter {
         case Irdrop:
         	cpu.rpop();
         	break;
-        case Ii:
+        case IatR:
         	cpu.push(cpu.rpeek());
         	break;
         case Ispidx:
@@ -584,6 +594,9 @@ public class InterpreterF99 implements Interpreter {
         	case CTX_PC:
         		cpu.push(cpu.getPC());
         		break;
+        	case CTX_INT:
+        		cpu.push((short) cpu.getStatus().getIntMask());
+        		break;
     		default:
     			cpu.push((short) -1);
     			break;
@@ -613,6 +626,9 @@ public class InterpreterF99 implements Interpreter {
         	case CTX_PC:
         		((CpuStateF99)cpu.getState()).setPC(cpu.pop());
         		throw JUMPED;
+        	case CTX_INT:
+        		((StatusF99) ((CpuStateF99)cpu.getState()).getStatus()).setIntMask(cpu.pop());
+        		break;
         	default:
         		cpu.pop();
         		break;
@@ -649,6 +665,9 @@ public class InterpreterF99 implements Interpreter {
 			return (l & 0xffff) >>> (r & 0x1f);
 		case OP_ASH:
 			return l >> (r & 0x1f);
+		case OP_CSH:
+			return ( ((l & 0xffff) >>> (r & 0x1f))
+					| ((l & 0xffff) << (16 - (r & 0x1f))) ) ;
 		}
 		return 0;
 	}
@@ -670,6 +689,9 @@ public class InterpreterF99 implements Interpreter {
 			return (int) ((((long)l) & 0xffffffffL) >>> (r & 0x1f));
 		case OP_ASH:
 			return l >> (r & 0x1f);
+		case OP_CSH:
+			return (int) ( ((((long) l) & 0xffffffffL) >>> (r & 0x1f))
+					| (((long) l) & 0xffffffffL) << (32 - (r & 0x1f)) );
 		}
 		return 0;
 	}

@@ -20,7 +20,7 @@ public class CpuF99 extends CpuBase {
     /**
 	 * 
 	 */
-	private static final int INT_BASE = 0xffc0;
+	public static final int INT_BASE = 0xffe0;
 	public static final int BASE_CYCLES_PER_SEC = 5000000;
 	private CpuStateF99 statef99;
 	
@@ -261,6 +261,8 @@ public class CpuF99 extends CpuBase {
 	
 	@Override
 	public void reset() {
+		getState().setSP((short) 0xff80);
+		getState().setRP((short) 0xffc0);
 		triggerInterrupt(INT_RESET);
 	}
 
@@ -348,9 +350,9 @@ public class CpuF99 extends CpuBase {
 	/**
 	 * @param pc2
 	 */
-	public void contextSwitch(short pc) {
-		rpush(pc);
-		setPC(pc);
+	public void contextSwitch(short vec) {
+		rpush(getPC());
+		setPC(machine.getConsole().readWord(vec));
 	}
 
 	/**

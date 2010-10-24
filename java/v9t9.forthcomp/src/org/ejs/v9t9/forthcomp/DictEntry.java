@@ -17,6 +17,7 @@ public class DictEntry {
 	private int codeSize;
 	private boolean hidden;
 	private boolean immediate;
+	private boolean export;
 
 	/**
 	 * @param name 
@@ -119,6 +120,18 @@ public class DictEntry {
 	public int getParamAddr() {
 		return getContentAddr() + getCodeSize();
 	}
-	
+
+	/**
+	 * @param export
+	 */
+	public void setExport(boolean export) {
+		this.export = export;
+	}
+	/**
+	 * @return the export
+	 */
+	public boolean isExport() {
+		return export;
+	}
 
 }

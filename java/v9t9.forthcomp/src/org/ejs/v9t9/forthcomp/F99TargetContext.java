@@ -3,7 +3,6 @@
  */
 package org.ejs.v9t9.forthcomp;
 
-import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -61,10 +60,11 @@ public class F99TargetContext extends TargetContext {
 		definePrim("drop", Idrop);
 		definePrim("swap", Iswap);
 		definePrim("over", Iover);
+		definePrim("rot", Irot);
 		definePrim("0=", I0equ);
-		definePrim("d0=", I0equ_d);
+		definePrim("D0=", I0equ_d);
 		definePrim("=", Iequ);
-		definePrim("d=", Iequ_d);
+		definePrim("D=", Iequ_d);
 		definePrim("0branch", I0branch);
 		definePrim("branch", Ibranch);
 		definePrim("negate", Ineg);
@@ -83,10 +83,10 @@ public class F99TargetContext extends TargetContext {
 		definePrim("2>r", ItoR_d);
 		definePrim("r>", IRfrom);
 		definePrim("2r>", IRfrom_d);
-		//definePrim("r@", IatR);
-		//definePrim("i", IatR);
 		definePrim("rdrop", Irdrop);
-		definePrim("i", Ii);
+		definePrim("r@", IatR);
+		definePrim("i", IatR);
+		defineInlinePrim("j", Irpidx, 2);
 		definePrim("(do)", ItoR_d);
 		definePrim("(loop)", Iloop);
 		definePrim("(+loop)", IplusLoop);
@@ -142,9 +142,14 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("LSHIFT", Ibinop, OP_LSH);
 		defineInlinePrim("RSHIFT", Ibinop, OP_ASH);
 		defineInlinePrim("URSHIFT", Ibinop, OP_RSH);
+		defineInlinePrim("CSHIFT", Ibinop, OP_CSH);
+		
+		defineInlinePrim("SWPB", IfieldLit, 8, Ibinop, OP_CSH);
+		
 		defineInlinePrim("DLSHIFT", Ibinop_d, OP_LSH);
 		defineInlinePrim("DRSHIFT", Ibinop_d, OP_ASH);
 		defineInlinePrim("DURSHIFT", Ibinop_d, OP_RSH);
+		defineInlinePrim("DCSHIFT", Ibinop_d, OP_CSH);
 		
 		defineInlinePrim("1-", IfieldLit, 1, Ibinop, OP_SUB);
 		defineInlinePrim("2-", IfieldLit, 2, Ibinop, OP_SUB);
@@ -154,6 +159,7 @@ public class F99TargetContext extends TargetContext {
 		//defineInlinePrim("d=", Ineg_d, Iadd_d, Ior, I0equ);
 		//defineInlinePrim("DOVAR", Ilit, Iexit);
 		defineInlinePrim("DOVAR", IcontextFrom, 6, Iexit);
+		defineInlinePrim("DOCON", Ilit, Iexit);
 		
 
 	}
@@ -162,6 +168,7 @@ public class F99TargetContext extends TargetContext {
 		define(string, new F99PrimitiveWord(defineEntry(string), opcode));
 		compileField(opcode);
 		compileField(Iexit);
+		alignCode();
 	}
 
 	private void defineInlinePrim(String string, int... opcodes) {
@@ -169,6 +176,7 @@ public class F99TargetContext extends TargetContext {
 		for (int i : opcodes)
 			compileField(i);
 		compileField(Iexit);
+		alignCode();
 	}
 	
 	/* (non-Javadoc)
@@ -191,7 +199,14 @@ public class F99TargetContext extends TargetContext {
 		
 		return word;
 	}
-	
+	/**
+	 * 
+	 */
+	public void initCode() {
+		opcodeIndex = 3;
+		alignCode();
+	}
+
 	/**
 	 * 
 	 */
@@ -388,25 +403,6 @@ public class F99TargetContext extends TargetContext {
 
 	}
 	
-	/**
-	 * @param out
-	 * @param k 
-	 * @param from 
-	 */
-	public void dumpDict(PrintStream out, int from, int to) {
-		int perLine = 8;
-		int lines = ((to - from) / cellSize + perLine - 1) / perLine;
-		int addr = from;
-		for (int i = 0; i < lines; i++) {
-			out.print(HexUtils.toHex4(addr) + ": ");
-			for (int j = 0; j < perLine && addr < to; j++) {
-				out.print(HexUtils.toHex4(readCell(addr)) + " ");
-				addr += cellSize;
-			}
-			out.println();
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#pushFixup()
 	 */
@@ -519,6 +515,6 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void defineCompilerWords(HostContext hostContext) {
-		hostContext.define("FIELD,", new FieldComma());		
+		hostContext.define("FIELD,", new FieldComma());
 	}
 }

@@ -12,8 +12,6 @@ import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.TI994A;
-import v9t9.emulator.hardware.TI99Machine;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleSoundArea;

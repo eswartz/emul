@@ -3,7 +3,6 @@ package v9t9.emulator.hardware.memory;
 import java.io.*;
 
 import v9t9.emulator.common.*;
-import v9t9.emulator.hardware.*;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.emulator.hardware.memory.mmio.*;
 import v9t9.engine.files.DataFiles;

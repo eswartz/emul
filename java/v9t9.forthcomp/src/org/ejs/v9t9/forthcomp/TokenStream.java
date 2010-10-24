@@ -71,23 +71,33 @@ public class TokenStream {
 	 * @return
 	 */
 	public String read() throws IOException {
-		if (streams.isEmpty())
-			return null;
-		LineNumberReader fr = streams.peek();
 		int ch;
-		while (Character.isWhitespace(ch = fr.read())) /**/;
-		if (ch == -1)
-			return null;
+		LineNumberReader fr = null;
+		while (true) {
+			if (streams.isEmpty())
+				return null;
+			fr = streams.peek();
+			while (Character.isWhitespace(ch = fr.read())) /**/;
+			if (ch == -1) {
+				streams.pop().close();
+				continue;
+			}
+			else
+				break;
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append((char) ch);
 		line = fr.getLineNumber();
+		fr.mark(1);
 		while (!Character.isWhitespace(ch = fr.read()) && ch != -1) {
 			sb.append((char) ch);
+			fr.mark(1);
 		}
+		fr.reset();
 		return sb.toString();
 	}
 	
-	public boolean isAtEol() {
+	public boolean isAtEol(int forLine) {
 		if (streams.isEmpty())
 			return true;
 		LineNumberReader fr = streams.peek();
@@ -96,6 +106,8 @@ public class TokenStream {
 			try {
 				int ch;
 				while (Character.isWhitespace(ch = fr.read()))  {
+					if (fr.getLineNumber() > forLine)
+						return true;
 					if (ch == '\n')
 						return true;
 				}
@@ -121,7 +133,10 @@ public class TokenStream {
 	 * @return
 	 */
 	public int getLine() {
-		return line;
+		//return line;
+		if (streams.isEmpty())
+			return line;
+		return streams.peek().getLineNumber();
 	}
 
 	/**
@@ -130,6 +145,25 @@ public class TokenStream {
 	 */
 	public AbortException abort(String string) {
 		return new AbortException(getFile(), line, string);
+	}
+
+	/**
+	 * @return
+	 */
+	public String getLocation() {
+		return getFile() + ":" + getLine();
+	}
+
+	/**
+	 * 
+	 */
+	public void readToEOL() {
+		if (streams.isEmpty())
+			return;
+		try {
+			streams.peek().readLine();
+		} catch (IOException e) {
+		}
 	}
 
 	

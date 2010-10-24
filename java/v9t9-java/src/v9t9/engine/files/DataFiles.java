@@ -18,6 +18,8 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.CompatUtils;
 
+import v9t9.engine.memory.MemoryDomain;
+
 
 /**
  * Utilities for finding needed files around the filesystem based on lists of paths.
@@ -149,6 +151,32 @@ public class DataFiles {
         return file;
     }
 
+    /**
+     * @param filepath
+     * @param realsize
+     * @param memory
+     * @return File written
+     */
+    public static File writeMemoryImage(String filepath, int addr, int size, MemoryDomain memory)
+    throws FileNotFoundException, IOException 
+	{
+        File file = new File(filepath);
+        if (!file.isAbsolute()) {
+        	File dir = new File(settingStoredRamPath.getString());
+        	dir.mkdirs();
+        	file = new File(dir, filepath);
+        }
+        
+        /* write the chunk */
+        FileOutputStream stream = new FileOutputStream(file);
+        for (int i = 0; i < size; i += 2) {
+        	stream.write(memory.readByte(addr + i));
+        	stream.write(memory.readByte(addr + i + 1));
+        }
+        stream.close();
+        
+        return file;
+    }
 	/**
 	 * @param section
 	 */

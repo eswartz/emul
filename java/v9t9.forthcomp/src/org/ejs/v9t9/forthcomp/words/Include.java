@@ -3,6 +3,9 @@
  */
 package org.ejs.v9t9.forthcomp.words;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.IWord;
@@ -12,20 +15,26 @@ import org.ejs.v9t9.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Paren implements IWord {
-	public Paren() {
+public class Include implements IWord {
+	public Include() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		String tok;
-		do {
-			tok = hostContext.readToken();
-			if (tok == null)
-				throw hostContext.abort("end of file before )");
-		} while (!tok.equals(")"));
+		String filename = hostContext.readToken();
+		
+		try {
+			File dir = new File(hostContext.getStream().getFile()).getParentFile();
+			File file = new File(dir, filename);
+			if (file.exists())
+				hostContext.getStream().push(file);
+			else
+				hostContext.getStream().push(new File(filename));
+		} catch (FileNotFoundException e) {
+			throw hostContext.abort(e.getMessage());
+		}
 	}
 	
 	/* (non-Javadoc)

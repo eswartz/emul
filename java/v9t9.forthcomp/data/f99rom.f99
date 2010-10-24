@@ -1,0 +1,55 @@
+\   (c) 2010
+\
+\   Forth-99 ROM
+
+\   Memory layout
+
+$400    dp!
+
+\   boot address
+0 ,
+
+\   cold address
+0 ,
+
+(define-prims)
+
+<BARE
+
+include sysdefs.i
+
+BARE>
+
+include sysutils.i
+
+<BARE
+
+include video.i
+
+:   ints-on
+    1 (>context) [ CTX_INT field, ] 
+;
+:   ints-off
+    0 (>context) [ CTX_INT field, ] 
+;
+
+:   cycle
+    begin
+        256 0 do
+            i screen-fill
+        loop
+    again
+;
+
+
+:   bootup
+    text-mode
+    
+    cycle
+;
+
+BARE>
+
+\ -------------------------------------------------
+
+' bootup $400 !

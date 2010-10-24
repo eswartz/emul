@@ -7,13 +7,18 @@ package org.ejs.v9t9.forthcomp;
  * @author ejs
  *
  */
-public class TargetColonWord extends TargetWord implements ITargetWord {
+public class TargetConstant extends TargetWord implements ITargetWord {
+
+	private final int value;
+	private final int width;
 
 	/**
 	 * @param entry
 	 */
-	public TargetColonWord(DictEntry entry) {
+	public TargetConstant(DictEntry entry, int value, int width) {
 		super(entry);
+		this.value = value;
+		this.width = width;
 	}
 
 	/* (non-Javadoc)
@@ -21,6 +26,8 @@ public class TargetColonWord extends TargetWord implements ITargetWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		throw hostContext.abort("cannot execute compiled word: " + entry.getName());
+		hostContext.pushData(value & 0xffff);
+		if (width == 2)
+			hostContext.pushData(value >> 16);
 	}
 }

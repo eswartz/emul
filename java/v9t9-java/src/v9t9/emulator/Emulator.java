@@ -26,6 +26,7 @@ import v9t9.emulator.common.ModuleManager;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
 import v9t9.emulator.hardware.EnhancedMachineModel;
+import v9t9.emulator.hardware.F99MachineModel;
 import v9t9.emulator.hardware.MFP201MachineModel;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
@@ -66,6 +67,7 @@ public class Emulator {
 		MachineModelFactory.register(EnhancedCompatibleMachineModel.ID, EnhancedCompatibleMachineModel.class);
 		MachineModelFactory.register(EnhancedMachineModel.ID, EnhancedMachineModel.class);
 		MachineModelFactory.register(MFP201MachineModel.ID, MFP201MachineModel.class);
+		MachineModelFactory.register(F99MachineModel.ID, F99MachineModel.class);
 		
 		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
@@ -110,7 +112,7 @@ public class Emulator {
 	        //Executor.settingDumpFullInstructions.setBoolean(true);
     	}
         
-        if (false) {
+        if (true) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
@@ -158,7 +160,9 @@ public class Emulator {
         Machine machine;
         
         String modelId = StandardMachineModel.ID;
-        if (findArgument(args, "--mfp201")) {
+        if (findArgument(args, "--f99")) {
+        	modelId = F99MachineModel.ID;
+        } else if (findArgument(args, "--mfp201")) {
         	modelId = MFP201MachineModel.ID;
         } else {
 	        if (findArgument(args, "--enhanced")) {

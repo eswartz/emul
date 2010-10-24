@@ -108,7 +108,7 @@ public class InstF99 {
 	public static final int IplusLoop = Iloop + _Iext;
 
 	public static final int Irdrop = Istack_start + 12;
-	public static final int Ii = Irdrop + _Iext;
+	public static final int IatR = Irdrop + _Iext;
 	
 	//////
 	public static final int Ispecial_start = Istack_start + 13;
@@ -145,6 +145,7 @@ public class InstF99 {
 	public static final int CTX_UP = 4;
 	public static final int CTX_UP0 = 5;
 	public static final int CTX_PC = 6;
+	public static final int CTX_INT = 7;
 	
 	public static final String[] ctxStrings = {
 		"SP",
@@ -157,22 +158,24 @@ public class InstF99 {
 	};
 	public static final int OP_ADD = 0;
 	public static final int OP_SUB = 1;
-	public static final int OP_LSH = 2;
-	public static final int OP_RSH = 3;
-	public static final int OP_ASH = 4;
-	public static final int OP_AND = 5;
-	public static final int OP_OR = 6;
-	public static final int OP_XOR = 7;
+	public static final int OP_AND = 2;
+	public static final int OP_OR = 3;
+	public static final int OP_XOR = 4;
+	public static final int OP_LSH = 5;
+	public static final int OP_RSH = 6;
+	public static final int OP_ASH = 7;
+	public static final int OP_CSH = 8;
 	
 	public static final String[] opStrings = {
 	    	"+",
 	    	"-",
-	    	"LSH",
-	    	"RSH",
-	    	"ASH",
 	    	"AND",
 	    	"OR",
 	    	"XOR",
+	    	"LSH",
+	    	"RSH",
+	    	"ASH",
+	    	"CSH",
 	    };
 	 
 	public static final int CMP_LT = 0;
@@ -218,7 +221,7 @@ public class InstF99 {
 		ItoR_d, 2, 0, 0, 2,
 		IRfrom, 0, 1, 1, 0,
 		IRfrom_d, 0, 2, 2, 0,
-		Ii, 0, 1, 1, 1,
+		IatR, 0, 1, 1, 1,
 		Iexit, 0, 0, 1, 0,
 		Irdrop, 0, 0, 1, 0,
 		Idup_d, 2, 4, 0, 0,
@@ -305,6 +308,7 @@ public class InstF99 {
 		instNames.put(ItoR_d, "2>R");
 		instNames.put(IRfrom, "R>");
 		instNames.put(IRfrom_d, "2R>");
+		instNames.put(IatR, "R@");
 		instNames.put(Idup_d, "2DUP");
 		//instNames.put(Iadd_d, "D+");
 		instNames.put(IfieldLit_d, "DLIT.F");

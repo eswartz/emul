@@ -7,9 +7,12 @@
 package v9t9.engine.memory;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -225,6 +228,16 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
     		is.close();
     	}
     }
+    
+
+	/**
+	 * @param fos
+	 */
+	public void writeSymbols(PrintStream os) {
+		for (Map.Entry<Short, String> entry : symbols.entrySet()) {
+			os.println(HexUtils.toHex4(entry.getKey()) + " " + entry.getValue());
+		}
+	}
 
 	public void defineSymbol(int addr, String name) {
 		if (addr < this.addr || addr >= this.addr + this.size) {
@@ -243,6 +256,18 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 
 	public void clearSymbols() {
 		symbols = null;
+	}
+
+
+	/**
+	 * @param domain
+	 */
+	public void copySymbols(MemoryDomain domain) {
+		if (symbols != null) {
+			for (Map.Entry<Short, String> entry : symbols.entrySet()) {
+				domain.getEntryAt(entry.getKey()).defineSymbol(entry.getKey(), entry.getValue());
+			}
+		}
 	}
 
 	public String lookupSymbolNear(short addr) {
@@ -406,6 +431,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 		}
 		return entry;
 	}
+
 
 
 }

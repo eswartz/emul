@@ -20,12 +20,7 @@ public class BackSlash implements IWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		String tok;
-		do {
-			tok = hostContext.readToken();
-			if (tok == null)
-				throw new AbortException("end of file before EOL");
-		} while (!hostContext.getStream().isAtEol());
+		hostContext.getStream().readToEOL();
 	}
 	
 	/* (non-Javadoc)

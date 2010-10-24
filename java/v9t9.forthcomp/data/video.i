@@ -6,12 +6,31 @@ create  TextModeRegs
     begin 
         dup @ dup
     while
-        write-vreg
+        vwaddr
         2+
     repeat   
     drop
 ;
 
+\ ---------------------
+
+Variable screen-addr
+Variable screen-size
+
 :   text-mode
-    
+    TextModeRegs write-vregs
+    0 screen-addr !
+    960 screen-size !
+;
+
+\ -------------------
+
+:   vfill ( ch addr len -- )
+    swap $4000 or vwaddr
+    0 do  dup VDPWD c!  loop 
+    drop
+;
+
+:   screen-fill ( ch -- )
+    screen-addr @ screen-size @ vfill
 ;
