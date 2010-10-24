@@ -39,6 +39,8 @@ public class InterpreterF99 implements Interpreter {
 
 	private TreeMap<Integer, Pair<Integer, InstructionF99[]>> cachedInstrs = new TreeMap<Integer, Pair<Integer, InstructionF99[]>>();
 	private MemoryWriteListener memoryListener;
+	private int minCachedInstr;
+	private int maxCachedInstr;
 	
     public InterpreterF99(Machine machine) {
         this.machine = machine;
@@ -60,6 +62,7 @@ public class InterpreterF99 implements Interpreter {
 
     public void dispose() {
     	cachedInstrs.clear();
+    	minCachedInstr = maxCachedInstr = 0;
     	memory.removeWriteListener(memoryListener);
     }
     /* (non-Javadoc)
@@ -163,8 +166,46 @@ public class InterpreterF99 implements Interpreter {
         return jumped;		
 	}
 	
+
+	private boolean doInvalidateInstructionCache(int addr) {
+		if (cachedInstrs.isEmpty())
+			return true;
+		if (addr < minCachedInstr)
+			return true;
+		if (addr >= maxCachedInstr)
+			return true;
+		
+		Pair<Integer, InstructionF99[]> cache = cachedInstrs.remove(addr);
+		if (cache != null) {
+			int maxAddr = addr + 2;
+			for (InstructionF99 inst : cache.second)
+				if (inst != null)
+					maxAddr = Math.max(inst.pc + inst.getSize(), maxAddr);
+			while (addr++ < maxAddr)
+				cachedInstrs.remove(addr);
+
+			refreshCache();
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 */
+	private void refreshCache() {
+		if (cachedInstrs.isEmpty()) {
+			minCachedInstr = maxCachedInstr = 0;
+			return;
+		}
+		minCachedInstr = cachedInstrs.firstKey();
+		maxCachedInstr = cachedInstrs.lastKey();
+	}
+
 	private void invalidateInstructionCache(int addr) {
-		cachedInstrs.remove(addr);
+		if (!doInvalidateInstructionCache(addr))
+			if (!doInvalidateInstructionCache((addr & ~1) - 2))	// in case a field
+				doInvalidateInstructionCache((addr & ~1) - 4);
 	}
 
 	private InstructionF99[] getInstructions() {
@@ -174,6 +215,7 @@ public class InterpreterF99 implements Interpreter {
 		if (cache == null) {
 			cache = parseInstructions(pc);
 			cachedInstrs.put(pc & 0xffff, cache);
+			refreshCache();
 		} else {
 			iblock.pc = (short) (pc + cache.first);
 		}
@@ -211,8 +253,9 @@ public class InterpreterF99 implements Interpreter {
 		} else {
 			while (iblock.index < 3 && iblock.instNum < 3) {
 				InstructionF99 inst = getInstruction(thisPc);
-				if (inst != null)
-					instBuffer[iblock.instNum++] = inst; 
+				if (inst != null) {
+					instBuffer[iblock.instNum++] = inst;
+				}
 			}
 		}
 		iblock.pc += (iblock.index == 4 ? 1 : 0);
@@ -281,6 +324,8 @@ public class InterpreterF99 implements Interpreter {
 			// no immediate	
 		}
 		
+		inst.setSize(iblock.pc - inst.pc);
+		
 		return inst;
 	}
 
@@ -310,12 +355,16 @@ public class InterpreterF99 implements Interpreter {
         case Icload:
         	cpu.push((short) (memory.readByte(cpu.pop()) & 0xff));
         	break;
-        case Istore:
-        	memory.writeWord(cpu.pop(), cpu.pop());
+        case Istore: {
+        	int addr = cpu.pop();
+        	memory.writeWord(addr, cpu.pop());
         	break;
-        case Icstore:
-        	memory.writeByte(cpu.pop(), (byte) cpu.pop());
+        }
+        case Icstore: {
+        	int addr = cpu.pop();
+        	memory.writeByte(addr, (byte) cpu.pop());
         	break;
+        }
         	
         case IplusStore: {
         	short addr = cpu.pop();

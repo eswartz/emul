@@ -24,6 +24,7 @@ import org.ejs.v9t9.forthcomp.words.Constant;
 import org.ejs.v9t9.forthcomp.words.Create;
 import org.ejs.v9t9.forthcomp.words.Do;
 import org.ejs.v9t9.forthcomp.words.Else;
+import org.ejs.v9t9.forthcomp.words.ParsedTick;
 import org.ejs.v9t9.forthcomp.words.PopExportState;
 import org.ejs.v9t9.forthcomp.words.PushExportState;
 import org.ejs.v9t9.forthcomp.words.Here;
@@ -122,85 +123,8 @@ public class ForthComp {
     	comp.saveMemory(consoleOutFile, gromOutFile);
 	}
 
-	/**
-	 * 
-	 */
-	private void finish() {
-		for (ForwardRef ref : targetContext.getForwardRefs()) {
-			logfile.println("*** Unresolved symbol: " + ref.getEntry().getName() + " ( " + ref.getLocation() + ")");
-			errors++;
-		}
-	}
-
 	private PrintStream logfile;
 
-	/**
-	 * @param logfile
-	 */
-	public void setLog(PrintStream logfile) {
-		this.logfile = logfile;
-		targetContext.setLog(logfile);
-	}
-
-	/**
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
-	 * 
-	 */
-	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException {
-
-    	final MemoryDomain console = new MemoryDomain("CONSOLE");
-    	EnhancedRamArea bigRamArea = new EnhancedRamArea(0, 0x10000); 
-		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
-				bigRamArea);
-		console.mapEntry(bigRamEntry);
-    	targetContext.exportMemory(console);
-    	
-		TargetContext.dumpMemory(logfile, 0, targetContext.getDP(),
-			new IMemoryReader() {
-
-				public int readWord(int addr) {
-					return console.readWord(addr);
-				}
-    	});
-		
-		if (consoleOutFile != null) {
-			System.out.println("Writing " + consoleOutFile);
-			
-			DataFiles.writeMemoryImage(new File(consoleOutFile).getAbsolutePath(), 
-					0, targetContext.getDP(), 
-					console);
-			
-			File symfile;
-			int didx = consoleOutFile.lastIndexOf('.');
-	        if (didx >= 0) {
-	        	symfile = new File(consoleOutFile.substring(0, didx) + ".sym");
-	        } else {
-	        	symfile = new File(consoleOutFile + ".sym");
-	        }
-			FileOutputStream fos = new FileOutputStream(symfile);
-			bigRamEntry.writeSymbols(new PrintStream(fos));
-			fos.close();
-		}
-    			
-	}
-
-	/**
-	 * 
-	 */
-	public void dumpDict() {
-		targetContext.dumpDict(logfile, targetContext.getBaseDP(), targetContext.getDP());
-		
-	}
-
-	public TargetContext getTargetContext() {
-		return targetContext;
-	}
-
-	private static void help() {
-		System.out.println("Help me!");
-	}
-	
 	private HostContext hostContext;
 	private TargetContext targetContext;
 	private TokenStream tokenStream;
@@ -212,6 +136,7 @@ public class ForthComp {
 		hostContext = new HostContext();
 		tokenStream = hostContext.getStream();
 		this.targetContext = targetContext;
+		this.logfile = System.out;
 		
 		defineHostCompilerWords();
 	 	
@@ -245,6 +170,7 @@ public class ForthComp {
 		hostContext.define("constant", new Constant());
 		hostContext.define("allot", new Allot());
 		hostContext.define("'", new Tick());
+		hostContext.define("[']", new ParsedTick());
 		
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
@@ -388,6 +314,83 @@ public class ForthComp {
 		}
 	}
 	
+	/**
+	 * 
+	 */
+	public void finish() {
+		for (ForwardRef ref : targetContext.getForwardRefs()) {
+			logfile.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
+			errors++;
+		}
+	}
+
+	/**
+	 * @param logfile
+	 */
+	public void setLog(PrintStream logfile) {
+		this.logfile = logfile;
+		targetContext.setLog(logfile);
+	}
+
+	/**
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 * 
+	 */
+	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException {
+	
+		final MemoryDomain console = new MemoryDomain("CONSOLE");
+		EnhancedRamArea bigRamArea = new EnhancedRamArea(0, 0x10000); 
+		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
+				bigRamArea);
+		console.mapEntry(bigRamEntry);
+		targetContext.exportMemory(console);
+		
+		TargetContext.dumpMemory(logfile, 0, targetContext.getDP(),
+			new IMemoryReader() {
+	
+				public int readWord(int addr) {
+					return console.readWord(addr);
+				}
+		});
+		
+		if (consoleOutFile != null) {
+			System.out.println("Writing " + consoleOutFile);
+			
+			DataFiles.writeMemoryImage(new File(consoleOutFile).getAbsolutePath(), 
+					0, targetContext.getDP(), 
+					console);
+			
+			File symfile;
+			int didx = consoleOutFile.lastIndexOf('.');
+	        if (didx >= 0) {
+	        	symfile = new File(consoleOutFile.substring(0, didx) + ".sym");
+	        } else {
+	        	symfile = new File(consoleOutFile + ".sym");
+	        }
+			FileOutputStream fos = new FileOutputStream(symfile);
+			bigRamEntry.writeSymbols(new PrintStream(fos));
+			fos.close();
+		}
+				
+	}
+
+	/**
+	 * 
+	 */
+	public void dumpDict() {
+		targetContext.dumpDict(logfile, targetContext.getBaseDP(), targetContext.getDP());
+		
+	}
+
+	public TargetContext getTargetContext() {
+		return targetContext;
+	}
+
+	private static void help() {
+		System.out.println("Help me!");
+	}
+
 	/**
 	 * @return the errors
 	 */

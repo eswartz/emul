@@ -13,8 +13,8 @@ import org.ejs.v9t9.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Tick implements IWord {
-	public Tick() {
+public class ParsedTick implements IWord {
+	public ParsedTick() {
 	}
 
 	/* (non-Javadoc)
@@ -30,7 +30,7 @@ public class Tick implements IWord {
 		if (!(word instanceof ITargetWord))
 			throw hostContext.abort("cannot take address of host word " + name);
 		
-		hostContext.pushData(((ITargetWord)word).getEntry().getContentAddr());
+		targetContext.compileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true);
 		
 	}
 	
@@ -38,6 +38,6 @@ public class Tick implements IWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return false;
+		return true;
 	}
 }

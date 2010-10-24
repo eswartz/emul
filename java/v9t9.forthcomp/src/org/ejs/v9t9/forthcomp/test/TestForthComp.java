@@ -66,7 +66,6 @@ public class TestForthComp {
 		if (cpu == null) {
 			f99MachineModel = new F99MachineModel();
 			f99Machine = (F99Machine) f99MachineModel.createMachine();
-			interp = new InterpreterF99(f99Machine);
 			cpu = (CpuF99) f99Machine.getCpu();
 		
 			DumpFullReporterF99 dump = new DumpFullReporterF99(cpu,  new PrintWriter(System.out));
@@ -76,6 +75,8 @@ public class TestForthComp {
 	}
 	@Before
 	public void setup() {
+		interp = new InterpreterF99(f99Machine);
+		
 		targCtx = new F99TargetContext(4096);
 		targCtx.setBaseDP(0x400);
 		
@@ -94,12 +95,12 @@ public class TestForthComp {
 	}
 	@Test
 	public void testLiteral() throws Exception {
-		comp.parseString("123");
+		parseString("123");
 		assertEquals(123, hostCtx.popData());
 	}
 	@Test
 	public void testLiteral2() throws Exception {
-		comp.parseString("123 456");
+		parseString("123 456");
 		assertEquals(456, hostCtx.popData());
 		assertEquals(123, hostCtx.popData());
 	}
@@ -110,7 +111,7 @@ public class TestForthComp {
 		
 		startDP = targCtx.getDP();
 		
-		comp.parseString("Variable t");
+		parseString("Variable t");
 		IWord var = targCtx.require("T");
 
 		var.execute(hostCtx, targCtx);
@@ -129,7 +130,7 @@ public class TestForthComp {
 		
 		startDP = targCtx.getDP();
 		
-		comp.parseString("Variable t Variable ud");
+		parseString("Variable t Variable ud");
 		
 		ITargetWord tvar = (ITargetWord) targCtx.require("T");
 		tvar.execute(hostCtx, targCtx);
@@ -150,7 +151,7 @@ public class TestForthComp {
 	@Test
 	public void testCompileTimeVariableLoadStore() throws Exception {
 		targCtx.clearDict();
-		comp.parseString("Variable t Variable u 123 t ! t @ u !  u @");
+		parseString("Variable t Variable u 123 t ! t @ u !  u @");
 		
 		IWord uvar = targCtx.require("U");
 		assertEquals(123, targCtx.readCell(((ITargetWord)uvar).getEntry().getParamAddr()));
@@ -163,7 +164,7 @@ public class TestForthComp {
 		ITargetWord semiS = (ITargetWord) targCtx.require(";S");
 		assertNotNull(semiS);
 
-		comp.parseString(": foo ;");
+		parseString(": foo ;");
 		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
 		assertNotNull(foo);
 		
@@ -177,7 +178,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testColon2() throws Exception {
-		comp.parseString(": foo ; : b ;");
+		parseString(": foo ; : b ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
 		
@@ -201,7 +202,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testPrimPacking1() throws Exception {
-		comp.parseString(": foo @ ! 0 dup ;");
+		parseString(": foo @ ! 0 dup ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.require("foo");
 		
@@ -250,9 +251,14 @@ public class TestForthComp {
 		targCtx.dumpDict(System.out, startDP, targCtx.getDP());
 	}
 	
+	private void parseString(String text) throws AbortException {
+		comp.parseString(text);
+		comp.finish();
+		assertEquals(0, comp.getErrors());
+	}
 	@Test
 	public void testLiterals1() throws Exception {
-		comp.parseString(": eq 15 3 - 0= ;");
+		parseString(": eq 15 3 - 0= ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
@@ -269,7 +275,7 @@ public class TestForthComp {
 
 	@Test
 	public void testLiterals2() throws Exception {
-		comp.parseString(": eq 15 456 = ;");
+		parseString(": eq 15 456 = ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
@@ -286,7 +292,7 @@ public class TestForthComp {
 
 	@Test
 	public void testLiterals3() throws Exception {
-		comp.parseString(": eq -3 5 4 ;");
+		parseString(": eq -3 5 4 ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
@@ -304,7 +310,7 @@ public class TestForthComp {
 
 	@Test
 	public void testLiterals3Ex() throws Exception {
-		comp.parseString(": eq -3 5 3 ;");
+		parseString(": eq -3 5 3 ;");
 
 		interpret("eq");
 		
@@ -316,7 +322,7 @@ public class TestForthComp {
 
 	@Test
 	public void testLiterals6() throws Exception {
-		comp.parseString(": eq 11. $ffff.aaaa ;");
+		parseString(": eq 11. $ffff.aaaa ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
@@ -364,7 +370,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testLiterals4() throws Exception {
-		comp.parseString(": eq 122 @ 456 ! 789 dup ;");
+		parseString(": eq 122 @ 456 ! 789 dup ;");
 		
 		TargetColonWord foo = (TargetColonWord) targCtx.require("eq");
 		
@@ -387,7 +393,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testLiterals4Ex() throws Exception {
-		comp.parseString(": eq 1020 1456 ! 789 dup ;");
+		parseString(": eq 1020 1456 ! 789 dup ;");
 		
 		targCtx.writeCell(1456, 1000);
 		
@@ -399,7 +405,7 @@ public class TestForthComp {
 
 	@Test
 	public void testLiterals5Ex() throws Exception {
-		comp.parseString(": num $1234.5678 ;");
+		parseString(": num $1234.5678 ;");
 		
 		interpret("num");
 		
@@ -409,7 +415,7 @@ public class TestForthComp {
 
 	@Test
 	public void testIfBranch0() throws Exception {
-		comp.parseString(": true if -1 else 0 then ;");
+		parseString(": true if -1 else 0 then ;");
 
 		TargetColonWord foo = (TargetColonWord) targCtx.require("true");
 		
@@ -432,7 +438,7 @@ public class TestForthComp {
 
 	@Test
 	public void testIfBranch0Ex() throws Exception {
-		comp.parseString(": true if -1 else 0 then ;");
+		parseString(": true if -1 else 0 then ;");
 
 		hostCtx.pushData(5);
 		interpret("true");
@@ -445,7 +451,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testIfBranch() throws Exception {
-		comp.parseString(": sgn dup 0< if drop -1 else 0= if 0 else 1 then then ;");
+		parseString(": sgn dup 0< if drop -1 else 0= if 0 else 1 then then ;");
 
 		dumpDict();
 		
@@ -496,7 +502,7 @@ public class TestForthComp {
 
 	@Test
 	public void testIfBranchEx() throws Exception {
-		comp.parseString(": sgn dup 0< if drop -1 else 0= if 0 else 1 then then ;");
+		parseString(": sgn dup 0< if drop -1 else 0= if 0 else 1 then then ;");
 
 		hostCtx.pushData(5);
 		interpret("sgn");
@@ -514,7 +520,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testColonCall() throws Exception {
-		comp.parseString(": sub negate 10 + ; : outer 100 sub -50 sub + ;");
+		parseString(": sub negate 10 + ; : outer 100 sub -50 sub + ;");
 
 		dumpDict();
 		
@@ -534,7 +540,7 @@ public class TestForthComp {
 
 	@Test
 	public void testColonCallEx() throws Exception {
-		comp.parseString(": sub negate 10 + ; : outer 100 sub -50 sub + ;");
+		parseString(": sub negate 10 + ; : outer 100 sub -50 sub + ;");
 		
 		interpret("outer");
 		assertEquals(-30, hostCtx.popData());
@@ -543,7 +549,7 @@ public class TestForthComp {
 
 	@Test
 	public void testMultiplyDivide() throws Exception {
-		comp.parseString(
+		parseString(
 				//": */ ( n1 n2 n3 -- n4 ) >r um* r> um/mod  swap drop ;\n" +
 				": */mod ( n1 n2 n3 -- rem quot ) >r um* r> um/mod ;\n" +
 				": */ ( n1 n2 n3 -- n4 ) */mod swap drop ;\n" +
@@ -557,7 +563,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoubleMath1Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				": outer $8888 $ffff um* $8887.7778 d= ;");
 		
 		interpret("outer");
@@ -567,7 +573,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoubleMath2Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				": outer $8887.7778 2>r  $8887 r> = $7778 r> = + ;");
 		
 		interpret("outer");
@@ -575,7 +581,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testShifts1Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				": outer $8887 12 ursh  $8887 8 rsh $ffff 15 lsh ;");
 		
 		interpret("outer");
@@ -585,7 +591,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testShifts2Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				": outer $8887 12U ursh  $8887 8U rsh $ffff 15U lsh ;");
 		
 		interpret("outer");
@@ -595,7 +601,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testDoublShifts1Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				": outer $8887.7778 16. dursh  $8887.7778 8. drsh ;");
 		
 		interpret("outer");
@@ -606,7 +612,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testDoublShifts2Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				": outer $8887.7778 16.U dursh  $8887.7778 8.U drsh ;");
 		
 		interpret("outer");
@@ -617,7 +623,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testDoLoop() throws Exception {
-		comp.parseString(": stack 0 do i loop ;");
+		parseString(": stack 0 do i loop ;");
 
 		dumpDict();
 		
@@ -640,7 +646,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoLoopEx() throws Exception {
-		comp.parseString(": stack 0 do i loop ;");
+		parseString(": stack 0 do i loop ;");
 
 		hostCtx.pushData(5);
 		interpret("stack");
@@ -654,7 +660,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testQDoLoop() throws Exception {
-		comp.parseString(": stack 0 ?do i loop ;");
+		parseString(": stack 0 ?do i loop ;");
 
 		dumpDict();
 		
@@ -695,7 +701,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoQLoopEx() throws Exception {
-		comp.parseString(": stack 3 ?do i loop ;");
+		parseString(": stack 3 ?do i loop ;");
 
 		hostCtx.pushData(5);
 		interpret("stack");
@@ -711,7 +717,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoLoopLeaveEx() throws Exception {
-		comp.parseString(": stack 10 3 do i 5 = if leave then i loop ;");
+		parseString(": stack 10 3 do i 5 = if leave then i loop ;");
 
 		interpret("stack");
 		assertEquals(4, hostCtx.popData());
@@ -721,7 +727,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoPlusLoopEx() throws Exception {
-		comp.parseString(": stack 0 do i 3 +loop ;");
+		parseString(": stack 0 do i 3 +loop ;");
 
 		hostCtx.pushData(10);
 		interpret("stack");
@@ -739,7 +745,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoPlusLoopEx2() throws Exception {
-		comp.parseString(": stack 0 do i 16384 u+loop ;");
+		parseString(": stack 0 do i 16384 u+loop ;");
 
 		hostCtx.pushData(0);
 		interpret("stack");
@@ -751,7 +757,7 @@ public class TestForthComp {
 
 	@Test
 	public void testDoPlusLoopEx3() throws Exception {
-		comp.parseString(": stack 10 -10 do i 4 +loop ;");
+		parseString(": stack 10 -10 do i 4 +loop ;");
 
 		interpret("stack");
 		assertEquals(6, hostCtx.popData());
@@ -763,7 +769,7 @@ public class TestForthComp {
 
 	@Test
 	public void testStackAccessorsEx() throws Exception {
-		comp.parseString(
+		parseString(
 			": depth (context>) [ 1 field, ] (context>) [ 0 field, ] - 2/ 1- ;\n"+
 			": rdepth (context>) [ 3 field, ] (context>) [ 2 field, ] - 2/ 1- ; \n" +	
 			": stack 1 2 4 5 >r depth rdepth rdrop ;");
@@ -775,7 +781,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testLogOpsEx1() throws Exception {
-		comp.parseString(
+		parseString(
 				": tst 1 2 < 1 2 >  1 -2 < 1 -2 >  6 6 >= -8 6 <= ;\n" +
 				": utst 1 2 u< 1 2 u>  1 -2 u< 1 -2 u>  6 6 u>= -8 6 u<= ;"
 				
@@ -800,7 +806,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testLogOpsEx2() throws Exception {
-		comp.parseString(
+		parseString(
 				": tst 1. 2. d< 1. 2. d>  1. -2. d< 1. -2. d>  6. 6. d>= -8. 6. d<= ;\n" +
 				": utst 1. 2. du< 1. 2. du>  1. -2. du< 1. -2. du>  6. 6. du>= -8. 6. du<= ;"
 				
@@ -848,7 +854,7 @@ public class TestForthComp {
 
 	@Test
 	public void testMemOps1Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				"Variable x\n" +
 				"Variable y\n" +
 				": tst 55 y !  x +!  x @ y +! ;"
@@ -876,7 +882,7 @@ public class TestForthComp {
 
 	@Test
 	public void testMemOps2Ex() throws Exception {
-		comp.parseString(
+		parseString(
 				"Create str\n" +
 				"3 c, 65 c, 172 c, 90 c,\n" +
 				": [] ( addr idx -- val addr ) over + c@ swap ; \n"+
@@ -896,7 +902,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testBeginAgain() throws Exception {
-		comp.parseString(
+		parseString(
 				"variable idx\n"+
 				": loopit\n"+
 				"begin \n" +
@@ -917,7 +923,7 @@ public class TestForthComp {
 
 	@Test
 	public void testBeginUntil() throws Exception {
-		comp.parseString(
+		parseString(
 				"variable idx\n"+
 				": loopit\n"+
 				"begin \n" +
@@ -936,7 +942,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testBeginWhileRepeat() throws Exception {
-		comp.parseString(
+		parseString(
 				"create  TextModeRegs\n" + 
 				"    $8000 , $81B0 , $8200 , $8400 , 0 , \n"+
 				"create Copy 50 allot\n"+
@@ -972,7 +978,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testConstants() throws Exception {
-		comp.parseString(
+		parseString(
 				"12 constant Speed\n" +
 				"50 constant Distance\n"+
 				": foo Speed Distance * ;\n");
@@ -986,7 +992,7 @@ public class TestForthComp {
 
 	@Test
 	public void testStacks() throws Exception {
-		comp.parseString(
+		parseString(
 				": foo rot ;\n");
 		
 		dumpDict();
@@ -998,7 +1004,7 @@ public class TestForthComp {
 	
 	@Test
 	public void testForwards() throws Exception {
-		comp.parseString(
+		parseString(
 				": vfill 1 2 3 ; \n"+
 				": foo cls cls cls ;\n" +
 				": cls vfill drop drop drop ;\n");
@@ -1033,7 +1039,7 @@ public class TestForthComp {
 
 	@Test
 	public void testRedef() throws Exception {
-		comp.parseString(
+		parseString(
 				": vfill ; \n"+
 				": foo cls ;\n" +
 				": cls vfill ;\n");
@@ -1041,7 +1047,7 @@ public class TestForthComp {
 		ITargetWord origCls = (ITargetWord) targCtx.require("cls");
 		ITargetWord origVfill = (ITargetWord) targCtx.require("vfill");
 		
-		comp.parseString(
+		parseString(
 				": vfill ; \n"+
 				": foo2 vfill ;\n"+
 				": cls drop ;\n"+
@@ -1075,7 +1081,7 @@ public class TestForthComp {
 
 	@Test
 	public void testWriteProgram() throws Exception {
-		comp.parseString(
+		parseString(
 				": num 123 ;\n" +
 				": foo num  456 ['] num 2+ ! num ;\n");
 		
@@ -1087,4 +1093,19 @@ public class TestForthComp {
 		assertEquals(123, hostCtx.popData());
 	}
 
+	@Test
+	public void testWriteProgram2() throws Exception {
+		parseString(
+				": num 123. ;\n" +
+				": foo num  456 ['] num 2+ 2+ ! num ;\n");
+		
+		dumpDict();
+		
+		interpret("foo");
+		
+		assertEquals(456, hostCtx.popData());
+		assertEquals(123, hostCtx.popData());
+		assertEquals(0, hostCtx.popData());
+		assertEquals(123, hostCtx.popData());
+	}
 }

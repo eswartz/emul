@@ -102,6 +102,8 @@ public class CpuMetrics {
         		vdpInterrupts, honoredInterrupts, (int)compiledInstructions, 
         		(int)switches, (int)compiles);
         
+        //System.out.println(entry.toSummary());
+        
         if (entries.size() >= 1024)
         	entries = new ArrayList<MetricEntry>(entries.subList(entries.size() - 512, entries.size()));
         
