@@ -73,9 +73,9 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            defaultHandler="org.eclipse.tcf.internal.target.ui.NewTargetCommandHandler"
-            id="org.eclipse.tcf.target.command.createTarget"
-            name="Create Target">
+            defaultHandler="org.eclipse.tcf.internal.target.ui.newtarget.NewTargetCommandHandler"
+            id="org.eclipse.tcf.target.command.newTarget"
+            name="New Target...">
       </command>
    </extension>
    <extension
@@ -84,8 +84,18 @@
             allPopups="false"
             locationURI="menu:org.eclipse.tcf.target.targetsView">
          <command
-               commandId="org.eclipse.tcf.target.command.createTarget"
-               label="Create Target"
+               commandId="org.eclipse.tcf.target.command.newTarget"
+               label="New Target..."
+               style="push">
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:org.eclipse.tcf.target.targetsView">
+         <command
+               commandId="org.eclipse.tcf.target.command.newTarget"
+               icon="icons/sample.gif"
+               label="New Target..."
                style="push">
          </command>
       </menuContribution>

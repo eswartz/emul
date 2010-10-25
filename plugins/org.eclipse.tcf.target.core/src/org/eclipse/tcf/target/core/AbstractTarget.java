@@ -25,6 +25,7 @@ public abstract class AbstractTarget extends PlatformObject implements ITarget {
 	
 	protected LinkedList<IPeer> peers = new LinkedList<IPeer>();
 	protected LinkedList<ITargetListener> listeners = new LinkedList<ITargetListener>();
+	protected LinkedList<ITargetRequest> outstandingRequests = new LinkedList<ITargetRequest>();
 	
 	private IChannel channel;
 
@@ -42,6 +43,8 @@ public abstract class AbstractTarget extends PlatformObject implements ITarget {
 	public void removeLaunchListener(ITargetListener listener) {
 		listeners.remove(listener);
 	}
+	
+	protected abstract void launch();
 	
 	protected IChannel getChannel() {
 		if (channel != null)
@@ -77,35 +80,61 @@ public abstract class AbstractTarget extends PlatformObject implements ITarget {
 	}
 	
 	@Override
+	public String getName() {
+		String name = getShortName();
+		String agentId = getAgentId();
+		if (agentId != null)
+			name += " {" + agentId + "}";
+		return name;
+	}
+	
+	private String getAgentId() {
+		if (peers.isEmpty())
+			return null;
+		
+		return peers.getFirst().getAgentID();
+	}
+	
+	@Override
 	public void handleTargetRequest(final ITargetRequest request) {
 		assert Protocol.isDispatchThread();
-		final IChannel channel = getChannel();
-		switch (channel.getState()) {
-		case IChannel.STATE_OPENING:
-			channel.addChannelListener(new IChannel.IChannelListener() {
-				@Override
-				public void onChannelOpened() {
-					request.execute(channel);
-					channel.removeChannelListener(this);
-				}
-				
-				@Override
-				public void onChannelClosed(Throwable error) {
-					request.channelUnavailable(Activator.createStatus(IStatus.ERROR, error));
-				}
-				
-				@Override
-				public void congestionLevel(int level) {
-				}
-			});
-			break;
-		case IChannel.STATE_OPEN:
-			request.execute(channel);
-			break;
-		case IChannel.STATE_CLOSED:
-			request.channelUnavailable(Activator.createStatus(IStatus.ERROR, new Error("Channel closed.")));
-			break;
+		if (!peers.isEmpty()) {
+			// have peers, ready to go.
+			final IChannel channel = getChannel();
+			switch (channel.getState()) {
+			case IChannel.STATE_OPENING:
+				channel.addChannelListener(new IChannel.IChannelListener() {
+					@Override
+					public void onChannelOpened() {
+						request.execute(channel);
+						channel.removeChannelListener(this);
+					}
+					
+					@Override
+					public void onChannelClosed(Throwable error) {
+						request.channelUnavailable(Activator.createStatus(IStatus.ERROR, error));
+					}
+					
+					@Override
+					public void congestionLevel(int level) {
+					}
+				});
+				break;
+			case IChannel.STATE_OPEN:
+				request.execute(channel);
+				break;
+			case IChannel.STATE_CLOSED:
+				request.channelUnavailable(Activator.createStatus(IStatus.ERROR, new Error("Channel closed.")));
+				break;
+			}
+			return;
 		}
+		
+		// Need to launch
+		boolean launching = !outstandingRequests.isEmpty();
+		outstandingRequests.add(request);
+		if (!launching)
+			launch();
 	}
 	
 	protected void fireEvent(TargetEvent event) {
@@ -118,20 +147,30 @@ public abstract class AbstractTarget extends PlatformObject implements ITarget {
 		boolean launching = false;
 		if (peers.isEmpty())
 			launching = true;
-		else
+		else {
+			// Make sure agent id matches
+			if (!getAgentId().equals(peer.getAgentID()))
+				return false;
+			
+			// Replace any old peer object with the new one
 			for (Iterator<IPeer> i = peers.iterator(); i.hasNext();) {
 				IPeer p = i.next();
 				if (p.getID().equals(peer.getID()))
-					// Replace the old peer object with the new one
 					i.remove();
 			}
+		}
 		
 		peers.add(peer);
 		
-		if (launching)
+		if (launching) {
+			// start things up now that we have a peer
 			fireEvent(new TargetEvent(EventType.LAUNCHED, this));
+			for (ITargetRequest request : outstandingRequests)
+				handleTargetRequest(request);
+			outstandingRequests.clear();
+		}
 		
-		return true;		
+		return true;
 	}
 	
 	@Override

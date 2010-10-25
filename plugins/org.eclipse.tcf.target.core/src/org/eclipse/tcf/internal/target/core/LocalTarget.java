@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.LinkedList;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
@@ -23,8 +22,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.tcf.target.core.AbstractTarget;
 import org.eclipse.tcf.target.core.ITarget;
-import org.eclipse.tcf.target.core.TargetEvent;
-import org.eclipse.tcf.target.core.TargetEvent.EventType;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.osgi.framework.Bundle;
@@ -35,45 +32,18 @@ public class LocalTarget extends AbstractTarget implements ITarget {
 	private String host = "127.0.0.1";
 	private String port = "1534";
 	
-	private String agentId;
-	private LinkedList<ITargetRequest> outstandingRequests = new LinkedList<ITargetRequest>();
 	private Process process;
 
 	@Override
-	public String getName() {
-		return "Local";
-	}
-
-	@Override
 	public String getShortName() {
-		return getName();
+		return "Local";
 	}
 	
 	@Override
-	public void handleTargetRequest(ITargetRequest request) {
-		assert Protocol.isDispatchThread();
-		
-		if (!peers.isEmpty()) {
-			// Good to go
-			super.handleTargetRequest(request);
-			return;
-		}
-		
-		// Need to launch
-		synchronized (outstandingRequests) {
-			boolean launching = !outstandingRequests.isEmpty();
-			outstandingRequests.add(request);
-			if (launching)
-				// already launching
-				return;
-		}
-		
+	protected void launch() {
 		try {
 			// Find the path to the agent executable
-			IPath agentPath = getAgentFileName();
-			Bundle debugBundle = Platform.getBundle("org.eclipse.tm.tcf.debug");
-			URL agentURL = FileLocator.find(debugBundle, agentPath, null);
-			File agentFile = new File(FileLocator.toFileURL(agentURL).toURI());
+			File agentFile = getAgentFile();
 			if (!Platform.getOS().equals(Platform.OS_WIN32)) {
 				Runtime.getRuntime().exec(new String[] { "chmod", "+x", agentFile.getAbsolutePath() }).waitFor();
 			}
@@ -117,7 +87,7 @@ public class LocalTarget extends AbstractTarget implements ITarget {
 			Activator.log(IStatus.ERROR, e);
 		}
 	}
-
+	
 	private boolean isLocalAgent(IPeer peer) {
         String h = peer.getAttributes().get(IPeer.ATTR_IP_HOST);
         String p = peer.getAttributes().get(IPeer.ATTR_IP_PORT);
@@ -125,43 +95,35 @@ public class LocalTarget extends AbstractTarget implements ITarget {
         return host.equals(h) && port.equals(p) && "true".equals(l);
 	}
 	
-    private static IPath getAgentFileName() {
-        String os = System.getProperty("os.name");
-        String arch = System.getProperty("os.arch");
-        String fnm = "agent";
-        if (arch.equals("x86")) arch = "i386";
-        if (arch.equals("i686")) arch = "i386";
-        if (os.startsWith("Windows")) {
-            os = "Windows";
-            fnm = "agent.exe";
-        }
-        if (os.equals("Linux")) os = "GNU/Linux";
-        return new Path("agent/" + os + "/" + arch + "/" + fnm);
-    }
-
+	private static File getAgentFile() throws URISyntaxException, IOException {
+		String localAgent = System.getProperty("tcf.localAgent");
+		if (localAgent != null) {
+			return new File(localAgent);
+		} else {
+	        String os = System.getProperty("os.name");
+	        String arch = System.getProperty("os.arch");
+	        String fnm = "agent";
+	        if (arch.equals("x86")) arch = "i386";
+	        if (arch.equals("i686")) arch = "i386";
+	        if (os.startsWith("Windows")) {
+	            os = "Windows";
+	            fnm = "agent.exe";
+	        }
+	        if (os.equals("Linux")) os = "GNU/Linux";
+			IPath agentPath = new Path("agent/" + os + "/" + arch + "/" + fnm);
+			Bundle debugBundle = Platform.getBundle("org.eclipse.tm.tcf.debug");
+			URL agentURL = FileLocator.find(debugBundle, agentPath, null);
+			return new File(FileLocator.toFileURL(agentURL).toURI());
+		}
+	}
+	
 	@Override
 	public boolean handleNewPeer(IPeer peer) {
-		synchronized (peers) {
-			if (peers.isEmpty()) {
-				// first one in, if it's ours, signal the launch listeners
-				if (isLocalAgent(peer)) {
-					peers.add(peer);
-					agentId = peer.getAgentID();
-					fireEvent(new TargetEvent(EventType.LAUNCHED, this));
-					for (ITargetRequest request : outstandingRequests)
-						// send to super now that we have a peer
-						super.handleTargetRequest(request);
-					outstandingRequests.clear();
-					return true;
-				}
-			} else {
-				// Base on agent id
-				if (agentId.equals(peer.getAgentID()))
-					if (super.handleNewPeer(peer))
-						return true;
-			}
-		}
-		return false;
+		// If it's the first one in, make sure it's a local agent
+		if (peers.isEmpty() && !isLocalAgent(peer))
+			return false;
+		
+		return super.handleNewPeer(peer);
 	}
 
 	public void dispose() {

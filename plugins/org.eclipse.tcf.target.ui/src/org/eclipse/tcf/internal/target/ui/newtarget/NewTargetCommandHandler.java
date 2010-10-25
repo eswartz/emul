@@ -8,17 +8,26 @@
  * Contributors:
  * Wind River Systems - Initial API and implementation
  *******************************************************************************/
-package org.eclipse.tcf.internal.target.ui;
+package org.eclipse.tcf.internal.target.ui.newtarget;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.core.commands.IHandlerListener;
+import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.swt.widgets.Display;
 
 public class NewTargetCommandHandler implements IHandler {
 
 	@Override
 	public void addHandlerListener(IHandlerListener handlerListener) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void removeHandlerListener(IHandlerListener handlerListener) {
 		// TODO Auto-generated method stub
 
 	}
@@ -31,7 +40,10 @@ public class NewTargetCommandHandler implements IHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		// TODO Auto-generated method stub
+		Wizard ntWizard = new NewTargetWizard();
+		WizardDialog dialog = new WizardDialog(Display.getDefault().getActiveShell(), ntWizard);
+		dialog.create();
+		dialog.open();
 		return null;
 	}
 
@@ -45,12 +57,6 @@ public class NewTargetCommandHandler implements IHandler {
 	public boolean isHandled() {
 		// TODO Auto-generated method stub
 		return true;
-	}
-
-	@Override
-	public void removeHandlerListener(IHandlerListener handlerListener) {
-		// TODO Auto-generated method stub
-
 	}
 
 }

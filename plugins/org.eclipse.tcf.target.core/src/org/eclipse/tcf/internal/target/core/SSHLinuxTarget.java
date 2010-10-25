@@ -11,25 +11,23 @@
 package org.eclipse.tcf.internal.target.core;
 
 import org.eclipse.tcf.target.core.AbstractTarget;
-import org.eclipse.tcf.target.core.ITarget;
-import org.eclipse.tm.tcf.protocol.IPeer;
 
-public class DiscoveredTarget extends AbstractTarget implements ITarget {
+/**
+ * A target that is launched through an SSH session.
+ * 
+ * @author Doug Schaefer
+ */
+public class SSHLinuxTarget extends AbstractTarget {
 
-	public DiscoveredTarget(IPeer firstPeer) {
-		handleNewPeer(firstPeer);
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
 	}
-	
+
 	@Override
 	protected void launch() {
-		// Discovered targets have already launched
-	}
-	
-	@Override
-	public boolean handleRemovePeer(String id) {
-		super.handleRemovePeer(id); // ignore result
+		// TODO Auto-generated method stub
 		
-		return peers.isEmpty(); // return true if peers all gone
 	}
-	
 }

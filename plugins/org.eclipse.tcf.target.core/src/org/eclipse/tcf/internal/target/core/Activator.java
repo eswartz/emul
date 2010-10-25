@@ -21,6 +21,8 @@ import org.osgi.framework.ServiceReference;
 
 public class Activator implements BundleActivator {
 
+	private static final String PLUGIN_ID = "org.eclipse.tcf.target.core";
+	
 	private static BundleContext context;
 	
 	private TargetManager targetManager;
@@ -60,8 +62,7 @@ public class Activator implements BundleActivator {
 		if (e instanceof CoreException)
 			return ((CoreException)e).getStatus();
 		
-		String pluginId = context.getBundle().getSymbolicName();
-		return new Status(severity, pluginId, e.getLocalizedMessage(), e);
+		return new Status(severity, PLUGIN_ID, e.getLocalizedMessage(), e);
 	}
 
 }

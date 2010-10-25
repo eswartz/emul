@@ -26,10 +26,9 @@ public class TargetServiceTester extends PropertyTester {
 			return false;
 		final ITarget target = (ITarget)receiver;
 		
-		if ("targetServiceRunning".equals(property))
-			// If target isn't running, return false
-			if (!target.isRunning())
-				return false;
+		// If target isn't running, return false
+		if (!target.isRunning())
+			return false;
 		
 		return new TCFTask<Boolean>() {
 			@Override
