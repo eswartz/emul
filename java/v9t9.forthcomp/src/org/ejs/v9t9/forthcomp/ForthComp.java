@@ -10,6 +10,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.v9t9.forthcomp.TargetContext.IMemoryReader;
@@ -22,6 +26,8 @@ import org.ejs.v9t9.forthcomp.words.Colon;
 import org.ejs.v9t9.forthcomp.words.Comma;
 import org.ejs.v9t9.forthcomp.words.Constant;
 import org.ejs.v9t9.forthcomp.words.Create;
+import org.ejs.v9t9.forthcomp.words.DConstant;
+import org.ejs.v9t9.forthcomp.words.DVariable;
 import org.ejs.v9t9.forthcomp.words.Do;
 import org.ejs.v9t9.forthcomp.words.Else;
 import org.ejs.v9t9.forthcomp.words.ParsedTick;
@@ -101,16 +107,17 @@ public class ForthComp {
         } 
         
     	int idx = getopt.getOptind();
-    	try {
-        	while (idx < args.length) {
-	        	String name = args[idx];
-	        	comp.parseFile(name);
-	        	idx++;
+    	while (idx < args.length) {
+        	String name = args[idx];
+        	try {
+        		comp.parseFile(name);
+        	} catch (AbortException e) {
+        		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
         	}
-        	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
-    	} catch (AbortException e) {
-    		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
+        	idx++;
     	}
+    	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
+	
 
     	comp.finish();
     	
@@ -121,6 +128,20 @@ public class ForthComp {
         
     	comp.getTargetContext().alignDP();
     	comp.saveMemory(consoleOutFile, gromOutFile);
+    	
+    	logfile.println("Top word uses:");
+    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getDictionary().values());
+		
+    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
+				public int compare(DictEntry o1, DictEntry o2) {
+					return o1.getUses() - o2.getUses();
+				}
+			}
+    	);
+    	for (DictEntry entry : sortedDict.subList(Math.max(0, sortedDict.size() - 16), sortedDict.size())) {
+    		logfile.println("\t" + entry.getUses() +"\t" + entry.getName() );
+    		
+    	}
 	}
 
 	private PrintStream logfile;
@@ -167,13 +188,17 @@ public class ForthComp {
 		
 		hostContext.define("create", new Create());
 		hostContext.define("variable", new Variable());
+		hostContext.define("dvariable", new DVariable());
 		hostContext.define("constant", new Constant());
+		hostContext.define("dconstant", new DConstant());
 		hostContext.define("allot", new Allot());
 		hostContext.define("'", new Tick());
 		hostContext.define("[']", new ParsedTick());
 		
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
+		hostContext.define("true", new HostConstant(-1));
+		hostContext.define("false", new HostConstant(0));
 		hostContext.define(":", new Colon());
 		hostContext.define(";", new SemiColon());
 		
@@ -213,12 +238,22 @@ public class ForthComp {
 	}
 	public void parseFile(String file) throws IOException, AbortException {
 		tokenStream.push(new File(file));
-		parse();
+		try {
+			parse();
+		} catch (AbortException e) {
+			errors++;
+			throw e;
+		}
 	}
 
 	public void parseString(String text) throws AbortException {
 		tokenStream.push(text);
-		parse();
+		try {
+			parse();
+		} catch (AbortException e) {
+			errors++;
+			throw e;
+		}
 	}
 	public void parse() throws AbortException {
 		String token;

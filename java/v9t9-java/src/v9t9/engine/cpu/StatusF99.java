@@ -60,11 +60,8 @@ public class StatusF99 implements Status {
     	this.bits = stat;
     }
 
-    /*
-     * for LIMI
-     */
     public void setIntMask(int mask) {
-        bits = (short) (bits & ~0x1 | mask & 0x1);
+        bits = (short) (bits & ~0x7 | mask & 0x7);
     }
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isLT()
@@ -133,7 +130,7 @@ public class StatusF99 implements Status {
      * @return
      */
     public int getIntMask() {
-        return (bits & 1);
+        return (bits & 0x7);
     }
 
 

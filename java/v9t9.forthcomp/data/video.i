@@ -28,7 +28,7 @@ create  VRegSave      16 allot
     drop
 ;
 
-: v-vis ( f -- )
+: vid-show ( f -- )
     $40 and 
     1 get-vreg  or
     $8100 or  write-vregaddr
@@ -47,7 +47,7 @@ Variable v-patts
     $800 v-patts !
     cls
     load-font
-    true v-vis
+    true vid-show
 ;
 
 \ -------------------
@@ -74,7 +74,7 @@ Variable v-patts
 
 EXPORT>
 
-:   vinit
+:   video-init
     \ reset latches
     VDPRD c@ drop
     0 GPLWD c! 

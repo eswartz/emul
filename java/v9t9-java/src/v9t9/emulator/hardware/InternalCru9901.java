@@ -6,30 +6,15 @@
  */
 package v9t9.emulator.hardware;
 
-import org.ejs.coffee.core.settings.ISettingSection;
-
-import v9t9.emulator.common.Machine;
-import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.keyboard.KeyboardState;
 
 /**
  * CRU handlers for the TMS9901 (as attached to a TI-99/4A).
  * @author ejs
  */
-public class InternalCru9901 implements CruAccess {
-    Machine machine;
+public class InternalCru9901 extends BaseCruAccess {
 	private CruManager manager;
 
-	private int crukeyboardcol;
-	/** Set to prevent reading alpha lock */
-	private boolean alphaLockMask;
-	protected int clockRegister;
-	protected int clockDecrementerRegister;
-	protected int clockReadRegister;
-	private boolean suppressClockInterrupts;
-	
-	
 	private CruWriter cruw9901_0 = new CruWriter() {
 
 		public int write(int addr, int data, int num) {
@@ -63,26 +48,26 @@ public class InternalCru9901 implements CruAccess {
 				//logger(_L | L_2, _("Altering 9901 bit... addr=%04X, data=%04X,mask=%04X\n"), addr,
 				//	 data, mask);
 		
-				if (bit == INT_CLOCK)
+				if (bit == intClock)
 					suppressClockInterrupts= false;
 				
 				//  First, writing a 0 will disable the interrupt,
 				//  and writing a 1 will enable it, or acknowledge it.
 				if (data == 0) {
-					int9901 &= ~mask;
+					enabledIntMask &= ~mask;
 				} else { 
 					if ((currentints & mask) != 0)
 						acknowledgeInterrupt(bit);
-					int9901 |= mask;
+					enabledIntMask |= mask;
 				}
 				
-				//logger(_L | L_2, _("before reset: int9901 = %04X, currentints = %04X\n"), hw9901.int9901,
+				//logger(_L | L_2, _("before reset: enabledIntMask = %04X, currentints = %04X\n"), hw9901.enabledIntMask,
 				//	 hw9901.currentints);
 		
-				//logger(_L | L_2, _("after reset: int9901 = %04X, currentints = %04X\n"), hw9901.int9901,
+				//logger(_L | L_2, _("after reset: enabledIntMask = %04X, currentints = %04X\n"), hw9901.enabledIntMask,
 				//	 hw9901.currentints);
 		
-				/*  int9901change();
+				/*  enabledIntMaskchange();
 				   handle9901(); */
 			}
 			return 0;
@@ -147,28 +132,6 @@ public class InternalCru9901 implements CruAccess {
 		}
 		
 	};
-	protected boolean clockmode;
-	
-	/** Enabled interrupt mask.  Any request to trigger an interrupt not
-	 * enabled in this mask will be ignored.
-	 */
-	protected int int9901;
-	/** Currently active interrupts.  These are fed to the TMS9900
-	 * via {@link Cpu9900#setInterruptRequest(byte)} in priority order. */
-	protected int currentints;
-
-	/** intlevel for peripheral interrupt */ 
-	public static final int INT_EXT = 1;
-	/** int9901/currentints mask for peripheral interrupt */ 
-	public static final int M_INT_EXT = 2;
-	/** intlevel for VDP interrupt */ 
-	public static final int INT_VDP = 2;
-	/** int9901/currentints mask for VDP interrupt */ 
-	public static final int M_INT_VDP = 4;
-	/** intlevel for clock interrupt */ 
-	public static final int INT_CLOCK = 3;
-	/** int9901/currentints mask for clock interrupt */ 
-	public static final int M_INT_CLOCK = 8;
 
 	private CruReader crur9901_0 = new CruReader() {
 		public int read(int addr, int data, int num) {
@@ -181,8 +144,8 @@ public class InternalCru9901 implements CruAccess {
 		public int read(int addr, int data, int num) {
 			if (clockmode)
 				return clockReadRegister & 1;
-			else if ((int9901 & M_INT_EXT) != 0) {
-				return (currentints & M_INT_EXT) == 0 ? 0 : 1;
+			else if ((enabledIntMask & (1 << intExt)) != 0) {
+				return (currentints & (1 << intExt)) == 0 ? 0 : 1;
 			} else
 				return 0;
 		}
@@ -192,11 +155,11 @@ public class InternalCru9901 implements CruAccess {
 		public int read(int addr, int data, int num) {
 			if (clockmode)
 				return (clockReadRegister >> 1) & 1;
-			else if ((int9901 & M_INT_VDP) != 0) {
+			else if ((enabledIntMask & (1 << intVdp)) != 0) {
 				// if the keyboard is not scanned continuously, this
 				// is a way to trap it in the standard TI ROM
 				keyboardState.resetProbe();
-				return (currentints & M_INT_VDP) == 0 ? 0 : 1;
+				return (currentints & (1 << intVdp)) == 0 ? 0 : 1;
 			} else
 				return 0;
 		}
@@ -212,7 +175,7 @@ public class InternalCru9901 implements CruAccess {
 
 			if (clockmode)
 				return (clockReadRegister >> (bit - 1)) & 0x1;
-			else if ((int9901 & (1 << bit)) != 0)
+			else if ((enabledIntMask & (1 << bit)) != 0)
 				return (currentints & (1 << bit)) == 0 ? 0 : 1;
 			else {
 				int alphamask = 0;
@@ -246,17 +209,12 @@ public class InternalCru9901 implements CruAccess {
 		}
 		
 	};
-	private final KeyboardState keyboardState;
-	private long clockTargetCycleCount;
-	private boolean intreq;
 	
     public InternalCru9901(TI99Machine machine, KeyboardState keyboardState) {
-        this.machine = machine;
-		this.keyboardState = keyboardState;
+    	super(machine, keyboardState, 15);
+    	
         this.manager = machine.getCruManager();
         assert manager != null;
-        
-        reset();
 
         registerInternalCru(0x0, 1, cruw9901_0);
         registerInternalCru(0x2, 1, cruw9901_S);
@@ -298,14 +256,6 @@ public class InternalCru9901 implements CruAccess {
 
     }
 
-    private void reset() {
-        int9901 = 0;
-        intreq = false;
-        ic = 0xf;
-		// 	XXX: reset software pins
-        currentints = 0;
-	}
-
 	protected void resetClock() {
 		clockDecrementerRegister = clockRegister;
 		clockTargetCycleCount = machine.getCpu().getTotalCurrentCycleCount() + 64;
@@ -342,127 +292,4 @@ public class InternalCru9901 implements CruAccess {
     public CruManager getCruManager() {
     	return manager;
     }
-
-    public boolean isInterruptWaiting() {
-    	return intreq;
-    }
-
-    public byte getInterruptLevel() {
-    	return ic;
-    }
-
-  
-  
-    /** When PIN_INTREQ set, the interrupt level (IC* bits on the TMS9900). */
-    private byte ic;
-    
-	public void pollForPins(Cpu cpu) {
-		// interrupts not generated in clock mode
-		if (clockmode) {
-			return;
-		}
-		
-		// while polling, also handle clock if in I/O mode
-		if (clockRegister != 0) {
-			// this decrements once every 64 cycles
-			long nowCycles = cpu.getTotalCurrentCycleCount();
-			while (clockTargetCycleCount < nowCycles) {
-				if (--clockDecrementerRegister <= 0) {
-					//System.out.println("tick");
-					if (!suppressClockInterrupts && (int9901 & M_INT_CLOCK) != 0) {
-						triggerInterrupt(INT_CLOCK);
-						
-						// "When the clock interrupt is active, the clock mask must be written
-						// to clear the interrupt."
-						suppressClockInterrupts = true;
-					}
-					resetClock();
-					break;
-				}
-				clockTargetCycleCount += 64;
-				clockReadRegister = clockDecrementerRegister;
-			}
-		}
-		
-		intreq = false;
-		
-		if ((currentints & int9901) != 0) {
-			int intlevel;
-			
-			// optimize for typical case
-			if ((currentints & int9901) == (1 << INT_VDP)) {
-				intlevel = 1;
-			} else {
-				intlevel = 15;
-				while (intlevel != 0 && ((currentints & int9901) & (1 << intlevel)) == 0)
-					intlevel--;
-			}
-	
-			if (intlevel != 0) {
-				//System.out.println(
-				//		"Requesting interrupt... "+intlevel+"/"+currentints+"/"+int9901);
-
-				this.intreq = true;
-				this.ic = ((byte) intlevel);
-				cpu.setPin(Cpu9900.PIN_INTREQ);
-			}
-		}
-	}
-
-	/**
-		Trigger an interrupt, via hardware.
-	*/
-	public void triggerInterrupt(int level) {
-		if ((int9901 & (1 << level)) != 0) {
-			if ((currentints & (1 << level)) == 0) {
-				currentints |= 1 << level;
-				//System.out.println(
-				//		"Hardware triggered interrupt... "+level+"/"+currentints+"/"+int9901);
-			}
-		}
-	}
-
-	public void acknowledgeInterrupt(int level) {
-		if ((currentints & (1 << level)) != 0) {
-			currentints &= ~(1 << level);
-			machine.getCpu().acknowledgeInterrupt();
-			//System.out.println(
-			//		"Acknowledged interrupt... "+level+"/"+currentints+"/"+int9901);
-		} else {
-			//System.out.println(
-			//		"??? acknowledged unset interrupt... "+level+"/"+currentints+"/"+int9901);
-		}
-	}
-
-	public void saveState(ISettingSection section) {
-		section.put("EnabledInterrupts", int9901);
-		section.put("CurrentInterrupts", currentints);
-		section.put("KeyboardColumn", crukeyboardcol);
-		section.put("ClockMode", clockmode);
-		section.put("ClockRegister", clockRegister);
-		section.put("ClockReadRegister", clockReadRegister);
-		section.put("ClockDecrementerRegister", clockDecrementerRegister);
-		section.put("SuppressClockInterrupts", suppressClockInterrupts);
-		section.put("AlphaLockMask", alphaLockMask);
-		section.put("IntReq", intreq);
-		section.put("IC", ic);
-	}
-	public void loadState(ISettingSection section) {
-		if (section == null) {
-			reset();
-			return;
-		}
-		int9901 = section.getInt("EnabledInterrupts");
-		currentints = section.getInt("CurrentInterrupts");
-		crukeyboardcol = section.getInt("KeyboardColumn");
-		clockmode = section.getBoolean("ClockMode");
-		clockReadRegister = section.getInt("ClockReadRegister");
-		clockDecrementerRegister = section.getInt("ClockDecrementerRegister");
-		clockRegister = section.getInt("ClockRegister");
-		suppressClockInterrupts = section.getBoolean("SuppressClockInterrupts");
-		alphaLockMask = section.getBoolean("AlphaLockMask");
-		intreq = section.getBoolean("IntReq");
-		ic = (byte) section.getInt("IC");
-	}
-	
 }

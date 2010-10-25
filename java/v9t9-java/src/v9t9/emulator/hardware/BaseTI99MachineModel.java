@@ -7,7 +7,6 @@ import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.cpu.*;
 import v9t9.emulator.runtime.interpreter.Interpreter9900;
-import v9t9.keyboard.KeyboardState;
 import v9t9.tools.asm.assembler.*;
 
 /**

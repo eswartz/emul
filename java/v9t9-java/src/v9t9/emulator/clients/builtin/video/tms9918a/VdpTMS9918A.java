@@ -24,7 +24,8 @@ import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.InternalCru9901;
+import v9t9.emulator.hardware.BaseCruAccess;
+import v9t9.emulator.hardware.CruAccess;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.engine.VdpHandler;
@@ -113,6 +114,8 @@ public class VdpTMS9918A implements VdpHandler {
 
 	public VdpTMS9918A(Machine machine) {
 		this.machine = machine;
+		
+		vdpStatus = (byte) VDP_INTERRUPT;
 		
 		settingVdpInterruptRate.addListener(new IPropertyListener() {
 
@@ -280,6 +283,7 @@ public class VdpTMS9918A implements VdpHandler {
     		&& 	(old & VdpTMS9918A.R1_INT) == 0 
     		&&	(vdpStatus & VdpTMS9918A.VDP_INTERRUPT) != 0) 
     		{
+    			
     			//trigger9901int( M_INT_VDP);	// TODO
     		}
 
@@ -568,9 +572,9 @@ public class VdpTMS9918A implements VdpHandler {
      * @see v9t9.handlers.VdpHandler#readVdpStatus()
      */
     public byte readVdpStatus() {
-		/* >8802, status read */
+		/* >8802, status read and acknowledge interrupt */
     	byte ret = vdpStatus;
-		vdpStatus &= ~0x80;
+		vdpStatus &= ~VDP_INTERRUPT;
 		// TODO machine.getCpu().reset9901int(v9t9.cpu.Cpu.M_INT_VDP);
 
         return ret;
@@ -695,9 +699,14 @@ public class VdpTMS9918A implements VdpHandler {
         		
         		// a real interrupt only occurs if wanted
         		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
-        			if (machine.getCpu().getCruAccess() != null)
-        				machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
-            		machine.getExecutor().nVdpInterrupts++;
+        			if ((vdpStatus & VDP_INTERRUPT) == 0) {
+        				vdpStatus |= VDP_INTERRUPT;
+        				machine.getExecutor().nVdpInterrupts++;
+        			}
+        			
+        			CruAccess cru = machine.getCpu().getCruAccess();
+					if (cru instanceof BaseCruAccess)
+        				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
         		}
         		//System.out.print('!');
 			}
@@ -709,7 +718,7 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	protected void doTick() {
-		vdpStatus |= 0x80;
+		
 	}
 	
 	public boolean isThrottled() {
@@ -788,7 +797,7 @@ public class VdpTMS9918A implements VdpHandler {
 			if (machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
 	    		if (Machine.settingThrottleInterrupts.getBoolean()) {
 	    			if (throttleCount-- < 0) {
-	    				throttleCount = 60;
+	    				throttleCount = 6;
 	    			} else {
 	    				return;
 	    			}
@@ -798,9 +807,14 @@ public class VdpTMS9918A implements VdpHandler {
 	    		
 	    		// a real VDP interrupt only occurs if desired
 	    		if ((vdpregs[1] & R1_INT) != 0) {
-	    			if (machine.getCpu().getCruAccess() != null)
-	    				machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
-		    		machine.getExecutor().nVdpInterrupts++;
+        			if ((vdpStatus & VDP_INTERRUPT) == 0) {
+        				vdpStatus |= VDP_INTERRUPT;
+        				machine.getExecutor().nVdpInterrupts++;
+        			}
+
+        			CruAccess cru = machine.getCpu().getCruAccess();
+					if (cru instanceof BaseCruAccess)
+        				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
 	    		}
 	    		//System.out.print('!');
 			}

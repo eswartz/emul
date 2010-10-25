@@ -31,7 +31,6 @@ public class F99MachineModel implements MachineModel {
 	public static final String ID = "Forth99";
 	
 	private F99MemoryModel memoryModel;
-	private Vdp9938Mmio vdpMmio;
 	private VdpV9938 vdp;
 	
 	public F99MachineModel() {
@@ -64,7 +63,7 @@ public class F99MachineModel implements MachineModel {
 	 */
 	public VdpHandler createVdp(Machine machine) {
 		vdp = new VdpV9938(machine);
-		vdpMmio = new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
+		new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;
 	}
 
@@ -73,6 +72,7 @@ public class F99MachineModel implements MachineModel {
 	}
 	
 	public void defineDevices(final Machine machine_) {
+		machine_.getCpu().setCruAccess(new InternalCruF99(machine_, machine_.getKeyboardState()));
 		/*
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;

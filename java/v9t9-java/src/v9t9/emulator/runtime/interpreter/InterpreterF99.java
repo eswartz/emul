@@ -2,6 +2,7 @@ package v9t9.emulator.runtime.interpreter;
 
 import java.util.TreeMap;
 
+import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Pair;
 
@@ -160,7 +161,7 @@ public class InterpreterF99 implements Interpreter {
         		listener.executed(block, iblock);
         	}
         	
-        	iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Icall);
+        	iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Iexiti || ins.getInst() == Icall);
         }
 	        
         return jumped;		
@@ -210,7 +211,8 @@ public class InterpreterF99 implements Interpreter {
 
 	private InstructionF99[] getInstructions() {
 		short pc = cpu.getPC();
-
+		if (pc == 0xb7a)
+			pc += 0;
 		Pair<Integer, InstructionF99[]> cache = cachedInstrs.get((int)pc);
 		if (cache == null) {
 			cache = parseInstructions(pc);
@@ -232,8 +234,10 @@ public class InterpreterF99 implements Interpreter {
 		
 		short opword = memory.readWord(thisPc);
 		
-		if (opword == 0)
+		if (opword == 0) {
 			System.out.println(HexUtils.toHex4(thisPc) + ": NOP word");
+			Logging.writeLogLine(Executor.settingDumpFullInstructions, HexUtils.toHex4(thisPc) + ": NOP word");
+		}
 		
 		iblock.instNum = 0;
 		iblock.opword = opword;
@@ -294,12 +298,14 @@ public class InterpreterF99 implements Interpreter {
 		case Icmp_d:
 		case Ibinop:
 		case Ibinop_d:
+		case Iunaryop:
+		case Iunaryop_d:
 		case ItoContext:
 		case IcontextFrom:
 			inst.setOp1(MachineOperandF99.createImmediateOperand(iblock.nextField(), MachineOperandF99.OP_ENC_IMM5));
 			if (opcode == I0cmp || opcode == Icmp || opcode == I0cmp_d || opcode == Icmp_d)
 				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_CMP;
-			else if (opcode == Ibinop || opcode == Ibinop_d)
+			else if (opcode == Ibinop || opcode == Ibinop_d || opcode == Iunaryop || opcode == Iunaryop_d)
 				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_OP;
 			else if (opcode == ItoContext || opcode == IcontextFrom)
 				((MachineOperandF99)inst.getOp1()).encoding = MachineOperandF99.OP_ENC_CTX;
@@ -331,7 +337,7 @@ public class InterpreterF99 implements Interpreter {
 
 	private InstructionF99 getCallInstruction(short op) {
 		InstructionF99 inst = new InstructionF99();
-		inst.pc = cpu.getPC() - 2;
+		inst.pc = cpu.getPC();
 		inst.opcode = op;
 		inst.setOp1(MachineOperandF99.createImmediateOperand((short) (op << 1), MachineOperandF99.OP_ENC_IMM15S1));
 		inst.setInst(Icall);
@@ -355,6 +361,12 @@ public class InterpreterF99 implements Interpreter {
         case Icload:
         	cpu.push((short) (memory.readByte(cpu.pop()) & 0xff));
         	break;
+        case Iload_d: {
+        	int addr = cpu.pop();
+        	cpu.push(memory.readWord(addr + 2));
+        	cpu.push(memory.readWord(addr));
+        	break;
+        }
         case Istore: {
         	int addr = cpu.pop();
         	memory.writeWord(addr, cpu.pop());
@@ -365,10 +377,25 @@ public class InterpreterF99 implements Interpreter {
         	memory.writeByte(addr, (byte) cpu.pop());
         	break;
         }
+        case Istore_d: {
+        	int addr = cpu.pop();
+        	memory.writeWord(addr, cpu.pop());
+        	memory.writeWord(addr + 2, cpu.pop());
+        	break;
+        }
         	
         case IplusStore: {
         	short addr = cpu.pop();
         	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(addr) + cpu.pop()));
+        	break;
+        }
+        case IplusStore_d: {
+        	short addr = cpu.pop();
+        	int add = cpu.popd();
+        	int val = (iblock.domain.readWord(addr) << 16) | (iblock.domain.readWord(addr + 2) & 0xffff);
+        	val += add;
+        	iblock.domain.writeWord(addr, (short) (val >> 16));
+        	iblock.domain.writeWord(addr + 2, (short) (val & 0xffff));
         	break;
         }
         	
@@ -383,7 +410,11 @@ public class InterpreterF99 implements Interpreter {
         	
         case Iexit:
         	cpu.setPC(cpu.rpop());
-        	iblock.showSymbol = true;
+        	return true;
+        case Iexiti:
+        	cpu.setPC(cpu.rpop());
+        	cpu.setST(cpu.rpop());
+        	cpu.noIntCount++;
         	return true;
         	
         case Idup:
@@ -524,14 +555,26 @@ public class InterpreterF99 implements Interpreter {
         	cpu.pushd(binOp_d(l, r, mop1.immed));
         	break;
         }
-        	
+        case Iunaryop: {
+        	short v = cpu.pop();
+        	cpu.push((short) unaryOp(v, mop1.immed));
+        	break;
+        }
+        case Iunaryop_d: {
+        	int v = cpu.popd();
+        	cpu.pushd(unaryOp_d(v, mop1.immed));
+        	break;
+        }
+
+        /*
         case I2times:
         	cpu.push((short) (cpu.pop() * 2));
         	break;
         case I2div:
         	cpu.push((short) (cpu.pop() / 2));
         	break;
-        	
+        	*/
+        
         case Iumul: {
         	int mul = (cpu.pop() & 0xffff) * (cpu.pop() & 0xffff);
         	cpu.push((short) (mul & 0xffff));
@@ -557,6 +600,7 @@ public class InterpreterF99 implements Interpreter {
         	}
         	break;
         }
+        /*
         case I1plus:
 	        cpu.push((short) (cpu.pop() + 1));
 	    	break;
@@ -572,7 +616,7 @@ public class InterpreterF99 implements Interpreter {
         case Iinvert:
         	cpu.push((short) ~cpu.pop());
         	break;
-        	
+        	*/
         case Icall:
         	cpu.rpush(iblock.pc);
         	cpu.setPC(mop1.immed);
@@ -718,12 +762,6 @@ public class InterpreterF99 implements Interpreter {
 		return false;
     }
 
-	/**
-	 * @param l
-	 * @param r
-	 * @param immed
-	 * @return
-	 */
 	private int binOp(short l, short r, short immed) {
 		switch (immed) {
 		case OP_ADD:
@@ -769,6 +807,54 @@ public class InterpreterF99 implements Interpreter {
 		case OP_CSH:
 			return (int) ( ((((long) l) & 0xffffffffL) >>> (r & 0x1f))
 					| (((long) l) & 0xffffffffL) << (32 - (r & 0x1f)) );
+		}
+		return 0;
+	}
+
+
+	private int unaryOp(short v, short immed) {
+		switch (immed) {
+		case OP_1MINUS:
+			return v-1;
+		case OP_2MINUS:
+			return v-2;
+		case OP_1PLUS:
+			return v+1;
+		case OP_2PLUS:
+			return v+2;
+		case OP_NEG:
+			return -v;
+		case OP_INV:
+			return ~v;
+		case OP_NOT:
+			return v == 0 ? -1 : 0;
+		case OP_2TIMES:
+			return v<<1;
+		case OP_2DIV:
+			return v>>1;
+		}
+		return 0;
+	}
+	private int unaryOp_d(int v, short immed) {
+		switch (immed) {
+		case OP_1MINUS:
+			return v-1;
+		case OP_2MINUS:
+			return v-2;
+		case OP_1PLUS:
+			return v+1;
+		case OP_2PLUS:
+			return v+2;
+		case OP_NEG:
+			return -v;
+		case OP_INV:
+			return ~v;
+		case OP_NOT:
+			return v == 0 ? -1 : 0;
+		case OP_2TIMES:
+			return v<<1;
+		case OP_2DIV:
+			return v>>1;
 		}
 		return 0;
 	}

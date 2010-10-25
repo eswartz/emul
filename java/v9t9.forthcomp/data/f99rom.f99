@@ -26,24 +26,29 @@ include sysutils.i
 
 include video.i
 
-:   ints-on
-    1 (>context) [ CTX_INT field, ] 
-;
-:   ints-off
-    0 (>context) [ CTX_INT field, ] 
-;
+include kbd.i
+
+include ints.i
 
 :   cycle
     begin
         256 0 do
-            i v-clear
+            key? if key else i then
+            v-clear
+            ints-check
+            0 0 do loop
         loop
     again
 ;
 
 
 :   bootup
-    vinit
+
+    ints-init
+    
+    kbd-init
+    
+    video-init
     
     cycle
 ;

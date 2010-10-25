@@ -49,12 +49,15 @@ public class F99TargetContext extends TargetContext {
 		definePrim(";S", Iexit);
 		definePrim("@", Iload);
 		definePrim("c@", Icload);
+		definePrim("d@", Iload_d);
 		definePrim("!", Istore);
 		definePrim("c!", Icstore);
+		definePrim("d!", Istore_d);
 		definePrim("+!", IplusStore);
+		definePrim("d+!", IplusStore_d);
 		
-		definePrim("1+", I1plus);
-		definePrim("2+", I2plus);
+		defineInlinePrim("1+", Iunaryop, OP_1PLUS);
+		defineInlinePrim("2+", Iunaryop, OP_2PLUS);
 		definePrim("dup", Idup);
 		definePrim("drop", Idrop);
 		definePrim("swap", Iswap);
@@ -66,9 +69,10 @@ public class F99TargetContext extends TargetContext {
 		definePrim("D=", Iequ_d);
 		definePrim("0branch", I0branch);
 		definePrim("branch", Ibranch);
-		definePrim("negate", Ineg);
-		definePrim("dnegate", Ineg_d);
-		definePrim("invert", Iinvert);
+		defineInlinePrim("negate", Iunaryop, OP_NEG);
+		defineInlinePrim("dnegate", Iunaryop_d, OP_NEG);
+		defineInlinePrim("invert", Iunaryop, OP_INV);
+		defineInlinePrim("not", Iunaryop, OP_NOT);
 		definePrim("+", Iadd);
 		defineInlinePrim("d+", Ibinop_d, OP_ADD);
 		defineInlinePrim("-", Ibinop, OP_SUB);
@@ -93,6 +97,7 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("(?do)", Idup_d, ItoR_d, Ibinop, OP_SUB, I0branch);
 		
 		definePrim("exit", Iexit);
+		definePrim("exiti", Iexiti);
 
 		definePrim("2dup", Idup_d);
 		definePrim("(context>)", IcontextFrom);
@@ -135,8 +140,8 @@ public class F99TargetContext extends TargetContext {
 		
 		defineInlinePrim("unloop", Irdrop, Irdrop);
 		defineInlinePrim("2rdrop", Irdrop, Irdrop);
-		definePrim("2/", I2div);
-		definePrim("2*", I2times);
+		defineInlinePrim("2/", Iunaryop, OP_2DIV);
+		defineInlinePrim("2*", Iunaryop, OP_2TIMES);
 		
 		defineInlinePrim("LSH", Ibinop, OP_LSH);
 		defineInlinePrim("RSH", Ibinop, OP_ASH);
@@ -223,6 +228,8 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compile(ITargetWord word) {
+		word.getEntry().use();
+		
 		if (word instanceof F99PrimitiveWord) {
 			int opcode = ((F99PrimitiveWord) word).getOpcode();
 			compileOpcode(opcode);
@@ -239,6 +246,9 @@ public class F99TargetContext extends TargetContext {
 				compileDoubleLiteral(cons.getValue(), false);
 			else
 				assert false;
+		} else if (word instanceof TargetVariable) {
+			TargetVariable var = (TargetVariable) word;
+			compileLiteral(var.getEntry().getParamAddr(), false);
 		} else {
 			// must call
 			alignCode();

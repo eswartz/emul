@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.InternalCruF99;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
 import v9t9.engine.memory.*;
 
@@ -29,6 +30,9 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	public static final int KEYRD = 0x20;
 	public static final int KEYWR = 0x22;
 	public static final int SOUND = 0x40;	// 0x20!
+	
+	public static final int CRU_BASE = 0x80;
+	public static final int CRU_END = 0x100;
 	
 	private final Machine machine;
 		
@@ -69,24 +73,31 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	}
 
     private void writeMmio(int addr, byte val) {
-    	switch (addr) {
-    	case VDPWD:
-    	case VDPWA:
-    	case VDPCL:
-    	case VDPWI:
-    		getTIMemoryModel().getVdpMmio().write(addr, val);
-    		break;
-    	case GPLWA:
-    	case GPLWD:
-    		getTIMemoryModel().getGplMmio().write(addr, val);
-    		break;
-    	case SPCHWT:
-    		getTIMemoryModel().getSpeechMmio().write(addr, val);
-    		break;
-    	}
 
     	if (addr >= SOUND && addr < SOUND + 0x20) {
     		getTIMemoryModel().getSoundMmio().write(addr, val);
+    	}
+    	else {
+	    	switch (addr) {
+	    	case VDPWD:
+	    	case VDPWA:
+	    	case VDPCL:
+	    	case VDPWI:
+	    		getTIMemoryModel().getVdpMmio().write(addr, val);
+	    		break;
+	    	case GPLWA:
+	    	case GPLWD:
+	    		getTIMemoryModel().getGplMmio().write(addr, val);
+	    		break;
+	    	case SPCHWT:
+	    		getTIMemoryModel().getSpeechMmio().write(addr, val);
+	    		break;
+    		default:
+    			if (addr >= CRU_BASE && addr < CRU_END) {
+    				((InternalCruF99) machine.getCpu().getCruAccess()).handleWrite(addr, val);
+    			}
+    			break;
+	    	}
     	}
 	}
 
@@ -104,6 +115,11 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
     		return getTIMemoryModel().getGplMmio().read(addr);
     	case SPCHRD:
     		return getTIMemoryModel().getSpeechMmio().read(addr);
+    	default:
+			if (addr >= CRU_BASE && addr < CRU_END) {
+				return ((InternalCruF99) machine.getCpu().getCruAccess()).handleRead(addr);
+			}
+			break;
     	}
 		return 0;
 	}

@@ -79,6 +79,7 @@ public class CpuF99 extends CpuBase {
     
 	public static final int INT_RESET = 15;
 	public static final int INT_NMI = 14;
+	public static final int INT_VDP = 1;
 	public static final int INT_BKPT = 0;
     
     /** When intreq, the interrupt level */
@@ -123,7 +124,8 @@ public class CpuF99 extends CpuBase {
 	    	cruAccess.pollForPins(this);
 	    	if (cruAccess.isInterruptWaiting()) {
 	    		ic = cruAccess.getInterruptLevel(); 
-	    		if (getStatus().getIntMask() >= ic) {
+	    		int mask = getStatus().getIntMask();
+    			if (mask >= ic) {
 	    			pins |= PIN_INTREQ;
 	    			return true;    		
 	    		}
@@ -179,14 +181,13 @@ public class CpuF99 extends CpuBase {
         	pins &= ~PIN_LOAD;
         	
             System.out.println("**** NMI ****");
-            
-            // TODO
+
+            triggerInterrupt(INT_NMI);
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
-            reset();
             
-            // TODO
+            triggerInterrupt(INT_RESET);
             
             machine.getExecutor().interpretOneInstruction();
         } else if ((pins & PIN_INTREQ) != 0 && getStatus().getIntMask() >= ic) {	// already checked int mask in status
@@ -194,10 +195,8 @@ public class CpuF99 extends CpuBase {
         	pins &= ~PIN_INTREQ;
         	
         	//System.out.print('=');
-        	interrupts++;
-            //contextSwitch(0x4 * ic);
             
-        	// TODO
+        	triggerInterrupt(ic);
             
             // no more interrupt until 9901 gives us another
             ic = 0;
@@ -271,7 +270,7 @@ public class CpuF99 extends CpuBase {
         getStatus().expand((short) 0);
 		getState().setSP((short) 0xff80);
 		getState().setRP((short) 0xffc0);
-		triggerInterrupt(INT_RESET);
+		contextSwitch((short) 0x400);
 	}
 
 	public CpuStateF99 getState() {
@@ -351,8 +350,8 @@ public class CpuF99 extends CpuBase {
 	 * @param intNmi
 	 * @return
 	 */
-	public short readIntVec(int intNum) {
-		return state.getConsole().readWord(INT_BASE + intNum * 2);
+	private short getIntVecAddr(int intNum) {
+		return (short) (INT_BASE + intNum * 2);
 	}
 
 	/**
@@ -360,15 +359,18 @@ public class CpuF99 extends CpuBase {
 	 */
 	public void contextSwitch(short vec) {
 		rpush(getPC());
-		setPC(machine.getConsole().readWord(vec));
+		short addr = machine.getConsole().readWord(vec);
+		setPC(addr);
 	}
 
 	/**
 	 * @param intr
 	 */
 	public void triggerInterrupt(int intr) {
-		rpush(getPC());
-		contextSwitch(readIntVec(intr));
+		rpush(getST());
+		((StatusF99)getStatus()).setIntMask(0);
+		short addr = getIntVecAddr(intr);
+		contextSwitch(addr);
 	}
 
 	/**

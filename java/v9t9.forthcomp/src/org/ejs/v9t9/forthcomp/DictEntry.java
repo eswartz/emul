@@ -7,7 +7,7 @@ package org.ejs.v9t9.forthcomp;
  * @author ejs
  *
  */
-public class DictEntry {
+public class DictEntry implements Comparable<DictEntry> {
 
 
 	private int link;
@@ -19,6 +19,8 @@ public class DictEntry {
 	private boolean immediate;
 	private boolean export;
 
+	private int uses;
+	
 	/**
 	 * @param name 
 	 * 
@@ -133,5 +135,23 @@ public class DictEntry {
 	public boolean isExport() {
 		return export;
 	}
+	
+	/**
+	 * @return the uses
+	 */
+	public int getUses() {
+		return uses;
+	}
+	public void use() {
+		uses++;
+	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	public int compareTo(DictEntry o) {
+		return name.compareTo(o.getName());
+	}
+
+	
 }

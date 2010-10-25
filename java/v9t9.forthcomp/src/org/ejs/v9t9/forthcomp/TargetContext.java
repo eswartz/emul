@@ -206,8 +206,8 @@ public abstract class TargetContext extends Context {
 		for (RelocEntry rel : relocs.toArray(new RelocEntry[relocs.size()])) {
 			if (rel.target == ref.getId()) {
 				rel.target = entry.getContentAddr();
-				writeCell(rel.addr, entry.getContentAddr());
-				//relocs.remove(rel);
+				if (rel.type != RelocType.RELOC_FORWARD)
+					writeCell(rel.addr, entry.getContentAddr());
 			}
 		}
 	}
@@ -477,6 +477,13 @@ public abstract class TargetContext extends Context {
 	 */
 	public Collection<ForwardRef> getForwardRefs() {
 		return forwards.values();
+	}
+
+	/**
+	 * @return
+	 */
+	public Map<String, DictEntry> getDictionary() {
+		return dictionary;
 	}
 
 }

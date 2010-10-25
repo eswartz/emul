@@ -899,7 +899,22 @@ public class TestForthComp {
 		assertEquals(65, hostCtx.popData());
 		assertEquals(3, hostCtx.popData());
 	}
-	
+
+	@Test
+	public void testMemOps3Ex() throws Exception {
+		parseString(
+				"DVariable counter\n" +
+				": tst 123. counter D!  1000. counter D+!  counter d@ ;"
+				
+		);
+		
+		dumpDict();
+		
+		interpret("tst");
+		
+		assertEquals(0, hostCtx.popData());
+		assertEquals(1123, hostCtx.popData());
+	}
 	@Test
 	public void testBeginAgain() throws Exception {
 		parseString(

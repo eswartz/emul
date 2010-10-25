@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.runtime.cpu.CpuF99;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
@@ -54,8 +53,6 @@ public class F99MemoryModel extends TI994AStandardConsoleMemoryModel {
 	    		0x0400, 0xFC00, new EnhancedRamArea(0, 0xFC00));
 	    entry.getArea().setLatency(0);
 		memory.addAndMap(entry);
-		
-		CPU.writeWord(CpuF99.INT_BASE + CpuF99.INT_RESET * 2, (short) 0x400);
 	}
 	
 	protected void defineMmioMemory(Machine machine) {
