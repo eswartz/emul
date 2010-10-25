@@ -96,6 +96,7 @@ public class F99TargetContext extends TargetContext {
 		definePrim("(u+loop)", IuplusLoop);
 		defineInlinePrim("(?do)", Idup_d, ItoR_d, Ibinop, OP_SUB, I0branch);
 		
+		definePrim("execute", Iexecute);
 		definePrim("exit", Iexit);
 		definePrim("exiti", Iexiti);
 

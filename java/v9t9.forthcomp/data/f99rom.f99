@@ -30,6 +30,29 @@ include kbd.i
 
 include ints.i
 
+\ -------------------------------
+
+:   quit
+    begin
+        key? if key emit then
+    again
+;
+
+:   abort
+
+    ints-init   kbd-init
+    
+    \ ."  aborted" cr
+    
+    ints-on
+    
+    quit
+;
+
+
+\ -------------------------------
+
+
 :   cycle
     begin
         256 0 do

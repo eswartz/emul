@@ -24,13 +24,11 @@ $0040       constant    SOUND  \ ... 0x20!
 \   ---------  peripherals
 
 $0080       constant    'INTS
+$0081       constant    'INTSP
     
-    $0      constant    'INT_BKPT
-    $1      constant    'M_INT_BKPT
-    $1      constant    'INT_EXT
-    $2      constant    'M_INT_EXT
-    $2      constant    'INT_VDP
-    $4      constant    'M_INT_VDP
+    $1      constant    M_INT_BKPT
+    $2      constant    M_INT_EXT
+    $4      constant    M_INT_VDP
 
 $0082       constant    'KBD
 $0083       constant    'KBDA
@@ -47,7 +45,7 @@ $ffe0       constant    IntVecs     \ ... 0x20
 
     15      constant    INT_RESET
     14      constant    INT_NMI
-    1       constant    INT_VDP
+    2       constant    INT_VDP
     0       constant    INT_BKPT
 
 \ -----------   GROM addresses

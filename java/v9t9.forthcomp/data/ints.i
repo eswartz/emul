@@ -1,6 +1,6 @@
 
 :   ints-on
-    'INT_VDP (>context) [ CTX_INT field, ] 
+    INT_VDP (>context) [ CTX_INT field, ] 
 ;
 :   ints-off
     0 (>context) [ CTX_INT field, ] 
@@ -18,9 +18,9 @@ DVariable vdp-ticks
 
 :   vdp-int-handler 
     'INTS c@  
-    dup 'M_INT_VDP and if 
+    dup M_INT_VDP and if 
         \ acknowledge interrupt
-        $fe and  'INTS c!
+        $fe and  'INTSP c!
         
         \ acknowledge VDP
         VDPST c@  vdp-status c!
@@ -38,8 +38,17 @@ DVariable vdp-ticks
     exiti
 ;
 
+:   nmi-int-handler
+    abort
+    exiti       \ NOTREACHED
+;
+
+
+:   >int-vec ( num -- )
+    2*  IntVecs +
+;
 :   set-int-vec ( addr num -- )
-    2*  IntVecs +  !
+    >int-vec  !
 ;
 
 :   enable-int ( addr num -- )
@@ -50,7 +59,16 @@ DVariable vdp-ticks
 
 ;
 
+:   call-int    ( num -- )
+    >int-vec @  
+    7 (context>) [ CTX_INT field, ] >r 
+    execute
+;
+
 :   ints-init
-    ['] vdp-int-handler  'INT_VDP     enable-int
+    ints-off
+    ['] vdp-int-handler  INT_VDP     enable-int
+    ['] nmi-int-handler  INT_NMI     enable-int
+    ints-on
 ;
 

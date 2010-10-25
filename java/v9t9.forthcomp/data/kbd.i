@@ -98,12 +98,14 @@ Variable    randnoise
 ;
 
 :   kbd-scan
-    \ check break... TODO
-    
     \ clear alpha lock line and read break-able bits
     $0 'KBDA c!
     
     0 read-row
+    
+    dup $72 = if                    \ ctrl+fctn+shift+space (abort)?
+        abort
+    then
     
     $70 and  kbdshift c!           \ save shift bits
     

@@ -148,7 +148,7 @@ public class DumpFullReporterF99 implements InstructionListener {
 		        " sp=" + Integer.toHexString(((CpuStateF99)cpu.getState()).getSP() & 0xffff).toUpperCase()
 		        + " rp=" + Integer.toHexString(((CpuStateF99)cpu.getState()).getRP() & 0xffff).toUpperCase()
 		        + " sr="
-		        + Integer.toHexString(cpu.getST() & 0xffff).toUpperCase()        
+		        + Integer.toHexString(cpu.getStatus().getIntMask()).toUpperCase()        
 		);
 		
 		int cycles = cpu.getCurrentCycleCount() - origCycleCount;

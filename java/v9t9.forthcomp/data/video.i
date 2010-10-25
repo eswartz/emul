@@ -36,16 +36,30 @@ create  VRegSave      16 allot
 
 \ ---------------------
 
-Variable v-addr
+Variable v-screen
 Variable v-size
 Variable v-patts
 
+Variable vx
+Variable vy
+
+Variable v-sx
+Variable win-x
+Variable win-y
+Variable win-sx
+Variable win-sy
+
 :   text-mode
     TextModeRegs write-vregs
-    0 v-addr !
+    0 v-screen !
     960 v-size !
     $800 v-patts !
-    cls
+    40 v-sx !
+    40 win-sx !
+    24 win-sy !
+
+    term-reset
+    cls    
     load-font
     true vid-show
 ;
@@ -67,10 +81,32 @@ Variable v-patts
 ;
 
 :   v-clear ( ch -- )
-    v-addr @ v-size @ vfill
+    v-screen @ v-size @ vfill
 ;
 
-:   cls  32 v-clear ;
+:   term-reset 
+    0 vx !
+    0 vy !
+;
+
+:   cls  32 v-clear  term-reset ;
+
+:   curs-addr ( -- )
+    vy @ win-y @ +  v-sx @ *  vx @ win-x @ +
+    v-screen @ + 
+;
+
+:   emit    ( ch -- )
+    curs-addr  $4000 or  vwaddr  swap  c!
+    1 vx +!  vx @ win-sx @ >= if 
+        0 vx !  1 vy +!  vy @ win-sy @ >= if
+            0 vy !
+        then
+    then   
+;
+
+:   cr  13 emit  ;
+:   space  32 emit  ;
 
 EXPORT>
 

@@ -621,6 +621,10 @@ public class InterpreterF99 implements Interpreter {
         	cpu.rpush(iblock.pc);
         	cpu.setPC(mop1.immed);
         	return true;
+        case Iexecute:
+        	cpu.rpush(iblock.pc);
+        	cpu.setPC(cpu.pop());
+        	return true;
         	
         case ItoR:
         	cpu.rpush(cpu.pop());
