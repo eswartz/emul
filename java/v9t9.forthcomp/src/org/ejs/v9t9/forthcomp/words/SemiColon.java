@@ -24,10 +24,8 @@ public class SemiColon implements IWord {
 		hostContext.assertCSP();
 		
 		hostContext.stopCompiling();
-		
-		ITargetWord semiS = (ITargetWord) targetContext.require(";S");
-		
-		targetContext.compile(semiS);
+
+		targetContext.compileExit();
 		
 		((ITargetWord) targetContext.getLatest()).getEntry().setHidden(false);
 	}

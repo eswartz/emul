@@ -23,6 +23,7 @@ import org.ejs.v9t9.forthcomp.words.BackSlash;
 import org.ejs.v9t9.forthcomp.words.Begin;
 import org.ejs.v9t9.forthcomp.words.CharComma;
 import org.ejs.v9t9.forthcomp.words.Colon;
+import org.ejs.v9t9.forthcomp.words.ColonColon;
 import org.ejs.v9t9.forthcomp.words.Comma;
 import org.ejs.v9t9.forthcomp.words.Constant;
 import org.ejs.v9t9.forthcomp.words.Create;
@@ -30,6 +31,7 @@ import org.ejs.v9t9.forthcomp.words.DConstant;
 import org.ejs.v9t9.forthcomp.words.DVariable;
 import org.ejs.v9t9.forthcomp.words.Do;
 import org.ejs.v9t9.forthcomp.words.Else;
+import org.ejs.v9t9.forthcomp.words.Exit;
 import org.ejs.v9t9.forthcomp.words.ParsedTick;
 import org.ejs.v9t9.forthcomp.words.PopExportState;
 import org.ejs.v9t9.forthcomp.words.PushExportState;
@@ -48,8 +50,10 @@ import org.ejs.v9t9.forthcomp.words.SemiColon;
 import org.ejs.v9t9.forthcomp.words.SetDP;
 import org.ejs.v9t9.forthcomp.words.Then;
 import org.ejs.v9t9.forthcomp.words.Tick;
+import org.ejs.v9t9.forthcomp.words.To;
 import org.ejs.v9t9.forthcomp.words.UPlusLoop;
 import org.ejs.v9t9.forthcomp.words.Until;
+import org.ejs.v9t9.forthcomp.words.User;
 import org.ejs.v9t9.forthcomp.words.Variable;
 import org.ejs.v9t9.forthcomp.words.While;
 
@@ -97,7 +101,8 @@ public class ForthComp {
         
         if (targetContext == null)
         	targetContext = new F99TargetContext(65536);
-        ForthComp comp = new ForthComp(targetContext);
+        HostContext hostContext = new HostContext();
+        ForthComp comp = new ForthComp(hostContext, targetContext);
         
         comp.setLog(logfile);
         
@@ -153,11 +158,13 @@ public class ForthComp {
 	private HostVariable stateVar;
 	private int errors;
 
-	public ForthComp(TargetContext targetContext) {
-		hostContext = new HostContext();
-		tokenStream = hostContext.getStream();
+	public ForthComp(HostContext hostContext, TargetContext targetContext) {
+		this.hostContext = hostContext;
 		this.targetContext = targetContext;
 		this.logfile = System.out;
+		
+		this.tokenStream = hostContext.getStream();
+
 		
 		defineHostCompilerWords();
 	 	
@@ -191,6 +198,8 @@ public class ForthComp {
 		hostContext.define("dvariable", new DVariable());
 		hostContext.define("constant", new Constant());
 		hostContext.define("dconstant", new DConstant());
+		hostContext.define("user", new User());
+		
 		hostContext.define("allot", new Allot());
 		hostContext.define("'", new Tick());
 		hostContext.define("[']", new ParsedTick());
@@ -199,8 +208,12 @@ public class ForthComp {
 		hostContext.define("@", new HostFetch());
 		hostContext.define("true", new HostConstant(-1));
 		hostContext.define("false", new HostConstant(0));
+		
 		hostContext.define(":", new Colon());
+		hostContext.define("::", new ColonColon());
 		hostContext.define(";", new SemiColon());
+		
+		hostContext.define("TO", new To());
 		
 		hostContext.define("if", new If());
 		hostContext.define("else", new Else());
@@ -216,6 +229,7 @@ public class ForthComp {
 	 	hostContext.define("loop", new Loop());
 	 	hostContext.define("+loop", new PlusLoop());
 	 	hostContext.define("u+loop", new UPlusLoop());
+	 	hostContext.define("exit", new Exit());
 
 	 	hostContext.define("(", new Paren());
 	 	hostContext.define("\\", new BackSlash());

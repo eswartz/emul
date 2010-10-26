@@ -10,4 +10,5 @@ package org.ejs.v9t9.forthcomp;
 public interface ITargetWord extends IWord {
 	
 	DictEntry getEntry();
+
 }

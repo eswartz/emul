@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
  *
  */
 public class Context implements IContext {
-	private LinkedHashMap<String, IWord> dictionary;
+	protected LinkedHashMap<String, IWord> dictionary;
 	private IWord latest;
 
 	/**

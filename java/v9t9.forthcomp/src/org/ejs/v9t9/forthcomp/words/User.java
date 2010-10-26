@@ -12,25 +12,23 @@ import org.ejs.v9t9.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Begin implements IWord {
-	public Begin() {
+public class User implements IWord {
+	public User() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		targetContext.alignCode();
-		targetContext.pushHere(hostContext);
-		hostContext.pushPairs(1);
-		
+		String name = hostContext.readToken();
+
+		targetContext.defineUser(name, 1);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

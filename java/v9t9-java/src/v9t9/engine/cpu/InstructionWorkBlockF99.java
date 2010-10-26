@@ -11,6 +11,7 @@ public final class InstructionWorkBlockF99 extends BaseInstructionWorkBlock {
     
     public short sp;
 	public short rp;
+	public short up;
 	public short opword;
 	public int index;
 	public boolean showSymbol;
@@ -27,6 +28,7 @@ public final class InstructionWorkBlockF99 extends BaseInstructionWorkBlock {
     	super.copyTo(copy);
     	copy.sp = sp;
     	copy.rp = rp;
+    	copy.up = up;
     	copy.opword = opword;
     	copy.index = index;
     	copy.instNum = instNum;

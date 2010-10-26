@@ -12,25 +12,22 @@ import org.ejs.v9t9.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Begin implements IWord {
-	public Begin() {
-	}
+public class Exit implements IWord {
 
 	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
+	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
 	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
+	public void execute(HostContext hostContext, TargetContext targetContext)
+			throws AbortException {
 		hostContext.assertCompiling();
-		targetContext.alignCode();
-		targetContext.pushHere(hostContext);
-		hostContext.pushPairs(1);
-		
+		targetContext.compileExit();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
 		return true;
 	}
+
 }

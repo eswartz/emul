@@ -33,7 +33,7 @@ public abstract class TargetContext extends Context {
 	private Map<Integer, String> symbols = new TreeMap<Integer, String>();
 	protected int dp;
 	
-	private Map<String, DictEntry> dictionary = new LinkedHashMap<String, DictEntry>();
+	private Map<String, DictEntry> dictEntryMap = new LinkedHashMap<String, DictEntry>();
 	
 	private DictEntry lastEntry;
 	protected int cellSize;
@@ -161,10 +161,10 @@ public abstract class TargetContext extends Context {
 		DictEntry entry = new DictEntry(size, entryAddr, name);
 		entry.setExport(export);
 		
-		DictEntry existing = dictionary.get(name.toUpperCase());
+		DictEntry existing = dictEntryMap.get(name.toUpperCase());
 		if (existing != null)
 			logfile.println("*** Redefining " + name);
-		dictionary.put(name.toUpperCase(), entry);
+		dictEntryMap.put(name.toUpperCase(), entry);
 		
 		if (export) {
 			if (lastEntry != null)
@@ -283,9 +283,34 @@ public abstract class TargetContext extends Context {
 		DictEntry entry = defineEntry(name);
 		logfile.println(name);
 		initCode();
-		compile((ITargetWord) require("DOCON"));
-		compileAddr(value);
+		compileDoConstant(value, cells);
 		return (TargetConstant) define(name, new TargetConstant(entry, value, 1));		
+	}
+
+	abstract public void compileDoConstant(int value, int cells) throws AbortException;
+	abstract public void compileDoUser(int index) throws AbortException;
+
+	public TargetUserVariable defineUser(String name, int cells) throws AbortException {
+		
+		TargetVariable up = findOrCreateVariable("UP");
+		int index = readCell(up.getEntry().getParamAddr());
+		writeCell(up.getEntry().getParamAddr(), index + 1);
+
+		DictEntry entry = defineEntry(name);
+		logfile.println(name);
+		initCode();
+		
+		compileDoUser(index);
+		
+		return (TargetUserVariable) define(name, new TargetUserVariable(entry, index));
+	}
+
+	protected TargetVariable findOrCreateVariable(String name) {
+		TargetVariable var = (TargetVariable) find(name);
+		if (var == null) {
+			var = create(name, 1);
+		}
+		return var;
 	}
 
 	abstract public void initCode();
@@ -483,7 +508,48 @@ public abstract class TargetContext extends Context {
 	 * @return
 	 */
 	public Map<String, DictEntry> getDictionary() {
-		return dictionary;
+		return dictEntryMap;
+	}
+
+	abstract public void ensureLocalSupport(HostContext hostContext) throws AbortException;
+	
+	abstract public void compileSetupLocals() throws AbortException;
+
+	abstract public void compileInitLocal(int index) throws AbortException;
+
+	abstract public void compileFromLocal(int index) throws AbortException;
+
+	abstract public void compileToLocal(int index) throws AbortException;
+	
+	abstract public void compileCleanupLocals() throws AbortException;
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.Context#find(java.lang.String)
+	 */
+	@Override
+	public IWord find(String token) {
+		if (getLatest() != null) {
+			DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+			if (entry.hasLocals()) {
+				IWord word = entry.findLocal(token);
+				if (word != null)
+					return word;
+			}
+		}
+		return super.find(token);
+	}
+	
+
+	/**
+	 * @throws AbortException 
+	 * 
+	 */
+	public void compileExit() throws AbortException {
+		if (((ITargetWord) getLatest()).getEntry().hasLocals())
+			compileCleanupLocals();
+		
+		ITargetWord semiS = (ITargetWord) require(";S");
+		compile(semiS);
 	}
 
 }

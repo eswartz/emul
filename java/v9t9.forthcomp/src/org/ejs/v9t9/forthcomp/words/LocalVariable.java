@@ -9,22 +9,29 @@ import org.ejs.v9t9.forthcomp.IWord;
 import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
+ * Placeholder for local used in a colon-colon def
  * @author ejs
  *
  */
-public class Begin implements IWord {
-	public Begin() {
+public class LocalVariable implements IWord {
+
+	private int index;
+	/**
+	 * 
+	 */
+	public LocalVariable(int index) {
+		this.index = index;
+	}
+	
+	public int getIndex() {
+		return index;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		targetContext.alignCode();
-		targetContext.pushHere(hostContext);
-		hostContext.pushPairs(1);
-		
+		targetContext.compileFromLocal(index);
 	}
 	
 	/* (non-Javadoc)

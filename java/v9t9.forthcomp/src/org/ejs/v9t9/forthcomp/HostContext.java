@@ -90,15 +90,22 @@ public class HostContext extends Context {
 	}
 
 	/**
+	 * @return
+	 * @throws AbortException 
+	 */
+	public boolean isCompiling() throws AbortException {
+		HostVariable state = (HostVariable)require("state");
+		return (state.getValue() != 0);
+	}
+	
+	/**
 	 * @return 
 	 * @throws AbortException 
 	 * 
 	 */
-	public HostVariable assertCompiling() throws AbortException {
-		HostVariable state = (HostVariable)require("state");
-		if (state.getValue() == 0)
+	public void assertCompiling() throws AbortException {
+		if (!isCompiling())
 			throw abort("not defining");
-		return state;
 
 	}
 
@@ -116,7 +123,9 @@ public class HostContext extends Context {
 	 * 
 	 */
 	public void stopCompiling() throws AbortException {
-		assertCompiling().setValue(0);
+		assertCompiling();
+		HostVariable state = (HostVariable)require("state");
+		state.setValue(0);
 	}
 
 	/**
@@ -151,4 +160,5 @@ public class HostContext extends Context {
 		if (csp.getValue() != dataStack.size())
 			throw abort("mismatched conditionals");
 	}
+	
 }

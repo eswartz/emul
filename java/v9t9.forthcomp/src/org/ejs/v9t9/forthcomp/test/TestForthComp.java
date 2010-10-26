@@ -41,14 +41,10 @@ import v9t9.engine.memory.MemoryDomain;
  */
 public class TestForthComp {
 
-	/**
-	 * 
-	 */
 	private static final int BASE_RP = 0xff00;
-	/**
-	 * 
-	 */
 	private static final int BASE_SP = 0xf800;
+	private static final int BASE_UP = 0xfe00;
+	
 	private F99TargetContext targCtx;
 	ForthComp comp;
 	HostContext hostCtx;
@@ -80,8 +76,8 @@ public class TestForthComp {
 		targCtx = new F99TargetContext(4096);
 		targCtx.setBaseDP(0x400);
 		
-		comp = new ForthComp(targCtx);
-		hostCtx = comp.getHostContext();
+		hostCtx = new HostContext();
+		comp = new ForthComp(hostCtx, targCtx);
 		
 		for (int i = 0; i <65536; i+= 2)
 			cpu.getConsole().writeWord(i, (short) 0);
@@ -345,7 +341,7 @@ public class TestForthComp {
 		String caller = new Exception().getStackTrace()[1].getMethodName();
 		System.out.println("*** interpreting in " + caller);
 		
-		targCtx.exportState(hostCtx, f99Machine, BASE_SP, BASE_RP);
+		targCtx.exportState(hostCtx, f99Machine, BASE_SP, BASE_RP, BASE_UP);
 
 		dumpCompiledMemory();
 		
@@ -1122,5 +1118,112 @@ public class TestForthComp {
 		assertEquals(123, hostCtx.popData());
 		assertEquals(0, hostCtx.popData());
 		assertEquals(123, hostCtx.popData());
+	}
+	
+	@Test
+	public void testUserVars() throws Exception {
+		parseString(
+				"User a\n"+
+				"User b\n"+
+				": foo 10  a !  5 b !  a @ b @ ;"
+		);
+
+		dumpDict();
+		
+		interpret("foo");
+		
+		assertEquals(5, hostCtx.popData());
+		assertEquals(10, hostCtx.popData());
+		
+	}
+
+	@Test
+	public void testLocals1() throws Exception {
+		parseString(
+				":: rev4 ( a b c d -- d c b a x )\n"+
+				"  d c b a " +
+				" a b c d + + + " + 
+				";"
+		);
+
+		hostCtx.pushData(1);
+		hostCtx.pushData(2);
+		hostCtx.pushData(3);
+		hostCtx.pushData(4);
+		
+		dumpDict();
+		
+		interpret("rev4");
+		
+		assertEquals(10, hostCtx.popData());
+		assertEquals(1, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+		assertEquals(4, hostCtx.popData());
+		
+	}
+	@Test
+	public void testLocals2() throws Exception {
+		parseString(
+				":: strcmp ( addr1 c1 addr2 c2 -- f )\n"+
+				"begin\n"+
+				"  c1 0= c2 0= and not \n"+
+				"while\n"+
+				"  addr1  dup 1+ to addr1  c1 1- to c1  c@\n"+
+				"  addr2  dup 1+ to addr2  c2 1- to c2  c@\n"+
+				"  - dup if  exit  else  drop  then\n"+
+				"repeat\n"+
+				"c1 c2 - \\ length dictates winner\n" +
+				";");
+		
+		int str1;
+		int str2;
+		
+		str1 = targCtx.writeLengthPrefixedString("This is first");
+		str2 = targCtx.writeLengthPrefixedString("This is second");
+		
+		dumpDict();
+		
+		hostCtx.pushData(str1 + 1);
+		hostCtx.pushData(targCtx.readChar(str1));
+		hostCtx.pushData(str2 + 1);
+		hostCtx.pushData(targCtx.readChar(str2));
+		
+		interpret("strcmp");
+		
+		int ret;
+		ret = hostCtx.popData();
+		assertEquals(ret+"",  ('f' - 's'), ret);
+	
+
+		str1 = targCtx.writeLengthPrefixedString("Yet, bigger.");
+		str2 = targCtx.writeLengthPrefixedString("And smaller.");
+		
+		dumpDict();
+		
+		hostCtx.pushData(str1 + 1);
+		hostCtx.pushData(targCtx.readChar(str1));
+		hostCtx.pushData(str2 + 1);
+		hostCtx.pushData(targCtx.readChar(str2));
+		
+		interpret("strcmp");
+		
+		ret = hostCtx.popData();
+		assertEquals(ret+"", ('Y' - 'A'), ret);
+		
+		str1 = targCtx.writeLengthPrefixedString("Another plain old copy?");
+		str2 = targCtx.writeLengthPrefixedString("Another plain old copy?");
+		
+		dumpDict();
+		
+		hostCtx.pushData(str1 + 1);
+		hostCtx.pushData(targCtx.readChar(str1));
+		hostCtx.pushData(str2 + 1);
+		hostCtx.pushData(targCtx.readChar(str2));
+		
+		interpret("strcmp");
+		
+		ret = hostCtx.popData();
+		assertTrue(ret+"", ret == 0);
 	}
 }

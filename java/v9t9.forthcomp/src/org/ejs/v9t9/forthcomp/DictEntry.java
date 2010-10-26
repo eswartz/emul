@@ -3,6 +3,11 @@
  */
 package org.ejs.v9t9.forthcomp;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.ejs.v9t9.forthcomp.words.LocalVariable;
+
 /**
  * @author ejs
  *
@@ -20,6 +25,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	private boolean export;
 
 	private int uses;
+	private Map<String, LocalVariable> locals;
 	
 	/**
 	 * @param name 
@@ -153,5 +159,29 @@ public class DictEntry implements Comparable<DictEntry> {
 		return name.compareTo(o.getName());
 	}
 
-	
+	public void allocateLocals() {
+		if (locals == null)
+			locals = new LinkedHashMap<String, LocalVariable>();
+	}
+	public Map<String, LocalVariable> getLocals() {
+		return locals;
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	public LocalVariable findLocal(String name) {
+		if (locals == null)
+			return null;
+		return locals.get(name);
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean hasLocals() {
+		return locals != null;
+	}
+
 }

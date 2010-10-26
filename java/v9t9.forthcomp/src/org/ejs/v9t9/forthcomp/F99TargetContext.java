@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Stack;
 
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
+import org.ejs.v9t9.forthcomp.words.ExitI;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
 
 import v9t9.emulator.hardware.F99Machine;
@@ -28,6 +29,7 @@ public class F99TargetContext extends TargetContext {
 	private int lastOpcodeAddr;
 	private static final int opcodeShifts[] = { 10, 5, 0 };
 	private List<Integer> leaves;
+	private TargetUserVariable lpUser;
 	
 
 	/**
@@ -58,6 +60,11 @@ public class F99TargetContext extends TargetContext {
 		
 		defineInlinePrim("1+", Iunaryop, OP_1PLUS);
 		defineInlinePrim("2+", Iunaryop, OP_2PLUS);
+		
+		defineInlinePrim("1-", Iunaryop, OP_1MINUS);
+		defineInlinePrim("2-", Iunaryop, OP_2MINUS);
+
+		
 		definePrim("dup", Idup);
 		definePrim("drop", Idrop);
 		definePrim("swap", Iswap);
@@ -90,6 +97,10 @@ public class F99TargetContext extends TargetContext {
 		definePrim("r@", IatR);
 		definePrim("i", IatR);
 		defineInlinePrim("j", Irpidx, 2);
+		
+		defineInlinePrim("rp@", IcontextFrom, CTX_RP);
+		defineInlinePrim("rp!", ItoContext, CTX_RP);
+		
 		definePrim("(do)", ItoR_d);
 		definePrim("(loop)", Iloop);
 		definePrim("(+loop)", IplusLoop);
@@ -97,8 +108,6 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("(?do)", Idup_d, ItoR_d, Ibinop, OP_SUB, I0branch);
 		
 		definePrim("execute", Iexecute);
-		definePrim("exit", Iexit);
-		definePrim("exiti", Iexiti);
 
 		definePrim("2dup", Idup_d);
 		definePrim("(context>)", IcontextFrom);
@@ -156,8 +165,6 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("DURSH", Ibinop_d, OP_RSH);
 		defineInlinePrim("DCSH", Ibinop_d, OP_CSH);
 		
-		defineInlinePrim("1-", IfieldLit, 1, Ibinop, OP_SUB);
-		defineInlinePrim("2-", IfieldLit, 2, Ibinop, OP_SUB);
 		defineInlinePrim("*", Iumul, Idrop);
 		defineInlinePrim("s>d", Idup, I0cmp, CMP_LT);
 		
@@ -250,6 +257,10 @@ public class F99TargetContext extends TargetContext {
 		} else if (word instanceof TargetVariable) {
 			TargetVariable var = (TargetVariable) word;
 			compileLiteral(var.getEntry().getParamAddr(), false);
+		} else if (word instanceof TargetUserVariable) {
+			TargetUserVariable user = (TargetUserVariable) word;
+			compileLiteral(user.getIndex(), false);
+			compileOpcode(Iuser);
 		} else {
 			// must call
 			alignCode();
@@ -371,7 +382,7 @@ public class F99TargetContext extends TargetContext {
 	 * @param baseSP
 	 * @param baseRP
 	 */
-	public void exportState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP) {
+	public void exportState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP, int baseUP) {
 		exportMemory(machine.getConsole());
 		CpuStateF99 cpu = (CpuStateF99) machine.getCpu().getState();
 		
@@ -388,6 +399,9 @@ public class F99TargetContext extends TargetContext {
 		cpu.setRP((short) (baseRP - stack.size() * cellSize));
 		for (int i = 0; i < stack.size(); i++)
 			machine.getConsole().writeWord(cpu.getRP() + i * 2, (short) (int) stack.get(stack.size() - i - 1));
+		
+		cpu.setBaseUP((short) baseUP);
+		cpu.setUP((short) baseUP);
 	}
 
 	/**
@@ -534,6 +548,161 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void defineCompilerWords(HostContext hostContext) {
 		hostContext.define("FIELD,", new FieldComma());
+
+		hostContext.define("EXITI", new ExitI());
+
 	}
 
+	/**
+	 * @param string
+	 * @return
+	 */
+	public int writeLengthPrefixedString(String string) throws AbortException {
+		int length = string.length();
+		if (length > 255)
+			throw new AbortException("String constant is too long");
+		
+		int dp = alloc(length + 1);
+		writeChar(dp, length);
+		
+		for (int i = 0; i < length; i++)
+			writeChar(dp + 1 + i, string.charAt(i));
+		
+		return dp;
+	}
+	
+
+	public void compileUser(TargetUserVariable var) {
+		compileLiteral(var.getIndex(), false);
+		compileOpcode(Iuser);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileCleanupLocals()
+	 */
+	@Override
+	public void ensureLocalSupport(HostContext hostContext) throws AbortException {
+		if (lpUser == null) {
+			lpUser = (TargetUserVariable) find("LP");
+			if (lpUser == null) {
+				lpUser = defineUser("LP", 1);
+				
+				HostContext subContext = new HostContext();
+				subContext.getStream().push(
+						"false <export\n"+
+						": (>LOCALS) LP @    	RP@ LP ! ; \\ caller pushes R> \n" +
+						": (LOCALS>) R>  LP @ RP!   R>  LP !  >R ; \n" +
+						"export>\n");
+				ForthComp comp = new ForthComp(subContext, this);
+				comp.parse();
+				if (comp.getErrors() > 0)
+					throw hostContext.abort("Failed to compile support code");
+			}
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileSetupLocals()
+	 */
+	@Override
+	public void compileSetupLocals() throws AbortException {
+
+		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+		if (entry.hasLocals())
+			throw new AbortException("cannot add more locals now");
+		
+		compile((ITargetWord) require("(>LOCALS)"));
+		compileOpcode(ItoR);	// save old LP	
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileInitLocal(int)
+	 */
+	@Override
+	public void compileInitLocal(int index) throws AbortException {
+		compileOpcode(ItoR);
+	}
+	
+	private int getLocalOffs(int index) {
+		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+		int offs = entry.getLocals().size() - index;
+		return -offs * 2;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileLocalAddr(int)
+	 */
+	@Override
+	public void compileFromLocal(int index) throws AbortException {
+		compileUser(lpUser);
+		compileOpcode(Iload);
+		compileLiteral(getLocalOffs(index), false);
+		compileOpcode(Iadd);
+		compileField(Iload);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileToLocal(int)
+	 */
+	@Override
+	public void compileToLocal(int index) throws AbortException {
+		compileUser(lpUser);
+		compileOpcode(Iload);
+		compileLiteral( getLocalOffs(index), false);
+		compileOpcode(Iadd);
+		compileField(Istore);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileCleanupLocals()
+	 */
+	@Override
+	public void compileCleanupLocals() throws AbortException {
+		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+		if (entry.hasLocals()) {
+			compile((ITargetWord) require("(LOCALS>)"));
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileDoConstant(int, int)
+	 */
+	@Override
+	public void compileDoConstant(int value, int cells) throws AbortException {
+		compile((ITargetWord) require("DOCON"));
+		if (cells == 1)
+			compileAddr(value);
+		else if (cells == 2) {
+			compileAddr(value & 0xffff);
+			compileAddr(value >> 16);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileDoUser(int)
+	 */
+	@Override
+	public void compileDoUser(int index) throws AbortException {
+		/*
+		compileOpcode(IcontextFrom);
+		compileField(CTX_UP);
+		compileLiteral(index * 2, false);
+		compileField(Iadd);
+		*/
+		compileLiteral(index, false);
+		compileOpcode(Iuser);
+		compileOpcode(Iexit);
+	}
+
+
+	/**
+	 * @throws AbortException 
+	 * 
+	 */
+	public void compileExitI() throws AbortException {
+		if (((ITargetWord) getLatest()).getEntry().hasLocals())
+			compileCleanupLocals();
+
+		compileExit();
+	}
 }

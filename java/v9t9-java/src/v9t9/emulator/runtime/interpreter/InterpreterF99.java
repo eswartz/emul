@@ -120,6 +120,7 @@ public class InterpreterF99 implements Interpreter {
         iblock.st = cpu.getST();
         iblock.sp = ((CpuStateF99)cpu.getState()).getSP();
         iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
+        iblock.up = ((CpuStateF99)cpu.getState()).getUP();
         iblock.inst = ins;
         
         InstructionWorkBlockF99 block = null;
@@ -155,6 +156,7 @@ public class InterpreterF99 implements Interpreter {
 	        iblock.st = cpu.getST();
 	        iblock.sp = ((CpuStateF99)cpu.getState()).getSP();
 	        iblock.rp = ((CpuStateF99)cpu.getState()).getRP();
+	        iblock.up = ((CpuStateF99)cpu.getState()).getUP();
         
         	block.cycles = cpu.getCurrentCycleCount();
         	for (InstructionListener listener : instructionListeners) {
@@ -653,6 +655,10 @@ public class InterpreterF99 implements Interpreter {
         	break;
         case Irpidx:
         	cpu.push(iblock.getReturnStackEntry(mop1.immed & 0x1f));
+        	break;
+        	
+        case Iuser:
+        	cpu.push((short) (iblock.up + (cpu.pop() * 2)));
         	break;
         	
         case Iloop: {
