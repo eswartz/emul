@@ -517,6 +517,8 @@ public abstract class TargetContext extends Context {
 
 	abstract public void compileInitLocal(int index) throws AbortException;
 
+	abstract public void compileLocalAddr(int index);
+
 	abstract public void compileFromLocal(int index) throws AbortException;
 
 	abstract public void compileToLocal(int index) throws AbortException;
@@ -531,9 +533,10 @@ public abstract class TargetContext extends Context {
 		if (getLatest() != null) {
 			DictEntry entry = ((ITargetWord) getLatest()).getEntry();
 			if (entry.hasLocals()) {
-				IWord word = entry.findLocal(token);
-				if (word != null)
+				IWord word = entry.findLocalWord(token);
+				if (word != null) {
 					return word;
+				}
 			}
 		}
 		return super.find(token);
@@ -551,5 +554,6 @@ public abstract class TargetContext extends Context {
 		ITargetWord semiS = (ITargetWord) require(";S");
 		compile(semiS);
 	}
+
 
 }

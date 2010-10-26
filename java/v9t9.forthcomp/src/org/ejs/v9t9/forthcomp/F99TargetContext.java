@@ -625,7 +625,7 @@ public class F99TargetContext extends TargetContext {
 	
 	private int getLocalOffs(int index) {
 		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
-		int offs = entry.getLocals().size() - index;
+		int offs = entry.getLocalCount() - index;
 		return -offs * 2;
 	}
 
@@ -633,11 +633,19 @@ public class F99TargetContext extends TargetContext {
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileLocalAddr(int)
 	 */
 	@Override
-	public void compileFromLocal(int index) throws AbortException {
+	public void compileLocalAddr(int index) {
 		compileUser(lpUser);
 		compileOpcode(Iload);
 		compileLiteral(getLocalOffs(index), false);
 		compileOpcode(Iadd);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileLocalAddr(int)
+	 */
+	@Override
+	public void compileFromLocal(int index) throws AbortException {
+		compileLocalAddr(index);
 		compileField(Iload);
 	}
 
@@ -646,10 +654,7 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileToLocal(int index) throws AbortException {
-		compileUser(lpUser);
-		compileOpcode(Iload);
-		compileLiteral( getLocalOffs(index), false);
-		compileOpcode(Iadd);
+		compileLocalAddr(index);
 		compileField(Istore);
 	}
 	
@@ -683,12 +688,6 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoUser(int index) throws AbortException {
-		/*
-		compileOpcode(IcontextFrom);
-		compileField(CTX_UP);
-		compileLiteral(index * 2, false);
-		compileField(Iadd);
-		*/
 		compileLiteral(index, false);
 		compileOpcode(Iuser);
 		compileOpcode(Iexit);
@@ -703,6 +702,6 @@ public class F99TargetContext extends TargetContext {
 		if (((ITargetWord) getLatest()).getEntry().hasLocals())
 			compileCleanupLocals();
 
-		compileExit();
+		compileOpcode(Iexiti);
 	}
 }

@@ -1164,6 +1164,7 @@ public class TestForthComp {
 	}
 	@Test
 	public void testLocals2() throws Exception {
+		
 		parseString(
 				":: strcmp ( addr1 c1 addr2 c2 -- f )\n"+
 				"begin\n"+
@@ -1176,8 +1177,30 @@ public class TestForthComp {
 				"c1 c2 - \\ length dictates winner\n" +
 				";");
 		
+		doStrCmpTest();
+	}
+	@Test
+	public void testLocals3() throws Exception {
+		
+		parseString(
+				":: strcmp ( addr1 c1 addr2 c2 -- f )\n"+
+				"begin\n"+
+				"  c1 0= c2 0= and not \n"+
+				"while\n"+
+				"  'addr1  dup @  1 rot +!  -1 'c1 +!  c@\n"+
+				"  'addr2  dup @  1 rot +!  -1 'c2 +!  c@\n"+
+				"  - dup if  exit  else  drop  then\n"+
+				"repeat\n"+
+				"c1 c2 - \\ length dictates winner\n" +
+				";");
+		
+		doStrCmpTest();
+	}
+	private void doStrCmpTest() throws AbortException {
 		int str1;
 		int str2;
+		
+		int cycles1 = cpu.getCurrentCycleCount();
 		
 		str1 = targCtx.writeLengthPrefixedString("This is first");
 		str2 = targCtx.writeLengthPrefixedString("This is second");
@@ -1225,5 +1248,35 @@ public class TestForthComp {
 		
 		ret = hostCtx.popData();
 		assertTrue(ret+"", ret == 0);
+		
+		int cycles2 = cpu.getCurrentCycleCount();
+		
+		System.out.println("cycles: " + (cycles2 - cycles1));
+	}
+	
+	@Test
+	public void testLocalNesting() throws Exception {
+		
+		parseString(
+				":: addsub ( a b ) a b + a b - ; \n"+
+				":: silly ( cnt bias )\n"+
+				"cnt 0 do\n"+
+				"  i bias addsub \n" +
+				"loop\n"+
+				";");
+		
+		
+		hostCtx.pushData(3);
+		hostCtx.pushData(10);
+		
+		interpret("silly");
+		
+		// 10, -10; 11, -9; 12, -8
+		assertEquals(-8, hostCtx.popData());
+		assertEquals(12, hostCtx.popData());
+		assertEquals(-9, hostCtx.popData());
+		assertEquals(11, hostCtx.popData());
+		assertEquals(-10, hostCtx.popData());
+		assertEquals(10, hostCtx.popData());
 	}
 }

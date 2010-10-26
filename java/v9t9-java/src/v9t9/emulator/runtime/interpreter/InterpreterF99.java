@@ -718,9 +718,6 @@ public class InterpreterF99 implements Interpreter {
         	case CTX_UP:
         		cpu.push(((CpuStateF99)cpu.getState()).getUP());
         		break;
-        	case CTX_UP0:
-        		cpu.push(((CpuStateF99)cpu.getState()).getBaseUP());
-        		break;
         	case CTX_PC:
         		cpu.push(cpu.getPC());
         		break;
@@ -749,9 +746,6 @@ public class InterpreterF99 implements Interpreter {
         		break;
         	case CTX_UP:
         		((CpuStateF99)cpu.getState()).setUP(cpu.pop());
-        		break;
-        	case CTX_UP0:
-        		((CpuStateF99)cpu.getState()).setBaseUP(cpu.pop());
         		break;
         	case CTX_PC:
         		((CpuStateF99)cpu.getState()).setPC(cpu.pop());

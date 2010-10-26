@@ -149,7 +149,6 @@ public class InstF99 {
 	public static final int CTX_RP = 2;
 	public static final int CTX_RP0 = 3;
 	public static final int CTX_UP = 4;
-	public static final int CTX_UP0 = 5;
 	public static final int CTX_PC = 6;
 	public static final int CTX_INT = 7;
 	

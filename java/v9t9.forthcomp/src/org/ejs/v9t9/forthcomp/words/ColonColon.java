@@ -3,8 +3,6 @@
  */
 package org.ejs.v9t9.forthcomp.words;
 
-import java.util.Map;
-
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
@@ -43,20 +41,16 @@ public class ColonColon implements IWord {
 
 		theWord.getEntry().allocateLocals();
 		
-		Map<String, LocalVariable> locals = theWord.getEntry().getLocals();
-		
 		while (true) {
 			String name = hostContext.readToken();
 			if ("--".equals(name)) 
 				break;
+			if (")".equals(name))
+				return;
 
-			if (locals.containsKey(name))
-				throw hostContext.abort(name +" already used");
-					
-			LocalVariable local = new LocalVariable(locals.size());
-			locals.put(name, local);
+			int index = theWord.getEntry().defineLocal(name);
 			
-			targetContext.compileInitLocal(local.getIndex());
+			targetContext.compileInitLocal(index);
 		}
 		
 		while (true) {

@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.ejs.v9t9.forthcomp.words.LocalVariable;
+import org.ejs.v9t9.forthcomp.words.LocalVariableAddr;
+import org.ejs.v9t9.forthcomp.words.StoreLocalVariable;
 
 /**
  * @author ejs
@@ -25,7 +27,9 @@ public class DictEntry implements Comparable<DictEntry> {
 	private boolean export;
 
 	private int uses;
-	private Map<String, LocalVariable> locals;
+	private Map<String, LocalVariableTriple> locals;
+	private Map<String, IWord> localDict;
+	
 	
 	/**
 	 * @param name 
@@ -160,21 +164,45 @@ public class DictEntry implements Comparable<DictEntry> {
 	}
 
 	public void allocateLocals() {
-		if (locals == null)
-			locals = new LinkedHashMap<String, LocalVariable>();
+		if (locals == null) {
+			locals = new LinkedHashMap<String, LocalVariableTriple>();
+		}
+		if (localDict == null) {
+			localDict = new LinkedHashMap<String, IWord>();
+		}
 	}
-	public Map<String, LocalVariable> getLocals() {
-		return locals;
+	public int defineLocal(String name) throws AbortException {
+
+		if (locals.containsKey(name))
+			throw new AbortException(name +" already used");
+		
+		int index = locals.size();
+		
+		LocalVariable local = new LocalVariable(index);
+		StoreLocalVariable storeLocal = new StoreLocalVariable(index);
+		LocalVariableAddr localAddr = new LocalVariableAddr(index);
+		
+		locals.put(name.toUpperCase(), new LocalVariableTriple(local, storeLocal, localAddr));
+		
+		localDict.put(name.toUpperCase() + "!", storeLocal);
+		localDict.put("'" + name.toUpperCase(), localAddr);
+		localDict.put(name.toUpperCase(), local);
+
+		return index;
 	}
 
+	public int getLocalCount() {
+		return locals.size();
+	}
 	/**
 	 * @param name
 	 * @return
 	 */
-	public LocalVariable findLocal(String name) {
+	public LocalVariableTriple findLocal(String name) {
 		if (locals == null)
 			return null;
-		return locals.get(name);
+		LocalVariableTriple triple = locals.get(name.toUpperCase());
+		return triple;
 	}
 
 	/**
@@ -183,5 +211,14 @@ public class DictEntry implements Comparable<DictEntry> {
 	public boolean hasLocals() {
 		return locals != null;
 	}
+
+	/**
+	 * @param token
+	 * @return
+	 */
+	public IWord findLocalWord(String token) {
+		return localDict.get(token.toUpperCase());
+	}
+
 
 }

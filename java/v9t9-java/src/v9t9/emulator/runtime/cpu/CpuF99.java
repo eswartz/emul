@@ -268,8 +268,12 @@ public class CpuF99 extends CpuBase {
 	@Override
 	public void reset() {
         getStatus().expand((short) 0);
+        
+        // ROM should set these!
 		getState().setSP((short) 0xff80);
 		getState().setRP((short) 0xffc0);
+		getState().setUP((short) 0xff00);
+		
 		contextSwitch((short) 0x400);
 	}
 

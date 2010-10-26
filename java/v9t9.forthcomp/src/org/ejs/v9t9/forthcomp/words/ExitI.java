@@ -29,7 +29,7 @@ public class ExitI implements IWord {
 	 */
 	public boolean isImmediate() {
 		
-		return false;
+		return true;
 	}
 
 }

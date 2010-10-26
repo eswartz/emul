@@ -18,12 +18,14 @@ create  VRegSave      16 allot
     VRegSave + c@
 ;
 
-:   write-vregs ( regaddrlist -- )
+\   (Not a good reason for locals, since they're much slower, but just have something for now)
+
+::   write-vregs ( reglist -- )
     begin 
-        dup @ dup
+        reglist @ dup
     while
         write-vregaddr
-        2+
+        2 'reglist +!
     repeat   
     drop
 ;
