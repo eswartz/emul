@@ -34,6 +34,22 @@ public class LocalTarget extends AbstractTarget implements ITarget {
 	
 	private Process process;
 
+	public String getHost() {
+		return host;
+	}
+	
+	public void setHost(String host) {
+		this.host = host;
+	}
+	
+	public String getPort() {
+		return port;
+	}
+	
+	public void setPort(String port) {
+		this.port = port;
+	}
+	
 	@Override
 	public String getShortName() {
 		return "Local";
@@ -59,7 +75,7 @@ public class LocalTarget extends AbstractTarget implements ITarget {
 				public void run() {
 					try {
 						final int n = process.waitFor();
-						if (n != 0) {
+						if (n != 0 && process != null) { // ignore when shutting down
 							// Assume bad things happened and peers never reported
 							Protocol.invokeLater(new Runnable() {
 								@Override
@@ -127,7 +143,9 @@ public class LocalTarget extends AbstractTarget implements ITarget {
 	}
 
 	public void dispose() {
-		if (process != null)
+		if (process != null) {
 			process.destroy();
+			process = null;
+		}
 	}
 }

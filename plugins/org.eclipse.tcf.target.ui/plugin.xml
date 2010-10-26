@@ -186,5 +186,29 @@
                id="org.eclipse.tm.tcf.debug.LaunchConfigurationType"></configurationType>
       </shortcut>
    </extension>
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            class="org.eclipse.tcf.internal.target.ui.properties.TargetSummaryPropertyPage"
+            id="org.eclipse.tcf.target.ui.properties.summary"
+            name="Summary"
+            nameFilter="*.*">
+         <enabledWhen>
+            <instanceof
+                  value="org.eclipse.tcf.target.core.ITarget">
+            </instanceof>
+         </enabledWhen>
+      </page>
+      <page
+            class="org.eclipse.tcf.internal.target.ui.properties.LocalPropertyPage"
+            id="org.eclipse.tcf.target.ui.properties.local"
+            name="Local Connection">
+         <enabledWhen>
+            <instanceof
+                  value="org.eclipse.tcf.internal.target.core.LocalTarget">
+            </instanceof>
+         </enabledWhen>
+      </page>
+   </extension>
 
 </plugin>

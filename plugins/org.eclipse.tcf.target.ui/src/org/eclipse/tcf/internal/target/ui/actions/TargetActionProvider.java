@@ -14,6 +14,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.tcf.target.core.ITarget;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.dialogs.PropertyDialogAction;
 import org.eclipse.ui.navigator.CommonActionProvider;
 import org.eclipse.ui.navigator.ICommonActionConstants;
 import org.eclipse.ui.navigator.ICommonActionExtensionSite;
@@ -24,7 +25,8 @@ public class TargetActionProvider extends CommonActionProvider {
 
 	private InspectTargetAction inspectTargetAction;
 	private AttachDebuggerAction attachDebuggerAction;
-	
+	private PropertyDialogAction propertiesAction;
+
 	private ICommonViewerWorkbenchSite viewSite;
 	private boolean contribute = false;
 
@@ -34,6 +36,7 @@ public class TargetActionProvider extends CommonActionProvider {
 			viewSite = (ICommonViewerWorkbenchSite)aSite.getViewSite();
 			inspectTargetAction = new InspectTargetAction(viewSite.getPage());
 			attachDebuggerAction = new AttachDebuggerAction();
+			propertiesAction = new PropertyDialogAction(viewSite.getSite(), viewSite.getSelectionProvider());
 			contribute = true;
 		}
 	}
@@ -49,9 +52,14 @@ public class TargetActionProvider extends CommonActionProvider {
 		if (inspectTargetAction.isEnabled())
 			menu.insertAfter(ICommonMenuConstants.GROUP_OPEN, inspectTargetAction);
 		
+		propertiesAction.selectionChanged(selection);
+		if (propertiesAction.isEnabled())
+			menu.insertAfter(ICommonMenuConstants.GROUP_PROPERTIES, propertiesAction);
+
 		attachDebuggerAction.selectionChanged(selection);
 		if (attachDebuggerAction.isEnabled())
-			menu.add(attachDebuggerAction);
+			menu.insertAfter(ICommonMenuConstants.GROUP_ADDITIONS, attachDebuggerAction);
+		
 	}
 
 	@Override

@@ -9,4 +9,5 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.tm.tcf.core;bundle-version="0.3.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: org.eclipse.tcf.target.core
+Export-Package: org.eclipse.tcf.internal.target.core;x-friends:="org.eclipse.tcf.target.ui",
+ org.eclipse.tcf.target.core
