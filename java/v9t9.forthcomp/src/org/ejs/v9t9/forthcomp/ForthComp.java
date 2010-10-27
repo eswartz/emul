@@ -208,6 +208,7 @@ public class ForthComp {
 		
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
+		hostContext.define("+", new HostAdd());
 		hostContext.define("true", new HostConstant(-1));
 		hostContext.define("false", new HostConstant(0));
 		
@@ -323,7 +324,8 @@ public class ForthComp {
 				targetContext.compileDoubleLiteral(((DoubleLiteral) word).getValue(), ((DoubleLiteral) word).isUnsigned());
 				
 			} else {
-				throw abort("unknown compile-time semantics for " + token);
+				//throw abort("unknown compile-time semantics for " + token);
+				word.execute(hostContext, targetContext);
 			}
 		}
 	}

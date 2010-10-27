@@ -94,12 +94,12 @@ Variable win-sy
 :   cls  32 v-clear  term-reset ;
 
 :   curs-addr ( -- )
-    vy @ win-y @ +  v-sx @ *  vx @ win-x @ +
+    vy @ win-y @ +  v-sx @ *  vx @ win-x @ +  +
     v-screen @ + 
 ;
 
 :   emit    ( ch -- )
-    curs-addr  $4000 or  vwaddr  swap  c!
+    curs-addr  $4000 or  vwaddr  VDPWD c!
     1 vx +!  vx @ win-sx @ >= if 
         0 vx !  1 vy +!  vy @ win-sy @ >= if
             0 vy !

@@ -56,6 +56,8 @@ $930        constant    grom_font5x6
 
 \ -----------   constants
 
+0           constant    CTX_SP       
+2           constant    CTX_RP       
 4           constant    CTX_UP       
 7           constant    CTX_INT        
 

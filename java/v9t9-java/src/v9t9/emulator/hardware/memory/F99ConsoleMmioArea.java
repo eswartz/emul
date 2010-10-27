@@ -48,9 +48,6 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 
     @Override
     public void writeByte(MemoryEntry entry, int addr, byte val) {
-    	if ((addr & 1) != 0)
-    		return;
-    	
     	writeMmio(addr, val);
     }
 
@@ -62,8 +59,6 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 
 	@Override
 	public byte readByte(MemoryEntry entry, int addr) {
-    	if ((addr & 1) != 0)
-    		return 0;
 		return readMmio(addr);
 	}
 	

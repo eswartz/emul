@@ -82,6 +82,7 @@ public class InstF99 {
 	public static final int Istack_start = Imem_start + 4;
 	
 	public static final int Ispidx = Istack_start + 0;
+	public static final int Iqdup = Ispidx + _Iext;
 	public static final int Irpidx = Istack_start + 1;
 	public static final int Idrop = Istack_start + 2;
 	public static final int Iuser = Idrop + _Iext;
@@ -237,6 +238,7 @@ public class InstF99 {
 	static final int[] instArgs = {
 		Inop, 0, 0, 0, 0,
 		Idup, 1, 2, 0, 0,
+		Iqdup, 2, -1, 0, 0,
 		Iload, 1, 1, 0, 0,
 		Istore, 2, 0, 0, 0,
 		Icload, 1, 1, 0, 0,
@@ -355,6 +357,7 @@ public class InstF99 {
 		instNames.put(IRfrom_d, "2R>");
 		instNames.put(IatR, "R@");
 		instNames.put(Idup_d, "2DUP");
+		instNames.put(Iqdup, "?DUP");
 		//instNames.put(Iadd_d, "D+");
 		instNames.put(IfieldLit_d, "DLIT.F");
 		instNames.put(IfieldLit, "LIT.F");

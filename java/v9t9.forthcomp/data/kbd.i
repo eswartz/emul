@@ -1,18 +1,21 @@
 
-Variable    kbdtimer
-Variable    kbddelay
-Variable    kbdrate
-
-Variable    kbdshift
-Variable    kbdscan
-Variable    kbdlast
-Variable    kbdflag
-
 16          Constant    kbdbufsize
 
-Variable    kbdbuf      kbdbufsize allot
-Variable    kbdtail
-Variable    kbdhead
+Create      kbdbuf      kbdbufsize allot
+
+Create      kbdstate    10 allot
+
+    : kbdtimer kbdstate ;
+    : kbddelay [ kbdstate 1 + ] LITERAL ;
+    : kbdrate [ kbdstate 2 + ] LITERAL ;
+
+    : kbdshift [ kbdstate 3 + ] LITERAL ;
+    : kbdscan [ kbdstate 4 + ] LITERAL ;
+    : kbdlast [ kbdstate 5 + ] LITERAL ;
+    : kbdflag [ kbdstate 6 + ] LITERAL ; 
+
+    : kbdtail [ kbdstate 7 + ] LITERAL ;
+    : kbdhead [ kbdstate 8 + ] LITERAL ;
 
 Variable    timeout
 Variable    randnoise
@@ -26,11 +29,11 @@ Variable    randnoise
 ;
 
 :   buffer-key  ( ch -- )
-    \ restart timer
-    0 kbdtimer c!
-
     \ remember the key
     kbdscan c!
+
+    \ restart timer
+    0 kbdtimer c!
     
     \ add to buffer
     kbdtail c@  dup  kbdbuf +  kbdscan c@  swap  c!
@@ -47,18 +50,18 @@ Variable    randnoise
 :   repeat-key  ( ch -- )
     kbdscan c@  over =  if
         \ same key: see if enough time has elapsed since last key
-        kbdflag c@ 0<       \ repeating? 
+        kbdflag c@        \ repeating? 
         if
             kbdtimer c@ kbddelay c@  <  if  drop exit  then
         else
             \ see if time to repeat
             kbdtimer c@ kbdrate c@  <  if  drop exit  then
             
-            $80 kbdflag +!
+            true kbdflag c!
         then
     else
         \ new key: reset repeat flag
-        kbdflag c@  $7f and  kbdflag c! 
+        0 kbdflag c! 
     then
     
     buffer-key
@@ -83,8 +86,8 @@ Variable    randnoise
     dup 211 = if  
         $30 kbdshift c@ = not  $08 or  and 
     then
-    
-    dup if  repeat-key  else  drop  then 
+
+    ?dup if  repeat-key  then 
 ;
 
 \   Actions when any key is detected
@@ -109,21 +112,17 @@ Variable    randnoise
     
     $70 and  kbdshift c!           \ save shift bits
     
-    0 kbdscan c!
-    
     6 0 do 
         i   read-row
         
         i 0= if $07 and then        \ ignore shifts in first row
          
-        dup if
+        ?dup if
             i  3 lsh            \ table row offset
             
             swap >bit swap +    \ column
                         
             handle-key leave
-        else
-            drop
         then
     loop
     
@@ -138,8 +137,8 @@ Variable    randnoise
 ;
 
 :   kbd-init
-    30 kbddelay !   \ 1/2 s before repeat
-    3 kbdrate !     \ 1/20 s delay between repeat
+    30 kbddelay c!   \ 1/2 s before repeat
+    3 kbdrate c!     \ 1/20 s delay between repeat
     0 kbdflag c!
     0 kbdscan c!
     0 kbdlast c!

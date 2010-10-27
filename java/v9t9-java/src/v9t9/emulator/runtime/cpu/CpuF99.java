@@ -371,7 +371,7 @@ public class CpuF99 extends CpuBase {
 	 * @param intr
 	 */
 	public void triggerInterrupt(int intr) {
-		rpush(getST());
+		rpush(((StatusF99)getStatus()).flatten());
 		((StatusF99)getStatus()).setIntMask(0);
 		short addr = getIntVecAddr(intr);
 		contextSwitch(addr);

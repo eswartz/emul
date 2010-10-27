@@ -40,8 +40,9 @@ public class InternalCruF99 extends BaseCruAccess {
 			
 		case INTSP:
 			for (int i = 0; i < 8; i++)
-				if ((currentints & (1 << i)) != 0)
+				if (((currentints | val) & (1 << i)) != 0) {
 					acknowledgeInterrupt(i);
+				}
 			break;
 			
 		case KBD:

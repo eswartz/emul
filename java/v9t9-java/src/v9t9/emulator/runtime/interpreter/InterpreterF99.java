@@ -416,12 +416,18 @@ public class InterpreterF99 implements Interpreter {
         case Iexiti:
         	cpu.setPC(cpu.rpop());
         	cpu.setST(cpu.rpop());
-        	cpu.noIntCount++;
+        	cpu.noIntCount+=2;
         	return true;
         	
         case Idup:
         	cpu.push(cpu.peek());
         	break;
+        case Iqdup: {
+        	short val = cpu.peek();
+        	if (val != 0)
+        		cpu.push(val);
+        	break;
+        }
         case I0branch: {
         	short targ = (short) (alignPC + mop1.immed);
         	if (cpu.pop() == 0) {

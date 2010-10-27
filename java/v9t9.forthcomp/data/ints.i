@@ -29,7 +29,7 @@ DVariable vdp-ticks
         1. vdp-ticks d+!
         
         \ scan keyboard
-        1 kbdtimer +!    
+        kbdtimer c@ 1+ kbdtimer c!    
         
         kbd-scan
         
@@ -69,6 +69,5 @@ DVariable vdp-ticks
     ints-off
     ['] vdp-int-handler  INT_VDP     enable-int
     ['] nmi-int-handler  INT_NMI     enable-int
-    ints-on
 ;
 

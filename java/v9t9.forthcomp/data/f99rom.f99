@@ -32,23 +32,32 @@ include ints.i
 
 \ -------------------------------
 
+: regs-init
+    $ff80 (>CONTEXT) [ CTX_SP field, ]
+    $ff00 (>CONTEXT) [ CTX_UP field, ]
+    r>      \ remember return
+    $ffc0 (>CONTEXT) [ CTX_RP field, ]
+    >r
+;
+
+
 User    base
 
 :   quit
     10 base !
     
     begin
-        key? if key emit then
+        key? if key emit 
+        else ints-check
+        then
     again
 ;
 
 :   abort
 
-    ints-init   kbd-init
+    regs-init   ints-init   kbd-init
     
     \ ."  aborted" cr
-    
-    ints-on
     
     quit
 ;
@@ -71,7 +80,7 @@ User    base
 
 :   bootup
 
-    $ff00 (>CONTEXT) [ CTX_UP field, ]
+    regs-init
 
     ints-init
     

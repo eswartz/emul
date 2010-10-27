@@ -1295,4 +1295,17 @@ public class TestForthComp {
 		ITargetWord var = (ITargetWord) targCtx.require("grade");
 		assertEquals(97, targCtx.readCell(var.getEntry().getParamAddr())); 
 	}
+	
+	@Test
+	public void testCompiledLit() throws Exception {
+
+		parseString(
+				"Create buffer 100 allot\n"+
+				": fool [ buffer 50 + LITERAL ] ;\n");
+		
+		interpret("fool");
+
+		ITargetWord var = (ITargetWord) targCtx.require("buffer");
+		assertEquals(var.getEntry().getParamAddr() + 50, hostCtx.popData()); 
+	}
 }

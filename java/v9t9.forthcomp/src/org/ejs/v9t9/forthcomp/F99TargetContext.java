@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Stack;
 
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
+import org.ejs.v9t9.forthcomp.words.Comma;
 import org.ejs.v9t9.forthcomp.words.ExitI;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
+import org.ejs.v9t9.forthcomp.words.Literal;
 
 import v9t9.emulator.hardware.F99Machine;
 import v9t9.emulator.runtime.cpu.CpuF99;
@@ -109,6 +111,7 @@ public class F99TargetContext extends TargetContext {
 		
 		definePrim("execute", Iexecute);
 
+		definePrim("?dup", Iqdup);
 		definePrim("2dup", Idup_d);
 		definePrim("(context>)", IcontextFrom);
 		definePrim("(>context)", ItoContext);
@@ -555,6 +558,8 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void defineCompilerWords(HostContext hostContext) {
 		hostContext.define("FIELD,", new FieldComma());
+		hostContext.define(",", new Comma());
+		hostContext.define("LITERAL", new Literal());
 
 		hostContext.define("EXITI", new ExitI());
 
