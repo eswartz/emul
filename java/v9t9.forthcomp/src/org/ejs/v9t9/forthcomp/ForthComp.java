@@ -54,6 +54,7 @@ import org.ejs.v9t9.forthcomp.words.To;
 import org.ejs.v9t9.forthcomp.words.UPlusLoop;
 import org.ejs.v9t9.forthcomp.words.Until;
 import org.ejs.v9t9.forthcomp.words.User;
+import org.ejs.v9t9.forthcomp.words.Value;
 import org.ejs.v9t9.forthcomp.words.Variable;
 import org.ejs.v9t9.forthcomp.words.While;
 
@@ -199,6 +200,7 @@ public class ForthComp {
 		hostContext.define("constant", new Constant());
 		hostContext.define("dconstant", new DConstant());
 		hostContext.define("user", new User());
+		hostContext.define("value", new Value());
 		
 		hostContext.define("allot", new Allot());
 		hostContext.define("'", new Tick());

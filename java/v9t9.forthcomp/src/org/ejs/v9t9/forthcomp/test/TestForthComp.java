@@ -1258,7 +1258,8 @@ public class TestForthComp {
 	public void testLocalNesting() throws Exception {
 		
 		parseString(
-				":: addsub ( a b ) a b + a b - ; \n"+
+				": trash 111 222 333 >r >r >r rdrop rdrop rdrop 444 ;\n" +
+				":: addsub ( a b ) a b + trash drop a b - ; \n"+
 				":: silly ( cnt bias )\n"+
 				"cnt 0 do\n"+
 				"  i bias addsub \n" +
@@ -1278,5 +1279,20 @@ public class TestForthComp {
 		assertEquals(11, hostCtx.popData());
 		assertEquals(-10, hostCtx.popData());
 		assertEquals(10, hostCtx.popData());
+	}
+	
+	@Test
+	public void testValues() throws Exception {
+
+		parseString(
+				"88 Value grade\n"+
+				"7 to grade\n"+
+				": fool\n"+
+				" grade 90 + to grade ;\n");
+		
+		interpret("fool");
+
+		ITargetWord var = (ITargetWord) targCtx.require("grade");
+		assertEquals(97, targCtx.readCell(var.getEntry().getParamAddr())); 
 	}
 }

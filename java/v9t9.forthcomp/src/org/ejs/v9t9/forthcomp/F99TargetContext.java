@@ -169,7 +169,7 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("s>d", Idup, I0cmp, CMP_LT);
 		
 		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
-		defineInlinePrim("DOCON", Ilit, Iexit);
+		defineInlinePrim("DOLIT", Ilit, Iexit);
 		
 		defineInlinePrim("true", IfieldLit, -1);
 		defineInlinePrim("false", IfieldLit, 0);
@@ -261,6 +261,13 @@ public class F99TargetContext extends TargetContext {
 			TargetUserVariable user = (TargetUserVariable) word;
 			compileLiteral(user.getIndex(), false);
 			compileOpcode(Iuser);
+		} else if (word instanceof TargetValue) {
+			TargetValue value = (TargetValue) word;
+			compileLiteral(value.getEntry().getParamAddr(), false);
+			if (value.getCells() == 1)
+				compileOpcode(Iload);
+			else
+				compileOpcode(Iload_d);
 		} else {
 			// must call
 			alignCode();
@@ -674,13 +681,8 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoConstant(int value, int cells) throws AbortException {
-		compile((ITargetWord) require("DOCON"));
-		if (cells == 1)
-			compileAddr(value);
-		else if (cells == 2) {
-			compileAddr(value & 0xffff);
-			compileAddr(value >> 16);
-		}
+		compile((ITargetWord) require("DOLIT"));
+		compilePushValue(cells, value);
 	}
 	
 	/* (non-Javadoc)
@@ -703,5 +705,28 @@ public class F99TargetContext extends TargetContext {
 			compileCleanupLocals();
 
 		compileOpcode(Iexiti);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileDoValue(int, int)
+	 */
+	@Override
+	public int compilePushValue(int cells, int value) throws AbortException {
+		compile((ITargetWord) require("DOLIT"));
+		
+		alignCode();
+		int loc = alloc(cells * cellSize);
+		
+		if (cells == 1)
+			writeCell(loc, value);
+		else if (cells == 2) {
+			writeCell(loc, value & 0xffff);
+			writeCell(loc + 2, value >> 16);
+		}
+		else
+			throw new AbortException("unhandled size: " +cells);
+		
+		return loc;
+
 	}
 }

@@ -9,6 +9,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
 import org.ejs.v9t9.forthcomp.IWord;
 import org.ejs.v9t9.forthcomp.LocalVariableTriple;
 import org.ejs.v9t9.forthcomp.TargetContext;
+import org.ejs.v9t9.forthcomp.TargetValue;
 
 /**
  * Placeholder for local used in a colon-colon def
@@ -30,7 +31,20 @@ public class To implements IWord {
 				return;
 			}
 		}
-		throw hostContext.abort("cannot handle " + name);
+		
+		IWord word = targetContext.find(name);
+		if (word == null)
+			throw hostContext.abort(name + "?");
+		
+		if (!(word instanceof TargetValue))
+			throw hostContext.abort("cannot handle " + name);
+		
+		if (hostContext.isCompiling()) {
+			targetContext.compileToValue((TargetValue) word);
+		}
+		else {
+			((TargetValue) word).setValue(targetContext, hostContext.popData());
+		}
 	}
 	
 	/* (non-Javadoc)

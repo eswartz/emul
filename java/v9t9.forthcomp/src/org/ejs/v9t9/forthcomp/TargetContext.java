@@ -287,6 +287,27 @@ public abstract class TargetContext extends Context {
 		return (TargetConstant) define(name, new TargetConstant(entry, value, 1));		
 	}
 
+	public TargetValue defineValue(String name, int value, int cells) throws AbortException {
+		DictEntry entry = defineEntry(name);
+		logfile.println(name);
+		
+		int dp = entry.getContentAddr();
+		
+		int loc = compilePushValue(cells, value);
+		
+		entry.setCodeSize(loc - dp);
+		
+		return (TargetValue) define(name, new TargetValue(entry, cells));		
+	}
+
+	/**
+	 * At runtime, push the # of cells to the stack from the current DP.
+	 * Return the location of the value.
+	 * @param cells
+	 * @param value
+	 */
+	abstract public int compilePushValue(int cells, int value) throws AbortException;
+	
 	abstract public void compileDoConstant(int value, int cells) throws AbortException;
 	abstract public void compileDoUser(int index) throws AbortException;
 
@@ -553,6 +574,15 @@ public abstract class TargetContext extends Context {
 		
 		ITargetWord semiS = (ITargetWord) require(";S");
 		compile(semiS);
+	}
+
+	/**
+	 * @param word
+	 * @throws AbortException 
+	 */
+	public void compileToValue(TargetValue word) throws AbortException {
+		compileLiteral(word.getEntry().getParamAddr(), false);
+		compile((ITargetWord) require("!"));
 	}
 
 
