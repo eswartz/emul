@@ -14,7 +14,7 @@ package v9t9.engine.cpu;
  * @author ejs
  */
 public class StatusF99 implements Status {
-    private static final short ST_INT = 1;
+    private static final short ST_INT = 0x7;
 	short bits; 
 
     public StatusF99() {
@@ -29,7 +29,7 @@ public class StatusF99 implements Status {
 	 */
     @Override
     public String toString() {
-    	return  ((bits & StatusF99.ST_INT) != 0 ? "I" : " ");
+    	return "I:" + (bits & StatusF99.ST_INT);
     }
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#copyTo(v9t9.engine.cpu.Status9900)
