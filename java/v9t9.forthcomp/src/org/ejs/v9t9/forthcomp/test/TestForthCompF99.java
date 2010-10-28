@@ -39,7 +39,7 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  *
  */
-public class TestForthComp {
+public class TestForthCompF99 {
 
 	private static final int BASE_RP = 0xff00;
 	private static final int BASE_SP = 0xf800;
@@ -58,7 +58,7 @@ public class TestForthComp {
 	/**
 	 * 
 	 */
-	public TestForthComp() {
+	public TestForthCompF99() {
 		if (cpu == null) {
 			f99MachineModel = new F99MachineModel();
 			f99Machine = (F99Machine) f99MachineModel.createMachine();
