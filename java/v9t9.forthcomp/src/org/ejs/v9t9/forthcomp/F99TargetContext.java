@@ -32,6 +32,16 @@ public class F99TargetContext extends TargetContext {
 	private static final int opcodeShifts[] = { 10, 5, 0 };
 	private List<Integer> leaves;
 	private TargetUserVariable lpUser;
+	private DictEntry stub5BitLit;
+	private DictEntry stub5BitOpcode;
+	private DictEntry stub10BitOpcode;
+	private DictEntry stub16BitLit;
+	private DictEntry stub16BitAddr;
+	private DictEntry stub8BitLit;
+	private DictEntry stubCall;
+	private DictEntry stub16BitJump;
+	private DictEntry stub5BitJump;
+	private DictEntry stub5BitCodeAlign;
 	
 
 	/**
@@ -43,6 +53,18 @@ public class F99TargetContext extends TargetContext {
 	public F99TargetContext(int memorySize) {
 		super(false, 8, 16, memorySize);
 		leaves = new LinkedList<Integer>();
+		
+		stub5BitCodeAlign = defineStub("<<5-bit code align>>");
+		stub5BitOpcode = defineStub("<<5-bit opcode>>");
+		stub10BitOpcode = defineStub("<<10-bit opcode>>");
+		stub5BitLit = defineStub("<<5-bit lit>>");
+		stub5BitJump = defineStub("<<5-bit jump>>");
+		stub8BitLit = defineStub("<<8-bit lit>>");
+		stub16BitLit = defineStub("<<16-bit lit>>");
+		stub16BitAddr = defineStub("<<16-bit addr>>");
+		stub16BitJump = defineStub("<<16-bit jump>>");
+		stubCall = defineStub("<<call>>");
+		
 	}
 	
 	/* (non-Javadoc)
@@ -50,6 +72,8 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void defineBuiltins() {
+		definePrim("<<5-bit lit>>", Iexit);
+		
 		definePrim(";S", Iexit);
 		definePrim("@", Iload);
 		definePrim("c@", Icload);
@@ -228,6 +252,10 @@ public class F99TargetContext extends TargetContext {
 	public void alignCode() {
 		alignDP();
 		if (opcodeIndex != 0) {
+			if (opcodeIndex < 3)
+				stub5BitCodeAlign.use();
+			if (opcodeIndex < 2)
+				stub5BitCodeAlign.use();
 			opcodeIndex = 0;
 			opcodeAddr = alloc(cellSize);
 			lastOpcodeAddr = opcodeAddr;
@@ -274,6 +302,7 @@ public class F99TargetContext extends TargetContext {
 		} else {
 			// must call
 			alignCode();
+			stubCall.use();
 			
 			int reloc = addRelocation(opcodeAddr, 
 					RelocType.RELOC_CALL_15S1, 
@@ -299,11 +328,13 @@ public class F99TargetContext extends TargetContext {
 					|| InstF99.isAligningPCReference(opcode))
 					)
 				alignCode();
+			stub10BitOpcode.use();
 			compileField(Iext);
 			lastOpcodeAddr = opcodeAddr;
 			compileField(opcode - InstF99._Iext);
 			
 		} else {
+			stub5BitOpcode.use();
 			compileField(opcode);
 			lastOpcodeAddr = opcodeAddr;
 		}
@@ -329,6 +360,7 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void compileDoubleLiteral(int value, boolean isUnsigned) {
 		if (value >= -32 && value < (isUnsigned ? 32 : 16) ) {
+			stub16BitLit.use();
 			compileOpcode(IfieldLit_d);
 			compileField(value);
 		} else {
@@ -336,6 +368,8 @@ public class F99TargetContext extends TargetContext {
 			// EXT, so we must align
 			if (opcodeIndex == 2)
 				opcodeIndex = 3;
+			stub16BitLit.use();
+			stub16BitLit.use();
 			compileOpcode(Ilit_d);
 			int ptr = alloc(4);
 			writeCell(ptr, value & 0xffff);
@@ -348,22 +382,30 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileLiteral(int value, boolean isUnsigned) {
+		doCompileLiteral(value, isUnsigned).use();
+	}
+
+	private DictEntry doCompileLiteral(int value, boolean isUnsigned) {
 		if (opcodeIndex + 1 == 1) {
 			if (value >= -32 && value < (isUnsigned ? 32 : 16)) {
 				compileField(IfieldLit);
 				compileField(value);
+				return stub5BitLit;
 			} else {
 				compileField(Ilit);
 				int ptr = alloc(2);
 				writeCell(ptr, value & 0xffff);
+				return stub16BitLit;
 			}
 		} else if (value >= -32 && value < (isUnsigned ? 32 : 16)) {
 			compileField(IfieldLit);
 			compileField(value);
+			return stub5BitLit;
 		} else {
 			compileField(Ilit);
 			int ptr = alloc(2);
 			writeCell(ptr, value & 0xffff);
+			return stub16BitLit;
 		}
 	}
 	
@@ -372,6 +414,11 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileAddr(int loc) {
+		doCompileAddr(loc);
+		stub16BitAddr.use();
+	}
+
+	private void doCompileAddr(int loc) {
 		int ptr = alloc(2);
 		writeCell(ptr, loc);
 	}
@@ -383,6 +430,7 @@ public class F99TargetContext extends TargetContext {
 	public void compileChar(int val) {
 		int ptr = alloc(1);
 		writeChar(ptr, val);
+		stub8BitLit.use();
 	}
 	
 	/**
@@ -492,6 +540,12 @@ public class F99TargetContext extends TargetContext {
 		int opAddr = hostContext.popData();
 		int memAddr = hostContext.popData();
 		int diff = nextDp - opAddr;
+		
+		if (diff < -16 || diff > 15)
+			stub16BitJump.use();
+		else
+			stub5BitJump.use();
+		
 		writeCell(memAddr, diff);
 		
 		opcodeIndex = 3;
@@ -504,7 +558,13 @@ public class F99TargetContext extends TargetContext {
 		int nextDp = getDP();
 		int opAddr = hostContext.popData();
 		int diff = opAddr - nextDp;
-		compileAddr(diff);
+		
+		if (diff < -16 || diff > 15)
+			stub16BitJump.use();
+		else
+			stub5BitJump.use();
+
+		doCompileAddr(diff);
 		opcodeIndex = 3;
 	}
 
@@ -532,7 +592,13 @@ public class F99TargetContext extends TargetContext {
 		
 		int opAddr = hostCtx.popData();
 		int diff = opAddr - lastOpcodeAddr;
-		compileAddr(diff);
+		
+		if (diff < -16 || diff > 15)
+			stub16BitJump.use();
+		else
+			stub5BitJump.use();
+
+		doCompileAddr(diff);
 		
 		if (isQDo) {
 			// then comes here
@@ -575,10 +641,14 @@ public class F99TargetContext extends TargetContext {
 			throw new AbortException("String constant is too long");
 		
 		int dp = alloc(length + 1);
-		writeChar(dp, length);
 		
-		for (int i = 0; i < length; i++)
+		writeChar(dp, length);
+		stub8BitLit.use();
+		
+		for (int i = 0; i < length; i++) {
 			writeChar(dp + 1 + i, string.charAt(i));
+			stub8BitLit.use();
+		}
 		
 		return dp;
 	}
@@ -695,7 +765,7 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoUser(int index) throws AbortException {
-		compileLiteral(index, false);
+		doCompileLiteral(index, false);
 		compileOpcode(Iuser);
 		compileOpcode(Iexit);
 	}
@@ -722,16 +792,37 @@ public class F99TargetContext extends TargetContext {
 		alignCode();
 		int loc = alloc(cells * cellSize);
 		
-		if (cells == 1)
+		if (cells == 1) {
 			writeCell(loc, value);
-		else if (cells == 2) {
+			stub16BitLit.use();
+		} else if (cells == 2) {
 			writeCell(loc, value & 0xffff);
 			writeCell(loc + 2, value >> 16);
+			stub16BitLit.use();
+			stub16BitLit.use();
 		}
 		else
 			throw new AbortException("unhandled size: " +cells);
 		
 		return loc;
 
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileWordParamAddr(org.ejs.v9t9.forthcomp.TargetValue)
+	 */
+	@Override
+	public void compileWordParamAddr(TargetValue word) {
+		stub16BitLit.use();
+		doCompileLiteral(((ITargetWord)word).getEntry().getParamAddr(), true);		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileWordXt(org.ejs.v9t9.forthcomp.ITargetWord)
+	 */
+	@Override
+	public void compileWordXt(ITargetWord word) {
+		stub16BitLit.use();
+		doCompileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true);		
 	}
 }

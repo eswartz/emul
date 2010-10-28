@@ -14,6 +14,7 @@ import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
+import org.ejs.v9t9.forthcomp.words.StubWord;
 
 import v9t9.engine.memory.MemoryDomain;
 
@@ -41,7 +42,8 @@ public abstract class TargetContext extends Context {
 	private int baseDP;
 	private PrintStream logfile = System.out;
 	private Map<String, ForwardRef> forwards;
-	
+	public DictEntry stubData;
+
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
 		this.littleEndian = littleEndian;
 		this.charBits = charBits;
@@ -50,8 +52,18 @@ public abstract class TargetContext extends Context {
 		this.memory = new byte[memorySize];
 		this.forwards = new LinkedHashMap<String,ForwardRef>();
 		this.export = true;
+		
+		stubData = defineStub("<<data space>>");
 	}
 
+
+	
+	protected DictEntry defineStub(String name) {
+		StubWord stubWord = new StubWord(name);
+		getDictionary().put(name, stubWord.getEntry());
+		return stubWord.getEntry();
+	}
+	
 	abstract public void defineBuiltins();
 	
 	/** read the value in memory */
@@ -115,6 +127,7 @@ public abstract class TargetContext extends Context {
 	 * @return
 	 */
 	public int allocCell() {
+		stubData.use(cellSize);
 		return alloc(cellSize);
 	}
 
@@ -153,6 +166,7 @@ public abstract class TargetContext extends Context {
 			size = cellSize + align(1 + name.length());
 			
 			alignDP();
+			stubData.use(size);
 			entryAddr = alloc(size);
 	
 		}
@@ -266,6 +280,7 @@ public abstract class TargetContext extends Context {
 		} catch (AbortException e) {
 			// for unit tests
 		}
+		stubData.use(cells * cellSize);
 		int loc = alloc(cells * cellSize);
 		entry.setCodeSize(loc - dp);
 		TargetVariable var = (TargetVariable) define(name, new TargetVariable(entry, loc));
@@ -581,9 +596,16 @@ public abstract class TargetContext extends Context {
 	 * @throws AbortException 
 	 */
 	public void compileToValue(TargetValue word) throws AbortException {
-		compileLiteral(word.getEntry().getParamAddr(), false);
+		compileWordParamAddr(word);
 		compile((ITargetWord) require("!"));
 	}
+
+	/**
+	 * @param word
+	 */
+	abstract public void compileWordParamAddr(TargetValue word);
+
+	abstract public void compileWordXt(ITargetWord word);
 
 
 }

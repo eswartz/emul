@@ -30,7 +30,8 @@ public class ParsedTick implements IWord {
 		if (!(word instanceof ITargetWord))
 			throw hostContext.abort("cannot take address of host word " + name);
 		
-		targetContext.compileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true);
+		targetContext.compileWordXt((ITargetWord)word);
+		//targetContext.compileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true);
 		
 	}
 	

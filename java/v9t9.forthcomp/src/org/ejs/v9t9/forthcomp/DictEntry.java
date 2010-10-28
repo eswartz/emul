@@ -221,4 +221,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	}
 
 
+	public void use(int count) {
+		uses += count;
+	}
 }

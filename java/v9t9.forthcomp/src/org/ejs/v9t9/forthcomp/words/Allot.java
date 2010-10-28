@@ -20,7 +20,10 @@ public class Allot implements IWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		targetContext.alloc(hostContext.popData());
+		
+		int size = hostContext.popData();
+		targetContext.stubData.use(size);
+		targetContext.alloc(size);
 	}
 	
 	/* (non-Javadoc)

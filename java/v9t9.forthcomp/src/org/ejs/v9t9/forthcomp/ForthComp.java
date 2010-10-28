@@ -135,8 +135,8 @@ public class ForthComp {
     	comp.getTargetContext().alignDP();
     	comp.saveMemory(consoleOutFile, gromOutFile);
     	
-    	logfile.println("Top word uses:");
     	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getDictionary().values());
+    	logfile.println("Top word uses of " + sortedDict.size() +":");
 		
     	Collections.sort(sortedDict, new Comparator<DictEntry>() {
 				public int compare(DictEntry o1, DictEntry o2) {
@@ -144,7 +144,7 @@ public class ForthComp {
 				}
 			}
     	);
-    	for (DictEntry entry : sortedDict.subList(Math.max(0, sortedDict.size() - 16), sortedDict.size())) {
+    	for (DictEntry entry : sortedDict.subList(Math.max(0, sortedDict.size() - 32), sortedDict.size())) {
     		logfile.println("\t" + entry.getUses() +"\t" + entry.getName() );
     		
     	}
