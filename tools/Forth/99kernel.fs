@@ -16,7 +16,8 @@ lock
 include user.fs
 
 order
-(up0) tup !     \ even if we don't have USER variables, this will be used for other stuff we want in RAM
+
+(up0) tup .s !   \ even if we don't have USER variables, this will be used for other stuff we want in RAM
 
 order
 

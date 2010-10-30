@@ -15,37 +15,32 @@ import org.ejs.v9t9.forthcomp.words.FieldComma;
 import org.ejs.v9t9.forthcomp.words.Literal;
 
 import v9t9.emulator.hardware.F99Machine;
-import v9t9.emulator.hardware.memory.EnhancedRamArea;
-import v9t9.emulator.runtime.cpu.CpuF99;
-import v9t9.emulator.runtime.cpu.CpuStateF99;
-import v9t9.engine.cpu.InstF99;
+import v9t9.emulator.hardware.memory.EnhancedRamByteArea;
+import v9t9.emulator.runtime.cpu.CpuF99b;
+import v9t9.emulator.runtime.cpu.CpuStateF99b;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 
-import static v9t9.engine.cpu.InstF99.*;
+import static v9t9.engine.cpu.InstF99b.*;
 
 /**
  * @author ejs
  *
  */
-public class F99TargetContext extends TargetContext {
+public class F99bTargetContext extends TargetContext {
 
-	private int opcodeIndex;
-	private int opcodeAddr;
-	private int lastOpcodeAddr;
-	private static final int opcodeShifts[] = { 10, 5, 0 };
 	private List<Integer> leaves;
 	private TargetUserVariable lpUser;
-	private DictEntry stub5BitLit;
-	private DictEntry stub5BitOpcode;
-	private DictEntry stub10BitOpcode;
+	private DictEntry stub4BitLit;
+	private DictEntry stub8BitOpcode;
+	private DictEntry stub16BitOpcode;
 	private DictEntry stub16BitLit;
 	private DictEntry stub16BitAddr;
 	private DictEntry stub8BitLit;
 	private DictEntry stubCall;
 	private DictEntry stub16BitJump;
-	private DictEntry stub5BitJump;
-	private DictEntry stub5BitCodeAlign;
+	private DictEntry stub8BitJump;
+	private DictEntry stub4BitJump;
 	
 
 	/**
@@ -54,15 +49,15 @@ public class F99TargetContext extends TargetContext {
 	 * @param cellBits
 	 * @param memorySize
 	 */
-	public F99TargetContext(int memorySize) {
+	public F99bTargetContext(int memorySize) {
 		super(false, 8, 16, memorySize);
 		leaves = new LinkedList<Integer>();
 		
-		stub5BitCodeAlign = defineStub("<<5-bit code align>>");
-		stub5BitOpcode = defineStub("<<5-bit opcode>>");
-		stub10BitOpcode = defineStub("<<10-bit opcode>>");
-		stub5BitLit = defineStub("<<5-bit lit>>");
-		stub5BitJump = defineStub("<<5-bit jump>>");
+		stub8BitOpcode = defineStub("<<8-bit opcode>>");
+		stub16BitOpcode = defineStub("<<16-bit opcode>>");
+		stub4BitLit = defineStub("<<4-bit lit>>");
+		stub4BitJump = defineStub("<<4-bit jump>>");
+		stub8BitJump = defineStub("<<8-bit jump>>");
 		stub8BitLit = defineStub("<<8-bit lit>>");
 		stub16BitLit = defineStub("<<16-bit lit>>");
 		stub16BitAddr = defineStub("<<16-bit addr>>");
@@ -86,11 +81,11 @@ public class F99TargetContext extends TargetContext {
 		definePrim("+!", IplusStore);
 		definePrim("d+!", IplusStore_d);
 		
-		defineInlinePrim("1+", Iunaryop, OP_1PLUS);
-		defineInlinePrim("2+", Iunaryop, OP_2PLUS);
+		definePrim("1+", I1plus);
+		definePrim("2+", I2plus);
 		
-		defineInlinePrim("1-", Iunaryop, OP_1MINUS);
-		defineInlinePrim("2-", Iunaryop, OP_2MINUS);
+		definePrim("1-", I1minus);
+		definePrim("2-", I2minus);
 
 		
 		definePrim("dup", Idup);
@@ -102,21 +97,23 @@ public class F99TargetContext extends TargetContext {
 		definePrim("D0=", I0equ_d);
 		definePrim("=", Iequ);
 		definePrim("D=", Iequ_d);
-		definePrim("0branch", I0branch);
-		definePrim("branch", Ibranch);
-		defineInlinePrim("negate", Iunaryop, OP_NEG);
-		defineInlinePrim("dnegate", Iunaryop_d, OP_NEG);
-		defineInlinePrim("invert", Iunaryop, OP_INV);
-		defineInlinePrim("not", Iunaryop, OP_NOT);
+		definePrim("0branch", I0branchB);
+		definePrim("branch", IbranchB);
+		definePrim("negate", Ineg);
+		definePrim("dnegate", Ineg_d);
 		definePrim("+", Iadd);
-		defineInlinePrim("d+", Ibinop_d, OP_ADD);
-		defineInlinePrim("-", Ibinop, OP_SUB);
-		defineInlinePrim("d-", Ibinop_d, OP_SUB);
+		definePrim("d+", Iadd_d);
+		definePrim("-", Isub);
+		definePrim("d-", Isub_d);
 		definePrim("um*", Iumul);
 		definePrim("um/mod", Iudivmod);
-		defineInlinePrim("or", Ibinop, OP_OR);
-		defineInlinePrim("and", Ibinop, OP_AND);
-		defineInlinePrim("xor", Ibinop, OP_XOR);
+		
+		definePrim("invert", Iinv);
+		definePrim("not", Inot);
+		definePrim("or", Ior);
+		definePrim("and", Iand);
+		definePrim("xor", Ixor);
+		
 		definePrim(">r", ItoR);
 		definePrim("2>r", ItoR_d);
 		definePrim("r>", IRfrom);
@@ -130,10 +127,10 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("rp!", ItoContext, CTX_RP);
 		
 		definePrim("(do)", ItoR_d);
-		definePrim("(loop)", Iloop);
-		definePrim("(+loop)", IplusLoop);
-		definePrim("(u+loop)", IuplusLoop);
-		defineInlinePrim("(?do)", Idup_d, ItoR_d, Ibinop, OP_SUB, I0branch);
+		defineInlinePrim("(loop)", IloopUp);
+		defineInlinePrim("(+loop)", IplusLoopUp);
+		defineInlinePrim("(u+loop)", IuplusLoopUp);
+		defineInlinePrim("(?do)", Idup_d, ItoR_d, Isub, I0branchB);
 		
 		definePrim("execute", Iexecute);
 
@@ -143,80 +140,80 @@ public class F99TargetContext extends TargetContext {
 		definePrim("(>context)", ItoContext);
 		definePrim("(user)", Iuser);
 
-		defineInlinePrim("0<", I0cmp, CMP_LT);
-		defineInlinePrim("0<=", I0cmp, CMP_LE);
-		defineInlinePrim("0>", I0cmp, CMP_GT);
-		defineInlinePrim("0>=", I0cmp, CMP_GE);
-		defineInlinePrim("0U<", I0cmp, CMP_ULT);
-		defineInlinePrim("0U<=", I0cmp, CMP_ULE);
-		defineInlinePrim("0U>", I0cmp, CMP_UGT);
-		defineInlinePrim("0U>=", I0cmp, CMP_UGE);
-		defineInlinePrim("<", Icmp, CMP_LT);
-		defineInlinePrim("<=", Icmp, CMP_LE);
-		defineInlinePrim(">", Icmp, CMP_GT);
-		defineInlinePrim(">=", Icmp, CMP_GE);
-		defineInlinePrim("U<", Icmp, CMP_ULT);
-		defineInlinePrim("U<=", Icmp, CMP_ULE);
-		defineInlinePrim("U>", Icmp, CMP_UGT);
-		defineInlinePrim("U>=", Icmp, CMP_UGE);
+		defineInlinePrim("0<", IlitX, Icmp+CMP_LT);
+		defineInlinePrim("0<=", IlitX, Icmp+CMP_LE);
+		defineInlinePrim("0>", IlitX, Icmp+CMP_GT);
+		defineInlinePrim("0>=", IlitX, Icmp+CMP_GE);
+		defineInlinePrim("0U<", IlitX, Icmp+CMP_ULT);
+		defineInlinePrim("0U<=", IlitX, Icmp+CMP_ULE);
+		defineInlinePrim("0U>", IlitX, Icmp+CMP_UGT);
+		defineInlinePrim("0U>=", IlitX, Icmp+CMP_UGE);
+		defineInlinePrim("<", Icmp+CMP_LT);
+		defineInlinePrim("<=", Icmp+CMP_LE);
+		defineInlinePrim(">", Icmp+CMP_GT);
+		defineInlinePrim(">=", Icmp+CMP_GE);
+		defineInlinePrim("U<", Icmp+CMP_ULT);
+		defineInlinePrim("U<=", Icmp+CMP_ULE);
+		defineInlinePrim("U>", Icmp+CMP_UGT);
+		defineInlinePrim("U>=", Icmp+CMP_UGE);
 
-		defineInlinePrim("0D<", I0cmp_d, CMP_LT);
-		defineInlinePrim("0D<=", I0cmp_d, CMP_LE);
-		defineInlinePrim("0D>", I0cmp_d, CMP_GT);
-		defineInlinePrim("0D>=", I0cmp_d, CMP_GE);
-		defineInlinePrim("0DU<", I0cmp_d, CMP_ULT);
-		defineInlinePrim("0DU<=", I0cmp_d, CMP_ULE);
-		defineInlinePrim("0DU>", I0cmp_d, CMP_UGT);
-		defineInlinePrim("0DU>=", I0cmp_d, CMP_UGE);
-		defineInlinePrim("D<", Icmp_d, CMP_LT);
-		defineInlinePrim("D<=", Icmp_d, CMP_LE);
-		defineInlinePrim("D>", Icmp_d, CMP_GT);
-		defineInlinePrim("D>=", Icmp_d, CMP_GE);
-		defineInlinePrim("DU<", Icmp_d, CMP_ULT);
-		defineInlinePrim("DU<=", Icmp_d, CMP_ULE);
-		defineInlinePrim("DU>", Icmp_d, CMP_UGT);
-		defineInlinePrim("DU>=", Icmp_d, CMP_UGE);
+		defineInlinePrim("0D<", IlitX_d, Icmp+CMP_LT);
+		defineInlinePrim("0D<=", IlitX_d, Icmp+CMP_LE);
+		defineInlinePrim("0D>", IlitX_d, Icmp+CMP_GT);
+		defineInlinePrim("0D>=", IlitX_d, Icmp+CMP_GE);
+		defineInlinePrim("0DU<", IlitX_d, Icmp+CMP_ULT);
+		defineInlinePrim("0DU<=", IlitX_d, Icmp+CMP_ULE);
+		defineInlinePrim("0DU>", IlitX_d, Icmp+CMP_UGT);
+		defineInlinePrim("0DU>=", IlitX_d, Icmp+CMP_UGE);
+		defineInlinePrim("D<", Icmp_d+CMP_LT);
+		defineInlinePrim("D<=", Icmp_d+CMP_LE);
+		defineInlinePrim("D>", Icmp_d+CMP_GT);
+		defineInlinePrim("D>=", Icmp_d+CMP_GE);
+		defineInlinePrim("DU<", Icmp_d+CMP_ULT);
+		defineInlinePrim("DU<=", Icmp_d+CMP_ULE);
+		defineInlinePrim("DU>", Icmp_d+CMP_UGT);
+		defineInlinePrim("DU>=", Icmp_d+CMP_UGE);
 		
-		defineInlinePrim("unloop", Irdrop, Irdrop);
-		defineInlinePrim("2rdrop", Irdrop, Irdrop);
-		defineInlinePrim("2/", Iunaryop, OP_2DIV);
-		defineInlinePrim("2*", Iunaryop, OP_2TIMES);
+		defineInlinePrim("unloop", Irdrop_d);
+		defineInlinePrim("2rdrop", Irdrop_d);
+		defineInlinePrim("2/", I2div);
+		defineInlinePrim("2*", I2times);
 		
-		defineInlinePrim("LSH", Ibinop, OP_LSH);
-		defineInlinePrim("RSH", Ibinop, OP_ASH);
-		defineInlinePrim("URSH", Ibinop, OP_RSH);
-		defineInlinePrim("CSH", Ibinop, OP_CSH);
+		defineInlinePrim("LSH", Ilsh);
+		defineInlinePrim("RSH", Iash);
+		defineInlinePrim("URSH", Irsh);
+		defineInlinePrim("CSH", Icsh);
 		
-		defineInlinePrim("SWPB", IfieldLit, 8, Ibinop, OP_CSH);
+		defineInlinePrim("SWPB", IlitX | 8, Icsh);
 		
-		defineInlinePrim("DLSH", Ibinop_d, OP_LSH);
-		defineInlinePrim("DRSH", Ibinop_d, OP_ASH);
-		defineInlinePrim("DURSH", Ibinop_d, OP_RSH);
-		defineInlinePrim("DCSH", Ibinop_d, OP_CSH);
+		defineInlinePrim("DLSH", Ilsh_d);
+		defineInlinePrim("DRSH", Iash_d);
+		defineInlinePrim("DURSH", Irsh_d);
+		defineInlinePrim("DCSH", Icsh_d);
 		
 		defineInlinePrim("*", Iumul, Idrop);
-		defineInlinePrim("s>d", Idup, I0cmp, CMP_LT);
+		defineInlinePrim("s>d", Idup, IlitX, Icmp+CMP_LT);
 		
 		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
-		defineInlinePrim("DOLIT", Ilit, Iexit);
+		defineInlinePrim("DOLIT", IlitW, 0, 0, Iexit);
 		
-		defineInlinePrim("true", IfieldLit, -1);
-		defineInlinePrim("false", IfieldLit, 0);
+		defineInlinePrim("true", IlitX | 0xf);
+		defineInlinePrim("false", IlitX);
 
 	}
 	
 	private void definePrim(String string, int opcode) {
 		define(string, new F99PrimitiveWord(defineEntry(string), opcode));
-		compileField(opcode);
-		compileField(Iexit);
+		compileByte(opcode);
+		compileByte(Iexit);
 		alignCode();
 	}
 
 	private void defineInlinePrim(String string, int... opcodes) {
 		define(string, new F99InlineWord(defineEntry(string), opcodes));
 		for (int i : opcodes)
-			compileField(i);
-		compileField(Iexit);
+			compileByte(i);
+		compileByte(Iexit);
 		alignCode();
 	}
 	
@@ -226,7 +223,6 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public DictEntry defineEntry(String name) {
 		DictEntry entry = super.defineEntry(name);
-		opcodeAddr = lastOpcodeAddr = getDP();
 		return entry;
 	}
 	/* (non-Javadoc)
@@ -244,7 +240,6 @@ public class F99TargetContext extends TargetContext {
 	 * 
 	 */
 	public void initCode() {
-		opcodeIndex = 3;
 		alignCode();
 	}
 
@@ -253,15 +248,6 @@ public class F99TargetContext extends TargetContext {
 	 */
 	public void alignCode() {
 		alignDP();
-		if (opcodeIndex != 0) {
-			if (opcodeIndex < 3)
-				stub5BitCodeAlign.use();
-			if (opcodeIndex < 2)
-				stub5BitCodeAlign.use();
-			opcodeIndex = 0;
-			opcodeAddr = alloc(cellSize);
-			lastOpcodeAddr = opcodeAddr;
-		}
 	}
 
 	/* (non-Javadoc)
@@ -302,17 +288,15 @@ public class F99TargetContext extends TargetContext {
 			else
 				compileOpcode(Iload_d);
 		} else {
-			// must call
-			alignCode();
 			stubCall.use();
 			
-			int reloc = addRelocation(opcodeAddr, 
+			int pc = alloc(cellSize);
+			
+			int reloc = addRelocation(pc, 
 					RelocType.RELOC_CALL_15S1, 
 					word.getEntry().getContentAddr(),
 					word.getEntry().getName());
-			writeCell(opcodeAddr, reloc);
-			
-			opcodeAddr = alloc(cellSize);
+			writeCell(pc, reloc);
 		}
 	}
 
@@ -320,40 +304,20 @@ public class F99TargetContext extends TargetContext {
 	 * @param opcode
 	 */
 	private void compileOpcode(int opcode) {
-		if (opcode >= InstF99._Iext) {
+		if (opcode >= 256) {
 			
-			if (opcodeIndex == 2 && 
-					// cannot read more than one field from the next word, and the EXT + opcode takes 1
-					(InstF99.opcodeHasFieldArgument(opcode) 
-					// also, for BRANCH, compiler words expect to write to HERE, but this will
-					// mismatch the interpreter's idea of the "next data word" 
-					|| InstF99.isAligningPCReference(opcode))
-					)
-				alignCode();
-			stub10BitOpcode.use();
-			compileField(Iext);
-			lastOpcodeAddr = opcodeAddr;
-			compileField(opcode - InstF99._Iext);
+			stub16BitOpcode.use();
+			compileByte(opcode >> 8);
+			compileByte(opcode & 0xff);
 			
 		} else {
-			stub5BitOpcode.use();
-			compileField(opcode);
-			lastOpcodeAddr = opcodeAddr;
+			stub8BitOpcode.use();
+			compileByte(opcode);
 		}
-		
-		if (InstF99.isAligningPCReference(opcode))
-			opcodeIndex = 3;		
 	}
 
-	public void compileField(int opcode) {
-		opcode &= 0x1f;
-		if (opcodeIndex >= 3) {
-			opcodeIndex = 0;
-			opcodeAddr = alloc(cellSize);
-		}
-		//System.out.println(HexUtils.toHex4(opcodeAddr)+"#" + opcodeIndex+": " + opcode);
-		writeCell(opcodeAddr, readCell(opcodeAddr) | (opcode << opcodeShifts[opcodeIndex]));
-		opcodeIndex++;
+	public void compileByte(int opcode) {
+		writeChar(alloc(1), opcode);
 	}
 
 	/* (non-Javadoc)
@@ -361,19 +325,18 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoubleLiteral(int valueLo, int valueHi, boolean isUnsigned, boolean optimize) {
-		int value = (valueLo & 0xffff) | (valueHi << 16);
-		if (!optimize || (value >= -32 && value < (isUnsigned ? 32 : 16) )) {
-			stub16BitLit.use();
-			compileOpcode(IfieldLit_d);
-			compileField(value);
+		int value = (valueLo & 0xffff) | (valueHi << 16); 
+		if (optimize && value >= -8 && value < (isUnsigned ? 16 : 8)) {
+			stub4BitLit.use();
+			compileOpcode(IlitX_d | (value & 0xf));
+		} else if (optimize && value >= -128 && value < (isUnsigned ? 256 : 128)) {
+			stub8BitLit.use();
+			compileOpcode(IlitB_d);
+			compileByte(value);
 		} else {
-			// the literal is relative to the opcode, not the 
-			// EXT, so we must align
-			if (opcodeIndex == 2)
-				opcodeIndex = 3;
 			stub16BitLit.use();
 			stub16BitLit.use();
-			compileOpcode(Ilit_d);
+			compileOpcode(IlitD_d);
 			int ptr = alloc(4);
 			writeCell(ptr, value & 0xffff);
 			writeCell(ptr + 2, value >> 16);
@@ -389,23 +352,15 @@ public class F99TargetContext extends TargetContext {
 	}
 
 	private DictEntry doCompileLiteral(int value, boolean isUnsigned, boolean optimize) {
-		if (opcodeIndex + 1 == 1) {
-			if (optimize && value >= -32 && value < (isUnsigned ? 32 : 16)) {
-				compileField(IfieldLit);
-				compileField(value);
-				return stub5BitLit;
-			} else {
-				compileField(Ilit);
-				int ptr = alloc(2);
-				writeCell(ptr, value & 0xffff);
-				return stub16BitLit;
-			}
-		} else if (optimize && value >= -32 && value < (isUnsigned ? 32 : 16)) {
-			compileField(IfieldLit);
-			compileField(value);
-			return stub5BitLit;
+		if (optimize && value >= -8 && value < (isUnsigned ? 16 : 8)) {
+			compileByte(IlitX | (value & 0xf));
+			return stub4BitLit;
+		} else if (optimize && value >= -128 && value < (isUnsigned ? 256 : 128)) {
+			compileByte(IlitB);
+			compileByte(value);
+			return stub8BitLit;
 		} else {
-			compileField(Ilit);
+			compileByte(IlitW);
 			int ptr = alloc(2);
 			writeCell(ptr, value & 0xffff);
 			return stub16BitLit;
@@ -445,7 +400,7 @@ public class F99TargetContext extends TargetContext {
 	 */
 	public void exportState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP, int baseUP) {
 		exportMemory(machine.getConsole());
-		CpuStateF99 cpu = (CpuStateF99) machine.getCpu().getState();
+		CpuStateF99b cpu = (CpuStateF99b) machine.getCpu().getState();
 		
 		cpu.setBaseSP((short) baseSP);
 		
@@ -474,12 +429,12 @@ public class F99TargetContext extends TargetContext {
 	 */
 	public void importState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP) {
 		importMemory(machine.getConsole());
-		CpuF99 cpu = (CpuF99) machine.getCpu();
+		CpuF99b cpu = (CpuF99b) machine.getCpu();
 		
 		Stack<Integer> stack = hostContext.getDataStack();
 		stack.clear();
 		
-		int curSP = ((CpuStateF99)cpu.getState()).getSP() & 0xffff;
+		int curSP = ((CpuStateF99b)cpu.getState()).getSP() & 0xffff;
 		while (baseSP > 0 && baseSP > curSP) {
 			baseSP -= 2;
 			stack.push((int) machine.getConsole().readWord(baseSP));
@@ -488,7 +443,7 @@ public class F99TargetContext extends TargetContext {
 		stack = hostContext.getReturnStack();
 		stack.clear();
 		
-		int curRP = ((CpuStateF99)cpu.getState()).getRP() & 0xffff;
+		int curRP = ((CpuStateF99b)cpu.getState()).getRP() & 0xffff;
 		while (curRP > 0 && baseRP > curRP) {
 			curRP -= 2;
 			stack.push((int) machine.getConsole().readWord(baseRP));
@@ -505,9 +460,7 @@ public class F99TargetContext extends TargetContext {
 		// as well as the original PC of the referring instruction
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
-		hostContext.pushData(lastOpcodeAddr);
-		writeCell(nextDp, 0);
-		setDP(nextDp + cellSize);
+		setDP(nextDp + 1);
 	}
 	
 	/* (non-Javadoc)
@@ -515,10 +468,8 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public int pushHere(HostContext hostContext) {
-		// TODO: optimize this
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
-		alignCode();
 		return nextDp;
 	}
 	/* (non-Javadoc)
@@ -527,12 +478,8 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void swapFixup(HostContext hostContext) {
 		int d0 = hostContext.popData();
-		int d1 = hostContext.popData();
 		int e0 = hostContext.popData();
-		int e1 = hostContext.popData();
-		hostContext.pushData(d1);
 		hostContext.pushData(d0);
-		hostContext.pushData(e1);
 		hostContext.pushData(e0);
 	}
 	/* (non-Javadoc)
@@ -541,38 +488,81 @@ public class F99TargetContext extends TargetContext {
 	public void resolveFixup(HostContext hostContext) throws AbortException {
 		int nextDp = getDP();
 		int opAddr = hostContext.popData();
-		int memAddr = hostContext.popData();
 		int diff = nextDp - opAddr;
 		
-		if (diff < -16 || diff > 15)
-			stub16BitJump.use();
-		else
-			stub5BitJump.use();
-		
-		writeCell(memAddr, diff);
-		
-		opcodeIndex = 3;
+		writeJumpOffs(hostContext, opAddr, diff);
 	}
-	
+
+
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#resolveFixup()
 	 */
-	public void compileBack(HostContext hostContext, boolean conditional) {
-		compileOpcode(conditional ? I0branch : Ibranch);
-		
+	public void compileBack(HostContext hostContext, boolean conditional) throws AbortException {
 		int nextDp = getDP();
 		int opAddr = hostContext.popData();
 		int diff = opAddr - nextDp;
 		
-		if (diff < -16 || diff > 15)
-			stub16BitJump.use();
-		else
-			stub5BitJump.use();
-
-		doCompileAddr(diff);
-		opcodeIndex = 3;
+		writeJumpOffsAlloc(hostContext, diff, conditional ? I0branchX : IbranchX);
 	}
 
+	private int writeJumpOffs(HostContext hostContext, int opAddr, int diff)
+			throws AbortException {
+		
+		// Opcode is already compiled as 1-byte branch, so diff is relative to offset
+		
+		// When we jump backward, measure from inst.pc, else from inst.pc + inst.size
+		if (diff < -128 - 1 || diff >= 128)
+			throw hostContext.abort("jump too long: " + diff);
+		
+		if (diff < -8 - 1 || diff >= 8) {
+			stub8BitJump.use();
+			if (diff < 0)
+				diff+=2;		// for branch inst
+			else
+				diff--;
+			
+			writeChar(opAddr, (diff & 0xff));
+			return 1;
+		}
+		else {
+			stub4BitJump.use();
+			int newOp = readChar(opAddr - 1);
+			if (newOp == IbranchB) newOp = IbranchX;
+			else if (newOp == I0branchB) newOp = I0branchX;
+			else throw hostContext.abort("suspicious code sequence: " + Integer.toHexString(newOp));
+			
+			if (diff < 0)
+				diff++;	// branch inst
+			writeChar(opAddr - 1, newOp | (diff & 0xf));
+			return 0;
+		}
+	}
+
+
+	private void writeJumpOffsAlloc(HostContext hostContext, int diff, int baseOpcode)
+			throws AbortException {
+		if (diff < -130 || diff >= 128) {
+			stub16BitJump.use();
+			if (diff >= 0)
+				diff--;		// for branch inst
+			baseOpcode = baseOpcode == IbranchX ? IbranchW : I0branchW;
+			compileOpcode(baseOpcode);
+			compileAddr(diff);
+		} else if (diff < -8 || diff >= 9) {
+			stub8BitJump.use();
+			if (diff >= 0)
+				diff-=2;
+			baseOpcode = baseOpcode == IbranchX ? IbranchB : I0branchB;
+			compileOpcode(baseOpcode);
+			compileChar((diff & 0xff));
+		}
+		else {
+			stub4BitJump.use();
+			if (diff >= 0)
+				diff--;	// branch inst
+			compileOpcode(baseOpcode | (diff & 0xf));
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#pushLeave(org.ejs.v9t9.forthcomp.HostContext)
@@ -582,7 +572,6 @@ public class F99TargetContext extends TargetContext {
 		// add fixup to a list
 		pushFixup(hostContext);
 		leaves.add(hostContext.popData());
-		leaves.add(hostContext.popData());		
 	}
 
 	/* (non-Javadoc)
@@ -596,22 +585,16 @@ public class F99TargetContext extends TargetContext {
 		boolean isQDo = hostCtx.popData() != 0;
 		
 		int opAddr = hostCtx.popData();
-		int diff = opAddr - lastOpcodeAddr;
+		int diff = opAddr - getDP();
 		
-		if (diff < -16 || diff > 15)
-			stub16BitJump.use();
-		else
-			stub5BitJump.use();
-
-		doCompileAddr(diff);
+		writeJumpOffsAlloc(hostCtx, diff, I0branchX);
 		
 		if (isQDo) {
 			// then comes here
 			resolveFixup(hostCtx);
 		}
 		
-		for (int i = 0; i < leaves.size(); i += 2) {
-			hostCtx.pushData(leaves.get(i + 1));
+		for (int i = 0; i < leaves.size(); i++) {
 			hostCtx.pushData(leaves.get(i));
 			resolveFixup(hostCtx);
 		}
@@ -736,7 +719,7 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void compileFromLocal(int index) throws AbortException {
 		compileLocalAddr(index);
-		compileField(Iload);
+		compileByte(Iload);
 	}
 
 	/* (non-Javadoc)
@@ -745,7 +728,7 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void compileToLocal(int index) throws AbortException {
 		compileLocalAddr(index);
-		compileField(Istore);
+		compileByte(Istore);
 	}
 	
 	/* (non-Javadoc)
@@ -795,10 +778,15 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public int compilePushValue(int cells, int value) throws AbortException {
-		compile((ITargetWord) require("DOLIT"));
+		int loc;
+		if (cells == 1) {
+			loc = getDP() - 3;
+			compile((ITargetWord) require("DOLIT"));
+		} else { 
+			loc = getDP() - 5;
+			compile((ITargetWord) require("DODLIT"));
+		}
 		
-		alignCode();
-		int loc = alloc(cells * cellSize);
 		
 		if (cells == 1) {
 			writeCell(loc, value);
@@ -840,10 +828,11 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public MemoryDomain createMemory() {
 		MemoryDomain console = new MemoryDomain("CONSOLE");
-		EnhancedRamArea bigRamArea = new EnhancedRamArea(0, 0x10000); 
+		EnhancedRamByteArea bigRamArea = new EnhancedRamByteArea(0, 0x10000); 
 		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
 				bigRamArea);
 		console.mapEntry(bigRamEntry);
 		return console;
 	}
+
 }

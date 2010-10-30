@@ -16,13 +16,13 @@ sym:009E:(first)
 sym:00A2:(limit)
 
 sym:00A6:(up0)
-Minimal Minimal Target     Target 
+Minimal Minimal Target     Target <5> 0 10000 -1 F00C 401FE4D0 
 in file included from *OS command line*:-1
 in file included from 99build.fs:716
-99kernel.fs:19: Invalid memory address
-(up0) tup >>>!<<<     \ even if we don't have USER variables, this will be used for other stuff we want in RAM
+99kernel.fs:20: Invalid memory address
+(up0) tup .s >>>!<<<   \ even if we don't have USER variables, this will be used for other stuff we want in RAM
 Backtrace:
-$401FA468 c! 
-$49DF3EC9 
-$49DF3EC8 
-$401FA8E8 S! 
+$401F9468 c! 
+$48BEDEC9 
+$48BEDEC8 
+$401F98E8 S! 

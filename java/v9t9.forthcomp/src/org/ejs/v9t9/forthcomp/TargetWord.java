@@ -19,7 +19,13 @@ public abstract class TargetWord implements ITargetWord {
 		this.entry = entry;
 		
 	}
-	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return entry.getName();
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.ITargetWord#getEntry()

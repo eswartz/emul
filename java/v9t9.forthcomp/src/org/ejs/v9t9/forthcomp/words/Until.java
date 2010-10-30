@@ -24,11 +24,7 @@ public class Until implements IWord {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(1);
 		
-		ITargetWord word = (ITargetWord) targetContext.require("0branch");
-		
-		targetContext.compile(word);
-		
-		targetContext.compileBack(hostContext);
+		targetContext.compileBack(hostContext, true);
 	}
 	
 	/* (non-Javadoc)

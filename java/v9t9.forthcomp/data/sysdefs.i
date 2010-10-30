@@ -6,12 +6,12 @@ $0000       constant    I/O
 $0000       constant    VDPRD
 $0002       constant    VDPST
 $0008       constant    VDPWD
-$000a       constant    VDPWA
+$000a       constant    VDPWA       \ high then low
 $000c       constant    VDPCL
 $000e       constant    VDPWI
 
 $0010       constant    GPLRD
-$0012       constant    GPLRA
+$0012       constant    GPLRA       \ high then low
 $0014       constant    GPLWD
 $0016       constant    GPLWA
 $0018       constant    SPCHRD

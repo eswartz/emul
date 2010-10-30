@@ -54,6 +54,7 @@ $1:
 
 intvdp:
 	sbo	    2			; acknowledge VDP interrupt
+    movb    @VDPST, 3   ; acknowledge #2
     
 	inc		@uptime + 2	; time in 1/60 seconds
 	jnc		intv00		; overflow?

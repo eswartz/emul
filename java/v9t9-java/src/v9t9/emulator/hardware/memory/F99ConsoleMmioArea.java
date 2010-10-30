@@ -19,6 +19,7 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	public static final int VDPST = 0x2;
 	public static final int VDPWD = 0x8;
 	public static final int VDPWA = 0xA;
+	public static final int VDPWAL = 0xB;
 	public static final int VDPCL = 0xC;
 	public static final int VDPWI = 0xE;
 	public static final int GPLRD = 0x10;
@@ -53,7 +54,15 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 
 	@Override
     public void writeWord(MemoryEntry entry, int addr, short val) {
-    	writeByte(entry, addr, (byte) (val >> 8));
+		if (addr == VDPWA) {
+			writeByte(entry, VDPWA, (byte) (val & 0xff));
+			writeByte(entry, VDPWA, (byte) (val >> 8));
+		} else if (addr == GPLWA) {
+			writeByte(entry, GPLWA, (byte) (val >> 8));
+			writeByte(entry, GPLWA, (byte) (val & 0xff));
+		} else {
+	    	writeByte(entry, addr, (byte) (val >> 8));
+		}
     }
 
 
@@ -64,7 +73,14 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	
 	@Override
 	public short readWord(MemoryEntry entry, int addr) {
-		return (short) (readByte(entry, addr) << 8);
+		if (addr == GPLRA) {
+			byte hi = readByte(entry, addr);
+			byte lo = readByte(entry, addr);
+			return (short) ((hi << 8) | (lo & 0xff));
+		} else {
+			return (short) (readByte(entry, addr) << 8);
+			
+		}
 	}
 
     private void writeMmio(int addr, byte val) {
@@ -75,9 +91,9 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
     	else {
 	    	switch (addr) {
 	    	case VDPWD:
-	    	case VDPWA:
 	    	case VDPCL:
 	    	case VDPWI:
+	    	case VDPWA:
 	    		getTIMemoryModel().getVdpMmio().write(addr, val);
 	    		break;
 	    	case GPLWA:

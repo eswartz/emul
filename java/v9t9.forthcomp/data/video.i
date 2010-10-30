@@ -78,8 +78,9 @@ Variable win-sy
 
 :   vfill ( ch addr len -- )
     swap $4000 or vwaddr
-    0 do  dup VDPWD c!  loop 
-    drop
+    rot >r
+    0 do  j VDPWD c!  loop 
+    rdrop 
 ;
 
 :   v-clear ( ch -- )

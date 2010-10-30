@@ -58,10 +58,8 @@ import org.ejs.v9t9.forthcomp.words.Value;
 import org.ejs.v9t9.forthcomp.words.Variable;
 import org.ejs.v9t9.forthcomp.words.While;
 
-import v9t9.emulator.hardware.memory.EnhancedRamArea;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
 
 /**
  * This class compiles FORTH programs into ROM images for V9t9
@@ -81,7 +79,7 @@ public class ForthComp {
 		String gromOutFile = null;
 		PrintStream logfile = System.out;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:g:l:");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:g:l:b");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -97,6 +95,10 @@ public class ForthComp {
             case 'l':
 				logfile = new PrintStream(new File(getopt.getOptarg()));
             	break;
+            case 'b':
+            	targetContext = new F99bTargetContext(65536);
+            	break;
+            	
             }
         }
         
@@ -319,9 +321,13 @@ public class ForthComp {
 			if (word instanceof ITargetWord) {
 				targetContext.compile((ITargetWord) word);
 			} else if (word instanceof Literal) {
-				targetContext.compileLiteral(((Literal) word).getValue(), ((Literal) word).isUnsigned());
+				targetContext.compileLiteral(((Literal) word).getValue(), ((Literal) word).isUnsigned(), true);
 			} else if (word instanceof DoubleLiteral) {
-				targetContext.compileDoubleLiteral(((DoubleLiteral) word).getValue(), ((DoubleLiteral) word).isUnsigned());
+				if (targetContext.getCellSize() == 2)
+					targetContext.compileDoubleLiteral(
+							((DoubleLiteral) word).getValue() & 0xffff, 
+							((DoubleLiteral) word).getValue() >> 16, 
+							((DoubleLiteral) word).isUnsigned(), true);
 				
 			} else {
 				//throw abort("unknown compile-time semantics for " + token);
@@ -392,11 +398,7 @@ public class ForthComp {
 	 */
 	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException {
 	
-		final MemoryDomain console = new MemoryDomain("CONSOLE");
-		EnhancedRamArea bigRamArea = new EnhancedRamArea(0, 0x10000); 
-		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
-				bigRamArea);
-		console.mapEntry(bigRamEntry);
+		final MemoryDomain console = targetContext.createMemory();
 		targetContext.exportMemory(console);
 		
 		TargetContext.dumpMemory(logfile, 0, targetContext.getDP(),
@@ -422,7 +424,7 @@ public class ForthComp {
 	        	symfile = new File(consoleOutFile + ".sym");
 	        }
 			FileOutputStream fos = new FileOutputStream(symfile);
-			bigRamEntry.writeSymbols(new PrintStream(fos));
+			console.getEntryAt(targetContext.getBaseDP()).writeSymbols(new PrintStream(fos));
 			fos.close();
 		}
 				

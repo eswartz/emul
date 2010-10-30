@@ -75,7 +75,7 @@ ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
 EXEEXT = 
-GFORTH = gforth
+GFORTH =/usr/bin/gforth
 GREP = /bin/grep
 HOST = i686-pc-linux-gnu
 HOSTOS = Unix
@@ -415,7 +415,7 @@ nforth.grm: nforth.gsm $(TIASM)
 
 nforth.prm nforthc.bin nforthg.bin nforthc.sym nforthg.sym: $(FORCE) $(TIASM) $(ROMADDR) nforth0.rom $(FORTH99) $(FORTHCOMMON)
 	rm -f $(LIST)
-	-gforth -e ": get-rom-addr $(shell $(ROMADDR) nforth0.rom) ; create mach-file ,\" `pwd`/99config.fs" 99build.fs -e bye &>out.lst 
+	-$(GFORTH) -e ": get-rom-addr $(shell $(ROMADDR) nforth0.rom) ; create mach-file ,\" `pwd`/99config.fs" 99build.fs -e bye &>out.lst 
 	if test -f $(LIST) ; then \
 		if ! grep 'Nothing' < $(LIST) &>/dev/null; then tail $(LIST); false; fi ; \
 	fi

@@ -357,8 +357,8 @@ public abstract class TargetContext extends Context {
 	 */
 	abstract public void compile(ITargetWord word);
 
-	abstract public void compileLiteral(int value, boolean isUnsigned);
-	abstract public void compileDoubleLiteral(int value, boolean isUnsigned);
+	abstract public void compileLiteral(int value, boolean isUnsigned, boolean optimize);
+	abstract public void compileDoubleLiteral(int valueLo, int valiueHi, boolean isUnsigned, boolean optimize);
 
 	/**
 	 * Flatten memory and resolve addresses
@@ -366,16 +366,14 @@ public abstract class TargetContext extends Context {
 	 */
 	public void exportMemory(MemoryDomain console) {
 		for (int i = 0; i < dp; i += cellSize) {
-			RelocEntry reloc = relocEntries.get(i);
+			console.writeWord(i, (short) readCell(i));
+		}
+		for (RelocEntry reloc : relocEntries.values()) {
 			int val;
-			if (reloc != null) {
-				val = reloc.target;	// TODO
-				if (reloc.type == RelocType.RELOC_CALL_15S1)
-					val = ((val >> 1) & 0x7fff) | 0x8000;
-			} else {
-				val = readCell(i);
-			}
-			console.writeWord(i, (short) val);
+			val = reloc.target;	// TODO
+			if (reloc.type == RelocType.RELOC_CALL_15S1)
+				val = ((val >> 1) & 0x7fff) | 0x8000;
+			console.writeWord(reloc.addr, (short) val);
 		}
 		
 		for (int i = 0; i < dp; i += MemoryDomain.AREASIZE)
@@ -415,10 +413,11 @@ public abstract class TargetContext extends Context {
 
 	/**
 	 * here over - swap !
+	 * @throws AbortException TODO
 	 */
-	abstract public void resolveFixup(HostContext hostContext);
+	abstract public void resolveFixup(HostContext hostContext) throws AbortException;
 	
-	abstract public void compileBack(HostContext hostContext);
+	abstract public void compileBack(HostContext hostContext, boolean conditional) throws AbortException;
 	
 	public void clearDict() {
 		super.clearDict();
@@ -606,6 +605,9 @@ public abstract class TargetContext extends Context {
 	abstract public void compileWordParamAddr(TargetValue word);
 
 	abstract public void compileWordXt(ITargetWord word);
+
+
+	abstract public MemoryDomain createMemory();
 
 
 }

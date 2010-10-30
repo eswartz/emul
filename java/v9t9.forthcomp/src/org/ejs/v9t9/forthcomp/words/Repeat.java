@@ -4,6 +4,7 @@
 package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.AbortException;
+import org.ejs.v9t9.forthcomp.F99TargetContext;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.IWord;
 import org.ejs.v9t9.forthcomp.TargetContext;
@@ -24,11 +25,16 @@ public class Repeat implements IWord {
 		
 		int a = hostContext.popData();
 		int b = hostContext.popData();
-		int c = hostContext.popData();
+		
+		int c = 0;
+		// HACK
+		if (targetContext instanceof F99TargetContext)
+			c = hostContext.popData();
 		
 		new Again().execute(hostContext, targetContext);
 		
-		hostContext.pushData(c);
+		if (targetContext instanceof F99TargetContext)
+			hostContext.pushData(c);
 		hostContext.pushData(b);
 		hostContext.pushData(a - 2);
 		

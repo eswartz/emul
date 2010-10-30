@@ -24,11 +24,7 @@ public class Again implements IWord {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(1);
 		
-		ITargetWord word = (ITargetWord) targetContext.require("branch");
-		
-		targetContext.compile(word);
-		
-		targetContext.compileBack(hostContext);
+		targetContext.compileBack(hostContext, false);
 	}
 	
 	/* (non-Javadoc)

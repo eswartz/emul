@@ -27,6 +27,7 @@ import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
 import v9t9.emulator.hardware.EnhancedMachineModel;
 import v9t9.emulator.hardware.F99MachineModel;
+import v9t9.emulator.hardware.F99bMachineModel;
 import v9t9.emulator.hardware.MFP201MachineModel;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
@@ -68,6 +69,7 @@ public class Emulator {
 		MachineModelFactory.register(EnhancedMachineModel.ID, EnhancedMachineModel.class);
 		MachineModelFactory.register(MFP201MachineModel.ID, MFP201MachineModel.class);
 		MachineModelFactory.register(F99MachineModel.ID, F99MachineModel.class);
+		MachineModelFactory.register(F99bMachineModel.ID, F99bMachineModel.class);
 		
 		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
@@ -160,8 +162,10 @@ public class Emulator {
         Machine machine;
         
         String modelId = StandardMachineModel.ID;
-        if (findArgument(args, "--f99")) {
-        	modelId = F99MachineModel.ID;
+        if (findArgument(args, "--f99b")) {
+        	modelId = F99bMachineModel.ID;
+        } else if (findArgument(args, "--f99")) {
+    		modelId = F99MachineModel.ID;
         } else if (findArgument(args, "--mfp201")) {
         	modelId = MFP201MachineModel.ID;
         } else {

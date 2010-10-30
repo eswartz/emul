@@ -2,15 +2,18 @@
 \   Write VWADDR 
 \
 :   vwaddr ( addr -- )
-    dup VDPWA c! swpb VDPWA c!
+    \ dup VDPWA c! swpb VDPWA c!
+    VDPWA !
 ;
 
 :   gwaddr ( addr -- )
-    dup swpb GPLWA c! GPLWA c!
+    \ dup swpb GPLWA c! GPLWA c!
+    GPLWA !
 ;
 
 :   graddr ( -- addr )
-    GPLRA c@ 8 lsh  GPLRA c@  or 1- 
+    \ GPLRA c@ 8 lsh  GPLRA c@  or 1-
+    GPLRA @ 1- 
 ;
 
 :   g@  ( addr -- )
