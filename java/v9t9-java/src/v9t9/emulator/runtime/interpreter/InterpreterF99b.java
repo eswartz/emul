@@ -3,6 +3,7 @@ package v9t9.emulator.runtime.interpreter;
 import java.util.BitSet;
 import java.util.TreeMap;
 
+import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.common.Machine;
@@ -94,29 +95,19 @@ public class InterpreterF99b implements Interpreter {
 		
 	    InstructionF99b ins = getInstruction();
 	    cpu.setPC(iblock.pc);
-	    
-	    executeAndListen(instructionListeners, ins);
-	}
-
-	/**
-	 * @param instructionListeners
-	 * @param ins
-	 */
-	private final boolean executeAndListen(InstructionListener[] instructionListeners,
-			InstructionF99b ins) {
-        iblock.cycles = cpu.getCurrentCycleCount();
-
-        iblock.pc = cpu.getPC();
-        iblock.st = cpu.getST();
-        iblock.sp = ((CpuStateF99b)cpu.getState()).getSP();
-        iblock.rp = ((CpuStateF99b)cpu.getState()).getRP();
-        iblock.up = ((CpuStateF99b)cpu.getState()).getUP();
-        iblock.inst = ins;
-        
-        InstructionWorkBlockF99b block = null;
-        
-        if (instructionListeners != null) {
-	        Pair<Integer, Integer> fx = InstF99b.getStackEffects(ins.getInst());
+		iblock.cycles = cpu.getCurrentCycleCount();
+		
+		iblock.pc = cpu.getPC();
+		iblock.st = cpu.getST();
+		iblock.sp = ((CpuStateF99b)cpu.getState()).getSP();
+		iblock.rp = ((CpuStateF99b)cpu.getState()).getRP();
+		iblock.up = ((CpuStateF99b)cpu.getState()).getUP();
+		iblock.inst = ins;
+		
+		InstructionWorkBlockF99b block = null;
+		
+		if (instructionListeners != null) {
+		    Pair<Integer, Integer> fx = InstF99b.getStackEffects(ins.getInst());
 			if (fx != null) {
 				int spused = fx.first;
 				if (spused < 0)
@@ -126,7 +117,7 @@ public class InterpreterF99b implements Interpreter {
 				for (int i = 0; i < spused; i++)
 					iblock.inStack[i] = iblock.getStackEntry(spused - i - 1);
 			}
-	        fx = InstF99b.getReturnStackEffects(ins.getInst());
+		    fx = InstF99b.getReturnStackEffects(ins.getInst());
 			if (fx != null) {
 				int rpused = fx.first;
 				if (rpused < 0)
@@ -138,46 +129,27 @@ public class InterpreterF99b implements Interpreter {
 			}
 			
 			block = new InstructionWorkBlockF99b(cpu);
-	        this.iblock.copyTo(block);
-        }
-        
-        /* execute */
-        boolean jumped = interpret(ins);
-
-    	/* notify listeners */
-    	if (instructionListeners != null) {
-	        iblock.pc = cpu.getPC();
-	        iblock.st = cpu.getST();
-	        iblock.sp = ((CpuStateF99b)cpu.getState()).getSP();
-	        iblock.rp = ((CpuStateF99b)cpu.getState()).getRP();
-	        iblock.up = ((CpuStateF99b)cpu.getState()).getUP();
-        
-        	block.cycles = cpu.getCurrentCycleCount();
-        	for (InstructionListener listener : instructionListeners) {
-        		listener.executed(block, iblock);
-        	}
-        	
-        	iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Iexiti || ins.getInst() == Icall);
-        }
-	        
-        return jumped;		
-	}
-	
-
-	private boolean doInvalidateInstructionCache(int addr) {
-		if (cachedInstrs.isEmpty())
-			return true;
-
-		InstructionF99b cached = cachedInstrs.remove(addr);
-		if (cached != null) {
-			int maxAddr = cached.pc + cached.getSize();
-			while (addr++ < maxAddr)
-				cachedInstrs.remove(addr);
-
-			refreshCache();
-			return true;
+		    this.iblock.copyTo(block);
 		}
-		return false;
+		
+		/* execute */
+		interpret(ins);
+		
+		/* notify listeners */
+		if (instructionListeners != null) {
+		    iblock.pc = cpu.getPC();
+		    iblock.st = cpu.getST();
+		    iblock.sp = ((CpuStateF99b)cpu.getState()).getSP();
+		    iblock.rp = ((CpuStateF99b)cpu.getState()).getRP();
+		    iblock.up = ((CpuStateF99b)cpu.getState()).getUP();
+		
+			block.cycles = cpu.getCurrentCycleCount();
+			for (InstructionListener listener : instructionListeners) {
+				listener.executed(block, iblock);
+			}
+			
+			iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Iexiti || ins.getInst() == Icall);
+		}
 	}
 
 	/**
@@ -190,18 +162,44 @@ public class InterpreterF99b implements Interpreter {
 		}
 	}
 
+	/**
+	 * When the byte at @addr changes, delete any instructions that
+	 * use that byte.
+	 * @param addr
+	 */
 	private void invalidateInstructionCache(int addr) {
 		if (cachedInstrs.isEmpty())
 			return;
 		
-		int first = instrMap.nextSetBit(Math.max(0, addr - 6));
+		// first, see if the map shows that any known instruction
+		// uses the byte
+		if (!instrMap.get(addr))
+			return;
+		
+		// find where it is.  Instructions can be up to 6 bytes
+		// (DLIT = double+lit+4 bytes)
+		int first = instrMap.nextSetBit(Math.max(0, addr - 5));
 		if (first < 0 || first >= addr + 6)
 			return;
 		
 		int cnt = 6;
-		while (cnt > 0 && !doInvalidateInstructionCache(first))
+		while (cnt-- > 0 && !doInvalidateInstructionCache(first, addr))
 			first++;
 	}
+
+	private boolean doInvalidateInstructionCache(int addr, int target) {
+		InstructionF99b cached = cachedInstrs.get(addr);
+		if (cached != null) {
+			int maxAddr = cached.pc + cached.getSize();
+			if (addr <= target && maxAddr > target) {
+				cachedInstrs.remove(addr);
+				refreshCache();
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	private InstructionF99b getInstruction() {
 		int pc = cpu.getPC() & 0xffff;
@@ -210,7 +208,7 @@ public class InterpreterF99b implements Interpreter {
 			inst = parseInstructions((short) pc);
 			cachedInstrs.put(pc, inst);
 			instrMap.set(pc, pc + inst.getSize());
-			//System.out.println(inst+": " + inst.getSize());
+			System.out.println(HexUtils.toHex4(pc)+": " + inst+": " + inst.getSize());
 			refreshCache();
 		} else {
 			iblock.pc = (short) (pc + inst.getSize());
@@ -344,8 +342,10 @@ public class InterpreterF99b implements Interpreter {
 	/**
      * Execute an instruction
      * @param ins
+     * @return true if jumped
      */
-    private final  boolean interpret(InstructionF99b ins) {
+    private final boolean interpret(InstructionF99b ins) {
+    	cpu.addCycles(ins.getSize());
 		if (ins.getInst() < 256) {
 			return interpretShort(ins);
 		} else if ((ins.getInst() >> 8) ==  Idouble) {
@@ -358,7 +358,6 @@ public class InterpreterF99b implements Interpreter {
     private final boolean interpretShort(InstructionF99b ins) {
     	int fromPC = iblock.pc;
     	MachineOperandF99b mop1 = (MachineOperandF99b)ins.getOp1();
-    	cpu.addCycles(1);
 		switch (ins.getInst()) {
 		case Icmp:
 		case Icmp+1:
@@ -602,6 +601,58 @@ public class InterpreterF99b implements Interpreter {
         			: (next & 0xffff) >= (change & 0xffff)) ? 0 : -1));
         	break;
         }
+        
+        case Icfill: {
+        	int step = cpu.pop();
+        	int len = cpu.pop();
+        	int addr = cpu.pop();
+        	byte ch = (byte) cpu.pop();
+        	while (len-- > 0) {
+        		memory.writeByte(addr, ch);
+        		addr += step;
+        		cpu.addCycles(1);
+        	}
+        	break;
+        }
+        case Ifill: {
+        	int step = cpu.pop();
+        	int len = cpu.pop();
+        	int addr = cpu.pop();
+        	short w = cpu.pop();
+        	while (len-- > 0) {
+        		memory.writeWord(addr, w);
+        		addr += step*2;
+        		cpu.addCycles(1);
+        	}
+        	break;
+        }
+        case Icmove: {
+        	int step = cpu.pop();
+        	int len = cpu.pop();
+        	int taddr = cpu.pop();
+        	int faddr = cpu.pop();
+        	while (len-- > 0) {
+        		memory.writeByte(taddr, memory.readByte(faddr));
+        		faddr += step;
+        		taddr += step;
+        		cpu.addCycles(1);
+        	}
+        	break;
+        }
+        case Imove: {
+        	int step = cpu.pop();
+        	int len = cpu.pop();
+        	int taddr = cpu.pop();
+        	int faddr = cpu.pop();
+        	while (len-- > 0) {
+        		memory.writeWord(taddr, memory.readWord(faddr));
+        		faddr += step*2;
+        		taddr += step*2;
+        		cpu.addCycles(1);
+        	}
+        	break;
+        }
+        
         case IcontextFrom:
         	switch (mop1.immed) {
         	case CTX_SP:
@@ -670,7 +721,6 @@ public class InterpreterF99b implements Interpreter {
     private final boolean interpretDouble(InstructionF99b ins) {
     	MachineOperandF99b mop1 = (MachineOperandF99b)ins.getOp1();
     	cpu.addCycles(1);
-    	
     	int baseInst = ins.getInst() & 0xff;
 		switch (baseInst) {
 		case Icmp:
@@ -828,6 +878,7 @@ public class InterpreterF99b implements Interpreter {
     }
 
     private final boolean interpretExt(InstructionF99b ins) {
+    	cpu.addCycles(1);
 		switch (ins.getInst()) {
         default:
     		unsupported(ins);
@@ -839,7 +890,7 @@ public class InterpreterF99b implements Interpreter {
 	 * @param ins
 	 */
 	private void unsupported(InstructionF99b ins) {
-		throw new UnsupportedOperationException("opcode " + ins.getInst() +": "+ ins);
+		System.out.println("Unsupported: " + HexUtils.toHex4(ins.getPc()) +" opcode = "+ ins.getInst() +": "+ ins);
 	}
 
 	private final int binOp(short l, short r, int immed) {

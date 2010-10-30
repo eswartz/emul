@@ -202,7 +202,6 @@ public class F99TargetContext extends TargetContext {
 		
 		defineInlinePrim("true", IfieldLit, -1);
 		defineInlinePrim("false", IfieldLit, 0);
-
 	}
 	
 	private void definePrim(String string, int opcode) {

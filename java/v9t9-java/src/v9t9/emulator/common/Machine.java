@@ -105,7 +105,7 @@ abstract public class Machine {
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
-    			executor.interruptExecution = Boolean.TRUE;
+    			executor.interruptExecution = true;
     			synchronized (executionLock) {
     				cpu.resetCycleCounts();
     				bExecuting = !setting.getBoolean();
@@ -380,7 +380,7 @@ abstract public class Machine {
 
 	public void setNotRunning() {
 		bAlive = false;
-		executor.interruptExecution = Boolean.TRUE;
+		executor.interruptExecution = true;
 		synchronized (executionLock) {
 			bExecuting = false;
 			executionLock.notifyAll();

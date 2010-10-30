@@ -181,8 +181,8 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	 * @param op
 	 * @return
 	 */
-	public MachineOperandMFP201 getOp(int op) {
-		return (MachineOperandMFP201) (op == 1 ? op1 : op == 2 ? op2 : op == 3 ? op3 : null);
+	public MachineOperand getOp(int op) {
+		return (MachineOperand) (op == 1 ? op1 : op == 2 ? op2 : op == 3 ? op3 : null);
 	}
 	
 	public void setOp(int op, Operand oper) {

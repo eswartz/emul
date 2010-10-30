@@ -63,7 +63,7 @@ public class Executor {
     /** counter for DBG/DBGF instructions */
     public int debugCount;
 
-	public volatile Boolean interruptExecution;
+	public volatile boolean interruptExecution;
     
 	private InstructionListener[] instructionListeners;
 
@@ -91,7 +91,7 @@ public class Executor {
 				} else {
 					Executor.this.removeInstructionListener(dumpFullReporter);
 				}
-				interruptExecution = Boolean.TRUE;
+				interruptExecution = true;
 			}
         	
         });
@@ -102,28 +102,28 @@ public class Executor {
 				} else {
 					Executor.this.removeInstructionListener(dumpReporter);
 				}
-				interruptExecution = Boolean.TRUE;
+				interruptExecution = true;
 			}
         	
         });
         Machine.settingPauseMachine.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				interruptExecution = Boolean.TRUE;
+				interruptExecution = true;
 			}
         	
         });
         settingSingleStep.addListener(new IPropertyListener() {
         	
         	public void propertyChanged(IProperty setting) {
-        		interruptExecution = Boolean.TRUE;
+        		interruptExecution = true;
         	}
         	
         });
         Cpu.settingRealTime.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				interruptExecution = Boolean.TRUE;
+				interruptExecution = true;
 			}
         	
         });
@@ -156,10 +156,10 @@ public class Executor {
 		} else if (settingSingleStep.getBoolean()){
 			interpretOneInstruction();
 		} else {
-			interruptExecution = Boolean.FALSE;
+			interruptExecution = false;
 			if (Cpu.settingRealTime.getBoolean()) {
 				while (!cpu.isThrottled() && !interruptExecution) {
-					interpretOneInstruction();
+					interp.executeChunk(10, this);
 				}
 			} else {
 				interp.executeChunk(1000, this);

@@ -712,10 +712,10 @@ public class InstTableMFP201 {
 					subInst = new RawInstruction(subInst);
 					coerceOperandTypes(subInst);
 					MachineOperandMFP201 subop;
-					subop = subInst.getOp(getFirstSrcOp(subInst));
+					subop = (MachineOperandMFP201) subInst.getOp(getFirstSrcOp(subInst));
 					if (subop != null && subop.type == OP_DEC)
 						work[1] |= 0x20;
-					subop = subInst.getOp(getDestOp(subInst));
+					subop = (MachineOperandMFP201) subInst.getOp(getDestOp(subInst));
 					if (subop != null && subop.type == OP_DEC)
 						work[1] |= 0x10;
 				}
@@ -1106,12 +1106,12 @@ public class InstTableMFP201 {
 			// apply decrement bits if enabled
 			MachineOperandMFP201 mop;
 			if ((descr & 0x20) != 0) { 
-				mop = subInst.getOp(getFirstSrcOp(subInst));
+				mop = (MachineOperandMFP201) subInst.getOp(getFirstSrcOp(subInst));
 				if (mop != null && mop.type == OP_INC)
 					mop.type = OP_DEC;
 			}
 			if ((descr & 0x10) != 0) {
-				mop = subInst.getOp(getDestOp(subInst));
+				mop = (MachineOperandMFP201) subInst.getOp(getDestOp(subInst));
 				if (mop != null && mop.type == OP_INC)
 					mop.type = OP_DEC;
 			}
@@ -1467,7 +1467,7 @@ public class InstTableMFP201 {
 	 * @param as
 	 */
 	private static int updateOperandAndCycles(RawInstruction inst, boolean isSrc, int asOp, int as, int pc, MemoryDomain domain) {
-		MachineOperandMFP201 mop = inst.getOp(asOp);
+		MachineOperandMFP201 mop = (MachineOperandMFP201) inst.getOp(asOp);
 		if (mop == null)
 			return pc;
 		

@@ -116,6 +116,15 @@ public class InstF99b {
 	public static final int IplusLoopUp = Iloop_start + 2;
 	public static final int IuplusLoopUp = Iloop_start + 3;
 	
+	/** ( ch caddr len step ) */ 
+	public static final int Icfill = Iloop_start + 4;
+	/** ( w caddr len step ) */ 
+	public static final int Ifill = Iloop_start + 5;
+	/** ( faddr taddr len step ) */ 
+	public static final int Icmove = Iloop_start + 6;
+	/** ( faddr taddr len step ) */ 
+	public static final int Imove = Iloop_start + 7;
+	
 	
 	public static final int Imisc_start = 0x70;
 	
@@ -317,6 +326,11 @@ public class InstF99b {
 		IuloopUp_d, 0, 1, 2, 2,
 		IplusLoopUp_d, 1, 1, 2, 2,
 		IuplusLoopUp_d, 1, 1, 2, 2,
+		
+		Icfill, 4, 0, 0, 0,
+		Ifill, 4, 0, 0, 0,
+		Icmove, 4, 0, 0, 0,
+		Imove, 4, 0, 0, 0,
 		
 		Iexit, 0, 0, 1, 0,
 		Iexiti, 0, 0, 2, 0,

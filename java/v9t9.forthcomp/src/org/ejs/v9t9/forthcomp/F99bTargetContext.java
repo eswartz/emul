@@ -205,6 +205,12 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("true", IlitX | 0xf);
 		defineInlinePrim("false", IlitX);
 
+		
+		defineInlinePrim("(fill)", Ifill);
+		defineInlinePrim("(cfill)", Icfill);
+		defineInlinePrim("(move)", Imove);
+		defineInlinePrim("(cmove)", Icmove);
+
 	}
 	
 	private void definePrim(String string, int opcode) {

@@ -50,7 +50,7 @@ Variable    randnoise
 
     kbdlast c@  over =  if
         \ same key: see if enough time has elapsed since last key
-        \ [char] ( demit kbdflag c@ .d kbdtimer c@ .d [char] ) demit 
+        [char] ( demit kbdflag c@ .d kbdtimer c@ .d [char] ) demit 
         
         kbdflag c@        \ repeating? 
         if
@@ -138,8 +138,7 @@ Variable    randnoise
         \ no key!
         \ any shifts at least?
         kbdshift c@ 0= if
-            0 kbdscan c!  0 kbdtimer c!  0 kbdflag c!
-            exit 
+            kbd-no-key exit 
         then
     then
     
@@ -147,14 +146,16 @@ Variable    randnoise
     
 ;
 
+:   kbd-no-key
+    0 kbdscan c!  0 kbdtimer c!  0 kbdflag c!  0 kbdlast c!
+;
+
 :   kbd-init
     30 kbddelay c!   \ 1/2 s before repeat
     3 kbdrate c!     \ 1/20 s delay between repeat
-    0 kbdflag c!
-    0 kbdscan c!
-    0 kbdlast c!
     0 kbdtail c!
     0 kbdhead c!
+    kbd-no-key
 ;
 
 true <EXPORT

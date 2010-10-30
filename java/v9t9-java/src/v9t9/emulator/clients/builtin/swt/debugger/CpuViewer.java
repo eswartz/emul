@@ -370,7 +370,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		if (Executor.settingSingleStep.getBoolean()) {
 			Executor.settingSingleStep.setBoolean(false);
 			Machine.settingPauseMachine.setBoolean(true);
-			machine.getExecutor().interruptExecution = Boolean.TRUE;
+			machine.getExecutor().interruptExecution = true;
 		}
 		//throw new AbortedException();
 	}
