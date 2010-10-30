@@ -610,7 +610,7 @@ public class InterpreterF99b implements Interpreter {
         	while (len-- > 0) {
         		memory.writeByte(addr, ch);
         		addr += step;
-        		cpu.addCycles(1);
+        		cpu.addCycles(2);
         	}
         	break;
         }
@@ -622,33 +622,35 @@ public class InterpreterF99b implements Interpreter {
         	while (len-- > 0) {
         		memory.writeWord(addr, w);
         		addr += step*2;
-        		cpu.addCycles(1);
+        		cpu.addCycles(2);
         	}
         	break;
         }
         case Icmove: {
-        	int step = cpu.pop();
+        	int tstep = cpu.pop();
+        	int fstep = cpu.pop();
         	int len = cpu.pop();
         	int taddr = cpu.pop();
         	int faddr = cpu.pop();
         	while (len-- > 0) {
         		memory.writeByte(taddr, memory.readByte(faddr));
-        		faddr += step;
-        		taddr += step;
-        		cpu.addCycles(1);
+        		faddr += fstep;
+        		taddr += tstep;
+        		cpu.addCycles(3);
         	}
         	break;
         }
         case Imove: {
-        	int step = cpu.pop();
+        	int tstep = cpu.pop();
+        	int fstep = cpu.pop();
         	int len = cpu.pop();
         	int taddr = cpu.pop();
         	int faddr = cpu.pop();
         	while (len-- > 0) {
         		memory.writeWord(taddr, memory.readWord(faddr));
-        		faddr += step*2;
-        		taddr += step*2;
-        		cpu.addCycles(1);
+        		faddr += fstep*2;
+        		taddr += tstep*2;
+        		cpu.addCycles(3);
         	}
         	break;
         }

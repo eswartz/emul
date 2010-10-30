@@ -27,7 +27,8 @@
 :   gvmove ( gaddr vaddr len -- )
     rot gwaddr
     swap  $4000 or  vwaddr
-    0 do  GPLRD c@ VDPWD c! loop
+    \ 0 do  GPLRD c@ VDPWD c! loop
+    GPLRD VDPWD rot  0 0 (cmove)
 ;
 
 :   >bit ( mask -- lowest bit# )

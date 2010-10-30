@@ -120,9 +120,9 @@ public class InstF99b {
 	public static final int Icfill = Iloop_start + 4;
 	/** ( w caddr len step ) */ 
 	public static final int Ifill = Iloop_start + 5;
-	/** ( faddr taddr len step ) */ 
+	/** ( faddr taddr len fstep tstep ) */ 
 	public static final int Icmove = Iloop_start + 6;
-	/** ( faddr taddr len step ) */ 
+	/** ( faddr taddr len fstep tstep ) */ 
 	public static final int Imove = Iloop_start + 7;
 	
 	
@@ -329,8 +329,8 @@ public class InstF99b {
 		
 		Icfill, 4, 0, 0, 0,
 		Ifill, 4, 0, 0, 0,
-		Icmove, 4, 0, 0, 0,
-		Imove, 4, 0, 0, 0,
+		Icmove, 5, 0, 0, 0,
+		Imove, 5, 0, 0, 0,
 		
 		Iexit, 0, 0, 1, 0,
 		Iexiti, 0, 0, 2, 0,
