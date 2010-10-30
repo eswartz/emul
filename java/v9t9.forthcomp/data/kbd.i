@@ -28,10 +28,7 @@ Variable    randnoise
     dup $61 >=  over $7B <=  or  -$20 and  -
 ;
 
-:   buffer-key  ( ch -- )
-    \ remember the key
-    kbdscan c!
-
+:   buffer-key  ( -- )
     \ restart timer
     0 kbdtimer c!
     
@@ -48,14 +45,19 @@ Variable    randnoise
 ;
 
 :   repeat-key  ( ch -- )
-    kbdscan c@  over =  if
+    \ remember the key
+    dup kbdscan c!
+
+    kbdlast c@  over =  if
         \ same key: see if enough time has elapsed since last key
+        \ [char] ( demit kbdflag c@ .d kbdtimer c@ .d [char] ) demit 
+        
         kbdflag c@        \ repeating? 
         if
-            kbdtimer c@ kbddelay c@  <  if  drop exit  then
+            kbdtimer c@ kbdrate c@  <  if  drop exit  then
         else
             \ see if time to repeat
-            kbdtimer c@ kbdrate c@  <  if  drop exit  then
+            kbdtimer c@ kbddelay c@  <  if  drop exit  then
             
             true kbdflag c!
         then
@@ -63,6 +65,9 @@ Variable    randnoise
         \ new key: reset repeat flag
         0 kbdflag c! 
     then
+
+    \ remember the key
+    kbdlast c!
     
     buffer-key
 ;
@@ -113,6 +118,7 @@ Variable    randnoise
     then
     
     $70 and  kbdshift c!           \ save shift bits
+    0 kbdscan c!
     
     6 0 do 
         i   read-row
@@ -131,7 +137,10 @@ Variable    randnoise
     kbdscan c@ 0= if
         \ no key!
         \ any shifts at least?
-        kbdshift c@ 0= if exit then
+        kbdshift c@ 0= if
+            0 kbdscan c!  0 kbdtimer c!  0 kbdflag c!
+            exit 
+        then
     then
     
     key-actions

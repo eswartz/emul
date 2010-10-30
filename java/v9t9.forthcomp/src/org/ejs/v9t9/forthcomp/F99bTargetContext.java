@@ -283,8 +283,7 @@ public class F99bTargetContext extends TargetContext {
 			compileLiteral(var.getEntry().getParamAddr(), false, true);
 		} else if (word instanceof TargetUserVariable) {
 			TargetUserVariable user = (TargetUserVariable) word;
-			compileLiteral(user.getIndex(), false, true);
-			compileOpcode(Iuser);
+			compileUser(user);
 		} else if (word instanceof TargetValue) {
 			TargetValue value = (TargetValue) word;
 			compileLiteral(value.getEntry().getParamAddr(), false, true);
@@ -616,13 +615,8 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public void defineCompilerWords(HostContext hostContext) {
-		//TargetHere targetHere = new TargetHere();
-		//define("HERE", targetHere);
-		//hostContext.define("HERE", targetHere);
-		define("HERE", defineForward("HERE", "<<built-in>>"));
-		
-		//hostContext.define("BASE", create("BASE", 1));
-		define("BASE", defineForward("BASE", "<<built-in>>"));
+		//define("HERE", defineForward("HERE", "<<built-in>>"));
+		//define("BASE", defineForward("BASE", "<<built-in>>"));
 		
 		hostContext.define("FIELD,", new FieldComma());
 		hostContext.define(",", new Comma());
@@ -659,8 +653,14 @@ public class F99bTargetContext extends TargetContext {
 	
 
 	public void compileUser(TargetUserVariable var) {
-		compileLiteral(var.getIndex(), false, true);
-		compileOpcode(Iuser);
+		int index = var.getIndex();
+		if (index < 256) {
+			compileOpcode(Iupidx);
+			compileByte(index);
+		} else {
+			doCompileLiteral(index, false, true);
+			compileOpcode(Iuser);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -760,17 +760,29 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoConstant(int value, int cells) throws AbortException {
-		compile((ITargetWord) require("DOLIT"));
-		compilePushValue(cells, value);
+		//compile((ITargetWord) require("DOLIT"));
+		//compilePushValue(cells, value);
+		if (cells == 1)
+			compileLiteral(value, false, true);
+		else if (cells == 2)
+			compileDoubleLiteral(value & 0xffff, value >> 16, false, true);
+		else
+			throw new UnsupportedOperationException();
+		
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileDoUser(int)
 	 */
 	@Override
-	public void compileDoUser(int index) throws AbortException {
-		doCompileLiteral(index, false, true);
-		compileOpcode(Iuser);
+	public void compileDoUser(int index) {
+		if (index < 256) {
+			compileOpcode(Iupidx);
+			compileByte(index);
+		} else {
+			doCompileLiteral(index, false, true);
+			compileOpcode(Iuser);
+		}
 		compileOpcode(Iexit);
 	}
 

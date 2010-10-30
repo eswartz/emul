@@ -21,6 +21,7 @@ import org.ejs.v9t9.forthcomp.words.Again;
 import org.ejs.v9t9.forthcomp.words.Allot;
 import org.ejs.v9t9.forthcomp.words.BackSlash;
 import org.ejs.v9t9.forthcomp.words.Begin;
+import org.ejs.v9t9.forthcomp.words.BracketChar;
 import org.ejs.v9t9.forthcomp.words.CharComma;
 import org.ejs.v9t9.forthcomp.words.Colon;
 import org.ejs.v9t9.forthcomp.words.ColonColon;
@@ -217,6 +218,7 @@ public class ForthComp {
 		hostContext.define(":", new Colon());
 		hostContext.define("::", new ColonColon());
 		hostContext.define(";", new SemiColon());
+		hostContext.define("[CHAR]", new BracketChar());
 		
 		hostContext.define("TO", new To());
 		

@@ -67,7 +67,7 @@ public class InterpreterF99b implements Interpreter {
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
 	 */
-    public void execute() {
+    public final void execute() {
     	InstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
     	executeAndListen(instructionListeners);
     }
@@ -86,7 +86,7 @@ public class InterpreterF99b implements Interpreter {
 		}
 	}
 
-	private void executeAndListen(InstructionListener[] instructionListeners) {
+	private final void executeAndListen(InstructionListener[] instructionListeners) {
 		iblock.pc = cpu.getPC();
 		iblock.cycles = 0;
 		iblock.st = cpu.getST();
@@ -102,7 +102,7 @@ public class InterpreterF99b implements Interpreter {
 	 * @param instructionListeners
 	 * @param ins
 	 */
-	private boolean executeAndListen(InstructionListener[] instructionListeners,
+	private final boolean executeAndListen(InstructionListener[] instructionListeners,
 			InstructionF99b ins) {
         iblock.cycles = cpu.getCurrentCycleCount();
 
@@ -194,7 +194,7 @@ public class InterpreterF99b implements Interpreter {
 		if (cachedInstrs.isEmpty())
 			return;
 		
-		int first = instrMap.nextSetBit(addr - 6);
+		int first = instrMap.nextSetBit(Math.max(0, addr - 6));
 		if (first < 0 || first >= addr + 6)
 			return;
 		
@@ -300,6 +300,7 @@ public class InterpreterF99b implements Interpreter {
 				break;
 			case Irpidx:
 			case Ispidx:
+			case Iupidx:
 				inst.setOp1(MachineOperandF99b.createImmediateOperand(
 						iblock.nextByte() & 0xff, MachineOperandF99b.OP_ENC_IMM8));
 				break;
@@ -344,12 +345,20 @@ public class InterpreterF99b implements Interpreter {
      * Execute an instruction
      * @param ins
      */
-    private boolean interpret(InstructionF99b ins) {
+    private final  boolean interpret(InstructionF99b ins) {
+		if (ins.getInst() < 256) {
+			return interpretShort(ins);
+		} else if ((ins.getInst() >> 8) ==  Idouble) {
+			return interpretDouble(ins);
+		} else {
+			return interpretExt(ins);
+		}
+    }
+    
+    private final boolean interpretShort(InstructionF99b ins) {
+    	int fromPC = iblock.pc;
     	MachineOperandF99b mop1 = (MachineOperandF99b)ins.getOp1();
-		cpu.addCycles(1);
-		
-		int fromPC = iblock.pc;
-        
+    	cpu.addCycles(1);
 		switch (ins.getInst()) {
 		case Icmp:
 		case Icmp+1:
@@ -375,30 +384,6 @@ public class InterpreterF99b implements Interpreter {
         	cpu.push((short) (c ? -1 : 0));
         	return false;
 		}
-		case Icmp_d:
-		case Icmp_d+1:
-		case Icmp_d+2:
-		case Icmp_d+3:
-		case Icmp_d+4:
-		case Icmp_d+5:
-		case Icmp_d+6:
-		case Icmp_d+7: {
-        	int r = cpu.popd();
-        	int l = cpu.popd();
-        	boolean c = false;
-        	switch (ins.getInst() & 0x7) {
-        	case InstF99b.CMP_GE: c = l >= r; break;
-        	case InstF99b.CMP_GT: c = l > r; break;
-        	case InstF99b.CMP_LE: c = l <= r; break;
-        	case InstF99b.CMP_LT: c = l < r; break;
-        	case InstF99b.CMP_UGE: c = (((long)l) & 0xffffffffL) >= (((long)r) & 0xffffffffL); break;
-        	case InstF99b.CMP_UGT: c = (((long)l) & 0xffffffffL) >  (((long)r) & 0xffffffffL); break;
-        	case InstF99b.CMP_ULE: c = (((long)l) & 0xffffffffL) <= (((long)r) & 0xffffffffL); break;
-        	case InstF99b.CMP_ULT: c = (((long)l) & 0xffffffffL) <  (((long)r) & 0xffffffffL); break;
-        	}
-        	cpu.push((short) (c ? -1 : 0));
-        	return false;
-        	}
 		case Imath_start:
 		case Imath_start+1:
 		case Imath_start+2:
@@ -408,17 +393,6 @@ public class InterpreterF99b implements Interpreter {
         	short r = cpu.pop();
         	short l = cpu.pop();
         	cpu.push((short) binOp(l, r, ins.getInst() - Imath_start));
-        	return false;
-		}
-		case Idmath_start:
-		case Idmath_start+1:
-		case Idmath_start+2:
-		case Idmath_start+3:
-		case Idmath_start+4:
-		case Idmath_start+5: {
-        	int r = cpu.popd();
-        	int l = cpu.popd();
-        	cpu.pushd(binOp_d(l, r, ins.getInst() - Idmath_start));
         	return false;
 		}
 		case Imath_start+8:
@@ -433,30 +407,12 @@ public class InterpreterF99b implements Interpreter {
         	cpu.push((short) unaryOp(v, ins.getInst() - Imath_start));
         	return false;
 		}
-		case Idmath_start+8:
-		case Idmath_start+9:
-		case Idmath_start+10:
-		case Idmath_start+11:
-		case Idmath_start+12:
-		case Idmath_start+13:
-		case Idmath_start+14:
-		case Idmath_start+15: {
-        	int v = cpu.popd();
-        	cpu.pushd(unaryOp_d(v, ins.getInst() - Idmath_start));
-        	return false;
-		}	
         case Iload:
         	cpu.push(memory.readWord(cpu.pop()));
         	break;
         case Icload:
         	cpu.push((short) (memory.readByte(cpu.pop()) & 0xff));
         	break;
-        case Iload_d: {
-        	int addr = cpu.pop();
-        	cpu.push(memory.readWord(addr + 2));
-        	cpu.push(memory.readWord(addr));
-        	break;
-        }
         case Istore: {
         	int addr = cpu.pop();
         	memory.writeWord(addr, cpu.pop());
@@ -467,37 +423,15 @@ public class InterpreterF99b implements Interpreter {
         	memory.writeByte(addr, (byte) cpu.pop());
         	break;
         }
-        case Istore_d: {
-        	int addr = cpu.pop();
-        	memory.writeWord(addr, cpu.pop());
-        	memory.writeWord(addr + 2, cpu.pop());
-        	break;
-        }
-        	
         case IplusStore: {
         	short addr = cpu.pop();
         	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(addr) + cpu.pop()));
         	break;
         }
-        case IplusStore_d: {
-        	short addr = cpu.pop();
-        	int add = cpu.popd();
-        	int val = (iblock.domain.readWord(addr) << 16) | (iblock.domain.readWord(addr + 2) & 0xffff);
-        	val += add;
-        	iblock.domain.writeWord(addr, (short) (val >> 16));
-        	iblock.domain.writeWord(addr + 2, (short) (val & 0xffff));
-        	break;
-        }
-        	
         case IlitB:
         case IlitW:
         case IlitX:
         	cpu.push(mop1.immed);
-        	break;
-        case IlitX_d:
-        case IlitB_d:
-        case IlitD_d:
-        	cpu.pushd(mop1.val);
         	break;
         	
         case Iexit:
@@ -540,33 +474,17 @@ public class InterpreterF99b implements Interpreter {
         case I0equ:
         	cpu.push((short) (cpu.pop() == 0 ? -1 : 0));
         	break;
-        case I0equ_d:
-        	cpu.push((short) (cpu.popd() == 0 ? -1 : 0));
-        	break;
         case Iequ:
         	cpu.push((short) (cpu.pop() == cpu.pop() ? -1 : 0));
         	break;
-        case Iequ_d:
-        	cpu.push((short) (cpu.popd() == cpu.popd() ? -1 : 0));
-        	break;
         case Idrop:
         	cpu.pop();
-        	break;
-        case Idrop_d:
-        	cpu.popd();
         	break;
         case Iswap: {
         	short x = cpu.pop();
         	short y = cpu.pop();
         	cpu.push(x);
         	cpu.push(y);
-        	break;
-        }
-        case Iswap_d: {
-        	int x = cpu.popd();
-        	int y = cpu.popd();
-        	cpu.pushd(x);
-        	cpu.pushd(y);
         	break;
         }
         case Iover:
@@ -579,12 +497,6 @@ public class InterpreterF99b implements Interpreter {
         	cpu.push(y);
         	cpu.push(x);
         	cpu.push(z);
-        	break;
-        }
-        case Idup_d: {
-        	int v = cpu.popd();
-        	cpu.pushd(v);
-        	cpu.pushd(v);
         	break;
         }
         
@@ -613,27 +525,6 @@ public class InterpreterF99b implements Interpreter {
         	}
         	break;
         }
-        case Iudivmod_d: {
-        	int div = cpu.popd() & 0xffffffff;
-        	int numHi = cpu.popd();
-        	int numLo = cpu.popd();
-        	long num = (numHi << 32) | (numLo & 0xffffffff);
-        	if (div == 0) {
-            	cpu.push((short) -1);
-            	cpu.push((short) 0);
-        	} else {
-        		long quot = num / div;
-        		int rem = (int) (num % div);
-        		if (quot >= 0x100000000L) {
-        			cpu.pushd(-1);
-                	cpu.pushd(0);
-        		} else {
-        			cpu.pushd(rem);
-                	cpu.pushd((int) quot);
-        		}
-        	}
-        	break;
-        }
 		case Iand:
 			cpu.push((short) (cpu.pop() & cpu.pop()));
 			break;
@@ -645,18 +536,6 @@ public class InterpreterF99b implements Interpreter {
 			break;
 		case Inot:
 			cpu.push((short) (cpu.pop() != 0 ? 0 : -1));
-			break;
-		case Iand_d:
-			cpu.pushd((cpu.popd() & cpu.popd()));
-			break;
-		case Ior_d:
-			cpu.pushd((cpu.popd() | cpu.popd()));
-			break;
-		case Ixor_d:
-			cpu.pushd((cpu.popd() ^ cpu.popd()));
-			break;
-		case Inot_d:
-			cpu.pushd((cpu.popd() != 0 ? 0 : -1));
 			break;
 
         case Icall:
@@ -671,24 +550,10 @@ public class InterpreterF99b implements Interpreter {
         case ItoR:
         	cpu.rpush(cpu.pop());
         	break;
-        case ItoR_d:
-        	cpu.rpush(iblock.getStackEntry(1));
-        	cpu.rpush(iblock.getStackEntry(0));
-        	cpu.pop();
-        	cpu.pop();
-        	break;
         case IRfrom:
         	cpu.push(cpu.rpop());
         	break;
-        case IRfrom_d:
-        	cpu.push(iblock.getReturnStackEntry(1));
-        	cpu.push(iblock.getReturnStackEntry(0));
-        	break;
         case Irdrop:
-        	cpu.rpop();
-        	break;
-        case Irdrop_d:
-        	cpu.rpop();
         	cpu.rpop();
         	break;
         case IatR:
@@ -701,6 +566,9 @@ public class InterpreterF99b implements Interpreter {
         	cpu.push(iblock.getReturnStackEntry(mop1.immed));
         	break;
         	
+        case Iupidx:
+        	cpu.push((short) (iblock.up + (mop1.val & 0xff) * 2));
+        	break;
         case Iuser:
         	cpu.push((short) (iblock.up + (cpu.pop() * 2)));
         	break;
@@ -793,13 +661,188 @@ public class InterpreterF99b implements Interpreter {
         	break;
         	
         default:
-    		throw new UnsupportedOperationException("" + ins);
+        	unsupported(ins);
         }
 
 		return false;
     }
 
-	private int binOp(short l, short r, int immed) {
+    private final boolean interpretDouble(InstructionF99b ins) {
+    	MachineOperandF99b mop1 = (MachineOperandF99b)ins.getOp1();
+    	cpu.addCycles(1);
+    	
+    	int baseInst = ins.getInst() & 0xff;
+		switch (baseInst) {
+		case Icmp:
+		case Icmp+1:
+		case Icmp+2:
+		case Icmp+3:
+		case Icmp+4:
+		case Icmp+5:
+		case Icmp+6:
+		case Icmp+7: {
+        	int r = cpu.popd();
+        	int l = cpu.popd();
+        	boolean c = false;
+        	switch (baseInst & 0x7) {
+        	case InstF99b.CMP_GE: c = l >= r; break;
+        	case InstF99b.CMP_GT: c = l > r; break;
+        	case InstF99b.CMP_LE: c = l <= r; break;
+        	case InstF99b.CMP_LT: c = l < r; break;
+        	case InstF99b.CMP_UGE: c = (((long)l) & 0xffffffffL) >= (((long)r) & 0xffffffffL); break;
+        	case InstF99b.CMP_UGT: c = (((long)l) & 0xffffffffL) >  (((long)r) & 0xffffffffL); break;
+        	case InstF99b.CMP_ULE: c = (((long)l) & 0xffffffffL) <= (((long)r) & 0xffffffffL); break;
+        	case InstF99b.CMP_ULT: c = (((long)l) & 0xffffffffL) <  (((long)r) & 0xffffffffL); break;
+        	}
+        	cpu.push((short) (c ? -1 : 0));
+        	return false;
+        	}
+		case Imath_start:
+		case Imath_start+1:
+		case Imath_start+2:
+		case Imath_start+3:
+		case Imath_start+4:
+		case Imath_start+5: {
+        	int r = cpu.popd();
+        	int l = cpu.popd();
+        	cpu.pushd(binOp_d(l, r, ins.getInst() - Idmath_start));
+        	return false;
+		}
+		case Imath_start+8:
+		case Imath_start+9:
+		case Imath_start+10:
+		case Imath_start+11:
+		case Imath_start+12:
+		case Imath_start+13:
+		case Imath_start+14:
+		case Imath_start+15: {
+        	int v = cpu.popd();
+        	cpu.pushd(unaryOp_d(v, ins.getInst() - Idmath_start));
+        	return false;
+		}	
+        case Iload: {
+        	int addr = cpu.pop();
+        	cpu.push(memory.readWord(addr + 2));
+        	cpu.push(memory.readWord(addr));
+        	break;
+        }
+        case Istore: {
+        	int addr = cpu.pop();
+        	memory.writeWord(addr, cpu.pop());
+        	memory.writeWord(addr + 2, cpu.pop());
+        	break;
+        }
+        	
+        case IplusStore: {
+        	short addr = cpu.pop();
+        	int add = cpu.popd();
+        	int val = (iblock.domain.readWord(addr) << 16) | (iblock.domain.readWord(addr + 2) & 0xffff);
+        	val += add;
+        	iblock.domain.writeWord(addr, (short) (val >> 16));
+        	iblock.domain.writeWord(addr + 2, (short) (val & 0xffff));
+        	break;
+        }
+        	
+        case IlitX:
+        case IlitB:
+        case IlitW:	// really D
+        	cpu.pushd(mop1.val);
+        	break;
+        case I0equ:
+        	cpu.push((short) (cpu.popd() == 0 ? -1 : 0));
+        	break;
+        case Iequ:
+        	cpu.push((short) (cpu.popd() == cpu.popd() ? -1 : 0));
+        	break;
+        case Idrop:
+        	cpu.popd();
+        	break;
+        case Iswap: {
+        	int x = cpu.popd();
+        	int y = cpu.popd();
+        	cpu.pushd(x);
+        	cpu.pushd(y);
+        	break;
+        }
+        case Idup: {
+        	int v = cpu.popd();
+        	cpu.pushd(v);
+        	cpu.pushd(v);
+        	break;
+        }
+        
+        case Iudivmod: {
+        	int div = cpu.popd() & 0xffffffff;
+        	int numHi = cpu.popd();
+        	int numLo = cpu.popd();
+        	long num = (numHi << 32) | (numLo & 0xffffffff);
+        	if (div == 0) {
+            	cpu.push((short) -1);
+            	cpu.push((short) 0);
+        	} else {
+        		long quot = num / div;
+        		int rem = (int) (num % div);
+        		if (quot >= 0x100000000L) {
+        			cpu.pushd(-1);
+                	cpu.pushd(0);
+        		} else {
+        			cpu.pushd(rem);
+                	cpu.pushd((int) quot);
+        		}
+        	}
+        	break;
+        }
+		case Iand:
+			cpu.pushd((cpu.popd() & cpu.popd()));
+			break;
+		case Ior:
+			cpu.pushd((cpu.popd() | cpu.popd()));
+			break;
+		case Ixor:
+			cpu.pushd((cpu.popd() ^ cpu.popd()));
+			break;
+		case Inot:
+			cpu.pushd((cpu.popd() != 0 ? 0 : -1));
+			break;
+        case ItoR:
+        	cpu.rpush(iblock.getStackEntry(1));
+        	cpu.rpush(iblock.getStackEntry(0));
+        	cpu.pop();
+        	cpu.pop();
+        	break;
+        case IRfrom:
+        	cpu.push(iblock.getReturnStackEntry(1));
+        	cpu.push(iblock.getReturnStackEntry(0));
+        	cpu.rpop();
+        	cpu.rpop();
+        	break;
+        case Irdrop:
+        	cpu.rpop();
+        	cpu.rpop();
+        	break;
+        default:
+        	unsupported(ins);
+        }
+
+		return false;
+    }
+
+    private final boolean interpretExt(InstructionF99b ins) {
+		switch (ins.getInst()) {
+        default:
+    		unsupported(ins);
+		}
+		return false;
+    }
+    
+	/**
+	 * @param ins
+	 */
+	private void unsupported(InstructionF99b ins) {
+		throw new UnsupportedOperationException("opcode " + ins.getInst() +": "+ ins);
+	}
+
+	private final int binOp(short l, short r, int immed) {
 		switch (immed) {
 		case OP_ADD:
 			return l + r;
@@ -818,7 +861,7 @@ public class InterpreterF99b implements Interpreter {
 		}
 		return 0;
 	}
-	private int binOp_d(int l, int r, int immed) {
+	private final int binOp_d(int l, int r, int immed) {
 		switch (immed) {
 		case OP_ADD:
 			return l + r;

@@ -155,14 +155,11 @@ public class Executor {
 			executeCompilableCode();
 		} else if (settingSingleStep.getBoolean()){
 			interpretOneInstruction();
-			cpu.checkAndHandleInterrupts();
 		} else {
 			interruptExecution = Boolean.FALSE;
 			if (Cpu.settingRealTime.getBoolean()) {
-				int count = 1000;
-				while (count-- > 0 && !cpu.isThrottled() && !interruptExecution) {
+				while (!cpu.isThrottled() && !interruptExecution) {
 					interpretOneInstruction();
-					cpu.checkAndHandleInterrupts();
 				}
 			} else {
 				interp.executeChunk(1000, this);

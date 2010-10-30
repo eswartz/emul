@@ -69,7 +69,7 @@ public class TestForthCompF99b {
 
 	}
 	@Before
-	public void setup() {
+	public void setup() throws AbortException {
 		interp = new InterpreterF99b(f99Machine);
 		
 		targCtx = new F99bTargetContext(4096);
@@ -82,6 +82,8 @@ public class TestForthCompF99b {
 			cpu.getConsole().writeByte(i, (byte) 0);
 		
 		targCtx.defineBuiltins();
+		//comp.parseString("User HERE User Base");
+
 		startDP = targCtx.getDP();
 	}
 	@After

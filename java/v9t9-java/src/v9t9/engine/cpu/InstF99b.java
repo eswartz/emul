@@ -106,6 +106,7 @@ public class InstF99b {
 	public static final int IplusStore = Imem_start + 4;
 
 	public static final int Iuser = Imem_start + 6;
+	public static final int Iupidx = Imem_start + 7;
 	
 	public static final int Iloop_start = 0x68;
 	
@@ -147,7 +148,7 @@ public class InstF99b {
 
 	////////////////////////
 	
-	public static final int IlitX_d = (Idouble << 8) + 0x10;
+	public static final int IlitX_d = (Idouble << 8) + 0x20;
 	
 	public static final int Idstack_start = (Idouble << 8) + Istack_start;
 	public static final int Idup_d = Idstack_start + 0;
@@ -210,6 +211,7 @@ public class InstF99b {
 	public static final int Istore_d = Idmem_start + 2;
 	public static final int IplusStore_d = Idmem_start + 4;
 	public static final int Iuser_d = Idmem_start + 6;
+	public static final int Iupidx_d = Idmem_start + 7;
 	
 	public static final int Idloop_start = (Idouble << 8) + 0x68;
 	
@@ -275,6 +277,8 @@ public class InstF99b {
 		IplusStore_d, 3, 0, 0, 0,
 		Iuser, 1, 1, 0, 0,
 		Iuser_d, 1, 2, 0, 0,
+		Iupidx, 0, 1, 0, 0,
+		Iupidx_d, 0, 2, 0, 0,
 
 		Iswap, 2, 2, 0, 0,
 		Iswap_d, 4, 4, 0, 0,

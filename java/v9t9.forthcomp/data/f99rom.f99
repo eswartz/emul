@@ -27,6 +27,8 @@ include sysutils.i
 
 0 <EXPORT
 
+include core.i
+
 include video.i
 
 include kbd.i
@@ -43,22 +45,6 @@ include ints.i
     >r
 ;
 
-User    base
-User    dp
-
-: here dp @ ;
-
-
-:   quit
-    10 base !
-    
-    begin
-        key? if key emit 
-        else ints-check
-        then
-    again
-;
-
 :   abort
 
     regs-init   ints-init   kbd-init
@@ -73,13 +59,15 @@ User    dp
 
 
 :   cycle
+    hex $1F2E3D4C. d.d 10 demit decimal
+    \ 256 0 do i .d 10 demit loop
     begin
+        42 demit
         256 0 do
-            i .d
             key? if key else i then
             v-clear
             ints-check
-            0 0 do loop
+            \ 0 0 do loop
         loop
     again
 ;

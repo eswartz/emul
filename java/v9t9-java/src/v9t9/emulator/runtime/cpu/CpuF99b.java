@@ -310,7 +310,7 @@ public class CpuF99b extends CpuBase {
 	}
 
 	public void push(short val) {
-		short newSp = (short) ((stateF99b.getSP() - 2) & 0xfffe);
+		short newSp = (short) ((stateF99b.getSP() - 2));
 		state.getConsole().writeWord(newSp, val);
 		stateF99b.setSP(newSp);
 		
@@ -325,13 +325,13 @@ public class CpuF99b extends CpuBase {
 
 	public short pop() {
 		short val = stateF99b.getConsole().readWord(stateF99b.getSP());
-		short newSp = (short) ((stateF99b.getSP() + 2) & 0xfffe);
+		short newSp = (short) ((stateF99b.getSP() + 2));
 		stateF99b.setSP(newSp);
 		return val;
 	}
 
 	public void rpush(short val) {
-		short newRp = (short) ((stateF99b.getRP() - 2) & 0xfffe);
+		short newRp = (short) ((stateF99b.getRP() - 2));
 		stateF99b.getConsole().writeWord(newRp, val);
 		stateF99b.setRP(newRp);
 		
@@ -345,7 +345,7 @@ public class CpuF99b extends CpuBase {
 	}
 	public short rpop() {
 		short val = stateF99b.getConsole().readWord(stateF99b.getRP());
-		short newRp = (short) ((stateF99b.getRP() + 2) & 0xfffe);
+		short newRp = (short) ((stateF99b.getRP() + 2));
 		stateF99b.setRP(newRp);
 		return val;
 	}
