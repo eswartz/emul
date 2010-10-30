@@ -33,6 +33,8 @@ $0081       constant    'INTSP
 $0082       constant    'KBD
 $0083       constant    'KBDA
 
+$00ff       constant    'DBG
+
 \   -----------------------    
 
 $0400       constant    ROM

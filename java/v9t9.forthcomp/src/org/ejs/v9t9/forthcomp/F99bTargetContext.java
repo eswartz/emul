@@ -192,6 +192,11 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("DCSH", Icsh_d);
 		
 		defineInlinePrim("*", Iumul, Idrop);
+		
+		defineInlinePrim("2drop", Idrop_d);
+		defineInlinePrim("d>q", Idup, IlitX, Icmp + CMP_LT, Idup);
+		defineInlinePrim("dum/mod", Iudivmod_d);
+		
 		defineInlinePrim("s>d", Idup, IlitX, Icmp+CMP_LT);
 		
 		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
@@ -611,6 +616,14 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public void defineCompilerWords(HostContext hostContext) {
+		//TargetHere targetHere = new TargetHere();
+		//define("HERE", targetHere);
+		//hostContext.define("HERE", targetHere);
+		define("HERE", defineForward("HERE", "<<built-in>>"));
+		
+		//hostContext.define("BASE", create("BASE", 1));
+		define("BASE", defineForward("BASE", "<<built-in>>"));
+		
 		hostContext.define("FIELD,", new FieldComma());
 		hostContext.define(",", new Comma());
 		hostContext.define("LITERAL", new Literal(true));

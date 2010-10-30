@@ -21,7 +21,7 @@ public class CpuF99b extends CpuBase {
 	 * 
 	 */
 	public static final int INT_BASE = 0xffe0;
-	public static final int BASE_CYCLES_PER_SEC = 1500000;
+	public static final int BASE_CYCLES_PER_SEC = 3000000;
 	private CpuStateF99b stateF99b;
 	
 	public CpuF99b(Machine machine, int interruptTick, VdpHandler vdp) {

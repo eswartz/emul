@@ -121,6 +121,8 @@ public class InterpreterF99b implements Interpreter {
 				int spused = fx.first;
 				if (spused < 0)
 					spused = 4;
+				if (spused > iblock.inStack.length)
+					spused = iblock.inStack.length;
 				for (int i = 0; i < spused; i++)
 					iblock.inStack[i] = iblock.getStackEntry(spused - i - 1);
 			}
@@ -129,6 +131,8 @@ public class InterpreterF99b implements Interpreter {
 				int rpused = fx.first;
 				if (rpused < 0)
 					rpused = 4;
+				if (rpused > iblock.inReturnStack.length)
+					rpused = iblock.inReturnStack.length;
 				for (int i = 0; i < rpused; i++)
 					iblock.inReturnStack[i] = iblock.getReturnStackEntry(rpused - i - 1);
 			}
@@ -190,7 +194,7 @@ public class InterpreterF99b implements Interpreter {
 		if (cachedInstrs.isEmpty())
 			return;
 		
-		int first = instrMap.nextSetBit(addr);
+		int first = instrMap.nextSetBit(addr - 6);
 		if (first < 0 || first >= addr + 6)
 			return;
 		
@@ -548,11 +552,21 @@ public class InterpreterF99b implements Interpreter {
         case Idrop:
         	cpu.pop();
         	break;
+        case Idrop_d:
+        	cpu.popd();
+        	break;
         case Iswap: {
         	short x = cpu.pop();
         	short y = cpu.pop();
         	cpu.push(x);
         	cpu.push(y);
+        	break;
+        }
+        case Iswap_d: {
+        	int x = cpu.popd();
+        	int y = cpu.popd();
+        	cpu.pushd(x);
+        	cpu.pushd(y);
         	break;
         }
         case Iover:
@@ -595,6 +609,27 @@ public class InterpreterF99b implements Interpreter {
         		} else {
         			cpu.push((short) rem);
                 	cpu.push((short) quot);
+        		}
+        	}
+        	break;
+        }
+        case Iudivmod_d: {
+        	int div = cpu.popd() & 0xffffffff;
+        	int numHi = cpu.popd();
+        	int numLo = cpu.popd();
+        	long num = (numHi << 32) | (numLo & 0xffffffff);
+        	if (div == 0) {
+            	cpu.push((short) -1);
+            	cpu.push((short) 0);
+        	} else {
+        		long quot = num / div;
+        		int rem = (int) (num % div);
+        		if (quot >= 0x100000000L) {
+        			cpu.pushd(-1);
+                	cpu.pushd(0);
+        		} else {
+        			cpu.pushd(rem);
+                	cpu.pushd((int) quot);
         		}
         	}
         	break;

@@ -32,6 +32,8 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	public static final int KEYWR = 0x22;
 	public static final int SOUND = 0x40;	// 0x20!
 	
+	public static final int DBG = 0xff;
+	
 	public static final int CRU_BASE = 0x80;
 	public static final int CRU_END = 0x100;
 	
@@ -102,6 +104,10 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	    		break;
 	    	case SPCHWT:
 	    		getTIMemoryModel().getSpeechMmio().write(addr, val);
+	    		break;
+	    		
+	    	case DBG:
+	    		System.out.print((char) val);
 	    		break;
     		default:
     			if (addr >= CRU_BASE && addr < CRU_END) {

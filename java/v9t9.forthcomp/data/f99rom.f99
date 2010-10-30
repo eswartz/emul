@@ -12,6 +12,9 @@ $400    dp!
 \   cold address
 0 ,
 
+\   initial dictionary
+0 ,
+
 (define-prims)
 
 0 <EXPORT
@@ -40,8 +43,11 @@ include ints.i
     >r
 ;
 
-
 User    base
+User    dp
+
+: here dp @ ;
+
 
 :   quit
     10 base !
@@ -69,6 +75,7 @@ User    base
 :   cycle
     begin
         256 0 do
+            i .d
             key? if key else i then
             v-clear
             ints-check
@@ -80,6 +87,9 @@ User    base
 
 :   bootup
 
+    $404 @ dp !
+    10 base !
+    
     regs-init
 
     ints-init
@@ -96,3 +106,4 @@ EXPORT>
 \ -------------------------------------------------
 
 ' bootup $400 !
+here     $404 !

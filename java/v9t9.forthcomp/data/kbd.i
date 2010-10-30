@@ -87,6 +87,8 @@ Variable    randnoise
         $30 kbdshift c@ = not  $08 or  and 
     then
 
+    dup .d 10 demit
+    
     ?dup if  repeat-key  then 
 ;
 

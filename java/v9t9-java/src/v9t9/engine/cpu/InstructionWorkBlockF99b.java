@@ -14,8 +14,8 @@ public final class InstructionWorkBlockF99b extends BaseInstructionWorkBlock {
 	public short up;
 	public boolean showSymbol;
 	
-	public short[] inStack = new short[4];
-	public short[] inReturnStack = new short[4];
+	public short[] inStack = new short[6];
+	public short[] inReturnStack = new short[6];
 
 	public InstructionWorkBlockF99b(CpuF99b cpu) {
     	super(cpu.getState());
