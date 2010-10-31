@@ -32,7 +32,6 @@ import v9t9.emulator.hardware.MFP201MachineModel;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
 import v9t9.emulator.hardware.StandardMachineModel;
-import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.cpu.Cpu;
