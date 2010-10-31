@@ -93,12 +93,14 @@ Variable    randnoise
     \ check alpha and uppercase if needed
     $80 'KBDA c!  'KBDA c@  if  toupper  then  $00 'KBDA c!
     
-    \ HACK!  Fctn-Shift-S  -->  Ctrl-H
+    \ dup .d 10 demit
+    
+    \ Fctn-Shift-S  -->  Ctrl-H
     dup 211 = if  
-        $30 kbdshift c@ = not  $08 or  and 
+        \ kbdshift c@ .d 10 demit
+        $30 kbdshift c@ = if  drop $08  then 
     then
 
-    \ dup .d 10 demit
     
     ?dup if  repeat-key  then 
 ;

@@ -206,7 +206,7 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("s>d", Idup, IlitX, Icmp+CMP_LT);
 		
 		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
-		defineInlinePrim("DOLIT", IlitW, 0, 0, Iexit);
+		//defineInlinePrim("DOLIT", IlitW, 0, 0, Iexit);
 		
 		defineInlinePrim("true", IlitX | 0xf);
 		defineInlinePrim("false", IlitX);
@@ -773,8 +773,6 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoConstant(int value, int cells) throws AbortException {
-		//compile((ITargetWord) require("DOLIT"));
-		//compilePushValue(cells, value);
 		if (cells == 1)
 			compileLiteral(value, false, true);
 		else if (cells == 2)
@@ -818,11 +816,15 @@ public class F99bTargetContext extends TargetContext {
 	public int compilePushValue(int cells, int value) throws AbortException {
 		int loc;
 		if (cells == 1) {
-			loc = getDP() - 3;
-			compile((ITargetWord) require("DOLIT"));
+			compileOpcode(IlitW);
+			loc = alloc(cellSize);
+			compileOpcode(Iexit);
+			//compile((ITargetWord) require("DOLIT"));
 		} else { 
-			loc = getDP() - 5;
-			compile((ITargetWord) require("DODLIT"));
+			compileOpcode(IlitD_d);
+			loc = alloc(cellSize * cells);
+			compileOpcode(Iexit);
+			//compile((ITargetWord) require("DODLIT"));
 		}
 		
 		

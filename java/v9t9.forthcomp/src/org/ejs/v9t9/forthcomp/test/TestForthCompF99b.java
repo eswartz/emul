@@ -1215,4 +1215,18 @@ public class TestForthCompF99b {
 		ITargetWord var = (ITargetWord) targCtx.require("buffer");
 		assertEquals(var.getEntry().getParamAddr() + 50, hostCtx.popData()); 
 	}
+	@Test
+	public void testNoExportValuesAndVars() throws Exception {
+		
+		parseString(
+				"0 <export\n"+
+				"Variable vy\n" + 
+				"\n" + 
+				"10 Value win-x\n" + 
+		": fool 1 vy !  win-x ;\n");
+		
+		interpret("fool");
+		
+		assertEquals(10, hostCtx.popData()); 
+	}
 }

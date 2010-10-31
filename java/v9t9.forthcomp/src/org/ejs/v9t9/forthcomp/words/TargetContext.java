@@ -315,11 +315,11 @@ public abstract class TargetContext extends Context {
 		DictEntry entry = defineEntry(name);
 		logfile.println(name);
 		
-		int dp = entry.getContentAddr();
+		int origDp = entry.getContentAddr();
 		
 		int loc = compilePushValue(cells, value);
 		
-		entry.setCodeSize(loc - dp);
+		entry.setCodeSize(loc - origDp);
 		
 		return (TargetValue) define(name, new TargetValue(entry, cells));		
 	}
