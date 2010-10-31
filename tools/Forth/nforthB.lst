@@ -23,6 +23,6 @@ in file included from 99build.fs:716
 (up0) tup .s >>>!<<<   \ even if we don't have USER variables, this will be used for other stuff we want in RAM
 Backtrace:
 $401F9468 c! 
-$48BEDEC9 
-$48BEDEC8 
+$4845CEC9 
+$4845CEC8 
 $401F98E8 S! 

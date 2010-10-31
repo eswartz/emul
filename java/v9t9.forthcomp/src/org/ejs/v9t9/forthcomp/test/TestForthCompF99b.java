@@ -804,6 +804,22 @@ public class TestForthCompF99b {
 		assertEquals(1123, hostCtx.popData());
 	}
 	@Test
+	public void testMemOps4Ex() throws Exception {
+		parseString(
+					//		 	low     high
+				"Create counter $1234 , $5678 , \n" +
+				": tst counter D@ ;"
+				
+		);
+		
+		dumpDict();
+		
+		interpret("tst");
+		
+		assertEquals(0x5678, hostCtx.popData());
+		assertEquals(0x1234, hostCtx.popData());
+	}
+	@Test
 	public void testBeginAgain() throws Exception {
 		parseString(
 				"variable idx\n"+

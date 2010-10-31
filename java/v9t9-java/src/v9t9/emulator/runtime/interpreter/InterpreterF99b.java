@@ -774,24 +774,24 @@ public class InterpreterF99b implements Interpreter {
 		}	
         case Iload: {
         	int addr = cpu.pop();
-        	cpu.push(memory.readWord(addr + 2));
         	cpu.push(memory.readWord(addr));
+        	cpu.push(memory.readWord(addr + 2));
         	break;
         }
         case Istore: {
         	int addr = cpu.pop();
-        	memory.writeWord(addr, cpu.pop());
         	memory.writeWord(addr + 2, cpu.pop());
+        	memory.writeWord(addr, cpu.pop());
         	break;
         }
         	
         case IplusStore: {
         	short addr = cpu.pop();
         	int add = cpu.popd();
-        	int val = (iblock.domain.readWord(addr) << 16) | (iblock.domain.readWord(addr + 2) & 0xffff);
+        	int val = (iblock.domain.readWord(addr + 2) << 16) | (iblock.domain.readWord(addr) & 0xffff);
         	val += add;
-        	iblock.domain.writeWord(addr, (short) (val >> 16));
-        	iblock.domain.writeWord(addr + 2, (short) (val & 0xffff));
+        	iblock.domain.writeWord(addr, (short) (val & 0xffff));
+        	iblock.domain.writeWord(addr + 2, (short) (val >> 16));
         	break;
         }
         	

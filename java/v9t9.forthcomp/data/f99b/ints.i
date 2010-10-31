@@ -28,11 +28,10 @@ DVariable vdp-ticks
         \ timer
         1. vdp-ticks d+!
         
-        \ scan keyboard
+        \ keyboard timer
         kbdtimer c@ 1+ kbdtimer c!    
         
-        \ kbd-scan
-        
+        update-cursor
     else
         drop
     then
