@@ -5,17 +5,19 @@ Create      kbdbuf      kbdbufsize allot
 
 Create      kbdstate    10 allot
 
-    : kbdtimer kbdstate ;
-    : kbddelay [ kbdstate 1 + ] LITERAL ;
-    : kbdrate [ kbdstate 2 + ] LITERAL ;
+kbdstate     Constant kbdtimer
 
-    : kbdshift [ kbdstate 3 + ] LITERAL ;
-    : kbdscan [ kbdstate 4 + ] LITERAL ;
-    : kbdlast [ kbdstate 5 + ] LITERAL ;
-    : kbdflag [ kbdstate 6 + ] LITERAL ; 
+kbdstate 1 + Constant kbddelay
 
-    : kbdtail [ kbdstate 7 + ] LITERAL ;
-    : kbdhead [ kbdstate 8 + ] LITERAL ;
+kbdstate 2 + Constant kbdrate
+
+kbdstate 3 + Constant kbdshift
+kbdstate 4 + Constant kbdscan
+kbdstate 5 + Constant kbdlast
+kbdstate 6 + Constant kbdflag 
+
+kbdstate 7 + Constant kbdtail
+kbdstate 8 + Constant kbdhead
 
 Variable    timeout
 Variable    randnoise
@@ -50,7 +52,7 @@ Variable    randnoise
 
     kbdlast c@  over =  if
         \ same key: see if enough time has elapsed since last key
-        [char] ( demit kbdflag c@ .d kbdtimer c@ .d [char] ) demit 
+        \ [char] ( demit kbdflag c@ .d kbdtimer c@ .d [char] ) demit 
         
         kbdflag c@        \ repeating? 
         if
@@ -96,7 +98,7 @@ Variable    randnoise
         $30 kbdshift c@ = not  $08 or  and 
     then
 
-    dup .d 10 demit
+    \ dup .d 10 demit
     
     ?dup if  repeat-key  then 
 ;

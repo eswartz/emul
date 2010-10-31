@@ -38,27 +38,35 @@ create  VRegSave      16 allot
 
 \ ---------------------
 
-Variable v-screen
-Variable v-size
-Variable v-patts
+Create  v-mode      16 allot
 
-Variable vx
-Variable vy
+v-mode   0 +     Constant v-screen      \ VDP addr of screen
+v-mode   2 +     Constant v-screensz    \ VDP addr of screen
+v-mode   4 +     Constant v-patts       \ VDP addr of patterns
+v-mode   6 +     Constant v-pattsz      \ VDP size of pattern table
+v-mode   8 +     Constant v-colors      \ VDP addr of colors
+v-mode  10 +     Constant v-colorsz     \ VDP size of color table
+v-mode  12 +     Constant v-sprites     \ VDP addr of sprites
+v-mode  14 +     Constant v-sprcol      \ VDP addr of sprite color table (0 if not sprite 2 mode)
+v-mode  16 +     Constant v-sprpat      \ VDP addr of sprite patterns
+v-mode  18 +     Constant v-sprmot      \ VDP addr of sprite motion
+v-mode  20 +     Constant v-free        \ usable space
 
+Create  v-state     8 allot
+
+v-state  0 +     Constant v-sx  \ chars
+v-state  1 +     Constant v-sy  \ chars
 Variable v-sx
-Variable win-x
-Variable win-y
-Variable win-sx
-Variable win-sy
+Variable v-sy
+Variable v-curs
 
 :   text-mode
     TextModeRegs write-vregs
     0 v-screen !
-    960 v-size !
+    960 v-screensz !
     $800 v-patts !
     40 v-sx !
-    40 win-sx !
-    24 win-sy !
+    24 v-sy !
 
     term-reset
     cls    
@@ -85,32 +93,9 @@ Variable win-sy
 ;
 
 :   v-clear ( ch -- )
-    v-screen @ v-size @ vfill
+    v-screen @ v-screensz @ vfill
 ;
 
-:   term-reset 
-    0 vx !
-    0 vy !
-;
-
-:   cls  32 v-clear  term-reset ;
-
-:   curs-addr ( -- )
-    vy @ win-y @ +  v-sx @ *  vx @ win-x @ +  +
-    v-screen @ + 
-;
-
-:   emit    ( ch -- )
-    curs-addr  $4000 or  vwaddr  VDPWD c!
-    1 vx +!  vx @ win-sx @ >= if 
-        0 vx !  1 vy +!  vy @ win-sy @ >= if
-            0 vy !
-        then
-    then   
-;
-
-:   cr  13 emit  ;
-:   space  32 emit  ;
 
 EXPORT>
 

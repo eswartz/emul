@@ -31,6 +31,8 @@ include core.i
 
 include video.i
 
+include term.i
+
 include kbd.i
 
 include ints.i

@@ -324,13 +324,24 @@ public abstract class TargetContext extends Context {
 
 	/**
 	 * At runtime, push the # of cells to the stack from the current DP.
-	 * Return the location of the value.
+	 * Return the location of the value.  The exact space must be allocated
+	 * so the value can change.
 	 * @param cells
 	 * @param value
+	 * @return DP of value
 	 */
 	abstract public int compilePushValue(int cells, int value) throws AbortException;
 	
+	/** At runtime, push the value in the given # of cells to the stack. 
+	 * Can be optimized.
+	 * @param value
+	 * @param cells
+	 * @throws AbortException
+	 */
 	abstract public void compileDoConstant(int value, int cells) throws AbortException;
+	/** At runtime, push the user variable for the given index. 
+	 * Can be optimized.
+	 */
 	abstract public void compileDoUser(int index) throws AbortException;
 
 	public TargetUserVariable defineUser(String name, int cells) throws AbortException {

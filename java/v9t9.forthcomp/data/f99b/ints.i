@@ -43,7 +43,7 @@ DVariable vdp-ticks
 :   kbd-int-handler
     'INTS c@  
     dup M_INT_KBD and if
-        [char] K demit
+        \ [char] K demit
      
         \ acknowledge interrupt
         [ M_INT_KBD invert literal ]  and  'INTSP c!

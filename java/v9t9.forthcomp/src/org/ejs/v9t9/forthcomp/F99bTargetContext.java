@@ -780,7 +780,7 @@ public class F99bTargetContext extends TargetContext {
 			compileDoubleLiteral(value & 0xffff, value >> 16, false, true);
 		else
 			throw new UnsupportedOperationException();
-		
+		compileOpcode(Iexit);
 	}
 	
 	/* (non-Javadoc)
