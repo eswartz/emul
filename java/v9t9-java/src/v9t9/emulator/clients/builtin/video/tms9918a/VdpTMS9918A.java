@@ -6,14 +6,12 @@
  */
 package v9t9.emulator.clients.builtin.video.tms9918a;
 
-import java.io.PrintWriter;
 import java.util.Arrays;
 
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
-import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
@@ -28,6 +26,7 @@ import v9t9.emulator.hardware.BaseCruAccess;
 import v9t9.emulator.hardware.CruAccess;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;
@@ -71,7 +70,6 @@ public class VdpTMS9918A implements VdpHandler {
 	protected byte vdpStatus;
 	
 	protected VdpMmio vdpMmio;
-	protected PrintWriter vdplog;
 	protected BlankModeRedrawHandler blankModeRedrawHandler;
 	protected VdpModeInfo vdpModeInfo;
 	protected int modeNumber;
@@ -96,10 +94,8 @@ public class VdpTMS9918A implements VdpHandler {
 	public final static int MODE_BITMAP = 4;
 	public final static int MODE_MULTI = 2;
 	
-    static public final String sDumpVdpAccess = "DumpVdpAccess";
-    static public final SettingProperty settingDumpVdpAccess = new SettingProperty(sDumpVdpAccess, new Boolean(false));
-    static public final String sVdpInterruptRate = "VdpInterruptRate";
-    static public final SettingProperty settingVdpInterruptRate = new SettingProperty(sVdpInterruptRate, new Integer(60));
+    static public final SettingProperty settingDumpVdpAccess = new SettingProperty("DumpVdpAccess", new Boolean(false));
+    static public final SettingProperty settingVdpInterruptRate = new SettingProperty("VdpInterruptRate", new Integer(60));
 
     // this should pretty much stay on
     static public final SettingProperty settingCpuSynchedVdpInterrupt = new SettingProperty("CpuSynchedVdpInterrupt",
@@ -135,20 +131,6 @@ public class VdpTMS9918A implements VdpHandler {
 		
 		recalcInterruptTiming();
 		
-		// interleave with CPU log
-		Logging.registerLog(settingDumpVdpAccess, "instrs_full.txt");
-		
-		settingDumpVdpAccess.addListener(new IPropertyListener() {
-
-			public void propertyChanged(IProperty setting) {
-				if (setting.getBoolean())
-					vdplog = Logging.getLog(setting);
-				else
-					vdplog = null;
-			}
-			
-		});
-		
 		Cpu.settingRealTime.addListener(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
 				VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
@@ -170,9 +152,9 @@ public class VdpTMS9918A implements VdpHandler {
         System.out.println("VDP interrupt target: " + vdpInterruptLimit);		
 	}
 
-	protected void log(String msg) {
-		if (vdplog != null)
-			vdplog.println("[VDP] " + msg);
+	public static void log(String msg) {
+		if (settingDumpVdpAccess.getBoolean() && Executor.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println("[VDP] " + msg);
 	}
 	
 	public MemoryDomain getVideoMemory() {
@@ -206,7 +188,8 @@ public class VdpTMS9918A implements VdpHandler {
     	byte old = vdpregs[reg];
     	vdpregs[reg] = val;
     	
-   		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
+    	if (settingDumpVdpAccess.getBoolean())
+    		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
 
@@ -748,7 +731,7 @@ public class VdpTMS9918A implements VdpHandler {
 			regState[i] = HexUtils.toHex2(vdpregs[i]);
 		}
 		section.put("Registers", regState);
-		settingDumpVdpAccess.saveState(section);
+		//settingDumpVdpAccess.saveState(section);
 		settingCpuSynchedVdpInterrupt.saveState(section);
 		settingVdpInterruptRate.saveState(section);
 	}
@@ -765,7 +748,7 @@ public class VdpTMS9918A implements VdpHandler {
 			}
 		}
 		
-		settingDumpVdpAccess.loadState(section);
+		//settingDumpVdpAccess.loadState(section);
 		settingCpuSynchedVdpInterrupt.loadState(section);
 		settingVdpInterruptRate.loadState(section);
 	}

@@ -7,7 +7,9 @@
 package v9t9.emulator.hardware.memory.mmio;
 
 import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
+import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine.ConsoleMmioReader;
@@ -19,7 +21,8 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  */
 public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistable {
-
+	static public final SettingProperty settingDumpGplAccess = new SettingProperty("DumpGplAccess", new Boolean(false));
+    
     private MemoryDomain domain;
     
     short gromaddr;
@@ -34,6 +37,10 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
 			throw new IllegalArgumentException();
 		}
         this.domain = domain;
+        
+		// interleave with CPU log
+		Logging.registerLog(settingDumpGplAccess, "instrs_full.txt");
+
      }
 
     /*	GROM has a strange banking scheme where the upper portion
@@ -79,7 +86,7 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
     	} else {
     	    /* >9800, memory read */
     	    //gromaddrflag = false;
-    	    if (Executor.settingDumpFullInstructions.getBoolean())
+    		if (Executor.settingDumpFullInstructions.getBoolean())
     			Executor.getDumpfull().println("Read GPL >" + HexUtils.toHex4(gromaddr - 1) + " = >" + HexUtils.toHex2(buf));
 
     	    ret = readGrom();

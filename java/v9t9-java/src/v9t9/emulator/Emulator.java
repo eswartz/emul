@@ -33,6 +33,7 @@ import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
 import v9t9.emulator.hardware.StandardMachineModel;
 import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Executor;
@@ -118,16 +119,14 @@ public class Emulator {
 	        //Executor.settingDumpFullInstructions.setBoolean(true);
     	}
         
-        if (true) {
-        	//Executor.settingDumpInstructions.setBoolean(true);
-        	Executor.settingDumpFullInstructions.setBoolean(true);
-        	//Compiler.settingDebugInstructions.setBoolean(true);
-        }
         if (false) {
-        	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
+        	//Executor.settingDumpInstructions.setBoolean(true);
+        	//Compiler.settingDebugInstructions.setBoolean(true);
+        	Executor.settingDumpFullInstructions.setBoolean(true);
         }
         
-    	TI994AStandardConsoleMemoryModel.settingExpRam.setBoolean(true);
+        VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
+        GplMmio.settingDumpGplAccess.setBoolean(true);
     }
     
 	protected void loadState() {

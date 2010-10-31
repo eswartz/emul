@@ -6,7 +6,6 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
-import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
@@ -103,6 +102,10 @@ public class Vdp9918AMmio extends VdpMmio {
 		//byte oldval = videoMemory.flatReadByte(vdpaddr);
 		videoMemory.writeByte(vdpaddr, val);
 		
+		if ((vdpaddr & 0xf) == 0 && VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
+			VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
+		}
+		
 		autoIncrementAddr();
 		vdpreadahead = val;
 		
@@ -113,9 +116,6 @@ public class Vdp9918AMmio extends VdpMmio {
 	}
 
 	protected void autoIncrementAddr() {
-		if ((vdpaddr & 0xf) == 0 && VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
-			Logging.writeLogLine(VdpTMS9918A.settingDumpVdpAccess, "VDP address: " + HexUtils.toHex4(vdpaddr));
-		}
 		vdpaddr = vdpaddr+1 & 0x3fff;
 		
 	}
@@ -130,7 +130,7 @@ public class Vdp9918AMmio extends VdpMmio {
 		}
 		if ((vdpaddrflag = !vdpaddrflag) == false) {
 			if (VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
-				Logging.writeLogLine(VdpTMS9918A.settingDumpVdpAccess, "VDP address: " + HexUtils.toHex4(vdpaddr));
+				VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
 			}
 			if ((vdpaddr & 0x8000) != 0) {
 				writeRegAddr(vdpaddr);

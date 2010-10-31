@@ -26,7 +26,7 @@ public class InstRow {
 	 * @param before
 	 * @param after
 	 */
-	public InstRow(InstructionWorkBlock before, InstructionWorkBlock after) {
+	public InstRow(BaseInstructionWorkBlock before, BaseInstructionWorkBlock after) {
 		this.before = before;
 		this.after = after;
 	}

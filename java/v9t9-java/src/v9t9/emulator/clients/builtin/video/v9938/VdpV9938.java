@@ -826,7 +826,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			// in line mode, X/Y are biased into 16:16
 			int maj = readMaj();
 			int min = readMin();
-			if (vdplog != null)
+			if (settingDumpVdpAccess.getBoolean())
 				log("Line: x="+cmdState.dx+",y="+cmdState.dy+",dix="+cmdState.dix+",diy="+cmdState.diy
 						+",maj="+maj+",min="+min+",axis="+(vdpregs[45]&R45_MAJ));
 			int frac = maj != 0 ? min * 0x10000 / maj : 0;
@@ -876,7 +876,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		// all clear
 		statusvec[2] = 0;
 		
-		if (vdplog != null)
+		if (settingDumpVdpAccess.getBoolean())
 			log("MSX command " + HexUtils.toHex2(cmdState.cmd)
 					+ " arg=" + HexUtils.toHex2(cmdState.arg) 
 					+ " op=" + HexUtils.toHex2(cmdState.op)
