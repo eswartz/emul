@@ -208,7 +208,7 @@ public class InterpreterF99b implements Interpreter {
 			inst = parseInstructions((short) pc);
 			cachedInstrs.put(pc, inst);
 			instrMap.set(pc, pc + inst.getSize());
-			System.out.println(HexUtils.toHex4(pc)+": " + inst+": " + inst.getSize());
+			//System.out.println(HexUtils.toHex4(pc)+": " + inst+": " + inst.getSize());
 			refreshCache();
 		} else {
 			iblock.pc = (short) (pc + inst.getSize());
