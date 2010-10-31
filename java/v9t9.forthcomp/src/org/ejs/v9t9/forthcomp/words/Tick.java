@@ -23,8 +23,9 @@ public class Tick implements IWord {
 		String name = hostContext.readToken();
 
 		IWord word = targetContext.find(name);
-		if (word == null)
-			throw hostContext.abort("cannot find " + name);
+		if (word == null) {
+			word = targetContext.defineForward(name, hostContext.getStream().getLocation());
+		}
 		
 		if (!(word instanceof ITargetWord))
 			throw hostContext.abort("cannot take address of host word " + name);

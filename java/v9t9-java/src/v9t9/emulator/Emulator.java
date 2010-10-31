@@ -94,9 +94,13 @@ public class Emulator {
     
 	protected void setupDefaults() {
 		
+		try {
+			WorkspaceSettings.loadFrom("workspace." + machine.getModel().getIdentifier());
+		} catch (IOException e) {
+		}
+		
 		WorkspaceSettings.CURRENT.register(Cpu.settingCyclesPerSecond);
 		WorkspaceSettings.CURRENT.register(Cpu.settingRealTime);
-		WorkspaceSettings.CURRENT.register(TI994AStandardConsoleMemoryModel.settingExpRam);
 		
     	Cpu.settingRealTime.setBoolean(true);
     	
@@ -114,7 +118,7 @@ public class Emulator {
 	        //Executor.settingDumpFullInstructions.setBoolean(true);
     	}
         
-        if (false) {
+        if (true) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
@@ -130,21 +134,24 @@ public class Emulator {
 		int barrier = client.getEventNotifier().getNotificationCount();
 		memoryModel.loadMemory(client.getEventNotifier());
 		
-		WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
-		try {
-        	if (ModuleManager.settingLastLoadedModule.getString().length() > 0)
-        		machine.getModuleManager().switchModule(ModuleManager.settingLastLoadedModule.getString());
-        	
-        } catch (NotifyException e) {
-        	machine.notifyEvent(e.getEvent());
-        }
-        
-        if (client.getEventNotifier().getNotificationCount() > barrier) {
-        	machine.notifyEvent(IEventNotifier.Level.ERROR,
-        			"Failed to load startup ROMs; please edit your " + DataFiles.settingBootRomsPath.getName() + " in the file "
-        		+ WorkspaceSettings.CURRENT.getConfigFilePath());
-        	//EmulatorSettings.INSTANCE.save();
-        }
+		if (machine.getModuleManager() != null) {
+			WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
+			try {
+	        	if (ModuleManager.settingLastLoadedModule.getString().length() > 0)
+	        		machine.getModuleManager().switchModule(ModuleManager.settingLastLoadedModule.getString());
+	        	
+	        } catch (NotifyException e) {
+	        	machine.notifyEvent(e.getEvent());
+	        }
+	        
+		}
+		
+		if (client.getEventNotifier().getNotificationCount() > barrier) {
+			machine.notifyEvent(IEventNotifier.Level.ERROR,
+					"Failed to load startup ROMs; please edit your " + DataFiles.settingBootRomsPath.getName() + " in the file "
+					+ WorkspaceSettings.CURRENT.getConfigFilePath());
+			//EmulatorSettings.INSTANCE.save();
+		}
 	}
 	
     public static void main(String args[]) throws IOException {
@@ -179,7 +186,7 @@ public class Emulator {
         
         MachineModel model = MachineModelFactory.createModel(modelId);
         assert (model != null);
-        	
+        
         machine = model.createMachine();
         
         Client client = createClient(args, machine);

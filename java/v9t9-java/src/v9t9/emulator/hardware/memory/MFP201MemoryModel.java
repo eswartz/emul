@@ -54,7 +54,7 @@ public class MFP201MemoryModel implements MemoryModel {
     	return console;
     }
     
-    protected void reportLoadError(IEventNotifier eventNotifier, String file, IOException e) {
+    protected void reportLoadError(IEventNotifier eventNotifier, String file, @SuppressWarnings("unused") IOException e) {
 		eventNotifier.notifyEvent(this, IEventNotifier.Level.ERROR, 
 				"Failed to find image '" + file +"' which is needed to start"); 
 

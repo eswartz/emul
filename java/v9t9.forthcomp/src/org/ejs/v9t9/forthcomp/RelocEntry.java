@@ -18,7 +18,7 @@ public class RelocEntry {
 	}
 	
 	public String toString() {
-		return type + ": " + addr + " => " + HexUtils.toHex4(target);
+		return type + ": " +  HexUtils.toHex4(addr) + " => " + HexUtils.toHex4(target);
 	}
 	
 	public RelocType type;

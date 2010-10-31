@@ -19,6 +19,8 @@ public class F99bMachine extends Machine {
 
 	@Override
 	protected void init(MachineModel machineModel) {
+		settingModuleList.setString("");
+		
 		super.init(machineModel);
 
 		cruManager = new CruManager();
@@ -84,9 +86,11 @@ public class F99bMachine extends Machine {
 	@Override
 	public void keyStateChanged() {
 		super.keyStateChanged();
-		CruAccess cru = getCpu().getCruAccess();
-		if (cru instanceof BaseCruAccess)
-			cru.triggerInterrupt(CpuF99b.INT_KBD);
+		if (keyboardState.anyKeyPressed()) {
+			CruAccess cru = getCpu().getCruAccess();
+			if (cru instanceof BaseCruAccess)
+				cru.triggerInterrupt(CpuF99b.INT_KBD);
+		}
 	}
 
 }

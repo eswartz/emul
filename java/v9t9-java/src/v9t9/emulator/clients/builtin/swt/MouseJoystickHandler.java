@@ -135,7 +135,7 @@ public class MouseJoystickHandler {
 		case 7:
 			dx = 1; dy = 1; break;
 		}
-		keyboardState.setJoystick(joy, KeyboardState.JOY_X | KeyboardState.JOY_Y, dx, dy, false);
+		keyboardState.setJoystick(joy, KeyboardState.JOY_X | KeyboardState.JOY_Y, dx, dy, false, System.currentTimeMillis());
 	}
 
 	/**
@@ -143,7 +143,7 @@ public class MouseJoystickHandler {
 	 */
 	protected void button(int button, int joy, boolean pressed) {
 		//System.out.println(button +"/"+ joy + "/" + pressed);
-		keyboardState.setJoystick(joy, KeyboardState.JOY_B, 0, 0, pressed);
+		keyboardState.setJoystick(joy, KeyboardState.JOY_B, 0, 0, pressed, System.currentTimeMillis());
 	}
 
 

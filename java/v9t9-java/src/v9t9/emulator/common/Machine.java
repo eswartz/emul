@@ -140,7 +140,9 @@ abstract public class Machine {
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
     	
-    	moduleManager = new ModuleManager(this, getModules());
+    	List<IModule> modules = getModules();
+    	if (modules != null)
+    		moduleManager = new ModuleManager(this, modules);
     	
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);
@@ -152,15 +154,17 @@ abstract public class Machine {
     public List<IModule> getModules() {
     	if (modules == null) {
     		String dbName = settingModuleList.getString();
-    		try {
-				modules = ModuleLoader.loadModuleList(dbName);
-    		} catch (NotifyException e) {
-    			notifyEvent(e.getEvent());
-    			notifyEvent(IEventNotifier.Level.ERROR,
-    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
-						+ WorkspaceSettings.CURRENT.getConfigFilePath());
-    			modules = Collections.emptyList();
-			}
+    		if (dbName.length() > 0) {
+	    		try {
+					modules = ModuleLoader.loadModuleList(dbName);
+	    		} catch (NotifyException e) {
+	    			notifyEvent(e.getEvent());
+	    			notifyEvent(IEventNotifier.Level.ERROR,
+	    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
+							+ WorkspaceSettings.CURRENT.getConfigFilePath());
+	    			modules = Collections.emptyList();
+				}
+    		}
     	}
     	return modules;
     }
@@ -474,7 +478,8 @@ abstract public class Machine {
 		memory.saveState(settings.addSection("Memory"));
 		vdp.saveState(settings.addSection("VDP"));
 		sound.saveState(settings.addSection("Sound"));
-		moduleManager.saveState(settings.addSection("Modules"));
+		if (moduleManager != null)
+			moduleManager.saveState(settings.addSection("Modules"));
 		if (dsrManager != null)
 			dsrManager.saveState(settings.addSection("DSRs"));
 	}
@@ -527,7 +532,8 @@ abstract public class Machine {
 	protected void doLoadState(ISettingSection section) {
 		memory.getModel().resetMemory();
 		//machineModel.getMemoryModel().initMemory(this);
-		moduleManager.loadState(section.getSection("Modules"));
+		if (moduleManager != null)
+			moduleManager.loadState(section.getSection("Modules"));
 		memory.loadState(section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
 		vdp.loadState(section.getSection("VDP"));
@@ -606,7 +612,8 @@ abstract public class Machine {
 
 	/** Called when keyboardState changes */
 	public void keyStateChanged() {
-		//keyboardState.next();
+		while (keyboardState.keyPending())
+			keyboardState.nextKey();
 	}
 }
 

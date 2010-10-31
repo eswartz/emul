@@ -9,8 +9,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 
 /** 99/4A expansion RAM, accessed over the peripheral bus */
 public class ExpRamArea extends ConsoleMemoryArea {
-    static public final String sExpRam = "MemoryExpansion32K";
-	static public final SettingProperty settingExpRam = new SettingProperty(sExpRam, new Boolean(false));
+    static public final SettingProperty settingExpRam = new SettingProperty("MemoryExpansion32K", new Boolean(false));
 
 	@Override
 	public boolean hasWriteAccess() {

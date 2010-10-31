@@ -19,6 +19,7 @@ import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.emulator.runtime.interpreter.InterpreterF99b;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.tools.asm.assembler.F99bInstructionFactory;
 import v9t9.tools.asm.assembler.IInstructionFactory;
 
 /**
@@ -28,7 +29,7 @@ import v9t9.tools.asm.assembler.IInstructionFactory;
  */
 public class F99bMachineModel implements MachineModel {
 
-	public static final String ID = "Forth99";
+	public static final String ID = "Forth99B";
 	
 	private F99bMemoryModel memoryModel;
 	private VdpV9938 vdp;
@@ -101,7 +102,7 @@ public class F99bMachineModel implements MachineModel {
 	 */
 	@Override
 	public IInstructionFactory getInstructionFactory() {
-		return null;
+		return new F99bInstructionFactory();
 	}
 
 	@Override

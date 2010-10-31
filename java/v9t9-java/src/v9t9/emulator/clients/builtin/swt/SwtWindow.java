@@ -97,7 +97,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		toolUiTimer = new Timer(true);
 		
 		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
-		shell.setText("V9t9");
+		shell.setText("V9t9 [" + machine.getModel().getIdentifier() + "]");
 		
 		File iconFile = Emulator.getDataFile("icons/v9t9.png");
 		Image icon = new Image(shell.getDisplay(), iconFile.getAbsolutePath());
@@ -418,7 +418,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		);
 		
-		createButton(buttonBar,
+		if (machine.getModuleManager() != null) {
+			createButton(buttonBar,
 				16, "Switch module", 
 				new SelectionAdapter() {
 					@Override
@@ -429,10 +430,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 							}
 						});
 					}
-			}
-		);
+				}
+			);
+		}
 		
-		createButton(buttonBar,
+		if (machine.getDsrManager() != null) {
+			createButton(buttonBar,
 				5, "Setup disks", 
 				new SelectionAdapter() {
 					@Override
@@ -443,8 +446,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 							}
 						});
 					}
-			}
-		);
+				}
+			);
+		}
 		/*
 		createButton(buttonBar,
 				0, 

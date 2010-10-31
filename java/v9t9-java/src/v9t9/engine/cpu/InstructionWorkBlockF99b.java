@@ -5,7 +5,6 @@ package v9t9.engine.cpu;
 
 import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.emulator.runtime.cpu.CpuStateF99b;
-import v9t9.emulator.runtime.interpreter.InterpreterF99b;
 
 public final class InstructionWorkBlockF99b extends BaseInstructionWorkBlock {
     

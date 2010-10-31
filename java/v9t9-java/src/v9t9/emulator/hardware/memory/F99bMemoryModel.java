@@ -13,7 +13,7 @@ import v9t9.engine.memory.MemoryEntry;
  * F99b console memory model.
  * @author ejs
  */
-public class F99bMemoryModel extends TI994AStandardConsoleMemoryModel {
+public class F99bMemoryModel extends BaseTI994AMemoryModel {
 
 	public F99bMemoryModel() {
 		super();

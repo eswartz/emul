@@ -61,7 +61,7 @@ Create v-curs-under     8 allot
 
 Variable v-curs                         \ state of cursor (0=off, 1=on)
 Variable v-cursor-timer                 \ current iter
-30 Constant v-cursor-blink              \ 30/60 sec
+20 Constant v-cursor-blink              \ 30/60 sec
  
 :   write-mode-params   ( table -- )
     begin

@@ -85,6 +85,7 @@ DVariable vdp-ticks
     ints-off
     ['] kbd-int-handler  INT_KBD     enable-int
     ['] vdp-int-handler  INT_VDP     enable-int
-    ['] nmi-int-handler  INT_NMI     enable-int
+    ['] nmi-int-handler  INT_NMI     set-int-vec
+    ['] bootup           INT_RESET   set-int-vec
 ;
 

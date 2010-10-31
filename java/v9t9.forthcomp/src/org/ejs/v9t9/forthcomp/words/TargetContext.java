@@ -67,7 +67,7 @@ public abstract class TargetContext extends Context {
 	
 	protected DictEntry defineStub(String name) {
 		StubWord stubWord = new StubWord(name);
-		getDictionary().put(name, stubWord.getEntry());
+		//getDictionary().put(name, stubWord.getEntry());
 		return stubWord.getEntry();
 	}
 	
@@ -226,6 +226,7 @@ public abstract class TargetContext extends Context {
 	private void resolveForward(ForwardRef ref, DictEntry entry) {
 		for (RelocEntry rel : relocs.toArray(new RelocEntry[relocs.size()])) {
 			if (rel.target == ref.getId()) {
+				System.out.println(rel);
 				rel.target = entry.getContentAddr();
 				if (rel.type != RelocType.RELOC_FORWARD)
 					writeCell(rel.addr, entry.getContentAddr());
@@ -268,6 +269,7 @@ public abstract class TargetContext extends Context {
 		memory[addr] = (byte) ch;
 	}
 
+	
 	public int getCellSize() {
 		return cellSize;
 	}
@@ -446,10 +448,15 @@ public abstract class TargetContext extends Context {
 		Arrays.fill(memory, (byte) 0);
 	}
 
-	/** compile address or offset */
-	abstract public void compileAddr(int loc);
+	/** compile cell value */
+	abstract public void compileCell(int val);
 	abstract public void compileChar(int val);
 	
+	/** compile address */
+	abstract public void compileWordXt(ITargetWord word);
+
+	abstract public void compileWordParamAddr(TargetValue word);
+
 	abstract public void pushLeave(HostContext hostContext);
 	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
 
@@ -616,14 +623,6 @@ public abstract class TargetContext extends Context {
 		compileWordParamAddr(word);
 		compile((ITargetWord) require("!"));
 	}
-
-	/**
-	 * @param word
-	 */
-	abstract public void compileWordParamAddr(TargetValue word);
-
-	abstract public void compileWordXt(ITargetWord word);
-
 
 	abstract public MemoryDomain createMemory();
 

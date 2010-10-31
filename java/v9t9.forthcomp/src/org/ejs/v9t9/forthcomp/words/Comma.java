@@ -19,7 +19,7 @@ public class Comma implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		int val = hostContext.popData();
-		targetContext.compileAddr(val);
+		targetContext.compileCell(val);
 	}
 
 	/* (non-Javadoc)

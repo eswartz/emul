@@ -4,7 +4,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrManager9900;
-import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.BaseTI994AMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
@@ -55,7 +55,7 @@ public class TI99Machine extends Machine {
 	 * @see v9t9.emulator.hardware.TI99Machine#getSoundMmio()
 	 */
 	public v9t9.emulator.hardware.memory.mmio.SoundMmio getSoundMmio() {
-	    return ((TI994AStandardConsoleMemoryModel) memoryModel).soundMmio;
+	    return ((BaseTI994AMemoryModel) memoryModel).soundMmio;
 	}
 
 	/* (non-Javadoc)
@@ -69,14 +69,14 @@ public class TI99Machine extends Machine {
 	 * @see v9t9.emulator.hardware.TI99Machine#getGplMmio()
 	 */
 	public GplMmio getGplMmio() {
-	    return ((TI994AStandardConsoleMemoryModel) memoryModel).gplMmio;
+	    return ((BaseTI994AMemoryModel) memoryModel).gplMmio;
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getSpeechMmio()
 	 */
 	public SpeechMmio getSpeechMmio() {
-		return ((TI994AStandardConsoleMemoryModel) memoryModel).speechMmio;
+		return ((BaseTI994AMemoryModel) memoryModel).speechMmio;
 	}
 
 	/* (non-Javadoc)

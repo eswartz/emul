@@ -7,9 +7,14 @@
 package v9t9.keyboard;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
+
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine;
 
+@SuppressWarnings("unused")
 public class KeyboardState {
     /* Masks, corresponding to column 0 */
     public static final byte SHIFT = 0x20;
@@ -49,6 +54,8 @@ public class KeyboardState {
 	private boolean pasteNext;
 	private int pasteKeyDelay = 20;
 
+	private Queue<KeyDelta> queuedKeys = new LinkedList<KeyDelta>();
+	
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
         which should be faked. */
@@ -108,6 +115,7 @@ public class KeyboardState {
         Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
         realshift = 0;
         probedColumns = 0;
+        //fireListeners();
     }
     
 
@@ -119,7 +127,7 @@ public class KeyboardState {
     /**
      * Post an ASCII character, applying any conversions to make it
      * a legal keystroke on the 99/4A keyboard.
-     * @param machine TODO
+     * @param machine
      * @param pressed
      * @param synthetic if true, the character came from, e.g., pasted text,
      * and there are not distinct shift key events; otherwise, apply logic
@@ -128,10 +136,10 @@ public class KeyboardState {
      * @param ch
      * @return true if we could represent it as ASCII
      */
-    public synchronized boolean postCharacter(Machine machine, boolean pressed, boolean synthetic, byte shift, char ch) {
-    	//System.out.println("post: ch=" + ch + "; shift="+ Utils.toHex2(shift)+"; pressed="+pressed);
+    public synchronized boolean postCharacter(Machine machine, boolean pressed, boolean synthetic, byte shift, char ch, long when) {
+    	//System.out.println("post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
     	if (isAsciiDirectKey(ch)) {
-    		setKey(pressed, synthetic, shift, ch);
+    		setKey(pressed, synthetic, shift, ch, when);
     		return true;
     	}
     	
@@ -141,128 +149,128 @@ public class KeyboardState {
 		switch (ch) {
 		
 		case 8:
-			setKey(pressed, synthetic, ctrlShifted, 'H');	/* BKSP */
+			setKey(pressed, synthetic, ctrlShifted, 'H', when);	/* BKSP */
 			break;
 		case 9:
-			setKey(pressed, synthetic, ctrlShifted, 'I');	/* TAB */
+			setKey(pressed, synthetic, ctrlShifted, 'I', when);	/* TAB */
 			break;
 			
 		case 13:
-			setKey(pressed, synthetic, (byte)0, '\r');
+			setKey(pressed, synthetic, (byte)0, '\r', when);
 			break;
 			
 			// shifted keys
 		case '!':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '1');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '1', when);
 			break;
 		case '@':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '2');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '2', when);
 			break;
 		case '#':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '3');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '3', when);
 			break;
 		case '$':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '4');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '4', when);
 			break;
 		case '%':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '5');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '5', when);
 			break;
 		case '^':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '6');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '6', when);
 			break;
 		case '&':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '7');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '7', when);
 			break;
 		case '*':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '8');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '8', when);
 			break;
 		case '(':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '9');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '9', when);
 			break;
 		case ')':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '0');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '0', when);
 			break;
 		case '+':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '=');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '=', when);
 			break;
 		case '<':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ',');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ',', when);
 			break;
 		case '>':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '.');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '.', when);
 			break;
 		case ':':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ';');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ';', when);
 			break;
 			
 			// faked keys
 		case '`':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'W'))
-				setKey(pressed, synthetic, fctnShifted, 'C');	/* ` */
+				setKey(pressed, synthetic, fctnShifted, 'C', when);	/* ` */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'W');	/* ~ */
+				setKey(pressed, synthetic, fctnShifted, 'W', when);	/* ~ */
 			break;
 		case '~':
-			setKey(pressed, synthetic, fctnShifted, 'W');
+			setKey(pressed, synthetic, fctnShifted, 'W', when);
 			break;
 		case '-':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'U'))
-				setKey(pressed, synthetic, KeyboardState.SHIFT, '/');	/* - */
+				setKey(pressed, synthetic, KeyboardState.SHIFT, '/', when);	/* - */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'U');	/* _ */
+				setKey(pressed, synthetic, fctnShifted, 'U', when);	/* _ */
 			break;
 		case '_':
-			setKey(pressed, synthetic, fctnShifted, 'U');
+			setKey(pressed, synthetic, fctnShifted, 'U', when);
 			break;
 		case '[':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'F'))
-				setKey(pressed, synthetic, fctnShifted, 'R');	/* [ */
+				setKey(pressed, synthetic, fctnShifted, 'R', when);	/* [ */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'F');	/* { */
+				setKey(pressed, synthetic, fctnShifted, 'F', when);	/* { */
 			break;
 		case '{':
-			setKey(pressed, synthetic, fctnShifted, 'F');
+			setKey(pressed, synthetic, fctnShifted, 'F', when);
 			break;
 		case ']':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'G'))
-				setKey(pressed, synthetic, fctnShifted, 'T');	/* ] */
+				setKey(pressed, synthetic, fctnShifted, 'T', when);	/* ] */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'G');	/* } */
+				setKey(pressed, synthetic, fctnShifted, 'G', when);	/* } */
 			break;
 		case '}':
-			setKey(pressed, synthetic, fctnShifted, 'G');
+			setKey(pressed, synthetic, fctnShifted, 'G', when);
 			break;
 			
 		case '\'':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'P'))
-				setKey(pressed, synthetic, fctnShifted, 'O');	/* ' */
+				setKey(pressed, synthetic, fctnShifted, 'O', when);	/* ' */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'P');	/* " */
+				setKey(pressed, synthetic, fctnShifted, 'P', when);	/* " */
 			break;
 		case '"':
-			setKey(pressed, synthetic, fctnShifted, 'P');
+			setKey(pressed, synthetic, fctnShifted, 'P', when);
 			break;
 		case '/':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'I'))
-				setKey(pressed, synthetic, (byte)0, '/');	/* / */
+				setKey(pressed, synthetic, (byte)0, '/', when);	/* / */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'I');	/* ? */
+				setKey(pressed, synthetic, fctnShifted, 'I', when);	/* ? */
 			break;
 		case '?':
-			setKey(pressed, synthetic, fctnShifted, 'I');
+			setKey(pressed, synthetic, fctnShifted, 'I', when);
 			break;
 		case '\\':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'A'))
-				setKey(pressed, synthetic, fctnShifted, 'Z');	/* \\ */
+				setKey(pressed, synthetic, fctnShifted, 'Z', when);	/* \\ */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'A');	/* | */
+				setKey(pressed, synthetic, fctnShifted, 'A', when);	/* | */
 			break;
 		case '|':
-			setKey(pressed, synthetic, fctnShifted, 'A');
+			setKey(pressed, synthetic, fctnShifted, 'A', when);
 			break;
 			
     	case 127:
-    		setKey(pressed, synthetic, fctnShifted, '1');	
+    		setKey(pressed, synthetic, fctnShifted, '1', when);	
 			break;
 		default:
 			return false;
@@ -277,17 +285,62 @@ public class KeyboardState {
     }
     
     /**
+	 * 
+	 */
+	private void fireListeners() {
+		machine.keyStateChanged();
+	}
+
+	public static class KeyDelta {
+		@Override
+		public String toString() {
+			return "KeyDelta [key=" + key + ", onoff=" + onoff + ", shift="
+					+ shift + ", synthetic=" + synthetic + ", time=" + time
+					+ "]";
+		}
+		int key;
+		int shift;
+		boolean synthetic;
+		boolean onoff;
+		public long time;
+		public KeyDelta(long time, int key, int shift, boolean synthetic, boolean onoff) {
+			this.time = time;
+			this.key = key;
+			this.shift = shift;
+			this.synthetic = synthetic;
+			this.onoff = onoff;
+		}
+		
+	}
+	/**
      * Set a key in the map.
      * @param onoff true: pressed, false: released
-     * @param synthetic if true, the shift + key are sent together from a synthetic
+	 * @param synthetic if true, the shift + key are sent together from a synthetic
      * event; else, shifts are sent in separate events from keys, so track them
-     * @param shift FCTN, SHIFT, CTRL mask
-     * @param key normalized ASCII key: no lowercase or shifted characters
+	 * @param shift FCTN, SHIFT, CTRL mask
+	 * @param key normalized ASCII key: no lowercase or shifted characters
+	 * @param when TODO
      */
-    public synchronized void setKey(boolean onoff, boolean synthetic, int shift, int key) {
+    public synchronized void setKey(boolean onoff, boolean synthetic, int shift, int key, long when) {
         key &= 0xff;
         shift &= 0xff;
 
+        long time = when;
+        //if (!onoff)
+        //	time += MAX_KEY_DELAY_MS;
+        queuedKeys.add(new KeyDelta(time, key, shift, synthetic, onoff));
+
+        fireListeners();
+    }
+    
+    private synchronized void applyKeyDelta(KeyDelta delta) {
+    	//System.out.println(delta);
+    	
+    	boolean onoff = delta.onoff;
+    	boolean synthetic = delta.synthetic;
+    	int shift = delta.shift;
+    	int key = delta.key;
+    	
         /* macros bound to high keys */
         /*
         if (key >= 128) {
@@ -317,8 +370,6 @@ public class KeyboardState {
         //if (shift && !onoff)
 //            logger(_L | L_1, "turned off [%d]: cshift=%d, cctrl=%d, cfctn=%d\n\n",
                  //shift, cshift, cctrl, cfctn);
-        
-        machine.keyStateChanged();
     }
 
 	private void changeKeyboardMatrix(boolean onoff, int key) {
@@ -343,7 +394,7 @@ public class KeyboardState {
 		    }
 		    */
 		    
-		    CHANGEKBDCRU(r, c, onoff);
+		    changeKbdMatrix(r, c, onoff);
 		    
 		}
 	}
@@ -377,14 +428,14 @@ public class KeyboardState {
                     shiftmap[key] = 1;
                     cshift++;
                 }
-                CHANGEKBDCRU(SHIFT_R, SHIFT_C, true);
+                changeKbdMatrix(SHIFT_R, SHIFT_C, true);
             } else {
                 if (shiftmap[key] != 0) {
                     shiftmap[key] = 0;
                     cshift--;
                 }
                 if (cshift == 0)
-                    CHANGEKBDCRU(SHIFT_R, SHIFT_C, false);
+                    changeKbdMatrix(SHIFT_R, SHIFT_C, false);
             }
         }
         if ((shift & FCTN) != 0) {
@@ -393,14 +444,14 @@ public class KeyboardState {
                     fctnmap[key] = 1;
                     cfctn++;
                 }
-                CHANGEKBDCRU(FCTN_R, FCTN_C, true);
+                changeKbdMatrix(FCTN_R, FCTN_C, true);
             } else {
                 if (fctnmap[key] != 0) {
                     fctnmap[key] = 0;
                     cfctn--;
                 }
                 if (cfctn == 0)
-                    CHANGEKBDCRU(FCTN_R, FCTN_C, false);
+                    changeKbdMatrix(FCTN_R, FCTN_C, false);
             }
         }
         if ((shift & CTRL) != 0) {
@@ -409,35 +460,35 @@ public class KeyboardState {
                     ctrlmap[key] = 1;
                     cctrl++;
                 }
-                CHANGEKBDCRU(CTRL_R, CTRL_C, true);
+                changeKbdMatrix(CTRL_R, CTRL_C, true);
             } else {
                 if (ctrlmap[key] != 0) {
                     ctrlmap[key] = 0;
                     cctrl--;
                 }
                 if (cctrl == 0)
-                    CHANGEKBDCRU(CTRL_R, CTRL_C, false);
+                    changeKbdMatrix(CTRL_R, CTRL_C, false);
             }
         }
 		return shift;
 	}
     
-    private void CHANGEKBDCRU(byte r, byte c, boolean v) {
+    private void changeKbdMatrix(byte r, byte c, boolean v) {
         if (v)
-            SETKBDCRU(r, c);
+            setKbdMatrix(r, c);
         else
-            RESETKBDCRU(r, c);
+            resetKbdMatrix(r, c);
     }
 
-    private boolean TESTKBDCRU(byte r, byte c) {
+    private boolean testKbdMatrix(byte r, byte c) {
         return (crukeyboardmap[c] & (0x80 >> r)) != 0;
     }
 
-    private void RESETKBDCRU(byte r, byte c) {
+    private void resetKbdMatrix(byte r, byte c) {
     	crukeyboardmap[c] &= ~(0x80 >> r);
     }
 
-    private void SETKBDCRU(byte r, byte c) {
+    private void setKbdMatrix(byte r, byte c) {
     	crukeyboardmap[c] |= (0x80 >> r);
     }
 
@@ -445,11 +496,11 @@ public class KeyboardState {
         byte b, r, c;
         boolean res = false;
 
-        if ((shift & SHIFT) != 0 && TESTKBDCRU(SHIFT_R, SHIFT_C))
+        if ((shift & SHIFT) != 0 && testKbdMatrix(SHIFT_R, SHIFT_C))
             res = true;
-        if ((shift & CTRL) != 0 && TESTKBDCRU(CTRL_R, CTRL_C))
+        if ((shift & CTRL) != 0 && testKbdMatrix(CTRL_R, CTRL_C))
             res = true;
-        if ((shift & FCTN) != 0 && TESTKBDCRU(FCTN_R, FCTN_C))
+        if ((shift & FCTN) != 0 && testKbdMatrix(FCTN_R, FCTN_C))
             res = true;
 
         if (key != 0) {
@@ -460,7 +511,7 @@ public class KeyboardState {
                      key, key);*/
             r = (byte) (b >> 4);
             c = (byte) (b & 15);
-            return res && TESTKBDCRU(r, c);
+            return res && testKbdMatrix(r, c);
         } else
             return res;
     }
@@ -476,11 +527,12 @@ public class KeyboardState {
 	public static final int JOY_RIGHT_R = 5;
 	public static final int JOY_DOWN_R = 4;
 	public static final int JOY_UP_R = 3;
+	private static final long MAX_KEY_DELAY_MS = 100;
 
 
 	//	j=1 or 2
-	final private void CHANGEJOYCRU(int j,int r, boolean v) {
-		CHANGEKBDCRU((byte) r, (byte)(JOY1_C+(j)-1), v);
+	final private void changeJoyMatrix(int j,int r, boolean v) {
+		changeKbdMatrix((byte) r, (byte)(JOY1_C+(j)-1), v);
 	}
 	
 	/**
@@ -490,27 +542,28 @@ public class KeyboardState {
 	 * @param x neg or pos or 0
 	 * @param y neg or pos or 0
 	 * @param fire boolean
+	 * @param when TODO
 	 */
-    public synchronized void setJoystick(int joy, int mask, int x, int y, boolean fire) {
+    public synchronized void setJoystick(int joy, int mask, int x, int y, boolean fire, long when) {
     	if ((mask & JOY_X) != 0) {
     		//logger(_L | L_1, _("changing JOY_X (%d)\n\n"), x);
-    		CHANGEJOYCRU(joy, JOY_LEFT_R, x < 0);
-    		CHANGEJOYCRU(joy, JOY_RIGHT_R, x > 0);
+    		changeJoyMatrix(joy, JOY_LEFT_R, x < 0);
+    		changeJoyMatrix(joy, JOY_RIGHT_R, x > 0);
     	}
     	if ((mask & JOY_Y) != 0) {
     		//logger(_L | L_1, _("changing JOY_Y (%d)\n\n"), y);
-    		CHANGEJOYCRU(joy, JOY_UP_R, y < 0);
-    		CHANGEJOYCRU(joy, JOY_DOWN_R, y > 0);
+    		changeJoyMatrix(joy, JOY_UP_R, y < 0);
+    		changeJoyMatrix(joy, JOY_DOWN_R, y > 0);
     	}
     	if ((mask & JOY_B) != 0) {
     		//logger(_L | L_1, _("changing JOY_B (%d)\n\n"), fire);
-    		CHANGEJOYCRU(joy, JOY_FIRE_R, fire);
+    		changeJoyMatrix(joy, JOY_FIRE_R, fire);
     	}
 
     	/*  clear unused bits  */
-    	CHANGEJOYCRU(joy, 0, false);
-    	CHANGEJOYCRU(joy, 1, false);
-    	CHANGEJOYCRU(joy, 2, false);
+    	changeJoyMatrix(joy, 0, false);
+    	changeJoyMatrix(joy, 1, false);
+    	changeJoyMatrix(joy, 2, false);
     }
     
 	public synchronized void setAlpha(boolean on) {
@@ -593,8 +646,10 @@ public class KeyboardState {
 					//if (!wasKeyboardProbed())
 					//	return;
 					
-					if (prevCh != 0)
-						postCharacter(machine, false, true, prevShift, prevCh);
+					long now = System.currentTimeMillis();
+					if (prevCh != 0) {
+						postCharacter(machine, false, true, prevShift, prevCh, now);
+					}
 					
 					if (index < chs.length) {
 						char ch = chs[index];
@@ -607,9 +662,9 @@ public class KeyboardState {
 				    		shift |= KeyboardState.SHIFT;
 				    	}
 				    	
-						//System.out.println("ch="+ch+"; prevCh="+prevCh+"; sCT="+successiveCharTimeout);
+						//System.out.println("ch="+ch+"; prevCh="+prevCh);
 						if (ch == prevCh) {
-							postCharacter(machine, false, true, shift, ch);
+							postCharacter(machine, false, true, shift, ch, now);
 							prevCh = 0;
 							return;
 							/*
@@ -628,7 +683,7 @@ public class KeyboardState {
 						
 						index++;
 						
-						postCharacter(machine, true, true, shift, ch);
+						postCharacter(machine, true, true, shift, ch, now);
 						
 						
 						prevCh = ch;
@@ -640,11 +695,75 @@ public class KeyboardState {
 			}
 			
 		};
-		
-		machine.keyStateChanged();
 	}
 
 	public boolean isPasting() {
 		return pasteTask != null;
+	}
+
+	/**
+	 * 
+	 */
+	public synchronized void nextKey() {
+		if (isPasting()) {
+			pushQueuedKey();
+		} else  {
+			long now = System.currentTimeMillis();
+			pushQueuedKey();
+			while (!queuedKeys.isEmpty()) {
+				KeyDelta delta = queuedKeys.peek();
+				if (now >= delta.time) {
+					queuedKeys.remove();
+					applyKeyDelta(delta);
+					break;
+				} else {
+					break;
+				}
+				//if (delta.time < now + MAX_KEY_DELAY_MS
+				//		|| (delta.onoff && !queuedKeys.isEmpty() && !queuedKeys.peek().onoff))
+				//	break;
+			}
+			
+			/*
+			for (int i=0;i<8;i++) System.out.print(
+					HexUtils.toHex2(crukeyboardmap[i])+" "); 
+			System.out.println();
+			*/
+		}
+	}
+
+	/**
+	 * 
+	 */
+	public synchronized void checkForPendingKeys() {
+		if (!queuedKeys.isEmpty()) {
+			nextKey();
+			fireListeners();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	public synchronized void notifyActive() {
+		boolean any = anyKeyPressed();
+		if (queuedKeys.isEmpty() && any)
+			fireListeners();
+	}
+
+	public synchronized boolean keyPending() {
+		return !queuedKeys.isEmpty();
+	}
+	public boolean anyKeyPressed() {
+		boolean any = false;
+		any = (realshift != 0);
+		if (!any) {
+			for (byte b : crukeyboardmap)
+				if (b != 0) {
+					any = true;
+					break;
+				}
+		}
+		return any;
 	}
 }

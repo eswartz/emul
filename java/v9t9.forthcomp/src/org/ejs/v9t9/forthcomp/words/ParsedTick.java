@@ -24,7 +24,7 @@ public class ParsedTick implements IWord {
 
 		IWord word = targetContext.find(name);
 		if (word == null)
-			throw hostContext.abort("cannot find " + name);
+			word = targetContext.defineForward(name, hostContext.getStream().getLocation());
 		
 		if (!(word instanceof ITargetWord))
 			throw hostContext.abort("cannot take address of host word " + name);

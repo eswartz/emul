@@ -417,16 +417,13 @@ public class F99TargetContext extends TargetContext {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileAddr(int)
-	 */
 	@Override
-	public void compileAddr(int loc) {
-		doCompileAddr(loc);
+	public void compileCell(int loc) {
+		doCompileCell(loc);
 		stub16BitAddr.use();
 	}
 
-	private void doCompileAddr(int loc) {
+	private void doCompileCell(int loc) {
 		int ptr = alloc(2);
 		writeCell(ptr, loc);
 	}
@@ -574,7 +571,7 @@ public class F99TargetContext extends TargetContext {
 		else
 			stub5BitJump.use();
 
-		doCompileAddr(diff);
+		doCompileCell(diff);
 		opcodeIndex = 3;
 	}
 
@@ -608,7 +605,7 @@ public class F99TargetContext extends TargetContext {
 		else
 			stub5BitJump.use();
 
-		doCompileAddr(diff);
+		doCompileCell(diff);
 		
 		if (isQDo) {
 			// then comes here

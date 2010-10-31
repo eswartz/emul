@@ -81,49 +81,63 @@ public class Executor {
         compilerStrategy.setExecutor(this);
         this.highLevelCodeInfoMap = new HashMap<MemoryArea, HighLevelCodeInfo>();
         
+        final Object lock = Executor.this.cpu.getMachine().getExecutionLock();
         settingDumpFullInstructions.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
-				
-				if (setting.getBoolean()) {
-					Executor.this.addInstructionListener(dumpFullReporter);
-				} else {
-					Executor.this.removeInstructionListener(dumpFullReporter);
+				synchronized (lock) {
+					Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
+					
+					if (setting.getBoolean()) {
+						Executor.this.addInstructionListener(dumpFullReporter);
+					} else {
+						Executor.this.removeInstructionListener(dumpFullReporter);
+					}
+					interruptExecution = Boolean.TRUE;
+					lock.notifyAll();
 				}
-				interruptExecution = Boolean.TRUE;
 			}
         	
         });
         settingDumpInstructions.addListener(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
-				if (setting.getBoolean()) {
-					Executor.this.addInstructionListener(dumpReporter);
-				} else {
-					Executor.this.removeInstructionListener(dumpReporter);
+				synchronized (lock) {
+					if (setting.getBoolean()) {
+						Executor.this.addInstructionListener(dumpReporter);
+					} else {
+						Executor.this.removeInstructionListener(dumpReporter);
+					}
+					interruptExecution = Boolean.TRUE;
+					lock.notifyAll();
 				}
-				interruptExecution = Boolean.TRUE;
 			}
         	
         });
+        /*
         Machine.settingPauseMachine.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
 			}
         	
-        });
+        });*/
         settingSingleStep.addListener(new IPropertyListener() {
         	
         	public void propertyChanged(IProperty setting) {
-        		interruptExecution = Boolean.TRUE;
+        		synchronized (lock) {
+        			interruptExecution = Boolean.TRUE;
+        			lock.notifyAll();
+        		}
         	}
         	
         });
         Cpu.settingRealTime.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				interruptExecution = Boolean.TRUE;
+				synchronized (lock) {
+					interruptExecution = Boolean.TRUE;
+					lock.notifyAll();
+				}
 			}
         	
         });

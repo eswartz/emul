@@ -20,6 +20,7 @@ import v9t9.engine.cpu.StatusF99b;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 
 /**
  * This class interprets F99b instructions one by one.
@@ -39,11 +40,14 @@ public class InterpreterF99b implements Interpreter {
 	private MemoryWriteListener memoryListener;
 
 	private BitSet instrMap;
+
+	private IInstructionFactory instructionFactory;
 	
     public InterpreterF99b(Machine machine) {
         this.machine = machine;
         this.cpu = (CpuF99b) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
+        instructionFactory = machine.getInstructionFactory();
         iblock = new InstructionWorkBlockF99b(cpu);
         iblock.domain = memory;
         iblock.showSymbol = true;
@@ -205,137 +209,13 @@ public class InterpreterF99b implements Interpreter {
 		int pc = cpu.getPC() & 0xffff;
 		InstructionF99b inst = cachedInstrs.get(pc);
 		if (inst == null) {
-			inst = parseInstructions((short) pc);
+			inst = (InstructionF99b) instructionFactory.decodeInstruction(pc, memory);
 			cachedInstrs.put(pc, inst);
 			instrMap.set(pc, pc + inst.getSize());
 			//System.out.println(HexUtils.toHex4(pc)+": " + inst+": " + inst.getSize());
 			refreshCache();
-		} else {
-			iblock.pc = (short) (pc + inst.getSize());
 		}
-		return inst;
-	}
-
-	/**
-	 * @return
-	 */
-	private InstructionF99b parseInstructions(short pc) {
-		
-		short thisPc = pc;
-		
-		short opword = (short) memory.readByte(thisPc);
-		if (opword < 0) {
-			opword = (short) ((opword << 8) | (memory.readByte(thisPc + 1) & 0xff));
-			iblock.pc += 2;
-			// call
-			return getCallInstruction(opword);
-		}
-		
-		iblock.pc = (short) (pc + 1);
-		
-		if (opword == Iext || opword == Idouble) {
-			opword = (short) (((opword << 8) | (memory.readByte(thisPc + 1) & 0xff)) & 0xffff);
-			++iblock.pc;
-		}
-		
-		InstructionF99b inst;
-		
-		inst = getInstruction(thisPc, opword);
-		
-		return inst;
-	}
-
-	private InstructionF99b getInstruction(short origPC, short opword) {
-		int opcode = opword & 0xffff;
-		
-		InstructionF99b inst = new InstructionF99b();
-		inst.pc = origPC;
-		
-		inst.opcode = opcode;
-		inst.setInst(opcode);
-
-		if (opcode >= IbranchX && opcode < I0branchX + 16) {
-			inst.setInst(opcode & 0xf0);
-			int val = (byte)(opcode<<4) >> 4;
-			if (val < 0)
-				val --;
-			inst.setOp1(MachineOperandF99b.createImmediateOperand(
-					val, 
-					MachineOperandF99b.OP_ENC_IMM4));
-		}
-		else if (opcode >= IlitX && opcode < IlitX + 16) {
-			inst.setInst(IlitX);
-			inst.setOp1(MachineOperandF99b.createImmediateOperand(
-					(byte)(opcode<<4) >> 4,
-					MachineOperandF99b.OP_ENC_IMM4));
-		}
-		else if (opcode >= IlitX_d && opcode < IlitX_d + 16) {
-			inst.setInst(IlitX_d);
-			inst.setOp1(MachineOperandF99b.createImmediateOperand(
-					(byte)(opcode<<4) >> 4,
-							MachineOperandF99b.OP_ENC_IMM4));
-		}
-		else
-			switch (opcode) {
-			case IbranchB:
-			case I0branchB: {
-				int val = (byte) iblock.nextByte();
-				if (val < 0)
-					val -= 2;
-				inst.setOp1(MachineOperandF99b.createImmediateOperand(
-						val, MachineOperandF99b.OP_ENC_IMM8));
-				break;
-			}
-			case IlitB:
-			case IlitB_d:
-				inst.setOp1(MachineOperandF99b.createImmediateOperand(
-						(byte) iblock.nextByte(), MachineOperandF99b.OP_ENC_IMM8));
-				break;
-			case ItoContext:
-			case IcontextFrom:
-				inst.setOp1(MachineOperandF99b.createImmediateOperand(
-						iblock.nextByte() & 0xff, MachineOperandF99b.OP_ENC_CTX));
-				break;
-			case Irpidx:
-			case Ispidx:
-			case Iupidx:
-				inst.setOp1(MachineOperandF99b.createImmediateOperand(
-						iblock.nextByte() & 0xff, MachineOperandF99b.OP_ENC_IMM8));
-				break;
-			case IlitW:
-			case I0branchW:
-			case IbranchW:  {
-				int val = (short) iblock.nextWord();
-				if (val < 0)
-					val -= inst.getSize();
-				inst.setOp1(MachineOperandF99b.createImmediateOperand(
-						val, MachineOperandF99b.OP_ENC_IMM16));
-				break;
-			}
-			case IlitD_d: {
-				int lo = iblock.nextWord() & 0xffff;
-				int hi = iblock.nextWord() & 0xffff;
-				inst.setOp1(MachineOperandF99b.createImmediateOperand(
-						lo | (hi << 16),
-						MachineOperandF99b.OP_ENC_IMM32));
-				break;
-			}
-			default:
-				// no immediate	
-			}
-		
-		inst.setSize(iblock.pc - inst.pc);
-		
-		return inst;
-	}
-
-	private InstructionF99b getCallInstruction(short op) {
-		InstructionF99b inst = new InstructionF99b();
-		inst.pc = cpu.getPC();
-		inst.opcode = op;
-		inst.setOp1(MachineOperandF99b.createImmediateOperand((short) (op << 1), MachineOperandF99b.OP_ENC_IMM15S1));
-		inst.setInst(Icall);
-		inst.setSize(2);
+		iblock.pc = (short) (pc + inst.getSize());
 		return inst;
 	}
 

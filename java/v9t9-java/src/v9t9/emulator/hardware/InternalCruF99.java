@@ -48,10 +48,12 @@ public class InternalCruF99 extends BaseCruAccess {
 			for (int i = 0; i < 8; i++)
 				if (((currentints | val) & (1 << i)) != 0) {
 					acknowledgeInterrupt(i);
-					if (i == CpuF99b.INT_KBD) {
+					if ((val & (1 << CpuF99b.INT_KBD)) == 0) {
 						keyboardState.resetProbe();
 						if (keyboardState.isPasting())
 							keyboardState.pushQueuedKey();
+						else
+							keyboardState.checkForPendingKeys();
 					}
 				}
 			break;

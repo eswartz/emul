@@ -383,16 +383,17 @@ public class F99bTargetContext extends TargetContext {
 		}
 	}
 	
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileAddr(int)
 	 */
 	@Override
-	public void compileAddr(int loc) {
-		doCompileAddr(loc);
-		stub16BitAddr.use();
+	public void compileCell(int loc) {
+		doCompileCell(loc);
+		stub16BitLit.use();
 	}
-
-	private void doCompileAddr(int loc) {
+	
+	private void doCompileCell(int loc) {
 		int ptr = alloc(2);
 		writeCell(ptr, loc);
 	}
@@ -563,7 +564,7 @@ public class F99bTargetContext extends TargetContext {
 				diff--;		// for branch inst
 			baseOpcode = baseOpcode == IbranchX ? IbranchW : I0branchW;
 			compileOpcode(baseOpcode);
-			compileAddr(diff);
+			compileCell(diff);
 		} else if (diff < -8 || diff >= 9) {
 			stub8BitJump.use();
 			if (diff >= 0)
@@ -855,8 +856,17 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileWordXt(ITargetWord word) {
-		stub16BitLit.use();
-		doCompileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true, true);		
+		stub16BitAddr.use();
+
+		compileByte(IlitW);
+		int ptr = alloc(cellSize);
+
+		int reloc = addRelocation(ptr, 
+				RelocType.RELOC_ABS_ADDR_16, 
+				word.getEntry().getContentAddr(),
+				word.getEntry().getName());
+
+		writeCell(ptr, reloc);
 	}
 	
 	/* (non-Javadoc)

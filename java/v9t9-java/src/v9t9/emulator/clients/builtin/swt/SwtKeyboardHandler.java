@@ -43,12 +43,14 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 
 	
 	class KeyInfo {
-		public KeyInfo(int keyCode, long timeout) {
+		public KeyInfo(int keyCode, long timeout, long when) {
 			this.keyCode = keyCode;
 			this.timeout = timeout;
+			this.when = when;
 		}
 		int keyCode;
 		long timeout;
+		public long when;
 	}
 
 	private static final long KEY_LIFE = 1000 / 20;
@@ -69,8 +71,8 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 	 * @param stateMask
 	 * @param keyCode
 	 */
-	private void recordKey(boolean pressed, int stateMask, int keyCode) {
-		long now = System.currentTimeMillis();
+	private void recordKey(boolean pressed, int stateMask, int keyCode, long now) {
+		//long now = System.currentTimeMillis();
 		boolean found = false;
 		
 		if (pasteTimer != null && pressed && keyCode == SWT.ESC) {
@@ -98,7 +100,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			}
 			
 			if (!found && pressed) {
-				pressedKeys.add(new KeyInfo(keyCode, now + KEY_LIFE));
+				pressedKeys.add(new KeyInfo(keyCode, now + KEY_LIFE, now));
 			}
 			
 			// shift keys are reported sometimes in keycode and sometimes in stateMask
@@ -118,7 +120,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 	}
 	
-	private void updateKey(boolean pressed, int stateMask, int keyCode) {
+	private void updateKey(boolean pressed, int stateMask, int keyCode, long when) {
 		
 		//System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
 		byte shift = 0;
@@ -143,7 +145,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		int joy = (shift & KeyboardState.SHIFT) != 0 ? 2 : 1;
 		
-		if (keyCode > 128 || !keyboardState.postCharacter(machine, pressed, false, shift, (char) keyCode)) {
+		if (keyCode > 128 || !keyboardState.postCharacter(machine, pressed, false, shift, (char) keyCode, when)) {
 			if (keyCode == 0)
 				keyCode = shift;
 			
@@ -155,15 +157,15 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 				// shifts
 			case SWT.SHIFT:
 			case KeyboardState.SHIFT:
-				keyboardState.setKey(pressed, false, KeyboardState.SHIFT, 0);
+				keyboardState.setKey(pressed, false, KeyboardState.SHIFT, 0, when);
 				break;
 			case SWT.CONTROL:
 			case KeyboardState.CTRL:
-				keyboardState.setKey(pressed, false, KeyboardState.CTRL, 0);
+				keyboardState.setKey(pressed, false, KeyboardState.CTRL, 0, when);
 				break;
 			case SWT.ALT:
 			case KeyboardState.FCTN:
-				keyboardState.setKey(pressed, false, KeyboardState.FCTN, 0);
+				keyboardState.setKey(pressed, false, KeyboardState.FCTN, 0, when);
 				break;
 
 			case SWT.CAPS_LOCK:
@@ -184,20 +186,20 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			case SWT.F7:
 			case SWT.F8:
 			case SWT.F9:
-				keyboardState.setKey(pressed, false, fctnShifted, '1' + SWT.F1 - keyCode);	
+				keyboardState.setKey(pressed, false, fctnShifted, '1' + SWT.F1 - keyCode, when);	
 				break;
 				
 			case SWT.ARROW_UP:
-				keyboardState.setKey(pressed, false, fctnShifted, 'E');
+				keyboardState.setKey(pressed, false, fctnShifted, 'E', when);
 				break;
 			case SWT.ARROW_DOWN:
-				keyboardState.setKey(pressed, false, fctnShifted, 'X');
+				keyboardState.setKey(pressed, false, fctnShifted, 'X', when);
 				break;
 			case SWT.ARROW_LEFT:
-				keyboardState.setKey(pressed, false, fctnShifted, 'S');
+				keyboardState.setKey(pressed, false, fctnShifted, 'S', when);
 				break;
 			case SWT.ARROW_RIGHT:
-				keyboardState.setKey(pressed, false, fctnShifted, 'D');
+				keyboardState.setKey(pressed, false, fctnShifted, 'D', when);
 				break;
 				
 				
@@ -205,71 +207,71 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			//	keyboardState.setKey(pressed, fctnShifted, '1');	
 			//	break;
 			case SWT.INSERT:
-				keyboardState.setKey(pressed, false, fctnShifted, '2');	
+				keyboardState.setKey(pressed, false, fctnShifted, '2', when);	
 				break;
 				
 			case SWT.PAGE_UP:
-				keyboardState.setKey(pressed, false, fctnShifted, '6'); // (as per E/A and TI Writer)
+				keyboardState.setKey(pressed, false, fctnShifted, '6', when); // (as per E/A and TI Writer)
 				break;
 			case SWT.PAGE_DOWN:
-				keyboardState.setKey(pressed, false, fctnShifted, '4'); // (as per E/A and TI Writer)
+				keyboardState.setKey(pressed, false, fctnShifted, '4', when); // (as per E/A and TI Writer)
 				break;
 
 			case SWT.HOME:
-				keyboardState.setKey(pressed, false, fctnShifted, '5');		// BEGIN
+				keyboardState.setKey(pressed, false, fctnShifted, '5', when);		// BEGIN
 				break;
 			case SWT.END:
-				keyboardState.setKey(pressed, false, fctnShifted, '0');		// Fctn-0
+				keyboardState.setKey(pressed, false, fctnShifted, '0', when);		// Fctn-0
 				break;
 				
 
 			case SWT.KEYPAD_8:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_Y,
-						0, pressed ? -1 : 0, false);
+						0, pressed ? -1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_2:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_Y,
-						 0, pressed ? 1 : 0, false);
+						 0, pressed ? 1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_4:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_X,
-						pressed ? -1 : 0, 0, false);
+						pressed ? -1 : 0, 0, false, when);
 				break;
 			case SWT.KEYPAD_6:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_X,
-						pressed ? 1 : 0, 0, false);
+						pressed ? 1 : 0, 0, false, when);
 				break;
 				
 			case SWT.KEYPAD_7:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? -1 : 0, pressed ? -1 : 0, false);
+						pressed ? -1 : 0, pressed ? -1 : 0, false, when);
 				break;
 				
 			case SWT.KEYPAD_0:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_B,
-						0, 0, pressed);
+						0, 0, pressed, when);
 				break;
 				
 			case SWT.KEYPAD_9:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? 1 : 0, pressed ? -1 : 0, false);
+						pressed ? 1 : 0, pressed ? -1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_3:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? 1 : 0, pressed ? 1 : 0, false);
+						pressed ? 1 : 0, pressed ? 1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_1:
 				keyboardState.setJoystick(joy,
 						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? -1 : 0, pressed ? 1 : 0, false);
+						pressed ? -1 : 0, pressed ? 1 : 0, false, when);
 				break;
 				
 
@@ -293,9 +295,17 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			state.resetKeyboard();
 		
 			synchronized (pressedKeys) {
-				updateKey(true, pressedStateMask, 0);
+				boolean first = true;
 				for (KeyInfo info : pressedKeys) {
-					updateKey(true, pressedStateMask, info.keyCode);
+					if (first) {
+						updateKey(true, pressedStateMask, 0, info.when);
+						first = false;
+					}
+					updateKey(true, pressedStateMask, info.keyCode, info.when);
+				}
+				if (first) {
+					updateKey(true, pressedStateMask, 0, System.currentTimeMillis());
+					first = false;
 				}
 			}
 		}
@@ -348,7 +358,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		 	shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
 	
 				public void handleEvent(Event event) {
-					recordKey(true, event.stateMask, event.keyCode);
+					recordKey(true, event.stateMask, event.keyCode, System.currentTimeMillis());
 					event.doit = false;
 					
 				}
@@ -357,7 +367,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			shell.getDisplay().addFilter(SWT.KeyUp, new Listener() {
 	
 				public void handleEvent(Event event) {
-					recordKey(false, event.stateMask, event.keyCode);
+					recordKey(false, event.stateMask, event.keyCode, System.currentTimeMillis());
 					event.doit = false;
 				}
 				
@@ -367,12 +377,12 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			control.addKeyListener(new KeyListener() {
 	
 				public void keyPressed(KeyEvent e) {
-					recordKey(true, e.stateMask, e.keyCode);
+					recordKey(true, e.stateMask, e.keyCode, System.currentTimeMillis());
 				}
 	
 	
 				public void keyReleased(KeyEvent e) {
-					recordKey(false, e.stateMask, e.keyCode);
+					recordKey(false, e.stateMask, e.keyCode, System.currentTimeMillis());
 				}
 				
 			});

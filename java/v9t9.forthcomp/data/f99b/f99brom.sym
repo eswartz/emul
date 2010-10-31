@@ -284,7 +284,7 @@
 0FD2 enable-int
 0FE4 call-int
 0FEE ints-init
-1004 regs-init
-1016 abort
-1020 cycle
-1040 bootup
+100C regs-init
+101E abort
+1028 cycle
+1048 bootup

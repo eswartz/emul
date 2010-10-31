@@ -21,6 +21,7 @@ public class EnhancedTI994ACompatibleConsoleMemoryModel extends TI994AStandardCo
 
 	@Override
 	protected void initSettings() {
+		super.initSettings();
 		ConsoleRamArea.settingEnhRam.setBoolean(true);
 
 	}
