@@ -72,7 +72,8 @@ Variable    randnoise
     buffer-key
 ;
 
-:   handle-key  ( tableoffs -- )
+:   lookup-key ( tableoffs -- )
+
     graddr >r
          
         kbdshift c@  3 rsh  grom_kbdlist +      \ get shifted table ptr
@@ -83,6 +84,9 @@ Variable    randnoise
         gc@     \ read char
         
     r> gwaddr
+;
+    
+:   handle-key  ( raw -- )
     
     \ check alpha and uppercase if needed
     $80 'KBDA c!  'KBDA c@  if  toupper  then  $00 'KBDA c!
@@ -130,7 +134,7 @@ Variable    randnoise
             
             swap >bit swap +    \ column
                         
-            handle-key leave
+            lookup-key handle-key leave
         then
     loop
     

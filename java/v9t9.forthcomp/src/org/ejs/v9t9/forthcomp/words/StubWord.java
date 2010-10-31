@@ -7,7 +7,6 @@ import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.DictEntry;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
-import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
  * Stub word, keeping track of low-level opcode uses for histograms.

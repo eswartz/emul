@@ -3,6 +3,9 @@
  */
 package org.ejs.v9t9.forthcomp;
 
+import org.ejs.v9t9.forthcomp.words.TargetContext;
+import org.ejs.v9t9.forthcomp.words.TargetWord;
+
 /**
  * @author ejs
  *

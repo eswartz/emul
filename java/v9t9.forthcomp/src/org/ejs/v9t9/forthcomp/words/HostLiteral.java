@@ -1,13 +1,16 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
+
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class Literal implements IWord {
+public class HostLiteral implements IWord {
 
 	private final int val;
 	private boolean isUnsigned; 
@@ -15,7 +18,7 @@ public class Literal implements IWord {
 	 * @param isUnsigned 
 	 * 
 	 */
-	public Literal(int val, boolean isUnsigned) {
+	public HostLiteral(int val, boolean isUnsigned) {
 		this.val = val;
 		this.isUnsigned = isUnsigned;
 	}

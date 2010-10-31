@@ -1,7 +1,10 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
+
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs

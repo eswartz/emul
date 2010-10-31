@@ -13,8 +13,14 @@ import org.ejs.v9t9.forthcomp.words.DLiteral;
 import org.ejs.v9t9.forthcomp.words.ExitI;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
 import org.ejs.v9t9.forthcomp.words.Literal;
+import org.ejs.v9t9.forthcomp.words.TargetColonWord;
+import org.ejs.v9t9.forthcomp.words.TargetConstant;
+import org.ejs.v9t9.forthcomp.words.TargetContext;
+import org.ejs.v9t9.forthcomp.words.TargetUserVariable;
+import org.ejs.v9t9.forthcomp.words.TargetValue;
+import org.ejs.v9t9.forthcomp.words.TargetVariable;
 
-import v9t9.emulator.hardware.F99Machine;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.EnhancedRamByteArea;
 import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.emulator.runtime.cpu.CpuStateF99b;
@@ -408,7 +414,7 @@ public class F99bTargetContext extends TargetContext {
 	 * @param baseSP
 	 * @param baseRP
 	 */
-	public void exportState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP, int baseUP) {
+	public void exportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) {
 		exportMemory(machine.getConsole());
 		CpuStateF99b cpu = (CpuStateF99b) machine.getCpu().getState();
 		
@@ -437,7 +443,7 @@ public class F99bTargetContext extends TargetContext {
 	 * @param baseSP
 	 * @param baseRP
 	 */
-	public void importState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP) {
+	public void importState(HostContext hostContext, Machine machine, int baseSP, int baseRP) {
 		importMemory(machine.getConsole());
 		CpuF99b cpu = (CpuF99b) machine.getCpu();
 		

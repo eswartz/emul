@@ -9,6 +9,7 @@ import java.util.Map;
 import org.ejs.v9t9.forthcomp.words.LocalVariable;
 import org.ejs.v9t9.forthcomp.words.LocalVariableAddr;
 import org.ejs.v9t9.forthcomp.words.StoreLocalVariable;
+import org.ejs.v9t9.forthcomp.words.TargetContext;
 
 /**
  * @author ejs

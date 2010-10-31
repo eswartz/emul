@@ -19,13 +19,13 @@ import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
 import org.ejs.v9t9.forthcomp.IWord;
 import org.ejs.v9t9.forthcomp.RelocEntry;
-import org.ejs.v9t9.forthcomp.TargetColonWord;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
+import org.ejs.v9t9.forthcomp.words.TargetColonWord;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import v9t9.emulator.hardware.F99Machine;
+import v9t9.emulator.hardware.F99bMachine;
 import v9t9.emulator.hardware.F99bMachineModel;
 import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.emulator.runtime.cpu.DumpFullReporterF99b;
@@ -50,7 +50,7 @@ public class TestForthCompF99b {
 	private int startDP;
 	
 	static F99bMachineModel f99bMachineModel;
-	static F99Machine f99Machine;
+	static F99bMachine f99Machine;
 	private static InterpreterF99b interp;
 	private static CpuF99b cpu;
 
@@ -60,7 +60,7 @@ public class TestForthCompF99b {
 	public TestForthCompF99b() {
 		if (cpu == null) {
 			f99bMachineModel = new F99bMachineModel();
-			f99Machine = (F99Machine) f99bMachineModel.createMachine();
+			f99Machine = (F99bMachine) f99bMachineModel.createMachine();
 			cpu = (CpuF99b) f99Machine.getCpu();
 		
 			DumpFullReporterF99b dump = new DumpFullReporterF99b(cpu,  new PrintWriter(System.out));

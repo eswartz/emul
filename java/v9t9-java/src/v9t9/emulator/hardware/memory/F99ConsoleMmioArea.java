@@ -32,6 +32,7 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	public static final int KEYWR = 0x22;
 	public static final int SOUND = 0x40;	// 0x20!
 	
+	// character outlet
 	public static final int DBG = 0xff;
 	
 	public static final int CRU_BASE = 0x80;

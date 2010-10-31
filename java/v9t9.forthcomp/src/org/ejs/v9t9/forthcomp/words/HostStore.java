@@ -6,12 +6,12 @@ package org.ejs.v9t9.forthcomp.words;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.IWord;
-import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
  * @author ejs
  *
  */
+@HostWordPlaceholder("!")
 public class HostStore implements IWord {
 
 	/* (non-Javadoc)

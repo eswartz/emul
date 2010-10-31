@@ -79,7 +79,6 @@
         <delete dir="bin"/>
     </target>
     <target depends="clean" name="cleanall">
-        <ant antfile="${org.ejs.coffee.core.location}/f99bromBuild.xml" dir="${org.ejs.coffee.core.location}" inheritAll="false" target="clean"/>
         <ant antfile="${v9t9-java.location}/f99bromBuild.xml" dir="${v9t9-java.location}" inheritAll="false" target="clean"/>
     </target>
     <target depends="build-subprojects,build-project" name="build"/>
@@ -118,7 +117,7 @@
     </target>
     <target name="ForthComp">
         <java classname="org.ejs.v9t9.forthcomp.ForthComp" failonerror="true" fork="yes">
-            <arg line="-b data/f99rom.f99 -c data/f99brom.bin"/>
+            <arg line="-b data/f99b/f99rom.f99 -c data/f99b/f99brom.bin"/>
             <classpath refid="v9t9.forthcomp.classpath"/>
         </java>
     </target>

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -13,8 +13,15 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.v9t9.forthcomp.AbortException;
+import org.ejs.v9t9.forthcomp.Context;
+import org.ejs.v9t9.forthcomp.DictEntry;
+import org.ejs.v9t9.forthcomp.ForwardRef;
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ITargetWord;
+import org.ejs.v9t9.forthcomp.IWord;
+import org.ejs.v9t9.forthcomp.RelocEntry;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
-import org.ejs.v9t9.forthcomp.words.StubWord;
 
 import v9t9.engine.memory.MemoryDomain;
 

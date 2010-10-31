@@ -8,8 +8,6 @@ import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
 import org.ejs.v9t9.forthcomp.IWord;
 import org.ejs.v9t9.forthcomp.LocalVariableTriple;
-import org.ejs.v9t9.forthcomp.TargetContext;
-import org.ejs.v9t9.forthcomp.TargetValue;
 
 /**
  * Placeholder for local used in a colon-colon def

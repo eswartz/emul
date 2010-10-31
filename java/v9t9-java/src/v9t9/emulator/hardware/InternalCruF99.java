@@ -5,6 +5,7 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.keyboard.KeyboardState;
 
 /**
@@ -30,6 +31,11 @@ public class InternalCruF99 extends BaseCruAccess {
 	 */
 	public InternalCruF99(Machine machine, KeyboardState keyboardState) {
 		super(machine, keyboardState, 8);
+		
+    	intExt = -1;
+    	intVdp = CpuF99b.INT_VDP;
+    	intClock = -1;
+
 	}
 	
 	public void handleWrite(int addr, byte val) {
@@ -42,16 +48,16 @@ public class InternalCruF99 extends BaseCruAccess {
 			for (int i = 0; i < 8; i++)
 				if (((currentints | val) & (1 << i)) != 0) {
 					acknowledgeInterrupt(i);
+					if (i == CpuF99b.INT_KBD) {
+						keyboardState.resetProbe();
+						if (keyboardState.isPasting())
+							keyboardState.pushQueuedKey();
+					}
 				}
 			break;
 			
 		case KBD:
 			crukeyboardcol = val & 0x7;
-			
-			keyboardState.resetProbe();
-			if (keyboardState.isPasting())
-				keyboardState.pushQueuedKey();
-			
 			break;
 			
 		case KBDA:

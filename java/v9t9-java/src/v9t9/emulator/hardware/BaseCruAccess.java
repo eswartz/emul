@@ -123,8 +123,7 @@ public class BaseCruAccess implements CruAccess {
 				intlevel--;
 	
 			if (intlevel != 0) {
-				//System.out.println(
-				//		"Requesting interrupt... "+intlevel+"/"+currentints+"/"+int9901);
+				//System.out.println("Requesting interrupt... "+intlevel+"/"+currentints+"/"+currentints);
 
 				this.intreq = true;
 				this.ic = ((byte) intlevel);

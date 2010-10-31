@@ -105,8 +105,8 @@ abstract public class Machine {
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
-    			executor.interruptExecution = true;
     			synchronized (executionLock) {
+    				executor.interruptExecution = true;
     				cpu.resetCycleCounts();
     				bExecuting = !setting.getBoolean();
     				executionLock.notifyAll();
@@ -601,6 +601,12 @@ abstract public class Machine {
 	 */
 	public MachineModel getModel() {
 		return machineModel;
+	}
+
+
+	/** Called when keyboardState changes */
+	public void keyStateChanged() {
+		//keyboardState.next();
 	}
 }
 

@@ -49,7 +49,7 @@ public class F99bMachineModel implements MachineModel {
 	 */
 	@Override
 	public Machine createMachine() {
-		return new F99Machine(this);
+		return new F99bMachine(this);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()

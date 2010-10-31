@@ -5,6 +5,9 @@ package org.ejs.v9t9.forthcomp;
 
 import java.util.ArrayList;
 
+import org.ejs.v9t9.forthcomp.words.TargetContext;
+import org.ejs.v9t9.forthcomp.words.TargetWord;
+
 /**
  * @author ejs
  *

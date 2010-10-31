@@ -17,6 +17,23 @@ import v9t9.engine.cpu.StatusF99b;
  * @author ejs
  */
 public class CpuF99b extends CpuBase {
+    public static final int PIN_INTREQ = 1 << 31;
+    public static final int PIN_LOAD = 1 << 3;
+    public static final int PIN_RESET = 1 << 5;
+    
+    public static final int INT_RESET = 15;
+    public static final int INT_NMI = 14;
+    public static final int INT_KBD = 3;
+    public static final int INT_VDP = 2;
+    public static final int INT_BKPT = 0;
+    
+    
+	public static final int SP = 0;
+	public static final int RP = 1;
+	public static final int PC = 2;
+	public static final int UP = 3;
+	public static final int SR = 4;
+
     /**
 	 * 
 	 */
@@ -73,23 +90,8 @@ public class CpuF99b extends CpuBase {
        	state.setPC(pc);
     }
 
-    public static final int PIN_INTREQ = 1 << 31;
-    public static final int PIN_LOAD = 1 << 3;
-    public static final int PIN_RESET = 1 << 5;
-    
-	public static final int INT_RESET = 15;
-	public static final int INT_NMI = 14;
-	public static final int INT_VDP = 1;
-	public static final int INT_BKPT = 0;
-    
     /** When intreq, the interrupt level */
     byte ic;
-    
-	public static final int SP = 0;
-	public static final int RP = 1;
-	public static final int PC = 2;
-	public static final int UP = 3;
-	public static final int SR = 4;
     
 	 /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#resetInterruptRequest()
@@ -194,7 +196,7 @@ public class CpuF99b extends CpuBase {
             // maskable
         	pins &= ~PIN_INTREQ;
         	
-        	//System.out.print('=');
+        	//System.out.print('=' + ic);
             
         	triggerInterrupt(ic);
             

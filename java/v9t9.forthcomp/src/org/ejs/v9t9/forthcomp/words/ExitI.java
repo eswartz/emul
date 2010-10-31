@@ -8,7 +8,6 @@ import org.ejs.v9t9.forthcomp.F99TargetContext;
 import org.ejs.v9t9.forthcomp.F99bTargetContext;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.IWord;
-import org.ejs.v9t9.forthcomp.TargetContext;
 
 /**
  * @author ejs

@@ -21,6 +21,7 @@ public class F99bMemoryModel extends TI994AStandardConsoleMemoryModel {
 
 	@Override
 	protected void initSettings() {
+		DataFiles.addSearchPath("../v9t9.forthcomp/data/f99b");
 		DataFiles.addSearchPath("../v9t9.forthcomp/data");
 	}
 

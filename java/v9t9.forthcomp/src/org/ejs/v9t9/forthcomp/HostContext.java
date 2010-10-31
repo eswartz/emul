@@ -6,6 +6,8 @@ package org.ejs.v9t9.forthcomp;
 import java.io.IOException;
 import java.util.Stack;
 
+import org.ejs.v9t9.forthcomp.words.HostVariable;
+
 /**
  * @author ejs
  *

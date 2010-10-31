@@ -16,7 +16,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.v9t9.forthcomp.TargetContext.IMemoryReader;
 import org.ejs.v9t9.forthcomp.words.Again;
 import org.ejs.v9t9.forthcomp.words.Allot;
 import org.ejs.v9t9.forthcomp.words.BackSlash;
@@ -31,8 +30,16 @@ import org.ejs.v9t9.forthcomp.words.Create;
 import org.ejs.v9t9.forthcomp.words.DConstant;
 import org.ejs.v9t9.forthcomp.words.DVariable;
 import org.ejs.v9t9.forthcomp.words.Do;
+import org.ejs.v9t9.forthcomp.words.HostBinOp;
+import org.ejs.v9t9.forthcomp.words.HostDoubleLiteral;
 import org.ejs.v9t9.forthcomp.words.Else;
 import org.ejs.v9t9.forthcomp.words.Exit;
+import org.ejs.v9t9.forthcomp.words.HostConstant;
+import org.ejs.v9t9.forthcomp.words.HostFetch;
+import org.ejs.v9t9.forthcomp.words.HostLiteral;
+import org.ejs.v9t9.forthcomp.words.HostStore;
+import org.ejs.v9t9.forthcomp.words.HostUnaryOp;
+import org.ejs.v9t9.forthcomp.words.HostVariable;
 import org.ejs.v9t9.forthcomp.words.ParsedTick;
 import org.ejs.v9t9.forthcomp.words.PopExportState;
 import org.ejs.v9t9.forthcomp.words.PushExportState;
@@ -49,6 +56,7 @@ import org.ejs.v9t9.forthcomp.words.Rbracket;
 import org.ejs.v9t9.forthcomp.words.Repeat;
 import org.ejs.v9t9.forthcomp.words.SemiColon;
 import org.ejs.v9t9.forthcomp.words.SetDP;
+import org.ejs.v9t9.forthcomp.words.TargetContext;
 import org.ejs.v9t9.forthcomp.words.Then;
 import org.ejs.v9t9.forthcomp.words.Tick;
 import org.ejs.v9t9.forthcomp.words.To;
@@ -58,6 +66,7 @@ import org.ejs.v9t9.forthcomp.words.User;
 import org.ejs.v9t9.forthcomp.words.Value;
 import org.ejs.v9t9.forthcomp.words.Variable;
 import org.ejs.v9t9.forthcomp.words.While;
+import org.ejs.v9t9.forthcomp.words.TargetContext.IMemoryReader;
 
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.MemoryDomain;
@@ -211,7 +220,33 @@ public class ForthComp {
 		
 		hostContext.define("!", new HostStore());
 		hostContext.define("@", new HostFetch());
-		hostContext.define("+", new HostAdd());
+		hostContext.define("+", new HostBinOp() {
+			public int getResult(int l, int r) { return l+r; }
+		});
+		hostContext.define("-", new HostBinOp() {
+			public int getResult(int l, int r) { return l-r; }
+		});
+		hostContext.define("*", new HostBinOp() {
+			public int getResult(int l, int r) { return l*r; }
+		});
+		hostContext.define("/", new HostBinOp() {
+			public int getResult(int l, int r) { return l/r; }
+		});
+		hostContext.define("OR", new HostBinOp() {
+			public int getResult(int l, int r) { return l|r; }
+		});
+		hostContext.define("XOR", new HostBinOp() {
+			public int getResult(int l, int r) { return l^r; }
+		});
+		hostContext.define("AND", new HostBinOp() {
+			public int getResult(int l, int r) { return l&r; }
+		});
+		hostContext.define("NEGATE", new HostUnaryOp() {
+			public int getResult(int v) { return -v; }
+		});
+		hostContext.define("INVERT", new HostUnaryOp() {
+			public int getResult(int v) { return ~v; }
+		});
 		hostContext.define("true", new HostConstant(-1));
 		hostContext.define("false", new HostConstant(0));
 		
@@ -322,14 +357,14 @@ public class ForthComp {
 			// compiling
 			if (word instanceof ITargetWord) {
 				targetContext.compile((ITargetWord) word);
-			} else if (word instanceof Literal) {
-				targetContext.compileLiteral(((Literal) word).getValue(), ((Literal) word).isUnsigned(), true);
-			} else if (word instanceof DoubleLiteral) {
+			} else if (word instanceof HostLiteral) {
+				targetContext.compileLiteral(((HostLiteral) word).getValue(), ((HostLiteral) word).isUnsigned(), true);
+			} else if (word instanceof HostDoubleLiteral) {
 				if (targetContext.getCellSize() == 2)
 					targetContext.compileDoubleLiteral(
-							((DoubleLiteral) word).getValue() & 0xffff, 
-							((DoubleLiteral) word).getValue() >> 16, 
-							((DoubleLiteral) word).isUnsigned(), true);
+							((HostDoubleLiteral) word).getValue() & 0xffff, 
+							((HostDoubleLiteral) word).getValue() >> 16, 
+							((HostDoubleLiteral) word).isUnsigned(), true);
 				
 			} else {
 				//throw abort("unknown compile-time semantics for " + token);
@@ -367,9 +402,9 @@ public class ForthComp {
 			if (isNeg)
 				val = -val;
 			if (isDouble)
-				return new DoubleLiteral(val, isUnsigned);
+				return new HostDoubleLiteral(val, isUnsigned);
 			else
-				return new Literal((int) val, isUnsigned);
+				return new HostLiteral((int) val, isUnsigned);
 		} catch (NumberFormatException e) {
 			return null;
 		}

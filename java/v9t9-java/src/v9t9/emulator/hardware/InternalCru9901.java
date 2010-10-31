@@ -213,6 +213,10 @@ public class InternalCru9901 extends BaseCruAccess {
     public InternalCru9901(TI99Machine machine, KeyboardState keyboardState) {
     	super(machine, keyboardState, 15);
     	
+    	intExt = 1;
+    	intVdp = 2;
+    	intClock = 3;
+    	
         this.manager = machine.getCruManager();
         assert manager != null;
 

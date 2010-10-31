@@ -47,6 +47,7 @@ public class KeyboardState {
 	//protected Timer pasteTimer;
 	protected Runnable pasteTask;
 	private boolean pasteNext;
+	private int pasteKeyDelay = 20;
 
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -95,6 +96,10 @@ public class KeyboardState {
     public KeyboardState(Machine machine) {
 		this.machine = machine;
         
+    }
+    
+    public void setPasteKeyDelay(int times) {
+    	this.pasteKeyDelay = times;
     }
     
     public synchronized void resetKeyboard() {
@@ -312,6 +317,8 @@ public class KeyboardState {
         //if (shift && !onoff)
 //            logger(_L | L_1, "turned off [%d]: cshift=%d, cctrl=%d, cfctn=%d\n\n",
                  //shift, cshift, cctrl, cfctn);
+        
+        machine.keyStateChanged();
     }
 
 	private void changeKeyboardMatrix(boolean onoff, int key) {
@@ -579,7 +586,7 @@ public class KeyboardState {
 					runDelay--;
 					return;
 				} else {
-					runDelay = 20;
+					runDelay = pasteKeyDelay;
 				}
 				if (index <= chs.length) {
 					// only send chars as fast as the machine is reading
@@ -633,6 +640,8 @@ public class KeyboardState {
 			}
 			
 		};
+		
+		machine.keyStateChanged();
 	}
 
 	public boolean isPasting() {

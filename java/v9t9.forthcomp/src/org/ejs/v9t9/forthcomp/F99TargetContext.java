@@ -13,6 +13,12 @@ import org.ejs.v9t9.forthcomp.words.DLiteral;
 import org.ejs.v9t9.forthcomp.words.ExitI;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
 import org.ejs.v9t9.forthcomp.words.Literal;
+import org.ejs.v9t9.forthcomp.words.TargetColonWord;
+import org.ejs.v9t9.forthcomp.words.TargetConstant;
+import org.ejs.v9t9.forthcomp.words.TargetContext;
+import org.ejs.v9t9.forthcomp.words.TargetUserVariable;
+import org.ejs.v9t9.forthcomp.words.TargetValue;
+import org.ejs.v9t9.forthcomp.words.TargetVariable;
 
 import v9t9.emulator.hardware.F99Machine;
 import v9t9.emulator.hardware.memory.EnhancedRamArea;

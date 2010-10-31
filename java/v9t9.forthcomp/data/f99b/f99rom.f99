@@ -1,0 +1,97 @@
+\   (c) 2010
+\
+\   Forth-99 ROM
+
+\   Memory layout
+
+$400    dp!
+
+\   boot address
+0 ,
+
+\   cold address
+0 ,
+
+\   initial dictionary
+0 ,
+
+(define-prims)
+
+0 <EXPORT
+
+include sysdefs.i
+
+EXPORT>
+
+include sysutils.i
+
+0 <EXPORT
+
+include core.i
+
+include video.i
+
+include kbd.i
+
+include ints.i
+
+\ -------------------------------
+
+: regs-init
+    $ff80 (>CONTEXT) [ CTX_SP field, ]
+    $ff00 (>CONTEXT) [ CTX_UP field, ]
+    r>      \ remember return
+    $ffc0 (>CONTEXT) [ CTX_RP field, ]
+    >r
+;
+
+:   abort
+
+    regs-init   ints-init   kbd-init
+    
+    \ ."  aborted" cr
+    
+    quit
+;
+
+
+\ -------------------------------
+
+
+:   cycle
+    hex $1F2E3D4C. d.d 10 demit decimal
+    \ 256 0 do i .d 10 demit loop
+    begin
+        42 demit
+        256 0 do
+            key? if key else i then
+            v-clear
+            ints-check
+            \ 0 0 do loop
+        loop
+    again
+;
+
+
+:   bootup
+
+    $404 @ dp !
+    10 base !
+    
+    regs-init
+
+    ints-init
+    
+    kbd-init
+    
+    video-init
+    
+    cycle
+;
+
+EXPORT>
+
+\ -------------------------------------------------
+
+' bootup $400 !
+here     $404 !

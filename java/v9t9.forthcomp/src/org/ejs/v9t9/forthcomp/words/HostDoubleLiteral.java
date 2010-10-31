@@ -1,13 +1,16 @@
 /**
  * 
  */
-package org.ejs.v9t9.forthcomp;
+package org.ejs.v9t9.forthcomp.words;
+
+import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class DoubleLiteral implements IWord {
+public class HostDoubleLiteral implements IWord {
 
 	private final long val;
 	private boolean isUnsigned;
@@ -15,7 +18,7 @@ public class DoubleLiteral implements IWord {
 	 * @param isUnsigned 
 	 * 
 	 */
-	public DoubleLiteral(long val, boolean isUnsigned) {
+	public HostDoubleLiteral(long val, boolean isUnsigned) {
 		this.val = val;
 		this.isUnsigned = isUnsigned;
 	}
