@@ -862,4 +862,13 @@ public class F99TargetContext extends TargetContext {
 		compile((ITargetWord) require("LITERAL"));
 		compile((ITargetWord) require("compile,"));
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoes(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.DictEntry, int)
+	 */
+	@Override
+	public void compileDoes(HostContext hostContext, DictEntry dictEntry,
+			int targetDP) throws AbortException {
+		throw hostContext.abort("DOES> not implemented");
+	}
 }
