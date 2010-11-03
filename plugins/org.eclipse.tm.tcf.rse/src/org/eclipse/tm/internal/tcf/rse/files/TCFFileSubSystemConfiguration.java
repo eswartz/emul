@@ -8,6 +8,7 @@
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Intel Corp. - Add Unix File System style detection, set TRUE by default
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -32,12 +33,22 @@ import org.eclipse.rse.subsystems.files.core.subsystems.IHostFileToRemoteFileAda
 import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFileSubSystem;
 import org.eclipse.rse.ui.SystemBasePlugin;
 import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
+import org.eclipse.tm.internal.tcf.rse.Messages;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 
 public class TCFFileSubSystemConfiguration extends FileServiceSubSystemConfiguration {
 
     private final TCFFileAdapter file_adapter = new TCFFileAdapter();
+    
+    public TCFFileSubSystemConfiguration()
+    {
+        super();
+        if (Messages.IS_UNIX_STYLE.equalsIgnoreCase("true"))
+            setIsUnixStyle(true);
+        else
+            setIsUnixStyle(false);
+    }
 
     @Override
     public ISubSystem createSubSystemInternal(IHost host) {

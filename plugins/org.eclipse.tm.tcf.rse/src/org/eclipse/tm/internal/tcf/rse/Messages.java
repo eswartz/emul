@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
- *     Intel Corp.        - Add TCF Connection Descriptions
+ *     Intel Corp.        - Add TCF Connection Descriptions and File System Style
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -119,6 +119,7 @@ public class Messages extends NLS {
 
     public static String PROCESS_VMSIZE_VALUE;
     public static String PROCESS_VMRSS_VALUE;
+    public static String IS_UNIX_STYLE;
 
     public static String TCFConnectorService_Name;
     public static String TCFConnectorService_Description;
