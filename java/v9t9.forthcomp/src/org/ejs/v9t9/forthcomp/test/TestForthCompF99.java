@@ -341,7 +341,7 @@ public class TestForthCompF99 {
 		String caller = new Exception().getStackTrace()[1].getMethodName();
 		System.out.println("*** interpreting in " + caller);
 		
-		targCtx.exportState(hostCtx, f99Machine, BASE_SP, BASE_RP, BASE_UP);
+		targCtx.doExportState(hostCtx, f99Machine, BASE_SP, BASE_RP, BASE_UP);
 
 		dumpCompiledMemory();
 		
@@ -357,7 +357,7 @@ public class TestForthCompF99 {
 
 		assertTrue(cpu.getState().getSP() <= cpu.getState().getBaseSP());
 		assertTrue(cpu.getState().getRP() <= cpu.getState().getBaseRP());
-		targCtx.importState(hostCtx, f99Machine, BASE_SP, BASE_RP);
+		targCtx.doImportState(hostCtx, f99Machine, BASE_SP, BASE_RP);
 		
 	}
 	private void dumpCompiledMemory() {

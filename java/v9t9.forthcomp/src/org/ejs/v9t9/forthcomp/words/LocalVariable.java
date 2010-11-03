@@ -5,14 +5,13 @@ package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * Placeholder for local used in a colon-colon def
  * @author ejs
  *
  */
-public class LocalVariable implements IWord {
+public class LocalVariable extends BaseWord {
 
 	private int index;
 	/**

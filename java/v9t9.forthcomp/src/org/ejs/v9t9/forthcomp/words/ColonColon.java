@@ -6,14 +6,13 @@ package org.ejs.v9t9.forthcomp.words;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  *  :: word ( local1 local2 ... -- ignored ... ) 
  * @author ejs
  *
  */
-public class ColonColon implements IWord {
+public class ColonColon extends BaseWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)

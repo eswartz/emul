@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class ParsedTick implements IWord {
+public class ParsedTick extends BaseWord {
 	public ParsedTick() {
 	}
 
@@ -29,7 +29,7 @@ public class ParsedTick implements IWord {
 		if (!(word instanceof ITargetWord))
 			throw hostContext.abort("cannot take address of host word " + name);
 		
-		targetContext.compileWordXt((ITargetWord)word);
+		targetContext.compileTick((ITargetWord)word);
 		//targetContext.compileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true);
 		
 	}

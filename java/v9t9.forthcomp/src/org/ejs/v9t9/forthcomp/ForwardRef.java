@@ -46,14 +46,7 @@ public class ForwardRef extends TargetWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		throw hostContext.abort("cannot invoke forward referenced word");
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
-	 */
-	public boolean isImmediate() {
-		return false;
+		throw hostContext.abort("cannot invoke forward referenced word: " + toString());
 	}
 
 	/**

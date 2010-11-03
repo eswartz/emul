@@ -5,13 +5,12 @@ package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class DLiteral implements IWord {
+public class DLiteral extends BaseWord {
 
 	private final boolean optimize;
 
@@ -23,6 +22,13 @@ public class DLiteral implements IWord {
 		
 	}
 	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "DLITERAL";
+	}
+	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
@@ -30,12 +36,14 @@ public class DLiteral implements IWord {
 		int valH = hostContext.popData();
 		int valL = hostContext.popData();
 		targetContext.compileDoubleLiteral(valL, valH, false, optimize);
+		
+		hostContext.compile(new HostDoubleLiteral(valL, valH, false));
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return false;
+		return true;
 	}
 }

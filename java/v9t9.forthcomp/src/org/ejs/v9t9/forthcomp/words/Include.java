@@ -8,13 +8,12 @@ import java.io.FileNotFoundException;
 
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class Include implements IWord {
+public class Include extends BaseWord {
 	public Include() {
 	}
 

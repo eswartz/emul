@@ -6,13 +6,12 @@ package org.ejs.v9t9.forthcomp.words;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class If implements IWord {
+public class If extends BaseWord {
 	public If() {
 	}
 
@@ -23,8 +22,9 @@ public class If implements IWord {
 		hostContext.assertCompiling();
 		
 		ITargetWord word = (ITargetWord) targetContext.require("0branch");
-		
 		targetContext.compile(word);
+		
+		hostContext.compile(hostContext.require("0branch"));
 		
 		targetContext.pushFixup(hostContext);
 		hostContext.pushPairs(2);

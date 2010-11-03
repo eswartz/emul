@@ -30,6 +30,9 @@ public class DictEntry implements Comparable<DictEntry> {
 	private int uses;
 	private Map<String, LocalVariableTriple> locals;
 	private Map<String, IWord> localDict;
+	private IWord hostBehavior;
+	private int hostStackCount;
+	private boolean targetOnly;
 	
 	
 	/**
@@ -85,11 +88,32 @@ public class DictEntry implements Comparable<DictEntry> {
 		this.hidden = hidden;
 	}
 	
-	/**
-	 * @return the hidden
-	 */
 	public boolean isHidden() {
 		return hidden;
+	}
+	
+	public void setHostBehavior(int count, IWord hostBehavior) {
+		this.hostStackCount = count;
+		this.hostBehavior = hostBehavior;
+	}
+	
+	public IWord getHostBehavior() {
+		return hostBehavior;
+	}
+
+	public void setTargetOnly(boolean targetOnly) {
+		this.targetOnly = targetOnly;
+	}
+	
+	public boolean isTargetOnly() {
+		return targetOnly;
+	}
+	
+	/**
+	 * @return the hostStackCount
+	 */
+	public int getHostStackCount() {
+		return hostStackCount;
 	}
 	/**
 	 * @param targetContext
@@ -117,6 +141,13 @@ public class DictEntry implements Comparable<DictEntry> {
 		return immediate;
 	}
 	
+
+	public void setImmediate(TargetContext targetContext, boolean b) {
+		this.immediate = b;
+		writeEntry(targetContext);
+	}
+	
+
 	/**
 	 * @param codeSize the codeSize to set
 	 */
@@ -225,4 +256,5 @@ public class DictEntry implements Comparable<DictEntry> {
 	public void use(int count) {
 		uses += count;
 	}
+
 }

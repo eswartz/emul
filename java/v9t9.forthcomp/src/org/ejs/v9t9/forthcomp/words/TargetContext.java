@@ -23,6 +23,7 @@ import org.ejs.v9t9.forthcomp.IWord;
 import org.ejs.v9t9.forthcomp.RelocEntry;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 
+import v9t9.emulator.common.Machine;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -373,7 +374,6 @@ public abstract class TargetContext extends Context {
 	abstract public void alignCode();
 	/**
 	 * Compile a word onto the current dictionary entry
-	 * @param semiS
 	 */
 	abstract public void compile(ITargetWord word);
 
@@ -453,7 +453,7 @@ public abstract class TargetContext extends Context {
 	abstract public void compileChar(int val);
 	
 	/** compile address */
-	abstract public void compileWordXt(ITargetWord word);
+	abstract public void compileTick(ITargetWord word);
 
 	abstract public void compileWordParamAddr(TargetValue word);
 
@@ -567,7 +567,7 @@ public abstract class TargetContext extends Context {
 	/**
 	 * @return
 	 */
-	public Map<String, DictEntry> getDictionary() {
+	public Map<String, DictEntry> getTargetDictionary() {
 		return dictEntryMap;
 	}
 
@@ -627,4 +627,78 @@ public abstract class TargetContext extends Context {
 	abstract public MemoryDomain createMemory();
 
 
+	protected abstract void doExportState(HostContext hostCtx, Machine machine,
+			int baseSp, int baseRp, int baseUp);
+	public void exportState(HostContext hostCtx, Machine machine,
+			int baseSp, int baseRp, int baseUp) {
+		
+		IWord dp = find("DP");
+		if (dp instanceof ITargetWord) {
+			writeCell(((ITargetWord) dp).getEntry().getParamAddr(), getDP());
+		}
+		
+		doExportState(hostCtx, machine, baseSp, baseRp, baseUp);
+
+	}
+
+
+
+	protected abstract void doImportState(HostContext hostCtx, Machine machine,
+			int baseSp, int baseRp);
+	public void importState(HostContext hostCtx, Machine machine,
+			int baseSp, int baseRp) {
+		doImportState(hostCtx, machine, baseSp, baseRp);
+		
+		IWord dp = find("DP");
+		if (dp instanceof ITargetWord) {
+			setDP(readCell(((ITargetWord) dp).getEntry().getParamAddr()));
+		}
+
+	}
+
+
+
+	/**
+	 * @param string
+	 * @return
+	 */
+	public int writeLengthPrefixedString(String string) throws AbortException {
+		int length = string.length();
+		if (length > 255)
+			throw new AbortException("String constant is too long");
+		
+		int dp = alloc(length + 1);
+		
+		writeChar(dp, length);
+		stubData.use();
+		
+		for (int i = 0; i < length; i++) {
+			writeChar(dp + 1 + i, string.charAt(i));
+			stubData.use();
+		}
+		
+		return dp;
+	}
+
+
+
+	/**
+	 * 
+	 */
+	public void markHostExecutionUnsupported() {
+		((TargetWord) getLatest()).setHostDp(-1);
+	}
+
+
+
+	public abstract void compileCall(ITargetWord word);
+
+
+
+	abstract public void compilePostpone(ITargetWord word) throws AbortException;
+
+
+
+	abstract public void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP) throws AbortException;
+	
 }

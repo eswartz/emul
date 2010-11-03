@@ -11,4 +11,9 @@ public interface ITargetWord extends IWord {
 	
 	DictEntry getEntry();
 
+	/**
+	 * @param localDP
+	 */
+	void setHostDp(int localDP);
+
 }

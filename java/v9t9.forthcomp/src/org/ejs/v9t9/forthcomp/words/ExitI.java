@@ -7,13 +7,12 @@ import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.F99TargetContext;
 import org.ejs.v9t9.forthcomp.F99bTargetContext;
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class ExitI implements IWord {
+public class ExitI extends BaseWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)

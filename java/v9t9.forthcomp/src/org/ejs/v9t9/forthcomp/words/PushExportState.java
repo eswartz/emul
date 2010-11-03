@@ -5,13 +5,12 @@ package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class PushExportState implements IWord {
+public class PushExportState extends BaseWord {
 
 	public PushExportState() {
 	}

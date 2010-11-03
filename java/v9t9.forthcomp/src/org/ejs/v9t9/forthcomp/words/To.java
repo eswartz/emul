@@ -14,7 +14,7 @@ import org.ejs.v9t9.forthcomp.LocalVariableTriple;
  * @author ejs
  *
  */
-public class To implements IWord {
+public class To extends BaseWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
@@ -38,6 +38,7 @@ public class To implements IWord {
 			throw hostContext.abort("cannot handle " + name);
 		
 		if (hostContext.isCompiling()) {
+			targetContext.markHostExecutionUnsupported();
 			targetContext.compileToValue((TargetValue) word);
 		}
 		else {

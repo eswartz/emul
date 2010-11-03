@@ -36,7 +36,6 @@ public class MFP201MachineModel implements MachineModel {
 	private Vdp9938Mmio vdpMmio;
 	private BankedMemoryEntry cpuBankedVideo;
 	private VdpV9938 vdp;
-	private boolean vdpCpuBanked;
 	//protected MemoryEntry currentMemory;
 	
 	public MFP201MachineModel() {
@@ -114,7 +113,6 @@ public class MFP201MachineModel implements MachineModel {
 			}
 		};
 
-		vdpCpuBanked = true;
 		cpuBankedVideo.domain.mapEntry(cpuBankedVideo);
 		
 		/*

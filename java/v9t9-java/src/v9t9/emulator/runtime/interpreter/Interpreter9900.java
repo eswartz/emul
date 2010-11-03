@@ -59,6 +59,13 @@ public class Interpreter9900 implements Interpreter {
      }
 
     /* (non-Javadoc)
+     * @see v9t9.emulator.runtime.interpreter.Interpreter#dispose()
+     */
+    @Override
+    public void dispose() {
+    	
+    }
+    /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
 	 */
     public void execute(Short op_x) {

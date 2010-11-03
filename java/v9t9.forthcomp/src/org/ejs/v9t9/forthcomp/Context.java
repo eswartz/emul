@@ -4,6 +4,9 @@
 package org.ejs.v9t9.forthcomp;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.ejs.v9t9.forthcomp.words.BaseWord;
 
 /**
  * @author ejs
@@ -24,6 +27,8 @@ public class Context implements IContext {
 	 * @param base
 	 */
 	public IWord define(String string, IWord word) {
+		if (word instanceof BaseWord)
+			((BaseWord) word).setName(string);
 		dictionary.put(string.toLowerCase(), word);
 		latest = word;
 		return word;
@@ -58,4 +63,7 @@ public class Context implements IContext {
 		latest = null;
 	}
 	
+	public Map<String, IWord> getDictionary() {
+		return dictionary;
+	}
 }

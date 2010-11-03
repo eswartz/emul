@@ -4,13 +4,12 @@
 package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class HostLiteral implements IWord {
+public class HostLiteral extends BaseWord {
 
 	private final int val;
 	private boolean isUnsigned; 
@@ -21,6 +20,13 @@ public class HostLiteral implements IWord {
 	public HostLiteral(int val, boolean isUnsigned) {
 		this.val = val;
 		this.isUnsigned = isUnsigned;
+	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "LITERAL "  + val;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#getValue()

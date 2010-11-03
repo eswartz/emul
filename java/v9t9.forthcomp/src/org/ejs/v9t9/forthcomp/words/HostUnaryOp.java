@@ -4,15 +4,24 @@
 package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public abstract class HostUnaryOp implements IWord {
+public abstract class HostUnaryOp extends BaseWord {
 
-	public HostUnaryOp() {
+	private String name;
+
+	public HostUnaryOp(String name) {
+		this.name = name;
+	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return name;
 	}
 
 	/* (non-Javadoc)

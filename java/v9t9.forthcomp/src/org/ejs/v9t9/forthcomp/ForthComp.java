@@ -16,56 +16,10 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.v9t9.forthcomp.words.Again;
-import org.ejs.v9t9.forthcomp.words.Allot;
-import org.ejs.v9t9.forthcomp.words.BackSlash;
-import org.ejs.v9t9.forthcomp.words.Begin;
-import org.ejs.v9t9.forthcomp.words.BracketChar;
-import org.ejs.v9t9.forthcomp.words.CharComma;
-import org.ejs.v9t9.forthcomp.words.Colon;
-import org.ejs.v9t9.forthcomp.words.ColonColon;
-import org.ejs.v9t9.forthcomp.words.Comma;
-import org.ejs.v9t9.forthcomp.words.Constant;
-import org.ejs.v9t9.forthcomp.words.Create;
-import org.ejs.v9t9.forthcomp.words.DConstant;
-import org.ejs.v9t9.forthcomp.words.DVariable;
-import org.ejs.v9t9.forthcomp.words.Do;
-import org.ejs.v9t9.forthcomp.words.HostBinOp;
 import org.ejs.v9t9.forthcomp.words.HostDoubleLiteral;
-import org.ejs.v9t9.forthcomp.words.Else;
-import org.ejs.v9t9.forthcomp.words.Exit;
-import org.ejs.v9t9.forthcomp.words.HostConstant;
-import org.ejs.v9t9.forthcomp.words.HostFetch;
 import org.ejs.v9t9.forthcomp.words.HostLiteral;
-import org.ejs.v9t9.forthcomp.words.HostStore;
-import org.ejs.v9t9.forthcomp.words.HostUnaryOp;
 import org.ejs.v9t9.forthcomp.words.HostVariable;
-import org.ejs.v9t9.forthcomp.words.ParsedTick;
-import org.ejs.v9t9.forthcomp.words.PopExportState;
-import org.ejs.v9t9.forthcomp.words.PushExportState;
-import org.ejs.v9t9.forthcomp.words.Here;
-import org.ejs.v9t9.forthcomp.words.If;
-import org.ejs.v9t9.forthcomp.words.Include;
-import org.ejs.v9t9.forthcomp.words.Lbracket;
-import org.ejs.v9t9.forthcomp.words.Leave;
-import org.ejs.v9t9.forthcomp.words.Loop;
-import org.ejs.v9t9.forthcomp.words.Paren;
-import org.ejs.v9t9.forthcomp.words.PlusLoop;
-import org.ejs.v9t9.forthcomp.words.QuestionDo;
-import org.ejs.v9t9.forthcomp.words.Rbracket;
-import org.ejs.v9t9.forthcomp.words.Repeat;
-import org.ejs.v9t9.forthcomp.words.SemiColon;
-import org.ejs.v9t9.forthcomp.words.SetDP;
 import org.ejs.v9t9.forthcomp.words.TargetContext;
-import org.ejs.v9t9.forthcomp.words.Then;
-import org.ejs.v9t9.forthcomp.words.Tick;
-import org.ejs.v9t9.forthcomp.words.To;
-import org.ejs.v9t9.forthcomp.words.UPlusLoop;
-import org.ejs.v9t9.forthcomp.words.Until;
-import org.ejs.v9t9.forthcomp.words.User;
-import org.ejs.v9t9.forthcomp.words.Value;
-import org.ejs.v9t9.forthcomp.words.Variable;
-import org.ejs.v9t9.forthcomp.words.While;
 import org.ejs.v9t9.forthcomp.words.TargetContext.IMemoryReader;
 
 import v9t9.engine.files.DataFiles;
@@ -147,7 +101,7 @@ public class ForthComp {
     	comp.getTargetContext().alignDP();
     	comp.saveMemory(consoleOutFile, gromOutFile);
     	
-    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getDictionary().values());
+    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
     	logfile.println("Top word uses of " + sortedDict.size() +":");
 		
     	Collections.sort(sortedDict, new Comparator<DictEntry>() {
@@ -178,112 +132,16 @@ public class ForthComp {
 		
 		this.tokenStream = hostContext.getStream();
 
+		defineCompilerWords();
 		
-		defineHostCompilerWords();
+		hostContext.defineHostCompilerWords();
 	 	
 	 	targetContext.defineCompilerWords(hostContext);
 	}
 
-	private void defineHostCompilerWords() {
+	private void defineCompilerWords() {
 		baseVar = (HostVariable) hostContext.define("base", new HostVariable(10));
 		stateVar = (HostVariable) hostContext.define("state", new HostVariable(0));
-		hostContext.define("csp", new HostVariable(0));
-		
-		hostContext.define("(define-prims)", new IWord() {
-
-			public void execute(HostContext hostContext,
-					TargetContext targetContext) throws AbortException {
-				targetContext.defineBuiltins();
-			}
-
-			public boolean isImmediate() {
-				return false;
-			}
-			
-		});
-		hostContext.define("include", new Include());
-		
-		hostContext.define("<EXPORT", new PushExportState());
-		hostContext.define("EXPORT>", new PopExportState());
-		
-		hostContext.define("create", new Create());
-		hostContext.define("variable", new Variable());
-		hostContext.define("dvariable", new DVariable());
-		hostContext.define("constant", new Constant());
-		hostContext.define("dconstant", new DConstant());
-		hostContext.define("user", new User());
-		hostContext.define("value", new Value());
-		
-		hostContext.define("allot", new Allot());
-		hostContext.define("'", new Tick());
-		hostContext.define("[']", new ParsedTick());
-		
-		hostContext.define("!", new HostStore());
-		hostContext.define("@", new HostFetch());
-		hostContext.define("+", new HostBinOp() {
-			public int getResult(int l, int r) { return l+r; }
-		});
-		hostContext.define("-", new HostBinOp() {
-			public int getResult(int l, int r) { return l-r; }
-		});
-		hostContext.define("*", new HostBinOp() {
-			public int getResult(int l, int r) { return l*r; }
-		});
-		hostContext.define("/", new HostBinOp() {
-			public int getResult(int l, int r) { return l/r; }
-		});
-		hostContext.define("OR", new HostBinOp() {
-			public int getResult(int l, int r) { return l|r; }
-		});
-		hostContext.define("XOR", new HostBinOp() {
-			public int getResult(int l, int r) { return l^r; }
-		});
-		hostContext.define("AND", new HostBinOp() {
-			public int getResult(int l, int r) { return l&r; }
-		});
-		hostContext.define("NEGATE", new HostUnaryOp() {
-			public int getResult(int v) { return -v; }
-		});
-		hostContext.define("INVERT", new HostUnaryOp() {
-			public int getResult(int v) { return ~v; }
-		});
-		hostContext.define("true", new HostConstant(-1));
-		hostContext.define("false", new HostConstant(0));
-		
-		hostContext.define(":", new Colon());
-		hostContext.define("::", new ColonColon());
-		hostContext.define(";", new SemiColon());
-		hostContext.define("[CHAR]", new BracketChar());
-		
-		hostContext.define("TO", new To());
-		
-		hostContext.define("if", new If());
-		hostContext.define("else", new Else());
-	 	hostContext.define("then", new Then());
-	 	hostContext.define("begin", new Begin());
-	 	hostContext.define("again", new Again());
-	 	hostContext.define("until", new Until());
-	 	hostContext.define("while", new While());
-	 	hostContext.define("repeat", new Repeat());
-	 	hostContext.define("do", new Do());
-	 	hostContext.define("?do", new QuestionDo());
-	 	hostContext.define("leave", new Leave());
-	 	hostContext.define("loop", new Loop());
-	 	hostContext.define("+loop", new PlusLoop());
-	 	hostContext.define("u+loop", new UPlusLoop());
-	 	hostContext.define("exit", new Exit());
-
-	 	hostContext.define("(", new Paren());
-	 	hostContext.define("\\", new BackSlash());
-	 	
-	 	hostContext.define("[", new Lbracket());
-	 	hostContext.define("]", new Rbracket());
-	 	
-	 	hostContext.define(",", new Comma());
-	 	hostContext.define("c,", new CharComma());
-	 	
-		hostContext.define("DP!", new SetDP());
-		hostContext.define("HERE", new Here());
 	}
 
 	/**
@@ -329,8 +187,13 @@ public class ForthComp {
 		
 		if (word == null) {
 			word = targetContext.find(token);
-			if (word instanceof ITargetWord && ((ITargetWord) word).getEntry().isHidden())
-				word = null;
+			if (word instanceof ITargetWord) { 
+				ITargetWord tw = (ITargetWord) word;
+				if (tw.getEntry().isHidden())
+					word = null;
+				else if (word.isImmediate() && stateVar.getValue() != 0 && tw.getEntry().isTargetOnly())
+					word = null;
+			}
 		}
 		
 		if (word == null) {
@@ -347,6 +210,8 @@ public class ForthComp {
 		
 		if (stateVar.getValue() == 0 || word.isImmediate()) {
 			try {
+				if (word instanceof ITargetWord && ((ITargetWord)word).getEntry().getHostBehavior() != null)
+					word = ((ITargetWord)word).getEntry().getHostBehavior();
 				word.execute(hostContext, targetContext);
 			} catch (AbortException e) {
 				throw e;
@@ -355,21 +220,21 @@ public class ForthComp {
 			}
 		} else {
 			// compiling
+			ITargetWord targetWord = null;
+			IWord hostWord = null;
+			
 			if (word instanceof ITargetWord) {
-				targetContext.compile((ITargetWord) word);
-			} else if (word instanceof HostLiteral) {
-				targetContext.compileLiteral(((HostLiteral) word).getValue(), ((HostLiteral) word).isUnsigned(), true);
-			} else if (word instanceof HostDoubleLiteral) {
-				if (targetContext.getCellSize() == 2)
-					targetContext.compileDoubleLiteral(
-							((HostDoubleLiteral) word).getValue() & 0xffff, 
-							((HostDoubleLiteral) word).getValue() >> 16, 
-							((HostDoubleLiteral) word).isUnsigned(), true);
-				
+				targetWord = (ITargetWord) word;
+				hostWord = hostContext.find(token);
+				if (hostWord == null) 
+					hostWord = targetWord;
 			} else {
-				//throw abort("unknown compile-time semantics for " + token);
-				word.execute(hostContext, targetContext);
-			}
+				hostWord = word;
+				targetWord = null;
+			}		
+			
+			hostContext.compileWord(targetContext, hostWord, targetWord);
+
 		}
 	}
 
@@ -401,8 +266,12 @@ public class ForthComp {
 			long val = Long.parseLong(token, radix);
 			if (isNeg)
 				val = -val;
-			if (isDouble)
-				return new HostDoubleLiteral(val, isUnsigned);
+			if (isDouble) {
+				if (targetContext.getCellSize() == 2)
+					return new HostDoubleLiteral((int)(val & 0xffff), (int)(val >> 16), isUnsigned);
+				else
+					throw new UnsupportedOperationException();
+			}
 			else
 				return new HostLiteral((int) val, isUnsigned);
 		} catch (NumberFormatException e) {

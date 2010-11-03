@@ -24,6 +24,13 @@ public class StubWord implements ITargetWord {
 	public StubWord(String name) {
 		entry = new DictEntry(0, 0, name);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.IWord#getName()
+	 */
+	public String getName() {
+		return entry.getName();
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.ITargetWord#getEntry()
 	 */
@@ -44,6 +51,13 @@ public class StubWord implements ITargetWord {
 	 */
 	public boolean isImmediate() {
 		return false;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.ITargetWord#setHostDp(int)
+	 */
+	public void setHostDp(int localDP) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

@@ -6,13 +6,12 @@ package org.ejs.v9t9.forthcomp.words;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class QuestionDo implements IWord {
+public class QuestionDo extends BaseWord {
 	public QuestionDo() {
 	}
 
@@ -22,10 +21,13 @@ public class QuestionDo implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		
+		targetContext.markHostExecutionUnsupported();
+		
 		ITargetWord qdoWord = (ITargetWord) targetContext.require("(?do)");
 
 		targetContext.compile(qdoWord);	// ends in 0branch
 		targetContext.pushFixup(hostContext);
+		
 		
 		targetContext.pushHere(hostContext);
 		hostContext.pushData(-1);		// ?do

@@ -7,13 +7,12 @@ import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.F99TargetContext;
 import org.ejs.v9t9.forthcomp.F99bTargetContext;
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class FieldComma implements IWord {
+public class FieldComma extends BaseWord {
 	public FieldComma() {
 	}
 

@@ -4,13 +4,12 @@
 package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class HostVariable implements IWord {
+public class HostVariable extends BaseWord {
 
 	private int val;
 	/**

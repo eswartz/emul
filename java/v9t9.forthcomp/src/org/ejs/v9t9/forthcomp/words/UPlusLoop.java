@@ -6,13 +6,12 @@ package org.ejs.v9t9.forthcomp.words;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class UPlusLoop implements IWord {
+public class UPlusLoop extends BaseWord {
 	public UPlusLoop() {
 	}
 
@@ -23,8 +22,9 @@ public class UPlusLoop implements IWord {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(3);
 		
-		ITargetWord word = (ITargetWord) targetContext.require("(u+loop)");
+		targetContext.markHostExecutionUnsupported();
 		
+		ITargetWord word = (ITargetWord) targetContext.require("(u+loop)");
 		targetContext.loopCompile(hostContext, word);
 	}
 	

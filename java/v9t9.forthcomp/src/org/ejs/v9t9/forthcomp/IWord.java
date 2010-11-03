@@ -11,6 +11,8 @@ import org.ejs.v9t9.forthcomp.words.TargetContext;
  */
 public interface IWord {
 
+	String getName();
+	
 	void execute(HostContext hostContext, TargetContext targetContext) throws AbortException;
 
 	boolean isImmediate();

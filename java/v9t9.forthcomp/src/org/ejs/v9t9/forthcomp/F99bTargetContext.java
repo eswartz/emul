@@ -8,11 +8,8 @@ import java.util.List;
 import java.util.Stack;
 
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
-import org.ejs.v9t9.forthcomp.words.Comma;
-import org.ejs.v9t9.forthcomp.words.DLiteral;
 import org.ejs.v9t9.forthcomp.words.ExitI;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
-import org.ejs.v9t9.forthcomp.words.Literal;
 import org.ejs.v9t9.forthcomp.words.TargetColonWord;
 import org.ejs.v9t9.forthcomp.words.TargetConstant;
 import org.ejs.v9t9.forthcomp.words.TargetContext;
@@ -205,7 +202,7 @@ public class F99bTargetContext extends TargetContext {
 		
 		defineInlinePrim("s>d", Idup, IlitX, Icmp+CMP_LT);
 		
-		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
+		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, I2plus, Iexit);
 		//defineInlinePrim("DOLIT", IlitW, 0, 0, Iexit);
 		
 		defineInlinePrim("true", IlitX | 0xf);
@@ -216,7 +213,9 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("(cfill)", Icfill);
 		defineInlinePrim("(move)", Imove);
 		defineInlinePrim("(cmove)", Icmove);
-
+		
+		defineInlinePrim("(LITERAL)", IlitW);
+		defineInlinePrim("(DLITERAL)", IlitD_d);
 	}
 	
 	private void definePrim(String string, int opcode) {
@@ -267,10 +266,6 @@ public class F99bTargetContext extends TargetContext {
 		alignDP();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.TargetContext#compile(org.ejs.v9t9.forthcomp.ITargetWord)
-	 */
-	@Override
 	public void compile(ITargetWord word) {
 		word.getEntry().use();
 		
@@ -304,15 +299,7 @@ public class F99bTargetContext extends TargetContext {
 			else
 				compileOpcode(Iload_d);
 		} else {
-			stubCall.use();
-			
-			int pc = alloc(cellSize);
-			
-			int reloc = addRelocation(pc, 
-					RelocType.RELOC_CALL_15S1, 
-					word.getEntry().getContentAddr(),
-					word.getEntry().getName());
-			writeCell(pc, reloc);
+			compileCall(word);
 		}
 	}
 
@@ -415,7 +402,7 @@ public class F99bTargetContext extends TargetContext {
 	 * @param baseSP
 	 * @param baseRP
 	 */
-	public void exportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) {
+	public void doExportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) {
 		exportMemory(machine.getConsole());
 		CpuStateF99b cpu = (CpuStateF99b) machine.getCpu().getState();
 		
@@ -444,7 +431,7 @@ public class F99bTargetContext extends TargetContext {
 	 * @param baseSP
 	 * @param baseRP
 	 */
-	public void importState(HostContext hostContext, Machine machine, int baseSP, int baseRP) {
+	public void doImportState(HostContext hostContext, Machine machine, int baseSP, int baseRP) {
 		importMemory(machine.getConsole());
 		CpuF99b cpu = (CpuF99b) machine.getCpu();
 		
@@ -477,7 +464,9 @@ public class F99bTargetContext extends TargetContext {
 		// as well as the original PC of the referring instruction
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
-		setDP(nextDp + 1);
+		alloc(1);		// assume short branch
+		
+		hostContext.markFixup(nextDp);
 	}
 	
 	/* (non-Javadoc)
@@ -487,6 +476,7 @@ public class F99bTargetContext extends TargetContext {
 	public int pushHere(HostContext hostContext) {
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
+		hostContext.markFixup(nextDp);
 		return nextDp;
 	}
 	/* (non-Javadoc)
@@ -508,6 +498,9 @@ public class F99bTargetContext extends TargetContext {
 		int diff = nextDp - opAddr;
 		
 		writeJumpOffs(hostContext, opAddr, diff);
+		
+		hostContext.resolveFixup(opAddr, nextDp);
+
 	}
 
 
@@ -538,6 +531,7 @@ public class F99bTargetContext extends TargetContext {
 			else
 				diff--;
 			
+			//System.out.println("@writeJumpOffs: " +opAddr + ": " + readChar(opAddr));
 			writeChar(opAddr, (diff & 0xff));
 			return 1;
 		}
@@ -632,38 +626,10 @@ public class F99bTargetContext extends TargetContext {
 		//define("BASE", defineForward("BASE", "<<built-in>>"));
 		
 		hostContext.define("FIELD,", new FieldComma());
-		hostContext.define(",", new Comma());
-		hostContext.define("LITERAL", new Literal(true));
-		hostContext.define("DLITERAL", new DLiteral(true));
-		hostContext.define("(LITERAL)", new Literal(false));
-		hostContext.define("(DLITERAL)", new DLiteral(false));
 
 		hostContext.define("EXITI", new ExitI());
 
 	}
-
-	/**
-	 * @param string
-	 * @return
-	 */
-	public int writeLengthPrefixedString(String string) throws AbortException {
-		int length = string.length();
-		if (length > 255)
-			throw new AbortException("String constant is too long");
-		
-		int dp = alloc(length + 1);
-		
-		writeChar(dp, length);
-		stub8BitLit.use();
-		
-		for (int i = 0; i < length; i++) {
-			writeChar(dp + 1 + i, string.charAt(i));
-			stub8BitLit.use();
-		}
-		
-		return dp;
-	}
-	
 
 	public void compileUser(TargetUserVariable var) {
 		int index = var.getIndex();
@@ -857,7 +823,7 @@ public class F99bTargetContext extends TargetContext {
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileWordXt(org.ejs.v9t9.forthcomp.ITargetWord)
 	 */
 	@Override
-	public void compileWordXt(ITargetWord word) {
+	public void compileTick(ITargetWord word) {
 		stub16BitAddr.use();
 
 		compileByte(IlitW);
@@ -869,6 +835,22 @@ public class F99bTargetContext extends TargetContext {
 				word.getEntry().getName());
 
 		writeCell(ptr, reloc);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileCall(org.ejs.v9t9.forthcomp.ITargetWord)
+	 */
+	@Override
+	public void compileCall(ITargetWord word) {
+		stubCall.use();
+		
+		int pc = alloc(cellSize);
+		
+		int reloc = addRelocation(pc, 
+				RelocType.RELOC_CALL_15S1, 
+				word.getEntry().getContentAddr(),
+				word.getEntry().getName());
+		writeCell(pc, reloc);
 	}
 	
 	/* (non-Javadoc)
@@ -884,4 +866,36 @@ public class F99bTargetContext extends TargetContext {
 		return console;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileComma(org.ejs.v9t9.forthcomp.ITargetWord)
+	 */
+	@Override
+	public void compilePostpone(ITargetWord word) throws AbortException {
+		compileTick(word);
+		compile((ITargetWord) require("LITERAL"));
+		compile((ITargetWord) require("compile,"));
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoes(int)
+	 */
+	@Override
+	public void compileDoes(HostContext hostContext, DictEntry entry, int targetDP) throws AbortException {
+		// paramAddr is after EXIT
+		int dataSize = (getDP() - entry.getParamAddr());
+		if (dataSize >= 8) {
+			throw hostContext.abort("cannot invoke DOES> on " + entry.getName() + " since its data is too large"); 
+		}
+		writeChar(entry.getParamAddr() - 1, IbranchX | dataSize);
+		compileOpcode(IbranchW);
+		
+		int reloc = addRelocation(dp, 
+				RelocType.RELOC_ABS_ADDR_16, 
+				targetDP,
+				entry.getName());
+		compileCell(reloc);
+		//compileCell(targetDP);
+
+	}
 }

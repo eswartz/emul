@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class Postpone implements IWord {
+public class Postpone extends BaseWord {
 	public Postpone() {
 	}
 
@@ -22,18 +22,46 @@ public class Postpone implements IWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		String name = hostContext.readToken();
 
-		IWord word = hostContext.find(name);
+		IWord word = targetContext.find(name);
 		if (word == null) {
-			word = targetContext.find(name);
-			if (word == null) {
-				throw hostContext.abort("cannot find " + name);
-			}
+			throw hostContext.abort("cannot find target definition of " + name);
 		}
 		
 		if (!(word instanceof ITargetWord))
-			throw hostContext.abort("cannot take address of host word " + name);
+			throw hostContext.abort("cannot postpone host word " + name);
 		
-		hostContext.pushData(((ITargetWord)word).getEntry().getContentAddr());
+		ITargetWord targetWord = (ITargetWord)word;
+		if (targetWord.isImmediate()) {
+			targetContext.compileCall(targetWord);
+		} else {
+			targetContext.compilePostpone(targetWord);
+		}
+		
+		IWord hostWord = hostContext.find(name);
+		//IWord hostWord = targetWord.getEntry().getHostBehavior();
+		//if (hostWord == null)
+		//	hostContext.find(name);
+		
+		if ((targetWord.getEntry().isTargetOnly() && hostWord != null)
+				|| (!(targetWord instanceof TargetColonWord) && hostWord != null)) {
+			//System.out.println(hostContext.getStream().getLocation()+": using host definition when emulating " + name);
+			if (hostWord.isImmediate())
+				hostContext.compile(hostWord);
+			else
+				hostContext.compile(new HostPostponedWord(hostWord, targetWord));
+		} else if (targetWord.getEntry().getHostBehavior() != null) {
+			if (targetWord.isImmediate())
+				hostContext.compile(targetWord.getEntry().getHostBehavior());
+			else
+				hostContext.compile(new HostPostponedWord(targetWord.getEntry().getHostBehavior(), targetWord));
+		} else if (targetWord instanceof TargetColonWord) {
+			if (targetWord.isImmediate())
+				hostContext.compile(targetWord);
+			else
+				hostContext.compile(new HostPostponedWord(targetWord, targetWord));
+		} else {
+			targetContext.markHostExecutionUnsupported();
+		}
 		
 	}
 	
@@ -41,6 +69,6 @@ public class Postpone implements IWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return false;
+		return true;
 	}
 }

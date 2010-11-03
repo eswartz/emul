@@ -9,4 +9,5 @@ public interface Interpreter {
 	 */
 	void executeChunk(int numinsts, Executor executor);
 
+	void dispose();
 }

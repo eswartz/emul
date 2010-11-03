@@ -35,6 +35,13 @@ public class AbortException extends Exception {
 		line = 0;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Throwable#toString()
+	 */
+	@Override
+	public String toString() {
+		return getClass().getName()+": " + getFile()+":" + getLine()+": " + getMessage();
+	}
 	/**
 	 * @return the file
 	 */

@@ -24,7 +24,4 @@ public class TargetHere extends TargetWord {
 			hostContext.pushData(targetContext.getDP());
 	}
 
-	public boolean isImmediate() {
-		return false;
-	}
 }

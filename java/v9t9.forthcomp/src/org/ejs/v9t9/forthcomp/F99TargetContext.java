@@ -20,7 +20,7 @@ import org.ejs.v9t9.forthcomp.words.TargetUserVariable;
 import org.ejs.v9t9.forthcomp.words.TargetValue;
 import org.ejs.v9t9.forthcomp.words.TargetVariable;
 
-import v9t9.emulator.hardware.F99Machine;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.EnhancedRamArea;
 import v9t9.emulator.runtime.cpu.CpuF99;
 import v9t9.emulator.runtime.cpu.CpuStateF99;
@@ -307,18 +307,22 @@ public class F99TargetContext extends TargetContext {
 			else
 				compileOpcode(Iload_d);
 		} else {
-			// must call
-			alignCode();
-			stubCall.use();
-			
-			int reloc = addRelocation(opcodeAddr, 
-					RelocType.RELOC_CALL_15S1, 
-					word.getEntry().getContentAddr(),
-					word.getEntry().getName());
-			writeCell(opcodeAddr, reloc);
-			
-			opcodeAddr = alloc(cellSize);
+			compileCall(word);
 		}
+	}
+
+	public void compileCall(ITargetWord word) {
+		// must call
+		alignCode();
+		stubCall.use();
+		
+		int reloc = addRelocation(opcodeAddr, 
+				RelocType.RELOC_CALL_15S1, 
+				word.getEntry().getContentAddr(),
+				word.getEntry().getName());
+		writeCell(opcodeAddr, reloc);
+		
+		opcodeAddr = alloc(cellSize);
 	}
 
 	/**
@@ -445,7 +449,7 @@ public class F99TargetContext extends TargetContext {
 	 * @param baseSP
 	 * @param baseRP
 	 */
-	public void exportState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP, int baseUP) {
+	public void doExportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) {
 		exportMemory(machine.getConsole());
 		CpuStateF99 cpu = (CpuStateF99) machine.getCpu().getState();
 		
@@ -474,7 +478,7 @@ public class F99TargetContext extends TargetContext {
 	 * @param baseSP
 	 * @param baseRP
 	 */
-	public void importState(HostContext hostContext, F99Machine machine, int baseSP, int baseRP) {
+	public void doImportState(HostContext hostContext, Machine machine, int baseSP, int baseRP) {
 		importMemory(machine.getConsole());
 		CpuF99 cpu = (CpuF99) machine.getCpu();
 		
@@ -831,7 +835,7 @@ public class F99TargetContext extends TargetContext {
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#compileWordXt(org.ejs.v9t9.forthcomp.ITargetWord)
 	 */
 	@Override
-	public void compileWordXt(ITargetWord word) {
+	public void compileTick(ITargetWord word) {
 		stub16BitLit.use();
 		doCompileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true, true);		
 	}
@@ -847,5 +851,15 @@ public class F99TargetContext extends TargetContext {
 				bigRamArea);
 		console.mapEntry(bigRamEntry);
 		return console;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compilePostpone(org.ejs.v9t9.forthcomp.ITargetWord)
+	 */
+	@Override
+	public void compilePostpone(ITargetWord word) throws AbortException {
+		compileTick(word);
+		compile((ITargetWord) require("LITERAL"));
+		compile((ITargetWord) require("compile,"));
 	}
 }

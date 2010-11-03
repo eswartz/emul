@@ -4,36 +4,44 @@
 package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class HostDoubleLiteral implements IWord {
+public class HostDoubleLiteral extends BaseWord {
 
-	private final long val;
+	private final int valLo;
+	private final int valHi;
 	private boolean isUnsigned;
 	/**
+	 * @param l 
 	 * @param isUnsigned 
 	 * 
 	 */
-	public HostDoubleLiteral(long val, boolean isUnsigned) {
-		this.val = val;
+	public HostDoubleLiteral(int valLo, int valHi, boolean isUnsigned) {
+		this.valLo = valLo;
+		this.valHi = valHi;
 		this.isUnsigned = isUnsigned;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#getValue()
 	 */
-	public int getValue() {
-		return (int) val;
+	public int getValueLo() {
+		return valLo;
+	}
+	/**
+	 * @return the valHi
+	 */
+	public int getValueHi() {
+		return valHi;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) {
-		hostContext.pushData((int) (val & 0xffff));
-		hostContext.pushData((int) (val >> 16));
+		hostContext.pushData(valLo);
+		hostContext.pushData(valHi);
 	}
 	/**
 	 * @param forField the forField to set

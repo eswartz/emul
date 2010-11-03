@@ -51,6 +51,14 @@ public class InterpreterMFP201 implements Interpreter {
      }
 
     /* (non-Javadoc)
+     * @see v9t9.emulator.runtime.interpreter.Interpreter#dispose()
+     */
+    @Override
+    public void dispose() {
+    	// TODO Auto-generated method stub
+    	
+    }
+    /* (non-Javadoc)
      * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
      */
     @Override

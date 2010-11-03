@@ -6,90 +6,37 @@ package org.ejs.v9t9.forthcomp.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static v9t9.engine.cpu.InstF99b.I0branchX;
+import static v9t9.engine.cpu.InstF99b.I0equ;
+import static v9t9.engine.cpu.InstF99b.IatR;
+import static v9t9.engine.cpu.InstF99b.IbranchB;
+import static v9t9.engine.cpu.InstF99b.IbranchX;
+import static v9t9.engine.cpu.InstF99b.Icmp;
+import static v9t9.engine.cpu.InstF99b.Idrop;
+import static v9t9.engine.cpu.InstF99b.Idup;
+import static v9t9.engine.cpu.InstF99b.Iequ;
+import static v9t9.engine.cpu.InstF99b.Iexit;
+import static v9t9.engine.cpu.InstF99b.IlitB;
+import static v9t9.engine.cpu.InstF99b.IlitB_d;
+import static v9t9.engine.cpu.InstF99b.IlitD_d;
+import static v9t9.engine.cpu.InstF99b.IlitW;
+import static v9t9.engine.cpu.InstF99b.IlitX;
+import static v9t9.engine.cpu.InstF99b.Iload;
+import static v9t9.engine.cpu.InstF99b.IloopUp;
+import static v9t9.engine.cpu.InstF99b.Irdrop_d;
+import static v9t9.engine.cpu.InstF99b.Istore;
+import static v9t9.engine.cpu.InstF99b.Isub;
+import static v9t9.engine.cpu.InstF99b.ItoR_d;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-
-import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.v9t9.forthcomp.AbortException;
-import org.ejs.v9t9.forthcomp.F99bTargetContext;
-import org.ejs.v9t9.forthcomp.ForthComp;
-import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
 import org.ejs.v9t9.forthcomp.IWord;
-import org.ejs.v9t9.forthcomp.RelocEntry;
-import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 import org.ejs.v9t9.forthcomp.words.TargetColonWord;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import v9t9.emulator.hardware.F99bMachine;
-import v9t9.emulator.hardware.F99bMachineModel;
-import v9t9.emulator.runtime.cpu.CpuF99b;
-import v9t9.emulator.runtime.cpu.DumpFullReporterF99b;
-import v9t9.emulator.runtime.interpreter.InterpreterF99b;
 import v9t9.engine.cpu.InstF99b;
-import static v9t9.engine.cpu.InstF99b.*;
-import v9t9.engine.memory.MemoryDomain;
 
-/**
- * @author ejs
- *
- */
-public class TestForthCompF99b {
-
-	private static final int BASE_RP = 0xff00;
-	private static final int BASE_SP = 0xf800;
-	private static final int BASE_UP = 0xfe00;
-	
-	private F99bTargetContext targCtx;
-	ForthComp comp;
-	HostContext hostCtx;
-	private int startDP;
-	
-	static F99bMachineModel f99bMachineModel;
-	static F99bMachine f99Machine;
-	private static InterpreterF99b interp;
-	private static CpuF99b cpu;
-
-	/**
-	 * 
-	 */
-	public TestForthCompF99b() {
-		if (cpu == null) {
-			f99bMachineModel = new F99bMachineModel();
-			f99Machine = (F99bMachine) f99bMachineModel.createMachine();
-			cpu = (CpuF99b) f99Machine.getCpu();
-		
-			DumpFullReporterF99b dump = new DumpFullReporterF99b(cpu,  new PrintWriter(System.out));
-			f99Machine.getExecutor().addInstructionListener(dump);
-		}
-
-	}
-	@Before
-	public void setup() throws AbortException {
-		interp = new InterpreterF99b(f99Machine);
-		
-		targCtx = new F99bTargetContext(4096);
-		targCtx.setBaseDP(0x400);
-		
-		hostCtx = new HostContext();
-		comp = new ForthComp(hostCtx, targCtx);
-		
-		for (int i = 0; i <65536; i++)
-			cpu.getConsole().writeByte(i, (byte) 0);
-		
-		targCtx.defineBuiltins();
-		//comp.parseString("User HERE User Base");
-
-		startDP = targCtx.getDP();
-	}
-	@After
-	public void shutDown() {
-		interp.dispose();
-	}
+public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testLiteral() throws Exception {
 		parseString("123");
@@ -220,31 +167,6 @@ public class TestForthCompF99b {
 		assertEquals(dp + 5, targCtx.getDP());
 	}
 	
-	private void dumpMemory(PrintStream out, int from, int to, MemoryDomain domain) {
-		System.out.println("raw memory:");
-		int perLine = 8;
-		int lines = ((to - from) / 2 + perLine - 1) / perLine;
-		int addr = from;
-		for (int i = 0; i < lines; i++) {
-			out.print(HexUtils.toHex4(addr) + ": ");
-			for (int j = 0; j < perLine && addr < to; j++) {
-				out.print(HexUtils.toHex4(domain.readWord(addr)) + " ");
-				addr += 2;
-			}
-			out.println();
-		}
-	}
-
-	private void dumpDict() {
-		System.out.println("dictionary cells:");
-		targCtx.dumpDict(System.out, startDP, targCtx.getDP());
-	}
-	
-	private void parseString(String text) throws AbortException {
-		comp.parseString(text);
-		comp.finish();
-		assertEquals(0, comp.getErrors());
-	}
 	@Test
 	public void testLiterals1() throws Exception {
 		parseString(": eq 7 3 - 0= ;");
@@ -313,39 +235,7 @@ public class TestForthCompF99b {
 		
 		assertEquals(14, hostCtx.popData());
 	}
-	
-	/**
-	 * @param name
-	 * @throws AbortException 
-	 * @throws IOException 
-	 */
-	private void interpret(String name) throws AbortException {
-		String caller = new Exception().getStackTrace()[1].getMethodName();
-		System.out.println("*** interpreting in " + caller);
-		
-		targCtx.exportState(hostCtx, f99Machine, BASE_SP, BASE_RP, BASE_UP);
 
-		dumpCompiledMemory();
-		
-		ITargetWord word = (ITargetWord) targCtx.require(name);
-		
-		int pc = word.getEntry().getContentAddr();
-		
-		cpu.rpush((short) 0);
-		cpu.setPC((short) pc);
-		interp.setShowSymbol();
-		while (cpu.getPC() != 0)
-			interp.execute();
-
-		assertTrue(cpu.getState().getSP() <= cpu.getState().getBaseSP());
-		assertTrue(cpu.getState().getRP() <= cpu.getState().getBaseRP());
-		targCtx.importState(hostCtx, f99Machine, BASE_SP, BASE_RP);
-		
-	}
-	private void dumpCompiledMemory() {
-		dumpMemory(System.out, startDP, targCtx.getDP(), f99Machine.getConsole());
-	}
-	
 	@Test
 	public void testLiterals4() throws Exception {
 		parseString(": eq 122 @ 456 ! 789 dup ;");
@@ -942,18 +832,6 @@ public class TestForthCompF99b {
 		assertCall("cls", word);
 		assertOpcodes(dp + 6, Iexit);
 	}
-	private void assertCall(ITargetWord word, int cell) throws AbortException {
-		RelocEntry rel = targCtx.getRelocEntry(cell);
-		assertNotNull(rel);
-		assertEquals(RelocType.RELOC_CALL_15S1, rel.type);
-		assertEquals(word.getEntry().getContentAddr(), rel.target);
-	}
-	private void assertCall(String string, int cell) throws AbortException {
-		ITargetWord word = (ITargetWord) targCtx.require(string);
-		assertCall(word, cell);
-	}
-	
-	
 
 	@Test
 	public void testRedef() throws Exception {
@@ -1228,5 +1106,41 @@ public class TestForthCompF99b {
 		interpret("fool");
 		
 		assertEquals(10, hostCtx.popData()); 
+	}
+	
+	@Test
+	public void testDictCompileLiteral() throws Exception {
+		
+		hostCtx.pushData(123);
+		parseString(
+				stockDictDefs +
+				": mklit ( n -- ) dup -8 >= over 8 < and  if\n" +
+				" 	$f and $20 or c,  else\n" +
+				"dup -128 >= over 128 < and  if\n" +
+				" 	$78 c, c,\n" +
+				"else\n" +
+				"	$79 c, ,\n" +
+				"then then\n"+
+				"; \n"
+				);
+		
+		
+		int dp = targCtx.getDP();
+		
+		hostCtx.pushData(10);
+		interpret("mklit");	
+		hostCtx.pushData(-3);
+		interpret("mklit");
+		hostCtx.pushData(0x1234);
+		interpret("mklit");
+
+		dumpDict();
+		
+		assertEquals(0x78, targCtx.readChar(dp++));
+		assertEquals(10, targCtx.readChar(dp++));
+		assertEquals(0x2D, targCtx.readChar(dp++));
+		assertEquals(0x79, targCtx.readChar(dp++));
+		assertEquals(0x12, targCtx.readChar(dp++));
+		assertEquals(0x34, targCtx.readChar(dp++));
 	}
 }

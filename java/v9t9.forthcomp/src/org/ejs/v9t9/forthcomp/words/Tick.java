@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class Tick implements IWord {
+public class Tick extends BaseWord {
 	public Tick() {
 	}
 

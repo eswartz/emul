@@ -4,23 +4,30 @@
 package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.HostContext;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public abstract class HostBinOp implements IWord {
+public abstract class HostBinOp extends BaseWord {
 
-	public HostBinOp() {
+	private String name;
+
+	public HostBinOp(String name) {
+		this.name = name;
 	}
+	@Override
+	public String toString() {
+		return name;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) {
-		int l = hostContext.popData();
 		int r = hostContext.popData();
+		int l = hostContext.popData();
 		hostContext.pushData(getResult(l, r));
 	}
 	

@@ -6,13 +6,12 @@ package org.ejs.v9t9.forthcomp.words;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 import org.ejs.v9t9.forthcomp.ITargetWord;
-import org.ejs.v9t9.forthcomp.IWord;
 
 /**
  * @author ejs
  *
  */
-public class Colon implements IWord {
+public class Colon extends BaseWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
@@ -27,7 +26,10 @@ public class Colon implements IWord {
 		
 		targetContext.defineColonWord(name);
 		
-		((ITargetWord) targetContext.getLatest()).getEntry().setHidden(true);
+		ITargetWord targetWord = (ITargetWord) targetContext.getLatest();
+		
+		targetWord.getEntry().setHidden(true);
+		targetWord.setHostDp(hostContext.getLocalDP());
 		
 	}
 
