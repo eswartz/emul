@@ -41,7 +41,7 @@
 #include <services/terminals.h>
 
 #ifndef TERMINALS_NO_LOGIN
-#define TERMINALS_NO_LOGIN 0
+#define TERMINALS_NO_LOGIN 1
 #endif
 
 static const char * TERMINALS = "Terminals";
@@ -71,7 +71,7 @@ static const char * TERMINALS = "Terminals";
 #  include <dirent.h>
 # if TERMINALS_NO_LOGIN
 #  define TERM_LAUNCH_EXEC "/bin/bash"
-#  define TERM_LAUNCH_ARGS {TERM_LAUNCH_EXEC, NULL}
+#  define TERM_LAUNCH_ARGS {TERM_LAUNCH_EXEC, "-l",NULL}
 #  define TERM_EXIT_SIGNAL SIGHUP
 # else
 #  define TERM_LAUNCH_EXEC "/bin/login"
@@ -476,40 +476,101 @@ static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id, 
     async_req_post(&out->req);
     return out;
 }
-
-static char ** envp_add(char ** old_envp, int old_envp_len, char * env) {
+/*
+ * Set the environment variable "name" to the value "value". If the variable
+ * exists already, override it or just skip.
+ */
+static void envp_add(char ***envp, int *env_len, const char *name, const char *value, int override)
+{
+    char **env;
+    size_t len;
     int i;
-    int env_size;
-    int old_envp_size = 0;
-    char ** new_envp = NULL;
-    char * p = NULL;
 
-    assert(old_envp || old_envp_len == 0);
-    assert(env);
-    assert(*env);
+    assert(*envp || *env_len == 0);
+    assert(name);
+    assert(value);
 
-    for (i = 0; i < old_envp_len; i++) {
-        old_envp_size += sizeof(char *); //size of env pointer
-        old_envp_size += strlen(old_envp[i]) + 1; //size of env string, including trailing '\0'
+    if(*envp==NULL && *env_len==0) {
+        *envp=loc_alloc(sizeof(char *));
+        *envp[0]=NULL;
+        *env_len=1;
     }
-    assert(old_envp == NULL || old_envp[i] == NULL);
-    old_envp_size += sizeof(char *); //last null pointer
 
-    env_size = strlen(env); //new env string size
-
-    new_envp = (char **) loc_alloc(old_envp_size + sizeof(char *) + env_size + 1);
-    p = (char *) new_envp + (old_envp_len + 2) * sizeof(char *); //setting new env ptr
-    new_envp[0] = strcpy(p, env); //copy new env string
-    p += env_size + 1;
-    for (i = 0; i < old_envp_len; i++) {
-        new_envp[i + 1] = strcpy(p, old_envp[i]);
-        p += strlen(old_envp[i]) + 1;
+    for(env=*envp,i=0,len=strlen(name);env[i];i++)
+        if(strncmp(env[i], name, len) == 0 && env[i][len] == '=')
+            break;
+    if(env[i]) {
+        //override
+        if(override)
+            loc_free(env[i]);
+        else
+            return;
+    }else {
+        //new variable
+        if(i >= *env_len -1) {
+            *env_len += 10;
+            env = *envp = loc_realloc(env, *env_len * sizeof(char *));
+        }
+        env[i + 1]=NULL;
     }
-    new_envp[i + 1] = NULL;
-    loc_free(old_envp);
-    return new_envp;
+    env[i]=loc_alloc_zero(len+1+strlen(value)+1);
+    snprintf(env[i],len+1+strlen(value)+1,"%s=%s",name,value);
 }
 
+static void set_terminal_env(char ***envp, int *env_len, const char *pty_type, const char *encoding, const char * exe)
+{
+#if TERMINALS_NO_LOGIN
+    char *value;
+    char *env_array [] = {
+            "USER",
+            "LOGNAME",
+            "HOME",
+            "PATH",
+            NULL
+    };
+#endif
+    int i=0;
+    char **new_envp=NULL;
+
+    //convert the envp memory layout
+    new_envp=loc_alloc((*env_len + 1) * sizeof(char *));
+    for(i=0;i<*env_len;i++) {
+        new_envp[i]=loc_alloc(strlen((*envp)[i])+1);
+        memcpy(new_envp[i],(*envp)[i],strlen((*envp)[i])+1);
+    }
+    new_envp[i]=NULL;
+    loc_free(*envp);
+
+    *envp=new_envp;
+    *env_len= i + 1;
+
+    if(*pty_type)
+        envp_add(envp,env_len,"TERM",pty_type,1);
+    if(*encoding)
+        envp_add(envp,env_len,"LANG",encoding,1);
+    envp_add(envp,env_len,"SHELL",exe,1);
+
+#if TERMINALS_NO_LOGIN
+    i=0;
+    while(env_array[i]) {
+        value=getenv(env_array[i]);
+        if(value)
+            envp_add(envp,env_len,env_array[i],value,0);
+        ++i;
+    }
+#endif
+}
+
+static void env_free (char **envp, int envp_len)
+{
+    int i;
+    if(envp)
+    {
+        for(i=0;i<envp_len && envp[i];i++)
+            loc_free(envp[i]);
+        loc_free(envp);
+    }
+}
 static int start_terminal(Channel * c, const char * pty_type, const char * encoding, char ** envp,
         int envp_len, const char * exe, const char ** args, int * pid, Terminal ** prs) {
     int err = 0;
@@ -538,18 +599,12 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         if (*pid == 0) {
             int fd = -1;
             int fd_tty_slave = -1;
-            char env_term[TERM_PROP_DEF_SIZE];
+            char *path;
 
-            if (*pty_type) {
-                snprintf(env_term, sizeof(env_term), "TERM=%s", pty_type);
-                envp = envp_add(envp, envp_len++, env_term);
-            }
-
-            if (!err && *encoding) {
-                snprintf(env_term, sizeof(env_term), "LANG=%s", encoding);
-                envp = envp_add(envp, envp_len++, env_term);
-            }
-
+            set_terminal_env(&envp,&envp_len,pty_type,encoding,exe);
+            path=getenv("HOME");
+            if(path)
+                chdir(path);
             setsid();
 
             if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
@@ -562,11 +617,10 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
             if (!err && dup2(fd_tty_slave, 2) < 0) err = errno;
             while (!err && fd > 3) close(--fd);
             if (!err) {
-                assert(envp == NULL || envp[envp_len] == NULL);
                 execve(exe, (char **)args, envp);
                 err = errno;
             }
-            if (envp) loc_free(envp);
+            if (envp) env_free(envp,envp_len);
             fprintf(stderr, "Cannot start %s: %s\n", exe, errno_to_str(err));
             exit(1);
         }
