@@ -40,7 +40,7 @@ import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 public class TCFFileSubSystemConfiguration extends FileServiceSubSystemConfiguration {
 
     private final TCFFileAdapter file_adapter = new TCFFileAdapter();
-    
+
     public TCFFileSubSystemConfiguration()
     {
         super();
