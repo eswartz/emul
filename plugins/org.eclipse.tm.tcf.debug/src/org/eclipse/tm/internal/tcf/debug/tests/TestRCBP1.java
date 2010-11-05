@@ -767,50 +767,22 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
     }
 
-    private boolean isMyBreakpoint(SuspendedContext sc) {
-        // Check if the context is suspended by one of our breakpoints
-        if (!"Breakpoint".equals(sc.reason)) return false;
-        long pc =  Long.parseLong(sc.pc);
-        for (IDiagnostics.ISymbol sym : sym_list.values()) {
-            if (pc == sym.getValue().longValue()) return true;
-        }
-        return false;
-    }
-
-    public void contextSuspended(final String id, String pc, String reason, Map<String, Object> params) {
-        IRunControl.RunControlContext ctx = threads.get(id);
-        if (ctx == null) return;
-        if (!ctx.hasState()) {
-            exit(new Exception("Suspended event for context that HasState = false"));
-            return;
-        }
-        running.remove(id);
-        SuspendedContext sc = suspended.get(id);
-        if (sc != null) {
-            if (done_get_state || !sc.pc.equals(pc) || !sc.reason.equals(reason)) {
-                exit(new Exception("Invalid contextSuspended event"));
-                return;
-            }
-        }
-        else {
-            sc = new SuspendedContext(id, pc, reason, params);
-            suspended.put(id, sc);
-        }
+    private void checkSuspendedContext(final SuspendedContext sc) {
         if (main_thread_id == null && isMyBreakpoint(sc)) {
             // Process main thread should be the first to hit a breakpoint in the test
             if (!done_get_state) {
                 exit(new Exception("Unexpeceted breakpoint hit"));
                 return;
             }
-            main_thread_id = id;
+            main_thread_id = sc.id;
         }
         if (main_thread_id == null) {
-            resume(id);
+            resume(sc.id);
             return;
         }
         if (isMyBreakpoint(sc)) {
-            if (id.equals(main_thread_id)) bp_cnt++;
-            SuspendedContext sp = suspended_prev.get(id);
+            if (sc.id.equals(main_thread_id)) bp_cnt++;
+            SuspendedContext sp = suspended_prev.get(sc.id);
             String sp_sym = sp == null ? null : toSymName(Long.parseLong(sp.pc));
             if (sp == null) {
                 checkSuspendedContext(sc, "tcf_test_func0");
@@ -819,7 +791,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 checkSuspendedContext(sc, "tcf_test_func1");
             }
             else if ("tcf_test_func1".equals(sp_sym)) {
-                if (id.equals(main_thread_id)) {
+                if (sc.id.equals(main_thread_id)) {
                     checkSuspendedContext(sc, "tcf_test_func2");
                 }
                 else {
@@ -845,21 +817,75 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     public void run() {
                         runRegistersTest(sc0, new Runnable() {
                             public void run() {
-                                resume(id);
+                                resume(sc.id);
                             }
                         });
                     }
                 });
             }
         };
-        if (ln != null) {
-            BigInteger x = new BigInteger(pc);
+        if (ln != null && sc.pc != null) {
+            BigInteger x = new BigInteger(sc.pc);
             BigInteger y = x.add(BigInteger.valueOf(1));
-            ln.mapToSource(id, x, y, ln_done);
+            ln.mapToSource(sc.id, x, y, ln_done);
         }
         else {
             ln_done.doneMapToSource(null, null, null);
         }
+    }
+
+    private boolean isMyBreakpoint(SuspendedContext sc) {
+        // Check if the context is suspended by one of our breakpoints
+        if (!"Breakpoint".equals(sc.reason)) return false;
+        long pc =  Long.parseLong(sc.pc);
+        for (IDiagnostics.ISymbol sym : sym_list.values()) {
+            if (pc == sym.getValue().longValue()) return true;
+        }
+        return false;
+    }
+
+    public void contextSuspended(final String id, String pc, String reason, Map<String, Object> params) {
+        IRunControl.RunControlContext ctx = threads.get(id);
+        if (ctx == null) return;
+        if (!ctx.hasState()) {
+            exit(new Exception("Suspended event for context that HasState = false"));
+            return;
+        }
+        running.remove(id);
+        SuspendedContext sc = suspended.get(id);
+        if (sc != null) {
+            if (done_get_state || pc != null && !sc.pc.equals(pc) || reason != null && !sc.reason.equals(reason)) {
+                exit(new Exception("Invalid contextSuspended event"));
+                return;
+            }
+        }
+        else {
+            sc = new SuspendedContext(id, pc, reason, params);
+            suspended.put(id, sc);
+        }
+        ctx.getState(new IRunControl.DoneGetState() {
+            public void doneGetState(IToken token, Exception error, boolean susp,
+                    String pc, String reason, Map<String, Object> params) {
+                if (error != null) {
+                    exit(error);
+                }
+                else if (!susp) {
+                    exit(new Exception("Invalid RunControl.getState result"));
+                }
+                else if (test_suite.isActive(TestRCBP1.this)) {
+                    SuspendedContext sc = suspended.get(id);
+                    if (sc.pc == null || sc.reason == null) {
+                        sc = new SuspendedContext(id, pc, reason, params);
+                        suspended.put(id, sc);
+                    }
+                    else if (!sc.pc.equals(pc) || !sc.reason.equals(reason)) {
+                        exit(new Exception("Invalid RunControl.getState result"));
+                        return;
+                    }
+                    checkSuspendedContext(sc);
+                }
+            }
+        });
     }
 
     private void resume(final String id) {
