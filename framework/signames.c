@@ -102,51 +102,54 @@ typedef struct SignalInfo {
     const char * desc;
 } SignalInfo;
 
-#define SIGINFO(sig, desc) { sig, ""#sig, desc },
+#define SigDesc(sig, desc) { sig, ""#sig, desc },
 static SignalInfo info[] = {
-    SIGINFO(SIGHUP,    "Hangup")
-    SIGINFO(SIGINT,    "Interrupt")
-    SIGINFO(SIGQUIT,   "Quit and dump core")
-    SIGINFO(SIGILL,    "Illegal instruction")
-    SIGINFO(SIGTRAP,   "Trace/breakpoint trap")
-    SIGINFO(SIGABRT,   "Process aborted")
-    SIGINFO(SIGBUS,    "Bus error")
-    SIGINFO(SIGFPE,    "Floating point exception")
-    SIGINFO(SIGKILL,   "Request to kill")
-    SIGINFO(SIGUSR1,   "User-defined signal 1")
-    SIGINFO(SIGSEGV,   "Segmentation violation")
-    SIGINFO(SIGUSR2,   "User-defined signal 2")
-    SIGINFO(SIGPIPE,   "Write to pipe with no one reading")
-    SIGINFO(SIGALRM,   "Signal raised by alarm")
-    SIGINFO(SIGTERM,   "Request to terminate")
+    SigDesc(SIGHUP,    "Hangup")
+    SigDesc(SIGINT,    "Interrupt")
+    SigDesc(SIGQUIT,   "Quit and dump core")
+    SigDesc(SIGILL,    "Illegal instruction")
+    SigDesc(SIGTRAP,   "Trace/breakpoint trap")
+    SigDesc(SIGABRT,   "Process aborted")
+    SigDesc(SIGBUS,    "Bus error")
+    SigDesc(SIGFPE,    "Floating point exception")
+    SigDesc(SIGKILL,   "Request to kill")
+    SigDesc(SIGUSR1,   "User-defined signal 1")
+    SigDesc(SIGSEGV,   "Segmentation violation")
+    SigDesc(SIGUSR2,   "User-defined signal 2")
+    SigDesc(SIGPIPE,   "Write to pipe with no one reading")
+    SigDesc(SIGALRM,   "Signal raised by alarm")
+    SigDesc(SIGTERM,   "Request to terminate")
 #ifdef SIGSTKFLT
-    SIGINFO(SIGSTKFLT, "Stack fault")
+    SigDesc(SIGSTKFLT, "Stack fault")
 #endif
-    SIGINFO(SIGCHLD,   "Child process terminated or stopped")
-    SIGINFO(SIGCONT,   "Continue if stopped")
-    SIGINFO(SIGSTOP,   "Stop executing temporarily")
-    SIGINFO(SIGTSTP,   "Terminal stop signal")
-    SIGINFO(SIGTTIN,   "Background process attempting to read from tty")
-    SIGINFO(SIGTTOU,   "Background process attempting to write to tty")
-    SIGINFO(SIGURG,    "Urgent data available on socket")
-    SIGINFO(SIGXCPU,   "CPU time limit exceeded")
-    SIGINFO(SIGXFSZ,   "File size limit exceeded")
-    SIGINFO(SIGVTALRM, "Virtual time timer expired")
-    SIGINFO(SIGPROF,   "Profiling timer expired")
+    SigDesc(SIGCHLD,   "Child process terminated or stopped")
+    SigDesc(SIGCONT,   "Continue if stopped")
+    SigDesc(SIGSTOP,   "Stop executing temporarily")
+    SigDesc(SIGTSTP,   "Terminal stop signal")
+    SigDesc(SIGTTIN,   "Background process attempting to read from tty")
+    SigDesc(SIGTTOU,   "Background process attempting to write to tty")
+    SigDesc(SIGURG,    "Urgent data available on socket")
+    SigDesc(SIGXCPU,   "CPU time limit exceeded")
+    SigDesc(SIGXFSZ,   "File size limit exceeded")
+    SigDesc(SIGVTALRM, "Virtual time timer expired")
+    SigDesc(SIGPROF,   "Profiling timer expired")
 #ifdef SIGWINCH
-    SIGINFO(SIGWINCH,  "Window resize signal")
+    SigDesc(SIGWINCH,  "Window resize signal")
 #endif
 #ifdef SIGIO
-    SIGINFO(SIGIO,     "Asynchronous I/O event")
+    SigDesc(SIGIO,     "Asynchronous I/O event")
 #elif defined(SIGPOLL)
-    SIGINFO(SIGPOLL,   "Asynchronous I/O event")
+    SigDesc(SIGPOLL,   "Asynchronous I/O event")
+#endif
+#ifdef SIGINFO
+    SigDesc(SIGINFO,   "Information request")
 #endif
 #ifdef SIGPWR
-    SIGINFO(SIGPWR,    "Power failure")
+    SigDesc(SIGPWR,    "Power failure")
 #endif
-    SIGINFO(SIGSYS,    "Bad syscall")
+    SigDesc(SIGSYS,    "Bad syscall")
 };
-#undef SIGINFO
+#undef SigDesc
 
 #define INFO_CNT ((int)(sizeof(info) / sizeof(SignalInfo)))
 
