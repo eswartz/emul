@@ -242,6 +242,8 @@ extern Context * context_get_group(Context * ctx, int group);
 /*
  * "breakpoint" context group - all contexts for which evaluation of breakpoint
  * location should produce same list of addresses.
+ * context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT) == NULL means the context
+ * does not support breakpoints.
  */
 #define CONTEXT_GROUP_BREAKPOINT    2
 

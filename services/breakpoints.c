@@ -615,7 +615,7 @@ static EvaluationRequest * post_evaluation_request(EvaluationRequest * req) {
 
 static void post_location_evaluation_request(Context * ctx) {
     Context * grp = context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT);
-    post_evaluation_request(create_evaluation_request(grp, 0))->location = 1;
+    if (grp != NULL) post_evaluation_request(create_evaluation_request(grp, 0))->location = 1;
 }
 
 static void expr_cache_enter(CacheClient * client, BreakpointInfo * bp, Context * ctx) {
@@ -981,25 +981,34 @@ static void event_replant_breakpoints(void * arg) {
 }
 
 static void replant_breakpoint(BreakpointInfo * bp) {
-    char ** ids = bp->context_ids;
     if (list_is_empty(&context_root)) return;
-    if (ids == NULL || ids != bp->context_ids_prev) {
+    if (bp->context_ids == NULL || bp->context_ids_prev == NULL) {
         LINK * l = context_root.next;
         while (l != &context_root) {
             Context * ctx = ctxl2ctxp(l);
             l = l->next;
             if (ctx->exited) continue;
-            if (!context_has_state(ctx)) continue;
             post_location_evaluation_request(ctx);
         }
-        bp->context_ids_prev = ids;
+        bp->context_ids_prev = bp->context_ids;
     }
     else {
+        char ** ids = bp->context_ids;
         while (*ids != NULL) {
             Context * ctx = id2ctx(*ids++);
             if (ctx == NULL) continue;
             if (ctx->exited) continue;
             post_location_evaluation_request(ctx);
+        }
+        if (bp->context_ids != bp->context_ids_prev) {
+            ids = bp->context_ids_prev;
+            while (*ids != NULL) {
+                Context * ctx = id2ctx(*ids++);
+                if (ctx == NULL) continue;
+                if (ctx->exited) continue;
+                post_location_evaluation_request(ctx);
+            }
+            bp->context_ids_prev = bp->context_ids;
         }
     }
 }
