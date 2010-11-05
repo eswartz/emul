@@ -491,7 +491,7 @@ static void envp_add(char ***envp, int *env_len, const char *name, const char *v
     assert(value);
 
     if(*envp==NULL && *env_len==0) {
-        *envp=loc_alloc(sizeof(char *));
+        *envp=(char **)loc_alloc(sizeof(char *));
         *envp[0]=NULL;
         *env_len=1;
     }
@@ -509,11 +509,11 @@ static void envp_add(char ***envp, int *env_len, const char *name, const char *v
         //new variable
         if(i >= *env_len -1) {
             *env_len += 10;
-            env = *envp = loc_realloc(env, *env_len * sizeof(char *));
+            env = *envp = (char **)loc_realloc(env, *env_len * sizeof(char *));
         }
         env[i + 1]=NULL;
     }
-    env[i]=loc_alloc_zero(len+1+strlen(value)+1);
+    env[i]=(char *)loc_alloc_zero(len+1+strlen(value)+1);
     snprintf(env[i],len+1+strlen(value)+1,"%s=%s",name,value);
 }
 
@@ -521,7 +521,7 @@ static void set_terminal_env(char ***envp, int *env_len, const char *pty_type, c
 {
 #if TERMINALS_NO_LOGIN
     char *value;
-    char *env_array [] = {
+    const char *env_array [] = {
             "USER",
             "LOGNAME",
             "HOME",
@@ -533,9 +533,9 @@ static void set_terminal_env(char ***envp, int *env_len, const char *pty_type, c
     char **new_envp=NULL;
 
     //convert the envp memory layout
-    new_envp=loc_alloc((*env_len + 1) * sizeof(char *));
+    new_envp=(char **)loc_alloc((*env_len + 1) * sizeof(char *));
     for(i=0;i<*env_len;i++) {
-        new_envp[i]=loc_alloc(strlen((*envp)[i])+1);
+        new_envp[i]=(char *)loc_alloc(strlen((*envp)[i])+1);
         memcpy(new_envp[i],(*envp)[i],strlen((*envp)[i])+1);
     }
     new_envp[i]=NULL;
@@ -603,8 +603,7 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
 
             set_terminal_env(&envp,&envp_len,pty_type,encoding,exe);
             path=getenv("HOME");
-            if(path)
-                chdir(path);
+            if (path && chdir(path) < 0) err = errno;
             setsid();
 
             if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
