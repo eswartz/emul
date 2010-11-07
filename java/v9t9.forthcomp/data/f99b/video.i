@@ -37,25 +37,29 @@ create  VRegSave      16 allot
 
 Create  v-mode      48 allot
 
-v-mode   0 +     Constant v-screen      \ VDP addr of screen
-v-mode   2 +     Constant v-screensz    \ VDP size of screen
-v-mode   4 +     Constant v-patts       \ VDP addr of patterns
-v-mode   6 +     Constant v-pattsz      \ VDP size of pattern table
-v-mode   8 +     Constant v-colors      \ VDP addr of colors
-v-mode  10 +     Constant v-colorsz     \ VDP size of color table
-v-mode  12 +     Constant v-sprites     \ VDP addr of sprites
-v-mode  14 +     Constant v-sprcol      \ VDP addr of sprite color table (0 if not sprite 2 mode)
-v-mode  16 +     Constant v-sprpat      \ VDP addr of sprite patterns
-v-mode  18 +     Constant v-sprmot      \ VDP addr of sprite motion
-v-mode  20 +     Constant v-free        \ usable space
-v-mode  22 +     Constant v-width       \ chars across
-v-mode  24 +     Constant v-height      \ chars down
+: +field    ( "name" ptr -- ptr' )    dup Constant 2+ ; immediate
 
-v-mode  26 +     Constant v-coordaddr   ( x y -- addr bit )
-v-mode  28 +     Constant v-drawchar    ( ch addr bit -- )
-v-mode  30 +     Constant v-savechar    ( addr bit buff -- )
-v-mode  32 +     Constant v-restorechar ( buff addr bit -- )
-v-mode  34 +     Constant v-drawcursor  ( addr bit -- )
+v-mode
+    +field  v-screen      \ VDP addr of screen
+    +field  v-screensz    \ VDP size of screen
+    +field  v-patts       \ VDP addr of patterns
+    +field  v-pattsz      \ VDP size of pattern table
+    +field  v-colors      \ VDP addr of colors
+    +field  v-colorsz     \ VDP size of color table
+    +field  v-sprites     \ VDP addr of sprites
+    +field  v-sprcol      \ VDP addr of sprite color table (0 if not sprite 2 mode)
+    +field  v-sprpat      \ VDP addr of sprite patterns
+    +field  v-sprmot      \ VDP addr of sprite motion
+    +field  v-free        \ usable space
+    +field  v-width       \ chars across
+    +field  v-height      \ chars down
+    
+    +field  v-coordaddr   ( x y -- addr bit )
+    +field  v-drawchar    ( ch addr bit -- )
+    +field  v-savechar    ( addr bit buff -- )
+    +field  v-restorechar ( buff addr bit -- )
+    +field  v-drawcursor  ( addr bit -- )
+drop
  
 Create v-curs-under     8 allot
 
