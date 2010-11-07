@@ -70,7 +70,7 @@ Variable    randnoise
 
     \ remember the key
     kbdlast c!
-    
+
     buffer-key
 ;
 
@@ -144,10 +144,7 @@ Variable    randnoise
     
     kbdscan c@ 0= if
         \ no key!
-        \ any shifts at least?
-        kbdshift c@ 0= if
-            kbd-no-key exit 
-        then
+        kbd-no-key exit 
     then
     
     key-actions
