@@ -13,6 +13,7 @@ import org.ejs.v9t9.forthcomp.words.FieldComma;
 import org.ejs.v9t9.forthcomp.words.TargetColonWord;
 import org.ejs.v9t9.forthcomp.words.TargetConstant;
 import org.ejs.v9t9.forthcomp.words.TargetContext;
+import org.ejs.v9t9.forthcomp.words.TargetSQuote;
 import org.ejs.v9t9.forthcomp.words.TargetUserVariable;
 import org.ejs.v9t9.forthcomp.words.TargetValue;
 import org.ejs.v9t9.forthcomp.words.TargetVariable;
@@ -73,7 +74,7 @@ public class F99bTargetContext extends TargetContext {
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#defineBuiltins()
 	 */
 	@Override
-	public void defineBuiltins() {
+	public void defineBuiltins() throws AbortException {
 		definePrim(";S", Iexit);
 		definePrim("@", Iload);
 		definePrim("c@", Icload);
@@ -216,6 +217,14 @@ public class F99bTargetContext extends TargetContext {
 		
 		defineInlinePrim("(LITERAL)", IlitW);
 		defineInlinePrim("(DLITERAL)", IlitD_d);
+		
+		//defineInlinePrim("(s\")", IcontextFrom, CTX_PC, IlitX | 5, Iadd, Idup, I1plus, Iswap, Icload);
+		defineInlinePrim("((s\"))", Irpidx, 1, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, ItoR);
+		
+		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
+		compileCall((ITargetWord) require("((s\"))"));
+		compileOpcode(Iexit);
+
 	}
 	
 	private void definePrim(String string, int opcode) {
@@ -626,9 +635,7 @@ public class F99bTargetContext extends TargetContext {
 		//define("BASE", defineForward("BASE", "<<built-in>>"));
 		
 		hostContext.define("FIELD,", new FieldComma());
-
 		hostContext.define("EXITI", new ExitI());
-
 	}
 
 	public void compileUser(TargetUserVariable var) {

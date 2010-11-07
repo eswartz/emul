@@ -72,7 +72,7 @@ public abstract class TargetContext extends Context {
 		return stubWord.getEntry();
 	}
 	
-	abstract public void defineBuiltins();
+	abstract public void defineBuiltins() throws AbortException;
 	
 	/** read the value in memory */
 	public int readCell(int addr) {
@@ -700,5 +700,12 @@ public abstract class TargetContext extends Context {
 
 
 	abstract public void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP) throws AbortException;
+
+
+	public void compileString(String string) throws AbortException {
+		IWord parenString = require("(s\")");
+		compile((ITargetWord) parenString);
+		writeLengthPrefixedString(string);
+	}
 	
 }

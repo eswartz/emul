@@ -76,6 +76,10 @@ Variable vy
 :   cr  13 emit  ;
 :   space  32 emit  ;
 
+:   type ( caddr n -- )
+    over + swap do i c@ emit loop     
+;
+
 EXPORT>
 
 

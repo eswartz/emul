@@ -1143,4 +1143,111 @@ public class TestForthCompF99b extends BaseF99bTest {
 		assertEquals(0x12, targCtx.readChar(dp++));
 		assertEquals(0x34, targCtx.readChar(dp++));
 	}
+	
+	@Test
+	public void testBracketIfEtc1() throws Exception {
+		hostCtx.pushData(123);
+		parseString(
+				"[if] 1 2 3\n"+
+				"[then]"
+				);
+		assertEquals(3, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
+		assertEquals(1, hostCtx.popData());
+		assertEquals(0, hostCtx.getDataStack().size());
+		
+		hostCtx.pushData(123);
+		parseString(
+				"0= [if] 1 2 3\n"+
+				"[then]"
+				);
+		assertEquals(0, hostCtx.getDataStack().size());
+		
+
+		hostCtx.pushData(123);
+		parseString(
+				"[if] 1 2 3 [else] 4 5 6\n"+
+				"[then]"
+				);
+		assertEquals(3, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
+		assertEquals(1, hostCtx.popData());
+		assertEquals(0, hostCtx.getDataStack().size());
+		
+
+		hostCtx.pushData(0);
+		parseString(
+				"[if] 1 2 3 [else] 4 5 6\n"+
+				"[then]"
+				);
+		assertEquals(6, hostCtx.popData());
+		assertEquals(5, hostCtx.popData());
+		assertEquals(4, hostCtx.popData());
+		assertEquals(0, hostCtx.getDataStack().size());
+	}
+	
+	@Test
+	public void testBracketIfdefEtc1() throws Exception {
+		
+		hostCtx.pushData(123);
+		parseString(
+				"[ifndef] 0\n"+
+				": 0 [ $20 c, ] ; target-only\n"+
+				"[then]\n" +
+				"[ifndef] 0\n"+
+				": 0 bogus \n"+
+				"[then]" 
+				);
+		
+		assertEquals(123, hostCtx.popData());
+
+		dumpDict();
+
+		ITargetWord var = (ITargetWord) targCtx.require("0");
+		int dp = var.getEntry().getContentAddr();		
+		assertEquals(IlitX, targCtx.readChar(dp++));
+		assertEquals(Iexit, targCtx.readChar(dp++));
+	}
+	
+
+	@Test
+	public void testBracketIfEtc2() throws Exception {
+		hostCtx.pushData(123);
+		parseString(
+				"[if] 1 2 3  3 = [if] 10 + [then]\n"+
+				"[then]"
+				);
+		assertEquals(12, hostCtx.popData());
+		assertEquals(1, hostCtx.popData());
+		assertEquals(0, hostCtx.getDataStack().size());
+		
+		hostCtx.pushData(123);
+		hostCtx.pushData(0);
+		parseString(
+				"[if] 1 2 3  3 = " +
+				"	[if] 10 + [else] 1999 [then] " +
+				"[else] -23 + [then]"
+				);
+		assertEquals(100, hostCtx.popData());
+		assertEquals(0, hostCtx.getDataStack().size());
+		
+		
+	}
+
+	@Test
+	public void testBracketIfEtc3() throws Exception {
+		hostCtx.pushData(123);
+		hostCtx.pushData(1);
+		parseString(
+				"[if] 1 2 3  6 = " +
+					"[if] 10 + [else] 1999 [then] " +
+				"[else] -23 + [then]"
+				);
+		assertEquals(1999, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
+		assertEquals(1, hostCtx.popData());
+		assertEquals(123, hostCtx.popData());
+		assertEquals(0, hostCtx.getDataStack().size());
+		
+	}
 }

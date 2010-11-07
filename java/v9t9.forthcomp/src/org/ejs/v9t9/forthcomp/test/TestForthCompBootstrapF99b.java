@@ -285,4 +285,46 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		assertEquals(InstF99b.IbranchW, targCtx.readChar(dp++));
 		assertEquals(doesDp, targCtx.findReloc(dp)); dp+=2;
 	}
+	
+	@Test
+	public void testStringLits() throws Exception {
+		
+		parseString(
+				stockDictDefs+
+				compileLiteral+
+				compileMeta+
+				": s\" postpone (s\") ; immediate target-only\n"+
+				": lala s\" hi there\" ;\n"
+		);		
+		dumpDict();
+		exportBinary();
+		
+		parseString("lala");
+		
+		DictEntry entry = ((ITargetWord) targCtx.require("lala")).getEntry();
+		int dp = entry.getContentAddr();
+		assertEquals(((ITargetWord)targCtx.require("(S\")")).getEntry().getContentAddr(), targCtx.findReloc(dp)); dp+=2;
+		/*
+		assertEquals(InstF99b.IcontextFrom, targCtx.readChar(dp++));
+		assertEquals(InstF99b.CTX_PC, targCtx.readChar(dp++));
+		assertEquals(InstF99b.IlitX | 5, targCtx.readChar(dp++));
+		assertEquals(InstF99b.Iadd, targCtx.readChar(dp++));
+		assertEquals(InstF99b.Idup, targCtx.readChar(dp++));
+		assertEquals(InstF99b.I1plus, targCtx.readChar(dp++));
+		assertEquals(InstF99b.Iswap, targCtx.readChar(dp++));
+		assertEquals(InstF99b.Icload, targCtx.readChar(dp++));
+		*/
+		
+		assertEquals(8, targCtx.readChar(dp++));
+		assertEquals('h', targCtx.readChar(dp++));
+		assertEquals('i', targCtx.readChar(dp++));
+		assertEquals(' ', targCtx.readChar(dp++));
+		assertEquals('t', targCtx.readChar(dp++));
+		assertEquals('h', targCtx.readChar(dp++));
+		assertEquals('e', targCtx.readChar(dp++));
+		assertEquals('r', targCtx.readChar(dp++));
+		assertEquals('e', targCtx.readChar(dp++));
+		
+		assertEquals(InstF99b.Iexit, targCtx.readChar(dp++));
+	}
 }

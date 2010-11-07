@@ -17,6 +17,11 @@ import org.ejs.v9t9.forthcomp.words.BaseHostBranch;
 import org.ejs.v9t9.forthcomp.words.BaseWord;
 import org.ejs.v9t9.forthcomp.words.Begin;
 import org.ejs.v9t9.forthcomp.words.BracketChar;
+import org.ejs.v9t9.forthcomp.words.BracketElse;
+import org.ejs.v9t9.forthcomp.words.BracketIf;
+import org.ejs.v9t9.forthcomp.words.BracketIfdef;
+import org.ejs.v9t9.forthcomp.words.BracketIfndef;
+import org.ejs.v9t9.forthcomp.words.BracketThen;
 import org.ejs.v9t9.forthcomp.words.CharComma;
 import org.ejs.v9t9.forthcomp.words.Colon;
 import org.ejs.v9t9.forthcomp.words.ColonColon;
@@ -28,10 +33,12 @@ import org.ejs.v9t9.forthcomp.words.DConstant;
 import org.ejs.v9t9.forthcomp.words.DLiteral;
 import org.ejs.v9t9.forthcomp.words.DVariable;
 import org.ejs.v9t9.forthcomp.words.Do;
+import org.ejs.v9t9.forthcomp.words.DotQuote;
 import org.ejs.v9t9.forthcomp.words.Else;
 import org.ejs.v9t9.forthcomp.words.Exit;
 import org.ejs.v9t9.forthcomp.words.Here;
 import org.ejs.v9t9.forthcomp.words.Host0Branch;
+import org.ejs.v9t9.forthcomp.words.HostBehavior;
 import org.ejs.v9t9.forthcomp.words.HostBinOp;
 import org.ejs.v9t9.forthcomp.words.HostBranch;
 import org.ejs.v9t9.forthcomp.words.HostConstant;
@@ -48,6 +55,7 @@ import org.ejs.v9t9.forthcomp.words.HostReturnRead;
 import org.ejs.v9t9.forthcomp.words.HostStore;
 import org.ejs.v9t9.forthcomp.words.HostSwap;
 import org.ejs.v9t9.forthcomp.words.HostTargetOnly;
+import org.ejs.v9t9.forthcomp.words.HostType;
 import org.ejs.v9t9.forthcomp.words.HostUnaryOp;
 import org.ejs.v9t9.forthcomp.words.HostVariable;
 import org.ejs.v9t9.forthcomp.words.If;
@@ -66,10 +74,10 @@ import org.ejs.v9t9.forthcomp.words.PushExportState;
 import org.ejs.v9t9.forthcomp.words.QuestionDo;
 import org.ejs.v9t9.forthcomp.words.Rbracket;
 import org.ejs.v9t9.forthcomp.words.Repeat;
+import org.ejs.v9t9.forthcomp.words.SQuote;
 import org.ejs.v9t9.forthcomp.words.SemiColon;
 import org.ejs.v9t9.forthcomp.words.SetDP;
 import org.ejs.v9t9.forthcomp.words.TargetContext;
-import org.ejs.v9t9.forthcomp.words.HostBehavior;
 import org.ejs.v9t9.forthcomp.words.Then;
 import org.ejs.v9t9.forthcomp.words.Tick;
 import org.ejs.v9t9.forthcomp.words.To;
@@ -85,6 +93,8 @@ import org.ejs.v9t9.forthcomp.words.While;
  *
  */
 public class HostContext extends Context {
+	public static boolean DEBUG = false;
+	
 	private Stack<Integer> dataStack;
 	private TokenStream tokenStream;
 	private Stack<Integer> returnStack;
@@ -127,6 +137,13 @@ public class HostContext extends Context {
 			
 		});
 		define("include", new Include());
+		
+		define("[if]", new BracketIf());
+		define("[ifdef]", new BracketIfdef());
+		define("[ifndef]", new BracketIfndef());
+		define("[else]", new BracketElse());
+		define("[then]", new BracketThen());
+		define("[endif]", new BracketThen());
 		
 		define("<EXPORT", new PushExportState());
 		define("EXPORT>", new PopExportState());
@@ -188,6 +205,10 @@ public class HostContext extends Context {
 	 	
 		define("DP!", new SetDP());
 		define("HERE", new Here());
+		
+		define("S\"", new SQuote());
+		define(".\"", new DotQuote());
+		define("type", new HostType());
 		
 		/////////////////////
 		
@@ -336,6 +357,9 @@ public class HostContext extends Context {
 	public int popReturn() {
 		return returnStack.pop();
 	}
+	public int peekReturn() {
+		return returnStack.peek();
+	}
 
 	/**
 	 * @return
@@ -427,7 +451,7 @@ public class HostContext extends Context {
 	}
 	
 	public void pushCall(int pc) {
-		System.out.println("call " + pc);
+		if (DEBUG) System.out.println("call " + pc);
 		callStack.push(hostPc);
 		hostPc = pc;
 	}
@@ -441,7 +465,7 @@ public class HostContext extends Context {
 		return hostDp;
 	}
 	public void compile(IWord word) {
-		System.out.println(hostDp +": "+ word);
+		if (DEBUG) System.out.println(hostDp +": "+ word);
 		assert !hostWords.containsKey((Integer)hostDp);
 		if (word instanceof BaseHostBranch)
 			word = (IWord) ((BaseHostBranch)word).clone();
@@ -454,7 +478,7 @@ public class HostContext extends Context {
 			IWord word = hostWords.get(hostPc);
 			if (word == null)
 				throw hostContext.abort("broken dictionary entry at " + hostPc);
-			System.out.println(
+			if (DEBUG) System.out.println(
 					//stack() + "\n" + 
 					"exec " + hostPc + ": " + word);
 			hostPc++;
@@ -463,7 +487,7 @@ public class HostContext extends Context {
 				ITargetWord targetWord = (ITargetWord) word;
 				IWord hostWord = targetWord.getEntry().getHostBehavior();
 				if (hostWord != null) {
-					System.out.println("On host: " + hostWord);
+					if (DEBUG) System.out.println("On host: " + hostWord);
 
 					Stack<Integer> origDataStack = new Stack<Integer>(); 
 					origDataStack.addAll(dataStack);

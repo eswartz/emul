@@ -77,6 +77,8 @@ User    #ptr
     again
 ;
 
+\ -----------------------------------------
+
 ( BOGUS -- just for defining words at host time )
 :   constant    ;
 
