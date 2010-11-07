@@ -106,7 +106,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if ((ascii == 0 || ascii == 0xffff) || 
 				!keyboardState.postCharacter(machine, realKey, pressed, synthetic, shift, ascii, when)) {
 			byte fctn = (byte) (KeyboardState.FCTN | shift);
-			System.out.println("??? " + keyCode + " : " + pressed);
+			//System.out.println("??? " + keyCode + " : " + pressed);
 			switch (keyCode) {
 			case KeyEvent.VK_SHIFT:
 				keyboardState.setKey(realKey, pressed, synthetic, KeyboardState.SHIFT, 0, when);
