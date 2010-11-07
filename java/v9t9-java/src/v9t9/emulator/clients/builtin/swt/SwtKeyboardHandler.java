@@ -42,7 +42,7 @@ import v9t9.keyboard.KeyboardState;
 public class SwtKeyboardHandler extends BaseKeyboardHandler {
 
 	
-	class KeyInfo {
+	static class KeyInfo {
 		public KeyInfo(int keyCode, long timeout, long when) {
 			this.keyCode = keyCode;
 			this.timeout = timeout;
@@ -125,6 +125,8 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		//System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
 		byte shift = 0;
 		
+		int realKey = keyCode;
+		
 		// separately pressed keys show up in keycode sometimes
 		
 		if (((stateMask | keyCode) & SWT.CTRL) != 0)
@@ -145,7 +147,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		int joy = (shift & KeyboardState.SHIFT) != 0 ? 2 : 1;
 		
-		if (keyCode > 128 || !keyboardState.postCharacter(machine, pressed, false, shift, (char) keyCode, when)) {
+		if (keyCode > 128 || !keyboardState.postCharacter(machine, realKey, pressed, false, shift, (char) keyCode, when)) {
 			if (keyCode == 0)
 				keyCode = shift;
 			
@@ -157,15 +159,15 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 				// shifts
 			case SWT.SHIFT:
 			case KeyboardState.SHIFT:
-				keyboardState.setKey(pressed, false, KeyboardState.SHIFT, 0, when);
+				keyboardState.setKey(realKey, pressed, false, KeyboardState.SHIFT, 0, when);
 				break;
 			case SWT.CONTROL:
 			case KeyboardState.CTRL:
-				keyboardState.setKey(pressed, false, KeyboardState.CTRL, 0, when);
+				keyboardState.setKey(realKey, pressed, false, KeyboardState.CTRL, 0, when);
 				break;
 			case SWT.ALT:
 			case KeyboardState.FCTN:
-				keyboardState.setKey(pressed, false, KeyboardState.FCTN, 0, when);
+				keyboardState.setKey(realKey, pressed, false, KeyboardState.FCTN, 0, when);
 				break;
 
 			case SWT.CAPS_LOCK:
@@ -186,20 +188,20 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			case SWT.F7:
 			case SWT.F8:
 			case SWT.F9:
-				keyboardState.setKey(pressed, false, fctnShifted, '1' + SWT.F1 - keyCode, when);	
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, '1' + SWT.F1 - keyCode, when);	
 				break;
 				
 			case SWT.ARROW_UP:
-				keyboardState.setKey(pressed, false, fctnShifted, 'E', when);
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, 'E', when);
 				break;
 			case SWT.ARROW_DOWN:
-				keyboardState.setKey(pressed, false, fctnShifted, 'X', when);
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, 'X', when);
 				break;
 			case SWT.ARROW_LEFT:
-				keyboardState.setKey(pressed, false, fctnShifted, 'S', when);
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, 'S', when);
 				break;
 			case SWT.ARROW_RIGHT:
-				keyboardState.setKey(pressed, false, fctnShifted, 'D', when);
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, 'D', when);
 				break;
 				
 				
@@ -207,21 +209,21 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			//	keyboardState.setKey(pressed, fctnShifted, '1');	
 			//	break;
 			case SWT.INSERT:
-				keyboardState.setKey(pressed, false, fctnShifted, '2', when);	
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, '2', when);	
 				break;
 				
 			case SWT.PAGE_UP:
-				keyboardState.setKey(pressed, false, fctnShifted, '6', when); // (as per E/A and TI Writer)
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, '6', when); // (as per E/A and TI Writer)
 				break;
 			case SWT.PAGE_DOWN:
-				keyboardState.setKey(pressed, false, fctnShifted, '4', when); // (as per E/A and TI Writer)
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, '4', when); // (as per E/A and TI Writer)
 				break;
 
 			case SWT.HOME:
-				keyboardState.setKey(pressed, false, fctnShifted, '5', when);		// BEGIN
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, '5', when);		// BEGIN
 				break;
 			case SWT.END:
-				keyboardState.setKey(pressed, false, fctnShifted, '0', when);		// Fctn-0
+				keyboardState.setKey(realKey, pressed, false, fctnShifted, '0', when);		// Fctn-0
 				break;
 				
 

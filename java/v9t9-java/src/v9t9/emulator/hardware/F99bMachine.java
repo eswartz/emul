@@ -14,7 +14,7 @@ public class F99bMachine extends Machine {
 
 	public F99bMachine(MachineModel machineModel) {
 		super(machineModel);
-		keyboardState.setPasteKeyDelay(0);
+		keyboardState.setPasteKeyDelay(1);
 	}
 
 	@Override
@@ -88,8 +88,9 @@ public class F99bMachine extends Machine {
 		super.keyStateChanged();
 		if (keyboardState.anyKeyPressed()) {
 			CruAccess cru = getCpu().getCruAccess();
-			if (cru instanceof BaseCruAccess)
+			if (cru instanceof BaseCruAccess) {
 				cru.triggerInterrupt(CpuF99b.INT_KBD);
+			}
 		}
 	}
 

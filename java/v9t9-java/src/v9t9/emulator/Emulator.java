@@ -118,7 +118,7 @@ public class Emulator {
 	        //Executor.settingDumpFullInstructions.setBoolean(true);
     	}
         
-        if (true) {
+        if (false) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);

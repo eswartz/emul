@@ -612,8 +612,6 @@ abstract public class Machine {
 
 	/** Called when keyboardState changes */
 	public void keyStateChanged() {
-		while (keyboardState.keyPending())
-			keyboardState.nextKey();
 	}
 }
 

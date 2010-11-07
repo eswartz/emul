@@ -6,16 +6,79 @@
  */
 package v9t9.keyboard;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.common.Machine;
 
+/**
+ * This class tracks the state of the keyboard as exposed to the 99/4A CRU, in a
+ * matrix of bits addressed by column and row.
+ * 
+ * There are two challenges:
+ * 
+ * 1) A modern PC keyboard has many more keys than the 99/4A did. While someone
+ * can press Alt+R to imitate Fctn-R to enter '[', he can also directly press
+ * '[' in a single keypress. Thus, in some cases, one keypress must set multiple
+ * bits, one "real" key and one "fake" shift key.
+ * 
+ * One particular aspect is arrow keys.  When, for example, Left Arrow is
+ * held down (Fctn-S) and then Right-Arrow is pressed (Fctn-D), then 
+ * a release of Left-Arrow should not reset the Fctn key until Right-Arrow
+ * is also released.
+ * 
+ * At the same time, real shift keys may be pressed. So we cannot get confused
+ * if the user presses, e.g., '{' via Shift+R. This should not, if possible, be
+ * exposed as "Fctn+Shift+R" but just as "Fctn-R". And of course, once '[' or
+ * '{' is released on the PC, the "fake" shift keys should be released unless
+ * the "real" shift or Alt key is still held down.
+ * 
+ * 
+ * 
+ * 2) Modern OSes expose keypresses via interrupts with "on" and "off" states.
+ * And the host is much faster than the older computers, so it's highly likely
+ * that the PC user can quickly press and release a key, and the emulated
+ * computer may not even see it!
+ * 
+ * This is mainly due to the issues of emulating the system down to the lowest
+ * levels. In the "real" 99/4A computer, the keyboard is scanned only at known
+ * times, and when a keypress is detected, the keyboard scanning routine will
+ * enter a delay loop to avoid "keyboard debounce". But this loop, interleaved
+ * with the real host computer, can conspire to make a lot of keypresses so
+ * unnoticed.
+ * 
+ * Also, again, since the host publishes discrete events for each key press,
+ * "rollover" doesn't work quite the same way. When typing quickly, several
+ * key-press events can happen at once and "pile up" before the corresponding
+ * key-release events arrive. On the emulated keyboard, though, such pile- up
+ * will set the logical OR of the bits for those keys, and will either be
+ * detected as "no key" or detected as only one or the other key.
+ * 
+ * Finally, the host (esp. under AWT) may send key-press AND key-release events
+ * when repeating a key! When this sequence is interleaved with the emulated
+ * keyscan routine, the frequencies may alias each other, and the keyscan
+ * routine may see the key during the short time it is "released", even when
+ * held down continuously on the host, leading to dropped keys, where the
+ * keyboard appears to "choke" between a long series of repeated keys.
+ * 
+ * @author ejs
+ * 
+ */
 @SuppressWarnings("unused")
 public class KeyboardState {
+	public static boolean DEBUG = false;
+	
     /* Masks, corresponding to column 0 */
     public static final byte SHIFT = 0x20;
     public static final byte FCTN = 0x10;
@@ -40,6 +103,9 @@ public class KeyboardState {
     /** 'real' shift keys being held down, as opposed to those being synthesized */
     private byte realshift;
     
+    //private Map<Integer, Pair<Long, Set<Integer>>> realKeyMap = new HashMap<Integer, Pair<Long, Set<Integer>>>();
+    private Queue<List<KeyDelta>> queuedKeys = new LinkedList<List<KeyDelta>>();
+    
 	private byte[] crukeyboardmap = new byte[8];
 	private boolean lastAlphaLock;
 	private byte[] lastcrukeyboardmap = new byte[8];
@@ -50,12 +116,13 @@ public class KeyboardState {
 
 	
 	//protected Timer pasteTimer;
-	protected Runnable pasteTask;
+	protected PasteTask pasteTask;
 	private boolean pasteNext;
 	private int pasteKeyDelay = 20;
+	private boolean prevWasBlank;
+	private long lastChangeTime;
+	private ArrayList<KeyDelta> currentGroup = null;
 
-	private Queue<KeyDelta> queuedKeys = new LinkedList<KeyDelta>();
-	
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
         which should be faked. */
@@ -87,6 +154,7 @@ public class KeyboardState {
     };
 	//private final Cpu cpu;
 	//private long lastAbortTime;
+	private static final long TIMEOUT = 50;
 
     /*	This macro tells us whether an ASCII code has a direct mapping
 	to a 9901 keyboard matrix location (stored in latinto9901[]).
@@ -110,6 +178,7 @@ public class KeyboardState {
     }
     
     public synchronized void resetKeyboard() {
+    	queuedKeys.clear();
         Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
         Arrays.fill(lastcrukeyboardmap, 0, 6, (byte)0);
         Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
@@ -136,10 +205,10 @@ public class KeyboardState {
      * @param ch
      * @return true if we could represent it as ASCII
      */
-    public synchronized boolean postCharacter(Machine machine, boolean pressed, boolean synthetic, byte shift, char ch, long when) {
-    	//System.out.println("post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
+    public synchronized boolean postCharacter(Machine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when) {
+    	if (DEBUG) System.out.println("post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
     	if (isAsciiDirectKey(ch)) {
-    		setKey(pressed, synthetic, shift, ch, when);
+    		setKey(realKey, pressed, synthetic, shift, ch, when);
     		return true;
     	}
     	
@@ -149,128 +218,128 @@ public class KeyboardState {
 		switch (ch) {
 		
 		case 8:
-			setKey(pressed, synthetic, ctrlShifted, 'H', when);	/* BKSP */
+			setKey(realKey, pressed, synthetic, ctrlShifted, 'H', when);	/* BKSP */
 			break;
 		case 9:
-			setKey(pressed, synthetic, ctrlShifted, 'I', when);	/* TAB */
+			setKey(realKey, pressed, synthetic, ctrlShifted, 'I', when);	/* TAB */
 			break;
 			
 		case 13:
-			setKey(pressed, synthetic, (byte)0, '\r', when);
+			setKey(realKey, pressed, synthetic, (byte)0, '\r', when);
 			break;
 			
 			// shifted keys
 		case '!':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '1', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '1', when);
 			break;
 		case '@':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '2', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '2', when);
 			break;
 		case '#':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '3', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '3', when);
 			break;
 		case '$':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '4', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '4', when);
 			break;
 		case '%':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '5', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '5', when);
 			break;
 		case '^':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '6', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '6', when);
 			break;
 		case '&':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '7', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '7', when);
 			break;
 		case '*':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '8', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '8', when);
 			break;
 		case '(':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '9', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '9', when);
 			break;
 		case ')':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '0', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '0', when);
 			break;
 		case '+':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '=', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '=', when);
 			break;
 		case '<':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ',', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, ',', when);
 			break;
 		case '>':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '.', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '.', when);
 			break;
 		case ':':
-			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ';', when);
+			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, ';', when);
 			break;
 			
 			// faked keys
 		case '`':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'W'))
-				setKey(pressed, synthetic, fctnShifted, 'C', when);	/* ` */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'C', when);	/* ` */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'W', when);	/* ~ */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'W', when);	/* ~ */
 			break;
 		case '~':
-			setKey(pressed, synthetic, fctnShifted, 'W', when);
+			setKey(realKey, pressed, synthetic, fctnShifted, 'W', when);
 			break;
 		case '-':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'U'))
-				setKey(pressed, synthetic, KeyboardState.SHIFT, '/', when);	/* - */
+				setKey(realKey, pressed, synthetic, KeyboardState.SHIFT, '/', when);	/* - */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'U', when);	/* _ */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'U', when);	/* _ */
 			break;
 		case '_':
-			setKey(pressed, synthetic, fctnShifted, 'U', when);
+			setKey(realKey, pressed, synthetic, fctnShifted, 'U', when);
 			break;
 		case '[':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'F'))
-				setKey(pressed, synthetic, fctnShifted, 'R', when);	/* [ */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'R', when);	/* [ */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'F', when);	/* { */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'F', when);	/* { */
 			break;
 		case '{':
-			setKey(pressed, synthetic, fctnShifted, 'F', when);
+			setKey(realKey, pressed, synthetic, fctnShifted, 'F', when);
 			break;
 		case ']':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'G'))
-				setKey(pressed, synthetic, fctnShifted, 'T', when);	/* ] */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'T', when);	/* ] */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'G', when);	/* } */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'G', when);	/* } */
 			break;
 		case '}':
-			setKey(pressed, synthetic, fctnShifted, 'G', when);
+			setKey(realKey, pressed, synthetic, fctnShifted, 'G', when);
 			break;
 			
 		case '\'':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'P'))
-				setKey(pressed, synthetic, fctnShifted, 'O', when);	/* ' */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'O', when);	/* ' */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'P', when);	/* " */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'P', when);	/* " */
 			break;
 		case '"':
-			setKey(pressed, synthetic, fctnShifted, 'P', when);
+			setKey(realKey, pressed, synthetic, fctnShifted, 'P', when);
 			break;
 		case '/':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'I'))
-				setKey(pressed, synthetic, (byte)0, '/', when);	/* / */
+				setKey(realKey, pressed, synthetic, (byte)0, '/', when);	/* / */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'I', when);	/* ? */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'I', when);	/* ? */
 			break;
 		case '?':
-			setKey(pressed, synthetic, fctnShifted, 'I', when);
+			setKey(realKey, pressed, synthetic, fctnShifted, 'I', when);
 			break;
 		case '\\':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'A'))
-				setKey(pressed, synthetic, fctnShifted, 'Z', when);	/* \\ */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'Z', when);	/* \\ */
 			else
-				setKey(pressed, synthetic, fctnShifted, 'A', when);	/* | */
+				setKey(realKey, pressed, synthetic, fctnShifted, 'A', when);	/* | */
 			break;
 		case '|':
-			setKey(pressed, synthetic, fctnShifted, 'A', when);
+			setKey(realKey, pressed, synthetic, fctnShifted, 'A', when);
 			break;
 			
     	case 127:
-    		setKey(pressed, synthetic, fctnShifted, '1', when);	
+    		setKey(realKey, pressed, synthetic, fctnShifted, '1', when);	
 			break;
 		default:
 			return false;
@@ -291,50 +360,286 @@ public class KeyboardState {
 		machine.keyStateChanged();
 	}
 
+	/**
+	 * @author ejs
+	 *
+	 */
+	private final class PasteTask implements Runnable {
+		/**
+		 * 
+		 */
+		private final char[] chs;
+		int index = 0;
+		byte prevShift = 0;
+		char prevCh = 0;
+		int runDelay;
+
+		/**
+		 * @param chs
+		 */
+		private PasteTask(char[] chs) {
+			this.chs = chs;
+		}
+
+		public void run() {
+			if (!machine.isAlive())
+				cancelPaste();
+			
+			if (Machine.settingPauseMachine.getBoolean())
+				return;
+			
+			if (runDelay > 0) {
+				runDelay--;
+				return;
+			} else {
+				runDelay = pasteKeyDelay;
+			}
+			if (index <= chs.length) {
+				// only send chars as fast as the machine is reading
+				//if (!wasKeyboardProbed())
+				//	return;
+				
+				long now = System.currentTimeMillis();
+				if (prevCh != 0) {
+					postCharacter(machine, prevCh, false, true, prevShift, prevCh, now);
+				}
+				
+				if (index < chs.length) {
+					char ch = chs[index];
+					byte shift = 0;
+
+					if (Character.isLowerCase(ch)) {
+			    		ch = Character.toUpperCase(ch);
+			    		shift &= ~ KeyboardState.SHIFT;
+			    	} else if (Character.isUpperCase(ch)) {
+			    		shift |= KeyboardState.SHIFT;
+			    	}
+			    	
+					//System.out.println("ch="+ch+"; prevCh="+prevCh);
+					if (ch == prevCh) {
+						postCharacter(machine, prevCh, false, true, shift, ch, now);
+						prevCh = 0;
+						return;
+						/*
+						if (successiveCharTimeout == 0) {
+							// need to inject a spacer to distinguish 
+							// successive repeated characters
+							resetKeyboard();
+							prevCh = 0;
+							successiveCharTimeout = 2;
+							return;
+						} else if (--successiveCharTimeout > 0) {
+							return;
+						}
+						*/
+					}
+					
+					index++;
+					
+					postCharacter(machine, ch, true, true, shift, ch, now);
+					
+					
+					prevCh = ch;
+					prevShift = shift;
+				} else {
+					cancelPaste();
+				}
+			}
+		}
+	}
+
+
 	public static class KeyDelta {
 		@Override
 		public String toString() {
-			return "KeyDelta [key=" + key + ", onoff=" + onoff + ", shift="
-					+ shift + ", synthetic=" + synthetic + ", time=" + time
+			return "KeyDelta [key=" + (key > 0 ? (char) key : "---") + ", onoff=" + onoff + ", shift="
+					+ shift + ", isShift="+isShift+", synthetic=" + synthetic + ", time=" + time
 					+ "]";
 		}
 		int key;
 		int shift;
 		boolean synthetic;
 		boolean onoff;
+		boolean isShift;
 		public long time;
-		public KeyDelta(long time, int key, int shift, boolean synthetic, boolean onoff) {
+		public int realKey;
+		public KeyDelta(long time, int realKey, int key, int shift, boolean synthetic, boolean onoff) {
 			this.time = time;
+			this.realKey = realKey;
 			this.key = key;
 			this.shift = shift;
 			this.synthetic = synthetic;
 			this.onoff = onoff;
+			this.isShift = (shift != 0) && (key == 0);
+		}
+		/**
+		 * @param currentGroup
+		 * @return
+		 */
+		public boolean groupsWith(List<KeyDelta> currentGroup) {
+			boolean anyKeys = false;
+			boolean anyOn = false;
+			long oldestTime = 0;
+			for (KeyDelta delta : currentGroup) {
+				if (oldestTime == 0) {
+					oldestTime = delta.time;
+				} else if (false && oldestTime + 100 < time){
+					return false;
+				} 
+				if (isShift) {
+					continue;
+				}
+				else if (delta.key != key && delta.onoff && onoff) {
+					return false;
+				}
+				else if (delta.key == key && (delta.onoff != onoff)) {
+					return false;
+				}
+				if (DEBUG) System.out.println("... keeping " + delta + " with " + this);
+			}
+			return true;
 		}
 		
 	}
 	/**
      * Set a key in the map.
-     * @param onoff true: pressed, false: released
+	 * @param realKey TODO
+	 * @param onoff true: pressed, false: released
 	 * @param synthetic if true, the shift + key are sent together from a synthetic
      * event; else, shifts are sent in separate events from keys, so track them
 	 * @param shift FCTN, SHIFT, CTRL mask
 	 * @param key normalized ASCII key: no lowercase or shifted characters
-	 * @param when TODO
+	 * @param when time in ms when key was detected
      */
-    public synchronized void setKey(boolean onoff, boolean synthetic, int shift, int key, long when) {
+    public synchronized void setKey(int realKey, boolean onoff, boolean synthetic, int shift, int key, long when) {
         key &= 0xff;
         shift &= 0xff;
 
         long time = when;
-        //if (!onoff)
-        //	time += MAX_KEY_DELAY_MS;
-        queuedKeys.add(new KeyDelta(time, key, shift, synthetic, onoff));
 
+        KeyDelta delta = new KeyDelta(time, realKey, key, shift, synthetic, onoff);
+        if (currentGroup == null) {
+        	currentGroup = new ArrayList<KeyDelta>();
+        } else if (!delta.groupsWith(currentGroup)) {
+        	queuedKeys.add(currentGroup);
+        	currentGroup = new ArrayList<KeyDelta>();
+        }
+        currentGroup.add(delta);
+        /*
+        if (!synthetic) {
+        	shift = trackRealShiftKeys(onoff, shift, key);
+	
+	        if (key != 0) {
+
+	            Pair<Long, Set<Integer>> keyinfo = realKeyMap.get(key);
+	            
+	            if (keyinfo == null && onoff) {
+	            	keyinfo = new Pair<Long, Set<Integer>>(time + TIMEOUT, new HashSet<Integer>());
+	            	realKeyMap.put(key, keyinfo);
+	            }
+	            if (onoff) {
+	            	keyinfo.second.add(realKey);
+	            	keyinfo.first = time + TIMEOUT;
+	            } else if (keyinfo != null) {
+	            	keyinfo.second.remove(realKey);
+	            }
+	            
+	            // See if this is the last key released.  If so, let it linger a little while.
+	            // But if another key is pressed, keep only the new key.
+	            
+	            
+	        } else {
+	            if ((shift & SHIFT) != 0)
+	                realshift = (byte) ((realshift & ~SHIFT) | (onoff ? SHIFT : 0));
+	            if ((shift & CTRL) != 0)
+	                realshift = (byte) ((realshift & ~CTRL) | (onoff ? CTRL : 0));
+	            if ((shift & FCTN) != 0)
+	                realshift = (byte) ((realshift & ~FCTN) | (onoff ? FCTN : 0));
+	        }
+	        
+	        Arrays.fill(crukeyboardmap, (byte) 0);
+	        Set<Entry<Integer, Pair<Long, Set<Integer>>>> currentSet = new HashSet<Entry<Integer,Pair<Long,Set<Integer>>>>(realKeyMap.entrySet());
+	        long now = System.currentTimeMillis();
+	        
+	        for (Map.Entry<Integer, Pair<Long, Set<Integer>>> keyEntry : currentSet) {
+	        	if (keyEntry.getValue().second.isEmpty() && keyEntry.getValue().first < now) {
+	        		System.out.println("removing: " + keyEntry);
+	        		realKeyMap.remove(keyEntry.getKey());
+	        	} else {
+	        		System.out.println("setting: " + keyEntry);
+	        		changeKeyboardMatrix(true, keyEntry.getKey());
+	        	}
+	        }
+
+        } else {
+        	changeKeyboardShifts(onoff, shift);
+        	changeKeyboardMatrix(onoff, key);
+        }
+        */
+        
         fireListeners();
     }
     
+	public synchronized void pushQueuedKey() {
+		long now = System.currentTimeMillis();
+		if (queuedKeys.isEmpty()) {
+			if (lastChangeTime + TIMEOUT < now)
+				Arrays.fill(crukeyboardmap, (byte) 0);
+			else
+				return;
+		} else {
+			Arrays.fill(crukeyboardmap, (byte) 0);
+			if (DEBUG) System.out.println("===========");
+			List<KeyDelta> group = queuedKeys.remove();
+			byte shift = 0;
+			for (KeyDelta delta : group) {
+				applyKeyDelta(delta);
+				if (delta.onoff) shift |= delta.shift;
+			}
+			changeKeyboardShifts(true, shift);
+		}
+		/*
+		if (lastChangeTime + 250 < now) {
+			boolean allShifts = true;
+			for (KeyDelta delta : queuedKeys) {
+				if (!delta.isShift) {
+					allShifts = false;
+					break;
+				}
+			}
+			if (allShifts)
+				return;
+		}
+		
+		System.out.println("===========");
+		boolean any = false;
+		boolean isOn = false;
+		while (!queuedKeys.isEmpty()) {
+			KeyDelta delta = queuedKeys.peek();
+			if (any && (delta.isShift && isOn != delta.onoff))
+				break;
+			queuedKeys.poll();
+			applyKeyDelta(delta);
+			isOn = delta.onoff;
+			any = true;
+			if (delta.time + 100 >= now)
+				break;
+		}
+		*/
+		
+		lastChangeTime = now;
+		System.arraycopy(crukeyboardmap, 0, lastcrukeyboardmap, 0, 8);
+		boolean noKey = !anyKeyPressed();
+		if (!noKey || !prevWasBlank) {
+			if (DEBUG) { for (int i=0;i<8;i++) System.out.print(HexUtils.toHex2(crukeyboardmap[i])+" "); System.out.println(); }
+			prevWasBlank = noKey;
+		}
+		lastAlphaLock = alphaLock;
+	}
+
+
     private synchronized void applyKeyDelta(KeyDelta delta) {
-    	//System.out.println(delta);
+    	if (DEBUG) System.out.println(delta);
     	
     	boolean onoff = delta.onoff;
     	boolean synthetic = delta.synthetic;
@@ -574,10 +879,6 @@ public class KeyboardState {
 		return lastAlphaLock;
 	}
 
-	public synchronized byte[] getKeyboardMap() {
-		return crukeyboardmap;
-	}
-
 	public synchronized int getKeyboardRow(int column) {
 		probedColumns |= (1 << column);
 		return lastcrukeyboardmap[column];
@@ -589,21 +890,14 @@ public class KeyboardState {
 
 	public synchronized void resetProbe() {
 		probedColumns = 0;
-		if (isPasting() && pasteNext)
+		if (isPasting())
 			pasteTask.run();
-		if (!isPasting())
-			pushQueuedKey();
+		pushQueuedKey();
 		pasteNext = true;
 	}
 	
 	public synchronized void setProbe() {
 		pasteNext = true;
-	}
-
-	public synchronized void pushQueuedKey() {
-		System.arraycopy(crukeyboardmap, 0, lastcrukeyboardmap, 0, 8);
-		//for (int i=0;i<8;i++) System.out.print(Utils.toHex2(crukeyboardmap[i])+" "); System.out.println();
-		lastAlphaLock = alphaLock;
 	}
 
 	public void cancelPaste() {
@@ -623,138 +917,18 @@ public class KeyboardState {
 		final char[] chs = contents.toCharArray();
 		
 		// this runnable is manually executed, not scheduled
-		pasteTask = new Runnable() {
-			int index = 0;
-			byte prevShift = 0;
-			char prevCh = 0;
-			int runDelay;
-			public void run() {
-				if (!machine.isAlive())
-					cancelPaste();
-				
-				if (Machine.settingPauseMachine.getBoolean())
-					return;
-				
-				if (runDelay > 0) {
-					runDelay--;
-					return;
-				} else {
-					runDelay = pasteKeyDelay;
-				}
-				if (index <= chs.length) {
-					// only send chars as fast as the machine is reading
-					//if (!wasKeyboardProbed())
-					//	return;
-					
-					long now = System.currentTimeMillis();
-					if (prevCh != 0) {
-						postCharacter(machine, false, true, prevShift, prevCh, now);
-					}
-					
-					if (index < chs.length) {
-						char ch = chs[index];
-						byte shift = 0;
-
-						if (Character.isLowerCase(ch)) {
-				    		ch = Character.toUpperCase(ch);
-				    		shift &= ~ KeyboardState.SHIFT;
-				    	} else if (Character.isUpperCase(ch)) {
-				    		shift |= KeyboardState.SHIFT;
-				    	}
-				    	
-						//System.out.println("ch="+ch+"; prevCh="+prevCh);
-						if (ch == prevCh) {
-							postCharacter(machine, false, true, shift, ch, now);
-							prevCh = 0;
-							return;
-							/*
-							if (successiveCharTimeout == 0) {
-								// need to inject a spacer to distinguish 
-								// successive repeated characters
-								resetKeyboard();
-								prevCh = 0;
-								successiveCharTimeout = 2;
-								return;
-							} else if (--successiveCharTimeout > 0) {
-								return;
-							}
-							*/
-						}
-						
-						index++;
-						
-						postCharacter(machine, true, true, shift, ch, now);
-						
-						
-						prevCh = ch;
-						prevShift = shift;
-					} else {
-						cancelPaste();
-					}
-				}
-			}
-			
-		};
+		pasteTask = new PasteTask(chs);
 	}
 
 	public boolean isPasting() {
 		return pasteTask != null;
 	}
 
-	/**
-	 * 
-	 */
-	public synchronized void nextKey() {
-		if (isPasting()) {
-			pushQueuedKey();
-		} else  {
-			long now = System.currentTimeMillis();
-			pushQueuedKey();
-			while (!queuedKeys.isEmpty()) {
-				KeyDelta delta = queuedKeys.peek();
-				if (now >= delta.time) {
-					queuedKeys.remove();
-					applyKeyDelta(delta);
-					break;
-				} else {
-					break;
-				}
-				//if (delta.time < now + MAX_KEY_DELAY_MS
-				//		|| (delta.onoff && !queuedKeys.isEmpty() && !queuedKeys.peek().onoff))
-				//	break;
-			}
-			
-			/*
-			for (int i=0;i<8;i++) System.out.print(
-					HexUtils.toHex2(crukeyboardmap[i])+" "); 
-			System.out.println();
-			*/
-		}
-	}
 
-	/**
-	 * 
-	 */
-	public synchronized void checkForPendingKeys() {
-		if (!queuedKeys.isEmpty()) {
-			nextKey();
-			fireListeners();
-		}
-	}
-
-	/**
-	 * 
-	 */
-	public synchronized void notifyActive() {
-		boolean any = anyKeyPressed();
-		if (queuedKeys.isEmpty() && any)
-			fireListeners();
-	}
-
-	public synchronized boolean keyPending() {
-		return !queuedKeys.isEmpty();
-	}
 	public boolean anyKeyPressed() {
+		if (!queuedKeys.isEmpty())
+			return true;
+		
 		boolean any = false;
 		any = (realshift != 0);
 		if (!any) {

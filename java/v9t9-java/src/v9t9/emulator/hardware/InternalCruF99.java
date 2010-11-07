@@ -50,10 +50,6 @@ public class InternalCruF99 extends BaseCruAccess {
 					acknowledgeInterrupt(i);
 					if ((val & (1 << CpuF99b.INT_KBD)) == 0) {
 						keyboardState.resetProbe();
-						if (keyboardState.isPasting())
-							keyboardState.pushQueuedKey();
-						else
-							keyboardState.checkForPendingKeys();
 					}
 				}
 			break;
@@ -87,7 +83,6 @@ public class InternalCruF99 extends BaseCruAccess {
 		
 		case KBDA:
 			keyboardState.setProbe();
-			
 			return (byte) (keyboardState.getAlpha() ? 1 : 0);
 		}
 		

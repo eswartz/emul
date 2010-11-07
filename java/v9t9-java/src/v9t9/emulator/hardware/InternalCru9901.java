@@ -116,8 +116,6 @@ public class InternalCru9901 extends BaseCruAccess {
 		public int write(int addr, int data, int num) {
 			if (data != 0) {
 				keyboardState.resetProbe();
-				if (keyboardState.isPasting())
-					keyboardState.pushQueuedKey();
 			}
 			alphaLockMask = data != 0;
 			return 0;
