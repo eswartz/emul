@@ -6,9 +6,10 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Wind River Systems - initial API and implementation
+ *     Wind River Systems            - initial API and implementation
  *     Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
- *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Uwe Stieber (Wind River)      - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Intel Corporation             - [329654] Make all sub services operate against TCF connector service
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
@@ -30,7 +31,7 @@ import org.eclipse.rse.services.clientserver.processes.IHostProcessFilter;
 import org.eclipse.rse.services.clientserver.processes.ISystemProcessRemoteConstants;
 import org.eclipse.rse.services.processes.AbstractProcessService;
 import org.eclipse.rse.services.processes.IProcessService;
-import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
+import org.eclipse.tm.internal.tcf.rse.ITCFService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 import org.eclipse.tm.internal.tcf.rse.TCFRSETask;
@@ -48,7 +49,7 @@ public class TCFProcessService extends AbstractProcessService implements IProces
 
     public TCFProcessService(IHost host) {
         connector = (TCFConnectorService)TCFConnectorServiceManager
-            .getInstance().getConnectorService(host, ITCFSubSystem.class);
+            .getInstance().getConnectorService(host, ITCFService.class);
         root = new TCFProcessResource(this, null, null, null);
     }
 

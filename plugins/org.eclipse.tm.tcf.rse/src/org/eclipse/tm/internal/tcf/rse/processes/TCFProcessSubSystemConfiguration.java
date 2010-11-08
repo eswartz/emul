@@ -6,8 +6,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Wind River Systems - initial API and implementation
+ *     Wind River Systems       - initial API and implementation
  *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Intel Corporation        - [329654] Make all sub services operate against TCF connector service   
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
@@ -18,7 +19,7 @@ import org.eclipse.rse.services.processes.IProcessService;
 import org.eclipse.rse.subsystems.processes.core.subsystem.IHostProcessToRemoteProcessAdapter;
 import org.eclipse.rse.subsystems.processes.servicesubsystem.ProcessServiceSubSystem;
 import org.eclipse.rse.subsystems.processes.servicesubsystem.ProcessServiceSubSystemConfiguration;
-import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
+import org.eclipse.tm.internal.tcf.rse.ITCFService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 
@@ -27,9 +28,8 @@ public class TCFProcessSubSystemConfiguration extends ProcessServiceSubSystemCon
     private final TCFProcessAdapter process_adapter = new TCFProcessAdapter();
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public Class getServiceImplType() {
-        return TCFProcessService.class;
+    public Class<ITCFService> getServiceImplType() {
+        return ITCFService.class;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class TCFProcessSubSystemConfiguration extends ProcessServiceSubSystemCon
     @Override
     public IConnectorService getConnectorService(IHost host) {
         return TCFConnectorServiceManager.getInstance()
-            .getConnectorService(host, ITCFSubSystem.class);
+            .getConnectorService(host, getServiceImplType());
     }
 
     @Override

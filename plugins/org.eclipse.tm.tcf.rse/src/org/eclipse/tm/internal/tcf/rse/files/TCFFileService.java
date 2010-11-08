@@ -12,6 +12,7 @@
  *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *     Uwe Stieber (Wind River) - [274277] The TCF file service subsystem implementation is not updating the progress monitor
  *     Intel Corporation        - [326489] Make recursive copy/delete available (delete/copy a folder contains files)
+ *     Intel Corporation        - [329654] Make all sub services operate against TCF connector service
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -44,7 +45,7 @@ import org.eclipse.rse.services.clientserver.messages.SystemOperationFailedExcep
 import org.eclipse.rse.services.files.AbstractFileService;
 import org.eclipse.rse.services.files.IHostFile;
 import org.eclipse.tm.internal.tcf.rse.Activator;
-import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
+import org.eclipse.tm.internal.tcf.rse.ITCFService;
 import org.eclipse.tm.internal.tcf.rse.Messages;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
@@ -96,7 +97,7 @@ public class TCFFileService extends AbstractFileService {
 
     public TCFFileService(IHost host) {
         connector = (TCFConnectorService)TCFConnectorServiceManager
-            .getInstance().getConnectorService(host, ITCFSubSystem.class);
+            .getInstance().getConnectorService(host, ITCFService.class);
     }
 
     @Override
