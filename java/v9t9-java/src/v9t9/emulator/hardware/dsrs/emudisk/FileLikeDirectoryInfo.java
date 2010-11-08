@@ -16,7 +16,7 @@ import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.files.NativeTextFile;
 import v9t9.engine.memory.ByteMemoryAccess;
 
-class FileLikeDirectoryInfo extends DirectoryInfo {
+public class FileLikeDirectoryInfo extends DirectoryInfo {
 
 	private int index;
 	private long totalSectors;

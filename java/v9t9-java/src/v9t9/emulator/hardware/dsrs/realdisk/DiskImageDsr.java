@@ -688,7 +688,7 @@ public class DiskImageDsr implements DsrHandler9900 {
 			SettingProperty setting = diskSettingsMap.get(name);
 			if (setting == null)
 				return null;
-			info = createDiskImage(name, new File(setting.getString()));
+			info = DiskImageFactory.createDiskImage(name, new File(setting.getString()));
 			disks.put(name, info);
 		}
 		return disks.get(name);
@@ -749,31 +749,12 @@ public class DiskImageDsr implements DsrHandler9900 {
 						fdc.setImage(null);
 					
 				}
-				image = createDiskImage(setting.getName(), new File(setting.getString()));
+				image = DiskImageFactory.createDiskImage(setting.getName(), new File(setting.getString()));
 				disks.put(setting.getName(), image);
 						
 				//setting.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 		});
-	}
-	
-	/**
-	 * @param name
-	 * @param file
-	 * @return
-	 */
-	protected BaseDiskImage createDiskImage(String name, File file) {
-		if (file.exists()) {
-			if (V9t9TrackDiskImage.isTrackImage(file))
-				return new V9t9TrackDiskImage(name, file);
-			
-			if (RawTrackDiskImage.isTrackImage(file))
-				return new RawTrackDiskImage(name, file);
-		}
-		if (file.getName().toLowerCase().endsWith(".trk"))
-			return new V9t9TrackDiskImage(name, file);
-		else
-			return new SectorDiskImage(name, file);
 	}
 	
 	private CruWriter cruwRealDiskMotor = new CruWriter() {

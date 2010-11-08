@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.coffee.core.properties.IPersistable;
@@ -16,6 +17,8 @@ import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.DSKheader;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.FDCStatus;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.IdMarker;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.StatusBit;
+import v9t9.engine.files.IFDRFlags;
+import v9t9.engine.files.V9t9FDR;
 
 
 /**
@@ -335,7 +338,7 @@ public abstract class BaseDiskImage implements IPersistable {
 			int start, int buflen) {
 		if (currentMarker != null) {
 			try {
-				System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
+				System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, start, buflen);
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.err.println("Possible bogus sector size: " + buflen);
 			}
@@ -343,4 +346,58 @@ public abstract class BaseDiskImage implements IPersistable {
 		}
 	}
 
+	public void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
+		int secsPerTrack = 9;
+		byte track = (byte) (sector / secsPerTrack);
+		byte side = (byte) (track > 40 ? 1 : 0);
+		byte tracksec = (byte) (sector % secsPerTrack);
+		seekToCurrentTrack(track, side);
+		List<IdMarker> markers = getTrackMarkers();
+		for (IdMarker marker : markers) {
+			if (marker.sectorid == tracksec && marker.trackid == track) {
+				readSectorData(marker, rwBuffer, start, buflen);
+				return;
+			}
+		}
+		throw new IOException("sector " + sector + " not found on track " + track + ", side " + side);
+	}
+
+	/**
+	 * @return
+	 * @throws IOException 
+	 */
+	public List<CatalogEntry> readCatalog() throws IOException {
+		List<CatalogEntry> entries = new ArrayList<CatalogEntry>();
+		byte[] sec1 = new byte[256];
+		byte[] fdrSec = new byte[256];
+		
+		readSector(1, sec1, 0, 256);
+		for (int ent = 0; ent < 256; ent+=2) {
+			int sec = ((sec1[ent] << 8) | (sec1[ent+1] & 0xff)) & 0xffff;
+			if (sec == 0)
+				break;
+			try {
+				readSector(sec, fdrSec, 0, 256);
+				V9t9FDR fdr = V9t9FDR.createFDR(fdrSec, 0);
+				String type = "???";
+				if ((fdr.getFlags() & IFDRFlags.ff_program) != 0)
+					type = "PROGRAM";
+				else {
+					if ((fdr.getFlags() & IFDRFlags.ff_internal) != 0)
+						type = "INT";
+					else
+						type = "DIS";
+					if ((fdr.getFlags() & IFDRFlags.ff_variable) != 0)
+						type += "/VAR";
+					else
+						type += "/FIX";
+				}
+				int sz = fdr.getSectorsUsed() + 1;
+				entries.add(new CatalogEntry(fdr.getFileName(), sz, type, fdr.getRecordLength()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return entries;
+	}
 }

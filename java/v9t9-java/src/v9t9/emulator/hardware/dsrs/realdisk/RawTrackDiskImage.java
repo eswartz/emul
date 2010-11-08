@@ -86,8 +86,9 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 	 */
 	private static byte[] readSector0(RandomAccessFile handle) throws IOException {
 		int ch;
+		int count = 0;
 		handle.seek(0);
-		while ((ch = handle.read()) >= 0) {
+		while ((ch = handle.read()) >= 0 && count < 18) {
 			if (ch == 0xfe 		// ID
 			&& handle.read() == 0 	// track
 			&& handle.read() == 0	// ...
@@ -98,7 +99,9 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 				byte[] sector = new byte[256];
 				handle.read(sector);
 				
-				return sector;
+				if (new String(sector).contains("DSK"))
+					return sector;
+				count++;
 			}
 		}	
 		return null;

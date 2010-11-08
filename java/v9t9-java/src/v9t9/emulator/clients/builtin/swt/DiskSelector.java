@@ -4,6 +4,7 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,9 +14,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -24,15 +33,19 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
@@ -41,6 +54,9 @@ import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.IDsrManager;
+import v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage;
+import v9t9.emulator.hardware.dsrs.realdisk.CatalogEntry;
+import v9t9.emulator.hardware.dsrs.realdisk.DiskImageFactory;
 
 /**
  * Select and set up disks
@@ -48,7 +64,35 @@ import v9t9.emulator.hardware.dsrs.IDsrManager;
  *
  */
 public class DiskSelector extends Composite {
-	
+
+	public static class CatalogLabelProvider extends LabelProvider implements ITableLabelProvider {
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
+		 */
+		public Image getColumnImage(Object element, int columnIndex) {
+			return null;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
+		 */
+		public String getColumnText(Object element, int columnIndex) {
+			CatalogEntry entry = (CatalogEntry) element;
+			switch(columnIndex) {
+			case  0:
+				return entry.fileName;
+			case 1:
+				return "" + entry.secs;
+			case 2:
+				return entry.type;
+			case 3:
+				return entry.type.equals("PROGRAM") ? "" :  "" + entry.recordLength;
+			}
+			return null;
+		}
+		
+	}
 	abstract class SettingEntry extends Composite {
 		protected final SettingProperty setting;
 		private IPropertyListener enableListener;
@@ -108,6 +152,7 @@ public class DiskSelector extends Composite {
 	class DiskEntry extends SettingEntry {
 		private Combo combo;
 		private Button browse;
+		private Button catalog;
 		
 		public DiskEntry(final Composite parent, SettingProperty setting_) {
 			super(parent, setting_, SWT.NONE);
@@ -119,7 +164,7 @@ public class DiskSelector extends Composite {
 		 */
 		@Override
 		protected void createControls(final Composite parent) {
-			GridLayoutFactory.fillDefaults().numColumns(4).applyTo(this);
+			GridLayoutFactory.fillDefaults().numColumns(5).applyTo(this);
 			
 			Label label = new Label(parent, SWT.NONE);
 			label.setText(setting.getLabel() + ": ");
@@ -184,8 +229,99 @@ public class DiskSelector extends Composite {
 					}
 				}
 			});			
+			
+			if (isDiskImage()) {
+				catalog = new Button(parent, SWT.PUSH);
+				GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
+				catalog.setText("Catalog...");
+				catalog.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						if (isDiskImage()) {
+							BaseDiskImage image = DiskImageFactory.createDiskImage(setting.getName(), new File(setting.getString()));
+							try {
+								image.openDiskImage();
+								
+								List<CatalogEntry> entries = image.readCatalog();
+								
+								image.closeDiskImage();
+								
+								showCatalogDialog(setting, entries);
+								
+							} catch (IOException e2) {
+								ErrorDialog.openError(getShell(), "Failed to open", "Could not read catalog for disk image " + setting.getString(), 
+										new Status(IStatus.ERROR, "org.ejs.v9t9", null, e2));
+							}
+						}
+					}
+				});
+			}
 		}
 		
+
+		/**
+		 * @param setting
+		 * @param entries
+		 */
+		protected void showCatalogDialog(final SettingProperty setting,
+				final List<CatalogEntry> entries) {
+			Dialog dialog = new Dialog(getShell()) {
+				/* (non-Javadoc)
+				 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
+				 */
+				@Override
+				protected void configureShell(Shell newShell) {
+					super.configureShell(newShell);
+					newShell.setText("Catalog of " + setting.getName() + " (" + setting.getString() + ")");
+				}
+				/* (non-Javadoc)
+				 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
+				 */
+				@Override
+				protected Point getInitialSize() {
+					return new Point(400, 300);
+				}
+				/* (non-Javadoc)
+				 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
+				 */
+				@Override
+				protected Control createDialogArea(Composite parent) {
+					Composite composite = (Composite) super.createDialogArea(parent);
+					
+					final TableViewer viewer = new TableViewer(composite, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI);
+					viewer.setContentProvider(new ArrayContentProvider());
+					viewer.setLabelProvider(new CatalogLabelProvider());
+
+					Table table = viewer.getTable();
+					table.setHeaderVisible(true);
+					
+					GridDataFactory.fillDefaults().grab(true,true).applyTo(viewer.getControl());
+					
+					TableColumn fileColumn = new TableColumn(table, SWT.LEFT);
+					fileColumn.setText("Filename");
+					TableColumn sizeColumn = new TableColumn(table, SWT.LEFT);
+					sizeColumn.setText("Sectors");
+					TableColumn typeColumn = new TableColumn(table, SWT.LEFT);
+					typeColumn.setText("Type");
+					TableColumn lenColumn = new TableColumn(table, SWT.LEFT);
+					lenColumn.setText("RecLen");
+					
+					viewer.setInput(entries);
+					
+					fileColumn.pack();
+					sizeColumn.pack();
+					typeColumn.pack();
+					lenColumn.pack();
+					///
+					
+					return composite;
+				}
+			};
+			dialog.open();
+
+			
+		}
+
 		private boolean isDiskImage() {
 			return setting.getName().contains("Image");
 		}

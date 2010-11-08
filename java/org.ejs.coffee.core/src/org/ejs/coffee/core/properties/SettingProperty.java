@@ -58,7 +58,7 @@ public class SettingProperty extends AbstractProperty {
 	public void setValue(Object value) {
 		boolean incompatible = value != null && !type.isAssignableFrom(value.getClass());
 		if (value != null && !incompatible) {
-			if (!this.value.equals(value)) {
+			if (this.value == null || !this.value.equals(value)) {
 				this.value = value;
 				firePropertyChange();
 			}

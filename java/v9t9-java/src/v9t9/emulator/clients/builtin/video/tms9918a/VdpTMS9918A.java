@@ -674,7 +674,7 @@ public class VdpTMS9918A implements VdpHandler {
 				doTick();
         		if (Machine.settingThrottleInterrupts.getBoolean()) {
         			if (throttleCount-- < 0) {
-        				throttleCount = 60;
+        				throttleCount = 6;
         			} else {
         				return;
         			}
@@ -780,7 +780,7 @@ public class VdpTMS9918A implements VdpHandler {
 			if (machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
 	    		if (Machine.settingThrottleInterrupts.getBoolean()) {
 	    			if (throttleCount-- < 0) {
-	    				throttleCount = 60;
+	    				throttleCount = 6;
 	    			} else {
 	    				return;
 	    			}
