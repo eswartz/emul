@@ -8,7 +8,7 @@
  * Contributors:
  *     Wind River Systems       - initial API and implementation
  *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
- *     Intel Corporation        - [329654] Make all sub services operate against TCF connector service   
+ *     Intel Corporation        - [329654] Make all sub services operate against TCF connector service
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
