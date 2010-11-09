@@ -69,6 +69,7 @@ import org.eclipse.debug.ui.contexts.ISuspendTrigger;
 import org.eclipse.debug.ui.contexts.ISuspendTriggerListener;
 import org.eclipse.debug.ui.sourcelookup.CommonSourceNotFoundEditorInput;
 import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -98,6 +99,7 @@ import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IMemoryMap;
@@ -109,6 +111,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
@@ -124,6 +127,37 @@ import org.eclipse.ui.texteditor.ITextEditor;
  */
 public class TCFModel implements IElementContentProvider, IElementLabelProvider, IViewerInputProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay, ISuspendTrigger {
+
+    /**
+     * A dummy editor input to open the disassembly view as editor.
+     */
+    public static class DisassemblyEditorInput implements IEditorInput {
+        static DisassemblyEditorInput INSTANCE = new DisassemblyEditorInput();
+
+        public Object getAdapter(Class adapter) {
+            return null;
+        }
+
+        public boolean exists() {
+            return false;
+        }
+
+        public ImageDescriptor getImageDescriptor() {
+            return null;
+        }
+
+        public String getName() {
+            return "Disassembly";
+        }
+
+        public IPersistableElement getPersistable() {
+            return null;
+        }
+
+        public String getToolTipText() {
+            return "Disassembly";
+        }
+    }
 
     private final TCFLaunch launch;
     private final Display display;
@@ -924,13 +958,31 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     if (error == null && src_ref != null) error = src_ref.error;
                     if (error != null) Activator.log("Error retrieving source mapping for a stack frame", error);
                     ILineNumbers.CodeArea area = src_ref == null ? null : src_ref.area;
-                    displaySource(cnt, page, stack_frame.parent.id, stack_frame.getFrameNo() == 0, area);
+                    if (area == null && getChannel().getRemoteService(IDisassembly.class) != null) {
+                        displayDisassembly(cnt, page);
+                    }
+                    else {
+                        displaySource(cnt, page, stack_frame.parent.id, stack_frame.getFrameNo() == 0, area);
+                    }
                 }
                 else {
                     displaySource(cnt, page, null, false, null);
                 }
             }
         });
+    }
+
+    private void displayDisassembly(final int cnt, final IWorkbenchPage page) {
+        final IEditorInput editor_input = DisassemblyEditorInput.INSTANCE;
+        final String editor_id = "org.eclipse.cdt.dsf.ui.disassembly";
+        if (PlatformUI.getWorkbench().getEditorRegistry().findEditor(editor_id) != null) {
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    if (cnt != display_source_cnt) return;
+                    openEditor(editor_input, editor_id, page);
+                }
+            });
+        }
     }
 
     private void displaySource(final int cnt, final IWorkbenchPage page,
