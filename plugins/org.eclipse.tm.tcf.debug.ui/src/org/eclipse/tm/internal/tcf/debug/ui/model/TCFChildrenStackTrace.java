@@ -89,15 +89,15 @@ public class TCFChildrenStackTrace extends TCFChildren {
 
     @Override
     protected boolean startDataRetrieval() {
-        final HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         TCFDataCache<TCFContextState> state = node.getState();
         if (!state.validate(this)) return false;
         Throwable state_error = state.getError();
         TCFContextState state_data = state.getData();
         if (state_error != null || state_data == null || !state_data.is_suspended) {
-            set(null, state_error, data);
+            set(null, state_error, null);
             return true;
         }
+        final HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         IStackTrace st = node.model.getLaunch().getService(IStackTrace.class);
         if (st == null) {
             addEmulatedTopFrame(data);

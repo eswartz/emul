@@ -62,6 +62,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     private int resumed_cnt;
     private boolean resume_pending;
+    private TCFNode[] last_stack_trace;
 
     private static int seq_cnt;
 
@@ -152,7 +153,12 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         super(parent, id);
         seq_no = seq_cnt++;
         children_exec = new TCFChildrenExecContext(this);
-        children_stack = new TCFChildrenStackTrace(this);
+        children_stack = new TCFChildrenStackTrace(this) {
+            @Override
+            TCFNode[] toArray() {
+                return last_stack_trace = super.toArray();
+            }
+        };
         children_regs = new TCFChildrenRegisters(this);
         children_exps = new TCFChildrenExpressions(this);
         line_info_cache = new LinkedHashMap<BigInteger,TCFSourceRef>() {
@@ -426,7 +432,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            children = ctx != null && ctx.hasState() ? children_stack : children_exec;
+            if (ctx != null && ctx.hasState()) {
+                if (resume_pending && last_stack_trace != null) {
+                    result.setChildCount(last_stack_trace.length);
+                    return true;
+                }
+                children = children_stack;
+            }
+            else {
+                children = children_exec;
+            }
         }
         else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
@@ -454,7 +469,25 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
-            children = ctx != null && ctx.hasState() ? children_stack : children_exec;
+            if (ctx != null && ctx.hasState()) {
+                if (resume_pending && last_stack_trace != null) {
+                    TCFNode[] arr = last_stack_trace;
+                    int offset = 0;
+                    int r_offset = result.getOffset();
+                    int r_length = result.getLength();
+                    for (TCFNode n : arr) {
+                        if (offset >= r_offset && offset < r_offset + r_length) {
+                            result.setChild(n, offset);
+                        }
+                        offset++;
+                    }
+                    return true;
+                }
+                children = children_stack;
+            }
+            else {
+                children = children_exec;
+            }
         }
         else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             if (!run_context.validate(done)) return false;
@@ -477,8 +510,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
-                if (resume_pending) {
-                    result.setHasChilren(true);
+                if (resume_pending && last_stack_trace != null) {
+                    result.setHasChilren(last_stack_trace.length > 0);
                     return true;
                 }
                 if (!state.validate(done)) return false;
@@ -662,6 +695,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         postContextRemovedDelta();
     }
 
+    void onExpressionAddedOrRemoved() {
+        children_exps.reset();
+        children_stack.onExpressionAddedOrRemoved();
+    }
+
     void onContainerSuspended() {
         assert !disposed;
         if (run_context.isValid()) {
@@ -669,16 +707,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (ctx == null) return;
             if (!ctx.hasState()) return;
         }
-        state.reset();
-        address.reset();
-        children_stack.onSuspended();
-        children_regs.onSuspended();
-        postAllChangedDelta();
-    }
-
-    void onExpressionAddedOrRemoved() {
-        children_exps.reset();
-        children_stack.onExpressionAddedOrRemoved();
+        onContextSuspended(null, null, null);
     }
 
     void onContainerResumed() {
@@ -687,10 +716,13 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx == null) return;
             if (!ctx.hasState()) return;
+            onContextResumed();
         }
-        state.reset();
-        for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
-        postAllChangedDelta();
+        else {
+            state.reset();
+            for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
+            postAllChangedDelta();
+        }
     }
 
     void onContextSuspended(String pc, String reason, Map<String,Object> params) {
