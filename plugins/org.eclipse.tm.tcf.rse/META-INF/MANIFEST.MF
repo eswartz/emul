@@ -5,6 +5,7 @@ Bundle-SymbolicName: org.eclipse.tm.tcf.rse;singleton:=true
 Bundle-Version: 0.3.0.qualifier
 Bundle-Activator: org.eclipse.tm.internal.tcf.rse.Activator
 Bundle-Vendor: %providerName
+Bundle-Localization: plugin
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.rse.core,
