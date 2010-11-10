@@ -75,20 +75,11 @@
       <command
             defaultHandler="org.eclipse.tcf.internal.target.ui.newtarget.NewTargetCommandHandler"
             id="org.eclipse.tcf.target.command.newTarget"
-            name="New Target...">
+            name="NewTarget">
       </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
-      <menuContribution
-            allPopups="false"
-            locationURI="menu:org.eclipse.tcf.target.targetsView">
-         <command
-               commandId="org.eclipse.tcf.target.command.newTarget"
-               label="New Target..."
-               style="push">
-         </command>
-      </menuContribution>
       <menuContribution
             allPopups="false"
             locationURI="toolbar:org.eclipse.tcf.target.targetsView">
