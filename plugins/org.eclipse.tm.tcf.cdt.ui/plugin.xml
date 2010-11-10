@@ -15,5 +15,15 @@
   	<extension point="org.eclipse.tm.tcf.debug.ui.launch_context">
    		<class name="org.eclipse.tm.internal.tcf.cdt.ui.TCFLaunchContext" />
    	</extension>
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"
+            class="org.eclipse.tm.internal.tcf.cdt.ui.disassembly.TCFDisassemblyBackendFactory">
+         <adapter
+               type="org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyBackend">
+         </adapter>
+      </factory>
+   </extension>
 
 </plugin>
