@@ -85,6 +85,19 @@ public class MemoryMapProxy implements IMemoryMap {
         }.token;
     }
 
+    public IToken set(String id, MemoryRegion[] map, final DoneSet done) {
+        return new Command(channel, this, "get", new Object[]{ id, map }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+                done.doneSet(token, error);
+            }
+        }.token;
+    }
+
     @SuppressWarnings("unchecked")
     private MemoryRegion[] toMemoryMap(Object o) {
         if (o == null) return null;
@@ -127,5 +140,13 @@ public class MemoryMapProxy implements IMemoryMap {
     public void removeListener(MemoryMapListener listener) {
         IChannel.IEventListener l = listeners.remove(listener);
         if (l != null) channel.removeEventListener(this, l);
+    }
+
+    static {
+        JSON.addObjectWriter(MemoryRegion.class, new JSON.ObjectWriter<MemoryRegion>() {
+            public void write(MemoryRegion r) throws IOException {
+                JSON.writeObject(r.getProperties());
+            }
+        });
     }
 }

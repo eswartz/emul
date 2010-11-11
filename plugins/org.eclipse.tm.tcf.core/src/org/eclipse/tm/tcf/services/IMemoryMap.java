@@ -119,6 +119,27 @@ public interface IMemoryMap extends IService {
     }
 
     /**
+     * Set memory map for given context ID.
+     *
+     * @param id – context ID.
+     * @param map – memory map data.
+     * @param done - call back interface called when operation is completed.
+     * @return - pending command handle.
+     */
+    IToken set(String id, MemoryRegion[] map, DoneSet done);
+
+    /**
+     * Client call back interface for set().
+     */
+    interface DoneSet {
+        /**
+         * Called when memory map set command is done.
+         * @param error – error description if operation failed, null if succeeded.
+         */
+        void doneSet(IToken token, Exception error);
+    }
+
+    /**
      * Add memory map event listener.
      * @param listener - memory map event listener to add.
      */
