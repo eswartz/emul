@@ -60,7 +60,14 @@ class SignalsDialog extends Dialog {
         SIZING_TABLE_WIDTH = 800,
         SIZING_TABLE_HEIGHT = 300;
 
-    private static final String[] column_names = { "Code", "Name", "Description", "Don't stop", "Don't pass", "Pending" };
+    private static final String[] column_names = {
+        "Code",
+        "Name",
+        "Description",
+        "Don't stop",
+        "Don't pass",
+        "Pending"
+    };
 
     private static class Signal extends SignalMask {
 
@@ -196,7 +203,8 @@ class SignalsDialog extends Dialog {
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
 
-        signal_table = new Table(composite, SWT.SINGLE | SWT.BORDER |
+        signal_table = new Table(composite,
+                SWT.SINGLE | SWT.BORDER |
                 SWT.H_SCROLL | SWT.V_SCROLL);
         signal_table.setFont(font);
         GridData data = new GridData(GridData.FILL_BOTH);
@@ -275,7 +283,7 @@ class SignalsDialog extends Dialog {
                 while (n != null && !(n instanceof TCFNodeExecContext)) n = n.getParent();
                 node = (TCFNodeExecContext)n;
                 if (node == null) {
-                    TCFLaunch launch = selection.getModel().getLaunch();
+                    TCFLaunch launch = model.getLaunch();
                     Collection<Map<String,Object>> sigs = launch.getSignalList();
                     if (sigs == null) {
                         done(new Signal[0]);
@@ -347,7 +355,7 @@ class SignalsDialog extends Dialog {
                 if ((x == null || !x.isPending()) && s.isPending()) send_list.add(s.getCode());
             }
             if (set_mask) {
-                TCFLaunch launch = selection.getModel().getLaunch();
+                TCFLaunch launch = model.getLaunch();
                 ILaunchConfigurationWorkingCopy cfg = launch.getLaunchConfiguration().getWorkingCopy();
                 cfg.setAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_STOP, Integer.toHexString(dont_stop_set));
                 cfg.setAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_PASS, Integer.toHexString(dont_pass_set));

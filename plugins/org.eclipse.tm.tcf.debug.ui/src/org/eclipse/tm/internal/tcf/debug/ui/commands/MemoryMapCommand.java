@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 
-public class SignalsCommand extends AbstractActionDelegate {
+public class MemoryMapCommand extends AbstractActionDelegate {
 
     private static boolean isValidNode(TCFNode n) {
         if (n instanceof TCFNodeLaunch) return true;
@@ -38,11 +38,11 @@ public class SignalsCommand extends AbstractActionDelegate {
         if (isValidNode(n)) {
             Shell shell = getWindow().getShell();
             try {
-                new SignalsDialog(shell, n).open();
+                new MemoryMapDialog(shell, n).open();
             }
             catch (Throwable x) {
                 MessageBox mb = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
-                mb.setText("Cannot open Signals dialog");
+                mb.setText("Cannot open Memory Map dialog");
                 mb.setMessage(TCFModel.getErrorMessage(x, true));
                 mb.open();
             }

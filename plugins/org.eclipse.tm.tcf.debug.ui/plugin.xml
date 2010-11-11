@@ -223,6 +223,12 @@
             label="%SignalsCommand.label"
             menubarPath="additions">
          </action>
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.MemoryMap"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.MemoryMapCommand"
+            label="%MemoryMapCommand.label"
+            menubarPath="additions">
+         </action>
       </objectContribution>
       
       <!-- ICastToType popup menu contributions -->
