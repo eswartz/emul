@@ -848,6 +848,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     public void update(IViewerInputUpdate update) {
+        if (IDebugUIConstants.ID_BREAKPOINT_VIEW.equals(update.getPresentationContext().getId())) {
+            // Current implementation does not support flexible hierarchy for breakpoints
+            IViewerInputProvider p = (IViewerInputProvider)launch.getAdapter(IViewerInputProvider.class);
+            if (p != null) {
+                p.update(update);
+                return;
+            }
+        }
         Object o = update.getElement();
         if (o instanceof TCFLaunch) {
             update.setInputElement(o);
