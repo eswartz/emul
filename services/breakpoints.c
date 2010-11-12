@@ -271,8 +271,8 @@ static int is_canonical_addr(Context * ctx, ContextAddress address) {
 static BreakInstruction * find_instruction(Context * ctx, ContextAddress address) {
     int hash = addr2instr_hash(ctx, address);
     LINK * l = addr2instr[hash].next;
-    assert(is_canonical_addr(ctx, address));
     if (address == 0) return NULL;
+    assert(is_canonical_addr(ctx, address));
     while (l != addr2instr + hash) {
         BreakInstruction * bi = link_adr2bi(l);
         if (bi->cb.ctx == ctx && bi->cb.address == address) return bi;
