@@ -381,7 +381,11 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 if (column != null) m.put(IBreakpoints.PROP_COLUMN, column);
             }
         }
-        String condition  = (String)p.get("org.eclipse.cdt.debug.core.condition");
+        else {
+            String address = (String)p.get("org.eclipse.cdt.debug.core.address");
+            if (address != null && address.length() > 0) m.put(IBreakpoints.PROP_LOCATION, address);
+        }
+        String condition = (String)p.get("org.eclipse.cdt.debug.core.condition");
         if (condition != null && condition.length() > 0) m.put(IBreakpoints.PROP_CONDITION, condition);
         Integer skip_count = (Integer)p.get("org.eclipse.cdt.debug.core.ignoreCount");
         if (skip_count != null && skip_count.intValue() > 0) m.put(IBreakpoints.PROP_IGNORECOUNT, skip_count);
