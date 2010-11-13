@@ -40,6 +40,9 @@ $00ff       constant    'DBG
 
 $0400       constant    ROM
 
+ROM         constant    (COLD)
+ROM 4 +     constant    DP0
+
 $fec0       constant    UP0         \ grows up
 $ff40       constant    SP0         \ grows down
 $ffc0       constant    RP0

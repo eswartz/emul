@@ -110,8 +110,8 @@ EXPORT>
 
 \ -------------------------------------------------
 
-' bootup $400 !
-here     $404 !
+' bootup (COLD) !
+here     DP0    !
 
 hex
 here ." HERE = " u. cr
