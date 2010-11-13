@@ -493,11 +493,13 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                     return;
                                 }
                                 SuspendedContext sc = suspended.get(id);
-                                if (sc != null) {
-                                    if (!sc.pc.equals(pc) || !sc.reason.equals(reason)) {
-                                        exit(new Exception("Invalid result of getState command"));
-                                        return;
-                                    }
+                                if (sc != null && sc.pc != null && !sc.pc.equals(pc)) {
+                                    exit(new Exception("Invalid result of getState command: invalid PC"));
+                                    return;
+                                }
+                                if (sc != null && sc.reason != null && !sc.reason.equals(reason)) {
+                                    exit(new Exception("Invalid result of getState command: invalid suspend reason"));
+                                    return;
                                 }
                                 if (rcbp1_found && "Breakpoint".equals(reason)) {
                                     exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
@@ -892,7 +894,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         assert done_get_state || resume_cnt == 0;
         if (!bp_sync_done) return;
         resume_cnt++;
-        SuspendedContext sc = suspended.get(id);
+        final SuspendedContext sc = suspended.get(id);
         IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx != null && sc != null) {
             int rm = rnd.nextInt(6);
@@ -902,7 +904,14 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     if (test_suite.cancel) return;
                     if (!test_suite.isActive(TestRCBP1.this)) return;
                     if (threads.get(id) == null) return;
-                    if (error != null) exit(error);
+                    if (error != null) {
+                        exit(error);
+                        return;
+                    }
+                    if (suspended.get(id) == sc) {
+                        exit(new Exception("Missing contextResumed event after resume command"));
+                        return;
+                    }
                 }
             });
         }
