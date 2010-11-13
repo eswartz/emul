@@ -77,7 +77,7 @@ public abstract class BaseForthCompTest {
 		
 		targCtx = createTargetContext();
 		
-		hostCtx = new HostContext();
+		hostCtx = new HostContext(targCtx);
 		comp = new ForthComp(hostCtx, targCtx);
 		
 		for (int i = 0; i <65536; i++)
@@ -119,6 +119,7 @@ public abstract class BaseForthCompTest {
 	}
 	
 	protected void parseString(String text) throws AbortException {
+		System.out.println(text);
 		comp.parseString(text);
 		comp.finish();
 		assertEquals("errors when compiling", 0, comp.getErrors());
@@ -145,7 +146,7 @@ public abstract class BaseForthCompTest {
 		
 	}
 
-	protected void exportBinary() {
+	protected void exportBinary() throws AbortException {
 		targCtx.exportState(hostCtx, f99Machine, BASE_SP, BASE_RP, BASE_UP);
 
 		dumpCompiledMemory();

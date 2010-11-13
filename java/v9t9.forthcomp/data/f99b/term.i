@@ -1,6 +1,6 @@
 
-Variable vx
-Variable vy
+cell    RamVar vx
+cell    RamVar vy
 
 0 Value win-x
 0 Value win-y
@@ -43,8 +43,8 @@ Variable vy
 ;
 
 :   crlf
-    advance-row
-;
+    advance-row 
+;  
 
 :   bksp
     -1 vx +!
@@ -71,14 +71,14 @@ Variable vy
         curs-addr  v-drawchar @ execute  
         advance-cursor
     then then 
-;
+;    target-only
 
-:   cr  13 emit  ;
-:   space  32 emit  ;
+:   cr  13 emit  ;   target-only
+:   space  32 emit  ;    target-only
 
 :   type ( caddr n -- )
     over + swap do i c@ emit loop     
-;
+;    target-only
 
 EXPORT>
 

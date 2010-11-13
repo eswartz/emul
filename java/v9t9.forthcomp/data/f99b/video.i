@@ -35,7 +35,7 @@ create  VRegSave      16 allot
 
 \ ---------------------
 
-Create  v-mode      48 allot
+48      RamVar  v-mode
 
 : +field    ( "name" ptr -- ptr' )    dup Constant 2+ ; immediate
 
@@ -61,10 +61,11 @@ v-mode
     +field  v-drawcursor  ( addr bit -- )
 drop
  
-Create v-curs-under     8 allot
+8   RamVar v-curs-under  
 
-Variable v-curs                         \ state of cursor (0=off, 1=on)
-Variable v-cursor-timer                 \ current iter
+1   RamVar v-curs                         \ state of cursor (0=off, 1=on)
+1   RamVar v-cursor-timer                 \ current iter
+
 20 Constant v-cursor-blink              \ 30/60 sec
  
 :   write-mode-params   ( table -- )
@@ -85,31 +86,31 @@ Variable v-cursor-timer                 \ current iter
 ;
 
 :   v-cursor-on ( addr bit -- )
-    v-curs @ not if
+    v-curs c@ not if
         2dup
         v-curs-under v-savechar @  execute
         
         v-drawcursor @ execute
-        true v-curs !
+        true v-curs c!
     else
         2drop
     then
 ;
 :   v-cursor-off  ( addr bit -- )
-    v-curs @ if
+    v-curs c@ if
         2>r v-curs-under 2r>  v-restorechar @  execute
-        false v-curs !
+        false v-curs c!
     else
         2drop
     then
 ;
 
 :   update-cursor
-    1 v-cursor-timer +!
-    v-cursor-timer @  v-cursor-blink >= if
-        0 v-cursor-timer !
+    1 v-cursor-timer c+!
+    v-cursor-timer c@  v-cursor-blink >= if
+        0 v-cursor-timer c!
         curs-addr
-        v-curs @ if 
+        v-curs c@ if 
             v-cursor-off
         else
             v-cursor-on

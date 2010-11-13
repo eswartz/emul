@@ -71,7 +71,7 @@ public abstract class TargetWord implements ITargetWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		if (getHostDp() >= 0) {
+		if (getHostDp() >= 0 && !getEntry().isTargetOnly()) {
 			hostContext.pushCall(getHostDp());
 			hostContext.interpret(hostContext, targetContext);
 		} else {

@@ -13,6 +13,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.F99TargetContext;
 import org.ejs.v9t9.forthcomp.ForthComp;
@@ -76,7 +77,7 @@ public class TestForthCompF99 {
 		targCtx = new F99TargetContext(4096);
 		targCtx.setBaseDP(0x400);
 		
-		hostCtx = new HostContext();
+		hostCtx = new HostContext(targCtx);
 		comp = new ForthComp(hostCtx, targCtx);
 		
 		for (int i = 0; i <65536; i+= 2)
@@ -1197,20 +1198,22 @@ public class TestForthCompF99 {
 		doStrCmpTest();
 	}
 	private void doStrCmpTest() throws AbortException {
-		int str1;
-		int str2;
+		Pair<Integer, Integer> str1;
+		Pair<Integer, Integer> str2;
 		
 		int cycles1 = cpu.getCurrentCycleCount();
 		
 		str1 = targCtx.writeLengthPrefixedString("This is first");
+		targCtx.alloc(str1.second);
 		str2 = targCtx.writeLengthPrefixedString("This is second");
+		targCtx.alloc(str2.second);
 		
 		dumpDict();
 		
-		hostCtx.pushData(str1 + 1);
-		hostCtx.pushData(targCtx.readChar(str1));
-		hostCtx.pushData(str2 + 1);
-		hostCtx.pushData(targCtx.readChar(str2));
+		hostCtx.pushData(str1.first + 1);
+		hostCtx.pushData(targCtx.readChar(str1.first));
+		hostCtx.pushData(str2.first + 1);
+		hostCtx.pushData(targCtx.readChar(str2.first));
 		
 		interpret("strcmp");
 		
@@ -1220,14 +1223,16 @@ public class TestForthCompF99 {
 	
 
 		str1 = targCtx.writeLengthPrefixedString("Yet, bigger.");
+		targCtx.alloc(str1.second);
 		str2 = targCtx.writeLengthPrefixedString("And smaller.");
-		
+		targCtx.alloc(str2.second);
+
 		dumpDict();
 		
-		hostCtx.pushData(str1 + 1);
-		hostCtx.pushData(targCtx.readChar(str1));
-		hostCtx.pushData(str2 + 1);
-		hostCtx.pushData(targCtx.readChar(str2));
+		hostCtx.pushData(str1.first + 1);
+		hostCtx.pushData(targCtx.readChar(str1.first));
+		hostCtx.pushData(str2.first + 1);
+		hostCtx.pushData(targCtx.readChar(str2.first));
 		
 		interpret("strcmp");
 		
@@ -1235,14 +1240,16 @@ public class TestForthCompF99 {
 		assertEquals(ret+"", ('Y' - 'A'), ret);
 		
 		str1 = targCtx.writeLengthPrefixedString("Another plain old copy?");
+		targCtx.alloc(str1.second);
 		str2 = targCtx.writeLengthPrefixedString("Another plain old copy?");
+		targCtx.alloc(str2.second);
 		
 		dumpDict();
 		
-		hostCtx.pushData(str1 + 1);
-		hostCtx.pushData(targCtx.readChar(str1));
-		hostCtx.pushData(str2 + 1);
-		hostCtx.pushData(targCtx.readChar(str2));
+		hostCtx.pushData(str1.first + 1);
+		hostCtx.pushData(targCtx.readChar(str1.first));
+		hostCtx.pushData(str2.first + 1);
+		hostCtx.pushData(targCtx.readChar(str2.first));
 		
 		interpret("strcmp");
 		

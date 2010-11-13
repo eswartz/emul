@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.Context;
 import org.ejs.v9t9.forthcomp.DictEntry;
@@ -81,6 +82,7 @@ public abstract class TargetContext extends Context {
 		}
 		
 		if (!littleEndian && cellBits == 16) {
+			addr &= 0xffff;
 			return (short) ((memory[addr] & 0xff) << 8) | (memory[addr + 1] & 0xff); 
 		} else {
 			throw new UnsupportedOperationException();
@@ -227,7 +229,7 @@ public abstract class TargetContext extends Context {
 	private void resolveForward(ForwardRef ref, DictEntry entry) {
 		for (RelocEntry rel : relocs.toArray(new RelocEntry[relocs.size()])) {
 			if (rel.target == ref.getId()) {
-				System.out.println(rel);
+				//System.out.println(rel);
 				rel.target = entry.getContentAddr();
 				if (rel.type != RelocType.RELOC_FORWARD)
 					writeCell(rel.addr, entry.getContentAddr());
@@ -371,7 +373,7 @@ public abstract class TargetContext extends Context {
 	}
 
 	abstract public void initCode();
-	abstract public void alignCode();
+	abstract public void alignBranch();
 	/**
 	 * Compile a word onto the current dictionary entry
 	 */
@@ -383,16 +385,14 @@ public abstract class TargetContext extends Context {
 	/**
 	 * Flatten memory and resolve addresses
 	 * @param console
+	 * @throws AbortException 
 	 */
-	public void exportMemory(MemoryDomain console) {
+	public void exportMemory(MemoryDomain console) throws AbortException {
 		for (int i = 0; i < dp; i += cellSize) {
 			console.writeWord(i, (short) readCell(i));
 		}
 		for (RelocEntry reloc : relocEntries.values()) {
-			int val;
-			val = reloc.target;	// TODO
-			if (reloc.type == RelocType.RELOC_CALL_15S1)
-				val = ((val >> 1) & 0x7fff) | 0x8000;
+			int val = doResolveRelocation(reloc);
 			console.writeWord(reloc.addr, (short) val);
 		}
 		
@@ -403,6 +403,10 @@ public abstract class TargetContext extends Context {
 			console.getEntryAt(symEntry.getKey()).defineSymbol(symEntry.getKey(), symEntry.getValue());
 		}
 	}
+	protected abstract int doResolveRelocation(RelocEntry reloc) throws AbortException;
+
+
+
 	/**
 	 * Flatten memory and resolve addresses
 	 * @param console
@@ -628,9 +632,9 @@ public abstract class TargetContext extends Context {
 
 
 	protected abstract void doExportState(HostContext hostCtx, Machine machine,
-			int baseSp, int baseRp, int baseUp);
+			int baseSp, int baseRp, int baseUp) throws AbortException;
 	public void exportState(HostContext hostCtx, Machine machine,
-			int baseSp, int baseRp, int baseUp) {
+			int baseSp, int baseRp, int baseUp) throws AbortException {
 		
 		IWord dp = find("DP");
 		if (dp instanceof ITargetWord) {
@@ -662,12 +666,12 @@ public abstract class TargetContext extends Context {
 	 * @param string
 	 * @return
 	 */
-	public int writeLengthPrefixedString(String string) throws AbortException {
+	public Pair<Integer, Integer> writeLengthPrefixedString(String string) throws AbortException {
 		int length = string.length();
 		if (length > 255)
 			throw new AbortException("String constant is too long");
 		
-		int dp = alloc(length + 1);
+		int dp = getDP();
 		
 		writeChar(dp, length);
 		stubData.use();
@@ -677,7 +681,7 @@ public abstract class TargetContext extends Context {
 			stubData.use();
 		}
 		
-		return dp;
+		return new Pair<Integer, Integer>(dp, length + 1);
 	}
 
 
@@ -705,7 +709,8 @@ public abstract class TargetContext extends Context {
 	public void compileString(String string) throws AbortException {
 		IWord parenString = require("(s\")");
 		compile((ITargetWord) parenString);
-		writeLengthPrefixedString(string);
+		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
+		alloc(info.second);
 	}
 
 
@@ -716,5 +721,4 @@ public abstract class TargetContext extends Context {
 	 * @return target addr for DOES
 	 */
 	abstract public int compileDoDoes(HostContext hostContext) throws AbortException;
-	
 }

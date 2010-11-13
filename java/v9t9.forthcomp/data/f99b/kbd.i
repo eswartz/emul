@@ -19,8 +19,8 @@ kbdstate 6 + Constant kbdflag
 kbdstate 7 + Constant kbdtail
 kbdstate 8 + Constant kbdhead
 
-Variable    timeout
-Variable    randnoise
+cell    RamVar    timeout
+cell    RamVar    randnoise
 
 :   read-row  ( col -- bits )
     'KBD c!   'KBD c@

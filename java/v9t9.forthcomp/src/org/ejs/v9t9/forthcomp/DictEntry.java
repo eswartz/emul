@@ -26,6 +26,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	private boolean hidden;
 	private boolean immediate;
 	private boolean export;
+	private boolean isDoesWord;
 
 	private int uses;
 	private Map<String, LocalVariableTriple> locals;
@@ -256,5 +257,15 @@ public class DictEntry implements Comparable<DictEntry> {
 	public void use(int count) {
 		uses += count;
 	}
+
+
+	public boolean isDoesWord() {
+		return isDoesWord;
+	}
+
+	public void setDoesWord(boolean isDoesWord) {
+		this.isDoesWord = isDoesWord;
+	}
+
 
 }

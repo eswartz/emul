@@ -3,6 +3,7 @@
  */
 package org.ejs.v9t9.forthcomp.words;
 
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
 
@@ -38,9 +39,9 @@ public class SQuote extends BaseWord {
 		if (hostContext.isCompiling()) {
 			targetContext.compileString(sb.toString());
 		} else {
-			int addr = targetContext.writeLengthPrefixedString(sb.toString());
+			Pair<Integer, Integer> addr = targetContext.writeLengthPrefixedString(sb.toString());
 			hostContext.pushData(sb.length());
-			hostContext.pushData(addr + 1);
+			hostContext.pushData(addr.first + 1);
 		}
 	}
 	

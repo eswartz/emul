@@ -22,6 +22,7 @@ import org.ejs.v9t9.forthcomp.words.BracketIf;
 import org.ejs.v9t9.forthcomp.words.BracketIfdef;
 import org.ejs.v9t9.forthcomp.words.BracketIfndef;
 import org.ejs.v9t9.forthcomp.words.BracketThen;
+import org.ejs.v9t9.forthcomp.words.CR;
 import org.ejs.v9t9.forthcomp.words.CharComma;
 import org.ejs.v9t9.forthcomp.words.Colon;
 import org.ejs.v9t9.forthcomp.words.ColonColon;
@@ -33,6 +34,7 @@ import org.ejs.v9t9.forthcomp.words.DConstant;
 import org.ejs.v9t9.forthcomp.words.DLiteral;
 import org.ejs.v9t9.forthcomp.words.DVariable;
 import org.ejs.v9t9.forthcomp.words.Do;
+import org.ejs.v9t9.forthcomp.words.Dot;
 import org.ejs.v9t9.forthcomp.words.DotQuote;
 import org.ejs.v9t9.forthcomp.words.Else;
 import org.ejs.v9t9.forthcomp.words.Exit;
@@ -42,12 +44,15 @@ import org.ejs.v9t9.forthcomp.words.HostBehavior;
 import org.ejs.v9t9.forthcomp.words.HostBinOp;
 import org.ejs.v9t9.forthcomp.words.HostBranch;
 import org.ejs.v9t9.forthcomp.words.HostConstant;
+import org.ejs.v9t9.forthcomp.words.HostDecimal;
 import org.ejs.v9t9.forthcomp.words.HostDoes;
 import org.ejs.v9t9.forthcomp.words.HostDoubleLiteral;
 import org.ejs.v9t9.forthcomp.words.HostDrop;
 import org.ejs.v9t9.forthcomp.words.HostDup;
+import org.ejs.v9t9.forthcomp.words.HostEmit;
 import org.ejs.v9t9.forthcomp.words.HostExitWord;
 import org.ejs.v9t9.forthcomp.words.HostFetch;
+import org.ejs.v9t9.forthcomp.words.HostHex;
 import org.ejs.v9t9.forthcomp.words.HostLiteral;
 import org.ejs.v9t9.forthcomp.words.HostOver;
 import org.ejs.v9t9.forthcomp.words.HostPlusStore;
@@ -61,6 +66,7 @@ import org.ejs.v9t9.forthcomp.words.HostVariable;
 import org.ejs.v9t9.forthcomp.words.If;
 import org.ejs.v9t9.forthcomp.words.Immediate;
 import org.ejs.v9t9.forthcomp.words.Include;
+import org.ejs.v9t9.forthcomp.words.LastXt;
 import org.ejs.v9t9.forthcomp.words.Lbracket;
 import org.ejs.v9t9.forthcomp.words.Leave;
 import org.ejs.v9t9.forthcomp.words.Literal;
@@ -81,6 +87,7 @@ import org.ejs.v9t9.forthcomp.words.TargetContext;
 import org.ejs.v9t9.forthcomp.words.Then;
 import org.ejs.v9t9.forthcomp.words.Tick;
 import org.ejs.v9t9.forthcomp.words.To;
+import org.ejs.v9t9.forthcomp.words.UDot;
 import org.ejs.v9t9.forthcomp.words.UPlusLoop;
 import org.ejs.v9t9.forthcomp.words.Until;
 import org.ejs.v9t9.forthcomp.words.User;
@@ -104,12 +111,16 @@ public class HostContext extends Context {
 	private LinkedHashMap<Integer, IWord> hostWords;
 	private int hostPc;
 	private Map<Integer, Integer> fixupMap;
+
+	private int cellSize;
 	
 	/**
+	 * @param targetContext 
 	 * 
 	 */
-	public HostContext() {
+	public HostContext(TargetContext targetContext) {
 		super();
+		this.cellSize = targetContext.getCellSize();
 		dataStack = new Stack<Integer>();
 		returnStack = new Stack<Integer>();
 		callStack = new Stack<Integer>();
@@ -205,10 +216,17 @@ public class HostContext extends Context {
 	 	
 		define("DP!", new SetDP());
 		define("HERE", new Here());
+		define("LastXt", new LastXt());
 		
 		define("S\"", new SQuote());
 		define(".\"", new DotQuote());
+		define(".", new Dot());
+		define("U.", new UDot());
+		define("emit", new HostEmit());
+		define("cr", new CR());
 		define("type", new HostType());
+		define("decimal", new HostDecimal());
+		define("hex", new HostHex());
 		
 		/////////////////////
 		
@@ -256,6 +274,11 @@ public class HostContext extends Context {
 		});
 		define("true", new HostConstant(-1));
 		define("false", new HostConstant(0));
+		
+		define("cell", new HostConstant(cellSize));
+		define("cells", new HostUnaryOp("cells") {
+			public int getResult(int v) { return v * cellSize; } 
+		});
 		
 		define(">", new HostBinOp(">") {
 			public int getResult(int l, int r) { return (l>r)?-1:0; }
@@ -629,6 +652,16 @@ public class HostContext extends Context {
 				
 		}
 			
+	}
+
+	/**
+	 * @param string
+	 * @param targetContext 
+	 * @return
+	 * @throws AbortException 
+	 */
+	public int readVariable(String string, TargetContext targetContext) throws AbortException {
+		return ((HostVariable)require(string)).getValue();
 	}
 
 }

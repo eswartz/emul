@@ -28,6 +28,7 @@ import static v9t9.engine.cpu.InstF99b.Istore;
 import static v9t9.engine.cpu.InstF99b.Isub;
 import static v9t9.engine.cpu.InstF99b.ItoR_d;
 
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.ITargetWord;
 import org.ejs.v9t9.forthcomp.IWord;
@@ -982,20 +983,22 @@ public class TestForthCompF99b extends BaseF99bTest {
 		doStrCmpTest();
 	}
 	private void doStrCmpTest() throws AbortException {
-		int str1;
-		int str2;
+		Pair<Integer, Integer> str1;
+		Pair<Integer, Integer> str2;
 		
 		int cycles1 = cpu.getCurrentCycleCount();
 		
 		str1 = targCtx.writeLengthPrefixedString("This is first");
+		targCtx.alloc(str1.second);
 		str2 = targCtx.writeLengthPrefixedString("This is second");
+		targCtx.alloc(str2.second);
 		
 		dumpDict();
 		
-		hostCtx.pushData(str1 + 1);
-		hostCtx.pushData(targCtx.readChar(str1));
-		hostCtx.pushData(str2 + 1);
-		hostCtx.pushData(targCtx.readChar(str2));
+		hostCtx.pushData(str1.first + 1);
+		hostCtx.pushData(targCtx.readChar(str1.first));
+		hostCtx.pushData(str2.first + 1);
+		hostCtx.pushData(targCtx.readChar(str2.first));
 		
 		interpret("strcmp");
 		
@@ -1005,14 +1008,16 @@ public class TestForthCompF99b extends BaseF99bTest {
 	
 
 		str1 = targCtx.writeLengthPrefixedString("Yet, bigger.");
+		targCtx.alloc(str1.second);
 		str2 = targCtx.writeLengthPrefixedString("And smaller.");
+		targCtx.alloc(str2.second);
 		
 		dumpDict();
 		
-		hostCtx.pushData(str1 + 1);
-		hostCtx.pushData(targCtx.readChar(str1));
-		hostCtx.pushData(str2 + 1);
-		hostCtx.pushData(targCtx.readChar(str2));
+		hostCtx.pushData(str1.first + 1);
+		hostCtx.pushData(targCtx.readChar(str1.first));
+		hostCtx.pushData(str2.first + 1);
+		hostCtx.pushData(targCtx.readChar(str2.first));
 		
 		interpret("strcmp");
 		
@@ -1020,14 +1025,16 @@ public class TestForthCompF99b extends BaseF99bTest {
 		assertEquals(ret+"", ('Y' - 'A'), ret);
 		
 		str1 = targCtx.writeLengthPrefixedString("Another plain old copy?");
+		targCtx.alloc(str1.second);
 		str2 = targCtx.writeLengthPrefixedString("Another plain old copy?");
-		
+		targCtx.alloc(str2.second);
+
 		dumpDict();
 		
-		hostCtx.pushData(str1 + 1);
-		hostCtx.pushData(targCtx.readChar(str1));
-		hostCtx.pushData(str2 + 1);
-		hostCtx.pushData(targCtx.readChar(str2));
+		hostCtx.pushData(str1.first + 1);
+		hostCtx.pushData(targCtx.readChar(str1.first));
+		hostCtx.pushData(str2.first + 1);
+		hostCtx.pushData(targCtx.readChar(str2.first));
 		
 		interpret("strcmp");
 		

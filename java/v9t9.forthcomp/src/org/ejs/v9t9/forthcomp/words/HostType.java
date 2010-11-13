@@ -17,8 +17,8 @@ public class HostType extends BaseWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		int leng = hostContext.popData();
 		int addr = hostContext.popData();
+		int leng = hostContext.popData();
 		while (leng-- > 0)
 			System.out.print((char) targetContext.readChar(addr++));
 	}

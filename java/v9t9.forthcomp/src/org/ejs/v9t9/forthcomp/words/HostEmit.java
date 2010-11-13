@@ -10,11 +10,10 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-@HostWordPlaceholder("@")
-public class HostFetch extends BaseWord {
+public class HostEmit extends BaseWord {
 	@Override
 	public String toString() {
-		return "@";
+		return "EMIT";
 	}
 
 	/* (non-Javadoc)
@@ -22,7 +21,7 @@ public class HostFetch extends BaseWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		hostContext.pushData(targetContext.readCell(hostContext.popData() & 0x7fffffff));
+		System.out.print((char) hostContext.popData());
 	}
 
 	/* (non-Javadoc)

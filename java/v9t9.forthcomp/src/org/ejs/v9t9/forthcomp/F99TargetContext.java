@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
+import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Pair;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 import org.ejs.v9t9.forthcomp.words.Comma;
 import org.ejs.v9t9.forthcomp.words.DLiteral;
@@ -214,7 +216,7 @@ public class F99TargetContext extends TargetContext {
 		define(string, new F99PrimitiveWord(defineEntry(string), opcode));
 		compileField(opcode);
 		compileField(Iexit);
-		alignCode();
+		alignBranch();
 	}
 
 	private void defineInlinePrim(String string, int... opcodes) {
@@ -222,7 +224,7 @@ public class F99TargetContext extends TargetContext {
 		for (int i : opcodes)
 			compileField(i);
 		compileField(Iexit);
-		alignCode();
+		alignBranch();
 	}
 	
 	/* (non-Javadoc)
@@ -250,13 +252,13 @@ public class F99TargetContext extends TargetContext {
 	 */
 	public void initCode() {
 		opcodeIndex = 3;
-		alignCode();
+		alignBranch();
 	}
 
 	/**
 	 * 
 	 */
-	public void alignCode() {
+	public void alignBranch() {
 		alignDP();
 		if (opcodeIndex != 0) {
 			if (opcodeIndex < 3)
@@ -269,6 +271,21 @@ public class F99TargetContext extends TargetContext {
 		}
 	}
 
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#doResolveRelocation(org.ejs.v9t9.forthcomp.RelocEntry)
+	 */
+	@Override
+	protected int doResolveRelocation(RelocEntry reloc) throws AbortException {
+		int val = reloc.target;	// TODO
+		if (reloc.type == RelocType.RELOC_CALL_15S1) {
+			if ((val & 1) != 0)
+				throw new AbortException("Call address is odd: " + HexUtils.toHex4(val));
+			val = ((val >> 1) & 0x7fff) | 0x8000;
+		}
+		return val;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.TargetContext#compile(org.ejs.v9t9.forthcomp.ITargetWord)
 	 */
@@ -313,7 +330,7 @@ public class F99TargetContext extends TargetContext {
 
 	public void compileCall(ITargetWord word) {
 		// must call
-		alignCode();
+		alignBranch();
 		stubCall.use();
 		
 		int reloc = addRelocation(opcodeAddr, 
@@ -338,7 +355,7 @@ public class F99TargetContext extends TargetContext {
 					// mismatch the interpreter's idea of the "next data word" 
 					|| InstF99.isAligningPCReference(opcode))
 					)
-				alignCode();
+				alignBranch();
 			stub10BitOpcode.use();
 			compileField(Iext);
 			lastOpcodeAddr = opcodeAddr;
@@ -448,8 +465,9 @@ public class F99TargetContext extends TargetContext {
 	 * @param machine
 	 * @param baseSP
 	 * @param baseRP
+	 * @throws AbortException 
 	 */
-	public void doExportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) {
+	public void doExportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) throws AbortException {
 		exportMemory(machine.getConsole());
 		CpuStateF99 cpu = (CpuStateF99) machine.getCpu().getState();
 		
@@ -524,7 +542,7 @@ public class F99TargetContext extends TargetContext {
 		// TODO: optimize this
 		int nextDp = getDP();
 		hostContext.pushData(nextDp);
-		alignCode();
+		alignBranch();
 		return nextDp;
 	}
 	/* (non-Javadoc)
@@ -649,7 +667,7 @@ public class F99TargetContext extends TargetContext {
 	 * @param string
 	 * @return
 	 */
-	public int writeLengthPrefixedString(String string) throws AbortException {
+	public Pair<Integer, Integer> writeLengthPrefixedString(String string) throws AbortException {
 		int length = string.length();
 		if (length > 255)
 			throw new AbortException("String constant is too long");
@@ -664,7 +682,7 @@ public class F99TargetContext extends TargetContext {
 			stub8BitLit.use();
 		}
 		
-		return dp;
+		return new Pair<Integer, Integer>(dp, length + 1);
 	}
 	
 
@@ -683,7 +701,7 @@ public class F99TargetContext extends TargetContext {
 			if (lpUser == null) {
 				lpUser = defineUser("LP", 1);
 				
-				HostContext subContext = new HostContext();
+				HostContext subContext = new HostContext(this);
 				subContext.getStream().push(
 						"false <export\n"+
 						": (>LOCALS) LP @    	RP@ LP ! ; \\ caller pushes R> \n" +
@@ -803,7 +821,7 @@ public class F99TargetContext extends TargetContext {
 	public int compilePushValue(int cells, int value) throws AbortException {
 		compile((ITargetWord) require("DOLIT"));
 		
-		alignCode();
+		alignBranch();
 		int loc = alloc(cells * cellSize);
 		
 		if (cells == 1) {

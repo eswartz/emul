@@ -67,16 +67,6 @@ User    #ptr
     s>d d.d
 ;
 
-:   quit
-    10 base !
-    
-    begin
-        key? if key emit 
-        else ints-check
-        then
-    again
-;
-
 \ -----------------------------------------
 
 ( BOGUS -- just for defining words at host time )

@@ -21,6 +21,10 @@ $400    dp!
 
 include sysdefs.i
 
+include compile.i
+
+include ram.i
+
 EXPORT>
 
 include sysutils.i
@@ -40,11 +44,22 @@ include ints.i
 \ -------------------------------
 
 : regs-init
-    $ff80 (>CONTEXT) [ CTX_SP field, ]
-    $ff00 (>CONTEXT) [ CTX_UP field, ]
+    SP0 (>CONTEXT) [ CTX_SP field, ]
+    UP0 (>CONTEXT) [ CTX_UP field, ]
     r>      \ remember return
-    $ffc0 (>CONTEXT) [ CTX_RP field, ]
+    RP0 (>CONTEXT) [ CTX_RP field, ]
     >r
+;
+
+
+:   quit
+    10 base !
+    
+    begin
+        key? if key emit 
+        else ints-check
+        then
+    again
 ;
 
 :   abort
@@ -97,3 +112,8 @@ EXPORT>
 
 ' bootup $400 !
 here     $404 !
+
+hex
+here ." HERE = " u. cr
+ramptr @ ." RAMTOP = " u. cr
+ 

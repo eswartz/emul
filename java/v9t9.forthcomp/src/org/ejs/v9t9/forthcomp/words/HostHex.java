@@ -10,19 +10,18 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-@HostWordPlaceholder("@")
-public class HostFetch extends BaseWord {
+public class HostHex extends BaseWord {
 	@Override
 	public String toString() {
-		return "@";
+		return "HEX";
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
+	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.words.TargetContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		hostContext.pushData(targetContext.readCell(hostContext.popData() & 0x7fffffff));
+		((HostVariable)hostContext.require("BASE")).setValue(16);
 	}
 
 	/* (non-Javadoc)
@@ -31,4 +30,5 @@ public class HostFetch extends BaseWord {
 	public boolean isImmediate() {
 		return false;
 	}
+	
 }

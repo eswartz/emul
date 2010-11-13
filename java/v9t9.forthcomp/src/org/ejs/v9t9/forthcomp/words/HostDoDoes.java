@@ -38,6 +38,8 @@ public class HostDoDoes extends BaseWord {
 		ITargetWord lastWord = (ITargetWord) targetContext.getLatest();
 		targetContext.getDictionary().put(lastWord.getName(), new TargetDoesWord(lastWord, redirectDp));
 		
+		lastWord.getEntry().setDoesWord(true);
+
 		targetContext.compileDoes(hostContext, lastWord.getEntry(), targetDP);
 		//hostContext.setHostPc(redirectDp);
 	}

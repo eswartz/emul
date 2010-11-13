@@ -42,8 +42,9 @@ public class ForthComp {
 		String consoleOutFile = null;
 		String gromOutFile = null;
 		PrintStream logfile = System.out;
+		boolean doHistogram = false;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:g:l:b");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:g:l:bh");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -62,13 +63,16 @@ public class ForthComp {
             case 'b':
             	targetContext = new F99bTargetContext(65536);
             	break;
+            case 'h':
+            	doHistogram = true;
+            	break;
             	
             }
         }
         
         if (targetContext == null)
         	targetContext = new F99TargetContext(65536);
-        HostContext hostContext = new HostContext();
+        HostContext hostContext = new HostContext(targetContext);
         ForthComp comp = new ForthComp(hostContext, targetContext);
         
         comp.setLog(logfile);
@@ -101,18 +105,20 @@ public class ForthComp {
     	comp.getTargetContext().alignDP();
     	comp.saveMemory(consoleOutFile, gromOutFile);
     	
-    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
-    	logfile.println("Top word uses of " + sortedDict.size() +":");
-		
-    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
-				public int compare(DictEntry o1, DictEntry o2) {
-					return o1.getUses() - o2.getUses();
+    	if (doHistogram) {
+	    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
+	    	logfile.println("Top word uses of " + sortedDict.size() +":");
+			
+	    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
+					public int compare(DictEntry o1, DictEntry o2) {
+						return o1.getUses() - o2.getUses();
+					}
 				}
-			}
-    	);
-    	for (DictEntry entry : sortedDict.subList(Math.max(0, sortedDict.size() - 32), sortedDict.size())) {
-    		logfile.println("\t" + entry.getUses() +"\t" + entry.getName() );
-    		
+	    	);
+	    	for (DictEntry entry : sortedDict.subList(Math.max(0, sortedDict.size() - 32), sortedDict.size())) {
+	    		logfile.println("\t" + entry.getUses() +"\t" + entry.getName() );
+	    		
+	    	}
     	}
 	}
 
@@ -300,9 +306,10 @@ public class ForthComp {
 	/**
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
+	 * @throws AbortException 
 	 * 
 	 */
-	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException {
+	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException, AbortException {
 	
 		final MemoryDomain console = targetContext.createMemory();
 		targetContext.exportMemory(console);

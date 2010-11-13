@@ -40,7 +40,11 @@ $00ff       constant    'DBG
 
 $0400       constant    ROM
 
+$fec0       constant    UP0         \ grows up
+$ff40       constant    SP0         \ grows down
+$ffc0       constant    RP0
 
+UP0         constant    RamTop      \ grows down
 
 $ffc0       constant    SysCalls    \ ... 0x20
 

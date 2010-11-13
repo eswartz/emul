@@ -104,6 +104,7 @@ public class InstF99b {
 	public static final int Icstore = Imem_start + 3;
 
 	public static final int IplusStore = Imem_start + 4;
+	public static final int IcplusStore = Imem_start + 5;
 
 	public static final int Iuser = Imem_start + 6;
 	public static final int Iupidx = Imem_start + 7;
@@ -284,6 +285,7 @@ public class InstF99b {
 		Iload_d, 1, 2, 0, 0,
 		Istore_d, 3, 0, 0, 0,
 		IplusStore, 2, 0, 0, 0,
+		IcplusStore, 2, 0, 0, 0,
 		IplusStore_d, 3, 0, 0, 0,
 		Iuser, 1, 1, 0, 0,
 		Iuser_d, 1, 2, 0, 0,
@@ -473,6 +475,7 @@ public class InstF99b {
 		instNames.put(Iload_d, "D@");
 		
 		instNames.put(IplusStore, "+!");
+		instNames.put(IcplusStore, "C+!");
 		instNames.put(IplusStore_d, "D+!");
 		
 		instNames.put(ItoR, ">R");

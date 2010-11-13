@@ -258,7 +258,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		// @ + bit
 		int doesDp = dp;
 		assertTrue(""+dp, (dp & 1) == 0);	// calls, so must align
-		assertEquals(InstF99b.Irdrop, targCtx.readChar(dp++));	// don't return into data
+		assertEquals(InstF99b.IRfrom, targCtx.readChar(dp++));	// get address
 		assertEquals(InstF99b.Iload, targCtx.readChar(dp++));	// user-specified code
 		assertEquals(InstF99b.Iadd, targCtx.readChar(dp++));
 		assertEquals(InstF99b.Iexit, targCtx.readChar(dp++));

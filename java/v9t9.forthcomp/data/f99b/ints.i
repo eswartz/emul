@@ -11,10 +11,10 @@
 ;
 
 \   Last VDP status
-Variable vdp-status
+1       RamVar vdp-status
 
 \   Timer
-DVariable vdp-ticks 
+2 cells RamVar vdp-ticks 
 
 :   vdp-int-handler 
     'INTS c@  

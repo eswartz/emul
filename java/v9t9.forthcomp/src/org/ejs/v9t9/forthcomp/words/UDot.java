@@ -10,25 +10,24 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Begin extends BaseWord {
-	public Begin() {
+public class UDot extends BaseWord {
+	public UDot() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		targetContext.alignBranch();
-		targetContext.pushHere(hostContext);
-		hostContext.pushPairs(1);
-		
+		int val = hostContext.popData();
+
+		System.out.print(Integer.toString(val & 0xffff, 
+				hostContext.readVariable("BASE", targetContext)));
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

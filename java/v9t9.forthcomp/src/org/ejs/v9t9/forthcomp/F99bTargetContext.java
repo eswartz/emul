@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
+import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.v9t9.forthcomp.RelocEntry.RelocType;
 import org.ejs.v9t9.forthcomp.words.ExitI;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
@@ -75,6 +76,9 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public void defineBuiltins() throws AbortException {
+		definePrim("cell", IlitX | 2);
+		defineInlinePrim("cells", IlitX | 1, Ilsh);
+		
 		definePrim(";S", Iexit);
 		definePrim("@", Iload);
 		definePrim("c@", Icload);
@@ -83,6 +87,7 @@ public class F99bTargetContext extends TargetContext {
 		definePrim("c!", Icstore);
 		definePrim("d!", Istore_d);
 		definePrim("+!", IplusStore);
+		definePrim("c+!", IcplusStore);
 		definePrim("d+!", IplusStore_d);
 		
 		definePrim("1+", I1plus);
@@ -232,7 +237,6 @@ public class F99bTargetContext extends TargetContext {
 		define(string, new F99PrimitiveWord(defineEntry(string), opcode));
 		compileByte(opcode);
 		compileByte(Iexit);
-		alignCode();
 	}
 
 	private void defineInlinePrim(String string, int... opcodes) {
@@ -240,7 +244,6 @@ public class F99bTargetContext extends TargetContext {
 		for (int i : opcodes)
 			compileByte(i);
 		compileByte(Iexit);
-		alignCode();
 	}
 	
 	/* (non-Javadoc)
@@ -263,19 +266,28 @@ public class F99bTargetContext extends TargetContext {
 		return word;
 	}
 	/**
-	 * 
+	 * Call addresses must be aligned
 	 */
 	public void initCode() {
-		alignCode();
-	}
-
-	/**
-	 * 
-	 */
-	public void alignCode() {
 		alignDP();
 	}
 
+	public void alignBranch() {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#doResolveRelocation(org.ejs.v9t9.forthcomp.RelocEntry)
+	 */
+	@Override
+	protected int doResolveRelocation(RelocEntry reloc) throws AbortException {
+		int val = reloc.target;	// TODO
+		if (reloc.type == RelocType.RELOC_CALL_15S1) {
+			if ((val & 1) != 0)
+				throw new AbortException("Call address is odd: " + HexUtils.toHex4(val));
+			val = ((val >> 1) & 0x7fff) | 0x8000;
+		}
+		return val;
+	}
 	public void compile(ITargetWord word) {
 		word.getEntry().use();
 		
@@ -287,7 +299,7 @@ public class F99bTargetContext extends TargetContext {
 			int[] opcodes = ((F99InlineWord) word).getOpcodes();
 			for (int opcode : opcodes)
 				compileOpcode(opcode);
-		} else if (word instanceof TargetConstant) {
+		} else if (word instanceof TargetConstant && !word.getEntry().isDoesWord()) {
 			TargetConstant cons = (TargetConstant) word;
 			if (cons.getWidth() == 1)
 				compileLiteral(cons.getValue(), false, true);
@@ -295,13 +307,13 @@ public class F99bTargetContext extends TargetContext {
 				compileDoubleLiteral(cons.getValue() & 0xffff, cons.getValue() >> 16, false, true);
 			else
 				assert false;
-		} else if (word instanceof TargetVariable) {
+		} else if (word instanceof TargetVariable && !word.getEntry().isDoesWord()) {
 			TargetVariable var = (TargetVariable) word;
 			compileLiteral(var.getEntry().getParamAddr(), false, true);
-		} else if (word instanceof TargetUserVariable) {
+		} else if (word instanceof TargetUserVariable && !word.getEntry().isDoesWord()) {
 			TargetUserVariable user = (TargetUserVariable) word;
 			compileUser(user);
-		} else if (word instanceof TargetValue) {
+		} else if (word instanceof TargetValue && !word.getEntry().isDoesWord()) {
 			TargetValue value = (TargetValue) word;
 			compileLiteral(value.getEntry().getParamAddr(), false, true);
 			if (value.getCells() == 1)
@@ -411,8 +423,9 @@ public class F99bTargetContext extends TargetContext {
 	 * @param machine
 	 * @param baseSP
 	 * @param baseRP
+	 * @throws AbortException 
 	 */
-	public void doExportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) {
+	public void doExportState(HostContext hostContext, Machine machine, int baseSP, int baseRP, int baseUP) throws AbortException {
 		exportMemory(machine.getConsole());
 		CpuStateF99b cpu = (CpuStateF99b) machine.getCpu().getState();
 		
@@ -660,7 +673,7 @@ public class F99bTargetContext extends TargetContext {
 			if (lpUser == null) {
 				lpUser = defineUser("LP", 1);
 				
-				HostContext subContext = new HostContext();
+				HostContext subContext = new HostContext(this);
 				subContext.getStream().push(
 						"false <export\n"+
 						": (>LOCALS) LP @    	RP@ LP ! ; \\ caller pushes R> \n" +
@@ -890,9 +903,10 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public int compileDoDoes(HostContext hostContext) throws AbortException {
+		// must be call'able
+		alignDP();
 		int addr = getDP();
-		alignCode();
-		compileOpcode(Irdrop);
+		compileOpcode(IRfrom);
 		return addr;
 	}
 	
@@ -923,4 +937,5 @@ public class F99bTargetContext extends TargetContext {
 				entry.getName());
 		//compileCell(reloc);
 	}
+	
 }

@@ -307,6 +307,13 @@ public class InterpreterF99b implements Interpreter {
         	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(addr) + cpu.pop()));
         	break;
         }
+        case IcplusStore: {
+        	short addr = cpu.pop();
+        	iblock.domain.writeByte(addr, (byte) (iblock.domain.readByte(addr) + cpu.pop()));
+        	break;
+        }
+        
+
         case IlitB:
         case IlitW:
         case IlitX:
