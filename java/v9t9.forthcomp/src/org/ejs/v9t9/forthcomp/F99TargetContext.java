@@ -864,6 +864,13 @@ public class F99TargetContext extends TargetContext {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoDoes(org.ejs.v9t9.forthcomp.HostContext)
+	 */
+	@Override
+	public int compileDoDoes(HostContext hostContext) throws AbortException {
+		throw hostContext.abort("DOES> not implemented");
+	}
+	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoes(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.DictEntry, int)
 	 */
 	@Override

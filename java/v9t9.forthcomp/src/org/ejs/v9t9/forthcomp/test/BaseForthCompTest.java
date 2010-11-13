@@ -99,6 +99,7 @@ public abstract class BaseForthCompTest {
 
 	protected void dumpMemory(PrintStream out, int from, int to, MemoryDomain domain) {
 		System.out.println("raw memory:");
+		from &= ~1;
 		int perLine = 8;
 		int lines = ((to - from) / 2 + perLine - 1) / perLine;
 		int addr = from;
@@ -114,7 +115,7 @@ public abstract class BaseForthCompTest {
 
 	protected void dumpDict() {
 		System.out.println("dictionary cells:");
-		targCtx.dumpDict(System.out, startDP, targCtx.getDP());
+		targCtx.dumpDict(System.out, startDP & ~1, targCtx.getDP());
 	}
 	
 	protected void parseString(String text) throws AbortException {

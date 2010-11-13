@@ -203,7 +203,8 @@ public class F99bTargetContext extends TargetContext {
 		
 		defineInlinePrim("s>d", Idup, IlitX, Icmp+CMP_LT);
 		
-		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, I2plus, Iexit);
+		//defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, I2plus, Iexit);
+		defineInlinePrim("DOVAR", IbranchX|0, Idovar);
 		//defineInlinePrim("DOLIT", IlitW, 0, 0, Iexit);
 		
 		defineInlinePrim("true", IlitX | 0xf);
@@ -885,10 +886,22 @@ public class F99bTargetContext extends TargetContext {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoDoes(org.ejs.v9t9.forthcomp.HostContext)
+	 */
+	@Override
+	public int compileDoDoes(HostContext hostContext) throws AbortException {
+		int addr = getDP();
+		alignCode();
+		compileOpcode(Irdrop);
+		return addr;
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoes(int)
 	 */
 	@Override
 	public void compileDoes(HostContext hostContext, DictEntry entry, int targetDP) throws AbortException {
+		/*
 		// paramAddr is after EXIT
 		int dataSize = (getDP() - entry.getParamAddr());
 		if (dataSize >= 8) {
@@ -903,6 +916,11 @@ public class F99bTargetContext extends TargetContext {
 				entry.getName());
 		compileCell(reloc);
 		//compileCell(targetDP);
-
+*/
+		addRelocation(entry.getContentAddr(), 
+				RelocType.RELOC_CALL_15S1, 
+				targetDP,
+				entry.getName());
+		//compileCell(reloc);
 	}
 }

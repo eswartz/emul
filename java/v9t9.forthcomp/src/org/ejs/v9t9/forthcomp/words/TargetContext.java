@@ -707,5 +707,14 @@ public abstract class TargetContext extends Context {
 		compile((ITargetWord) parenString);
 		writeLengthPrefixedString(string);
 	}
+
+
+
+	/**
+	 * Prepare for DOES>
+	 * @param hostContext
+	 * @return target addr for DOES
+	 */
+	abstract public int compileDoDoes(HostContext hostContext) throws AbortException;
 	
 }

@@ -232,13 +232,10 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 				stockDictDefs +
 				compileLiteral +
 				compileMeta+
-				": xt! ( xt addr -- ) $7B ( BRANCHW ) over c! 1+ ! ; \n"+
+				": xt! ( xt addr -- ) $7B ( BRANCHW ) over c! 1+ ! ; \n"+	// BOGUS
 				//": ] true state ! ; immediate host( 0 ) ] \n"+
-				// Create splats PC@ EXIT for variables... but we need to 
-				// also jump elsewhere.  Replace the EXIT with a short branch
-				// over the content.
 				": (does>) r> lastxt xt!  ;  \n"+
-				": does> postpone (does>) ; immediate target-only\n"+
+				": does> postpone (does>) postpone rdrop ; immediate target-only\n"+
 				": make-adder: ( n -- ) create , does> @ + ;\n "+
 				"here swap\n"+
 				"100 make-adder: 100+\n");
@@ -260,7 +257,9 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		
 		// @ + bit
 		int doesDp = dp;
-		assertEquals(InstF99b.Iload, targCtx.readChar(dp++));
+		assertTrue(""+dp, (dp & 1) == 0);	// calls, so must align
+		assertEquals(InstF99b.Irdrop, targCtx.readChar(dp++));	// don't return into data
+		assertEquals(InstF99b.Iload, targCtx.readChar(dp++));	// user-specified code
 		assertEquals(InstF99b.Iadd, targCtx.readChar(dp++));
 		assertEquals(InstF99b.Iexit, targCtx.readChar(dp++));
 		
@@ -273,6 +272,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 
 		assertEquals(dp+"|"+dphere, ((dphere + newEntry.getHeaderSize()+1)&~1), dp);
 		
+		/*
 		// first, normal DOVAR (PC@ 2+)
 		assertEquals(InstF99b.IcontextFrom, targCtx.readChar(dp++));
 		assertEquals(InstF99b.CTX_PC, targCtx.readChar(dp++));
@@ -284,6 +284,14 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		// and the DOES> redirect
 		assertEquals(InstF99b.IbranchW, targCtx.readChar(dp++));
 		assertEquals(doesDp, targCtx.findReloc(dp)); dp+=2;
+		*/
+
+		// the DOES> redirect
+		assertEquals(doesDp, targCtx.findReloc(dp)); dp+=2;
+		// then the data
+		assertEquals(100, targCtx.readCell(dp)); dp+=2;
+		// should be nothing weird after this
+		assertEquals(targCtx.getDP(), dp);
 	}
 	
 	@Test

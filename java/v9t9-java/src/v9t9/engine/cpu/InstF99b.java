@@ -131,6 +131,7 @@ public class InstF99b {
 	public static final int Iexit = Imisc_start + 0;
 	public static final int Iexiti = Imisc_start + 1;
 	public static final int Iexecute = Imisc_start + 2;
+	public static final int Idovar = Imisc_start + 3;
 
 	/** @see CTX_... */
 	public static final int IcontextFrom = Imisc_start + 6;
@@ -407,6 +408,7 @@ public class InstF99b {
 		Icmp_d+7, 4, 1, 0, 0,
 		
 		Iexecute, 1, -1, -1, -1,
+		Idovar, 0, 0, 1, 0,
 		Icall, 1, -1, -1, -1,
 		Idouble, -1, -1, -1, -1,
 		Iext, -1, -1, -1, -1,

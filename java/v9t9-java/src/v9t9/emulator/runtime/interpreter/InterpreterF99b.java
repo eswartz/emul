@@ -425,6 +425,13 @@ public class InterpreterF99b implements Interpreter {
         	cpu.rpush(iblock.pc);
         	cpu.setPC(cpu.pop());
         	return true;
+        case Idovar:
+    	{
+    		short next = cpu.rpop();
+        	cpu.push(iblock.pc);
+        	cpu.setPC(next);
+        	return true;
+    	}
         	
         case ItoR:
         	cpu.rpush(cpu.pop());
