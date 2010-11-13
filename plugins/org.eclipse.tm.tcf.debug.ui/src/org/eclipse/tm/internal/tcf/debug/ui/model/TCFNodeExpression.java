@@ -342,54 +342,49 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     set(null, null, bf.toString());
                     return true;
                 }
-                TCFNode n = parent;
-                while (n != null) {
-                    if (n instanceof TCFNodeExecContext) {
-                        TCFDataCache<IMemory.MemoryContext> mem_cache = ((TCFNodeExecContext)n).getMemoryContext();
-                        if (!mem_cache.validate(this)) return false;
-                        mem = mem_cache.getData();
-                        if (mem != null) break;
-                    }
-                    n = n.parent;
+                TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(parent);
+                if (!mem_cache.validate(this)) return false;
+                if (mem_cache.getError() != null) {
+                    set(null, mem_cache.getError(), null);
+                    return true;
                 }
-                if (mem != null) {
-                    if (!type.validate(this)) return false;
-                    ISymbols.Symbol type_data = type.getData();
-                    if (type_data != null) {
-                        switch (type_data.getTypeClass()) {
-                        case pointer:
-                        case array:
-                            TCFDataCache<ISymbols.Symbol> base_type_cahce = model.getSymbolInfoCache(type_data.getBaseTypeID());
-                            if (base_type_cahce != null) {
-                                if (!base_type_cahce.validate(this)) return false;
-                                base_type_data = base_type_cahce.getData();
-                                if (base_type_data != null) {
-                                    offs = 0;
-                                    size = base_type_data.getSize();
-                                    switch (base_type_data.getTypeClass()) {
-                                    case integer:
-                                    case cardinal:
-                                        if (base_type_data.getSize() != 1) break;
-                                        size = 0; // read until character = 0
-                                    case composite:
-                                        if (base_type_data.getSize() == 0) break;
-                                        if (type_data.getTypeClass() == ISymbols.TypeClass.array &&
-                                                base_type_data.getTypeClass() == ISymbols.TypeClass.composite) break;
-                                        if (!value.validate(this)) return false;
-                                        IExpressions.Value v = value.getData();
-                                        if (v != null) {
-                                            byte[] data = v.getValue();
-                                            if (type_data.getTypeClass() == ISymbols.TypeClass.array) {
-                                                set(null, null, toASCIIString(data, 0, data.length));
-                                                return true;
-                                            }
-                                            big_endian = v.isBigEndian();
-                                            BigInteger a = toBigInteger(data, 0, data.length, big_endian, false);
-                                            if (!a.equals(BigInteger.valueOf(0))) {
-                                                addr = a;
-                                                Protocol.invokeLater(this);
-                                                return false;
-                                            }
+                mem = mem_cache.getData().getMemoryContext().getData();
+                if (!type.validate(this)) return false;
+                ISymbols.Symbol type_data = type.getData();
+                if (type_data != null) {
+                    switch (type_data.getTypeClass()) {
+                    case pointer:
+                    case array:
+                        TCFDataCache<ISymbols.Symbol> base_type_cahce = model.getSymbolInfoCache(type_data.getBaseTypeID());
+                        if (base_type_cahce != null) {
+                            if (!base_type_cahce.validate(this)) return false;
+                            base_type_data = base_type_cahce.getData();
+                            if (base_type_data != null) {
+                                offs = 0;
+                                size = base_type_data.getSize();
+                                switch (base_type_data.getTypeClass()) {
+                                case integer:
+                                case cardinal:
+                                    if (base_type_data.getSize() != 1) break;
+                                    size = 0; // read until character = 0
+                                case composite:
+                                    if (base_type_data.getSize() == 0) break;
+                                    if (type_data.getTypeClass() == ISymbols.TypeClass.array &&
+                                            base_type_data.getTypeClass() == ISymbols.TypeClass.composite) break;
+                                    if (!value.validate(this)) return false;
+                                    IExpressions.Value v = value.getData();
+                                    if (v != null) {
+                                        byte[] data = v.getValue();
+                                        if (type_data.getTypeClass() == ISymbols.TypeClass.array) {
+                                            set(null, null, toASCIIString(data, 0, data.length));
+                                            return true;
+                                        }
+                                        big_endian = v.isBigEndian();
+                                        BigInteger a = toBigInteger(data, 0, data.length, big_endian, false);
+                                        if (!a.equals(BigInteger.valueOf(0))) {
+                                            addr = a;
+                                            Protocol.invokeLater(this);
+                                            return false;
                                         }
                                     }
                                 }

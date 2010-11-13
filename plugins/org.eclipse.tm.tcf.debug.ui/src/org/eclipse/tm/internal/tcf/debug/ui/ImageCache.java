@@ -44,6 +44,7 @@ public class ImageCache {
         IMG_VARIABLE = "icons/full/obj16/genericvariable_obj.gif",
 
         IMG_SIGNALS = "icons/signals.gif",
+        IMG_MEMORY_MAP = "icons/memory-map.gif",
 
         IMG_ARRAY_PARTITION = "icons/full/obj16/arraypartition_obj.gif",
 

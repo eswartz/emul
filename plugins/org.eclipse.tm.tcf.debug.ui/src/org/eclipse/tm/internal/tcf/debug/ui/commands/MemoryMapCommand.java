@@ -15,7 +15,9 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeArrayPartition;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 
@@ -25,6 +27,8 @@ public class MemoryMapCommand extends AbstractActionDelegate {
         if (n instanceof TCFNodeLaunch) return true;
         if (n instanceof TCFNodeExecContext) return true;
         if (n instanceof TCFNodeStackFrame) return true;
+        if (n instanceof TCFNodeExpression) return true;
+        if (n instanceof TCFNodeArrayPartition) return true;
         return false;
     }
 

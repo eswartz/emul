@@ -96,22 +96,15 @@ public class TCFNodeStackFrame extends TCFNode {
                     return true;
                 }
                 if (frame_no > 0) n = n.subtract(BigInteger.valueOf(1));
-                IMemory.MemoryContext mem_ctx = null;
-                TCFNode p = parent;
-                while (p != null) {
-                    if (p instanceof TCFNodeExecContext) {
-                        TCFDataCache<IMemory.MemoryContext> cache = ((TCFNodeExecContext)p).getMemoryContext();
-                        if (!cache.validate(this)) return false;
-                        mem_ctx = cache.getData();
-                        if (mem_ctx != null) break;
-                    }
-                    p = p.parent;
-                }
-                if (p == null) {
-                    set(null, null, null);
+                TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(parent);
+                if (!mem_cache.validate(this)) return false;
+                if (mem_cache.getError() != null) {
+                    set(null, mem_cache.getError(), null);
                     return true;
                 }
-                final Map<BigInteger,TCFSourceRef> line_info_cache = ((TCFNodeExecContext)p).getLineInfoCache();
+                TCFNodeExecContext mem_node = mem_cache.getData();
+                final IMemory.MemoryContext mem_ctx = mem_node.getMemoryContext().getData();
+                final Map<BigInteger,TCFSourceRef> line_info_cache = mem_node.getLineInfoCache();
                 TCFSourceRef l = line_info_cache.get(n);
                 if (l != null) {
                     l.context = mem_ctx;
@@ -128,11 +121,10 @@ public class TCFNodeStackFrame extends TCFNode {
                 }
                 final BigInteger n0 = n;
                 final BigInteger n1 = n0.add(BigInteger.valueOf(1));
-                final IMemory.MemoryContext ctx = mem_ctx;
-                command = ln.mapToSource(p.id, n0, n1, new ILineNumbers.DoneMapToSource() {
+                command = ln.mapToSource(mem_node.id, n0, n1, new ILineNumbers.DoneMapToSource() {
                     public void doneMapToSource(IToken token, Exception error, ILineNumbers.CodeArea[] areas) {
                         TCFSourceRef l = new TCFSourceRef();
-                        l.context = ctx;
+                        l.context = mem_ctx;
                         l.address = n0;
                         if (error == null && areas != null && areas.length > 0) {
                             for (ILineNumbers.CodeArea area : areas) {

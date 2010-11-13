@@ -704,8 +704,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         assert !disposed;
         if (run_context.isValid()) {
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx == null) return;
-            if (!ctx.hasState()) return;
+            if (ctx != null && !ctx.hasState()) return;
         }
         onContextSuspended(null, null, null);
     }
@@ -714,13 +713,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         assert !disposed;
         if (run_context.isValid()) {
             IRunControl.RunControlContext ctx = run_context.getData();
-            if (ctx == null) return;
-            if (!ctx.hasState()) return;
+            if (ctx != null && !ctx.hasState()) return;
             onContextResumed();
         }
         else {
             state.reset();
-            for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
             postAllChangedDelta();
         }
     }

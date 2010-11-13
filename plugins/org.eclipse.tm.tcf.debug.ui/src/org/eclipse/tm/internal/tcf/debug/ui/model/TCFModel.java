@@ -180,6 +180,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
         new HashMap<String,IMemoryBlockRetrievalExtension>();
 
+    private final Map<String,TCFDataCache<TCFNodeExecContext>> mem_searches =
+        new HashMap<String,TCFDataCache<TCFNodeExecContext>>();
+
     private final Map<String,String> cast_to_type_map =
         new HashMap<String,String>();
 
@@ -494,23 +497,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             return new TCFTask<Object>() {
                 public void run() {
                     Object o = null;
-                    TCFNode n = node;
-                    while (n != null && !n.isDisposed()) {
-                        if (n instanceof TCFNodeExecContext) {
-                            TCFNodeExecContext e = (TCFNodeExecContext)n;
-                            TCFDataCache<IMemory.MemoryContext> cache = e.getMemoryContext();
-                            if (!cache.validate(this)) return;
-                            if (cache.getData() != null) {
-                                o = mem_retrieval.get(e.id);
-                                if (o == null) {
-                                    TCFMemoryBlockRetrieval m = new TCFMemoryBlockRetrieval(e);
-                                    mem_retrieval.put(e.id, m);
-                                    o = m;
-                                }
-                                break;
-                            }
+                    TCFDataCache<TCFNodeExecContext> cache = searchMemoryContext(node);
+                    if (!cache.validate(this)) return;
+                    if (cache.getData() != null) {
+                        TCFNodeExecContext ctx = cache.getData();
+                        o = mem_retrieval.get(ctx.getID());
+                        if (o == null) {
+                            TCFMemoryBlockRetrieval m = new TCFMemoryBlockRetrieval(ctx);
+                            mem_retrieval.put(ctx.getID(), m);
+                            o = m;
                         }
-                        n = n.parent;
                     }
                     assert o == null || adapter.isInstance(o);
                     done(o);
@@ -728,6 +724,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         assert Protocol.isDispatchThread();
         id2node.remove(id);
         mem_retrieval.remove(id);
+        mem_searches.remove(id);
     }
 
     IExpressionManager getExpressionManager() {
@@ -783,6 +780,60 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         TCFNodeSymbol n = (TCFNodeSymbol)getNode(sym_id);
         if (n == null) n = new TCFNodeSymbol(launch_node, sym_id);
         return n.getChildren();
+    }
+
+    /**
+     * Search memory context that owns the object represented by given node.
+     * @return data cache item that holds the memory context node.
+     */
+    public TCFDataCache<TCFNodeExecContext> searchMemoryContext(final TCFNode node) {
+        TCFDataCache<TCFNodeExecContext> cache = mem_searches.get(node.getID());
+        if (cache == null) {
+            cache = new TCFDataCache<TCFNodeExecContext>(channel) {
+                @Override
+                protected boolean startDataRetrieval() {
+                    TCFNode n = node;
+                    Throwable err = null;
+                    TCFNodeExecContext ctx = null;
+                    while (n != null && !n.isDisposed()) {
+                        if (n instanceof TCFNodeExecContext) {
+                            TCFNodeExecContext e = (TCFNodeExecContext)n;
+                            TCFDataCache<IMemory.MemoryContext> cache = e.getMemoryContext();
+                            if (!cache.validate(this)) return false;
+                            if (cache.getError() != null) {
+                                err = cache.getError();
+                                if (err instanceof IErrorReport) {
+                                    IErrorReport r = (IErrorReport)err;
+                                    if (r.getErrorCode() == IErrorReport.TCF_ERROR_INV_CONTEXT) {
+                                        /* Continue search - go to parent node */
+                                        err = null;
+                                    }
+                                }
+                                if (err != null) break;
+                            }
+                            else if (cache.getData() != null) {
+                                ctx = e;
+                                break;
+                            }
+                        }
+                        n = n.parent;
+                    }
+                    if (err != null) {
+                        set(null, err, null);
+                    }
+                    else if (ctx == null) {
+                        set(null, new Exception("Context does not provide memory access"), null);
+                    }
+                    else {
+                        set(null, null, ctx);
+                    }
+                    mem_searches.remove(node.getID());
+                    return true;
+                }
+            };
+            mem_searches.put(node.getID(), cache);
+        }
+        return cache;
     }
 
     public void update(IChildrenCountUpdate[] updates) {

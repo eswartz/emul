@@ -86,7 +86,7 @@ public class MemoryMapProxy implements IMemoryMap {
     }
 
     public IToken set(String id, MemoryRegion[] map, final DoneSet done) {
-        return new Command(channel, this, "get", new Object[]{ id, map }) {
+        return new Command(channel, this, "set", new Object[]{ id, map }) {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {

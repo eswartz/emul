@@ -164,15 +164,20 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                     if (exec_ctx.isDisposed()) {
                         error("Context is disposed");
                     }
-                    else  {
+                    else {
                         TCFDataCache<IMemory.MemoryContext> cache = exec_ctx.getMemoryContext();
                         if (!cache.validate(this)) return;
-                        IMemory.MemoryContext mem = cache.getData();
-                        if (mem == null) {
-                            error("Context does not provide memory access");
+                        if (cache.getError() != null) {
+                            error(cache.getError());
                         }
                         else {
-                            done(mem.getAddressSize());
+                            IMemory.MemoryContext mem = cache.getData();
+                            if (mem == null) {
+                                error("Context does not provide memory access");
+                            }
+                            else {
+                                done(mem.getAddressSize());
+                            }
                         }
                     }
                 }
@@ -247,38 +252,43 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                     else {
                         TCFDataCache<IMemory.MemoryContext> cache = exec_ctx.getMemoryContext();
                         if (!cache.validate(this)) return;
-                        final IMemory.MemoryContext mem = cache.getData();
-                        if (mem == null) {
-                            error("Context does not provide memory access");
+                        if (cache.getError() != null) {
+                            error(cache.getError());
                         }
                         else {
-                            int size = (int)units;
-                            int mode = IMemory.MODE_CONTINUEONERROR | IMemory.MODE_VERIFY;
-                            final byte[] buf = new byte[size];
-                            mem.get(address, 1, buf, 0, size, mode, new IMemory.DoneMemory() {
-                                public void doneMemory(IToken token, MemoryError error) {
-                                    MemoryByte[] res = new MemoryByte[buf.length];
-                                    int big_endian = 0;
-                                    if (mem.getProperties().get(IMemory.PROP_BIG_ENDIAN) != null) {
-                                        big_endian |= MemoryByte.ENDIANESS_KNOWN;
-                                        if (mem.isBigEndian()) big_endian |= MemoryByte.BIG_ENDIAN;
-                                    }
-                                    for (int i = 0; i < buf.length; i++) {
-                                        int flags = big_endian;
-                                        if (error instanceof IMemory.ErrorOffset) {
-                                            IMemory.ErrorOffset ofs = (IMemory.ErrorOffset)error;
-                                            if (ofs.getStatus(i) == IMemory.ErrorOffset.BYTE_VALID) {
+                            final IMemory.MemoryContext mem = cache.getData();
+                            if (mem == null) {
+                                error("Context does not provide memory access");
+                            }
+                            else {
+                                int size = (int)units;
+                                int mode = IMemory.MODE_CONTINUEONERROR | IMemory.MODE_VERIFY;
+                                final byte[] buf = new byte[size];
+                                mem.get(address, 1, buf, 0, size, mode, new IMemory.DoneMemory() {
+                                    public void doneMemory(IToken token, MemoryError error) {
+                                        MemoryByte[] res = new MemoryByte[buf.length];
+                                        int big_endian = 0;
+                                        if (mem.getProperties().get(IMemory.PROP_BIG_ENDIAN) != null) {
+                                            big_endian |= MemoryByte.ENDIANESS_KNOWN;
+                                            if (mem.isBigEndian()) big_endian |= MemoryByte.BIG_ENDIAN;
+                                        }
+                                        for (int i = 0; i < buf.length; i++) {
+                                            int flags = big_endian;
+                                            if (error instanceof IMemory.ErrorOffset) {
+                                                IMemory.ErrorOffset ofs = (IMemory.ErrorOffset)error;
+                                                if (ofs.getStatus(i) == IMemory.ErrorOffset.BYTE_VALID) {
+                                                    flags = MemoryByte.READABLE | MemoryByte.WRITABLE;
+                                                }
+                                            }
+                                            else if (error == null) {
                                                 flags = MemoryByte.READABLE | MemoryByte.WRITABLE;
                                             }
+                                            res[i] = new MemoryByte(buf[i], (byte)flags);
                                         }
-                                        else if (error == null) {
-                                            flags = MemoryByte.READABLE | MemoryByte.WRITABLE;
-                                        }
-                                        res[i] = new MemoryByte(buf[i], (byte)flags);
+                                        done(res);
                                     }
-                                    done(res);
-                                }
-                            });
+                                });
+                            }
                         }
                     }
                 }

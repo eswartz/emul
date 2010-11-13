@@ -226,6 +226,7 @@
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.MemoryMap"
             class="org.eclipse.tm.internal.tcf.debug.ui.commands.MemoryMapCommand"
+            icon="icons/memory-map.gif"
             label="%MemoryMapCommand.label"
             menubarPath="additions">
          </action>

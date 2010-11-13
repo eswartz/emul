@@ -214,11 +214,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
 
     private void createLocalAgentButtons(Composite parent) {
         Composite local_agent_comp = new Composite(parent, SWT.NONE);
-        GridLayout local_agent_layout = new GridLayout();
-        local_agent_layout.numColumns = 1;
-        local_agent_layout.marginHeight = 0;
-        local_agent_layout.marginWidth = 0;
-        local_agent_comp.setLayout(local_agent_layout);
+        GridLayout layout = new GridLayout();
+        layout.numColumns = 1;
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        local_agent_comp.setLayout(layout);
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
         local_agent_comp.setLayoutData(gd);
 
@@ -245,15 +245,15 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         Font font = parent.getFont();
 
         Group group = new Group(parent, SWT.NONE);
-        GridLayout top_layout = new GridLayout();
-        top_layout.verticalSpacing = 0;
-        top_layout.numColumns = 2;
-        group.setLayout(top_layout);
+        GridLayout layout = new GridLayout();
+        layout.verticalSpacing = 0;
+        layout.numColumns = 2;
+        group.setLayout(layout);
         group.setLayoutData(new GridData(GridData.FILL_BOTH));
         group.setFont(font);
         group.setText("Target");
 
-        createVerticalSpacer(group, top_layout.numColumns);
+        createVerticalSpacer(group, layout.numColumns);
 
         Label host_label = new Label(group, SWT.NONE);
         host_label.setText("Target ID:");
@@ -265,7 +265,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         peer_id_text.setFont(font);
         peer_id_text.setEditable(false);
 
-        createVerticalSpacer(group, top_layout.numColumns);
+        createVerticalSpacer(group, layout.numColumns);
 
         Label peer_label = new Label(group, SWT.NONE);
         peer_label.setText("&Available targets:");
