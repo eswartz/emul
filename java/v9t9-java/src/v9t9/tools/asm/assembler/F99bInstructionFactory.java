@@ -3,26 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
-import static v9t9.engine.cpu.InstF99b.I0branchB;
-import static v9t9.engine.cpu.InstF99b.I0branchW;
-import static v9t9.engine.cpu.InstF99b.I0branchX;
-import static v9t9.engine.cpu.InstF99b.IbranchB;
-import static v9t9.engine.cpu.InstF99b.IbranchW;
-import static v9t9.engine.cpu.InstF99b.IbranchX;
-import static v9t9.engine.cpu.InstF99b.Icall;
-import static v9t9.engine.cpu.InstF99b.IcontextFrom;
-import static v9t9.engine.cpu.InstF99b.Idouble;
-import static v9t9.engine.cpu.InstF99b.Iext;
-import static v9t9.engine.cpu.InstF99b.IlitB;
-import static v9t9.engine.cpu.InstF99b.IlitB_d;
-import static v9t9.engine.cpu.InstF99b.IlitD_d;
-import static v9t9.engine.cpu.InstF99b.IlitW;
-import static v9t9.engine.cpu.InstF99b.IlitX;
-import static v9t9.engine.cpu.InstF99b.IlitX_d;
-import static v9t9.engine.cpu.InstF99b.Irpidx;
-import static v9t9.engine.cpu.InstF99b.Ispidx;
-import static v9t9.engine.cpu.InstF99b.ItoContext;
-import static v9t9.engine.cpu.InstF99b.Iupidx;
+import static v9t9.engine.cpu.InstF99b.*;
 import v9t9.engine.cpu.InstructionF99b;
 import v9t9.engine.cpu.MachineOperandF99b;
 import v9t9.engine.cpu.RawInstruction;
@@ -146,6 +127,10 @@ public class F99bInstructionFactory implements IInstructionFactory {
 			case IlitB_d:
 				inst.setOp1(MachineOperandF99b.createImmediateOperand(
 						(byte) iblock.nextByte(), MachineOperandF99b.OP_ENC_IMM8));
+				break;
+			case Isyscall:
+				inst.setOp1(MachineOperandF99b.createImmediateOperand(
+						(byte) iblock.nextByte(), MachineOperandF99b.OP_ENC_SYSCALL));
 				break;
 			case ItoContext:
 			case IcontextFrom:

@@ -133,6 +133,8 @@ public class InstF99b {
 	public static final int Iexiti = Imisc_start + 1;
 	public static final int Iexecute = Imisc_start + 2;
 	public static final int Idovar = Imisc_start + 3;
+	
+	public static final int Isyscall = Imisc_start + 4;
 
 	/** @see CTX_... */
 	public static final int IcontextFrom = Imisc_start + 6;
@@ -266,6 +268,19 @@ public class InstF99b {
 		"PC",
 	};
 
+	/** Start tracing */
+	public static final int SYSCALL_DEBUG_ON = 0;
+	/** Stop tracing */
+	public static final int SYSCALL_DEBUG_OFF = 1;
+	/** Interpret string ( caddr len -- ) */
+	public static final int SYSCALL_INTERPRET = 2;
+	
+	public static final String[] syscallStrings = {
+		"+DBG",
+		"-DBG",
+		"INTERPRET",
+	};
+	
 	/** for each inst:  SP read, SP left
 	 *	RP read, RP left;
 	 *  neg means unsure
@@ -412,6 +427,7 @@ public class InstF99b {
 		Iexecute, 1, -1, -1, -1,
 		Idovar, 0, 0, 1, 0,
 		Icall, 1, -1, -1, -1,
+		Isyscall, 1, -1, -1, -1,
 		Idouble, -1, -1, -1, -1,
 		Iext, -1, -1, -1, -1,
 		

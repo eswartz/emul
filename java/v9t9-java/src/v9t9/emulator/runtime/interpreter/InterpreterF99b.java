@@ -606,7 +606,32 @@ public class InterpreterF99b implements Interpreter {
         		break;
         	}
         	break;
-        	
+
+        case Isyscall:
+        	switch (mop1.immed) {
+	        	case SYSCALL_DEBUG_OFF: {
+	            	int oldCount = machine.getExecutor().debugCount; 
+	            	machine.getExecutor().debugCount++;
+	            	if ((oldCount == 0) != (machine.getExecutor().debugCount == 0))
+	            		Executor.settingDumpFullInstructions.setBoolean(false);
+	            	break;
+	        	}
+	        	case SYSCALL_DEBUG_ON: {
+	        		int oldCount = machine.getExecutor().debugCount; 
+	        		machine.getExecutor().debugCount--;
+	        		if ((oldCount == 0) != (machine.getExecutor().debugCount == 0))
+	        			Executor.settingDumpFullInstructions.setBoolean(true);
+	        		break;
+	        	}
+	        	case SYSCALL_INTERPRET: {
+	        		int len = cpu.pop();
+	        		int addr = cpu.pop();
+	        		
+	        		break;
+	        	}
+        	}
+        	break;
+
         default:
         	unsupported(ins);
         }

@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry excluding="v9t9/emulator/clients/builtin/sdl/" kind="src" path="src"/>
 	<classpathentry kind="src" path="eulang"/>
+	<classpathentry kind="src" path="forthcomp"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="libs/bcel-5.2.jar"/>
 	<classpathentry kind="lib" path="libs/gnu-getopt-1.0.11.jar"/>

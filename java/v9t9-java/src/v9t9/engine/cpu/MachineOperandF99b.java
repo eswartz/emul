@@ -10,7 +10,8 @@ import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.Symbol;
 
-import static v9t9.engine.cpu.InstF99.ctxStrings;
+import static v9t9.engine.cpu.InstF99b.ctxStrings;
+import static v9t9.engine.cpu.InstF99b.syscallStrings;
 
 /**
  * A machine operand, as parsed from an instruction or converted from an
@@ -39,6 +40,7 @@ public class MachineOperandF99b extends BaseMachineOperand {
 	public static final int OP_ENC_IMM16 = 4;
 	public static final int OP_ENC_IMM32 = 5;
 	public static final int OP_ENC_CTX = 6;
+	public static final int OP_ENC_SYSCALL = 7;
 
 
 	/** 
@@ -138,6 +140,8 @@ public class MachineOperandF99b extends BaseMachineOperand {
     			return "#>" + HexUtils.toHex4((byte)val) + " (" + val + ")";
     		else if (encoding == OP_ENC_CTX)
     			return (val >= 0 && val < ctxStrings.length ? ctxStrings[val] : "") + " (" + val + ")";
+    		else if (encoding == OP_ENC_SYSCALL)
+    			return (val >= 0 && val < syscallStrings.length ? syscallStrings[val] : "") + " (" + val + ")";
     		else
     			return "#>" + HexUtils.toHex4(val) + " (" + val + ")";
     	}
