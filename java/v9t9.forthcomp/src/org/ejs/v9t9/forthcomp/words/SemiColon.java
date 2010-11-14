@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class SemiColon extends BaseWord {
+public class SemiColon extends BaseStdWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
@@ -23,7 +23,7 @@ public class SemiColon extends BaseWord {
 		
 		hostContext.stopCompiling();
 
-		targetContext.compileExit();
+		targetContext.compileExit(hostContext);
 		
 		((ITargetWord) targetContext.getLatest()).getEntry().setHidden(false);
 	}

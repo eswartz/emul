@@ -5,6 +5,7 @@ package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ISemantics;
 
 /**
  * @author ejs
@@ -17,9 +18,21 @@ public class DLiteral extends BaseWord {
 	/**
 	 * 
 	 */
-	public DLiteral(boolean optimize) {
-		this.optimize = optimize;
+	public DLiteral(boolean optimize_) {
+		this.optimize = optimize_;
 		
+		setCompilationSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				int valH = hostContext.popData();
+				int valL = hostContext.popData();
+				targetContext.compileDoubleLiteral(valL, valH, false, optimize);
+				
+				hostContext.compile(new HostDoubleLiteral(valL, valH, false));
+			}
+		});
+		setInterpretationSemantics(getCompilationSemantics());
 	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -27,23 +40,5 @@ public class DLiteral extends BaseWord {
 	@Override
 	public String toString() {
 		return "DLITERAL";
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext)
-			throws AbortException {
-		int valH = hostContext.popData();
-		int valL = hostContext.popData();
-		targetContext.compileDoubleLiteral(valL, valH, false, optimize);
-		
-		hostContext.compile(new HostDoubleLiteral(valL, valH, false));
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
-	 */
-	public boolean isImmediate() {
-		return true;
 	}
 }

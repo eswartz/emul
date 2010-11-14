@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class Postpone extends BaseWord {
+public class Postpone extends BaseStdWord {
 	public Postpone() {
 	}
 
@@ -31,7 +31,7 @@ public class Postpone extends BaseWord {
 			throw hostContext.abort("cannot postpone host word " + name);
 		
 		ITargetWord targetWord = (ITargetWord)word;
-		if (targetWord.isImmediate()) {
+		if (targetWord.getEntry().isImmediate()) {
 			targetContext.compileCall(targetWord);
 		} else {
 			targetContext.compilePostpone(targetWord);
@@ -41,7 +41,7 @@ public class Postpone extends BaseWord {
 		//IWord hostWord = targetWord.getEntry().getHostBehavior();
 		//if (hostWord == null)
 		//	hostContext.find(name);
-		
+		/*
 		if ((targetWord.getEntry().isTargetOnly() && hostWord != null)
 				|| (!(targetWord instanceof TargetColonWord) && hostWord != null)) {
 			//System.out.println(hostContext.getStream().getLocation()+": using host definition when emulating " + name);
@@ -50,19 +50,24 @@ public class Postpone extends BaseWord {
 			else
 				hostContext.compile(new HostPostponedWord(hostWord, targetWord));
 		} else if (targetWord.getEntry().getHostBehavior() != null) {
-			if (targetWord.isImmediate())
+			if (targetWord.getEntry().isImmediate())
 				hostContext.compile(targetWord.getEntry().getHostBehavior());
 			else
 				hostContext.compile(new HostPostponedWord(targetWord.getEntry().getHostBehavior(), targetWord));
 		} else if (targetWord instanceof TargetColonWord) {
-			if (targetWord.isImmediate())
+			if (targetWord.getEntry().isImmediate())
 				hostContext.compile(targetWord);
 			else
 				hostContext.compile(new HostPostponedWord(targetWord, targetWord));
 		} else {
 			targetContext.markHostExecutionUnsupported();
 		}
+		*/
+		//if (hostWord.getInterpretSemantics() == null && hostWord.getCompileSemantics() == null)
+		//      throw hostContext.abort(word.getName() + " cannot be postponed -- no interpret or compile semantics");
 		
+		hostContext.compile(new HostPostponedWord(hostWord, targetWord));
+
 	}
 	
 	/* (non-Javadoc)

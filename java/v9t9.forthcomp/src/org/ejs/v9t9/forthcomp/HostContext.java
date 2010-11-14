@@ -100,7 +100,7 @@ import org.ejs.v9t9.forthcomp.words.While;
  *
  */
 public class HostContext extends Context {
-	public static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 	
 	private Stack<Integer> dataStack;
 	private TokenStream tokenStream;
@@ -137,13 +137,14 @@ public class HostContext extends Context {
 		define("csp", new HostVariable(0));
 		
 		define("(define-prims)", new BaseWord() {
-			public void execute(HostContext hostContext,
-					TargetContext targetContext) throws AbortException {
-				targetContext.defineBuiltins();
-			}
-
-			public boolean isImmediate() {
-				return false;
+			{
+				setExecutionSemantics(new ISemantics() {
+					
+					public void execute(HostContext hostContext, TargetContext targetContext)
+							throws AbortException {
+						targetContext.defineBuiltins();
+					}
+				});
 			}
 			
 		});
@@ -506,6 +507,7 @@ public class HostContext extends Context {
 					"exec " + hostPc + ": " + word);
 			hostPc++;
 			
+			/*
 			if (word instanceof ITargetWord) {
 				ITargetWord targetWord = (ITargetWord) word;
 				IWord hostWord = targetWord.getEntry().getHostBehavior();
@@ -518,7 +520,7 @@ public class HostContext extends Context {
 					origReturnStack.addAll(returnStack);
 					int dp = targetContext.getDP();
 					
-					hostWord.execute(hostContext, targetContext);
+					hostWord.getExecutionSemantics().execute(hostContext, targetContext);
 					
 					targetContext.setDP(dp);
 					dataStack = origDataStack;
@@ -526,7 +528,11 @@ public class HostContext extends Context {
 				}
 				
 			}
-			word.execute(hostContext, targetContext);
+			*/
+			
+			if (word.getExecutionSemantics() == null)
+				throw abort(word.getName() +  " has unknown runtime semantics");
+			word.getExecutionSemantics().execute(hostContext, targetContext);
 		}
 	}
 
@@ -602,54 +608,48 @@ public class HostContext extends Context {
 	 * @throws AbortException 
 	 */
 	public void compileWord(TargetContext targetContext, IWord hostWord, ITargetWord targetWord) throws AbortException {
-		/*
-		if (word instanceof ITargetWord) {
-			IWord hostWord = find(token);
-			compile(hostWord != null ? hostWord : word);
-			targetContext.compile((ITargetWord) word);
-		} else if (word instanceof HostLiteral) {
-			compile(word);
-			targetContext.compileLiteral(((HostLiteral) word).getValue(), ((HostLiteral) word).isUnsigned(), true);
-		} else if (word instanceof HostDoubleLiteral) {
-			compile(word);
-			if (targetContext.getCellSize() == 2)
-				targetContext.compileDoubleLiteral(
-						((HostDoubleLiteral) word).getValueLo(),
-						((HostDoubleLiteral) word).getValueHi(), 
-						((HostDoubleLiteral) word).isUnsigned(), true);
-			
-		} else {
-			//throw abort("unknown compile-time semantics for " + token + " (it needs a definition in the target)");
-			IWord hostWord = find(token);
-			compile(hostWord != null ? hostWord : word);
-			if (word.isImmediate())
-				word.execute(this, targetContext);
-		}	
-		*/
-		if (hostWord != null)
-			compile(hostWord);
+		
+		boolean hadSemantics = false;
+		
 		if (targetWord != null) {
-			targetContext.compile(targetWord);
-		} else {
-			if (hostWord instanceof HostLiteral) {
-				targetContext.compileLiteral(((HostLiteral) hostWord).getValue(),
-						((HostLiteral) hostWord).isUnsigned(), true);
-			} else if (hostWord instanceof HostDoubleLiteral) {
-				if (targetContext.getCellSize() == 2)
-					targetContext.compileDoubleLiteral(
-							((HostDoubleLiteral) hostWord).getValueLo(),
-							((HostDoubleLiteral) hostWord).getValueHi(), 
-							((HostDoubleLiteral) hostWord).isUnsigned(), true);
-				else
-					throw new UnsupportedOperationException();
-			} else {
-				if (hostWord.isImmediate())
-					hostWord.execute(this, targetContext);
-				else
-					throw abort("unknown compile-time semantics for " + hostWord + " (it needs a definition in the target)");
-					
+			if (targetWord.getCompilationSemantics() != null) {
+				if (!targetWord.getEntry().isTargetOnly()) {
+					boolean saveState = hostWord != null && hostWord != targetWord
+						&& targetWord.getEntry().getHostBehavior() != null;
+					int dp = 0;
+					Stack<Integer> origDataStack = null;
+					Stack<Integer> origReturnStack = null;
+					if (saveState) {
+						if (DEBUG) System.out.println("On host: " + hostWord);
+
+						origDataStack = new Stack<Integer>(); 
+						origDataStack.addAll(dataStack);
+						origReturnStack = new Stack<Integer>();
+						origReturnStack.addAll(returnStack);
+						dp = targetContext.getDP();
+					}
+					targetWord.getCompilationSemantics().execute(this, targetContext);
+					if (saveState) {
+						targetContext.setDP(dp);
+						dataStack = origDataStack;
+						returnStack = origReturnStack;
+					} else {
+						hadSemantics = true;
+					}
+				}
 			}
-				
+			else
+				targetContext.compile(targetWord);
+		}
+		if (hostWord != null) {
+			if (hostWord.getCompilationSemantics() != null) {
+				if (!hadSemantics)
+					hostWord.getCompilationSemantics().execute(this, targetContext);
+				else if (hostWord != targetWord || !targetWord.getEntry().isImmediate())
+					compile(hostWord);
+			}
+			else
+				compile(hostWord);
 		}
 			
 	}

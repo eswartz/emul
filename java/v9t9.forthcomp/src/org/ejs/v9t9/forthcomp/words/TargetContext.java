@@ -46,6 +46,7 @@ public abstract class TargetContext extends Context {
 	private Map<String, DictEntry> dictEntryMap = new LinkedHashMap<String, DictEntry>();
 	
 	private DictEntry lastEntry;
+	/** in bytes */
 	protected int cellSize;
 	private boolean export;
 	private int baseDP;
@@ -285,25 +286,27 @@ public abstract class TargetContext extends Context {
 	public TargetVariable create(String name, int cells) {
 		DictEntry entry = defineEntry(name);
 		int dp = entry.getContentAddr();
-		try {
-			ITargetWord doVar = (ITargetWord) require("DOVAR");
-			initCode();
-			compile(doVar);
-		} catch (AbortException e) {
-			// for unit tests
-		}
+		initCode();
+		compileDoVar();
 		stubData.use(cells * cellSize);
 		int loc = alloc(cells * cellSize);
 		entry.setCodeSize(loc - dp);
-		TargetVariable var = (TargetVariable) define(name, new TargetVariable(entry, loc));
+		final TargetVariable var = (TargetVariable) define(name, new TargetVariable(entry));
+		
 		return var;
 	}
+
+	abstract protected void compileDoVar();
+
+
 
 	public TargetColonWord defineColonWord(String name) {
 		DictEntry entry = defineEntry(name);
 		logfile.println(name);
 		initCode();
-		return (TargetColonWord) define(name, new TargetColonWord(entry));		
+		final TargetColonWord colon =  (TargetColonWord) define(name, new TargetColonWord(entry));
+		
+		return colon;
 	}
 
 	public TargetConstant defineConstant(String name, int value, int cells) throws AbortException {
@@ -311,7 +314,8 @@ public abstract class TargetContext extends Context {
 		logfile.println(name);
 		initCode();
 		compileDoConstant(value, cells);
-		return (TargetConstant) define(name, new TargetConstant(entry, value, 1));		
+		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(entry, value, 1));
+		return constant;
 	}
 
 	public TargetValue defineValue(String name, int value, int cells) throws AbortException {
@@ -324,8 +328,13 @@ public abstract class TargetContext extends Context {
 		
 		entry.setCodeSize(loc - origDp);
 		
-		return (TargetValue) define(name, new TargetValue(entry, cells));		
+		final TargetValue tvalue = (TargetValue) define(name, new TargetValue(entry, cells));
+		return tvalue;
 	}
+
+	abstract protected void compileLoad(int cells);
+
+
 
 	/**
 	 * At runtime, push the # of cells to the stack from the current DP.
@@ -608,24 +617,28 @@ public abstract class TargetContext extends Context {
 	
 
 	/**
+	 * @param hostContext TODO
 	 * @throws AbortException 
 	 * 
 	 */
-	public void compileExit() throws AbortException {
+	public void compileExit(HostContext hostContext) throws AbortException {
 		if (((ITargetWord) getLatest()).getEntry().hasLocals())
 			compileCleanupLocals();
 		
 		ITargetWord semiS = (ITargetWord) require(";S");
-		compile(semiS);
+		semiS.getCompilationSemantics().execute(hostContext, this);
 	}
 
 	/**
+	 * @param hostContext TODO
 	 * @param word
 	 * @throws AbortException 
 	 */
-	public void compileToValue(TargetValue word) throws AbortException {
+	public void compileToValue(HostContext hostContext, TargetValue word) throws AbortException {
 		compileWordParamAddr(word);
-		compile((ITargetWord) require("!"));
+		//compile((ITargetWord) require("!"));
+		require("!").getCompilationSemantics().execute(hostContext, this);
+
 	}
 
 	abstract public MemoryDomain createMemory();
@@ -706,9 +719,10 @@ public abstract class TargetContext extends Context {
 	abstract public void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP) throws AbortException;
 
 
-	public void compileString(String string) throws AbortException {
+	public void compileString(HostContext hostContext, String string) throws AbortException {
 		IWord parenString = require("(s\")");
-		compile((ITargetWord) parenString);
+		//compile((ITargetWord) parenString);
+		parenString.getCompilationSemantics().execute(hostContext, this);
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
 		alloc(info.second);
 	}
@@ -721,4 +735,12 @@ public abstract class TargetContext extends Context {
 	 * @return target addr for DOES
 	 */
 	abstract public int compileDoDoes(HostContext hostContext) throws AbortException;
+
+
+
+	/**
+	 * @param opcode
+	 */
+	abstract public void compileOpcode(int opcode);
+	abstract public void compileUser(TargetUserVariable var);
 }

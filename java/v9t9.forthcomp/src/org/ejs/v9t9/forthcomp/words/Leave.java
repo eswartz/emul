@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class Leave extends BaseWord {
+public class Leave extends BaseStdWord {
 	public Leave() {
 	}
 
@@ -24,7 +24,7 @@ public class Leave extends BaseWord {
 		targetContext.markHostExecutionUnsupported();
 		
 		ITargetWord branch = (ITargetWord) targetContext.require("branch");
-		targetContext.compile(branch);
+		branch.getCompilationSemantics().execute(hostContext, targetContext);
 		
 		targetContext.pushLeave(hostContext);
 		

@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Exit extends BaseWord {
+public class Exit extends BaseStdWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
@@ -19,7 +19,7 @@ public class Exit extends BaseWord {
 			throws AbortException {
 		hostContext.assertCompiling();
 		hostContext.compileExit();
-		targetContext.compileExit();
+		targetContext.compileExit(hostContext);
 	}
 
 	/* (non-Javadoc)

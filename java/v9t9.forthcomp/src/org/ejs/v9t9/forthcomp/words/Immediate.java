@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class Immediate extends BaseWord {
+public class Immediate extends BaseStdWord {
 	public Immediate() {
 	}
 
@@ -19,7 +19,9 @@ public class Immediate extends BaseWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		((ITargetWord) targetContext.getLatest()).getEntry().setImmediate(targetContext, true);
+		ITargetWord word = (ITargetWord) targetContext.getLatest();
+		word.getEntry().setImmediate(targetContext, true);
+		word.setCompilationSemantics(word.getExecutionSemantics());
 	}
 	
 	/* (non-Javadoc)

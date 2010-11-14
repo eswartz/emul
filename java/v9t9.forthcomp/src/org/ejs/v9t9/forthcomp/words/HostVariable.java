@@ -9,7 +9,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostVariable extends BaseWord {
+public class HostVariable extends BaseStdWord {
 
 	private int val;
 	/**

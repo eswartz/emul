@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Comma extends BaseWord {
+public class Comma extends BaseStdWord {
 
 	@Override
 	public String toString() {

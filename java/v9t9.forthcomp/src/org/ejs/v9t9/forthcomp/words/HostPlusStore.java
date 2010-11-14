@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostPlusStore extends BaseWord {
+public class HostPlusStore extends BaseStdWord {
 
 	@Override
 	public String toString() {

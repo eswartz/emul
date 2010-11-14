@@ -3,7 +3,9 @@
  */
 package org.ejs.v9t9.forthcomp.words;
 
+import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ISemantics;
 
 /**
  * @author ejs
@@ -17,9 +19,24 @@ public class HostLiteral extends BaseWord {
 	 * @param isUnsigned 
 	 * 
 	 */
-	public HostLiteral(int val, boolean isUnsigned) {
-		this.val = val;
-		this.isUnsigned = isUnsigned;
+	public HostLiteral(int val_, boolean isUnsigned_) {
+		this.val = val_;
+		this.isUnsigned = isUnsigned_;
+		setCompilationSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				hostContext.compile(HostLiteral.this);
+				targetContext.compileLiteral(val, isUnsigned, true);
+			}
+		});
+		setExecutionSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+			throws AbortException {
+				hostContext.pushData(val);
+			}
+		});
 	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -34,14 +51,6 @@ public class HostLiteral extends BaseWord {
 	public int getValue() {
 		return val;
 	}
-
-	
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) {
-		hostContext.pushData(val);
-	}
 	/**
 	 * @param forField the forField to set
 	 */
@@ -50,11 +59,5 @@ public class HostLiteral extends BaseWord {
 	}
 	public boolean isUnsigned() {
 		return isUnsigned;
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
-	 */
-	public boolean isImmediate() {
-		return false;
 	}
 }

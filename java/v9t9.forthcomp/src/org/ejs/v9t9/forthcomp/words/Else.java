@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class Else extends BaseWord {
+public class Else extends BaseStdWord {
 	public Else() {
 	}
 
@@ -24,14 +24,14 @@ public class Else extends BaseWord {
 		hostContext.assertPairs(2);
 		
 		ITargetWord word = (ITargetWord) targetContext.require("branch");
-		targetContext.compile(word);
+		word.getCompilationSemantics().execute(hostContext, targetContext);
 		
 		hostContext.compile(hostContext.require("branch"));
 		
 		targetContext.pushFixup(hostContext);
 		targetContext.swapFixup(hostContext);
 		
-		IWord then = hostContext.require("then");
+		Then then = (Then) hostContext.require("then");
 		
 		hostContext.pushPairs(2);
 		

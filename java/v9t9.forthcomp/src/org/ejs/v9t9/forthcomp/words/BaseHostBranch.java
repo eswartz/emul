@@ -8,7 +8,7 @@ package org.ejs.v9t9.forthcomp.words;
  * @author ejs
  * 
  */
-public abstract class BaseHostBranch extends BaseWord implements Cloneable {
+public abstract class BaseHostBranch extends BaseStdWord implements Cloneable {
 
 	protected int target;
 

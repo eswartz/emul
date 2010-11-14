@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class QuestionDo extends BaseWord {
+public class QuestionDo extends BaseStdWord {
 	public QuestionDo() {
 	}
 
@@ -25,7 +25,8 @@ public class QuestionDo extends BaseWord {
 		
 		ITargetWord qdoWord = (ITargetWord) targetContext.require("(?do)");
 
-		targetContext.compile(qdoWord);	// ends in 0branch
+		qdoWord.getCompilationSemantics().execute(hostContext, targetContext);// ends in 0branch
+		
 		targetContext.pushFixup(hostContext);
 		
 		

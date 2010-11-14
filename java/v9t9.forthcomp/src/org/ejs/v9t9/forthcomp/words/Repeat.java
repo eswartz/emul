@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Repeat extends BaseWord {
+public class Repeat extends BaseStdWord {
 	public Repeat() {
 	}
 

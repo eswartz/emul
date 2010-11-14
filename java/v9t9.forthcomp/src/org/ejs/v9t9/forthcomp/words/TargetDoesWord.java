@@ -5,6 +5,7 @@ package org.ejs.v9t9.forthcomp.words;
 
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ISemantics;
 import org.ejs.v9t9.forthcomp.ITargetWord;
 
 /**
@@ -19,19 +20,20 @@ public class TargetDoesWord extends TargetWord {
 	/**
 	 * @param lastEntry
 	 */
-	public TargetDoesWord(ITargetWord var, int doesPc) {
-		super(var.getEntry());
-		this.var = var;
-		this.doesPc = doesPc;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.pushData(var.getEntry().getParamAddr());
-		hostContext.pushCall(doesPc);
-		hostContext.interpret(hostContext, targetContext);
+	public TargetDoesWord(ITargetWord var_, int doesPc_) {
+		super(var_.getEntry());
+		this.var = var_;
+		this.doesPc = doesPc_;
+		
+		setExecutionSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				hostContext.pushData(var.getEntry().getParamAddr());
+				hostContext.pushCall(doesPc);
+				hostContext.interpret(hostContext, targetContext);				
+			}
+		});
 	}
 	
 }

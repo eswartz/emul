@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class Do extends BaseWord {
+public class Do extends BaseStdWord {
 	public Do() {
 	}
 
@@ -24,7 +24,7 @@ public class Do extends BaseWord {
 		targetContext.markHostExecutionUnsupported();
 		
 		ITargetWord word = (ITargetWord) targetContext.require("(do)");
-		targetContext.compile(word);
+		word.getCompilationSemantics().execute(hostContext, targetContext);
 		
 		hostContext.compile(hostContext.find("(do)"));
 		

@@ -9,7 +9,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public abstract class HostUnaryOp extends BaseWord {
+public abstract class HostUnaryOp extends BaseStdWord {
 
 	private String name;
 

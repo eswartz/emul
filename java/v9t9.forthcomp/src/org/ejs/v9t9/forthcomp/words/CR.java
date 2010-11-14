@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class CR extends BaseWord {
+public class CR extends BaseStdWord {
 	@Override
 	public String toString() {
 		return "CR";

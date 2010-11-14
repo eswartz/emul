@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class ColonColon extends BaseWord {
+public class ColonColon extends BaseStdWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)

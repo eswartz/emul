@@ -20,6 +20,16 @@ public class F99InlineWord extends TargetWord {
 	public F99InlineWord(DictEntry entry, int[] opcodes) {
 		super(entry);
 		this.opcodes = opcodes;
+		
+		setCompilationSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				int[] opcodes = getOpcodes();
+				for (int opcode : opcodes)
+					targetContext.compileOpcode(opcode);				
+			}
+		});
 	}
 
 	/**
@@ -27,13 +37,6 @@ public class F99InlineWord extends TargetWord {
 	 */
 	public int[] getOpcodes() {
 		return opcodes;
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext)
-			throws AbortException {
-		throw hostContext.abort("cannot execute " + entry.getName() + " in compiler");
 	}
 
 }

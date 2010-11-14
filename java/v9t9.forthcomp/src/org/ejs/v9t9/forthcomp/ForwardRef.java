@@ -27,6 +27,14 @@ public class ForwardRef extends TargetWord {
 		this.location = location;
 		fwds = new ArrayList<Integer>();
 		this.id = id;
+		
+		setExecutionSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				throw hostContext.abort("cannot invoke forward referenced word: " + toString());
+			}
+		});
 	}
 
 	/**
@@ -41,14 +49,7 @@ public class ForwardRef extends TargetWord {
 	public int getId() {
 		return id;
 	}
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext)
-			throws AbortException {
-		throw hostContext.abort("cannot invoke forward referenced word: " + toString());
-	}
-
+	
 	/**
 	 * @param num
 	 */

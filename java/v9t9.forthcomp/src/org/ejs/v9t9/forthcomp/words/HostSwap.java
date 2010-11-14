@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostSwap extends BaseWord {
+public class HostSwap extends BaseStdWord {
 
 	/**
 	 * 

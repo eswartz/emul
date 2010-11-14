@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class ParsedTick extends BaseWord {
+public class ParsedTick extends BaseStdWord {
 	public ParsedTick() {
 	}
 

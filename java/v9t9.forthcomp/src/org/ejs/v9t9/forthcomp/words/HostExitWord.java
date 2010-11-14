@@ -7,7 +7,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostExitWord extends BaseWord {
+public class HostExitWord extends BaseStdWord {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

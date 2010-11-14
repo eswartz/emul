@@ -57,10 +57,11 @@ public class TestForthCompF99b extends BaseF99bTest {
 		startDP = targCtx.getDP();
 		
 		parseString("Variable t");
-		IWord var = targCtx.require("T");
+		dumpDict();
+		ITargetWord var = (ITargetWord) targCtx.require("T");
 
-		var.execute(hostCtx, targCtx);
-		assertEquals(startDP + 4, hostCtx.popData());
+		var.getExecutionSemantics().execute(hostCtx, targCtx);
+		assertEquals(var.getEntry().getParamAddr(), hostCtx.popData());
 		//assertEquals(-1, hostCtx.popData());
 		//assertEquals(((ITargetWord)var).getEntry().getContentAddr(), targCtx.resolveAddr(-1));
 		
@@ -78,14 +79,14 @@ public class TestForthCompF99b extends BaseF99bTest {
 		parseString("Variable t Variable ud");
 		
 		ITargetWord tvar = (ITargetWord) targCtx.require("T");
-		tvar.execute(hostCtx, targCtx);
+		tvar.getExecutionSemantics().execute(hostCtx, targCtx);
 		ITargetWord uvar = (ITargetWord) targCtx.require("Ud");
-		uvar.execute(hostCtx, targCtx);
+		uvar.getExecutionSemantics().execute(hostCtx, targCtx);
 		
-		//assertEquals(-2, hostCtx.popData());
-		//assertEquals(-1, hostCtx.popData());
-		//assertEquals(tvar.getEntry().getContentAddr(), targCtx.resolveAddr(-1));
-		//assertEquals(uvar.getEntry().getContentAddr(), targCtx.resolveAddr(-2));
+		int ud = hostCtx.popData();
+		int t = hostCtx.popData();
+		assertEquals(tvar.getEntry().getParamAddr(), t);
+		assertEquals(uvar.getEntry().getParamAddr(), ud);
 		
 		assertEquals(0, tvar.getEntry().getAddr() & 1);
 		assertEquals(0, tvar.getEntry().getContentAddr() & 1);

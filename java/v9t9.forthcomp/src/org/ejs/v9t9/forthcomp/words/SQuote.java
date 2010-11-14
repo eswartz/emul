@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class SQuote extends BaseWord {
+public class SQuote extends BaseStdWord {
 
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.words.TargetContext)
@@ -37,7 +37,7 @@ public class SQuote extends BaseWord {
 		}
 
 		if (hostContext.isCompiling()) {
-			targetContext.compileString(sb.toString());
+			targetContext.compileString(hostContext, sb.toString());
 		} else {
 			Pair<Integer, Integer> addr = targetContext.writeLengthPrefixedString(sb.toString());
 			hostContext.pushData(sb.length());

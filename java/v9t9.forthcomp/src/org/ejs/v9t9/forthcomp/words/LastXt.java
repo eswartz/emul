@@ -8,7 +8,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class LastXt extends BaseWord {
+public class LastXt extends BaseStdWord {
 	@Override
 	public String toString() {
 		return "LASTXT";

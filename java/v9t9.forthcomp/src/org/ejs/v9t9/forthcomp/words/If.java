@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class If extends BaseWord {
+public class If extends BaseStdWord {
 	public If() {
 	}
 
@@ -22,7 +22,7 @@ public class If extends BaseWord {
 		hostContext.assertCompiling();
 		
 		ITargetWord word = (ITargetWord) targetContext.require("0branch");
-		targetContext.compile(word);
+		word.getCompilationSemantics().execute(hostContext, targetContext);
 		
 		hostContext.compile(hostContext.require("0branch"));
 		

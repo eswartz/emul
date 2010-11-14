@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class HostBehavior extends BaseWord {
+public class HostBehavior extends BaseStdWord {
 	public HostBehavior() {
 	}
 

@@ -14,7 +14,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class CompileComma extends BaseWord {
+public class CompileComma extends BaseStdWord {
 
 	@Override
 	public String toString() {

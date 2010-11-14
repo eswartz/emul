@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Allot extends BaseWord {
+public class Allot extends BaseStdWord {
 	public Allot() {
 	}
 

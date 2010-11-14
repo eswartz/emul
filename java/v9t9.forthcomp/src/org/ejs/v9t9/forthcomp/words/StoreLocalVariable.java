@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class StoreLocalVariable extends BaseWord {
+public class StoreLocalVariable extends BaseStdWord {
 
 	private int index;
 	/**

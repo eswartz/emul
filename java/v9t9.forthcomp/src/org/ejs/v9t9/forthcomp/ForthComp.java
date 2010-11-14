@@ -188,6 +188,54 @@ public class ForthComp {
 	private void parse(String token) throws AbortException {
 		IWord word = null;
 		
+		if (stateVar.getValue() == 0) {
+			word = hostContext.find(token);
+			if (word == null) {
+				word = targetContext.find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				throw abort("unknown word or literal: " + token);
+			}
+			
+			if (word.getInterpretationSemantics() == null)
+				throw abort(word.getName() + " has no interpretation semantics");
+			
+			word.getInterpretationSemantics().execute(hostContext, targetContext);
+		} else {
+			word = targetContext.find(token);
+			if (word == null) {
+				word = hostContext.find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				word = targetContext.defineForward(token, hostContext.getStream().getLocation());
+			}
+		
+			ITargetWord targetWord = null;
+			IWord hostWord = null;
+			
+			if (word instanceof ITargetWord) {
+				targetWord = (ITargetWord) word;
+				hostWord = hostContext.find(token);
+				if (hostWord == null) 
+					hostWord = targetWord;
+			} else {
+				hostWord = word;
+				targetWord = null;
+			}		
+			
+			hostContext.compileWord(targetContext, hostWord, targetWord);
+		}
+	}
+
+	private void parse__(String token) throws AbortException {
+		IWord word = null;
+		
 		if (stateVar.getValue() == 0)
 			word = hostContext.find(token);
 		
@@ -197,8 +245,8 @@ public class ForthComp {
 				ITargetWord tw = (ITargetWord) word;
 				if (tw.getEntry().isHidden())
 					word = null;
-				else if (word.isImmediate() && stateVar.getValue() != 0 && tw.getEntry().isTargetOnly())
-					word = null;
+				//else if (word.isImmediate() && stateVar.getValue() != 0 && tw.getEntry().isTargetOnly())
+				//	word = null;
 			}
 		}
 		
@@ -214,11 +262,12 @@ public class ForthComp {
 			word = targetContext.defineForward(token, hostContext.getStream().getLocation());
 		}
 		
-		if (stateVar.getValue() == 0 || word.isImmediate()) {
+		if (stateVar.getValue() == 0 /*|| word.isImmediate()*/) {
 			try {
 				if (word instanceof ITargetWord && ((ITargetWord)word).getEntry().getHostBehavior() != null)
 					word = ((ITargetWord)word).getEntry().getHostBehavior();
-				word.execute(hostContext, targetContext);
+				//word.execute(hostContext, targetContext);
+				word.getInterpretationSemantics().execute(hostContext, targetContext);
 			} catch (AbortException e) {
 				throw e;
 			} catch (Throwable t) {

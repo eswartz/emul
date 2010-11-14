@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class FieldComma extends BaseWord {
+public class FieldComma extends BaseStdWord {
 	public FieldComma() {
 	}
 
@@ -33,6 +33,6 @@ public class FieldComma extends BaseWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

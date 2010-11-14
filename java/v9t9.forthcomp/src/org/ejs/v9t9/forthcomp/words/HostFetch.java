@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  *
  */
 @HostWordPlaceholder("@")
-public class HostFetch extends BaseWord {
+public class HostFetch extends BaseStdWord {
 	@Override
 	public String toString() {
 		return "@";

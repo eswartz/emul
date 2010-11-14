@@ -3,6 +3,88 @@
  */
 package org.ejs.v9t9.forthcomp;
 
+import static v9t9.engine.cpu.InstF99.CMP_GE;
+import static v9t9.engine.cpu.InstF99.CMP_GT;
+import static v9t9.engine.cpu.InstF99.CMP_LE;
+import static v9t9.engine.cpu.InstF99.CMP_LT;
+import static v9t9.engine.cpu.InstF99.CMP_UGE;
+import static v9t9.engine.cpu.InstF99.CMP_UGT;
+import static v9t9.engine.cpu.InstF99.CMP_ULE;
+import static v9t9.engine.cpu.InstF99.CMP_ULT;
+import static v9t9.engine.cpu.InstF99.CTX_PC;
+import static v9t9.engine.cpu.InstF99.CTX_RP;
+import static v9t9.engine.cpu.InstF99.I0branch;
+import static v9t9.engine.cpu.InstF99.I0cmp;
+import static v9t9.engine.cpu.InstF99.I0cmp_d;
+import static v9t9.engine.cpu.InstF99.I0equ;
+import static v9t9.engine.cpu.InstF99.I0equ_d;
+import static v9t9.engine.cpu.InstF99.IRfrom;
+import static v9t9.engine.cpu.InstF99.IRfrom_d;
+import static v9t9.engine.cpu.InstF99.Iadd;
+import static v9t9.engine.cpu.InstF99.IatR;
+import static v9t9.engine.cpu.InstF99.Ibinop;
+import static v9t9.engine.cpu.InstF99.Ibinop_d;
+import static v9t9.engine.cpu.InstF99.Ibranch;
+import static v9t9.engine.cpu.InstF99.Icload;
+import static v9t9.engine.cpu.InstF99.Icmp;
+import static v9t9.engine.cpu.InstF99.Icmp_d;
+import static v9t9.engine.cpu.InstF99.IcontextFrom;
+import static v9t9.engine.cpu.InstF99.Icstore;
+import static v9t9.engine.cpu.InstF99.Idrop;
+import static v9t9.engine.cpu.InstF99.Idup;
+import static v9t9.engine.cpu.InstF99.Idup_d;
+import static v9t9.engine.cpu.InstF99.Iequ;
+import static v9t9.engine.cpu.InstF99.Iequ_d;
+import static v9t9.engine.cpu.InstF99.Iexecute;
+import static v9t9.engine.cpu.InstF99.Iexit;
+import static v9t9.engine.cpu.InstF99.Iexiti;
+import static v9t9.engine.cpu.InstF99.Iext;
+import static v9t9.engine.cpu.InstF99.IfieldLit;
+import static v9t9.engine.cpu.InstF99.IfieldLit_d;
+import static v9t9.engine.cpu.InstF99.Ilit;
+import static v9t9.engine.cpu.InstF99.Ilit_d;
+import static v9t9.engine.cpu.InstF99.Iload;
+import static v9t9.engine.cpu.InstF99.Iload_d;
+import static v9t9.engine.cpu.InstF99.Iloop;
+import static v9t9.engine.cpu.InstF99.Iover;
+import static v9t9.engine.cpu.InstF99.IplusLoop;
+import static v9t9.engine.cpu.InstF99.IplusStore;
+import static v9t9.engine.cpu.InstF99.IplusStore_d;
+import static v9t9.engine.cpu.InstF99.Iqdup;
+import static v9t9.engine.cpu.InstF99.Irdrop;
+import static v9t9.engine.cpu.InstF99.Irot;
+import static v9t9.engine.cpu.InstF99.Irpidx;
+import static v9t9.engine.cpu.InstF99.Istore;
+import static v9t9.engine.cpu.InstF99.Istore_d;
+import static v9t9.engine.cpu.InstF99.Iswap;
+import static v9t9.engine.cpu.InstF99.ItoContext;
+import static v9t9.engine.cpu.InstF99.ItoR;
+import static v9t9.engine.cpu.InstF99.ItoR_d;
+import static v9t9.engine.cpu.InstF99.Iudivmod;
+import static v9t9.engine.cpu.InstF99.Iumul;
+import static v9t9.engine.cpu.InstF99.Iunaryop;
+import static v9t9.engine.cpu.InstF99.Iunaryop_d;
+import static v9t9.engine.cpu.InstF99.IuplusLoop;
+import static v9t9.engine.cpu.InstF99.Iuser;
+import static v9t9.engine.cpu.InstF99.OP_1MINUS;
+import static v9t9.engine.cpu.InstF99.OP_1PLUS;
+import static v9t9.engine.cpu.InstF99.OP_2DIV;
+import static v9t9.engine.cpu.InstF99.OP_2MINUS;
+import static v9t9.engine.cpu.InstF99.OP_2PLUS;
+import static v9t9.engine.cpu.InstF99.OP_2TIMES;
+import static v9t9.engine.cpu.InstF99.OP_ADD;
+import static v9t9.engine.cpu.InstF99.OP_AND;
+import static v9t9.engine.cpu.InstF99.OP_ASH;
+import static v9t9.engine.cpu.InstF99.OP_CSH;
+import static v9t9.engine.cpu.InstF99.OP_INV;
+import static v9t9.engine.cpu.InstF99.OP_LSH;
+import static v9t9.engine.cpu.InstF99.OP_NEG;
+import static v9t9.engine.cpu.InstF99.OP_NOT;
+import static v9t9.engine.cpu.InstF99.OP_OR;
+import static v9t9.engine.cpu.InstF99.OP_RSH;
+import static v9t9.engine.cpu.InstF99.OP_SUB;
+import static v9t9.engine.cpu.InstF99.OP_XOR;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -16,11 +98,9 @@ import org.ejs.v9t9.forthcomp.words.ExitI;
 import org.ejs.v9t9.forthcomp.words.FieldComma;
 import org.ejs.v9t9.forthcomp.words.Literal;
 import org.ejs.v9t9.forthcomp.words.TargetColonWord;
-import org.ejs.v9t9.forthcomp.words.TargetConstant;
 import org.ejs.v9t9.forthcomp.words.TargetContext;
 import org.ejs.v9t9.forthcomp.words.TargetUserVariable;
 import org.ejs.v9t9.forthcomp.words.TargetValue;
-import org.ejs.v9t9.forthcomp.words.TargetVariable;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.EnhancedRamArea;
@@ -29,8 +109,6 @@ import v9t9.emulator.runtime.cpu.CpuStateF99;
 import v9t9.engine.cpu.InstF99;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-
-import static v9t9.engine.cpu.InstF99.*;
 
 /**
  * @author ejs
@@ -205,7 +283,7 @@ public class F99TargetContext extends TargetContext {
 		defineInlinePrim("*", Iumul, Idrop);
 		defineInlinePrim("s>d", Idup, I0cmp, CMP_LT);
 		
-		defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
+		//defineInlinePrim("DOVAR", IcontextFrom, CTX_PC, Iexit);
 		defineInlinePrim("DOLIT", Ilit, Iexit);
 		
 		defineInlinePrim("true", IfieldLit, -1);
@@ -292,42 +370,21 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void compile(ITargetWord word) {
 		word.getEntry().use();
-		
-		if (word instanceof F99PrimitiveWord) {
-			int opcode = ((F99PrimitiveWord) word).getOpcode();
-			compileOpcode(opcode);
-			
-		} else if (word instanceof F99InlineWord) {
-			int[] opcodes = ((F99InlineWord) word).getOpcodes();
-			for (int opcode : opcodes)
-				compileOpcode(opcode);
-		} else if (word instanceof TargetConstant) {
-			TargetConstant cons = (TargetConstant) word;
-			if (cons.getWidth() == 1)
-				compileLiteral(cons.getValue(), false, true);
-			else if (cons.getWidth() == 2)
-				compileDoubleLiteral(cons.getValue() & 0xffff, cons.getValue() >> 16, false, true);
-			else
-				assert false;
-		} else if (word instanceof TargetVariable) {
-			TargetVariable var = (TargetVariable) word;
-			compileLiteral(var.getEntry().getParamAddr(), false, true);
-		} else if (word instanceof TargetUserVariable) {
-			TargetUserVariable user = (TargetUserVariable) word;
-			compileLiteral(user.getIndex(), false, true);
-			compileOpcode(Iuser);
-		} else if (word instanceof TargetValue) {
-			TargetValue value = (TargetValue) word;
-			compileLiteral(value.getEntry().getParamAddr(), false, true);
-			if (value.getCells() == 1)
-				compileOpcode(Iload);
-			else
-				compileOpcode(Iload_d);
-		} else {
-			compileCall(word);
-		}
+		compileCall(word);
 	}
 
+	@Override
+	protected void compileLoad(int bytes) {
+		if (bytes == 1)
+			compileOpcode(Icload);
+		else if (bytes == 2)
+			compileOpcode(Iload);
+		else if (bytes == 4)
+			compileOpcode(Iload_d);
+		else
+			assert false;
+	}
+	
 	public void compileCall(ITargetWord word) {
 		// must call
 		alignBranch();
@@ -345,7 +402,7 @@ public class F99TargetContext extends TargetContext {
 	/**
 	 * @param opcode
 	 */
-	private void compileOpcode(int opcode) {
+	public void compileOpcode(int opcode) {
 		if (opcode >= InstF99._Iext) {
 			
 			if (opcodeIndex == 2 && 
@@ -880,7 +937,19 @@ public class F99TargetContext extends TargetContext {
 		compile((ITargetWord) require("LITERAL"));
 		compile((ITargetWord) require("compile,"));
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoVar()
+	 */
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoVar()
+	 */
+	@Override
+	protected void compileDoVar() {
+		 compileOpcode(IcontextFrom);
+		 compileOpcode(CTX_PC);
+		 compileOpcode(Iexit);
+	}
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.words.TargetContext#compileDoDoes(org.ejs.v9t9.forthcomp.HostContext)
 	 */

@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Variable extends BaseWord {
+public class Variable extends BaseStdWord {
 	public Variable() {
 	}
 

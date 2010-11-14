@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostEmit extends BaseWord {
+public class HostEmit extends BaseStdWord {
 	@Override
 	public String toString() {
 		return "EMIT";

@@ -3,8 +3,10 @@
  */
 package org.ejs.v9t9.forthcomp.words;
 
+import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.DictEntry;
 import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ISemantics;
 
 /**
  * @author ejs
@@ -12,21 +14,26 @@ import org.ejs.v9t9.forthcomp.HostContext;
  */
 public class TargetVariable extends TargetWord {
 
-	private int addr;
 	/**
 	 * @param addr 
 	 * 
 	 */
-	public TargetVariable(DictEntry entry, int addr) {
+	public TargetVariable(DictEntry entry) {
 		super(entry);
-		this.addr = addr;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.IContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) {
-		hostContext.pushData(addr);
+		setCompilationSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
+			}
+		});
+		setExecutionSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+			throws AbortException {
+				hostContext.pushData(getEntry().getParamAddr());
+			}
+		});
 	}
 	
 }

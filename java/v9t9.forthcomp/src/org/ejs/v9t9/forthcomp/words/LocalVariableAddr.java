@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class LocalVariableAddr extends BaseWord {
+public class LocalVariableAddr extends BaseStdWord {
 
 	private int index;
 	/**

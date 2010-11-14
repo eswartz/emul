@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostHex extends BaseWord {
+public class HostHex extends BaseStdWord {
 	@Override
 	public String toString() {
 		return "HEX";

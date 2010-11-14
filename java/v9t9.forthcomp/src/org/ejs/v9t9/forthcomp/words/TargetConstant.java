@@ -6,6 +6,7 @@ package org.ejs.v9t9.forthcomp.words;
 import org.ejs.v9t9.forthcomp.AbortException;
 import org.ejs.v9t9.forthcomp.DictEntry;
 import org.ejs.v9t9.forthcomp.HostContext;
+import org.ejs.v9t9.forthcomp.ISemantics;
 import org.ejs.v9t9.forthcomp.ITargetWord;
 
 /**
@@ -20,20 +21,33 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 	/**
 	 * @param entry
 	 */
-	public TargetConstant(DictEntry entry, int value, int width) {
+	public TargetConstant(DictEntry entry, int value_, int width_) {
 		super(entry);
-		this.value = value;
-		this.width = width;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext)
-			throws AbortException {
-		hostContext.pushData(value & 0xffff);
-		if (width == 2)
-			hostContext.pushData(value >> 16);
+		this.value = value_;
+		this.width = width_;
+		
+		setCompilationSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				if (getWidth() == 1)
+					targetContext.compileLiteral(getValue(), false, true);
+				else if (getWidth() == 2 && targetContext.getCellSize() == 2)
+					targetContext.compileDoubleLiteral(getValue() & 0xffff, getValue() >> 16, false, true);
+				else
+					assert false;
+			}
+		});
+		setExecutionSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				hostContext.pushData(value & 0xffff);
+				if (width == 2)
+					hostContext.pushData(value >> 16);
+				
+			}
+		});
 	}
 
 	/**

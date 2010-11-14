@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Rbracket extends BaseWord {
+public class Rbracket extends BaseStdWord {
 	public Rbracket() {
 	}
 
@@ -32,6 +32,6 @@ public class Rbracket extends BaseWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

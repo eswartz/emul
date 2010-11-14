@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public class HostPostponedWord extends BaseWord {
+public class HostPostponedWord extends BaseStdWord {
 
 	private final ITargetWord targetWord;
 	private final IWord hostWord;

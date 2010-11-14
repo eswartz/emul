@@ -182,6 +182,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		assertEquals(InstF99b.IlitW, targCtx.readChar(dp++));
 		assertEquals(0x12, targCtx.readChar(dp++));
 		assertEquals(0x34, targCtx.readChar(dp++));
+		assertEquals(InstF99b.Iexit, targCtx.readChar(dp++));
 
 	}
 	
@@ -297,6 +298,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 	@Test
 	public void testStringLits() throws Exception {
 		
+		startDP = 0x400;
 		parseString(
 				stockDictDefs+
 				compileLiteral+
@@ -311,7 +313,8 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		
 		DictEntry entry = ((ITargetWord) targCtx.require("lala")).getEntry();
 		int dp = entry.getContentAddr();
-		assertEquals(((ITargetWord)targCtx.require("(S\")")).getEntry().getContentAddr(), targCtx.findReloc(dp)); dp+=2;
+		assertEquals(((ITargetWord)targCtx.require("((S\"))")).getEntry().getContentAddr(), targCtx.findReloc(dp)); 
+		dp+=2;
 		/*
 		assertEquals(InstF99b.IcontextFrom, targCtx.readChar(dp++));
 		assertEquals(InstF99b.CTX_PC, targCtx.readChar(dp++));

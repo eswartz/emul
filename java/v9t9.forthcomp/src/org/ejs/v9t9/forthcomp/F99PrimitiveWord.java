@@ -20,6 +20,15 @@ public class F99PrimitiveWord extends TargetWord {
 	public F99PrimitiveWord(DictEntry entry, int opcode) {
 		super(entry);
 		this.opcode = opcode;
+		
+		setCompilationSemantics(new ISemantics() {
+			
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				int opcode = getOpcode();
+				targetContext.compileOpcode(opcode);
+			}
+		});
 	}
 
 	/**
@@ -27,13 +36,6 @@ public class F99PrimitiveWord extends TargetWord {
 	 */
 	public int getOpcode() {
 		return opcode;
-	}
-	/* (non-Javadoc)
-	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.TargetContext)
-	 */
-	public void execute(HostContext hostContext, TargetContext targetContext)
-			throws AbortException {
-		throw hostContext.abort("cannot execute " + entry.getName() + " in compiler");
 	}
 
 }

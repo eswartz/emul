@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class HostDoDoes extends BaseWord {
+public class HostDoDoes extends BaseStdWord {
 
 	private final int redirectDp;
 	private final int targetDP;
@@ -41,6 +41,7 @@ public class HostDoDoes extends BaseWord {
 		lastWord.getEntry().setDoesWord(true);
 
 		targetContext.compileDoes(hostContext, lastWord.getEntry(), targetDP);
+		
 		//hostContext.setHostPc(redirectDp);
 	}
 	

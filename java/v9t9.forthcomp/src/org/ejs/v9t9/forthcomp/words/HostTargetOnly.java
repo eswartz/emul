@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class HostTargetOnly extends BaseWord {
+public class HostTargetOnly extends BaseStdWord {
 	public HostTargetOnly() {
 	}
 

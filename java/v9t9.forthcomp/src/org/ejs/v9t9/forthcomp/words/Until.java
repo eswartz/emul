@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Until extends BaseWord {
+public class Until extends BaseStdWord {
 	public Until() {
 	}
 

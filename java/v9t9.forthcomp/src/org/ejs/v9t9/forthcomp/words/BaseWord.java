@@ -3,6 +3,8 @@
  */
 package org.ejs.v9t9.forthcomp.words;
 
+import org.ejs.v9t9.forthcomp.DictEntry;
+import org.ejs.v9t9.forthcomp.ISemantics;
 import org.ejs.v9t9.forthcomp.IWord;
 
 /**
@@ -12,6 +14,9 @@ import org.ejs.v9t9.forthcomp.IWord;
 public abstract class BaseWord implements IWord {
 
 	private String name;
+	protected ISemantics compileSemantics;
+	protected ISemantics interpretSemantics;
+	protected ISemantics executionSemantics;
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -34,5 +39,41 @@ public abstract class BaseWord implements IWord {
 		this.name = name;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.IWord#getEntry()
+	 */
+	public DictEntry getEntry() {
+		return null;
+	}
 
+
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.IWord#getCompileSemantics()
+	 */
+	public ISemantics getCompilationSemantics() {
+		return compileSemantics;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.IWord#getInterpretSemantics()
+	 */
+	public ISemantics getInterpretationSemantics() {
+		return interpretSemantics;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.v9t9.forthcomp.IWord#getRuntimeSemantics()
+	 */
+	public ISemantics getExecutionSemantics() {
+		return executionSemantics;
+	}
+	public void setCompilationSemantics(ISemantics compileSemantics) {
+		this.compileSemantics = compileSemantics;
+	}
+	public void setInterpretationSemantics(ISemantics interpretSemantics) {
+		this.interpretSemantics = interpretSemantics;
+	}
+	public void setExecutionSemantics(ISemantics executionSemantics) {
+		this.executionSemantics = executionSemantics;
+		if (interpretSemantics == null)
+			interpretSemantics = executionSemantics;
+	}
 }

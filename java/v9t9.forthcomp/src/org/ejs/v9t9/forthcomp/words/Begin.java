@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Begin extends BaseWord {
+public class Begin extends BaseStdWord {
 	public Begin() {
 	}
 

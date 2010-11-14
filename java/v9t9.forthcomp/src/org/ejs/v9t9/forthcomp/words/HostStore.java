@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  *
  */
 @HostWordPlaceholder("!")
-public class HostStore extends BaseWord {
+public class HostStore extends BaseStdWord {
 
 	@Override
 	public String toString() {

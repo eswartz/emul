@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class Loop extends BaseWord {
+public class Loop extends BaseStdWord {
 	public Loop() {
 	}
 

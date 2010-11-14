@@ -12,7 +12,7 @@ import org.ejs.v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public abstract class TargetWord implements ITargetWord {
+public abstract class TargetWord extends BaseWord implements ITargetWord {
 
 	protected final DictEntry entry;
 	private int hostPc;
@@ -69,13 +69,7 @@ public abstract class TargetWord implements ITargetWord {
 	/* (non-Javadoc)
 	 * @see org.ejs.v9t9.forthcomp.IWord#execute(org.ejs.v9t9.forthcomp.HostContext, org.ejs.v9t9.forthcomp.words.TargetContext)
 	 */
-	public void execute(HostContext hostContext, TargetContext targetContext)
+	public final void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		if (getHostDp() >= 0 && !getEntry().isTargetOnly()) {
-			hostContext.pushCall(getHostDp());
-			hostContext.interpret(hostContext, targetContext);
-		} else {
-			throw hostContext.abort("cannot execute target word: " + entry.getName());
-		}		
 	}
 }

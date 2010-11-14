@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class While extends BaseWord {
+public class While extends BaseStdWord {
 	public While() {
 	}
 

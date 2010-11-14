@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostReturnRead extends BaseWord {
+public class HostReturnRead extends BaseStdWord {
 
 	/**
 	 * 

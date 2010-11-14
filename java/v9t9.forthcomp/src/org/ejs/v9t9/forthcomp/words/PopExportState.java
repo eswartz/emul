@@ -10,7 +10,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class PopExportState extends BaseWord {
+public class PopExportState extends BaseStdWord {
 
 	public PopExportState() {
 	}

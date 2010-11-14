@@ -11,7 +11,7 @@ import org.ejs.v9t9.forthcomp.IWord;
  * @author ejs
  *
  */
-public abstract class PreProcWord extends BaseWord {
+public abstract class PreProcWord extends BaseStdWord {
 
 	protected void falseBranch(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		int levels = 1;
@@ -20,7 +20,7 @@ public abstract class PreProcWord extends BaseWord {
 			System.out.println(word);
 			if ("(".equals(word) || "\\".equals(word)) {
 				IWord realword = hostContext.find(word);
-				realword.execute(hostContext, targetContext);
+				realword.getInterpretationSemantics().execute(hostContext, targetContext);
 				continue;
 			}
 			
@@ -42,6 +42,6 @@ public abstract class PreProcWord extends BaseWord {
 	 * @see org.ejs.v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

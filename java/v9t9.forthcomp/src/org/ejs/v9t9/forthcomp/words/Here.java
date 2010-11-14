@@ -7,7 +7,7 @@ import org.ejs.v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class Here extends BaseWord {
+public class Here extends BaseStdWord {
 	@Override
 	public String toString() {
 		return "HERE";
