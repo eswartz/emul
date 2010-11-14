@@ -355,7 +355,7 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	protected int doResolveRelocation(RelocEntry reloc) throws AbortException {
-		int val = reloc.target;	// TODO
+		int val = reloc.target;
 		if (reloc.type == RelocType.RELOC_CALL_15S1) {
 			if ((val & 1) != 0)
 				throw new AbortException("Call address is odd: " + HexUtils.toHex4(val));
@@ -672,7 +672,7 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void loopCompile(HostContext hostCtx, ITargetWord loopCaller)
 			throws AbortException {
-		compile(loopCaller);
+		loopCaller.getCompilationSemantics().execute(hostCtx, this);
 		
 		boolean isQDo = hostCtx.popData() != 0;
 		
@@ -683,6 +683,7 @@ public class F99TargetContext extends TargetContext {
 			stub16BitJump.use();
 		else
 			stub5BitJump.use();
+
 
 		doCompileCell(diff);
 		
@@ -700,7 +701,7 @@ public class F99TargetContext extends TargetContext {
 		
 		ITargetWord unloop = (ITargetWord) require("unloop");
 		
-		compile(unloop);
+		unloop.getCompilationSemantics().execute(hostCtx, this);
 		
 	}
 
@@ -845,7 +846,7 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public void compileDoConstant(int value, int cells) throws AbortException {
-		compile((ITargetWord) require("DOLIT"));
+		compileOpcode(Ilit);
 		compilePushValue(cells, value);
 	}
 	
@@ -876,7 +877,7 @@ public class F99TargetContext extends TargetContext {
 	 */
 	@Override
 	public int compilePushValue(int cells, int value) throws AbortException {
-		compile((ITargetWord) require("DOLIT"));
+		compileOpcode(Ilit);
 		
 		alignBranch();
 		int loc = alloc(cells * cellSize);
@@ -934,7 +935,7 @@ public class F99TargetContext extends TargetContext {
 	@Override
 	public void compilePostpone(ITargetWord word) throws AbortException {
 		compileTick(word);
-		compile((ITargetWord) require("LITERAL"));
+		compileOpcode(Ilit);
 		compile((ITargetWord) require("compile,"));
 	}
 
